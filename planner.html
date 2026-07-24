@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planner | Eddie Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#0f172a;color:#fff}
+.container{max-width:1250px;margin:auto;padding:30px}
+h1{text-align:center;font-size:2.8rem}
+.subtitle{text-align:center;color:#94a3b8;margin:8px 0 30px}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:24px}
+.panel{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:20px}
+h2{margin-bottom:15px;color:#38bdf8}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #334155;text-align:left}
+th{color:#94a3b8}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#334155;font-size:.8rem}
+textarea{width:100%;height:150px;background:#0f172a;color:#fff;border:1px solid #334155;border-radius:10px;padding:10px}
+ul{padding-left:18px}
+li{margin:8px 0}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>📅 Planner & Calendar</h1>
+<div class="subtitle">Your command center for school, marathon training, graduate school, and personal planning.</div>
+
+<div class="grid">
+<div>
+
+<div class="panel">
+<h2>2026–2027 Key Dates</h2>
+<table>
+<tr><th>Date</th><th>Category</th><th>Event</th></tr>
+<tr><td>August</td><td><span class="badge">School</span></td><td>First Day of School</td></tr>
+<tr><td>September</td><td><span class="badge">School</span></td><td>Labor Day</td></tr>
+<tr><td>October</td><td><span class="badge">School</span></td><td>Fall Break</td></tr>
+<tr><td>November</td><td><span class="badge">School</span></td><td>Thanksgiving Break</td></tr>
+<tr><td>December</td><td><span class="badge">School</span></td><td>Winter Break Begins</td></tr>
+<tr><td>January</td><td><span class="badge">School</span></td><td>Classes Resume / MLK Day</td></tr>
+<tr><td>March</td><td><span class="badge">School</span></td><td>Spring Break</td></tr>
+<tr><td>May</td><td><span class="badge">School</span></td><td>Last Day of School</td></tr>
+<tr><td>Nov. 7</td><td><span class="badge">Marathon</span></td><td>Indianapolis Marathon</td></tr>
+<tr><td>Sept.</td><td><span class="badge">Race</span></td><td>Head Over Teal 10K (Tune-Up)</td></tr>
+</table>
+</div>
+
+<div class="panel" style="margin-top:20px">
+<h2>Graduate School Planner</h2>
+<p>Paste syllabus due dates here (future version will import automatically):</p>
+<textarea placeholder="Example:
+Math 501
+• Quiz 1 - Aug 28
+• Discussion - Sept 2
+• Midterm - Oct 8"></textarea>
+</div>
+
+<div class="panel" style="margin-top:20px">
+<h2>Semester Goals</h2>
+<ul>
+<li>☐ Stay ahead on assignments</li>
+<li>☐ Weekly lesson planning</li>
+<li>☐ Marathon training on schedule</li>
+<li>☐ Weekly reflection every Sunday</li>
+</ul>
+</div>
+
+</div>
+
+<div>
+
+<div class="panel">
+<h2>Upcoming</h2>
+<ul>
+<li>🏫 First Day of School</li>
+<li>⚽ Soccer Season</li>
+<li>🏃 Tune-Up Race</li>
+<li>🏁 Indianapolis Marathon</li>
+</ul>
+</div>
+
+<div class="panel" style="margin-top:20px">
+<h2>Marathon Planning</h2>
+<ul>
+<li>Current Training Week</li>
+<li>Weekly Mileage</li>
+<li>Next Workout</li>
+<li>Long Run</li>
+<li>Race Countdown</li>
+<li>Shoe Mileage</li>
+</ul>
+</div>
+
+<div class="panel" style="margin-top:20px">
+<h2>Weekly Planning</h2>
+<ul>
+<li>Top 3 Priorities</li>
+<li>Important Meetings</li>
+<li>Assignments Due</li>
+<li>Meal Prep</li>
+<li>Recovery Day</li>
+</ul>
+</div>
+
+</div>
+</div>
+
+</div>
+</body>
+</html>
