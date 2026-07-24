@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eddie Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+font-family:Inter,Arial,Helvetica,sans-serif;
+background:#0f172a;
+color:#f8fafc;
+}
+.container{
+max-width:950px;
+margin:60px auto;
+padding:0 24px;
+}
+header{text-align:center;margin-bottom:48px}
+h1{
+font-size:2.8rem;
+font-weight:700;
+letter-spacing:-1px;
+margin-bottom:10px;
+}
+.subtitle{
+color:#94a3b8;
+font-size:1.05rem;
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+gap:22px;
+}
+.card{
+display:block;
+background:#1e293b;
+border:1px solid #334155;
+border-radius:16px;
+padding:28px;
+text-decoration:none;
+color:#f8fafc;
+transition:.2s;
+}
+.card:link,.card:visited{color:#f8fafc;text-decoration:none}
+.card:hover{
+transform:translateY(-4px);
+border-color:#38bdf8;
+}
+.icon{font-size:2rem;margin-bottom:16px}
+.card h2{
+font-size:1.25rem;
+margin-bottom:10px;
+font-weight:600;
+}
+.card p{
+color:#cbd5e1;
+line-height:1.6;
+font-size:.95rem;
+}
+footer{
+text-align:center;
+margin-top:48px;
+color:#64748b;
+font-size:.9rem;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Eddie Dashboard</h1>
+<p class="subtitle">A simple place to manage training, planning, teaching, and personal goals.</p>
+</header>
+
+<div class="grid">
+
+<a class="card" href="75day.html">
+<div class="icon">📈</div>
+<h2>75-Day System</h2>
+<p>Track habits, daily progress, reflections, and weekly reviews.</p>
+</a>
+
+<a class="card" href="marathon.html">
+<div class="icon">🏃</div>
+<h2>Marathon Dashboard</h2>
+<p>Training schedule, workouts, mileage, race countdown, and progress.</p>
+</a>
+
+<a class="card" href="planner.html">
+<div class="icon">📅</div>
+<h2>Planner</h2>
+<p>Calendar, school events, graduate work, races, and weekly planning.</p>
+</a>
+
+</div>
+
+<footer>Built by Eddie Steers</footer>
+</div>
+</body>
+</html>
