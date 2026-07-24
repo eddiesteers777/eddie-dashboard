@@ -1,0 +1,45 @@
+
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planner</title>
+<style>
+body{font-family:Arial,sans-serif;background:#0f172a;color:#fff;margin:0}
+.wrap{max-width:1200px;margin:auto;padding:24px}
+.months{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+button{padding:10px;border:none;border-radius:8px;background:#1e293b;color:#fff;cursor:pointer}
+button:hover{background:#38bdf8;color:#000}
+table{width:100%;border-collapse:collapse;background:#1e293b}
+th,td{border:1px solid #334155;width:14.2%;height:80px;vertical-align:top;padding:5px}
+.event{display:block;background:#38bdf8;color:#001;padding:2px 4px;border-radius:4px;font-size:12px;margin-top:3px}
+</style></head><body><div class="wrap">
+<h1>2026–2027 Planner</h1><p>Official Shelby County calendar preloaded.</p>
+<div class="months" id="m"></div><div id="cal"></div></div>
+<script>
+const names=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const events={
+7:{6:"PD",7:"PD",10:"Teacher Institute",12:"Teacher Workday",13:"First Day of School"},
+8:{7:"Labor Day"},
+9:{9:"End of 1st Nine Weeks",12:"Fall Break",13:"Fall Break",16:"Report Cards"},
+10:{11:"Veterans Day",23:"Thanksgiving Break",24:"Thanksgiving Break",25:"Thanksgiving Break",26:"Thanksgiving Break",27:"Thanksgiving Break"},
+11:{18:"End of 2nd Nine Weeks / Early Dismissal",21:"Winter Break",22:"Winter Break",23:"Winter Break",24:"Winter Break",25:"Winter Break",28:"Winter Break",29:"Winter Break",30:"Winter Break",31:"Winter Break"},
+0:{1:"Winter Break",4:"Teacher Workday",5:"2nd Semester Begins",8:"Report Cards",18:"MLK Day"},
+1:{15:"Presidents Day / Teacher Workday"},
+2:{5:"End of 3rd Nine Weeks",8:"Planning Day",12:"Report Cards",22:"Spring Break",23:"Spring Break",24:"Spring Break",25:"Spring Break",26:"Spring Break"},
+3:{23:"PD / Planning"},
+4:{27:"End of 4th Nine Weeks / Early Dismissal",28:"Teacher Workday",31:"Memorial Day"}
+};
+const holder=document.getElementById('m');
+names.forEach((n,i)=>{let b=document.createElement('button');b.textContent=n;b.onclick=()=>draw(i);holder.appendChild(b);});
+function cell(m,d){let e=events[m]&&events[m][d]?'<span class="event">'+events[m][d]+'</span>':'';return '<td><b>'+d+'</b>'+e+'</td>';}
+function draw(month){
+ let y=month>=6?2026:2027,f=new Date(y,month,1).getDay(),days=new Date(y,month+1,0).getDate();
+ let h='<h2>'+names[month]+' '+y+'</h2><table><tr>'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>'<th>'+x+'</th>').join('')+'</tr><tr>';
+ for(let i=0;i<f;i++)h+='<td></td>';
+ let d=1;
+ for(let i=f;i<7;i++)h+=cell(month,d++);
+ h+='</tr>';
+ while(d<=days){h+='<tr>';for(let i=0;i<7;i++){h+=d<=days?cell(month,d++):'<td></td>';}h+='</tr>';}
+ h+='</table>';document.getElementById('cal').innerHTML=h;
+}
+draw(7);
+</script></body></html>
