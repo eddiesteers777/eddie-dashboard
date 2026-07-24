@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eddie Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#0f172a;color:#fff}
+.container{max-width:1200px;margin:auto;padding:30px}
+header{text-align:center;padding:20px 0 35px}
+header h1{font-size:3rem}
+header p{color:#94a3b8;margin-top:8px}
+.stats,.cards,.bottom{display:grid;gap:20px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:30px}
+.card,.panel{background:#1e293b;border:1px solid #334155;border-radius:18px;padding:22px}
+.stat-title{color:#94a3b8;font-size:.9rem}
+.stat-value{font-size:2rem;font-weight:bold;color:#38bdf8;margin-top:8px}
+.cards{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:20px}
+.dashboard{display:block;text-decoration:none;color:white;transition:.2s}
+.dashboard:hover{transform:translateY(-5px);border-color:#38bdf8}
+.icon{font-size:42px;margin-bottom:12px}
+.bottom{grid-template-columns:2fr 1fr;margin-top:30px}
+h2{margin-bottom:15px}
+ul{padding-left:18px}
+li{margin:10px 0}
+button{margin-top:15px;background:#38bdf8;color:#0f172a;border:none;padding:10px 18px;border-radius:10px;font-weight:bold}
+footer{text-align:center;color:#64748b;margin-top:35px}
+@media(max-width:900px){.bottom{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Eddie Dashboard</h1>
+<p>Teacher • Coach • Marathon Runner</p>
+<p id="today"></p>
+</header>
+
+<div class="stats">
+<div class="card">
+<div class="stat-title">🔥 75-Day</div>
+<div class="stat-value" id="day">Day 1</div>
+</div>
+<div class="card">
+<div class="stat-title">🏃 Marathon</div>
+<div class="stat-value" id="week">Week 1</div>
+</div>
+<div class="card">
+<div class="stat-title">🎯 Next Goal</div>
+<div class="stat-value">Ready</div>
+</div>
+<div class="card">
+<div class="stat-title">📅 Upcoming</div>
+<div class="stat-value">School</div>
+</div>
+</div>
+
+<div class="panel">
+<h2>Today's Focus</h2>
+<ul>
+<li>🏃 Complete today's run</li>
+<li>🔥 Finish 75-Day habits</li>
+<li>📚 School / Grad work</li>
+<li>⚽ Coaching priorities</li>
+</ul>
+</div>
+
+<h2 style="margin-top:30px">Dashboards</h2>
+<div class="cards">
+<a class="panel dashboard" href="75day.html">
+<div class="icon">🔥</div>
+<h3>75-Day Operating System</h3>
+<p>Habits, streaks, goals, reflections and reviews.</p>
+</a>
+
+<a class="panel dashboard" href="marathon.html">
+<div class="icon">🏃</div>
+<h3>Marathon Dashboard</h3>
+<p>Training plan, mileage, workouts and race preparation.</p>
+</a>
+
+<div class="panel">
+<div class="icon">📚</div>
+<h3>Teacher Dashboard</h3>
+<p>Coming Soon</p>
+</div>
+
+<div class="panel">
+<div class="icon">⚽</div>
+<h3>Soccer Dashboard</h3>
+<p>Coming Soon</p>
+</div>
+</div>
+
+<div class="bottom">
+<div class="panel">
+<h2>Upcoming Events</h2>
+<ul>
+<li>First Day of School</li>
+<li>Soccer Season</li>
+<li>10K Tune-Up Race</li>
+<li>Indianapolis Marathon</li>
+</ul>
+<button>Calendar Coming Soon</button>
+</div>
+
+<div class="panel">
+<h2>Quick Notes</h2>
+<ul>
+<li>☐ Buy gels</li>
+<li>☐ Lesson plans</li>
+<li>☐ Parent email</li>
+<li>☐ Weekly review</li>
+</ul>
+</div>
+</div>
+
+<footer>Built by Eddie Steers • Version 3 Preview</footer>
+</div>
+
+<script>
+document.getElementById("today").textContent =
+new Date().toLocaleDateString(undefined,{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+
+// Placeholder until dashboards are connected.
+try{
+ const d=localStorage.getItem("current75Day");
+ if(d) document.getElementById("day").textContent="Day "+d;
+ const w=localStorage.getItem("currentMarathonWeek");
+ if(w) document.getElementById("week").textContent="Week "+w;
+}catch(e){}
+</script>
+</body>
+</html>
