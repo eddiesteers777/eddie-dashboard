@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eddie Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    font-family:Inter,Arial,Helvetica,sans-serif;
+    background:#0f172a;
+    color:#f8fafc;
+}
+.container{
+    max-width:900px;
+    margin:90px auto;
+    padding:0 30px;
+}
+header{text-align:center;}
+h1{
+    font-size:2.9rem;
+    font-weight:700;
+    letter-spacing:-1px;
+    margin-bottom:10px;
+}
+.subtitle{
+    color:#94a3b8;
+    font-size:1.05rem;
+}
+.updated{
+    margin-top:8px;
+    color:#64748b;
+    font-size:.9rem;
+}
+.divider{
+    width:80px;
+    height:2px;
+    background:#334155;
+    margin:32px auto 42px;
+}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:22px;
+}
+.card,
+.card:link,
+.card:visited{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-height:145px;
+    background:#1e293b;
+    border:1px solid #334155;
+    border-radius:20px;
+    padding:28px;
+    text-decoration:none;
+    color:#f8fafc;
+    transition:.2s ease;
+}
+.card:hover{
+    transform:translateY(-2px);
+    border-color:#38bdf8;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.icon{
+    font-size:1.8rem;
+    margin-bottom:14px;
+}
+.card h2{
+    font-size:1.2rem;
+    font-weight:600;
+}
+footer{
+    text-align:center;
+    margin-top:55px;
+    color:#64748b;
+    font-size:.9rem;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+<h1>Eddie Dashboard</h1>
+<p class="subtitle">Personal Command Center</p>
+<p class="updated">Last Updated • July 2026</p>
+</header>
+
+<div class="divider"></div>
+
+<div class="grid">
+
+<a class="card" href="75day.html">
+<div class="icon">📈</div>
+<h2>75-Day System</h2>
+</a>
+
+<a class="card" href="marathon.html">
+<div class="icon">🏃</div>
+<h2>Marathon Dashboard</h2>
+</a>
+
+<a class="card" href="planner.html">
+<div class="icon">📅</div>
+<h2>Planner</h2>
+</a>
+
+</div>
+
+<footer>Version 1.0 • © 2026 Eddie Steers</footer>
+
+</div>
+</body>
+</html>
