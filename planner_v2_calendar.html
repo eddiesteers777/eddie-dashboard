@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planner | Eddie Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#0f172a;color:#fff}
+.container{max-width:1200px;margin:auto;padding:30px}
+h1{text-align:center;font-size:2.8rem}
+.subtitle{text-align:center;color:#94a3b8;margin:8px 0 25px}
+.months{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:25px}
+.month{background:#1e293b;border:1px solid #334155;padding:12px;border-radius:10px;cursor:pointer;text-align:center}
+.month:hover,.month.active{background:#38bdf8;color:#0f172a;font-weight:bold}
+#calendar{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:20px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #334155;height:90px;vertical-align:top;padding:6px}
+th{background:#162236}
+.event{display:block;margin-top:4px;background:#38bdf8;color:#08111f;padding:2px 4px;border-radius:5px;font-size:.75rem}
+@media(max-width:900px){.months{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>📅 Planner & Calendar</h1>
+<div class="subtitle">Click a month to view its calendar.</div>
+
+<div class="months" id="months"></div>
+
+<div id="calendar"></div>
+
+</div>
+
+<script>
+const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+const events={
+7:{13:"🏫 First Day"},
+8:{1:"🏃 Head Over Teal 10K",7:"⚽ Soccer"},
+10:{7:"🏁 Indianapolis Marathon",26:"🦃 Thanksgiving"}
+};
+
+const months=document.getElementById("months");
+monthNames.forEach((m,i)=>{
+ const b=document.createElement("div");
+ b.className="month";
+ b.textContent=m;
+ b.onclick=()=>{document.querySelectorAll(".month").forEach(x=>x.classList.remove("active"));b.classList.add("active");render(i);}
+ months.appendChild(b);
+});
+
+function render(month){
+ const year=2026;
+ const first=new Date(year,month,1).getDay();
+ const days=new Date(year,month+1,0).getDate();
+ let h="<div id='calendar'><h2>"+monthNames[month]+" "+year+"</h2><table><tr>";
+ ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>h+="<th>"+d+"</th>");
+ h+="</tr><tr>";
+ for(let i=0;i<first;i++)h+="<td></td>";
+ let day=1;
+ for(let i=first;i<7;i++)h+=cell(month,day++);
+ h+="</tr>";
+ while(day<=days){
+   h+="<tr>";
+   for(let i=0;i<7;i++){
+      if(day<=days) h+=cell(month,day++);
+      else h+="<td></td>";
+   }
+   h+="</tr>";
+ }
+ h+="</table></div>";
+ document.getElementById("calendar").outerHTML=h;
+}
+function cell(month,day){
+ let e=events[month]&&events[month][day]?'<span class="event">'+events[month][day]+'</span>':'';
+ return "<td><strong>"+day+"</strong>"+e+"</td>";
+}
+document.querySelector(".month").classList.add("active");
+render(0);
+</script>
+</body>
+</html>
