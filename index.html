@@ -1,115 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eddie Dashboard</title>
-<style>
-<link rel="stylesheet" href="css/style.css">
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eddie Dashboard</title>
+
+    <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<nav>
-<div class="logo">🏠 Eddie Dashboard</div>
-<div class="user">
-<span id="user-name">Guest</span>
-<button id="loginBtn">Sign In</button>
-<button id="logoutBtn">Sign Out</button>
-</div>
-</nav>
+    <nav>
+        <div class="logo">🏠 Eddie Dashboard</div>
 
-<div class="container">
+        <div class="nav-right">
+            <span id="user-name">Guest</span>
+            <button id="loginBtn">Sign In</button>
+            <button id="logoutBtn" style="display:none;">Sign Out</button>
+        </div>
+    </nav>
 
-<header>
-<h1>Personal Command Center</h1>
-<p class="subtitle">One dashboard for running, planning, habits, and life.</p>
-<p class="updated">Version 2.0 • Firebase Ready</p>
-</header>
+    <div class="container">
 
-<section class="stats">
-<div class="stat">
-<h3>Marathon Countdown</h3>
-<p>-- Days</p>
-</div>
+        <header>
+            <h1>Personal Command Center</h1>
+            <p class="subtitle">One dashboard for running, planning, habits, and life.</p>
+            <p class="updated">Version 2.0 • Firebase Ready</p>
+        </header>
 
-<div class="stat">
-<h3>Weekly Mileage</h3>
-<p>0 mi</p>
-</div>
+        <section class="stats">
 
-<div class="stat">
-<h3>Habit Score</h3>
-<p>0%</p>
-</div>
+            <div class="stat-card">
+                <h3>Marathon Countdown</h3>
+                <p>-- Days</p>
+            </div>
 
-<div class="stat">
-<h3>Today's Focus</h3>
-<p>---</p>
-</div>
-</section>
+            <div class="stat-card">
+                <h3>Weekly Mileage</h3>
+                <p>0 mi</p>
+            </div>
 
-<div class="grid">
+            <div class="stat-card">
+                <h3>Habit Score</h3>
+                <p>0%</p>
+            </div>
 
-<a class="card" href="marathon.html">
-<div class="icon">🏃</div>
-<h2>Marathon Dashboard</h2>
-<p>Training plan, workouts, analytics and future COROS sync.</p>
-</a>
+            <div class="stat-card">
+                <h3>Today's Focus</h3>
+                <p>---</p>
+            </div>
 
-<a class="card" href="75day.html">
-<div class="icon">📈</div>
-<h2>75-Day System</h2>
-<p>Track habits, faith, nutrition and consistency.</p>
-</a>
+        </section>
 
-<a class="card" href="planner.html">
-<div class="icon">📅</div>
-<h2>Planner</h2>
-<p>Daily, weekly and monthly planning.</p>
-</a>
+        <div class="grid">
 
-<a class="card" href="#">
-<div class="icon">🤖</div>
-<h2>AI Coach</h2>
-<p>Coming soon.</p>
-</a>
+            <a class="card" href="marathon.html">
+                <div class="card-icon">🏃</div>
+                <h2>Marathon Dashboard</h2>
+                <p>Training plan, workouts, analytics and future COROS sync.</p>
+            </a>
 
-<a class="card" href="#">
-<div class="icon">📊</div>
-<h2>Analytics</h2>
-<p>Progress charts and trends.</p>
-</a>
+            <a class="card" href="75day.html">
+                <div class="card-icon">📈</div>
+                <h2>75-Day System</h2>
+                <p>Track habits, faith, nutrition and consistency.</p>
+            </a>
 
-<a class="card" href="#">
-<div class="icon">⚙️</div>
-<h2>Settings</h2>
-<p>Profile, Firebase, COROS and preferences.</p>
-</a>
+            <a class="card" href="planner.html">
+                <div class="card-icon">📅</div>
+                <h2>Planner</h2>
+                <p>Daily, weekly and monthly planning.</p>
+            </a>
 
-</div>
+            <a class="card" href="#">
+                <div class="card-icon">🤖</div>
+                <h2>AI Coach</h2>
+                <p>Coming soon.</p>
+            </a>
 
-<footer>
-© 2026 Eddie Steers • Ready for Firebase Authentication & Firestore
-</footer>
+            <a class="card" href="#">
+                <div class="card-icon">📊</div>
+                <h2>Analytics</h2>
+                <p>Progress charts and trends.</p>
+            </a>
 
-</div>
+            <a class="card" href="#">
+                <div class="card-icon">⚙️</div>
+                <h2>Settings</h2>
+                <p>Profile, Firebase, COROS and preferences.</p>
+            </a>
 
-<script type="module">
-import { login, logout } from "./js/auth.js";
+        </div>
 
-document.getElementById("loginBtn").addEventListener("click", login);
-document.getElementById("logoutBtn").addEventListener("click", logout);
-</script>
+        <footer>
+            © 2026 Eddie Steers • Ready for Firebase Authentication & Firestore
+        </footer>
 
-<script type="module" src="js/app.js"></script>
+    </div>
 
-<script type="module">
-    import { login, logout } from "./js/auth.js";
+    <script type="module" src="js/app.js"></script>
 
-    document.getElementById("loginBtn").addEventListener("click", login);
-    document.getElementById("logoutBtn").addEventListener("click", logout);
-</script>
+    <script type="module">
+        import { login, logout } from "./js/auth.js";
+
+        document.getElementById("loginBtn").addEventListener("click", login);
+        document.getElementById("logoutBtn").addEventListener("click", logout);
+    </script>
 
 </body>
+
 </html>
