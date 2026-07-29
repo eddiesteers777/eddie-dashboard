@@ -34,25 +34,24 @@ export async function logout() {
 // Listen for login changes
 onAuthStateChanged(auth, (user) => {
 
-  if (user) {
-    console.log("Signed in as:", user.displayName);
-
     const userName = document.getElementById("user-name");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    if (userName) {
-      userName.textContent = user.displayName;
+    if (user) {
+
+        userName.textContent = user.displayName;
+
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+
+    } else {
+
+        userName.textContent = "Guest";
+
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+
     }
-
-  } else {
-
-    console.log("Not signed in");
-
-    const userName = document.getElementById("user-name");
-
-    if (userName) {
-      userName.textContent = "Guest";
-    }
-
-  }
 
 });
