@@ -1,14 +1,29 @@
 // ==========================================
-// EddieOS v2.0 - Main Application
+// EddieOS AI Coach v1.0
 // ==========================================
 
-import { auth, db } from "./firebase.js";
-
-console.log("🚀 EddieOS Loaded");
-console.log("Firebase Auth:", auth);
-console.log("Firestore:", db);
-
-// Future app initialization goes here
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("Dashboard Ready");
+
+    const hour = new Date().getHours();
+
+    let greeting = "Good evening";
+
+    if(hour < 12){
+
+        greeting = "Good morning";
+
+    }else if(hour < 17){
+
+        greeting = "Good afternoon";
+
+    }
+
+    const intro = document.querySelector(".coach-intro");
+
+    if(intro){
+
+        intro.textContent = `${greeting}, Eddie.`;
+
+    }
+
 });
