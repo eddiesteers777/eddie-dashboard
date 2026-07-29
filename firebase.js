@@ -6,14 +6,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebas
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// Replace these with your Firebase project's configuration
 const firebaseConfig = {
-  apiKey: "PASTE_API_KEY_HERE",
-  authDomain: "PASTE_AUTH_DOMAIN_HERE",
-  projectId: "PASTE_PROJECT_ID_HERE",
-  storageBucket: "PASTE_STORAGE_BUCKET_HERE",
-  messagingSenderId: "PASTE_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_APP_ID_HERE"
+  apiKey: "AIzaSyBCQcvxYpAofdrvMkjqyfp7FxY4XlYSwCs",
+  authDomain: "eddie-s-dashboard.firebaseapp.com",
+  projectId: "eddie-s-dashboard",
+  storageBucket: "eddie-s-dashboard.firebasestorage.app",
+  messagingSenderId: "262522365804",
+  appId: "1:262522365804:web:e45f677d3fb8f80454b549",
+  measurementId: "G-VB75B9KPLS"
 };
 
 // Initialize Firebase
