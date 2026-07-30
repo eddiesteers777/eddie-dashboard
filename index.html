@@ -2,162 +2,551 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eddie Dashboard</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>EddieOS</title>
 
     <link rel="stylesheet" href="css/style.css">
+
 </head>
 
 <body>
 
+    <!-- ==========================
+         Navigation
+    =========================== -->
+
     <nav>
-        <div class="logo">🏠 Eddie Dashboard</div>
+
+        <div class="logo">
+
+            🏠 EddieOS
+
+        </div>
 
         <div class="nav-right">
-            <span id="user-name">Guest</span>
-            <button id="loginBtn">Sign In</button>
-            <button id="logoutBtn" style="display:none;">Sign Out</button>
+
+            <span id="user-name">
+
+                Guest
+
+            </span>
+
+            <button id="loginBtn">
+
+                Sign In
+
+            </button>
+
+            <button id="logoutBtn"
+                    style="display:none;">
+
+                Sign Out
+
+            </button>
+
         </div>
+
     </nav>
 
-    <div class="container">
+    <!-- ==========================
+         Main Container
+    =========================== -->
 
-        <header>
-            <h1>Personal Command Center</h1>
-            <p class="subtitle">One dashboard for running, planning, habits, and life.</p>
-            <p class="updated">Version 2.0 • Firebase Ready</p>
-        </header>
+    <main class="container">
 
-        <section class="stats">
+        <!-- ==========================
+             Hero Section
+        =========================== -->
 
-            <div class="stat-card">
-                <h3>Marathon Countdown</h3>
-                <p>-- Days</p>
+        <section class="hero">
+
+            <div class="hero-left">
+
+                <p class="welcome">
+
+                    Welcome Back 👋
+
+                </p>
+
+                <h1>
+
+                    EddieOS
+
+                </h1>
+
+                <p class="hero-text">
+
+                    Your personal operating system for running,
+                    teaching, planning, habits, and life.
+
+                </p>
+
             </div>
 
-            <div class="stat-card">
-                <h3>Weekly Mileage</h3>
-                <p>0 mi</p>
-            </div>
+            <div class="hero-right">
 
-            <div class="stat-card">
-                <h3>Habit Score</h3>
-                <p>0%</p>
-            </div>
+                <div class="goal-card">
 
-            <div class="stat-card">
-                <h3>Today's Focus</h3>
-                <p>---</p>
+                    <span>
+
+                        🎯 Goal Marathon
+
+                    </span>
+
+                    <h2>
+
+                        Indianapolis
+
+                    </h2>
+
+                    <p>
+
+                        Goal Time
+
+                    </p>
+
+                    <h1>
+
+                        3:05:00
+
+                    </h1>
+
+                </div>
+
             </div>
 
         </section>
 
-        <div class="grid">
+        <!-- ==========================
+             Quick Stats
+        =========================== -->
 
-            <a class="card" href="marathon.html">
-                <div class="card-icon">🏃</div>
-                <h2>Marathon Dashboard</h2>
-                <p>Training plan, workouts, analytics and future COROS sync.</p>
+        <section class="stats">
+                    <div class="stat-card">
+
+                <span>🏁 Marathon Countdown</span>
+
+                <h2 id="countdown">102</h2>
+
+                <p>Days Remaining</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <span>🏃 Weekly Mileage</span>
+
+                <h2 id="weeklyMileage">44</h2>
+
+                <p>Miles This Week</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <span>❤️ Readiness</span>
+
+                <h2 id="readiness">91%</h2>
+
+                <p>Excellent</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <span>🔥 Current Streak</span>
+
+                <h2 id="streak">19</h2>
+
+                <p>Days</p>
+
+            </div>
+
+        </section>
+
+        <!-- ==========================
+             AI Coach
+        =========================== -->
+
+        <section class="coach-card">
+
+            <div class="coach-header">
+
+                <div>
+
+                    <p class="coach-label">
+
+                        🤖 AI Coach
+
+                    </p>
+
+                    <h2>
+
+                        Good Afternoon, Eddie
+
+                    </h2>
+
+                </div>
+
+                <span class="coach-status">
+
+                    ONLINE
+
+                </span>
+
+            </div>
+
+            <div class="coach-grid">
+
+                <div class="coach-stat">
+
+                    <span>Readiness</span>
+
+                    <strong>91%</strong>
+
+                </div>
+
+                <div class="coach-stat">
+
+                    <span>Recovery</span>
+
+                    <strong>Good</strong>
+
+                </div>
+
+                <div class="coach-stat">
+
+                    <span>Fatigue</span>
+
+                    <strong>Low</strong>
+
+                </div>
+
+                <div class="coach-stat">
+
+                    <span>Today's Run</span>
+
+                    <strong>Easy 5 Miles</strong>
+
+                </div>
+
+            </div>
+
+            <div class="coach-message">
+
+                <h3>Today's Brief</h3>
+
+                <ul>
+
+                    <li>✅ Great recovery after yesterday's workout.</li>
+
+                    <li>🏃 Stay in Zone 2 today.</li>
+
+                    <li>💧 Drink at least 90 oz of water.</li>
+
+                    <li>🥗 Increase carbs tonight.</li>
+
+                    <li>😴 Target 8 hours of sleep.</li>
+
+                </ul>
+
+            </div>
+
+            <button class="coach-button">
+
+                Open AI Coach
+
+            </button>
+
+        </section>
+
+        <!-- ==========================
+             Dashboard Modules
+        =========================== -->
+
+        <section class="grid">
+                    <a class="card" href="pages/marathon.html">
+
+                <div class="card-icon">
+
+                    🏃
+
+                </div>
+
+                <h2>
+
+                    Marathon Dashboard
+
+                </h2>
+
+                <p>
+
+                    Training plans, workouts, race prediction and progress.
+
+                </p>
+
             </a>
 
-            <a class="card" href="75day.html">
-                <div class="card-icon">📈</div>
-                <h2>75-Day System</h2>
-                <p>Track habits, faith, nutrition and consistency.</p>
+            <a class="card" href="pages/75day.html">
+
+                <div class="card-icon">
+
+                    📈
+
+                </div>
+
+                <h2>
+
+                    75-Day System
+
+                </h2>
+
+                <p>
+
+                    Track habits, discipline and streaks.
+
+                </p>
+
             </a>
 
-            <a class="card" href="planner.html">
-                <div class="card-icon">📅</div>
-                <h2>Planner</h2>
-                <p>Daily, weekly and monthly planning.</p>
+            <a class="card" href="pages/planner.html">
+
+                <div class="card-icon">
+
+                    📅
+
+                </div>
+
+                <h2>
+
+                    Planner
+
+                </h2>
+
+                <p>
+
+                    Daily, weekly and monthly planning.
+
+                </p>
+
             </a>
 
-                <section class="coach-card">
+            <a class="card" href="pages/analytics.html">
 
-    <div class="coach-header">
-        <h2>🤖 AI Coach</h2>
-        <span class="coach-status">ONLINE</span>
-    </div>
+                <div class="card-icon">
 
-    <p class="coach-intro">
-        Good afternoon, Eddie.
-    </p>
+                    📊
 
-    <div class="coach-grid">
+                </div>
 
-        <div class="coach-stat">
-            <span>Readiness</span>
-            <strong id="coach-readiness">87%</strong>
-        </div>
+                <h2>
 
-        <div class="coach-stat">
-            <span>Fatigue</span>
-            <strong id="coach-fatigue">Low</strong>
-        </div>
+                    Analytics
 
-        <div class="coach-stat">
-            <span>Recovery</span>
-            <strong id="coach-recovery">Good</strong>
-        </div>
+                </h2>
 
-        <div class="coach-stat">
-            <span>Today's Workout</span>
-            <strong id="coach-workout">Easy 5 Miles</strong>
-        </div>
+                <p>
 
-    </div>
+                    Charts, trends and performance insights.
 
-    <div class="coach-message">
+                </p>
 
-        <h3>Today's Advice</h3>
-
-        <p id="coach-message">
-
-            Yesterday's workout was completed successfully.
-
-            Keep today's effort easy and focus on recovery.
-
-            Hydrate throughout the day and prioritize sleep tonight.
-
-        </p>
-
-    </div>
-
-    <button class="coach-button">
-        View Full Report
-    </button>
-
-</section>
             </a>
 
-            <a class="card" href="#">
-                <div class="card-icon">📊</div>
-                <h2>Analytics</h2>
-                <p>Progress charts and trends.</p>
+            <a class="card" href="pages/shoes.html">
+
+                <div class="card-icon">
+
+                    👟
+
+                </div>
+
+                <h2>
+
+                    Shoe Tracker
+
+                </h2>
+
+                <p>
+
+                    Track mileage, shoe rotation and replacement dates.
+
+                </p>
+
             </a>
 
-            <a class="card" href="#">
-                <div class="card-icon">⚙️</div>
-                <h2>Settings</h2>
-                <p>Profile, Firebase, COROS and preferences.</p>
+            <a class="card" href="pages/settings.html">
+
+                <div class="card-icon">
+
+                    ⚙️
+
+                </div>
+
+                <h2>
+
+                    Settings
+
+                </h2>
+
+                <p>
+
+                    Profile, Firebase, AI Coach and integrations.
+
+                </p>
+
             </a>
 
-        </div>
+        </section>
+
+        <!-- ==========================
+             Upcoming Training
+        =========================== -->
+
+        <section class="training-panel">
+
+            <div class="panel-header">
+
+                <h2>
+
+                    🏃 Upcoming Training
+
+                </h2>
+
+            </div>
+
+            <div class="training-grid">
+
+                <div class="training-card">
+
+                    <span>Today</span>
+
+                    <h3>Easy Run</h3>
+
+                    <p>5 Miles • Zone 2</p>
+
+                </div>
+
+                <div class="training-card">
+
+                    <span>Tomorrow</span>
+
+                    <h3>Recovery</h3>
+
+                    <p>Strength + Mobility</p>
+
+                </div>
+
+                <div class="training-card">
+
+                    <span>Saturday</span>
+
+                    <h3>Long Run</h3>
+
+                    <p>18 Miles</p>
+
+                </div>
+
+            </div>
+
+        </section>
+                <!-- ==========================
+             Shoe Rotation
+        =========================== -->
+
+        <section class="shoe-panel">
+
+            <div class="panel-header">
+
+                <h2>
+
+                    👟 Shoe Rotation
+
+                </h2>
+
+            </div>
+
+            <div class="training-grid">
+
+                <div class="training-card">
+
+                    <span>Daily Trainer</span>
+
+                    <h3>Saucony Speed 5</h3>
+
+                    <p>248 / 500 Miles</p>
+
+                </div>
+
+                <div class="training-card">
+
+                    <span>Race Shoe</span>
+
+                    <h3>Not Assigned</h3>
+
+                    <p>Ready for Indianapolis</p>
+
+                </div>
+
+                <div class="training-card">
+
+                    <span>Replacement</span>
+
+                    <h3>252 Miles Left</h3>
+
+                    <p>Estimated Life Remaining</p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ==========================
+             Footer
+        =========================== -->
 
         <footer>
-            © 2026 Eddie Steers • Ready for Firebase Authentication & Firestore
+
+            <p>
+
+                © 2026 EddieOS
+
+            </p>
+
+            <p>
+
+                Powered by Firebase • AI Coach • Future COROS Integration
+
+            </p>
+
         </footer>
 
-    </div>
+    </main>
+
+    <!-- ==========================
+         JavaScript
+    =========================== -->
 
     <script type="module" src="js/app.js"></script>
 
     <script type="module">
+
         import { login, logout } from "./js/auth.js";
 
-        document.getElementById("loginBtn").addEventListener("click", login);
-        document.getElementById("logoutBtn").addEventListener("click", logout);
+        document
+            .getElementById("loginBtn")
+            .addEventListener("click", login);
+
+        document
+            .getElementById("logoutBtn")
+            .addEventListener("click", logout);
+
     </script>
 
 </body>
