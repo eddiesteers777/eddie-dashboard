@@ -47,7 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const difference = raceDate - today;
 
-        const daysRemaining = Math.ceil(difference / (1000 * 60 * 60 * 24));
+        const daysRemaining = Math.ceil(
+            difference / (1000 * 60 * 60 * 24)
+        );
 
         countdown.textContent = daysRemaining;
 
@@ -74,6 +76,35 @@ document.addEventListener("DOMContentLoaded", () => {
     if (streak) {
 
         streak.textContent = dashboardData.training.streak;
+
+    }
+
+    // --------------------------
+    // Today's Workout
+    // --------------------------
+
+    const days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+    ];
+
+    const todayName = days[new Date().getDay()];
+
+    const todayWorkout = dashboardData.training.week.find(
+        workout => workout.day === todayName
+    );
+
+    const workoutElement = document.getElementById("todayWorkout");
+
+    if (workoutElement && todayWorkout) {
+
+        workoutElement.textContent =
+            `${todayWorkout.workout} • ${todayWorkout.miles} Miles`;
 
     }
 
