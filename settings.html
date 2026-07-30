@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EddieOS | Settings</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/settings.css">
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            EddieOS
+        </div>
+
+        <div class="nav-links">
+            <a href="index.html">Dashboard</a>
+            <a href="marathon.html">Marathon</a>
+            <a href="planner.html">Planner</a>
+            <a href="75day.html">75 Day</a>
+            <a href="analytics.html">Analytics</a>
+            <a class="active" href="settings.html">Settings</a>
+        </div>
+
+    </nav>
+
+    <main class="settings-page">
+
+        <!-- Header -->
+
+        <section class="hero">
+
+            <h1>Settings</h1>
+
+            <p>
+                Manage your EddieOS account, training preferences, and connections.
+            </p>
+
+        </section>
+
+        <!-- Profile -->
+
+        <section class="profile-card">
+
+            <div class="profile-left">
+
+                <div class="avatar">
+                    ES
+                </div>
+
+                <div>
+
+                    <h2 id="userName">Eddie Steers</h2>
+
+                    <p id="userEmail">
+                        Loading...
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Settings Grid -->
+
+        <section class="settings-grid">
+
+            <!-- Account -->
+
+            <div class="settings-card">
+
+                <h3>👤 Account</h3>
+
+                <div class="setting-row">
+                    <span>Name</span>
+                    <span id="displayName">Eddie Steers</span>
+                </div>
+
+                <div class="setting-row">
+                    <span>Email</span>
+                    <span id="displayEmail">Loading...</span>
+                </div>
+
+                <button class="primary-btn" id="logoutBtn">
+                    Sign Out
+                </button>
+
+            </div>
+
+            <!-- Connections -->
+
+            <div class="settings-card">
+
+                <h3>🔗 Connections</h3>
+
+                <div class="connection">
+
+                    <div>
+
+                        <strong>COROS</strong>
+
+                        <p>Coming Soon</p>
+
+                    </div>
+
+                    <button disabled>Connect</button>
+
+                </div>
+
+                <div class="connection">
+
+                    <div>
+
+                        <strong>Strava</strong>
+
+                        <p>Coming Soon</p>
+
+                    </div>
+
+                    <button disabled>Connect</button>
+
+                </div>
+
+                <div class="connection">
+
+                    <div>
+
+                        <strong>Garmin</strong>
+
+                        <p>Future Support</p>
+
+                    </div>
+
+                    <button disabled>Connect</button>
+
+                </div>
+
+            </div>
+
+            <!-- Running Preferences -->
+
+            <div class="settings-card">
+
+                <h3>🏃 Running Preferences</h3>
+
+                <div class="setting-row">
+
+                    <span>Units</span>
+
+                    <select id="units">
+
+                        <option>Miles</option>
+
+                        <option>Kilometers</option>
+
+                    </select>
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>First Day of Week</span>
+
+                    <select id="weekStart">
+
+                        <option>Sunday</option>
+
+                        <option>Monday</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            <!-- Goals -->
+
+            <div class="settings-card">
+
+                <h3>🎯 Goals</h3>
+
+                <div class="setting-row">
+
+                    <span>Goal Marathon</span>
+
+                    <input
+                        type="text"
+                        placeholder="3:05:00">
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Weekly Mileage</span>
+
+                    <input
+                        type="number"
+                        placeholder="50">
+
+                </div>
+
+            </div>
+
+            <!-- AI Coach -->
+
+            <div class="settings-card">
+
+                <h3>🤖 AI Coach</h3>
+
+                <div class="setting-row">
+
+                    <span>Enable AI Coach</span>
+
+                    <input
+                        type="checkbox"
+                        checked>
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Weekly Insights</span>
+
+                    <input
+                        type="checkbox"
+                        checked>
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Daily Recommendations</span>
+
+                    <input
+                        type="checkbox">
+
+                </div>
+
+            </div>
+
+            <!-- About -->
+
+            <div class="settings-card">
+
+                <h3>ℹ️ About EddieOS</h3>
+
+                <div class="setting-row">
+
+                    <span>Version</span>
+
+                    <span>1.0 Beta</span>
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Developer</span>
+
+                    <span>Eddie Steers</span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script type="module" src="js/settings.js"></script>
+
+</body>
+
+</html>
