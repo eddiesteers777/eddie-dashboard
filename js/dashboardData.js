@@ -13,8 +13,64 @@ export const dashboardData = {
     },
 
     training: {
-        today: "Easy 5 Miles",
-        streak: 19
+training: {
+
+    streak: 19,
+
+    week: [
+
+        {
+            day: "Sunday",
+            workout: "Rest Day",
+            miles: 0,
+            type: "Recovery"
+        },
+
+        {
+            day: "Monday",
+            workout: "Easy Run",
+            miles: 5,
+            type: "Zone 2"
+        },
+
+        {
+            day: "Tuesday",
+            workout: "Intervals",
+            miles: 8,
+            type: "Speed"
+        },
+
+        {
+            day: "Wednesday",
+            workout: "Recovery Run",
+            miles: 4,
+            type: "Recovery"
+        },
+
+        {
+            day: "Thursday",
+            workout: "Tempo Run",
+            miles: 7,
+            type: "Threshold"
+        },
+
+        {
+            day: "Friday",
+            workout: "Easy Run",
+            miles: 5,
+            type: "Zone 2"
+        },
+
+        {
+            day: "Saturday",
+            workout: "Long Run",
+            miles: 18,
+            type: "Long Run"
+        }
+
+    ]
+
+},
     },
 
     coach: {
