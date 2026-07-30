@@ -126,3 +126,44 @@
     box-shadow:0 8px 20px rgba(0,0,0,.06);
 
 }
+/* ==========================================
+   CHARTS
+========================================== */
+
+.section-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+}
+
+.section-header h2{
+
+    font-size:1.4rem;
+
+}
+
+.section-header p{
+
+    color:#888;
+
+}
+
+.chart-section{
+
+    height:500px;
+
+}
+
+.chart-section canvas{
+
+    width:100% !important;
+
+    height:400px !important;
+
+}
