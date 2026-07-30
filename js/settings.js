@@ -2,46 +2,21 @@
 // EddieOS Settings
 // ==============================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+// Import shared Firebase instance
+import { auth, db } from "./firebase.js";
 
+// Firebase Auth
 import {
-    getAuth,
     onAuthStateChanged,
     signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+// Firestore
 import {
-    getFirestore,
     doc,
     getDoc,
     setDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-// =====================================
-// Firebase Config
-// =====================================
-
-const firebaseConfig = {
-
-    apiKey: "YOUR_API_KEY",
-
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-
-    projectId: "YOUR_PROJECT_ID",
-
-    storageBucket: "YOUR_PROJECT.appspot.com",
-
-    messagingSenderId: "XXXXXXXX",
-
-    appId: "XXXXXXXX"
-
-};
-
-// =====================================
-
-const app = initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
 
 const db = getFirestore(app);
 
