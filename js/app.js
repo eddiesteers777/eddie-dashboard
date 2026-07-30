@@ -2,13 +2,44 @@
 // EddieOS Dashboard
 // ==========================================
 
-import { dashboardData } from "./dashboardData.js";
+import { dashboardData as localData } from "./dashboardData.js";
+import { loadDashboard } from "./firestore.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
-    // --------------------------
+    // ==========================================
+    // Load Dashboard Data
+    // ==========================================
+
+    let dashboardData = localData;
+
+    try {
+
+        const cloudData = await loadDashboard();
+
+        if (cloudData) {
+
+            dashboardData = cloudData;
+
+            console.log("☁️ Loaded dashboard from Firestore.");
+
+        } else {
+
+            console.log("💻 Using local dashboard data.");
+
+        }
+
+    } catch (error) {
+
+        console.error("Firestore Error:", error);
+
+        console.log("💻 Falling back to local dashboard data.");
+
+    }
+
+    // ==========================================
     // Greeting
-    // --------------------------
+    // ==========================================
 
     const hour = new Date().getHours();
 
@@ -24,18 +55,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
-    // AI Coach Greeting
     const coachHeading = document.querySelector(".coach-header h2");
 
     if (coachHeading) {
 
-        coachHeading.textContent = `${greeting}, Eddie`;
+        coachHeading.textContent = `${greeting}, ${dashboardData.profile.firstName}`;
 
     }
 
-    // --------------------------
-    // Dashboard Stats
-    // --------------------------
+    // ==========================================
+    // Countdown
+    // ==========================================
 
     const countdown = document.getElementById("countdown");
 
@@ -55,33 +85,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
+    // ==========================================
+    // Weekly Mileage
+    // ==========================================
+
     const weeklyMileage = document.getElementById("weeklyMileage");
 
     if (weeklyMileage) {
 
-        weeklyMileage.textContent = dashboardData.marathon.currentWeeklyMileage;
+        weeklyMileage.textContent =
+            dashboardData.marathon.currentWeeklyMileage;
 
     }
+
+    // ==========================================
+    // Readiness
+    // ==========================================
 
     const readiness = document.getElementById("readiness");
 
     if (readiness) {
 
-        readiness.textContent = dashboardData.health.readiness + "%";
+        readiness.textContent =
+            dashboardData.health.readiness + "%";
 
     }
+
+    // ==========================================
+    // Streak
+    // ==========================================
 
     const streak = document.getElementById("streak");
 
     if (streak) {
 
-        streak.textContent = dashboardData.training.streak;
+        streak.textContent =
+            dashboardData.training.streak;
 
     }
 
-    // --------------------------
+    // ==========================================
     // Today's Workout
-    // --------------------------
+    // ==========================================
 
     const days = [
         "Sunday",
@@ -108,9 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
-    // --------------------------
+    // ==========================================
     // AI Coach Brief
-    // --------------------------
+    // ==========================================
 
     const coachBrief = document.getElementById("coachBrief");
 
