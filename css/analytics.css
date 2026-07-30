@@ -5,132 +5,50 @@
 .analytics-page{
     max-width:1400px;
     margin:40px auto;
-    padding:0 30px;
+    padding:0 32px;
 }
 
-.analytics-header{
-    margin-bottom:40px;
+/* ==========================================
+   HERO
+========================================== */
+
+.hero{
+    margin-bottom:35px;
 }
 
-.analytics-header h1{
-    font-size:2.5rem;
+.hero h1{
+    font-size:3rem;
     font-weight:700;
+    color:#f8fafc;
     margin-bottom:10px;
 }
 
-.analytics-header p{
-    color:#777;
-    font-size:1rem;
+.hero p{
+    color:#94a3b8;
+    font-size:1.1rem;
 }
 
 /* ==========================================
-   PERFORMANCE CARDS
+   PERFORMANCE SUMMARY
 ========================================== */
 
-.stats-grid{
+.summary-card{
 
-    display:grid;
+    background:#1e293b;
 
-    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    border:1px solid rgba(255,255,255,.05);
 
-    gap:20px;
+    border-radius:20px;
 
-    margin-bottom:50px;
-
-}
-
-.stat-card{
-
-    background:white;
-
-    border-radius:18px;
-
-    padding:24px;
-
-    box-shadow:0 8px 20px rgba(0,0,0,.06);
-
-    transition:.25s;
-
-}
-
-.stat-card:hover{
-
-    transform:translateY(-4px);
-
-    box-shadow:0 15px 30px rgba(0,0,0,.10);
-
-}
-
-.stat-label{
-
-    display:block;
-
-    color:#777;
-
-    font-size:.9rem;
-
-    margin-bottom:10px;
-
-}
-
-.stat-card h2{
-
-    font-size:2rem;
-
-    margin-bottom:8px;
-
-}
-
-.stat-change{
-
-    font-size:.9rem;
-
-}
-
-.positive{
-
-    color:#16a34a;
-
-}
-
-.neutral{
-
-    color:#777;
-
-}
-
-.negative{
-
-    color:#dc2626;
-
-}
-
-/* ==========================================
-   EMPTY SECTIONS
-========================================== */
-
-.chart-section,
-.insights-section,
-.records-section{
-
-    background:white;
-
-    border-radius:18px;
-
-    padding:30px;
+    padding:28px;
 
     margin-bottom:30px;
 
-    min-height:250px;
-
-    box-shadow:0 8px 20px rgba(0,0,0,.06);
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
 
 }
-/* ==========================================
-   CHARTS
-========================================== */
 
-.section-header{
+.summary-title{
 
     display:flex;
 
@@ -142,28 +60,260 @@
 
 }
 
-.section-header h2{
+.summary-title h2{
 
-    font-size:1.4rem;
+    color:white;
 
-}
-
-.section-header p{
-
-    color:#888;
+    font-size:1.5rem;
 
 }
 
-.chart-section{
+.summary-title span{
 
-    height:500px;
+    color:#94a3b8;
+
+    font-size:.95rem;
 
 }
 
-.chart-section canvas{
+.summary-grid{
 
-    width:100% !important;
+    display:grid;
 
-    height:400px !important;
+    grid-template-columns:repeat(4,1fr);
+
+    gap:20px;
+
+}
+
+.summary-item{
+
+    background:#0f172a;
+
+    border-radius:16px;
+
+    padding:22px;
+
+}
+
+.summary-item h3{
+
+    color:#38bdf8;
+
+    font-size:2rem;
+
+    margin-bottom:8px;
+
+}
+
+.summary-item p{
+
+    color:#94a3b8;
+
+}
+
+/* ==========================================
+   QUICK STATS
+========================================== */
+
+.stats-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:18px;
+
+    margin-bottom:35px;
+
+}
+
+.stat-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:22px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+    transition:.25s;
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:0 18px 35px rgba(0,0,0,.12);
+
+}
+
+.stat-card span{
+
+    display:block;
+
+    color:#64748b;
+
+    margin-bottom:10px;
+
+    font-size:.95rem;
+
+}
+
+.stat-card h2{
+
+    color:#0f172a;
+
+    font-size:2.1rem;
+
+    margin-bottom:10px;
+
+}
+
+.stat-card small{
+
+    color:#94a3b8;
+
+    font-size:.9rem;
+
+}
+
+/* ==========================================
+   PANELS
+========================================== */
+
+.panel{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    margin-bottom:30px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+}
+
+.panel-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+}
+
+.panel-header h2{
+
+    color:#0f172a;
+
+    font-size:1.5rem;
+
+}
+
+.panel-header p{
+
+    color:#94a3b8;
+
+}
+
+.panel canvas{
+
+    width:100%!important;
+
+    height:420px!important;
+
+}
+
+/* ==========================================
+   PERSONAL RECORDS
+========================================== */
+
+.records-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+
+    gap:18px;
+
+}
+
+.record{
+
+    background:#f8fafc;
+
+    border-radius:16px;
+
+    padding:25px;
+
+    text-align:center;
+
+}
+
+.record span{
+
+    color:#64748b;
+
+    display:block;
+
+    margin-bottom:12px;
+
+}
+
+.record h3{
+
+    color:#0f172a;
+
+    font-size:2rem;
+
+}
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media(max-width:900px){
+
+    .summary-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+@media(max-width:650px){
+
+    .analytics-page{
+
+        padding:20px;
+
+    }
+
+    .hero h1{
+
+        font-size:2.2rem;
+
+    }
+
+    .summary-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .records-grid{
+
+        grid-template-columns:1fr;
+
+    }
 
 }
