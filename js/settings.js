@@ -2,24 +2,21 @@
 // EddieOS Settings
 // ==============================
 
-// Import shared Firebase instance
 import { auth, db } from "./firebase.js";
 
-// Firebase Auth
 import {
     onAuthStateChanged,
     signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-// Firestore
 import {
     doc,
     getDoc,
     setDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const db = getFirestore(app);
-
+// =====================================
+// DOM Elements
 // =====================================
 
 const userName = document.getElementById("userName");
@@ -32,8 +29,6 @@ const avatar = document.querySelector(".avatar");
 
 const logoutBtn = document.getElementById("logoutBtn");
 
-// Preferences
-
 const units = document.getElementById("units");
 const weekStart = document.getElementById("weekStart");
 
@@ -43,28 +38,25 @@ const weeklyMileage = document.querySelector('input[type="number"]');
 const checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
 // =====================================
+// Load User
+// =====================================
 
 onAuthStateChanged(auth, async (user) => {
 
     if (!user) {
-
         window.location.href = "login.html";
-
         return;
-
     }
 
     // User Info
 
     userName.textContent = user.displayName || "Runner";
-
-    userEmail.textContent = user.email;
+    userEmail.textContent = user.email || "";
 
     displayName.textContent = user.displayName || "Runner";
+    displayEmail.textContent = user.email || "";
 
-    displayEmail.textContent = user.email;
-
-    // Google Profile Picture
+    // Profile Picture
 
     if (user.photoURL) {
 
@@ -76,34 +68,46 @@ onAuthStateChanged(auth, async (user) => {
 
     }
 
-    // Load Settings
+    // Load Saved Settings
 
-    const settingsRef = doc(db, "users", user.uid, "settings", "preferences");
+    try {
 
-    const snapshot = await getDoc(settingsRef);
+        const settingsRef = doc(
+            db,
+            "users",
+            user.uid,
+            "settings",
+            "preferences"
+        );
 
-    if (snapshot.exists()) {
+        const snapshot = await getDoc(settingsRef);
 
-        const data = snapshot.data();
+        if (snapshot.exists()) {
 
-        units.value = data.units || "Miles";
+            const data = snapshot.data();
 
-        weekStart.value = data.weekStart || "Sunday";
+            units.value = data.units || "Miles";
+            weekStart.value = data.weekStart || "Sunday";
 
-        goalTime.value = data.goalTime || "";
+            goalTime.value = data.goalTime || "";
+            weeklyMileage.value = data.weeklyMileage || "";
 
-        weeklyMileage.value = data.weeklyMileage || "";
+            checkboxes[0].checked = data.aiEnabled ?? true;
+            checkboxes[1].checked = data.weeklyInsights ?? true;
+            checkboxes[2].checked = data.dailyRecommendations ?? false;
 
-        checkboxes[0].checked = data.aiEnabled ?? true;
-        checkboxes[1].checked = data.weeklyInsights ?? true;
-        checkboxes[2].checked = data.dailyRecommendations ?? false;
+        }
+
+    } catch (error) {
+
+        console.error("Error loading settings:", error);
 
     }
 
 });
 
 // =====================================
-// Auto Save
+// Save Settings
 // =====================================
 
 async function saveSettings() {
@@ -112,37 +116,51 @@ async function saveSettings() {
 
     if (!user) return;
 
-    await setDoc(
+    try {
 
-        doc(db, "users", user.uid, "settings", "preferences"),
+        await setDoc(
 
-        {
+            doc(
+                db,
+                "users",
+                user.uid,
+                "settings",
+                "preferences"
+            ),
 
-            units: units.value,
+            {
 
-            weekStart: weekStart.value,
+                units: units.value,
 
-            goalTime: goalTime.value,
+                weekStart: weekStart.value,
 
-            weeklyMileage: weeklyMileage.value,
+                goalTime: goalTime.value,
 
-            aiEnabled: checkboxes[0].checked,
+                weeklyMileage: Number(weeklyMileage.value) || 0,
 
-            weeklyInsights: checkboxes[1].checked,
+                aiEnabled: checkboxes[0].checked,
 
-            dailyRecommendations: checkboxes[2].checked
+                weeklyInsights: checkboxes[1].checked,
 
-        },
+                dailyRecommendations: checkboxes[2].checked
 
-        {
+            },
 
-            merge: true
+            {
 
-        }
+                merge: true
 
-    );
+            }
 
-    console.log("Settings Saved");
+        );
+
+        console.log("✅ Settings saved");
+
+    } catch (error) {
+
+        console.error("Error saving settings:", error);
+
+    }
 
 }
 
@@ -169,8 +187,16 @@ async function saveSettings() {
 
 logoutBtn.addEventListener("click", async () => {
 
-    await signOut(auth);
+    try {
 
-    window.location.href = "login.html";
+        await signOut(auth);
+
+        window.location.href = "login.html";
+
+    } catch (error) {
+
+        console.error("Logout failed:", error);
+
+    }
 
 });
