@@ -41,7 +41,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (countdown) {
 
-        countdown.textContent = dashboardData.marathon.countdown;
+        const today = new Date();
+
+        const raceDate = new Date(dashboardData.marathon.raceDate);
+
+        const difference = raceDate - today;
+
+        const daysRemaining = Math.ceil(difference / (1000 * 60 * 60 * 24));
+
+        countdown.textContent = daysRemaining;
 
     }
 
