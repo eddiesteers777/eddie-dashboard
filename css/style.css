@@ -1,24 +1,7 @@
-/* ===========================================
-   EddieOS v2.0 Global Styles
-   =========================================== */
-
-:root{
-    --bg:#0f172a;
-    --surface:#1e293b;
-    --surface-light:#334155;
-    --primary:#38bdf8;
-    --primary-hover:#0ea5e9;
-    --text:#f8fafc;
-    --text-secondary:#94a3b8;
-    --text-muted:#64748b;
-    --success:#22c55e;
-    --warning:#f59e0b;
-    --danger:#ef4444;
-    --radius:18px;
-    --transition:.2s ease;
-    --shadow:0 10px 25px rgba(0,0,0,.30);
-    --max-width:1100px;
-}
+/* ==========================================
+   EddieOS v3
+   Global Styles
+========================================== */
 
 *{
     margin:0;
@@ -31,211 +14,288 @@ html{
 }
 
 body{
-    font-family:Inter,Arial,Helvetica,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    line-height:1.5;
+
+    background:#0f172a;
+
+    color:#f8fafc;
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    line-height:1.6;
 }
 
+/* ==========================================
+   Links
+========================================== */
+
+a{
+
+    text-decoration:none;
+
+    color:inherit;
+
+}
+
+/* ==========================================
+   Main Container
+========================================== */
+
+.container{
+
+    width:min(1400px,92%);
+
+    margin:40px auto;
+
+}
+
+/* ==========================================
+   Navigation
+========================================== */
+
 nav{
-    position:sticky;
-    top:0;
-    z-index:1000;
+
+    width:100%;
+
     display:flex;
+
     justify-content:space-between;
+
     align-items:center;
-    padding:18px 32px;
+
+    padding:22px 40px;
+
     background:#111827;
-    border-bottom:1px solid var(--surface-light);
+
+    border-bottom:1px solid rgba(255,255,255,.08);
+
+    position:sticky;
+
+    top:0;
+
+    z-index:1000;
+
 }
 
 .logo{
-    font-size:1.25rem;
-    font-weight:700;
+
+    font-size:1.7rem;
+
+    font-weight:800;
+
+    letter-spacing:.5px;
+
 }
 
 .nav-right{
+
     display:flex;
+
     align-items:center;
-    gap:14px;
+
+    gap:16px;
+
 }
 
-.user-name{
-    color:var(--text-secondary);
-}
+#user-name{
 
-button{
-    background:var(--primary);
-    color:#fff;
-    border:none;
-    border-radius:10px;
-    padding:10px 18px;
-    cursor:pointer;
+    color:#cbd5e1;
+
     font-weight:600;
-    transition:var(--transition);
+
 }
 
-button:hover{
-    background:var(--primary-hover);
+nav button{
+
+    border:none;
+
+    cursor:pointer;
+
+    padding:10px 20px;
+
+    border-radius:10px;
+
+    background:#2563eb;
+
+    color:white;
+
+    font-weight:700;
+
+    transition:.25s;
+
 }
 
-.container{
-    max-width:var(--max-width);
-    margin:70px auto;
-    padding:0 24px;
+nav button:hover{
+
+    background:#1d4ed8;
+
+    transform:translateY(-2px);
+
 }
 
-header{
-    text-align:center;
+/* ==========================================
+   Hero
+========================================== */
+
+.hero{
+
+    display:grid;
+
+    grid-template-columns:2fr 1fr;
+
+    gap:30px;
+
+    align-items:center;
+
     margin-bottom:40px;
+
 }
 
-header h1{
-    font-size:3rem;
+.welcome{
+
+    color:#94a3b8;
+
+    font-size:.95rem;
+
     margin-bottom:10px;
+
 }
 
-.subtitle{
-    color:var(--text-secondary);
+.hero h1{
+
+    font-size:3rem;
+
+    margin-bottom:12px;
+
 }
 
-.updated{
-    color:var(--text-muted);
-    margin-top:10px;
+.hero-text{
+
+    color:#cbd5e1;
+
+    max-width:650px;
+
+    font-size:1.05rem;
+
 }
+/* ==========================================
+   Goal Card
+========================================== */
+
+.goal-card{
+
+    background:linear-gradient(135deg,#2563eb,#0ea5e9);
+
+    border-radius:22px;
+
+    padding:30px;
+
+    color:white;
+
+    box-shadow:0 15px 40px rgba(0,0,0,.35);
+
+}
+
+.goal-card span{
+
+    font-size:.9rem;
+
+    opacity:.9;
+
+}
+
+.goal-card h2{
+
+    font-size:2rem;
+
+    margin:12px 0;
+
+}
+
+.goal-card p{
+
+    opacity:.85;
+
+    margin-bottom:8px;
+
+}
+
+.goal-card h1{
+
+    font-size:3rem;
+
+    font-weight:800;
+
+}
+
+/* ==========================================
+   Quick Stats
+========================================== */
 
 .stats{
+
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:18px;
-    margin-bottom:40px;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:22px;
+
+    margin-bottom:35px;
+
 }
 
 .stat-card{
-    background:var(--surface);
-    border:1px solid var(--surface-light);
-    border-radius:var(--radius);
-    padding:20px;
+
+    background:#1e293b;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:18px;
+
+    padding:24px;
+
+    transition:.25s;
+
 }
 
-.stat-card h3{
-    color:var(--text-secondary);
+.stat-card:hover{
+
+    transform:translateY(-6px);
+
+    border-color:#38bdf8;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.30);
+
+}
+
+.stat-card span{
+
+    color:#94a3b8;
+
     font-size:.9rem;
-    margin-bottom:8px;
+
+}
+
+.stat-card h2{
+
+    margin:12px 0 6px;
+
+    font-size:2.1rem;
+
 }
 
 .stat-card p{
-    font-size:1.8rem;
-    font-weight:700;
+
+    color:#cbd5e1;
+
 }
 
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-    gap:22px;
-}
-
-.card{
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    min-height:170px;
-    padding:28px;
-    background:var(--surface);
-    border:1px solid var(--surface-light);
-    border-radius:var(--radius);
-    color:var(--text);
-    text-decoration:none;
-    transition:var(--transition);
-}
-
-.card:hover{
-    transform:translateY(-4px);
-    border-color:var(--primary);
-    box-shadow:var(--shadow);
-}
-
-.card-icon{
-    font-size:2rem;
-    margin-bottom:16px;
-}
-
-.card h2{
-    margin-bottom:8px;
-}
-
-.card p{
-    color:var(--text-secondary);
-}
-
-.section-title{
-    margin:50px 0 20px;
-    font-size:1.6rem;
-}
-
-footer{
-    text-align:center;
-    margin:60px 0 25px;
-    color:var(--text-muted);
-}
-
-input,
-select,
-textarea{
-    width:100%;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid var(--surface-light);
-    background:var(--surface);
-    color:var(--text);
-    font-size:1rem;
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-    outline:none;
-    border-color:var(--primary);
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,
-td{
-    padding:14px;
-    text-align:left;
-    border-bottom:1px solid var(--surface-light);
-}
-
-th{
-    background:var(--surface);
-}
-
-@media (max-width:768px){
-    nav{
-        flex-direction:column;
-        gap:16px;
-    }
-
-    .container{
-        margin-top:40px;
-    }
-
-    header h1{
-        font-size:2.3rem;
-    }
-
-    .stats,
-    .grid{
-        grid-template-columns:1fr;
-    }
-}
-/* ===========================================
+/* ==========================================
    AI Coach
-=========================================== */
+========================================== */
 
 .coach-card{
 
@@ -243,13 +303,11 @@ th{
 
     border:2px solid #38bdf8;
 
-    border-radius:20px;
+    border-radius:22px;
 
     padding:30px;
 
     margin-bottom:40px;
-
-    box-shadow:0 12px 30px rgba(0,0,0,.35);
 
 }
 
@@ -261,7 +319,15 @@ th{
 
     align-items:center;
 
-    margin-bottom:20px;
+    margin-bottom:28px;
+
+}
+
+.coach-label{
+
+    color:#94a3b8;
+
+    margin-bottom:8px;
 
 }
 
@@ -277,23 +343,13 @@ th{
 
     color:white;
 
-    padding:6px 14px;
+    padding:8px 16px;
 
     border-radius:999px;
 
     font-size:.8rem;
 
-    font-weight:bold;
-
-}
-
-.coach-intro{
-
-    color:#cbd5e1;
-
-    margin-bottom:24px;
-
-    font-size:1.1rem;
+    font-weight:700;
 
 }
 
@@ -301,11 +357,11 @@ th{
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    grid-template-columns:repeat(4,1fr);
 
     gap:18px;
 
-    margin-bottom:28px;
+    margin-bottom:24px;
 
 }
 
@@ -313,9 +369,9 @@ th{
 
     background:#0f172a;
 
-    border-radius:16px;
+    border-radius:14px;
 
-    padding:18px;
+    padding:20px;
 
     text-align:center;
 
@@ -327,13 +383,13 @@ th{
 
     color:#94a3b8;
 
-    margin-bottom:8px;
+    margin-bottom:10px;
 
 }
 
 .coach-stat strong{
 
-    font-size:1.4rem;
+    font-size:1.5rem;
 
 }
 
@@ -341,11 +397,11 @@ th{
 
     background:#111827;
 
-    border-left:4px solid #38bdf8;
+    border-left:5px solid #38bdf8;
+
+    border-radius:14px;
 
     padding:20px;
-
-    border-radius:12px;
 
     margin-bottom:24px;
 
@@ -353,15 +409,19 @@ th{
 
 .coach-message h3{
 
-    margin-bottom:10px;
+    margin-bottom:12px;
 
 }
 
-.coach-message p{
+.coach-message ul{
 
-    color:#cbd5e1;
+    padding-left:20px;
 
-    line-height:1.7;
+}
+
+.coach-message li{
+
+    margin-bottom:8px;
 
 }
 
@@ -369,8 +429,411 @@ th{
 
     width:100%;
 
+    border:none;
+
+    border-radius:12px;
+
     padding:16px;
 
     font-size:1rem;
+
+    font-weight:700;
+
+    background:#38bdf8;
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.coach-button:hover{
+
+    background:#0ea5e9;
+
+    transform:translateY(-2px);
+
+}
+/* ==========================================
+   Dashboard Grid
+========================================== */
+
+.grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+
+    gap:24px;
+
+    margin-bottom:40px;
+
+}
+
+.card{
+
+    background:#1e293b;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:20px;
+
+    padding:28px;
+
+    transition:all .25s ease;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+}
+
+.card:hover{
+
+    transform:translateY(-8px);
+
+    border-color:#38bdf8;
+
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+
+}
+
+.card-icon{
+
+    font-size:2rem;
+
+}
+
+.card h2{
+
+    font-size:1.5rem;
+
+}
+
+.card p{
+
+    color:#94a3b8;
+
+    line-height:1.6;
+
+}
+
+/* ==========================================
+   Shared Panels
+========================================== */
+
+.training-panel,
+.shoe-panel{
+
+    background:#1e293b;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    margin-bottom:35px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+}
+
+.panel-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+}
+
+.panel-header h2{
+
+    font-size:1.8rem;
+
+}
+
+/* ==========================================
+   Training / Shoe Grid
+========================================== */
+
+.training-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+
+    gap:22px;
+
+}
+
+.training-card{
+
+    background:#111827;
+
+    border-radius:16px;
+
+    padding:22px;
+
+    transition:.25s;
+
+    border:1px solid rgba(255,255,255,.05);
+
+}
+
+.training-card:hover{
+
+    transform:translateY(-5px);
+
+    border-color:#38bdf8;
+
+}
+
+.training-card span{
+
+    color:#94a3b8;
+
+    font-size:.9rem;
+
+}
+
+.training-card h3{
+
+    margin:12px 0;
+
+    font-size:1.5rem;
+
+}
+
+.training-card p{
+
+    color:#cbd5e1;
+
+}
+
+/* ==========================================
+   Nice Accent Line
+========================================== */
+
+.training-panel::before,
+.shoe-panel::before{
+
+    content:"";
+
+    display:block;
+
+    width:70px;
+
+    height:4px;
+
+    background:#38bdf8;
+
+    border-radius:999px;
+
+    margin-bottom:22px;
+
+}
+/* ==========================================
+   Footer
+========================================== */
+
+footer{
+
+    margin:60px 0 30px;
+
+    padding-top:30px;
+
+    border-top:1px solid rgba(255,255,255,.08);
+
+    text-align:center;
+
+    color:#94a3b8;
+
+}
+
+footer p:first-child{
+
+    font-size:1rem;
+
+    font-weight:700;
+
+    color:#f8fafc;
+
+    margin-bottom:8px;
+
+}
+
+/* ==========================================
+   Scrollbar
+========================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#0f172a;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#334155;
+
+    border-radius:999px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#38bdf8;
+
+}
+
+/* ==========================================
+   Animations
+========================================== */
+
+.hero,
+.stats,
+.coach-card,
+.grid,
+.training-panel,
+.shoe-panel{
+
+    animation:fadeUp .6s ease forwards;
+
+}
+
+@keyframes fadeUp{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(25px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ==========================================
+   Responsive
+========================================== */
+
+@media (max-width:1000px){
+
+    .hero{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .coach-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+@media (max-width:700px){
+
+    nav{
+
+        flex-direction:column;
+
+        gap:18px;
+
+        padding:20px;
+
+    }
+
+    .hero h1{
+
+        font-size:2.3rem;
+
+    }
+
+    .goal-card h1{
+
+        font-size:2.3rem;
+
+    }
+
+    .stats{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .training-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .coach-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .container{
+
+        width:95%;
+
+        margin:25px auto;
+
+    }
+
+}
+
+/* ==========================================
+   Small Hover Effects
+========================================== */
+
+.goal-card,
+.stat-card,
+.card,
+.training-card,
+.coach-card{
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease,
+        border-color .25s ease;
+
+}
+
+.goal-card:hover,
+.coach-card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
 
 }
