@@ -3,7 +3,7 @@ export const dashboardData = {
         race: "Indianapolis Monumental Marathon",
         goalTime: "3:05:00",
         weeklyMileage: 44,
-        countdown: 102
+        raceDate: "2026-11-08",
     },
 
     health: {
