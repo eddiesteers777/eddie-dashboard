@@ -1,12 +1,19 @@
+// ==============================
+// EddieOS Analytics Dashboard
+// ==============================
+
+// Weekly Mileage Chart
+
 const canvas = document.getElementById("weeklyMileageChart");
 
 const ctx = canvas.getContext("2d");
 
 // Gradient Fill
-const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+
+const gradient = ctx.createLinearGradient(0, 0, 0, 450);
 
 gradient.addColorStop(0, "rgba(59,130,246,.45)");
-gradient.addColorStop(.5, "rgba(59,130,246,.18)");
+gradient.addColorStop(.35, "rgba(59,130,246,.20)");
 gradient.addColorStop(1, "rgba(59,130,246,0)");
 
 new Chart(ctx, {
@@ -16,6 +23,7 @@ new Chart(ctx, {
     data: {
 
         labels: [
+
             "Jun 8",
             "Jun 15",
             "Jun 22",
@@ -24,6 +32,7 @@ new Chart(ctx, {
             "Jul 13",
             "Jul 20",
             "Jul 27"
+
         ],
 
         datasets: [
@@ -33,6 +42,7 @@ new Chart(ctx, {
                 label: "Weekly Mileage",
 
                 data: [
+
                     28,
                     32,
                     35,
@@ -41,13 +51,14 @@ new Chart(ctx, {
                     46,
                     48,
                     44
+
                 ],
 
-                borderColor: "#3b82f6",
+                fill: true,
 
                 backgroundColor: gradient,
 
-                fill: true,
+                borderColor: "#3b82f6",
 
                 borderWidth: 4,
 
@@ -83,6 +94,14 @@ new Chart(ctx, {
 
         },
 
+        animation: {
+
+            duration: 1600,
+
+            easing: "easeOutQuart"
+
+        },
+
         plugins: {
 
             legend: {
@@ -93,13 +112,17 @@ new Chart(ctx, {
 
             tooltip: {
 
-                backgroundColor: "#111827",
+                backgroundColor: "#0f172a",
 
                 padding: 14,
 
-                cornerRadius: 10,
+                cornerRadius: 12,
 
                 displayColors: false,
+
+                titleColor: "#ffffff",
+
+                bodyColor: "#ffffff",
 
                 callbacks: {
 
@@ -127,7 +150,7 @@ new Chart(ctx, {
 
                 ticks: {
 
-                    color: "#6b7280"
+                    color: "#64748b"
 
                 }
 
@@ -143,13 +166,13 @@ new Chart(ctx, {
 
                     stepSize: 10,
 
-                    color: "#6b7280"
+                    color: "#64748b"
 
                 },
 
                 grid: {
 
-                    color: "rgba(0,0,0,.06)"
+                    color: "rgba(148,163,184,.18)"
 
                 }
 
