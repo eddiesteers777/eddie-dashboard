@@ -1,9 +1,17 @@
-/* ==========================================
-   EddieOS v3
-   Global Styles
-========================================== */
+/* ==========================================================
+   EddieOS v4 Design System
+   Premium Running Dashboard
+   ========================================================== */
 
-*{
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ==========================================================
+   Reset
+   ========================================================== */
+
+*,
+*::before,
+*::after{
     margin:0;
     padding:0;
     box-sizing:border-box;
@@ -13,52 +21,237 @@ html{
     scroll-behavior:smooth;
 }
 
-body{
+:root{
 
-    background:#0f172a;
+    /* Colors */
 
-    color:#f8fafc;
+    --bg:#050B14;
+    --bg-secondary:#091321;
 
-    font-family:
-        Inter,
-        "Segoe UI",
-        Arial,
-        sans-serif;
+    --surface:#101C2D;
+    --surface-light:#162538;
+    --surface-hover:#1A2E46;
 
-    line-height:1.6;
+    --primary:#4EA8FF;
+    --primary-light:#78BEFF;
+
+    --success:#22C55E;
+    --warning:#F59E0B;
+    --danger:#EF4444;
+
+    --text:#FFFFFF;
+    --text-secondary:#B7C4D6;
+    --text-muted:#71839B;
+
+    --border:rgba(255,255,255,.08);
+    --border-light:rgba(255,255,255,.14);
+
+    --shadow:
+        0 18px 45px rgba(0,0,0,.30);
+
+    --shadow-hover:
+        0 25px 70px rgba(0,0,0,.42);
+
+    --radius:22px;
+
+    --transition:
+        .28s cubic-bezier(.22,.61,.36,1);
+
 }
 
-/* ==========================================
+/* ==========================================================
+   Body
+   ========================================================== */
+
+body{
+
+    min-height:100vh;
+
+    overflow-x:hidden;
+
+    color:var(--text);
+
+    font-family:"Inter",sans-serif;
+
+    line-height:1.6;
+
+    background:
+
+        radial-gradient(
+            circle at top right,
+            rgba(78,168,255,.12),
+            transparent 34%
+        ),
+
+        radial-gradient(
+            circle at bottom left,
+            rgba(76,81,255,.10),
+            transparent 35%
+        ),
+
+        linear-gradient(
+            180deg,
+            var(--bg),
+            var(--bg-secondary)
+        );
+
+}
+
+/* ==========================================================
+   Premium Background Grid
+   ========================================================== */
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    pointer-events:none;
+
+    background-image:
+
+        linear-gradient(
+            rgba(255,255,255,.018) 1px,
+            transparent 1px
+        ),
+
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.018) 1px,
+            transparent 1px
+        );
+
+    background-size:42px 42px;
+
+    opacity:.55;
+
+    z-index:-2;
+
+}
+
+/* Aurora Glow */
+
+body::after{
+
+    content:"";
+
+    position:fixed;
+
+    width:700px;
+    height:700px;
+
+    top:-220px;
+    right:-180px;
+
+    background:
+
+        radial-gradient(
+            circle,
+            rgba(78,168,255,.12),
+            transparent 70%
+        );
+
+    filter:blur(70px);
+
+    pointer-events:none;
+
+    z-index:-3;
+
+}
+
+/* ==========================================================
+   Typography
+   ========================================================== */
+
+h1{
+
+    font-size:3rem;
+
+    font-weight:900;
+
+    letter-spacing:-1.5px;
+
+    line-height:1.05;
+
+}
+
+h2{
+
+    font-size:2rem;
+
+    font-weight:800;
+
+}
+
+h3{
+
+    font-size:1.35rem;
+
+    font-weight:700;
+
+}
+
+p{
+
+    color:var(--text-secondary);
+
+}
+
+small{
+
+    color:var(--text-muted);
+
+}
+
+/* ==========================================================
    Links
-========================================== */
+   ========================================================== */
 
 a{
 
+    color:inherit;
+
     text-decoration:none;
 
-    color:inherit;
+    transition:var(--transition);
 
 }
 
-/* ==========================================
+a:hover{
+
+    color:var(--primary);
+
+}
+
+/* ==========================================================
    Main Container
-========================================== */
+   ========================================================== */
 
 .container{
 
-    width:min(1400px,92%);
+    width:min(1450px,92%);
 
-    margin:40px auto;
+    margin:48px auto;
 
 }
-
-/* ==========================================
-   Navigation
-========================================== */
+/* ==========================================================
+   Premium Navigation
+   ========================================================== */
 
 nav{
 
-    width:100%;
+    position:sticky;
+
+    top:18px;
+
+    z-index:1000;
+
+    width:min(1450px,94%);
+
+    margin:24px auto 42px;
 
     display:flex;
 
@@ -66,29 +259,163 @@ nav{
 
     align-items:center;
 
-    padding:22px 40px;
+    padding:18px 28px;
 
-    background:#111827;
+    border-radius:22px;
 
-    border-bottom:1px solid rgba(255,255,255,.08);
+    background:rgba(16,28,45,.78);
 
-    position:sticky;
+    backdrop-filter:blur(24px);
 
-    top:0;
+    -webkit-backdrop-filter:blur(24px);
 
-    z-index:1000;
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+
+        0 20px 60px rgba(0,0,0,.35);
+
+    transition:all .35s cubic-bezier(.22,.61,.36,1);
 
 }
+
+/* Floating Hover */
+
+nav:hover{
+
+    border-color:rgba(255,255,255,.14);
+
+    box-shadow:
+
+        0 28px 80px rgba(0,0,0,.45);
+
+}
+
+/* ==========================================================
+   Logo
+   ========================================================== */
 
 .logo{
 
-    font-size:1.7rem;
+    display:flex;
 
-    font-weight:800;
+    align-items:center;
 
-    letter-spacing:.5px;
+    gap:14px;
+
+    font-size:1.55rem;
+
+    font-weight:900;
+
+    letter-spacing:-.5px;
+
+    color:white;
 
 }
+
+/* Optional logo circle */
+
+.logo::before{
+
+    content:"";
+
+    width:16px;
+
+    height:16px;
+
+    border-radius:50%;
+
+    background:linear-gradient(
+        135deg,
+        #4EA8FF,
+        #2DD4FF
+    );
+
+    box-shadow:
+
+        0 0 18px rgba(78,168,255,.65);
+
+}
+
+/* ==========================================================
+   Navigation Links
+   ========================================================== */
+
+.nav-links{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+.nav-links a{
+
+    position:relative;
+
+    padding:11px 18px;
+
+    border-radius:14px;
+
+    color:var(--text-secondary);
+
+    font-size:.95rem;
+
+    font-weight:600;
+
+    transition:all .28s cubic-bezier(.22,.61,.36,1);
+
+}
+
+/* Hover */
+
+.nav-links a:hover{
+
+    color:white;
+
+    background:rgba(255,255,255,.06);
+
+}
+
+/* Active Page */
+
+.nav-links a.active{
+
+    color:white;
+
+    background:rgba(78,168,255,.12);
+
+    border:1px solid rgba(78,168,255,.28);
+
+}
+
+/* Blue line */
+
+.nav-links a.active::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:18px;
+
+    right:18px;
+
+    bottom:6px;
+
+    height:3px;
+
+    border-radius:999px;
+
+    background:var(--primary);
+
+}
+
+/* ==========================================================
+   Right Side
+   ========================================================== */
 
 .nav-right{
 
@@ -102,738 +429,116 @@ nav{
 
 #user-name{
 
-    color:#cbd5e1;
+    color:var(--text-secondary);
 
     font-weight:600;
 
+    font-size:.95rem;
+
 }
 
-nav button{
+/* ==========================================================
+   Buttons
+   ========================================================== */
+
+button{
 
     border:none;
 
     cursor:pointer;
 
-    padding:10px 20px;
+    border-radius:14px;
 
-    border-radius:10px;
-
-    background:#2563eb;
-
-    color:white;
+    padding:12px 22px;
 
     font-weight:700;
 
-    transition:.25s;
+    font-size:.95rem;
+
+    transition:all .28s cubic-bezier(.22,.61,.36,1);
+
+}
+
+/* Primary */
+
+button.primary{
+
+    background:linear-gradient(
+        135deg,
+        var(--primary),
+        #3D91FF
+    );
+
+    color:white;
+
+    box-shadow:
+
+        0 12px 30px rgba(78,168,255,.28);
+
+}
+
+button.primary:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+
+        0 18px 40px rgba(78,168,255,.40);
+
+}
+
+/* Secondary */
+
+button.secondary{
+
+    background:rgba(255,255,255,.05);
+
+    color:white;
+
+    border:1px solid rgba(255,255,255,.08);
+
+}
+
+button.secondary:hover{
+
+    background:rgba(255,255,255,.08);
+
+}
+
+/* Existing nav buttons */
+
+nav button{
+
+    background:linear-gradient(
+        135deg,
+        var(--primary),
+        #3D91FF
+    );
+
+    color:white;
 
 }
 
 nav button:hover{
 
-    background:#1d4ed8;
-
     transform:translateY(-2px);
 
-}
+    box-shadow:
 
-/* ==========================================
-   Hero
-========================================== */
-
-.hero{
-
-    display:grid;
-
-    grid-template-columns:2fr 1fr;
-
-    gap:30px;
-
-    align-items:center;
-
-    margin-bottom:40px;
+        0 14px 35px rgba(78,168,255,.35);
 
 }
 
-.welcome{
+/* ==========================================================
+   Divider
+   ========================================================== */
 
-    color:#94a3b8;
+.nav-divider{
 
-    font-size:.95rem;
+    width:1px;
 
-    margin-bottom:10px;
+    height:28px;
 
-}
-
-.hero h1{
-
-    font-size:3rem;
-
-    margin-bottom:12px;
-
-}
-
-.hero-text{
-
-    color:#cbd5e1;
-
-    max-width:650px;
-
-    font-size:1.05rem;
-
-}
-/* ==========================================
-   Goal Card
-========================================== */
-
-.goal-card{
-
-    background:linear-gradient(135deg,#2563eb,#0ea5e9);
-
-    border-radius:22px;
-
-    padding:30px;
-
-    color:white;
-
-    box-shadow:0 15px 40px rgba(0,0,0,.35);
-
-}
-
-.goal-card span{
-
-    font-size:.9rem;
-
-    opacity:.9;
-
-}
-
-.goal-card h2{
-
-    font-size:2rem;
-
-    margin:12px 0;
-
-}
-
-.goal-card p{
-
-    opacity:.85;
-
-    margin-bottom:8px;
-
-}
-
-.goal-card h1{
-
-    font-size:3rem;
-
-    font-weight:800;
-
-}
-
-/* ==========================================
-   Quick Stats
-========================================== */
-
-.stats{
-
-    display:grid;
-
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-
-    gap:22px;
-
-    margin-bottom:35px;
-
-}
-
-.stat-card{
-
-    background:#1e293b;
-
-    border:1px solid rgba(255,255,255,.08);
-
-    border-radius:18px;
-
-    padding:24px;
-
-    transition:.25s;
-
-}
-
-.stat-card:hover{
-
-    transform:translateY(-6px);
-
-    border-color:#38bdf8;
-
-    box-shadow:0 12px 30px rgba(0,0,0,.30);
-
-}
-
-.stat-card span{
-
-    color:#94a3b8;
-
-    font-size:.9rem;
-
-}
-
-.stat-card h2{
-
-    margin:12px 0 6px;
-
-    font-size:2.1rem;
-
-}
-
-.stat-card p{
-
-    color:#cbd5e1;
-
-}
-
-/* ==========================================
-   AI Coach
-========================================== */
-
-.coach-card{
-
-    background:#1e293b;
-
-    border:2px solid #38bdf8;
-
-    border-radius:22px;
-
-    padding:30px;
-
-    margin-bottom:40px;
-
-}
-
-.coach-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:28px;
-
-}
-
-.coach-label{
-
-    color:#94a3b8;
-
-    margin-bottom:8px;
-
-}
-
-.coach-header h2{
-
-    font-size:2rem;
-
-}
-
-.coach-status{
-
-    background:#22c55e;
-
-    color:white;
-
-    padding:8px 16px;
-
-    border-radius:999px;
-
-    font-size:.8rem;
-
-    font-weight:700;
-
-}
-
-.coach-grid{
-
-    display:grid;
-
-    grid-template-columns:repeat(4,1fr);
-
-    gap:18px;
-
-    margin-bottom:24px;
-
-}
-
-.coach-stat{
-
-    background:#0f172a;
-
-    border-radius:14px;
-
-    padding:20px;
-
-    text-align:center;
-
-}
-
-.coach-stat span{
-
-    display:block;
-
-    color:#94a3b8;
-
-    margin-bottom:10px;
-
-}
-
-.coach-stat strong{
-
-    font-size:1.5rem;
-
-}
-
-.coach-message{
-
-    background:#111827;
-
-    border-left:5px solid #38bdf8;
-
-    border-radius:14px;
-
-    padding:20px;
-
-    margin-bottom:24px;
-
-}
-
-.coach-message h3{
-
-    margin-bottom:12px;
-
-}
-
-.coach-message ul{
-
-    padding-left:20px;
-
-}
-
-.coach-message li{
-
-    margin-bottom:8px;
-
-}
-
-.coach-button{
-
-    width:100%;
-
-    border:none;
-
-    border-radius:12px;
-
-    padding:16px;
-
-    font-size:1rem;
-
-    font-weight:700;
-
-    background:#38bdf8;
-
-    color:white;
-
-    cursor:pointer;
-
-    transition:.25s;
-
-}
-
-.coach-button:hover{
-
-    background:#0ea5e9;
-
-    transform:translateY(-2px);
-
-}
-/* ==========================================
-   Dashboard Grid
-========================================== */
-
-.grid{
-
-    display:grid;
-
-    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-
-    gap:24px;
-
-    margin-bottom:40px;
-
-}
-
-.card{
-
-    background:#1e293b;
-
-    border:1px solid rgba(255,255,255,.08);
-
-    border-radius:20px;
-
-    padding:28px;
-
-    transition:all .25s ease;
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:14px;
-
-}
-
-.card:hover{
-
-    transform:translateY(-8px);
-
-    border-color:#38bdf8;
-
-    box-shadow:0 18px 40px rgba(0,0,0,.35);
-
-}
-
-.card-icon{
-
-    font-size:2rem;
-
-}
-
-.card h2{
-
-    font-size:1.5rem;
-
-}
-
-.card p{
-
-    color:#94a3b8;
-
-    line-height:1.6;
-
-}
-
-/* ==========================================
-   Shared Panels
-========================================== */
-
-.training-panel,
-.shoe-panel{
-
-    background:#1e293b;
-
-    border-radius:20px;
-
-    padding:30px;
-
-    margin-bottom:35px;
-
-    border:1px solid rgba(255,255,255,.08);
-
-}
-
-.panel-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:25px;
-
-}
-
-.panel-header h2{
-
-    font-size:1.8rem;
-
-}
-
-/* ==========================================
-   Training / Shoe Grid
-========================================== */
-
-.training-grid{
-
-    display:grid;
-
-    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-
-    gap:22px;
-
-}
-
-.training-card{
-
-    background:#111827;
-
-    border-radius:16px;
-
-    padding:22px;
-
-    transition:.25s;
-
-    border:1px solid rgba(255,255,255,.05);
-
-}
-
-.training-card:hover{
-
-    transform:translateY(-5px);
-
-    border-color:#38bdf8;
-
-}
-
-.training-card span{
-
-    color:#94a3b8;
-
-    font-size:.9rem;
-
-}
-
-.training-card h3{
-
-    margin:12px 0;
-
-    font-size:1.5rem;
-
-}
-
-.training-card p{
-
-    color:#cbd5e1;
-
-}
-
-/* ==========================================
-   Nice Accent Line
-========================================== */
-
-.training-panel::before,
-.shoe-panel::before{
-
-    content:"";
-
-    display:block;
-
-    width:70px;
-
-    height:4px;
-
-    background:#38bdf8;
-
-    border-radius:999px;
-
-    margin-bottom:22px;
-
-}
-/* ==========================================
-   Footer
-========================================== */
-
-footer{
-
-    margin:60px 0 30px;
-
-    padding-top:30px;
-
-    border-top:1px solid rgba(255,255,255,.08);
-
-    text-align:center;
-
-    color:#94a3b8;
-
-}
-
-footer p:first-child{
-
-    font-size:1rem;
-
-    font-weight:700;
-
-    color:#f8fafc;
-
-    margin-bottom:8px;
-
-}
-
-/* ==========================================
-   Scrollbar
-========================================== */
-
-::-webkit-scrollbar{
-
-    width:10px;
-
-}
-
-::-webkit-scrollbar-track{
-
-    background:#0f172a;
-
-}
-
-::-webkit-scrollbar-thumb{
-
-    background:#334155;
-
-    border-radius:999px;
-
-}
-
-::-webkit-scrollbar-thumb:hover{
-
-    background:#38bdf8;
-
-}
-
-/* ==========================================
-   Animations
-========================================== */
-
-.hero,
-.stats,
-.coach-card,
-.grid,
-.training-panel,
-.shoe-panel{
-
-    animation:fadeUp .6s ease forwards;
-
-}
-
-@keyframes fadeUp{
-
-    from{
-
-        opacity:0;
-
-        transform:translateY(25px);
-
-    }
-
-    to{
-
-        opacity:1;
-
-        transform:translateY(0);
-
-    }
-
-}
-
-/* ==========================================
-   Responsive
-========================================== */
-
-@media (max-width:1000px){
-
-    .hero{
-
-        grid-template-columns:1fr;
-
-    }
-
-    .coach-grid{
-
-        grid-template-columns:repeat(2,1fr);
-
-    }
-
-}
-
-@media (max-width:700px){
-
-    nav{
-
-        flex-direction:column;
-
-        gap:18px;
-
-        padding:20px;
-
-    }
-
-    .hero h1{
-
-        font-size:2.3rem;
-
-    }
-
-    .goal-card h1{
-
-        font-size:2.3rem;
-
-    }
-
-    .stats{
-
-        grid-template-columns:1fr;
-
-    }
-
-    .grid{
-
-        grid-template-columns:1fr;
-
-    }
-
-    .training-grid{
-
-        grid-template-columns:1fr;
-
-    }
-
-    .coach-grid{
-
-        grid-template-columns:1fr;
-
-    }
-
-    .container{
-
-        width:95%;
-
-        margin:25px auto;
-
-    }
-
-}
-
-/* ==========================================
-   Small Hover Effects
-========================================== */
-
-.goal-card,
-.stat-card,
-.card,
-.training-card,
-.coach-card{
-
-    transition:
-        transform .25s ease,
-        box-shadow .25s ease,
-        border-color .25s ease;
-
-}
-
-.goal-card:hover,
-.coach-card:hover{
-
-    transform:translateY(-4px);
-
-    box-shadow:0 18px 40px rgba(0,0,0,.35);
+    background:rgba(255,255,255,.08);
 
 }
