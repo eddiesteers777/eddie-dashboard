@@ -1242,3 +1242,187 @@
     }
 
 }
+/* ==========================================================
+   TRAINING PANELS
+========================================================== */
+
+.training-panel{
+
+    position:relative;
+
+    overflow:hidden;
+
+    margin-bottom:55px;
+
+    padding:34px;
+
+    border-radius:30px;
+
+    background:linear-gradient(
+        180deg,
+        rgba(20,33,50,.97),
+        rgba(12,22,36,.97)
+    );
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:0 22px 55px rgba(0,0,0,.28);
+
+}
+
+.training-panel::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    width:100%;
+
+    height:5px;
+
+    background:linear-gradient(
+        90deg,
+        #4EA8FF,
+        #64C7FF
+    );
+
+}
+
+.panel-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:30px;
+
+}
+
+.panel-header h2{
+
+    font-size:2rem;
+
+    font-weight:800;
+
+}
+
+.training-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+
+    gap:22px;
+
+}
+.training-card{
+
+    position:relative;
+
+    overflow:hidden;
+
+    padding:24px;
+
+    border-radius:22px;
+
+    background:linear-gradient(
+        180deg,
+        rgba(255,255,255,.04),
+        rgba(255,255,255,.02)
+    );
+
+    border:1px solid rgba(255,255,255,.06);
+
+    transition:.3s;
+
+}
+
+.training-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    width:4px;
+
+    height:100%;
+
+    background:#4EA8FF;
+
+    transform:scaleY(0);
+
+    transform-origin:top;
+
+    transition:.3s;
+
+}
+
+.training-card:hover{
+
+    transform:translateY(-8px);
+
+    border-color:rgba(78,168,255,.25);
+
+    box-shadow:0 18px 35px rgba(0,0,0,.25);
+
+}
+
+.training-card:hover::before{
+
+    transform:scaleY(1);
+
+}
+
+.training-card span{
+
+    display:inline-block;
+
+    margin-bottom:14px;
+
+    padding:6px 12px;
+
+    border-radius:999px;
+
+    background:rgba(78,168,255,.10);
+
+    color:#4EA8FF;
+
+    font-size:.82rem;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:.6px;
+
+}
+
+.training-card h3{
+
+    margin-bottom:10px;
+
+    font-size:1.45rem;
+
+    font-weight:800;
+
+    color:white;
+
+}
+
+.training-card p{
+
+    color:#B7C4D6;
+
+    line-height:1.7;
+
+}
