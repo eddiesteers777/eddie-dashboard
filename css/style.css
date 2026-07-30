@@ -837,26 +837,3 @@ footer p:first-child{
     box-shadow:0 18px 40px rgba(0,0,0,.35);
 
 }
-/* ==========================================
-   Navigation v2
-========================================== */
-
-.navbar{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    gap:30px;
-
-}
-
-.nav-links{
-
-    display:flex;
-
-    gap:20px;
-
-}
