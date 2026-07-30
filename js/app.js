@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (weeklyMileage) {
 
-        weeklyMileage.textContent = dashboardData.marathon.weeklyMileage;
+        weeklyMileage.textContent = dashboardData.marathon.currentWeeklyMileage;
 
     }
 
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const todayName = days[new Date().getDay()];
 
-    const todayWorkout = dashboardData.training.week.find(
+    const todayWorkout = dashboardData.training.workouts.find(
         workout => workout.day === todayName
     );
 
