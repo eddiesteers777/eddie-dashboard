@@ -10,7 +10,31 @@ import {
     setDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
 import { dashboardData } from "./dashboardData.js";
+
+// ==========================================
+// Wait for Authentication
+// ==========================================
+
+function waitForUser() {
+
+    return new Promise((resolve) => {
+
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+
+            unsubscribe();
+
+            resolve(user);
+
+        });
+
+    });
+
+}
 
 // ==========================================
 // Load Dashboard
@@ -18,7 +42,7 @@ import { dashboardData } from "./dashboardData.js";
 
 export async function loadDashboard() {
 
-    const user = auth.currentUser;
+    const user = await waitForUser();
 
     if (!user) return null;
 
@@ -28,11 +52,13 @@ export async function loadDashboard() {
 
     if (snapshot.exists()) {
 
+        console.log("☁️ Dashboard loaded from Firestore.");
+
         return snapshot.data();
 
     }
 
-    // First login - create default dashboard
+    console.log("🆕 Creating dashboard in Firestore.");
 
     await setDoc(docRef, dashboardData);
 
@@ -46,7 +72,7 @@ export async function loadDashboard() {
 
 export async function saveDashboard(data) {
 
-    const user = auth.currentUser;
+    const user = await waitForUser();
 
     if (!user) return;
 
