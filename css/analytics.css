@@ -1,54 +1,98 @@
 /* ==========================================
-   ANALYTICS PAGE
+   EddieOS Analytics
 ========================================== */
 
-.analytics-page{
-    max-width:1400px;
-    margin:40px auto;
-    padding:0 32px;
+:root{
+
+    --bg:#0F172A;
+
+    --surface:#1E293B;
+
+    --surface2:#273449;
+
+    --line:#334155;
+
+    --accent:#4EA8FF;
+
+    --accent2:#2563EB;
+
+    --green:#22C55E;
+
+    --yellow:#FACC15;
+
+    --orange:#FB923C;
+
+    --red:#EF4444;
+
+    --text:#F8FAFC;
+
+    --muted:#94A3B8;
+
+    --radius:22px;
+
+    --shadow:
+        0 18px 40px rgba(0,0,0,.22);
+
 }
 
 /* ==========================================
-   HERO
+   Base
+========================================== */
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+}
+
+body{
+
+    background:var(--bg);
+
+    color:var(--text);
+
+    font-family:
+        Inter,
+        Arial,
+        sans-serif;
+
+}
+
+.analytics-page{
+
+    width:min(1650px,95%);
+
+    margin:auto;
+
+    padding:
+
+        40px
+        0
+        80px;
+
+}
+
+/* ==========================================
+   Hero
 ========================================== */
 
 .hero{
-    margin-bottom:35px;
-}
 
-.hero h1{
-    font-size:3rem;
-    font-weight:700;
-    color:#f8fafc;
-    margin-bottom:10px;
-}
+    background:
 
-.hero p{
-    color:#94a3b8;
-    font-size:1.1rem;
-}
+        linear-gradient(
+            135deg,
+            #4EA8FF,
+            #2563EB
+        );
 
-/* ==========================================
-   PERFORMANCE SUMMARY
-========================================== */
+    border-radius:28px;
 
-.summary-card{
-
-    background:#1e293b;
-
-    border:1px solid rgba(255,255,255,.05);
-
-    border-radius:20px;
-
-    padding:28px;
-
-    margin-bottom:30px;
-
-    box-shadow:0 10px 25px rgba(0,0,0,.25);
-
-}
-
-.summary-title{
+    padding:42px;
 
     display:flex;
 
@@ -56,145 +100,318 @@
 
     align-items:center;
 
-    margin-bottom:25px;
+    gap:40px;
+
+    margin-bottom:34px;
+
+    box-shadow:var(--shadow);
 
 }
 
-.summary-title h2{
+.hero h1{
 
-    color:white;
+    font-size:62px;
 
-    font-size:1.5rem;
+    font-weight:800;
 
-}
-
-.summary-title span{
-
-    color:#94a3b8;
-
-    font-size:.95rem;
+    margin-bottom:12px;
 
 }
 
-.summary-grid{
+.hero p{
+
+    font-size:19px;
+
+    max-width:700px;
+
+    opacity:.95;
+
+    line-height:1.7;
+
+}
+
+.hero-right{
 
     display:grid;
 
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:1fr;
 
-    gap:20px;
-
-}
-
-.summary-item{
-
-    background:#0f172a;
-
-    border-radius:16px;
-
-    padding:22px;
+    gap:18px;
 
 }
 
-.summary-item h3{
+.hero-stat{
 
-    color:#38bdf8;
+    background:
 
-    font-size:2rem;
+        rgba(255,255,255,.12);
+
+    backdrop-filter:blur(14px);
+
+    border-radius:18px;
+
+    padding:20px 24px;
+
+    min-width:250px;
+
+}
+
+.hero-stat span{
+
+    display:block;
+
+    font-size:14px;
+
+    letter-spacing:.08em;
+
+    text-transform:uppercase;
+
+    opacity:.8;
+
+    margin-bottom:6px;
+
+}
+
+.hero-stat h2{
+
+    font-size:34px;
+
+    font-weight:800;
+
+}
+/* ==========================================
+   Live Dashboard
+========================================== */
+
+.dashboard-grid{
+
+    display:grid;
+
+    grid-template-columns:
+
+        repeat(
+            auto-fit,
+            minmax(260px,1fr)
+        );
+
+    gap:24px;
+
+    margin-bottom:34px;
+
+}
+
+.dashboard-card{
+
+    background:var(--surface);
+
+    border:1px solid var(--line);
+
+    border-radius:var(--radius);
+
+    padding:28px;
+
+    box-shadow:var(--shadow);
+
+    transition:.25s;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.dashboard-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    width:5px;
+
+    height:100%;
+
+    background:var(--accent);
+
+}
+
+.dashboard-card:hover{
+
+    transform:
+
+        translateY(-5px);
+
+    border-color:
+
+        var(--accent);
+
+}
+
+.dashboard-card span{
+
+    display:block;
+
+    color:var(--muted);
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+    font-size:13px;
+
+    margin-bottom:10px;
+
+}
+
+.dashboard-card h2{
+
+    font-size:42px;
+
+    font-weight:800;
 
     margin-bottom:8px;
 
+    line-height:1;
+
 }
 
-.summary-item p{
+.dashboard-card small{
 
-    color:#94a3b8;
+    color:var(--muted);
+
+    font-size:15px;
+
+    line-height:1.5;
 
 }
 
 /* ==========================================
-   QUICK STATS
+   Performance Overview
 ========================================== */
 
-.stats-grid{
+.performance-grid{
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:
 
-    gap:18px;
+        repeat(
+            4,
+            1fr
+        );
 
-    margin-bottom:35px;
+    gap:24px;
+
+    margin-bottom:34px;
 
 }
 
-.stat-card{
+.performance-card{
 
-    background:white;
+    background:var(--surface);
 
-    border-radius:18px;
+    border:1px solid var(--line);
 
-    padding:22px;
+    border-radius:var(--radius);
 
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    padding:30px;
+
+    text-align:center;
+
+    box-shadow:var(--shadow);
 
     transition:.25s;
 
 }
 
-.stat-card:hover{
+.performance-card:hover{
 
-    transform:translateY(-6px);
+    transform:
 
-    box-shadow:0 18px 35px rgba(0,0,0,.12);
+        translateY(-4px);
 
-}
+    border-color:
 
-.stat-card span{
-
-    display:block;
-
-    color:#64748b;
-
-    margin-bottom:10px;
-
-    font-size:.95rem;
+        var(--accent);
 
 }
 
-.stat-card h2{
+.performance-card h3{
 
-    color:#0f172a;
+    font-size:58px;
 
-    font-size:2.1rem;
+    font-weight:800;
 
     margin-bottom:10px;
 
 }
 
-.stat-card small{
+.performance-card p{
 
-    color:#94a3b8;
+    color:var(--muted);
 
-    font-size:.9rem;
+    font-size:15px;
 
 }
 
+.performance-card.good h3{
+
+    color:var(--green);
+
+}
+
+.performance-card.warning h3{
+
+    color:var(--yellow);
+
+}
+
+.performance-card.alert h3{
+
+    color:var(--red);
+
+}
 /* ==========================================
-   PANELS
+   Analytics Panels
 ========================================== */
+
+.analytics-grid{
+
+    display:grid;
+
+    grid-template-columns:
+
+        2fr
+        1fr;
+
+    gap:28px;
+
+    margin-bottom:34px;
+
+}
 
 .panel{
 
-    background:white;
+    background:var(--surface);
 
-    border-radius:20px;
+    border:1px solid var(--line);
 
-    padding:30px;
+    border-radius:var(--radius);
 
-    margin-bottom:30px;
+    padding:28px;
 
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    box-shadow:var(--shadow);
+
+    transition:.25s;
+
+}
+
+.panel:hover{
+
+    border-color:var(--accent);
 
 }
 
@@ -206,113 +423,229 @@
 
     align-items:center;
 
-    margin-bottom:25px;
+    margin-bottom:24px;
 
 }
 
 .panel-header h2{
 
-    color:#0f172a;
+    font-size:28px;
 
-    font-size:1.5rem;
+    font-weight:700;
 
 }
 
 .panel-header p{
 
-    color:#94a3b8;
+    color:var(--muted);
+
+    font-size:15px;
 
 }
 
-.panel canvas{
+canvas{
 
-    width:100%!important;
+    width:100% !important;
 
-    height:420px!important;
+    height:360px !important;
 
 }
 
 /* ==========================================
-   PERSONAL RECORDS
+   AI Insights
+========================================== */
+
+.insight-card{
+
+    background:var(--surface2);
+
+    border-left:5px solid var(--accent);
+
+    border-radius:18px;
+
+    padding:18px 20px;
+
+    margin-bottom:16px;
+
+    transition:.2s;
+
+}
+
+.insight-card:hover{
+
+    transform:translateX(4px);
+
+}
+
+.insight-card h4{
+
+    margin-bottom:8px;
+
+    font-size:17px;
+
+}
+
+.insight-card p{
+
+    color:var(--muted);
+
+    line-height:1.6;
+
+    font-size:15px;
+
+}
+
+/* ==========================================
+   Personal Records
 ========================================== */
 
 .records-grid{
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    grid-template-columns:
 
-    gap:18px;
+        repeat(
+            auto-fit,
+            minmax(180px,1fr)
+        );
+
+    gap:20px;
 
 }
 
 .record{
 
-    background:#f8fafc;
+    background:var(--surface2);
 
-    border-radius:16px;
+    border-radius:20px;
 
-    padding:25px;
+    padding:24px;
 
     text-align:center;
+
+    transition:.25s;
+
+}
+
+.record:hover{
+
+    transform:
+
+        translateY(-4px);
+
+    background:#314156;
 
 }
 
 .record span{
 
-    color:#64748b;
-
     display:block;
 
-    margin-bottom:12px;
+    color:var(--muted);
+
+    margin-bottom:10px;
+
+    font-size:14px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
 
 }
 
 .record h3{
 
-    color:#0f172a;
+    font-size:34px;
 
-    font-size:2rem;
+    font-weight:800;
 
 }
 
 /* ==========================================
-   MOBILE
+   Mobile
 ========================================== */
 
-@media(max-width:900px){
+@media(max-width:1200px){
 
-    .summary-grid{
+    .performance-grid{
 
-        grid-template-columns:repeat(2,1fr);
+        grid-template-columns:
+
+            repeat(
+                2,
+                1fr
+            );
+
+    }
+
+    .analytics-grid{
+
+        grid-template-columns:
+
+            1fr;
 
     }
 
 }
 
-@media(max-width:650px){
+@media(max-width:850px){
 
-    .analytics-page{
+    .hero{
 
-        padding:20px;
+        flex-direction:column;
+
+        align-items:flex-start;
 
     }
 
     .hero h1{
 
-        font-size:2.2rem;
+        font-size:46px;
 
     }
 
-    .summary-grid{
+    .dashboard-grid{
 
-        grid-template-columns:1fr;
+        grid-template-columns:
+
+            1fr;
 
     }
 
-    .records-grid{
+}
 
-        grid-template-columns:1fr;
+@media(max-width:600px){
+
+    .performance-grid{
+
+        grid-template-columns:
+
+            1fr;
+
+    }
+
+    .hero{
+
+        padding:28px;
+
+    }
+
+    .hero h1{
+
+        font-size:38px;
+
+    }
+
+    .panel{
+
+        padding:22px;
+
+    }
+
+    canvas{
+
+        height:260px !important;
 
     }
 
