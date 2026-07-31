@@ -20,115 +20,94 @@
     --text:#F8FAFC;
     --muted:#94A3B8;
     --accent:#4EA8FF;
-    --success:#22C55E;
-    --warning:#FACC15;
-    --danger:#EF4444;
+    --green:#22C55E;
+    --yellow:#FACC15;
+    --red:#EF4444;
     --font-body:'Inter',sans-serif;
     --font-display:'Bebas Neue',sans-serif;
 }
 
 *{
+    margin:0;
+    padding:0;
     box-sizing:border-box;
 }
 
 body{
-    margin:0;
     background:var(--bg);
     color:var(--text);
     font-family:var(--font-body);
 }
 
 .wrap{
-    max-width:1400px;
-    margin:36px auto 60px;
+    max-width:1450px;
+    margin:40px auto 70px;
     padding:0 24px;
 }
 
 h1{
-    margin:0;
     font-family:var(--font-display);
-    font-size:54px;
-    letter-spacing:.04em;
+    font-size:56px;
+    letter-spacing:.05em;
 }
 
 .subtitle{
-    margin:8px 0 30px;
     color:var(--muted);
+    margin-top:6px;
+    margin-bottom:34px;
     font-size:16px;
 }
 
-.dashboard{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    gap:20px;
-}
-
-.card{
+.day-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
     background:var(--surface);
     border:1px solid var(--line);
     border-radius:18px;
-    padding:22px;
-    box-shadow:0 10px 28px rgba(0,0,0,.18);
+    padding:18px 24px;
+    margin-bottom:28px;
 }
-.card h2{
-    margin:0;
-    font-family:var(--font-display);
-    font-size:30px;
-    letter-spacing:.04em;
-}
-
-.value{
-    margin:14px 0 10px;
-    font-size:32px;
-    font-weight:700;
-}
-
-.goal{
-    color:var(--muted);
-    font-size:14px;
-}
-
-.bar{
-    width:100%;
-    height:12px;
-    margin-top:18px;
-    background:var(--surface-alt);
-    border-radius:999px;
-    overflow:hidden;
-}
-
-.fill{
-    height:100%;
-    width:0%;
-    background:var(--accent);
-    transition:.3s;
-}
-
-.controls{
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-top:18px;
-    flex-wrap:wrap;
-}
-
-.controls button{
-    padding:10px 14px;
-    border:none;
-    border-radius:10px;
+.day-bar button{
     background:var(--accent);
     color:#0F172A;
+    border:none;
+    border-radius:12px;
+    padding:12px 20px;
+    font-size:15px;
     font-weight:700;
     cursor:pointer;
     transition:.2s;
 }
 
-.controls button:hover{
+.day-bar button:hover{
     transform:translateY(-2px);
-    filter:brightness(1.1);
+    filter:brightness(1.08);
 }
-.notes{
-    margin-top:36px;
+
+.day-info{
+    text-align:center;
+}
+
+.day-info h2{
+    font-size:28px;
+    font-weight:700;
+    margin-bottom:4px;
+}
+
+.day-info p{
+    color:var(--muted);
+    font-size:14px;
+}
+
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:22px;
+    margin-bottom:34px;
+}
+
+.card{
     background:var(--surface);
     border:1px solid var(--line);
     border-radius:18px;
@@ -136,41 +115,140 @@ h1{
     box-shadow:0 10px 28px rgba(0,0,0,.18);
 }
 
-.notes h2{
-    margin:0 0 20px;
+.card h3{
+    font-size:18px;
+    color:var(--muted);
+    margin-bottom:16px;
+}
+
+.value{
+    font-size:42px;
+    font-weight:800;
+    margin-bottom:6px;
+}
+.goal{
+    color:var(--muted);
+    font-size:15px;
+    margin-bottom:18px;
+}
+
+.progress{
+    width:100%;
+    height:12px;
+    background:var(--surface-alt);
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:20px;
+}
+
+.progress-fill{
+    width:0%;
+    height:100%;
+    background:var(--accent);
+    transition:.3s;
+}
+
+.controls{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+}
+
+.controls button{
+    border:none;
+    border-radius:10px;
+    padding:12px;
+    background:var(--surface-alt);
+    color:var(--text);
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.controls button:hover{
+    background:var(--accent);
+    color:#0F172A;
+}
+
+.section-title{
+    margin:40px 0 18px;
     font-family:var(--font-display);
-    font-size:34px;
+    font-size:38px;
     letter-spacing:.04em;
 }
-
-.notes label{
-    display:block;
-    margin-top:18px;
-    margin-bottom:8px;
-    font-weight:600;
+.notes-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
 }
 
-.notes textarea{
+.note-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:22px;
+}
+
+.note-card h3{
+    margin-bottom:12px;
+    font-size:20px;
+}
+
+.note-card textarea{
     width:100%;
-    min-height:80px;
+    min-height:120px;
     resize:vertical;
     border:1px solid var(--line);
     border-radius:12px;
     background:var(--surface-alt);
     color:var(--text);
     padding:12px;
-    font-family:var(--font-body);
     font-size:15px;
+    font-family:var(--font-body);
+}
+
+.score-card{
+    margin-top:34px;
+    background:linear-gradient(135deg,var(--accent),#3A86FF);
+    border-radius:20px;
+    padding:28px;
+    color:white;
+    text-align:center;
+}
+
+.score-card h2{
+    font-family:var(--font-display);
+    font-size:42px;
+    letter-spacing:.05em;
+}
+
+.score{
+    margin-top:10px;
+    font-size:64px;
+    font-weight:800;
+}
+@media(max-width:900px){
+
+    .notes-grid{
+        grid-template-columns:1fr;
+    }
+
 }
 
 @media(max-width:700px){
 
     h1{
-        font-size:42px;
+        font-size:44px;
     }
 
-    .dashboard{
-        grid-template-columns:1fr;
+    .day-bar{
+        flex-direction:column;
+        gap:16px;
+    }
+
+    .controls{
+        grid-template-columns:repeat(2,1fr);
     }
 
 }
@@ -188,13 +266,33 @@ h1{
 <h1>Nutrition</h1>
 
 <p class="subtitle">
-Track your daily nutrition and stay fueled for every run.
+    Fuel your body. Recover faster. Perform better.
 </p>
+
+<div class="day-bar">
+
+    <button id="prevDay">
+        ← Previous Day
+    </button>
+
+    <div class="day-info">
+
+        <h2 id="currentDate"></h2>
+
+        <p id="dayCounter"></p>
+
+    </div>
+
+    <button id="nextDay">
+        Next Day →
+    </button>
+
+</div>
 
 <div class="dashboard">
     <div class="card">
 
-        <h2>Calories</h2>
+        <h3>Calories</h3>
 
         <div class="value">
             <span id="caloriesValue">0</span>
@@ -204,21 +302,22 @@ Track your daily nutrition and stay fueled for every run.
             Goal: <span id="caloriesGoal">3200</span> Calories
         </div>
 
-        <div class="bar">
-            <div class="fill" id="caloriesBar"></div>
+        <div class="progress">
+            <div class="progress-fill" id="caloriesBar"></div>
         </div>
 
         <div class="controls">
             <button onclick="changeValue('calories',-100)">-100</button>
             <button onclick="changeValue('calories',100)">+100</button>
             <button onclick="changeValue('calories',250)">+250</button>
+            <button onclick="setValue('calories')">Set</button>
         </div>
 
     </div>
 
     <div class="card">
 
-        <h2>Protein</h2>
+        <h3>Protein</h3>
 
         <div class="value">
             <span id="proteinValue">0</span>g
@@ -228,20 +327,21 @@ Track your daily nutrition and stay fueled for every run.
             Goal: <span id="proteinGoal">170</span>g
         </div>
 
-        <div class="bar">
-            <div class="fill" id="proteinBar"></div>
+        <div class="progress">
+            <div class="progress-fill" id="proteinBar"></div>
         </div>
 
         <div class="controls">
             <button onclick="changeValue('protein',-10)">-10</button>
             <button onclick="changeValue('protein',10)">+10</button>
             <button onclick="changeValue('protein',25)">+25</button>
+            <button onclick="setValue('protein')">Set</button>
         </div>
 
     </div>
         <div class="card">
 
-        <h2>Carbs</h2>
+        <h3>Carbs</h3>
 
         <div class="value">
             <span id="carbsValue">0</span>g
@@ -251,21 +351,46 @@ Track your daily nutrition and stay fueled for every run.
             Goal: <span id="carbsGoal">420</span>g
         </div>
 
-        <div class="bar">
-            <div class="fill" id="carbsBar"></div>
+        <div class="progress">
+            <div class="progress-fill" id="carbsBar"></div>
         </div>
 
         <div class="controls">
             <button onclick="changeValue('carbs',-25)">-25</button>
             <button onclick="changeValue('carbs',25)">+25</button>
             <button onclick="changeValue('carbs',50)">+50</button>
+            <button onclick="setValue('carbs')">Set</button>
         </div>
 
     </div>
 
     <div class="card">
 
-        <h2>Water</h2>
+        <h3>Fat</h3>
+
+        <div class="value">
+            <span id="fatValue">0</span>g
+        </div>
+
+        <div class="goal">
+            Goal: <span id="fatGoal">70</span>g
+        </div>
+
+        <div class="progress">
+            <div class="progress-fill" id="fatBar"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="changeValue('fat',-5)">-5</button>
+            <button onclick="changeValue('fat',5)">+5</button>
+            <button onclick="changeValue('fat',10)">+10</button>
+            <button onclick="setValue('fat')">Set</button>
+        </div>
+
+    </div>
+        <div class="card">
+
+        <h3>Water</h3>
 
         <div class="value">
             <span id="waterValue">0</span> oz
@@ -275,76 +400,356 @@ Track your daily nutrition and stay fueled for every run.
             Goal: <span id="waterGoal">100</span> oz
         </div>
 
-        <div class="bar">
-            <div class="fill" id="waterBar"></div>
+        <div class="progress">
+            <div class="progress-fill" id="waterBar"></div>
         </div>
 
         <div class="controls">
-            <button onclick="changeValue('water',-8)">-8 oz</button>
-            <button onclick="changeValue('water',8)">+8 oz</button>
-            <button onclick="changeValue('water',16)">+16 oz</button>
+            <button onclick="changeValue('water',-8)">-8</button>
+            <button onclick="changeValue('water',8)">+8</button>
+            <button onclick="changeValue('water',16)">+16</button>
+            <button onclick="setValue('water')">Set</button>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Sodium</h3>
+
+        <div class="value">
+            <span id="sodiumValue">0</span> mg
+        </div>
+
+        <div class="goal">
+            Goal: <span id="sodiumGoal">3000</span> mg
+        </div>
+
+        <div class="progress">
+            <div class="progress-fill" id="sodiumBar"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="changeValue('sodium',-250)">-250</button>
+            <button onclick="changeValue('sodium',250)">+250</button>
+            <button onclick="changeValue('sodium',500)">+500</button>
+            <button onclick="setValue('sodium')">Set</button>
         </div>
 
     </div>
 
 </div>
 
-<div class="notes">
+<h2 class="section-title">
+    Meals
+</h2>
 
-    <h2>Meals & Notes</h2>
+<div class="notes-grid">
+    <div class="note-card">
 
-    <label>Breakfast</label>
-    <textarea id="breakfast"></textarea>
+        <h3>Breakfast</h3>
 
-    <label>Lunch</label>
-    <textarea id="lunch"></textarea>
+        <textarea
+            id="breakfast"
+            placeholder="What did you eat for breakfast?"></textarea>
 
-    <label>Dinner</label>
-    <textarea id="dinner"></textarea>
+    </div>
 
-    <label>Snacks</label>
-    <textarea id="snacks"></textarea>
+    <div class="note-card">
 
-    <label>Notes</label>
-    <textarea id="notes"></textarea>
+        <h3>Lunch</h3>
+
+        <textarea
+            id="lunch"
+            placeholder="What did you eat for lunch?"></textarea>
+
+    </div>
+
+    <div class="note-card">
+
+        <h3>Dinner</h3>
+
+        <textarea
+            id="dinner"
+            placeholder="What did you eat for dinner?"></textarea>
+
+    </div>
+
+    <div class="note-card">
+
+        <h3>Snacks / Notes</h3>
+
+        <textarea
+            id="snacks"
+            placeholder="Snacks, supplements, electrolytes, or anything else..."></textarea>
+
+    </div>
 
 </div>
+
+<div class="score-card">
+
+    <h2>Daily Nutrition Score</h2>
+
+    <div
+        class="score"
+        id="dailyScore">
+        0%
+    </div>
+
+    <p id="scoreMessage">
+        Start tracking today's nutrition.
+    </p>
+
+</div>
+
+</div>
+
 <script src="js/loadHeader.js"></script>
 
 <script>
-
 const goals={
     calories:3200,
     protein:170,
     carbs:420,
-    water:100
+    fat:70,
+    water:100,
+    sodium:3000
 };
 
-const values={
-    calories:0,
-    protein:0,
-    carbs:0,
-    water:0
-};
+let currentDate=new Date();
 
-function updateCard(name){
+let data={};
 
-    document.getElementById(name+"Value").textContent=values[name];
+function dateKey(date){
 
-    const percent=Math.min((values[name]/goals[name])*100,100);
-
-    document.getElementById(name+"Bar").style.width=percent+"%";
+    return date.toISOString().split("T")[0];
 
 }
 
-function changeValue(name,amount){
+function loadDay(){
 
-    values[name]=Math.max(0,values[name]+amount);
+    const key=dateKey(currentDate);
 
-    updateCard(name);
+    const saved=localStorage.getItem(key);
+
+    if(saved){
+
+        data=JSON.parse(saved);
+
+    }else{
+
+        data={
+            calories:0,
+            protein:0,
+            carbs:0,
+            fat:0,
+            water:0,
+            sodium:0,
+            breakfast:"",
+            lunch:"",
+            dinner:"",
+            snacks:""
+        };
+
+    }
+
+    updateDate();
+
+    updateAll();
 
 }
-Object.keys(goals).forEach(updateCard);
+function saveDay(){
+
+    localStorage.setItem(
+        dateKey(currentDate),
+        JSON.stringify(data)
+    );
+
+}
+
+function updateDate(){
+
+    document.getElementById("currentDate").textContent=
+        currentDate.toLocaleDateString(
+            "en-US",
+            {
+                weekday:"long",
+                month:"long",
+                day:"numeric",
+                year:"numeric"
+            }
+        );
+
+    const raceDay=new Date("2026-11-07");
+
+    const diff=Math.floor(
+        (raceDay-currentDate)/(1000*60*60*24)
+    );
+
+    document.getElementById("dayCounter").textContent=
+        diff>=0
+            ? diff+" days until Indianapolis Marathon"
+            : "Race Complete 🏁";
+
+}
+
+function updateAll(){
+
+    Object.keys(goals).forEach(stat=>{
+
+        document.getElementById(stat+"Value").textContent=data[stat];
+
+        const percent=Math.min(
+            (data[stat]/goals[stat])*100,
+            100
+        );
+
+        document.getElementById(stat+"Bar").style.width=
+            percent+"%";
+
+    });
+
+    document.getElementById("breakfast").value=data.breakfast;
+    document.getElementById("lunch").value=data.lunch;
+    document.getElementById("dinner").value=data.dinner;
+    document.getElementById("snacks").value=data.snacks;
+
+    updateScore();
+
+}
+function updateScore(){
+
+    let score=0;
+
+    Object.keys(goals).forEach(stat=>{
+
+        const percent=Math.min(
+            data[stat]/goals[stat],
+            1
+        );
+
+        score+=percent;
+
+    });
+
+    score=Math.round(
+        (score/Object.keys(goals).length)*100
+    );
+
+    document.getElementById("dailyScore").textContent=
+        score+"%";
+
+    const message=document.getElementById("scoreMessage");
+
+    if(score>=95){
+
+        message.textContent="Outstanding! You're fully fueled.";
+
+    }else if(score>=80){
+
+        message.textContent="Great job. Just a little more to hit every goal.";
+
+    }else if(score>=60){
+
+        message.textContent="Solid start. Keep eating and hydrating.";
+
+    }else{
+
+        message.textContent="Let's start fueling your body today.";
+
+    }
+
+}
+
+function changeValue(stat,amount){
+
+    data[stat]=Math.max(
+        0,
+        data[stat]+amount
+    );
+
+    saveDay();
+
+    updateAll();
+
+}
+
+function setValue(stat){
+
+    const value=prompt(
+        "Enter "+stat+" value:",
+        data[stat]
+    );
+
+    if(value===null) return;
+
+    const number=parseFloat(value);
+
+    if(!isNaN(number)){
+
+        data[stat]=number;
+
+        saveDay();
+
+        updateAll();
+
+    }
+
+}
+document.getElementById("breakfast").addEventListener("input",e=>{
+
+    data.breakfast=e.target.value;
+
+    saveDay();
+
+});
+
+document.getElementById("lunch").addEventListener("input",e=>{
+
+    data.lunch=e.target.value;
+
+    saveDay();
+
+});
+
+document.getElementById("dinner").addEventListener("input",e=>{
+
+    data.dinner=e.target.value;
+
+    saveDay();
+
+});
+
+document.getElementById("snacks").addEventListener("input",e=>{
+
+    data.snacks=e.target.value;
+
+    saveDay();
+
+});
+
+document.getElementById("prevDay").addEventListener("click",()=>{
+
+    currentDate.setDate(
+        currentDate.getDate()-1
+    );
+
+    loadDay();
+
+});
+
+document.getElementById("nextDay").addEventListener("click",()=>{
+
+    currentDate.setDate(
+        currentDate.getDate()+1
+    );
+
+    loadDay();
+
+});
+
+loadDay();
 
 </script>
 
