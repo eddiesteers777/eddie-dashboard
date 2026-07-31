@@ -1,0 +1,790 @@
+:root{
+
+    --bg:#0F172A;
+    --surface:#1E293B;
+    --surface-light:#273449;
+    --border:#334155;
+
+    --text:#F8FAFC;
+    --muted:#94A3B8;
+
+    --accent:#4EA8FF;
+    --accent-dark:#2563EB;
+
+    --green:#22C55E;
+    --yellow:#FACC15;
+    --red:#EF4444;
+
+    --radius:20px;
+
+    --shadow:
+        0 15px 35px rgba(0,0,0,.22);
+
+}
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+body{
+
+    background:var(--bg);
+    color:var(--text);
+
+    font-family:
+        Inter,
+        Arial,
+        sans-serif;
+
+}
+
+.nutrition-page{
+
+    max-width:1500px;
+
+    margin:auto;
+
+    padding:
+
+        40px
+        24px
+        80px;
+
+}
+
+.page-title{
+
+    margin-bottom:35px;
+
+}
+
+.page-title h1{
+
+    font-size:64px;
+
+    font-weight:800;
+
+    line-height:1;
+
+    margin-bottom:8px;
+
+}
+
+.page-title p{
+
+    color:var(--muted);
+
+    font-size:18px;
+
+}
+
+.date-navigation{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:20px;
+
+    margin-bottom:28px;
+
+}
+
+.date-info{
+
+    flex:1;
+
+    background:var(--surface);
+
+    border:1px solid var(--border);
+
+    border-radius:20px;
+
+    padding:22px 28px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.date-info h2{
+
+    font-size:32px;
+
+    margin-bottom:6px;
+
+}
+
+.date-info span{
+
+    color:var(--muted);
+
+    font-size:15px;
+
+}
+
+.day-btn{
+
+    width:62px;
+
+    height:62px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:var(--accent);
+
+    color:white;
+
+    font-size:26px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:
+
+        .25s;
+
+}
+
+.day-btn:hover{
+
+    transform:
+
+        translateY(-3px);
+
+    background:
+
+        var(--accent-dark);
+
+}
+
+.day-btn:active{
+
+    transform:
+
+        scale(.95);
+
+}
+/* ==========================
+   Workout Card
+========================== */
+
+.workout-card{
+
+    background:
+        linear-gradient(
+            135deg,
+            #4EA8FF,
+            #2563EB
+        );
+
+    color:white;
+
+    border-radius:24px;
+
+    padding:30px 34px;
+
+    margin-bottom:32px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.workout-label{
+
+    display:block;
+
+    text-transform:uppercase;
+
+    letter-spacing:.12em;
+
+    font-size:14px;
+
+    opacity:.9;
+
+    margin-bottom:10px;
+
+}
+
+.workout-card h2{
+
+    font-size:42px;
+
+    margin-bottom:12px;
+
+    font-weight:800;
+
+}
+
+.workout-card p{
+
+    font-size:18px;
+
+    line-height:1.6;
+
+    max-width:850px;
+
+    opacity:.95;
+
+}
+
+/* ==========================
+   Macro Grid
+========================== */
+
+.macro-grid{
+
+    display:grid;
+
+    grid-template-columns:
+
+        repeat(
+            auto-fit,
+            minmax(320px,1fr)
+        );
+
+    gap:24px;
+
+    margin-bottom:40px;
+
+}
+
+.macro-card{
+
+    background:var(--surface);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:24px;
+
+    box-shadow:var(--shadow);
+
+    transition:.25s;
+
+}
+
+.macro-card:hover{
+
+    transform:
+
+        translateY(-5px);
+
+    border-color:
+
+        var(--accent);
+
+}
+
+.card-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:18px;
+
+}
+
+.card-title{
+
+    font-size:24px;
+
+    font-weight:700;
+
+}
+
+.goal-label{
+
+    color:var(--muted);
+
+    font-size:15px;
+
+}
+
+.big-value{
+
+    display:flex;
+
+    align-items:flex-end;
+
+    gap:8px;
+
+    margin-bottom:18px;
+
+}
+
+.big-value span{
+
+    font-size:60px;
+
+    font-weight:800;
+
+    line-height:1;
+
+}
+
+.big-value small{
+
+    color:var(--muted);
+
+    font-size:22px;
+
+    margin-bottom:8px;
+
+}
+/* ==========================
+   Progress Bar
+========================== */
+
+.progress{
+
+    width:100%;
+
+    height:14px;
+
+    background:var(--surface-light);
+
+    border-radius:999px;
+
+    overflow:hidden;
+
+    margin-bottom:22px;
+
+}
+
+.progress-fill{
+
+    width:0%;
+
+    height:100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--accent),
+            #60A5FA
+        );
+
+    transition:
+        width .35s ease,
+        background .35s ease;
+
+}
+
+/* ==========================
+   Controls
+========================== */
+
+.controls{
+
+    display:grid;
+
+    grid-template-columns:
+        60px
+        1fr
+        60px;
+
+    gap:16px;
+
+    align-items:center;
+
+    margin-bottom:18px;
+
+}
+
+.adjust-btn{
+
+    width:60px;
+
+    height:60px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:var(--surface-light);
+
+    color:var(--text);
+
+    font-size:34px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.adjust-btn:hover{
+
+    background:var(--accent);
+
+    color:white;
+
+    transform:scale(1.05);
+
+}
+
+.adjust-btn:active{
+
+    transform:scale(.95);
+
+}
+
+.metric-display{
+
+    text-align:center;
+
+}
+
+.metric-display .current{
+
+    display:block;
+
+    font-size:42px;
+
+    font-weight:800;
+
+    line-height:1;
+
+}
+
+.metric-display .label{
+
+    display:block;
+
+    margin-top:6px;
+
+    color:var(--muted);
+
+    font-size:14px;
+
+}
+
+.remaining{
+
+    text-align:center;
+
+    color:var(--muted);
+
+    font-size:15px;
+
+    margin-bottom:18px;
+
+}
+
+.goal-btn{
+
+    width:100%;
+
+    border:none;
+
+    border-radius:14px;
+
+    padding:13px;
+
+    background:var(--surface-light);
+
+    color:var(--text);
+
+    font-size:15px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.goal-btn:hover{
+
+    background:var(--accent);
+
+    color:white;
+
+}
+/* ==========================
+   Meals
+========================== */
+
+.meal-section{
+
+    margin-top:10px;
+
+}
+
+.meal-section h2{
+
+    font-size:42px;
+
+    font-weight:800;
+
+    margin-bottom:22px;
+
+}
+
+.meal-grid{
+
+    display:grid;
+
+    grid-template-columns:
+
+        repeat(
+            auto-fit,
+            minmax(340px,1fr)
+        );
+
+    gap:24px;
+
+    margin-bottom:40px;
+
+}
+
+.meal-card{
+
+    background:var(--surface);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:24px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.meal-card h3{
+
+    margin-bottom:16px;
+
+    font-size:22px;
+
+}
+
+.meal-card textarea{
+
+    width:100%;
+
+    min-height:140px;
+
+    resize:vertical;
+
+    border:none;
+
+    outline:none;
+
+    background:var(--surface-light);
+
+    color:var(--text);
+
+    border-radius:16px;
+
+    padding:16px;
+
+    font-size:15px;
+
+    line-height:1.6;
+
+    font-family:inherit;
+
+    transition:.2s;
+
+}
+
+.meal-card textarea:focus{
+
+    box-shadow:
+
+        0 0 0 3px
+
+        rgba(78,168,255,.30);
+
+}
+
+/* ==========================
+   Summary
+========================== */
+
+.summary-grid{
+
+    display:grid;
+
+    grid-template-columns:
+
+        repeat(
+            auto-fit,
+            minmax(360px,1fr)
+        );
+
+    gap:24px;
+
+    margin-bottom:40px;
+
+}
+
+.summary-card{
+
+    background:var(--surface);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:28px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.score-card{
+
+    background:
+
+        linear-gradient(
+            135deg,
+            #4EA8FF,
+            #2563EB
+        );
+
+    border:none;
+
+}
+
+.score-card h3{
+
+    font-size:24px;
+
+    margin-bottom:16px;
+
+}
+
+#nutritionScore{
+
+    font-size:76px;
+
+    font-weight:800;
+
+    line-height:1;
+
+    margin-bottom:12px;
+
+}
+
+#scoreMessage{
+
+    font-size:17px;
+
+    line-height:1.6;
+
+    opacity:.95;
+
+}
+
+.stat-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:14px 0;
+
+    border-bottom:
+
+        1px solid
+
+        var(--border);
+
+}
+
+.stat-row:last-child{
+
+    border-bottom:none;
+
+}
+
+.stat-name{
+
+    color:var(--muted);
+
+}
+
+.stat-value{
+
+    font-weight:700;
+
+}
+
+/* ==========================
+   Responsive
+========================== */
+
+@media(max-width:900px){
+
+    .date-navigation{
+
+        flex-direction:column;
+
+        align-items:stretch;
+
+    }
+
+    .day-btn{
+
+        width:100%;
+
+        height:56px;
+
+    }
+
+}
+
+@media(max-width:650px){
+
+    .page-title h1{
+
+        font-size:48px;
+
+    }
+
+    .workout-card h2{
+
+        font-size:34px;
+
+    }
+
+    .controls{
+
+        grid-template-columns:
+
+            55px
+
+            1fr
+
+            55px;
+
+    }
+
+    .big-value span{
+
+        font-size:48px;
+
+    }
+
+}
