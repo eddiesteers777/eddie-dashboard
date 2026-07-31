@@ -1,0 +1,1461 @@
+/* ==========================================
+   EddieOS Marathon Tracker
+   Part 1 - Foundation + Hero + Stats
+========================================== */
+
+:root{
+
+    --bg:#07111f;
+    --surface:#111c2e;
+    --surface-light:#18263b;
+    --card:#162338;
+
+    --border:rgba(255,255,255,.08);
+
+    --text:#f5f8ff;
+    --text-light:#9aa8c7;
+
+    --primary:#3b82f6;
+    --primary-dark:#2563eb;
+    --primary-light:#60a5fa;
+
+    --green:#22c55e;
+    --orange:#f59e0b;
+    --red:#ef4444;
+
+    --shadow:
+        0 20px 45px rgba(0,0,0,.35);
+
+    --radius:22px;
+
+    --transition:.25s ease;
+
+}
+
+/* ==========================================
+   Reset
+========================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    font-family:"Inter",sans-serif;
+
+    background:
+        radial-gradient(circle at top,#13233d 0%,#08111d 45%,#040a14 100%);
+
+    color:var(--text);
+
+    padding:40px;
+
+}
+
+/* ==========================================
+   Main Container
+========================================== */
+
+#mp-root{
+
+    max-width:1350px;
+
+    margin:auto;
+
+}
+
+/* ==========================================
+   Hero
+========================================== */
+
+.mp-hero{
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(27,43,69,.96),
+            rgba(16,27,43,.95)
+        );
+
+    border:
+
+        1px solid var(--border);
+
+    border-radius:28px;
+
+    padding:40px;
+
+    margin-bottom:32px;
+
+    box-shadow:var(--shadow);
+
+    backdrop-filter:blur(18px);
+
+}
+
+.mp-hero-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    gap:40px;
+
+    flex-wrap:wrap;
+
+}
+
+.mp-eyebrow{
+
+    display:inline-block;
+
+    padding:8px 16px;
+
+    border-radius:999px;
+
+    background:
+
+        rgba(59,130,246,.15);
+
+    color:var(--primary-light);
+
+    font-size:.72rem;
+
+    font-weight:700;
+
+    letter-spacing:.18em;
+
+    text-transform:uppercase;
+
+    margin-bottom:18px;
+
+}
+
+.mp-title{
+
+    font-size:3rem;
+
+    font-weight:800;
+
+    line-height:1.05;
+
+    margin-bottom:12px;
+
+}
+
+.mp-sub{
+
+    max-width:650px;
+
+    color:var(--text-light);
+
+    line-height:1.7;
+
+    font-size:1rem;
+
+}
+
+/* ==========================================
+   Goal Card
+========================================== */
+
+.mp-goal-block{
+
+    min-width:260px;
+
+    text-align:right;
+
+    padding:28px;
+
+    border-radius:22px;
+
+    background:
+
+        linear-gradient(
+            160deg,
+            rgba(59,130,246,.18),
+            rgba(20,32,54,.95)
+        );
+
+    border:1px solid rgba(59,130,246,.25);
+
+}
+
+.mp-goal-label{
+
+    color:var(--text-light);
+
+    text-transform:uppercase;
+
+    font-size:.72rem;
+
+    letter-spacing:.16em;
+
+}
+
+.mp-goal-time{
+
+    margin-top:10px;
+
+    font-size:3rem;
+
+    font-weight:800;
+
+    color:white;
+
+}
+
+.mp-countdown{
+
+    margin-top:12px;
+
+    color:var(--primary-light);
+
+    font-weight:600;
+
+}
+
+/* ==========================================
+   Stat Cards
+========================================== */
+
+.mp-stats-row{
+
+    display:grid;
+
+    grid-template-columns:
+
+        repeat(4,1fr);
+
+    gap:22px;
+
+    margin-top:36px;
+
+}
+
+.mp-stat{
+
+    background:
+
+        rgba(255,255,255,.04);
+
+    border:
+
+        1px solid rgba(255,255,255,.07);
+
+    border-radius:20px;
+
+    padding:24px;
+
+    transition:var(--transition);
+
+}
+
+.mp-stat:hover{
+
+    transform:translateY(-5px);
+
+    border-color:
+
+        rgba(59,130,246,.45);
+
+    box-shadow:
+
+        0 15px 35px rgba(0,0,0,.28);
+
+}
+
+.mp-stat-val{
+
+    font-size:2rem;
+
+    font-weight:800;
+
+    color:white;
+
+    margin-bottom:8px;
+
+}
+
+.mp-stat-label{
+
+    color:var(--text-light);
+
+    font-size:.8rem;
+
+    letter-spacing:.08em;
+
+    text-transform:uppercase;
+
+}
+
+/* ==========================================
+   Typography Helpers
+========================================== */
+
+.mp-display{
+
+    font-family:"Inter",sans-serif;
+
+}
+
+.mp-mono{
+
+    font-family:
+        "JetBrains Mono",
+        monospace;
+
+}
+/* ==========================================
+   Part 2
+   Chart + Week Navigation + Detail Header
+========================================== */
+
+/* ===========================
+   Chart Section
+=========================== */
+
+.mp-chart-wrap{
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(22,35,56,.96),
+            rgba(16,27,43,.94)
+        );
+
+    border:1px solid var(--border);
+
+    border-radius:24px;
+
+    padding:30px;
+
+    margin-bottom:28px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.mp-chart-title{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:16px;
+
+    margin-bottom:22px;
+
+    font-size:.8rem;
+
+    text-transform:uppercase;
+
+    letter-spacing:.14em;
+
+    color:var(--text-light);
+
+}
+
+.mp-chart-scroll{
+
+    overflow-x:auto;
+
+    padding-bottom:10px;
+
+}
+
+#mp-chart-svg{
+
+    display:block;
+
+    min-width:950px;
+
+}
+
+.mp-bar{
+
+    cursor:pointer;
+
+    transition:
+        opacity .25s ease,
+        transform .25s ease;
+
+}
+
+.mp-bar:hover{
+
+    opacity:.85;
+
+}
+
+.mp-bar-selected{
+
+    stroke:white;
+
+    stroke-width:3;
+
+}
+
+/* ===========================
+   Legend
+=========================== */
+
+.mp-legend{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:18px;
+
+    font-size:.75rem;
+
+    color:var(--text-light);
+
+}
+
+.mp-legend span{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+}
+
+.mp-legend i{
+
+    width:10px;
+
+    height:10px;
+
+    border-radius:3px;
+
+}
+
+/* ===========================
+   Week Chips
+=========================== */
+
+.mp-weeklist{
+
+    display:flex;
+
+    gap:12px;
+
+    overflow-x:auto;
+
+    padding:6px 0 18px;
+
+    margin-bottom:30px;
+
+    scrollbar-width:none;
+
+}
+
+.mp-weeklist::-webkit-scrollbar{
+
+    display:none;
+
+}
+
+.mp-wchip{
+
+    flex:0 0 auto;
+
+    padding:12px 18px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.04);
+
+    border:1px solid var(--border);
+
+    color:var(--text-light);
+
+    font-size:.85rem;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:all .25s ease;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+.mp-wchip:hover{
+
+    transform:translateY(-3px);
+
+    border-color:rgba(59,130,246,.45);
+
+    color:white;
+
+}
+
+.mp-wchip.active{
+
+    background:
+
+        linear-gradient(
+            135deg,
+            var(--primary),
+            var(--primary-dark)
+        );
+
+    color:white;
+
+    border:none;
+
+    box-shadow:
+
+        0 10px 30px rgba(37,99,235,.35);
+
+}
+
+.mp-dot{
+
+    width:8px;
+
+    height:8px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.4);
+
+}
+
+.mp-wchip.done .mp-dot{
+
+    background:var(--green);
+
+}
+
+.mp-wchip.active .mp-dot{
+
+    background:white;
+
+}
+
+/* ===========================
+   Detail Section
+=========================== */
+
+.mp-detail{
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(22,35,56,.96),
+            rgba(16,27,43,.95)
+        );
+
+    border:1px solid var(--border);
+
+    border-radius:26px;
+
+    padding:36px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.mp-detail-head{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    gap:30px;
+
+    flex-wrap:wrap;
+
+    margin-bottom:28px;
+
+}
+
+.mp-phase-pill{
+
+    display:inline-block;
+
+    padding:8px 16px;
+
+    border-radius:999px;
+
+    font-size:.72rem;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:.12em;
+
+    margin-bottom:18px;
+
+}
+
+.mp-week-title{
+
+    font-size:2.2rem;
+
+    font-weight:800;
+
+    margin-bottom:8px;
+
+}
+
+.mp-week-dates{
+
+    color:var(--text-light);
+
+    font-size:.95rem;
+
+}
+
+.mp-week-progress{
+
+    text-align:right;
+
+}
+
+.mp-week-miles{
+
+    font-size:3rem;
+
+    font-weight:800;
+
+    color:var(--primary-light);
+
+    line-height:1;
+
+}
+
+.mp-week-miles-label{
+
+    margin-top:10px;
+
+    color:var(--text-light);
+
+    font-size:.8rem;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+}
+
+/* ===========================
+   Info Banners
+=========================== */
+
+.mp-banner{
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:12px;
+
+    padding:18px 22px;
+
+    border-radius:18px;
+
+    margin-bottom:18px;
+
+    font-size:.95rem;
+
+    line-height:1.5;
+
+}
+
+.mp-banner-race{
+
+    background:
+
+        rgba(59,130,246,.12);
+
+    border:
+
+        1px solid rgba(59,130,246,.35);
+
+    color:#dbeafe;
+
+}
+
+.mp-banner-check{
+
+    background:
+
+        rgba(34,197,94,.12);
+
+    border:
+
+        1px solid rgba(34,197,94,.35);
+
+    color:#dcfce7;
+
+}
+/* ==========================================
+   Part 3
+   Training Table + Notes + Inputs
+========================================== */
+
+/* ===========================
+   Workout List
+=========================== */
+
+.mp-days{
+
+    overflow:hidden;
+
+    border-radius:22px;
+
+    border:1px solid var(--border);
+
+    background:rgba(255,255,255,.03);
+
+    margin-bottom:28px;
+
+}
+
+.mp-day-row{
+
+    display:grid;
+
+    grid-template-columns:
+
+        36px
+        55px
+        1fr
+        90px
+        120px
+        110px;
+
+    gap:18px;
+
+    align-items:center;
+
+    padding:18px 22px;
+
+    border-bottom:1px solid rgba(255,255,255,.06);
+
+    transition:.25s;
+
+}
+
+.mp-day-row:last-child{
+
+    border-bottom:none;
+
+}
+
+.mp-day-row:hover{
+
+    background:rgba(255,255,255,.04);
+
+}
+
+.mp-day-done{
+
+    background:
+
+        rgba(59,130,246,.10);
+
+}
+
+.mp-race{
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(245,158,11,.12),
+            rgba(255,255,255,.02)
+        );
+
+}
+
+/* ===========================
+   Checkbox
+=========================== */
+
+.mp-check{
+
+    width:24px;
+
+    height:24px;
+
+    border-radius:8px;
+
+    border:2px solid rgba(255,255,255,.25);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.mp-check:hover{
+
+    border-color:var(--primary);
+
+}
+
+.mp-check.checked{
+
+    background:
+
+        linear-gradient(
+            135deg,
+            var(--primary),
+            var(--primary-dark)
+        );
+
+    border-color:transparent;
+
+    color:white;
+
+}
+
+/* ===========================
+   Text
+=========================== */
+
+.mp-day-abbr{
+
+    font-weight:700;
+
+    color:var(--text-light);
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+}
+
+.mp-day-session{
+
+    line-height:1.5;
+
+    color:white;
+
+}
+
+.mp-day-race-tag{
+
+    color:var(--orange);
+
+    font-weight:700;
+
+}
+
+.mp-day-miles{
+
+    text-align:right;
+
+    font-weight:700;
+
+    font-size:1rem;
+
+}
+
+.mp-day-timing{
+
+    color:var(--text-light);
+
+    font-size:.82rem;
+
+}
+
+.mp-pace-chip{
+
+    justify-self:center;
+
+    padding:8px 14px;
+
+    border-radius:999px;
+
+    background:
+
+        rgba(59,130,246,.12);
+
+    border:
+
+        1px solid rgba(59,130,246,.25);
+
+    color:var(--primary-light);
+
+    font-size:.72rem;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:.06em;
+
+}
+
+/* ===========================
+   Editable Inputs
+=========================== */
+
+.mp-day-session-input,
+
+.mp-day-miles-input{
+
+    background:
+
+        rgba(255,255,255,.05);
+
+    border:1px solid transparent;
+
+    color:white;
+
+    border-radius:10px;
+
+    padding:8px 10px;
+
+    font-size:.92rem;
+
+    transition:.2s;
+
+}
+
+.mp-day-session-input{
+
+    width:100%;
+
+}
+
+.mp-day-miles-input{
+
+    width:60px;
+
+    text-align:right;
+
+}
+
+.mp-day-session-input:hover,
+
+.mp-day-miles-input:hover{
+
+    border-color:
+
+        rgba(59,130,246,.35);
+
+}
+
+.mp-day-session-input:focus,
+
+.mp-day-miles-input:focus{
+
+    outline:none;
+
+    border-color:var(--primary);
+
+    background:
+
+        rgba(59,130,246,.08);
+
+}
+
+.mp-edited-flag{
+
+    color:var(--orange);
+
+    margin-left:6px;
+
+}
+
+/* ===========================
+   Motivation Quote
+=========================== */
+
+.mp-mental{
+
+    margin:28px 0;
+
+    padding:22px;
+
+    border-left:5px solid var(--primary);
+
+    background:
+
+        rgba(59,130,246,.08);
+
+    border-radius:18px;
+
+    color:#dbeafe;
+
+    font-size:1.05rem;
+
+    font-style:italic;
+
+    line-height:1.6;
+
+}
+
+/* ===========================
+   Notes
+=========================== */
+
+.mp-notes-grid{
+
+    display:grid;
+
+    grid-template-columns:
+
+        repeat(auto-fit,minmax(260px,1fr));
+
+    gap:22px;
+
+    margin-top:26px;
+
+}
+
+.mp-note-card{
+
+    background:
+
+        rgba(255,255,255,.04);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    border-radius:20px;
+
+    padding:24px;
+
+    transition:.25s;
+
+}
+
+.mp-note-card:hover{
+
+    transform:translateY(-4px);
+
+    border-color:
+
+        rgba(59,130,246,.35);
+
+}
+
+.mp-note-label{
+
+    font-size:.78rem;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+    color:var(--primary-light);
+
+    margin-bottom:12px;
+
+    font-weight:700;
+
+}
+
+.mp-note-body{
+
+    color:var(--text-light);
+
+    line-height:1.7;
+
+    font-size:.95rem;
+
+}
+/* ==========================================
+   Part 4
+   Buttons + Drawer + Responsive + Animations
+========================================== */
+
+/* ===========================
+   Buttons
+=========================== */
+
+.mp-drawer-toggle,
+.mp-reset-btn{
+
+    appearance:none;
+
+    border:none;
+
+    cursor:pointer;
+
+    padding:12px 22px;
+
+    border-radius:14px;
+
+    font-size:.9rem;
+
+    font-weight:600;
+
+    transition:all .25s ease;
+
+    margin-top:24px;
+
+    margin-right:12px;
+
+}
+
+.mp-drawer-toggle{
+
+    color:white;
+
+    background:linear-gradient(
+        135deg,
+        var(--primary),
+        var(--primary-dark)
+    );
+
+    box-shadow:
+        0 12px 30px rgba(37,99,235,.30);
+
+}
+
+.mp-drawer-toggle:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:
+        0 18px 35px rgba(37,99,235,.40);
+
+}
+
+.mp-reset-btn{
+
+    background:rgba(239,68,68,.12);
+
+    color:#fca5a5;
+
+    border:1px solid rgba(239,68,68,.30);
+
+}
+
+.mp-reset-btn:hover{
+
+    background:#ef4444;
+
+    color:white;
+
+}
+
+/* ===========================
+   Pace Drawer
+=========================== */
+
+.mp-drawer{
+
+    margin-top:28px;
+
+    display:none;
+
+    background:rgba(255,255,255,.04);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:26px;
+
+    animation:fadeUp .35s ease;
+
+}
+
+.mp-drawer.open{
+
+    display:block;
+
+}
+
+.mp-pace-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+.mp-pace-table td{
+
+    padding:14px 10px;
+
+    border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.mp-pace-table tr:last-child td{
+
+    border-bottom:none;
+
+}
+
+.mp-pace-table td:first-child{
+
+    color:white;
+
+    font-weight:600;
+
+}
+
+.mp-pace-table td:last-child{
+
+    text-align:right;
+
+    color:var(--primary-light);
+
+    font-weight:700;
+
+}
+
+/* ===========================
+   Scrollbars
+=========================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+    height:10px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#09111c;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#23406c;
+
+    border-radius:999px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:var(--primary);
+
+}
+
+/* Firefox */
+
+*{
+
+    scrollbar-color:#23406c #09111c;
+
+}
+
+/* ===========================
+   Animations
+=========================== */
+
+@keyframes fadeUp{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+@keyframes floatCard{
+
+    from{
+
+        transform:translateY(0);
+
+    }
+
+    50%{
+
+        transform:translateY(-4px);
+
+    }
+
+    to{
+
+        transform:translateY(0);
+
+    }
+
+}
+
+.mp-stat,
+.mp-note-card,
+.mp-detail,
+.mp-chart-wrap,
+.mp-hero{
+
+    animation:fadeUp .5s ease;
+
+}
+
+.mp-stat:hover,
+.mp-note-card:hover{
+
+    animation:floatCard .6s ease;
+
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width:1100px){
+
+    .mp-stats-row{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+@media (max-width:850px){
+
+    body{
+
+        padding:20px;
+
+    }
+
+    .mp-hero{
+
+        padding:28px;
+
+    }
+
+    .mp-hero-top{
+
+        flex-direction:column;
+
+    }
+
+    .mp-goal-block{
+
+        width:100%;
+
+        text-align:left;
+
+    }
+
+    .mp-detail{
+
+        padding:24px;
+
+    }
+
+    .mp-day-row{
+
+        grid-template-columns:
+
+            30px
+            45px
+            1fr;
+
+        gap:12px;
+
+    }
+
+    .mp-day-miles,
+    .mp-pace-chip,
+    .mp-day-timing{
+
+        grid-column:3;
+
+        justify-self:start;
+
+        text-align:left;
+
+    }
+
+}
+
+@media (max-width:600px){
+
+    .mp-title{
+
+        font-size:2.2rem;
+
+    }
+
+    .mp-goal-time{
+
+        font-size:2.3rem;
+
+    }
+
+    .mp-week-title{
+
+        font-size:1.8rem;
+
+    }
+
+    .mp-stats-row{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .mp-notes-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .mp-drawer-toggle,
+    .mp-reset-btn{
+
+        width:100%;
+
+        margin-right:0;
+
+    }
+
+}
