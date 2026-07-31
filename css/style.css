@@ -1,4 +1,63 @@
 /* ==========================================================
+   EDDIEOS FOUNDATION
+========================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+*,
+*::before,
+*::after{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+}
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+:root{
+
+    --bg:#050B14;
+
+    --bg-secondary:#091321;
+
+    --surface:#101C2D;
+
+    --surface-light:#162538;
+
+    --surface-hover:#1A2E46;
+
+    --primary:#4EA8FF;
+
+    --primary-light:#78BEFF;
+
+    --success:#22C55E;
+
+    --warning:#F59E0B;
+
+    --danger:#EF4444;
+
+    --text:#FFFFFF;
+
+    --text-secondary:#B7C4D6;
+
+    --text-muted:#71839B;
+
+    --border:rgba(255,255,255,.08);
+
+    --border-light:rgba(255,255,255,.14);
+
+    --radius:22px;
+
+}
+/* ==========================================================
    NAVIGATION
 ========================================================== */
 
