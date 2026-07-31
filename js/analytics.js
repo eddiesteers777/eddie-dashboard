@@ -1,185 +1,178 @@
-// ==============================
-// EddieOS Analytics Dashboard
-// ==============================
+/* ==========================================
+   EddieOS Analytics
+========================================== */
 
-// Weekly Mileage Chart
+const RACE_DATE = new Date("2026-11-07");
 
-const canvas = document.getElementById("weeklyMileageChart");
+const today = new Date();
 
-const ctx = canvas.getContext("2d");
+let marathonPlan = [];
 
-// Gradient Fill
+let charts = {};
 
-const gradient = ctx.createLinearGradient(0, 0, 0, 450);
+const analytics = {
 
-gradient.addColorStop(0, "rgba(59,130,246,.45)");
-gradient.addColorStop(.35, "rgba(59,130,246,.20)");
-gradient.addColorStop(1, "rgba(59,130,246,0)");
+    weeklyMileage:0,
 
-new Chart(ctx, {
+    totalMileage:0,
 
-    type: "line",
+    peakMileage:0,
 
-    data: {
+    completion:0,
 
-        labels: [
+    longestRun:0,
 
-            "Jun 8",
-            "Jun 15",
-            "Jun 22",
-            "Jun 29",
-            "Jul 6",
-            "Jul 13",
-            "Jul 20",
-            "Jul 27"
+    longRuns:0,
 
-        ],
+    completedLongRuns:0,
 
-        datasets: [
+    trainingWeek:1,
 
-            {
+    nextLongRun:null,
 
-                label: "Weekly Mileage",
+    todayWorkout:null
 
-                data: [
+};
 
-                    28,
-                    32,
-                    35,
-                    40,
-                    43,
-                    46,
-                    48,
-                    44
+/* ==========================================
+   Utilities
+========================================== */
 
-                ],
+function formatDate(date){
 
-                fill: true,
+    return date.toLocaleDateString(
 
-                backgroundColor: gradient,
+        "en-US",
 
-                borderColor: "#3b82f6",
+        {
 
-                borderWidth: 4,
+            weekday:"long",
 
-                tension: .45,
+            month:"long",
 
-                pointRadius: 0,
-
-                pointHoverRadius: 8,
-
-                pointHoverBorderWidth: 3,
-
-                pointHoverBackgroundColor: "#ffffff",
-
-                pointHoverBorderColor: "#3b82f6"
-
-            }
-
-        ]
-
-    },
-
-    options: {
-
-        responsive: true,
-
-        maintainAspectRatio: false,
-
-        interaction: {
-
-            intersect: false,
-
-            mode: "index"
-
-        },
-
-        animation: {
-
-            duration: 1600,
-
-            easing: "easeOutQuart"
-
-        },
-
-        plugins: {
-
-            legend: {
-
-                display: false
-
-            },
-
-            tooltip: {
-
-                backgroundColor: "#0f172a",
-
-                padding: 14,
-
-                cornerRadius: 12,
-
-                displayColors: false,
-
-                titleColor: "#ffffff",
-
-                bodyColor: "#ffffff",
-
-                callbacks: {
-
-                    label: function(context) {
-
-                        return context.raw + " miles";
-
-                    }
-
-                }
-
-            }
-
-        },
-
-        scales: {
-
-            x: {
-
-                grid: {
-
-                    display: false
-
-                },
-
-                ticks: {
-
-                    color: "#64748b"
-
-                }
-
-            },
-
-            y: {
-
-                beginAtZero: true,
-
-                suggestedMax: 55,
-
-                ticks: {
-
-                    stepSize: 10,
-
-                    color: "#64748b"
-
-                },
-
-                grid: {
-
-                    color: "rgba(148,163,184,.18)"
-
-                }
-
-            }
+            day:"numeric"
 
         }
 
+    );
+
+}
+
+function daysUntilRace(){
+
+    return Math.max(
+
+        0,
+
+        Math.ceil(
+
+            (RACE_DATE - today) /
+
+            86400000
+
+        )
+
+    );
+
+}
+/* ==========================================
+   Load Marathon Data
+========================================== */
+
+function loadMarathonPlan(){
+
+    const storedPlan = localStorage.getItem(
+
+        "marathonPlan"
+
+    );
+
+    if(storedPlan){
+
+        marathonPlan = JSON.parse(
+
+            storedPlan
+
+        );
+
     }
 
-});
+    else{
+
+        marathonPlan = [];
+
+    }
+
+}
+
+/* ==========================================
+   Calculate Analytics
+========================================== */
+
+function calculateAnalytics(){
+
+    if(marathonPlan.length===0){
+
+        return;
+
+    }
+
+    analytics.totalMileage = 0;
+
+    analytics.weeklyMileage = 0;
+
+    analytics.peakMileage = 0;
+
+    analytics.longRuns = 0;
+
+    analytics.completedLongRuns = 0;
+
+    marathonPlan.forEach(week=>{
+
+        analytics.totalMileage +=
+
+            week.totalMileage || 0;
+
+        analytics.peakMileage = Math.max(
+
+            analytics.peakMileage,
+
+            week.totalMileage || 0
+
+        );
+
+        if(
+
+            week.totalMileage >
+
+            analytics.weeklyMileage &&
+
+            week.current
+
+        ){
+
+            analytics.weeklyMileage =
+
+                week.totalMileage;
+
+        }
+
+        week.workouts.forEach(workout=>{
+
+            if(
+
+                workout.type ===
+
+                "Long Run"
+
+            ){
+
+                analytics.longRuns++;
+
+            }
+
+        });
+
+    });
+
+}
