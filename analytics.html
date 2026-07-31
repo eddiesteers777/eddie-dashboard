@@ -5,46 +5,69 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-    <title>EddieOS | Analytics</title>
+    <title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/analytics.css">
+        Analytics | EddieOS
+
+    </title>
+
+    <!-- EddieOS Base -->
+
+    <link
+        rel="stylesheet"
+        href="css/style.css">
+
+    <!-- Analytics Theme -->
+
+    <link
+        rel="stylesheet"
+        href="css/analytics.css">
+
+    <!-- Google Font -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
 </head>
 
 <body>
 
-    <!-- ================= NAVIGATION ================= -->
+    <!-- EddieOS Header -->
 
-    <nav class="navbar">
-
-        <div class="logo">
-            EddieOS
-        </div>
-
-        <div class="nav-links">
-            <a href="index.html">Dashboard</a>
-            <a href="marathon.html">Marathon</a>
-            <a href="planner.html">Planner</a>
-            <a href="75day.html">75 Day</a>
-            <a class="active" href="analytics.html">Analytics</a>
-        </div>
-
-    </nav>
-
-    <!-- ================= PAGE ================= -->
-
-<main class="analytics-page">
+    <div id="header"></div>
 
     <!-- ==========================================
+         Analytics
+    ========================================== -->
+
+    <main class="analytics-page">
+        <!-- ==========================================
          HERO
-    =========================================== -->
+    ========================================== -->
 
     <section class="hero">
 
-        <div>
+        <div class="hero-left">
+
+            <span class="hero-tag">
+
+                EDDIEOS PERFORMANCE CENTER
+
+            </span>
 
             <h1>
 
@@ -54,11 +77,31 @@
 
             <p>
 
-                Monitor your training, recovery, and progress toward the
-                Indianapolis Marathon. Every metric below updates from your
-                Marathon training plan automatically.
+                Your complete training headquarters. EddieOS analyzes every
+                workout in your marathon plan to calculate progress,
+                readiness, consistency, and race-day preparation.
 
             </p>
+
+            <div class="hero-buttons">
+
+                <button
+                    id="viewTodayWorkout"
+                    class="primary-btn">
+
+                    View Today's Workout
+
+                </button>
+
+                <button
+                    id="viewMarathonPlan"
+                    class="secondary-btn">
+
+                    Marathon Plan
+
+                </button>
+
+            </div>
 
         </div>
 
@@ -84,13 +127,29 @@
 
                 <span>
 
+                    Current Week
+
+                </span>
+
+                <h2 id="trainingWeek">
+
+                    Loading...
+
+                </h2>
+
+            </div>
+
+            <div class="hero-stat">
+
+                <span>
+
                     Training Phase
 
                 </span>
 
                 <h2 id="trainingPhase">
 
-                    Base Build
+                    Loading...
 
                 </h2>
 
@@ -102,11 +161,10 @@
 
     <!-- ==========================================
          LIVE DASHBOARD
-    =========================================== -->
+    ========================================== -->
 
     <section class="dashboard-grid">
-
-        <div class="dashboard-card">
+            <div class="dashboard-card">
 
             <span>
 
@@ -122,7 +180,7 @@
 
             <small id="todayWorkoutDetails">
 
-                Reading Marathon Plan...
+                Reading marathon schedule...
 
             </small>
 
@@ -138,35 +196,13 @@
 
             <h2 id="weeklyMileage">
 
-                ---
+                -- mi
 
             </h2>
 
             <small>
 
-                Current Week
-
-            </small>
-
-        </div>
-
-        <div class="dashboard-card">
-
-            <span>
-
-                Long Run
-
-            </span>
-
-            <h2 id="nextLongRun">
-
-                ---
-
-            </h2>
-
-            <small>
-
-                Next Scheduled
+                Scheduled This Week
 
             </small>
 
@@ -188,7 +224,73 @@
 
             <small>
 
-                Scheduled Workouts
+                Planned Workouts Completed
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Next Long Run
+
+            </span>
+
+            <h2 id="nextLongRun">
+
+                Loading...
+
+            </h2>
+
+            <small id="nextLongRunDate">
+
+                Upcoming Long Run
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Peak Weekly Mileage
+
+            </span>
+
+            <h2 id="peakMileage">
+
+                -- mi
+
+            </h2>
+
+            <small>
+
+                Highest Week In Plan
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Total Plan Miles
+
+            </span>
+
+            <h2 id="totalMileage">
+
+                -- mi
+
+            </h2>
+
+            <small>
+
+                Entire Marathon Block
 
             </small>
 
@@ -197,72 +299,95 @@
     </section>
 
     <!-- ==========================================
-         PERFORMANCE
-    =========================================== -->
+         PERFORMANCE OVERVIEW
+    ========================================== -->
 
     <section class="performance-grid">
+            <div class="performance-card good">
 
-        <div class="performance-card good">
-
-            <h3 id="fitnessScore">
-
-                --
-
-            </h3>
-
-            <p>
+            <span>
 
                 Fitness Score
 
-            </p>
+            </span>
+
+            <h2 id="fitnessScore">
+
+                --
+
+            </h2>
+
+            <small>
+
+                Based on consistency and mileage
+
+            </small>
 
         </div>
 
         <div class="performance-card">
 
-            <h3 id="trainingStatus">
-
-                --
-
-            </h3>
-
-            <p>
+            <span>
 
                 Training Status
 
-            </p>
+            </span>
+
+            <h2 id="trainingStatus">
+
+                Loading...
+
+            </h2>
+
+            <small>
+
+                Current training phase
+
+            </small>
 
         </div>
 
         <div class="performance-card">
 
-            <h3 id="recoveryScore">
-
-                --
-
-            </h3>
-
-            <p>
+            <span>
 
                 Recovery
 
-            </p>
+            </span>
+
+            <h2 id="recoveryScore">
+
+                --
+
+            </h2>
+
+            <small>
+
+                Estimated readiness
+
+            </small>
 
         </div>
 
         <div class="performance-card good">
 
-            <h3 id="raceReadiness">
-
-                --%
-
-            </h3>
-
-            <p>
+            <span>
 
                 Marathon Readiness
 
-            </p>
+            </span>
+
+            <h2 id="raceReadiness">
+
+                --%
+
+            </h2>
+
+            <small>
+
+                Overall preparation
+
+            </small>
 
         </div>
 
@@ -270,7 +395,7 @@
 
     <!-- ==========================================
          CHARTS
-    =========================================== -->
+    ========================================== -->
 
     <section class="analytics-grid">
 
@@ -278,17 +403,21 @@
 
             <div class="panel-header">
 
-                <h2>
+                <div>
 
-                    Weekly Mileage
+                    <h2>
 
-                </h2>
+                        Weekly Mileage
 
-                <p>
+                    </h2>
 
-                    Entire Training Block
+                    <p>
 
-                </p>
+                        Entire marathon training block
+
+                    </p>
+
+                </div>
 
             </div>
 
@@ -300,11 +429,21 @@
 
             <div class="panel-header">
 
-                <h2>
+                <div>
 
-                    Upcoming Workouts
+                    <h2>
 
-                </h2>
+                        Upcoming Workouts
+
+                    </h2>
+
+                    <p>
+
+                        Next seven scheduled sessions
+
+                    </p>
+
+                </div>
 
             </div>
 
@@ -315,30 +454,324 @@
         </div>
 
     </section>
-
-    <!-- ==========================================
-         AI INSIGHTS
-    =========================================== -->
+        <!-- ==========================================
+         AI COACH
+    ========================================== -->
 
     <section class="panel">
 
         <div class="panel-header">
 
-            <h2>
+            <div>
 
-                AI Coach
+                <h2>
 
-            </h2>
+                    EddieOS AI Coach
 
-            <p>
+                </h2>
 
-                Live Analysis
+                <p>
 
-            </p>
+                    Personalized insights based on your training plan
+
+                </p>
+
+            </div>
 
         </div>
 
         <div id="aiInsights">
+
+            <div class="insight-card">
+
+                <h4>
+
+                    Loading Analysis...
+
+                </h4>
+
+                <p>
+
+                    Reviewing your marathon training schedule.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ==========================================
+         TRAINING BREAKDOWN
+    ========================================== -->
+
+    <section class="dashboard-grid">
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Easy Runs
+
+            </span>
+
+            <h2 id="easyRunCount">
+
+                --
+
+            </h2>
+
+            <small>
+
+                Scheduled Easy Runs
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Quality Sessions
+
+            </span>
+
+            <h2 id="qualityRunCount">
+
+                --
+
+            </h2>
+
+            <small>
+
+                Tempo • Intervals • Hills
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Long Runs
+
+            </span>
+
+            <h2 id="longRunCount">
+
+                --
+
+            </h2>
+
+            <small>
+
+                Marathon Long Runs
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Rest Days
+
+            </span>
+
+            <h2 id="restDayCount">
+
+                --
+
+            </h2>
+
+            <small>
+
+                Planned Recovery Days
+
+            </small>
+
+        </div>
+
+    </section>
+
+    <!-- ==========================================
+         TRAINING TRENDS
+    ========================================== -->
+
+    <section class="analytics-grid">
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+
+                        Weekly Training Load
+
+                    </h2>
+
+                    <p>
+
+                        Mileage progression through race day
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <canvas id="trainingLoadChart"></canvas>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+
+                        Workout Distribution
+
+                    </h2>
+
+                    <p>
+
+                        Breakdown of training sessions
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <canvas id="workoutTypeChart"></canvas>
+
+        </div>
+
+    </section>
+        <!-- ==========================================
+         GOAL PROGRESS
+    ========================================== -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>
+
+                    Marathon Goal Progress
+
+                </h2>
+
+                <p>
+
+                    Live progress toward your Indianapolis Marathon goals
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="dashboard-grid">
+
+            <div class="dashboard-card">
+
+                <span>
+
+                    Goal Time
+
+                </span>
+
+                <h2 id="goalTime">
+
+                    3:05:00
+
+                </h2>
+
+                <small>
+
+                    Indianapolis Marathon
+
+                </small>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <span>
+
+                    Goal Pace
+
+                </span>
+
+                <h2 id="goalPace">
+
+                    7:03 /mi
+
+                </h2>
+
+                <small>
+
+                    Required Race Pace
+
+                </small>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <span>
+
+                    Longest Run
+
+                </span>
+
+                <h2 id="longestRun">
+
+                    --
+
+                </h2>
+
+                <small>
+
+                    Completed During This Block
+
+                </small>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <span>
+
+                    Current Streak
+
+                </span>
+
+                <h2 id="trainingStreak">
+
+                    --
+
+                </h2>
+
+                <small>
+
+                    Consecutive Scheduled Workouts
+
+                </small>
+
+            </div>
 
         </div>
 
@@ -346,17 +779,27 @@
 
     <!-- ==========================================
          PERSONAL RECORDS
-    =========================================== -->
+    ========================================== -->
 
     <section class="panel">
 
         <div class="panel-header">
 
-            <h2>
+            <div>
 
-                Personal Records
+                <h2>
 
-            </h2>
+                    Personal Records
+
+                </h2>
+
+                <p>
+
+                    Lifetime Best Performances
+
+                </p>
+
+            </div>
 
         </div>
 
@@ -370,7 +813,7 @@
 
                 </span>
 
-                <h3>
+                <h3 id="pr5k">
 
                     18:42
 
@@ -386,7 +829,7 @@
 
                 </span>
 
-                <h3>
+                <h3 id="pr10k">
 
                     39:51
 
@@ -402,7 +845,7 @@
 
                 </span>
 
-                <h3>
+                <h3 id="prHalf">
 
                     1:27:14
 
@@ -418,7 +861,7 @@
 
                 </span>
 
-                <h3>
+                <h3 id="prMarathon">
 
                     3:16:32
 
@@ -432,8 +875,11 @@
 
 </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module" src="js/analytics.js"></script>
+<script src="js/loadHeader.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="module" src="js/analytics.js"></script>
 
 </body>
 
