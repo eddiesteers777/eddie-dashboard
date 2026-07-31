@@ -36,201 +36,401 @@
 
     <!-- ================= PAGE ================= -->
 
-    <main class="analytics-page">
+<main class="analytics-page">
 
-        <!-- Hero -->
+    <!-- ==========================================
+         HERO
+    =========================================== -->
 
-        <section class="hero">
+    <section class="hero">
 
-            <div>
+        <div>
 
-                <h1>Performance Analytics</h1>
+            <h1>
 
-                <p>
-                    Monitor your training, identify trends, and prepare for race day.
-                </p>
+                Performance Analytics
 
-            </div>
+            </h1>
 
-        </section>
+            <p>
 
-        <!-- ================= PERFORMANCE SUMMARY ================= -->
+                Monitor your training, recovery, and progress toward the
+                Indianapolis Marathon. Every metric below updates from your
+                Marathon training plan automatically.
 
-        <section class="summary-card">
+            </p>
 
-            <div class="summary-title">
+        </div>
 
-                <h2>Performance Summary</h2>
+        <div class="hero-right">
 
-                <span>This Week</span>
+            <div class="hero-stat">
 
-            </div>
+                <span>
 
-            <div class="summary-grid">
+                    Race Countdown
 
-                <div class="summary-item">
-                    <h3>92</h3>
-                    <p>Fitness Score</p>
-                </div>
+                </span>
 
-                <div class="summary-item">
-                    <h3>Productive</h3>
-                    <p>Training Status</p>
-                </div>
+                <h2 id="countdownDays">
 
-                <div class="summary-item">
-                    <h3>Excellent</h3>
-                    <p>Recovery</p>
-                </div>
+                    ---
 
-                <div class="summary-item">
-                    <h3>91%</h3>
-                    <p>Marathon Ready</p>
-                </div>
+                </h2>
 
             </div>
 
-        </section>
+            <div class="hero-stat">
 
-        <!-- ================= QUICK STATS ================= -->
+                <span>
 
-        <section class="stats-grid">
+                    Training Phase
 
-            <div class="stat-card">
-                <span>Weekly Mileage</span>
-                <h2>44 mi</h2>
-                <small>+8% vs last week</small>
+                </span>
+
+                <h2 id="trainingPhase">
+
+                    Base Build
+
+                </h2>
+
             </div>
 
-            <div class="stat-card">
-                <span>Average Pace</span>
-                <h2>7:21</h2>
-                <small>Current training pace</small>
-            </div>
+        </div>
 
-            <div class="stat-card">
-                <span>Longest Run</span>
-                <h2>18 mi</h2>
-                <small>Training cycle best</small>
-            </div>
+    </section>
 
-            <div class="stat-card">
-                <span>Readiness</span>
-                <h2>91%</h2>
-                <small>Excellent</small>
-            </div>
+    <!-- ==========================================
+         LIVE DASHBOARD
+    =========================================== -->
 
-            <div class="stat-card">
-                <span>Total Miles</span>
-                <h2>812</h2>
-                <small>All-time</small>
-            </div>
+    <section class="dashboard-grid">
 
-            <div class="stat-card">
-                <span>Training Streak</span>
-                <h2>19</h2>
-                <small>Days</small>
-            </div>
+        <div class="dashboard-card">
 
-            <div class="stat-card">
-                <span>Goal Time</span>
-                <h2>3:05</h2>
-                <small>Indianapolis</small>
-            </div>
+            <span>
 
-            <div class="stat-card">
-                <span>Race Countdown</span>
-                <h2>102</h2>
-                <small>Days Remaining</small>
-            </div>
+                Today's Workout
 
-        </section>
+            </span>
 
-        <!-- ================= WEEKLY MILEAGE ================= -->
+            <h2 id="todayWorkout">
 
-        <section class="panel">
+                Loading...
+
+            </h2>
+
+            <small id="todayWorkoutDetails">
+
+                Reading Marathon Plan...
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Weekly Mileage
+
+            </span>
+
+            <h2 id="weeklyMileage">
+
+                ---
+
+            </h2>
+
+            <small>
+
+                Current Week
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Long Run
+
+            </span>
+
+            <h2 id="nextLongRun">
+
+                ---
+
+            </h2>
+
+            <small>
+
+                Next Scheduled
+
+            </small>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <span>
+
+                Weekly Completion
+
+            </span>
+
+            <h2 id="completionPercent">
+
+                --%
+
+            </h2>
+
+            <small>
+
+                Scheduled Workouts
+
+            </small>
+
+        </div>
+
+    </section>
+
+    <!-- ==========================================
+         PERFORMANCE
+    =========================================== -->
+
+    <section class="performance-grid">
+
+        <div class="performance-card good">
+
+            <h3 id="fitnessScore">
+
+                --
+
+            </h3>
+
+            <p>
+
+                Fitness Score
+
+            </p>
+
+        </div>
+
+        <div class="performance-card">
+
+            <h3 id="trainingStatus">
+
+                --
+
+            </h3>
+
+            <p>
+
+                Training Status
+
+            </p>
+
+        </div>
+
+        <div class="performance-card">
+
+            <h3 id="recoveryScore">
+
+                --
+
+            </h3>
+
+            <p>
+
+                Recovery
+
+            </p>
+
+        </div>
+
+        <div class="performance-card good">
+
+            <h3 id="raceReadiness">
+
+                --%
+
+            </h3>
+
+            <p>
+
+                Marathon Readiness
+
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- ==========================================
+         CHARTS
+    =========================================== -->
+
+    <section class="analytics-grid">
+
+        <div class="panel">
 
             <div class="panel-header">
 
-                <h2>Weekly Mileage</h2>
+                <h2>
 
-                <p>Last 8 Weeks</p>
+                    Weekly Mileage
+
+                </h2>
+
+                <p>
+
+                    Entire Training Block
+
+                </p>
 
             </div>
 
             <canvas id="weeklyMileageChart"></canvas>
 
-        </section>
+        </div>
 
-        <!-- ================= TRAINING LOAD ================= -->
-
-        <section class="panel">
+        <div class="panel">
 
             <div class="panel-header">
 
-                <h2>Training Load</h2>
+                <h2>
 
-                <p>Coming Soon</p>
+                    Upcoming Workouts
 
-            </div>
-
-        </section>
-
-        <!-- ================= AI INSIGHTS ================= -->
-
-        <section class="panel">
-
-            <div class="panel-header">
-
-                <h2>AI Insights</h2>
+                </h2>
 
             </div>
 
-            <div id="aiInsights">
-
-                <p>Training analysis will appear here.</p>
+            <div id="upcomingRuns">
 
             </div>
 
-        </section>
+        </div>
 
-        <!-- ================= PERSONAL RECORDS ================= -->
+    </section>
 
-        <section class="panel">
+    <!-- ==========================================
+         AI INSIGHTS
+    =========================================== -->
 
-            <div class="panel-header">
+    <section class="panel">
 
-                <h2>Personal Records</h2>
+        <div class="panel-header">
+
+            <h2>
+
+                AI Coach
+
+            </h2>
+
+            <p>
+
+                Live Analysis
+
+            </p>
+
+        </div>
+
+        <div id="aiInsights">
+
+        </div>
+
+    </section>
+
+    <!-- ==========================================
+         PERSONAL RECORDS
+    =========================================== -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>
+
+                Personal Records
+
+            </h2>
+
+        </div>
+
+        <div class="records-grid">
+
+            <div class="record">
+
+                <span>
+
+                    5K
+
+                </span>
+
+                <h3>
+
+                    18:42
+
+                </h3>
 
             </div>
 
-            <div class="records-grid">
+            <div class="record">
 
-                <div class="record">
-                    <span>5K</span>
-                    <h3>18:42</h3>
-                </div>
+                <span>
 
-                <div class="record">
-                    <span>10K</span>
-                    <h3>39:51</h3>
-                </div>
+                    10K
 
-                <div class="record">
-                    <span>Half</span>
-                    <h3>1:27:14</h3>
-                </div>
+                </span>
 
-                <div class="record">
-                    <span>Marathon</span>
-                    <h3>3:16:32</h3>
-                </div>
+                <h3>
+
+                    39:51
+
+                </h3>
 
             </div>
 
-        </section>
+            <div class="record">
 
-    </main>
+                <span>
+
+                    Half Marathon
+
+                </span>
+
+                <h3>
+
+                    1:27:14
+
+                </h3>
+
+            </div>
+
+            <div class="record">
+
+                <span>
+
+                    Marathon
+
+                </span>
+
+                <h3>
+
+                    3:16:32
+
+                </h3>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="js/analytics.js"></script>
