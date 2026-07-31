@@ -275,32 +275,26 @@ function loadDay(){
     const key = getKey(currentDate);
 
     const saved = localStorage.getItem(
-
         "nutrition-" + key
-
     );
 
     nutrition = saved
-
         ? JSON.parse(saved)
-
         : createBlankDay();
+
+    Object.keys(macros).forEach(m=>{
+
+        if(typeof nutrition[m] !== "number"){
+
+            nutrition[m]=0;
+
+        }
+
+    });
 
     updateDate();
 
     updateDisplay();
-
-}
-
-function saveDay(){
-
-    localStorage.setItem(
-
-        "nutrition-" + getKey(currentDate),
-
-        JSON.stringify(nutrition)
-
-    );
 
 }
 
