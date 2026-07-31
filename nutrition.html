@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Nutrition</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+:root{
+    --bg:#0F172A;
+    --surface:#1E293B;
+    --surface-alt:#273449;
+    --line:#334155;
+    --text:#F8FAFC;
+    --muted:#94A3B8;
+    --accent:#4EA8FF;
+    --success:#22C55E;
+    --warning:#FACC15;
+    --danger:#EF4444;
+    --font-body:'Inter',sans-serif;
+    --font-display:'Bebas Neue',sans-serif;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+}
+
+.wrap{
+    max-width:1400px;
+    margin:36px auto 60px;
+    padding:0 24px;
+}
+
+h1{
+    margin:0;
+    font-family:var(--font-display);
+    font-size:54px;
+    letter-spacing:.04em;
+}
+
+.subtitle{
+    margin:8px 0 30px;
+    color:var(--muted);
+    font-size:16px;
+}
+
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.card h2{
+    margin:0;
+    font-family:var(--font-display);
+    font-size:30px;
+    letter-spacing:.04em;
+}
+
+.value{
+    margin:14px 0 10px;
+    font-size:32px;
+    font-weight:700;
+}
+
+.goal{
+    color:var(--muted);
+    font-size:14px;
+}
+
+.bar{
+    width:100%;
+    height:12px;
+    margin-top:18px;
+    background:var(--surface-alt);
+    border-radius:999px;
+    overflow:hidden;
+}
+
+.fill{
+    height:100%;
+    width:0%;
+    background:var(--accent);
+    transition:.3s;
+}
+
+.controls{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:18px;
+    flex-wrap:wrap;
+}
+
+.controls button{
+    padding:10px 14px;
+    border:none;
+    border-radius:10px;
+    background:var(--accent);
+    color:#0F172A;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.controls button:hover{
+    transform:translateY(-2px);
+    filter:brightness(1.1);
+}
+.notes{
+    margin-top:36px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+
+.notes h2{
+    margin:0 0 20px;
+    font-family:var(--font-display);
+    font-size:34px;
+    letter-spacing:.04em;
+}
+
+.notes label{
+    display:block;
+    margin-top:18px;
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+.notes textarea{
+    width:100%;
+    min-height:80px;
+    resize:vertical;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--surface-alt);
+    color:var(--text);
+    padding:12px;
+    font-family:var(--font-body);
+    font-size:15px;
+}
+
+@media(max-width:700px){
+
+    h1{
+        font-size:42px;
+    }
+
+    .dashboard{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="wrap">
+
+<h1>Nutrition</h1>
+
+<p class="subtitle">
+Track your daily nutrition and stay fueled for every run.
+</p>
+
+<div class="dashboard">
+    <div class="card">
+
+        <h2>Calories</h2>
+
+        <div class="value">
+            <span id="caloriesValue">0</span>
+        </div>
+
+        <div class="goal">
+            Goal: <span id="caloriesGoal">3200</span> Calories
+        </div>
+
+        <div class="bar">
+            <div class="fill" id="caloriesBar"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="changeValue('calories',-100)">-100</button>
+            <button onclick="changeValue('calories',100)">+100</button>
+            <button onclick="changeValue('calories',250)">+250</button>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Protein</h2>
+
+        <div class="value">
+            <span id="proteinValue">0</span>g
+        </div>
+
+        <div class="goal">
+            Goal: <span id="proteinGoal">170</span>g
+        </div>
+
+        <div class="bar">
+            <div class="fill" id="proteinBar"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="changeValue('protein',-10)">-10</button>
+            <button onclick="changeValue('protein',10)">+10</button>
+            <button onclick="changeValue('protein',25)">+25</button>
+        </div>
+
+    </div>
+        <div class="card">
+
+        <h2>Carbs</h2>
+
+        <div class="value">
+            <span id="carbsValue">0</span>g
+        </div>
+
+        <div class="goal">
+            Goal: <span id="carbsGoal">420</span>g
+        </div>
+
+        <div class="bar">
+            <div class="fill" id="carbsBar"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="changeValue('carbs',-25)">-25</button>
+            <button onclick="changeValue('carbs',25)">+25</button>
+            <button onclick="changeValue('carbs',50)">+50</button>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Water</h2>
+
+        <div class="value">
+            <span id="waterValue">0</span> oz
+        </div>
+
+        <div class="goal">
+            Goal: <span id="waterGoal">100</span> oz
+        </div>
+
+        <div class="bar">
+            <div class="fill" id="waterBar"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="changeValue('water',-8)">-8 oz</button>
+            <button onclick="changeValue('water',8)">+8 oz</button>
+            <button onclick="changeValue('water',16)">+16 oz</button>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="notes">
+
+    <h2>Meals & Notes</h2>
+
+    <label>Breakfast</label>
+    <textarea id="breakfast"></textarea>
+
+    <label>Lunch</label>
+    <textarea id="lunch"></textarea>
+
+    <label>Dinner</label>
+    <textarea id="dinner"></textarea>
+
+    <label>Snacks</label>
+    <textarea id="snacks"></textarea>
+
+    <label>Notes</label>
+    <textarea id="notes"></textarea>
+
+</div>
+<script src="js/loadHeader.js"></script>
+
+<script>
+
+const goals={
+    calories:3200,
+    protein:170,
+    carbs:420,
+    water:100
+};
+
+const values={
+    calories:0,
+    protein:0,
+    carbs:0,
+    water:0
+};
+
+function updateCard(name){
+
+    document.getElementById(name+"Value").textContent=values[name];
+
+    const percent=Math.min((values[name]/goals[name])*100,100);
+
+    document.getElementById(name+"Bar").style.width=percent+"%";
+
+}
+
+function changeValue(name,amount){
+
+    values[name]=Math.max(0,values[name]+amount);
+
+    updateCard(name);
+
+}
+Object.keys(goals).forEach(updateCard);
+
+</script>
+
+</body>
+
+</html>
