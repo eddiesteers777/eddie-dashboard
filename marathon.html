@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,7 +8,7 @@
 
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/marathon.css">
-  
+
 </head>
 <body>
 
@@ -54,12 +55,484 @@
   <div class="mp-detail" id="mp-detail"></div>
 </div>
 
+<script>
+(function () {
+  const START = new Date("2026-07-20T00:00:00");
+  const dayMs = 86400000;
+
+  function fmtDate(d) {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  function weekStart(n) { return new Date(START.getTime() + (n - 1) * 7 * dayMs); }
+  function weekEnd(n) { return new Date(weekStart(n).getTime() + 6 * dayMs); }
+  function weekRangeLabel(n) {
+    return fmtDate(weekStart(n)) + " - " + fmtDate(weekEnd(n)) + ", 2026";
+  }
+
+  const PHASES = {
+    rebuild:  { label: "Rebuild & Consistency",           color: "#4c8b6e" },
+    build:    { label: "Aerobic & Threshold Build",        color: "#2fd4c0" },
+    mp:       { label: "Marathon-Specific Development",    color: "#6c8cff" },
+    peak:     { label: "Peak & Race Simulation",           color: "#f0a742" },
+    taper:    { label: "Taper & Race",                     color: "#c2694a" },
+  };
+
+  const days7 = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const timing7 = ["Before school", "Afternoon/evening", "Before school", "Afternoon/evening", "Before school", "Morning (unrushed)", "Morning (flexible)"];
+
+  function D(session, miles, pace, race) {
+    return { session, miles, pace, race: !!race };
+  }
+
+  const WEEKS = [
+    { phase: "rebuild",
+      days: [D("Recovery jog", 3, "Recovery"), D("Hill repeats: 8x45s @ strong effort", 5, "Hill effort"),
+             D("Easy aerobic", 5, "Easy"), D("6mi, last 2mi @ Steady", 6, "Steady"),
+             D("Recovery + Strength (Foundation phase)", 3, "Recovery"), D("Long run - comfortable, finish strong", 9, "Long run"),
+             D("Recovery jog", 2, "Recovery")],
+      mental: "Show up. Rebuild trust in your training.",
+      purpose: "Re-establish rhythm. Hills introduce power/economy at low impact - no flat speedwork yet.",
+      fueling: "No in-run fueling needed (all runs under 90 min). Protein-forward breakfast, steady hydration.",
+      heat: "Peak Alabama summer - run recovery/easy by feel, not pace. Slow it down.",
+      strength: "Foundation: 12-15 reps, single-leg emphasis, daily eccentric calf raises begin now." },
+
+    { phase: "rebuild",
+      days: [D("Recovery jog", 4, "Recovery"), D("Fartlek: 8x1min surge / 1min float", 6, "Fartlek"),
+             D("Easy aerobic", 5, "Easy"), D("7mi, 2mi @ Steady", 7, "Steady"),
+             D("Recovery + Strength", 3, "Recovery"), D("Long run - comfortable", 10, "Long run"),
+             D("Recovery jog", 2, "Recovery")],
+      mental: "Patience over pace. Effort first, watch second.",
+      purpose: "First unstructured speed stimulus (fartlek) - teaches pace-change tolerance without rigid intervals.",
+      fueling: "Long run crosses 90 min for the first time - practice one gel or 20-30g carbs mid-run.",
+      heat: "Still deep summer - shift Tuesday to evening if a heat advisory is in effect.",
+      strength: "Foundation continues: durability work + eccentric Achilles loading daily." },
+
+    { phase: "rebuild",
+      days: [D("Recovery jog", 4, "Recovery"), D("Hill repeats: 10x45s @ strong effort", 6, "Hill effort"),
+             D("Easy aerobic", 6, "Easy"), D("Progression finish - last 3mi progressively faster", 7, "Progression"),
+             D("Recovery + Strength", 3, "Recovery"), D("Long run, last 2mi @ Steady", 11, "Steady"),
+             D("Recovery jog", 3, "Recovery")],
+      mental: "Strength inside the effort. Hills don't lie, and neither do you.",
+      purpose: "Hill volume increases; progression finish rehearses negative-split pacing discipline.",
+      fueling: "Continue mid-run fueling practice on the long run - same gel each time.",
+      heat: "Run hills in the coolest part of the day available - heat + hills is a bad combo.",
+      strength: "Foundation phase, week 3 of 4 - loads still light, reps still high." },
+
+    { phase: "rebuild",
+      days: [D("Recovery jog", 3, "Recovery"), D("Easy + strides (down week - no hard effort)", 4, "Easy"),
+             D("Easy aerobic", 3, "Easy"), D("Easy aerobic", 5, "Easy"),
+             D("Recovery + light Strength", 2, "Recovery"), D("Easy long run", 8, "Long run"),
+             D("Recovery jog", 2, "Recovery")],
+      mental: "Recovery is training too.",
+      purpose: "True cutback (~33% drop) to absorb 3 weeks of rebuilding load before the next phase begins.",
+      fueling: "Nothing new this week - dial back to basics.",
+      heat: "Standard summer caution - every run at easy effort regardless of pace shown.",
+      strength: "End of Foundation phase - Strength phase (moderate load) begins next week.",
+      checkpoint: "Checkpoint #1: How did the rebuild month feel? Easy across the board = go slightly more aggressive on Phase 2 volume. Anything forced = hold steady." },
+
+    { phase: "build",
+      days: [D("Recovery jog", 4, "Recovery"), D("Cruise intervals: 5x6min @ threshold, 2min jog", 7, "Cruise"),
+             D("Easy aerobic", 6, "Easy"), D("Progression tempo - steady into threshold", 8, "Threshold"),
+             D("Recovery + Strength (Strength phase begins)", 4, "Recovery"), D("Long run, last 3mi @ Steady/Tempo", 12, "Steady"),
+             D("Recovery jog", 3, "Recovery")],
+      mental: "Consistency compounds - this is where the base starts to show up in how workouts feel.",
+      purpose: "Mileage climbs meaningfully. Cruise intervals become the primary threshold tool.",
+      fueling: "Long run regularly over 90 min now - target 60-90g carbs/hr with your race-day gel.",
+      heat: "Late-summer heat still demands effort-based pacing on quality days.",
+      strength: "Strength phase begins: 8-10 reps, moderate load, loaded carries + RDLs added." },
+
+    { phase: "build",
+      days: [D("Recovery jog", 5, "Recovery"), D("VO2max: 6x3min @ 5K effort, 2min jog", 7, "VO2max"),
+             D("Easy aerobic", 6, "Easy"), D("1K repeats: 6x1K @ 10K pace", 8, "10K pace"),
+             D("Recovery + Strength", 5, "Recovery"), D("Long run w/ 4mi Cruise Intervals embedded", 13, "Cruise"),
+             D("Recovery jog", 3, "Recovery")],
+      mental: "Comfortable hard - let workouts feel controlled even when they're honest efforts.",
+      purpose: "First of two total VO2max touches this cycle - preserves top-end speed without becoming a speed block.",
+      fueling: "Continue practicing your exact race-day gel brand/flavor for consistency.",
+      heat: "Watch dew point as much as temperature - humidity is the bigger pace threat right now.",
+      strength: "Strength phase continues - loads increasing, still supporting (not competing with) mileage." },
+
+    { phase: "build",
+      days: [D("Recovery jog", 4, "Recovery"), D("Mile repeats: 4x1mi @ Threshold, 90s jog", 6, "Threshold"),
+             D("Easy aerobic", 5, "Easy"), D("Broken tempo: 3x2mi @ Threshold", 8, "Threshold"),
+             D("Recovery + Strength", 4, "Recovery"), D("Long run w/ 3mi @ Threshold", 12, "Threshold"),
+             D("Recovery jog", 3, "Recovery")],
+      mental: "Sharpen before racing - trust the fitness, don't chase it in the final week.",
+      purpose: "Slight mileage trim to arrive at the 10K with fresh legs while keeping threshold sharp.",
+      fueling: "Rehearse your full pre-race breakfast and warm-up routine ahead of the 10K.",
+      heat: "Early September in Alabama is often still hot - treat exactly like the prior 6 weeks.",
+      strength: "Strength phase, final full week before race-week reduction." },
+
+    { phase: "build",
+      days: [D("Recovery jog", 3, "Recovery"), D("Easy + strides", 3, "Easy"),
+             D("Easy aerobic", 4, "Easy"), D("Easy aerobic", 6, "Easy"),
+             D("Recovery + light Strength", 2, "Recovery"), D("Shakeout jog", 2, "Recovery"),
+             D("RACE: 10K Tune-Up (Sun Sep 13) + warm-up/cooldown", 8, "Race", true)],
+      mental: "Race for data, not just outcome. Notice how goal-adjacent paces feel.",
+      purpose: "First tune-up race - a fitness checkpoint and full fueling/pacing rehearsal.",
+      fueling: "Full race-morning fueling rehearsal: same breakfast, timing, and warm-up as marathon day.",
+      heat: "Early-Sept race - expect warm conditions; don't chase a 'perfect' time in the heat.",
+      strength: "Race-week reduction - light activation only.",
+      race: { name: "10K Tune-Up", date: "Sun, Sep 13, 2026" },
+      checkpoint: "Checkpoint #2 (post-10K): Recalculate threshold/cruise/VO2max paces from this result via Riegel/VDOT." },
+
+    { phase: "mp",
+      days: [D("Recovery jog", 5, "Recovery"), D("VO2max: 5x1000m @ 10K-5K effort", 7, "VO2max"),
+             D("Easy aerobic", 6, "Easy"), D("4mi @ Marathon Pace", 9, "MP"),
+             D("Recovery + Strength (Power phase begins)", 5, "Recovery"), D("Progression long run - last 3mi toward MP", 14, "MP"),
+             D("Recovery jog", 4, "Recovery")],
+      mental: "Marathon pace becomes familiar, not fast.",
+      purpose: "Marathon pace enters the long run for the first time - the centerpiece of this phase.",
+      fueling: "Practice the full 60-90g carbs/hr target now that MP miles are in the mix.",
+      heat: "Conditions should start easing by late September - effort still the tiebreaker on humid days.",
+      strength: "Power/Economy phase begins: 5-6 reps, controlled tempo, low-amplitude plyo only if pain-free." },
+
+    { phase: "mp",
+      days: [D("Recovery jog", 5, "Recovery"), D("Cruise intervals: 6x5min @ threshold", 8, "Cruise"),
+             D("Easy aerobic", 6, "Easy"), D("5mi @ Marathon Pace", 9, "MP"),
+             D("Recovery + Strength", 5, "Recovery"), D("Fast-finish long run - last 3mi hard", 16, "Fast finish"),
+             D("Recovery jog", 4, "Recovery")],
+      mental: "Confidence in the tired miles - notice how MP feels in mile 12, not just mile 2.",
+      purpose: "Longest long run yet; fast-finish trains fast-twitch recruitment under aerobic fatigue.",
+      fueling: "Treat the long run as a dress rehearsal: race shoes, race breakfast, race gels.",
+      heat: "Fall conditions arriving - paces may start coming more easily at the same effort.",
+      strength: "Power/Economy phase continues." },
+
+    { phase: "mp",
+      days: [D("Recovery jog", 5, "Recovery"), D("Mile repeats: 6x1mi @ Threshold", 8, "Threshold"),
+             D("Easy aerobic", 5, "Easy"), D("5mi @ Marathon Pace, fueling practice", 10, "MP"),
+             D("Recovery + Strength", 4, "Recovery"), D("19mi w/ 7-8mi continuous Marathon Pace, full fueling rehearsal", 19, "MP"),
+             D("Recovery jog", 3, "Recovery")],
+      mental: "Practice race day exactly - nothing new on race morning you haven't rehearsed here.",
+      purpose: "Final full-volume build week before the half marathon; MP and threshold now sit side by side comfortably.",
+      fueling: "Last full fueling rehearsal before the half marathon - lock in what's working.",
+      heat: "Should feel noticeably cooler - a good sign of both season and fitness.",
+      strength: "Power/Economy phase, final full week before the half-marathon taper." },
+
+    { phase: "mp",
+      days: [D("Recovery jog", 4, "Recovery"), D("Easy + strides", 3, "Easy"),
+             D("Easy aerobic", 4, "Easy"), D("Easy aerobic", 6, "Easy"),
+             D("Recovery + light Strength", 3, "Recovery"), D("Shakeout jog", 2, "Recovery"),
+             D("RACE: Half Marathon Tune-Up (Sun Oct 11) + warm-up/cooldown", 15, "Race", true)],
+      mental: "The half marathon is a checkpoint, not the goal - run it hard, then let the data speak.",
+      purpose: "The single most valuable fitness checkpoint of the cycle - race it at genuine effort.",
+      fueling: "Full race-day simulation: gear, breakfast, warm-up, in-race fueling exactly as planned for Nov 8.",
+      heat: "Early October should be comfortable - a good early sign for marathon-day conditions.",
+      strength: "Race-week reduction - light activation only.",
+      race: { name: "Half Marathon Tune-Up", date: "Sun, Oct 11, 2026" },
+      checkpoint: "Checkpoint #3 (post-half): Recalculate marathon-pace target directly from this result - the best predictor available this cycle." },
+
+    { phase: "peak",
+      days: [D("Recovery jog", 5, "Recovery"), D("Progression tempo - steady into threshold", 8, "Threshold"),
+             D("Easy aerobic", 3, "Easy"), D("6mi @ Marathon Pace", 10, "MP"),
+             D("Recovery + Strength", 4, "Recovery"), D("Broken MP long run: 3x3mi @ MP, short jog recovery", 17, "MP"),
+             D("Recovery jog", 1, "Recovery")],
+      mental: "Simulate, don't panic - this is the dress rehearsal, not the performance.",
+      purpose: "A smoothing/step-down week after the half marathon before the true peak - protects tissue from stacking two max weeks back to back.",
+      fueling: "Exact race-day fueling plan, tested at exact race effort, in exact shoes and kit.",
+      heat: "Mid-October in Alabama is typically ideal training weather.",
+      strength: "Power/Economy phase, reduced volume this week to match the running step-down." },
+
+    { phase: "peak",
+      days: [D("Recovery jog", 6, "Recovery"), D("Short MP-specific reps: 6x1mi @ MP/Threshold blend", 8, "MP"),
+             D("Easy aerobic", 7, "Easy"), D("6mi @ Marathon Pace, full race-day fueling test", 10, "MP"),
+             D("Recovery + Strength", 5, "Recovery"), D("PEAK: 20-mile long run w/ 10-12mi continuous Marathon Pace", 20, "MP", false),
+             D("Recovery jog", 5, "Recovery")],
+      mental: "Peak week - trust the work. Everything from here is about arriving healthy, not doing more.",
+      purpose: "The single biggest week of the cycle. 10-12 miles at marathon pace inside a 20-miler is the exact stimulus that turns a 3:09 predictor into a 3:05 finisher.",
+      fueling: "Final full rehearsal - whatever works here is exactly what you do Nov 8.",
+      heat: "Conditions should be excellent - no heat adjustments needed most days.",
+      strength: "Maintenance phase begins - minimal volume, nothing new introduced.",
+      checkpoint: "Checkpoint #4: How did the marathon-pace segment feel in the final third of the 20-miler? This sets your final race-pace confidence." },
+
+    { phase: "taper",
+      days: [D("Recovery jog", 4, "Recovery"), D("3x1mi @ Marathon Pace (sharpen, not tire)", 6, "MP"),
+             D("Easy aerobic", 5, "Easy"), D("3mi @ Marathon Pace", 7, "MP"),
+             D("Recovery + light Strength", 3, "Recovery"), D("Long run w/ 4mi @ Marathon Pace", 12, "MP"),
+             D("Recovery jog", 3, "Recovery")],
+      mental: "Less is more - the fitness is already banked. This week protects it.",
+      purpose: "Volume drops meaningfully; small sharp intensity touches keep race-pace feel alive.",
+      fueling: "Begin thinking about race-week carb intake - nothing drastic yet, just attentive.",
+      heat: "Cool, stable conditions expected - a good final data point for race-day pacing.",
+      strength: "Maintenance - one short activation session, minimal volume." },
+
+    { phase: "taper",
+      days: [D("Recovery jog", 3, "Recovery"), D("Easy + strides", 4, "Easy"),
+             D("Easy shakeout", 3, "Easy"), D("3x1mi @ Marathon Pace, then rest starts", 4, "MP"),
+             D("Easy + light strides, gear check", 2, "Easy"), D("Shakeout jog, begin carb-load", 2, "Recovery"),
+             D("RACE DAY: Indianapolis Monumental Marathon - Goal 3:05:00", 26.2, "Race", true)],
+      mental: "You've earned this line. Not hoping for 3:05 - believing it, because you did the work to prove it.",
+      purpose: "Arrive rested, confident, and fueled. Every hard mile that matters has already been run.",
+      fueling: "Standard race-morning routine, exactly as rehearsed in Weeks 8, 12, and 14. Nothing new on race day.",
+      heat: "Early-November race morning should run cool - dress in layers you can shed.",
+      strength: "None this week - full rest for the legs.",
+      race: { name: "Indianapolis Monumental Marathon", date: "Sun, Nov 8, 2026" } },
+  ];
+
+  const PACES = [
+    ["Recovery", "8:45-9:30/mi"], ["Easy", "8:15-9:00/mi"], ["Long run", "7:50-8:40/mi"],
+    ["Marathon pace (MP)", "6:58-7:05/mi"], ["Steady", "7:20-7:40/mi"], ["Threshold", "6:35-6:50/mi"],
+    ["Cruise intervals", "6:30-6:45/mi"], ["10K pace", "6:15-6:25/mi"], ["5K pace / VO2max", "6:00-6:10/mi"],
+    ["Hill repeats / Fartlek", "By effort, not pace"],
+  ];
+
+  // ---------- STATE ----------
+  let progress = {}; // { "1": {Mon:true,...}, ... }
+  let overrides = {}; // { "1": { Mon: {session: "...", miles: 5}, ... }, ... }
+  let selectedWeek = 1;
+
+  function loadProgress(){try{progress=JSON.parse(localStorage.getItem('training-progress')||'{}')}catch(e){progress={};}}
+function saveProgress(){localStorage.setItem('training-progress',JSON.stringify(progress));}
+function loadOverrides(){try{overrides=JSON.parse(localStorage.getItem('training-overrides')||'{}')}catch(e){overrides={};}}
+function saveOverrides(){localStorage.setItem('training-overrides',JSON.stringify(overrides));}
+
+  function weekDone(n) {
+    const p = progress[n] || {};
+    return days7.filter((d) => p[d]).length;
+  }
+  function totalDone() {
+    let c = 0;
+    for (let n = 1; n <= 16; n++) c += weekDone(n);
+    return c;
+  }
+
+  // Merge a week's default day data with any user edits
+  function getWeekDays(n) {
+    const wk = WEEKS[n - 1];
+    const wo = overrides[n] || {};
+    return wk.days.map((d, i) => {
+      const key = days7[i];
+      const o = wo[key] || {};
+      return {
+        session: o.session !== undefined ? o.session : d.session,
+        miles: o.miles !== undefined ? o.miles : d.miles,
+        pace: d.pace,
+        race: d.race,
+        edited: o.session !== undefined || o.miles !== undefined,
+      };
+    });
+  }
+  function weekTotal(n) {
+    const t = getWeekDays(n).reduce((a, d) => a + (Number(d.miles) || 0), 0);
+    return Math.round(t * 10) / 10;
+  }
+  function escapeAttr(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  }
+
+  // ---------- CHART ----------
+  function renderChart() {
+    const svg = document.getElementById("mp-chart-svg");
+    const w = 900, h = 120, padL = 34, padB = 22, barGap = 6;
+    const barW = (w - padL - 10) / 16 - barGap;
+    const maxMiles = Math.max(...WEEKS.map((wk, i) => weekTotal(i + 1)));
+    let svgHtml = "";
+    const now = new Date();
+    WEEKS.forEach((wk, i) => {
+      const n = i + 1;
+      const total = weekTotal(n);
+      const barH = (total / maxMiles) * (h - padB - 14);
+      const x = padL + i * (barW + barGap);
+      const y = h - padB - barH;
+      const color = PHASES[wk.phase].color;
+      const isSel = n === selectedWeek;
+      const isRace = wk.days.some((d) => d.race);
+      const inWeek = now >= weekStart(n) && now <= weekEnd(n);
+      svgHtml += `<g class="mp-bar" data-week="${n}">
+        <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="3" fill="${color}" opacity="${isSel ? 1 : 0.85}" class="${isSel ? "mp-bar-selected" : ""}"></rect>
+        <text x="${x + barW / 2}" y="${h - padB + 13}" text-anchor="middle" font-size="9.5" fill="#8b96a3">${n}</text>
+        ${isRace ? `<text x="${x + barW / 2}" y="${y - 5}" text-anchor="middle" font-size="11">&#127937;</text>` : ""}
+        ${inWeek ? `<text x="${x + barW / 2}" y="${h - 4}" text-anchor="middle" font-size="8" fill="#f0a742" font-weight="700">TODAY</text>` : ""}
+      </g>`;
+    });
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.innerHTML = svgHtml;
+    svg.querySelectorAll(".mp-bar").forEach((g) => {
+      g.addEventListener("click", () => selectWeek(parseInt(g.getAttribute("data-week"), 10)));
+    });
+  }
+
+  // ---------- WEEK LIST ----------
+  function renderWeekList() {
+    const el = document.getElementById("mp-weeklist");
+    el.innerHTML = "";
+    for (let n = 1; n <= 16; n++) {
+      const chip = document.createElement("div");
+      const done = weekDone(n);
+      chip.className = "mp-wchip" + (n === selectedWeek ? " active" : "") + (done === 7 ? " done" : "");
+      chip.innerHTML = `<span class="mp-dot"></span> Wk ${n}`;
+      chip.addEventListener("click", () => selectWeek(n));
+      el.appendChild(chip);
+    }
+  }
+
+  // ---------- DETAIL ----------
+  function renderDetail() {
+    const wk = WEEKS[selectedWeek - 1];
+    const phaseInfo = PHASES[wk.phase];
+    const wkDays = getWeekDays(selectedWeek);
+    const total = weekTotal(selectedWeek);
+    const done = weekDone(selectedWeek);
+    const el = document.getElementById("mp-detail");
+
+    let raceBanner = "";
+    if (wk.race) {
+      raceBanner = `<div class="mp-banner mp-banner-race">&#127942; <div><strong>${wk.race.name}</strong> - ${wk.race.date}</div></div>`;
+    }
+    let checkBanner = "";
+    if (wk.checkpoint) {
+      checkBanner = `<div class="mp-banner mp-banner-check">&#128260; <div>${wk.checkpoint}</div></div>`;
+    }
+
+    let rows = "";
+    wkDays.forEach((d, i) => {
+      const key = days7[i];
+      const checked = !!(progress[selectedWeek] && progress[selectedWeek][key]);
+      rows += `<div class="mp-day-row ${checked ? "mp-day-done" : ""} ${d.race ? "race" : ""}" data-day="${key}">
+        <div class="mp-check ${checked ? "checked" : ""}" data-toggle="${key}">${checked ? "&#10003;" : ""}</div>
+        <div class="mp-day-abbr">${key}</div>
+        <input class="mp-day-session-input ${d.race ? "mp-day-race-tag" : ""}" data-day="${key}" data-field="session" value="${escapeAttr(d.session)}" spellcheck="false">
+        <div style="display:flex;align-items:center;justify-content:flex-end;">
+          <input type="number" step="0.1" min="0" class="mp-day-miles-input mp-mono" data-day="${key}" data-field="miles" value="${d.miles}">
+          <span class="mp-mono" style="color:var(--text-dim);font-size:11px;">mi</span>
+        </div>
+        <div class="mp-pace-chip">${d.pace}</div>
+        <div class="mp-day-timing">${timing7[i]}${d.edited ? '<span class="mp-edited-flag" title="Edited from default plan">&#9998;</span>' : ""}</div>
+      </div>`;
+    });
+
+    el.innerHTML = `
+      <div class="mp-detail-head">
+        <div>
+          <span class="mp-phase-pill" style="background:${phaseInfo.color}22; color:${phaseInfo.color}">${phaseInfo.label}</span>
+          <h2 class="mp-week-title mp-display">Week ${selectedWeek}</h2>
+          <div class="mp-week-dates mp-mono">${weekRangeLabel(selectedWeek)}</div>
+        </div>
+        <div class="mp-week-progress">
+          <div class="mp-week-miles mp-mono">${total}<span style="font-size:14px;color:var(--text-dim)">mi</span></div>
+          <div class="mp-week-miles-label">${done}/7 days logged</div>
+        </div>
+      </div>
+      ${raceBanner}${checkBanner}
+      <div class="mp-days">${rows}</div>
+      <div class="mp-mental">"${wk.mental}"</div>
+      <div class="mp-notes-grid">
+        <div class="mp-note-card"><div class="mp-note-label">Purpose of the week</div><div class="mp-note-body">${wk.purpose}</div></div>
+        <div class="mp-note-card"><div class="mp-note-label">Strength phase</div><div class="mp-note-body">${wk.strength}</div></div>
+        <div class="mp-note-card"><div class="mp-note-label">Fueling</div><div class="mp-note-body">${wk.fueling}</div></div>
+        <div class="mp-note-card"><div class="mp-note-label">Heat / humidity</div><div class="mp-note-body">${wk.heat}</div></div>
+      </div>
+      <button class="mp-drawer-toggle" id="mp-pace-toggle">Pace reference &#9662;</button>
+      <button class="mp-drawer-toggle" id="mp-reset-week-btn">Reset this week's edits</button>
+      <button class="mp-reset-btn" id="mp-reset-btn">Reset all progress</button>
+      <div class="mp-drawer" id="mp-pace-drawer">
+        <table class="mp-pace-table">
+          ${PACES.map((p) => `<tr><td>${p[0]}</td><td class="mp-mono">${p[1]}</td></tr>`).join("")}
+        </table>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:8px;">In Alabama summer heat, run by effort first - these ranges assume mild conditions. See the week's heat note above for adjustments.</div>
+      </div>
+    `;
+
+    el.querySelectorAll("[data-toggle]").forEach((box) => {
+      box.addEventListener("click", async () => {
+        const key = box.getAttribute("data-toggle");
+        if (!progress[selectedWeek]) progress[selectedWeek] = {};
+        progress[selectedWeek][key] = !progress[selectedWeek][key];
+        saveProgress();
+        renderDetail();
+        renderWeekList();
+        renderChart();
+        updateStats();
+      });
+    });
+
+    el.querySelectorAll(".mp-day-session-input, .mp-day-miles-input").forEach((inp) => {
+      inp.addEventListener("change", async (e) => {
+        const key = e.target.getAttribute("data-day");
+        const field = e.target.getAttribute("data-field");
+        let val = e.target.value;
+        if (field === "miles") {
+          val = parseFloat(val);
+          if (isNaN(val) || val < 0) val = 0;
+        } else {
+          val = val.trim();
+        }
+        if (!overrides[selectedWeek]) overrides[selectedWeek] = {};
+        if (!overrides[selectedWeek][key]) overrides[selectedWeek][key] = {};
+        overrides[selectedWeek][key][field] = val;
+        saveOverrides();
+        renderDetail();
+        renderChart();
+        updateStats();
+      });
+      // Prevent Enter from adding a newline / submitting, just blur to trigger change
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.target.blur(); }
+      });
+    });
+
+    document.getElementById("mp-pace-toggle").addEventListener("click", () => {
+      document.getElementById("mp-pace-drawer").classList.toggle("open");
+    });
+    document.getElementById("mp-reset-week-btn").addEventListener("click", async () => {
+      if (overrides[selectedWeek] && confirm("Reset this week's mileage/workout edits back to the default plan?")) {
+        delete overrides[selectedWeek];
+        saveOverrides();
+        renderDetail(); renderChart(); updateStats();
+      } else if (!overrides[selectedWeek]) {
+        alert("No edits to reset for this week.");
+      }
+    });
+    document.getElementById("mp-reset-btn").addEventListener("click", async () => {
+      if (confirm("Reset all logged progress? This can't be undone.")) {
+        progress = {};
+        saveProgress();
+        renderDetail(); renderWeekList(); renderChart(); updateStats();
+      }
+    });
+  }
+
+  function updateStats() {
+    const now = new Date();
+    const raceDay = new Date(weekEnd(16));
+    const daysLeft = Math.ceil((raceDay - now) / dayMs);
+    document.getElementById("mp-countdown").textContent = daysLeft >= 0 ? daysLeft + " days to race day" : "Race complete!";
+    let curWeek = 1;
+    for (let n = 1; n <= 16; n++) { if (now >= weekStart(n) && now <= weekEnd(n)) curWeek = n; }
+    if (now > weekEnd(16)) curWeek = 16;
+    if (now < weekStart(1)) curWeek = 1;
+    document.getElementById("mp-stat-week").textContent = curWeek + " / 16";
+    let totalMiles = 0;
+    for (let n = 1; n <= 16; n++) totalMiles += weekTotal(n);
+    document.getElementById("mp-stat-total").textContent = Math.round(totalMiles);
+    document.getElementById("mp-stat-pct").textContent = Math.round((totalDone() / 112) * 100) + "%";
+  }
+
+  function selectWeek(n) {
+    selectedWeek = n;
+    renderDetail();
+    renderWeekList();
+    renderChart();
+  }
+
+  function init() {
+    loadProgress();
+    loadOverrides();
+    const now = new Date();
+    let curWeek = 1;
+    for (let n = 1; n <= 16; n++) { if (now >= weekStart(n) && now <= weekEnd(n)) curWeek = n; }
+    if (now > weekEnd(16)) curWeek = 16;
+    selectedWeek = curWeek;
+    updateStats();
+    renderChart();
+    renderWeekList();
+    renderDetail();
+  }
+  init();
+})();
 </script>
 
-<script type="module" src="js/marathon.js"></script>
-  
 <script src="js/loadHeader.js"></script>
 
 </body>
-
 </html>
