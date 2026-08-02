@@ -213,6 +213,87 @@ if (coachLongRun && nextLongRun) {
         `${nextLongRun.miles} mi`;
 
 }
+// ==========================================
+// AI Coach Notes
+// ==========================================
+
+const coachBrief = document.getElementById("coachBrief");
+
+if (coachBrief) {
+
+    coachBrief.innerHTML = "";
+
+    const notes = [];
+
+    const todayWorkout = getUpcomingWorkouts()[0];
+
+    notes.push(
+
+        `Current Training Phase: ${getTrainingPhase()}.`
+
+    );
+
+    if (todayWorkout) {
+
+        notes.push(
+
+            `Today's workout: ${todayWorkout.session} (${todayWorkout.miles} mi).`
+
+        );
+
+    }
+
+    const longRun = getNextLongRun();
+
+    if (longRun) {
+
+        notes.push(
+
+            `Next long run: ${longRun.miles} miles during Week ${longRun.week}.`
+
+        );
+
+    }
+
+    const completion = getCompletionPercent();
+
+    if (completion >= 90) {
+
+        notes.push(
+
+            "Excellent consistency. Stay healthy and trust the training."
+
+        );
+
+    } else if (completion >= 70) {
+
+        notes.push(
+
+            "You're on track. Continue prioritizing your quality workouts."
+
+        );
+
+    } else {
+
+        notes.push(
+
+            "Focus on consistency. Completing every scheduled workout is the biggest priority."
+
+        );
+
+    }
+
+    notes.forEach(note => {
+
+        const li = document.createElement("li");
+
+        li.textContent = note;
+
+        coachBrief.appendChild(li);
+
+    });
+
+}
     // ==========================================
     // AI Coach Brief
     // ==========================================
