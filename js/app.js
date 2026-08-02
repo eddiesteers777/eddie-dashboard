@@ -162,6 +162,8 @@ if (trainingPhase) {
 
 const upcomingWorkouts = getUpcomingWorkouts();
 
+console.log(upcomingWorkouts);
+
 const workoutElement = document.getElementById("todayWorkout");
 
 if (workoutElement && upcomingWorkouts.length > 0) {
