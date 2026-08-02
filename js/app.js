@@ -1,4 +1,3 @@
-console.log("APP VERSION 2");
 // ==========================================
 // EddieOS Dashboard
 // ==========================================
@@ -20,7 +19,9 @@ import {
 
     getNextLongRun,
 
-    getCompletionPercent
+    getCompletionPercent,
+
+    getWeeklyGoal
 
 } from "./marathonData.js";
 
@@ -55,302 +56,333 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("💻 Falling back to local dashboard data.");
 
     }
-
     // ==========================================
     // Greeting
     // ==========================================
 
     const hour = new Date().getHours();
 
-    let greeting = "Good evening";
+    let greeting = "Good Evening";
 
     if (hour < 12) {
 
-        greeting = "Good morning";
+        greeting = "Good Morning";
 
     } else if (hour < 17) {
 
-        greeting = "Good afternoon";
+        greeting = "Good Afternoon";
 
     }
 
-    const coachHeading = document.querySelector(".coach-header h2");
+    const welcomeHeading = document.getElementById("welcomeHeading");
 
-    if (coachHeading) {
+    if (welcomeHeading) {
 
-        coachHeading.textContent = `${greeting}, ${dashboardData.profile.firstName}`;
+        welcomeHeading.innerHTML =
+
+            `${greeting},<br>${dashboardData.profile.firstName}`;
 
     }
 
     // ==========================================
-    // Countdown
+    // Hero Card
     // ==========================================
 
-const countdown = document.getElementById("raceCountdown");
+    const goalTime = document.getElementById("goalTime");
 
-if (countdown) {
+    if (goalTime) {
 
-    countdown.textContent =
-        `${getRaceCountdown()} Days`;
+        goalTime.textContent = "3:10:00";
 
-}
-// ==========================================
-// Goal Time
-// ==========================================
+    }
 
-const goalTime = document.getElementById("goalTime");
+    const raceCountdown = document.getElementById("raceCountdown");
 
-if (goalTime) {
+    if (raceCountdown) {
 
-    goalTime.textContent = "3:10:00";
+        raceCountdown.textContent =
 
-}
-// ==========================================
-// Weekly Mileage
-// ==========================================
+            `${getRaceCountdown()} Days`;
 
-const weeklyMileage = document.getElementById("weeklyMileage");
+    }
 
-if (weeklyMileage) {
+    const weeklyGoal = document.getElementById("weeklyGoal");
 
-    weeklyMileage.textContent =
-        `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
+    if (weeklyGoal) {
 
-}
-// ==========================================
-// Training Phase
-// ==========================================
+        weeklyGoal.textContent =
 
-const trainingPhase = document.getElementById("trainingPhase");
+            `${getWeeklyGoal()} mi`;
 
-if (trainingPhase) {
-
-    trainingPhase.textContent =
-        getTrainingPhase();
-
-}
-
+    }
     // ==========================================
-    // Readiness
+    // Quick Stats
     // ==========================================
 
-    const readiness = document.getElementById("readiness");
+    const weeklyMileage = document.getElementById("weeklyMileage");
+
+    if (weeklyMileage) {
+
+        weeklyMileage.textContent =
+
+            `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
+
+    }
+
+    const readiness = document.getElementById("readinessScore");
 
     if (readiness) {
 
         readiness.textContent =
-            dashboardData.health.readiness + "%";
+
+            `${dashboardData.health.readiness}%`;
 
     }
 
-    // ==========================================
-    // Streak
-    // ==========================================
-
-    const streak = document.getElementById("streak");
+    const streak = document.getElementById("streakDays");
 
     if (streak) {
 
         streak.textContent =
+
             dashboardData.training.streak;
 
     }
 
-// ==========================================
-// Today's Workout
-// ==========================================
+    const nextRace = document.getElementById("nextRace");
 
-try {
+    if (nextRace) {
+
+        nextRace.textContent =
+
+            getRaceCountdown();
+
+    }
+    // ==========================================
+    // Quick Stats
+    // ==========================================
+
+    const weeklyMileage = document.getElementById("weeklyMileage");
+
+    if (weeklyMileage) {
+
+        weeklyMileage.textContent =
+
+            `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
+
+    }
+
+    const readiness = document.getElementById("readinessScore");
+
+    if (readiness) {
+
+        readiness.textContent =
+
+            `${dashboardData.health.readiness}%`;
+
+    }
+
+    const streak = document.getElementById("streakDays");
+
+    if (streak) {
+
+        streak.textContent =
+
+            dashboardData.training.streak;
+
+    }
+
+    const nextRace = document.getElementById("nextRace");
+
+    if (nextRace) {
+
+        nextRace.textContent =
+
+            getRaceCountdown();
+
+    }
+    // ==========================================
+    // Today's Workout
+    // ==========================================
 
     const upcomingWorkouts = getUpcomingWorkouts();
 
-    console.table(upcomingWorkouts);
+    const todayWorkout = document.getElementById("todayWorkout");
 
-} catch (error) {
+    if (todayWorkout && upcomingWorkouts.length > 0) {
 
-    console.error("Upcoming Workouts Error:", error);
+        todayWorkout.textContent =
 
-}
-
-const workoutElement = document.getElementById("todayWorkout");
-
-if (workoutElement && upcomingWorkouts.length > 0) {
-
-    const workout = upcomingWorkouts[0];
-
-    workoutElement.textContent =
-        `${workout.session} • ${workout.miles} mi`;
-
-}
-// ==========================================
-// AI Coach Stats
-// ==========================================
-
-const coachWeek = document.getElementById("coachWeek");
-
-if (coachWeek) {
-
-    coachWeek.textContent =
-        `Week ${getCurrentWeek()}`;
-
-}
-
-
-const coachPhase = document.getElementById("coachPhase");
-
-if (coachPhase) {
-
-    coachPhase.textContent =
-        getTrainingPhase();
-
-}
-
-
-const coachCompletion = document.getElementById("coachCompletion");
-
-if (coachCompletion) {
-
-    coachCompletion.textContent =
-        `${getCompletionPercent()}%`;
-
-}
-
-
-const coachLongRun = document.getElementById("coachLongRun");
-
-const nextLongRun = getNextLongRun();
-
-if (coachLongRun && nextLongRun) {
-
-    coachLongRun.textContent =
-        `${nextLongRun.miles} mi`;
-
-}
-// ==========================================
-// AI Coach Notes
-// ==========================================
-
-const coachBrief = document.getElementById("coachBrief");
-
-if (coachBrief) {
-
-    coachBrief.innerHTML = "";
-
-    const notes = [];
-
-    const todayWorkout = getUpcomingWorkouts()[0];
-
-    notes.push(
-
-        `Current Training Phase: ${getTrainingPhase()}.`
-
-    );
-
-    if (todayWorkout) {
-
-        notes.push(
-
-            `Today's workout: ${todayWorkout.session} (${todayWorkout.miles} mi).`
-
-        );
+            `${upcomingWorkouts[0].session} • ${upcomingWorkouts[0].miles} mi`;
 
     }
 
-    const longRun = getNextLongRun();
+    // ==========================================
+    // AI Coach Stats
+    // ==========================================
 
-    if (longRun) {
+    const coachWeek = document.getElementById("coachWeek");
 
-        notes.push(
+    if (coachWeek) {
 
-            `Next long run: ${longRun.miles} miles during Week ${longRun.week}.`
+        coachWeek.textContent =
 
-        );
-
-    }
-
-    const completion = getCompletionPercent();
-
-    if (completion >= 90) {
-
-        notes.push(
-
-            "Excellent consistency. Stay healthy and trust the training."
-
-        );
-
-    } else if (completion >= 70) {
-
-        notes.push(
-
-            "You're on track. Continue prioritizing your quality workouts."
-
-        );
-
-    } else {
-
-        notes.push(
-
-            "Focus on consistency. Completing every scheduled workout is the biggest priority."
-
-        );
+            `Week ${getCurrentWeek()}`;
 
     }
 
-    notes.forEach(note => {
+    const coachPhase = document.getElementById("coachPhase");
 
-        const li = document.createElement("li");
+    if (coachPhase) {
 
-        li.textContent = note;
+        coachPhase.textContent =
 
-        coachBrief.appendChild(li);
+            getTrainingPhase();
 
-    });
+    }
 
-}
-// ==========================================
-// Upcoming Training
-// ==========================================
+    const coachCompletion = document.getElementById("coachCompletion");
 
-const upcomingTraining = document.getElementById("upcomingTraining");
+    if (coachCompletion) {
 
-if (upcomingTraining) {
+        coachCompletion.textContent =
 
-    upcomingTraining.innerHTML = "";
+            `${getCompletionPercent()}%`;
 
-    getUpcomingWorkouts()
+    }
 
-        .slice(0, 4)
+    const coachLongRun = document.getElementById("coachLongRun");
 
-        .forEach(workout => {
+    const nextLongRun = getNextLongRun();
 
-            upcomingTraining.innerHTML += `
+    if (coachLongRun && nextLongRun) {
 
-                <div class="training-card">
+        coachLongRun.textContent =
 
-                    <span>
+            `${nextLongRun.miles} mi`;
 
-                        Week ${workout.week} • ${workout.day}
+    }
+    // ==========================================
+    // AI Coach Notes
+    // ==========================================
 
-                    </span>
+    const coachBrief = document.getElementById("coachBrief");
 
-                    <h3>
+    if (coachBrief) {
 
-                        ${workout.session}
+        coachBrief.innerHTML = "";
 
-                    </h3>
+        const notes = [];
 
-                    <p>
+        notes.push(
 
-                        ${workout.miles} miles${workout.pace ? ` • ${workout.pace}` : ""}
+            `Current Training Phase: ${getTrainingPhase()}.`
 
-                    </p>
+        );
 
-                </div>
+        if (upcomingWorkouts.length > 0) {
 
-            `;
+            notes.push(
+
+                `Today's workout: ${upcomingWorkouts[0].session} (${upcomingWorkouts[0].miles} mi).`
+
+            );
+
+        }
+
+        if (nextLongRun) {
+
+            notes.push(
+
+                `Next long run: ${nextLongRun.miles} miles during Week ${nextLongRun.week}.`
+
+            );
+
+        }
+
+        const completion = getCompletionPercent();
+
+        if (completion >= 90) {
+
+            notes.push(
+
+                "Excellent consistency. Stay healthy and trust the training."
+
+            );
+
+        } else if (completion >= 70) {
+
+            notes.push(
+
+                "You're on track. Continue prioritizing your quality workouts."
+
+            );
+
+        } else {
+
+            notes.push(
+
+                "Focus on consistency. Completing every scheduled workout is the biggest priority."
+
+            );
+
+        }
+
+        notes.forEach(note => {
+
+            const li = document.createElement("li");
+
+            li.textContent = note;
+
+            coachBrief.appendChild(li);
 
         });
 
-}
-    
+    }
+    // ==========================================
+    // Upcoming Training
+    // ==========================================
+
+    const upcomingTraining = document.getElementById("upcomingTraining");
+
+    if (upcomingTraining) {
+
+        upcomingTraining.innerHTML = "";
+
+        upcomingWorkouts
+
+            .slice(0, 4)
+
+            .forEach(workout => {
+
+                upcomingTraining.innerHTML += `
+
+                    <div class="training-card">
+
+                        <span>
+
+                            Week ${workout.week} • ${workout.day}
+
+                        </span>
+
+                        <h3>
+
+                            ${workout.session}
+
+                        </h3>
+
+                        <p>
+
+                            ${workout.miles} miles${workout.pace ? ` • ${workout.pace}` : ""}
+
+                        </p>
+
+                    </div>
+
+                `;
+
+            });
+
+    }
+
 });
