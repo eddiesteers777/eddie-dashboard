@@ -342,3 +342,5 @@ if (upcomingTraining) {
         });
 
 }
+    
+});
