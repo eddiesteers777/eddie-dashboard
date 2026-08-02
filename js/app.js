@@ -17,7 +17,9 @@ import {
 
     getTrainingPhase,
 
-    getNextLongRun
+    getNextLongRun,
+
+    getCompletionPercent
 
 } from "./marathonData.js";
 
@@ -339,26 +341,3 @@ if (upcomingTraining) {
         });
 
 }
-    // ==========================================
-    // AI Coach Brief
-    // ==========================================
-
-    const coachBrief = document.getElementById("coachBrief");
-
-    if (coachBrief) {
-
-        coachBrief.innerHTML = "";
-
-        dashboardData.coach.brief.forEach(item => {
-
-            const li = document.createElement("li");
-
-            li.textContent = item;
-
-            coachBrief.appendChild(li);
-
-        });
-
-    }
-
-});
