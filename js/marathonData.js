@@ -10,7 +10,7 @@ export const START_DATE = new Date(
 
 export const RACE_DATE = new Date(
 
-    "2026-11-08T00:00:00"
+    "2026-11-07T00:00:00"
 
 );
 
@@ -553,19 +553,19 @@ export function getRaceCountdown(){
 
     const today = new Date();
 
+    today.setHours(0,0,0,0);
 
-    const difference =
+    const race = new Date(RACE_DATE);
 
-        RACE_DATE - today;
-
+    race.setHours(0,0,0,0);
 
     return Math.max(
 
         0,
 
-        Math.ceil(
+        Math.round(
 
-            difference / DAY_MS
+            (race - today) / DAY_MS
 
         )
 
