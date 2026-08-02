@@ -13,6 +13,8 @@ import {
 
     getAdjustedWeekMileage,
 
+    getUpcomingWorkouts,
+
     getTrainingPhase,
 
     getNextLongRun
@@ -89,18 +91,29 @@ if (countdown) {
         `${getRaceCountdown()} Days`;
 
 }
-    // ==========================================
-    // Weekly Mileage
-    // ==========================================
+// ==========================================
+// Goal Time
+// ==========================================
 
-    const weeklyMileage = document.getElementById("weeklyMileage");
+const goalTime = document.getElementById("goalTime");
 
-    if (weeklyMileage) {
+if (goalTime) {
 
-        weeklyMileage.textContent =
-            dashboardData.marathon.currentWeeklyMileage;
+    goalTime.textContent = "3:10:00";
 
-    }
+}
+// ==========================================
+// Weekly Mileage
+// ==========================================
+
+const weeklyMileage = document.getElementById("weeklyMileage");
+
+if (weeklyMileage) {
+
+    weeklyMileage.textContent =
+        `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
+
+}
 
     // ==========================================
     // Readiness
