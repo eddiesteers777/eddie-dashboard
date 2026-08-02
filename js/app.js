@@ -164,7 +164,7 @@ try {
 
     const upcomingWorkouts = getUpcomingWorkouts();
 
-    console.log("Upcoming Workouts:", upcomingWorkouts);
+    console.table(upcomingWorkouts);
 
 } catch (error) {
 
