@@ -1069,59 +1069,67 @@ export function getWorkoutBreakdown(){
 
 export function getUpcomingWorkouts(){
 
-    const currentWeek =
+    const today = new Date();
 
-        getCurrentWeek();
-
+    today.setHours(0,0,0,0);
 
     const workouts = [];
 
-
     for(
 
-        let w = currentWeek;
+        let week = getCurrentWeek();
 
-        w <= WEEKS.length;
+        week <= WEEKS.length;
 
-        w++
+        week++
 
     ){
 
+        const weekDays = getAdjustedWeekDays(week);
 
-        getAdjustedWeekDays(w)
+        weekDays.forEach((day,index)=>{
 
-            .forEach(
+            const workoutDate = new Date(
 
-                (day,index)=>{
+                weekStart(week).getTime()
 
+                +
 
-                    workouts.push({
-
-                        week:w,
-
-                        day:DAYS[index],
-
-                        session:day.session,
-
-                        miles:day.miles,
-
-                        pace:day.pace
-
-                    });
-
-
-                }
+                index * DAY_MS
 
             );
 
+            workoutDate.setHours(0,0,0,0);
+
+            if(workoutDate >= today){
+
+                workouts.push({
+
+                    week,
+
+                    day:DAYS[index],
+
+                    date:workoutDate,
+
+                    session:day.session,
+
+                    miles:day.miles,
+
+                    pace:day.pace,
+
+                    race:day.race || false
+
+                });
+
+            }
+
+        });
 
     }
-
 
     return workouts;
 
 }
-
 
 
 /* ==========================================
