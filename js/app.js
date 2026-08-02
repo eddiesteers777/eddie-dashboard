@@ -294,6 +294,51 @@ if (coachBrief) {
     });
 
 }
+// ==========================================
+// Upcoming Training
+// ==========================================
+
+const upcomingTraining = document.getElementById("upcomingTraining");
+
+if (upcomingTraining) {
+
+    upcomingTraining.innerHTML = "";
+
+    getUpcomingWorkouts()
+
+        .slice(0, 4)
+
+        .forEach(workout => {
+
+            upcomingTraining.innerHTML += `
+
+                <div class="training-card">
+
+                    <span>
+
+                        Week ${workout.week} • ${workout.day}
+
+                    </span>
+
+                    <h3>
+
+                        ${workout.session}
+
+                    </h3>
+
+                    <p>
+
+                        ${workout.miles} miles${workout.pace ? ` • ${workout.pace}` : ""}
+
+                    </p>
+
+                </div>
+
+            `;
+
+        });
+
+}
     // ==========================================
     // AI Coach Brief
     // ==========================================
