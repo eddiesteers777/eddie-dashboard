@@ -169,7 +169,50 @@ if (workoutElement && upcomingWorkouts.length > 0) {
         `${workout.session} • ${workout.miles} mi`;
 
 }
+// ==========================================
+// AI Coach Stats
+// ==========================================
 
+const coachWeek = document.getElementById("coachWeek");
+
+if (coachWeek) {
+
+    coachWeek.textContent =
+        `Week ${getCurrentWeek()}`;
+
+}
+
+
+const coachPhase = document.getElementById("coachPhase");
+
+if (coachPhase) {
+
+    coachPhase.textContent =
+        getTrainingPhase();
+
+}
+
+
+const coachCompletion = document.getElementById("coachCompletion");
+
+if (coachCompletion) {
+
+    coachCompletion.textContent =
+        `${getCompletionPercent()}%`;
+
+}
+
+
+const coachLongRun = document.getElementById("coachLongRun");
+
+const nextLongRun = getNextLongRun();
+
+if (coachLongRun && nextLongRun) {
+
+    coachLongRun.textContent =
+        `${nextLongRun.miles} mi`;
+
+}
     // ==========================================
     // AI Coach Brief
     // ==========================================
