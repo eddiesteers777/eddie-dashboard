@@ -141,34 +141,22 @@ if (weeklyMileage) {
 
     }
 
-    // ==========================================
-    // Today's Workout
-    // ==========================================
+// ==========================================
+// Today's Workout
+// ==========================================
 
-    const days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-    ];
+const upcomingWorkouts = getUpcomingWorkouts();
 
-    const todayName = days[new Date().getDay()];
+const workoutElement = document.getElementById("todayWorkout");
 
-    const todayWorkout = dashboardData.training.workouts.find(
-        workout => workout.day === todayName
-    );
+if (workoutElement && upcomingWorkouts.length > 0) {
 
-    const workoutElement = document.getElementById("todayWorkout");
+    const workout = upcomingWorkouts[0];
 
-    if (workoutElement && todayWorkout) {
+    workoutElement.textContent =
+        `${workout.session} • ${workout.miles} mi`;
 
-        workoutElement.textContent =
-            `${todayWorkout.workout} • ${todayWorkout.miles} Miles`;
-
-    }
+}
 
     // ==========================================
     // AI Coach Brief
