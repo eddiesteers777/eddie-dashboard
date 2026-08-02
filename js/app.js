@@ -5,6 +5,20 @@
 import { dashboardData as localData } from "./dashboardData.js";
 import { loadDashboard } from "./firestore.js";
 
+import {
+
+    getRaceCountdown,
+
+    getCurrentWeek,
+
+    getAdjustedWeekMileage,
+
+    getTrainingPhase,
+
+    getNextLongRun
+
+} from "./marathonData.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
 
     // ==========================================
@@ -67,24 +81,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Countdown
     // ==========================================
 
-    const countdown = document.getElementById("countdown");
+const countdown = document.getElementById("raceCountdown");
 
-    if (countdown) {
+if (countdown) {
 
-        const today = new Date();
+    countdown.textContent =
+        `${getRaceCountdown()} Days`;
 
-        const raceDate = new Date(dashboardData.marathon.raceDate);
-
-        const difference = raceDate - today;
-
-        const daysRemaining = Math.ceil(
-            difference / (1000 * 60 * 60 * 24)
-        );
-
-        countdown.textContent = daysRemaining;
-
-    }
-
+}
     // ==========================================
     // Weekly Mileage
     // ==========================================
