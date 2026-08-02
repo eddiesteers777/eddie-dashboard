@@ -114,6 +114,18 @@ if (weeklyMileage) {
         `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
 
 }
+// ==========================================
+// Training Phase
+// ==========================================
+
+const trainingPhase = document.getElementById("trainingPhase");
+
+if (trainingPhase) {
+
+    trainingPhase.textContent =
+        getTrainingPhase();
+
+}
 
     // ==========================================
     // Readiness
