@@ -60,7 +60,7 @@ export function weekStart(week){
 
 }
 
-export function weekEnworkout(week){
+export function weekEnd(week){
 
     return new Date(
 
@@ -86,7 +86,7 @@ export function weekRange(week){
 
     )} - ${formatDate(
 
-        weekEnworkout(week)
+        weekEnd(week)
 
     )}, 2026`;
 
