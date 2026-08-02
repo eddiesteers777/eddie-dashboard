@@ -160,9 +160,17 @@ if (trainingPhase) {
 // Today's Workout
 // ==========================================
 
-const upcomingWorkouts = getUpcomingWorkouts();
+try {
 
-console.log(upcomingWorkouts);
+    const upcomingWorkouts = getUpcomingWorkouts();
+
+    console.log("Upcoming Workouts:", upcomingWorkouts);
+
+} catch (error) {
+
+    console.error("Upcoming Workouts Error:", error);
+
+}
 
 const workoutElement = document.getElementById("todayWorkout");
 
