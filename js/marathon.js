@@ -31,7 +31,7 @@ import {
 
 } from "./marathonData.js";
 
-
+console.log("Marathon JS loaded");
 
 /* ==========================================
    State
