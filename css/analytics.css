@@ -650,3 +650,50 @@ canvas{
     }
 
 }
+/* ==========================================
+   Import Activities
+========================================== */
+
+.import-box{
+
+    display:flex;
+
+    gap:16px;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    margin-top:20px;
+
+}
+
+#importStatus{
+
+    margin-top:18px;
+
+    font-size:.95rem;
+
+    color:var(--text-secondary);
+
+}
+
+#importActivities{
+
+    cursor:pointer;
+
+}
+
+#activityFile{
+
+    padding:12px;
+
+    border:1px solid rgba(255,255,255,.12);
+
+    border-radius:12px;
+
+    background:rgba(255,255,255,.04);
+
+    color:white;
+
+}
