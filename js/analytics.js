@@ -935,9 +935,11 @@ if(todayButton){
     );
 
 }
-/* ==========================================
+/* /* ==========================================
    Import Activities
 ========================================== */
+
+const dropZone = $("dropZone");
 
 const activityFile = $("activityFile");
 
@@ -947,6 +949,8 @@ const importStatus = $("importStatus");
 
 if (
 
+    dropZone &&
+
     activityFile &&
 
     importButton &&
@@ -955,11 +959,25 @@ if (
 
 ){
 
-    importButton.addEventListener(
+    dropZone.addEventListener(
 
         "click",
 
         ()=>{
+
+            activityFile.click();
+
+        }
+
+    );
+
+    importButton.addEventListener(
+
+        "click",
+
+        (event)=>{
+
+            event.stopPropagation();
 
             activityFile.click();
 
@@ -973,24 +991,75 @@ if (
 
         ()=>{
 
-            if(activityFile.files.length===0){
-
-                importStatus.textContent =
-
-                    "No files selected.";
-
-                return;
-
-            }
-
-            importStatus.textContent =
-
-                `${activityFile.files.length} file(s) selected.`;
+            handleFiles(activityFile.files);
 
         }
 
     );
 
+    dropZone.addEventListener(
+
+        "dragover",
+
+        (event)=>{
+
+            event.preventDefault();
+
+            dropZone.classList.add("dragging");
+
+        }
+
+    );
+
+    dropZone.addEventListener(
+
+        "dragleave",
+
+        ()=>{
+
+            dropZone.classList.remove("dragging");
+
+        }
+
+    );
+
+    dropZone.addEventListener(
+
+        "drop",
+
+        (event)=>{
+
+            event.preventDefault();
+
+            dropZone.classList.remove("dragging");
+
+            handleFiles(event.dataTransfer.files);
+
+        }
+
+    );
+
+}
+
+function handleFiles(files){
+
+    if(files.length===0){
+
+        importStatus.textContent =
+
+            "No files selected.";
+
+        return;
+
+    }
+
+    importStatus.textContent =
+
+        `${files.length} activities ready to import.`;
+
+    console.log(files);
+
+}
 }
 /* ==========================================
    Start
