@@ -159,7 +159,7 @@
 
     </section>
 <!-- ==========================================
-     IMPORT ACTIVITIES
+     Import Activities
 ========================================== -->
 
 <section class="panel">
@@ -170,13 +170,13 @@
 
             <h2>
 
-                Import Activities
+                Import COROS Activities
 
             </h2>
 
             <p>
 
-                Upload your exported COROS, GPX, TCX, FIT, or ZIP files.
+                Drag & drop your exported FIT or TCX files, or browse your computer.
 
             </p>
 
@@ -184,29 +184,55 @@
 
     </div>
 
-    <div class="import-box">
+    <div id="dropZone" class="drop-zone">
 
-        <input
-            type="file"
-            id="activityFile"
-            accept=".fit,.gpx,.tcx,.zip"
-            multiple>
+        <div class="upload-icon">
+
+            📁
+
+        </div>
+
+        <h3>
+
+            Drop your activities here
+
+        </h3>
+
+        <p>
+
+            or
+
+        </p>
 
         <button
             id="importActivities"
             class="primary-btn">
 
-            Import Activities
+            Choose Files
 
         </button>
 
+        <input
+            type="file"
+            id="activityFile"
+            accept=".fit,.tcx"
+            multiple
+            hidden>
+
+        <small>
+
+            Supported:
+            .FIT • .TCX
+
+        </small>
+
     </div>
 
-    <p id="importStatus">
+    <div id="importStatus">
 
-        No files selected.
+        No activities imported.
 
-    </p>
+    </div>
 
 </section>
     <!-- ==========================================
