@@ -1043,6 +1043,8 @@ if (
 
 async function handleFiles(files){
 
+   console.log("handleFiles() called");
+
     if(files.length===0){
 
         importStatus.textContent =
