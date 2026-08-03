@@ -1118,6 +1118,8 @@ else if(file.name.toLowerCase().endsWith(".fit")){
 
     );
 
+  }
+
 }
 
     importStatus.textContent =
