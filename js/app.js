@@ -88,13 +88,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Hero Card
     // ==========================================
 
-    const goalTime = document.getElementById("goalTime");
+const goalTime = document.getElementById("goalTime");
 
-    if (goalTime) {
+if (goalTime) {
 
-        goalTime.textContent = "3:10:00";
+    goalTime.textContent =
+        dashboardData.training.goalTime;
 
-    }
+}
 
     const raceCountdown = document.getElementById("raceCountdown");
 
