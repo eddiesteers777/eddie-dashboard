@@ -1,7 +1,469 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>EddieOS Dashboard</title> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"> <link rel="stylesheet" href="css/style.css"> </head> <body> <div id="header"
-</div> <main class="container"> <!-- ========================================== Hero =========================================== --> <section class="hero"> <div class="hero-left"> <div class="welcome"> 👋 Welcome Back </div> <h1> Good Afternoon, <br> Eddie </h1> <p class="hero-text"> Stay consistent, trust your training, and keep building toward your marathon goal. </p> <div class="hero-actions"> <button class="primary-btn"> Today's Workout </button> <button class="secondary-btn"> View Plan </button> </div> </div> <div class="hero-right"> <div class="goal-card"> <span> 🏁 Goal Race </span> <h2> Indianapolis Marathon </h2> <p> Goal Time </p> <h1 id="goalTime"> 3:10:00 </h1> <div class="goal-divider"
-</div> <div class="goal-stats"> <div> <small> Race Day </small> <strong id="raceCountdown"> 102 Days </strong> </div> <div> <small> Weekly Goal </small> <strong> 50 mi </strong> </div> </div> </div> </div> </section> <!-- ========================================== Quick Stats =========================================== --> <section class="stats"> <div class="stat-card"> <span> Weekly Mileage </span> <h2 id="weeklyMileage"> 42.8 </h2> <p> Miles completed this week </p> </div> <div class="stat-card"> <span> Readiness </span> <h2 id="readinessScore"> 91% </h2> <p> Ready for today's workout </p> </div> <div class="stat-card"> <span> Current Streak </span> <h2 id="streakDays"> 17 </h2> <p> Consecutive training days </p> </div> <div class="stat-card"> <span> Next Race </span> <h2 id="nextRace"> 102 </h2> <p> Days until Indianapolis </p> </div> </section> <!-- ========================================== AI Coach =========================================== --> <div class="coach-grid"> <div class="coach-stat"> <span> Current Week </span> <strong id="coachWeek"> -- </strong> </div> <div class="coach-stat"> <span> Training Phase </span> <strong id="coachPhase"> -- </strong> </div> <div class="coach-stat"> <span> Completion </span> <strong id="coachCompletion"> -- </strong> </div> <div class="coach-stat"> <span> Next Long Run </span> <strong id="coachLongRun"> -- </strong> </div> </div> <!-- ========================================== Dashboard Apps =========================================== --> <section class="grid"> <a href="marathon.html" class="card"> <div class="card-icon"> 🏃 </div> <h2> Marathon </h2> <p> View your training plan, race countdown, workouts, and goal progress. </p> <a href="nutrition.html" class="card"> <div class="card-icon"> 🍎 </div> <h2> Nutrition </h2> <p> Track protein, carbs, calories, water, and daily nutrition goals. </p> </a> </a> <a href="planner.html" class="card"> <div class="card-icon"> 📅 </div> <h2> Planner </h2> <p> Organize workouts, meals, appointments, and daily tasks all in one place. </p> </a> <a href="analytics.html" class="card"> <div class="card-icon"> 📈 </div> <h2> Analytics </h2> <p> Dive into mileage, pace trends, recovery, and long-term progress. </p> </a> <a href="shoes.html" class="card"> <div class="card-icon"> 👟 </div> <h2> Shoes </h2> <p> Track shoe mileage and know exactly when it's time to rotate pairs. </p> </a> <a href="75day.html" class="card"> <div class="card-icon"> 💪 </div> <h2> 75-Day Challenge </h2> <p> Stay accountable with your daily habits and challenge progress. </p> </a> <a href="settings.html" class="card"> <div class="card-icon"> ⚙️ </div> <h2> Settings </h2> <p> Customize EddieOS, connect accounts, and manage preferences. </p> </a> </section> <!-- ========================================== Upcoming Training =========================================== --> <div class="training-grid" id="upcomingTraining"> </div> <!-- ========================================== Shoe Rotation =========================================== --> <section class="shoe-panel"> <div class="panel-header"> <h2> Shoe Rotation </h2> </div> <div class="training-grid"> <div class="training-card"> <span> Daily Trainer </span> <h3> New Balance SC Trainer v3 </h3> <p> <strong>215 miles</strong> of 400 miles used. </p> <div class="progress-bar"> <div class="progress-fill" style="width:54%;"> </div> </div> </div> <div class="training-card"> <span> Speed Work </span> <h3> Saucony Endorphin Speed 5 </h3> <p> <strong>72 miles</strong> of 300 miles used. </p> <div class="progress-bar"> <div class="progress-fill" style="width:24%;"> </div> </div> </div> </div> </section> <!-- End of Main Container --> </main> <!-- ========================================== Scripts =========================================== --> <script src="https://unpkg.com/lucide@latest"
-</script> <script> lucide.createIcons(); </script> <script src="js/loadHeader.js"
-</script> <script type="module" src="js/firebase.js"
-</script> <script type="module" src="js/app.js"
-</script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>EddieOS Dashboard</title>
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="container">
+
+        <!-- ==========================================
+             Hero
+        =========================================== -->
+
+        <section class="hero">
+
+            <div class="hero-left">
+
+                <div class="welcome">
+                    👋 Welcome Back
+                </div>
+
+                <h1>
+                    Good Afternoon,
+                    <br>
+                    Eddie
+                </h1>
+
+                <p class="hero-text">
+                    Stay consistent, trust your training, and keep building toward your marathon goal.
+                </p>
+
+                <div class="hero-actions">
+
+                    <button class="primary-btn">
+                        Today's Workout
+                    </button>
+
+                    <button class="secondary-btn">
+                        View Plan
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="hero-right">
+
+                <div class="goal-card">
+
+                    <span>
+                        🏁 Goal Race
+                    </span>
+
+                    <h2>
+                        Indianapolis Marathon
+                    </h2>
+
+                    <p>
+                        Goal Time
+                    </p>
+
+                    <h1 id="goalTime">
+                        3:10:00
+                    </h1>
+
+                    <div class="goal-divider"></div>
+
+                    <div class="goal-stats">
+
+                        <div>
+
+                            <small>
+                                Race Day
+                            </small>
+
+                            <strong id="raceCountdown">
+                                102 Days
+                            </strong>
+
+                        </div>
+
+                        <div>
+
+                            <small>
+                                Weekly Goal
+                            </small>
+
+                            <strong>
+                                50 mi
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+        <!-- ==========================================
+             Quick Stats
+        =========================================== -->
+
+        <section class="stats">
+
+            <div class="stat-card">
+
+                <span>
+                    Weekly Mileage
+                </span>
+
+                <h2 id="weeklyMileage">
+                    42.8
+                </h2>
+
+                <p>
+                    Miles completed this week
+                </p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <span>
+                    Readiness
+                </span>
+
+                <h2 id="readinessScore">
+                    91%
+                </h2>
+
+                <p>
+                    Ready for today's workout
+                </p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <span>
+                    Current Streak
+                </span>
+
+                <h2 id="streakDays">
+                    17
+                </h2>
+
+                <p>
+                    Consecutive training days
+                </p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <span>
+                    Next Race
+                </span>
+
+                <h2 id="nextRace">
+                    102
+                </h2>
+
+                <p>
+                    Days until Indianapolis
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- ==========================================
+             AI Coach
+        =========================================== -->
+
+        <div class="coach-grid">
+
+            <div class="coach-stat">
+
+                <span>
+                    Current Week
+                </span>
+
+                <strong id="coachWeek">
+                    --
+                </strong>
+
+            </div>
+
+            <div class="coach-stat">
+
+                <span>
+                    Training Phase
+                </span>
+
+                <strong id="coachPhase">
+                    --
+                </strong>
+
+            </div>
+
+            <div class="coach-stat">
+
+                <span>
+                    Completion
+                </span>
+
+                <strong id="coachCompletion">
+                    --
+                </strong>
+
+            </div>
+
+            <div class="coach-stat">
+
+                <span>
+                    Next Long Run
+                </span>
+
+                <strong id="coachLongRun">
+                    --
+                </strong>
+
+            </div>
+
+        </div>
+          <!-- ==========================================
+             Dashboard Apps
+        =========================================== -->
+
+        <section class="grid">
+
+            <a href="marathon.html" class="card">
+
+                <div class="card-icon">
+                    🏃
+                </div>
+
+                <h2>
+                    Marathon
+                </h2>
+
+                <p>
+                    View your training plan, race countdown, workouts, and goal progress.
+                </p>
+
+                <a href="nutrition.html" class="card">
+
+                    <div class="card-icon">
+                        🍎
+                    </div>
+
+                    <h2>
+                        Nutrition
+                    </h2>
+
+                    <p>
+                        Track protein, carbs, calories, water, and daily nutrition goals.
+                    </p>
+
+                </a>
+
+            </a>
+
+            <a href="planner.html" class="card">
+
+                <div class="card-icon">
+                    📅
+                </div>
+
+                <h2>
+                    Planner
+                </h2>
+
+                <p>
+                    Organize workouts, meals, appointments, and daily tasks all in one place.
+                </p>
+
+            </a>
+
+            <a href="analytics.html" class="card">
+
+                <div class="card-icon">
+                    📈
+                </div>
+
+                <h2>
+                    Analytics
+                </h2>
+
+                <p>
+                    Dive into mileage, pace trends, recovery, and long-term progress.
+                </p>
+
+            </a>
+
+            <a href="shoes.html" class="card">
+
+                <div class="card-icon">
+                    👟
+                </div>
+
+                <h2>
+                    Shoes
+                </h2>
+
+                <p>
+                    Track shoe mileage and know exactly when it's time to rotate pairs.
+                </p>
+
+            </a>
+
+            <a href="75day.html" class="card">
+
+                <div class="card-icon">
+                    💪
+                </div>
+
+                <h2>
+                    75-Day Challenge
+                </h2>
+
+                <p>
+                    Stay accountable with your daily habits and challenge progress.
+                </p>
+
+            </a>
+
+            <a href="settings.html" class="card">
+
+                <div class="card-icon">
+                    ⚙️
+                </div>
+
+                <h2>
+                    Settings
+                </h2>
+
+                <p>
+                    Customize EddieOS, connect accounts, and manage preferences.
+                </p>
+
+            </a>
+
+        </section>
+
+        <!-- ==========================================
+             Upcoming Training
+        =========================================== -->
+
+        <div class="training-grid"
+             id="upcomingTraining">
+
+        </div>
+          <!-- ==========================================
+             Shoe Rotation
+        =========================================== -->
+
+        <section class="shoe-panel">
+
+            <div class="panel-header">
+
+                <h2>
+                    Shoe Rotation
+                </h2>
+
+            </div>
+
+            <div class="training-grid">
+
+                <div class="training-card">
+
+                    <span>
+                        Daily Trainer
+                    </span>
+
+                    <h3>
+                        New Balance SC Trainer v3
+                    </h3>
+
+                    <p>
+                        <strong>215 miles</strong> of 400 miles used.
+                    </p>
+
+                    <div class="progress-bar">
+
+                        <div class="progress-fill"
+                             style="width:54%;">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="training-card">
+
+                    <span>
+                        Speed Work
+                    </span>
+
+                    <h3>
+                        Saucony Endorphin Speed 5
+                    </h3>
+
+                    <p>
+                        <strong>72 miles</strong> of 300 miles used.
+                    </p>
+
+                    <div class="progress-bar">
+
+                        <div class="progress-fill"
+                             style="width:24%;">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- End of Main Container -->
+
+    </main>
+
+    <!-- ==========================================
+         Scripts
+    =========================================== -->
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/app.js"></script>
+
+</body>
+
+</html>
