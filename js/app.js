@@ -162,49 +162,6 @@ if (goalTime) {
 
     }
     // ==========================================
-    // Quick Stats
-    // ==========================================
-
-    const weeklyMileage = document.getElementById("weeklyMileage");
-
-    if (weeklyMileage) {
-
-        weeklyMileage.textContent =
-
-            `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
-
-    }
-
-    const readiness = document.getElementById("readinessScore");
-
-    if (readiness) {
-
-        readiness.textContent =
-
-            `${dashboardData.health.readiness}%`;
-
-    }
-
-    const streak = document.getElementById("streakDays");
-
-    if (streak) {
-
-        streak.textContent =
-
-            dashboardData.training.streak;
-
-    }
-
-    const nextRace = document.getElementById("nextRace");
-
-    if (nextRace) {
-
-        nextRace.textContent =
-
-            getRaceCountdown();
-
-    }
-    // ==========================================
     // Today's Workout
     // ==========================================
 
