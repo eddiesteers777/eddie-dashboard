@@ -1077,11 +1077,47 @@ async function handleFiles(files){
 
         }
 
-        else if(file.name.toLowerCase().endsWith(".fit")){
+else if(file.name.toLowerCase().endsWith(".fit")){
 
-            const buffer = await file.arrayBuffer();
+    const parser = new FitParser({
 
-            console.log(buffer);
+        force: true,
+
+        speedUnit: "mi",
+
+        lengthUnit: "mi",
+
+        temperatureUnit: "fahrenheit",
+
+        elapsedRecordField: true,
+
+        mode: "both"
+
+    });
+
+    const buffer = await file.arrayBuffer();
+
+    parser.parse(
+
+        buffer,
+
+        function(error,data){
+
+            if(error){
+
+                console.error(error);
+
+                return;
+
+            }
+
+            console.log(data);
+
+        }
+
+    );
+
+}
 
         }
 
