@@ -1041,7 +1041,7 @@ if (
 
 }
 
-function handleFiles(files){
+async function handleFiles(files){
 
     if(files.length===0){
 
@@ -1055,11 +1055,40 @@ function handleFiles(files){
 
     importStatus.textContent =
 
-        `${files.length} activities ready to import.`;
+        `Reading ${files.length} activities...`;
 
-    console.log(files);
+    for(const file of files){
 
-}
+        console.log("--------------------------------");
+
+        console.log("File:", file.name);
+
+        console.log("Type:", file.type);
+
+        console.log("Size:", file.size);
+
+        if(file.name.toLowerCase().endsWith(".tcx")){
+
+            const text = await file.text();
+
+            console.log(text.substring(0,500));
+
+        }
+
+        else if(file.name.toLowerCase().endsWith(".fit")){
+
+            const buffer = await file.arrayBuffer();
+
+            console.log(buffer);
+
+        }
+
+    }
+
+    importStatus.textContent =
+
+        `${files.length} activities loaded.`;
+
 }
 /* ==========================================
    Start
