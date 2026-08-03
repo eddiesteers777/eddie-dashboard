@@ -935,8 +935,63 @@ if(todayButton){
     );
 
 }
+/* ==========================================
+   Import Activities
+========================================== */
 
+const activityFile = $("activityFile");
 
+const importButton = $("importActivities");
+
+const importStatus = $("importStatus");
+
+if (
+
+    activityFile &&
+
+    importButton &&
+
+    importStatus
+
+){
+
+    importButton.addEventListener(
+
+        "click",
+
+        ()=>{
+
+            activityFile.click();
+
+        }
+
+    );
+
+    activityFile.addEventListener(
+
+        "change",
+
+        ()=>{
+
+            if(activityFile.files.length===0){
+
+                importStatus.textContent =
+
+                    "No files selected.";
+
+                return;
+
+            }
+
+            importStatus.textContent =
+
+                `${activityFile.files.length} file(s) selected.`;
+
+        }
+
+    );
+
+}
 /* ==========================================
    Start
 ========================================== */
