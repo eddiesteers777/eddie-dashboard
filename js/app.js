@@ -33,6 +33,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let dashboardData = localData;
 
+    console.log(dashboardData.marathon);
+
     try {
 
         const cloudData = await loadDashboard();
