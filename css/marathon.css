@@ -754,6 +754,21 @@ body{
         30px;
 
     gap:18px;
+
+    align-items:center;
+
+    padding:24px 22px;
+
+    margin-bottom:12px;
+
+    border-radius:18px;
+
+    background:rgba(255,255,255,.03);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    transition:.25s;
+
 }
 
     align-items:center;
