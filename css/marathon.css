@@ -749,13 +749,13 @@ body{
     display:grid;
 
     grid-template-columns:
-
         36px
         55px
         1fr
         90px
         120px
-        110px;
+        110px
+        28px;
 
     gap:18px;
 
@@ -896,6 +896,32 @@ body{
     color:var(--text-light);
 
     font-size:.82rem;
+
+}
+
+.mp-day-expand{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    color:var(--text-light);
+
+    cursor:pointer;
+
+    opacity:.6;
+
+    transition:.2s;
+
+}
+
+.mp-day-expand:hover{
+
+    opacity:1;
+
+    color:var(--primary-light);
 
 }
 
