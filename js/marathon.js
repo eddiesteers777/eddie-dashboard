@@ -469,6 +469,32 @@ function getSelectedWeekData(){
 
 }
 /* ==========================================
+   Cross Training Helper
+========================================== */
+
+function getCrossTraining(dayName) {
+
+    switch (dayName) {
+
+        case "Tue":
+            return CROSS_TRAINING.strength;
+
+        case "Fri":
+            return CROSS_TRAINING.maintenance;
+
+        case "Sat":
+            return CROSS_TRAINING.recovery;
+
+        case "Sun":
+            return CROSS_TRAINING.stretch;
+
+        default:
+            return null;
+
+    }
+
+}
+/* ==========================================
    Week Detail Rendering
 ========================================== */
 
