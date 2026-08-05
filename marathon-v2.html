@@ -6,23 +6,474 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-    <title>EddieOS Marathon V2</title>
+    <title>EddieOS | Marathon V2</title>
 
-    <link rel="stylesheet" href="marathon-v2.css">
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link
+        rel="stylesheet"
+        href="marathon-v2.css">
 
 </head>
 
 <body>
 
-    <div id="mp-root">
+<div id="mp-root">
 
-        <div id="marathon-app"></div>
+    <!-- =====================================
+         Hero
+    ====================================== -->
 
-    </div>
+    <section class="mp-hero">
 
-    <script type="module" src="marathon-v2.js"></script>
+        <div class="mp-hero-top">
+
+            <div>
+
+                <span class="mp-eyebrow">
+
+                    EddieOS Marathon
+
+                </span>
+
+                <h1 class="mp-title">
+
+                    Indianapolis Monumental Marathon
+
+                </h1>
+
+                <p class="mp-sub">
+
+                    Follow every week of training, monitor
+                    mileage, manage strength work,
+                    cross-training, recovery, and stay on
+                    pace toward race day.
+
+                </p>
+
+            </div>
+
+            <div class="mp-goal-block">
+
+                <div class="mp-goal-label">
+
+                    Goal Time
+
+                </div>
+
+                <div
+                    id="goalTime"
+                    class="mp-goal-time">
+
+                    3:05:00
+
+                </div>
+
+                <div
+                    id="raceCountdown"
+                    class="mp-countdown">
+
+                    Loading...
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ==========================
+             Stats
+        =========================== -->
+
+        <div class="mp-stats-row">
+
+            <div class="mp-stat">
+
+                <div
+                    id="statWeek"
+                    class="mp-stat-val">
+
+                    --
+
+                </div>
+
+                <div class="mp-stat-label">
+
+                    Current Week
+
+                </div>
+
+            </div>
+
+            <div class="mp-stat">
+
+                <div
+                    id="statMileage"
+                    class="mp-stat-val">
+
+                    --
+
+                </div>
+
+                <div class="mp-stat-label">
+
+                    Weekly Mileage
+
+                </div>
+
+            </div>
+
+            <div class="mp-stat">
+
+                <div
+                    id="statCompleted"
+                    class="mp-stat-val">
+
+                    --
+
+                </div>
+
+                <div class="mp-stat-label">
+
+                    Days Complete
+
+                </div>
+
+            </div>
+
+            <div class="mp-stat">
+
+                <div
+                    id="statPhase"
+                    class="mp-stat-val">
+
+                    --
+
+                </div>
+
+                <div class="mp-stat-label">
+
+                    Training Phase
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+    
+    <!-- =====================================
+         Mileage Progress
+    ====================================== -->
+
+    <section class="mp-chart-wrap">
+
+        <div class="mp-chart-title">
+
+            <span>
+
+                Weekly Mileage Progress
+
+            </span>
+
+            <div class="mp-legend">
+
+                <span>
+
+                    <i class="mp-build"></i>
+
+                    Build
+
+                </span>
+
+                <span>
+
+                    <i class="mp-peak"></i>
+
+                    Peak
+
+                </span>
+
+                <span>
+
+                    <i class="mp-cutback"></i>
+
+                    Cutback
+
+                </span>
+
+                <span>
+
+                    <i class="mp-taper"></i>
+
+                    Taper
+
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="mp-chart-scroll">
+
+            <svg
+
+                id="mp-chart"
+
+                viewBox="0 0 1200 250"
+
+                preserveAspectRatio="none">
+
+            </svg>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================
+         Week Navigation
+    ====================================== -->
+
+    <section class="mp-week-nav">
+
+        <div
+
+            id="mp-week-selector"
+
+            class="mp-week-selector">
+
+        </div>
+
+    </section>
+
+    <!-- =====================================
+         Week Detail
+    ====================================== -->
+
+    <section class="mp-week-detail">
+
+        <div class="mp-detail-header">
+
+            <div>
+
+                <span
+
+                    id="phaseBadge"
+
+                    class="mp-phase-badge">
+
+                    Base
+
+                </span>
+
+                <h2
+
+                    id="weekTitle"
+
+                    class="mp-week-title">
+
+                    Week 1
+
+                </h2>
+
+                <p
+
+                    id="weekDates"
+
+                    class="mp-week-dates">
+
+                    Loading...
+
+                </p>
+
+            </div>
+
+            <div class="mp-week-summary">
+
+                <div
+
+                    id="weekMileage"
+
+                    class="mp-week-mileage">
+
+                    0 mi
+
+                </div>
+
+                <div class="mp-week-label">
+
+                    Planned Mileage
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =====================================
+             Workout Cards
+        ====================================== -->
+
+        <div
+
+            id="mp-workouts"
+
+            class="mp-workouts">
+
+        </div>
+
+        <!-- =====================================
+             Weekly Motivation
+        ====================================== -->
+
+        <div
+
+            id="mentalCue"
+
+            class="mp-mental">
+
+        </div>
+
+        <!-- =====================================
+             Weekly Notes
+        ====================================== -->
+
+        <div class="mp-notes-grid">
+
+            <div class="mp-note-card">
+
+                <div class="mp-note-title">
+
+                    Purpose
+
+                </div>
+
+                <div
+
+                    id="purposeText"
+
+                    class="mp-note-body">
+
+                </div>
+
+            </div>
+
+            <div class="mp-note-card">
+
+                <div class="mp-note-title">
+
+                    Fueling
+
+                </div>
+
+                <div
+
+                    id="fuelingText"
+
+                    class="mp-note-body">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+        <!-- =====================================
+         Pace Reference Drawer
+    ====================================== -->
+
+    <section class="mp-pace-section">
+
+        <button
+
+            id="togglePaces"
+
+            class="mp-btn mp-btn-primary">
+
+            Show Pace Guide
+
+        </button>
+
+        <div
+
+            id="paceDrawer"
+
+            class="mp-pace-drawer">
+
+            <div class="mp-pace-header">
+
+                <h3>
+
+                    Training Pace Guide
+
+                </h3>
+
+                <p>
+
+                    Based on your current marathon goal.
+
+                </p>
+
+            </div>
+
+            <div
+
+                id="paceTable"
+
+                class="mp-pace-table">
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================
+         Footer
+    ====================================== -->
+
+    <footer class="mp-footer">
+
+        <div>
+
+            EddieOS Marathon V2
+
+        </div>
+
+        <div>
+
+            Indianapolis Monumental Marathon
+
+        </div>
+
+    </footer>
+
+</div>
+
+<script
+
+    type="module"
+
+    src="marathon-v2.js">
+
+</script>
 
 </body>
 
