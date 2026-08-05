@@ -208,6 +208,77 @@ export function workout(
     };
 
 }
+/* ==========================================
+   Cross Training Templates
+========================================== */
+
+export const CROSS_TRAINING = {
+
+    strength: {
+
+        title: "Tuesday Strength",
+
+        workouts: [
+
+            "Bench Press - 3 × 8",
+            "Pull-Ups - 3 × 8",
+            "Shoulder Press - 3 × 10",
+            "Chest Supported Rows - 3 × 10",
+            "Face Pulls - 3 × 15"
+
+        ]
+
+    },
+
+    maintenance: {
+
+        title: "Friday Maintenance",
+
+        workouts: [
+
+            "Goblet Squat - 2 × 10",
+            "Single Leg RDL - 2 × 10",
+            "Push-Ups - 2 × 15",
+            "Band Pull Aparts - 2 × 20"
+
+        ]
+
+    },
+
+    stretch: {
+
+        title: "Stretching",
+
+        workouts: [
+
+            "Hip Flexors",
+            "Hamstrings",
+            "Calves",
+            "Thoracic Mobility"
+
+        ]
+
+    },
+
+    recovery: {
+
+        title: "Recovery",
+
+        workouts: [
+
+            "Foam Roll",
+
+            "Stretch",
+
+            "Hydrate",
+
+            "Protein Goal"
+
+        ]
+
+    }
+
+};
  export const WEEKS = [
     { phase: "rebuild",
       days: [workout("Recovery jog", 3, "Recovery"), workout("Hill repeats: 8x45s @ strong effort", 5, "Hill effort"),
