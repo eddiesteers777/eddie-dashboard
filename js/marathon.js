@@ -583,6 +583,8 @@ function renderDetail(){
 
                     ${day.pace}
 
+                    </div>
+
                 <div class="mp-day-timing">
 
                     ${DAY_TIMES[index]}
