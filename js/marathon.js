@@ -677,14 +677,29 @@ else if (dayName === "Sun") {
 
                     ${day.pace}
 
-                </div>
-
-
                 <div class="mp-day-timing">
 
-                    ${DAY_TIMES[index]}
+    ${DAY_TIMES[index]}
 
-                    ${extraButton}
+    ${extraButton}
+
+</div>
+
+<div class="mp-cross-panel">
+
+    ${
+        dayName === "Tue"
+        ? CROSS_TRAINING.strength.workouts.map(workout => `<div>${workout}</div>`).join("")
+        : dayName === "Fri"
+        ? CROSS_TRAINING.maintenance.workouts.map(workout => `<div>${workout}</div>`).join("")
+        : dayName === "Sat"
+        ? CROSS_TRAINING.recovery.workouts.map(workout => `<div>${workout}</div>`).join("")
+        : dayName === "Sun"
+        ? CROSS_TRAINING.stretch.workouts.map(workout => `<div>${workout}</div>`).join("")
+        : ""
+    }
+
+</div>
 
                 </div>
 
