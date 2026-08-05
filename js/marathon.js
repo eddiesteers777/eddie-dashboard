@@ -532,7 +532,39 @@ function renderDetail(){
 
     let rows = "";
 
+let crossTrainingHTML = "";
 
+const today = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+
+const todayTraining = getCrossTraining(today);
+
+if (todayTraining) {
+
+    crossTrainingHTML = `
+
+        <div class="mp-note-card">
+
+            <div class="mp-note-label">
+
+                💪 Today's Cross Training
+
+            </div>
+
+            <div class="mp-note-body">
+
+                <strong>${todayTraining.title}</strong>
+
+                <br><br>
+
+                ${todayTraining.workouts.join("<br>")}
+
+            </div>
+
+        </div>
+
+    `;
+
+}
 
     days.forEach(
 
