@@ -781,6 +781,7 @@ if (todayTraining) {
 
             </div>
 
+            ${crossTrainingHTML}
 
         </div>
 
