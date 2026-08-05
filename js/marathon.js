@@ -562,6 +562,12 @@ function renderDetail(){
     <div class="mp-day-timing">
         ${DAY_TIMES[index]}
     </div>
+    
+<div class="mp-day-expand">
+
+    ▼
+
+</div>
 
 </div>
 
