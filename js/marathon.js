@@ -11,6 +11,8 @@ import {
 
     PACES,
 
+    CROSS_TRAINING,
+
     DAYS,
 
     DAY_TIMES,
