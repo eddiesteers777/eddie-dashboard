@@ -2,7 +2,6 @@
    EddieOS Marathon Controller
 ========================================== */
 
-
 import {
 
     WEEKS,
@@ -33,27 +32,29 @@ import {
 
 } from "./marathonData.js";
 
-console.log("NEW Marathon JS loaded");
+console.log("EddieOS Marathon v2");
 
 /* ==========================================
    State
 ========================================== */
 
-
 let progress = loadProgress();
-
 
 let overrides = loadOverrides();
 
-
 let selectedWeek = 1;
 
+/*
+==========================================
+Dropdown State
+==========================================
+*/
 
+let expandedDays = {};
 
 /* ==========================================
    DOM Helpers
 ========================================== */
-
 
 const $ = (id)=>{
 
@@ -61,12 +62,9 @@ const $ = (id)=>{
 
 };
 
-
-
 /* ==========================================
    Save Data
 ========================================== */
-
 
 function saveProgress(){
 
@@ -80,8 +78,6 @@ function saveProgress(){
 
 }
 
-
-
 function saveOverrides(){
 
     localStorage.setItem(
@@ -93,22 +89,213 @@ function saveOverrides(){
     );
 
 }
+
+/* ==========================================
+   Extras Helpers
+========================================== */
+
+function getExtras(day){
+
+    if(day.extras){
+
+        return day.extras;
+
+    }
+
+    return {
+
+        strength:[],
+
+        crossTraining:[],
+
+        mobility:[],
+
+        recovery:[],
+
+        notes:""
+
+    };
+
+}
+
+function hasExtras(day){
+
+    const extras = getExtras(day);
+
+    return (
+
+        extras.strength.length ||
+
+        extras.crossTraining.length ||
+
+        extras.mobility.length ||
+
+        extras.recovery.length ||
+
+        extras.notes.trim() !== ""
+
+    );
+
+}
+
+function renderExtras(day){
+
+    const extras = getExtras(day);
+
+    let html = "";
+
+    if(extras.strength.length){
+
+        html += `
+
+        <div class="mp-extra-group">
+
+            <div class="mp-extra-title">
+
+                💪 Strength
+
+            </div>
+
+            ${extras.strength.map(item=>`
+
+                <div class="mp-extra-item">
+
+                    ${item}
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+        `;
+
+    }
+
+    if(extras.crossTraining.length){
+
+        html += `
+
+        <div class="mp-extra-group">
+
+            <div class="mp-extra-title">
+
+                🚴 Cross Training
+
+            </div>
+
+            ${extras.crossTraining.map(item=>`
+
+                <div class="mp-extra-item">
+
+                    ${item}
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+        `;
+
+    }
+
+    if(extras.mobility.length){
+
+        html += `
+
+        <div class="mp-extra-group">
+
+            <div class="mp-extra-title">
+
+                🧘 Mobility
+
+            </div>
+
+            ${extras.mobility.map(item=>`
+
+                <div class="mp-extra-item">
+
+                    ${item}
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+        `;
+
+    }
+
+    if(extras.recovery.length){
+
+        html += `
+
+        <div class="mp-extra-group">
+
+            <div class="mp-extra-title">
+
+                ❤️ Recovery
+
+            </div>
+
+            ${extras.recovery.map(item=>`
+
+                <div class="mp-extra-item">
+
+                    ${item}
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+        `;
+
+    }
+
+    if(extras.notes){
+
+        html += `
+
+        <div class="mp-extra-group">
+
+            <div class="mp-extra-title">
+
+                📝 Notes
+
+            </div>
+
+            <div class="mp-extra-item">
+
+                ${extras.notes}
+
+            </div>
+
+        </div>
+
+        `;
+
+    }
+
+    return html;
+
+}
 /* ==========================================
    Marathon Stats
 ========================================== */
 
-
 function totalCompleted(){
 
     let count = 0;
-
 
     Object.values(progress)
 
         .forEach(
 
             week=>{
-
 
                 count +=
 
@@ -118,25 +305,19 @@ function totalCompleted(){
 
                     .length;
 
-
             }
 
         );
-
 
     return count;
 
 }
 
-
-
 function updateStats(){
 
     const now = new Date();
 
-
     const raceDay = weekEnd(16);
-
 
     const daysLeft = Math.ceil(
 
@@ -148,9 +329,7 @@ function updateStats(){
 
     );
 
-
     const countdown = $("mp-countdown");
-
 
     if(countdown){
 
@@ -168,11 +347,7 @@ function updateStats(){
 
     }
 
-
-
     let currentWeek = 1;
-
-
 
     for(
 
@@ -200,15 +375,11 @@ function updateStats(){
 
     }
 
-
-
     if(now > weekEnd(16)){
 
         currentWeek = 16;
 
     }
-
-
 
     if(now < weekStart(1)){
 
@@ -216,14 +387,9 @@ function updateStats(){
 
     }
 
-
-
     selectedWeek = currentWeek;
 
-
-
     const weekDisplay = $("mp-stat-week");
-
 
     if(weekDisplay){
 
@@ -237,17 +403,13 @@ function updateStats(){
 
     }
 
-
-
     const totalMiles = WEEKS.reduce(
 
         (total,week,index)=>{
 
-
             return total +
 
             getWeekMileage(index+1);
-
 
         },
 
@@ -255,10 +417,7 @@ function updateStats(){
 
     );
 
-
-
     const totalDisplay = $("mp-stat-total");
-
 
     if(totalDisplay){
 
@@ -268,10 +427,7 @@ function updateStats(){
 
     }
 
-
-
     const percentDisplay = $("mp-stat-pct");
-
 
     if(percentDisplay){
 
@@ -294,10 +450,10 @@ function updateStats(){
     }
 
 }
+
 /* ==========================================
    Week Rendering Helpers
 ========================================== */
-
 
 function weekDone(weekNumber){
 
@@ -309,7 +465,6 @@ function weekDone(weekNumber){
 
         {};
 
-
     return DAYS.filter(
 
         day =>
@@ -320,14 +475,11 @@ function weekDone(weekNumber){
 
 }
 
-
-
 function renderWeekList(){
 
     const container =
 
         $("mp-weeklist");
-
 
     if(!container){
 
@@ -335,9 +487,7 @@ function renderWeekList(){
 
     }
 
-
     container.innerHTML = "";
-
 
     for(
 
@@ -353,12 +503,9 @@ function renderWeekList(){
 
             document.createElement("div");
 
-
         const completed =
 
             weekDone(n);
-
-
 
         chip.className =
 
@@ -396,8 +543,6 @@ function renderWeekList(){
 
             );
 
-
-
         chip.innerHTML = `
 
             <span class="mp-dot"></span>
@@ -405,8 +550,6 @@ function renderWeekList(){
             Wk ${n}
 
         `;
-
-
 
         chip.addEventListener(
 
@@ -424,20 +567,15 @@ function renderWeekList(){
 
         );
 
-
-
         container.appendChild(chip);
 
     }
 
 }
 
-
-
 /* ==========================================
    Current Week Data
 ========================================== */
-
 
 function getSelectedWeekData(){
 
@@ -447,7 +585,6 @@ function getSelectedWeekData(){
 
             WEEKS[selectedWeek-1],
 
-
         days:
 
             getAdjustedWeekDays(
@@ -455,7 +592,6 @@ function getSelectedWeekData(){
                 selectedWeek
 
             ),
-
 
         mileage:
 
@@ -472,13 +608,9 @@ function getSelectedWeekData(){
    Week Detail Rendering
 ========================================== */
 
-
 function renderDetail(){
 
-    const container =
-
-        $("mp-detail");
-
+    const container = $("mp-detail");
 
     if(!container){
 
@@ -486,21 +618,13 @@ function renderDetail(){
 
     }
 
-
-    const data =
-
-        getSelectedWeekData();
-
+    const data = getSelectedWeekData();
 
     const week = data.week;
 
-
     const days = data.days;
 
-
-    const phaseInfo =
-
-        PHASES[week.phase];
+    const phaseInfo = PHASES[week.phase];
 
     let rows = "";
 
@@ -508,11 +632,8 @@ function renderDetail(){
 
         (day,index)=>{
 
+            const dayName = DAYS[index];
 
-            const dayName =
-
-                DAYS[index];
-           
             const completed =
 
                 progress[selectedWeek]
@@ -521,34 +642,60 @@ function renderDetail(){
 
                 progress[selectedWeek][dayName];
 
+            const expandable = hasExtras(day);
+
+            const expanded = expandedDays[dayName];
+
             rows += `
 
-<div class="mp-day-row ${completed ? "mp-day-done" : ""}">
+<div class="mp-day-wrapper">
+
+<div
+
+class="mp-day-row ${completed ? "mp-day-done" : ""}"
+
+data-expand="${dayName}">
 
     <div
+
         class="mp-check ${completed ? "checked" : ""}"
+
         data-toggle="${dayName}">
+
         ${completed ? "✓" : ""}
+
     </div>
 
     <div class="mp-day-abbr">
+
         ${dayName}
+
     </div>
 
     <input
+
         class="mp-day-session-input"
+
         data-day="${dayName}"
+
         data-field="session"
+
         value="${day.session}">
 
     <div class="mp-mile-box">
 
         <input
+
             type="number"
+
             step="0.1"
+
             class="mp-day-miles-input"
+
             data-day="${dayName}"
+
             data-field="miles"
+
             value="${day.miles}">
 
         mi
@@ -556,163 +703,155 @@ function renderDetail(){
     </div>
 
     <div class="mp-pace-chip">
+
         ${day.pace}
+
     </div>
 
     <div class="mp-day-timing">
-        ${DAY_TIMES[index]}
-    </div>
-    
-<div class="mp-day-expand">
 
-    ▼
+        ${DAY_TIMES[index]}
+
+    </div>
+
+    <div class="mp-day-expand">
+
+        ${expandable ? (expanded ? "▲" : "▼") : ""}
+
+    </div>
 
 </div>
+
+${expandable ? `
+
+<div
+
+class="mp-day-dropdown ${expanded ? "open" : ""}">
+
+    ${renderExtras(day)}
+
+</div>
+
+` : ""}
 
 </div>
 
 `;
 
-
         }
 
     );
 
-
-
     container.innerHTML = `
 
+<div class="mp-detail-head">
 
-        <div class="mp-detail-head">
+    <div>
 
+        <span
 
-            <div>
+            class="mp-phase-pill"
 
+            style="
 
-                <span
+            background:${phaseInfo.color}22;
 
-                class="mp-phase-pill"
+            color:${phaseInfo.color}">
 
-                style="
+            ${phaseInfo.label}
 
-                background:${phaseInfo.color}22;
+        </span>
 
-                color:${phaseInfo.color}">
+        <h2 class="mp-week-title">
 
-                    ${phaseInfo.label}
+            Week ${selectedWeek}
 
-                </span>
+        </h2>
 
+        <div class="mp-week-dates">
 
-                <h2 class="mp-week-title">
-
-                    Week ${selectedWeek}
-
-                </h2>
-
-
-                <div class="mp-week-dates">
-
-                    ${weekRange(selectedWeek)}
-
-                </div>
-
-
-            </div>
-
-
-            <div class="mp-week-progress">
-
-
-                <div class="mp-week-miles">
-
-                    ${data.mileage} mi
-
-                </div>
-
-
-                <div>
-
-                    ${weekDone(selectedWeek)}/7 completed
-
-                </div>
-
-
-            </div>
-
+            ${weekRange(selectedWeek)}
 
         </div>
 
+    </div>
 
-        <div class="mp-days">
+    <div class="mp-week-progress">
 
-            ${rows}
+        <div class="mp-week-miles">
 
-        </div>
-
-
-        <div class="mp-mental">
-
-            "${week.mental}"
+            ${data.mileage} mi
 
         </div>
 
+        <div>
 
-        <div class="mp-notes-grid">
-
-
-            <div class="mp-note-card">
-
-                <div class="mp-note-label">
-
-                    Purpose
-
-                </div>
-
-                <div class="mp-note-body">
-
-                    ${week.purpose}
-
-                </div>
-
-            </div>
-
-
-            <div class="mp-note-card">
-
-                <div class="mp-note-label">
-
-                    Fueling
-
-                </div>
-
-                <div class="mp-note-body">
-
-                    ${week.fueling}
-
-                </div>
-
-            </div>
-
+            ${weekDone(selectedWeek)}/7 completed
 
         </div>
 
+    </div>
 
-    `;
+</div>
+
+<div class="mp-days">
+
+    ${rows}
+
+</div>
+
+<div class="mp-mental">
+
+    "${week.mental}"
+
+</div>
+
+<div class="mp-notes-grid">
+
+    <div class="mp-note-card">
+
+        <div class="mp-note-label">
+
+            Purpose
+
+        </div>
+
+        <div class="mp-note-body">
+
+            ${week.purpose}
+
+        </div>
+
+    </div>
+
+    <div class="mp-note-card">
+
+        <div class="mp-note-label">
+
+            Fueling
+
+        </div>
+
+        <div class="mp-note-body">
+
+            ${week.fueling}
+
+        </div>
+
+    </div>
+
+</div>
+
+`;
 
 }
 /* ==========================================
    Event Listeners
 ========================================== */
 
-
 function attachDetailEvents(){
 
-
-    const container =
-
-        $("mp-detail");
-
+    const container = $("mp-detail");
 
     if(!container){
 
@@ -720,12 +859,11 @@ function attachDetailEvents(){
 
     }
 
-
-
     /*
-        Complete workout toggle
+    ==========================================
+    Complete Workout Toggle
+    ==========================================
     */
-
 
     container
 
@@ -735,13 +873,13 @@ function attachDetailEvents(){
 
         box=>{
 
-
             box.addEventListener(
 
                 "click",
 
-                ()=>{
+                event=>{
 
+                    event.stopPropagation();
 
                     const day =
 
@@ -751,27 +889,17 @@ function attachDetailEvents(){
 
                         );
 
-
-
                     if(!progress[selectedWeek]){
 
-                        progress[selectedWeek]={};
+                        progress[selectedWeek] = {};
 
                     }
 
-
-
                     progress[selectedWeek][day] =
 
-                        !
-
-                        progress[selectedWeek][day];
-
-
+                        !progress[selectedWeek][day];
 
                     saveProgress();
-
-
 
                     renderDetail();
 
@@ -779,24 +907,91 @@ function attachDetailEvents(){
 
                     updateStats();
 
+                    attachDetailEvents();
 
                 }
 
             );
 
+        }
+
+    );
+
+    /*
+    ==========================================
+    Expand / Collapse Day
+    ==========================================
+    */
+
+    container
+
+    .querySelectorAll("[data-expand]")
+
+    .forEach(
+
+        row=>{
+
+            row.addEventListener(
+
+                "click",
+
+                event=>{
+
+                    if(
+
+                        event.target.matches(
+
+                            ".mp-day-session-input"
+
+                        )
+
+                        ||
+
+                        event.target.matches(
+
+                            ".mp-day-miles-input"
+
+                        )
+
+                        ||
+
+                        event.target.closest(
+
+                            ".mp-check"
+
+                        )
+
+                    ){
+
+                        return;
+
+                    }
+
+                    const day =
+
+                        row.dataset.expand;
+
+                    expandedDays[day] =
+
+                        !expandedDays[day];
+
+                    renderDetail();
+
+                    attachDetailEvents();
+
+                }
+
+            );
 
         }
 
     );
 
-
-
-
-
     /*
-        Workout edits
+    ==========================================
+    Workout Edits
+    ==========================================
     */
-
 
     container
 
@@ -810,52 +1005,29 @@ function attachDetailEvents(){
 
         input=>{
 
-
             input.addEventListener(
 
                 "change",
 
                 event=>{
 
-
                     const day =
 
-                        event.target
-
-                        .dataset
-
-                        .day;
-
-
+                        event.target.dataset.day;
 
                     const field =
 
-                        event.target
-
-                        .dataset
-
-                        .field;
-
-
+                        event.target.dataset.field;
 
                     let value =
 
                         event.target.value;
 
+                    if(field === "miles"){
 
+                        value = Number(value);
 
-                    if(field==="miles"){
-
-                        value =
-
-                            Number(value);
-
-
-                        if(
-
-                            Number.isNaN(value)
-
-                        ){
+                        if(Number.isNaN(value)){
 
                             value = 0;
 
@@ -863,68 +1035,48 @@ function attachDetailEvents(){
 
                     }
 
-
-
                     if(!overrides[selectedWeek]){
 
-                        overrides[selectedWeek]={};
+                        overrides[selectedWeek] = {};
 
                     }
-
-
 
                     if(!overrides[selectedWeek][day]){
 
-                        overrides[selectedWeek][day]={};
+                        overrides[selectedWeek][day] = {};
 
                     }
 
-
-
-                    overrides[selectedWeek][day][field]
-
-                        = value;
-
-
+                    overrides[selectedWeek][day][field] = value;
 
                     saveOverrides();
 
-
-
                     renderDetail();
 
-
+                    attachDetailEvents();
 
                 }
 
             );
 
-
         }
 
     );
-
 
 }
 /* ==========================================
    Chart Rendering
 ========================================== */
 
-
 function renderChart(){
 
-    const svg =
-
-        $("mp-chart-svg");
-
+    const svg = $("mp-chart-svg");
 
     if(!svg){
 
         return;
 
     }
-
-
 
     const width = 900;
 
@@ -942,22 +1094,13 @@ function renderChart(){
 
     );
 
-
-
     let html = "";
-
-
 
     WEEKS.forEach(
 
         (week,index)=>{
 
-
-            const weekNumber =
-
-                index + 1;
-
-
+            const weekNumber = index + 1;
 
             const miles =
 
@@ -967,8 +1110,6 @@ function renderChart(){
 
                 );
 
-
-
             const barHeight =
 
                 (miles / maxMiles)
@@ -977,17 +1118,11 @@ function renderChart(){
 
                 80;
 
-
-
             const x =
 
                 40 +
 
-                index *
-
-                52;
-
-
+                index * 52;
 
             const y =
 
@@ -995,67 +1130,57 @@ function renderChart(){
 
                 barHeight;
 
-
-
             const color =
 
                 PHASES[week.phase]
 
                 .color;
 
-
-
             html += `
 
+<g
 
-            <g class="mp-bar"
+class="mp-bar"
 
-            data-week="${weekNumber}">
+data-week="${weekNumber}">
 
+    <rect
 
-                <rect
+        x="${x}"
 
-                x="${x}"
+        y="${y}"
 
-                y="${y}"
+        width="35"
 
-                width="35"
+        height="${barHeight}"
 
-                height="${barHeight}"
+        rx="4"
 
-                rx="4"
+        fill="${color}">
 
-                fill="${color}">
+    </rect>
 
-                </rect>
+    <text
 
+        x="${x+17}"
 
-                <text
+        y="115"
 
-                x="${x+17}"
+        text-anchor="middle"
 
-                y="115"
+        font-size="10">
 
-                text-anchor="middle"
+        ${weekNumber}
 
-                font-size="10">
+    </text>
 
-                    ${weekNumber}
+</g>
 
-                </text>
-
-
-            </g>
-
-
-            `;
-
+`;
 
         }
 
     );
-
-
 
     svg.setAttribute(
 
@@ -1065,10 +1190,7 @@ function renderChart(){
 
     );
 
-
     svg.innerHTML = html;
-
-
 
     svg
 
@@ -1078,52 +1200,43 @@ function renderChart(){
 
         bar=>{
 
-
             bar.addEventListener(
 
                 "click",
 
                 ()=>{
 
-
                     selectedWeek =
 
-                    Number(
+                        Number(
 
-                        bar.dataset.week
+                            bar.dataset.week
 
-                    );
-
+                        );
 
                     renderDetail();
 
                     renderWeekList();
 
+                    attachDetailEvents();
 
                 }
 
             );
 
-
         }
 
     );
 
-
 }
-
-
 
 /* ==========================================
    Initialize Marathon
 ========================================== */
 
-
 function init(){
 
-
     const now = new Date();
-
 
     for(
 
@@ -1151,8 +1264,6 @@ function init(){
 
     }
 
-
-
     updateStats();
 
     renderChart();
@@ -1163,9 +1274,6 @@ function init(){
 
     attachDetailEvents();
 
-
 }
-
-
 
 init();
