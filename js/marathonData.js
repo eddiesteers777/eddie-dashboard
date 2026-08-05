@@ -195,18 +195,27 @@ export function workout(
 
 ){
 
-    return{
+    return {
 
-        session,
+    session,
 
-        miles,
+    miles,
 
-        pace,
+    pace,
 
-        race
+    race,
 
-    };
+    strength: [],
 
+    crossTraining: [],
+
+    mobility: [],
+
+    recovery: [],
+
+    notes: ""
+
+};
 }
 /* ==========================================
    Cross Training Templates
