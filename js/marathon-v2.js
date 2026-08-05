@@ -144,7 +144,7 @@ function createDayCard(day, index) {
 
 }
 
-function render() {
+function renderDetail(){
 
     const app = $("marathon-app");
 
