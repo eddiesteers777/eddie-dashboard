@@ -521,85 +521,51 @@ function renderDetail(){
 
                 progress[selectedWeek][dayName];
 
-
-
             rows += `
 
-            <div class="mp-day-row 
+<div class="mp-day-row ${completed ? "mp-day-done" : ""}">
 
-                ${completed ? "mp-day-done" : ""}">
+    <div
+        class="mp-check ${completed ? "checked" : ""}"
+        data-toggle="${dayName}">
+        ${completed ? "✓" : ""}
+    </div>
 
-                <div
+    <div class="mp-day-abbr">
+        ${dayName}
+    </div>
 
-                    class="mp-check ${completed ? "checked" : ""}"
+    <input
+        class="mp-day-session-input"
+        data-day="${dayName}"
+        data-field="session"
+        value="${day.session}">
 
-                    data-toggle="${dayName}">
+    <div class="mp-mile-box">
 
-                    ${completed ? "✓" : ""}
+        <input
+            type="number"
+            step="0.1"
+            class="mp-day-miles-input"
+            data-day="${dayName}"
+            data-field="miles"
+            value="${day.miles}">
 
-                </div>
+        mi
 
+    </div>
 
-                <div class="mp-day-abbr">
+    <div class="mp-pace-chip">
+        ${day.pace}
+    </div>
 
-                    ${dayName}
+    <div class="mp-day-timing">
+        ${DAY_TIMES[index]}
+    </div>
 
-                </div>
+</div>
 
-
-                <input
-
-                    class="mp-day-session-input"
-
-                    data-day="${dayName}"
-
-                    data-field="session"
-
-                    value="${day.session}">
-
-
-                <div class="mp-mile-box">
-
-                    <input
-
-                    type="number"
-
-                    step="0.1"
-
-                    class="mp-day-miles-input"
-
-                    data-day="${dayName}"
-
-                    data-field="miles"
-
-                    value="${day.miles}">
-
-                    mi
-
-                </div>
-
-
-                <div class="mp-pace-chip">
-
-                    ${day.pace}
-
-                    </div>
-
-                <div class="mp-day-timing">
-
-                    ${DAY_TIMES[index]}
-
-                   </div>
-
-                   <div class="mp-day-expand">
-
-                       ▼
-                       
-                </div>
-
-            </div>
-
-            `;
+`;
 
 
         }
