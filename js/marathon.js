@@ -469,32 +469,6 @@ function getSelectedWeekData(){
 
 }
 /* ==========================================
-   Cross Training Helper
-========================================== */
-
-function getCrossTraining(dayName) {
-
-    switch (dayName) {
-
-        case "Tue":
-            return CROSS_TRAINING.strength;
-
-        case "Fri":
-            return CROSS_TRAINING.maintenance;
-
-        case "Sat":
-            return CROSS_TRAINING.recovery;
-
-        case "Sun":
-            return CROSS_TRAINING.stretch;
-
-        default:
-            return null;
-
-    }
-
-}
-/* ==========================================
    Week Detail Rendering
 ========================================== */
 
@@ -528,45 +502,7 @@ function renderDetail(){
 
         PHASES[week.phase];
 
-
-
     let rows = "";
-
-let crossTrainingHTML = "";
-
-const today = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
-
-const todayTraining = getCrossTraining(today);
-
-console.log(today, todayTraining);
-
-if (todayTraining) {
-
-    crossTrainingHTML = `
-
-        <div class="mp-note-card">
-
-            <div class="mp-note-label">
-
-                💪 Today's Cross Training
-
-            </div>
-
-            <div class="mp-note-body">
-
-                <strong>${todayTraining.title}</strong>
-
-                <br><br>
-
-                ${todayTraining.workouts.join("<br>")}
-
-            </div>
-
-        </div>
-
-    `;
-
-}
 
     days.forEach(
 
@@ -576,36 +512,6 @@ if (todayTraining) {
             const dayName =
 
                 DAYS[index];
-
-let extraButton = "";
-
-if (dayName === "Tue") {
-
-    extraButton =
-        `<button class="mp-cross-btn">💪 Strength</button>`;
-
-}
-
-else if (dayName === "Fri") {
-
-    extraButton =
-        `<button class="mp-cross-btn">💪 Maintenance</button>`;
-
-}
-
-else if (dayName === "Sat") {
-
-    extraButton =
-        `<button class="mp-cross-btn">🧊 Recovery</button>`;
-
-}
-
-else if (dayName === "Sun") {
-
-    extraButton =
-        `<button class="mp-cross-btn">🧘 Stretch</button>`;
-
-}
            
             const completed =
 
@@ -679,27 +585,9 @@ else if (dayName === "Sun") {
 
                 <div class="mp-day-timing">
 
-    ${DAY_TIMES[index]}
+                    ${DAY_TIMES[index]}
 
-    ${extraButton}
-
-</div>
-
-<div class="mp-cross-panel">
-
-    ${
-        dayName === "Tue"
-        ? CROSS_TRAINING.strength.workouts.map(workout => `<div>${workout}</div>`).join("")
-        : dayName === "Fri"
-        ? CROSS_TRAINING.maintenance.workouts.map(workout => `<div>${workout}</div>`).join("")
-        : dayName === "Sat"
-        ? CROSS_TRAINING.recovery.workouts.map(workout => `<div>${workout}</div>`).join("")
-        : dayName === "Sun"
-        ? CROSS_TRAINING.stretch.workouts.map(workout => `<div>${workout}</div>`).join("")
-        : ""
-    }
-
-</div>
+                   </div>
 
                 </div>
 
@@ -829,7 +717,6 @@ else if (dayName === "Sun") {
 
             </div>
 
-            ${crossTrainingHTML}
 
         </div>
 
