@@ -577,7 +577,36 @@ if (todayTraining) {
 
                 DAYS[index];
 
+let extraButton = "";
 
+if (dayName === "Tue") {
+
+    extraButton =
+        `<button class="mp-cross-btn">💪 Strength</button>`;
+
+}
+
+else if (dayName === "Fri") {
+
+    extraButton =
+        `<button class="mp-cross-btn">💪 Maintenance</button>`;
+
+}
+
+else if (dayName === "Sat") {
+
+    extraButton =
+        `<button class="mp-cross-btn">🧊 Recovery</button>`;
+
+}
+
+else if (dayName === "Sun") {
+
+    extraButton =
+        `<button class="mp-cross-btn">🧘 Stretch</button>`;
+
+}
+           
             const completed =
 
                 progress[selectedWeek]
@@ -654,6 +683,8 @@ if (todayTraining) {
                 <div class="mp-day-timing">
 
                     ${DAY_TIMES[index]}
+
+                    ${extraButton}
 
                 </div>
 
