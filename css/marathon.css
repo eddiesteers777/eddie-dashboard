@@ -732,15 +732,11 @@ body{
 
 .mp-days{
 
-    overflow:hidden;
+    display:flex;
 
-    border-radius:22px;
+    flex-direction:column;
 
-    border:1px solid var(--border);
-
-    background:rgba(255,255,255,.03);
-
-    margin-bottom:28px;
+    gap:12px;
 
 }
 
@@ -762,11 +758,15 @@ body{
 
     align-items:center;
 
-    padding:18px 22px;
+    padding:24px 22px;
 
-    border-bottom:1px solid rgba(255,255,255,.06);
+    margin-bottom:12px;
 
-    transition:.25s;
+    border-radius:18px;
+
+    background:rgba(255,255,255,.03);
+
+    border:1px solid rgba(255,255,255,.06);
 
 }
 
