@@ -1,0 +1,268 @@
+/* ==========================================
+   EddieOS Marathon V2
+========================================== */
+
+:root{
+
+    --bg:#07111f;
+
+    --card:#162338;
+
+    --card-light:#1c2b44;
+
+    --border:rgba(255,255,255,.08);
+
+    --text:#f5f8ff;
+
+    --text-light:#9aa8c7;
+
+    --primary:#3b82f6;
+
+    --primary-light:#60a5fa;
+
+    --shadow:
+        0 18px 45px rgba(0,0,0,.35);
+
+}
+
+/* ==========================================
+   Reset
+========================================== */
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+}
+
+body{
+
+    background:var(--bg);
+
+    color:var(--text);
+
+    font-family:Inter,sans-serif;
+
+    padding:40px;
+
+}
+
+#marathon-app{
+
+    max-width:1200px;
+
+    margin:auto;
+
+}
+
+/* ==========================================
+   Hero
+========================================== */
+
+.mp-hero{
+
+    background:linear-gradient(
+        145deg,
+        #1a2740,
+        #101b2b
+    );
+
+    border-radius:26px;
+
+    padding:40px;
+
+    margin-bottom:30px;
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow);
+
+}
+
+.mp-hero h1{
+
+    font-size:2.6rem;
+
+    margin-bottom:10px;
+
+}
+
+.mp-hero p{
+
+    color:var(--text-light);
+
+    margin-bottom:15px;
+
+}
+
+.mp-hero h2{
+
+    color:var(--primary-light);
+
+}
+
+/* ==========================================
+   Workout Card
+========================================== */
+
+.mp-card{
+
+    background:var(--card);
+
+    border:1px solid var(--border);
+
+    border-radius:20px;
+
+    padding:24px;
+
+    margin-bottom:18px;
+
+    transition:.25s;
+
+}
+
+.mp-card:hover{
+
+    transform:translateY(-3px);
+
+    border-color:rgba(59,130,246,.35);
+
+}
+
+.mp-day-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    gap:20px;
+
+}
+
+.mp-day-name{
+
+    font-size:.82rem;
+
+    color:var(--primary-light);
+
+    text-transform:uppercase;
+
+    letter-spacing:.12em;
+
+    margin-bottom:6px;
+
+}
+
+.mp-workout{
+
+    font-size:1.25rem;
+
+    font-weight:700;
+
+}
+
+.mp-meta{
+
+    color:var(--text-light);
+
+    margin-top:8px;
+
+}
+
+.mp-miles{
+
+    font-size:1.4rem;
+
+    font-weight:800;
+
+}
+
+/* ==========================================
+   Button
+========================================== */
+
+.mp-toggle{
+
+    width:100%;
+
+    margin-top:22px;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    background:rgba(59,130,246,.10);
+
+    color:var(--primary-light);
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+
+.mp-toggle:hover{
+
+    background:rgba(59,130,246,.18);
+
+}
+
+/* ==========================================
+   Dropdown
+========================================== */
+
+.mp-details{
+
+    display:none;
+
+    margin-top:22px;
+
+    padding-top:22px;
+
+    border-top:1px solid var(--border);
+
+}
+
+.mp-details.open{
+
+    display:block;
+
+}
+
+.mp-section{
+
+    margin-bottom:24px;
+
+}
+
+.mp-section:last-child{
+
+    margin-bottom:0;
+
+}
+
+.mp-section h4{
+
+    margin-bottom:10px;
+
+    color:var(--primary-light);
+
+}
+
+.mp-section div{
+
+    color:var(--text-light);
+
+    line-height:1.7;
+
+}
