@@ -33,7 +33,7 @@ import {
 
 } from "./marathonData.js";
 
-console.log("Marathon JS loaded");
+console.log("NEW Marathon JS loaded");
 
 /* ==========================================
    State
