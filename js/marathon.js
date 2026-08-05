@@ -589,8 +589,11 @@ function renderDetail(){
 
                    </div>
 
-                </div>
+                   <div class="mp-day-expand">
 
+                       ▼
+                       
+                </div>
 
             </div>
 
