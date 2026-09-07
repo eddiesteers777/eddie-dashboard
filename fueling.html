@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+
+        Fueling | EddieOS
+
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css">
+
+    <link
+        rel="stylesheet"
+        href="css/fueling.css">
+
+</head>
+
+<body>
+
+    <!-- Header -->
+
+    <div id="header"></div>
+
+    <!-- Page -->
+
+    <main class="fueling-page">
+
+        <!-- ============================================
+             HERO
+        ============================================= -->
+
+        <section class="page-title">
+
+            <h1>
+
+                Endurance Fueling
+
+            </h1>
+
+            <p class="page-subtitle">
+
+                Build your fueling plan. Train your gut. Race with confidence.
+
+            </p>
+
+            <p class="page-blurb">
+
+                Enter today's session and a few things about you and the conditions,
+                and the calculator will build a starting carb, fluid, and sodium
+                target with a fueling timeline you can adjust to fit what actually
+                works for your gut.
+
+            </p>
+
+        </section>
+
+        <!-- ============================================
+             MODE + MARATHON INTEGRATION
+        ============================================= -->
+
+        <section class="fuel-toolbar">
+
+            <div
+                class="mode-toggle"
+                id="modeToggle">
+
+                <button
+                    class="mode-btn active"
+                    data-mode="training">
+
+                    Training
+
+                </button>
+
+                <button
+                    class="mode-btn"
+                    data-mode="race">
+
+                    Race
+
+                </button>
+
+            </div>
+
+            <p
+                class="mode-caption"
+                id="modeCaption">
+
+                Training mode: practice fueling, train your gut, and experiment in
+                small steps.
+
+            </p>
+
+            <div class="marathon-integration">
+
+                <button
+                    class="fuel-btn secondary"
+                    id="useMarathonWorkoutBtn">
+
+                    Use Marathon Workout
+
+                </button>
+
+                <span
+                    class="marathon-workout-preview"
+                    id="marathonWorkoutPreview">
+
+                </span>
+
+            </div>
+
+        </section>
+
+        <!-- ============================================
+             SECTION 1 — SESSION INPUTS
+        ============================================= -->
+
+        <section class="fuel-panel">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Session Inputs
+
+                </h2>
+
+                <span class="fuel-panel-tag">
+
+                    Step 1
+
+                </span>
+
+            </div>
+
+            <div class="fuel-input-grid">
+
+                <!-- Workout -->
+
+                <div class="fuel-card">
+
+                    <h3>Workout</h3>
+
+                    <label class="fuel-field">
+
+                        <span>Workout Type</span>
+
+                        <select id="workoutType">
+
+                            <option value="easy">Easy Run</option>
+                            <option value="long">Long Run</option>
+                            <option value="workout">Workout</option>
+                            <option value="marathon">Marathon</option>
+                            <option value="race">Race</option>
+                            <option value="other">Other</option>
+
+                        </select>
+
+                    </label>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Duration (min)</span>
+
+                            <input
+                                type="number"
+                                id="duration"
+                                min="0"
+                                step="5"
+                                value="90">
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Distance (mi)</span>
+
+                            <input
+                                type="number"
+                                id="distance"
+                                min="0"
+                                step="0.1"
+                                placeholder="optional">
+
+                        </label>
+
+                    </div>
+
+                    <label class="fuel-field">
+
+                        <span>Pace (per mile, optional)</span>
+
+                        <input
+                            type="text"
+                            id="pace"
+                            placeholder="e.g. 8:15">
+
+                    </label>
+
+                </div>
+
+                <!-- Athlete -->
+
+                <div class="fuel-card">
+
+                    <h3>Athlete</h3>
+
+                    <label class="fuel-field">
+
+                        <span>Body Weight (lb)</span>
+
+                        <input
+                            type="number"
+                            id="bodyWeight"
+                            min="0"
+                            step="1"
+                            value="165">
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Current Carb Intake (g/hr)</span>
+
+                        <input
+                            type="number"
+                            id="currentCarbIntake"
+                            min="0"
+                            step="5"
+                            placeholder="what you usually take in">
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Fueling Tolerance / Experience</span>
+
+                        <select id="tolerance">
+
+                            <option value="low">Low - new to fueling</option>
+                            <option value="moderate" selected>Moderate - some experience</option>
+                            <option value="high">High - well trained gut</option>
+
+                        </select>
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Stomach Sensitivity</span>
+
+                        <select id="stomachSensitivity">
+
+                            <option value="sensitive">Sensitive</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="iron">Iron Stomach</option>
+
+                        </select>
+
+                    </label>
+
+                </div>
+
+                <!-- Environment -->
+
+                <div class="fuel-card">
+
+                    <h3>Environment</h3>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Temperature (°F)</span>
+
+                            <input
+                                type="number"
+                                id="temperature"
+                                step="1"
+                                value="75">
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Humidity (%)</span>
+
+                            <input
+                                type="number"
+                                id="humidity"
+                                min="0"
+                                max="100"
+                                step="1"
+                                value="55">
+
+                        </label>
+
+                    </div>
+
+                    <label class="fuel-field">
+
+                        <span>Sweat Rate</span>
+
+                        <select id="sweatRate">
+
+                            <option value="low">Low</option>
+                            <option value="moderate" selected>Moderate</option>
+                            <option value="high">High</option>
+
+                        </select>
+
+                    </label>
+
+                </div>
+
+                <!-- Sodium -->
+
+                <div class="fuel-card">
+
+                    <h3>Sodium</h3>
+
+                    <label class="fuel-field">
+
+                        <span>Sweat Sodium Concentration</span>
+
+                        <select id="sweatSodium">
+
+                            <option value="unknown" selected>Not sure</option>
+                            <option value="light">Light (light/no salt marks)</option>
+                            <option value="average">Average</option>
+                            <option value="heavy">Heavy (salty, salt-crusted skin)</option>
+
+                        </select>
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Typical Sodium Intake (mg/hr)</span>
+
+                        <input
+                            type="number"
+                            id="typicalSodiumIntake"
+                            min="0"
+                            step="50"
+                            placeholder="if known">
+
+                    </label>
+
+                </div>
+
+                <!-- Fueling Preferences -->
+
+                <div class="fuel-card fuel-card-wide">
+
+                    <h3>Fueling Preferences</h3>
+
+                    <div
+                        class="fuel-checkbox-grid"
+                        id="fuelPreferences">
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="gels" checked>
+                            <span>Gels</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="drinkmix">
+                            <span>Drink Mix</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="chews">
+                            <span>Chews</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="bars">
+                            <span>Bars</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="homemade">
+                            <span>Homemade</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="combination">
+                            <span>Combination</span>
+                        </label>
+
+                    </div>
+
+                    <label class="fuel-checkbox fuel-caffeine-toggle">
+
+                        <input type="checkbox" id="caffeineWanted">
+                        <span>Include caffeine in my plan</span>
+
+                    </label>
+
+                </div>
+
+            </div>
+
+            <button
+                class="fuel-btn primary fuel-calc-btn"
+                id="calculateBtn">
+
+                Calculate Fueling Plan
+
+            </button>
+
+        </section>
+
+        <!-- ============================================
+             SECTION 2 — FUELING TARGETS
+        ============================================= -->
+
+        <section
+            class="fuel-panel"
+            id="targetsPanel"
+            style="display:none;">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Fueling Targets
+
+                </h2>
+
+                <span class="fuel-panel-tag">
+
+                    Step 2 · Starting targets, not medical advice
+
+                </span>
+
+            </div>
+
+            <div class="fuel-target-grid">
+
+                <div class="fuel-target-card">
+
+                    <span class="fuel-target-label">Carbohydrates</span>
+
+                    <div class="fuel-target-value">
+
+                        <input
+                            type="number"
+                            id="carbsPerHour"
+                            min="0"
+                            step="5">
+
+                        <small>g / hr</small>
+
+                    </div>
+
+                    <div class="fuel-target-sub">
+
+                        <span id="carbsTotal">0 g</span> total ·
+                        every <input
+                            type="number"
+                            id="fuelInterval"
+                            min="5"
+                            step="5"
+                            value="30"> min
+
+                    </div>
+
+                </div>
+
+                <div class="fuel-target-card">
+
+                    <span class="fuel-target-label">Fluids</span>
+
+                    <div class="fuel-target-value">
+
+                        <input
+                            type="number"
+                            id="fluidPerHour"
+                            min="0"
+                            step="1">
+
+                        <small>oz / hr</small>
+
+                    </div>
+
+                    <div class="fuel-target-sub">
+
+                        <span id="fluidTotal">0 oz</span> total
+
+                    </div>
+
+                </div>
+
+                <div class="fuel-target-card">
+
+                    <span class="fuel-target-label">Sodium</span>
+
+                    <div class="fuel-target-value">
+
+                        <input
+                            type="number"
+                            id="sodiumPerHour"
+                            min="0"
+                            step="25">
+
+                        <small>mg / hr</small>
+
+                    </div>
+
+                    <div class="fuel-target-sub">
+
+                        <span id="sodiumTotal">0 mg</span> total
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <p class="fuel-note" id="calcNote"></p>
+
+        </section>
+
+        <!-- ============================================
+             SECTION 3 — FUELING TIMELINE
+        ============================================= -->
+
+        <section
+            class="fuel-panel"
+            id="timelinePanel"
+            style="display:none;">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Fueling Timeline
+
+                </h2>
+
+                <span class="fuel-panel-tag">
+
+                    Step 3
+
+                </span>
+
+            </div>
+
+            <div
+                class="fuel-timeline"
+                id="fuelTimeline">
+
+            </div>
+
+        </section>
+
+        <!-- ============================================
+             SECTION 4 — DIY FUELING CALCULATOR
+        ============================================= -->
+
+        <section class="fuel-panel">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    DIY Fueling Calculator
+
+                </h2>
+
+                <span class="fuel-panel-tag">
+
+                    Homemade drink mix
+                </span>
+
+            </div>
+
+            <div class="fuel-input-grid">
+
+                <div class="fuel-card">
+
+                    <h3>Bottles</h3>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Bottle Size (oz)</span>
+
+                            <input
+                                type="number"
+                                id="diyBottleSize"
+                                min="0"
+                                step="1"
+                                value="20">
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span># of Bottles</span>
+
+                            <input
+                                type="number"
+                                id="diyBottleCount"
+                                min="1"
+                                step="1"
+                                value="1">
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <div class="fuel-card">
+
+                    <h3>Targets (total across bottles)</h3>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Carbs (g)</span>
+
+                            <input
+                                type="number"
+                                id="diyCarbTarget"
+                                min="0"
+                                step="5"
+                                value="60">
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Sodium (mg)</span>
+
+                            <input
+                                type="number"
+                                id="diySodiumTarget"
+                                min="0"
+                                step="50"
+                                value="300">
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <div class="fuel-card fuel-card-wide">
+
+                    <h3>Ingredients</h3>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Carbohydrate Source</span>
+
+                            <select id="diyCarbSource">
+
+                                <option value="maltodextrin">Maltodextrin</option>
+                                <option value="table-sugar">Table Sugar</option>
+                                <option value="honey">Honey</option>
+                                <option value="juice">Fruit Juice</option>
+                                <option value="sports-powder">Sports Drink Powder</option>
+                                <option value="other">Other</option>
+
+                            </select>
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Sodium Source</span>
+
+                            <select id="diySodiumSource">
+
+                                <option value="table-salt">Table Salt</option>
+                                <option value="salt-tabs">Salt Tabs</option>
+                                <option value="electrolyte-mix">Electrolyte Mix</option>
+                                <option value="other">Other</option>
+
+                            </select>
+
+                        </label>
+
+                    </div>
+
+                    <label class="fuel-field">
+
+                        <span>Notes</span>
+
+                        <textarea
+                            id="diyNotes"
+                            rows="2"
+                            placeholder="e.g. 3 tbsp maltodextrin, 1/4 tsp salt, splash of juice for flavor"></textarea>
+
+                    </label>
+
+                </div>
+
+            </div>
+
+            <button
+                class="fuel-btn primary"
+                id="diyCalculateBtn">
+
+                Calculate DIY Mix
+
+            </button>
+
+            <div
+                class="fuel-diy-results"
+                id="diyResults"
+                style="display:none;">
+
+                <div class="fuel-diy-stat">
+
+                    <span id="diyCarbsPerBottle">0 g</span>
+                    <small>carbs / bottle</small>
+
+                </div>
+
+                <div class="fuel-diy-stat">
+
+                    <span id="diySodiumPerBottle">0 mg</span>
+                    <small>sodium / bottle</small>
+
+                </div>
+
+                <div class="fuel-diy-stat">
+
+                    <span id="diyTotalFluid">0 oz</span>
+                    <small>total fluid</small>
+
+                </div>
+
+                <button
+                    class="fuel-btn secondary"
+                    id="saveDiyRecipeBtn">
+
+                    Save Recipe
+
+                </button>
+
+            </div>
+
+            <div
+                class="fuel-saved-list"
+                id="diyRecipeList">
+
+            </div>
+
+        </section>
+
+        <!-- ============================================
+             SECTION 5 — COMMERCIAL FUELING LIBRARY
+        ============================================= -->
+
+        <section class="fuel-panel">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Fueling Library
+
+                </h2>
+
+                <button
+                    class="fuel-btn secondary small"
+                    id="addLibraryItemBtn">
+
+                    + Add Item
+
+                </button>
+
+            </div>
+
+            <div
+                class="fuel-library-tabs"
+                id="libraryTabs">
+
+                <button class="fuel-tab active" data-category="all">All</button>
+                <button class="fuel-tab" data-category="gels">Gels</button>
+                <button class="fuel-tab" data-category="drinkmix">Drink Mixes</button>
+                <button class="fuel-tab" data-category="chews">Chews</button>
+                <button class="fuel-tab" data-category="bars">Bars</button>
+                <button class="fuel-tab" data-category="other">Other</button>
+
+            </div>
+
+            <form
+                class="fuel-card fuel-library-form"
+                id="libraryForm"
+                style="display:none;">
+
+                <div class="fuel-field-row">
+
+                    <label class="fuel-field">
+                        <span>Name</span>
+                        <input type="text" id="libName" required>
+                    </label>
+
+                    <label class="fuel-field">
+                        <span>Category</span>
+                        <select id="libCategory">
+                            <option value="gels">Gels</option>
+                            <option value="drinkmix">Drink Mix</option>
+                            <option value="chews">Chews</option>
+                            <option value="bars">Bars</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </label>
+
+                </div>
+
+                <div class="fuel-field-row">
+
+                    <label class="fuel-field">
+                        <span>Carbs (g)</span>
+                        <input type="number" id="libCarbs" min="0" step="1" value="25">
+                    </label>
+
+                    <label class="fuel-field">
+                        <span>Sodium (mg)</span>
+                        <input type="number" id="libSodium" min="0" step="5" value="50">
+                    </label>
+
+                    <label class="fuel-field">
+                        <span>Fluid (oz)</span>
+                        <input type="number" id="libFluid" min="0" step="1" value="0">
+                    </label>
+
+                </div>
+
+                <div class="fuel-field-row">
+
+                    <label class="fuel-field">
+                        <span>Serving Size</span>
+                        <input type="text" id="libServing" placeholder="e.g. 1 packet">
+                    </label>
+
+                    <label class="fuel-field">
+                        <span>Price</span>
+                        <input type="text" id="libPrice" placeholder="e.g. $1.50">
+                    </label>
+
+                    <label class="fuel-checkbox fuel-lib-caffeine">
+                        <input type="checkbox" id="libCaffeine">
+                        <span>Contains Caffeine</span>
+                    </label>
+
+                </div>
+
+                <input type="hidden" id="libEditId">
+
+                <div class="fuel-form-actions">
+
+                    <button
+                        type="submit"
+                        class="fuel-btn primary small">
+
+                        Save Item
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="fuel-btn secondary small"
+                        id="cancelLibraryFormBtn">
+
+                        Cancel
+
+                    </button>
+
+                </div>
+
+            </form>
+
+            <div
+                class="fuel-library-grid"
+                id="libraryGrid">
+
+            </div>
+
+        </section>
+
+        <!-- ============================================
+             SECTION 6 — BUILD A PLAN
+        ============================================= -->
+
+        <section class="fuel-panel">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Build a Plan
+
+                </h2>
+
+                <span class="fuel-panel-tag">
+
+                    Step 4
+                </span>
+
+            </div>
+
+            <label class="fuel-field fuel-plan-name">
+
+                <span>Plan Name</span>
+
+                <input
+                    type="text"
+                    id="planName"
+                    placeholder="e.g. 18-mile long run fueling">
+
+            </label>
+
+            <div
+                class="fuel-plan-summary"
+                id="planSummary">
+
+                <p class="fuel-empty-state">
+
+                    Calculate a fueling plan above to build a saved plan.
+
+                </p>
+
+            </div>
+
+            <div class="fuel-form-actions">
+
+                <button
+                    class="fuel-btn primary"
+                    id="savePlanBtn">
+
+                    Save Plan
+
+                </button>
+
+                <button
+                    class="fuel-btn secondary"
+                    id="duplicatePlanBtn">
+
+                    Duplicate Plan
+
+                </button>
+
+                <button
+                    class="fuel-btn secondary"
+                    id="clearPlanBtn">
+
+                    Clear Plan
+
+                </button>
+
+                <button
+                    class="fuel-btn danger"
+                    id="deletePlanBtn"
+                    style="display:none;">
+
+                    Delete Plan
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- ============================================
+             SAVED FUELING PLANS
+        ============================================= -->
+
+        <section class="fuel-panel">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Saved Fueling Plans
+
+                </h2>
+
+            </div>
+
+            <div
+                class="fuel-saved-plans-grid"
+                id="savedPlansGrid">
+
+                <p class="fuel-empty-state">
+
+                    No saved plans yet.
+
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- Disclaimer -->
+
+        <p class="fuel-disclaimer">
+
+            Fueling recommendations are estimates for training and planning purposes
+            and are not medical advice. Individual needs vary based on physiology,
+            conditions, intensity, and experience.
+
+        </p>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script
+        type="module"
+        src="js/fueling.js">
+    </script>
+
+</body>
+
+</html>
