@@ -2100,17 +2100,30 @@ function openPlan(id) {
 
     $("includeHomemadeDrink").checked = plan.includeHomemadeDrink !== false;
 
-    if (plan.diyInputs) {
+if (plan.diyInputs) {
+    $("diyBottleSize").value =
+        plan.diyInputs.bottleSize || 20;
 
-        $("diyBottleSize").value = plan.diyInputs.bottleSize || 20;
-        $("diyBottleCount").value = plan.diyInputs.bottleCount || 1;
-        $("diyCarbTarget").value = plan.diyInputs.carbTarget || 0;
-        $("diySodiumTarget").value = plan.diyInputs.sodiumTarget || 0;
-        $("diyCarbSource").value = plan.diyInputs.carbSource || "table-sugar";
-        $("diySodiumSource").value = plan.diyInputs.sodiumSource || "table-salt";
-        $("diyNotes").value = plan.diyInputs.notes || "";
+    $("diyBottleCount").value =
+        plan.diyInputs.bottleCount || 1;
 
-    }
+    $("diyCarbTarget").value =
+        plan.diyInputs.carbTarget || 0;
+
+    $("diySodiumTarget").value =
+        plan.diyInputs.sodiumTarget || 0;
+
+    $("diyCarbSource").value =
+        plan.diyInputs.carbSource || "table-sugar";
+
+    $("diySodiumSource").value =
+        plan.diyInputs.sodiumSource || "table-salt";
+
+    $("diyNotes").value =
+        plan.diyInputs.notes || "";
+
+    refreshDiySnapshot();
+}
 
 if (plan.diySnapshot) {
     $("diyResults").dataset.snapshot =
