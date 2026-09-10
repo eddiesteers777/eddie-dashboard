@@ -97,47 +97,25 @@ function saveOverrides(){
 ========================================== */
 
 function getExtras(day){
-
-    if(day.extras){
-
-        return day.extras;
-
-    }
-
     return {
-
-        strength:[],
-
-        crossTraining:[],
-
-        mobility:[],
-
-        recovery:[],
-
-        notes:""
-
+        strength: Array.isArray(day.strength) ? day.strength : [],
+        crossTraining: Array.isArray(day.crossTraining) ? day.crossTraining : [],
+        mobility: Array.isArray(day.mobility) ? day.mobility : [],
+        recovery: Array.isArray(day.recovery) ? day.recovery : [],
+        notes: typeof day.notes === "string" ? day.notes : ""
     };
-
 }
 
 function hasExtras(day){
-
     const extras = getExtras(day);
 
     return (
-
-        extras.strength.length ||
-
-        extras.crossTraining.length ||
-
-        extras.mobility.length ||
-
-        extras.recovery.length ||
-
+        extras.strength.length > 0 ||
+        extras.crossTraining.length > 0 ||
+        extras.mobility.length > 0 ||
+        extras.recovery.length > 0 ||
         extras.notes.trim() !== ""
-
     );
-
 }
 
 function renderExtras(day){
