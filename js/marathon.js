@@ -23,11 +23,9 @@ import {
     weekRange,
 
     getWeekMileage,
-
+    getAdjustedWeekMileage,
     getAdjustedWeekDays,
-
     loadProgress,
-
     loadOverrides
 
 } from "./marathonData.js";
@@ -391,8 +389,6 @@ function updateStats(){
 
     }
 
-    selectedWeek = currentWeek;
-
     const weekDisplay = $("mp-stat-week");
 
     if(weekDisplay){
@@ -598,11 +594,9 @@ function getSelectedWeekData(){
             ),
 
         mileage:
-
-            getWeekMileage(
-
-                selectedWeek
-
+            getAdjustedWeekMileage(
+                selectedWeek,
+                overrides
             )
 
     };
@@ -1092,7 +1086,10 @@ function renderChart(){
 
             (_,index)=>
 
-            getWeekMileage(index+1)
+            getAdjustedWeekMileage(
+                index + 1,
+                overrides
+            )
 
         )
 
@@ -1108,7 +1105,10 @@ function renderChart(){
 
             const miles =
 
-                getWeekMileage(
+            getAdjustedWeekMileage(
+                index + 1,
+                overrides
+            )
 
                     weekNumber
 
