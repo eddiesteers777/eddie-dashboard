@@ -620,7 +620,8 @@ function renderDetail(){
 
             const expandable = hasExtras(day);
 
-            const expanded = expandedDays[dayName];
+const expandedKey = `${selectedWeek}-${dayName}`;
+const expanded = expandedDays[expandedKey];
 
             rows += `
 
