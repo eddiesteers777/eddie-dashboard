@@ -2112,15 +2112,28 @@ function openPlan(id) {
 
     }
 
-    if (plan.diySnapshot) {
+if (plan.diySnapshot) {
+    $("diyResults").dataset.snapshot =
+        JSON.stringify(plan.diySnapshot);
 
-        $("diyResults").dataset.snapshot = JSON.stringify(plan.diySnapshot);
+    $("diyWaterAmount").textContent =
+        `${plan.diySnapshot.totalFluid} oz`;
 
-        $("diyWaterAmount").textContent = `${plan.diySnapshot.totalFluid} oz`;
-        $("diySugarGrams").textContent = `${plan.diySnapshot.sugarGrams} g`;
-        $("diySaltGrams").textContent = `${plan.diySnapshot.saltGrams} g`;
-        $("diySugarTsp").textContent = plan.diySnapshot.sugarTsp;
-        $("diySaltTsp").textContent = plan.diySnapshot.saltTsp;
+    $("diySugarGrams").textContent =
+        `${plan.diySnapshot.sugarGrams} g`;
+
+    $("diySaltGrams").textContent =
+        `${plan.diySnapshot.saltGrams} g`;
+
+    $("diySugarTsp").textContent =
+        plan.diySnapshot.sugarTsp ?? "Use product label";
+
+    $("diySaltTsp").textContent =
+        plan.diySnapshot.saltTsp ?? "Use product label";
+
+    $("diyResults").style.display = "flex";
+    $("diyConversionNote").style.display = "";
+}
 
         $("diyResults").style.display = "flex";
         $("diyConversionNote").style.display = "";
