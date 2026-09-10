@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pace Calculator - EddieOS</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pace-calculator.css">
+
+</head>
+<body>
+
+<div id="header"></div>
+
+<div id="pc-root">
+
+  <div class="pc-hero">
+    <div class="pc-eyebrow">Training Tool</div>
+    <h1 class="pc-title">Pace Calculator</h1>
+    <div class="pc-sub">Enter any two of pace, time, and distance — solve for the third.</div>
+  </div>
+
+  <div class="pc-card">
+
+    <div class="pc-solve-row">
+      <span class="pc-solve-label">Solve for</span>
+      <div class="pc-solve-tabs" id="pc-solve-tabs">
+        <button type="button" class="pc-solve-tab active" data-solve="pace">Pace</button>
+        <button type="button" class="pc-solve-tab" data-solve="time">Time</button>
+        <button type="button" class="pc-solve-tab" data-solve="distance">Distance</button>
+      </div>
+    </div>
+
+    <div class="pc-unit-row">
+      <span class="pc-solve-label">Units</span>
+      <div class="pc-unit-toggle" id="pc-unit-toggle">
+        <button type="button" class="pc-unit-btn active" data-unit="mi">Miles</button>
+        <button type="button" class="pc-unit-btn" data-unit="km">Kilometers</button>
+      </div>
+    </div>
+
+    <div class="pc-fields" id="pc-fields">
+
+      <div class="pc-field" id="pc-field-distance">
+        <label class="pc-field-label">Distance</label>
+        <div class="pc-input-row">
+          <input
+            type="number"
+            step="0.001"
+            min="0"
+            class="pc-input pc-input-wide"
+            id="pc-distance-input"
+            placeholder="e.g. 26.2">
+          <span class="pc-unit-suffix" id="pc-distance-unit-label">mi</span>
+        </div>
+        <select class="pc-preset-select" id="pc-distance-preset">
+          <option value="">Common distances…</option>
+          <option value="1.60934">1 Mile</option>
+          <option value="5">5K</option>
+          <option value="10">10K</option>
+          <option value="15">15K</option>
+          <option value="16.09344">10 Mile</option>
+          <option value="21.0975">Half Marathon</option>
+          <option value="42.195">Marathon</option>
+        </select>
+      </div>
+
+      <div class="pc-field" id="pc-field-time">
+        <label class="pc-field-label">Time</label>
+        <div class="pc-input-row pc-time-inputs">
+          <input type="number" min="0" class="pc-input pc-input-narrow" id="pc-time-h" placeholder="HH">
+          <span class="pc-colon">:</span>
+          <input type="number" min="0" max="59" class="pc-input pc-input-narrow" id="pc-time-m" placeholder="MM">
+          <span class="pc-colon">:</span>
+          <input type="number" min="0" max="59" class="pc-input pc-input-narrow" id="pc-time-s" placeholder="SS">
+        </div>
+      </div>
+
+      <div class="pc-field" id="pc-field-pace">
+        <label class="pc-field-label">Pace <span id="pc-pace-unit-label">(per mile)</span></label>
+        <div class="pc-input-row pc-time-inputs">
+          <input type="number" min="0" class="pc-input pc-input-narrow" id="pc-pace-m" placeholder="MM">
+          <span class="pc-colon">:</span>
+          <input type="number" min="0" max="59" class="pc-input pc-input-narrow" id="pc-pace-s" placeholder="SS">
+        </div>
+      </div>
+
+    </div>
+
+    <button type="button" class="pc-calculate-btn" id="pc-calculate-btn">Calculate</button>
+
+    <div class="pc-error" id="pc-error"></div>
+
+  </div>
+
+  <div class="pc-result-card" id="pc-result-card">
+
+    <div class="pc-result-top">
+      <div class="pc-result-block">
+        <div class="pc-result-label" id="pc-result-label">Your Pace</div>
+        <div class="pc-result-value" id="pc-result-value">--:--</div>
+      </div>
+      <div class="pc-result-sub">
+        <div class="pc-result-chip">
+          <span class="pc-result-chip-label">Speed</span>
+          <span class="pc-result-chip-value" id="pc-result-speed">--</span>
+        </div>
+        <div class="pc-result-chip">
+          <span class="pc-result-chip-label">Distance</span>
+          <span class="pc-result-chip-value" id="pc-result-distance">--</span>
+        </div>
+        <div class="pc-result-chip">
+          <span class="pc-result-chip-label">Time</span>
+          <span class="pc-result-chip-value" id="pc-result-time">--</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc-splits-wrap">
+      <div class="pc-splits-title">Finish times at this pace</div>
+      <div class="pc-splits-grid" id="pc-splits-grid"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="js/pace-calculator.js"></script>
+
+<script src="js/loadHeader.js"></script>
+
+</body>
+</html>
