@@ -1119,6 +1119,52 @@ $("regenerateTimelineBtn").addEventListener("click", () => {
 const SUGAR_G_PER_TSP = 4.2;
 const SALT_G_PER_TSP = 5.7;
 
+const DIY_CARB_SOURCES = {
+    "table-sugar": {
+        label: "Table Sugar",
+        carbsPerGram: 1
+    },
+    "maltodextrin": {
+        label: "Maltodextrin",
+        carbsPerGram: 0.95
+    },
+    "honey": {
+        label: "Honey",
+        carbsPerGram: 0.82
+    },
+    "fruit-juice": {
+        label: "Fruit Juice",
+        carbsPerGram: 0.11
+    },
+    "sports-drink-powder": {
+        label: "Sports Drink Powder",
+        carbsPerGram: 0.90
+    },
+    "other": {
+        label: "Other",
+        carbsPerGram: 1
+    }
+};
+
+const DIY_SODIUM_SOURCES = {
+    "table-salt": {
+        label: "Table Salt",
+        sodiumPerGram: 393
+    },
+    "salt-tabs": {
+        label: "Salt Tabs",
+        sodiumPerGram: 0
+    },
+    "electrolyte-mix": {
+        label: "Electrolyte Mix",
+        sodiumPerGram: 0
+    },
+    "other": {
+        label: "Other",
+        sodiumPerGram: 0
+    }
+};
+
 $("diyCalculateBtn").addEventListener("click", () => {
 
     const bottleSize = Number($("diyBottleSize").value) || 0;
@@ -1128,17 +1174,53 @@ $("diyCalculateBtn").addEventListener("click", () => {
 
     const totalFluid = bottleSize * bottleCount;
 
-    const sugarGrams = Math.round(carbTarget * 10) / 10;
-    const saltGrams = Math.round((sodiumTarget / 393) * 100) / 100;
+const carbSource = $("diyCarbSource").value;
+const sodiumSource = $("diySodiumSource").value;
 
-    const sugarTsp = Math.round((sugarGrams / SUGAR_G_PER_TSP) * 4) / 4;
-    const saltTsp = Math.round((saltGrams / SALT_G_PER_TSP) * 4) / 4;
+const carbConfig =
+    DIY_CARB_SOURCES[carbSource] ||
+    DIY_CARB_SOURCES["table-sugar"];
+
+const sodiumConfig =
+    DIY_SODIUM_SOURCES[sodiumSource] ||
+    DIY_SODIUM_SOURCES["table-salt"];
+
+const sugarGrams =
+    Math.round(
+        (carbTarget / carbConfig.carbsPerGram) * 10
+    ) / 10;
+
+const saltGrams =
+    sodiumSource === "table-salt"
+        ? Math.round((sodiumTarget / 393) * 100) / 100
+        : 0;
+
+const sugarTsp =
+    carbSource === "table-sugar"
+        ? Math.round((sugarGrams / SUGAR_G_PER_TSP) * 4) / 4
+        : null;
+
+const saltTsp =
+    sodiumSource === "table-salt"
+        ? Math.round((saltGrams / SALT_G_PER_TSP) * 4) / 4
+        : null;
 
     $("diyWaterAmount").textContent = `${totalFluid} oz`;
-    $("diySugarGrams").textContent = `${sugarGrams} g`;
-    $("diySaltGrams").textContent = `${saltGrams} g`;
-    $("diySugarTsp").textContent = sugarTsp;
-    $("diySaltTsp").textContent = saltTsp;
+$("diySugarGrams").textContent = `${sugarGrams} g`;
+$("diySaltGrams").textContent =
+    sodiumSource === "table-salt"
+        ? `${saltGrams} g`
+        : "Use product label";
+
+$("diySugarTsp").textContent =
+    sugarTsp !== null
+        ? sugarTsp
+        : "Use product label";
+
+$("diySaltTsp").textContent =
+    saltTsp !== null
+        ? saltTsp
+        : "Use product label";
 
     $("diyResults").style.display = "flex";
     $("diyConversionNote").style.display = "";
