@@ -967,47 +967,86 @@ function buildFeedQueue() {
 }
 
 function generateTimelineRows() {
-
     const duration = currentDurationMinutes();
-
-    const interval = Math.max(5, Number($("fuelInterval").value) || 25);
+    const interval = Math.max(
+        5,
+        Number($("fuelInterval").value) || 25
+    );
 
     const queue = buildFeedQueue();
 
-    const rows = [{ time: "0:00", label: "Start — sip fluids, settle in" }];
+    const rows = [
+        {
+            time: "0:00",
+            label: "Start — sip fluids, settle in"
+        }
+    ];
 
-    let qi = 0;
+    if (!queue.length) {
+        const firstFeedTime = Math.min(interval, duration);
 
-    for (let t = interval; t <= duration; t += interval) {
+        if (duration > 0) {
+            rows.push({
+                time: formatClock(firstFeedTime),
+                label: "Carbs + fluid"
+            });
+        }
+    } else {
+        /*
+            Place each planned serving once.
 
-        let label;
+            We use the preferred interval as a guide, but never
+            create extra servings just to fill the timeline.
+        */
+        const availableTimes = [];
 
-        if (queue.length) {
-
-            label = queue[qi % queue.length];
-
-            qi++;
-
-        } else {
-
-            label = "Carbs + fluid";
-
+        for (
+            let t = interval;
+            t < duration;
+            t += interval
+        ) {
+            availableTimes.push(t);
         }
 
-        rows.push({ time: formatClock(t), label });
+        if (!availableTimes.length || availableTimes[availableTimes.length - 1] < duration) {
+            availableTimes.push(duration);
+        }
 
+        const feedCount = queue.length;
+
+        queue.forEach((item, index) => {
+            let time;
+
+            if (feedCount === 1) {
+                time = Math.min(interval, duration);
+            } else {
+                const slot = Math.round(
+                    (index / (feedCount - 1)) *
+                    (availableTimes.length - 1)
+                );
+
+                time = availableTimes[slot];
+            }
+
+            rows.push({
+                time: formatClock(time),
+                label: item
+            });
+        });
     }
 
-    if (lastSession && lastSession.caffeineWanted && rows.length > 2) {
+    if (
+        lastSession &&
+        lastSession.caffeineWanted &&
+        rows.length > 2
+    ) {
+        const midIndex =
+            Math.ceil((rows.length - 1) / 2);
 
-        const mid = rows[Math.ceil((rows.length - 1) / 2)];
-
-        mid.label += " + Caffeine";
-
+        rows[midIndex].label += " + Caffeine";
     }
 
     return rows;
-
 }
 
 function renderTimeline(regenerate) {
