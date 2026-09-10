@@ -855,9 +855,73 @@ function renderComposition() {
 
 }
 
-$("includeHomemadeDrink").addEventListener("change", () => { renderComposition(); renderPlanSummary(); });
-$("diyCarbTarget").addEventListener("input", () => { renderComposition(); renderPlanSummary(); });
-$("diySodiumTarget").addEventListener("input", () => { renderComposition(); renderPlanSummary(); });
+function refreshDiySnapshot(){
+    const bottleSize = Number($("diyBottleSize").value) || 16;
+    const bottleCount = Math.max(1, Number($("diyBottleCount").value) || 1);
+    const carbTarget = Number($("diyCarbTarget").value) || 0;
+    const sodiumTarget = Number($("diySodiumTarget").value) || 0;
+
+    const totalFluid = bottleSize * bottleCount;
+
+    const sugarGrams = Math.round(carbTarget * 10) / 10;
+    const saltGrams = Math.round((sodiumTarget / 393) * 100) / 100;
+
+    const sugarTsp = Math.round((sugarGrams / SUGAR_G_PER_TSP) * 4) / 4;
+    const saltTsp = Math.round((saltGrams / SALT_G_PER_TSP) * 4) / 4;
+
+    $("diyResults").dataset.snapshot = JSON.stringify({
+        bottleSize,
+        bottleCount,
+        carbTarget,
+        sodiumTarget,
+        totalFluid,
+        sugarGrams,
+        saltGrams,
+        sugarTsp,
+        saltTsp,
+        carbSource: $("diyCarbSource").value,
+        sodiumSource: $("diySodiumSource").value,
+        notes: $("diyNotes").value
+    });
+}
+
+$("includeHomemadeDrink").addEventListener("change", () => {
+    refreshDiySnapshot();
+    renderComposition();
+    renderPlanSummary();
+});
+
+$("diyCarbTarget").addEventListener("input", () => {
+    refreshDiySnapshot();
+    renderComposition();
+    renderPlanSummary();
+});
+
+$("diySodiumTarget").addEventListener("input", () => {
+    refreshDiySnapshot();
+    renderComposition();
+    renderPlanSummary();
+});
+
+$("diyBottleSize").addEventListener("input", () => {
+    refreshDiySnapshot();
+});
+
+$("diyBottleCount").addEventListener("input", () => {
+    refreshDiySnapshot();
+});
+
+$("diyCarbSource").addEventListener("change", () => {
+    refreshDiySnapshot();
+});
+
+$("diySodiumSource").addEventListener("change", () => {
+    refreshDiySnapshot();
+});
+
+$("diyNotes").addEventListener("input", () => {
+    refreshDiySnapshot();
+});
 
 $("autoFillDrinkBtn").addEventListener("click", () => {
 
@@ -875,6 +939,7 @@ $("autoFillDrinkBtn").addEventListener("click", () => {
     $("diySodiumTarget").value = c.remainderSodium;
     $("includeHomemadeDrink").checked = true;
 
+    refreshDiySnapshot();
     renderComposition();
 
     document.getElementById("diyPanelAnchor").scrollIntoView({ behavior: "smooth" });
