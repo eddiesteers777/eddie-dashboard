@@ -1242,3 +1242,33 @@ function getNextLongRun(){
     null;
 
 }
+/* ==========================================
+   Public Exports
+========================================== */
+
+export {
+    WEEKS,
+    PHASES,
+    PACES,
+    CROSS_TRAINING,
+    DAYS,
+    DAY_TIMES,
+    weekStart,
+    weekEnd,
+    weekRange,
+    getWeekMileage,
+    getAdjustedWeekDays,
+    getAdjustedWeekMileage,
+    getCurrentWeek,
+    getRaceCountdown,
+    getLongestRun,
+    getLongRuns,
+    getTrainingPhase,
+    loadProgress,
+    loadOverrides,
+    getCompletedWorkouts,
+    getCompletionPercent,
+    getWorkoutBreakdown,
+    getUpcomingWorkouts,
+    getNextLongRun
+};
