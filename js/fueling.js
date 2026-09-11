@@ -167,11 +167,11 @@ function ensureHammerGels(list) {
 ========================================== */
 
 function getMarathonModule() {
-
-    if (!marathonModulePromise) marathonModulePromise = import("./marathonData.js");
+    if (!marathonModulePromise) {
+        marathonModulePromise = import("./marathonData.js");
+    }
 
     return marathonModulePromise;
-
 }
 
 async function initWeekSelector() {
@@ -256,24 +256,21 @@ async function maybeOpenFromQuery(data, currentWeek) {
 }
 
 async function selectWeek(week) {
-
     selectedWeek = week;
     selectedDayIndex = null;
 
     document.querySelectorAll(".week-chip").forEach(b => {
-
         b.classList.toggle("active", Number(b.dataset.week) === week);
-
     });
 
     const data = await getMarathonModule();
 
-    const days = data.getAdjustedWeekDays(week);
+    // Reload the latest saved Marathon overrides before building the list.
+    const days = data.getAdjustedWeekDays(week, data.loadOverrides());
 
     renderDayList(days, data.DAYS);
 
     $("workoutDetailCard").style.display = "none";
-
 }
 
 function renderDayList(days, DAYS) {
