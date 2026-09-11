@@ -78,6 +78,21 @@ function saveProgress(){
 
 }
 
+
+function saveOverrides(){
+
+    localStorage.setItem(
+
+        "training-overrides",
+
+        JSON.stringify(overrides)
+
+    );
+
+    import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud());
+
+}
+
 /* ==========================================
    Extras Helpers
 ========================================== */
