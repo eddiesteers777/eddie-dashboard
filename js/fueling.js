@@ -2146,18 +2146,11 @@ if (plan.diySnapshot) {
 
     $("diyResults").style.display = "flex";
     $("diyConversionNote").style.display = "";
+} else {
+    $("diyResults").style.display = "none";
+    $("diyConversionNote").style.display = "none";
+    delete $("diyResults").dataset.snapshot;
 }
-
-        $("diyResults").style.display = "flex";
-        $("diyConversionNote").style.display = "";
-
-    } else {
-
-        $("diyResults").style.display = "none";
-        $("diyConversionNote").style.display = "none";
-        delete $("diyResults").dataset.snapshot;
-
-    }
 
     updatePlanWorkoutLabel();
 
