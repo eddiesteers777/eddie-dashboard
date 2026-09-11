@@ -345,11 +345,17 @@ function selectDay(index, day, dayKey) {
 
     `;
 
-    $("buildFuelingPlanBtn").addEventListener("click", () => {
+$("buildFuelingPlanBtn").addEventListener("click", () => {
 
-        applyMarathonWorkout(day, selectedWeek, dayKey);
+    applyMarathonWorkout(
+        day,
+        selectedWeek,
+        dayKey
+    );
 
-    });
+    updatePlanWorkoutLabel();
+
+});
 
     if (existingPlan) {
 
