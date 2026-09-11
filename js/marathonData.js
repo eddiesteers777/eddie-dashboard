@@ -792,54 +792,6 @@ function getTrainingPhase(){
     return PHASES[phase]?.label || "";
 
 }
-/* ==========================================
-   Progress + Override Persistence
-   Single source of truth for the two
-   localStorage keys used by the Marathon page.
-========================================== */
-
-
-function loadProgress(){
-
-    try{
-
-        return JSON.parse(
-
-            localStorage.getItem(
-
-                "training-progress"
-
-            )
-
-            ||
-
-            "{}"
-
-        );
-
-    }
-
-    catch(error){
-
-        return {};
-
-    }
-
-}
-
-function saveProgress(progress){
-
-    localStorage.setItem(
-
-        "training-progress",
-
-        JSON.stringify(progress)
-
-    );
-
-}
-
-
 
 function loadOverrides(){
 
