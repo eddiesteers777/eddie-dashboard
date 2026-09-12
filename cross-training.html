@@ -1,83 +1,119 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cross Training | EddieOS</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/cross-training.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cross Training - EddieOS</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/cross-training.css">
+
 </head>
 <body>
-    <div id="header"></div>
 
-    <main class="cross-training-page">
-        <section class="ct-hero">
-            <div>
-                <span class="ct-eyebrow">EDDIEOS TRAINING HUB</span>
-                <h1>Cross Training</h1>
-                <p>Create your strength, bike, swim, mobility, or recovery work and attach it directly to a specific day in your Marathon plan.</p>
-            </div>
-            <a class="ct-back-link" href="marathon.html">← Marathon Plan</a>
-        </section>
+<div id="header"></div>
 
-        <section class="ct-panel">
-            <div class="ct-panel-head">
-                <div>
-                    <h2>Marathon Cross-Training Calendar</h2>
-                    <p>Each cell is the actual Marathon day. Saved workouts immediately become part of that day's Marathon dropdown.</p>
-                </div>
-                <span class="ct-sync-badge">🔗 Linked to Marathon</span>
-            </div>
+<div id="ct-root">
 
-            <div class="ct-calendar-wrap">
-                <div id="crossTrainingCalendar" class="ct-calendar"></div>
-            </div>
-        </section>
+  <div class="ct-hero">
+    <div class="ct-eyebrow">Cross-Training Studio</div>
+    <h1 class="ct-title">Cross Training</h1>
+    <div class="ct-sub">Build a workout once, then attach it to any day in your marathon plan.</div>
 
-        <section class="ct-editor-panel" id="crossTrainingEditor" style="display:none;">
-            <div class="ct-editor-head">
-                <div>
-                    <span id="ctSelectedWeekDay" class="ct-selected-label"></span>
-                    <h2 id="ctSelectedWorkoutName">Add Cross Training</h2>
-                </div>
-                <button id="ctCloseBtn" class="ct-btn secondary">Close</button>
-            </div>
+    <div class="ct-stats-row">
+      <div class="ct-stat"><div class="ct-stat-val" id="ct-stat-library">0</div><div class="ct-stat-label">Library Workouts</div></div>
+      <div class="ct-stat"><div class="ct-stat-val" id="ct-stat-week-min">0</div><div class="ct-stat-label">Selected Week Minutes</div></div>
+      <div class="ct-stat"><div class="ct-stat-val" id="ct-stat-cycle-min">0</div><div class="ct-stat-label">Cycle Minutes</div></div>
+      <div class="ct-stat"><div class="ct-stat-val" id="ct-stat-days-covered">0</div><div class="ct-stat-label">Days Covered</div></div>
+    </div>
+  </div>
 
-            <div class="ct-form-grid">
-                <label>
-                    <span>Type</span>
-                    <select id="ctType">
-                        <option value="Strength">Strength</option>
-                        <option value="Bike">Bike</option>
-                        <option value="Swim">Swim</option>
-                        <option value="Elliptical">Elliptical</option>
-                        <option value="Mobility">Mobility</option>
-                        <option value="Recovery">Recovery</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </label>
+  <div class="ct-toolbar">
+    <input type="text" class="ct-search" id="ct-search" placeholder="Search your workouts…">
+    <div class="ct-filter-chips" id="ct-filter-chips"></div>
+    <button type="button" class="ct-new-btn" id="ct-new-workout-btn">+ New Workout</button>
+  </div>
 
-                <label>
-                    <span>Duration</span>
-                    <input id="ctDuration" type="number" min="0" step="5" placeholder="45">
-                </label>
-            </div>
+  <div class="ct-library-grid" id="ct-library-grid"></div>
 
-            <label class="ct-form-full">
-                <span>Workout Details</span>
-                <textarea id="ctDetails" rows="5" placeholder="Example: 45 min Zone 2 bike. Keep effort easy and conversational."></textarea>
-            </label>
+  <div class="ct-library-empty" id="ct-library-empty">
+    No cross-training workouts yet. Click <strong>+ New Workout</strong> to build your first one.
+  </div>
 
-            <div class="ct-editor-actions">
-                <button id="ctSaveBtn" class="ct-btn primary">Save to Marathon Day</button>
-                <button id="ctClearBtn" class="ct-btn secondary">Clear Day</button>
-            </div>
+  <div class="ct-attach-panel">
 
-            <p class="ct-editor-note">This uses the existing <strong>training-overrides</strong> data that the Marathon page already reads, so there is no second cross-training database to keep in sync.</p>
-        </section>
-    </main>
+    <div class="ct-panel-title">Attach to Your Plan</div>
 
-    <script src="js/loadHeader.js"></script>
-    <script type="module" src="js/cross-training.js"></script>
+    <div class="ct-attach-field">
+      <label class="ct-field-label">Workout</label>
+      <select class="ct-select" id="ct-attach-workout-select">
+        <option value="">Select a workout from your library…</option>
+      </select>
+    </div>
+
+    <div class="ct-attach-field">
+      <label class="ct-field-label">Week</label>
+      <div class="ct-week-chips" id="ct-attach-weeklist"></div>
+    </div>
+
+    <div class="ct-attach-field">
+      <label class="ct-field-label">Day</label>
+      <div class="ct-day-pills" id="ct-attach-daypills"></div>
+    </div>
+
+    <div class="ct-day-preview" id="ct-day-preview"></div>
+
+    <button type="button" class="ct-attach-btn" id="ct-attach-btn">Attach Workout to This Day</button>
+
+    <div class="ct-attach-error" id="ct-attach-error"></div>
+
+  </div>
+
+</div>
+
+<!-- ========== Workout Builder Modal ========== -->
+
+<div class="ct-modal-overlay" id="ct-modal-overlay">
+  <div class="ct-modal">
+
+    <div class="ct-modal-header">
+      <h2 class="ct-modal-title" id="ct-modal-title">New Cross-Training Workout</h2>
+      <button type="button" class="ct-modal-close" id="ct-modal-close">✕</button>
+    </div>
+
+    <div class="ct-modal-body">
+
+      <label class="ct-field-label">Workout Name</label>
+      <input type="text" class="ct-input" id="ct-builder-name" placeholder="e.g. Zone 2 Bike Ride">
+
+      <label class="ct-field-label">Category</label>
+      <div class="ct-category-chips" id="ct-builder-category-chips"></div>
+
+      <label class="ct-field-label">Blocks</label>
+      <div class="ct-blocks-list" id="ct-blocks-list"></div>
+      <button type="button" class="ct-add-block-btn" id="ct-add-block-btn">+ Add Block</button>
+
+      <label class="ct-field-label">Workout Notes</label>
+      <textarea class="ct-textarea" id="ct-builder-notes" rows="2" placeholder="Optional notes for the whole workout…"></textarea>
+
+    </div>
+
+    <div class="ct-modal-footer">
+      <div class="ct-modal-total" id="ct-builder-total">Total: 0 min</div>
+      <div class="ct-modal-actions">
+        <button type="button" class="ct-btn-secondary" id="ct-builder-cancel">Cancel</button>
+        <button type="button" class="ct-btn-primary" id="ct-builder-save">Save Workout</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/marathonData.js"></script>
+<script src="js/cross-training.js"></script>
+
+<script src="js/loadHeader.js"></script>
+
 </body>
 </html>
