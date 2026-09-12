@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Race to 3:05 - Marathon Training Plan</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/marathon.css">
+
+</head>
+<body>
+
+<div id="header"></div>
+
+<div id="mp-root">
+  <div class="mp-hero">
+    <div class="mp-hero-top">
+      <div>
+        <div class="mp-eyebrow">16-Week Build - Indianapolis Monumental</div>
+        <h1 class="mp-title mp-display">Race to 3:05</h1>
+        <div class="mp-sub">Revised plan - peak 60-62 mi/wk - one 20-miler - periodized quality - Jul 20 to Nov 8, 2026</div>
+      </div>
+      <div class="mp-goal-block">
+        <div class="mp-goal-label">Goal Time</div>
+        <div class="mp-goal-time mp-mono">3:05:00</div>
+        <div class="mp-countdown mp-mono" id="mp-countdown">-- days to race day</div>
+      </div>
+    </div>
+    <div class="mp-stats-row">
+      <div class="mp-stat"><div class="mp-stat-val" id="mp-stat-week">-</div><div class="mp-stat-label">Current Week</div></div>
+      <div class="mp-stat"><div class="mp-stat-val" id="mp-stat-total">1150</div><div class="mp-stat-label">Cycle Miles</div></div>
+      <div class="mp-stat"><div class="mp-stat-val" id="mp-stat-peak">61</div><div class="mp-stat-label">Peak Week</div></div>
+      <div class="mp-stat"><div class="mp-stat-val" id="mp-stat-pct">0%</div><div class="mp-stat-label">Completed</div></div>
+    </div>
+  </div>
+
+  <div class="mp-chart-wrap">
+    <div class="mp-chart-title">
+      <span>Weekly Mileage - click a week to open it</span>
+      <span class="mp-legend">
+        <span><i style="background:#4c8b6e"></i>Rebuild</span>
+        <span><i style="background:#2fd4c0"></i>Build</span>
+        <span><i style="background:#6c8cff"></i>MP Development</span>
+        <span><i style="background:#f0a742"></i>Peak</span>
+        <span><i style="background:#c2694a"></i>Taper</span>
+      </span>
+    </div>
+    <div class="mp-chart-scroll"><svg id="mp-chart-svg" height="120"></svg></div>
+  </div>
+
+  <div class="mp-weeklist" id="mp-weeklist"></div>
+
+  <div class="mp-detail" id="mp-detail"></div>
+</div>
+
+<script type="module" src="js/marathon.js"></script>
+
+<script src="js/loadHeader.js"></script>
+
+</body>
+</html>
