@@ -55,17 +55,17 @@
 
             <p class="page-blurb">
 
-                Pull a workout straight from your Marathon plan, or enter a session
-                by hand, and this will build a carb, fluid, and sodium target with a
-                gel + homemade drink breakdown and a fueling timeline you can adjust
-                to fit what actually works for your gut.
+                Enter today's session and a few things about you and the conditions,
+                and the calculator will build a starting carb, fluid, and sodium
+                target with a fueling timeline you can adjust to fit what actually
+                works for your gut.
 
             </p>
 
         </section>
 
         <!-- ============================================
-             MODE + QUICK MARATHON SHORTCUT
+             MODE + MARATHON INTEGRATION
         ============================================= -->
 
         <section class="fuel-toolbar">
@@ -107,7 +107,7 @@
                     class="fuel-btn secondary"
                     id="useMarathonWorkoutBtn">
 
-                    Use Today's Workout
+                    Use Marathon Workout
 
                 </button>
 
@@ -116,49 +116,6 @@
                     id="marathonWorkoutPreview">
 
                 </span>
-
-            </div>
-
-        </section>
-
-        <!-- ============================================
-             SELECT MARATHON WORKOUT
-        ============================================= -->
-
-        <section class="fuel-panel">
-
-            <div class="fuel-panel-header">
-
-                <h2>
-
-                    Select Marathon Workout
-
-                </h2>
-
-                <span class="fuel-panel-tag">
-
-                    Pulled live from your Marathon plan
-
-                </span>
-
-            </div>
-
-            <div
-                class="week-select-row"
-                id="weekSelectRow">
-
-            </div>
-
-            <div
-                class="workout-day-list"
-                id="workoutDayList">
-
-            </div>
-
-            <div
-                class="workout-detail-card"
-                id="workoutDetailCard"
-                style="display:none;">
 
             </div>
 
@@ -180,7 +137,7 @@
 
                 <span class="fuel-panel-tag">
 
-                    Auto-filled from a workout above, or enter your own
+                    Step 1
 
                 </span>
 
@@ -486,7 +443,7 @@
 
                 <span class="fuel-panel-tag">
 
-                    Starting targets, not medical advice
+                    Step 2 · Starting targets, not medical advice
 
                 </span>
 
@@ -518,7 +475,7 @@
                             id="fuelInterval"
                             min="5"
                             step="5"
-                            value="25"> min
+                            value="30"> min
 
                     </div>
 
@@ -579,45 +536,6 @@
         </section>
 
         <!-- ============================================
-             FUELING COMPOSITION (gels + drink vs target)
-        ============================================= -->
-
-        <section
-            class="fuel-panel"
-            id="compositionPanel"
-            style="display:none;">
-
-            <div class="fuel-panel-header">
-
-                <h2>
-
-                    Fueling Composition
-
-                </h2>
-
-                <span class="fuel-panel-tag">
-
-                    Gels + homemade drink vs your target
-
-                </span>
-
-            </div>
-
-            <div id="compositionBreakdown">
-
-            </div>
-
-            <p class="fuel-note">
-
-                Add gels, chews, or drink mixes from the Fueling Library below using
-                "Add to Plan" — they'll show up here. Anything not covered by a
-                product comes from your homemade drink.
-
-            </p>
-
-        </section>
-
-        <!-- ============================================
              SECTION 3 — FUELING TIMELINE
         ============================================= -->
 
@@ -634,25 +552,11 @@
 
                 </h2>
 
-                <div class="fuel-timeline-actions">
+                <span class="fuel-panel-tag">
 
-                    <button
-                        class="fuel-btn secondary small"
-                        id="regenerateTimelineBtn">
+                    Step 3
 
-                        Regenerate
-
-                    </button>
-
-                    <button
-                        class="fuel-btn secondary small"
-                        id="addTimelineStepBtn">
-
-                        + Add Step
-
-                    </button>
-
-                </div>
+                </span>
 
             </div>
 
@@ -665,27 +569,23 @@
         </section>
 
         <!-- ============================================
-             SECTION 4 — HOMEMADE DRINK (sugar + salt)
+             SECTION 4 — DIY FUELING CALCULATOR
         ============================================= -->
 
-        <section
-            class="fuel-panel"
-            id="diyPanelAnchor">
+        <section class="fuel-panel">
 
             <div class="fuel-panel-header">
 
                 <h2>
 
-                    Homemade Drink — Sugar + Salt Calculator
+                    DIY Fueling Calculator
 
                 </h2>
 
-                <label class="fuel-checkbox fuel-include-drink">
+                <span class="fuel-panel-tag">
 
-                    <input type="checkbox" id="includeHomemadeDrink" checked>
-                    <span>Include in plan</span>
-
-                </label>
+                    Homemade drink mix
+                </span>
 
             </div>
 
@@ -754,21 +654,12 @@
                                 type="number"
                                 id="diySodiumTarget"
                                 min="0"
-                                step="25"
+                                step="50"
                                 value="300">
 
                         </label>
 
                     </div>
-
-                    <button
-                        type="button"
-                        class="fuel-btn secondary small"
-                        id="autoFillDrinkBtn">
-
-                        Use Remaining After Gels/Chews
-
-                    </button>
 
                 </div>
 
@@ -784,8 +675,8 @@
 
                             <select id="diyCarbSource">
 
-                                <option value="table-sugar" selected>Table Sugar</option>
                                 <option value="maltodextrin">Maltodextrin</option>
+                                <option value="table-sugar">Table Sugar</option>
                                 <option value="honey">Honey</option>
                                 <option value="juice">Fruit Juice</option>
                                 <option value="sports-powder">Sports Drink Powder</option>
@@ -801,7 +692,7 @@
 
                             <select id="diySodiumSource">
 
-                                <option value="table-salt" selected>Table Salt</option>
+                                <option value="table-salt">Table Salt</option>
                                 <option value="salt-tabs">Salt Tabs</option>
                                 <option value="electrolyte-mix">Electrolyte Mix</option>
                                 <option value="other">Other</option>
@@ -819,7 +710,7 @@
                         <textarea
                             id="diyNotes"
                             rows="2"
-                            placeholder="e.g. squeeze of lemon for flavor"></textarea>
+                            placeholder="e.g. 3 tbsp maltodextrin, 1/4 tsp salt, splash of juice for flavor"></textarea>
 
                     </label>
 
@@ -827,12 +718,11 @@
 
             </div>
 
-<button
-    type="button"
-    class="fuel-btn primary"
-    id="calculateBtn">
+            <button
+                class="fuel-btn primary"
+                id="diyCalculateBtn">
 
-                Calculate Drink Recipe
+                Calculate DIY Mix
 
             </button>
 
@@ -843,22 +733,22 @@
 
                 <div class="fuel-diy-stat">
 
-                    <span id="diyWaterAmount">0 oz</span>
-                    <small>water</small>
+                    <span id="diyCarbsPerBottle">0 g</span>
+                    <small>carbs / bottle</small>
 
                 </div>
 
                 <div class="fuel-diy-stat">
 
-                    <span id="diySugarGrams">0 g</span>
-                    <small>table sugar (≈ <span id="diySugarTsp">0</span> tsp)</small>
+                    <span id="diySodiumPerBottle">0 mg</span>
+                    <small>sodium / bottle</small>
 
                 </div>
 
                 <div class="fuel-diy-stat">
 
-                    <span id="diySaltGrams">0 g</span>
-                    <small>table salt (≈ <span id="diySaltTsp">0</span> tsp)</small>
+                    <span id="diyTotalFluid">0 oz</span>
+                    <small>total fluid</small>
 
                 </div>
 
@@ -871,15 +761,6 @@
                 </button>
 
             </div>
-
-            <p class="fuel-note" id="diyConversionNote" style="display:none;">
-
-                Teaspoon conversions assume standard granulated sugar (≈4.2 g/tsp)
-                and fine table salt (≈5.7 g/tsp) — exact gram amounts are more
-                reliable than teaspoons, which vary by ingredient and how it's
-                measured.
-
-            </p>
 
             <div
                 class="fuel-saved-list"
@@ -1023,7 +904,7 @@
         </section>
 
         <!-- ============================================
-             PRE-WORKOUT FUEL
+             SECTION 6 — BUILD A PLAN
         ============================================= -->
 
         <section class="fuel-panel">
@@ -1032,52 +913,14 @@
 
                 <h2>
 
-                    Pre-Workout Fuel
+                    Build a Plan
 
                 </h2>
 
                 <span class="fuel-panel-tag">
 
-                    Simple, cheap, easy to digest
-
+                    Step 4
                 </span>
-
-            </div>
-
-            <div
-                class="pre-workout-groups"
-                id="preWorkoutGroups">
-
-            </div>
-
-            <label class="fuel-field fuel-preworkout-field">
-
-                <span>What you're actually having</span>
-
-                <input
-                    type="text"
-                    id="preWorkoutFood"
-                    placeholder="tap an option above, or type your own">
-
-            </label>
-
-        </section>
-
-        <!-- ============================================
-             COMPLETE WORKOUT PLAN SUMMARY + SAVE
-        ============================================= -->
-
-        <section class="fuel-panel">
-
-            <div class="fuel-panel-header">
-
-                <h2>
-
-                    Complete Fueling Plan
-
-                </h2>
-
-                <span class="fuel-panel-tag" id="planWorkoutLabel"></span>
 
             </div>
 
@@ -1088,7 +931,7 @@
                 <input
                     type="text"
                     id="planName"
-                    placeholder="e.g. Week 8 Saturday — 16 mile long run">
+                    placeholder="e.g. 18-mile long run fueling">
 
             </label>
 
@@ -1159,7 +1002,9 @@
 
             </div>
 
-            <div id="savedPlansGrid">
+            <div
+                class="fuel-saved-plans-grid"
+                id="savedPlansGrid">
 
                 <p class="fuel-empty-state">
 
