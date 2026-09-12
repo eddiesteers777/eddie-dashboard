@@ -167,11 +167,11 @@ function ensureHammerGels(list) {
 ========================================== */
 
 function getMarathonModule() {
-    if (!marathonModulePromise) {
-        marathonModulePromise = import("./marathonData.js");
-    }
+
+    if (!marathonModulePromise) marathonModulePromise = import("./marathonData.js");
 
     return marathonModulePromise;
+
 }
 
 async function initWeekSelector() {
@@ -180,35 +180,19 @@ async function initWeekSelector() {
 
         const data = await getMarathonModule();
 
-        const totalWeeks = data.WEEKS.length;
-
-        const row = $("weekSelectRow");
-
-        row.innerHTML = "";
-
         const currentWeek = data.getCurrentWeek();
 
-        for (let w = 1; w <= totalWeeks; w++) {
-
-            const btn = document.createElement("button");
-
-            btn.className = "week-chip" + (w === currentWeek ? " current" : "");
-            btn.textContent = "Wk " + w;
-            btn.dataset.week = w;
-
-            btn.addEventListener("click", () => selectWeek(w));
-
-            row.appendChild(btn);
-
-        }
+        renderMarathonCalendar(data, currentWeek);
 
         await maybeOpenFromQuery(data, currentWeek);
 
     } catch (err) {
 
-        $("weekSelectRow").innerHTML = "";
+        const calendar = $("marathonCalendar");
 
-        $("workoutDayList").innerHTML = `<p class="fuel-empty-state">Couldn't load Marathon data (js/marathonData.js).</p>`;
+        if (calendar) {
+            calendar.innerHTML = `<p class="fuel-empty-state">Couldn't load Marathon data (js/marathonData.js).</p>`;
+        }
 
         console.error("Marathon data load error:", err);
 
@@ -225,8 +209,6 @@ async function maybeOpenFromQuery(data, currentWeek) {
 
     if (qWeek && qDay) {
 
-        const existing = findPlanForWorkout(qWeek, qDay);
-
         await selectWeek(qWeek);
 
         const dayIndex = data.DAYS.indexOf(qDay);
@@ -239,11 +221,13 @@ async function maybeOpenFromQuery(data, currentWeek) {
 
         }
 
+        const existing = findPlanForWorkout(qWeek, qDay);
+
         if (existing) {
 
             openPlan(existing.id);
 
-            document.getElementById("planSummary").scrollIntoView({ behavior: "smooth" });
+            $("planSummary").scrollIntoView({ behavior: "smooth" });
 
         }
 
@@ -256,76 +240,109 @@ async function maybeOpenFromQuery(data, currentWeek) {
 }
 
 async function selectWeek(week) {
+
     selectedWeek = week;
     selectedDayIndex = null;
 
-    document.querySelectorAll(".week-chip").forEach(b => {
-        b.classList.toggle("active", Number(b.dataset.week) === week);
-    });
-
     const data = await getMarathonModule();
 
-    // Reload the latest saved Marathon overrides before building the list.
-    const days = data.getAdjustedWeekDays(week, data.loadOverrides());
+    renderMarathonCalendar(data, data.getCurrentWeek());
 
-    renderDayList(days, data.DAYS);
+    const dayRows = document.querySelectorAll(`.workout-day-row[data-week="${week}"]`);
+
+    dayRows.forEach(row => row.classList.remove("selected"));
 
     $("workoutDetailCard").style.display = "none";
+
 }
 
-function renderDayList(days, DAYS) {
+function renderMarathonCalendar(data, currentWeek) {
 
-    const list = $("workoutDayList");
+    const calendar = $("marathonCalendar");
+    if (!calendar) return;
 
-    list.innerHTML = "";
+    calendar.innerHTML = "";
 
-    days.forEach((d, i) => {
+    const dayNames = data.DAYS;
+    const today = new Date();
 
-        const dayKey = DAYS[i];
+    const header = document.createElement("div");
+    header.className = "marathon-calendar-week calendar-header-row";
+    header.innerHTML = `
+        <div class="calendar-week-label">Week</div>
+        ${dayNames.map(day => `<div class="calendar-day-heading">${day}</div>`).join("")}
+    `;
+    calendar.appendChild(header);
 
-        const hasPlan = findPlanForWorkout(selectedWeek, dayKey);
+    for (let week = 1; week <= data.WEEKS.length; week++) {
 
+        const days = data.getAdjustedWeekDays(week);
         const row = document.createElement("div");
+        row.className = "marathon-calendar-week" + (week === currentWeek ? " current-week" : "");
 
-        row.className = "workout-day-row" + (hasPlan ? " has-plan" : "");
+        const range = data.weekRange(week);
 
         row.innerHTML = `
-
-            <span class="workout-day-abbr">${dayKey}</span>
-            <span class="workout-day-session">${escapeHTML(d.session)}</span>
-            <span class="workout-day-miles">${d.miles} mi</span>
-            <span class="workout-day-pace">${escapeHTML(d.pace)}</span>
-            ${hasPlan ? '<span class="workout-day-check">Fueling Plan ✓</span>' : "<span></span>"}
-
+            <div class="calendar-week-label">
+                <strong>Wk ${week}</strong>
+                <span>${escapeHTML(range)}</span>
+            </div>
         `;
 
-        row.addEventListener("click", () => selectDay(i, d, dayKey));
+        days.forEach((day, index) => {
 
-        list.appendChild(row);
+            const dayKey = dayNames[index];
+            const date = new Date(data.weekStart(week).getTime() + index * 86400000);
+            const hasPlan = !!findPlanForWorkout(week, dayKey);
+            const isToday = date.toDateString() === today.toDateString();
 
-    });
+            const cell = document.createElement("button");
+            cell.type = "button";
+            cell.className = "workout-day-row marathon-calendar-day" +
+                (hasPlan ? " has-plan" : "") +
+                (isToday ? " today" : "");
+            cell.dataset.week = week;
+            cell.dataset.index = index;
+
+            cell.innerHTML = `
+                <span class="calendar-day-date">${date.toLocaleDateString("en-US", { month:"short", day:"numeric" })}</span>
+                <span class="workout-day-abbr">${dayKey}</span>
+                <span class="workout-day-session">${escapeHTML(day.session)}</span>
+                <span class="workout-day-miles">${day.miles} mi</span>
+                <span class="workout-day-pace">${escapeHTML(day.pace)}</span>
+                ${hasPlan ? '<span class="workout-day-check">⛽ Planned</span>' : '<span class="workout-day-check empty">&nbsp;</span>'}
+            `;
+
+            cell.addEventListener("click", () => selectDay(index, day, dayKey, week));
+
+            row.appendChild(cell);
+
+        });
+
+        calendar.appendChild(row);
+
+    }
 
 }
 
-function selectDay(index, day, dayKey) {
+function selectDay(index, day, dayKey, weekOverride = selectedWeek) {
 
+    selectedWeek = weekOverride;
     selectedDayIndex = index;
 
-    document.querySelectorAll(".workout-day-row").forEach((r, i) => {
+    document.querySelectorAll(".workout-day-row").forEach(r => r.classList.remove("selected"));
 
-        r.classList.toggle("selected", i === index);
+    const selected = document.querySelector(`.workout-day-row[data-week="${weekOverride}"][data-index="${index}"]`);
+    if (selected) selected.classList.add("selected");
 
-    });
-
-    const existingPlan = findPlanForWorkout(selectedWeek, dayKey);
+    const existingPlan = findPlanForWorkout(weekOverride, dayKey);
 
     const card = $("workoutDetailCard");
 
     card.style.display = "";
-
     card.innerHTML = `
 
-        <h3>Week ${selectedWeek} — ${dayKey}</h3>
+        <h3>Week ${weekOverride} — ${dayKey}</h3>
 
         <p class="workout-detail-line">
             ${escapeHTML(day.session)} — ${day.miles} mi @ ${escapeHTML(day.pace)}${day.race ? " (Race)" : ""}
@@ -337,22 +354,16 @@ function selectDay(index, day, dayKey) {
         }
 
         <div style="margin-top:14px;">
-            <button class="fuel-btn primary small" id="buildFuelingPlanBtn">Build Fueling Plan</button>
+            <button class="fuel-btn primary small" id="buildFuelingPlanBtn">${existingPlan ? "Edit Fueling Plan" : "Build Fueling Plan"}</button>
         </div>
 
     `;
 
-$("buildFuelingPlanBtn").addEventListener("click", () => {
+    $("buildFuelingPlanBtn").addEventListener("click", () => {
 
-    applyMarathonWorkout(
-        day,
-        selectedWeek,
-        dayKey
-    );
+        applyMarathonWorkout(day, weekOverride, dayKey);
 
-    updatePlanWorkoutLabel();
-
-});
+    });
 
     if (existingPlan) {
 
@@ -360,7 +371,7 @@ $("buildFuelingPlanBtn").addEventListener("click", () => {
 
             openPlan(existingPlan.id);
 
-            document.getElementById("planSummary").scrollIntoView({ behavior: "smooth" });
+            $("planSummary").scrollIntoView({ behavior: "smooth" });
 
         });
 
@@ -370,7 +381,7 @@ $("buildFuelingPlanBtn").addEventListener("click", () => {
 
 function findPlanForWorkout(week, dayKey) {
 
-    return plans.find(p => p.marathonRef && p.marathonRef.week === week && p.marathonRef.dayKey === dayKey);
+    return plans.find(p => p.marathonRef && Number(p.marathonRef.week) === Number(week) && p.marathonRef.dayKey === dayKey);
 
 }
 
@@ -1895,13 +1906,19 @@ $("deletePlanBtn").addEventListener("click", () => {
 
 function renderDayListIfVisible() {
 
-    if (selectedWeek == null) return;
-
     getMarathonModule().then(data => {
 
-        const days = data.getAdjustedWeekDays(selectedWeek);
+        renderMarathonCalendar(data, data.getCurrentWeek());
 
-        renderDayList(days, data.DAYS);
+        if (selectedWeek != null && selectedDayIndex != null) {
+
+            const days = data.getAdjustedWeekDays(selectedWeek);
+            const day = days[selectedDayIndex];
+            const dayKey = data.DAYS[selectedDayIndex];
+
+            if (day) selectDay(selectedDayIndex, day, dayKey, selectedWeek);
+
+        }
 
     });
 
@@ -2149,11 +2166,8 @@ if (plan.diySnapshot) {
 
     $("diyResults").style.display = "flex";
     $("diyConversionNote").style.display = "";
-} else {
-    $("diyResults").style.display = "none";
-    $("diyConversionNote").style.display = "none";
-    delete $("diyResults").dataset.snapshot;
 }
+
 
     updatePlanWorkoutLabel();
 
