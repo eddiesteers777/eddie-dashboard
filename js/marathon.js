@@ -1,14 +1,20 @@
 /* ==========================================
    EddieOS Marathon Controller
-   Focused cohesion version:
-   - Per-day expandable dropdown
-   - Uses existing Marathon data + overrides
-   - Reads linked Fueling plans from fueling-plans
-   - Reads Cross Training / Strength / Mobility /
-     Recovery / Notes from training-overrides
-   - Keeps existing progress + override storage
-   - Renders locally first so cloud sync cannot leave
-     the page blank if Firebase/auth is slow or unavailable
+   Dynamic per-day training hub
+
+   The Marathon day is the source of truth for:
+   - Workout
+   - Fueling link
+   - Strength
+   - Cross Training link
+   - Mobility
+   - Recovery
+   - Notes
+
+   Uses the existing localStorage keys only:
+   - training-progress
+   - training-overrides
+   - fueling-plans
 ========================================== */
 
 import {
@@ -26,70 +32,147 @@ import {
     loadOverrides
 } from "./marathonData.js";
 
-console.log("EddieOS Marathon — cohesion controller");
+console.log("EddieOS Marathon — dynamic day hub");
 
+/* ==========================================
+   State
+========================================== */
 let progress = loadProgress();
 let overrides = loadOverrides();
 let selectedWeek = 1;
 const expandedDays = {};
 
+/* ==========================================
+   DOM helpers
+========================================== */
 const $ = (id) => document.getElementById(id);
 
-function saveProgress(){
-    localStorage.setItem("training-progress", JSON.stringify(progress));
-    import("./cloudSync.js")
-        .then(({ pushToCloud }) => pushToCloud())
-        .catch(() => {});
-}
-
-function saveOverrides(){
-    localStorage.setItem("training-overrides", JSON.stringify(overrides));
-    import("./cloudSync.js")
-        .then(({ pushToCloud }) => pushToCloud())
-        .catch(() => {});
-}
-
-function escapeHTML(value){
+function escapeHTML(value) {
     const div = document.createElement("div");
     div.textContent = value == null ? "" : String(value);
     return div.innerHTML;
 }
 
-function getAdjustedDays(weekNumber){
-    try {
-        return getAdjustedWeekDays(weekNumber, overrides);
-    } catch(error){
-        console.warn("getAdjustedWeekDays fallback:", error);
-        const week = WEEKS[weekNumber - 1];
-        const weekOverrides = overrides[weekNumber] || {};
-        return week.days.map((day, index) => ({
-            ...day,
-            ...(weekOverrides[DAYS[index]] || {}),
-            race: !!day.race
-        }));
+function escapeAttr(value) {
+    return escapeHTML(value).replace(/'/g, "&#39;");
+}
+
+/* ==========================================
+   Robust data formatting
+
+   Existing EddieOS data can contain strings,
+   arrays, or objects. Never render an object
+   directly; that is what causes [object Object].
+========================================== */
+function formatValue(value) {
+    if (value == null) return "";
+
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        return String(value);
     }
+
+    if (Array.isArray(value)) {
+        return value.map(formatValue).filter(Boolean).join(" — ");
+    }
+
+    if (typeof value === "object") {
+        const preferredKeys = [
+            "title", "name", "exercise", "label", "type", "activity",
+            "workout", "description", "duration", "time", "intensity",
+            "pace", "sets", "reps", "distance", "minutes", "details", "note"
+        ];
+
+        const parts = [];
+        const seen = new Set();
+
+        for (const key of preferredKeys) {
+            if (Object.prototype.hasOwnProperty.call(value, key)) {
+                const text = formatValue(value[key]);
+                if (text && !seen.has(text)) {
+                    parts.push(text);
+                    seen.add(text);
+                }
+            }
+        }
+
+        if (parts.length) return parts.join(" — ");
+
+        const fallback = Object.entries(value)
+            .filter(([key]) => key !== "id")
+            .map(([key, val]) => {
+                const text = formatValue(val);
+                return text ? `${key}: ${text}` : "";
+            })
+            .filter(Boolean);
+
+        return fallback.join(" — ");
+    }
+
+    return String(value);
 }
 
-function getArray(day, key){
-    return Array.isArray(day?.[key]) ? day[key] : [];
+function asArray(value) {
+    if (value == null || value === "") return [];
+    return Array.isArray(value) ? value : [value];
 }
 
-function getString(day, key){
-    return typeof day?.[key] === "string" ? day[key] : "";
+function getExtras(day) {
+    const legacy = day && day.extras && typeof day.extras === "object" ? day.extras : {};
+
+    return {
+        strength: asArray(day?.strength ?? legacy.strength),
+        crossTraining: asArray(day?.crossTraining ?? legacy.crossTraining),
+        mobility: asArray(day?.mobility ?? legacy.mobility),
+        recovery: asArray(day?.recovery ?? legacy.recovery),
+        notes: formatValue(day?.notes ?? legacy.notes ?? "")
+    };
 }
 
-function loadFuelingPlans(){
+function hasExtraContent(day, week, dayKey) {
+    const ex = getExtras(day);
+    return Boolean(
+        ex.strength.length ||
+        ex.crossTraining.length ||
+        ex.mobility.length ||
+        ex.recovery.length ||
+        ex.notes.trim() ||
+        getFuelingPlan(week, dayKey)
+    );
+}
+
+/* ==========================================
+   Persistence
+========================================== */
+function saveProgress() {
+    localStorage.setItem("training-progress", JSON.stringify(progress));
+    import("./cloudSync.js")
+        .then(({ pushToCloud }) => pushToCloud())
+        .catch((error) => console.warn("Cloud progress sync unavailable:", error));
+}
+
+function saveOverrides() {
+    localStorage.setItem("training-overrides", JSON.stringify(overrides));
+    import("./cloudSync.js")
+        .then(({ pushToCloud }) => pushToCloud())
+        .catch((error) => console.warn("Cloud override sync unavailable:", error));
+}
+
+/* ==========================================
+   Fueling integration
+========================================== */
+function loadFuelingPlans() {
     try {
-        const raw = localStorage.getItem("fueling-plans") || "[]";
-        const parsed = JSON.parse(raw);
+        const raw = localStorage.getItem("fueling-plans");
+        const parsed = raw ? JSON.parse(raw) : [];
         return Array.isArray(parsed) ? parsed : [];
-    } catch(error){
+    } catch (error) {
+        console.warn("Unable to read fueling-plans:", error);
         return [];
     }
 }
 
-function getFuelingPlan(week, dayKey){
-    return loadFuelingPlans().find(plan =>
+function getFuelingPlan(week, dayKey) {
+    return loadFuelingPlans().find((plan) =>
         plan &&
         plan.marathonRef &&
         Number(plan.marathonRef.week) === Number(week) &&
@@ -97,206 +180,391 @@ function getFuelingPlan(week, dayKey){
     ) || null;
 }
 
-function renderList(items, emptyText = "None scheduled"){
-    if(!items.length){
-        return `<div class="mp-extras-body mp-empty-extra">${escapeHTML(emptyText)}</div>`;
-    }
-    return `<div class="mp-extras-body">${items.map(item =>
-        `<div class="mp-extra-item">${escapeHTML(item)}</div>`
-    ).join("")}</div>`;
+function fuelingSummary(plan) {
+    if (!plan) return "";
+
+    const parts = [];
+    const carbs = plan.carbTotal ?? plan.carbsPerHour ?? plan.carbTarget;
+    const fluid = plan.fluidTotal ?? plan.fluidPerHour ?? plan.fluidTarget;
+    const sodium = plan.sodiumTotal ?? plan.sodiumPerHour ?? plan.sodiumTarget;
+
+    if (carbs !== undefined && carbs !== "") parts.push(`Carbs ${formatValue(carbs)} g`);
+    if (fluid !== undefined && fluid !== "") parts.push(`Fluid ${formatValue(fluid)}`);
+    if (sodium !== undefined && sodium !== "") parts.push(`Sodium ${formatValue(sodium)} mg`);
+
+    return parts.join(" • ");
 }
 
-function renderDayDropdown(day, weekNumber, dayKey){
-    const fueling = getFuelingPlan(weekNumber, dayKey);
-    const strength = getArray(day, "strength");
-    const crossTraining = getArray(day, "crossTraining");
-    const mobility = getArray(day, "mobility");
-    const recovery = getArray(day, "recovery");
-    const notes = getString(day, "notes");
-    const description = getString(day, "description");
-    const duration = getString(day, "duration");
-    const key = `${weekNumber}-${dayKey}`;
-    const open = !!expandedDays[key];
-
-    return `
-        <div class="mp-day-dropdown ${open ? "open" : ""}" id="mp-day-dropdown-${weekNumber}-${dayKey}">
-            <div class="mp-day-dropdown-inner">
-
-                <div class="mp-extra-group">
-                    <div class="mp-extra-title">🏃 Workout</div>
-                    <div class="mp-extras-body">
-                        <div class="mp-extra-item"><strong>${escapeHTML(day.session)}</strong></div>
-                        <div class="mp-extra-item">${escapeHTML(day.miles)} mi • ${escapeHTML(day.pace)}</div>
-                        ${duration ? `<div class="mp-extra-item">Duration: ${escapeHTML(duration)}</div>` : ""}
-                        ${description ? `<div class="mp-extra-item">${escapeHTML(description)}</div>` : ""}
-                    </div>
-                </div>
-
-                <div class="mp-extra-group">
-                    <div class="mp-extra-title">⛽ Fueling</div>
-                    ${fueling ? `
-                        <div class="mp-extras-body">
-                            <div class="mp-extra-item"><strong>${escapeHTML(fueling.name || "Saved Fueling Plan")}</strong></div>
-                            <div class="mp-extra-item">${Number(fueling.carbTotal || 0)}g carbs • ${Number(fueling.fluidTotal || 0)}oz fluid • ${Number(fueling.sodiumTotal || 0)}mg sodium</div>
-                            <a class="mp-extra-link" href="fueling.html?week=${weekNumber}&day=${encodeURIComponent(dayKey)}">Open / Edit Fueling Plan →</a>
-                        </div>
-                    ` : `<div class="mp-extras-body mp-empty-extra"><a class="mp-extra-link" href="fueling.html?week=${weekNumber}&day=${encodeURIComponent(dayKey)}">Build Fueling Plan →</a></div>`}
-                </div>
-
-                <div class="mp-extra-group">
-                    <div class="mp-extra-title">💪 Strength</div>
-                    ${renderList(strength)}
-                </div>
-
-                <div class="mp-extra-group">
-                    <div class="mp-extra-title">🚴 Cross Training</div>
-                    ${renderList(crossTraining)}
-                </div>
-
-                <div class="mp-extra-group">
-                    <div class="mp-extra-title">🧘 Mobility</div>
-                    ${renderList(mobility)}
-                </div>
-
-                <div class="mp-extra-group">
-                    <div class="mp-extra-title">❤️ Recovery</div>
-                    ${renderList(recovery)}
-                </div>
-
-                <div class="mp-extra-group">
-                    <div class="mp-extra-title">📝 Notes</div>
-                    ${notes ? `<div class="mp-extras-body"><div class="mp-extra-item">${escapeHTML(notes)}</div></div>` : `<div class="mp-extras-body mp-empty-extra">None</div>`}
-                </div>
-
-            </div>
-        </div>
-    `;
+function getFuelingHref(week, dayKey) {
+    return `fueling.html?week=${encodeURIComponent(week)}&day=${encodeURIComponent(dayKey)}`;
 }
 
-function weekDone(weekNumber){
+function getCrossTrainingHref(week, dayKey) {
+    return `cross-training.html?week=${encodeURIComponent(week)}&day=${encodeURIComponent(dayKey)}`;
+}
+
+/* ==========================================
+   Progress
+========================================== */
+function weekDone(weekNumber) {
     const weekProgress = progress[weekNumber] || {};
-    return DAYS.filter(day => weekProgress[day]).length;
+    return DAYS.filter((day) => Boolean(weekProgress[day])).length;
 }
 
-function totalCompleted(){
-    return Object.values(progress).reduce((total, week) => {
-        return total + Object.values(week || {}).filter(Boolean).length;
-    }, 0);
+function totalCompleted() {
+    let count = 0;
+    Object.values(progress).forEach((week) => {
+        if (week && typeof week === "object") {
+            count += Object.values(week).filter(Boolean).length;
+        }
+    });
+    return count;
 }
 
-function getCurrentWeek(){
+/* ==========================================
+   Stats
+========================================== */
+function updateStats() {
     const now = new Date();
-    let current = 1;
-
-    for(let n = 1; n <= WEEKS.length; n++){
-        if(now >= weekStart(n) && now <= weekEnd(n)) current = n;
-    }
-
-    if(now < weekStart(1)) current = 1;
-    if(now > weekEnd(WEEKS.length)) current = WEEKS.length;
-
-    return current;
-}
-
-function updateStats(){
     const raceDay = weekEnd(WEEKS.length);
-    const now = new Date();
     const daysLeft = Math.ceil((raceDay - now) / 86400000);
 
     const countdown = $("mp-countdown");
-    if(countdown){
+    if (countdown) {
         countdown.textContent = daysLeft >= 0 ? `${daysLeft} days to race day` : "Race complete!";
     }
 
-    const weekDisplay = $("mp-stat-week");
-    if(weekDisplay){
-        weekDisplay.textContent = `${getCurrentWeek()} / ${WEEKS.length}`;
+    let currentWeek = 1;
+    for (let n = 1; n <= WEEKS.length; n++) {
+        if (now >= weekStart(n) && now <= weekEnd(n)) currentWeek = n;
     }
+    if (now > weekEnd(WEEKS.length)) currentWeek = WEEKS.length;
+    if (now < weekStart(1)) currentWeek = 1;
+
+    const weekDisplay = $("mp-stat-week");
+    if (weekDisplay) weekDisplay.textContent = `${currentWeek} / ${WEEKS.length}`;
+
+    const totalMiles = WEEKS.reduce(
+        (total, _, index) => total + Number(getAdjustedWeekMileage(index + 1, overrides) || 0),
+        0
+    );
 
     const totalDisplay = $("mp-stat-total");
-    if(totalDisplay){
-        const totalMiles = WEEKS.reduce((sum, _, index) => {
-            try {
-                return sum + Number(getAdjustedWeekMileage(index + 1, overrides) || 0);
-            } catch(error){
-                return sum;
-            }
-        }, 0);
-        totalDisplay.textContent = Math.round(totalMiles);
-    }
+    if (totalDisplay) totalDisplay.textContent = Math.round(totalMiles);
 
     const peakDisplay = $("mp-stat-peak");
-    if(peakDisplay){
-        const peak = Math.max(...WEEKS.map((_, index) => {
-            try { return Number(getAdjustedWeekMileage(index + 1, overrides) || 0); }
-            catch(error){ return 0; }
-        }));
+    if (peakDisplay) {
+        const peak = Math.max(
+            ...WEEKS.map((_, index) => Number(getAdjustedWeekMileage(index + 1, overrides) || 0))
+        );
         peakDisplay.textContent = Math.round(peak);
     }
 
-    const pctDisplay = $("mp-stat-pct");
-    if(pctDisplay){
-        pctDisplay.textContent = `${Math.round((totalCompleted() / (WEEKS.length * DAYS.length)) * 100)}%`;
+    const percentDisplay = $("mp-stat-pct");
+    if (percentDisplay) {
+        percentDisplay.textContent = `${Math.round((totalCompleted() / (WEEKS.length * DAYS.length)) * 100)}%`;
     }
 }
 
-function renderWeekList(){
+/* ==========================================
+   Week navigation
+========================================== */
+function renderWeekList() {
     const container = $("mp-weeklist");
-    if(!container) return;
+    if (!container) return;
 
     container.innerHTML = "";
 
-    for(let weekNumber = 1; weekNumber <= WEEKS.length; weekNumber++){
+    for (let n = 1; n <= WEEKS.length; n++) {
         const chip = document.createElement("div");
-        const completed = weekDone(weekNumber);
+        const completed = weekDone(n);
 
-        chip.className = `mp-wchip${weekNumber === selectedWeek ? " active" : ""}${completed === 7 ? " done" : ""}`;
-        chip.innerHTML = `<span class="mp-dot"></span>Wk ${weekNumber}`;
-
+        chip.className = `mp-wchip${n === selectedWeek ? " active" : ""}${completed === 7 ? " done" : ""}`;
+        chip.innerHTML = `<span class="mp-dot"></span>Wk ${n}`;
         chip.addEventListener("click", () => {
-            selectedWeek = weekNumber;
+            selectedWeek = n;
             renderDetail();
             renderWeekList();
-            renderChart();
         });
 
         container.appendChild(chip);
     }
 }
 
-function renderDetail(){
+/* ==========================================
+   Day override helpers
+========================================== */
+function ensureDayOverride(dayKey) {
+    if (!overrides[selectedWeek] || typeof overrides[selectedWeek] !== "object") {
+        overrides[selectedWeek] = {};
+    }
+    if (!overrides[selectedWeek][dayKey] || typeof overrides[selectedWeek][dayKey] !== "object") {
+        overrides[selectedWeek][dayKey] = {};
+    }
+    return overrides[selectedWeek][dayKey];
+}
+
+function setDayField(dayKey, field, value) {
+    const entry = ensureDayOverride(dayKey);
+    entry[field] = value;
+    saveOverrides();
+}
+
+function getCurrentDay(dayIndex) {
+    const days = getAdjustedWeekDays(selectedWeek, overrides);
+    return days[dayIndex] || {};
+}
+
+function addExtra(dayKey, field, input) {
+    const value = input.value.trim();
+    if (!value) return;
+
+    const dayOverride = ensureDayOverride(dayKey);
+    const current = asArray(dayOverride[field]);
+    current.push(value);
+    dayOverride[field] = current;
+
+    input.value = "";
+    saveOverrides();
+    renderDetail();
+}
+
+function removeExtra(dayKey, field, index) {
+    const dayOverride = ensureDayOverride(dayKey);
+    const current = asArray(dayOverride[field]).slice();
+
+    if (index < 0 || index >= current.length) return;
+    current.splice(index, 1);
+
+    dayOverride[field] = current;
+    saveOverrides();
+    renderDetail();
+}
+
+function saveNotes(dayKey, textarea) {
+    setDayField(dayKey, "notes", textarea.value.trim());
+    renderDetail();
+}
+
+/* ==========================================
+   Dynamic extra section renderer
+========================================== */
+function renderEditableList({ week, dayKey, field, label, icon, items, placeholder }) {
+    const itemHTML = items.length
+        ? items.map((item, index) => `
+            <div class="mp-extra-item mp-extra-editable-item">
+                <span>${escapeHTML(formatValue(item))}</span>
+                <button
+                    type="button"
+                    class="mp-extra-remove"
+                    data-remove-extra="true"
+                    data-week="${week}"
+                    data-day="${escapeAttr(dayKey)}"
+                    data-field="${field}"
+                    data-index="${index}"
+                    title="Remove">
+                    ×
+                </button>
+            </div>
+        `).join("")
+        : `<div class="mp-extra-empty">Nothing added yet.</div>`;
+
+    return `
+        <div class="mp-extra-group mp-extra-editor-group">
+            <div class="mp-extra-title">${icon} ${label}</div>
+            <div class="mp-extra-items">
+                ${itemHTML}
+            </div>
+            <div class="mp-extra-add-row">
+                <input
+                    type="text"
+                    class="mp-extra-input"
+                    data-extra-input="true"
+                    data-week="${week}"
+                    data-day="${escapeAttr(dayKey)}"
+                    data-field="${field}"
+                    placeholder="${escapeAttr(placeholder)}"
+                    autocomplete="off">
+                <button
+                    type="button"
+                    class="mp-extra-add"
+                    data-add-extra="true"
+                    data-week="${week}"
+                    data-day="${escapeAttr(dayKey)}"
+                    data-field="${field}">
+                    + Add
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderDayExtras(day, week, dayKey) {
+    const ex = getExtras(day);
+    const plan = getFuelingPlan(week, dayKey);
+
+    const fuelingHTML = plan
+        ? `
+            <div class="mp-extra-group">
+                <div class="mp-extra-title">⛽ Fueling</div>
+                <div class="mp-extra-item">
+                    <div>
+                        <strong>Fueling Plan Saved ✓</strong>
+                        ${fuelingSummary(plan) ? `<div style="margin-top:5px;opacity:.85">${escapeHTML(fuelingSummary(plan))}</div>` : ""}
+                    </div>
+                    <a
+                        class="mp-extra-link"
+                        href="${getFuelingHref(week, dayKey)}">
+                        Edit →
+                    </a>
+                </div>
+            </div>
+        `
+        : `
+            <div class="mp-extra-group">
+                <div class="mp-extra-title">⛽ Fueling</div>
+                <div class="mp-extra-item">
+                    <span>No fueling plan saved.</span>
+                    <a
+                        class="mp-extra-link"
+                        href="${getFuelingHref(week, dayKey)}">
+                        Build one →
+                    </a>
+                </div>
+            </div>
+        `;
+
+    const crossTrainingHTML = ex.crossTraining.length
+        ? `
+            <div class="mp-extra-group">
+                <div class="mp-extra-title">🚴 Cross Training</div>
+                ${ex.crossTraining.map((item, index) => `
+                    <div class="mp-extra-item mp-extra-editable-item">
+                        <span>${escapeHTML(formatValue(item))}</span>
+                        <button type="button" class="mp-extra-remove" data-remove-extra="true" data-week="${week}" data-day="${escapeAttr(dayKey)}" data-field="crossTraining" data-index="${index}" title="Remove">×</button>
+                    </div>
+                `).join("")}
+                <div class="mp-extra-actions">
+                    <a class="mp-extra-link" href="${getCrossTrainingHref(week, dayKey)}">Edit Cross Training →</a>
+                </div>
+            </div>
+        `
+        : `
+            <div class="mp-extra-group">
+                <div class="mp-extra-title">🚴 Cross Training</div>
+                <div class="mp-extra-item">
+                    <span>No cross training saved.</span>
+                    <a class="mp-extra-link" href="${getCrossTrainingHref(week, dayKey)}">Add workout →</a>
+                </div>
+            </div>
+        `;
+
+    const notesHTML = `
+        <div class="mp-extra-group">
+            <div class="mp-extra-title">📝 Notes</div>
+            <textarea
+                class="mp-extra-notes"
+                data-notes-input="true"
+                data-week="${week}"
+                data-day="${escapeAttr(dayKey)}"
+                placeholder="Add anything specific about this workout...">${escapeHTML(ex.notes)}</textarea>
+            <div class="mp-extra-actions">
+                <button
+                    type="button"
+                    class="mp-extra-save-notes"
+                    data-save-notes="true"
+                    data-week="${week}"
+                    data-day="${escapeAttr(dayKey)}">
+                    Save Notes
+                </button>
+            </div>
+        </div>
+    `;
+
+    return `
+        <div class="mp-extra-grid">
+            ${fuelingHTML}
+            ${renderEditableList({ week, dayKey, field: "strength", label: "Strength", icon: "💪", items: ex.strength, placeholder: "e.g. RDL — 3 × 8" })}
+            ${crossTrainingHTML}
+            ${renderEditableList({ week, dayKey, field: "mobility", label: "Mobility", icon: "🧘", items: ex.mobility, placeholder: "e.g. Hip flexor stretch — 2 × 30 sec" })}
+            ${renderEditableList({ week, dayKey, field: "recovery", label: "Recovery", icon: "❤️", items: ex.recovery, placeholder: "e.g. 10 min easy stretching" })}
+            ${notesHTML}
+        </div>
+    `;
+}
+
+/* ==========================================
+   Week detail
+========================================== */
+function renderDetail() {
     const container = $("mp-detail");
-    if(!container) return;
+    if (!container) return;
 
     const week = WEEKS[selectedWeek - 1];
-    if(!week) return;
+    if (!week) return;
 
-    const days = getAdjustedDays(selectedWeek);
-    const phaseInfo = PHASES[week.phase] || { label: "Marathon", color: "#3b82f6" };
+    const days = getAdjustedWeekDays(selectedWeek, overrides);
+    const mileage = Number(getAdjustedWeekMileage(selectedWeek, overrides) || 0);
+    const phaseInfo = PHASES[week.phase] || { label: "Training", color: "#4EA8FF" };
 
     const rows = days.map((day, index) => {
-        const dayName = DAYS[index];
-        const completed = !!(progress[selectedWeek] && progress[selectedWeek][dayName]);
-        const key = `${selectedWeek}-${dayName}`;
-        const open = !!expandedDays[key];
-        const today = getCurrentWeek() === selectedWeek && getTodayDayName() === dayName;
+        const dayKey = DAYS[index];
+        const completed = Boolean(progress[selectedWeek] && progress[selectedWeek][dayKey]);
+        const expandedKey = `${selectedWeek}-${dayKey}`;
+        const expanded = Boolean(expandedDays[expandedKey]);
+        const hasContent = hasExtraContent(day, selectedWeek, dayKey);
 
         return `
-            <div class="mp-day-wrapper ${today ? "mp-day-today" : ""}">
-                <div class="mp-day-row ${completed ? "mp-day-done" : ""}" data-expand-day="${dayName}">
-                    <div class="mp-check ${completed ? "checked" : ""}" data-toggle="${dayName}">
+            <div class="mp-day-wrapper">
+                <div
+                    class="mp-day-row ${completed ? "mp-day-done" : ""}"
+                    data-expand-day="${escapeAttr(dayKey)}"
+                    data-expand-key="${escapeAttr(expandedKey)}">
+
+                    <div class="mp-check ${completed ? "checked" : ""}" data-toggle="${escapeAttr(dayKey)}">
                         ${completed ? "✓" : ""}
                     </div>
-                    <div class="mp-day-abbr">${dayName}</div>
-                    <input class="mp-day-session-input" data-day="${dayName}" data-field="session" value="${escapeHTML(day.session)}">
+
+                    <div class="mp-day-abbr">${dayKey}</div>
+
+                    <input
+                        class="mp-day-session-input"
+                        data-day="${escapeAttr(dayKey)}"
+                        data-field="session"
+                        value="${escapeAttr(formatValue(day.session))}"
+                        spellcheck="false">
+
                     <div class="mp-mile-box">
-                        <input type="number" step="0.1" class="mp-day-miles-input" data-day="${dayName}" data-field="miles" value="${escapeHTML(day.miles)}"> mi
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            class="mp-day-miles-input"
+                            data-day="${escapeAttr(dayKey)}"
+                            data-field="miles"
+                            value="${escapeAttr(day.miles)}">
+                        mi
                     </div>
-                    <div class="mp-pace-chip">${escapeHTML(day.pace)}</div>
+
+                    <div class="mp-pace-chip">${escapeHTML(formatValue(day.pace))}</div>
+
                     <div class="mp-day-timing">${escapeHTML(DAY_TIMES[index] || "")}</div>
-                    <button type="button" class="mp-day-expand-btn" data-expand-day="${dayName}" aria-expanded="${open ? "true" : "false"}">${open ? "▲" : "▼"}</button>
+
+                    <button
+                        type="button"
+                        class="mp-day-expand-toggle ${hasContent ? "mp-has-notes" : ""} ${expanded ? "mp-expand-open" : ""}"
+                        data-expand-day-button="true"
+                        data-week="${selectedWeek}"
+                        data-day="${escapeAttr(dayKey)}"
+                        aria-expanded="${expanded ? "true" : "false"}"
+                        title="Open day details">
+                        ${expanded ? "▲" : "▼"}
+                    </button>
                 </div>
-                ${renderDayDropdown(day, selectedWeek, dayName)}
+
+                <div class="mp-day-extras ${expanded ? "mp-day-extras-open" : ""}" data-day-extras="true" data-week="${selectedWeek}" data-day="${escapeAttr(dayKey)}">
+                    ${expanded ? renderDayExtras(day, selectedWeek, dayKey) : ""}
+                </div>
             </div>
         `;
     }).join("");
@@ -304,12 +572,17 @@ function renderDetail(){
     container.innerHTML = `
         <div class="mp-detail-head">
             <div>
-                <span class="mp-phase-pill" style="background:${phaseInfo.color}22;color:${phaseInfo.color}">${escapeHTML(phaseInfo.label)}</span>
+                <span
+                    class="mp-phase-pill"
+                    style="background:${phaseInfo.color}22;color:${phaseInfo.color}">
+                    ${escapeHTML(phaseInfo.label)}
+                </span>
                 <h2 class="mp-week-title">Week ${selectedWeek}</h2>
                 <div class="mp-week-dates">${escapeHTML(weekRange(selectedWeek))}</div>
             </div>
+
             <div class="mp-week-progress">
-                <div class="mp-week-miles">${getAdjustedWeekMileageSafe(selectedWeek)} mi</div>
+                <div class="mp-week-miles">${mileage} mi</div>
                 <div>${weekDone(selectedWeek)}/7 completed</div>
             </div>
         </div>
@@ -328,21 +601,21 @@ function renderDetail(){
                 <div class="mp-note-body">${escapeHTML(week.fueling || "")}</div>
             </div>
             <div class="mp-note-card">
-                <div class="mp-note-label">Heat / Humidity</div>
+                <div class="mp-note-label">Heat / humidity</div>
                 <div class="mp-note-body">${escapeHTML(week.heat || "")}</div>
             </div>
             <div class="mp-note-card">
-                <div class="mp-note-label">Strength Phase</div>
+                <div class="mp-note-label">Strength phase</div>
                 <div class="mp-note-body">${escapeHTML(week.strength || "")}</div>
             </div>
         </div>
 
-        <button class="mp-drawer-toggle" id="mp-pace-toggle" type="button">Pace reference ▼</button>
-        <button class="mp-drawer-toggle" id="mp-reset-week-btn" type="button">Reset this week's edits</button>
-        <button class="mp-reset-btn" id="mp-reset-btn" type="button">Reset all progress</button>
+        <button type="button" class="mp-drawer-toggle" id="mp-pace-toggle">Pace reference ▼</button>
+        <button type="button" class="mp-drawer-toggle" id="mp-reset-week-btn">Reset this week's edits</button>
+        <button type="button" class="mp-reset-btn" id="mp-reset-btn">Reset all progress</button>
         <div class="mp-drawer" id="mp-pace-drawer">
             <table class="mp-pace-table">
-                ${PACES.map(p => `<tr><td>${escapeHTML(p[0])}</td><td class="mp-mono">${escapeHTML(p[1])}</td></tr>`).join("")}
+                ${PACES.map((p) => `<tr><td>${escapeHTML(p[0])}</td><td class="mp-mono">${escapeHTML(p[1])}</td></tr>`).join("")}
             </table>
         </div>
     `;
@@ -350,102 +623,97 @@ function renderDetail(){
     attachDetailEvents();
 }
 
-function getAdjustedWeekMileageSafe(weekNumber){
-    try {
-        return Math.round(Number(getAdjustedWeekMileage(weekNumber, overrides) || 0) * 10) / 10;
-    } catch(error){
-        return 0;
-    }
-}
-
-function getTodayDayName(){
-    const jsDay = new Date().getDay();
-    return DAYS[jsDay === 0 ? 6 : jsDay - 1];
-}
-
-function attachDetailEvents(){
+/* ==========================================
+   Events — delegated so dynamic controls
+   always keep working after a re-render.
+========================================== */
+function attachDetailEvents() {
     const container = $("mp-detail");
-    if(!container) return;
+    if (!container || container.dataset.eventsBound === "true") return;
 
-    container.querySelectorAll("[data-toggle]").forEach(box => {
-        box.addEventListener("click", event => {
+    container.dataset.eventsBound = "true";
+
+    container.addEventListener("click", (event) => {
+        const target = event.target;
+
+        const check = target.closest("[data-toggle]");
+        if (check) {
             event.stopPropagation();
-            const day = box.getAttribute("data-toggle");
-            if(!progress[selectedWeek]) progress[selectedWeek] = {};
-            progress[selectedWeek][day] = !progress[selectedWeek][day];
+            const dayKey = check.getAttribute("data-toggle");
+
+            if (!progress[selectedWeek]) progress[selectedWeek] = {};
+            progress[selectedWeek][dayKey] = !progress[selectedWeek][dayKey];
+
             saveProgress();
             renderDetail();
             renderWeekList();
             updateStats();
-        });
-    });
+            return;
+        }
 
-    container.querySelectorAll("[data-expand-day]").forEach(trigger => {
-        trigger.addEventListener("click", event => {
-            if(event.target.closest(".mp-check, .mp-day-session-input, .mp-day-miles-input")) return;
+        const expandButton = target.closest("[data-expand-day-button]");
+        if (expandButton) {
             event.stopPropagation();
-            const day = trigger.getAttribute("data-expand-day");
-            const key = `${selectedWeek}-${day}`;
+            const dayKey = expandButton.getAttribute("data-day");
+            const key = `${selectedWeek}-${dayKey}`;
             expandedDays[key] = !expandedDays[key];
             renderDetail();
-        });
-    });
+            return;
+        }
 
-    container.querySelectorAll(".mp-day-session-input, .mp-day-miles-input").forEach(input => {
-        input.addEventListener("click", event => event.stopPropagation());
-        input.addEventListener("change", event => {
-            const day = event.target.dataset.day;
-            const field = event.target.dataset.field;
-            let value = event.target.value;
-
-            if(field === "miles"){
-                value = Number(value);
-                if(Number.isNaN(value) || value < 0) value = 0;
-            } else {
-                value = String(value).trim();
-            }
-
-            if(!overrides[selectedWeek]) overrides[selectedWeek] = {};
-            if(!overrides[selectedWeek][day]) overrides[selectedWeek][day] = {};
-            overrides[selectedWeek][day][field] = value;
-            saveOverrides();
+        const dayRow = target.closest("[data-expand-day]");
+        if (dayRow && !target.closest("input, textarea, button, a, .mp-check")) {
+            const dayKey = dayRow.getAttribute("data-expand-day");
+            const key = `${selectedWeek}-${dayKey}`;
+            expandedDays[key] = !expandedDays[key];
             renderDetail();
-            renderChart();
-            updateStats();
-        });
+            return;
+        }
 
-        input.addEventListener("keydown", event => {
-            if(event.key === "Enter") event.target.blur();
-        });
-    });
+        const addButton = target.closest("[data-add-extra]");
+        if (addButton) {
+            const dayKey = addButton.getAttribute("data-day");
+            const field = addButton.getAttribute("data-field");
+            const input = container.querySelector(`input[data-extra-input="true"][data-day="${CSS.escape(dayKey)}"][data-field="${CSS.escape(field)}"]`);
+            if (input) addExtra(dayKey, field, input);
+            return;
+        }
 
-    const paceButton = $("mp-pace-toggle");
-    const paceDrawer = $("mp-pace-drawer");
-    if(paceButton && paceDrawer){
-        paceButton.addEventListener("click", () => paceDrawer.classList.toggle("open"));
-    }
+        const removeButton = target.closest("[data-remove-extra]");
+        if (removeButton) {
+            const dayKey = removeButton.getAttribute("data-day");
+            const field = removeButton.getAttribute("data-field");
+            const index = Number(removeButton.getAttribute("data-index"));
+            removeExtra(dayKey, field, index);
+            return;
+        }
 
-    const resetWeekButton = $("mp-reset-week-btn");
-    if(resetWeekButton){
-        resetWeekButton.addEventListener("click", () => {
-            if(overrides[selectedWeek]){
-                if(confirm("Reset this week's mileage/workout edits back to the default plan?")){
-                    delete overrides[selectedWeek];
-                    saveOverrides();
-                    renderDetail();
-                    renderChart();
-                    updateStats();
-                }
-            } else {
-                alert("No edits to reset for this week.");
+        const saveNotesButton = target.closest("[data-save-notes]");
+        if (saveNotesButton) {
+            const dayKey = saveNotesButton.getAttribute("data-day");
+            const textarea = container.querySelector(`textarea[data-notes-input="true"][data-day="${CSS.escape(dayKey)}"]`);
+            if (textarea) saveNotes(dayKey, textarea);
+            return;
+        }
+
+        if (target.closest("#mp-pace-toggle")) {
+            $("mp-pace-drawer")?.classList.toggle("open");
+            return;
+        }
+
+        if (target.closest("#mp-reset-week-btn")) {
+            if (overrides[selectedWeek] && confirm("Reset this week's mileage/workout edits back to the default plan?")) {
+                delete overrides[selectedWeek];
+                saveOverrides();
+                renderDetail();
+                renderChart();
+                updateStats();
             }
-        });
-    }
+            return;
+        }
 
-    const resetButton = $("mp-reset-btn");
-    if(resetButton){
-        resetButton.addEventListener("click", () => {
-            if(confirm("Reset all logged progress? This can't be undone.")){
+        if (target.closest("#mp-reset-btn")) {
+            if (confirm("Reset all logged progress? This can't be undone.")) {
                 progress = {};
                 saveProgress();
                 renderDetail();
@@ -453,74 +721,77 @@ function attachDetailEvents(){
                 renderChart();
                 updateStats();
             }
-        });
-    }
-}
-
-function ensureCohesionStyles(){
-    if(document.getElementById("mp-cohesion-inline-styles")) return;
-
-    const style = document.createElement("style");
-    style.id = "mp-cohesion-inline-styles";
-    style.textContent = `
-        .mp-day-expand-btn{
-            appearance:none;
-            border:0;
-            background:transparent;
-            color:var(--text-light,#9aa8c7);
-            cursor:pointer;
-            font-size:.9rem;
-            padding:8px;
-            border-radius:8px;
         }
-        .mp-day-expand-btn:hover{color:var(--primary-light,#60a5fa);background:rgba(59,130,246,.08);}
-        .mp-day-dropdown{display:none;margin:-4px 0 8px 0;padding:0 18px 16px 18px;}
-        .mp-day-dropdown.open{display:block;}
-        .mp-day-dropdown-inner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:14px;border-radius:16px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);}
-        .mp-extra-group{padding:12px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);}
-        .mp-extra-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--primary-light,#60a5fa);margin-bottom:7px;}
-        .mp-extras-body{color:var(--text-light,#9aa8c7);font-size:.84rem;line-height:1.55;}
-        .mp-extra-item{margin-top:4px;}
-        .mp-extra-item:first-child{margin-top:0;}
-        .mp-empty-extra{opacity:.6;font-style:italic;}
-        .mp-extra-link{display:inline-block;margin-top:7px;color:var(--primary-light,#60a5fa);font-weight:700;text-decoration:none;}
-        .mp-extra-link:hover{text-decoration:underline;}
-        .mp-day-today .mp-day-row{box-shadow:inset 3px 0 0 var(--primary,#3b82f6);}
-        @media(max-width:800px){.mp-day-dropdown-inner{grid-template-columns:1fr;}.mp-day-row{grid-template-columns:30px 45px 1fr 65px 95px 85px 35px;gap:8px;padding:18px 12px;}}
-    `;
-    document.head.appendChild(style);
+    });
+
+    container.addEventListener("keydown", (event) => {
+        const input = event.target;
+        if (input.matches("[data-extra-input]")) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                const button = container.querySelector(
+                    `[data-add-extra="true"][data-day="${CSS.escape(input.getAttribute("data-day"))}"][data-field="${CSS.escape(input.getAttribute("data-field"))}"]`
+                );
+                button?.click();
+            }
+        }
+    });
+
+    container.addEventListener("change", (event) => {
+        const input = event.target;
+
+        if (input.matches(".mp-day-session-input, .mp-day-miles-input")) {
+            const dayKey = input.getAttribute("data-day");
+            const field = input.getAttribute("data-field");
+            let value = input.value;
+
+            if (field === "miles") {
+                value = Number(value);
+                if (Number.isNaN(value) || value < 0) value = 0;
+            } else {
+                value = value.trim();
+            }
+
+            setDayField(dayKey, field, value);
+            renderDetail();
+            renderChart();
+            updateStats();
+        }
+    });
 }
 
-function renderChart(){
+/* ==========================================
+   Chart
+========================================== */
+function renderChart() {
     const svg = $("mp-chart-svg");
-    if(!svg) return;
+    if (!svg) return;
 
     const width = 900;
     const height = 120;
-    const values = WEEKS.map((_, index) => getAdjustedWeekMileageSafe(index + 1));
-    const maxMiles = Math.max(...values, 1);
+    const milesList = WEEKS.map((_, index) => Number(getAdjustedWeekMileage(index + 1, overrides) || 0));
+    const maxMiles = Math.max(1, ...milesList);
 
-    let html = "";
-    WEEKS.forEach((week, index) => {
+    const html = WEEKS.map((week, index) => {
         const weekNumber = index + 1;
-        const miles = values[index];
+        const miles = milesList[index];
         const barHeight = (miles / maxMiles) * 80;
         const x = 40 + index * 52;
         const y = 100 - barHeight;
-        const color = (PHASES[week.phase] || {}).color || "#3b82f6";
+        const color = (PHASES[week.phase] || {}).color || "#4EA8FF";
 
-        html += `
-            <g class="mp-bar" data-week="${weekNumber}">
+        return `
+            <g class="mp-bar" data-week="${weekNumber}" style="cursor:pointer">
                 <rect x="${x}" y="${y}" width="35" height="${barHeight}" rx="4" fill="${color}"></rect>
-                <text x="${x+17}" y="115" text-anchor="middle" font-size="10">${weekNumber}</text>
+                <text x="${x + 17}" y="115" text-anchor="middle" font-size="10">${weekNumber}</text>
             </g>
         `;
-    });
+    }).join("");
 
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = html;
 
-    svg.querySelectorAll(".mp-bar").forEach(bar => {
+    svg.querySelectorAll(".mp-bar").forEach((bar) => {
         bar.addEventListener("click", () => {
             selectedWeek = Number(bar.dataset.week);
             renderDetail();
@@ -529,28 +800,42 @@ function renderChart(){
     });
 }
 
-function renderAll(){
-    ensureCohesionStyles();
-    updateStats();
-    renderChart();
+/* ==========================================
+   Initialization
+========================================== */
+function determineCurrentWeek() {
+    const now = new Date();
+    for (let n = 1; n <= WEEKS.length; n++) {
+        if (now >= weekStart(n) && now <= weekEnd(n)) return n;
+    }
+    if (now > weekEnd(WEEKS.length)) return WEEKS.length;
+    return 1;
+}
+
+function refreshFromStorage() {
+    progress = loadProgress();
+    overrides = loadOverrides();
     renderWeekList();
+    renderChart();
     renderDetail();
+    updateStats();
 }
 
-function boot(){
-    selectedWeek = getCurrentWeek();
-    renderAll();
-
-    import("./cloudSync.js")
-        .then(({ initCloudSync }) => initCloudSync())
-        .then(() => {
-            progress = loadProgress();
-            overrides = loadOverrides();
-            renderAll();
-        })
-        .catch(error => {
-            console.warn("EddieOS Marathon cloud sync unavailable:", error);
-        });
+function init() {
+    selectedWeek = determineCurrentWeek();
+    refreshFromStorage();
 }
 
-boot();
+// Render immediately from localStorage so the Marathon page is usable
+// even if Firebase authentication/cloud pull is slow.
+init();
+
+// Then hydrate with the cloud copy, using the site's existing sync system.
+import("./cloudSync.js")
+    .then(({ initCloudSync }) => initCloudSync())
+    .then(() => {
+        refreshFromStorage();
+    })
+    .catch((error) => {
+        console.warn("Cloud sync initialization skipped:", error);
+    });
