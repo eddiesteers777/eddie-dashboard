@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Planner</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+/* Colors/fonts come from css/style.css (loaded first on every
+   page) — only Planner-specific layout lives here now. */
+
+*{
+    box-sizing:border-box;
+}
+
+.wrap{
+    max-width:1400px;
+    margin:36px auto 60px;
+    padding:0 24px;
+}
+
+h1{
+    margin:0;
+    font-family:var(--font-display);
+    font-size:54px;
+    letter-spacing:.04em;
+}
+
+p{
+    margin:6px 0 24px;
+    color:var(--muted);
+    font-size:15px;
+}
+
+.months{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:24px;
+}
+button{
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    color:var(--text);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+
+button:hover{
+    background:var(--primary);
+    color:#0F172A;
+    transform:translateY(-2px);
+}
+
+h2{
+    margin:0 0 18px;
+    font-family:var(--font-display);
+    font-size:34px;
+    letter-spacing:.04em;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+
+th{
+    background:var(--surface-light);
+    color:var(--text);
+    padding:14px 8px;
+    border:1px solid var(--border);
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+
+td{
+    width:14.285%;
+    height:110px;
+    vertical-align:top;
+    padding:8px;
+    border:1px solid var(--border);
+}
+
+td b{
+    display:block;
+    margin-bottom:6px;
+    font-size:15px;
+}
+
+.event{
+    display:block;
+    margin-top:5px;
+    padding:4px 6px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.3;
+}
+
+.event.school{
+    background:var(--primary);
+    color:#0F172A;
+}
+
+.event.ed550{
+    background:var(--green);
+    color:#0F172A;
+}
+
+.event.math501{
+    background:var(--orange);
+    color:#0F172A;
+}
+
+.event.deadline{
+    background:var(--red);
+    color:#FFFFFF;
+}
+
+.legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    margin:-6px 0 22px;
+    font-size:13px;
+    color:var(--muted);
+}
+
+.legend span{
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+
+.legend i{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    display:inline-block;
+}
+
+.legend i.school{ background:var(--primary); }
+.legend i.ed550{ background:var(--green); }
+.legend i.math501{ background:var(--orange); }
+.legend i.deadline{ background:var(--red); }
+@media(max-width:900px){
+
+    .months{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+@media(max-width:650px){
+
+    .months{
+        grid-template-columns:1fr;
+    }
+
+    th,
+    td{
+        height:80px;
+        font-size:12px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="wrap">
+
+<h1>2026–2027 Planner</h1>
+
+<p>Shelby County district calendar, plus ED 450/550 (Instructional Strategies II) and MATH 501 (Mathematics for Teachers) key dates.</p>
+
+<div class="legend">
+    <span><i class="school"></i> Shelby County District</span>
+    <span><i class="ed550"></i> ED 450/550</span>
+    <span><i class="math501"></i> MATH 501</span>
+    <span><i class="deadline"></i> Deadline / Exam</span>
+</div>
+
+<div class="months" id="m"></div>
+
+<div id="cal"></div>
+
+</div>
+
+<script src="js/loadHeader.js"></script>
+
+<script>
+
+const names=[
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+];
+
+const events={
+    7:{
+        6:"PD",
+        7:"PD",
+        10:"Teacher Institute",
+        12:"Teacher Workday",
+        13:"First Day of School"
+    },
+
+    8:{
+        7:"Labor Day"
+    },
+
+    9:{
+        9:"End of 1st Nine Weeks",
+        12:"Fall Break",
+        13:"Fall Break",
+        16:"Report Cards"
+    },
+
+    10:{
+        11:"Veterans Day",
+        23:"Thanksgiving Break",
+        24:"Thanksgiving Break",
+        25:"Thanksgiving Break",
+        26:"Thanksgiving Break",
+        27:"Thanksgiving Break"
+    },
+
+    11:{
+        18:"End of 2nd Nine Weeks / Early Dismissal",
+        21:"Winter Break",
+        22:"Winter Break",
+        23:"Winter Break",
+        24:"Winter Break",
+        25:"Winter Break",
+        28:"Winter Break",
+        29:"Winter Break",
+        30:"Winter Break",
+        31:"Winter Break"
+    },
+
+    0:{
+        1:"Winter Break",
+        4:"Teacher Workday",
+        5:"2nd Semester Begins",
+        8:"Report Cards",
+        18:"MLK Day"
+    },
+
+    1:{
+        15:"Presidents Day / Teacher Workday"
+    },
+
+    2:{
+        5:"End of 3rd Nine Weeks",
+        8:"Planning Day",
+        12:"Report Cards",
+        22:"Spring Break",
+        23:"Spring Break",
+        24:"Spring Break",
+        25:"Spring Break",
+        26:"Spring Break"
+    },
+     3:{
+        23:"PD / Planning"
+    },
+
+    4:{
+        27:"End of 4th Nine Weeks / Early Dismissal",
+        28:"Teacher Workday",
+        31:"Memorial Day"
+    }
+
+};
+
+// ED 450/550 (Instructional Strategies II) and MATH 501 (Mathematics
+// for Teachers) — every date below is checked against each syllabus's
+// own week-by-week table / important-dates list for Fall 2026, and
+// each day-of-week was verified computationally (not eyeballed) against
+// the actual 2026 calendar before being added here.
+const courseEvents={
+
+    7:{ // August
+        18:[{c:"ed550",t:"ED550: No Class (Intro Week)"}],
+        24:[{c:"ed550",t:"ED550: Syllabus Quiz + Intro Due"}],
+        25:[
+            {c:"ed550",t:"ED550: Class 5\u20138pm"},
+            {c:"deadline",t:"MATH501: Drop Deadline (no W)"}
+        ],
+        31:[{c:"ed550",t:"ED550: Ch1 Study Guide + How I Teach Chart Due"}]
+    },
+
+    8:{ // September
+        1:[{c:"ed550",t:"ED550: Class 5\u20138pm"}],
+        7:[{c:"ed550",t:"ED550: Ch2 Study Guide Due"}],
+        8:[{c:"ed550",t:"ED550: No Class"}],
+        14:[{c:"ed550",t:"ED550: Ch3 SG + How I Teach Chart Due"}],
+        15:[{c:"ed550",t:"ED550: Class 5\u20138pm"}],
+        21:[{c:"ed550",t:"ED550: Ch4 Study Guide Due"}],
+        22:[{c:"ed550",t:"ED550: No Class"}],
+        28:[{c:"ed550",t:"ED550: Ch5 SG + Lesson Plan #1 Due"}],
+        29:[{c:"ed550",t:"ED550: Class 5\u20138pm"}]
+    },
+
+    9:{ // October
+        5:[{c:"ed550",t:"ED550: Ch6 Study Guide Due"}],
+        6:[{c:"ed550",t:"ED550: No Class"}],
+        8:[{c:"math501",t:"MATH501: Founder's Day (No Class)"}],
+        12:[{c:"ed550",t:"ED550: Ch7 SG + Lesson Plan #2 Due"}],
+        13:[{c:"ed550",t:"ED550: Class 5\u20138pm"}],
+        16:[{c:"deadline",t:"MATH501: Midterm Exam"}],
+        19:[{c:"ed550",t:"ED550: Ch8 Study Guide Due"}],
+        20:[{c:"ed550",t:"ED550: Class 5\u20138pm (Teacher Interview)"}],
+        26:[
+            {c:"ed550",t:"ED550: Ch9 Study Guide Due"},
+            {c:"deadline",t:"MATH501: Withdraw Deadline"}
+        ],
+        27:[
+            {c:"ed550",t:"ED550: No Class (Lesson Plan #3)"},
+            {c:"deadline",t:"ED550: WITHDRAW DEADLINE"}
+        ]
+    },
+
+    10:{ // November
+        2:[{c:"ed550",t:"ED550: Ch10 SG + Lesson Plan #3 Due"}],
+        3:[{c:"ed550",t:"ED550: No Class (3-Day Learning Segment)"}],
+        9:[{c:"ed550",t:"ED550: Assessment of Prof. Practices Due"}],
+        10:[{c:"ed550",t:"ED550: No Class (3-Day Learning Segment)"}],
+        16:[{c:"ed550",t:"ED550: Graduate Presentation Slides Due"}],
+        17:[{c:"ed550",t:"ED550: Presentations Begin"}],
+        23:[{c:"ed550",t:"ED550: Final 3-Day LS Plans + Day 1 Video Due"}],
+        24:[{c:"ed550",t:"ED550: Presentations"}]
+    },
+
+    11:{ // December
+        1:[{c:"ed550",t:"ED550: Presentations (No Final Exam)"}],
+        4:[
+            {c:"ed550",t:"ED550: Disposition Conference Due"},
+            {c:"math501",t:"MATH501: Last Day of Term"}
+        ],
+        9:[{c:"deadline",t:"MATH501: Final Exam"}]
+    }
+
+};
+
+const holder=document.getElementById('m');
+
+names.forEach((name,index)=>{
+
+    const button=document.createElement('button');
+
+    button.textContent=name;
+
+    button.onclick=()=>draw(index);
+
+    holder.appendChild(button);
+
+});
+
+function cell(month,day){
+
+    let inner='';
+
+    const schoolEvent=events[month] && events[month][day];
+
+    if(schoolEvent){
+        inner+=`<span class="event school">${schoolEvent}</span>`;
+    }
+
+    const courseDay=courseEvents[month] && courseEvents[month][day];
+
+    if(courseDay){
+        courseDay.forEach(ev=>{
+            inner+=`<span class="event ${ev.c}">${ev.t}</span>`;
+        });
+    }
+
+    return `
+        <td>
+            <b>${day}</b>
+            ${inner}
+        </td>
+    `;
+
+}
+
+function draw(month){
+    const year=month>=6 ? 2026 : 2027;
+
+    const firstDay=new Date(year,month,1).getDay();
+
+    const daysInMonth=new Date(year,month+1,0).getDate();
+
+    let html=`
+        <h2>${names[month]} ${year}</h2>
+
+        <table>
+
+        <tr>
+            ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+                .map(day=>`<th>${day}</th>`)
+                .join('')}
+        </tr>
+
+        <tr>
+    `;
+
+    for(let i=0;i<firstDay;i++){
+
+        html+='<td></td>';
+
+    }
+
+    let day=1;
+
+    for(let i=firstDay;i<7;i++){
+
+        html+=cell(month,day++);
+
+    }
+
+    html+='</tr>';
+
+    while(day<=daysInMonth){
+
+        html+='<tr>';
+
+        for(let i=0;i<7;i++){
+
+            html+=day<=daysInMonth
+                ? cell(month,day++)
+                : '<td></td>';
+
+        }
+
+        html+='</tr>';
+
+    }
+
+    html+='</table>';
+
+    document.getElementById('cal').innerHTML=html;
+
+}
+
+draw(7);
+
+</script>
+
+</body>
+
+</html>
