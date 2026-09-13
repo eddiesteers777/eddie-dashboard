@@ -1,202 +1,284 @@
-// ==============================
-// EddieOS Settings
-// ==============================
+<!DOCTYPE html>
+<html lang="en">
 
-import { auth, db } from "./firebase.js";
+<head>
 
-import {
-    onAuthStateChanged,
-    signOut
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-import {
-    doc,
-    getDoc,
-    setDoc
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    <title>EddieOS | Settings</title>
 
-// =====================================
-// DOM Elements
-// =====================================
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/settings.css">
 
-const userName = document.getElementById("userName");
-const userEmail = document.getElementById("userEmail");
+</head>
 
-const displayName = document.getElementById("displayName");
-const displayEmail = document.getElementById("displayEmail");
+<body>
 
-const avatar = document.querySelector(".avatar");
+    <!-- Navigation -->
 
-const logoutBtn = document.getElementById("logoutBtn");
+    <nav class="navbar">
 
-const units = document.getElementById("units");
-const weekStart = document.getElementById("weekStart");
+        <div class="logo">
+            EddieOS
+        </div>
 
-const goalTime = document.querySelector('input[type="text"]');
-const weeklyMileage = document.querySelector('input[type="number"]');
+        <div class="nav-links">
+            <a href="index.html">Dashboard</a>
+            <a href="marathon.html">Marathon</a>
+            <a href="planner.html">Planner</a>
+            <a href="75day.html">75 Day</a>
+            <a href="analytics.html">Analytics</a>
+            <a class="active" href="settings.html">Settings</a>
+        </div>
 
-const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    </nav>
 
-// =====================================
-// Load User
-// =====================================
+    <main class="settings-page">
 
-onAuthStateChanged(auth, async (user) => {
+        <!-- Header -->
 
-    if (!user) {
-        window.location.href = "index.html";
-        return;
-    }
+        <section class="hero">
 
-    // User Info
+            <h1>Settings</h1>
 
-    userName.textContent = user.displayName || "Runner";
-    userEmail.textContent = user.email || "";
+            <p>
+                Manage your EddieOS account, training preferences, and connections.
+            </p>
 
-    displayName.textContent = user.displayName || "Runner";
-    displayEmail.textContent = user.email || "";
+        </section>
 
-    // Profile Picture
+        <!-- Profile -->
 
-    if (user.photoURL) {
+        <section class="profile-card">
 
-        avatar.innerHTML = "";
+            <div class="profile-left">
 
-        avatar.style.backgroundImage = `url(${user.photoURL})`;
-        avatar.style.backgroundSize = "cover";
-        avatar.style.backgroundPosition = "center";
+                <div class="avatar">
+                    ES
+                </div>
 
-    }
+                <div>
 
-    // Load Saved Settings
+                    <h2 id="userName">Eddie Steers</h2>
 
-    try {
+                    <p id="userEmail">
+                        Loading...
+                    </p>
 
-        const settingsRef = doc(
-            db,
-            "users",
-            user.uid,
-            "settings",
-            "preferences"
-        );
+                </div>
 
-        const snapshot = await getDoc(settingsRef);
+            </div>
 
-        if (snapshot.exists()) {
+        </section>
 
-            const data = snapshot.data();
+        <!-- Settings Grid -->
 
-            units.value = data.units || "Miles";
-            weekStart.value = data.weekStart || "Sunday";
+        <section class="settings-grid">
 
-            goalTime.value = data.goalTime || "";
-            weeklyMileage.value = data.weeklyMileage || "";
+            <!-- Account -->
 
-            checkboxes[0].checked = data.aiEnabled ?? true;
-            checkboxes[1].checked = data.weeklyInsights ?? true;
-            checkboxes[2].checked = data.dailyRecommendations ?? false;
+            <div class="settings-card">
 
-        }
+                <h3>👤 Account</h3>
 
-    } catch (error) {
+                <div class="setting-row">
+                    <span>Name</span>
+                    <span id="displayName">Eddie Steers</span>
+                </div>
 
-        console.error("Error loading settings:", error);
+                <div class="setting-row">
+                    <span>Email</span>
+                    <span id="displayEmail">Loading...</span>
+                </div>
 
-    }
+                <button class="primary-btn" id="logoutBtn">
+                    Sign Out
+                </button>
 
-});
+            </div>
 
-// =====================================
-// Save Settings
-// =====================================
+            <!-- Connections -->
 
-async function saveSettings() {
+            <div class="settings-card">
 
-    const user = auth.currentUser;
+                <h3>🔗 Connections</h3>
 
-    if (!user) return;
+                <div class="connection">
 
-    try {
+                    <div>
 
-        await setDoc(
+                        <strong>COROS</strong>
 
-            doc(
-                db,
-                "users",
-                user.uid,
-                "settings",
-                "preferences"
-            ),
+                        <p>Coming Soon</p>
 
-            {
+                    </div>
 
-                units: units.value,
+                    <button disabled>Connect</button>
 
-                weekStart: weekStart.value,
+                </div>
 
-                goalTime: goalTime.value,
+                <div class="connection">
 
-                weeklyMileage: Number(weeklyMileage.value) || 0,
+                    <div>
 
-                aiEnabled: checkboxes[0].checked,
+                        <strong>Strava</strong>
 
-                weeklyInsights: checkboxes[1].checked,
+                        <p>Coming Soon</p>
 
-                dailyRecommendations: checkboxes[2].checked
+                    </div>
 
-            },
+                    <button disabled>Connect</button>
 
-            {
+                </div>
 
-                merge: true
+                <div class="connection">
 
-            }
+                    <div>
 
-        );
+                        <strong>Garmin</strong>
 
-        console.log("✅ Settings saved");
+                        <p>Future Support</p>
 
-    } catch (error) {
+                    </div>
 
-        console.error("Error saving settings:", error);
+                    <button disabled>Connect</button>
 
-    }
+                </div>
 
-}
+            </div>
 
-// =====================================
-// Event Listeners
-// =====================================
+            <!-- Running Preferences -->
 
-[
-    units,
-    weekStart,
-    goalTime,
-    weeklyMileage,
-    ...checkboxes
+            <div class="settings-card">
 
-].forEach(element => {
+                <h3>🏃 Running Preferences</h3>
 
-    element.addEventListener("change", saveSettings);
+                <div class="setting-row">
 
-});
+                    <span>Units</span>
 
-// =====================================
-// Logout
-// =====================================
+                    <select id="units">
 
-logoutBtn.addEventListener("click", async () => {
+                        <option>Miles</option>
 
-    try {
+                        <option>Kilometers</option>
 
-        await signOut(auth);
+                    </select>
 
-        window.location.href = "index.html";
+                </div>
 
-    } catch (error) {
+                <div class="setting-row">
 
-        console.error("Logout failed:", error);
+                    <span>First Day of Week</span>
 
-    }
+                    <select id="weekStart">
 
-});
+                        <option>Sunday</option>
+
+                        <option>Monday</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            <!-- Goals -->
+
+            <div class="settings-card">
+
+                <h3>🎯 Goals</h3>
+
+                <div class="setting-row">
+
+                    <span>Goal Marathon</span>
+
+                    <input
+                        type="text"
+                        placeholder="3:05:00">
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Weekly Mileage</span>
+
+                    <input
+                        type="number"
+                        placeholder="50">
+
+                </div>
+
+            </div>
+
+            <!-- AI Coach -->
+
+            <div class="settings-card">
+
+                <h3>🤖 AI Coach</h3>
+
+                <div class="setting-row">
+
+                    <span>Enable AI Coach</span>
+
+                    <input
+                        type="checkbox"
+                        checked>
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Weekly Insights</span>
+
+                    <input
+                        type="checkbox"
+                        checked>
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Daily Recommendations</span>
+
+                    <input
+                        type="checkbox">
+
+                </div>
+
+            </div>
+
+            <!-- About -->
+
+            <div class="settings-card">
+
+                <h3>ℹ️ About EddieOS</h3>
+
+                <div class="setting-row">
+
+                    <span>Version</span>
+
+                    <span>1.0 Beta</span>
+
+                </div>
+
+                <div class="setting-row">
+
+                    <span>Developer</span>
+
+                    <span>Eddie Steers</span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script type="module" src="js/settings.js"></script>
+
+</body>
+
+</html>
