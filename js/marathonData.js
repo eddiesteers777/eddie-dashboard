@@ -1,33 +1,26 @@
 /* ==========================================
    EddieOS Marathon Data
-   Source of truth for the 16-week plan.
 ========================================== */
 
-const START_DATE = new Date(
+export const START_DATE = new Date(
 
     "2026-07-20T00:00:00"
 
 );
 
-/*
-   NOTE: previously exported as 2026-11-07.
-   The actual race day used throughout the plan (Week 16's
-   Sunday workout, and weekEnd(16) itself) is 2026-11-08.
-   Corrected here so this constant matches the real plan.
-*/
-const RACE_DATE = new Date(
+export const RACE_DATE = new Date(
 
-    "2026-11-08T00:00:00"
+    "2026-11-07T00:00:00"
 
 );
 
-const DAY_MS = 86400000;
+export const DAY_MS = 86400000;
 
 /* ==========================================
    Helper Functions
 ========================================== */
 
-function formatDate(date){
+export function formatDate(date){
 
     return date.toLocaleDateString(
 
@@ -45,7 +38,7 @@ function formatDate(date){
 
 }
 
-function weekStart(week){
+export function weekStart(week){
 
     return new Date(
 
@@ -67,7 +60,7 @@ function weekStart(week){
 
 }
 
-function weekEnd(week){
+export function weekEnd(week){
 
     return new Date(
 
@@ -85,7 +78,7 @@ function weekEnd(week){
 
 }
 
-function weekRange(week){
+export function weekRange(week){
 
     return `${formatDate(
 
@@ -102,7 +95,7 @@ function weekRange(week){
    Training Phases
 ========================================== */
 
-const PHASES = {
+export const PHASES = {
 
     rebuild:{
 
@@ -150,7 +143,7 @@ const PHASES = {
    Days
 ========================================== */
 
-const DAYS = [
+export const DAYS = [
 
     "Mon",
 
@@ -168,33 +161,29 @@ const DAYS = [
 
 ];
 
-/* Matches the live page's timing labels (source of truth) */
-const DAY_TIMES = [
+export const DAY_TIMES = [
 
     "Before school",
 
-    "Afternoon/evening",
+    "Afternoon / Evening",
 
     "Before school",
 
-    "Afternoon/evening",
+    "Afternoon / Evening",
 
     "Before school",
 
-    "Morning (unrushed)",
+    "Morning",
 
-    "Morning (flexible)"
+    "Morning"
 
 ];
 
 /* ==========================================
    Workout Builder
-   V2 adds: description, duration, and the four
-   dynamic/editable extra categories. All default
-   empty — no data is invented for any day.
 ========================================== */
 
-function workout(
+export function workout(
 
     session,
 
@@ -208,38 +197,31 @@ function workout(
 
     return {
 
-        session,
+    session,
 
-        miles,
+    miles,
 
-        pace,
+    pace,
 
-        race,
+    race,
 
-        description:"",
+    strength: [],
 
-        duration:"",
+    crossTraining: [],
 
-        strength:[],
+    mobility: [],
 
-        crossTraining:[],
+    recovery: [],
 
-        mobility:[],
+    notes: ""
 
-        recovery:[],
-
-        notes:""
-
-    };
-
+};
 }
 /* ==========================================
-   Cross Training Reference Templates
-   (suggestion library only — not auto-applied
-   to any day; days start empty per above)
+   Cross Training Templates
 ========================================== */
 
-const CROSS_TRAINING = {
+export const CROSS_TRAINING = {
 
     strength: {
 
@@ -306,13 +288,7 @@ const CROSS_TRAINING = {
     }
 
 };
-
-/* ==========================================
-   16-Week Plan
-   Content unchanged from the live page — this
-   IS the protected training plan.
-========================================== */
-const WEEKS = [
+ export const WEEKS = [
     { phase: "rebuild",
       days: [workout("Recovery jog", 3, "Recovery"), workout("Hill repeats: 8x45s @ strong effort", 5, "Hill effort"),
              workout("Easy aerobic", 5, "Easy"), workout("6mi, last 2mi @ Steady", 6, "Steady"),
@@ -495,12 +471,12 @@ const WEEKS = [
       heat: "Early-November race morning should run cool - dress in layers you can shed.",
       strength: "None this week - full rest for the legs.",
       race: { name: "Indianapolis Monumental Marathon", date: "Sun, Nov 8, 2026" } },
-];
+  ];
 /* ==========================================
    Pace Reference
 ========================================== */
 
-const PACES = [
+export const PACES = [
 
     ["Recovery", "8:45–9:30 /mi"],
 
@@ -528,13 +504,13 @@ const PACES = [
    Week Helpers
 ========================================== */
 
-function getWeek(weekNumber){
+export function getWeek(weekNumber){
 
     return WEEKS[weekNumber-1];
 
 }
 
-function getWeekDays(weekNumber){
+export function getWeekDays(weekNumber){
 
     return getWeek(
 
@@ -544,7 +520,7 @@ function getWeekDays(weekNumber){
 
 }
 
-function getWeekMileage(weekNumber){
+export function getWeekMileage(weekNumber){
 
     return getWeekDays(
 
@@ -564,7 +540,7 @@ function getWeekMileage(weekNumber){
 
 }
 
-function getPeakMileage(){
+export function getPeakMileage(){
 
     return Math.max(
 
@@ -584,7 +560,7 @@ function getPeakMileage(){
 ========================================== */
 
 
-function getCycleMileage(){
+export function getCycleMileage(){
 
     let total = 0;
 
@@ -608,7 +584,7 @@ function getCycleMileage(){
 
 
 
-function getCurrentWeek(){
+export function getCurrentWeek(){
 
     const today = new Date();
 
@@ -653,13 +629,13 @@ function getCurrentWeek(){
 
 
 
-function getRaceCountdown(){
+export function getRaceCountdown(){
 
     const today = new Date();
 
     today.setHours(0,0,0,0);
 
-    const race = new Date(weekEnd(WEEKS.length));
+    const race = new Date(RACE_DATE);
 
     race.setHours(0,0,0,0);
 
@@ -679,7 +655,7 @@ function getRaceCountdown(){
 
 
 
-function getLongestRun(){
+export function getLongestRun(){
 
     let longest = 0;
 
@@ -723,7 +699,7 @@ function getLongestRun(){
 
 
 
-function getLongRuns(){
+export function getLongRuns(){
 
     const runs = [];
 
@@ -779,7 +755,7 @@ function getLongRuns(){
 
 
 
-function getTrainingPhase(){
+export function getTrainingPhase(){
 
     const week = getCurrentWeek();
 
@@ -792,8 +768,42 @@ function getTrainingPhase(){
     return PHASES[phase]?.label || "";
 
 }
+/* ==========================================
+   Progress Tracking
+========================================== */
 
-function loadOverrides(){
+
+export function loadProgress(){
+
+    try{
+
+        return JSON.parse(
+
+            localStorage.getItem(
+
+                "training-progress"
+
+            )
+
+            ||
+
+            "{}"
+
+        );
+
+    }
+
+    catch(error){
+
+        return {};
+
+    }
+
+}
+
+
+
+export function loadOverrides(){
 
     try{
 
@@ -821,7 +831,13 @@ function loadOverrides(){
 
 }
 
-function saveOverrides(overrides){
+
+
+// Shared writer for training-overrides. Marathon's own in-page
+// edits keep using their local save function (unchanged), but
+// other pages — Cross Training — write through this one so
+// there's a single implementation of "how overrides get saved."
+export function saveOverrides(overrides){
 
     localStorage.setItem(
 
@@ -830,6 +846,12 @@ function saveOverrides(overrides){
         JSON.stringify(overrides)
 
     );
+
+    // Cross Training (and anything else using this shared writer) should
+    // sync across devices the same way Marathon's own edits do.
+    import("./cloudSync.js")
+        .then(({ pushToCloud }) => pushToCloud())
+        .catch(() => {});
 
 }
 
@@ -840,14 +862,14 @@ function saveOverrides(overrides){
 ========================================== */
 
 
-function getCompletedWorkouts(progress){
+export function getCompletedWorkouts(){
 
-    const source = progress || loadProgress();
+    const progress = loadProgress();
 
     let completed = 0;
 
 
-    Object.values(source)
+    Object.values(progress)
 
         .forEach(
 
@@ -872,11 +894,11 @@ function getCompletedWorkouts(progress){
 
 
 
-function getCompletionPercent(progress){
+export function getCompletionPercent(){
 
     const completed =
 
-        getCompletedWorkouts(progress);
+        getCompletedWorkouts();
 
 
     const total =
@@ -900,14 +922,10 @@ function getCompletionPercent(progress){
 
 /* ==========================================
    Override Handling
-   Merges saved overrides (progress edits) onto
-   the base plan for a given week. Extended for
-   V2 to also merge pace/description/duration/notes
-   and the four dynamic extras arrays.
 ========================================== */
 
 
-function getAdjustedWeekDays(weekNumber, overridesArg){
+export function getAdjustedWeekDays(weekNumber){
 
     const week =
 
@@ -920,7 +938,7 @@ function getAdjustedWeekDays(weekNumber, overridesArg){
 
     const overrides =
 
-        overridesArg || loadOverrides();
+        loadOverrides();
 
 
 
@@ -933,13 +951,17 @@ function getAdjustedWeekDays(weekNumber, overridesArg){
         {};
 
 
-    const FIELDS = [
 
-        "session","miles","pace","description",
+    // Fields that a training-overrides entry for a given day can
+    // supply. Cross Training, Mobility, Recovery, and Notes are
+    // written here by the Cross Training page (and, for session/miles,
+    // by edits made directly on this page) — this is the single
+    // merge point so nothing needs a second data source.
+    const MERGE_FIELDS = [
 
-        "duration","strength","crossTraining",
+        "session", "miles", "pace", "description", "duration",
 
-        "mobility","recovery","notes"
+        "strength", "crossTraining", "mobility", "recovery", "notes"
 
     ];
 
@@ -965,7 +987,7 @@ function getAdjustedWeekDays(weekNumber, overridesArg){
 
             const merged = {};
 
-            FIELDS.forEach(field=>{
+            MERGE_FIELDS.forEach(field=>{
 
                 merged[field] =
 
@@ -1005,13 +1027,11 @@ function getAdjustedWeekDays(weekNumber, overridesArg){
 
 
 
-function getAdjustedWeekMileage(weekNumber, overridesArg){
+export function getAdjustedWeekMileage(weekNumber){
 
     return getAdjustedWeekDays(
 
-        weekNumber,
-
-        overridesArg
+        weekNumber
 
     )
 
@@ -1033,7 +1053,7 @@ function getAdjustedWeekMileage(weekNumber, overridesArg){
 ========================================== */
 
 
-function getWorkoutBreakdown(){
+export function getWorkoutBreakdown(){
 
     const breakdown = {
 
@@ -1146,7 +1166,7 @@ function getWorkoutBreakdown(){
 ========================================== */
 
 
-function getUpcomingWorkouts(){
+export function getUpcomingWorkouts(){
 
     const today = new Date();
 
@@ -1216,7 +1236,7 @@ function getUpcomingWorkouts(){
 ========================================== */
 
 
-function getNextLongRun(){
+export function getNextLongRun(){
 
     const workouts =
 
@@ -1242,33 +1262,34 @@ function getNextLongRun(){
     null;
 
 }
+
+
+
 /* ==========================================
-   Public Exports
+   Marathon Data Export Check
 ========================================== */
 
-export {
+
+export default {
+
+    START_DATE,
+
+    RACE_DATE,
+
     WEEKS,
+
     PHASES,
+
     PACES,
-    CROSS_TRAINING,
-    DAYS,
-    DAY_TIMES,
-    weekStart,
-    weekEnd,
-    weekRange,
-    getWeekMileage,
-    getAdjustedWeekDays,
-    getAdjustedWeekMileage,
+
     getCurrentWeek,
-    getRaceCountdown,
+
+    getCycleMileage,
+
+    getPeakMileage,
+
     getLongestRun,
-    getLongRuns,
-    getTrainingPhase,
-    loadProgress,
-    loadOverrides,
-    getCompletedWorkouts,
-    getCompletionPercent,
-    getWorkoutBreakdown,
-    getUpcomingWorkouts,
-    getNextLongRun
+
+    getCompletionPercent
+
 };
