@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Check | EddieOS</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+.sc-wrap{
+    max-width:1000px;
+    margin:40px auto 80px;
+    padding:0 24px;
+}
+
+.sc-header{
+    margin-bottom:28px;
+}
+
+.sc-header h1{
+    font-size:2.4rem;
+    font-weight:900;
+    margin-bottom:10px;
+}
+
+.sc-header p{
+    color:var(--text-secondary);
+    max-width:680px;
+    line-height:1.7;
+}
+
+.sc-note{
+    margin-top:14px;
+    padding:14px 18px;
+    border-radius:14px;
+    background:rgba(78,168,255,.08);
+    border:1px solid rgba(78,168,255,.20);
+    color:var(--text-secondary);
+    font-size:.9rem;
+    line-height:1.6;
+}
+
+.sc-run-btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    padding:14px 28px;
+    margin:22px 0 10px;
+    border-radius:14px;
+    font-size:1rem;
+    font-weight:700;
+    color:white;
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    box-shadow:0 12px 30px rgba(78,168,255,.30);
+    transition:.2s;
+}
+
+.sc-run-btn:hover{
+    transform:translateY(-2px);
+}
+
+.sc-run-btn:disabled{
+    opacity:.6;
+    cursor:default;
+    transform:none;
+}
+
+.sc-summary{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin:20px 0 30px;
+}
+
+.sc-summary-chip{
+    padding:12px 20px;
+    border-radius:14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    font-size:.9rem;
+    font-weight:700;
+}
+
+.sc-summary-chip.pass{ color:var(--green); }
+.sc-summary-chip.warn{ color:var(--yellow); }
+.sc-summary-chip.fail{ color:var(--red); }
+
+.sc-category{
+    margin-bottom:26px;
+    border-radius:20px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    overflow:hidden;
+}
+
+.sc-category-head{
+    padding:18px 22px;
+    font-weight:800;
+    font-size:1.1rem;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.sc-category-head small{
+    color:var(--muted);
+    font-weight:600;
+    font-size:.8rem;
+}
+
+.sc-row{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    padding:14px 22px;
+    border-bottom:1px solid var(--border);
+    font-size:.92rem;
+}
+
+.sc-row:last-child{
+    border-bottom:none;
+}
+
+.sc-icon{
+    flex-shrink:0;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.8rem;
+    font-weight:800;
+    margin-top:1px;
+}
+
+.sc-icon.pass{ background:rgba(34,197,94,.15); color:var(--green); }
+.sc-icon.warn{ background:rgba(250,204,21,.15); color:var(--yellow); }
+.sc-icon.fail{ background:rgba(239,68,68,.15); color:var(--red); }
+
+.sc-row-body code{
+    background:rgba(255,255,255,.06);
+    padding:2px 6px;
+    border-radius:6px;
+    font-family:var(--font-mono);
+    font-size:.85em;
+}
+
+.sc-row-msg{
+    color:var(--text-secondary);
+    margin-top:3px;
+    line-height:1.5;
+}
+
+.sc-empty{
+    padding:20px 22px;
+    color:var(--muted);
+}
+
+.sc-loading{
+    color:var(--muted);
+    padding:20px 0;
+}
+
+</style>
+
+</head>
+<body>
+
+<div id="header"></div>
+
+<div class="sc-wrap">
+
+    <div class="sc-header">
+
+        <h1>Site Check</h1>
+
+        <p>
+            Runs the same checks I've been doing by hand throughout this project — real syntax parsing,
+            import/export cross-referencing, broken DOM references, dead nav links, orphaned files, and
+            cloud-sync coverage — directly in your browser against the live files on this domain.
+        </p>
+
+        <div class="sc-note">
+            Run this <strong>after pushing to GitHub Pages</strong>, not by double-clicking the file on your
+            computer — browsers block a local file from fetching its sibling files for security reasons, so
+            this only works once it's actually being served from a real address (your GitHub Pages URL, or
+            a local dev server). The file list below is hand-maintained near the top of this file's script —
+            add new pages/files there if you create them, or this can't see them.
+        </div>
+
+    </div>
+
+    <button class="sc-run-btn" id="runBtn">Run Full Check</button>
+
+    <div id="summary"></div>
+
+    <div id="results"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/8.11.3/acorn.min.js"></script>
+
+<script src="js/loadHeader.js"></script>
+
+<script>
+(function(){
+
+    // ==========================================
+    // Site manifest — update when you add pages/files.
+    // (No directory-listing API exists for a static GitHub
+    // Pages site, so this has to be told what to look for.)
+    // ==========================================
+
+    const PAGES = [
+        "index.html","marathon.html","fueling.html","cross-training.html",
+        "nutrition.html","75day.html","planner.html","analytics.html",
+        "pace-calculator.html","settings.html"
+    ];
+
+    const OTHER_HTML = ["components/header.html"];
+
+    const JS_FILES = [
+        "js/app.js","js/auth.js","js/cloudSync.js","js/courseEvents.js",
+        "js/cross-training.js","js/dashboardData.js","js/firebase.js",
+        "js/firestore.js","js/fueling.js","js/loadHeader.js","js/marathon.js",
+        "js/marathonData.js","js/nutrition.js","js/pace-calculator.js",
+        "js/settings.js","js/analytics.js"
+    ];
+
+    const CSS_FILES = [
+        "css/style.css","css/analytics.css","css/cross-training.css",
+        "css/fueling.css","css/marathon.css","css/nutrition.css",
+        "css/pace-calculator.css","css/settings.css"
+    ];
+
+    const ALL_HTML = PAGES.concat(OTHER_HTML);
+
+    // ==========================================
+    // Fetch cache (each file is only fetched once per run)
+    // ==========================================
+
+    const cache = new Map();
+
+    async function fetchText(path){
+
+        if (cache.has(path)) return cache.get(path);
+
+        const promise = fetch(path + "?_=" + Date.now())
+            .then(res => {
+
+                if (!res.ok) throw new Error("HTTP " + res.status);
+
+                return res.text();
+
+            });
+
+        cache.set(path, promise);
+
+        return promise;
+
+    }
+
+    async function urlExists(path){
+
+        try{
+
+            const res = await fetch(path + "?_=" + Date.now(), { method:"GET" });
+
+            return res.ok;
+
+        } catch(e){
+
+            return false;
+
+        }
+
+    }
+
+    // ==========================================
+    // Path resolution: "./x.js" relative to fromPath
+    // ==========================================
+
+    function resolvePath(fromPath, importSource){
+
+        if (/^https?:\/\//.test(importSource)) return null;
+
+        const fromDir = fromPath.includes("/")
+            ? fromPath.slice(0, fromPath.lastIndexOf("/"))
+            : "";
+
+        const raw = (fromDir ? fromDir + "/" : "") + importSource;
+
+        const segments = raw.split("/");
+
+        const stack = [];
+
+        segments.forEach(seg => {
+
+            if (seg === "." || seg === "") return;
+
+            if (seg === "..") stack.pop();
+            else stack.push(seg);
+
+        });
+
+        return stack.join("/");
+
+    }
+
+    // ==========================================
+    // Regex-based extraction helpers (safe — never
+    // execute fetched code, only pattern-match it)
+    // ==========================================
+
+    function extractExports(code){
+
+        const names = new Set();
+
+        [...code.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)]
+            .forEach(m => names.add(m[1]));
+
+        [...code.matchAll(/export\s+const\s+(\w+)/g)]
+            .forEach(m => names.add(m[1]));
+
+        [...code.matchAll(/export\s+let\s+(\w+)/g)]
+            .forEach(m => names.add(m[1]));
+
+        [...code.matchAll(/export\s*\{([^}]+)\}/g)]
+            .forEach(m => {
+
+                m[1].split(",").forEach(part => {
+
+                    const name = part.trim().split(/\s+as\s+/)[0].trim();
+
+                    if (name) names.add(name);
+
+                });
+
+            });
+
+        return names;
+
+    }
+
+    function extractImports(code){
+
+        const results = [];
+
+        [...code.matchAll(/import\s*\{([^}]+)\}\s*from\s*["']([^"']+)["']/g)]
+            .forEach(m => {
+
+                const names = m[1].split(",")
+                    .map(s => s.trim().split(/\s+as\s+/)[0].trim())
+                    .filter(Boolean);
+
+                results.push({ names, source: m[2] });
+
+            });
+
+        return results;
+
+    }
+
+    // Every local file targeted by a dynamic import("...") call — used
+    // for orphan detection. Dynamic imports (the codebase's own pattern
+    // for cloudSync.js and courseEvents.js) don't destructure names at
+    // the call site in a single consistent shape, so this only tracks
+    // *that the file is used*, not which names are pulled from it.
+    function extractDynamicImportTargets(code){
+
+        return [...code.matchAll(/import\(\s*["']([^"']+)["']\s*\)/g)].map(m => m[1]);
+
+    }
+
+    function extractLocalScriptTags(html){
+
+        // <script src="..." [type="module"]>  — local files only
+        const tags = [];
+
+        [...html.matchAll(/<script\b([^>]*)\ssrc=["']([^"']+)["']([^>]*)>/g)]
+            .forEach(m => {
+
+                const src = m[2];
+
+                if (/^https?:\/\//.test(src)) return;
+
+                const attrs = m[1] + " " + m[3];
+
+                const isModule = /type\s*=\s*["']module["']/.test(attrs);
+
+                tags.push({ src, isModule });
+
+            });
+
+        return tags;
+
+    }
+
+    function extractInlineScripts(html){
+
+        return [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)]
+            .map(m => m[1]);
+
+    }
+
+    function extractDeclaredIds(html){
+
+        return new Set([...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m => m[1]));
+
+    }
+
+    function extractIdReferences(code){
+
+        const ids = new Set();
+
+        [...code.matchAll(/getElementById\(\s*["']([^"']+)["']\s*\)/g)]
+            .forEach(m => ids.add(m[1]));
+
+        [...code.matchAll(/\$\(\s*["']([^"']+)["']\s*\)/g)]
+            .forEach(m => ids.add(m[1]));
+
+        return ids;
+
+    }
+
+    function extractLocalStorageKeys(code){
+
+        // Resolve one level of variable indirection first — e.g. this
+        // codebase's own `var LIBRARY_KEY = "cross-training-library";`
+        // followed by `localStorage.setItem(LIBRARY_KEY, ...)`. Without
+        // this, a key stored in a variable is invisible to a purely
+        // literal-string regex, which is exactly how a real gap here
+        // (cross-training-library was never added to cloudSync.js)
+        // went undetected before.
+        const varMap = new Map();
+
+        [...code.matchAll(/(?:var|let|const)\s+(\w+)\s*=\s*["']([^"']+)["']\s*;/g)]
+            .forEach(m => varMap.set(m[1], m[2]));
+
+        const exact = new Set();
+
+        const prefixes = new Set();
+
+        [...code.matchAll(/localStorage\.(?:setItem|getItem)\(\s*["']([^"'`${}]+)["']/g)]
+            .forEach(m => exact.add(m[1]));
+
+        [...code.matchAll(/localStorage\.(?:setItem|getItem)\(\s*`([^`$]+)\$\{/g)]
+            .forEach(m => prefixes.add(m[1]));
+
+        [...code.matchAll(/localStorage\.(?:setItem|getItem)\(\s*(\w+)\s*[,)]/g)]
+            .forEach(m => {
+
+                const resolved = varMap.get(m[1]);
+
+                if (resolved) exact.add(resolved);
+
+            });
+
+        return { exact, prefixes };
+
+    }
+
+    // ==========================================
+    // UI helpers
+    // ==========================================
+
+    function row(status, title, msg){
+
+        return `
+            <div class="sc-row">
+                <div class="sc-icon ${status}">${status === "pass" ? "\u2713" : status === "warn" ? "!" : "\u2715"}</div>
+                <div class="sc-row-body">
+                    <div>${title}</div>
+                    ${msg ? `<div class="sc-row-msg">${msg}</div>` : ""}
+                </div>
+            </div>
+        `;
+
+    }
+
+    function renderCategory(container, title, subtitle, rows){
+
+        const section = document.createElement("div");
+
+        section.className = "sc-category";
+
+        section.innerHTML = `
+            <div class="sc-category-head">
+                <span>${title}</span>
+                <small>${subtitle}</small>
+            </div>
+            ${rows.length ? rows.join("") : '<div class="sc-empty">Nothing to check.</div>'}
+        `;
+
+        container.appendChild(section);
+
+    }
+
+    // ==========================================
+    // Checks
+    // ==========================================
+
+    async function checkSyntax(){
+
+        const rows = [];
+
+        let fail = 0, pass = 0;
+
+        for (const path of JS_FILES){
+
+            try{
+
+                const code = await fetchText(path);
+
+                try{
+
+                    acorn.parse(code, { ecmaVersion: 2022, sourceType: "module" });
+
+                    pass++;
+
+                    rows.push(row("pass", `<code>${path}</code>`, "Parses cleanly."));
+
+                } catch(parseErr){
+
+                    fail++;
+
+                    rows.push(row("fail", `<code>${path}</code>`, "Syntax error: " + parseErr.message));
+
+                }
+
+            } catch(fetchErr){
+
+                fail++;
+
+                rows.push(row("fail", `<code>${path}</code>`, "Could not fetch this file \u2014 " + fetchErr.message));
+
+            }
+
+        }
+
+        return { rows, pass, fail, warn: 0 };
+
+    }
+
+    async function checkImports(){
+
+        const rows = [];
+
+        let fail = 0, pass = 0;
+
+        for (const path of JS_FILES){
+
+            let code;
+
+            try{ code = await fetchText(path); } catch(e){ continue; }
+
+            const imports = extractImports(code);
+
+            if (imports.length === 0) continue;
+
+            for (const imp of imports){
+
+                const target = resolvePath(path, imp.source);
+
+                if (!target) continue; // external URL, skip
+
+                let targetCode;
+
+                try{ targetCode = await fetchText(target); }
+                catch(e){
+
+                    fail++;
+
+                    rows.push(row("fail", `<code>${path}</code> imports from <code>${imp.source}</code>`,
+                        `Target file <code>${target}</code> could not be fetched.`));
+
+                    continue;
+
+                }
+
+                const exportedNames = extractExports(targetCode);
+
+                const missing = imp.names.filter(n => !exportedNames.has(n));
+
+                if (missing.length){
+
+                    fail++;
+
+                    rows.push(row("fail", `<code>${path}</code> imports from <code>${imp.source}</code>`,
+                        `<code>${target}</code> does not export: ${missing.map(m => `<code>${m}</code>`).join(", ")}`));
+
+                } else {
+
+                    pass++;
+
+                    rows.push(row("pass", `<code>${path}</code> \u2192 <code>${imp.source}</code>`,
+                        `${imp.names.length} import${imp.names.length===1?"":"s"} resolved.`));
+
+                }
+
+            }
+
+        }
+
+        return { rows, pass, fail, warn: 0 };
+
+    }
+
+    async function checkScriptTagTypes(){
+
+        const rows = [];
+
+        let fail = 0, pass = 0;
+
+        for (const page of ALL_HTML){
+
+            let html;
+
+            try{ html = await fetchText(page); } catch(e){ continue; }
+
+            const tags = extractLocalScriptTags(html);
+
+            for (const tag of tags){
+
+                let code;
+
+                try{ code = await fetchText(tag.src); } catch(e){ continue; }
+
+                const usesModuleSyntax = /^\s*export\s|^\s*import\s|[^.\w]export\s+(function|const|let)|[^.\w]import\s*\{/.test(code);
+
+                if (usesModuleSyntax && !tag.isModule){
+
+                    fail++;
+
+                    rows.push(row("fail", `<code>${page}</code> loads <code>${tag.src}</code>`,
+                        `That file uses <code>import</code>/<code>export</code> but the script tag has no <code>type="module"</code> \u2014 it will fail to load as a classic script.`));
+
+                } else {
+
+                    pass++;
+
+                }
+
+            }
+
+        }
+
+        if (pass && !fail){
+
+            rows.push(row("pass", "All local script tags", `${pass} script tag${pass===1?"":"s"} checked \u2014 module/classic usage matches each file's content.`));
+
+        }
+
+        return { rows, pass, fail, warn: 0 };
+
+    }
+
+    async function checkDomIds(){
+
+        const rows = [];
+
+        let fail = 0, pass = 0;
+
+        let headerIds = new Set();
+
+        try{
+
+            const headerHtml = await fetchText("components/header.html");
+
+            headerIds = extractDeclaredIds(headerHtml);
+
+        } catch(e){}
+
+        for (const page of PAGES){
+
+            let html;
+
+            try{ html = await fetchText(page); } catch(e){ continue; }
+
+            const declaredIds = new Set([...extractDeclaredIds(html), ...headerIds]);
+
+            const tags = extractLocalScriptTags(html);
+
+            const inline = extractInlineScripts(html);
+
+            const codeBlocks = [...inline];
+
+            for (const tag of tags){
+
+                try{ codeBlocks.push(await fetchText(tag.src)); } catch(e){}
+
+            }
+
+            const referenced = new Set();
+
+            codeBlocks.forEach(code => {
+
+                extractIdReferences(code).forEach(id => referenced.add(id));
+
+            });
+
+            const missing = [...referenced].filter(id => !declaredIds.has(id));
+
+            if (missing.length){
+
+                fail++;
+
+                rows.push(row("fail", `<code>${page}</code>`,
+                    `References ${missing.length} id${missing.length===1?"":"s"} not found in this page (or the shared header): ${missing.slice(0,8).map(m=>`<code>${m}</code>`).join(", ")}${missing.length>8?"\u2026":""}`));
+
+            } else {
+
+                pass++;
+
+                rows.push(row("pass", `<code>${page}</code>`, `${referenced.size} element reference${referenced.size===1?"":"s"} all resolve.`));
+
+            }
+
+        }
+
+        return { rows, pass, fail, warn: 0 };
+
+    }
+
+    async function checkNavLinks(){
+
+        const rows = [];
+
+        let fail = 0, pass = 0;
+
+        let headerHtml;
+
+        try{ headerHtml = await fetchText("components/header.html"); }
+        catch(e){
+
+            rows.push(row("fail", "components/header.html", "Could not fetch the shared header at all."));
+
+            return { rows, pass: 0, fail: 1, warn: 0 };
+
+        }
+
+        const links = [...new Set([...headerHtml.matchAll(/href=["']([a-zA-Z0-9_.-]+\.html)["']/g)].map(m => m[1]))];
+
+        for (const link of links){
+
+            const exists = await urlExists(link);
+
+            if (exists){
+
+                pass++;
+
+            } else {
+
+                fail++;
+
+                rows.push(row("fail", `Nav link <code>${link}</code>`, "This page returns a 404 \u2014 the link in your header points nowhere."));
+
+            }
+
+        }
+
+        if (pass && !fail){
+
+            rows.push(row("pass", "All navigation links", `${pass} link${pass===1?"":"s"} in your header all resolve to a real page.`));
+
+        }
+
+        return { rows, pass, fail, warn: 0 };
+
+    }
+
+    async function checkOrphanedFiles(){
+
+        const rows = [];
+
+        let warn = 0, pass = 0;
+
+        const referenced = new Set();
+
+        for (const page of ALL_HTML){
+
+            let html;
+
+            try{ html = await fetchText(page); } catch(e){ continue; }
+
+            [...html.matchAll(/(?:src|href)=["']([^"'#][^"']*\.(?:js|css))["']/g)]
+                .forEach(m => {
+
+                    if (!/^https?:\/\//.test(m[1])) referenced.add(m[1].replace(/^\.\//, ""));
+
+                });
+
+        }
+
+        for (const path of JS_FILES){
+
+            let code;
+
+            try{ code = await fetchText(path); } catch(e){ continue; }
+
+            extractImports(code).forEach(imp => {
+
+                const target = resolvePath(path, imp.source);
+
+                if (target) referenced.add(target);
+
+            });
+
+            extractDynamicImportTargets(code).forEach(source => {
+
+                const target = resolvePath(path, source);
+
+                if (target) referenced.add(target);
+
+            });
+
+        }
+
+        [...JS_FILES, ...CSS_FILES].forEach(path => {
+
+            if (referenced.has(path)){
+
+                pass++;
+
+            } else {
+
+                warn++;
+
+                rows.push(row("warn", `<code>${path}</code>`,
+                    "Not linked, loaded, or imported by anything on the manifest above \u2014 looks orphaned. Safe to delete if you don't need it."));
+
+            }
+
+        });
+
+        if (pass && !warn){
+
+            rows.push(row("pass", "All manifest files", `${pass} JS/CSS file${pass===1?"":"s"} are referenced from somewhere.`));
+
+        }
+
+        return { rows, pass, fail: 0, warn };
+
+    }
+
+    async function checkCloudSyncCoverage(){
+
+        const rows = [];
+
+        let fail = 0, pass = 0;
+
+        let syncCode;
+
+        try{ syncCode = await fetchText("js/cloudSync.js"); }
+        catch(e){
+
+            rows.push(row("fail", "js/cloudSync.js", "Could not fetch cloudSync.js at all."));
+
+            return { rows, pass: 0, fail: 1, warn: 0 };
+
+        }
+
+        const exactMatch = syncCode.match(/EXACT_KEYS\s*=\s*\[([\s\S]*?)\]/);
+
+        const prefixMatch = syncCode.match(/KEY_PREFIXES\s*=\s*\[([\s\S]*?)\]/);
+
+        const exactKeys = exactMatch
+            ? [...exactMatch[1].matchAll(/["']([^"']+)["']/g)].map(m => m[1])
+            : [];
+
+        const keyPrefixes = prefixMatch
+            ? [...prefixMatch[1].matchAll(/["']([^"']+)["']/g)].map(m => m[1])
+            : [];
+
+        const usedExact = new Set();
+
+        const usedPrefixes = new Set();
+
+        for (const path of JS_FILES){
+
+            let code;
+
+            try{ code = await fetchText(path); } catch(e){ continue; }
+
+            const found = extractLocalStorageKeys(code);
+
+            found.exact.forEach(k => usedExact.add(k));
+
+            found.prefixes.forEach(p => usedPrefixes.add(p));
+
+        }
+
+        function isCovered(key){
+
+            if (exactKeys.includes(key)) return true;
+
+            return keyPrefixes.some(p => key.startsWith(p));
+
+        }
+
+        usedExact.forEach(key => {
+
+            if (isCovered(key)){
+
+                pass++;
+
+            } else {
+
+                fail++;
+
+                rows.push(row("fail", `localStorage key <code>${key}</code>`,
+                    "Not covered by cloudSync.js's EXACT_KEYS or KEY_PREFIXES \u2014 this data won't sync across devices."));
+
+            }
+
+        });
+
+        usedPrefixes.forEach(prefix => {
+
+            if (isCovered(prefix)){
+
+                pass++;
+
+            } else {
+
+                fail++;
+
+                rows.push(row("fail", `localStorage key prefix <code>${prefix}*</code>`,
+                    "Not covered by cloudSync.js's EXACT_KEYS or KEY_PREFIXES \u2014 this data won't sync across devices."));
+
+            }
+
+        });
+
+        if (pass && !fail){
+
+            rows.push(row("pass", "All localStorage keys in use", `${pass} key${pass===1?"":"s"}/prefix${pass===1?"":"es"} found are covered by cloud sync.`));
+
+        }
+
+        return { rows, pass, fail, warn: 0 };
+
+    }
+
+    // ==========================================
+    // Runner
+    // ==========================================
+
+    async function runAll(){
+
+        const btn = document.getElementById("runBtn");
+
+        const summaryEl = document.getElementById("summary");
+
+        const resultsEl = document.getElementById("results");
+
+        btn.disabled = true;
+
+        btn.textContent = "Running\u2026";
+
+        resultsEl.innerHTML = '<div class="sc-loading">Fetching and checking every file \u2014 this takes a few seconds\u2026</div>';
+
+        summaryEl.innerHTML = "";
+
+        cache.clear();
+
+        const checks = [
+
+            { title: "JS Syntax", subtitle: "Real parsing via Acorn \u2014 not a guess", fn: checkSyntax },
+            { title: "Imports & Exports", subtitle: "Every import checked against what's actually exported", fn: checkImports },
+            { title: "Script Tag Types", subtitle: "Classic vs. module mismatches", fn: checkScriptTagTypes },
+            { title: "Element References", subtitle: "Every $()/getElementById() checked against real HTML", fn: checkDomIds },
+            { title: "Navigation Links", subtitle: "Every header link checked live", fn: checkNavLinks },
+            { title: "Cloud Sync Coverage", subtitle: "Every localStorage key checked against cloudSync.js", fn: checkCloudSyncCoverage },
+            { title: "Orphaned Files", subtitle: "Files nothing on the manifest references", fn: checkOrphanedFiles }
+
+        ];
+
+        resultsEl.innerHTML = "";
+
+        let totalPass = 0, totalWarn = 0, totalFail = 0;
+
+        for (const check of checks){
+
+            let result;
+
+            try{
+
+                result = await check.fn();
+
+            } catch(e){
+
+                result = { rows: [row("fail", check.title, "This check itself failed to run: " + e.message)], pass:0, fail:1, warn:0 };
+
+            }
+
+            totalPass += result.pass;
+            totalWarn += result.warn;
+            totalFail += result.fail;
+
+            renderCategory(resultsEl, check.title, check.subtitle, result.rows);
+
+        }
+
+        summaryEl.innerHTML = `
+            <div class="sc-summary">
+                <div class="sc-summary-chip pass">${totalPass} passed</div>
+                ${totalWarn ? `<div class="sc-summary-chip warn">${totalWarn} warning${totalWarn===1?"":"s"}</div>` : ""}
+                ${totalFail ? `<div class="sc-summary-chip fail">${totalFail} failed</div>` : `<div class="sc-summary-chip pass">Nothing broken</div>`}
+            </div>
+        `;
+
+        btn.disabled = false;
+
+        btn.textContent = "Run Full Check Again";
+
+    }
+
+    document.getElementById("runBtn").addEventListener("click", runAll);
+
+})();
+</script>
+
+</body>
+</html>
