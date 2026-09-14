@@ -1,0 +1,89 @@
+<!-- ==========================================
+     EddieOS Navigation
+=========================================== -->
+
+<nav class="navbar">
+
+    <div class="nav-left">
+
+        <a href="index.html" class="logo">
+            <div class="logo-dot"></div>
+            <span>EddieOS</span>
+        </a>
+
+        <div class="nav-links">
+
+            <a href="index.html">
+                Dashboard
+            </a>
+
+            <details class="nav-dropdown">
+                <summary>Training <span class="nav-chevron">▾</span></summary>
+                <div class="nav-dropdown-menu">
+                    <a href="marathon.html">Marathon</a>
+                    <a href="cross-training.html">Cross-Training</a>
+                    <a href="75day.html">75-Day</a>
+                </div>
+            </details>
+
+            <details class="nav-dropdown">
+                <summary>Health <span class="nav-chevron">▾</span></summary>
+                <div class="nav-dropdown-menu">
+                    <a href="nutrition.html">Nutrition</a>
+                    <a href="fueling.html">Fueling</a>
+                </div>
+            </details>
+
+            <details class="nav-dropdown">
+                <summary>Planning <span class="nav-chevron">▾</span></summary>
+                <div class="nav-dropdown-menu">
+                    <a href="planner.html">Planner</a>
+                </div>
+            </details>
+
+            <details class="nav-dropdown">
+                <summary>Progress <span class="nav-chevron">▾</span></summary>
+                <div class="nav-dropdown-menu">
+                    <a href="analytics.html">Analytics</a>
+                    <a href="shoes.html">Shoes</a>
+                </div>
+            </details>
+
+            <details class="nav-dropdown">
+                <summary>Tools <span class="nav-chevron">▾</span></summary>
+                <div class="nav-dropdown-menu">
+                    <a href="pace-calculator.html">Pace Calculator</a>
+                </div>
+            </details>
+
+        </div>
+
+    </div>
+
+    <div class="nav-right">
+
+        <button class="search-btn">
+            🔍
+        </button>
+
+        <button id="syncStatusBtn" class="sync-status-btn" style="display:none;" title="Click to sync now">
+            ☁️ <span id="syncStatusText">—</span>
+        </button>
+
+        <span id="user-name">
+            Guest
+        </span>
+
+        <button id="loginBtn">
+            Sign In
+        </button>
+
+        <button
+            id="logoutBtn"
+            style="display:none;">
+            Sign Out
+        </button>
+
+    </div>
+
+</nav>
