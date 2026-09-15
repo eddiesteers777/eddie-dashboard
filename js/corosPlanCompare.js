@@ -23,7 +23,7 @@ import {
     getAdjustedWeekDays
 } from "./marathonData.js";
 
-const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot";
+const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 
 function $(id) {
     return document.getElementById(id);
@@ -707,8 +707,8 @@ function renderStatus(comparison, snapshot) {
     if (!status) return;
 
     const synced =
-        snapshot?.savedAt
-            ? new Date(snapshot.savedAt).toLocaleString(
+        snapshot?.fetchedAt
+            ? new Date(snapshot.fetchedAt).toLocaleString(
                 undefined,
                 {
                     month: "short",
