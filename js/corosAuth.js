@@ -271,6 +271,10 @@ async function finishOAuth() {
     saveToken(token);
     setStatus("Connected to COROS", true);
 
+    window.dispatchEvent(
+        new CustomEvent("eddieos:coros-auth-changed")
+    );
+
     const cleanUrl =
         `${window.location.origin}${window.location.pathname}` +
         window.location.hash;
@@ -332,5 +336,7 @@ if (document.readyState === "loading") {
 }
 
 export {
-    getStoredToken
+    getStoredToken,
+    COROS_MCP_URL as MCP_URL,
+    discoverOAuth as discoverOAuthMetadata
 };
