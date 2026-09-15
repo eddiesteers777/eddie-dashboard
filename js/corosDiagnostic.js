@@ -2,10 +2,12 @@
 
 import {
     MCP_URL,
-    CLIENT_ID,
-    getTokenRecord,
+    getStoredToken,
     discoverOAuthMetadata
 } from "./corosAuth.js";
+
+const CLIENT_ID =
+    "https://eddiesteers777.github.io/eddie-dashboard/oauth/client-metadata.json";
 
 const $ = id => document.getElementById(id);
 
@@ -99,7 +101,7 @@ async function runCorosDiagnostic() {
 
     // Token.
     const token =
-        getTokenRecord();
+        getStoredToken();
 
     checks.push(
         row(
@@ -122,7 +124,7 @@ async function runCorosDiagnostic() {
             row(
                 "OAuth discovery",
                 "pass",
-                `Found COROS authorization server: ${metadata.authorizationServer.issuer || "issuer not supplied"}`
+                `Found COROS authorization server: ${metadata.issuer || "issuer not supplied"}`
             )
         );
     } catch (error) {
