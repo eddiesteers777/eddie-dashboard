@@ -2,12 +2,10 @@
 
 import {
     MCP_URL,
-    getStoredToken,
+    CLIENT_ID,
+    getTokenRecord,
     discoverOAuthMetadata
 } from "./corosAuth.js";
-
-const CLIENT_ID =
-    "https://eddiesteers777.github.io/eddie-dashboard/oauth/client-metadata.json";
 
 const $ = id => document.getElementById(id);
 
@@ -37,31 +35,6 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
-}
-
-function rawRow(name, status, message, raw) {
-    const icon =
-        status === "pass"
-            ? "✓"
-            : status === "warn"
-                ? "!"
-                : "×";
-
-    const shown =
-        raw.length > 4000
-            ? `${raw.slice(0, 4000)}\n\n… (truncated, ${raw.length} chars total)`
-            : raw;
-
-    return `
-        <div class="coros-diagnostic-row ${status}">
-            <span class="coros-diagnostic-icon">${icon}</span>
-            <div>
-                <strong>${escapeHtml(name)}</strong>
-                <small>${escapeHtml(message)}</small>
-                <pre style="white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;margin-top:8px;padding:10px;background:rgba(0,0,0,.25);border-radius:6px;font-size:12px;">${escapeHtml(shown)}</pre>
-            </div>
-        </div>
-    `;
 }
 
 async function runCorosDiagnostic() {
@@ -126,7 +99,7 @@ async function runCorosDiagnostic() {
 
     // Token.
     const token =
-        getStoredToken();
+        getTokenRecord();
 
     checks.push(
         row(
@@ -149,7 +122,7 @@ async function runCorosDiagnostic() {
             row(
                 "OAuth discovery",
                 "pass",
-                `Found COROS authorization server: ${metadata.issuer || "issuer not supplied"}`
+                `Found COROS authorization server: ${metadata.authorizationServer.issuer || "issuer not supplied"}`
             )
         );
     } catch (error) {
@@ -163,158 +136,8 @@ async function runCorosDiagnostic() {
     }
 
     // MCP tools/list.
-    let tools = [];
-
     if (token?.access_token) {
         try {
-            const response =
-                await fetch(MCP_URL, {
-                    method: "POST",
-                    headers: {
-                        Authorization:
-                            `Bearer ${token.access_token}`,
-                        "Content-Type":
-                            "application/json",
-                        Accept:
-                            "application/json, text/event-stream",
-                        "MCP-Protocol-Version":
-                            "2026-07-28",
-                        "Mcp-Method":
-                            "tools/list",
-                        "Mcp-Name":
-                            "tools/list"
-                    },
-                    body: JSON.stringify({
-                        jsonrpc: "2.0",
-                        id: 1,
-                        method: "tools/list",
-                        params: {
-                            _meta: {
-                                "io.modelcontextprotocol/clientInfo": {
-                                    name: "EddieOS",
-                                    version: "diagnostic-1"
-                                }
-                            }
-                        }
-                    })
-                });
-
-            const text =
-                await response.text();
-
-            if (!response.ok) {
-                throw new Error(
-                    `HTTP ${response.status}: ${text.slice(0, 260)}`
-                );
-            }
-
-            let payload;
-
-            try {
-                payload =
-                    JSON.parse(text);
-            } catch {
-                const line =
-                    text
-                        .split(/\r?\n/)
-                        .find(
-                            x =>
-                                x.startsWith(
-                                    "data:"
-                                )
-                        );
-
-                payload =
-                    line
-                        ? JSON.parse(
-                            line.slice(5).trim()
-                        )
-                        : null;
-            }
-
-            tools =
-                payload?.result?.tools ||
-                [];
-
-            const needed = [
-                "querySportRecords",
-                "getActivityDetail",
-                "queryRecoveryStatus",
-                "queryTrainingLoadAssessment",
-                "queryFitnessAssessmentOverview"
-            ];
-
-            const missing =
-                needed.filter(
-                    name =>
-                        !tools.some(
-                            tool =>
-                                tool.name === name
-                        )
-                );
-
-            checks.push(
-                row(
-                    "MCP tools",
-                    missing.length
-                        ? "warn"
-                        : "pass",
-                    missing.length
-                        ? `MCP responded, but missing: ${missing.join(", ")}`
-                        : `${tools.length} tools returned; all required EddieOS tools are available.`
-                )
-            );
-        } catch (error) {
-            checks.push(
-                row(
-                    "MCP endpoint",
-                    "fail",
-                    error.message
-                )
-            );
-        }
-    }
-
-    // Sample querySportRecords call — shows the raw live response.
-    if (token?.access_token && tools.length) {
-        try {
-            const sportTool =
-                tools.find(
-                    t => t.name === "querySportRecords"
-                );
-
-            if (!sportTool) {
-                throw new Error(
-                    "querySportRecords was not in the tools/list response."
-                );
-            }
-
-            const schema =
-                sportTool.inputSchema?.properties || {};
-
-            const args = {};
-
-            const end = new Date();
-            const start = new Date(end);
-            start.setDate(start.getDate() - 6);
-
-            if (Object.prototype.hasOwnProperty.call(schema, "startDate")) {
-                args.startDate = start.toISOString().slice(0, 10);
-            }
-
-            if (Object.prototype.hasOwnProperty.call(schema, "endDate")) {
-                args.endDate = end.toISOString().slice(0, 10);
-            }
-
-            if (Object.prototype.hasOwnProperty.call(schema, "timezone")) {
-                args.timezone =
-                    Intl.DateTimeFormat().resolvedOptions().timeZone;
-            }
-
-            if (Object.prototype.hasOwnProperty.call(schema, "limit")) {
-                args.limit = 20;
-            }
-
             const response =
                 await fetch(MCP_URL, {
                     method: "POST",
@@ -334,16 +157,53 @@ async function runCorosDiagnostic() {
                     },
                     body: JSON.stringify({
                         jsonrpc: "2.0",
-                        id: 2,
+                        id: 101,
                         method: "tools/call",
                         params: {
-                            name: "querySportRecords",
-                            arguments: args,
-                            _meta: {
-                                "io.modelcontextprotocol/clientInfo": {
-                                    name: "EddieOS",
-                                    version: "diagnostic-1"
-                                }
+                            name:
+                                "querySportRecords",
+                            arguments: {
+                                startDate:
+                                    (() => {
+                                        const d = new Date();
+                                        d.setDate(
+                                            d.getDate() - 6
+                                        );
+
+                                        return (
+                                            d.getFullYear() +
+                                            String(
+                                                d.getMonth() + 1
+                                            ).padStart(2, "0") +
+                                            String(
+                                                d.getDate()
+                                            ).padStart(2, "0")
+                                        );
+                                    })(),
+
+                                endDate:
+                                    (() => {
+                                        const d = new Date();
+
+                                        return (
+                                            d.getFullYear() +
+                                            String(
+                                                d.getMonth() + 1
+                                            ).padStart(2, "0") +
+                                            String(
+                                                d.getDate()
+                                            ).padStart(2, "0")
+                                        );
+                                    })(),
+
+                                sportTypeCodes: [
+                                    100,
+                                    101,
+                                    102,
+                                    103
+                                ],
+
+                                limit: 20
                             }
                         }
                     })
@@ -354,22 +214,81 @@ async function runCorosDiagnostic() {
 
             if (!response.ok) {
                 throw new Error(
-                    `HTTP ${response.status}: ${text.slice(0, 300)}`
+                    `HTTP ${response.status}: ${text.slice(0, 260)}`
                 );
             }
 
-            checks.push(
-                rawRow(
-                    "Sample querySportRecords call (last 7 days)",
-                    "pass",
-                    `Arguments sent: ${JSON.stringify(args)}`,
+            let payload = null;
+
+            try {
+                payload =
+                    JSON.parse(text);
+            } catch {
+                const line =
                     text
+                        .split(/\r?\n/)
+                        .find(
+                            x =>
+                                x.startsWith(
+                                    "data:"
+                                )
+                        );
+
+                if (line) {
+                    payload =
+                        JSON.parse(
+                            line.slice(5).trim()
+                        );
+                }
+            }
+
+            const contentText =
+                Array.isArray(
+                    payload?.result?.content
                 )
-            );
+                    ? payload.result.content
+                        .map(
+                            item =>
+                                item?.text || ""
+                        )
+                        .join("\n")
+                    : "";
+
+            if (
+                /Tool call anomalies detected/i
+                    .test(contentText)
+            ) {
+                checks.push(
+                    row(
+                        "Sample activity query",
+                        "fail",
+                        "COROS still flagged the running-only query as a tool-call anomaly."
+                    )
+                );
+            } else if (
+                payload?.result?.isError === true
+            ) {
+                checks.push(
+                    row(
+                        "Sample activity query",
+                        "fail",
+                        contentText ||
+                        "COROS returned an activity-query error."
+                    )
+                );
+            } else {
+                checks.push(
+                    row(
+                        "Sample activity query",
+                        "pass",
+                        "COROS accepted the running-only activity query using yyyyMMdd dates."
+                    )
+                );
+            }
         } catch (error) {
             checks.push(
                 row(
-                    "Sample querySportRecords call",
+                    "Sample activity query",
                     "fail",
                     error.message
                 )
