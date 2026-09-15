@@ -593,6 +593,300 @@ body{
 }
 
 /* ==========================
+   Food Search & Log
+========================== */
+
+.food-search{
+
+    position:relative;
+    margin-bottom:14px;
+
+}
+
+.food-search-input{
+
+    width:100%;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:14px;
+    padding:12px 16px;
+    font-size:14px;
+    font-family:inherit;
+    outline:none;
+    transition:.2s;
+
+}
+
+.food-search-input:focus{
+
+    box-shadow:
+        0 0 0 3px
+        rgba(78,168,255,.30);
+
+}
+
+.food-search-results{
+
+    position:relative;
+    margin-top:8px;
+
+}
+
+.food-search-results:empty{
+
+    margin-top:0;
+
+}
+
+.food-search-loading,
+.food-search-empty{
+
+    padding:12px 16px;
+    color:var(--text-secondary);
+    font-size:13px;
+
+}
+
+.food-result{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-bottom:6px;
+    cursor:pointer;
+    transition:.15s;
+
+}
+
+.food-result:hover{
+
+    border-color:var(--primary);
+    background:rgba(78,168,255,.08);
+
+}
+
+.food-result-main{
+
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+
+}
+
+.food-result-main strong{
+
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+}
+
+.food-result-main span{
+
+    font-size:12px;
+    color:var(--text-secondary);
+
+}
+
+.food-result-cals{
+
+    font-size:12px;
+    color:var(--text-secondary);
+    white-space:nowrap;
+    flex-shrink:0;
+
+}
+
+.food-confirm{
+
+    border:1px solid var(--primary);
+    border-radius:14px;
+    padding:16px;
+    background:rgba(78,168,255,.06);
+
+}
+
+.food-confirm-name{
+
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:10px;
+
+}
+
+.food-confirm-row{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+
+}
+
+.food-confirm-grams{
+
+    width:80px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:14px;
+    font-family:inherit;
+    outline:none;
+
+}
+
+.food-confirm-serving{
+
+    font-size:12px;
+    color:var(--text-secondary);
+
+}
+
+.food-confirm-preview{
+
+    font-size:13px;
+    color:var(--text-secondary);
+    margin-bottom:12px;
+
+}
+
+.food-confirm-actions{
+
+    display:flex;
+    gap:10px;
+
+}
+
+.food-confirm-add,
+.food-confirm-cancel{
+
+    border:none;
+    border-radius:10px;
+    padding:9px 16px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+
+}
+
+.food-confirm-add{
+
+    background:var(--primary);
+    color:#fff;
+
+}
+
+.food-confirm-add:hover{
+
+    background:var(--primary-dark);
+
+}
+
+.food-confirm-cancel{
+
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+
+}
+
+.food-confirm-cancel:hover{
+
+    border-color:var(--text-secondary);
+
+}
+
+.food-log{
+
+    margin-bottom:14px;
+
+}
+
+.food-log:empty{
+
+    margin-bottom:0;
+
+}
+
+.food-log-item{
+
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    background:var(--surface-light);
+    border-radius:12px;
+    margin-bottom:6px;
+
+}
+
+.food-log-item-main{
+
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+
+}
+
+.food-log-item-main strong{
+
+    font-size:13px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+}
+
+.food-log-item-main span{
+
+    font-size:11px;
+    color:var(--text-secondary);
+
+}
+
+.food-log-item-macros{
+
+    font-size:12px;
+    color:var(--text-secondary);
+    white-space:nowrap;
+
+}
+
+.food-log-remove{
+
+    background:transparent;
+    border:none;
+    color:var(--text-secondary);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    padding:4px 8px;
+    border-radius:8px;
+    transition:.15s;
+
+}
+
+.food-log-remove:hover{
+
+    color:var(--red);
+    background:rgba(239,68,68,.12);
+
+}
+
+/* ==========================
    Summary
 ========================== */
 
