@@ -30,6 +30,7 @@ const weekStart = document.getElementById("weekStart");
 
 const goalTime = document.querySelector('input[type="text"]');
 const weeklyMileage = document.querySelector('input[type="number"]');
+const usdaApiKey = document.getElementById("usdaApiKey");
 
 const checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
@@ -86,6 +87,7 @@ onAuthStateChanged(auth, async (user) => {
 
     goalTime.value = saved.goalTime;
     weeklyMileage.value = saved.weeklyMileage || "";
+    usdaApiKey.value = saved.usdaApiKey || "";
 
     checkboxes[0].checked = saved.aiEnabled;
     checkboxes[1].checked = saved.weeklyInsights;
@@ -106,6 +108,7 @@ function saveSettings() {
 
         goalTime: goalTime.value.trim(),
         weeklyMileage: Number(weeklyMileage.value) || 0,
+        usdaApiKey: usdaApiKey.value.trim(),
 
         aiEnabled: checkboxes[0].checked,
         weeklyInsights: checkboxes[1].checked,
@@ -126,6 +129,7 @@ function saveSettings() {
     weekStart,
     goalTime,
     weeklyMileage,
+    usdaApiKey,
     ...checkboxes
 
 ].forEach(element => {
