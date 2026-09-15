@@ -23,7 +23,9 @@ const DEFAULTS = {
 
     aiEnabled: true,
     weeklyInsights: true,
-    dailyRecommendations: false
+    dailyRecommendations: false,
+
+    usdaApiKey: ""
 
 };
 
