@@ -38,6 +38,9 @@ const OFF_LEGACY_SEARCH_URL =
 const OFF_SALICIOUS_SEARCH_URL =
     "https://search.openfoodfacts.org/search";
 
+const OFF_PRODUCT_URL =
+    "https://world.openfoodfacts.org/api/v2/product/";
+
 const USDA_SEARCH_URL =
     "https://api.nal.usda.gov/fdc/v1/foods/search";
 
@@ -272,18 +275,69 @@ function dedupeByName(results) {
     return out;
 }
 
+async function lookupBarcode(barcode) {
+    const url =
+        `${OFF_PRODUCT_URL}${encodeURIComponent(barcode)}.json` +
+        "?fields=product_name,product_name_en,generic_name,brands,code,nutriments,serving_size";
+
+    const response = await fetch(url, {
+        headers: { Accept: "application/json" }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Open Food Facts barcode lookup failed (${response.status})`);
+    }
+
+    const data = await response.json();
+
+    // status 0 / status_verbose "product not found" means the
+    // barcode simply isn't in Open Food Facts — not an error.
+    if (!data.product) {
+        return [];
+    }
+
+    const normalized = normalizeOffProduct(data.product);
+    return normalized ? [normalized] : [];
+}
+
+function looksLikeBarcode(query) {
+    const digitsOnly = query.replace(/[\s-]/g, "");
+    return /^\d{8,14}$/.test(digitsOnly);
+}
+
 /**
- * Searches for foods matching the query. Tries Open Food Facts
- * first; if a USDA API key is saved in Settings, USDA results
- * are appended as a fallback for whole/generic foods. Errors
- * from either source are non-fatal — a failure in one source
- * just means fewer results, not a broken search.
+ * Searches for foods matching the query. If the query looks like a
+ * barcode (8-14 digits, as typed or scanned from packaging), an exact
+ * barcode lookup is tried first — this is a more reliable, separate
+ * part of Open Food Facts's API than text search, and gives an exact
+ * match when a product's barcode is known even if it wouldn't surface
+ * well in a name search. Falls through to normal search either way if
+ * that doesn't find anything.
+ *
+ * Beyond that, Open Food Facts is tried first; if a USDA API key is
+ * saved in Settings, USDA results are appended as a fallback for
+ * whole/generic foods. Errors from any one source are non-fatal — a
+ * failure in one just means fewer results, not a broken search.
  */
 export async function searchFoods(query) {
     const trimmed = query.trim();
 
     if (!trimmed) {
         return [];
+    }
+
+    if (looksLikeBarcode(trimmed)) {
+        try {
+            const barcodeResults = await lookupBarcode(
+                trimmed.replace(/[\s-]/g, "")
+            );
+
+            if (barcodeResults.length) {
+                return barcodeResults;
+            }
+        } catch (error) {
+            console.warn("Barcode lookup failed:", error);
+        }
     }
 
     const results = [];
