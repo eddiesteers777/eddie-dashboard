@@ -607,6 +607,217 @@ async function loadRecentData() {
     return snapshot;
 }
 
+function findNumeric(data, keys = []) {
+    if (!data || typeof data !== "object") {
+        return null;
+    }
+
+    const lower = new Map();
+
+    const walk = (value, prefix = "") => {
+        if (!value || typeof value !== "object") {
+            return;
+        }
+
+        for (const [key, item] of Object.entries(value)) {
+            const normalized =
+                `${prefix}${key}`.toLowerCase();
+
+            lower.set(normalized, item);
+
+            if (
+                item &&
+                typeof item === "object" &&
+                !Array.isArray(item)
+            ) {
+                walk(item, `${normalized}.`);
+            }
+        }
+    };
+
+    walk(data);
+
+    for (const key of keys) {
+        for (const [candidate, value] of lower.entries()) {
+            if (
+                candidate === key.toLowerCase() ||
+                candidate.endsWith(`.${key.toLowerCase()}`)
+            ) {
+                const n = Number(value);
+
+                if (Number.isFinite(n)) {
+                    return n;
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+function findValue(data, keys = []) {
+    if (!data || typeof data !== "object") {
+        return null;
+    }
+
+    const walk = (value) => {
+        if (!value || typeof value !== "object") {
+            return null;
+        }
+
+        for (const key of keys) {
+            if (
+                Object.prototype.hasOwnProperty.call(
+                    value,
+                    key
+                )
+            ) {
+                return value[key];
+            }
+        }
+
+        for (const child of Object.values(value)) {
+            if (child && typeof child === "object") {
+                const result = walk(child);
+
+                if (result !== null && result !== undefined) {
+                    return result;
+                }
+            }
+        }
+
+        return null;
+    };
+
+    return walk(data);
+}
+
+function formatRecovery(data) {
+    const percent = findNumeric(data, [
+        "recoveryPercentage",
+        "recovery_percent",
+        "recoveryScore",
+        "recovery"
+    ]);
+
+    const level = findValue(data, [
+        "recoveryLevel",
+        "recovery_level",
+        "level"
+    ]);
+
+    if (percent !== null) {
+        return {
+            value: `${Math.round(percent)}%`,
+            meta: level ? String(level) : "Current recovery"
+        };
+    }
+
+    if (level) {
+        return {
+            value: String(level),
+            meta: "Current recovery"
+        };
+    }
+
+    return {
+        value: "—",
+        meta: "No recovery value returned"
+    };
+}
+
+function formatTrainingLoad(data) {
+    const shortTerm = findNumeric(data, [
+        "shortTermLoad",
+        "short_term_load",
+        "shortTermTrainingLoad"
+    ]);
+
+    const ratio = findNumeric(data, [
+        "loadRatio",
+        "load_ratio",
+        "trainingLoadRatio"
+    ]);
+
+    if (shortTerm !== null) {
+        return {
+            value: Math.round(shortTerm).toString(),
+            meta:
+                ratio !== null
+                    ? `Load ratio ${ratio.toFixed(2)}`
+                    : "Short-term load"
+        };
+    }
+
+    const load = findNumeric(data, [
+        "trainingLoad",
+        "weeklyTrainingLoad"
+    ]);
+
+    if (load !== null) {
+        return {
+            value: Math.round(load).toString(),
+            meta: "COROS training load"
+        };
+    }
+
+    return {
+        value: "—",
+        meta: "No load value returned"
+    };
+}
+
+function formatPrediction(value) {
+    if (typeof value === "object" && value !== null) {
+        const nested =
+            value.time ??
+            value.predictedTime ??
+            value.prediction ??
+            value.value;
+
+        if (nested !== undefined) {
+            return formatPrediction(nested);
+        }
+    }
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+        const totalSeconds = Math.round(value);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    return String(value);
+}
+
+function formatFitness(data) {
+    const vo2 = findNumeric(data, [
+        "vo2Max",
+        "vo2max",
+        "VO2Max"
+    ]);
+
+    const marathon = findValue(data, [
+        "marathon",
+        "marathonPrediction",
+        "marathon_predicted_time",
+        "marathonPredictionTime"
+    ]);
+
+    return {
+        vo2: vo2 !== null ? vo2.toFixed(1) : "—",
+        marathon:
+            marathon !== null && marathon !== undefined
+                ? formatPrediction(marathon)
+                : "—",
+        vo2Meta: vo2 !== null
+            ? "COROS fitness assessment"
+            : "No VO₂ Max returned"
+    };
+}
+
 function renderSnapshot(snapshot) {
     if (!snapshot) return;
 
@@ -649,6 +860,20 @@ function renderSnapshot(snapshot) {
             }
         )}`
     );
+
+    const load = formatTrainingLoad(snapshot.trainingLoad);
+    setText("corosTrainingLoad", load.value);
+    setText("corosTrainingLoadMeta", load.meta);
+
+    const recovery = formatRecovery(snapshot.recovery);
+    setText("corosRecovery", recovery.value);
+    setText("corosRecoveryMeta", recovery.meta);
+
+    const fitness = formatFitness(snapshot.fitness);
+    setText("corosVo2Max", fitness.vo2);
+    setText("corosVo2Meta", fitness.vo2Meta);
+    setText("corosMarathonPrediction", fitness.marathon);
+    setText("corosPredictionMeta", "COROS race prediction");
 
     setStatus(
         "COROS data loaded successfully.",
