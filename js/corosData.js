@@ -2,7 +2,9 @@
 
 import {
     MCP_URL,
-    getStoredToken
+    getTokenRecord,
+    saveTokenRecord,
+    discoverOAuthMetadata
 } from "./corosAuth.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
@@ -15,7 +17,7 @@ let requestId = 1;
 const $ = id => document.getElementById(id);
 
 function accessToken() {
-    return getStoredToken()?.access_token || null;
+    return getTokenRecord()?.access_token || null;
 }
 
 function setStatus(text, type = "neutral") {
@@ -31,6 +33,8 @@ function setText(id, value) {
 }
 
 function parseBody(text, contentType) {
+    let payload = null;
+
     if (contentType.includes("text/event-stream")) {
         const lines = text
             .split(/\r?\n/)
@@ -40,18 +44,44 @@ function parseBody(text, contentType) {
 
         for (let i = lines.length - 1; i >= 0; i--) {
             try {
-                return JSON.parse(lines[i]);
+                payload = JSON.parse(lines[i]);
+                break;
             } catch {}
         }
 
-        throw new Error("COROS returned an unreadable MCP event stream.");
+        if (!payload) {
+            throw new Error(
+                "COROS returned an unreadable MCP event stream."
+            );
+        }
+    } else {
+        try {
+            payload = JSON.parse(text);
+        } catch {
+            throw new Error("COROS returned invalid JSON.");
+        }
     }
 
-    try {
-        return JSON.parse(text);
-    } catch {
-        throw new Error("COROS returned invalid JSON.");
+    const contentText =
+        Array.isArray(payload?.result?.content)
+            ? payload.result.content
+                .map(item => item?.text || "")
+                .join("\n")
+            : "";
+
+    if (payload?.result?.isError === true) {
+        throw new Error(
+            contentText || "COROS reported a tool error."
+        );
     }
+
+    if (/Tool call anomalies detected/i.test(contentText)) {
+        throw new Error(
+            "COROS flagged the activity query as a tool-call anomaly. EddieOS is using the narrower running-only query format now."
+        );
+    }
+
+    return payload;
 }
 
 async function mcpRequest(method, params = {}, name = method) {
@@ -141,24 +171,37 @@ function supported(schema, key) {
     );
 }
 
+function formatCorosDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}${month}${day}`;
+}
+
 function buildArgs(toolDefinition, start, end) {
     const schema =
         toolDefinition?.inputSchema || {};
 
     const args = {};
 
-    const startDate =
-        start.toISOString().slice(0, 10);
-
-    const endDate =
-        end.toISOString().slice(0, 10);
-
     if (supported(schema, "startDate")) {
-        args.startDate = startDate;
+        args.startDate =
+            formatCorosDate(start);
     }
 
     if (supported(schema, "endDate")) {
-        args.endDate = endDate;
+        args.endDate =
+            formatCorosDate(end);
+    }
+
+    if (supported(schema, "sportTypeCodes")) {
+        args.sportTypeCodes = [
+            100, // Outdoor Run
+            101, // Indoor Run
+            102, // Trail Run
+            103  // Track Run
+        ];
     }
 
     if (supported(schema, "timezone")) {
@@ -169,7 +212,7 @@ function buildArgs(toolDefinition, start, end) {
     }
 
     if (supported(schema, "limit")) {
-        args.limit = 100;
+        args.limit = 20;
     }
 
     return args;
@@ -414,18 +457,18 @@ async function enrichActivities(
     const schema =
         detailTool.inputSchema || {};
 
-    const targets =
-        summaries.filter(isRun).slice(0, 25);
-
-    const CONCURRENCY = 5;
     const enriched = [];
 
-    async function fetchOne(summary) {
+    for (
+        const summary
+        of summaries.filter(isRun).slice(0, 25)
+    ) {
         const id =
             recordId(summary);
 
         if (!id) {
-            return summary;
+            enriched.push(summary);
+            continue;
         }
 
         const args = {};
@@ -450,13 +493,13 @@ async function enrichActivities(
                     detailTool.name
                 );
 
-            return {
+            enriched.push({
                 ...summary,
                 ...parseDetail(result),
                 _corosLabelId: id,
                 _corosSportType:
                     recordSportType(summary)
-            };
+            });
         } catch (error) {
             console.warn(
                 "COROS detail lookup failed:",
@@ -464,35 +507,14 @@ async function enrichActivities(
                 error
             );
 
-            return summary;
+            enriched.push(summary);
         }
-    }
-
-    for (
-        let start = 0;
-        start < targets.length;
-        start += CONCURRENCY
-    ) {
-        const batch =
-            targets.slice(start, start + CONCURRENCY);
-
-        const results =
-            await Promise.all(
-                batch.map(fetchOne)
-            );
-
-        enriched.push(...results);
     }
 
     return enriched;
 }
 
 async function loadRecentData() {
-    setStatus(
-        "Connecting to COROS and loading your recent data…",
-        "loading"
-    );
-
     const tools =
         await listTools();
 
@@ -607,217 +629,6 @@ async function loadRecentData() {
     return snapshot;
 }
 
-function findNumeric(data, keys = []) {
-    if (!data || typeof data !== "object") {
-        return null;
-    }
-
-    const lower = new Map();
-
-    const walk = (value, prefix = "") => {
-        if (!value || typeof value !== "object") {
-            return;
-        }
-
-        for (const [key, item] of Object.entries(value)) {
-            const normalized =
-                `${prefix}${key}`.toLowerCase();
-
-            lower.set(normalized, item);
-
-            if (
-                item &&
-                typeof item === "object" &&
-                !Array.isArray(item)
-            ) {
-                walk(item, `${normalized}.`);
-            }
-        }
-    };
-
-    walk(data);
-
-    for (const key of keys) {
-        for (const [candidate, value] of lower.entries()) {
-            if (
-                candidate === key.toLowerCase() ||
-                candidate.endsWith(`.${key.toLowerCase()}`)
-            ) {
-                const n = Number(value);
-
-                if (Number.isFinite(n)) {
-                    return n;
-                }
-            }
-        }
-    }
-
-    return null;
-}
-
-function findValue(data, keys = []) {
-    if (!data || typeof data !== "object") {
-        return null;
-    }
-
-    const walk = (value) => {
-        if (!value || typeof value !== "object") {
-            return null;
-        }
-
-        for (const key of keys) {
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    value,
-                    key
-                )
-            ) {
-                return value[key];
-            }
-        }
-
-        for (const child of Object.values(value)) {
-            if (child && typeof child === "object") {
-                const result = walk(child);
-
-                if (result !== null && result !== undefined) {
-                    return result;
-                }
-            }
-        }
-
-        return null;
-    };
-
-    return walk(data);
-}
-
-function formatRecovery(data) {
-    const percent = findNumeric(data, [
-        "recoveryPercentage",
-        "recovery_percent",
-        "recoveryScore",
-        "recovery"
-    ]);
-
-    const level = findValue(data, [
-        "recoveryLevel",
-        "recovery_level",
-        "level"
-    ]);
-
-    if (percent !== null) {
-        return {
-            value: `${Math.round(percent)}%`,
-            meta: level ? String(level) : "Current recovery"
-        };
-    }
-
-    if (level) {
-        return {
-            value: String(level),
-            meta: "Current recovery"
-        };
-    }
-
-    return {
-        value: "—",
-        meta: "No recovery value returned"
-    };
-}
-
-function formatTrainingLoad(data) {
-    const shortTerm = findNumeric(data, [
-        "shortTermLoad",
-        "short_term_load",
-        "shortTermTrainingLoad"
-    ]);
-
-    const ratio = findNumeric(data, [
-        "loadRatio",
-        "load_ratio",
-        "trainingLoadRatio"
-    ]);
-
-    if (shortTerm !== null) {
-        return {
-            value: Math.round(shortTerm).toString(),
-            meta:
-                ratio !== null
-                    ? `Load ratio ${ratio.toFixed(2)}`
-                    : "Short-term load"
-        };
-    }
-
-    const load = findNumeric(data, [
-        "trainingLoad",
-        "weeklyTrainingLoad"
-    ]);
-
-    if (load !== null) {
-        return {
-            value: Math.round(load).toString(),
-            meta: "COROS training load"
-        };
-    }
-
-    return {
-        value: "—",
-        meta: "No load value returned"
-    };
-}
-
-function formatPrediction(value) {
-    if (typeof value === "object" && value !== null) {
-        const nested =
-            value.time ??
-            value.predictedTime ??
-            value.prediction ??
-            value.value;
-
-        if (nested !== undefined) {
-            return formatPrediction(nested);
-        }
-    }
-
-    if (typeof value === "number" && Number.isFinite(value)) {
-        const totalSeconds = Math.round(value);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-    }
-
-    return String(value);
-}
-
-function formatFitness(data) {
-    const vo2 = findNumeric(data, [
-        "vo2Max",
-        "vo2max",
-        "VO2Max"
-    ]);
-
-    const marathon = findValue(data, [
-        "marathon",
-        "marathonPrediction",
-        "marathon_predicted_time",
-        "marathonPredictionTime"
-    ]);
-
-    return {
-        vo2: vo2 !== null ? vo2.toFixed(1) : "—",
-        marathon:
-            marathon !== null && marathon !== undefined
-                ? formatPrediction(marathon)
-                : "—",
-        vo2Meta: vo2 !== null
-            ? "COROS fitness assessment"
-            : "No VO₂ Max returned"
-    };
-}
-
 function renderSnapshot(snapshot) {
     if (!snapshot) return;
 
@@ -861,23 +672,13 @@ function renderSnapshot(snapshot) {
         )}`
     );
 
-    const load = formatTrainingLoad(snapshot.trainingLoad);
-    setText("corosTrainingLoad", load.value);
-    setText("corosTrainingLoadMeta", load.meta);
-
-    const recovery = formatRecovery(snapshot.recovery);
-    setText("corosRecovery", recovery.value);
-    setText("corosRecoveryMeta", recovery.meta);
-
-    const fitness = formatFitness(snapshot.fitness);
-    setText("corosVo2Max", fitness.vo2);
-    setText("corosVo2Meta", fitness.vo2Meta);
-    setText("corosMarathonPrediction", fitness.marathon);
-    setText("corosPredictionMeta", "COROS race prediction");
-
     setStatus(
-        "COROS data loaded successfully.",
-        "success"
+        activities.length
+            ? "COROS data loaded successfully."
+            : "COROS connected, but no running activities were returned for the requested period.",
+        activities.length
+            ? "success"
+            : "warning"
     );
 }
 
