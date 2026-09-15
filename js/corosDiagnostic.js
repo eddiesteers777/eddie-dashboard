@@ -39,6 +39,31 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 }
 
+function rawRow(name, status, message, raw) {
+    const icon =
+        status === "pass"
+            ? "✓"
+            : status === "warn"
+                ? "!"
+                : "×";
+
+    const shown =
+        raw.length > 4000
+            ? `${raw.slice(0, 4000)}\n\n… (truncated, ${raw.length} chars total)`
+            : raw;
+
+    return `
+        <div class="coros-diagnostic-row ${status}">
+            <span class="coros-diagnostic-icon">${icon}</span>
+            <div>
+                <strong>${escapeHtml(name)}</strong>
+                <small>${escapeHtml(message)}</small>
+                <pre style="white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;margin-top:8px;padding:10px;background:rgba(0,0,0,.25);border-radius:6px;font-size:12px;">${escapeHtml(shown)}</pre>
+            </div>
+        </div>
+    `;
+}
+
 async function runCorosDiagnostic() {
     const results =
         $("corosDiagnosticResults");
@@ -138,6 +163,8 @@ async function runCorosDiagnostic() {
     }
 
     // MCP tools/list.
+    let tools = [];
+
     if (token?.access_token) {
         try {
             const response =
@@ -205,7 +232,7 @@ async function runCorosDiagnostic() {
                         : null;
             }
 
-            const tools =
+            tools =
                 payload?.result?.tools ||
                 [];
 
@@ -241,6 +268,108 @@ async function runCorosDiagnostic() {
             checks.push(
                 row(
                     "MCP endpoint",
+                    "fail",
+                    error.message
+                )
+            );
+        }
+    }
+
+    // Sample querySportRecords call — shows the raw live response.
+    if (token?.access_token && tools.length) {
+        try {
+            const sportTool =
+                tools.find(
+                    t => t.name === "querySportRecords"
+                );
+
+            if (!sportTool) {
+                throw new Error(
+                    "querySportRecords was not in the tools/list response."
+                );
+            }
+
+            const schema =
+                sportTool.inputSchema?.properties || {};
+
+            const args = {};
+
+            const end = new Date();
+            const start = new Date(end);
+            start.setDate(start.getDate() - 6);
+
+            if (Object.prototype.hasOwnProperty.call(schema, "startDate")) {
+                args.startDate = start.toISOString().slice(0, 10);
+            }
+
+            if (Object.prototype.hasOwnProperty.call(schema, "endDate")) {
+                args.endDate = end.toISOString().slice(0, 10);
+            }
+
+            if (Object.prototype.hasOwnProperty.call(schema, "timezone")) {
+                args.timezone =
+                    Intl.DateTimeFormat().resolvedOptions().timeZone;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(schema, "limit")) {
+                args.limit = 20;
+            }
+
+            const response =
+                await fetch(MCP_URL, {
+                    method: "POST",
+                    headers: {
+                        Authorization:
+                            `Bearer ${token.access_token}`,
+                        "Content-Type":
+                            "application/json",
+                        Accept:
+                            "application/json, text/event-stream",
+                        "MCP-Protocol-Version":
+                            "2026-07-28",
+                        "Mcp-Method":
+                            "tools/call",
+                        "Mcp-Name":
+                            "querySportRecords"
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: "2.0",
+                        id: 2,
+                        method: "tools/call",
+                        params: {
+                            name: "querySportRecords",
+                            arguments: args,
+                            _meta: {
+                                "io.modelcontextprotocol/clientInfo": {
+                                    name: "EddieOS",
+                                    version: "diagnostic-1"
+                                }
+                            }
+                        }
+                    })
+                });
+
+            const text =
+                await response.text();
+
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP ${response.status}: ${text.slice(0, 300)}`
+                );
+            }
+
+            checks.push(
+                rawRow(
+                    "Sample querySportRecords call (last 7 days)",
+                    "pass",
+                    `Arguments sent: ${JSON.stringify(args)}`,
+                    text
+                )
+            );
+        } catch (error) {
+            checks.push(
+                row(
+                    "Sample querySportRecords call",
                     "fail",
                     error.message
                 )
