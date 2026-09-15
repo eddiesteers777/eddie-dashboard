@@ -26,7 +26,7 @@
     <link
         rel="stylesheet"
         href="css/analytics.css">
-    <link rel="stylesheet" href="css/corosCoach.css">
+    <link rel="stylesheet" href="css/corosIntegration.css">
     <link rel="stylesheet" href="css/corosPlanCompare.css">
     <link rel="stylesheet" href="css/corosData.css">
 
@@ -209,6 +209,22 @@
     </div>
 
 </section>
+
+        <div class="coros-diagnostic-tools">
+            <button id="runCorosDiagnosticBtn" class="secondary-btn">
+                Run COROS Diagnostic
+            </button>
+
+            <div id="corosDiagnosticStatus" class="coros-diagnostic-status">
+                Diagnostic not run yet.
+            </div>
+
+            <div id="corosDiagnosticResults"
+                 class="coros-diagnostic-results"
+                 aria-live="polite">
+            </div>
+        </div>
+
 
     <!-- ==========================================
          COROS DATA
@@ -396,116 +412,6 @@
         </div>
 
     </section>
-
-    <!-- ==========================================
-         COROS COACH ASSESSMENT
-    =========================================== -->
-
-    <section class="coros-coach-panel panel" id="corosCoachPanel">
-
-        <div class="panel-header">
-            <div>
-                <span class="coros-data-eyebrow">
-                    EDDIEOS COACH
-                </span>
-
-                <h2>
-                    3:05 Readiness Assessment
-                </h2>
-
-                <p class="coros-data-subtitle">
-                    A transparent EddieOS coaching signal using recent plan
-                    execution, COROS recovery, training load, and fitness data.
-                </p>
-            </div>
-        </div>
-
-        <div class="coros-coach-top">
-
-            <div class="coros-coach-score-card">
-                <div
-                    id="corosCoachScore"
-                    class="coros-coach-score">
-                    —
-                </div>
-
-                <div class="coros-coach-score-label">
-                    EddieOS Score
-                </div>
-
-                <div
-                    id="corosCoachHeadline"
-                    class="coros-coach-headline">
-                    Awaiting Data
-                </div>
-            </div>
-
-            <div class="coros-coach-main">
-
-                <h3>
-                    What the data says
-                </h3>
-
-                <p>
-                    EddieOS weighs the signals below together instead of treating
-                    any single COROS metric as proof that a 3:05 marathon is
-                    guaranteed.
-                </p>
-
-                <div
-                    id="corosCoachNotes"
-                    class="coros-coach-notes">
-                    <div class="coros-coach-note">
-                        Connect COROS and refresh your data to generate the
-                        assessment.
-                    </div>
-                </div>
-
-                <div
-                    id="corosCoachUpdated"
-                    class="coros-coach-updated">
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="coros-coach-metrics">
-
-            <div class="coros-coach-metric">
-                <span>Plan Execution</span>
-                <strong id="corosCoachExecution">—</strong>
-                <small>Recent scheduled running days</small>
-            </div>
-
-            <div class="coros-coach-metric">
-                <span>Recent Mileage</span>
-                <strong id="corosCoachMileage">—</strong>
-                <small>Actual / planned in COROS window</small>
-            </div>
-
-            <div class="coros-coach-metric">
-                <span>Recovery</span>
-                <strong id="corosCoachRecovery">—</strong>
-                <small>Current COROS recovery</small>
-            </div>
-
-            <div class="coros-coach-metric">
-                <span>Load Ratio</span>
-                <strong id="corosCoachLoad">—</strong>
-                <small>COROS recent load relationship</small>
-            </div>
-
-            <div class="coros-coach-metric">
-                <span>Marathon Prediction</span>
-                <strong id="corosCoachPrediction">—</strong>
-                <small>COROS current race prediction</small>
-            </div>
-
-        </div>
-
-    </section>
-
 
 <section class="panel">
 
@@ -1303,10 +1209,10 @@
 <script src="https://cdn.jsdelivr.net/npm/fit-file-parser@1.9.3/dist/fit-file-parser.min.js"></script>
 
 <script type="module" src="js/analytics.js"></script>
-<script type="module" src="js/corosAuth.js?v=20260915"></script>
-<script type="module" src="js/corosData.js?v=20260915"></script>
-<script type="module" src="js/corosPlanCompare.js?v=20260915"></script>
-<script type="module" src="js/corosCoach.js?v=20260915"></script>
+<script type="module" src="js/corosAuth.js"></script>
+<script type="module" src="js/corosData.js"></script>
+<script type="module" src="js/corosPlanCompare.js"></script>
+<script type="module" src="js/corosDiagnostic.js"></script>
 
 </body>
 
