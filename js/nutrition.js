@@ -2,7 +2,7 @@
    EddieOS Nutrition
 ========================================== */
 
-const RACE_DAY = new Date("2026-11-07");
+const RACE_DAY = new Date("2026-11-08");
 
 let currentDate = new Date();
 
@@ -116,7 +116,14 @@ function createBlankDay(){
 
         workoutTitle:"Rest Day",
 
-        workoutDescription:"No workout scheduled."
+        workoutDescription:"No workout scheduled.",
+
+        foodLog:{
+            breakfast:[],
+            lunch:[],
+            dinner:[],
+            snacks:[]
+        }
 
     };
 
@@ -303,9 +310,32 @@ function loadDay(){
 
     });
 
+    if(!nutrition.foodLog){
+
+        nutrition.foodLog = {
+            breakfast:[],
+            lunch:[],
+            dinner:[],
+            snacks:[]
+        };
+
+    }
+
+    ["breakfast","lunch","dinner","snacks"].forEach(meal=>{
+
+        if(!Array.isArray(nutrition.foodLog[meal])){
+
+            nutrition.foodLog[meal] = [];
+
+        }
+
+    });
+
     updateDate();
 
     updateDisplay();
+
+    renderAllFoodLogs();
 
 }
 
@@ -635,6 +665,485 @@ function updateSummary(){
     }
 
 }
+
+/* ==========================================
+   Food Search & Log
+========================================== */
+
+const MEALS = ["breakfast","lunch","dinner","snacks"];
+
+let lastSearchResults = {};
+let pendingFood = {};
+let searchDebounceTimers = {};
+
+function debounce(fn, delay){
+
+    let timer = null;
+
+    return (...args) => {
+
+        clearTimeout(timer);
+
+        timer = setTimeout(() => fn(...args), delay);
+
+    };
+
+}
+
+function renderFoodLog(meal){
+
+    const container = document.getElementById("foodLog-" + meal);
+
+    if(!container){
+        return;
+    }
+
+    const entries = nutrition.foodLog[meal] || [];
+
+    if(!entries.length){
+
+        container.innerHTML = "";
+        return;
+
+    }
+
+    container.innerHTML = entries.map(entry => `
+
+        <div class="food-log-item">
+
+            <div class="food-log-item-main">
+
+                <strong>${escapeHtml(entry.name)}</strong>
+
+                <span>
+
+                    ${entry.brand ? escapeHtml(entry.brand) + " · " : ""}${entry.grams}g
+
+                </span>
+
+            </div>
+
+            <div class="food-log-item-macros">
+
+                ${entry.calories} cal · ${entry.protein}p · ${entry.carbs}c · ${entry.fat}f
+
+            </div>
+
+            <button
+
+                class="food-log-remove"
+
+                data-meal="${meal}"
+
+                data-entry-id="${entry.id}"
+
+                title="Remove">
+
+                ×
+
+            </button>
+
+        </div>
+
+    `).join("");
+
+}
+
+function renderAllFoodLogs(){
+
+    MEALS.forEach(renderFoodLog);
+
+}
+
+function escapeHtml(value){
+
+    return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+
+}
+
+function addFoodToLog(meal, food, grams){
+
+    import("./foodSearch.js").then(({ scaleFood }) => {
+
+        const scaled = scaleFood(food, grams);
+
+        const entry = {
+            id: crypto.randomUUID(),
+            name: food.name,
+            brand: food.brand,
+            source: food.source,
+            grams: Math.round(grams),
+            ...scaled
+        };
+
+        nutrition.foodLog[meal].push(entry);
+
+        ["calories","protein","carbs","fat","sodium"].forEach(key => {
+
+            nutrition[key] = Math.round(
+                (nutrition[key] || 0) + entry[key]
+            );
+
+        });
+
+        saveDay();
+
+        updateDisplay();
+
+        renderFoodLog(meal);
+
+        clearFoodSearch(meal);
+
+    });
+
+}
+
+function removeFoodFromLog(meal, entryId){
+
+    const entries = nutrition.foodLog[meal] || [];
+
+    const index = entries.findIndex(e => e.id === entryId);
+
+    if(index === -1){
+        return;
+    }
+
+    const entry = entries[index];
+
+    ["calories","protein","carbs","fat","sodium"].forEach(key => {
+
+        nutrition[key] = Math.max(
+            0,
+            Math.round((nutrition[key] || 0) - (entry[key] || 0))
+        );
+
+    });
+
+    entries.splice(index, 1);
+
+    saveDay();
+
+    updateDisplay();
+
+    renderFoodLog(meal);
+
+}
+
+function clearFoodSearch(meal){
+
+    const input = document.querySelector(
+        `.food-search-input[data-meal="${meal}"]`
+    );
+
+    const results = document.querySelector(
+        `.food-search-results[data-meal="${meal}"]`
+    );
+
+    if(input){
+        input.value = "";
+    }
+
+    if(results){
+        results.innerHTML = "";
+    }
+
+    delete pendingFood[meal];
+    delete lastSearchResults[meal];
+
+}
+
+function renderSearchResults(meal, results){
+
+    const container = document.querySelector(
+        `.food-search-results[data-meal="${meal}"]`
+    );
+
+    if(!container){
+        return;
+    }
+
+    lastSearchResults[meal] = results;
+
+    if(!results.length){
+
+        container.innerHTML = `
+
+            <div class="food-search-empty">
+                No matches. Try a different search.
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    container.innerHTML = results.map((food, index) => `
+
+        <div
+            class="food-result"
+            data-meal="${meal}"
+            data-food-index="${index}">
+
+            <div class="food-result-main">
+
+                <strong>${escapeHtml(food.name)}</strong>
+
+                <span>
+                    ${food.brand ? escapeHtml(food.brand) + " · " : ""}${escapeHtml(food.source)}
+                </span>
+
+            </div>
+
+            <div class="food-result-cals">
+                ${food.per100g.calories} cal / 100g
+            </div>
+
+        </div>
+
+    `).join("");
+
+}
+
+function renderFoodConfirm(meal){
+
+    const container = document.querySelector(
+        `.food-search-results[data-meal="${meal}"]`
+    );
+
+    const food = pendingFood[meal];
+
+    if(!container || !food){
+        return;
+    }
+
+    import("./foodSearch.js").then(({ scaleFood }) => {
+
+        const grams = food._pendingGrams || food.servingGrams || 100;
+
+        const scaled = scaleFood(food, grams);
+
+        container.innerHTML = `
+
+            <div class="food-confirm">
+
+                <div class="food-confirm-name">
+                    ${escapeHtml(food.name)}
+                </div>
+
+                <div class="food-confirm-row">
+
+                    <input
+                        type="number"
+                        class="food-confirm-grams"
+                        data-meal="${meal}"
+                        min="1"
+                        step="1"
+                        value="${grams}">
+
+                    <span>g</span>
+
+                    ${food.servingDesc ? `<span class="food-confirm-serving">(${escapeHtml(food.servingDesc)})</span>` : ""}
+
+                </div>
+
+                <div
+                    class="food-confirm-preview"
+                    data-meal="${meal}">
+                    ${scaled.calories} cal · ${scaled.protein}p · ${scaled.carbs}c · ${scaled.fat}f · ${scaled.sodium}mg sodium
+                </div>
+
+                <div class="food-confirm-actions">
+
+                    <button
+                        class="food-confirm-add"
+                        data-meal="${meal}">
+                        Add to ${meal[0].toUpperCase() + meal.slice(1)}
+                    </button>
+
+                    <button
+                        class="food-confirm-cancel"
+                        data-meal="${meal}">
+                        Cancel
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+}
+
+const runSearch = debounce((meal, query) => {
+
+    if(!query.trim()){
+
+        const container = document.querySelector(
+            `.food-search-results[data-meal="${meal}"]`
+        );
+
+        if(container){
+            container.innerHTML = "";
+        }
+
+        return;
+
+    }
+
+    const container = document.querySelector(
+        `.food-search-results[data-meal="${meal}"]`
+    );
+
+    if(container){
+
+        container.innerHTML = `
+            <div class="food-search-loading">Searching…</div>
+        `;
+
+    }
+
+    import("./foodSearch.js").then(({ searchFoods }) => {
+
+        searchFoods(query).then(results => {
+
+            renderSearchResults(meal, results);
+
+        });
+
+    });
+
+}, 450);
+
+document
+    .querySelectorAll(".food-search-input")
+    .forEach(input => {
+
+        input.addEventListener("input", e => {
+
+            const meal = e.target.dataset.meal;
+
+            delete pendingFood[meal];
+
+            runSearch(meal, e.target.value);
+
+        });
+
+    });
+
+document.addEventListener("click", e => {
+
+    /* Clicking a search result -> show quantity confirm */
+
+    const resultEl = e.target.closest(".food-result");
+
+    if(resultEl){
+
+        const meal = resultEl.dataset.meal;
+        const index = Number(resultEl.dataset.foodIndex);
+        const food = (lastSearchResults[meal] || [])[index];
+
+        if(food){
+
+            pendingFood[meal] = food;
+            renderFoodConfirm(meal);
+
+        }
+
+        return;
+
+    }
+
+    /* Confirm-quantity Add button */
+
+    if(e.target.matches(".food-confirm-add")){
+
+        const meal = e.target.dataset.meal;
+
+        const gramsInput = document.querySelector(
+            `.food-confirm-grams[data-meal="${meal}"]`
+        );
+
+        const grams = Number(gramsInput?.value) || 100;
+
+        const food = pendingFood[meal];
+
+        if(food){
+            addFoodToLog(meal, food, grams);
+        }
+
+        return;
+
+    }
+
+    /* Confirm-quantity Cancel button */
+
+    if(e.target.matches(".food-confirm-cancel")){
+
+        const meal = e.target.dataset.meal;
+
+        clearFoodSearch(meal);
+
+        return;
+
+    }
+
+    /* Remove a logged food item */
+
+    if(e.target.matches(".food-log-remove")){
+
+        removeFoodFromLog(
+            e.target.dataset.meal,
+            e.target.dataset.entryId
+        );
+
+        return;
+
+    }
+
+});
+
+document.addEventListener("input", e => {
+
+    if(e.target.matches(".food-confirm-grams")){
+
+        const meal = e.target.dataset.meal;
+        const food = pendingFood[meal];
+        const grams = Number(e.target.value) || 1;
+
+        if(!food){
+            return;
+        }
+
+        food._pendingGrams = grams;
+
+        const preview = document.querySelector(
+            `.food-confirm-preview[data-meal="${meal}"]`
+        );
+
+        if(!preview){
+            return;
+        }
+
+        import("./foodSearch.js").then(({ scaleFood }) => {
+
+            const scaled = scaleFood(food, grams);
+
+            preview.textContent =
+                `${scaled.calories} cal · ${scaled.protein}p · ${scaled.carbs}c · ${scaled.fat}f · ${scaled.sodium}mg sodium`;
+
+        });
+
+    }
+
+});
 
 /* ==========================================
    Button Events
