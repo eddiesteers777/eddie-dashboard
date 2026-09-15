@@ -414,18 +414,18 @@ async function enrichActivities(
     const schema =
         detailTool.inputSchema || {};
 
+    const targets =
+        summaries.filter(isRun).slice(0, 25);
+
+    const CONCURRENCY = 5;
     const enriched = [];
 
-    for (
-        const summary
-        of summaries.filter(isRun).slice(0, 25)
-    ) {
+    async function fetchOne(summary) {
         const id =
             recordId(summary);
 
         if (!id) {
-            enriched.push(summary);
-            continue;
+            return summary;
         }
 
         const args = {};
@@ -450,13 +450,13 @@ async function enrichActivities(
                     detailTool.name
                 );
 
-            enriched.push({
+            return {
                 ...summary,
                 ...parseDetail(result),
                 _corosLabelId: id,
                 _corosSportType:
                     recordSportType(summary)
-            });
+            };
         } catch (error) {
             console.warn(
                 "COROS detail lookup failed:",
@@ -464,14 +464,35 @@ async function enrichActivities(
                 error
             );
 
-            enriched.push(summary);
+            return summary;
         }
+    }
+
+    for (
+        let start = 0;
+        start < targets.length;
+        start += CONCURRENCY
+    ) {
+        const batch =
+            targets.slice(start, start + CONCURRENCY);
+
+        const results =
+            await Promise.all(
+                batch.map(fetchOne)
+            );
+
+        enriched.push(...results);
     }
 
     return enriched;
 }
 
 async function loadRecentData() {
+    setStatus(
+        "Connecting to COROS and loading your recent data…",
+        "loading"
+    );
+
     const tools =
         await listTools();
 
