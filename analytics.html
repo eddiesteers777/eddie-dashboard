@@ -26,6 +26,9 @@
     <link
         rel="stylesheet"
         href="css/analytics.css">
+    <link rel="stylesheet" href="css/corosCoach.css">
+    <link rel="stylesheet" href="css/corosPlanCompare.css">
+    <link rel="stylesheet" href="css/corosData.css">
 
 </head>
 
@@ -144,8 +147,365 @@
 
     </section>
 <!-- ==========================================
+     COROS CONNECTION
+========================================== -->
+
+<section class="coros-connection-panel panel" id="corosConnectionPanel">
+
+    <div class="coros-connection-content">
+
+        <div class="coros-connection-copy">
+
+            <span class="coros-eyebrow">
+                DATA CONNECTION
+            </span>
+
+            <h2>
+                Connect COROS
+            </h2>
+
+            <p>
+                Bring your COROS training data into EddieOS so your analytics can eventually combine
+                real workouts, recovery, and fitness data with your Marathon training plan.
+            </p>
+
+            <div class="coros-status" id="corosConnectionStatus">
+
+                <span class="coros-status-dot"></span>
+
+                <span id="corosConnectionStatusText">
+                    Not connected
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="coros-connection-action">
+
+            <div class="coros-data-preview">
+                <span>ACTIVITY DATA</span>
+                <strong>Mileage • Pace • HR • Training Load</strong>
+            </div>
+
+            <div class="coros-data-preview">
+                <span>RECOVERY DATA</span>
+                <strong>Sleep • HRV • Resting HR</strong>
+            </div>
+
+            <button
+                type="button"
+                class="primary-btn coros-connect-btn"
+                id="connectCorosBtn">
+                Connect COROS
+            </button>
+
+            <small>
+                Your existing FIT / TCX import remains available below.
+            </small>
+
+        </div>
+
+    </div>
+
+</section>
+
+    <!-- ==========================================
+         COROS DATA
+    =========================================== -->
+
+    <section class="coros-data-panel panel" id="corosDataPanel">
+        <div class="panel-header">
+            <div>
+                <span class="coros-data-eyebrow">
+                    COROS LIVE DATA
+                </span>
+                <h2>Training Snapshot</h2>
+                <p class="coros-data-subtitle">
+                    EddieOS is reading your recent COROS training,
+                    fitness, and recovery data.
+                </p>
+            </div>
+
+            <div class="coros-data-actions">
+                <span id="corosDataLastSync">Not synced yet</span>
+                <button id="refreshCorosDataBtn" class="secondary-btn">
+                    Refresh COROS
+                </button>
+            </div>
+        </div>
+
+        <div id="corosDataStatus" class="coros-data-status">
+            Connect COROS above to load live data.
+        </div>
+
+        <div class="coros-data-grid">
+            <div class="coros-data-card">
+                <span>Recent Activities</span>
+                <strong id="corosActivityCount">—</strong>
+                <small id="corosActivitySummary">Last 28 days</small>
+            </div>
+
+            <div class="coros-data-card">
+                <span>28-Day Mileage</span>
+                <strong id="corosMileage">—</strong>
+                <small>Running distance</small>
+            </div>
+
+            <div class="coros-data-card">
+                <span>Training Load</span>
+                <strong id="corosTrainingLoad">—</strong>
+                <small id="corosTrainingLoadMeta">Recent COROS load</small>
+            </div>
+
+            <div class="coros-data-card">
+                <span>Recovery</span>
+                <strong id="corosRecovery">—</strong>
+                <small id="corosRecoveryMeta">Current status</small>
+            </div>
+
+            <div class="coros-data-card">
+                <span>VO₂ Max</span>
+                <strong id="corosVo2Max">—</strong>
+                <small id="corosVo2Meta">COROS fitness assessment</small>
+            </div>
+
+            <div class="coros-data-card">
+                <span>Marathon Prediction</span>
+                <strong id="corosMarathonPrediction">—</strong>
+                <small id="corosPredictionMeta">COROS race prediction</small>
+            </div>
+        </div>
+
+        <div class="coros-recent-activities">
+            <div class="panel-header">
+                <div>
+                    <h3>Recent COROS Runs</h3>
+                </div>
+            </div>
+
+            <div id="corosRecentActivities" class="coros-activity-list">
+                <div class="coros-empty-state">
+                    Connect COROS to populate recent activities.
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+<!-- ==========================================
      Import Activities
 ========================================== -->
+
+
+    <!-- ==========================================
+         COROS vs MARATHON PLAN
+    =========================================== -->
+
+    <section class="coros-plan-compare-panel panel" id="corosPlanComparePanel">
+
+        <div class="panel-header">
+            <div>
+                <span class="coros-data-eyebrow">
+                    PLAN EXECUTION
+                </span>
+
+                <h2>
+                    COROS vs Marathon Plan
+                </h2>
+
+                <p class="coros-data-subtitle">
+                    EddieOS compares your completed COROS workouts with the
+                    protected Marathon schedule and its prescribed pace ranges.
+                </p>
+            </div>
+
+            <button
+                id="refreshCorosPlanComparisonBtn"
+                class="secondary-btn">
+                Recheck Plan
+            </button>
+        </div>
+
+        <div
+            id="corosPlanCompareStatus"
+            class="coros-plan-compare-status">
+            Waiting for COROS data.
+        </div>
+
+        <div class="coros-plan-compare-grid">
+
+            <div class="coros-plan-card">
+                <span>Workout Execution</span>
+                <strong id="corosPlanExecution">—</strong>
+                <small>Planned running days completed</small>
+            </div>
+
+            <div class="coros-plan-card">
+                <span>Plan Mileage</span>
+                <strong id="corosPlanMileage">—</strong>
+                <small id="corosPlanMileagePct">Actual vs planned</small>
+            </div>
+
+            <div class="coros-plan-card">
+                <span>Long Runs</span>
+                <strong id="corosPlanLongRuns">—</strong>
+                <small>Completed vs scheduled</small>
+            </div>
+
+            <div class="coros-plan-card">
+                <span>Quality Sessions</span>
+                <strong id="corosPlanQuality">—</strong>
+                <small>Tempo • MP • Threshold • Intervals</small>
+            </div>
+
+            <div class="coros-plan-card">
+                <span>Pace Compliance</span>
+                <strong id="corosPlanPace">—</strong>
+                <small>Matched pace-range sessions</small>
+            </div>
+
+            <div class="coros-plan-card">
+                <span>3:05 Pace</span>
+                <strong>6:58–7:05</strong>
+                <small id="corosPlanMpMeta">Target Marathon Pace</small>
+            </div>
+
+        </div>
+
+        <div class="coros-plan-goal">
+            <span>3:05 Goal Alignment</span>
+
+            <p id="corosPlanGoalAlignment">
+                Waiting for enough COROS workout data to compare your execution
+                with the 3:05 plan.
+            </p>
+        </div>
+
+        <div class="coros-plan-matches">
+            <h3>Recent Plan Matches</h3>
+
+            <div
+                id="corosPlanMatches"
+                class="coros-plan-match-list">
+                <div class="coros-empty-state">
+                    Connect COROS and refresh the data snapshot to compare your
+                    actual workouts against the Marathon plan.
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ==========================================
+         COROS COACH ASSESSMENT
+    =========================================== -->
+
+    <section class="coros-coach-panel panel" id="corosCoachPanel">
+
+        <div class="panel-header">
+            <div>
+                <span class="coros-data-eyebrow">
+                    EDDIEOS COACH
+                </span>
+
+                <h2>
+                    3:05 Readiness Assessment
+                </h2>
+
+                <p class="coros-data-subtitle">
+                    A transparent EddieOS coaching signal using recent plan
+                    execution, COROS recovery, training load, and fitness data.
+                </p>
+            </div>
+        </div>
+
+        <div class="coros-coach-top">
+
+            <div class="coros-coach-score-card">
+                <div
+                    id="corosCoachScore"
+                    class="coros-coach-score">
+                    —
+                </div>
+
+                <div class="coros-coach-score-label">
+                    EddieOS Score
+                </div>
+
+                <div
+                    id="corosCoachHeadline"
+                    class="coros-coach-headline">
+                    Awaiting Data
+                </div>
+            </div>
+
+            <div class="coros-coach-main">
+
+                <h3>
+                    What the data says
+                </h3>
+
+                <p>
+                    EddieOS weighs the signals below together instead of treating
+                    any single COROS metric as proof that a 3:05 marathon is
+                    guaranteed.
+                </p>
+
+                <div
+                    id="corosCoachNotes"
+                    class="coros-coach-notes">
+                    <div class="coros-coach-note">
+                        Connect COROS and refresh your data to generate the
+                        assessment.
+                    </div>
+                </div>
+
+                <div
+                    id="corosCoachUpdated"
+                    class="coros-coach-updated">
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="coros-coach-metrics">
+
+            <div class="coros-coach-metric">
+                <span>Plan Execution</span>
+                <strong id="corosCoachExecution">—</strong>
+                <small>Recent scheduled running days</small>
+            </div>
+
+            <div class="coros-coach-metric">
+                <span>Recent Mileage</span>
+                <strong id="corosCoachMileage">—</strong>
+                <small>Actual / planned in COROS window</small>
+            </div>
+
+            <div class="coros-coach-metric">
+                <span>Recovery</span>
+                <strong id="corosCoachRecovery">—</strong>
+                <small>Current COROS recovery</small>
+            </div>
+
+            <div class="coros-coach-metric">
+                <span>Load Ratio</span>
+                <strong id="corosCoachLoad">—</strong>
+                <small>COROS recent load relationship</small>
+            </div>
+
+            <div class="coros-coach-metric">
+                <span>Marathon Prediction</span>
+                <strong id="corosCoachPrediction">—</strong>
+                <small>COROS current race prediction</small>
+            </div>
+
+        </div>
+
+    </section>
+
 
 <section class="panel">
 
@@ -943,6 +1303,10 @@
 <script src="https://cdn.jsdelivr.net/npm/fit-file-parser@1.9.3/dist/fit-file-parser.min.js"></script>
 
 <script type="module" src="js/analytics.js"></script>
+<script type="module" src="js/corosAuth.js"></script>
+<script type="module" src="js/corosData.js">
+<script type="module" src="js/corosPlanCompare.js">
+<script type="module" src="js/corosCoach.js"></script></script></script>
 
 </body>
 
