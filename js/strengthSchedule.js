@@ -957,6 +957,14 @@ function renderMyWorkouts() {
 
                             <button
                                 type="button"
+                                class="strength-row-btn"
+                                data-start-my-workout="${day.id}"
+                            >
+                                ▶ Start
+                            </button>
+
+                            <button
+                                type="button"
                                 class="strength-row-btn primary"
                                 data-schedule-my-workout="${day.id}"
                             >
@@ -1227,6 +1235,27 @@ function init() {
                                 dayId:
                                     target.dataset
                                         .editMyWorkout
+                            }
+                        }
+                    )
+                );
+
+                return;
+            }
+
+            if (
+                target.matches(
+                    "[data-start-my-workout]"
+                )
+            ) {
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "eddieos:strength-start-workout",
+                        {
+                            detail: {
+                                dayId:
+                                    target.dataset
+                                        .startMyWorkout
                             }
                         }
                     )
