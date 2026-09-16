@@ -982,7 +982,7 @@ function renderFoodConfirm(meal){
 
 }
 
-const runSearch = debounce((meal, query) => {
+function performSearch(meal, query){
 
     if(!query.trim()){
 
@@ -1020,7 +1020,9 @@ const runSearch = debounce((meal, query) => {
 
     });
 
-}, 450);
+}
+
+const runSearch = debounce(performSearch, 450);
 
 document
     .querySelectorAll(".food-search-input")
@@ -1033,6 +1035,37 @@ document
             delete pendingFood[meal];
 
             runSearch(meal, e.target.value);
+
+        });
+
+    });
+
+document
+    .querySelectorAll(".food-scan-btn")
+    .forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const meal = button.dataset.meal;
+
+            import("./barcodeScanner.js").then(({ openBarcodeScanner }) => {
+
+                openBarcodeScanner(code => {
+
+                    const input = document.querySelector(
+                        `.food-search-input[data-meal="${meal}"]`
+                    );
+
+                    if (input) {
+                        input.value = code;
+                    }
+
+                    delete pendingFood[meal];
+                    performSearch(meal, code);
+
+                });
+
+            });
 
         });
 
