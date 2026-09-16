@@ -9,11 +9,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0">
 
-    <title>
-
-        Strength | EddieOS
-
-    </title>
+    <title>Strength | EddieOS</title>
 
     <link
         rel="stylesheet"
@@ -27,11 +23,7 @@
 
 <body>
 
-    <!-- Header -->
-
     <div id="header"></div>
-
-    <!-- Page -->
 
     <main class="strength-page">
 
@@ -41,7 +33,9 @@
 
                 <h1>Strength</h1>
 
-                <p id="strengthWeekContext" class="strength-week-context">
+                <p
+                    id="strengthWeekContext"
+                    class="strength-week-context">
                     Loading this week's phase…
                 </p>
 
@@ -49,8 +43,15 @@
 
             <div class="strength-hero-stat">
 
-                <span id="strengthVolumeValue" class="strength-hero-number">0</span>
-                <span class="strength-hero-unit">lb this week</span>
+                <span
+                    id="strengthVolumeValue"
+                    class="strength-hero-number">
+                    0
+                </span>
+
+                <span class="strength-hero-unit">
+                    lb this week
+                </span>
 
             </div>
 
@@ -58,7 +59,10 @@
 
         <section class="strength-day-bar">
 
-            <div id="strengthDayTabs" class="strength-day-tabs"></div>
+            <div
+                id="strengthDayTabs"
+                class="strength-day-tabs">
+            </div>
 
             <button
                 type="button"
@@ -69,7 +73,9 @@
 
         </section>
 
-        <section id="strengthEmptyState" class="strength-empty-state">
+        <section
+            id="strengthEmptyState"
+            class="strength-empty-state">
 
             <h2>No lifting days yet</h2>
 
@@ -105,13 +111,18 @@
 
         </section>
 
-        <section id="strengthDayContent" class="strength-day-content"></section>
+        <section
+            id="strengthDayContent"
+            class="strength-day-content">
+        </section>
 
     </main>
 
     <!-- Exercise Search Modal -->
 
-    <div class="strength-search-overlay" id="exerciseSearchOverlay">
+    <div
+        class="strength-search-overlay"
+        id="exerciseSearchOverlay">
 
         <div class="strength-search-modal">
 
@@ -140,7 +151,66 @@
 
                 <div
                     id="exerciseSearchResults"
-                    class="strength-search-results"></div>
+                    class="strength-search-results">
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Group Builder -->
+
+    <div
+        class="strength-group-overlay"
+        id="strengthGroupOverlay">
+
+        <div class="strength-group-modal">
+
+            <div class="strength-group-modal-header">
+
+                <h3 id="strengthGroupModalTitle">
+                    Create Superset
+                </h3>
+
+                <button
+                    type="button"
+                    class="strength-search-close"
+                    id="strengthGroupClose">
+                    ×
+                </button>
+
+            </div>
+
+            <div class="strength-group-modal-body">
+
+                <p class="strength-group-modal-help">
+                    Select two or more exercises. EddieOS keeps the current
+                    exercise order when it creates the group.
+                </p>
+
+                <div
+                    id="strengthGroupExerciseList">
+                </div>
+
+            </div>
+
+            <div class="strength-group-modal-footer">
+
+                <button
+                    type="button"
+                    id="strengthGroupCancel"
+                    class="strength-template-btn strength-template-btn-outline">
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    id="strengthGroupSave"
+                    class="strength-template-btn">
+                    Create Group
+                </button>
 
             </div>
 
@@ -150,11 +220,15 @@
 
     <!-- Rename Day Modal -->
 
-    <div class="strength-rename-overlay" id="renameDayOverlay">
+    <div
+        class="strength-rename-overlay"
+        id="renameDayOverlay">
 
         <div class="strength-rename-modal">
 
-            <span class="strength-search-title">Name this day</span>
+            <span class="strength-search-title">
+                Name this day
+            </span>
 
             <input
                 type="text"
@@ -184,9 +258,48 @@
 
     </div>
 
+    <!-- Rest Timer -->
+
+    <div
+        id="strengthRestTimer"
+        class="strength-rest-timer">
+
+        <div
+            id="strengthRestTimerTitle"
+            class="strength-rest-timer-title">
+            Rest
+        </div>
+
+        <div
+            id="strengthRestTimerValue"
+            class="strength-rest-timer-value">
+            1:30
+        </div>
+
+        <div class="strength-rest-timer-actions">
+
+            <button
+                type="button"
+                id="strengthRestTimerSkip">
+                Skip
+            </button>
+
+            <button
+                type="button"
+                id="strengthRestTimerClose">
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
     <script src="js/loadHeader.js"></script>
 
-    <script type="module" src="js/strength.js"></script>
+    <script
+        type="module"
+        src="js/strength.js">
+    </script>
 
 </body>
 
