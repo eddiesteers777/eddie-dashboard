@@ -1441,3 +1441,753 @@
     border-color:var(--primary);
     box-shadow:0 0 0 2px rgba(78,168,255,.12);
 }
+
+/* ==========================================
+   Strength v4 — Compact Workspace
+========================================== */
+
+.strength-workspace{
+    width:100%;
+}
+
+.strength-workspace-nav{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr)) auto;
+    gap:8px;
+    margin-bottom:14px;
+}
+
+.strength-workspace-tab{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:3px;
+    min-width:0;
+    padding:11px 13px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    color:var(--text-secondary);
+    cursor:pointer;
+    text-align:left;
+    font:inherit;
+}
+
+.strength-workspace-tab span{
+    color:inherit;
+    font-size:12px;
+    font-weight:800;
+}
+
+.strength-workspace-tab small{
+    overflow:hidden;
+    width:100%;
+    color:var(--muted);
+    font-size:9px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.strength-workspace-tab.active{
+    border-color:var(--primary);
+    background:rgba(78,168,255,.07);
+    color:var(--primary);
+}
+
+.strength-workspace-create{
+    padding:0 16px;
+    border:1px solid var(--primary);
+    border-radius:12px;
+    background:var(--primary);
+    color:#05131f;
+    cursor:pointer;
+    font:inherit;
+    font-size:11px;
+    font-weight:800;
+    white-space:nowrap;
+}
+
+.strength-workspace-panel{
+    display:none;
+}
+
+.strength-workspace-panel.active{
+    display:block;
+}
+
+/* -------------------------
+   Calendar
+------------------------- */
+
+.strength-schedule-overview{
+    display:grid;
+    grid-template-columns:minmax(0,2fr) minmax(290px,1fr);
+    gap:14px;
+}
+
+.strength-calendar-shell,
+.strength-agenda-panel,
+.strength-upcoming-strip,
+.strength-myworkouts-panel{
+    padding:18px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:var(--surface);
+}
+
+.strength-calendar-header,
+.strength-agenda-header,
+.strength-upcoming-strip,
+.strength-myworkouts-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.strength-calendar-header h2{
+    font-size:22px;
+}
+
+.strength-calendar-actions{
+    display:flex;
+    gap:6px;
+}
+
+.strength-calendar-btn{
+    width:34px;
+    height:34px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    cursor:pointer;
+    font:inherit;
+    font-size:11px;
+    font-weight:700;
+}
+
+.strength-calendar-btn:hover{
+    border-color:var(--primary);
+    color:var(--primary);
+}
+
+.strength-calendar-actions .strength-calendar-btn:first-child{
+    width:auto;
+    padding:0 10px;
+}
+
+.strength-calendar-weekdays,
+.strength-calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(0,1fr));
+    gap:5px;
+}
+
+.strength-calendar-weekdays{
+    margin-top:16px;
+    padding-bottom:4px;
+}
+
+.strength-calendar-weekdays span{
+    color:var(--muted);
+    font-size:8px;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-align:center;
+    text-transform:uppercase;
+}
+
+.strength-calendar-day{
+    position:relative;
+    min-height:74px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:space-between;
+    padding:8px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(255,255,255,.012);
+    color:var(--text-secondary);
+    cursor:pointer;
+    text-align:left;
+    font:inherit;
+}
+
+.strength-calendar-day:hover{
+    border-color:rgba(78,168,255,.35);
+}
+
+.strength-calendar-day.outside{
+    border-color:transparent;
+    background:transparent;
+    cursor:default;
+}
+
+.strength-calendar-day.selected{
+    border-color:var(--primary);
+    background:rgba(78,168,255,.07);
+}
+
+.strength-calendar-day.today .strength-calendar-number{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:23px;
+    height:23px;
+    border-radius:50%;
+    background:var(--primary);
+    color:#05131f;
+}
+
+.strength-calendar-number{
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:800;
+}
+
+.strength-calendar-workouts{
+    display:flex;
+    align-items:center;
+    gap:3px;
+    min-height:8px;
+}
+
+.strength-calendar-workouts i{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--primary);
+}
+
+.strength-calendar-workouts i.completed{
+    background:var(--green);
+}
+
+.strength-calendar-workouts b{
+    color:var(--muted);
+    font-size:7px;
+}
+
+/* -------------------------
+   Agenda
+------------------------- */
+
+.strength-agenda-header h3{
+    margin-top:3px;
+    color:var(--text);
+    font-size:16px;
+    line-height:1.25;
+}
+
+.strength-agenda-add-btn{
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:transparent;
+    color:var(--primary);
+    cursor:pointer;
+    font:inherit;
+    font-size:10px;
+    font-weight:800;
+    white-space:nowrap;
+}
+
+.strength-agenda-list{
+    display:grid;
+    gap:8px;
+    margin-top:15px;
+}
+
+.strength-agenda-item{
+    display:grid;
+    grid-template-columns:48px minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    padding:11px;
+    border:1px solid var(--border);
+    border-radius:11px;
+    background:rgba(255,255,255,.018);
+}
+
+.strength-agenda-item.completed{
+    opacity:.55;
+}
+
+.strength-agenda-time{
+    color:var(--primary);
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:800;
+}
+
+.strength-agenda-main{
+    min-width:0;
+}
+
+.strength-agenda-main strong{
+    display:block;
+    overflow:hidden;
+    color:var(--text);
+    font-size:11px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.strength-agenda-main span{
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:9px;
+    line-height:1.35;
+}
+
+.strength-agenda-actions{
+    display:flex;
+    gap:4px;
+}
+
+.strength-agenda-icon{
+    width:25px;
+    height:25px;
+    border:1px solid var(--border);
+    border-radius:7px;
+    background:transparent;
+    color:var(--text-secondary);
+    cursor:pointer;
+}
+
+.strength-agenda-icon:hover{
+    border-color:var(--primary);
+    color:var(--primary);
+}
+
+.strength-agenda-empty,
+.strength-upcoming-empty,
+.strength-myworkouts-empty{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    padding:20px 8px;
+    color:var(--muted);
+    text-align:center;
+    font-size:10px;
+}
+
+.strength-agenda-empty strong,
+.strength-myworkouts-empty strong{
+    color:var(--text-secondary);
+    font-size:11px;
+}
+
+/* -------------------------
+   Upcoming
+------------------------- */
+
+.strength-upcoming-strip{
+    margin-top:14px;
+}
+
+.strength-upcoming-strip h3{
+    margin-top:3px;
+    font-size:16px;
+}
+
+.strength-upcoming-list{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:7px;
+    flex:1;
+}
+
+.strength-upcoming-item{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:3px;
+    min-width:0;
+    padding:10px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(255,255,255,.018);
+    color:var(--text-secondary);
+    cursor:pointer;
+    text-align:left;
+    font:inherit;
+}
+
+.strength-upcoming-item:hover{
+    border-color:var(--primary);
+}
+
+.strength-upcoming-item span{
+    color:var(--primary);
+    font-size:8px;
+    font-weight:800;
+}
+
+.strength-upcoming-item strong{
+    width:100%;
+    overflow:hidden;
+    color:var(--text);
+    font-size:10px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.strength-upcoming-item small{
+    color:var(--muted);
+    font-size:8px;
+}
+
+/* -------------------------
+   My workouts
+------------------------- */
+
+.strength-myworkouts-header h2{
+    font-size:21px;
+}
+
+.strength-myworkouts-header p{
+    max-width:58ch;
+    margin-top:6px;
+    color:var(--text-secondary);
+    font-size:11px;
+    line-height:1.5;
+}
+
+.strength-myworkouts-list{
+    display:grid;
+    gap:8px;
+    margin-top:14px;
+}
+
+.strength-myworkout-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:13px 15px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:rgba(255,255,255,.018);
+}
+
+.strength-myworkout-main{
+    min-width:0;
+}
+
+.strength-myworkout-title{
+    color:var(--text);
+    font-size:12px;
+    font-weight:800;
+}
+
+.strength-myworkout-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:4px;
+    color:var(--muted);
+    font-size:9px;
+}
+
+.strength-myworkout-actions{
+    display:flex;
+    gap:6px;
+}
+
+.strength-row-btn{
+    padding:7px 9px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:transparent;
+    color:var(--text-secondary);
+    cursor:pointer;
+    font:inherit;
+    font-size:9px;
+    font-weight:800;
+}
+
+.strength-row-btn.primary{
+    border-color:var(--primary);
+    color:var(--primary);
+    background:rgba(78,168,255,.05);
+}
+
+.strength-row-btn:hover{
+    border-color:var(--primary);
+    color:var(--primary);
+}
+
+/* -------------------------
+   Builder overlay
+------------------------- */
+
+.strength-editor-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:240;
+    padding:18px;
+    background:rgba(4,8,16,.78);
+    backdrop-filter:blur(7px);
+}
+
+.strength-editor-overlay.open{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.strength-editor-modal{
+    width:min(1150px,100%);
+    height:min(92vh,100%);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    border:1px solid var(--border);
+    border-radius:22px;
+    background:linear-gradient(160deg,rgba(24,38,60,.99),rgba(14,23,38,.99));
+    box-shadow:0 35px 90px rgba(0,0,0,.55);
+}
+
+.strength-editor-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    padding:18px 21px;
+    border-bottom:1px solid var(--border);
+}
+
+.strength-editor-header h2{
+    margin-top:3px;
+    font-size:21px;
+}
+
+.strength-editor-header p{
+    max-width:62ch;
+    margin-top:5px;
+    color:var(--text-secondary);
+    font-size:10px;
+    line-height:1.45;
+}
+
+.strength-editor-header-actions{
+    display:flex;
+    gap:7px;
+    flex-shrink:0;
+}
+
+.strength-editor-save,
+.strength-editor-close{
+    border-radius:9px;
+    cursor:pointer;
+    font:inherit;
+    font-weight:800;
+}
+
+.strength-editor-save{
+    padding:8px 11px;
+    border:1px solid var(--primary);
+    background:rgba(78,168,255,.06);
+    color:var(--primary);
+    font-size:10px;
+}
+
+.strength-editor-close{
+    width:32px;
+    height:32px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text-secondary);
+    font-size:16px;
+}
+
+.strength-editor-body{
+    flex:1;
+    overflow-y:auto;
+    padding:15px;
+}
+
+.strength-editor-workout-tabs .strength-day-content{
+    min-height:0;
+}
+
+/* -------------------------
+   Schedule modal
+------------------------- */
+
+.strength-schedule-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:250;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(4,8,16,.74);
+    backdrop-filter:blur(6px);
+}
+
+.strength-schedule-overlay.open{
+    display:flex;
+}
+
+.strength-schedule-modal{
+    width:min(520px,100%);
+    border:1px solid var(--border);
+    border-radius:20px;
+    background:linear-gradient(160deg,rgba(24,38,60,.99),rgba(14,23,38,.99));
+    box-shadow:0 30px 70px rgba(0,0,0,.52);
+}
+
+.strength-schedule-modal-header{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:20px 22px;
+    border-bottom:1px solid var(--border);
+}
+
+.strength-schedule-modal-header h3{
+    margin-top:3px;
+    font-size:19px;
+}
+
+.strength-schedule-modal-header p{
+    margin-top:5px;
+    color:var(--text-secondary);
+    font-size:10px;
+    line-height:1.45;
+}
+
+.strength-schedule-form{
+    display:grid;
+    gap:13px;
+    padding:18px 22px 20px;
+}
+
+.strength-schedule-form label{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.strength-schedule-form label > span{
+    color:var(--muted);
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+
+.strength-schedule-form input,
+.strength-schedule-form select,
+.strength-schedule-form textarea{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--surface-light);
+    color:var(--text);
+    font:inherit;
+    font-size:11px;
+    outline:none;
+}
+
+.strength-schedule-form textarea{
+    resize:vertical;
+}
+
+.strength-schedule-form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+@media(max-width:850px){
+    .strength-workspace-nav{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .strength-workspace-create{
+        grid-column:1/-1;
+        min-height:40px;
+    }
+
+    .strength-schedule-overview{
+        grid-template-columns:1fr;
+    }
+
+    .strength-upcoming-list{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:640px){
+    .strength-workspace-nav{
+        grid-template-columns:1fr;
+    }
+
+    .strength-calendar-shell,
+    .strength-agenda-panel,
+    .strength-upcoming-strip,
+    .strength-myworkouts-panel{
+        padding:14px;
+        border-radius:15px;
+    }
+
+    .strength-calendar-day{
+        min-height:56px;
+        padding:6px;
+    }
+
+    .strength-calendar-day.outside{
+        min-height:56px;
+    }
+
+    .strength-upcoming-list{
+        grid-template-columns:1fr;
+    }
+
+    .strength-myworkout-row{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .strength-myworkout-actions{
+        width:100%;
+    }
+
+    .strength-row-btn{
+        flex:1;
+    }
+
+    .strength-editor-overlay{
+        padding:8px;
+    }
+
+    .strength-editor-modal{
+        height:96vh;
+        border-radius:17px;
+    }
+
+    .strength-editor-header{
+        padding:14px;
+    }
+
+    .strength-editor-header-actions{
+        flex-direction:column;
+    }
+
+    .strength-editor-body{
+        padding:10px;
+    }
+
+    .strength-schedule-form-grid{
+        grid-template-columns:1fr;
+    }
+}
