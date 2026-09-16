@@ -1,0 +1,796 @@
+/* ==========================================
+   EddieOS Strength
+========================================== */
+
+.strength-page{
+
+    max-width:1100px;
+    margin:0 auto;
+    padding:32px 24px 80px;
+
+}
+
+/* ==========================
+   Hero
+========================== */
+
+.strength-hero{
+
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+
+}
+
+.strength-hero-text h1{
+
+    font-family:var(--font-display);
+    font-size:56px;
+    letter-spacing:.5px;
+    line-height:1;
+    margin-bottom:10px;
+
+}
+
+.strength-week-context{
+
+    color:var(--text-secondary);
+    font-size:15px;
+    max-width:52ch;
+    line-height:1.6;
+
+}
+
+.strength-hero-stat{
+
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    flex-shrink:0;
+
+}
+
+.strength-hero-number{
+
+    font-family:var(--font-display);
+    font-size:64px;
+    line-height:1;
+    color:var(--primary);
+
+}
+
+.strength-hero-unit{
+
+    color:var(--text-secondary);
+    font-size:14px;
+
+}
+
+/* ==========================
+   Day tabs
+========================== */
+
+.strength-day-bar{
+
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+
+}
+
+.strength-day-tabs{
+
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    flex:1;
+
+}
+
+.strength-day-tab{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:100px;
+    padding:9px 8px 9px 18px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:.15s;
+
+}
+
+.strength-day-tab:hover{
+
+    border-color:var(--primary);
+    color:var(--text);
+
+}
+
+.strength-day-tab.active{
+
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#05131f;
+
+}
+
+.strength-day-tab-remove{
+
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,.12);
+    color:inherit;
+    font-size:13px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:.7;
+    transition:.15s;
+
+}
+
+.strength-day-tab.active .strength-day-tab-remove{
+
+    background:rgba(5,19,31,.18);
+
+}
+
+.strength-day-tab-remove:hover{
+
+    opacity:1;
+    background:rgba(239,68,68,.35);
+
+}
+
+.strength-add-day-btn{
+
+    background:var(--surface-light);
+    border:1px dashed var(--border);
+    border-radius:100px;
+    padding:9px 18px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:.15s;
+    white-space:nowrap;
+
+}
+
+.strength-add-day-btn:hover{
+
+    border-color:var(--primary);
+    color:var(--primary);
+    border-style:solid;
+
+}
+
+/* ==========================
+   Empty state
+========================== */
+
+.strength-empty-state{
+
+    display:none;
+    text-align:center;
+    padding:60px 24px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+
+}
+
+.strength-empty-state.visible{
+
+    display:block;
+
+}
+
+.strength-empty-state h2{
+
+    font-size:22px;
+    margin-bottom:10px;
+
+}
+
+.strength-empty-state p{
+
+    color:var(--text-secondary);
+    max-width:46ch;
+    margin:0 auto 26px;
+    line-height:1.6;
+
+}
+
+.strength-empty-actions{
+
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+
+}
+
+.strength-template-btn{
+
+    background:var(--primary);
+    color:#05131f;
+    border:none;
+    border-radius:14px;
+    padding:12px 20px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+
+}
+
+.strength-template-btn:hover{
+
+    background:var(--primary-light);
+
+}
+
+.strength-template-btn-outline{
+
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+
+}
+
+.strength-template-btn-outline:hover{
+
+    border-color:var(--text-secondary);
+    color:var(--text);
+    background:transparent;
+
+}
+
+/* ==========================
+   Day content / exercise blocks
+========================== */
+
+.strength-day-content{
+
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+
+}
+
+.strength-exercise-block{
+
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--primary);
+    border-radius:16px;
+    padding:20px 24px 22px;
+
+}
+
+.strength-exercise-header{
+
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:16px;
+
+}
+
+.strength-exercise-image{
+
+    width:48px;
+    height:48px;
+    border-radius:10px;
+    object-fit:cover;
+    background:var(--surface-light);
+    flex-shrink:0;
+
+}
+
+.strength-exercise-info{
+
+    flex:1;
+    min-width:0;
+
+}
+
+.strength-exercise-name{
+
+    font-size:18px;
+    font-weight:700;
+    margin-bottom:2px;
+
+}
+
+.strength-exercise-tags{
+
+    color:var(--text-secondary);
+    font-size:12.5px;
+    text-transform:capitalize;
+
+}
+
+.strength-exercise-remove{
+
+    background:transparent;
+    border:none;
+    color:var(--text-secondary);
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    padding:4px 8px;
+    border-radius:8px;
+    transition:.15s;
+    flex-shrink:0;
+
+}
+
+.strength-exercise-remove:hover{
+
+    color:var(--red);
+    background:rgba(239,68,68,.12);
+
+}
+
+/* Set table -- reads as real tabular data, not another
+   nested card. */
+
+.strength-set-table{
+
+    width:100%;
+    border-collapse:collapse;
+
+}
+
+.strength-set-table thead th{
+
+    text-align:left;
+    font-size:11px;
+    letter-spacing:.04em;
+    color:var(--muted);
+    font-weight:600;
+    padding:0 10px 8px;
+    border-bottom:1px solid var(--border);
+
+}
+
+.strength-set-table thead th:first-child{
+
+    padding-left:0;
+
+}
+
+.strength-set-table tbody td{
+
+    padding:8px 10px;
+    border-bottom:1px solid var(--border);
+
+}
+
+.strength-set-table tbody tr:last-child td{
+
+    border-bottom:none;
+
+}
+
+.strength-set-table tbody td:first-child{
+
+    padding-left:0;
+
+}
+
+.strength-set-index{
+
+    font-family:var(--font-mono);
+    color:var(--text-secondary);
+    font-size:14px;
+    width:28px;
+
+}
+
+.strength-set-input{
+
+    width:64px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:6px 8px;
+    font-family:var(--font-mono);
+    font-size:14px;
+    outline:none;
+    transition:.15s;
+
+}
+
+.strength-set-input:focus{
+
+    border-color:var(--primary);
+}
+
+.strength-set-unit{
+
+    color:var(--muted);
+    font-size:12px;
+    margin-left:6px;
+
+}
+
+.strength-set-done{
+
+    width:24px;
+    height:24px;
+    border-radius:7px;
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:transparent;
+    transition:.15s;
+
+}
+
+.strength-set-done.checked{
+
+    background:var(--green);
+    border-color:var(--green);
+    color:#05130a;
+
+}
+
+.strength-set-remove{
+
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:16px;
+    cursor:pointer;
+    padding:4px 6px;
+    border-radius:6px;
+    transition:.15s;
+
+}
+
+.strength-set-remove:hover{
+
+    color:var(--red);
+
+}
+
+.strength-add-set-btn{
+
+    margin-top:12px;
+    background:transparent;
+    border:1px dashed var(--border);
+    border-radius:10px;
+    padding:8px 14px;
+    color:var(--text-secondary);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+
+}
+
+.strength-add-set-btn:hover{
+
+    border-color:var(--primary);
+    color:var(--primary);
+
+}
+
+.strength-add-exercise-btn{
+
+    background:var(--surface-light);
+    border:1px dashed var(--border);
+    border-radius:16px;
+    padding:20px;
+    color:var(--text-secondary);
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+    text-align:center;
+
+}
+
+.strength-add-exercise-btn:hover{
+
+    border-color:var(--primary);
+    color:var(--primary);
+    background:rgba(78,168,255,.06);
+
+}
+
+/* ==========================
+   Exercise search modal
+========================== */
+
+.strength-search-overlay{
+
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(4,8,16,.7);
+    backdrop-filter:blur(6px);
+    z-index:200;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+
+}
+
+.strength-search-overlay.open{
+
+    display:flex;
+
+}
+
+.strength-search-modal{
+
+    background:
+        linear-gradient(
+            160deg,
+            rgba(24,38,60,.98),
+            rgba(14,23,38,.98)
+        );
+    border:1px solid var(--border);
+    border-radius:24px;
+    max-width:560px;
+    width:100%;
+    max-height:82vh;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
+    animation:strengthFadeUp .25s ease;
+
+}
+
+.strength-search-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 24px;
+    border-bottom:1px solid var(--border);
+
+}
+
+.strength-search-title{
+
+    font-size:1.1rem;
+    font-weight:800;
+
+}
+
+.strength-search-close{
+
+    appearance:none;
+    border:none;
+    background:rgba(255,255,255,.06);
+    color:var(--text-secondary);
+    width:32px;
+    height:32px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:1rem;
+    transition:.2s;
+
+}
+
+.strength-search-close:hover{
+
+    background:rgba(239,68,68,.2);
+    color:#fca5a5;
+
+}
+
+.strength-search-body{
+
+    padding:18px 24px 24px;
+    overflow-y:auto;
+
+}
+
+.strength-search-input{
+
+    width:100%;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:14px;
+    padding:12px 16px;
+    font-size:14px;
+    font-family:inherit;
+    outline:none;
+    transition:.2s;
+    margin-bottom:14px;
+
+}
+
+.strength-search-input:focus{
+
+    box-shadow:
+        0 0 0 3px
+        rgba(78,168,255,.30);
+
+}
+
+.strength-search-loading,
+.strength-search-empty{
+
+    padding:20px 4px;
+    color:var(--text-secondary);
+    font-size:13px;
+    text-align:center;
+
+}
+
+.strength-result{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-bottom:8px;
+    cursor:pointer;
+    transition:.15s;
+
+}
+
+.strength-result:hover{
+
+    border-color:var(--primary);
+    background:rgba(78,168,255,.08);
+
+}
+
+.strength-result-image{
+
+    width:40px;
+    height:40px;
+    border-radius:8px;
+    object-fit:cover;
+    background:var(--surface-light);
+    flex-shrink:0;
+
+}
+
+.strength-result-info{
+
+    min-width:0;
+
+}
+
+.strength-result-info strong{
+
+    display:block;
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+}
+
+.strength-result-info span{
+
+    font-size:12px;
+    color:var(--text-secondary);
+    text-transform:capitalize;
+
+}
+
+/* ==========================
+   Rename day modal
+========================== */
+
+.strength-rename-overlay{
+
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(4,8,16,.7);
+    backdrop-filter:blur(6px);
+    z-index:210;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+
+}
+
+.strength-rename-overlay.open{
+
+    display:flex;
+
+}
+
+.strength-rename-modal{
+
+    background:
+        linear-gradient(
+            160deg,
+            rgba(24,38,60,.98),
+            rgba(14,23,38,.98)
+        );
+    border:1px solid var(--border);
+    border-radius:20px;
+    max-width:360px;
+    width:100%;
+    padding:22px;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
+    animation:strengthFadeUp .25s ease;
+
+}
+
+.strength-rename-modal .strength-search-title{
+
+    display:block;
+    margin-bottom:14px;
+
+}
+
+.strength-rename-actions{
+
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:16px;
+
+}
+
+@keyframes strengthFadeUp{
+
+    from{
+        opacity:0;
+        transform:translateY(14px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+/* ==========================
+   Responsive
+========================== */
+
+@media (max-width:640px){
+
+    .strength-hero-text h1{
+        font-size:42px;
+    }
+
+    .strength-hero-number{
+        font-size:44px;
+    }
+
+    .strength-exercise-header{
+        flex-wrap:wrap;
+    }
+
+}
