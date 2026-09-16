@@ -2946,6 +2946,214 @@ document.addEventListener(
     }
 );
 
+
+/* ==========================================
+   Workout Library integration
+========================================== */
+
+window.addEventListener(
+    "eddieos:use-strength-workout",
+    event => {
+        const workout =
+            event.detail?.workout;
+
+        const mode =
+            event.detail?.mode ||
+            "new";
+
+        if (
+            !workout ||
+            !Array.isArray(
+                workout.exercises
+            )
+        ) {
+            return;
+        }
+
+        const groupMap = {};
+        const groupRounds = {};
+
+        const exercises =
+            workout.exercises.map(
+                exercise => {
+                    let groupId = null;
+
+                    if (exercise.group) {
+                        if (
+                            !groupMap[
+                                exercise.group
+                            ]
+                        ) {
+                            groupMap[
+                                exercise.group
+                            ] =
+                                uid();
+                        }
+
+                        groupId =
+                            groupMap[
+                                exercise.group
+                            ];
+                    }
+
+                    return {
+                        id: uid(),
+                        exerciseId:
+                            exercise.exerciseId ||
+                            null,
+                        name:
+                            exercise.name ||
+                            "Exercise",
+                        equipment:
+                            exercise.equipment ||
+                            null,
+                        primaryMuscles:
+                            exercise.primaryMuscles ||
+                            [],
+                        image:
+                            exercise.image ||
+                            null,
+                        mode:
+                            exercise.mode ===
+                            "time"
+                                ? "time"
+                                : "reps",
+                        restSeconds:
+                            Number(
+                                exercise.restSeconds
+                            ) || 90,
+                        notes:
+                            exercise.notes ||
+                            "",
+                        groupId,
+                        groupType:
+                            groupId
+                                ? exercise.groupType ===
+                                  "circuit"
+                                    ? "circuit"
+                                    : "superset"
+                                : null,
+                        sets:
+                            Array.from(
+                                {
+                                    length:
+                                        Math.max(
+                                            1,
+                                            Number(
+                                                exercise.sets
+                                            ) || 1
+                                        )
+                                },
+                                () => ({
+                                    id: uid(),
+                                    weight:
+                                        Number(
+                                            exercise.weight
+                                        ) || 0,
+                                    reps:
+                                        exercise.mode ===
+                                        "time"
+                                            ? 0
+                                            : Number(
+                                                exercise.reps
+                                            ) || 0,
+                                    duration:
+                                        Number(
+                                            exercise.duration
+                                        ) || 30,
+                                    done: false,
+                                    rpe:
+                                        exercise.rpe ||
+                                        "",
+                                    type:
+                                        "working"
+                                })
+                            )
+                    };
+                }
+            );
+
+        Object.entries(
+            groupMap
+        ).forEach(
+            ([sourceGroup, newGroupId]) => {
+                const sourceExercise =
+                    workout.exercises.find(
+                        exercise =>
+                            exercise.group ===
+                            sourceGroup
+                    );
+
+                if (
+                    sourceExercise?.groupType ===
+                    "circuit"
+                ) {
+                    groupRounds[
+                        newGroupId
+                    ] =
+                        Number(
+                            workout.rounds
+                        ) || 3;
+                }
+            }
+        );
+
+        if (mode === "current") {
+            const day =
+                activeDay();
+
+            if (!day) {
+                alert(
+                    "Create or select a Strength day first."
+                );
+                return;
+            }
+
+            day.exercises.push(
+                ...exercises
+            );
+
+            if (!day.groupRounds) {
+                day.groupRounds = {};
+            }
+
+            Object.assign(
+                day.groupRounds,
+                groupRounds
+            );
+
+            savePlan();
+            renderAll();
+            return;
+        }
+
+        const newId =
+            createDay(
+                workout.name,
+                exercises
+            );
+
+        const newDay =
+            plan.days.find(
+                day =>
+                    day.id === newId
+            );
+
+        if (newDay) {
+            newDay.estimatedMinutes =
+                Number(
+                    workout.minutes
+                ) || 45;
+
+            newDay.groupRounds =
+                groupRounds;
+
+            savePlan();
+            renderAll();
+        }
+    }
+);
+
 /* ==========================================
    Init
 ========================================== */
