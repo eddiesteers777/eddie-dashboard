@@ -11,6 +11,7 @@ import {
 import { searchExercises } from "./exerciseSearch.js";
 
 const STORAGE_KEY = "strength-plan";
+const LIBRARY_KEY = "strength-exercise-library";
 const DEFAULT_REST = 90;
 
 let plan = { days: [], activeDay: null };
@@ -30,6 +31,181 @@ let restEndsAt = 0;
 function uid() {
     return crypto.randomUUID();
 }
+function loadCustomLibrary() {
+    try {
+        const raw =
+            localStorage.getItem(LIBRARY_KEY);
+
+        const saved =
+            raw
+                ? JSON.parse(raw)
+                : [];
+
+        return Array.isArray(saved)
+            ? saved
+            : [];
+    } catch {
+        return [];
+    }
+}
+
+function saveCustomLibrary(items) {
+    localStorage.setItem(
+        LIBRARY_KEY,
+        JSON.stringify(items)
+    );
+
+    import("./cloudSync.js")
+        .then(
+            ({ pushToCloud }) =>
+                pushToCloud()
+        )
+        .catch(() => {});
+}
+
+function customExerciseToSearchResult(exercise) {
+    return {
+        id: exercise.id,
+        name: exercise.name,
+        equipment:
+            exercise.equipment ||
+            "no equipment",
+        level:
+            exercise.level ||
+            null,
+        category:
+            exercise.category ||
+            "Custom",
+        primaryMuscles:
+            Array.isArray(
+                exercise.primaryMuscles
+            )
+                ? exercise.primaryMuscles
+                : [],
+        secondaryMuscles:
+            Array.isArray(
+                exercise.secondaryMuscles
+            )
+                ? exercise.secondaryMuscles
+                : [],
+        instructions:
+            Array.isArray(
+                exercise.instructions
+            )
+                ? exercise.instructions
+                : [],
+        image:
+            exercise.image ||
+            null,
+        isCustom: true
+    };
+}
+
+function escapeQuery(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase();
+}
+
+function searchCustomLibrary(query = "") {
+    const term =
+        escapeQuery(query);
+
+    const items =
+        loadCustomLibrary();
+
+    if (!term) {
+        return items.map(
+            customExerciseToSearchResult
+        );
+    }
+
+    return items
+        .filter(exercise => {
+            const haystack = [
+                exercise.name,
+                exercise.equipment,
+                exercise.category,
+                ...(exercise.primaryMuscles || []),
+                ...(exercise.secondaryMuscles || [])
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+            return haystack.includes(
+                term
+            );
+        })
+        .map(
+            customExerciseToSearchResult
+        );
+}
+
+function saveCustomExerciseFromForm() {
+    const name =
+        $("customExerciseName")?.value.trim();
+
+    if (!name) {
+        alert(
+            "Give the exercise a name first."
+        );
+        return;
+    }
+
+    const equipment =
+        $("customExerciseEquipment")?.value.trim();
+
+    const category =
+        $("customExerciseCategory")?.value.trim();
+
+    const muscles =
+        $("customExerciseMuscles")
+            ?.value
+            .split(",")
+            .map(
+                value =>
+                    value.trim()
+            )
+            .filter(Boolean);
+
+    const exercise = {
+        id: `custom-${uid()}`,
+        name,
+        equipment:
+            equipment ||
+            "no equipment",
+        category:
+            category ||
+            "Custom",
+        primaryMuscles:
+            muscles || [],
+        secondaryMuscles: [],
+        instructions: [],
+        image: null,
+        custom: true,
+        createdAt: Date.now()
+    };
+
+    const library =
+        loadCustomLibrary();
+
+    library.push(exercise);
+    saveCustomLibrary(library);
+
+    closeCustomExerciseModal();
+
+    // Refresh any currently open search.
+    const query =
+        $("exerciseSearchInput")
+            ?.value ||
+        "";
+
+    searchExercisesForBuilder(
+        query
+    );
+}
+
 
 function $(id) {
     return document.getElementById(id);
@@ -1100,6 +1276,37 @@ function seedFromTemplate(
    Exercise search
 ========================================== */
 
+function openCustomExerciseModal() {
+    $("customExerciseOverlay")
+        ?.classList.add("open");
+
+    const input =
+        $("customExerciseName");
+
+    if (input) {
+        input.value = "";
+        input.focus();
+    }
+
+    const equipment =
+        $("customExerciseEquipment");
+
+    const muscles =
+        $("customExerciseMuscles");
+
+    const category =
+        $("customExerciseCategory");
+
+    if (equipment) equipment.value = "";
+    if (muscles) muscles.value = "";
+    if (category) category.value = "";
+}
+
+function closeCustomExerciseModal() {
+    $("customExerciseOverlay")
+        ?.classList.remove("open");
+}
+
 function openExerciseSearch() {
     const overlay =
         $("exerciseSearchOverlay");
@@ -1165,6 +1372,11 @@ function renderSearchResults(
                         <div class="strength-result-info">
                             <strong>
                                 ${escapeHtml(ex.name)}
+                                ${
+                                    ex.isCustom
+                                        ? `<span class="strength-custom-badge">My Library</span>`
+                                        : ""
+                                }
                             </strong>
 
                             <span>
@@ -1194,6 +1406,45 @@ function renderSearchResults(
                     No matches. Try a different search.
                 </div>
             `;
+}
+
+async function searchExercisesForBuilder(query = "") {
+    const custom =
+        searchCustomLibrary(
+            query
+        );
+
+    let publicResults = [];
+
+    if (query.trim()) {
+        publicResults =
+            await searchExercises(
+                query
+            );
+    }
+
+    const seen = new Set();
+
+    return [
+        ...custom,
+        ...publicResults
+    ]
+        .filter(exercise => {
+            const key =
+                String(
+                    exercise.name
+                )
+                    .trim()
+                    .toLowerCase();
+
+            if (seen.has(key)) {
+                return false;
+            }
+
+            seen.add(key);
+            return true;
+        })
+        .slice(0, 25);
 }
 
 function addExercise(
@@ -1790,6 +2041,39 @@ document.addEventListener(
             )
         ) {
             openExerciseSearch();
+            return;
+        }
+
+        if (
+            target.matches(
+                "#openCustomExerciseBtn"
+            )
+        ) {
+            openCustomExerciseModal();
+            return;
+        }
+
+        if (
+            target.matches(
+                "#customExerciseSave"
+            )
+        ) {
+            saveCustomExerciseFromForm();
+            return;
+        }
+
+        if (
+            target.matches(
+                "#customExerciseClose"
+            ) ||
+            target.matches(
+                "#customExerciseCancel"
+            ) ||
+            target.matches(
+                "#customExerciseOverlay"
+            )
+        ) {
+            closeCustomExerciseModal();
             return;
         }
 
@@ -2484,7 +2768,7 @@ document.addEventListener(
             searchDebounceTimer =
                 setTimeout(
                     () =>
-                        searchExercises(
+                        searchExercisesForBuilder(
                             query
                         )
                             .then(
