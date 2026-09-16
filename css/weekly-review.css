@@ -1,0 +1,216 @@
+/* ==========================================
+   EddieOS Weekly Review
+========================================== */
+
+.wr-page{
+
+    max-width:1100px;
+    margin:0 auto;
+    padding:32px 24px 80px;
+
+}
+
+.wr-hero{
+
+    margin-bottom:28px;
+
+}
+
+.wr-hero h1{
+
+    font-family:var(--font-display);
+    font-size:52px;
+    letter-spacing:.5px;
+    line-height:1;
+    margin-bottom:8px;
+
+}
+
+.wr-week-range{
+
+    color:var(--text-secondary);
+    font-size:15px;
+
+}
+
+/* ==========================
+   Summary cards
+========================== */
+
+.wr-grid{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+    gap:14px;
+    margin-bottom:36px;
+
+}
+
+.wr-card{
+
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--primary);
+    border-radius:16px;
+    padding:18px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+
+}
+
+.wr-card-strength{ border-left-color:var(--orange); }
+.wr-card-cross{ border-left-color:var(--green); }
+.wr-card-nutrition{ border-left-color:var(--yellow); }
+.wr-card-recovery{ border-left-color:#a78bfa; }
+.wr-card-gear{ border-left-color:var(--red); }
+
+.wr-card-label{
+
+    font-size:12px;
+    color:var(--text-secondary);
+    text-transform:uppercase;
+    letter-spacing:.03em;
+
+}
+
+.wr-card-value{
+
+    font-family:var(--font-display);
+    font-size:34px;
+    line-height:1.1;
+
+}
+
+.wr-card-meta{
+
+    font-size:12px;
+    color:var(--muted);
+
+}
+
+/* ==========================
+   Nutrition day-by-day
+========================== */
+
+.wr-section-title{
+
+    font-size:18px;
+    margin-bottom:14px;
+
+}
+
+.wr-nutrition-days{
+
+    margin-bottom:36px;
+
+}
+
+.wr-nutrition-grid{
+
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:8px;
+
+}
+
+.wr-nutrition-day{
+
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 8px;
+    text-align:center;
+
+}
+
+.wr-nutrition-day-label{
+
+    font-size:11px;
+    color:var(--text-secondary);
+    margin-bottom:8px;
+
+}
+
+.wr-nutrition-day-bar-track{
+
+    width:100%;
+    height:50px;
+    background:var(--surface-light);
+    border-radius:8px;
+    display:flex;
+    align-items:flex-end;
+    overflow:hidden;
+    margin-bottom:6px;
+
+}
+
+.wr-nutrition-day-bar-fill{
+
+    width:100%;
+    border-radius:8px 8px 0 0;
+    transition:height .3s ease;
+
+}
+
+.wr-nutrition-day-pct{
+
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-secondary);
+
+}
+
+.wr-nutrition-day.no-data{
+
+    opacity:.4;
+
+}
+
+@media (max-width:640px){
+
+    .wr-nutrition-grid{
+        grid-template-columns:repeat(4, 1fr);
+    }
+
+}
+
+/* ==========================
+   Summary
+========================== */
+
+.wr-summary{
+
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:24px;
+
+}
+
+.wr-summary-text{
+
+    color:var(--text-secondary);
+    font-size:14.5px;
+    line-height:1.8;
+
+}
+
+.wr-summary-text p{
+
+    margin-bottom:10px;
+
+}
+
+.wr-summary-text p:last-child{
+
+    margin-bottom:0;
+
+}
+
+@media (max-width:640px){
+
+    .wr-hero h1{ font-size:38px; }
+    .wr-card-value{ font-size:28px; }
+
+}
