@@ -132,12 +132,23 @@
                     Add an Exercise
                 </span>
 
-                <button
-                    type="button"
-                    class="strength-search-close"
-                    id="exerciseSearchClose">
-                    ×
-                </button>
+                <div class="strength-search-header-actions">
+
+                    <button
+                        type="button"
+                        class="strength-library-add-btn"
+                        id="openCustomExerciseBtn">
+                        + My Exercise
+                    </button>
+
+                    <button
+                        type="button"
+                        class="strength-search-close"
+                        id="exerciseSearchClose">
+                        ×
+                    </button>
+
+                </div>
 
             </div>
 
@@ -153,6 +164,98 @@
                     id="exerciseSearchResults"
                     class="strength-search-results">
                 </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Custom Exercise Library -->
+
+    <div
+        class="strength-group-overlay"
+        id="customExerciseOverlay">
+
+        <div class="strength-group-modal">
+
+            <div class="strength-group-modal-header">
+
+                <h3>
+                    Add Exercise to My Library
+                </h3>
+
+                <button
+                    type="button"
+                    class="strength-search-close"
+                    id="customExerciseClose">
+                    ×
+                </button>
+
+            </div>
+
+            <div class="strength-group-modal-body">
+
+                <p class="strength-group-modal-help">
+                    Add an exercise that isn't in the public database.
+                    Your custom exercises will appear in Exercise Search
+                    on this device and sync with your EddieOS account.
+                </p>
+
+                <label class="strength-custom-field">
+                    <span>Exercise name</span>
+                    <input
+                        type="text"
+                        id="customExerciseName"
+                        placeholder="e.g. Single-Leg RDL"
+                    >
+                </label>
+
+                <label class="strength-custom-field">
+                    <span>Equipment</span>
+                    <input
+                        type="text"
+                        id="customExerciseEquipment"
+                        placeholder="e.g. Dumbbell, resistance band, bodyweight"
+                    >
+                </label>
+
+                <label class="strength-custom-field">
+                    <span>Primary muscles</span>
+                    <input
+                        type="text"
+                        id="customExerciseMuscles"
+                        placeholder="e.g. glutes, hamstrings, core"
+                    >
+                </label>
+
+                <label class="strength-custom-field">
+                    <span>Category</span>
+                    <input
+                        type="text"
+                        id="customExerciseCategory"
+                        placeholder="e.g. Lower Body, Core, Rehab"
+                    >
+                </label>
+
+            </div>
+
+            <div class="strength-group-modal-footer">
+
+                <button
+                    type="button"
+                    id="customExerciseCancel"
+                    class="strength-template-btn strength-template-btn-outline">
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    id="customExerciseSave"
+                    class="strength-template-btn">
+                    Add to Library
+                </button>
 
             </div>
 
