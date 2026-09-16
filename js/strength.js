@@ -342,6 +342,12 @@ function savePlan() {
         JSON.stringify(plan)
     );
 
+    window.dispatchEvent(
+        new CustomEvent(
+            "eddieos:strength-plan-updated"
+        )
+    );
+
     import("./cloudSync.js")
         .then(({ pushToCloud }) => pushToCloud())
         .catch(() => {});
@@ -2018,6 +2024,11 @@ document.addEventListener(
                 newId
             );
 
+            setTimeout(
+                () => openStrengthEditor(newId),
+                120
+            );
+
             return;
         }
 
@@ -3150,6 +3161,84 @@ window.addEventListener(
 
             savePlan();
             renderAll();
+        }
+    }
+);
+
+
+/* ==========================================
+   Compact workspace editor hooks
+========================================== */
+
+function openStrengthEditor(dayId = null) {
+    if (
+        dayId &&
+        plan.days.some(
+            day => day.id === dayId
+        )
+    ) {
+        plan.activeDay = dayId;
+        savePlan();
+        renderAll();
+    }
+
+    const overlay =
+        document.getElementById(
+            "strengthEditorOverlay"
+        );
+
+    overlay?.classList.add("open");
+}
+
+function closeStrengthEditor() {
+    document
+        .getElementById(
+            "strengthEditorOverlay"
+        )
+        ?.classList.remove("open");
+}
+
+window.addEventListener(
+    "eddieos:strength-open-editor",
+    event => {
+        openStrengthEditor(
+            event.detail?.dayId ||
+            null
+        );
+    }
+);
+
+window.addEventListener(
+    "eddieos:strength-close-editor",
+    () => {
+        closeStrengthEditor();
+    }
+);
+
+document.addEventListener(
+    "click",
+    event => {
+        const target =
+            event.target;
+
+        if (
+            target.matches(
+                "#strengthEditorClose"
+            )
+        ) {
+            closeStrengthEditor();
+        }
+
+        if (
+            target.matches(
+                "#strengthEditorSaveLibrary"
+            )
+        ) {
+            document
+                .getElementById(
+                    "strengthLibrarySaveCurrent"
+                )
+                ?.click();
         }
     }
 );

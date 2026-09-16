@@ -415,6 +415,14 @@ function workoutCard(workout) {
                 <button
                     type="button"
                     class="strength-library-btn"
+                    data-library-schedule="${escapeHtml(workout.id)}"
+                >
+                    Schedule
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-library-btn"
                     data-library-preview="${escapeHtml(workout.id)}"
                 >
                     Preview
@@ -1089,6 +1097,27 @@ function init() {
                     target.dataset
                         .libraryFavorite
                 );
+                return;
+            }
+
+            if (
+                target.matches(
+                    "[data-library-schedule]"
+                )
+            ) {
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "eddieos:strength-schedule-workout",
+                        {
+                            detail: {
+                                workoutId:
+                                    target.dataset
+                                        .librarySchedule
+                            }
+                        }
+                    )
+                );
+
                 return;
             }
 
