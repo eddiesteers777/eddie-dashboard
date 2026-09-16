@@ -61,225 +61,516 @@
 
         </section>
 
-
         <!-- ==========================================
-             WORKOUT LIBRARY
+             STRENGTH WORKSPACE
         =========================================== -->
 
-        <section class="strength-library-panel" id="strengthLibraryPanel">
+        <section class="strength-workspace" id="strengthWorkspace">
 
-            <div class="strength-library-header">
+            <div class="strength-workspace-nav">
+
+                <button
+                    type="button"
+                    class="strength-workspace-tab active"
+                    data-strength-view="schedule">
+                    <span>Schedule</span>
+                    <small>Calendar & upcoming</small>
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-workspace-tab"
+                    data-strength-view="library">
+                    <span>Workout Library</span>
+                    <small>Ready-to-use templates</small>
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-workspace-tab"
+                    data-strength-view="mine">
+                    <span>My Workouts</span>
+                    <small>Build & organize</small>
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-workspace-create"
+                    id="strengthQuickNewWorkout">
+                    + New Workout
+                </button>
+
+            </div>
+
+            <!-- Schedule / Calendar -->
+
+            <section
+                class="strength-workspace-panel active"
+                data-strength-panel="schedule"
+                id="strengthSchedulePanel">
+
+                <div class="strength-schedule-overview">
+
+                    <div class="strength-calendar-shell">
+
+                        <div class="strength-calendar-header">
+
+                            <div>
+
+                                <span class="strength-library-eyebrow">
+                                    TRAINING SCHEDULE
+                                </span>
+
+                                <h2 id="strengthCalendarMonth">
+                                    Month
+                                </h2>
+
+                            </div>
+
+                            <div class="strength-calendar-actions">
+
+                                <button
+                                    type="button"
+                                    class="strength-calendar-btn"
+                                    id="strengthCalendarToday">
+                                    Today
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="strength-calendar-btn"
+                                    id="strengthCalendarPrev">
+                                    ←
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="strength-calendar-btn"
+                                    id="strengthCalendarNext">
+                                    →
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="strength-calendar-weekdays">
+                            <span>Sun</span>
+                            <span>Mon</span>
+                            <span>Tue</span>
+                            <span>Wed</span>
+                            <span>Thu</span>
+                            <span>Fri</span>
+                            <span>Sat</span>
+                        </div>
+
+                        <div
+                            id="strengthCalendarGrid"
+                            class="strength-calendar-grid">
+                        </div>
+
+                    </div>
+
+                    <aside class="strength-agenda-panel">
+
+                        <div class="strength-agenda-header">
+
+                            <div>
+                                <span class="strength-library-eyebrow">
+                                    DAY AGENDA
+                                </span>
+
+                                <h3 id="strengthAgendaDate">
+                                    Select a date
+                                </h3>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="strength-agenda-add-btn"
+                                id="strengthAgendaAdd">
+                                + Schedule
+                            </button>
+
+                        </div>
+
+                        <div
+                            id="strengthAgendaList"
+                            class="strength-agenda-list">
+                        </div>
+
+                    </aside>
+
+                </div>
+
+                <div class="strength-upcoming-strip">
+
+                    <div>
+                        <span class="strength-library-eyebrow">
+                            UPCOMING
+                        </span>
+
+                        <h3>
+                            Next Workouts
+                        </h3>
+                    </div>
+
+                    <div
+                        id="strengthUpcomingList"
+                        class="strength-upcoming-list">
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- Library -->
+
+            <section
+                class="strength-workspace-panel"
+                data-strength-panel="library"
+                id="strengthLibraryWorkspacePanel">
+
+                <div class="strength-library-panel" id="strengthLibraryPanel">
+
+                    <div class="strength-library-header">
+
+                        <div>
+                            <span class="strength-library-eyebrow">
+                                WORKOUT LIBRARY
+                            </span>
+
+                            <h2>
+                                Ready-to-Use Workouts
+                            </h2>
+
+                            <p>
+                                Choose a template, preview it, or make a copy
+                                for your own library.
+                            </p>
+                        </div>
+
+                        <div class="strength-library-header-actions">
+
+                            <button
+                                type="button"
+                                class="strength-library-header-btn"
+                                id="strengthLibrarySaveCurrent">
+                                Save Current Workout
+                            </button>
+
+                            <button
+                                type="button"
+                                class="strength-library-header-btn primary"
+                                id="strengthLibraryNewFolder">
+                                + Folder
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <div class="strength-library-filter-tabs">
+
+                        <button
+                            type="button"
+                            class="strength-library-filter-btn active"
+                            data-view="all">
+                            All Workouts
+                        </button>
+
+                        <button
+                            type="button"
+                            class="strength-library-filter-btn"
+                            data-view="favorites">
+                            ★ Favorites
+                        </button>
+
+                        <button
+                            type="button"
+                            class="strength-library-filter-btn"
+                            data-view="mine">
+                            My Library
+                        </button>
+
+                    </div>
+
+                    <div class="strength-library-controls">
+
+                        <input
+                            id="strengthLibrarySearch"
+                            class="strength-library-search"
+                            type="search"
+                            placeholder="Search workouts, exercises, goals, equipment...">
+
+                        <select
+                            id="strengthLibraryCategory"
+                            class="strength-library-select">
+                            <option value="all">All categories</option>
+                        </select>
+
+                        <select
+                            id="strengthLibraryGoal"
+                            class="strength-library-select">
+                            <option value="all">All goals</option>
+                        </select>
+
+                        <select
+                            id="strengthLibraryEquipment"
+                            class="strength-library-select">
+                            <option value="all">All equipment</option>
+                        </select>
+
+                        <select
+                            id="strengthLibraryDuration"
+                            class="strength-library-select">
+                            <option value="all">Any duration</option>
+                            <option value="20">20 min or less</option>
+                            <option value="30">21–30 min</option>
+                            <option value="45">31–45 min</option>
+                            <option value="60">46+ min</option>
+                        </select>
+
+                        <select
+                            id="strengthLibraryLevel"
+                            class="strength-library-select">
+                            <option value="all">All levels</option>
+                        </select>
+
+                        <select
+                            id="strengthLibraryFolder"
+                            class="strength-library-select">
+                            <option value="all">All folders</option>
+                        </select>
+
+                    </div>
+
+                    <div class="strength-library-results-bar">
+
+                        <span id="strengthLibraryCount">
+                            0 workouts
+                        </span>
+
+                        <span>
+                            Browse • preview • use • schedule
+                        </span>
+
+                    </div>
+
+                    <div
+                        id="strengthLibraryGrid"
+                        class="strength-library-grid">
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- My Workouts -->
+
+            <section
+                class="strength-workspace-panel"
+                data-strength-panel="mine"
+                id="strengthMyWorkoutsPanel">
+
+                <div class="strength-myworkouts-panel">
+
+                    <div class="strength-myworkouts-header">
+
+                        <div>
+                            <span class="strength-library-eyebrow">
+                                MY WORKOUTS
+                            </span>
+
+                            <h2>
+                                Your Saved Builds
+                            </h2>
+
+                            <p>
+                                Your workout designs stay here until you decide
+                                to edit, schedule, duplicate, or delete them.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="strength-library-header-btn primary"
+                            id="strengthMyWorkoutsNew">
+                            + New Workout
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="strengthMyWorkoutsList"
+                        class="strength-myworkouts-list">
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+</main>
+
+    <!-- ==========================================
+         WORKOUT BUILDER
+    =========================================== -->
+
+    <div
+        class="strength-editor-overlay"
+        id="strengthEditorOverlay">
+
+        <div class="strength-editor-modal">
+
+            <div class="strength-editor-header">
 
                 <div>
                     <span class="strength-library-eyebrow">
-                        WORKOUT LIBRARY
+                        WORKOUT BUILDER
                     </span>
 
                     <h2>
-                        Ready-to-Use Workouts
+                        Build Workout
                     </h2>
 
                     <p>
-                        Browse EddieOS templates, save your own workouts,
-                        favorite the ones you use most, and organize your
-                        personal library into folders.
+                        Arrange exercises, add supersets/circuits, set targets,
+                        then save or schedule the workout.
                     </p>
                 </div>
 
-                <div class="strength-library-header-actions">
+                <div class="strength-editor-header-actions">
 
                     <button
                         type="button"
-                        class="strength-library-header-btn"
-                        id="strengthLibrarySaveCurrent">
-                        Save Current Day
+                        class="strength-editor-save"
+                        id="strengthEditorSaveLibrary">
+                        Save to Library
                     </button>
 
                     <button
                         type="button"
-                        class="strength-library-header-btn primary"
-                        id="strengthLibraryNewFolder">
-                        + Folder
+                        class="strength-editor-close"
+                        id="strengthEditorClose">
+                        ×
                     </button>
 
                 </div>
 
             </div>
 
-            <div class="strength-library-filter-tabs">
+            <div class="strength-editor-body">
+
+                <div class="strength-editor-workout-tabs">
+                    ${editor_existing}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         SCHEDULE WORKOUT MODAL
+    =========================================== -->
+
+    <div
+        class="strength-schedule-overlay"
+        id="strengthScheduleOverlay">
+
+        <div class="strength-schedule-modal">
+
+            <div class="strength-schedule-modal-header">
+
+                <div>
+                    <span class="strength-library-eyebrow">
+                        ASSIGN WORKOUT
+                    </span>
+
+                    <h3>
+                        Schedule Workout
+                    </h3>
+
+                    <p>
+                        Choose the workout, date, start time, and optional note.
+                    </p>
+                </div>
 
                 <button
                     type="button"
-                    class="strength-library-filter-btn active"
-                    data-view="all">
-                    All Workouts
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-library-filter-btn"
-                    data-view="favorites">
-                    ★ Favorites
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-library-filter-btn"
-                    data-view="mine">
-                    My Library
+                    class="strength-search-close"
+                    id="strengthScheduleClose">
+                    ×
                 </button>
 
             </div>
 
-            <div class="strength-library-controls">
+            <div class="strength-schedule-form">
 
-                <input
-                    id="strengthLibrarySearch"
-                    class="strength-library-search"
-                    type="search"
-                    placeholder="Search workouts, exercises, goals, equipment...">
+                <label>
+                    <span>Workout</span>
 
-                <select
-                    id="strengthLibraryCategory"
-                    class="strength-library-select">
-                    <option value="all">
-                        All categories
-                    </option>
-                </select>
+                    <select
+                        id="strengthScheduleWorkout">
+                    </select>
+                </label>
 
-                <select
-                    id="strengthLibraryGoal"
-                    class="strength-library-select">
-                    <option value="all">
-                        All goals
-                    </option>
-                </select>
+                <div class="strength-schedule-form-grid">
 
-                <select
-                    id="strengthLibraryEquipment"
-                    class="strength-library-select">
-                    <option value="all">
-                        All equipment
-                    </option>
-                </select>
+                    <label>
+                        <span>Date</span>
 
-                <select
-                    id="strengthLibraryDuration"
-                    class="strength-library-select">
-                    <option value="all">
-                        Any duration
-                    </option>
-                    <option value="20">
-                        20 min or less
-                    </option>
-                    <option value="30">
-                        21–30 min
-                    </option>
-                    <option value="45">
-                        31–45 min
-                    </option>
-                    <option value="60">
-                        46+ min
-                    </option>
-                </select>
+                        <input
+                            type="date"
+                            id="strengthScheduleDate">
+                    </label>
 
-                <select
-                    id="strengthLibraryLevel"
-                    class="strength-library-select">
-                    <option value="all">
-                        All levels
-                    </option>
-                </select>
+                    <label>
+                        <span>Start time</span>
 
-                <select
-                    id="strengthLibraryFolder"
-                    class="strength-library-select">
-                    <option value="all">
-                        All folders
-                    </option>
-                </select>
+                        <input
+                            type="time"
+                            id="strengthScheduleTime">
+                    </label>
+
+                </div>
+
+                <label>
+                    <span>Note</span>
+
+                    <textarea
+                        id="strengthScheduleNote"
+                        rows="3"
+                        placeholder="e.g. Keep this session light before Saturday's long run.">
+                    </textarea>
+                </label>
 
             </div>
 
-            <div class="strength-library-results-bar">
-
-                <span id="strengthLibraryCount">
-                    0 workouts
-                </span>
-
-                <span>
-                    Built for quick selection and easy editing.
-                </span>
-
-            </div>
-
-            <div
-                id="strengthLibraryGrid"
-                class="strength-library-grid">
-            </div>
-
-        </section>
-
-        <section class="strength-day-bar">
-
-            <div
-                id="strengthDayTabs"
-                class="strength-day-tabs">
-            </div>
-
-            <button
-                type="button"
-                id="addDayBtn"
-                class="strength-add-day-btn">
-                + New Day
-            </button>
-
-        </section>
-
-        <section
-            id="strengthEmptyState"
-            class="strength-empty-state">
-
-            <h2>No lifting days yet</h2>
-
-            <p>
-                Build a day from scratch, or start from a template
-                already in your marathon plan's strength phase.
-            </p>
-
-            <div class="strength-empty-actions">
+            <div class="strength-group-modal-footer">
 
                 <button
                     type="button"
-                    class="strength-template-btn"
-                    data-template="strength">
-                    Start from "Tuesday Strength"
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-template-btn"
-                    data-template="maintenance">
-                    Start from "Friday Maintenance"
-                </button>
-
-                <button
-                    type="button"
-                    id="emptyStateNewDayBtn"
+                    id="strengthScheduleCancel"
                     class="strength-template-btn strength-template-btn-outline">
-                    Start blank
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    id="strengthScheduleSave"
+                    class="strength-template-btn">
+                    Schedule Workout
                 </button>
 
             </div>
 
-        </section>
+        </div>
 
-        <section
-            id="strengthDayContent"
-            class="strength-day-content">
-        </section>
-
-    </main>
+    </div>
 
     <!-- Exercise Search Modal -->
 
@@ -682,6 +973,11 @@
     <script
         type="module"
         src="js/strengthLibrary.js">
+    </script>
+
+    <script
+        type="module"
+        src="js/strengthSchedule.js">
     </script>
 
 </body>
