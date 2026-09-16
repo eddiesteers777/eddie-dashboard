@@ -534,7 +534,7 @@
     inset:0;
     background:rgba(4,8,16,.7);
     backdrop-filter:blur(6px);
-    z-index:200;
+    z-index:245;
     align-items:center;
     justify-content:center;
     padding:20px;
@@ -714,7 +714,7 @@
     inset:0;
     background:rgba(4,8,16,.7);
     backdrop-filter:blur(6px);
-    z-index:210;
+    z-index:247;
     align-items:center;
     justify-content:center;
     padding:20px;
@@ -1163,7 +1163,7 @@
     display:none;
     position:fixed;
     inset:0;
-    z-index:220;
+    z-index:246;
     align-items:center;
     justify-content:center;
     padding:20px;
@@ -1262,7 +1262,7 @@
     position:fixed;
     right:22px;
     bottom:22px;
-    z-index:230;
+    z-index:248;
     display:none;
     min-width:250px;
     padding:15px 16px;
@@ -2189,5 +2189,323 @@
 
     .strength-schedule-form-grid{
         grid-template-columns:1fr;
+    }
+}
+
+/* ==========================
+   Workout Mode
+========================== */
+
+.strength-workout-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:241;
+    background:var(--bg);
+}
+
+.strength-workout-overlay.open{
+    display:flex;
+    flex-direction:column;
+}
+
+.strength-workout-modal{
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    max-width:720px;
+    width:100%;
+    margin:0 auto;
+}
+
+.strength-workout-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 20px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+}
+
+.strength-workout-day-name{
+    font-size:18px;
+    font-weight:800;
+}
+
+.strength-workout-timer{
+    font-family:var(--font-mono);
+    font-size:14px;
+    color:var(--primary);
+    margin-top:2px;
+}
+
+.strength-workout-header-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.strength-workout-finish-btn{
+    background:var(--green);
+    color:#05130a;
+    border:none;
+    border-radius:12px;
+    padding:11px 20px;
+    font-size:14px;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+}
+
+.strength-workout-close-btn{
+    background:rgba(255,255,255,.06);
+    border:none;
+    color:var(--text-secondary);
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:1.2rem;
+}
+
+.strength-workout-close-btn:hover{
+    background:rgba(239,68,68,.2);
+    color:#fca5a5;
+}
+
+.strength-workout-body{
+    flex:1;
+    overflow-y:auto;
+    padding:18px 16px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+}
+
+.strength-workout-empty{
+    text-align:center;
+    color:var(--text-secondary);
+    padding:60px 20px;
+}
+
+/* Exercise block */
+
+.strength-workout-exercise{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--primary);
+    border-radius:16px;
+    padding:16px;
+}
+
+.strength-workout-exercise-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:12px;
+}
+
+.strength-workout-exercise-title strong{
+    display:block;
+    font-size:16px;
+    margin-bottom:2px;
+}
+
+.strength-workout-prev{
+    font-size:12px;
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+}
+
+.strength-workout-exercise-actions{
+    display:flex;
+    gap:6px;
+    flex-shrink:0;
+}
+
+/* Swap panel */
+
+.strength-workout-swap-panel{
+    margin-bottom:12px;
+    padding:12px;
+    background:var(--surface-light);
+    border-radius:12px;
+}
+
+.strength-workout-swap-input{
+    margin-bottom:8px;
+}
+
+.strength-workout-swap-results{
+    max-height:220px;
+    overflow-y:auto;
+    margin-bottom:8px;
+}
+
+/* Set rows -- the main event; big, thumb-friendly */
+
+.strength-workout-sets{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:14px;
+}
+
+.strength-workout-set-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface-light);
+    border-radius:14px;
+    padding:10px 10px 10px 14px;
+    flex-wrap:wrap;
+}
+
+.strength-workout-set-row.done{
+    background:rgba(34,197,94,.08);
+}
+
+.strength-workout-set-index{
+    font-family:var(--font-mono);
+    color:var(--text-secondary);
+    font-size:14px;
+    width:18px;
+    flex-shrink:0;
+}
+
+.strength-workout-adjust{
+    display:flex;
+    align-items:center;
+    gap:4px;
+}
+
+.strength-workout-adjust button{
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+    border-radius:9px;
+    min-width:38px;
+    height:38px;
+    font-size:12px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    flex-shrink:0;
+}
+
+.strength-workout-adjust button:hover{
+    border-color:var(--primary);
+    color:var(--primary);
+}
+
+.strength-workout-input{
+    width:56px;
+    height:38px;
+    text-align:center;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:9px;
+    font-family:var(--font-mono);
+    font-size:15px;
+    font-weight:700;
+}
+
+.strength-workout-input-small{
+    width:44px;
+}
+
+.strength-workout-done-btn{
+    width:42px;
+    height:42px;
+    border-radius:11px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:transparent;
+    font-size:18px;
+    cursor:pointer;
+    flex-shrink:0;
+    margin-left:auto;
+}
+
+.strength-workout-done-btn.checked{
+    background:var(--green);
+    border-color:var(--green);
+    color:#05130a;
+}
+
+.strength-workout-remove-set{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:16px;
+    cursor:pointer;
+    padding:4px 6px;
+    flex-shrink:0;
+}
+
+.strength-workout-remove-set:hover{
+    color:var(--red);
+}
+
+/* Footer: add set / plates / notes */
+
+.strength-workout-exercise-footer{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.strength-workout-notes{
+    flex:1;
+    min-width:160px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:9px 12px;
+    font-size:13px;
+    font-family:inherit;
+}
+
+/* Plate calculator */
+
+.strength-plate-calc{
+    margin-top:12px;
+    padding:12px;
+    background:var(--surface-light);
+    border-radius:12px;
+}
+
+.strength-plate-result strong{
+    display:block;
+    margin-bottom:8px;
+    font-family:var(--font-mono);
+}
+
+.strength-plate-chips{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.strength-plate-chip{
+    background:var(--primary);
+    color:#05131f;
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:800;
+    padding:5px 9px;
+    border-radius:8px;
+}
+
+@media (max-width:480px){
+    .strength-workout-adjust button,
+    .strength-workout-input{
+        min-width:32px;
+        width:auto;
+        padding:0 6px;
     }
 }
