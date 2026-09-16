@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+
+        Gear | EddieOS
+
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css">
+
+    <link
+        rel="stylesheet"
+        href="css/gear.css">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="gear-page">
+
+        <section class="gear-hero">
+
+            <div>
+                <h1>Gear</h1>
+                <p class="gear-hero-sub">
+                    Track shoe mileage and know when it's time to replace a pair.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                id="addShoeBtn"
+                class="gear-add-btn">
+                + Add Shoe
+            </button>
+
+        </section>
+
+        <section
+            id="gearWeekBanner"
+            class="gear-week-banner">
+
+            <span id="gearWeekBannerText">
+                Loading this week's mileage…
+            </span>
+
+            <select
+                id="gearWeekBannerSelect"
+                class="gear-week-select"></select>
+
+            <button
+                type="button"
+                id="gearWeekBannerApply"
+                class="gear-week-apply">
+                Log to this shoe
+            </button>
+
+        </section>
+
+        <section
+            id="gearEmptyState"
+            class="gear-empty-state">
+
+            <h2>No shoes tracked yet</h2>
+
+            <p>Add your current daily trainer to start tracking mileage toward its replacement point.</p>
+
+            <button
+                type="button"
+                id="gearEmptyAddBtn"
+                class="gear-add-btn">
+                + Add Your First Shoe
+            </button>
+
+        </section>
+
+        <section
+            id="gearActiveGrid"
+            class="gear-grid"></section>
+
+        <section id="gearRetiredSection" class="gear-retired-section">
+
+            <h2 class="gear-retired-title">Retired</h2>
+
+            <div
+                id="gearRetiredGrid"
+                class="gear-grid gear-grid-retired"></div>
+
+        </section>
+
+    </main>
+
+    <!-- Add/Edit Shoe Modal -->
+
+    <div class="gear-modal-overlay" id="shoeModalOverlay">
+
+        <div class="gear-modal">
+
+            <div class="gear-modal-header">
+                <span id="shoeModalTitle">Add a Shoe</span>
+                <button
+                    type="button"
+                    id="shoeModalClose"
+                    class="gear-modal-close">×</button>
+            </div>
+
+            <div class="gear-modal-body">
+
+                <label class="gear-field-label">Shoe name</label>
+                <input
+                    type="text"
+                    id="shoeNameInput"
+                    class="gear-input"
+                    placeholder="e.g. Nike Pegasus 41">
+
+                <label class="gear-field-label">Brand (optional)</label>
+                <input
+                    type="text"
+                    id="shoeBrandInput"
+                    class="gear-input"
+                    placeholder="e.g. Nike">
+
+                <label class="gear-field-label">
+                    Replacement mileage
+                </label>
+                <input
+                    type="number"
+                    id="shoeThresholdInput"
+                    class="gear-input"
+                    value="400"
+                    min="100"
+                    step="25">
+
+                <label class="gear-field-label">
+                    Starting mileage (if not brand new)
+                </label>
+                <input
+                    type="number"
+                    id="shoeStartingMilesInput"
+                    class="gear-input"
+                    value="0"
+                    min="0"
+                    step="1">
+
+                <div class="gear-modal-actions">
+
+                    <button
+                        type="button"
+                        id="shoeModalCancel"
+                        class="gear-btn-outline">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        id="shoeModalSave"
+                        class="gear-add-btn">
+                        Save
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Log Miles Modal -->
+
+    <div class="gear-modal-overlay" id="logMilesOverlay">
+
+        <div class="gear-modal gear-modal-small">
+
+            <div class="gear-modal-header">
+                <span id="logMilesTitle">Log Miles</span>
+                <button
+                    type="button"
+                    id="logMilesClose"
+                    class="gear-modal-close">×</button>
+            </div>
+
+            <div class="gear-modal-body">
+
+                <label class="gear-field-label">Miles</label>
+                <input
+                    type="number"
+                    id="logMilesInput"
+                    class="gear-input"
+                    min="0"
+                    step="0.1"
+                    placeholder="6.2">
+
+                <label class="gear-field-label">Note (optional)</label>
+                <input
+                    type="text"
+                    id="logMilesNote"
+                    class="gear-input"
+                    placeholder="e.g. long run">
+
+                <div class="gear-modal-actions">
+
+                    <button
+                        type="button"
+                        id="logMilesCancel"
+                        class="gear-btn-outline">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        id="logMilesSave"
+                        class="gear-add-btn">
+                        Add
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/gear.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+
+        Weekly Review | EddieOS
+
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css">
+
+    <link
+        rel="stylesheet"
+        href="css/weekly-review.css">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="wr-page">
+
+        <section class="wr-hero">
+
+            <h1>Weekly Review</h1>
+            <p id="wrWeekRange" class="wr-week-range">Loading…</p>
+
+        </section>
+
+        <section class="wr-grid">
+
+            <div class="wr-card wr-card-miles">
+                <span class="wr-card-label">Miles Run</span>
+                <span id="wrMilesValue" class="wr-card-value">—</span>
+                <span id="wrMilesMeta" class="wr-card-meta">this week</span>
+            </div>
+
+            <div class="wr-card wr-card-strength">
+                <span class="wr-card-label">Strength Volume</span>
+                <span id="wrStrengthValue" class="wr-card-value">—</span>
+                <span id="wrStrengthMeta" class="wr-card-meta">lb across your plan</span>
+            </div>
+
+            <div class="wr-card wr-card-cross">
+                <span class="wr-card-label">Cross-Training</span>
+                <span id="wrCrossValue" class="wr-card-value">—</span>
+                <span id="wrCrossMeta" class="wr-card-meta">days this week</span>
+            </div>
+
+            <div class="wr-card wr-card-nutrition">
+                <span class="wr-card-label">Nutrition Adherence</span>
+                <span id="wrNutritionValue" class="wr-card-value">—</span>
+                <span id="wrNutritionMeta" class="wr-card-meta">of calorie goal, avg</span>
+            </div>
+
+            <div class="wr-card wr-card-recovery">
+                <span class="wr-card-label">Recovery</span>
+                <span id="wrRecoveryValue" class="wr-card-value">—</span>
+                <span id="wrRecoveryMeta" class="wr-card-meta">latest COROS reading</span>
+            </div>
+
+            <div class="wr-card wr-card-gear">
+                <span class="wr-card-label">Gear</span>
+                <span id="wrGearValue" class="wr-card-value">—</span>
+                <span id="wrGearMeta" class="wr-card-meta">shoes nearing replacement</span>
+            </div>
+
+        </section>
+
+        <section class="wr-nutrition-days">
+
+            <h2 class="wr-section-title">Nutrition, Day by Day</h2>
+
+            <div id="wrNutritionDays" class="wr-nutrition-grid"></div>
+
+        </section>
+
+        <section class="wr-summary">
+
+            <h2 class="wr-section-title">How This Week Went</h2>
+
+            <div id="wrSummaryText" class="wr-summary-text">
+                Loading…
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/weekly-review.js"></script>
+
+</body>
+
+</html>
