@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+
+        Strength | EddieOS
+
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css">
+
+    <link
+        rel="stylesheet"
+        href="css/strength.css">
+
+</head>
+
+<body>
+
+    <!-- Header -->
+
+    <div id="header"></div>
+
+    <!-- Page -->
+
+    <main class="strength-page">
+
+        <section class="strength-hero">
+
+            <div class="strength-hero-text">
+
+                <h1>Strength</h1>
+
+                <p id="strengthWeekContext" class="strength-week-context">
+                    Loading this week's phase…
+                </p>
+
+            </div>
+
+            <div class="strength-hero-stat">
+
+                <span id="strengthVolumeValue" class="strength-hero-number">0</span>
+                <span class="strength-hero-unit">lb this week</span>
+
+            </div>
+
+        </section>
+
+        <section class="strength-day-bar">
+
+            <div id="strengthDayTabs" class="strength-day-tabs"></div>
+
+            <button
+                type="button"
+                id="addDayBtn"
+                class="strength-add-day-btn">
+                + New Day
+            </button>
+
+        </section>
+
+        <section id="strengthEmptyState" class="strength-empty-state">
+
+            <h2>No lifting days yet</h2>
+
+            <p>
+                Build a day from scratch, or start from a template
+                already in your marathon plan's strength phase.
+            </p>
+
+            <div class="strength-empty-actions">
+
+                <button
+                    type="button"
+                    class="strength-template-btn"
+                    data-template="strength">
+                    Start from "Tuesday Strength"
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-template-btn"
+                    data-template="maintenance">
+                    Start from "Friday Maintenance"
+                </button>
+
+                <button
+                    type="button"
+                    id="emptyStateNewDayBtn"
+                    class="strength-template-btn strength-template-btn-outline">
+                    Start blank
+                </button>
+
+            </div>
+
+        </section>
+
+        <section id="strengthDayContent" class="strength-day-content"></section>
+
+    </main>
+
+    <!-- Exercise Search Modal -->
+
+    <div class="strength-search-overlay" id="exerciseSearchOverlay">
+
+        <div class="strength-search-modal">
+
+            <div class="strength-search-header">
+
+                <span class="strength-search-title">
+                    Add an Exercise
+                </span>
+
+                <button
+                    type="button"
+                    class="strength-search-close"
+                    id="exerciseSearchClose">
+                    ×
+                </button>
+
+            </div>
+
+            <div class="strength-search-body">
+
+                <input
+                    type="text"
+                    id="exerciseSearchInput"
+                    class="strength-search-input"
+                    placeholder="Search exercises, muscles, or equipment...">
+
+                <div
+                    id="exerciseSearchResults"
+                    class="strength-search-results"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Rename Day Modal -->
+
+    <div class="strength-rename-overlay" id="renameDayOverlay">
+
+        <div class="strength-rename-modal">
+
+            <span class="strength-search-title">Name this day</span>
+
+            <input
+                type="text"
+                id="renameDayInput"
+                class="strength-search-input"
+                placeholder="e.g. Upper Body A">
+
+            <div class="strength-rename-actions">
+
+                <button
+                    type="button"
+                    id="renameDayCancel"
+                    class="strength-template-btn strength-template-btn-outline">
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    id="renameDaySave"
+                    class="strength-template-btn">
+                    Save
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/strength.js"></script>
+
+</body>
+
+</html>
