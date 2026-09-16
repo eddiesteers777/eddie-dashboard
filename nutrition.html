@@ -142,11 +142,20 @@
                     <h3>Breakfast</h3>
 
                     <div class="food-search">
-                        <input
-                            type="text"
-                            class="food-search-input"
-                            data-meal="breakfast"
-                            placeholder="Search by name, or type/scan a barcode...">
+                        <div class="food-search-row">
+                            <input
+                                type="text"
+                                class="food-search-input"
+                                data-meal="breakfast"
+                                placeholder="Search by name, or type/scan a barcode...">
+                            <button
+                                type="button"
+                                class="food-scan-btn"
+                                data-meal="breakfast"
+                                title="Scan a barcode">
+                                📷
+                            </button>
+                        </div>
                         <div
                             class="food-search-results"
                             data-meal="breakfast"></div>
@@ -167,11 +176,20 @@
                     <h3>Lunch</h3>
 
                     <div class="food-search">
-                        <input
-                            type="text"
-                            class="food-search-input"
-                            data-meal="lunch"
-                            placeholder="Search by name, or type/scan a barcode...">
+                        <div class="food-search-row">
+                            <input
+                                type="text"
+                                class="food-search-input"
+                                data-meal="lunch"
+                                placeholder="Search by name, or type/scan a barcode...">
+                            <button
+                                type="button"
+                                class="food-scan-btn"
+                                data-meal="lunch"
+                                title="Scan a barcode">
+                                📷
+                            </button>
+                        </div>
                         <div
                             class="food-search-results"
                             data-meal="lunch"></div>
@@ -192,11 +210,20 @@
                     <h3>Dinner</h3>
 
                     <div class="food-search">
-                        <input
-                            type="text"
-                            class="food-search-input"
-                            data-meal="dinner"
-                            placeholder="Search by name, or type/scan a barcode...">
+                        <div class="food-search-row">
+                            <input
+                                type="text"
+                                class="food-search-input"
+                                data-meal="dinner"
+                                placeholder="Search by name, or type/scan a barcode...">
+                            <button
+                                type="button"
+                                class="food-scan-btn"
+                                data-meal="dinner"
+                                title="Scan a barcode">
+                                📷
+                            </button>
+                        </div>
                         <div
                             class="food-search-results"
                             data-meal="dinner"></div>
@@ -217,11 +244,20 @@
                     <h3>Snacks</h3>
 
                     <div class="food-search">
-                        <input
-                            type="text"
-                            class="food-search-input"
-                            data-meal="snacks"
-                            placeholder="Search by name, or type/scan a barcode...">
+                        <div class="food-search-row">
+                            <input
+                                type="text"
+                                class="food-search-input"
+                                data-meal="snacks"
+                                placeholder="Search by name, or type/scan a barcode...">
+                            <button
+                                type="button"
+                                class="food-scan-btn"
+                                data-meal="snacks"
+                                title="Scan a barcode">
+                                📷
+                            </button>
+                        </div>
                         <div
                             class="food-search-results"
                             data-meal="snacks"></div>
@@ -276,6 +312,45 @@
         </section>
 
     </main>
+
+    <!-- Barcode Scanner Modal -->
+
+    <div class="food-scanner-overlay" id="foodScannerOverlay">
+
+        <div class="food-scanner-modal">
+
+            <div class="food-scanner-header">
+
+                <span class="food-scanner-title">
+                    Scan a Barcode
+                </span>
+
+                <button
+                    type="button"
+                    class="food-scanner-close"
+                    id="foodScannerClose">
+                    ×
+                </button>
+
+            </div>
+
+            <div class="food-scanner-body">
+
+                <div id="foodScannerReader"></div>
+
+                <div
+                    class="food-scanner-status"
+                    id="foodScannerStatus">
+                    Requesting camera access…
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <script src="js/loadHeader.js"></script>
 
