@@ -3215,6 +3215,18 @@ window.addEventListener(
     }
 );
 
+window.addEventListener(
+    "eddieos:strength-create-workout",
+    () => {
+        const newId = createDay(
+            "New Workout",
+            []
+        );
+
+        openStrengthEditor(newId);
+    }
+);
+
 document.addEventListener(
     "click",
     event => {

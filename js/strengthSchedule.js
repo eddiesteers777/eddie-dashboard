@@ -1053,23 +1053,10 @@ function init() {
                     "mine"
                 );
 
-                document
-                    .getElementById(
-                        "addDayBtn"
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "eddieos:strength-create-workout"
                     )
-                    ?.click();
-
-                setTimeout(
-                    () => {
-                        document
-                            .getElementById(
-                                "strengthEditorOverlay"
-                            )
-                            ?.classList.add(
-                                "open"
-                            );
-                    },
-                    180
                 );
 
                 return;
