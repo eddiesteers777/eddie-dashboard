@@ -19,6 +19,10 @@
         rel="stylesheet"
         href="css/strength.css">
 
+    <link
+        rel="stylesheet"
+        href="css/strengthLibrary.css">
+
 </head>
 
 <body>
@@ -53,6 +57,165 @@
                     lb this week
                 </span>
 
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             WORKOUT LIBRARY
+        =========================================== -->
+
+        <section class="strength-library-panel" id="strengthLibraryPanel">
+
+            <div class="strength-library-header">
+
+                <div>
+                    <span class="strength-library-eyebrow">
+                        WORKOUT LIBRARY
+                    </span>
+
+                    <h2>
+                        Ready-to-Use Workouts
+                    </h2>
+
+                    <p>
+                        Browse EddieOS templates, save your own workouts,
+                        favorite the ones you use most, and organize your
+                        personal library into folders.
+                    </p>
+                </div>
+
+                <div class="strength-library-header-actions">
+
+                    <button
+                        type="button"
+                        class="strength-library-header-btn"
+                        id="strengthLibrarySaveCurrent">
+                        Save Current Day
+                    </button>
+
+                    <button
+                        type="button"
+                        class="strength-library-header-btn primary"
+                        id="strengthLibraryNewFolder">
+                        + Folder
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="strength-library-filter-tabs">
+
+                <button
+                    type="button"
+                    class="strength-library-filter-btn active"
+                    data-view="all">
+                    All Workouts
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-library-filter-btn"
+                    data-view="favorites">
+                    ★ Favorites
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-library-filter-btn"
+                    data-view="mine">
+                    My Library
+                </button>
+
+            </div>
+
+            <div class="strength-library-controls">
+
+                <input
+                    id="strengthLibrarySearch"
+                    class="strength-library-search"
+                    type="search"
+                    placeholder="Search workouts, exercises, goals, equipment...">
+
+                <select
+                    id="strengthLibraryCategory"
+                    class="strength-library-select">
+                    <option value="all">
+                        All categories
+                    </option>
+                </select>
+
+                <select
+                    id="strengthLibraryGoal"
+                    class="strength-library-select">
+                    <option value="all">
+                        All goals
+                    </option>
+                </select>
+
+                <select
+                    id="strengthLibraryEquipment"
+                    class="strength-library-select">
+                    <option value="all">
+                        All equipment
+                    </option>
+                </select>
+
+                <select
+                    id="strengthLibraryDuration"
+                    class="strength-library-select">
+                    <option value="all">
+                        Any duration
+                    </option>
+                    <option value="20">
+                        20 min or less
+                    </option>
+                    <option value="30">
+                        21–30 min
+                    </option>
+                    <option value="45">
+                        31–45 min
+                    </option>
+                    <option value="60">
+                        46+ min
+                    </option>
+                </select>
+
+                <select
+                    id="strengthLibraryLevel"
+                    class="strength-library-select">
+                    <option value="all">
+                        All levels
+                    </option>
+                </select>
+
+                <select
+                    id="strengthLibraryFolder"
+                    class="strength-library-select">
+                    <option value="all">
+                        All folders
+                    </option>
+                </select>
+
+            </div>
+
+            <div class="strength-library-results-bar">
+
+                <span id="strengthLibraryCount">
+                    0 workouts
+                </span>
+
+                <span>
+                    Built for quick selection and easy editing.
+                </span>
+
+            </div>
+
+            <div
+                id="strengthLibraryGrid"
+                class="strength-library-grid">
             </div>
 
         </section>
@@ -263,6 +426,118 @@
 
     </div>
 
+
+    <!-- Library Preview -->
+
+    <div
+        class="strength-library-preview-overlay"
+        id="strengthLibraryPreviewOverlay">
+
+        <div class="strength-library-preview-modal">
+
+            <div class="strength-library-preview-header">
+
+                <div>
+                    <span class="strength-library-eyebrow">
+                        WORKOUT PREVIEW
+                    </span>
+
+                    <h3 id="strengthLibraryPreviewTitle">
+                        Workout
+                    </h3>
+                </div>
+
+                <button
+                    type="button"
+                    class="strength-search-close"
+                    id="strengthLibraryClosePreview">
+                    ×
+                </button>
+
+            </div>
+
+            <div
+                id="strengthLibraryPreviewBody"
+                class="strength-library-preview-body">
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Save Current Workout -->
+
+    <div
+        class="strength-group-overlay"
+        id="strengthSaveWorkoutOverlay">
+
+        <div class="strength-group-modal">
+
+            <div class="strength-group-modal-header">
+
+                <h3>
+                    Save Workout to My Library
+                </h3>
+
+                <button
+                    type="button"
+                    class="strength-search-close"
+                    id="strengthSaveWorkoutCancel">
+                    ×
+                </button>
+
+            </div>
+
+            <div class="strength-group-modal-body">
+
+                <label class="strength-custom-field">
+                    <span>Workout name</span>
+                    <input
+                        type="text"
+                        id="strengthSaveWorkoutName"
+                        placeholder="e.g. Tuesday Runner Strength">
+                </label>
+
+                <label class="strength-custom-field">
+                    <span>Folder</span>
+                    <select
+                        id="strengthSaveWorkoutFolder">
+                    </select>
+                </label>
+
+                <label class="strength-custom-field">
+                    <span>Description</span>
+                    <textarea
+                        id="strengthSaveWorkoutDescription"
+                        rows="3"
+                        placeholder="What is this workout for?">
+                    </textarea>
+                </label>
+
+            </div>
+
+            <div class="strength-group-modal-footer">
+
+                <button
+                    type="button"
+                    id="strengthSaveWorkoutCancel2"
+                    class="strength-template-btn strength-template-btn-outline">
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    id="strengthSaveWorkoutConfirm"
+                    class="strength-template-btn">
+                    Save to Library
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
     <!-- Group Builder -->
 
     <div
@@ -402,6 +677,11 @@
     <script
         type="module"
         src="js/strength.js">
+    </script>
+
+    <script
+        type="module"
+        src="js/strengthLibrary.js">
     </script>
 
 </body>
