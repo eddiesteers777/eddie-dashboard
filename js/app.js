@@ -6,24 +6,25 @@ import { dashboardData as localData } from "./dashboardData.js";
 import { loadDashboard } from "./firestore.js";
 
 import {
-
-    getRaceCountdown,
-
+    RACE_DATE,
+    DAYS,
+    weekStart,
     getCurrentWeek,
-
     getAdjustedWeekMileage,
-
-    getUpcomingWorkouts,
-
-    getTrainingPhase,
-
-    getNextLongRun,
-
-    getCompletionPercent,
-
-    getWeekMileage
-
+    getAdjustedWeekDays,
+    getTrainingPhase
 } from "./marathonData.js";
+
+import { getUpcomingCourseEvents } from "./courseEvents.js";
+
+const DAY_MS = 86400000;
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -33,473 +34,413 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let dashboardData = localData;
 
-    console.log(dashboardData.marathon);
-
     try {
-
         const cloudData = await loadDashboard();
 
         if (cloudData) {
-
             dashboardData = cloudData;
-
-            console.log("☁️ Loaded dashboard from Firestore.");
-
-        } else {
-
-            console.log("💻 Using local dashboard data.");
-
         }
-
     } catch (error) {
-
         console.error("Firestore Error:", error);
-
-        console.log("💻 Falling back to local dashboard data.");
-
     }
+
     // ==========================================
     // Greeting
     // ==========================================
 
     const hour = new Date().getHours();
-
     let greeting = "Good Evening";
 
     if (hour < 12) {
-
         greeting = "Good Morning";
-
     } else if (hour < 17) {
-
         greeting = "Good Afternoon";
-
     }
 
     const welcomeHeading = document.getElementById("welcomeHeading");
 
     if (welcomeHeading) {
-
         welcomeHeading.innerHTML =
-
             `${greeting},<br>${dashboardData.profile.firstName}`;
-
     }
 
     // ==========================================
-    // Hero Card
+    // Phase status -- adapts before, during, and
+    // after race day instead of being permanently
+    // marathon-framed
     // ==========================================
 
-const goalTime = document.getElementById("goalTime");
+    renderPhaseStatus();
 
-if (goalTime) {
+    // ==========================================
+    // Today
+    // ==========================================
 
-    // Prefer the user's own saved goal from Settings; fall back to
-    // the placeholder default only if they haven't set one yet.
-    try {
+    renderToday();
 
-        const { getUserSettings } = await import("./userSettings.js");
-
-        const settings = getUserSettings();
-
-        goalTime.textContent = settings.goalTime || dashboardData.training.goalTime;
-
-    } catch (error) {
-
-        goalTime.textContent = dashboardData.training.goalTime;
-
-    }
-
-}
-
-    const raceCountdown = document.getElementById("raceCountdown");
-
-    if (raceCountdown) {
-
-        raceCountdown.textContent =
-
-            `${getRaceCountdown()} Days`;
-
-    }
-
-    const weeklyGoal = document.getElementById("weeklyGoal");
-
-    if (weeklyGoal) {
-
-        weeklyGoal.textContent =
-
-            `${getWeekMileage(getCurrentWeek())} mi`;
-
-    }
     // ==========================================
     // Quick Stats
     // ==========================================
 
-    const weeklyMileage = document.getElementById("weeklyMileage");
+    const weeklyMileageEl = document.getElementById("weeklyMileage");
 
-    if (weeklyMileage) {
-
-        weeklyMileage.textContent =
-
-            `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
-
-    }
-
-    const readiness = document.getElementById("readinessScore");
-
-    if (readiness) {
-
-        readiness.textContent =
-
-            `${dashboardData.health.readiness}%`;
-
-    }
-
-    const streak = document.getElementById("streakDays");
-
-    if (streak) {
-
-        streak.textContent =
-
-            dashboardData.training.streak;
-
-    }
-
-    const nextRace = document.getElementById("nextRace");
-
-    if (nextRace) {
-
-        nextRace.textContent =
-
-            getRaceCountdown();
-
-    }
-    // ==========================================
-    // Today's Workout
-    // (shown as the first Upcoming Training card below)
-    // ==========================================
-
-    const upcomingWorkouts = getUpcomingWorkouts();
-
-    // ==========================================
-    // AI Coach Stats
-    // ==========================================
-
-    const coachWeek = document.getElementById("coachWeek");
-
-    if (coachWeek) {
-
-        coachWeek.textContent =
-
-            `Week ${getCurrentWeek()}`;
-
-    }
-
-    const coachPhase = document.getElementById("coachPhase");
-
-    if (coachPhase) {
-
-        coachPhase.textContent =
-
-            getTrainingPhase();
-
-    }
-
-    const coachCompletion = document.getElementById("coachCompletion");
-
-    if (coachCompletion) {
-
-        coachCompletion.textContent =
-
-            `${getCompletionPercent()}%`;
-
-    }
-
-    const coachLongRun = document.getElementById("coachLongRun");
-
-    const nextLongRun = getNextLongRun();
-
-    if (coachLongRun && nextLongRun) {
-
-        coachLongRun.textContent =
-
-            `${nextLongRun.miles} mi`;
-
-    }
-    // ==========================================
-    // AI Coach Notes
-    // ==========================================
-
-    const coachBrief = document.getElementById("coachBrief");
-
-    if (coachBrief) {
-
-        coachBrief.innerHTML = "";
-
-        // Each note is { text } for a plain line, or { text, href } to
-        // render as a link to the page that note is actually about —
-        // this brief now pulls from Marathon, Fueling, Cross-Training,
-        // and the Planner instead of Marathon alone.
-        const notes = [];
-
-        notes.push({
-
-            text: `Current Training Phase: ${getTrainingPhase()}.`
-
-        });
-
-        // ---- Weekly mileage: your goal (Settings) vs this week's plan ----
+    if (weeklyMileageEl) {
         try {
-
-            const { getUserSettings } = await import("./userSettings.js");
-
-            const settings = getUserSettings();
-
-            if (settings.weeklyMileage > 0) {
-
-                const planned = getWeekMileage(getCurrentWeek());
-
-                const diff = Math.round((planned - settings.weeklyMileage) * 10) / 10;
-
-                const compareText = diff === 0
-                    ? "right on your weekly goal."
-                    : diff > 0
-                        ? `${diff} mi above your ${settings.weeklyMileage} mi/week goal.`
-                        : `${Math.abs(diff)} mi below your ${settings.weeklyMileage} mi/week goal.`;
-
-                notes.push({
-
-                    text: `This week's plan: ${planned} mi \u2014 ${compareText}`,
-                    href: "settings.html"
-
-                });
-
-            }
-
-        } catch (error) {
-
-            console.error("Coach brief: weekly mileage comparison failed", error);
-
+            weeklyMileageEl.textContent =
+                `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
+        } catch {
+            weeklyMileageEl.textContent = "--";
         }
-
-        const todayWorkout = upcomingWorkouts.length > 0 ? upcomingWorkouts[0] : null;
-
-        if (todayWorkout) {
-
-            notes.push({
-
-                text: `Today's workout: ${todayWorkout.session} (${todayWorkout.miles} mi).`
-
-            });
-
-            // ---- Fueling status for today's workout ----
-            try {
-
-                const plans = JSON.parse(localStorage.getItem("fueling-plans") || "[]");
-
-                const plan = plans.find(p =>
-                    p.marathonRef &&
-                    p.marathonRef.week === todayWorkout.week &&
-                    p.marathonRef.dayKey === todayWorkout.day
-                );
-
-                if (plan) {
-
-                    notes.push({
-
-                        text: `\u26fd Fueling plan ready: ${plan.carbTotal}g carbs, ${plan.fluidTotal}oz fluid.`,
-                        href: "fueling.html"
-
-                    });
-
-                } else if (Number(todayWorkout.miles) >= 8) {
-
-                    // Only nudge for a plan on runs long enough to need one.
-                    notes.push({
-
-                        text: `\u26fd No fueling plan yet for today's ${todayWorkout.miles}-mile run \u2014 build one now.`,
-                        href: `fueling.html?week=${todayWorkout.week}&day=${todayWorkout.day}`
-
-                    });
-
-                }
-
-            } catch (error) {
-
-                console.error("Coach brief: fueling lookup failed", error);
-
-            }
-
-        }
-
-        if (nextLongRun) {
-
-            notes.push({
-
-                text: `Next long run: ${nextLongRun.miles} miles during Week ${nextLongRun.week}.`
-
-            });
-
-        }
-
-        // ---- Cross-training coverage this week ----
-        try {
-
-            const overrides = JSON.parse(localStorage.getItem("training-overrides") || "{}");
-
-            const week = getCurrentWeek();
-
-            const weekOverrides = overrides[week] || {};
-
-            const daysCovered = Object.values(weekOverrides)
-                .filter(day => Array.isArray(day.crossTraining) && day.crossTraining.length > 0)
-                .length;
-
-            if (daysCovered > 0) {
-
-                notes.push({
-
-                    text: `\ud83d\udeb4 Cross-training: ${daysCovered} day${daysCovered === 1 ? "" : "s"} covered this week.`,
-                    href: "cross-training.html"
-
-                });
-
-            }
-
-        } catch (error) {
-
-            console.error("Coach brief: cross-training lookup failed", error);
-
-        }
-
-        // ---- Nearest upcoming course deadline (Planner), if any ----
-        try {
-
-            const { getUpcomingCourseEvents } = await import("./courseEvents.js");
-
-            const upcomingDeadlines = getUpcomingCourseEvents(10)
-                .filter(ev => ev.category === "deadline");
-
-            if (upcomingDeadlines.length > 0) {
-
-                const next = upcomingDeadlines[0];
-
-                const whenText =
-                    next.daysAway === 0 ? "today" :
-                    next.daysAway === 1 ? "tomorrow" :
-                    `in ${next.daysAway} days`;
-
-                notes.push({
-
-                    text: `\ud83d\udcda ${next.label} \u2014 ${whenText}.`,
-                    href: "planner.html"
-
-                });
-
-            }
-
-        } catch (error) {
-
-            console.error("Coach brief: course events unavailable", error);
-
-        }
-
-        const completion = getCompletionPercent();
-
-        if (completion >= 90) {
-
-            notes.push({
-
-                text: "Excellent consistency. Stay healthy and trust the training."
-
-            });
-
-        } else if (completion >= 70) {
-
-            notes.push({
-
-                text: "You're on track. Continue prioritizing your quality workouts."
-
-            });
-
-        } else {
-
-            notes.push({
-
-                text: "Focus on consistency. Completing every scheduled workout is the biggest priority."
-
-            });
-
-        }
-
-        notes.forEach(note => {
-
-            const li = document.createElement("li");
-
-            if (note.href) {
-
-                const a = document.createElement("a");
-
-                a.href = note.href;
-                a.textContent = note.text;
-
-                li.appendChild(a);
-
-            } else {
-
-                li.textContent = note.text;
-
-            }
-
-            coachBrief.appendChild(li);
-
-        });
-
     }
+
+    renderRecovery();
+    renderStreak();
+
     // ==========================================
-    // Upcoming Training
+    // Nutrition Snapshot
     // ==========================================
 
-    const upcomingTraining = document.getElementById("upcomingTraining");
-
-    if (upcomingTraining) {
-
-        upcomingTraining.innerHTML = "";
-
-        upcomingWorkouts
-
-            .slice(0, 4)
-
-            .forEach(workout => {
-
-                upcomingTraining.innerHTML += `
-
-                    <div class="training-card">
-
-                        <span>
-
-                            Week ${workout.week} • ${workout.day}
-
-                        </span>
-
-                        <h3>
-
-                            ${workout.session}
-
-                        </h3>
-
-                        <p>
-
-                            ${workout.miles} miles${workout.pace ? ` • ${workout.pace}` : ""}
-
-                        </p>
-
-                    </div>
-
-                `;
-
-            });
-
-    }
+    renderNutritionSnapshot();
 
 });
+
+/* ==========================================
+   Phase status
+========================================== */
+
+function renderPhaseStatus() {
+    const el = document.getElementById("phaseStatus");
+
+    if (!el) {
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const race = new Date(RACE_DATE);
+    race.setHours(0, 0, 0, 0);
+
+    const daysUntilRace = Math.round((race - today) / DAY_MS);
+
+    if (daysUntilRace > 7) {
+        let phase = "";
+
+        try {
+            phase = getTrainingPhase();
+        } catch {
+            phase = "";
+        }
+
+        el.textContent = phase
+            ? `${phase} — ${daysUntilRace} days to Indianapolis`
+            : `${daysUntilRace} days to Indianapolis`;
+    } else if (daysUntilRace > 0) {
+        el.textContent = `Race week — ${daysUntilRace} day${daysUntilRace === 1 ? "" : "s"} to Indianapolis. Trust the taper.`;
+    } else if (daysUntilRace === 0) {
+        el.textContent = "Race day. Good luck out there — go get your 3:05.";
+    } else {
+        const daysSince = Math.abs(daysUntilRace);
+        el.textContent = `${daysSince} day${daysSince === 1 ? "" : "s"} since Indianapolis. Time to build into the next phase.`;
+    }
+}
+
+/* ==========================================
+   Today
+========================================== */
+
+function renderToday() {
+    const container = document.getElementById("todayItems");
+    const dateLabel = document.getElementById("todayDateLabel");
+
+    if (!container) {
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (dateLabel) {
+        dateLabel.textContent = today.toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric"
+        });
+    }
+
+    const items = [];
+
+    let week = 1;
+    let dayData = null;
+    let dayKey = null;
+
+    try {
+        week = getCurrentWeek();
+        const start = weekStart(week);
+        const dayIndex = Math.round((today - start) / DAY_MS);
+        const weekDays = getAdjustedWeekDays(week);
+
+        if (dayIndex >= 0 && dayIndex < weekDays.length) {
+            dayData = weekDays[dayIndex];
+            dayKey = DAYS[dayIndex];
+        }
+    } catch (error) {
+        console.error("Dashboard: could not resolve today's plan", error);
+    }
+
+    // Today's run
+    if (dayData?.miles) {
+        items.push({
+            icon: "🏃",
+            title: dayData.session || "Run",
+            detail: `${dayData.miles} mi${dayData.pace ? ` @ ${dayData.pace}` : ""}${dayData.race ? " — RACE DAY" : ""}`,
+            link: "marathon.html"
+        });
+    }
+
+    // Fuel plan tied to today's run
+    if (dayData?.miles && week && dayKey) {
+        try {
+            const plans = JSON.parse(localStorage.getItem("fueling-plans") || "[]");
+            const plan = plans.find(p =>
+                p.marathonRef &&
+                Number(p.marathonRef.week) === Number(week) &&
+                p.marathonRef.dayKey === dayKey
+            );
+
+            if (plan) {
+                items.push({
+                    icon: "⛽",
+                    title: "Fuel plan ready",
+                    detail: plan.name || "A fueling plan is attached to today's run",
+                    link: "fueling.html"
+                });
+            }
+        } catch {
+            // No fuel plan data -- fine, just don't show this item.
+        }
+    }
+
+    // Cross-training attached to today
+    if (Array.isArray(dayData?.crossTraining) && dayData.crossTraining.length) {
+        dayData.crossTraining.forEach(entry => {
+            items.push({
+                icon: "🚴",
+                title: entry.activity || "Cross-Training",
+                detail: [entry.duration, entry.intensity]
+                    .filter(Boolean)
+                    .join(" · ") || "Scheduled for today",
+                link: "cross-training.html"
+            });
+        });
+    }
+
+    // Planner / course events due today
+    try {
+        const todaysEvents = getUpcomingCourseEvents(0);
+
+        todaysEvents.forEach(ev => {
+            items.push({
+                icon: "📅",
+                title: ev.label,
+                detail: ev.category || "Due today",
+                link: "planner.html"
+            });
+        });
+    } catch {
+        // No course event data -- fine.
+    }
+
+    if (!items.length) {
+        container.innerHTML = `
+            <div class="eos-today-rest">
+                Nothing scheduled today. Good day to rest, or check in on your
+                <a href="strength.html">Strength plan</a>.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = items.map(item => `
+        <a href="${item.link}" class="eos-today-item">
+            <span class="eos-today-item-icon">${item.icon}</span>
+            <div class="eos-today-item-text">
+                <strong>${escapeHtml(item.title)}</strong>
+                <span>${escapeHtml(item.detail)}</span>
+            </div>
+        </a>
+    `).join("");
+}
+
+/* ==========================================
+   Recovery (real COROS data, not a static number)
+========================================== */
+
+function findNumeric(data, keys) {
+    if (!data || typeof data !== "object") {
+        return null;
+    }
+
+    const lower = new Map();
+
+    const walk = (value, prefix = "") => {
+        if (!value || typeof value !== "object") return;
+
+        for (const [key, item] of Object.entries(value)) {
+            const normalized = `${prefix}${key}`.toLowerCase();
+            lower.set(normalized, item);
+
+            if (item && typeof item === "object" && !Array.isArray(item)) {
+                walk(item, `${normalized}.`);
+            }
+        }
+    };
+
+    walk(data);
+
+    for (const key of keys) {
+        for (const [candidate, value] of lower.entries()) {
+            if (candidate === key.toLowerCase() || candidate.endsWith(`.${key.toLowerCase()}`)) {
+                const n = Number(value);
+                if (Number.isFinite(n)) return n;
+            }
+        }
+    }
+
+    return null;
+}
+
+function renderRecovery() {
+    const valueEl = document.getElementById("recoveryScore");
+    const metaEl = document.getElementById("recoveryMeta");
+
+    if (!valueEl) {
+        return;
+    }
+
+    let snapshot = null;
+
+    try {
+        snapshot = JSON.parse(
+            localStorage.getItem("__eddieos_coros_data_snapshot_v2") || "null"
+        );
+    } catch {
+        snapshot = null;
+    }
+
+    const percent = snapshot ? findNumeric(snapshot.recovery, [
+        "recoveryPercentage", "recovery_percent", "recoveryScore", "recovery"
+    ]) : null;
+
+    if (percent === null) {
+        valueEl.textContent = "--";
+        metaEl.textContent = "No COROS data synced";
+        return;
+    }
+
+    valueEl.textContent = `${Math.round(percent)}%`;
+    metaEl.textContent = "Latest COROS reading";
+}
+
+/* ==========================================
+   Streak (computed from real 75-Day entries,
+   not a static placeholder)
+========================================== */
+
+function renderStreak() {
+    const valueEl = document.getElementById("streakDays");
+
+    if (!valueEl) {
+        return;
+    }
+
+    let entries = {};
+
+    try {
+        entries = JSON.parse(localStorage.getItem("entries") || "{}");
+    } catch {
+        entries = {};
+    }
+
+    function dayHasEntry(date) {
+        const key = date.toISOString().slice(0, 10);
+        const day = entries[key];
+        return !!(day && Object.values(day).some(Boolean));
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let streak = 0;
+    const cursor = new Date(today);
+
+    // If today has nothing logged yet, that's fine -- start counting
+    // from yesterday so a streak doesn't reset to 0 first thing in
+    // the morning before the day's habits are checked off.
+    if (!dayHasEntry(cursor)) {
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    while (dayHasEntry(cursor)) {
+        streak++;
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    valueEl.textContent = String(streak);
+}
+
+/* ==========================================
+   Nutrition snapshot
+========================================== */
+
+function renderNutritionSnapshot() {
+    const container = document.getElementById("nutritionSnapBars");
+
+    if (!container) {
+        return;
+    }
+
+    const key = "nutrition-" + new Date().toISOString().slice(0, 10);
+
+    let day = null;
+
+    try {
+        const raw = localStorage.getItem(key);
+        day = raw ? JSON.parse(raw) : null;
+    } catch {
+        day = null;
+    }
+
+    if (!day) {
+        container.innerHTML = `
+            <div class="eos-nutrition-snap-empty">
+                Nothing logged yet today.
+            </div>
+        `;
+        return;
+    }
+
+    const macros = [
+        { key: "calories", label: "Calories", goal: 3200, unit: "" },
+        { key: "protein", label: "Protein", goal: 180, unit: "g" },
+        { key: "carbs", label: "Carbs", goal: 450, unit: "g" },
+        { key: "fat", label: "Fat", goal: 70, unit: "g" }
+    ];
+
+    container.innerHTML = macros.map(m => {
+        const actual = Number(day[m.key]) || 0;
+        const pct = Math.min(100, Math.round((actual / m.goal) * 100));
+
+        return `
+            <div class="eos-nutrition-snap-bar">
+                <div class="eos-nutrition-snap-bar-label">
+                    <span>${m.label}</span>
+                    <span>${actual}${m.unit} / ${m.goal}${m.unit}</span>
+                </div>
+                <div class="eos-nutrition-snap-track">
+                    <div class="eos-nutrition-snap-fill" style="width:${pct}%"></div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
