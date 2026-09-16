@@ -966,6 +966,58 @@
 
     </div>
 
+    <!-- Workout Mode -->
+
+    <div
+        class="strength-workout-overlay"
+        id="strengthWorkoutOverlay">
+
+        <div class="strength-workout-modal">
+
+            <div class="strength-workout-header">
+
+                <div>
+                    <div
+                        id="workoutModeDayName"
+                        class="strength-workout-day-name">
+                        Workout
+                    </div>
+                    <div
+                        id="workoutModeTimer"
+                        class="strength-workout-timer">
+                        0:00
+                    </div>
+                </div>
+
+                <div class="strength-workout-header-actions">
+
+                    <button
+                        type="button"
+                        id="workoutModeFinish"
+                        class="strength-workout-finish-btn">
+                        Finish
+                    </button>
+
+                    <button
+                        type="button"
+                        id="workoutModeClose"
+                        class="strength-workout-close-btn"
+                        title="Close without finishing">
+                        ×
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div
+                id="workoutModeBody"
+                class="strength-workout-body"></div>
+
+        </div>
+
+    </div>
+
     <script src="js/loadHeader.js"></script>
 
     <script
@@ -981,6 +1033,11 @@
     <script
         type="module"
         src="js/strengthSchedule.js">
+    </script>
+
+    <script
+        type="module"
+        src="js/strengthWorkoutMode.js">
     </script>
 
 </body>
