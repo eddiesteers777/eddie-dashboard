@@ -157,3 +157,41 @@ logoutBtn.addEventListener("click", async () => {
     }
 
 });
+
+// =====================================
+// Export All Data
+// =====================================
+
+document.getElementById("exportDataBtn")?.addEventListener("click", async () => {
+
+    try {
+
+        const { exportAllData } = await import("./cloudSync.js");
+
+        const bundle = exportAllData();
+
+        const blob = new Blob(
+            [JSON.stringify(bundle, null, 2)],
+            { type: "application/json" }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const dateStamp = new Date().toISOString().slice(0, 10);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `eddieos-backup-${dateStamp}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        URL.revokeObjectURL(url);
+
+    } catch (error) {
+
+        console.error("Export failed:", error);
+        alert("Something went wrong exporting your data. Check the console for details.");
+
+    }
+
+});
