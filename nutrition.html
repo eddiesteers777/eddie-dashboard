@@ -4,24 +4,13 @@
 <head>
 
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <title>Nutrition | EddieOS</title>
 
-    <title>
-
-        Nutrition | EddieOS
-
-    </title>
-
-    <link
-        rel="stylesheet"
-        href="css/style.css">
-
-    <link
-        rel="stylesheet"
-        href="css/nutrition.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nutrition.css">
+    <link rel="stylesheet" href="css/nutrition-condensed.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F172A">
@@ -32,126 +21,54 @@
 <body>
 
     <!-- Header -->
-
     <div id="header"></div>
 
     <!-- Page -->
-
     <main class="nutrition-page">
 
         <section class="page-title">
-
-            <h1>
-
-                Nutrition
-
-            </h1>
-
-            <p>
-
-                Fuel your body. Recover faster. Run stronger.
-
-            </p>
-
+            <h1>Nutrition</h1>
+            <p>Fuel your body. Recover faster. Run stronger.</p>
         </section>
 
         <!-- Date Navigation -->
-
         <section class="date-navigation">
-
-            <button
-                id="previousDay"
-                class="day-btn">
-
-                ←
-
-            </button>
+            <button id="previousDay" class="day-btn">←</button>
 
             <div class="date-info">
-
-                <h2 id="currentDate">
-
-                    Loading...
-
-                </h2>
-
-                <span id="countdown">
-
-                    Calculating...
-
-                </span>
-
+                <h2 id="currentDate">Loading...</h2>
+                <span id="countdown">Calculating...</span>
             </div>
 
-            <button
-                id="nextDay"
-                class="day-btn">
-
-                →
-
-            </button>
-
+            <button id="nextDay" class="day-btn">→</button>
         </section>
 
         <!-- Workout Card -->
-
         <section class="workout-card">
-
             <div>
-
-                <span class="workout-label">
-
-                    TODAY'S TRAINING
-
-                </span>
-
-                <h2 id="workoutTitle">
-
-                    Loading...
-
-                </h2>
-
-                <p id="workoutDescription">
-
-                    Loading today's workout...
-
-                </p>
-
+                <span class="workout-label">TODAY'S TRAINING</span>
+                <h2 id="workoutTitle">Loading...</h2>
+                <p id="workoutDescription">Loading today's workout...</p>
             </div>
-
         </section>
 
         <!-- Macro Cards -->
-
-        <section
-            id="macroGrid"
-            class="macro-grid">
-
-        </section>
+        <section id="macroGrid" class="macro-grid"></section>
 
         <!-- Meals -->
-
         <section class="meal-section">
-
-            <h2>
-
-                Meals
-
-            </h2>
+            <h2>Meals</h2>
 
             <div class="meal-tabs" id="mealTabs">
-
                 <button type="button" class="meal-tab active" data-meal-tab="breakfast">Breakfast</button>
                 <button type="button" class="meal-tab" data-meal-tab="lunch">Lunch</button>
                 <button type="button" class="meal-tab" data-meal-tab="dinner">Dinner</button>
                 <button type="button" class="meal-tab" data-meal-tab="snacks">Snacks</button>
-
             </div>
 
             <div class="meal-grid">
 
                 <div class="meal-card active" data-meal-panel="breakfast">
-
                     <h3>Breakfast</h3>
 
                     <div class="food-search">
@@ -165,27 +82,17 @@
                                 type="button"
                                 class="food-scan-btn"
                                 data-meal="breakfast"
-                                title="Scan a barcode">
-                                📷
-                            </button>
+                                title="Scan a barcode">📷</button>
                         </div>
-                        <div
-                            class="food-search-results"
-                            data-meal="breakfast"></div>
+                        <div class="food-search-results" data-meal="breakfast"></div>
                     </div>
 
-                    <div
-                        class="food-log"
-                        id="foodLog-breakfast"></div>
+                    <div class="food-log" id="foodLog-breakfast"></div>
 
-                    <textarea
-                        id="breakfast"
-                        placeholder="Breakfast..."></textarea>
-
+                    <textarea id="breakfast" placeholder="Breakfast..."></textarea>
                 </div>
 
                 <div class="meal-card" data-meal-panel="lunch">
-
                     <h3>Lunch</h3>
 
                     <div class="food-search">
@@ -199,27 +106,17 @@
                                 type="button"
                                 class="food-scan-btn"
                                 data-meal="lunch"
-                                title="Scan a barcode">
-                                📷
-                            </button>
+                                title="Scan a barcode">📷</button>
                         </div>
-                        <div
-                            class="food-search-results"
-                            data-meal="lunch"></div>
+                        <div class="food-search-results" data-meal="lunch"></div>
                     </div>
 
-                    <div
-                        class="food-log"
-                        id="foodLog-lunch"></div>
+                    <div class="food-log" id="foodLog-lunch"></div>
 
-                    <textarea
-                        id="lunch"
-                        placeholder="Lunch..."></textarea>
-
+                    <textarea id="lunch" placeholder="Lunch..."></textarea>
                 </div>
 
                 <div class="meal-card" data-meal-panel="dinner">
-
                     <h3>Dinner</h3>
 
                     <div class="food-search">
@@ -233,27 +130,17 @@
                                 type="button"
                                 class="food-scan-btn"
                                 data-meal="dinner"
-                                title="Scan a barcode">
-                                📷
-                            </button>
+                                title="Scan a barcode">📷</button>
                         </div>
-                        <div
-                            class="food-search-results"
-                            data-meal="dinner"></div>
+                        <div class="food-search-results" data-meal="dinner"></div>
                     </div>
 
-                    <div
-                        class="food-log"
-                        id="foodLog-dinner"></div>
+                    <div class="food-log" id="foodLog-dinner"></div>
 
-                    <textarea
-                        id="dinner"
-                        placeholder="Dinner..."></textarea>
-
+                    <textarea id="dinner" placeholder="Dinner..."></textarea>
                 </div>
 
                 <div class="meal-card" data-meal-panel="snacks">
-
                     <h3>Snacks</h3>
 
                     <div class="food-search">
@@ -267,110 +154,57 @@
                                 type="button"
                                 class="food-scan-btn"
                                 data-meal="snacks"
-                                title="Scan a barcode">
-                                📷
-                            </button>
+                                title="Scan a barcode">📷</button>
                         </div>
-                        <div
-                            class="food-search-results"
-                            data-meal="snacks"></div>
+                        <div class="food-search-results" data-meal="snacks"></div>
                     </div>
 
-                    <div
-                        class="food-log"
-                        id="foodLog-snacks"></div>
+                    <div class="food-log" id="foodLog-snacks"></div>
 
-                    <textarea
-                        id="snacks"
-                        placeholder="Snacks, electrolytes, supplements..."></textarea>
-
+                    <textarea id="snacks" placeholder="Snacks, electrolytes, supplements..."></textarea>
                 </div>
 
             </div>
-
         </section>
 
         <!-- Summary -->
-
         <section class="summary-grid">
 
             <div class="summary-card score-card">
-
-                <h3>
-
-                    Daily Score
-
-                </h3>
-
-                <div id="nutritionScore">
-
-                    0%
-
-                </div>
-
-                <p id="scoreMessage">
-
-                    Let's get started.
-
-                </p>
-
+                <h3>Daily Score</h3>
+                <div id="nutritionScore">0%</div>
+                <p id="scoreMessage">Let's get started.</p>
             </div>
 
-            <div
-                id="remainingCard"
-                class="summary-card">
-
-            </div>
+            <div id="remainingCard" class="summary-card"></div>
 
         </section>
 
     </main>
 
     <!-- Barcode Scanner Modal -->
-
     <div class="food-scanner-overlay" id="foodScannerOverlay">
-
         <div class="food-scanner-modal">
 
             <div class="food-scanner-header">
-
-                <span class="food-scanner-title">
-                    Scan a Barcode
-                </span>
-
-                <button
-                    type="button"
-                    class="food-scanner-close"
-                    id="foodScannerClose">
-                    ×
-                </button>
-
+                <span class="food-scanner-title">Scan a Barcode</span>
+                <button type="button" class="food-scanner-close" id="foodScannerClose">×</button>
             </div>
 
             <div class="food-scanner-body">
-
                 <div id="foodScannerReader"></div>
-
-                <div
-                    class="food-scanner-status"
-                    id="foodScannerStatus">
+                <div class="food-scanner-status" id="foodScannerStatus">
                     Requesting camera access…
                 </div>
-
             </div>
 
         </div>
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/index.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@undecaf/barcode-detector-polyfill@0.9.23/dist/index.js"></script>
-
     <script src="js/loadHeader.js"></script>
-
     <script src="js/nutrition.js"></script>
-
     <script src="js/registerSW.js"></script>
 
 </body>
