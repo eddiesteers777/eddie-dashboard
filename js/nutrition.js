@@ -1073,6 +1073,26 @@ document
 
 document.addEventListener("click", e => {
 
+    /* Meal tab switching */
+
+    const mealTabEl = e.target.closest("[data-meal-tab]");
+
+    if(mealTabEl){
+
+        const meal = mealTabEl.dataset.mealTab;
+
+        document.querySelectorAll(".meal-tab").forEach(tab => {
+            tab.classList.toggle("active", tab.dataset.mealTab === meal);
+        });
+
+        document.querySelectorAll(".meal-card").forEach(card => {
+            card.classList.toggle("active", card.dataset.mealPanel === meal);
+        });
+
+        return;
+
+    }
+
     /* Clicking a search result -> show quantity confirm */
 
     const resultEl = e.target.closest(".food-result");
