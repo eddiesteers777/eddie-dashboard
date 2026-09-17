@@ -243,6 +243,11 @@ section{
     color:#fff;
 }
 
+.eos-navbar .eos-dropdown-trigger.section-active{
+    background:rgba(78,168,255,.14);
+    color:#fff;
+}
+
 .eos-navbar .eos-nav-item.active{
     background:#4EA8FF;
     color:#fff;
@@ -275,9 +280,11 @@ section{
     transform:rotate(180deg) translateY(1px);
 }
 
-/* Important: menu is hidden until its dropdown is actually opened. */
+/* Important: menu is hidden until its dropdown is actually opened,
+   via opacity/visibility rather than display, so open/close can
+   animate smoothly instead of snapping on and off. */
 .eos-navbar .eos-dropdown-menu{
-    display:none;
+    display:block;
     position:absolute;
     z-index:1100;
     top:calc(100% + 8px);
@@ -285,17 +292,24 @@ section{
     width:max-content;
     min-width:190px;
     padding:6px;
-    transform:translateX(-50%);
+    transform:translateX(-50%) translateY(-6px);
     background:#172235;
     border:1px solid rgba(255,255,255,.10);
     border-radius:14px;
     box-shadow:0 18px 42px rgba(0,0,0,.38);
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:opacity .16s ease, transform .16s ease, visibility .16s;
 }
 
 .eos-navbar .eos-dropdown[open] > .eos-dropdown-menu{
-    display:block;
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0);
 }
 
 .eos-navbar .eos-dropdown-menu::before{
