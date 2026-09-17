@@ -513,24 +513,71 @@ body{
 
 }
 
+.meal-tabs{
+
+    display:flex;
+
+    gap:8px;
+
+    margin-bottom:20px;
+
+    flex-wrap:wrap;
+
+}
+
+.meal-tab{
+
+    padding:10px 20px;
+
+    border:1px solid var(--border);
+
+    border-radius:100px;
+
+    background:var(--surface);
+
+    color:var(--text-secondary);
+
+    font-size:14px;
+
+    font-weight:700;
+
+    font-family:inherit;
+
+    cursor:pointer;
+
+    transition:.15s;
+
+}
+
+.meal-tab:hover{
+
+    border-color:var(--primary);
+
+    color:var(--text);
+
+}
+
+.meal-tab.active{
+
+    background:var(--primary);
+
+    border-color:var(--primary);
+
+    color:#05131f;
+
+}
+
 .meal-grid{
 
-    display:grid;
-
-    grid-template-columns:
-
-        repeat(
-            auto-fit,
-            minmax(340px,1fr)
-        );
-
-    gap:24px;
+    display:block;
 
     margin-bottom:40px;
 
 }
 
 .meal-card{
+
+    display:none;
 
     background:var(--surface);
 
@@ -541,6 +588,12 @@ body{
     padding:24px;
 
     box-shadow:var(--shadow);
+
+}
+
+.meal-card.active{
+
+    display:block;
 
 }
 
