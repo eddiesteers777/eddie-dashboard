@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Running | EddieOS</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/running.css">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="running-page">
+
+        <section class="running-hero">
+
+            <h1>Running</h1>
+
+            <p id="runningPlanContext" class="running-plan-context">
+                Loading your training plan…
+            </p>
+
+        </section>
+
+        <div class="running-toolbar">
+
+            <div class="running-view-toggle" id="runningViewToggle">
+
+                <button type="button" class="running-view-btn active" data-running-view="week">
+                    Week
+                </button>
+
+                <button type="button" class="running-view-btn" data-running-view="month">
+                    Month
+                </button>
+
+                <button type="button" class="running-view-btn" data-running-view="list">
+                    List
+                </button>
+
+            </div>
+
+            <div class="running-nav-controls">
+
+                <button type="button" id="runningPrev" class="running-nav-btn">←</button>
+
+                <span id="runningRangeLabel" class="running-range-label">Loading…</span>
+
+                <button type="button" id="runningNext" class="running-nav-btn">→</button>
+
+                <button type="button" id="runningToday" class="running-row-btn">Today</button>
+
+            </div>
+
+        </div>
+
+        <section class="running-calendar-wrap">
+
+            <div id="runningWeekView" class="running-view active"></div>
+
+            <div id="runningMonthView" class="running-view"></div>
+
+            <div id="runningListView" class="running-view"></div>
+
+        </section>
+
+        <section id="runningDayDetail" class="running-day-detail"></section>
+
+        <section class="running-summary-grid">
+
+            <div class="running-summary-card">
+                <h3>This Week</h3>
+                <div id="runningThisWeek"></div>
+            </div>
+
+            <div class="running-summary-card">
+                <h3>Upcoming</h3>
+                <div id="runningUpcoming"></div>
+            </div>
+
+            <div class="running-summary-card">
+                <h3>Recent Runs</h3>
+                <div id="runningRecentRuns"></div>
+            </div>
+
+        </section>
+
+        <button type="button" id="runningAddRunBtn" class="running-fab">
+            + Add Run
+        </button>
+
+    </main>
+
+    <!-- Add / Edit Run Modal -->
+
+    <div class="running-modal-overlay" id="runningRunModalOverlay">
+
+        <div class="running-modal">
+
+            <div class="running-modal-header">
+                <span id="runningRunModalTitle">Add a Run</span>
+                <button type="button" id="runningRunModalClose" class="running-modal-close">×</button>
+            </div>
+
+            <div class="running-modal-body">
+
+                <label class="running-field-label">Date</label>
+                <input type="date" id="runningRunDate" class="running-input">
+
+                <label class="running-field-label">Time (optional)</label>
+                <input type="time" id="runningRunTime" class="running-input">
+
+                <label class="running-field-label">Distance (miles)</label>
+                <input type="number" id="runningRunMiles" class="running-input" min="0" step="0.1">
+
+                <label class="running-field-label">Type</label>
+                <select id="runningRunType" class="running-input">
+                    <option>Easy</option>
+                    <option>Recovery</option>
+                    <option>Long Run</option>
+                    <option>Workout</option>
+                    <option>Trail</option>
+                    <option>Treadmill</option>
+                    <option>Race</option>
+                    <option>Other</option>
+                </select>
+
+                <label class="running-field-label">Notes (optional)</label>
+                <input type="text" id="runningRunNotes" class="running-input" placeholder="How it felt, weather, etc.">
+
+                <div class="running-modal-actions">
+                    <button type="button" id="runningRunDelete" class="running-btn-outline running-btn-danger" style="display:none;">Delete</button>
+                    <button type="button" id="runningRunCancel" class="running-btn-outline">Cancel</button>
+                    <button type="button" id="runningRunSave" class="running-row-btn primary">Save</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/runningLog.js"></script>
+
+    <script type="module" src="js/runningCalendar.js"></script>
+
+</body>
+
+</html>
