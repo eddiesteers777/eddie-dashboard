@@ -10,8 +10,63 @@ fetch("components/header.html")
 
             if (link.getAttribute("href") === page) {
                 link.classList.add("active");
+
+                // Also give the parent dropdown's own trigger a
+                // persistent highlight, so it's clear which section
+                // you're in even after the menu itself closes --
+                // not just the one link inside it.
+                const parentDropdown = link.closest(".eos-dropdown");
+                const trigger = parentDropdown?.querySelector(".eos-dropdown-trigger");
+                trigger?.classList.add("section-active");
             }
 
+        });
+
+        // ---- Dropdown coordination ----
+        // Native <details> elements have zero built-in awareness of
+        // each other or of clicks elsewhere on the page: opening one
+        // doesn't close another, and clicking outside does nothing.
+        // Both are needed for the menu to feel like one coordinated
+        // nav bar rather than five independent widgets.
+
+        const dropdowns = Array.from(document.querySelectorAll(".eos-dropdown"));
+
+        function closeAllDropdowns(except = null) {
+            dropdowns.forEach(dropdown => {
+                if (dropdown !== except && dropdown.open) {
+                    dropdown.open = false;
+                }
+            });
+        }
+
+        dropdowns.forEach(dropdown => {
+
+            dropdown.addEventListener("toggle", () => {
+                if (dropdown.open) {
+                    closeAllDropdowns(dropdown);
+                }
+            });
+
+            dropdown.querySelectorAll(".eos-dropdown-link").forEach(link => {
+                // Close immediately on selection rather than leaving
+                // the menu open while the page navigates away.
+                link.addEventListener("click", () => {
+                    dropdown.open = false;
+                });
+            });
+
+        });
+
+        document.addEventListener("click", event => {
+            if (!event.target.closest(".eos-dropdown")) {
+                closeAllDropdowns();
+            }
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                closeAllDropdowns();
+            }
         });
 
         // ---- Wire up Google Sign-In / Sign-Out ----
