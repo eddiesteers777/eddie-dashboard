@@ -16,6 +16,7 @@ import {
 } from "./marathonData.js";
 
 import { getUpcomingCourseEvents } from "./courseEvents.js";
+import { describeCorosFreshness } from "./corosStatus.js";
 
 const DAY_MS = 86400000;
 
@@ -339,7 +340,7 @@ function renderRecovery() {
     }
 
     valueEl.textContent = `${Math.round(percent)}%`;
-    metaEl.textContent = "Latest COROS reading";
+    metaEl.textContent = describeCorosFreshness(snapshot?.fetchedAt);
 }
 
 /* ==========================================
