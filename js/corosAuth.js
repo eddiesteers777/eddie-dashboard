@@ -1,40 +1,40 @@
-/* ==========================================
-   EddieOS COROS OAuth — Step 2
-   Authorization only. No COROS data is pulled yet.
-========================================== */
+/* EddieOS COROS OAuth — current MCP-compatible implementation */
 
-const COROS_MCP_URL = "https://mcpus.coros.com/mcp";
-const OAUTH_STATE_KEY = "__eddieos_coros_oauth_state";
-const OAUTH_TOKEN_KEY = "__eddieos_coros_oauth_token";
+const MCP_URL = "https://mcpus.coros.com/mcp";
+const CLIENT_ID =
+    "https://eddiesteers777.github.io/eddie-dashboard/oauth/client-metadata.json";
 
-const $ = (id) => document.getElementById(id);
+const TOKEN_KEY = "__eddieos_coros_oauth_v2";
+const PENDING_KEY = "__eddieos_coros_oauth_pending_v2";
+
+const $ = id => document.getElementById(id);
 
 function randomString(length = 64) {
     const bytes = new Uint8Array(length);
     crypto.getRandomValues(bytes);
-
-    return Array.from(bytes, (byte) =>
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[
-            byte % 62
-        ]
+    return Array.from(
+        bytes,
+        byte =>
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[
+                byte % 62
+            ]
     ).join("");
 }
 
 function base64Url(bytes) {
     let binary = "";
-    for (const byte of bytes) {
-        binary += String.fromCharCode(byte);
-    }
-
+    for (const byte of bytes) binary += String.fromCharCode(byte);
     return btoa(binary)
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
         .replace(/=+$/g, "");
 }
 
-async function sha256Base64Url(value) {
-    const bytes = new TextEncoder().encode(value);
-    const digest = await crypto.subtle.digest("SHA-256", bytes);
+async function pkceChallenge(verifier) {
+    const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(verifier)
+    );
     return base64Url(new Uint8Array(digest));
 }
 
@@ -42,38 +42,17 @@ function redirectUri() {
     return `${window.location.origin}${window.location.pathname}`;
 }
 
-function setStatus(text, connected = false) {
-    const textEl = $("corosConnectionStatusText");
-    const dot = document.querySelector(".coros-status-dot");
-    const button = $("connectCorosBtn");
-
-    if (textEl) {
-        textEl.textContent = text;
-    }
-
-    if (dot) {
-        dot.style.background = connected ? "#22C55E" : "#94A3B8";
-        dot.style.boxShadow = connected
-            ? "0 0 10px rgba(34,197,94,.55)"
-            : "none";
-    }
-
-    if (button) {
-        button.textContent = connected ? "COROS Connected" : "Connect COROS";
-    }
-}
-
-function getStoredToken() {
+function getTokenRecord() {
     try {
-        return JSON.parse(localStorage.getItem(OAUTH_TOKEN_KEY) || "null");
+        return JSON.parse(localStorage.getItem(TOKEN_KEY) || "null");
     } catch {
         return null;
     }
 }
 
-function saveToken(token) {
+function saveTokenRecord(token) {
     localStorage.setItem(
-        OAUTH_TOKEN_KEY,
+        TOKEN_KEY,
         JSON.stringify({
             ...token,
             savedAt: Date.now()
@@ -81,169 +60,209 @@ function saveToken(token) {
     );
 }
 
-async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-        const body = await response.text().catch(() => "");
-        throw new Error(
-            `Request failed (${response.status})${body ? `: ${body}` : ""}`
-        );
-    }
-
-    return response.json();
+function clearCorosToken() {
+    localStorage.removeItem(TOKEN_KEY);
 }
 
-async function discoverOAuth() {
-    const origin = new URL(COROS_MCP_URL).origin;
-
-    // RFC 9728 protected-resource metadata first.
-    let resourceMetadata = null;
-
-    for (const path of [
-        "/.well-known/oauth-protected-resource/mcp",
-        "/.well-known/oauth-protected-resource"
-    ]) {
-        try {
-            resourceMetadata = await fetchJson(`${origin}${path}`, {
-                headers: { Accept: "application/json" }
-            });
-            if (resourceMetadata) break;
-        } catch {
-            // Try the next standard location.
-        }
-    }
-
-    const authorizationServers =
-        resourceMetadata?.authorization_servers || [origin];
-
-    for (const issuer of authorizationServers) {
-        const base = issuer.replace(/\/$/, "");
-
-        try {
-            return await fetchJson(
-                `${base}/.well-known/oauth-authorization-server`,
-                {
-                    headers: {
-                        Accept: "application/json",
-                        "MCP-Protocol-Version": "2025-11-25"
-                    }
-                }
-            );
-        } catch {
-            // Try next advertised issuer.
-        }
-    }
-
-    throw new Error(
-        "EddieOS could not discover the COROS OAuth authorization server."
-    );
-}
-
-async function registerPublicClient(metadata) {
-    if (!metadata.registration_endpoint) {
-        throw new Error(
-            "COROS did not advertise dynamic client registration. EddieOS needs a COROS public client registration before it can safely start OAuth."
-        );
-    }
-
-    const client = await fetchJson(metadata.registration_endpoint, {
-        method: "POST",
+async function jsonRequest(url, options = {}) {
+    const response = await fetch(url, {
+        ...options,
         headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json"
-        },
-        body: JSON.stringify({
-            client_name: "EddieOS",
-            redirect_uris: [redirectUri()],
-            grant_types: ["authorization_code"],
-            response_types: ["code"],
-            token_endpoint_auth_method: "none"
-        })
+            Accept: "application/json",
+            ...(options.headers || {})
+        }
     });
 
-    if (!client.client_id) {
-        throw new Error("COROS did not return a client ID.");
+    const body = await response.text();
+
+    if (!response.ok) {
+        throw new Error(
+            `${response.status} ${response.statusText}` +
+            (body ? ` — ${body.slice(0, 240)}` : "")
+        );
     }
 
-    return client;
+    try {
+        return JSON.parse(body);
+    } catch {
+        throw new Error("Expected JSON from COROS but received invalid JSON.");
+    }
+}
+
+async function discoverOAuthMetadata() {
+    const origin = new URL(MCP_URL).origin;
+
+    const protectedResource =
+        await jsonRequest(
+            `${origin}/.well-known/oauth-protected-resource`
+        );
+
+    const issuer =
+        protectedResource.authorization_servers?.[0];
+
+    if (!issuer) {
+        throw new Error(
+            "COROS did not advertise an authorization server."
+        );
+    }
+
+    const issuerBase = issuer.replace(/\/$/, "");
+
+    const authorizationServer =
+        await jsonRequest(
+            `${issuerBase}/.well-known/oauth-authorization-server`
+        );
+
+    if (!authorizationServer.authorization_endpoint) {
+        throw new Error(
+            "COROS did not provide an authorization endpoint."
+        );
+    }
+
+    if (!authorizationServer.token_endpoint) {
+        throw new Error(
+            "COROS did not provide a token endpoint."
+        );
+    }
+
+    return {
+        protectedResource,
+        authorizationServer
+    };
 }
 
 async function startOAuth() {
-    setStatus("Connecting…");
+    setConnectionStatus("Connecting…", false);
 
-    const metadata = await discoverOAuth();
+    const {
+        authorizationServer
+    } = await discoverOAuthMetadata();
 
-    if (!Array.isArray(metadata.code_challenge_methods_supported) ||
-        !metadata.code_challenge_methods_supported.includes("S256")) {
-        throw new Error(
-            "COROS did not advertise PKCE S256, so EddieOS stopped instead of using a weaker authorization flow."
-        );
+    const useCimd =
+        authorizationServer.client_id_metadata_document_supported === true;
+
+    let clientId = CLIENT_ID;
+
+    if (!useCimd) {
+        if (!authorizationServer.registration_endpoint) {
+            throw new Error(
+                "COROS supports OAuth here, but no Client ID Metadata Document or Dynamic Client Registration path was advertised."
+            );
+        }
+
+        const registration =
+            await jsonRequest(
+                authorizationServer.registration_endpoint,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        client_name: "EddieOS",
+                        redirect_uris: [redirectUri()],
+                        grant_types: [
+                            "authorization_code",
+                            "refresh_token"
+                        ],
+                        response_types: ["code"],
+                        token_endpoint_auth_method: "none"
+                    })
+                }
+            );
+
+        clientId = registration.client_id;
+
+        if (!clientId) {
+            throw new Error(
+                "COROS Dynamic Client Registration did not return a client ID."
+            );
+        }
     }
 
-    const client = await registerPublicClient(metadata);
-
-    const state = randomString(48);
     const verifier = randomString(96);
-    const challenge = await sha256Base64Url(verifier);
+    const challenge = await pkceChallenge(verifier);
+    const state = randomString(48);
 
     sessionStorage.setItem(
-        OAUTH_STATE_KEY,
+        PENDING_KEY,
         JSON.stringify({
             state,
             verifier,
-            clientId: client.client_id,
-            tokenEndpoint: metadata.token_endpoint,
+            clientId,
+            authorizationServer,
             createdAt: Date.now()
         })
     );
 
     const params = new URLSearchParams({
         response_type: "code",
-        client_id: client.client_id,
+        client_id: clientId,
         redirect_uri: redirectUri(),
         state,
         code_challenge: challenge,
         code_challenge_method: "S256",
-        resource: COROS_MCP_URL
+        resource: MCP_URL
     });
 
     window.location.assign(
-        `${metadata.authorization_endpoint}?${params.toString()}`
+        `${authorizationServer.authorization_endpoint}?${params.toString()}`
     );
 }
 
 async function finishOAuth() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    const error = params.get("error");
+    const oauthError = params.get("error");
 
-    if (!code && !error) {
-        return;
-    }
+    if (!code && !oauthError) return false;
 
-    let pending = null;
+    let pending;
 
     try {
         pending = JSON.parse(
-            sessionStorage.getItem(OAUTH_STATE_KEY) || "null"
+            sessionStorage.getItem(PENDING_KEY) || "null"
         );
     } catch {
         pending = null;
     }
 
-    sessionStorage.removeItem(OAUTH_STATE_KEY);
+    sessionStorage.removeItem(PENDING_KEY);
 
     if (!pending) {
-        throw new Error("The COROS OAuth state could not be recovered.");
+        throw new Error(
+            "COROS authorization state was not found."
+        );
     }
 
     if (params.get("state") !== pending.state) {
-        throw new Error("The COROS OAuth state validation failed.");
+        throw new Error(
+            "COROS OAuth state validation failed."
+        );
     }
 
-    if (error) {
-        throw new Error(`COROS authorization failed: ${error}`);
+    if (oauthError) {
+        throw new Error(
+            `COROS authorization failed: ${oauthError}` +
+            (
+                params.get("error_description")
+                    ? ` — ${params.get("error_description")}`
+                    : ""
+            )
+        );
+    }
+
+    const returnedIssuer = params.get("iss");
+    const expectedIssuer = pending.authorizationServer.issuer;
+
+    if (
+        returnedIssuer &&
+        expectedIssuer &&
+        returnedIssuer !== expectedIssuer
+    ) {
+        throw new Error(
+            "COROS OAuth issuer validation failed."
+        );
     }
 
     const body = new URLSearchParams({
@@ -252,91 +271,167 @@ async function finishOAuth() {
         redirect_uri: redirectUri(),
         client_id: pending.clientId,
         code_verifier: pending.verifier,
-        resource: COROS_MCP_URL
+        resource: MCP_URL
     });
 
-    const token = await fetchJson(pending.tokenEndpoint, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Accept: "application/json"
-        },
-        body
-    });
+    const token =
+        await jsonRequest(
+            pending.authorizationServer.token_endpoint,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+                body
+            }
+        );
 
     if (!token.access_token) {
-        throw new Error("COROS did not return an access token.");
+        throw new Error(
+            "COROS did not return an access token."
+        );
     }
 
-    saveToken(token);
-    setStatus("Connected to COROS", true);
+    saveTokenRecord(token);
+    setConnectionStatus("Connected to COROS", true);
 
-    window.dispatchEvent(
-        new CustomEvent("eddieos:coros-auth-changed")
+    window.history.replaceState(
+        {},
+        document.title,
+        redirectUri()
     );
 
-    const cleanUrl =
-        `${window.location.origin}${window.location.pathname}` +
-        window.location.hash;
+    window.dispatchEvent(
+        new CustomEvent(
+            "eddieos:coros-auth-changed",
+            {
+                detail: { connected: true }
+            }
+        )
+    );
 
-    window.history.replaceState({}, document.title, cleanUrl);
+    return true;
 }
 
-async function initCorosAuth() {
-    const button = $("connectCorosBtn");
-    if (!button) return;
+function setConnectionStatus(text, connected) {
+    const textElement =
+        $("corosConnectionStatusText");
 
-    const existing = getStoredToken();
+    const dot =
+        document.querySelector(".coros-status-dot");
 
-    if (existing?.access_token) {
-        setStatus("Connected to COROS", true);
-        return;
+    const button =
+        $("connectCorosBtn");
+
+    if (textElement) {
+        textElement.textContent = text;
     }
 
-    setStatus("Not connected");
+    if (dot) {
+        dot.style.background =
+            connected ? "#22C55E" : "#94A3B8";
 
-    button.addEventListener("click", async () => {
-        if (button.disabled) return;
+        dot.style.boxShadow =
+            connected
+                ? "0 0 10px rgba(34,197,94,.55)"
+                : "none";
+    }
 
-        button.disabled = true;
+    if (button) {
+        button.textContent =
+            connected
+                ? "COROS Connected"
+                : "Connect COROS";
+    }
+}
 
-        try {
-            await startOAuth();
-        } catch (error) {
-            console.error("EddieOS COROS OAuth:", error);
-            setStatus("Connection unavailable");
-            alert(
-                `EddieOS could not start the COROS connection.\n\n${error.message}`
-            );
-            button.disabled = false;
-        }
-    });
+function init() {
+    // Remove only the obsolete token key from the experimental version.
+    localStorage.removeItem(
+        "__eddieos_coros_oauth_token"
+    );
 
-    try {
-        await finishOAuth();
-    } catch (error) {
-        console.error("EddieOS COROS OAuth callback:", error);
-        setStatus("Authorization failed");
+    const button =
+        $("connectCorosBtn");
+
+    const existing =
+        getTokenRecord();
+
+    setConnectionStatus(
+        existing?.access_token
+            ? "Connected to COROS"
+            : "Not connected",
+        Boolean(existing?.access_token)
+    );
+
+    if (button) {
+        button.addEventListener(
+            "click",
+            async () => {
+                if (button.dataset.busy === "true") return;
+
+                button.dataset.busy = "true";
+                button.disabled = true;
+
+                try {
+                    await startOAuth();
+                } catch (error) {
+                    console.error(
+                        "EddieOS COROS OAuth:",
+                        error
+                    );
+
+                    setConnectionStatus(
+                        "Connection unavailable",
+                        false
+                    );
+
+                    alert(
+                        `EddieOS could not start the COROS connection.\n\n${error.message}`
+                    );
+
+                    button.disabled = false;
+                    button.dataset.busy = "false";
+                }
+            }
+        );
+    }
+
+    finishOAuth().catch(error => {
+        console.error(
+            "EddieOS COROS OAuth callback:",
+            error
+        );
+
+        setConnectionStatus(
+            "Authorization failed",
+            false
+        );
+
         alert(
             `COROS authorization did not finish successfully.\n\n${error.message}`
         );
 
-        const cleanUrl =
-            `${window.location.origin}${window.location.pathname}` +
-            window.location.hash;
-
-        window.history.replaceState({}, document.title, cleanUrl);
-    }
+        window.history.replaceState(
+            {},
+            document.title,
+            redirectUri()
+        );
+    });
 }
 
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initCorosAuth);
+    document.addEventListener("DOMContentLoaded", init);
 } else {
-    initCorosAuth();
+    init();
 }
 
 export {
-    getStoredToken,
-    COROS_MCP_URL as MCP_URL,
-    discoverOAuth as discoverOAuthMetadata
+    MCP_URL,
+    CLIENT_ID,
+    getTokenRecord,
+    saveTokenRecord,
+    clearCorosToken,
+    discoverOAuthMetadata
 };
