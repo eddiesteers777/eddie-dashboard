@@ -258,70 +258,106 @@ async function selectWeek(week) {
 
 function renderMarathonCalendar(data, currentWeek) {
 
+    const tabsContainer = $("marathonWeekTabs");
     const calendar = $("marathonCalendar");
     if (!calendar) return;
 
-    calendar.innerHTML = "";
+    // selectedWeek already exists elsewhere in this file to track
+    // which week a selected *day* belongs to -- reused here as
+    // "which week's tab is being viewed" too, since it's the same
+    // underlying concept and defaults sensibly (today's week) the
+    // same way either use of it would.
+    if (selectedWeek == null) {
+        selectedWeek = currentWeek;
+    }
 
     const dayNames = data.DAYS;
     const today = new Date();
 
+    // ---- Week tab strip ----
+
+    if (tabsContainer) {
+
+        tabsContainer.innerHTML = "";
+
+        for (let week = 1; week <= data.WEEKS.length; week++) {
+
+            const tab = document.createElement("button");
+            tab.type = "button";
+            tab.className = "fuel-week-tab" +
+                (week === selectedWeek ? " active" : "") +
+                (week === currentWeek ? " is-current" : "");
+            tab.textContent = week;
+            tab.title = escapeHTML(data.weekRange(week));
+            tab.addEventListener("click", () => selectWeek(week));
+
+            tabsContainer.appendChild(tab);
+
+        }
+
+        const activeTab = tabsContainer.querySelector(".fuel-week-tab.active");
+        activeTab?.scrollIntoView({ inline: "center", block: "nearest" });
+
+    }
+
+    // ---- Selected week's compact day grid ----
+
+    calendar.innerHTML = "";
+
+    const week = selectedWeek;
+    const days = data.getAdjustedWeekDays(week);
+    const range = data.weekRange(week);
+
     const header = document.createElement("div");
-    header.className = "marathon-calendar-week calendar-header-row";
+    header.className = "fuel-week-header";
     header.innerHTML = `
-        <div class="calendar-week-label">Week</div>
-        ${dayNames.map(day => `<div class="calendar-day-heading">${day}</div>`).join("")}
+        <strong>Week ${week}</strong>
+        <span>${escapeHTML(range)}</span>
     `;
     calendar.appendChild(header);
 
-    for (let week = 1; week <= data.WEEKS.length; week++) {
+    const row = document.createElement("div");
+    row.className = "marathon-calendar-week-grid";
 
-        const days = data.getAdjustedWeekDays(week);
-        const row = document.createElement("div");
-        row.className = "marathon-calendar-week" + (week === currentWeek ? " current-week" : "");
+    days.forEach((day, index) => {
 
-        const range = data.weekRange(week);
+        const dayKey = dayNames[index];
+        const date = new Date(data.weekStart(week).getTime() + index * 86400000);
+        const hasPlan = !!findPlanForWorkout(week, dayKey);
+        const isToday = date.toDateString() === today.toDateString();
+        const isRest = !day.miles;
 
-        row.innerHTML = `
-            <div class="calendar-week-label">
-                <strong>Wk ${week}</strong>
-                <span>${escapeHTML(range)}</span>
-            </div>
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "workout-day-row marathon-calendar-day" +
+            (hasPlan ? " has-plan" : "") +
+            (isToday ? " today" : "") +
+            (isRest ? " rest" : "");
+        cell.dataset.week = week;
+        cell.dataset.index = index;
+
+        const compactLabel = isRest
+            ? "Rest"
+            : `${day.miles} ${escapeHTML(day.pace || "mi")}`;
+
+        cell.innerHTML = `
+            <span class="calendar-day-date">${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+            <span class="workout-day-abbr">${dayKey}</span>
+            <span class="workout-day-compact">${compactLabel}</span>
+            ${hasPlan ? '<span class="workout-day-check">⛽</span>' : ""}
         `;
 
-        days.forEach((day, index) => {
+        cell.title = day.session
+            ? escapeHTML(day.session)
+            : "Rest day";
 
-            const dayKey = dayNames[index];
-            const date = new Date(data.weekStart(week).getTime() + index * 86400000);
-            const hasPlan = !!findPlanForWorkout(week, dayKey);
-            const isToday = date.toDateString() === today.toDateString();
+        cell.addEventListener("click", () => selectDay(index, day, dayKey, week));
 
-            const cell = document.createElement("button");
-            cell.type = "button";
-            cell.className = "workout-day-row marathon-calendar-day" +
-                (hasPlan ? " has-plan" : "") +
-                (isToday ? " today" : "");
-            cell.dataset.week = week;
-            cell.dataset.index = index;
+        row.appendChild(cell);
 
-            cell.innerHTML = `
-                <span class="calendar-day-date">${date.toLocaleDateString("en-US", { month:"short", day:"numeric" })}</span>
-                <span class="workout-day-abbr">${dayKey}</span>
-                <span class="workout-day-session">${escapeHTML(day.session)}</span>
-                <span class="workout-day-miles">${day.miles} mi</span>
-                <span class="workout-day-pace">${escapeHTML(day.pace)}</span>
-                ${hasPlan ? '<span class="workout-day-check">⛽ Planned</span>' : '<span class="workout-day-check empty">&nbsp;</span>'}
-            `;
+    });
 
-            cell.addEventListener("click", () => selectDay(index, day, dayKey, week));
-
-            row.appendChild(cell);
-
-        });
-
-        calendar.appendChild(row);
-
-    }
+    calendar.appendChild(row);
 
 }
 
