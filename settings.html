@@ -11,6 +11,10 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/settings.css">
 
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
 </head>
 
 <body>
@@ -266,6 +270,24 @@
 
             <div class="settings-card">
 
+                <h3>💾 Your Data</h3>
+
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
+                    Download everything EddieOS has stored for you — training plans, logs,
+                    settings, all of it — as one file you can keep as a backup.
+                </p>
+
+                <button
+                    type="button"
+                    id="exportDataBtn"
+                    class="settings-btn">
+                    Export All Data
+                </button>
+
+            </div>
+
+            <div class="settings-card">
+
                 <h3>ℹ️ About EddieOS</h3>
 
                 <div class="setting-row">
@@ -293,6 +315,8 @@
     <script src="js/loadHeader.js"></script>
 
     <script type="module" src="js/settings.js"></script>
+
+    <script src="js/registerSW.js"></script>
 
 </body>
 
