@@ -22,6 +22,20 @@ function collectLocalKeys(){
   return [...keys];
 }
 function currentLocalData(){ const data={}; for(const k of collectLocalKeys()) data[k]=localStorage.getItem(k); return data; }
+
+/**
+ * Bundles every EddieOS localStorage key this app actually knows
+ * about (the same list cloud sync itself uses, so this can never
+ * drift out of sync with what actually gets backed up) into one
+ * plain object suitable for downloading as a backup file.
+ */
+export function exportAllData(){
+  return {
+    app: "EddieOS",
+    exportedAt: new Date().toISOString(),
+    data: currentLocalData()
+  };
+}
 function snapshotData(data){ return JSON.stringify(data); }
 function markSynced(data=currentLocalData()){ try{ localStorage.setItem(SNAPSHOT_KEY,snapshotData(data)); }catch(e){} }
 function lastSyncedData(){ try{ const raw=localStorage.getItem(SNAPSHOT_KEY); return raw===null?null:(JSON.parse(raw)||{}); }catch(e){ return null; } }
