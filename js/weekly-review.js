@@ -9,6 +9,8 @@ import {
     getWeekDays
 } from "./marathonData.js";
 
+import { describeCorosFreshness } from "./corosStatus.js";
+
 function escapeHtml(value) {
     return String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -220,9 +222,7 @@ function renderRecovery() {
     }
 
     valueEl.textContent = `${Math.round(percent)}%`;
-    metaEl.textContent = snapshot.fetchedAt
-        ? `as of ${new Date(snapshot.fetchedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
-        : "latest COROS reading";
+    metaEl.textContent = describeCorosFreshness(snapshot.fetchedAt);
 
     return percent;
 }
