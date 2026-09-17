@@ -23,6 +23,10 @@
         rel="stylesheet"
         href="css/nutrition.css">
 
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
 </head>
 
 <body>
@@ -135,9 +139,18 @@
 
             </h2>
 
+            <div class="meal-tabs" id="mealTabs">
+
+                <button type="button" class="meal-tab active" data-meal-tab="breakfast">Breakfast</button>
+                <button type="button" class="meal-tab" data-meal-tab="lunch">Lunch</button>
+                <button type="button" class="meal-tab" data-meal-tab="dinner">Dinner</button>
+                <button type="button" class="meal-tab" data-meal-tab="snacks">Snacks</button>
+
+            </div>
+
             <div class="meal-grid">
 
-                <div class="meal-card">
+                <div class="meal-card active" data-meal-panel="breakfast">
 
                     <h3>Breakfast</h3>
 
@@ -171,7 +184,7 @@
 
                 </div>
 
-                <div class="meal-card">
+                <div class="meal-card" data-meal-panel="lunch">
 
                     <h3>Lunch</h3>
 
@@ -205,7 +218,7 @@
 
                 </div>
 
-                <div class="meal-card">
+                <div class="meal-card" data-meal-panel="dinner">
 
                     <h3>Dinner</h3>
 
@@ -239,7 +252,7 @@
 
                 </div>
 
-                <div class="meal-card">
+                <div class="meal-card" data-meal-panel="snacks">
 
                     <h3>Snacks</h3>
 
@@ -357,6 +370,8 @@
     <script src="js/loadHeader.js"></script>
 
     <script src="js/nutrition.js"></script>
+
+    <script src="js/registerSW.js"></script>
 
 </body>
 
