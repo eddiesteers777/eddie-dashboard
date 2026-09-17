@@ -1,1277 +1,547 @@
-/* Colors/fonts come from css/style.css (loaded first on every
-   page). Only Nutrition-specific layout lives here now. */
+/* ==========================================
+   EddieOS Nutrition — Condensed PWA Layout
+   Loaded after css/nutrition.css.
 
-*{
+   This is a presentation-only layer. It keeps the
+   existing Nutrition HTML, IDs, JS behavior, food
+   search, barcode scanner, storage, and meal logic
+   intact while bringing the page in line with the
+   compact Running / Strength workspace style.
+========================================== */
 
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-
-}
-
-body{
-
-    font-family:
-        Inter,
-        Arial,
-        sans-serif;
-
-}
-
+/* Page shell */
 .nutrition-page{
-
-    max-width:1500px;
-
-    margin:auto;
-
-    padding:
-
-        40px
-        24px
-        80px;
-
+    max-width:1000px;
+    margin:0 auto;
+    padding:28px 24px 100px;
 }
 
+/* ------------------------------------------
+   Header / date workspace
+------------------------------------------ */
 .page-title{
-
-    margin-bottom:35px;
-
+    margin-bottom:16px;
 }
 
 .page-title h1{
-
-    font-size:64px;
-
-    font-weight:800;
-
+    font-family:var(--font-display);
+    font-size:44px;
+    font-weight:400;
+    letter-spacing:.5px;
     line-height:1;
-
-    margin-bottom:8px;
-
+    margin-bottom:6px;
 }
 
 .page-title p{
-
-    color:var(--muted);
-
-    font-size:18px;
-
+    color:var(--text-secondary);
+    font-size:14px;
 }
 
 .date-navigation{
-
-    display:flex;
-
-    justify-content:space-between;
-
+    display:grid;
+    grid-template-columns:32px minmax(0,1fr) 32px;
     align-items:center;
-
-    gap:20px;
-
-    margin-bottom:28px;
-
+    gap:10px;
+    margin-bottom:14px;
 }
 
 .date-info{
-
-    flex:1;
-
-    background:var(--surface);
-
-    border:1px solid var(--border);
-
-    border-radius:20px;
-
-    padding:22px 28px;
-
-    box-shadow:var(--shadow);
-
+    min-width:0;
+    padding:0;
+    background:transparent;
+    border:none;
+    border-radius:0;
+    box-shadow:none;
+    text-align:center;
 }
 
 .date-info h2{
-
-    font-size:32px;
-
-    margin-bottom:6px;
-
+    font-size:17px;
+    line-height:1.2;
+    margin-bottom:3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .date-info span{
-
     color:var(--muted);
-
-    font-size:15px;
-
+    font-size:12px;
 }
 
 .day-btn{
-
-    width:62px;
-
-    height:62px;
-
-    border:none;
-
-    border-radius:18px;
-
-    background:var(--primary);
-
-    color:white;
-
-    font-size:26px;
-
+    width:32px;
+    height:32px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--surface);
+    color:var(--text-secondary);
+    font-size:14px;
     font-weight:700;
-
     cursor:pointer;
-
-    transition:
-
-        .25s;
-
+    transition:.15s;
 }
 
 .day-btn:hover{
-
-    transform:
-
-        translateY(-3px);
-
-    background:
-
-        var(--primary-dark);
-
+    transform:none;
+    border-color:var(--primary);
+    background:var(--surface);
+    color:var(--primary);
 }
 
 .day-btn:active{
-
-    transform:
-
-        scale(.95);
-
+    transform:scale(.96);
 }
-/* ==========================
-   Workout Card
-========================== */
 
+/* ------------------------------------------
+   Today's training — compact context row
+------------------------------------------ */
 .workout-card{
-
-    background:
-        linear-gradient(
-            135deg,
-            #4EA8FF,
-            #2563EB
-        );
-
-    color:white;
-
-    border-radius:24px;
-
-    padding:30px 34px;
-
-    margin-bottom:32px;
-
-    box-shadow:var(--shadow);
-
+    background:var(--surface);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-left:3px solid var(--primary);
+    border-radius:16px;
+    padding:13px 16px;
+    margin-bottom:16px;
+    box-shadow:none;
 }
 
 .workout-label{
-
-    display:block;
-
-    text-transform:uppercase;
-
-    letter-spacing:.12em;
-
-    font-size:14px;
-
-    opacity:.9;
-
-    margin-bottom:10px;
-
+    font-size:10px;
+    letter-spacing:.10em;
+    color:var(--muted);
+    opacity:1;
+    margin-bottom:4px;
 }
 
 .workout-card h2{
-
-    font-size:42px;
-
-    margin-bottom:12px;
-
-    font-weight:800;
-
+    font-size:17px;
+    line-height:1.25;
+    margin-bottom:3px;
+    font-weight:700;
 }
 
 .workout-card p{
-
-    font-size:18px;
-
-    line-height:1.6;
-
-    max-width:850px;
-
-    opacity:.95;
-
+    color:var(--text-secondary);
+    font-size:12.5px;
+    line-height:1.4;
+    max-width:none;
+    opacity:1;
 }
 
-/* ==========================
-   Macro Grid
-========================== */
-
+/* ------------------------------------------
+   Macro workspace
+------------------------------------------ */
 .macro-grid{
-
     display:grid;
-
-    grid-template-columns:
-
-        repeat(
-            auto-fit,
-            minmax(320px,1fr)
-        );
-
-    gap:24px;
-
-    margin-bottom:40px;
-
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-bottom:18px;
 }
 
 .macro-card{
-
+    min-width:0;
     background:var(--surface);
-
     border:1px solid var(--border);
-
-    border-radius:22px;
-
-    padding:24px;
-
-    box-shadow:var(--shadow);
-
-    transition:.25s;
-
+    border-radius:14px;
+    padding:12px;
+    box-shadow:none;
+    transition:.15s;
 }
 
 .macro-card:hover{
-
-    transform:
-
-        translateY(-5px);
-
-    border-color:
-
-        var(--primary);
-
+    transform:none;
+    border-color:var(--primary);
 }
 
 .card-top{
-
     display:flex;
-
+    align-items:baseline;
     justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:18px;
-
+    gap:8px;
+    margin-bottom:7px;
 }
 
 .card-title{
-
-    font-size:24px;
-
+    min-width:0;
+    font-size:12px;
     font-weight:700;
-
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .goal-label{
-
+    flex-shrink:0;
     color:var(--muted);
-
-    font-size:15px;
-
+    font-size:9.5px;
+    white-space:nowrap;
 }
 
 .big-value{
-
-    display:flex;
-
-    align-items:flex-end;
-
-    gap:8px;
-
-    margin-bottom:18px;
-
+    align-items:baseline;
+    gap:4px;
+    margin-bottom:7px;
 }
 
 .big-value span{
-
-    font-size:60px;
-
-    font-weight:800;
-
+    font-family:var(--font-mono);
+    font-size:25px;
+    font-weight:700;
     line-height:1;
-
 }
 
 .big-value small{
-
     color:var(--muted);
-
-    font-size:22px;
-
-    margin-bottom:8px;
-
+    font-family:var(--font-mono);
+    font-size:10px;
+    margin-bottom:0;
 }
-/* ==========================
-   Progress Bar
-========================== */
 
 .progress{
-
-    width:100%;
-
-    height:14px;
-
-    background:var(--surface-light);
-
+    height:5px;
+    margin-bottom:8px;
     border-radius:999px;
-
-    overflow:hidden;
-
-    margin-bottom:22px;
-
 }
 
 .progress-fill{
-
-    width:0%;
-
-    height:100%;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--primary),
-            #60A5FA
-        );
-
-    transition:
-        width .35s ease,
-        background .35s ease;
-
+    background:var(--primary);
 }
 
-/* ==========================
-   Controls
-========================== */
-
 .controls{
-
-    display:grid;
-
-    grid-template-columns:
-        60px
-        1fr
-        60px;
-
-    gap:16px;
-
+    grid-template-columns:28px minmax(0,1fr) 28px;
+    gap:6px;
     align-items:center;
-
-    margin-bottom:18px;
-
+    margin-bottom:5px;
 }
 
 .adjust-btn{
-
-    width:60px;
-
-    height:60px;
-
-    border:none;
-
-    border-radius:18px;
-
+    width:28px;
+    height:28px;
+    border:1px solid var(--border);
+    border-radius:8px;
     background:var(--surface-light);
-
-    color:var(--text);
-
-    font-size:34px;
-
-    font-weight:700;
-
-    cursor:pointer;
-
-    transition:.2s;
-
+    color:var(--text-secondary);
+    font-size:17px;
+    line-height:1;
 }
 
 .adjust-btn:hover{
-
     background:var(--primary);
-
-    color:white;
-
-    transform:scale(1.05);
-
-}
-
-.adjust-btn:active{
-
-    transform:scale(.95);
-
-}
-
-.metric-display{
-
-    text-align:center;
-
+    color:#05131f;
+    transform:none;
 }
 
 .metric-display .current{
-
-    display:block;
-
-    font-size:42px;
-
-    font-weight:800;
-
-    line-height:1;
-
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
 }
 
 .metric-display .label{
-
-    display:block;
-
-    margin-top:6px;
-
-    color:var(--muted);
-
-    font-size:14px;
-
+    margin-top:1px;
+    font-size:9px;
 }
 
 .remaining{
-
-    text-align:center;
-
-    color:var(--muted);
-
-    font-size:15px;
-
-    margin-bottom:18px;
-
+    font-size:9.5px;
+    line-height:1.25;
+    margin-bottom:7px;
 }
 
 .goal-btn{
-
-    width:100%;
-
-    border:none;
-
-    border-radius:14px;
-
-    padding:13px;
-
-    background:var(--surface-light);
-
-    color:var(--text);
-
-    font-size:15px;
-
-    font-weight:700;
-
-    cursor:pointer;
-
-    transition:.2s;
-
+    border-radius:8px;
+    padding:6px 8px;
+    font-size:10px;
+    line-height:1.1;
 }
 
-.goal-btn:hover{
-
-    background:var(--primary);
-
-    color:white;
-
-}
-/* ==========================
-   Meals
-========================== */
-
+/* ------------------------------------------
+   Meals — same compact control philosophy as
+   the Running Week / Month / List toggle
+------------------------------------------ */
 .meal-section{
-
-    margin-top:10px;
-
+    margin-top:0;
 }
 
 .meal-section h2{
-
-    font-size:42px;
-
-    font-weight:800;
-
-    margin-bottom:22px;
-
+    font-size:18px;
+    font-weight:700;
+    line-height:1.2;
+    margin-bottom:10px;
 }
 
 .meal-tabs{
-
-    display:flex;
-
-    gap:8px;
-
-    margin-bottom:20px;
-
+    display:inline-flex;
+    width:auto;
+    max-width:100%;
+    gap:4px;
+    padding:4px;
+    margin-bottom:10px;
     flex-wrap:wrap;
-
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
 }
 
 .meal-tab{
-
-    padding:10px 20px;
-
-    border:1px solid var(--border);
-
-    border-radius:100px;
-
-    background:var(--surface);
-
+    padding:7px 13px;
+    border:none;
+    border-radius:8px;
+    background:transparent;
     color:var(--text-secondary);
-
-    font-size:14px;
-
+    font-size:12px;
     font-weight:700;
-
-    font-family:inherit;
-
-    cursor:pointer;
-
-    transition:.15s;
-
 }
 
 .meal-tab:hover{
-
-    border-color:var(--primary);
-
+    border:none;
     color:var(--text);
-
+    background:rgba(78,168,255,.06);
 }
 
 .meal-tab.active{
-
     background:var(--primary);
-
-    border-color:var(--primary);
-
+    border:none;
     color:#05131f;
-
 }
 
 .meal-grid{
-
     display:block;
-
-    margin-bottom:40px;
-
+    margin-bottom:18px;
 }
 
 .meal-card{
-
     display:none;
-
     background:var(--surface);
-
     border:1px solid var(--border);
-
-    border-radius:22px;
-
-    padding:24px;
-
-    box-shadow:var(--shadow);
-
+    border-radius:14px;
+    padding:14px;
+    box-shadow:none;
 }
 
 .meal-card.active{
-
     display:block;
-
 }
 
 .meal-card h3{
-
-    margin-bottom:16px;
-
-    font-size:22px;
-
+    margin-bottom:10px;
+    font-size:14px;
 }
 
 .meal-card textarea{
-
-    width:100%;
-
-    min-height:140px;
-
-    resize:vertical;
-
-    border:none;
-
-    outline:none;
-
-    background:var(--surface-light);
-
-    color:var(--text);
-
-    border-radius:16px;
-
-    padding:16px;
-
-    font-size:15px;
-
-    line-height:1.6;
-
-    font-family:inherit;
-
-    transition:.2s;
-
+    min-height:78px;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:13px;
+    line-height:1.45;
 }
 
-.meal-card textarea:focus{
-
-    box-shadow:
-
-        0 0 0 3px
-
-        rgba(78,168,255,.30);
-
-}
-
-/* ==========================
-   Food Search & Log
-========================== */
-
+/* Food search stays fully functional; just tighten the controls. */
 .food-search{
-
-    position:relative;
-    margin-bottom:14px;
-
+    margin-bottom:10px;
 }
 
 .food-search-row{
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-}
-
-.food-scan-btn{
-
-    flex-shrink:0;
-    width:44px;
-    height:44px;
-    background:var(--surface-light);
-    border:1px solid var(--border);
-    border-radius:14px;
-    font-size:18px;
-    cursor:pointer;
-    transition:.2s;
-
-}
-
-.food-scan-btn:hover{
-
-    border-color:var(--primary);
-    background:rgba(78,168,255,.1);
-
+    gap:6px;
 }
 
 .food-search-input{
-
-    flex:1;
-    width:100%;
-    background:var(--surface-light);
-    border:1px solid var(--border);
-    color:var(--text);
-    border-radius:14px;
-    padding:12px 16px;
-    font-size:14px;
-    font-family:inherit;
-    outline:none;
-    transition:.2s;
-
+    border-radius:10px;
+    padding:9px 12px;
+    font-size:13px;
 }
 
-.food-search-input:focus{
-
-    box-shadow:
-        0 0 0 3px
-        rgba(78,168,255,.30);
-
+.food-scan-btn{
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    font-size:16px;
 }
 
 .food-search-results{
-
-    position:relative;
-    margin-top:8px;
-
-}
-
-.food-search-results:empty{
-
-    margin-top:0;
-
-}
-
-.food-search-loading,
-.food-search-empty{
-
-    padding:12px 16px;
-    color:var(--text-secondary);
-    font-size:13px;
-
+    margin-top:6px;
 }
 
 .food-result{
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:12px 14px;
-    border:1px solid var(--border);
-    border-radius:12px;
-    margin-bottom:6px;
-    cursor:pointer;
-    transition:.15s;
-
-}
-
-.food-result:hover{
-
-    border-color:var(--primary);
-    background:rgba(78,168,255,.08);
-
-}
-
-.food-result-main{
-
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-    min-width:0;
-
+    padding:9px 11px;
+    border-radius:10px;
+    margin-bottom:5px;
 }
 
 .food-result-main strong{
-
-    font-size:14px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-
+    font-size:13px;
 }
 
-.food-result-main span{
-
-    font-size:12px;
-    color:var(--text-secondary);
-
-}
-
+.food-result-main span,
 .food-result-cals{
-
-    font-size:12px;
-    color:var(--text-secondary);
-    white-space:nowrap;
-    flex-shrink:0;
-
-}
-
-.food-confirm{
-
-    border:1px solid var(--primary);
-    border-radius:14px;
-    padding:16px;
-    background:rgba(78,168,255,.06);
-
-}
-
-.food-confirm-name{
-
-    font-weight:600;
-    font-size:14px;
-    margin-bottom:10px;
-
-}
-
-.food-confirm-row{
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:10px;
-
-}
-
-.food-confirm-grams{
-
-    width:80px;
-    background:var(--surface-light);
-    border:1px solid var(--border);
-    color:var(--text);
-    border-radius:10px;
-    padding:8px 10px;
-    font-size:14px;
-    font-family:inherit;
-    outline:none;
-
-}
-
-.food-confirm-serving{
-
-    font-size:12px;
-    color:var(--text-secondary);
-
-}
-
-.food-confirm-preview{
-
-    font-size:13px;
-    color:var(--text-secondary);
-    margin-bottom:12px;
-
-}
-
-.food-confirm-actions{
-
-    display:flex;
-    gap:10px;
-
-}
-
-.food-confirm-add,
-.food-confirm-cancel{
-
-    border:none;
-    border-radius:10px;
-    padding:9px 16px;
-    font-size:13px;
-    font-weight:600;
-    cursor:pointer;
-    font-family:inherit;
-    transition:.15s;
-
-}
-
-.food-confirm-add{
-
-    background:var(--primary);
-    color:#fff;
-
-}
-
-.food-confirm-add:hover{
-
-    background:var(--primary-dark);
-
-}
-
-.food-confirm-cancel{
-
-    background:transparent;
-    border:1px solid var(--border);
-    color:var(--text-secondary);
-
-}
-
-.food-confirm-cancel:hover{
-
-    border-color:var(--text-secondary);
-
-}
-
-.food-log{
-
-    margin-bottom:14px;
-
-}
-
-.food-log:empty{
-
-    margin-bottom:0;
-
-}
-
-.food-log-item{
-
-    display:grid;
-    grid-template-columns:1fr auto auto;
-    align-items:center;
-    gap:10px;
-    padding:10px 14px;
-    background:var(--surface-light);
-    border-radius:12px;
-    margin-bottom:6px;
-
-}
-
-.food-log-item-main{
-
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-    min-width:0;
-
-}
-
-.food-log-item-main strong{
-
-    font-size:13px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-
-}
-
-.food-log-item-main span{
-
     font-size:11px;
-    color:var(--text-secondary);
-
 }
 
-.food-log-item-macros{
-
-    font-size:12px;
-    color:var(--text-secondary);
-    white-space:nowrap;
-
-}
-
-.food-log-remove{
-
-    background:transparent;
-    border:none;
-    color:var(--text-secondary);
-    font-size:18px;
-    line-height:1;
-    cursor:pointer;
-    padding:4px 8px;
-    border-radius:8px;
-    transition:.15s;
-
-}
-
-.food-log-remove:hover{
-
-    color:var(--red);
-    background:rgba(239,68,68,.12);
-
-}
-
-/* ==========================
-   Summary
-========================== */
-
+/* ------------------------------------------
+   Bottom summary — compact, data-first
+------------------------------------------ */
 .summary-grid{
-
-    display:grid;
-
-    grid-template-columns:
-
-        repeat(
-            auto-fit,
-            minmax(360px,1fr)
-        );
-
-    gap:24px;
-
-    margin-bottom:40px;
-
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-bottom:32px;
 }
 
 .summary-card{
-
     background:var(--surface);
-
     border:1px solid var(--border);
-
-    border-radius:22px;
-
-    padding:28px;
-
-    box-shadow:var(--shadow);
-
+    border-radius:14px;
+    padding:14px 16px;
+    box-shadow:none;
 }
 
 .score-card{
-
-    background:
-
-        linear-gradient(
-            135deg,
-            #4EA8FF,
-            #2563EB
-        );
-
-    border:none;
-
+    background:var(--surface);
+    border-left:3px solid var(--primary);
+    border-right:1px solid var(--border);
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
 }
 
 .score-card h3{
-
-    font-size:24px;
-
-    margin-bottom:16px;
-
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    margin-bottom:8px;
 }
 
 #nutritionScore{
-
-    font-size:76px;
-
-    font-weight:800;
-
+    font-family:var(--font-mono);
+    font-size:34px;
+    font-weight:700;
     line-height:1;
-
-    margin-bottom:12px;
-
+    margin-bottom:6px;
 }
 
 #scoreMessage{
-
-    font-size:17px;
-
-    line-height:1.6;
-
-    opacity:.95;
-
+    color:var(--text-secondary);
+    font-size:12px;
+    line-height:1.4;
+    opacity:1;
 }
 
 .stat-row{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:14px 0;
-
-    border-bottom:
-
-        1px solid
-
-        var(--border);
-
-}
-
-.stat-row:last-child{
-
-    border-bottom:none;
-
+    padding:7px 0;
 }
 
 .stat-name{
-
+    font-size:11px;
     color:var(--muted);
-
 }
 
 .stat-value{
-
-    font-weight:700;
-
+    font-family:var(--font-mono);
+    font-size:11px;
 }
 
-/* ==========================
-   Responsive
-========================== */
+#remainingCard h3{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    margin-bottom:3px;
+}
 
+/* ------------------------------------------
+   PWA / mobile behavior
+------------------------------------------ */
 @media(max-width:900px){
+    .nutrition-page{
+        max-width:1000px;
+    }
 
     .date-navigation{
-
-        flex-direction:column;
-
-        align-items:stretch;
-
+        grid-template-columns:32px minmax(0,1fr) 32px;
+        flex-direction:initial;
+        align-items:center;
     }
 
     .day-btn{
-
-        width:100%;
-
-        height:56px;
-
+        width:32px;
+        height:32px;
     }
-
 }
 
 @media(max-width:650px){
+    .nutrition-page{
+        padding:24px 16px 90px;
+    }
 
     .page-title h1{
-
-        font-size:48px;
-
+        font-size:38px;
     }
 
-    .workout-card h2{
-
-        font-size:34px;
-
+    .page-title p{
+        font-size:12.5px;
     }
 
-    .controls{
+    .macro-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:8px;
+    }
 
-        grid-template-columns:
+    .macro-card{
+        padding:10px;
+    }
 
-            55px
-
-            1fr
-
-            55px;
-
+    .goal-label{
+        display:none;
     }
 
     .big-value span{
-
-        font-size:48px;
-
+        font-size:22px;
     }
 
-}
-
-/* ==========================
-   Barcode Scanner Modal
-========================== */
-
-.food-scanner-overlay{
-
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(4,8,16,.7);
-    backdrop-filter:blur(6px);
-    z-index:200;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-
-}
-
-.food-scanner-overlay.open{
-
-    display:flex;
-
-}
-
-.food-scanner-modal{
-
-    background:
-        linear-gradient(
-            160deg,
-            rgba(24,38,60,.98),
-            rgba(14,23,38,.98)
-        );
-    border:1px solid var(--border);
-    border-radius:24px;
-    max-width:480px;
-    width:100%;
-    max-height:88vh;
-    display:flex;
-    flex-direction:column;
-    box-shadow:0 30px 70px rgba(0,0,0,.5);
-    animation:foodScannerFadeUp .25s ease;
-
-}
-
-.food-scanner-header{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:20px 24px;
-    border-bottom:1px solid var(--border);
-
-}
-
-.food-scanner-title{
-
-    font-size:1.1rem;
-    font-weight:800;
-
-}
-
-.food-scanner-close{
-
-    appearance:none;
-    border:none;
-    background:rgba(255,255,255,.06);
-    color:var(--text-secondary);
-    width:32px;
-    height:32px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:1rem;
-    transition:.2s;
-
-}
-
-.food-scanner-close:hover{
-
-    background:rgba(239,68,68,.2);
-    color:#fca5a5;
-
-}
-
-.food-scanner-body{
-
-    padding:20px 24px 24px;
-
-}
-
-#foodScannerReader{
-
-    width:100%;
-    border-radius:16px;
-    overflow:hidden;
-    background:#000;
-    min-height:200px;
-
-}
-
-.food-scanner-status{
-
-    margin-top:14px;
-    text-align:center;
-    font-size:13px;
-    color:var(--text-secondary);
-
-}
-
-.food-scanner-status[data-status="error"]{
-
-    color:var(--red);
-
-}
-
-.food-scanner-status[data-status="ready"]{
-
-    color:var(--green);
-
-}
-
-@keyframes foodScannerFadeUp{
-
-    from{
-        opacity:0;
-        transform:translateY(14px);
+    .summary-grid{
+        grid-template-columns:1fr;
     }
 
-    to{
-        opacity:1;
-        transform:translateY(0);
+    .meal-tabs{
+        width:100%;
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
     }
 
+    .meal-tab{
+        width:100%;
+        padding:7px 5px;
+        font-size:11px;
+    }
+}
+
+@media(max-width:420px){
+    .nutrition-page{
+        padding-left:12px;
+        padding-right:12px;
+    }
+
+    .date-info h2{
+        font-size:15px;
+    }
+
+    .workout-card{
+        padding:12px 14px;
+    }
+
+    .workout-card h2{
+        font-size:16px;
+    }
+
+    .controls{
+        grid-template-columns:26px minmax(0,1fr) 26px;
+        gap:4px;
+    }
+
+    .adjust-btn{
+        width:26px;
+        height:26px;
+        font-size:16px;
+    }
 }
