@@ -23,6 +23,10 @@
         rel="stylesheet"
         href="css/fueling.css">
 
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
 </head>
 
 <body>
@@ -149,6 +153,11 @@
                     <span><i class="legend-dot"></i> Marathon workout</span>
                     <span><i class="legend-dot legend-fueling"></i> Fueling plan assigned</span>
                     <span><i class="legend-dot legend-today"></i> Current week</span>
+                </div>
+
+                <div
+                    class="fuel-week-tabs"
+                    id="marathonWeekTabs">
                 </div>
 
                 <div
@@ -1190,6 +1199,8 @@
         type="module"
         src="js/fueling.js">
     </script>
+
+    <script src="js/registerSW.js"></script>
 
 </body>
 
