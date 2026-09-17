@@ -1619,10 +1619,90 @@
 .legend-today{ background:transparent; border:2px solid var(--primary); }
 
 .marathon-calendar{
-    min-width:1080px;
     display:flex;
     flex-direction:column;
+    gap:10px;
+}
+
+.fuel-week-tabs{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding-bottom:6px;
+    margin-bottom:4px;
+    scroll-behavior:smooth;
+}
+
+.fuel-week-tab{
+    flex-shrink:0;
+    min-width:34px;
+    height:34px;
+    padding:0 4px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--surface);
+    color:var(--text-secondary);
+    font-size:12.5px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    transition:.15s;
+    position:relative;
+}
+
+.fuel-week-tab:hover{
+    border-color:var(--primary);
+    color:var(--text);
+}
+
+.fuel-week-tab.active{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#05131f;
+}
+
+.fuel-week-tab.is-current::after{
+    content:"";
+    position:absolute;
+    top:4px;
+    right:4px;
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:var(--green);
+}
+
+.fuel-week-tab.active.is-current::after{
+    background:#05131f;
+}
+
+.fuel-week-header{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    padding:0 2px;
+}
+
+.fuel-week-header strong{
+    font-size:14px;
+}
+
+.fuel-week-header span{
+    color:var(--muted);
+    font-size:12px;
+}
+
+.marathon-calendar-week-grid{
+    display:grid;
+    grid-template-columns:repeat(7, minmax(0, 1fr));
     gap:8px;
+}
+
+.workout-day-compact{
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
 }
 
 .marathon-calendar-week{
@@ -1680,7 +1760,7 @@
 .marathon-calendar-day{
     position:relative;
     width:100%;
-    min-height:126px;
+    min-height:76px;
     border:1px solid var(--border);
     background:var(--surface-light);
     color:var(--text);
@@ -1689,10 +1769,14 @@
     display:flex;
     flex-direction:column;
     align-items:flex-start;
-    gap:5px;
+    gap:4px;
     text-align:left;
     cursor:pointer;
     transition:.2s;
+}
+
+.marathon-calendar-day.rest{
+    opacity:.6;
 }
 
 .marathon-calendar-day:hover{
