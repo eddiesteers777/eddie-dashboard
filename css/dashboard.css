@@ -4,22 +4,73 @@
 
 .eos-today-hero{
 
+    position:relative;
+    overflow:hidden;
     margin-bottom:28px;
+    padding:6px 0 8px;
+
+}
+
+.eos-today-hero::before{
+
+    content:"";
+    position:absolute;
+    top:-120px;
+    right:-80px;
+    width:360px;
+    height:280px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(78,168,255,.10) 0%,rgba(78,168,255,.025) 45%,transparent 72%);
+    pointer-events:none;
+
+}
+
+.eos-today-hero::after{
+
+    content:"";
+    position:absolute;
+    top:50%;
+    right:4px;
+    width:190px;
+    height:190px;
+    transform:translateY(-50%);
+    background-image:url('../icons/icon-512.png');
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    opacity:.045;
+    mix-blend-mode:screen;
+    filter:saturate(.9) brightness(1.15);
+    pointer-events:none;
+
+}
+
+.eos-today-hero > div{
+
+    position:relative;
+    z-index:1;
 
 }
 
 .eos-today-eyebrow{
 
     color:var(--text-secondary);
-    font-size:14px;
-    margin-bottom:6px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.08em;
+    line-height:1.2;
+    text-transform:uppercase;
+    margin-bottom:8px;
 
 }
 
 .eos-today-hero h1{
 
-    font-size:38px;
-    line-height:1.15;
+    font-family:var(--font-display);
+    font-size:44px;
+    font-weight:400;
+    letter-spacing:.5px;
+    line-height:1;
     margin-bottom:8px;
 
 }
@@ -27,21 +78,42 @@
 .eos-today-phase{
 
     color:var(--text-secondary);
-    font-size:15px;
+    font-size:14px;
 
 }
 
 /* ==========================
    Today card
 ========================== */
-
 .eos-today-card{
 
+    position:relative;
+    overflow:hidden;
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:var(--radius);
     padding:24px 26px;
     margin-bottom:28px;
+
+}
+
+.eos-today-card::before{
+
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:1px;
+    background:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(78,168,255,.14) 22%,
+        rgba(120,190,255,.55) 50%,
+        rgba(37,99,235,.14) 78%,
+        transparent 100%
+    );
+    pointer-events:none;
 
 }
 
@@ -74,7 +146,6 @@
     gap:10px;
 
 }
-
 .eos-today-item{
 
     display:flex;
@@ -121,6 +192,7 @@
 
     font-size:13px;
     color:var(--text-secondary);
+
 }
 
 .eos-today-rest{
@@ -149,14 +221,33 @@
 /* ==========================
    Nutrition snapshot
 ========================== */
-
 .eos-nutrition-snap{
 
+    position:relative;
+    overflow:hidden;
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:var(--radius);
     padding:22px 26px;
     margin-bottom:28px;
+
+}
+
+.eos-nutrition-snap::before{
+
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:1px;
+    background:linear-gradient(
+        90deg,
+        transparent,
+        rgba(78,168,255,.28),
+        transparent
+    );
+    pointer-events:none;
 
 }
 
@@ -181,9 +272,7 @@
 }
 
 .eos-nutrition-snap-header a:hover{
-
     text-decoration:underline;
-
 }
 
 .eos-nutrition-snap-bars{
@@ -229,9 +318,49 @@
 
 }
 
+/* ==========================
+   Subtle brand treatment for
+   the dashboard stat row
+========================== */
+.stats .stat-card{
+
+    position:relative;
+    overflow:hidden;
+
+}
+
+.stats .stat-card::before{
+
+    content:"";
+    position:absolute;
+    top:0;
+    left:18px;
+    right:18px;
+    height:1px;
+    background:linear-gradient(
+        90deg,
+        transparent,
+        rgba(78,168,255,.18),
+        transparent
+    );
+    pointer-events:none;
+
+}
+
+@media (max-width:700px){
+
+    .eos-today-hero::after{
+        width:150px;
+        height:150px;
+        right:-8px;
+        opacity:.035;
+    }
+
+}
+
 @media (max-width:640px){
 
-    .eos-today-hero h1{ font-size:30px; }
+    .eos-today-hero h1{ font-size:34px; }
 
     .eos-today-card,
     .eos-nutrition-snap{
