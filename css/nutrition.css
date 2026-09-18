@@ -545,3 +545,110 @@
         font-size:16px;
     }
 }
+
+/* ------------------------------------------
+   Form controls — EddieOS dark treatment
+   Prevent browser/default button styles from
+   introducing white controls into the page.
+------------------------------------------ */
+.nutrition-page input,
+.nutrition-page textarea,
+.nutrition-page button,
+.nutrition-page select{
+    color-scheme:dark;
+}
+
+.goal-btn{
+    appearance:none;
+    -webkit-appearance:none;
+    width:auto;
+    min-width:0;
+    align-self:flex-start;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:7px 11px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-family:inherit;
+    font-size:11px;
+    font-weight:700;
+    line-height:1;
+    box-shadow:none;
+}
+
+.goal-btn:hover{
+    background:rgba(78,168,255,.10);
+    border-color:var(--primary);
+    color:var(--text);
+}
+
+.goal-btn:focus-visible{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 2px rgba(78,168,255,.22);
+}
+
+.food-search-input,
+.meal-card textarea,
+.food-confirm-grams{
+    appearance:none;
+    -webkit-appearance:none;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text);
+    box-shadow:none;
+}
+
+.food-search-input::placeholder,
+.meal-card textarea::placeholder{
+    color:var(--muted);
+    opacity:1;
+}
+
+.food-search-input:focus,
+.meal-card textarea:focus,
+.food-confirm-grams:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 2px rgba(78,168,255,.18);
+}
+
+.food-scan-btn{
+    appearance:none;
+    -webkit-appearance:none;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+    box-shadow:none;
+}
+
+.food-scan-btn:hover{
+    background:rgba(78,168,255,.10);
+    border-color:var(--primary);
+    color:var(--text);
+}
+
+.food-scan-btn:focus-visible{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 2px rgba(78,168,255,.18);
+}
+
+.meal-card textarea{
+    min-height:70px;
+    resize:vertical;
+}
+
+@media(max-width:650px){
+    .goal-btn{
+        padding:7px 10px;
+        font-size:10px;
+    }
+
+    .food-search-input{
+        min-width:0;
+    }
+}
