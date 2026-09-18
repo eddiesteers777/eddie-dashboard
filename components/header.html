@@ -1,13 +1,17 @@
 <!-- ==========================================
      EddieOS Navigation
-=========================================== -->
+========================================== -->
 
 <nav class="navbar eos-navbar">
 
     <div class="nav-left eos-nav-left">
 
         <a href="index.html" class="logo eos-logo">
-            <div class="logo-dot"></div>
+            <div
+                class="logo-dot"
+                aria-hidden="true"
+                style="width:22px;height:22px;flex:0 0 22px;border-radius:6px;background-image:url('icons/icon-192.png');background-size:cover;background-position:center;background-color:transparent;box-shadow:none;">
+            </div>
             <span>EddieOS</span>
         </a>
 
@@ -16,7 +20,6 @@
             <a href="index.html" class="eos-nav-item">
                 Dashboard
             </a>
-
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
                     <span>Training</span><span class="eos-chevron">⌄</span>
@@ -28,7 +31,6 @@
                     <a href="75day.html" class="eos-dropdown-link">75-Day</a>
                 </div>
             </details>
-
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
                     <span>Health</span><span class="eos-chevron">⌄</span>
@@ -38,7 +40,6 @@
                     <a href="fueling.html" class="eos-dropdown-link">Fueling</a>
                 </div>
             </details>
-
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
                     <span>Planning</span><span class="eos-chevron">⌄</span>
@@ -47,7 +48,6 @@
                     <a href="planner.html" class="eos-dropdown-link">Planner</a>
                 </div>
             </details>
-
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
                     <span>Progress</span><span class="eos-chevron">⌄</span>
@@ -58,7 +58,6 @@
                     <a href="gear.html" class="eos-dropdown-link">Gear</a>
                 </div>
             </details>
-
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
                     <span>Tools</span><span class="eos-chevron">⌄</span>
@@ -73,7 +72,6 @@
     </div>
 
     <div class="nav-right eos-nav-right">
-
         <button class="search-btn">
             🔍
         </button>
@@ -95,7 +93,5 @@
             style="display:none;">
             Sign Out
         </button>
-
     </div>
-
 </nav>
