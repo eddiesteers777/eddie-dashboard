@@ -192,12 +192,14 @@ section{
 }
 
 .logo-dot{
-    width:14px;
-    height:14px;
-    flex:0 0 14px;
-    border-radius:50%;
-    background:#4EA8FF;
-    box-shadow:0 0 15px #4EA8FF;
+    width:26px;
+    height:26px;
+    flex:0 0 26px;
+    border-radius:8px;
+    background-image:url('../icons/icon-192.png');
+    background-size:cover;
+    background-position:center;
+    box-shadow:0 0 14px rgba(78,168,255,.35);
 }
 
 .nav-links{
@@ -528,6 +530,29 @@ section{
     align-items:center;
 
     margin-bottom:55px;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.hero::before{
+
+    content:"";
+    position:absolute;
+    top:-100px;
+    right:-60px;
+    width:340px;
+    height:340px;
+    background-image:url('../icons/icon-512.png');
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center;
+    opacity:.045;
+    mix-blend-mode:screen;
+    filter:saturate(.9) brightness(1.15);
+    pointer-events:none;
 
 }
 
