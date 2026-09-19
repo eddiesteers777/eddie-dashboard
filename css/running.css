@@ -46,7 +46,11 @@
    viewports, where the centered page content
    leaves room on either side. Hidden below
    1300px so it never competes with content
-   or shows up on tablet/mobile.
+   or shows up on tablet/mobile. Stylized after
+   the Boston Marathon course — a point-to-point
+   route with a rolling Newton Hills stretch and
+   the famous sharp right on Hereford / left on
+   Boylston into the finish.
 ========================== */
 
 .running-bg-trail{
@@ -70,12 +74,37 @@
 
 }
 
-.running-bg-trail path{
+.running-bg-trail .trail-route{
 
     fill:none;
     stroke:var(--primary);
     stroke-width:2.5;
     stroke-linecap:round;
+    stroke-linejoin:round;
+
+}
+
+.running-bg-trail .trail-road{
+
+    fill:none;
+    stroke:var(--border);
+    stroke-width:1;
+    stroke-linecap:round;
+    opacity:.5;
+
+}
+
+.running-bg-trail .trail-marker{
+
+    fill:var(--bg);
+    stroke:var(--primary);
+    stroke-width:1.5;
+
+}
+
+.running-bg-trail .trail-pin{
+
+    fill:var(--primary);
 
 }
 
