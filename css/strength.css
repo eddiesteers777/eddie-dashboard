@@ -22,6 +22,27 @@
     gap:24px;
     margin-bottom:28px;
     flex-wrap:wrap;
+    position:relative;
+    overflow:hidden;
+
+}
+
+.strength-hero::before{
+
+    content:"";
+    position:absolute;
+    top:-60px;
+    right:-30px;
+    width:220px;
+    height:220px;
+    background-image:url('../icons/icon-512.png');
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center;
+    opacity:.05;
+    mix-blend-mode:screen;
+    filter:saturate(.9) brightness(1.15);
+    pointer-events:none;
 
 }
 
