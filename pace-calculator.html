@@ -21,10 +21,18 @@
 <div id="pc-root">
 
   <div class="pc-hero">
-    <div class="pc-eyebrow">Training Tool</div>
+    <div class="pc-eyebrow">Training Tools</div>
     <h1 class="pc-title">Pace Calculator</h1>
-    <div class="pc-sub">Enter any two of pace, time, and distance — solve for the third.</div>
+    <div class="pc-sub">Pace conversions, race-day splits, and training paces from a real result.</div>
   </div>
+
+  <div class="pc-tool-tabs" id="pc-tool-tabs">
+    <button type="button" class="pc-tool-tab active" data-pc-tool="calculator">Pace Calculator</button>
+    <button type="button" class="pc-tool-tab" data-pc-tool="splits">Race Splits</button>
+    <button type="button" class="pc-tool-tab" data-pc-tool="zones">Training Zones</button>
+  </div>
+
+  <div class="pc-tool-panel active" data-pc-panel="calculator">
 
   <div class="pc-card">
 
@@ -125,6 +133,117 @@
     <div class="pc-splits-wrap">
       <div class="pc-splits-title">Finish times at this pace</div>
       <div class="pc-splits-grid" id="pc-splits-grid"></div>
+    </div>
+
+  </div>
+
+  </div>
+
+  <!-- Race Splits -->
+
+  <div class="pc-tool-panel" data-pc-panel="splits">
+
+    <div class="pc-card">
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label">Distance</label>
+          <select id="rs-distance-preset" class="pc-select"></select>
+        </div>
+
+        <div class="pc-field">
+          <label class="pc-field-label">Goal Time</label>
+          <div class="pc-time-inputs">
+            <input type="number" id="rs-goal-h" placeholder="H" min="0" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="rs-goal-m" placeholder="MM" min="0" max="59" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="rs-goal-s" placeholder="SS" min="0" max="59" class="pc-time-input">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label">Split Style</label>
+          <div class="pc-unit-toggle" id="rs-style-toggle">
+            <button type="button" class="pc-unit-btn active" data-rs-style="even">Even</button>
+            <button type="button" class="pc-unit-btn" data-rs-style="negative">Negative Split</button>
+          </div>
+        </div>
+
+        <div class="pc-field">
+          <label class="pc-field-label">Units</label>
+          <div class="pc-unit-toggle" id="rs-unit-toggle">
+            <button type="button" class="pc-unit-btn active" data-rs-unit="mi">Miles</button>
+            <button type="button" class="pc-unit-btn" data-rs-unit="km">Kilometers</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button type="button" id="rs-calc-btn" class="pc-calc-btn">Generate Splits</button>
+
+      <div id="rs-error" class="pc-error" style="display:none;"></div>
+
+    </div>
+
+    <div class="pc-card" id="rs-result-card" style="display:none;">
+      <div class="pc-splits-title">Your Splits</div>
+      <div class="pc-splits-table" id="rs-splits-table"></div>
+    </div>
+
+  </div>
+
+  <!-- Training Zones -->
+
+  <div class="pc-tool-panel" data-pc-panel="zones">
+
+    <div class="pc-card">
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label">Recent Race Distance</label>
+          <select id="tz-distance-preset" class="pc-select"></select>
+        </div>
+
+        <div class="pc-field">
+          <label class="pc-field-label">Finish Time</label>
+          <div class="pc-time-inputs">
+            <input type="number" id="tz-time-h" placeholder="H" min="0" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="tz-time-m" placeholder="MM" min="0" max="59" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="tz-time-s" placeholder="SS" min="0" max="59" class="pc-time-input">
+          </div>
+        </div>
+
+      </div>
+
+      <button type="button" id="tz-calc-btn" class="pc-calc-btn">Calculate Training Paces</button>
+
+      <div id="tz-error" class="pc-error" style="display:none;"></div>
+
+    </div>
+
+    <div class="pc-card" id="tz-result-card" style="display:none;">
+
+      <div class="pc-splits-title">
+        Your Training Paces
+        <span id="tz-vdot-label" class="pc-vdot-label"></span>
+      </div>
+
+      <div class="pc-zones-table" id="tz-zones-table"></div>
+
+      <p class="pc-zones-note">
+        Based on the Jack Daniels VDOT method — a widely used way to derive personalized
+        training paces from a real race result rather than a fixed guess.
+      </p>
+
     </div>
 
   </div>
