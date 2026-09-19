@@ -416,14 +416,97 @@ function closeWorkoutMode() {
     activeDayId = null;
 }
 
+function meaningfulSetsFor(exercise) {
+    return (exercise.sets || []).filter(set =>
+        exercise.mode === "time"
+            ? Number(set.duration) > 0
+            : Number(set.weight) > 0 || Number(set.reps) > 0
+    );
+}
+
+function buildWorkoutSummary(day, elapsedMs) {
+    const lines = day.exercises
+        .map(exercise => {
+            const sets = meaningfulSetsFor(exercise);
+
+            if (!sets.length) {
+                return null;
+            }
+
+            const setsText = formatPreviousSets({ sets }, exercise.mode === "time");
+            const notes = exercise.notes?.trim();
+
+            return `${exercise.name}: ${setsText}${notes ? " — " + notes : ""}`;
+        })
+        .filter(Boolean);
+
+    if (!lines.length) {
+        return null;
+    }
+
+    return [
+        `${day.name} — ${formatElapsed(elapsedMs)}`,
+        "",
+        ...lines,
+        "",
+        "Logged with EddieOS"
+    ].join("\n");
+}
+
+function openSummaryModal(text) {
+    const overlay = $("strengthSummaryOverlay");
+    const textarea = $("strengthSummaryText");
+
+    if (!overlay || !textarea) {
+        return;
+    }
+
+    textarea.value = text;
+    overlay.classList.add("open");
+}
+
+function closeSummaryModal() {
+    $("strengthSummaryOverlay")?.classList.remove("open");
+}
+
+async function copySummaryText() {
+    const textarea = $("strengthSummaryText");
+    const button = $("strengthSummaryCopy");
+
+    if (!textarea) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(textarea.value);
+    } catch {
+        textarea.select();
+        document.execCommand("copy");
+    }
+
+    if (button) {
+        const original = button.textContent;
+        button.textContent = "Copied!";
+        setTimeout(() => {
+            button.textContent = original;
+        }, 1500);
+    }
+}
+
 function finishWorkout() {
     const day = getActiveDay();
+    const elapsedMs = timerStartedAt ? Date.now() - timerStartedAt : 0;
+    const summary = day ? buildWorkoutSummary(day, elapsedMs) : null;
 
     if (day) {
         day.exercises.forEach(logExercise);
     }
 
     closeWorkoutMode();
+
+    if (summary) {
+        openSummaryModal(summary);
+    }
 }
 
 function openSwapPanel(exerciseId) {
@@ -748,5 +831,22 @@ document.addEventListener("input", event => {
                 });
             });
         }, 350);
+    }
+});
+
+document.addEventListener("click", event => {
+    const target = event.target;
+
+    if (!target.closest("#strengthSummaryOverlay")) {
+        return;
+    }
+
+    if (target.matches("#strengthSummaryDone") || target.matches("#strengthSummaryOverlay")) {
+        closeSummaryModal();
+        return;
+    }
+
+    if (target.matches("#strengthSummaryCopy")) {
+        copySummaryText();
     }
 });

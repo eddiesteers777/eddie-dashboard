@@ -797,6 +797,79 @@
 }
 
 /* ==========================
+   Workout Summary
+========================== */
+
+.strength-summary-overlay{
+
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(4,8,16,.7);
+    backdrop-filter:blur(6px);
+    z-index:248;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+
+}
+
+.strength-summary-overlay.open{
+
+    display:flex;
+
+}
+
+.strength-summary-modal{
+
+    background:
+        linear-gradient(
+            160deg,
+            rgba(24,38,60,.98),
+            rgba(14,23,38,.98)
+        );
+    border:1px solid var(--border);
+    border-radius:20px;
+    max-width:460px;
+    width:100%;
+    padding:22px;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
+    animation:strengthFadeUp .25s ease;
+
+}
+
+.strength-summary-modal .strength-search-title{
+
+    display:block;
+    margin-bottom:6px;
+
+}
+
+.strength-summary-hint{
+
+    color:var(--text-secondary);
+    font-size:13.5px;
+    margin-bottom:14px;
+
+}
+
+.strength-summary-textarea{
+
+    width:100%;
+    min-height:180px;
+    resize:vertical;
+    background:rgba(0,0,0,.25);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:13.5px;
+    line-height:1.6;
+
+}
+
+/* ==========================
    Responsive
 ========================== */
 

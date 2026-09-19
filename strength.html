@@ -1022,6 +1022,49 @@
 
     </div>
 
+    <!-- Workout Summary (Strava-ready text) -->
+
+    <div
+        class="strength-summary-overlay"
+        id="strengthSummaryOverlay">
+
+        <div class="strength-summary-modal">
+
+            <span class="strength-search-title">
+                Workout complete
+            </span>
+
+            <p class="strength-summary-hint">
+                Copy this into your Strava activity description.
+            </p>
+
+            <textarea
+                id="strengthSummaryText"
+                class="strength-summary-textarea"
+                readonly></textarea>
+
+            <div class="strength-rename-actions">
+
+                <button
+                    type="button"
+                    id="strengthSummaryDone"
+                    class="strength-template-btn strength-template-btn-outline">
+                    Close
+                </button>
+
+                <button
+                    type="button"
+                    id="strengthSummaryCopy"
+                    class="strength-template-btn">
+                    Copy text
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
     <script src="js/loadHeader.js"></script>
 
     <script
