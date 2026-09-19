@@ -26,6 +26,29 @@
 
     margin-bottom:30px;
 
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.page-title::before{
+
+    content:"";
+    position:absolute;
+    top:-45px;
+    right:-25px;
+    width:200px;
+    height:200px;
+    background-image:url('../icons/icon-512.png');
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center;
+    opacity:.05;
+    mix-blend-mode:screen;
+    filter:saturate(.9) brightness(1.15);
+    pointer-events:none;
+
 }
 
 .page-title h1{
