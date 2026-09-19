@@ -7,6 +7,35 @@
     max-width:1000px;
     margin:0 auto;
     padding:28px 24px 100px;
+    position:relative;
+
+}
+
+/* ==========================
+   Fixed watermark layer (test)
+   -----------------------------------------
+   A dedicated position:fixed element, not
+   background-attachment:fixed — that CSS
+   property is deliberately unsupported on
+   iOS Safari and would silently fail there.
+   A real fixed-position element stays pinned
+   to the viewport on every browser, so the
+   mark stays put while the page scrolls over it.
+========================== */
+
+.running-bg-fixed{
+
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background-image:url('../icons/icon-512.png');
+    background-repeat:no-repeat;
+    background-position:center 42%;
+    background-size:min(560px, 65vmin);
+    opacity:.05;
+    mix-blend-mode:screen;
+    filter:saturate(.9) brightness(1.15);
 
 }
 
@@ -17,28 +46,7 @@
 .running-hero{
 
     margin-bottom:20px;
-    position:relative;
-    overflow:hidden;
     padding-right:4px;
-
-}
-
-.running-hero::before{
-
-    content:"";
-    position:absolute;
-    top:-40px;
-    right:-25px;
-    width:190px;
-    height:190px;
-    background-image:url('../icons/icon-512.png');
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
-    opacity:.05;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
 
 }
 
