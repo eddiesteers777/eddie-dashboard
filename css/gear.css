@@ -18,6 +18,27 @@
     gap:20px;
     margin-bottom:20px;
     flex-wrap:wrap;
+    position:relative;
+    overflow:hidden;
+
+}
+
+.gear-hero::before{
+
+    content:"";
+    position:absolute;
+    top:-55px;
+    right:-25px;
+    width:210px;
+    height:210px;
+    background-image:url('../icons/icon-512.png');
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center;
+    opacity:.05;
+    mix-blend-mode:screen;
+    filter:saturate(.9) brightness(1.15);
+    pointer-events:none;
 
 }
 
