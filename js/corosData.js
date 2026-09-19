@@ -346,7 +346,20 @@ function activityMeters(activity) {
         : value;
 }
 
+// COROS sport-type codes for the running disciplines EddieOS
+// queries for (see buildArgs' sportTypeCodes). Activities often
+// come back with only a numeric code and no textual sport name,
+// so the code check has to come first -- relying on the substring
+// match alone silently drops every real run.
+const RUNNING_SPORT_CODES = new Set([100, 101, 102, 103]);
+
 function isRun(activity) {
+    const code = Number(recordSportType(activity));
+
+    if (Number.isFinite(code) && RUNNING_SPORT_CODES.has(code)) {
+        return true;
+    }
+
     const text = [
         activity?.sport,
         activity?.sport_type,
@@ -605,6 +618,7 @@ async function loadRecentData() {
         version: 3,
         fetchedAt: Date.now(),
         activities,
+        rawActivityCount: summaries.length,
         recovery: unwrap(recovery),
         trainingLoad: unwrap(trainingLoad),
         fitness: unwrap(fitness)
@@ -672,10 +686,15 @@ function renderSnapshot(snapshot) {
         )}`
     );
 
+    const rawCount =
+        Number(snapshot.rawActivityCount) || 0;
+
     setStatus(
         activities.length
             ? "COROS data loaded successfully."
-            : "COROS connected, but no running activities were returned for the requested period.",
+            : rawCount
+                ? `COROS returned ${rawCount} activities in the last 28 days, but none matched the running filter. Try Refresh COROS to re-check.`
+                : "COROS connected, but no activities of any kind were returned for the last 28 days.",
         activities.length
             ? "success"
             : "warning"
