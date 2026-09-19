@@ -485,6 +485,60 @@ function renderGoalProgress() {
 }
 
 /* ==========================================
+   Training Consistency — one cell per scheduled day,
+   columns are weeks, rows Mon-Sun.
+========================================== */
+
+function renderConsistencyHeatmap() {
+    const container = $("consistencyHeatmap");
+    if (!container) return;
+
+    const progress = loadProgress();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let html = "";
+    for (let w = 1; w <= WEEKS.length; w++) {
+        html += `<div class="heatmap-week">`;
+        getAdjustedWeekDays(w).forEach((day, i) => {
+            const date = new Date(weekStart(w).getTime() + i * DAY_MS);
+            date.setHours(0, 0, 0, 0);
+            const dayKey = DAYS[i];
+            const hasRun = Number(day.miles) > 0 || day.race;
+            const done = isDayDone(progress, w, dayKey);
+            const isFuture = date > today;
+
+            let state;
+            let statusLabel;
+            if (isFuture) {
+                state = "future";
+                statusLabel = "Upcoming";
+            } else if (!hasRun) {
+                state = done ? "done-rest" : "rest";
+                statusLabel = done ? "Completed" : "Rest day";
+            } else {
+                state = done ? "done" : "missed";
+                statusLabel = done ? "Completed" : "Missed";
+            }
+
+            const detail = hasRun ? `${day.session || "Run"} (${day.miles} mi)` : (day.session || "Rest");
+            const title = `Week ${w} ${dayKey} — ${detail} — ${statusLabel}`;
+
+            html += `<div class="heatmap-cell ${state}" title="${escapeHtmlAttr(title)}"></div>`;
+        });
+        html += `</div>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function escapeHtmlAttr(value) {
+    const div = document.createElement("div");
+    div.textContent = value;
+    return div.innerHTML.replace(/"/g, "&quot;");
+}
+
+/* ==========================================
    Init
 ========================================== */
 
@@ -503,6 +557,7 @@ function initAnalytics() {
     safely(renderHero);
     safely(renderSnapshot);
     safely(renderPerformanceCards);
+    safely(renderConsistencyHeatmap);
     safely(renderMileageTrendChart);
     safely(renderWorkoutMixChart);
     safely(renderUpcomingWorkouts);

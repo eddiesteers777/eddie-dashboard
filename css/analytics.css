@@ -803,3 +803,98 @@ canvas{
     max-width:640px;
 
 }
+
+/* ==========================================
+   Training Consistency heatmap — one cell per
+   scheduled day, columns are weeks, rows Mon-Sun.
+========================================== */
+
+.heatmap-grid{
+
+    display:flex;
+    gap:4px;
+    overflow-x:auto;
+    padding-bottom:4px;
+
+}
+
+.heatmap-week{
+
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+
+}
+
+.heatmap-cell{
+
+    width:18px;
+    height:18px;
+    border-radius:4px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    flex-shrink:0;
+
+}
+
+.heatmap-cell.done{
+
+    background:var(--green);
+    border-color:var(--green);
+
+}
+
+.heatmap-cell.done-rest{
+
+    background:rgba(34,197,94,.35);
+    border-color:rgba(34,197,94,.5);
+
+}
+
+.heatmap-cell.missed{
+
+    background:var(--red);
+    border-color:var(--red);
+
+}
+
+.heatmap-cell.rest{
+
+    background:var(--surface-light);
+    border-color:var(--border);
+
+}
+
+.heatmap-cell.future{
+
+    background:transparent;
+    border-color:var(--border);
+    border-style:dashed;
+
+}
+
+.heatmap-legend{
+
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+    margin-top:16px;
+    font-size:13px;
+    color:var(--muted);
+
+}
+
+.heatmap-legend span{
+
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+
+}
+
+.heatmap-legend .heatmap-cell{
+
+    width:14px;
+    height:14px;
+
+}

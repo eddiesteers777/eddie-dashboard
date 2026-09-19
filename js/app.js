@@ -12,7 +12,8 @@ import {
     getCurrentWeek,
     getAdjustedWeekMileage,
     getAdjustedWeekDays,
-    getTrainingPhase
+    getTrainingPhase,
+    loadProgress
 } from "./marathonData.js";
 
 import { getUpcomingCourseEvents } from "./courseEvents.js";
@@ -189,13 +190,19 @@ function renderToday() {
         console.error("Dashboard: could not resolve today's plan", error);
     }
 
-    // Today's run
+    // Today's run — the one item you can mark done right here, no
+    // navigating to Marathon just to check a box.
     if (dayData?.miles) {
+        const progress = loadProgress();
         items.push({
             icon: "🏃",
             title: dayData.session || "Run",
             detail: `${dayData.miles} mi${dayData.pace ? ` @ ${dayData.pace}` : ""}${dayData.race ? " — RACE DAY" : ""}`,
-            link: "marathon.html"
+            link: "marathon.html",
+            isRun: true,
+            week,
+            dayKey,
+            done: !!(progress[week] && progress[week][dayKey])
         });
     }
 
@@ -262,7 +269,24 @@ function renderToday() {
         return;
     }
 
-    container.innerHTML = items.map(item => `
+    container.innerHTML = items.map(item => item.isRun ? `
+        <div class="eos-today-item eos-today-item-run">
+            <a href="${item.link}" class="eos-today-item-link">
+                <span class="eos-today-item-icon">${item.icon}</span>
+                <div class="eos-today-item-text">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <span>${escapeHtml(item.detail)}</span>
+                </div>
+            </a>
+            <button
+                type="button"
+                class="eos-today-complete-btn${item.done ? " done" : ""}"
+                data-complete-week="${item.week}"
+                data-complete-day="${item.dayKey}">
+                ${item.done ? "✓ Done" : "Mark Done"}
+            </button>
+        </div>
+    ` : `
         <a href="${item.link}" class="eos-today-item">
             <span class="eos-today-item-icon">${item.icon}</span>
             <div class="eos-today-item-text">
@@ -271,6 +295,29 @@ function renderToday() {
             </div>
         </a>
     `).join("");
+
+    if (!container.dataset.completeBound) {
+        container.dataset.completeBound = "true";
+        container.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-complete-week]");
+            if (!button) return;
+
+            event.preventDefault();
+            const w = button.dataset.completeWeek;
+            const dayKey = button.dataset.completeDay;
+
+            const progress = loadProgress();
+            if (!progress[w]) progress[w] = {};
+            progress[w][dayKey] = !progress[w][dayKey];
+
+            localStorage.setItem("training-progress", JSON.stringify(progress));
+            import("./cloudSync.js")
+                .then(({ pushToCloud }) => pushToCloud())
+                .catch((error) => console.warn("Cloud progress sync unavailable:", error));
+
+            renderToday();
+        });
+    }
 }
 
 /* ==========================================
