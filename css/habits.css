@@ -1,0 +1,527 @@
+/* ==========================================
+   EddieOS Habits
+
+   --teal / --amber are page-specific extensions
+   for the calendar heat-scale, same documented
+   pattern the old 75-Day page used -- not part
+   of the shared token set, and not meant to be.
+========================================== */
+
+:root{
+    --teal:#2FB6B0;
+    --amber:#FFB020;
+}
+
+.habits-page{
+
+    max-width:900px;
+    margin:0 auto;
+    padding:32px 24px 80px;
+
+}
+
+/* ==========================
+   Hero
+========================== */
+
+.habits-hero{
+
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+    position:relative;
+    overflow:hidden;
+
+}
+
+.habits-hero::before{
+
+    content:"";
+    position:absolute;
+    top:-50px;
+    right:-25px;
+    width:200px;
+    height:200px;
+    background-image:url('../icons/icon-512.png');
+    background-size:contain;
+    background-repeat:no-repeat;
+    background-position:center;
+    opacity:.05;
+    mix-blend-mode:screen;
+    filter:saturate(.9) brightness(1.15);
+    pointer-events:none;
+
+}
+
+.habits-hero h1{
+
+    font-family:var(--font-display);
+    font-size:48px;
+    letter-spacing:.5px;
+    line-height:1;
+    margin-bottom:6px;
+
+}
+
+.habits-hero-sub{
+
+    color:var(--text-secondary);
+    font-size:14px;
+
+}
+
+.habits-hero-stats{
+
+    display:flex;
+    gap:24px;
+
+}
+
+.habits-hero-stat{
+
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+
+}
+
+.habits-hero-number{
+
+    font-family:var(--font-display);
+    font-size:38px;
+    line-height:1;
+    color:var(--primary);
+
+}
+
+.habits-hero-unit{
+
+    font-size:12px;
+    color:var(--text-secondary);
+
+}
+
+/* ==========================
+   View toggle
+========================== */
+
+.habits-view-toggle{
+
+    display:flex;
+    gap:4px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:4px;
+    margin-bottom:22px;
+    width:fit-content;
+
+}
+
+.habits-view-btn{
+
+    background:transparent;
+    border:none;
+    color:var(--text-secondary);
+    padding:9px 20px;
+    border-radius:9px;
+    font-size:13.5px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    transition:.15s;
+
+}
+
+.habits-view-btn.active{
+
+    background:var(--primary);
+    color:#05131f;
+
+}
+
+.habits-panel{
+
+    display:none;
+
+}
+
+.habits-panel.active{
+
+    display:block;
+
+}
+
+/* ==========================
+   Shared nav / buttons
+========================== */
+
+.habits-nav-btn{
+
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    cursor:pointer;
+    font-size:14px;
+
+}
+
+.habits-nav-btn:hover{
+
+    border-color:var(--primary);
+    color:var(--primary);
+
+}
+
+.habits-row-btn{
+
+    padding:9px 16px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:transparent;
+    color:var(--text-secondary);
+    cursor:pointer;
+    font:inherit;
+    font-size:13px;
+    font-weight:700;
+}
+
+.habits-row-btn:hover{
+
+    border-color:var(--primary);
+    color:var(--primary);
+
+}
+
+.habits-row-btn.primary{
+
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#05131f;
+
+}
+
+.habits-day-label{
+
+    font-size:14px;
+    color:var(--text-secondary);
+    min-width:160px;
+    text-align:center;
+    font-weight:600;
+
+}
+
+/* ==========================
+   Today panel
+========================== */
+
+.habits-day-nav{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:18px;
+
+}
+
+.habits-checklist-card{
+
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:22px 24px;
+
+}
+
+.habits-checklist-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-weight:700;
+    font-size:15px;
+    margin-bottom:16px;
+
+}
+
+.habits-checklist-count{
+
+    font-size:13px;
+    color:var(--text-secondary);
+    font-weight:500;
+
+}
+
+.habits-checklist{
+
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+
+}
+
+.habits-empty-note{
+
+    color:var(--text-secondary);
+    font-size:13.5px;
+    padding:10px 2px;
+
+}
+
+.habits-row{
+
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--surface-light);
+    border-radius:12px;
+    padding:14px 16px;
+    cursor:pointer;
+    transition:.15s;
+
+}
+
+.habits-row:hover{
+
+    background:rgba(78,168,255,.08);
+
+}
+
+.habits-check{
+
+    width:26px;
+    height:26px;
+    border-radius:9px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:transparent;
+    font-size:14px;
+    transition:.15s;
+
+}
+
+.habits-check.on{
+
+    background:var(--green);
+    border-color:var(--green);
+    color:#05130a;
+
+}
+
+.habits-check.on::after{
+
+    content:"✓";
+
+}
+
+.habits-row-name{
+
+    font-size:14.5px;
+    color:var(--text);
+
+}
+
+.habits-row-name.done{
+
+    color:var(--text-secondary);
+    text-decoration:line-through;
+
+}
+
+/* ==========================
+   Calendar panel
+========================== */
+
+.habits-cal-toolbar{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+
+}
+
+.habits-cal-grid-header{
+
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    margin-bottom:8px;
+
+}
+
+.habits-cal-grid-header span{
+
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+
+}
+
+.habits-cal-grid{
+
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:6px;
+    margin-bottom:18px;
+
+}
+
+.habits-cal-cell{
+
+    aspect-ratio:1;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--text-secondary);
+    transition:.15s;
+
+}
+
+.habits-cal-cell.empty{
+
+    background:transparent;
+    border-color:transparent;
+    cursor:default;
+
+}
+
+.habits-cal-cell.today{
+
+    border-color:var(--primary);
+    box-shadow:0 0 0 1px var(--primary);
+
+}
+
+.habits-cal-cell.future{
+
+    opacity:.4;
+    cursor:default;
+
+}
+
+.habits-cal-legend{
+
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    font-size:12px;
+    color:var(--text-secondary);
+
+}
+
+.habits-sw{
+
+    display:inline-block;
+    width:10px;
+    height:10px;
+    border-radius:3px;
+    margin-right:5px;
+    vertical-align:middle;
+
+}
+
+/* ==========================
+   Habits management panel
+========================== */
+
+.habits-manage-list{
+
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:18px;
+
+}
+
+.habits-manage-item{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 16px;
+
+}
+
+.habits-manage-item span{
+
+    font-size:14.5px;
+
+}
+
+.habits-del-btn{
+
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:16px;
+    cursor:pointer;
+    padding:4px 8px;
+    border-radius:8px;
+    transition:.15s;
+
+}
+
+.habits-del-btn:hover{
+
+    color:var(--red);
+    background:rgba(239,68,68,.12);
+
+}
+
+.habits-add-row{
+
+    display:flex;
+    gap:10px;
+
+}
+
+.habits-add-row input{
+
+    flex:1;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:11px 14px;
+    font-size:14px;
+    font-family:inherit;
+    outline:none;
+
+}
+
+.habits-add-row input:focus{
+
+    border-color:var(--primary);
+
+}
+
+@media (max-width:600px){
+
+    .habits-hero h1{ font-size:36px; }
+
+    .habits-hero-number{ font-size:30px; }
+
+    .habits-cal-cell{ font-size:10px; }
+
+}
