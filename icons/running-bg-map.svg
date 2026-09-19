@@ -1,0 +1,101 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+<!-- EddieOS Running background map: stylized Boston Marathon course. -->
+<!-- Colors hardcoded to match css/style.css tokens (this file can't read CSS vars). -->
+<!-- Route/labels/markers stay within a central safe zone so background-size:cover -->
+<!-- never crops them on unusual viewport aspect ratios; only the grid is full-bleed. -->
+<g stroke="#B7C4D6" stroke-opacity="0.5" stroke-width="2">
+<line x1="-2" y1="38" x2="1581" y2="49" />
+<line x1="-22" y1="94" x2="1617" y2="70" />
+<line x1="109" y1="169" x2="1494" y2="197" />
+<line x1="14" y1="239" x2="1489" y2="214" />
+<line x1="67" y1="301" x2="1497" y2="286" />
+<line x1="101" y1="355" x2="1588" y2="328" />
+<line x1="-9" y1="436" x2="1537" y2="446" />
+<line x1="109" y1="503" x2="1495" y2="509" />
+<line x1="61" y1="566" x2="1492" y2="550" />
+<line x1="102" y1="614" x2="1514" y2="602" />
+<line x1="-4" y1="691" x2="1618" y2="668" />
+<line x1="38" y1="761" x2="1623" y2="783" />
+<line x1="6" y1="829" x2="1506" y2="836" />
+<line x1="8" y1="891" x2="1575" y2="867" />
+<line x1="22" y1="-24" x2="36" y2="815" />
+<line x1="103" y1="87" x2="105" y2="936" />
+<line x1="213" y1="40" x2="225" y2="919" />
+<line x1="310" y1="76" x2="304" y2="892" />
+<line x1="380" y1="6" x2="360" y2="862" />
+<line x1="483" y1="36" x2="489" y2="934" />
+<line x1="585" y1="47" x2="578" y2="914" />
+<line x1="668" y1="-22" x2="675" y2="830" />
+<line x1="754" y1="2" x2="738" y2="887" />
+<line x1="862" y1="85" x2="839" y2="907" />
+<line x1="955" y1="-21" x2="951" y2="880" />
+<line x1="1039" y1="49" x2="1051" y2="927" />
+<line x1="1134" y1="76" x2="1114" y2="817" />
+<line x1="1231" y1="29" x2="1250" y2="921" />
+<line x1="1314" y1="-24" x2="1335" y2="815" />
+<line x1="1407" y1="39" x2="1400" y2="914" />
+<line x1="1499" y1="58" x2="1475" y2="888" />
+<line x1="1599" y1="78" x2="1584" y2="890" />
+</g>
+<g fill="#4EA8FF" fill-opacity="0.35" stroke="none">
+<path d="M300,650 C330,635 365,640 375,665 C385,690 365,715 335,712 C305,709 275,690 280,668 C283,655 290,655 300,650 Z" transform="translate(322.8,224.3) scale(0.5732)" />
+<path d="M980,470 C1005,458 1035,465 1040,488 C1045,510 1020,528 995,522 C972,517 958,495 965,480 C969,472 973,474 980,470 Z" transform="translate(322.8,224.3) scale(0.5732)" />
+<path d="M1360,60 C1420,80 1470,120 1500,175 C1520,210 1510,250 1480,260 C1450,270 1430,235 1415,200 C1395,155 1360,120 1330,100 C1315,90 1340,68 1360,60 Z" transform="translate(322.8,224.3) scale(0.5732)" />
+</g>
+<g font-family="monospace" font-size="15" fill="#94A3B8" letter-spacing="1.5">
+<text x="362.9" y="619.8">HOPKINTON</text>
+<text x="540.6" y="680.0">ASHLAND</text>
+<text x="640.9" y="645.6">FRAMINGHAM</text>
+<text x="749.8" y="648.4">NATICK</text>
+<text x="821.5" y="614.0">WELLESLEY</text>
+<text x="941.9" y="579.6">NEWTON</text>
+<text x="1062.2" y="508.0">BROOKLINE</text>
+<text x="1039.3" y="278.7">BOSTON</text>
+</g>
+<path d="M403.1,671.4 L443.2,651.3 L477.6,671.4 L512.0,642.7 L552.1,659.9 L586.5,634.1 L620.9,651.3 L655.3,625.5 L695.4,639.8 L729.8,614.0 L764.2,628.4 L798.6,605.4 L833.0,594.0 L864.5,576.8 L890.3,559.6 L913.2,542.4 L930.4,562.4 L947.6,536.7 L964.8,553.8 L982.0,522.3 L1002.1,536.7 L1022.1,508.0 L1047.9,487.9 L1073.7,465.0 L1096.6,436.3 L1119.6,401.9 L1119.6,356.1 L1194.1,353.2 L1208.4,316.0" fill="none" stroke="#4EA8FF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+<g fill="#0F172A" stroke="#4EA8FF" stroke-width="2.5">
+<circle cx="443.2" cy="651.3" r="6" />
+<circle cx="477.6" cy="671.4" r="6" />
+<circle cx="512.0" cy="642.7" r="6" />
+<circle cx="552.1" cy="659.9" r="6" />
+<circle cx="586.5" cy="634.1" r="6" />
+<circle cx="620.9" cy="651.3" r="6" />
+<circle cx="655.3" cy="625.5" r="6" />
+<circle cx="695.4" cy="639.8" r="6" />
+<circle cx="729.8" cy="614.0" r="6" />
+<circle cx="764.2" cy="628.4" r="6" />
+<circle cx="798.6" cy="605.4" r="6" />
+<circle cx="833.0" cy="594.0" r="6" />
+<circle cx="864.5" cy="576.8" r="6" />
+<circle cx="890.3" cy="559.6" r="6" />
+<circle cx="913.2" cy="542.4" r="6" />
+<circle cx="930.4" cy="562.4" r="6" />
+<circle cx="947.6" cy="536.7" r="6" />
+<circle cx="964.8" cy="553.8" r="6" />
+<circle cx="982.0" cy="522.3" r="6" />
+<circle cx="1002.1" cy="536.7" r="6" />
+<circle cx="1022.1" cy="508.0" r="6" />
+<circle cx="1047.9" cy="487.9" r="6" />
+<circle cx="1073.7" cy="465.0" r="6" />
+<circle cx="1096.6" cy="436.3" r="6" />
+<circle cx="1119.6" cy="401.9" r="6" />
+<circle cx="1119.6" cy="356.1" r="6" />
+<circle cx="1194.1" cy="353.2" r="6" />
+</g>
+<g fill="#F8FAFC">
+<circle cx="504.4" cy="649.0" r="4" />
+<circle cx="607.2" cy="644.4" r="4" />
+<circle cx="710.3" cy="628.6" r="4" />
+<circle cx="814.4" cy="600.2" r="4" />
+<circle cx="916.1" cy="545.8" r="4" />
+<circle cx="987.2" cy="526.0" r="4" />
+<circle cx="1073.1" cy="465.5" r="4" />
+<circle cx="1119.6" cy="361.2" r="4" />
+</g>
+<circle cx="403.1" cy="671.4" r="16" fill="none" stroke="#4EA8FF" stroke-width="4" />
+<circle cx="403.1" cy="671.4" r="6" fill="#4EA8FF" />
+<text x="371.1" y="705.4" font-family="monospace" font-size="16" font-weight="bold" fill="#F8FAFC" letter-spacing="1">START</text>
+<circle cx="1208.4" cy="316.0" r="16" fill="none" stroke="#F8FAFC" stroke-width="4" />
+<circle cx="1208.4" cy="316.0" r="6" fill="#F8FAFC" />
+<text x="1192.4" y="294.0" font-family="monospace" font-size="16" font-weight="bold" fill="#F8FAFC" letter-spacing="1">FINISH</text>
+</svg>

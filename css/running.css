@@ -12,7 +12,7 @@
 }
 
 /* ==========================
-   Fixed watermark layer (test)
+   Fixed background map (test)
    -----------------------------------------
    A dedicated position:fixed element, not
    background-attachment:fixed — that CSS
@@ -21,108 +21,37 @@
    A real fixed-position element stays pinned
    to the viewport on every browser, so the
    mark stays put while the page scrolls over it.
+   Stylized after the Boston Marathon course —
+   full route map (streets, town labels, the
+   Newton Hills stretch, the famous sharp right
+   on Hereford / left on Boylston into the
+   finish) as a faint full-viewport backdrop.
+   Desktop only — hidden below 1300px so it
+   never competes with content on tablet/mobile.
+   Colors are baked into the SVG file itself
+   (background-images can't read CSS variables)
+   and are kept in sync with the tokens in
+   css/style.css.
 ========================== */
 
-.running-bg-fixed{
+.running-bg-map{
 
     position:fixed;
     inset:0;
     z-index:-1;
     pointer-events:none;
-    background-image:url('../icons/icon-512.png');
+    background-image:url('../icons/running-bg-map.svg');
     background-repeat:no-repeat;
-    background-position:center 42%;
-    background-size:min(560px, 65vmin);
+    background-position:center;
+    background-size:cover;
     opacity:.05;
     mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-
-}
-
-/* ==========================
-   Fixed side trail lines (test)
-   -----------------------------------------
-   Only visible in the empty gutters on wide
-   viewports, where the centered page content
-   leaves room on either side. Hidden below
-   1300px so it never competes with content
-   or shows up on tablet/mobile. Stylized after
-   the Boston Marathon course — a point-to-point
-   route with a rolling Newton Hills stretch and
-   the famous sharp right on Hereford / left on
-   Boylston into the finish.
-========================== */
-
-.running-bg-trail{
-
-    position:fixed;
-    top:0;
-    width:110px;
-    height:100vh;
-    z-index:-1;
-    pointer-events:none;
-    opacity:.05;
-    mix-blend-mode:screen;
-
-}
-
-.running-bg-trail svg{
-
-    width:100%;
-    height:100%;
-    display:block;
-
-}
-
-.running-bg-trail .trail-route{
-
-    fill:none;
-    stroke:var(--primary);
-    stroke-width:2.5;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-
-}
-
-.running-bg-trail .trail-road{
-
-    fill:none;
-    stroke:var(--border);
-    stroke-width:1;
-    stroke-linecap:round;
-    opacity:.5;
-
-}
-
-.running-bg-trail .trail-marker{
-
-    fill:var(--bg);
-    stroke:var(--primary);
-    stroke-width:1.5;
-
-}
-
-.running-bg-trail .trail-pin{
-
-    fill:var(--primary);
-
-}
-
-.running-bg-trail-left{
-
-    left:24px;
-
-}
-
-.running-bg-trail-right{
-
-    right:24px;
 
 }
 
 @media (max-width:1300px){
 
-    .running-bg-trail{ display:none; }
+    .running-bg-map{ display:none; }
 
 }
 
