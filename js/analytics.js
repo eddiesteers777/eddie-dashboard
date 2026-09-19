@@ -1,1144 +1,528 @@
-console.log("ANALYTICS VERSION 99");
 /* ==========================================
    EddieOS Analytics
+
+   Every number on this page is either read directly from the
+   Marathon plan + your logged progress, or (Personal Records) typed
+   in by you. Nothing here is a placeholder — if a metric can't be
+   computed honestly from real data, it isn't shown.
 ========================================== */
 
 import {
-
     WEEKS,
-
     DAYS,
-
     getCurrentWeek,
-
     getRaceCountdown,
-
     getCycleMileage,
-
     getPeakMileage,
-
     getLongestRun,
-
     getCompletionPercent,
-
     getAdjustedWeekDays,
-
     getAdjustedWeekMileage,
-
     getWorkoutBreakdown,
-
     getUpcomingWorkouts,
-
     getTrainingPhase,
-
-    getNextLongRun
-
+    getNextLongRun,
+    loadProgress,
+    weekStart,
+    DAY_MS
 } from "./marathonData.js";
-
 
 let charts = {};
 
+function $(id) {
+    return document.getElementById(id);
+}
+
+function setText(id, value) {
+    const el = $(id);
+    if (el) el.textContent = value;
+}
+
+/* ==========================================
+   Derived data — completed (not just planned)
+
+   getAdjustedWeekMileage/getWorkoutBreakdown in marathonData.js
+   describe the PLAN. Everything below cross-references that plan
+   against training-progress to describe what actually happened.
+========================================== */
+
+function isDayDone(progress, week, dayKey) {
+    return !!(progress[week] && progress[week][dayKey]);
+}
+
+function actualWeekMileage(progress, weekNumber) {
+    return getAdjustedWeekDays(weekNumber).reduce((sum, day, i) => {
+        return sum + (isDayDone(progress, weekNumber, DAYS[i]) ? Number(day.miles || 0) : 0);
+    }, 0);
+}
+
+function categorizeSession(day) {
+    if (day.race) return "race";
+    const session = (day.session || "").toLowerCase();
+    if (session.includes("long")) return "long";
+    if (session.includes("recovery")) return "recovery";
+    if (
+        session.includes("tempo") ||
+        session.includes("threshold") ||
+        session.includes("interval") ||
+        session.includes("vo2") ||
+        session.includes("repeat")
+    ) return "quality";
+    return "easy";
+}
+
+function getCompletedBreakdown(progress) {
+    const breakdown = { easy: 0, quality: 0, long: 0, recovery: 0, race: 0 };
+    for (let w = 1; w <= WEEKS.length; w++) {
+        getAdjustedWeekDays(w).forEach((day, i) => {
+            if (isDayDone(progress, w, DAYS[i])) breakdown[categorizeSession(day)]++;
+        });
+    }
+    return breakdown;
+}
+
+// Consecutive most-recent scheduled running days (miles > 0, up to today)
+// completed without a miss. Rest/cross-training-only days (0 miles) don't
+// count for or against it — they're just skipped.
+function getCurrentStreak(progress) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const runDays = [];
+    for (let w = 1; w <= WEEKS.length; w++) {
+        getAdjustedWeekDays(w).forEach((day, i) => {
+            const date = new Date(weekStart(w).getTime() + i * DAY_MS);
+            date.setHours(0, 0, 0, 0);
+            if (date > today) return;
+            if (Number(day.miles) > 0) {
+                runDays.push(isDayDone(progress, w, DAYS[i]));
+            }
+        });
+    }
+
+    let streak = 0;
+    for (let i = runDays.length - 1; i >= 0; i--) {
+        if (!runDays[i]) break;
+        streak++;
+    }
+    return streak;
+}
+
+function getWeekCompletionPercent(progress, weekNumber) {
+    const completed = DAYS.filter(dayKey => isDayDone(progress, weekNumber, dayKey)).length;
+    return Math.round((completed / DAYS.length) * 100);
+}
+
+function getTotalActualMileage(progress) {
+    let total = 0;
+    for (let w = 1; w <= WEEKS.length; w++) total += actualWeekMileage(progress, w);
+    return Math.round(total * 10) / 10;
+}
+
+/* ==========================================
+   Load
+========================================== */
 
 const analytics = {
-
-    trainingWeek:1,
-
-    weeklyMileage:0,
-
-    totalMileage:0,
-
-    peakMileage:0,
-
-    completion:0,
-
-    longestRun:0,
-
-    nextLongRun:null,
-
-    todayWorkout:null,
-
-    workoutBreakdown:null
-
+    trainingWeek: 1,
+    weeklyMileage: 0,
+    totalMileage: 0,
+    peakMileage: 0,
+    completion: 0,
+    weekCompletion: 0,
+    longestRun: 0,
+    nextLongRun: null,
+    todayWorkout: null,
+    workoutBreakdown: null,
+    completedBreakdown: null,
+    streak: 0,
+    actualMileageSoFar: 0
 };
 
+function loadAnalyticsData() {
+    const progress = loadProgress();
 
-/* ==========================================
-   Utilities
-========================================== */
+    analytics.trainingWeek = getCurrentWeek();
+    analytics.weeklyMileage = getAdjustedWeekMileage(analytics.trainingWeek);
+    analytics.totalMileage = getCycleMileage();
+    analytics.peakMileage = getPeakMileage();
+    analytics.completion = getCompletionPercent();
+    analytics.weekCompletion = getWeekCompletionPercent(progress, analytics.trainingWeek);
+    analytics.longestRun = getLongestRun();
+    analytics.nextLongRun = getNextLongRun();
+    analytics.workoutBreakdown = getWorkoutBreakdown();
+    analytics.completedBreakdown = getCompletedBreakdown(progress);
+    analytics.streak = getCurrentStreak(progress);
+    analytics.actualMileageSoFar = getTotalActualMileage(progress);
 
-function $(id){
-
-    return document.getElementById(id);
-
+    const days = getAdjustedWeekDays(analytics.trainingWeek);
+    const todayIndex = (new Date().getDay() + 6) % 7; // Mon=0..Sun=6
+    analytics.todayWorkout = days[todayIndex] || null;
 }
 
-
-function setText(id,value){
-
-    const element = $(id);
-
-    if(element){
-
-        element.textContent = value;
-
-    }
-
-}
 /* ==========================================
-   Load Analytics Data
+   Hero
 ========================================== */
 
-function loadAnalyticsData(){
+function renderHero() {
+    setText("countdownDays", getRaceCountdown());
+    setText("trainingWeek", `Week ${analytics.trainingWeek} of ${WEEKS.length}`);
 
-    analytics.trainingWeek =
-
-        getCurrentWeek();
-
-
-    analytics.weeklyMileage =
-
-        getAdjustedWeekMileage(
-
-            analytics.trainingWeek
-
-        );
-
-
-    analytics.totalMileage =
-
-        getCycleMileage();
-
-
-    analytics.peakMileage =
-
-        getPeakMileage();
-
-
-    analytics.longestRun =
-
-        getLongestRun();
-
-
-    analytics.completion =
-
-        getCompletionPercent();
-
-
-    analytics.nextLongRun =
-
-        getNextLongRun();
-
-
-    analytics.workoutBreakdown =
-
-        getWorkoutBreakdown();
-
-
-    const upcoming =
-
-        getUpcomingWorkouts();
-
-
-    analytics.todayWorkout =
-
-        upcoming.length
-
-            ? upcoming[0]
-
-            : null;
-
+    setText("trainingPhase", getTrainingPhase() || "—");
 }
+
 /* ==========================================
-   Update Dashboard
+   Snapshot (dashboard-grid)
 ========================================== */
 
-function updateDashboard(){
-
+function renderSnapshot() {
+    setText("todayWorkout", analytics.todayWorkout ? analytics.todayWorkout.session : "Rest");
     setText(
-
-        "countdownDays",
-
-        `${getRaceCountdown()} Days`
-
+        "todayWorkoutDetails",
+        analytics.todayWorkout && Number(analytics.todayWorkout.miles) > 0
+            ? `${analytics.todayWorkout.miles} mi @ ${analytics.todayWorkout.pace || "easy"}`
+            : "No running session scheduled today"
     );
 
+    setText("weeklyMileage", `${analytics.weeklyMileage} mi`);
+    setText("completionPercent", `${analytics.weekCompletion}%`);
+    setText("currentStreak", analytics.streak);
 
-    setText(
-
-        "trainingWeek",
-
-        `Week ${analytics.trainingWeek}`
-
-    );
-
-
-    setText(
-
-        "trainingPhase",
-
-        getTrainingPhase()
-
-    );
-
-
-    setText(
-
-        "weeklyMileage",
-
-        `${analytics.weeklyMileage} mi`
-
-    );
-
-
-    setText(
-
-        "completionPercent",
-
-        `${analytics.completion}%`
-
-    );
-
-
-    setText(
-
-        "peakMileage",
-
-        `${analytics.peakMileage} mi`
-
-    );
-
-
-    setText(
-
-        "totalMileage",
-
-        `${analytics.totalMileage} mi`
-
-    );
-
-
-    setText(
-
-        "longestRun",
-
-        `${analytics.longestRun} mi`
-
-    );
-
-
-    if(analytics.nextLongRun){
-
-        setText(
-
-            "nextLongRun",
-
-            `${analytics.nextLongRun.miles} mi`
-
-        );
-
-
-        setText(
-
-            "nextLongRunDate",
-
-            `Week ${analytics.nextLongRun.week}`
-
-        );
-
+    if (analytics.nextLongRun) {
+        setText("nextLongRun", `${analytics.nextLongRun.miles} mi`);
+        setText("nextLongRunDate", `Week ${analytics.nextLongRun.week}`);
+    } else {
+        setText("nextLongRun", "—");
+        setText("nextLongRunDate", "No long runs remaining");
     }
 
-
-    if(analytics.todayWorkout){
-
-        setText(
-
-            "todayWorkout",
-
-            analytics.todayWorkout.session
-
-        );
-
-
-        setText(
-
-            "todayWorkoutDetails",
-
-            `${analytics.todayWorkout.day} • ${analytics.todayWorkout.miles} mi • ${analytics.todayWorkout.pace}`
-
-        );
-
-    }
-
+    setText("peakMileage", `${analytics.peakMileage} mi`);
+    setText("totalMileage", `${analytics.totalMileage} mi`);
 }
+
 /* ==========================================
-   Update Performance Cards
+   Performance Overview
 ========================================== */
 
-function updatePerformanceCards(){
+function renderPerformanceCards() {
+    const fitness = Math.min(100, Math.round(analytics.completion * 0.7 + (analytics.streak * 2)));
 
-    const fitness = Math.min(
-
-        100,
-
-        Math.round(
-
-            (analytics.completion * 0.40)
-
-            +
-
-            (analytics.weeklyMileage * 1.25)
-
-        )
-
-    );
-
-
-    let status =
-
-        "Building";
-
-
-    if(analytics.trainingWeek >= 13){
-
-        status = "Peak";
-
-    }
-
-    else if(analytics.trainingWeek >= 9){
-
-        status = "Marathon Build";
-
-    }
-
-    else if(analytics.trainingWeek >= 5){
-
-        status = "Base Build";
-
-    }
-
-
-    const readiness = Math.min(
-
-        100,
-
-        Math.round(
-
-            fitness * 0.95
-
-        )
-
-    );
-
+    const status =
+        analytics.completion >= 90 ? "On Track" :
+        analytics.completion >= 70 ? "Building" :
+        "Needs Focus";
 
     const recovery =
+        analytics.completion >= 90 ? "Excellent" :
+        analytics.completion >= 70 ? "Good" :
+        analytics.completion >= 50 ? "Fair" :
+        "Needs Work";
 
-        analytics.completion >= 90
-
-            ? "Excellent"
-
-            : analytics.completion >= 70
-
-            ? "Good"
-
-            : analytics.completion >= 50
-
-            ? "Fair"
-
-            : "Needs Work";
-
-
-    setText(
-
-        "fitnessScore",
-
-        fitness
-
-    );
-
-
-    setText(
-
-        "trainingStatus",
-
-        status
-
-    );
-
-
-    setText(
-
-        "recoveryScore",
-
-        recovery
-
-    );
-
-
-    setText(
-
-        "raceReadiness",
-
-        `${readiness}%`
-
-    );
-
-
-    if(analytics.workoutBreakdown){
-
-        setText(
-
-            "easyRunCount",
-
-            analytics.workoutBreakdown.easy
-
-        );
-
-
-        setText(
-
-            "qualityRunCount",
-
-            analytics.workoutBreakdown.quality
-
-        );
-
-
-        setText(
-
-            "longRunCount",
-
-            analytics.workoutBreakdown.long
-
-        );
-
-
-        setText(
-
-            "restDayCount",
-
-            analytics.workoutBreakdown.recovery
-
-        );
-
-    }
-
+    setText("fitnessScore", fitness);
+    setText("trainingStatus", status);
+    setText("recoveryScore", recovery);
+    setText("raceReadiness", `${analytics.completion}%`);
 }
+
 /* ==========================================
-   Weekly Mileage Chart
+   Mileage Trend Chart — planned vs actual
 ========================================== */
 
-function renderWeeklyMileageChart(){
+function renderMileageTrendChart() {
+    const canvas = $("mileageTrendChart");
+    if (!canvas) return;
+    if (charts.mileageTrend) charts.mileageTrend.destroy();
 
-    const canvas =
+    const progress = loadProgress();
+    const currentWeek = analytics.trainingWeek;
 
-        $("weeklyMileageChart");
+    const planned = WEEKS.map((_, i) => getAdjustedWeekMileage(i + 1));
+    const actual = WEEKS.map((_, i) => {
+        const w = i + 1;
+        return w <= currentWeek ? actualWeekMileage(progress, w) : null;
+    });
 
-
-    if(!canvas){
-
-        return;
-
-    }
-
-
-    if(charts.weeklyMileage){
-
-        charts.weeklyMileage.destroy();
-
-    }
-
-
-    charts.weeklyMileage =
-
-        new Chart(
-
-            canvas,
-
-            {
-
-                type:"line",
-
-                data:{
-
-                    labels:
-
-                        WEEKS.map(
-
-                            (_,index)=>
-
-                            `W${index+1}`
-
-                        ),
-
-                    datasets:[
-
-                        {
-
-                            label:"Weekly Mileage",
-
-                            data:
-
-                                WEEKS.map(
-
-                                    (_,index)=>
-
-                                    getAdjustedWeekMileage(
-
-                                        index+1
-
-                                    )
-
-                                ),
-
-                            borderWidth:3,
-
-                            tension:.35,
-
-                            fill:false
-
-                        }
-
-                    ]
-
+    charts.mileageTrend = new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: WEEKS.map((_, i) => `W${i + 1}`),
+            datasets: [
+                {
+                    label: "Planned",
+                    data: planned,
+                    borderColor: "#5B7699",
+                    backgroundColor: "transparent",
+                    borderWidth: 2,
+                    borderDash: [5, 4],
+                    tension: 0.3,
+                    pointRadius: 0
                 },
-
-                options:{
-
-                    responsive:true,
-
-                    maintainAspectRatio:false,
-
-                    plugins:{
-
-                        legend:{
-
-                            display:false
-
-                        }
-
-                    },
-
-                    scales:{
-
-                        y:{
-
-                            beginAtZero:true
-
-                        }
-
-                    }
-
+                {
+                    label: "Actual",
+                    data: actual,
+                    borderColor: "#4EA8FF",
+                    backgroundColor: "rgba(78,168,255,.12)",
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    spanGaps: false,
+                    pointRadius: 2
                 }
-
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true, labels: { color: "#B7C4D6" } } },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: "#94A3B8" }, grid: { color: "rgba(255,255,255,.06)" } },
+                x: { ticks: { color: "#94A3B8" }, grid: { display: false } }
             }
-
-        );
-
+        }
+    });
 }
+
 /* ==========================================
-   Workout Breakdown Chart
+   Workout Mix Chart — planned vs completed, by type
 ========================================== */
 
-function renderWorkoutTypeChart(){
+function renderWorkoutMixChart() {
+    const canvas = $("workoutMixChart");
+    if (!canvas) return;
+    if (charts.workoutMix) charts.workoutMix.destroy();
 
-    const canvas =
+    const labels = ["Easy", "Quality", "Long", "Recovery", "Race"];
+    const keys = ["easy", "quality", "long", "recovery", "race"];
+    const planned = keys.map(k => analytics.workoutBreakdown[k]);
+    const completed = keys.map(k => analytics.completedBreakdown[k]);
 
-        $("workoutTypeChart");
-
-
-    if(!canvas){
-
-        return;
-
-    }
-
-
-    if(charts.workoutType){
-
-        charts.workoutType.destroy();
-
-    }
-
-
-    const breakdown =
-
-        analytics.workoutBreakdown;
-
-
-    charts.workoutType =
-
-        new Chart(
-
-            canvas,
-
-            {
-
-                type:"doughnut",
-
-                data:{
-
-                    labels:[
-
-                        "Easy",
-
-                        "Quality",
-
-                        "Long",
-
-                        "Recovery",
-
-                        "Race"
-
-                    ],
-
-                    datasets:[
-
-                        {
-
-                            data:[
-
-                                breakdown.easy,
-
-                                breakdown.quality,
-
-                                breakdown.long,
-
-                                breakdown.recovery,
-
-                                breakdown.race
-
-                            ]
-
-                        }
-
-                    ]
-
-                },
-
-                options:{
-
-                    responsive:true,
-
-                    maintainAspectRatio:false,
-
-                    plugins:{
-
-                        legend:{
-
-                            position:"bottom"
-
-                        }
-
-                    }
-
-                }
-
+    charts.workoutMix = new Chart(canvas, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                { label: "Planned", data: planned, backgroundColor: "rgba(91,118,153,.5)", borderRadius: 6 },
+                { label: "Completed", data: completed, backgroundColor: "#4EA8FF", borderRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true, labels: { color: "#B7C4D6" } } },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: "#94A3B8" }, grid: { color: "rgba(255,255,255,.06)" } },
+                x: { ticks: { color: "#94A3B8" }, grid: { display: false } }
             }
-
-        );
-
+        }
+    });
 }
+
 /* ==========================================
    Upcoming Workouts
 ========================================== */
 
-function renderUpcomingWorkouts(){
+function renderUpcomingWorkouts() {
+    const container = $("upcomingRuns");
+    if (!container) return;
 
-    const container =
-
-        $("upcomingRuns");
-
-
-    if(!container){
-
-        return;
-
-    }
-
-
-    const workouts =
-
-        getUpcomingWorkouts()
-
-        .slice(0,7);
-
-
+    const upcoming = getUpcomingWorkouts().slice(0, 7);
     container.innerHTML = "";
 
-
-    workouts.forEach(
-
-        workout=>{
-
-            const card =
-
-                document.createElement(
-
-                    "div"
-
-                );
-
-
-            card.className =
-
-                "upcoming-workout";
-
-
-            card.innerHTML = `
-
-                <div class="upcoming-left">
-
-                    <strong>
-
-                        Week ${workout.week}
-
-                    </strong>
-
-                    <span>
-
-                        ${workout.day}
-
-                    </span>
-
-                </div>
-
-                <div class="upcoming-middle">
-
-                    ${workout.session}
-
-                </div>
-
-                <div class="upcoming-right">
-
-                    ${workout.miles} mi
-
-                </div>
-
-            `;
-
-
-            container.appendChild(
-
-                card
-
-            );
-
-        }
-
-    );
-
-}
-/* ==========================================
-   AI Coach
-========================================== */
-
-function renderAIInsights(){
-
-    const container =
-
-        $("aiInsights");
-
-
-    if(!container){
-
+    if (upcoming.length === 0) {
+        container.innerHTML = `<div class="insight-card"><p>No upcoming workouts scheduled.</p></div>`;
         return;
-
     }
 
+    upcoming.forEach(workout => {
+        const card = document.createElement("div");
+        card.className = "upcoming-workout";
+        card.innerHTML = `
+            <div class="upcoming-left">
+                <strong>Week ${workout.week}</strong>
+                <span>${workout.day}</span>
+            </div>
+            <div class="upcoming-middle">${workout.session}</div>
+            <div class="upcoming-right">${Number(workout.miles) > 0 ? `${workout.miles} mi` : ""}</div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+/* ==========================================
+   Training Insights (rule-based, not "AI")
+========================================== */
+
+function renderInsights() {
+    const container = $("trainingInsights");
+    if (!container) return;
 
     const insights = [];
 
-
-    if(analytics.completion >= 90){
-
+    if (analytics.completion >= 90) {
         insights.push({
-
-            title:"Excellent Consistency",
-
-            text:"You've completed nearly every scheduled workout. Stay healthy and trust the process."
-
+            title: "Excellent Consistency",
+            text: "You've completed nearly every scheduled workout. Stay healthy and trust the process."
         });
-
+    } else if (analytics.completion >= 70) {
+        insights.push({
+            title: "Good Progress",
+            text: "You're staying consistent. Focus on hitting every quality workout and long run."
+        });
+    } else {
+        insights.push({
+            title: "Build Consistency",
+            text: "The biggest improvement right now comes from completing more scheduled workouts."
+        });
     }
 
-    else if(analytics.completion >= 70){
-
+    if (analytics.streak >= 3) {
         insights.push({
-
-            title:"Good Progress",
-
-            text:"You're staying consistent. Focus on hitting every quality workout and long run."
-
+            title: `${analytics.streak}-Workout Streak`,
+            text: "You haven't missed a scheduled run in a while — keep the chain going."
         });
-
+    } else if (analytics.streak === 0) {
+        insights.push({
+            title: "Streak Reset",
+            text: "Your last scheduled run wasn't logged as complete. One good session gets it moving again."
+        });
     }
 
-    else{
-
+    if (analytics.nextLongRun) {
         insights.push({
-
-            title:"Build Consistency",
-
-            text:"The biggest improvement right now comes from completing more scheduled workouts."
-
+            title: "Next Long Run",
+            text: `${analytics.nextLongRun.miles} miles scheduled during Week ${analytics.nextLongRun.week}. Prioritize sleep and fueling before this session.`
         });
-
     }
 
-
-    if(analytics.nextLongRun){
-
-        insights.push({
-
-            title:"Next Long Run",
-
-            text:`${analytics.nextLongRun.miles} miles scheduled during Week ${analytics.nextLongRun.week}. Prioritize sleep and fueling before this session.`
-
-        });
-
-    }
-
-
-    if(analytics.trainingWeek >= 13){
-
-        insights.push({
-
-            title:"Peak Phase",
-
-            text:"You're entering the highest training load of the cycle. Recovery is just as important as mileage."
-
-        });
-
-    }
-
-    else if(analytics.trainingWeek >= 9){
-
-        insights.push({
-
-            title:"Marathon Specific Training",
-
-            text:"Marathon pace workouts are becoming the priority. Practice race-day nutrition during these sessions."
-
-        });
-
-    }
-
-    else{
-
-        insights.push({
-
-            title:"Building Your Base",
-
-            text:"Stay patient. Aerobic fitness built now will pay off during the peak weeks."
-
-        });
-
-    }
-
-
-    container.innerHTML =
-
-        insights.map(
-
-            insight => `
-
-                <div class="insight-card">
-
-                    <h4>
-
-                        ${insight.title}
-
-                    </h4>
-
-                    <p>
-
-                        ${insight.text}
-
-                    </p>
-
-                </div>
-
-            `
-
-        ).join("");
-
+    container.innerHTML = insights.map(i => `
+        <div class="insight-card">
+            <h4>${i.title}</h4>
+            <p>${i.text}</p>
+        </div>
+    `).join("");
 }
-/* ==========================================
-   Initialize Analytics
-========================================== */
-
-function initAnalytics(){
-
-    loadAnalyticsData();
-
-    updateDashboard();
-
-    updatePerformanceCards();
-
-    renderWeeklyMileageChart();
-
-    renderWorkoutTypeChart();
-
-    renderUpcomingWorkouts();
-
-    renderAIInsights();
-
-}
-
 
 /* ==========================================
-   Buttons
+   Personal Records — real, user-entered, no fake defaults
 ========================================== */
 
-const marathonButton =
-
-    $("viewMarathonPlan");
-
-
-if(marathonButton){
-
-    marathonButton.addEventListener(
-
-        "click",
-
-        ()=>{
-
-            window.location.href =
-
-                "marathon.html";
-
-        }
-
-    );
-
-}
-
-
-const todayButton =
-
-    $("viewTodayWorkout");
-
-
-if(todayButton){
-
-    todayButton.addEventListener(
-
-        "click",
-
-        ()=>{
-
-            window.location.href =
-
-                "marathon.html";
-
-        }
-
-    );
-
-}
-/* ==========================================
-   Import Activities
-========================================== */
-
-const dropZone = $("dropZone");
-
-const activityFile = $("activityFile");
-
-const importButton = $("importActivities");
-
-const importStatus = $("importStatus");
-
-if (
-
-    dropZone &&
-
-    activityFile &&
-
-    importButton &&
-
-    importStatus
-
-){
-
-    dropZone.addEventListener(
-
-        "click",
-
-        ()=>{
-
-            activityFile.click();
-
-        }
-
-    );
-
-    importButton.addEventListener(
-
-        "click",
-
-        (event)=>{
-
-            event.stopPropagation();
-
-            activityFile.click();
-
-        }
-
-    );
-
-    activityFile.addEventListener(
-
-        "change",
-
-        ()=>{
-
-            handleFiles(activityFile.files);
-
-        }
-
-    );
-
-    dropZone.addEventListener(
-
-        "dragover",
-
-        (event)=>{
-
-            event.preventDefault();
-
-            dropZone.classList.add("dragging");
-
-        }
-
-    );
-
-    dropZone.addEventListener(
-
-        "dragleave",
-
-        ()=>{
-
-            dropZone.classList.remove("dragging");
-
-        }
-
-    );
-
-    dropZone.addEventListener(
-
-        "drop",
-
-        (event)=>{
-
-            event.preventDefault();
-
-            dropZone.classList.remove("dragging");
-
-            handleFiles(event.dataTransfer.files);
-
-        }
-
-    );
-
-}
-
-async function handleFiles(files){
-
-   console.log("handleFiles() called");
-
-    if(files.length===0){
-
-        importStatus.textContent =
-
-            "No files selected.";
-
-        return;
-
+const PR_KEY = "personal-records";
+const PR_FIELDS = [
+    { id: "5k", label: "5K" },
+    { id: "10k", label: "10K" },
+    { id: "half", label: "Half Marathon" },
+    { id: "marathon", label: "Marathon" }
+];
+
+function loadPersonalRecords() {
+    try {
+        return JSON.parse(localStorage.getItem(PR_KEY) || "{}");
+    } catch (e) {
+        return {};
     }
+}
 
-    importStatus.textContent =
+function savePersonalRecords(records) {
+    localStorage.setItem(PR_KEY, JSON.stringify(records));
+    import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});
+}
 
-        `Reading ${files.length} activities...`;
+function renderPersonalRecords() {
+    const container = $("recordsGrid");
+    if (!container) return;
 
-    for(const file of files){
+    const records = loadPersonalRecords();
 
-        console.log("--------------------------------");
+    container.innerHTML = PR_FIELDS.map(field => `
+        <div class="record" data-field="${field.id}">
+            <span>${field.label}</span>
+            <h3 class="record-value">${records[field.id] || "Not set"}</h3>
+            <input
+                type="text"
+                class="record-input"
+                placeholder="e.g. 3:05:00"
+                value="${records[field.id] || ""}"
+                hidden>
+        </div>
+    `).join("");
 
-        console.log("File:", file.name);
+    container.querySelectorAll(".record").forEach(card => {
+        const field = card.dataset.field;
+        const value = card.querySelector(".record-value");
+        const input = card.querySelector(".record-input");
 
-        console.log("Type:", file.type);
+        value.addEventListener("click", () => {
+            value.hidden = true;
+            input.hidden = false;
+            input.focus();
+            input.select();
+        });
 
-        console.log("Size:", file.size);
-
-        if(file.name.toLowerCase().endsWith(".tcx")){
-
-            const text = await file.text();
-
-            console.log(text.substring(0,500));
-
+        function commit() {
+            const records = loadPersonalRecords();
+            const next = input.value.trim();
+            records[field] = next;
+            savePersonalRecords(records);
+            value.textContent = next || "Not set";
+            input.hidden = true;
+            value.hidden = false;
         }
 
-else if(file.name.toLowerCase().endsWith(".fit")){
-
-    const parser = new FitParser({
-
-        force: true,
-
-        speedUnit: "mi",
-
-        lengthUnit: "mi",
-
-        temperatureUnit: "fahrenheit",
-
-        elapsedRecordField: true,
-
-        mode: "both"
-
+        input.addEventListener("blur", commit);
+        input.addEventListener("keydown", e => {
+            if (e.key === "Enter") input.blur();
+        });
     });
-
-    const buffer = await file.arrayBuffer();
-
-    parser.parse(
-
-        buffer,
-
-        function(error,data){
-
-            if(error){
-
-                console.error(error);
-
-                return;
-
-            }
-
-            console.log(data);
-
-        }
-
-    );
-
-  }
-
 }
 
-    importStatus.textContent =
-
-        `${files.length} activities loaded.`;
-
-}
 /* ==========================================
-   Start
+   Goal Progress
 ========================================== */
 
-document.addEventListener(
+function renderGoalProgress() {
+    setText("longestRun", `${analytics.longestRun} mi`);
+    setText("actualMileageSoFar", `${analytics.actualMileageSoFar} mi`);
+}
 
-    "DOMContentLoaded",
+/* ==========================================
+   Init
+========================================== */
 
-    ()=>{
-
-        initAnalytics();
-
+// Each section is independent — a failure in one (e.g. the Chart.js CDN
+// being unreachable) must never take down the others with it.
+function safely(fn) {
+    try {
+        fn();
+    } catch (error) {
+        console.error(`Analytics: ${fn.name} failed`, error);
     }
+}
 
-);
+function initAnalytics() {
+    loadAnalyticsData();
+    safely(renderHero);
+    safely(renderSnapshot);
+    safely(renderPerformanceCards);
+    safely(renderMileageTrendChart);
+    safely(renderWorkoutMixChart);
+    safely(renderUpcomingWorkouts);
+    safely(renderInsights);
+    safely(renderPersonalRecords);
+    safely(renderGoalProgress);
+}
+
+const marathonButton = $("viewMarathonPlan");
+if (marathonButton) {
+    marathonButton.addEventListener("click", () => {
+        window.location.href = "marathon.html";
+    });
+}
+
+const todayButton = $("viewTodayWorkout");
+if (todayButton) {
+    todayButton.addEventListener("click", () => {
+        window.location.href = "marathon.html";
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initAnalytics);
