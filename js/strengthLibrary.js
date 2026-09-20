@@ -3,6 +3,7 @@
 ========================================== */
 
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
+import { icon } from "./icons.js";
 
 const LIBRARY_KEY = "strength-workout-library";
 const FAVORITES_KEY = "strength-workout-favorites";
@@ -368,7 +369,7 @@ function workoutCard(workout) {
                             : "Add to favorites"
                     }"
                 >
-                    ${isFavorite ? "★" : "☆"}
+                    ${isFavorite ? icon("starFilled") : icon("star")}
                 </button>
 
             </div>
@@ -384,7 +385,7 @@ function workoutCard(workout) {
             <div class="strength-library-meta">
 
                 <span>
-                    ⏱ ${Number(workout.minutes) || 0} min
+                    ${icon("timer")} ${Number(workout.minutes) || 0} min
                 </span>
 
                 <span>
@@ -1090,13 +1091,14 @@ function init() {
             const target =
                 event.target;
 
-            if (
-                target.matches(
+            const favoriteBtn =
+                target.closest(
                     "[data-library-favorite]"
-                )
-            ) {
+                );
+
+            if (favoriteBtn) {
                 toggleFavorite(
-                    target.dataset
+                    favoriteBtn.dataset
                         .libraryFavorite
                 );
                 return;

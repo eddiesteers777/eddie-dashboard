@@ -25,6 +25,7 @@ import {
 } from "./marathonData.js";
 
 import { getEntriesForDate, getRecentEntries } from "./runningLog.js";
+import { icon } from "./icons.js";
 
 let currentView = "week";
 let weekAnchor = new Date();
@@ -197,11 +198,11 @@ function cellGlyph(dateStr, day) {
     const todayStr = isoDate(new Date());
 
     if (day && isCompleted(day.week, day.dayKey)) {
-        return "✓";
+        return icon("check");
     }
 
     if (dateStr === todayStr) {
-        return "●";
+        return icon("dot");
     }
 
     return "";
@@ -464,7 +465,7 @@ function renderDayDetail(dateStr) {
                     Edit
                 </button>
                 <button type="button" class="running-row-btn ${completed ? "primary" : ""}" data-toggle-complete="${dateStr}">
-                    ${completed ? "✓ Completed" : "Mark Complete"}
+                    ${completed ? `${icon("check")} Completed` : "Mark Complete"}
                 </button>
             </div>
 
@@ -717,12 +718,14 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("[data-toggle-complete]")) {
-        const day = marathonDayForDate(target.dataset.toggleComplete);
+    const toggleCompleteBtn = target.closest("[data-toggle-complete]");
+
+    if (toggleCompleteBtn) {
+        const day = marathonDayForDate(toggleCompleteBtn.dataset.toggleComplete);
 
         if (day) {
             toggleCompleted(day.week, day.dayKey);
-            renderDayDetail(target.dataset.toggleComplete);
+            renderDayDetail(toggleCompleteBtn.dataset.toggleComplete);
 
             if (currentView === "week") renderWeekView();
             if (currentView === "month") renderMonthView();

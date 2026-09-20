@@ -2,6 +2,8 @@
    EddieOS Endurance Fueling
 ========================================== */
 
+import { icon } from "./icons.js";
+
 const $ = (id) => document.getElementById(id);
 
 /* ==========================================
@@ -344,7 +346,7 @@ function renderMarathonCalendar(data, currentWeek) {
             <span class="calendar-day-date">${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
             <span class="workout-day-abbr">${dayKey}</span>
             <span class="workout-day-compact">${compactLabel}</span>
-            ${hasPlan ? '<span class="workout-day-check">⛽</span>' : ""}
+            ${hasPlan ? `<span class="workout-day-check">${icon("fuel")}</span>` : ""}
         `;
 
         cell.title = day.session
@@ -385,7 +387,7 @@ function selectDay(index, day, dayKey, weekOverride = selectedWeek) {
         </p>
 
         ${existingPlan
-            ? `<span class="fuel-tag caffeine">Fueling Plan Saved ✓</span> <button class="fuel-btn secondary small" id="openWorkoutPlanBtn">Open Plan</button>`
+            ? `<span class="fuel-tag caffeine">Fueling Plan Saved ${icon("check")}</span> <button class="fuel-btn secondary small" id="openWorkoutPlanBtn">Open Plan</button>`
             : ""
         }
 
@@ -898,7 +900,7 @@ function renderComposition() {
 
         <div class="fuel-plan-row fuel-plan-target ${onTarget ? "on-target" : "off-target"}">
             <span>Target</span>
-            <span>${c.targetCarbs} g carb · ${c.targetSodium} mg sodium ${onTarget ? "— on target ✓" : "— adjust products or drink"}</span>
+            <span>${c.targetCarbs} g carb · ${c.targetSodium} mg sodium ${onTarget ? `— on target ${icon("check")}` : "— adjust products or drink"}</span>
         </div>
 
     `;
@@ -1126,7 +1128,7 @@ function renderTimeline(regenerate) {
 
             <div class="fuel-timeline-content">
                 <input type="text" class="timeline-label-input" data-idx="${idx}" value="${escapeHTML(row.label)}">
-                <button class="timeline-remove-btn" data-idx="${idx}" title="Remove step">✕</button>
+                <button class="timeline-remove-btn" data-idx="${idx}" title="Remove step">${icon("close")}</button>
             </div>
 
         `;
@@ -1162,9 +1164,11 @@ $("fuelTimeline").addEventListener("input", (e) => {
 
 $("fuelTimeline").addEventListener("click", (e) => {
 
-    if (!e.target.classList.contains("timeline-remove-btn")) return;
+    const removeBtn = e.target.closest(".timeline-remove-btn");
 
-    const idx = Number(e.target.dataset.idx);
+    if (!removeBtn) return;
+
+    const idx = Number(removeBtn.dataset.idx);
 
     timelineRows.splice(idx, 1);
 
@@ -1742,7 +1746,7 @@ function renderPlanSummary() {
 
             <span class="fuel-tag">
                 ${p.qty}× ${escapeHTML(p.name)}
-                <button data-remove-plan-item="${p.id}" style="background:none;border:none;color:var(--muted);cursor:pointer;">✕</button>
+                <button data-remove-plan-item="${p.id}" style="background:none;border:none;color:var(--muted);cursor:pointer;">${icon("close")}</button>
             </span>
 
         `).join("") + `</div>`;
@@ -1780,9 +1784,11 @@ function workoutSummaryLabel() {
 
 $("planSummary").addEventListener("click", (e) => {
 
-    const id = e.target.dataset.removePlanItem;
+    const removeBtn = e.target.closest("[data-remove-plan-item]");
 
-    if (!id) return;
+    if (!removeBtn) return;
+
+    const id = removeBtn.dataset.removePlanItem;
 
     planItems = planItems.filter(p => String(p.id) !== id);
 

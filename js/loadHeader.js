@@ -4,6 +4,12 @@ fetch("components/header.html")
 
         document.getElementById("header").innerHTML = data;
 
+        // The header's icons are injected after icons.js's own
+        // DOMContentLoaded hydration already ran, so this content
+        // needs a manual pass.
+        const { hydrate } = await import("./icons.js");
+        hydrate();
+
         const page = window.location.pathname.split("/").pop() || "index.html";
 
         document.querySelectorAll(".nav-links a").forEach(link => {

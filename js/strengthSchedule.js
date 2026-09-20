@@ -12,6 +12,7 @@
 ========================================== */
 
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
+import { icon } from "./icons.js";
 
 const SCHEDULE_KEY = "strength-schedule";
 const LIBRARY_KEY = "strength-workout-library";
@@ -768,8 +769,8 @@ function renderAgenda() {
                             >
                                 ${
                                     item.completed
-                                        ? "✓"
-                                        : "○"
+                                        ? icon("check")
+                                        : icon("dot")
                                 }
                             </button>
 
@@ -779,7 +780,7 @@ function renderAgenda() {
                                 data-schedule-delete="${item.id}"
                                 title="Remove"
                             >
-                                ×
+                                ${icon("close")}
                             </button>
 
                         </div>
@@ -960,7 +961,7 @@ function renderMyWorkouts() {
                                 class="strength-row-btn"
                                 data-start-my-workout="${day.id}"
                             >
-                                ▶ Start
+                                ${icon("play")} Start
                             </button>
 
                             <button
@@ -1174,26 +1175,28 @@ function init() {
                 return;
             }
 
-            if (
-                target.matches(
+            const scheduleCompleteBtn =
+                target.closest(
                     "[data-schedule-complete]"
-                )
-            ) {
+                );
+
+            if (scheduleCompleteBtn) {
                 toggleCompleted(
-                    target.dataset
+                    scheduleCompleteBtn.dataset
                         .scheduleComplete
                 );
 
                 return;
             }
 
-            if (
-                target.matches(
+            const scheduleDeleteBtn =
+                target.closest(
                     "[data-schedule-delete]"
-                )
-            ) {
+                );
+
+            if (scheduleDeleteBtn) {
                 deleteScheduleItem(
-                    target.dataset
+                    scheduleDeleteBtn.dataset
                         .scheduleDelete
                 );
 
@@ -1243,18 +1246,19 @@ function init() {
                 return;
             }
 
-            if (
-                target.matches(
+            const startMyWorkoutBtn =
+                target.closest(
                     "[data-start-my-workout]"
-                )
-            ) {
+                );
+
+            if (startMyWorkoutBtn) {
                 window.dispatchEvent(
                     new CustomEvent(
                         "eddieos:strength-start-workout",
                         {
                             detail: {
                                 dayId:
-                                    target.dataset
+                                    startMyWorkoutBtn.dataset
                                         .startMyWorkout
                             }
                         }

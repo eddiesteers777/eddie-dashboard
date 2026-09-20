@@ -9,6 +9,7 @@ import {
 } from "./marathonData.js";
 
 import { searchExercises } from "./exerciseSearch.js";
+import { icon } from "./icons.js";
 
 const STORAGE_KEY = "strength-plan";
 const LIBRARY_KEY = "strength-exercise-library";
@@ -443,7 +444,7 @@ function renderDayTabs() {
                 data-remove-day="${day.id}"
                 title="Delete day"
             >
-                ×
+                ${icon("close")}
             </button>
         </div>
     `).join("");
@@ -586,7 +587,7 @@ function renderSetTable(exercise) {
                                     data-exercise-id="${exercise.id}"
                                     title="Complete set"
                                 >
-                                    ✓
+                                    ${icon("check")}
                                 </button>
                             </td>
 
@@ -598,7 +599,7 @@ function renderSetTable(exercise) {
                                     data-exercise-id="${exercise.id}"
                                     title="Remove set"
                                 >
-                                    ×
+                                    ${icon("close")}
                                 </button>
                             </td>
                         </tr>
@@ -637,7 +638,7 @@ function renderExercise(exercise) {
                     class="strength-drag-handle"
                     title="Drag to reorder"
                 >
-                    ⋮⋮
+                    ${icon("moreVertical")}${icon("moreVertical")}
                 </div>
 
                 ${
@@ -686,7 +687,7 @@ function renderExercise(exercise) {
                         data-move-up="${exercise.id}"
                         title="Move up"
                     >
-                        ↑
+                        ${icon("arrowUp")}
                     </button>
 
                     <button
@@ -695,7 +696,7 @@ function renderExercise(exercise) {
                         data-move-down="${exercise.id}"
                         title="Move down"
                     >
-                        ↓
+                        ${icon("arrowDown")}
                     </button>
 
                     <button
@@ -704,7 +705,7 @@ function renderExercise(exercise) {
                         data-duplicate-exercise="${exercise.id}"
                         title="Duplicate exercise"
                     >
-                        ⧉
+                        ${icon("copy")}
                     </button>
 
                     <button
@@ -713,7 +714,7 @@ function renderExercise(exercise) {
                         data-remove-exercise="${exercise.id}"
                         title="Remove exercise"
                     >
-                        ×
+                        ${icon("close")}
                     </button>
 
                 </div>
@@ -729,7 +730,7 @@ function renderExercise(exercise) {
                     }"
                     data-toggle-mode="${exercise.id}"
                 >
-                    ⏱ ${
+                    ${icon("timer")} ${
                         exercise.mode === "time"
                             ? "Timed"
                             : "Reps"
@@ -1962,11 +1963,14 @@ document.addEventListener(
                 ".strength-day-tab"
             );
 
+        const removeDayBtn =
+            target.closest(
+                ".strength-day-tab-remove"
+            );
+
         if (
             tab &&
-            !target.matches(
-                ".strength-day-tab-remove"
-            )
+            !removeDayBtn
         ) {
             plan.activeDay =
                 tab.dataset.dayId;
@@ -1991,13 +1995,9 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
-                ".strength-day-tab-remove"
-            )
-        ) {
+        if (removeDayBtn) {
             removeDay(
-                target.dataset
+                removeDayBtn.dataset
                     .removeDay
             );
 
@@ -2122,11 +2122,12 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const removeExerciseBtn =
+            target.closest(
                 "[data-remove-exercise]"
-            )
-        ) {
+            );
+
+        if (removeExerciseBtn) {
             const day = activeDay();
 
             if (day) {
@@ -2134,7 +2135,7 @@ document.addEventListener(
                     day.exercises.filter(
                         ex =>
                             ex.id !==
-                            target.dataset
+                            removeExerciseBtn.dataset
                                 .removeExercise
                     );
 
@@ -2146,18 +2147,19 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const duplicateExerciseBtn =
+            target.closest(
                 "[data-duplicate-exercise]"
-            )
-        ) {
+            );
+
+        if (duplicateExerciseBtn) {
             const day = activeDay();
 
             const source =
                 day?.exercises.find(
                     ex =>
                         ex.id ===
-                        target.dataset
+                        duplicateExerciseBtn.dataset
                             .duplicateExercise
                 );
 
@@ -2207,13 +2209,14 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const moveUpBtn =
+            target.closest(
                 "[data-move-up]"
-            )
-        ) {
+            );
+
+        if (moveUpBtn) {
             moveExercise(
-                target.dataset
+                moveUpBtn.dataset
                     .moveUp,
                 -1
             );
@@ -2221,13 +2224,14 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const moveDownBtn =
+            target.closest(
                 "[data-move-down]"
-            )
-        ) {
+            );
+
+        if (moveDownBtn) {
             moveExercise(
-                target.dataset
+                moveDownBtn.dataset
                     .moveDown,
                 1
             );
@@ -2235,16 +2239,17 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const toggleModeBtn =
+            target.closest(
                 "[data-toggle-mode]"
-            )
-        ) {
+            );
+
+        if (toggleModeBtn) {
             const exercise =
                 activeDay()?.exercises.find(
                     ex =>
                         ex.id ===
-                        target.dataset
+                        toggleModeBtn.dataset
                             .toggleMode
                 );
 
@@ -2418,16 +2423,17 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const toggleSetBtn =
+            target.closest(
                 "[data-toggle-set]"
-            )
-        ) {
+            );
+
+        if (toggleSetBtn) {
             const exercise =
                 activeDay()?.exercises.find(
                     ex =>
                         ex.id ===
-                        target.dataset
+                        toggleSetBtn.dataset
                             .exerciseId
                 );
 
@@ -2435,7 +2441,7 @@ document.addEventListener(
                 exercise?.sets.find(
                     item =>
                         item.id ===
-                        target.dataset
+                        toggleSetBtn.dataset
                             .toggleSet
                 );
 
@@ -2445,7 +2451,7 @@ document.addEventListener(
 
                 savePlan();
 
-                target.classList.toggle(
+                toggleSetBtn.classList.toggle(
                     "checked",
                     set.done
                 );
@@ -2463,16 +2469,17 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const addSetBtn =
+            target.closest(
                 "[data-add-set]"
-            )
-        ) {
+            );
+
+        if (addSetBtn) {
             const exercise =
                 activeDay()?.exercises.find(
                     ex =>
                         ex.id ===
-                        target.dataset
+                        addSetBtn.dataset
                             .addSet
                 );
 
@@ -2503,16 +2510,17 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const removeSetBtn =
+            target.closest(
                 "[data-remove-set]"
-            )
-        ) {
+            );
+
+        if (removeSetBtn) {
             const exercise =
                 activeDay()?.exercises.find(
                     ex =>
                         ex.id ===
-                        target.dataset
+                        removeSetBtn.dataset
                             .exerciseId
                 );
 
@@ -2521,7 +2529,7 @@ document.addEventListener(
                     exercise.sets.filter(
                         set =>
                             set.id !==
-                            target.dataset
+                            removeSetBtn.dataset
                                 .removeSet
                     );
 

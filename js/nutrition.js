@@ -385,7 +385,7 @@ function updateDate(){
 
         "countdown"
 
-    ).textContent =
+    ).innerHTML =
 
         days >= 0
 
@@ -397,7 +397,7 @@ function updateDate(){
 
         :
 
-        "Race Complete 🏁";
+        `Race Complete ${window.icon ? window.icon("flag") : ""}`;
 
 }
 

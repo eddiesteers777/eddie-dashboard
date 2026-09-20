@@ -7,6 +7,8 @@ import {
     getWeekMileage
 } from "./marathonData.js";
 
+import { icon } from "./icons.js";
+
 const STORAGE_KEY = "gear-shoes";
 
 let shoes = [];
@@ -133,7 +135,7 @@ function shoeCard(shoe) {
                     class="gear-card-menu"
                     data-delete-shoe="${shoe.id}"
                     title="Delete">
-                    ×
+                    ${icon("close")}
                 </button>
             </div>
 
@@ -290,7 +292,7 @@ document.addEventListener("click", e => {
         return;
     }
 
-    if (e.target.matches("#shoeModalClose") || e.target.matches("#shoeModalCancel") || e.target.matches("#shoeModalOverlay")) {
+    if (e.target.closest("#shoeModalClose") || e.target.closest("#shoeModalCancel") || e.target === document.getElementById("shoeModalOverlay")) {
         closeShoeModal();
         return;
     }
@@ -305,7 +307,7 @@ document.addEventListener("click", e => {
         return;
     }
 
-    if (e.target.matches("#logMilesClose") || e.target.matches("#logMilesCancel") || e.target.matches("#logMilesOverlay")) {
+    if (e.target.closest("#logMilesClose") || e.target.closest("#logMilesCancel") || e.target === document.getElementById("logMilesOverlay")) {
         closeLogMilesModal();
         return;
     }
@@ -326,8 +328,10 @@ document.addEventListener("click", e => {
         return;
     }
 
-    if (e.target.matches("[data-delete-shoe]")) {
-        shoes = shoes.filter(s => s.id !== e.target.dataset.deleteShoe);
+    const deleteShoeBtn = e.target.closest("[data-delete-shoe]");
+
+    if (deleteShoeBtn) {
+        shoes = shoes.filter(s => s.id !== deleteShoeBtn.dataset.deleteShoe);
         saveShoes();
         renderAll();
         return;

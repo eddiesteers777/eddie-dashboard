@@ -314,9 +314,9 @@ document.addEventListener("click", event => {
     }
 
     if (
-        target.matches("#runningRunModalClose") ||
-        target.matches("#runningRunCancel") ||
-        target.matches("#runningRunModalOverlay")
+        target.closest("#runningRunModalClose") ||
+        target.closest("#runningRunCancel") ||
+        target === document.getElementById("runningRunModalOverlay")
     ) {
         closeRunModal();
         return;

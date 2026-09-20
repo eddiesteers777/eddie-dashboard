@@ -7,19 +7,21 @@ import {
     discoverOAuthMetadata
 } from "./corosAuth.js";
 
+import { icon } from "./icons.js";
+
 const $ = id => document.getElementById(id);
 
 function row(name, status, message) {
-    const icon =
+    const statusIcon =
         status === "pass"
-            ? "✓"
+            ? icon("check")
             : status === "warn"
-                ? "!"
-                : "×";
+                ? icon("alertTriangle")
+                : icon("close");
 
     return `
         <div class="coros-diagnostic-row ${status}">
-            <span class="coros-diagnostic-icon">${icon}</span>
+            <span class="coros-diagnostic-icon">${statusIcon}</span>
             <div>
                 <strong>${escapeHtml(name)}</strong>
                 <small>${escapeHtml(message)}</small>
