@@ -438,6 +438,64 @@
 
 }
 
+/* Mobile app shell -- tighten the Today card and its rows further
+   so a full day's worth of items fits without feeling like a wall
+   of padding. Layered after the 640px rules above so it wins. */
+@media (max-width:900px){
+
+    .eos-today-hero{
+        margin-bottom:18px;
+        padding:2px 0 4px;
+    }
+
+    .eos-today-card{
+        padding:14px 14px;
+        margin-bottom:18px;
+    }
+
+    .eos-today-card-header{
+        margin-bottom:10px;
+    }
+
+    .eos-today-card-header h2{
+        font-size:15px;
+    }
+
+    .eos-today-date{
+        font-size:12px;
+    }
+
+    .eos-today-items{
+        gap:6px;
+    }
+
+    .eos-today-item{
+        gap:10px;
+        padding:10px 12px;
+        border-radius:12px;
+    }
+
+    .eos-today-item-run{
+        padding:8px 8px 8px 12px;
+        gap:8px;
+        flex-wrap:wrap;
+    }
+
+    .eos-today-item-text strong{
+        font-size:13.5px;
+    }
+
+    .eos-today-item-text span{
+        font-size:12px;
+    }
+
+    .eos-today-complete-btn{
+        padding:7px 12px;
+        font-size:12px;
+    }
+
+}
+
 /* ==========================
    Launch splash
 

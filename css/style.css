@@ -577,7 +577,11 @@ section{
         padding-bottom:calc(64px + env(safe-area-inset-bottom));
     }
 
-    .eos-dashboard-grid{
+    /* .grid.eos-dashboard-grid (not just .eos-dashboard-grid) --
+       the generic .grid{display:grid} rule sits much further down
+       this file at equal specificity, so it was winning on source
+       order and this never actually hid on mobile. */
+    .grid.eos-dashboard-grid{
         display:none;
     }
 }
