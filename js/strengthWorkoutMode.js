@@ -293,9 +293,12 @@ function renderExerciseBlock(exercise) {
             <div class="strength-workout-exercise-body">
 
                 <div class="strength-workout-prev">
-                    ${previous
-                        ? "Last time: " + escapeHtml(formatPreviousSets(previous, isTime))
-                        : "No previous session logged yet"}
+                    <span class="strength-workout-prev-icon">${icon("clock")}</span>
+                    <span class="strength-workout-prev-text">
+                        ${previous
+                            ? `<span class="strength-workout-prev-label">Last time</span> ${escapeHtml(formatPreviousSets(previous, isTime))}`
+                            : "No previous session logged yet"}
+                    </span>
                 </div>
 
                 <div
