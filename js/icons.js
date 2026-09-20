@@ -18,6 +18,8 @@ const PATHS = {
     // UI chrome
     chevronDown: `<polyline points="6 9 12 15 18 9"></polyline>`,
     chevronRight: `<polyline points="9 18 15 12 9 6"></polyline>`,
+    home: `<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>`,
+    grid: `<rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect>`,
     arrowUp: `<line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline>`,
     arrowDown: `<line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline>`,
     check: `<polyline points="20 6 9 17 4 12"></polyline>`,

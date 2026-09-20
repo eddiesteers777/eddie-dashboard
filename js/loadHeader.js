@@ -1,3 +1,50 @@
+// The mobile app shell (bottom tab bar + the pill row that lets a
+// tab covering several real pages switch between them) is built
+// here and injected at runtime rather than duplicated into every
+// page's own markup. Desktop keeps the existing dropdown navbar
+// untouched; both are simply hidden/shown by a CSS breakpoint.
+const BOTTOM_TABS = [
+    { key: "today", label: "Today", icon: "home", href: "index.html" },
+    { key: "train", label: "Train", icon: "dumbbell", href: "running.html" },
+    { key: "health", label: "Health", icon: "heart", href: "nutrition.html" },
+    { key: "more", label: "More", icon: "grid", href: "more.html" }
+];
+
+const PAGE_TAB = {
+    "index.html": "today",
+    "running.html": "train",
+    "strength.html": "train",
+    "cross-training.html": "train",
+    "habits.html": "train",
+    "nutrition.html": "health",
+    "fueling.html": "health",
+    "analytics.html": "more",
+    "weekly-review.html": "more",
+    "gear.html": "more",
+    "marathon.html": "more",
+    "75day.html": "more",
+    "planner.html": "more",
+    "pace-calculator.html": "more",
+    "settings.html": "more",
+    "more.html": "more"
+};
+
+// Only tabs that actually bundle multiple real pages need a way to
+// switch between siblings -- Today and More are single destinations
+// (More's own page is a menu of everything else), so they get none.
+const SUBNAV_GROUPS = {
+    train: [
+        { href: "running.html", label: "Running" },
+        { href: "strength.html", label: "Strength" },
+        { href: "cross-training.html", label: "Cross-Training" },
+        { href: "habits.html", label: "Habits" }
+    ],
+    health: [
+        { href: "nutrition.html", label: "Nutrition" },
+        { href: "fueling.html", label: "Fueling" }
+    ]
+};
+
 fetch("components/header.html")
     .then(response => response.text())
     .then(async (data) => {
@@ -7,10 +54,35 @@ fetch("components/header.html")
         // The header's icons are injected after icons.js's own
         // DOMContentLoaded hydration already ran, so this content
         // needs a manual pass.
-        const { hydrate } = await import("./icons.js");
+        const { hydrate, icon } = await import("./icons.js");
         hydrate();
 
         const page = window.location.pathname.split("/").pop() || "index.html";
+
+        const activeTab = PAGE_TAB[page] || null;
+
+        document.body.insertAdjacentHTML("beforeend", `
+            <nav class="eos-bottomnav" aria-label="Primary">
+                ${BOTTOM_TABS.map(tab => `
+                    <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}">
+                        <span class="eos-bottomnav-icon">${icon(tab.icon)}</span>
+                        <span>${tab.label}</span>
+                    </a>
+                `).join("")}
+            </nav>
+        `);
+
+        const subnavPages = SUBNAV_GROUPS[activeTab];
+
+        if (subnavPages) {
+            document.getElementById("header").insertAdjacentHTML("afterend", `
+                <div class="eos-subnav" aria-label="Section pages">
+                    ${subnavPages.map(p => `
+                        <a href="${p.href}" class="eos-subnav-link ${p.href === page ? "active" : ""}">${p.label}</a>
+                    `).join("")}
+                </div>
+            `);
+        }
 
         document.querySelectorAll(".nav-links a").forEach(link => {
 

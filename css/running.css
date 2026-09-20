@@ -719,6 +719,12 @@
 
 }
 
+@media (max-width:900px){
+    .running-fab{
+        bottom:calc(78px + env(safe-area-inset-bottom));
+    }
+}
+
 .running-fab:hover{
 
     background:var(--primary-light);

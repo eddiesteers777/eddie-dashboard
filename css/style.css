@@ -459,61 +459,160 @@ section{
     }
 }
 
+/* ==========================================================
+   MOBILE APP SHELL
+
+   Below 900px the desktop dropdown navbar gives way to a
+   Fitbod-style shell: a slim top bar (just the logo + account/
+   sync controls) plus a fixed 4-tab bottom bar for Today/Train/
+   Health/More. A page whose "tab" actually covers several real
+   pages (Train, Health) also gets a horizontally-scrolling pill
+   row under the top bar to move between its siblings, since
+   those pages are no longer reachable via the (now hidden)
+   dropdown menu. Both the bottom bar and the pill row are built
+   and injected by loadHeader.js, not present in each page's own
+   markup.
+========================================================== */
+
 @media (max-width:900px){
     .navbar{
-        flex-direction:column;
-        align-items:stretch;
-        gap:12px;
-        padding:16px;
+        flex-direction:row;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:12px 16px;
+        margin:14px auto;
+        position:sticky;
+        top:0;
+        z-index:1200;
     }
 
     .nav-left{
-        flex-direction:column;
-        align-items:stretch;
+        flex-direction:row;
+        align-items:center;
         gap:10px;
-    }
-
-    .eos-navbar .eos-logo{
-        justify-content:center;
+        min-width:0;
     }
 
     .eos-navbar .eos-nav-links{
-        justify-content:center;
-        flex-wrap:wrap;
-        gap:4px;
-    }
-
-    .eos-navbar .eos-dropdown-menu{
-        min-width:180px;
+        display:none;
     }
 
     .nav-right{
+        justify-content:flex-end;
+        gap:6px;
+    }
+
+    .sync-status-btn #syncStatusText{
+        display:none;
+    }
+
+    .sync-status-btn{
+        min-width:40px;
+        padding:0;
         justify-content:center;
     }
-}
 
-@media (max-width:560px){
-    .eos-navbar .eos-nav-links{
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:4px;
+    body{
+        padding-bottom:calc(64px + env(safe-area-inset-bottom));
     }
 
-    .eos-navbar .eos-nav-item,
-    .eos-navbar .eos-dropdown-trigger{
-        width:100%;
-    }
-
-    .eos-navbar .eos-dropdown{
-        width:100%;
-    }
-
-    .eos-navbar .eos-dropdown-menu{
-        position:absolute;
-        left:50%;
-        width:min(220px,90vw);
+    .eos-dashboard-grid{
+        display:none;
     }
 }
+
+.eos-bottomnav{
+    display:none;
+}
+
+.eos-subnav{
+    display:none;
+}
+
+@media (max-width:900px){
+    .eos-bottomnav{
+        display:flex;
+        align-items:stretch;
+        position:fixed;
+        left:0;
+        right:0;
+        bottom:0;
+        z-index:1300;
+        padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+        background:rgba(15,23,42,.94);
+        backdrop-filter:blur(20px);
+        -webkit-backdrop-filter:blur(20px);
+        border-top:1px solid rgba(255,255,255,.08);
+        box-shadow:0 -12px 30px rgba(0,0,0,.35);
+    }
+
+    .eos-bottomnav-item{
+        flex:1 1 0;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:3px;
+        padding:7px 2px;
+        border-radius:14px;
+        color:var(--muted);
+        text-decoration:none;
+        font-size:.66rem;
+        font-weight:700;
+        letter-spacing:.01em;
+        transition:color .15s ease,background-color .15s ease;
+    }
+
+    .eos-bottomnav-item .ui-icon{
+        width:22px;
+        height:22px;
+    }
+
+    .eos-bottomnav-item.active{
+        color:var(--primary);
+        background:rgba(78,168,255,.13);
+    }
+
+    .eos-subnav{
+        display:flex;
+        gap:8px;
+        width:min(1450px,94%);
+        margin:0 auto 22px;
+        padding:2px;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+    }
+
+    .eos-subnav::-webkit-scrollbar{
+        display:none;
+    }
+
+    .eos-subnav-link{
+        flex:0 0 auto;
+        padding:9px 16px;
+        border-radius:999px;
+        background:rgba(255,255,255,.05);
+        border:1px solid rgba(255,255,255,.08);
+        color:var(--text-secondary);
+        font-size:.84rem;
+        font-weight:650;
+        text-decoration:none;
+        white-space:nowrap;
+        transition:background-color .15s ease,border-color .15s ease,color .15s ease;
+    }
+
+    .eos-subnav-link.active{
+        background:var(--primary);
+        border-color:var(--primary);
+        color:#fff;
+    }
+}
+
+/* Below 900px the dropdown nav-links are hidden entirely (see the
+   max-width:900px block above) in favor of the bottom tab bar, so
+   the old sub-560px fallback layout for them no longer applies. */
 
 /* ==========================================================
    HERO
@@ -1949,33 +2048,12 @@ section{
 
 }
 
+/* .navbar/.nav-left/.nav-links used to get re-stacked here too --
+   a leftover duplicate of the rules in the MOBILE APP SHELL block
+   above that fought with them for the cascade. That block now owns
+   the navbar's mobile layout; this one keeps only what's actually
+   unique to it. */
 @media (max-width:900px){
-
-    .navbar{
-
-        flex-direction:column;
-
-        gap:20px;
-
-        padding:22px;
-
-    }
-
-    .nav-left{
-
-        flex-direction:column;
-
-        gap:18px;
-
-    }
-
-    .nav-links{
-
-        flex-wrap:wrap;
-
-        justify-content:center;
-
-    }
 
     .coach-grid{
 

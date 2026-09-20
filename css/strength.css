@@ -1384,6 +1384,12 @@
     box-shadow:0 20px 55px rgba(0,0,0,.42);
 }
 
+@media (max-width:900px){
+    .strength-rest-timer{
+        bottom:calc(78px + env(safe-area-inset-bottom));
+    }
+}
+
 .strength-rest-timer.visible{
     display:block;
 }
@@ -2317,7 +2323,11 @@
     display:none;
     position:fixed;
     inset:0;
-    z-index:1200;
+    /* Above the mobile bottom tab bar (z-index:1300) so a live
+       workout session -- meant to feel like its own full-screen
+       app, not a page with the site chrome still peeking through --
+       fully covers it instead of the tab bar floating on top. */
+    z-index:1400;
     background:var(--bg);
     overflow:hidden;
     --workout-accent: #ec4899;
