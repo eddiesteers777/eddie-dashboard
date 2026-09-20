@@ -424,33 +424,114 @@ function meaningfulSetsFor(exercise) {
     );
 }
 
-function buildWorkoutSummary(day, elapsedMs) {
-    const lines = day.exercises
-        .map(exercise => {
-            const sets = meaningfulSetsFor(exercise);
+function formatSetLine(set, isTime) {
+    if (isTime) {
+        const seconds = Number(set.duration) || 0;
+        return seconds >= 60 ? formatElapsed(seconds * 1000) : `${seconds} sec`;
+    }
 
-            if (!sets.length) {
+    const weight = Number(set.weight) || 0;
+    const reps = Number(set.reps) || 0;
+
+    return weight > 0 ? `${weight} lb × ${reps}` : `${reps} reps`;
+}
+
+// One completed exercise's worth of summary text -- a single clean
+// line when every set was the same (bodyweight reps, a held plank),
+// a bulleted breakdown when the sets differ (an ascending pyramid).
+function formatExerciseBlock(exercise) {
+    const isTime = exercise.mode === "time";
+    const sets = meaningfulSetsFor(exercise);
+
+    if (!sets.length) {
+        return null;
+    }
+
+    const setLines = sets.map(set => formatSetLine(set, isTime));
+    const allSame = setLines.every(line => line === setLines[0]);
+    const notes = exercise.notes?.trim();
+
+    if (allSame) {
+        const suffix = sets.length > 1 ? ` × ${sets.length}` : "";
+
+        return {
+            text: `${exercise.name} — ${setLines[0]}${suffix}${notes ? ` (${notes})` : ""}`,
+            rounds: sets.length
+        };
+    }
+
+    const text = [
+        exercise.name,
+        ...setLines.map(line => `  - ${line}`),
+        notes ? `  Note: ${notes}` : null
+    ].filter(Boolean).join("\n");
+
+    return { text, rounds: sets.length };
+}
+
+// Groups exercises that share a groupId (a superset/circuit built
+// in the plan editor) into one block, in the order they appear in
+// the day, so the summary reads as a unit with a shared round count
+// instead of as unrelated exercises.
+function groupExercisesForSummary(day) {
+    const groups = [];
+    const indexByGroupId = new Map();
+
+    day.exercises.forEach(exercise => {
+        if (!exercise.groupId) {
+            groups.push({ solo: true, exercise });
+            return;
+        }
+
+        if (indexByGroupId.has(exercise.groupId)) {
+            groups[indexByGroupId.get(exercise.groupId)].exercises.push(exercise);
+            return;
+        }
+
+        indexByGroupId.set(exercise.groupId, groups.length);
+        groups.push({
+            solo: false,
+            groupType: exercise.groupType,
+            exercises: [exercise]
+        });
+    });
+
+    return groups;
+}
+
+function buildWorkoutSummary(day, elapsedMs) {
+    const blocks = groupExercisesForSummary(day)
+        .map(group => {
+            if (group.solo) {
+                return formatExerciseBlock(group.exercise)?.text || null;
+            }
+
+            const entries = group.exercises
+                .map(formatExerciseBlock)
+                .filter(Boolean);
+
+            if (!entries.length) {
                 return null;
             }
 
-            const setsText = formatPreviousSets({ sets }, exercise.mode === "time");
-            const notes = exercise.notes?.trim();
+            const rounds = Math.max(...entries.map(entry => entry.rounds));
+            const label = group.groupType === "circuit" ? "Circuit" : "Superset";
 
-            return `${exercise.name}: ${setsText}${notes ? " — " + notes : ""}`;
+            return [
+                `${label} — ${rounds} round${rounds === 1 ? "" : "s"}`,
+                ...entries.map(entry => entry.text)
+            ].join("\n");
         })
         .filter(Boolean);
 
-    if (!lines.length) {
+    if (!blocks.length) {
         return null;
     }
 
     return [
         `${day.name} — ${formatElapsed(elapsedMs)}`,
-        "",
-        ...lines,
-        "",
-        "Logged with EddieOS"
-    ].join("\n");
+        ...blocks
+    ].join("\n\n");
 }
 
 function openSummaryModal(text) {
