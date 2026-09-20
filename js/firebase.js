@@ -3,7 +3,7 @@
 // ==========================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -22,6 +22,12 @@ const app = initializeApp(firebaseConfig);
 // Initialize services
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Auth defaults to IndexedDB-backed persistence, which browsers with
+// strict tracking/storage protections (e.g. Edge's Tracking Prevention)
+// can abort mid-open -- surfacing as an uncaught AbortError on every
+// page load. Plain localStorage persistence sidesteps that entirely.
+setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 // Export for use in other files
 export { app, auth, db };
