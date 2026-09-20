@@ -15,6 +15,8 @@ import {
     logExercise
 } from "./strengthHistory.js";
 
+import { icon } from "./icons.js";
+
 const PLAN_KEY = "strength-plan";
 const BAR_WEIGHT = 45;
 const PLATE_SIZES = [45, 35, 25, 10, 5, 2.5];
@@ -38,27 +40,6 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
-}
-
-/* ==========================================
-   Icons -- small inline SVGs instead of plain
-   ASCII symbols (×, ✓, −, +), so Workout Mode
-   doesn't look like it's using leftover text
-   characters for its controls.
-========================================== */
-
-const ICONS = {
-    chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
-    check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-    close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
-    plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
-    minus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
-    swap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>`,
-    scale: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 3 12l3.5 5.5M17.5 6.5 21 12l-3.5 5.5"></path><line x1="6.5" y1="6.5" x2="17.5" y2="6.5"></line><line x1="12" y1="6.5" x2="12" y2="19"></line><line x1="8" y1="19" x2="16" y2="19"></line></svg>`
-};
-
-function icon(name, extraClass = "") {
-    return `<span class="strength-workout-icon ${extraClass}">${ICONS[name] || ""}</span>`;
 }
 
 /* ==========================================
@@ -295,7 +276,7 @@ function renderExerciseBlock(exercise) {
                 class="strength-workout-exercise-summary"
                 data-toggle-exercise="${exercise.id}">
 
-                <span class="strength-workout-exercise-chevron">${icon("chevron")}</span>
+                <span class="strength-workout-exercise-chevron">${icon("chevronDown")}</span>
 
                 <span class="strength-workout-exercise-summary-text">
                     <strong>${escapeHtml(exercise.name)}</strong>
@@ -308,9 +289,8 @@ function renderExerciseBlock(exercise) {
 
             </button>
 
-            <div
-                class="strength-workout-exercise-body"
-                style="display:${expanded ? "block" : "none"}">
+            <div class="strength-workout-exercise-collapse">
+            <div class="strength-workout-exercise-body">
 
                 <div class="strength-workout-prev">
                     ${previous
@@ -392,6 +372,7 @@ function renderExerciseBlock(exercise) {
                     id="plateCalc-${exercise.id}"
                     style="display:none"></div>
 
+            </div>
             </div>
 
         </div>
@@ -878,12 +859,12 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("#workoutModeClose") || target.matches("#strengthWorkoutOverlay")) {
+    if (target.closest("#workoutModeClose") || target === $("strengthWorkoutOverlay")) {
         closeWorkoutMode();
         return;
     }
 
-    if (target.matches("#workoutModeFinish")) {
+    if (target.closest("#workoutModeFinish")) {
         finishWorkout();
         return;
     }
@@ -907,10 +888,12 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("[data-toggle-workout-set]")) {
+    const toggleSetBtn = target.closest("[data-toggle-workout-set]");
+
+    if (toggleSetBtn) {
         updatePlan(day => {
-            const exercise = findExercise(day, target.dataset.exerciseId);
-            const set = exercise && findSet(exercise, target.dataset.toggleWorkoutSet);
+            const exercise = findExercise(day, toggleSetBtn.dataset.exerciseId);
+            const set = exercise && findSet(exercise, toggleSetBtn.dataset.toggleWorkoutSet);
 
             if (set) {
                 set.done = !set.done;
@@ -921,13 +904,15 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("[data-remove-workout-set]")) {
+    const removeSetBtn = target.closest("[data-remove-workout-set]");
+
+    if (removeSetBtn) {
         updatePlan(day => {
-            const exercise = findExercise(day, target.dataset.exerciseId);
+            const exercise = findExercise(day, removeSetBtn.dataset.exerciseId);
 
             if (exercise) {
                 exercise.sets = exercise.sets.filter(
-                    s => s.id !== target.dataset.removeWorkoutSet
+                    s => s.id !== removeSetBtn.dataset.removeWorkoutSet
                 );
                 renderExercise(exercise);
             }
@@ -936,9 +921,11 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("[data-workout-add-set]")) {
+    const addSetBtn = target.closest("[data-workout-add-set]");
+
+    if (addSetBtn) {
         updatePlan(day => {
-            const exercise = findExercise(day, target.dataset.workoutAddSet);
+            const exercise = findExercise(day, addSetBtn.dataset.workoutAddSet);
 
             if (exercise) {
                 const last = exercise.sets[exercise.sets.length - 1];
@@ -959,10 +946,12 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("[data-remove-workout-exercise]")) {
+    const removeExerciseBtn = target.closest("[data-remove-workout-exercise]");
+
+    if (removeExerciseBtn) {
         updatePlan(day => {
             day.exercises = day.exercises.filter(
-                ex => ex.id !== target.dataset.removeWorkoutExercise
+                ex => ex.id !== removeExerciseBtn.dataset.removeWorkoutExercise
             );
         });
         renderBody();
@@ -970,13 +959,17 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("[data-swap-exercise]")) {
-        openSwapPanel(target.dataset.swapExercise);
+    const swapBtn = target.closest("[data-swap-exercise]");
+
+    if (swapBtn) {
+        openSwapPanel(swapBtn.dataset.swapExercise);
         return;
     }
 
-    if (target.matches("[data-cancel-swap]")) {
-        closeSwapPanel(target.dataset.cancelSwap);
+    const cancelSwapBtn = target.closest("[data-cancel-swap]");
+
+    if (cancelSwapBtn) {
+        closeSwapPanel(cancelSwapBtn.dataset.cancelSwap);
         return;
     }
 
@@ -993,8 +986,10 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("[data-toggle-plates]")) {
-        const exerciseId = target.dataset.togglePlates;
+    const platesBtn = target.closest("[data-toggle-plates]");
+
+    if (platesBtn) {
+        const exerciseId = platesBtn.dataset.togglePlates;
         const panel = $(`plateCalc-${exerciseId}`);
 
         if (!panel) {
@@ -1124,12 +1119,12 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("#strengthSummaryDone") || target.matches("#strengthSummaryOverlay")) {
+    if (target.closest("#strengthSummaryDone") || target === $("strengthSummaryOverlay")) {
         closeSummaryModal();
         return;
     }
 
-    if (target.matches("#strengthSummaryCopy")) {
+    if (target.closest("#strengthSummaryCopy")) {
         copySummaryText();
     }
 });

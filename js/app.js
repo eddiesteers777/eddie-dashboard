@@ -18,6 +18,7 @@ import {
 
 import { getUpcomingCourseEvents } from "./courseEvents.js";
 import { describeCorosFreshness } from "./corosStatus.js";
+import { icon } from "./icons.js";
 
 const DAY_MS = 86400000;
 
@@ -195,7 +196,7 @@ function renderToday() {
     if (dayData?.miles) {
         const progress = loadProgress();
         items.push({
-            icon: "🏃",
+            icon: icon("activity"),
             title: dayData.session || "Run",
             detail: `${dayData.miles} mi${dayData.pace ? ` @ ${dayData.pace}` : ""}${dayData.race ? " — RACE DAY" : ""}`,
             link: "marathon.html",
@@ -225,7 +226,7 @@ function renderToday() {
                 const startable = dayId && planDayIds.has(dayId);
 
                 items.push({
-                    icon: "🏋️",
+                    icon: icon("dumbbell"),
                     title: item.workoutName || "Strength workout",
                     detail: startable
                         ? `${item.time || "Today"} · Tap to start`
@@ -249,7 +250,7 @@ function renderToday() {
 
             if (plan) {
                 items.push({
-                    icon: "⛽",
+                    icon: icon("fuel"),
                     title: "Fuel plan ready",
                     detail: plan.name || "A fueling plan is attached to today's run",
                     link: "fueling.html"
@@ -264,7 +265,7 @@ function renderToday() {
     if (Array.isArray(dayData?.crossTraining) && dayData.crossTraining.length) {
         dayData.crossTraining.forEach(entry => {
             items.push({
-                icon: "🚴",
+                icon: icon("bike"),
                 title: entry.activity || "Cross-Training",
                 detail: [entry.duration, entry.intensity]
                     .filter(Boolean)
@@ -280,7 +281,7 @@ function renderToday() {
 
         todaysEvents.forEach(ev => {
             items.push({
-                icon: "📅",
+                icon: icon("calendar"),
                 title: ev.label,
                 detail: ev.category || "Due today",
                 link: "planner.html"
@@ -314,7 +315,7 @@ function renderToday() {
                 class="eos-today-complete-btn${item.done ? " done" : ""}"
                 data-complete-week="${item.week}"
                 data-complete-day="${item.dayKey}">
-                ${item.done ? "✓ Done" : "Mark Done"}
+                ${item.done ? `${icon("check")} Done` : "Mark Done"}
             </button>
         </div>
     ` : `

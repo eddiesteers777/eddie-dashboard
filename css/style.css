@@ -1503,7 +1503,9 @@ section{
 
     border-radius:22px;
 
-    font-size:2rem;
+    font-size:1.75rem;
+
+    color:var(--primary);
 
     background:linear-gradient(
         135deg,
@@ -2069,4 +2071,29 @@ section{
 
     }
 
+}
+
+/* ==========================================
+   Shared icons (js/icons.js) -- inline SVGs
+   used in place of raw emoji/ASCII symbols.
+   Sized in em by default so an icon matches
+   the font-size of whatever it sits inside;
+   a context that needs a specific pixel size
+   can still set width/height directly.
+========================================== */
+
+.ui-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:1em;
+    height:1em;
+    flex-shrink:0;
+    vertical-align:-0.125em;
+}
+
+.ui-icon svg{
+    display:block;
+    width:100%;
+    height:100%;
 }

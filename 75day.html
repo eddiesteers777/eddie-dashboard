@@ -601,6 +601,11 @@ body{
 
 <script src="js/loadHeader.js"></script>
 
+<script type="module">
+    import { icon } from "./js/icons.js";
+    window.icon = icon;
+</script>
+
 <script>
 const START = '2026-07-24';
 const END   = '2026-10-06';
@@ -626,17 +631,30 @@ const QUOTES = [
 ];
 
 const DEFAULT_HABITS = [
-  {id:'h1',name:'🙏 Prayer'},
-  {id:'h2',name:'📖 Bible'},
-  {id:'h3',name:'🏃 Training Complete'},
-  {id:'h4',name:'💪 Strength'},
-  {id:'h5',name:'🧘 Stretch / Mobility'},
-  {id:'h6',name:'🥩 Protein Goal'},
-  {id:'h7',name:'💧 Water Goal'},
-  {id:'h8',name:'😴 Sleep 7+ hrs'},
-  {id:'h9',name:'📚 Read 10 Pages'},
-  {id:'h10',name:'❤️ Time with Wife'}
+  {id:'h1',name:'Prayer',icon:'pray'},
+  {id:'h2',name:'Bible',icon:'bookOpen'},
+  {id:'h3',name:'Training Complete',icon:'activity'},
+  {id:'h4',name:'Strength',icon:'dumbbell'},
+  {id:'h5',name:'Stretch / Mobility',icon:'stretch'},
+  {id:'h6',name:'Protein Goal',icon:'drumstick'},
+  {id:'h7',name:'Water Goal',icon:'droplet'},
+  {id:'h8',name:'Sleep 7+ hrs',icon:'moon'},
+  {id:'h9',name:'Read 10 Pages',icon:'bookOpen'},
+  {id:'h10',name:'Time with Wife',icon:'heart'}
 ];
+
+// Habits saved before icons existed have the emoji baked into the
+// name itself -- strip it so it isn't shown twice, and fall back to
+// a generic icon since we don't know which one it used to be.
+const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
+
+function habitLabel(h){
+  return h.name.replace(EMOJI_PREFIX, '').trim();
+}
+
+function habitIcon(h){
+  return window.icon ? window.icon(h.icon || 'star') : '';
+}
 
 function toDate(s){
   const [y,m,d]=s.split('-').map(Number);
@@ -977,6 +995,7 @@ function focusAreas(){
   const ranked=habits
     .map(h=>({
       name:h.name,
+      icon:h.icon,
       pct:habitCompletionPct(h.id)
     }))
     .filter(h=>h.pct!==null)
@@ -1136,7 +1155,7 @@ function render(){
            data-hid="${h.id}"></div>
 
       <div class="habit-name ${checked?'done':''}">
-        ${h.name}
+        ${habitIcon(h)} ${habitLabel(h)}
       </div>
     `;
 
@@ -1168,12 +1187,12 @@ function render(){
     const item=el('div','manage-item');
 
     item.innerHTML=`
-      <span>${h.name}</span>
+      <span>${habitIcon(h)} ${habitLabel(h)}</span>
 
       <button
         class="habit-del"
         data-del="${h.id}">
-        ✕
+        ${window.icon ? window.icon('close') : ''}
       </button>
     `;
 
@@ -1223,7 +1242,7 @@ function render(){
 
     <div class="stat-col">
       <div class="stat-big" style="color:var(--teal)">
-        ${streak}${streak>0?' 🔥':''}
+        ${streak}${streak>0&&window.icon?' '+window.icon('flame'):''}
       </div>
 
       <div class="stat-sub">
@@ -1272,7 +1291,7 @@ function render(){
 
     row.innerHTML=`
       <div class="bar-top">
-        <span>${h.name}</span>
+        <span>${habitIcon(h)} ${habitLabel(h)}</span>
 
         <span class="pct">
           ${pct===null?'—':pct+'%'}
@@ -1331,7 +1350,7 @@ function render(){
         </div>
 
         <div class="focus-name">
-          ${item.name}
+          ${habitIcon(item)} ${habitLabel(item)}
         </div>
       `;
 
@@ -1429,9 +1448,9 @@ function render(){
     el(
       'div',
       'reset-link',
-      '<button id="saveBtn">💾 Save Now</button>&nbsp;'+
-      '<button id="exportBtn">📤 Export</button>&nbsp;'+
-      '<label style="cursor:pointer;text-decoration:underline;">📥 Import<input id="importFile" type="file" accept=".json" style="display:none"></label>&nbsp;'+
+      '<button id="saveBtn">'+(window.icon?window.icon('save'):'')+' Save Now</button>&nbsp;'+
+      '<button id="exportBtn">'+(window.icon?window.icon('upload'):'')+' Export</button>&nbsp;'+
+      '<label style="cursor:pointer;text-decoration:underline;">'+(window.icon?window.icon('download'):'')+' Import<input id="importFile" type="file" accept=".json" style="display:none"></label>&nbsp;'+
       '<button id="resetBtn">Reset all data</button>'
     )
   );

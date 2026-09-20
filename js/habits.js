@@ -7,17 +7,33 @@
    date range. Tracks indefinitely.
 ========================================== */
 
+import { icon } from "./icons.js";
+
+// Habits saved before icons existed have the emoji baked into the
+// name itself (e.g. "🙏 Prayer") -- strip it so it isn't shown
+// twice, and fall back to a generic icon since we don't know which
+// one it used to be.
+const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
+
+function habitLabel(h) {
+    return h.name.replace(EMOJI_PREFIX, "").trim();
+}
+
+function habitIcon(h) {
+    return icon(h.icon || "star");
+}
+
 const DEFAULT_HABITS = [
-    { id: "h1", name: "🙏 Prayer" },
-    { id: "h2", name: "📖 Bible" },
-    { id: "h3", name: "🏃 Training Complete" },
-    { id: "h4", name: "💪 Strength" },
-    { id: "h5", name: "🧘 Stretch / Mobility" },
-    { id: "h6", name: "🥩 Protein Goal" },
-    { id: "h7", name: "💧 Water Goal" },
-    { id: "h8", name: "😴 Sleep 7+ hrs" },
-    { id: "h9", name: "📚 Read 10 Pages" },
-    { id: "h10", name: "❤️ Time with Wife" }
+    { id: "h1", name: "Prayer", icon: "pray" },
+    { id: "h2", name: "Bible", icon: "bookOpen" },
+    { id: "h3", name: "Training Complete", icon: "activity" },
+    { id: "h4", name: "Strength", icon: "dumbbell" },
+    { id: "h5", name: "Stretch / Mobility", icon: "stretch" },
+    { id: "h6", name: "Protein Goal", icon: "drumstick" },
+    { id: "h7", name: "Water Goal", icon: "droplet" },
+    { id: "h8", name: "Sleep 7+ hrs", icon: "moon" },
+    { id: "h9", name: "Read 10 Pages", icon: "bookOpen" },
+    { id: "h10", name: "Time with Wife", icon: "heart" }
 ];
 
 let habits = [];
@@ -261,7 +277,7 @@ function renderToday() {
             <div class="habits-row" data-toggle-habit="${h.id}">
                 <div class="habits-check ${checked ? "on" : ""}"></div>
                 <div class="habits-row-name ${checked ? "done" : ""}">
-                    ${escapeHtml(h.name)}
+                    ${habitIcon(h)} ${escapeHtml(habitLabel(h))}
                 </div>
             </div>
         `;
@@ -361,13 +377,13 @@ function renderManage() {
 
     list.innerHTML = habits.map(h => `
         <div class="habits-manage-item">
-            <span>${escapeHtml(h.name)}</span>
+            <span>${habitIcon(h)} ${escapeHtml(habitLabel(h))}</span>
             <button
                 type="button"
                 class="habits-del-btn"
                 data-del-habit="${h.id}"
                 title="Remove">
-                ×
+                ${icon("close")}
             </button>
         </div>
     `).join("");
@@ -467,8 +483,10 @@ document.addEventListener("click", e => {
         return;
     }
 
-    if (target.matches("[data-del-habit]")) {
-        habits = habits.filter(h => h.id !== target.dataset.delHabit);
+    const delBtn = target.closest("[data-del-habit]");
+
+    if (delBtn) {
+        habits = habits.filter(h => h.id !== delBtn.dataset.delHabit);
         saveHabits();
         renderManage();
         renderHero();

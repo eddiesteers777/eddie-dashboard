@@ -2408,6 +2408,9 @@
 }
 
 .strength-workout-close-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
     background:rgba(255,255,255,.06);
     border:none;
     color:var(--text-secondary);
@@ -2526,6 +2529,12 @@
     font:inherit;
     text-align:left;
     cursor:pointer;
+    transition:background-color .15s ease;
+}
+
+.strength-workout-exercise-summary:hover,
+.strength-workout-exercise-summary:focus-visible{
+    background:rgba(255,255,255,.03);
 }
 
 .strength-workout-exercise-chevron{
@@ -2535,7 +2544,7 @@
     transition:transform .2s ease;
 }
 
-.strength-workout-exercise-chevron .strength-workout-icon{
+.strength-workout-exercise-chevron .ui-icon{
     width:16px;
     height:16px;
 }
@@ -2595,7 +2604,23 @@
     border-left-color:var(--green);
 }
 
+/* Smooth expand/collapse instead of an instant display:none/block
+   flip -- the grid-template-rows 0fr/1fr trick animates to the
+   content's real height without needing to measure it in JS. */
+
+.strength-workout-exercise-collapse{
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .25s ease;
+}
+
+.strength-workout-exercise.expanded .strength-workout-exercise-collapse{
+    grid-template-rows:1fr;
+}
+
 .strength-workout-exercise-body{
+    min-height:0;
+    overflow:hidden;
     padding:0 14px 14px;
 }
 
@@ -2662,27 +2687,12 @@
     gap:4px;
 }
 
-/* Icons -- inline SVGs used throughout Workout Mode's controls
-   instead of plain ×/✓/−/+ text characters. Icon-only buttons get
-   a larger, centered icon; icons inline with button text get a
-   smaller one with a little breathing room. */
+/* Icons -- shared .ui-icon component (js/icons.js) used throughout
+   Workout Mode's controls instead of plain ×/✓/−/+ text characters.
+   Icon-only buttons get a larger, centered icon; icons inline with
+   button text get a smaller one with a little breathing room. */
 
-.strength-workout-icon{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:14px;
-    height:14px;
-    flex-shrink:0;
-}
-
-.strength-workout-icon svg{
-    display:block;
-    width:100%;
-    height:100%;
-}
-
-.strength-row-btn .strength-workout-icon{
+.strength-row-btn .ui-icon{
     width:11px;
     height:11px;
     margin-right:4px;
@@ -2697,17 +2707,17 @@
     justify-content:center;
 }
 
-.strength-workout-adjust button .strength-workout-icon{
+.strength-workout-adjust button .ui-icon{
     width:13px;
     height:13px;
 }
 
-.strength-workout-done-btn .strength-workout-icon{
+.strength-workout-done-btn .ui-icon{
     width:18px;
     height:18px;
 }
 
-.strength-workout-remove-set .strength-workout-icon{
+.strength-workout-remove-set .ui-icon{
     width:15px;
     height:15px;
 }
