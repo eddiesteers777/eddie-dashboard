@@ -20,6 +20,8 @@ import {
     saveOverrides
 } from "./marathonData.js";
 
+import { icon } from "./icons.js";
+
 console.log("EddieOS Cross Training Studio");
 
 /* ==========================================
@@ -30,14 +32,14 @@ var LIBRARY_KEY = "cross-training-library";
 
 var CATEGORIES = {
 
-    cycling:    { label:"Cycling",          icon:"🚴", color:"#3b82f6" },
-    swimming:   { label:"Swimming",          icon:"🏊", color:"#22d3ee" },
-    elliptical: { label:"Elliptical",        icon:"🌀", color:"#a855f7" },
-    rowing:     { label:"Rowing",            icon:"🚣", color:"#f59e0b" },
-    yoga:       { label:"Yoga",              icon:"🧘", color:"#22c55e" },
-    circuit:    { label:"Strength Circuit",  icon:"🏋️", color:"#ef4444" },
-    mobility:   { label:"Mobility",          icon:"🤸", color:"#60a5fa" },
-    other:      { label:"Other",             icon:"⚡", color:"#9aa8c7" }
+    cycling:    { label:"Cycling",          icon:"bike",      color:"#3b82f6" },
+    swimming:   { label:"Swimming",         icon:"swim",      color:"#22d3ee" },
+    elliptical: { label:"Elliptical",       icon:"refresh",   color:"#a855f7" },
+    rowing:     { label:"Rowing",           icon:"row",       color:"#f59e0b" },
+    yoga:       { label:"Yoga",             icon:"stretch",   color:"#22c55e" },
+    circuit:    { label:"Strength Circuit", icon:"dumbbell",  color:"#ef4444" },
+    mobility:   { label:"Mobility",         icon:"activity",  color:"#60a5fa" },
+    other:      { label:"Other",            icon:"bolt",      color:"#9aa8c7" }
 
 };
 
@@ -208,7 +210,7 @@ function renderFilterChips(){
 
             (filterCategory === key ? " active" : "") +
 
-            '" data-filter="' + key + '">' + cat.icon + ' ' + cat.label + '</button>';
+            '" data-filter="' + key + '">' + icon(cat.icon) + ' ' + cat.label + '</button>';
 
     });
 
@@ -324,7 +326,7 @@ function renderLibraryGrid(){
 
             '<div class="ct-card-top">' +
 
-                '<div class="ct-card-icon" style="background:' + cat.color + '22;color:' + cat.color + ';">' + cat.icon + '</div>' +
+                '<div class="ct-card-icon" style="background:' + cat.color + '22;color:' + cat.color + ';">' + icon(cat.icon) + '</div>' +
 
                 '<div>' +
 
@@ -564,7 +566,7 @@ function renderCategoryChips(){
 
             (active ? "background:" + cat.color + ";" : "") +
 
-            '">' + cat.icon + ' ' + cat.label + '</button>';
+            '">' + icon(cat.icon) + ' ' + cat.label + '</button>';
 
     });
 
@@ -594,7 +596,7 @@ function renderBlocksList(){
 
         html += '<div class="ct-block-row" draggable="true" data-block-id="' + block.id + '">' +
 
-            '<div class="ct-block-drag-handle">⋮⋮</div>' +
+            '<div class="ct-block-drag-handle">' + icon("moreVertical") + icon("moreVertical") + '</div>' +
 
             '<input type="text" class="ct-block-input" data-field="label" data-id="' + block.id + '" placeholder="Block label" value="' + escapeHtml(block.label) + '">' +
 
@@ -612,7 +614,7 @@ function renderBlocksList(){
 
             '<input type="text" class="ct-block-input" data-field="notes" data-id="' + block.id + '" placeholder="Notes" value="' + escapeHtml(block.notes) + '">' +
 
-            '<button type="button" class="ct-block-remove" data-remove-block="' + block.id + '">✕</button>' +
+            '<button type="button" class="ct-block-remove" data-remove-block="' + block.id + '">' + icon("close") + '</button>' +
 
         '</div>';
 
@@ -883,9 +885,7 @@ function renderAttachWorkoutSelect(){
 
     library.forEach(function(workout){
 
-        var cat = CATEGORIES[workout.category] || CATEGORIES.other;
-
-        html += '<option value="' + workout.id + '">' + cat.icon + ' ' + escapeHtml(workout.name) + '</option>';
+        html += '<option value="' + workout.id + '">' + escapeHtml(workout.name) + '</option>';
 
     });
 
