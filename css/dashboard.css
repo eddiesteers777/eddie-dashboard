@@ -494,6 +494,43 @@
         font-size:12px;
     }
 
+    /* Weekly Mileage / Recovery / Habit Streak -- style.css's own
+       700px rule stacks these into three full-height cards, which
+       on a phone is a long scroll of mostly padding for three
+       numbers. Row them up instead, sized for a phone screen. This
+       file loads after style.css so it wins at equal specificity. */
+    .stats{
+        grid-template-columns:repeat(3,1fr);
+        gap:8px;
+        margin-bottom:18px;
+    }
+
+    .stat-card{
+        padding:12px 10px;
+        border-radius:14px;
+    }
+
+    .stat-card:hover{
+        transform:none;
+    }
+
+    .stat-card span{
+        margin-bottom:6px;
+        font-size:9.5px;
+        letter-spacing:.02em;
+    }
+
+    .stat-card h2{
+        margin-bottom:4px;
+        font-size:1.5rem;
+        letter-spacing:-.5px;
+    }
+
+    .stat-card p{
+        font-size:10.5px;
+        line-height:1.3;
+    }
+
 }
 
 /* ==========================
