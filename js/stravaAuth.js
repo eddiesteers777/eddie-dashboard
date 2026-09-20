@@ -1,0 +1,207 @@
+/* ==========================================
+   EddieOS Strava — OAuth connection
+
+   Strava's token exchange requires a client_secret, which can't
+   live in this static site's JS (it'd be public in the repo). A
+   small serverless broker (see /cloudflare-worker) holds the
+   secret and does the exchange/refresh on our behalf; this file
+   only ever sends it an authorization code or a refresh token,
+   never the secret itself.
+========================================== */
+
+const AUTHORIZE_URL = "https://www.strava.com/oauth/authorize";
+const TOKEN_KEY = "__eddieos_strava_oauth_v1";
+const PENDING_KEY = "__eddieos_strava_oauth_pending_v1";
+const SCOPE = "read,activity:read_all";
+
+// Fill these in once you've created a Strava API app
+// (https://www.strava.com/settings/api) and deployed the broker
+// worker in /cloudflare-worker -- see that folder's README.
+const CLIENT_ID = "REPLACE_WITH_STRAVA_CLIENT_ID";
+const BROKER_URL = "REPLACE_WITH_YOUR_WORKER_URL";
+
+const $ = id => document.getElementById(id);
+
+function redirectUri() {
+    return `${window.location.origin}${window.location.pathname}`;
+}
+
+function getTokenRecord() {
+    try {
+        return JSON.parse(localStorage.getItem(TOKEN_KEY) || "null");
+    } catch {
+        return null;
+    }
+}
+
+function saveTokenRecord(token) {
+    localStorage.setItem(TOKEN_KEY, JSON.stringify(token));
+}
+
+function clearTokenRecord() {
+    localStorage.removeItem(TOKEN_KEY);
+}
+
+function setConnectionStatus(text, connected) {
+    const textEl = $("stravaConnectionStatusText");
+    const dot = document.querySelector(".strava-status-dot");
+    const button = $("connectStravaBtn");
+
+    if (textEl) {
+        textEl.textContent = text;
+    }
+
+    if (dot) {
+        dot.style.background = connected ? "var(--green)" : "";
+        dot.style.boxShadow = connected ? "0 0 0 4px rgba(34,197,94,.15)" : "";
+    }
+
+    if (button) {
+        button.textContent = connected ? "Strava Connected" : "Connect Strava";
+    }
+}
+
+function startOAuth() {
+    if (CLIENT_ID.startsWith("REPLACE_") || BROKER_URL.startsWith("REPLACE_")) {
+        throw new Error(
+            "Strava isn't configured yet. Fill in CLIENT_ID and BROKER_URL at the top of js/stravaAuth.js first."
+        );
+    }
+
+    const state = crypto.randomUUID();
+    sessionStorage.setItem(PENDING_KEY, state);
+
+    const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        response_type: "code",
+        redirect_uri: redirectUri(),
+        approval_prompt: "auto",
+        scope: SCOPE,
+        state
+    });
+
+    window.location.href = `${AUTHORIZE_URL}?${params.toString()}`;
+}
+
+async function brokerRequest(body) {
+    const response = await fetch(BROKER_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload || payload.errors) {
+        const message =
+            payload?.message ||
+            `Strava token request failed (HTTP ${response.status}).`;
+
+        throw new Error(message);
+    }
+
+    return payload;
+}
+
+async function ensureFreshToken() {
+    const token = getTokenRecord();
+
+    if (!token) {
+        return null;
+    }
+
+    const expiresInMs = Number(token.expires_at) * 1000 - Date.now();
+
+    if (expiresInMs > 5 * 60 * 1000) {
+        return token.access_token;
+    }
+
+    const refreshed = await brokerRequest({ refresh_token: token.refresh_token });
+    saveTokenRecord({ ...token, ...refreshed });
+
+    return refreshed.access_token;
+}
+
+async function finishOAuth() {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const error = url.searchParams.get("error");
+    const state = url.searchParams.get("state");
+
+    if (!code && !error) {
+        return;
+    }
+
+    const pendingState = sessionStorage.getItem(PENDING_KEY);
+    sessionStorage.removeItem(PENDING_KEY);
+
+    url.searchParams.delete("code");
+    url.searchParams.delete("state");
+    url.searchParams.delete("scope");
+    url.searchParams.delete("error");
+    history.replaceState({}, "", url.toString());
+
+    if (error) {
+        throw new Error(`Strava denied the connection: ${error}`);
+    }
+
+    if (state !== pendingState) {
+        throw new Error("Strava authorization state did not match. Please try connecting again.");
+    }
+
+    const token = await brokerRequest({ code });
+    saveTokenRecord(token);
+
+    setConnectionStatus(
+        token.athlete?.firstname ? `Connected as ${token.athlete.firstname}` : "Strava Connected",
+        true
+    );
+
+    window.dispatchEvent(new CustomEvent("eddieos:strava-auth-changed"));
+}
+
+function init() {
+    const button = $("connectStravaBtn");
+    const existing = getTokenRecord();
+
+    setConnectionStatus(
+        existing ? "Strava Connected" : "Not connected",
+        Boolean(existing)
+    );
+
+    if (button) {
+        button.addEventListener("click", () => {
+            if (button.dataset.busy === "true") {
+                return;
+            }
+
+            button.dataset.busy = "true";
+
+            try {
+                startOAuth();
+            } catch (error) {
+                button.dataset.busy = "false";
+                alert(`EddieOS could not start the Strava connection.\n\n${error.message}`);
+            }
+        });
+    }
+
+    finishOAuth().catch(error => {
+        alert(`Strava authorization did not finish successfully.\n\n${error.message}`);
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+} else {
+    init();
+}
+
+export {
+    getTokenRecord,
+    saveTokenRecord,
+    clearTokenRecord,
+    ensureFreshToken
+};

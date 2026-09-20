@@ -1,0 +1,8 @@
+name = "eddieos-strava-broker"
+main = "strava-broker.js"
+compatibility_date = "2026-09-20"
+
+# Secrets (never put these here -- set them with `wrangler secret put`,
+# see the setup notes at the bottom of strava-broker.js):
+#   STRAVA_CLIENT_ID
+#   STRAVA_CLIENT_SECRET

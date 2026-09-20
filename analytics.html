@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="css/corosIntegration.css">
     <link rel="stylesheet" href="css/corosPlanCompare.css">
     <link rel="stylesheet" href="css/corosData.css">
+    <link rel="stylesheet" href="css/stravaIntegration.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F172A">
@@ -607,6 +608,118 @@
 
             </section>
 
+            <!-- ==========================================
+                 STRAVA CONNECTION
+            ========================================== -->
+
+            <section class="strava-connection-panel panel" id="stravaConnectionPanel">
+
+                <div class="strava-connection-content">
+
+                    <div class="strava-connection-copy">
+
+                        <span class="strava-eyebrow">
+                            DATA CONNECTION
+                        </span>
+
+                        <h2>
+                            Connect Strava
+                        </h2>
+
+                        <p>
+                            Pull your Strava runs into EddieOS so your analytics can include
+                            activities you log or sync there, alongside your Marathon training plan.
+                        </p>
+
+                        <div class="strava-status" id="stravaConnectionStatus">
+
+                            <span class="strava-status-dot"></span>
+
+                            <span id="stravaConnectionStatusText">
+                                Not connected
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="strava-connection-action">
+
+                        <div class="strava-data-preview">
+                            <span>ACTIVITY DATA</span>
+                            <strong>Mileage • Pace • Recent Runs</strong>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="primary-btn strava-connect-btn"
+                            id="connectStravaBtn">
+                            Connect Strava
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ==========================================
+                 STRAVA DATA
+            =========================================== -->
+
+            <section class="strava-data-panel panel" id="stravaDataPanel">
+                <div class="panel-header">
+                    <div>
+                        <span class="strava-data-eyebrow">
+                            STRAVA LIVE DATA
+                        </span>
+                        <h2>Strava Runs</h2>
+                        <p class="strava-data-subtitle">
+                            EddieOS is reading your recent Strava running activities.
+                        </p>
+                    </div>
+
+                    <div class="strava-data-actions">
+                        <span id="stravaDataLastSync">Not synced yet</span>
+                        <button id="refreshStravaDataBtn" class="secondary-btn">
+                            Refresh Strava
+                        </button>
+                    </div>
+                </div>
+
+                <div id="stravaDataStatus" class="strava-data-status">
+                    Connect Strava above to load live data.
+                </div>
+
+                <div class="strava-data-grid">
+                    <div class="strava-data-card">
+                        <span>Recent Activities</span>
+                        <strong id="stravaActivityCount">—</strong>
+                        <small>Last 28 days</small>
+                    </div>
+
+                    <div class="strava-data-card">
+                        <span>28-Day Mileage</span>
+                        <strong id="stravaMileage">—</strong>
+                        <small>Running distance</small>
+                    </div>
+                </div>
+
+                <div class="strava-recent-activities">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Recent Strava Runs</h3>
+                        </div>
+                    </div>
+
+                    <div id="stravaRecentActivities" class="strava-activity-list">
+                        <div class="strava-empty-state">
+                            Connect Strava to populate recent activities.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </section>
 
     </main>
@@ -620,6 +733,8 @@
     <script type="module" src="js/corosData.js"></script>
     <script type="module" src="js/corosPlanCompare.js"></script>
     <script type="module" src="js/corosDiagnostic.js"></script>
+    <script type="module" src="js/stravaAuth.js"></script>
+    <script type="module" src="js/stravaData.js"></script>
 
     <script src="js/registerSW.js"></script>
 
