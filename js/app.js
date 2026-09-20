@@ -2,9 +2,6 @@
 // EddieOS Dashboard
 // ==========================================
 
-import { dashboardData as localData } from "./dashboardData.js";
-import { loadDashboard } from "./firestore.js";
-
 import {
     RACE_DATE,
     DAYS,
@@ -32,22 +29,6 @@ function escapeHtml(value) {
 document.addEventListener("DOMContentLoaded", async () => {
 
     // ==========================================
-    // Load Dashboard Data
-    // ==========================================
-
-    let dashboardData = localData;
-
-    try {
-        const cloudData = await loadDashboard();
-
-        if (cloudData) {
-            dashboardData = cloudData;
-        }
-    } catch (error) {
-        console.error("Firestore Error:", error);
-    }
-
-    // ==========================================
     // Greeting
     // ==========================================
 
@@ -62,9 +43,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const welcomeHeading = document.getElementById("welcomeHeading");
 
+    // The signed-in user's own name, not the hardcoded profile in
+    // dashboardData.js -- that was always "Eddie" for literally
+    // anyone who opened this dashboard, signed in or not.
     if (welcomeHeading) {
-        welcomeHeading.innerHTML =
-            `${greeting},<br>${dashboardData.profile.firstName}`;
+        welcomeHeading.innerHTML = `${greeting},<br>Guest`;
+
+        import("./auth.js").then(({ listenForAuth }) => {
+            listenForAuth(user => {
+                const name = user
+                    ? (user.displayName ? user.displayName.split(" ")[0] : "Runner")
+                    : "Guest";
+
+                welcomeHeading.innerHTML = `${greeting},<br>${escapeHtml(name)}`;
+            });
+        }).catch(() => {});
     }
 
     // ==========================================

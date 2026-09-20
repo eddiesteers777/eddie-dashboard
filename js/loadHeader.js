@@ -293,8 +293,26 @@ fetch("components/header.html")
         });
 
         // ---- Wire up Google Sign-In / Sign-Out ----
+        // auth.js pulls in the Firebase SDK from gstatic.com -- if
+        // that fetch ever fails (offline, a blocked domain, a CDN
+        // hiccup), the dynamic import throws. Previously nothing
+        // downstream of it was wrapped, so that one failure silently
+        // killed dropdown coordination, the mobile quick-add menu,
+        // search, everything else this function still had left to
+        // wire up. No-op stubs here mean a broken/unavailable auth.js
+        // just leaves sign-in non-functional (the only thing it
+        // actually can't do without Firebase) instead of taking the
+        // rest of the header down with it.
 
-        const { login, logout, listenForAuth } = await import("./auth.js");
+        let login = async () => false;
+        let logout = async () => {};
+        let listenForAuth = () => {};
+
+        try {
+            ({ login, logout, listenForAuth } = await import("./auth.js"));
+        } catch (error) {
+            console.warn("EddieOS: auth.js unavailable this session -- sign-in features disabled.", error);
+        }
 
         const userName = document.getElementById("user-name");
         const loginBtn = document.getElementById("loginBtn");
@@ -451,5 +469,101 @@ fetch("components/header.html")
             });
 
         }
+
+        // ---- Sign-in prompt ----
+        // Nudges a guest to sign in, once per browser session
+        // (same gating pattern as the launch splash), regardless of
+        // which page happens to be the first one this session lands
+        // on. Dismissible -- this is a nudge, not a hard gate; guest
+        // use stays fully functional, just device-local.
+
+        const SIGNIN_PROMPT_KEY = "eddieos-signin-prompt-shown";
+
+        function closeSigninPrompt() {
+            const overlay = document.getElementById("signinPromptOverlay");
+
+            if (!overlay) return;
+
+            overlay.classList.remove("open");
+            setTimeout(() => overlay.remove(), 250);
+        }
+
+        function showSigninPrompt() {
+            if (document.getElementById("signinPromptOverlay")) return;
+
+            document.body.insertAdjacentHTML("beforeend", `
+                <div class="eos-signin-overlay" id="signinPromptOverlay">
+                    <div class="eos-signin-modal">
+                        <div class="eos-signin-icon">${icon("cloud")}</div>
+                        <h2>Sign in to save your progress</h2>
+                        <p>
+                            You're using EddieOS as a guest. Changes you make --
+                            workouts, habits, nutrition logs, and more -- are only
+                            saved on this device. Sign in with Google to back
+                            everything up and keep it in sync if you ever switch
+                            devices.
+                        </p>
+                        <div class="eos-signin-actions">
+                            <button type="button" class="eos-signin-btn primary" id="signinPromptLoginBtn">
+                                Sign In with Google
+                            </button>
+                            <button type="button" class="eos-signin-btn secondary" id="signinPromptDismissBtn">
+                                Continue as Guest
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `);
+
+            const overlay = document.getElementById("signinPromptOverlay");
+            const promptLoginBtn = document.getElementById("signinPromptLoginBtn");
+            const dismissBtn = document.getElementById("signinPromptDismissBtn");
+
+            requestAnimationFrame(() => overlay.classList.add("open"));
+
+            overlay.addEventListener("click", event => {
+                if (event.target === overlay) closeSigninPrompt();
+            });
+
+            dismissBtn.addEventListener("click", closeSigninPrompt);
+
+            promptLoginBtn.addEventListener("click", async () => {
+                promptLoginBtn.disabled = true;
+                promptLoginBtn.textContent = "Signing in…";
+
+                const success = await login();
+
+                if (success) {
+                    window.location.reload();
+                } else {
+                    promptLoginBtn.disabled = false;
+                    promptLoginBtn.textContent = "Sign In with Google";
+                }
+            });
+        }
+
+        listenForAuth(user => {
+            if (user) return;
+
+            let alreadyShown = false;
+
+            try {
+                alreadyShown = !!sessionStorage.getItem(SIGNIN_PROMPT_KEY);
+                sessionStorage.setItem(SIGNIN_PROMPT_KEY, "1");
+            } catch {
+                // Storage unavailable -- fall through and show it
+                // this once rather than nag on every render.
+            }
+
+            if (!alreadyShown) {
+                showSigninPrompt();
+            }
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                closeSigninPrompt();
+            }
+        });
 
     });
