@@ -5,11 +5,15 @@
    for the calendar heat-scale, same documented
    pattern the old 75-Day page used -- not part
    of the shared token set, and not meant to be.
+   --purple / --indigo extend the same set for
+   per-habit icon coloring (js/habitIcons.js).
 ========================================== */
 
 :root{
     --teal:#2FB6B0;
     --amber:#FFB020;
+    --purple:#A78BFA;
+    --indigo:#6366F1;
 }
 
 .habits-page{
@@ -318,14 +322,18 @@
 
 }
 
-.habits-check.on::after{
+.habits-check .ui-icon{
 
-    content:"✓";
+    width:14px;
+    height:14px;
 
 }
 
 .habits-row-name{
 
+    display:flex;
+    align-items:center;
+    gap:10px;
     font-size:14.5px;
     color:var(--text);
 
@@ -335,6 +343,26 @@
 
     color:var(--text-secondary);
     text-decoration:line-through;
+
+}
+
+.habits-row-icon{
+
+    flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:30px;
+    height:30px;
+    border-radius:9px;
+    background:color-mix(in srgb, currentColor 16%, transparent);
+
+}
+
+.habits-row-icon .ui-icon{
+
+    width:16px;
+    height:16px;
 
 }
 
@@ -465,6 +493,9 @@
 
 .habits-manage-item span{
 
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
     font-size:14.5px;
 
 }

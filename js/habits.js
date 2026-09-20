@@ -8,6 +8,7 @@
 ========================================== */
 
 import { icon } from "./icons.js";
+import { inferHabitVisual, habitVisual } from "./habitIcons.js";
 
 // Habits saved before icons existed have the emoji baked into the
 // name itself (e.g. "🙏 Prayer") -- strip it so it isn't shown
@@ -20,7 +21,8 @@ function habitLabel(h) {
 }
 
 function habitIcon(h) {
-    return icon(h.icon || "star");
+    const { icon: iconName, color } = habitVisual(h);
+    return `<span class="habits-row-icon" style="color:${color}">${icon(iconName)}</span>`;
 }
 
 const DEFAULT_HABITS = [
@@ -275,7 +277,7 @@ function renderToday() {
 
         return `
             <div class="habits-row" data-toggle-habit="${h.id}">
-                <div class="habits-check ${checked ? "on" : ""}"></div>
+                <div class="habits-check ${checked ? "on" : ""}">${checked ? icon("check") : ""}</div>
                 <div class="habits-row-name ${checked ? "done" : ""}">
                     ${habitIcon(h)} ${escapeHtml(habitLabel(h))}
                 </div>
@@ -513,9 +515,13 @@ function addNewHabit() {
         return;
     }
 
+    const visual = inferHabitVisual(name);
+
     habits.push({
         id: "h" + Date.now(),
-        name
+        name,
+        icon: visual.icon,
+        color: visual.color
     });
 
     saveHabits();

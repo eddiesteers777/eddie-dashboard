@@ -9,10 +9,13 @@
 
 <style>
 /* Colors/fonts come from css/style.css (loaded first on every
-   page) — --teal/--amber are unique to this page's habit charts. */
+   page) — --teal/--amber/--purple/--indigo are unique to this
+   page's habit charts and icons. */
 :root{
   --teal:#2FB6B0;
   --amber:#FFB020;
+  --purple:#A78BFA;
+  --indigo:#6366F1;
 }
 
 *{box-sizing:border-box;}
@@ -291,8 +294,28 @@ body{
 
 .habit-name{
     flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
     font-size:15px;
     font-weight:500;
+}
+
+.habit-row-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:26px;
+    height:26px;
+    border-radius:8px;
+    background:color-mix(in srgb, currentColor 16%, transparent);
+    margin-right:2px;
+    vertical-align:middle;
+}
+
+.habit-row-icon .ui-icon{
+    width:14px;
+    height:14px;
 }
 
 .habit-name.done{
@@ -394,6 +417,12 @@ body{
     background:var(--surface-light);
     font-size:13px;
 }
+
+.manage-item span{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+}
 /* ---------- stats ---------- */
 
 .stat-row{
@@ -479,6 +508,9 @@ body{
 
 .focus-name{
     flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
     font-size:14px;
     line-height:1.4;
 }
@@ -603,7 +635,10 @@ body{
 
 <script type="module">
     import { icon } from "./js/icons.js";
+    import { inferHabitVisual, habitVisual } from "./js/habitIcons.js";
     window.icon = icon;
+    window.inferHabitVisual = inferHabitVisual;
+    window.habitVisual = habitVisual;
 </script>
 
 <script>
@@ -653,7 +688,9 @@ function habitLabel(h){
 }
 
 function habitIcon(h){
-  return window.icon ? window.icon(h.icon || 'star') : '';
+  if(!window.icon || !window.habitVisual) return '';
+  const v = window.habitVisual(h);
+  return '<span class="habit-row-icon" style="color:'+v.color+'">'+window.icon(v.icon)+'</span>';
 }
 
 function toDate(s){
@@ -1559,9 +1596,13 @@ function wireEvents(){
 
       if(!value) return;
 
+      const visual = window.inferHabitVisual ? window.inferHabitVisual(value) : {};
+
       habits.push({
         id:'h'+Date.now(),
-        name:value
+        name:value,
+        icon:visual.icon,
+        color:visual.color
       });
 
       saveHabits();
