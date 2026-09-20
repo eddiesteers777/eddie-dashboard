@@ -2312,8 +2312,10 @@
     display:none;
     position:fixed;
     inset:0;
-    z-index:241;
+    z-index:1200;
     background:var(--bg);
+    overflow:hidden;
+    --workout-accent: #ec4899;
 }
 
 .strength-workout-overlay.open{
@@ -2338,10 +2340,11 @@
     border-bottom:1px solid var(--border);
     background:
         linear-gradient(
-            160deg,
-            var(--surface),
-            rgba(78,168,255,.06)
-        );
+            135deg,
+            rgba(78,168,255,.16),
+            rgba(236,72,153,.14)
+        ),
+        var(--surface);
 }
 
 .strength-workout-progress-track{
@@ -2355,9 +2358,52 @@
         linear-gradient(
             90deg,
             var(--primary),
-            var(--green)
+            var(--workout-accent)
         );
     transition:width .35s ease;
+}
+
+.strength-workout-nav{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    padding:10px 20px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+}
+
+.strength-workout-nav-arrow{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    color:var(--text);
+    font-size:18px;
+    font-weight:800;
+    cursor:pointer;
+    transition:.15s ease;
+}
+
+.strength-workout-nav-arrow:hover:not(:disabled){
+    border-color:var(--workout-accent);
+    color:var(--workout-accent);
+}
+
+.strength-workout-nav-arrow:disabled{
+    opacity:.3;
+    cursor:default;
+}
+
+.strength-workout-page-counter{
+    min-width:64px;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:13px;
+    font-weight:700;
+    color:var(--text-secondary);
+    letter-spacing:.04em;
 }
 
 .strength-workout-day-name{
@@ -2413,9 +2459,25 @@
     color:#fca5a5;
 }
 
-.strength-workout-body{
+/* One exercise (or one whole group) fills the screen at a time --
+   swipe or use the Prev/Next arrows to move on, instead of
+   scrolling past every other exercise in the day to get there. */
+
+.strength-workout-carousel{
     flex:1;
+    display:flex;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+}
+
+.strength-workout-page{
+    flex:0 0 100%;
+    max-width:100%;
+    scroll-snap-align:start;
     overflow-y:auto;
+    overflow-x:hidden;
     padding:18px 16px 40px;
     display:flex;
     flex-direction:column;
@@ -2642,17 +2704,25 @@
     border-radius:11px;
     border:1px solid var(--border);
     background:var(--surface);
-    color:transparent;
+    color:var(--text-secondary);
+    opacity:.35;
     font-size:18px;
     cursor:pointer;
     flex-shrink:0;
     margin-left:auto;
+    transition:.15s ease;
+}
+
+.strength-workout-done-btn:hover{
+    opacity:.7;
+    border-color:var(--workout-accent, var(--primary));
 }
 
 .strength-workout-done-btn.checked{
     background:var(--green);
     border-color:var(--green);
     color:#05130a;
+    opacity:1;
 }
 
 .strength-workout-remove-set{

@@ -25,6 +25,8 @@ let timerInterval = null;
 let swappingExerciseId = null;
 let lastSwapResults = {};
 let swapDebounceTimer = null;
+let currentPageIndex = 0;
+let pageCount = 0;
 
 function $(id) {
     return document.getElementById(id);
@@ -188,7 +190,6 @@ function renderSetRow(exercise, set, index) {
         : `
             <div class="strength-workout-adjust">
                 <button type="button" data-adjust="weight" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">−5</button>
-                <button type="button" data-adjust="weight" data-delta="-2.5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">−2.5</button>
                 <input
                     type="number"
                     class="strength-workout-input"
@@ -196,7 +197,6 @@ function renderSetRow(exercise, set, index) {
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
                     value="${set.weight}">
-                <button type="button" data-adjust="weight" data-delta="2.5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">+2.5</button>
                 <button type="button" data-adjust="weight" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">+5</button>
             </div>
 
@@ -373,19 +373,20 @@ function groupLabel(groupType) {
             : "Superset";
 }
 
-// Renders exercises that share a groupId (built as a superset,
-// circuit, or warmup in the plan editor) as one connected card,
-// so a workout done as a circuit still looks like one during the
-// session instead of a string of unrelated exercise cards.
-function renderDayBody(day) {
-    const blocks = [];
+// Groups exercises that share a groupId (built as a superset,
+// circuit, or warmup in the plan editor) into one connected card,
+// so a workout done as a circuit still looks like one page during
+// the session instead of a string of unrelated exercise cards.
+// Returns one HTML string per PAGE (an exercise, or a whole group).
+function renderDayPages(day) {
+    const pages = [];
     let index = 0;
 
     while (index < day.exercises.length) {
         const first = day.exercises[index];
 
         if (!first.groupId) {
-            blocks.push(renderExerciseBlock(first));
+            pages.push(renderExerciseBlock(first));
             index++;
             continue;
         }
@@ -404,7 +405,7 @@ function renderDayBody(day) {
 
         const plannedRounds = Number(day.groupRounds?.[groupId]) || null;
 
-        blocks.push(`
+        pages.push(`
             <div
                 class="strength-workout-group strength-workout-group-${groupType}"
                 data-workout-group="${groupId}">
@@ -424,7 +425,7 @@ function renderDayBody(day) {
         `);
     }
 
-    return blocks.join("");
+    return pages;
 }
 
 function renderBody() {
@@ -446,10 +447,88 @@ function renderBody() {
                 This day has no exercises yet.
             </div>
         `;
+        pageCount = 0;
+        updatePageNav();
         return;
     }
 
-    body.innerHTML = renderDayBody(day);
+    const pages = renderDayPages(day);
+    pageCount = pages.length;
+
+    body.innerHTML = pages
+        .map((html, i) => `<div class="strength-workout-page" data-page-index="${i}">${html}</div>`)
+        .join("");
+
+    currentPageIndex = Math.min(currentPageIndex, pageCount - 1);
+    updatePageNav();
+}
+
+// One exercise/group per screen, swiped or paged between, instead
+// of a single long vertical list you have to scroll through.
+function goToPage(index, smooth = true) {
+    const carousel = $("workoutModeBody");
+
+    if (!carousel || !pageCount) {
+        return;
+    }
+
+    currentPageIndex = Math.max(0, Math.min(index, pageCount - 1));
+
+    carousel.scrollTo({
+        left: currentPageIndex * carousel.clientWidth,
+        behavior: smooth ? "smooth" : "instant"
+    });
+
+    updatePageNav();
+}
+
+function updatePageNav() {
+    const counter = $("workoutModePageCounter");
+    const prevBtn = $("workoutModePrev");
+    const nextBtn = $("workoutModeNext");
+
+    if (counter) {
+        counter.textContent = pageCount
+            ? `${currentPageIndex + 1} / ${pageCount}`
+            : "0 / 0";
+    }
+
+    if (prevBtn) {
+        prevBtn.disabled = currentPageIndex <= 0;
+    }
+
+    if (nextBtn) {
+        nextBtn.disabled = currentPageIndex >= pageCount - 1;
+    }
+}
+
+// Keeps the counter/arrows in sync when the user swipes the
+// carousel directly instead of tapping Prev/Next.
+let scrollSyncQueued = false;
+
+function onCarouselScroll() {
+    if (scrollSyncQueued) {
+        return;
+    }
+
+    scrollSyncQueued = true;
+
+    requestAnimationFrame(() => {
+        scrollSyncQueued = false;
+
+        const carousel = $("workoutModeBody");
+
+        if (!carousel || !pageCount || !carousel.clientWidth) {
+            return;
+        }
+
+        const index = Math.round(carousel.scrollLeft / carousel.clientWidth);
+
+        if (index !== currentPageIndex) {
+            currentPageIndex = Math.max(0, Math.min(index, pageCount - 1));
+            updatePageNav();
+        }
+    });
 }
 
 /* ==========================================
@@ -458,6 +537,7 @@ function renderBody() {
 
 function openWorkoutMode(dayId) {
     activeDayId = dayId;
+    currentPageIndex = 0;
 
     const overlay = $("strengthWorkoutOverlay");
 
@@ -467,6 +547,7 @@ function openWorkoutMode(dayId) {
 
     overlay.classList.add("open");
     renderBody();
+    goToPage(0, false);
     updateProgress();
     startTimer();
 
@@ -795,6 +876,16 @@ function applySwap(exerciseId, picked) {
    Event wiring
 ========================================== */
 
+$("workoutModeBody")?.addEventListener("scroll", onCarouselScroll);
+
+// Re-align to the current page after a viewport resize (rotation,
+// on-screen keyboard) since scroll position is computed from width.
+window.addEventListener("resize", () => {
+    if ($("strengthWorkoutOverlay")?.classList.contains("open")) {
+        goToPage(currentPageIndex, false);
+    }
+});
+
 window.addEventListener(
     "eddieos:strength-start-workout",
     event => {
@@ -839,6 +930,16 @@ document.addEventListener("click", event => {
 
     if (target.matches("#workoutModeFinish")) {
         finishWorkout();
+        return;
+    }
+
+    if (target.matches("#workoutModePrev")) {
+        goToPage(currentPageIndex - 1);
+        return;
+    }
+
+    if (target.matches("#workoutModeNext")) {
+        goToPage(currentPageIndex + 1);
         return;
     }
 
@@ -901,6 +1002,7 @@ document.addEventListener("click", event => {
             );
         });
         renderBody();
+        goToPage(currentPageIndex, false);
         updateProgress();
         return;
     }
