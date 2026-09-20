@@ -74,7 +74,7 @@
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
   function weekStart(n) { return new Date(START.getTime() + (n - 1) * 7 * dayMs); }
-  function weekEnd(n) { return new Date(weekStart(n).getTime() + 6 * dayMs); }
+  function weekEnd(n) { return new Date(weekStart(n).getTime() + 7 * dayMs - 1); }
   function weekRangeLabel(n) {
     return fmtDate(weekStart(n)) + " - " + fmtDate(weekEnd(n)) + ", 2026";
   }

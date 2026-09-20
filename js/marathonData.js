@@ -68,11 +68,15 @@ export function weekEnd(week){
 
         +
 
-        6
+        7
 
         *
 
         DAY_MS
+
+        -
+
+        1
 
     );
 
