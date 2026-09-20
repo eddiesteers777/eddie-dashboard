@@ -323,7 +323,7 @@
 .running-month-grid-header{
 
     display:grid;
-    grid-template-columns:repeat(7, 1fr);
+    grid-template-columns:repeat(7, minmax(0, 1fr));
     margin-bottom:8px;
 
 }
@@ -341,7 +341,7 @@
 .running-month-grid{
 
     display:grid;
-    grid-template-columns:repeat(7, 1fr);
+    grid-template-columns:repeat(7, minmax(0, 1fr));
     gap:6px;
 
 }
@@ -361,6 +361,8 @@
     cursor:pointer;
     font-family:inherit;
     position:relative;
+    overflow:hidden;
+    min-width:0;
     transition:.15s;
 
 }
@@ -413,6 +415,10 @@
     color:var(--text-secondary);
     text-align:center;
     line-height:1.2;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 
 }
 

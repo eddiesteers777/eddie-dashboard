@@ -26,6 +26,13 @@ html{
 
     scroll-behavior:smooth;
 
+    /* iOS Safari's rubber-band overscroll (and Android's over-scroll
+       glow) scrolls past the body's own box, exposing whatever the
+       html element's background is -- without this it's the browser
+       default white, flashing behind every page at the top/bottom
+       edge of a scroll. Match body's base color here too. */
+    background:#0F172A;
+
 }
 
 :root{
