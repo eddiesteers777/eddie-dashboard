@@ -769,6 +769,7 @@
     border-radius:22px;
     max-width:420px;
     width:100%;
+    overflow:hidden;
     box-shadow:0 30px 70px rgba(0,0,0,.5);
 
 }
@@ -829,6 +830,8 @@
 .running-input{
 
     width:100%;
+    max-width:100%;
+    min-width:0;
     background:var(--surface-light);
     border:1px solid var(--border);
     color:var(--text);
@@ -837,7 +840,22 @@
     font-size:14px;
     font-family:inherit;
     outline:none;
+    overflow:hidden;
 
+}
+
+/* iOS Safari's native date/time picker has its own intrinsic
+   min-width based on the locale's date/time format string, which
+   can win over width:100% on a narrow modal and visibly overflow
+   the input's own box -- appearance:none drops the extra native
+   chrome that inflates that intrinsic size (the picker itself still
+   opens on tap; only the default OS-drawn styling goes away, which
+   this input already replaces with its own anyway). Scoped to just
+   these two types so the Type <select>'s native arrow is untouched. */
+.running-input[type="date"],
+.running-input[type="time"]{
+    -webkit-appearance:none;
+    appearance:none;
 }
 
 .running-input:focus{
