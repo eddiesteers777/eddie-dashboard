@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (weeklyMileageEl) {
         try {
             weeklyMileageEl.textContent =
-                `${getAdjustedWeekMileage(getCurrentWeek())} mi`;
+                `${getAdjustedWeekMileage(getCurrentWeek())}`;
         } catch {
             weeklyMileageEl.textContent = "--";
         }
@@ -414,7 +414,7 @@ function renderRecovery() {
 
     if (percent === null) {
         valueEl.textContent = "--";
-        metaEl.textContent = "No COROS data synced";
+        if (metaEl) metaEl.textContent = "";
         return;
     }
 

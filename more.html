@@ -76,6 +76,50 @@
             cursor:pointer;
             white-space:nowrap;
         }
+
+        /* Compact rows instead of description cards -- a symbol and
+           a name is enough once More is a destination you already
+           know, not something you need explained on every visit. */
+        .more-list{
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+        .more-row{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            padding:12px 14px;
+            background:var(--surface);
+            border:1px solid var(--border);
+            border-radius:16px;
+            text-decoration:none;
+            color:var(--text);
+            transition:background-color .15s ease,border-color .15s ease;
+        }
+        .more-row:hover{
+            background:var(--surface-light);
+            border-color:rgba(78,168,255,.25);
+        }
+        .more-row-icon{
+            flex-shrink:0;
+            width:40px;
+            height:40px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:12px;
+            color:white;
+        }
+        .more-row-name{
+            flex:1;
+            font-size:15.5px;
+            font-weight:700;
+        }
+        .more-row-chevron{
+            flex-shrink:0;
+            color:var(--muted);
+        }
     </style>
 
 </head>
@@ -110,54 +154,54 @@
             <button type="button" id="moreLogoutBtn" class="eos-more-account-btn" style="display:none;">Sign Out</button>
         </section>
 
-        <section class="grid">
+        <section class="more-list">
 
-            <a href="marathon.html" class="card">
-                <div class="card-icon" data-icon="activity"></div>
-                <h2>Marathon Plan</h2>
-                <p>Your 16-week plan, race countdown, and week-by-week workouts.</p>
+            <a href="marathon.html" class="more-row">
+                <div class="more-row-icon" data-icon="activity" style="background:linear-gradient(135deg,#2563EB,#3B82F6)"></div>
+                <span class="more-row-name">Marathon Plan</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="75day.html" class="card">
-                <div class="card-icon" data-icon="flame"></div>
-                <h2>75-Day Challenge</h2>
-                <p>Daily challenge tracker and streak.</p>
+            <a href="75day.html" class="more-row">
+                <div class="more-row-icon" data-icon="flame" style="background:linear-gradient(135deg,#22C55E,#4ADE80)"></div>
+                <span class="more-row-name">75-Day Challenge</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="analytics.html" class="card">
-                <div class="card-icon" data-icon="trendingUp"></div>
-                <h2>Analytics</h2>
-                <p>Mileage, pace trends, recovery, and COROS data.</p>
+            <a href="analytics.html" class="more-row">
+                <div class="more-row-icon" data-icon="trendingUp" style="background:linear-gradient(135deg,#F59E0B,#FBBF24)"></div>
+                <span class="more-row-name">Analytics</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="weekly-review.html" class="card">
-                <div class="card-icon" data-icon="clipboard"></div>
-                <h2>Weekly Review</h2>
-                <p>How the whole week actually went, in one place.</p>
+            <a href="weekly-review.html" class="more-row">
+                <div class="more-row-icon" data-icon="clipboard" style="background:linear-gradient(135deg,#8B5CF6,#A855F7)"></div>
+                <span class="more-row-name">Weekly Review</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="gear.html" class="card">
-                <div class="card-icon" data-icon="footprint"></div>
-                <h2>Gear</h2>
-                <p>Shoe mileage and replacement alerts.</p>
+            <a href="gear.html" class="more-row">
+                <div class="more-row-icon" data-icon="footprint" style="background:linear-gradient(135deg,#EC4899,#F472B6)"></div>
+                <span class="more-row-name">Gear</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="planner.html" class="card">
-                <div class="card-icon" data-icon="calendar"></div>
-                <h2>Planner</h2>
-                <p>Course dates and upcoming deadlines.</p>
+            <a href="planner.html" class="more-row">
+                <div class="more-row-icon" data-icon="calendar" style="background:linear-gradient(135deg,#06B6D4,#22D3EE)"></div>
+                <span class="more-row-name">Planner</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="pace-calculator.html" class="card">
-                <div class="card-icon" data-icon="timer"></div>
-                <h2>Pace Calculator</h2>
-                <p>Race and training pace conversions.</p>
+            <a href="pace-calculator.html" class="more-row">
+                <div class="more-row-icon" data-icon="timer" style="background:linear-gradient(135deg,#2563EB,#3B82F6)"></div>
+                <span class="more-row-name">Pace Calculator</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="settings.html" class="card">
-                <div class="card-icon" data-icon="user"></div>
-                <h2>Settings</h2>
-                <p>Preferences, goals, connected accounts, and sign out.</p>
+            <a href="settings.html" class="more-row">
+                <div class="more-row-icon" data-icon="user" style="background:linear-gradient(135deg,#64748B,#94A3B8)"></div>
+                <span class="more-row-name">Settings</span>
+                <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
         </section>
