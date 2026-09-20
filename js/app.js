@@ -206,6 +206,37 @@ function renderToday() {
         });
     }
 
+    // A strength workout scheduled for today (via the Strength
+    // page's Schedule calendar) -- lets today's workout be started
+    // right from the dashboard instead of only from Strength itself.
+    try {
+        const scheduleKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        const schedule = JSON.parse(localStorage.getItem("strength-schedule") || "null");
+        const plan = JSON.parse(localStorage.getItem("strength-plan") || "null");
+        const planDayIds = new Set((plan?.days || []).map(day => day.id));
+
+        (schedule?.items || [])
+            .filter(item => item.date === scheduleKey && !item.completed)
+            .forEach(item => {
+                const dayId = item.workoutId?.startsWith("plan-")
+                    ? item.workoutId.slice(5)
+                    : null;
+
+                const startable = dayId && planDayIds.has(dayId);
+
+                items.push({
+                    icon: "🏋️",
+                    title: item.workoutName || "Strength workout",
+                    detail: startable
+                        ? `${item.time || "Today"} · Tap to start`
+                        : `${item.time || "Today"} · Open in Strength to start`,
+                    link: startable ? `strength.html?startWorkout=${dayId}` : "strength.html"
+                });
+            });
+    } catch {
+        // No schedule data -- fine, just don't show this item.
+    }
+
     // Fuel plan tied to today's run
     if (dayData?.miles && week && dayKey) {
         try {

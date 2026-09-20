@@ -1073,6 +1073,16 @@
     vertical-align:middle;
 }
 
+.strength-group-badge-circuit{
+    background:rgba(34,197,94,.10);
+    color:var(--green);
+}
+
+.strength-group-badge-warmup{
+    background:rgba(234,179,8,.14);
+    color:var(--yellow);
+}
+
 .strength-exercise-details{
     display:grid;
     grid-template-columns:150px minmax(0,1fr);
@@ -1162,6 +1172,10 @@
     border-left:3px solid var(--green);
 }
 
+.strength-group-warmup{
+    border-left:3px solid var(--yellow);
+}
+
 .strength-group-header{
     display:flex;
     align-items:center;
@@ -1183,6 +1197,10 @@
 
 .strength-group-circuit .strength-group-label{
     color:var(--green);
+}
+
+.strength-group-warmup .strength-group-label{
+    color:var(--yellow);
 }
 
 .strength-group-header strong{
@@ -2318,7 +2336,28 @@
     justify-content:space-between;
     padding:18px 20px;
     border-bottom:1px solid var(--border);
-    background:var(--surface);
+    background:
+        linear-gradient(
+            160deg,
+            var(--surface),
+            rgba(78,168,255,.06)
+        );
+}
+
+.strength-workout-progress-track{
+    height:5px;
+    background:rgba(255,255,255,.06);
+}
+
+.strength-workout-progress-fill{
+    height:100%;
+    background:
+        linear-gradient(
+            90deg,
+            var(--primary),
+            var(--green)
+        );
+    transition:width .35s ease;
 }
 
 .strength-workout-day-name{
@@ -2344,11 +2383,18 @@
     color:#05130a;
     border:none;
     border-radius:12px;
-    padding:11px 20px;
+    padding:11px 22px;
     font-size:14px;
     font-weight:800;
     cursor:pointer;
     font-family:inherit;
+    box-shadow:0 6px 18px rgba(34,197,94,.28);
+    transition:transform .15s ease, box-shadow .15s ease;
+}
+
+.strength-workout-finish-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 22px rgba(34,197,94,.36);
 }
 
 .strength-workout-close-btn{
@@ -2390,6 +2436,66 @@
     border-left:3px solid var(--primary);
     border-radius:16px;
     padding:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,.16);
+}
+
+/* Grouped (superset/circuit/warmup) card -- one connected unit
+   instead of a string of unrelated exercise cards, matching the
+   plan editor's own grouping display. */
+
+.strength-workout-group{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:rgba(255,255,255,.02);
+}
+
+.strength-workout-group .strength-workout-exercise{
+    border-left:3px solid transparent;
+    box-shadow:none;
+}
+
+.strength-workout-group-superset{
+    border-left:3px solid var(--primary);
+}
+
+.strength-workout-group-circuit{
+    border-left:3px solid var(--green);
+}
+
+.strength-workout-group-warmup{
+    border-left:3px solid var(--yellow);
+}
+
+.strength-workout-group-header{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    padding:2px 4px;
+}
+
+.strength-workout-group-label{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--primary);
+}
+
+.strength-workout-group-circuit .strength-workout-group-label{
+    color:var(--green);
+}
+
+.strength-workout-group-warmup .strength-workout-group-label{
+    color:var(--yellow);
+}
+
+.strength-workout-group-rounds{
+    color:var(--muted);
+    font-size:12px;
 }
 
 .strength-workout-exercise-header{
@@ -2401,9 +2507,29 @@
 }
 
 .strength-workout-exercise-title strong{
-    display:block;
+    display:flex;
+    align-items:center;
+    gap:8px;
     font-size:16px;
     margin-bottom:2px;
+}
+
+.strength-workout-exercise-complete{
+    border-left-color:var(--green);
+    opacity:.78;
+}
+
+.strength-workout-complete-check{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:var(--green);
+    color:#05130a;
+    font-size:11px;
+    font-weight:800;
 }
 
 .strength-workout-prev{

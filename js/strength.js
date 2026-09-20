@@ -31,6 +31,20 @@ let restEndsAt = 0;
 function uid() {
     return crypto.randomUUID();
 }
+
+const GROUP_TYPES = ["circuit", "superset", "warmup"];
+
+function normalizeGroupType(type) {
+    return GROUP_TYPES.includes(type) ? type : null;
+}
+
+function groupTypeLabel(type) {
+    return type === "circuit"
+        ? "Circuit"
+        : type === "warmup"
+            ? "Warmup"
+            : "Superset";
+}
 function loadCustomLibrary() {
     try {
         const raw =
@@ -263,12 +277,7 @@ function normalizeExercise(ex = {}) {
             Number(ex.restSeconds) || DEFAULT_REST,
         notes: ex.notes || "",
         groupId: ex.groupId || null,
-        groupType:
-            ex.groupType === "circuit"
-                ? "circuit"
-                : ex.groupType === "superset"
-                    ? "superset"
-                    : null,
+        groupType: normalizeGroupType(ex.groupType),
         sets: Array.isArray(ex.sets) && ex.sets.length
             ? ex.sets.map(set =>
                 normalizeSet(set, mode)
@@ -606,12 +615,8 @@ function renderExercise(exercise) {
 
     const groupBadge =
         exercise.groupId
-            ? `<span class="strength-group-badge">
-                ${
-                    exercise.groupType === "circuit"
-                        ? "Circuit"
-                        : "Superset"
-                }
+            ? `<span class="strength-group-badge strength-group-badge-${exercise.groupType || "superset"}">
+                ${groupTypeLabel(exercise.groupType)}
               </span>`
             : "";
 
@@ -884,18 +889,16 @@ function renderGrouped(day) {
 
                     <div>
                         <span class="strength-group-label">
-                            ${
-                                groupType === "circuit"
-                                    ? "Circuit"
-                                    : "Superset"
-                            }
+                            ${groupTypeLabel(groupType)}
                         </span>
 
                         <strong>
                             ${
                                 groupType === "circuit"
                                     ? "Move through each exercise for the selected rounds."
-                                    : "Perform each exercise back-to-back before resting."
+                                    : groupType === "warmup"
+                                        ? "A quick circuit to get warm before the session starts."
+                                        : "Perform each exercise back-to-back before resting."
                             }
                         </strong>
                     </div>
@@ -903,7 +906,7 @@ function renderGrouped(day) {
                     <div class="strength-group-actions">
 
                         ${
-                            groupType === "circuit"
+                            groupType === "circuit" || groupType === "warmup"
                                 ? `
                                     <label class="strength-rounds-control">
                                         Rounds
@@ -914,7 +917,7 @@ function renderGrouped(day) {
                                             value="${
                                                 Number(
                                                     day.groupRounds[groupId]
-                                                ) || 3
+                                                ) || (groupType === "warmup" ? 1 : 3)
                                             }"
                                             data-group-rounds="${groupId}"
                                         >
@@ -1023,6 +1026,14 @@ function renderDayContent() {
                     data-open-group="circuit"
                 >
                     + Circuit
+                </button>
+
+                <button
+                    type="button"
+                    class="strength-builder-btn"
+                    data-open-group="warmup"
+                >
+                    + Warmup
                 </button>
 
                 <button
@@ -1624,11 +1635,7 @@ function openGroupModal(
 
     if (title) {
         title.textContent =
-            `Create ${
-                type === "circuit"
-                    ? "Circuit"
-                    : "Superset"
-            }`;
+            `Create ${groupTypeLabel(type)}`;
     }
 
     list.innerHTML =
@@ -1650,12 +1657,7 @@ function openGroupModal(
                         <small>
                             ${
                                 exercise.groupId
-                                    ? (
-                                        exercise.groupType ===
-                                        "circuit"
-                                            ? "Already in circuit"
-                                            : "Already in superset"
-                                    )
+                                    ? `Already in ${groupTypeLabel(exercise.groupType).toLowerCase()}`
                                     : "Not grouped"
                             }
                         </small>
@@ -1757,13 +1759,10 @@ function createGroupFromModal() {
         day.groupRounds = {};
     }
 
-    if (
-        pendingGroupType ===
-        "circuit"
-    ) {
-        day.groupRounds[
-            groupId
-        ] = 3;
+    if (pendingGroupType === "circuit") {
+        day.groupRounds[groupId] = 3;
+    } else if (pendingGroupType === "warmup") {
+        day.groupRounds[groupId] = 1;
     }
 
     savePlan();
@@ -2399,6 +2398,11 @@ document.addEventListener(
             )
         ) {
             openGroupModal(
+                activeDay()?.exercises.find(
+                    ex =>
+                        ex.groupId ===
+                        target.dataset.addToGroup
+                )?.groupType ||
                 "superset"
             );
 
@@ -3039,10 +3043,7 @@ window.addEventListener(
                         groupId,
                         groupType:
                             groupId
-                                ? exercise.groupType ===
-                                  "circuit"
-                                    ? "circuit"
-                                    : "superset"
+                                ? normalizeGroupType(exercise.groupType) || "superset"
                                 : null,
                         sets:
                             Array.from(
@@ -3105,6 +3106,16 @@ window.addEventListener(
                         Number(
                             workout.rounds
                         ) || 3;
+                } else if (
+                    sourceExercise?.groupType ===
+                    "warmup"
+                ) {
+                    groupRounds[
+                        newGroupId
+                    ] =
+                        Number(
+                            workout.rounds
+                        ) || 1;
                 }
             }
         );

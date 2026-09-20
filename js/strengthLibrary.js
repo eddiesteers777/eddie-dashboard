@@ -637,7 +637,9 @@ function previewWorkout(id) {
                                                     ${
                                                         first.groupType === "circuit"
                                                             ? `Circuit`
-                                                            : `Superset`
+                                                            : first.groupType === "warmup"
+                                                                ? `Warmup`
+                                                                : `Superset`
                                                     }
                                                 </div>
                                             `

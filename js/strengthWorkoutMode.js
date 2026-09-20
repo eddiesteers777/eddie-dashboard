@@ -69,6 +69,10 @@ function getActiveDay() {
     return plan.days.find(d => d.id === activeDayId) || null;
 }
 
+function dayExists(dayId) {
+    return loadPlan().days.some(d => d.id === dayId);
+}
+
 function updatePlan(mutator) {
     const plan = loadPlan();
     const day = plan.days.find(d => d.id === activeDayId);
@@ -249,16 +253,20 @@ function formatPreviousSets(entry, isTime) {
 function renderExerciseBlock(exercise) {
     const isTime = exercise.mode === "time";
     const previous = getPreviousPerformance(exercise);
+    const allDone = exercise.sets.length > 0 && exercise.sets.every(set => set.done);
 
     return `
         <div
-            class="strength-workout-exercise"
+            class="strength-workout-exercise ${allDone ? "strength-workout-exercise-complete" : ""}"
             data-workout-exercise="${exercise.id}">
 
             <div class="strength-workout-exercise-header">
 
                 <div class="strength-workout-exercise-title">
-                    <strong>${escapeHtml(exercise.name)}</strong>
+                    <strong>
+                        ${escapeHtml(exercise.name)}
+                        ${allDone ? `<span class="strength-workout-complete-check">✓</span>` : ""}
+                    </strong>
                     <span class="strength-workout-prev">
                         ${previous
                             ? "Last time: " + escapeHtml(formatPreviousSets(previous, isTime))
@@ -357,6 +365,68 @@ function renderExercise(exercise) {
     }
 }
 
+function groupLabel(groupType) {
+    return groupType === "circuit"
+        ? "Circuit"
+        : groupType === "warmup"
+            ? "Warmup"
+            : "Superset";
+}
+
+// Renders exercises that share a groupId (built as a superset,
+// circuit, or warmup in the plan editor) as one connected card,
+// so a workout done as a circuit still looks like one during the
+// session instead of a string of unrelated exercise cards.
+function renderDayBody(day) {
+    const blocks = [];
+    let index = 0;
+
+    while (index < day.exercises.length) {
+        const first = day.exercises[index];
+
+        if (!first.groupId) {
+            blocks.push(renderExerciseBlock(first));
+            index++;
+            continue;
+        }
+
+        const groupId = first.groupId;
+        const groupType = first.groupType || "superset";
+        const members = [];
+
+        while (
+            index < day.exercises.length &&
+            day.exercises[index].groupId === groupId
+        ) {
+            members.push(day.exercises[index]);
+            index++;
+        }
+
+        const plannedRounds = Number(day.groupRounds?.[groupId]) || null;
+
+        blocks.push(`
+            <div
+                class="strength-workout-group strength-workout-group-${groupType}"
+                data-workout-group="${groupId}">
+
+                <div class="strength-workout-group-header">
+                    <span class="strength-workout-group-label">
+                        ${groupLabel(groupType)}
+                    </span>
+                    ${plannedRounds
+                        ? `<span class="strength-workout-group-rounds">${plannedRounds} round${plannedRounds === 1 ? "" : "s"} planned</span>`
+                        : ""}
+                </div>
+
+                ${members.map(renderExerciseBlock).join("")}
+
+            </div>
+        `);
+    }
+
+    return blocks.join("");
+}
+
 function renderBody() {
     const body = $("workoutModeBody");
     const nameEl = $("workoutModeDayName");
@@ -379,9 +449,7 @@ function renderBody() {
         return;
     }
 
-    body.innerHTML = day.exercises
-        .map(renderExerciseBlock)
-        .join("");
+    body.innerHTML = renderDayBody(day);
 }
 
 /* ==========================================
@@ -399,6 +467,7 @@ function openWorkoutMode(dayId) {
 
     overlay.classList.add("open");
     renderBody();
+    updateProgress();
     startTimer();
 
     const timerEl = $("workoutModeTimer");
@@ -416,22 +485,70 @@ function closeWorkoutMode() {
     activeDayId = null;
 }
 
+// Share of exercises with at least one set checked off -- a simple,
+// glanceable "how far into this workout am I" signal that doesn't
+// get thrown off by exercises having different numbers of sets.
+function computeProgress(day) {
+    if (!day.exercises.length) {
+        return 0;
+    }
+
+    const doneCount = day.exercises.filter(exercise =>
+        (exercise.sets || []).some(set => set.done)
+    ).length;
+
+    return Math.round((doneCount / day.exercises.length) * 100);
+}
+
+function updateProgress() {
+    const day = getActiveDay();
+    const fill = $("workoutModeProgressFill");
+
+    if (!day || !fill) {
+        return;
+    }
+
+    fill.style.width = `${computeProgress(day)}%`;
+}
+
 function meaningfulSetsFor(exercise) {
-    return (exercise.sets || []).filter(set =>
+    const sets = exercise.sets || [];
+
+    const withData = sets.filter(set =>
         exercise.mode === "time"
             ? Number(set.duration) > 0
             : Number(set.weight) > 0 || Number(set.reps) > 0
     );
+
+    if (withData.length) {
+        return withData;
+    }
+
+    // Warmup drills (band circuits, mobility work) often have
+    // nothing to log -- just a checkbox. Count them as done if
+    // they were checked off at all, so they still show up.
+    return exercise.groupType === "warmup"
+        ? sets.filter(set => set.done)
+        : withData;
 }
 
 function formatSetLine(set, isTime) {
     if (isTime) {
         const seconds = Number(set.duration) || 0;
+
+        if (!seconds) {
+            return "Done";
+        }
+
         return seconds >= 60 ? formatElapsed(seconds * 1000) : `${seconds} sec`;
     }
 
     const weight = Number(set.weight) || 0;
     const reps = Number(set.reps) || 0;
+
+    if (!weight && !reps) {
+        return "Done";
+    }
 
     return weight > 0 ? `${weight} lb × ${reps}` : `${reps} reps`;
 }
@@ -515,7 +632,7 @@ function buildWorkoutSummary(day, elapsedMs) {
             }
 
             const rounds = Math.max(...entries.map(entry => entry.rounds));
-            const label = group.groupType === "circuit" ? "Circuit" : "Superset";
+            const label = groupLabel(group.groupType);
 
             return [
                 `${label} — ${rounds} round${rounds === 1 ? "" : "s"}`,
@@ -689,6 +806,25 @@ window.addEventListener(
     }
 );
 
+// Lets a link from elsewhere (the dashboard's "Start Workout" card
+// for a scheduled session) open straight into Workout Mode instead
+// of just landing on the Strength page.
+(function openFromUrlParam() {
+    const url = new URL(window.location.href);
+    const dayId = url.searchParams.get("startWorkout");
+
+    if (!dayId) {
+        return;
+    }
+
+    url.searchParams.delete("startWorkout");
+    history.replaceState({}, "", url.toString());
+
+    if (dayExists(dayId)) {
+        openWorkoutMode(dayId);
+    }
+})();
+
 document.addEventListener("click", event => {
     const target = event.target;
 
@@ -713,11 +849,10 @@ document.addEventListener("click", event => {
 
             if (set) {
                 set.done = !set.done;
-                target.classList.toggle("checked", set.done);
-                target.closest(".strength-workout-set-row")
-                    ?.classList.toggle("done", set.done);
+                renderExercise(exercise);
             }
         });
+        updateProgress();
         return;
     }
 
@@ -732,6 +867,7 @@ document.addEventListener("click", event => {
                 renderExercise(exercise);
             }
         });
+        updateProgress();
         return;
     }
 
@@ -765,6 +901,7 @@ document.addEventListener("click", event => {
             );
         });
         renderBody();
+        updateProgress();
         return;
     }
 
