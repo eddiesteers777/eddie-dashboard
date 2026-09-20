@@ -24,6 +24,45 @@
 
 <body>
 
+    <div id="splashScreen" class="eos-splash">
+        <div class="eos-splash-glow" aria-hidden="true"></div>
+        <div class="eos-splash-mark">
+            <img src="icons/icon-512.png" alt="" class="eos-splash-logo">
+        </div>
+        <div class="eos-splash-wordmark">EddieOS</div>
+    </div>
+
+    <script>
+        // Runs synchronously, before first paint, so a repeat visit
+        // within the same session never even flashes the splash --
+        // it's removed before the browser has anything to show. A
+        // fresh session gets the full ~3s brand moment, then fades.
+        (function () {
+            var splash = document.getElementById("splashScreen");
+            if (!splash) return;
+
+            var alreadyShown = false;
+
+            try {
+                alreadyShown = !!sessionStorage.getItem("eddieos-splash-shown");
+                sessionStorage.setItem("eddieos-splash-shown", "1");
+            } catch (e) {
+                // Storage unavailable (private browsing, etc.) --
+                // fall through and just show the splash once here.
+            }
+
+            if (alreadyShown) {
+                splash.remove();
+                return;
+            }
+
+            setTimeout(function () {
+                splash.classList.add("eos-splash-hide");
+                setTimeout(function () { splash.remove(); }, 550);
+            }, 2500);
+        })();
+    </script>
+
     <div id="header"></div>
 
     <main class="container">

@@ -157,6 +157,59 @@ section{
 }
 
 /* ==========================================================
+   PAGE TRANSITIONS
+
+   This is a static multi-page site -- every nav tap or card
+   click is a real full-document navigation, not a client-side
+   route change. Cross-Document View Transitions turn that from
+   an instant white-flash reload into a soft animated handoff,
+   with zero JavaScript: the browser snapshots the outgoing page,
+   snapshots the incoming one once it's ready, and cross-fades
+   between them. It has to be opted into on every participating
+   page (source AND destination), which is why this lives in the
+   one stylesheet every page already loads rather than being
+   added per-page. Supported same-origin only, on Safari 18.2+
+   (iOS 18.2+) and Chromium 126+; unsupported browsers just get
+   today's instant navigation, no breakage either way.
+========================================================== */
+
+@view-transition{
+    navigation:auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root){
+    animation-duration:.36s;
+    /* Apple's own sheet-presentation curve -- an ease-out with a
+       flat landing, reads as calm rather than snappy/bouncy. */
+    animation-timing-function:cubic-bezier(.32,.72,0,1);
+}
+
+::view-transition-old(root){
+    animation-name:eos-page-out;
+}
+
+::view-transition-new(root){
+    animation-name:eos-page-in;
+}
+
+@keyframes eos-page-out{
+    from{ opacity:1; transform:scale(1); }
+    to{ opacity:0; transform:scale(.99); }
+}
+
+@keyframes eos-page-in{
+    from{ opacity:0; transform:scale(1.01); }
+    to{ opacity:1; transform:scale(1); }
+}
+
+@media (prefers-reduced-motion:reduce){
+    @view-transition{
+        navigation:none;
+    }
+}
+
+/* ==========================================================
    NAVIGATION
    Clean EddieOS dropdown header
 ========================================================== */
