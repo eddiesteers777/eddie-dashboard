@@ -2028,6 +2028,11 @@
     background:rgba(78,168,255,.05);
 }
 
+.strength-row-btn-danger:hover{
+    border-color:var(--red);
+    color:var(--red);
+}
+
 .strength-row-btn:hover{
     border-color:var(--primary);
     color:var(--primary);
@@ -2363,52 +2368,11 @@
     transition:width .35s ease;
 }
 
-.strength-workout-nav{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:16px;
-    padding:10px 20px;
-    border-bottom:1px solid var(--border);
-    background:var(--surface);
-}
-
-.strength-workout-nav-arrow{
-    width:36px;
-    height:36px;
-    border-radius:50%;
-    border:1px solid var(--border);
-    background:var(--surface-light);
-    color:var(--text);
-    font-size:18px;
-    font-weight:800;
-    cursor:pointer;
-    transition:.15s ease;
-}
-
-.strength-workout-nav-arrow:hover:not(:disabled){
-    border-color:var(--workout-accent);
-    color:var(--workout-accent);
-}
-
-.strength-workout-nav-arrow:disabled{
-    opacity:.3;
-    cursor:default;
-}
-
-.strength-workout-page-counter{
-    min-width:64px;
-    text-align:center;
-    font-family:var(--font-mono);
-    font-size:13px;
-    font-weight:700;
-    color:var(--text-secondary);
-    letter-spacing:.04em;
-}
-
 .strength-workout-day-name{
-    font-size:18px;
-    font-weight:800;
+    font-family:'Bebas Neue',var(--font-body);
+    font-size:26px;
+    font-weight:400;
+    letter-spacing:.03em;
 }
 
 .strength-workout-timer{
@@ -2459,29 +2423,14 @@
     color:#fca5a5;
 }
 
-/* One exercise (or one whole group) fills the screen at a time --
-   swipe or use the Prev/Next arrows to move on, instead of
-   scrolling past every other exercise in the day to get there. */
-
-.strength-workout-carousel{
+.strength-workout-body{
     flex:1;
-    display:flex;
-    overflow-x:auto;
-    overflow-y:hidden;
-    scroll-snap-type:x mandatory;
-    -webkit-overflow-scrolling:touch;
-}
-
-.strength-workout-page{
-    flex:0 0 100%;
-    max-width:100%;
-    scroll-snap-align:start;
     overflow-y:auto;
     overflow-x:hidden;
-    padding:18px 16px 40px;
+    padding:14px 16px 40px;
     display:flex;
     flex-direction:column;
-    gap:16px;
+    gap:10px;
 }
 
 .strength-workout-empty{
@@ -2497,8 +2446,8 @@
     border:1px solid var(--border);
     border-left:3px solid var(--primary);
     border-radius:16px;
-    padding:16px;
     box-shadow:0 8px 20px rgba(0,0,0,.16);
+    overflow:hidden;
 }
 
 /* Grouped (superset/circuit/warmup) card -- one connected unit
@@ -2560,50 +2509,101 @@
     font-size:12px;
 }
 
-.strength-workout-exercise-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:10px;
-    margin-bottom:12px;
-}
+/* Collapsed summary row -- always visible, tap to expand. This is
+   the whole point: a day's exercises stay glanceable as a list of
+   short rows instead of every exercise's full editor being open
+   and stacked on top of each other at once. */
 
-.strength-workout-exercise-title strong{
+.strength-workout-exercise-summary{
     display:flex;
     align-items:center;
-    gap:8px;
-    font-size:16px;
-    margin-bottom:2px;
+    gap:12px;
+    width:100%;
+    padding:13px 14px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+}
+
+.strength-workout-exercise-chevron{
+    flex-shrink:0;
+    display:flex;
+    color:var(--muted);
+    transition:transform .2s ease;
+}
+
+.strength-workout-exercise-chevron .strength-workout-icon{
+    width:16px;
+    height:16px;
+}
+
+.strength-workout-exercise.expanded .strength-workout-exercise-chevron{
+    transform:rotate(180deg);
+    color:var(--workout-accent, var(--primary));
+}
+
+.strength-workout-exercise-summary-text{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.strength-workout-exercise-summary-text strong{
+    font-size:15.5px;
+    font-weight:700;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.strength-workout-mini-sets{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--text-secondary);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.strength-workout-set-tally{
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:34px;
+    height:26px;
+    padding:0 8px;
+    border-radius:999px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+}
+
+.strength-workout-set-tally.complete{
+    background:var(--green);
+    color:#05130a;
 }
 
 .strength-workout-exercise-complete{
     border-left-color:var(--green);
-    opacity:.78;
 }
 
-.strength-workout-complete-check{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background:var(--green);
-    color:#05130a;
-    font-size:11px;
-    font-weight:800;
+.strength-workout-exercise-body{
+    padding:0 14px 14px;
 }
 
 .strength-workout-prev{
+    margin-bottom:10px;
     font-size:12px;
     color:var(--text-secondary);
     font-family:var(--font-mono);
-}
-
-.strength-workout-exercise-actions{
-    display:flex;
-    gap:6px;
-    flex-shrink:0;
 }
 
 /* Swap panel */
@@ -2660,6 +2660,56 @@
     display:flex;
     align-items:center;
     gap:4px;
+}
+
+/* Icons -- inline SVGs used throughout Workout Mode's controls
+   instead of plain ×/✓/−/+ text characters. Icon-only buttons get
+   a larger, centered icon; icons inline with button text get a
+   smaller one with a little breathing room. */
+
+.strength-workout-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:14px;
+    height:14px;
+    flex-shrink:0;
+}
+
+.strength-workout-icon svg{
+    display:block;
+    width:100%;
+    height:100%;
+}
+
+.strength-row-btn .strength-workout-icon{
+    width:11px;
+    height:11px;
+    margin-right:4px;
+    vertical-align:-1px;
+}
+
+.strength-workout-adjust button,
+.strength-workout-done-btn,
+.strength-workout-remove-set{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.strength-workout-adjust button .strength-workout-icon{
+    width:13px;
+    height:13px;
+}
+
+.strength-workout-done-btn .strength-workout-icon{
+    width:18px;
+    height:18px;
+}
+
+.strength-workout-remove-set .strength-workout-icon{
+    width:15px;
+    height:15px;
 }
 
 .strength-workout-adjust button{
@@ -2749,8 +2799,9 @@
 }
 
 .strength-workout-notes{
-    flex:1;
-    min-width:160px;
+    display:block;
+    width:100%;
+    margin-top:10px;
     background:var(--surface-light);
     border:1px solid var(--border);
     color:var(--text);

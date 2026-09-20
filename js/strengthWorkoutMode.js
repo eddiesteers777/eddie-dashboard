@@ -25,8 +25,7 @@ let timerInterval = null;
 let swappingExerciseId = null;
 let lastSwapResults = {};
 let swapDebounceTimer = null;
-let currentPageIndex = 0;
-let pageCount = 0;
+let expandedExerciseIds = new Set();
 
 function $(id) {
     return document.getElementById(id);
@@ -39,6 +38,27 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+/* ==========================================
+   Icons -- small inline SVGs instead of plain
+   ASCII symbols (×, ✓, −, +), so Workout Mode
+   doesn't look like it's using leftover text
+   characters for its controls.
+========================================== */
+
+const ICONS = {
+    chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
+    check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+    close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
+    plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+    minus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+    swap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>`,
+    scale: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 3 12l3.5 5.5M17.5 6.5 21 12l-3.5 5.5"></path><line x1="6.5" y1="6.5" x2="17.5" y2="6.5"></line><line x1="12" y1="6.5" x2="12" y2="19"></line><line x1="8" y1="19" x2="16" y2="19"></line></svg>`
+};
+
+function icon(name, extraClass = "") {
+    return `<span class="strength-workout-icon ${extraClass}">${ICONS[name] || ""}</span>`;
 }
 
 /* ==========================================
@@ -176,7 +196,7 @@ function renderSetRow(exercise, set, index) {
     const numberControls = isTime
         ? `
             <div class="strength-workout-adjust">
-                <button type="button" data-adjust="duration" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">−5s</button>
+                <button type="button" data-adjust="duration" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("minus")}</button>
                 <input
                     type="number"
                     class="strength-workout-input"
@@ -184,12 +204,12 @@ function renderSetRow(exercise, set, index) {
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
                     value="${set.duration}">
-                <button type="button" data-adjust="duration" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">+5s</button>
+                <button type="button" data-adjust="duration" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("plus")}</button>
             </div>
         `
         : `
             <div class="strength-workout-adjust">
-                <button type="button" data-adjust="weight" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">−5</button>
+                <button type="button" data-adjust="weight" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("minus")}</button>
                 <input
                     type="number"
                     class="strength-workout-input"
@@ -197,11 +217,11 @@ function renderSetRow(exercise, set, index) {
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
                     value="${set.weight}">
-                <button type="button" data-adjust="weight" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">+5</button>
+                <button type="button" data-adjust="weight" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("plus")}</button>
             </div>
 
             <div class="strength-workout-adjust strength-workout-adjust-reps">
-                <button type="button" data-adjust="reps" data-delta="-1" data-set-id="${set.id}" data-exercise-id="${exercise.id}">−1</button>
+                <button type="button" data-adjust="reps" data-delta="-1" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("minus")}</button>
                 <input
                     type="number"
                     class="strength-workout-input strength-workout-input-small"
@@ -209,7 +229,7 @@ function renderSetRow(exercise, set, index) {
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
                     value="${set.reps}">
-                <button type="button" data-adjust="reps" data-delta="1" data-set-id="${set.id}" data-exercise-id="${exercise.id}">+1</button>
+                <button type="button" data-adjust="reps" data-delta="1" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("plus")}</button>
             </div>
         `;
 
@@ -228,7 +248,7 @@ function renderSetRow(exercise, set, index) {
                 data-toggle-workout-set="${set.id}"
                 data-exercise-id="${exercise.id}"
                 title="Mark set complete">
-                ✓
+                ${icon("check")}
             </button>
 
             <button
@@ -237,7 +257,7 @@ function renderSetRow(exercise, set, index) {
                 data-remove-workout-set="${set.id}"
                 data-exercise-id="${exercise.id}"
                 title="Remove set">
-                ×
+                ${icon("close")}
             </button>
 
         </div>
@@ -250,92 +270,115 @@ function formatPreviousSets(entry, isTime) {
         .join(", ");
 }
 
+// Collapsed by default -- just a name, a one-line summary of what's
+// logged, and a done tally -- so a whole day's exercises fit on
+// screen at once. Tapping the summary row expands it in place to
+// reveal the full set editor, notes, and add-set/swap/remove.
 function renderExerciseBlock(exercise) {
     const isTime = exercise.mode === "time";
     const previous = getPreviousPerformance(exercise);
-    const allDone = exercise.sets.length > 0 && exercise.sets.every(set => set.done);
+    const doneCount = exercise.sets.filter(set => set.done).length;
+    const totalCount = exercise.sets.length;
+    const allDone = totalCount > 0 && doneCount === totalCount;
+    const expanded = expandedExerciseIds.has(exercise.id);
+    const currentSummary = totalCount
+        ? formatPreviousSets({ sets: exercise.sets }, isTime)
+        : "No sets yet";
 
     return `
         <div
-            class="strength-workout-exercise ${allDone ? "strength-workout-exercise-complete" : ""}"
+            class="strength-workout-exercise ${allDone ? "strength-workout-exercise-complete" : ""} ${expanded ? "expanded" : ""}"
             data-workout-exercise="${exercise.id}">
 
-            <div class="strength-workout-exercise-header">
+            <button
+                type="button"
+                class="strength-workout-exercise-summary"
+                data-toggle-exercise="${exercise.id}">
 
-                <div class="strength-workout-exercise-title">
-                    <strong>
-                        ${escapeHtml(exercise.name)}
-                        ${allDone ? `<span class="strength-workout-complete-check">✓</span>` : ""}
-                    </strong>
-                    <span class="strength-workout-prev">
-                        ${previous
-                            ? "Last time: " + escapeHtml(formatPreviousSets(previous, isTime))
-                            : "No previous session logged yet"}
-                    </span>
+                <span class="strength-workout-exercise-chevron">${icon("chevron")}</span>
+
+                <span class="strength-workout-exercise-summary-text">
+                    <strong>${escapeHtml(exercise.name)}</strong>
+                    <span class="strength-workout-mini-sets">${escapeHtml(currentSummary)}</span>
+                </span>
+
+                <span class="strength-workout-set-tally ${allDone ? "complete" : ""}">
+                    ${allDone ? icon("check") : `${doneCount}/${totalCount}`}
+                </span>
+
+            </button>
+
+            <div
+                class="strength-workout-exercise-body"
+                style="display:${expanded ? "block" : "none"}">
+
+                <div class="strength-workout-prev">
+                    ${previous
+                        ? "Last time: " + escapeHtml(formatPreviousSets(previous, isTime))
+                        : "No previous session logged yet"}
                 </div>
 
-                <div class="strength-workout-exercise-actions">
+                <div
+                    class="strength-workout-swap-panel"
+                    id="swapPanel-${exercise.id}"
+                    style="display:${swappingExerciseId === exercise.id ? "block" : "none"}">
+
+                    <input
+                        type="text"
+                        class="strength-workout-input strength-workout-swap-input"
+                        data-swap-input="${exercise.id}"
+                        placeholder="Search a replacement exercise...">
+
+                    <div
+                        class="strength-workout-swap-results"
+                        id="swapResults-${exercise.id}"></div>
+
+                    <button
+                        type="button"
+                        class="strength-row-btn"
+                        data-cancel-swap="${exercise.id}">
+                        Cancel
+                    </button>
+
+                </div>
+
+                <div class="strength-workout-sets">
+                    ${exercise.sets.map((set, i) => renderSetRow(exercise, set, i)).join("")}
+                </div>
+
+                <div class="strength-workout-exercise-footer">
+
+                    <button
+                        type="button"
+                        class="strength-row-btn"
+                        data-workout-add-set="${exercise.id}">
+                        ${icon("plus")} Add Set
+                    </button>
+
+                    ${!isTime ? `
+                        <button
+                            type="button"
+                            class="strength-row-btn"
+                            data-toggle-plates="${exercise.id}">
+                            ${icon("scale")} Plates
+                        </button>
+                    ` : ""}
+
                     <button
                         type="button"
                         class="strength-row-btn"
                         data-swap-exercise="${exercise.id}">
-                        Swap
+                        ${icon("swap")} Swap
                     </button>
+
                     <button
                         type="button"
-                        class="strength-row-btn"
+                        class="strength-row-btn strength-row-btn-danger"
                         data-remove-workout-exercise="${exercise.id}">
-                        Remove
+                        ${icon("close")} Remove
                     </button>
+
                 </div>
-
-            </div>
-
-            <div
-                class="strength-workout-swap-panel"
-                id="swapPanel-${exercise.id}"
-                style="display:${swappingExerciseId === exercise.id ? "block" : "none"}">
-
-                <input
-                    type="text"
-                    class="strength-workout-input strength-workout-swap-input"
-                    data-swap-input="${exercise.id}"
-                    placeholder="Search a replacement exercise...">
-
-                <div
-                    class="strength-workout-swap-results"
-                    id="swapResults-${exercise.id}"></div>
-
-                <button
-                    type="button"
-                    class="strength-row-btn"
-                    data-cancel-swap="${exercise.id}">
-                    Cancel
-                </button>
-
-            </div>
-
-            <div class="strength-workout-sets">
-                ${exercise.sets.map((set, i) => renderSetRow(exercise, set, i)).join("")}
-            </div>
-
-            <div class="strength-workout-exercise-footer">
-
-                <button
-                    type="button"
-                    class="strength-row-btn"
-                    data-workout-add-set="${exercise.id}">
-                    + Add Set
-                </button>
-
-                ${!isTime ? `
-                    <button
-                        type="button"
-                        class="strength-row-btn"
-                        data-toggle-plates="${exercise.id}">
-                        Plates
-                    </button>
-                ` : ""}
 
                 <input
                     type="text"
@@ -344,12 +387,12 @@ function renderExerciseBlock(exercise) {
                     placeholder="Notes (felt strong, knee twinge, etc.)"
                     value="${escapeHtml(exercise.notes || "")}">
 
-            </div>
+                <div
+                    class="strength-plate-calc"
+                    id="plateCalc-${exercise.id}"
+                    style="display:none"></div>
 
-            <div
-                class="strength-plate-calc"
-                id="plateCalc-${exercise.id}"
-                style="display:none"></div>
+            </div>
 
         </div>
     `;
@@ -375,18 +418,19 @@ function groupLabel(groupType) {
 
 // Groups exercises that share a groupId (built as a superset,
 // circuit, or warmup in the plan editor) into one connected card,
-// so a workout done as a circuit still looks like one page during
-// the session instead of a string of unrelated exercise cards.
-// Returns one HTML string per PAGE (an exercise, or a whole group).
-function renderDayPages(day) {
-    const pages = [];
+// so a workout done as a circuit still looks like one unit instead
+// of a string of unrelated exercise cards. Each exercise inside
+// renders collapsed by default (see renderExerciseBlock), so a
+// whole day's worth fits on screen without much scrolling.
+function renderDayBody(day) {
+    const blocks = [];
     let index = 0;
 
     while (index < day.exercises.length) {
         const first = day.exercises[index];
 
         if (!first.groupId) {
-            pages.push(renderExerciseBlock(first));
+            blocks.push(renderExerciseBlock(first));
             index++;
             continue;
         }
@@ -405,7 +449,7 @@ function renderDayPages(day) {
 
         const plannedRounds = Number(day.groupRounds?.[groupId]) || null;
 
-        pages.push(`
+        blocks.push(`
             <div
                 class="strength-workout-group strength-workout-group-${groupType}"
                 data-workout-group="${groupId}">
@@ -425,7 +469,7 @@ function renderDayPages(day) {
         `);
     }
 
-    return pages;
+    return blocks.join("");
 }
 
 function renderBody() {
@@ -447,88 +491,10 @@ function renderBody() {
                 This day has no exercises yet.
             </div>
         `;
-        pageCount = 0;
-        updatePageNav();
         return;
     }
 
-    const pages = renderDayPages(day);
-    pageCount = pages.length;
-
-    body.innerHTML = pages
-        .map((html, i) => `<div class="strength-workout-page" data-page-index="${i}">${html}</div>`)
-        .join("");
-
-    currentPageIndex = Math.min(currentPageIndex, pageCount - 1);
-    updatePageNav();
-}
-
-// One exercise/group per screen, swiped or paged between, instead
-// of a single long vertical list you have to scroll through.
-function goToPage(index, smooth = true) {
-    const carousel = $("workoutModeBody");
-
-    if (!carousel || !pageCount) {
-        return;
-    }
-
-    currentPageIndex = Math.max(0, Math.min(index, pageCount - 1));
-
-    carousel.scrollTo({
-        left: currentPageIndex * carousel.clientWidth,
-        behavior: smooth ? "smooth" : "instant"
-    });
-
-    updatePageNav();
-}
-
-function updatePageNav() {
-    const counter = $("workoutModePageCounter");
-    const prevBtn = $("workoutModePrev");
-    const nextBtn = $("workoutModeNext");
-
-    if (counter) {
-        counter.textContent = pageCount
-            ? `${currentPageIndex + 1} / ${pageCount}`
-            : "0 / 0";
-    }
-
-    if (prevBtn) {
-        prevBtn.disabled = currentPageIndex <= 0;
-    }
-
-    if (nextBtn) {
-        nextBtn.disabled = currentPageIndex >= pageCount - 1;
-    }
-}
-
-// Keeps the counter/arrows in sync when the user swipes the
-// carousel directly instead of tapping Prev/Next.
-let scrollSyncQueued = false;
-
-function onCarouselScroll() {
-    if (scrollSyncQueued) {
-        return;
-    }
-
-    scrollSyncQueued = true;
-
-    requestAnimationFrame(() => {
-        scrollSyncQueued = false;
-
-        const carousel = $("workoutModeBody");
-
-        if (!carousel || !pageCount || !carousel.clientWidth) {
-            return;
-        }
-
-        const index = Math.round(carousel.scrollLeft / carousel.clientWidth);
-
-        if (index !== currentPageIndex) {
-            currentPageIndex = Math.max(0, Math.min(index, pageCount - 1));
-            updatePageNav();
-        }
-    });
+    body.innerHTML = renderDayBody(day);
 }
 
 /* ==========================================
@@ -537,7 +503,7 @@ function onCarouselScroll() {
 
 function openWorkoutMode(dayId) {
     activeDayId = dayId;
-    currentPageIndex = 0;
+    expandedExerciseIds = new Set();
 
     const overlay = $("strengthWorkoutOverlay");
 
@@ -547,7 +513,6 @@ function openWorkoutMode(dayId) {
 
     overlay.classList.add("open");
     renderBody();
-    goToPage(0, false);
     updateProgress();
     startTimer();
 
@@ -876,16 +841,6 @@ function applySwap(exerciseId, picked) {
    Event wiring
 ========================================== */
 
-$("workoutModeBody")?.addEventListener("scroll", onCarouselScroll);
-
-// Re-align to the current page after a viewport resize (rotation,
-// on-screen keyboard) since scroll position is computed from width.
-window.addEventListener("resize", () => {
-    if ($("strengthWorkoutOverlay")?.classList.contains("open")) {
-        goToPage(currentPageIndex, false);
-    }
-});
-
 window.addEventListener(
     "eddieos:strength-start-workout",
     event => {
@@ -933,13 +888,22 @@ document.addEventListener("click", event => {
         return;
     }
 
-    if (target.matches("#workoutModePrev")) {
-        goToPage(currentPageIndex - 1);
-        return;
-    }
+    if (target.closest("[data-toggle-exercise]")) {
+        const exerciseId = target.closest("[data-toggle-exercise]").dataset.toggleExercise;
 
-    if (target.matches("#workoutModeNext")) {
-        goToPage(currentPageIndex + 1);
+        if (expandedExerciseIds.has(exerciseId)) {
+            expandedExerciseIds.delete(exerciseId);
+        } else {
+            expandedExerciseIds.add(exerciseId);
+        }
+
+        const day = getActiveDay();
+        const exercise = day && findExercise(day, exerciseId);
+
+        if (exercise) {
+            renderExercise(exercise);
+        }
+
         return;
     }
 
@@ -1002,7 +966,6 @@ document.addEventListener("click", event => {
             );
         });
         renderBody();
-        goToPage(currentPageIndex, false);
         updateProgress();
         return;
     }
