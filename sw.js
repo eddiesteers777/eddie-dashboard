@@ -8,16 +8,28 @@
 
    Strategy:
    - Same-origin requests (this site's own HTML,
-     CSS, JS): cache-first, but always kick off a
-     network fetch in the background to refresh
-     the cache for next time (stale-while-revalidate).
+     CSS, JS): network-first, falling back to the
+     cache only when the network fetch fails (i.e.
+     actually offline). This was cache-first with a
+     background refresh (stale-while-revalidate)
+     until it caused real bugs: a page could keep
+     serving yesterday's cached CSS/JS indefinitely
+     whenever the background refetch hadn't
+     happened to run yet, even though the live site
+     had long since moved on. Network-first trades
+     a normally-imperceptible round trip for never
+     showing stale UI while online.
    - Cross-origin requests (Firebase, COROS,
      jsDelivr, Google Fonts, etc.): never touched
      at all -- always go straight to the network,
      exactly as if this service worker didn't exist.
+
+   Bump CACHE_NAME whenever CORE_ASSETS changes, so
+   the old cache (and whatever it has stale) gets
+   dropped on activate instead of lingering.
 ========================================== */
 
-const CACHE_NAME = "eddieos-shell-v1";
+const CACHE_NAME = "eddieos-shell-v2";
 
 const CORE_ASSETS = [
     "index.html",
@@ -71,25 +83,20 @@ self.addEventListener("fetch", event => {
     }
 
     event.respondWith(
-        caches.open(CACHE_NAME).then(async cache => {
-            const cached = await cache.match(request);
-
-            const networkFetch = fetch(request)
-                .then(response => {
-                    if (response && response.ok) {
-                        cache.put(request, response.clone());
-                    }
-                    return response;
-                })
-                .catch(() => null);
-
-            // Serve from cache immediately if we have it, refreshing
-            // in the background; otherwise wait on the network.
-            return cached || (await networkFetch) || new Response(
-                "Offline and this page hasn't been cached yet.",
-                { status: 503, headers: { "Content-Type": "text/plain" } }
-            );
-        })
+        fetch(request)
+            .then(response => {
+                if (response && response.ok) {
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone()));
+                }
+                return response;
+            })
+            .catch(async () => {
+                const cached = await caches.match(request);
+                return cached || new Response(
+                    "Offline and this page hasn't been cached yet.",
+                    { status: 503, headers: { "Content-Type": "text/plain" } }
+                );
+            })
     );
 
 });
