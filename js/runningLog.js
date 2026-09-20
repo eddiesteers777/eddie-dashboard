@@ -342,3 +342,22 @@ window.addEventListener("eddieos:running-add-run-for-date", event => {
     const dateStr = event.detail?.date;
     openRunModal(dateStr ? { date: dateStr } : null);
 });
+
+/**
+ * The mobile header's "+" quick-add menu links here with
+ * ?addRun=1 so tapping "Add a Run" from anywhere on the site opens
+ * straight into this modal instead of just landing on the page.
+ */
+(function openFromUrlParam() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("addRun") === "1") {
+        openRunModal();
+
+        // Strip the param so a later refresh of this same page
+        // doesn't reopen the modal every time.
+        params.delete("addRun");
+        const query = params.toString();
+        history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
+    }
+})();

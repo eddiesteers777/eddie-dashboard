@@ -535,42 +535,12 @@ section{
 ========================================================== */
 
 @media (max-width:900px){
-    .navbar{
-        flex-direction:row;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-        padding:12px 16px;
-        margin:14px auto;
-        position:sticky;
-        top:0;
-        z-index:1200;
-    }
-
-    .nav-left{
-        flex-direction:row;
-        align-items:center;
-        gap:10px;
-        min-width:0;
-    }
-
-    .eos-navbar .eos-nav-links{
+    /* The desktop dropdown navbar is fully replaced on mobile by
+       .eos-mobile-topbar below -- not just restyled, since account/
+       sync controls moved to the More page and the remaining three
+       actions (quick add, logo, search) don't fit that structure. */
+    .eos-navbar{
         display:none;
-    }
-
-    .nav-right{
-        justify-content:flex-end;
-        gap:6px;
-    }
-
-    .sync-status-btn #syncStatusText{
-        display:none;
-    }
-
-    .sync-status-btn{
-        min-width:40px;
-        padding:0;
-        justify-content:center;
     }
 
     body{
@@ -584,6 +554,225 @@ section{
     .grid.eos-dashboard-grid{
         display:none;
     }
+}
+
+.eos-mobile-topbar,
+.eos-search-overlay{
+    display:none;
+}
+
+@media (max-width:900px){
+
+    .eos-mobile-topbar{
+        display:grid;
+        grid-template-columns:44px 1fr 44px;
+        align-items:center;
+        width:min(1450px,94%);
+        margin:14px auto;
+        position:sticky;
+        top:0;
+        z-index:1200;
+        padding:10px 14px;
+        background:rgba(16,28,45,.82);
+        backdrop-filter:blur(18px);
+        -webkit-backdrop-filter:blur(18px);
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:22px;
+        box-shadow:0 15px 45px rgba(0,0,0,.28);
+    }
+
+    .eos-mobile-icon-btn{
+        width:40px;
+        height:40px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:1px solid rgba(255,255,255,.14);
+        border-radius:50%;
+        background:rgba(255,255,255,.05);
+        color:var(--text);
+        cursor:pointer;
+        transition:background-color .15s ease,border-color .15s ease;
+    }
+
+    .eos-mobile-icon-btn:active{
+        background:rgba(78,168,255,.16);
+        border-color:var(--primary);
+    }
+
+    .eos-mobile-quickadd{
+        position:relative;
+        justify-self:start;
+    }
+
+    .eos-mobile-topbar-logo{
+        justify-self:center;
+        display:flex;
+        align-items:center;
+        gap:9px;
+        color:white;
+        text-decoration:none;
+        font-size:1.15rem;
+        font-weight:800;
+        white-space:nowrap;
+    }
+
+    .eos-mobile-topbar-logo .logo-dot{
+        width:26px;
+        height:26px;
+        flex:0 0 26px;
+        border-radius:8px;
+    }
+
+    #mobileSearchBtn{
+        justify-self:end;
+    }
+
+    .eos-mobile-quickadd-menu{
+        position:absolute;
+        top:calc(100% + 10px);
+        left:0;
+        z-index:1250;
+        min-width:200px;
+        padding:6px;
+        background:#172235;
+        border:1px solid rgba(255,255,255,.10);
+        border-radius:14px;
+        box-shadow:0 18px 42px rgba(0,0,0,.38);
+        opacity:0;
+        visibility:hidden;
+        transform:translateY(-6px);
+        pointer-events:none;
+        transition:opacity .16s ease,transform .16s ease,visibility .16s;
+    }
+
+    .eos-mobile-quickadd.open .eos-mobile-quickadd-menu{
+        opacity:1;
+        visibility:visible;
+        transform:translateY(0);
+        pointer-events:auto;
+    }
+
+    .eos-mobile-quickadd-link{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:11px 12px;
+        border-radius:9px;
+        color:#D5DEEA;
+        font-size:.92rem;
+        font-weight:650;
+        text-decoration:none;
+        white-space:nowrap;
+    }
+
+    .eos-mobile-quickadd-link:active{
+        background:rgba(78,168,255,.13);
+        color:#fff;
+    }
+
+    .eos-search-overlay{
+        display:flex;
+        flex-direction:column;
+        position:fixed;
+        inset:0;
+        z-index:4000;
+        padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+        background:var(--bg);
+        opacity:0;
+        visibility:hidden;
+        transform:translateY(-8px);
+        transition:opacity .2s ease,transform .2s ease,visibility .2s;
+    }
+
+    .eos-search-overlay.open{
+        opacity:1;
+        visibility:visible;
+        transform:translateY(0);
+    }
+
+    .eos-search-bar{
+        flex:0 0 auto;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:12px 14px;
+        margin-top:env(safe-area-inset-top);
+        background:var(--surface);
+        border:1px solid var(--border);
+        border-radius:14px;
+    }
+
+    .eos-search-bar-icon{
+        flex-shrink:0;
+        color:var(--muted);
+    }
+
+    .eos-search-input{
+        flex:1;
+        min-width:0;
+        background:none;
+        border:none;
+        outline:none;
+        color:var(--text);
+        font-size:16px;
+        font-family:inherit;
+    }
+
+    .eos-search-input::placeholder{
+        color:var(--muted);
+    }
+
+    .eos-search-close{
+        flex-shrink:0;
+        width:30px;
+        height:30px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:none;
+        border-radius:50%;
+        background:rgba(255,255,255,.06);
+        color:var(--text-secondary);
+        cursor:pointer;
+    }
+
+    .eos-search-results{
+        flex:1;
+        overflow-y:auto;
+        margin-top:14px;
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+    }
+
+    .eos-search-result{
+        display:flex;
+        align-items:center;
+        gap:14px;
+        padding:14px 12px;
+        border-radius:12px;
+        color:var(--text);
+        text-decoration:none;
+        font-size:15px;
+        font-weight:650;
+    }
+
+    .eos-search-result:active{
+        background:var(--surface-light);
+    }
+
+    .eos-search-result .ui-icon{
+        color:var(--primary);
+        flex-shrink:0;
+    }
+
+    .eos-search-empty{
+        padding:14px 12px;
+        color:var(--muted);
+        font-size:14px;
+    }
+
 }
 
 .eos-bottomnav{

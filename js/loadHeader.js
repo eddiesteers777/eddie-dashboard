@@ -45,6 +45,36 @@ const SUBNAV_GROUPS = {
     ]
 };
 
+// Destinations the mobile search overlay can jump to -- a quick-jump
+// list of real pages, not a search over logged content (runs, meals,
+// etc.). Simple on purpose; can grow into real content search later.
+const SEARCH_DESTINATIONS = [
+    { label: "Today", href: "index.html", icon: "home" },
+    { label: "Running", href: "running.html", icon: "activity" },
+    { label: "Strength", href: "strength.html", icon: "dumbbell" },
+    { label: "Cross-Training", href: "cross-training.html", icon: "bike" },
+    { label: "Habits", href: "habits.html", icon: "checkCircle" },
+    { label: "Nutrition", href: "nutrition.html", icon: "apple" },
+    { label: "Fueling", href: "fueling.html", icon: "fuel" },
+    { label: "Marathon Plan", href: "marathon.html", icon: "activity" },
+    { label: "75-Day Challenge", href: "75day.html", icon: "flame" },
+    { label: "Analytics", href: "analytics.html", icon: "trendingUp" },
+    { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard" },
+    { label: "Gear", href: "gear.html", icon: "footprint" },
+    { label: "Planner", href: "planner.html", icon: "calendar" },
+    { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer" },
+    { label: "Settings", href: "settings.html", icon: "user" },
+    { label: "More", href: "more.html", icon: "grid" }
+];
+
+function escapeForHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+}
+
 fetch("components/header.html")
     .then(response => response.text())
     .then(async (data) => {
@@ -83,6 +113,121 @@ fetch("components/header.html")
                 </div>
             `);
         }
+
+        // ---- Mobile quick-add (+) menu ----
+
+        const quickAddWrap = document.querySelector(".eos-mobile-quickadd");
+        const quickAddBtn = document.getElementById("quickAddBtn");
+        const quickAddWorkoutLink = document.getElementById("quickAddWorkoutLink");
+
+        function closeQuickAdd() {
+            quickAddWrap?.classList.remove("open");
+            quickAddBtn?.setAttribute("aria-expanded", "false");
+        }
+
+        if (quickAddWrap && quickAddBtn) {
+
+            // Point "Start a Workout" at today's actual scheduled
+            // workout when there is one, same lookup the dashboard's
+            // own Today card uses -- falls back to plain
+            // strength.html (its default href) otherwise.
+            try {
+                const today = new Date();
+                const scheduleKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+                const schedule = JSON.parse(localStorage.getItem("strength-schedule") || "null");
+                const plan = JSON.parse(localStorage.getItem("strength-plan") || "null");
+                const planDayIds = new Set((plan?.days || []).map(day => day.id));
+
+                const todayItem = (schedule?.items || []).find(
+                    item => item.date === scheduleKey && !item.completed
+                );
+
+                const dayId = todayItem?.workoutId?.startsWith("plan-")
+                    ? todayItem.workoutId.slice(5)
+                    : null;
+
+                if (dayId && planDayIds.has(dayId) && quickAddWorkoutLink) {
+                    quickAddWorkoutLink.href = `strength.html?startWorkout=${dayId}`;
+                }
+            } catch {
+                // No schedule data -- link already defaults to strength.html.
+            }
+
+            quickAddBtn.addEventListener("click", event => {
+                event.stopPropagation();
+                const isOpen = quickAddWrap.classList.toggle("open");
+                quickAddBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            });
+
+            quickAddWrap.querySelectorAll(".eos-mobile-quickadd-link").forEach(link => {
+                link.addEventListener("click", closeQuickAdd);
+            });
+
+            document.addEventListener("click", event => {
+                if (!event.target.closest(".eos-mobile-quickadd")) {
+                    closeQuickAdd();
+                }
+            });
+
+        }
+
+        // ---- Mobile search overlay ----
+
+        const searchBtn = document.getElementById("mobileSearchBtn");
+        const searchOverlay = document.getElementById("searchOverlay");
+        const searchInput = document.getElementById("searchInput");
+        const searchResults = document.getElementById("searchResults");
+        const searchCloseBtn = document.getElementById("searchCloseBtn");
+
+        function renderSearchResults(query) {
+            if (!searchResults) return;
+
+            const q = query.trim().toLowerCase();
+            const matches = q
+                ? SEARCH_DESTINATIONS.filter(d => d.label.toLowerCase().includes(q))
+                : SEARCH_DESTINATIONS;
+
+            searchResults.innerHTML = matches.length
+                ? matches.map(d => `
+                    <a href="${d.href}" class="eos-search-result">
+                        ${icon(d.icon)} <span>${escapeForHtml(d.label)}</span>
+                    </a>
+                `).join("")
+                : `<div class="eos-search-empty">No matches for "${escapeForHtml(query)}"</div>`;
+        }
+
+        function openSearch() {
+            if (!searchOverlay) return;
+            renderSearchResults("");
+            searchOverlay.classList.add("open");
+            searchInput?.focus();
+        }
+
+        function closeSearch() {
+            if (!searchOverlay) return;
+            searchOverlay.classList.remove("open");
+            if (searchInput) searchInput.value = "";
+        }
+
+        if (searchBtn && searchOverlay) {
+
+            searchBtn.addEventListener("click", openSearch);
+            searchCloseBtn?.addEventListener("click", closeSearch);
+            searchInput?.addEventListener("input", () => renderSearchResults(searchInput.value));
+
+            searchInput?.addEventListener("keydown", event => {
+                if (event.key === "Enter") {
+                    searchResults?.querySelector(".eos-search-result")?.click();
+                }
+            });
+
+        }
+
+        document.addEventListener("keydown", event => {
+            if (event.key !== "Escape") return;
+            closeQuickAdd();
+            if (searchOverlay?.classList.contains("open")) closeSearch();
+        });
 
         document.querySelectorAll(".nav-links a").forEach(link => {
 

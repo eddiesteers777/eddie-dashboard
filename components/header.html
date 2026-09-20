@@ -91,3 +91,67 @@
         </button>
     </div>
 </nav>
+
+<!-- Mobile-only app-shell top bar: + quick add, centered logo,
+     search. Shown in place of the dropdown navbar above below the
+     app-shell breakpoint (see MOBILE APP SHELL in style.css). -->
+<nav class="eos-mobile-topbar" id="eosMobileTopbar">
+
+    <div class="eos-mobile-quickadd">
+
+        <button
+            type="button"
+            class="eos-mobile-icon-btn"
+            id="quickAddBtn"
+            aria-label="Quick add"
+            aria-haspopup="true"
+            aria-expanded="false">
+            <span data-icon="plus"></span>
+        </button>
+
+        <div class="eos-mobile-quickadd-menu" id="quickAddMenu">
+            <a href="strength.html" class="eos-mobile-quickadd-link" id="quickAddWorkoutLink">
+                <span data-icon="dumbbell"></span> Start a Workout
+            </a>
+            <a href="running.html?addRun=1" class="eos-mobile-quickadd-link">
+                <span data-icon="footprint"></span> Add a Run
+            </a>
+        </div>
+
+    </div>
+
+    <a href="index.html" class="eos-mobile-topbar-logo">
+        <div class="logo-dot" aria-hidden="true"></div>
+        <span>EddieOS</span>
+    </a>
+
+    <button
+        type="button"
+        class="eos-mobile-icon-btn"
+        id="mobileSearchBtn"
+        aria-label="Search EddieOS">
+        <span data-icon="search"></span>
+    </button>
+
+</nav>
+
+<div class="eos-search-overlay" id="searchOverlay">
+
+    <div class="eos-search-bar">
+        <span class="eos-search-bar-icon" data-icon="search"></span>
+        <input
+            type="text"
+            id="searchInput"
+            class="eos-search-input"
+            placeholder="Search EddieOS…"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false">
+        <button type="button" class="eos-search-close" id="searchCloseBtn" aria-label="Close search">
+            <span data-icon="close"></span>
+        </button>
+    </div>
+
+    <div class="eos-search-results" id="searchResults"></div>
+
+</div>

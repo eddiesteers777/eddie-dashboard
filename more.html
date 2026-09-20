@@ -14,6 +14,70 @@
     <meta name="theme-color" content="#0F172A">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
+    <style>
+        /* Account/sync live here on mobile since the desktop navbar
+           (where they normally show) is hidden below the app-shell
+           breakpoint -- More is the natural place for them to land. */
+        .eos-more-account{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            background:var(--surface);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            padding:18px 20px;
+            margin-bottom:24px;
+        }
+        .eos-more-account-info{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex:1;
+            min-width:0;
+        }
+        .eos-more-account-avatar{
+            flex-shrink:0;
+            width:42px;
+            height:42px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:var(--primary);
+            color:#05131f;
+            font-weight:800;
+            font-size:16px;
+        }
+        .eos-more-account-info div{
+            min-width:0;
+            display:flex;
+            flex-direction:column;
+            gap:2px;
+        }
+        .eos-more-account-info strong{
+            font-size:15px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+        .eos-more-account-info span{
+            font-size:12.5px;
+            color:var(--text-secondary);
+        }
+        .eos-more-account-btn{
+            flex-shrink:0;
+            padding:10px 16px;
+            border:none;
+            border-radius:11px;
+            background:var(--primary);
+            color:white;
+            font-weight:650;
+            font-size:13.5px;
+            cursor:pointer;
+            white-space:nowrap;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -32,6 +96,18 @@
                 </p>
             </div>
 
+        </section>
+
+        <section class="eos-more-account">
+            <div class="eos-more-account-info">
+                <div class="eos-more-account-avatar" id="moreAvatar">?</div>
+                <div>
+                    <strong id="moreUserName">Guest</strong>
+                    <span id="moreSyncStatus">Not signed in</span>
+                </div>
+            </div>
+            <button type="button" id="moreLoginBtn" class="eos-more-account-btn">Sign In</button>
+            <button type="button" id="moreLogoutBtn" class="eos-more-account-btn" style="display:none;">Sign Out</button>
         </section>
 
         <section class="grid">
@@ -91,6 +167,82 @@
     <script src="js/loadHeader.js"></script>
 
     <script type="module" src="js/icons.js"></script>
+
+    <script type="module">
+        import { login, logout, listenForAuth } from "./js/auth.js";
+
+        const nameEl = document.getElementById("moreUserName");
+        const statusEl = document.getElementById("moreSyncStatus");
+        const avatarEl = document.getElementById("moreAvatar");
+        const loginBtn = document.getElementById("moreLoginBtn");
+        const logoutBtn = document.getElementById("moreLogoutBtn");
+
+        function formatRelativeTime(ts) {
+            if (!ts) return "never synced on this device";
+
+            const diffSec = Math.round((Date.now() - ts) / 1000);
+            if (diffSec < 10) return "just now";
+            if (diffSec < 60) return diffSec + "s ago";
+
+            const diffMin = Math.round(diffSec / 60);
+            if (diffMin < 60) return diffMin + "m ago";
+
+            const diffHr = Math.round(diffMin / 60);
+            if (diffHr < 24) return diffHr + "h ago";
+
+            return Math.round(diffHr / 24) + "d ago";
+        }
+
+        async function refreshSyncLine() {
+            const { getSyncStatus } = await import("./js/cloudSync.js");
+            const status = getSyncStatus();
+
+            statusEl.textContent = status.lastError && status.lastError !== "not-signed-in"
+                ? "Sync error — open Settings"
+                : "Synced " + formatRelativeTime(status.lastSyncedAt);
+        }
+
+        loginBtn?.addEventListener("click", async () => {
+            loginBtn.disabled = true;
+            loginBtn.textContent = "Signing in…";
+
+            const success = await login();
+
+            if (success) {
+                window.location.reload();
+            } else {
+                loginBtn.disabled = false;
+                loginBtn.textContent = "Sign In";
+            }
+        });
+
+        logoutBtn?.addEventListener("click", async () => {
+            await logout();
+            window.location.reload();
+        });
+
+        listenForAuth(user => {
+            if (user) {
+                const name = user.displayName || "Runner";
+
+                nameEl.textContent = name;
+                avatarEl.textContent = name.slice(0, 1).toUpperCase();
+
+                loginBtn.style.display = "none";
+                logoutBtn.style.display = "inline-flex";
+
+                refreshSyncLine();
+                setInterval(refreshSyncLine, 15000);
+            } else {
+                nameEl.textContent = "Guest";
+                avatarEl.textContent = "?";
+                statusEl.textContent = "Not signed in";
+
+                loginBtn.style.display = "inline-flex";
+                logoutBtn.style.display = "none";
+            }
+        });
+    </script>
 
     <script src="js/registerSW.js"></script>
 
