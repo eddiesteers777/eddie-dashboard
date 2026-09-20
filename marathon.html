@@ -59,6 +59,12 @@
   <div class="mp-detail" id="mp-detail"></div>
 </div>
 
+<script type="module">
+    import { icon } from "./js/icons.js";
+    window.icon = icon;
+    window.dispatchEvent(new CustomEvent("eddieos:icons-ready"));
+</script>
+
 <script>
 (function () {
   const START = new Date("2026-07-20T00:00:00");
@@ -482,7 +488,7 @@
       ? items.map((item, index) => `
           <div class="mp-extra-editable-item">
             <span>${escapeHTMLSafe(formatValue(item))}</span>
-            <button type="button" class="mp-extra-remove" data-remove-extra="${field}" data-day="${escapeAttr(dayKey)}" data-index="${index}" title="Remove">×</button>
+            <button type="button" class="mp-extra-remove" data-remove-extra="${field}" data-day="${escapeAttr(dayKey)}" data-index="${index}" title="Remove">${window.icon ? window.icon("close") : ""}</button>
           </div>
         `).join("")
       : `<div class="mp-extras-body" style="opacity:.6;">Nothing added yet.</div>`;
@@ -505,9 +511,10 @@
     const dateObj = getDateForDay(week, dayKey);
     const dateStr = dateObj ? isoDateKey(dateObj) : null;
 
+    const fuelIcon = window.icon ? window.icon("fuel") : "";
     const fuelingHtml = plan ? `
       <div>
-        <div class="mp-extras-label">⛽ Fueling Plan</div>
+        <div class="mp-extras-label">${fuelIcon} Fueling Plan</div>
         <div class="mp-extras-body">
           ${escapeHTMLSafe(plan.name || "Saved plan")} — ${Number(plan.carbTotal || 0)}g carb · ${Number(plan.fluidTotal || 0)}oz fluid · ${Number(plan.sodiumTotal || 0)}mg sodium
         </div>
@@ -515,7 +522,7 @@
       </div>
     ` : `
       <div>
-        <div class="mp-extras-label">⛽ Fueling Plan</div>
+        <div class="mp-extras-label">${fuelIcon} Fueling Plan</div>
         <div class="mp-extras-body">Nothing built yet for this day.</div>
         <a class="mp-extras-fuel-link" href="fueling.html?week=${week}&day=${encodeURIComponent(dayKey)}">Build Fueling Plan →</a>
       </div>
@@ -524,7 +531,7 @@
     const ctEntries = day.crossTraining || [];
     const crossTrainingHtml = `
       <div>
-        <div class="mp-extras-label">🚴 Cross Training</div>
+        <div class="mp-extras-label">${window.icon ? window.icon("bike") : ""} Cross Training</div>
         <div class="mp-extras-body">
           ${ctEntries.length
             ? ctEntries.map(e => `<div>${escapeHTMLSafe(formatValue(e))}</div>`).join("")
@@ -539,7 +546,7 @@
     const nutrition = dateStr ? getNutritionSummary(dateStr) : null;
     const nutritionHtml = `
       <div>
-        <div class="mp-extras-label">🍽️ Nutrition</div>
+        <div class="mp-extras-label">${window.icon ? window.icon("utensils") : ""} Nutrition</div>
         <div class="mp-extras-body">
           ${nutrition
             ? `${nutrition.calories || 0} kcal · ${nutrition.protein || 0}g protein · ${nutrition.carbs || 0}g carbs`
@@ -559,7 +566,7 @@
           : `${day75.done}/${day75.total} habits completed.`;
     const day75Html = `
       <div>
-        <div class="mp-extras-label">✅ 75-Day Habits</div>
+        <div class="mp-extras-label">${window.icon ? window.icon("checkCircle") : ""} 75-Day Habits</div>
         <div class="mp-extras-body">${day75Body}</div>
         ${day75.inWindow ? `<a class="mp-extras-fuel-link" href="75day.html?date=${dateStr}">Open 75-Day →</a>` : ""}
       </div>
@@ -571,11 +578,11 @@
         ${crossTrainingHtml}
         ${nutritionHtml}
         ${day75Html}
-        ${renderEditableList(week, dayKey, "strength", "Strength", "💪", day.strength || [], "e.g. Squats 3x8")}
-        ${renderEditableList(week, dayKey, "mobility", "Mobility", "🧘", day.mobility || [], "e.g. Hip openers 2x30s")}
-        ${renderEditableList(week, dayKey, "recovery", "Recovery", "❤️", day.recovery || [], "e.g. Foam roll 10 min")}
+        ${renderEditableList(week, dayKey, "strength", "Strength", window.icon ? window.icon("dumbbell") : "", day.strength || [], "e.g. Squats 3x8")}
+        ${renderEditableList(week, dayKey, "mobility", "Mobility", window.icon ? window.icon("stretch") : "", day.mobility || [], "e.g. Hip openers 2x30s")}
+        ${renderEditableList(week, dayKey, "recovery", "Recovery", window.icon ? window.icon("heart") : "", day.recovery || [], "e.g. Foam roll 10 min")}
         <div>
-          <div class="mp-extras-label">📝 Notes</div>
+          <div class="mp-extras-label">${window.icon ? window.icon("edit") : ""} Notes</div>
           <textarea class="mp-extras-notes-input" rows="2" data-notes-day="${escapeAttr(dayKey)}" placeholder="Anything worth remembering">${escapeHTMLSafe(notesValue)}</textarea>
         </div>
       </div>
@@ -639,11 +646,11 @@
 
     let raceBanner = "";
     if (wk.race) {
-      raceBanner = `<div class="mp-banner mp-banner-race">&#127942; <div><strong>${wk.race.name}</strong> - ${wk.race.date}</div></div>`;
+      raceBanner = `<div class="mp-banner mp-banner-race">${window.icon ? window.icon("trophy") : ""} <div><strong>${wk.race.name}</strong> - ${wk.race.date}</div></div>`;
     }
     let checkBanner = "";
     if (wk.checkpoint) {
-      checkBanner = `<div class="mp-banner mp-banner-check">&#128260; <div>${wk.checkpoint}</div></div>`;
+      checkBanner = `<div class="mp-banner mp-banner-check">${window.icon ? window.icon("refresh") : ""} <div>${wk.checkpoint}</div></div>`;
     }
 
     let rows = "";
@@ -663,8 +670,8 @@
           <span class="mp-mono" style="color:var(--text-dim);font-size:11px;">mi</span>
         </div>
         <div class="mp-pace-chip">${d.pace}</div>
-        <div class="mp-day-timing">${timing7[i]}${d.edited ? '<span class="mp-edited-flag" title="Edited from default plan">&#9998;</span>' : ""}</div>
-        <button type="button" class="mp-day-expand-toggle ${anyExtras ? "mp-has-notes" : ""} ${isOpen ? "mp-expand-open" : ""}" data-day-toggle="${key}" title="${isOpen ? "Collapse" : "Expand"}">▾</button>
+        <div class="mp-day-timing">${timing7[i]}${d.edited ? `<span class="mp-edited-flag" title="Edited from default plan">${window.icon ? window.icon("edit") : ""}</span>` : ""}</div>
+        <button type="button" class="mp-day-expand-toggle ${anyExtras ? "mp-has-notes" : ""} ${isOpen ? "mp-expand-open" : ""}" data-day-toggle="${key}" title="${isOpen ? "Collapse" : "Expand"}">${window.icon ? window.icon("chevronDown") : ""}</button>
       </div>
       <div class="mp-day-extras ${isOpen ? "mp-extras-open" : ""}">
         ${isOpen ? renderDayExtras(d, selectedWeek, key) : ""}
@@ -901,6 +908,14 @@
   /* Render immediately from local data so the page is never blank while
      cloud sync resolves, then refresh again once cloud data lands. */
   init();
+
+  // The icon module loads deferred, so the very first render() above
+  // can happen before window.icon exists -- re-render once it's ready
+  // so labels don't stay blank until the next click or cloud sync.
+  window.addEventListener("eddieos:icons-ready", () => {
+    renderWeekList();
+    renderDetail();
+  });
 
   import('./js/cloudSync.js')
     .then(({initCloudSync}) => initCloudSync())
