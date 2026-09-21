@@ -151,6 +151,7 @@ function renderMacroCards(){
         const card = document.createElement("div");
 
         card.className = "macro-card";
+        card.style.setProperty("--macro-color", macro.color);
 
         card.innerHTML = `
 

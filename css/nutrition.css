@@ -1,12 +1,5 @@
 /* ==========================================
-   EddieOS Nutrition — Condensed PWA Layout
-   Loaded after css/nutrition.css.
-
-   This is a presentation-only layer. It keeps the
-   existing Nutrition HTML, IDs, JS behavior, food
-   search, barcode scanner, storage, and meal logic
-   intact while bringing the page in line with the
-   compact Running / Strength workspace style.
+   EddieOS Nutrition
 ========================================== */
 
 /* Page shell */
@@ -90,27 +83,28 @@
 }
 
 .day-btn{
-    width:32px;
-    height:32px;
+    width:38px;
+    height:38px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:999px;
     background:var(--surface);
     color:var(--text-secondary);
     font-size:14px;
     font-weight:700;
     cursor:pointer;
-    transition:.15s;
+    box-shadow:0 6px 16px rgba(0,0,0,.25);
+    transition:transform .15s ease,background .15s ease,color .15s ease;
 }
 
 .day-btn:hover{
-    transform:none;
+    transform:translateY(-1px);
     border-color:var(--primary);
     background:var(--surface);
     color:var(--primary);
 }
 
 .day-btn:active{
-    transform:scale(.96);
+    transform:scale(.94);
 }
 
 /* ------------------------------------------
@@ -121,10 +115,10 @@
     color:var(--text);
     border:1px solid var(--border);
     border-left:3px solid var(--primary);
-    border-radius:16px;
+    border-radius:18px;
     padding:13px 16px;
     margin-bottom:16px;
-    box-shadow:none;
+    box-shadow:0 10px 28px rgba(0,0,0,.28);
 }
 
 .workout-label{
@@ -164,15 +158,16 @@
     min-width:0;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-top:3px solid var(--macro-color, var(--primary));
+    border-radius:18px;
     padding:12px;
-    box-shadow:none;
-    transition:.15s;
+    box-shadow:0 10px 26px rgba(0,0,0,.28);
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
 }
 
 .macro-card:hover{
-    transform:none;
-    border-color:var(--primary);
+    transform:translateY(-3px);
+    box-shadow:0 16px 34px rgba(0,0,0,.34);
 }
 
 .card-top{
@@ -207,9 +202,10 @@
 
 .big-value span{
     font-family:var(--font-mono);
-    font-size:25px;
-    font-weight:700;
+    font-size:27px;
+    font-weight:800;
     line-height:1;
+    color:var(--macro-color, var(--text));
 }
 
 .big-value small{
@@ -220,13 +216,14 @@
 }
 
 .progress{
-    height:5px;
+    height:6px;
     margin-bottom:8px;
     border-radius:999px;
 }
 
 .progress-fill{
-    background:var(--primary);
+    background:var(--macro-color, var(--primary));
+    box-shadow:0 0 10px color-mix(in srgb, var(--macro-color, var(--primary)) 55%, transparent);
 }
 
 .controls{
@@ -237,20 +234,27 @@
 }
 
 .adjust-btn{
-    width:28px;
-    height:28px;
+    width:32px;
+    height:32px;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:999px;
     background:var(--surface-light);
     color:var(--text-secondary);
     font-size:17px;
+    font-weight:700;
     line-height:1;
+    transition:transform .15s ease,background .15s ease,color .15s ease,border-color .15s ease;
 }
 
 .adjust-btn:hover{
-    background:var(--primary);
+    background:var(--macro-color, var(--primary));
+    border-color:var(--macro-color, var(--primary));
     color:#05131f;
-    transform:none;
+    transform:translateY(-1px);
+}
+
+.adjust-btn:active{
+    transform:scale(.92);
 }
 
 .metric-display .current{
@@ -271,8 +275,8 @@
 }
 
 .goal-btn{
-    border-radius:8px;
-    padding:6px 8px;
+    border-radius:999px;
+    padding:6px 12px;
     font-size:10px;
     line-height:1.1;
 }
@@ -302,17 +306,19 @@
     flex-wrap:wrap;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:999px;
+    box-shadow:0 6px 18px rgba(0,0,0,.22);
 }
 
 .meal-tab{
-    padding:7px 13px;
+    padding:8px 16px;
     border:none;
-    border-radius:8px;
+    border-radius:999px;
     background:transparent;
     color:var(--text-secondary);
     font-size:12px;
     font-weight:700;
+    transition:transform .15s ease,background .15s ease,color .15s ease;
 }
 
 .meal-tab:hover{
@@ -325,6 +331,7 @@
     background:var(--primary);
     border:none;
     color:#05131f;
+    transform:translateY(-1px);
 }
 
 .meal-grid{
@@ -336,9 +343,9 @@
     display:none;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:18px;
     padding:14px;
-    box-shadow:none;
+    box-shadow:0 10px 28px rgba(0,0,0,.28);
 }
 
 .meal-card.active{
@@ -374,9 +381,9 @@
 }
 
 .food-scan-btn{
-    width:36px;
-    height:36px;
-    border-radius:10px;
+    width:38px;
+    height:38px;
+    border-radius:999px;
     font-size:16px;
 }
 
@@ -411,9 +418,9 @@
 .summary-card{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:18px;
     padding:14px 16px;
-    box-shadow:none;
+    box-shadow:0 10px 28px rgba(0,0,0,.28);
 }
 
 .score-card{
@@ -422,6 +429,10 @@
     border-right:1px solid var(--border);
     border-top:1px solid var(--border);
     border-bottom:1px solid var(--border);
+}
+
+#nutritionScore{
+    color:var(--primary);
 }
 
 .score-card h3{
@@ -588,8 +599,8 @@
     align-items:center;
     justify-content:center;
     border:1px solid var(--border);
-    border-radius:9px;
-    padding:7px 11px;
+    border-radius:999px;
+    padding:7px 13px;
     background:var(--surface-light);
     color:var(--text-secondary);
     font-family:inherit;
@@ -597,18 +608,24 @@
     font-weight:700;
     line-height:1;
     box-shadow:none;
+    transition:transform .15s ease,background .15s ease,color .15s ease,border-color .15s ease;
 }
 
 .goal-btn:hover{
-    background:rgba(78,168,255,.10);
-    border-color:var(--primary);
-    color:var(--text);
+    background:var(--macro-color, var(--primary));
+    border-color:var(--macro-color, var(--primary));
+    color:#05131f;
+    transform:translateY(-1px);
+}
+
+.goal-btn:active{
+    transform:scale(.95);
 }
 
 .goal-btn:focus-visible{
     outline:none;
-    border-color:var(--primary);
-    box-shadow:0 0 0 2px rgba(78,168,255,.22);
+    border-color:var(--macro-color, var(--primary));
+    box-shadow:0 0 0 2px color-mix(in srgb, var(--macro-color, var(--primary)) 30%, transparent);
 }
 
 .food-search-input,
@@ -643,12 +660,18 @@
     border:1px solid var(--border);
     color:var(--text-secondary);
     box-shadow:none;
+    transition:transform .15s ease,background .15s ease,color .15s ease,border-color .15s ease;
 }
 
 .food-scan-btn:hover{
-    background:rgba(78,168,255,.10);
+    background:var(--primary);
     border-color:var(--primary);
-    color:var(--text);
+    color:#05131f;
+    transform:translateY(-1px);
+}
+
+.food-scan-btn:active{
+    transform:scale(.92);
 }
 
 .food-scan-btn:focus-visible{
