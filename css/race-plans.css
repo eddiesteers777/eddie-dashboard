@@ -1,0 +1,1329 @@
+/* ==========================================
+   EddieOS Running — Race Plans
+   Phase 1A: setup wizard only
+========================================== */
+
+.running-section-tabs{
+    display:flex;
+    gap:4px;
+    width:max-content;
+    margin-bottom:18px;
+    padding:4px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+}
+
+.running-section-tab{
+    appearance:none;
+    border:0;
+    background:transparent;
+    color:var(--text-secondary);
+    padding:8px 18px;
+    border-radius:9px;
+    font:inherit;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.15s ease;
+}
+
+.running-section-tab:hover{ color:var(--text); }
+
+.running-section-tab.active{
+    background:var(--primary);
+    color:#05131f;
+}
+
+.running-section-view{ display:none; }
+.running-section-view.active{ display:block; }
+
+.race-plans-shell{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:22px;
+    box-shadow:0 10px 28px rgba(0,0,0,.28);
+}
+
+.race-plans-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:18px;
+}
+
+.race-plans-kicker{
+    color:var(--primary-light);
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.12em;
+    margin-bottom:4px;
+}
+
+.race-plans-heading h2{
+    font-size:22px;
+    margin-bottom:4px;
+}
+
+.race-plans-heading p{
+    color:var(--text-secondary);
+    font-size:13px;
+}
+
+.race-plan-builder{
+    border-top:1px solid var(--border);
+    padding-top:18px;
+}
+
+.race-plan-progress{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.race-plan-progress-track{
+    position:relative;
+    flex:1;
+    height:4px;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    overflow:hidden;
+}
+
+.race-plan-progress-fill{
+    height:100%;
+    width:20%;
+    background:linear-gradient(90deg,var(--primary-dark),var(--primary-light));
+    transition:width .18s ease;
+}
+
+.race-plan-step-label{
+    flex:0 0 auto;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:700;
+}
+
+.race-plan-step-label span:last-child{
+    color:var(--text-secondary);
+    margin-left:4px;
+}
+
+.race-plan-step{ display:none; }
+.race-plan-step.active{ display:block; }
+
+.race-plan-step-heading{ margin-bottom:16px; }
+
+.race-plan-step-heading h3{
+    font-size:18px;
+    margin-bottom:5px;
+}
+
+.race-plan-step-heading p{
+    max-width:700px;
+    font-size:12.5px;
+    line-height:1.5;
+}
+
+.race-type-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+    margin-bottom:16px;
+}
+
+.race-type-card{
+    appearance:none;
+    border:1px solid var(--border);
+    border-top:3px solid var(--race-color, var(--border));
+    border-radius:16px;
+    background:var(--surface-light);
+    color:var(--text);
+    padding:14px 12px;
+    text-align:left;
+    cursor:pointer;
+    font:inherit;
+    box-shadow:0 8px 20px rgba(0,0,0,.2);
+    transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,background .15s ease;
+}
+
+.race-type-card:hover{
+    border-color:var(--race-color, rgba(78,168,255,.45));
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px rgba(0,0,0,.28);
+}
+
+.race-type-card.selected{
+    background:color-mix(in srgb, var(--race-color, var(--primary)) 12%, var(--surface-light));
+    border-color:var(--race-color, var(--primary));
+    box-shadow:0 0 0 2px color-mix(in srgb, var(--race-color, var(--primary)) 35%, transparent);
+}
+
+.race-type-distance{
+    display:block;
+    font-family:var(--font-mono);
+    color:var(--race-color, var(--text));
+    font-size:16px;
+    font-weight:700;
+    margin-bottom:3px;
+}
+
+.race-type-caption{
+    display:block;
+    color:var(--muted);
+    font-size:10px;
+    line-height:1.3;
+}
+
+.race-plan-two-col,
+.race-plan-three-col{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-bottom:10px;
+}
+
+.race-plan-three-col{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+
+.race-plan-field,
+.race-plan-readout,
+.race-plan-toggle-field{
+    min-width:0;
+}
+
+.race-plan-field > span,
+.race-plan-readout > span,
+.race-plan-toggle-field > span,
+.race-plan-field-label{
+    display:block;
+    color:var(--muted);
+    font-size:10.5px;
+    font-weight:700;
+    margin-bottom:6px;
+}
+
+.race-plan-field em{
+    color:var(--muted);
+    font-size:9px;
+    font-style:normal;
+    font-weight:500;
+    margin-left:4px;
+}
+
+.race-plan-field input,
+.race-plan-field select{
+    width:100%;
+    min-height:38px;
+    padding:9px 11px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font:inherit;
+    font-size:12.5px;
+    outline:none;
+}
+
+.race-plan-field input:focus,
+.race-plan-field select:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 2px rgba(78,168,255,.14);
+}
+
+.race-plan-readout{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-height:38px;
+    padding:0 12px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(255,255,255,.025);
+}
+
+.race-plan-readout strong{
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+    font-size:12px;
+}
+
+.race-plan-goal-block,
+.race-plan-ultra-fields{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+}
+
+.race-plan-choice-row,
+.race-plan-toggle-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+.race-plan-choice,
+.race-plan-toggle-row label{
+    cursor:pointer;
+}
+
+.race-plan-choice input,
+.race-plan-toggle-row input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+}
+
+.race-plan-choice span,
+.race-plan-toggle-row span{
+    display:inline-flex;
+    align-items:center;
+    min-height:34px;
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-size:11px;
+    font-weight:700;
+    transition:.15s ease;
+}
+
+.race-plan-choice input:checked + span,
+.race-plan-toggle-row input:checked + span{
+    background:rgba(78,168,255,.12);
+    border-color:var(--primary);
+    color:var(--text);
+}
+
+.race-plan-goal-time{
+    max-width:220px;
+    margin-top:10px;
+}
+
+.race-plan-callout,
+.race-plan-review-note{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+    padding:11px 12px;
+    border-left:3px solid var(--primary);
+    background:rgba(78,168,255,.055);
+    border-radius:10px;
+}
+
+.race-plan-callout strong,
+.race-plan-review-note strong{
+    flex:0 0 auto;
+    color:var(--text);
+    font-size:10.5px;
+}
+
+.race-plan-callout span,
+.race-plan-review-note span{
+    color:var(--text-secondary);
+    font-size:10.5px;
+    line-height:1.4;
+}
+
+.race-plan-weekday-block{ margin-bottom:14px; }
+
+.race-plan-weekday-grid{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(0,1fr));
+    gap:6px;
+}
+
+.race-plan-weekday-grid label{ cursor:pointer; }
+.race-plan-weekday-grid input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+}
+
+.race-plan-weekday-grid span{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:38px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+    font-size:10px;
+    font-weight:700;
+}
+
+.race-plan-weekday-grid input:checked + span{
+    background:rgba(78,168,255,.12);
+    border-color:var(--primary);
+    color:var(--text);
+}
+
+.race-plan-section-mini-title{
+    color:var(--text-secondary);
+    font-size:11px;
+    font-weight:800;
+    margin-bottom:10px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+}
+
+.race-plan-review-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+}
+
+.race-plan-review-block{
+    min-width:0;
+    padding:12px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:11px;
+}
+
+.race-plan-review-block span,
+.race-plan-review-block small{
+    display:block;
+    color:var(--muted);
+    font-size:9.5px;
+}
+
+.race-plan-review-block strong{
+    display:block;
+    color:var(--text);
+    font-size:12.5px;
+    margin:3px 0;
+    overflow-wrap:anywhere;
+}
+
+.race-plan-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:18px;
+}
+
+.race-plan-actions-spacer{ flex:1; }
+
+.race-plan-primary-btn,
+.race-plan-secondary-btn,
+.race-plan-subtle-btn{
+    appearance:none;
+    border-radius:999px;
+    padding:9px 18px;
+    font:inherit;
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,color .15s ease;
+}
+
+.race-plan-primary-btn{
+    border:1px solid var(--primary);
+    background:var(--primary);
+    color:#05131f;
+    box-shadow:0 6px 18px rgba(78,168,255,.28);
+}
+
+.race-plan-primary-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 22px rgba(78,168,255,.36);
+}
+
+.race-plan-primary-btn:active{ transform:scale(.97); }
+
+.race-plan-secondary-btn,
+.race-plan-subtle-btn{
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    color:var(--text-secondary);
+}
+
+.race-plan-secondary-btn:hover,
+.race-plan-subtle-btn:hover{
+    border-color:var(--primary);
+    color:var(--text);
+    transform:translateY(-1px);
+}
+
+.race-plan-secondary-btn:active,
+.race-plan-subtle-btn:active{ transform:scale(.97); }
+
+.race-plan-saved-list{ margin-bottom:16px; }
+
+.race-plan-saved-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:var(--muted);
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+}
+
+.race-plan-saved-heading span:last-child{
+    display:inline-flex;
+    min-width:20px;
+    justify-content:center;
+    padding:2px 6px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--text-secondary);
+}
+
+.race-plan-saved-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+}
+
+.race-plan-saved-card{
+    appearance:none;
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:11px;
+    background:rgba(255,255,255,.025);
+    color:var(--text-secondary);
+    padding:11px 12px;
+    text-align:left;
+    cursor:pointer;
+    font:inherit;
+}
+
+.race-plan-saved-card:hover{
+    border-color:var(--primary);
+    background:rgba(78,168,255,.05);
+}
+
+.race-plan-saved-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:3px;
+}
+
+.race-plan-saved-top strong{
+    min-width:0;
+    color:var(--text);
+    font-size:12px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.race-plan-saved-top em{
+    color:var(--primary-light);
+    font-size:9px;
+    font-style:normal;
+    text-transform:uppercase;
+}
+
+.race-plan-saved-card > span:not(.race-plan-saved-top),
+.race-plan-saved-card small{
+    display:block;
+    color:var(--muted);
+    font-size:9.5px;
+}
+
+@media(max-width:700px){
+    .race-type-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .race-plan-two-col,
+    .race-plan-three-col,
+    .race-plan-review-grid,
+    .race-plan-saved-grid{ grid-template-columns:1fr; }
+    .race-plan-weekday-grid{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+
+@media(max-width:480px){
+    .running-section-tabs{ width:100%; }
+    .running-section-tab{ flex:1; padding-left:10px; padding-right:10px; }
+    .race-plans-shell{ padding:15px; }
+    .race-type-grid{ grid-template-columns:1fr 1fr; }
+    .race-type-card{ padding:11px 10px; }
+    .race-type-distance{ font-size:14px; }
+    .race-plan-actions{ position:sticky; bottom:8px; z-index:5; padding-top:8px; background:linear-gradient(180deg,transparent,var(--surface) 35%); }
+}
+
+/* ==========================================
+   Phase 1B — Generated plan preview
+========================================== */
+
+.race-plan-generation-preview{
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid var(--border);
+}
+
+.race-plan-generation-header{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:end;
+    gap:10px;
+    margin-bottom:12px;
+}
+
+.race-plan-generation-header h4{
+    margin:0 0 3px;
+    color:var(--text);
+    font-size:16px;
+}
+
+.race-plan-generation-header p{
+    margin:0;
+    color:var(--muted);
+    font-size:10.5px;
+}
+
+.race-plan-generation-stat{
+    min-width:86px;
+    padding:9px 10px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface-light);
+    box-shadow:0 6px 16px rgba(0,0,0,.18);
+}
+
+.race-plan-generation-stat span{
+    display:block;
+    color:var(--muted);
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
+.race-plan-generation-stat strong{
+    display:block;
+    margin-top:3px;
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:13px;
+}
+
+.race-plan-generation-summary{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:6px;
+    margin-bottom:12px;
+}
+
+.race-plan-generation-phase-card{
+    min-width:0;
+    padding:9px 10px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-top:3px solid var(--phase-color, var(--primary));
+    border-radius:12px;
+}
+
+.race-plan-generation-phase-card span,
+.race-plan-generation-phase-card small{
+    display:block;
+    color:var(--muted);
+    font-size:9px;
+}
+
+.race-plan-generation-phase-card strong{
+    display:block;
+    margin:2px 0;
+    color:var(--text);
+    font-size:11px;
+}
+
+.race-plan-generation-weeklist{
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+
+.race-plan-generation-list-title{
+    padding:8px 10px;
+    background:rgba(255,255,255,.025);
+    color:var(--muted);
+    font-size:9.5px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+
+.race-plan-generation-week{
+    display:grid;
+    grid-template-columns:42px 110px 64px minmax(0,1fr);
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+    border-top:1px solid var(--border);
+    font-size:10.5px;
+}
+
+.race-plan-generation-week-num{
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-weight:700;
+}
+
+.race-plan-generation-phase{
+    color:var(--phase-color, var(--primary-light));
+    font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.race-plan-generation-miles{
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-weight:700;
+}
+
+.race-plan-generation-focus{
+    min-width:0;
+    color:var(--text-secondary);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.race-plan-generation-warnings{
+    margin-bottom:12px;
+    padding:10px 11px;
+    border-left:3px solid var(--yellow);
+    border-radius:9px;
+    background:rgba(250,204,21,.05);
+    color:var(--text-secondary);
+    font-size:10px;
+    line-height:1.45;
+}
+
+.race-plan-generation-warnings strong{
+    display:block;
+    margin-bottom:3px;
+    color:var(--text);
+    font-size:10.5px;
+}
+
+.race-plan-generation-note{
+    display:flex;
+    gap:7px;
+    margin-top:12px;
+    padding:10px 11px;
+    border-left:3px solid var(--primary);
+    border-radius:9px;
+    background:rgba(78,168,255,.05);
+    color:var(--text-secondary);
+    font-size:10px;
+    line-height:1.45;
+}
+
+.race-plan-generation-note strong{ color:var(--text); }
+
+@media(max-width:760px){
+    .race-plan-generation-header{ grid-template-columns:1fr 1fr; }
+    .race-plan-generation-header > div:first-child{ grid-column:1 / -1; }
+    .race-plan-generation-summary{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .race-plan-generation-week{ grid-template-columns:34px 100px 60px minmax(0,1fr); }
+}
+
+@media(max-width:520px){
+    .race-plan-generation-header{ grid-template-columns:1fr 1fr; }
+    .race-plan-generation-stat{ min-width:0; }
+    .race-plan-generation-summary{ grid-template-columns:1fr 1fr; }
+    .race-plan-generation-week{
+        grid-template-columns:32px 1fr auto;
+    }
+    .race-plan-generation-focus{
+        grid-column:2 / -1;
+        margin-top:-2px;
+    }
+}
+
+/* ==========================================
+   Phase 3 — calendar activation
+========================================== */
+.race-plan-calendar-note{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+    color:var(--text-secondary);
+    font-size:11px;
+}
+
+.race-plan-calendar-badge{
+    display:inline-flex;
+    align-items:center;
+    border:1px solid rgba(34,197,94,.28);
+    border-radius:999px;
+    padding:3px 7px;
+    color:var(--green);
+    font-size:9px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+}
+
+.running-generated-plan-line{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:8px;
+    margin-top:4px;
+    color:var(--text-secondary);
+    font-size:10.5px;
+}
+
+.running-generated-plan-line strong{
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:11.5px;
+}
+
+.running-generated-plan-source{
+    color:var(--primary-light);
+    font-size:9.5px;
+    white-space:nowrap;
+}
+
+.running-generated-plan-mark{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:18px;
+    height:18px;
+    padding:0 6px;
+    border-radius:999px;
+    background:rgba(78,168,255,.10);
+    border:1px solid rgba(78,168,255,.20);
+    color:var(--primary-light);
+    font-family:var(--font-mono);
+    font-size:9px;
+    font-weight:800;
+}
+
+.running-generated-day-detail{
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+}
+
+.running-generated-day-detail + .running-generated-day-detail{
+    margin-top:10px;
+}
+
+.running-generated-day-detail-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:5px;
+}
+
+.running-generated-day-detail-label{
+    color:var(--muted);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
+.running-generated-day-detail-meta{
+    color:var(--text-secondary);
+    font-size:11px;
+    line-height:1.4;
+}
+
+.running-generated-complete-btn{
+    flex-shrink:0;
+}
+
+.running-program-calendar-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:3px;
+    color:var(--text-secondary);
+    font-size:9.5px;
+}
+
+.running-program-calendar-item strong{
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:10px;
+}
+
+/* ==========================================
+   Phase 4 — Race Plan Management
+========================================== */
+.race-plan-manager-toolbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:12px;
+}
+
+.race-plan-manager-kicker{
+    color:var(--primary-light);
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.12em;
+    margin-bottom:4px;
+}
+
+.race-plan-manager-toolbar h3{
+    font-size:18px;
+    margin-bottom:4px;
+}
+
+.race-plan-manager-toolbar p{
+    color:var(--text-secondary);
+    font-size:11.5px;
+    line-height:1.4;
+}
+
+.race-plan-manager-counts{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:18px;
+}
+
+.race-plan-manager-counts span{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:5px 8px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:rgba(255,255,255,.02);
+    color:var(--muted);
+    font-size:9.5px;
+}
+
+.race-plan-manager-counts strong{
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+}
+
+.race-plan-manager-group{
+    margin-bottom:18px;
+}
+
+.race-plan-manager-group-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:7px;
+    color:var(--muted);
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+
+.race-plan-manager-group-heading span:last-child{
+    min-width:20px;
+    padding:2px 6px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    text-align:center;
+    color:var(--text-secondary);
+}
+
+.race-plan-manager-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+}
+
+.race-plan-manager-card{
+    min-width:0;
+    padding:13px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:var(--surface-light);
+    box-shadow:0 8px 20px rgba(0,0,0,.2);
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+
+.race-plan-manager-card:hover{
+    border-color:rgba(78,168,255,.35);
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px rgba(0,0,0,.28);
+}
+
+.race-plan-manager-card.race-plan-status-active{
+    border-left:3px solid var(--primary);
+}
+
+.race-plan-manager-card.race-plan-status-paused{
+    border-left:3px solid var(--yellow);
+}
+
+.race-plan-manager-card.race-plan-status-archived{
+    border-left:3px solid var(--muted);
+    opacity:.9;
+}
+
+.race-plan-manager-card-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.race-plan-manager-card-title{
+    min-width:0;
+}
+
+.race-plan-manager-race-type{
+    color:var(--primary-light);
+    font-family:var(--font-mono);
+    font-size:9px;
+    font-weight:700;
+    margin-bottom:2px;
+}
+
+.race-plan-manager-card h3{
+    color:var(--text);
+    font-size:13px;
+    line-height:1.2;
+    margin-bottom:3px;
+    overflow-wrap:anywhere;
+}
+
+.race-plan-manager-card-title p{
+    color:var(--muted);
+    font-size:9.5px;
+}
+
+.race-plan-status{
+    flex:0 0 auto;
+    padding:4px 9px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--muted);
+    font-size:8.5px;
+    font-style:normal;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+}
+
+.race-plan-status.race-plan-status-active{
+    color:#05131f;
+    border-color:var(--primary);
+    background:var(--primary);
+}
+
+.race-plan-status.race-plan-status-paused{
+    color:#1f1704;
+    border-color:var(--yellow);
+    background:var(--yellow);
+}
+
+.race-plan-status.race-plan-status-archived{
+    color:var(--text-secondary);
+    border-color:var(--border);
+    background:var(--surface);
+}
+
+.race-plan-manager-metrics{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:6px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--border);
+}
+
+.race-plan-manager-metrics > div{
+    min-width:0;
+}
+
+.race-plan-manager-metrics span,
+.race-plan-manager-detail-grid span{
+    display:block;
+    color:var(--muted);
+    font-size:8.5px;
+    margin-bottom:2px;
+}
+
+.race-plan-manager-metrics strong,
+.race-plan-manager-detail-grid strong{
+    display:block;
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+    font-size:10px;
+    line-height:1.25;
+    overflow-wrap:anywhere;
+}
+
+.race-plan-manager-meta-row{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    margin-top:8px;
+    color:var(--muted);
+    font-size:9px;
+}
+
+.race-plan-manager-details{
+    margin-top:9px;
+    border-top:1px solid var(--border);
+    padding-top:8px;
+}
+
+.race-plan-manager-details summary{
+    cursor:pointer;
+    color:var(--text-secondary);
+    font-size:9.5px;
+    font-weight:700;
+}
+
+.race-plan-manager-detail-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px;
+    margin-top:9px;
+}
+
+.race-plan-phase-list{
+    margin-top:9px;
+    border-top:1px solid var(--border);
+}
+
+.race-plan-phase-row{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    padding:6px 0;
+    border-bottom:1px solid var(--border);
+    color:var(--muted);
+    font-size:9px;
+}
+
+.race-plan-phase-row:last-child{
+    border-bottom:none;
+}
+
+.race-plan-phase-row strong{
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+    font-size:9px;
+}
+
+.race-plan-manager-note,
+.race-plan-manager-empty-detail{
+    margin-top:8px;
+    color:var(--muted);
+    font-size:9px;
+    line-height:1.45;
+}
+
+.race-plan-manager-empty{
+    padding:12px;
+    border:1px dashed var(--border);
+    border-radius:10px;
+    color:var(--muted);
+    font-size:10px;
+}
+
+.race-plan-manager-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:10px;
+}
+
+.race-plan-action-btn{
+    appearance:none;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-secondary);
+    border-radius:999px;
+    padding:7px 12px;
+    font:inherit;
+    font-size:9.5px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform .15s ease,border-color .15s ease,color .15s ease;
+}
+
+.race-plan-action-btn:hover{
+    border-color:var(--primary);
+    color:var(--text);
+    transform:translateY(-1px);
+}
+
+.race-plan-action-btn:active{ transform:scale(.95); }
+
+.race-plan-action-btn.primary{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#05131f;
+}
+
+.race-plan-action-btn.danger:hover{
+    border-color:var(--red);
+    color:var(--red);
+}
+
+@media(max-width:700px){
+    .race-plan-manager-toolbar{
+        flex-direction:column;
+    }
+
+    .race-plan-manager-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:520px){
+    .race-plan-manager-metrics{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .race-plan-manager-detail-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+
+/* ==========================================
+   Phase 5 — Regeneration / modification review
+========================================== */
+
+.race-plan-change-summary{
+    margin:14px 0 12px;
+    padding:13px;
+    border:1px solid rgba(78,168,255,.22);
+    border-left:3px solid var(--primary);
+    border-radius:14px;
+    background:rgba(78,168,255,.045);
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+
+.race-plan-change-summary-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+}
+
+.race-plan-change-summary-header h4{
+    margin:0 0 3px;
+    color:var(--text);
+    font-size:14px;
+}
+
+.race-plan-change-summary-header p{
+    margin:0;
+    color:var(--muted);
+    font-size:10.5px;
+}
+
+.race-plan-change-preserved{
+    flex:0 0 auto;
+    min-width:82px;
+    padding:7px 9px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface-light);
+    text-align:center;
+    box-shadow:0 6px 16px rgba(0,0,0,.18);
+}
+
+.race-plan-change-preserved span{
+    display:block;
+    color:var(--muted);
+    font-size:8.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
+.race-plan-change-preserved strong{
+    display:block;
+    margin-top:2px;
+    color:var(--green);
+    font-family:var(--font-mono);
+    font-size:15px;
+}
+
+.race-plan-change-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:6px;
+}
+
+.race-plan-change-grid > div{
+    min-width:0;
+    padding:8px 9px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:rgba(255,255,255,.02);
+}
+
+.race-plan-change-grid span,
+.race-plan-change-grid small{
+    display:block;
+    color:var(--muted);
+    font-size:8.5px;
+}
+
+.race-plan-change-grid strong{
+    display:block;
+    margin:3px 0 2px;
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.race-plan-change-grid small{
+    color:var(--text-secondary);
+}
+
+.race-plan-change-note{
+    margin-top:8px;
+    color:var(--text-secondary);
+    font-size:9.5px;
+    line-height:1.4;
+}
+
+.race-plan-manager-card .race-plan-action-btn:first-child{
+    font-weight:800;
+}
+
+@media(max-width:800px){
+    .race-plan-change-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:480px){
+    .race-plan-change-summary-header{
+        flex-direction:column;
+    }
+
+    .race-plan-change-preserved{
+        width:100%;
+        text-align:left;
+    }
+
+    .race-plan-change-grid{
+        grid-template-columns:1fr 1fr;
+    }
+}
