@@ -149,22 +149,35 @@ function buildLongRunMileage(settings, weekNumber, totalWeeks) {
 
 function allocateMileage(runDays, longDay, qualityDays, weeklyMileage, longMiles) {
     const result = Object.fromEntries(runDays.map(day => [day, 0]));
-    if (!runDays.length) return result;
+    if (!runDays.length) return { allocation: result, shortfall: 0 };
 
     result[longDay] = Math.min(longMiles, weeklyMileage);
     const remainingDays = runDays.filter(day => day !== longDay);
     const remaining = Math.max(0, weeklyMileage - result[longDay]);
-    if (!remainingDays.length) return result;
+    if (!remainingDays.length) return { allocation: result, shortfall: roundHalf(remaining) };
+
+    // A regular run should never be the biggest effort of the week.
+    // Splitting "remaining" purely by weight can otherwise dump
+    // nearly all of it onto a single day when there are only one or
+    // two non-long run days (e.g. a 2-run-day week putting 12+ miles
+    // on the "other" day) -- cap each day at the long run's distance
+    // (or a bit above its even share, whichever is smaller) and let
+    // the week's realized mileage fall short of the target instead.
+    const fairShare = remaining / remainingDays.length;
+    const perDayCap = Math.max(0, Math.min(result[longDay] || fairShare, fairShare * 1.5));
 
     const qualitySet = new Set(qualityDays);
     const weights = remainingDays.map(day => qualitySet.has(day) ? 1.15 : 0.9);
     const weightTotal = weights.reduce((sum, weight) => sum + weight, 0) || 1;
 
+    let allocated = 0;
     remainingDays.forEach((day, index) => {
-        result[day] = roundHalf(remaining * (weights[index] / weightTotal));
+        const share = roundHalf(Math.min(remaining * (weights[index] / weightTotal), perDayCap));
+        result[day] = share;
+        allocated += share;
     });
 
-    return result;
+    return { allocation: result, shortfall: Math.max(0, roundHalf(remaining - allocated)) };
 }
 
 function phaseForWeek(weekNumber, transitionWeeks, isCutback) {
@@ -178,7 +191,7 @@ function buildTrainingWeek({ settings, weekNumber, totalWeeks, transitionWeeks, 
     const isCutback = weekNumber > 1 && weekNumber % 4 === 0 && weekNumber < totalWeeks;
     const weeklyMileage = buildWeeklyMileage(settings, weekNumber, totalWeeks, transitionWeeks, dayPlan.previousMileage);
     const longMiles = runDays.length ? buildLongRunMileage(settings, weekNumber, totalWeeks) : 0;
-    const allocation = allocateMileage(runDays, longDay, qualityDays, weeklyMileage, longMiles);
+    const { allocation, shortfall } = allocateMileage(runDays, longDay, qualityDays, weeklyMileage, longMiles);
     const phase = phaseForWeek(weekNumber, transitionWeeks, isCutback);
 
     const start = parseLocalDate(settings.startDate);
@@ -230,6 +243,8 @@ function buildTrainingWeek({ settings, weekNumber, totalWeeks, transitionWeeks, 
         startDate: isoDate(weekStart),
         endDate: isoDate(weekEnd),
         plannedMiles,
+        targetMiles: roundHalf(weeklyMileage),
+        mileageShortfall: shortfall,
         runDays: runDays.length,
         longRunMiles: longMiles,
         days,
@@ -317,6 +332,12 @@ export function generateTrainingPlan(settings) {
 
     const peakGenerated = Math.max(0, ...weeks.map(week => week.plannedMiles));
     const longestGenerated = Math.max(0, ...weeks.flatMap(week => week.days.map(day => Number(day.miles) || 0)));
+
+    const shortfallWeeks = weeks.filter(week => week.mileageShortfall > 0.5);
+    if (shortfallWeeks.length) {
+        const worst = shortfallWeeks.reduce((max, week) => week.mileageShortfall > max.mileageShortfall ? week : max);
+        warnings.push(`${runDays.length} running day${runDays.length === 1 ? "" : "s"} a week couldn't safely hold your requested mileage without a regular run exceeding the long run -- EddieOS capped daily mileage instead, so ${shortfallWeeks.length} week${shortfallWeeks.length === 1 ? "" : "s"} come in under target (up to ${formatMilesValue(worst.mileageShortfall)} mi short, e.g. week ${worst.week}). Add a running day or raise your long-run range to close the gap.`);
+    }
 
     const generatedPlan = {
         version: 1,
