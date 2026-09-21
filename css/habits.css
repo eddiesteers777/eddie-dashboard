@@ -1,20 +1,13 @@
 /* ==========================================
    EddieOS Habits
 
-   --teal / --amber are page-specific extensions
-   for the calendar heat-scale, same documented
-   pattern the old 75-Day page used -- not part
-   of the shared token set, and not meant to be.
-   --purple / --indigo extend the same set for
-   per-habit icon coloring (js/habitIcons.js).
+   --teal/--amber/--purple/--indigo used to be
+   page-local extensions here, defined again in
+   75day.html -- promoted into the shared :root
+   in style.css so the same names resolve to the
+   same colors everywhere (bottom nav, search,
+   dashboard) instead of drifting per page.
 ========================================== */
-
-:root{
-    --teal:#2FB6B0;
-    --amber:#FFB020;
-    --purple:#A78BFA;
-    --indigo:#6366F1;
-}
 
 .habits-page{
 

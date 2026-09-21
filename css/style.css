@@ -65,6 +65,26 @@ html{
 
     --red:#EF4444;
 
+    --purple:#A78BFA;
+
+    --purple-light:#8B5CF6;
+
+    --pink:#EC4899;
+
+    --pink-light:#F472B6;
+
+    --cyan:#06B6D4;
+
+    --cyan-light:#22D3EE;
+
+    --amber:#FFB020;
+
+    --amber-light:#FBBF24;
+
+    --teal:#2FB6B0;
+
+    --indigo:#6366F1;
+
     --radius:22px;
 
     --shadow:0 18px 40px rgba(0,0,0,.22);
@@ -671,6 +691,22 @@ section{
         color:#fff;
     }
 
+    .eos-mobile-quickadd-icon{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:28px;
+        height:28px;
+        border-radius:8px;
+        flex-shrink:0;
+        background:color-mix(in srgb, currentColor 16%, transparent);
+    }
+
+    .eos-mobile-quickadd-icon .ui-icon{
+        width:15px;
+        height:15px;
+    }
+
     .eos-search-overlay{
         display:flex;
         flex-direction:column;
@@ -762,9 +798,20 @@ section{
         background:var(--surface-light);
     }
 
-    .eos-search-result .ui-icon{
-        color:var(--primary);
+    .eos-search-result-icon{
         flex-shrink:0;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:34px;
+        height:34px;
+        border-radius:10px;
+        background:color-mix(in srgb, currentColor 16%, transparent);
+    }
+
+    .eos-search-result-icon .ui-icon{
+        width:18px;
+        height:18px;
     }
 
     .eos-search-empty{
@@ -773,6 +820,122 @@ section{
         font-size:14px;
     }
 
+}
+
+/* ==========================================================
+   SIGN-IN PROMPT
+
+   Unlike the bottom bar/search above, this isn't mobile-only --
+   guests land on every form factor. Shown once per browser
+   session (loadHeader.js gates it via sessionStorage), on
+   whichever page happens to load first.
+========================================================== */
+
+.eos-signin-overlay{
+    position:fixed;
+    inset:0;
+    z-index:4500;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(4,8,16,.72);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    opacity:0;
+    transition:opacity .2s ease;
+}
+
+.eos-signin-overlay.open{
+    opacity:1;
+}
+
+.eos-signin-modal{
+    width:100%;
+    max-width:400px;
+    background:linear-gradient(160deg,rgba(24,38,60,.98),rgba(14,23,38,.98));
+    border:1px solid var(--border);
+    border-radius:22px;
+    padding:30px 26px;
+    text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
+    transform:translateY(10px);
+    transition:transform .2s ease;
+}
+
+.eos-signin-overlay.open .eos-signin-modal{
+    transform:translateY(0);
+}
+
+.eos-signin-icon{
+    width:56px;
+    height:56px;
+    margin:0 auto 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:16px;
+    background:rgba(78,168,255,.14);
+    color:var(--primary);
+}
+
+.eos-signin-icon .ui-icon{
+    width:26px;
+    height:26px;
+}
+
+.eos-signin-modal h2{
+    font-size:19px;
+    margin-bottom:10px;
+}
+
+.eos-signin-modal p{
+    color:var(--text-secondary);
+    font-size:14px;
+    line-height:1.6;
+    margin-bottom:24px;
+}
+
+.eos-signin-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.eos-signin-btn{
+    padding:13px 18px;
+    border-radius:12px;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    border:none;
+    font-family:inherit;
+    transition:.2s ease;
+}
+
+.eos-signin-btn.primary{
+    background:var(--primary);
+    color:#05131f;
+}
+
+.eos-signin-btn.primary:hover{
+    background:var(--primary-light);
+}
+
+.eos-signin-btn.primary:disabled{
+    opacity:.7;
+    cursor:default;
+}
+
+.eos-signin-btn.secondary{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+}
+
+.eos-signin-btn.secondary:hover{
+    border-color:rgba(255,255,255,.2);
+    color:var(--text);
 }
 
 .eos-bottomnav{
@@ -823,8 +986,8 @@ section{
     }
 
     .eos-bottomnav-item.active{
-        color:var(--primary);
-        background:rgba(78,168,255,.13);
+        color:var(--tab-color, var(--primary));
+        background:color-mix(in srgb, var(--tab-color, var(--primary)) 16%, transparent);
     }
 
     .eos-subnav{

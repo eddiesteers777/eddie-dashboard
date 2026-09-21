@@ -168,8 +168,15 @@
 
 .eos-today-item-icon{
 
-    font-size:22px;
+    font-size:18px;
     flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border-radius:11px;
+    background:color-mix(in srgb, currentColor 16%, transparent);
 
 }
 
