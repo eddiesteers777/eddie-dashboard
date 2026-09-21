@@ -2339,6 +2339,7 @@
 }
 
 .strength-workout-modal{
+    position:relative;
     display:flex;
     flex-direction:column;
     height:100%;
@@ -2502,11 +2503,19 @@
 }
 
 .strength-workout-group-label{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
     font-size:11px;
     font-weight:800;
     letter-spacing:.1em;
     text-transform:uppercase;
     color:var(--primary);
+}
+
+.strength-workout-group-label .ui-icon{
+    width:12px;
+    height:12px;
 }
 
 .strength-workout-group-circuit .strength-workout-group-label{
@@ -2581,11 +2590,31 @@
 }
 
 .strength-workout-mini-sets{
+    display:flex;
+    flex-wrap:nowrap;
+    gap:4px;
+    overflow:hidden;
+    -webkit-mask-image:linear-gradient(to right, black 85%, transparent 100%);
+    mask-image:linear-gradient(to right, black 85%, transparent 100%);
+}
+
+.strength-workout-mini-empty{
     font-family:var(--font-mono);
     font-size:12px;
     color:var(--text-secondary);
-    overflow:hidden;
-    text-overflow:ellipsis;
+}
+
+.strength-workout-chip{
+    flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    background:color-mix(in srgb, var(--set-color, var(--primary)) 16%, transparent);
+    color:var(--set-color, var(--primary));
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:999px;
     white-space:nowrap;
 }
 
@@ -2660,6 +2689,10 @@
 }
 
 .strength-workout-prev-text{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px 6px;
     min-width:0;
     flex:1;
     font-size:12px;
@@ -2710,8 +2743,9 @@
     align-items:center;
     gap:8px;
     background:var(--surface-light);
+    border-left:3px solid var(--set-color, var(--primary));
     border-radius:14px;
-    padding:10px 10px 10px 14px;
+    padding:10px 10px 10px 12px;
     flex-wrap:wrap;
 }
 
@@ -2720,11 +2754,30 @@
 }
 
 .strength-workout-set-index{
+    display:flex;
+    align-items:center;
+    justify-content:center;
     font-family:var(--font-mono);
-    color:var(--text-secondary);
-    font-size:14px;
-    width:18px;
+    color:#05131f;
+    background:var(--set-color, var(--primary));
+    font-size:13px;
+    font-weight:800;
+    width:26px;
+    height:26px;
+    border-radius:999px;
+    border:none;
     flex-shrink:0;
+    cursor:pointer;
+    padding:0;
+    transition:transform .15s ease;
+}
+
+.strength-workout-set-index:hover{
+    transform:scale(1.08);
+}
+
+.strength-workout-set-index:active{
+    transform:scale(.92);
 }
 
 .strength-workout-adjust{
@@ -2769,22 +2822,29 @@
 }
 
 .strength-workout-adjust button{
-    background:var(--surface);
+    background:var(--surface-light);
     border:1px solid var(--border);
-    color:var(--text-secondary);
-    border-radius:9px;
-    min-width:38px;
-    height:38px;
+    color:var(--text);
+    border-radius:999px;
+    min-width:36px;
+    height:36px;
     font-size:12px;
     font-weight:700;
     font-family:inherit;
     cursor:pointer;
     flex-shrink:0;
+    box-shadow:0 4px 10px rgba(0,0,0,.2);
+    transition:transform .15s ease,background .15s ease,color .15s ease,border-color .15s ease;
 }
 
 .strength-workout-adjust button:hover{
-    border-color:var(--primary);
-    color:var(--primary);
+    border-color:var(--set-color, var(--primary));
+    color:var(--set-color, var(--primary));
+    transform:translateY(-1px);
+}
+
+.strength-workout-adjust button:active{
+    transform:scale(.92);
 }
 
 .strength-workout-input{
@@ -2805,43 +2865,59 @@
 }
 
 .strength-workout-done-btn{
-    width:42px;
-    height:42px;
-    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:40px;
+    height:40px;
+    border-radius:999px;
     border:1px solid var(--border);
-    background:var(--surface);
+    background:var(--surface-light);
     color:var(--text-secondary);
-    opacity:.35;
     font-size:18px;
     cursor:pointer;
     flex-shrink:0;
     margin-left:auto;
-    transition:.15s ease;
+    box-shadow:0 4px 10px rgba(0,0,0,.2);
+    transition:transform .15s ease,background .15s ease,border-color .15s ease,color .15s ease;
 }
 
 .strength-workout-done-btn:hover{
-    opacity:.7;
-    border-color:var(--workout-accent, var(--primary));
+    border-color:var(--green);
+    color:var(--green);
+    transform:translateY(-1px);
+}
+
+.strength-workout-done-btn:active{
+    transform:scale(.92);
 }
 
 .strength-workout-done-btn.checked{
     background:var(--green);
     border-color:var(--green);
     color:#05130a;
-    opacity:1;
 }
 
 .strength-workout-remove-set{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:34px;
+    height:34px;
+    border-radius:999px;
     background:transparent;
-    border:none;
+    border:1px solid transparent;
     color:var(--muted);
     font-size:16px;
     cursor:pointer;
-    padding:4px 6px;
+    padding:0;
     flex-shrink:0;
+    transition:.15s ease;
 }
 
 .strength-workout-remove-set:hover{
+    background:rgba(239,68,68,.12);
+    border-color:rgba(239,68,68,.35);
     color:var(--red);
 }
 
@@ -2904,5 +2980,190 @@
         min-width:32px;
         width:auto;
         padding:0 6px;
+    }
+}
+
+/* ==========================================
+   Rest timer -- pinned to the bottom of the
+   Workout Mode modal, slides up when a set is
+   marked done and auto-hides a few seconds
+   after it completes.
+========================================== */
+
+.strength-rest-bar{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    background:var(--surface);
+    border-top:1px solid var(--border);
+    border-radius:20px 20px 0 0;
+    box-shadow:0 -12px 30px rgba(0,0,0,.35);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    transform:translateY(100%);
+    transition:transform .25s ease;
+    z-index:5;
+}
+
+.strength-rest-bar.open{
+    transform:translateY(0);
+}
+
+.strength-rest-track{
+    height:5px;
+    border-radius:999px;
+    background:var(--border);
+    overflow:hidden;
+    margin-bottom:10px;
+}
+
+.strength-rest-fill{
+    height:100%;
+    width:100%;
+    background:var(--primary);
+    border-radius:999px;
+    transition:width .25s linear;
+}
+
+.strength-rest-bar.complete .strength-rest-fill{
+    background:var(--green);
+}
+
+.strength-rest-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.strength-rest-info{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.strength-rest-icon{
+    display:flex;
+    color:var(--primary);
+}
+
+.strength-rest-bar.complete .strength-rest-icon{
+    color:var(--green);
+}
+
+.strength-rest-icon .ui-icon{
+    width:16px;
+    height:16px;
+}
+
+.strength-rest-label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--text-secondary);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+
+.strength-rest-time{
+    font-family:var(--font-mono);
+    font-size:20px;
+    font-weight:800;
+    color:var(--text);
+}
+
+.strength-rest-bar.complete .strength-rest-time::after{
+    content:" \2014 Go";
+    font-size:12px;
+    font-weight:700;
+    color:var(--green);
+    text-transform:uppercase;
+}
+
+.strength-rest-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.strength-rest-adjust,
+.strength-rest-skip{
+    appearance:none;
+    -webkit-appearance:none;
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-family:inherit;
+    font-size:12px;
+    font-weight:700;
+    padding:8px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:transform .15s ease,border-color .15s ease,color .15s ease,background .15s ease;
+}
+
+.strength-rest-adjust:hover,
+.strength-rest-skip:hover{
+    border-color:var(--primary);
+    color:var(--primary);
+    transform:translateY(-1px);
+}
+
+.strength-rest-skip{
+    background:var(--surface);
+    color:var(--text);
+}
+
+@media (max-width:480px){
+    .strength-rest-row{
+        justify-content:center;
+        text-align:center;
+    }
+
+    .strength-rest-actions{
+        width:100%;
+        justify-content:center;
+    }
+}
+
+/* ==========================================
+   Post-workout summary stats
+========================================== */
+
+.strength-summary-stats{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:8px;
+    margin:14px 0;
+}
+
+.strength-summary-stat{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    padding:12px 6px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:14px;
+}
+
+.strength-summary-stat-value{
+    font-family:var(--font-mono);
+    font-size:18px;
+    font-weight:800;
+    color:var(--primary);
+}
+
+.strength-summary-stat-label{
+    font-size:10.5px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+}
+
+@media (max-width:480px){
+    .strength-summary-stats{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
     }
 }

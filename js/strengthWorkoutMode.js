@@ -126,6 +126,98 @@ function stopTimer() {
 }
 
 /* ==========================================
+   Rest timer -- auto-starts when a set is
+   marked done, using that exercise's configured
+   restSeconds (set in the plan editor, but never
+   previously surfaced here).
+========================================== */
+
+let restInterval = null;
+let restEndsAt = null;
+let restTotalMs = null;
+let restHideTimeout = null;
+
+function vibrate(pattern) {
+    try {
+        navigator.vibrate?.(pattern);
+    } catch {
+        // Vibration unsupported -- fine, it's a nice-to-have.
+    }
+}
+
+function renderRestTime() {
+    const timeEl = $("workoutRestTime");
+    const fillEl = $("workoutRestFill");
+    const bar = $("workoutRestBar");
+
+    if (!timeEl || !fillEl || !bar) {
+        return;
+    }
+
+    const remaining = Math.max(0, restEndsAt - Date.now());
+    timeEl.textContent = formatElapsed(remaining);
+    fillEl.style.width = `${Math.max(0, Math.min(100, (remaining / restTotalMs) * 100))}%`;
+
+    if (remaining <= 0) {
+        clearInterval(restInterval);
+        restInterval = null;
+        bar.classList.add("complete");
+        vibrate([200, 100, 200]);
+
+        clearTimeout(restHideTimeout);
+        restHideTimeout = setTimeout(hideRestBar, 4000);
+    }
+}
+
+function startRestTimer(seconds) {
+    const bar = $("workoutRestBar");
+
+    if (!bar || !seconds) {
+        return;
+    }
+
+    clearInterval(restInterval);
+    clearTimeout(restHideTimeout);
+
+    restTotalMs = seconds * 1000;
+    restEndsAt = Date.now() + restTotalMs;
+
+    bar.classList.remove("complete");
+    bar.classList.add("open");
+
+    renderRestTime();
+    restInterval = setInterval(renderRestTime, 250);
+}
+
+function adjustRestTimer(deltaSeconds) {
+    if (restEndsAt === null) {
+        return;
+    }
+
+    restEndsAt += deltaSeconds * 1000;
+    restTotalMs = Math.max(restTotalMs, restEndsAt - Date.now());
+
+    const bar = $("workoutRestBar");
+
+    if (bar?.classList.contains("complete") && restEndsAt > Date.now()) {
+        bar.classList.remove("complete");
+        clearTimeout(restHideTimeout);
+        restInterval = setInterval(renderRestTime, 250);
+    }
+
+    renderRestTime();
+}
+
+function hideRestBar() {
+    clearInterval(restInterval);
+    clearTimeout(restHideTimeout);
+    restInterval = null;
+    restEndsAt = null;
+
+    $("workoutRestBar")?.classList.remove("open", "complete");
+}
+
+/* ==========================================
    Plate calculator
 ========================================== */
 
@@ -171,8 +263,23 @@ function renderPlateCalc(weight) {
    Rendering
 ========================================== */
 
+const SET_TYPE_COLORS = {
+    working: "var(--primary)",
+    warmup: "var(--yellow)",
+    drop: "var(--purple)"
+};
+
+const SET_TYPE_ORDER = ["working", "warmup", "drop"];
+
+const SET_TYPE_LABELS = {
+    working: "Working set",
+    warmup: "Warm-up set",
+    drop: "Drop set"
+};
+
 function renderSetRow(exercise, set, index) {
     const isTime = exercise.mode === "time";
+    const setType = set.type || "working";
 
     const numberControls = isTime
         ? `
@@ -217,9 +324,17 @@ function renderSetRow(exercise, set, index) {
     return `
         <div
             class="strength-workout-set-row ${set.done ? "done" : ""}"
-            data-set-row="${set.id}">
+            data-set-row="${set.id}"
+            style="--set-color:${SET_TYPE_COLORS[setType]}">
 
-            <span class="strength-workout-set-index">${index + 1}</span>
+            <button
+                type="button"
+                class="strength-workout-set-index"
+                data-cycle-set-type="${set.id}"
+                data-exercise-id="${exercise.id}"
+                title="${SET_TYPE_LABELS[setType]} — tap to change">
+                ${index + 1}
+            </button>
 
             ${numberControls}
 
@@ -245,10 +360,21 @@ function renderSetRow(exercise, set, index) {
     `;
 }
 
-function formatPreviousSets(entry, isTime) {
-    return entry.sets
-        .map(s => isTime ? `${s.duration}s` : `${s.weight}×${s.reps}`)
-        .join(", ");
+// Small rounded chips (one per set) instead of one run-on
+// comma-separated string -- reads as a designed UI element rather
+// than a raw data dump.
+function renderSetChips(sets, isTime) {
+    if (!sets.length) {
+        return "";
+    }
+
+    return sets
+        .map(s => {
+            const label = isTime ? `${s.duration}s` : `${s.weight}×${s.reps}`;
+            const color = SET_TYPE_COLORS[s.type || "working"];
+            return `<span class="strength-workout-chip" style="--set-color:${color}">${escapeHtml(label)}</span>`;
+        })
+        .join("");
 }
 
 // Collapsed by default -- just a name, a one-line summary of what's
@@ -263,8 +389,8 @@ function renderExerciseBlock(exercise) {
     const allDone = totalCount > 0 && doneCount === totalCount;
     const expanded = expandedExerciseIds.has(exercise.id);
     const currentSummary = totalCount
-        ? formatPreviousSets({ sets: exercise.sets }, isTime)
-        : "No sets yet";
+        ? renderSetChips(exercise.sets, isTime)
+        : `<span class="strength-workout-mini-empty">No sets yet</span>`;
 
     return `
         <div
@@ -280,7 +406,7 @@ function renderExerciseBlock(exercise) {
 
                 <span class="strength-workout-exercise-summary-text">
                     <strong>${escapeHtml(exercise.name)}</strong>
-                    <span class="strength-workout-mini-sets">${escapeHtml(currentSummary)}</span>
+                    <span class="strength-workout-mini-sets">${currentSummary}</span>
                 </span>
 
                 <span class="strength-workout-set-tally ${allDone ? "complete" : ""}">
@@ -296,7 +422,7 @@ function renderExerciseBlock(exercise) {
                     <span class="strength-workout-prev-icon">${icon("clock")}</span>
                     <span class="strength-workout-prev-text">
                         ${previous
-                            ? `<span class="strength-workout-prev-label">Last time</span> ${escapeHtml(formatPreviousSets(previous, isTime))}`
+                            ? `<span class="strength-workout-prev-label">Last time</span> ${renderSetChips(previous.sets, isTime)}`
                             : "No previous session logged yet"}
                     </span>
                 </div>
@@ -400,6 +526,14 @@ function groupLabel(groupType) {
             : "Superset";
 }
 
+function groupIcon(groupType) {
+    return groupType === "circuit"
+        ? "refresh"
+        : groupType === "warmup"
+            ? "flame"
+            : "swap";
+}
+
 // Groups exercises that share a groupId (built as a superset,
 // circuit, or warmup in the plan editor) into one connected card,
 // so a workout done as a circuit still looks like one unit instead
@@ -440,7 +574,7 @@ function renderDayBody(day) {
 
                 <div class="strength-workout-group-header">
                     <span class="strength-workout-group-label">
-                        ${groupLabel(groupType)}
+                        ${icon(groupIcon(groupType))} ${groupLabel(groupType)}
                     </span>
                     ${plannedRounds
                         ? `<span class="strength-workout-group-rounds">${plannedRounds} round${plannedRounds === 1 ? "" : "s"} planned</span>`
@@ -512,6 +646,7 @@ function closeWorkoutMode() {
 
     overlay?.classList.remove("open");
     stopTimer();
+    hideRestBar();
     activeDayId = null;
 }
 
@@ -681,7 +816,62 @@ function buildWorkoutSummary(day, elapsedMs) {
     ].join("\n\n");
 }
 
-function openSummaryModal(text) {
+// Total volume only counts weight-bearing (reps-mode) sets --
+// timed exercises (planks, mobility circuits) don't have a
+// comparable "lb moved" figure, so they're left out of that stat
+// but still count toward sets/exercises completed.
+function computeWorkoutStats(day) {
+    let totalVolume = 0;
+    let setsCompleted = 0;
+    let exercisesCompleted = 0;
+
+    day.exercises.forEach(exercise => {
+        const doneSets = (exercise.sets || []).filter(set => set.done);
+
+        if (doneSets.length) {
+            exercisesCompleted++;
+        }
+
+        setsCompleted += doneSets.length;
+
+        if (exercise.mode !== "time") {
+            doneSets.forEach(set => {
+                totalVolume += (Number(set.weight) || 0) * (Number(set.reps) || 0);
+            });
+        }
+    });
+
+    return { totalVolume, setsCompleted, exercisesCompleted };
+}
+
+function renderSummaryStats(stats, elapsedMs) {
+    const el = $("strengthSummaryStats");
+
+    if (!el) {
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="strength-summary-stat">
+            <span class="strength-summary-stat-value">${formatElapsed(elapsedMs)}</span>
+            <span class="strength-summary-stat-label">Duration</span>
+        </div>
+        <div class="strength-summary-stat">
+            <span class="strength-summary-stat-value">${stats.totalVolume.toLocaleString()}</span>
+            <span class="strength-summary-stat-label">lb Volume</span>
+        </div>
+        <div class="strength-summary-stat">
+            <span class="strength-summary-stat-value">${stats.setsCompleted}</span>
+            <span class="strength-summary-stat-label">Sets</span>
+        </div>
+        <div class="strength-summary-stat">
+            <span class="strength-summary-stat-value">${stats.exercisesCompleted}</span>
+            <span class="strength-summary-stat-label">Exercises</span>
+        </div>
+    `;
+}
+
+function openSummaryModal(text, stats, elapsedMs) {
     const overlay = $("strengthSummaryOverlay");
     const textarea = $("strengthSummaryText");
 
@@ -689,6 +879,7 @@ function openSummaryModal(text) {
         return;
     }
 
+    renderSummaryStats(stats, elapsedMs);
     textarea.value = text;
     overlay.classList.add("open");
 }
@@ -725,6 +916,7 @@ function finishWorkout() {
     const day = getActiveDay();
     const elapsedMs = timerStartedAt ? Date.now() - timerStartedAt : 0;
     const summary = day ? buildWorkoutSummary(day, elapsedMs) : null;
+    const stats = day ? computeWorkoutStats(day) : null;
 
     if (day) {
         day.exercises.forEach(logExercise);
@@ -732,8 +924,8 @@ function finishWorkout() {
 
     closeWorkoutMode();
 
-    if (summary) {
-        openSummaryModal(summary);
+    if (summary && stats) {
+        openSummaryModal(summary, stats, elapsedMs);
     }
 }
 
@@ -872,6 +1064,21 @@ document.addEventListener("click", event => {
         return;
     }
 
+    if (target.closest("#workoutRestSkip")) {
+        hideRestBar();
+        return;
+    }
+
+    if (target.closest("#workoutRestMinus")) {
+        adjustRestTimer(-15);
+        return;
+    }
+
+    if (target.closest("#workoutRestPlus")) {
+        adjustRestTimer(15);
+        return;
+    }
+
     if (target.closest("[data-toggle-exercise]")) {
         const exerciseId = target.closest("[data-toggle-exercise]").dataset.toggleExercise;
 
@@ -894,16 +1101,42 @@ document.addEventListener("click", event => {
     const toggleSetBtn = target.closest("[data-toggle-workout-set]");
 
     if (toggleSetBtn) {
+        let justCompleted = false;
+        let restSeconds = 0;
+
         updatePlan(day => {
             const exercise = findExercise(day, toggleSetBtn.dataset.exerciseId);
             const set = exercise && findSet(exercise, toggleSetBtn.dataset.toggleWorkoutSet);
 
             if (set) {
                 set.done = !set.done;
+                justCompleted = set.done;
+                restSeconds = exercise.restSeconds;
                 renderExercise(exercise);
             }
         });
         updateProgress();
+
+        if (justCompleted) {
+            startRestTimer(restSeconds);
+        }
+
+        return;
+    }
+
+    const cycleTypeBtn = target.closest("[data-cycle-set-type]");
+
+    if (cycleTypeBtn) {
+        updatePlan(day => {
+            const exercise = findExercise(day, cycleTypeBtn.dataset.exerciseId);
+            const set = exercise && findSet(exercise, cycleTypeBtn.dataset.cycleSetType);
+
+            if (set) {
+                const currentIndex = SET_TYPE_ORDER.indexOf(set.type || "working");
+                set.type = SET_TYPE_ORDER[(currentIndex + 1) % SET_TYPE_ORDER.length];
+                renderExercise(exercise);
+            }
+        });
         return;
     }
 

@@ -1025,6 +1025,32 @@
                 id="workoutModeBody"
                 class="strength-workout-body"></div>
 
+            <div
+                id="workoutRestBar"
+                class="strength-rest-bar">
+
+                <div class="strength-rest-track">
+                    <div id="workoutRestFill" class="strength-rest-fill"></div>
+                </div>
+
+                <div class="strength-rest-row">
+
+                    <div class="strength-rest-info">
+                        <span class="strength-rest-icon" data-icon="timer"></span>
+                        <span class="strength-rest-label">Rest</span>
+                        <span id="workoutRestTime" class="strength-rest-time">0:00</span>
+                    </div>
+
+                    <div class="strength-rest-actions">
+                        <button type="button" id="workoutRestMinus" class="strength-rest-adjust">−15s</button>
+                        <button type="button" id="workoutRestPlus" class="strength-rest-adjust">+15s</button>
+                        <button type="button" id="workoutRestSkip" class="strength-rest-skip">Skip</button>
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
     </div>
@@ -1040,6 +1066,8 @@
             <span class="strength-search-title">
                 Workout complete
             </span>
+
+            <div id="strengthSummaryStats" class="strength-summary-stats"></div>
 
             <p class="strength-summary-hint">
                 Copy this into your Strava activity description.
