@@ -104,13 +104,20 @@ function desiredStrengthSessions(plan) {
             workoutIndex += 1;
             if (!template) continue;
 
+            const focusLabel = entry.session || "Strength";
+            const guidance = entry.strengthIntensity === "light"
+                ? `${focusLabel} — LIGHT load; protect running quality and keep reps in reserve.`
+                : entry.repScheme
+                    ? `${focusLabel} — ${entry.repScheme}.`
+                    : `${focusLabel}.`;
+
             sessions.push({
                 date,
                 dayCode: entry.day,
                 workoutId: `plan-${template.id}`,
                 workoutName: template.name || "Strength",
                 strengthIntensity: entry.strengthIntensity || "support",
-                note: `Training Plan: ${plan.name} • ${entry.strengthIntensity === "light" ? "LIGHT — protect running quality; reduce load and volume." : "SUPPORTING STRENGTH — keep 1–3 reps in reserve."}`,
+                note: `Training Plan: ${plan.name} • ${guidance}`,
                 phase: week.phase,
                 week: week.week
             });

@@ -19,6 +19,200 @@
 const ALL_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const RUN_PREFERENCE = ["MON", "WED", "FRI", "TUE", "THU", "SAT", "SUN"];
 const SUPPORT_PREFERENCE = ["TUE", "THU", "MON", "FRI", "SAT", "WED", "SUN"];
+const CROSS_MODALITIES = ["Swim", "Bike", "Elliptical", "Row"];
+
+// Each primary goal gets its own vocabulary of session names/details
+// and lift focus + rep scheme, so the plan's character actually
+// changes with what the person picked -- a Strength-primary plan
+// reads as running-as-maintenance with heavy lifting, a Speed plan
+// reads as sharp intervals with power-focused lifting, etc. A
+// secondary goal blends a couple of its own options in rather than
+// swapping the whole vocabulary, so it nudges the plan without
+// overriding the primary goal's identity.
+const GOAL_VOCABULARY = {
+    STRENGTH: {
+        easyRun: ["Easy Maintenance Run", "Recovery Jog", "Easy Aerobic Run"],
+        quality: [
+            { label: "Steady Tempo", detail: "20 min @ controlled effort" },
+            { label: "Moderate Fartlek", detail: "6 × 2 min surge / 2 min easy" }
+        ],
+        longRun: ["Easy Long Run", "Steady Long Run"],
+        lift: ["Strength — Heavy Lower", "Strength — Heavy Upper", "Strength — Full Body"],
+        repScheme: "3–6 reps, heavy load, 2–4 min rest"
+    },
+    RUN_MAINTENANCE: {
+        easyRun: ["Easy Aerobic Run", "Conversational Run", "Recovery Jog"],
+        quality: [
+            { label: "Steady State Run", detail: "20 min @ steady effort" },
+            { label: "Light Fartlek", detail: "4 × 3 min pickup / 2 min easy" }
+        ],
+        longRun: ["Easy Long Run"],
+        lift: ["Strength — Full Body Support", "Strength — Core & Stability"],
+        repScheme: "8–12 reps, moderate load"
+    },
+    BASE_BUILD: {
+        easyRun: ["Easy Aerobic Run", "Steady Aerobic Run", "Conversational Run"],
+        quality: [
+            { label: "Progression Run", detail: "last 10 min faster than steady" },
+            { label: "Aerobic Fartlek", detail: "8 × 1 min pickup / 1 min easy" },
+            { label: "Hill Strides", detail: "6 × 20 sec hill strides" }
+        ],
+        longRun: ["Aerobic Long Run", "Progression Long Run"],
+        lift: ["Strength — General Prep", "Strength — Full Body"],
+        repScheme: "8–10 reps, moderate load"
+    },
+    SPEED: {
+        easyRun: ["Easy Recovery Run", "Easy Aerobic Run"],
+        quality: [
+            { label: "Interval Repeats", detail: "6 × 400m @ fast effort" },
+            { label: "Tempo Run", detail: "20 min @ threshold effort" },
+            { label: "Hill Sprints", detail: "8 × 15 sec hill sprints" },
+            { label: "Speed Fartlek", detail: "10 × 30 sec fast / 90 sec easy" }
+        ],
+        longRun: ["Easy Long Run", "Progression Long Run"],
+        lift: ["Strength — Power & Speed", "Strength — Plyometric Prep"],
+        repScheme: "3–5 reps @ speed, full recovery between sets"
+    },
+    RUN_STRENGTH: {
+        easyRun: ["Easy Aerobic Run", "Hilly Easy Run"],
+        quality: [
+            { label: "Hill Repeats", detail: "8 × 45 sec uphill @ strong effort" },
+            { label: "Tempo Run", detail: "20 min @ controlled threshold" }
+        ],
+        longRun: ["Hilly Long Run", "Steady Long Run"],
+        lift: ["Strength — Running-Specific Lower", "Strength — Posterior Chain", "Strength — Single-Leg Stability"],
+        repScheme: "5–8 reps, moderate-heavy load"
+    },
+    VERTICAL_POWER: {
+        easyRun: ["Easy Aerobic Run"],
+        quality: [
+            { label: "Hill Sprints", detail: "6 × 10 sec max-effort hill sprints" },
+            { label: "Bounding Intervals", detail: "5 × 30 sec bounding + easy jog" }
+        ],
+        longRun: ["Easy Long Run"],
+        lift: ["Strength — Explosive Lower", "Strength — Plyometrics", "Strength — Olympic-Style Power"],
+        repScheme: "3–5 reps, explosive intent, full recovery between sets"
+    },
+    HYPERTROPHY: {
+        easyRun: ["Easy Aerobic Run", "Recovery Jog"],
+        quality: [
+            { label: "Steady Tempo", detail: "20 min @ controlled effort" }
+        ],
+        longRun: ["Easy Long Run"],
+        lift: ["Strength — Hypertrophy Upper", "Strength — Hypertrophy Lower", "Strength — Hypertrophy Full Body"],
+        repScheme: "8–12 reps, moderate load, 60–90 sec rest"
+    },
+    ATHLETIC: {
+        easyRun: ["Easy Aerobic Run"],
+        quality: [
+            { label: "Interval Repeats", detail: "5 × 400m @ fast effort" },
+            { label: "Hill Repeats", detail: "6 × 30 sec hill repeats" },
+            { label: "Tempo Run", detail: "20 min @ threshold effort" }
+        ],
+        longRun: ["Easy Long Run", "Progression Long Run"],
+        lift: ["Strength — Power", "Strength — Full Body Athletic", "Strength — Core & Stability"],
+        repScheme: "Varied: 3–6 reps power work, 8–12 reps accessory work"
+    }
+};
+
+// Secondary-goal checkboxes use their own short vocabulary (see
+// programs.html) rather than the primary-goal enum; map the ones
+// that meaningfully change session character onto a donor profile.
+// MOBILITY and FITNESS are handled as light flavor text instead.
+const SECONDARY_VOCABULARY = {
+    SPEED: GOAL_VOCABULARY.SPEED,
+    POWER: GOAL_VOCABULARY.VERTICAL_POWER,
+    HYPERTROPHY: GOAL_VOCABULARY.HYPERTROPHY,
+    RUNNING: GOAL_VOCABULARY.RUN_MAINTENANCE
+};
+
+function hashSeed(text) {
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+}
+
+// A tiny deterministic PRNG (mulberry32), seeded from the plan's own
+// settings: identical settings always regenerate the identical plan
+// (predictable -- re-activating without changes doesn't reshuffle
+// anything), but changing any input reshuffles which vocabulary
+// options get used, so plans don't all read like the same template.
+function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function next() {
+        a |= 0;
+        a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function createRng(settings) {
+    const seedText = [
+        settings.primaryGoal, settings.name, settings.startDate, settings.endDate,
+        settings.runDays, settings.liftDays, settings.crossDays, settings.longRunDay,
+        settings.currentMiles, settings.targetMiles, settings.maxMiles,
+        settings.longMin, settings.longMax, settings.speedDays,
+        (Array.isArray(settings.secondaryGoals) ? settings.secondaryGoals : []).join(",")
+    ].join("|");
+    return mulberry32(hashSeed(seedText));
+}
+
+function pickFrom(rng, list, fallback) {
+    if (!Array.isArray(list) || !list.length) return fallback;
+    return list[Math.floor(rng() * list.length) % list.length];
+}
+
+function buildVocabulary(settings) {
+    const primary = GOAL_VOCABULARY[settings.primaryGoal] || GOAL_VOCABULARY.BASE_BUILD;
+    const secondaryCodes = Array.isArray(settings.secondaryGoals) ? settings.secondaryGoals : [];
+    const donors = secondaryCodes.map(code => SECONDARY_VOCABULARY[code]).filter(Boolean);
+
+    function mergeLabels(key) {
+        const seen = new Set(primary[key] || []);
+        const combined = [...(primary[key] || [])];
+        const cap = combined.length + 2;
+        for (const donor of donors) {
+            for (const label of donor[key] || []) {
+                if (combined.length >= cap) break;
+                if (!seen.has(label)) {
+                    seen.add(label);
+                    combined.push(label);
+                }
+            }
+        }
+        return combined;
+    }
+
+    function mergeQuality() {
+        const seen = new Set((primary.quality || []).map(item => item.label));
+        const combined = [...(primary.quality || [])];
+        const cap = combined.length + 2;
+        for (const donor of donors) {
+            for (const item of donor.quality || []) {
+                if (combined.length >= cap) break;
+                if (!seen.has(item.label)) {
+                    seen.add(item.label);
+                    combined.push(item);
+                }
+            }
+        }
+        return combined;
+    }
+
+    return {
+        easyRun: mergeLabels("easyRun"),
+        quality: mergeQuality(),
+        longRun: mergeLabels("longRun"),
+        lift: mergeLabels("lift"),
+        repScheme: primary.repScheme,
+        mobilityFlavor: secondaryCodes.includes("MOBILITY")
+    };
+}
 
 function roundHalf(value) {
     return Math.max(0, Math.round(value * 2) / 2);
@@ -228,7 +422,7 @@ function phaseForWeek(weekNumber, transitionWeeks, isCutback) {
     return "Maintain";
 }
 
-function buildTrainingWeek({ settings, weekNumber, totalWeeks, transitionWeeks, planEnd, dayPlan }) {
+function buildTrainingWeek({ settings, weekNumber, totalWeeks, transitionWeeks, planEnd, dayPlan, rng, vocabulary }) {
     const { runDays, longDay, qualityDays, liftPlacements, crossPlacements } = dayPlan;
     const isCutback = weekNumber > 1 && weekNumber % 4 === 0 && weekNumber < totalWeeks;
     const weeklyMileage = buildWeeklyMileage(settings, weekNumber, totalWeeks, transitionWeeks, dayPlan.previousMileage);
@@ -241,7 +435,9 @@ function buildTrainingWeek({ settings, weekNumber, totalWeeks, transitionWeeks, 
     let weekEnd = addDays(weekStart, 6);
     if (weekEnd > planEnd) weekEnd = planEnd;
 
+    const recoveryLabels = vocabulary.easyRun.filter(label => /recovery|jog/i.test(label));
     const days = [];
+    let previousType = null;
     for (let offset = 0; offset <= dateDiffDays(weekStart, weekEnd); offset++) {
         const date = addDays(weekStart, offset);
         const code = weekdayCode(date);
@@ -249,6 +445,7 @@ function buildTrainingWeek({ settings, weekNumber, totalWeeks, transitionWeeks, 
 
         if (!runDays.includes(code)) {
             days.push({ date: dateStr, day: code, type: "rest", miles: 0, session: "Rest", phase });
+            previousType = "rest";
             continue;
         }
 
@@ -256,23 +453,47 @@ function buildTrainingWeek({ settings, weekNumber, totalWeeks, transitionWeeks, 
         const isQuality = qualityDays.includes(code);
         const type = isLong ? "long" : isQuality ? "workout" : "easy";
         const miles = isLong ? Math.min(longMiles, weeklyMileage) : allocation[code];
-        const label = isLong ? "Long Run" : isQuality ? "Quality Run" : "Easy Run";
 
-        days.push({ date: dateStr, day: code, type, miles, session: `${label} — ${formatMilesValue(miles)} mi`, phase });
+        let session;
+        if (isLong) {
+            session = `${pickFrom(rng, vocabulary.longRun, "Long Run")} — ${formatMilesValue(miles)} mi`;
+        } else if (isQuality) {
+            const item = pickFrom(rng, vocabulary.quality, { label: "Quality Run", detail: "" });
+            session = item.detail
+                ? `${item.label} — ${item.detail} (${formatMilesValue(miles)} mi)`
+                : `${item.label} — ${formatMilesValue(miles)} mi`;
+        } else {
+            // A day right after a hard or long effort leans toward
+            // whichever "recovery"/"jog" label the goal's vocabulary
+            // offers, instead of the same generic easy-run text
+            // regardless of what came before it.
+            const afterHardEffort = previousType === "long" || previousType === "workout";
+            const pool = afterHardEffort && recoveryLabels.length ? recoveryLabels : vocabulary.easyRun;
+            session = `${pickFrom(rng, pool, "Easy Run")} — ${formatMilesValue(miles)} mi`;
+        }
+
+        days.push({ date: dateStr, day: code, type, miles, session, phase });
+        previousType = type;
     }
 
     const supplemental = [
-        ...liftPlacements.map(placement => ({
-            day: placement.day,
-            type: "strength",
-            session: placement.isDouble ? "Strength — Light" : "Strength",
-            miles: 0,
-            strengthIntensity: placement.isDouble || placement.day === longDay ? "light" : "support"
-        })),
+        ...liftPlacements.map(placement => {
+            const focus = pickFrom(rng, vocabulary.lift, "Strength");
+            const tags = [placement.isDouble ? "Light" : null, isCutback ? "Deload" : null].filter(Boolean);
+            return {
+                day: placement.day,
+                type: "strength",
+                session: tags.length ? `${focus} (${tags.join(" · ")})` : focus,
+                miles: 0,
+                strengthIntensity: placement.isDouble || placement.day === longDay || isCutback ? "light" : "support",
+                repScheme: vocabulary.repScheme,
+                mobilityFlavor: vocabulary.mobilityFlavor
+            };
+        }),
         ...crossPlacements.map(placement => ({
             day: placement.day,
             type: "cross",
-            session: "Cross Training",
+            session: `Cross Training — ${pickFrom(rng, CROSS_MODALITIES, "")}`.trim().replace(/ — $/, ""),
             miles: 0
         }))
     ];
@@ -361,6 +582,8 @@ export function generateTrainingPlan(settings) {
     }
 
     const transitionWeeks = Math.max(1, Math.min(totalWeeks, Math.ceil(totalWeeks * 0.5)));
+    const rng = createRng(settings);
+    const vocabulary = buildVocabulary(settings);
 
     const weeks = [];
     let previousMileage = Number(settings.currentMiles) || 0;
@@ -371,7 +594,9 @@ export function generateTrainingPlan(settings) {
             totalWeeks,
             transitionWeeks,
             planEnd: end,
-            dayPlan: { runDays, longDay, qualityDays, liftPlacements: liftResult.placed, crossPlacements: crossResult.placed, previousMileage }
+            dayPlan: { runDays, longDay, qualityDays, liftPlacements: liftResult.placed, crossPlacements: crossResult.placed, previousMileage },
+            rng,
+            vocabulary
         });
         previousMileage = generated.plannedMiles;
         weeks.push(generated);
