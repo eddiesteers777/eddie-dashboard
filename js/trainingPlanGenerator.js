@@ -64,6 +64,15 @@ function formatMilesValue(value) {
     return Number.isInteger(number) ? String(number) : number.toFixed(1);
 }
 
+function dayIndex(code) {
+    return ALL_DAYS.indexOf(code);
+}
+
+function circularDistance(a, b) {
+    const diff = Math.abs(dayIndex(a) - dayIndex(b));
+    return Math.min(diff, 7 - diff);
+}
+
 function resolveLongDay(available, requested) {
     if (available.includes(requested)) return requested;
     if (available.includes("SAT")) return "SAT";
@@ -82,9 +91,42 @@ function pickRunDays(available, count, longDay) {
 }
 
 function pickQualityDays(runDays, longDay, count) {
+    if (count <= 0) return { days: [], dropped: 0 };
+
+    // A hard/quality effort right next to the long run -- the day
+    // before it (no taper) or the day after it (no recovery) -- is a
+    // training mistake, so prefer days with at least one buffer day
+    // of separation. Only fall back to adjacency if there simply
+    // aren't enough other run days to honor the requested count.
+    const buffered = runDays.filter(day => day !== longDay && (!longDay || circularDistance(day, longDay) > 1));
     const eligible = runDays.filter(day => day !== longDay);
-    if (!eligible.length || count <= 0) return [];
-    return eligible.slice(0, Math.min(count, eligible.length));
+    const pool = buffered.length >= count ? buffered : eligible;
+    if (!pool.length) return { days: [], dropped: count };
+
+    // TUE/WED/THU first (never MON by default -- MON is only chosen
+    // if nothing else is available). Each pick greedily maximizes
+    // its distance from the days already chosen, so multiple quality
+    // sessions spread across the week instead of stacking up, with
+    // ties broken by that day-of-week preference.
+    const preference = ["TUE", "WED", "THU", "FRI", "MON", "SAT", "SUN"];
+    const remaining = [...pool].sort((a, b) => preference.indexOf(a) - preference.indexOf(b));
+
+    const chosen = [];
+    while (chosen.length < count && remaining.length) {
+        let best = remaining[0];
+        let bestDistance = -1;
+        for (const day of remaining) {
+            const minDistance = chosen.length ? Math.min(...chosen.map(picked => circularDistance(day, picked))) : 7;
+            if (minDistance > bestDistance) {
+                bestDistance = minDistance;
+                best = day;
+            }
+        }
+        chosen.push(best);
+        remaining.splice(remaining.indexOf(best), 1);
+    }
+
+    return { days: chosen, dropped: Math.max(0, count - chosen.length) };
 }
 
 function placeSupportDays({ count, occupied, avoidDoubleOn, available, allowDoubles, doublesRemaining }) {
@@ -272,7 +314,12 @@ export function generateTrainingPlan(settings) {
     const runCount = clampInt(settings.runDays, 0, available.length);
     const longDay = runCount > 0 ? resolveLongDay(available, settings.longRunDay) : null;
     const runDays = pickRunDays(available, runCount, longDay);
-    const qualityDays = pickQualityDays(runDays, longDay, clampInt(settings.speedDays, 0, runDays.length));
+    const requestedSpeedDays = clampInt(settings.speedDays, 0, runDays.length);
+    const qualityResult = pickQualityDays(runDays, longDay, requestedSpeedDays);
+    const qualityDays = qualityResult.days;
+    if (qualityResult.dropped > 0) {
+        warnings.push(`Only ${qualityDays.length} of the requested ${requestedSpeedDays} weekly speed session${requestedSpeedDays === 1 ? "" : "s"} fit your selected running days; the rest were left as easy runs.`);
+    }
 
     const occupied = new Set(runDays);
     const avoidDoubleOn = new Set([longDay, ...qualityDays].filter(Boolean));
