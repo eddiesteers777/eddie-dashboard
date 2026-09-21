@@ -4,10 +4,11 @@
 // page's own markup. Desktop keeps the existing dropdown navbar
 // untouched; both are simply hidden/shown by a CSS breakpoint.
 const BOTTOM_TABS = [
-    { key: "today", label: "Today", icon: "home", href: "index.html" },
-    { key: "train", label: "Train", icon: "dumbbell", href: "running.html" },
-    { key: "health", label: "Health", icon: "heart", href: "nutrition.html" },
-    { key: "more", label: "More", icon: "grid", href: "more.html" }
+    { key: "today", label: "Today", icon: "home", href: "index.html", color: "var(--primary)" },
+    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--orange)" },
+    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--pink)" },
+    { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--purple)" },
+    { key: "more", label: "More", icon: "grid", href: "more.html", color: "var(--muted)" }
 ];
 
 const PAGE_TAB = {
@@ -15,7 +16,7 @@ const PAGE_TAB = {
     "running.html": "train",
     "strength.html": "train",
     "cross-training.html": "train",
-    "habits.html": "train",
+    "habits.html": "habits",
     "nutrition.html": "health",
     "fueling.html": "health",
     "analytics.html": "more",
@@ -30,14 +31,14 @@ const PAGE_TAB = {
 };
 
 // Only tabs that actually bundle multiple real pages need a way to
-// switch between siblings -- Today and More are single destinations
-// (More's own page is a menu of everything else), so they get none.
+// switch between siblings -- Today, Habits, and More are each a
+// single destination (More's own page is a menu of everything
+// else), so they get none.
 const SUBNAV_GROUPS = {
     train: [
         { href: "running.html", label: "Running" },
         { href: "strength.html", label: "Strength" },
-        { href: "cross-training.html", label: "Cross-Training" },
-        { href: "habits.html", label: "Habits" }
+        { href: "cross-training.html", label: "Cross-Training" }
     ],
     health: [
         { href: "nutrition.html", label: "Nutrition" },
@@ -48,23 +49,25 @@ const SUBNAV_GROUPS = {
 // Destinations the mobile search overlay can jump to -- a quick-jump
 // list of real pages, not a search over logged content (runs, meals,
 // etc.). Simple on purpose; can grow into real content search later.
+// Colors match the same destination everywhere it shows up (bottom
+// nav, More's rows, here) instead of everything defaulting to blue.
 const SEARCH_DESTINATIONS = [
-    { label: "Today", href: "index.html", icon: "home" },
-    { label: "Running", href: "running.html", icon: "activity" },
-    { label: "Strength", href: "strength.html", icon: "dumbbell" },
-    { label: "Cross-Training", href: "cross-training.html", icon: "bike" },
-    { label: "Habits", href: "habits.html", icon: "checkCircle" },
-    { label: "Nutrition", href: "nutrition.html", icon: "apple" },
-    { label: "Fueling", href: "fueling.html", icon: "fuel" },
-    { label: "Marathon Plan", href: "marathon.html", icon: "activity" },
-    { label: "75-Day Challenge", href: "75day.html", icon: "flame" },
-    { label: "Analytics", href: "analytics.html", icon: "trendingUp" },
-    { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard" },
-    { label: "Gear", href: "gear.html", icon: "footprint" },
-    { label: "Planner", href: "planner.html", icon: "calendar" },
-    { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer" },
-    { label: "Settings", href: "settings.html", icon: "user" },
-    { label: "More", href: "more.html", icon: "grid" }
+    { label: "Today", href: "index.html", icon: "home", color: "var(--primary)" },
+    { label: "Running", href: "running.html", icon: "activity", color: "var(--primary-dark)" },
+    { label: "Strength", href: "strength.html", icon: "dumbbell", color: "var(--orange)" },
+    { label: "Cross-Training", href: "cross-training.html", icon: "bike", color: "var(--cyan)" },
+    { label: "Habits", href: "habits.html", icon: "checkCircle", color: "var(--purple)" },
+    { label: "Nutrition", href: "nutrition.html", icon: "apple", color: "var(--green)" },
+    { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--red)" },
+    { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)" },
+    { label: "75-Day Challenge", href: "75day.html", icon: "flame", color: "var(--green)" },
+    { label: "Analytics", href: "analytics.html", icon: "trendingUp", color: "var(--amber)" },
+    { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)" },
+    { label: "Gear", href: "gear.html", icon: "footprint", color: "var(--pink)" },
+    { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)" },
+    { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)" },
+    { label: "Settings", href: "settings.html", icon: "user", color: "var(--muted)" },
+    { label: "More", href: "more.html", icon: "grid", color: "var(--muted)" }
 ];
 
 function escapeForHtml(value) {
@@ -94,7 +97,7 @@ fetch("components/header.html")
         document.body.insertAdjacentHTML("beforeend", `
             <nav class="eos-bottomnav" aria-label="Primary">
                 ${BOTTOM_TABS.map(tab => `
-                    <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}">
+                    <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}" style="--tab-color:${tab.color}">
                         <span class="eos-bottomnav-icon">${icon(tab.icon)}</span>
                         <span>${tab.label}</span>
                     </a>
@@ -190,7 +193,8 @@ fetch("components/header.html")
             searchResults.innerHTML = matches.length
                 ? matches.map(d => `
                     <a href="${d.href}" class="eos-search-result">
-                        ${icon(d.icon)} <span>${escapeForHtml(d.label)}</span>
+                        <span class="eos-search-result-icon" style="color:${d.color}">${icon(d.icon)}</span>
+                        <span>${escapeForHtml(d.label)}</span>
                     </a>
                 `).join("")
                 : `<div class="eos-search-empty">No matches for "${escapeForHtml(query)}"</div>`;

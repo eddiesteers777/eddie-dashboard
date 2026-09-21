@@ -190,6 +190,7 @@ function renderToday() {
         const progress = loadProgress();
         items.push({
             icon: icon("activity"),
+            color: "var(--primary-dark)",
             title: dayData.session || "Run",
             detail: `${dayData.miles} mi${dayData.pace ? ` @ ${dayData.pace}` : ""}${dayData.race ? " — RACE DAY" : ""}`,
             link: "marathon.html",
@@ -220,6 +221,7 @@ function renderToday() {
 
                 items.push({
                     icon: icon("dumbbell"),
+                    color: "var(--orange)",
                     title: item.workoutName || "Strength workout",
                     detail: startable
                         ? `${item.time || "Today"} · Tap to start`
@@ -244,6 +246,7 @@ function renderToday() {
             if (plan) {
                 items.push({
                     icon: icon("fuel"),
+                    color: "var(--red)",
                     title: "Fuel plan ready",
                     detail: plan.name || "A fueling plan is attached to today's run",
                     link: "fueling.html"
@@ -259,6 +262,7 @@ function renderToday() {
         dayData.crossTraining.forEach(entry => {
             items.push({
                 icon: icon("bike"),
+                color: "var(--cyan)",
                 title: entry.activity || "Cross-Training",
                 detail: [entry.duration, entry.intensity]
                     .filter(Boolean)
@@ -275,6 +279,7 @@ function renderToday() {
         todaysEvents.forEach(ev => {
             items.push({
                 icon: icon("calendar"),
+                color: "var(--cyan-light)",
                 title: ev.label,
                 detail: ev.category || "Due today",
                 link: "planner.html"
@@ -297,7 +302,7 @@ function renderToday() {
     container.innerHTML = items.map(item => item.isRun ? `
         <div class="eos-today-item eos-today-item-run">
             <a href="${item.link}" class="eos-today-item-link">
-                <span class="eos-today-item-icon">${item.icon}</span>
+                <span class="eos-today-item-icon" style="color:${item.color}">${item.icon}</span>
                 <div class="eos-today-item-text">
                     <strong>${escapeHtml(item.title)}</strong>
                     <span>${escapeHtml(item.detail)}</span>
@@ -313,7 +318,7 @@ function renderToday() {
         </div>
     ` : `
         <a href="${item.link}" class="eos-today-item">
-            <span class="eos-today-item-icon">${item.icon}</span>
+            <span class="eos-today-item-icon" style="color:${item.color}">${item.icon}</span>
             <div class="eos-today-item-text">
                 <strong>${escapeHtml(item.title)}</strong>
                 <span>${escapeHtml(item.detail)}</span>
