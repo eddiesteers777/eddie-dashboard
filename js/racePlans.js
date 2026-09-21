@@ -23,6 +23,7 @@
 
 import { generateRacePlan, summarizeGeneratedPlan } from "./racePlanGenerator.js";
 import { loadRunningPrograms, saveRunningPrograms } from "./runningPrograms.js";
+import { loadTrainingPrograms } from "./trainingPrograms.js";
 import { compareGeneratedPlans, preserveRegeneratedRuntimeState } from "./racePlanEditor.js";
 import { START_DATE as MARATHON_START_DATE, RACE_DATE as MARATHON_RACE_DATE } from "./marathonData.js";
 import {
@@ -675,6 +676,19 @@ function getPlanConflicts(plans, candidatePlan, excludePlanId = null) {
         if (datesOverlap(candidateStart, candidateEnd, plan.generatedPlan.trainingStartDate, plan.generatedPlan.raceDate)) {
             conflicts.push({
                 name: plan.name || "Active race plan",
+                start: plan.generatedPlan.trainingStartDate,
+                end: plan.generatedPlan.raceDate
+            });
+        }
+    }
+
+    // Training Plans live in their own store but share the same
+    // Running calendar, so an active one can overlap a race plan too.
+    for (const plan of loadTrainingPrograms()) {
+        if (!plan || plan.id === excludePlanId || normalizePlanStatus(plan) !== "active" || !plan.generatedPlan) continue;
+        if (datesOverlap(candidateStart, candidateEnd, plan.generatedPlan.trainingStartDate, plan.generatedPlan.raceDate)) {
+            conflicts.push({
+                name: plan.name || "Active training plan",
                 start: plan.generatedPlan.trainingStartDate,
                 end: plan.generatedPlan.raceDate
             });

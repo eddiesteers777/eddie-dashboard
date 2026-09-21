@@ -1,5 +1,9 @@
 import { loadRunningPrograms } from './runningPrograms.js';
 import { loadTrainingPrograms, saveTrainingPrograms } from './trainingPrograms.js';
+import { generateTrainingPlan } from './trainingPlanGenerator.js';
+import { syncTrainingPlanStrengthSchedule, deactivateTrainingPlanStrengthSchedule } from './trainingPlanStrengthIntegration.js';
+import { getRacePlanStrengthAvailability } from './racePlanStrengthIntegration.js';
+import { START_DATE as MARATHON_START_DATE, RACE_DATE as MARATHON_RACE_DATE } from './marathonData.js';
 
 const TAB_KEY = 'programs-tab';
 const TAB_NAMES = { race: 'Race Plans', training: 'Training Plans' };
@@ -124,49 +128,207 @@ function renderRaceLibrary() {
     }).join('');
 }
 
+function datesOverlap(startA, endA, startB, endB) {
+    if (!startA || !endA || !startB || !endB) return false;
+    return startA <= endB && startB <= endA;
+}
+
+function toIsoDate(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function formatConflictList(conflicts) {
+    return conflicts.map(conflict => `• ${conflict.name} (${formatDate(conflict.start)} → ${formatDate(conflict.end)})`).join('\n');
+}
+
+function getTrainingPlanConflicts(candidateStart, candidateEnd, excludeId) {
+    const conflicts = [];
+
+    for (const plan of loadTrainingPrograms()) {
+        if (!plan || plan.id === excludeId || normalizeStatus(plan) !== 'active' || !plan.generatedPlan) continue;
+        if (datesOverlap(candidateStart, candidateEnd, plan.generatedPlan.trainingStartDate, plan.generatedPlan.raceDate)) {
+            conflicts.push({ name: plan.name || 'Active training plan', start: plan.generatedPlan.trainingStartDate, end: plan.generatedPlan.raceDate });
+        }
+    }
+
+    for (const plan of loadRunningPrograms()) {
+        if (!plan || normalizeStatus(plan) !== 'active' || !plan.generatedPlan) continue;
+        if (datesOverlap(candidateStart, candidateEnd, plan.generatedPlan.trainingStartDate, plan.generatedPlan.raceDate)) {
+            conflicts.push({ name: plan.name || 'Active race plan', start: plan.generatedPlan.trainingStartDate, end: plan.generatedPlan.raceDate });
+        }
+    }
+
+    const marathonStart = toIsoDate(MARATHON_START_DATE);
+    const marathonEnd = toIsoDate(MARATHON_RACE_DATE);
+    if (marathonStart && marathonEnd && datesOverlap(candidateStart, candidateEnd, marathonStart, marathonEnd)) {
+        conflicts.push({ name: 'Existing Indianapolis Marathon plan', start: marathonStart, end: marathonEnd });
+    }
+
+    return conflicts;
+}
+
+function trainingCardActions(id, status) {
+    const escId = escapeHtml(id);
+    const edit = `<button type="button" class="program-card-link" data-training-edit="${escId}">Edit</button>`;
+    const activate = `<button type="button" class="program-card-link" data-training-activate="${escId}">Activate</button>`;
+    const pause = `<button type="button" class="program-card-link" data-training-pause="${escId}">Pause</button>`;
+    const archive = `<button type="button" class="program-card-link program-card-danger" data-training-archive="${escId}">Archive</button>`;
+    const del = `<button type="button" class="program-card-link program-card-danger" data-training-delete="${escId}">Delete</button>`;
+
+    if (status === 'active') return `${pause}${archive}`;
+    if (status === 'paused') return `${edit}${activate}${archive}`;
+    if (status === 'archived') return `${activate}`;
+    return `${edit}${activate}${del}`;
+}
+
 function renderTrainingLibrary() {
     const container = document.getElementById('trainingDraftLibrary');
     const counts = document.getElementById('trainingDraftCounts');
     if (!container || !counts) return;
 
-    const drafts = loadTrainingPrograms()
+    const plans = loadTrainingPrograms()
         .slice()
         .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
 
-    counts.innerHTML = `<span><strong>${drafts.length}</strong> ${drafts.length === 1 ? 'Draft' : 'Drafts'}</span>`;
+    const groups = {
+        active: plans.filter(item => normalizeStatus(item) === 'active'),
+        paused: plans.filter(item => normalizeStatus(item) === 'paused'),
+        draft: plans.filter(item => normalizeStatus(item) === 'draft'),
+        archived: plans.filter(item => normalizeStatus(item) === 'archived')
+    };
 
-    if (!drafts.length) {
-        container.innerHTML = '<div class="programs-empty">No training plan drafts yet. Build one below and save it to keep it here.</div>';
+    counts.innerHTML = Object.entries(groups)
+        .map(([status, list]) => `<span><strong>${list.length}</strong> ${STATUS_LABELS[status]}</span>`)
+        .join('');
+
+    if (!plans.length) {
+        container.innerHTML = '<div class="programs-empty">No training plans yet. Build one below and save it to keep it here.</div>';
         return;
     }
 
-    container.innerHTML = drafts.map(draft => {
-        const settings = draft.settings || {};
-        const name = draft.name || settings.name || 'Untitled training block';
-        const dateRange = settings.startDate && settings.endDate ? `${formatDate(settings.startDate)} → ${formatDate(settings.endDate)}` : 'Dates not set';
+    container.innerHTML = plans.map(plan => {
+        const status = normalizeStatus(plan);
+        const settings = plan.settings || {};
+        const generated = plan.generatedPlan;
+        const name = plan.name || settings.name || 'Untitled training block';
         const goalLabel = GOAL_LABELS[settings.primaryGoal] || 'Training Plan';
+        const dateRange = generated
+            ? `${formatDate(generated.trainingStartDate)} → ${formatDate(generated.raceDate)}`
+            : (settings.startDate && settings.endDate ? `${formatDate(settings.startDate)} → ${formatDate(settings.endDate)}` : 'Dates not set');
+        const schedule = generated
+            ? `${generated.runDaysPerWeek} runs · ${generated.liftDaysPerWeek} lifts · ${generated.crossDaysPerWeek} cross`
+            : `${settings.runDays ?? 0} runs · ${settings.liftDays ?? 0} lifts · ${settings.crossDays ?? 0} cross`;
+        const metrics = generated
+            ? `<div class="program-meta"><span>${generated.totalWeeks} wk</span><span>Peak <strong>${escapeHtml(formatMiles(generated.generatedPeakMileage))} mi</strong></span><span>Long run <strong>${escapeHtml(formatMiles(generated.longestPlannedRun))} mi</strong></span></div>`
+            : '';
+
         return `
             <article class="program-card">
                 <div class="program-card-main">
                     <div>
                         <div class="program-card-top">
-                            <span class="program-status draft">${STATUS_LABELS.draft}</span>
+                            <span class="program-status ${status}">${STATUS_LABELS[status]}</span>
                             <span class="programs-kicker">${escapeHtml(goalLabel.toUpperCase())}</span>
                         </div>
                         <h3>${escapeHtml(name)}</h3>
                         <div class="program-meta">
                             <span>${escapeHtml(dateRange)}</span>
-                            <span>${settings.runDays ?? 0} runs · ${settings.liftDays ?? 0} lifts · ${settings.crossDays ?? 0} cross</span>
+                            <span>${schedule}</span>
                         </div>
+                        ${metrics}
                     </div>
-                    <div class="program-card-actions">
-                        <button type="button" class="program-card-link" data-training-edit="${draft.id}">Edit</button>
-                        <button type="button" class="program-card-link program-card-danger" data-training-delete="${draft.id}">Delete</button>
-                    </div>
+                    <div class="program-card-actions">${trainingCardActions(plan.id, status)}</div>
                 </div>
             </article>
         `;
     }).join('');
+}
+
+async function activateTrainingPlan(id) {
+    const programs = loadTrainingPrograms();
+    const plan = programs.find(item => item.id === id);
+    if (!plan) return;
+
+    let result;
+    try {
+        result = generateTrainingPlan(plan.settings || {});
+    } catch (error) {
+        window.alert(error.message || 'This training plan could not be generated. Check its settings and try again.');
+        return;
+    }
+
+    const { generatedPlan, warnings } = result;
+    const conflicts = getTrainingPlanConflicts(generatedPlan.trainingStartDate, generatedPlan.raceDate, id);
+    if (conflicts.length) {
+        window.alert(`EddieOS cannot activate this training plan yet because it overlaps an existing active plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`);
+        return;
+    }
+
+    if (generatedPlan.liftDaysPerWeek > 0 && !getRacePlanStrengthAvailability().available) {
+        const proceed = window.confirm('This plan schedules Strength sessions, but no current Strength plan was found.\n\nClick OK to activate without Strength calendar entries.\n\nClick Cancel to keep the plan inactive.');
+        if (!proceed) return;
+    }
+
+    const now = new Date().toISOString();
+    plan.status = 'active';
+    plan.generatedPlan = generatedPlan;
+    plan.updatedAt = now;
+    plan.calendarActivatedAt = plan.calendarActivatedAt || now;
+    plan.archivedAt = null;
+    plan.pausedAt = null;
+
+    await saveTrainingPrograms(programs);
+
+    let strengthResult = { warning: '' };
+    try {
+        strengthResult = await syncTrainingPlanStrengthSchedule(plan);
+    } catch (error) {
+        console.error('Training-plan Strength calendar integration failed:', error);
+        window.alert('The training plan was activated, but EddieOS could not update the Strength calendar. Your existing Strength schedule was not deleted.');
+    }
+
+    renderTrainingLibrary();
+    window.dispatchEvent(new CustomEvent('eddieos:training-programs-changed', { detail: { programId: id, action: 'activated' } }));
+    window.dispatchEvent(new CustomEvent('eddieos:running-programs-changed', { detail: { programId: id, action: 'activated' } }));
+    window.dispatchEvent(new CustomEvent('eddieos:running-program-added', {
+        detail: { programId: id, startDate: generatedPlan.trainingStartDate, raceDate: generatedPlan.raceDate, status: 'active' }
+    }));
+
+    const combinedWarnings = [...warnings, ...(strengthResult.warning ? [strengthResult.warning] : [])];
+    window.alert(combinedWarnings.length
+        ? `Training plan activated with notes:\n\n${combinedWarnings.map(item => `• ${item}`).join('\n')}`
+        : 'Training plan activated. Check the Running and Strength calendars for the generated schedule.');
+}
+
+async function updateTrainingPlanStatus(id, nextStatus) {
+    const programs = loadTrainingPrograms();
+    const plan = programs.find(item => item.id === id);
+    if (!plan) return;
+
+    const now = new Date().toISOString();
+    plan.status = nextStatus;
+    plan.updatedAt = now;
+    if (nextStatus === 'paused') plan.pausedAt = now;
+    if (nextStatus === 'archived') {
+        plan.archivedAt = now;
+        plan.pausedAt = null;
+    }
+
+    await saveTrainingPrograms(programs);
+
+    try {
+        if (nextStatus === 'paused' || nextStatus === 'archived') {
+            await deactivateTrainingPlanStrengthSchedule(id);
+        }
+    } catch (error) {
+        console.error('Training-plan Strength cleanup failed:', error);
+    }
+
+    renderTrainingLibrary();
+    window.dispatchEvent(new CustomEvent('eddieos:training-programs-changed', { detail: { programId: id, action: nextStatus } }));
+    window.dispatchEvent(new CustomEvent('eddieos:running-programs-changed', { detail: { programId: id, action: nextStatus } }));
 }
 
 function applyTrainingSettings(settings) {
@@ -418,6 +580,9 @@ function init() {
     document.getElementById('trainingDraftLibrary')?.addEventListener('click', event => {
         const editBtn = event.target.closest('[data-training-edit]');
         const deleteBtn = event.target.closest('[data-training-delete]');
+        const activateBtn = event.target.closest('[data-training-activate]');
+        const pauseBtn = event.target.closest('[data-training-pause]');
+        const archiveBtn = event.target.closest('[data-training-archive]');
 
         if (editBtn) {
             const draft = loadTrainingPrograms().find(item => item.id === editBtn.dataset.trainingEdit);
@@ -442,6 +607,22 @@ function init() {
                 renderTrainingLibrary();
                 window.dispatchEvent(new CustomEvent('eddieos:training-programs-changed', { detail: { id } }));
             });
+            return;
+        }
+
+        if (activateBtn) {
+            activateTrainingPlan(activateBtn.dataset.trainingActivate);
+            return;
+        }
+
+        if (pauseBtn) {
+            updateTrainingPlanStatus(pauseBtn.dataset.trainingPause, 'paused');
+            return;
+        }
+
+        if (archiveBtn) {
+            if (!window.confirm('Archive this training plan? It will come off the active calendar, but its history is kept.')) return;
+            updateTrainingPlanStatus(archiveBtn.dataset.trainingArchive, 'archived');
         }
     });
     ['trainingStartDate', 'trainingEndDate'].forEach(id => {

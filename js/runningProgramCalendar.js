@@ -13,7 +13,7 @@ import {
     getActiveProgramWeekStats,
     getActiveProgramUpcomingRuns,
     toggleRunningProgramDayCompleted
-} from "./runningPrograms.js";
+} from "./activeProgramSources.js";
 
 let selectedDate = null;
 let observer = null;
@@ -70,20 +70,31 @@ function renderContext() {
 
     if (programs.length === 1) {
         const program = programs[0];
+        const isRacePlan = program.source !== "training-plan";
         const weeks = program.generatedPlan?.weeks || [];
         const activeWeek = weeks.find(week =>
             week.startDate <= today && week.endDate >= today
         );
-        const race = new Date(`${program.generatedPlan.raceDate}T00:00:00`);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        const daysToRace = Math.round((race - now) / 86400000);
-        context.textContent = `${program.name} — Week ${activeWeek?.week || "—"} of ${program.generatedPlan.totalWeeks || weeks.length}${activeWeek?.phase ? ` — ${activeWeek.phase}` : ""}${daysToRace >= 0 ? ` — ${daysToRace} days to race day` : ""}`;
+        let countdown = "";
+        if (isRacePlan) {
+            const race = new Date(`${program.generatedPlan.raceDate}T00:00:00`);
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const daysToRace = Math.round((race - now) / 86400000);
+            countdown = daysToRace >= 0 ? ` — ${daysToRace} days to race day` : "";
+        }
+        context.textContent = `${program.name} — Week ${activeWeek?.week || "—"} of ${program.generatedPlan.totalWeeks || weeks.length}${activeWeek?.phase ? ` — ${activeWeek.phase}` : ""}${countdown}`;
         context.dataset.generatedPlanContext = program.id;
         return;
     }
 
-    context.textContent = `${programs.length} active race plans`; 
+    const allTraining = programs.every(program => program.source === "training-plan");
+    const allRace = programs.every(program => program.source !== "training-plan");
+    context.textContent = allTraining
+        ? `${programs.length} active training plans`
+        : allRace
+            ? `${programs.length} active race plans`
+            : `${programs.length} active training programs`;
     context.dataset.generatedPlanContext = "multiple";
 }
 
@@ -106,7 +117,13 @@ function renderWeekCells() {
 
         const runs = entries.filter(item => Number(item.entry.miles) > 0);
         const support = entries.filter(item => Number(item.entry.miles) === 0);
-        marker.textContent = runs.length ? `${formatMiles(runs[0].entry.miles)} mi` : support[0]?.entry.session || "Plan";
+        // A "double" day (e.g. an easy run plus a lift session, which
+        // Training Plans schedule on purpose) has both a run and a
+        // support entry -- show both instead of silently dropping one.
+        const parts = [];
+        if (runs.length) parts.push(`${formatMiles(runs[0].entry.miles)} mi`);
+        if (support.length) parts.push(support[0].entry.type === "strength" ? "Strength" : (support[0].entry.session || "Plan"));
+        marker.textContent = parts.length ? parts.join(" + ") : "Plan";
         marker.title = entries.map(item => `${item.programName}: ${item.entry.session || item.entry.type}`).join("\n");
 
         cell.dataset.generatedPlanApplied = dateStr;
