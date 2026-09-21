@@ -24,6 +24,12 @@
 import { generateRacePlan, summarizeGeneratedPlan } from "./racePlanGenerator.js";
 import { loadRunningPrograms, saveRunningPrograms } from "./runningPrograms.js";
 import { compareGeneratedPlans, preserveRegeneratedRuntimeState } from "./racePlanEditor.js";
+import { START_DATE as MARATHON_START_DATE, RACE_DATE as MARATHON_RACE_DATE } from "./marathonData.js";
+import {
+    syncRacePlanStrengthSchedule,
+    deactivateRacePlanStrengthSchedule,
+    getRacePlanStrengthAvailability
+} from "./racePlanStrengthIntegration.js";
 
 const STEP_TITLES = ["Race", "Athlete", "Schedule", "Preferences", "Review"];
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -335,6 +341,11 @@ function renderReview() {
                 <strong>${data.strengthDays} strength · ${data.crossDays} cross</strong>
                 <small>${escapeHtml(data.crossType)} · ${data.speedDays} speed day${data.speedDays === 1 ? "" : "s"}</small>
             </div>
+            <div class="race-plan-review-block">
+                <span>Strength calendar</span>
+                <strong>${data.strengthDays ? (getRacePlanStrengthAvailability().available ? "Auto-scheduled" : "Needs Strength plan") : "Off"}</strong>
+                <small>${data.strengthDays ? (getRacePlanStrengthAvailability().available ? "Uses your current Strength plan; Friday is always light." : "Create a Strength plan before activating this race plan.") : "No Strength sessions will be added."}</small>
+            </div>
         </div>
     `;
 }
@@ -414,6 +425,15 @@ function renderGeneratedPreview(plan) {
            </div>`
         : "";
 
+    const conflicts = getPlanConflicts(loadRunningPrograms(), plan, editingPlanId);
+    const conflictHtml = conflicts.length
+        ? `<div class="race-plan-generation-warnings race-plan-conflict-warning">
+            <strong>Calendar conflict</strong>
+            <div>This plan overlaps an existing active training plan. Nothing will be overwritten. EddieOS will require the overlap to be resolved before this plan can become active.</div>
+            <div>${escapeHtml(formatConflictList(conflicts)).replaceAll("\n", "<br>")}</div>
+           </div>`
+        : "";
+
     const weekRows = plan.weeks.map(week => {
         const keyRuns = week.days.filter(day => day.miles > 0);
         const focus = keyRuns.find(day => day.type === "workout")?.session
@@ -457,6 +477,7 @@ function renderGeneratedPreview(plan) {
         </div>
 
         ${warningHtml}
+        ${conflictHtml}
 
         ${editingPlanId ? renderPlanChangeSummary(
             loadRunningPrograms().find(item => item.id === editingPlanId)?.generatedPlan || null,
@@ -512,19 +533,28 @@ async function saveGeneratedPlan() {
         ? preserveRegeneratedRuntimeState(previousGeneratedPlan, generatedPreview)
         : generatedPreview;
 
-    const overlappingActive = plans.some(plan => {
-        if (plan.id === editingPlanId || plan.status !== "active" || !plan.generatedPlan) return false;
-        return datesOverlap(
-            plan.generatedPlan.trainingStartDate,
-            plan.generatedPlan.raceDate,
-            generatedPreview.trainingStartDate,
-            generatedPreview.raceDate
-        );
-    });
+    const conflicts = getPlanConflicts(plans, generatedPreview, editingPlanId);
+    let nextStatus = existing ? normalizePlanStatus(existing) : "active";
 
-    if (overlappingActive) {
+    if (conflicts.length) {
+        const conflictText = formatConflictList(conflicts);
+        if (existing && normalizePlanStatus(existing) === "active") {
+            window.alert(
+                `EddieOS did not apply these changes. This active plan would overlap:\n\n${conflictText}\n\nYour current active plan is unchanged. Resolve the overlap before applying the regenerated schedule.`
+            );
+            return false;
+        }
+
+        const saveAsDraft = window.confirm(
+            `This plan overlaps an existing active training plan:\n\n${conflictText}\n\nYour existing plan will NOT be erased or changed.\n\nClick OK to save this new plan as a DRAFT only. It will not be added to the active Running calendar until the overlap is resolved.\n\nClick Cancel to return without saving.`
+        );
+        if (!saveAsDraft) return false;
+        nextStatus = "draft";
+    }
+
+    if (nextStatus === "active" && Number(settings.strengthDays) > 0 && !getRacePlanStrengthAvailability().available) {
         const proceed = window.confirm(
-            "This race plan overlaps another active race plan. EddieOS will keep both plans intact and show both on the Running calendar. Continue?"
+            "This plan requests automatic Strength scheduling, but no current Strength plan was found.\n\nClick OK to save without Strength calendar entries.\n\nClick Cancel to return and create a Strength plan first."
         );
         if (!proceed) return false;
     }
@@ -535,7 +565,7 @@ async function saveGeneratedPlan() {
         name: settings.raceName || RACE_LABELS[settings.raceType] || "Race Plan",
         type: settings.raceType,
         settings,
-        status: existing ? normalizePlanStatus(existing) : "active",
+        status: nextStatus,
         generatedPlan: nextGeneratedPlan,
         createdAt: existing?.createdAt || now,
         updatedAt: now,
@@ -563,7 +593,25 @@ async function saveGeneratedPlan() {
 
     await saveRunningPrograms(nextPlans);
 
-    const wasActiveOnCalendar = !existing || normalizePlanStatus(existing) === "active";
+    let strengthResult = { scheduled: 0, removed: 0, preserved: 0, skipped: 0, warning: "" };
+    if (record.status === "active") {
+        try {
+            strengthResult = await syncRacePlanStrengthSchedule(record);
+        } catch (error) {
+            console.error("Race-plan Strength calendar integration failed:", error);
+            window.alert("The race plan was saved, but EddieOS could not update the Strength calendar. Your existing Strength schedule was not deleted.");
+        }
+    } else if (existing && (record.status === "paused" || record.status === "archived")) {
+        try {
+            strengthResult = await deactivateRacePlanStrengthSchedule(record.id);
+        } catch (error) {
+            console.error("Race-plan Strength calendar cleanup failed:", error);
+        }
+    }
+
+    if (strengthResult.warning) window.alert(strengthResult.warning);
+
+    const wasActiveOnCalendar = record.status === "active";
 
     editingPlanId = null;
     clearGeneratedPreview();
@@ -577,7 +625,8 @@ async function saveGeneratedPlan() {
         detail: {
             programId: planId,
             startDate,
-            raceDate
+            raceDate,
+            status: record.status
         }
     }));
     window.dispatchEvent(new CustomEvent("eddieos:running-programs-changed", {
@@ -597,6 +646,55 @@ async function saveGeneratedPlan() {
 function datesOverlap(startA, endA, startB, endB) {
     if (!startA || !endA || !startB || !endB) return false;
     return startA <= endB && startB <= endA;
+}
+
+function formatIsoDate(value) {
+    if (!value) return "—";
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function getBuiltInMarathonConflict() {
+    const toIso = value => {
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    };
+    return { start: toIso(MARATHON_START_DATE), end: toIso(MARATHON_RACE_DATE) };
+}
+
+function getPlanConflicts(plans, candidatePlan, excludePlanId = null) {
+    const candidateStart = candidatePlan?.trainingStartDate || candidatePlan?.settings?.trainingStartDate;
+    const candidateEnd = candidatePlan?.raceDate || candidatePlan?.settings?.raceDate;
+    if (!candidateStart || !candidateEnd) return [];
+
+    const conflicts = [];
+    for (const plan of plans) {
+        if (!plan || plan.id === excludePlanId || normalizePlanStatus(plan) !== "active" || !plan.generatedPlan) continue;
+        if (datesOverlap(candidateStart, candidateEnd, plan.generatedPlan.trainingStartDate, plan.generatedPlan.raceDate)) {
+            conflicts.push({
+                name: plan.name || "Active race plan",
+                start: plan.generatedPlan.trainingStartDate,
+                end: plan.generatedPlan.raceDate
+            });
+        }
+    }
+
+    const marathon = getBuiltInMarathonConflict();
+    if (marathon.start && marathon.end && datesOverlap(candidateStart, candidateEnd, marathon.start, marathon.end)) {
+        conflicts.push({
+            name: "Existing Indianapolis Marathon plan",
+            start: marathon.start,
+            end: marathon.end
+        });
+    }
+
+    return conflicts;
+}
+
+function formatConflictList(conflicts) {
+    return conflicts.map(conflict => `• ${conflict.name} (${formatIsoDate(conflict.start)} → ${formatIsoDate(conflict.end)})`).join("\n");
 }
 
 function normalizePlanStatus(plan) {
@@ -775,13 +873,19 @@ async function updatePlanStatus(planId, nextStatus) {
 
         const start = plan.generatedPlan.trainingStartDate;
         const end = plan.generatedPlan.raceDate;
-        const overlapping = plans.some(item => {
-            if (item.id === planId || normalizePlanStatus(item) !== "active" || !item.generatedPlan) return false;
-            return datesOverlap(start, end, item.generatedPlan.trainingStartDate, item.generatedPlan.raceDate);
-        });
+        const conflicts = getPlanConflicts(plans, plan.generatedPlan, planId);
 
-        if (overlapping) {
-            const proceed = window.confirm("This plan overlaps another active race plan. Activate it anyway? Both will remain intact.");
+        if (conflicts.length) {
+            window.alert(
+                `EddieOS cannot activate this race plan yet because it overlaps an existing active training plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`
+            );
+            return false;
+        }
+
+        if (Number(plan.settings?.strengthDays) > 0 && !getRacePlanStrengthAvailability().available) {
+            const proceed = window.confirm(
+                "This plan requests automatic Strength scheduling, but no current Strength plan was found.\n\nClick OK to activate without Strength calendar entries.\n\nClick Cancel to keep the plan inactive."
+            );
             if (!proceed) return false;
         }
     }
@@ -802,6 +906,17 @@ async function updatePlanStatus(planId, nextStatus) {
     }
 
     await saveRunningPrograms(plans);
+    try {
+        if (nextStatus === "active") {
+            const result = await syncRacePlanStrengthSchedule(plan);
+            if (result.warning) window.alert(result.warning);
+        } else if (nextStatus === "paused" || nextStatus === "archived") {
+            await deactivateRacePlanStrengthSchedule(planId);
+        }
+    } catch (error) {
+        console.error("Race-plan Strength status integration failed:", error);
+        window.alert("The race plan status changed, but EddieOS could not fully update the Strength calendar.");
+    }
     renderSavedPlans();
     window.dispatchEvent(new CustomEvent("eddieos:running-programs-changed", {
         detail: { programId: planId, action: nextStatus }

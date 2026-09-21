@@ -339,6 +339,10 @@ function focusCalendarOnDate(dateStr) {
 }
 
 window.addEventListener("eddieos:running-program-added", event => {
+    if (event.detail?.status !== "active") {
+        scheduleRefresh();
+        return;
+    }
     const dateStr = event.detail?.startDate;
     if (dateStr) {
         focusCalendarOnDate(dateStr);

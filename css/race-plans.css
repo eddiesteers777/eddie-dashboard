@@ -701,6 +701,16 @@
     color:var(--text-secondary);
     font-size:10px;
     line-height:1.45;
+    box-shadow:0 6px 16px rgba(0,0,0,.16);
+}
+
+.race-plan-conflict-warning{
+    border-left-color:var(--red);
+    background:rgba(239,68,68,.06);
+}
+
+.race-plan-conflict-warning strong{
+    color:var(--red);
 }
 
 .race-plan-generation-warnings strong{

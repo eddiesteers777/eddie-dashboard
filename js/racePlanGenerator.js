@@ -428,35 +428,76 @@ function allocateMileage(runDays, longDay, qualityDays, weeklyMileage, longMiles
     return result;
 }
 
-function buildSupplemental(settings, runDays, longDay, qualityDays, weekNumber, totalWeeks) {
+function previousDayCode(dayCode) {
+    const codes = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+    const index = codes.indexOf(dayCode);
+    if (index < 0) return null;
+    return codes[(index + 6) % 7];
+}
+
+function strengthPreferenceOrder(longDay, requestedCount) {
+    const preLong = previousDayCode(longDay);
+    const preferred = requestedCount >= 2
+        ? ["TUE", preLong, "WED", "THU", "FRI", "MON", "SAT", "SUN"]
+        : ["TUE", "WED", "THU", "MON", "SAT", "SUN", "FRI"];
+    return [...new Set(preferred.filter(Boolean))];
+}
+
+function chooseStrengthDays(runDays, longDay, qualityDays, requestedCount) {
+    const count = Math.max(0, requestedCount);
+    if (!count) return [];
+
+    const preLong = previousDayCode(longDay);
+    const preference = strengthPreferenceOrder(longDay, count);
+    const scored = preference
+        .filter(day => day !== longDay)
+        .map(day => {
+            let score = 0;
+            if (day === "TUE") score += 40;
+            if (runDays.includes(day)) score += 15;
+            if (qualityDays.includes(day)) score -= 30;
+            if (count >= 2 && day === preLong) score += 35;
+            if (day === "FRI") score += count >= 2 ? 10 : 0;
+            return { day, score, order: preference.indexOf(day) };
+        })
+        .sort((a, b) => b.score - a.score || a.order - b.order);
+
+    return scored.slice(0, Math.min(count, scored.length)).map(item => item.day);
+}
+
+function buildSupplemental(settings, runDays, longDay, qualityDays, weekNumber, totalWeeks, phase) {
     const entries = [];
-    const preferredStrength = ["MON", "WED", "FRI", "TUE", "THU", "SAT", "SUN"];
     const preferredCross = ["TUE", "THU", "SAT", "WED", "FRI", "MON", "SUN"];
     const unavailable = new Set([longDay, ...qualityDays]);
 
-    const pickDays = (preferred, count) => {
-        const chosen = [];
-        for (const day of preferred) {
-            if (chosen.length >= count) break;
-            if (!runDays.includes(day) && !chosen.includes(day)) chosen.push(day);
-        }
-        if (chosen.length < count) {
-            for (const day of preferred) {
-                if (chosen.length >= count) break;
-                if (!unavailable.has(day) && !chosen.includes(day)) chosen.push(day);
-            }
-        }
-        return chosen;
-    };
+    const strengthDays = chooseStrengthDays(
+        runDays,
+        longDay,
+        qualityDays,
+        Number(settings.strengthDays) || 0
+    );
 
-    const strengthCount = Math.max(0, Number(settings.strengthDays) || 0);
-    for (const day of pickDays(preferredStrength, strengthCount)) {
-        entries.push({ day, type: "strength", session: "Strength", miles: 0 });
+    for (const day of strengthDays) {
+        const light = day === "FRI" || day === previousDayCode(longDay) || phase === "Taper";
+        entries.push({
+            day,
+            type: "strength",
+            session: light ? "Strength — Light" : "Strength",
+            miles: 0,
+            strengthIntensity: light ? "light" : "support"
+        });
     }
 
     const occupied = new Set(entries.map(entry => entry.day));
-    const crossDays = pickDays(preferredCross.filter(day => !occupied.has(day)), Math.max(0, Number(settings.crossDays) || 0));
-    for (const day of crossDays) {
+    const crossCount = Math.max(0, Number(settings.crossDays) || 0);
+    const crossCandidates = preferredCross.filter(day => !occupied.has(day));
+    const crossDays = crossCandidates.filter(day => !unavailable.has(day));
+
+    const selectedCross = crossDays.length >= crossCount
+        ? crossDays.slice(0, crossCount)
+        : [...crossDays, ...crossCandidates.filter(day => !crossDays.includes(day))].slice(0, crossCount);
+
+    for (const day of selectedCross) {
         if (occupied.has(day)) continue;
         entries.push({
             day,
@@ -568,7 +609,7 @@ function generateWeek(settings, profile, weekNumber, totalWeeks, weeklyMileage, 
         });
     }
 
-    const supplemental = buildSupplemental(settings, runDays, longDay, qualityDays, weekNumber, totalWeeks);
+    const supplemental = buildSupplemental(settings, runDays, longDay, qualityDays, weekNumber, totalWeeks, phase);
     return {
         week: weekNumber,
         phase,
