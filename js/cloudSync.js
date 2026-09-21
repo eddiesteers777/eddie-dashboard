@@ -3,7 +3,7 @@ import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import { doc, getDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const EXACT_KEYS = ["training-progress","training-overrides","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","gear-shoes","strength-history","running-log","personal-records","running-programs"];
+const EXACT_KEYS = ["training-progress","training-overrides","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs"];
 const KEY_PREFIXES = ["nutrition-","fueling-","cross-training-"];
 const META_KEY = "__cloudSyncMeta";
 const SNAPSHOT_KEY = "__cloudSyncSnapshot";

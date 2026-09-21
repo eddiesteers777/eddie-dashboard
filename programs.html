@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programs | EddieOS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/programs.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+    <div id="header"></div>
+
+    <main class="programs-page">
+        <section class="programs-hero">
+            <div>
+                <div class="programs-kicker">PLANNING</div>
+                <h1>Programs</h1>
+                <p>Build and manage training that coordinates the systems inside EddieOS.</p>
+            </div>
+            <div class="programs-hero-mark" aria-hidden="true"></div>
+        </section>
+
+        <nav class="programs-tabs" id="programsTabs" aria-label="Programs workspace" role="tablist">
+            <button type="button" class="programs-tab active" data-program-tab="race" role="tab" aria-selected="true">
+                Race Plans
+            </button>
+            <button type="button" class="programs-tab" data-program-tab="training" role="tab" aria-selected="false">
+                Training Plans
+            </button>
+        </nav>
+
+        <section class="programs-panel active" data-program-panel="race" role="tabpanel">
+            <div class="programs-panel-heading">
+                <div>
+                    <div class="programs-kicker">RACE PROGRAMS</div>
+                    <h2>Race Plans</h2>
+                    <p>Your race-focused plans live here. The existing Race Plan Builder remains the source of truth for creating and editing race schedules.</p>
+                </div>
+                <a class="programs-primary-btn" href="running.html?section=race-plans">+ Create Race Plan</a>
+            </div>
+
+            <div class="programs-library-counts" id="raceProgramCounts"></div>
+            <div id="raceProgramLibrary" class="programs-library"></div>
+
+            <div class="programs-info-row">
+                <span class="programs-info-dot"></span>
+                <span>Activating a race plan adds its generated schedule to the Running calendar and keeps the existing Marathon system separate.</span>
+            </div>
+        </section>
+
+        <section class="programs-panel" data-program-panel="training" role="tabpanel" hidden>
+            <div class="programs-panel-heading">
+                <div>
+                    <div class="programs-kicker">FLEXIBLE PROGRAM BUILDER</div>
+                    <h2>Training Plans</h2>
+                    <p>Build an off-season, maintenance, strength, speed, or athletic-development block without tying it to a race.</p>
+                </div>
+                <button type="button" class="programs-secondary-btn" id="trainingPlanReset">Reset</button>
+            </div>
+
+            <div class="programs-library-counts" id="trainingDraftCounts"></div>
+            <div id="trainingDraftLibrary" class="programs-library"></div>
+
+            <form id="trainingPlanBuilder" class="training-builder" novalidate>
+                <div class="training-stepper" aria-label="Training plan setup progress">
+                    <div class="training-stepper-track"><span id="trainingProgressFill"></span></div>
+                    <div class="training-stepper-label"><span id="trainingStepCurrent">1</span><span> / 5</span><strong id="trainingStepTitle">Goal</strong></div>
+                </div>
+
+                <section class="training-step active" data-training-step="1">
+                    <div class="training-step-heading">
+                        <h3>What are you trying to accomplish?</h3>
+                        <p>Choose the main adaptation. EddieOS will use it to decide what the program should protect when training competes for space.</p>
+                    </div>
+                    <div class="training-goal-grid" id="trainingPrimaryGoals">
+                        <button type="button" class="training-goal-card" data-primary-goal="STRENGTH" style="--goal-color:var(--orange)">
+                            <strong>Build Strength</strong><span>Get stronger and more resilient.</span>
+                        </button>
+                        <button type="button" class="training-goal-card" data-primary-goal="RUN_MAINTENANCE" style="--goal-color:var(--cyan)">
+                            <strong>Running Maintenance</strong><span>Maintain fitness without race prep.</span>
+                        </button>
+                        <button type="button" class="training-goal-card" data-primary-goal="BASE_BUILD" style="--goal-color:var(--primary)">
+                            <strong>Base Building</strong><span>Build aerobic capacity and consistency.</span>
+                        </button>
+                        <button type="button" class="training-goal-card" data-primary-goal="SPEED" style="--goal-color:var(--yellow)">
+                            <strong>Speed Development</strong><span>Improve speed, economy, and quality.</span>
+                        </button>
+                        <button type="button" class="training-goal-card" data-primary-goal="RUN_STRENGTH" style="--goal-color:var(--teal)">
+                            <strong>Running Strength</strong><span>Strength built specifically to support running.</span>
+                        </button>
+                        <button type="button" class="training-goal-card" data-primary-goal="VERTICAL_POWER" style="--goal-color:var(--purple)">
+                            <strong>Vertical / Power</strong><span>Explosive strength and jump performance.</span>
+                        </button>
+                        <button type="button" class="training-goal-card" data-primary-goal="HYPERTROPHY" style="--goal-color:var(--pink)">
+                            <strong>Hypertrophy</strong><span>Build muscle with an intentional volume focus.</span>
+                        </button>
+                        <button type="button" class="training-goal-card" data-primary-goal="ATHLETIC" style="--goal-color:var(--indigo)">
+                            <strong>Athletic Development</strong><span>Balance strength, speed, power, and conditioning.</span>
+                        </button>
+                    </div>
+
+                    <div class="training-subsection">
+                        <div class="training-field-label">Secondary goals <em>optional</em></div>
+                        <div class="training-chip-grid">
+                            <label><input type="checkbox" name="secondaryGoals" value="RUNNING"><span>Maintain Running</span></label>
+                            <label><input type="checkbox" name="secondaryGoals" value="SPEED"><span>Maintain Speed</span></label>
+                            <label><input type="checkbox" name="secondaryGoals" value="MOBILITY"><span>Mobility</span></label>
+                            <label><input type="checkbox" name="secondaryGoals" value="POWER"><span>Power</span></label>
+                            <label><input type="checkbox" name="secondaryGoals" value="HYPERTROPHY"><span>Build Muscle</span></label>
+                            <label><input type="checkbox" name="secondaryGoals" value="FITNESS"><span>General Fitness</span></label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="training-step" data-training-step="2">
+                    <div class="training-step-heading">
+                        <h3>Set the training window.</h3>
+                        <p>Your dates define how much time the program has to build, consolidate, and transition.</p>
+                    </div>
+                    <div class="training-two-col">
+                        <label class="training-field"><span>Program name <em>optional</em></span><input id="trainingPlanName" type="text" placeholder="Example: Winter Strength + Run Maintenance"></label>
+                        <label class="training-field"><span>Training start</span><input id="trainingStartDate" type="date" required></label>
+                    </div>
+                    <div class="training-two-col">
+                        <label class="training-field"><span>Training end</span><input id="trainingEndDate" type="date" required></label>
+                        <div class="training-readout"><span>Program length</span><strong id="trainingDuration">Choose both dates</strong></div>
+                    </div>
+                </section>
+
+                <section class="training-step" data-training-step="3">
+                    <div class="training-step-heading">
+                        <h3>Build the week around your availability.</h3>
+                        <p>Hard constraints come first. Preferences can bend when necessary to keep the overall program coherent.</p>
+                    </div>
+                    <div class="training-three-col">
+                        <label class="training-field"><span>Runs / week</span><select id="trainingRunDays"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option></select></label>
+                        <label class="training-field"><span>Lifts / week</span><select id="trainingLiftDays"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></label>
+                        <label class="training-field"><span>Cross-training / week</span><select id="trainingCrossDays"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+                    </div>
+                    <div class="training-subsection">
+                        <div class="training-field-label">Hard constraints</div>
+                        <div class="training-chip-grid">
+                            <label><input type="checkbox" id="trainingSundayRest" checked><span>Sunday = Rest</span></label>
+                            <label><input type="checkbox" id="trainingAllowDoubles" checked><span>Allow doubles</span></label>
+                        </div>
+                    </div>
+                    <div class="training-two-col">
+                        <label class="training-field"><span>Maximum doubles / week</span><select id="trainingMaxDoubles"><option value="0">0</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></label>
+                        <label class="training-field"><span>Preferred long-run day</span><select id="trainingLongRunDay"><option value="SAT" selected>Saturday</option><option value="SUN">Sunday</option><option value="FRI">Friday</option><option value="OTHER">Other</option></select></label>
+                    </div>
+                </section>
+
+                <section class="training-step" data-training-step="4">
+                    <div class="training-step-heading">
+                        <h3>Define the workload.</h3>
+                        <p>Use ranges and ceilings so the plan can flex instead of repeating the same workload every week.</p>
+                    </div>
+                    <div class="training-three-col">
+                        <label class="training-field"><span>Current weekly running</span><input id="trainingCurrentMiles" type="number" min="0" step="0.5" value="25"></label>
+                        <label class="training-field"><span>Target weekly running</span><input id="trainingTargetMiles" type="number" min="0" step="0.5" value="28"></label>
+                        <label class="training-field"><span>Maximum weekly running</span><input id="trainingMaxMiles" type="number" min="0" step="0.5" value="30"></label>
+                    </div>
+                    <div class="training-three-col">
+                        <label class="training-field"><span>Preferred long run</span><input id="trainingLongMin" type="number" min="0" step="0.5" value="8"></label>
+                        <label class="training-field"><span>Longest long run</span><input id="trainingLongMax" type="number" min="0" step="0.5" value="10"></label>
+                        <label class="training-field"><span>Speed workouts / week</span><select id="trainingSpeedDays"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option></select></label>
+                    </div>
+                    <div class="training-subsection">
+                        <div class="training-field-label">Double-session preference</div>
+                        <div class="training-chip-grid">
+                            <label><input type="checkbox" checked><span>Run AM + Lift PM</span></label>
+                            <label><input type="checkbox"><span>Run AM + Run PM</span></label>
+                            <label><input type="checkbox"><span>Lift AM + Run PM</span></label>
+                            <label><input type="checkbox"><span>Cross-train + Run</span></label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="training-step" data-training-step="5">
+                    <div class="training-step-heading">
+                        <h3>Review the program you are about to build.</h3>
+                        <p>This first pass only captures your training architecture. The generation engine can use it next to build the actual weeks.</p>
+                    </div>
+                    <div id="trainingPlanReview" class="training-review"></div>
+                    <div class="training-review-note"><strong>Calendar protection</strong><span>This design screen does not add anything to Running, Strength, or Cross Training calendars yet.</span></div>
+                </section>
+
+                <div class="training-actions">
+                    <button type="button" id="trainingBack" class="programs-secondary-btn" hidden>Back</button>
+                    <div></div>
+                    <button type="button" id="trainingNext" class="programs-primary-btn">Continue</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/programs.js"></script>
+    <script src="js/registerSW.js"></script>
+</body>
+</html>

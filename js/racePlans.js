@@ -1183,3 +1183,10 @@ updateAdaptiveFields();
 updateDuration();
 renderSavedPlans();
 showStep(1);
+
+// Lets programs.html deep-link straight into this tab
+// (running.html?section=race-plans) instead of landing on Calendar.
+const requestedSection = new URLSearchParams(window.location.search).get("section");
+if (requestedSection === "race-plans") {
+    document.querySelector('[data-running-section="race-plans"]')?.click();
+}

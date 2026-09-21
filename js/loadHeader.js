@@ -25,6 +25,7 @@ const PAGE_TAB = {
     "marathon.html": "more",
     "75day.html": "more",
     "planner.html": "more",
+    "programs.html": "more",
     "pace-calculator.html": "more",
     "settings.html": "more",
     "more.html": "more"
@@ -65,6 +66,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)" },
     { label: "Gear", href: "gear.html", icon: "footprint", color: "var(--pink)" },
     { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)" },
+    { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)" },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)" },
     { label: "Settings", href: "settings.html", icon: "user", color: "var(--muted)" },
     { label: "More", href: "more.html", icon: "grid", color: "var(--muted)" }
