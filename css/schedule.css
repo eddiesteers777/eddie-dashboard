@@ -1,0 +1,272 @@
+/* ==========================================
+   EddieOS — Schedule
+
+   Loaded alongside css/clients.css (this page reuses its card/row/
+   list/message/editor-overlay component classes) -- these rules
+   cover only what's specific to scheduling: the slot form, slot
+   cards, blackout-date chips, and the book-a-slot overlay.
+========================================== */
+
+/* #bookOverlay sits outside <main class="clients-page">, so the
+   blanket ".clients-page [hidden]" rule in clients.css doesn't reach
+   it -- same reason #planEditorOverlay needs its own line there. */
+#bookOverlay[hidden]{
+    display:none !important;
+}
+
+/* ---- Add-slot form ---- */
+
+.sched-slot-form{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.sched-slot-form select,
+.sched-slot-form input{
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    padding:10px 12px;
+    font-size:13.5px;
+    min-width:0;
+}
+.sched-slot-form button{
+    grid-column:1 / -1;
+}
+@media(min-width:640px){
+    .sched-slot-form{grid-template-columns:1fr 1fr 1fr 1fr;}
+    .sched-slot-form input[type="text"]{grid-column:1 / 3;}
+    .sched-slot-form button{grid-column:auto;}
+}
+
+/* ---- Slot cards ---- */
+
+.sched-slot-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:24px;
+}
+.sched-slot-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+}
+.sched-slot-card.inactive{opacity:.5;}
+.sched-slot-day{
+    flex-shrink:0;
+    width:52px;
+    text-align:center;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--primary);
+}
+.sched-slot-info{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+.sched-slot-time{font-size:14.5px;font-weight:700;}
+.sched-slot-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    font-size:12px;
+    color:var(--text-secondary);
+}
+.sched-slot-tag{
+    display:inline-flex;
+    align-items:center;
+    padding:2px 9px;
+    border-radius:999px;
+    background:rgba(78,168,255,.12);
+    color:var(--primary);
+    font-size:10.5px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+.sched-slot-actions{
+    flex-shrink:0;
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+/* ---- Blackout dates ---- */
+
+.sched-blackout-form{
+    display:flex;
+    gap:10px;
+    margin-bottom:14px;
+}
+.sched-blackout-form input{
+    flex:1;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    padding:10px 12px;
+    font-size:13.5px;
+}
+.sched-blackout-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+.sched-blackout-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 8px 6px 14px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:999px;
+    font-size:12.5px;
+}
+.sched-blackout-chip button{
+    appearance:none;
+    background:transparent;
+    border:0;
+    color:var(--text-secondary);
+    cursor:pointer;
+    display:flex;
+    padding:2px;
+}
+.sched-blackout-chip button:hover{color:#EF4444;}
+
+/* ---- Request rows (extends .clients-row) ---- */
+
+/* .clients-row centers its children on the cross axis, which is
+   fine for its short single-line rows elsewhere -- but a request's
+   name + type + time + note can wrap across several lines, and
+   centering against that tall block leaves the avatar and the
+   Approve/Deny buttons stranded mid-paragraph instead of at the
+   top. Align to the top here, and let the actions drop to their own
+   full-width row once the content is tall enough to need it. */
+.sched-request-row{
+    align-items:flex-start;
+    flex-wrap:wrap;
+}
+.sched-request-actions{
+    margin-left:auto;
+}
+@media(max-width:520px){
+    .sched-request-row{gap:10px;}
+    .sched-request-actions{
+        width:100%;
+        margin-left:0;
+        justify-content:flex-end;
+    }
+}
+
+.sched-request-detail{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+.sched-request-status{
+    display:inline-flex;
+    align-items:center;
+    padding:3px 9px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    width:max-content;
+}
+.sched-request-status.requested{background:rgba(250,204,21,.1);color:var(--yellow);}
+.sched-request-status.approved{background:rgba(34,197,94,.1);color:var(--green);}
+.sched-request-status.denied,
+.sched-request-status.cancelled{background:rgba(148,163,184,.1);color:var(--muted);}
+.sched-request-note{font-size:12px;color:var(--text-secondary);}
+.sched-request-actions{
+    flex-shrink:0;
+    display:flex;
+    gap:8px;
+}
+
+/* ---- Coach select ---- */
+
+.sched-coach-select{
+    width:100%;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    padding:11px 14px;
+    font-size:14px;
+}
+
+/* ---- Book overlay ---- */
+
+#bookOverlay{
+    position:fixed;
+    inset:0;
+    z-index:5000;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    background:rgba(5,12,23,.72);
+    backdrop-filter:blur(2px);
+}
+.sched-book-editor{
+    width:100%;
+    max-width:480px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:22px 22px 0 0;
+}
+@media(min-width:640px){
+    #bookOverlay{align-items:center;padding:20px;}
+    .sched-book-editor{border-radius:22px;}
+}
+
+#bookForm{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.sched-radio-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13.5px;
+    cursor:pointer;
+}
+.sched-field-label{
+    display:block;
+    font-size:12px;
+    color:var(--text-secondary);
+    margin-bottom:6px;
+}
+.sched-book-fields input{
+    width:100%;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    padding:10px 12px;
+    font-size:13.5px;
+}
+#bookForm textarea{
+    resize:vertical;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    padding:10px 12px;
+    font:13.5px/1.4 var(--font-body);
+}

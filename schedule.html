@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Schedule | EddieOS</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/schedule.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page schedule-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coaching</div>
+                <h1>Schedule</h1>
+                <p class="eos-today-phase">
+                    Set your open training times, or request a session with a coach who's linked you.
+                </p>
+            </div>
+        </section>
+
+        <div id="scheduleSignedOut" class="clients-empty" hidden>
+            <span data-icon="user"></span>
+            <p>Sign in to manage scheduling.</p>
+        </div>
+
+        <div id="scheduleSignedIn" hidden>
+
+            <nav class="clients-tabs" role="tablist">
+                <button type="button" class="clients-tab active" data-tab="availability" role="tab">My Availability</button>
+                <button type="button" class="clients-tab" data-tab="book" role="tab">Book a Session</button>
+            </nav>
+
+            <!-- ===== Coach view: manage slots + respond to requests ===== -->
+            <section class="clients-panel" data-panel="availability">
+
+                <div class="clients-card">
+                    <h2>Add a weekly time slot</h2>
+                    <p class="clients-card-note">Clients you've linked can request to book this recurring time.</p>
+                    <form id="slotForm" class="sched-slot-form">
+                        <select id="slotDay" required></select>
+                        <input type="time" id="slotStart" required>
+                        <input type="time" id="slotEnd" required>
+                        <select id="slotType" required></select>
+                        <input type="text" id="slotLabel" placeholder="Label (optional) -- e.g. U10 Group">
+                        <input type="number" id="slotCapacity" min="1" value="1" title="Capacity">
+                        <button type="submit" class="clients-btn-primary">Add Slot</button>
+                    </form>
+                    <p id="slotMsg" class="clients-msg" hidden></p>
+                </div>
+
+                <div id="slotsListWrap">
+                    <h2 class="clients-section-title">Your weekly slots</h2>
+                    <div id="slotsList" class="sched-slot-list"></div>
+                    <p id="slotsEmptyMsg" class="clients-card-note" hidden>No open slots yet -- add one above.</p>
+                </div>
+
+                <div class="clients-card">
+                    <h2>Blackout dates</h2>
+                    <p class="clients-card-note">Dates you're unavailable regardless of your weekly slots -- holidays, vacation, etc.</p>
+                    <form id="blackoutForm" class="sched-blackout-form">
+                        <input type="date" id="blackoutInput" required>
+                        <button type="submit" class="clients-btn-secondary">Add</button>
+                    </form>
+                    <div id="blackoutList" class="sched-blackout-list"></div>
+                </div>
+
+                <div id="requestsListWrap">
+                    <h2 class="clients-section-title">Requests</h2>
+                    <div id="requestsList" class="clients-list"></div>
+                    <p id="requestsEmptyMsg" class="clients-card-note" hidden>No booking requests yet.</p>
+                </div>
+
+            </section>
+
+            <!-- ===== Client view: browse a coach's slots + request ===== -->
+            <section class="clients-panel" data-panel="book" hidden>
+
+                <div class="clients-card">
+                    <h2>Choose a coach</h2>
+                    <select id="coachSelect" class="sched-coach-select"></select>
+                    <p id="noCoachesMsg" class="clients-card-note" hidden>No coach has linked you yet -- ask them to redeem an invite code from your "Share My Plans" page first.</p>
+                </div>
+
+                <div id="availableSlotsWrap">
+                    <h2 class="clients-section-title">Open times</h2>
+                    <div id="availableSlotsList" class="sched-slot-list"></div>
+                    <p id="availableSlotsEmptyMsg" class="clients-card-note" hidden>This coach hasn't published any open times yet.</p>
+                </div>
+
+                <div id="myRequestsWrap">
+                    <h2 class="clients-section-title">Your requests</h2>
+                    <div id="myRequestsList" class="clients-list"></div>
+                    <p id="myRequestsEmptyMsg" class="clients-card-note" hidden>You haven't requested any sessions yet.</p>
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- ===== Book-a-slot form ===== -->
+    <div id="bookOverlay" class="clients-editor-overlay" hidden>
+        <div class="clients-editor sched-book-editor">
+
+            <div class="clients-editor-head">
+                <div>
+                    <div class="clients-editor-client" id="bookSlotMeta"></div>
+                    <h2 id="bookSlotTitle">Request this time</h2>
+                </div>
+                <button type="button" id="bookCloseBtn" class="clients-editor-close" aria-label="Close">
+                    <span data-icon="close"></span>
+                </button>
+            </div>
+
+            <div class="clients-editor-body">
+                <form id="bookForm">
+                    <label class="sched-radio-row">
+                        <input type="radio" name="bookMode" value="single" checked>
+                        <span>Just this one date</span>
+                    </label>
+                    <label class="sched-radio-row">
+                        <input type="radio" name="bookMode" value="recurring">
+                        <span>Recurring, weekly</span>
+                    </label>
+
+                    <div class="sched-book-fields">
+                        <label class="sched-field-label">Starting</label>
+                        <input type="date" id="bookStartDate" required>
+                    </div>
+                    <div class="sched-book-fields" id="bookWeeksField" hidden>
+                        <label class="sched-field-label">For how many weeks</label>
+                        <input type="number" id="bookWeeks" min="2" max="26" value="6">
+                    </div>
+
+                    <textarea id="bookNote" rows="2" placeholder="Anything your coach should know (optional)"></textarea>
+
+                    <div class="clients-editor-actions">
+                        <button type="submit" id="bookSubmitBtn" class="clients-btn-primary">Send Request</button>
+                        <span id="bookMsg" class="clients-msg" hidden></span>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/schedule.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

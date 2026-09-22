@@ -24,6 +24,20 @@ rules_version = '2';
 //                              plus coach notes. The client's device
 //                              keeps this current automatically; a
 //                              linked coach reads and edits it here.
+//   coachAvailability/{coachUid}
+//                              A coach's recurring weekly open time
+//                              slots (day/time/session type/capacity)
+//                              plus blackout dates. Visible only to
+//                              the coach and clients already linked
+//                              to them via coachLinks.
+//   bookingRequests/{id}       A client's request to book a slot
+//                              (single date or a recurring series).
+//                              Only the coach who owns the slot and
+//                              the requesting client can see or act
+//                              on it. Creating one requires an
+//                              existing coachLinks relationship, so
+//                              booking is invite-only like plan
+//                              sharing is.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -66,6 +80,31 @@ service cloud.firestore {
       allow read, write: if request.auth != null && exists(
         /databases/$(database)/documents/coachLinks/$(request.auth.uid + '_' + clientUid)
       );
+    }
+
+    match /coachAvailability/{coachUid} {
+      allow write: if request.auth != null && request.auth.uid == coachUid;
+      // A linked client needs to browse this to book anything.
+      allow read: if request.auth != null && (
+        request.auth.uid == coachUid ||
+        exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + request.auth.uid))
+      );
+    }
+
+    match /bookingRequests/{requestId} {
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.coachUid
+            || request.auth.uid == resource.data.clientUid);
+      // A client can only request time from a coach they're already
+      // linked to (same invite-code trust as plan sharing), and only
+      // ever as themselves.
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.clientUid
+        && exists(/databases/$(database)/documents/coachLinks/$(request.resource.data.coachUid + '_' + request.auth.uid));
+      // Coach approves/denies, or either side cancels.
+      allow update, delete: if request.auth != null
+        && (request.auth.uid == resource.data.coachUid
+            || request.auth.uid == resource.data.clientUid);
     }
   }
 }
