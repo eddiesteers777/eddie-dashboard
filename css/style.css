@@ -335,6 +335,16 @@ section{
     color:#fff;
 }
 
+/* Nav items get [hidden] toggled by js/loadHeader.js based on
+   account entitlements (see js/navAccess.js) -- .eos-dropdown,
+   .eos-dropdown-menu and .eos-dropdown-link all set their own
+   display below, and an author display rule always outranks the
+   browser's native [hidden]{display:none} at equal specificity/
+   origin. One blanket rule instead of chasing it per element. */
+.eos-navbar [hidden]{
+    display:none !important;
+}
+
 .eos-navbar .eos-dropdown{
     position:relative;
     display:block;

@@ -5,8 +5,8 @@
 // untouched; both are simply hidden/shown by a CSS breakpoint.
 const BOTTOM_TABS = [
     { key: "today", label: "Today", icon: "home", href: "index.html", color: "var(--primary)" },
-    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--orange)" },
-    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--pink)" },
+    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--orange)", requires: "training" },
+    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--pink)", requires: "training" },
     { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--purple)" },
     { key: "more", label: "More", icon: "grid", href: "more.html", color: "var(--muted)" }
 ];
@@ -125,19 +125,30 @@ fetch("components/header.html")
             }
         })();
 
-        // ---- Account profile bootstrap ----
+        // ---- Account profile bootstrap + nav access ----
         // Creates this account's userProfiles/{uid} doc the first
         // time it's missing (see docs/PRODUCT_ARCHITECTURE.md and
-        // js/userProfile.js). Nothing reads this yet to gate
-        // anything -- this step is only the data model existing, not
-        // enforcing it -- so a failure here is silent and harmless,
-        // same posture as cloud sync's own bootstrap right above.
-        (async () => {
+        // js/userProfile.js), then filters the nav to what that
+        // account's role/services actually cover (js/navAccess.js --
+        // roadmap step 5). ensureProfile() runs first and is awaited
+        // before the access check, so a brand-new profile always
+        // exists before anything reads it -- no race where a
+        // still-being-created profile gets misread as "no access".
+        // navAccess.js fails OPEN on any error (full nav, not an
+        // empty one), so a problem here degrades to this app's
+        // long-standing fully-open behavior rather than locking
+        // anyone out of their own dashboard.
+        let navFilterReady = (async () => {
             try {
                 const { ensureProfile } = await import("./userProfile.js");
                 await ensureProfile();
+                const { getNavAccess, applyNavAccess } = await import("./navAccess.js");
+                const access = await getNavAccess();
+                applyNavAccess(document, access);
+                return access;
             } catch (error) {
-                console.warn("EddieOS: account profile bootstrap failed this session.", error);
+                console.warn("EddieOS: account profile / nav access bootstrap failed this session.", error);
+                return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true };
             }
         })();
 
@@ -151,9 +162,23 @@ fetch("components/header.html")
 
         const activeTab = PAGE_TAB[page] || null;
 
+        // Same entitlement check as the desktop dropdowns (js/navAccess.js)
+        // -- a tab that isn't relevant to this account's role/services
+        // is left out of the array entirely rather than rendered and
+        // hidden, since the bottom nav is built fresh here rather than
+        // toggling existing static markup.
+        const navAccess = await navFilterReady;
+        const visibleTabs = BOTTOM_TABS.filter(tab => {
+            if (!tab.requires) return true;
+            return tab.requires === "training" ? navAccess.hasTrainingAccess
+                : tab.requires === "soccer" ? navAccess.hasSoccerAccess
+                : tab.requires === "coach" ? navAccess.isCoach
+                : true;
+        });
+
         document.body.insertAdjacentHTML("beforeend", `
             <nav class="eos-bottomnav" aria-label="Primary">
-                ${BOTTOM_TABS.map(tab => `
+                ${visibleTabs.map(tab => `
                     <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}" style="--tab-color:${tab.color}">
                         <span class="eos-bottomnav-icon">${icon(tab.icon)}</span>
                         <span>${tab.label}</span>

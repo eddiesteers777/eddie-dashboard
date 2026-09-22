@@ -2,11 +2,12 @@
    EddieOS — Account Profile
 
    The account/role data model described in
-   docs/PRODUCT_ARCHITECTURE.md. This is deliberately the smallest
-   possible first step: a profile document gets created the first
-   time someone signs in, and nothing anywhere reads it to gate
-   access yet. That comes later (the approval workflow + role-based
-   nav), once there's something real to build it against.
+   docs/PRODUCT_ARCHITECTURE.md. A profile document gets created the
+   first time someone signs in. The approval workflow (My Clients ->
+   Pending) and the internal nav (js/navAccess.js) both now read it
+   -- the nav hides sections a client's role/services don't cover,
+   though that's still just a UX simplification, not the real access
+   boundary; firestore.rules is what actually enforces anything.
 
    Critically: role is self-reported and grants nothing by itself.
    isCoachApproved can only ever be flipped by a write from an

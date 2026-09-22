@@ -16,7 +16,7 @@
             <a href="index.html" class="eos-nav-item">
                 Dashboard
             </a>
-            <details class="nav-dropdown eos-dropdown">
+            <details class="nav-dropdown eos-dropdown" data-requires="training">
                 <summary class="eos-dropdown-trigger">
                     <span>Training</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
@@ -27,7 +27,7 @@
                     <a href="habits.html" class="eos-dropdown-link">Habits</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown">
+            <details class="nav-dropdown eos-dropdown" data-requires="training">
                 <summary class="eos-dropdown-trigger">
                     <span>Health</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
@@ -36,7 +36,7 @@
                     <a href="fueling.html" class="eos-dropdown-link">Fueling</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown">
+            <details class="nav-dropdown eos-dropdown" data-requires="training">
                 <summary class="eos-dropdown-trigger">
                     <span>Planning</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
@@ -45,7 +45,7 @@
                     <a href="programs.html" class="eos-dropdown-link">Programs</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown">
+            <details class="nav-dropdown eos-dropdown" data-requires="training">
                 <summary class="eos-dropdown-trigger">
                     <span>Progress</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
@@ -61,8 +61,8 @@
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="pace-calculator.html" class="eos-dropdown-link">Pace Calculator</a>
-                    <a href="clients.html" class="eos-dropdown-link">My Clients</a>
-                    <a href="schedule.html" class="eos-dropdown-link">Schedule</a>
+                    <a href="clients.html" class="eos-dropdown-link" data-requires="coach">My Clients</a>
+                    <a href="schedule.html" class="eos-dropdown-link" data-requires="training,soccer">Schedule</a>
                     <a href="install.html" class="eos-dropdown-link">Get the App</a>
                 </div>
             </details>
