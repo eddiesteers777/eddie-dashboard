@@ -38,6 +38,23 @@ rules_version = '2';
 //                              existing coachLinks relationship, so
 //                              booking is invite-only like plan
 //                              sharing is.
+//   userProfiles/{uid}         Account role/status/entitlements (see
+//                              docs/PRODUCT_ARCHITECTURE.md). Every
+//                              account gets one automatically on
+//                              first sign-in, always starting
+//                              unapproved and pending -- a user can
+//                              edit their own basic fields but can
+//                              NEVER flip their own isCoachApproved
+//                              or status. Only a write from an
+//                              account that is ALREADY isCoachApproved
+//                              can approve/change anyone's (including
+//                              its own future changes). The very
+//                              first coach has no existing approved
+//                              coach to approve them, so that one
+//                              flip has to happen by hand in the
+//                              Firebase Console's Data tab, once,
+//                              after they've signed in and their
+//                              profile document exists.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -105,6 +122,34 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
         && (request.auth.uid == resource.data.coachUid
             || request.auth.uid == resource.data.clientUid);
+    }
+
+    match /userProfiles/{uid} {
+      // Low-sensitivity (role/status/services, no private training
+      // data) -- any signed-in user can read any profile, which is
+      // what a future "pending clients" list needs.
+      allow read: if request.auth != null;
+
+      // Only as yourself, and only ever starting unapproved/pending
+      // -- self-signup can never grant itself anything.
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.isCoachApproved == false
+        && request.resource.data.status == "pending";
+
+      allow update: if request.auth != null && (
+        // You may edit your own profile, but never your own
+        // isCoachApproved or status.
+        (request.auth.uid == uid
+          && request.resource.data.isCoachApproved == resource.data.isCoachApproved
+          && request.resource.data.status == resource.data.status)
+        ||
+        // An already-approved coach may change anyone's role/status/
+        // services/isCoachApproved -- this is also how a new coach
+        // gets approved after the first one is bootstrapped by hand.
+        (get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.isCoachApproved == true)
+      );
     }
   }
 }

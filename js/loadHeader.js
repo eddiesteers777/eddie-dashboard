@@ -125,6 +125,22 @@ fetch("components/header.html")
             }
         })();
 
+        // ---- Account profile bootstrap ----
+        // Creates this account's userProfiles/{uid} doc the first
+        // time it's missing (see docs/PRODUCT_ARCHITECTURE.md and
+        // js/userProfile.js). Nothing reads this yet to gate
+        // anything -- this step is only the data model existing, not
+        // enforcing it -- so a failure here is silent and harmless,
+        // same posture as cloud sync's own bootstrap right above.
+        (async () => {
+            try {
+                const { ensureProfile } = await import("./userProfile.js");
+                await ensureProfile();
+            } catch (error) {
+                console.warn("EddieOS: account profile bootstrap failed this session.", error);
+            }
+        })();
+
         // The header's icons are injected after icons.js's own
         // DOMContentLoaded hydration already ran, so this content
         // needs a manual pass.
