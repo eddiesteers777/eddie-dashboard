@@ -1,5 +1,6 @@
 import { loadRunningPrograms } from './runningPrograms.js';
 import { loadTrainingPrograms, saveTrainingPrograms } from './trainingPrograms.js';
+import { getLocalCoachNotes } from './coachNotesLocal.js';
 import { generateTrainingPlan } from './trainingPlanGenerator.js';
 import { syncTrainingPlanStrengthSchedule, deactivateTrainingPlanStrengthSchedule } from './trainingPlanStrengthIntegration.js';
 import { getRacePlanStrengthAvailability } from './racePlanStrengthIntegration.js';
@@ -123,9 +124,28 @@ function renderRaceLibrary() {
                         <a class="program-card-link" href="running.html?section=race-plans">Open Race Plans</a>
                     </div>
                 </div>
+                ${coachNotesBadge('runningPrograms', program.id)}
             </article>
         `;
     }).join('');
+}
+
+// A coach with linked access can leave notes on a client's plan (see
+// clients.html / js/coachAccess.js); cloud sync mirrors those notes
+// down into localStorage on every pull, so the client sees the
+// latest one right on the plan card without visiting My Clients.
+function coachNotesBadge(field, programId) {
+    const notes = getLocalCoachNotes()?.[field]?.[programId];
+    if (!notes || !notes.length) return '';
+    const latest = notes[notes.length - 1];
+    const extra = notes.length - 1;
+    return `
+        <div class="program-coach-note">
+            <strong>Note from ${escapeHtml(latest.author || 'Coach')}</strong>
+            <p>${escapeHtml(latest.text)}</p>
+            ${extra > 0 ? `<span class="program-coach-note-more">+${extra} more note${extra === 1 ? '' : 's'}</span>` : ''}
+        </div>
+    `;
 }
 
 function datesOverlap(startA, endA, startB, endB) {
@@ -241,6 +261,7 @@ function renderTrainingLibrary() {
                     </div>
                     <div class="program-card-actions">${trainingCardActions(plan.id, status)}</div>
                 </div>
+                ${coachNotesBadge('trainingPrograms', plan.id)}
             </article>
         `;
     }).join('');

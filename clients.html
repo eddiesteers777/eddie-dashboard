@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Clients | EddieOS</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coaching</div>
+                <h1>My Clients</h1>
+                <p class="eos-today-phase">
+                    Get edit access to a client's Training Plans and Race Plans, or share your own with a coach.
+                </p>
+            </div>
+        </section>
+
+        <div id="clientsSignedOut" class="clients-empty" hidden>
+            <span data-icon="user"></span>
+            <p>Sign in to manage coach access.</p>
+        </div>
+
+        <div id="clientsSignedIn" hidden>
+
+            <nav class="clients-tabs" role="tablist">
+                <button type="button" class="clients-tab active" data-tab="coach" role="tab">Coach a Client</button>
+                <button type="button" class="clients-tab" data-tab="share" role="tab">Share My Plans</button>
+            </nav>
+
+            <!-- ===== Coach view: clients this account has access to ===== -->
+            <section class="clients-panel" data-panel="coach">
+
+                <div class="clients-card">
+                    <h2>Add a client</h2>
+                    <p class="clients-card-note">Ask them to open "Share My Plans" on their own account and send you their code.</p>
+                    <form id="redeemForm" class="clients-redeem-row">
+                        <input type="text" id="redeemInput" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                        <button type="submit" id="redeemBtn" class="clients-btn-primary">Add Client</button>
+                    </form>
+                    <p id="redeemMsg" class="clients-msg" hidden></p>
+                </div>
+
+                <div id="clientsListWrap">
+                    <h2 class="clients-section-title">Your clients</h2>
+                    <div id="clientsList" class="clients-list"></div>
+                    <p id="clientsEmptyMsg" class="clients-card-note" hidden>No clients yet -- add one with a code above.</p>
+                </div>
+
+            </section>
+
+            <!-- ===== Share view: this account's own coaches ===== -->
+            <section class="clients-panel" data-panel="share" hidden>
+
+                <div class="clients-card">
+                    <h2>Invite a coach</h2>
+                    <p class="clients-card-note">Generates a one-time code. Your coach enters it under "Coach a Client" on their own account -- they'll be able to view, edit, and leave notes on your Training Plans and Race Plans only. Nothing else on your account is shared.</p>
+                    <button type="button" id="generateCodeBtn" class="clients-btn-primary">Generate Invite Code</button>
+                    <div id="codeDisplay" class="clients-code-display" hidden>
+                        <span id="codeValue"></span>
+                        <button type="button" id="copyCodeBtn" class="clients-btn-secondary">
+                            <span data-icon="copy"></span><span id="copyCodeLabel">Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="coachesListWrap">
+                    <h2 class="clients-section-title">Coaches with access</h2>
+                    <div id="coachesList" class="clients-list"></div>
+                    <p id="coachesEmptyMsg" class="clients-card-note" hidden>No one has access to your plans yet.</p>
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- ===== Plan editor (coach editing a client's plan) ===== -->
+    <div id="planEditorOverlay" class="clients-editor-overlay" hidden>
+        <div class="clients-editor">
+
+            <div class="clients-editor-head">
+                <div>
+                    <div class="clients-editor-client" id="editorClientName"></div>
+                    <h2 id="editorPlanName">Plan</h2>
+                </div>
+                <button type="button" id="editorCloseBtn" class="clients-editor-close" aria-label="Close">
+                    <span data-icon="close"></span>
+                </button>
+            </div>
+
+            <div class="clients-editor-body">
+
+                <div id="editorNoPlans" class="clients-card-note" hidden>This client doesn't have any plans yet.</div>
+
+                <div id="editorPlanTabs" class="clients-plan-tabs"></div>
+
+                <div id="editorWeeks" class="clients-weeks"></div>
+
+                <div class="clients-notes-section">
+                    <h3>Notes</h3>
+                    <div id="editorNotesList" class="clients-notes-list"></div>
+                    <form id="editorNoteForm" class="clients-note-form">
+                        <textarea id="editorNoteInput" rows="2" placeholder="Leave a note for your client about this plan..."></textarea>
+                        <button type="submit" class="clients-btn-primary">Post Note</button>
+                    </form>
+                </div>
+
+                <div class="clients-editor-actions">
+                    <button type="button" id="editorSaveBtn" class="clients-btn-primary">Save Changes</button>
+                    <span id="editorSaveMsg" class="clients-msg" hidden></span>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/clients.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

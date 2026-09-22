@@ -198,6 +198,17 @@
 .program-card-link:hover{background:rgba(78,168,255,.1);text-decoration:none;}
 .program-card-link.program-card-danger{color:var(--red);}
 .program-card-link.program-card-danger:hover{background:rgba(239,68,68,.1);}
+.program-coach-note{
+    margin-top:12px;
+    padding:10px 12px;
+    background:rgba(78,168,255,.06);
+    border:1px solid rgba(78,168,255,.22);
+    border-left:3px solid var(--primary);
+    border-radius:10px;
+}
+.program-coach-note strong{display:block;font-size:11px;color:var(--primary);margin-bottom:3px;}
+.program-coach-note p{margin:0;font-size:12.5px;line-height:1.45;color:var(--text);}
+.program-coach-note-more{display:block;margin-top:4px;font-size:10.5px;color:var(--text-secondary);}
 .programs-empty{
     background:var(--surface);
     border:1px dashed var(--border);

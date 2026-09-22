@@ -86,6 +86,10 @@ export async function pullFromCloud(){
       if(ct>0) localTimes[key]=ct;
       if(changed) applied++;
     }
+    try{
+      const {pullSharedPlanUpdates}=await import("./coachAccess.js");
+      applied+=await pullSharedPlanUpdates(localTimes);
+    }catch(error){ console.warn("Coach-shared plan pull failed:",error); }
     saveKeyTimes(localTimes);
     markSynced();
     saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
@@ -126,6 +130,10 @@ export async function pushToCloud(){
     saveKeyTimes(finalTimes);
     markSynced(result.data);
     saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
+    try{
+      const {mirrorPlansToShared}=await import("./coachAccess.js");
+      await mirrorPlansToShared(localData,finalTimes);
+    }catch(error){ console.warn("Coach-shared plan mirror failed:",error); }
     console.log(`💾 Synced ${Object.keys(result.data).length} item(s) with the cloud.`);
     return true;
   }catch(error){
