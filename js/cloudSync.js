@@ -59,12 +59,18 @@ function legacyTimestamp(value){
 }
 async function getSyncDoc(){ const user=await waitForUser(); return user?doc(db,"users",user.uid,"sync","localStorage"):null; }
 
+// Returns {ok, applied} rather than a bare boolean so a caller can
+// tell whether the pull actually changed anything locally (applied >
+// 0) versus this device already being current -- used to decide
+// whether a fresh page load needs to reload itself to show newly
+// pulled data. No existing caller reads the old boolean return value,
+// so this is a safe shape change.
 export async function pullFromCloud(){
   try{
     const docRef=await getSyncDoc();
-    if(!docRef){ saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:"not-signed-in"}); return false; }
+    if(!docRef){ saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:"not-signed-in"}); return {ok:false,applied:0}; }
     const snap=await getDoc(docRef);
-    if(!snap.exists()){ markSynced(); saveSyncMeta({lastSyncedAt:Date.now(),lastError:null}); return false; }
+    if(!snap.exists()){ markSynced(); saveSyncMeta({lastSyncedAt:Date.now(),lastError:null}); return {ok:false,applied:0}; }
     const cloud=snap.data()||{};
     const stored=cloud.data||{};
     const cloudTimes=cloud.keyUpdatedAt||{};
@@ -75,18 +81,19 @@ export async function pullFromCloud(){
       const ct=Number(cloudTimes[key]||legacy||0);
       const lt=Number(localTimes[key]||0);
       if(lt>ct) continue;
+      const changed=localStorage.getItem(key)!==stored[key];
       localStorage.setItem(key,stored[key]);
       if(ct>0) localTimes[key]=ct;
-      applied++;
+      if(changed) applied++;
     }
     saveKeyTimes(localTimes);
     markSynced();
     saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
     console.log(`☁️ Pulled ${applied} item(s) from the cloud.`);
-    return true;
+    return {ok:true,applied};
   }catch(error){
     saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:error.code||error.message||"pull-failed"});
-    console.error("Cloud sync (pull) error:",error); return false;
+    console.error("Cloud sync (pull) error:",error); return {ok:false,applied:0};
   }
 }
 
@@ -129,10 +136,11 @@ export async function pushToCloud(){
 
 let autoPushArmed=false;
 export async function initCloudSync(){
-  await pullFromCloud();
-  if(autoPushArmed) return;
+  const pullResult=await pullFromCloud();
+  if(autoPushArmed) return pullResult;
   autoPushArmed=true;
   window.addEventListener("beforeunload",()=>{ pushToCloud(); });
   document.addEventListener("visibilitychange",()=>{ if(document.hidden) pushToCloud(); });
   setInterval(()=>{ pushToCloud(); },30000);
+  return pullResult;
 }

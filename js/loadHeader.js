@@ -86,6 +86,39 @@ fetch("components/header.html")
 
         document.getElementById("header").innerHTML = data;
 
+        // ---- Universal cloud sync bootstrap ----
+        // Previously only 75day.html and marathon.html called
+        // initCloudSync() themselves, so every other page never
+        // pulled anything from the cloud on load -- changes made on
+        // another device only showed up here if the user happened to
+        // land on one of those two pages first, or tapped the manual
+        // sync button. This file loads on every page, so firing it
+        // here once fixes that everywhere instead of repeating the
+        // same snippet across 16 more files. Deliberately not
+        // awaited -- it runs in the background and shouldn't hold up
+        // the rest of the header. initCloudSync() no-ops harmlessly
+        // for guests (nothing to pull).
+        (async () => {
+            try {
+                const { initCloudSync } = await import("./cloudSync.js");
+                const { applied } = await initCloudSync();
+
+                // Only this first pull on a fresh page load reloads
+                // to show what came in -- initCloudSync only pulls
+                // once per page load (later background syncs are
+                // push-only, see cloudSync.js), so this can't loop,
+                // and it means a background sync later in the
+                // session never yanks the page out from under
+                // something the user is mid-typing.
+                if (applied > 0) window.location.reload();
+            } catch (error) {
+                // Covers the dynamic import itself failing too (e.g.
+                // the Firebase SDK fetch from gstatic.com is blocked
+                // or offline) -- not just initCloudSync() throwing.
+                console.warn("EddieOS: cloud sync bootstrap failed this session.", error);
+            }
+        })();
+
         // The header's icons are injected after icons.js's own
         // DOMContentLoaded hydration already ran, so this content
         // needs a manual pass.

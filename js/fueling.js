@@ -70,7 +70,9 @@ function saveJSON(key, value) {
 
     localStorage.setItem(key, JSON.stringify(value));
 
-    import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud());
+    import("./cloudSync.js")
+        .then(({ pushToCloud }) => pushToCloud())
+        .catch(error => console.warn("Fueling cloud sync could not be completed:", error));
 
 }
 
@@ -2239,21 +2241,27 @@ function escapeHTML(str) {
    Initialize
 ========================================== */
 
-import("./cloudSync.js").then(({ initCloudSync }) => {
+function renderFuelingPage() {
 
-    initCloudSync().then(() => {
+    loadPersistedState();
 
-        loadPersistedState();
+    setMode(mode);
+    renderLibrary();
+    renderDiyRecipes();
+    renderSavedPlans();
+    renderPlanSummary();
+    renderPreWorkoutGroups();
+    updatePlanWorkoutLabel();
+    initWeekSelector();
 
-        setMode(mode);
-        renderLibrary();
-        renderDiyRecipes();
-        renderSavedPlans();
-        renderPlanSummary();
-        renderPreWorkoutGroups();
-        updatePlanWorkoutLabel();
-        initWeekSelector();
+}
 
+import("./cloudSync.js")
+    .then(({ initCloudSync }) => initCloudSync().then(renderFuelingPage))
+    .catch(error => {
+        console.warn("Fueling cloud sync could not be completed:", error);
+        // Cloud sync failing (offline, Firebase SDK blocked, etc.)
+        // shouldn't leave the page blank -- still load whatever's
+        // already in localStorage.
+        renderFuelingPage();
     });
-
-});

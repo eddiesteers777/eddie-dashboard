@@ -285,7 +285,9 @@ function saveDay(){
         JSON.stringify(nutrition)
     );
 
-    import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud());
+    import("./cloudSync.js")
+        .then(({ pushToCloud }) => pushToCloud())
+        .catch(error => console.warn("Nutrition cloud sync could not be completed:", error));
 
 }
 
@@ -1407,8 +1409,12 @@ document
 
 renderMacroCards();
 
-import("./cloudSync.js").then(({ initCloudSync }) => {
-
-    initCloudSync().then(loadDay);
-
-});
+import("./cloudSync.js")
+    .then(({ initCloudSync }) => initCloudSync().then(loadDay))
+    .catch(error => {
+        console.warn("Nutrition cloud sync could not be completed:", error);
+        // Cloud sync failing (offline, Firebase SDK blocked, etc.)
+        // shouldn't leave the page blank -- still load whatever's
+        // already in localStorage.
+        loadDay();
+    });
