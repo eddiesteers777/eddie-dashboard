@@ -26,13 +26,20 @@ const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
 
 // ---- Tabs ----
-document.querySelectorAll(".clients-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-        document.querySelectorAll(".clients-tab").forEach(t => t.classList.toggle("active", t === tab));
-        document.querySelectorAll(".clients-panel").forEach(panel => {
-            panel.hidden = panel.dataset.panel !== tab.dataset.tab;
-        });
+// selectTab is also called on load if the page was opened with
+// ?tab=pending etc. (see bottom of file) -- js/coach.html links here
+// directly to a specific tab instead of duplicating this page's UI.
+function selectTab(tabName) {
+    const tab = document.querySelector(`.clients-tab[data-tab="${tabName}"]`);
+    if (!tab || tab.hidden) return;
+    document.querySelectorAll(".clients-tab").forEach(t => t.classList.toggle("active", t === tab));
+    document.querySelectorAll(".clients-panel").forEach(panel => {
+        panel.hidden = panel.dataset.panel !== tabName;
     });
+}
+
+document.querySelectorAll(".clients-tab").forEach(tab => {
+    tab.addEventListener("click", () => selectTab(tab.dataset.tab));
 });
 
 function escapeHtml(value) {
@@ -468,6 +475,13 @@ listenForAuth(user => {
         isApprovedCoach().then(approved => {
             pendingTabBtn.hidden = !approved;
             if (approved) refreshPending();
+
+            // js/coach.html deep-links here with ?tab=pending etc.
+            // instead of duplicating this page's UI -- only applied
+            // once we know whether the requested tab is actually
+            // visible for this account (e.g. "pending" needs approved).
+            const requestedTab = new URLSearchParams(window.location.search).get("tab");
+            if (requestedTab) selectTab(requestedTab);
         });
     }
 });

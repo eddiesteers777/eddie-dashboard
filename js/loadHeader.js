@@ -29,6 +29,7 @@ const PAGE_TAB = {
     "pace-calculator.html": "more",
     "settings.html": "more",
     "clients.html": "more",
+    "coach.html": "more",
     "schedule.html": "more",
     "install.html": "more",
     "more.html": "more"
@@ -71,6 +72,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)" },
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)" },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)" },
+    { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, #0EA5E9)" },
     { label: "Schedule", href: "schedule.html", icon: "calendar", color: "var(--purple)" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },

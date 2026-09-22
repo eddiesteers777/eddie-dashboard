@@ -58,13 +58,20 @@ async function hydrateIcons() {
 }
 
 // ---- Tabs ----
-document.querySelectorAll(".clients-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-        document.querySelectorAll(".clients-tab").forEach(t => t.classList.toggle("active", t === tab));
-        document.querySelectorAll(".clients-panel").forEach(panel => {
-            panel.hidden = panel.dataset.panel !== tab.dataset.tab;
-        });
+// selectTab is also called on load if the page was opened with
+// ?tab=availability (see bottom of file) -- js/coach.html links here
+// directly to a specific tab instead of duplicating this page's UI.
+function selectTab(tabName) {
+    const tab = document.querySelector(`.clients-tab[data-tab="${tabName}"]`);
+    if (!tab) return;
+    document.querySelectorAll(".clients-tab").forEach(t => t.classList.toggle("active", t === tab));
+    document.querySelectorAll(".clients-panel").forEach(panel => {
+        panel.hidden = panel.dataset.panel !== tabName;
     });
+}
+
+document.querySelectorAll(".clients-tab").forEach(tab => {
+    tab.addEventListener("click", () => selectTab(tab.dataset.tab));
 });
 
 // ---- Populate static selects ----
@@ -430,5 +437,10 @@ listenForAuth(user => {
         refreshRequests();
         refreshCoachSelect();
         refreshMyRequests();
+
+        // js/coach.html deep-links here with ?tab=availability instead
+        // of duplicating this page's UI.
+        const requestedTab = new URLSearchParams(window.location.search).get("tab");
+        if (requestedTab) selectTab(requestedTab);
     }
 });

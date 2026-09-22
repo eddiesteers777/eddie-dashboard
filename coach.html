@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Coach Dashboard | EddieOS</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/coach.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page coach-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coaching</div>
+                <h1>Coach Dashboard</h1>
+                <p class="eos-today-phase">
+                    What needs your attention today, and quick links into the rest of My Clients and Schedule.
+                </p>
+            </div>
+        </section>
+
+        <div id="coachSignedOut" class="clients-empty" hidden>
+            <span data-icon="user"></span>
+            <p>Sign in to view your coach dashboard.</p>
+        </div>
+
+        <div id="coachNotApproved" class="clients-empty" hidden>
+            <span data-icon="user"></span>
+            <p>This page is for approved coaches only.</p>
+        </div>
+
+        <div id="coachDashboard" hidden>
+
+            <div class="coach-stat-grid">
+
+                <a href="clients.html?tab=pending" class="coach-stat-card" id="statPendingAccounts">
+                    <div class="coach-stat-number" id="statPendingAccountsNum">0</div>
+                    <div class="coach-stat-label">Pending accounts</div>
+                </a>
+
+                <a href="schedule.html?tab=availability" class="coach-stat-card" id="statPendingRequests">
+                    <div class="coach-stat-number" id="statPendingRequestsNum">0</div>
+                    <div class="coach-stat-label">Booking requests waiting</div>
+                </a>
+
+                <a href="clients.html?tab=coach" class="coach-stat-card coach-stat-neutral">
+                    <div class="coach-stat-number" id="statActiveClientsNum">0</div>
+                    <div class="coach-stat-label">Active clients</div>
+                </a>
+
+            </div>
+
+            <h2 class="clients-section-title">Quick Links</h2>
+            <div class="coach-links-grid">
+
+                <a href="clients.html?tab=coach" class="coach-link-card">
+                    <div class="coach-link-icon" data-icon="users"></div>
+                    <div>
+                        <strong>Manage Clients</strong>
+                        <span>View and edit Training &amp; Race Plans</span>
+                    </div>
+                    <span class="coach-link-chevron" data-icon="chevronRight"></span>
+                </a>
+
+                <a href="clients.html?tab=pending" class="coach-link-card">
+                    <div class="coach-link-icon" data-icon="checkCircle"></div>
+                    <div>
+                        <strong>Review Pending Accounts</strong>
+                        <span>Approve or deny new signups</span>
+                    </div>
+                    <span class="coach-link-chevron" data-icon="chevronRight"></span>
+                </a>
+
+                <a href="schedule.html?tab=availability" class="coach-link-card">
+                    <div class="coach-link-icon" data-icon="calendar"></div>
+                    <div>
+                        <strong>Availability &amp; Requests</strong>
+                        <span>Manage open times and respond to bookings</span>
+                    </div>
+                    <span class="coach-link-chevron" data-icon="chevronRight"></span>
+                </a>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/coach.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>
