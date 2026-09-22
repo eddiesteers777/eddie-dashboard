@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Weekly Check-in | EddieOS</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/checkin.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page checkin-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coaching</div>
+                <h1>Weekly Check-in</h1>
+                <p class="eos-today-phase">
+                    A short weekly note to your coach, and their reply -- the rhythm that keeps your plan current.
+                </p>
+            </div>
+        </section>
+
+        <div id="checkinSignedOut" class="clients-empty" hidden>
+            <span data-icon="user"></span>
+            <p>Sign in to check in with your coach.</p>
+        </div>
+
+        <div id="checkinSignedIn" hidden>
+
+            <nav class="clients-tabs" role="tablist">
+                <button type="button" class="clients-tab active" data-tab="mine" role="tab">My Check-in</button>
+                <button type="button" id="reviewTabBtn" class="clients-tab" data-tab="review" role="tab" hidden>
+                    Review Check-ins <span id="reviewCount" class="clients-tab-badge" hidden></span>
+                </button>
+            </nav>
+
+            <!-- ===== Client view: submit + own history ===== -->
+            <section class="clients-panel" data-panel="mine">
+
+                <div id="noCoachMsg" class="clients-empty" hidden>
+                    <span data-icon="users"></span>
+                    <p>You're not linked to a coach yet.</p>
+                    <a href="clients.html?tab=share" class="clients-btn-primary">Invite a Coach</a>
+                </div>
+
+                <div id="checkinFormWrap" hidden>
+
+                    <div class="clients-card">
+                        <h2 id="checkinWeekLabel">This Week</h2>
+                        <p class="clients-card-note" id="checkinCoachLabel"></p>
+
+                        <label class="checkin-select-wrap" id="checkinCoachSelectWrap" hidden>
+                            <span>Coach</span>
+                            <select id="checkinCoachSelect"></select>
+                        </label>
+
+                        <div class="checkin-rating-row">
+                            <span class="checkin-rating-label">How did this week go?</span>
+                            <div id="checkinRatingStars" class="checkin-stars"></div>
+                        </div>
+
+                        <textarea id="checkinNotesInput" rows="4" placeholder="Wins, energy, soreness, anything life-related that affected training..."></textarea>
+
+                        <button type="button" id="checkinSubmitBtn" class="clients-btn-primary">Submit Check-in</button>
+                        <p id="checkinSubmitMsg" class="clients-msg" hidden></p>
+                    </div>
+
+                    <h2 class="clients-section-title">History</h2>
+                    <div id="checkinHistoryList" class="checkin-history-list"></div>
+                    <p id="checkinHistoryEmpty" class="clients-card-note" hidden>No check-ins yet -- submit your first one above.</p>
+
+                </div>
+
+            </section>
+
+            <!-- ===== Coach view: review check-ins from linked clients ===== -->
+            <section class="clients-panel" data-panel="review" hidden>
+
+                <div class="clients-card">
+                    <h2>Client check-ins</h2>
+                    <p class="clients-card-note">Needs-review items come first. Reviewing writes your feedback back to the client and clears it from the queue.</p>
+                </div>
+
+                <div id="reviewList" class="checkin-history-list"></div>
+                <p id="reviewEmpty" class="clients-card-note" hidden>No check-ins from your clients yet.</p>
+
+            </section>
+
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/checkin.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

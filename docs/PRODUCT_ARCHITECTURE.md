@@ -80,7 +80,7 @@ The most product-differentiating idea in the vision and currently the least buil
 4. **Public site** — now it has something real to gate behind "Sign In."
 5. **Service-driven client nav** — filtered by `services[]`, replacing today's dropdown-of-everything.
 6. **Coach dashboard** — consolidate `clients.html` + `schedule.html` under one coach nav, add a "needs attention" summary view.
-7. **Weekly coaching cycle** — check-in → coach review → plan publish → notification. Highest-leverage feature for retaining paying clients; mostly assembling existing pieces (plan editing, notes, sync).
+7. **Weekly coaching cycle** — done. `checkin.html`/`js/checkins.js`: a client submits one rating+notes check-in per week to a linked coach (`checkins/{clientUid_weekOf}`), the coach reviews from a queue (also surfaced on the Coach Dashboard stat grid) and writes feedback back, both steps optionally emailed via EmailJS. Plan publishing itself still happens through the existing plan editor in `clients.html` -- the check-in is the trigger that pulls a coach back to a specific client each week, not a new plan-editing surface.
 8. **Training↔fueling connection.**
 9. **Booking refinements** — location/duration fields, public-facing request path, payment.
 10. **Business tools** — payments, packages.

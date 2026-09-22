@@ -30,6 +30,11 @@
       site, add a third template and fill in
       TEMPLATE_APPLICATION_ID and COACH_NOTIFICATION_EMAIL below --
       see the comment above isApplicationEmailConfigured().
+   6. (Optional) For weekly check-in emails, add two more templates
+      and fill in TEMPLATE_CHECKIN_SUBMITTED_ID (to the coach, when a
+      client submits) and TEMPLATE_CHECKIN_REVIEWED_ID (to the
+      client, when the coach reviews) below -- see the comments above
+      sendCheckinSubmittedEmail() / sendCheckinReviewedEmail().
 
    Until all four values below are filled in, emails are silently
    skipped (logged to console only) -- the booking flow itself works
@@ -40,6 +45,8 @@ const SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
 const TEMPLATE_REQUEST_ID = "YOUR_EMAILJS_REQUEST_TEMPLATE_ID";
 const TEMPLATE_RESPONSE_ID = "YOUR_EMAILJS_RESPONSE_TEMPLATE_ID";
 const TEMPLATE_APPLICATION_ID = "YOUR_EMAILJS_APPLICATION_TEMPLATE_ID";
+const TEMPLATE_CHECKIN_SUBMITTED_ID = "YOUR_EMAILJS_CHECKIN_SUBMITTED_TEMPLATE_ID";
+const TEMPLATE_CHECKIN_REVIEWED_ID = "YOUR_EMAILJS_CHECKIN_REVIEWED_TEMPLATE_ID";
 const PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
 
 // Where a public-site application gets emailed. Only used for
@@ -127,6 +134,51 @@ export async function sendBookingResponseEmail({ clientEmail, clientName, coachN
         start_time: startTime || "",
         end_time: endTime || "",
         coach_note: coachNote || "",
+        link: link || ""
+    });
+}
+
+// Optional, same pattern as the application email -- needs its own
+// template (see setup step 6 at the top of this file). Suggested
+// variables: {{coach_name}}, {{client_name}}, {{week_of}},
+// {{rating}}, {{notes}}, {{link}}.
+function isCheckinSubmittedEmailConfigured() {
+    return isEmailConfigured() && !TEMPLATE_CHECKIN_SUBMITTED_ID.startsWith("YOUR_");
+}
+
+// Suggested variables: {{client_name}}, {{coach_name}}, {{week_of}},
+// {{feedback}}, {{link}}.
+function isCheckinReviewedEmailConfigured() {
+    return isEmailConfigured() && !TEMPLATE_CHECKIN_REVIEWED_ID.startsWith("YOUR_");
+}
+
+export async function sendCheckinSubmittedEmail({ coachEmail, coachName, clientName, weekOf, rating, notes, link }) {
+    if (!isCheckinSubmittedEmailConfigured()) {
+        console.warn("EddieOS: check-in submitted email isn't set up yet (js/emailNotify.js) -- skipping, the check-in itself still went through and is visible on the coach's Review Check-ins tab.");
+        return false;
+    }
+    return send(TEMPLATE_CHECKIN_SUBMITTED_ID, {
+        to_email: coachEmail,
+        coach_name: coachName || "",
+        client_name: clientName || "",
+        week_of: weekOf || "",
+        rating: rating ?? "",
+        notes: notes || "",
+        link: link || ""
+    });
+}
+
+export async function sendCheckinReviewedEmail({ clientEmail, clientName, coachName, weekOf, feedback, link }) {
+    if (!isCheckinReviewedEmailConfigured()) {
+        console.warn("EddieOS: check-in reviewed email isn't set up yet (js/emailNotify.js) -- skipping, the review itself still went through.");
+        return false;
+    }
+    return send(TEMPLATE_CHECKIN_REVIEWED_ID, {
+        to_email: clientEmail,
+        client_name: clientName || "",
+        coach_name: coachName || "",
+        week_of: weekOf || "",
+        feedback: feedback || "",
         link: link || ""
     });
 }

@@ -55,6 +55,14 @@ rules_version = '2';
 //                              Firebase Console's Data tab, once,
 //                              after they've signed in and their
 //                              profile document exists.
+//   checkins/{clientUid_weekOf} A client's weekly check-in (rating +
+//                              notes) to a linked coach, one document
+//                              per client per Mon-Sun week. The client
+//                              can create/resubmit their own but can
+//                              never write coachFeedback or mark it
+//                              reviewed; only the coach on the
+//                              check-in can do that, and only without
+//                              touching the client's rating/notes.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -149,6 +157,43 @@ service cloud.firestore {
         // services/isCoachApproved -- this is also how a new coach
         // gets approved after the first one is bootstrapped by hand.
         (get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.isCoachApproved == true)
+      );
+    }
+
+    match /checkins/{checkinId} {
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.clientUid
+            || request.auth.uid == resource.data.coachUid);
+
+      // Only as the client themselves, only for a coach they're
+      // already linked to (same coachLinks trust as plan sharing and
+      // booking), and never pre-marked reviewed or with feedback --
+      // a check-in always starts fresh, waiting on the coach.
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.clientUid
+        && request.resource.data.status == "submitted"
+        && request.resource.data.coachFeedback == ""
+        && exists(/databases/$(database)/documents/coachLinks/$(request.resource.data.coachUid + '_' + request.auth.uid));
+
+      allow update: if request.auth != null && (
+        // The client can resubmit (edit rating/notes) any week, which
+        // always puts it back in the review queue -- but can never
+        // touch the coach's feedback or mark their own submission
+        // reviewed.
+        (request.auth.uid == resource.data.clientUid
+          && request.resource.data.clientUid == resource.data.clientUid
+          && request.resource.data.coachUid == resource.data.coachUid
+          && request.resource.data.status == "submitted"
+          && request.resource.data.coachFeedback == resource.data.coachFeedback)
+        ||
+        // The coach reviews: writes feedback and flips status to
+        // "reviewed" -- can never touch the client's rating/notes.
+        (request.auth.uid == resource.data.coachUid
+          && request.resource.data.clientUid == resource.data.clientUid
+          && request.resource.data.coachUid == resource.data.coachUid
+          && request.resource.data.rating == resource.data.rating
+          && request.resource.data.notes == resource.data.notes
+          && request.resource.data.status == "reviewed")
       );
     }
   }

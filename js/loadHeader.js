@@ -31,6 +31,7 @@ const PAGE_TAB = {
     "clients.html": "more",
     "coach.html": "more",
     "schedule.html": "more",
+    "checkin.html": "more",
     "install.html": "more",
     "more.html": "more"
 };
@@ -75,6 +76,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, #0EA5E9)" },
     { label: "Schedule", href: "schedule.html", icon: "calendar", color: "var(--purple)" },
+    { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },
     { label: "Settings", href: "settings.html", icon: "user", color: "var(--muted)" },
     { label: "More", href: "more.html", icon: "grid", color: "var(--muted)" }
