@@ -43,6 +43,21 @@ function sharedPlanDoc(clientUid) {
     return doc(db, "sharedPlans", clientUid);
 }
 
+// Firestore doesn't guarantee a nested map's field order survives a
+// round trip, so comparing plain JSON.stringify() output before vs.
+// after a pull can report "changed" even when nothing actually is --
+// which previously caused loadHeader.js's "reload once if this pull
+// applied anything" logic to reload on every single load, forever.
+// Sorting keys before stringifying makes the comparison immune to
+// that reordering.
+function stableStringify(value) {
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+    if (value && typeof value === "object") {
+        return `{${Object.keys(value).sort().map(k => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
+    }
+    return JSON.stringify(value);
+}
+
 // ---- Invite / link lifecycle ----
 
 export async function createInviteCode() {
@@ -192,9 +207,14 @@ export async function pullSharedPlanUpdates(localTimes) {
         const ct = Number(cloudTimes[key] || 0);
         const lt = Number(localTimes[key] || 0);
         if (lt > ct) continue;
-        const serialized = JSON.stringify(value);
-        const changed = localStorage.getItem(key) !== serialized;
-        localStorage.setItem(key, serialized);
+
+        const currentRaw = localStorage.getItem(key);
+        let currentCanonical = null;
+        try { currentCanonical = currentRaw !== null ? stableStringify(JSON.parse(currentRaw)) : null; }
+        catch { currentCanonical = null; }
+        const changed = currentCanonical !== stableStringify(value);
+
+        if (changed) localStorage.setItem(key, JSON.stringify(value));
         if (ct > 0) localTimes[key] = ct;
         if (changed) applied++;
     }
