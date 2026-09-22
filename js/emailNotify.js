@@ -12,7 +12,8 @@
    1. Sign up free at https://www.emailjs.com
    2. Email Services -> Add a service (Gmail is the easiest) -> copy
       its Service ID into SERVICE_ID below.
-   3. Email Templates -> create two templates:
+   3. Email Templates -> create two templates (a third is optional,
+      see below):
         a) "Booking Request" -- sent to YOU when a client requests a
            session. Suggested variables: {{client_name}},
            {{session_type}}, {{label}}, {{day_label}}, {{start_time}},
@@ -25,6 +26,10 @@
            ID into TEMPLATE_RESPONSE_ID.
         Both templates need a "To email" field set to {{to_email}}.
    4. Account -> General -> copy your Public Key into PUBLIC_KEY.
+   5. (Optional) For an email when someone applies on the public
+      site, add a third template and fill in
+      TEMPLATE_APPLICATION_ID and COACH_NOTIFICATION_EMAIL below --
+      see the comment above isApplicationEmailConfigured().
 
    Until all four values below are filled in, emails are silently
    skipped (logged to console only) -- the booking flow itself works
@@ -34,10 +39,30 @@
 const SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
 const TEMPLATE_REQUEST_ID = "YOUR_EMAILJS_REQUEST_TEMPLATE_ID";
 const TEMPLATE_RESPONSE_ID = "YOUR_EMAILJS_RESPONSE_TEMPLATE_ID";
+const TEMPLATE_APPLICATION_ID = "YOUR_EMAILJS_APPLICATION_TEMPLATE_ID";
 const PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
+
+// Where a public-site application gets emailed. Only used for
+// sendApplicationEmail() -- the booking emails already know who to
+// notify from the booking/coach data itself, this is the one place
+// that needs a fixed address since a guest applying isn't linked to
+// a coach yet.
+const COACH_NOTIFICATION_EMAIL = "YOUR_EMAIL@EXAMPLE.COM";
 
 export function isEmailConfigured() {
     return ![SERVICE_ID, TEMPLATE_REQUEST_ID, TEMPLATE_RESPONSE_ID, PUBLIC_KEY].some(v => v.startsWith("YOUR_"));
+}
+
+// The application email is optional even once the three booking
+// values above are configured -- it needs its own template (a third
+// one, alongside "Booking Request" and "Booking Response" -- see the
+// setup steps at the top of this file). Suggested variables:
+// {{applicant_name}}, {{applicant_email}}, {{requested_services}},
+// {{message}}, {{link}}.
+function isApplicationEmailConfigured() {
+    return isEmailConfigured()
+        && !TEMPLATE_APPLICATION_ID.startsWith("YOUR_")
+        && !COACH_NOTIFICATION_EMAIL.startsWith("YOUR_");
 }
 
 let loadPromise = null;
@@ -102,6 +127,21 @@ export async function sendBookingResponseEmail({ clientEmail, clientName, coachN
         start_time: startTime || "",
         end_time: endTime || "",
         coach_note: coachNote || "",
+        link: link || ""
+    });
+}
+
+export async function sendApplicationEmail({ applicantName, applicantEmail, requestedServices, message, link }) {
+    if (!isApplicationEmailConfigured()) {
+        console.warn("EddieOS: application email isn't set up yet (js/emailNotify.js) -- skipping, the application itself still went through and is visible in My Clients → Pending.");
+        return false;
+    }
+    return send(TEMPLATE_APPLICATION_ID, {
+        to_email: COACH_NOTIFICATION_EMAIL,
+        applicant_name: applicantName || "",
+        applicant_email: applicantEmail || "",
+        requested_services: (requestedServices || []).join(", ") || "(none selected)",
+        message: message || "",
         link: link || ""
     });
 }

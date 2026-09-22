@@ -247,6 +247,12 @@
 .clients-pending-row .clients-row-info strong{
     white-space:normal;
 }
+.clients-service-note{
+    font-size:12.5px;
+    color:var(--text-secondary);
+    margin-top:6px;
+    line-height:1.5;
+}
 .clients-service-list{
     display:flex;
     flex-wrap:wrap;

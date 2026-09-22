@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Apply | EddieOS</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+</head>
+
+<body class="pub-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page">
+
+        <section class="pub-hero">
+            <div class="pub-hero-kicker">Apply</div>
+            <h1>Let's see if it's a fit.</h1>
+            <p>Sign in, tell me what you're looking for, and I'll follow up with next steps.</p>
+        </section>
+
+        <section class="pub-section" style="border-top:none;">
+
+            <div class="pub-apply-card">
+
+                <div id="applySignedOut" class="pub-apply-signedout">
+                    <p>Sign in with Google to start your application.</p>
+                    <button type="button" id="applySignInBtn" class="pub-btn-primary">Sign in with Google</button>
+                </div>
+
+                <div id="applyForm" hidden>
+
+                    <div class="pub-apply-identity">
+                        <div class="pub-apply-avatar" id="applyAvatar">?</div>
+                        <div>
+                            <strong id="applyName">Name</strong>
+                            <span id="applyEmail">email</span>
+                        </div>
+                    </div>
+
+                    <form id="applicationForm">
+                        <span class="pub-field-label">Which services are you interested in?</span>
+                        <div id="applyServiceGrid" class="pub-service-grid"></div>
+
+                        <span class="pub-field-label">Tell me about your goals</span>
+                        <textarea id="applyMessage" rows="4" placeholder="What are you training for, and what are you looking for in a coach?"></textarea>
+
+                        <button type="submit" id="applySubmitBtn" class="pub-btn-primary" style="width:100%;">Submit Application</button>
+                        <span id="applyMsg" class="pub-apply-msg" hidden></span>
+                    </form>
+
+                </div>
+
+                <div id="applySuccess" class="pub-apply-success" hidden>
+                    <div class="pub-card-icon" data-icon="checkCircle" style="margin:0 auto 12px;"></div>
+                    <h3>Application sent</h3>
+                    <p>Thanks -- I'll review it and follow up soon. You can close this page.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="pub-footer">
+        <p>&copy; 2026 EddieOS &middot; <a href="home.html">Home</a></p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/loadPublicHeader.js"></script>
+    <script type="module" src="js/apply.js"></script>
+
+</body>
+
+</html>

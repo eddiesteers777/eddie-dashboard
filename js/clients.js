@@ -386,12 +386,25 @@ const pendingList = document.getElementById("pendingList");
 const pendingEmptyMsg = document.getElementById("pendingEmptyMsg");
 
 function pendingCardHtml(profile) {
+    const requested = new Set(profile.requestedServices || []);
     const services = SERVICES.map(s => `
         <label class="clients-service-check">
-            <input type="checkbox" value="${escapeHtml(s.value)}">
+            <input type="checkbox" value="${escapeHtml(s.value)}" ${requested.has(s.value) ? "checked" : ""}>
             <span>${escapeHtml(s.label)}</span>
         </label>
     `).join("");
+
+    // requestedServices/applicationMessage only exist if they applied
+    // through the public site's apply form (js/apply.js) -- someone
+    // whose profile was only ever auto-created by signing into the
+    // internal app won't have these, and that's fine, just fewer
+    // details to show.
+    const requestedNote = profile.requestedServices?.length
+        ? `<div class="clients-service-note">Requested: ${profile.requestedServices.map(v => escapeHtml(SERVICES.find(s => s.value === v)?.label || v)).join(", ")}</div>`
+        : "";
+    const messageNote = profile.applicationMessage
+        ? `<div class="clients-service-note">"${escapeHtml(profile.applicationMessage)}"</div>`
+        : "";
 
     return `
         <div class="clients-row clients-pending-row" data-uid="${escapeHtml(profile.uid)}">
@@ -399,6 +412,8 @@ function pendingCardHtml(profile) {
             <div class="clients-row-info">
                 <strong>${escapeHtml(profile.displayName || "Unnamed")}</strong>
                 <span>${escapeHtml(profile.email || "")} &middot; wants: ${escapeHtml(profile.role || "client")}</span>
+                ${requestedNote}
+                ${messageNote}
                 <div class="clients-service-list">${services}</div>
             </div>
             <div class="clients-pending-actions">

@@ -118,3 +118,23 @@ export async function promoteToCoach(uid) {
         status: "active"
     });
 }
+
+// ---- Guest application (public site) ----
+
+// A guest fills this in on apply.html after signing in. It writes
+// onto their OWN profile (their "self" fields -- requestedServices,
+// applicationMessage -- are separate from the coach-granted
+// `services` field, so applying never grants anything by itself; it
+// only tells the coach what to look at in the Pending tab). Allowed
+// by the existing self-update rule since it never touches
+// isCoachApproved or status.
+export async function submitApplication(requestedServices, message) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    await ensureProfile();
+    await updateDoc(profileDoc(user.uid), {
+        requestedServices: requestedServices || [],
+        applicationMessage: message || "",
+        applicationSubmittedAt: serverTimestamp()
+    });
+}
