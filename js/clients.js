@@ -15,6 +15,10 @@ import {
     listMyClients, listMyCoaches, removeLink,
     readSharedPlanDoc, saveClientPlanList, addPlanNote
 } from "./coachAccess.js";
+import {
+    SERVICES, isApprovedCoach, listPendingProfiles,
+    approveClient, denyProfile, promoteToCoach
+} from "./userProfile.js";
 
 const DAY_TYPES = ["rest", "easy", "long", "workout", "race", "cross", "strength"];
 
@@ -368,6 +372,76 @@ editorSaveBtn.addEventListener("click", async () => {
 editorCloseBtn.addEventListener("click", () => { overlay.hidden = true; editorState = null; });
 overlay.addEventListener("click", event => { if (event.target === overlay) { overlay.hidden = true; editorState = null; } });
 
+// ---- Pending accounts (coach-only) ----
+// The tab itself stays hidden for everyone except an approved coach
+// -- but that's just so a regular client isn't confused by a tab
+// that will always be empty for them. The actual security boundary
+// is the Firestore write rule (only an already-approved coach can
+// change status/services/isCoachApproved), same as everywhere else
+// in this app: UI hiding is never the real gate.
+
+const pendingTabBtn = document.getElementById("pendingTabBtn");
+const pendingCount = document.getElementById("pendingCount");
+const pendingList = document.getElementById("pendingList");
+const pendingEmptyMsg = document.getElementById("pendingEmptyMsg");
+
+function pendingCardHtml(profile) {
+    const services = SERVICES.map(s => `
+        <label class="clients-service-check">
+            <input type="checkbox" value="${escapeHtml(s.value)}">
+            <span>${escapeHtml(s.label)}</span>
+        </label>
+    `).join("");
+
+    return `
+        <div class="clients-row clients-pending-row" data-uid="${escapeHtml(profile.uid)}">
+            <div class="clients-row-avatar">${escapeHtml((profile.displayName || "?").slice(0, 1).toUpperCase())}</div>
+            <div class="clients-row-info">
+                <strong>${escapeHtml(profile.displayName || "Unnamed")}</strong>
+                <span>${escapeHtml(profile.email || "")} &middot; wants: ${escapeHtml(profile.role || "client")}</span>
+                <div class="clients-service-list">${services}</div>
+            </div>
+            <div class="clients-pending-actions">
+                <button type="button" class="clients-btn-primary" data-action="approve">Approve</button>
+                <button type="button" class="clients-btn-secondary" data-action="deny">Deny</button>
+                <button type="button" class="clients-btn-secondary" data-action="promote">Make Coach</button>
+            </div>
+        </div>
+    `;
+}
+
+async function refreshPending() {
+    const pending = await listPendingProfiles();
+    pendingCount.hidden = pending.length === 0;
+    pendingCount.textContent = pending.length || "";
+    pendingList.innerHTML = "";
+    pendingEmptyMsg.hidden = pending.length > 0;
+
+    for (const profile of pending) {
+        const wrap = document.createElement("div");
+        wrap.innerHTML = pendingCardHtml(profile);
+        const row = wrap.firstElementChild;
+
+        row.querySelector('[data-action="approve"]').addEventListener("click", async () => {
+            const services = [...row.querySelectorAll(".clients-service-check input:checked")].map(el => el.value);
+            await approveClient(profile.uid, services);
+            refreshPending();
+        });
+        row.querySelector('[data-action="deny"]').addEventListener("click", async () => {
+            if (!window.confirm(`Deny ${profile.displayName || "this account"}'s request?`)) return;
+            await denyProfile(profile.uid);
+            refreshPending();
+        });
+        row.querySelector('[data-action="promote"]').addEventListener("click", async () => {
+            if (!window.confirm(`Make ${profile.displayName || "this account"} an approved coach? They'll get full coach access.`)) return;
+            await promoteToCoach(profile.uid);
+            refreshPending();
+        });
+
+        pendingList.appendChild(row);
+    }
+}
+
 // ---- Auth gate ----
 
 listenForAuth(user => {
@@ -376,5 +450,9 @@ listenForAuth(user => {
     if (user) {
         refreshClients();
         refreshCoaches();
+        isApprovedCoach().then(approved => {
+            pendingTabBtn.hidden = !approved;
+            if (approved) refreshPending();
+        });
     }
 });

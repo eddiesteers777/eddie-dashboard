@@ -59,6 +59,20 @@
 }
 .clients-tab:hover{color:var(--text);}
 .clients-tab.active{background:var(--primary);color:#05131f;}
+.clients-tab-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:18px;
+    height:18px;
+    padding:0 5px;
+    margin-left:6px;
+    border-radius:999px;
+    background:#EF4444;
+    color:#fff;
+    font-size:10.5px;
+    font-weight:800;
+}
 
 .clients-card{
     background:var(--surface);
@@ -215,6 +229,50 @@
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
+}
+
+/* ---- Pending accounts ---- */
+
+/* A pending row's info column can wrap across several lines (name,
+   email, a whole checkbox list of services) -- .clients-row's own
+   align-items:center would center the avatar and action buttons
+   against that tall block instead of the top, the same layout bug
+   fixed in schedule.css's .sched-request-row. Applying the fix here
+   from the start instead of shipping the bug again. */
+.clients-pending-row{
+    align-items:flex-start;
+    flex-wrap:wrap;
+}
+.clients-pending-row .clients-row-info span,
+.clients-pending-row .clients-row-info strong{
+    white-space:normal;
+}
+.clients-service-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 14px;
+    margin-top:8px;
+}
+.clients-service-check{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:12.5px;
+    color:var(--text);
+    cursor:pointer;
+}
+.clients-pending-actions{
+    flex-shrink:0;
+    display:flex;
+    gap:8px;
+    margin-left:auto;
+}
+@media(max-width:560px){
+    .clients-pending-actions{
+        width:100%;
+        margin-left:0;
+        justify-content:flex-end;
+    }
 }
 
 /* ---- Plan editor overlay ---- */

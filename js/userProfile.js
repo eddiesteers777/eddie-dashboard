@@ -19,7 +19,19 @@
 
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {
+    doc, getDoc, setDoc, updateDoc,
+    collection, query, where, getDocs,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+export const SERVICES = [
+    { value: "online_coaching", label: "Online Coaching" },
+    { value: "running", label: "Running Coaching" },
+    { value: "strength", label: "Strength Coaching" },
+    { value: "soccer_1on1", label: "1-on-1 Soccer" },
+    { value: "soccer_group", label: "Group Soccer" }
+];
 
 function profileDoc(uid) {
     return doc(db, "userProfiles", uid);
@@ -66,4 +78,43 @@ export async function getProfile(uid) {
 export async function isApprovedCoach() {
     const profile = await getMyProfile();
     return Boolean(profile?.isCoachApproved);
+}
+
+// ---- Coach-side approval (all writes here rely on firestore.rules
+// actually enforcing that the caller is already isCoachApproved --
+// these functions don't check that themselves, same as every other
+// write in this app trusts the deployed rules as the real boundary) ----
+
+export async function listPendingProfiles() {
+    const user = await waitForUser();
+    if (!user) return [];
+    const snap = await getDocs(query(collection(db, "userProfiles"), where("status", "==", "pending")));
+    return snap.docs
+        .map(d => ({ uid: d.id, ...d.data() }))
+        .filter(p => p.uid !== user.uid);
+}
+
+// The main approval action: activates the account as a client with
+// whichever services the coach granted. Never touches
+// isCoachApproved -- promoting someone to coach is a separate,
+// deliberate action (see promoteToCoach) so it can't happen by
+// accident while approving an ordinary client.
+export async function approveClient(uid, services) {
+    await updateDoc(profileDoc(uid), {
+        status: "active",
+        services: services || [],
+        approvedAt: serverTimestamp()
+    });
+}
+
+export async function denyProfile(uid) {
+    await updateDoc(profileDoc(uid), { status: "archived" });
+}
+
+export async function promoteToCoach(uid) {
+    await updateDoc(profileDoc(uid), {
+        role: "coach",
+        isCoachApproved: true,
+        status: "active"
+    });
 }

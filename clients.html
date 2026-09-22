@@ -43,6 +43,9 @@
             <nav class="clients-tabs" role="tablist">
                 <button type="button" class="clients-tab active" data-tab="coach" role="tab">Coach a Client</button>
                 <button type="button" class="clients-tab" data-tab="share" role="tab">Share My Plans</button>
+                <button type="button" id="pendingTabBtn" class="clients-tab" data-tab="pending" role="tab" hidden>
+                    Pending <span id="pendingCount" class="clients-tab-badge" hidden></span>
+                </button>
             </nav>
 
             <!-- ===== Coach view: clients this account has access to ===== -->
@@ -86,6 +89,21 @@
                     <h2 class="clients-section-title">Coaches with access</h2>
                     <div id="coachesList" class="clients-list"></div>
                     <p id="coachesEmptyMsg" class="clients-card-note" hidden>No one has access to your plans yet.</p>
+                </div>
+
+            </section>
+
+            <!-- ===== Coach view: accounts awaiting approval ===== -->
+            <section class="clients-panel" data-panel="pending" hidden>
+
+                <div class="clients-card">
+                    <h2>Pending accounts</h2>
+                    <p class="clients-card-note">Anyone who's signed in but hasn't been approved yet shows up here. Approving activates their account and grants only the services you check.</p>
+                </div>
+
+                <div id="pendingListWrap">
+                    <div id="pendingList" class="clients-list"></div>
+                    <p id="pendingEmptyMsg" class="clients-card-note" hidden>No pending accounts right now.</p>
                 </div>
 
             </section>
