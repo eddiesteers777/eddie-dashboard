@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get EddieOS | Install on Your Phone</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/install.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+
+    <header class="install-topbar">
+        <a href="index.html" class="install-topbar-brand">
+            <img src="icons/icon-192.png" alt="" class="install-logo">
+            <span>EddieOS</span>
+        </a>
+    </header>
+
+    <main class="install-page">
+
+        <section class="install-hero">
+            <div class="install-kicker">GET THE APP</div>
+            <h1>Your training, right on your home screen.</h1>
+            <p>EddieOS installs like a real app straight from this page — no App Store, no download. Takes about 20 seconds.</p>
+        </section>
+
+        <div id="installAlreadyInstalled" class="install-already" hidden>
+            <span data-icon="checkCircle"></span>
+            <span>You're already using the installed app.</span>
+        </div>
+
+        <div id="installBody">
+
+            <nav class="install-tabs" id="installTabs" role="tablist" aria-label="Choose your phone">
+                <button type="button" class="install-tab" data-platform="ios" role="tab">iPhone</button>
+                <button type="button" class="install-tab" data-platform="android" role="tab">Android</button>
+            </nav>
+
+            <section class="install-panel" data-platform-panel="ios">
+
+                <div class="install-warning" id="iosBrowserWarning" hidden>
+                    <span data-icon="alertTriangle"></span>
+                    <div>
+                        <strong>Open this page in Safari first</strong>
+                        <span>Installing only works from Safari — tap the ••• or share menu in your current browser and choose "Open in Safari."</span>
+                    </div>
+                </div>
+
+                <ol class="install-steps">
+                    <li>
+                        <span class="install-step-num">1</span>
+                        <div><strong>Tap the Share icon</strong><span>The square with an arrow pointing up, in Safari's toolbar.</span></div>
+                    </li>
+                    <li>
+                        <span class="install-step-num">2</span>
+                        <div><strong>Scroll down and tap "Add to Home Screen"</strong><span>It's a bit further down the share sheet.</span></div>
+                    </li>
+                    <li>
+                        <span class="install-step-num">3</span>
+                        <div><strong>Tap "Add"</strong><span>Top-right corner. The EddieOS icon appears on your home screen.</span></div>
+                    </li>
+                </ol>
+
+            </section>
+
+            <section class="install-panel" data-platform-panel="android" hidden>
+
+                <button type="button" class="install-primary-btn" id="androidInstallBtn" hidden>
+                    <span data-icon="download"></span> Install App
+                </button>
+
+                <ol class="install-steps">
+                    <li>
+                        <span class="install-step-num">1</span>
+                        <div><strong>Tap the ⋮ menu</strong><span>Top-right corner in Chrome.</span></div>
+                    </li>
+                    <li>
+                        <span class="install-step-num">2</span>
+                        <div><strong>Tap "Install app"</strong><span>Some phones call this "Add to Home screen" instead.</span></div>
+                    </li>
+                    <li>
+                        <span class="install-step-num">3</span>
+                        <div><strong>Tap "Install"</strong><span>The EddieOS icon appears on your home screen.</span></div>
+                    </li>
+                </ol>
+
+            </section>
+
+            <section class="install-panel" data-platform-panel="desktop" hidden>
+                <p class="install-desktop-note">You're viewing this on a computer. Scan the QR code or send yourself the link below to install it on your phone.</p>
+            </section>
+
+            <section class="install-share">
+                <div class="install-qr-card">
+                    <img src="icons/install-qr.svg" alt="QR code that opens this page" width="180" height="180">
+                </div>
+                <div class="install-share-info">
+                    <strong>Scan to open this page on your phone</strong>
+                    <p>Or copy the link and text it to yourself.</p>
+                    <div class="install-link-row">
+                        <input type="text" id="installLinkInput" readonly aria-label="Install page link">
+                        <button type="button" id="installCopyBtn" class="install-secondary-btn">
+                            <span data-icon="copy"></span><span class="install-copy-label">Copy</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/install.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+</html>

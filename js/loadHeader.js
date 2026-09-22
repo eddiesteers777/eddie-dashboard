@@ -68,6 +68,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)" },
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)" },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)" },
+    { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },
     { label: "Settings", href: "settings.html", icon: "user", color: "var(--muted)" },
     { label: "More", href: "more.html", icon: "grid", color: "var(--muted)" }
 ];

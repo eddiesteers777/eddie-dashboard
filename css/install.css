@@ -1,0 +1,252 @@
+/* ==========================================
+   EddieOS — Install / Get the App
+   ========================================== */
+
+body{
+    background:var(--bg);
+}
+/* Several elements on this page set their own display property
+   (flex/none-toggling panels, etc.), and any author rule that sets
+   display always outranks the browser's own [hidden]{display:none}
+   rule at equal specificity/origin -- without this, a hidden element
+   with its own display rule renders visible regardless of the
+   hidden attribute. One blanket rule here instead of chasing it
+   down per element. */
+.install-page [hidden]{
+    display:none !important;
+}
+
+/* This page is meant to be opened by people who don't have the app
+   yet, so it skips the full site header/nav entirely -- a minimal
+   brand bar instead, with just a way back into the real app. */
+.install-topbar{
+    display:flex;
+    align-items:center;
+    padding:16px 20px;
+}
+.install-topbar-brand{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    text-decoration:none;
+    color:var(--text);
+    font-family:var(--font-display);
+    font-size:20px;
+    letter-spacing:.3px;
+}
+.install-logo{
+    width:32px;
+    height:32px;
+    border-radius:9px;
+}
+
+.install-page{
+    width:min(520px,92%);
+    margin:0 auto;
+    padding:20px 0 80px;
+}
+
+.install-hero{
+    text-align:center;
+    margin-bottom:24px;
+}
+.install-kicker{
+    color:var(--muted);
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+}
+.install-hero h1{
+    font-family:var(--font-display);
+    font-size:36px;
+    font-weight:400;
+    letter-spacing:.3px;
+    line-height:1.08;
+    margin:0 0 12px;
+}
+.install-hero p{
+    color:var(--text-secondary);
+    font-size:14px;
+    line-height:1.5;
+    max-width:400px;
+    margin:0 auto;
+}
+
+.install-already{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    justify-content:center;
+    background:rgba(34,197,94,.08);
+    border:1px solid rgba(34,197,94,.3);
+    color:var(--green);
+    border-radius:14px;
+    padding:14px 16px;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:20px;
+}
+
+.install-tabs{
+    display:flex;
+    width:max-content;
+    max-width:100%;
+    margin:0 auto 20px;
+    gap:4px;
+    padding:4px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:999px;
+}
+.install-tab{
+    appearance:none;
+    border:0;
+    background:transparent;
+    color:var(--text-secondary);
+    padding:9px 22px;
+    border-radius:999px;
+    font:700 13px/1 var(--font-body);
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease;
+}
+.install-tab:hover{color:var(--text);}
+.install-tab.active{background:var(--primary);color:#05131f;}
+
+.install-panel[hidden]{display:none !important;}
+
+.install-warning{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    background:rgba(250,204,21,.08);
+    border:1px solid rgba(250,204,21,.3);
+    border-radius:14px;
+    padding:13px 14px;
+    margin-bottom:16px;
+    color:var(--yellow);
+}
+.install-warning strong{display:block;color:var(--text);font-size:13px;margin-bottom:3px;}
+.install-warning span{display:block;font-size:12.5px;color:var(--text-secondary);line-height:1.4;}
+
+.install-steps{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:0;
+    margin:0 0 24px;
+}
+.install-steps li{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px 16px;
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+.install-step-num{
+    flex-shrink:0;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--primary);
+    color:#05131f;
+    font-weight:800;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.install-steps strong{display:block;font-size:14px;margin-bottom:3px;}
+.install-steps li div span{display:block;font-size:12.5px;color:var(--text-secondary);line-height:1.45;}
+
+.install-primary-btn,
+.install-secondary-btn{
+    appearance:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    border-radius:999px;
+    padding:12px 22px;
+    font:700 13px/1 var(--font-body);
+    cursor:pointer;
+    transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,color .15s ease;
+}
+.install-primary-btn{
+    width:100%;
+    background:var(--primary);
+    color:#05131f;
+    border:1px solid var(--primary);
+    box-shadow:0 6px 18px rgba(78,168,255,.28);
+    margin-bottom:16px;
+}
+.install-primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(78,168,255,.36);}
+.install-primary-btn:active{transform:scale(.98);}
+.install-primary-btn[hidden]{display:none !important;}
+
+.install-desktop-note{
+    text-align:center;
+    color:var(--text-secondary);
+    font-size:13.5px;
+    line-height:1.5;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:24px;
+}
+
+.install-share{
+    display:flex;
+    gap:18px;
+    align-items:center;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 10px 28px rgba(0,0,0,.22);
+}
+.install-qr-card{
+    flex-shrink:0;
+    background:#fff;
+    border-radius:14px;
+    padding:10px;
+    line-height:0;
+}
+.install-qr-card img{display:block;width:100px;height:100px;}
+.install-share-info{flex:1;min-width:0;}
+.install-share-info strong{display:block;font-size:14px;margin-bottom:4px;}
+.install-share-info p{margin:0 0 10px;color:var(--text-secondary);font-size:12.5px;}
+.install-link-row{display:flex;gap:8px;}
+.install-link-row input{
+    flex:1;
+    min-width:0;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--text-secondary);
+    padding:9px 14px;
+    font-size:12px;
+    font-family:var(--font-mono);
+}
+.install-secondary-btn{
+    flex-shrink:0;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    border:1px solid var(--border);
+    padding:9px 16px;
+}
+.install-secondary-btn:hover{border-color:var(--primary);color:var(--text);}
+.install-secondary-btn.copied{border-color:var(--green);color:var(--green);}
+
+@media(max-width:520px){
+    .install-hero h1{font-size:30px;}
+    .install-share{flex-direction:column;text-align:center;}
+    .install-share-info{width:100%;}
+    .install-link-row{flex-direction:column;}
+}
