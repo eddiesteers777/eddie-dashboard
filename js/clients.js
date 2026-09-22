@@ -118,6 +118,7 @@ redeemForm.addEventListener("submit", async event => {
 const generateCodeBtn = document.getElementById("generateCodeBtn");
 const codeDisplay = document.getElementById("codeDisplay");
 const codeValue = document.getElementById("codeValue");
+const generateCodeMsg = document.getElementById("generateCodeMsg");
 const copyCodeBtn = document.getElementById("copyCodeBtn");
 const copyCodeLabel = document.getElementById("copyCodeLabel");
 const coachesList = document.getElementById("coachesList");
@@ -126,12 +127,21 @@ const coachesEmptyMsg = document.getElementById("coachesEmptyMsg");
 generateCodeBtn.addEventListener("click", async () => {
     generateCodeBtn.disabled = true;
     generateCodeBtn.textContent = "Generating…";
+    generateCodeMsg.hidden = true;
     try {
         const code = await createInviteCode();
         codeValue.textContent = code;
         codeDisplay.hidden = false;
     } catch (error) {
         console.error("Invite code generation failed:", error);
+        const denied = error.code === "permission-denied" || /permission/i.test(error.message || "");
+        showMsg(
+            generateCodeMsg,
+            denied
+                ? "Couldn't generate a code -- Firestore security rules for this feature may not be deployed yet."
+                : "Couldn't generate a code. Try again.",
+            true
+        );
     } finally {
         generateCodeBtn.disabled = false;
         generateCodeBtn.textContent = "Generate Invite Code";

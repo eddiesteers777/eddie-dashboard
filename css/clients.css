@@ -408,6 +408,22 @@
     padding-top:18px;
 }
 
-@media(max-width:520px){
-    .clients-day-row{grid-template-columns:30px 74px 54px 1fr;}
+@media(max-width:560px){
+    /* At narrow widths there isn't room for type + miles + session
+       text side by side without truncating -- a <select> can't
+       ellipsis its own text, so a cramped column just clips it
+       mid-word ("Workout" -> "Worko"). Give the type dropdown and
+       miles field their own row and let the session-notes field
+       take the full width on a second row instead. */
+    .clients-day-row{
+        grid-template-columns:34px 1fr 60px;
+        grid-template-areas:
+            "label type miles"
+            "session session session";
+        row-gap:6px;
+    }
+    .clients-day-label{grid-area:label;}
+    .clients-day-type{grid-area:type;}
+    .clients-day-miles{grid-area:miles;}
+    .clients-day-session{grid-area:session;}
 }

@@ -32,14 +32,15 @@ service cloud.firestore {
     }
 
     match /inviteCodes/{code} {
-      // Any signed-in user can read a code (needed to redeem it),
-      // but only the client who generated it can create or delete it.
-      allow read: if request.auth != null;
+      // Any signed-in user can read a code (needed to redeem it) or
+      // delete one (needed to burn it on redemption -- the coach
+      // doing the redeeming is never the client who created the
+      // code, so a narrower rule here would leave codes reusable
+      // forever instead of single-use). Only the client who
+      // generated a code can create it in the first place.
+      allow read, delete: if request.auth != null;
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.clientUid;
-      allow delete: if request.auth != null
-        && (request.auth.uid == resource.data.clientUid
-            || request.auth.uid == resource.data.coachUid);
     }
 
     match /coachLinks/{linkId} {
