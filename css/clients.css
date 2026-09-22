@@ -2,6 +2,17 @@
    EddieOS — My Clients
    ========================================== */
 
+/* Every other page in the app gives its own <main class="X-page">
+   this width/margin/padding rule (see programs.css, settings.css,
+   habits.css) -- it's what keeps text off the screen edges. This
+   page never got one, so its content ran edge-to-edge with no side
+   gutter at all. */
+.clients-page{
+    width:min(900px,94%);
+    margin:0 auto;
+    padding:28px 0 100px;
+}
+
 /* Several elements here set their own display (flex rows, the modal
    overlay) and an author display rule always outranks the browser's
    native [hidden]{display:none} at equal specificity/origin -- one
