@@ -121,6 +121,7 @@
     border-radius:11px;
     padding:11px 18px;
     font:700 13px/1 var(--font-body);
+    text-decoration:none;
     cursor:pointer;
     white-space:nowrap;
     transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,color .15s ease;

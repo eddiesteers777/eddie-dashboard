@@ -33,7 +33,7 @@ export async function getNavAccess() {
 
         if (!profile) {
             // Not signed in, or no profile yet -- narrowest view.
-            return { isCoach: false, hasTrainingAccess: false, hasSoccerAccess: false };
+            return { isCoach: false, hasTrainingAccess: false, hasSoccerAccess: false, status: null };
         }
 
         const services = profile.services || [];
@@ -41,24 +41,30 @@ export async function getNavAccess() {
         return {
             isCoach,
             hasTrainingAccess: isCoach || services.some(s => TRAINING_SERVICES.includes(s)),
-            hasSoccerAccess: isCoach || services.some(s => SOCCER_SERVICES.includes(s))
+            hasSoccerAccess: isCoach || services.some(s => SOCCER_SERVICES.includes(s)),
+            status: profile.status || null
         };
     } catch (error) {
         console.warn("EddieOS: nav access check failed -- showing full nav rather than hiding it.", error);
-        return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true };
+        return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true, status: null };
     }
 }
 
 // Hides any element in `root` carrying data-requires="a,b" unless at
 // least one listed requirement is met (OR, not AND) -- e.g.
-// data-requires="training,soccer" shows for either. Then hides any
-// .eos-dropdown left with zero visible links, so a dropdown never
-// renders as an empty, clickable-but-useless button.
+// data-requires="training,soccer" shows for either. "client" means a
+// non-coach account with training or soccer access: pages a coach
+// already reaches through the Coach section (Schedule, Check-in) use
+// it for their client-facing copy so a coach doesn't see them twice.
+// Then hides any .eos-dropdown left with zero visible links, so a
+// dropdown never renders as an empty, clickable-but-useless button.
 export function applyNavAccess(root, access) {
+    const isClient = !access.isCoach && (access.hasTrainingAccess || access.hasSoccerAccess);
     root.querySelectorAll("[data-requires]").forEach(el => {
         const reqs = el.dataset.requires.split(",").map(r => r.trim());
         const granted = reqs.some(r =>
             (r === "coach" && access.isCoach) ||
+            (r === "client" && isClient) ||
             (r === "training" && access.hasTrainingAccess) ||
             (r === "soccer" && access.hasSoccerAccess)
         );

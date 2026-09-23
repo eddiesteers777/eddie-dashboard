@@ -265,7 +265,10 @@ listenForAuth(user => {
         reviewTabBtn.hidden = !approved;
         if (approved) refreshReview();
 
+        // A coach arriving here from the Coach section wants the review
+        // queue, not their own (usually coach-less) client check-in.
         const requestedTab = new URLSearchParams(window.location.search).get("tab");
         if (requestedTab) selectTab(requestedTab);
+        else if (approved) selectTab("review");
     });
 });

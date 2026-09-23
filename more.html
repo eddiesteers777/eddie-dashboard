@@ -181,6 +181,7 @@
                 <div class="eos-more-account-avatar" id="moreAvatar">?</div>
                 <div>
                     <strong id="moreUserName">Guest</strong>
+                    <span id="moreAccountStatus" hidden></span>
                     <button type="button" id="moreSyncStatus" class="eos-more-sync-btn" disabled>Not signed in</button>
                 </div>
             </div>
@@ -238,25 +239,13 @@
                 <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="clients.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="users" style="background:linear-gradient(135deg,#0EA5E9,#38BDF8)"></div>
-                <span class="more-row-name">My Clients</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="schedule.html" class="more-row" data-requires="training,soccer">
+            <a href="schedule.html" class="more-row" data-requires="client">
                 <div class="more-row-icon" data-icon="calendar" style="background:linear-gradient(135deg,#8B5CF6,#A855F7)"></div>
                 <span class="more-row-name">Schedule</span>
                 <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="coach.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="target" style="background:linear-gradient(135deg,#EF4444,#F87171)"></div>
-                <span class="more-row-name">Coach Dashboard</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="checkin.html" class="more-row" data-requires="training,soccer,coach">
+            <a href="checkin.html" class="more-row" data-requires="client">
                 <div class="more-row-icon" data-icon="star" style="background:linear-gradient(135deg,#F59E0B,#FBBF24)"></div>
                 <span class="more-row-name">Weekly Check-in</span>
                 <span class="more-row-chevron" data-icon="chevronRight"></span>
@@ -318,6 +307,24 @@
                 : "Synced " + formatRelativeTime(status.lastSyncedAt);
         }
 
+        // Makes the account's role visible -- otherwise a pending or
+        // unapproved account just sees sections quietly missing from
+        // the nav with no hint why.
+        async function refreshAccountStatus() {
+            const accountStatusEl = document.getElementById("moreAccountStatus");
+            try {
+                const { getNavAccess } = await import("./js/navAccess.js");
+                const access = await getNavAccess();
+                accountStatusEl.textContent = access.isCoach ? "Coach account"
+                    : access.status === "active" ? "Client account"
+                    : access.status === "pending" ? "Pending approval -- some sections hidden"
+                    : "";
+                accountStatusEl.hidden = !accountStatusEl.textContent;
+            } catch {
+                accountStatusEl.hidden = true;
+            }
+        }
+
         statusEl?.addEventListener("click", async () => {
             if (statusEl.disabled) return;
 
@@ -376,6 +383,7 @@
                 statusEl.disabled = false;
                 refreshSyncLine();
                 setInterval(refreshSyncLine, 15000);
+                refreshAccountStatus();
             } else {
                 nameEl.textContent = "Guest";
                 avatarEl.textContent = "?";

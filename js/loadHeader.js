@@ -8,6 +8,7 @@ const BOTTOM_TABS = [
     { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--orange)", requires: "training" },
     { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--pink)", requires: "training" },
     { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--purple)" },
+    { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--red)", requires: "coach" },
     { key: "more", label: "More", icon: "grid", href: "more.html", color: "var(--muted)" }
 ];
 
@@ -28,10 +29,10 @@ const PAGE_TAB = {
     "programs.html": "more",
     "pace-calculator.html": "more",
     "settings.html": "more",
-    "clients.html": "more",
-    "coach.html": "more",
-    "schedule.html": "more",
-    "checkin.html": "more",
+    "clients.html": "coach",
+    "coach.html": "coach",
+    "schedule.html": "coach",
+    "checkin.html": "coach",
     "install.html": "more",
     "more.html": "more"
 };
@@ -49,6 +50,12 @@ const SUBNAV_GROUPS = {
     health: [
         { href: "nutrition.html", label: "Nutrition" },
         { href: "fueling.html", label: "Fueling" }
+    ],
+    coach: [
+        { href: "coach.html", label: "Dashboard" },
+        { href: "clients.html", label: "My Clients" },
+        { href: "checkin.html", label: "Check-ins" },
+        { href: "schedule.html", label: "Schedule" }
     ]
 };
 
@@ -164,8 +171,6 @@ fetch("components/header.html")
 
         const page = window.location.pathname.split("/").pop() || "index.html";
 
-        const activeTab = PAGE_TAB[page] || null;
-
         // Same entitlement check as the desktop dropdowns (js/navAccess.js)
         // -- a tab that isn't relevant to this account's role/services
         // is left out of the array entirely rather than rendered and
@@ -179,6 +184,13 @@ fetch("components/header.html")
                 : tab.requires === "coach" ? navAccess.isCoach
                 : true;
         });
+
+        // Schedule and Check-in belong to the Coach tab for a coach, but
+        // a client uses them too and has no Coach tab -- fall back to
+        // More so they still get a highlighted tab and never see the
+        // coach-only subnav pills.
+        let activeTab = PAGE_TAB[page] || null;
+        if (activeTab && !visibleTabs.some(tab => tab.key === activeTab)) activeTab = "more";
 
         document.body.insertAdjacentHTML("beforeend", `
             <nav class="eos-bottomnav" aria-label="Primary">
@@ -320,6 +332,11 @@ fetch("components/header.html")
         });
 
         document.querySelectorAll(".nav-links a").forEach(link => {
+
+            // Some pages are linked from two dropdowns (Coach for a
+            // coach, Tools for a client) with one copy hidden -- only
+            // the visible one should light up its section.
+            if (link.hidden) return;
 
             if (link.getAttribute("href") === page) {
                 link.classList.add("active");

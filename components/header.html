@@ -16,9 +16,17 @@
             <a href="index.html" class="eos-nav-item">
                 Dashboard
             </a>
-            <a href="coach.html" class="eos-nav-item" data-requires="coach">
-                Coach
-            </a>
+            <details class="nav-dropdown eos-dropdown" data-requires="coach">
+                <summary class="eos-dropdown-trigger">
+                    <span>Coach</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                </summary>
+                <div class="nav-dropdown-menu eos-dropdown-menu">
+                    <a href="coach.html" class="eos-dropdown-link">Dashboard</a>
+                    <a href="clients.html" class="eos-dropdown-link">My Clients</a>
+                    <a href="checkin.html" class="eos-dropdown-link">Weekly Check-ins</a>
+                    <a href="schedule.html" class="eos-dropdown-link">Schedule</a>
+                </div>
+            </details>
             <details class="nav-dropdown eos-dropdown" data-requires="training">
                 <summary class="eos-dropdown-trigger">
                     <span>Training</span><span class="eos-chevron" data-icon="chevronDown"></span>
@@ -64,9 +72,8 @@
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="pace-calculator.html" class="eos-dropdown-link">Pace Calculator</a>
-                    <a href="clients.html" class="eos-dropdown-link" data-requires="coach">My Clients</a>
-                    <a href="schedule.html" class="eos-dropdown-link" data-requires="training,soccer">Schedule</a>
-                    <a href="checkin.html" class="eos-dropdown-link" data-requires="training,soccer,coach">Weekly Check-in</a>
+                    <a href="schedule.html" class="eos-dropdown-link" data-requires="client">Schedule</a>
+                    <a href="checkin.html" class="eos-dropdown-link" data-requires="client">Weekly Check-in</a>
                     <a href="install.html" class="eos-dropdown-link">Get the App</a>
                 </div>
             </details>
