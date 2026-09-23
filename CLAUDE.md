@@ -1,0 +1,145 @@
+# EddieOS — Project Guide & Handoff
+
+EddieOS is Eddie Steers' coaching business platform: a public marketing site for guests, plus an installable app (PWA) where clients train and Eddie coaches them. It covers online coaching, running and strength programming, and 1-on-1 or group soccer training.
+
+- **Live site:** https://eddiesteers777.github.io/eddie-dashboard/ (GitHub Pages, deploys automatically from `main`)
+- **Repo:** `eddiesteers777/eddie-dashboard`
+- **Deeper background:** `docs/PRODUCT_ARCHITECTURE.md` (the original audit, account/role design, and roadmap)
+
+---
+
+## Directions for a new chat (read first)
+
+1. **Read this file, then `docs/PRODUCT_ARCHITECTURE.md`,** before changing anything. Inspect the real code instead of trusting summaries. Both docs describe intent, and the code is the truth.
+2. **Workflow Eddie expects:**
+   - Build on a feature branch, test it, commit, and push the branch.
+   - Wait for Eddie to say **"push it"** (or "push"). Only then merge to `main` (`git checkout main && git pull origin main && git merge --no-edit <branch> && git push origin main`) and switch back to the branch.
+   - Eddie paces big work with short messages like "step 8". Do one roadmap step fully (build → test → report), then stop.
+3. **Eddie isn't a developer.** Any step he has to do himself (Firebase Console, GitHub uploads) needs plain, click-by-click directions. Screenshots from him are common, so read them carefully.
+4. **Challenge ideas when there's a better way.** Eddie explicitly asked for pushback, not agreement.
+5. **Firestore rules are NOT auto-deployed.** Whenever `firestore.rules` changes, tell Eddie to paste the **whole file** into Firebase Console → Firestore Database → **Rules** → Publish. A new collection without its rules fails with permission-denied.
+6. **Never put Eddie's email or other personal info in the code.** He chose to keep it out of the public repo.
+
+---
+
+## The three experiences
+
+| Who | What they see | How it's decided |
+|---|---|---|
+| **Guest** (signed out) | Public site only: Home, About, Packages, Get the App, Apply | `js/loadHeader.js` sends signed-out visitors on any app page to `home.html` |
+| **Client** (approved, `status: "active"`) | The app, filtered to the services Eddie granted them | `services[]` on their profile, read by `js/navAccess.js` |
+| **Coach / admin** (`isCoachApproved: true`) | Everything, plus the Coach section | Eddie's own account. Approved coaches can approve anyone. |
+
+A new sign-in starts as a **pending client** with no services, so it sees almost nothing until approved. That's by design.
+
+---
+
+## Page map
+
+**Public site** (uses `components/publicHeader.html` + `js/loadPublicHeader.js` + `css/public.css`)
+
+| Page | Purpose |
+|---|---|
+| `home.html` | Guest "dashboard": hero photo, the four offerings as photo cards, meet-your-coach, what the app gives clients, how it works |
+| `about.html` | Photo + bio (bio text is still placeholder) + 3-photo gallery |
+| `packages.html` | Online Coaching / 1-on-1 Soccer / Group Soccer packages (prices are still `$—`) |
+| `coaching.html`, `soccer.html` | Offering detail pages (linked from Home cards and footers, not the top nav) |
+| `apply.html` | Intake form (requires Google sign-in). Writes the request onto the applicant's pending profile. |
+| `install.html` | "Get the App" install instructions (own standalone header) |
+
+Photos live in `images/`. `images/README.md` lists the exact filenames. A missing photo shows a styled placeholder (the `<img onerror="this.remove()">` + `.pub-photo-fallback` pattern).
+
+**App: client pages** (use `components/header.html` + `js/loadHeader.js`)
+
+| Area | Pages |
+|---|---|
+| Today | `index.html` (dashboard) |
+| Train | `running.html`, `strength.html`, `cross-training.html` |
+| Health | `nutrition.html`, `fueling.html` |
+| Habits | `habits.html` |
+| More | `marathon.html`, `75day.html`, `planner.html`, `programs.html`, `analytics.html`, `weekly-review.html`, `gear.html`, `pace-calculator.html`, `settings.html`, `more.html` |
+| Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), both reached via Tools / More |
+
+**App: coach pages** (the **Coach** bottom tab on mobile / **Coach** dropdown on desktop)
+
+| Page | Purpose |
+|---|---|
+| `coach.html` | Dashboard: pending accounts, booking requests, check-ins to review, active clients |
+| `clients.html` | Tabs: *Coach a Client* (plan editor), *Share My Plans* (invite codes), *Pending* (approve/deny signups, make coach) |
+| `checkin.html` | *Review Check-ins* tab (coaches land here by default) |
+| `schedule.html` | Availability, blackout dates, approve/deny booking requests |
+
+Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, read by each page's `selectTab()`.
+
+`site-check.html` is a diagnostics page and is exempt from the guest redirect.
+
+---
+
+## How it's built
+
+- **Static site, no build step.** Plain HTML/CSS/ES-module JS, hosted on GitHub Pages. PWA via `manifest.json` + `sw.js` (network-first for same-origin files).
+- **Firebase** (project `eddie-s-dashboard`): Google sign-in only (`js/auth.js`), Firestore for data (`js/firebase.js`). SDK loads from `gstatic.com`.
+- **Design system:** CSS custom properties in `css/style.css` (dark navy `--bg`, `--surface`, `--primary: #4EA8FF`). Fonts: Inter / Bebas Neue / JetBrains Mono. Reuse the tokens and don't hard-code new colors.
+- **Icons:** `js/icons.js`. Write `<span data-icon="name">` in HTML. Content inserted later needs `import("./icons.js").then(m => m.hydrate())`.
+- **Email:** `js/emailNotify.js` uses EmailJS (client-side). All IDs are still `YOUR_...` placeholders, so emails are skipped silently until Eddie sets up an account. Core flows never depend on email.
+- **Integrations:** COROS (`js/coros*.js`) and Strava (`js/strava*.js`). The Strava token exchange runs in a Cloudflare Worker (`cloudflare-worker/strava-broker.js`) so the client secret stays out of this public repo.
+
+### Firestore data model
+
+| Collection | What it holds |
+|---|---|
+| `users/{uid}/sync/localStorage` | Each user's private app data, mirrored from localStorage (`js/cloudSync.js`, last-write-wins per key) |
+| `userProfiles/{uid}` | `role`, `isCoachApproved`, `status` (`pending`/`active`/`archived`), `services[]`, application fields. Users can never change their own `isCoachApproved`/`status`; only an approved coach can. |
+| `inviteCodes/{code}` | One-time codes a client gives a coach |
+| `coachLinks/{coachUid}_{clientUid}` | Proof a client linked a coach. It gates everything below. |
+| `sharedPlans/{clientUid}` | Mirror of the client's training/race plans + coach notes |
+| `coachAvailability/{coachUid}` | Weekly slots + blackout dates |
+| `bookingRequests/{id}` | Session requests (single or recurring), approved/denied by the coach |
+| `checkins/{clientUid}_{weekOf}` | One weekly check-in per client (rating + notes, then coach feedback) |
+
+Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `strength`, `soccer_1on1`, `soccer_group`.
+
+### Navigation access
+
+`js/navAccess.js` turns the profile into `{ isCoach, hasTrainingAccess, hasSoccerAccess, status }`. HTML elements carry `data-requires="..."` with any of `training`, `soccer`, `coach`, `client` (meaning a non-coach with training or soccer access). Multiple values are OR'd. Mobile bottom tabs are defined in `BOTTOM_TABS` in `js/loadHeader.js`: Today, Train, Health, Habits, Coach (coach only), More. **Nav access fails open:** if the profile can't load, the full nav shows rather than an empty one.
+
+---
+
+## Gotchas we've already hit (don't repeat them)
+
+- **`[hidden]` vs CSS `display`:** any class that sets `display` beats the browser's native `[hidden]`. Every page/component scope has a blanket override (`.clients-page [hidden]{display:none!important}` etc.). Add one when writing new CSS.
+- **Flex rows with wrapping text:** use `align-items:flex-start`, or action buttons float to the middle of tall rows.
+- **Flex wrapping:** `flex:1` (basis 0) overrides `width:100%`. Use `flex:0 0 100%` to force an item onto its own row.
+- **Reload loop:** comparing Firestore data with plain `JSON.stringify` caused an infinite reload (key order changes). Use `stableStringify` in `js/coachAccess.js`.
+- **Guest redirect** only fires when Firebase definitively says "signed out". It never fires on an auth-load error, so offline users aren't kicked out.
+- **Overlays** need `z-index` above the navbar (1000) and search overlay (4500). The plan editor uses 5000.
+
+## Testing
+
+- The sandbox can't reach `gstatic.com`, so the real Firebase SDK won't load. Test with Playwright (installed globally at `/opt/node22/lib/node_modules/playwright`, browsers at `/opt/pw-browsers`) by serving the repo with `python3 -m http.server 8934` and mocking `js/auth.js`, `js/firebase.js`, `js/userProfile.js`, `js/cloudSync.js`, etc. via `page.route()`.
+- **Create contexts with `serviceWorkers: "block"`,** or the service worker serves the real modules and bypasses your mocks.
+- Screenshot at desktop (1280px) **and** phone (375–390px) widths, and look at them.
+- Mock data must match the real shape (e.g. list functions return `{ id, ...data }`).
+- `node --check file.js` for quick syntax checks.
+
+---
+
+## Current status (as of 2026-09-23)
+
+Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, coach approval, public site, service-driven nav, coach dashboard, weekly check-ins. After that came the unified Coach nav section and the guest-view redesign (photo-led Home, About, Packages, Get the App in the top nav).
+
+**Waiting on Eddie:**
+- [ ] **Approve his own account** in Firebase Console → Firestore → `userProfiles` → his doc: `isCoachApproved: true`, `role: "coach"`, `status: "active"`. (In progress at the time of writing. The More page shows "Coach account" once it's done.)
+- [ ] Confirm the latest `firestore.rules` (with the `checkins` section) has been pasted and published.
+- [ ] Upload photos to `images/` (filenames in `images/README.md`).
+- [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly).
+- [ ] Send a short **bio** for `about.html`.
+- [ ] Optional: set up EmailJS and fill in the IDs in `js/emailNotify.js` (booking, application, check-in emails).
+
+## What's next (roadmap)
+
+8. **Training ↔ fueling connection.** Read `js/fueling.js` and `js/nutrition.js` data shapes first, then design per-day fueling targets (pre/during/post) from each training day's type and duration.
+9. **Booking refinements:** location, session length, a public request path.
+10. **Business tools:** payments, packages checkout.
+
+The brand name is deliberately undecided (keep the mountain/E mark). Don't rename anything until Eddie decides.
