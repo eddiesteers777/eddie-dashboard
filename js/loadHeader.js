@@ -1,3 +1,20 @@
+// Guests get the public site (home.html and friends), not a
+// half-empty version of the app. Only redirects once Firebase has
+// actually resolved to "signed out" -- if auth itself can't load
+// (offline, SDK blocked) this does nothing, so a signed-in user is
+// never bounced out of their own app by a network hiccup.
+// site-check.html is a diagnostics page that must work signed out.
+(async () => {
+    const page = window.location.pathname.split("/").pop() || "index.html";
+    if (page === "site-check.html") return;
+    try {
+        const { waitForUser } = await import("./auth.js");
+        if (!(await waitForUser())) window.location.replace("home.html");
+    } catch {
+        // Fail open -- leave the page as-is.
+    }
+})();
+
 // The mobile app shell (bottom tab bar + the pill row that lets a
 // tab covering several real pages switch between them) is built
 // here and injected at runtime rather than duplicated into every

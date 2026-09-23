@@ -2,7 +2,7 @@
    EddieOS — Public Site
 
    Shared styles for the guest-facing marketing pages (home,
-   coaching, soccer, about, pricing, apply). Deliberately separate
+   coaching, soccer, about, packages, apply). Deliberately separate
    from the internal app's navbar/dropdown/bottom-nav CSS in
    style.css -- this loads alongside style.css only for its design
    tokens (colors, fonts, radius), not its component classes, since
@@ -57,6 +57,7 @@ body.pub-body{
     font-weight:600;
     padding:8px 14px;
     border-radius:999px;
+    white-space:nowrap;
     transition:background .15s ease,color .15s ease;
 }
 .pub-nav-link:hover{color:var(--text);background:var(--surface);}
@@ -66,6 +67,14 @@ body.pub-body{
     background:var(--primary);
 }
 .pub-nav-link.pub-nav-cta:hover{background:var(--primary);opacity:.9;}
+.pub-nav-link.pub-nav-app{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:var(--text);
+    border:1px solid var(--border);
+}
+.pub-nav-link.pub-nav-app .ui-icon{width:15px;height:15px;}
 
 .pub-signin-btn{
     appearance:none;
@@ -83,7 +92,14 @@ body.pub-body{
 
 @media(max-width:720px){
     .pub-navbar{flex-wrap:wrap;padding:16px 20px;}
-    .pub-nav-links{order:3;width:100%;justify-content:center;gap:2px;}
+    /* flex-basis (not width) decides whether this wraps to its own
+       row -- the base rule's flex:1 means basis 0, which lets it
+       squeeze in beside the logo as a thin column instead. */
+    .pub-nav-links{order:3;flex:0 0 100%;justify-content:center;gap:2px;}
+    .pub-logo{flex:1;}
+    /* The logo already links home -- dropping the separate link is
+       what lets the rest fit on one row at phone widths. */
+    .pub-nav-link[data-page="home.html"]{display:none;}
     .pub-nav-link{padding:7px 10px;font-size:13px;}
 }
 
@@ -157,6 +173,8 @@ body.pub-body{
     border:1px solid var(--border);
 }
 .pub-btn-secondary:hover{border-color:var(--primary);color:var(--primary);}
+.pub-btn-primary .ui-icon,
+.pub-btn-secondary .ui-icon{width:16px;height:16px;}
 
 /* ---- Sections / cards ---- */
 
@@ -241,6 +259,167 @@ body.pub-body{
     margin:0 0 24px;
 }
 
+/* ---- Photos ----
+   Every photo sits in a .pub-photo frame. Until the real file exists
+   in images/, the <img>'s onerror removes it and the frame shows a
+   branded gradient + icon instead of a broken-image box -- so the
+   page looks finished before photos are uploaded, and a photo
+   "just appears" once it's added with the right filename. */
+
+.pub-photo{
+    position:relative;
+    overflow:hidden;
+    border-radius:var(--radius);
+    background:
+        radial-gradient(circle at 30% 20%,rgba(78,168,255,.35),transparent 60%),
+        linear-gradient(135deg,#1E3A5F,#312E81);
+    border:1px solid var(--border);
+}
+.pub-photo img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+.pub-photo-fallback{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:rgba(255,255,255,.35);
+}
+.pub-photo-fallback .ui-icon{width:44px;height:44px;}
+.pub-photo img + .pub-photo-fallback{display:none;}
+
+/* ---- Home: split hero ---- */
+
+.pub-hero-split{
+    display:grid;
+    grid-template-columns:1.1fr .9fr;
+    gap:48px;
+    align-items:center;
+    text-align:left;
+    padding:48px 0 56px;
+}
+.pub-hero-split p{margin-left:0;}
+.pub-hero-split .pub-hero-actions{justify-content:flex-start;}
+.pub-hero-photo{aspect-ratio:4/5;}
+
+@media(max-width:820px){
+    .pub-hero-split{grid-template-columns:1fr;gap:28px;text-align:center;padding-top:32px;}
+    .pub-hero-split p{margin-left:auto;}
+    .pub-hero-split .pub-hero-actions{justify-content:center;}
+    .pub-hero-photo{order:-1;aspect-ratio:4/3;max-width:460px;width:100%;margin:0 auto;}
+}
+
+/* ---- Home: offering cards (image on top) ---- */
+
+.pub-offer-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:18px;
+}
+.pub-offer-card{
+    display:flex;
+    flex-direction:column;
+    text-decoration:none;
+    color:var(--text);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    transition:transform .15s ease,border-color .15s ease;
+}
+.pub-offer-card:hover{transform:translateY(-3px);border-color:rgba(78,168,255,.35);}
+.pub-offer-card .pub-photo{
+    aspect-ratio:16/10;
+    border:0;
+    border-radius:0;
+}
+.pub-offer-body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:8px;flex:1;}
+.pub-offer-body h3{font-size:18px;margin:0;}
+.pub-offer-body p{color:var(--text-secondary);font-size:14px;line-height:1.6;margin:0;flex:1;}
+.pub-offer-link{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    color:var(--primary);
+    font-size:13.5px;
+    font-weight:700;
+    margin-top:6px;
+}
+.pub-offer-link .ui-icon{width:15px;height:15px;}
+
+/* ---- Home: meet your coach / app feature bands ---- */
+
+.pub-feature-split{
+    display:grid;
+    grid-template-columns:.8fr 1.2fr;
+    gap:40px;
+    align-items:center;
+}
+.pub-feature-split.pub-feature-reverse{grid-template-columns:1.2fr .8fr;}
+.pub-feature-split .pub-photo{aspect-ratio:1/1;}
+.pub-feature-text h2{
+    font-family:var(--font-display);
+    font-size:clamp(28px,4vw,38px);
+    font-weight:400;
+    margin:0 0 14px;
+}
+.pub-feature-text p{
+    color:var(--text-secondary);
+    font-size:15.5px;
+    line-height:1.7;
+    margin:0 0 20px;
+}
+.pub-feature-list{
+    list-style:none;
+    padding:0;
+    margin:0 0 24px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.pub-feature-list li{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    color:var(--text-secondary);
+    font-size:14.5px;
+    line-height:1.5;
+}
+.pub-feature-list li strong{color:var(--text);}
+.pub-feature-list .ui-icon{
+    flex-shrink:0;
+    width:20px;
+    height:20px;
+    color:var(--primary);
+    margin-top:1px;
+}
+.pub-app-mock{
+    aspect-ratio:1/1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.pub-app-mock img{
+    position:static;
+    width:46%;
+    height:auto;
+    border-radius:26%;
+    box-shadow:0 24px 60px rgba(0,0,0,.45);
+}
+
+@media(max-width:820px){
+    .pub-feature-split,
+    .pub-feature-split.pub-feature-reverse{grid-template-columns:1fr;gap:24px;}
+    .pub-feature-split .pub-photo,
+    .pub-app-mock{max-width:360px;width:100%;margin:0 auto;}
+    .pub-feature-reverse .pub-app-mock{order:-1;}
+}
+
 /* ---- About page bio ---- */
 
 .pub-bio{
@@ -252,16 +431,22 @@ body.pub-body{
 }
 .pub-bio-photo{
     flex-shrink:0;
-    width:160px;
-    height:160px;
-    border-radius:28px;
-    background:linear-gradient(135deg,var(--primary),#7C3AED);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:var(--font-display);
-    font-size:56px;
-    color:#05131f;
+    width:240px;
+    aspect-ratio:4/5;
+}
+@media(max-width:560px){
+    .pub-bio-photo{width:100%;max-width:320px;margin:0 auto;}
+}
+
+.pub-gallery{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+}
+.pub-gallery .pub-photo{aspect-ratio:1/1;}
+@media(max-width:560px){
+    .pub-gallery{grid-template-columns:1fr 1fr;}
+    .pub-gallery .pub-photo:last-child{grid-column:1 / -1;aspect-ratio:2/1;}
 }
 .pub-bio-text{
     flex:1;
@@ -272,14 +457,72 @@ body.pub-body{
 }
 .pub-bio-text p{margin:0 0 14px;}
 
-/* ---- Pricing ---- */
+/* ---- Packages ---- */
+
+.pub-package-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:18px;
+    align-items:stretch;
+}
+.pub-package{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:28px 26px;
+}
+.pub-package.pub-package-featured{
+    border-color:var(--primary);
+    box-shadow:0 12px 40px rgba(78,168,255,.15);
+}
+.pub-package-badge{
+    position:absolute;
+    top:-12px;
+    left:26px;
+    background:var(--primary);
+    color:#05131f;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:5px 12px;
+    border-radius:999px;
+}
+.pub-package h3{font-size:19px;margin:0 0 6px;}
+.pub-package-for{color:var(--text-secondary);font-size:13.5px;line-height:1.5;margin:0 0 18px;}
+.pub-package-price{
+    font-family:var(--font-display);
+    font-size:44px;
+    line-height:1;
+    color:var(--text);
+}
+.pub-package-unit{color:var(--muted);font-size:13.5px;font-weight:600;margin-left:4px;}
+.pub-package-options{
+    margin:14px 0 0;
+    padding:12px 0 0;
+    border-top:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-size:13.5px;
+    color:var(--text-secondary);
+}
+.pub-package-options div{display:flex;justify-content:space-between;gap:12px;}
+.pub-package-options strong{color:var(--text);}
+.pub-package .pub-feature-list{margin:20px 0 24px;flex:1;}
+.pub-package .pub-feature-list li{font-size:14px;}
+.pub-package .pub-btn-primary,
+.pub-package .pub-btn-secondary{width:100%;}
 
 .pub-pricing-note{
     text-align:center;
     max-width:640px;
-    margin:0 auto 36px;
-    color:var(--text-secondary);
-    font-size:15.5px;
+    margin:28px auto 0;
+    color:var(--muted);
+    font-size:13.5px;
     line-height:1.6;
 }
 
