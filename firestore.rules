@@ -2,198 +2,203 @@ rules_version = '2';
 
 // EddieOS Firestore Security Rules
 //
-// This file is not auto-deployed by this repo -- there's no CI/CD
-// wired up for Firestore. Paste this into Firebase Console ->
-// Firestore Database -> Rules (or `firebase deploy --only
-// firestore:rules` if you have the CLI set up) whenever it changes.
+// This file is not auto-deployed by this repo. Paste the WHOLE file into
+// Firebase Console -> Firestore Database -> Rules -> Publish whenever it
+// changes. `npm run test:rules` exercises it against the local emulator
+// (tests/rules.test.mjs), and CI runs the same tests on every push.
 //
 // Collections:
-//   users/{uid}/sync/{docId}   Each user's full private data blob
-//                              (nutrition, strength, everything).
-//                              Only that user can ever read/write it.
-//   inviteCodes/{code}         Short-lived, single-use codes a client
-//                              generates to hand their coach. Deleted
-//                              immediately after redemption.
-//   coachLinks/{coachUid}_{clientUid}
-//                              Proof a client consented to give a
-//                              specific coach access. Created only by
-//                              redeeming that client's invite code.
-//   sharedPlans/{clientUid}    A mirror of just that client's
-//                              Training Plans + Race Plans (never
-//                              their nutrition/strength/other data),
-//                              plus coach notes. The client's device
-//                              keeps this current automatically; a
-//                              linked coach reads and edits it here.
-//   coachAvailability/{coachUid}
-//                              A coach's recurring weekly open time
-//                              slots (day/time/session type/capacity)
-//                              plus blackout dates. Visible only to
-//                              the coach and clients already linked
-//                              to them via coachLinks.
-//   bookingRequests/{id}       A client's request to book a slot
-//                              (single date or a recurring series).
-//                              Only the coach who owns the slot and
-//                              the requesting client can see or act
-//                              on it. Creating one requires an
-//                              existing coachLinks relationship, so
-//                              booking is invite-only like plan
-//                              sharing is.
-//   userProfiles/{uid}         Account role/status/entitlements (see
-//                              docs/PRODUCT_ARCHITECTURE.md). Every
-//                              account gets one automatically on
-//                              first sign-in, always starting
-//                              unapproved and pending -- a user can
-//                              edit their own basic fields but can
-//                              NEVER flip their own isCoachApproved
-//                              or status. Only a write from an
-//                              account that is ALREADY isCoachApproved
-//                              can approve/change anyone's (including
-//                              its own future changes). The very
-//                              first coach has no existing approved
-//                              coach to approve them, so that one
-//                              flip has to happen by hand in the
-//                              Firebase Console's Data tab, once,
-//                              after they've signed in and their
-//                              profile document exists.
-//   checkins/{clientUid_weekOf} A client's weekly check-in (rating +
-//                              notes) to a linked coach, one document
-//                              per client per Mon-Sun week. The client
-//                              can create/resubmit their own but can
-//                              never write coachFeedback or mark it
-//                              reviewed; only the coach on the
-//                              check-in can do that, and only without
-//                              touching the client's rating/notes.
+//   users/{uid}/sync/{docId}   Each user's private data blob. Owner only.
+//   userProfiles/{uid}         Role / status / services. Readable only by
+//                              the owner and approved coaches (who need
+//                              the Pending list). A user can only edit
+//                              their own application fields; everything
+//                              that grants access is coach-only.
+//   inviteCodes/{code}         One-time codes a client hands a coach.
+//                              Never listable; expire after 7 days.
+//   coachLinks/{coach}_{client} Proof a client invited a coach. Can only
+//                              be created by an approved coach, in the
+//                              same atomic batch that deletes (burns) a
+//                              valid invite code from that client -- so a
+//                              link can't be forged and a code can't be
+//                              redeemed twice.
+//   sharedPlans/{clientUid}    Client's plan mirror; a linked coach can
+//                              read and edit it.
+//   coachAvailability/{coach}  Weekly slots; visible to linked clients.
+//   bookingRequests/{id}       Client requests; only the coach can approve
+//                              or deny, the client can only cancel, and
+//                              the booking details themselves never change.
+//   checkins/{client}_{week}   Weekly check-ins; the client writes the
+//                              rating/notes, the coach writes feedback.
+//
+// The very first coach is bootstrapped by hand in the Firebase Console
+// (isCoachApproved: true on their own userProfiles doc), since no
+// approved coach exists yet to approve them.
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function profilePath(uid) {
+      return /databases/$(database)/documents/userProfiles/$(uid);
+    }
+
+    function isApprovedCoach() {
+      return signedIn()
+        && exists(profilePath(request.auth.uid))
+        && get(profilePath(request.auth.uid)).data.isCoachApproved == true;
+    }
+
+    function linked(coachUid, clientUid) {
+      return exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + clientUid));
+    }
+
+    // True when an update touches only the listed fields.
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
     match /users/{uid}/sync/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isUser(uid);
+    }
+
+    match /userProfiles/{uid} {
+      allow get: if isUser(uid) || isApprovedCoach();
+      allow list: if isApprovedCoach();
+
+      // Self-signup always starts as an unapproved, pending client with
+      // no services -- it can never grant itself anything.
+      allow create: if isUser(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.role == "client"
+        && request.resource.data.isCoachApproved == false
+        && request.resource.data.status == "pending"
+        && request.resource.data.services.size() == 0;
+
+      // A user may only fill in their own application; role, status,
+      // services and isCoachApproved are set by an approved coach.
+      allow update: if (isUser(uid) && onlyChanges([
+          "requestedServices", "applicationMessage", "applicationSubmittedAt",
+          "displayName", "email"
+        ]))
+        || isApprovedCoach();
     }
 
     match /inviteCodes/{code} {
-      // Any signed-in user can read a code (needed to redeem it) or
-      // delete one (needed to burn it on redemption -- the coach
-      // doing the redeeming is never the client who created the
-      // code, so a narrower rule here would leave codes reusable
-      // forever instead of single-use). Only the client who
-      // generated a code can create it in the first place.
-      allow read, delete: if request.auth != null;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.clientUid;
+      allow create: if signedIn()
+        && request.resource.data.clientUid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasOnly(["clientUid", "clientName", "clientEmail", "createdAt"]);
+
+      // Look up one code by its exact value -- never list them.
+      allow get: if isApprovedCoach()
+        || (resource != null && resource.data.clientUid == request.auth.uid);
+      allow list: if false;
+
+      // Its client can withdraw it; an approved coach can only burn it
+      // as part of the batch that creates the matching link.
+      allow delete: if signedIn() && (
+        resource.data.clientUid == request.auth.uid
+        || (isApprovedCoach() && existsAfter(
+             /databases/$(database)/documents/coachLinks/$(request.auth.uid + '_' + resource.data.clientUid)))
+      );
     }
 
     match /coachLinks/{linkId} {
-      // Only the two people in the link can ever see or remove it.
-      allow read: if request.auth != null
+      allow read: if signedIn()
         && (request.auth.uid == resource.data.coachUid
             || request.auth.uid == resource.data.clientUid);
-      // Only the coach redeeming a code can create the link, and only
-      // as themselves -- they can't forge a link naming another coach.
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.coachUid
-        && linkId == request.auth.uid + '_' + request.resource.data.clientUid;
-      allow delete: if request.auth != null
+
+      allow create: if isApprovedCoach()
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid != request.auth.uid
+        && linkId == request.auth.uid + '_' + request.resource.data.clientUid
+        && request.resource.data.inviteCode is string
+        && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode))
+        && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.clientUid
+             == request.resource.data.clientUid
+        && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.createdAt
+             > request.time - duration.value(7, 'd')
+        && !existsAfter(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode));
+
+      allow update: if false;
+
+      allow delete: if signedIn()
         && (request.auth.uid == resource.data.coachUid
             || request.auth.uid == resource.data.clientUid);
     }
 
     match /sharedPlans/{clientUid} {
-      // The client always has full access to their own mirror.
-      allow read, write: if request.auth != null && request.auth.uid == clientUid;
-      // A coach gets access only once a matching coachLinks doc
-      // proves the client linked them -- never by default.
-      allow read, write: if request.auth != null && exists(
-        /databases/$(database)/documents/coachLinks/$(request.auth.uid + '_' + clientUid)
-      );
+      allow read, write: if isUser(clientUid)
+        || (signedIn() && linked(request.auth.uid, clientUid));
     }
 
     match /coachAvailability/{coachUid} {
-      allow write: if request.auth != null && request.auth.uid == coachUid;
-      // A linked client needs to browse this to book anything.
-      allow read: if request.auth != null && (
-        request.auth.uid == coachUid ||
-        exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + request.auth.uid))
-      );
+      allow write: if isUser(coachUid);
+      allow read: if isUser(coachUid)
+        || (signedIn() && linked(coachUid, request.auth.uid));
     }
 
     match /bookingRequests/{requestId} {
-      allow read: if request.auth != null
+      allow read: if signedIn()
         && (request.auth.uid == resource.data.coachUid
             || request.auth.uid == resource.data.clientUid);
-      // A client can only request time from a coach they're already
-      // linked to (same invite-code trust as plan sharing), and only
-      // ever as themselves.
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.clientUid
-        && exists(/databases/$(database)/documents/coachLinks/$(request.resource.data.coachUid + '_' + request.auth.uid));
-      // Coach approves/denies, or either side cancels.
-      allow update, delete: if request.auth != null
-        && (request.auth.uid == resource.data.coachUid
-            || request.auth.uid == resource.data.clientUid);
-    }
 
-    match /userProfiles/{uid} {
-      // Low-sensitivity (role/status/services, no private training
-      // data) -- any signed-in user can read any profile, which is
-      // what a future "pending clients" list needs.
-      allow read: if request.auth != null;
+      allow create: if signedIn()
+        && request.resource.data.clientUid == request.auth.uid
+        && request.resource.data.status == "requested"
+        && request.resource.data.coachNote == ""
+        && linked(request.resource.data.coachUid, request.auth.uid);
 
-      // Only as yourself, and only ever starting unapproved/pending
-      // -- self-signup can never grant itself anything.
-      allow create: if request.auth != null
-        && request.auth.uid == uid
-        && request.resource.data.uid == uid
-        && request.resource.data.isCoachApproved == false
-        && request.resource.data.status == "pending";
-
-      allow update: if request.auth != null && (
-        // You may edit your own profile, but never your own
-        // isCoachApproved or status.
-        (request.auth.uid == uid
-          && request.resource.data.isCoachApproved == resource.data.isCoachApproved
-          && request.resource.data.status == resource.data.status)
+      allow update: if signedIn() && (
+        // The coach approves, denies or cancels, with an optional note.
+        (request.auth.uid == resource.data.coachUid
+          && request.resource.data.status in ["approved", "denied", "cancelled"]
+          && onlyChanges(["status", "coachNote", "respondedAt"]))
         ||
-        // An already-approved coach may change anyone's role/status/
-        // services/isCoachApproved -- this is also how a new coach
-        // gets approved after the first one is bootstrapped by hand.
-        (get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.isCoachApproved == true)
+        // The client can only cancel their own request.
+        (request.auth.uid == resource.data.clientUid
+          && request.resource.data.status == "cancelled"
+          && onlyChanges(["status", "respondedAt"]))
       );
+
+      allow delete: if false;
     }
 
     match /checkins/{checkinId} {
-      allow read: if request.auth != null
+      allow read: if signedIn()
         && (request.auth.uid == resource.data.clientUid
             || request.auth.uid == resource.data.coachUid);
 
-      // Only as the client themselves, only for a coach they're
-      // already linked to (same coachLinks trust as plan sharing and
-      // booking), and never pre-marked reviewed or with feedback --
-      // a check-in always starts fresh, waiting on the coach.
-      allow create: if request.auth != null
+      allow create: if signedIn()
         && request.auth.uid == request.resource.data.clientUid
+        && checkinId == request.auth.uid + '_' + request.resource.data.weekOf
         && request.resource.data.status == "submitted"
         && request.resource.data.coachFeedback == ""
-        && exists(/databases/$(database)/documents/coachLinks/$(request.resource.data.coachUid + '_' + request.auth.uid));
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && linked(request.resource.data.coachUid, request.auth.uid);
 
-      allow update: if request.auth != null && (
-        // The client can resubmit (edit rating/notes) any week, which
-        // always puts it back in the review queue -- but can never
-        // touch the coach's feedback or mark their own submission
-        // reviewed.
+      allow update: if signedIn() && (
+        // The client resubmits their rating/notes, which puts it back in
+        // the coach's queue.
         (request.auth.uid == resource.data.clientUid
-          && request.resource.data.clientUid == resource.data.clientUid
-          && request.resource.data.coachUid == resource.data.coachUid
           && request.resource.data.status == "submitted"
-          && request.resource.data.coachFeedback == resource.data.coachFeedback)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+          && onlyChanges(["rating", "notes", "status", "reviewedAt", "submittedAt",
+                          "clientName", "clientEmail", "coachName"]))
         ||
-        // The coach reviews: writes feedback and flips status to
-        // "reviewed" -- can never touch the client's rating/notes.
+        // The coach writes feedback and marks it reviewed.
         (request.auth.uid == resource.data.coachUid
-          && request.resource.data.clientUid == resource.data.clientUid
-          && request.resource.data.coachUid == resource.data.coachUid
-          && request.resource.data.rating == resource.data.rating
-          && request.resource.data.notes == resource.data.notes
-          && request.resource.data.status == "reviewed")
+          && request.resource.data.status == "reviewed"
+          && onlyChanges(["coachFeedback", "status", "reviewedAt"]))
       );
     }
   }

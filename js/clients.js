@@ -115,6 +115,8 @@ redeemForm.addEventListener("submit", async event => {
     } catch (error) {
         const message = {
             "invalid-code": "That code doesn't exist or has already been used.",
+            "expired-code": "That code has expired. Ask your client for a new one.",
+            "not-approved-coach": "Only approved coach accounts can add clients.",
             "empty-code": "Enter a code first.",
             "cannot-link-self": "You can't add yourself as a client."
         }[error.message] || "Couldn't add that client. Try again.";

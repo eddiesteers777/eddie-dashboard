@@ -23,7 +23,7 @@
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import {
-    doc, getDoc, setDoc, deleteDoc,
+    doc, getDoc, setDoc, deleteDoc, writeBatch,
     collection, query, where, getDocs,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -32,6 +32,7 @@ import { setLocalCoachNotes, getLocalCoachNotes } from "./coachNotesLocal.js";
 export { getLocalCoachNotes };
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I ambiguity
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // matches the 7-day limit in firestore.rules
 
 function randomCode(len = 6) {
     let out = "";
@@ -82,25 +83,44 @@ export async function redeemInviteCode(rawCode) {
     if (!code) throw new Error("empty-code");
 
     const codeRef = doc(db, "inviteCodes", code);
-    const snap = await getDoc(codeRef);
+    let snap;
+    try {
+        snap = await getDoc(codeRef);
+    } catch (error) {
+        // Only approved coaches may look codes up (firestore.rules).
+        if (error.code === "permission-denied") throw new Error("not-approved-coach");
+        throw error;
+    }
     if (!snap.exists()) throw new Error("invalid-code");
 
     const invite = snap.data();
     if (invite.clientUid === user.uid) throw new Error("cannot-link-self");
+    const createdMs = invite.createdAt?.toMillis?.() ?? 0;
+    if (createdMs && Date.now() - createdMs > INVITE_TTL_MS) throw new Error("expired-code");
 
+    // Creating the link and burning the code in ONE batch is what makes
+    // the code single-use: the rules only allow the link when the same
+    // commit deletes a valid code from that client, so a second
+    // redemption (even a simultaneous one) finds no code and fails.
     const linkId = `${user.uid}_${invite.clientUid}`;
-    await setDoc(doc(db, "coachLinks", linkId), {
+    const batch = writeBatch(db);
+    batch.set(doc(db, "coachLinks", linkId), {
         coachUid: user.uid,
         coachName: user.displayName || "Coach",
         coachEmail: user.email || "",
         clientUid: invite.clientUid,
         clientName: invite.clientName || "Client",
         clientEmail: invite.clientEmail || "",
+        inviteCode: code,
         linkedAt: serverTimestamp()
     });
-
-    // Single-use -- burn the code so it can't be redeemed twice.
-    await deleteDoc(codeRef).catch(() => {});
+    batch.delete(codeRef);
+    try {
+        await batch.commit();
+    } catch (error) {
+        if (error.code === "permission-denied") throw new Error("invalid-code");
+        throw error;
+    }
 
     return { clientUid: invite.clientUid, clientName: invite.clientName || "Client" };
 }
