@@ -23,10 +23,10 @@
    Coach Dashboard's "Still to set up" card shows which are off.
 ========================================== */
 
-const SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
-const TEMPLATE_COACH_ALERT_ID = "YOUR_EMAILJS_COACH_ALERT_TEMPLATE_ID";
-const TEMPLATE_CLIENT_UPDATE_ID = "YOUR_EMAILJS_CLIENT_UPDATE_TEMPLATE_ID";
-const PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
+const SERVICE_ID = "service_vgrqpxp";
+const TEMPLATE_COACH_ALERT_ID = "template_09f1ynl";
+const TEMPLATE_CLIENT_UPDATE_ID = "template_y44xbx1";
+const PUBLIC_KEY = "LmASOr5Jpz-ykYRgm";
 
 const isSet = value => !value.startsWith("YOUR_");
 const coreConfigured = () => isSet(SERVICE_ID) && isSet(PUBLIC_KEY);

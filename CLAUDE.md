@@ -142,7 +142,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 - [ ] Upload photos to `images/` (filenames in `images/README.md`).
 - [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly). Until then each package says "Pricing on request".
 - [ ] Send a short **bio** for `about.html` (background, experience, certifications). It currently has honest interim copy with no specific claims.
-- [ ] Set up EmailJS (IDs in `js/emailNotify.js`). The Coach Dashboard's "Still to set up" card lists whatever is still off.
+- [x] EmailJS is connected (service + "Coach Alert" / "Client Update" templates + public key in `js/emailNotify.js`). Emails come from Eddie's Gmail as "Southbound Coaching". Remaining: add `southboundcoaching.com` to EmailJS Account → Security allowed domains if not done.
 
 ## What's next (roadmap)
 
