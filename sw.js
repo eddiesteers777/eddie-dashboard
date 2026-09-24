@@ -29,7 +29,7 @@
    dropped on activate instead of lingering.
 ========================================== */
 
-const CACHE_NAME = "eddieos-shell-v3";
+const CACHE_NAME = "eddieos-shell-v4";
 
 const CORE_ASSETS = [
     "index.html",

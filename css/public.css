@@ -41,7 +41,7 @@ body.pub-body{
     letter-spacing:.3px;
     flex-shrink:0;
 }
-.pub-logo .brand-mark{height:34px;}
+.pub-logo .brand-mark{height:38px;}
 .pub-logo-text{display:flex;flex-direction:column;gap:3px;}
 .pub-logo .brand-word{font-size:21px;}
 .pub-logo-sub{
