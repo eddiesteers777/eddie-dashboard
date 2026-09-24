@@ -1,4 +1,4 @@
-/* EddieOS COROS Diagnostic */
+/* Southbound COROS Diagnostic */
 
 import {
     MCP_URL,
@@ -110,8 +110,8 @@ async function runCorosDiagnostic() {
                 ? "pass"
                 : "fail",
             token?.access_token
-                ? "An EddieOS COROS access token is stored in this browser."
-                : "No EddieOS COROS access token is stored."
+                ? "An Southbound COROS access token is stored in this browser."
+                : "No Southbound COROS access token is stored."
         )
     );
 

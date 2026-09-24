@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Nav Access
+   Southbound — Nav Access
 
    Computes what a signed-in account should see in navigation, based
    on the account/role model from docs/PRODUCT_ARCHITECTURE.md
@@ -45,7 +45,7 @@ export async function getNavAccess() {
             status: profile.status || null
         };
     } catch (error) {
-        console.warn("EddieOS: nav access check failed -- showing full nav rather than hiding it.", error);
+        console.warn("Southbound: nav access check failed -- showing full nav rather than hiding it.", error);
         return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true, status: null };
     }
 }

@@ -1,4 +1,4 @@
-/* EddieOS COROS Data — rebuilt for current stateless MCP */
+/* Southbound COROS Data — rebuilt for current stateless MCP */
 
 import {
     MCP_URL,
@@ -77,7 +77,7 @@ function parseBody(text, contentType) {
 
     if (/Tool call anomalies detected/i.test(contentText)) {
         throw new Error(
-            "COROS flagged the activity query as a tool-call anomaly. EddieOS is using the narrower running-only query format now."
+            "COROS flagged the activity query as a tool-call anomaly. Southbound is using the narrower running-only query format now."
         );
     }
 
@@ -346,7 +346,7 @@ function activityMeters(activity) {
         : value;
 }
 
-// COROS sport-type codes for the running disciplines EddieOS
+// COROS sport-type codes for the running disciplines Southbound
 // queries for (see buildArgs' sportTypeCodes). Activities often
 // come back with only a numeric code and no textual sport name,
 // so the code check has to come first -- relying on the substring
@@ -717,7 +717,7 @@ function init() {
                     await loadRecentData();
                 } catch (error) {
                     console.error(
-                        "EddieOS COROS data:",
+                        "Southbound COROS data:",
                         error
                     );
                     setStatus(

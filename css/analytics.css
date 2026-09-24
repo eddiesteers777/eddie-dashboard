@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Analytics
+   Southbound Analytics
 
    Colors/fonts now come from css/style.css (loaded first on
    every page) — this file only adds Analytics-specific layout.
@@ -52,8 +52,8 @@ body{
 
         linear-gradient(
             135deg,
-            #4EA8FF,
-            #2563EB
+            #C9AD84,
+            #A68A62
         );
 
     border-radius:28px;
@@ -500,7 +500,7 @@ canvas{
 
         translateY(-4px);
 
-    background:#314156;
+    background:#2E4A3A;
 
 }
 

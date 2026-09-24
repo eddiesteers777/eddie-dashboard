@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Barcode Scanner
+   Southbound Barcode Scanner
 
    Thin wrapper around the html5-qrcode library
    (loaded globally via a <script> tag in nutrition.html)

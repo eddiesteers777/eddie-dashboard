@@ -1,5 +1,5 @@
 // ==========================================
-// EddieOS Authentication
+// Southbound Authentication
 // ==========================================
 
 import { auth } from "./firebase.js";

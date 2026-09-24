@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Training Plans — Generator
+   Southbound Training Plans — Generator
 
    Turns a saved Training Plan draft (goal, dates, weekly
    structure, workload ranges) into a week-by-week schedule
@@ -608,7 +608,7 @@ export function generateTrainingPlan(settings) {
     const shortfallWeeks = weeks.filter(week => week.mileageShortfall > 0.5);
     if (shortfallWeeks.length) {
         const worst = shortfallWeeks.reduce((max, week) => week.mileageShortfall > max.mileageShortfall ? week : max);
-        warnings.push(`${runDays.length} running day${runDays.length === 1 ? "" : "s"} a week couldn't safely hold your requested mileage without a regular run exceeding the long run -- EddieOS capped daily mileage instead, so ${shortfallWeeks.length} week${shortfallWeeks.length === 1 ? "" : "s"} come in under target (up to ${formatMilesValue(worst.mileageShortfall)} mi short, e.g. week ${worst.week}). Add a running day or raise your long-run range to close the gap.`);
+        warnings.push(`${runDays.length} running day${runDays.length === 1 ? "" : "s"} a week couldn't safely hold your requested mileage without a regular run exceeding the long run -- Southbound capped daily mileage instead, so ${shortfallWeeks.length} week${shortfallWeeks.length === 1 ? "" : "s"} come in under target (up to ${formatMilesValue(worst.mileageShortfall)} mi short, e.g. week ${worst.week}). Add a running day or raise your long-run range to close the gap.`);
     }
 
     const generatedPlan = {

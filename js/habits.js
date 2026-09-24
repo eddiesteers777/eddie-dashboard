@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Habits
+   Southbound Habits
 
    Same underlying data as the old 75-Day page --
    'habits' and 'entries' in localStorage, same
@@ -335,11 +335,11 @@ function renderCalendar() {
             const pct = dayPct(dateStr);
 
             if (pct === 100) {
-                bg = "background:var(--primary);color:#05131f;";
+                bg = "background:var(--primary);color:#0f2019;";
             } else if (pct >= 50) {
-                bg = "background:var(--teal);color:#05131f;";
+                bg = "background:var(--teal);color:#0f2019;";
             } else if (pct > 0) {
-                bg = "background:var(--amber);color:#05131f;";
+                bg = "background:var(--amber);color:#0f2019;";
             }
         }
 

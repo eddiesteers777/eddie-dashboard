@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Coach Dashboard
+   Southbound — Coach Dashboard
 
    A "needs attention" summary plus quick links into My Clients and
    Schedule, rather than duplicating either page's UI here. Deep
@@ -13,7 +13,6 @@ import { listMyClients } from "./coachAccess.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { listCheckinsForMyClients } from "./checkins.js";
 import { getEmailSetupStatus } from "./emailNotify.js";
-import { isStravaConfigured } from "./stravaConfig.js";
 
 // Features that need an outside account before they work. Each one
 // silently does nothing until then, so the dashboard says so.
@@ -21,8 +20,7 @@ function renderSetupChecklist() {
     const email = getEmailSetupStatus();
     const items = [
         { on: email.coachAlerts, name: "Emails to you", detail: "You aren't emailed about new booking requests, applications or check-ins yet. Needs the EmailJS \"Coach alert\" template." },
-        { on: email.clientUpdates, name: "Emails to clients", detail: "Clients aren't emailed when you answer a booking or reply to a check-in yet. Needs the EmailJS \"Client update\" template." },
-        { on: isStravaConfigured(), name: "Strava", detail: "Clients can't connect Strava yet. Needs a Strava API app and the small sign-in service in /cloudflare-worker." }
+        { on: email.clientUpdates, name: "Emails to clients", detail: "Clients aren't emailed when you answer a booking or reply to a check-in yet. Needs the EmailJS \"Client update\" template." }
     ].filter(item => !item.on);
 
     document.getElementById("setupCard").hidden = items.length === 0;

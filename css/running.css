@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running
+   Southbound Running
 ========================================== */
 
 .running-page{
@@ -127,7 +127,7 @@
 .running-view-btn.active{
 
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
 
 }
 
@@ -192,13 +192,13 @@
 
     background:var(--primary);
     border-color:var(--primary);
-    color:#05131f;
+    color:#0f2019;
 
 }
 
 .running-row-btn.primary:hover{
 
-    color:#05131f;
+    color:#0f2019;
     opacity:.9;
 
 }
@@ -267,14 +267,14 @@
 .running-week-cell.today{
 
     border-color:var(--primary);
-    background:rgba(78,168,255,.08);
+    background:rgba(201,173,132,.08);
 
 }
 
 .running-week-cell.selected{
 
     border-color:var(--primary);
-    box-shadow:0 0 0 2px rgba(78,168,255,.3);
+    box-shadow:0 0 0 2px rgba(201,173,132,.3);
 
 }
 
@@ -384,13 +384,13 @@
 .running-month-cell.today{
 
     border-color:var(--primary);
-    background:rgba(78,168,255,.08);
+    background:rgba(201,173,132,.08);
 
 }
 
 .running-month-cell.selected{
 
-    box-shadow:0 0 0 2px rgba(78,168,255,.3);
+    box-shadow:0 0 0 2px rgba(201,173,132,.3);
 
 }
 
@@ -451,7 +451,7 @@
 .running-list-row:hover,
 .running-list-row.selected{
 
-    background:rgba(78,168,255,.06);
+    background:rgba(201,173,132,.06);
 
 }
 
@@ -712,7 +712,7 @@
     bottom:24px;
     right:24px;
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     border:none;
     border-radius:100px;
     padding:14px 22px;
@@ -720,7 +720,7 @@
     font-weight:800;
     cursor:pointer;
     font-family:inherit;
-    box-shadow:0 12px 30px rgba(78,168,255,.35);
+    box-shadow:0 12px 30px rgba(201,173,132,.35);
     z-index:150;
 
 }
@@ -742,7 +742,7 @@
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(4,8,16,.7);
+    background:rgba(4,10,7,.7);
     backdrop-filter:blur(6px);
     z-index:200;
     align-items:center;
@@ -762,8 +762,8 @@
     background:
         linear-gradient(
             160deg,
-            rgba(24,38,60,.98),
-            rgba(14,23,38,.98)
+            rgba(26,42,33,.98),
+            rgba(14,26,20,.98)
         );
     border:1px solid var(--border);
     border-radius:22px;

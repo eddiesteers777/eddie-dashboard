@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Race Plan Generator
+   Southbound Running — Race Plan Generator
 
    Phase 1B:
    Turns a saved Race Plan setup into a structured,

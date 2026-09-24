@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Log
+   Southbound Running — Log
 
    Runs that aren't part of the marathon plan --
    logged by hand (always available) or, if COROS

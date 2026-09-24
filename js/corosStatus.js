@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — COROS Freshness
+   Southbound — COROS Freshness
 
    Pages that passively read the cached COROS
    snapshot (Dashboard, Weekly Review) shouldn't

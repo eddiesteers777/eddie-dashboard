@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Install / Get the App
+   Southbound — Install / Get the App
    ========================================== */
 
 body{
@@ -112,7 +112,7 @@ body{
     transition:background .15s ease,color .15s ease;
 }
 .install-tab:hover{color:var(--text);}
-.install-tab.active{background:var(--primary);color:#05131f;}
+.install-tab.active{background:var(--primary);color:#0f2019;}
 
 .install-panel[hidden]{display:none !important;}
 
@@ -154,7 +154,7 @@ body{
     height:26px;
     border-radius:50%;
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     font-weight:800;
     font-size:13px;
     display:flex;
@@ -180,12 +180,12 @@ body{
 .install-primary-btn{
     width:100%;
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     border:1px solid var(--primary);
-    box-shadow:0 6px 18px rgba(78,168,255,.28);
+    box-shadow:0 6px 18px rgba(201,173,132,.28);
     margin-bottom:16px;
 }
-.install-primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(78,168,255,.36);}
+.install-primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(201,173,132,.36);}
 .install-primary-btn:active{transform:scale(.98);}
 .install-primary-btn[hidden]{display:none !important;}
 

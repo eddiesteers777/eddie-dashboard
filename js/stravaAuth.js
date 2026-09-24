@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strava — OAuth connection
+   Southbound Strava — OAuth connection
 
    Strava's token exchange requires a client_secret, which can't
    live in this static site's JS (it'd be public in the repo). A
@@ -163,6 +163,18 @@ async function finishOAuth() {
 }
 
 function init() {
+    // Strava is shelved: since mid-2026 creating a Strava API app needs
+    // a paid subscription. Until stravaConfig.js is filled in, the
+    // Strava panels stay out of Analytics instead of offering a
+    // Connect button that can't work.
+    if (!isStravaConfigured()) {
+        ["stravaConnectionPanel", "stravaDataPanel"].forEach(id => {
+            const panel = $(id);
+            if (panel) panel.style.display = "none";
+        });
+        return;
+    }
+
     const button = $("connectStravaBtn");
     const existing = getTokenRecord();
 
@@ -183,7 +195,7 @@ function init() {
                 startOAuth();
             } catch (error) {
                 button.dataset.busy = "false";
-                alert(`EddieOS could not start the Strava connection.\n\n${error.message}`);
+                alert(`Southbound could not start the Strava connection.\n\n${error.message}`);
             }
         });
     }

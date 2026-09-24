@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Marathon Tracker
+   Southbound Marathon Tracker
    Part 1 - Foundation + Hero + Stats
 
    Colors/fonts come from css/style.css (loaded first on every
@@ -56,8 +56,8 @@ body{
 
         linear-gradient(
             145deg,
-            rgba(27,43,69,.96),
-            rgba(16,27,43,.95)
+            rgba(30,48,37,.96),
+            rgba(17,30,23,.95)
         );
 
     border:
@@ -123,7 +123,7 @@ body{
 
     background:
 
-        rgba(59,130,246,.15);
+        rgba(201,173,132,.15);
 
     color:var(--primary-light);
 
@@ -181,11 +181,11 @@ body{
 
         linear-gradient(
             160deg,
-            rgba(59,130,246,.18),
-            rgba(20,32,54,.95)
+            rgba(201,173,132,.18),
+            rgba(22,36,28,.95)
         );
 
-    border:1px solid rgba(59,130,246,.25);
+    border:1px solid rgba(201,173,132,.25);
 
 }
 
@@ -265,7 +265,7 @@ body{
 
     border-color:
 
-        rgba(59,130,246,.45);
+        rgba(201,173,132,.45);
 
     box-shadow:
 
@@ -328,8 +328,8 @@ body{
     background:
         linear-gradient(
             145deg,
-            rgba(22,35,56,.96),
-            rgba(16,27,43,.94)
+            rgba(24,40,31,.96),
+            rgba(17,30,23,.94)
         );
 
     border:1px solid var(--border);
@@ -506,7 +506,7 @@ body{
 
     transform:translateY(-3px);
 
-    border-color:rgba(59,130,246,.45);
+    border-color:rgba(201,173,132,.45);
 
     color:white;
 
@@ -522,13 +522,13 @@ body{
             var(--primary-dark)
         );
 
-    color:white;
+    color:var(--on-primary);
 
     border:none;
 
     box-shadow:
 
-        0 10px 30px rgba(37,99,235,.35);
+        0 10px 30px rgba(166,138,98,.35);
 
 }
 
@@ -566,8 +566,8 @@ body{
 
         linear-gradient(
             145deg,
-            rgba(22,35,56,.96),
-            rgba(16,27,43,.95)
+            rgba(24,40,31,.96),
+            rgba(17,30,23,.95)
         );
 
     border:1px solid var(--border);
@@ -694,13 +694,13 @@ body{
 
     background:
 
-        rgba(59,130,246,.12);
+        rgba(201,173,132,.12);
 
     border:
 
-        1px solid rgba(59,130,246,.35);
+        1px solid rgba(201,173,132,.35);
 
-    color:#dbeafe;
+    color:#efe6d6;
 
 }
 
@@ -783,7 +783,7 @@ body{
 
     background:
 
-        rgba(59,130,246,.10);
+        rgba(201,173,132,.10);
 
 }
 
@@ -843,7 +843,7 @@ body{
 
     border-color:transparent;
 
-    color:white;
+    color:var(--on-primary);
 
 }
 
@@ -933,11 +933,11 @@ body{
 
     background:
 
-        rgba(59,130,246,.12);
+        rgba(201,173,132,.12);
 
     border:
 
-        1px solid rgba(59,130,246,.25);
+        1px solid rgba(201,173,132,.25);
 
     color:var(--primary-light);
 
@@ -997,7 +997,7 @@ body{
 
     border-color:
 
-        rgba(59,130,246,.35);
+        rgba(201,173,132,.35);
 
 }
 
@@ -1011,7 +1011,7 @@ body{
 
     background:
 
-        rgba(59,130,246,.08);
+        rgba(201,173,132,.08);
 
 }
 
@@ -1037,11 +1037,11 @@ body{
 
     background:
 
-        rgba(59,130,246,.08);
+        rgba(201,173,132,.08);
 
     border-radius:18px;
 
-    color:#dbeafe;
+    color:#efe6d6;
 
     font-size:1.05rem;
 
@@ -1091,7 +1091,7 @@ body{
 
     border-color:
 
-        rgba(59,130,246,.35);
+        rgba(201,173,132,.35);
 
 }
 
@@ -1156,7 +1156,7 @@ body{
 
 .mp-drawer-toggle{
 
-    color:white;
+    color:var(--on-primary);
 
     background:linear-gradient(
         135deg,
@@ -1165,7 +1165,7 @@ body{
     );
 
     box-shadow:
-        0 12px 30px rgba(37,99,235,.30);
+        0 12px 30px rgba(166,138,98,.30);
 
 }
 
@@ -1174,7 +1174,7 @@ body{
     transform:translateY(-3px);
 
     box-shadow:
-        0 18px 35px rgba(37,99,235,.40);
+        0 18px 35px rgba(166,138,98,.40);
 
 }
 
@@ -1278,13 +1278,13 @@ body{
 
 ::-webkit-scrollbar-track{
 
-    background:#09111c;
+    background:#0a150f;
 
 }
 
 ::-webkit-scrollbar-thumb{
 
-    background:#23406c;
+    background:#2e4a3a;
 
     border-radius:999px;
 
@@ -1300,7 +1300,7 @@ body{
 
 *{
 
-    scrollbar-color:#23406c #09111c;
+    scrollbar-color:#2e4a3a #0a150f;
 
 }
 
@@ -1747,7 +1747,7 @@ body{
 
 .mp-extra-input:hover{
 
-    border-color:rgba(59,130,246,.3);
+    border-color:rgba(201,173,132,.3);
 
 }
 
@@ -1757,7 +1757,7 @@ body{
 
     border-color:var(--primary);
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
 }
 
@@ -1765,9 +1765,9 @@ body{
 
     appearance:none;
 
-    border:1px dashed rgba(59,130,246,.4);
+    border:1px dashed rgba(201,173,132,.4);
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
     color:var(--primary-light);
 
@@ -1789,7 +1789,7 @@ body{
 
 .mp-extra-add:hover{
 
-    background:rgba(59,130,246,.16);
+    background:rgba(201,173,132,.16);
 
     border-color:var(--primary);
 
@@ -1821,7 +1821,7 @@ body{
 
 .mp-extras-notes-input:hover{
 
-    border-color:rgba(59,130,246,.3);
+    border-color:rgba(201,173,132,.3);
 
 }
 
@@ -1831,7 +1831,7 @@ body{
 
     border-color:var(--primary);
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
 }
 

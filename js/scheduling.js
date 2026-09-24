@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Scheduling
+   Southbound — Scheduling
 
    Lets a coach publish recurring weekly availability (day, time,
    session type, capacity -- 1 for 1:1, more for group) and lets a

@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Program Store
+   Southbound Running — Program Store
 
    Single source for the running-programs localStorage
    structure used by Race Plans and the Running calendar.
@@ -15,7 +15,7 @@ export function loadRunningPrograms() {
         if (Array.isArray(parsed)) return parsed;
         if (parsed && Array.isArray(parsed.plans)) return parsed.plans;
     } catch (error) {
-        console.warn("EddieOS running-programs storage could not be read:", error);
+        console.warn("Southbound running-programs storage could not be read:", error);
     }
     return [];
 }

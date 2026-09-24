@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strava — activity data
+   Southbound Strava — activity data
 
    Once connected, activity reads go straight from the browser to
    Strava's API with the access token -- only the token exchange
@@ -180,7 +180,7 @@ function init() {
             try {
                 await loadRecentActivities();
             } catch (error) {
-                console.error("EddieOS Strava data:", error);
+                console.error("Southbound Strava data:", error);
                 setStatus(error.message, "error");
             } finally {
                 refresh.disabled = false;
@@ -207,7 +207,7 @@ function init() {
 
     window.addEventListener("eddieos:strava-auth-changed", () => {
         loadRecentActivities().catch(error => {
-            console.error("EddieOS Strava data:", error);
+            console.error("Southbound Strava data:", error);
             setStatus(error.message, "error");
         });
     });

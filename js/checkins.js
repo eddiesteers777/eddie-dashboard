@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Weekly Coaching Cycle
+   Southbound — Weekly Coaching Cycle
 
    A client submits one short check-in per week (how it went + a
    1-5 rating) for a coach they're already linked to; the coach

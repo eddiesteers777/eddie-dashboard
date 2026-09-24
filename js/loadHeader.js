@@ -149,7 +149,7 @@ fetch("components/header.html")
                 // Covers the dynamic import itself failing too (e.g.
                 // the Firebase SDK fetch from gstatic.com is blocked
                 // or offline) -- not just initCloudSync() throwing.
-                console.warn("EddieOS: cloud sync bootstrap failed this session.", error);
+                console.warn("Southbound: cloud sync bootstrap failed this session.", error);
             }
         })();
 
@@ -175,7 +175,7 @@ fetch("components/header.html")
                 applyNavAccess(document, access);
                 return access;
             } catch (error) {
-                console.warn("EddieOS: account profile / nav access bootstrap failed this session.", error);
+                console.warn("Southbound: account profile / nav access bootstrap failed this session.", error);
                 return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true };
             }
         })();
@@ -435,7 +435,7 @@ fetch("components/header.html")
         try {
             ({ login, logout, listenForAuth } = await import("./auth.js"));
         } catch (error) {
-            console.warn("EddieOS: auth.js unavailable this session -- sign-in features disabled.", error);
+            console.warn("Southbound: auth.js unavailable this session -- sign-in features disabled.", error);
         }
 
         const userName = document.getElementById("user-name");
@@ -621,7 +621,7 @@ fetch("components/header.html")
                         <div class="eos-signin-icon">${icon("cloud")}</div>
                         <h2>Sign in to save your progress</h2>
                         <p>
-                            You're using EddieOS as a guest. Changes you make --
+                            You're using Southbound as a guest. Changes you make --
                             workouts, habits, nutrition logs, and more -- are only
                             saved on this device. Sign in with Google to back
                             everything up and keep it in sync if you ever switch

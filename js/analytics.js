@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Analytics
+   Southbound Analytics
 
    Every number on this page is either read directly from the
    Marathon plan + your logged progress, or (Personal Records) typed
@@ -260,8 +260,8 @@ function renderMileageTrendChart() {
                 {
                     label: "Actual",
                     data: actual,
-                    borderColor: "#4EA8FF",
-                    backgroundColor: "rgba(78,168,255,.12)",
+                    borderColor: "#C9AD84",
+                    backgroundColor: "rgba(201,173,132,.12)",
                     borderWidth: 3,
                     tension: 0.3,
                     fill: true,
@@ -273,10 +273,10 @@ function renderMileageTrendChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: true, labels: { color: "#B7C4D6" } } },
+            plugins: { legend: { display: true, labels: { color: "#C3C9BD" } } },
             scales: {
-                y: { beginAtZero: true, ticks: { color: "#94A3B8" }, grid: { color: "rgba(255,255,255,.06)" } },
-                x: { ticks: { color: "#94A3B8" }, grid: { display: false } }
+                y: { beginAtZero: true, ticks: { color: "#8E9A89" }, grid: { color: "rgba(255,255,255,.06)" } },
+                x: { ticks: { color: "#8E9A89" }, grid: { display: false } }
             }
         }
     });
@@ -302,16 +302,16 @@ function renderWorkoutMixChart() {
             labels,
             datasets: [
                 { label: "Planned", data: planned, backgroundColor: "rgba(91,118,153,.5)", borderRadius: 6 },
-                { label: "Completed", data: completed, backgroundColor: "#4EA8FF", borderRadius: 6 }
+                { label: "Completed", data: completed, backgroundColor: "#C9AD84", borderRadius: 6 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: true, labels: { color: "#B7C4D6" } } },
+            plugins: { legend: { display: true, labels: { color: "#C3C9BD" } } },
             scales: {
-                y: { beginAtZero: true, ticks: { color: "#94A3B8" }, grid: { color: "rgba(255,255,255,.06)" } },
-                x: { ticks: { color: "#94A3B8" }, grid: { display: false } }
+                y: { beginAtZero: true, ticks: { color: "#8E9A89" }, grid: { color: "rgba(255,255,255,.06)" } },
+                x: { ticks: { color: "#8E9A89" }, grid: { display: false } }
             }
         }
     });

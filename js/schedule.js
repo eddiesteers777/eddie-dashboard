@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Schedule
+   Southbound — Schedule
 
    Two roles on one page, same pattern as clients.js: "My
    Availability" (this account as a coach, publishing weekly slots

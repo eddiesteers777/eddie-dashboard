@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Dashboard — Today
+   Southbound Dashboard — Today
 ========================================== */
 
 .eos-today-hero{
@@ -20,7 +20,7 @@
     width:360px;
     height:280px;
     border-radius:50%;
-    background:radial-gradient(circle,rgba(78,168,255,.10) 0%,rgba(78,168,255,.025) 45%,transparent 72%);
+    background:radial-gradient(circle,rgba(201,173,132,.10) 0%,rgba(201,173,132,.025) 45%,transparent 72%);
     pointer-events:none;
 
 }
@@ -108,9 +108,9 @@
     background:linear-gradient(
         90deg,
         transparent 0%,
-        rgba(78,168,255,.14) 22%,
+        rgba(201,173,132,.14) 22%,
         rgba(120,190,255,.55) 50%,
-        rgba(37,99,235,.14) 78%,
+        rgba(166,138,98,.14) 78%,
         transparent 100%
     );
     pointer-events:none;
@@ -162,7 +162,7 @@
 
 .eos-today-item:hover{
 
-    background:rgba(78,168,255,.1);
+    background:rgba(201,173,132,.1);
 
 }
 
@@ -320,7 +320,7 @@
     background:linear-gradient(
         90deg,
         transparent,
-        rgba(78,168,255,.28),
+        rgba(201,173,132,.28),
         transparent
     );
     pointer-events:none;
@@ -416,7 +416,7 @@
     background:linear-gradient(
         90deg,
         transparent,
-        rgba(78,168,255,.18),
+        rgba(201,173,132,.18),
         transparent
     );
     pointer-events:none;
@@ -559,7 +559,7 @@
     align-items:center;
     justify-content:center;
     gap:22px;
-    background:radial-gradient(circle at center,#182B45 0%,#0B1526 55%,#050A12 100%);
+    background:radial-gradient(circle at center,#1F3A2C 0%,#0F2019 55%,#07100C 100%);
     transition:opacity .5s ease;
 
 }
@@ -577,7 +577,7 @@
     width:220px;
     height:220px;
     border-radius:50%;
-    background:radial-gradient(circle,rgba(78,168,255,.55) 0%,rgba(78,168,255,.18) 45%,transparent 72%);
+    background:radial-gradient(circle,rgba(201,173,132,.55) 0%,rgba(201,173,132,.18) 45%,transparent 72%);
     filter:blur(4px);
     animation:eos-splash-pulse 1.6s ease-in-out infinite;
 
@@ -606,10 +606,12 @@
 .eos-splash-wordmark{
 
     position:relative;
-    font-family:var(--font-display);
-    font-size:32px;
-    letter-spacing:1px;
-    color:#F8FAFC;
+    font-family:var(--font-brand);
+    font-weight:800;
+    font-size:28px;
+    letter-spacing:.02em;
+    text-transform:uppercase;
+    color:var(--cream);
 
 }
 

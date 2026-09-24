@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Public Nav Loader
+   Southbound — Public Nav Loader
 
    Same fetch-a-partial pattern as js/loadHeader.js, deliberately
    much smaller: no cloud sync bootstrap, no mobile bottom nav, no
@@ -50,6 +50,6 @@ fetch("components/publicHeader.html")
                 }
             });
         } catch (error) {
-            console.warn("EddieOS: public nav sign-in wiring failed.", error);
+            console.warn("Southbound: public nav sign-in wiring failed.", error);
         }
     });

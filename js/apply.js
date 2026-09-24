@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Apply (public site)
+   Southbound — Apply (public site)
 
    Guest applies for coaching/soccer services. Requires Google
    sign-in (so the application lands on a real account rather than

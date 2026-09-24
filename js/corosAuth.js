@@ -1,4 +1,4 @@
-/* EddieOS COROS OAuth — current MCP-compatible implementation */
+/* Southbound COROS OAuth — current MCP-compatible implementation */
 
 const MCP_URL = "https://mcpus.coros.com/mcp";
 const CLIENT_ID =
@@ -378,7 +378,7 @@ function init() {
                     await startOAuth();
                 } catch (error) {
                     console.error(
-                        "EddieOS COROS OAuth:",
+                        "Southbound COROS OAuth:",
                         error
                     );
 
@@ -388,7 +388,7 @@ function init() {
                     );
 
                     alert(
-                        `EddieOS could not start the COROS connection.\n\n${error.message}`
+                        `Southbound could not start the COROS connection.\n\n${error.message}`
                     );
 
                     button.disabled = false;
@@ -400,7 +400,7 @@ function init() {
 
     finishOAuth().catch(error => {
         console.error(
-            "EddieOS COROS OAuth callback:",
+            "Southbound COROS OAuth callback:",
             error
         );
 

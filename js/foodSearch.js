@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Food Search
+   Southbound Food Search
 
    Searches real food/product databases so nutrition
    entries don't have to be typed in by hand.

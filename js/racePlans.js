@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Race Plan Builder
+   Southbound Running — Race Plan Builder
 
    Phase 1B:
    - guided setup wizard
@@ -430,7 +430,7 @@ function renderGeneratedPreview(plan) {
     const conflictHtml = conflicts.length
         ? `<div class="race-plan-generation-warnings race-plan-conflict-warning">
             <strong>Calendar conflict</strong>
-            <div>This plan overlaps an existing active training plan. Nothing will be overwritten. EddieOS will require the overlap to be resolved before this plan can become active.</div>
+            <div>This plan overlaps an existing active training plan. Nothing will be overwritten. Southbound will require the overlap to be resolved before this plan can become active.</div>
             <div>${escapeHtml(formatConflictList(conflicts)).replaceAll("\n", "<br>")}</div>
            </div>`
         : "";
@@ -492,7 +492,7 @@ function renderGeneratedPreview(plan) {
 
         <div class="race-plan-generation-note">
             <strong>What this phase does:</strong>
-            <span>Review the generated plan. When you add it to the calendar, EddieOS will schedule these planned runs without changing your existing Marathon plan.</span>
+            <span>Review the generated plan. When you add it to the calendar, Southbound will schedule these planned runs without changing your existing Marathon plan.</span>
         </div>
     `;
 }
@@ -513,7 +513,7 @@ function generateCurrentPlan() {
         return true;
     } catch (error) {
         generatedPreview = null;
-        window.alert(error.message || "EddieOS could not generate this plan.");
+        window.alert(error.message || "Southbound could not generate this plan.");
         return false;
     }
 }
@@ -541,7 +541,7 @@ async function saveGeneratedPlan() {
         const conflictText = formatConflictList(conflicts);
         if (existing && normalizePlanStatus(existing) === "active") {
             window.alert(
-                `EddieOS did not apply these changes. This active plan would overlap:\n\n${conflictText}\n\nYour current active plan is unchanged. Resolve the overlap before applying the regenerated schedule.`
+                `Southbound did not apply these changes. This active plan would overlap:\n\n${conflictText}\n\nYour current active plan is unchanged. Resolve the overlap before applying the regenerated schedule.`
             );
             return false;
         }
@@ -600,7 +600,7 @@ async function saveGeneratedPlan() {
             strengthResult = await syncRacePlanStrengthSchedule(record);
         } catch (error) {
             console.error("Race-plan Strength calendar integration failed:", error);
-            window.alert("The race plan was saved, but EddieOS could not update the Strength calendar. Your existing Strength schedule was not deleted.");
+            window.alert("The race plan was saved, but Southbound could not update the Strength calendar. Your existing Strength schedule was not deleted.");
         }
     } else if (existing && (record.status === "paused" || record.status === "archived")) {
         try {
@@ -891,7 +891,7 @@ async function updatePlanStatus(planId, nextStatus) {
 
         if (conflicts.length) {
             window.alert(
-                `EddieOS cannot activate this race plan yet because it overlaps an existing active training plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`
+                `Southbound cannot activate this race plan yet because it overlaps an existing active training plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`
             );
             return false;
         }
@@ -929,7 +929,7 @@ async function updatePlanStatus(planId, nextStatus) {
         }
     } catch (error) {
         console.error("Race-plan Strength status integration failed:", error);
-        window.alert("The race plan status changed, but EddieOS could not fully update the Strength calendar.");
+        window.alert("The race plan status changed, but Southbound could not fully update the Strength calendar.");
     }
     renderSavedPlans();
     window.dispatchEvent(new CustomEvent("eddieos:running-programs-changed", {

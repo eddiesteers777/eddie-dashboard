@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Endurance Fueling
+   Southbound Endurance Fueling
 ========================================== */
 
 import { icon } from "./icons.js";

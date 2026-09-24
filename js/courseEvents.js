@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Course Events
+   Southbound Course Events
 
    Single source of truth for grad-school course dates
    (ED 450/550, MATH 501) — used by planner.html to render

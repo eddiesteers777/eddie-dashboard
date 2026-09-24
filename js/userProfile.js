@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Account Profile
+   Southbound — Account Profile
 
    The account/role data model described in
    docs/PRODUCT_ARCHITECTURE.md. A profile document gets created the

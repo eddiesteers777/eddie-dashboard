@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Training Plans — Strength bridge
+   Southbound Training Plans — Strength bridge
 
    Mirrors js/racePlanStrengthIntegration.js: schedules
    generated lift sessions into the existing strength-schedule

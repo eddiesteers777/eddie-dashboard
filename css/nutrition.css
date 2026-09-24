@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Nutrition
+   Southbound Nutrition
 ========================================== */
 
 /* Page shell */
@@ -249,7 +249,7 @@
 .adjust-btn:hover{
     background:var(--macro-color, var(--primary));
     border-color:var(--macro-color, var(--primary));
-    color:#05131f;
+    color:#0f2019;
     transform:translateY(-1px);
 }
 
@@ -324,13 +324,13 @@
 .meal-tab:hover{
     border:none;
     color:var(--text);
-    background:rgba(78,168,255,.06);
+    background:rgba(201,173,132,.06);
 }
 
 .meal-tab.active{
     background:var(--primary);
     border:none;
-    color:#05131f;
+    color:#0f2019;
     transform:translateY(-1px);
 }
 
@@ -578,7 +578,7 @@
 }
 
 /* ------------------------------------------
-   Form controls — EddieOS dark treatment
+   Form controls — Southbound dark treatment
    Prevent browser/default button styles from
    introducing white controls into the page.
 ------------------------------------------ */
@@ -614,7 +614,7 @@
 .goal-btn:hover{
     background:var(--macro-color, var(--primary));
     border-color:var(--macro-color, var(--primary));
-    color:#05131f;
+    color:#0f2019;
     transform:translateY(-1px);
 }
 
@@ -650,7 +650,7 @@
 .food-confirm-grams:focus{
     outline:none;
     border-color:var(--primary);
-    box-shadow:0 0 0 2px rgba(78,168,255,.18);
+    box-shadow:0 0 0 2px rgba(201,173,132,.18);
 }
 
 .food-scan-btn{
@@ -666,7 +666,7 @@
 .food-scan-btn:hover{
     background:var(--primary);
     border-color:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     transform:translateY(-1px);
 }
 
@@ -677,7 +677,7 @@
 .food-scan-btn:focus-visible{
     outline:none;
     border-color:var(--primary);
-    box-shadow:0 0 0 2px rgba(78,168,255,.18);
+    box-shadow:0 0 0 2px rgba(201,173,132,.18);
 }
 
 .meal-card textarea{

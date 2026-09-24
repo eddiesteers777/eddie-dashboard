@@ -1,5 +1,5 @@
 // ==========================================
-// EddieOS Data Store
+// Southbound Data Store
 // ==========================================
 
 export const dashboardData = {

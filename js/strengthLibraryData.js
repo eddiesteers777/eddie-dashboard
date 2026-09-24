@@ -53,8 +53,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "marathon-strength-b",
@@ -110,8 +110,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "marathon-maintenance-25",
@@ -169,8 +169,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "pre-long-run-support",
@@ -228,8 +228,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "runner-core-stability",
@@ -291,8 +291,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 20
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "full-body-30",
@@ -350,8 +350,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 40
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "full-body-45",
@@ -413,8 +413,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "full-body-60",
@@ -482,8 +482,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "minimal-full-body",
@@ -541,8 +541,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 40
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "beginner-foundation",
@@ -600,8 +600,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "upper-strength-a",
@@ -657,8 +657,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "upper-hypertrophy",
@@ -714,8 +714,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "push-day",
@@ -771,8 +771,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "pull-day",
@@ -828,8 +828,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "upper-superset",
@@ -897,8 +897,8 @@ export const BUILT_IN_WORKOUTS = [
         "groupType": "superset"
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "lower-strength-a",
@@ -948,8 +948,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 60
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "lower-hypertrophy",
@@ -1005,8 +1005,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "single-leg-foundation",
@@ -1062,8 +1062,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "glute-posterior",
@@ -1119,8 +1119,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "lower-superset",
@@ -1188,8 +1188,8 @@ export const BUILT_IN_WORKOUTS = [
         "groupType": "superset"
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "dumbbell-only-30",
@@ -1245,8 +1245,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "bands-only-25",
@@ -1302,8 +1302,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "bodyweight-full-body",
@@ -1361,8 +1361,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "hotel-gym-30",
@@ -1420,8 +1420,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "core-20",
@@ -1475,8 +1475,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 45
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "core-carry",
@@ -1532,8 +1532,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "athletic-foundation",
@@ -1589,8 +1589,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "power-primer-20",
@@ -1642,8 +1642,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "field-athlete",
@@ -1699,8 +1699,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "full-body-circuit",
@@ -1762,8 +1762,8 @@ export const BUILT_IN_WORKOUTS = [
         "groupType": "circuit"
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "bodyweight-circuit-20",
@@ -1825,8 +1825,8 @@ export const BUILT_IN_WORKOUTS = [
         "groupType": "circuit"
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "calves-feet-15",
@@ -1878,8 +1878,8 @@ export const BUILT_IN_WORKOUTS = [
         "duration": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "mobility-strength-20",
@@ -1937,8 +1937,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "upper-body-25",
@@ -1988,8 +1988,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "lower-body-25",
@@ -2039,8 +2039,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "arms-20",
@@ -2090,8 +2090,8 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   },
   {
     "id": "marathon-strength-light",
@@ -2147,7 +2147,7 @@ export const BUILT_IN_WORKOUTS = [
         "restSeconds": 30
       }
     ],
-    "folder": "EddieOS Originals",
-    "source": "EddieOS Originals"
+    "folder": "Southbound Originals",
+    "source": "Southbound Originals"
   }
 ];

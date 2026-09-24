@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Cross Training Studio
+   Southbound Cross Training Studio
 
    Now a real ES module — imports the shared
    Marathon data/helpers instead of expecting
@@ -22,7 +22,7 @@ import {
 
 import { icon } from "./icons.js";
 
-console.log("EddieOS Cross Training Studio");
+console.log("Southbound Cross Training Studio");
 
 /* ==========================================
    Constants

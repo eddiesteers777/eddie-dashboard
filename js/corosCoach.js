@@ -1,12 +1,12 @@
 /* ==========================================
-   EddieOS COROS Coach Assessment — Step 5
+   Southbound COROS Coach Assessment — Step 5
 
    Turns COROS fitness/recovery/training-load data
    plus recent Marathon-plan execution into a
    transparent coaching assessment.
 
    Important:
-   - This is an EddieOS composite signal, not a
+   - This is an Southbound composite signal, not a
      medical diagnosis or a COROS-provided score.
    - The Marathon plan remains untouched.
 ========================================== */
@@ -770,7 +770,7 @@ function coachingMessage(score, parts, metrics, recovery, load, fitness) {
 
     if (!notes.length) {
         notes.push(
-            "EddieOS does not yet have enough current COROS information to make a strong coaching call."
+            "Southbound does not yet have enough current COROS information to make a strong coaching call."
         );
     }
 

@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Training Plans — Program Store
+   Southbound Training Plans — Program Store
 
    Single source for the training-programs localStorage
    structure. Kept separate from running-programs: a
@@ -18,7 +18,7 @@ export function loadTrainingPrograms() {
         if (Array.isArray(parsed)) return parsed;
         if (parsed && Array.isArray(parsed.plans)) return parsed.plans;
     } catch (error) {
-        console.warn("EddieOS training-programs storage could not be read:", error);
+        console.warn("Southbound training-programs storage could not be read:", error);
     }
     return [];
 }

@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — My Clients
+   Southbound — My Clients
 
    Two roles live on one page since any account can be both a coach
    and a client: "Coach a Client" (this account editing someone

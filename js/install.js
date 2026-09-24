@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Get the App
+   Southbound — Get the App
 
    Device-aware install instructions. iOS has no API a page can call
    to trigger "Add to Home Screen" -- Apple deliberately left that

@@ -1,10 +1,10 @@
 /* ==========================================
-   EddieOS Pace Calculator
+   Southbound Pace Calculator
    Plain classic script — no import/export,
    so nothing can fail on module resolution.
 ========================================== */
 
-console.log("EddieOS Pace Calculator");
+console.log("Southbound Pace Calculator");
 
 /* ==========================================
    Constants

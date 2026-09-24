@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — My Clients
+   Southbound — My Clients
    ========================================== */
 
 /* Every other page in the app gives its own <main class="X-page">
@@ -58,7 +58,7 @@
     transition:background .15s ease,color .15s ease;
 }
 .clients-tab:hover{color:var(--text);}
-.clients-tab.active{background:var(--primary);color:#05131f;}
+.clients-tab.active{background:var(--primary);color:#0f2019;}
 .clients-tab-badge{
     display:inline-flex;
     align-items:center;
@@ -128,9 +128,9 @@
 }
 .clients-btn-primary{
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     border:1px solid var(--primary);
-    box-shadow:0 6px 18px rgba(78,168,255,.25);
+    box-shadow:0 6px 18px rgba(201,173,132,.25);
 }
 .clients-btn-primary:hover{transform:translateY(-1px);}
 .clients-btn-primary:disabled{opacity:.6;cursor:default;transform:none;}
@@ -208,7 +208,7 @@
     align-items:center;
     justify-content:center;
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     font-weight:800;
 }
 .clients-row-info{
@@ -295,7 +295,7 @@
     display:flex;
     align-items:flex-end;
     justify-content:center;
-    background:rgba(5,12,23,.72);
+    background:rgba(5,13,9,.72);
     backdrop-filter:blur(2px);
     padding:0;
 }
@@ -373,7 +373,7 @@
     font:700 12.5px/1 var(--font-body);
     cursor:pointer;
 }
-.clients-plan-tab.active{background:var(--primary);color:#05131f;border-color:var(--primary);}
+.clients-plan-tab.active{background:var(--primary);color:#0f2019;border-color:var(--primary);}
 
 .clients-weeks{
     display:flex;

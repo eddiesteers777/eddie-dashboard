@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Gear
+   Southbound Gear
 ========================================== */
 
 .gear-page{
@@ -63,7 +63,7 @@
 .gear-add-btn{
 
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     border:none;
     border-radius:14px;
     padding:12px 20px;
@@ -152,7 +152,7 @@
 .gear-week-apply{
 
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     border:none;
     border-radius:10px;
     padding:9px 16px;
@@ -408,7 +408,7 @@
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(4,8,16,.7);
+    background:rgba(4,10,7,.7);
     backdrop-filter:blur(6px);
     z-index:200;
     align-items:center;
@@ -428,8 +428,8 @@
     background:
         linear-gradient(
             160deg,
-            rgba(24,38,60,.98),
-            rgba(14,23,38,.98)
+            rgba(26,42,33,.98),
+            rgba(14,26,20,.98)
         );
     border:1px solid var(--border);
     border-radius:22px;

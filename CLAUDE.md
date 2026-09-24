@@ -1,6 +1,6 @@
-# EddieOS — Project Guide & Handoff
+# Southbound Coaching — Project Guide & Handoff
 
-EddieOS is Eddie Steers' coaching business platform: a public marketing site for guests, plus an installable app (PWA) where clients train and Eddie coaches them. It covers online coaching, running and strength programming, and 1-on-1 or group soccer training.
+Southbound Coaching (formerly "EddieOS") is Eddie Steers' coaching business platform: a public marketing site for guests, plus an installable app (PWA) where clients train and Eddie coaches them. It covers online coaching, running and strength programming, and 1-on-1 or group soccer training.
 
 - **Live site:** https://eddiesteers777.github.io/eddie-dashboard/ (GitHub Pages, deploys automatically from `main`)
 - **Repo:** `eddiesteers777/eddie-dashboard`
@@ -79,10 +79,11 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 
 - **Static site, no build step.** Plain HTML/CSS/ES-module JS, hosted on GitHub Pages. PWA via `manifest.json` + `sw.js` (network-first for same-origin files).
 - **Firebase** (project `eddie-s-dashboard`): Google sign-in only (`js/auth.js`), Firestore for data (`js/firebase.js`). SDK loads from `gstatic.com`.
-- **Design system:** CSS custom properties in `css/style.css` (dark navy `--bg`, `--surface`, `--primary: #4EA8FF`). Fonts: Inter / Bebas Neue / JetBrains Mono. Reuse the tokens and don't hard-code new colors.
+- **Brand:** Southbound Coaching. Logo files in `brand/`: `sb-mark.svg` (SB monogram for dark backgrounds, used in every header), `sb-mark-forest.svg` (for light backgrounds), `southbound-logo.svg` (full lockup with "COACHING"). App icons in `icons/` are the mark on forest green (`icon-512/192`, `icon-maskable-512`, `apple-touch-icon`, `favicon-32`). Taglines: "Faster | Stronger | Smarter" (home hero) and "Train | Develop | Compete | Grow". The old name "EddieOS" survives only in data identifiers: `eddieos-...` localStorage/cache keys, the backup file's `app` field, and the COROS OAuth client name. Don't rename those.
+- **Design system:** CSS custom properties in `css/style.css`: deep forest `--bg #0F2019`, `--surface #17291F`, tan `--primary #C9AD84`, cream `--text`/`--cream`, plus `--forest`, `--sage`, `--stone`. Text on a tan fill uses `--on-primary` (dark green), never white. Fonts: Inter (body) / Bebas Neue (display headings) / Saira 800 (`--font-brand`, the wordmark) / JetBrains Mono. Category colors (run/strength/etc.) are separate on purpose. Reuse the tokens and don't hard-code new colors.
 - **Icons:** `js/icons.js`. Write `<span data-icon="name">` in HTML. Content inserted later needs `import("./icons.js").then(m => m.hydrate())`.
 - **Email:** `js/emailNotify.js` uses EmailJS (client-side). The free plan allows only **2 templates**, so everything runs on two: "Coach alert" (recipient fixed to Eddie's address inside EmailJS, never in this repo) for booking requests, applications and check-ins, and "Client update" (`{{to_email}}`) for booking replies and check-in feedback. Both use `{{subject}}`, `{{headline}}`, `{{details}}`, `{{link}}` (+ `{{to_name}}` for clients). Until the IDs are filled in, emails are skipped quietly; core flows never depend on email. Keep EmailJS's allowed-domains list set to `eddiesteers777.github.io` so the public key can't be used elsewhere.
-- **Integrations:** COROS (`js/coros*.js`) and Strava (`js/strava*.js`). The Strava token exchange runs in a Cloudflare Worker (`cloudflare-worker/strava-broker.js`) so the client secret stays out of this public repo.
+- **Integrations:** COROS (`js/coros*.js`). Strava (`js/strava*.js` + the Cloudflare Worker in `cloudflare-worker/`) is **shelved**: since mid-2026 creating a Strava API app requires a paid Strava subscription, which Eddie doesn't have. The code stays; its Analytics panels hide themselves until `js/stravaConfig.js` is filled in.
 
 ### Firestore data model
 
@@ -130,7 +131,7 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 
 ## Current status (as of 2026-09-24)
 
-Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, coach approval, public site, service-driven nav, coach dashboard, weekly check-ins. After that came the unified Coach nav section and the guest-view redesign (photo-led Home, About, Packages, Get the App in the top nav). Then a security review's fixes (rules + atomic invite-code redemption), the live-workout layout fixes on phones, automated tests + CI, and launch polish (meta descriptions, interim bio/pricing copy, setup checklist on the Coach Dashboard).
+Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, coach approval, public site, service-driven nav, coach dashboard, weekly check-ins. After that came the unified Coach nav section and the guest-view redesign (photo-led Home, About, Packages, Get the App in the top nav). Then a security review's fixes (rules + atomic invite-code redemption), the live-workout layout fixes on phones, automated tests + CI, and launch polish (meta descriptions, interim bio/pricing copy, setup checklist on the Coach Dashboard). Then the Southbound Coaching rebrand (SB mark, forest/tan palette, new app icons) and the two-template EmailJS setup.
 
 **Waiting on Eddie:**
 - [ ] **Approve his own account** in Firebase Console → Firestore → `userProfiles` → his doc: `isCoachApproved: true`, `role: "coach"`, `status: "active"`. (In progress at the time of writing. The More page shows "Coach account" once it's done.)
@@ -138,8 +139,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 - [ ] Upload photos to `images/` (filenames in `images/README.md`).
 - [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly). Until then each package says "Pricing on request".
 - [ ] Send a short **bio** for `about.html` (background, experience, certifications). It currently has honest interim copy with no specific claims.
-- [ ] Set up EmailJS (IDs in `js/emailNotify.js`) and Strava (`js/stravaConfig.js` + the worker in `cloudflare-worker/`). The Coach Dashboard's "Still to set up" card lists whatever is still off.
-- [ ] Pick a logo from the Southbound Coaching concepts canvas, then do the rebrand (name, logo, colors, app icons).
+- [ ] Set up EmailJS (IDs in `js/emailNotify.js`). The Coach Dashboard's "Still to set up" card lists whatever is still off.
 
 ## What's next (roadmap)
 
@@ -147,4 +147,4 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 9. **Booking refinements:** location, session length, a public request path.
 10. **Business tools:** payments, packages checkout.
 
-The brand name is deliberately undecided (keep the mountain/E mark). Don't rename anything until Eddie decides.
+The brand is Southbound Coaching (decided 2026-09-24 from Eddie's brand board: SB speed monogram, forest green / sage / tan / stone / cream).

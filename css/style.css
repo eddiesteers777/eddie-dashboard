@@ -1,5 +1,5 @@
 /* ==========================================================
-   EDDIEOS FOUNDATION
+   SOUTHBOUND FOUNDATION
 
    Canonical design tokens for the whole site. Every page loads
    this file first — page-specific stylesheets should only add
@@ -8,7 +8,7 @@
    different accent blues across the site. Consolidated here.)
 ========================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Saira:ital,wght@0,800;1,900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 *,
 *::before,
@@ -31,31 +31,43 @@ html{
        html element's background is -- without this it's the browser
        default white, flashing behind every page at the top/bottom
        edge of a scroll. Match body's base color here too. */
-    background:#0F172A;
+    background:#0F2019;
 
 }
 
 :root{
 
-    --bg:#0F172A;
+    --bg:#0F2019;
 
-    --surface:#1E293B;
+    --surface:#17291F;
 
-    --surface-light:#273449;
+    --surface-light:#203528;
 
     --border:rgba(255,255,255,.08);
 
-    --text:#F8FAFC;
+    --text:#F2EEE4;
 
-    --text-secondary:#B7C4D6;
+    --text-secondary:#C3C9BD;
 
-    --muted:#94A3B8;
+    --muted:#8E9A89;
 
-    --primary:#4EA8FF;
+    --primary:#C9AD84;
 
-    --primary-light:#78BEFF;
+    --primary-light:#DCC6A3;
 
-    --primary-dark:#2563EB;
+    --primary-dark:#A68A62;
+
+    /* Southbound brand palette (from the brand board). --primary is
+       the tan; text sitting on a tan fill uses --on-primary. */
+    --forest:#173226;
+
+    --sage:#8FA388;
+
+    --stone:#E3DDD0;
+
+    --cream:#F2EEE4;
+
+    --on-primary:#0F2019;
 
     --green:#22C55E;
 
@@ -93,6 +105,8 @@ html{
 
     --font-display:'Bebas Neue',sans-serif;
 
+    --font-brand:'Saira',sans-serif;
+
     --font-mono:'JetBrains Mono',monospace;
 
 }
@@ -101,7 +115,7 @@ body{
     font-family:"Inter",sans-serif;
 
     background:
-        radial-gradient(circle at top,#182B45 0%,#0B1526 45%,#050A12 100%);
+        radial-gradient(circle at top,#1F3A2C 0%,#0F2019 45%,#07100C 100%);
 
     color:var(--text);
 
@@ -172,7 +186,7 @@ section{
 
     background:var(--primary);
 
-    color:white;
+    color:var(--on-primary);
 
 }
 
@@ -231,7 +245,7 @@ section{
 
 /* ==========================================================
    NAVIGATION
-   Clean EddieOS dropdown header
+   Clean Southbound dropdown header
 ========================================================== */
 
 .navbar{
@@ -244,7 +258,7 @@ section{
     justify-content:space-between;
     align-items:center;
     gap:20px;
-    background:rgba(16,28,45,.82);
+    background:rgba(17,31,24,.82);
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
     border:1px solid rgba(255,255,255,.08);
@@ -279,7 +293,30 @@ section{
     background-image:url('../icons/icon-512.png');
     background-size:cover;
     background-position:center;
-    box-shadow:0 0 14px rgba(78,168,255,.35);
+    box-shadow:0 0 14px rgba(201,173,132,.35);
+}
+
+/* Southbound logo: the SB mark (brand/sb-mark.svg) plus the squared
+   heavy wordmark from the brand board. Used by every header. */
+.brand-mark{
+    display:block;
+    height:30px;
+    width:auto;
+    flex:0 0 auto;
+}
+
+.brand-word{
+    font-family:var(--font-brand);
+    font-weight:800;
+    font-style:normal;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    line-height:1;
+    color:var(--cream);
+}
+
+.eos-logo .brand-word{
+    font-size:1.2rem;
 }
 
 .nav-links{
@@ -307,7 +344,7 @@ section{
     min-height:40px;
     padding:9px 12px;
     border-radius:10px;
-    color:#B7C4D6;
+    color:#C3C9BD;
     background:transparent;
     font-size:.92rem;
     font-weight:650;
@@ -326,13 +363,13 @@ section{
 }
 
 .eos-navbar .eos-dropdown-trigger.section-active{
-    background:rgba(78,168,255,.14);
+    background:rgba(201,173,132,.14);
     color:#fff;
 }
 
 .eos-navbar .eos-nav-item.active{
-    background:#4EA8FF;
-    color:#fff;
+    background:#C9AD84;
+    color:var(--on-primary);
 }
 
 /* Nav items get [hidden] toggled by js/loadHeader.js based on
@@ -385,7 +422,7 @@ section{
     min-width:190px;
     padding:6px;
     transform:translateX(-50%) translateY(-6px);
-    background:#172235;
+    background:#1A2E23;
     border:1px solid rgba(255,255,255,.10);
     border-radius:14px;
     box-shadow:0 18px 42px rgba(0,0,0,.38);
@@ -412,7 +449,7 @@ section{
     width:9px;
     height:9px;
     transform:translateX(-50%) rotate(45deg);
-    background:#172235;
+    background:#1A2E23;
     border-left:1px solid rgba(255,255,255,.10);
     border-top:1px solid rgba(255,255,255,.10);
 }
@@ -424,7 +461,7 @@ section{
     min-height:38px;
     padding:9px 11px;
     border-radius:9px;
-    color:#D5DEEA;
+    color:#E3DDD0;
     background:transparent;
     font-size:.90rem;
     font-weight:600;
@@ -436,7 +473,7 @@ section{
 
 .eos-navbar .eos-dropdown-link:hover,
 .eos-navbar .eos-dropdown-link.active{
-    background:rgba(78,168,255,.13);
+    background:rgba(201,173,132,.13);
     color:#fff;
 }
 
@@ -461,7 +498,7 @@ section{
 }
 
 .search-btn:hover{
-    background:#4EA8FF;
+    background:#C9AD84;
 }
 
 .sync-status-btn{
@@ -473,7 +510,7 @@ section{
     border:1px solid rgba(255,255,255,.10);
     border-radius:999px;
     background:rgba(255,255,255,.04);
-    color:#B7C4D6;
+    color:#C3C9BD;
     font-size:.76rem;
     font-weight:600;
     cursor:pointer;
@@ -481,7 +518,7 @@ section{
 }
 
 .sync-status-btn:hover{
-    border-color:#4EA8FF;
+    border-color:#C9AD84;
     color:white;
 }
 
@@ -503,7 +540,7 @@ section{
     max-width:105px;
     overflow:hidden;
     text-overflow:ellipsis;
-    color:#B7C4D6;
+    color:#C3C9BD;
     font-weight:600;
     font-size:.92rem;
 }
@@ -513,8 +550,8 @@ section{
     padding:10px 16px;
     border:none;
     border-radius:11px;
-    background:#4EA8FF;
-    color:white;
+    background:#C9AD84;
+    color:var(--on-primary);
     font-weight:650;
     cursor:pointer;
     white-space:nowrap;
@@ -524,7 +561,7 @@ section{
 #loginBtn:hover,
 #logoutBtn:hover{
     transform:translateY(-1px);
-    box-shadow:0 10px 25px rgba(78,168,255,.30);
+    box-shadow:0 10px 25px rgba(201,173,132,.30);
 }
 
 @media (max-width:1200px){
@@ -545,6 +582,21 @@ section{
     }
 
     #user-name{
+        display:none;
+    }
+}
+
+/* The coach nav has seven menus; on laptop widths the sync pill's
+   text and then the wordmark give way so the menus never slide
+   under the right-hand controls. The pill keeps its icon + title. */
+@media (max-width:1440px){
+    .sync-status-btn #syncStatusText{
+        display:none;
+    }
+}
+
+@media (max-width:1120px){
+    .eos-logo .brand-word{
         display:none;
     }
 }
@@ -603,7 +655,7 @@ section{
         top:0;
         z-index:1200;
         padding:10px 14px;
-        background:rgba(16,28,45,.82);
+        background:rgba(17,31,24,.82);
         backdrop-filter:blur(18px);
         -webkit-backdrop-filter:blur(18px);
         border:1px solid rgba(255,255,255,.08);
@@ -626,7 +678,7 @@ section{
     }
 
     .eos-mobile-icon-btn:active{
-        background:rgba(78,168,255,.16);
+        background:rgba(201,173,132,.16);
         border-color:var(--primary);
     }
 
@@ -647,11 +699,8 @@ section{
         white-space:nowrap;
     }
 
-    .eos-mobile-topbar-logo .logo-dot{
-        width:26px;
-        height:26px;
-        flex:0 0 26px;
-        border-radius:8px;
+    .eos-mobile-topbar-logo .brand-mark{
+        height:24px;
     }
 
     #mobileSearchBtn{
@@ -665,7 +714,7 @@ section{
         z-index:1250;
         min-width:200px;
         padding:6px;
-        background:#172235;
+        background:#1A2E23;
         border:1px solid rgba(255,255,255,.10);
         border-radius:14px;
         box-shadow:0 18px 42px rgba(0,0,0,.38);
@@ -689,7 +738,7 @@ section{
         gap:10px;
         padding:11px 12px;
         border-radius:9px;
-        color:#D5DEEA;
+        color:#E3DDD0;
         font-size:.92rem;
         font-weight:650;
         text-decoration:none;
@@ -697,7 +746,7 @@ section{
     }
 
     .eos-mobile-quickadd-link:active{
-        background:rgba(78,168,255,.13);
+        background:rgba(201,173,132,.13);
         color:#fff;
     }
 
@@ -849,7 +898,7 @@ section{
     align-items:center;
     justify-content:center;
     padding:20px;
-    background:rgba(4,8,16,.72);
+    background:rgba(4,10,7,.72);
     backdrop-filter:blur(6px);
     -webkit-backdrop-filter:blur(6px);
     opacity:0;
@@ -863,7 +912,7 @@ section{
 .eos-signin-modal{
     width:100%;
     max-width:400px;
-    background:linear-gradient(160deg,rgba(24,38,60,.98),rgba(14,23,38,.98));
+    background:linear-gradient(160deg,rgba(26,42,33,.98),rgba(14,26,20,.98));
     border:1px solid var(--border);
     border-radius:22px;
     padding:30px 26px;
@@ -885,7 +934,7 @@ section{
     align-items:center;
     justify-content:center;
     border-radius:16px;
-    background:rgba(78,168,255,.14);
+    background:rgba(201,173,132,.14);
     color:var(--primary);
 }
 
@@ -925,7 +974,7 @@ section{
 
 .eos-signin-btn.primary{
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
 }
 
 .eos-signin-btn.primary:hover{
@@ -966,7 +1015,7 @@ section{
         bottom:0;
         z-index:1300;
         padding:6px 6px calc(6px + env(safe-area-inset-bottom));
-        background:rgba(15,23,42,.94);
+        background:rgba(15,32,25,.94);
         backdrop-filter:blur(20px);
         -webkit-backdrop-filter:blur(20px);
         border-top:1px solid rgba(255,255,255,.08);
@@ -1032,7 +1081,7 @@ section{
     .eos-subnav-link.active{
         background:var(--primary);
         border-color:var(--primary);
-        color:#fff;
+        color:var(--on-primary);
     }
 }
 
@@ -1107,11 +1156,11 @@ section{
 
     border-radius:999px;
 
-    background:rgba(78,168,255,.10);
+    background:rgba(201,173,132,.10);
 
-    border:1px solid rgba(78,168,255,.20);
+    border:1px solid rgba(201,173,132,.20);
 
-    color:#4EA8FF;
+    color:#C9AD84;
 
     font-weight:700;
 
@@ -1137,7 +1186,7 @@ section{
 
     max-width:600px;
 
-    color:#B7C4D6;
+    color:#C3C9BD;
 
     font-size:1.08rem;
 
@@ -1170,11 +1219,11 @@ section{
 
     background:linear-gradient(
         135deg,
-        #4EA8FF,
+        #C9AD84,
         #2D7FFF
     );
 
-    color:white;
+    color:var(--on-primary);
 
     font-weight:700;
 
@@ -1182,7 +1231,7 @@ section{
 
     transition:.3s;
 
-    box-shadow:0 12px 30px rgba(78,168,255,.30);
+    box-shadow:0 12px 30px rgba(201,173,132,.30);
 
 }
 
@@ -1190,7 +1239,7 @@ section{
 
     transform:translateY(-3px);
 
-    box-shadow:0 18px 40px rgba(78,168,255,.40);
+    box-shadow:0 18px 40px rgba(201,173,132,.40);
 
 }
 
@@ -1245,14 +1294,16 @@ section{
 
     background:linear-gradient(
         135deg,
-        #3B82F6 0%,
-        #2563EB 50%,
-        #1D4ED8 100%
+        #2E4A3A 0%,
+        #1F3A2C 55%,
+        #173226 100%
     );
 
     color:white;
 
-    box-shadow:0 28px 60px rgba(37,99,235,.35);
+    box-shadow:0 28px 60px rgba(0,0,0,.35);
+
+    border:1px solid rgba(201,173,132,.25);
 
     transition:.35s;
 
@@ -1262,7 +1313,7 @@ section{
 
     transform:translateY(-8px);
 
-    box-shadow:0 38px 80px rgba(37,99,235,.45);
+    box-shadow:0 38px 80px rgba(166,138,98,.45);
 
 }
 
@@ -1462,8 +1513,8 @@ section{
 
     background:linear-gradient(
         180deg,
-        rgba(22,37,56,.95),
-        rgba(16,28,45,.95)
+        rgba(24,41,31,.95),
+        rgba(17,31,24,.95)
     );
 
     border:1px solid rgba(255,255,255,.08);
@@ -1488,7 +1539,7 @@ section{
 
     height:4px;
 
-    background:#4EA8FF;
+    background:#C9AD84;
 
     transform:scaleX(0);
 
@@ -1502,7 +1553,7 @@ section{
 
     transform:translateY(-8px);
 
-    border-color:rgba(78,168,255,.25);
+    border-color:rgba(201,173,132,.25);
 
     box-shadow:0 24px 55px rgba(0,0,0,.30);
 
@@ -1519,7 +1570,7 @@ section{
 
     margin-bottom:14px;
 
-    color:#71839B;
+    color:#8E9A89;
 
     font-size:.85rem;
 
@@ -1549,7 +1600,7 @@ section{
 
 .stat-card p{
 
-    color:#B7C4D6;
+    color:#C3C9BD;
 
     line-height:1.6;
 
@@ -1559,7 +1610,7 @@ section{
 
     background:linear-gradient(
         90deg,
-        #4EA8FF,
+        #C9AD84,
         #7DD3FC
     );
 
@@ -1612,11 +1663,11 @@ section{
 
     background:linear-gradient(
         180deg,
-        rgba(20,33,50,.96),
-        rgba(13,24,38,.96)
+        rgba(21,36,28,.96),
+        rgba(13,26,20,.96)
     );
 
-    border:1px solid rgba(78,168,255,.15);
+    border:1px solid rgba(201,173,132,.15);
 
     box-shadow:0 24px 60px rgba(0,0,0,.30);
 
@@ -1640,7 +1691,7 @@ section{
 
     background:radial-gradient(
         circle,
-        rgba(78,168,255,.18),
+        rgba(201,173,132,.18),
         transparent 70%
     );
 
@@ -1660,7 +1711,7 @@ section{
 
 .coach-label{
 
-    color:#4EA8FF;
+    color:#C9AD84;
 
     font-size:.85rem;
 
@@ -1753,9 +1804,9 @@ section{
 
     transform:translateY(-6px);
 
-    background:rgba(78,168,255,.08);
+    background:rgba(201,173,132,.08);
 
-    border-color:rgba(78,168,255,.25);
+    border-color:rgba(201,173,132,.25);
 
 }
 
@@ -1763,7 +1814,7 @@ section{
 
     display:block;
 
-    color:#71839B;
+    color:#8E9A89;
 
     font-size:.85rem;
 
@@ -1795,7 +1846,7 @@ section{
 
     background:rgba(255,255,255,.03);
 
-    border-left:4px solid #4EA8FF;
+    border-left:4px solid #C9AD84;
 
 }
 
@@ -1815,7 +1866,7 @@ section{
 
     margin-bottom:10px;
 
-    color:#B7C4D6;
+    color:#C3C9BD;
 
     line-height:1.7;
 
@@ -1827,7 +1878,7 @@ section{
 
     text-decoration:underline;
 
-    text-decoration-color:rgba(78,168,255,.5);
+    text-decoration-color:rgba(201,173,132,.5);
 
     text-underline-offset:3px;
 
@@ -1837,7 +1888,7 @@ section{
 
 .coach-message li a:hover{
 
-    color:#4EA8FF;
+    color:#C9AD84;
 
 }
 .coach-button{
@@ -1858,11 +1909,11 @@ section{
 
     background:linear-gradient(
         135deg,
-        #4EA8FF,
+        #C9AD84,
         #2D7FFF
     );
 
-    color:white;
+    color:var(--on-primary);
 
     font-size:1rem;
 
@@ -1872,7 +1923,7 @@ section{
 
     transition:.3s;
 
-    box-shadow:0 16px 40px rgba(78,168,255,.30);
+    box-shadow:0 16px 40px rgba(201,173,132,.30);
 
 }
 
@@ -1880,7 +1931,7 @@ section{
 
     transform:translateY(-3px);
 
-    box-shadow:0 22px 50px rgba(78,168,255,.40);
+    box-shadow:0 22px 50px rgba(201,173,132,.40);
 
 }
 
@@ -1937,8 +1988,8 @@ section{
 
     background:linear-gradient(
         180deg,
-        rgba(22,37,56,.95),
-        rgba(14,25,39,.95)
+        rgba(24,41,31,.95),
+        rgba(14,27,21,.95)
     );
 
     border:1px solid rgba(255,255,255,.08);
@@ -1963,7 +2014,7 @@ section{
 
     background:radial-gradient(
         circle at top right,
-        rgba(78,168,255,.12),
+        rgba(201,173,132,.12),
         transparent 60%
     );
 
@@ -1995,7 +2046,7 @@ section{
 
     transform:translateY(-10px);
 
-    border-color:rgba(78,168,255,.25);
+    border-color:rgba(201,173,132,.25);
 
     box-shadow:0 28px 60px rgba(0,0,0,.35);
 
@@ -2009,7 +2060,7 @@ section{
 
 .card:hover::after{
 
-    color:#4EA8FF;
+    color:#C9AD84;
 
     transform:translateX(6px);
 
@@ -2034,11 +2085,11 @@ section{
 
     background:linear-gradient(
         135deg,
-        rgba(78,168,255,.18),
-        rgba(78,168,255,.08)
+        rgba(201,173,132,.18),
+        rgba(201,173,132,.08)
     );
 
-    border:1px solid rgba(78,168,255,.18);
+    border:1px solid rgba(201,173,132,.18);
 
     transition:.35s;
 
@@ -2048,7 +2099,7 @@ section{
 
     transform:scale(1.08) rotate(-6deg);
 
-    box-shadow:0 12px 30px rgba(78,168,255,.22);
+    box-shadow:0 12px 30px rgba(201,173,132,.22);
 
 }
 
@@ -2066,7 +2117,7 @@ section{
 
 .card p{
 
-    color:#B7C4D6;
+    color:#C3C9BD;
 
     line-height:1.75;
 
@@ -2076,13 +2127,13 @@ section{
 
 .card:hover h2{
 
-    color:#4EA8FF;
+    color:#C9AD84;
 
 }
 
 .card:nth-child(1) .card-icon{
 
-    background:linear-gradient(135deg,#2563EB,#3B82F6);
+    background:linear-gradient(135deg,#A68A62,#B89A70);
 
 }
 
@@ -2142,8 +2193,8 @@ section{
 
     background:linear-gradient(
         180deg,
-        rgba(20,33,50,.97),
-        rgba(12,22,36,.97)
+        rgba(21,36,28,.97),
+        rgba(13,25,19,.97)
     );
 
     border:1px solid rgba(255,255,255,.08);
@@ -2168,7 +2219,7 @@ section{
 
     background:linear-gradient(
         90deg,
-        #4EA8FF,
+        #C9AD84,
         #64C7FF
     );
 
@@ -2239,7 +2290,7 @@ section{
 
     height:100%;
 
-    background:#4EA8FF;
+    background:#C9AD84;
 
     transform:scaleY(0);
 
@@ -2253,7 +2304,7 @@ section{
 
     transform:translateY(-8px);
 
-    border-color:rgba(78,168,255,.25);
+    border-color:rgba(201,173,132,.25);
 
     box-shadow:0 18px 35px rgba(0,0,0,.25);
 
@@ -2275,9 +2326,9 @@ section{
 
     border-radius:999px;
 
-    background:rgba(78,168,255,.10);
+    background:rgba(201,173,132,.10);
 
-    color:#4EA8FF;
+    color:#C9AD84;
 
     font-size:.82rem;
 
@@ -2303,7 +2354,7 @@ section{
 
 .training-card p{
 
-    color:#B7C4D6;
+    color:#C3C9BD;
 
     line-height:1.7;
 
@@ -2326,8 +2377,8 @@ section{
 
     background:linear-gradient(
         180deg,
-        rgba(20,33,50,.97),
-        rgba(12,22,36,.97)
+        rgba(21,36,28,.97),
+        rgba(13,25,19,.97)
     );
 
     border:1px solid rgba(255,255,255,.08);

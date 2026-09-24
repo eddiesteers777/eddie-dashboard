@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strength — Workout Mode
+   Southbound Strength — Workout Mode
 
    A condensed, gym-friendly view of a single
    day, separate from the full plan Editor.

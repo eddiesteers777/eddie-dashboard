@@ -1,4 +1,4 @@
-// EddieOS Cloud Sync - conflict-safe incremental version
+// Southbound Cloud Sync - conflict-safe incremental version
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import { doc, getDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -24,7 +24,7 @@ function collectLocalKeys(){
 function currentLocalData(){ const data={}; for(const k of collectLocalKeys()) data[k]=localStorage.getItem(k); return data; }
 
 /**
- * Bundles every EddieOS localStorage key this app actually knows
+ * Bundles every Southbound localStorage key this app actually knows
  * about (the same list cloud sync itself uses, so this can never
  * drift out of sync with what actually gets backed up) into one
  * plain object suitable for downloading as a backup file.

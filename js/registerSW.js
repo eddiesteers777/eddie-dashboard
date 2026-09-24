@@ -1,5 +1,5 @@
 // ==========================================
-// EddieOS — Service Worker Registration
+// Southbound — Service Worker Registration
 // ==========================================
 
 if ("serviceWorker" in navigator) {

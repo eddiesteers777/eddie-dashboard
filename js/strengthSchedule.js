@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strength Schedule
+   Southbound Strength Schedule
 
    Keeps scheduling separate from workout design.
 
@@ -205,7 +205,7 @@ function planDayAsWorkout(day) {
         equipment:
             "Mixed",
         description:
-            "Your EddieOS workout build.",
+            "Your Southbound workout build.",
         exercises:
             (day.exercises || [])
                 .map(

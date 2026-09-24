@@ -1,8 +1,8 @@
 /* ==========================================
-   EddieOS COROS vs Marathon Plan — Step 4
+   Southbound COROS vs Marathon Plan — Step 4
 
    Compares the COROS activity snapshot already
-   stored by corosData.js with EddieOS's protected
+   stored by corosData.js with Southbound's protected
    marathon plan.
 
    Outputs:
@@ -608,10 +608,10 @@ function renderGoalAlignment(comparison) {
             "Your recent matched Marathon Pace sessions are consistently landing in the 6:58–7:05/mi target range. That is a positive execution signal for the 3:05 plan.";
     } else if (pctValue >= 50) {
         element.textContent =
-            "Your Marathon Pace execution is mixed. The 3:05 target remains in play, but EddieOS should watch whether pace control improves as the marathon-specific block progresses.";
+            "Your Marathon Pace execution is mixed. The 3:05 target remains in play, but Southbound should watch whether pace control improves as the marathon-specific block progresses.";
     } else {
         element.textContent =
-            "Your matched Marathon Pace sessions are frequently outside the 6:58–7:05/mi target range. EddieOS should treat that as a caution signal rather than assuming the 3:05 goal is on track.";
+            "Your matched Marathon Pace sessions are frequently outside the 6:58–7:05/mi target range. Southbound should treat that as a caution signal rather than assuming the 3:05 goal is on track.";
     }
 }
 

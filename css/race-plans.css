@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Race Plans
+   Southbound Running — Race Plans
    Phase 1A: setup wizard only
 ========================================== */
 
@@ -32,7 +32,7 @@
 
 .running-section-tab.active{
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
 }
 
 .running-section-view{ display:none; }
@@ -151,7 +151,7 @@
 }
 
 .race-type-card:hover{
-    border-color:var(--race-color, rgba(78,168,255,.45));
+    border-color:var(--race-color, rgba(201,173,132,.45));
     transform:translateY(-2px);
     box-shadow:0 12px 26px rgba(0,0,0,.28);
 }
@@ -230,7 +230,7 @@
 .race-plan-field input:focus,
 .race-plan-field select:focus{
     border-color:var(--primary);
-    box-shadow:0 0 0 2px rgba(78,168,255,.14);
+    box-shadow:0 0 0 2px rgba(201,173,132,.14);
 }
 
 .race-plan-readout{
@@ -293,7 +293,7 @@
 
 .race-plan-choice input:checked + span,
 .race-plan-toggle-row input:checked + span{
-    background:rgba(78,168,255,.12);
+    background:rgba(201,173,132,.12);
     border-color:var(--primary);
     color:var(--text);
 }
@@ -310,7 +310,7 @@
     margin-top:14px;
     padding:11px 12px;
     border-left:3px solid var(--primary);
-    background:rgba(78,168,255,.055);
+    background:rgba(201,173,132,.055);
     border-radius:10px;
 }
 
@@ -358,7 +358,7 @@
 }
 
 .race-plan-weekday-grid input:checked + span{
-    background:rgba(78,168,255,.12);
+    background:rgba(201,173,132,.12);
     border-color:var(--primary);
     color:var(--text);
 }
@@ -426,13 +426,13 @@
 .race-plan-primary-btn{
     border:1px solid var(--primary);
     background:var(--primary);
-    color:#05131f;
-    box-shadow:0 6px 18px rgba(78,168,255,.28);
+    color:#0f2019;
+    box-shadow:0 6px 18px rgba(201,173,132,.28);
 }
 
 .race-plan-primary-btn:hover{
     transform:translateY(-1px);
-    box-shadow:0 8px 22px rgba(78,168,255,.36);
+    box-shadow:0 8px 22px rgba(201,173,132,.36);
 }
 
 .race-plan-primary-btn:active{ transform:scale(.97); }
@@ -499,7 +499,7 @@
 
 .race-plan-saved-card:hover{
     border-color:var(--primary);
-    background:rgba(78,168,255,.05);
+    background:rgba(201,173,132,.05);
 }
 
 .race-plan-saved-top{
@@ -727,7 +727,7 @@
     padding:10px 11px;
     border-left:3px solid var(--primary);
     border-radius:9px;
-    background:rgba(78,168,255,.05);
+    background:rgba(201,173,132,.05);
     color:var(--text-secondary);
     font-size:10px;
     line-height:1.45;
@@ -812,8 +812,8 @@
     height:18px;
     padding:0 6px;
     border-radius:999px;
-    background:rgba(78,168,255,.10);
-    border:1px solid rgba(78,168,255,.20);
+    background:rgba(201,173,132,.10);
+    border:1px solid rgba(201,173,132,.20);
     color:var(--primary-light);
     font-family:var(--font-mono);
     font-size:9px;
@@ -966,7 +966,7 @@
 }
 
 .race-plan-manager-card:hover{
-    border-color:rgba(78,168,255,.35);
+    border-color:rgba(201,173,132,.35);
     transform:translateY(-2px);
     box-shadow:0 12px 26px rgba(0,0,0,.28);
 }
@@ -1030,7 +1030,7 @@
 }
 
 .race-plan-status.race-plan-status-active{
-    color:#05131f;
+    color:#0f2019;
     border-color:var(--primary);
     background:var(--primary);
 }
@@ -1180,7 +1180,7 @@
 .race-plan-action-btn.primary{
     background:var(--primary);
     border-color:var(--primary);
-    color:#05131f;
+    color:#0f2019;
 }
 
 .race-plan-action-btn.danger:hover{
@@ -1216,10 +1216,10 @@
 .race-plan-change-summary{
     margin:14px 0 12px;
     padding:13px;
-    border:1px solid rgba(78,168,255,.22);
+    border:1px solid rgba(201,173,132,.22);
     border-left:3px solid var(--primary);
     border-radius:14px;
-    background:rgba(78,168,255,.045);
+    background:rgba(201,173,132,.045);
     box-shadow:0 8px 20px rgba(0,0,0,.18);
 }
 

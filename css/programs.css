@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Programs
+   Southbound Programs
    ========================================== */
 
 .programs-page{
@@ -27,7 +27,7 @@
     position:absolute;
     inset:auto 0 0 0;
     height:1px;
-    background:linear-gradient(90deg,rgba(78,168,255,.35),transparent 75%);
+    background:linear-gradient(90deg,rgba(201,173,132,.35),transparent 75%);
 }
 .programs-kicker{
     color:var(--muted);
@@ -55,10 +55,10 @@
     width:100px;
     height:100px;
     flex:0 0 100px;
-    border:1px solid rgba(78,168,255,.12);
+    border:1px solid rgba(201,173,132,.12);
     border-radius:24px;
     background:
-        linear-gradient(135deg,rgba(78,168,255,.08),transparent 65%),
+        linear-gradient(135deg,rgba(201,173,132,.08),transparent 65%),
         url('../icons/icon-512.png') center/72% no-repeat;
     opacity:.5;
 }
@@ -84,8 +84,8 @@
     cursor:pointer;
     transition:transform .15s ease,color .15s ease,background .15s ease;
 }
-.programs-tab:hover{color:var(--text);background:rgba(78,168,255,.06);}
-.programs-tab.active{background:var(--primary);color:#05131f;box-shadow:0 4px 14px rgba(78,168,255,.32);}
+.programs-tab:hover{color:var(--text);background:rgba(201,173,132,.06);}
+.programs-tab.active{background:var(--primary);color:#0f2019;box-shadow:0 4px 14px rgba(201,173,132,.32);}
 .programs-tab:active{transform:scale(.96);}
 .programs-panel{display:none;}
 .programs-panel.active{display:block;}
@@ -118,11 +118,11 @@
 }
 .programs-primary-btn{
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
     border:1px solid var(--primary);
-    box-shadow:0 6px 18px rgba(78,168,255,.28);
+    box-shadow:0 6px 18px rgba(201,173,132,.28);
 }
-.programs-primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(78,168,255,.36);color:#05131f;}
+.programs-primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(201,173,132,.36);color:#0f2019;}
 .programs-primary-btn:active{transform:scale(.97);}
 .programs-secondary-btn{
     background:var(--surface-light);
@@ -158,7 +158,7 @@
 .program-card:hover{
     transform:translateY(-2px);
     box-shadow:0 12px 26px rgba(0,0,0,.26);
-    border-color:rgba(78,168,255,.3);
+    border-color:rgba(201,173,132,.3);
 }
 .program-card-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;}
 .program-card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
@@ -176,8 +176,8 @@
 }
 .program-status.active{background:rgba(34,197,94,.1);color:var(--green);}
 .program-status.paused{background:rgba(250,204,21,.08);color:var(--yellow);}
-.program-status.archived{background:rgba(148,163,184,.08);color:var(--muted);}
-.program-status.draft{background:rgba(78,168,255,.08);color:var(--primary);}
+.program-status.archived{background:rgba(142,154,137,.08);color:var(--muted);}
+.program-status.draft{background:rgba(201,173,132,.08);color:var(--primary);}
 .program-card h3{font-size:15px;margin:0 0 5px;}
 .program-meta{display:flex;flex-wrap:wrap;gap:8px 14px;color:var(--text-secondary);font-size:11px;}
 .program-meta span strong{font-family:var(--font-mono);color:var(--text);}
@@ -195,14 +195,14 @@
     border-radius:999px;
     transition:background .15s ease,color .15s ease;
 }
-.program-card-link:hover{background:rgba(78,168,255,.1);text-decoration:none;}
+.program-card-link:hover{background:rgba(201,173,132,.1);text-decoration:none;}
 .program-card-link.program-card-danger{color:var(--red);}
 .program-card-link.program-card-danger:hover{background:rgba(239,68,68,.1);}
 .program-coach-note{
     margin-top:12px;
     padding:10px 12px;
-    background:rgba(78,168,255,.06);
-    border:1px solid rgba(78,168,255,.22);
+    background:rgba(201,173,132,.06);
+    border:1px solid rgba(201,173,132,.22);
     border-left:3px solid var(--primary);
     border-radius:10px;
 }
@@ -261,7 +261,7 @@
     transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,background .15s ease;
 }
 .training-goal-card:hover{
-    border-color:var(--goal-color, rgba(78,168,255,.45));
+    border-color:var(--goal-color, rgba(201,173,132,.45));
     transform:translateY(-2px);
     box-shadow:0 12px 26px rgba(0,0,0,.26);
 }
@@ -285,7 +285,7 @@
 .training-field{display:flex;flex-direction:column;gap:6px;}
 .training-field span,.training-readout span{font-size:11px;color:var(--muted);}
 .training-field input,.training-field select{width:100%;appearance:none;-webkit-appearance:none;background:var(--surface-light);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:9px 11px;font:13px/1.2 var(--font-body);outline:none;}
-.training-field input:focus,.training-field select:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(78,168,255,.15);}
+.training-field input:focus,.training-field select:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(201,173,132,.15);}
 .training-readout{display:flex;flex-direction:column;justify-content:center;min-height:58px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);}
 .training-readout strong{font:700 15px/1.2 var(--font-mono);color:var(--text);margin-top:3px;}
 .training-review{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
@@ -293,7 +293,7 @@
 .training-review-card small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
 .training-review-card strong{display:block;color:var(--text);font-size:13px;line-height:1.35;}
 .training-review-card span{display:block;color:var(--text-secondary);font-size:11px;margin-top:3px;line-height:1.35;}
-.training-review-note{display:flex;gap:9px;margin-top:12px;padding:11px 12px;border-left:3px solid var(--primary);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:10px;background:rgba(78,168,255,.04);}
+.training-review-note{display:flex;gap:9px;margin-top:12px;padding:11px 12px;border-left:3px solid var(--primary);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:10px;background:rgba(201,173,132,.04);}
 .training-review-note strong{font-size:11px;color:var(--text);white-space:nowrap;}
 .training-review-note span{font-size:11px;color:var(--muted);}
 .training-actions{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin-top:18px;}

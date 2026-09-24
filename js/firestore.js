@@ -1,5 +1,5 @@
 // ==========================================
-// EddieOS Firestore
+// Southbound Firestore
 // ==========================================
 
 import { db, auth } from "./firebase.js";

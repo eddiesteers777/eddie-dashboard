@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Active Program Sources
+   Southbound Running — Active Program Sources
 
    The Running calendar (js/runningProgramCalendar.js) used to
    read only running-programs (Race Plans). Training Plans live

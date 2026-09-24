@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Generated Plan Calendar Adapter
+   Southbound Running — Generated Plan Calendar Adapter
 
    Phase 3 keeps the existing Marathon calendar engine intact.
    This adapter reads active generated plans from running-programs

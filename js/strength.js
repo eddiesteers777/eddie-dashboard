@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strength — User Friendly Builder v2
+   Southbound Strength — User Friendly Builder v2
 ========================================== */
 
 import {

@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Cross Training Studio
+   Southbound Cross Training Studio
 
    Colors/fonts come from css/style.css (loaded first on every
    page) — this file only adds Cross Training-specific layout.
@@ -47,8 +47,8 @@ body{
 
         linear-gradient(
             145deg,
-            rgba(27,43,69,.96),
-            rgba(16,27,43,.95)
+            rgba(30,48,37,.96),
+            rgba(17,30,23,.95)
         );
 
     border:1px solid var(--border);
@@ -96,7 +96,7 @@ body{
 
     border-radius:999px;
 
-    background:rgba(59,130,246,.15);
+    background:rgba(201,173,132,.15);
 
     color:var(--primary-light);
 
@@ -166,7 +166,7 @@ body{
 
     transform:translateY(-4px);
 
-    border-color:rgba(59,130,246,.4);
+    border-color:rgba(201,173,132,.4);
 
 }
 
@@ -234,7 +234,7 @@ body{
 
 .ct-search:hover{
 
-    border-color:rgba(59,130,246,.35);
+    border-color:rgba(201,173,132,.35);
 
 }
 
@@ -244,7 +244,7 @@ body{
 
     border-color:var(--primary);
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
 }
 
@@ -292,7 +292,7 @@ body{
 
 .ct-filter-chip:hover{
 
-    border-color:rgba(59,130,246,.4);
+    border-color:rgba(201,173,132,.4);
 
     color:white;
 
@@ -308,7 +308,7 @@ body{
             var(--primary-dark)
         );
 
-    color:white;
+    color:var(--on-primary);
 
     border-color:transparent;
 
@@ -330,7 +330,7 @@ body{
 
     font-weight:700;
 
-    color:white;
+    color:var(--on-primary);
 
     background:
 
@@ -340,7 +340,7 @@ body{
             var(--primary-dark)
         );
 
-    box-shadow:0 12px 26px rgba(37,99,235,.30);
+    box-shadow:0 12px 26px rgba(166,138,98,.30);
 
     transition:.2s;
 
@@ -352,7 +352,7 @@ body{
 
     transform:translateY(-2px);
 
-    box-shadow:0 16px 32px rgba(37,99,235,.40);
+    box-shadow:0 16px 32px rgba(166,138,98,.40);
 
 }
 
@@ -406,8 +406,8 @@ body{
 
         linear-gradient(
             145deg,
-            rgba(22,35,56,.96),
-            rgba(16,27,43,.95)
+            rgba(24,40,31,.96),
+            rgba(17,30,23,.95)
         );
 
     border:1px solid var(--border);
@@ -426,7 +426,7 @@ body{
 
     transform:translateY(-4px);
 
-    border-color:rgba(59,130,246,.4);
+    border-color:rgba(201,173,132,.4);
 
     box-shadow:0 15px 32px rgba(0,0,0,.3);
 
@@ -592,7 +592,7 @@ body{
 
 .ct-card-btn:hover{
 
-    border-color:rgba(59,130,246,.4);
+    border-color:rgba(201,173,132,.4);
 
     color:white;
 
@@ -608,7 +608,7 @@ body{
             var(--primary-dark)
         );
 
-    color:white;
+    color:var(--on-primary);
 
     border-color:transparent;
 
@@ -634,8 +634,8 @@ body{
 
         linear-gradient(
             145deg,
-            rgba(22,35,56,.96),
-            rgba(16,27,43,.95)
+            rgba(24,40,31,.96),
+            rgba(17,30,23,.95)
         );
 
     border:1px solid var(--border);
@@ -712,7 +712,7 @@ body{
 
 .ct-select:hover{
 
-    border-color:rgba(59,130,246,.35);
+    border-color:rgba(201,173,132,.35);
 
 }
 
@@ -770,7 +770,7 @@ body{
 
 .ct-week-chip:hover{
 
-    border-color:rgba(59,130,246,.4);
+    border-color:rgba(201,173,132,.4);
 
     color:white;
 
@@ -786,7 +786,7 @@ body{
             var(--primary-dark)
         );
 
-    color:white;
+    color:var(--on-primary);
 
     border-color:transparent;
 
@@ -834,7 +834,7 @@ body{
 
 .ct-day-pill:hover{
 
-    border-color:rgba(59,130,246,.4);
+    border-color:rgba(201,173,132,.4);
 
     color:white;
 
@@ -850,7 +850,7 @@ body{
             var(--primary-dark)
         );
 
-    color:white;
+    color:var(--on-primary);
 
     border-color:transparent;
 
@@ -974,9 +974,9 @@ body{
 
     align-items:center;
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
-    border:1px solid rgba(59,130,246,.2);
+    border:1px solid rgba(201,173,132,.2);
 
     border-radius:10px;
 
@@ -1072,7 +1072,7 @@ body{
 
     margin-top:24px;
 
-    color:white;
+    color:var(--on-primary);
 
     background:
 
@@ -1082,7 +1082,7 @@ body{
             var(--primary-dark)
         );
 
-    box-shadow:0 12px 30px rgba(37,99,235,.30);
+    box-shadow:0 12px 30px rgba(166,138,98,.30);
 
     transition:.25s;
 
@@ -1092,7 +1092,7 @@ body{
 
     transform:translateY(-2px);
 
-    box-shadow:0 18px 35px rgba(37,99,235,.40);
+    box-shadow:0 18px 35px rgba(166,138,98,.40);
 
 }
 
@@ -1132,7 +1132,7 @@ body{
 
     inset:0;
 
-    background:rgba(4,8,16,.7);
+    background:rgba(4,10,7,.7);
 
     backdrop-filter:blur(6px);
 
@@ -1158,8 +1158,8 @@ body{
 
         linear-gradient(
             160deg,
-            rgba(24,38,60,.98),
-            rgba(14,23,38,.98)
+            rgba(26,42,33,.98),
+            rgba(14,26,20,.98)
         );
 
     border:1px solid var(--border);
@@ -1270,7 +1270,7 @@ body{
 .ct-input:hover,
 .ct-textarea:hover{
 
-    border-color:rgba(59,130,246,.35);
+    border-color:rgba(201,173,132,.35);
 
 }
 
@@ -1281,7 +1281,7 @@ body{
 
     border-color:var(--primary);
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
 }
 
@@ -1335,7 +1335,7 @@ body{
 
 .ct-category-chip:hover{
 
-    border-color:rgba(59,130,246,.4);
+    border-color:rgba(201,173,132,.4);
 
     color:white;
 
@@ -1397,7 +1397,7 @@ body{
 
     border-color:var(--primary);
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
 }
 
@@ -1437,7 +1437,7 @@ body{
 
 .ct-block-input:hover{
 
-    border-color:rgba(59,130,246,.3);
+    border-color:rgba(201,173,132,.3);
 
 }
 
@@ -1503,9 +1503,9 @@ body{
 
     appearance:none;
 
-    border:1px dashed rgba(59,130,246,.4);
+    border:1px dashed rgba(201,173,132,.4);
 
-    background:rgba(59,130,246,.08);
+    background:rgba(201,173,132,.08);
 
     color:var(--primary-light);
 
@@ -1527,7 +1527,7 @@ body{
 
 .ct-add-block-btn:hover{
 
-    background:rgba(59,130,246,.16);
+    background:rgba(201,173,132,.16);
 
     border-color:var(--primary);
 
@@ -1614,7 +1614,7 @@ body{
 
 .ct-btn-primary{
 
-    color:white;
+    color:var(--on-primary);
 
     background:
 
@@ -1624,7 +1624,7 @@ body{
             var(--primary-dark)
         );
 
-    box-shadow:0 10px 24px rgba(37,99,235,.3);
+    box-shadow:0 10px 24px rgba(166,138,98,.3);
 
 }
 
@@ -1672,13 +1672,13 @@ body{
 
 ::-webkit-scrollbar-track{
 
-    background:#09111c;
+    background:#0a150f;
 
 }
 
 ::-webkit-scrollbar-thumb{
 
-    background:#23406c;
+    background:#2e4a3a;
 
     border-radius:999px;
 
@@ -1692,7 +1692,7 @@ body{
 
 *{
 
-    scrollbar-color:#23406c #09111c;
+    scrollbar-color:#2e4a3a #0a150f;
 
 }
 

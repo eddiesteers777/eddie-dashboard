@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Icons
+   Southbound Icons
 
    One shared set of small inline SVG icons
    (lucide-style: 24x24, stroke-based,
@@ -94,7 +94,7 @@ function icon(name, className = "") {
     const path = PATHS[name];
 
     if (!path) {
-        console.warn(`EddieOS icons: unknown icon "${name}"`);
+        console.warn(`Southbound icons: unknown icon "${name}"`);
         return "";
     }
 

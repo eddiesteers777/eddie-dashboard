@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS User Settings
+   Southbound User Settings
 
    Single source of truth for user-editable goals/preferences —
    used by settings.html to edit them, and by the Dashboard and

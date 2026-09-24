@@ -1,5 +1,5 @@
 // ==============================
-// EddieOS Settings
+// Southbound Settings
 // ==============================
 
 import { auth } from "./firebase.js";

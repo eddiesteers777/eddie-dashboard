@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Habit Icon Inference
+   Southbound Habit Icon Inference
 
    Shared by habits.js and 75day.html (same
    underlying "habits"/"entries" localStorage

@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Marathon Data
+   Southbound Marathon Data
 ========================================== */
 
 export const START_DATE = new Date(

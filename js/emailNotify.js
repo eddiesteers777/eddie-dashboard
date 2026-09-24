@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Email Notifications (EmailJS)
+   Southbound — Email Notifications (EmailJS)
 
    A static site has no server, so emails go out through EmailJS from
    the browser: a public key (meant to be exposed, like the Firebase
@@ -70,7 +70,7 @@ function loadEmailJs() {
 
 async function send(templateId, params) {
     if (!coreConfigured() || !isSet(templateId)) {
-        console.warn("EddieOS: this email isn't set up yet (js/emailNotify.js) -- skipped it; everything else still went through.");
+        console.warn("Southbound: this email isn't set up yet (js/emailNotify.js) -- skipped it; everything else still went through.");
         return false;
     }
     try {
@@ -78,7 +78,7 @@ async function send(templateId, params) {
         await emailjs.send(SERVICE_ID, templateId, params);
         return true;
     } catch (error) {
-        console.warn("EddieOS: email notification failed to send.", error);
+        console.warn("Southbound: email notification failed to send.", error);
         return false;
     }
 }

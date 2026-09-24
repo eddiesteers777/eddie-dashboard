@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strength Workout Library UI
+   Southbound Strength Workout Library UI
 ========================================== */
 
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
@@ -350,7 +350,7 @@ function workoutCard(workout) {
                             `
                             : `
                                 <span class="strength-library-badge original">
-                                    EddieOS
+                                    Southbound
                                 </span>
                             `
                     }
@@ -824,7 +824,7 @@ function saveWorkoutFromForm() {
             $("strengthSaveWorkoutDescription")
                 ?.value
                 .trim() ||
-            "Custom workout saved from EddieOS Strength.",
+            "Custom workout saved from Southbound Strength.",
         tags: ["custom"],
         folder,
         exercises:

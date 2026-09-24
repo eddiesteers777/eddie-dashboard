@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Exercise Search
+   Southbound Exercise Search
 
    Searches the free-exercise-db dataset (876
    exercises, public domain / Unlicense) for the

@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Race Plan Modification
+   Southbound Running — Race Plan Modification
 
    Phase 5:
    - compare a regenerated plan against its current schedule

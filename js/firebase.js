@@ -1,5 +1,5 @@
 // ==========================================
-// EddieOS v2.0 - Firebase Initialization
+// Southbound v2.0 - Firebase Initialization
 // ==========================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";

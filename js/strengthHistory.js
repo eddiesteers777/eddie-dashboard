@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strength History
+   Southbound Strength History
 
    Tracks what was actually lifted, session by
    session, separate from the plan itself (which

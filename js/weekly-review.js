@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Weekly Review
+   Southbound Weekly Review
 ========================================== */
 
 import {

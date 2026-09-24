@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Habits
+   Southbound Habits
 
    --teal/--amber/--purple/--indigo used to be
    page-local extensions here, defined again in
@@ -136,7 +136,7 @@
 .habits-view-btn.active{
 
     background:var(--primary);
-    color:#05131f;
+    color:#0f2019;
 
 }
 
@@ -200,7 +200,7 @@
 
     background:var(--primary);
     border-color:var(--primary);
-    color:#05131f;
+    color:#0f2019;
 
 }
 
@@ -286,7 +286,7 @@
 
 .habits-row:hover{
 
-    background:rgba(78,168,255,.08);
+    background:rgba(201,173,132,.08);
 
 }
 

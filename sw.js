@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Service Worker
+   Southbound Service Worker
 
    Goal: make the app usable offline / feel like
    a real installed app, without ever risking
@@ -29,7 +29,7 @@
    dropped on activate instead of lingering.
 ========================================== */
 
-const CACHE_NAME = "eddieos-shell-v2";
+const CACHE_NAME = "eddieos-shell-v3";
 
 const CORE_ASSETS = [
     "index.html",

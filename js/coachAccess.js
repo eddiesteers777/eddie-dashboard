@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Coach / Client Plan Access
+   Southbound — Coach / Client Plan Access
 
    Lets a coach (any signed-in account) get edit access to a
    client's Training Plans and Race/Running Plans only -- never

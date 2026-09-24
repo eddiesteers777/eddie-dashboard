@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS — Coach Notes (local read)
+   Southbound — Coach Notes (local read)
 
    Pure localStorage read, deliberately kept free of any Firebase
    import. Cloud sync (js/cloudSync.js + js/coachAccess.js) is what

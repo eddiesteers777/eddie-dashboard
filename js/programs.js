@@ -95,7 +95,7 @@ function renderRaceLibrary() {
         .join('');
 
     if (!programs.length) {
-        container.innerHTML = '<div class="programs-empty">No race plans have been created yet. Start with a race distance and EddieOS will take you into the existing Race Plan Builder.</div>';
+        container.innerHTML = '<div class="programs-empty">No race plans have been created yet. Start with a race distance and Southbound will take you into the existing Race Plan Builder.</div>';
         return;
     }
 
@@ -283,7 +283,7 @@ async function activateTrainingPlan(id) {
     const { generatedPlan, warnings } = result;
     const conflicts = getTrainingPlanConflicts(generatedPlan.trainingStartDate, generatedPlan.raceDate, id);
     if (conflicts.length) {
-        window.alert(`EddieOS cannot activate this training plan yet because it overlaps an existing active plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`);
+        window.alert(`Southbound cannot activate this training plan yet because it overlaps an existing active plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`);
         return;
     }
 
@@ -307,7 +307,7 @@ async function activateTrainingPlan(id) {
         strengthResult = await syncTrainingPlanStrengthSchedule(plan);
     } catch (error) {
         console.error('Training-plan Strength calendar integration failed:', error);
-        window.alert('The training plan was activated, but EddieOS could not update the Strength calendar. Your existing Strength schedule was not deleted.');
+        window.alert('The training plan was activated, but Southbound could not update the Strength calendar. Your existing Strength schedule was not deleted.');
     }
 
     renderTrainingLibrary();

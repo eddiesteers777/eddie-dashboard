@@ -18,12 +18,12 @@
 
 .hero h1{
     font-size:3rem;
-    color:#f8fafc;
+    color:#f2eee4;
     margin-bottom:10px;
 }
 
 .hero p{
-    color:#94a3b8;
+    color:#8e9a89;
     font-size:1.05rem;
 }
 
@@ -39,7 +39,7 @@
 
     align-items:center;
 
-    background:#1e293b;
+    background:#17291f;
 
     border-radius:20px;
 
@@ -69,7 +69,7 @@
 
     border-radius:50%;
 
-    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    background:linear-gradient(135deg,#b89a70,#a68a62);
 
     display:flex;
 
@@ -81,7 +81,7 @@
 
     font-weight:700;
 
-    color:white;
+    color:var(--on-primary);
 
 }
 
@@ -97,7 +97,7 @@
 
 .profile-left p{
 
-    color:#94a3b8;
+    color:#8e9a89;
 
 }
 
@@ -149,7 +149,7 @@
 
     background:var(--primary);
 
-    color:#05131f;
+    color:#0f2019;
 
     font-size:.9rem;
 
@@ -332,7 +332,7 @@ input[type="checkbox"]{
 
     background:var(--primary-dark);
 
-    color:white;
+    color:var(--on-primary);
 
     font-size:1rem;
 

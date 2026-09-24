@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Calendar
+   Southbound Running — Calendar
 
    Reads the marathon plan directly from
    marathonData.js rather than duplicating it.

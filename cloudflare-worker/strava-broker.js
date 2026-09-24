@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Strava token broker (Cloudflare Worker)
+   Southbound Strava token broker (Cloudflare Worker)
 
    The only piece of Strava's OAuth flow that needs a
    client_secret. Everything else -- building the authorize URL,

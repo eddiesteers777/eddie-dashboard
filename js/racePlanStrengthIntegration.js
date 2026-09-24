@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Running — Race Plan → Strength bridge
+   Southbound Running — Race Plan → Strength bridge
 
    Phase 6:
    - schedules generated strength sessions into the

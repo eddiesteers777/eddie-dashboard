@@ -1,5 +1,5 @@
 /* ==========================================
-   EddieOS Nutrition
+   Southbound Nutrition
 ========================================== */
 
 const RACE_DAY = new Date("2026-11-08");
@@ -18,7 +18,7 @@ const macros = {
 
         step:100,
 
-        color:"#4EA8FF"
+        color:"#C9AD84"
 
     },
 
