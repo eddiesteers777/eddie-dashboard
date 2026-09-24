@@ -189,8 +189,8 @@
             Run this <strong>after pushing to GitHub Pages</strong>, not by double-clicking the file on your
             computer — browsers block a local file from fetching its sibling files for security reasons, so
             this only works once it's actually being served from a real address (your GitHub Pages URL, or
-            a local dev server). The file list below is hand-maintained near the top of this file's script —
-            add new pages/files there if you create them, or this can't see them.
+            a local dev server). The list of files it checks comes from <code>site-manifest.json</code>,
+            which is generated from the real files and verified by the automated tests on every push.
         </div>
 
     </div>
@@ -211,34 +211,33 @@
 (function(){
 
     // ==========================================
-    // Site manifest — update when you add pages/files.
-    // (No directory-listing API exists for a static GitHub
-    // Pages site, so this has to be told what to look for.)
+    // Site manifest -- generated from the real files by
+    // scripts/build-manifest.mjs (npm run manifest), and the
+    // automated tests fail if it goes stale, so this list can't
+    // silently drift out of date the way the old hand-typed one did.
     // ==========================================
 
-    const PAGES = [
-        "index.html","marathon.html","fueling.html","cross-training.html",
-        "nutrition.html","75day.html","planner.html","analytics.html",
-        "pace-calculator.html","settings.html"
-    ];
+    let PAGES = [];
+    let OTHER_HTML = [];
+    let JS_FILES = [];
+    let CSS_FILES = [];
+    let ALL_HTML = [];
 
-    const OTHER_HTML = ["components/header.html"];
+    async function loadManifest(){
 
-    const JS_FILES = [
-        "js/app.js","js/auth.js","js/cloudSync.js","js/courseEvents.js",
-        "js/cross-training.js","js/dashboardData.js","js/firebase.js",
-        "js/firestore.js","js/fueling.js","js/loadHeader.js","js/marathon.js",
-        "js/marathonData.js","js/nutrition.js","js/pace-calculator.js",
-        "js/settings.js","js/analytics.js"
-    ];
+        const res = await fetch("site-manifest.json?_=" + Date.now());
 
-    const CSS_FILES = [
-        "css/style.css","css/analytics.css","css/cross-training.css",
-        "css/fueling.css","css/marathon.css","css/nutrition.css",
-        "css/pace-calculator.css","css/settings.css"
-    ];
+        if (!res.ok) throw new Error("site-manifest.json missing (HTTP " + res.status + ")");
 
-    const ALL_HTML = PAGES.concat(OTHER_HTML);
+        const manifest = await res.json();
+
+        PAGES = manifest.pages;
+        OTHER_HTML = manifest.partials;
+        JS_FILES = manifest.scripts;
+        CSS_FILES = manifest.styles;
+        ALL_HTML = PAGES.concat(OTHER_HTML);
+
+    }
 
     // ==========================================
     // Fetch cache (each file is only fetched once per run)
@@ -968,6 +967,22 @@
         summaryEl.innerHTML = "";
 
         cache.clear();
+
+        try {
+
+            await loadManifest();
+
+        } catch (error) {
+
+            resultsEl.innerHTML = '<div class="sc-loading">Couldn’t load the file list: ' + error.message + '</div>';
+
+            btn.disabled = false;
+
+            btn.textContent = "Run Full Check";
+
+            return;
+
+        }
 
         const checks = [
 
