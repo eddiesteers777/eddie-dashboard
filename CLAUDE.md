@@ -81,7 +81,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 - **Firebase** (project `eddie-s-dashboard`): Google sign-in only (`js/auth.js`), Firestore for data (`js/firebase.js`). SDK loads from `gstatic.com`.
 - **Design system:** CSS custom properties in `css/style.css` (dark navy `--bg`, `--surface`, `--primary: #4EA8FF`). Fonts: Inter / Bebas Neue / JetBrains Mono. Reuse the tokens and don't hard-code new colors.
 - **Icons:** `js/icons.js`. Write `<span data-icon="name">` in HTML. Content inserted later needs `import("./icons.js").then(m => m.hydrate())`.
-- **Email:** `js/emailNotify.js` uses EmailJS (client-side). All IDs are still `YOUR_...` placeholders, so emails are skipped silently until Eddie sets up an account. Core flows never depend on email.
+- **Email:** `js/emailNotify.js` uses EmailJS (client-side). The free plan allows only **2 templates**, so everything runs on two: "Coach alert" (recipient fixed to Eddie's address inside EmailJS, never in this repo) for booking requests, applications and check-ins, and "Client update" (`{{to_email}}`) for booking replies and check-in feedback. Both use `{{subject}}`, `{{headline}}`, `{{details}}`, `{{link}}` (+ `{{to_name}}` for clients). Until the IDs are filled in, emails are skipped quietly; core flows never depend on email. Keep EmailJS's allowed-domains list set to `eddiesteers777.github.io` so the public key can't be used elsewhere.
 - **Integrations:** COROS (`js/coros*.js`) and Strava (`js/strava*.js`). The Strava token exchange runs in a Cloudflare Worker (`cloudflare-worker/strava-broker.js`) so the client secret stays out of this public repo.
 
 ### Firestore data model
