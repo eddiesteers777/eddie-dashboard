@@ -10,7 +10,7 @@
    Deploy: see the setup notes at the bottom of this file.
 ========================================== */
 
-const ALLOWED_ORIGIN = "https://eddiesteers777.github.io";
+const ALLOWED_ORIGIN = "https://southboundcoaching.com";
 const STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token";
 
 function corsHeaders() {
@@ -99,5 +99,5 @@ export default {
       your Strava app's Client ID (not the secret) into STRAVA_CLIENT_ID
       in that same file.
    5. In your Strava API app settings, set "Authorization Callback
-      Domain" to eddiesteers777.github.io.
+      Domain" to southboundcoaching.com.
 ========================================== */

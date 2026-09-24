@@ -2,7 +2,7 @@
 
 const MCP_URL = "https://mcpus.coros.com/mcp";
 const CLIENT_ID =
-    "https://eddiesteers777.github.io/eddie-dashboard/oauth/client-metadata.json";
+    "https://southboundcoaching.com/oauth/client-metadata.json";
 
 const TOKEN_KEY = "__eddieos_coros_oauth_v2";
 const PENDING_KEY = "__eddieos_coros_oauth_pending_v2";
@@ -159,7 +159,7 @@ async function startOAuth() {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        client_name: "EddieOS",
+                        client_name: "Southbound Coaching",
                         redirect_uris: [redirectUri()],
                         grant_types: [
                             "authorization_code",

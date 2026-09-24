@@ -9,7 +9,7 @@ import {
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 const CLIENT_ID =
-    "https://eddiesteers777.github.io/eddie-dashboard/oauth/client-metadata.json";
+    "https://southboundcoaching.com/oauth/client-metadata.json";
 const MCP_VERSION = "2026-07-28";
 
 let requestId = 1;

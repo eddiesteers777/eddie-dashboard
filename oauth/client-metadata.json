@@ -1,8 +1,8 @@
 {
-  "client_id": "https://eddiesteers777.github.io/eddie-dashboard/oauth/client-metadata.json",
-  "client_name": "EddieOS",
+  "client_id": "https://southboundcoaching.com/oauth/client-metadata.json",
+  "client_name": "Southbound Coaching",
   "redirect_uris": [
-    "https://eddiesteers777.github.io/eddie-dashboard/analytics.html"
+    "https://southboundcoaching.com/analytics.html"
   ],
   "grant_types": [
     "authorization_code",
