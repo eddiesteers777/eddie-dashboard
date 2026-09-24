@@ -196,3 +196,14 @@ listenForAuth(async user => {
     refreshDashboard();
     loadInquiries();
 });
+
+// An installed app can sit in the background for hours; reload the
+// counts and questions whenever the coach comes back to it, so a
+// question sent in the meantime shows up without a manual refresh.
+function refreshIfShowing() {
+    if (document.visibilityState !== "visible" || dashboardEl.hidden) return;
+    refreshDashboard();
+    loadInquiries();
+}
+document.addEventListener("visibilitychange", refreshIfShowing);
+window.addEventListener("pageshow", event => { if (event.persisted) refreshIfShowing(); });
