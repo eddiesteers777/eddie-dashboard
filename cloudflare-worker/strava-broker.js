@@ -95,8 +95,8 @@ export default {
       (values come from your Strava API app at strava.com/settings/api)
    4. wrangler deploy prints a URL like
       https://eddieos-strava-broker.<your-subdomain>.workers.dev
-      -- paste that into BROKER_URL in js/stravaAuth.js, and put
-      your Strava app's Client ID (not the secret) into CLIENT_ID
+      -- paste that into STRAVA_BROKER_URL in js/stravaConfig.js, and put
+      your Strava app's Client ID (not the secret) into STRAVA_CLIENT_ID
       in that same file.
    5. In your Strava API app settings, set "Authorization Callback
       Domain" to eddiesteers777.github.io.

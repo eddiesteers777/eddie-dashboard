@@ -82,3 +82,43 @@
 .coach-link-card strong{font-size:14.5px;}
 .coach-link-card span{font-size:12.5px;color:var(--text-secondary);}
 .coach-link-chevron{flex-shrink:0;color:var(--muted);}
+
+/* "Still to set up" checklist -- only shown while something needs an
+   outside account (EmailJS, Strava) before it works. */
+.coach-setup{
+    margin-bottom:32px;
+}
+.coach-setup-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+.coach-setup-row{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px 16px;
+}
+.coach-setup-row div{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    min-width:0;
+}
+.coach-setup-row strong{font-size:14.5px;}
+.coach-setup-row span:not(.coach-setup-pill){font-size:13px;color:var(--text-secondary);line-height:1.45;}
+.coach-setup-pill{
+    flex-shrink:0;
+    margin-top:1px;
+    padding:3px 9px;
+    border-radius:999px;
+    background:rgba(245,158,11,.15);
+    color:#F59E0B;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}

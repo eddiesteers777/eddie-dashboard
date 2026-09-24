@@ -89,12 +89,12 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 | Collection | What it holds |
 |---|---|
 | `users/{uid}/sync/localStorage` | Each user's private app data, mirrored from localStorage (`js/cloudSync.js`, last-write-wins per key) |
-| `userProfiles/{uid}` | `role`, `isCoachApproved`, `status` (`pending`/`active`/`archived`), `services[]`, application fields. Users can never change their own `isCoachApproved`/`status`; only an approved coach can. |
-| `inviteCodes/{code}` | One-time codes a client gives a coach |
-| `coachLinks/{coachUid}_{clientUid}` | Proof a client linked a coach. It gates everything below. |
+| `userProfiles/{uid}` | `role`, `isCoachApproved`, `status` (`pending`/`active`/`archived`), `services[]`, application fields. Readable only by the owner and approved coaches. Users may only edit their own application fields; role/status/services/isCoachApproved are coach-only. |
+| `inviteCodes/{code}` | One-time codes a client gives a coach. Never listable; expire after 7 days. |
+| `coachLinks/{coachUid}_{clientUid}` | Proof a client linked a coach. It gates everything below. Only an approved coach can create one, in the same batch that deletes (burns) a valid code from that client (`redeemInviteCode` in `js/coachAccess.js`). |
 | `sharedPlans/{clientUid}` | Mirror of the client's training/race plans + coach notes |
 | `coachAvailability/{coachUid}` | Weekly slots + blackout dates |
-| `bookingRequests/{id}` | Session requests (single or recurring), approved/denied by the coach |
+| `bookingRequests/{id}` | Session requests (single or recurring). Only the coach can approve/deny; the client can only cancel; booking details never change after creation. |
 | `checkins/{clientUid}_{weekOf}` | One weekly check-in per client (rating + notes, then coach feedback) |
 
 Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `strength`, `soccer_1on1`, `soccer_group`.
@@ -113,9 +113,13 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 - **Reload loop:** comparing Firestore data with plain `JSON.stringify` caused an infinite reload (key order changes). Use `stableStringify` in `js/coachAccess.js`.
 - **Guest redirect** only fires when Firebase definitively says "signed out". It never fires on an auth-load error, so offline users aren't kicked out.
 - **Overlays** need `z-index` above the navbar (1000) and search overlay (4500). The plan editor uses 5000.
+- **Cards with `overflow:hidden` inside a scrolling flex column shrink to slivers** (their flex min-height becomes 0). Give them `flex-shrink:0` -- this was the live-workout "things overlap" bug.
+- **Any rules change needs a test.** Add the attack and the legitimate flow to `tests/rules.test.mjs`.
 
 ## Testing
 
+- `npm install` once, then `npm test` runs everything: `npm run test:static` (every script parses, every local link/asset/import exists, public pages have meta descriptions and no placeholder text, `site-manifest.json` is current) and `npm run test:rules` (the Firestore emulator against `firestore.rules`). GitHub Actions (`.github/workflows/ci.yml`) runs both on every push.
+- After adding or removing a page, script or stylesheet, run `npm run manifest` (it feeds `site-check.html` and the static tests).
 - The sandbox can't reach `gstatic.com`, so the real Firebase SDK won't load. Test with Playwright (installed globally at `/opt/node22/lib/node_modules/playwright`, browsers at `/opt/pw-browsers`) by serving the repo with `python3 -m http.server 8934` and mocking `js/auth.js`, `js/firebase.js`, `js/userProfile.js`, `js/cloudSync.js`, etc. via `page.route()`.
 - **Create contexts with `serviceWorkers: "block"`,** or the service worker serves the real modules and bypasses your mocks.
 - Screenshot at desktop (1280px) **and** phone (375–390px) widths, and look at them.
@@ -124,17 +128,18 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 
 ---
 
-## Current status (as of 2026-09-23)
+## Current status (as of 2026-09-24)
 
-Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, coach approval, public site, service-driven nav, coach dashboard, weekly check-ins. After that came the unified Coach nav section and the guest-view redesign (photo-led Home, About, Packages, Get the App in the top nav).
+Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, coach approval, public site, service-driven nav, coach dashboard, weekly check-ins. After that came the unified Coach nav section and the guest-view redesign (photo-led Home, About, Packages, Get the App in the top nav). Then a security review's fixes (rules + atomic invite-code redemption), the live-workout layout fixes on phones, automated tests + CI, and launch polish (meta descriptions, interim bio/pricing copy, setup checklist on the Coach Dashboard).
 
 **Waiting on Eddie:**
 - [ ] **Approve his own account** in Firebase Console → Firestore → `userProfiles` → his doc: `isCoachApproved: true`, `role: "coach"`, `status: "active"`. (In progress at the time of writing. The More page shows "Coach account" once it's done.)
-- [ ] Confirm the latest `firestore.rules` (with the `checkins` section) has been pasted and published.
+- [ ] **Paste the current `firestore.rules` into Firebase Console and Publish.** The security fixes (forged coach links, profile privacy, invite codes, bookings) only protect the live app once this is done.
 - [ ] Upload photos to `images/` (filenames in `images/README.md`).
-- [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly).
-- [ ] Send a short **bio** for `about.html`.
-- [ ] Optional: set up EmailJS and fill in the IDs in `js/emailNotify.js` (booking, application, check-in emails).
+- [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly). Until then each package says "Pricing on request".
+- [ ] Send a short **bio** for `about.html` (background, experience, certifications). It currently has honest interim copy with no specific claims.
+- [ ] Set up EmailJS (IDs in `js/emailNotify.js`) and Strava (`js/stravaConfig.js` + the worker in `cloudflare-worker/`). The Coach Dashboard's "Still to set up" card lists whatever is still off.
+- [ ] Pick a logo from the Southbound Coaching concepts canvas, then do the rebrand (name, logo, colors, app icons).
 
 ## What's next (roadmap)
 

@@ -12,6 +12,31 @@ import { isApprovedCoach, listPendingProfiles } from "./userProfile.js";
 import { listMyClients } from "./coachAccess.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { listCheckinsForMyClients } from "./checkins.js";
+import { getEmailSetupStatus } from "./emailNotify.js";
+import { isStravaConfigured } from "./stravaConfig.js";
+
+// Features that need an outside account before they work. Each one
+// silently does nothing until then, so the dashboard says so.
+function renderSetupChecklist() {
+    const email = getEmailSetupStatus();
+    const items = [
+        { on: email.bookings, name: "Booking emails", detail: "You and your clients aren't emailed about booking requests yet. Needs your EmailJS account keys." },
+        { on: email.applications, name: "Application emails", detail: "You won't get an email when someone applies. Needs an EmailJS template and your email address." },
+        { on: email.checkins, name: "Check-in emails", detail: "Weekly check-ins and your replies aren't emailed yet. Needs two EmailJS templates." },
+        { on: isStravaConfigured(), name: "Strava", detail: "Clients can't connect Strava yet. Needs a Strava API app and the small sign-in service in /cloudflare-worker." }
+    ].filter(item => !item.on);
+
+    document.getElementById("setupCard").hidden = items.length === 0;
+    document.getElementById("setupList").innerHTML = items.map(item => `
+        <div class="coach-setup-row">
+            <span class="coach-setup-pill">Off</span>
+            <div>
+                <strong>${item.name}</strong>
+                <span>${item.detail}</span>
+            </div>
+        </div>
+    `).join("");
+}
 
 const signedOutEl = document.getElementById("coachSignedOut");
 const notApprovedEl = document.getElementById("coachNotApproved");
@@ -65,5 +90,6 @@ listenForAuth(async user => {
     }
 
     dashboardEl.hidden = false;
+    renderSetupChecklist();
     refreshDashboard();
 });

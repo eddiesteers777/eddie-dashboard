@@ -72,6 +72,16 @@ function isApplicationEmailConfigured() {
         && !COACH_NOTIFICATION_EMAIL.startsWith("YOUR_");
 }
 
+// Which email features are live -- shown on the Coach Dashboard so an
+// unconfigured feature is visible instead of silently doing nothing.
+export function getEmailSetupStatus() {
+    return {
+        bookings: isEmailConfigured(),
+        applications: isApplicationEmailConfigured(),
+        checkins: isCheckinSubmittedEmailConfigured() && isCheckinReviewedEmailConfigured()
+    };
+}
+
 let loadPromise = null;
 function loadEmailJs() {
     if (window.emailjs) return Promise.resolve(window.emailjs);

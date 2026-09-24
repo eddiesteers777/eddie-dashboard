@@ -639,3 +639,11 @@ body.pub-body{
     font-size:12.5px;
 }
 .pub-footer a{color:var(--muted);}
+
+/* Shown until real prices are set -- reads as intentional, not blank. */
+.pub-package-price.pub-package-price-tbd{
+    font-family:var(--font-body);
+    font-size:22px;
+    font-weight:700;
+    line-height:1.2;
+}

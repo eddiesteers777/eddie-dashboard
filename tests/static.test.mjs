@@ -81,3 +81,27 @@ test("firestore.rules has no leftover wide-open rules", () => {
     assert.ok(!/allow\s+(read|write|read,\s*write)\s*:\s*if\s+true/.test(rules), "a rule allows everyone");
     assert.ok(!/allow read:\s*if request\.auth != null;/.test(rules), "a rule lets any signed-in user read everything in a collection");
 });
+
+const PUBLIC_PAGES = ["home.html", "about.html", "packages.html", "coaching.html", "soccer.html", "apply.html", "install.html"];
+
+test("public pages have a search description and share preview", () => {
+    for (const page of PUBLIC_PAGES) {
+        const html = read(page);
+        assert.match(html, /<meta name="description" content="[^"]{50,160}">/, `${page} needs a 50-160 character meta description`);
+        assert.match(html, /<meta property="og:title"/, `${page} needs og:title`);
+        assert.match(html, /<meta property="og:image"/, `${page} needs og:image`);
+    }
+});
+
+test("public pages show no leftover placeholder text", () => {
+    for (const page of PUBLIC_PAGES) {
+        // Visible text only: drop comments, scripts and tags first.
+        const text = read(page)
+            .replace(/<!--[\s\S]*?-->/g, "")
+            .replace(/<script[\s\S]*?<\/script>/g, "")
+            .replace(/<[^>]+>/g, " ");
+        for (const marker of ["$—", "[Replace", "[Add ", "lorem ipsum", "[YOUR"]) {
+            assert.ok(!text.includes(marker), `${page} still shows placeholder text "${marker}"`);
+        }
+    }
+});

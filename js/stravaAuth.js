@@ -9,16 +9,16 @@
    never the secret itself.
 ========================================== */
 
+import { STRAVA_CLIENT_ID, STRAVA_BROKER_URL, isStravaConfigured } from "./stravaConfig.js";
+
 const AUTHORIZE_URL = "https://www.strava.com/oauth/authorize";
 const TOKEN_KEY = "__eddieos_strava_oauth_v1";
 const PENDING_KEY = "__eddieos_strava_oauth_pending_v1";
 const SCOPE = "read,activity:read_all";
 
-// Fill these in once you've created a Strava API app
-// (https://www.strava.com/settings/api) and deployed the broker
-// worker in /cloudflare-worker -- see that folder's README.
-const CLIENT_ID = "REPLACE_WITH_STRAVA_CLIENT_ID";
-const BROKER_URL = "REPLACE_WITH_YOUR_WORKER_URL";
+// Client ID and broker URL live in js/stravaConfig.js.
+const CLIENT_ID = STRAVA_CLIENT_ID;
+const BROKER_URL = STRAVA_BROKER_URL;
 
 const $ = id => document.getElementById(id);
 
@@ -62,9 +62,9 @@ function setConnectionStatus(text, connected) {
 }
 
 function startOAuth() {
-    if (CLIENT_ID.startsWith("REPLACE_") || BROKER_URL.startsWith("REPLACE_")) {
+    if (!isStravaConfigured()) {
         throw new Error(
-            "Strava isn't configured yet. Fill in CLIENT_ID and BROKER_URL at the top of js/stravaAuth.js first."
+            "Strava isn't configured yet. Fill in the client ID and broker URL in js/stravaConfig.js first."
         );
     }
 
