@@ -630,6 +630,7 @@ function openWorkoutMode(dayId) {
     }
 
     overlay.classList.add("open");
+    document.documentElement.classList.add("strength-workout-open");
     renderBody();
     updateProgress();
     startTimer();
@@ -645,6 +646,7 @@ function closeWorkoutMode() {
     const overlay = $("strengthWorkoutOverlay");
 
     overlay?.classList.remove("open");
+    document.documentElement.classList.remove("strength-workout-open");
     stopTimer();
     hideRestBar();
     activeDayId = null;
