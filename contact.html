@@ -77,10 +77,13 @@
                     <label class="pub-field-label" for="contactMessage">Your question</label>
                     <textarea id="contactMessage" rows="5" maxlength="2000" placeholder="What are you training for, what days or times work, anything you'd like to know..."></textarea>
 
-                    <!-- Spam trap: hidden from people, filled in by bots. -->
+                    <!-- Spam trap: hidden from people, filled in by bots. Named so
+                         browser autofill and password managers never touch it
+                         (a field called "Company" got autofilled and silently
+                         dropped real questions). -->
                     <div class="pub-trap" aria-hidden="true">
-                        <label for="contactCompany">Company</label>
-                        <input type="text" id="contactCompany" tabindex="-1" autocomplete="off">
+                        <label for="sbLeaveEmpty">Leave this empty</label>
+                        <input type="text" id="sbLeaveEmpty" name="sb_leave_empty" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
                     </div>
 
                     <button type="submit" id="contactSubmitBtn" class="pub-btn-primary" style="width:100%;">Send Question</button>
