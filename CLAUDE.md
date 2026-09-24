@@ -118,6 +118,7 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 - **Overlays** need `z-index` above the navbar (1000) and search overlay (4500). The plan editor uses 5000.
 - **Cards with `overflow:hidden` inside a scrolling flex column shrink to slivers** (their flex min-height becomes 0). Give them `flex-shrink:0` -- this was the live-workout "things overlap" bug.
 - **The domain move changed the origin.** Browser storage (localStorage, the installed app, COROS tokens) is per-origin, so it doesn't carry over from the github.io address; signed-in users get their data back from cloud sync on the new domain. Google sign-in only works on domains listed in Firebase Console → Authentication → Settings → Authorized domains.
+- **Honeypot fields must not look like real fields.** The contact form's hidden spam trap was once labeled "Company"; browser autofill filled it, so real questions were silently dropped while showing "Question sent". Keep it as `sbLeaveEmpty` ("Leave this empty", `autocomplete="off"` + password-manager ignore attributes).
 - **Any rules change needs a test.** Add the attack and the legitimate flow to `tests/rules.test.mjs`.
 
 ## Testing
@@ -137,7 +138,7 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, coach approval, public site, service-driven nav, coach dashboard, weekly check-ins. After that came the unified Coach nav section and the guest-view redesign (photo-led Home, About, Packages, Get the App in the top nav). Then a security review's fixes (rules + atomic invite-code redemption), the live-workout layout fixes on phones, automated tests + CI, and launch polish (meta descriptions, interim bio/pricing copy, setup checklist on the Coach Dashboard). Then the Southbound Coaching rebrand (SB mark traced from Eddie's logo, forest/tan palette, new app icons) and the two-template EmailJS setup.
 
 **Waiting on Eddie:**
-- [ ] **Approve his own account** in Firebase Console → Firestore → `userProfiles` → his doc: `isCoachApproved: true`, `role: "coach"`, `status: "active"`. (In progress at the time of writing. The More page shows "Coach account" once it's done.)
+- [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
 - [x] Firestore rules published (2026-09-24, including `inquiries`). Re-paste the whole file whenever it changes.
 - [ ] Upload photos to `images/` (filenames in `images/README.md`).
 - [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly). Until then each package says "Pricing on request".
