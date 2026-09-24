@@ -49,6 +49,11 @@
 
             <div class="coach-stat-grid">
 
+                <a href="#inquiries" class="coach-stat-card" id="statNewInquiries">
+                    <div class="coach-stat-number" id="statNewInquiriesNum">0</div>
+                    <div class="coach-stat-label">New website questions</div>
+                </a>
+
                 <a href="clients.html?tab=pending" class="coach-stat-card" id="statPendingAccounts">
                     <div class="coach-stat-number" id="statPendingAccountsNum">0</div>
                     <div class="coach-stat-label">Pending accounts</div>
@@ -75,6 +80,14 @@
                 <h2 class="clients-section-title">Still to set up</h2>
                 <div id="setupList" class="coach-setup-list"></div>
             </div>
+
+            <section id="inquiries" class="coach-inquiries">
+                <div class="coach-inq-head">
+                    <h2 class="clients-section-title">Website Questions</h2>
+                    <button type="button" id="inqToggleHandled" class="coach-inq-toggle" hidden>Show answered</button>
+                </div>
+                <div id="inquiryList" class="coach-inq-list"></div>
+            </section>
 
             <h2 class="clients-section-title">Quick Links</h2>
             <div class="coach-links-grid">

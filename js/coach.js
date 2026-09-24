@@ -13,6 +13,109 @@ import { listMyClients } from "./coachAccess.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { listCheckinsForMyClients } from "./checkins.js";
 import { getEmailSetupStatus } from "./emailNotify.js";
+import { listInquiries, setInquiryHandled, interestLabel } from "./inquiries.js";
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// ---- Website questions (from contact.html) ----
+
+const inquiryListEl = document.getElementById("inquiryList");
+const inqToggleBtn = document.getElementById("inqToggleHandled");
+let inquiries = [];
+let inquiriesFailed = false;
+let showHandled = false;
+
+function shortDate(ts) {
+    const d = ts?.toDate ? ts.toDate() : null;
+    return d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+}
+
+function inquiryRow(q) {
+    const handled = q.status === "handled";
+    const phoneDigits = (q.phone || "").replace(/[^\d+]/g, "");
+    const subject = encodeURIComponent("Re: your question to Southbound Coaching");
+    const meta = [
+        q.who === "child" ? `For their child${q.athleteAge ? `, age ${escapeHtml(q.athleteAge)}` : ""}` : "",
+        q.email ? escapeHtml(q.email) : "",
+        q.phone ? escapeHtml(q.phone) : ""
+    ].filter(Boolean).join(" &middot; ");
+    return `
+        <div class="coach-inq-row${handled ? " coach-inq-handled" : ""}">
+            <div class="coach-inq-top">
+                <strong>${escapeHtml(q.name)}</strong>
+                <span class="coach-inq-pill">${escapeHtml(interestLabel(q.interest))}</span>
+                <span class="coach-inq-date">${shortDate(q.createdAt)}</span>
+            </div>
+            ${meta ? `<div class="coach-inq-meta">${meta}</div>` : ""}
+            <p class="coach-inq-message">${escapeHtml(q.message)}</p>
+            <div class="coach-inq-actions">
+                ${q.email ? `<a class="coach-inq-btn" href="mailto:${encodeURIComponent(q.email)}?subject=${subject}">Email</a>` : ""}
+                ${phoneDigits ? `<a class="coach-inq-btn" href="sms:${phoneDigits}">Text</a><a class="coach-inq-btn" href="tel:${phoneDigits}">Call</a>` : ""}
+                <button type="button" class="coach-inq-btn coach-inq-done" data-inq="${escapeHtml(q.id)}" data-handled="${handled ? "1" : ""}">
+                    ${handled ? "Move back to new" : "Mark answered"}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderInquiries() {
+    const fresh = inquiries.filter(q => q.status !== "handled");
+    const answered = inquiries.length - fresh.length;
+
+    statNewInquiriesNum.textContent = fresh.length;
+    statNewInquiries.classList.toggle("coach-stat-attention", fresh.length > 0);
+    statNewInquiries.classList.toggle("coach-stat-neutral", fresh.length === 0);
+
+    inqToggleBtn.hidden = answered === 0;
+    inqToggleBtn.textContent = showHandled ? "Hide answered" : `Show answered (${answered})`;
+
+    if (inquiriesFailed) {
+        inquiryListEl.innerHTML = `<div class="coach-inq-empty">Couldn't load questions. If this keeps happening, make sure the latest Firestore rules are published.</div>`;
+        return;
+    }
+    const shown = showHandled ? inquiries : fresh;
+    inquiryListEl.innerHTML = shown.length
+        ? shown.map(inquiryRow).join("")
+        : `<div class="coach-inq-empty">${inquiries.length ? "You're all caught up." : "No questions yet. They show up here when someone uses the Contact page."}</div>`;
+}
+
+async function loadInquiries() {
+    try {
+        inquiries = await listInquiries();
+        inquiriesFailed = false;
+    } catch (error) {
+        console.warn("Southbound: couldn't load website questions.", error);
+        inquiries = [];
+        inquiriesFailed = true;
+    }
+    renderInquiries();
+}
+
+inqToggleBtn.addEventListener("click", () => {
+    showHandled = !showHandled;
+    renderInquiries();
+});
+
+inquiryListEl.addEventListener("click", async event => {
+    const btn = event.target.closest("[data-inq]");
+    if (!btn) return;
+    btn.disabled = true;
+    const makeHandled = !btn.dataset.handled;
+    try {
+        await setInquiryHandled(btn.dataset.inq, makeHandled);
+        const q = inquiries.find(item => item.id === btn.dataset.inq);
+        if (q) q.status = makeHandled ? "handled" : "new";
+        renderInquiries();
+    } catch (error) {
+        console.error("Couldn't update question:", error);
+        btn.disabled = false;
+    }
+});
 
 // Features that need an outside account before they work. Each one
 // silently does nothing until then, so the dashboard says so.
@@ -46,6 +149,8 @@ const statPendingRequestsNum = document.getElementById("statPendingRequestsNum")
 const statPendingCheckins = document.getElementById("statPendingCheckins");
 const statPendingCheckinsNum = document.getElementById("statPendingCheckinsNum");
 const statActiveClientsNum = document.getElementById("statActiveClientsNum");
+const statNewInquiries = document.getElementById("statNewInquiries");
+const statNewInquiriesNum = document.getElementById("statNewInquiriesNum");
 
 async function refreshDashboard() {
     const [pending, clients, requests, checkins] = await Promise.all([
@@ -89,4 +194,5 @@ listenForAuth(async user => {
     dashboardEl.hidden = false;
     renderSetupChecklist();
     refreshDashboard();
+    loadInquiries();
 });

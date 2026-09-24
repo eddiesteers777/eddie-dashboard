@@ -193,3 +193,50 @@ test("check-ins: the client can't self-review and the coach can't edit the clien
     await assertSucceeds(updateDoc(doc(as("coach"), "checkins/client_2026-09-21"), { status: "reviewed", coachFeedback: "Nice work", reviewedAt: serverTimestamp() }));
     await assertSucceeds(updateDoc(doc(as("client"), "checkins/client_2026-09-21"), { status: "submitted", rating: 3, notes: "tired" }));
 });
+
+// ---- Website questions (public Contact page, no sign-in) ----
+
+const guest = () => env.unauthenticatedContext().firestore();
+
+function inquiry(overrides = {}) {
+    return {
+        name: "Pat Parent", email: "pat@example.com", phone: "", interest: "soccer_1on1",
+        who: "child", athleteAge: "12", message: "Do you train 12 year olds on Saturdays?",
+        status: "new", createdAt: serverTimestamp(), ...overrides
+    };
+}
+
+test("anyone can send a question without signing in, but can't read it back", async () => {
+    await assertSucceeds(setDoc(doc(guest(), "inquiries/q1"), inquiry()));
+    await assertSucceeds(setDoc(doc(guest(), "inquiries/q2"), inquiry({ email: "", phone: "555-0100", who: "self", athleteAge: "" })));
+    await assertFails(getDoc(doc(guest(), "inquiries/q1")));
+    await assertFails(getDocs(collection(guest(), "inquiries")));
+    await assertFails(getDocs(collection(as("client"), "inquiries")));
+});
+
+test("questions must be well-formed: contact info, known values, sane sizes, new status", async () => {
+    await assertFails(setDoc(doc(guest(), "inquiries/bad1"), inquiry({ email: "", phone: "" })));
+    await assertFails(setDoc(doc(guest(), "inquiries/bad2"), inquiry({ email: "not-an-email" })));
+    await assertFails(setDoc(doc(guest(), "inquiries/bad3"), inquiry({ status: "handled" })));
+    await assertFails(setDoc(doc(guest(), "inquiries/bad4"), inquiry({ interest: "free_money" })));
+    await assertFails(setDoc(doc(guest(), "inquiries/bad5"), inquiry({ message: "x".repeat(2001) })));
+    await assertFails(setDoc(doc(guest(), "inquiries/bad6"), inquiry({ name: "" })));
+    await assertFails(setDoc(doc(guest(), "inquiries/bad7"), inquiry({ isCoachApproved: true })));
+    await assertFails(setDoc(doc(guest(), "inquiries/bad8"), inquiry({ createdAt: Timestamp.fromMillis(0) })));
+});
+
+test("a sent question can't be edited or deleted by its sender", async () => {
+    await assertSucceeds(setDoc(doc(guest(), "inquiries/q1"), inquiry()));
+    await assertFails(updateDoc(doc(guest(), "inquiries/q1"), { message: "changed" }));
+    await assertFails(deleteDoc(doc(guest(), "inquiries/q1")));
+    await assertFails(updateDoc(doc(as("client"), "inquiries/q1"), { status: "handled" }));
+});
+
+test("the coach can list questions and mark them handled, but not rewrite them", async () => {
+    await assertSucceeds(setDoc(doc(guest(), "inquiries/q1"), inquiry()));
+    await assertSucceeds(getDocs(collection(as("coach"), "inquiries")));
+    await assertSucceeds(updateDoc(doc(as("coach"), "inquiries/q1"), { status: "handled", handledAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "inquiries/q1"), { status: "new", handledAt: null }));
+    await assertFails(updateDoc(doc(as("coach"), "inquiries/q1"), { message: "rewritten" }));
+    await assertFails(updateDoc(doc(as("coach"), "inquiries/q1"), { status: "deleted" }));
+});

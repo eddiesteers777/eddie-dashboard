@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Contact | Southbound Coaching</title>
+
+    <meta name="description" content="Have a question about coaching or soccer training? Send it here, no account needed, and Eddie will get back to you by email or phone.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Contact | Southbound Coaching">
+    <meta property="og:description" content="Have a question about coaching or soccer training? Send it here, no account needed, and Eddie will get back to you by email or phone.">
+    <meta property="og:url" content="https://southboundcoaching.com/contact.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/icon-512.png">
+    <meta name="twitter:card" content="summary">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page">
+
+        <section class="pub-hero pub-hero-compact">
+            <div class="pub-hero-kicker">Contact</div>
+            <h1>Ask me anything.</h1>
+            <p>No account needed. Send a question about coaching, soccer sessions, or anything else, and I'll get back to you.</p>
+        </section>
+
+        <section class="pub-section" style="border-top:none;padding-top:12px;">
+
+            <div class="pub-apply-card">
+
+                <form id="contactForm" novalidate>
+
+                    <label class="pub-field-label" for="contactName">Your name</label>
+                    <input type="text" id="contactName" class="pub-input" maxlength="100" autocomplete="name" required>
+
+                    <div class="pub-field-row">
+                        <div>
+                            <label class="pub-field-label" for="contactEmail">Email</label>
+                            <input type="email" id="contactEmail" class="pub-input" maxlength="200" autocomplete="email" inputmode="email">
+                        </div>
+                        <div>
+                            <label class="pub-field-label" for="contactPhone">Phone</label>
+                            <input type="tel" id="contactPhone" class="pub-input" maxlength="40" autocomplete="tel" inputmode="tel">
+                        </div>
+                    </div>
+                    <p class="pub-field-hint">Email, phone, or both -- however you'd like me to reach you.</p>
+
+                    <label class="pub-field-label" for="contactInterest">I'm asking about</label>
+                    <select id="contactInterest" class="pub-input"></select>
+
+                    <span class="pub-field-label">Who's training?</span>
+                    <div class="pub-choice-row" role="radiogroup" aria-label="Who's training?">
+                        <label class="pub-service-check"><input type="radio" name="contactWho" value="self" checked><span>Me</span></label>
+                        <label class="pub-service-check"><input type="radio" name="contactWho" value="child"><span>My child</span></label>
+                    </div>
+
+                    <div id="contactAgeWrap" hidden>
+                        <label class="pub-field-label" for="contactAge">Athlete's age</label>
+                        <input type="text" id="contactAge" class="pub-input pub-input-short" maxlength="20" inputmode="numeric">
+                    </div>
+
+                    <label class="pub-field-label" for="contactMessage">Your question</label>
+                    <textarea id="contactMessage" rows="5" maxlength="2000" placeholder="What are you training for, what days or times work, anything you'd like to know..."></textarea>
+
+                    <!-- Spam trap: hidden from people, filled in by bots. -->
+                    <div class="pub-trap" aria-hidden="true">
+                        <label for="contactCompany">Company</label>
+                        <input type="text" id="contactCompany" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <button type="submit" id="contactSubmitBtn" class="pub-btn-primary" style="width:100%;">Send Question</button>
+                    <span id="contactMsg" class="pub-apply-msg" role="status" hidden></span>
+
+                </form>
+
+                <div id="contactSuccess" class="pub-apply-success" hidden>
+                    <div class="pub-card-icon" data-icon="checkCircle" style="margin:0 auto 12px;"></div>
+                    <h3>Question sent</h3>
+                    <p id="contactSuccessText">Thanks -- I'll get back to you soon.</p>
+                    <a href="packages.html" class="pub-btn-secondary" style="margin-top:18px;">See Packages</a>
+                </div>
+
+            </div>
+
+            <p class="pub-contact-alt">Ready to start training? <a href="apply.html">Apply here</a> instead.</p>
+
+        </section>
+
+    </main>
+
+    <footer class="pub-footer">
+        <p>&copy; 2026 Southbound &middot; <a href="home.html">Home</a> &middot; <a href="packages.html">Packages</a> &middot; <a href="apply.html">Apply</a></p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/loadPublicHeader.js"></script>
+    <script type="module" src="js/contact.js"></script>
+
+</body>
+
+</html>

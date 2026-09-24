@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// EddieOS Firestore Security Rules
+// Southbound Coaching Firestore Security Rules
 //
 // This file is not auto-deployed by this repo. Paste the WHOLE file into
 // Firebase Console -> Firestore Database -> Rules -> Publish whenever it
@@ -30,6 +30,9 @@ rules_version = '2';
 //                              the booking details themselves never change.
 //   checkins/{client}_{week}   Weekly check-ins; the client writes the
 //                              rating/notes, the coach writes feedback.
+//   inquiries/{id}             Questions from the public Contact page.
+//                              Anyone can send one (strictly validated);
+//                              only approved coaches can read them.
 //
 // The very first coach is bootstrapped by hand in the Firebase Console
 // (isCoachApproved: true on their own userProfiles doc), since no
@@ -169,6 +172,36 @@ service cloud.firestore {
       );
 
       allow delete: if false;
+    }
+
+    // Questions from the public Contact page. Anyone may send one
+    // (no sign-in), so every field is checked; only approved coaches
+    // can read them, and the coach can only mark them handled.
+    function validInquiry(d) {
+      return d.keys().hasOnly(["name", "email", "phone", "interest", "who",
+                               "athleteAge", "message", "status", "createdAt"])
+        && d.keys().hasAll(["name", "email", "phone", "interest", "who",
+                            "athleteAge", "message", "status", "createdAt"])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && d.email is string && d.email.size() <= 200
+        && (d.email.size() == 0 || d.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'))
+        && d.phone is string && d.phone.size() <= 40
+        && (d.email.size() > 0 || d.phone.size() > 0)
+        && d.interest in ["online_coaching", "running_strength", "soccer_1on1", "soccer_group", "other"]
+        && d.who in ["self", "child"]
+        && d.athleteAge is string && d.athleteAge.size() <= 20
+        && d.message is string && d.message.size() > 0 && d.message.size() <= 2000
+        && d.status == "new"
+        && d.createdAt == request.time;
+    }
+
+    match /inquiries/{inquiryId} {
+      allow create: if validInquiry(request.resource.data);
+      allow read: if isApprovedCoach();
+      allow update: if isApprovedCoach()
+        && request.resource.data.status in ["new", "handled"]
+        && onlyChanges(["status", "handledAt"]);
+      allow delete: if isApprovedCoach();
     }
 
     match /checkins/{checkinId} {

@@ -9,8 +9,8 @@
 
    1. "Coach alert" -- the recipient is fixed to Eddie's own address
       INSIDE EmailJS (never in this public repo), so these can only
-      ever reach him. Used for booking requests, new applications and
-      submitted check-ins.
+      ever reach him. Used for booking requests, new applications,
+      website questions and submitted check-ins.
    2. "Client update" -- sent to the client ({{to_email}}). Used for
       booking approvals/denials and check-in feedback.
 
@@ -142,6 +142,21 @@ export function sendApplicationEmail({ applicantName, applicantEmail, requestedS
             message ? `Message: ${message}` : ""
         ),
         page: "clients.html?tab=pending"
+    });
+}
+
+export function sendInquiryEmail({ name, email, phone, interest, who, athleteAge, message }) {
+    return coachAlert({
+        subject: `New question from ${name || "the website"}`,
+        headline: `${name || "Someone"} sent a question through the website.`,
+        details: lines(
+            `About: ${interest}`,
+            who === "child" ? `For their child${athleteAge ? ` (age ${athleteAge})` : ""}` : "",
+            email ? `Email: ${email}` : "",
+            phone ? `Phone: ${phone}` : "",
+            `Message: ${message}`
+        ),
+        page: "coach.html#inquiries"
     });
 }
 

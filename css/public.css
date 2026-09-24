@@ -108,7 +108,15 @@ body.pub-body{
     /* The logo already links home -- dropping the separate link is
        what lets the rest fit on one row at phone widths. */
     .pub-nav-link[data-page="home.html"]{display:none;}
+    /* "Get the App" -> "App" so Contact fits on the same row. */
+    .pub-nav-long{display:none;}
     .pub-nav-link{padding:7px 10px;font-size:13px;}
+}
+
+@media(max-width:400px){
+    .pub-nav-links{gap:0;}
+    .pub-nav-link{padding:7px 8px;font-size:12.5px;}
+    .pub-nav-link.pub-nav-app{gap:4px;}
 }
 
 /* ---- Page shell ---- */
@@ -123,6 +131,9 @@ body.pub-body{
     text-align:center;
     padding:64px 0 48px;
 }
+/* Form pages: the form is the point, so keep it close to the heading. */
+.pub-hero.pub-hero-compact{padding-bottom:8px;margin-bottom:0;}
+.pub-hero.pub-hero-compact p{margin-bottom:0;}
 .pub-hero-kicker{
     color:var(--primary);
     font-size:12px;
@@ -635,8 +646,69 @@ body.pub-body{
 .pub-apply-success h3{font-size:20px;margin:14px 0 8px;}
 .pub-apply-success p{color:var(--text-secondary);font-size:14.5px;line-height:1.6;}
 
+/* ---- Contact form (reuses the Apply card) ---- */
+
+.pub-input{
+    display:block;
+    width:100%;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    padding:11px 14px;
+    font:14px/1.4 var(--font-body);
+    margin-bottom:20px;
+}
+.pub-input:focus,
+.pub-apply-card textarea:focus{outline:none;border-color:var(--primary);}
+.pub-input-short{max-width:140px;}
+select.pub-input{appearance:auto;}
+.pub-apply-card input[type=radio],
+.pub-apply-card input[type=checkbox]{accent-color:var(--primary);}
+.pub-field-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+.pub-field-row .pub-input{margin-bottom:6px;}
+.pub-field-hint{
+    color:var(--muted);
+    font-size:12.5px;
+    margin:0 0 20px;
+}
+.pub-choice-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:20px;
+}
+.pub-choice-row .pub-service-check{padding:10px 16px;}
+.pub-trap{
+    position:absolute;
+    left:-9999px;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+}
+.pub-contact-alt{
+    text-align:center;
+    color:var(--text-secondary);
+    font-size:14px;
+    margin:22px 0 0;
+}
+.pub-contact-alt a,
+.pub-apply-alt a{color:var(--primary);font-weight:700;}
+.pub-apply-signedout .pub-apply-alt{margin:20px 0 0;font-size:13.5px;}
+.pub-cta-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:10px;
+}
+
 @media(max-width:520px){
     .pub-service-grid{grid-template-columns:1fr;}
+    .pub-field-row{grid-template-columns:1fr;gap:0;}
     .pub-apply-card{padding:24px 20px;}
 }
 

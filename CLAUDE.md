@@ -26,7 +26,7 @@ Southbound Coaching (formerly "EddieOS") is Eddie Steers' coaching business plat
 
 | Who | What they see | How it's decided |
 |---|---|---|
-| **Guest** (signed out) | Public site only: Home, About, Packages, Get the App, Apply | `js/loadHeader.js` sends signed-out visitors on any app page to `home.html` |
+| **Guest** (signed out) | Public site only: Home, About, Packages, Contact, Get the App, Apply | `js/loadHeader.js` sends signed-out visitors on any app page to `home.html` |
 | **Client** (approved, `status: "active"`) | The app, filtered to the services Eddie granted them | `services[]` on their profile, read by `js/navAccess.js` |
 | **Coach / admin** (`isCoachApproved: true`) | Everything, plus the Coach section | Eddie's own account. Approved coaches can approve anyone. |
 
@@ -45,6 +45,7 @@ A new sign-in starts as a **pending client** with no services, so it sees almost
 | `packages.html` | Online Coaching / 1-on-1 Soccer / Group Soccer packages (prices are still `$—`) |
 | `coaching.html`, `soccer.html` | Offering detail pages (linked from Home cards and footers, not the top nav) |
 | `apply.html` | Intake form (requires Google sign-in). Writes the request onto the applicant's pending profile. |
+| `contact.html` | "Ask a question" form, **no sign-in**: name, email and/or phone, topic, who's training (+ athlete age), message. Saves to `inquiries` and emails a coach alert. `?about=soccer_group` etc. preselects the topic. Every page's CTA band has an "Ask a Question" button next to Apply. |
 | `install.html` | "Get the App" install instructions (own standalone header) |
 
 Photos live in `images/`. `images/README.md` lists the exact filenames. A missing photo shows a styled placeholder (the `<img onerror="this.remove()">` + `.pub-photo-fallback` pattern).
@@ -64,7 +65,7 @@ Photos live in `images/`. `images/README.md` lists the exact filenames. A missin
 
 | Page | Purpose |
 |---|---|
-| `coach.html` | Dashboard: pending accounts, booking requests, check-ins to review, active clients |
+| `coach.html` | Dashboard: new website questions (with Email/Text/Call and Mark answered), pending accounts, booking requests, check-ins to review, active clients. `coach.html#inquiries` jumps to the questions. |
 | `clients.html` | Tabs: *Coach a Client* (plan editor), *Share My Plans* (invite codes), *Pending* (approve/deny signups, make coach) |
 | `checkin.html` | *Review Check-ins* tab (coaches land here by default) |
 | `schedule.html` | Availability, blackout dates, approve/deny booking requests |
@@ -97,6 +98,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 | `coachAvailability/{coachUid}` | Weekly slots + blackout dates |
 | `bookingRequests/{id}` | Session requests (single or recurring). Only the coach can approve/deny; the client can only cancel; booking details never change after creation. |
 | `checkins/{clientUid}_{weekOf}` | One weekly check-in per client (rating + notes, then coach feedback) |
+| `inquiries/{id}` | Questions from `contact.html`. **Anyone can create one without signing in**, so the rules validate every field (known keys, sizes, email format, an email or a phone, `status: "new"`, server timestamp). Only approved coaches can read them; the coach can only flip `status` new/handled. A hidden honeypot field in the form drops obvious bots. If spam ever becomes a problem, add Firebase App Check. |
 
 Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `strength`, `soccer_1on1`, `soccer_group`.
 
@@ -145,7 +147,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 ## What's next (roadmap)
 
 8. **Training ↔ fueling connection.** Read `js/fueling.js` and `js/nutrition.js` data shapes first, then design per-day fueling targets (pre/during/post) from each training day's type and duration.
-9. **Booking refinements:** location, session length, a public request path.
+9. **Booking refinements:** location, session length. (The public question path is done: `contact.html`.)
 10. **Business tools:** payments, packages checkout.
 
 The brand is Southbound Coaching (decided 2026-09-24 from Eddie's brand board: SB speed monogram, forest green / sage / tan / stone / cream).

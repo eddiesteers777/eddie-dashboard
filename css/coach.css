@@ -122,3 +122,102 @@
     text-transform:uppercase;
     letter-spacing:.04em;
 }
+
+/* ---- Website questions (from contact.html) ---- */
+
+.coach-inquiries{
+    margin-bottom:32px;
+    scroll-margin-top:90px;
+}
+.coach-inq-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+}
+.coach-inq-head .clients-section-title{margin:0;}
+.coach-inq-toggle{
+    appearance:none;
+    background:none;
+    border:0;
+    color:var(--primary);
+    font:700 13px/1 var(--font-body);
+    cursor:pointer;
+    padding:6px 0;
+}
+.coach-inq-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.coach-inq-row{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 18px;
+    flex-shrink:0;
+}
+.coach-inq-row.coach-inq-handled{opacity:.6;}
+.coach-inq-top{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px 10px;
+}
+.coach-inq-top strong{font-size:15px;}
+.coach-inq-pill{
+    padding:3px 9px;
+    border-radius:999px;
+    background:rgba(201,173,132,.15);
+    color:var(--primary);
+    font-size:11.5px;
+    font-weight:700;
+}
+.coach-inq-date{
+    margin-left:auto;
+    color:var(--muted);
+    font-size:12.5px;
+}
+.coach-inq-meta{
+    margin-top:6px;
+    color:var(--text-secondary);
+    font-size:13px;
+    overflow-wrap:anywhere;
+}
+.coach-inq-message{
+    margin:10px 0 14px;
+    font-size:14px;
+    line-height:1.55;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+}
+.coach-inq-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+.coach-inq-btn{
+    appearance:none;
+    display:inline-flex;
+    align-items:center;
+    padding:8px 14px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    color:var(--text);
+    font:700 13px/1 var(--font-body);
+    text-decoration:none;
+    cursor:pointer;
+}
+.coach-inq-btn:hover{border-color:var(--primary);}
+.coach-inq-done{margin-left:auto;}
+.coach-inq-empty{
+    background:var(--surface);
+    border:1px dashed var(--border);
+    border-radius:14px;
+    padding:18px;
+    color:var(--text-secondary);
+    font-size:14px;
+    text-align:center;
+}
