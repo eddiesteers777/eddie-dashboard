@@ -503,3 +503,89 @@
     .clients-day-miles{grid-area:miles;}
     .clients-day-session{grid-area:session;}
 }
+
+/* ---- Client list: search, filters, rows that open the Client Hub ---- */
+
+.clients-search{
+    width:100%;
+    margin:0 0 10px;
+    padding:11px 14px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    font:14px var(--font-body);
+}
+.clients-search:focus{ outline:none; border-color:var(--primary); }
+
+.clients-filters{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    margin-bottom:12px;
+    scrollbar-width:none;
+}
+.clients-filters::-webkit-scrollbar{ display:none; }
+.clients-filter{
+    flex-shrink:0;
+    min-height:36px;
+    padding:0 14px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:transparent;
+    color:var(--text-secondary);
+    font:600 13px/1 var(--font-body);
+    cursor:pointer;
+    white-space:nowrap;
+}
+.clients-filter.active{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.clients-filter-count{ opacity:.7; margin-left:3px; }
+
+.clients-client-row{ padding:0 10px 0 0; }
+.clients-client-link{
+    flex:1;
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 4px 12px 14px;
+    color:inherit;
+    text-decoration:none;
+}
+.clients-client-link .clients-row-info{ flex:1; min-width:0; }
+.clients-client-meta{ color:var(--muted); font-size:12.5px; }
+.clients-client-chevron{ color:var(--muted); flex-shrink:0; }
+.clients-client-row:hover{ border-color:rgba(201,173,132,.35); }
+.clients-attn-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:20px;
+    height:20px;
+    padding:0 6px;
+    margin-left:6px;
+    border-radius:999px;
+    background:#EF4444;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    vertical-align:2px;
+}
+
+/* ---- Inline plan editor (js/planEditor.js) ---- */
+
+.clients-plan-name{ margin:0 0 10px; font-size:17px; }
+.clients-week.is-current{ border-color:var(--primary); box-shadow:0 0 0 1px var(--primary) inset; }
+.clients-week-head{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.clients-week-now{
+    padding:2px 8px;
+    border-radius:999px;
+    background:var(--primary);
+    color:var(--on-primary);
+    font-size:11px;
+    font-weight:700;
+}
+.clients-week-done{ margin-left:auto; color:var(--muted); font-size:12px; font-weight:600; }
+.clients-day-row.is-done .clients-day-label{ color:var(--green); }
+.clients-day-check{ font-weight:700; }

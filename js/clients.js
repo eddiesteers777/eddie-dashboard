@@ -13,15 +13,14 @@ import { listenForAuth } from "./auth.js";
 import { cachedRole } from "./role.js";
 import {
     createInviteCode, redeemInviteCode, linkApplicant,
-    listMyClients, listMyCoaches, removeLink,
-    readSharedPlanDoc, saveClientPlanList, addPlanNote
+    listMyCoaches, removeLink
 } from "./coachAccess.js";
+import { loadClientDirectory } from "./clientDirectory.js";
+import { summarizeClient, serviceLabels, isoDate, shortDate } from "./clientSummary.js";
 import {
     SERVICES, isApprovedCoach, listPendingProfiles,
     approveClient, denyProfile, promoteToCoach
 } from "./userProfile.js";
-
-const DAY_TYPES = ["rest", "easy", "long", "workout", "race", "cross", "strength"];
 
 const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
@@ -47,16 +46,6 @@ function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-function formatRelativeTime(ts) {
-    if (!ts) return "";
-    const diffMin = Math.round((Date.now() - ts) / 60000);
-    if (diffMin < 1) return "just now";
-    if (diffMin < 60) return `${diffMin}m ago`;
-    const diffHr = Math.round(diffMin / 60);
-    if (diffHr < 24) return `${diffHr}h ago`;
-    return `${Math.round(diffHr / 24)}d ago`;
-}
-
 // ---- Coach panel: redeem + client list ----
 
 const redeemForm = document.getElementById("redeemForm");
@@ -72,36 +61,108 @@ function showMsg(el, text, isError = false) {
     el.hidden = false;
 }
 
-async function refreshClients() {
-    const clients = await listMyClients();
-    clientsList.innerHTML = "";
-    clientsEmptyMsg.hidden = clients.length > 0;
+// Each linked client as one row: who they are, their plan week, next
+// session, check-in status and anything that needs attention. The row
+// opens their Client Hub (client.html). Data comes from
+// js/clientDirectory.js, summaries from js/clientSummary.js.
+let clientRows = [];
+let clientFilter = "all";
+const clientSearch = document.getElementById("clientSearch");
+const clientFilters = document.getElementById("clientFilters");
 
-    for (const client of clients) {
+const FILTERS = {
+    all: () => true,
+    attention: c => c.attention.length > 0,
+    running: c => c.services.includes("running"),
+    strength: c => c.services.includes("strength"),
+    soccer: c => c.services.some(s => s.startsWith("soccer")),
+    online: c => c.services.includes("online_coaching")
+};
+
+function planLine(c) {
+    const p = c.plans.primary;
+    if (!p) return "No active plan";
+    if (p.state === "upcoming") return `${p.name} · starts ${shortDate(p.startDate)}`;
+    if (p.state === "finished") return `${p.name} · finished`;
+    return `${p.name} · Week ${p.weekNumber} of ${p.totalWeeks}`;
+}
+
+function sessionLine(c) {
+    const next = c.sessions.upcoming[0];
+    return next ? `Next session ${shortDate(next.date)}` : "";
+}
+
+function checkinLine(c) {
+    const latest = c.checkins.latest;
+    if (!latest) return "";
+    return latest.status === "submitted" ? "Check-in needs reply" : `Check-in ${shortDate(latest.weekOf)} reviewed`;
+}
+
+function renderClientRows() {
+    const q = (clientSearch.value || "").trim().toLowerCase();
+    const shown = clientRows
+        .filter(FILTERS[clientFilter] || FILTERS.all)
+        .filter(c => !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+
+    clientsEmptyMsg.hidden = clientRows.length > 0;
+    clientsList.innerHTML = shown.length || !clientRows.length ? "" :
+        `<p class="clients-card-note">No clients match.</p>`;
+
+    for (const c of shown) {
         const row = document.createElement("div");
-        row.className = "clients-row";
+        row.className = "clients-row clients-client-row";
+        const meta = [planLine(c), sessionLine(c), checkinLine(c)].filter(Boolean);
         row.innerHTML = `
-            <div class="clients-row-avatar">${escapeHtml((client.clientName || "?").slice(0, 1).toUpperCase())}</div>
-            <div class="clients-row-info">
-                <strong>${escapeHtml(client.clientName || "Client")}</strong>
-                <span>${escapeHtml(client.clientEmail || "")}</span>
-            </div>
-            <button type="button" class="clients-btn-secondary" data-action="view">View &amp; Edit</button>
+            <a class="clients-client-link" href="client.html?uid=${encodeURIComponent(c.uid)}">
+                <div class="clients-row-avatar">${escapeHtml((c.name || "?").slice(0, 1).toUpperCase())}</div>
+                <div class="clients-row-info">
+                    <strong>${escapeHtml(c.name)}${c.attention.length ? ` <span class="clients-attn-badge" title="Needs attention">${c.attention.length}</span>` : ""}</strong>
+                    <span>${escapeHtml(serviceLabels(c.services).join(" · ") || c.email)}</span>
+                    <span class="clients-client-meta">${meta.map(escapeHtml).join(" &middot; ")}</span>
+                </div>
+                <span class="clients-client-chevron" data-icon="chevronRight"></span>
+            </a>
             <button type="button" class="clients-btn-icon" data-action="remove" aria-label="Remove client">
                 <span data-icon="trash"></span>
             </button>
         `;
-        row.querySelector('[data-action="view"]').addEventListener("click", () => openEditor(client));
         row.querySelector('[data-action="remove"]').addEventListener("click", async () => {
-            if (!window.confirm(`Remove access to ${client.clientName || "this client"}'s plans?`)) return;
-            await removeLink(client.id);
+            if (!window.confirm(`Remove ${c.name}? You'll lose access to their plans, check-ins and sessions until they send you a new code.`)) return;
+            await removeLink(c.linkId);
             refreshClients();
         });
         clientsList.appendChild(row);
     }
 
-    await import("./icons.js").then(m => m.hydrate());
+    clientFilters.querySelectorAll("[data-filter]").forEach(btn => {
+        const count = clientRows.filter(FILTERS[btn.dataset.filter]).length;
+        btn.querySelector(".clients-filter-count").textContent = count;
+        btn.classList.toggle("active", btn.dataset.filter === clientFilter);
+    });
+
+    import("./icons.js").then(m => m.hydrate());
 }
+
+async function refreshClients() {
+    clientsList.innerHTML = `<p class="clients-card-note">Loading clients…</p>`;
+    const today = isoDate(new Date());
+    const records = await loadClientDirectory().catch(error => {
+        console.error("Loading clients failed:", error);
+        return [];
+    });
+    clientRows = records
+        .map(r => ({ ...summarizeClient(r, today), linkId: r.link.id }))
+        .sort((a, b) => (b.attention.length > 0) - (a.attention.length > 0) || a.name.localeCompare(b.name));
+    renderClientRows();
+}
+
+clientSearch.addEventListener("input", renderClientRows);
+clientFilters.addEventListener("click", event => {
+    const btn = event.target.closest("[data-filter]");
+    if (!btn) return;
+    clientFilter = btn.dataset.filter;
+    renderClientRows();
+});
 
 redeemForm.addEventListener("submit", async event => {
     event.preventDefault();
@@ -198,189 +259,6 @@ async function refreshCoaches() {
 
     await import("./icons.js").then(m => m.hydrate());
 }
-
-// ---- Plan editor ----
-
-const overlay = document.getElementById("planEditorOverlay");
-const editorClientName = document.getElementById("editorClientName");
-const editorPlanName = document.getElementById("editorPlanName");
-const editorNoPlans = document.getElementById("editorNoPlans");
-const editorPlanTabs = document.getElementById("editorPlanTabs");
-const editorWeeks = document.getElementById("editorWeeks");
-const editorNotesList = document.getElementById("editorNotesList");
-const editorNoteForm = document.getElementById("editorNoteForm");
-const editorNoteInput = document.getElementById("editorNoteInput");
-const editorSaveBtn = document.getElementById("editorSaveBtn");
-const editorSaveMsg = document.getElementById("editorSaveMsg");
-const editorCloseBtn = document.getElementById("editorCloseBtn");
-
-let editorState = null; // { clientUid, clientName, plans: [{planType, index, program}], activeKey }
-
-function planKey(planType, index) { return `${planType}:${index}`; }
-
-async function openEditor(client) {
-    editorState = { clientUid: client.clientUid, clientName: client.clientName || "Client", plans: [], activeKey: null };
-    editorClientName.textContent = client.clientName || "Client";
-    editorPlanName.textContent = "Loading…";
-    editorNoPlans.hidden = true;
-    editorPlanTabs.innerHTML = "";
-    editorWeeks.innerHTML = "";
-    editorNotesList.innerHTML = "";
-    editorSaveMsg.hidden = true;
-    overlay.hidden = false;
-
-    const shared = await readSharedPlanDoc(client.clientUid);
-    editorState.shared = shared || {};
-    const training = (shared?.trainingPrograms || []).map((program, index) => ({ planType: "training", index, program }));
-    const running = (shared?.runningPrograms || []).map((program, index) => ({ planType: "running", index, program }));
-    editorState.plans = [...running, ...training];
-
-    if (!editorState.plans.length) {
-        editorPlanName.textContent = "No plans";
-        editorNoPlans.hidden = false;
-        return;
-    }
-
-    editorPlanTabs.innerHTML = "";
-    editorState.plans.forEach(entry => {
-        const key = planKey(entry.planType, entry.index);
-        const tab = document.createElement("button");
-        tab.type = "button";
-        tab.className = "clients-plan-tab";
-        tab.dataset.key = key;
-        tab.textContent = entry.program.name || (entry.planType === "training" ? "Training Plan" : "Race Plan");
-        tab.addEventListener("click", () => selectPlan(key));
-        editorPlanTabs.appendChild(tab);
-    });
-
-    selectPlan(planKey(editorState.plans[0].planType, editorState.plans[0].index));
-}
-
-function currentEntry() {
-    if (!editorState) return null;
-    return editorState.plans.find(entry => planKey(entry.planType, entry.index) === editorState.activeKey) || null;
-}
-
-function selectPlan(key) {
-    editorState.activeKey = key;
-    document.querySelectorAll(".clients-plan-tab").forEach(tab => tab.classList.toggle("active", tab.dataset.key === key));
-
-    const entry = currentEntry();
-    if (!entry) return;
-    editorPlanName.textContent = entry.program.name || "Plan";
-    renderWeeks(entry);
-    renderNotes(entry);
-}
-
-function renderWeeks(entry) {
-    const weeks = entry.program?.generatedPlan?.weeks || [];
-    editorWeeks.innerHTML = "";
-
-    if (!weeks.length) {
-        editorWeeks.innerHTML = `<p class="clients-card-note">This plan hasn't been generated yet.</p>`;
-        return;
-    }
-
-    weeks.forEach((week, weekIndex) => {
-        const block = document.createElement("div");
-        block.className = "clients-week";
-        block.innerHTML = `<div class="clients-week-head">Week ${week.week ?? weekIndex + 1}${week.phase ? ` &middot; ${escapeHtml(week.phase)}` : ""}</div>`;
-
-        const daysWrap = document.createElement("div");
-        daysWrap.className = "clients-days";
-
-        (week.days || []).forEach((day, dayIndex) => {
-            const row = document.createElement("div");
-            row.className = "clients-day-row";
-            row.innerHTML = `
-                <span class="clients-day-label">${escapeHtml(day.day || day.date || "")}</span>
-                <select data-field="type" class="clients-day-type"></select>
-                <input type="number" step="0.1" min="0" data-field="miles" class="clients-day-miles" value="${Number(day.miles) || 0}">
-                <input type="text" data-field="session" class="clients-day-session" value="${escapeHtml(day.session || "")}" placeholder="Session notes">
-            `;
-
-            const select = row.querySelector("select");
-            DAY_TYPES.forEach(type => {
-                const option = document.createElement("option");
-                option.value = type;
-                option.textContent = type[0].toUpperCase() + type.slice(1);
-                if (type === day.type) option.selected = true;
-                select.appendChild(option);
-            });
-            if (!DAY_TYPES.includes(day.type)) {
-                const option = document.createElement("option");
-                option.value = day.type || "easy";
-                option.textContent = day.type || "Easy";
-                option.selected = true;
-                select.prepend(option);
-            }
-
-            select.addEventListener("change", () => { day.type = select.value; });
-            row.querySelector('[data-field="miles"]').addEventListener("input", e => { day.miles = Number(e.target.value) || 0; });
-            row.querySelector('[data-field="session"]').addEventListener("input", e => { day.session = e.target.value; });
-
-            daysWrap.appendChild(row);
-        });
-
-        block.appendChild(daysWrap);
-        editorWeeks.appendChild(block);
-    });
-}
-
-function renderNotes(entry) {
-    const field = entry.planType === "training" ? "trainingPrograms" : "runningPrograms";
-    const notes = editorState.shared?.notes?.[field]?.[entry.program.id] || [];
-    editorNotesList.innerHTML = notes.length
-        ? notes.map(note => `
-            <div class="clients-note">
-                <span class="clients-note-author">${escapeHtml(note.author || "Coach")}</span>
-                <span class="clients-note-time">${escapeHtml(formatRelativeTime(note.at))}</span>
-                <p>${escapeHtml(note.text)}</p>
-            </div>
-        `).join("")
-        : `<p class="clients-card-note">No notes yet.</p>`;
-}
-
-editorNoteForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    const entry = currentEntry();
-    if (!entry || !editorNoteInput.value.trim()) return;
-
-    const submitBtn = editorNoteForm.querySelector("button");
-    submitBtn.disabled = true;
-    try {
-        await addPlanNote(editorState.clientUid, entry.planType, entry.program.id, editorNoteInput.value);
-        editorState.shared = await readSharedPlanDoc(editorState.clientUid) || editorState.shared;
-        editorNoteInput.value = "";
-        renderNotes(entry);
-    } catch (error) {
-        console.error("Posting note failed:", error);
-    } finally {
-        submitBtn.disabled = false;
-    }
-});
-
-editorSaveBtn.addEventListener("click", async () => {
-    if (!editorState) return;
-    editorSaveBtn.disabled = true;
-    editorSaveMsg.hidden = true;
-
-    try {
-        const trainingPrograms = editorState.plans.filter(e => e.planType === "training").map(e => e.program);
-        const runningPrograms = editorState.plans.filter(e => e.planType === "running").map(e => e.program);
-        if (trainingPrograms.length) await saveClientPlanList(editorState.clientUid, "training", trainingPrograms);
-        if (runningPrograms.length) await saveClientPlanList(editorState.clientUid, "running", runningPrograms);
-        showMsg(editorSaveMsg, "Saved -- your client will see this next time their app syncs.");
-    } catch (error) {
-        console.error("Saving client plan failed:", error);
-        showMsg(editorSaveMsg, "Couldn't save. Try again.", true);
-    } finally {
-        editorSaveBtn.disabled = false;
-    }
-});
-
-editorCloseBtn.addEventListener("click", () => { overlay.hidden = true; editorState = null; });
-overlay.addEventListener("click", event => { if (event.target === overlay) { overlay.hidden = true; editorState = null; } });
 
 // ---- Pending accounts (coach-only) ----
 // The tab itself stays hidden for everyone except an approved coach

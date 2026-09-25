@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Client | Southbound</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/client-hub.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page hub-page">
+
+        <a href="clients.html" class="hub-back"><span data-icon="chevronLeft"></span> My Clients</a>
+
+        <p id="hubLoading" class="clients-card-note">Loading client…</p>
+
+        <div id="hubMissing" class="clients-empty" hidden>
+            <span data-icon="users"></span>
+            <p>This client isn't connected to your account (or the link is out of date).</p>
+            <a href="clients.html" class="clients-btn-primary">Back to My Clients</a>
+        </div>
+
+        <div id="hubBody" hidden>
+
+            <!-- Header -->
+            <section class="hub-header">
+                <div class="hub-avatar" id="hubAvatar"></div>
+                <div class="hub-identity">
+                    <h1 id="hubName"></h1>
+                    <div class="hub-services" id="hubServices"></div>
+                    <div class="hub-since" id="hubSince"></div>
+                </div>
+                <a class="clients-btn-secondary hub-email" id="hubEmail" hidden><span data-icon="mail"></span> Email</a>
+            </section>
+
+            <!-- At a glance -->
+            <section class="hub-glance" id="hubGlance"></section>
+
+            <nav class="clients-tabs hub-tabs" role="tablist">
+                <button type="button" class="clients-tab active" data-tab="overview" role="tab">Overview</button>
+                <button type="button" class="clients-tab" data-tab="plan" role="tab">Plan</button>
+                <button type="button" class="clients-tab" data-tab="checkins" role="tab">Check-ins <span id="hubCheckinBadge" class="clients-tab-badge" hidden></span></button>
+                <button type="button" class="clients-tab" data-tab="sessions" role="tab">Sessions <span id="hubSessionBadge" class="clients-tab-badge" hidden></span></button>
+            </nav>
+
+            <section class="clients-panel" data-panel="overview">
+                <div id="hubAttention"></div>
+                <div class="hub-grid">
+                    <div class="clients-card">
+                        <h2>What's next</h2>
+                        <div id="hubNext" class="hub-list"></div>
+                    </div>
+                    <div class="clients-card">
+                        <h2>Recent activity</h2>
+                        <div id="hubTimeline" class="hub-timeline"></div>
+                    </div>
+                </div>
+                <div class="clients-card" id="hubApplication" hidden>
+                    <h2>From their application</h2>
+                    <div id="hubApplicationBody"></div>
+                </div>
+                <div class="hub-actions" id="hubActions"></div>
+            </section>
+
+            <section class="clients-panel" data-panel="plan" hidden>
+                <div id="hubPlan"></div>
+            </section>
+
+            <section class="clients-panel" data-panel="checkins" hidden>
+                <div id="hubCheckins" class="hub-list"></div>
+            </section>
+
+            <section class="clients-panel" data-panel="sessions" hidden>
+                <div id="hubSessions"></div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/clientHub.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

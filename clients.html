@@ -29,7 +29,7 @@
                 <div class="eos-today-eyebrow">Coaching</div>
                 <h1 id="clientsTitle">My Clients</h1>
                 <p class="eos-today-phase" id="clientsIntro">
-                    Get edit access to a client's Training Plans and Race Plans, or share your own with a coach.
+                    Everyone you coach, in one place. Tap a client for their plan, check-ins and sessions.
                 </p>
             </div>
         </section>
@@ -64,6 +64,15 @@
 
                 <div id="clientsListWrap">
                     <h2 class="clients-section-title">Your clients</h2>
+                    <input type="search" id="clientSearch" class="clients-search" placeholder="Search by name or email" autocomplete="off" aria-label="Search clients">
+                    <div id="clientFilters" class="clients-filters" role="group" aria-label="Filter clients">
+                        <button type="button" class="clients-filter active" data-filter="all">All <span class="clients-filter-count"></span></button>
+                        <button type="button" class="clients-filter" data-filter="attention">Needs attention <span class="clients-filter-count"></span></button>
+                        <button type="button" class="clients-filter" data-filter="running">Running <span class="clients-filter-count"></span></button>
+                        <button type="button" class="clients-filter" data-filter="strength">Strength <span class="clients-filter-count"></span></button>
+                        <button type="button" class="clients-filter" data-filter="soccer">Soccer <span class="clients-filter-count"></span></button>
+                        <button type="button" class="clients-filter" data-filter="online">Online <span class="clients-filter-count"></span></button>
+                    </div>
                     <div id="clientsList" class="clients-list"></div>
                     <p id="clientsEmptyMsg" class="clients-card-note" hidden>No clients yet -- add one with a code above.</p>
                 </div>
@@ -112,47 +121,6 @@
         </div>
 
     </main>
-
-    <!-- ===== Plan editor (coach editing a client's plan) ===== -->
-    <div id="planEditorOverlay" class="clients-editor-overlay" hidden>
-        <div class="clients-editor">
-
-            <div class="clients-editor-head">
-                <div>
-                    <div class="clients-editor-client" id="editorClientName"></div>
-                    <h2 id="editorPlanName">Plan</h2>
-                </div>
-                <button type="button" id="editorCloseBtn" class="clients-editor-close" aria-label="Close">
-                    <span data-icon="close"></span>
-                </button>
-            </div>
-
-            <div class="clients-editor-body">
-
-                <div id="editorNoPlans" class="clients-card-note" hidden>This client doesn't have any plans yet.</div>
-
-                <div id="editorPlanTabs" class="clients-plan-tabs"></div>
-
-                <div id="editorWeeks" class="clients-weeks"></div>
-
-                <div class="clients-notes-section">
-                    <h3>Notes</h3>
-                    <div id="editorNotesList" class="clients-notes-list"></div>
-                    <form id="editorNoteForm" class="clients-note-form">
-                        <textarea id="editorNoteInput" rows="2" placeholder="Leave a note for your client about this plan..."></textarea>
-                        <button type="submit" class="clients-btn-primary">Post Note</button>
-                    </form>
-                </div>
-
-                <div class="clients-editor-actions">
-                    <button type="button" id="editorSaveBtn" class="clients-btn-primary">Save Changes</button>
-                    <span id="editorSaveMsg" class="clients-msg" hidden></span>
-                </div>
-
-            </div>
-
-        </div>
-    </div>
 
     <script src="js/loadHeader.js"></script>
 

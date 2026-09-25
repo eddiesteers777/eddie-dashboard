@@ -22,7 +22,8 @@
 // a coach who's offline or whose profile didn't load is never bounced.
 const COACH_ONLY_PAGES = new Set([
     "marathon.html", "75day.html", "planner.html",
-    "analytics.html", "weekly-review.html", "gear.html"
+    "analytics.html", "weekly-review.html", "gear.html",
+    "client.html"
 ]);
 function leaveCoachOnlyPage() {
     const page = window.location.pathname.split("/").pop() || "index.html";
@@ -68,6 +69,7 @@ const PAGE_TAB = {
     "pace-calculator.html": "more",
     "settings.html": "more",
     "clients.html": "coach",
+    "client.html": "coach",
     "coach.html": "coach",
     "schedule.html": "coach",
     "checkin.html": "coach",
@@ -271,7 +273,7 @@ fetch("components/header.html")
             document.getElementById("header").insertAdjacentHTML("afterend", `
                 <div class="eos-subnav" aria-label="Section pages">
                     ${subnavPages.map(p => `
-                        <a href="${p.href}" class="eos-subnav-link ${p.href === page ? "active" : ""}">${p.label}</a>
+                        <a href="${p.href}" class="eos-subnav-link ${p.href === page || (page === "client.html" && p.href === "clients.html") ? "active" : ""}">${p.label}</a>
                     `).join("")}
                 </div>
             `);
