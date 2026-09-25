@@ -319,7 +319,13 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(["coachUid", "coachName", "clientUid", "name", "kind", "status",
              "version", "publishedAt", "coachNote", "changes", "startDate", "endDate", "createdAt", "updatedAt",
-             "viewedVersion", "viewedAt", "ackVersion", "ackAt"])
+             "viewedVersion", "viewedAt", "ackVersion", "ackAt", "adoptedFrom"])
+        // The client's own plan this one replaces (their app retires it).
+        && (!("adoptedFrom" in request.resource.data) || request.resource.data.adoptedFrom == null
+            || (request.resource.data.adoptedFrom is map
+                && request.resource.data.adoptedFrom.keys().hasOnly(["store", "id"])
+                && request.resource.data.adoptedFrom.store in ["running", "training"]
+                && request.resource.data.adoptedFrom.id is string))
         && request.resource.data.coachUid == request.auth.uid
         && request.resource.data.clientUid is string
         && linked(request.auth.uid, request.resource.data.clientUid)

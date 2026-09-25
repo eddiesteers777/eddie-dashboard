@@ -3,7 +3,7 @@
 
    One home for a client, coach side: who they are, where their plan
    stands, what's next, what needs attention, and recent activity, with
-   tabs for their Plan (the shared plan editor), Check-ins (reply
+   tabs for their Plan (the coach's plan workspace, js/planWorkspace.js), Check-ins (reply
    inline), Sessions, Notes and Profile.
 
    It reads coachLinks, userProfiles, sharedPlans, checkins,
@@ -76,12 +76,14 @@ function selectTab(name) {
     document.querySelectorAll(".hub-page .clients-panel").forEach(p => { p.hidden = p.dataset.panel !== name; });
     if (name === "plan" && !planMounted && record) {
         planMounted = true;
-        import("./planEditor.js").then(({ mountPlanEditor }) => mountPlanEditor($("hubPlan"), {
+        import("./planWorkspace.js").then(({ mountPlanWorkspace }) => mountPlanWorkspace($("hubPlan"), {
             clientUid,
             clientName: displayName(),
-            focusPlanId: record.summary.plans.primary?.id,
-            currentDate: isoDate(new Date())
-        })).then(() => import("./icons.js").then(m => m.hydrate()));
+            clientEmail: record.profile?.email || record.link?.clientEmail,
+            firstName: firstName(),
+            data: record,
+            onChange: () => { summarize(); renderAll(); }
+        }));
     }
     if (name === "profile" && !profileMounted && record) {
         profileMounted = true;
@@ -656,12 +658,12 @@ function sortNotes() {
 
 function summarize() {
     const today = isoDate(new Date());
-    const plans = summarizePlans(record.shared, today);
+    const plans = summarizePlans(record.shared, today, record.coachingPlans || []);
     const sessions = summarizeSessions(record.requests, today);
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [] }),
         timeline: buildTimeline(record)
     };
 }

@@ -76,6 +76,7 @@ const PAGE_TAB = {
     "client.html": "coach",
     "profile.html": "more",
     "updates.html": "more",
+    "plan.html": "more",
     "coach.html": "coach",
     "schedule.html": "coach",
     "checkin.html": "coach",
@@ -168,6 +169,16 @@ fetch("components/header.html")
                 const { initCloudSync } = await import("./cloudSync.js");
                 const { applied } = await initCloudSync();
 
+                // Clients: bring down any newer version of a plan their
+                // coach published (js/coachPlanSync.js). Same one-reload
+                // rule as above; the copy then matches, so no loop.
+                let plansChanged = false;
+                const { cachedRole } = await import("./role.js");
+                if (cachedRole() !== "coach") {
+                    const { syncCoachPlans } = await import("./coachPlanSync.js");
+                    plansChanged = (await syncCoachPlans()).changed;
+                }
+
                 // Only this first pull on a fresh page load reloads
                 // to show what came in -- initCloudSync only pulls
                 // once per page load (later background syncs are
@@ -175,7 +186,7 @@ fetch("components/header.html")
                 // and it means a background sync later in the
                 // session never yanks the page out from under
                 // something the user is mid-typing.
-                if (applied > 0) window.location.reload();
+                if (applied > 0 || plansChanged) window.location.reload();
             } catch (error) {
                 // Covers the dynamic import itself failing too (e.g.
                 // the Firebase SDK fetch from gstatic.com is blocked

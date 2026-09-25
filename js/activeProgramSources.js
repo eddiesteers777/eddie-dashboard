@@ -12,6 +12,7 @@
 
 import { loadRunningPrograms, saveRunningPrograms } from "./runningPrograms.js";
 import { loadTrainingPrograms, saveTrainingPrograms } from "./trainingPrograms.js";
+import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
 
 function getActivePrograms() {
     const race = loadRunningPrograms()
@@ -20,7 +21,11 @@ function getActivePrograms() {
     const training = loadTrainingPrograms()
         .filter(program => program?.status === "active" && program?.generatedPlan)
         .map(program => ({ ...program, source: "training-plan" }));
-    return [...race, ...training];
+    // Plans the coach published (js/coachPlanStore.js).
+    const coach = loadCoachPlans()
+        .filter(program => program?.status === "active" && program?.generatedPlan)
+        .map(program => ({ ...program, source: "coach" }));
+    return [...coach, ...race, ...training];
 }
 
 export function getActiveRunningPrograms() {
@@ -142,7 +147,7 @@ export function getActiveProgramUpcomingRuns(todayDate, horizonDays = 14) {
 }
 
 export async function toggleRunningProgramDayCompleted(programId, dateStr) {
-    for (const [load, save] of [[loadRunningPrograms, saveRunningPrograms], [loadTrainingPrograms, saveTrainingPrograms]]) {
+    for (const [load, save] of [[loadCoachPlans, saveCoachPlans], [loadRunningPrograms, saveRunningPrograms], [loadTrainingPrograms, saveTrainingPrograms]]) {
         const programs = load();
         const program = programs.find(item => item.id === programId);
         if (!program?.generatedPlan?.weeks) continue;

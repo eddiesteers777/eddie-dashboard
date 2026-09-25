@@ -206,34 +206,10 @@ export async function writeSharedPlanMirror(clientUid, payload, keyUpdatedAtPatc
     await setDoc(sharedPlanDoc(clientUid), { ...payload, keyUpdatedAt, updatedAt: serverTimestamp() }, { merge: true });
 }
 
-// Coach-side edit: pushes a full replacement of one plan list (mirrors
-// the shape trainingPrograms.js/runningPrograms.js write locally) and
-// stamps it with "now" so it wins the client's next pull, the same
-// last-write-wins rule normal cloud sync already uses everywhere else.
-export async function saveClientPlanList(clientUid, planType, programs) {
-    const user = await waitForUser();
-    if (!user) throw new Error("not-signed-in");
-    const field = planType === "training" ? "trainingPrograms" : "runningPrograms";
-    const storageKey = planType === "training" ? "training-programs" : "running-programs";
-    await writeSharedPlanMirror(clientUid, { [field]: programs, updatedBy: user.uid }, { [storageKey]: Date.now() });
-}
-
-export async function addPlanNote(clientUid, planType, programId, text) {
-    const user = await waitForUser();
-    if (!user) throw new Error("not-signed-in");
-    if (!text?.trim()) return;
-
-    const field = planType === "training" ? "trainingPrograms" : "runningPrograms";
-    const existing = await readSharedPlanDoc(clientUid) || {};
-    const notes = { ...(existing.notes || {}) };
-    const bucket = { ...(notes[field] || {}) };
-    const list = [...(bucket[programId] || [])];
-    list.push({ text: text.trim(), author: user.displayName || "Coach", at: Date.now() });
-    bucket[programId] = list;
-    notes[field] = bucket;
-
-    await setDoc(sharedPlanDoc(clientUid), { notes, updatedAt: serverTimestamp(), updatedBy: user.uid }, { merge: true });
-}
+// Coaches don't edit this mirror any more: a coached plan is published
+// from coachingPlans (js/coachingPlans.js) and the client's app copies
+// it down (js/coachPlanSync.js). The mirror is read-only context for the
+// coach (their own plans, done marks).
 
 // ---- Client-side mirror sync (called from cloudSync.js) ----
 
@@ -250,6 +226,10 @@ export async function mirrorPlansToShared(localData, localTimes) {
     if ("running-programs" in localData) {
         try { payload.runningPrograms = JSON.parse(localData["running-programs"] || "[]"); } catch { payload.runningPrograms = []; }
         keyUpdatedAt["running-programs"] = Number(localTimes["running-programs"] || Date.now());
+    }
+    if ("coach-plans" in localData) {
+        try { payload.coachPlans = JSON.parse(localData["coach-plans"] || "[]"); } catch { payload.coachPlans = []; }
+        keyUpdatedAt["coach-plans"] = Number(localTimes["coach-plans"] || Date.now());
     }
     if (!Object.keys(payload).length) return;
 

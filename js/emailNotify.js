@@ -207,3 +207,15 @@ export function sendCoachUpdateEmail({ clientEmail, clientName, coachName, text 
         page: "updates.html"
     });
 }
+
+// Coach published a plan or a new version of one (js/coachingPlans.js).
+export function sendPlanPublishedEmail({ clientEmail, clientName, coachName, planName, firstVersion }) {
+    return clientUpdate({
+        toEmail: clientEmail,
+        toName: clientName,
+        subject: firstVersion ? "Your training plan is ready" : "Your training plan was updated",
+        headline: `${coachName || "Your coach"} ${firstVersion ? "published your plan" : "updated your plan"}${planName ? `: ${planName}` : ""}.`,
+        details: "Open the app to see what's changed.",
+        page: "plan.html"
+    });
+}

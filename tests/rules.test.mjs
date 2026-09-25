@@ -441,7 +441,7 @@ function publishNext(db, n, { head = {}, ver = {} } = {}) {
 
 test("coaching plans: a linked coach publishes; the client reads it; strangers can't", async () => {
     await seedLinkAndBooking();
-    await assertSucceeds(firstPublish(as("coach")));
+    await assertSucceeds(firstPublish(as("coach"), { head: { adoptedFrom: { store: "running", id: "rp1" } } }));
     await assertSucceeds(getDoc(doc(as("client"), "coachingPlans/p1")));
     await assertSucceeds(getDoc(doc(as("client"), "coachingPlans/p1/versions/1")));
     await assertSucceeds(getDocs(query(collection(as("client"), "coachingPlans"), where("clientUid", "==", "client"))));
@@ -465,6 +465,8 @@ test("coaching plans: publishing can't be faked, skipped, rewound or re-pointed"
     // Starting at version 5, or pre-acknowledged.
     await assertFails(firstPublish(as("coach"), { head: { version: 5 } }));
     await assertFails(firstPublish(as("coach"), { head: { ackVersion: 1 } }));
+    await assertFails(firstPublish(as("coach"), { head: { adoptedFrom: { store: "nutrition", id: "x" } } }));
+    await assertFails(firstPublish(as("coach"), { head: { adoptedFrom: { store: "running", id: "x", wipe: true } } }));
     // A client can't publish a plan to themselves.
     await assertFails(firstPublish(as("client"), { head: { coachUid: "client" }, ver: { coachUid: "client" } }));
     await assertSucceeds(firstPublish(as("coach")));

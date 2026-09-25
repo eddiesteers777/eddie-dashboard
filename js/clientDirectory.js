@@ -8,6 +8,7 @@
      sharedPlans (js/coachAccess.js readSharedPlanDoc)
      checkins    (js/checkins.js listCheckinsForMyClients)
      bookingRequests (js/scheduling.js listRequestsForMyClients)
+     coachingPlans / drafts (js/coachingPlans.js) -- plans the coach publishes
      clientRecords (js/clientRecords.js getClientRecord) -- the profile;
                `record` is null when not filled in, undefined when it
                couldn't be read (e.g. rules not published yet)
@@ -20,6 +21,24 @@ import { listCheckinsForMyClients } from "./checkins.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { getClientRecord } from "./clientRecords.js";
 import { listPrivateNotes, listUpdatesForClient } from "./clientNotes.js";
+import { listPlansForClient, listDraftsForClient, getVersion } from "./coachingPlans.js";
+
+// Published plans for one client, each active one with its current
+// version's plan attached (so the hub is right even before the client's
+// app has pulled it). [] if they can't be read (rules not published).
+async function publishedPlans(clientUid) {
+    try {
+        const headers = await listPlansForClient(clientUid);
+        return Promise.all(headers.map(async h => {
+            if (h.status !== "active") return h;
+            const v = await getVersion(h.id, h.version).catch(() => null);
+            return { ...h, plan: v?.plan || null };
+        }));
+    } catch (error) {
+        console.warn("Southbound: coaching plans unavailable.", error?.code || error);
+        return [];
+    }
+}
 
 // undefined = couldn't read (rules not published yet, offline...).
 const orUndefined = promise => promise.catch(error => {
@@ -58,16 +77,18 @@ export async function loadClientDirectory() {
     const requestsBy = groupByClient(requests);
 
     return Promise.all(links.map(async link => {
-        const [profile, shared, record] = await Promise.all([
+        const [profile, shared, record, coachingPlans] = await Promise.all([
             quiet(getProfile(link.clientUid)),
             quiet(readSharedPlanDoc(link.clientUid)),
-            readRecord(link.clientUid)
+            readRecord(link.clientUid),
+            publishedPlans(link.clientUid)
         ]);
         return {
             link,
             profile,
             shared,
             record,
+            coachingPlans,
             checkins: checkinsBy.get(link.clientUid) || [],
             requests: requestsBy.get(link.clientUid) || []
         };
@@ -79,14 +100,16 @@ export async function loadClientRecord(clientUid) {
     const links = await listMyClients();
     const link = links.find(l => l.clientUid === clientUid);
     if (!link) return null;
-    const [profile, shared, checkins, requests, record, privateNotes, updates] = await Promise.all([
+    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts] = await Promise.all([
         quiet(getProfile(clientUid)),
         quiet(readSharedPlanDoc(clientUid)),
         quiet(listCheckinsForMyClients()),
         quiet(listRequestsForMyClients()),
         readRecord(clientUid),
         orUndefined(listPrivateNotes(clientUid)),
-        orUndefined(listUpdatesForClient(clientUid))
+        orUndefined(listUpdatesForClient(clientUid)),
+        publishedPlans(clientUid),
+        listDraftsForClient(clientUid).catch(() => [])
     ]);
     return {
         link,
@@ -95,6 +118,8 @@ export async function loadClientRecord(clientUid) {
         record,
         privateNotes,
         updates,
+        coachingPlans,
+        planDrafts,
         checkins: (checkins || []).filter(c => c.clientUid === clientUid),
         requests: (requests || []).filter(r => r.clientUid === clientUid)
     };

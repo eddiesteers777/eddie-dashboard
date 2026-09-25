@@ -60,9 +60,17 @@ function renderContext() {
     if (!context) return;
 
     const today = isoDate(new Date());
+    // Start/end from the plan's own days when it has no race date (coach
+    // plans built week by week, training plans).
+    const bounds = program => {
+        const dates = (program.generatedPlan?.weeks || []).flatMap(w => (w.days || []).map(d => d.date)).filter(Boolean).sort();
+        return {
+            start: program.generatedPlan?.trainingStartDate || dates[0],
+            end: program.generatedPlan?.raceDate || dates[dates.length - 1]
+        };
+    };
     const programs = getActivePrograms().filter(program => {
-        const start = program.generatedPlan?.trainingStartDate;
-        const end = program.generatedPlan?.raceDate;
+        const { start, end } = bounds(program);
         return start && end && today >= start && today <= end;
     });
 
@@ -70,10 +78,11 @@ function renderContext() {
 
     if (programs.length === 1) {
         const program = programs[0];
-        const isRacePlan = program.source !== "training-plan";
+        const isRacePlan = program.source !== "training-plan" && Boolean(program.generatedPlan?.raceDate);
         const weeks = program.generatedPlan?.weeks || [];
         const activeWeek = weeks.find(week =>
-            week.startDate <= today && week.endDate >= today
+            (week.days || []).some(day => day.date === today)
+            || (week.startDate <= today && week.endDate >= today)
         );
         let countdown = "";
         if (isRacePlan) {

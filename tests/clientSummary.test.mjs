@@ -196,3 +196,55 @@ test("coach feed: updates, check-in replies and past session notes, newest first
     assert.equal(feed[3].title, "Update from your coach");
     assert.equal(feed[2].text, "Work on first touch");
 });
+
+// ---- Coach-published plans ----
+
+function coachCopy(version, doneThrough) {
+    return { id: "coach-p1", coachPlanId: "p1", coachVersion: version, name: "Fall 10K", status: "active", source: "coach",
+        generatedPlan: { weeks: makePlan({ completedThrough: doneThrough }).generatedPlan.weeks } };
+}
+
+test("coach plans: the client's synced copy counts, with their done marks", () => {
+    const s = summarizePlans({ coachPlans: [coachCopy(2, "2026-09-22")] }, "2026-09-23", [{ id: "p1", version: 2, name: "Fall 10K", status: "active" }]);
+    assert.equal(s.primary.name, "Fall 10K");
+    assert.equal(s.primary.coachPlanId, "p1");
+    assert.equal(s.week.completed, 2);
+});
+
+test("coach plans: a newer published version stands in until the client syncs, keeping their marks", () => {
+    const published = makePlan({ completedThrough: null }).generatedPlan;
+    published.weeks[1].days[1] = { ...published.weeks[1].days[1], miles: 9 };
+    const s = summarizePlans({ coachPlans: [coachCopy(1, "2026-09-22")] }, "2026-09-23",
+        [{ id: "p1", version: 2, name: "Fall 10K v2", status: "active", plan: published }]);
+    assert.equal(s.plans.filter(p => p.planType === "coach").length, 1, "one copy, not two");
+    assert.equal(s.primary.name, "Fall 10K v2");
+    assert.equal(s.week.completed, 2, "marks carried over by date");
+    assert.equal(s.week.plannedMiles, 33, "the coach's new version: 5 x 4 mi easy + 8 mi long, one easy day now 9");
+});
+
+test("coach plans: a plan the coach took over isn't counted twice", () => {
+    const own = { ...makePlan(), id: "rp1" };
+    const s = summarizePlans({ runningPrograms: [own], coachPlans: [coachCopy(1, null)] }, "2026-09-23",
+        [{ id: "p1", version: 1, name: "Fall 10K", status: "active", adoptedFrom: { store: "running", id: "rp1" } }]);
+    assert.equal(s.activeCount, 1);
+});
+
+test("coach plans: before the client syncs a taken-over plan, its done marks still count", () => {
+    const own = { ...makePlan({ completedThrough: "2026-09-22" }), id: "rp1" };
+    const s = summarizePlans({ runningPrograms: [own] }, "2026-09-23",
+        [{ id: "p1", version: 1, name: "Fall 10K", status: "active", adoptedFrom: { store: "running", id: "rp1" }, plan: makePlan().generatedPlan }]);
+    assert.equal(s.activeCount, 1);
+    assert.equal(s.week.completed, 2);
+});
+
+test("coach plans: an update not opened for two days needs attention; timeline shows publish and got-it", () => {
+    const at = iso => ({ toMillis: () => new Date(`${iso}T12:00:00`).getTime() });
+    const plans = summarizePlans({}, "2026-09-25");
+    const base = { profile: { services: ["running"] }, plans, sessions: { waiting: [], upcoming: [] }, checkins: { needsReview: [], thisWeek: { status: "submitted" } }, today: "2026-09-25", record: undefined };
+    const unseen = { id: "p1", name: "Fall 10K", version: 3, status: "active", viewedVersion: 2, publishedAt: at("2026-09-21") };
+    assert.ok(needsAttention({ ...base, coachingPlans: [unseen] }).some(i => i.kind === "plan-unseen" && /update \(v3\)/.test(i.text)));
+    assert.ok(!needsAttention({ ...base, coachingPlans: [{ ...unseen, publishedAt: at("2026-09-24") }] }).some(i => i.kind === "plan-unseen"), "not yet: only a day old");
+    assert.ok(!needsAttention({ ...base, coachingPlans: [{ ...unseen, viewedVersion: 3 }] }).some(i => i.kind === "plan-unseen"));
+    const tl = buildTimeline({ coachingPlans: [{ ...unseen, ackVersion: 2, ackAt: at("2026-09-22") }] });
+    assert.deepEqual(tl.map(e => e.text), ["Got your plan update (v2)", "You published Fall 10K (v3)"]);
+});

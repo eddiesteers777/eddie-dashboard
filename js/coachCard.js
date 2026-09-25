@@ -16,6 +16,7 @@ import { getMyProfile } from "./userProfile.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { isIntakeComplete } from "./clientRecordSchema.js";
 import { listMyUpdates } from "./clientNotes.js";
+import { listMyPlans } from "./coachingPlans.js";
 import { icon } from "./icons.js";
 
 function esc(value) {
@@ -63,19 +64,32 @@ function row({ iconName, color, title, detail, note, link }) {
 export async function renderCoachCard(container) {
     if (!container) return null;
 
-    const [coaches, requests, checkins, profile, record, updates] = await Promise.all([
+    const [coaches, requests, checkins, profile, record, updates, plans] = await Promise.all([
         listMyCoaches().catch(() => []),
         listMyBookingRequests().catch(() => []),
         listMyCheckins().catch(() => []),
         getMyProfile().catch(() => null),
         // undefined = couldn't read (don't nag), null = not filled in yet
         getMyClientRecord().catch(() => undefined),
-        listMyUpdates().catch(() => [])
+        listMyUpdates().catch(() => []),
+        listMyPlans().catch(() => [])
     ]);
 
     const coach = coaches[0];
     const today = localIso();
     const rows = [];
+
+    // ---- A plan the coach published and they haven't said "Got it" to ----
+    for (const plan of plans.filter(p => p.status === "active" && (p.ackVersion || 0) < p.version)) {
+        rows.push(row({
+            iconName: "calendar",
+            color: "var(--primary)",
+            title: plan.version > 1 ? "Your plan was updated" : "Your plan is ready",
+            detail: `${plan.name}${plan.changes?.length ? ` · ${plan.changes.length} change${plan.changes.length === 1 ? "" : "s"}` : ""}`,
+            note: plan.coachNote ? (plan.coachNote.length > 140 ? `${plan.coachNote.slice(0, 140).trim()}…` : plan.coachNote) : "",
+            link: `plan.html?plan=${encodeURIComponent(plan.id)}`
+        }));
+    }
 
     // ---- Updates from the coach (updates.html marks them read) ----
     const unread = updates.filter(u => !u.readAt);

@@ -23,6 +23,7 @@
 ========================================== */
 
 import { isIntakeComplete, athleteDisplayName } from "./clientRecordSchema.js";
+import { mergeRuntimeByDate } from "./coachingPlanModel.js";
 
 export const SERVICE_LABELS = {
     online_coaching: "Online Coaching",
@@ -69,10 +70,34 @@ export function serviceLabels(services = []) {
 
 // ---------- Plans ----------
 
-function allPlans(shared) {
-    const race = (shared?.runningPrograms || []).map(p => ({ ...p, planType: "running" }));
-    const training = (shared?.trainingPrograms || []).map(p => ({ ...p, planType: "training" }));
-    return [...race, ...training];
+// published: coachingPlans headers, each with the current version's
+// `plan` when known. The client's mirrored copy (shared.coachPlans) has
+// their "done" marks; until their app has pulled the newest version,
+// the published plan stands in (with whatever marks the copy has).
+function allPlans(shared, published = []) {
+    const copies = (shared?.coachPlans || []).map(p => ({ ...p, planType: "coach" }));
+    const coach = copies.filter(c => !published.some(h => h.id === c.coachPlanId && h.plan && (c.coachVersion || 0) < h.version));
+    for (const h of published) {
+        const copy = copies.find(c => c.coachPlanId === h.id);
+        if (copy && (copy.coachVersion || 0) >= h.version) continue;
+        if (!h.plan) continue;
+        // Done marks: from their copy, or (first version, not synced yet)
+        // from their own plan the coach took over.
+        const adoptedOwn = h.adoptedFrom
+            ? (shared?.[h.adoptedFrom.store === "training" ? "trainingPrograms" : "runningPrograms"] || []).find(p => p.id === h.adoptedFrom.id)
+            : null;
+        coach.push({
+            id: `coach-${h.id}`, coachPlanId: h.id, coachVersion: h.version, name: h.name, planType: "coach",
+            status: h.status, generatedPlan: mergeRuntimeByDate(copy?.generatedPlan || adoptedOwn?.generatedPlan, h.plan)
+        });
+    }
+    // A plan the coach took over is retired on the client's device; until
+    // that syncs, don't count it twice.
+    const adopted = new Set(published.map(h => h.adoptedFrom?.id).filter(Boolean));
+    const own = p => !adopted.has(p.id) && !p.replacedByCoachPlan;
+    const race = (shared?.runningPrograms || []).filter(own).map(p => ({ ...p, planType: "running" }));
+    const training = (shared?.trainingPrograms || []).filter(own).map(p => ({ ...p, planType: "training" }));
+    return [...coach, ...race, ...training];
 }
 
 function weekEnd(week) {
@@ -105,8 +130,8 @@ function isWorkout(day) {
 
 // The client's plan picture: the active plan (current one first), today,
 // the next workout, and how this week is going.
-export function summarizePlans(shared, today) {
-    const plans = allPlans(shared);
+export function summarizePlans(shared, today, published = []) {
+    const plans = allPlans(shared, published);
     const active = plans.filter(p => p.status === "active" && p.generatedPlan?.weeks?.length);
     const withPos = active
         .map(p => ({ program: p, position: planPosition(p, today) }))
@@ -142,6 +167,7 @@ export function summarizePlans(shared, today) {
         primary: primary ? {
             id: primary.program.id,
             name: primary.program.name || (primary.program.planType === "training" ? "Training Plan" : "Race Plan"),
+            coachPlanId: primary.program.coachPlanId || null,
             planType: primary.program.planType,
             goal: primary.program.generatedPlan?.primaryGoal || primary.program.goal || "",
             raceDate: primary.program.generatedPlan?.raceDate || primary.program.raceDate || "",
@@ -190,7 +216,7 @@ export function summarizeCheckins(checkins, today) {
 
 // What the coach should act on for this client, most urgent first.
 // Each: { kind, text, tab } -- tab is the Client Hub tab that handles it.
-export function needsAttention({ profile, plans, sessions, checkins, today, record }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [] }) {
     const items = [];
     const services = profile?.services || [];
     const trains = services.some(s => TRAINING_SERVICES.includes(s));
@@ -213,6 +239,18 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     } else if (plans.primary?.state === "current" && plans.primary.endDate && plans.primary.endDate <= addDays(today, 7)) {
         items.push({ kind: "plan", text: `${plans.primary.name} ends ${shortDate(plans.primary.endDate)}`, tab: "plan" });
     }
+    // A plan update they haven't opened after two days.
+    for (const h of coachingPlans) {
+        const published = toMillis(h.publishedAt);
+        if (h.status !== "active" || (h.viewedVersion || 0) >= h.version || !published) continue;
+        if (published <= new Date(`${today}T00:00:00`).getTime() - 2 * 86400000) {
+            items.push({
+                kind: "plan-unseen",
+                text: h.version > 1 ? `Hasn't opened your ${h.name} update (v${h.version})` : `Hasn't opened ${h.name} yet`,
+                tab: "plan"
+            });
+        }
+    }
     if (plans.week.missed >= 2) {
         items.push({ kind: "missed", text: `${plans.week.missed} workouts not marked done this week`, tab: "plan" });
     }
@@ -231,7 +269,7 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
 
 // Recent activity derived from existing data (no timeline collection yet).
 // Each: { at (millis), date (iso), kind, text }
-export function buildTimeline({ profile, link, checkins, requests, record, updates }) {
+export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans }) {
     const events = [];
     const push = (at, kind, text) => { const ms = toMillis(at); if (ms) events.push({ at: ms, date: isoDate(new Date(ms)), kind, text }); };
 
@@ -239,6 +277,10 @@ export function buildTimeline({ profile, link, checkins, requests, record, updat
     push(profile?.approvedAt, "approved", "Account approved");
     push(link?.linkedAt, "linked", "Connected to you");
     push(record?.intakeCompletedAt, "intake", "Filled in their profile");
+    for (const h of coachingPlans || []) {
+        push(h.publishedAt, "plan-published", `You published ${h.name}${h.version > 1 ? ` (v${h.version})` : ""}`);
+        if (h.ackVersion) push(h.ackAt, "plan-ack", `Got your plan${h.ackVersion > 1 ? ` update (v${h.ackVersion})` : ""}`);
+    }
     for (const u of updates || []) {
         push(u.createdAt, "update", "You sent them an update");
         push(u.readAt, "update-read", "They read your update");
@@ -265,11 +307,11 @@ export function shortDate(iso) {
 
 // ---------- One-line row for the client list ----------
 
-export function summarizeClient({ profile, link, shared, checkins, requests, record }, today) {
-    const plans = summarizePlans(shared, today);
+export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [] }, today) {
+    const plans = summarizePlans(shared, today, coachingPlans);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans });
     const name = profile?.displayName || link?.clientName || "Client";
     const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
     const goesBy = athleteDisplayName(record, "");
