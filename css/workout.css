@@ -41,8 +41,9 @@
 .wo-steps strong{ color:var(--text); font-size:17px; }
 .wo-steps li > span:last-child{ color:var(--text-secondary); font-size:14.5px; }
 @media (max-width:480px){
-    .wo-steps li{ grid-template-columns:1fr auto; }
+    .wo-steps li{ grid-template-columns:auto 1fr; }
     .wo-step-label{ grid-column:1 / -1; }
+    .wo-steps strong{ white-space:nowrap; }
 }
 .wo-plain{ margin:0; color:var(--text); font-size:15.5px; line-height:1.6; }
 
@@ -80,7 +81,7 @@
 .wo-seg{ display:flex; gap:8px; }
 .wo-seg label{ flex:1; }
 .wo-seg input, .wo-rpe input{ position:absolute; opacity:0; pointer-events:none; }
-.wo-seg span{
+.wo-seg label > span{
     display:flex;
     align-items:center;
     justify-content:center;
@@ -99,7 +100,7 @@
 .wo-pace{ margin:-4px 0 0; color:var(--primary); font-size:14px; font-weight:700; min-height:1.2em; }
 .wo-done-fields{ display:flex; flex-direction:column; gap:10px; }
 .wo-rpe{ display:grid; grid-template-columns:repeat(10, 1fr); gap:4px; }
-.wo-rpe span{
+.wo-rpe label > span{
     display:flex;
     align-items:center;
     justify-content:center;

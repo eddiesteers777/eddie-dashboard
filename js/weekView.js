@@ -24,7 +24,8 @@ const KIND = {
     session: { icon: "users", color: "var(--purple)" }
 };
 
-const canToggle = item => ["plan", "extra", "strength"].includes(item.source?.type) && !item.autoDone;
+// A logged coach-plan workout is done or skipped by its log (edit it on the workout page), not a tap.
+const canToggle = item => ["plan", "extra", "strength"].includes(item.source?.type) && !item.autoDone && !item.actual;
 
 function doneButton(item, compact = false) {
     if (!canToggle(item)) return "";
@@ -69,10 +70,11 @@ function itemLine(item) {
             <span class="wk-item-text">
                 ${item.kind === "run" && item.source?.type === "plan" ? `<a class="wk-item-link" href="${esc(workoutLink(item).href)}">${esc(text)}</a>` : `<span>${esc(text)}</span>`}
                 ${item.detail ? `<small>${esc(item.detail)}</small>` : ""}
-                ${item.logged && item.title !== "Logged run" ? `<small class="wk-logged-inline">Logged ${item.logged} mi</small>` : ""}
+                ${item.actual?.distance ? `<small class="wk-logged-inline">You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</small>`
+                    : item.logged && item.title !== "Logged run" ? `<small class="wk-logged-inline">Logged ${item.logged} mi</small>` : ""}
             </span>
             ${item.state === "missed" ? `<span class="wk-missed">Missed</span>` : item.state === "skipped" ? `<span class="wk-skipped">Skipped</span>` : ""}
-            ${item.autoDone ? `<span class="wk-status is-done" title="Logged">${icon("checkCircle")}<span class="sr-only">Done (logged)</span></span>` : doneButton(item, true)}
+            ${(item.autoDone || item.actual) && item.done ? `<span class="wk-status is-done" title="Logged">${icon("checkCircle")}<span class="sr-only">Done (logged)</span></span>` : doneButton(item, true)}
         </li>`;
 }
 

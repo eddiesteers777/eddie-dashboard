@@ -13,6 +13,7 @@
 
 import { listenForAuth } from "./auth.js";
 import { listMyUpdates, markUpdatesRead } from "./clientNotes.js";
+import { listMyResults } from "./workoutResults.js";
 import { listMyCheckins } from "./checkins.js";
 import { listMyBookingRequests } from "./scheduling.js";
 import { listMyCoaches } from "./coachAccess.js";
@@ -24,7 +25,7 @@ import { emptyHtml } from "./ui.js";
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const KIND_ICON = { update: "send", feedback: "star", session: "clipboard" };
+const KIND_ICON = { update: "send", feedback: "star", session: "clipboard", workout: "activity" };
 
 function when(ms) {
     const date = new Date(ms);
@@ -63,13 +64,14 @@ listenForAuth(async user => {
         return;
     }
 
-    const [updates, checkins, requests, coaches] = await Promise.all([
+    const [updates, checkins, requests, coaches, results] = await Promise.all([
         listMyUpdates().catch(error => { console.warn("Southbound: updates unavailable.", error); return []; }),
         listMyCheckins().catch(() => []),
         listMyBookingRequests().catch(() => []),
-        listMyCoaches().catch(() => [])
+        listMyCoaches().catch(() => []),
+        listMyResults().catch(() => [])
     ]);
-    const feed = buildCoachFeed({ updates, checkins, requests, today: isoDate(new Date()) });
+    const feed = buildCoachFeed({ updates, checkins, requests, results, today: isoDate(new Date()) });
 
     $("feedLoading").hidden = true;
     $("feed").innerHTML = feed.length

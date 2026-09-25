@@ -32,6 +32,8 @@ import {
     sendClientUpdate, deleteClientUpdate
 } from "./clientNotes.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
+import { commentOnResult } from "./workoutResults.js";
+import { compareRun, formatDuration } from "./runWorkout.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -656,14 +658,104 @@ function sortNotes() {
     record.privateNotes.sort((a, b) => (b.pinned === true) - (a.pinned === true) || toMillis(b.createdAt) - toMillis(a.createdAt));
 }
 
+// ---- Workouts: planned vs. actual, reply on each ----
+
+const RPE_WORDS = { 1: "very easy", 2: "easy", 3: "easy", 4: "comfortable", 5: "steady", 6: "moderate", 7: "hard", 8: "very hard", 9: "near max", 10: "all out" };
+
+// The plan day a result was logged against (for planned details).
+function plannedDay(result) {
+    const h = (record.coachingPlans || []).find(p => p.id === result.planId);
+    return h?.plan?.weeks?.flatMap(w => w.days || []).find(d => d.date === result.date) || null;
+}
+
+// The coach's own words for the day, or "5 mi easy run" when the session is just the type.
+function plannedText(r, day) {
+    const session = String(day?.session || "").trim();
+    if (session && session.toLowerCase() !== String(day?.type || "").toLowerCase()) return session;
+    const miles = Number(day?.miles ?? r.plannedMiles) || 0;
+    return `${miles ? `${miles} mi ` : ""}${String(r.title || "run").toLowerCase()}`;
+}
+
+function workoutResultHtml(r) {
+    const day = plannedDay(r);
+    const cmp = compareRun({ miles: r.plannedMiles || day?.miles, workout: day?.workout }, { distance: r.distance, durationSec: r.durationSec });
+    const vs = { on: "on target pace", faster: "faster than target", slower: "slower than target" }[cmp.paceVsTarget];
+    const fresh = !r.coachComment;
+    return `
+        <div class="clients-card hub-wo${r.pain && fresh ? " is-pain" : ""}${fresh ? " is-new" : ""}" data-result="${esc(r.id)}">
+            <div class="hub-wo-head">
+                <strong>${esc(r.title || "Workout")}</strong>
+                <span class="pw-meta">${esc(shortDate(r.date))}</span>
+                <span class="hub-pill${r.status === "skipped" ? " is-skipped" : ""}">${r.status === "skipped" ? "Skipped" : "Done"}</span>
+            </div>
+            <p class="hub-wo-planned"><span>Planned</span> ${esc(plannedText(r, day))}</p>
+            ${r.status === "completed" ? `
+                <div class="hub-wo-stats">
+                    <div><span>Ran</span><strong>${r.distance ? `${r.distance} mi` : "—"}</strong>${cmp.distancePct ? `<small>${cmp.distancePct}% of plan</small>` : ""}</div>
+                    <div><span>Time</span><strong>${r.durationSec ? formatDuration(r.durationSec) : "—"}</strong></div>
+                    <div><span>Pace</span><strong>${cmp.pace || "—"}</strong>${vs ? `<small>${esc(vs)}</small>` : ""}</div>
+                    <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(RPE_WORDS[r.rpe])}</small>` : ""}</div>
+                </div>` : ""}
+            ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
+            ${r.note ? `<p class="hub-quote">"${esc(r.note)}"</p>` : ""}
+            <form class="hub-reply" data-reply="${esc(r.id)}">
+                <label class="clients-card-note" for="wo-${esc(r.id)}">Your reply (${esc(firstName())} sees it on this workout)</label>
+                <textarea id="wo-${esc(r.id)}" rows="2" maxlength="1000" placeholder="Good control on the last rep...">${esc(r.coachComment || "")}</textarea>
+                <div class="hub-reply-actions">
+                    <button type="submit" class="clients-btn-primary">${r.coachComment ? "Update reply" : "Reply"}</button>
+                    <span class="clients-msg" hidden></span>
+                </div>
+            </form>
+        </div>`;
+}
+
+function renderWorkouts() {
+    const results = record.results || [];
+    const badge = $("hubWorkoutBadge");
+    const waiting = results.filter(r => !r.coachComment && (r.pain || r.date >= isoDate(new Date(Date.now() - 7 * 86400000)))).length;
+    badge.hidden = !waiting;
+    badge.textContent = waiting || "";
+    const hasPlan = (record.coachingPlans || []).some(p => p.status === "active");
+    $("hubWorkouts").innerHTML = results.length
+        ? results.map(workoutResultHtml).join("")
+        : `<div class="clients-card"><div class="sb-empty"><span class="sb-empty-icon">${icon("activity")}</span>
+            <strong class="sb-empty-title">No workouts logged yet</strong>
+            <p class="sb-empty-text">${hasPlan ? `When ${esc(firstName())} logs a run from your plan -- distance, time, effort, anything that hurt -- it shows up here to reply to.` : `Publish a plan from the Plan tab, and ${esc(firstName())}'s logged runs show up here.`}</p></div></div>`;
+
+    $("hubWorkouts").querySelectorAll("form[data-reply]").forEach(form => form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const r = results.find(x => x.id === form.dataset.reply);
+        const text = form.querySelector("textarea").value.trim();
+        if (!text) return;
+        const btn = form.querySelector("button");
+        btn.disabled = true;
+        try {
+            await commentOnResult(r.id, text);
+            r.coachComment = text;
+            r.coachCommentAt = Date.now();
+            summarize();
+            renderAll();
+            selectTab("workouts");
+            toast(`Reply saved. ${firstName()} sees it on the workout.`);
+        } catch (error) {
+            console.error(error);
+            const msg = form.querySelector(".clients-msg");
+            msg.textContent = friendlyError(error, "save that");
+            msg.className = "clients-msg clients-msg-error";
+            msg.hidden = false;
+            btn.disabled = false;
+        }
+    }));
+}
+
 function summarize() {
     const today = isoDate(new Date());
-    const plans = summarizePlans(record.shared, today, record.coachingPlans || []);
+    const plans = summarizePlans(record.shared, today, record.coachingPlans || [], record.results || []);
     const sessions = summarizeSessions(record.requests, today);
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [] }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [] }),
         timeline: buildTimeline(record)
     };
 }
@@ -680,6 +772,7 @@ function renderAll() {
     renderActions();
     renderCheckins();
     renderSessions();
+    renderWorkouts();
     renderNotes();
     import("./icons.js").then(m => m.hydrate());
 }

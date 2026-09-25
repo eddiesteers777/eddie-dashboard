@@ -130,8 +130,26 @@ function isWorkout(day) {
 
 // The client's plan picture: the active plan (current one first), today,
 // the next workout, and how this week is going.
-export function summarizePlans(shared, today, published = []) {
-    const plans = allPlans(shared, published);
+// A logged workout result is the truth for that day of a coach plan,
+// even before the client's mirrored copy has synced its done mark.
+function applyResults(plans, results) {
+    if (!results?.length) return plans;
+    const byKey = new Map(results.map(r => [`${r.planId}|${r.date}`, r]));
+    return plans.map(p => {
+        if (!p.coachPlanId || !p.generatedPlan?.weeks) return p;
+        const weeks = p.generatedPlan.weeks.map(w => ({
+            ...w,
+            days: (w.days || []).map(d => {
+                const r = byKey.get(`${p.coachPlanId}|${d.date}`);
+                return r ? { ...d, completed: r.status === "completed", skipped: r.status === "skipped" } : d;
+            })
+        }));
+        return { ...p, generatedPlan: { ...p.generatedPlan, weeks } };
+    });
+}
+
+export function summarizePlans(shared, today, published = [], results = []) {
+    const plans = applyResults(allPlans(shared, published), results);
     const active = plans.filter(p => p.status === "active" && p.generatedPlan?.weeks?.length);
     const withPos = active
         .map(p => ({ program: p, position: planPosition(p, today) }))
@@ -156,7 +174,8 @@ export function summarizePlans(shared, today, published = []) {
         planned: thisWeek.length,
         dueSoFar: dueSoFar.length,
         completed: thisWeek.filter(d => d.completed).length,
-        missed: dueSoFar.filter(d => !d.completed && d.date < today).length,
+        missed: dueSoFar.filter(d => !d.completed && !d.skipped && d.date < today).length,
+        skipped: dueSoFar.filter(d => d.skipped).length,
         plannedMiles: round1(thisWeek.reduce((s, d) => s + (Number(d.miles) || 0), 0)),
         completedMiles: round1(thisWeek.filter(d => d.completed).reduce((s, d) => s + (Number(d.miles) || 0), 0))
     };
@@ -216,8 +235,12 @@ export function summarizeCheckins(checkins, today) {
 
 // What the coach should act on for this client, most urgent first.
 // Each: { kind, text, tab } -- tab is the Client Hub tab that handles it.
-export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [] }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [] }) {
     const items = [];
+    // Pain flagged on a workout, not yet answered: first thing to see.
+    for (const r of results.filter(x => x.pain && !x.coachComment && x.date >= addDays(today, -14))) {
+        items.push({ kind: "pain", text: `Flagged pain on ${shortDate(r.date)} (${r.title || "workout"})${r.painNote ? `: "${r.painNote}"` : ""}`, tab: "workouts" });
+    }
     const services = profile?.services || [];
     const trains = services.some(s => TRAINING_SERVICES.includes(s));
     const soccer = services.some(s => SOCCER_SERVICES.includes(s));
@@ -251,6 +274,11 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
             });
         }
     }
+    const monday = weekKey(new Date(`${today}T00:00:00`));
+    const skippedThisWeek = results.filter(r => r.status === "skipped" && r.date >= monday && r.date <= today).length;
+    if (skippedThisWeek >= 2) {
+        items.push({ kind: "skipped", text: `Skipped ${skippedThisWeek} workouts this week`, tab: "workouts" });
+    }
     if (plans.week.missed >= 2) {
         items.push({ kind: "missed", text: `${plans.week.missed} workouts not marked done this week`, tab: "plan" });
     }
@@ -269,7 +297,7 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
 
 // Recent activity derived from existing data (no timeline collection yet).
 // Each: { at (millis), date (iso), kind, text }
-export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans }) {
+export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans, results }) {
     const events = [];
     const push = (at, kind, text) => { const ms = toMillis(at); if (ms) events.push({ at: ms, date: isoDate(new Date(ms)), kind, text }); };
 
@@ -277,6 +305,12 @@ export function buildTimeline({ profile, link, checkins, requests, record, updat
     push(profile?.approvedAt, "approved", "Account approved");
     push(link?.linkedAt, "linked", "Connected to you");
     push(record?.intakeCompletedAt, "intake", "Filled in their profile");
+    for (const r of results || []) {
+        push(r.createdAt, r.status === "skipped" ? "workout-skipped" : "workout",
+            r.status === "skipped" ? `Skipped ${r.title || "a workout"} (${shortDate(r.date)})`
+                : `Logged ${r.title || "a workout"}${r.distance ? ` — ${r.distance} mi` : ""}${r.rpe ? `, effort ${r.rpe}/10` : ""}${r.pain ? ", pain flagged" : ""}`);
+        if (r.coachComment) push(r.coachCommentAt, "workout-reply", `You replied on ${r.title || "their workout"} (${shortDate(r.date)})`);
+    }
     for (const h of coachingPlans || []) {
         push(h.publishedAt, "plan-published", `You published ${h.name}${h.version > 1 ? ` (v${h.version})` : ""}`);
         if (h.ackVersion) push(h.ackAt, "plan-ack", `Got your plan${h.ackVersion > 1 ? ` update (v${h.ackVersion})` : ""}`);
@@ -307,11 +341,11 @@ export function shortDate(iso) {
 
 // ---------- One-line row for the client list ----------
 
-export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [] }, today) {
-    const plans = summarizePlans(shared, today, coachingPlans);
+export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [] }, today) {
+    const plans = summarizePlans(shared, today, coachingPlans, results);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results });
     const name = profile?.displayName || link?.clientName || "Client";
     const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
     const goesBy = athleteDisplayName(record, "");
@@ -338,8 +372,16 @@ export function summarizeClient({ profile, link, shared, checkins, requests, rec
 // (clientUpdates), replies to check-ins, and notes on sessions that have
 // happened. Each: { at, kind, title, detail, text, link, unread }.
 // Private coach notes never reach the client, so they can't appear here.
-export function buildCoachFeed({ updates = [], checkins = [], requests = [], today }) {
+export function buildCoachFeed({ updates = [], checkins = [], requests = [], results = [], today }) {
     const feed = [];
+    for (const r of results) {
+        if (!r.coachComment) continue;
+        feed.push({
+            at: toMillis(r.coachCommentAt) || toMillis(r.updatedAt), kind: "workout",
+            title: `Reply on your ${String(r.title || "workout").toLowerCase()}`, detail: shortDate(r.date),
+            text: r.coachComment, link: `workout.html?program=coach-${encodeURIComponent(r.planId)}&date=${r.date}`, unread: false
+        });
+    }
     for (const u of updates) {
         if (!u.text) continue;
         feed.push({

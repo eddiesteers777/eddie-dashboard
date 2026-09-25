@@ -222,6 +222,20 @@ test("coach plans: a newer published version stands in until the client syncs, k
     assert.equal(s.week.plannedMiles, 33, "the coach's new version: 5 x 4 mi easy + 8 mi long, one easy day now 9");
 });
 
+test("coach plans: logged results count before the client's copy syncs", () => {
+    const results = [
+        { planId: "p1", date: "2026-09-23", status: "completed" },
+        { planId: "p1", date: "2026-09-22", status: "skipped" },
+        { planId: "other", date: "2026-09-21", status: "completed" }
+    ];
+    const shared = { coachPlans: [coachCopy(2, "2026-09-22")] };
+    const s = summarizePlans(shared, "2026-09-23", [{ id: "p1", version: 2, name: "Fall 10K", status: "active" }], results);
+    assert.equal(s.week.completed, 2, "Mon done (mark), Tue skipped (log wins), Wed done (log)");
+    assert.equal(s.week.skipped, 1);
+    assert.equal(s.week.missed, 0);
+    assert.equal(shared.coachPlans[0].generatedPlan.weeks[1].days[1].completed, true, "the shared mirror isn't mutated");
+});
+
 test("coach plans: a plan the coach took over isn't counted twice", () => {
     const own = { ...makePlan(), id: "rp1" };
     const s = summarizePlans({ runningPrograms: [own], coachPlans: [coachCopy(1, null)] }, "2026-09-23",
@@ -247,4 +261,31 @@ test("coach plans: an update not opened for two days needs attention; timeline s
     assert.ok(!needsAttention({ ...base, coachingPlans: [{ ...unseen, viewedVersion: 3 }] }).some(i => i.kind === "plan-unseen"));
     const tl = buildTimeline({ coachingPlans: [{ ...unseen, ackVersion: 2, ackAt: at("2026-09-22") }] });
     assert.deepEqual(tl.map(e => e.text), ["Got your plan update (v2)", "You published Fall 10K (v3)"]);
+});
+
+// ---- Workout results ----
+
+test("workout results: pain first in attention, skips counted, timeline and client feed", () => {
+    const at = iso => ({ toMillis: () => new Date(`${iso}T12:00:00`).getTime() });
+    const results = [
+        { date: "2026-09-29", title: "Workout", status: "completed", distance: 6.2, rpe: 8, pain: true, painNote: "left Achilles", coachComment: "", createdAt: at("2026-09-29") },
+        { date: "2026-09-30", title: "Easy run", status: "skipped", pain: false, coachComment: "", createdAt: at("2026-09-30") },
+        { date: "2026-10-01", title: "Easy run", status: "skipped", pain: false, coachComment: "Rest is fine.", coachCommentAt: at("2026-10-01"), planId: "p1", createdAt: at("2026-10-01") }
+    ];
+    const plans = summarizePlans({}, "2026-10-02");
+    const base = { profile: { services: ["running"] }, plans, sessions: { waiting: [], upcoming: [] }, checkins: { needsReview: [], thisWeek: { status: "submitted" } }, today: "2026-10-02", record: undefined };
+    const items = needsAttention({ ...base, results });
+    assert.equal(items[0].kind, "pain");
+    assert.match(items[0].text, /Flagged pain on Sep 29 \(Workout\): "left Achilles"/);
+    assert.ok(items.some(i => i.kind === "skipped" && /Skipped 2 workouts/.test(i.text)));
+    // Answered pain drops off.
+    assert.ok(!needsAttention({ ...base, results: [{ ...results[0], coachComment: "Ice it." }] }).some(i => i.kind === "pain"));
+    const tl = buildTimeline({ results }).map(e => e.text);
+    assert.ok(tl.includes("Logged Workout — 6.2 mi, effort 8/10, pain flagged"));
+    assert.ok(tl.includes("Skipped Easy run (Sep 30)"));
+    assert.ok(tl.includes("You replied on Easy run (Oct 1)"));
+    const feed = buildCoachFeed({ results, today: "2026-10-02" });
+    assert.equal(feed.length, 1);
+    assert.equal(feed[0].title, "Reply on your easy run");
+    assert.equal(feed[0].link, "workout.html?program=coach-p1&date=2026-10-01");
 });
