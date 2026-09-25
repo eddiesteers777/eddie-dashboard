@@ -1,0 +1,123 @@
+/* ==========================================
+   Southbound — Client profile form (js/clientProfileForm.js)
+   Used by profile.html (client) and the Client Hub's Profile tab.
+========================================== */
+
+.cp-form [hidden], .profile-page [hidden]{ display:none !important; }
+
+.cp-form{ display:flex; flex-direction:column; gap:14px; }
+
+.cp-section{
+    padding:20px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius, 18px);
+}
+.cp-section h2{
+    margin:0 0 14px;
+    font-size:17px;
+}
+
+.cp-field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:14px;
+}
+.cp-field:last-child{ margin-bottom:0; }
+
+.cp-label{
+    color:var(--text);
+    font-size:14px;
+    font-weight:600;
+    line-height:1.4;
+}
+.cp-required{
+    margin-left:4px;
+    color:var(--primary);
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+.cp-hint{ color:var(--muted); font-size:12.5px; }
+
+.cp-input{
+    width:100%;
+    padding:10px 12px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    font:15px var(--font-body);
+    color-scheme:dark;
+}
+.cp-input:focus{ outline:none; border-color:var(--primary); }
+textarea.cp-input{ resize:vertical; min-height:74px; line-height:1.5; }
+.cp-short{ max-width:200px; }
+
+.cp-choice, .cp-days{ display:flex; flex-wrap:wrap; gap:8px; }
+.cp-choice-option, .cp-day{ position:relative; cursor:pointer; }
+.cp-choice-option input, .cp-day input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+}
+.cp-choice-option span, .cp-day span{
+    display:inline-flex;
+    align-items:center;
+    min-height:40px;
+    padding:0 16px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-size:14px;
+    font-weight:600;
+}
+.cp-day span{ min-width:52px; justify-content:center; padding:0 10px; }
+.cp-choice-option input:checked + span, .cp-day input:checked + span{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:var(--on-primary);
+}
+.cp-choice-option input:focus-visible + span, .cp-day input:focus-visible + span{
+    box-shadow:0 0 0 2px rgba(201,173,132,.45);
+}
+
+.cp-actions{
+    position:sticky;
+    bottom:12px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:12px 16px;
+    background:rgba(23,41,31,.92);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--border);
+    border-radius:16px;
+}
+@media (max-width:900px){
+    /* sit above the bottom tab bar */
+    .cp-actions{ bottom:calc(84px + env(safe-area-inset-bottom)); }
+}
+
+/* ---- profile.html ---- */
+
+.profile-page{
+    max-width:760px;
+    margin:0 auto;
+}
+.profile-intro{
+    margin:0 0 18px;
+    padding:16px 18px;
+    background:rgba(201,173,132,.08);
+    border:1px solid rgba(201,173,132,.25);
+    border-radius:14px;
+    color:var(--text-secondary);
+    font-size:14.5px;
+    line-height:1.6;
+}
+.profile-intro strong{ color:var(--text); }

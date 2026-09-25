@@ -292,3 +292,64 @@ test("an applicant's standing code lets an approved coach link them on approval,
     await assertSucceeds(redeem(as("coach"), "coach", "stranger", code));
     await assertFails(redeem(as("coach"), "coach", "stranger", code));
 });
+
+// ---- Client profiles (clientRecords) ----
+
+function profile(clientUid, by, extra = {}) {
+    return {
+        clientUid, whoTrains: "self", preferredName: "Cam", athleteName: "", birthYear: 1994,
+        phone: "555-0100", primarySport: "running", teamOrLevel: "", currentTraining: "3 runs a week",
+        weeklyMileage: 18.5, strengthExperience: "some", availabilityDays: ["tue", "thu", "sat"],
+        availabilityNotes: "Mornings", primaryGoal: "Sub-45 10K", secondaryGoals: "", targetEvent: "Fall 10K",
+        targetDate: "2026-10-11", coachingWants: "", workedBefore: "", notWorked: "", injuries: "Old ankle sprain",
+        intakeComplete: true, updatedAt: serverTimestamp(), updatedBy: by, ...extra
+    };
+}
+
+test("client profiles: the client fills theirs in and their linked coach can read and edit it", async () => {
+    await seedLinkAndBooking();
+    const mine = doc(as("client"), "clientRecords/client");
+    await assertSucceeds(getDoc(mine)); // reading before it exists is fine
+    await assertSucceeds(setDoc(mine, profile("client", "client", { intakeCompletedAt: serverTimestamp() })));
+    await assertSucceeds(getDoc(doc(as("coach"), "clientRecords/client")));
+    await assertSucceeds(setDoc(doc(as("coach"), "clientRecords/client"),
+        { primaryGoal: "Sub-44 10K", clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "coach" }, { merge: true }));
+});
+
+test("client profiles: nobody else can read or write them", async () => {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(async ctx => {
+        await setDoc(doc(ctx.firestore(), "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [] });
+        await setDoc(doc(ctx.firestore(), "clientRecords/client"), profile("client", "client", { updatedAt: Timestamp.now() }));
+    });
+    // An approved coach who isn't linked, and a random account.
+    await assertFails(getDoc(doc(as("coach2"), "clientRecords/client")));
+    await assertFails(getDoc(doc(as("stranger"), "clientRecords/client")));
+    await assertFails(setDoc(doc(as("stranger"), "clientRecords/client"), profile("client", "stranger")));
+    // A client can't write someone else's.
+    await assertFails(setDoc(doc(as("client"), "clientRecords/stranger"), profile("stranger", "client")));
+    // Nobody deletes it.
+    await assertFails(deleteDoc(doc(as("client"), "clientRecords/client")));
+    await assertFails(deleteDoc(doc(as("coach"), "clientRecords/client")));
+    // Once the client removes the coach, the coach loses access.
+    await assertSucceeds(deleteDoc(doc(as("client"), "coachLinks/coach_client")));
+    await assertFails(getDoc(doc(as("coach"), "clientRecords/client")));
+});
+
+test("client profiles: only known fields, sane values, honest who/when", async () => {
+    await seedLinkAndBooking();
+    const mine = doc(as("client"), "clientRecords/client");
+    await assertFails(setDoc(mine, profile("client", "client", { isCoachApproved: true })));
+    await assertFails(setDoc(mine, profile("client", "client", { primaryGoal: "x".repeat(501) })));
+    await assertFails(setDoc(mine, profile("client", "client", { whoTrains: "coach" })));
+    await assertFails(setDoc(mine, profile("client", "client", { availabilityDays: ["mon", "funday"] })));
+    await assertFails(setDoc(mine, profile("client", "client", { targetDate: "next spring" })));
+    await assertFails(setDoc(mine, profile("client", "client", { birthYear: "1994" })));
+    await assertFails(setDoc(mine, profile("client", "client", { clientUid: "stranger" })));
+    await assertFails(setDoc(mine, profile("client", "coach"))); // can't sign it as someone else
+    await assertFails(setDoc(mine, profile("client", "client", { updatedAt: Timestamp.fromMillis(0) })));
+    // The completion time is set once, by the server clock, and then kept.
+    await assertSucceeds(setDoc(mine, profile("client", "client", { intakeCompletedAt: serverTimestamp() })));
+    await assertFails(setDoc(mine, { intakeCompletedAt: Timestamp.fromMillis(0), clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "client" }, { merge: true }));
+    await assertSucceeds(setDoc(mine, { phone: "555-0199", clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "client" }, { merge: true }));
+});

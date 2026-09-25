@@ -61,7 +61,7 @@ Photos live in `images/`. `images/README.md` lists the exact filenames. A missin
 | Habits | `habits.html` |
 | More | `programs.html`, `pace-calculator.html`, `settings.html`, `more.html` |
 | Coach-only personal tools | `marathon.html`, `75day.html`, `planner.html` (Eddie's own calendar: add/edit/delete events, saved privately as `planner-events` via cloud sync, `js/plannerEvents.js`; today's events show on Today; no dates live in the code), `analytics.html`, `weekly-review.html`, `gear.html` (Eddie's own; `data-requires="coach"` in nav, More, search and the Today cards, and `COACH_ONLY_PAGES` in `js/loadHeader.js` sends a client who opens one by link back to Today) |
-| Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), `clients.html?tab=share` ("Connect with Your Coach": get a one-time code for the coach), all reached via Tools / More |
+| Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), `profile.html` ("My Profile": the client intake, prefilled from their application, saved to `clientRecords`), `clients.html?tab=share` ("Connect with Your Coach": get a one-time code for the coach), all reached via Tools / More. Today's coach card prompts "Tell your coach about you" until the profile has a goal and a sport. |
 
 **App: coach pages** (the **Coach** bottom tab on mobile / **Coach** dropdown on desktop)
 
@@ -69,7 +69,7 @@ Photos live in `images/`. `images/README.md` lists the exact filenames. A missin
 |---|---|
 | `coach.html` | Dashboard: new website questions (with Email/Text/Call and Mark answered), pending accounts, booking requests, check-ins to review, active clients. `coach.html#inquiries` jumps to the questions. |
 | `clients.html` | Coach: *Coach a Client* (enter a client's code, then the client list: search, filter chips All / Needs attention / Running / Strength / Soccer / Online, one row per client with plan week, next session, check-in status and an attention badge; a row opens the Client Hub) and *Pending* (approve/deny signups, make coach). A client sees only "Connect with Your Coach" (the share panel) on the same page. |
-| `client.html?uid=…` | **Client Hub** (coach only): header (name, services, client since), at-a-glance boxes (plan week, this week's completion, next session, last check-in; sessions-first for soccer-only clients), tabs *Overview* (needs attention, what's next, recent activity, their application, quick actions), *Plan* (the plan editor, opened on this week), *Check-ins* (reply inline, emails the client), *Sessions* (waiting / upcoming / past with notes). `?tab=plan` etc. deep-links. |
+| `client.html?uid=…` | **Client Hub** (coach only): header (name, services, client since), at-a-glance boxes (plan week, this week's completion, next session, last check-in; sessions-first for soccer-only clients), tabs *Overview* (needs attention, what's next, recent activity, their application, quick actions), *Plan* (the plan editor, opened on this week), *Check-ins* (reply inline, emails the client), *Sessions* (waiting / upcoming / past with notes), *Profile* (the client profile, editable by the coach). The header also shows who's training (parent accounts), "goes by", their goal + target event, and a Text button; the Overview has an "About them" card with injuries/limits highlighted. `?tab=plan` etc. deep-links. |
 | `checkin.html` | *Review Check-ins* tab (coaches land here by default) |
 | `schedule.html` | Availability, blackout dates, approve/deny booking requests |
 
@@ -102,6 +102,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 | `coachAvailability/{coachUid}` | Weekly slots + blackout dates |
 | `bookingRequests/{id}` | Session requests (single or recurring). Only the coach can approve/deny; the client can only cancel; booking details never change after creation. |
 | `checkins/{clientUid}_{weekOf}` | One weekly check-in per client (rating + notes, then coach feedback) |
+| `clientRecords/{clientUid}` | The **client profile** (fields in `js/clientRecordSchema.js`): who's training (self/child), preferred/athlete name, birth year, phone, sport, team/level, current training, weekly miles, strength experience, available days + notes, main/other goals, target event + date, what they want from a coach, what has/hasn't worked, injuries. Plus `intakeComplete`, `intakeCompletedAt`, `updatedAt`, `updatedBy`. The client and their **linked** coach can read and write it (`validClientRecord` checks every key/type/size and that updatedBy/updatedAt are honest); nobody deletes it. **Nothing coach-private goes here** -- the client can read it all. Name/email/services/status/start date stay on `userProfiles`/`coachLinks`, not duplicated. |
 | `inquiries/{id}` | Questions from `contact.html`. **Anyone can create one without signing in**, so the rules validate every field (known keys, sizes, email format, an email or a phone, `status: "new"`, server timestamp). Only approved coaches can read them; the coach can only flip `status` new/handled. A hidden honeypot field in the form drops obvious bots. If spam ever becomes a problem, add Firebase App Check. |
 
 Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `strength`, `soccer_1on1`, `soccer_group`.
@@ -123,11 +124,11 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 
 ### Client Hub (coach CRM) -- see `docs/CLIENT_MANAGEMENT_PLAN.md`
 
-Eddie's handoff for turning Southbound into a connected client-management platform ("powerful underneath, simple on the surface"), in 9 phases. **Phase 1 (Client Hub foundation) is built**: it stores nothing new and needs no rules change -- it reads what a linked coach can already read.
+Eddie's handoff for turning Southbound into a connected client-management platform ("powerful underneath, simple on the surface"), in 9 phases. **Phases 1-2 are built.** Phase 1 (Client Hub foundation) stores nothing new -- it reads what a linked coach can already read. Phase 2 adds the client profile (`clientRecords`, `js/clientRecordSchema.js` + `js/clientRecords.js` + the shared form `js/clientProfileForm.js`, used by `profile.html` and the hub's Profile tab). Birth *year*, not birthday: it's all coaching needs (age groups, zones) and less sensitive. A test (`tests/clientRecordSchema.test.mjs`) fails if the schema's fields and the rules' allowed keys drift apart.
 - `js/clientDirectory.js` loads coachLinks + userProfiles + sharedPlans + checkins + bookingRequests (existing modules).
 - `js/clientSummary.js` (pure, unit-tested in `tests/clientSummary.test.mjs`) derives: plan position (current week, start/end), today/next workout and this week's completion from the mirrored plan days' `completed` flags, sessions (upcoming/past/waiting), check-ins (latest, needs reply, recent average), needs-attention items, and a recent-activity timeline built from existing timestamps.
 - `js/planEditor.js` is the plan editor, moved out of the old My Clients popup; the hub's Plan tab mounts it inline.
-- Next phases: 2 `clientRecords/{uid}` profile (goal, preferred name, etc.), 3 private coach notes vs client-facing updates, 4 stored timeline, 5 "Needs attention" coach dashboard, 6 session history/mark complete, 7 progress, 8 client side, 9 packages/billing. Phases 2+ add collections, so they need rules + rules tests + Eddie pasting the rules.
+- Next phases: 3 private coach notes vs client-facing updates (a separate coach-only collection -- never a field on `clientRecords`), 4 stored timeline, 5 "Needs attention" coach dashboard, 6 session history/mark complete, 7 progress, 8 client side, 9 packages/billing. Phases 2+ add collections, so they need rules + rules tests + Eddie pasting the rules.
 - **Progress data limit:** a client's own logs (running-log, habits, nutrition) live in `users/{uid}/sync`, which only the client can read. The hub can only show what the client's app mirrors to `sharedPlans` (plans + completed days). Showing more (Phase 7) means mirroring a small summary, not opening the private sync doc.
 
 ### Navigation access
@@ -176,6 +177,8 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 **Client Hub Phase 1 (2026-09-25, no rules change):** searchable/filterable client list, `client.html` hub with Overview / Plan / Check-ins / Sessions, plan editor moved inline, 9 unit tests + an emulator e2e (list, search, filters, hub summary, plan edit saves to sharedPlans, inline check-in reply, soccer-only view, unknown uid, client redirected).
 
+**Client Hub Phase 2 (2026-09-25, RULES CHANGED):** client profile (`clientRecords`) with `profile.html` intake (prefilled from the application, parent/child aware), Today prompt, hub Profile tab + header goal/phone + About card, profile-aware attention/timeline/search, privacy page updated. 3 new rules tests, 9 new unit tests, a 23-step emulator e2e.
+
 **Known gaps / Eddie's call (not done):**
 - Should clients connect COROS? Today it only works from `analytics.html` (coach-only), and Settings shows it to the coach only.
 - Nutrition goals default to Eddie's numbers (3200 kcal, 180 g protein...) in `js/nutrition.js`; clients can edit them, but a coach-set or sensible default would be better.
@@ -184,6 +187,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
 - [x] Firestore rules published (2026-09-24, including `inquiries`). Re-paste the whole file whenever it changes.
+- [ ] **Publish the updated rules (adds `clientRecords`, Client Hub phase 2).** Until then profiles can't be read or saved; the app degrades quietly (no intake nag, save shows "isn't switched on yet").
 - [ ] Photos: the hero, all four offer cards and gallery-1 are Unsplash stock (free license, graded to match; hero alt text doesn't claim it's Eddie). Still needed from Eddie: `eddie-portrait.jpg`, `eddie-about.jpg`, `gallery-2/3.jpg` (filenames in `images/README.md`). Swap the hero for a real photo of Eddie when he has one.
 - [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly). Until then each package says "Pricing on request".
 - [ ] Send a short **bio** for `about.html` (background, experience, certifications). It currently has honest interim copy with no specific claims.
@@ -191,7 +195,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 ## What's next (roadmap)
 
-**Active track: Client management** (`docs/CLIENT_MANAGEMENT_PLAN.md`) -- Phase 1 done; Phase 2 (client profile / `clientRecords`) next.
+**Active track: Client management** (`docs/CLIENT_MANAGEMENT_PLAN.md`) -- Phases 1-2 done; Phase 3 (private coach notes + client-facing updates) next.
 
 8. **Training ↔ fueling connection.** (The race-day schedule — gels by mile, bottles by mile range — is done; what's left is auto-building a plan for each training day.) Read `js/fueling.js` and `js/nutrition.js` data shapes first, then design per-day fueling targets (pre/during/post) from each training day's type and duration.
 9. **Booking refinements:** location, session length. (Done: the public question path `contact.html`, session notes, group capacity checks.)

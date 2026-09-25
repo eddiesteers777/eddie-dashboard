@@ -8,6 +8,9 @@
      sharedPlans (js/coachAccess.js readSharedPlanDoc)
      checkins    (js/checkins.js listCheckinsForMyClients)
      bookingRequests (js/scheduling.js listRequestsForMyClients)
+     clientRecords (js/clientRecords.js getClientRecord) -- the profile;
+               `record` is null when not filled in, undefined when it
+               couldn't be read (e.g. rules not published yet)
    js/clientSummary.js turns the result into what the pages show.
 ========================================== */
 
@@ -15,6 +18,13 @@ import { listMyClients, readSharedPlanDoc } from "./coachAccess.js";
 import { getProfile } from "./userProfile.js";
 import { listCheckinsForMyClients } from "./checkins.js";
 import { listRequestsForMyClients } from "./scheduling.js";
+import { getClientRecord } from "./clientRecords.js";
+
+// null = no profile yet; undefined = couldn't read it.
+const readRecord = uid => getClientRecord(uid).catch(error => {
+    console.warn("Southbound: client profile unavailable.", error);
+    return undefined;
+});
 
 const quiet = promise => promise.catch(error => {
     console.warn("Southbound: client data partly unavailable.", error);
@@ -41,14 +51,16 @@ export async function loadClientDirectory() {
     const requestsBy = groupByClient(requests);
 
     return Promise.all(links.map(async link => {
-        const [profile, shared] = await Promise.all([
+        const [profile, shared, record] = await Promise.all([
             quiet(getProfile(link.clientUid)),
-            quiet(readSharedPlanDoc(link.clientUid))
+            quiet(readSharedPlanDoc(link.clientUid)),
+            readRecord(link.clientUid)
         ]);
         return {
             link,
             profile,
             shared,
+            record,
             checkins: checkinsBy.get(link.clientUid) || [],
             requests: requestsBy.get(link.clientUid) || []
         };
@@ -60,16 +72,18 @@ export async function loadClientRecord(clientUid) {
     const links = await listMyClients();
     const link = links.find(l => l.clientUid === clientUid);
     if (!link) return null;
-    const [profile, shared, checkins, requests] = await Promise.all([
+    const [profile, shared, checkins, requests, record] = await Promise.all([
         quiet(getProfile(clientUid)),
         quiet(readSharedPlanDoc(clientUid)),
         quiet(listCheckinsForMyClients()),
-        quiet(listRequestsForMyClients())
+        quiet(listRequestsForMyClients()),
+        readRecord(clientUid)
     ]);
     return {
         link,
         profile,
         shared,
+        record,
         checkins: (checkins || []).filter(c => c.clientUid === clientUid),
         requests: (requests || []).filter(r => r.clientUid === clientUid)
     };

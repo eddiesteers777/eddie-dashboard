@@ -237,3 +237,61 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
 .hub-session-date span{ color:var(--muted); font-size:12.5px; }
 .hub-session-text{ display:flex; flex-direction:column; gap:2px; min-width:0; font-size:14px; }
 .hub-inline-btn{ display:inline-flex; margin-top:10px; text-decoration:none; }
+
+/* ---- Phase 2: profile in the hub ---- */
+
+.hub-goesby{ margin-top:2px; color:var(--text-secondary); font-size:14px; font-weight:600; }
+.hub-goal{
+    margin-top:8px;
+    color:var(--text);
+    font-size:14.5px;
+    line-height:1.45;
+}
+.hub-goal span{
+    margin-right:6px;
+    color:var(--primary);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+}
+.hub-goal em{ color:var(--text-secondary); font-style:normal; }
+.hub-contact{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.hub-about-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+}
+.hub-about-head h2{ margin:0; }
+.hub-injury{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:12px;
+    padding:10px 12px;
+    background:rgba(245,158,11,.1);
+    border:1px solid rgba(245,158,11,.35);
+    border-radius:12px;
+    color:var(--text);
+    font-size:14px;
+    line-height:1.5;
+}
+.hub-injury .ui-icon{ color:#F59E0B; margin-top:3px; }
+.hub-facts{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    gap:8px 14px;
+    margin:0;
+    font-size:14px;
+    line-height:1.5;
+}
+.hub-facts dt{ color:var(--muted); font-weight:600; }
+.hub-facts dd{ margin:0; color:var(--text); white-space:pre-line; }
+@media (max-width:560px){
+    .hub-facts{ grid-template-columns:1fr; gap:2px; }
+    .hub-facts dd{ margin-bottom:8px; }
+}
+.hub-profile-note{ margin:0 0 12px; }

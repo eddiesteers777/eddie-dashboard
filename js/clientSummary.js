@@ -18,7 +18,11 @@
                mirrored from the client's app, days carry `completed`)
      checkins  checkins where clientUid == uid
      requests  bookingRequests where clientUid == uid
+     record    clientRecords/{uid} (the client profile; null = not filled
+               in yet, undefined = couldn't be read)
 ========================================== */
+
+import { isIntakeComplete, athleteDisplayName } from "./clientRecordSchema.js";
 
 export const SERVICE_LABELS = {
     online_coaching: "Online Coaching",
@@ -186,7 +190,7 @@ export function summarizeCheckins(checkins, today) {
 
 // What the coach should act on for this client, most urgent first.
 // Each: { kind, text, tab } -- tab is the Client Hub tab that handles it.
-export function needsAttention({ profile, plans, sessions, checkins, today }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record }) {
     const items = [];
     const services = profile?.services || [];
     const trains = services.some(s => TRAINING_SERVICES.includes(s));
@@ -197,6 +201,10 @@ export function needsAttention({ profile, plans, sessions, checkins, today }) {
     }
     if (sessions.waiting.length) {
         items.push({ kind: "booking", text: `${sessions.waiting.length} session request${sessions.waiting.length === 1 ? "" : "s"} waiting on you`, tab: "sessions" });
+    }
+    // Profile not filled in (only when we could actually read it).
+    if (record !== undefined && !isIntakeComplete(record)) {
+        items.push({ kind: "intake", text: "Hasn't filled in their profile yet", tab: "profile" });
     }
     if (trains && !plans.primary) {
         items.push({ kind: "plan", text: "No active training plan", tab: "plan" });
@@ -223,13 +231,14 @@ export function needsAttention({ profile, plans, sessions, checkins, today }) {
 
 // Recent activity derived from existing data (no timeline collection yet).
 // Each: { at (millis), date (iso), kind, text }
-export function buildTimeline({ profile, link, checkins, requests }) {
+export function buildTimeline({ profile, link, checkins, requests, record }) {
     const events = [];
     const push = (at, kind, text) => { const ms = toMillis(at); if (ms) events.push({ at: ms, date: isoDate(new Date(ms)), kind, text }); };
 
     push(profile?.applicationSubmittedAt, "application", "Application submitted");
     push(profile?.approvedAt, "approved", "Account approved");
     push(link?.linkedAt, "linked", "Connected to you");
+    push(record?.intakeCompletedAt, "intake", "Filled in their profile");
     for (const c of checkins || []) {
         push(c.submittedAt, "checkin", `Weekly check-in sent${c.rating ? ` — ${c.rating}/5` : ""}`);
         if (c.status === "reviewed") push(c.reviewedAt, "feedback", "You replied to their check-in");
@@ -252,14 +261,21 @@ export function shortDate(iso) {
 
 // ---------- One-line row for the client list ----------
 
-export function summarizeClient({ profile, link, shared, checkins, requests }, today) {
+export function summarizeClient({ profile, link, shared, checkins, requests, record }, today) {
     const plans = summarizePlans(shared, today);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record });
+    const name = profile?.displayName || link?.clientName || "Client";
+    const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
+    const goesBy = athleteDisplayName(record, "");
     return {
         uid: link?.clientUid || profile?.uid,
-        name: profile?.displayName || link?.clientName || "Client",
+        name,
+        athlete,
+        goesBy: goesBy && goesBy !== name ? goesBy : "",
+        goal: record?.primaryGoal || "",
+        searchText: [name, goesBy, athlete, profile?.email, link?.clientEmail].filter(Boolean).join(" ").toLowerCase(),
         email: profile?.email || link?.clientEmail || "",
         services: profile?.services || [],
         status: profile?.status || "active",

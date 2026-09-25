@@ -13,6 +13,8 @@ import { listMyBookingRequests, SESSION_TYPES } from "./scheduling.js";
 import { listMyCheckins, weekKeyFor } from "./checkins.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { getMyProfile } from "./userProfile.js";
+import { getMyClientRecord } from "./clientRecords.js";
+import { isIntakeComplete } from "./clientRecordSchema.js";
 import { icon } from "./icons.js";
 
 function esc(value) {
@@ -60,16 +62,29 @@ function row({ iconName, color, title, detail, note, link }) {
 export async function renderCoachCard(container) {
     if (!container) return null;
 
-    const [coaches, requests, checkins, profile] = await Promise.all([
+    const [coaches, requests, checkins, profile, record] = await Promise.all([
         listMyCoaches().catch(() => []),
         listMyBookingRequests().catch(() => []),
         listMyCheckins().catch(() => []),
-        getMyProfile().catch(() => null)
+        getMyProfile().catch(() => null),
+        // undefined = couldn't read (don't nag), null = not filled in yet
+        getMyClientRecord().catch(() => undefined)
     ]);
 
     const coach = coaches[0];
     const today = localIso();
     const rows = [];
+
+    // ---- Profile (entered once, remembered) ----
+    if (coach && record !== undefined && !isIntakeComplete(record)) {
+        rows.push(row({
+            iconName: "user",
+            color: "var(--primary)",
+            title: "Tell your coach about you",
+            detail: "Goals, schedule, what's worked before -- about 3 minutes",
+            link: "profile.html"
+        }));
+    }
 
     // ---- Sessions ----
     const upcoming = requests

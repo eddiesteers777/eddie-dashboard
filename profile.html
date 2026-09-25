@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Profile | Southbound Coaching</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/client-profile.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page profile-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coaching</div>
+                <h1>My Profile</h1>
+                <p class="eos-today-phase">Tell your coach about you once, and it's remembered.</p>
+            </div>
+        </section>
+
+        <p id="profileLoading" class="clients-card-note">Loading…</p>
+        <div id="profileIntro" class="profile-intro" hidden></div>
+        <div id="profileForm"></div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/profile.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

@@ -70,6 +70,7 @@ const PAGE_TAB = {
     "settings.html": "more",
     "clients.html": "coach",
     "client.html": "coach",
+    "profile.html": "more",
     "coach.html": "coach",
     "schedule.html": "coach",
     "checkin.html": "coach",

@@ -23,6 +23,7 @@ import { SESSION_TYPES } from "./scheduling.js";
 import { reviewCheckin } from "./checkins.js";
 import { sendCheckinReviewedEmail } from "./emailNotify.js";
 import { icon } from "./icons.js";
+import { FIELDS, displayValue, athleteDisplayName } from "./clientRecordSchema.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -52,6 +53,7 @@ function workoutText(day) {
 // ---- Tabs ----
 
 let planMounted = false;
+let profileMounted = false;
 let record = null;
 
 function selectTab(name) {
@@ -67,6 +69,21 @@ function selectTab(name) {
             focusPlanId: record.summary.plans.primary?.id,
             currentDate: isoDate(new Date())
         })).then(() => import("./icons.js").then(m => m.hydrate()));
+    }
+    if (name === "profile" && !profileMounted && record) {
+        profileMounted = true;
+        renderProfileNote();
+        import("./clientProfileForm.js").then(({ mountProfileForm }) => mountProfileForm($("hubProfile"), {
+            clientUid,
+            record: record.record || null,
+            mode: "coach",
+            onSaved: saved => {
+                record.record = saved;
+                summarize();
+                renderAll();
+                renderProfileNote();
+            }
+        }));
     }
     const url = new URL(location.href);
     url.searchParams.set("tab", name);
@@ -98,6 +115,76 @@ function renderHeader() {
     if (email) {
         $("hubEmail").href = `mailto:${email}`;
         $("hubEmail").hidden = false;
+    }
+
+    // From their profile: who's actually training, their goal, a phone.
+    const rec = record.record;
+    const goesBy = $("hubGoesBy");
+    const who = athleteDisplayName(rec, "");
+    if (rec?.whoTrains === "child" && rec.athleteName) {
+        goesBy.textContent = `Training: ${rec.athleteName}${rec.birthYear ? ` (born ${rec.birthYear})` : ""}`;
+        goesBy.hidden = false;
+    } else if (who && who !== name) {
+        goesBy.textContent = `Goes by ${who}`;
+        goesBy.hidden = false;
+    } else {
+        goesBy.hidden = true;
+    }
+    const goal = $("hubGoal");
+    if (rec?.primaryGoal) {
+        const target = [rec.targetEvent, rec.targetDate ? displayValue(FIELDS.find(f => f.key === "targetDate"), rec.targetDate) : ""].filter(Boolean).join(", ");
+        goal.innerHTML = `<span>Goal</span> ${esc(rec.primaryGoal)}${target ? ` <em>· ${esc(target)}</em>` : ""}`;
+        goal.hidden = false;
+    } else {
+        goal.hidden = true;
+    }
+    const phone = String(rec?.phone || "").replace(/[^\d+]/g, "");
+    $("hubCall").hidden = !phone;
+    if (phone) {
+        $("hubCall").href = `sms:${phone}`;
+        $("hubCall").title = rec.phone;
+    }
+}
+
+// Key facts from their profile for the Overview (the full, editable
+// version is the Profile tab).
+function renderAbout() {
+    const rec = record.record;
+    if (!rec) { $("hubAbout").innerHTML = ""; return; }
+    const f = key => FIELDS.find(x => x.key === key);
+    const val = key => displayValue(f(key), rec[key]);
+    const rows = [
+        ["Aiming for", [rec.targetEvent, val("targetDate")].filter(Boolean).join(", ")],
+        ["Sport", [val("primarySport"), rec.teamOrLevel].filter(Boolean).join(" · ")],
+        ["Training now", [rec.currentTraining, val("weeklyMileage")].filter(Boolean).join(" · ")],
+        ["Available", [val("availabilityDays"), rec.availabilityNotes].filter(Boolean).join(" · ")],
+        ["Other goals", rec.secondaryGoals],
+        ["Wants from a coach", rec.coachingWants],
+        ["What's worked", rec.workedBefore],
+        ["What hasn't", rec.notWorked]
+    ].filter(([, v]) => v);
+    $("hubAbout").innerHTML = `
+        <div class="clients-card hub-about">
+            <div class="hub-about-head">
+                <h2>About ${esc(athleteDisplayName(rec, displayName()).split(" ")[0])}</h2>
+                <button type="button" class="clients-btn-secondary" data-go-tab="profile">Full profile</button>
+            </div>
+            ${rec.injuries ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Injuries / limits:</strong> ${esc(rec.injuries)}</span></div>` : ""}
+            ${rows.length ? `<dl class="hub-facts">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
+        </div>`;
+}
+
+function renderProfileNote() {
+    const rec = record.record;
+    const note = $("hubProfileNote");
+    if (rec === undefined) {
+        note.textContent = "Couldn't load their profile right now. If this keeps happening, the new security rules may not be published yet.";
+    } else if (!rec) {
+        note.textContent = "They haven't filled this in yet (they're prompted on their Today screen). You can also fill it in together here -- they'll see whatever you save.";
+    } else {
+        const when = toMillis(rec.updatedAt);
+        const by = rec.updatedBy === clientUid ? "them" : "you";
+        note.textContent = `${when ? `Last updated ${new Date(when).toLocaleDateString("en-US", { month: "short", day: "numeric" })} by ${by}. ` : ""}They can see everything on this tab.`;
     }
 }
 
@@ -209,7 +296,8 @@ function renderActions() {
         <button type="button" class="clients-btn-secondary" data-go-tab="plan">${icon("edit")} Edit plan</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="checkins">${icon("star")} Check-ins</button>
         <a class="clients-btn-secondary" href="schedule.html?tab=availability">${icon("calendar")} Schedule</a>
-        ${email ? `<a class="clients-btn-secondary" href="mailto:${esc(email)}">${icon("mail")} Email ${esc(displayName().split(" ")[0])}</a>` : ""}`;
+        ${email ? `<a class="clients-btn-secondary" href="mailto:${esc(email)}">${icon("mail")} Email ${esc(displayName().split(" ")[0])}</a>` : ""}
+        <button type="button" class="clients-btn-secondary" data-go-tab="profile">${icon("user")} Profile</button>`;
 }
 
 function renderCheckins() {
@@ -306,7 +394,7 @@ function summarize() {
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record }),
         timeline: buildTimeline(record)
     };
 }
@@ -315,6 +403,7 @@ function renderAll() {
     renderHeader();
     renderGlance();
     renderAttention();
+    renderAbout();
     renderNext();
     renderTimeline();
     renderApplication();

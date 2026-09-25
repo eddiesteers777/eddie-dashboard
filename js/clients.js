@@ -102,7 +102,7 @@ function renderClientRows() {
     const q = (clientSearch.value || "").trim().toLowerCase();
     const shown = clientRows
         .filter(FILTERS[clientFilter] || FILTERS.all)
-        .filter(c => !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+        .filter(c => !q || c.searchText.includes(q));
 
     clientsEmptyMsg.hidden = clientRows.length > 0;
     clientsList.innerHTML = shown.length || !clientRows.length ? "" :
@@ -116,7 +116,7 @@ function renderClientRows() {
             <a class="clients-client-link" href="client.html?uid=${encodeURIComponent(c.uid)}">
                 <div class="clients-row-avatar">${escapeHtml((c.name || "?").slice(0, 1).toUpperCase())}</div>
                 <div class="clients-row-info">
-                    <strong>${escapeHtml(c.name)}${c.attention.length ? ` <span class="clients-attn-badge" title="Needs attention">${c.attention.length}</span>` : ""}</strong>
+                    <strong>${escapeHtml(c.name)}${c.athlete ? ` <span class="clients-client-athlete">for ${escapeHtml(c.athlete)}</span>` : c.goesBy ? ` <span class="clients-client-athlete">(${escapeHtml(c.goesBy)})</span>` : ""}${c.attention.length ? ` <span class="clients-attn-badge" title="Needs attention">${c.attention.length}</span>` : ""}</strong>
                     <span>${escapeHtml(serviceLabels(c.services).join(" · ") || c.email)}</span>
                     <span class="clients-client-meta">${meta.map(escapeHtml).join(" &middot; ")}</span>
                 </div>

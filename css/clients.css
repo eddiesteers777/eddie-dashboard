@@ -589,3 +589,4 @@
 .clients-week-done{ margin-left:auto; color:var(--muted); font-size:12px; font-weight:600; }
 .clients-day-row.is-done .clients-day-label{ color:var(--green); }
 .clients-day-check{ font-weight:700; }
+.clients-client-athlete{ color:var(--text-secondary); font-weight:500; font-size:13px; }

@@ -137,3 +137,30 @@ test("summarizeClient: one row for the list", () => {
     assert.equal(row.plans.primary.weekNumber, 2);
     assert.deepEqual(row.attention, []);
 });
+
+test("profile: flag it when not filled in, but not when it couldn't be read", () => {
+    const today = "2026-09-23";
+    const base = { profile: { services: ["soccer_1on1"] }, plans: summarizePlans({}, today),
+        sessions: summarizeSessions([{ status: "approved", dates: ["2026-09-30"] }], today),
+        checkins: summarizeCheckins([], today), today };
+    assert.deepEqual(needsAttention({ ...base, record: null }).map(i => i.kind), ["intake"]);
+    assert.deepEqual(needsAttention({ ...base, record: { primaryGoal: "Better first touch" } }).map(i => i.kind), ["intake"], "no sport yet");
+    assert.deepEqual(needsAttention({ ...base, record: { primaryGoal: "Better first touch", primarySport: "soccer" } }), []);
+    assert.deepEqual(needsAttention({ ...base, record: undefined }), []);
+});
+
+test("profile: names, search and timeline", () => {
+    const row = summarizeClient({
+        profile: { uid: "p1", displayName: "Jordan Parent", email: "jp@x.com", services: ["soccer_1on1"] },
+        link: { clientUid: "p1" }, shared: {}, checkins: [], requests: [],
+        record: { whoTrains: "child", athleteName: "Alex", primaryGoal: "Make the U12 team", primarySport: "soccer" }
+    }, "2026-09-23");
+    assert.equal(row.athlete, "Alex");
+    assert.equal(row.goesBy, "Alex");
+    assert.equal(row.goal, "Make the U12 team");
+    assert.ok(row.searchText.includes("alex") && row.searchText.includes("jordan"));
+
+    const t = buildTimeline({ profile: {}, link: {}, checkins: [], requests: [],
+        record: { intakeCompletedAt: Date.parse("2026-09-24T12:00:00Z") } });
+    assert.deepEqual(t.map(e => e.kind), ["intake"]);
+});

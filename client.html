@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/clients.css">
     <link rel="stylesheet" href="css/client-hub.css">
+    <link rel="stylesheet" href="css/client-profile.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
@@ -42,10 +43,15 @@
                 <div class="hub-avatar" id="hubAvatar"></div>
                 <div class="hub-identity">
                     <h1 id="hubName"></h1>
+                    <div class="hub-goesby" id="hubGoesBy" hidden></div>
                     <div class="hub-services" id="hubServices"></div>
                     <div class="hub-since" id="hubSince"></div>
+                    <div class="hub-goal" id="hubGoal" hidden></div>
                 </div>
-                <a class="clients-btn-secondary hub-email" id="hubEmail" hidden><span data-icon="mail"></span> Email</a>
+                <div class="hub-contact">
+                    <a class="clients-btn-secondary hub-email" id="hubCall" hidden><span data-icon="messageSquare"></span> Text</a>
+                    <a class="clients-btn-secondary hub-email" id="hubEmail" hidden><span data-icon="mail"></span> Email</a>
+                </div>
             </section>
 
             <!-- At a glance -->
@@ -56,10 +62,12 @@
                 <button type="button" class="clients-tab" data-tab="plan" role="tab">Plan</button>
                 <button type="button" class="clients-tab" data-tab="checkins" role="tab">Check-ins <span id="hubCheckinBadge" class="clients-tab-badge" hidden></span></button>
                 <button type="button" class="clients-tab" data-tab="sessions" role="tab">Sessions <span id="hubSessionBadge" class="clients-tab-badge" hidden></span></button>
+                <button type="button" class="clients-tab" data-tab="profile" role="tab">Profile</button>
             </nav>
 
             <section class="clients-panel" data-panel="overview">
                 <div id="hubAttention"></div>
+                <div id="hubAbout"></div>
                 <div class="hub-grid">
                     <div class="clients-card">
                         <h2>What's next</h2>
@@ -87,6 +95,11 @@
 
             <section class="clients-panel" data-panel="sessions" hidden>
                 <div id="hubSessions"></div>
+            </section>
+
+            <section class="clients-panel" data-panel="profile" hidden>
+                <p class="clients-card-note hub-profile-note" id="hubProfileNote"></p>
+                <div id="hubProfile"></div>
             </section>
 
         </div>
