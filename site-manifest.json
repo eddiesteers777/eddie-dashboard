@@ -106,6 +106,7 @@
     "js/racePlans.js",
     "js/registerSW.js",
     "js/role.js",
+    "js/runWorkout.js",
     "js/runningCalendar.js",
     "js/runningLog.js",
     "js/runningProgramCalendar.js",
@@ -133,7 +134,8 @@
     "js/weekData.js",
     "js/weekModel.js",
     "js/weekView.js",
-    "js/weekly-review.js"
+    "js/weekly-review.js",
+    "js/workoutResults.js"
   ],
   "styles": [
     "css/analytics.css",

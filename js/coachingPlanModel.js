@@ -21,7 +21,8 @@
 // publishes; always kept from the client's own copy.
 export const RUNTIME_KEYS = [
     "completed", "completedAt", "actual", "actualDistance", "actualDuration",
-    "actualPace", "actualTime", "notes", "source", "corosActivityId"
+    "actualPace", "actualTime", "notes", "source", "corosActivityId",
+    "skipped", "resultId"
 ];
 
 export const DAY_TYPES = ["rest", "easy", "long", "workout", "race", "cross", "strength"];

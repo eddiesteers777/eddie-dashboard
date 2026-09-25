@@ -518,3 +518,57 @@ test("plan drafts: coach only -- the client never sees an unpublished plan", asy
     await assertFails(setDoc(doc(as("coach"), "coachingPlanDrafts/d4"), draft({ secret: true })));
     await assertSucceeds(deleteDoc(doc(as("coach"), "coachingPlanDrafts/d1")));
 });
+
+// ---- Workout results: the client owns what they did ----
+
+async function seedPublishedPlan() {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "coachingPlans/p1"), { coachUid: "coach", clientUid: "client", name: "Fall 10K", version: 2, status: "active" });
+        await setDoc(doc(db, "coachingPlans/pX"), { coachUid: "coach", clientUid: "stranger", name: "Someone else's", version: 1, status: "active" });
+    });
+}
+const result = (extra = {}) => ({
+    clientUid: "client", coachUid: "coach", planId: "p1", planVersion: 2, date: "2026-09-29", title: "Workout",
+    plannedMiles: 6, status: "completed", distance: 6.2, durationSec: 3050, rpe: 8, pain: false, painNote: "", note: "Last rep was tough.",
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(), coachComment: "", coachCommentAt: null, ...extra
+});
+
+test("workout results: the client logs their own; their coach reads and comments", async () => {
+    await seedPublishedPlan();
+    const id = "workoutResults/client_p1_2026-09-29";
+    await assertSucceeds(setDoc(doc(as("client"), id), result()));
+    await assertSucceeds(getDocs(query(collection(as("client"), "workoutResults"), where("clientUid", "==", "client"))));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "workoutResults"), where("coachUid", "==", "coach"), where("clientUid", "==", "client"))));
+    await assertFails(getDoc(doc(as("stranger"), id)));
+    // The client edits what they did.
+    await assertSucceeds(updateDoc(doc(as("client"), id), { distance: 6.4, rpe: 7, updatedAt: serverTimestamp() }));
+    // The coach comments -- and nothing else.
+    await assertSucceeds(updateDoc(doc(as("coach"), id), { coachComment: "Good control on the last rep.", coachCommentAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), id), { rpe: 3 }));
+    await assertFails(updateDoc(doc(as("client"), id), { coachComment: "Great job, me.", coachCommentAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { clientUid: "stranger", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { date: "2026-09-30", updatedAt: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(doc(as("client"), id)));
+});
+
+test("workout results: only for a plan the coach published to them, with sane values", async () => {
+    await seedPublishedPlan();
+    const make = (id, extra) => setDoc(doc(as("client"), `workoutResults/${id}`), result(extra));
+    // Wrong id shape, someone else's plan, a made-up coach.
+    await assertFails(make("client_p1_2026-09-30"));
+    await assertFails(make("client_pX_2026-09-29", { planId: "pX" }));
+    await assertFails(make("client_p1_2026-09-29", { coachUid: "stranger" }));
+    // Writing as someone else, or pre-filling the coach's comment.
+    await assertFails(setDoc(doc(as("stranger"), "workoutResults/client_p1_2026-09-29"), result()));
+    await assertFails(make("client_p1_2026-09-29", { coachComment: "Perfect!" }));
+    // Out-of-range values.
+    await assertFails(make("client_p1_2026-09-29", { rpe: 11 }));
+    await assertFails(make("client_p1_2026-09-29", { distance: -1 }));
+    await assertFails(make("client_p1_2026-09-29", { status: "crushed-it" }));
+    await assertFails(make("client_p1_2026-09-29", { note: "x".repeat(1001) }));
+    await assertFails(make("client_p1_2026-09-29", { extra: true }));
+    // A skipped workout with nothing filled in is fine.
+    await assertSucceeds(make("client_p1_2026-09-29", { status: "skipped", distance: null, durationSec: null, rpe: null }));
+});

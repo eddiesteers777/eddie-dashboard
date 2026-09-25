@@ -46,6 +46,7 @@ function supplementalDate(week, entry) {
 function stateFor(item, date, today) {
     if (item.kind === "session") return date < today ? "done" : date === today ? "today" : "upcoming";
     if (item.done) return "done";
+    if (item.skipped) return "skipped";
     if (date === today) return "today";
     return date < today ? "missed" : "upcoming";
 }
@@ -90,6 +91,9 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
                     detail: kind === "run" && session && session.toLowerCase() !== String(day.type).toLowerCase() ? session : "",
                     miles: kind === "run" ? round1(day.miles) : 0,
                     done: Boolean(day.completed),
+                    skipped: Boolean(day.skipped),
+                    structured: Boolean(day.workout),
+                    coachPlanId: plan.coachPlanId || null,
                     planName: plan.name || "",
                     fromCoach: plan.source === "coach",
                     source: { type: "plan", programId: plan.id, date }
@@ -164,6 +168,7 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
     const status = !items.length ? "rest"
         : workouts.length && workouts.every(i => i.done) ? "done"
         : workouts.some(i => i.state === "missed") ? "missed"
+        : date < today && workouts.length && workouts.every(i => i.done || i.state === "skipped") ? "skipped"
         : date === today ? "today"
         : date < today ? "done" : "upcoming";
 

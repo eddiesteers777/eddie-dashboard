@@ -78,6 +78,11 @@ test("day status: rest, done, missed, upcoming; sessions are never missed", () =
     assert.equal(buildDay("2026-09-28", inputs, "2026-10-05").status, "done");
     assert.equal(buildDay("2026-10-02", inputs, "2026-10-05").status, "rest");
     assert.equal(buildDay("2026-10-03", inputs, "2026-09-29").status, "upcoming");
+    const skippedPlan = coachPlan();
+    skippedPlan.generatedPlan.weeks[0].days[1].skipped = true;
+    const tueSkipped = buildDay("2026-09-29", { plans: [skippedPlan] }, "2026-10-05");
+    assert.equal(tueSkipped.items[0].state, "skipped", "skipped, not missed");
+    assert.equal(tueSkipped.status, "skipped");
     const onlySession = buildDay("2026-09-29", { sessions: inputs.sessions }, "2026-10-05");
     assert.equal(onlySession.items[0].state, "done");
     assert.equal(onlySession.status, "done");

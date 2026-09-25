@@ -219,3 +219,13 @@ export function sendPlanPublishedEmail({ clientEmail, clientName, coachName, pla
         page: "plan.html"
     });
 }
+
+// A client flagged pain or discomfort on a workout (js/workoutResults.js).
+export function sendPainFlagEmail({ clientName, date, title, painNote }) {
+    return coachAlert({
+        subject: `${clientName || "A client"} flagged pain on a workout`,
+        headline: `${clientName || "A client"} flagged pain or discomfort on ${title || "a workout"} (${date}).`,
+        details: painNote ? `"${painNote}"` : "No details given.",
+        page: "clients.html"
+    });
+}
