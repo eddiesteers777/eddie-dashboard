@@ -172,7 +172,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
 - [x] Firestore rules published (2026-09-24, including `inquiries`). Re-paste the whole file whenever it changes.
-- [ ] Upload photos to `images/` (filenames in `images/README.md`).
+- [ ] Photos: the hero, all four offer cards and gallery-1 are Unsplash stock (free license, graded to match; hero alt text doesn't claim it's Eddie). Still needed from Eddie: `eddie-portrait.jpg`, `eddie-about.jpg`, `gallery-2/3.jpg` (filenames in `images/README.md`). Swap the hero for a real photo of Eddie when he has one.
 - [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly). Until then each package says "Pricing on request".
 - [ ] Send a short **bio** for `about.html` (background, experience, certifications). It currently has honest interim copy with no specific claims.
 - [x] EmailJS is connected (service + "Coach Alert" / "Client Update" templates + public key in `js/emailNotify.js`). Emails come from Eddie's Gmail as "Southbound Coaching".
