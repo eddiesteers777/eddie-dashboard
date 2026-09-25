@@ -15,7 +15,7 @@
     }
 })();
 
-// Eddie's own tools (his race plan, school planner, COROS analytics,
+// Eddie's own tools (his race plan, personal planner, COROS analytics,
 // gear...) are coach-only. The nav already hides them; this also sends
 // a client who opens one by link back to Today. Only acts on a role
 // that was actually read from the profile ("client" in js/role.js), so

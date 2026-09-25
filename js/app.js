@@ -13,7 +13,7 @@ import {
     loadProgress
 } from "./marathonData.js";
 
-import { getUpcomingCourseEvents } from "./courseEvents.js";
+import { getUpcomingPlannerEvents, categoryFor, formatTime } from "./plannerEvents.js";
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
 import { showsPersonalPlan } from "./role.js";
@@ -368,21 +368,20 @@ function renderToday() {
         });
     }
 
-    // Planner / course events due today (the coach's own planner)
+    // Today's events from the coach's own Planner (js/plannerEvents.js)
     if (PERSONAL_PLAN) try {
-        const todaysEvents = getUpcomingCourseEvents(0);
-
-        todaysEvents.forEach(ev => {
+        getUpcomingPlannerEvents(0).forEach(ev => {
+            const category = categoryFor(ev.category);
             items.push({
                 icon: icon("calendar"),
-                color: "var(--cyan-light)",
-                title: ev.label,
-                detail: ev.category || "Due today",
+                color: category.color,
+                title: ev.title,
+                detail: [formatTime(ev.time), category.label].filter(Boolean).join(" · "),
                 link: "planner.html"
             });
         });
     } catch {
-        // No course event data -- fine.
+        // No planner data -- fine.
     }
 
     if (!items.length) {

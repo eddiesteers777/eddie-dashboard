@@ -13,190 +13,266 @@
 <style>
 
 /* Colors/fonts come from css/style.css (loaded first on every
-   page) — only Planner-specific layout lives here now. */
+   page) -- only Planner-specific layout lives here. */
 
-*{
-    box-sizing:border-box;
-}
+.planner-page *{ box-sizing:border-box; }
+.planner-page [hidden], #plannerSheet[hidden]{ display:none !important; }
 
-.wrap{
-    max-width:1400px;
+.planner-page{
+    max-width:1200px;
     margin:36px auto 60px;
     padding:0 24px;
     position:relative;
-    overflow:hidden;
 }
 
-.wrap::before{
+.planner-page::before{
     content:"";
     position:absolute;
     top:-30px;
     right:0;
     width:200px;
     height:200px;
-    background-image:url('brand/sb-mark.svg');
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
+    background:url('brand/sb-mark.svg') center/contain no-repeat;
     opacity:.045;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
     pointer-events:none;
 }
 
-h1{
+.planner-page h1{
     margin:0;
     font-family:var(--font-display);
     font-size:54px;
     letter-spacing:.04em;
 }
 
-p{
-    margin:6px 0 24px;
+.planner-intro{
+    margin:6px 0 22px;
     color:var(--muted);
     font-size:15px;
 }
 
-.months{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:12px;
-    margin-bottom:24px;
-}
-button{
-    padding:12px;
-    border:1px solid var(--border);
-    border-radius:12px;
-    background:var(--surface);
-    color:var(--text);
-    font-size:14px;
-    font-weight:600;
-    cursor:pointer;
-    transition:.2s;
+.planner-toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
 }
 
-button:hover{
-    background:var(--primary);
-    color:#0F2019;
-    transform:translateY(-2px);
-}
-
-h2{
-    margin:0 0 18px;
+.planner-toolbar h2{
+    margin:0 auto 0 0;
     font-family:var(--font-display);
     font-size:34px;
     letter-spacing:.04em;
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
+.planner-btn{
+    min-height:40px;
+    padding:0 16px;
+    border:1px solid var(--border);
+    border-radius:12px;
     background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:16px;
-    overflow:hidden;
-    box-shadow:0 8px 24px rgba(0,0,0,.18);
-}
-
-th{
-    background:var(--surface-light);
     color:var(--text);
-    padding:14px 8px;
-    border:1px solid var(--border);
-    font-size:13px;
-    text-transform:uppercase;
-    letter-spacing:.06em;
+    font:600 14px/1 var(--font-body);
+    cursor:pointer;
+    transition:.15s;
 }
 
-td{
-    width:14.285%;
-    height:110px;
-    vertical-align:top;
-    padding:8px;
-    border:1px solid var(--border);
-}
+.planner-btn:hover{ border-color:var(--primary); }
 
-td b{
-    display:block;
-    margin-bottom:6px;
-    font-size:15px;
-}
-
-.event{
-    display:block;
-    margin-top:5px;
-    padding:4px 6px;
-    border-radius:6px;
-    font-size:11px;
-    font-weight:700;
-    line-height:1.3;
-}
-
-.event.school{
+.planner-btn.primary{
     background:var(--primary);
-    color:#0F2019;
+    border-color:var(--primary);
+    color:var(--on-primary);
 }
 
-.event.ed550{
-    background:var(--green);
-    color:#0F2019;
-}
+.planner-btn.danger{ color:#EF4444; }
 
-.event.math501{
-    background:var(--orange);
-    color:#0F2019;
-}
-
-.event.deadline{
-    background:var(--red);
-    color:#FFFFFF;
-}
-
-.legend{
+.planner-legend{
     display:flex;
     flex-wrap:wrap;
-    gap:16px;
-    margin:-6px 0 22px;
+    gap:14px;
+    margin:0 0 16px;
     font-size:13px;
     color:var(--muted);
 }
 
-.legend span{
+.planner-legend span{ display:flex; align-items:center; gap:7px; }
+.planner-legend i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+.planner-grid{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(0,1fr));
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+}
+
+.planner-dow{
+    padding:12px 6px;
+    background:var(--surface-light);
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--text-secondary);
+}
+
+.planner-day{
+    min-height:110px;
+    padding:8px;
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    text-align:left;
+    font:inherit;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+}
+
+.planner-day:nth-child(7n + 7){ border-right:0; }
+.planner-day:hover{ background:rgba(201,173,132,.06); }
+.planner-day.is-selected{ box-shadow:inset 0 0 0 2px var(--primary); }
+.planner-day.is-empty{ cursor:default; background:rgba(0,0,0,.12); }
+.planner-day.is-empty:hover{ background:rgba(0,0,0,.12); }
+
+.planner-day-num{
+    font-size:14px;
+    font-weight:700;
+    width:26px;
+    height:26px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+}
+
+.planner-day.is-today .planner-day-num{
+    background:var(--primary);
+    color:var(--on-primary);
+}
+
+.planner-chip{
+    display:block;
+    width:100%;
+    padding:4px 6px;
+    border:0;
+    border-radius:6px;
+    background:var(--chip);
+    color:#0F2019;
+    font:700 11px/1.3 var(--font-body);
+    text-align:left;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    cursor:pointer;
+}
+
+.planner-chip.is-deadline{ color:#fff; }
+
+.planner-more{ font-size:11px; color:var(--muted); }
+
+.planner-section-title{
+    margin:32px 0 12px;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text-secondary);
+}
+
+.planner-list{ display:flex; flex-direction:column; gap:8px; }
+
+.planner-row{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    width:100%;
+    padding:12px 14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    color:var(--text);
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+}
+
+.planner-row:hover{ border-color:rgba(201,173,132,.35); }
+.planner-row i{ flex:0 0 10px; height:10px; margin-top:5px; border-radius:50%; background:var(--chip); }
+.planner-row strong{ display:block; font-size:14px; }
+.planner-row span{ display:block; font-size:13px; color:var(--text-secondary); margin-top:2px; }
+
+.planner-empty{ color:var(--muted); font-size:14px; }
+
+/* ---- Add / edit sheet ---- */
+
+#plannerSheet{
+    position:fixed;
+    inset:0;
+    z-index:5000;
     display:flex;
     align-items:center;
-    gap:7px;
+    justify-content:center;
+    padding:20px;
+    background:rgba(5,12,9,.72);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
 }
 
-.legend i{
-    width:10px;
-    height:10px;
-    border-radius:50%;
-    display:inline-block;
+.planner-sheet-card{
+    width:100%;
+    max-width:460px;
+    max-height:90vh;
+    overflow:auto;
+    padding:22px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
 }
 
-.legend i.school{ background:var(--primary); }
-.legend i.ed550{ background:var(--green); }
-.legend i.math501{ background:var(--orange); }
-.legend i.deadline{ background:var(--red); }
-@media(max-width:900px){
+.planner-sheet-card h3{ margin:0 0 16px; font-size:20px; }
 
-    .months{
-        grid-template-columns:repeat(2,1fr);
-    }
+.planner-field{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.planner-field > span{ font-size:12px; font-weight:600; color:var(--text-secondary); }
 
+.planner-field input,
+.planner-field select,
+.planner-field textarea{
+    width:100%;
+    padding:10px 12px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    font:14px var(--font-body);
+    color-scheme:dark;
 }
+
+.planner-field textarea{ min-height:70px; resize:vertical; }
+.planner-field-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+.planner-sheet-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.planner-sheet-actions .danger{ margin-right:auto; }
 
 @media(max-width:650px){
 
-    .months{
-        grid-template-columns:1fr;
-    }
-
-    th,
-    td{
-        height:80px;
-        font-size:12px;
-    }
+    .planner-page{ padding:0 14px; margin-top:20px; }
+    .planner-page h1{ font-size:42px; }
+    .planner-toolbar h2{ flex:0 0 100%; font-size:28px; }
+    .planner-day{ min-height:64px; padding:5px 4px; }
+    .planner-day-num{ font-size:12px; width:22px; height:22px; }
+    /* Titles don't fit in a phone-width cell: show a colored bar per
+       event and read the details in the day list below. */
+    .planner-chip{ height:6px; padding:0; font-size:0; pointer-events:none; }
+    .planner-more{ font-size:10px; }
 
 }
 
@@ -213,216 +289,256 @@ td b{
 
 <div id="header"></div>
 
-<div class="wrap">
+<main class="planner-page">
 
-<h1>2026–2027 Planner</h1>
+    <h1>Planner</h1>
+    <p class="planner-intro">Your own calendar: classes, deadlines, appointments, anything. It's saved to your account, so it follows you to every device and only you can see it. Today's screen shows what's due today.</p>
 
-<p>Shelby County district calendar, plus ED 450/550 (Instructional Strategies II) and MATH 501 (Mathematics for Teachers) key dates.</p>
+    <div class="planner-toolbar">
+        <h2 id="plannerMonthLabel"></h2>
+        <button type="button" class="planner-btn" id="plannerPrev" aria-label="Previous month">&larr;</button>
+        <button type="button" class="planner-btn" id="plannerToday">Today</button>
+        <button type="button" class="planner-btn" id="plannerNext" aria-label="Next month">&rarr;</button>
+        <button type="button" class="planner-btn primary" id="plannerAdd">+ Add Event</button>
+    </div>
 
-<div class="legend">
-    <span><i class="school"></i> Shelby County District</span>
-    <span><i class="ed550"></i> ED 450/550</span>
-    <span><i class="math501"></i> MATH 501</span>
-    <span><i class="deadline"></i> Deadline / Exam</span>
-</div>
+    <div class="planner-legend" id="plannerLegend"></div>
 
-<div class="months" id="m"></div>
+    <div class="planner-grid" id="plannerGrid"></div>
 
-<div id="cal"></div>
+    <h3 class="planner-section-title" id="plannerDayTitle">Coming up</h3>
+    <div class="planner-list" id="plannerList"></div>
 
+</main>
+
+<div id="plannerSheet" hidden>
+    <form class="planner-sheet-card" id="plannerForm">
+        <h3 id="plannerSheetTitle">Add Event</h3>
+        <label class="planner-field">
+            <span>What</span>
+            <input type="text" id="plannerTitle" maxlength="120" required placeholder="e.g. Midterm, Dentist, Team meeting">
+        </label>
+        <div class="planner-field-row">
+            <label class="planner-field">
+                <span>Date</span>
+                <input type="date" id="plannerDate" required>
+            </label>
+            <label class="planner-field">
+                <span>Time (optional)</span>
+                <input type="time" id="plannerTime">
+            </label>
+        </div>
+        <label class="planner-field">
+            <span>Type</span>
+            <select id="plannerCategory"></select>
+        </label>
+        <label class="planner-field">
+            <span>Notes (optional)</span>
+            <textarea id="plannerNotes" maxlength="500"></textarea>
+        </label>
+        <div class="planner-sheet-actions">
+            <button type="button" class="planner-btn danger" id="plannerDelete" hidden>Delete</button>
+            <button type="button" class="planner-btn" id="plannerCancel">Cancel</button>
+            <button type="submit" class="planner-btn primary">Save</button>
+        </div>
+    </form>
 </div>
 
 <script src="js/loadHeader.js"></script>
 
 <script type="module">
 
-const names=[
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-];
+import {
+    PLANNER_CATEGORIES, categoryFor, loadPlannerEvents, upsertPlannerEvent,
+    deletePlannerEvent, eventsOnDate, getUpcomingPlannerEvents, isoDate, formatTime
+} from "./js/plannerEvents.js";
 
-const events={
-    7:{
-        6:"PD",
-        7:"PD",
-        10:"Teacher Institute",
-        12:"Teacher Workday",
-        13:"First Day of School"
-    },
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const $ = id => document.getElementById(id);
 
-    8:{
-        7:"Labor Day"
-    },
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 
-    9:{
-        9:"End of 1st Nine Weeks",
-        12:"Fall Break",
-        13:"Fall Break",
-        16:"Report Cards"
-    },
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth();
+let selectedDate = null; // "YYYY-MM-DD" when a day is tapped
+let editingId = null;
 
-    10:{
-        11:"Veterans Day",
-        23:"Thanksgiving Break",
-        24:"Thanksgiving Break",
-        25:"Thanksgiving Break",
-        26:"Thanksgiving Break",
-        27:"Thanksgiving Break"
-    },
+$("plannerLegend").innerHTML = PLANNER_CATEGORIES
+    .map(c => `<span><i style="background:${c.color}"></i>${c.label}</span>`).join("");
+$("plannerCategory").innerHTML = PLANNER_CATEGORIES
+    .map(c => `<option value="${c.value}">${c.label}</option>`).join("");
 
-    11:{
-        18:"End of 2nd Nine Weeks / Early Dismissal",
-        21:"Winter Break",
-        22:"Winter Break",
-        23:"Winter Break",
-        24:"Winter Break",
-        25:"Winter Break",
-        28:"Winter Break",
-        29:"Winter Break",
-        30:"Winter Break",
-        31:"Winter Break"
-    },
+function niceDate(iso) {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
 
-    0:{
-        1:"Winter Break",
-        4:"Teacher Workday",
-        5:"2nd Semester Begins",
-        8:"Report Cards",
-        18:"MLK Day"
-    },
+const niceTime = formatTime;
 
-    1:{
-        15:"Presidents Day / Teacher Workday"
-    },
+function chipHtml(ev) {
+    const cat = categoryFor(ev.category);
+    return `<span class="planner-chip ${ev.category === "deadline" ? "is-deadline" : ""}" style="--chip:${cat.color}" data-edit="${esc(ev.id)}" title="${esc(ev.title)}">${esc(ev.time ? `${niceTime(ev.time)} ${ev.title}` : ev.title)}</span>`;
+}
 
-    2:{
-        5:"End of 3rd Nine Weeks",
-        8:"Planning Day",
-        12:"Report Cards",
-        22:"Spring Break",
-        23:"Spring Break",
-        24:"Spring Break",
-        25:"Spring Break",
-        26:"Spring Break"
-    },
-     3:{
-        23:"PD / Planning"
-    },
+function rowHtml(ev, withDate) {
+    const cat = categoryFor(ev.category);
+    const when = [withDate ? niceDate(ev.date) : "", niceTime(ev.time), cat.label].filter(Boolean).join(" · ");
+    return `
+        <button type="button" class="planner-row" style="--chip:${cat.color}" data-edit="${esc(ev.id)}">
+            <i></i>
+            <div>
+                <strong>${esc(ev.title)}</strong>
+                <span>${esc(when)}</span>
+                ${ev.notes ? `<span>${esc(ev.notes)}</span>` : ""}
+            </div>
+        </button>`;
+}
 
-    4:{
-        27:"End of 4th Nine Weeks / Early Dismissal",
-        28:"Teacher Workday",
-        31:"Memorial Day"
+function render() {
+    const events = loadPlannerEvents();
+    const todayIso = isoDate(new Date());
+
+    $("plannerMonthLabel").textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+
+    const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const cells = DOW.map(d => `<div class="planner-dow">${d}</div>`);
+
+    for (let i = 0; i < firstDow; i++) cells.push(`<div class="planner-day is-empty"></div>`);
+    for (let day = 1; day <= daysInMonth; day++) {
+        const iso = isoDate(new Date(viewYear, viewMonth, day));
+        const dayEvents = eventsOnDate(iso, events);
+        const shown = dayEvents.slice(0, 3).map(chipHtml).join("");
+        const more = dayEvents.length > 3 ? `<span class="planner-more">+${dayEvents.length - 3} more</span>` : "";
+        cells.push(`
+            <div class="planner-day ${iso === todayIso ? "is-today" : ""} ${iso === selectedDate ? "is-selected" : ""}" role="button" tabindex="0" data-day="${iso}" aria-label="${niceDate(iso)}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length === 1 ? "" : "s"}` : ""}">
+                <span class="planner-day-num">${day}</span>
+                ${shown}${more}
+            </div>`);
     }
+    const trailing = (7 - ((firstDow + daysInMonth) % 7)) % 7;
+    for (let i = 0; i < trailing; i++) cells.push(`<div class="planner-day is-empty"></div>`);
+    $("plannerGrid").innerHTML = cells.join("");
 
-};
+    // Below the calendar: the tapped day, or what's coming up.
+    if (selectedDate) {
+        const dayEvents = eventsOnDate(selectedDate, events);
+        $("plannerDayTitle").textContent = niceDate(selectedDate);
+        $("plannerList").innerHTML = (dayEvents.length
+            ? dayEvents.map(ev => rowHtml(ev, false)).join("")
+            : `<p class="planner-empty">Nothing on this day.</p>`)
+            + `<div><button type="button" class="planner-btn primary" data-add-on="${selectedDate}">+ Add on ${esc(niceDate(selectedDate))}</button></div>`;
+    } else {
+        const upcoming = getUpcomingPlannerEvents(45, events);
+        $("plannerDayTitle").textContent = "Coming up";
+        $("plannerList").innerHTML = upcoming.length
+            ? upcoming.map(ev => rowHtml(ev, true)).join("")
+            : `<p class="planner-empty">Nothing in the next 45 days. Tap a day or "+ Add Event" to add one.</p>`;
+    }
+}
 
-// ED 450/550 and MATH 501 dates now live in js/courseEvents.js —
-// shared with the Dashboard's AI Coach so it can surface upcoming
-// deadlines too, instead of this data existing only on this page.
-import { COURSE_EVENTS as courseEvents } from "./js/courseEvents.js";
+function openSheet(event, date) {
+    editingId = event?.id || null;
+    $("plannerSheetTitle").textContent = editingId ? "Edit Event" : "Add Event";
+    $("plannerTitle").value = event?.title || "";
+    $("plannerDate").value = event?.date || date || isoDate(new Date());
+    $("plannerTime").value = event?.time || "";
+    $("plannerCategory").value = event?.category || "personal";
+    $("plannerNotes").value = event?.notes || "";
+    $("plannerDelete").hidden = !editingId;
+    $("plannerSheet").hidden = false;
+    $("plannerTitle").focus();
+}
 
-const holder=document.getElementById('m');
+function closeSheet() {
+    $("plannerSheet").hidden = true;
+    editingId = null;
+}
 
-names.forEach((name,index)=>{
-
-    const button=document.createElement('button');
-
-    button.textContent=name;
-
-    button.onclick=()=>draw(index);
-
-    holder.appendChild(button);
-
+document.addEventListener("click", event => {
+    const edit = event.target.closest("[data-edit]");
+    if (edit) {
+        const ev = loadPlannerEvents().find(e => e.id === edit.dataset.edit);
+        if (ev) openSheet(ev);
+        return;
+    }
+    const addOn = event.target.closest("[data-add-on]");
+    if (addOn) { openSheet(null, addOn.dataset.addOn); return; }
+    const day = event.target.closest("[data-day]");
+    if (day) {
+        selectedDate = selectedDate === day.dataset.day ? null : day.dataset.day;
+        render();
+    }
 });
 
-function cell(month,day){
+$("plannerGrid").addEventListener("keydown", event => {
+    const day = event.target.closest("[data-day]");
+    if (day && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); day.click(); }
+});
 
-    let inner='';
+$("plannerPrev").addEventListener("click", () => {
+    viewMonth -= 1;
+    if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
+    selectedDate = null;
+    render();
+});
 
-    const schoolEvent=events[month] && events[month][day];
+$("plannerNext").addEventListener("click", () => {
+    viewMonth += 1;
+    if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
+    selectedDate = null;
+    render();
+});
 
-    if(schoolEvent){
-        inner+=`<span class="event school">${schoolEvent}</span>`;
-    }
+$("plannerToday").addEventListener("click", () => {
+    viewYear = new Date().getFullYear();
+    viewMonth = new Date().getMonth();
+    selectedDate = null;
+    render();
+});
 
-    const courseDay=courseEvents[month] && courseEvents[month][day];
+$("plannerAdd").addEventListener("click", () => openSheet(null, selectedDate));
+$("plannerCancel").addEventListener("click", closeSheet);
+$("plannerSheet").addEventListener("click", event => { if (event.target.id === "plannerSheet") closeSheet(); });
+document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("plannerSheet").hidden) closeSheet(); });
 
-    if(courseDay){
-        courseDay.forEach(ev=>{
-            inner+=`<span class="event ${ev.c}">${ev.t}</span>`;
-        });
-    }
+$("plannerForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const title = $("plannerTitle").value.trim();
+    const date = $("plannerDate").value;
+    if (!title || !date) return;
+    upsertPlannerEvent({
+        id: editingId || undefined,
+        title,
+        date,
+        time: $("plannerTime").value || "",
+        category: $("plannerCategory").value,
+        notes: $("plannerNotes").value.trim()
+    });
+    // Jump to the event's month so it's visible right away.
+    const [y, m] = date.split("-").map(Number);
+    viewYear = y;
+    viewMonth = m - 1;
+    closeSheet();
+    render();
+});
 
-    return `
-        <td>
-            <b>${day}</b>
-            ${inner}
-        </td>
-    `;
+$("plannerDelete").addEventListener("click", () => {
+    if (!editingId || !window.confirm("Delete this event?")) return;
+    deletePlannerEvent(editingId);
+    closeSheet();
+    render();
+});
 
-}
+render();
 
-function draw(month){
-    const year=month>=6 ? 2026 : 2027;
-
-    const firstDay=new Date(year,month,1).getDay();
-
-    const daysInMonth=new Date(year,month+1,0).getDate();
-
-    let html=`
-        <h2>${names[month]} ${year}</h2>
-
-        <table>
-
-        <tr>
-            ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-                .map(day=>`<th>${day}</th>`)
-                .join('')}
-        </tr>
-
-        <tr>
-    `;
-
-    for(let i=0;i<firstDay;i++){
-
-        html+='<td></td>';
-
-    }
-
-    let day=1;
-
-    for(let i=firstDay;i<7;i++){
-
-        html+=cell(month,day++);
-
-    }
-
-    html+='</tr>';
-
-    while(day<=daysInMonth){
-
-        html+='<tr>';
-
-        for(let i=0;i<7;i++){
-
-            html+=day<=daysInMonth
-                ? cell(month,day++)
-                : '<td></td>';
-
-        }
-
-        html+='</tr>';
-
-    }
-
-    html+='</table>';
-
-    document.getElementById('cal').innerHTML=html;
-
-}
-
-draw(7);
+// Pull the latest from the cloud (another device may have added
+// events), then redraw.
+import("./js/cloudSync.js")
+    .then(({ initCloudSync }) => initCloudSync())
+    .then(render)
+    .catch(() => {});
 
 </script>
 

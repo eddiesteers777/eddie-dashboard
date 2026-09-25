@@ -60,7 +60,7 @@ Photos live in `images/`. `images/README.md` lists the exact filenames. A missin
 | Health | `nutrition.html`, `fueling.html` |
 | Habits | `habits.html` |
 | More | `programs.html`, `pace-calculator.html`, `settings.html`, `more.html` |
-| Coach-only personal tools | `marathon.html`, `75day.html`, `planner.html`, `analytics.html`, `weekly-review.html`, `gear.html` (Eddie's own; `data-requires="coach"` in nav, More, search and the Today cards, and `COACH_ONLY_PAGES` in `js/loadHeader.js` sends a client who opens one by link back to Today) |
+| Coach-only personal tools | `marathon.html`, `75day.html`, `planner.html` (Eddie's own calendar: add/edit/delete events, saved privately as `planner-events` via cloud sync, `js/plannerEvents.js`; today's events show on Today; no dates live in the code), `analytics.html`, `weekly-review.html`, `gear.html` (Eddie's own; `data-requires="coach"` in nav, More, search and the Today cards, and `COACH_ONLY_PAGES` in `js/loadHeader.js` sends a client who opens one by link back to Today) |
 | Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), `clients.html?tab=share` ("Connect with Your Coach": get a one-time code for the coach), all reached via Tools / More |
 
 **App: coach pages** (the **Coach** bottom tab on mobile / **Coach** dropdown on desktop)
@@ -167,7 +167,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 **Known gaps / Eddie's call (not done):**
 - Should clients connect COROS? Today it only works from `analytics.html` (coach-only), and Settings shows it to the coach only.
 - Nutrition goals default to Eddie's numbers (3200 kcal, 180 g protein...) in `js/nutrition.js`; clients can edit them, but a coach-set or sensible default would be better.
-- `planner.html` / `js/courseEvents.js` contain Eddie's school calendar in the public repo (coach-only in the app, but the data is still in the code).
+- The old school/course dates were removed from the code on 2026-09-25, but they're still in the public repo's git history. Scrubbing that means rewriting `main`'s history (force-push); only with Eddie's go-ahead.
 
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
