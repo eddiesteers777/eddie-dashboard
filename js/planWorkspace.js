@@ -30,6 +30,11 @@ import { toMillis } from "./clientSummary.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { builderHtml, readBuilder, startingWorkout, blankSet, summaryHtml } from "./workoutBuilder.js";
 import { sanitizeWorkout, workoutSummary, plannedMiles } from "./runWorkout.js";
+import {
+    strengthBuilderHtml, readStrengthBuilder, startingStrength, blankExercise, fromTemplate,
+    strengthSummaryHtml, rememberVideos, rememberedVideo
+} from "./strengthBuilder.js";
+import { sanitizeStrength } from "./strengthWorkout.js";
 
 // Day types a structured run workout applies to.
 const RUN_TYPES = ["easy", "long", "workout", "race", "tempo", "recovery"];
@@ -231,9 +236,11 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                                         </select>
                                         <input type="number" step="0.1" min="0" max="100" data-field="miles" class="clients-day-miles" value="${Number(day.miles) || 0}" aria-label="${esc(shortDay(day.date))} miles">
                                         <input type="text" maxlength="300" data-field="session" class="clients-day-session" value="${esc(day.session || "")}" placeholder="Workout details" aria-label="${esc(shortDay(day.date))} workout">
-                                        <button type="button" class="pw-details-btn${day.workout ? " has-workout" : ""}" data-act="details"${RUN_TYPES.includes(day.type) ? "" : " hidden"} aria-expanded="false">${day.workout ? `${icon("check")} Structured` : `${icon("plus")} Details`}</button>
+                                        <span class="pw-day-btns"><button type="button" class="pw-details-btn${day.workout ? " has-workout" : ""}" data-act="details"${RUN_TYPES.includes(day.type) ? "" : " hidden"} aria-expanded="false">${day.workout ? `${icon("check")} Structured` : `${icon("plus")} Details`}</button>
+                                        <button type="button" class="pw-details-btn pw-strength-btn${day.strength ? " has-workout" : ""}" data-act="strength" aria-expanded="false">${day.strength ? `${icon("check")} Strength` : `${icon("plus")} Strength`}</button></span>
                                     </div>
                                     <div class="pw-builder-slot"></div>
+                                    <div class="pw-strength-slot"></div>
                                     </div>`).join("")}
                             </div>
                         </div>`).join("")}
@@ -344,12 +351,90 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         markDirty();
     }
 
+    // ---------- Strength session (any day) ----------
+
+    const strengthRaw = new Map();   // "week:day" -> raw form values while open
+
+    function strengthButton(ref, has) {
+        const btn = ref.dayEl.querySelector('[data-act="strength"]');
+        btn.classList.toggle("has-workout", has);
+        btn.innerHTML = `${icon(has ? "check" : "plus")} Strength`;
+        return btn;
+    }
+
+    function renderStrength(ref, raw) {
+        strengthRaw.set(ref.key, raw);
+        ref.dayEl.querySelector(".pw-strength-slot").innerHTML = strengthBuilderHtml(raw);
+    }
+
+    function openStrength(ref) {
+        renderStrength(ref, strengthRaw.get(ref.key) || startingStrength(ref.day));
+        const btn = ref.dayEl.querySelector('[data-act="strength"]');
+        btn.setAttribute("aria-expanded", "true");
+        btn.classList.add("is-open");
+    }
+
+    function closeStrength(ref) {
+        ref.dayEl.querySelector(".pw-strength-slot").innerHTML = "";
+        strengthRaw.delete(ref.key);
+        const btn = ref.dayEl.querySelector('[data-act="strength"]');
+        btn.setAttribute("aria-expanded", "false");
+        btn.classList.remove("is-open");
+    }
+
+    // The builder's values -> the day's strength session (and, on a rest
+    // day, the day becomes a strength day).
+    function applyStrength(ref) {
+        const raw = readStrengthBuilder(ref.dayEl.querySelector(".pw-sbuilder"));
+        strengthRaw.set(ref.key, raw);
+        const clean = sanitizeStrength(raw);
+        if (clean) {
+            ref.day.strength = clean;
+            if (!ref.day.type || ref.day.type === "rest") {
+                ref.day.type = "strength";
+                ref.day.miles = 0;
+                ref.dayEl.querySelector('[data-field="type"]').value = "strength";
+                ref.dayEl.querySelector('[data-field="miles"]').value = 0;
+                ref.dayEl.querySelector('[data-act="details"]').hidden = true;
+            }
+            if (ref.day.type === "strength") {
+                ref.day.session = clean.title;
+                ref.dayEl.querySelector('[data-field="session"]').value = clean.title;
+            }
+            rememberVideos(clean);
+        } else {
+            delete ref.day.strength;
+        }
+        strengthButton(ref, Boolean(clean));
+        ref.dayEl.querySelector("[data-sb-summary]").innerHTML = strengthSummaryHtml(clean);
+        markDirty();
+    }
+
     // Edits go straight into the in-memory plan.
     container.addEventListener("input", event => {
         if (state.view !== "editor") return;
         const e = state.editing;
         const target = event.target;
         if (target.closest(".pw-builder")) { applyBuilder(dayRefs(target)); return; }
+        if (target.closest(".pw-sbuilder")) {
+            const ref = dayRefs(target);
+            if (target.matches("[data-sb-template]")) {
+                if (!target.value) return;
+                renderStrength(ref, fromTemplate(target.value, readStrengthBuilder(ref.dayEl.querySelector(".pw-sbuilder"))));
+                applyStrength(ref);
+                return;
+            }
+            // A demo link used before for this exercise fills itself in.
+            if (/\.name$/.test(target.dataset.sb || "")) {
+                const video = target.closest(".sb-ex")?.querySelector('[data-sb$=".video"]');
+                const known = rememberedVideo(target.value);
+                if (video && !video.value && known) video.value = known;
+            }
+            applyStrength(ref);
+            // Pairing changes the numbering (3A / 3B).
+            if (target.type === "checkbox") renderStrength(ref, strengthRaw.get(ref.key));
+            return;
+        }
         if (target.id === "pwName") { e.name = target.value; markDirty(); return; }
         const weekEl = target.closest("[data-week]");
         if (!weekEl) return;
@@ -376,6 +461,12 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             day.miles = 0;
             const milesInput = dayEl.querySelector('[data-field="miles"]');
             if (milesInput) milesInput.value = 0;
+            if (day.strength) {
+                delete day.strength;
+                const ref = dayRefs(target);
+                if (ref) { closeStrength(ref); strengthButton(ref, false); }
+                toast("Rest day: its strength session was removed.");
+            }
         }
         if (field === "type") {
             // Workout details only belong on runs.
@@ -437,6 +528,31 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 builderRaw.set(ref.key, raw);
                 ref.dayEl.querySelector(".pw-builder-slot").innerHTML = builderHtml(raw);
                 if (act === "wb-remove-set") applyBuilder(ref);
+                return;
+            }
+            if (act === "strength") {
+                const ref = dayRefs(btn);
+                return btn.getAttribute("aria-expanded") === "true" ? closeStrength(ref) : openStrength(ref);
+            }
+            if (act === "sb-add-ex" || act === "sb-remove-ex" || act === "sb-move-up") {
+                const ref = dayRefs(btn);
+                const raw = readStrengthBuilder(ref.dayEl.querySelector(".pw-sbuilder"));
+                const i = Number(btn.dataset.ex);
+                if (act === "sb-add-ex") raw.exercises.push(blankExercise());
+                else if (act === "sb-remove-ex") raw.exercises.splice(i, 1);
+                else if (i > 0) [raw.exercises[i - 1], raw.exercises[i]] = [raw.exercises[i], raw.exercises[i - 1]];
+                if (raw.exercises[0]) raw.exercises[0].superset = false;
+                renderStrength(ref, raw);
+                if (act !== "sb-add-ex") applyStrength(ref);
+                if (act === "sb-add-ex") ref.dayEl.querySelector(".sb-ex:last-of-type .sb-ex-name")?.focus();
+                return;
+            }
+            if (act === "sb-clear") {
+                const ref = dayRefs(btn);
+                delete ref.day.strength;
+                closeStrength(ref);
+                strengthButton(ref, false);
+                markDirty();
                 return;
             }
             if (act === "wb-clear") {

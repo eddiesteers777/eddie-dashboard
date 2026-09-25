@@ -572,3 +572,30 @@ test("workout results: only for a plan the coach published to them, with sane va
     // A skipped workout with nothing filled in is fine.
     await assertSucceeds(make("client_p1_2026-09-29", { status: "skipped", distance: null, durationSec: null, rpe: null }));
 });
+
+test("strength logs: their own id next to the run's, with the sets lifted", async () => {
+    await seedPublishedPlan();
+    const lift = extra => result({
+        kind: "strength", title: "Lower Strength", plannedMiles: 0, distance: null,
+        exercises: [{ name: "Trap Bar Deadlift", sets: [{ weight: 185, reps: 5 }, { weight: 195, reps: 5 }] }],
+        ...extra
+    });
+    const id = "workoutResults/client_p1_2026-09-29_strength";
+    // A run and a strength session on the same day don't collide.
+    await assertSucceeds(setDoc(doc(as("client"), "workoutResults/client_p1_2026-09-29"), result()));
+    await assertSucceeds(setDoc(doc(as("client"), id), lift()));
+    await assertSucceeds(getDoc(doc(as("coach"), id)));
+    await assertSucceeds(updateDoc(doc(as("client"), id), { exercises: [{ name: "Trap Bar Deadlift", sets: [] }], updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), id), { coachComment: "Nice jump to 195.", coachCommentAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), id), { exercises: [] }));
+    await assertFails(updateDoc(doc(as("client"), id), { kind: "run", updatedAt: serverTimestamp() }));
+    await deleteDoc(doc(as("client"), id));
+    // The id has to match the kind; exercises only on a strength log; a sane size.
+    await assertFails(setDoc(doc(as("client"), "workoutResults/client_p1_2026-09-30"), lift({ date: "2026-09-30" })));
+    await assertFails(setDoc(doc(as("client"), "workoutResults/client_p1_2026-09-30_strength"), result({ date: "2026-09-30" })));
+    await assertFails(setDoc(doc(as("client"), "workoutResults/client_p1_2026-09-30_strength"), result({ date: "2026-09-30", kind: "strength", exercises: "lots" })));
+    await assertFails(setDoc(doc(as("client"), "workoutResults/client_p1_2026-09-30"), result({ date: "2026-09-30", exercises: [] })));
+    await assertFails(setDoc(doc(as("client"), "workoutResults/client_p1_2026-09-30_strength"), lift({ date: "2026-09-30", kind: "cardio" })));
+    await assertFails(setDoc(doc(as("client"), id), lift({ exercises: Array.from({ length: 21 }, (_, i) => ({ name: `Ex ${i}`, sets: [] })) })));
+    await assertFails(setDoc(doc(as("stranger"), id), lift()));
+});

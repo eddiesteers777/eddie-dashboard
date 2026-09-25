@@ -2818,7 +2818,7 @@ section{
         padding-bottom:calc(92px + env(safe-area-inset-bottom)) !important;
     }
 
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.record-input):not(.fuel-target-value input),
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.record-input):not(.fuel-target-value input):not(.st-big-input),
     select,
     textarea{
         font-size:16px !important;

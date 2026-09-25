@@ -99,3 +99,18 @@ test("next workout after a rest day, and the plan week a date falls in", () => {
     assert.equal(planContext(inputs.plans, "2027-01-01"), null);
     assert.equal(nextWorkout({ plans: [] }, "2026-10-02"), null);
 });
+
+test("a coach's strength session: the day itself on a strength day, its own item next to a run", () => {
+    const plan = coachPlan();
+    const lift = { title: "Lower Strength", minutes: 45, goal: "", notes: "", exercises: [{ name: "Trap Bar Deadlift", sets: 3, reps: "5", weight: 185, rpe: 7, rir: null, restSec: 150, superset: false, note: "", video: "" }] };
+    const d = plan.generatedPlan.weeks[0].days;
+    d[2] = { ...d[2], strength: lift };                                  // Wed: strength day
+    d[0] = { ...d[0], strength: { ...lift, title: "Core" }, strengthCompleted: true, strengthResultId: "r1", strengthRpe: 6 };  // Mon: run + core
+    const wed = buildDay("2026-09-30", { plans: [plan] }, "2026-09-30").items;
+    assert.deepEqual(wed.map(i => [i.kind, i.title, i.detail, i.structured, i.source.type]), [["strength", "Lower Strength", "1 exercise · 45 min", true, "plan"]]);
+    const mon = buildDay("2026-09-28", { plans: [plan] }, "2026-09-30").items;
+    assert.deepEqual(mon.map(i => [i.kind, i.title, i.done]), [["run", "Easy run", true], ["strength", "Core", true]]);
+    assert.equal(mon[1].source.type, "plan-strength");
+    assert.deepEqual(mon[1].actual, { rpe: 6, pain: false });
+    assert.equal(buildWeek("2026-09-28", { plans: [plan] }, "2026-09-30").summary.strength.planned, 3, "Mon core + Wed lower + Thu core extra");
+});

@@ -32,7 +32,9 @@ import {
     sendClientUpdate, deleteClientUpdate
 } from "./clientNotes.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
-import { commentOnResult } from "./workoutResults.js";
+import { commentOnResult, isStrengthResult } from "./workoutResults.js";
+import { compareStrength } from "./strengthWorkout.js";
+import { strengthTableHtml } from "./strengthSession.js";
 import { compareRun, formatDuration } from "./runWorkout.js";
 
 const $ = id => document.getElementById(id);
@@ -676,8 +678,48 @@ function plannedText(r, day) {
     return `${miles ? `${miles} mi ` : ""}${String(r.title || "run").toLowerCase()}`;
 }
 
+// A strength log: every exercise planned vs lifted.
+function strengthResultHtml(r, day) {
+    const lift = day?.strength;
+    const cmp = lift ? compareStrength(lift, r.exercises) : null;
+    const fresh = !r.coachComment;
+    return `
+        <div class="clients-card hub-wo is-strength${r.pain && fresh ? " is-pain" : ""}${fresh ? " is-new" : ""}" data-result="${esc(r.id)}">
+            <div class="hub-wo-head">
+                <strong>${esc(r.title || "Strength")}</strong>
+                <span class="pw-meta">${esc(shortDate(r.date))} · strength</span>
+                <span class="hub-pill${r.status === "skipped" ? " is-skipped" : ""}">${r.status === "skipped" ? "Skipped" : "Done"}</span>
+            </div>
+            ${r.status === "completed" && cmp ? `
+                <div class="hub-wo-stats">
+                    <div><span>Sets</span><strong>${cmp.doneSets}/${cmp.plannedSets}</strong><small>${cmp.pct}% of plan</small></div>
+                    <div><span>Time</span><strong>${r.durationSec ? formatDuration(r.durationSec) : "—"}</strong></div>
+                    <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(RPE_WORDS[r.rpe])}</small>` : ""}</div>
+                </div>
+                ${strengthTableHtml(cmp)}
+                ${cmp.highlights.length ? `<ul class="hub-wo-highlights">${cmp.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}` : ""}
+            ${r.status === "completed" && !cmp ? `<p class="hub-wo-planned"><span>Logged</span> ${esc((r.exercises || []).map(e => `${e.name} (${e.sets?.length || 0} sets)`).join(", "))}</p>` : ""}
+            ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
+            ${r.note ? `<p class="hub-quote">"${esc(r.note)}"</p>` : ""}
+            ${replyFormHtml(r)}
+        </div>`;
+}
+
+function replyFormHtml(r) {
+    return `
+            <form class="hub-reply" data-reply="${esc(r.id)}">
+                <label class="clients-card-note" for="wo-${esc(r.id)}">Your reply (${esc(firstName())} sees it on this workout)</label>
+                <textarea id="wo-${esc(r.id)}" rows="2" maxlength="1000" placeholder="${r.kind === "strength" ? "Nice jump on the deadlift..." : "Good control on the last rep..."}">${esc(r.coachComment || "")}</textarea>
+                <div class="hub-reply-actions">
+                    <button type="submit" class="clients-btn-primary">${r.coachComment ? "Update reply" : "Reply"}</button>
+                    <span class="clients-msg" hidden></span>
+                </div>
+            </form>`;
+}
+
 function workoutResultHtml(r) {
     const day = plannedDay(r);
+    if (isStrengthResult(r)) return strengthResultHtml(r, day);
     const cmp = compareRun({ miles: r.plannedMiles || day?.miles, workout: day?.workout }, { distance: r.distance, durationSec: r.durationSec });
     const vs = { on: "on target pace", faster: "faster than target", slower: "slower than target" }[cmp.paceVsTarget];
     const fresh = !r.coachComment;
@@ -698,14 +740,7 @@ function workoutResultHtml(r) {
                 </div>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
             ${r.note ? `<p class="hub-quote">"${esc(r.note)}"</p>` : ""}
-            <form class="hub-reply" data-reply="${esc(r.id)}">
-                <label class="clients-card-note" for="wo-${esc(r.id)}">Your reply (${esc(firstName())} sees it on this workout)</label>
-                <textarea id="wo-${esc(r.id)}" rows="2" maxlength="1000" placeholder="Good control on the last rep...">${esc(r.coachComment || "")}</textarea>
-                <div class="hub-reply-actions">
-                    <button type="submit" class="clients-btn-primary">${r.coachComment ? "Update reply" : "Reply"}</button>
-                    <span class="clients-msg" hidden></span>
-                </div>
-            </form>
+            ${replyFormHtml(r)}
         </div>`;
 }
 

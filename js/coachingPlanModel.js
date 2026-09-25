@@ -17,12 +17,16 @@
    tests/coachingPlanModel.test.mjs.
 ========================================== */
 
+import { strengthDetailText } from "./strengthWorkout.js";
+
 // Things the athlete records on a day. Never part of what the coach
 // publishes; always kept from the client's own copy.
 export const RUNTIME_KEYS = [
     "completed", "completedAt", "actual", "actualDistance", "actualDuration",
     "actualPace", "actualTime", "notes", "source", "corosActivityId",
-    "skipped", "resultId", "rpe", "pain"
+    "skipped", "resultId", "rpe", "pain",
+    // A strength session added to the day (day.strength, js/strengthWorkout.js)
+    "strengthCompleted", "strengthCompletedAt", "strengthSkipped", "strengthResultId", "strengthRpe", "strengthPain"
 ];
 
 export const DAY_TYPES = ["rest", "easy", "long", "workout", "race", "cross", "strength"];
@@ -65,13 +69,17 @@ export function typeLabel(type) {
     return TYPE_LABELS[type] || (type ? type[0].toUpperCase() + type.slice(1) : "Workout");
 }
 
-// One day, the way a person reads it: "6 mi Workout (3 x 1 mi @ tempo)".
+// One day, the way a person reads it: "6 mi Workout (3 x 1 mi @ tempo)",
+// "Strength (Lower Strength: Trap Bar Deadlift 3 × 5 @ 185 lb, ...)",
+// "5 mi Easy + Strength (...)".
 export function dayText(day) {
-    if (!day || !day.type || day.type === "rest") return "Rest";
+    const strength = day?.strength?.exercises?.length ? `Strength (${strengthDetailText(day.strength)})` : "";
+    if (!day || !day.type || day.type === "rest") return strength || "Rest";
+    if (day.type === "strength" && strength) return strength;
     const miles = num(day.miles) ? `${round1(day.miles)} mi ` : "";
     const session = String(day.session || "").trim();
     const showSession = session && session.toLowerCase() !== String(day.type).toLowerCase();
-    return `${miles}${typeLabel(day.type)}${showSession ? ` (${session})` : ""}`;
+    return `${miles}${typeLabel(day.type)}${showSession ? ` (${session})` : ""}${strength ? ` + ${strength}` : ""}`;
 }
 
 // ---------- Prescription only ----------

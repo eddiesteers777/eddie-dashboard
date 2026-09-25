@@ -17,6 +17,7 @@
 const PATHS = {
     // UI chrome
     chevronDown: `<polyline points="6 9 12 15 18 9"></polyline>`,
+    chevronUp: `<polyline points="18 15 12 9 6 15"></polyline>`,
     chevronRight: `<polyline points="9 18 15 12 9 6"></polyline>`,
     chevronLeft: `<polyline points="15 18 9 12 15 6"></polyline>`,
     home: `<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>`,

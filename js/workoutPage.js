@@ -13,7 +13,8 @@
        vs. actual and can reply on it.
      - their result, planned vs. actual, and the coach's reply
    Plans the client made themselves have no coach to log to: they get
-   Mark done instead.
+   Mark done instead. A coach's strength session on the day
+   (&kind=strength) is handed to js/strengthSession.js.
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
@@ -24,7 +25,7 @@ import { shortDay, typeLabel, isoDate } from "./coachingPlanModel.js";
 import {
     executionSteps, amountText, targetText, compareRun, parseDuration, formatDuration, formatPace
 } from "./runWorkout.js";
-import { listMyResults, saveMyResult, deleteMyResult } from "./workoutResults.js";
+import { listMyResults, saveMyResult, deleteMyResult, isStrengthResult } from "./workoutResults.js";
 import { toast, sbConfirm, friendlyError, emptyHtml } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
@@ -34,6 +35,7 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 const params = new URLSearchParams(location.search);
 const programId = params.get("program");
 const date = params.get("date");
+const strengthMode = params.get("kind") === "strength";
 
 const RPE_WORDS = { 1: "Very easy", 2: "Easy", 3: "Easy", 4: "Comfortable", 5: "Steady", 6: "Moderate", 7: "Hard", 8: "Very hard", 9: "Near max", 10: "All out" };
 const RUN_TITLES = { easy: "Easy run", recovery: "Recovery run", long: "Long run", workout: "Workout", tempo: "Tempo run", race: "Race" };
@@ -143,6 +145,7 @@ function render() {
 }
 
 $("woBody").addEventListener("click", async event => {
+    if (strengthMode) return;
     const btn = event.target.closest("[data-act]");
     if (!btn) return;
     const act = btn.dataset.act;
@@ -375,7 +378,11 @@ listenForAuth(async user => {
     state.user = user;
     const found = programId && date ? findDay() : null;
     $("woLoading").hidden = true;
-    if (!found || !found.day.type || found.day.type === "rest") {
+    if (strengthMode && found?.day?.strength?.exercises?.length) {
+        const { mountStrengthSession } = await import("./strengthSession.js");
+        return mountStrengthSession({ found, date, user, openLog: params.get("log") === "1" });
+    }
+    if (strengthMode || !found || !found.day.type || found.day.type === "rest") {
         $("woBody").innerHTML = `<div class="clients-card">${emptyHtml({ iconName: "calendar", title: "Nothing planned here", text: "This workout isn't on your plan any more. Your coach may have moved it.", actionHref: "plan.html", actionLabel: "See your week" })}</div>`;
         return;
     }
@@ -386,7 +393,7 @@ listenForAuth(async user => {
     if (isCoachPlan()) {
         try {
             const results = await listMyResults(state.program.coachPlanId);
-            state.result = results.find(r => r.date === date) || null;
+            state.result = results.find(r => r.date === date && !isStrengthResult(r)) || null;
         } catch (error) {
             console.warn("Southbound: workout results unavailable.", error?.code || error);
         }

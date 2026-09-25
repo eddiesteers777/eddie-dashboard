@@ -2,10 +2,12 @@
    Southbound — workout results (Firestore)
 
    What the client actually did on a planned day of a coach's plan:
-   workoutResults/{clientUid}_{planId}_{date}
+   workoutResults/{clientUid}_{planId}_{date}            a run
+   workoutResults/{clientUid}_{planId}_{date}_strength   a strength session
      { clientUid, coachUid, planId, planVersion, date, title, plannedMiles,
        status: "completed" | "skipped", distance (mi), durationSec, rpe 1-10,
        pain, painNote, note, createdAt, updatedAt,
+       kind: "strength", exercises: [{ name, sets: [{ weight, reps }] }]   <- strength only
        coachComment, coachCommentAt }         <- only the coach writes these
    Kept apart from the prescription (coachingPlans) on purpose: the plan
    says what to do, this says what happened. The client's device copy of
@@ -20,6 +22,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
 import { sendPainFlagEmail } from "./emailNotify.js";
+import { sanitizeActual } from "./strengthWorkout.js";
 
 const withId = snap => ({ id: snap.id, ...snap.data() });
 
@@ -29,11 +32,12 @@ async function me() {
     return user;
 }
 
-export const resultId = (clientUid, planId, date) => `${clientUid}_${planId}_${date}`;
+export const resultId = (clientUid, planId, date, kind = "run") => `${clientUid}_${planId}_${date}${kind === "strength" ? "_strength" : ""}`;
+export const isStrengthResult = r => r?.kind === "strength";
 
 const EDITABLE = ["status", "distance", "durationSec", "rpe", "pain", "painNote", "note", "title", "plannedMiles", "planVersion"];
 
-function clean(input) {
+function clean(input, kind) {
     const numOrNull = (v, max) => (v === "" || v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.min(max, Number(v))));
     const rpe = Number.isInteger(Number(input.rpe)) && Number(input.rpe) >= 1 && Number(input.rpe) <= 10 ? Number(input.rpe) : null;
     const durationSec = numOrNull(input.durationSec, 172800);
@@ -48,7 +52,8 @@ function clean(input) {
         note: String(input.note || "").trim().slice(0, 1000),
         title: String(input.title || "Workout").slice(0, 120),
         plannedMiles: Math.max(0, Math.min(200, Number(input.plannedMiles) || 0)),
-        planVersion: Math.max(1, Number(input.planVersion) || 1)
+        planVersion: Math.max(1, Number(input.planVersion) || 1),
+        ...(kind === "strength" ? { distance: null, plannedMiles: 0, exercises: skipped ? [] : sanitizeActual(input.exercises) } : {})
     };
 }
 
@@ -66,32 +71,37 @@ export async function listMyResults(planId = null) {
  * loaded (or null for a first log). Also marks the day done / skipped on
  * this device's copy of the plan. Returns the saved result.
  */
-export async function saveMyResult({ planId, coachUid, date, clientName, coachEmailHint, ...fields }, existing = null) {
+export async function saveMyResult({ planId, coachUid, date, clientName, kind = "run", ...fields }, existing = null) {
     const user = await me();
-    const id = resultId(user.uid, planId, date);
-    const values = clean(fields);
+    const id = resultId(user.uid, planId, date, kind);
+    const values = clean(fields, kind);
     if (existing) {
-        const patch = Object.fromEntries(EDITABLE.map(k => [k, values[k]]));
+        const patch = Object.fromEntries([...EDITABLE, ...(kind === "strength" ? ["exercises"] : [])].map(k => [k, values[k]]));
         await updateDoc(doc(db, "workoutResults", id), { ...patch, updatedAt: serverTimestamp() });
     } else {
         await setDoc(doc(db, "workoutResults", id), {
-            clientUid: user.uid, coachUid, planId, date, ...values,
+            clientUid: user.uid, coachUid, planId, date, ...(kind === "strength" ? { kind } : {}), ...values,
             createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
             coachComment: "", coachCommentAt: null
         });
     }
-    await markLocal(planId, date, values.status === "completed"
-        ? { completed: true, skipped: false, resultId: id, actualDistance: values.distance, actualDuration: values.durationSec, rpe: values.rpe, pain: values.pain }
-        : { completed: false, skipped: true, resultId: id, actualDistance: null, actualDuration: null, rpe: null, pain: values.pain });
+    const done = values.status === "completed";
+    await markLocal(planId, date, kind === "strength"
+        ? { strengthCompleted: done, strengthSkipped: !done, strengthResultId: id, strengthRpe: done ? values.rpe : null, strengthPain: values.pain }
+        : done
+            ? { completed: true, skipped: false, resultId: id, actualDistance: values.distance, actualDuration: values.durationSec, rpe: values.rpe, pain: values.pain }
+            : { completed: false, skipped: true, resultId: id, actualDistance: null, actualDuration: null, rpe: null, pain: values.pain });
     if (values.pain && (!existing?.pain || existing.painNote !== values.painNote)) {
         sendPainFlagEmail({ clientName: clientName || user.displayName, date, title: values.title, painNote: values.painNote });
     }
-    return { ...(existing || { id, clientUid: user.uid, coachUid, planId, date, coachComment: "", coachCommentAt: null }), ...values, id, updatedAt: Date.now() };
+    return { ...(existing || { id, clientUid: user.uid, coachUid, planId, date, coachComment: "", coachCommentAt: null, ...(kind === "strength" ? { kind } : {}) }), ...values, id, updatedAt: Date.now() };
 }
 
 export async function deleteMyResult(result) {
     await deleteDoc(doc(db, "workoutResults", result.id));
-    await markLocal(result.planId, result.date, { completed: false, skipped: false, resultId: null, actualDistance: null, actualDuration: null, rpe: null, pain: null });
+    await markLocal(result.planId, result.date, isStrengthResult(result)
+        ? { strengthCompleted: null, strengthSkipped: null, strengthResultId: null, strengthRpe: null, strengthPain: null }
+        : { completed: false, skipped: false, resultId: null, actualDistance: null, actualDuration: null, rpe: null, pain: null });
 }
 
 // The day on this device's copy of the coach plan.
@@ -100,10 +110,15 @@ async function markLocal(planId, date, patch) {
     const plan = plans.find(p => p.coachPlanId === planId);
     const day = plan?.generatedPlan?.weeks?.flatMap(w => w.days || []).find(d => d.date === date);
     if (!day) return;
+    // A strength-only day: its session is the day, so the day's own marks follow.
+    if (day.type === "strength" && "strengthCompleted" in patch) {
+        patch = { ...patch, completed: patch.strengthCompleted, skipped: patch.strengthSkipped };
+    }
     for (const [k, v] of Object.entries(patch)) {
         if (v === null || v === false) delete day[k]; else day[k] = v;
     }
     if (patch.completed) day.completedAt = new Date().toISOString();
+    if (patch.strengthCompleted) day.strengthCompletedAt = new Date().toISOString();
     await saveCoachPlans(plans);
 }
 

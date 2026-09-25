@@ -289,3 +289,18 @@ test("workout results: pain first in attention, skips counted, timeline and clie
     assert.equal(feed[0].title, "Reply on your easy run");
     assert.equal(feed[0].link, "workout.html?program=coach-p1&date=2026-10-01");
 });
+
+test("strength logs: decide a strength-only day, never the run next to them; timeline counts sets", () => {
+    const copy = coachCopy(1, null);
+    const days = copy.generatedPlan.weeks[1].days;
+    days[0] = { ...days[0], strength: { title: "Core", exercises: [{ name: "Dead Bug", sets: 2, reps: "10" }] } };   // Mon run + core
+    days[1] = { ...days[1], type: "strength", miles: 0, strength: { title: "Lower", exercises: [{ name: "Squat", sets: 3, reps: "5" }] } };
+    const results = [
+        { planId: "p1", date: "2026-09-21", status: "completed", kind: "strength" },
+        { planId: "p1", date: "2026-09-22", status: "completed", kind: "strength", title: "Lower", exercises: [{ name: "Squat", sets: [{ weight: 135, reps: 5 }, { weight: 135, reps: 5 }] }], createdAt: 1790000000000 }
+    ];
+    const s = summarizePlans({ coachPlans: [copy] }, "2026-09-23", [{ id: "p1", version: 1, name: "Fall 10K", status: "active" }], results);
+    assert.equal(s.week.completed, 1, "Tue strength day done; Mon's run isn't marked by the core log");
+    const t = buildTimeline({ results });
+    assert.ok(t.some(e => e.text === "Logged Lower — 2 sets"), JSON.stringify(t));
+});

@@ -4,7 +4,9 @@
    The client's week as one list per day, whatever it came from:
      - plan days (the coach's plan, or a Race / Training Plan they made):
        runs, strength days, cross-training, plus a plan's extra
-       strength / cross sessions ("supplemental")
+       strength / cross sessions ("supplemental"). A coach's strength
+       session on a day (day.strength) is the day itself on a strength
+       day, or its own item next to the run on any other day.
      - strength workouts on their Strength schedule. A plan's strength
        session that was also copied onto that schedule (tagged with the
        plan it came from) shows once, as the schedule item.
@@ -20,6 +22,7 @@
 ========================================== */
 
 import { addDays, typeLabel } from "./coachingPlanModel.js";
+import { strengthSummary } from "./strengthWorkout.js";
 
 const DAY_CODES = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -81,6 +84,23 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
         for (const week of plan.generatedPlan?.weeks || []) {
             for (const day of week.days || []) {
                 if (day.date !== date || !day.type || day.type === "rest") continue;
+                const lift = day.strength?.exercises?.length ? day.strength : null;
+                const liftItem = extra => ({
+                    id: extra ? `plan-strength:${plan.id}:${date}` : `plan:${plan.id}:${date}`,
+                    kind: "strength",
+                    title: lift.title || "Strength",
+                    detail: strengthSummary({ ...lift, title: "" }),
+                    miles: 0,
+                    done: Boolean(day.strengthCompleted || (!extra && day.completed)),
+                    skipped: Boolean(day.strengthSkipped || (!extra && day.skipped)),
+                    structured: true,
+                    actual: day.strengthResultId ? { rpe: day.strengthRpe ?? null, pain: Boolean(day.strengthPain) } : null,
+                    coachPlanId: plan.coachPlanId || null,
+                    planName: plan.name || "",
+                    fromCoach: plan.source === "coach",
+                    source: { type: extra ? "plan-strength" : "plan", programId: plan.id, date, strength: true }
+                });
+                if (lift && day.type === "strength") { items.push(liftItem(false)); continue; }
                 const kind = kindOf(day.type);
                 const session = String(day.session || "").trim();
                 const title = kind === "run" ? runTitle(day.type) : kind === "strength" ? (session || "Strength") : (session || "Cross-training");
@@ -99,6 +119,7 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
                     fromCoach: plan.source === "coach",
                     source: { type: "plan", programId: plan.id, date }
                 });
+                if (lift) items.push(liftItem(true));
             }
             for (const entry of week.supplemental || []) {
                 if (supplementalDate(week, entry) !== date) continue;

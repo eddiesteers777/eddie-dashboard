@@ -571,9 +571,49 @@ body.has-bottomnav .pw-bar{ bottom:92px; }
             "session session session"
             "details details details";
     }
-    .pw-details-btn{ grid-area:details; justify-self:start; }
+    .pw-day-btns{ grid-area:details; justify-self:start; }
     .wb-label{ flex:0 0 100%; }
 }
+
+/* ---- Strength session builder (js/strengthBuilder.js) ---- */
+
+.pw-day-btns{ display:inline-flex; gap:6px; flex-wrap:wrap; }
+.pw-sbuilder{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin:0 0 6px;
+    padding:14px;
+    background:rgba(143,163,136,.07);
+    border:1px solid rgba(143,163,136,.3);
+    border-radius:14px;
+}
+.pw-sbuilder input,
+.pw-sbuilder select,
+.pw-sbuilder textarea{
+    min-width:0;
+    padding:7px 9px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:9px;
+    color:var(--text);
+    font-size:13.5px;
+}
+.pw-sbuilder .wb-field input, .pw-sbuilder .wb-field textarea, .pw-sbuilder .wb-field select{ flex:0 0 auto; text-transform:none; letter-spacing:0; font-weight:500; resize:vertical; }
+.pw-sbuilder input[type="checkbox"]{ padding:0; width:18px; height:18px; }
+.sb-head{ display:grid; grid-template-columns:1fr 110px; gap:10px; }
+.sb-ex{ display:flex; flex-direction:column; gap:8px; padding:12px 0 10px; border-top:1px dashed var(--border); }
+.sb-ex.is-paired{ margin-left:18px; padding-left:12px; border-left:2px solid rgba(201,173,132,.45); border-top-style:none; }
+.sb-ex-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.sb-ex-num{ flex:0 0 auto; min-width:30px; color:var(--primary); font:800 15px var(--font-body); }
+.sb-ex-name{ flex:1 1 200px; font-weight:700 !important; }
+.sb-ex-row .sb-btn-icon{ width:36px; min-height:36px; }
+.sb-ex-rx label{ display:flex; flex-direction:column; gap:3px; color:var(--muted); font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.sb-ex-rx input{ width:78px; }
+.sb-ex-rx input[type="text"]{ width:96px; }
+.sb-ex-extra input[type="text"], .sb-ex-extra input[type="url"]{ flex:1 1 220px; }
+.sb-ex-pair{ display:inline-flex; align-items:center; gap:7px; flex:0 0 100%; color:var(--text-secondary); font-size:13.5px; font-weight:600; }
+.pw-sbuilder [hidden]{ display:none !important; }
 
 /* ---- Workouts (logged results from the coach's plan) ---- */
 
@@ -593,4 +633,14 @@ body.has-bottomnav .pw-bar{ bottom:92px; }
 .hub-wo .hub-reply{ margin-top:0; }
 @media (max-width:480px){
     .hub-wo-stats{ grid-template-columns:1fr 1fr; }
+}
+.hub-wo-highlights{ margin:0; padding-left:18px; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+.pw-sbuilder .wb-field input, .pw-sbuilder .wb-field select, .pw-sbuilder .wb-field textarea{ width:100%; box-sizing:border-box; }
+.pw-sbuilder .sb-ex-name{ flex:1 1 120px; min-width:0; }
+@media (max-width:560px){
+    .pw-sbuilder{ padding:12px 10px; }
+    .sb-head{ grid-template-columns:1fr 84px; }
+    .sb-ex.is-paired{ margin-left:6px; padding-left:8px; }
+    .sb-ex-rx{ display:grid; grid-template-columns:repeat(3, 1fr); }
+    .sb-ex-rx input, .sb-ex-rx input[type="text"], .sb-ex-rx select{ width:100%; box-sizing:border-box; }
 }

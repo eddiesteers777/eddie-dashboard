@@ -47,9 +47,10 @@ rules_version = '2';
 //                              the coach, never changed or deleted.
 //   coachingPlanDrafts/{id}    The coach's work in progress. Coach only --
 //                              the client never sees an unpublished plan.
-//   workoutResults/{client_plan_date}  How a client's planned workout went
-//                              (done/skipped, distance, time, effort, pain,
-//                              note). The client writes their own; their
+//   workoutResults/{client_plan_date[_strength]}  How a client's planned
+//                              workout went (done/skipped, distance, time,
+//                              effort, pain, note; for strength, the sets
+//                              lifted). The client writes their own; their
 //                              coach reads it and can only add a comment.
 //   inquiries/{id}             Questions from the public Contact page.
 //                              Anyone can send one (strictly validated);
@@ -432,7 +433,10 @@ service cloud.firestore {
         && d.note is string && d.note.size() <= 1000
         && d.title is string && d.title.size() <= 120
         && d.plannedMiles is number && d.plannedMiles >= 0 && d.plannedMiles <= 200
-        && d.planVersion is int && d.planVersion >= 1;
+        && d.planVersion is int && d.planVersion >= 1
+        // A strength log: what was lifted, exercise by exercise.
+        && d.get("kind", "run") in ["run", "strength"]
+        && (!("exercises" in d) || (d.kind == "strength" && d.exercises is list && d.exercises.size() <= 20));
     }
 
     match /workoutResults/{resultId} {
@@ -440,14 +444,16 @@ service cloud.firestore {
         && (resource.data.clientUid == request.auth.uid
             || resource.data.coachUid == request.auth.uid);
 
-      // One result per planned day: the id is client_plan_date, and the
-      // plan must be one this coach published to this client.
+      // One result per planned day (and one per strength session that
+      // day): the id is client_plan_date[_strength], and the plan must be
+      // one this coach published to this client.
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(["clientUid", "coachUid", "planId", "planVersion", "date", "title",
              "plannedMiles", "status", "distance", "durationSec", "rpe", "pain", "painNote", "note",
-             "createdAt", "updatedAt", "coachComment", "coachCommentAt"])
+             "createdAt", "updatedAt", "coachComment", "coachCommentAt", "kind", "exercises"])
         && request.resource.data.clientUid == request.auth.uid
         && resultId == request.auth.uid + "_" + request.resource.data.planId + "_" + request.resource.data.date
+             + (request.resource.data.get("kind", "run") == "strength" ? "_strength" : "")
         && linked(request.resource.data.coachUid, request.auth.uid)
         && get(/databases/$(database)/documents/coachingPlans/$(request.resource.data.planId)).data.clientUid == request.auth.uid
         && get(/databases/$(database)/documents/coachingPlans/$(request.resource.data.planId)).data.coachUid == request.resource.data.coachUid
@@ -461,7 +467,7 @@ service cloud.firestore {
       allow update: if signedIn()
         && resource.data.clientUid == request.auth.uid
         && onlyChanges(["status", "distance", "durationSec", "rpe", "pain", "painNote", "note",
-             "title", "plannedMiles", "planVersion", "updatedAt"])
+             "title", "plannedMiles", "planVersion", "updatedAt", "exercises"])
         && validResult(request.resource.data)
         && request.resource.data.updatedAt == request.time;
 

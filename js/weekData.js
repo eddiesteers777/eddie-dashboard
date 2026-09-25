@@ -16,6 +16,7 @@ import {
 } from "./activeProgramSources.js";
 import { getAllEntries } from "./runningLog.js";
 import { SESSION_TYPES, listMyBookingRequests } from "./scheduling.js";
+import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
 
 const SCHEDULE_KEY = "strength-schedule";
 
@@ -61,6 +62,16 @@ export async function loadSessions() {
 export async function toggleDone(item) {
     const src = item.source || {};
     if (src.type === "plan") return toggleRunningProgramDayCompleted(src.programId, src.date);
+    if (src.type === "plan-strength") {
+        // A coach's strength session added to a run day: its own mark.
+        const plans = loadCoachPlans();
+        const day = plans.find(p => p.id === src.programId)?.generatedPlan?.weeks?.flatMap(w => w.days || []).find(d => d.date === src.date);
+        if (!day) return null;
+        if (day.strengthCompleted) { delete day.strengthCompleted; delete day.strengthCompletedAt; }
+        else { day.strengthCompleted = true; day.strengthCompletedAt = new Date().toISOString(); }
+        await saveCoachPlans(plans);
+        return Boolean(day.strengthCompleted);
+    }
     if (src.type === "extra") return toggleProgramSupplementalCompleted(src.programId, src.date, item.kind === "strength" ? "strength" : "cross");
     if (src.type === "strength") {
         const data = loadStrengthSchedule();
@@ -76,6 +87,9 @@ export async function toggleDone(item) {
 
 // Where "Start" / "Open" goes for a workout.
 export function workoutLink(item) {
+    if (item.kind === "strength" && item.source?.strength) {
+        return { href: `workout.html?program=${encodeURIComponent(item.source.programId)}&date=${item.source.date}&kind=strength`, label: !item.done && !item.skipped ? (item.coachPlanId ? "Start" : "Open") : "Open" };
+    }
     if (item.kind === "strength") {
         const dayId = item.workoutId?.startsWith("plan-") ? item.workoutId.slice(5) : null;
         try {

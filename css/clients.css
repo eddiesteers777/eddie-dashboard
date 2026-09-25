@@ -591,3 +591,19 @@
 .clients-day-row.is-done .clients-day-label{ color:var(--green); }
 .clients-day-check{ font-weight:700; }
 .clients-client-athlete{ color:var(--text-secondary); font-weight:500; font-size:13px; }
+
+/* ---- Strength planned vs actual (js/strengthSession.js: client workout page + coach hub) ---- */
+
+.st-table{ display:flex; flex-direction:column; margin-bottom:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.st-row{ display:grid; grid-template-columns:1.3fr 1fr 1.3fr; gap:8px; padding:9px 12px; border-top:1px solid var(--border); color:var(--text); font-size:14px; }
+.st-row b{ color:var(--primary); }
+.st-row-head{ border-top:0; background:var(--surface-light); color:var(--muted); font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+.st-row.is-heavier span:last-child{ color:var(--success); font-weight:700; }
+.st-row.is-lighter span:last-child{ color:var(--warning); }
+.st-row.is-missed span:last-child{ color:var(--muted); }
+.st-row .ui-icon{ width:13px; height:13px; vertical-align:-1px; }
+@media (max-width:480px){
+    .st-row{ grid-template-columns:1fr 1fr; }
+    .st-row span:first-child{ grid-column:1 / -1; font-weight:700; }
+    .st-row-head span:first-child{ display:none; }
+}

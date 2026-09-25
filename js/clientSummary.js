@@ -134,13 +134,15 @@ function isWorkout(day) {
 // even before the client's mirrored copy has synced its done mark.
 function applyResults(plans, results) {
     if (!results?.length) return plans;
-    const byKey = new Map(results.map(r => [`${r.planId}|${r.date}`, r]));
+    // A strength log only decides a strength-only day; an extra session
+    // on a run day never marks the run.
+    const byKey = new Map(results.map(r => [`${r.planId}|${r.date}|${r.kind === "strength" ? "strength" : "run"}`, r]));
     return plans.map(p => {
         if (!p.coachPlanId || !p.generatedPlan?.weeks) return p;
         const weeks = p.generatedPlan.weeks.map(w => ({
             ...w,
             days: (w.days || []).map(d => {
-                const r = byKey.get(`${p.coachPlanId}|${d.date}`);
+                const r = byKey.get(`${p.coachPlanId}|${d.date}|${d.type === "strength" && d.strength ? "strength" : "run"}`);
                 return r ? { ...d, completed: r.status === "completed", skipped: r.status === "skipped" } : d;
             })
         }));
@@ -308,7 +310,7 @@ export function buildTimeline({ profile, link, checkins, requests, record, updat
     for (const r of results || []) {
         push(r.createdAt, r.status === "skipped" ? "workout-skipped" : "workout",
             r.status === "skipped" ? `Skipped ${r.title || "a workout"} (${shortDate(r.date)})`
-                : `Logged ${r.title || "a workout"}${r.distance ? ` — ${r.distance} mi` : ""}${r.rpe ? `, effort ${r.rpe}/10` : ""}${r.pain ? ", pain flagged" : ""}`);
+                : `Logged ${r.title || "a workout"}${r.distance ? ` — ${r.distance} mi` : ""}${r.kind === "strength" && r.exercises?.length ? ` — ${r.exercises.reduce((n, e) => n + (e.sets?.length || 0), 0)} sets` : ""}${r.rpe ? `, effort ${r.rpe}/10` : ""}${r.pain ? ", pain flagged" : ""}`);
         if (r.coachComment) push(r.coachCommentAt, "workout-reply", `You replied on ${r.title || "their workout"} (${shortDate(r.date)})`);
     }
     for (const h of coachingPlans || []) {
@@ -379,7 +381,7 @@ export function buildCoachFeed({ updates = [], checkins = [], requests = [], res
         feed.push({
             at: toMillis(r.coachCommentAt) || toMillis(r.updatedAt), kind: "workout",
             title: `Reply on your ${String(r.title || "workout").toLowerCase()}`, detail: shortDate(r.date),
-            text: r.coachComment, link: `workout.html?program=coach-${encodeURIComponent(r.planId)}&date=${r.date}`, unread: false
+            text: r.coachComment, link: `workout.html?program=coach-${encodeURIComponent(r.planId)}&date=${r.date}${r.kind === "strength" ? "&kind=strength" : ""}`, unread: false
         });
     }
     for (const u of updates) {
