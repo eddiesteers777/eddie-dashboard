@@ -193,3 +193,17 @@ export function sendCheckinReviewedEmail({ clientEmail, clientName, coachName, w
         page: "checkin.html"
     });
 }
+
+// Coach sent the client an update (js/clientNotes.js). The client
+// template is fixed text ("your coach sent you something, open the
+// app"), so the update itself is only ever read in the app.
+export function sendCoachUpdateEmail({ clientEmail, clientName, coachName, text }) {
+    return clientUpdate({
+        toEmail: clientEmail,
+        toName: clientName,
+        subject: "An update from your coach",
+        headline: `${coachName || "Your coach"} sent you an update.`,
+        details: text ? `"${text}"` : "",
+        page: "updates.html"
+    });
+}

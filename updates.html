@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>From Your Coach | Southbound Coaching</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/updates.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page updates-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coaching</div>
+                <h1>From Your Coach</h1>
+                <p class="eos-today-phase">Updates, check-in replies and session notes, all in one place.</p>
+            </div>
+        </section>
+
+        <p id="feedLoading" class="clients-card-note">Loading…</p>
+        <div id="feed" class="updates-feed"></div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/updates.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

@@ -3,7 +3,7 @@
 
    What a client needs from their coach at a glance: their next
    session, requests still waiting, notes from their last session,
-   and where this week's check-in stands. Only reads data the client
+   where this week's check-in stands, and new updates. Only reads data the client
    already has access to under firestore.rules (their own booking
    requests, check-ins and coach link). Rendered by js/app.js for
    non-coach accounts.
@@ -15,6 +15,7 @@ import { listMyCoaches } from "./coachAccess.js";
 import { getMyProfile } from "./userProfile.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { isIntakeComplete } from "./clientRecordSchema.js";
+import { listMyUpdates } from "./clientNotes.js";
 import { icon } from "./icons.js";
 
 function esc(value) {
@@ -62,18 +63,32 @@ function row({ iconName, color, title, detail, note, link }) {
 export async function renderCoachCard(container) {
     if (!container) return null;
 
-    const [coaches, requests, checkins, profile, record] = await Promise.all([
+    const [coaches, requests, checkins, profile, record, updates] = await Promise.all([
         listMyCoaches().catch(() => []),
         listMyBookingRequests().catch(() => []),
         listMyCheckins().catch(() => []),
         getMyProfile().catch(() => null),
         // undefined = couldn't read (don't nag), null = not filled in yet
-        getMyClientRecord().catch(() => undefined)
+        getMyClientRecord().catch(() => undefined),
+        listMyUpdates().catch(() => [])
     ]);
 
     const coach = coaches[0];
     const today = localIso();
     const rows = [];
+
+    // ---- Updates from the coach (updates.html marks them read) ----
+    const unread = updates.filter(u => !u.readAt);
+    if (unread.length) {
+        rows.push(row({
+            iconName: "send",
+            color: "var(--primary)",
+            title: unread.length === 1 ? `New update from ${unread[0].coachName || "your coach"}` : `${unread.length} new updates from your coach`,
+            detail: "",
+            note: unread[0].text.length > 140 ? `${unread[0].text.slice(0, 140).trim()}…` : unread[0].text,
+            link: "updates.html"
+        }));
+    }
 
     // ---- Profile (entered once, remembered) ----
     if (coach && record !== undefined && !isIntakeComplete(record)) {

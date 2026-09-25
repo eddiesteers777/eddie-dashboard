@@ -34,6 +34,11 @@ rules_version = '2';
 //                              The client fills it in; their linked coach
 //                              can read and edit it. Nothing coach-private
 //                              lives here -- the client can read it all.
+//   coachNotes/{id}            A coach's PRIVATE notes about a client. Only
+//                              the coach who wrote a note can read it --
+//                              there is deliberately no client clause.
+//   clientUpdates/{id}         Updates a coach sends a client. The client
+//                              reads them and can only mark them read.
 //   inquiries/{id}             Questions from the public Contact page.
 //                              Anyone can send one (strictly validated);
 //                              only approved coaches can read them.
@@ -230,6 +235,54 @@ service cloud.firestore {
           || (signedIn() && linked(request.auth.uid, clientUid)))
         && validClientRecord(request.resource.data, clientUid);
       allow delete: if false;
+    }
+
+    // A coach's private notes about a client. Readable ONLY by the coach
+    // who wrote them: there is no client clause here on purpose, so a
+    // private note can never reach the client.
+    function validNoteText(t, max) {
+      return t is string && t.size() > 0 && t.size() <= max;
+    }
+
+    match /coachNotes/{noteId} {
+      allow read: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "text", "pinned", "createdAt", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && validNoteText(request.resource.data.text, 4000)
+        && request.resource.data.pinned is bool
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if signedIn() && resource.data.coachUid == request.auth.uid
+        && onlyChanges(["text", "pinned", "updatedAt"])
+        && validNoteText(request.resource.data.text, 4000)
+        && request.resource.data.pinned is bool
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // Updates a coach sends a client: both can read them, only the
+    // (linked) coach writes them, and the client can only mark them read.
+    match /clientUpdates/{updateId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "coachName", "clientUid", "text", "createdAt", "readAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && request.resource.data.coachName is string
+        && request.resource.data.coachName.size() <= 100
+        && validNoteText(request.resource.data.text, 2000)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.readAt == null;
+      allow update: if signedIn() && resource.data.clientUid == request.auth.uid
+        && onlyChanges(["readAt"])
+        && request.resource.data.readAt == request.time;
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
     }
 
     // Questions from the public Contact page. Anyone may send one

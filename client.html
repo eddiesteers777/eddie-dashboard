@@ -62,11 +62,13 @@
                 <button type="button" class="clients-tab" data-tab="plan" role="tab">Plan</button>
                 <button type="button" class="clients-tab" data-tab="checkins" role="tab">Check-ins <span id="hubCheckinBadge" class="clients-tab-badge" hidden></span></button>
                 <button type="button" class="clients-tab" data-tab="sessions" role="tab">Sessions <span id="hubSessionBadge" class="clients-tab-badge" hidden></span></button>
+                <button type="button" class="clients-tab" data-tab="notes" role="tab">Notes</button>
                 <button type="button" class="clients-tab" data-tab="profile" role="tab">Profile</button>
             </nav>
 
             <section class="clients-panel" data-panel="overview">
                 <div id="hubAttention"></div>
+                <div id="hubPinned"></div>
                 <div id="hubAbout"></div>
                 <div class="hub-grid">
                     <div class="clients-card">
@@ -95,6 +97,10 @@
 
             <section class="clients-panel" data-panel="sessions" hidden>
                 <div id="hubSessions"></div>
+            </section>
+
+            <section class="clients-panel" data-panel="notes" hidden>
+                <div id="hubNotes"></div>
             </section>
 
             <section class="clients-panel" data-panel="profile" hidden>

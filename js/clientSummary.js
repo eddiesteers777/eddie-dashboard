@@ -231,7 +231,7 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
 
 // Recent activity derived from existing data (no timeline collection yet).
 // Each: { at (millis), date (iso), kind, text }
-export function buildTimeline({ profile, link, checkins, requests, record }) {
+export function buildTimeline({ profile, link, checkins, requests, record, updates }) {
     const events = [];
     const push = (at, kind, text) => { const ms = toMillis(at); if (ms) events.push({ at: ms, date: isoDate(new Date(ms)), kind, text }); };
 
@@ -239,6 +239,10 @@ export function buildTimeline({ profile, link, checkins, requests, record }) {
     push(profile?.approvedAt, "approved", "Account approved");
     push(link?.linkedAt, "linked", "Connected to you");
     push(record?.intakeCompletedAt, "intake", "Filled in their profile");
+    for (const u of updates || []) {
+        push(u.createdAt, "update", "You sent them an update");
+        push(u.readAt, "update-read", "They read your update");
+    }
     for (const c of checkins || []) {
         push(c.submittedAt, "checkin", `Weekly check-in sent${c.rating ? ` — ${c.rating}/5` : ""}`);
         if (c.status === "reviewed") push(c.reviewedAt, "feedback", "You replied to their check-in");
@@ -284,4 +288,42 @@ export function summarizeClient({ profile, link, shared, checkins, requests, rec
         checkins: checkinSummary,
         attention
     };
+}
+
+// ---------- Client side: everything their coach has told them ----------
+
+// One newest-first feed for updates.html: updates the coach sent
+// (clientUpdates), replies to check-ins, and notes on sessions that have
+// happened. Each: { at, kind, title, detail, text, link, unread }.
+// Private coach notes never reach the client, so they can't appear here.
+export function buildCoachFeed({ updates = [], checkins = [], requests = [], today }) {
+    const feed = [];
+    for (const u of updates) {
+        if (!u.text) continue;
+        feed.push({
+            at: toMillis(u.createdAt), kind: "update", id: u.id,
+            title: `Update from ${u.coachName || "your coach"}`,
+            detail: "", text: u.text, link: "", unread: !u.readAt
+        });
+    }
+    for (const c of checkins) {
+        if (c.status !== "reviewed" || !c.coachFeedback) continue;
+        feed.push({
+            at: toMillis(c.reviewedAt) || toMillis(c.submittedAt), kind: "feedback",
+            title: "Reply to your check-in", detail: `Week of ${shortDate(c.weekOf)}`,
+            text: c.coachFeedback, link: "checkin.html", unread: false
+        });
+    }
+    for (const r of requests) {
+        if (r.status !== "approved" || !r.coachNote) continue;
+        const last = (r.dates || []).filter(d => d <= today).sort().pop();
+        if (!last) continue;
+        const [y, m, d] = last.split("-").map(Number);
+        feed.push({
+            at: toMillis(r.respondedAt) || new Date(y, m - 1, d, 12).getTime(), kind: "session",
+            title: "Notes from your session", detail: shortDate(last),
+            text: r.coachNote, link: "schedule.html", unread: false
+        });
+    }
+    return feed.filter(f => f.at).sort((a, b) => b.at - a.at);
 }

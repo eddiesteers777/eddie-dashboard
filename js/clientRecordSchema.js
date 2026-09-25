@@ -9,7 +9,7 @@
 
    Nothing coach-private belongs in this document: the client can read
    all of it. Private coach notes are a separate, coach-only collection
-   (roadmap phase 3).
+   (coachNotes, js/clientNotes.js).
 
    firestore.rules (validClientRecord) enforces the same keys, types and
    sizes -- keep the two in step. Unit-tested in

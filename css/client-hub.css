@@ -97,7 +97,7 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
     .hub-glance{ grid-template-columns:1fr 1fr; }
 }
 
-.hub-tabs{ margin-bottom:16px; max-width:100%; overflow-x:auto; scrollbar-width:none; }
+.hub-tabs{ position:relative; margin-bottom:16px; max-width:100%; overflow-x:auto; scrollbar-width:none; }
 .hub-tabs::-webkit-scrollbar{ display:none; }
 .hub-tabs .clients-tab{ white-space:nowrap; flex-shrink:0; }
 @media (max-width:520px){
@@ -295,3 +295,102 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
     .hub-facts dd{ margin-bottom:8px; }
 }
 .hub-profile-note{ margin:0 0 12px; }
+
+/* ---- Phase 3: private notes vs. updates they see ---- */
+
+.hub-page .sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip:rect(0 0 0 0);
+    white-space:nowrap;
+}
+
+/* Private = dashed sage border + lock; shared = solid tan edge + eye.
+   The two must never look alike. */
+.hub-private{
+    border:1px dashed var(--sage);
+    background:rgba(143,163,138,.06);
+}
+.hub-shared{ border-left:3px solid var(--primary); }
+.hub-private-tag,
+.hub-shared-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+.hub-private-tag{ background:rgba(143,163,138,.16); color:var(--sage); }
+.hub-shared-tag{ background:rgba(201,173,132,.16); color:var(--primary); }
+.hub-private h2 .ui-icon{ color:var(--sage); }
+.hub-shared h2 .ui-icon{ color:var(--primary); }
+.hub-about-head h2{ display:flex; align-items:center; gap:8px; }
+
+.hub-check{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    min-height:40px;
+    color:var(--text-secondary);
+    font-size:14px;
+    cursor:pointer;
+}
+.hub-check input{ width:18px; height:18px; accent-color:var(--primary); }
+.hub-reply-actions{ flex-wrap:wrap; }
+
+.hub-notes-list{ margin-top:14px; }
+.hub-note{
+    padding:12px 0;
+    border-top:1px solid var(--border);
+}
+.hub-note-meta{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    color:var(--muted);
+    font-size:12.5px;
+    font-weight:600;
+}
+.hub-note-meta .hub-pill{ margin-left:auto; }
+.hub-note-pin{ display:inline-flex; align-items:center; gap:4px; color:var(--sage); }
+.hub-note-text{
+    margin:6px 0 0;
+    color:var(--text);
+    font-size:14.5px;
+    line-height:1.55;
+    white-space:pre-line;
+    overflow-wrap:anywhere;
+}
+.hub-note-actions{ display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
+.hub-link-btn{
+    min-height:36px;
+    padding:0 10px;
+    background:none;
+    border:0;
+    border-radius:8px;
+    color:var(--text-secondary);
+    font:600 13px var(--font-body);
+    cursor:pointer;
+}
+.hub-link-btn:first-child{ margin-left:-10px; }
+.hub-link-btn:hover{ color:var(--primary); background:var(--surface-light); }
+.hub-link-btn.is-danger:hover{ color:var(--red, #EF4444); }
+.hub-note-edit{ margin-top:8px; }
+
+.hub-pinned .hub-note-text{
+    padding:8px 0;
+    border-bottom:1px solid var(--border);
+}
+.hub-pinned .hub-note-text:last-of-type{ border-bottom:0; margin-bottom:10px; }
+
+@media (max-width:560px){
+    .hub-about-head{ flex-wrap:wrap; }
+}

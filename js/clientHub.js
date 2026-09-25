@@ -4,11 +4,14 @@
    One home for a client, coach side: who they are, where their plan
    stands, what's next, what needs attention, and recent activity, with
    tabs for their Plan (the shared plan editor), Check-ins (reply
-   inline) and Sessions.
+   inline), Sessions, Notes and Profile.
 
-   Nothing new is stored: it reads the existing coachLinks,
-   userProfiles, sharedPlans, checkins and bookingRequests through
+   It reads coachLinks, userProfiles, sharedPlans, checkins,
+   bookingRequests, clientRecords, coachNotes and clientUpdates through
    js/clientDirectory.js, and summarizes with js/clientSummary.js.
+   Notes keeps the coach's PRIVATE notes (coachNotes, never shown to
+   the client) visibly apart from updates the client DOES see
+   (clientUpdates) -- js/clientNotes.js.
    Coach-only (COACH_ONLY_PAGES in js/loadHeader.js); firestore.rules
    only let a linked coach read any of this anyway.
 ========================================== */
@@ -24,6 +27,10 @@ import { reviewCheckin } from "./checkins.js";
 import { sendCheckinReviewedEmail } from "./emailNotify.js";
 import { icon } from "./icons.js";
 import { FIELDS, displayValue, athleteDisplayName } from "./clientRecordSchema.js";
+import {
+    addPrivateNote, updatePrivateNote, deletePrivateNote,
+    sendClientUpdate, deleteClientUpdate
+} from "./clientNotes.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -60,6 +67,11 @@ function selectTab(name) {
     const tab = document.querySelector(`.hub-tabs .clients-tab[data-tab="${name}"]`);
     if (!tab) return;
     document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.classList.toggle("active", t === tab));
+    // On phones the tab bar scrolls sideways; keep the chosen tab in view.
+    const bar = tab.parentElement;
+    if (tab.offsetLeft + tab.offsetWidth > bar.scrollLeft + bar.clientWidth || tab.offsetLeft < bar.scrollLeft) {
+        bar.scrollLeft = tab.offsetLeft - (bar.clientWidth - tab.offsetWidth) / 2;
+    }
     document.querySelectorAll(".hub-page .clients-panel").forEach(p => { p.hidden = p.dataset.panel !== name; });
     if (name === "plan" && !planMounted && record) {
         planMounted = true;
@@ -93,10 +105,20 @@ function selectTab(name) {
 document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
 document.addEventListener("click", event => {
     const go = event.target.closest("[data-go-tab]");
-    if (go) { event.preventDefault(); selectTab(go.dataset.goTab); window.scrollTo({ top: 0 }); }
+    if (!go) return;
+    event.preventDefault();
+    selectTab(go.dataset.goTab);
+    const focus = go.dataset.focus && $(go.dataset.focus);
+    if (focus) { focus.scrollIntoView({ block: "center" }); focus.focus({ preventScroll: true }); }
+    else window.scrollTo({ top: 0 });
 });
 
 const displayName = () => record?.profile?.displayName || record?.link?.clientName || "Client";
+const firstName = () => athleteDisplayName(record?.record, displayName()).split(" ")[0];
+const noteDate = value => {
+    const ms = toMillis(value);
+    return ms ? new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Just now";
+};
 
 // ---- Render ----
 
@@ -293,6 +315,8 @@ function renderApplication() {
 function renderActions() {
     const email = record.profile?.email || record.link?.clientEmail;
     $("hubActions").innerHTML = `
+        <button type="button" class="clients-btn-secondary" data-go-tab="notes" data-focus="noteText">${icon("lock")} Private note</button>
+        <button type="button" class="clients-btn-secondary" data-go-tab="notes" data-focus="updateText">${icon("send")} Send update</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="plan">${icon("edit")} Edit plan</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="checkins">${icon("star")} Check-ins</button>
         <a class="clients-btn-secondary" href="schedule.html?tab=availability">${icon("calendar")} Schedule</a>
@@ -387,6 +411,245 @@ function renderSessions() {
         + `<p class="clients-card-note">Session notes are added from <a href="schedule.html?tab=availability">Schedule</a> (Session Notes on an approved session).</p>`;
 }
 
+// ---- Notes: private notes vs. updates they see ----
+
+// Pinned private notes sit on the Overview, so the things to remember
+// ("left knee -- no hills", "mom picks up at 5") are the first thing seen.
+function renderPinned() {
+    const pinned = (record.privateNotes || []).filter(n => n.pinned);
+    $("hubPinned").innerHTML = pinned.length ? `
+        <div class="clients-card hub-private hub-pinned">
+            <div class="hub-about-head">
+                <h2>${icon("pin")} Pinned notes</h2>
+                <span class="hub-private-tag">${icon("lock")} Only you</span>
+            </div>
+            ${pinned.map(n => `<p class="hub-note-text">${esc(n.text)}</p>`).join("")}
+            <button type="button" class="clients-btn-secondary" data-go-tab="notes">All notes</button>
+        </div>` : "";
+}
+
+function privateNoteHtml(n) {
+    return `
+        <div class="hub-note ${n.pinned ? "is-pinned" : ""}" data-note="${esc(n.id)}">
+            <div class="hub-note-meta">
+                <span>${esc(noteDate(n.createdAt))}${toMillis(n.updatedAt) - toMillis(n.createdAt) > 60000 ? " · edited" : ""}</span>
+                ${n.pinned ? `<span class="hub-note-pin">${icon("pin")} Pinned</span>` : ""}
+            </div>
+            <p class="hub-note-text">${esc(n.text)}</p>
+            <div class="hub-note-actions">
+                <button type="button" class="hub-link-btn" data-note-action="pin">${n.pinned ? "Unpin" : "Pin to Overview"}</button>
+                <button type="button" class="hub-link-btn" data-note-action="edit">Edit</button>
+                <button type="button" class="hub-link-btn is-danger" data-note-action="delete">Delete</button>
+            </div>
+        </div>`;
+}
+
+function updateHtml(u) {
+    const read = toMillis(u.readAt);
+    return `
+        <div class="hub-note" data-update="${esc(u.id)}">
+            <div class="hub-note-meta">
+                <span>Sent ${esc(noteDate(u.createdAt))}</span>
+                <span class="hub-pill ${read ? "" : "is-new"}">${read ? `Read ${esc(shortDate(new Date(read).toISOString().slice(0, 10)))}` : "Not read yet"}</span>
+            </div>
+            <p class="hub-note-text">${esc(u.text)}</p>
+            <div class="hub-note-actions">
+                <button type="button" class="hub-link-btn is-danger" data-update-action="delete">${read ? "Delete" : "Unsend"}</button>
+            </div>
+        </div>`;
+}
+
+function renderNotes() {
+    const first = firstName();
+    const notes = record.privateNotes;
+    const updates = record.updates;
+    const off = `<p class="clients-card-note">Couldn't load these right now. If this keeps happening, the new security rules may not be published yet.</p>`;
+
+    $("hubNotes").innerHTML = `
+        <div class="clients-card hub-private">
+            <div class="hub-about-head">
+                <h2>${icon("lock")} Private notes</h2>
+                <span class="hub-private-tag">${icon("lock")} Only you can see these</span>
+            </div>
+            <p class="clients-card-note">For you: how they respond to training, family details, things to remember. ${esc(first)} never sees these.</p>
+            ${notes === undefined ? off : `
+            <form class="hub-reply" id="noteForm">
+                <label class="sr-only" for="noteText">New private note</label>
+                <textarea id="noteText" rows="3" maxlength="4000" placeholder="A private note about ${esc(first)}..."></textarea>
+                <div class="hub-reply-actions">
+                    <button type="submit" class="clients-btn-primary">${icon("lock")} Save private note</button>
+                    <label class="hub-check"><input type="checkbox" id="notePinned"> Pin to Overview</label>
+                    <span class="clients-msg" hidden></span>
+                </div>
+            </form>
+            <div class="hub-notes-list" id="noteList">
+                ${notes.length ? notes.map(privateNoteHtml).join("") : `<p class="clients-card-note">No private notes yet.</p>`}
+            </div>`}
+        </div>
+
+        <div class="clients-card hub-shared">
+            <div class="hub-about-head">
+                <h2>${icon("send")} Updates to ${esc(first)}</h2>
+                <span class="hub-shared-tag">${icon("eye")} ${esc(first)} sees these</span>
+            </div>
+            <p class="clients-card-note">Shows in their app under From Your Coach, and they get an email saying you sent something.</p>
+            ${updates === undefined ? off : `
+            <form class="hub-reply" id="updateForm">
+                <label class="sr-only" for="updateText">New update for ${esc(first)}</label>
+                <textarea id="updateText" rows="3" maxlength="2000" placeholder="Great week, ${esc(first)}! Next week we..."></textarea>
+                <div class="hub-reply-actions">
+                    <button type="submit" class="clients-btn-primary">${icon("send")} Send to ${esc(first)}</button>
+                    <span class="clients-msg" hidden></span>
+                </div>
+            </form>
+            <div class="hub-notes-list" id="updateList">
+                ${updates.length ? updates.map(updateHtml).join("") : `<p class="clients-card-note">No updates sent yet.</p>`}
+            </div>`}
+        </div>`;
+
+    wireNotes();
+}
+
+function showMsg(form, text, error = true) {
+    const msg = form.querySelector(".clients-msg");
+    msg.textContent = text;
+    msg.className = `clients-msg${error ? " clients-msg-error" : ""}`;
+    msg.hidden = false;
+}
+
+function afterNotesChange(focusId) {
+    summarize();
+    renderAll();
+    selectTab("notes");
+    if (focusId) $(focusId)?.focus();
+}
+
+function wireNotes() {
+    const noteForm = $("noteForm");
+    noteForm?.addEventListener("submit", async event => {
+        event.preventDefault();
+        const text = $("noteText").value.trim();
+        if (!text) { showMsg(noteForm, "Write the note first."); return; }
+        const btn = noteForm.querySelector("button");
+        btn.disabled = true;
+        try {
+            const note = await addPrivateNote(clientUid, text, $("notePinned").checked);
+            record.privateNotes = [note, ...record.privateNotes];
+            sortNotes();
+            afterNotesChange();
+        } catch (error) {
+            console.error(error);
+            showMsg(noteForm, "Couldn't save that -- try again.");
+            btn.disabled = false;
+        }
+    });
+
+    const updateForm = $("updateForm");
+    updateForm?.addEventListener("submit", async event => {
+        event.preventDefault();
+        const text = $("updateText").value.trim();
+        if (!text) { showMsg(updateForm, "Write the update first."); return; }
+        const btn = updateForm.querySelector("button");
+        btn.disabled = true;
+        try {
+            const update = await sendClientUpdate(clientUid, text, {
+                clientName: displayName(),
+                clientEmail: record.profile?.email || record.link?.clientEmail
+            });
+            record.updates = [update, ...record.updates];
+            afterNotesChange();
+        } catch (error) {
+            console.error(error);
+            showMsg(updateForm, "Couldn't send that -- try again.");
+            btn.disabled = false;
+        }
+    });
+
+    $("noteList")?.addEventListener("click", async event => {
+        const btn = event.target.closest("[data-note-action]");
+        if (!btn) return;
+        const row = btn.closest("[data-note]");
+        const note = record.privateNotes.find(n => n.id === row.dataset.note);
+        if (!note) return;
+        const action = btn.dataset.noteAction;
+        try {
+            if (action === "delete") {
+                if (!confirm("Delete this private note?")) return;
+                await deletePrivateNote(note.id);
+                record.privateNotes = record.privateNotes.filter(n => n !== note);
+                afterNotesChange();
+            } else if (action === "pin") {
+                await updatePrivateNote(note.id, { text: note.text, pinned: !note.pinned });
+                note.pinned = !note.pinned;
+                note.updatedAt = Date.now();
+                sortNotes();
+                afterNotesChange();
+            } else if (action === "edit") {
+                editNote(row, note);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Couldn't change that note -- try again.");
+        }
+    });
+
+    $("updateList")?.addEventListener("click", async event => {
+        const btn = event.target.closest("[data-update-action]");
+        if (!btn) return;
+        const update = record.updates.find(u => u.id === btn.closest("[data-update]").dataset.update);
+        if (!update) return;
+        const question = update.readAt
+            ? "Delete this update? It disappears from their app too."
+            : "Unsend this update? It disappears from their app. (The email saying you sent something has already gone.)";
+        if (!confirm(question)) return;
+        try {
+            await deleteClientUpdate(update.id);
+            record.updates = record.updates.filter(u => u !== update);
+            afterNotesChange();
+        } catch (error) {
+            console.error(error);
+            alert("Couldn't delete that update -- try again.");
+        }
+    });
+}
+
+function editNote(row, note) {
+    row.querySelector(".hub-note-text").outerHTML = `
+        <form class="hub-reply hub-note-edit">
+            <textarea rows="3" maxlength="4000" aria-label="Edit note">${esc(note.text)}</textarea>
+            <div class="hub-reply-actions">
+                <button type="submit" class="clients-btn-primary">Save</button>
+                <button type="button" class="clients-btn-secondary" data-cancel>Cancel</button>
+                <span class="clients-msg" hidden></span>
+            </div>
+        </form>`;
+    row.querySelector(".hub-note-actions").hidden = true;
+    const form = row.querySelector("form");
+    const area = form.querySelector("textarea");
+    area.focus();
+    form.querySelector("[data-cancel]").addEventListener("click", () => renderNotes());
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const text = area.value.trim();
+        if (!text) { showMsg(form, "A note can't be empty -- delete it instead."); return; }
+        form.querySelector("button").disabled = true;
+        try {
+            await updatePrivateNote(note.id, { text, pinned: note.pinned });
+            note.text = text;
+            note.updatedAt = Date.now();
+            afterNotesChange();
+        } catch (error) {
+            console.error(error);
+            showMsg(form, "Couldn't save that -- try again.");
+            form.querySelector("button").disabled = false;
+        }
+    });
+}
+
+function sortNotes() {
+    record.privateNotes.sort((a, b) => (b.pinned === true) - (a.pinned === true) || toMillis(b.createdAt) - toMillis(a.createdAt));
+}
+
 function summarize() {
     const today = isoDate(new Date());
     const plans = summarizePlans(record.shared, today);
@@ -403,6 +666,7 @@ function renderAll() {
     renderHeader();
     renderGlance();
     renderAttention();
+    renderPinned();
     renderAbout();
     renderNext();
     renderTimeline();
@@ -410,6 +674,7 @@ function renderAll() {
     renderActions();
     renderCheckins();
     renderSessions();
+    renderNotes();
     import("./icons.js").then(m => m.hydrate());
 }
 

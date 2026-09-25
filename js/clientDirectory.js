@@ -19,6 +19,13 @@ import { getProfile } from "./userProfile.js";
 import { listCheckinsForMyClients } from "./checkins.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { getClientRecord } from "./clientRecords.js";
+import { listPrivateNotes, listUpdatesForClient } from "./clientNotes.js";
+
+// undefined = couldn't read (rules not published yet, offline...).
+const orUndefined = promise => promise.catch(error => {
+    console.warn("Southbound: client notes unavailable.", error);
+    return undefined;
+});
 
 // null = no profile yet; undefined = couldn't read it.
 const readRecord = uid => getClientRecord(uid).catch(error => {
@@ -72,18 +79,22 @@ export async function loadClientRecord(clientUid) {
     const links = await listMyClients();
     const link = links.find(l => l.clientUid === clientUid);
     if (!link) return null;
-    const [profile, shared, checkins, requests, record] = await Promise.all([
+    const [profile, shared, checkins, requests, record, privateNotes, updates] = await Promise.all([
         quiet(getProfile(clientUid)),
         quiet(readSharedPlanDoc(clientUid)),
         quiet(listCheckinsForMyClients()),
         quiet(listRequestsForMyClients()),
-        readRecord(clientUid)
+        readRecord(clientUid),
+        orUndefined(listPrivateNotes(clientUid)),
+        orUndefined(listUpdatesForClient(clientUid))
     ]);
     return {
         link,
         profile,
         shared,
         record,
+        privateNotes,
+        updates,
         checkins: (checkins || []).filter(c => c.clientUid === clientUid),
         requests: (requests || []).filter(r => r.clientUid === clientUid)
     };

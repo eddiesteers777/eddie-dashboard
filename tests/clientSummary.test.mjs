@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
     planPosition, summarizePlans, summarizeSessions, summarizeCheckins,
-    needsAttention, buildTimeline, summarizeClient, weekKey
+    needsAttention, buildTimeline, summarizeClient, weekKey, buildCoachFeed
 } from "../js/clientSummary.js";
 
 // A 3-week plan starting Mon 2026-09-14 (weeks: 14-20, 21-27, 28-Oct 4).
@@ -163,4 +163,36 @@ test("profile: names, search and timeline", () => {
     const t = buildTimeline({ profile: {}, link: {}, checkins: [], requests: [],
         record: { intakeCompletedAt: Date.parse("2026-09-24T12:00:00Z") } });
     assert.deepEqual(t.map(e => e.kind), ["intake"]);
+});
+
+test("timeline: updates sent and read", () => {
+    const t = buildTimeline({ profile: {}, link: {}, checkins: [], requests: [],
+        updates: [{ createdAt: Date.parse("2026-09-24T12:00:00Z"), readAt: Date.parse("2026-09-25T08:00:00Z") }, { createdAt: Date.parse("2026-09-25T12:00:00Z"), readAt: null }] });
+    assert.deepEqual(t.map(e => e.kind), ["update", "update-read", "update"]);
+});
+
+test("coach feed: updates, check-in replies and past session notes, newest first", () => {
+    const at = iso => ({ toMillis: () => new Date(`${iso}T12:00:00`).getTime() });
+    const feed = buildCoachFeed({
+        today: "2026-09-25",
+        updates: [
+            { id: "u1", text: "Great week!", coachName: "Eddie", createdAt: at("2026-09-24"), readAt: null },
+            { id: "u2", text: "Older", createdAt: at("2026-09-10"), readAt: at("2026-09-11") }
+        ],
+        checkins: [
+            { status: "reviewed", coachFeedback: "Nice work", weekOf: "2026-09-15", reviewedAt: at("2026-09-20") },
+            { status: "submitted", notes: "tired", weekOf: "2026-09-22", submittedAt: at("2026-09-23") }
+        ],
+        requests: [
+            { status: "approved", coachNote: "Work on first touch", dates: ["2026-09-18", "2026-10-02"], respondedAt: at("2026-09-18") },
+            { status: "approved", coachNote: "Before it happens", dates: ["2026-10-01"], respondedAt: at("2026-09-22") },
+            { status: "denied", coachNote: "nope", dates: ["2026-09-01"], respondedAt: at("2026-09-01") }
+        ]
+    });
+    assert.deepEqual(feed.map(f => f.kind), ["update", "feedback", "session", "update"]);
+    assert.equal(feed[0].title, "Update from Eddie");
+    assert.equal(feed[0].unread, true);
+    assert.equal(feed[3].unread, false);
+    assert.equal(feed[3].title, "Update from your coach");
+    assert.equal(feed[2].text, "Work on first touch");
 });

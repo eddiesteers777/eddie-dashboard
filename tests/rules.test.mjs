@@ -353,3 +353,57 @@ test("client profiles: only known fields, sane values, honest who/when", async (
     await assertFails(setDoc(mine, { intakeCompletedAt: Timestamp.fromMillis(0), clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "client" }, { merge: true }));
     await assertSucceeds(setDoc(mine, { phone: "555-0199", clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "client" }, { merge: true }));
 });
+
+// ---- Private coach notes + client updates ----
+
+const note = (coachUid, clientUid, extra = {}) => ({
+    coachUid, clientUid, text: "Be conservative with mileage; left Achilles.", pinned: false,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
+});
+const update = (coachUid, clientUid, extra = {}) => ({
+    coachUid, coachName: "Eddie", clientUid, text: "Great week. Same structure next week.",
+    createdAt: serverTimestamp(), readAt: null, ...extra
+});
+
+test("private notes: only the coach who wrote them can ever read them -- never the client", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(setDoc(doc(as("coach"), "coachNotes/n1"), note("coach", "client")));
+    await assertSucceeds(getDoc(doc(as("coach"), "coachNotes/n1")));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "coachNotes"), where("coachUid", "==", "coach"), where("clientUid", "==", "client"))));
+    // The client the note is about can't read it, get it or list it.
+    await assertFails(getDoc(doc(as("client"), "coachNotes/n1")));
+    await assertFails(getDocs(query(collection(as("client"), "coachNotes"), where("clientUid", "==", "client"))));
+    await assertFails(getDoc(doc(as("stranger"), "coachNotes/n1")));
+    // The client can't plant, edit or delete one either.
+    await assertFails(setDoc(doc(as("client"), "coachNotes/n2"), note("client", "client")));
+    await assertFails(updateDoc(doc(as("client"), "coachNotes/n1"), { text: "hi", pinned: false, updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("client"), "coachNotes/n1")));
+});
+
+test("private notes: a coach can only write about linked clients, and can't re-point a note", async () => {
+    await seedLinkAndBooking();
+    await assertFails(setDoc(doc(as("coach"), "coachNotes/n3"), note("coach", "stranger")));
+    await assertFails(setDoc(doc(as("coach"), "coachNotes/n4"), note("client", "client"))); // can't write as someone else
+    await assertFails(setDoc(doc(as("coach"), "coachNotes/n5"), note("coach", "client", { text: "" })));
+    await assertFails(setDoc(doc(as("coach"), "coachNotes/n6"), note("coach", "client", { shareWithClient: true })));
+    await assertSucceeds(setDoc(doc(as("coach"), "coachNotes/n1"), note("coach", "client")));
+    await assertSucceeds(updateDoc(doc(as("coach"), "coachNotes/n1"), { text: "Updated", pinned: true, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), "coachNotes/n1"), { clientUid: "stranger", updatedAt: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(doc(as("coach"), "coachNotes/n1")));
+});
+
+test("client updates: the linked coach sends, the client reads and can only mark read", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(setDoc(doc(as("coach"), "clientUpdates/u1"), update("coach", "client")));
+    await assertSucceeds(getDocs(query(collection(as("client"), "clientUpdates"), where("clientUid", "==", "client"))));
+    await assertSucceeds(updateDoc(doc(as("client"), "clientUpdates/u1"), { readAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "clientUpdates/u1"), { text: "I rewrote this" }));
+    await assertFails(deleteDoc(doc(as("client"), "clientUpdates/u1")));
+    await assertFails(getDoc(doc(as("stranger"), "clientUpdates/u1")));
+    // Only a linked coach can send, as themselves, a well-formed update.
+    await assertFails(setDoc(doc(as("client"), "clientUpdates/u2"), update("client", "client")));
+    await assertFails(setDoc(doc(as("coach"), "clientUpdates/u3"), update("coach", "stranger")));
+    await assertFails(setDoc(doc(as("coach"), "clientUpdates/u4"), update("coach", "client", { readAt: serverTimestamp() })));
+    await assertFails(setDoc(doc(as("coach"), "clientUpdates/u5"), update("coach", "client", { text: "x".repeat(2001) })));
+    await assertSucceeds(deleteDoc(doc(as("coach"), "clientUpdates/u1")));
+});

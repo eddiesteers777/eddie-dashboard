@@ -32,6 +32,7 @@
     "site-check.html",
     "soccer.html",
     "strength.html",
+    "updates.html",
     "weekly-review.html"
   ],
   "partials": [
@@ -49,6 +50,7 @@
     "js/checkins.js",
     "js/clientDirectory.js",
     "js/clientHub.js",
+    "js/clientNotes.js",
     "js/clientProfileForm.js",
     "js/clientRecordSchema.js",
     "js/clientRecords.js",
@@ -117,6 +119,7 @@
     "js/trainingPlanGenerator.js",
     "js/trainingPlanStrengthIntegration.js",
     "js/trainingPrograms.js",
+    "js/updates.js",
     "js/userProfile.js",
     "js/userSettings.js",
     "js/weekly-review.js"
@@ -151,6 +154,7 @@
     "css/strength.css",
     "css/strengthLibrary.css",
     "css/style.css",
+    "css/updates.css",
     "css/weekly-review.css"
   ]
 }
