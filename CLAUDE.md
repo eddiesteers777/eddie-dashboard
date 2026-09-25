@@ -202,6 +202,11 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 **Active track: Client management** (`docs/CLIENT_MANAGEMENT_PLAN.md`) -- Phases 1-3 done; Phase 4 (stored timeline) next.
 
+**Queued plans from Eddie (2026-09-25), not started:**
+- `docs/COACHING_PLATFORM_PLAN.md`: the coach-delivery platform. The coach owns a published plan in Firestore (draft/publish, versions, acknowledgement); the client gets a unified Today / My Week / workout detail; structured run and strength workouts with planned-vs-actual results. Its phases A-I absorb Client Management phases 4-9.
+- `docs/APP_POLISH_PLAN.md`: official-app polish (one design system, native controls, states, toasts, copy) plus a custom Southbound reaction-emoji set.
+- `docs/EMAIL_NOTIFICATIONS_PLAN.md`: replace EmailJS with Firebase Cloud Functions + Resend, driven by Firestore notification events. Needs the Firebase Blaze plan, a Resend account and DNS records for the domain, all set up by Eddie.
+
 8. **Training ↔ fueling connection.** (The race-day schedule — gels by mile, bottles by mile range — is done; what's left is auto-building a plan for each training day.) Read `js/fueling.js` and `js/nutrition.js` data shapes first, then design per-day fueling targets (pre/during/post) from each training day's type and duration.
 9. **Booking refinements:** location, session length. (Done: the public question path `contact.html`, session notes, group capacity checks.)
 10. **Business tools:** payments, packages checkout.
