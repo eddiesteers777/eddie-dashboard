@@ -1970,6 +1970,10 @@ section{
 
 }
 
+/* Cards gated by data-requires (js/navAccess.js) -- .card's
+   display:flex would otherwise beat the native [hidden]. */
+.card[hidden]{ display:none !important; }
+
 .card{
 
     position:relative;
@@ -2651,4 +2655,34 @@ section{
     display:block;
     width:100%;
     height:100%;
+}
+
+/* ==========================================
+   Phone polish
+   - iOS Safari zooms the whole page when a
+     focused field's text is under 16px, so every
+     form field is at least 16px on phones (the
+     big fueling-target and record inputs are
+     already larger and keep their own size).
+   - Small buttons get a ~40px touch target.
+========================================== */
+
+@media (max-width:900px){
+
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.record-input):not(.fuel-target-value input),
+    select,
+    textarea{
+        font-size:16px !important;
+    }
+
+    .running-nav-btn{ width:40px; height:40px; }
+    .running-view-btn,
+    .habits-view-btn,
+    .clients-tab,
+    .eos-today-complete-btn{ min-height:40px; }
+
+    .controls{ grid-template-columns:36px minmax(0,1fr) 36px !important; }
+    .adjust-btn{ width:36px !important; height:36px !important; }
+    .goal-btn{ min-height:36px; padding:9px 14px !important; font-size:12px !important; }
+    .day-btn{ width:42px; height:42px; }
 }

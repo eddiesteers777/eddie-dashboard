@@ -9,6 +9,7 @@ import {
 } from "./marathonData.js";
 
 import { searchExercises } from "./exerciseSearch.js";
+import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
 
 const STORAGE_KEY = "strength-plan";
@@ -370,6 +371,13 @@ function savePlan() {
 function renderWeekContext() {
     const el = $("strengthWeekContext");
     if (!el) return;
+
+    // The marathon block's weekly strength focus is the coach's own
+    // plan (js/role.js).
+    if (!showsPersonalPlan()) {
+        el.textContent = "Build a lifting day below, whenever you're ready for it.";
+        return;
+    }
 
     try {
         const weekNumber = getCurrentWeek();

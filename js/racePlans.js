@@ -26,6 +26,7 @@ import { loadRunningPrograms, saveRunningPrograms } from "./runningPrograms.js";
 import { loadTrainingPrograms } from "./trainingPrograms.js";
 import { compareGeneratedPlans, preserveRegeneratedRuntimeState } from "./racePlanEditor.js";
 import { START_DATE as MARATHON_START_DATE, RACE_DATE as MARATHON_RACE_DATE } from "./marathonData.js";
+import { showsPersonalPlan } from "./role.js";
 import {
     syncRacePlanStrengthSchedule,
     deactivateRacePlanStrengthSchedule,
@@ -695,7 +696,9 @@ function getPlanConflicts(plans, candidatePlan, excludePlanId = null) {
         }
     }
 
-    const marathon = getBuiltInMarathonConflict();
+    // Only the coach's own race block can clash -- a client's plans never
+    // overlap it (js/role.js).
+    const marathon = showsPersonalPlan() ? getBuiltInMarathonConflict() : {};
     if (marathon.start && marathon.end && datesOverlap(candidateStart, candidateEnd, marathon.start, marathon.end)) {
         conflicts.push({
             name: "Existing Indianapolis Marathon plan",

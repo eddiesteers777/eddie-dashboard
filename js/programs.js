@@ -5,6 +5,7 @@ import { generateTrainingPlan } from './trainingPlanGenerator.js';
 import { syncTrainingPlanStrengthSchedule, deactivateTrainingPlanStrengthSchedule } from './trainingPlanStrengthIntegration.js';
 import { getRacePlanStrengthAvailability } from './racePlanStrengthIntegration.js';
 import { START_DATE as MARATHON_START_DATE, RACE_DATE as MARATHON_RACE_DATE } from './marathonData.js';
+import { showsPersonalPlan } from './role.js';
 
 const TAB_KEY = 'programs-tab';
 const TAB_NAMES = { race: 'Race Plans', training: 'Training Plans' };
@@ -182,7 +183,8 @@ function getTrainingPlanConflicts(candidateStart, candidateEnd, excludeId) {
 
     const marathonStart = toIsoDate(MARATHON_START_DATE);
     const marathonEnd = toIsoDate(MARATHON_RACE_DATE);
-    if (marathonStart && marathonEnd && datesOverlap(candidateStart, candidateEnd, marathonStart, marathonEnd)) {
+    // Only the coach's own race block can clash (js/role.js).
+    if (showsPersonalPlan() && marathonStart && marathonEnd && datesOverlap(candidateStart, candidateEnd, marathonStart, marathonEnd)) {
         conflicts.push({ name: 'Existing Indianapolis Marathon plan', start: marathonStart, end: marathonEnd });
     }
 

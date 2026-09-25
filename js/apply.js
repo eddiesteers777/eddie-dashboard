@@ -14,6 +14,14 @@ import { listenForAuth, login, getCurrentUser } from "./auth.js";
 import { SERVICES, ensureProfile, getMyProfile, submitApplication } from "./userProfile.js";
 import { sendApplicationEmail } from "./emailNotify.js";
 
+// Leaves the standing invite that lets the coach's "Approve" link this
+// account in one step (js/coachAccess.js). Never blocks applying.
+function leaveApplyCode() {
+    import("./coachAccess.js")
+        .then(({ ensureApplyCode }) => ensureApplyCode())
+        .catch(error => console.warn("Southbound: couldn't leave the apply code.", error));
+}
+
 const signedOutEl = document.getElementById("applySignedOut");
 const formWrapEl = document.getElementById("applyForm");
 const successEl = document.getElementById("applySuccess");
@@ -63,6 +71,7 @@ applicationForm.addEventListener("submit", async event => {
     try {
         const user = getCurrentUser();
         await submitApplication(requestedServices, message);
+        leaveApplyCode();
         sendApplicationEmail({
             applicantName: user?.displayName || "",
             applicantEmail: user?.email || "",
@@ -100,6 +109,7 @@ listenForAuth(async user => {
     if (current?.applicationSubmittedAt) {
         formWrapEl.hidden = true;
         successEl.hidden = false;
+        if (current.status === "pending") leaveApplyCode();
     } else {
         formWrapEl.hidden = false;
         successEl.hidden = true;

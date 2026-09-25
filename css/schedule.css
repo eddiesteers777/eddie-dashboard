@@ -270,3 +270,15 @@
     padding:10px 12px;
     font:13.5px/1.4 var(--font-body);
 }
+
+/* Session notes (coach writes after a session; client sees them) and
+   the "slot is full" warning on a request. */
+.sched-request-note.sched-coach-note{
+    color:var(--text);
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+}
+.sched-request-note.is-full{
+    color:var(--amber);
+    font-weight:700;
+}

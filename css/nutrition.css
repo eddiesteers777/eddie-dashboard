@@ -695,3 +695,151 @@
         min-width:0;
     }
 }
+
+/* ------------------------------------------
+   Food search results, confirm card, food log
+   and the barcode scanner modal. These rules
+   were lost when this file was replaced on
+   2026-09-17 (the scanner showed as loose text
+   at the bottom of the page); restored here in
+   the Southbound palette.
+------------------------------------------ */
+.nutrition-page [hidden]{ display:none !important; }
+
+.food-search-loading,
+.food-search-empty{
+    padding:12px 16px;
+    color:var(--text-secondary);
+    font-size:13px;
+}
+
+.food-confirm{
+    border:1px solid var(--primary);
+    border-radius:14px;
+    padding:16px;
+    background:rgba(201,173,132,.06);
+}
+.food-confirm-name{ font-weight:600; font-size:14px; margin-bottom:10px; }
+.food-confirm-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.food-confirm-grams{
+    width:80px;
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:14px;
+    font-family:inherit;
+}
+.food-confirm-serving{ font-size:12px; color:var(--text-secondary); }
+.food-confirm-preview{ font-size:13px; color:var(--text-secondary); margin-bottom:12px; }
+.food-confirm-actions{ display:flex; gap:10px; }
+.food-confirm-add,
+.food-confirm-cancel{
+    border:none;
+    border-radius:10px;
+    padding:10px 16px;
+    min-height:40px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+}
+.food-confirm-add{ background:var(--primary); color:var(--on-primary); }
+.food-confirm-add:hover{ background:var(--primary-dark); }
+.food-confirm-cancel{ background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+.food-confirm-cancel:hover{ border-color:var(--text-secondary); }
+
+.food-log{ margin-bottom:14px; }
+.food-log:empty{ margin-bottom:0; }
+.food-log-item{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    background:var(--surface-light);
+    border-radius:12px;
+    margin-bottom:6px;
+}
+.food-log-item-main{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.food-log-item-main strong{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.food-log-item-main span{ font-size:11px; color:var(--text-secondary); }
+.food-log-item-macros{ font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+.food-log-remove{
+    background:transparent;
+    border:none;
+    color:var(--text-secondary);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    min-width:36px;
+    min-height:36px;
+    border-radius:8px;
+    transition:.15s;
+}
+.food-log-remove:hover{ color:var(--red); background:rgba(239,68,68,.12); }
+
+.food-scanner-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(5,12,9,.72);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    z-index:5000; /* above the navbar (1000) and search overlay (4500) */
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+.food-scanner-overlay.open{ display:flex; }
+.food-scanner-modal{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:24px;
+    max-width:480px;
+    width:100%;
+    max-height:88vh;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
+    animation:foodScannerFadeUp .25s ease;
+}
+.food-scanner-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 20px;
+    border-bottom:1px solid var(--border);
+}
+.food-scanner-title{ font-size:1.1rem; font-weight:800; }
+.food-scanner-close{
+    appearance:none;
+    border:none;
+    background:rgba(255,255,255,.06);
+    color:var(--text-secondary);
+    width:40px;
+    height:40px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:1.1rem;
+    transition:.2s;
+}
+.food-scanner-close:hover{ background:rgba(239,68,68,.2); color:#fca5a5; }
+.food-scanner-body{ padding:18px 20px 22px; overflow:auto; }
+#foodScannerReader{
+    width:100%;
+    border-radius:16px;
+    overflow:hidden;
+    background:#000;
+    min-height:200px;
+}
+.food-scanner-status{ margin-top:14px; text-align:center; font-size:13px; color:var(--text-secondary); }
+.food-scanner-status[data-status="error"]{ color:var(--red); }
+.food-scanner-status[data-status="ready"]{ color:var(--green); }
+@keyframes foodScannerFadeUp{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+}
+
+/* The macro +/- row: [ - ] value [ + ] side by side (its
+   display:grid was lost in the same replacement). */
+.controls{ display:grid; }

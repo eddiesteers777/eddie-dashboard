@@ -25,6 +25,8 @@ import {
 } from "./marathonData.js";
 
 import { getEntriesForDate, getRecentEntries } from "./runningLog.js";
+import { getActiveProgramEntriesForDate } from "./activeProgramSources.js";
+import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
 
 let currentView = "week";
@@ -97,6 +99,11 @@ function resolvePaceRange(paceCode) {
 ========================================== */
 
 function marathonDayForDate(dateStr) {
+    // The built-in marathon block is the coach's own race (js/role.js).
+    if (!showsPersonalPlan()) {
+        return null;
+    }
+
     const date = new Date(dateStr + "T00:00:00");
 
     if (date < START_DATE || date > RACE_DATE) {
@@ -212,10 +219,35 @@ function cellGlyph(dateStr, day) {
    Active plan context (header line)
 ========================================== */
 
+// A client's own plans (Race / Training Plans from Programs, or one their
+// coach set up) -- what the summary shows when the coach's personal
+// marathon block doesn't apply.
+function ownPlanEntries(fromDate, days) {
+    const out = [];
+    for (let i = 0; i < days; i++) {
+        const date = new Date(fromDate.getTime() + i * DAY_MS);
+        const dateStr = isoDate(date);
+        for (const item of getActiveProgramEntriesForDate(dateStr)) {
+            out.push({ date: dateStr, programName: item.programName, entry: item.entry || {} });
+        }
+    }
+    return out;
+}
+
 function renderPlanContext() {
     const el = document.getElementById("runningPlanContext");
 
     if (!el) {
+        return;
+    }
+
+    if (!showsPersonalPlan()) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const names = [...new Set(ownPlanEntries(today, 28).map(e => e.programName).filter(Boolean))];
+        el.textContent = names.length
+            ? `Current plan: ${names.join(" + ")}`
+            : "Log your runs here. Your plan shows up once your coach adds one, or build your own in Programs.";
         return;
     }
 
@@ -472,7 +504,7 @@ function renderDayDetail(dateStr) {
         </div>
     ` : `
         <div class="running-detail-plan running-detail-rest">
-            No marathon workout scheduled — rest day, or outside the training block.
+            ${showsPersonalPlan() ? "No marathon workout scheduled — rest day, or outside the training block." : "Nothing planned from the marathon block for this day."}
         </div>
     `;
 
@@ -532,6 +564,26 @@ function renderThisWeek() {
         return;
     }
 
+    if (!showsPersonalPlan()) {
+        // Miles actually logged Monday-Sunday this week.
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const monday = new Date(today.getTime() - ((today.getDay() + 6) % 7) * DAY_MS);
+        let logged = 0;
+        let runs = 0;
+        for (let i = 0; i < 7; i++) {
+            const entries = getEntriesForDate(isoDate(new Date(monday.getTime() + i * DAY_MS)));
+            entries.forEach(entry => { logged += Number(entry.miles) || 0; runs += 1; });
+        }
+        el.innerHTML = `
+            <div class="running-summary-stat">
+                <span class="running-summary-value">${logged.toFixed(1)} mi</span>
+                <span class="running-summary-meta">${runs} run${runs === 1 ? "" : "s"} logged this week</span>
+            </div>
+        `;
+        return;
+    }
+
     try {
         const week = getCurrentWeek();
         const days = getAdjustedWeekDays(week);
@@ -571,7 +623,18 @@ function renderUpcoming() {
     let upcoming = [];
 
     try {
-        upcoming = getUpcomingWorkouts().slice(0, 4);
+        if (showsPersonalPlan()) {
+            upcoming = getUpcomingWorkouts().slice(0, 4);
+        } else {
+            const tomorrow = new Date();
+            tomorrow.setHours(0, 0, 0, 0);
+            tomorrow.setTime(tomorrow.getTime() + DAY_MS);
+            upcoming = ownPlanEntries(tomorrow, 21).slice(0, 4).map(e => ({
+                date: `${e.date}T00:00:00`,
+                miles: Number(e.entry.miles || e.entry.distance) || 0,
+                session: e.entry.session || (e.entry.type === "strength" ? "Strength" : e.programName)
+            }));
+        }
     } catch {
         upcoming = [];
     }

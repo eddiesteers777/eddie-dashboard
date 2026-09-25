@@ -89,16 +89,18 @@ const SEARCH_DESTINATIONS = [
     { label: "Habits", href: "habits.html", icon: "checkCircle", color: "var(--purple)" },
     { label: "Nutrition", href: "nutrition.html", icon: "apple", color: "var(--green)" },
     { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--red)" },
-    { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)" },
-    { label: "75-Day Challenge", href: "75day.html", icon: "flame", color: "var(--green)" },
-    { label: "Analytics", href: "analytics.html", icon: "trendingUp", color: "var(--amber)" },
-    { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)" },
-    { label: "Gear", href: "gear.html", icon: "footprint", color: "var(--pink)" },
-    { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)" },
+    // The coach's personal tools (built around his own race block) --
+    // hidden from clients, like their More rows and menu links.
+    { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)", requires: "coach" },
+    { label: "75-Day Challenge", href: "75day.html", icon: "flame", color: "var(--green)", requires: "coach" },
+    { label: "Analytics", href: "analytics.html", icon: "trendingUp", color: "var(--amber)", requires: "coach" },
+    { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)", requires: "coach" },
+    { label: "Gear", href: "gear.html", icon: "footprint", color: "var(--pink)", requires: "coach" },
+    { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)", requires: "coach" },
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)" },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)" },
-    { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)" },
-    { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, #0EA5E9)" },
+    { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
+    { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, #0EA5E9)", requires: "coach" },
     { label: "Schedule", href: "schedule.html", icon: "calendar", color: "var(--purple)" },
     { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },
@@ -170,9 +172,29 @@ fetch("components/header.html")
             try {
                 const { ensureProfile } = await import("./userProfile.js");
                 await ensureProfile();
+                const { showsPersonalPlan } = await import("./role.js");
+                const showedPersonalPlan = showsPersonalPlan();
                 const { getNavAccess, applyNavAccess } = await import("./navAccess.js");
                 const access = await getNavAccess();
                 applyNavAccess(document, access);
+                // Keep a pending applicant's standing invite fresh so the
+                // coach's "Approve" can link them (js/coachAccess.js).
+                if (access.status === "pending") {
+                    Promise.all([import("./userProfile.js"), import("./coachAccess.js")])
+                        .then(async ([{ getMyProfile }, { ensureApplyCode }]) => {
+                            const profile = await getMyProfile();
+                            if (profile?.applicationSubmittedAt) await ensureApplyCode();
+                        })
+                        .catch(() => {});
+                }
+                // This page rendered before the account's role was known on
+                // this device (first visit, or the role changed): reload once
+                // so the coach's personal plan shows or hides correctly
+                // (js/role.js). Guarded so it can never loop.
+                if (showsPersonalPlan() !== showedPersonalPlan && !sessionStorage.getItem("sb-role-reloaded")) {
+                    sessionStorage.setItem("sb-role-reloaded", "1");
+                    window.location.reload();
+                }
                 return access;
             } catch (error) {
                 console.warn("Southbound: account profile / nav access bootstrap failed this session.", error);
@@ -301,9 +323,10 @@ fetch("components/header.html")
             if (!searchResults) return;
 
             const q = query.trim().toLowerCase();
+            const allowed = SEARCH_DESTINATIONS.filter(d => d.requires !== "coach" || navAccess.isCoach);
             const matches = q
-                ? SEARCH_DESTINATIONS.filter(d => d.label.toLowerCase().includes(q))
-                : SEARCH_DESTINATIONS;
+                ? allowed.filter(d => d.label.toLowerCase().includes(q))
+                : allowed;
 
             searchResults.innerHTML = matches.length
                 ? matches.map(d => `

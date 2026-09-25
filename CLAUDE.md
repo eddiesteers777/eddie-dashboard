@@ -47,6 +47,7 @@ A new sign-in starts as a **pending client** with no services, so it sees almost
 | `apply.html` | Intake form (requires Google sign-in). Writes the request onto the applicant's pending profile. |
 | `contact.html` | "Ask a question" form, **no sign-in**: name, email and/or phone, topic, who's training (+ athlete age), message. Saves to `inquiries` and emails a coach alert. `?about=soccer_group` etc. preselects the topic. Every page's CTA band has an "Ask a Question" button next to Apply. |
 | `install.html` | "Get the App" install instructions (own standalone header) |
+| `privacy.html` | Plain-language privacy page (what's collected, Firebase/EmailJS, who sees it, deletion via Contact). Linked from every public footer, the apply sign-in and the contact form. Keep it true when data handling changes. |
 
 Photos live in `images/`. `images/README.md` lists the exact filenames. A missing photo shows a styled placeholder (the `<img onerror="this.remove()">` + `.pub-photo-fallback` pattern).
 
@@ -58,7 +59,8 @@ Photos live in `images/`. `images/README.md` lists the exact filenames. A missin
 | Train | `running.html`, `strength.html`, `cross-training.html` |
 | Health | `nutrition.html`, `fueling.html` |
 | Habits | `habits.html` |
-| More | `marathon.html`, `75day.html`, `planner.html`, `programs.html`, `analytics.html`, `weekly-review.html`, `gear.html`, `pace-calculator.html`, `settings.html`, `more.html` |
+| More | `programs.html`, `pace-calculator.html`, `settings.html`, `more.html` |
+| Coach-only personal tools | `marathon.html`, `75day.html`, `planner.html`, `analytics.html`, `weekly-review.html`, `gear.html` (Eddie's own; `data-requires="coach"` in nav, More, search and the Today cards. Still reachable by direct URL.) |
 | Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), both reached via Tools / More |
 
 **App: coach pages** (the **Coach** bottom tab on mobile / **Coach** dropdown on desktop)
@@ -103,6 +105,18 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 
 Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `strength`, `soccer_1on1`, `soccer_group`.
 
+### Eddie's personal plan vs. clients
+
+`js/marathonData.js` is Eddie's own race block (Indianapolis, 3:05). It must only show for the coach. `js/role.js` remembers the account's role per device (`sb-account-role` in localStorage, written by `js/navAccess.js`, not cloud-synced). Pages that render before the profile loads call `showsPersonalPlan()`; `js/loadHeader.js` reloads the page once (guarded by sessionStorage `sb-role-reloaded`) when the role it just learned differs from what the page rendered with. Unknown role = client. For clients: Today, Running, Strength, Cross-Training, Fueling and Nutrition use the client's own Programs (`getActiveProgramEntriesForDate`) and logged miles instead of the marathon plan, and the marathon picker/overlap checks are off.
+
+### Client Today + coach link
+
+- **"From your coach" card** (`js/coachCard.js`, `#coachCardSection` in `index.html`, clients only): next approved session, requests waiting, notes from the last session (`coachNote`), weekly check-in due/sent, latest feedback. Reads only data the client can already read.
+- **Auto-link on approval, no rules change:** an applicant's app leaves a standing invite code `APPLY-{uid}` (`ensureApplyCode()` in `js/coachAccess.js`, refreshed by `loadHeader` while pending and by `apply.js` after submitting; recreated when older than 5 days). The coach's Approve (`js/clients.js`) then calls `linkApplicant(uid)`, which redeems it through the normal code path (`linkWithCode`). If it fails, the alert falls back to the old "ask for an invite code" instructions.
+- **Session notes:** the coach can add/edit notes on approved bookings (`setSessionNotes` in `js/scheduling.js`, allowed by the existing rules); the client sees them on Schedule and the Today card.
+- **Group capacity:** the coach's request rows show "x/y already booked -- full", and approving into a full slot asks first. Clients can't see spots left (that would need a rules change).
+- **Schedule for clients** hides the availability tab and opens on "Book a Session".
+
 ### Navigation access
 
 `js/navAccess.js` turns the profile into `{ isCoach, hasTrainingAccess, hasSoccerAccess, status }`. HTML elements carry `data-requires="..."` with any of `training`, `soccer`, `coach`, `client` (meaning a non-coach with training or soccer access). Multiple values are OR'd. Mobile bottom tabs are defined in `BOTTOM_TABS` in `js/loadHeader.js`: Today, Train, Health, Habits, Coach (coach only), More. **Nav access fails open:** if the profile can't load, the full nav shows rather than an empty one.
@@ -120,6 +134,8 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 - **Cards with `overflow:hidden` inside a scrolling flex column shrink to slivers** (their flex min-height becomes 0). Give them `flex-shrink:0` -- this was the live-workout "things overlap" bug.
 - **The domain move changed the origin.** Browser storage (localStorage, the installed app, COROS tokens) is per-origin, so it doesn't carry over from the github.io address; signed-in users get their data back from cloud sync on the new domain. Google sign-in only works on domains listed in Firebase Console → Authentication → Settings → Authorized domains.
 - **Honeypot fields must not look like real fields.** The contact form's hidden spam trap was once labeled "Company"; browser autofill filled it, so real questions were silently dropped while showing "Question sent". Keep it as `sbLeaveEmpty` ("Leave this empty", `autocomplete="off"` + password-manager ignore attributes).
+- **Hand-uploaded files can drop rules.** A 2026-09-17 upload replaced `css/nutrition.css` and silently removed the barcode-scanner modal, food log and confirm styles (restored 2026-09-25). If Eddie uploads a file, diff it against the previous version.
+- **Phone inputs must be 16px+** or iOS zooms on focus. `css/style.css` forces 16px on form fields at <=900px (the big fueling-target and record inputs are excluded); small buttons get ~40px touch targets there too.
 - **Any rules change needs a test.** Add the attack and the legitimate flow to `tests/rules.test.mjs`.
 
 ## Testing
@@ -134,9 +150,16 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 
 ---
 
-## Current status (as of 2026-09-24)
+## Current status (as of 2026-09-25)
 
 Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, coach approval, public site, service-driven nav, coach dashboard, weekly check-ins. After that came the unified Coach nav section and the guest-view redesign (photo-led Home, About, Packages, Get the App in the top nav). Then a security review's fixes (rules + atomic invite-code redemption), the live-workout layout fixes on phones, automated tests + CI, and launch polish (meta descriptions, interim bio/pricing copy, setup checklist on the Coach Dashboard). Then the Southbound Coaching rebrand (SB mark traced from Eddie's logo, forest/tan palette, new app icons) and the two-template EmailJS setup.
+
+**2026-09-25 batch (no rules change):** personal plan hidden from clients, client Today "From your coach" card, auto-link on approval, session notes, group capacity checks, client Schedule view, phone polish (no input zoom, bigger tap targets, nutrition +/- row), restored nutrition scanner/food-log CSS, privacy page. Regression harness: an emulator-backed Playwright run (real modules + rules) covering pending → approve → linked → client Today/Running/Fueling/More/Nutrition/Schedule, coach Today/Schedule, guest privacy + redirect.
+
+**Known gaps (not fixed yet):**
+- Nutrition goals default to Eddie's numbers (3200 kcal, 180 g protein...) in `js/nutrition.js`; clients can edit them, but a coach-set or sensible default would be better.
+- `planner.html` contains Eddie's school calendar in the public repo (now coach-only in nav, but the data is still in the code).
+- Personal pages are hidden from nav, not blocked; a client could still open them by URL.
 
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
@@ -149,7 +172,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 ## What's next (roadmap)
 
 8. **Training ↔ fueling connection.** (The race-day schedule — gels by mile, bottles by mile range — is done; what's left is auto-building a plan for each training day.) Read `js/fueling.js` and `js/nutrition.js` data shapes first, then design per-day fueling targets (pre/during/post) from each training day's type and duration.
-9. **Booking refinements:** location, session length. (The public question path is done: `contact.html`.)
+9. **Booking refinements:** location, session length. (Done: the public question path `contact.html`, session notes, group capacity checks.)
 10. **Business tools:** payments, packages checkout.
 
 The brand is Southbound Coaching (decided 2026-09-24 from Eddie's brand board: SB speed monogram, forest green / sage / tan / stone / cream).

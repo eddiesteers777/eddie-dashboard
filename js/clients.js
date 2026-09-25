@@ -11,7 +11,7 @@
 
 import { listenForAuth } from "./auth.js";
 import {
-    createInviteCode, redeemInviteCode,
+    createInviteCode, redeemInviteCode, linkApplicant,
     listMyClients, listMyCoaches, removeLink,
     readSharedPlanDoc, saveClientPlanList, addPlanNote
 } from "./coachAccess.js";
@@ -448,8 +448,24 @@ async function refreshPending() {
 
         row.querySelector('[data-action="approve"]').addEventListener("click", async () => {
             const services = [...row.querySelectorAll(".clients-service-check input:checked")].map(el => el.value);
+            const approveBtn = row.querySelector('[data-action="approve"]');
+            approveBtn.disabled = true;
             await approveClient(profile.uid, services);
+            // Link them in the same step using the code their application
+            // left (js/coachAccess.js). Older applications won't have one;
+            // those still link the usual way, with an invite code.
+            let linked = false;
+            try {
+                await linkApplicant(profile.uid);
+                linked = true;
+            } catch (error) {
+                console.info("Approved without auto-link:", error.message);
+            }
+            window.alert(linked
+                ? `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and linked -- they're in My Clients now.`
+                : `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved. To see their plans and check-ins, ask them for an invite code (Share My Plans tab) and add it under Coach a Client.`);
             refreshPending();
+            refreshClients();
         });
         row.querySelector('[data-action="deny"]').addEventListener("click", async () => {
             if (!window.confirm(`Deny ${profile.displayName || "this account"}'s request?`)) return;

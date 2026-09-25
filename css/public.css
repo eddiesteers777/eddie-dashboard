@@ -730,3 +730,24 @@ select.pub-input{appearance:auto;}
     font-weight:700;
     line-height:1.2;
 }
+
+/* ---- Privacy / legal text ---- */
+
+.pub-legal{
+    max-width:720px;
+    color:var(--text-secondary);
+    font-size:15px;
+    line-height:1.7;
+}
+.pub-legal h2{
+    color:var(--text);
+    font-size:20px;
+    margin:28px 0 8px;
+}
+.pub-legal h2:first-child{margin-top:0;}
+.pub-legal p{margin:0 0 12px;}
+.pub-legal ul{margin:0 0 12px;padding-left:20px;}
+.pub-legal li{margin-bottom:8px;}
+.pub-legal strong{color:var(--text);}
+.pub-legal a{color:var(--primary);}
+.pub-legal-date{color:var(--muted);font-size:13px;}

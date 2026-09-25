@@ -8,6 +8,7 @@ import {
     DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN
 } from "./fuelSchedule.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
+import { showsPersonalPlan } from "./role.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -2050,7 +2051,15 @@ function renderFuelingPage() {
     renderPlanSummary();
     renderPreWorkoutGroups();
     updatePlanWorkoutLabel();
-    initWeekSelector();
+
+    // Picking a workout from the marathon block only makes sense for the
+    // coach's own plan; everyone else enters their session directly.
+    if (showsPersonalPlan()) {
+        initWeekSelector();
+    } else {
+        $("marathonPickerPanel").style.display = "none";
+        $("marathonIntegration").style.display = "none";
+    }
 
 }
 

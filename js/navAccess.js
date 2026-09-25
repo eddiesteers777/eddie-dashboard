@@ -31,13 +31,17 @@ export async function getNavAccess() {
         const { getMyProfile } = await import("./userProfile.js");
         const profile = await getMyProfile();
 
+        const { setCachedRole } = await import("./role.js");
+
         if (!profile) {
             // Not signed in, or no profile yet -- narrowest view.
+            setCachedRole(null);
             return { isCoach: false, hasTrainingAccess: false, hasSoccerAccess: false, status: null };
         }
 
         const services = profile.services || [];
         const isCoach = Boolean(profile.isCoachApproved);
+        setCachedRole(isCoach ? "coach" : "client");
         return {
             isCoach,
             hasTrainingAccess: isCoach || services.some(s => TRAINING_SERVICES.includes(s)),
@@ -72,7 +76,7 @@ export function applyNavAccess(root, access) {
     });
 
     root.querySelectorAll(".eos-dropdown").forEach(dropdown => {
-        if (dropdown.hasAttribute("data-requires")) return; // already handled above as a whole unit
+        if (dropdown.hidden) return; // already hidden as a whole unit above
         const links = [...dropdown.querySelectorAll(".eos-dropdown-link")];
         if (links.length && links.every(a => a.hidden)) dropdown.hidden = true;
     });

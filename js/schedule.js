@@ -9,12 +9,13 @@
 
 import { listenForAuth } from "./auth.js";
 import { listMyCoaches } from "./coachAccess.js";
+import { cachedRole } from "./role.js";
 import {
     SESSION_TYPES, DAY_NAMES,
     getCoachAvailability, addAvailabilitySlot, removeAvailabilitySlot, toggleAvailabilitySlot,
     addBlackoutDate, removeBlackoutDate,
     generateWeeklyDates, requestBooking, listMyBookingRequests, listRequestsForMyClients,
-    respondToRequest, cancelBookingRequest, getApprovedCountForSlotDate
+    respondToRequest, cancelBookingRequest, getApprovedCountForSlotDate, setSessionNotes
 } from "./scheduling.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
 
@@ -73,6 +74,19 @@ function selectTab(tabName) {
 document.querySelectorAll(".clients-tab").forEach(tab => {
     tab.addEventListener("click", () => selectTab(tab.dataset.tab));
 });
+
+// Setting open times is a coach job: a client lands straight on
+// "Book a Session" with no availability tab. Uses the role remembered
+// on this device (js/role.js) so there's no flash, then confirms it
+// against the real profile once that loads.
+const introEl = document.getElementById("scheduleIntro");
+const coachIntro = introEl.textContent;
+function setScheduleView(isCoach, tab) {
+    document.querySelector(".clients-tabs").hidden = !isCoach;
+    introEl.textContent = isCoach ? coachIntro : "Request a session with your coach and see what's booked.";
+    selectTab(isCoach ? (tab || "availability") : "book");
+}
+if (cachedRole() !== "coach") setScheduleView(false);
 
 // ---- Populate static selects ----
 document.getElementById("slotDay").innerHTML = DAY_NAMES.map((name, i) => `<option value="${i}">${name}</option>`).join("");
@@ -204,9 +218,12 @@ async function refreshRequests() {
             : formatDateShort(req.dates[0]);
 
         let capacityNote = "";
-        if (req.status === "requested" && req.capacity > 1) {
+        if (req.status === "requested") {
             const already = await getApprovedCountForSlotDate(currentUser.uid, req.slotId, req.dates[0]);
-            capacityNote = `<div class="sched-request-note">${already}/${req.capacity} already booked for ${escapeHtml(formatDateShort(req.dates[0]))}</div>`;
+            const cap = req.capacity || 1;
+            if (cap > 1 || already > 0) {
+                capacityNote = `<div class="sched-request-note${already >= cap ? " is-full" : ""}">${already}/${cap} already booked for ${escapeHtml(formatDateShort(req.dates[0]))}${already >= cap ? " -- full" : ""}</div>`;
+            }
         }
 
         const row = document.createElement("div");
@@ -217,6 +234,7 @@ async function refreshRequests() {
                 <strong>${escapeHtml(req.clientName)} &middot; ${escapeHtml(typeLabel(req.sessionType))}${req.label ? ` (${escapeHtml(req.label)})` : ""}</strong>
                 <span>${escapeHtml(DAY_NAMES[req.dayOfWeek])}s, ${formatTime(req.startTime)}&ndash;${formatTime(req.endTime)} &middot; ${escapeHtml(datesLabel)}</span>
                 ${req.clientNote ? `<div class="sched-request-note">"${escapeHtml(req.clientNote)}"</div>` : ""}
+                ${req.status === "approved" && req.coachNote ? `<div class="sched-request-note sched-coach-note">Your notes: "${escapeHtml(req.coachNote)}"</div>` : ""}
                 ${capacityNote}
                 <span class="sched-request-status ${req.status}">${req.status}</span>
             </div>
@@ -225,18 +243,50 @@ async function refreshRequests() {
                     <button type="button" class="clients-btn-primary" data-action="approve">Approve</button>
                     <button type="button" class="clients-btn-secondary" data-action="deny">Deny</button>
                 ` : ""}
+                ${req.status === "approved" ? `
+                    <button type="button" class="clients-btn-secondary" data-action="notes">${req.coachNote ? "Edit Notes" : "Session Notes"}</button>
+                ` : ""}
             </div>
         `;
 
         row.querySelector('[data-action="approve"]')?.addEventListener("click", () => respond(req, "approved"));
         row.querySelector('[data-action="deny"]')?.addEventListener("click", () => respond(req, "denied"));
+        row.querySelector('[data-action="notes"]')?.addEventListener("click", () => editSessionNotes(req));
 
         requestsList.appendChild(row);
     }
 }
 
+// Group (and 1:1) slots hold a set number of people. Before approving,
+// check every date in the request so a slot is never overbooked by
+// accident -- the coach can still override on purpose.
+async function fullDates(req) {
+    const cap = req.capacity || 1;
+    const full = [];
+    for (const date of req.dates || []) {
+        const already = await getApprovedCountForSlotDate(currentUser.uid, req.slotId, date);
+        if (already >= cap) full.push(`${formatDateShort(date)} (${already}/${cap})`);
+    }
+    return full;
+}
+
+async function editSessionNotes(req) {
+    const note = window.prompt(
+        `Notes for ${req.clientName} -- what you worked on, homework for next time. They'll see this on their Today screen and in Schedule.`,
+        req.coachNote || ""
+    );
+    if (note === null) return;
+    await setSessionNotes(req.id, note.trim());
+    refreshRequests();
+}
+
 async function respond(req, status) {
-    const note = window.prompt(`Add a note for ${req.clientName}? (optional)`) || "";
+    if (status === "approved") {
+        const full = await fullDates(req);
+        if (full.length && !window.confirm(`This slot is already full on ${full.join(", ")}. Approve anyway?`)) return;
+    }
+    const note = window.prompt(`Add a note for ${req.clientName}? (optional)`);
+    if (note === null) return;
     await respondToRequest(req.id, status, note);
     sendBookingResponseEmail({
         clientEmail: req.clientEmail,
@@ -322,7 +372,7 @@ async function refreshMyRequests() {
             <div class="sched-request-detail">
                 <strong>${escapeHtml(req.coachName)} &middot; ${escapeHtml(typeLabel(req.sessionType))}${req.label ? ` (${escapeHtml(req.label)})` : ""}</strong>
                 <span>${escapeHtml(DAY_NAMES[req.dayOfWeek])}s, ${formatTime(req.startTime)}&ndash;${formatTime(req.endTime)} &middot; ${escapeHtml(datesLabel)}</span>
-                ${req.coachNote ? `<div class="sched-request-note">Coach: "${escapeHtml(req.coachNote)}"</div>` : ""}
+                ${req.coachNote ? `<div class="sched-request-note sched-coach-note">${req.status === "approved" ? "Notes from your coach" : "Coach"}: "${escapeHtml(req.coachNote)}"</div>` : ""}
                 <span class="sched-request-status ${req.status}">${req.status}</span>
             </div>
             <div class="sched-request-actions">
@@ -441,6 +491,15 @@ listenForAuth(user => {
         // js/coach.html deep-links here with ?tab=availability instead
         // of duplicating this page's UI.
         const requestedTab = new URLSearchParams(window.location.search).get("tab");
-        if (requestedTab) selectTab(requestedTab);
+        if (requestedTab && cachedRole() === "coach") selectTab(requestedTab);
+
+        const guessedCoach = cachedRole() === "coach";
+        import("./userProfile.js")
+            .then(({ getMyProfile }) => getMyProfile())
+            .then(profile => {
+                const isCoach = Boolean(profile?.isCoachApproved);
+                if (profile && isCoach !== guessedCoach) setScheduleView(isCoach, requestedTab);
+            })
+            .catch(() => {});
     }
 });

@@ -75,12 +75,62 @@ export async function createInviteCode() {
     return code;
 }
 
-export async function redeemInviteCode(rawCode) {
-    const user = await waitForUser();
-    if (!user) throw new Error("not-signed-in");
+// ---- Applying = standing invite ----
+// Applying to train (apply.html) is the client's request to be coached,
+// so the apply flow leaves an invite code with a predictable id. When
+// the coach approves the account, clients.js links it in the same step
+// through linkWithCode() -- the exact rules-checked batch a typed code
+// uses (code must exist, belong to that client, be under 7 days old,
+// and is burned by the link). The client's app keeps it fresh while the
+// account is pending (js/loadHeader.js, js/apply.js).
+export function applyCodeFor(uid) {
+    return `APPLY-${uid}`;
+}
 
+const APPLY_CODE_REFRESH_MS = 5 * 24 * 60 * 60 * 1000;
+
+export async function ensureApplyCode() {
+    const user = await waitForUser();
+    if (!user) return;
+
+    const ref = doc(db, "inviteCodes", applyCodeFor(user.uid));
+    let snap = null;
+    try {
+        snap = await getDoc(ref);
+    } catch {
+        // A code that doesn't exist reads as permission-denied for the
+        // client (firestore.rules only lets them read their own codes).
+        snap = null;
+    }
+
+    if (snap?.exists()) {
+        const createdMs = snap.data().createdAt?.toMillis?.() ?? 0;
+        if (createdMs && Date.now() - createdMs < APPLY_CODE_REFRESH_MS) return;
+        await deleteDoc(ref); // codes can't be updated, only replaced
+    }
+
+    await setDoc(ref, {
+        clientUid: user.uid,
+        clientName: user.displayName || "Client",
+        clientEmail: user.email || "",
+        createdAt: serverTimestamp()
+    });
+}
+
+// Coach: link a just-approved applicant using their standing code.
+export async function linkApplicant(clientUid) {
+    return linkWithCode(applyCodeFor(clientUid));
+}
+
+export async function redeemInviteCode(rawCode) {
     const code = (rawCode || "").trim().toUpperCase();
     if (!code) throw new Error("empty-code");
+    return linkWithCode(code);
+}
+
+async function linkWithCode(code) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
 
     const codeRef = doc(db, "inviteCodes", code);
     let snap;

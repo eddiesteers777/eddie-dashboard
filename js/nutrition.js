@@ -384,11 +384,18 @@ function updateDate(){
 
     );
 
+    // The race countdown is the coach's own race (js/role.js); clients
+    // just see the date.
+    let personalPlan = false;
+    try { personalPlan = localStorage.getItem("sb-account-role") === "coach"; } catch {}
+
     document.getElementById(
 
         "countdown"
 
     ).innerHTML =
+
+        !personalPlan ? "" :
 
         days >= 0
 

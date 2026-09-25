@@ -19,6 +19,7 @@ import {
     loadOverrides,
     saveOverrides
 } from "./marathonData.js";
+import { showsPersonalPlan } from "./role.js";
 
 import { icon } from "./icons.js";
 
@@ -1317,6 +1318,14 @@ function start(){
     }
 
     library = loadLibrary();
+
+    // Attaching workouts to days is built on the coach's own marathon
+    // block (js/role.js); everyone else gets the workout library only.
+    if(!showsPersonalPlan()){
+        ct$("ct-root").classList.add("ct-no-plan");
+        var sub = document.querySelector(".ct-sub");
+        if(sub) sub.textContent = "Build cross-training workouts once and reuse them any week.";
+    }
 
     attachWeek = (typeof getCurrentWeek === "function") ? getCurrentWeek() : 1;
 

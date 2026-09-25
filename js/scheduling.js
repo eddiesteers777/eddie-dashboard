@@ -169,6 +169,16 @@ export async function respondToRequest(requestId, status, coachNote) {
     });
 }
 
+// Coach: add or change notes on an approved session after it happens
+// (what you worked on, homework). firestore.rules already allow this --
+// the status stays "approved" and only coachNote/respondedAt change.
+export async function setSessionNotes(requestId, coachNote) {
+    await updateDoc(doc(db, "bookingRequests", requestId), {
+        coachNote: coachNote || "",
+        respondedAt: serverTimestamp()
+    });
+}
+
 export async function cancelBookingRequest(requestId) {
     await updateDoc(doc(db, "bookingRequests", requestId), { status: "cancelled", respondedAt: serverTimestamp() });
 }

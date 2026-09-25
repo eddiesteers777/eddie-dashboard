@@ -102,6 +102,22 @@
         </section>
 
         <!-- ==========================================
+             From your coach (clients only -- js/coachCard.js)
+        =========================================== -->
+
+        <section id="coachCardSection" class="eos-today-card eos-coach-card" hidden>
+
+            <div class="eos-today-card-header">
+                <h2>From Your Coach</h2>
+            </div>
+
+            <div id="coachCardBody" class="eos-coach-rows">
+                <div class="eos-today-loading">Loading…</div>
+            </div>
+
+        </section>
+
+        <!-- ==========================================
              Quick Stats
         =========================================== -->
 
@@ -146,7 +162,7 @@
 
         <section class="grid eos-dashboard-grid">
 
-            <a href="marathon.html" class="card">
+            <a href="marathon.html" class="card" data-requires="coach">
                 <div class="card-icon" data-icon="activity"></div>
                 <h2>Marathon</h2>
                 <p>Training plan, race countdown, workouts, and goal progress.</p>
@@ -182,25 +198,25 @@
                 <p>Daily checklist, streaks, and consistency.</p>
             </a>
 
-            <a href="planner.html" class="card">
+            <a href="planner.html" class="card" data-requires="coach">
                 <div class="card-icon" data-icon="calendar"></div>
                 <h2>Planner</h2>
                 <p>Course dates and upcoming deadlines.</p>
             </a>
 
-            <a href="gear.html" class="card">
+            <a href="gear.html" class="card" data-requires="coach">
                 <div class="card-icon" data-icon="footprint"></div>
                 <h2>Gear</h2>
                 <p>Shoe mileage and replacement alerts.</p>
             </a>
 
-            <a href="weekly-review.html" class="card">
+            <a href="weekly-review.html" class="card" data-requires="coach">
                 <div class="card-icon" data-icon="clipboard"></div>
                 <h2>Weekly Review</h2>
                 <p>How the whole week actually went, in one place.</p>
             </a>
 
-            <a href="analytics.html" class="card">
+            <a href="analytics.html" class="card" data-requires="coach">
                 <div class="card-icon" data-icon="trendingUp"></div>
                 <h2>Analytics</h2>
                 <p>Mileage, pace trends, recovery, and COROS data.</p>

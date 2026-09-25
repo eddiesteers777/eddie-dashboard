@@ -16,6 +16,36 @@ import {
 import { getUpcomingCourseEvents } from "./courseEvents.js";
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
+import { showsPersonalPlan } from "./role.js";
+import { getActiveProgramEntriesForDate } from "./activeProgramSources.js";
+
+// The built-in marathon block (js/marathonData.js) is the coach's own
+// race. Clients get their own plans and a "From your coach" card
+// instead (js/role.js, js/coachCard.js).
+const PERSONAL_PLAN = showsPersonalPlan();
+
+function localIso(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+// Miles logged Monday-Sunday this week (Running page log).
+function loggedMilesThisWeek() {
+    let entries = [];
+    try {
+        entries = JSON.parse(localStorage.getItem("running-log") || "null")?.entries || [];
+    } catch {
+        entries = [];
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const monday = new Date(today.getTime() - ((today.getDay() + 6) % 7) * DAY_MS);
+    const from = localIso(monday);
+    const to = localIso(new Date(monday.getTime() + 6 * DAY_MS));
+    const miles = entries
+        .filter(e => e.date >= from && e.date <= to)
+        .reduce((sum, e) => sum + (Number(e.miles) || 0), 0);
+    return Math.round(miles * 10) / 10;
+}
 
 const DAY_MS = 86400000;
 
@@ -80,7 +110,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const weeklyMileageEl = document.getElementById("weeklyMileage");
 
-    if (weeklyMileageEl) {
+    if (weeklyMileageEl && !PERSONAL_PLAN) {
+        weeklyMileageEl.textContent = `${loggedMilesThisWeek()}`;
+    } else if (weeklyMileageEl) {
         try {
             weeklyMileageEl.textContent =
                 `${getAdjustedWeekMileage(getCurrentWeek())}`;
@@ -98,6 +130,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderNutritionSnapshot();
 
+    // ==========================================
+    // From your coach (clients only)
+    // ==========================================
+
+    const coachSection = document.getElementById("coachCardSection");
+
+    if (coachSection && !PERSONAL_PLAN) {
+        coachSection.hidden = false;
+        import("./coachCard.js")
+            .then(({ renderCoachCard }) => renderCoachCard(document.getElementById("coachCardBody")))
+            .catch(error => {
+                console.warn("Southbound: couldn't load the coach card.", error);
+                coachSection.hidden = true;
+            });
+    }
+
 });
 
 /* ==========================================
@@ -108,6 +156,21 @@ function renderPhaseStatus() {
     const el = document.getElementById("phaseStatus");
 
     if (!el) {
+        return;
+    }
+
+    if (!PERSONAL_PLAN) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let names = [];
+        for (let i = 0; i < 28 && names.length < 2; i++) {
+            for (const item of getActiveProgramEntriesForDate(localIso(new Date(today.getTime() + i * DAY_MS)))) {
+                if (item.programName && !names.includes(item.programName)) names.push(item.programName);
+            }
+        }
+        el.textContent = names.length
+            ? `Training: ${names.join(" + ")}`
+            : "Here's your day. Your plan, sessions and check-ins all live here.";
         return;
     }
 
@@ -171,6 +234,7 @@ function renderToday() {
     let dayKey = null;
 
     try {
+        if (!PERSONAL_PLAN) throw "skip";
         week = getCurrentWeek();
         const start = weekStart(week);
         const dayIndex = Math.round((today - start) / DAY_MS);
@@ -181,7 +245,27 @@ function renderToday() {
             dayKey = DAYS[dayIndex];
         }
     } catch (error) {
-        console.error("Dashboard: could not resolve today's plan", error);
+        if (error !== "skip") console.error("Dashboard: could not resolve today's plan", error);
+    }
+
+    // Today's entries from the account's own plans (Race / Training
+    // Plans from Programs, or plans the coach edited for them).
+    if (!PERSONAL_PLAN) {
+        try {
+            getActiveProgramEntriesForDate(localIso(today)).forEach(item => {
+                const entry = item.entry || {};
+                const isStrength = entry.type === "strength";
+                items.push({
+                    icon: icon(isStrength ? "dumbbell" : entry.type === "cross" ? "bike" : "activity"),
+                    color: isStrength ? "var(--orange)" : "var(--primary-dark)",
+                    title: entry.session || (isStrength ? "Strength" : "Run"),
+                    detail: [entry.miles ? `${entry.miles} mi` : "", item.programName].filter(Boolean).join(" · "),
+                    link: isStrength ? "strength.html" : "running.html"
+                });
+            });
+        } catch {
+            // No plan data -- fine.
+        }
     }
 
     // Today's run — the one item you can mark done right here, no
@@ -272,8 +356,8 @@ function renderToday() {
         });
     }
 
-    // Planner / course events due today
-    try {
+    // Planner / course events due today (the coach's own planner)
+    if (PERSONAL_PLAN) try {
         const todaysEvents = getUpcomingCourseEvents(0);
 
         todaysEvents.forEach(ev => {
@@ -290,10 +374,15 @@ function renderToday() {
     }
 
     if (!items.length) {
-        container.innerHTML = `
+        container.innerHTML = PERSONAL_PLAN ? `
             <div class="eos-today-rest">
                 Nothing scheduled today. Good day to rest, or check in on your
                 <a href="strength.html">Strength plan</a>.
+            </div>
+        ` : `
+            <div class="eos-today-rest">
+                Nothing on your plan today. Log a run on <a href="running.html">Running</a>,
+                or start a workout from <a href="strength.html">Strength</a>.
             </div>
         `;
         return;
@@ -507,6 +596,18 @@ function renderNutritionSnapshot() {
 
     container.innerHTML = macros.map(m => {
         const actual = Number(day[m.key]) || 0;
+        // The goals above are the coach's own numbers; clients just see
+        // what they've logged.
+        if (!PERSONAL_PLAN) {
+            return `
+            <div class="eos-nutrition-snap-bar">
+                <div class="eos-nutrition-snap-bar-label">
+                    <span>${m.label}</span>
+                    <span>${actual}${m.unit}</span>
+                </div>
+            </div>
+        `;
+        }
         const pct = Math.min(100, Math.round((actual / m.goal) * 100));
 
         return `

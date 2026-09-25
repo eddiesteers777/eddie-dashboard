@@ -82,7 +82,7 @@ test("firestore.rules has no leftover wide-open rules", () => {
     assert.ok(!/allow read:\s*if request\.auth != null;/.test(rules), "a rule lets any signed-in user read everything in a collection");
 });
 
-const PUBLIC_PAGES = ["home.html", "about.html", "packages.html", "coaching.html", "soccer.html", "apply.html", "contact.html", "install.html"];
+const PUBLIC_PAGES = ["home.html", "about.html", "packages.html", "coaching.html", "soccer.html", "apply.html", "contact.html", "install.html", "privacy.html"];
 
 test("public pages have a search description and share preview", () => {
     for (const page of PUBLIC_PAGES) {

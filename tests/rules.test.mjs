@@ -240,3 +240,32 @@ test("the coach can list questions and mark them handled, but not rewrite them",
     await assertFails(updateDoc(doc(as("coach"), "inquiries/q1"), { message: "rewritten" }));
     await assertFails(updateDoc(doc(as("coach"), "inquiries/q1"), { status: "deleted" }));
 });
+
+// ---- Applying leaves a standing invite; "Approve" links in one step ----
+// (js/coachAccess.js ensureApplyCode + linkApplicant). No rules change:
+// it's the same code-burning batch as a typed invite code.
+
+test("an applicant's standing code lets an approved coach link them on approval, once", async () => {
+    const applicant = as("stranger");
+    const code = "APPLY-stranger";
+    // The client can't read a code that doesn't exist yet (reads as denied)...
+    await assertFails(getDoc(doc(applicant, `inviteCodes/${code}`)));
+    // ...so it creates one, and can read, replace and withdraw its own.
+    await assertSucceeds(setDoc(doc(applicant, `inviteCodes/${code}`), {
+        clientUid: "stranger", clientName: "Sam", clientEmail: "", createdAt: serverTimestamp()
+    }));
+    await assertSucceeds(getDoc(doc(applicant, `inviteCodes/${code}`)));
+    await assertFails(updateDoc(doc(applicant, `inviteCodes/${code}`), { createdAt: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(doc(applicant, `inviteCodes/${code}`)));
+    await assertSucceeds(setDoc(doc(applicant, `inviteCodes/${code}`), {
+        clientUid: "stranger", clientName: "Sam", clientEmail: "", createdAt: serverTimestamp()
+    }));
+    // Nobody can plant a standing code for someone else.
+    await assertFails(setDoc(doc(as("client"), "inviteCodes/APPLY-other"), {
+        clientUid: "other", clientName: "Oz", clientEmail: "", createdAt: serverTimestamp()
+    }));
+    // Only an approved coach can use it, and only once.
+    await assertFails(redeem(as("client"), "client", "stranger", code));
+    await assertSucceeds(redeem(as("coach"), "coach", "stranger", code));
+    await assertFails(redeem(as("coach"), "coach", "stranger", code));
+});
