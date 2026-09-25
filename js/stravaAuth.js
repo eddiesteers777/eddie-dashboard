@@ -9,6 +9,7 @@
    never the secret itself.
 ========================================== */
 
+import { sbAlert } from "./ui.js";
 import { STRAVA_CLIENT_ID, STRAVA_BROKER_URL, isStravaConfigured } from "./stravaConfig.js";
 
 const AUTHORIZE_URL = "https://www.strava.com/oauth/authorize";
@@ -195,13 +196,13 @@ function init() {
                 startOAuth();
             } catch (error) {
                 button.dataset.busy = "false";
-                alert(`Southbound could not start the Strava connection.\n\n${error.message}`);
+                sbAlert(error.message, { title: "Couldn't start the Strava connection" });
             }
         });
     }
 
     finishOAuth().catch(error => {
-        alert(`Strava authorization did not finish successfully.\n\n${error.message}`);
+        sbAlert(error.message, { title: "Strava didn't finish connecting" });
     });
 }
 

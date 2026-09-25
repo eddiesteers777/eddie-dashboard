@@ -12,6 +12,7 @@
 
 import { SECTIONS, DAYS } from "./clientRecordSchema.js";
 import { saveClientRecord } from "./clientRecords.js";
+import { toast } from "./ui.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -132,9 +133,7 @@ export function mountProfileForm(container, { clientUid, record = null, mode = "
         btn.disabled = true;
         try {
             current = await saveClientRecord(clientUid, values, current);
-            msg.textContent = mode === "client" ? "Saved. Your coach can see this now." : "Saved.";
-            msg.className = "clients-msg";
-            msg.hidden = false;
+            toast(mode === "client" ? "Profile saved. Your coach can see it now." : "Profile saved.");
             onSaved?.(current);
         } catch (error) {
             console.error("Saving profile failed:", error);

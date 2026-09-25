@@ -1,4 +1,5 @@
 import { listenForAuth } from "./auth.js";
+import { toast } from "./ui.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { isApprovedCoach } from "./userProfile.js";
 import { submitCheckin, listMyCheckins, listCheckinsForMyClients, reviewCheckin, weekKeyFor } from "./checkins.js";
@@ -154,9 +155,8 @@ checkinSubmitBtn?.addEventListener("click", async () => {
             notes: checkinNotesInput.value.trim()
         });
 
-        checkinSubmitMsg.textContent = "Check-in sent!";
-        checkinSubmitMsg.className = "clients-msg";
-        checkinSubmitMsg.hidden = false;
+        toast("Check-in sent. Your coach will reply here and by email.");
+        checkinSubmitMsg.hidden = true;
 
         sendCheckinSubmittedEmail({
             coachEmail: coach.coachEmail,
@@ -228,9 +228,8 @@ async function refreshReview() {
             btn.disabled = true;
             try {
                 await reviewCheckin(id, textarea.value.trim());
-                msg.textContent = "Saved.";
-                msg.className = "clients-msg";
-                msg.hidden = false;
+                toast("Reply sent. They get it in the app and by email.");
+                msg.hidden = true;
 
                 sendCheckinReviewedEmail({
                     clientEmail: source?.clientEmail,

@@ -249,9 +249,9 @@
 .strength-template-btn{
 
     background:var(--primary);
-    color:#0f2019;
+    color:var(--on-primary);
     border:none;
-    border-radius:14px;
+    border-radius:var(--radius-pill);
     padding:12px 20px;
     font-size:14px;
     font-weight:700;
@@ -2403,7 +2403,7 @@ html.strength-workout-open body{
 }
 
 .strength-workout-day-name{
-    font-family:'Bebas Neue',var(--font-body);
+    font-family:var(--font-display);
     font-size:26px;
     font-weight:400;
     line-height:1.1;
@@ -2443,7 +2443,7 @@ html.strength-workout-open body{
     background:var(--green);
     color:#05130a;
     border:none;
-    border-radius:12px;
+    border-radius:var(--radius-pill);
     padding:11px 22px;
     font-size:14px;
     font-weight:800;

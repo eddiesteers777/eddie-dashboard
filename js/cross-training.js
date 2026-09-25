@@ -22,6 +22,7 @@ import {
 import { showsPersonalPlan } from "./role.js";
 
 import { icon } from "./icons.js";
+import { toast, sbConfirm } from "./ui.js";
 
 console.log("Southbound Cross Training Studio");
 
@@ -452,7 +453,7 @@ function duplicateWorkout(id){
 
 }
 
-function deleteWorkout(id){
+async function deleteWorkout(id){
 
     var workout = getWorkoutById(id);
 
@@ -462,7 +463,7 @@ function deleteWorkout(id){
 
     }
 
-    if(!confirm('Delete "' + workout.name + '" from your library? Days it\'s already attached to keep their entry.')){
+    if(!(await sbConfirm("Days it's already attached to keep their entry.", { title: 'Delete "' + workout.name + '"?', confirmLabel: "Delete", danger: true }))){
 
         return;
 
@@ -789,7 +790,7 @@ function saveWorkoutFromBuilder(){
 
     if(name === ""){
 
-        alert("Give this workout a name before saving.");
+        toast("Give this workout a name before saving.", { type: "info" });
 
         return;
 
@@ -797,7 +798,7 @@ function saveWorkoutFromBuilder(){
 
     if(builderBlocks.length === 0){
 
-        alert("Add at least one block before saving.");
+        toast("Add at least one block before saving.", { type: "info" });
 
         return;
 

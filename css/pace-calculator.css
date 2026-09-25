@@ -222,19 +222,13 @@ body{
 .pc-solve-tab.active,
 .pc-unit-btn.active{
 
-    background:
-
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
+    background:var(--primary);
 
     color:var(--on-primary);
 
     border-color:transparent;
 
-    box-shadow:0 10px 25px rgba(166,138,98,.30);
+    box-shadow:none;
 
 }
 
@@ -328,7 +322,7 @@ body{
 
     font-size:1rem;
 
-    font-family:"JetBrains Mono",monospace;
+    font-family:var(--font-mono);
 
     transition:.2s;
 
@@ -384,7 +378,7 @@ body{
 
     font-weight:700;
 
-    font-family:"JetBrains Mono",monospace;
+    font-family:var(--font-mono);
 
 }
 
@@ -394,7 +388,7 @@ body{
 
     font-size:.85rem;
 
-    font-family:"JetBrains Mono",monospace;
+    font-family:var(--font-mono);
 
     white-space:nowrap;
 
@@ -452,7 +446,7 @@ body{
 
     padding:16px;
 
-    border-radius:14px;
+    border-radius:var(--radius-pill);
 
     font-size:1rem;
 
@@ -462,15 +456,9 @@ body{
 
     color:var(--on-primary);
 
-    background:
+    background:var(--primary);
 
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
-
-    box-shadow:0 12px 30px rgba(166,138,98,.30);
+    box-shadow:0 8px 20px rgba(201,173,132,.22);
 
     transition:all .25s ease;
 
@@ -572,7 +560,7 @@ body{
 
     color:white;
 
-    font-family:"JetBrains Mono",monospace;
+    font-family:var(--font-mono);
 
     line-height:1;
 
@@ -626,7 +614,7 @@ body{
 
     font-weight:700;
 
-    font-family:"JetBrains Mono",monospace;
+    font-family:var(--font-mono);
 
     font-size:1.05rem;
 
@@ -706,7 +694,7 @@ body{
 
     font-weight:700;
 
-    font-family:"JetBrains Mono",monospace;
+    font-family:var(--font-mono);
 
     font-size:1.15rem;
 
@@ -965,9 +953,9 @@ body{
 
     width:100%;
     background:var(--primary);
-    color:#0f2019;
+    color:var(--on-primary);
     border:none;
-    border-radius:14px;
+    border-radius:var(--radius-pill);
     padding:15px;
     font-size:15px;
     font-weight:800;

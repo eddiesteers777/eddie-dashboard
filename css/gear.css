@@ -63,9 +63,9 @@
 .gear-add-btn{
 
     background:var(--primary);
-    color:#0f2019;
+    color:var(--on-primary);
     border:none;
-    border-radius:14px;
+    border-radius:var(--radius-pill);
     padding:12px 20px;
     font-size:14px;
     font-weight:700;
@@ -87,7 +87,7 @@
     background:transparent;
     border:1px solid var(--border);
     color:var(--text-secondary);
-    border-radius:14px;
+    border-radius:var(--radius-pill);
     padding:12px 20px;
     font-size:14px;
     font-weight:600;

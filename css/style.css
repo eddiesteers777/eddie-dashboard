@@ -8,7 +8,45 @@
    different accent blues across the site. Consolidated here.)
 ========================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Saira:ital,wght@0,800;1,900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* Fonts are hosted with the site (fonts/, SIL Open Font License) instead
+   of Google Fonts, so the installed app looks the same offline and no
+   request leaves for a third party. Latin subset; Inter and JetBrains
+   Mono are variable fonts, so every weight comes from one file. */
+@font-face{
+    font-family:'Inter';
+    font-style:normal;
+    font-weight:100 900;
+    font-display:swap;
+    src:url('../fonts/inter-latin-var.woff2') format('woff2');
+}
+@font-face{
+    font-family:'Bebas Neue';
+    font-style:normal;
+    font-weight:400;
+    font-display:swap;
+    src:url('../fonts/bebas-neue-latin-400.woff2') format('woff2');
+}
+@font-face{
+    font-family:'Saira';
+    font-style:normal;
+    font-weight:800;
+    font-display:swap;
+    src:url('../fonts/saira-latin-800.woff2') format('woff2');
+}
+@font-face{
+    font-family:'Saira';
+    font-style:italic;
+    font-weight:900;
+    font-display:swap;
+    src:url('../fonts/saira-latin-900-italic.woff2') format('woff2');
+}
+@font-face{
+    font-family:'JetBrains Mono';
+    font-style:normal;
+    font-weight:100 800;
+    font-display:swap;
+    src:url('../fonts/jetbrains-mono-latin-var.woff2') format('woff2');
+}
 
 *,
 *::before,
@@ -101,18 +139,35 @@ html{
 
     --shadow:0 18px 40px rgba(0,0,0,.22);
 
-    --font-body:'Inter',sans-serif;
+    --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
 
-    --font-display:'Bebas Neue',sans-serif;
+    --font-display:'Bebas Neue','Arial Narrow',Impact,sans-serif;
 
-    --font-brand:'Saira',sans-serif;
+    --font-brand:'Saira',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
 
-    --font-mono:'JetBrains Mono',monospace;
+    --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+
+    /* ---- Controls: one shape and one set of states everywhere ---- */
+
+    --radius-sm:10px;          /* small tool buttons, inputs, chips */
+    --radius-md:14px;          /* inputs, list rows */
+    --radius-pill:999px;       /* every main action button */
+    --control-height:44px;
+    --focus-ring:0 0 0 3px rgba(201,173,132,.45);
+    --danger:#EF4444;
+    --danger-bg:rgba(239,68,68,.12);
+    --success:#22C55E;
+    --success-bg:rgba(34,197,94,.12);
+    --warning:#F59E0B;
+    --warning-bg:rgba(245,158,11,.12);
+
+    /* Native pickers, scrollbars and dropdown menus render dark. */
+    color-scheme:dark;
 
 }
 body{
 
-    font-family:"Inter",sans-serif;
+    font-family:var(--font-body);
 
     background:
         radial-gradient(circle at top,#1F3A2C 0%,#0F2019 45%,#07100C 100%);
@@ -141,10 +196,105 @@ img{
 
 }
 
-button{
+/* ==========================================================
+   FORM CONTROLS -- every page
 
+   Native controls otherwise fall back to the browser's own font,
+   colors and focus ring, which is what made forms look like a
+   different app. Page stylesheets still size and lay them out;
+   these are the shared defaults and states underneath.
+========================================================== */
+
+button,
+input,
+select,
+textarea,
+optgroup,
+option{
     font-family:inherit;
+    font-size:inherit;
+    line-height:inherit;
+    color:inherit;
+    letter-spacing:inherit;
+}
 
+button{
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled{
+    cursor:not-allowed;
+    opacity:.55;
+}
+
+select option,
+select optgroup{
+    background:var(--surface);
+    color:var(--text);
+}
+
+input::placeholder,
+textarea::placeholder{
+    color:var(--muted);
+    opacity:1;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+progress{
+    accent-color:var(--primary);
+}
+
+/* Browser autofill paints inputs pale yellow/blue; keep them forest. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill{
+    -webkit-text-fill-color:var(--text);
+    -webkit-box-shadow:0 0 0 1000px var(--surface-light) inset;
+    caret-color:var(--text);
+    transition:background-color 9999s ease-out 0s;
+}
+
+/* One focus treatment for keyboard users; no ring on mouse/touch. */
+:focus-visible{
+    outline:2px solid var(--primary);
+    outline-offset:2px;
+}
+:focus:not(:focus-visible){
+    outline:none;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+    outline:none;
+    border-color:var(--primary) !important;
+    box-shadow:var(--focus-ring);
+}
+
+a{
+    -webkit-tap-highlight-color:transparent;
+}
+
+html{
+    scrollbar-color:rgba(201,173,132,.35) transparent;
+}
+
+@media (prefers-reduced-motion:reduce){
+    *,
+    *::before,
+    *::after{
+        scroll-behavior:auto !important;
+        transition-duration:.01ms !important;
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+    }
 }
 
 .container{
@@ -963,7 +1113,7 @@ section{
 
 .eos-signin-btn{
     padding:13px 18px;
-    border-radius:12px;
+    border-radius:var(--radius-pill);
     font-weight:700;
     font-size:14.5px;
     cursor:pointer;
@@ -974,7 +1124,7 @@ section{
 
 .eos-signin-btn.primary{
     background:var(--primary);
-    color:#0f2019;
+    color:var(--on-primary);
 }
 
 .eos-signin-btn.primary:hover{
@@ -1215,13 +1365,9 @@ section{
 
     border:none;
 
-    border-radius:14px;
+    border-radius:var(--radius-pill);
 
-    background:linear-gradient(
-        135deg,
-        #C9AD84,
-        #2D7FFF
-    );
+    background:var(--primary);
 
     color:var(--on-primary);
 
@@ -1231,7 +1377,7 @@ section{
 
     transition:.3s;
 
-    box-shadow:0 12px 30px rgba(201,173,132,.30);
+    box-shadow:0 8px 20px rgba(201,173,132,.22);
 
 }
 
@@ -1251,13 +1397,13 @@ section{
 
     padding:14px 26px;
 
-    border-radius:14px;
+    border-radius:var(--radius-pill);
 
-    border:1px solid rgba(255,255,255,.10);
+    border:1px solid var(--border);
 
-    background:rgba(255,255,255,.05);
+    background:var(--surface-light);
 
-    color:white;
+    color:var(--text);
 
     font-weight:700;
 
@@ -1905,13 +2051,9 @@ section{
 
     border:none;
 
-    border-radius:18px;
+    border-radius:var(--radius-pill);
 
-    background:linear-gradient(
-        135deg,
-        #C9AD84,
-        #2D7FFF
-    );
+    background:var(--primary);
 
     color:var(--on-primary);
 
@@ -1923,7 +2065,7 @@ section{
 
     transition:.3s;
 
-    box-shadow:0 16px 40px rgba(201,173,132,.30);
+    box-shadow:0 8px 20px rgba(201,173,132,.22);
 
 }
 
@@ -2719,4 +2861,196 @@ section{
     .controls{ grid-template-columns:36px minmax(0,1fr) 36px !important; }
     .adjust-btn{ width:36px !important; height:36px !important; }
     .goal-btn{ min-height:36px; padding:9px 14px !important; font-size:12px !important; }
+}
+
+/* ==========================================================
+   BUTTONS -- the canonical set (new code uses these)
+
+   .sb-btn + one of: -primary (tan, the main action), -secondary
+   (quiet surface), -tertiary (text only), -danger (delete/remove),
+   and .sb-btn-icon for a square icon button. Older page buttons
+   were brought to the same shape (pill) and the same flat tan.
+========================================================== */
+
+.sb-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:var(--control-height);
+    padding:0 20px;
+    border:1px solid transparent;
+    border-radius:var(--radius-pill);
+    font:700 14px/1 var(--font-body);
+    text-decoration:none;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .15s ease;
+}
+.sb-btn:active:not(:disabled){ transform:scale(.98); }
+.sb-btn-primary{ background:var(--primary); color:var(--on-primary); border-color:var(--primary); }
+.sb-btn-primary:hover:not(:disabled){ background:var(--primary-light); border-color:var(--primary-light); }
+.sb-btn-secondary{ background:var(--surface-light); color:var(--text); border-color:var(--border); }
+.sb-btn-secondary:hover:not(:disabled){ border-color:var(--primary); }
+.sb-btn-tertiary{ background:transparent; color:var(--text-secondary); padding:0 12px; }
+.sb-btn-tertiary:hover:not(:disabled){ color:var(--primary); }
+.sb-btn-danger{ background:var(--danger); color:#fff; border-color:var(--danger); }
+.sb-btn-danger:hover:not(:disabled){ filter:brightness(1.08); }
+.sb-btn-icon{ width:var(--control-height); padding:0; border-radius:var(--radius-sm); background:var(--surface-light); color:var(--text); border-color:var(--border); }
+
+.sr-only{
+    position:absolute !important;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip:rect(0 0 0 0);
+    white-space:nowrap;
+}
+
+/* ==========================================================
+   UI FEEDBACK -- js/ui.js (toasts, dialogs, loading, empty)
+========================================================== */
+
+.sb-toast-host{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    z-index:6000;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    width:min(440px, calc(100vw - 32px));
+    transform:translateX(-50%);
+    pointer-events:none;
+}
+body.has-bottomnav .sb-toast-host{ bottom:96px; }
+.sb-toast{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    width:100%;
+    padding:13px 16px;
+    background:var(--forest);
+    border:1px solid rgba(201,173,132,.35);
+    border-radius:16px;
+    box-shadow:0 16px 40px rgba(0,0,0,.4);
+    color:var(--text);
+    font-size:14.5px;
+    font-weight:600;
+    line-height:1.45;
+    pointer-events:auto;
+    cursor:pointer;
+    opacity:0;
+    transform:translateY(12px);
+    transition:opacity .22s ease,transform .22s ease;
+}
+.sb-toast.is-in{ opacity:1; transform:none; }
+.sb-toast-icon{ flex-shrink:0; display:flex; margin-top:1px; color:var(--primary); }
+.sb-toast.is-success .sb-toast-icon{ color:var(--success); }
+.sb-toast.is-error{ border-color:rgba(239,68,68,.45); }
+.sb-toast.is-error .sb-toast-icon{ color:var(--danger); }
+
+.sb-dialog{
+    width:min(420px, calc(100vw - 32px));
+    max-height:calc(100dvh - 48px);
+    margin:auto;
+    padding:0;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:0 30px 80px rgba(0,0,0,.55);
+    color:var(--text);
+}
+.sb-dialog::backdrop{
+    background:rgba(5,12,9,.66);
+    backdrop-filter:blur(3px);
+    -webkit-backdrop-filter:blur(3px);
+}
+.sb-dialog[open]{ animation:sb-dialog-in .2s cubic-bezier(.32,.72,0,1); }
+@keyframes sb-dialog-in{
+    from{ opacity:0; transform:translateY(10px) scale(.98); }
+    to{ opacity:1; transform:none; }
+}
+.sb-dialog-form{ display:flex; flex-direction:column; gap:12px; padding:22px; }
+.sb-dialog-title{ font-size:18px; line-height:1.3; }
+.sb-dialog-message{
+    color:var(--text-secondary);
+    font-size:15px;
+    line-height:1.55;
+    white-space:pre-line;
+}
+.sb-dialog-input{
+    width:100%;
+    min-height:var(--control-height);
+    padding:10px 14px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
+    color:var(--text);
+    font-size:16px;
+    resize:vertical;
+}
+.sb-dialog-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:6px;
+}
+@media (max-width:480px){
+    .sb-dialog-actions .sb-btn{ flex:1 1 0; }
+}
+
+.sb-loading{ display:flex; flex-direction:column; gap:10px; padding:4px 0; }
+.sb-skeleton{
+    display:block;
+    height:14px;
+    border-radius:8px;
+    background:linear-gradient(90deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.05) 100%);
+    background-size:200% 100%;
+    animation:sb-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes sb-shimmer{
+    from{ background-position:100% 0; }
+    to{ background-position:-100% 0; }
+}
+
+.sb-empty{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:28px 18px;
+    text-align:center;
+}
+.sb-empty-icon{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:48px;
+    height:48px;
+    margin-bottom:4px;
+    border-radius:50%;
+    background:rgba(201,173,132,.12);
+    color:var(--primary);
+}
+.sb-empty-title{ font-size:16px; color:var(--text); }
+.sb-empty-text{ max-width:360px; font-size:14px; line-height:1.55; color:var(--text-secondary); }
+.sb-empty-text a{ color:var(--primary); }
+.sb-empty .sb-btn{ margin-top:6px; }
+
+/* Text that fills in a moment after load (a heading, a date label):
+   an empty .sb-wait element shows a shimmer bar instead of "Loading...",
+   and disappears as soon as a script writes its text. */
+.sb-wait:empty::before{
+    content:"";
+    display:inline-block;
+    width:min(12ch, 70%);
+    height:.8em;
+    border-radius:8px;
+    vertical-align:middle;
+    background:linear-gradient(90deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.05) 100%);
+    background-size:200% 100%;
+    animation:sb-shimmer 1.3s ease-in-out infinite;
 }

@@ -10,6 +10,7 @@
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
+import { sbConfirm, sbAlert, toast, loadingHtml } from "./ui.js";
 import { cachedRole } from "./role.js";
 import {
     createInviteCode, redeemInviteCode, linkApplicant,
@@ -127,7 +128,7 @@ function renderClientRows() {
             </button>
         `;
         row.querySelector('[data-action="remove"]').addEventListener("click", async () => {
-            if (!window.confirm(`Remove ${c.name}? You'll lose access to their plans, check-ins and sessions until they send you a new code.`)) return;
+            if (!(await sbConfirm("You'll lose access to their plans, check-ins and sessions until they send you a new code.", { title: `Remove ${c.name}?`, confirmLabel: "Remove", danger: true }))) return;
             await removeLink(c.linkId);
             refreshClients();
         });
@@ -144,7 +145,7 @@ function renderClientRows() {
 }
 
 async function refreshClients() {
-    clientsList.innerHTML = `<p class="clients-card-note">Loading clients…</p>`;
+    clientsList.innerHTML = loadingHtml("Loading clients", { lines: 4 });
     const today = isoDate(new Date());
     const records = await loadClientDirectory().catch(error => {
         console.error("Loading clients failed:", error);
@@ -250,7 +251,7 @@ async function refreshCoaches() {
             </button>
         `;
         row.querySelector('[data-action="revoke"]').addEventListener("click", async () => {
-            if (!window.confirm(`Remove ${coach.coachName || "this coach"}'s access to your plans?`)) return;
+            if (!(await sbConfirm("They won't see your plans, check-ins or sessions any more.", { title: `Remove ${coach.coachName || "this coach"}'s access?`, confirmLabel: "Remove", danger: true }))) return;
             await removeLink(coach.id);
             refreshCoaches();
         });
@@ -340,19 +341,21 @@ async function refreshPending() {
             } catch (error) {
                 console.info("Approved without auto-link:", error.message);
             }
-            window.alert(linked
-                ? `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and linked -- they're in My Clients now.`
-                : `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved. They aren't linked yet: ask them to open More > Connect with Coach in their app and send you the code, then enter it under Coach a Client.`);
+            if (linked) {
+                toast(`${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and in My Clients now.`);
+            } else {
+                await sbAlert("They aren't linked to you yet. Ask them to open More > Connect with Coach in their app and send you the code, then enter it under Coach a Client.", { title: `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved` });
+            }
             refreshPending();
             refreshClients();
         });
         row.querySelector('[data-action="deny"]').addEventListener("click", async () => {
-            if (!window.confirm(`Deny ${profile.displayName || "this account"}'s request?`)) return;
+            if (!(await sbConfirm("They'll stay signed up but won't get access to the app.", { title: `Deny ${profile.displayName || "this account"}'s request?`, confirmLabel: "Deny", danger: true }))) return;
             await denyProfile(profile.uid);
             refreshPending();
         });
         row.querySelector('[data-action="promote"]').addEventListener("click", async () => {
-            if (!window.confirm(`Make ${profile.displayName || "this account"} an approved coach? They'll get full coach access.`)) return;
+            if (!(await sbConfirm("They'll get full coach access, including approving accounts.", { title: `Make ${profile.displayName || "this account"} a coach?`, confirmLabel: "Make coach" }))) return;
             await promoteToCoach(profile.uid);
             refreshPending();
         });

@@ -13,6 +13,7 @@
 
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
 import { icon } from "./icons.js";
+import { sbConfirm } from "./ui.js";
 
 const SCHEDULE_KEY = "strength-schedule";
 const LIBRARY_KEY = "strength-workout-library";
@@ -428,7 +429,7 @@ function createScheduleItem() {
     renderAll();
 }
 
-function deleteScheduleItem(id) {
+async function deleteScheduleItem(id) {
     const data =
         loadSchedule();
 
@@ -441,9 +442,11 @@ function deleteScheduleItem(id) {
     if (!item) return;
 
     if (
-        !confirm(
-            `Remove "${item.workoutName}" from the schedule?`
-        )
+        !(await sbConfirm("", {
+            title: `Remove "${item.workoutName}" from the schedule?`,
+            confirmLabel: "Remove",
+            danger: true
+        }))
     ) {
         return;
     }

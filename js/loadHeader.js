@@ -4,6 +4,10 @@
 // (offline, SDK blocked) this does nothing, so a signed-in user is
 // never bounced out of their own app by a network hiccup.
 // site-check.html is a diagnostics page that must work signed out.
+// Southbound dialogs/toasts (js/ui.js) for every app page, including
+// inline page scripts, which reach them as window.SB.
+import("./ui.js").catch(error => console.warn("Southbound: UI helpers unavailable.", error));
+
 (async () => {
     const page = window.location.pathname.split("/").pop() || "index.html";
     if (page === "site-check.html") return;

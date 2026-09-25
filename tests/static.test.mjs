@@ -105,3 +105,39 @@ test("public pages show no leftover placeholder text", () => {
         }
     }
 });
+
+// The app talks through js/ui.js (Southbound dialogs and toasts), never
+// the browser's grey alert()/confirm()/prompt() boxes. A plain call is
+// only allowed as the fallback side of a ternary (`window.SB ? ... : confirm(...)`)
+// in inline scripts that run before js/ui.js may have loaded.
+test("no browser alert/confirm/prompt dialogs", () => {
+    const offenders = [];
+    const sources = [
+        ...manifest.scripts.filter(f => f !== "js/ui.js").map(f => [f, read(f)]),
+        ...manifest.pages.map(f => [f, (read(f).match(/<script[\s\S]*?<\/script>/g) || []).join("\n")])
+    ];
+    for (const [file, src] of sources) {
+        const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+        for (const m of code.matchAll(/(^|[^.\w])((?:window\.)?(alert|confirm|prompt))\s*\(/g)) {
+            const before = code.slice(Math.max(0, m.index - 2), m.index + m[1].length);
+            if (/:\s*$/.test(before)) continue;
+            const line = code.slice(0, m.index).split("\n").length;
+            offenders.push(`${file}:${line} ${m[2]}()`);
+        }
+    }
+    assert.deepEqual(offenders, [], `Use toast/sbAlert/sbConfirm/sbPrompt from js/ui.js instead:\n${offenders.join("\n")}`);
+});
+
+test("fonts are self-hosted (no Google Fonts) and every font file exists", () => {
+    const css = manifest.styles.map(f => [f, read(f)]);
+    for (const [file, src] of css) {
+        assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(src), `${file} still loads Google Fonts`);
+        for (const [, ref] of src.matchAll(/url\(['"]?([^'")]+\.woff2)['"]?\)/g)) {
+            const target = resolveRef(file, ref);
+            assert.ok(existsSync(join(root, target)), `${file} -> ${ref} is missing`);
+        }
+    }
+    for (const page of [...manifest.pages, ...manifest.partials]) {
+        assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(read(page)), `${page} still loads Google Fonts`);
+    }
+});

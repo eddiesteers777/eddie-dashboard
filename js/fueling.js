@@ -9,6 +9,7 @@ import {
 } from "./fuelSchedule.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
 import { showsPersonalPlan } from "./role.js";
+import { toast, sbConfirm, sbPrompt } from "./ui.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -982,7 +983,7 @@ $("autoFillDrinkBtn").addEventListener("click", () => {
 
     if (!lastTargets) {
 
-        alert("Calculate a fueling plan first.");
+        toast("Calculate your fueling targets first (step 1 at the top).", { type: "info" });
 
         return;
 
@@ -1058,7 +1059,7 @@ $("diyCalculateBtn").addEventListener("click", () => {
 
 });
 
-$("saveDiyRecipeBtn").addEventListener("click", () => {
+$("saveDiyRecipeBtn").addEventListener("click", async () => {
 
     const snapshot = $("diyResults").dataset.snapshot;
 
@@ -1068,7 +1069,9 @@ $("saveDiyRecipeBtn").addEventListener("click", () => {
 
     recipe.id = Date.now();
 
-    recipe.name = prompt("Name this recipe:", "My DIY Mix") || "My DIY Mix";
+    const name = await sbPrompt("", { title: "Name this recipe", defaultValue: "My DIY Mix", maxLength: 60, confirmLabel: "Save recipe" });
+    if (name === null) return;
+    recipe.name = name.trim() || "My DIY Mix";
 
     diyRecipes.push(recipe);
 
@@ -1321,7 +1324,7 @@ $("libraryGrid").addEventListener("click", (e) => {
 
         if (!lastTargets) {
 
-            alert("Calculate a fueling plan first, so this item's contribution can be checked against your target.");
+            toast("Calculate your fueling targets first, so this can be checked against them.", { type: "info" });
 
             return;
 
@@ -1570,7 +1573,7 @@ $("savePlanBtn").addEventListener("click", () => {
 
     if (!lastTargets) {
 
-        alert("Calculate a fueling plan first before saving.");
+        toast("Calculate your fueling targets first, then save.", { type: "info" });
 
         return;
 
@@ -1600,7 +1603,7 @@ $("duplicatePlanBtn").addEventListener("click", () => {
 
     if (!lastTargets) {
 
-        alert("Calculate a fueling plan first before duplicating.");
+        toast("Calculate your fueling targets first, then duplicate.", { type: "info" });
 
         return;
 
@@ -1652,11 +1655,11 @@ $("clearPlanBtn").addEventListener("click", () => {
 
 });
 
-$("deletePlanBtn").addEventListener("click", () => {
+$("deletePlanBtn").addEventListener("click", async () => {
 
     if (!currentPlanId) return;
 
-    if (!confirm("Delete this saved plan?")) return;
+    if (!(await sbConfirm("This can't be undone.", { title: "Delete this saved plan?", confirmLabel: "Delete", danger: true }))) return;
 
     plans = plans.filter(p => String(p.id) !== String(currentPlanId));
 
@@ -1860,7 +1863,7 @@ $("fuelSheetEdit").addEventListener("click", () => {
 
 $("fuelSheetPrint").addEventListener("click", () => window.print());
 
-$("savedPlansGrid").addEventListener("click", (e) => {
+$("savedPlansGrid").addEventListener("click", async (e) => {
 
     const viewId = e.target.closest("[data-view]")?.dataset.view;
     const openId = e.target.dataset.open;
@@ -1889,7 +1892,7 @@ $("savedPlansGrid").addEventListener("click", (e) => {
 
     if (delId) {
 
-        if (!confirm("Delete this saved plan?")) return;
+        if (!(await sbConfirm("This can't be undone.", { title: "Delete this saved plan?", confirmLabel: "Delete", danger: true }))) return;
 
         plans = plans.filter(p => String(p.id) !== delId);
 

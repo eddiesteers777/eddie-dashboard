@@ -524,8 +524,10 @@ $("plannerForm").addEventListener("submit", event => {
     render();
 });
 
-$("plannerDelete").addEventListener("click", () => {
-    if (!editingId || !window.confirm("Delete this event?")) return;
+$("plannerDelete").addEventListener("click", async () => {
+    if (!editingId) return;
+    const { sbConfirm } = await import("./js/ui.js");
+    if (!(await sbConfirm("", { title: "Delete this event?", confirmLabel: "Delete", danger: true }))) return;
     deletePlannerEvent(editingId);
     closeSheet();
     render();

@@ -119,6 +119,7 @@
     "js/trainingPlanGenerator.js",
     "js/trainingPlanStrengthIntegration.js",
     "js/trainingPrograms.js",
+    "js/ui.js",
     "js/updates.js",
     "js/userProfile.js",
     "js/userSettings.js",

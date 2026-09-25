@@ -31,6 +31,7 @@ import {
     addPrivateNote, updatePrivateNote, deletePrivateNote,
     sendClientUpdate, deleteClientUpdate
 } from "./clientNotes.js";
+import { toast, sbConfirm, friendlyError } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -369,6 +370,7 @@ function renderCheckins() {
             summarize();
             renderAll();
             selectTab("checkins");
+            toast("Reply sent. They get it in the app and by email.");
         } catch (error) {
             console.error(error);
             msg.textContent = "Couldn't save that -- try again.";
@@ -537,6 +539,7 @@ function wireNotes() {
             record.privateNotes = [note, ...record.privateNotes];
             sortNotes();
             afterNotesChange();
+            toast("Private note saved");
         } catch (error) {
             console.error(error);
             showMsg(noteForm, "Couldn't save that -- try again.");
@@ -558,6 +561,7 @@ function wireNotes() {
             });
             record.updates = [update, ...record.updates];
             afterNotesChange();
+            toast(`Update sent to ${firstName()}`);
         } catch (error) {
             console.error(error);
             showMsg(updateForm, "Couldn't send that -- try again.");
@@ -574,7 +578,7 @@ function wireNotes() {
         const action = btn.dataset.noteAction;
         try {
             if (action === "delete") {
-                if (!confirm("Delete this private note?")) return;
+                if (!(await sbConfirm("This can't be undone.", { title: "Delete this private note?", confirmLabel: "Delete", danger: true }))) return;
                 await deletePrivateNote(note.id);
                 record.privateNotes = record.privateNotes.filter(n => n !== note);
                 afterNotesChange();
@@ -589,7 +593,7 @@ function wireNotes() {
             }
         } catch (error) {
             console.error(error);
-            alert("Couldn't change that note -- try again.");
+            toast(friendlyError(error, "change that note"), { type: "error" });
         }
     });
 
@@ -599,16 +603,16 @@ function wireNotes() {
         const update = record.updates.find(u => u.id === btn.closest("[data-update]").dataset.update);
         if (!update) return;
         const question = update.readAt
-            ? "Delete this update? It disappears from their app too."
-            : "Unsend this update? It disappears from their app. (The email saying you sent something has already gone.)";
-        if (!confirm(question)) return;
+            ? "It disappears from their app too."
+            : "It disappears from their app. The email saying you sent something has already gone, but it doesn't include your message.";
+        if (!(await sbConfirm(question, { title: update.readAt ? "Delete this update?" : "Unsend this update?", confirmLabel: update.readAt ? "Delete" : "Unsend", danger: true }))) return;
         try {
             await deleteClientUpdate(update.id);
             record.updates = record.updates.filter(u => u !== update);
             afterNotesChange();
         } catch (error) {
             console.error(error);
-            alert("Couldn't delete that update -- try again.");
+            toast(friendlyError(error, "delete that update"), { type: "error" });
         }
     });
 }

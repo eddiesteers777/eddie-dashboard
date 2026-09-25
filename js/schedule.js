@@ -8,6 +8,7 @@
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
+import { sbConfirm, sbPrompt, toast } from "./ui.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
 import {
@@ -143,7 +144,7 @@ async function refreshAvailability() {
             refreshAvailability();
         });
         card.querySelector('[data-action="remove"]').addEventListener("click", async () => {
-            if (!window.confirm("Remove this slot? Existing approved bookings aren't affected.")) return;
+            if (!(await sbConfirm("Sessions you've already approved aren't affected.", { title: "Remove this slot?", confirmLabel: "Remove", danger: true }))) return;
             await removeAvailabilitySlot(slot.id);
             refreshAvailability();
         });
@@ -274,21 +275,31 @@ async function fullDates(req) {
 }
 
 async function editSessionNotes(req) {
-    const note = window.prompt(
-        `Notes for ${req.clientName} -- what you worked on, homework for next time. They'll see this on their Today screen and in Schedule.`,
-        req.coachNote || ""
-    );
+    const note = await sbPrompt("What you worked on, homework for next time. They'll see this on their Today screen and in Schedule.", {
+        title: `Session notes for ${req.clientName}`,
+        defaultValue: req.coachNote || "",
+        multiline: true,
+        maxLength: 2000,
+        confirmLabel: "Save notes"
+    });
     if (note === null) return;
     await setSessionNotes(req.id, note.trim());
+    toast("Session notes saved");
     refreshRequests();
 }
 
 async function respond(req, status) {
     if (status === "approved") {
         const full = await fullDates(req);
-        if (full.length && !window.confirm(`This slot is already full on ${full.join(", ")}. Approve anyway?`)) return;
+        if (full.length && !(await sbConfirm(`Already full on ${full.join(", ")}.`, { title: "This slot is full. Approve anyway?", confirmLabel: "Approve anyway" }))) return;
     }
-    const note = window.prompt(`Add a note for ${req.clientName}? (optional)`);
+    const note = await sbPrompt("Optional. It goes in the email and shows on their booking.", {
+        title: `${status === "approved" ? "Approve" : "Decline"} ${req.clientName}'s request`,
+        placeholder: status === "approved" ? "See you there!" : "Can we try another time?",
+        multiline: true,
+        maxLength: 1000,
+        confirmLabel: status === "approved" ? "Approve" : "Decline"
+    });
     if (note === null) return;
     await respondToRequest(req.id, status, note);
     sendBookingResponseEmail({
@@ -304,6 +315,7 @@ async function respond(req, status) {
         coachNote: note,
         link: window.location.origin + window.location.pathname
     }).catch(() => {});
+    toast(status === "approved" ? `Approved. ${req.clientName} gets an email.` : `Declined. ${req.clientName} gets an email.`);
     refreshRequests();
 }
 
@@ -383,7 +395,7 @@ async function refreshMyRequests() {
             </div>
         `;
         row.querySelector('[data-action="cancel"]')?.addEventListener("click", async () => {
-            if (!window.confirm("Cancel this request?")) return;
+            if (!(await sbConfirm("Your coach will see it was cancelled.", { title: "Cancel this request?", confirmLabel: "Cancel request", cancelLabel: "Keep it", danger: true }))) return;
             await cancelBookingRequest(req.id);
             refreshMyRequests();
         });
@@ -462,7 +474,7 @@ bookForm.addEventListener("submit", async event => {
             dates: created.dates,
             link: window.location.origin + window.location.pathname
         }).catch(() => {});
-        showMsg(bookMsg, "Request sent!");
+        toast("Request sent. You'll get an email when your coach answers.");
         setTimeout(() => {
             bookOverlay.hidden = true;
             bookState = null;

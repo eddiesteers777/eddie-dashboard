@@ -303,15 +303,13 @@ body{
 
 .mp-display{
 
-    font-family:"Inter",sans-serif;
+    font-family:var(--font-body);
 
 }
 
 .mp-mono{
 
-    font-family:
-        "JetBrains Mono",
-        monospace;
+    font-family:var(--font-mono);
 
 }
 /* ==========================================
@@ -514,13 +512,7 @@ body{
 
 .mp-wchip.active{
 
-    background:
-
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
+    background:var(--primary);
 
     color:var(--on-primary);
 
@@ -1140,7 +1132,7 @@ body{
 
     padding:12px 22px;
 
-    border-radius:14px;
+    border-radius:var(--radius-pill);
 
     font-size:.9rem;
 
@@ -1158,14 +1150,9 @@ body{
 
     color:var(--on-primary);
 
-    background:linear-gradient(
-        135deg,
-        var(--primary),
-        var(--primary-dark)
-    );
+    background:var(--primary);
 
-    box-shadow:
-        0 12px 30px rgba(166,138,98,.30);
+    box-shadow:0 8px 20px rgba(201,173,132,.22);
 
 }
 

@@ -827,11 +827,11 @@ function importData(file){
       saveAll();
       render();
 
-      alert('Data imported!');
+      (window.SB ? window.SB.toast : alert)('Data imported.');
 
     }catch{
 
-      alert('Invalid backup file.');
+      (window.SB ? m => window.SB.toast(m, { type: 'error' }) : alert)("That file isn't a Southbound backup.");
 
     }
 
@@ -1647,7 +1647,7 @@ function wireEvents(){
 
       saveAll();
 
-      alert('Saved!');
+      (window.SB ? window.SB.toast : alert)('Saved');
 
     });
 
@@ -1681,9 +1681,13 @@ function wireEvents(){
 
   if(resetBtn){
 
-    resetBtn.addEventListener('click',()=>{
+    resetBtn.addEventListener('click',async()=>{
 
-      if(confirm('Reset all habits and checked days? This cannot be undone.')){
+      const ok = window.SB
+        ? await window.SB.confirm("This can't be undone.", { title: 'Reset all habits and checked days?', confirmLabel: 'Reset', danger: true })
+        : confirm('Reset all habits and checked days? This cannot be undone.');
+
+      if(ok){
 
         habits=[...DEFAULT_HABITS];
 

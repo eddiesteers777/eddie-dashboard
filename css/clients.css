@@ -118,17 +118,18 @@
     align-items:center;
     justify-content:center;
     gap:7px;
-    border-radius:11px;
+    border-radius:var(--radius-pill);
     padding:11px 18px;
     font:700 13px/1 var(--font-body);
     text-decoration:none;
     cursor:pointer;
     white-space:nowrap;
     transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,color .15s ease;
+    min-height:var(--control-height);
 }
 .clients-btn-primary{
     background:var(--primary);
-    color:#0f2019;
+    color:var(--on-primary);
     border:1px solid var(--primary);
     box-shadow:0 6px 18px rgba(201,173,132,.25);
 }

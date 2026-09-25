@@ -27,6 +27,7 @@ import { loadTrainingPrograms } from "./trainingPrograms.js";
 import { compareGeneratedPlans, preserveRegeneratedRuntimeState } from "./racePlanEditor.js";
 import { START_DATE as MARATHON_START_DATE, RACE_DATE as MARATHON_RACE_DATE } from "./marathonData.js";
 import { showsPersonalPlan } from "./role.js";
+import { toast, sbAlert, sbConfirm } from "./ui.js";
 import {
     syncRacePlanStrengthSchedule,
     deactivateRacePlanStrengthSchedule,
@@ -501,7 +502,7 @@ function renderGeneratedPreview(plan) {
 function generateCurrentPlan() {
     const error = validateCurrentStep();
     if (error) {
-        window.alert(error);
+        toast(error, { type: "info" });
         return false;
     }
 
@@ -514,7 +515,7 @@ function generateCurrentPlan() {
         return true;
     } catch (error) {
         generatedPreview = null;
-        window.alert(error.message || "Southbound could not generate this plan.");
+        toast(error.message || "Couldn't build this plan. Check its settings and try again.", { type: "error" });
         return false;
     }
 }
@@ -541,22 +542,25 @@ async function saveGeneratedPlan() {
     if (conflicts.length) {
         const conflictText = formatConflictList(conflicts);
         if (existing && normalizePlanStatus(existing) === "active") {
-            window.alert(
-                `Southbound did not apply these changes. This active plan would overlap:\n\n${conflictText}\n\nYour current active plan is unchanged. Resolve the overlap before applying the regenerated schedule.`
+            await sbAlert(
+                `It would overlap:\n\n${conflictText}\n\nYour current active plan is unchanged. Resolve the overlap, then apply the new schedule.`,
+                { title: "Changes not applied" }
             );
             return false;
         }
 
-        const saveAsDraft = window.confirm(
-            `This plan overlaps an existing active training plan:\n\n${conflictText}\n\nYour existing plan will NOT be erased or changed.\n\nClick OK to save this new plan as a DRAFT only. It will not be added to the active Running calendar until the overlap is resolved.\n\nClick Cancel to return without saving.`
+        const saveAsDraft = await sbConfirm(
+            `${conflictText}\n\nYour existing plan won't be changed. You can save this new one as a draft; it stays off the Running calendar until the overlap is resolved.`,
+            { title: "This overlaps an active plan", confirmLabel: "Save as draft", cancelLabel: "Go back" }
         );
         if (!saveAsDraft) return false;
         nextStatus = "draft";
     }
 
     if (nextStatus === "active" && Number(settings.strengthDays) > 0 && !getRacePlanStrengthAvailability().available) {
-        const proceed = window.confirm(
-            "This plan requests automatic Strength scheduling, but no current Strength plan was found.\n\nClick OK to save without Strength calendar entries.\n\nClick Cancel to return and create a Strength plan first."
+        const proceed = await sbConfirm(
+            "This plan asks for Strength sessions on the calendar, but there's no current Strength plan. Save it without Strength sessions, or go back and create a Strength plan first.",
+            { title: "No Strength plan found", confirmLabel: "Save without Strength", cancelLabel: "Go back" }
         );
         if (!proceed) return false;
     }
@@ -601,7 +605,7 @@ async function saveGeneratedPlan() {
             strengthResult = await syncRacePlanStrengthSchedule(record);
         } catch (error) {
             console.error("Race-plan Strength calendar integration failed:", error);
-            window.alert("The race plan was saved, but Southbound could not update the Strength calendar. Your existing Strength schedule was not deleted.");
+            toast("Race plan saved, but the Strength calendar couldn't be updated. Your existing Strength schedule is unchanged.", { type: "error" });
         }
     } else if (existing && (record.status === "paused" || record.status === "archived")) {
         try {
@@ -611,7 +615,7 @@ async function saveGeneratedPlan() {
         }
     }
 
-    if (strengthResult.warning) window.alert(strengthResult.warning);
+    if (strengthResult.warning) await sbAlert(strengthResult.warning, { title: "About your Strength calendar" });
 
     const wasActiveOnCalendar = record.status === "active";
 
@@ -884,7 +888,7 @@ async function updatePlanStatus(planId, nextStatus) {
 
     if (nextStatus === "active") {
         if (!plan.generatedPlan) {
-            window.alert("This plan does not have a generated schedule yet.");
+            toast("This plan doesn't have a schedule yet. Open it and generate one first.", { type: "info" });
             return false;
         }
 
@@ -893,15 +897,17 @@ async function updatePlanStatus(planId, nextStatus) {
         const conflicts = getPlanConflicts(plans, plan.generatedPlan, planId);
 
         if (conflicts.length) {
-            window.alert(
-                `Southbound cannot activate this race plan yet because it overlaps an existing active training plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`
+            await sbAlert(
+                `${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause or archive the other plan, or change this plan's dates, then try again.`,
+                { title: "This plan overlaps an active plan" }
             );
             return false;
         }
 
         if (Number(plan.settings?.strengthDays) > 0 && !getRacePlanStrengthAvailability().available) {
-            const proceed = window.confirm(
-                "This plan requests automatic Strength scheduling, but no current Strength plan was found.\n\nClick OK to activate without Strength calendar entries.\n\nClick Cancel to keep the plan inactive."
+            const proceed = await sbConfirm(
+                "This plan asks for Strength sessions on the calendar, but there's no current Strength plan. You can activate it without Strength sessions, or keep it inactive for now.",
+                { title: "No Strength plan found", confirmLabel: "Activate without Strength", cancelLabel: "Keep inactive" }
             );
             if (!proceed) return false;
         }
@@ -926,13 +932,13 @@ async function updatePlanStatus(planId, nextStatus) {
     try {
         if (nextStatus === "active") {
             const result = await syncRacePlanStrengthSchedule(plan);
-            if (result.warning) window.alert(result.warning);
+            if (result.warning) await sbAlert(result.warning, { title: "About your Strength calendar" });
         } else if (nextStatus === "paused" || nextStatus === "archived") {
             await deactivateRacePlanStrengthSchedule(planId);
         }
     } catch (error) {
         console.error("Race-plan Strength status integration failed:", error);
-        window.alert("The race plan status changed, but Southbound could not fully update the Strength calendar.");
+        toast("Plan updated, but the Strength calendar couldn't be fully updated.", { type: "error" });
     }
     renderSavedPlans();
     window.dispatchEvent(new CustomEvent("eddieos:running-programs-changed", {
@@ -1112,7 +1118,7 @@ function initFormEvents() {
     document.getElementById("racePlanNext")?.addEventListener("click", () => {
         const error = validateCurrentStep();
         if (error) {
-            window.alert(error);
+            toast(error, { type: "info" });
             return;
         }
         showStep(currentStep + 1);
@@ -1176,7 +1182,7 @@ function initFormEvents() {
         }
 
         if (action === "archive") {
-            const proceed = window.confirm("Archive this race plan? Its data and generated training history will remain saved, but it will no longer appear on the active Running calendar.");
+            const proceed = await sbConfirm("Its data and training history stay saved, but it comes off the active Running calendar.", { title: "Archive this race plan?", confirmLabel: "Archive" });
             if (proceed) await updatePlanStatus(plan.id, "archived");
             return;
         }

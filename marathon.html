@@ -836,19 +836,23 @@
     if (paceBtn) paceBtn.addEventListener("click", () => document.getElementById("mp-pace-drawer").classList.toggle("open"));
 
     const resetWeekBtn = document.getElementById("mp-reset-week-btn");
-    if (resetWeekBtn) resetWeekBtn.addEventListener("click", () => {
-      if (overrides[selectedWeek] && confirm("Reset this week's mileage/workout edits back to the default plan?")) {
+    if (resetWeekBtn) resetWeekBtn.addEventListener("click", async () => {
+      const confirmReset = async msg => window.SB ? window.SB.confirm("", { title: msg, confirmLabel: "Reset", danger: true }) : confirm(msg);
+      if (overrides[selectedWeek] && await confirmReset("Reset this week's edits back to the default plan?")) {
         delete overrides[selectedWeek];
         saveOverrides();
         renderDetail(); renderChart(); updateStats();
       } else if (!overrides[selectedWeek]) {
-        alert("No edits to reset for this week.");
+        (window.SB ? m => window.SB.toast(m, { type: "info" }) : alert)("No edits to reset for this week.");
       }
     });
 
     const resetAllBtn = document.getElementById("mp-reset-btn");
-    if (resetAllBtn) resetAllBtn.addEventListener("click", () => {
-      if (confirm("Reset all logged progress? This can't be undone.")) {
+    if (resetAllBtn) resetAllBtn.addEventListener("click", async () => {
+      const ok = window.SB
+        ? await window.SB.confirm("This can't be undone.", { title: "Reset all logged progress?", confirmLabel: "Reset", danger: true })
+        : confirm("Reset all logged progress? This can't be undone.");
+      if (ok) {
         progress = {};
         saveProgress();
         renderDetail(); renderWeekList(); renderChart(); updateStats();

@@ -4,6 +4,7 @@
 
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
 import { icon } from "./icons.js";
+import { toast, sbConfirm, sbPrompt } from "./ui.js";
 
 const LIBRARY_KEY = "strength-workout-library";
 const FAVORITES_KEY = "strength-workout-favorites";
@@ -736,9 +737,7 @@ function saveCurrentWorkout() {
         );
 
     if (!day) {
-        alert(
-            "Select a Strength day before saving it to the library."
-        );
+        toast("Select a Strength day before saving it to the library.", { type: "info" });
         return;
     }
 
@@ -790,9 +789,7 @@ function saveWorkoutFromForm() {
             .trim();
 
     if (!name) {
-        alert(
-            "Give the workout a name."
-        );
+        toast("Give the workout a name.", { type: "info" });
         return;
     }
 
@@ -887,7 +884,7 @@ function saveMyWorkouts(data) {
     );
 }
 
-function copyToMyLibrary(id) {
+async function copyToMyLibrary(id) {
     const workout =
         findWorkout(id);
 
@@ -897,18 +894,27 @@ function copyToMyLibrary(id) {
         libraryData();
 
     let name =
-        prompt(
-            "Name your copy:",
-            workout.name
-        );
+        await sbPrompt("", {
+            title: "Name your copy",
+            defaultValue: workout.name,
+            maxLength: 80,
+            confirmLabel: "Next"
+        });
 
     if (!name?.trim()) return;
 
+    const folderAnswer =
+        await sbPrompt(`Your folders: ${data.folders.join(", ")}. Type a new name to make a new folder.`, {
+            title: "Which folder?",
+            defaultValue: data.folders[0] || "My Workouts",
+            maxLength: 60,
+            confirmLabel: "Save copy"
+        });
+
+    if (folderAnswer === null) return;
+
     const folder =
-        prompt(
-            `Folder (${data.folders.join(", ")}):`,
-            data.folders[0] || "My Workouts"
-        ) ||
+        folderAnswer.trim() ||
         data.folders[0] ||
         "My Workouts";
 
@@ -952,7 +958,7 @@ function copyToMyLibrary(id) {
     renderLibrary();
 }
 
-function deleteMyWorkout(id) {
+async function deleteMyWorkout(id) {
     const data =
         libraryData();
 
@@ -965,9 +971,11 @@ function deleteMyWorkout(id) {
     if (!workout) return;
 
     if (
-        !confirm(
-            `Delete "${workout.name}" from My Library?`
-        )
+        !(await sbConfirm("Days it's already scheduled on keep their copy.", {
+            title: `Delete "${workout.name}" from My Library?`,
+            confirmLabel: "Delete",
+            danger: true
+        }))
     ) {
         return;
     }
@@ -1025,11 +1033,14 @@ function moveMyWorkout(
     renderLibrary();
 }
 
-function createFolder() {
+async function createFolder() {
     const name =
-        prompt(
-            "New library folder name:"
-        )?.trim();
+        (await sbPrompt("", {
+            title: "New folder",
+            placeholder: "e.g. Race week",
+            maxLength: 60,
+            confirmLabel: "Create folder"
+        }))?.trim();
 
     if (!name) return;
 
@@ -1041,9 +1052,7 @@ function createFolder() {
             name
         )
     ) {
-        alert(
-            "That folder already exists."
-        );
+        toast("That folder already exists.", { type: "info" });
         return;
     }
 

@@ -1216,7 +1216,7 @@ document.addEventListener(
 
     "click",
 
-    e=>{
+    async e=>{
 
         /* + and - buttons */
 
@@ -1284,17 +1284,15 @@ document.addEventListener(
 
                 e.target.dataset.goal;
 
-            const value = Number(
+            const label = { calories: "calories", protein: "protein (g)", carbs: "carbs (g)", fat: "fat (g)" }[macro] || macro;
 
-                prompt(
+            const answer = window.SB?.prompt
+                ? await window.SB.prompt("", { title: `Daily ${label} goal`, defaultValue: String(macros[macro].goal), maxLength: 6, confirmLabel: "Save goal" })
+                : prompt("Enter new goal", macros[macro].goal);
 
-                    "Enter new goal",
+            if (answer === null) return;
 
-                    macros[macro].goal
-
-                )
-
-            );
+            const value = Number(answer);
 
             if(
 

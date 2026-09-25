@@ -300,13 +300,7 @@ body{
 
 .ct-filter-chip.active{
 
-    background:
-
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
+    background:var(--primary);
 
     color:var(--on-primary);
 
@@ -324,7 +318,7 @@ body{
 
     padding:12px 22px;
 
-    border-radius:12px;
+    border-radius:var(--radius-pill);
 
     font-size:.88rem;
 
@@ -332,15 +326,9 @@ body{
 
     color:var(--on-primary);
 
-    background:
+    background:var(--primary);
 
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
-
-    box-shadow:0 12px 26px rgba(166,138,98,.30);
+    box-shadow:0 8px 20px rgba(201,173,132,.22);
 
     transition:.2s;
 
@@ -600,13 +588,7 @@ body{
 
 .ct-card-btn.ct-card-btn-primary{
 
-    background:
-
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
+    background:var(--primary);
 
     color:var(--on-primary);
 
@@ -778,13 +760,7 @@ body{
 
 .ct-week-chip.active{
 
-    background:
-
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
+    background:var(--primary);
 
     color:var(--on-primary);
 
@@ -842,13 +818,7 @@ body{
 
 .ct-day-pill.active{
 
-    background:
-
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
+    background:var(--primary);
 
     color:var(--on-primary);
 
@@ -1064,7 +1034,7 @@ body{
 
     padding:16px;
 
-    border-radius:14px;
+    border-radius:var(--radius-pill);
 
     font-size:1rem;
 
@@ -1074,15 +1044,9 @@ body{
 
     color:var(--on-primary);
 
-    background:
+    background:var(--primary);
 
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
-
-    box-shadow:0 12px 30px rgba(166,138,98,.30);
+    box-shadow:0 8px 20px rgba(201,173,132,.22);
 
     transition:.25s;
 
@@ -1563,7 +1527,7 @@ body{
 
     font-size:.9rem;
 
-    font-family:"JetBrains Mono",monospace;
+    font-family:var(--font-mono);
 
 }
 
@@ -1586,14 +1550,13 @@ body{
 
     padding:11px 20px;
 
-    border-radius:12px;
+    border-radius:var(--radius-pill);
 
     font-size:.85rem;
 
     font-weight:700;
 
     transition:.2s;
-
 }
 
 .ct-btn-secondary{
@@ -1616,13 +1579,7 @@ body{
 
     color:var(--on-primary);
 
-    background:
-
-        linear-gradient(
-            135deg,
-            var(--primary),
-            var(--primary-dark)
-        );
+    background:var(--primary);
 
     box-shadow:0 10px 24px rgba(166,138,98,.3);
 

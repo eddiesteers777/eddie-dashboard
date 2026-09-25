@@ -3,6 +3,7 @@
 // ==============================
 
 import { auth } from "./firebase.js";
+import { toast } from "./ui.js";
 
 import {
     onAuthStateChanged,
@@ -162,7 +163,7 @@ document.getElementById("exportDataBtn")?.addEventListener("click", async () => 
     } catch (error) {
 
         console.error("Export failed:", error);
-        alert("Something went wrong exporting your data. Check the console for details.");
+        toast("Couldn't export your data. Try again in a moment.", { type: "error" });
 
     }
 

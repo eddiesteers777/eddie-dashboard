@@ -11,6 +11,7 @@ import {
 import { searchExercises } from "./exerciseSearch.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
+import { toast } from "./ui.js";
 
 const STORAGE_KEY = "strength-plan";
 const LIBRARY_KEY = "strength-exercise-library";
@@ -163,9 +164,7 @@ function saveCustomExerciseFromForm() {
         $("customExerciseName")?.value.trim();
 
     if (!name) {
-        alert(
-            "Give the exercise a name first."
-        );
+        toast("Give the exercise a name first.", { type: "info" });
         return;
     }
 
@@ -1702,9 +1701,7 @@ function createGroupFromModal() {
         );
 
     if (ids.length < 2) {
-        alert(
-            "Select at least two exercises."
-        );
+        toast("Select at least two exercises.", { type: "info" });
 
         return;
     }
@@ -3141,9 +3138,7 @@ window.addEventListener(
                 activeDay();
 
             if (!day) {
-                alert(
-                    "Create or select a Strength day first."
-                );
+                toast("Create or select a Strength day first.", { type: "info" });
                 return;
             }
 

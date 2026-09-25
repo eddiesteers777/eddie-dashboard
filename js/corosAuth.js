@@ -1,5 +1,7 @@
 /* Southbound COROS OAuth — current MCP-compatible implementation */
 
+import { sbAlert } from "./ui.js";
+
 const MCP_URL = "https://mcpus.coros.com/mcp";
 const CLIENT_ID =
     "https://southboundcoaching.com/oauth/client-metadata.json";
@@ -387,9 +389,7 @@ function init() {
                         false
                     );
 
-                    alert(
-                        `Southbound could not start the COROS connection.\n\n${error.message}`
-                    );
+                    sbAlert(error.message, { title: "Couldn't start the COROS connection" });
 
                     button.disabled = false;
                     button.dataset.busy = "false";
@@ -409,9 +409,7 @@ function init() {
             false
         );
 
-        alert(
-            `COROS authorization did not finish successfully.\n\n${error.message}`
-        );
+        sbAlert(error.message, { title: "COROS didn't finish connecting" });
 
         window.history.replaceState(
             {},

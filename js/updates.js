@@ -19,6 +19,7 @@ import { listMyCoaches } from "./coachAccess.js";
 import { buildCoachFeed, isoDate } from "./clientSummary.js";
 import { cachedRole } from "./role.js";
 import { icon } from "./icons.js";
+import { emptyHtml } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -73,9 +74,9 @@ listenForAuth(async user => {
     $("feedLoading").hidden = true;
     $("feed").innerHTML = feed.length
         ? feed.map(itemHtml).join("")
-        : `<div class="clients-card"><p class="clients-card-note">${coaches.length
-            ? `Nothing from your coach yet. Updates, replies to your <a href="checkin.html">weekly check-in</a> and notes from your sessions show up here.`
-            : `You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> and their updates show up here.`}</p></div>`;
+        : `<div class="clients-card">${coaches.length
+            ? emptyHtml({ iconName: "messageSquare", title: "Nothing from your coach yet", text: "Updates, replies to your weekly check-in and notes from your sessions show up here.", actionHref: "checkin.html", actionLabel: "Send a check-in" })
+            : emptyHtml({ iconName: "link", title: "Not connected to a coach yet", text: "Connect with your coach and their updates show up here.", actionHref: "clients.html?tab=share", actionLabel: "Connect with Coach" })}</div>`;
 
     // Seen now; the "New" tags stay until the next visit.
     markUpdatesRead(updates);

@@ -6,6 +6,7 @@ import { syncTrainingPlanStrengthSchedule, deactivateTrainingPlanStrengthSchedul
 import { getRacePlanStrengthAvailability } from './racePlanStrengthIntegration.js';
 import { START_DATE as MARATHON_START_DATE, RACE_DATE as MARATHON_RACE_DATE } from './marathonData.js';
 import { showsPersonalPlan } from './role.js';
+import { toast, sbAlert, sbConfirm } from './ui.js';
 
 const TAB_KEY = 'programs-tab';
 const TAB_NAMES = { race: 'Race Plans', training: 'Training Plans' };
@@ -278,19 +279,19 @@ async function activateTrainingPlan(id) {
     try {
         result = generateTrainingPlan(plan.settings || {});
     } catch (error) {
-        window.alert(error.message || 'This training plan could not be generated. Check its settings and try again.');
+        await sbAlert(error.message || 'Check its settings and try again.', { title: "Couldn't build this plan" });
         return;
     }
 
     const { generatedPlan, warnings } = result;
     const conflicts = getTrainingPlanConflicts(generatedPlan.trainingStartDate, generatedPlan.raceDate, id);
     if (conflicts.length) {
-        window.alert(`Southbound cannot activate this training plan yet because it overlaps an existing active plan:\n\n${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause/archive the conflicting plan or change this plan's dates, then try again.`);
+        await sbAlert(`${formatConflictList(conflicts)}\n\nNothing was deleted or changed. Pause or archive the other plan, or change this plan's dates, then try again.`, { title: 'This plan overlaps an active plan' });
         return;
     }
 
     if (generatedPlan.liftDaysPerWeek > 0 && !getRacePlanStrengthAvailability().available) {
-        const proceed = window.confirm('This plan schedules Strength sessions, but no current Strength plan was found.\n\nClick OK to activate without Strength calendar entries.\n\nClick Cancel to keep the plan inactive.');
+        const proceed = await sbConfirm('This plan schedules Strength sessions, but there is no current Strength plan to put on the calendar. You can activate it without Strength sessions, or keep it inactive for now.', { title: 'No Strength plan found', confirmLabel: 'Activate without Strength', cancelLabel: 'Keep inactive' });
         if (!proceed) return;
     }
 
@@ -309,7 +310,7 @@ async function activateTrainingPlan(id) {
         strengthResult = await syncTrainingPlanStrengthSchedule(plan);
     } catch (error) {
         console.error('Training-plan Strength calendar integration failed:', error);
-        window.alert('The training plan was activated, but Southbound could not update the Strength calendar. Your existing Strength schedule was not deleted.');
+        toast('Plan activated, but the Strength calendar could not be updated. Your existing Strength schedule is unchanged.', { type: 'error' });
     }
 
     renderTrainingLibrary();
@@ -320,9 +321,11 @@ async function activateTrainingPlan(id) {
     }));
 
     const combinedWarnings = [...warnings, ...(strengthResult.warning ? [strengthResult.warning] : [])];
-    window.alert(combinedWarnings.length
-        ? `Training plan activated with notes:\n\n${combinedWarnings.map(item => `• ${item}`).join('\n')}`
-        : 'Training plan activated. Check the Running and Strength calendars for the generated schedule.');
+    if (combinedWarnings.length) {
+        await sbAlert(combinedWarnings.map(item => `• ${item}`).join('\n'), { title: 'Training plan activated, with notes' });
+    } else {
+        toast('Training plan activated. It is on your Running and Strength calendars.');
+    }
 }
 
 async function updateTrainingPlanStatus(id, nextStatus) {
@@ -548,14 +551,14 @@ function init() {
     let editingDraftId = null;
     trainingNext?.addEventListener('click', () => {
         if (currentStep === 1 && !document.querySelector('[data-primary-goal].selected')) {
-            window.alert('Choose a primary training goal first.');
+            toast('Choose a primary training goal first.', { type: 'info' });
             return;
         }
         if (currentStep === 2) {
             const start = document.getElementById('trainingStartDate')?.value;
             const end = document.getElementById('trainingEndDate')?.value;
             if (!start || !end || end < start) {
-                window.alert('Choose a valid training start and end date.');
+                toast('Choose a start date and an end date after it.', { type: 'info' });
                 return;
             }
         }
@@ -589,7 +592,7 @@ function init() {
             renderTrainingLibrary();
             window.dispatchEvent(new CustomEvent('eddieos:training-programs-changed', { detail: { id } }));
         });
-        window.alert('Training plan draft saved. Find it in the list above.');
+        toast('Draft saved. Find it in the list above.');
     });
     trainingBack?.addEventListener('click', () => {
         currentStep = Math.max(1, currentStep - 1);
@@ -600,7 +603,7 @@ function init() {
         currentStep = 1;
         resetTrainingBuilder();
     });
-    document.getElementById('trainingDraftLibrary')?.addEventListener('click', event => {
+    document.getElementById('trainingDraftLibrary')?.addEventListener('click', async event => {
         const editBtn = event.target.closest('[data-training-edit]');
         const deleteBtn = event.target.closest('[data-training-delete]');
         const activateBtn = event.target.closest('[data-training-activate]');
@@ -619,7 +622,7 @@ function init() {
 
         if (deleteBtn) {
             const id = deleteBtn.dataset.trainingDelete;
-            if (!window.confirm('Delete this training plan draft?')) return;
+            if (!(await sbConfirm("This can't be undone.", { title: 'Delete this draft?', confirmLabel: 'Delete', danger: true }))) return;
             const remaining = loadTrainingPrograms().filter(item => item.id !== id);
             saveTrainingPrograms(remaining).then(() => {
                 if (editingDraftId === id) {
@@ -644,7 +647,7 @@ function init() {
         }
 
         if (archiveBtn) {
-            if (!window.confirm('Archive this training plan? It will come off the active calendar, but its history is kept.')) return;
+            if (!(await sbConfirm('It comes off the active calendar, but its history is kept.', { title: 'Archive this training plan?', confirmLabel: 'Archive' }))) return;
             updateTrainingPlanStatus(archiveBtn.dataset.trainingArchive, 'archived');
         }
     });
