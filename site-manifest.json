@@ -64,6 +64,8 @@
     "js/firebase.js",
     "js/firestore.js",
     "js/foodSearch.js",
+    "js/fuelSchedule.js",
+    "js/fuelScheduleView.js",
     "js/fueling.js",
     "js/gear.js",
     "js/habitIcons.js",

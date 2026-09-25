@@ -524,13 +524,7 @@
 
                     <div class="fuel-target-sub">
 
-                        <span id="carbsTotal">0 g</span> total ·
-                        every <input
-                            type="number"
-                            id="fuelInterval"
-                            min="5"
-                            step="5"
-                            value="25"> min
+                        <span id="carbsTotal">0 g</span> total
 
                     </div>
 
@@ -630,7 +624,9 @@
         </section>
 
         <!-- ============================================
-             SECTION 3 — FUELING TIMELINE
+             SECTION 3 — RACE-DAY SCHEDULE
+             Built live from the targets, products and
+             bottles (js/fuelSchedule.js + fuelScheduleView.js).
         ============================================= -->
 
         <section
@@ -642,37 +638,35 @@
 
                 <h2>
 
-                    Fueling Timeline
+                    Race-Day Schedule
 
                 </h2>
 
-                <div class="fuel-timeline-actions">
+                <label class="fs-control">
 
-                    <button
-                        class="fuel-btn secondary small"
-                        id="regenerateTimelineBtn">
+                    First gel at
+                    <input
+                        type="number"
+                        id="firstGelMin"
+                        min="5"
+                        max="90"
+                        step="5"
+                        value="30">
+                    min
 
-                        Regenerate
-
-                    </button>
-
-                    <button
-                        class="fuel-btn secondary small"
-                        id="addTimelineStepBtn">
-
-                        + Add Step
-
-                    </button>
-
-                </div>
+                </label>
 
             </div>
 
-            <div
-                class="fuel-timeline"
-                id="fuelTimeline">
+            <p class="fuel-note fs-intro">
 
-            </div>
+                Every gel by mile and time, which miles each bottle covers and how much to sip,
+                and an hour-by-hour check against your targets. Gels are spaced evenly and stop
+                15 minutes before the finish, when they can no longer help. Caffeinated gels go last.
+
+            </p>
+
+            <div id="fuelSchedule"></div>
 
         </section>
 
@@ -1193,6 +1187,26 @@
         </p>
 
     </main>
+
+    <!-- Saved-plan sheet: the full race-day breakdown for one plan. -->
+    <div class="fs-sheet" id="fuelPlanSheet" hidden>
+        <div class="fs-sheet-backdrop" data-close-sheet></div>
+        <div class="fs-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="fuelSheetTitle">
+            <div class="fs-sheet-head">
+                <div>
+                    <span class="fs-sheet-kicker" id="fuelSheetKicker"></span>
+                    <h2 id="fuelSheetTitle"></h2>
+                    <span class="fs-sheet-sub" id="fuelSheetSub"></span>
+                </div>
+                <button type="button" class="fs-sheet-close" data-close-sheet aria-label="Close"><span data-icon="close"></span></button>
+            </div>
+            <div id="fuelSheetBody"></div>
+            <div class="fs-sheet-actions">
+                <button type="button" class="fuel-btn secondary" id="fuelSheetEdit">Edit Plan</button>
+                <button type="button" class="fuel-btn primary" id="fuelSheetPrint">Print / Save PDF</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/loadHeader.js"></script>
 

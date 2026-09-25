@@ -2172,3 +2172,502 @@
     }
 
 }
+
+/* ==========================================================
+   RACE-DAY SCHEDULE (.fs-*)
+   Rendered by js/fuelScheduleView.js in the builder and the
+   saved-plan sheet.
+========================================================== */
+
+.fs-control{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:var(--text-secondary);
+    font-size:13px;
+    font-weight:600;
+}
+.fs-control input{
+    width:64px;
+    padding:7px 8px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    color:var(--text);
+    font:700 14px/1 var(--font-body);
+    text-align:center;
+}
+.fs-intro{margin:-6px 0 20px;}
+
+.fs{display:flex;flex-direction:column;gap:18px;}
+
+.fs-heading{
+    margin:6px 0 -6px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text-secondary);
+}
+.fs-muted{color:var(--muted);}
+
+/* ---- Stat strip ---- */
+.fs-stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(92px,1fr));
+    gap:8px;
+}
+.fs-stat{
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:10px 12px;
+}
+.fs-stat span{
+    display:block;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+.fs-stat strong{
+    display:block;
+    margin-top:4px;
+    font-family:var(--font-display);
+    font-size:28px;
+    font-weight:400;
+    line-height:1;
+    color:var(--text);
+}
+.fs-stat small{
+    margin-left:3px;
+    font-family:var(--font-body);
+    font-size:11px;
+    color:var(--muted);
+}
+
+/* ---- Warnings ---- */
+.fs-warnings{
+    list-style:none;
+    margin:0;
+    padding:12px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    border-radius:14px;
+    background:rgba(255,176,32,.08);
+    border:1px solid rgba(255,176,32,.25);
+    color:var(--amber-light);
+    font-size:13px;
+    line-height:1.5;
+}
+
+/* ---- Course bar ---- */
+.fs-course-track{
+    position:relative;
+    height:54px;
+    border-radius:12px;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--border);
+    overflow:visible;
+}
+.fs-course-band{
+    position:absolute;
+    top:0;
+    bottom:0;
+    border-right:1px solid rgba(15,32,25,.6);
+}
+.fs-course-band:first-child{border-radius:11px 0 0 11px;}
+.fs-course-band:nth-last-child(1 of .fs-course-band){border-radius:0 11px 11px 0;border-right:0;}
+.fs-course-band span{
+    position:absolute;
+    left:8px;
+    top:4px;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.06em;
+    color:rgba(242,238,228,.7);
+}
+.fs-band-0{background:rgba(6,182,212,.14);}
+.fs-band-1{background:rgba(6,182,212,.24);}
+.fs-band-2{background:rgba(6,182,212,.34);}
+.fs-course-gel{
+    position:absolute;
+    top:50%;
+    transform:translate(-50%,-35%);
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    background:var(--yellow);
+    color:var(--on-primary);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:800;
+    box-shadow:0 0 0 3px var(--bg);
+}
+.fs-course-gel.is-caffeine{background:var(--orange);}
+.fs-course-labels{
+    display:flex;
+    justify-content:space-between;
+    margin-top:8px;
+    font-size:12px;
+    color:var(--muted);
+}
+.fs-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:8px;
+    font-size:12px;
+    color:var(--text-secondary);
+}
+.fs-legend span{display:inline-flex;align-items:center;gap:6px;}
+.fs-dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    display:inline-block;
+}
+.fs-dot-gel{background:var(--yellow);}
+.fs-dot-caffeine{background:var(--orange);}
+.fs-dot-bottle{background:rgba(6,182,212,.6);border-radius:3px;}
+
+/* ---- Checkpoints ---- */
+.fs-events{
+    list-style:none;
+    margin:0;
+    padding:0;
+}
+.fs-event{
+    display:grid;
+    grid-template-columns:86px 22px 1fr;
+    align-items:flex-start;
+    gap:10px;
+    position:relative;
+    padding-bottom:16px;
+}
+.fs-event:last-child{padding-bottom:0;}
+.fs-event-where{text-align:right;}
+.fs-event-where strong{
+    display:block;
+    font-family:var(--font-display);
+    font-size:21px;
+    font-weight:400;
+    line-height:1;
+    color:var(--text);
+}
+.fs-event-where span{
+    display:block;
+    margin-top:3px;
+    font:600 12px/1 var(--font-mono);
+    color:var(--muted);
+}
+.fs-event-mark{
+    position:relative;
+    align-self:stretch;
+}
+.fs-event-mark::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:3px;
+    transform:translateX(-50%);
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:var(--surface-light);
+    border:2px solid var(--muted);
+    z-index:1;
+}
+.fs-event-mark::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:18px;
+    bottom:-18px;
+    width:2px;
+    transform:translateX(-50%);
+    background:var(--border);
+}
+.fs-event:last-child .fs-event-mark::after{display:none;}
+.fs-event-gel .fs-event-mark::before{background:var(--yellow);border-color:var(--yellow);}
+.fs-event-gel.is-caffeine .fs-event-mark::before{background:var(--orange);border-color:var(--orange);}
+.fs-event-bottle .fs-event-mark::before{background:rgba(6,182,212,.6);border-color:var(--cyan);border-radius:4px;}
+.fs-event-finish .fs-event-mark::before{background:var(--primary);border-color:var(--primary);}
+.fs-event-title{
+    font-size:14.5px;
+    font-weight:700;
+    color:var(--text);
+    line-height:1.35;
+}
+.fs-event-meta{
+    margin-top:3px;
+    font-size:12.5px;
+    color:var(--text-secondary);
+    line-height:1.45;
+}
+.fs-tag{
+    display:inline-block;
+    margin-left:4px;
+    padding:2px 7px;
+    border-radius:999px;
+    background:rgba(251,146,60,.16);
+    color:var(--orange);
+    font-size:10.5px;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    vertical-align:2px;
+}
+
+/* ---- Bottles ---- */
+.fs-bottles{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:10px;
+}
+.fs-bottle{
+    border-radius:14px;
+    border:1px solid rgba(6,182,212,.3);
+    padding:14px;
+}
+.fs-bottle-top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:8px;
+}
+.fs-bottle-top strong{font-size:15px;}
+.fs-bottle-top span{
+    font-family:var(--font-display);
+    font-size:19px;
+    color:var(--text);
+    white-space:nowrap;
+}
+.fs-bottle-when{
+    margin-top:2px;
+    text-align:right;
+    font:600 12px/1.2 var(--font-mono);
+    color:var(--muted);
+}
+.fs-bottle-sip{
+    margin-top:12px;
+    font-size:14px;
+    color:var(--text);
+}
+.fs-bottle-sip strong{color:var(--cyan-light);}
+.fs-bottle-macros{
+    margin-top:6px;
+    font-size:12.5px;
+    color:var(--text-secondary);
+}
+.fs-mix{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:6px 12px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    font-size:14px;
+    line-height:1.45;
+}
+.fs-mix-label{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--primary);
+}
+
+/* ---- Hour by hour ---- */
+.fs-hours{
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+}
+.fs-hour{
+    display:grid;
+    grid-template-columns:1.4fr 1fr 1fr 1fr 92px;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    border-top:1px solid var(--border);
+    font-size:14px;
+}
+.fs-hour:first-child{border-top:0;}
+.fs-hour small{
+    display:block;
+    margin-top:2px;
+    font-size:11.5px;
+    color:var(--muted);
+}
+.fs-hour-head{
+    background:rgba(255,255,255,.03);
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+.fs-hour-total{background:rgba(201,173,132,.06);}
+.fs-pill{
+    display:inline-block;
+    padding:3px 9px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+    white-space:nowrap;
+}
+.fs-pill-ok{background:rgba(34,197,94,.14);color:var(--green);}
+.fs-pill-low{background:rgba(255,176,32,.14);color:var(--amber);}
+.fs-pill-high{background:rgba(6,182,212,.14);color:var(--cyan-light);}
+
+@media (max-width:560px){
+    .fs-event{grid-template-columns:70px 20px 1fr;gap:8px;}
+    .fs-event-where strong{font-size:18px;}
+    .fs-hour-head{display:none;}
+    .fs-hour{grid-template-columns:repeat(3,1fr);row-gap:6px;}
+    .fs-hour > span:first-child{grid-column:1 / 3;}
+    .fs-hour > span:last-child{grid-column:3;grid-row:1;justify-self:end;}
+    .fs-control{font-size:12.5px;}
+}
+
+/* ---- Saved-plan card additions ---- */
+.fuel-saved-plan-title{
+    appearance:none;
+    background:none;
+    border:0;
+    padding:0;
+    color:inherit;
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+}
+.fuel-saved-plan-title:hover{color:var(--primary);}
+.fuel-saved-plan-glance{
+    margin:-4px 0 12px;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--primary);
+}
+.fuel-saved-plan-actions button.view{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:var(--on-primary);
+    font-weight:700;
+}
+.fuel-saved-plan-actions button.view:hover{opacity:.9;}
+
+/* ---- Saved-plan sheet ---- */
+.fs-sheet{
+    position:fixed;
+    inset:0;
+    z-index:5200;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+}
+.fs-sheet[hidden]{display:none;}
+html.fs-sheet-open{overflow:hidden;}
+.fs-sheet-backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(4,10,7,.7);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+}
+.fs-sheet-panel{
+    position:relative;
+    width:min(780px,100%);
+    max-height:calc(100dvh - 48px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:22px;
+    box-shadow:0 30px 80px rgba(0,0,0,.5);
+    padding:0 24px;
+}
+.fs-sheet-head{
+    position:sticky;
+    top:0;
+    z-index:2;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin:0 -24px 18px;
+    padding:20px 24px 16px;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+}
+.fs-sheet-kicker{
+    display:block;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--primary);
+}
+.fs-sheet-head h2{
+    margin:6px 0 2px;
+    font-family:var(--font-display);
+    font-size:30px;
+    font-weight:400;
+    line-height:1.05;
+    color:var(--text);
+}
+.fs-sheet-sub{font-size:13px;color:var(--text-secondary);}
+.fs-sheet-close{
+    flex-shrink:0;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--surface-light);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+.fs-sheet-actions{
+    position:sticky;
+    bottom:0;
+    z-index:3;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    margin:22px -24px 0;
+    padding:14px 24px calc(14px + env(safe-area-inset-bottom));
+    background:var(--surface);
+    border-top:1px solid var(--border);
+}
+
+@media (max-width:640px){
+    .fs-sheet{padding:0;align-items:flex-end;}
+    .fs-sheet-panel{
+        max-height:94dvh;
+        border-radius:22px 22px 0 0;
+        padding:0 16px;
+    }
+    .fs-sheet-head{margin:0 -16px 16px;padding:16px;}
+    .fs-sheet-head h2{font-size:26px;}
+    .fs-sheet-actions{margin:20px -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));}
+    .fs-sheet-actions .fuel-btn{flex:1;}
+}
+
+/* ---- Print: just the open plan, on white ---- */
+@media print{
+    body *{visibility:hidden !important;}
+    .fs-sheet,.fs-sheet *{visibility:visible !important;}
+    .fs-sheet{position:absolute;inset:0;padding:0;display:block;}
+    .fs-sheet-backdrop,.fs-sheet-actions,.fs-sheet-close{display:none !important;}
+    .fs-sheet-panel{max-height:none;overflow:visible;box-shadow:none;border:0;width:100%;}
+}

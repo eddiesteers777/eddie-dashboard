@@ -3,6 +3,11 @@
 ========================================== */
 
 import { icon } from "./icons.js";
+import {
+    buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
+    DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN
+} from "./fuelSchedule.js";
+import { scheduleHTML } from "./fuelScheduleView.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +27,6 @@ let lastSession = null;   // the session inputs used for the last calculation
 let planItems = [];       // library items added to the current plan build
 let currentPlanId = null; // set when editing a saved plan
 let marathonRef = null;   // { week, dayKey } when this plan is tied to a Marathon workout
-let timelineRows = [];    // [{ time: "0:25", label: "Hammer Raspberry Gel" }, ...]
 let preWorkoutFood = "";
 
 let library = [];
@@ -231,7 +235,7 @@ async function maybeOpenFromQuery(data, currentWeek) {
 
             openPlan(existing.id);
 
-            $("planSummary").scrollIntoView({ behavior: "smooth" });
+            openPlanSheet(existing.id);
 
         }
 
@@ -653,7 +657,6 @@ function updateTotalsAndTimeline(regenerateTimeline) {
     $("fluidTotal").textContent = `${Math.round(fluidPerHour * hours)} oz`;
     $("sodiumTotal").textContent = `${Math.round(sodiumPerHour * hours)} mg`;
 
-    renderTimeline(!!regenerateTimeline);
     renderComposition();
     renderPlanSummary();
 
@@ -717,7 +720,7 @@ $("calculateBtn").addEventListener("click", runCalculation);
 
 });
 
-$("fuelInterval").addEventListener("input", () => updateTotalsAndTimeline(true));
+$("firstGelMin").addEventListener("input", renderSchedule);
 
 /* ==========================================
    Marathon Integration
@@ -907,36 +910,39 @@ function renderComposition() {
 
     `;
 
+    // Anything that changes the composition changes the schedule too.
+    renderSchedule();
+
 }
 
-function refreshDiySnapshot(){
-    const bottleSize = Number($("diyBottleSize").value) || 16;
+// The homemade drink's ingredient amounts for the current inputs, from
+// the same ingredient table the race-day schedule uses.
+function currentDiyMix() {
+    const bottleSize = Number($("diyBottleSize").value) || 0;
     const bottleCount = Math.max(1, Number($("diyBottleCount").value) || 1);
     const carbTarget = Number($("diyCarbTarget").value) || 0;
     const sodiumTarget = Number($("diySodiumTarget").value) || 0;
-
-    const totalFluid = bottleSize * bottleCount;
-
-    const sugarGrams = Math.round(carbTarget * 10) / 10;
-    const saltGrams = Math.round((sodiumTarget / 393) * 100) / 100;
-
-    const sugarTsp = Math.round((sugarGrams / SUGAR_G_PER_TSP) * 4) / 4;
-    const saltTsp = Math.round((saltGrams / SALT_G_PER_TSP) * 4) / 4;
-
-    $("diyResults").dataset.snapshot = JSON.stringify({
+    const carbSource = $("diyCarbSource").value;
+    const sodiumSource = $("diySodiumSource").value;
+    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource });
+    return {
         bottleSize,
         bottleCount,
         carbTarget,
         sodiumTarget,
-        totalFluid,
-        sugarGrams,
-        saltGrams,
-        sugarTsp,
-        saltTsp,
-        carbSource: $("diyCarbSource").value,
-        sodiumSource: $("diySodiumSource").value,
+        totalFluid: bottleSize * bottleCount,
+        sugarGrams: mix.carbGrams,
+        saltGrams: mix.sodiumGrams ?? 0,
+        sugarTsp: mix.carbTsp != null ? Math.round(mix.carbTsp * 4) / 4 : null,
+        saltTsp: mix.sodiumTsp != null ? Math.round(mix.sodiumTsp * 8) / 8 : null,
+        carbSource,
+        sodiumSource,
         notes: $("diyNotes").value
-    });
+    };
+}
+
+function refreshDiySnapshot() {
+    $("diyResults").dataset.snapshot = JSON.stringify(currentDiyMix());
 }
 
 $("includeHomemadeDrink").addEventListener("change", () => {
@@ -957,21 +963,15 @@ $("diySodiumTarget").addEventListener("input", () => {
     renderPlanSummary();
 });
 
-$("diyBottleSize").addEventListener("input", () => {
+["diyBottleSize", "diyBottleCount"].forEach(id => $(id).addEventListener("input", () => {
     refreshDiySnapshot();
-});
+    renderComposition();
+}));
 
-$("diyBottleCount").addEventListener("input", () => {
+["diyCarbSource", "diySodiumSource"].forEach(id => $(id).addEventListener("change", () => {
     refreshDiySnapshot();
-});
-
-$("diyCarbSource").addEventListener("change", () => {
-    refreshDiySnapshot();
-});
-
-$("diySodiumSource").addEventListener("change", () => {
-    refreshDiySnapshot();
-});
+    renderComposition();
+}));
 
 $("diyNotes").addEventListener("input", () => {
     refreshDiySnapshot();
@@ -1001,206 +1001,31 @@ $("autoFillDrinkBtn").addEventListener("click", () => {
 });
 
 /* ==========================================
-   Render — Timeline (editable)
+   Race-Day Schedule (gels by mile, bottles by
+   mile range, hour-by-hour check). The math is
+   in js/fuelSchedule.js; the view in
+   js/fuelScheduleView.js.
 ========================================== */
 
-function buildFeedQueue() {
+function renderSchedule() {
 
-    const queue = [];
+    const container = $("fuelSchedule");
 
-    planItems.forEach(p => {
-
-        for (let i = 0; i < p.qty; i++) queue.push(p.name);
-
-    });
-
-    if ($("includeHomemadeDrink").checked) queue.push("Homemade Drink");
-
-    return queue;
-
-}
-
-function generateTimelineRows() {
-    const duration = currentDurationMinutes();
-    const interval = Math.max(
-        5,
-        Number($("fuelInterval").value) || 25
-    );
-
-    const queue = buildFeedQueue();
-
-    const rows = [
-        {
-            time: "0:00",
-            label: "Start — sip fluids, settle in"
-        }
-    ];
-
-    if (!queue.length) {
-        const firstFeedTime = Math.min(interval, duration);
-
-        if (duration > 0) {
-            rows.push({
-                time: formatClock(firstFeedTime),
-                label: "Carbs + fluid"
-            });
-        }
-    } else {
-        /*
-            Place each planned serving once.
-
-            We use the preferred interval as a guide, but never
-            create extra servings just to fill the timeline.
-        */
-        const availableTimes = [];
-
-        for (
-            let t = interval;
-            t < duration;
-            t += interval
-        ) {
-            availableTimes.push(t);
-        }
-
-        if (!availableTimes.length || availableTimes[availableTimes.length - 1] < duration) {
-            availableTimes.push(duration);
-        }
-
-        const feedCount = queue.length;
-
-        queue.forEach((item, index) => {
-            let time;
-
-            if (feedCount === 1) {
-                time = Math.min(interval, duration);
-            } else {
-                const slot = Math.round(
-                    (index / (feedCount - 1)) *
-                    (availableTimes.length - 1)
-                );
-
-                time = availableTimes[slot];
-            }
-
-            rows.push({
-                time: formatClock(time),
-                label: item
-            });
-        });
-    }
-
-    if (
-        lastSession &&
-        lastSession.caffeineWanted &&
-        rows.length > 2
-    ) {
-        const midIndex =
-            Math.ceil((rows.length - 1) / 2);
-
-        rows[midIndex].label += " + Caffeine";
-    }
-
-    return rows;
-}
-
-function renderTimeline(regenerate) {
-
-    if (regenerate || !timelineRows.length) timelineRows = generateTimelineRows();
-
-    const container = $("fuelTimeline");
-
-    container.innerHTML = "";
-
-    timelineRows.forEach((row, idx) => {
-
-        const item = document.createElement("div");
-
-        item.className = "fuel-timeline-item";
-
-        item.innerHTML = `
-
-            <div class="fuel-timeline-time">
-                <input type="text" class="timeline-time-input" data-idx="${idx}" value="${escapeHTML(row.time)}">
-            </div>
-
-            <div class="fuel-timeline-rail">
-                <div class="fuel-timeline-dot"></div>
-                <div class="fuel-timeline-line"></div>
-            </div>
-
-            <div class="fuel-timeline-content">
-                <input type="text" class="timeline-label-input" data-idx="${idx}" value="${escapeHTML(row.label)}">
-                <button class="timeline-remove-btn" data-idx="${idx}" title="Remove step">${icon("close")}</button>
-            </div>
-
-        `;
-
-        container.appendChild(item);
-
-    });
-
-}
-
-function formatClock(minutes) {
-
-    const h = Math.floor(minutes / 60);
-
-    const m = minutes % 60;
-
-    return `${h}:${String(m).padStart(2, "0")}`;
-
-}
-
-$("fuelTimeline").addEventListener("input", (e) => {
-
-    const idx = e.target.dataset.idx;
-
-    if (idx === undefined) return;
-
-    if (e.target.classList.contains("timeline-time-input")) timelineRows[idx].time = e.target.value;
-    if (e.target.classList.contains("timeline-label-input")) timelineRows[idx].label = e.target.value;
-
-    renderPlanSummary();
-
-});
-
-$("fuelTimeline").addEventListener("click", (e) => {
-
-    const removeBtn = e.target.closest(".timeline-remove-btn");
-
-    if (!removeBtn) return;
-
-    const idx = Number(removeBtn.dataset.idx);
-
-    timelineRows.splice(idx, 1);
-
-    renderTimeline(false);
-    renderPlanSummary();
-
-});
-
-$("addTimelineStepBtn").addEventListener("click", () => {
-
-    timelineRows.push({ time: "", label: "" });
-
-    renderTimeline(false);
-
-});
-
-$("regenerateTimelineBtn").addEventListener("click", () => {
+    if (!container) return;
 
     if (!lastTargets) {
 
-        alert("Calculate a fueling plan first.");
+        container.innerHTML = "";
 
         return;
 
     }
 
-    renderTimeline(true);
-    renderPlanSummary();
+    const schedule = buildSchedule(scheduleInputFromPlan(buildPlanObject()));
 
-});
+    container.innerHTML = scheduleHTML(schedule, { preWorkoutFood });
+
+}
 
 /* ==========================================
    Homemade Drink — Sugar + Salt Calculator
@@ -1211,124 +1036,21 @@ $("regenerateTimelineBtn").addEventListener("click", () => {
    grams of salt ≈ mg sodium ÷ 393.
 ========================================== */
 
-const SUGAR_G_PER_TSP = 4.2;
-const SALT_G_PER_TSP = 5.7;
-
-const DIY_CARB_SOURCES = {
-    "table-sugar": {
-        label: "Table Sugar",
-        carbsPerGram: 1
-    },
-    "maltodextrin": {
-        label: "Maltodextrin",
-        carbsPerGram: 0.95
-    },
-    "honey": {
-        label: "Honey",
-        carbsPerGram: 0.82
-    },
-    "fruit-juice": {
-        label: "Fruit Juice",
-        carbsPerGram: 0.11
-    },
-    "sports-drink-powder": {
-        label: "Sports Drink Powder",
-        carbsPerGram: 0.90
-    },
-    "other": {
-        label: "Other",
-        carbsPerGram: 1
-    }
-};
-
-const DIY_SODIUM_SOURCES = {
-    "table-salt": {
-        label: "Table Salt",
-        sodiumPerGram: 393
-    },
-    "salt-tabs": {
-        label: "Salt Tabs",
-        sodiumPerGram: 0
-    },
-    "electrolyte-mix": {
-        label: "Electrolyte Mix",
-        sodiumPerGram: 0
-    },
-    "other": {
-        label: "Other",
-        sodiumPerGram: 0
-    }
-};
-
 $("diyCalculateBtn").addEventListener("click", () => {
 
-    const bottleSize = Number($("diyBottleSize").value) || 0;
-    const bottleCount = Math.max(1, Number($("diyBottleCount").value) || 1);
-    const carbTarget = Number($("diyCarbTarget").value) || 0;
-    const sodiumTarget = Number($("diySodiumTarget").value) || 0;
+    const mix = currentDiyMix();
+    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
 
-    const totalFluid = bottleSize * bottleCount;
-
-const carbSource = $("diyCarbSource").value;
-const sodiumSource = $("diySodiumSource").value;
-
-const carbConfig =
-    DIY_CARB_SOURCES[carbSource] ||
-    DIY_CARB_SOURCES["table-sugar"];
-
-const sodiumConfig =
-    DIY_SODIUM_SOURCES[sodiumSource] ||
-    DIY_SODIUM_SOURCES["table-salt"];
-
-const sugarGrams =
-    Math.round(
-        (carbTarget / carbConfig.carbsPerGram) * 10
-    ) / 10;
-
-const saltGrams =
-    sodiumSource === "table-salt"
-        ? Math.round((sodiumTarget / 393) * 100) / 100
-        : 0;
-
-const sugarTsp =
-    carbSource === "table-sugar"
-        ? Math.round((sugarGrams / SUGAR_G_PER_TSP) * 4) / 4
-        : null;
-
-const saltTsp =
-    sodiumSource === "table-salt"
-        ? Math.round((saltGrams / SALT_G_PER_TSP) * 4) / 4
-        : null;
-
-    $("diyWaterAmount").textContent = `${totalFluid} oz`;
-$("diySugarGrams").textContent = `${sugarGrams} g`;
-$("diySaltGrams").textContent =
-    sodiumSource === "table-salt"
-        ? `${saltGrams} g`
-        : "Use product label";
-
-$("diySugarTsp").textContent =
-    sugarTsp !== null
-        ? sugarTsp
-        : "Use product label";
-
-$("diySaltTsp").textContent =
-    saltTsp !== null
-        ? saltTsp
-        : "Use product label";
+    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
+    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
+    $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
+    $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
+    $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
 
     $("diyResults").style.display = "flex";
     $("diyConversionNote").style.display = "";
 
-    $("diyResults").dataset.snapshot = JSON.stringify({
-
-        bottleSize, bottleCount, carbTarget, sodiumTarget, totalFluid,
-        sugarGrams, saltGrams, sugarTsp, saltTsp,
-        carbSource: $("diyCarbSource").value,
-        sodiumSource: $("diySodiumSource").value,
-        notes: $("diyNotes").value
-
-    });
+    $("diyResults").dataset.snapshot = JSON.stringify(mix);
 
     renderComposition();
     renderPlanSummary();
@@ -1614,7 +1336,6 @@ $("libraryGrid").addEventListener("click", (e) => {
         else planItems.push({ id: item.id, name: item.name, carbs: item.carbs, sodium: item.sodium, fluid: item.fluid, caffeine: item.caffeine, qty: 1 });
 
         renderComposition();
-        renderTimeline(true);
         renderPlanSummary();
 
     }
@@ -1674,6 +1395,7 @@ $("preWorkoutGroups").addEventListener("click", (e) => {
     preWorkoutFood = food;
 
     renderPlanSummary();
+    renderSchedule();
 
 });
 
@@ -1682,6 +1404,7 @@ $("preWorkoutFood").addEventListener("input", () => {
     preWorkoutFood = $("preWorkoutFood").value;
 
     renderPlanSummary();
+    renderSchedule();
 
 });
 
@@ -1795,7 +1518,6 @@ $("planSummary").addEventListener("click", (e) => {
     planItems = planItems.filter(p => String(p.id) !== id);
 
     renderComposition();
-    renderTimeline(true);
     renderPlanSummary();
 
 });
@@ -1836,7 +1558,7 @@ function buildPlanObject() {
             notes: $("diyNotes").value
         },
         preWorkoutFood,
-        timelineRows,
+        firstGelMin: Number($("firstGelMin").value) || DEFAULT_FIRST_GEL_MIN,
         session: lastSession
 
     };
@@ -1869,7 +1591,7 @@ $("savePlanBtn").addEventListener("click", () => {
 
     if (selectedWeek) renderDayListIfVisible();
 
-    alert(marathonRef ? "Saved to this Marathon workout." : "Plan saved.");
+    openPlanSheet(plan.id, marathonRef ? "Saved to this workout" : "Saved");
 
 });
 
@@ -1911,7 +1633,6 @@ $("clearPlanBtn").addEventListener("click", () => {
     currentPlanId = null;
     marathonRef = null;
     planItems = [];
-    timelineRows = [];
     preWorkoutFood = "";
     lastTargets = null;
     lastSession = null;
@@ -2035,26 +1756,39 @@ function planCardHTML(plan) {
 
     const dateLabel = plan.date ? new Date(plan.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
 
+    const s = buildSchedule(scheduleInputFromPlan(plan));
+
+    const firstGel = s.gels[0];
+
+    const glance = [
+        s.gels.length ? `${s.gels.length} gel${s.gels.length === 1 ? "" : "s"}` : "",
+        s.bottles.length ? `${s.bottles.length} bottle${s.bottles.length === 1 ? "" : "s"}` : "",
+        firstGel ? `1st gel ${firstGel.mile != null ? `mile ${firstGel.mile.toFixed(1)}` : formatClock(firstGel.min)}` : ""
+    ].filter(Boolean).join(" · ");
+
     return `
 
         <div class="fuel-saved-plan-card">
 
-            <h4>${escapeHTML(plan.name)}</h4>
+            <h4><button type="button" class="fuel-saved-plan-title" data-view="${escapeHTML(plan.id)}">${escapeHTML(plan.name)}</button></h4>
 
             <div class="fuel-saved-plan-meta">
                 ${plan.marathonRef ? `${plan.marathonRef.dayKey} · ` : ""}${escapeHTML(plan.workout)} · ${plan.duration} min${dateLabel ? " · " + dateLabel : ""}
             </div>
 
             <div class="fuel-saved-plan-targets">
-                <span>${plan.carbTotal}g carbs</span>
-                <span>${plan.fluidTotal}oz fluid</span>
-                <span>${plan.sodiumTotal}mg sodium</span>
+                <span>${plan.carbsPerHour} g/hr carbs</span>
+                <span>${plan.fluidPerHour} oz/hr fluid</span>
+                <span>${plan.sodiumPerHour} mg/hr sodium</span>
             </div>
 
+            ${glance ? `<div class="fuel-saved-plan-glance">${glance}</div>` : ""}
+
             <div class="fuel-saved-plan-actions">
-                <button data-open="${plan.id}">Open</button>
-                <button data-duplicate="${plan.id}">Duplicate</button>
-                <button class="delete" data-delete="${plan.id}">Delete</button>
+                <button class="view" data-view="${escapeHTML(plan.id)}">View Plan</button>
+                <button data-open="${escapeHTML(plan.id)}">Edit</button>
+                <button data-duplicate="${escapeHTML(plan.id)}">Duplicate</button>
+                <button class="delete" data-delete="${escapeHTML(plan.id)}">Delete</button>
             </div>
 
         </div>
@@ -2063,9 +1797,74 @@ function planCardHTML(plan) {
 
 }
 
+/* ==========================================
+   Saved-plan sheet
+========================================== */
+
+let sheetPlanId = null;
+
+function openPlanSheet(id, note = "") {
+
+    const plan = plans.find(p => String(p.id) === String(id));
+
+    if (!plan) return;
+
+    sheetPlanId = plan.id;
+
+    const schedule = buildSchedule(scheduleInputFromPlan(plan));
+
+    $("fuelSheetKicker").textContent = [
+        plan.marathonRef ? `Week ${plan.marathonRef.week} · ${plan.marathonRef.dayKey}` : "Custom plan",
+        plan.mode === "race" ? "Race" : "Training",
+        note
+    ].filter(Boolean).join(" · ");
+
+    $("fuelSheetTitle").textContent = plan.name;
+    $("fuelSheetSub").textContent = plan.workout || "";
+    $("fuelSheetBody").innerHTML = scheduleHTML(schedule, { preWorkoutFood: plan.preWorkoutFood });
+
+    $("fuelPlanSheet").hidden = false;
+    document.documentElement.classList.add("fs-sheet-open");
+    $("fuelPlanSheet").querySelector(".fs-sheet-panel").scrollTop = 0;
+    $("fuelPlanSheet").querySelector(".fs-sheet-close").focus();
+
+}
+
+function closePlanSheet() {
+
+    $("fuelPlanSheet").hidden = true;
+    document.documentElement.classList.remove("fs-sheet-open");
+
+}
+
+$("fuelPlanSheet").addEventListener("click", (e) => {
+
+    if (e.target.closest("[data-close-sheet]")) closePlanSheet();
+
+});
+
+document.addEventListener("keydown", (e) => {
+
+    if (e.key === "Escape" && !$("fuelPlanSheet").hidden) closePlanSheet();
+
+});
+
+$("fuelSheetEdit").addEventListener("click", () => {
+
+    closePlanSheet();
+
+    if (sheetPlanId != null) openPlan(sheetPlanId);
+
+});
+
+$("fuelSheetPrint").addEventListener("click", () => window.print());
+
 $("savedPlansGrid").addEventListener("click", (e) => {
 
+    const viewId = e.target.closest("[data-view]")?.dataset.view;
     const openId = e.target.dataset.open;
+
+    if (viewId) openPlanSheet(viewId);
     const dupId = e.target.dataset.duplicate;
     const delId = e.target.dataset.delete;
 
@@ -2118,7 +1917,7 @@ function openPlan(id) {
 
     planItems = (plan.items || []).map(i => ({ ...i }));
 
-    timelineRows = (plan.timelineRows || []).map(r => ({ ...r }));
+    $("firstGelMin").value = plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN;
 
     preWorkoutFood = plan.preWorkoutFood || "";
     $("preWorkoutFood").value = preWorkoutFood;
@@ -2215,7 +2014,6 @@ if (plan.diySnapshot) {
 
     updatePlanWorkoutLabel();
 
-    renderTimeline(false);
     renderComposition();
     renderPlanSummary();
 
