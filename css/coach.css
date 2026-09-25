@@ -39,6 +39,13 @@
     font-size:13px;
     font-weight:600;
 }
+/* Five full-width boxes stacked ~550px deep on a phone; two per row
+   keeps the whole summary on one screen. */
+@media(max-width:560px){
+    .coach-stat-grid{grid-template-columns:1fr 1fr;gap:10px;}
+    .coach-stat-card{padding:16px 14px;}
+    .coach-stat-number{font-size:32px;}
+}
 
 .coach-links-grid{
     display:flex;

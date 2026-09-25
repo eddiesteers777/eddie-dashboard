@@ -2669,20 +2669,54 @@ section{
 
 @media (max-width:900px){
 
+    /* Room for the fixed bottom tab bar (~72px). Several pages' own
+       CSS sets body{padding:20px} on phones, which wiped out the
+       padding-bottom above and left their last card under the bar. */
+    body.has-bottomnav{
+        padding-bottom:calc(92px + env(safe-area-inset-bottom)) !important;
+    }
+
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.record-input):not(.fuel-target-value input),
     select,
     textarea{
         font-size:16px !important;
     }
 
-    .running-nav-btn{ width:40px; height:40px; }
+    /* Page stylesheets load after this file, so these need !important
+       to win at equal specificity. */
+    .running-nav-btn,
+    .day-btn,
+    #habitsPrevDay, #habitsNextDay,
+    #strengthCalendarPrev, #strengthCalendarNext,
+    .fuel-week-tab,
+    .clients-btn-icon{ min-width:40px !important; min-height:40px !important; }
+
     .running-view-btn,
     .habits-view-btn,
     .clients-tab,
-    .eos-today-complete-btn{ min-height:40px; }
+    .eos-today-complete-btn,
+    .meal-tab,
+    .programs-tab,
+    .programs-primary-btn,
+    .fuel-tab,
+    .mode-btn,
+    .ct-filter-chip,
+    .pc-tool-tab,
+    #runningToday,
+    #strengthCalendarToday,
+    #strengthAgendaAdd,
+    .coach-inq-btn,
+    #moreLogoutBtn,
+    #installCopyBtn,
+    .fuel-lib-actions button,
+    #autoFillDrinkBtn,
+    #addLibraryItemBtn{ min-height:40px !important; }
+
+    .eos-nutrition-snap-header a{ display:inline-flex; align-items:center; min-height:40px; }
+    #saveBtn, #exportBtn, #resetBtn, .manage-toggle{ min-height:40px !important; padding:0 8px !important; }
+    .sched-blackout-chip button{ min-width:32px; min-height:32px; align-items:center; justify-content:center; }
 
     .controls{ grid-template-columns:36px minmax(0,1fr) 36px !important; }
     .adjust-btn{ width:36px !important; height:36px !important; }
     .goal-btn{ min-height:36px; padding:9px 14px !important; font-size:12px !important; }
-    .day-btn{ width:42px; height:42px; }
 }

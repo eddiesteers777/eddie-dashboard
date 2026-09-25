@@ -194,6 +194,29 @@ test("check-ins: the client can't self-review and the coach can't edit the clien
     await assertSucceeds(updateDoc(doc(as("client"), "checkins/client_2026-09-21"), { status: "submitted", rating: 3, notes: "tired" }));
 });
 
+test("check-ins: a linked client can send this week's first check-in, exactly as js/checkins.js writes it", async () => {
+    await seedLinkAndBooking();
+    const ref = doc(as("client"), "checkins/client_2026-09-28");
+    // Reading a check-in that doesn't exist yet is refused (the read rule
+    // needs resource.data), which is why submitCheckin treats
+    // permission-denied as "new". This is the bug that blocked every
+    // first check-in on the live site until 2026-09-25.
+    await assertFails(getDoc(ref));
+    const payload = {
+        clientUid: "client", clientName: "Cam", clientEmail: "client@example.com",
+        coachUid: "coach", coachName: "Eddie", weekOf: "2026-09-28",
+        rating: 4, notes: "Legs heavy", status: "submitted", reviewedAt: null,
+        submittedAt: serverTimestamp(), coachFeedback: ""
+    };
+    await assertSucceeds(setDoc(ref, payload, { merge: true }));
+    // A resubmit (no coachFeedback key) still works.
+    const { coachFeedback, ...resubmit } = payload;
+    await assertSucceeds(setDoc(ref, { ...resubmit, rating: 5 }, { merge: true }));
+    // Someone who isn't linked to that coach can't create one.
+    await assertFails(setDoc(doc(as("stranger"), "checkins/stranger_2026-09-28"),
+        { ...payload, clientUid: "stranger" }, { merge: true }));
+});
+
 // ---- Website questions (public Contact page, no sign-in) ----
 
 const guest = () => env.unauthenticatedContext().firestore();

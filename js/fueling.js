@@ -2052,6 +2052,8 @@ function renderFuelingPage() {
     renderPreWorkoutGroups();
     updatePlanWorkoutLabel();
 
+    initCollapsiblePanels();
+
     // Picking a workout from the marathon block only makes sense for the
     // coach's own plan; everyone else enters their session directly.
     if (showsPersonalPlan()) {
@@ -2061,6 +2063,36 @@ function renderFuelingPage() {
         $("marathonIntegration").style.display = "none";
     }
 
+}
+
+// On a phone this page is ~18 screens tall. The reference sections
+// (Fueling Library, Pre-Workout Fuel) start folded there, with a
+// Show/Hide button in their header; desktop starts with them open.
+function initCollapsiblePanels() {
+    const startOpen = !window.matchMedia("(max-width: 900px)").matches;
+
+    document.querySelectorAll(".fuel-panel[data-collapsible]").forEach(panel => {
+        const header = panel.querySelector(".fuel-panel-header");
+        if (!header || header.querySelector(".fuel-collapse-btn")) return;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "fuel-collapse-btn";
+
+        const setOpen = open => {
+            panel.classList.toggle("is-collapsed", !open);
+            btn.setAttribute("aria-expanded", String(open));
+            btn.textContent = open ? "Hide" : "Show";
+        };
+
+        btn.addEventListener("click", () => setOpen(panel.classList.contains("is-collapsed")));
+        header.querySelector("h2")?.addEventListener("click", () => setOpen(panel.classList.contains("is-collapsed")));
+        // "+ Add Item" needs the form underneath to be visible.
+        panel.querySelector("#addLibraryItemBtn")?.addEventListener("click", () => setOpen(true));
+
+        header.appendChild(btn);
+        setOpen(startOpen);
+    });
 }
 
 import("./cloudSync.js")

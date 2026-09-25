@@ -59,7 +59,7 @@
     border-radius:24px;
     background:
         linear-gradient(135deg,rgba(201,173,132,.08),transparent 65%),
-        url('../icons/icon-512.png') center/72% no-repeat;
+        url('../brand/sb-mark.svg') center/64% no-repeat;
     opacity:.5;
 }
 .programs-tabs{

@@ -1066,7 +1066,7 @@
     border-radius:999px;
     background:rgba(201,173,132,.10);
     color:var(--primary);
-    font-size:8px;
+    font-size:10.5px;
     font-weight:800;
     letter-spacing:.05em;
     text-transform:uppercase;
@@ -1102,7 +1102,7 @@
 
 .strength-exercise-details label > span{
     color:var(--muted);
-    font-size:9px;
+    font-size:11px;
     font-weight:800;
     letter-spacing:.06em;
     text-transform:uppercase;
@@ -1189,7 +1189,7 @@
 .strength-group-label{
     display:block;
     color:var(--primary);
-    font-size:9px;
+    font-size:11px;
     font-weight:800;
     letter-spacing:.12em;
     text-transform:uppercase;
@@ -1229,7 +1229,7 @@
     align-items:center;
     gap:5px;
     color:var(--muted);
-    font-size:9px;
+    font-size:11px;
     font-weight:800;
     text-transform:uppercase;
 }
@@ -1521,7 +1521,7 @@
     border:1px solid rgba(201,173,132,.25);
     border-radius:999px;
     color:var(--primary);
-    font-size:8px;
+    font-size:10.5px;
     font-weight:800;
     letter-spacing:.05em;
     text-transform:uppercase;
@@ -1601,7 +1601,7 @@
     overflow:hidden;
     width:100%;
     color:var(--muted);
-    font-size:9px;
+    font-size:11px;
     text-overflow:ellipsis;
     white-space:nowrap;
 }
@@ -1709,7 +1709,7 @@
 
 .strength-calendar-weekdays span{
     color:var(--muted);
-    font-size:8px;
+    font-size:10.5px;
     font-weight:800;
     letter-spacing:.04em;
     text-align:center;
@@ -1857,7 +1857,7 @@
     display:block;
     margin-top:3px;
     color:var(--muted);
-    font-size:9px;
+    font-size:11px;
     line-height:1.35;
 }
 
@@ -1941,7 +1941,7 @@
 
 .strength-upcoming-item span{
     color:var(--primary);
-    font-size:8px;
+    font-size:10.5px;
     font-weight:800;
 }
 
@@ -1956,7 +1956,7 @@
 
 .strength-upcoming-item small{
     color:var(--muted);
-    font-size:8px;
+    font-size:10.5px;
 }
 
 /* -------------------------
@@ -2008,7 +2008,7 @@
     gap:8px;
     margin-top:4px;
     color:var(--muted);
-    font-size:9px;
+    font-size:11px;
 }
 
 .strength-myworkout-actions{
@@ -2024,7 +2024,7 @@
     color:var(--text-secondary);
     cursor:pointer;
     font:inherit;
-    font-size:9px;
+    font-size:11px;
     font-weight:800;
 }
 
@@ -2201,7 +2201,7 @@
 
 .strength-schedule-form label > span{
     color:var(--muted);
-    font-size:9px;
+    font-size:11px;
     font-weight:800;
     letter-spacing:.06em;
     text-transform:uppercase;

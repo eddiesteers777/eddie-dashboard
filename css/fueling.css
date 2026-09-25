@@ -1370,6 +1370,14 @@
 
     }
 
+    /* Its flex-basis (260px) is a width in the desktop row but became a
+       260px-tall empty gap once the toolbar stacks into a column. */
+    .mode-caption{
+
+        flex:0 0 auto;
+
+    }
+
     .marathon-integration{
 
         justify-content:space-between;
@@ -2671,3 +2679,20 @@ html.fs-sheet-open{overflow:hidden;}
     .fs-sheet-backdrop,.fs-sheet-actions,.fs-sheet-close{display:none !important;}
     .fs-sheet-panel{max-height:none;overflow:visible;box-shadow:none;border:0;width:100%;}
 }
+
+/* Foldable reference sections (js/fueling.js initCollapsiblePanels) */
+.fuel-panel.is-collapsed > :not(.fuel-panel-header){ display:none !important; }
+.fuel-panel.is-collapsed .fuel-panel-header{ margin-bottom:0; }
+.fuel-panel[data-collapsible] .fuel-panel-header h2{ cursor:pointer; }
+.fuel-collapse-btn{
+    appearance:none;
+    min-height:40px;
+    padding:0 16px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font:700 13px/1 var(--font-body);
+    cursor:pointer;
+}
+.fuel-collapse-btn:hover{ color:var(--text); border-color:var(--primary); }

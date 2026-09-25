@@ -10,6 +10,7 @@
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
+import { cachedRole } from "./role.js";
 import {
     createInviteCode, redeemInviteCode, linkApplicant,
     listMyClients, listMyCoaches, removeLink,
@@ -157,7 +158,7 @@ generateCodeBtn.addEventListener("click", async () => {
         );
     } finally {
         generateCodeBtn.disabled = false;
-        generateCodeBtn.textContent = "Generate Invite Code";
+        generateCodeBtn.textContent = codeDisplay.hidden ? "Get My Code" : "Get a New Code";
     }
 });
 
@@ -463,7 +464,7 @@ async function refreshPending() {
             }
             window.alert(linked
                 ? `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and linked -- they're in My Clients now.`
-                : `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved. To see their plans and check-ins, ask them for an invite code (Share My Plans tab) and add it under Coach a Client.`);
+                : `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved. They aren't linked yet: ask them to open More > Connect with Coach in their app and send you the code, then enter it under Coach a Client.`);
             refreshPending();
             refreshClients();
         });
@@ -482,6 +483,30 @@ async function refreshPending() {
     }
 }
 
+// ---- Coach vs client view ----
+// A coach manages clients here (Coach a Client + Pending) and has no
+// use for sharing their own plans. A client only ever uses this page to
+// connect with their coach, so they get just that (More -> Connect with
+// Coach links here). Guessed from the role remembered on this device
+// (js/role.js) so there's no flash, then confirmed from the profile.
+
+const titleEl = document.getElementById("clientsTitle");
+const introEl = document.getElementById("clientsIntro");
+const coachTitle = titleEl.textContent;
+const coachIntro = introEl.textContent;
+
+function setClientsView(isCoach) {
+    document.getElementById("clientsTabs").hidden = !isCoach;
+    document.getElementById("shareTabBtn").hidden = isCoach;
+    titleEl.textContent = isCoach ? coachTitle : "Connect with Your Coach";
+    introEl.textContent = isCoach
+        ? coachIntro
+        : "Link your account to your coach so they can build your plan, read your check-ins and book your sessions.";
+    if (!isCoach) selectTab("share");
+    else if (document.querySelector('.clients-tab.active')?.dataset.tab === "share") selectTab("coach");
+}
+setClientsView(cachedRole() === "coach");
+
 // ---- Auth gate ----
 
 listenForAuth(user => {
@@ -491,6 +516,7 @@ listenForAuth(user => {
         refreshClients();
         refreshCoaches();
         isApprovedCoach().then(approved => {
+            setClientsView(approved);
             pendingTabBtn.hidden = !approved;
             if (approved) refreshPending();
 
@@ -499,7 +525,7 @@ listenForAuth(user => {
             // once we know whether the requested tab is actually
             // visible for this account (e.g. "pending" needs approved).
             const requestedTab = new URLSearchParams(window.location.search).get("tab");
-            if (requestedTab) selectTab(requestedTab);
+            if (requestedTab && (approved || requestedTab === "share")) selectTab(requestedTab);
         });
     }
 });

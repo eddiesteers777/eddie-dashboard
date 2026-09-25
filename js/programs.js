@@ -96,7 +96,7 @@ function renderRaceLibrary() {
         .join('');
 
     if (!programs.length) {
-        container.innerHTML = '<div class="programs-empty">No race plans have been created yet. Start with a race distance and Southbound will take you into the existing Race Plan Builder.</div>';
+        container.innerHTML = '<div class="programs-empty">No race plans yet. Tap Create Race Plan, pick your race distance and date, and your weeks are built for you.</div>';
         return;
     }
 

@@ -415,3 +415,9 @@ input[type="checkbox"]{
     }
 
 }
+
+/* Cards gated by data-requires (js/navAccess.js): .settings-card sets
+   display, which would otherwise beat the native [hidden]. */
+.settings-card[hidden]{ display:none !important; }
+
+.connection .settings-btn{ text-decoration:none; flex-shrink:0; }

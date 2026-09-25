@@ -60,15 +60,15 @@ Photos live in `images/`. `images/README.md` lists the exact filenames. A missin
 | Health | `nutrition.html`, `fueling.html` |
 | Habits | `habits.html` |
 | More | `programs.html`, `pace-calculator.html`, `settings.html`, `more.html` |
-| Coach-only personal tools | `marathon.html`, `75day.html`, `planner.html`, `analytics.html`, `weekly-review.html`, `gear.html` (Eddie's own; `data-requires="coach"` in nav, More, search and the Today cards. Still reachable by direct URL.) |
-| Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), both reached via Tools / More |
+| Coach-only personal tools | `marathon.html`, `75day.html`, `planner.html`, `analytics.html`, `weekly-review.html`, `gear.html` (Eddie's own; `data-requires="coach"` in nav, More, search and the Today cards, and `COACH_ONLY_PAGES` in `js/loadHeader.js` sends a client who opens one by link back to Today) |
+| Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), `clients.html?tab=share` ("Connect with Your Coach": get a one-time code for the coach), all reached via Tools / More |
 
 **App: coach pages** (the **Coach** bottom tab on mobile / **Coach** dropdown on desktop)
 
 | Page | Purpose |
 |---|---|
 | `coach.html` | Dashboard: new website questions (with Email/Text/Call and Mark answered), pending accounts, booking requests, check-ins to review, active clients. `coach.html#inquiries` jumps to the questions. |
-| `clients.html` | Tabs: *Coach a Client* (plan editor), *Share My Plans* (invite codes), *Pending* (approve/deny signups, make coach) |
+| `clients.html` | Coach: tabs *Coach a Client* (plan editor, enter a client's code) and *Pending* (approve/deny signups, make coach). A client sees only "Connect with Your Coach" (the share panel) on the same page. |
 | `checkin.html` | *Review Check-ins* tab (coaches land here by default) |
 | `schedule.html` | Availability, blackout dates, approve/deny booking requests |
 
@@ -115,7 +115,10 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 - **Auto-link on approval, no rules change:** an applicant's app leaves a standing invite code `APPLY-{uid}` (`ensureApplyCode()` in `js/coachAccess.js`, refreshed by `loadHeader` while pending and by `apply.js` after submitting; recreated when older than 5 days). The coach's Approve (`js/clients.js`) then calls `linkApplicant(uid)`, which redeems it through the normal code path (`linkWithCode`). If it fails, the alert falls back to the old "ask for an invite code" instructions.
 - **Session notes:** the coach can add/edit notes on approved bookings (`setSessionNotes` in `js/scheduling.js`, allowed by the existing rules); the client sees them on Schedule and the Today card.
 - **Group capacity:** the coach's request rows show "x/y already booked -- full", and approving into a full slot asks first. Clients can't see spots left (that would need a rules change).
-- **Schedule for clients** hides the availability tab and opens on "Book a Session".
+- **One view per role, no tab bars:** Schedule (coach: availability + requests; client: Book a Session), Check-in (coach: review queue; client: their check-in) and My Clients (coach: clients + pending; client: connect code) each pick their panel from `js/role.js` first, then confirm from the profile.
+- **Linking without applying:** clients who didn't come through `apply.html` use More → Connect with Coach to get a code; the coach enters it under Coach a Client.
+- **Habits:** the coach keeps his own starting list (ids h1-h10, which his saved check-offs use); clients start with a generic one (c1-c5) in `js/habits.js`.
+- **Today stats for clients:** "Recovery" (COROS) becomes "Sessions Booked" (upcoming approved sessions, returned by `renderCoachCard`).
 
 ### Navigation access
 
@@ -136,6 +139,9 @@ Services vocabulary (`js/userProfile.js`): `online_coaching`, `running`, `streng
 - **Honeypot fields must not look like real fields.** The contact form's hidden spam trap was once labeled "Company"; browser autofill filled it, so real questions were silently dropped while showing "Question sent". Keep it as `sbLeaveEmpty` ("Leave this empty", `autocomplete="off"` + password-manager ignore attributes).
 - **Hand-uploaded files can drop rules.** A 2026-09-17 upload replaced `css/nutrition.css` and silently removed the barcode-scanner modal, food log and confirm styles (restored 2026-09-25). If Eddie uploads a file, diff it against the previous version.
 - **Phone inputs must be 16px+** or iOS zooms on focus. `css/style.css` forces 16px on form fields at <=900px (the big fueling-target and record inputs are excluded); small buttons get ~40px touch targets there too.
+- **Reading your own not-yet-created doc is permission-denied, not "missing".** Rules like `checkins` check `resource.data.clientUid`, which fails when there's no doc. `submitCheckin` read first, so every first weekly check-in failed on the live site until 2026-09-25. Treat permission-denied on your own doc ID as "new", and test the real create path, not an admin-seeded doc.
+- **Page CSS resets body padding on phones.** Several pages set `body{padding:20px}`, which wiped out the bottom tab bar's padding. `loadHeader` now adds `body.has-bottomnav`, padded with `!important` in `css/style.css`.
+- **Phone overrides in `css/style.css` need `!important`.** Page stylesheets load after it, so equal-specificity rules there win (yesterday's first tap-target pass silently didn't apply).
 - **Any rules change needs a test.** Add the attack and the legitimate flow to `tests/rules.test.mjs`.
 
 ## Testing
@@ -156,10 +162,12 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 **2026-09-25 batch (no rules change):** personal plan hidden from clients, client Today "From your coach" card, auto-link on approval, session notes, group capacity checks, client Schedule view, phone polish (no input zoom, bigger tap targets, nutrition +/- row), restored nutrition scanner/food-log CSS, privacy page. Regression harness: an emulator-backed Playwright run (real modules + rules) covering pending → approve → linked → client Today/Running/Fueling/More/Nutrition/Schedule, coach Today/Schedule, guest privacy + redirect.
 
-**Known gaps (not fixed yet):**
+**2026-09-25 audit batch (no rules change):** full audit of every page as guest/client/coach at 1280 and 390 against the emulator, then fixes: first weekly check-in always failed (fixed + rules test), clients' default habits were Eddie's personal list, unlinked clients had no way to get a link code (now More → Connect with Coach), bottom tab bar covered the end of 5 pages, clients could open Eddie's pages by URL, Fueling/Programs/Settings copy, Settings controls that did nothing removed (units, week start, goal time, weekly mileage, AI Coach), COROS shown under Settings for the coach only, "Synced never synced", role-specific single views, tap targets/text sizes (stars 44px, 40px buttons, no text under 10px), Fueling library/pre-workout fold on phones, coach stat grid 2-up, labelled slot fields.
+
+**Known gaps / Eddie's call (not done):**
+- Should clients connect COROS? Today it only works from `analytics.html` (coach-only), and Settings shows it to the coach only.
 - Nutrition goals default to Eddie's numbers (3200 kcal, 180 g protein...) in `js/nutrition.js`; clients can edit them, but a coach-set or sensible default would be better.
-- `planner.html` contains Eddie's school calendar in the public repo (now coach-only in nav, but the data is still in the code).
-- Personal pages are hidden from nav, not blocked; a client could still open them by URL.
+- `planner.html` / `js/courseEvents.js` contain Eddie's school calendar in the public repo (coach-only in the app, but the data is still in the code).
 
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).

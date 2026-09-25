@@ -121,7 +121,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    renderRecovery();
+    // Recovery comes from COROS, which only the coach connects; a client
+    // sees their upcoming booked sessions there instead (filled in by
+    // the coach card below once it has loaded their requests).
+    if (PERSONAL_PLAN) {
+        renderRecovery();
+    } else {
+        const label = document.getElementById("recoveryLabel");
+        if (label) label.textContent = "Sessions Booked";
+    }
     renderStreak();
 
     // ==========================================
@@ -140,6 +148,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         coachSection.hidden = false;
         import("./coachCard.js")
             .then(({ renderCoachCard }) => renderCoachCard(document.getElementById("coachCardBody")))
+            .then(summary => {
+                const el = document.getElementById("recoveryScore");
+                if (el && summary) el.textContent = String(summary.upcomingSessions);
+            })
             .catch(error => {
                 console.warn("Southbound: couldn't load the coach card.", error);
                 coachSection.hidden = true;

@@ -46,7 +46,15 @@ export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf
 
     const week = weekOf || weekKeyFor();
     const ref = checkinRef(user.uid, week);
-    const existing = await getDoc(ref);
+    // The rules only let a client read a check-in that exists and is
+    // theirs, so reading this week's before it's been created is
+    // refused (permission-denied), not "missing". Either way it's new.
+    let isNew = true;
+    try {
+        isNew = !(await getDoc(ref)).exists();
+    } catch (error) {
+        if (error?.code !== "permission-denied") throw error;
+    }
 
     const payload = {
         clientUid: user.uid,
@@ -66,7 +74,7 @@ export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf
     // update the client themselves makes, so it's simplest to just
     // never include it here on a resubmit and let merge:true leave
     // whatever the coach last wrote in place.
-    if (!existing.exists()) payload.coachFeedback = "";
+    if (isNew) payload.coachFeedback = "";
 
     await setDoc(ref, payload, { merge: true });
     return { id: ref.id, ...payload };

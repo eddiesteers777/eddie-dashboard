@@ -33,7 +33,7 @@
             <h1>Settings</h1>
 
             <p>
-                Manage your Southbound account, training preferences, and connections.
+                Your account and your data.
             </p>
 
         </section>
@@ -44,13 +44,11 @@
 
             <div class="profile-left">
 
-                <div class="avatar">
-                    ES
-                </div>
+                <div class="avatar" id="settingsAvatar"></div>
 
                 <div>
 
-                    <h2 id="userName">Eddie Steers</h2>
+                    <h2 id="userName"></h2>
 
                     <p id="userEmail">
                         Loading...
@@ -74,7 +72,7 @@
 
                 <div class="setting-row">
                     <span>Name</span>
-                    <span id="displayName">Eddie Steers</span>
+                    <span id="displayName"></span>
                 </div>
 
                 <div class="setting-row">
@@ -88,123 +86,25 @@
 
             </div>
 
-            <!-- Connections -->
+            <!-- Connections (coach only for now: COROS connects from Analytics) -->
 
-            <div class="settings-card">
+            <div class="settings-card" data-requires="coach">
 
                 <h3><span data-icon="link"></span> Connections</h3>
 
                 <div class="connection">
-
                     <div>
-
                         <strong>COROS</strong>
-
-                        <p>Coming Soon</p>
-
+                        <p>Connect and sync from the Analytics page.</p>
                     </div>
-
-                    <button disabled>Connect</button>
-
-                </div>
-
-                <div class="connection">
-
-                    <div>
-
-                        <strong>Strava</strong>
-
-                        <p>Coming Soon</p>
-
-                    </div>
-
-                    <button disabled>Connect</button>
-
-                </div>
-
-                <div class="connection">
-
-                    <div>
-
-                        <strong>Garmin</strong>
-
-                        <p>Future Support</p>
-
-                    </div>
-
-                    <button disabled>Connect</button>
-
+                    <a class="settings-btn" href="analytics.html#corosConnectionPanel">Open</a>
                 </div>
 
             </div>
 
-            <!-- Running Preferences -->
+            <!-- Nutrition (the USDA key is a developer-style setting; coach only) -->
 
-            <div class="settings-card">
-
-                <h3><span data-icon="activity"></span> Running Preferences</h3>
-
-                <div class="setting-row">
-
-                    <span>Units</span>
-
-                    <select id="units">
-
-                        <option>Miles</option>
-
-                        <option>Kilometers</option>
-
-                    </select>
-
-                </div>
-
-                <div class="setting-row">
-
-                    <span>First Day of Week</span>
-
-                    <select id="weekStart">
-
-                        <option>Sunday</option>
-
-                        <option>Monday</option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-            <!-- Goals -->
-
-            <div class="settings-card">
-
-                <h3><span data-icon="target"></span> Goals</h3>
-
-                <div class="setting-row">
-
-                    <span>Goal Marathon</span>
-
-                    <input
-                        type="text"
-                        placeholder="3:05:00">
-
-                </div>
-
-                <div class="setting-row">
-
-                    <span>Weekly Mileage</span>
-
-                    <input
-                        type="number"
-                        placeholder="50">
-
-                </div>
-
-            </div>
-
-            <!-- Nutrition -->
-
-            <div class="settings-card">
+            <div class="settings-card" data-requires="coach">
 
                 <h3><span data-icon="apple"></span> Nutrition</h3>
 
@@ -227,43 +127,6 @@
                     </a>
                     also fills in whole/generic foods like "banana" or "chicken breast."
                 </p>
-
-            </div>
-
-            <!-- AI Coach -->
-
-            <div class="settings-card">
-
-                <h3><span data-icon="robot"></span> AI Coach</h3>
-
-                <div class="setting-row">
-
-                    <span>Enable AI Coach</span>
-
-                    <input
-                        type="checkbox"
-                        checked>
-
-                </div>
-
-                <div class="setting-row">
-
-                    <span>Weekly Insights</span>
-
-                    <input
-                        type="checkbox"
-                        checked>
-
-                </div>
-
-                <div class="setting-row">
-
-                    <span>Daily Recommendations</span>
-
-                    <input
-                        type="checkbox">
-
-                </div>
 
             </div>
 

@@ -56,8 +56,9 @@ function row({ iconName, color, title, detail, note, link }) {
         </a>`;
 }
 
+// Returns { upcomingSessions } so Today can show it in its stat row.
 export async function renderCoachCard(container) {
-    if (!container) return;
+    if (!container) return null;
 
     const [coaches, requests, checkins, profile] = await Promise.all([
         listMyCoaches().catch(() => []),
@@ -155,10 +156,11 @@ export async function renderCoachCard(container) {
                     ? `Your account is waiting for approval. Once your coach approves it, your sessions, plan and weekly check-ins show up here.`
                     : coach
                         ? `Nothing new from your coach right now. <a href="schedule.html">Book a session</a> or <a href="checkin.html">check in</a> any time.`
-                        : `Once you're linked with your coach, your sessions and weekly check-ins show up here.`}
+                        : `You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> and your sessions and weekly check-ins show up here.`}
             </div>`;
-        return;
+        return { upcomingSessions: upcoming.length };
     }
 
     container.innerHTML = rows.join("");
+    return { upcomingSessions: upcoming.length };
 }

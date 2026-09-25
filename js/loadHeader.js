@@ -15,6 +15,27 @@
     }
 })();
 
+// Eddie's own tools (his race plan, school planner, COROS analytics,
+// gear...) are coach-only. The nav already hides them; this also sends
+// a client who opens one by link back to Today. Only acts on a role
+// that was actually read from the profile ("client" in js/role.js), so
+// a coach who's offline or whose profile didn't load is never bounced.
+const COACH_ONLY_PAGES = new Set([
+    "marathon.html", "75day.html", "planner.html",
+    "analytics.html", "weekly-review.html", "gear.html"
+]);
+function leaveCoachOnlyPage() {
+    const page = window.location.pathname.split("/").pop() || "index.html";
+    let role = null;
+    try { role = localStorage.getItem("sb-account-role"); } catch {}
+    if (COACH_ONLY_PAGES.has(page) && role === "client") {
+        window.location.replace("index.html");
+        return true;
+    }
+    return false;
+}
+leaveCoachOnlyPage();
+
 // The mobile app shell (bottom tab bar + the pill row that lets a
 // tab covering several real pages switch between them) is built
 // here and injected at runtime rather than duplicated into every
@@ -187,6 +208,7 @@ fetch("components/header.html")
                         })
                         .catch(() => {});
                 }
+                if (leaveCoachOnlyPage()) return access;
                 // This page rendered before the account's role was known on
                 // this device (first visit, or the role changed): reload once
                 // so the coach's personal plan shows or hides correctly
@@ -231,6 +253,7 @@ fetch("components/header.html")
         let activeTab = PAGE_TAB[page] || null;
         if (activeTab && !visibleTabs.some(tab => tab.key === activeTab)) activeTab = "more";
 
+        document.body.classList.add("has-bottomnav");
         document.body.insertAdjacentHTML("beforeend", `
             <nav class="eos-bottomnav" aria-label="Primary">
                 ${visibleTabs.map(tab => `

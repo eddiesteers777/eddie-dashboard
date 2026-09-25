@@ -21,18 +21,15 @@ const userEmail = document.getElementById("userEmail");
 const displayName = document.getElementById("displayName");
 const displayEmail = document.getElementById("displayEmail");
 
-const avatar = document.querySelector(".avatar");
+const avatar = document.getElementById("settingsAvatar");
 
 const logoutBtn = document.getElementById("logoutBtn");
 
-const units = document.getElementById("units");
-const weekStart = document.getElementById("weekStart");
-
-const goalTime = document.querySelector('input[type="text"]');
-const weeklyMileage = document.querySelector('input[type="number"]');
+// Units, week start, goal time, weekly mileage and the "AI Coach"
+// switches used to live here too; nothing ever read them, so they were
+// removed (2026-09-25) rather than left as switches that do nothing.
+// Old saved values stay in user-settings untouched.
 const usdaApiKey = document.getElementById("usdaApiKey");
-
-const checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
 // =====================================
 // Load User + Settings
@@ -48,11 +45,16 @@ onAuthStateChanged(auth, async (user) => {
     // User Info (from the Google account itself — unrelated to the
     // goals/preferences data below, still comes straight from auth)
 
-    userName.textContent = user.displayName || "Runner";
+    userName.textContent = user.displayName || "Your account";
     userEmail.textContent = user.email || "";
 
-    displayName.textContent = user.displayName || "Runner";
+    displayName.textContent = user.displayName || "Your account";
     displayEmail.textContent = user.email || "";
+
+    const initials = (user.displayName || user.email || "?")
+        .split(/[\s@.]+/).filter(Boolean).slice(0, 2)
+        .map(part => part[0].toUpperCase()).join("");
+    avatar.textContent = initials;
 
     if (user.photoURL) {
 
@@ -82,16 +84,7 @@ onAuthStateChanged(auth, async (user) => {
 
     const saved = getUserSettings();
 
-    units.value = saved.units;
-    weekStart.value = saved.weekStart;
-
-    goalTime.value = saved.goalTime;
-    weeklyMileage.value = saved.weeklyMileage || "";
     usdaApiKey.value = saved.usdaApiKey || "";
-
-    checkboxes[0].checked = saved.aiEnabled;
-    checkboxes[1].checked = saved.weeklyInsights;
-    checkboxes[2].checked = saved.dailyRecommendations;
 
 });
 
@@ -103,16 +96,7 @@ function saveSettings() {
 
     saveUserSettings({
 
-        units: units.value,
-        weekStart: weekStart.value,
-
-        goalTime: goalTime.value.trim(),
-        weeklyMileage: Number(weeklyMileage.value) || 0,
-        usdaApiKey: usdaApiKey.value.trim(),
-
-        aiEnabled: checkboxes[0].checked,
-        weeklyInsights: checkboxes[1].checked,
-        dailyRecommendations: checkboxes[2].checked
+        usdaApiKey: usdaApiKey.value.trim()
 
     });
 
@@ -124,19 +108,7 @@ function saveSettings() {
 // Event Listeners
 // =====================================
 
-[
-    units,
-    weekStart,
-    goalTime,
-    weeklyMileage,
-    usdaApiKey,
-    ...checkboxes
-
-].forEach(element => {
-
-    element.addEventListener("change", saveSettings);
-
-});
+usdaApiKey.addEventListener("change", saveSettings);
 
 // =====================================
 // Logout

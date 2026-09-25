@@ -57,6 +57,7 @@ function renderRatingStars() {
         btn.type = "button";
         btn.className = "checkin-star" + (i <= currentRating ? " active" : "");
         btn.textContent = "★";
+        btn.setAttribute("aria-label", `${i} out of 5`);
         btn.dataset.value = String(i);
         btn.addEventListener("click", () => {
             currentRating = i;
@@ -261,14 +262,16 @@ listenForAuth(user => {
 
     refreshMine();
 
+    // Each account only ever uses one side of this page -- a client sends
+    // their check-in, a coach reviews them -- so the tab bar stays hidden
+    // and the right panel is simply shown.
     isApprovedCoach().then(approved => {
         reviewTabBtn.hidden = !approved;
-        if (approved) refreshReview();
-
-        // A coach arriving here from the Coach section wants the review
-        // queue, not their own (usually coach-less) client check-in.
-        const requestedTab = new URLSearchParams(window.location.search).get("tab");
-        if (requestedTab) selectTab(requestedTab);
-        else if (approved) selectTab("review");
+        if (approved) {
+            refreshReview();
+            selectTab("review");
+            document.getElementById("checkinIntro").textContent =
+                "Read how each client's week went and send your feedback. They get it in the app and by email.";
+        }
     });
 });

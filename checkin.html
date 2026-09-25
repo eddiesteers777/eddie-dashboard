@@ -29,7 +29,7 @@
             <div>
                 <div class="eos-today-eyebrow">Coaching</div>
                 <h1>Weekly Check-in</h1>
-                <p class="eos-today-phase">
+                <p class="eos-today-phase" id="checkinIntro">
                     A short weekly note to your coach, and their reply -- the rhythm that keeps your plan current.
                 </p>
             </div>
@@ -42,7 +42,7 @@
 
         <div id="checkinSignedIn" hidden>
 
-            <nav class="clients-tabs" role="tablist">
+            <nav class="clients-tabs" id="checkinTabs" role="tablist" hidden>
                 <button type="button" class="clients-tab active" data-tab="mine" role="tab">My Check-in</button>
                 <button type="button" id="reviewTabBtn" class="clients-tab" data-tab="review" role="tab" hidden>
                     Review Check-ins <span id="reviewCount" class="clients-tab-badge" hidden></span>
@@ -55,7 +55,7 @@
                 <div id="noCoachMsg" class="clients-empty" hidden>
                     <span data-icon="users"></span>
                     <p>You're not linked to a coach yet.</p>
-                    <a href="clients.html?tab=share" class="clients-btn-primary">Invite a Coach</a>
+                    <a href="clients.html?tab=share" class="clients-btn-primary">Connect with Your Coach</a>
                 </div>
 
                 <div id="checkinFormWrap" hidden>

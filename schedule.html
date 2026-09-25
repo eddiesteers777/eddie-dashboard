@@ -54,12 +54,12 @@
                     <h2>Add a weekly time slot</h2>
                     <p class="clients-card-note">Clients you've linked can request to book this recurring time.</p>
                     <form id="slotForm" class="sched-slot-form">
-                        <select id="slotDay" required></select>
-                        <input type="time" id="slotStart" required>
-                        <input type="time" id="slotEnd" required>
-                        <select id="slotType" required></select>
-                        <input type="text" id="slotLabel" placeholder="Label (optional) -- e.g. U10 Group">
-                        <input type="number" id="slotCapacity" min="1" value="1" title="Capacity">
+                        <label class="sched-field"><span>Day</span><select id="slotDay" required></select></label>
+                        <label class="sched-field"><span>Type</span><select id="slotType" required></select></label>
+                        <label class="sched-field"><span>Starts</span><input type="time" id="slotStart" required></label>
+                        <label class="sched-field"><span>Ends</span><input type="time" id="slotEnd" required></label>
+                        <label class="sched-field sched-field-wide"><span>Label (optional)</span><input type="text" id="slotLabel" placeholder="e.g. U10 Group"></label>
+                        <label class="sched-field"><span>Spots</span><input type="number" id="slotCapacity" min="1" value="1"></label>
                         <button type="submit" class="clients-btn-primary">Add Slot</button>
                     </form>
                     <p id="slotMsg" class="clients-msg" hidden></p>
@@ -95,7 +95,7 @@
                 <div class="clients-card">
                     <h2>Choose a coach</h2>
                     <select id="coachSelect" class="sched-coach-select"></select>
-                    <p id="noCoachesMsg" class="clients-card-note" hidden>No coach has linked you yet -- ask them to redeem an invite code from your "Share My Plans" page first.</p>
+                    <p id="noCoachesMsg" class="clients-card-note" hidden>You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> first, then their open times show up here.</p>
                 </div>
 
                 <div id="availableSlotsWrap">

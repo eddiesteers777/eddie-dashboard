@@ -122,7 +122,7 @@
 }
 
 .workout-label{
-    font-size:10px;
+    font-size:11px;
     letter-spacing:.10em;
     color:var(--muted);
     opacity:1;
@@ -190,7 +190,7 @@
 .goal-label{
     flex-shrink:0;
     color:var(--muted);
-    font-size:9.5px;
+    font-size:11px;
     white-space:nowrap;
 }
 
@@ -211,7 +211,7 @@
 .big-value small{
     color:var(--muted);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:11px;
     margin-bottom:0;
 }
 
@@ -265,11 +265,11 @@
 
 .metric-display .label{
     margin-top:1px;
-    font-size:9px;
+    font-size:11px;
 }
 
 .remaining{
-    font-size:9.5px;
+    font-size:11px;
     line-height:1.25;
     margin-bottom:7px;
 }
@@ -277,7 +277,7 @@
 .goal-btn{
     border-radius:999px;
     padding:6px 12px;
-    font-size:10px;
+    font-size:11px;
     line-height:1.1;
 }
 
@@ -688,7 +688,7 @@
 @media(max-width:650px){
     .goal-btn{
         padding:7px 10px;
-        font-size:10px;
+        font-size:11px;
     }
 
     .food-search-input{

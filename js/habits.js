@@ -9,6 +9,7 @@
 
 import { icon } from "./icons.js";
 import { inferHabitVisual, habitVisual } from "./habitIcons.js";
+import { showsPersonalPlan } from "./role.js";
 
 // Habits saved before icons existed have the emoji baked into the
 // name itself (e.g. "🙏 Prayer") -- strip it so it isn't shown
@@ -25,7 +26,9 @@ function habitIcon(h) {
     return `<span class="habits-row-icon" style="color:${color}">${icon(iconName)}</span>`;
 }
 
-const DEFAULT_HABITS = [
+// Eddie's own starting list (the coach account). Its ids (h1-h10) are
+// what his saved check-offs point at, so don't renumber them.
+const COACH_HABITS = [
     { id: "h1", name: "Prayer", icon: "pray" },
     { id: "h2", name: "Bible", icon: "bookOpen" },
     { id: "h3", name: "Training Complete", icon: "activity" },
@@ -37,6 +40,18 @@ const DEFAULT_HABITS = [
     { id: "h9", name: "Read 10 Pages", icon: "bookOpen" },
     { id: "h10", name: "Time with Wife", icon: "heart" }
 ];
+
+// What a client starts with before editing their own list. Nothing
+// personal -- just the basics every athlete tracks.
+const CLIENT_HABITS = [
+    { id: "c1", name: "Training Complete", icon: "activity" },
+    { id: "c2", name: "Stretch / Mobility", icon: "stretch" },
+    { id: "c3", name: "Protein Goal", icon: "drumstick" },
+    { id: "c4", name: "Water Goal", icon: "droplet" },
+    { id: "c5", name: "Sleep 7+ hrs", icon: "moon" }
+];
+
+const DEFAULT_HABITS = showsPersonalPlan() ? COACH_HABITS : CLIENT_HABITS;
 
 let habits = [];
 let entries = {};

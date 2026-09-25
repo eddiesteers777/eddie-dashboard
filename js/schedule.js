@@ -76,17 +76,20 @@ document.querySelectorAll(".clients-tab").forEach(tab => {
 });
 
 // Setting open times is a coach job: a client lands straight on
-// "Book a Session" with no availability tab. Uses the role remembered
+// "Book a Session", a coach on their availability and requests. Uses the role remembered
 // on this device (js/role.js) so there's no flash, then confirms it
 // against the real profile once that loads.
 const introEl = document.getElementById("scheduleIntro");
-const coachIntro = introEl.textContent;
-function setScheduleView(isCoach, tab) {
-    document.querySelector(".clients-tabs").hidden = !isCoach;
-    introEl.textContent = isCoach ? coachIntro : "Request a session with your coach and see what's booked.";
-    selectTab(isCoach ? (tab || "availability") : "book");
+function setScheduleView(isCoach) {
+    // Each account only uses one side: the coach sets times and answers
+    // requests, a client books. So no tab bar for either.
+    document.querySelector(".clients-tabs").hidden = true;
+    introEl.textContent = isCoach
+        ? "Set your open times, block off dates, and answer booking requests."
+        : "Request a session with your coach and see what's booked.";
+    selectTab(isCoach ? "availability" : "book");
 }
-if (cachedRole() !== "coach") setScheduleView(false);
+setScheduleView(cachedRole() === "coach");
 
 // ---- Populate static selects ----
 document.getElementById("slotDay").innerHTML = DAY_NAMES.map((name, i) => `<option value="${i}">${name}</option>`).join("");
@@ -498,7 +501,7 @@ listenForAuth(user => {
             .then(({ getMyProfile }) => getMyProfile())
             .then(profile => {
                 const isCoach = Boolean(profile?.isCoachApproved);
-                if (profile && isCoach !== guessedCoach) setScheduleView(isCoach, requestedTab);
+                if (profile && isCoach !== guessedCoach) setScheduleView(isCoach);
             })
             .catch(() => {});
     }

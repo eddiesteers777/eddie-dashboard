@@ -37,14 +37,18 @@
 }
 .checkin-stars{
     display:flex;
-    gap:6px;
+    gap:2px;
 }
 .checkin-star{
     appearance:none;
     background:transparent;
     border:0;
-    padding:2px;
-    color:var(--border);
+    min-width:44px;
+    min-height:44px;
+    padding:4px;
+    font-size:30px;
+    line-height:1;
+    color:rgba(245,240,230,.22); /* unselected stars still read as stars */
     cursor:pointer;
     transition:color .12s ease,transform .12s ease;
 }
