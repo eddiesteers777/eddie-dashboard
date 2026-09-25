@@ -34,7 +34,8 @@
     "soccer.html",
     "strength.html",
     "updates.html",
-    "weekly-review.html"
+    "weekly-review.html",
+    "workout.html"
   ],
   "partials": [
     "components/header.html",
@@ -135,6 +136,8 @@
     "js/weekModel.js",
     "js/weekView.js",
     "js/weekly-review.js",
+    "js/workoutBuilder.js",
+    "js/workoutPage.js",
     "js/workoutResults.js"
   ],
   "styles": [
@@ -170,6 +173,7 @@
     "css/style.css",
     "css/updates.css",
     "css/week.css",
-    "css/weekly-review.css"
+    "css/weekly-review.css",
+    "css/workout.css"
   ]
 }

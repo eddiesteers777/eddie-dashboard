@@ -22,7 +22,7 @@
 export const RUNTIME_KEYS = [
     "completed", "completedAt", "actual", "actualDistance", "actualDuration",
     "actualPace", "actualTime", "notes", "source", "corosActivityId",
-    "skipped", "resultId"
+    "skipped", "resultId", "rpe", "pain"
 ];
 
 export const DAY_TYPES = ["rest", "easy", "long", "workout", "race", "cross", "strength"];

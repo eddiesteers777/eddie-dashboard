@@ -80,7 +80,9 @@ export async function saveMyResult({ planId, coachUid, date, clientName, coachEm
             coachComment: "", coachCommentAt: null
         });
     }
-    await markLocal(planId, date, values.status === "completed" ? { completed: true, skipped: false, resultId: id } : { completed: false, skipped: true, resultId: id });
+    await markLocal(planId, date, values.status === "completed"
+        ? { completed: true, skipped: false, resultId: id, actualDistance: values.distance, actualDuration: values.durationSec, rpe: values.rpe, pain: values.pain }
+        : { completed: false, skipped: true, resultId: id, actualDistance: null, actualDuration: null, rpe: null, pain: values.pain });
     if (values.pain && (!existing?.pain || existing.painNote !== values.painNote)) {
         sendPainFlagEmail({ clientName: clientName || user.displayName, date, title: values.title, painNote: values.painNote });
     }
@@ -89,7 +91,7 @@ export async function saveMyResult({ planId, coachUid, date, clientName, coachEm
 
 export async function deleteMyResult(result) {
     await deleteDoc(doc(db, "workoutResults", result.id));
-    await markLocal(result.planId, result.date, { completed: false, skipped: false, resultId: null });
+    await markLocal(result.planId, result.date, { completed: false, skipped: false, resultId: null, actualDistance: null, actualDuration: null, rpe: null, pain: null });
 }
 
 // The day on this device's copy of the coach plan.

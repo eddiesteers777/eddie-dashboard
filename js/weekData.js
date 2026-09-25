@@ -84,6 +84,9 @@ export function workoutLink(item) {
         } catch {}
         return { href: "strength.html", label: "Open" };
     }
+    if (item.kind === "run" && item.source?.type === "plan") {
+        return { href: `workout.html?program=${encodeURIComponent(item.source.programId)}&date=${item.source.date}`, label: item.structured && !item.done ? "Start" : item.coachPlanId && !item.done ? "Log it" : "Open" };
+    }
     if (item.kind === "cross") return { href: "cross-training.html", label: "Open" };
     if (item.kind === "session") return { href: "schedule.html", label: "Details" };
     return { href: "running.html", label: "Open" };

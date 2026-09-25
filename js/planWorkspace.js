@@ -28,6 +28,11 @@ import {
 } from "./coachingPlanModel.js";
 import { toMillis } from "./clientSummary.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
+import { builderHtml, readBuilder, startingWorkout, blankSet, summaryHtml } from "./workoutBuilder.js";
+import { sanitizeWorkout, workoutSummary, plannedMiles } from "./runWorkout.js";
+
+// Day types a structured run workout applies to.
+const RUN_TYPES = ["easy", "long", "workout", "race", "tempo", "recovery"];
 import { icon } from "./icons.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -218,13 +223,17 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                             </div>
                             <div class="clients-days">
                                 ${(week.days || []).map((day, di) => `
-                                    <div class="clients-day-row${marks.get(day.date) ? " is-done" : ""}" data-day="${di}">
+                                    <div class="pw-day" data-day="${di}">
+                                    <div class="clients-day-row${marks.get(day.date) ? " is-done" : ""}">
                                         <span class="clients-day-label pw-day-label">${esc(shortDay(day.date).split(",")[0])}<small>${esc(shortDay(day.date).split(", ")[1] || "")}</small>${marks.get(day.date) ? ` <span class="clients-day-check" title="${esc(first)} marked this done">✓</span>` : ""}</span>
                                         <select data-field="type" class="clients-day-type" aria-label="${esc(shortDay(day.date))} type">
                                             ${[...new Set([...DAY_TYPES, day.type || "rest"])].map(t => `<option value="${esc(t)}"${t === (day.type || "rest") ? " selected" : ""}>${esc(typeLabel(t))}</option>`).join("")}
                                         </select>
                                         <input type="number" step="0.1" min="0" max="100" data-field="miles" class="clients-day-miles" value="${Number(day.miles) || 0}" aria-label="${esc(shortDay(day.date))} miles">
                                         <input type="text" maxlength="300" data-field="session" class="clients-day-session" value="${esc(day.session || "")}" placeholder="Workout details" aria-label="${esc(shortDay(day.date))} workout">
+                                        <button type="button" class="pw-details-btn${day.workout ? " has-workout" : ""}" data-act="details"${RUN_TYPES.includes(day.type) ? "" : " hidden"} aria-expanded="false">${day.workout ? `${icon("check")} Structured` : `${icon("plus")} Details`}</button>
+                                    </div>
+                                    <div class="pw-builder-slot"></div>
                                     </div>`).join("")}
                             </div>
                         </div>`).join("")}
@@ -275,11 +284,72 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         if (dirty) dirty.hidden = false;
     }
 
+    // ---------- Workout details (structured runs) ----------
+
+    const builderRaw = new Map();   // "week:day" -> raw form values while open
+
+    function dayRefs(el) {
+        const weekEl = el.closest("[data-week]");
+        const dayEl = el.closest("[data-day]");
+        if (!weekEl || !dayEl) return null;
+        const wi = Number(weekEl.dataset.week);
+        const di = Number(dayEl.dataset.day);
+        return { weekEl, dayEl, wi, di, week: state.editing.plan.weeks[wi], day: state.editing.plan.weeks[wi].days[di], key: `${wi}:${di}` };
+    }
+
+    function openBuilder(ref) {
+        const raw = builderRaw.get(ref.key) || startingWorkout(ref.day);
+        builderRaw.set(ref.key, raw);
+        ref.dayEl.querySelector(".pw-builder-slot").innerHTML = builderHtml(raw);
+        const btn = ref.dayEl.querySelector('[data-act="details"]');
+        btn.setAttribute("aria-expanded", "true");
+        btn.classList.add("is-open");
+    }
+
+    function closeBuilder(ref) {
+        ref.dayEl.querySelector(".pw-builder-slot").innerHTML = "";
+        builderRaw.delete(ref.key);
+        const btn = ref.dayEl.querySelector('[data-act="details"]');
+        btn.setAttribute("aria-expanded", "false");
+        btn.classList.remove("is-open");
+    }
+
+    // The builder's values -> the day's workout, text and miles.
+    function applyBuilder(ref) {
+        const raw = readBuilder(ref.dayEl.querySelector(".pw-builder"));
+        builderRaw.set(ref.key, raw);
+        const clean = sanitizeWorkout(raw);
+        const { miles, exact } = plannedMiles(clean);
+        if (clean) {
+            ref.day.workout = clean;
+            const summary = workoutSummary(clean);
+            if (summary) {
+                ref.day.session = summary.slice(0, 300);
+                ref.dayEl.querySelector('[data-field="session"]').value = ref.day.session;
+            }
+            if (miles) {
+                ref.day.miles = miles;
+                ref.dayEl.querySelector('[data-field="miles"]').value = miles;
+            }
+        } else {
+            delete ref.day.workout;
+        }
+        const btn = ref.dayEl.querySelector('[data-act="details"]');
+        btn.classList.toggle("has-workout", Boolean(clean));
+        btn.innerHTML = clean ? `${icon("check")} Structured` : `${icon("plus")} Details`;
+        ref.dayEl.querySelector("[data-wb-summary]").innerHTML = summaryHtml(clean, miles, exact);
+        recalcPlannedMiles(state.editing.plan);
+        const milesEl = container.querySelector(`[data-el="miles-${ref.wi}"]`);
+        if (milesEl) milesEl.textContent = `${ref.week.plannedMiles} mi`;
+        markDirty();
+    }
+
     // Edits go straight into the in-memory plan.
     container.addEventListener("input", event => {
         if (state.view !== "editor") return;
         const e = state.editing;
         const target = event.target;
+        if (target.closest(".pw-builder")) { applyBuilder(dayRefs(target)); return; }
         if (target.id === "pwName") { e.name = target.value; markDirty(); return; }
         const weekEl = target.closest("[data-week]");
         if (!weekEl) return;
@@ -306,6 +376,19 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             day.miles = 0;
             const milesInput = dayEl.querySelector('[data-field="miles"]');
             if (milesInput) milesInput.value = 0;
+        }
+        if (field === "type") {
+            // Workout details only belong on runs.
+            const btn = dayEl.querySelector('[data-act="details"]');
+            const isRun = RUN_TYPES.includes(day.type);
+            btn.hidden = !isRun;
+            if (!isRun) {
+                delete day.workout;
+                const ref = dayRefs(target);
+                if (ref) closeBuilder(ref);
+                btn.classList.remove("has-workout");
+                btn.innerHTML = `${icon("plus")} Details`;
+            }
         }
         recalcPlannedMiles(e.plan);
         const milesEl = container.querySelector(`[data-el="miles-${weekEl.dataset.week}"]`);
@@ -340,6 +423,30 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 state.editing.dirty = true;
                 renderEditor();
                 container.querySelector(".clients-week:last-child")?.scrollIntoView({ block: "center" });
+                return;
+            }
+            if (act === "details") {
+                const ref = dayRefs(btn);
+                return btn.getAttribute("aria-expanded") === "true" ? closeBuilder(ref) : openBuilder(ref);
+            }
+            if (act === "wb-add-set" || act === "wb-remove-set") {
+                const ref = dayRefs(btn);
+                const raw = readBuilder(ref.dayEl.querySelector(".pw-builder"));
+                if (act === "wb-add-set") raw.sets.push(blankSet());
+                else raw.sets.splice(Number(btn.dataset.set), 1);
+                builderRaw.set(ref.key, raw);
+                ref.dayEl.querySelector(".pw-builder-slot").innerHTML = builderHtml(raw);
+                if (act === "wb-remove-set") applyBuilder(ref);
+                return;
+            }
+            if (act === "wb-clear") {
+                const ref = dayRefs(btn);
+                delete ref.day.workout;
+                closeBuilder(ref);
+                const detailsBtn = ref.dayEl.querySelector('[data-act="details"]');
+                detailsBtn.classList.remove("has-workout");
+                detailsBtn.innerHTML = `${icon("plus")} Details`;
+                markDirty();
                 return;
             }
             if (act === "save") return save(btn);

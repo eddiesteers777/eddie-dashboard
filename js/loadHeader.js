@@ -79,6 +79,7 @@ const PAGE_TAB = {
     "profile.html": "more",
     "updates.html": "more",
     "plan.html": "plan",
+    "workout.html": "plan",
     "coach.html": "coach",
     "schedule.html": "coach",
     "checkin.html": "coach",

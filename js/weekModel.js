@@ -93,6 +93,7 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
                     done: Boolean(day.completed),
                     skipped: Boolean(day.skipped),
                     structured: Boolean(day.workout),
+                    actual: day.resultId ? { distance: day.actualDistance ?? null, durationSec: day.actualDuration ?? null, rpe: day.rpe ?? null, pain: Boolean(day.pain) } : null,
                     coachPlanId: plan.coachPlanId || null,
                     planName: plan.name || "",
                     fromCoach: plan.source === "coach",

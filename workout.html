@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Workout | Southbound Coaching</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/workout.css">
+    <link rel="stylesheet" href="css/week.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page workout-page">
+
+        <a href="plan.html" class="hub-back"><span data-icon="chevronLeft"></span> My Plan</a>
+
+        <div id="woLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:70%"></span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="woBody"></div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/workoutPage.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>
