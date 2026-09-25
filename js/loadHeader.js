@@ -48,6 +48,8 @@ leaveCoachOnlyPage();
 // untouched; both are simply hidden/shown by a CSS breakpoint.
 const BOTTOM_TABS = [
     { key: "today", label: "Today", icon: "home", href: "index.html", color: "var(--primary)" },
+    // A client's week and plan (js/myPlan.js). The coach's own tools stay as they were.
+    { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client-training" },
     { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--orange)", requires: "training" },
     { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--pink)", requires: "training" },
     { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--purple)" },
@@ -76,7 +78,7 @@ const PAGE_TAB = {
     "client.html": "coach",
     "profile.html": "more",
     "updates.html": "more",
-    "plan.html": "more",
+    "plan.html": "plan",
     "coach.html": "coach",
     "schedule.html": "coach",
     "checkin.html": "coach",
@@ -260,6 +262,7 @@ fetch("components/header.html")
         const visibleTabs = BOTTOM_TABS.filter(tab => {
             if (!tab.requires) return true;
             return tab.requires === "training" ? navAccess.hasTrainingAccess
+                : tab.requires === "client-training" ? !navAccess.isCoach && navAccess.hasTrainingAccess
                 : tab.requires === "soccer" ? navAccess.hasSoccerAccess
                 : tab.requires === "coach" ? navAccess.isCoach
                 : true;

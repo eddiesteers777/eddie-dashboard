@@ -16,6 +16,8 @@
     <link rel="stylesheet"
           href="css/dashboard.css">
 
+    <link rel="stylesheet" href="css/week.css">
+
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -96,6 +98,21 @@
             <div id="todayItems" class="eos-today-items">
                 <div class="eos-today-loading"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
             </div>
+
+        </section>
+
+        <!-- ==========================================
+             This week (clients only -- js/todayClient.js)
+        =========================================== -->
+
+        <section id="weekSection" class="eos-today-card wk-week-card" hidden>
+
+            <div class="eos-today-card-header">
+                <h2>This Week</h2>
+                <a href="plan.html" class="wk-see-all">Full week <span data-icon="chevronRight"></span></a>
+            </div>
+            <p id="weekSummary" class="wk-summary"></p>
+            <div id="weekList"></div>
 
         </section>
 

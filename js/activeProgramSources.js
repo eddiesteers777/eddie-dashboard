@@ -164,3 +164,22 @@ export async function toggleRunningProgramDayCompleted(programId, dateStr) {
 
     return null;
 }
+
+// A plan's extra strength / cross session (week.supplemental) on a date.
+export async function toggleProgramSupplementalCompleted(programId, dateStr, type) {
+    for (const [load, save] of [[loadCoachPlans, saveCoachPlans], [loadRunningPrograms, saveRunningPrograms], [loadTrainingPrograms, saveTrainingPrograms]]) {
+        const programs = load();
+        const program = programs.find(item => item.id === programId);
+        if (!program?.generatedPlan?.weeks) continue;
+        for (const week of program.generatedPlan.weeks) {
+            for (const entry of week.supplemental || []) {
+                if (entry.type !== type || dayDateWithinWeek(week, entry.day) !== dateStr) continue;
+                entry.completed = !entry.completed;
+                program.updatedAt = new Date().toISOString();
+                await save(programs);
+                return entry.completed;
+            }
+        }
+    }
+    return null;
+}

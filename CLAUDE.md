@@ -55,13 +55,13 @@ Photos live in `images/`. `images/README.md` lists the exact filenames. A missin
 
 | Area | Pages |
 |---|---|
-| Today | `index.html` (dashboard) |
+| Today | `index.html`. **Clients** (`js/todayClient.js`): today's workout(s) as big cards with Mark done + Start/Open, "Rest day · Next: ..." otherwise, a "This Week" strip (one line per day, done/missed marks, totals) linking to My Plan, then the coach card and stats. **Coach**: his own dashboard (marathon plan, planner) in `js/app.js`, unchanged. |
 | Train | `running.html`, `strength.html`, `cross-training.html` |
 | Health | `nutrition.html`, `fueling.html` |
 | Habits | `habits.html` |
 | More | `programs.html`, `pace-calculator.html`, `settings.html`, `more.html` |
 | Coach-only personal tools | `marathon.html`, `75day.html`, `planner.html` (Eddie's own calendar: add/edit/delete events, saved privately as `planner-events` via cloud sync, `js/plannerEvents.js`; today's events show on Today; no dates live in the code), `analytics.html`, `weekly-review.html`, `gear.html` (Eddie's own; `data-requires="coach"` in nav, More, search and the Today cards, and `COACH_ONLY_PAGES` in `js/loadHeader.js` sends a client who opens one by link back to Today) |
-| Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), `profile.html` ("My Profile": the client intake, prefilled from their application, saved to `clientRecords`), `clients.html?tab=share` ("Connect with Your Coach": get a one-time code for the coach), `updates.html` ("From Your Coach": updates the coach sent, check-in replies and past session notes in one feed; opening it marks updates read), `plan.html` ("My Plan": the plan the coach published, from the on-device copy so it works offline; "Your plan was updated" notice with the coach's note + change list + **Got it**; big picture; one week at a time with done marks), all reached via Tools / More. Today's coach card shows "Your plan is ready / was updated" until Got it. Today's coach card prompts "Tell your coach about you" until the profile has a goal and a sport. |
+| Client coaching | `schedule.html` (book sessions), `checkin.html` (weekly check-in), `profile.html` ("My Profile": the client intake, prefilled from their application, saved to `clientRecords`), `clients.html?tab=share` ("Connect with Your Coach": get a one-time code for the coach), `updates.html` ("From Your Coach": updates the coach sent, check-in replies and past session notes in one feed; opening it marks updates read), `plan.html` ("My Plan", the client's **Plan** tab: the "Your plan was updated" notice with the coach's note + change list + **Got it**; the coach plan's big picture; and the whole week, one week at a time -- everything from every source with Mark done on each workout -- works offline and for clients training on their own plans too), all reached via Tools / More. Today's coach card shows "Your plan is ready / was updated" until Got it. Today's coach card prompts "Tell your coach about you" until the profile has a goal and a sport. |
 
 **App: coach pages** (the **Coach** bottom tab on mobile / **Coach** dropdown on desktop)
 
@@ -141,7 +141,7 @@ Eddie's handoff for turning Southbound into a connected client-management platfo
 
 ### Navigation access
 
-`js/navAccess.js` turns the profile into `{ isCoach, hasTrainingAccess, hasSoccerAccess, status }`. HTML elements carry `data-requires="..."` with any of `training`, `soccer`, `coach`, `client` (meaning a non-coach with training or soccer access). Multiple values are OR'd. Mobile bottom tabs are defined in `BOTTOM_TABS` in `js/loadHeader.js`: Today, Train, Health, Habits, Coach (coach only), More. **Nav access fails open:** if the profile can't load, the full nav shows rather than an empty one.
+`js/navAccess.js` turns the profile into `{ isCoach, hasTrainingAccess, hasSoccerAccess, status }`. HTML elements carry `data-requires="..."` with any of `training`, `soccer`, `coach`, `client` (meaning a non-coach with training or soccer access). Multiple values are OR'd. Mobile bottom tabs are defined in `BOTTOM_TABS` in `js/loadHeader.js`: Today, Plan (clients with training access, `requires: "client-training"`), Train, Health, Habits, Coach (coach only), More. **Nav access fails open:** if the profile can't load, the full nav shows rather than an empty one.
 
 ---
 
@@ -198,6 +198,8 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 **Coaching Phase A (2026-09-25, RULES CHANGED):** the coach owns the prescription. Draft -> Review & publish -> immutable version; the client's app copies the newest version to `coach-plans` (`js/coachPlanSync.js` from `js/loadHeader.js`, one reload when something changed) and keeps its own done marks by date (`mergeRuntimeByDate`); taking over a client-made plan retires their copy (`adoptedFrom`). The calendar/Today/Running read coach plans through `js/activeProgramSources.js` (they're never listed on Programs/Race Plans, so a client can't edit or delete one). My Plan page + Got it; hub attention "hasn't opened your update" after 2 days; timeline published / got it. The old coach editor that wrote into the client's `sharedPlans` copy (`js/planEditor.js`, `saveClientPlanList`) is gone. 5 rules tests, 9 model + 5 summary unit tests, a 50-step emulator e2e (take over, draft, publish, client sync with marks carried, Got it, move a long run -> v2 "moved from Sat to Sun", new blank plan, archive).
 
+**Coaching Phase B (2026-09-25, no rules change):** one week for the client. `js/weekModel.js` (pure, unit-tested) merges plan days + a plan's extra sessions + the Strength schedule (a plan's strength session copied onto the schedule -- tagged racePlanId/trainingPlanId, or the plan a coach plan took over via `adoptedFromId` -- shows once) + approved sessions + logged runs (a planned run counts as done when they logged at least 80% of it that day, `autoDone`, not saved as a mark); states done / today / missed / upcoming / rest; week totals; next workout. `js/weekData.js` gathers the inputs and saves Mark done to the right store; `js/weekView.js` renders it for Today and My Plan. Client Plan tab. 5 unit tests + a 23-step emulator e2e.
+
 **Known gaps / Eddie's call (not done):**
 - Should clients connect COROS? Today it only works from `analytics.html` (coach-only), and Settings shows it to the coach only.
 - Nutrition goals default to Eddie's numbers (3200 kcal, 180 g protein...) in `js/nutrition.js`; clients can edit them, but a coach-set or sensible default would be better.
@@ -216,7 +218,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 **Active track: Client management** (`docs/CLIENT_MANAGEMENT_PLAN.md`) -- Phases 1-3 done; Phase 4 (stored timeline) next.
 
-**Queued plans from Eddie (2026-09-25). Agreed order: polish foundation (done), then coaching platform phases A (done) -F, email switch when his accounts are ready, then fueling-on-workouts, the full polish audit, and emojis:**
+**Queued plans from Eddie (2026-09-25). Agreed order: polish foundation (done), then coaching platform phases A-B (done), C-F, email switch when his accounts are ready, then fueling-on-workouts, the full polish audit, and emojis:**
 - `docs/COACHING_PLATFORM_PLAN.md`: the coach-delivery platform. The coach owns a published plan in Firestore (draft/publish, versions, acknowledgement); the client gets a unified Today / My Week / workout detail; structured run and strength workouts with planned-vs-actual results. Its phases A-I absorb Client Management phases 4-9.
 - `docs/APP_POLISH_PLAN.md`: official-app polish (one design system, native controls, states, toasts, copy) plus a custom Southbound reaction-emoji set. **The foundation batch is done**; the page-by-page audit and emojis wait until the coaching platform's new screens exist.
 - `docs/EMAIL_NOTIFICATIONS_PLAN.md`: replace EmailJS with Firebase Cloud Functions + Resend, driven by Firestore notification events. Needs the Firebase Blaze plan, a Resend account and DNS records for the domain, all set up by Eddie.

@@ -122,6 +122,7 @@
     "js/strengthLibraryData.js",
     "js/strengthSchedule.js",
     "js/strengthWorkoutMode.js",
+    "js/todayClient.js",
     "js/trainingPlanGenerator.js",
     "js/trainingPlanStrengthIntegration.js",
     "js/trainingPrograms.js",
@@ -129,6 +130,9 @@
     "js/updates.js",
     "js/userProfile.js",
     "js/userSettings.js",
+    "js/weekData.js",
+    "js/weekModel.js",
+    "js/weekView.js",
     "js/weekly-review.js"
   ],
   "styles": [
@@ -163,6 +167,7 @@
     "css/strengthLibrary.css",
     "css/style.css",
     "css/updates.css",
+    "css/week.css",
     "css/weekly-review.css"
   ]
 }

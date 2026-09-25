@@ -53,49 +53,8 @@
 .myplan-facts dt{ color:var(--muted); font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 .myplan-facts dd{ margin:2px 0 0; color:var(--text); font-size:15px; font-weight:700; overflow-wrap:anywhere; }
 
-/* ---- One week ---- */
+/* ---- The week: css/week.css ---- */
 
-.myplan-week-nav{ display:flex; align-items:center; gap:10px; }
-.myplan-week-title{ flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; }
-.myplan-week-title strong{ font-size:16px; }
-.myplan-progress{ margin:10px 0 0; text-align:center; color:var(--text-secondary); font-size:14px; font-weight:600; }
-.myplan-days{ list-style:none; margin:12px 0 0; padding:0; }
-.myplan-day{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    min-height:52px;
-    padding:8px 10px;
-    border-bottom:1px solid var(--border);
-}
-.myplan-day:last-child{ border-bottom:0; }
-.myplan-day.is-today{
-    background:rgba(201,173,132,.1);
-    border-radius:12px;
-    border-bottom-color:transparent;
-}
-.myplan-day-date{
-    flex:0 0 58px;
-    display:flex;
-    flex-direction:column;
-    color:var(--text);
-    font-size:14px;
-    font-weight:800;
-    line-height:1.2;
-}
-.myplan-day-date small{ color:var(--muted); font-size:12px; font-weight:600; }
-.myplan-day-text{ flex:1; min-width:0; color:var(--text); font-size:15px; line-height:1.4; overflow-wrap:anywhere; }
-.myplan-day.is-rest .myplan-day-text{ color:var(--muted); }
-.myplan-day-state{ flex-shrink:0; display:flex; color:var(--success); }
-.myplan-today{
-    padding:3px 9px;
-    border-radius:999px;
-    background:var(--primary);
-    color:var(--on-primary);
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-}
+.myplan-progress{ margin:8px 0 10px; text-align:center; color:var(--text-secondary); font-size:14px; font-weight:600; }
 .myplan-hint{ margin-top:12px; }
 .myplan-hint a{ color:var(--primary); }

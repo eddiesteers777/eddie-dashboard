@@ -1,0 +1,143 @@
+/* ==========================================
+   Southbound — workouts and the week (js/weekView.js)
+   Used by Today (index.html) and My Plan (plan.html).
+========================================== */
+
+.wk-week-card[hidden], .wk-days [hidden]{ display:none !important; }
+
+/* ---- Today's workout ---- */
+
+.wk-today-cards{ display:flex; flex-direction:column; gap:12px; }
+.wk-card{
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:18px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:18px;
+}
+.wk-card.is-done{ border-color:rgba(34,197,94,.35); }
+.wk-card-top{ display:flex; align-items:flex-start; gap:12px; }
+.wk-icon{
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    background:rgba(255,255,255,.05);
+    color:var(--primary);
+}
+.wk-card-title{ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.wk-card-title strong{ font-size:20px; line-height:1.2; color:var(--text); overflow-wrap:anywhere; }
+.wk-meta{ display:inline-flex; align-items:center; gap:5px; flex-wrap:wrap; color:var(--muted); font-size:13px; font-weight:600; }
+.wk-meta .ui-icon{ width:13px; height:13px; color:var(--primary); }
+.wk-big{ flex-shrink:0; font:800 30px/1 var(--font-body); color:var(--text); letter-spacing:-.01em; }
+.wk-big small{ font-size:15px; font-weight:700; color:var(--text-secondary); }
+.wk-detail{ margin:0; color:var(--text); font-size:15.5px; line-height:1.5; overflow-wrap:anywhere; }
+.wk-logged{ display:flex; align-items:center; gap:6px; margin:0; color:var(--text-secondary); font-size:13.5px; }
+.wk-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.wk-actions .sb-btn{ flex:1 1 140px; }
+
+.wk-done{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:var(--control-height);
+    padding:0 18px;
+    flex:1 1 140px;
+    background:var(--primary);
+    border:1px solid var(--primary);
+    border-radius:var(--radius-pill);
+    color:var(--on-primary);
+    font:700 14px/1 var(--font-body);
+    cursor:pointer;
+}
+.wk-done.is-done{ background:var(--success-bg); border-color:rgba(34,197,94,.45); color:var(--success); }
+.wk-done.is-compact{
+    flex:0 0 auto;
+    width:40px;
+    min-height:40px;
+    padding:0;
+    background:transparent;
+    border-color:var(--border);
+    color:var(--muted);
+}
+.wk-done.is-compact.is-done{ background:var(--success-bg); border-color:transparent; color:var(--success); }
+
+.wk-rest-day{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:16px;
+    background:var(--surface-light);
+    border-radius:18px;
+}
+.wk-rest-day > div{ display:flex; flex-direction:column; gap:3px; }
+.wk-rest-day strong{ font-size:18px; color:var(--text); }
+.wk-rest-day span{ color:var(--text-secondary); font-size:14.5px; line-height:1.5; }
+.wk-rest-day a{ color:var(--primary); }
+
+/* ---- The week ---- */
+
+.wk-see-all{ display:inline-flex; align-items:center; gap:2px; color:var(--primary); font-size:14px; font-weight:700; text-decoration:none; }
+.wk-summary{ margin:-4px 0 10px; color:var(--text-secondary); font-size:14px; font-weight:600; }
+.wk-days{ list-style:none; margin:0; padding:0; }
+.wk-day{
+    padding:10px 8px;
+    border-bottom:1px solid var(--border);
+}
+.wk-day:last-child{ border-bottom:0; }
+.wk-day.is-today{ background:rgba(201,173,132,.1); border-radius:12px; border-bottom-color:transparent; }
+.wk-day-head{ display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+.wk-day-date{ display:flex; flex-direction:column; color:var(--text); font-size:14px; font-weight:800; line-height:1.2; }
+.wk-day-date small{ color:var(--muted); font-size:12px; font-weight:600; }
+.wk-today{
+    padding:3px 9px;
+    border-radius:999px;
+    background:var(--primary);
+    color:var(--on-primary);
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+.wk-rest{ margin:0; color:var(--muted); font-size:14.5px; }
+.wk-items{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; }
+.wk-item{ display:flex; align-items:center; gap:10px; min-height:44px; }
+.wk-dot{ flex-shrink:0; display:flex; }
+.wk-item-text{ flex:1; min-width:0; display:flex; flex-direction:column; color:var(--text); font-size:15px; line-height:1.35; }
+.wk-item-text small{ color:var(--text-secondary); font-size:13px; overflow-wrap:anywhere; }
+.wk-item-text .wk-logged-inline{ color:var(--muted); }
+.wk-item.is-done .wk-item-text > span{ color:var(--text-secondary); }
+.wk-missed{
+    flex-shrink:0;
+    padding:2px 8px;
+    border-radius:999px;
+    background:var(--warning-bg);
+    color:var(--warning);
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+}
+.wk-status{ display:flex; flex-shrink:0; }
+.wk-status.is-done{ color:var(--success); }
+.wk-status.is-missed{ color:var(--warning); }
+
+/* The Today strip: one line per day. */
+.wk-days.is-compact .wk-day{ display:flex; align-items:center; gap:12px; min-height:44px; padding:6px 8px; }
+.wk-days.is-compact .wk-day-date{ flex:0 0 40px; }
+.wk-day-summary{ flex:1; min-width:0; color:var(--text); font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wk-day-summary.is-rest{ color:var(--muted); }
+
+/* My Plan: week navigation */
+.wk-nav{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.wk-nav-title{ flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; }
+.wk-nav-title strong{ font-size:16px; color:var(--text); }
+.wk-nav-title span{ color:var(--muted); font-size:13px; font-weight:600; }
+.wk-this-week{ display:block; margin:0 auto 6px; }

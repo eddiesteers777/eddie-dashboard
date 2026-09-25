@@ -220,7 +220,18 @@ function renderPhaseStatus() {
    Today
 ========================================== */
 
+let clientTodayModule = null;
+
 function renderToday() {
+    // Clients: today's workout + this week, from every source
+    // (js/todayClient.js). The coach's own dashboard continues below.
+    if (!PERSONAL_PLAN) {
+        if (clientTodayModule) clientTodayModule.renderClientToday();
+        else import("./todayClient.js").then(m => { clientTodayModule = m; m.initClientToday(); })
+            .catch(error => console.error("Southbound: client Today failed to load.", error));
+        return;
+    }
+
     const container = document.getElementById("todayItems");
     const dateLabel = document.getElementById("todayDateLabel");
 

@@ -1,20 +1,24 @@
 /* ==========================================
    Southbound — My Plan (plan.html), client side
 
-   The plan the coach published, from the copy on this device
-   (js/coachPlanStore.js, kept current by js/coachPlanSync.js), so it
+   The client's plan and week, from what's on this device (coach plans
+   via js/coachPlanStore.js, kept current by js/coachPlanSync.js), so it
    opens offline too:
      - "Your plan was updated": the coach's note and what changed, with
        a Got it button (acknowledgePlan). Opening the page counts as
        seen (markPlanViewed). Both are shown to the coach.
      - the big picture: plan, version, coach, goal, week X of Y
-     - one week at a time, with done marks and today highlighted
+     - the whole week, one week at a time: everything in it from every
+       source (js/weekModel.js), with Mark done on each workout
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
 import { loadCoachPlans } from "./coachPlanStore.js";
 import { listMyPlans, markPlanViewed, acknowledgePlan } from "./coachingPlans.js";
-import { planWeekFor, dayText, shortDay, isoDate, planDateRange } from "./coachingPlanModel.js";
+import { planWeekFor, shortDay, isoDate, planDateRange, mondayOf, addDays } from "./coachingPlanModel.js";
+import { buildWeek } from "./weekModel.js";
+import { weekInputs, loadSessions } from "./weekData.js";
+import { weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
@@ -25,7 +29,7 @@ const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const today = isoDate(new Date());
 
-const state = { plans: [], headers: [], selected: null, weekIndex: 0, goal: "" };
+const state = { plans: [], headers: [], selected: null, monday: "", goal: "", sessions: [], items: new Map() };
 
 function activePlans() {
     return loadCoachPlans().filter(p => p.status === "active" && p.generatedPlan?.weeks?.length);
@@ -70,88 +74,88 @@ $("planNotice").addEventListener("click", async event => {
     }
 });
 
-// ---------- The plan ----------
+// ---------- The plan + the week ----------
 
 function renderPlan() {
     const plan = state.selected;
-    if (!plan) return;
-    const weeks = plan.generatedPlan.weeks;
-    const week = weeks[state.weekIndex];
-    const position = planWeekFor(plan.generatedPlan, today);
-    const { startDate, endDate } = planDateRange(plan.generatedPlan);
-    const header = state.headers.find(h => h.id === plan.coachPlanId);
-    const workouts = (week.days || []).filter(d => d.type && d.type !== "rest");
-    const done = workouts.filter(d => d.completed);
-    const miles = workouts.reduce((s, d) => s + (Number(d.miles) || 0), 0);
-    const doneMiles = done.reduce((s, d) => s + (Number(d.miles) || 0), 0);
-    const r1 = n => Math.round(n * 10) / 10;
-    const raceDate = plan.generatedPlan.raceDate;
+    const inputs = weekInputs(state.sessions);
+    const week = buildWeek(state.monday, inputs, today);
+    state.items = new Map(week.days.flatMap(d => d.items).map(i => [i.id, i]));
+    const thisMonday = mondayOf(today);
 
-    const where = position.state === "current" ? `Week ${position.index + 1} of ${weeks.length}`
-        : position.state === "upcoming" ? `Starts ${shortDay(startDate)}`
-        : position.state === "finished" ? "Finished" : `${weeks.length} weeks`;
-
-    $("planBody").innerHTML = `
-        ${state.plans.length > 1 ? `
-            <div class="clients-tabs myplan-switch" role="tablist">
-                ${state.plans.map(p => `<button type="button" class="clients-tab${p.id === plan.id ? " active" : ""}" data-select="${esc(p.id)}">${esc(p.name)}</button>`).join("")}
-            </div>` : ""}
-
-        <section class="clients-card myplan-overview">
-            <div class="myplan-title">
-                <h2>${esc(plan.name)}</h2>
-                <span class="myplan-meta">From ${esc(plan.coachName || header?.coachName || "your coach")} · version ${plan.coachVersion}</span>
-            </div>
-            <dl class="myplan-facts">
-                ${state.goal ? `<div><dt>Goal</dt><dd>${esc(state.goal)}</dd></div>` : ""}
-                <div><dt>Where you are</dt><dd>${esc(where)}</dd></div>
-                <div><dt>Dates</dt><dd>${esc(shortDay(startDate))} – ${esc(shortDay(endDate))}</dd></div>
-                ${raceDate ? `<div><dt>Race day</dt><dd>${esc(shortDay(raceDate))}</dd></div>` : ""}
-            </dl>
-        </section>
-
-        <section class="clients-card myplan-week">
-            <div class="myplan-week-nav">
-                <button type="button" class="sb-btn sb-btn-icon" data-week="-1" aria-label="Previous week"${state.weekIndex === 0 ? " disabled" : ""}>${icon("chevronLeft")}</button>
-                <div class="myplan-week-title">
-                    <strong>Week ${week.week ?? state.weekIndex + 1}${week.phase ? ` · ${esc(week.phase)}` : ""}</strong>
-                    <span class="myplan-meta">${esc(shortDay(week.days[0].date))} – ${esc(shortDay(week.days[week.days.length - 1].date))}</span>
+    let overview = "";
+    if (plan) {
+        const weeks = plan.generatedPlan.weeks;
+        const position = planWeekFor(plan.generatedPlan, today);
+        const { startDate, endDate } = planDateRange(plan.generatedPlan);
+        const header = state.headers.find(h => h.id === plan.coachPlanId);
+        const raceDate = plan.generatedPlan.raceDate;
+        const where = position.state === "current" ? `Week ${position.index + 1} of ${weeks.length}`
+            : position.state === "upcoming" ? `Starts ${shortDay(startDate)}`
+            : position.state === "finished" ? "Finished" : `${weeks.length} weeks`;
+        overview = `
+            ${state.plans.length > 1 ? `
+                <div class="clients-tabs myplan-switch" role="tablist">
+                    ${state.plans.map(p => `<button type="button" class="clients-tab${p.id === plan.id ? " active" : ""}" data-select="${esc(p.id)}">${esc(p.name)}</button>`).join("")}
+                </div>` : ""}
+            <section class="clients-card myplan-overview">
+                <div class="myplan-title">
+                    <h2>${esc(plan.name)}</h2>
+                    <span class="myplan-meta">From ${esc(plan.coachName || header?.coachName || "your coach")} · version ${plan.coachVersion}</span>
                 </div>
-                <button type="button" class="sb-btn sb-btn-icon" data-week="1" aria-label="Next week"${state.weekIndex >= weeks.length - 1 ? " disabled" : ""}>${icon("chevronRight")}</button>
+                <dl class="myplan-facts">
+                    ${state.goal ? `<div><dt>Goal</dt><dd>${esc(state.goal)}</dd></div>` : ""}
+                    <div><dt>Where you are</dt><dd>${esc(where)}</dd></div>
+                    <div><dt>Dates</dt><dd>${esc(shortDay(startDate))} – ${esc(shortDay(endDate))}</dd></div>
+                    ${raceDate ? `<div><dt>Race day</dt><dd>${esc(shortDay(raceDate))}</dd></div>` : ""}
+                </dl>
+            </section>`;
+    }
+
+    const ctx = week.context;
+    const title = ctx ? `Week ${ctx.weekNumber} of ${ctx.totalWeeks}${ctx.phase ? ` · ${ctx.phase}` : ""}` : state.monday === thisMonday ? "This week" : "Week";
+    $("planBody").innerHTML = `
+        ${overview}
+        <section class="clients-card myplan-week">
+            <div class="wk-nav">
+                <button type="button" class="sb-btn sb-btn-icon" data-week="-1" aria-label="Previous week">${icon("chevronLeft")}</button>
+                <div class="wk-nav-title">
+                    <strong>${esc(title)}</strong>
+                    <span>${esc(shortDay(week.monday))} – ${esc(shortDay(week.sunday))}${ctx && !plan ? ` · ${esc(ctx.planName)}` : ""}</span>
+                </div>
+                <button type="button" class="sb-btn sb-btn-icon" data-week="1" aria-label="Next week">${icon("chevronRight")}</button>
             </div>
-            ${workouts.length ? `
-                <p class="myplan-progress">${done.length} of ${workouts.length} done${miles ? ` · ${r1(doneMiles)} / ${r1(miles)} mi` : ""}</p>` : ""}
-            <ol class="myplan-days">
-                ${week.days.map(day => {
-                    const isToday = day.date === today;
-                    const rest = !day.type || day.type === "rest";
-                    return `
-                        <li class="myplan-day${isToday ? " is-today" : ""}${day.completed ? " is-done" : ""}${rest ? " is-rest" : ""}">
-                            <span class="myplan-day-date">${esc(shortDay(day.date).split(",")[0])}<small>${esc(shortDay(day.date).split(", ")[1] || "")}</small></span>
-                            <span class="myplan-day-text">${esc(dayText(day))}</span>
-                            <span class="myplan-day-state">${day.completed ? `${icon("checkCircle")}<span class="sr-only">Done</span>` : isToday ? `<span class="myplan-today">Today</span>` : ""}</span>
-                        </li>`;
-                }).join("")}
-            </ol>
-            <p class="clients-card-note myplan-hint">Mark workouts done on <a href="running.html">Running</a> or <a href="index.html">Today</a>. Something needs to change? Tell your coach in your <a href="checkin.html">weekly check-in</a>.</p>
+            ${state.monday !== thisMonday ? `<button type="button" class="sb-btn sb-btn-tertiary wk-this-week" data-week="now">Back to this week</button>` : ""}
+            ${week.summary.planned || week.summary.sessions ? `<p class="myplan-progress">${esc(summaryLine(week.summary))}</p>` : ""}
+            ${weekListHtml(week)}
+            <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done. Something needs to change? Tell your coach in your <a href="checkin.html">weekly check-in</a>.</p>
         </section>`;
 }
 
 $("planBody").addEventListener("click", event => {
     const weekBtn = event.target.closest("[data-week]");
     if (weekBtn) {
-        const n = state.selected.generatedPlan.weeks.length;
-        state.weekIndex = Math.max(0, Math.min(n - 1, state.weekIndex + Number(weekBtn.dataset.week)));
+        state.monday = weekBtn.dataset.week === "now" ? mondayOf(today) : addDays(state.monday, 7 * Number(weekBtn.dataset.week));
         renderPlan();
         return;
     }
     const select = event.target.closest("[data-select]");
     if (select) {
         state.selected = state.plans.find(p => p.id === select.dataset.select);
-        state.weekIndex = planWeekFor(state.selected.generatedPlan, today).index;
+        state.monday = mondayFor(state.selected);
         renderPlan();
     }
 });
+
+bindWeekActions($("planBody"), { getItem: id => state.items.get(id), onChange: () => renderPlan() });
+
+// The week to open on: this week, or the plan's first week if it hasn't started.
+function mondayFor(plan) {
+    if (!plan) return mondayOf(today);
+    const position = planWeekFor(plan.generatedPlan, today);
+    const { startDate } = planDateRange(plan.generatedPlan);
+    return position.state === "upcoming" && startDate ? mondayOf(startDate) : mondayOf(today);
+}
 
 // ---------- Load ----------
 
@@ -185,14 +189,19 @@ listenForAuth(async user => {
         }
     }
 
-    if (!state.plans.length) {
+    const params = new URLSearchParams(location.search);
+    state.selected = state.plans.find(p => p.coachPlanId === params.get("plan")) || state.plans[0] || null;
+    state.monday = mondayFor(state.selected);
+
+    // Nothing to show at all: no coach plan, no plan of their own, nothing scheduled.
+    const anything = state.plans.length || weekInputs().plans.length || weekInputs().strength.length;
+    if (!anything) {
         $("planBody").innerHTML = `<div class="clients-card">${coaches.length
             ? emptyHtml({ iconName: "calendar", title: "No plan from your coach yet", text: "When your coach publishes your plan it shows up here, and you'll get an email.", actionHref: "updates.html", actionLabel: "From Your Coach" })
             : emptyHtml({ iconName: "link", title: "Not connected to a coach yet", text: "Connect with your coach and the plan they build for you shows up here.", actionHref: "clients.html?tab=share", actionLabel: "Connect with Coach" })}</div>`;
         return;
     }
-    const params = new URLSearchParams(location.search);
-    state.selected = state.plans.find(p => p.coachPlanId === params.get("plan")) || state.plans[0];
-    state.weekIndex = planWeekFor(state.selected.generatedPlan, today).index;
     renderPlan();
+    state.sessions = await loadSessions();
+    if (state.sessions.length) renderPlan();
 });
