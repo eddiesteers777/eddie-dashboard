@@ -39,6 +39,14 @@ rules_version = '2';
 //                              there is deliberately no client clause.
 //   clientUpdates/{id}         Updates a coach sends a client. The client
 //                              reads them and can only mark them read.
+//   coachingPlans/{planId}     A plan the coach publishes to a client
+//                              (header). Created at the first publish;
+//                              the client reads it and can only record
+//                              that they viewed / acknowledged a version.
+//     .../versions/{n}         Each published version. Written once by
+//                              the coach, never changed or deleted.
+//   coachingPlanDrafts/{id}    The coach's work in progress. Coach only --
+//                              the client never sees an unpublished plan.
 //   inquiries/{id}             Questions from the public Contact page.
 //                              Anyone can send one (strictly validated);
 //                              only approved coaches can read them.
@@ -283,6 +291,122 @@ service cloud.firestore {
         && onlyChanges(["readAt"])
         && request.resource.data.readAt == request.time;
       allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // ---- Coaching plans: the coach owns the prescription ----
+
+    function validPlanHeaderFields(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 120
+        && d.kind in ["race", "training", "custom"]
+        && d.status in ["active", "archived"]
+        && d.version is int && d.version >= 1
+        && d.coachNote is string && d.coachNote.size() <= 2000
+        && d.changes is list && d.changes.size() <= 40
+        && d.startDate is string && d.endDate is string
+        && d.coachName is string && d.coachName.size() <= 100;
+    }
+
+    function versionPath(planId, version) {
+      return /databases/$(database)/documents/coachingPlans/$(planId)/versions/$(string(version));
+    }
+
+    match /coachingPlans/{planId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+
+      // First publish: the header and version 1 go in one batch.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "coachName", "clientUid", "name", "kind", "status",
+             "version", "publishedAt", "coachNote", "changes", "startDate", "endDate", "createdAt", "updatedAt",
+             "viewedVersion", "viewedAt", "ackVersion", "ackAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && validPlanHeaderFields(request.resource.data)
+        && request.resource.data.version == 1
+        && request.resource.data.status == "active"
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.viewedVersion == 0 && request.resource.data.viewedAt == null
+        && request.resource.data.ackVersion == 0 && request.resource.data.ackAt == null
+        && existsAfter(versionPath(planId, 1));
+
+      // Coach: publish the next version (with its version doc in the same
+      // batch) or archive/restore. Never re-points the plan to another
+      // client, never goes back a version.
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && linked(request.auth.uid, resource.data.clientUid)
+        && onlyChanges(["name", "kind", "status", "version", "publishedAt", "coachNote", "changes",
+             "startDate", "endDate", "updatedAt", "coachName"])
+        && validPlanHeaderFields(request.resource.data)
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.version == resource.data.version
+            || (request.resource.data.version == resource.data.version + 1
+                && request.resource.data.publishedAt == request.time
+                && existsAfter(versionPath(planId, request.resource.data.version))));
+
+      // Client: only "I've seen it" / "Got it", for a version that exists,
+      // never going backwards, stamped by the server.
+      allow update: if signedIn()
+        && resource.data.clientUid == request.auth.uid
+        && onlyChanges(["viewedVersion", "viewedAt", "ackVersion", "ackAt"])
+        && request.resource.data.viewedVersion is int
+        && request.resource.data.viewedVersion >= resource.data.viewedVersion
+        && request.resource.data.viewedVersion <= resource.data.version
+        && request.resource.data.ackVersion is int
+        && request.resource.data.ackVersion >= resource.data.ackVersion
+        && request.resource.data.ackVersion <= resource.data.version
+        && (request.resource.data.viewedAt == resource.data.viewedAt || request.resource.data.viewedAt == request.time)
+        && (request.resource.data.ackAt == resource.data.ackAt || request.resource.data.ackAt == request.time);
+
+      // Plans are archived, never deleted: they're the coaching record.
+      allow delete: if false;
+
+      match /versions/{version} {
+        allow read: if signedIn()
+          && (resource.data.coachUid == request.auth.uid
+              || resource.data.clientUid == request.auth.uid);
+
+        // Written once, alongside the header that points at it.
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "planId", "version", "name", "kind",
+               "plan", "changes", "coachNote", "publishedAt"])
+          && request.resource.data.coachUid == request.auth.uid
+          && linked(request.auth.uid, request.resource.data.clientUid)
+          && request.resource.data.planId == planId
+          && request.resource.data.version is int
+          && string(request.resource.data.version) == version
+          && request.resource.data.plan is map
+          && request.resource.data.name is string && request.resource.data.name.size() <= 120
+          && request.resource.data.changes is list && request.resource.data.changes.size() <= 40
+          && request.resource.data.coachNote is string && request.resource.data.coachNote.size() <= 2000
+          && request.resource.data.publishedAt == request.time
+          && getAfter(/databases/$(database)/documents/coachingPlans/$(planId)).data.version == request.resource.data.version
+          && getAfter(/databases/$(database)/documents/coachingPlans/$(planId)).data.clientUid == request.resource.data.clientUid
+          && getAfter(/databases/$(database)/documents/coachingPlans/$(planId)).data.coachUid == request.auth.uid;
+
+        allow update, delete: if false;
+      }
+    }
+
+    // The coach's unpublished work. No client clause: a client never
+    // sees a draft.
+    match /coachingPlanDrafts/{planId} {
+      allow read, delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "name", "kind", "plan",
+             "basedOnVersion", "adoptedFrom", "createdAt", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && (resource == null || (resource.data.coachUid == request.auth.uid
+            && resource.data.clientUid == request.resource.data.clientUid))
+        && request.resource.data.name is string && request.resource.data.name.size() <= 120
+        && request.resource.data.plan is map
+        && request.resource.data.updatedAt == request.time;
     }
 
     // Questions from the public Contact page. Anyone may send one

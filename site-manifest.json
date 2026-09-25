@@ -61,6 +61,7 @@
     "js/coachAccess.js",
     "js/coachCard.js",
     "js/coachNotesLocal.js",
+    "js/coachingPlanModel.js",
     "js/contact.js",
     "js/corosAuth.js",
     "js/corosCoach.js",

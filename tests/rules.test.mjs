@@ -407,3 +407,112 @@ test("client updates: the linked coach sends, the client reads and can only mark
     await assertFails(setDoc(doc(as("coach"), "clientUpdates/u5"), update("coach", "client", { text: "x".repeat(2001) })));
     await assertSucceeds(deleteDoc(doc(as("coach"), "clientUpdates/u1")));
 });
+
+// ---- Coaching plans: the coach owns the prescription ----
+
+const PLAN = { weeks: [{ week: 1, startDate: "2026-09-28", days: [{ date: "2026-09-28", day: "MON", type: "easy", miles: 5, session: "" }] }] };
+
+function header(extra = {}) {
+    return {
+        coachUid: "coach", coachName: "Eddie", clientUid: "client", name: "Fall 10K", kind: "race", status: "active",
+        version: 1, publishedAt: serverTimestamp(), coachNote: "", changes: [], startDate: "2026-09-28", endDate: "2026-10-04",
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+        viewedVersion: 0, viewedAt: null, ackVersion: 0, ackAt: null, ...extra
+    };
+}
+function version(n, extra = {}) {
+    return {
+        coachUid: "coach", clientUid: "client", planId: "p1", version: n, name: "Fall 10K", kind: "race",
+        plan: PLAN, changes: [], coachNote: "", publishedAt: serverTimestamp(), ...extra
+    };
+}
+function firstPublish(db, { head = {}, ver = {} } = {}) {
+    const batch = writeBatch(db);
+    batch.set(doc(db, "coachingPlans/p1"), header(head));
+    batch.set(doc(db, "coachingPlans/p1/versions/1"), version(1, ver));
+    return batch.commit();
+}
+function publishNext(db, n, { head = {}, ver = {} } = {}) {
+    const batch = writeBatch(db);
+    batch.update(doc(db, "coachingPlans/p1"), { version: n, publishedAt: serverTimestamp(), updatedAt: serverTimestamp(), changes: ["Tue: 5 mi Easy → 6 mi Workout"], ...head });
+    batch.set(doc(db, `coachingPlans/p1/versions/${n}`), version(n, ver));
+    return batch.commit();
+}
+
+test("coaching plans: a linked coach publishes; the client reads it; strangers can't", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(firstPublish(as("coach")));
+    await assertSucceeds(getDoc(doc(as("client"), "coachingPlans/p1")));
+    await assertSucceeds(getDoc(doc(as("client"), "coachingPlans/p1/versions/1")));
+    await assertSucceeds(getDocs(query(collection(as("client"), "coachingPlans"), where("clientUid", "==", "client"))));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "coachingPlans"), where("coachUid", "==", "coach"), where("clientUid", "==", "client"))));
+    await assertFails(getDoc(doc(as("stranger"), "coachingPlans/p1")));
+    await assertFails(getDoc(doc(as("stranger"), "coachingPlans/p1/versions/1")));
+    // Next version: header and version doc together.
+    await assertSucceeds(publishNext(as("coach"), 2));
+    await assertSucceeds(getDoc(doc(as("client"), "coachingPlans/p1/versions/2")));
+    // Archive, then restore.
+    await assertSucceeds(updateDoc(doc(as("coach"), "coachingPlans/p1"), { status: "archived", updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "coachingPlans/p1"), { status: "active", updatedAt: serverTimestamp() }));
+});
+
+test("coaching plans: publishing can't be faked, skipped, rewound or re-pointed", async () => {
+    await seedLinkAndBooking();
+    // Not linked to that client.
+    await assertFails(firstPublish(as("coach"), { head: { clientUid: "stranger" }, ver: { clientUid: "stranger" } }));
+    // A header with no version doc behind it.
+    await assertFails(setDoc(doc(as("coach"), "coachingPlans/p1"), header()));
+    // Starting at version 5, or pre-acknowledged.
+    await assertFails(firstPublish(as("coach"), { head: { version: 5 } }));
+    await assertFails(firstPublish(as("coach"), { head: { ackVersion: 1 } }));
+    // A client can't publish a plan to themselves.
+    await assertFails(firstPublish(as("client"), { head: { coachUid: "client" }, ver: { coachUid: "client" } }));
+    await assertSucceeds(firstPublish(as("coach")));
+    // Skipping a number, going backwards, or bumping without a version doc.
+    await assertFails(publishNext(as("coach"), 3));
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1"), { version: 2, publishedAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1"), { version: 0, updatedAt: serverTimestamp() }));
+    // A version doc that doesn't match the header.
+    await assertFails(setDoc(doc(as("coach"), "coachingPlans/p1/versions/2"), version(2)));
+    // Re-pointing to another client, or deleting the record.
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1"), { clientUid: "stranger", updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("coach"), "coachingPlans/p1")));
+    // Published versions are permanent.
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1/versions/1"), { name: "Changed history" }));
+    await assertFails(deleteDoc(doc(as("coach"), "coachingPlans/p1/versions/1")));
+    // The coach can't mark it seen on the client's behalf.
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1"), { ackVersion: 1, ackAt: serverTimestamp() }));
+});
+
+test("coaching plans: the client can only say they saw it / got it", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(firstPublish(as("coach")));
+    await assertSucceeds(publishNext(as("coach"), 2));
+    await assertSucceeds(updateDoc(doc(as("client"), "coachingPlans/p1"), { viewedVersion: 2, viewedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("client"), "coachingPlans/p1"), { ackVersion: 2, ackAt: serverTimestamp() }));
+    // Not a version that doesn't exist yet, not backwards, not a made-up time.
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { ackVersion: 3, ackAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { viewedVersion: 3, viewedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { viewedVersion: 1, viewedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { viewedVersion: 2, viewedAt: Timestamp.fromMillis(Date.now() - DAY) }));
+    // Never the plan itself.
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { name: "My plan now" }));
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { status: "archived" }));
+    await assertFails(setDoc(doc(as("client"), "coachingPlans/p1/versions/3"), version(3, { coachUid: "client" })));
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1/versions/2"), { plan: {} }));
+});
+
+test("plan drafts: coach only -- the client never sees an unpublished plan", async () => {
+    await seedLinkAndBooking();
+    const draft = extra => ({ coachUid: "coach", clientUid: "client", name: "Winter base", kind: "training", plan: PLAN, basedOnVersion: 0, adoptedFrom: null, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra });
+    await assertSucceeds(setDoc(doc(as("coach"), "coachingPlanDrafts/d1"), draft()));
+    await assertSucceeds(getDoc(doc(as("coach"), "coachingPlanDrafts/d1")));
+    await assertSucceeds(setDoc(doc(as("coach"), "coachingPlanDrafts/d1"), draft({ name: "Winter base v2" })));
+    await assertFails(getDoc(doc(as("client"), "coachingPlanDrafts/d1")));
+    await assertFails(getDocs(query(collection(as("client"), "coachingPlanDrafts"), where("clientUid", "==", "client"))));
+    await assertFails(setDoc(doc(as("client"), "coachingPlanDrafts/d2"), draft({ coachUid: "client" })));
+    await assertFails(setDoc(doc(as("coach"), "coachingPlanDrafts/d3"), draft({ clientUid: "stranger" })));
+    await assertFails(setDoc(doc(as("coach"), "coachingPlanDrafts/d1"), draft({ clientUid: "stranger" })));
+    await assertFails(setDoc(doc(as("coach"), "coachingPlanDrafts/d4"), draft({ secret: true })));
+    await assertSucceeds(deleteDoc(doc(as("coach"), "coachingPlanDrafts/d1")));
+});
