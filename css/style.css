@@ -719,7 +719,26 @@ section{
         gap:14px;
         padding:13px 16px;
     }
+}
 
+/* The coach nav has seven menus. What gives way is decided by the
+   header's own width (a container query), not the window's: the
+   header is capped to the page column (PAGE WIDTHS), so a wide window
+   doesn't mean a wide header, and window-based rules let the menus
+   slide under the search / sync / account controls (2026-09-26).
+   First the sync pill's text (it keeps its icon + title), then the
+   name, then the wordmark. */
+.eos-navbar{
+    container:sbnav / inline-size;
+}
+
+@container sbnav (max-width:1340px){
+    .sync-status-btn #syncStatusText{
+        display:none;
+    }
+}
+
+@container sbnav (max-width:1130px){
     .nav-left{
         gap:16px;
     }
@@ -736,18 +755,32 @@ section{
     }
 }
 
-/* The coach nav has seven menus; on laptop widths the sync pill's
-   text and then the wordmark give way so the menus never slide
-   under the right-hand controls. The pill keeps its icon + title. */
-@media (max-width:1440px){
-    .sync-status-btn #syncStatusText{
+@container sbnav (max-width:1055px){
+    .eos-logo .brand-word{
         display:none;
     }
 }
 
-@media (max-width:1120px){
-    .eos-logo .brand-word{
-        display:none;
+/* Narrow laptop windows (header under ~960px): tighter menus. */
+@container sbnav (max-width:960px){
+    .nav-left{
+        gap:10px;
+    }
+
+    .nav-right{
+        gap:6px;
+    }
+
+    .eos-navbar .eos-nav-item,
+    .eos-navbar .eos-dropdown-trigger{
+        padding-left:6px;
+        padding-right:6px;
+        font-size:.8rem;
+    }
+
+    #loginBtn,
+    #logoutBtn{
+        padding:10px 12px;
     }
 }
 
