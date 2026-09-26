@@ -644,3 +644,57 @@ body.has-bottomnav .pw-bar{ bottom:92px; }
     .sb-ex-rx{ display:grid; grid-template-columns:repeat(3, 1fr); }
     .sb-ex-rx input, .sb-ex-rx input[type="text"], .sb-ex-rx select{ width:100%; box-sizing:border-box; }
 }
+
+/* ---- Weekly workspace: day / week menus, library, drag and drop (js/planOps.js) ---- */
+
+.pw-menu-btn{ width:34px; min-height:34px !important; padding:0; color:var(--text-secondary); }
+.clients-week-head .pw-menu-btn{ margin-left:4px; }
+.pw-day-label[draggable="true"]{ cursor:grab; }
+.pw-day.is-dragging{ opacity:.45; }
+.pw-day.is-drop > .clients-day-row{ outline:2px dashed var(--primary); outline-offset:2px; border-radius:12px; background:rgba(201,173,132,.08); }
+.pw-menu-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.pw-menu-row .sb-btn{ flex:1 1 140px; }
+.pw-menu-list{ display:flex; flex-direction:column; border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.pw-menu-list button{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:48px;
+    padding:0 14px;
+    background:transparent;
+    border:0;
+    border-top:1px solid var(--border);
+    color:var(--text);
+    font:600 15px var(--font-body);
+    text-align:left;
+    cursor:pointer;
+}
+.pw-menu-list button:first-child{ border-top:0; }
+.pw-menu-list button:hover:not(:disabled){ background:rgba(201,173,132,.08); }
+.pw-menu-list button:disabled{ color:var(--muted); cursor:default; }
+.pw-menu-list .ui-icon{ color:var(--primary); }
+.pw-menu-list button:disabled .ui-icon{ color:var(--muted); }
+.pw-lib .pw-lib-list{ display:flex; flex-direction:column; gap:14px; max-height:52vh; overflow:auto; padding-right:4px; }
+.pw-lib-group h3{ margin:0 0 6px; color:var(--primary); font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.pw-lib-row{ display:flex; align-items:flex-start; gap:6px; }
+.pw-lib-pick{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:10px 12px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    text-align:left;
+    cursor:pointer;
+}
+.pw-lib-pick:hover{ border-color:rgba(201,173,132,.5); }
+.pw-lib-pick strong{ font-size:15px; }
+.pw-lib-pick span{ color:var(--text-secondary); font-size:13px; line-height:1.4; }
+.pw-lib-row .sb-btn-icon{ width:40px; min-height:40px; margin-top:2px; }
+.pw-lib [hidden], .pw-menu [hidden]{ display:none !important; }
+/* Toasts (with Undo) sit above the editor's save / publish bar. */
+body:has(.pw-editor) .sb-toast-host{ bottom:104px; }
+body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }

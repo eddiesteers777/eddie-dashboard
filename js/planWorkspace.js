@@ -27,7 +27,7 @@ import {
     changeLines, shortDay, isoDate
 } from "./coachingPlanModel.js";
 import { toMillis } from "./clientSummary.js";
-import { toast, sbConfirm, friendlyError } from "./ui.js";
+import { toast, sbConfirm, sbPrompt, friendlyError } from "./ui.js";
 import { builderHtml, readBuilder, startingWorkout, blankSet, summaryHtml } from "./workoutBuilder.js";
 import { sanitizeWorkout, workoutSummary, plannedMiles } from "./runWorkout.js";
 import {
@@ -35,6 +35,12 @@ import {
     strengthSummaryHtml, rememberVideos, rememberedVideo
 } from "./strengthBuilder.js";
 import { sanitizeStrength } from "./strengthWorkout.js";
+import {
+    moveDay, copyDay, clearDay, nextWeekDate, copyWeek, clearWeek, dayEntry, weekEntry,
+    applyEntryToDay, applyWeekEntry, prescriptionText, kindOfPrescription, isRest,
+    RUN_FOLDERS, STRENGTH_FOLDERS
+} from "./planOps.js";
+import { dayEntries, weekEntries, saveEntry, deleteEntry } from "./coachLibrary.js";
 
 // Day types a structured run workout applies to.
 const RUN_TYPES = ["easy", "long", "workout", "race", "tempo", "recovery"];
@@ -200,7 +206,8 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         return `Version ${h.version} published ${esc(niceDate(toMillis(h.publishedAt)))} · ${seen}.`;
     }
 
-    function renderEditor() {
+    function renderEditor({ keepScroll = false } = {}) {
+        const scrollY = window.scrollY;
         state.view = "editor";
         const e = state.editing;
         const marks = doneMarks(e.planId);
@@ -225,19 +232,21 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                                 <input class="pw-phase" type="text" maxlength="40" value="${esc(week.phase || "")}" placeholder="Phase (optional)" aria-label="Week ${wi + 1} phase" data-field="phase">
                                 ${wi === currentIndex ? `<span class="clients-week-now">This week</span>` : ""}
                                 <span class="clients-week-done" data-el="miles-${wi}">${week.plannedMiles || 0} mi</span>
+                                <button type="button" class="sb-btn sb-btn-icon pw-menu-btn" data-act="week-menu" aria-label="Week ${wi + 1} options: copy, templates, clear">${icon("moreVertical")}</button>
                             </div>
                             <div class="clients-days">
                                 ${(week.days || []).map((day, di) => `
                                     <div class="pw-day" data-day="${di}">
                                     <div class="clients-day-row${marks.get(day.date) ? " is-done" : ""}">
-                                        <span class="clients-day-label pw-day-label">${esc(shortDay(day.date).split(",")[0])}<small>${esc(shortDay(day.date).split(", ")[1] || "")}</small>${marks.get(day.date) ? ` <span class="clients-day-check" title="${esc(first)} marked this done">✓</span>` : ""}</span>
+                                        <span class="clients-day-label pw-day-label" draggable="true" title="Drag onto another day to move it (hold Alt / Option to copy)">${esc(shortDay(day.date).split(",")[0])}<small>${esc(shortDay(day.date).split(", ")[1] || "")}</small>${marks.get(day.date) ? ` <span class="clients-day-check" title="${esc(first)} marked this done">✓</span>` : ""}</span>
                                         <select data-field="type" class="clients-day-type" aria-label="${esc(shortDay(day.date))} type">
                                             ${[...new Set([...DAY_TYPES, day.type || "rest"])].map(t => `<option value="${esc(t)}"${t === (day.type || "rest") ? " selected" : ""}>${esc(typeLabel(t))}</option>`).join("")}
                                         </select>
                                         <input type="number" step="0.1" min="0" max="100" data-field="miles" class="clients-day-miles" value="${Number(day.miles) || 0}" aria-label="${esc(shortDay(day.date))} miles">
                                         <input type="text" maxlength="300" data-field="session" class="clients-day-session" value="${esc(day.session || "")}" placeholder="Workout details" aria-label="${esc(shortDay(day.date))} workout">
                                         <span class="pw-day-btns"><button type="button" class="pw-details-btn${day.workout ? " has-workout" : ""}" data-act="details"${RUN_TYPES.includes(day.type) ? "" : " hidden"} aria-expanded="false">${day.workout ? `${icon("check")} Structured` : `${icon("plus")} Details`}</button>
-                                        <button type="button" class="pw-details-btn pw-strength-btn${day.strength ? " has-workout" : ""}" data-act="strength" aria-expanded="false">${day.strength ? `${icon("check")} Strength` : `${icon("plus")} Strength`}</button></span>
+                                        <button type="button" class="pw-details-btn pw-strength-btn${day.strength ? " has-workout" : ""}" data-act="strength" aria-expanded="false">${day.strength ? `${icon("check")} Strength` : `${icon("plus")} Strength`}</button>
+                                        <button type="button" class="sb-btn sb-btn-icon pw-menu-btn" data-act="day-menu" aria-label="${esc(shortDay(day.date))} options: move, copy, library">${icon("moreVertical")}</button></span>
                                     </div>
                                     <div class="pw-builder-slot"></div>
                                     <div class="pw-strength-slot"></div>
@@ -259,7 +268,8 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             </div>`;
 
         const currentBlock = container.querySelector(".clients-week.is-current");
-        if (currentBlock) requestAnimationFrame(() => currentBlock.scrollIntoView({ block: "start" }));
+        if (keepScroll) window.scrollTo(0, scrollY);
+        else if (currentBlock) requestAnimationFrame(() => currentBlock.scrollIntoView({ block: "start" }));
         if (e.header) renderHistory();
     }
 
@@ -530,6 +540,8 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 if (act === "wb-remove-set") applyBuilder(ref);
                 return;
             }
+            if (act === "day-menu") { const ref = dayRefs(btn); return dayMenu(ref.wi, ref.di); }
+            if (act === "week-menu") return weekMenu(Number(btn.closest("[data-week]").dataset.week));
             if (act === "strength") {
                 const ref = dayRefs(btn);
                 return btn.getAttribute("aria-expanded") === "true" ? closeStrength(ref) : openStrength(ref);
@@ -638,6 +650,285 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         d.showModal();
         return d;
     }
+
+    // ---------- Weekly workspace: move / copy / library (js/planOps.js) ----------
+
+    const allDays = () => (state.editing.plan.weeks || []).flatMap(w => w.days || []);
+
+    // Every change here is one step with an Undo on the toast. Only the
+    // latest change can be undone (an older snapshot would throw away
+    // everything done since), so a new change retires the last Undo.
+    let undoToast = null;
+    function runOp(message, mutate) {
+        undoToast?.querySelector(".sb-toast-action")?.remove();
+        const before = clone(state.editing.plan);
+        mutate(state.editing.plan);
+        recalcPlannedMiles(state.editing.plan);
+        builderRaw.clear();
+        strengthRaw.clear();
+        state.editing.dirty = true;
+        renderEditor({ keepScroll: true });
+        undoToast = toast(message, {
+            action: {
+                label: "Undo",
+                onClick: () => {
+                    state.editing.plan = before;
+                    builderRaw.clear();
+                    strengthRaw.clear();
+                    state.editing.dirty = true;
+                    renderEditor({ keepScroll: true });
+                    toast("Undone");
+                }
+            }
+        });
+    }
+
+    const dayLabel = date => shortDay(date).replace(/,/, "");
+
+    function dateOptions(exclude, selected) {
+        return allDays().filter(d => d.date !== exclude)
+            .map(d => `<option value="${d.date}"${d.date === selected ? " selected" : ""}>${esc(dayLabel(d.date))} — ${esc(prescriptionText(d).slice(0, 60))}</option>`).join("");
+    }
+
+    function dayMenu(wi, di) {
+        const day = state.editing.plan.weeks[wi].days[di];
+        const date = day.date;
+        const next = nextWeekDate(state.editing.plan, date);
+        const empty = isRest(day);
+        const days = allDays();
+        const following = days[days.findIndex(d => d.date === date) + 1]?.date || days[0].date;
+        const d = dialog(`
+            <form class="sb-dialog-form pw-menu">
+                <h2 class="sb-dialog-title">${esc(shortDay(date))}</h2>
+                <p class="sb-dialog-message">${esc(prescriptionText(day))}</p>
+                <label class="pw-label">Another day<select class="sb-dialog-input" name="target">${dateOptions(date, following)}</select></label>
+                <div class="pw-menu-row">
+                    <button type="button" class="sb-btn sb-btn-secondary" data-op="move">${icon("swap")} Move there</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" data-op="copy"${empty ? " disabled" : ""}>${icon("copy")} Copy there</button>
+                </div>
+                <p class="clients-card-note">Moving onto a day that has a workout swaps the two.</p>
+                <div class="pw-menu-list">
+                    <button type="button" data-op="next"${!next || empty ? " disabled" : ""}>${icon("copy")} Copy to the same day next week</button>
+                    <button type="button" data-op="insert">${icon("bookOpen")} Insert from library…</button>
+                    <button type="button" data-op="save"${empty ? " disabled" : ""}>${icon("save")} Save to my library…</button>
+                    <button type="button" data-op="clear"${empty ? " disabled" : ""}>${icon("trash")} Make it a rest day</button>
+                </div>
+                <div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-secondary" data-cancel>Close</button></div>
+            </form>`);
+        d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+        d.addEventListener("click", event => {
+            const op = event.target.closest("[data-op]")?.dataset.op;
+            if (!op) return;
+            const target = d.querySelector('[name="target"]').value;
+            d.close();
+            if (op === "move") runOp(`Moved to ${dayLabel(target)}.`, plan => moveDay(plan, date, target));
+            if (op === "copy") runOp(`Copied to ${dayLabel(target)}.`, plan => copyDay(plan, date, target));
+            if (op === "next") runOp(`Copied to ${dayLabel(next)}.`, plan => copyDay(plan, date, next));
+            if (op === "clear") runOp(`${dayLabel(date)} is a rest day.`, plan => clearDay(plan, date));
+            if (op === "insert") insertDialog(date);
+            if (op === "save") saveDayDialog(day);
+        });
+    }
+
+    function weekMenu(wi) {
+        const weeks = state.editing.plan.weeks;
+        const week = weeks[wi];
+        const workouts = (week.days || []).filter(dd => !isRest(dd)).length;
+        const templates = weekEntries();
+        const d = dialog(`
+            <form class="sb-dialog-form pw-menu">
+                <h2 class="sb-dialog-title">Week ${week.week ?? wi + 1}</h2>
+                <p class="sb-dialog-message">${workouts} workout${workouts === 1 ? "" : "s"} · ${week.plannedMiles || 0} mi</p>
+                ${weeks.length > 1 ? `
+                <label class="pw-label">Copy this week onto<select class="sb-dialog-input" name="target">
+                    ${weeks.map((w, i) => i === wi ? "" : `<option value="${i}"${i === wi + 1 ? " selected" : ""}>Week ${w.week ?? i + 1} · ${esc(shortDay(w.days?.[0]?.date || ""))}${(w.days || []).some(dd => !isRest(dd)) ? " (replaces what's there)" : ""}</option>`).join("")}
+                </select></label>
+                <div class="pw-menu-row"><button type="button" class="sb-btn sb-btn-secondary" data-op="copy-to"${workouts ? "" : " disabled"}>${icon("copy")} Copy week there</button></div>` : ""}
+                <div class="pw-menu-list">
+                    ${wi > 0 ? `<button type="button" data-op="copy-prev">${icon("copy")} Copy last week into this one</button>` : ""}
+                    <button type="button" data-op="save"${workouts ? "" : " disabled"}>${icon("save")} Save as a week template…</button>
+                    <button type="button" data-op="apply"${templates.length ? "" : " disabled"}>${icon("bookOpen")} Use a week template…${templates.length ? "" : " (none saved yet)"}</button>
+                    <button type="button" data-op="clear"${workouts ? "" : " disabled"}>${icon("trash")} Clear this week</button>
+                </div>
+                <div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-secondary" data-cancel>Close</button></div>
+            </form>`);
+        d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+        d.addEventListener("click", async event => {
+            const op = event.target.closest("[data-op]")?.dataset.op;
+            if (!op) return;
+            const target = Number(d.querySelector('[name="target"]')?.value);
+            d.close();
+            const label = i => `week ${weeks[i].week ?? i + 1}`;
+            if (op === "copy-to") runOp(`Week copied onto ${label(target)}.`, plan => copyWeek(plan, wi, target));
+            if (op === "copy-prev") runOp(`Copied ${label(wi - 1)} into ${label(wi)}.`, plan => copyWeek(plan, wi - 1, wi));
+            if (op === "clear") runOp(`${label(wi)[0].toUpperCase()}${label(wi).slice(1)} cleared.`, plan => clearWeek(plan, wi));
+            if (op === "save") {
+                const name = await sbPrompt("Name this week so you can find it later.", { title: "Save as a week template", defaultValue: `${week.phase || "Week"} · ${week.plannedMiles || 0} mi`, confirmLabel: "Save" });
+                if (!name) return;
+                saveEntry(weekEntry(week, { name }));
+                toast("Week saved to your library.");
+            }
+            if (op === "apply") weekTemplateDialog(wi);
+        });
+    }
+
+    function libraryRow(entry, withDelete) {
+        const kind = entry.kind === "run+strength" ? "run + strength" : entry.kind;
+        const detail = entry.kind === "week" ? `${entry.days.filter(dd => !isRest(dd)).length} workouts · ${entry.miles || 0} mi` : prescriptionText(entry.rx);
+        return `
+            <div class="pw-lib-row" data-name="${esc(`${entry.name} ${entry.folder} ${kind}`.toLowerCase())}">
+                <button type="button" class="pw-lib-pick" data-pick="${esc(entry.id)}">
+                    <strong>${esc(entry.name)}</strong>
+                    <span>${esc(detail)}</span>
+                </button>
+                ${withDelete ? `<button type="button" class="sb-btn sb-btn-icon" data-delete="${esc(entry.id)}" aria-label="Delete ${esc(entry.name)} from your library">${icon("trash")}</button>` : ""}
+            </div>`;
+    }
+
+    function libraryListHtml(entries) {
+        const folders = [];
+        for (const entry of entries) {
+            const folder = entry.builtIn ? `Southbound · ${entry.folder}` : entry.folder || "My library";
+            let group = folders.find(f => f.name === folder);
+            if (!group) folders.push(group = { name: folder, items: [] });
+            group.items.push(entry);
+        }
+        return folders.map(f => `
+            <div class="pw-lib-group">
+                <h3>${esc(f.name)}</h3>
+                ${f.items.map(entry => libraryRow(entry, !entry.builtIn)).join("")}
+            </div>`).join("");
+    }
+
+    function pickerDialog({ title, message, entries, onPick }) {
+        const d = dialog(`
+            <form class="sb-dialog-form pw-lib">
+                <h2 class="sb-dialog-title">${esc(title)}</h2>
+                ${message ? `<p class="sb-dialog-message">${esc(message)}</p>` : ""}
+                <input class="sb-dialog-input" type="search" name="q" placeholder="Search: tempo, hills, lower…" aria-label="Search the library">
+                <div class="pw-lib-list" data-el="list">${libraryListHtml(entries())}</div>
+                <div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-secondary" data-cancel>Close</button></div>
+            </form>`);
+        const list = d.querySelector('[data-el="list"]');
+        const filter = () => {
+            const q = d.querySelector('[name="q"]').value.trim().toLowerCase();
+            list.querySelectorAll(".pw-lib-row").forEach(row => { row.hidden = Boolean(q) && !row.dataset.name.includes(q); });
+            list.querySelectorAll(".pw-lib-group").forEach(g => { g.hidden = ![...g.querySelectorAll(".pw-lib-row")].some(r => !r.hidden); });
+        };
+        d.querySelector('[name="q"]').addEventListener("input", filter);
+        d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+        d.querySelector("form").addEventListener("submit", ev => ev.preventDefault());
+        list.addEventListener("click", async event => {
+            const del = event.target.closest("[data-delete]");
+            if (del) {
+                const entry = entries().find(x => x.id === del.dataset.delete);
+                if (!entry || !(await sbConfirm(`"${entry.name}" comes out of your library. Plans that already use it keep it.`, { title: "Delete from your library?", confirmLabel: "Delete", danger: true }))) return;
+                deleteEntry(entry.id);
+                list.innerHTML = libraryListHtml(entries());
+                filter();
+                return;
+            }
+            const pick = event.target.closest("[data-pick]");
+            if (!pick) return;
+            const entry = entries().find(x => x.id === pick.dataset.pick);
+            if (!entry) return;
+            d.close();
+            onPick(entry);
+        });
+    }
+
+    function insertDialog(date) {
+        const day = allDays().find(dd => dd.date === date);
+        const runDay = day && !["rest", "strength", "cross"].includes(day.type);
+        pickerDialog({
+            title: `Insert on ${shortDay(date)}`,
+            message: runDay ? "A strength session is added next to the run; a run replaces the day." : "It replaces what's on the day. You can undo.",
+            entries: dayEntries,
+            onPick: entry => runOp(`${entry.name} added to ${dayLabel(date)}.`, plan => applyEntryToDay(plan, date, entry))
+        });
+    }
+
+    function weekTemplateDialog(wi) {
+        pickerDialog({
+            title: `Use a week template`,
+            message: "It replaces every day of this week. You can undo.",
+            entries: weekEntries,
+            onPick: entry => runOp(`${entry.name} applied.`, plan => applyWeekEntry(plan, wi, entry))
+        });
+    }
+
+    function saveDayDialog(day) {
+        const kind = kindOfPrescription(day);
+        const folders = kind === "strength" ? STRENGTH_FOLDERS : kind === "run+strength" ? [...RUN_FOLDERS, ...STRENGTH_FOLDERS] : RUN_FOLDERS;
+        const guess = kind === "strength" ? "" : ({ easy: "Easy", recovery: "Recovery", tempo: "Tempo", long: "Long Runs", race: "Race Specific" }[day.type] || "");
+        const name = day.type === "strength" && day.strength ? day.strength.title : prescriptionText(day).slice(0, 80);
+        const d = dialog(`
+            <form class="sb-dialog-form">
+                <h2 class="sb-dialog-title">Save to my library</h2>
+                <p class="sb-dialog-message">Reuse it on any client's plan: day menu → Insert from library. Adjust paces or weights after inserting.</p>
+                <label class="pw-label">Name<input class="sb-dialog-input" name="name" maxlength="80" required value="${esc(name)}"></label>
+                <label class="pw-label">Folder<select class="sb-dialog-input" name="folder">
+                    ${folders.map(f => `<option${f === guess ? " selected" : ""}>${esc(f)}</option>`).join("")}
+                    <option>Other</option>
+                </select></label>
+                <div class="sb-dialog-actions">
+                    <button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button>
+                    <button type="submit" class="sb-btn sb-btn-primary">Save</button>
+                </div>
+            </form>`);
+        d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+        d.querySelector("form").addEventListener("submit", ev => {
+            ev.preventDefault();
+            const f = new FormData(ev.target);
+            const entryName = String(f.get("name") || "").trim();
+            if (!entryName) return;
+            saveEntry(dayEntry(day, { name: entryName, folder: String(f.get("folder") || "") }));
+            d.close();
+            toast(`"${entryName}" saved to your library.`);
+        });
+        d.querySelector('[name="name"]').select();
+    }
+
+    // Drag a day's label onto another day (mouse; phones use the day menu).
+    let dragFrom = null;
+    container.addEventListener("dragstart", event => {
+        const label = event.target.closest?.(".pw-day-label[draggable]");
+        if (!label || state.view !== "editor") return;
+        const ref = dayRefs(label);
+        dragFrom = ref.day.date;
+        event.dataTransfer.effectAllowed = "copyMove";
+        event.dataTransfer.setData("text/plain", dragFrom);
+        ref.dayEl.classList.add("is-dragging");
+    });
+    container.addEventListener("dragover", event => {
+        if (!dragFrom) return;
+        const dayEl = event.target.closest?.(".pw-day");
+        if (!dayEl) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = event.altKey || event.ctrlKey ? "copy" : "move";
+        container.querySelectorAll(".pw-day.is-drop").forEach(el => el !== dayEl && el.classList.remove("is-drop"));
+        dayEl.classList.add("is-drop");
+    });
+    container.addEventListener("dragleave", event => {
+        const dayEl = event.target.closest?.(".pw-day");
+        if (dayEl && !dayEl.contains(event.relatedTarget)) dayEl.classList.remove("is-drop");
+    });
+    container.addEventListener("drop", event => {
+        if (!dragFrom) return;
+        const dayEl = event.target.closest?.(".pw-day");
+        if (!dayEl) return;
+        event.preventDefault();
+        const to = dayRefs(dayEl).day.date;
+        const from = dragFrom;
+        dragFrom = null;
+        if (to === from) return renderEditor({ keepScroll: true });
+        if (event.altKey || event.ctrlKey) runOp(`Copied to ${dayLabel(to)}.`, plan => copyDay(plan, from, to));
+        else runOp(`Moved to ${dayLabel(to)}.`, plan => moveDay(plan, from, to));
+    });
+    container.addEventListener("dragend", () => {
+        dragFrom = null;
+        container.querySelectorAll(".is-dragging, .is-drop").forEach(el => el.classList.remove("is-dragging", "is-drop"));
+    });
 
     function newPlanDialog() {
         const nextMonday = (() => {

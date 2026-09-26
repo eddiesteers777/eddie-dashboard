@@ -2946,6 +2946,18 @@ body.has-bottomnav .sb-toast-host{ bottom:96px; }
     transition:opacity .22s ease,transform .22s ease;
 }
 .sb-toast.is-in{ opacity:1; transform:none; }
+.sb-toast-text{ flex:1; }
+.sb-toast-action{
+    flex-shrink:0;
+    margin:-5px -6px -5px 4px;
+    padding:5px 12px;
+    background:transparent;
+    border:1px solid rgba(201,173,132,.55);
+    border-radius:var(--radius-pill);
+    color:var(--primary);
+    font:800 13.5px var(--font-body);
+    cursor:pointer;
+}
 .sb-toast-icon{ flex-shrink:0; display:flex; margin-top:1px; color:var(--primary); }
 .sb-toast.is-success .sb-toast-icon{ color:var(--success); }
 .sb-toast.is-error{ border-color:rgba(239,68,68,.45); }

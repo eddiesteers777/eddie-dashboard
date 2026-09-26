@@ -43,18 +43,23 @@ function host() {
 
 const TOAST_ICONS = { success: "checkCircle", error: "alertTriangle", info: "info" };
 
-export function toast(message, { type = "success", duration = 3200 } = {}) {
+// `action: { label, onClick }` adds a button (e.g. Undo); the toast then stays up longer.
+export function toast(message, { type = "success", duration = 3200, action = null } = {}) {
     const el = document.createElement("div");
     el.className = `sb-toast is-${type}`;
-    el.innerHTML = `<span class="sb-toast-icon">${icon(TOAST_ICONS[type] || "info")}</span><span class="sb-toast-text">${esc(message)}</span>`;
+    el.innerHTML = `<span class="sb-toast-icon">${icon(TOAST_ICONS[type] || "info")}</span><span class="sb-toast-text">${esc(message)}</span>${action ? `<button type="button" class="sb-toast-action">${esc(action.label)}</button>` : ""}`;
     host().appendChild(el);
     requestAnimationFrame(() => el.classList.add("is-in"));
     const remove = () => {
         el.classList.remove("is-in");
         setTimeout(() => el.remove(), 250);
     };
-    const timer = setTimeout(remove, type === "error" ? Math.max(duration, 5000) : duration);
-    el.addEventListener("click", () => { clearTimeout(timer); remove(); });
+    const timer = setTimeout(remove, type === "error" ? Math.max(duration, 5000) : action ? Math.max(duration, 7000) : duration);
+    el.addEventListener("click", event => {
+        clearTimeout(timer);
+        remove();
+        if (action && event.target.closest(".sb-toast-action")) action.onClick?.();
+    });
     return el;
 }
 
