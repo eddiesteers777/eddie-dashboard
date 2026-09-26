@@ -41,6 +41,29 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 }
 
+function addCopyBlock(results, id, label, note, text) {
+    results.insertAdjacentHTML("beforeend", `
+        <div class="coros-diagnostic-copy">
+            <button type="button" class="secondary-btn" id="${id}">${escapeHtml(label)}</button>
+            <small>${escapeHtml(note)}</small>
+            <textarea readonly rows="6" hidden aria-label="${escapeHtml(label)}">${escapeHtml(text)}</textarea>
+        </div>`);
+    const btn = $(id);
+    btn?.addEventListener("click", async () => {
+        const box = btn.parentElement.querySelector("textarea");
+        try {
+            await navigator.clipboard.writeText(text);
+            btn.textContent = "Copied. Paste it into your message.";
+        } catch {
+            // No clipboard access: show the text, selected, to copy by hand.
+            box.hidden = false;
+            box.focus();
+            box.select();
+            btn.textContent = "Select all and copy the text below";
+        }
+    });
+}
+
 async function runCorosDiagnostic() {
     const results =
         $("corosDiagnosticResults");
@@ -56,6 +79,7 @@ async function runCorosDiagnostic() {
 
     const checks = [];
     let workoutTools = [];
+    let sampleReply = "";
 
     // Client metadata.
     try {
@@ -216,6 +240,7 @@ async function runCorosDiagnostic() {
 
             const text =
                 await response.text();
+            sampleReply = text;
 
             if (!response.ok) {
                 throw new Error(
@@ -346,31 +371,11 @@ async function runCorosDiagnostic() {
     results.innerHTML =
         checks.join("");
 
-    // "Send workouts to the watch" needs COROS's exact format: one tap
-    // copies it (generic tool instructions, nothing personal).
-    if (workoutTools.length) {
-        const text = JSON.stringify(workoutTools, null, 2);
-        results.insertAdjacentHTML("beforeend", `
-            <div class="coros-diagnostic-copy">
-                <button type="button" class="secondary-btn" id="copyCorosWorkoutTools">Copy COROS workout tool details</button>
-                <small>Copies COROS's instructions for its ${workoutTools.length} workout and plan tools, to paste to your developer.</small>
-                <textarea readonly rows="6" hidden aria-label="COROS workout tool details">${escapeHtml(text)}</textarea>
-            </div>`);
-        const btn = $("copyCorosWorkoutTools");
-        btn?.addEventListener("click", async () => {
-            const box = btn.parentElement.querySelector("textarea");
-            try {
-                await navigator.clipboard.writeText(text);
-                btn.textContent = "Copied. Paste it into your message.";
-            } catch {
-                // No clipboard access: show the text, selected, to copy by hand.
-                box.hidden = false;
-                box.focus();
-                box.select();
-                btn.textContent = "Select all and copy the text below";
-            }
-        });
-    }
+    // One tap copies something to paste to the developer: COROS's raw
+    // reply to the run query (the athlete's own recent runs), and the
+    // exact format of its workout tools (generic, nothing personal).
+    if (sampleReply) addCopyBlock(results, "copyCorosReply", "Copy COROS's reply", "Copies what COROS sent back for your last 7 days of runs (dates, distances, times), to paste to your developer if runs are missing.", sampleReply.slice(0, 15000));
+    if (workoutTools.length) addCopyBlock(results, "copyCorosWorkoutTools", "Copy COROS workout tool details", `Copies COROS's instructions for its ${workoutTools.length} workout and plan tools, to paste to your developer.`, JSON.stringify(workoutTools, null, 2));
 
     const failures =
         checks.filter(

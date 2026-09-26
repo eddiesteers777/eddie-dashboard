@@ -144,8 +144,9 @@ function activityMeters(activity) {
         activity?.distance ??
         0;
 
-    const value =
-        Number(raw);
+    // Text replies carry units: "8.1 km", "5.03 mi", "8046 m".
+    const text = String(raw).trim().toLowerCase();
+    const value = parseFloat(text.replace(/,/g, ""));
 
     if (!Number.isFinite(value)) return 0;
 
@@ -154,11 +155,11 @@ function activityMeters(activity) {
             activity?.distanceUnit ??
             activity?.distance_unit ??
             ""
-        ).toLowerCase();
+        ).toLowerCase() || (text.match(/[a-z]+$/)?.[0] ?? "");
 
-    return unit.includes("mile")
-        ? value * 1609.344
-        : value;
+    if (/^(mi|mile|miles)$/.test(unit) || unit.includes("mile")) return value * 1609.344;
+    if (/^(km|kilometers?|kilometres?)$/.test(unit)) return value * 1000;
+    return value;
 }
 
 // COROS sport-type codes for the running disciplines Southbound
