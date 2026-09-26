@@ -49,7 +49,7 @@ export async function getNavAccess() {
             status: profile.status || null
         };
     } catch (error) {
-        console.warn("Southbound: nav access check failed -- showing full nav rather than hiding it.", error);
+        console.warn("Southbound: nav access check failed — showing full nav rather than hiding it.", error);
         return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true, status: null };
     }
 }

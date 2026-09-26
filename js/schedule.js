@@ -226,7 +226,7 @@ async function refreshRequests() {
             const already = await getApprovedCountForSlotDate(currentUser.uid, req.slotId, req.dates[0]);
             const cap = req.capacity || 1;
             if (cap > 1 || already > 0) {
-                capacityNote = `<div class="sched-request-note${already >= cap ? " is-full" : ""}">${already}/${cap} already booked for ${escapeHtml(formatDateShort(req.dates[0]))}${already >= cap ? " -- full" : ""}</div>`;
+                capacityNote = `<div class="sched-request-note${already >= cap ? " is-full" : ""}">${already}/${cap} already booked for ${escapeHtml(formatDateShort(req.dates[0]))}${already >= cap ? " — full" : ""}</div>`;
             }
         }
 

@@ -49,7 +49,7 @@ export const SECTIONS = [
             ] },
             { key: "preferredName", type: "text", max: 60, when: "self", label: "Goes by", ask: "What should your coach call you?" },
             { key: "athleteName", type: "text", max: 60, when: "child", label: "Athlete", ask: "Athlete's first name" },
-            { key: "birthYear", type: "year", label: "Birth year", ask: "Birth year", askChild: "Athlete's birth year", hint: "Just the year -- it's for age groups and training zones." },
+            { key: "birthYear", type: "year", label: "Birth year", ask: "Birth year", askChild: "Athlete's birth year", hint: "Just the year — it's for age groups and training zones." },
             { key: "phone", type: "tel", max: 30, label: "Phone", ask: "Best phone number for texts about sessions" }
         ]
     },

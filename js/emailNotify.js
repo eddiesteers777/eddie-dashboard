@@ -70,7 +70,7 @@ function loadEmailJs() {
 
 async function send(templateId, params) {
     if (!coreConfigured() || !isSet(templateId)) {
-        console.warn("Southbound: this email isn't set up yet (js/emailNotify.js) -- skipped it; everything else still went through.");
+        console.warn("Southbound: this email isn't set up yet (js/emailNotify.js) — skipped it; everything else still went through.");
         return false;
     }
     try {

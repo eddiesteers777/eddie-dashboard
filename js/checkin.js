@@ -246,7 +246,7 @@ checkinSubmitBtn?.addEventListener("click", async () => {
 
         await refreshMine();
     } catch (error) {
-        checkinSubmitMsg.textContent = "Couldn't submit that -- try again.";
+        checkinSubmitMsg.textContent = "Couldn't submit that — try again.";
         checkinSubmitMsg.className = "clients-msg clients-msg-error";
         checkinSubmitMsg.hidden = false;
         console.error(error);
@@ -319,7 +319,7 @@ async function refreshReview() {
 
                 await refreshReview();
             } catch (error) {
-                msg.textContent = "Couldn't save that -- try again.";
+                msg.textContent = "Couldn't save that — try again.";
                 msg.className = "clients-msg clients-msg-error";
                 msg.hidden = false;
                 btn.disabled = false;

@@ -85,13 +85,13 @@ form.addEventListener("submit", async event => {
 
         const firstName = data.name.split(/\s+/)[0];
         const via = data.email && data.phone ? "by email or phone" : data.email ? "by email" : "by phone";
-        successText.textContent = `Thanks, ${firstName} -- I'll get back to you ${via} soon.`;
+        successText.textContent = `Thanks, ${firstName} — I'll get back to you ${via} soon.`;
         form.hidden = true;
         successEl.hidden = false;
     } catch (error) {
         console.error("Contact form submit failed:", error);
         showMsg(error.message === "timeout"
-            ? "This is taking too long -- your network may be blocking it. Try again on another connection (like cell data)."
+            ? "This is taking too long — your network may be blocking it. Try again on another connection (like cell data)."
             : "Couldn't send your question. Check your connection and try again.");
         submitBtn.disabled = false;
         submitBtn.textContent = "Send Question";

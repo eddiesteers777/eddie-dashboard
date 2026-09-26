@@ -7,6 +7,7 @@
    No Marathon data is migrated or duplicated.
 ========================================== */
 
+import { showsPersonalPlan } from "./role.js";
 import {
     getActiveRunningPrograms,
     getActiveProgramEntriesForDate,
@@ -55,6 +56,11 @@ function getWeekBounds(date = new Date()) {
     return { start, end };
 }
 
+const TYPE_LABELS = {
+    easy: "Easy", recovery: "Recovery", long: "Long", workout: "Workout", tempo: "Tempo",
+    intervals: "Intervals", race: "Race", strength: "Strength", cross: "Cross", run: "Run"
+};
+
 function renderContext() {
     const context = document.getElementById("runningPlanContext");
     if (!context) return;
@@ -90,9 +96,10 @@ function renderContext() {
             const now = new Date();
             now.setHours(0, 0, 0, 0);
             const daysToRace = Math.round((race - now) / 86400000);
-            countdown = daysToRace >= 0 ? ` — ${daysToRace} days to race day` : "";
+            countdown = daysToRace >= 0 ? ` · ${daysToRace} days to race day` : "";
         }
-        context.textContent = `${program.name} — Week ${activeWeek?.week || "—"} of ${program.generatedPlan.totalWeeks || weeks.length}${activeWeek?.phase ? ` — ${activeWeek.phase}` : ""}${countdown}`;
+        const phase = activeWeek?.phase && activeWeek.phase !== program.name ? ` · ${activeWeek.phase}` : "";
+        context.textContent = `${program.name} · Week ${activeWeek?.week || "—"} of ${program.generatedPlan.totalWeeks || weeks.length}${phase}${countdown}`;
         context.dataset.generatedPlanContext = program.id;
         return;
     }
@@ -134,6 +141,13 @@ function renderWeekCells() {
         if (support.length) parts.push(support[0].entry.type === "strength" ? "Strength" : (support[0].entry.session || "Plan"));
         marker.textContent = parts.length ? parts.join(" + ") : "Plan";
         marker.title = entries.map(item => `${item.programName}: ${item.entry.session || item.entry.type}`).join("\n");
+
+        // No marathon day under it (a client's own or coach plan): name the
+        // workout instead of the base calendar's "Rest".
+        const label = cell.querySelector(".running-week-cell-label");
+        if (label && label.textContent.trim() === "Rest") {
+            label.textContent = TYPE_LABELS[(runs[0] || support[0]).entry.type] || (runs.length ? "Run" : "Plan");
+        }
 
         cell.dataset.generatedPlanApplied = dateStr;
     });
@@ -241,6 +255,12 @@ function renderThisWeek() {
 function renderUpcoming() {
     const el = document.getElementById("runningUpcoming");
     if (!el) return;
+    // A client's Upcoming already lists their plans (js/runningCalendar.js);
+    // this adds plans on top of the coach's own marathon block.
+    if (!showsPersonalPlan()) {
+        el.querySelector(".running-generated-upcoming")?.remove();
+        return;
+    }
 
     const today = isoDate(new Date());
     const upcoming = getActiveProgramUpcomingRuns(today, 14).slice(0, 4);

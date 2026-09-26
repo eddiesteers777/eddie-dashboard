@@ -110,7 +110,7 @@ export async function renderCoachCard(container) {
             iconName: "user",
             color: "var(--primary)",
             title: "Tell your coach about you",
-            detail: "Goals, schedule, what's worked before -- about 3 minutes",
+            detail: "Goals, schedule, what's worked before — about 3 minutes",
             link: "profile.html"
         }));
     }

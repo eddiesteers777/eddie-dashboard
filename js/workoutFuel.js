@@ -102,10 +102,10 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
     const before = [];
     if (level === "full") {
         const carbs = lbs ? `about ${roundTo(lbs * 0.45, 10)} g of carbs` : "a carb-focused meal";
-        before.push({ when: "2-3 hours before", text: `${carbs[0].toUpperCase()}${carbs.slice(1)}${lbs ? " -- e.g." : ", e.g."} oatmeal + banana, or a bagel with honey. Low fat and fiber.` });
+        before.push({ when: "2-3 hours before", text: `${carbs[0].toUpperCase()}${carbs.slice(1)}${lbs ? " — e.g." : ", e.g."} oatmeal + banana, or a bagel with honey. Low fat and fiber.` });
         before.push({ when: "15-30 min before", text: type === "race" ? "Half a banana or a few sips of sports drink. Caffeine now if you use it." : "Half a banana or a few sips of sports drink." });
     } else if (level === "light" || hard) {
-        before.push({ when: "1-2 hours before", text: "Something light and easy to digest -- banana + toast, or a plain bagel." });
+        before.push({ when: "1-2 hours before", text: "Something light and easy to digest — banana + toast, or a plain bagel." });
     } else {
         before.push({ when: "Before", text: "Eat normally. A light snack 1-2 hours before if you're hungry." });
     }
@@ -115,7 +115,7 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
     if (level === "full" || hard) {
         const carbs = lbs ? `about ${roundTo(lbs * 0.45, 10)} g carbs` : "60-80 g carbs";
         after.push(`Within 30-60 min: ${carbs} + 20-30 g protein (e.g. chocolate milk and a bagel).`);
-        after.push("Drink 16-24 oz over the next hour -- more if it was hot or you finished thirsty.");
+        after.push("Drink 16-24 oz over the next hour — more if it was hot or you finished thirsty.");
     } else {
         after.push("Your next normal meal, with some protein, within a couple of hours.");
     }

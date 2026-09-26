@@ -2,86 +2,6 @@
    Southbound Dashboard — Today
 ========================================== */
 
-.eos-today-hero{
-
-    position:relative;
-    overflow:hidden;
-    margin-bottom:28px;
-    padding:6px 0 8px;
-
-}
-
-.eos-today-hero::before{
-
-    content:"";
-    position:absolute;
-    top:-120px;
-    right:-80px;
-    width:360px;
-    height:280px;
-    border-radius:50%;
-    background:radial-gradient(circle,rgba(201,173,132,.10) 0%,rgba(201,173,132,.025) 45%,transparent 72%);
-    pointer-events:none;
-
-}
-
-.eos-today-hero::after{
-
-    content:"";
-    position:absolute;
-    top:50%;
-    right:4px;
-    width:190px;
-    height:190px;
-    transform:translateY(-50%);
-    background-image:url('../brand/sb-mark.svg');
-    background-size:contain;
-    background-position:center;
-    background-repeat:no-repeat;
-    opacity:.045;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
-
-}
-
-.eos-today-hero > div{
-
-    position:relative;
-    z-index:1;
-
-}
-
-.eos-today-eyebrow{
-
-    color:var(--text-secondary);
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:.08em;
-    line-height:1.2;
-    text-transform:uppercase;
-    margin-bottom:8px;
-
-}
-
-.eos-today-hero h1{
-
-    font-family:var(--font-display);
-    font-size:44px;
-    font-weight:400;
-    letter-spacing:.5px;
-    line-height:1;
-    margin-bottom:8px;
-
-}
-
-.eos-today-phase{
-
-    color:var(--text-secondary);
-    font-size:14px;
-
-}
-
 /* ==========================
    Today card
 ========================== */
@@ -423,20 +343,9 @@
 
 }
 
-@media (max-width:700px){
 
-    .eos-today-hero::after{
-        width:150px;
-        height:150px;
-        right:-8px;
-        opacity:.035;
-    }
-
-}
 
 @media (max-width:640px){
-
-    .eos-today-hero h1{ font-size:34px; }
 
     .eos-today-card,
     .eos-nutrition-snap{
@@ -449,11 +358,6 @@
    so a full day's worth of items fits without feeling like a wall
    of padding. Layered after the 640px rules above so it wins. */
 @media (max-width:900px){
-
-    .eos-today-hero{
-        margin-bottom:18px;
-        padding:2px 0 4px;
-    }
 
     .eos-today-card{
         padding:14px 14px;

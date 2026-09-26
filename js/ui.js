@@ -150,10 +150,10 @@ export async function sbPrompt(message, { title = "", defaultValue = "", placeho
 export function friendlyError(error, action = "save that") {
     const code = String(error?.code || error?.message || "");
     if (!navigator.onLine || /unavailable|network|offline|timeout/i.test(code)) {
-        return `Couldn't ${action} -- you look offline. Check your connection and try again.`;
+        return `Couldn't ${action} — you look offline. Check your connection and try again.`;
     }
     if (/permission-denied|unauthenticated/i.test(code)) {
-        return `Couldn't ${action} -- this isn't switched on for your account yet.`;
+        return `Couldn't ${action} — this isn't switched on for your account yet.`;
     }
     return `Couldn't ${action}. Try again in a moment.`;
 }

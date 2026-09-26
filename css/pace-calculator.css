@@ -1084,3 +1084,16 @@ body{
     }
 
 }
+
+/* Phones: the three tools share the row instead of running off the screen. */
+@media (max-width:600px){
+    .pc-tool-tabs{ width:100%; }
+    .pc-tool-tab{
+        flex:1 1 0;
+        min-width:0;
+        padding:10px 6px;
+        white-space:normal;
+        text-align:center;
+        line-height:1.2;
+    }
+}

@@ -263,7 +263,7 @@ function renderPlanContext() {
         const daysToRace = Math.round((race - today) / DAY_MS);
 
         el.textContent = daysToRace >= 0
-            ? `Indianapolis Monumental Marathon — Week ${week} of 16${phase ? " — " + phase : ""} — ${daysToRace} days to race day`
+            ? `Indianapolis Monumental Marathon · Week ${week} of 16${phase ? " · " + phase : ""} · ${daysToRace} days to race day`
             : `Indianapolis Monumental Marathon — ${Math.abs(daysToRace)} days since race day`;
     } catch {
         el.textContent = "Indianapolis Monumental Marathon";
@@ -647,7 +647,7 @@ function renderUpcoming() {
     el.innerHTML = upcoming.map(w => `
         <div class="running-summary-row">
             <span>${new Date(w.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span>
-            <span>${w.miles ? w.miles + " mi" : "Rest"}${w.session ? " · " + escapeHtml(w.session) : ""}</span>
+            <span>${[w.miles ? w.miles + " mi" : "", w.session ? escapeHtml(w.session) : ""].filter(Boolean).join(" · ") || "Rest"}</span>
         </div>
     `).join("");
 }

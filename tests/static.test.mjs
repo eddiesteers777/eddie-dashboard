@@ -128,6 +128,37 @@ test("no browser alert/confirm/prompt dialogs", () => {
     assert.deepEqual(offenders, [], `Use toast/sbAlert/sbConfirm/sbPrompt from js/ui.js instead:\n${offenders.join("\n")}`);
 });
 
+// Visible copy reads like a finished product: a real dash (—), never a
+// typed "--", and never the old "EddieOS" name. EddieOS survives only in
+// data identifiers (eddieos-* keys, the backup file's app field, the COROS
+// client name), which live in code, not copy.
+const stringLiterals = code => [...code
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .matchAll(/\/\/[^\n]*|`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'/g)]
+    .map(m => m[0]).filter(t => !t.startsWith("//"));
+
+test("visible copy uses real dashes and the Southbound name", () => {
+    const offenders = [];
+    const IDENTIFIERS = { "js/cloudSync.js": 1, "js/corosData.js": 1 };
+    for (const page of [...manifest.pages, ...manifest.partials]) {
+        const text = read(page)
+            .replace(/<!--[\s\S]*?-->/g, "")
+            .replace(/<script[\s\S]*?<\/script>/g, "")
+            .replace(/<style[\s\S]*?<\/style>/g, "")
+            .replace(/<[^>]+>/g, " ");
+        // A lone "--" on its own line is a value placeholder ("-- mi"), not a dash.
+        if (/\S -- \S/.test(text)) offenders.push(`${page}: "--" in the page text`);
+        if (/eddie\s*os/i.test(text)) offenders.push(`${page}: says EddieOS`);
+    }
+    for (const file of manifest.scripts) {
+        const strings = stringLiterals(read(file));
+        for (const t of strings.filter(t => /\S -- \S/.test(t))) offenders.push(`${file}: ${t.slice(0, 70)}`);
+        const names = strings.filter(t => /eddie\s*os/i.test(t.replace(/eddieos[-_:]\w*/gi, "")));
+        if (names.length > (IDENTIFIERS[file] || 0)) offenders.push(`${file}: says EddieOS`);
+    }
+    assert.deepEqual(offenders, [], `Use " — " for a dash and "Southbound" for the name:\n${offenders.join("\n")}`);
+});
+
 test("fonts are self-hosted (no Google Fonts) and every font file exists", () => {
     const css = manifest.styles.map(f => [f, read(f)]);
     for (const [file, src] of css) {

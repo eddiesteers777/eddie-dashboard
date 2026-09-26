@@ -585,11 +585,7 @@ function renderCalendar() {
             dayNumber > lastDate
         ) {
             html += `
-                <button
-                    type="button"
-                    class="strength-calendar-day outside"
-                    tabindex="-1">
-                </button>
+                <span class="strength-calendar-day outside" aria-hidden="true"></span>
             `;
 
             continue;

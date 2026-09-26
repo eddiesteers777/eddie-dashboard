@@ -214,7 +214,7 @@ generateCodeBtn.addEventListener("click", async () => {
         showMsg(
             generateCodeMsg,
             denied
-                ? "Couldn't generate a code -- Firestore security rules for this feature may not be deployed yet."
+                ? "Couldn't generate a code — Firestore security rules for this feature may not be deployed yet."
                 : "Couldn't generate a code. Try again.",
             true
         );

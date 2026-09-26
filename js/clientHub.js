@@ -226,7 +226,7 @@ function renderProfileNote() {
     if (rec === undefined) {
         note.textContent = "Couldn't load their profile right now. If this keeps happening, the new security rules may not be published yet.";
     } else if (!rec) {
-        note.textContent = "They haven't filled this in yet (they're prompted on their Today screen). You can also fill it in together here -- they'll see whatever you save.";
+        note.textContent = "They haven't filled this in yet (they're prompted on their Today screen). You can also fill it in together here — they'll see whatever you save.";
     } else {
         const when = toMillis(rec.updatedAt);
         const by = rec.updatedBy === clientUid ? "them" : "you";
@@ -398,7 +398,7 @@ function renderCheckins() {
             toast("Reply sent. They get it in the app and by email.");
         } catch (error) {
             console.error(error);
-            msg.textContent = "Couldn't save that -- try again.";
+            msg.textContent = "Couldn't save that — try again.";
             msg.className = "clients-msg clients-msg-error";
             msg.hidden = false;
             btn.disabled = false;
@@ -426,7 +426,7 @@ function renderChanges() {
                 <p class="hub-quote">"${esc(c.message)}"</p>
                 <form class="hub-reply" data-change="${esc(c.id)}">
                     <label class="clients-card-note" for="chg-${esc(c.id)}">Your answer (${esc(first)} sees it on My Plan and gets an email)</label>
-                    <textarea id="chg-${esc(c.id)}" rows="2" maxlength="1000" placeholder="Moved it to Wednesday -- check your week.">${esc(c.coachReply || "")}</textarea>
+                    <textarea id="chg-${esc(c.id)}" rows="2" maxlength="1000" placeholder="Moved it to Wednesday — check your week.">${esc(c.coachReply || "")}</textarea>
                     <div class="hub-reply-actions">
                         <button type="submit" class="clients-btn-primary">Answer &amp; resolve</button>
                         <span class="clients-msg" hidden></span>
@@ -630,7 +630,7 @@ function wireNotes() {
             toast("Private note saved");
         } catch (error) {
             console.error(error);
-            showMsg(noteForm, "Couldn't save that -- try again.");
+            showMsg(noteForm, "Couldn't save that — try again.");
             btn.disabled = false;
         }
     });
@@ -652,7 +652,7 @@ function wireNotes() {
             toast(`Update sent to ${firstName()}`);
         } catch (error) {
             console.error(error);
-            showMsg(updateForm, "Couldn't send that -- try again.");
+            showMsg(updateForm, "Couldn't send that — try again.");
             btn.disabled = false;
         }
     });
@@ -723,7 +723,7 @@ function editNote(row, note) {
     form.addEventListener("submit", async event => {
         event.preventDefault();
         const text = area.value.trim();
-        if (!text) { showMsg(form, "A note can't be empty -- delete it instead."); return; }
+        if (!text) { showMsg(form, "A note can't be empty — delete it instead."); return; }
         form.querySelector("button").disabled = true;
         try {
             await updatePrivateNote(note.id, { text, pinned: note.pinned });
@@ -732,7 +732,7 @@ function editNote(row, note) {
             afterNotesChange();
         } catch (error) {
             console.error(error);
-            showMsg(form, "Couldn't save that -- try again.");
+            showMsg(form, "Couldn't save that — try again.");
             form.querySelector("button").disabled = false;
         }
     });

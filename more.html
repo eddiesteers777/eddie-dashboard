@@ -344,7 +344,7 @@
                 const access = await getNavAccess();
                 accountStatusEl.textContent = access.isCoach ? "Coach account"
                     : access.status === "active" ? "Client account"
-                    : access.status === "pending" ? "Pending approval -- some sections hidden"
+                    : access.status === "pending" ? "Pending approval — some sections hidden"
                     : "";
                 accountStatusEl.hidden = !accountStatusEl.textContent;
             } catch {

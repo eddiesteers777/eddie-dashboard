@@ -62,7 +62,7 @@ export function workoutCardHtml(item) {
             ${fuelLine(item)}
             ${item.kind === "strength" && item.actual && item.done ? `<p class="wk-logged">${icon("checkCircle")} Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.actual?.distance ? `<p class="wk-logged">${icon("checkCircle")} You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
-                : item.logged ? `<p class="wk-logged">${icon("activity")} You logged ${item.logged} mi${item.autoDone ? " -- counts as done" : ""}</p>` : ""}
+                : item.logged ? `<p class="wk-logged">${icon("activity")} You logged ${item.logged} mi${item.autoDone ? " — counts as done" : ""}</p>` : ""}
             <div class="wk-actions">
                 ${doneButton(item)}
                 <a class="sb-btn sb-btn-secondary" href="${esc(link.href)}">${esc(link.label)} ${icon("chevronRight")}</a>

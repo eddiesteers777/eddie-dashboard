@@ -237,10 +237,10 @@ export function buildSchedule(input) {
     const warnings = [];
     const gelGap = gels.length > 1 ? gels[1].min - gels[0].min : null;
     if (gelGap !== null && gelGap < 15) {
-        warnings.push(`Gels are only ${gelGap} min apart. That's a lot to absorb -- consider fewer gels and a stronger drink, or an earlier first gel.`);
+        warnings.push(`Gels are only ${gelGap} min apart. That's a lot to absorb — consider fewer gels and a stronger drink, or an earlier first gel.`);
     }
     if (concentration !== null && concentration > 10) {
-        warnings.push(`Your drink is a ${concentration}% carb mix -- stronger than the 6-8% most stomachs handle easily. Practice it in training first, or spread it over more water.`);
+        warnings.push(`Your drink is a ${concentration}% carb mix — stronger than the 6-8% most stomachs handle easily. Practice it in training first, or spread it over more water.`);
     }
     if (drink && targetFluid && fluidFromDrink < targetFluid * 0.8) {
         warnings.push(`Your bottles hold ${fluidFromDrink} oz of the ${targetFluid} oz fluid target. Plan on about ${targetFluid - fluidFromDrink} oz of water from aid stations.`);

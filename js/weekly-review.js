@@ -354,6 +354,9 @@ function init() {
         // Fall through with defaults if the plan can't resolve a week.
     }
 
+    const rangeFallback = document.getElementById("wrWeekRange");
+    if (rangeFallback && !rangeFallback.textContent.trim()) rangeFallback.textContent = "Your training this week";
+
     const stats = {
         miles: renderMiles(weekNumber),
         strength: renderStrength(),

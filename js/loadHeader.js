@@ -296,12 +296,19 @@ fetch("components/header.html")
 
         if (subnavPages) {
             document.getElementById("header").insertAdjacentHTML("afterend", `
-                <div class="eos-subnav" aria-label="Section pages">
-                    ${subnavPages.map(p => `
-                        <a href="${p.href}" class="eos-subnav-link ${p.href === page || (page === "client.html" && p.href === "clients.html") ? "active" : ""}">${p.label}</a>
-                    `).join("")}
-                </div>
+                <nav class="eos-subnav" aria-label="Section pages">
+                    ${subnavPages.map(p => {
+                        const current = p.href === page || (page === "client.html" && p.href === "clients.html");
+                        return `<a href="${p.href}" class="eos-subnav-link ${current ? "active" : ""}"${current ? ` aria-current="page"` : ""}>${p.label}</a>`;
+                    }).join("")}
+                </nav>
             `);
+            // On a phone the row scrolls sideways: keep the current page's chip in view.
+            const subnav = document.querySelector(".eos-subnav");
+            const current = subnav?.querySelector(".eos-subnav-link.active");
+            if (subnav && current && subnav.scrollWidth > subnav.clientWidth) {
+                subnav.scrollLeft = current.offsetLeft - (subnav.clientWidth - current.offsetWidth) / 2;
+            }
         }
 
         // ---- Mobile quick-add (+) menu ----
@@ -508,7 +515,7 @@ fetch("components/header.html")
         try {
             ({ login, logout, listenForAuth } = await import("./auth.js"));
         } catch (error) {
-            console.warn("Southbound: auth.js unavailable this session -- sign-in features disabled.", error);
+            console.warn("Southbound: auth.js unavailable this session — sign-in features disabled.", error);
         }
 
         const userName = document.getElementById("user-name");
@@ -695,7 +702,7 @@ fetch("components/header.html")
                         <h2>Sign in to save your progress</h2>
                         <p>
                             You're using Southbound as a guest. Changes you make --
-                            workouts, habits, nutrition logs, and more -- are only
+                            workouts, habits, nutrition logs, and more — are only
                             saved on this device. Sign in with Google to back
                             everything up and keep it in sync if you ever switch
                             devices.

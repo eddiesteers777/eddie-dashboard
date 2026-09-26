@@ -122,7 +122,7 @@ export function mountProfileForm(container, { clientUid, record = null, mode = "
         const values = collect(form);
         msg.hidden = true;
         if (!String(values.primaryGoal || "").trim()) {
-            msg.textContent = "Add your main goal first -- it's the one thing that's required.";
+            msg.textContent = "Add your main goal first — it's the one thing that's required.";
             if (mode === "coach") msg.textContent = "Add a main goal first.";
             msg.className = "clients-msg clients-msg-error";
             msg.hidden = false;
@@ -139,7 +139,7 @@ export function mountProfileForm(container, { clientUid, record = null, mode = "
             console.error("Saving profile failed:", error);
             const denied = error?.code === "permission-denied";
             msg.textContent = denied
-                ? "Couldn't save -- the profile isn't switched on yet. Try again later."
+                ? "Couldn't save — the profile isn't switched on yet. Try again later."
                 : "Couldn't save that. Check your connection and try again.";
             msg.className = "clients-msg clients-msg-error";
             msg.hidden = false;
