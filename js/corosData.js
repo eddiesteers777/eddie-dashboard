@@ -6,6 +6,7 @@ import {
     saveTokenRecord,
     discoverOAuthMetadata
 } from "./corosAuth.js";
+import { unwrapResult, findRecords } from "./corosParse.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 const CLIENT_ID =
@@ -218,83 +219,20 @@ function buildArgs(toolDefinition, start, end) {
     return args;
 }
 
-function unwrap(result) {
-    if (!result) return null;
-
-    if (result.structuredContent) {
-        return result.structuredContent;
-    }
-
-    if (Array.isArray(result.content)) {
-        for (const item of result.content) {
-            if (item?.json) return item.json;
-
-            if (typeof item?.text === "string") {
-                try {
-                    return JSON.parse(item.text);
-                } catch {
-                    return { text: item.text };
-                }
-            }
-        }
-    }
-
-    return result;
-}
+// COROS replies: js/corosParse.js reads them (and finds the activity list wherever it is).
+const unwrap = unwrapResult;
 
 function parseRecords(result) {
-    const value = unwrap(result);
-
-    if (Array.isArray(value?.activities)) {
-        return value.activities;
-    }
-
-    if (Array.isArray(value?.records)) {
-        return value.records;
-    }
-
-    if (Array.isArray(value?.data)) {
-        return value.data;
-    }
-
-    if (typeof value?.text === "string") {
-        const blocks =
-            value.text
-                .split(/\n(?=LabelId\s*:|ActivityId\s*:)/i)
-                .map(x => x.trim())
-                .filter(Boolean);
-
-        return blocks.map(block => {
-            const item = {};
-
-            block.split(/\r?\n/).forEach(line => {
-                const match =
-                    line.match(/^([^:]+):\s*(.*)$/);
-
-                if (!match) return;
-
-                const key =
-                    match[1]
-                        .trim()
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, "_");
-
-                item[key] =
-                    match[2].trim();
-            });
-
-            return item;
-        });
-    }
-
-    return [];
+    return findRecords(unwrapResult(result));
 }
 
 function recordId(activity) {
     return (
         activity?.labelId ??
         activity?.label_id ??
+        activity?.labelid ??
         activity?.activityId ??
+        activity?.activityid ??
         activity?.activity_id ??
         activity?.id ??
         null
@@ -305,6 +243,7 @@ function recordSportType(activity) {
     return (
         activity?.sportType ??
         activity?.sport_type ??
+        activity?.sporttype ??
         activity?.sportTypeCode ??
         activity?.sport_type_code ??
         null
@@ -315,6 +254,7 @@ function activityDate(activity) {
     return (
         activity?.startTime ??
         activity?.start_time ??
+        activity?.starttime ??
         activity?.startDate ??
         activity?.start_date ??
         activity?.date ??
@@ -326,6 +266,7 @@ function activityMeters(activity) {
     const raw =
         activity?.distanceMeters ??
         activity?.distance_meters ??
+        activity?.distancemeters ??
         activity?.distance ??
         0;
 

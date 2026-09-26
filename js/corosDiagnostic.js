@@ -9,6 +9,7 @@ import {
 
 import { icon } from "./icons.js";
 import { corosToolsSummary } from "./corosTools.js";
+import { unwrapResult, findRecords, describeShape } from "./corosParse.js";
 
 const $ = id => document.getElementById(id);
 
@@ -280,11 +281,17 @@ async function runCorosDiagnostic() {
                     )
                 );
             } else {
+                // Count what actually came back; when it's nothing, say
+                // what the reply looked like so the cause is visible.
+                const value = unwrapResult(payload?.result);
+                const found = findRecords(value).length;
                 checks.push(
                     row(
                         "Sample activity query",
-                        "pass",
-                        "COROS accepted the running-only activity query using yyyyMMdd dates."
+                        found ? "pass" : "warn",
+                        found
+                            ? `COROS returned ${found} ${found === 1 ? "run" : "runs"} from the last 7 days.`
+                            : `COROS answered but Southbound found no runs from the last 7 days. The reply looked like: ${describeShape(value)}`
                     )
                 );
             }
@@ -321,8 +328,14 @@ async function runCorosDiagnostic() {
                 const line = text.split(/\r?\n/).find(x => x.startsWith("data:"));
                 if (line) payload = JSON.parse(line.slice(5).trim());
             }
-            const summary = corosToolsSummary(payload?.result?.tools || []);
+            const tools = payload?.result?.tools || [];
+            const summary = corosToolsSummary(tools);
             checks.push(row("What COROS lets Southbound do", summary.status, summary.text));
+            const activityTool = tools.find(t => t?.name === "querySportRecords");
+            if (activityTool) {
+                const fields = Object.keys(activityTool.inputSchema?.properties || {});
+                checks.push(row("How COROS wants runs asked for", "pass", `querySportRecords takes: ${fields.join(", ") || "no settings"}.`));
+            }
         } catch (error) {
             checks.push(row("What COROS lets Southbound do", "warn", `Couldn't list COROS's tools: ${error.message}`));
         }

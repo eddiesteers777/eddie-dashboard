@@ -78,6 +78,7 @@
     "js/corosCoach.js",
     "js/corosData.js",
     "js/corosDiagnostic.js",
+    "js/corosParse.js",
     "js/corosPlanCompare.js",
     "js/corosStatus.js",
     "js/corosTools.js",
