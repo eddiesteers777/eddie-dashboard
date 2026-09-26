@@ -24,7 +24,7 @@ import { weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
-import { toast, emptyHtml, friendlyError } from "./ui.js";
+import { toast, emptyHtml, friendlyError, sbChoose } from "./ui.js";
 import { icon } from "./icons.js";
 import { listMyChangeRequests } from "./changeRequests.js";
 import { openChangeRequestDialog, changeRequestsHtml, bindChangeRequestActions } from "./changeRequestDialog.js";
@@ -141,13 +141,20 @@ function renderPlan() {
             ${weekListHtml(week)}
             <div class="myplan-foot">
                 <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done.</p>
-                ${currentCoach() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="change">${icon("messageSquare")} Need a change?</button>` : ""}
+                <div class="myplan-foot-actions">
+                    <button type="button" class="sb-btn sb-btn-secondary" data-act="calendar">${icon("calendar")} Add to calendar</button>
+                    ${currentCoach() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="change">${icon("messageSquare")} Need a change?</button>` : ""}
+                </div>
             </div>
         </section>
         ${changeRequestsHtml(state.requests, currentCoach()?.coachName || "Your coach")}`;
 }
 
 $("planBody").addEventListener("click", async event => {
+    if (event.target.closest('[data-act="calendar"]')) {
+        await addToCalendar();
+        return;
+    }
     if (event.target.closest('[data-act="change"]')) {
         const coach = currentCoach();
         if (!coach) return;
@@ -175,6 +182,28 @@ $("planBody").addEventListener("click", async event => {
 
 bindWeekActions($("planBody"), { getItem: id => state.items.get(id), onChange: () => renderPlan() });
 bindChangeRequestActions($("planBody"), id => { state.requests = state.requests.filter(r => r.id !== id); renderPlan(); });
+
+// ---------- Add to calendar (js/calendarButton.js) ----------
+
+async function addToCalendar() {
+    const inputs = weekInputs(state.sessions);
+    const plan = state.selected;
+    const end = plan ? planDateRange(plan.generatedPlan).endDate : "";
+    const from = state.monday > mondayOf(today) ? state.monday : mondayOf(today);
+    const restWeeks = [];
+    if (end) for (let m = from; m <= end && restWeeks.length < 30; m = addDays(m, 7)) restWeeks.push(m);
+    const choices = [{ value: "week", label: "This week", primary: restWeeks.length <= 1 }];
+    if (restWeeks.length > 1) choices.push({ value: "plan", label: `Rest of the plan (${restWeeks.length} weeks)`, primary: true });
+    const choice = await sbChoose("Your workouts and sessions go into your phone's calendar, each with a link back to Southbound. Adding them again later updates them.", { title: "Add to your calendar", choices });
+    if (!choice) return;
+    const { downloadCalendar } = await import("./calendarButton.js");
+    if (choice === "week") {
+        downloadCalendar([buildWeek(state.monday, inputs, today)], { filename: `southbound-week-${state.monday}.ics` });
+    } else {
+        const slug = String(plan.name || "plan").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "plan";
+        downloadCalendar(restWeeks.map(m => buildWeek(m, inputs, today)), { filename: `southbound-${slug}.ics`, name: plan.name || "Southbound Training" });
+    }
+}
 
 // The week to open on: this week, or the plan's first week if it hasn't started.
 function mondayFor(plan) {

@@ -71,7 +71,7 @@ export function planContext(plans, date) {
  * Everything on one date.
  *   plans     [{ id, name, source, adoptedFromId?, generatedPlan }]
  *   strength  strength-schedule items [{ id, date, workoutName, workoutId, time, completed, racePlanId?, trainingPlanId? }]
- *   sessions  [{ date, startTime, title, detail }]
+ *   sessions  [{ date, startTime, endTime?, title, detail }]
  *   runLog    [{ date, miles }]
  */
 export function buildDay(date, { plans = [], strength = [], sessions = [], runLog = [] } = {}, today = date) {
@@ -162,6 +162,8 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
         items.push({
             id: `session:${s.id || s.date + s.startTime}`,
             kind: "session",
+            startTime: s.startTime || "",
+            endTime: s.endTime || "",
             title: s.title || "Session with your coach",
             detail: [s.startTime ? niceTime(s.startTime) : "", s.detail].filter(Boolean).join(" · "),
             miles: 0,

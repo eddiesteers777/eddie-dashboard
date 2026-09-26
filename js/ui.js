@@ -108,6 +108,19 @@ function openDialog({ title, message, body = "", actions, danger = false, onOpen
     });
 }
 
+// A few labelled choices ("This week" / "Whole plan"). Resolves to the
+// chosen value, or null when cancelled.
+export async function sbChoose(message, { title = "", choices = [], cancelLabel = "Cancel" } = {}) {
+    const { action } = await openDialog({
+        title, message,
+        actions: [
+            { value: "cancel", label: cancelLabel, className: "sb-btn-tertiary" },
+            ...choices.map((c, i) => ({ value: `choice:${i}`, label: c.label, className: c.primary ? "sb-btn-primary" : "sb-btn-secondary" }))
+        ]
+    });
+    return action.startsWith("choice:") ? choices[Number(action.slice(7))].value : null;
+}
+
 export async function sbAlert(message, { title = "", okLabel = "OK" } = {}) {
     await openDialog({
         title, message,

@@ -8,6 +8,7 @@ import {
 } from "./corosAuth.js";
 
 import { icon } from "./icons.js";
+import { corosToolsSummary } from "./corosTools.js";
 
 const $ = id => document.getElementById(id);
 
@@ -295,6 +296,35 @@ async function runCorosDiagnostic() {
                     error.message
                 )
             );
+        }
+    }
+
+    // What COROS lets Southbound do: can it only read runs, or could it
+    // also send workouts to the watch? (js/corosTools.js)
+    if (token?.access_token) {
+        try {
+            const response = await fetch(MCP_URL, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token.access_token}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json, text/event-stream",
+                    "MCP-Protocol-Version": "2026-07-28",
+                    "Mcp-Method": "tools/list"
+                },
+                body: JSON.stringify({ jsonrpc: "2.0", id: 102, method: "tools/list", params: {} })
+            });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${text.slice(0, 200)}`);
+            let payload = null;
+            try { payload = JSON.parse(text); } catch {
+                const line = text.split(/\r?\n/).find(x => x.startsWith("data:"));
+                if (line) payload = JSON.parse(line.slice(5).trim());
+            }
+            const summary = corosToolsSummary(payload?.result?.tools || []);
+            checks.push(row("What COROS lets Southbound do", summary.status, summary.text));
+        } catch (error) {
+            checks.push(row("What COROS lets Southbound do", "warn", `Couldn't list COROS's tools: ${error.message}`));
         }
     }
 

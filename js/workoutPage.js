@@ -189,7 +189,8 @@ function render() {
                 : item ? `<button type="button" class="sb-btn ${workout ? "sb-btn-secondary" : "sb-btn-primary"}" data-act="toggle">${icon(done ? "checkCircle" : "check")} ${done ? "Done" : "Mark done"}</button>` : ""}
         </div>`}
         ${isCoachPlan() && !state.result ? `<p class="clients-card-note wo-hint">Logging tells your coach how it went, including anything that hurt.</p>` : ""}
-        ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}`;
+        ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}
+        ${item && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="calendar">${icon("calendar")} Add to calendar</button>` : ""}`;
 }
 
 $("woBody").addEventListener("click", async event => {
@@ -202,6 +203,13 @@ $("woBody").addEventListener("click", async event => {
     if (act === "change") {
         const { openChangeRequestDialog } = await import("./changeRequestDialog.js");
         return openChangeRequestDialog({ coach: { coachUid: state.program.coachUid, coachName: state.program.coachName }, planId: state.program.coachPlanId, date, dates: [date] });
+    }
+    if (act === "calendar") {
+        const day = buildDay(date, weekInputs(), isoDate(new Date()));
+        const items = day.items.filter(i => i.source?.programId === programId && i.kind === "run");
+        if (!items.length) return;
+        const { downloadCalendar } = await import("./calendarButton.js");
+        return downloadCalendar([{ days: [{ ...day, items }] }], { filename: `southbound-${date}.ics` });
     }
     if (act === "toggle") {
         const item = buildDay(date, weekInputs(), isoDate(new Date())).items.find(i => i.source?.programId === programId && i.kind === "run");

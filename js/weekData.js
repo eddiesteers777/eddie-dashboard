@@ -51,6 +51,7 @@ export async function loadSessions() {
                 id: `${r.id}:${date}`,
                 date,
                 startTime: r.startTime,
+                endTime: r.endTime,
                 title: `${SESSION_TYPES.find(t => t.value === r.sessionType)?.label || "Session"}${r.label ? ` · ${r.label}` : ""}`,
                 detail: r.coachName ? `with ${r.coachName}` : ""
             })));
