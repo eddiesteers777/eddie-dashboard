@@ -275,6 +275,67 @@ function renderMacroCards(){
 
 }
 /* ==========================================
+   Goals (js/nutritionGoals.js): saved per person as
+   "nutrition-goals"; a client starts from their own starting point
+   (scaled to their Fueling body weight), never the coach's numbers.
+========================================== */
+
+let savedGoals = null;
+let goalsModule = null;
+
+async function applyGoals(){
+
+    try {
+        goalsModule = goalsModule || await import("./nutritionGoals.js");
+        const read = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; } };
+        savedGoals = read("nutrition-goals");
+        let isCoach = false;
+        try { isCoach = localStorage.getItem("sb-account-role") === "coach"; } catch {}
+        let bodyWeightLb = null;
+        const plans = read("fueling-plans");
+        if (!isCoach && Array.isArray(plans) && plans.length) {
+            const { profileFromPlans } = await import("./workoutFuel.js");
+            bodyWeightLb = Number(profileFromPlans(plans).bodyWeight) || null;
+        }
+        const { goals, custom } = goalsModule.resolveGoals(savedGoals, { isCoach, bodyWeightLb });
+        Object.entries(goals).forEach(([key, value]) => { if (macros[key]) macros[key].goal = value; });
+        showGoalsNote(!isCoach && !custom, Boolean(bodyWeightLb));
+    } catch (error) {
+        console.warn("Nutrition goals could not be loaded:", error);
+    }
+
+}
+
+function showGoalsNote(show, fromWeight){
+
+    let note = document.getElementById("goalsNote");
+    if (!show) { note?.remove(); return; }
+    if (!note) {
+        note = document.createElement("p");
+        note.id = "goalsNote";
+        note.className = "nutrition-goals-note";
+        document.getElementById("macroGrid")?.insertAdjacentElement("beforebegin", note);
+    }
+    note.textContent = fromWeight
+        ? "Starting goals, based on the body weight in your Fueling plan. Tap Edit Goal on any card to make them yours."
+        : "Starting goals for an active adult. Tap Edit Goal on any card to make them yours, or add your weight in Fueling for goals that fit you.";
+
+}
+
+function saveGoal(key, value){
+
+    const next = goalsModule?.withGoal(savedGoals, key, value);
+    if (!next) return;
+    savedGoals = next;
+    try { localStorage.setItem("nutrition-goals", JSON.stringify(next)); } catch {}
+    showGoalsNote(false);
+    import("./cloudSync.js")
+        .then(({ pushToCloud }) => pushToCloud())
+        .catch(error => console.warn("Nutrition cloud sync could not be completed:", error));
+
+}
+
+/* ==========================================
    Save / Load
 ========================================== */
 
@@ -1304,6 +1365,8 @@ document.addEventListener(
 
                 macros[macro].goal = value;
 
+                saveGoal(macro, value);
+
                 updateDisplay();
 
             }
@@ -1412,14 +1475,20 @@ document
    Initialize
 ========================================== */
 
-renderMacroCards();
+// Goals first, so a client never sees someone else's numbers flash up;
+// again after cloud sync, which may bring goals set on another device.
+applyGoals().then(() => {
 
-import("./cloudSync.js")
-    .then(({ initCloudSync }) => initCloudSync().then(loadDay))
-    .catch(error => {
-        console.warn("Nutrition cloud sync could not be completed:", error);
-        // Cloud sync failing (offline, Firebase SDK blocked, etc.)
-        // shouldn't leave the page blank -- still load whatever's
-        // already in localStorage.
-        loadDay();
-    });
+    renderMacroCards();
+
+    import("./cloudSync.js")
+        .then(({ initCloudSync }) => initCloudSync().then(applyGoals).then(loadDay))
+        .catch(error => {
+            console.warn("Nutrition cloud sync could not be completed:", error);
+            // Cloud sync failing (offline, Firebase SDK blocked, etc.)
+            // shouldn't leave the page blank -- still load whatever's
+            // already in localStorage.
+            loadDay();
+        });
+
+});

@@ -149,6 +149,7 @@ test("visible copy uses real dashes and the Southbound name", () => {
         // A lone "--" on its own line is a value placeholder ("-- mi"), not a dash.
         if (/\S -- \S/.test(text)) offenders.push(`${page}: "--" in the page text`);
         if (/eddie\s*os/i.test(text)) offenders.push(`${page}: says EddieOS`);
+        if (/operating system/i.test(read(page).replace(/<!--[\s\S]*?-->/g, ""))) offenders.push(`${page}: says "operating system" (the old EddieOS tagline)`);
     }
     for (const file of manifest.scripts) {
         const strings = stringLiterals(read(file));

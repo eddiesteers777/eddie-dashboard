@@ -843,3 +843,15 @@
 /* The macro +/- row: [ - ] value [ + ] side by side (its
    display:grid was lost in the same replacement). */
 .controls{ display:grid; }
+
+/* A client's goals are a starting point until they set their own (js/nutritionGoals.js). */
+.nutrition-goals-note{
+    margin:0 0 14px;
+    padding:10px 14px;
+    border-left:3px solid var(--primary);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    background:rgba(201,173,132,.07);
+    color:var(--text-secondary);
+    font-size:14px;
+    line-height:1.5;
+}

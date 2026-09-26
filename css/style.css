@@ -3351,3 +3351,54 @@ html body :is(
 .sb-emoji-choice:focus-visible{ background:rgba(201,173,132,.12); }
 .sb-emoji-choice:active{ transform:scale(.9); }
 .sb-emoji-choice .sb-emoji{ width:32px; height:32px; margin:0; vertical-align:0; }
+
+/* ==========================================================
+   PAGE WIDTHS — two columns on a computer, and the header lines
+   up with the wide one on every page:
+     wide (1200px)   dashboards and tools: Today, Running, Strength,
+                     Cross-Training, Nutrition, Fueling, Programs,
+                     Settings, More, the coach's own tools
+     narrow (900px)  coaching, forms and feeds (every .clients-page,
+                     Habits, Pace Calculator), for comfortable reading
+   A new page picks one by using .container or .clients-page.
+   Phones keep their own gutters (below 901px nothing here applies).
+========================================================== */
+
+@media (min-width:901px){
+    :root{
+        --page-wide:1200px;
+        --page-narrow:900px;
+    }
+
+    /* A few older pages padded the body instead of their column. */
+    html body:has(> #ct-root, > #pc-root, > #mp-root){
+        padding-left:0;
+        padding-right:0;
+    }
+
+    html body .navbar{
+        width:min(var(--page-wide), 94%);
+    }
+
+    html body :is(
+        main.container, .running-page, .strength-page, .nutrition-page, .fueling-page,
+        .programs-page, .planner-page, .analytics-page, .wr-page, .gear-page,
+        #ct-root, #mp-root, #app.wrap
+    ){
+        width:min(var(--page-wide), 94%);
+        max-width:none;
+        margin-left:auto;
+        margin-right:auto;
+        padding-left:0;
+        padding-right:0;
+    }
+
+    html body :is(main.clients-page, .habits-page, #pc-root){
+        width:min(var(--page-narrow), 94%);
+        max-width:none;
+        margin-left:auto;
+        margin-right:auto;
+        padding-left:0;
+        padding-right:0;
+    }
+}

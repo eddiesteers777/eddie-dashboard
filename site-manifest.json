@@ -104,6 +104,7 @@
     "js/myPlan.js",
     "js/navAccess.js",
     "js/nutrition.js",
+    "js/nutritionGoals.js",
     "js/pace-calculator.js",
     "js/planOps.js",
     "js/planWorkspace.js",
