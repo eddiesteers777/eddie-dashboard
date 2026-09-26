@@ -1,20 +1,10 @@
 /* Southbound COROS Data — rebuilt for current stateless MCP */
 
-import {
-    MCP_URL,
-    getTokenRecord,
-    saveTokenRecord,
-    discoverOAuthMetadata
-} from "./corosAuth.js";
+import { getTokenRecord } from "./corosAuth.js";
+import { mcpRequest } from "./corosClient.js";
 import { unwrapResult, findRecords } from "./corosParse.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
-const CLIENT_ID =
-    "https://southboundcoaching.com/oauth/client-metadata.json";
-const MCP_VERSION = "2026-07-28";
-
-let requestId = 1;
-
 const $ = id => document.getElementById(id);
 
 function accessToken() {
@@ -31,122 +21,6 @@ function setStatus(text, type = "neutral") {
 function setText(id, value) {
     const el = $(id);
     if (el) el.textContent = value;
-}
-
-function parseBody(text, contentType) {
-    let payload = null;
-
-    if (contentType.includes("text/event-stream")) {
-        const lines = text
-            .split(/\r?\n/)
-            .filter(line => line.startsWith("data:"))
-            .map(line => line.slice(5).trim())
-            .filter(Boolean);
-
-        for (let i = lines.length - 1; i >= 0; i--) {
-            try {
-                payload = JSON.parse(lines[i]);
-                break;
-            } catch {}
-        }
-
-        if (!payload) {
-            throw new Error(
-                "COROS returned an unreadable MCP event stream."
-            );
-        }
-    } else {
-        try {
-            payload = JSON.parse(text);
-        } catch {
-            throw new Error("COROS returned invalid JSON.");
-        }
-    }
-
-    const contentText =
-        Array.isArray(payload?.result?.content)
-            ? payload.result.content
-                .map(item => item?.text || "")
-                .join("\n")
-            : "";
-
-    if (payload?.result?.isError === true) {
-        throw new Error(
-            contentText || "COROS reported a tool error."
-        );
-    }
-
-    if (/Tool call anomalies detected/i.test(contentText)) {
-        throw new Error(
-            "COROS flagged the activity query as a tool-call anomaly. Southbound is using the narrower running-only query format now."
-        );
-    }
-
-    return payload;
-}
-
-async function mcpRequest(method, params = {}, name = method) {
-    const token = accessToken();
-
-    if (!token) {
-        throw new Error("COROS is not connected.");
-    }
-
-    const body = {
-        jsonrpc: "2.0",
-        id: requestId++,
-        method,
-        params: {
-            ...params,
-            _meta: {
-                "io.modelcontextprotocol/clientInfo": {
-                    name: "EddieOS",
-                    version: "1.0.0"
-                }
-            }
-        }
-    };
-
-    const response = await fetch(MCP_URL, {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json, text/event-stream",
-            "MCP-Protocol-Version": MCP_VERSION,
-            "Mcp-Method": method,
-            "Mcp-Name": name
-        },
-        body: JSON.stringify(body)
-    });
-
-    const text = await response.text();
-
-    if (response.status === 401) {
-        throw new Error(
-            "COROS returned HTTP 401. Reconnect COROS."
-        );
-    }
-
-    if (!response.ok) {
-        throw new Error(
-            `COROS MCP returned HTTP ${response.status}: ${text.slice(0, 300)}`
-        );
-    }
-
-    const payload = parseBody(
-        text,
-        response.headers.get("content-type") || ""
-    );
-
-    if (payload.error) {
-        throw new Error(
-            payload.error.message ||
-            `COROS MCP ${method} returned an error.`
-        );
-    }
-
-    return payload.result ?? payload;
 }
 
 async function listTools() {

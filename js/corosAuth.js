@@ -295,7 +295,8 @@ async function finishOAuth() {
         );
     }
 
-    saveTokenRecord(token);
+    // Keep the client ID with the token: renewing it later needs the same one.
+    saveTokenRecord({ ...token, client_id: pending.clientId });
     setConnectionStatus("Connected to COROS", true);
 
     window.history.replaceState(

@@ -93,7 +93,7 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
     const during = level === "none"
         ? ["No fuel needed. Water if it's hot."]
         : [
-            `${targets.carbsPerHour} g carbs an hour${gels.length ? ` -- ${gels.length} gel${gels.length === 1 ? "" : "s"}` : ""}`,
+            `${targets.carbsPerHour} g carbs an hour${gels.length ? ` — ${gels.length} gel${gels.length === 1 ? "" : "s"}` : ""}`,
             `${targets.fluidPerHour} oz fluid an hour`,
             `${targets.sodiumPerHour} mg sodium an hour`
         ];

@@ -85,19 +85,31 @@
 
             </div>
 
-            <!-- Connections (coach only for now: COROS connects from Analytics) -->
+            <!-- Connections: COROS for anyone who trains (js/corosSettings.js) -->
 
-            <div class="settings-card" data-requires="coach">
+            <div class="settings-card" id="coros" data-requires="training">
 
                 <h3><span data-icon="link"></span> Connections</h3>
+
+                <div class="connection" data-requires="coach">
+                    <div>
+                        <strong>Your COROS data</strong>
+                        <p>Runs, training load and recovery on the Analytics page.</p>
+                    </div>
+                    <a class="settings-btn" href="analytics.html#corosConnectionPanel">Open</a>
+                </div>
 
                 <div class="connection">
                     <div>
                         <strong>COROS</strong>
-                        <p>Connect and sync from the Analytics page.</p>
+                        <p>Send your planned runs to your COROS watch from My Plan or any workout. <span class="coros-connection-state" id="corosConnectionStatusText">Not connected</span></p>
                     </div>
-                    <a class="settings-btn" href="analytics.html#corosConnectionPanel">Open</a>
+                    <div class="connection-actions">
+                        <button type="button" class="settings-btn" id="connectCorosBtn">Connect COROS</button>
+                        <button type="button" class="settings-btn" id="disconnectCorosBtn" hidden>Disconnect</button>
+                    </div>
                 </div>
+
 
             </div>
 
@@ -179,6 +191,7 @@
 
     <script type="module" src="js/icons.js"></script>
     <script type="module" src="js/settings.js"></script>
+    <script type="module" src="js/corosSettings.js"></script>
 
     <script src="js/registerSW.js"></script>
 

@@ -24,7 +24,7 @@ import { weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
-import { toast, emptyHtml, friendlyError, sbChoose } from "./ui.js";
+import { toast, emptyHtml, friendlyError, sbChoose, sbAlert } from "./ui.js";
 import { icon } from "./icons.js";
 import { listMyChangeRequests } from "./changeRequests.js";
 import { openChangeRequestDialog, changeRequestsHtml, bindChangeRequestActions } from "./changeRequestDialog.js";
@@ -143,14 +143,21 @@ function renderPlan() {
                 <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done.</p>
                 <div class="myplan-foot-actions">
                     <button type="button" class="sb-btn sb-btn-secondary" data-act="calendar">${icon("calendar")} Add to calendar</button>
+                    ${corosOn() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="coros-week">${icon("send")} Send week to COROS</button>` : ""}
                     ${currentCoach() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="change">${icon("messageSquare")} Need a change?</button>` : ""}
                 </div>
             </div>
+            ${corosOn() ? "" : `<p class="clients-card-note myplan-coros-hint">Have a COROS watch? <a href="settings.html#coros">Connect it in Settings</a> to send your runs straight to it.</p>`}
         </section>
         ${changeRequestsHtml(state.requests, currentCoach()?.coachName || "Your coach")}`;
 }
 
 $("planBody").addEventListener("click", async event => {
+    const corosBtn = event.target.closest('[data-act="coros-week"]');
+    if (corosBtn) {
+        await sendWeekToCoros(corosBtn);
+        return;
+    }
     if (event.target.closest('[data-act="calendar"]')) {
         await addToCalendar();
         return;
@@ -182,6 +189,40 @@ $("planBody").addEventListener("click", async event => {
 
 bindWeekActions($("planBody"), { getItem: id => state.items.get(id), onChange: () => renderPlan() });
 bindChangeRequestActions($("planBody"), id => { state.requests = state.requests.filter(r => r.id !== id); renderPlan(); });
+
+// ---------- Send to COROS (js/corosSend.js) ----------
+
+// COROS connected on this device? (Its sign-in token lives in this browser.)
+function corosOn() {
+    try { return Boolean(JSON.parse(localStorage.getItem("__eddieos_coros_oauth_v2") || "null")?.access_token); } catch { return false; }
+}
+
+async function sendWeekToCoros(btn) {
+    const { entryFor, loadSent, sendToCoros, sendSummary } = await import("./corosSend.js");
+    const sent = loadSent();
+    const dates = Array.from({ length: 7 }, (_, i) => addDays(state.monday, i)).filter(d => d >= today);
+    const entries = weekInputs(state.sessions).plans
+        .flatMap(p => dates.map(d => entryFor(p, d)))
+        .filter(e => e.course || sent[e.key]);
+    if (!entries.some(e => e.course)) {
+        toast("No runs left to send this week.");
+        return;
+    }
+    btn.disabled = true;
+    const label = btn.innerHTML;
+    btn.textContent = "Sending to COROS…";
+    try {
+        const r = await sendToCoros(entries, { today });
+        const summary = sendSummary(r);
+        if (r.notes.length) await sbAlert([summary ? `${summary}.` : "", ...r.notes].filter(Boolean).join("\n\n"), { title: "COROS" });
+        else if (summary) toast(summary);
+    } catch (error) {
+        toast(friendlyError(error, "send that to COROS"), { type: "error" });
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = label;
+    }
+}
 
 // ---------- Add to calendar (js/calendarButton.js) ----------
 

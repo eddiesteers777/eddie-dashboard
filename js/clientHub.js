@@ -838,7 +838,7 @@ function renderWorkouts() {
         ? results.map(workoutResultHtml).join("")
         : `<div class="clients-card"><div class="sb-empty"><span class="sb-empty-icon">${icon("activity")}</span>
             <strong class="sb-empty-title">No workouts logged yet</strong>
-            <p class="sb-empty-text">${hasPlan ? `When ${esc(firstName())} logs a run from your plan -- distance, time, effort, anything that hurt -- it shows up here to reply to.` : `Publish a plan from the Plan tab, and ${esc(firstName())}'s logged runs show up here.`}</p></div></div>`;
+            <p class="sb-empty-text">${hasPlan ? `When ${esc(firstName())} logs a run from your plan — distance, time, effort, anything that hurt — it shows up here to reply to.` : `Publish a plan from the Plan tab, and ${esc(firstName())}'s logged runs show up here.`}</p></div></div>`;
 
     $("hubWorkouts").querySelectorAll("form[data-reply]").forEach(form => form.addEventListener("submit", async event => {
         event.preventDefault();

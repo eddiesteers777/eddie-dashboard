@@ -242,3 +242,9 @@ body.wo-mode-open{ overflow:hidden; }
 }
 .wo-mode-gel{ display:flex; align-items:center; justify-content:center; gap:8px; margin:0; color:var(--text-secondary); font-size:15px; font-weight:700; }
 .wo-mode-gel.is-now{ padding:12px; border-radius:14px; background:var(--primary); color:var(--on-primary); font-size:18px; }
+
+/* Send to COROS (js/corosSend.js) */
+.wo-coros{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:10px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:rgba(201,173,132,.06); }
+.wo-coros p{ margin:0; color:var(--text-secondary); font-size:14px; }
+.wo-coros.is-sent{ flex-direction:row; align-items:center; color:var(--text-secondary); font-size:14px; }
+.wo-coros.is-sent .ui-icon{ color:var(--green); flex-shrink:0; }

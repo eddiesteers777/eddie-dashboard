@@ -28,9 +28,11 @@ import {
     executionSteps, amountText, targetText, compareRun, parseDuration, formatDuration, formatPace
 } from "./runWorkout.js";
 import { listMyResults, saveMyResult, deleteMyResult, isStrengthResult } from "./workoutResults.js";
-import { toast, sbConfirm, friendlyError, emptyHtml } from "./ui.js";
+import { toast, sbConfirm, sbAlert, friendlyError, emptyHtml } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
+import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from "./corosSend.js";
+import { sendableDate } from "./corosWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 
 const $ = id => document.getElementById(id);
@@ -190,7 +192,8 @@ function render() {
         </div>`}
         ${isCoachPlan() && !state.result ? `<p class="clients-card-note wo-hint">Logging tells your coach how it went, including anything that hurt.</p>` : ""}
         ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}
-        ${item && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="calendar">${icon("calendar")} Add to calendar</button>` : ""}`;
+        ${item && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="calendar">${icon("calendar")} Add to calendar</button>` : ""}
+        ${state.result ? "" : corosHtml()}`;
 }
 
 $("woBody").addEventListener("click", async event => {
@@ -204,6 +207,7 @@ $("woBody").addEventListener("click", async event => {
         const { openChangeRequestDialog } = await import("./changeRequestDialog.js");
         return openChangeRequestDialog({ coach: { coachUid: state.program.coachUid, coachName: state.program.coachName }, planId: state.program.coachPlanId, date, dates: [date] });
     }
+    if (act === "coros") return sendThisToCoros(btn);
     if (act === "calendar") {
         const day = buildDay(date, weekInputs(), isoDate(new Date()));
         const items = day.items.filter(i => i.source?.programId === programId && i.kind === "run");
@@ -219,6 +223,34 @@ $("woBody").addEventListener("click", async event => {
         if (nowDone) toast(`${title()} done. Nice work.`);
     }
 });
+
+// ---------- Send to COROS (js/corosSend.js) ----------
+
+function corosHtml() {
+    if (!isCorosConnected() || !sendableDate(date, isoDate(new Date()))) return "";
+    const entry = entryFor(state.program, date);
+    const st = sendState(entry);
+    if (st === "sent") return `<p class="wo-coros is-sent">${icon("checkCircle")} On your COROS schedule. Your watch picks it up when it syncs.</p>`;
+    if (st === "changed") return `<div class="wo-coros"><p>Your coach changed this since you sent it to COROS.</p><button type="button" class="sb-btn sb-btn-secondary" data-act="coros">${icon("send")} Update on COROS</button></div>`;
+    if (st === "none") return `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="coros">${icon("send")} Send to COROS</button>`;
+    return "";
+}
+
+async function sendThisToCoros(btn) {
+    btn.disabled = true;
+    const label = btn.innerHTML;
+    btn.textContent = "Sending to COROS…";
+    try {
+        const r = await sendToCoros([entryFor(state.program, date)], { today: isoDate(new Date()) });
+        if (r.notes.length) await sbAlert(r.notes.join("\n\n"), { title: "COROS" });
+        else toast(sendSummary(r));
+        refresh();
+    } catch (error) {
+        toast(friendlyError(error, "send that to COROS"), { type: "error" });
+        btn.disabled = false;
+        btn.innerHTML = label;
+    }
+}
 
 function refresh() {
     const found = findDay();

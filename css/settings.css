@@ -421,3 +421,9 @@ input[type="checkbox"]{
 .settings-card[hidden]{ display:none !important; }
 
 .connection .settings-btn{ text-decoration:none; flex-shrink:0; }
+
+/* COROS connect / disconnect (js/corosSettings.js) */
+.connection{ gap:14px; }
+.connection-actions{ display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; }
+.coros-connection-state{ display:block; margin-top:4px; color:var(--primary); font-weight:600; }
+.settings-page [hidden]{ display:none !important; }

@@ -161,3 +161,4 @@
 .wk-fuel{ display:flex; align-items:flex-start; gap:6px; margin:6px 0 0; color:var(--text-secondary); font-size:13.5px; line-height:1.4; }
 .wk-fuel .ui-icon{ color:var(--primary); margin-top:1px; flex-shrink:0; }
 .myplan-foot-actions{ display:flex; flex-wrap:wrap; gap:8px; }
+.myplan-coros-hint{ margin:12px 0 0; }

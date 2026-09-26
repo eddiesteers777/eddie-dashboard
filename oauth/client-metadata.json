@@ -2,7 +2,8 @@
   "client_id": "https://southboundcoaching.com/oauth/client-metadata.json",
   "client_name": "Southbound Coaching",
   "redirect_uris": [
-    "https://southboundcoaching.com/analytics.html"
+    "https://southboundcoaching.com/analytics.html",
+    "https://southboundcoaching.com/settings.html"
   ],
   "grant_types": [
     "authorization_code",

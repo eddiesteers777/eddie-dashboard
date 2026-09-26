@@ -152,8 +152,12 @@ test("visible copy uses real dashes and the Southbound name", () => {
         if (/operating system/i.test(read(page).replace(/<!--[\s\S]*?-->/g, ""))) offenders.push(`${page}: says "operating system" (the old EddieOS tagline)`);
     }
     for (const file of manifest.scripts) {
-        const strings = stringLiterals(read(file));
-        for (const t of strings.filter(t => /\S -- \S/.test(t))) offenders.push(`${file}: ${t.slice(0, 70)}`);
+        const src = read(file);
+        const strings = stringLiterals(src);
+        // Whole code minus comments too, so a "--" inside a template nested
+        // in another template (which the string scan can't see) is caught.
+        const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
+        for (const line of code.split("\n").filter(l => /[^\s-] -- [^\s-]/.test(l))) offenders.push(`${file}: ${line.trim().slice(0, 70)}`);
         const names = strings.filter(t => /eddie\s*os/i.test(t.replace(/eddieos[-_:]\w*/gi, "")));
         if (names.length > (IDENTIFIERS[file] || 0)) offenders.push(`${file}: says EddieOS`);
     }
