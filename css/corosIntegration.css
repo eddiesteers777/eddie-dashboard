@@ -80,3 +80,8 @@
     font-size:.68rem;
     line-height:1.4;
 }
+
+.coros-diagnostic-copy{ display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+.coros-diagnostic-copy small{ color:var(--muted); font-size:13px; }
+.coros-diagnostic-copy textarea{ width:100%; font:12px var(--font-mono); }
+.coros-diagnostic-copy [hidden]{ display:none !important; }

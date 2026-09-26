@@ -22,3 +22,15 @@ test("other changes, nothing about workouts; nothing listed at all", () => {
     assert.match(corosToolsSummary([...READ_ONLY, { name: "setUnits" }]).text, /Can also change: setUnits \(nothing about workouts\)/);
     assert.equal(corosToolsSummary([]).status, "warn");
 });
+
+test("workout tool details: only workout / plan tools, with their fields", async () => {
+    const { workoutToolDetails } = await import("../js/corosTools.js");
+    const details = workoutToolDetails([
+        { name: "querySportRecords", description: "runs" },
+        { name: "createSingleWorkout", description: "Make a workout", inputSchema: { properties: { name: { type: "string" } } } },
+        { name: "queryWorkoutLibrary" }
+    ]);
+    assert.deepEqual(details.map(d => d.name), ["createSingleWorkout", "queryWorkoutLibrary"]);
+    assert.deepEqual(details[0].inputSchema, { properties: { name: { type: "string" } } });
+    assert.equal(details[1].description, "");
+});

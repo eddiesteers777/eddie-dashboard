@@ -33,3 +33,13 @@ export function corosToolsSummary(tools) {
     else parts.push("Read-only: nothing here can send a workout to the watch.");
     return { status: workout.length ? "pass" : "warn", text: parts.join(" ") };
 }
+
+// Everything COROS says about its workout / plan tools (read and write):
+// name, what it does, and the fields it takes. Copied by the diagnostic
+// so the exact format can be pasted to whoever builds "send to watch".
+export function workoutToolDetails(tools) {
+    return (tools || [])
+        .filter(t => t?.name && WORKOUTISH.test(t.name))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(t => ({ name: t.name, description: t.description || "", inputSchema: t.inputSchema || {} }));
+}

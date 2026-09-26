@@ -8,7 +8,7 @@ import {
 } from "./corosAuth.js";
 
 import { icon } from "./icons.js";
-import { corosToolsSummary } from "./corosTools.js";
+import { corosToolsSummary, workoutToolDetails } from "./corosTools.js";
 import { unwrapResult, findRecords, describeShape } from "./corosParse.js";
 
 const $ = id => document.getElementById(id);
@@ -55,6 +55,7 @@ async function runCorosDiagnostic() {
         "Running diagnostic…";
 
     const checks = [];
+    let workoutTools = [];
 
     // Client metadata.
     try {
@@ -329,6 +330,7 @@ async function runCorosDiagnostic() {
                 if (line) payload = JSON.parse(line.slice(5).trim());
             }
             const tools = payload?.result?.tools || [];
+            workoutTools = workoutToolDetails(tools);
             const summary = corosToolsSummary(tools);
             checks.push(row("What COROS lets Southbound do", summary.status, summary.text));
             const activityTool = tools.find(t => t?.name === "querySportRecords");
@@ -343,6 +345,32 @@ async function runCorosDiagnostic() {
 
     results.innerHTML =
         checks.join("");
+
+    // "Send workouts to the watch" needs COROS's exact format: one tap
+    // copies it (generic tool instructions, nothing personal).
+    if (workoutTools.length) {
+        const text = JSON.stringify(workoutTools, null, 2);
+        results.insertAdjacentHTML("beforeend", `
+            <div class="coros-diagnostic-copy">
+                <button type="button" class="secondary-btn" id="copyCorosWorkoutTools">Copy COROS workout tool details</button>
+                <small>Copies COROS's instructions for its ${workoutTools.length} workout and plan tools, to paste to your developer.</small>
+                <textarea readonly rows="6" hidden aria-label="COROS workout tool details">${escapeHtml(text)}</textarea>
+            </div>`);
+        const btn = $("copyCorosWorkoutTools");
+        btn?.addEventListener("click", async () => {
+            const box = btn.parentElement.querySelector("textarea");
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.textContent = "Copied. Paste it into your message.";
+            } catch {
+                // No clipboard access: show the text, selected, to copy by hand.
+                box.hidden = false;
+                box.focus();
+                box.select();
+                btn.textContent = "Select all and copy the text below";
+            }
+        });
+    }
 
     const failures =
         checks.filter(
