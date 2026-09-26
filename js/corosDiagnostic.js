@@ -111,7 +111,7 @@ async function runCorosDiagnostic() {
                 ? "pass"
                 : "fail",
             token?.access_token
-                ? "An Southbound COROS access token is stored in this browser."
+                ? "A Southbound COROS access token is stored in this browser."
                 : "No Southbound COROS access token is stored."
         )
     );
