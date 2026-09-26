@@ -235,6 +235,10 @@ function renderToday() {
     const container = document.getElementById("todayItems");
     const dateLabel = document.getElementById("todayDateLabel");
 
+    // Send the coach's own marathon runs to his COROS watch.
+    import("./marathonCorosButton.js").then(m => m.mountMarathonCoros(document.getElementById("marathonCoros")))
+        .catch(error => console.error("Southbound: Send to COROS failed to load.", error));
+
     if (!container) {
         return;
     }

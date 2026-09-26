@@ -39,6 +39,7 @@
       <div class="mp-stat"><div class="mp-stat-val" id="mp-stat-peak">61</div><div class="mp-stat-label">Peak Week</div></div>
       <div class="mp-stat"><div class="mp-stat-val" id="mp-stat-pct">0%</div><div class="mp-stat-label">Completed</div></div>
     </div>
+    <div id="marathonCoros" class="sb-coros-bar" hidden></div>
   </div>
 
   <div class="mp-chart-wrap">
@@ -59,6 +60,11 @@
 
   <div class="mp-detail" id="mp-detail"></div>
 </div>
+
+<script type="module">
+    import { mountMarathonCoros } from "./js/marathonCorosButton.js";
+    mountMarathonCoros(document.getElementById("marathonCoros"));
+</script>
 
 <script type="module">
     import { icon } from "./js/icons.js";

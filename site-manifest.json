@@ -109,6 +109,8 @@
     "js/install.js",
     "js/loadHeader.js",
     "js/loadPublicHeader.js",
+    "js/marathonCoros.js",
+    "js/marathonCorosButton.js",
     "js/marathonData.js",
     "js/myPlan.js",
     "js/navAccess.js",

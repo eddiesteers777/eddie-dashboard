@@ -3435,3 +3435,49 @@ html body :is(
         padding-right:0;
     }
 }
+
+/* ==========================================================
+   SEND TO COROS BAR — the coach's own marathon plan (Today and
+   the Marathon page), js/marathonCorosButton.js
+========================================================== */
+.sb-coros-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:14px;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-md, 14px);
+    background:rgba(255,255,255,.03);
+}
+
+.sb-coros-bar[hidden]{
+    display:none !important;
+}
+
+.sb-coros-bar-text{
+    margin:0;
+    color:var(--muted);
+    font-size:.88rem;
+    line-height:1.4;
+}
+
+.sb-coros-bar-text svg{
+    width:16px;
+    height:16px;
+    vertical-align:-3px;
+    color:var(--primary);
+}
+
+.sb-coros-bar-btn{
+    flex:0 0 auto;
+    white-space:nowrap;
+}
+
+@media (max-width:560px){
+    .sb-coros-bar{
+        flex-direction:column;
+        align-items:stretch;
+    }
+}
