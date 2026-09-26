@@ -18,7 +18,9 @@
    Unit-tested in tests/corosWorkout.test.mjs.
 ========================================== */
 
-import { parsePaceRange, setText, amountText } from "./runWorkout.js";
+import { parsePaceRange, setText, amountText, paceRangeText } from "./runWorkout.js";
+
+const atPace = step => (step?.pace && paceRangeText(step.pace) ? ` @ ${paceRangeText(step.pace)}` : "");
 
 const METERS = { mi: 1609.344, km: 1000, m: 1 };
 const HR = z => ({ intensityType: 1, sectionIntensity: z });
@@ -61,7 +63,8 @@ const section = (sectionType, step, intensity) => ({ sectionType, ...target(step
 
 function structuredSections(w) {
     const out = [];
-    if (w.warmup) out.push(section(1, w.warmup, effortZone(w.warmup.note, HR(2))));
+    // A warm-up / cool-down with a pace (the coach's own plan) goes by that pace, else heart rate.
+    if (w.warmup) out.push(section(1, w.warmup, paceRangePerKm(w.warmup.pace) || effortZone(w.warmup.note, HR(2))));
     for (const set of w.sets || []) {
         let members;
         if (set.parts?.length) {
@@ -82,7 +85,7 @@ function structuredSections(w) {
             out.push(...members);
         }
     }
-    if (w.cooldown) out.push(section(4, w.cooldown, effortZone(w.cooldown.note, HR(2))));
+    if (w.cooldown) out.push(section(4, w.cooldown, paceRangePerKm(w.cooldown.pace) || effortZone(w.cooldown.note, HR(2))));
     return out;
 }
 
@@ -103,7 +106,7 @@ export function courseFromDay(day, { title = "Run", coachName = "" } = {}) {
     if (!sections.length) return null;
 
     const steps = w?.sets?.length
-        ? [w.warmup ? `Warm up ${amountText(w.warmup)}` : "", ...w.sets.map(setText), w.cooldown ? `Cool down ${amountText(w.cooldown)}` : ""].filter(Boolean).join(", ")
+        ? [w.warmup ? `Warm up ${amountText(w.warmup)}${atPace(w.warmup)}` : "", ...w.sets.map(setText), w.cooldown ? `Cool down ${amountText(w.cooldown)}${atPace(w.cooldown)}` : ""].filter(Boolean).join(", ")
         : String(day.session || "").trim();
     const targets = [
         sections.some(function hr(s) { return s.intervalGroup ? s.sets.some(hr) : s.intensityType === 1; }) ? "easy parts by heart-rate zone" : "",

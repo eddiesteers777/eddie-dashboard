@@ -165,7 +165,9 @@ function readParts(session, dayMiles, table, context) {
             const n = part.replace(RE.warm, " ").replace(RE.cool, " ").match(RE.amount);
             if (!n) continue;                                     // "warm-up/cooldown" with no distance
             const s = step(n[1], unitOf(n[2], n[1], () => "mi"));
-            items.push({ kind: RE.warm.test(part) ? "warm" : "cool", step: { ...s, note: "easy" } });
+            // "2mi WU @ 8:30" / "1.5 CD @ 8:00-8:30": his own pace; else his Easy pace (below).
+            const aim = part.includes("@") ? targetFor(part, table) : null;
+            items.push({ kind: RE.warm.test(part) ? "warm" : "cool", step: { ...s, note: "easy", ...(aim?.pace ? { pace: aim.pace } : {}) } });
         } else if ((m = part.match(RE.reps))) {
             const [, reps, n, u] = m;
             const unit = unitOf(u, n, x => (Number(x) >= 100 ? "m" : "mi"));
@@ -238,6 +240,13 @@ function race(session, dayMiles, table) {
     return { warmup: easy(Math.max(0.5, around * 0.6), "easy + strides"), sets: [set], cooldown: easy(Math.max(0.5, around * 0.4)) };
 }
 
+// Warm-ups and cool-downs run at his Easy pace (the plan's pace table) unless he wrote one.
+function easyPaced(workout, table) {
+    if (!workout || !table.easy) return workout;
+    for (const k of ["warmup", "cooldown"]) if (workout[k] && !workout[k].pace) workout[k] = { ...workout[k], pace: table.easy };
+    return workout;
+}
+
 const TYPE_OF = { recovery: "recovery", easy: "easy", "long run": "long", race: "race" };
 
 /**
@@ -256,7 +265,7 @@ export function planDayFromMarathon(day, paces) {
     if (!dayMiles) return { ...out, type: "rest", miles: 0 };
 
     const isRace = Boolean(day.race) || label === "race" || /^race\b/i.test(session);
-    if (isRace) { out.workout = race(session, dayMiles, table); if (out.workout) return out; }
+    if (isRace) { out.workout = easyPaced(race(session, dayMiles, table), table); if (out.workout) return out; }
 
     // "Mile repeats: 6x1mi ..." -> the label is context, the rest is the workout.
     const colon = session.match(/^([^:]{0,39}[^:\d\s])\s*:\s*(.+)$/);
@@ -275,7 +284,7 @@ export function planDayFromMarathon(day, paces) {
         // A plain run ("Easy aerobic", "Recovery jog"), or a hard label with no numbers
         // ("Progression tempo - steady into threshold"): warm-up, the effort, cool-down.
         const aim = type === "workout" && dayMiles >= 5 ? wordTarget(`${label} ${session}`, table) : null;
-        if (aim && !isEasy(aim)) out.workout = { warmup: easy(1.5), sets: [{ repeat: 1, amount: round1(dayMiles - 3), unit: "mi", ...aim, recovery: null }], cooldown: easy(1.5) };
+        if (aim && !isEasy(aim)) out.workout = easyPaced({ warmup: easy(1.5), sets: [{ repeat: 1, amount: round1(dayMiles - 3), unit: "mi", ...aim, recovery: null }], cooldown: easy(1.5) }, table);
         return out;
     }
 
@@ -296,7 +305,7 @@ export function planDayFromMarathon(day, paces) {
         else if (!cool) cooldown = easy(rem);
         else if (rem > 0.5) adds();
     } else if (rem < -0.5) adds();
-    out.workout = { warmup, sets, cooldown };
+    out.workout = easyPaced({ warmup, sets, cooldown }, table);
     return out;
 }
 
@@ -351,7 +360,7 @@ export function marathonPreview(day, paces) {
     const w = planDay.workout;
     const zone = planDay.type === "recovery" ? "recovery (heart-rate zone 1)" : "easy (heart-rate zone 2)";
     const steps = w
-        ? [w.warmup ? `${amountText(w.warmup)} warm-up` : "", ...(w.sets || []).map(setWords), w.cooldown ? `${amountText(w.cooldown)} cool-down` : ""].filter(Boolean)
+        ? [w.warmup ? `${amountText(w.warmup)} warm-up${w.warmup.pace ? ` @ ${paceRangeText(w.warmup.pace)}` : ""}` : "", ...(w.sets || []).map(setWords), w.cooldown ? `${amountText(w.cooldown)} cool-down${w.cooldown.pace ? ` @ ${paceRangeText(w.cooldown.pace)}` : ""}` : ""].filter(Boolean)
         : [`${planDay.miles} mi ${zone}`];
     return { steps, unread: planDay.unread, notes: planDay.notes };
 }

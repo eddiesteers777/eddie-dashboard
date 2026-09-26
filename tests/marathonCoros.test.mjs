@@ -33,7 +33,7 @@ test("a marathon-pace block inside a long run, at the plan's MP range", () => {
     assert.equal(c.courseName, "Long run · 19 mi");
     assert.deepEqual(c.sections.map(s => [s.sectionType, Math.round(s.targetValue / 160.9344) / 10]), [[1, 10], [2, 7], [4, 2]]);
     assert.deepEqual([c.sections[1].intensityValueStart, c.sections[1].intensityValueEnd], [260, 264]);
-    assert.equal(c.sections[0].intensityType, 1, "easy miles by heart rate");
+    assert.deepEqual([c.sections[0].intensityType, c.sections[0].intensityValueStart, c.sections[0].intensityValueEnd], [2, 308, 336], "warm-up at his Easy pace 8:15-9:00");
     const peak = marathonCourse(day("PEAK: 20-mile long run w/ 10-12mi continuous Marathon Pace", 20, "MP"), PACES);
     assert.equal(peak.courseName, "20-mile long run · 20 mi");
     assert.equal(Math.round(miles(peak)), 20);
@@ -78,12 +78,17 @@ test("easy days are one heart-rate section; rest days send nothing", () => {
 const preview = (session, miles, pace = "Threshold") => marathonPreview(day(session, miles, pace), PACES);
 
 test("custom: exact paces, rep times, reps without units, distance recoveries", () => {
-    assert.deepEqual(preview("8x800 @ 2:55, 400m jog", 7).steps, ["0.5 mi warm-up", "8 × 800 m @ 5:52/mi with 400 m jog", "0.5 mi cool-down"]);
+    assert.deepEqual(preview("8x800 @ 2:55, 400m jog", 7).steps, ["0.5 mi warm-up @ 8:15–9:00/mi", "8 × 800 m @ 5:52/mi with 400 m jog", "0.5 mi cool-down @ 8:15–9:00/mi"]);
     assert.deepEqual(preview("4 easy + 2 @ 6:45", 6).steps, ["4 mi easy (heart-rate zone 2)", "2 mi @ 6:45/mi"]);
-    assert.deepEqual(preview("5x1mi @ 6:30, 2min rest", 8).steps, ["1 mi warm-up", "5 × 1 mi @ 6:30/mi with 2 min rest", "1 mi cool-down"]);
+    assert.deepEqual(preview("5x1mi @ 6:30, 2min rest", 8).steps, ["1 mi warm-up @ 8:15–9:00/mi", "5 × 1 mi @ 6:30/mi with 2 min rest", "1 mi cool-down @ 8:15–9:00/mi"]);
     assert.deepEqual(preview("12x400 @ 85s, 200m jog", 7).steps[1], "12 × 400 m @ 5:42/mi with 200 m jog");
     assert.deepEqual(preview("6x1K @ 3:45/km, 2min jog", 8).steps[1], "6 × 1 km @ 6:02/mi with 2 min jog");
-    assert.deepEqual(preview("1.5 WU, 20min @ tempo, 1.5 CD", 6).steps, ["1.5 mi warm-up", "20 min @ 6:35–6:50/mi", "1.5 mi cool-down"]);
+    assert.deepEqual(preview("1.5 WU, 20min @ tempo, 1.5 CD", 6).steps, ["1.5 mi warm-up @ 8:15–9:00/mi", "20 min @ 6:35–6:50/mi", "1.5 mi cool-down @ 8:15–9:00/mi"]);
+    // His own warm-up / cool-down pace wins, and goes to COROS as that pace.
+    assert.deepEqual(preview("2mi WU @ 8:30, 8x800 @ 2:55, 400m jog, 1.5 CD @ 8:00-8:30", 9.5, "VO2max").steps,
+        ["2 mi warm-up @ 8:30/mi", "8 × 800 m @ 5:52/mi with 400 m jog", "1.5 mi cool-down @ 8:00–8:30/mi"]);
+    const own = marathonCourse(day("2mi WU @ 8:30, 8x800 @ 2:55, 400m jog, 1.5 CD @ 8:00-8:30", 9.5, "VO2max"), PACES).sections;
+    assert.deepEqual([own[0].sectionType, own[0].intensityType, own[0].intensityValueStart, own.at(-1).intensityValueStart, own.at(-1).intensityValueEnd], [1, 2, 317, 298, 317]);
     assert.deepEqual(preview("10mi w/ last 3 @ MP", 10, "MP").steps, ["7 mi easy (heart-rate zone 2)", "3 mi @ 6:58–7:05/mi"]);
     assert.deepEqual(preview("6 easy + 6x20s strides", 6.5, "Easy").steps[1], "6 × 0:20 @ strides (pace zone 6) with 1 min jog");
     // The watch gets the same: 800 m reps at 5:52/mi = 219 s/km.
@@ -96,7 +101,7 @@ test("custom: exact paces, rep times, reps without units, distance recoveries", 
 
 test("custom: mixed repeats go to COROS as one interval group", () => {
     const text = "2 mi warm up, 4x(1mi @ MP, 1mi @ threshold), 2 mi cool down";
-    assert.deepEqual(preview(text, 12, "MP").steps, ["2 mi warm-up", "4 × (1 mi @ 6:58–7:05/mi, 1 mi @ 6:35–6:50/mi)", "2 mi cool-down"]);
+    assert.deepEqual(preview(text, 12, "MP").steps, ["2 mi warm-up @ 8:15–9:00/mi", "4 × (1 mi @ 6:58–7:05/mi, 1 mi @ 6:35–6:50/mi)", "2 mi cool-down @ 8:15–9:00/mi"]);
     const g = marathonCourse(day(text, 12, "MP"), PACES).sections[1];
     assert.equal(g.repeats, 4);
     assert.deepEqual(g.sets.map(s => [s.sectionType, s.targetValue, s.intensityValueStart]), [[2, 1609, 260], [2, 1609, 245]]);
