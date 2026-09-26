@@ -10,6 +10,7 @@ import {
 import { icon } from "./icons.js";
 import { corosToolsSummary, workoutToolDetails } from "./corosTools.js";
 import { unwrapResult, findRecords, describeShape, normalizeActivity } from "./corosParse.js";
+import { replyText } from "./corosMetrics.js";
 
 const $ = id => document.getElementById(id);
 
@@ -377,6 +378,16 @@ async function runCorosDiagnostic() {
     // reply to the run query (the athlete's own recent runs), and the
     // exact format of its workout tools (generic, nothing personal).
     if (sampleReply) addCopyBlock(results, "copyCorosReply", "Copy COROS's reply", "Copies what COROS sent back for your last 7 days of runs (dates, distances, times), to paste to your developer if runs are missing.", sampleReply.slice(0, 15000));
+    // The training load / recovery / fitness replies Analytics last loaded
+    // (from its saved copy, no extra calls), for when a card stays "—".
+    try {
+        const snap = JSON.parse(localStorage.getItem("__eddieos_coros_data_snapshot_v2") || "null");
+        const part = (title, value) => `=== ${title} ===\n${replyText(value) || "(nothing)"}`;
+        if (snap && (snap.trainingLoad || snap.recovery || snap.fitness)) {
+            addCopyBlock(results, "copyCorosFitness", "Copy COROS's fitness replies", "Copies what COROS sent for training load, recovery and fitness (VO₂ max, race predictions), to paste to your developer if those cards show —.",
+                [part("Training load", snap.trainingLoad), part("Recovery", snap.recovery), part("Fitness", snap.fitness)].join("\n\n").slice(0, 15000));
+        }
+    } catch {}
     if (workoutTools.length) addCopyBlock(results, "copyCorosWorkoutTools", "Copy COROS workout tool details", `Copies COROS's instructions for its ${workoutTools.length} workout and plan tools, to paste to your developer.`, JSON.stringify(workoutTools, null, 2));
 
     const failures =

@@ -159,8 +159,12 @@
     }
 
     .coros-activity-row{
-        grid-template-columns:1fr;
-        gap:9px;
+        grid-template-columns:1fr 1fr;
+        gap:9px 14px;
+    }
+
+    .coros-activity-main{
+        grid-column:1 / -1;
     }
 }
 

@@ -3,6 +3,7 @@
 import { getTokenRecord } from "./corosAuth.js";
 import { mcpRequest } from "./corosClient.js";
 import { unwrapResult, findRecords, normalizeActivity } from "./corosParse.js";
+import { readLoad, readRecovery, readFitness, recentRunRows } from "./corosMetrics.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 const $ = id => document.getElementById(id);
@@ -514,6 +515,9 @@ function renderSnapshot(snapshot) {
         )}`
     );
 
+    renderMetrics(snapshot);
+    renderRecentRuns(activities);
+
     const rawCount =
         Number(snapshot.rawActivityCount) || 0;
 
@@ -527,6 +531,46 @@ function renderSnapshot(snapshot) {
             ? "success"
             : "warning"
     );
+}
+
+const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// Training Load / Recovery / VO2 Max / Marathon Prediction cards.
+function renderMetrics(snapshot) {
+    const load = readLoad(snapshot.trainingLoad);
+    const recovery = readRecovery(snapshot.recovery);
+    const fitness = readFitness(snapshot.fitness);
+
+    setText("corosTrainingLoad", load.short != null ? String(Math.round(load.short)) : load.ratio != null ? load.ratio.toFixed(2) : "—");
+    setText("corosTrainingLoadMeta", [
+        load.short != null && load.long != null ? `Long-term ${Math.round(load.long)}` : "",
+        load.short != null && load.ratio != null ? `ratio ${load.ratio.toFixed(2)}` : "",
+        load.short == null && load.ratio != null ? "Load ratio" : ""
+    ].filter(Boolean).join(" · ") || "Recent COROS load");
+
+    setText("corosRecovery", recovery.percent != null ? `${Math.round(recovery.percent)}%` : recovery.status || "—");
+    setText("corosRecoveryMeta", [
+        recovery.percent != null ? recovery.status : "",
+        recovery.hours ? `${recovery.hours} h to full recovery` : ""
+    ].filter(Boolean).join(" · ") || "Current status");
+
+    setText("corosVo2Max", fitness.vo2 != null ? String(fitness.vo2) : "—");
+    setText("corosVo2Meta", fitness.threshold ? `Threshold pace ${fitness.threshold}` : "COROS fitness assessment");
+    setText("corosMarathonPrediction", fitness.marathon || "—");
+}
+
+function renderRecentRuns(activities) {
+    const list = $("corosRecentActivities");
+    if (!list) return;
+    const rows = recentRunRows(activities, 10);
+    list.innerHTML = rows.length
+        ? rows.map(r => `
+            <div class="coros-activity-row">
+                <div class="coros-activity-main"><strong>${escapeHtml(r.name)}</strong><span>${escapeHtml(r.when)}</span></div>
+                <div class="coros-activity-stat"><strong>${escapeHtml(r.miles)}</strong><span>${escapeHtml([r.time, r.pace].filter(Boolean).join(" · "))}</span></div>
+                <div class="coros-activity-stat"><strong>${escapeHtml(r.hr || "—")}</strong><span>Avg heart rate</span></div>
+            </div>`).join("")
+        : `<div class="coros-empty-state">No COROS runs in the last 28 days yet.</div>`;
 }
 
 function init() {
