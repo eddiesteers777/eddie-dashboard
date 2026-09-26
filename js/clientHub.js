@@ -39,6 +39,7 @@ import { checkinDetailsHtml } from "./checkinView.js";
 import { answerChangeRequest } from "./changeRequests.js";
 import { reasonLabel } from "./feedbackModel.js";
 import { compareRun, formatDuration } from "./runWorkout.js";
+import { renderEmojiText } from "./emoji.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -364,7 +365,7 @@ function renderCheckins() {
             ${checkinDetailsHtml(c) || `<p class="hub-quote"><em>No notes.</em></p>`}
             <form class="hub-reply" data-checkin="${esc(c.id)}">
                 <label class="clients-card-note" for="reply-${esc(c.id)}">Your reply (they get it in the app and by email)</label>
-                <textarea id="reply-${esc(c.id)}" rows="2" placeholder="Feedback for ${esc(displayName().split(" ")[0])}...">${esc(c.coachFeedback || "")}</textarea>
+                <textarea id="reply-${esc(c.id)}" data-emoji="quick" rows="2" placeholder="Feedback for ${esc(displayName().split(" ")[0])}...">${esc(c.coachFeedback || "")}</textarea>
                 <div class="hub-reply-actions">
                     <button type="submit" class="clients-btn-primary">${c.status === "reviewed" ? "Update reply" : "Send reply"}</button>
                     <button type="button" class="sb-btn sb-btn-tertiary" data-goto="plan">${icon("edit")} Adjust the plan</button>
@@ -426,7 +427,7 @@ function renderChanges() {
                 <p class="hub-quote">"${esc(c.message)}"</p>
                 <form class="hub-reply" data-change="${esc(c.id)}">
                     <label class="clients-card-note" for="chg-${esc(c.id)}">Your answer (${esc(first)} sees it on My Plan and gets an email)</label>
-                    <textarea id="chg-${esc(c.id)}" rows="2" maxlength="1000" placeholder="Moved it to Wednesday — check your week.">${esc(c.coachReply || "")}</textarea>
+                    <textarea id="chg-${esc(c.id)}" data-emoji="quick" rows="2" maxlength="1000" placeholder="Moved it to Wednesday — check your week.">${esc(c.coachReply || "")}</textarea>
                     <div class="hub-reply-actions">
                         <button type="submit" class="clients-btn-primary">Answer &amp; resolve</button>
                         <span class="clients-msg" hidden></span>
@@ -435,7 +436,7 @@ function renderChanges() {
             </div>`).join("")}
             ${answered.length ? `<details class="hub-changes-done"${open.length ? "" : " open"}><summary>Answered recently (${answered.length})</summary>
                 ${answered.map(c => `<div class="hub-change"><div class="hub-change-head"><strong>${esc(reasonLabel(c.reason))}${c.date ? ` · ${esc(shortDate(c.date))}` : ""}</strong></div>
-                    <p class="hub-quote">"${esc(c.message)}"</p><p class="hub-change-reply">${icon("send")} ${esc(c.coachReply || "Resolved")}</p></div>`).join("")}
+                    <p class="hub-quote">"${esc(c.message)}"</p><p class="hub-change-reply">${icon("send")} ${renderEmojiText(esc(c.coachReply || "Resolved"))}</p></div>`).join("")}
             </details>` : ""}
             ${open.length ? `<p class="clients-card-note">Change the plan below, publish it, then answer here.</p>` : ""}
         </section>`;
@@ -542,7 +543,7 @@ function updateHtml(u) {
                 <span>Sent ${esc(noteDate(u.createdAt))}</span>
                 <span class="hub-pill ${read ? "" : "is-new"}">${read ? `Read ${esc(shortDate(new Date(read).toISOString().slice(0, 10)))}` : "Not read yet"}</span>
             </div>
-            <p class="hub-note-text">${esc(u.text)}</p>
+            <p class="hub-note-text">${renderEmojiText(esc(u.text))}</p>
             <div class="hub-note-actions">
                 <button type="button" class="hub-link-btn is-danger" data-update-action="delete">${read ? "Delete" : "Unsend"}</button>
             </div>
@@ -586,7 +587,7 @@ function renderNotes() {
             ${updates === undefined ? off : `
             <form class="hub-reply" id="updateForm">
                 <label class="sr-only" for="updateText">New update for ${esc(first)}</label>
-                <textarea id="updateText" rows="3" maxlength="2000" placeholder="Great week, ${esc(first)}! Next week we..."></textarea>
+                <textarea id="updateText" data-emoji="quick" rows="3" maxlength="2000" placeholder="Great week, ${esc(first)}! Next week we..."></textarea>
                 <div class="hub-reply-actions">
                     <button type="submit" class="clients-btn-primary">${icon("send")} Send to ${esc(first)}</button>
                     <span class="clients-msg" hidden></span>
@@ -782,7 +783,7 @@ function strengthResultHtml(r, day) {
                 ${cmp.highlights.length ? `<ul class="hub-wo-highlights">${cmp.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}` : ""}
             ${r.status === "completed" && !cmp ? `<p class="hub-wo-planned"><span>Logged</span> ${esc((r.exercises || []).map(e => `${e.name} (${e.sets?.length || 0} sets)`).join(", "))}</p>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
-            ${r.note ? `<p class="hub-quote">"${esc(r.note)}"</p>` : ""}
+            ${r.note ? `<p class="hub-quote">"${renderEmojiText(esc(r.note))}"</p>` : ""}
             ${replyFormHtml(r)}
         </div>`;
 }
@@ -791,7 +792,7 @@ function replyFormHtml(r) {
     return `
             <form class="hub-reply" data-reply="${esc(r.id)}">
                 <label class="clients-card-note" for="wo-${esc(r.id)}">Your reply (${esc(firstName())} sees it on this workout)</label>
-                <textarea id="wo-${esc(r.id)}" rows="2" maxlength="1000" placeholder="${r.kind === "strength" ? "Nice jump on the deadlift..." : "Good control on the last rep..."}">${esc(r.coachComment || "")}</textarea>
+                <textarea id="wo-${esc(r.id)}" data-emoji="quick" rows="2" maxlength="1000" placeholder="${r.kind === "strength" ? "Nice jump on the deadlift..." : "Good control on the last rep..."}">${esc(r.coachComment || "")}</textarea>
                 <div class="hub-reply-actions">
                     <button type="submit" class="clients-btn-primary">${r.coachComment ? "Update reply" : "Reply"}</button>
                     <span class="clients-msg" hidden></span>
@@ -821,7 +822,7 @@ function workoutResultHtml(r) {
                     <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(RPE_WORDS[r.rpe])}</small>` : ""}</div>
                 </div>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
-            ${r.note ? `<p class="hub-quote">"${esc(r.note)}"</p>` : ""}
+            ${r.note ? `<p class="hub-quote">"${renderEmojiText(esc(r.note))}"</p>` : ""}
             ${replyFormHtml(r)}
         </div>`;
 }

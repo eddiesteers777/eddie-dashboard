@@ -16,6 +16,7 @@ import { CHANGE_REASONS, reasonLabel } from "./feedbackModel.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { icon } from "./icons.js";
+import { renderEmojiText } from "./emoji.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const when = ts => { const ms = ts?.toMillis?.() ?? (typeof ts === "number" ? ts : null); return ms ? new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""; };
@@ -103,7 +104,7 @@ export function changeRequestsHtml(requests, coachName = "your coach") {
                     <span class="cr-status">${r.status === "open" ? "Waiting for your coach" : `Answered ${esc(when(r.resolvedAt))}`}</span>
                 </div>
                 <p class="cr-message">"${esc(r.message)}"</p>
-                ${r.coachReply ? `<div class="wo-reply cr-reply"><span>${icon("send")} ${esc(coachName)}</span><p>${esc(r.coachReply)}</p></div>` : ""}
+                ${r.coachReply ? `<div class="wo-reply cr-reply"><span>${icon("send")} ${esc(coachName)}</span><p>${renderEmojiText(esc(r.coachReply))}</p></div>` : ""}
                 ${r.status === "open" ? `<button type="button" class="sb-btn sb-btn-tertiary cr-withdraw" data-withdraw="${esc(r.id)}">Withdraw</button>` : ""}
             </div>`).join("")}
         </section>`;

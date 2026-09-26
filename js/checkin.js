@@ -12,6 +12,7 @@ import { listMyResults } from "./workoutResults.js";
 import { loadCoachPlans } from "./coachPlanStore.js";
 import { isoDate } from "./coachingPlanModel.js";
 import { toMillis } from "./clientSummary.js";
+import { renderEmojiText } from "./emoji.js";
 
 const signedOutEl = document.getElementById("checkinSignedOut");
 const signedInEl = document.getElementById("checkinSignedIn");
@@ -197,7 +198,7 @@ async function refreshMine() {
                 </span>
             </div>
             ${checkinDetailsHtml(c)}
-            ${c.coachFeedback ? `<div class="checkin-row-feedback"><strong>Coach feedback</strong>${escapeHtml(c.coachFeedback)}</div>` : ""}
+            ${c.coachFeedback ? `<div class="checkin-row-feedback"><strong>Coach feedback</strong>${renderEmojiText(escapeHtml(c.coachFeedback))}</div>` : ""}
             ${c.status === "reviewed" && plans.some(p => p.publishedAt && p.publishedAt > (toMillis(c.submittedAt) || Infinity))
                 ? `<a class="ck-plan-updated" href="plan.html">Your coach updated your plan after this check-in. See what changed →</a>` : ""}
         </div>
@@ -282,7 +283,7 @@ async function refreshReview() {
             ${checkinDetailsHtml(c) || `<p class="checkin-row-notes"><em>No notes left.</em></p>`}
             <a class="ck-open-plan" href="client.html?uid=${encodeURIComponent(c.clientUid)}&tab=plan">Adjust ${escapeHtml((c.clientName || "their").split(" ")[0])}'s plan →</a>
             <form class="checkin-review-form">
-                <textarea rows="2" placeholder="Write feedback for ${escapeHtml(c.clientName || "your client")}...">${escapeHtml(c.coachFeedback || "")}</textarea>
+                <textarea rows="2" data-emoji="quick" placeholder="Write feedback for ${escapeHtml(c.clientName || "your client")}...">${escapeHtml(c.coachFeedback || "")}</textarea>
                 <div class="checkin-review-form-actions">
                     <button type="submit" class="clients-btn-primary">${c.status === "reviewed" ? "Update Feedback" : "Mark Reviewed"}</button>
                     <span class="clients-msg" hidden></span>

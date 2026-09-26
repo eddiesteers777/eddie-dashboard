@@ -3213,3 +3213,141 @@ html body :is(
         font-size:14px;
     }
 }
+
+/* ==========================================================
+   SOUTHBOUND REACTIONS (js/emoji.js, js/emojiPicker.js)
+   Personal reactions only; working icons stay in js/icons.js.
+========================================================== */
+
+.sb-emoji{
+    display:inline-block;
+    width:1.5em;
+    height:1.5em;
+    margin:0 .08em;
+    vertical-align:-.4em;
+    user-select:none;
+}
+.sb-emoji.is-big{ width:40px; height:40px; margin:2px 4px 2px 0; vertical-align:middle; }
+
+.sb-emoji-bar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+    margin-top:6px;
+}
+.sb-emoji-bar [hidden]{ display:none !important; }
+.sb-emoji-quick,
+.sb-emoji-open{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-width:36px;
+    height:36px;
+    padding:0 6px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill);
+    background:rgba(255,255,255,.03);
+    color:var(--text-secondary);
+    font:600 13px var(--font-body);
+    cursor:pointer;
+    transition:background-color .15s ease,border-color .15s ease,transform .1s ease;
+}
+.sb-emoji-open{ padding:0 12px 0 7px; }
+.sb-emoji-quick:hover,
+.sb-emoji-open:hover{ border-color:rgba(201,173,132,.45); background:rgba(201,173,132,.08); color:var(--text); }
+.sb-emoji-quick:active{ transform:scale(.92); }
+.sb-emoji-quick .sb-emoji,
+.sb-emoji-open .sb-emoji{ width:24px; height:24px; margin:0; vertical-align:0; }
+.sb-emoji-open .sb-emoji{ width:22px; height:22px; }
+.sb-emoji-preview{
+    flex:0 0 100%;
+    color:var(--text);
+    font-size:14px;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+}
+.sb-emoji-preview-label{
+    margin-right:4px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+
+.sb-emoji-pop{
+    position:fixed;
+    inset:auto;
+    width:min(372px, calc(100vw - 24px));
+    max-height:min(420px, 80vh);
+    margin:0;
+    padding:12px 12px 14px;
+    overflow:auto;
+    background:var(--surface);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:0 18px 50px rgba(0,0,0,.5);
+}
+.sb-emoji-pop::backdrop{ background:rgba(8,16,12,.35); }
+.sb-emoji-pop.is-sheet{
+    left:0; right:0; bottom:0; top:auto;
+    width:100%;
+    max-width:100%;
+    max-height:70vh;
+    border-radius:20px 20px 0 0;
+    padding-bottom:calc(16px + env(safe-area-inset-bottom));
+}
+.sb-emoji-pop-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+}
+.sb-emoji-pop-title{
+    font-family:var(--font-display);
+    font-size:22px;
+    letter-spacing:.5px;
+}
+.sb-emoji-pop-close{
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:var(--radius-sm);
+    background:transparent;
+    color:var(--muted);
+    font-size:22px;
+    cursor:pointer;
+}
+.sb-emoji-pop-close:hover{ background:rgba(255,255,255,.06); color:var(--text); }
+.sb-emoji-cat{ margin-top:8px; }
+.sb-emoji-cat-label{
+    margin:0 0 4px 2px;
+    color:var(--primary);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+.sb-emoji-grid{
+    display:grid;
+    grid-template-columns:repeat(7, minmax(0, 1fr));
+    gap:2px;
+}
+.sb-emoji-choice{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:46px;
+    border:0;
+    border-radius:12px;
+    background:transparent;
+    cursor:pointer;
+    transition:background-color .12s ease,transform .1s ease;
+}
+.sb-emoji-choice:hover,
+.sb-emoji-choice:focus-visible{ background:rgba(201,173,132,.12); }
+.sb-emoji-choice:active{ transform:scale(.9); }
+.sb-emoji-choice .sb-emoji{ width:32px; height:32px; margin:0; vertical-align:0; }

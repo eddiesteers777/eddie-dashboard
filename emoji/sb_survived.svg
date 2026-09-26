@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<clipPath id="sb_survived-f"><circle cx="32" cy="33" r="25"/></clipPath>
+<circle cx="32" cy="33" r="25" fill="#C9AD84"/>
+<circle cx="39" cy="42" r="25" fill="#AE9068" opacity=".45" clip-path="url(#sb_survived-f)"/>
+<path d="M18 29l8 4l-8 4M46 29l-8 4l8 4" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 48q2.5-4 5 0t5 0t5 0t5 0" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="32" cy="33" r="25" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 10c-2.55 3.8249999999999997 -3.8249999999999997 5.5249999999999995 -3.8249999999999997 7.225a3.8249999999999997 3.8249999999999997 0 0 0 7.6499999999999995 0c0 -1.7 -1.275 -3.4 -3.8249999999999997 -7.225z" fill="#7FB2CF" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M55 12c-2.55 3.8249999999999997 -3.8249999999999997 5.5249999999999995 -3.8249999999999997 7.225a3.8249999999999997 3.8249999999999997 0 0 0 7.6499999999999995 0c0 -1.7 -1.275 -3.4 -3.8249999999999997 -7.225z" fill="#7FB2CF" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>

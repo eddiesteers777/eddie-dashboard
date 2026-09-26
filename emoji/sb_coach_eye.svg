@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<path d="M4 33q28-30 56 0q-28 28-56 0z" fill="#F2EEE4" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<clipPath id="sb_coach_eye-eye"><path d="M4 33q28-30 56 0q-28 28-56 0z"/></clipPath>
+<circle cx="32" cy="32" r="12" fill="#C9AD84" clip-path="url(#sb_coach_eye-eye)"/>
+<circle cx="32" cy="32" r="12" fill="none" stroke="#0F2019" stroke-width="2.6" clip-path="url(#sb_coach_eye-eye)"/>
+<circle cx="32" cy="32" r="5.5" fill="#0F2019"/>
+<circle cx="35" cy="29" r="2" fill="#F2EEE4"/>
+<path d="M4 33q28-30 56 0q-28 28-56 0z" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 13l3 5M32 8v6M50 13l-3 5" stroke="#C9AD84" stroke-width="3.2" stroke-linecap="round"/></svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<clipPath id="sb_tired_proud-f"><circle cx="32" cy="33" r="25"/></clipPath>
+<circle cx="32" cy="33" r="25" fill="#C9AD84"/>
+<circle cx="39" cy="42" r="25" fill="#AE9068" opacity=".45" clip-path="url(#sb_tired_proud-f)"/>
+<path d="M18 33h10M36 33h10" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19 33q4 5 8 0M37 33q4 5 8 0" fill="#0F2019"/>
+<path d="M24 45q8 5 16 0" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="32" cy="33" r="25" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M53 8c-3 4.5 -4.5 6.5 -4.5 8.5a4.5 4.5 0 0 0 9 0c0 -2 -1.5 -4 -4.5 -8.5z" fill="#7FB2CF" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>

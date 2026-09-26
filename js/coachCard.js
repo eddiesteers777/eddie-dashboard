@@ -18,6 +18,7 @@ import { isIntakeComplete } from "./clientRecordSchema.js";
 import { listMyUpdates } from "./clientNotes.js";
 import { listMyPlans } from "./coachingPlans.js";
 import { icon } from "./icons.js";
+import { renderEmojiText } from "./emoji.js";
 
 function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -54,7 +55,7 @@ function row({ iconName, color, title, detail, note, link }) {
             <span class="eos-coach-row-text">
                 <strong>${esc(title)}</strong>
                 ${detail ? `<span>${esc(detail)}</span>` : ""}
-                ${note ? `<em>"${esc(note)}"</em>` : ""}
+                ${note ? `<em>"${renderEmojiText(esc(note))}"</em>` : ""}
             </span>
             <span class="eos-coach-row-chevron">${icon("chevronRight")}</span>
         </a>`;
@@ -99,7 +100,7 @@ export async function renderCoachCard(container) {
             color: "var(--primary)",
             title: unread.length === 1 ? `New update from ${unread[0].coachName || "your coach"}` : `${unread.length} new updates from your coach`,
             detail: "",
-            note: unread[0].text.length > 140 ? `${unread[0].text.slice(0, 140).trim()}…` : unread[0].text,
+            note: unread[0].text.length > 140 ? `${unread[0].text.slice(0, 140).replace(/:sb_[a-z_]*$/, "").trim()}…` : unread[0].text,
             link: "updates.html"
         }));
     }

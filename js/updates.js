@@ -22,6 +22,7 @@ import { buildCoachFeed, isoDate } from "./clientSummary.js";
 import { cachedRole } from "./role.js";
 import { icon } from "./icons.js";
 import { emptyHtml } from "./ui.js";
+import { renderEmojiText } from "./emoji.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -48,7 +49,7 @@ function itemHtml(item) {
                     ${item.unread ? `<span class="updates-new">New</span>` : ""}
                     <span class="updates-when">${esc(when(item.at))}${item.detail ? ` · ${esc(item.detail)}` : ""}</span>
                 </span>
-                <span class="updates-text">${esc(item.text)}</span>
+                <span class="updates-text">${renderEmojiText(esc(item.text))}</span>
             </span>
         </${tag.split(" ")[0]}>`;
 }

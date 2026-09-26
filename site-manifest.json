@@ -81,6 +81,8 @@
     "js/cross-training.js",
     "js/dashboardData.js",
     "js/emailNotify.js",
+    "js/emoji.js",
+    "js/emojiPicker.js",
     "js/exerciseSearch.js",
     "js/feedbackModel.js",
     "js/firebase.js",

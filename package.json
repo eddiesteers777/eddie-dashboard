@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "npm run test:static && npm run test:rules",
-    "test:static": "node --test tests/static.test.mjs tests/fuelSchedule.test.mjs tests/clientSummary.test.mjs tests/clientRecordSchema.test.mjs tests/coachingPlanModel.test.mjs tests/weekModel.test.mjs tests/runWorkout.test.mjs tests/strengthWorkout.test.mjs tests/planOps.test.mjs tests/feedbackModel.test.mjs tests/workoutFuel.test.mjs",
+    "test:static": "node --test tests/static.test.mjs tests/fuelSchedule.test.mjs tests/clientSummary.test.mjs tests/clientRecordSchema.test.mjs tests/coachingPlanModel.test.mjs tests/weekModel.test.mjs tests/runWorkout.test.mjs tests/strengthWorkout.test.mjs tests/planOps.test.mjs tests/feedbackModel.test.mjs tests/workoutFuel.test.mjs tests/emoji.test.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-eddie \"node --test tests/rules.test.mjs\"",
     "manifest": "node scripts/build-manifest.mjs"
   },

@@ -28,6 +28,7 @@ import { parseDuration, formatDuration } from "./runWorkout.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
+import { renderEmojiText } from "./emoji.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -68,7 +69,7 @@ function exercisesHtml(lift) {
 function coachReplyHtml(result) {
     if (!result.coachComment) return `<p class="clients-card-note">Your coach sees this${result.pain ? " and was told about the pain" : ""}.</p>`;
     const when = toMillis(result.coachCommentAt);
-    return `<div class="wo-reply"><span>${icon("send")} ${esc(coachName())}${when ? ` · ${new Date(when).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}</span><p>${esc(result.coachComment)}</p></div>`;
+    return `<div class="wo-reply"><span>${icon("send")} ${esc(coachName())}${when ? ` · ${new Date(when).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}</span><p>${renderEmojiText(esc(result.coachComment))}</p></div>`;
 }
 
 function resultHtml(result) {
@@ -76,7 +77,7 @@ function resultHtml(result) {
         return `
             <section class="clients-card wo-result is-skipped">
                 <h2>${icon("info")} Skipped</h2>
-                ${result.note ? `<p class="wo-note">"${esc(result.note)}"</p>` : ""}
+                ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
                 ${coachReplyHtml(result)}
                 <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button></div>
             </section>`;
@@ -92,7 +93,7 @@ function resultHtml(result) {
             </div>
             ${strengthTableHtml(cmp)}
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
-            ${result.note ? `<p class="wo-note">"${esc(result.note)}"</p>` : ""}
+            ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
             ${coachReplyHtml(result)}
             <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button></div>
         </section>`;
@@ -350,7 +351,7 @@ function openLogForm({ actual = null, durationSec = null } = {}) {
                 <label><input type="radio" name="pain" value="yes"${r.pain ? " checked" : ""}><span>Yes</span></label>
             </div>
             <label class="pw-label wo-pain-field"${r.pain ? "" : " hidden"}>Where, and how bad?<textarea class="sb-dialog-input" name="painNote" rows="2" maxlength="300" placeholder="Right knee, sore on the split squats">${esc(r.painNote || "")}</textarea></label>
-            <label class="pw-label">Anything to tell your coach? (optional)<textarea class="sb-dialog-input" name="note" rows="3" maxlength="1000" placeholder="Deadlifts felt strong.">${esc(r.note || "")}</textarea></label>
+            <label class="pw-label">Anything to tell your coach? (optional)<textarea class="sb-dialog-input" name="note" data-emoji rows="3" maxlength="1000" placeholder="Deadlifts felt strong.">${esc(r.note || "")}</textarea></label>
             <p class="clients-msg clients-msg-error" data-error hidden></p>
             <div class="sb-dialog-actions">
                 ${state.result ? `<button type="button" class="sb-btn sb-btn-tertiary" data-remove>Remove log</button>` : ""}

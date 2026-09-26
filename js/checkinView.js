@@ -9,6 +9,7 @@
 
 import { snapshotLines, WELLBEING } from "./feedbackModel.js";
 import { icon } from "./icons.js";
+import { renderEmojiText } from "./emoji.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -24,5 +25,5 @@ export function checkinDetailsHtml(c) {
         ${lines.length ? `<ul class="ck-week">${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
         ${scores.length ? `<div class="ck-scores">${scores.map(w => `<span class="ck-score${Number(c[w.key]) <= 2 ? " is-low" : ""}">${esc(w.label)} <b>${c[w.key]}/5</b></span>`).join("")}</div>` : ""}
         ${c.pain ? `<p class="ck-pain">${icon("alertTriangle")} Pain or discomfort${c.painNote ? `: ${esc(c.painNote)}` : ""}</p>` : ""}
-        ${said.map(([label, text]) => `<div class="ck-said"><span>${esc(label)}</span><p>${esc(text)}</p></div>`).join("")}`;
+        ${said.map(([label, text]) => `<div class="ck-said"><span>${esc(label)}</span><p>${renderEmojiText(esc(text))}</p></div>`).join("")}`;
 }

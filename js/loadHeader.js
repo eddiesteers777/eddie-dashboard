@@ -256,6 +256,9 @@ fetch("components/header.html")
         const { hydrate, icon } = await import("./icons.js");
         hydrate();
 
+        // Southbound reactions on every <textarea data-emoji> (js/emojiPicker.js).
+        import("./emojiPicker.js").then(m => m.enableEmojiPickers()).catch(() => {});
+
         const page = window.location.pathname.split("/").pop() || "index.html";
 
         // Same entitlement check as the desktop dropdowns (js/navAccess.js)

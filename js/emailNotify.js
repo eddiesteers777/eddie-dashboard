@@ -22,6 +22,7 @@
    all work fully without them; this only adds the email on top. The
    Coach Dashboard's "Still to set up" card shows which are off.
 ========================================== */
+import { emojiPlainText } from "./emoji.js";
 
 const SERVICE_ID = "service_vgrqpxp";
 const TEMPLATE_COACH_ALERT_ID = "template_09f1ynl";
@@ -75,7 +76,9 @@ async function send(templateId, params) {
     }
     try {
         const emailjs = await loadEmailJs();
-        await emailjs.send(SERVICE_ID, templateId, params);
+        // Emails can't draw Southbound reactions: ":sb_pr:" goes out as "[PR]".
+        const plain = Object.fromEntries(Object.entries(params).map(([k, v]) => [k, typeof v === "string" ? emojiPlainText(v) : v]));
+        await emailjs.send(SERVICE_ID, templateId, plain);
         return true;
     } catch (error) {
         console.warn("Southbound: email notification failed to send.", error);

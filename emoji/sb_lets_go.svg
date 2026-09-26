@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<path d="M5 22h9M1 29h12M6 36h8" stroke="#C9AD84" stroke-width="3.2" stroke-linecap="round"/>
+<clipPath id="sb_lets_go-f"><circle cx="35" cy="33" r="25"/></clipPath>
+<circle cx="35" cy="33" r="25" fill="#C9AD84"/>
+<circle cx="42" cy="42" r="25" fill="#AE9068" opacity=".45" clip-path="url(#sb_lets_go-f)"/>
+<path d="M20 33q4-6 8 0M36 33q4-6 8 0" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M21 40h22q0 12-11 12t-11-12z" fill="#0F2019"/>
+<path d="M26 48.5q6-4 12 0q-3 3-6 3t-6-3z" fill="#E07A3F"/>
+<circle cx="35" cy="33" r="25" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>

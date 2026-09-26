@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<path d="M4 21h9M0 28h12M5 35h8" stroke="#C9AD84" stroke-width="3.2" stroke-linecap="round"/>
+<clipPath id="sb_soccer-ball"><circle cx="36" cy="32" r="23"/></clipPath>
+<circle cx="36" cy="32" r="23" fill="#F2EEE4"/>
+<circle cx="43" cy="40" r="23" fill="#E3DDD0" clip-path="url(#sb_soccer-ball)"/>
+<path d="M36.0 24.5L36.0 10.0M43.1 29.7L56.9 25.2M40.4 38.1L48.9 49.8M31.6 38.1L23.1 49.8M28.9 29.7L15.1 25.2" stroke="#0F2019" stroke-width="2.4" clip-path="url(#sb_soccer-ball)"/>
+<path d="M36.0 24.5 L43.1 29.7 L40.4 38.1 L31.6 38.1 L28.9 29.7Z" fill="#173226" stroke="#0F2019" stroke-width="2.4" stroke-linejoin="round"/>
+<circle cx="36.0" cy="7.5" r="4" fill="#173226" clip-path="url(#sb_soccer-ball)"/><circle cx="59.3" cy="24.4" r="4" fill="#173226" clip-path="url(#sb_soccer-ball)"/><circle cx="50.4" cy="51.8" r="4" fill="#173226" clip-path="url(#sb_soccer-ball)"/><circle cx="21.6" cy="51.8" r="4" fill="#173226" clip-path="url(#sb_soccer-ball)"/><circle cx="12.7" cy="24.4" r="4" fill="#173226" clip-path="url(#sb_soccer-ball)"/>
+<circle cx="36" cy="32" r="23" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
