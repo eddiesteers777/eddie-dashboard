@@ -2,7 +2,7 @@
 
 import { getTokenRecord } from "./corosAuth.js";
 import { mcpRequest } from "./corosClient.js";
-import { unwrapResult, findRecords } from "./corosParse.js";
+import { unwrapResult, findRecords, normalizeActivity } from "./corosParse.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 const $ = id => document.getElementById(id);
@@ -96,8 +96,9 @@ function buildArgs(toolDefinition, start, end) {
 // COROS replies: js/corosParse.js reads them (and finds the activity list wherever it is).
 const unwrap = unwrapResult;
 
+// Every run in one plain shape (meters, seconds, ISO start) for every page.
 function parseRecords(result) {
-    return findRecords(unwrapResult(result));
+    return findRecords(unwrapResult(result)).map(normalizeActivity);
 }
 
 function recordId(activity) {
@@ -287,18 +288,27 @@ async function enrichActivities(
         detailTool.inputSchema || {};
 
     const enriched = [];
+    let lookups = 0;
 
     for (
         const summary
-        of summaries.filter(isRun).slice(0, 25)
+        of summaries.filter(isRun)
     ) {
         const id =
             recordId(summary);
 
-        if (!id) {
+        // COROS's run list already carries distance, time, pace and heart
+        // rate; only look up runs that came back without them (at most 25).
+        const complete =
+            activityMeters(summary) > 0 &&
+            Number(summary.duration) > 0;
+
+        if (!id || complete || lookups >= 25) {
             enriched.push(summary);
             continue;
         }
+
+        lookups++;
 
         const args = {};
 
@@ -322,13 +332,15 @@ async function enrichActivities(
                     detailTool.name
                 );
 
-            enriched.push({
+            const detail = parseDetail(result);
+
+            enriched.push(normalizeActivity({
+                ...detail,
                 ...summary,
-                ...parseDetail(result),
                 _corosLabelId: id,
                 _corosSportType:
                     recordSportType(summary)
-            });
+            }));
         } catch (error) {
             console.warn(
                 "COROS detail lookup failed:",

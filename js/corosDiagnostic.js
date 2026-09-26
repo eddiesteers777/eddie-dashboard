@@ -9,7 +9,7 @@ import {
 
 import { icon } from "./icons.js";
 import { corosToolsSummary, workoutToolDetails } from "./corosTools.js";
-import { unwrapResult, findRecords, describeShape } from "./corosParse.js";
+import { unwrapResult, findRecords, describeShape, normalizeActivity } from "./corosParse.js";
 
 const $ = id => document.getElementById(id);
 
@@ -310,13 +310,15 @@ async function runCorosDiagnostic() {
                 // Count what actually came back; when it's nothing, say
                 // what the reply looked like so the cause is visible.
                 const value = unwrapResult(payload?.result);
-                const found = findRecords(value).length;
+                const runs = findRecords(value).map(normalizeActivity);
+                const found = runs.length;
+                const miles = runs.reduce((sum, r) => sum + (Number(r.distance) || 0), 0) / 1609.344;
                 checks.push(
                     row(
                         "Sample activity query",
                         found ? "pass" : "warn",
                         found
-                            ? `COROS returned ${found} ${found === 1 ? "run" : "runs"} from the last 7 days.`
+                            ? `COROS returned ${found} ${found === 1 ? "run" : "runs"} from the last 7 days${miles ? `, ${miles.toFixed(1)} miles in all` : ""}.`
                             : `COROS answered but Southbound found no runs from the last 7 days. The reply looked like: ${describeShape(value)}`
                     )
                 );
