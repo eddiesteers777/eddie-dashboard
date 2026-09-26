@@ -47,6 +47,16 @@
 
         <div id="coachDashboard" hidden>
 
+            <section class="coach-queue" aria-labelledby="coachQueueTitle">
+                <div class="coach-queue-head">
+                    <h2 class="clients-section-title" id="coachQueueTitle">Who needs you today</h2>
+                    <span class="coach-queue-count" id="coachQueueCount"></span>
+                </div>
+                <div id="coachQueueList" class="coach-queue-list">
+                    <div class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:64%"></span></div></div>
+                </div>
+            </section>
+
             <div class="coach-stat-grid">
 
                 <a href="#inquiries" class="coach-stat-card" id="statNewInquiries">

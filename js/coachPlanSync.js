@@ -82,6 +82,7 @@ export async function syncCoachPlans() {
                 kind: header.kind,
                 coachName: header.coachName || "",
                 coachUid: header.coachUid || "",
+                publishedAt: header.publishedAt?.toMillis?.() || null,
                 adoptedFromId: header.adoptedFrom?.id || null,
                 status: "active",
                 source: "coach",

@@ -229,3 +229,23 @@ export function sendPainFlagEmail({ clientName, date, title, painNote }) {
         page: "clients.html"
     });
 }
+
+export function sendChangeRequestEmail({ clientName, reasonLabel, date, message }) {
+    return coachAlert({
+        subject: `${clientName || "A client"} asked for a plan change`,
+        headline: `${clientName || "A client"} asked for a change${date ? ` for ${date}` : ""} (${reasonLabel || "other"}).`,
+        details: message ? `"${message}"` : "",
+        page: "coach.html"
+    });
+}
+
+export function sendChangeReplyEmail({ clientEmail, clientName, coachName, text }) {
+    return clientUpdate({
+        toEmail: clientEmail,
+        toName: clientName,
+        subject: "Your coach answered your change request",
+        headline: `${coachName || "Your coach"} answered your change request.`,
+        details: text ? `"${text}"` : "",
+        page: "plan.html"
+    });
+}

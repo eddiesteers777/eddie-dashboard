@@ -599,3 +599,80 @@ test("strength logs: their own id next to the run's, with the sets lifted", asyn
     await assertFails(setDoc(doc(as("client"), id), lift({ exercises: Array.from({ length: 21 }, (_, i) => ({ name: `Ex ${i}`, sets: [] })) })));
     await assertFails(setDoc(doc(as("stranger"), id), lift()));
 });
+
+// ---- Coaching Phase F: the feedback loop ----
+
+test("check-ins: the richer check-in with the week's snapshot; no extra or oversized fields", async () => {
+    await seedLinkAndBooking();
+    const ref = doc(as("client"), "checkins/client_2026-09-28");
+    const payload = {
+        clientUid: "client", clientName: "Cam", clientEmail: "client@example.com",
+        coachUid: "coach", coachName: "Eddie", weekOf: "2026-09-28",
+        rating: 4, notes: "", status: "submitted", reviewedAt: null,
+        submittedAt: serverTimestamp(), coachFeedback: "",
+        energy: 4, recovery: 2, motivation: null, pain: true, painNote: "left knee",
+        wentWell: "Long run", change: "Tuesdays are hard",
+        week: { planned: 6, done: 5, miles: 30, milesDone: 26, longRun: "done", avgRpe: 6.8 }
+    };
+    await assertSucceeds(setDoc(ref, payload, { merge: true }));
+    const { coachFeedback, ...resubmit } = payload;
+    await assertSucceeds(setDoc(ref, { ...resubmit, recovery: 3 }, { merge: true }));
+    // The coach still just replies.
+    await assertSucceeds(updateDoc(doc(as("coach"), "checkins/client_2026-09-28"), { status: "reviewed", coachFeedback: "Easy Tuesday this week.", reviewedAt: serverTimestamp() }));
+    // Attacks on a new week's check-in.
+    const next = doc(as("client"), "checkins/client_2026-10-05");
+    const fresh = { ...payload, weekOf: "2026-10-05" };
+    await assertFails(setDoc(next, { ...fresh, isVip: true }));
+    await assertFails(setDoc(next, { ...fresh, energy: 7 }));
+    await assertFails(setDoc(next, { ...fresh, pain: "yes" }));
+    await assertFails(setDoc(next, { ...fresh, change: "x".repeat(1001) }));
+    await assertFails(setDoc(next, { ...fresh, week: "lots" }));
+    await assertFails(setDoc(next, { ...fresh, week: Object.fromEntries(Array.from({ length: 17 }, (_, i) => [`k${i}`, i])) }));
+    await assertFails(setDoc(next, { ...fresh, coachFeedback: "Great week, me" }));
+    await assertSucceeds(setDoc(next, fresh));
+});
+
+test("change requests: a linked client asks, the coach answers and resolves", async () => {
+    await seedLinkAndBooking();
+    const ask = extra => ({
+        clientUid: "client", clientName: "Cam", coachUid: "coach", planId: "p1", date: "2026-10-06",
+        reason: "work", message: "Can Tuesday move to Wednesday?", status: "open", coachReply: "",
+        createdAt: serverTimestamp(), resolvedAt: null, ...extra
+    });
+    const ref = doc(as("client"), "changeRequests/r1");
+    await assertSucceeds(setDoc(ref, ask()));
+    await assertSucceeds(getDocs(query(collection(as("client"), "changeRequests"), where("clientUid", "==", "client"))));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "changeRequests"), where("coachUid", "==", "coach"))));
+    await assertFails(getDoc(doc(as("stranger"), "changeRequests/r1")));
+    // The client can't answer their own request or edit it after sending.
+    await assertFails(updateDoc(ref, { status: "resolved", resolvedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { message: "never mind" }));
+    // The coach answers -- only the answer.
+    const coachRef = doc(as("coach"), "changeRequests/r1");
+    await assertFails(updateDoc(coachRef, { message: "edited", coachReply: "ok", status: "resolved", resolvedAt: serverTimestamp() }));
+    await assertFails(updateDoc(coachRef, { coachReply: "ok", status: "resolved", resolvedAt: null }));
+    await assertSucceeds(updateDoc(coachRef, { coachReply: "Moved it to Wednesday.", status: "resolved", resolvedAt: serverTimestamp() }));
+    // Answered: the client can no longer delete it.
+    await assertFails(deleteDoc(ref));
+    // A fresh one can be withdrawn.
+    await assertSucceeds(setDoc(doc(as("client"), "changeRequests/r2"), ask({ date: null, planId: null })));
+    await assertSucceeds(deleteDoc(doc(as("client"), "changeRequests/r2")));
+    // Attacks on create.
+    const bad = (id, extra, who = "client") => setDoc(doc(as(who), `changeRequests/${id}`), ask(extra));
+    await assertFails(bad("r3", { reason: "because" }));
+    await assertFails(bad("r3", { message: "" }));
+    await assertFails(bad("r3", { status: "resolved" }));
+    await assertFails(bad("r3", { coachReply: "Approved!" }));
+    await assertFails(bad("r3", { date: "next tuesday" }));
+    await assertFails(bad("r3", { extra: 1 }));
+    await assertFails(bad("r3", { clientUid: "stranger" }, "stranger"));
+    await assertFails(bad("r3", { coachUid: "coach2" }));
+});
+
+test("last seen: a user stamps only their own lastSeenAt, only with the server clock", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(updateDoc(doc(as("client"), "userProfiles/client"), { lastSeenAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "userProfiles/client"), { lastSeenAt: new Date("2030-01-01") }));
+    await assertFails(updateDoc(doc(as("client"), "userProfiles/client"), { lastSeenAt: serverTimestamp(), status: "active", services: ["running"] }));
+    await assertFails(updateDoc(doc(as("stranger"), "userProfiles/client"), { lastSeenAt: serverTimestamp() }));
+});

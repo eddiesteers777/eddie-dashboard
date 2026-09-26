@@ -71,9 +71,6 @@
 .wo-pain{ display:flex; align-items:flex-start; gap:8px; margin:0 0 10px; padding:10px 12px; background:var(--warning-bg); border-radius:12px; color:var(--text); font-size:14.5px; }
 .wo-pain .ui-icon{ color:var(--warning); margin-top:2px; }
 .wo-note{ margin:0 0 10px; color:var(--text); font-size:15px; line-height:1.55; font-style:italic; }
-.wo-reply{ margin:0 0 12px; padding:12px 14px; background:rgba(201,173,132,.1); border-left:3px solid var(--primary); border-radius:0 12px 12px 0; }
-.wo-reply span{ display:flex; align-items:center; gap:6px; color:var(--primary); font-size:12.5px; font-weight:800; }
-.wo-reply p{ margin:4px 0 0; color:var(--text); font-size:15px; line-height:1.55; }
 
 /* ---- Log form ---- */
 
@@ -221,3 +218,4 @@ body.wo-mode-open{ overflow:hidden; }
 }
 .st-mode .wo-mode-main h2{ font-size:clamp(30px, 8vw, 48px); line-height:1.05; }
 .st-mode .wo-mode-actions{ grid-template-columns:1fr 2fr; }
+.wo-change{ margin-top:6px; padding-left:0; color:var(--text-secondary); }

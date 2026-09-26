@@ -10,6 +10,8 @@
      - the big picture: plan, version, coach, goal, week X of Y
      - the whole week, one week at a time: everything in it from every
        source (js/weekModel.js), with Mark done on each workout
+     - "Need a change?": ask the coach instead of editing their plan,
+       and the coach's answers (js/changeRequestDialog.js)
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
@@ -24,12 +26,21 @@ import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
 import { toast, emptyHtml, friendlyError } from "./ui.js";
 import { icon } from "./icons.js";
+import { listMyChangeRequests } from "./changeRequests.js";
+import { openChangeRequestDialog, changeRequestsHtml, bindChangeRequestActions } from "./changeRequestDialog.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const today = isoDate(new Date());
 
-const state = { plans: [], headers: [], selected: null, monday: "", goal: "", sessions: [], items: new Map() };
+const state = { plans: [], headers: [], selected: null, monday: "", goal: "", sessions: [], items: new Map(), coaches: [], requests: [] };
+
+// Who a change request goes to: this plan's coach, else their linked coach.
+function currentCoach() {
+    const p = state.selected;
+    if (p?.coachUid) return { coachUid: p.coachUid, coachName: p.coachName || "" };
+    return state.coaches[0] || null;
+}
 
 function activePlans() {
     return loadCoachPlans().filter(p => p.status === "active" && p.generatedPlan?.weeks?.length);
@@ -128,11 +139,26 @@ function renderPlan() {
             ${state.monday !== thisMonday ? `<button type="button" class="sb-btn sb-btn-tertiary wk-this-week" data-week="now">Back to this week</button>` : ""}
             ${week.summary.planned || week.summary.sessions ? `<p class="myplan-progress">${esc(summaryLine(week.summary))}</p>` : ""}
             ${weekListHtml(week)}
-            <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done. Something needs to change? Tell your coach in your <a href="checkin.html">weekly check-in</a>.</p>
-        </section>`;
+            <div class="myplan-foot">
+                <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done.</p>
+                ${currentCoach() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="change">${icon("messageSquare")} Need a change?</button>` : ""}
+            </div>
+        </section>
+        ${changeRequestsHtml(state.requests, currentCoach()?.coachName || "Your coach")}`;
 }
 
-$("planBody").addEventListener("click", event => {
+$("planBody").addEventListener("click", async event => {
+    if (event.target.closest('[data-act="change"]')) {
+        const coach = currentCoach();
+        if (!coach) return;
+        // Days they can pick: today on, through the end of next week.
+        const from = state.monday > today ? state.monday : today;
+        const dates = [];
+        for (let d = from; d <= addDays(mondayOf(from), 13); d = addDays(d, 1)) dates.push(d);
+        const saved = await openChangeRequestDialog({ coach, planId: state.selected?.coachPlanId || null, dates });
+        if (saved) { state.requests.unshift(saved); renderPlan(); }
+        return;
+    }
     const weekBtn = event.target.closest("[data-week]");
     if (weekBtn) {
         state.monday = weekBtn.dataset.week === "now" ? mondayOf(today) : addDays(state.monday, 7 * Number(weekBtn.dataset.week));
@@ -148,6 +174,7 @@ $("planBody").addEventListener("click", event => {
 });
 
 bindWeekActions($("planBody"), { getItem: id => state.items.get(id), onChange: () => renderPlan() });
+bindChangeRequestActions($("planBody"), id => { state.requests = state.requests.filter(r => r.id !== id); renderPlan(); });
 
 // The week to open on: this week, or the plan's first week if it hasn't started.
 function mondayFor(plan) {
@@ -172,12 +199,15 @@ listenForAuth(async user => {
     }
 
     state.plans = activePlans();
-    const [headers, record, coaches] = await Promise.all([
+    const [headers, record, coaches, requests] = await Promise.all([
         listMyPlans().catch(error => { console.warn("Southbound: plan updates unavailable.", error?.code || error); return []; }),
         getMyClientRecord().catch(() => null),
-        listMyCoaches().catch(() => [])
+        listMyCoaches().catch(() => []),
+        listMyChangeRequests().catch(() => [])
     ]);
     state.headers = headers;
+    state.coaches = coaches;
+    state.requests = requests;
     state.goal = [record?.primaryGoal, record?.targetEvent].filter(Boolean).join(" · ");
     $("planLoading").hidden = true;
 

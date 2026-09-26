@@ -23,6 +23,7 @@ import { getClientRecord } from "./clientRecords.js";
 import { listPrivateNotes, listUpdatesForClient } from "./clientNotes.js";
 import { listPlansForClient, listDraftsForClient, getVersion } from "./coachingPlans.js";
 import { listResultsForClient } from "./workoutResults.js";
+import { listChangeRequestsForCoach } from "./changeRequests.js";
 
 // [] if results can't be read (rules not published yet, offline...).
 const resultsFor = uid => listResultsForClient(uid).catch(error => {
@@ -74,14 +75,23 @@ function groupByClient(items) {
 }
 
 // Every linked client, each as { link, profile, shared, checkins, requests }.
+// Change requests need the Phase F rules; before they're published this
+// quietly returns nothing.
+const changesFor = (clientUid = null) => listChangeRequestsForCoach(clientUid).catch(error => {
+    if (error?.code !== "permission-denied") console.warn("Southbound: change requests unavailable.", error);
+    return [];
+});
+
 export async function loadClientDirectory() {
-    const [links, checkins, requests] = await Promise.all([
+    const [links, checkins, requests, changes] = await Promise.all([
         listMyClients(),
         quiet(listCheckinsForMyClients()),
-        quiet(listRequestsForMyClients())
+        quiet(listRequestsForMyClients()),
+        changesFor()
     ]);
     const checkinsBy = groupByClient(checkins);
     const requestsBy = groupByClient(requests);
+    const changesBy = groupByClient(changes);
 
     return Promise.all(links.map(async link => {
         const [profile, shared, record, coachingPlans, results] = await Promise.all([
@@ -99,7 +109,8 @@ export async function loadClientDirectory() {
             coachingPlans,
             results,
             checkins: checkinsBy.get(link.clientUid) || [],
-            requests: requestsBy.get(link.clientUid) || []
+            requests: requestsBy.get(link.clientUid) || [],
+            changes: changesBy.get(link.clientUid) || []
         };
     }));
 }
@@ -109,7 +120,7 @@ export async function loadClientRecord(clientUid) {
     const links = await listMyClients();
     const link = links.find(l => l.clientUid === clientUid);
     if (!link) return null;
-    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts, results] = await Promise.all([
+    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts, results, changes] = await Promise.all([
         quiet(getProfile(clientUid)),
         quiet(readSharedPlanDoc(clientUid)),
         quiet(listCheckinsForMyClients()),
@@ -119,7 +130,8 @@ export async function loadClientRecord(clientUid) {
         orUndefined(listUpdatesForClient(clientUid)),
         publishedPlans(clientUid),
         listDraftsForClient(clientUid).catch(() => []),
-        resultsFor(clientUid)
+        resultsFor(clientUid),
+        changesFor(clientUid)
     ]);
     return {
         link,
@@ -131,6 +143,7 @@ export async function loadClientRecord(clientUid) {
         coachingPlans,
         planDrafts,
         results,
+        changes,
         checkins: (checkins || []).filter(c => c.clientUid === clientUid),
         requests: (requests || []).filter(r => r.clientUid === clientUid)
     };

@@ -17,6 +17,7 @@ import {
     collection, query, where, getDocs,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { cleanCheckinAnswers } from "./feedbackModel.js";
 
 // Monday-start week key (YYYY-MM-DD of that week's Monday) so every
 // day within the same week maps to one check-in document per client,
@@ -39,7 +40,10 @@ function checkinRef(clientUid, weekOf) {
 // weekOf defaults to the current week; a client only ever has one
 // document per week, so resubmitting overwrites rating/notes and
 // puts it back in the coach's review queue (status -> "submitted").
-export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf }) {
+// answers: energy / recovery / motivation (1-5), pain + painNote,
+// wentWell, change (js/feedbackModel.js); week: weekSnapshot() of the
+// week it's about, so the coach sees it without rebuilding it.
+export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf, answers = {}, week: weekSummary = null }) {
     const user = await waitForUser();
     if (!user) throw new Error("not-signed-in");
     if (!coachUid) throw new Error("no-coach");
@@ -64,10 +68,11 @@ export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf
         coachName: coachName || "Coach",
         weekOf: week,
         rating: rating || 0,
-        notes: notes || "",
+        ...cleanCheckinAnswers({ ...answers, notes }),
         status: "submitted",
         reviewedAt: null,
-        submittedAt: serverTimestamp()
+        submittedAt: serverTimestamp(),
+        ...(weekSummary ? { week: weekSummary } : {})
     };
     // Only stamp coachFeedback on first creation -- Firestore rules
     // require it stay untouched (equal to the existing value) on any

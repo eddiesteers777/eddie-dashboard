@@ -698,3 +698,15 @@ body.has-bottomnav .pw-bar{ bottom:92px; }
 /* Toasts (with Undo) sit above the editor's save / publish bar. */
 body:has(.pw-editor) .sb-toast-host{ bottom:104px; }
 body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
+
+/* ---- Change requests on the Plan tab (coaching Phase F) ---- */
+
+.hub-changes{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; border-color:rgba(201,173,132,.5); }
+.hub-changes h2{ margin:0; }
+.hub-change{ padding:10px 0 4px; border-top:1px solid var(--border); }
+.hub-change:first-of-type{ border-top:0; }
+.hub-change-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.hub-change-head strong{ color:var(--text); font-size:15px; }
+.hub-change-reply{ display:flex; align-items:flex-start; gap:6px; margin:6px 0 0; color:var(--primary); font-size:14px; }
+.hub-changes-done summary{ cursor:pointer; color:var(--text-secondary); font-weight:700; font-size:14px; }
+.hub-reply-actions{ flex-wrap:wrap; }

@@ -35,6 +35,9 @@ import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { commentOnResult, isStrengthResult } from "./workoutResults.js";
 import { compareStrength } from "./strengthWorkout.js";
 import { strengthTableHtml } from "./strengthSession.js";
+import { checkinDetailsHtml } from "./checkinView.js";
+import { answerChangeRequest } from "./changeRequests.js";
+import { reasonLabel } from "./feedbackModel.js";
 import { compareRun, formatDuration } from "./runWorkout.js";
 
 const $ = id => document.getElementById(id);
@@ -129,6 +132,18 @@ const noteDate = value => {
 
 // ---- Render ----
 
+// "2 hours ago", "yesterday", "5 days ago", "Sep 12".
+function agoText(ms) {
+    const mins = Math.round((Date.now() - ms) / 60000);
+    if (mins < 60) return mins <= 1 ? "just now" : `${mins} min ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    const days = Math.round(hours / 24);
+    if (days === 1) return "yesterday";
+    if (days < 14) return `${days} days ago`;
+    return `on ${new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+}
+
 function renderHeader() {
     const { profile, link } = record;
     const name = displayName();
@@ -139,7 +154,9 @@ function renderHeader() {
     $("hubServices").textContent = services.length ? services.join(" · ") : "No services assigned yet";
     const since = toMillis(profile?.approvedAt) || toMillis(link?.linkedAt);
     const status = profile?.status && profile.status !== "active" ? `${profile.status[0].toUpperCase()}${profile.status.slice(1)} · ` : "Active · ";
-    $("hubSince").textContent = status + (since ? `Client since ${new Date(since).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "Client");
+    const seen = toMillis(profile?.lastSeenAt);
+    $("hubSince").textContent = status + (since ? `Client since ${new Date(since).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "Client")
+        + (seen ? ` · Last in the app ${agoText(seen)}` : "");
     const email = profile?.email || link?.clientEmail;
     if (email) {
         $("hubEmail").href = `mailto:${email}`;
@@ -344,17 +361,19 @@ function renderCheckins() {
                 <span class="hub-stars" aria-label="${Number(c.rating) || 0} out of 5">${"★".repeat(Number(c.rating) || 0)}<span>${"★".repeat(5 - (Number(c.rating) || 0))}</span></span>
                 <span class="hub-pill ${c.status === "submitted" ? "is-new" : ""}">${c.status === "submitted" ? "Needs reply" : "Reviewed"}</span>
             </div>
-            <p class="hub-quote">${c.notes ? `"${esc(c.notes)}"` : "<em>No notes.</em>"}</p>
+            ${checkinDetailsHtml(c) || `<p class="hub-quote"><em>No notes.</em></p>`}
             <form class="hub-reply" data-checkin="${esc(c.id)}">
                 <label class="clients-card-note" for="reply-${esc(c.id)}">Your reply (they get it in the app and by email)</label>
                 <textarea id="reply-${esc(c.id)}" rows="2" placeholder="Feedback for ${esc(displayName().split(" ")[0])}...">${esc(c.coachFeedback || "")}</textarea>
                 <div class="hub-reply-actions">
                     <button type="submit" class="clients-btn-primary">${c.status === "reviewed" ? "Update reply" : "Send reply"}</button>
+                    <button type="button" class="sb-btn sb-btn-tertiary" data-goto="plan">${icon("edit")} Adjust the plan</button>
                     <span class="clients-msg" hidden></span>
                 </div>
             </form>
         </div>`).join("")
         : `<div class="clients-card"><p class="clients-card-note">No check-ins yet. Clients send one each week from their app.</p></div>`;
+    $("hubCheckins").querySelectorAll("[data-goto]").forEach(btn => btn.addEventListener("click", () => selectTab(btn.dataset.goto)));
 
     $("hubCheckins").querySelectorAll("form.hub-reply").forEach(form => form.addEventListener("submit", async event => {
         event.preventDefault();
@@ -380,6 +399,69 @@ function renderCheckins() {
         } catch (error) {
             console.error(error);
             msg.textContent = "Couldn't save that -- try again.";
+            msg.className = "clients-msg clients-msg-error";
+            msg.hidden = false;
+            btn.disabled = false;
+        }
+    }));
+}
+
+// ---- Change requests (top of the Plan tab, next to where you change it) ----
+
+function renderChanges() {
+    const all = record.changes || [];
+    const open = all.filter(c => c.status === "open");
+    const answered = all.filter(c => c.status === "resolved" && (toMillis(c.resolvedAt) || 0) > Date.now() - 30 * 86400000).slice(0, 3);
+    if (!open.length && !answered.length) { $("hubChanges").innerHTML = ""; return; }
+    const first = firstName();
+    $("hubChanges").innerHTML = `
+        <section class="clients-card hub-changes">
+            <h2>${open.length ? `${esc(first)} asked for ${open.length === 1 ? "a change" : `${open.length} changes`}` : "Change requests"}</h2>
+            ${open.map(c => `
+            <div class="hub-change is-open">
+                <div class="hub-change-head">
+                    <strong>${esc(reasonLabel(c.reason))}${c.date ? ` · ${esc(shortDate(c.date))}` : ""}</strong>
+                    <span class="pw-meta">${esc(shortDate(isoDate(new Date(toMillis(c.createdAt) || Date.now()))))}</span>
+                </div>
+                <p class="hub-quote">"${esc(c.message)}"</p>
+                <form class="hub-reply" data-change="${esc(c.id)}">
+                    <label class="clients-card-note" for="chg-${esc(c.id)}">Your answer (${esc(first)} sees it on My Plan and gets an email)</label>
+                    <textarea id="chg-${esc(c.id)}" rows="2" maxlength="1000" placeholder="Moved it to Wednesday -- check your week.">${esc(c.coachReply || "")}</textarea>
+                    <div class="hub-reply-actions">
+                        <button type="submit" class="clients-btn-primary">Answer &amp; resolve</button>
+                        <span class="clients-msg" hidden></span>
+                    </div>
+                </form>
+            </div>`).join("")}
+            ${answered.length ? `<details class="hub-changes-done"${open.length ? "" : " open"}><summary>Answered recently (${answered.length})</summary>
+                ${answered.map(c => `<div class="hub-change"><div class="hub-change-head"><strong>${esc(reasonLabel(c.reason))}${c.date ? ` · ${esc(shortDate(c.date))}` : ""}</strong></div>
+                    <p class="hub-quote">"${esc(c.message)}"</p><p class="hub-change-reply">${icon("send")} ${esc(c.coachReply || "Resolved")}</p></div>`).join("")}
+            </details>` : ""}
+            ${open.length ? `<p class="clients-card-note">Change the plan below, publish it, then answer here.</p>` : ""}
+        </section>`;
+    $("hubChanges").querySelectorAll("form[data-change]").forEach(form => form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const c = all.find(x => x.id === form.dataset.change);
+        const text = form.querySelector("textarea").value.trim();
+        const msg = form.querySelector(".clients-msg");
+        if (!text) {
+            msg.textContent = `Write ${first} a short answer first.`;
+            msg.className = "clients-msg clients-msg-error";
+            msg.hidden = false;
+            return;
+        }
+        const btn = form.querySelector("button");
+        btn.disabled = true;
+        try {
+            const updated = await answerChangeRequest(c, text, { clientEmail: record.profile?.email || record.link?.clientEmail, coachName: record.link?.coachName || "" });
+            Object.assign(c, updated);
+            summarize();
+            renderAll();
+            selectTab("plan");
+            toast(`Answered. ${first} sees it on My Plan.`);
+        } catch (error) {
+            console.error(error);
+            msg.textContent = friendlyError(error, "save that");
             msg.className = "clients-msg clients-msg-error";
             msg.hidden = false;
             btn.disabled = false;
@@ -790,7 +872,7 @@ function summarize() {
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [] }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [] }),
         timeline: buildTimeline(record)
     };
 }
@@ -808,6 +890,7 @@ function renderAll() {
     renderCheckins();
     renderSessions();
     renderWorkouts();
+    renderChanges();
     renderNotes();
     import("./icons.js").then(m => m.hydrate());
 }

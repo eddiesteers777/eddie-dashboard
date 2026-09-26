@@ -607,3 +607,53 @@
     .st-row span:first-child{ grid-column:1 / -1; font-weight:700; }
     .st-row-head span:first-child{ display:none; }
 }
+
+/* ---- A check-in's details (js/checkinView.js: check-in page + coach hub) ---- */
+
+.ck-week{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; padding:0; list-style:none; }
+.ck-week li{ padding:5px 10px; border-radius:999px; background:var(--surface-light); color:var(--text); font-size:13px; font-weight:600; }
+.ck-scores{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+.ck-score{ padding:4px 10px; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary); font-size:13px; }
+.ck-score b{ color:var(--text); }
+.ck-score.is-low{ border-color:rgba(245,158,11,.6); background:var(--warning-bg); }
+.ck-score.is-low b{ color:var(--warning); }
+.ck-pain{ display:flex; align-items:flex-start; gap:8px; margin:8px 0; padding:9px 12px; background:var(--warning-bg); border-radius:12px; color:var(--text); font-size:14px; }
+.ck-pain .ui-icon{ color:var(--warning); margin-top:2px; }
+.ck-said{ margin:8px 0 0; }
+.ck-said span{ color:var(--muted); font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+.ck-said p{ margin:2px 0 0; color:var(--text); font-size:14.5px; line-height:1.5; white-space:pre-wrap; }
+
+/* ---- Change requests (js/changeRequestDialog.js, coach hub) ---- */
+
+.cr-dialog{ width:min(500px, calc(100vw - 24px)); }
+.cr-reasons{ display:flex; flex-wrap:wrap; gap:8px; }
+.cr-reasons input{ position:absolute; opacity:0; pointer-events:none; }
+.cr-reasons span{
+    display:inline-flex;
+    align-items:center;
+    min-height:40px;
+    padding:0 14px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill);
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+}
+.cr-reasons input:checked + span{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.cr-reasons input:focus-visible + span{ box-shadow:var(--focus-ring); }
+.cr-list{ display:flex; flex-direction:column; gap:10px; }
+.cr-item{ padding:12px 14px; border:1px solid var(--border); border-radius:14px; }
+.cr-item.is-open{ border-color:rgba(201,173,132,.45); }
+.cr-item-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.cr-item-head strong{ color:var(--text); font-size:15px; }
+.cr-status{ color:var(--muted); font-size:12.5px; font-weight:700; }
+.cr-item.is-open .cr-status{ color:var(--primary); }
+.cr-message{ margin:6px 0 0; color:var(--text-secondary); font-size:14.5px; line-height:1.5; font-style:italic; }
+.cr-reply{ margin:10px 0 0; }
+.cr-withdraw{ margin-top:6px; padding-left:0; }
+.wo-reply{ margin:0 0 12px; padding:12px 14px; background:rgba(201,173,132,.1); border-left:3px solid var(--primary); border-radius:0 12px 12px 0; }
+.wo-reply span{ display:flex; align-items:center; gap:6px; color:var(--primary); font-size:12.5px; font-weight:800; }
+.wo-reply p{ margin:4px 0 0; color:var(--text); font-size:15px; line-height:1.55; }
+.cr-dialog [hidden], .cr-list [hidden]{ display:none !important; }

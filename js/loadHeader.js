@@ -220,6 +220,10 @@ fetch("components/header.html")
                 const { getNavAccess, applyNavAccess } = await import("./navAccess.js");
                 const access = await getNavAccess();
                 applyNavAccess(document, access);
+                // Clients: let the coach see when they last opened the app.
+                if (!access.isCoach && access.status === "active") {
+                    import("./userProfile.js").then(m => m.touchLastSeen()).catch(() => {});
+                }
                 // Keep a pending applicant's standing invite fresh so the
                 // coach's "Approve" can link them (js/coachAccess.js).
                 if (access.status === "pending") {

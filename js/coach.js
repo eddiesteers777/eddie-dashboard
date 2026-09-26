@@ -14,6 +14,54 @@ import { listRequestsForMyClients } from "./scheduling.js";
 import { listCheckinsForMyClients } from "./checkins.js";
 import { getEmailSetupStatus } from "./emailNotify.js";
 import { listInquiries, setInquiryHandled, interestLabel } from "./inquiries.js";
+import { loadClientDirectory } from "./clientDirectory.js";
+import { summarizeClient, isoDate } from "./clientSummary.js";
+import { attentionQueue } from "./feedbackModel.js";
+import { icon } from "./icons.js";
+import { emptyHtml } from "./ui.js";
+
+// ---- Who needs you today (every client's attention items, most urgent first) ----
+
+const QUEUE_ICONS = {
+    pain: "alertTriangle", change: "calendar", checkin: "star", missed: "clock", skipped: "clock",
+    booking: "calendar", "plan-unseen": "eye", race: "flag", plan: "clipboard", quiet: "moon",
+    "no-checkin": "star", sessions: "calendar", intake: "user"
+};
+
+async function loadQueue() {
+    const list = document.getElementById("coachQueueList");
+    const count = document.getElementById("coachQueueCount");
+    try {
+        const today = isoDate(new Date());
+        const clients = (await loadClientDirectory()).map(c => summarizeClient(c, today));
+        const queue = attentionQueue(clients);
+        const people = new Set(queue.map(q => q.uid)).size;
+        count.textContent = queue.length ? `${people} client${people === 1 ? "" : "s"}` : "";
+        if (!queue.length) {
+            list.innerHTML = `<div class="clients-card">${emptyHtml({
+                iconName: "checkCircle",
+                title: clients.length ? "You're all caught up" : "No clients yet",
+                text: clients.length ? "No pain flags, change requests, check-ins or missed workouts waiting on you." : "When clients connect with you, anything that needs you shows up here."
+            })}</div>`;
+            return;
+        }
+        let last = null;
+        list.innerHTML = queue.map(q => {
+            const head = q.uid !== last ? `<div class="coach-queue-name">${escapeHtml(q.name)}</div>` : "";
+            last = q.uid;
+            return `${head}
+                <a class="coach-queue-item is-${escapeHtml(q.kind)}" href="${escapeHtml(q.href)}">
+                    <span class="coach-queue-icon">${icon(QUEUE_ICONS[q.kind] || "info")}</span>
+                    <span class="coach-queue-text">${escapeHtml(q.text)}</span>
+                    ${icon("chevronRight")}
+                </a>`;
+        }).join("");
+    } catch (error) {
+        console.warn("Southbound: couldn't build the attention queue.", error);
+        count.textContent = "";
+        list.innerHTML = `<div class="coach-inq-empty">Couldn't load your clients right now. Open <a href="clients.html">My Clients</a>.</div>`;
+    }
+}
 
 function escapeHtml(value) {
     return String(value ?? "")
@@ -193,6 +241,7 @@ listenForAuth(async user => {
 
     dashboardEl.hidden = false;
     renderSetupChecklist();
+    loadQueue();
     refreshDashboard();
     loadInquiries();
 });
@@ -202,6 +251,7 @@ listenForAuth(async user => {
 // question sent in the meantime shows up without a manual refresh.
 function refreshIfShowing() {
     if (document.visibilityState !== "visible" || dashboardEl.hidden) return;
+    loadQueue();
     refreshDashboard();
     loadInquiries();
 }

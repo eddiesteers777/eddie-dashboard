@@ -4,6 +4,14 @@ import { listMyCoaches } from "./coachAccess.js";
 import { isApprovedCoach } from "./userProfile.js";
 import { submitCheckin, listMyCheckins, listCheckinsForMyClients, reviewCheckin, weekKeyFor } from "./checkins.js";
 import { sendCheckinSubmittedEmail, sendCheckinReviewedEmail } from "./emailNotify.js";
+import { WELLBEING, weekSnapshot, snapshotLines, checkinFlags } from "./feedbackModel.js";
+import { checkinDetailsHtml } from "./checkinView.js";
+import { buildWeek } from "./weekModel.js";
+import { weekInputs, loadSessions } from "./weekData.js";
+import { listMyResults } from "./workoutResults.js";
+import { loadCoachPlans } from "./coachPlanStore.js";
+import { isoDate } from "./coachingPlanModel.js";
+import { toMillis } from "./clientSummary.js";
 
 const signedOutEl = document.getElementById("checkinSignedOut");
 const signedInEl = document.getElementById("checkinSignedIn");
@@ -28,6 +36,60 @@ const reviewEmpty = document.getElementById("reviewEmpty");
 
 let myCoaches = [];
 let currentRating = 0;
+let currentWeek = null;   // weekSnapshot() of the week being checked in about
+
+const $ = id => document.getElementById(id);
+
+// Energy / Recovery / Motivation, 1-5 each.
+function renderScales(values = {}) {
+    $("checkinScales").innerHTML = WELLBEING.map(w => `
+        <div class="checkin-scale" role="radiogroup" aria-label="${w.label}, 1 to 5">
+            <span class="checkin-rating-label">${w.label}</span>
+            <div class="checkin-scale-row">
+                ${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="ck-${w.key}" value="${n}"${Number(values[w.key]) === n ? " checked" : ""}><span>${n}</span></label>`).join("")}
+            </div>
+            <span class="checkin-scale-ends"><span>Low</span><span>High</span></span>
+        </div>`).join("");
+}
+
+function setPain(on, note = "") {
+    document.querySelector(`input[name="ckPain"][value="${on ? "yes" : "no"}"]`).checked = true;
+    $("checkinPainNote").hidden = !on;
+    $("checkinPainNote").value = note;
+}
+
+document.querySelectorAll('input[name="ckPain"]').forEach(r => r.addEventListener("change", () => {
+    $("checkinPainNote").hidden = document.querySelector('input[name="ckPain"]:checked')?.value !== "yes";
+}));
+
+function readAnswers() {
+    const pick = key => document.querySelector(`input[name="ck-${key}"]:checked`)?.value || null;
+    const pain = document.querySelector('input[name="ckPain"]:checked')?.value === "yes";
+    return {
+        energy: pick("energy"), recovery: pick("recovery"), motivation: pick("motivation"),
+        pain, painNote: $("checkinPainNote").value,
+        wentWell: $("checkinWentWell").value, change: $("checkinChange").value
+    };
+}
+
+// "Your week": worked out from their plan, logs and sessions.
+async function renderYourWeek() {
+    try {
+        const [sessions, results] = await Promise.all([loadSessions(), listMyResults().catch(() => [])]);
+        const week = buildWeek(weekKeyFor(), weekInputs(sessions), isoDate(new Date()));
+        currentWeek = weekSnapshot(week, results);
+        const lines = snapshotLines(currentWeek);
+        $("checkinWeekCard").hidden = !lines.length;
+        $("checkinWeekList").innerHTML = lines.map(l => `<li>${escapeHtml(l)}</li>`).join("");
+        const ctx = week.context;
+        $("checkinWeekPlan").textContent = ctx ? `Week ${ctx.weekNumber} of ${ctx.totalWeeks} · ${ctx.planName}` : "";
+        if (!lines.length) currentWeek = null;
+    } catch (error) {
+        console.warn("Southbound: couldn't work out the week.", error);
+        currentWeek = null;
+        $("checkinWeekCard").hidden = true;
+    }
+}
 
 function escapeHtml(value) {
     return String(value ?? "")
@@ -108,11 +170,20 @@ async function refreshMine() {
         checkinCoachLabel.textContent = `To ${myCoaches[0].coachName || "your coach"}`;
     }
 
-    currentRating = 0;
-    checkinNotesInput.value = "";
-    renderRatingStars();
-
+    renderYourWeek();
     const checkins = await listMyCheckins();
+    // This week's check-in, if they already sent one: edit it.
+    const current = checkins.find(c => c.weekOf === weekKeyFor());
+    currentRating = current?.rating || 0;
+    checkinNotesInput.value = current?.notes || "";
+    $("checkinWentWell").value = current?.wentWell || "";
+    $("checkinChange").value = current?.change || "";
+    setPain(Boolean(current?.pain), current?.painNote || "");
+    renderScales(current || {});
+    renderRatingStars();
+    checkinSubmitBtn.dataset.label = current ? "Update Check-in" : "Submit Check-in";
+    checkinSubmitBtn.textContent = checkinSubmitBtn.dataset.label;
+    const plans = loadCoachPlans();
     checkinHistoryList.innerHTML = checkins.map(c => `
         <div class="checkin-row">
             <div class="checkin-row-head">
@@ -125,8 +196,10 @@ async function refreshMine() {
                     ${c.status === "reviewed" ? "Reviewed" : "Needs review"}
                 </span>
             </div>
-            ${c.notes ? `<p class="checkin-row-notes">${escapeHtml(c.notes)}</p>` : ""}
+            ${checkinDetailsHtml(c)}
             ${c.coachFeedback ? `<div class="checkin-row-feedback"><strong>Coach feedback</strong>${escapeHtml(c.coachFeedback)}</div>` : ""}
+            ${c.status === "reviewed" && plans.some(p => p.publishedAt && p.publishedAt > (toMillis(c.submittedAt) || Infinity))
+                ? `<a class="ck-plan-updated" href="plan.html">Your coach updated your plan after this check-in. See what changed →</a>` : ""}
         </div>
     `).join("");
     checkinHistoryEmpty.hidden = checkins.length > 0;
@@ -148,11 +221,14 @@ checkinSubmitBtn?.addEventListener("click", async () => {
     checkinSubmitBtn.textContent = "Submitting...";
 
     try {
+        const answers = readAnswers();
         const result = await submitCheckin({
             coachUid: coach.coachUid,
             coachName: coach.coachName,
             rating: currentRating,
-            notes: checkinNotesInput.value.trim()
+            notes: checkinNotesInput.value.trim(),
+            answers,
+            week: currentWeek
         });
 
         toast("Check-in sent. Your coach will reply here and by email.");
@@ -164,7 +240,7 @@ checkinSubmitBtn?.addEventListener("click", async () => {
             clientName: result.clientName,
             weekOf: result.weekOf,
             rating: result.rating,
-            notes: result.notes,
+            notes: [checkinFlags(result).join(" · "), result.change && `Change: ${result.change}`, result.notes].filter(Boolean).join("\n"),
             link: window.location.origin + window.location.pathname + "?tab=review"
         });
 
@@ -176,7 +252,7 @@ checkinSubmitBtn?.addEventListener("click", async () => {
         console.error(error);
     } finally {
         checkinSubmitBtn.disabled = false;
-        checkinSubmitBtn.textContent = "Submit Check-in";
+        checkinSubmitBtn.textContent = checkinSubmitBtn.dataset.label || "Submit Check-in";
     }
 });
 
@@ -203,7 +279,8 @@ async function refreshReview() {
                     ${c.status === "reviewed" ? "Reviewed" : "Needs review"}
                 </span>
             </div>
-            ${c.notes ? `<p class="checkin-row-notes">${escapeHtml(c.notes)}</p>` : `<p class="checkin-row-notes"><em>No notes left.</em></p>`}
+            ${checkinDetailsHtml(c) || `<p class="checkin-row-notes"><em>No notes left.</em></p>`}
+            <a class="ck-open-plan" href="client.html?uid=${encodeURIComponent(c.clientUid)}&tab=plan">Adjust ${escapeHtml((c.clientName || "their").split(" ")[0])}'s plan →</a>
             <form class="checkin-review-form">
                 <textarea rows="2" placeholder="Write feedback for ${escapeHtml(c.clientName || "your client")}...">${escapeHtml(c.coachFeedback || "")}</textarea>
                 <div class="checkin-review-form-actions">

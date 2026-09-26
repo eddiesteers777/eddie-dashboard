@@ -139,3 +139,21 @@ export async function submitApplication(requestedServices, message) {
         applicationSubmittedAt: serverTimestamp()
     });
 }
+
+// "Last in the app" for the coach (the Client Hub, "Hasn't opened the app
+// in N days"). At most once every 6 hours per device; the rules only
+// accept the server's clock. Never blocks or fails anything.
+const LAST_SEEN_KEY = "sb-last-seen-ping";
+export async function touchLastSeen() {
+    try {
+        const last = Number(localStorage.getItem(LAST_SEEN_KEY) || 0);
+        if (Date.now() - last < 6 * 3600 * 1000) return false;
+        const user = await waitForUser();
+        if (!user) return false;
+        await updateDoc(doc(db, "userProfiles", user.uid), { lastSeenAt: serverTimestamp() });
+        localStorage.setItem(LAST_SEEN_KEY, String(Date.now()));
+        return true;
+    } catch {
+        return false;
+    }
+}

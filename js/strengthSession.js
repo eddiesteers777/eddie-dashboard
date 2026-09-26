@@ -138,7 +138,8 @@ function render() {
             <button type="button" class="sb-btn sb-btn-primary" data-act="start">${icon("play")} Start session</button>
             <button type="button" class="sb-btn sb-btn-secondary" data-act="log">${icon("edit")} Log it</button>
         </div>
-        <p class="clients-card-note wo-hint">Start session walks you through every set with a rest timer. Already done it? Log it instead.</p>`}`;
+        <p class="clients-card-note wo-hint">Start session walks you through every set with a rest timer. Already done it? Log it instead.</p>
+        ${state.date >= new Date().toLocaleDateString("en-CA") ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}`}`;
     hydrate();
 }
 
@@ -452,6 +453,12 @@ export async function mountStrengthSession({ found, date, user, openLog }) {
         if (!btn) return;
         if (btn.dataset.act === "start") startSession();
         if (btn.dataset.act === "log") openLogForm();
+        if (btn.dataset.act === "change") {
+            import("./changeRequestDialog.js").then(({ openChangeRequestDialog }) => openChangeRequestDialog({
+                coach: { coachUid: state.program.coachUid, coachName: state.program.coachName },
+                planId: state.program.coachPlanId, date: state.date, dates: [state.date]
+            }));
+        }
     });
     render();
     try {

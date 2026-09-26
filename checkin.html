@@ -60,6 +60,13 @@
 
                 <div id="checkinFormWrap" hidden>
 
+                    <div class="clients-card checkin-week" id="checkinWeekCard" hidden>
+                        <h2>Your week</h2>
+                        <p class="clients-card-note" id="checkinWeekPlan"></p>
+                        <ul class="ck-week" id="checkinWeekList"></ul>
+                        <p class="clients-card-note">Your coach sees this with your check-in.</p>
+                    </div>
+
                     <div class="clients-card">
                         <h2 id="checkinWeekLabel">This Week</h2>
                         <p class="clients-card-note" id="checkinCoachLabel"></p>
@@ -70,11 +77,32 @@
                         </label>
 
                         <div class="checkin-rating-row">
-                            <span class="checkin-rating-label">How did this week go?</span>
+                            <span class="checkin-rating-label">How did this week go overall?</span>
                             <div id="checkinRatingStars" class="checkin-stars"></div>
                         </div>
 
-                        <textarea id="checkinNotesInput" rows="4" placeholder="Wins, energy, soreness, anything life-related that affected training..."></textarea>
+                        <div class="checkin-scales" id="checkinScales"></div>
+
+                        <div class="checkin-field">
+                            <span class="checkin-rating-label">Any pain or discomfort?</span>
+                            <div class="checkin-seg" role="radiogroup" aria-label="Any pain or discomfort?">
+                                <label><input type="radio" name="ckPain" value="no" checked><span>No</span></label>
+                                <label><input type="radio" name="ckPain" value="yes"><span>Yes</span></label>
+                            </div>
+                            <textarea id="checkinPainNote" rows="2" maxlength="300" placeholder="Where, and how bad? (e.g. left Achilles, sore after long runs)" aria-label="Where, and how bad?" hidden></textarea>
+                        </div>
+                        <label class="checkin-field">
+                            <span class="checkin-rating-label">What went well?</span>
+                            <textarea id="checkinWentWell" rows="2" maxlength="1000" placeholder="Long run felt strong, hit every workout..."></textarea>
+                        </label>
+                        <label class="checkin-field">
+                            <span class="checkin-rating-label">What should we change?</span>
+                            <textarea id="checkinChange" rows="2" maxlength="1000" placeholder="Tuesdays are hard with work, the long run felt too long..."></textarea>
+                        </label>
+                        <label class="checkin-field">
+                            <span class="checkin-rating-label">Anything else affecting training?</span>
+                            <textarea id="checkinNotesInput" rows="3" maxlength="2000" placeholder="Sleep, stress, travel, life..."></textarea>
+                        </label>
 
                         <button type="button" id="checkinSubmitBtn" class="clients-btn-primary">Submit Check-in</button>
                         <p id="checkinSubmitMsg" class="clients-msg" hidden></p>

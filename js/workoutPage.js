@@ -141,7 +141,8 @@ function render() {
                 ? `<button type="button" class="sb-btn ${workout ? "sb-btn-secondary" : "sb-btn-primary"}" data-act="log">${icon("edit")} Log this run</button>`
                 : item ? `<button type="button" class="sb-btn ${workout ? "sb-btn-secondary" : "sb-btn-primary"}" data-act="toggle">${icon(done ? "checkCircle" : "check")} ${done ? "Done" : "Mark done"}</button>` : ""}
         </div>`}
-        ${isCoachPlan() && !state.result ? `<p class="clients-card-note wo-hint">Logging tells your coach how it went, including anything that hurt.</p>` : ""}`;
+        ${isCoachPlan() && !state.result ? `<p class="clients-card-note wo-hint">Logging tells your coach how it went, including anything that hurt.</p>` : ""}
+        ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}`;
 }
 
 $("woBody").addEventListener("click", async event => {
@@ -151,6 +152,10 @@ $("woBody").addEventListener("click", async event => {
     const act = btn.dataset.act;
     if (act === "start") return startWorkoutMode();
     if (act === "log") return openLogForm();
+    if (act === "change") {
+        const { openChangeRequestDialog } = await import("./changeRequestDialog.js");
+        return openChangeRequestDialog({ coach: { coachUid: state.program.coachUid, coachName: state.program.coachName }, planId: state.program.coachPlanId, date, dates: [date] });
+    }
     if (act === "toggle") {
         const item = buildDay(date, weekInputs(), isoDate(new Date())).items.find(i => i.source?.programId === programId && i.kind === "run");
         if (!item) return;

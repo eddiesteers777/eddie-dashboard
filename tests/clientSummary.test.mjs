@@ -135,7 +135,7 @@ test("summarizeClient: one row for the list", () => {
     }, "2026-09-23");
     assert.equal(row.name, "Sam");
     assert.equal(row.plans.primary.weekNumber, 2);
-    assert.deepEqual(row.attention, []);
+    assert.deepEqual(row.attention, [{ kind: "race", text: "Race in 11 days (Oct 4)", tab: "plan" }], "the plan's race is inside two weeks");
 });
 
 test("profile: flag it when not filled in, but not when it couldn't be read", () => {

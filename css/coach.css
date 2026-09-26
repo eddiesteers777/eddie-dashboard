@@ -228,3 +228,33 @@
     font-size:14px;
     text-align:center;
 }
+
+/* ---- Who needs you today (coaching Phase F) ---- */
+
+.coach-queue{ margin-bottom:22px; }
+.coach-queue-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.coach-queue-count{ color:var(--muted); font-size:13px; font-weight:700; }
+.coach-queue-list{ display:flex; flex-direction:column; gap:6px; }
+.coach-queue-name{ margin:10px 0 2px; color:var(--text); font-size:15px; font-weight:800; }
+.coach-queue-name:first-child{ margin-top:0; }
+.coach-queue-item{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:12px 14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    color:var(--text);
+    text-decoration:none;
+    font-size:14.5px;
+    line-height:1.45;
+}
+.coach-queue-item:hover{ border-color:rgba(201,173,132,.5); }
+.coach-queue-item > .ui-icon:last-child{ margin-left:auto; flex-shrink:0; color:var(--muted); margin-top:2px; }
+.coach-queue-icon{ display:flex; flex-shrink:0; margin-top:1px; color:var(--primary); }
+.coach-queue-text{ flex:1; min-width:0; }
+.coach-queue-item.is-pain{ border-color:rgba(245,158,11,.6); background:var(--warning-bg); }
+.coach-queue-item.is-pain .coach-queue-icon{ color:var(--warning); }
+.coach-queue-item.is-change{ border-color:rgba(201,173,132,.5); }
+.coach-queue [hidden]{ display:none !important; }

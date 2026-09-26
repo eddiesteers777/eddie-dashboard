@@ -163,3 +163,43 @@
     align-items:center;
     gap:12px;
 }
+
+/* ---- Smarter check-in (coaching Phase F) ---- */
+
+.checkin-page [hidden]{ display:none !important; }
+.checkin-scales{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:16px; }
+.checkin-scale-row{ display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; }
+.checkin-scale-row input, .checkin-seg input{ position:absolute; opacity:0; pointer-events:none; }
+.checkin-scale-row span, .checkin-seg span{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-weight:800;
+    cursor:pointer;
+}
+.checkin-scale-row input:checked + span, .checkin-seg input:checked + span{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.checkin-scale-row input:focus-visible + span, .checkin-seg input:focus-visible + span{ box-shadow:var(--focus-ring); }
+.checkin-scale-ends{ display:flex; justify-content:space-between; margin-top:4px; color:var(--muted); font-size:11.5px; font-weight:700; }
+.checkin-field{ display:flex; flex-direction:column; gap:0; margin-bottom:14px; }
+.checkin-field textarea, #checkinPainNote{
+    display:block;
+    width:100%;
+    padding:10px 12px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    font:14.5px/1.5 var(--font-body);
+    resize:vertical;
+}
+#checkinPainNote{ margin-top:8px; }
+.checkin-seg{ display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:320px; }
+.checkin-seg span{ border-radius:var(--radius-pill); }
+.checkin-week{ border-color:rgba(201,173,132,.35); }
+.ck-plan-updated{ display:inline-block; margin-top:10px; color:var(--primary); font-weight:700; text-decoration:none; }
+.ck-open-plan{ display:inline-block; margin:8px 0 4px; color:var(--primary); font-size:14px; font-weight:700; text-decoration:none; }

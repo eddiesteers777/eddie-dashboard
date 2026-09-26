@@ -20,10 +20,13 @@
      requests  bookingRequests where clientUid == uid
      record    clientRecords/{uid} (the client profile; null = not filled
                in yet, undefined = couldn't be read)
+     results   workoutResults (what they did on coach-plan days)
+     changes   changeRequests (asks for a plan change; js/changeRequests.js)
 ========================================== */
 
 import { isIntakeComplete, athleteDisplayName } from "./clientRecordSchema.js";
 import { mergeRuntimeByDate } from "./coachingPlanModel.js";
+import { checkinFlags, reasonLabel } from "./feedbackModel.js";
 
 export const SERVICE_LABELS = {
     online_coaching: "Online Coaching",
@@ -237,7 +240,7 @@ export function summarizeCheckins(checkins, today) {
 
 // What the coach should act on for this client, most urgent first.
 // Each: { kind, text, tab } -- tab is the Client Hub tab that handles it.
-export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [] }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [] }) {
     const items = [];
     // Pain flagged on a workout, not yet answered: first thing to see.
     for (const r of results.filter(x => x.pain && !x.coachComment && x.date >= addDays(today, -14))) {
@@ -247,8 +250,18 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     const trains = services.some(s => TRAINING_SERVICES.includes(s));
     const soccer = services.some(s => SOCCER_SERVICES.includes(s));
 
+    // They asked for a change and you haven't answered.
+    for (const c of changes.filter(x => x.status === "open")) {
+        const message = String(c.message || "").trim();
+        items.push({
+            kind: "change",
+            text: `Asked for a change${c.date ? ` for ${shortDate(c.date)}` : ""} (${reasonLabel(c.reason).toLowerCase()})${message ? `: "${message.length > 90 ? `${message.slice(0, 90)}…` : message}"` : ""}`,
+            tab: "plan"
+        });
+    }
     for (const c of checkins.needsReview) {
-        items.push({ kind: "checkin", text: `Check-in for week of ${shortDate(c.weekOf)} needs your reply`, tab: "checkins" });
+        const flags = checkinFlags(c);
+        items.push({ kind: "checkin", text: `Check-in for week of ${shortDate(c.weekOf)} needs your reply${flags.length ? ` — ${flags.join(", ").toLowerCase()}` : ""}`, tab: "checkins" });
     }
     if (sessions.waiting.length) {
         items.push({ kind: "booking", text: `${sessions.waiting.length} session request${sessions.waiting.length === 1 ? "" : "s"} waiting on you`, tab: "sessions" });
@@ -263,6 +276,18 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
         items.push({ kind: "plan", text: `${plans.primary.name} finished ${shortDate(plans.primary.endDate)} — time for what's next`, tab: "plan" });
     } else if (plans.primary?.state === "current" && plans.primary.endDate && plans.primary.endDate <= addDays(today, 7)) {
         items.push({ kind: "plan", text: `${plans.primary.name} ends ${shortDate(plans.primary.endDate)}`, tab: "plan" });
+    }
+    // A race inside two weeks.
+    const race = plans.primary?.raceDate;
+    if (race && race >= today && race <= addDays(today, 14)) {
+        const days = Math.round((new Date(`${race}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
+        items.push({ kind: "race", text: days === 0 ? "Race day today" : `Race in ${days} day${days === 1 ? "" : "s"} (${shortDate(race)})`, tab: "plan" });
+    }
+    // Hasn't opened the app in a week (only known once their app has reported in).
+    const seen = toMillis(profile?.lastSeenAt);
+    if (seen && profile?.status !== "archived") {
+        const days = Math.floor((new Date(`${today}T12:00:00`).getTime() - seen) / 86400000);
+        if (days >= 7) items.push({ kind: "quiet", text: `Hasn't opened the app in ${days} days`, tab: "overview" });
     }
     // A plan update they haven't opened after two days.
     for (const h of coachingPlans) {
@@ -299,7 +324,7 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
 
 // Recent activity derived from existing data (no timeline collection yet).
 // Each: { at (millis), date (iso), kind, text }
-export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans, results }) {
+export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans, results, changes }) {
     const events = [];
     const push = (at, kind, text) => { const ms = toMillis(at); if (ms) events.push({ at: ms, date: isoDate(new Date(ms)), kind, text }); };
 
@@ -312,6 +337,10 @@ export function buildTimeline({ profile, link, checkins, requests, record, updat
             r.status === "skipped" ? `Skipped ${r.title || "a workout"} (${shortDate(r.date)})`
                 : `Logged ${r.title || "a workout"}${r.distance ? ` — ${r.distance} mi` : ""}${r.kind === "strength" && r.exercises?.length ? ` — ${r.exercises.reduce((n, e) => n + (e.sets?.length || 0), 0)} sets` : ""}${r.rpe ? `, effort ${r.rpe}/10` : ""}${r.pain ? ", pain flagged" : ""}`);
         if (r.coachComment) push(r.coachCommentAt, "workout-reply", `You replied on ${r.title || "their workout"} (${shortDate(r.date)})`);
+    }
+    for (const c of changes || []) {
+        push(c.createdAt, "change", `Asked for a change (${reasonLabel(c.reason).toLowerCase()})${c.date ? ` for ${shortDate(c.date)}` : ""}`);
+        if (c.status === "resolved") push(c.resolvedAt, "change-reply", `You answered their change request`);
     }
     for (const h of coachingPlans || []) {
         push(h.publishedAt, "plan-published", `You published ${h.name}${h.version > 1 ? ` (v${h.version})` : ""}`);
@@ -343,11 +372,11 @@ export function shortDate(iso) {
 
 // ---------- One-line row for the client list ----------
 
-export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [] }, today) {
+export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [] }, today) {
     const plans = summarizePlans(shared, today, coachingPlans, results);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes });
     const name = profile?.displayName || link?.clientName || "Client";
     const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
     const goesBy = athleteDisplayName(record, "");
@@ -374,8 +403,16 @@ export function summarizeClient({ profile, link, shared, checkins, requests, rec
 // (clientUpdates), replies to check-ins, and notes on sessions that have
 // happened. Each: { at, kind, title, detail, text, link, unread }.
 // Private coach notes never reach the client, so they can't appear here.
-export function buildCoachFeed({ updates = [], checkins = [], requests = [], results = [], today }) {
+export function buildCoachFeed({ updates = [], checkins = [], requests = [], results = [], changes = [], today }) {
     const feed = [];
+    for (const c of changes) {
+        if (c.status !== "resolved" || !c.coachReply) continue;
+        feed.push({
+            at: toMillis(c.resolvedAt) || toMillis(c.createdAt), kind: "change",
+            title: "Reply to your change request", detail: c.date ? shortDate(c.date) : reasonLabel(c.reason),
+            text: c.coachReply, link: "plan.html", unread: false
+        });
+    }
     for (const r of results) {
         if (!r.coachComment) continue;
         feed.push({
