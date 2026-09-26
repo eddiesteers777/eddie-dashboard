@@ -75,6 +75,7 @@
     "js/coachingPlans.js",
     "js/contact.js",
     "js/corosAuth.js",
+    "js/corosAutoSend.js",
     "js/corosClient.js",
     "js/corosCoach.js",
     "js/corosData.js",

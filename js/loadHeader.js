@@ -189,7 +189,13 @@ fetch("components/header.html")
                 // and it means a background sync later in the
                 // session never yanks the page out from under
                 // something the user is mid-typing.
-                if (applied > 0 || plansChanged) window.location.reload();
+                if (applied > 0 || plansChanged) {
+                    window.location.reload();
+                } else if (cachedRole() !== "coach") {
+                    // Clients: put the coach's next two weeks on their COROS watch
+                    // when they've connected it (js/corosAutoSend.js; no-op otherwise).
+                    import("./corosAutoSend.js").then(m => m.runCorosAutoSend()).catch(() => {});
+                }
             } catch (error) {
                 // Covers the dynamic import itself failing too (e.g.
                 // the Firebase SDK fetch from gstatic.com is blocked

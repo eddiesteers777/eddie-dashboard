@@ -147,7 +147,9 @@ function renderPlan() {
                     ${currentCoach() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="change">${icon("messageSquare")} Need a change?</button>` : ""}
                 </div>
             </div>
-            ${corosOn() ? "" : `<p class="clients-card-note myplan-coros-hint">Have a COROS watch? <a href="settings.html#coros">Connect it in Settings</a> to send your runs straight to it.</p>`}
+            ${corosOn()
+                ? (corosAuto() && currentCoach() ? `<p class="clients-card-note myplan-coros-hint">${icon("checkCircle")} Your coach's next 2 weeks go to your COROS watch automatically. <a href="settings.html#coros">Change</a></p>` : "")
+                : `<p class="clients-card-note myplan-coros-hint">Have a COROS watch? <a href="settings.html#coros">Connect it in Settings</a> to send your runs straight to it.</p>`}
         </section>
         ${changeRequestsHtml(state.requests, currentCoach()?.coachName || "Your coach")}`;
 }
@@ -195,6 +197,11 @@ bindChangeRequestActions($("planBody"), id => { state.requests = state.requests.
 // COROS connected on this device? (Its sign-in token lives in this browser.)
 function corosOn() {
     try { return Boolean(JSON.parse(localStorage.getItem("__eddieos_coros_oauth_v2") || "null")?.access_token); } catch { return false; }
+}
+
+// Automatic sending (js/corosAutoSend.js): on unless they turned it off.
+function corosAuto() {
+    try { return localStorage.getItem("coros-auto-send") !== "off"; } catch { return false; }
 }
 
 async function sendWeekToCoros(btn) {
