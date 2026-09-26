@@ -88,6 +88,7 @@
     "js/foodSearch.js",
     "js/fuelSchedule.js",
     "js/fuelScheduleView.js",
+    "js/fuelTargets.js",
     "js/fueling.js",
     "js/gear.js",
     "js/habitIcons.js",
@@ -146,6 +147,7 @@
     "js/weekView.js",
     "js/weekly-review.js",
     "js/workoutBuilder.js",
+    "js/workoutFuel.js",
     "js/workoutPage.js",
     "js/workoutResults.js"
   ],

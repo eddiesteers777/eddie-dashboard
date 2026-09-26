@@ -25,7 +25,8 @@ export function startingWorkout(day) {
         sets: [blankSet()],
         cooldown: { amount: "", unit: "mi", note: "easy" },
         why: "",
-        cue: ""
+        cue: "",
+        fuel: ""
     };
 }
 
@@ -85,6 +86,9 @@ export function builderHtml(raw) {
             <label class="wb-field">Coach cue
                 <input data-wb="cue" type="text" maxlength="200" value="${esc(raw.cue || "")}" placeholder="Relax your shoulders; the last rep should look like the first.">
             </label>
+            <label class="wb-field">Fueling note
+                <input data-wb="fuel" type="text" maxlength="200" value="${esc(raw.fuel || "")}" placeholder="Practice race-day fueling: gel every 30 min, caffeinated one last.">
+            </label>
             <div class="wb-summary" data-wb-summary>${summaryHtml(clean, miles, exact)}</div>
             <button type="button" class="sb-btn sb-btn-tertiary wb-clear" data-act="wb-clear">Remove workout details</button>
         </div>`;
@@ -97,7 +101,7 @@ export function summaryHtml(clean, miles, exact) {
 
 // The form's current values as a raw workout.
 export function readBuilder(root) {
-    const raw = { warmup: {}, sets: [], cooldown: {}, why: "", cue: "" };
+    const raw = { warmup: {}, sets: [], cooldown: {}, why: "", cue: "", fuel: "" };
     root.querySelectorAll("[data-wb]").forEach(el => {
         const path = el.dataset.wb.split(".");
         let node = raw;

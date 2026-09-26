@@ -20,7 +20,9 @@
 import { listenForAuth } from "./auth.js";
 import { getActiveRunningPrograms } from "./activeProgramSources.js";
 import { buildDay } from "./weekModel.js";
-import { weekInputs, toggleDone } from "./weekData.js";
+import { weekInputs, toggleDone, fuelContext } from "./weekData.js";
+import { fuelForRun, gelCues } from "./workoutFuel.js";
+import { formatClock } from "./fuelSchedule.js";
 import { shortDay, typeLabel, isoDate } from "./coachingPlanModel.js";
 import {
     executionSteps, amountText, targetText, compareRun, parseDuration, formatDuration, formatPace
@@ -107,6 +109,48 @@ function coachReplyHtml(result) {
     return `<div class="wo-reply"><span>${icon("send")} ${esc(state.program.coachName || "Your coach")}${when ? ` · ${new Date(when).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}</span><p>${esc(result.coachComment)}</p></div>`;
 }
 
+// ---------- Fuel (js/workoutFuel.js) ----------
+
+function currentFuel() {
+    const miles = Number(state.day.miles) || 0;
+    if (!miles) return null;
+    const ctx = fuelContext();
+    state.fuelContext = ctx;
+    return fuelForRun({ type: state.day.type, miles, coachNote: state.day.workout?.fuel || "" }, ctx);
+}
+
+function fuelHtml() {
+    const fuel = state.fuel;
+    if (!fuel || (fuel.level === "none" && !fuel.coachNote && !["workout", "tempo"].includes(state.day.type))) return "";
+    const coach = state.program.coachName || "your coach";
+    const typeParam = { tempo: "workout" }[state.day.type] || state.day.type;
+    return `
+        <section class="clients-card wo-fuel">
+            <h2>${icon("fuel")} Fuel</h2>
+            ${fuel.coachNote ? `<div class="wo-reply wo-fuel-note"><span>${icon("send")} From ${esc(coach)}</span><p>${esc(fuel.coachNote)}</p></div>` : ""}
+            <div class="wo-fuel-cols">
+                <div>
+                    <h3>Before</h3>
+                    <ul>${fuel.before.map(b => `<li><b>${esc(b.when)}</b> ${esc(b.text)}</li>`).join("")}</ul>
+                </div>
+                <div>
+                    <h3>During</h3>
+                    <ul>${fuel.during.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
+                    ${fuel.gels.length ? `
+                    <ol class="wo-gels">
+                        ${fuel.gels.map(g => `<li><strong>${esc(g.clock)}</strong><span>${g.mile ? `mile ${g.mile}` : ""}</span><span>${esc(g.name)}${g.caffeine ? " (caffeine)" : ""}</span></li>`).join("")}
+                    </ol>` : ""}
+                </div>
+                <div>
+                    <h3>After</h3>
+                    <ul>${fuel.after.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
+                </div>
+            </div>
+            <p class="clients-card-note">About ${fuel.durationMin} min, estimated from the distance. ${state.fuelContext?.hasProfile ? "Targets use your last fueling plan's details." : "Save a plan in Fueling (your weight, sweat rate, stomach) and these fit you better."}
+                <a href="fueling.html?type=${encodeURIComponent(typeParam)}&miles=${encodeURIComponent(fuel.miles)}&duration=${fuel.durationMin}">Fine-tune in Fueling →</a></p>
+        </section>`;
+}
+
 function render() {
     const { day, week, program } = state;
     const workout = day.workout;
@@ -133,6 +177,8 @@ function render() {
             <h2>The workout</h2>
             ${workout && (workout.sets?.length || workout.warmup || workout.cooldown) ? stepsHtml(workout) : `<p class="wo-plain">${esc(day.session && day.session.toLowerCase() !== String(day.type).toLowerCase() ? day.session : `${miles ? `${miles} mi ` : ""}${title().toLowerCase()} at a comfortable effort`)}</p>`}
         </section>
+
+        ${fuelHtml()}
 
         ${state.result ? "" : `
         <div class="wo-actions wo-main-actions">
@@ -175,6 +221,16 @@ function refresh() {
 
 let wakeLock = null;
 
+// "Gel now" for two minutes after each gel's time, otherwise when the next one is.
+function gelCueHtml(elapsedSec) {
+    const cues = gelCues(state.fuel);
+    if (!cues.length) return "";
+    const now = cues.find(c => elapsedSec >= c.min * 60 && elapsedSec < c.min * 60 + 120);
+    if (now) return `<p class="wo-mode-gel is-now">${icon("fuel")} Gel now: ${esc(now.name)}${now.caffeine ? " (caffeine)" : ""}</p>`;
+    const next = cues.find(c => c.min * 60 > elapsedSec);
+    return next ? `<p class="wo-mode-gel">${icon("fuel")} Next gel at ${formatClock(next.min)}</p>` : "";
+}
+
 async function startWorkoutMode() {
     const steps = executionSteps(state.day.workout);
     if (!steps.length) return;
@@ -212,12 +268,15 @@ async function startWorkoutMode() {
                 <span class="wo-mode-clock${remaining !== null && remaining <= 0 ? " is-over" : ""}" aria-live="off">${clock}</span>
                 <span class="wo-mode-clock-label">${remaining !== null ? "left in this step" : "on this step"}</span>
             </div>
+            ${gelCueHtml(Math.floor((Date.now() - started) / 1000))}
             ${steps[index + 1] ? `<p class="wo-mode-next">Next: ${esc(steps[index + 1].title)} · ${esc(steps[index + 1].amount)}${steps[index + 1].target ? ` · ${esc(steps[index + 1].target)}` : ""}</p>` : `<p class="wo-mode-next">Last step</p>`}
             <div class="wo-mode-actions">
                 <button type="button" class="sb-btn sb-btn-secondary" data-mode="back"${index === 0 ? " disabled" : ""}>${icon("chevronLeft")} Back</button>
                 <button type="button" class="sb-btn sb-btn-primary" data-mode="next">${index === steps.length - 1 ? `${icon("check")} Finish` : `Next step ${icon("chevronRight")}`}</button>
             </div>`;
         if (remaining === 0 && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        const elapsedNow = Math.floor((Date.now() - started) / 1000);
+        if (gelCues(state.fuel).some(c => c.min * 60 === elapsedNow) && navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
     };
 
     const close = () => {
@@ -392,6 +451,7 @@ listenForAuth(async user => {
         return;
     }
     Object.assign(state, found);
+    state.fuel = currentFuel();
     document.title = `${title()} | Southbound`;
     render();
     import("./icons.js").then(m => m.hydrate());

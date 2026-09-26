@@ -11,7 +11,7 @@
 ========================================== */
 
 import { icon } from "./icons.js";
-import { toggleDone, workoutLink } from "./weekData.js";
+import { toggleDone, workoutLink, fuelForItem } from "./weekData.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, friendlyError } from "./ui.js";
 
@@ -35,6 +35,14 @@ function doneButton(item, compact = false) {
     </button>`;
 }
 
+// "Fuel: 3 gels, first at 0:30 · 21 oz/hr" on a run that needs fueling.
+function fuelLine(item) {
+    if (item.done || item.skipped) return "";
+    const fuel = fuelForItem(item);
+    if (!fuel?.summary) return "";
+    return `<p class="wk-fuel">${icon("fuel")} Fuel: ${esc(fuel.summary)}${fuel.coachNote ? ` · ${esc(fuel.coachNote)}` : ""}</p>`;
+}
+
 // Today's workout, front and center.
 export function workoutCardHtml(item) {
     const k = KIND[item.kind] || KIND.run;
@@ -51,6 +59,7 @@ export function workoutCardHtml(item) {
                 ${bigNumber}
             </div>
             ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            ${fuelLine(item)}
             ${item.kind === "strength" && item.actual && item.done ? `<p class="wk-logged">${icon("checkCircle")} Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.actual?.distance ? `<p class="wk-logged">${icon("checkCircle")} You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.logged ? `<p class="wk-logged">${icon("activity")} You logged ${item.logged} mi${item.autoDone ? " -- counts as done" : ""}</p>` : ""}

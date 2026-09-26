@@ -11,6 +11,7 @@
                                                          2 min easy jog
        cooldown: { amount, unit, note }
        why, cue                                     "why this workout", coach cue
+       fuel                                         the coach's fueling note
      }
    units: "mi" | "km" | "m" | "min". Paces are per mile ("8:05" or
    "8:05-8:15").
@@ -110,9 +111,10 @@ export function sanitizeWorkout(input) {
         sets,
         cooldown: cleanStep(input.cooldown),
         why: str(input.why, 300),
-        cue: str(input.cue, 200)
+        cue: str(input.cue, 200),
+        fuel: str(input.fuel, 200)
     };
-    const empty = !out.warmup && !out.sets.length && !out.cooldown && !out.why && !out.cue;
+    const empty = !out.warmup && !out.sets.length && !out.cooldown && !out.why && !out.cue && !out.fuel;
     return empty ? null : out;
 }
 

@@ -17,6 +17,7 @@ import {
 import { getAllEntries } from "./runningLog.js";
 import { SESSION_TYPES, listMyBookingRequests } from "./scheduling.js";
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
+import { fuelForRun, profileFromPlans } from "./workoutFuel.js";
 
 const SCHEDULE_KEY = "strength-schedule";
 
@@ -104,4 +105,22 @@ export function workoutLink(item) {
     if (item.kind === "cross") return { href: "cross-training.html", label: "Open" };
     if (item.kind === "session") return { href: "schedule.html", label: "Details" };
     return { href: "running.html", label: "Open" };
+}
+
+// ---------- Fuel ----------
+
+// What js/workoutFuel.js needs from this device: the athlete's Fueling
+// Library (their gels) and the inputs on their last saved fueling plan.
+export function fuelContext() {
+    const read = (key, fallback) => {
+        try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
+    };
+    const plans = read("fueling-plans", []);
+    return { library: read("fueling-library", []), profile: profileFromPlans(Array.isArray(plans) ? plans : []), hasProfile: Array.isArray(plans) && plans.some(p => p?.session) };
+}
+
+// A plan run's fuel plan (null for anything that isn't a planned run).
+export function fuelForItem(item, context = fuelContext()) {
+    if (item?.kind !== "run" || item.source?.type !== "plan" || !item.miles) return null;
+    return fuelForRun({ type: item.dayType, miles: item.miles, coachNote: item.fuelNote }, context);
 }
