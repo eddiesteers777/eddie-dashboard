@@ -11,7 +11,7 @@
 ========================================== */
 
 import { WEEKS, PACES, DAYS, weekStart, getAdjustedWeekDays } from "./marathonData.js";
-import { marathonCourse } from "./marathonCoros.js";
+import { marathonCourse, marathonPreview } from "./marathonCoros.js";
 import { sendToCoros, sendState, sendSummary, isCorosConnected, loadSent } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
 import { toast, sbChoose, sbAlert, friendlyError } from "./ui.js";
@@ -98,5 +98,56 @@ async function send(btn, render) {
         btn.disabled = false;
         btn.innerHTML = label;
         render();
+        window.dispatchEvent(new CustomEvent("sb:coros-sent"));
     }
+}
+
+// ---------- What the watch will get, under each day on the Marathon page ----------
+
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+export function previewHtml(day, date, today) {
+    const p = marathonPreview(day, PACES);
+    if (!p) return "";
+    const entry = { key: `marathon|${date}`, date, course: marathonCourse(day, PACES) };
+    const st = date >= today ? sendState(entry) : "empty";
+    const status = st === "sent" ? `<span class="mp-coros-status is-sent">${icon("checkCircle")} On COROS</span>`
+        : st === "changed" ? `<span class="mp-coros-status is-changed">Changed since sent: send again</span>` : "";
+    const warn = [
+        ...p.unread.map(u => `Couldn't read “${esc(u)}”, so it's left out. Try e.g. “6x800 @ 2:55, 400m jog”.`),
+        ...p.notes.map(esc)
+    ];
+    return `<div class="mp-coros-preview${warn.length ? " has-warning" : ""}">
+        <span class="mp-coros-preview-icon" title="What your COROS watch gets">${icon("watch")}</span>
+        <div class="mp-coros-preview-body">
+            <div class="mp-coros-steps">${p.steps.map(esc).join(`<span class="mp-coros-arrow"> → </span>`)}${status}</div>
+            ${warn.map(w => `<div class="mp-coros-warn">${icon("alertTriangle")} ${w}</div>`).join("")}
+        </div>
+    </div>`;
+}
+
+// Fill a preview line under each day row whenever the page redraws the week.
+export function watchMarathonPreviews(detail) {
+    if (!detail) return;
+    const fill = () => {
+        const week = Number(detail.dataset.week);
+        if (!week || !WEEKS[week - 1]) return;
+        const today = isoDate(new Date());
+        const days = getAdjustedWeekDays(week);
+        detail.querySelectorAll(".mp-day-row[data-day]").forEach(row => {
+            const i = DAYS.indexOf(row.dataset.day);
+            if (i < 0 || row.nextElementSibling?.classList.contains("mp-coros-preview")) return;
+            const d = new Date(weekStart(week));
+            d.setDate(d.getDate() + i);
+            const html = previewHtml(days[i], isoDate(d), today);
+            if (html) row.insertAdjacentHTML("afterend", html);
+        });
+    };
+    new MutationObserver(fill).observe(detail, { childList: true });
+    // After a send, the "On COROS" marks change: draw the previews again.
+    window.addEventListener("sb:coros-sent", () => {
+        detail.querySelectorAll(".mp-coros-preview").forEach(el => el.remove());
+        fill();
+    });
+    fill();
 }

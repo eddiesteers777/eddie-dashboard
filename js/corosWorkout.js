@@ -63,9 +63,17 @@ function structuredSections(w) {
     const out = [];
     if (w.warmup) out.push(section(1, w.warmup, effortZone(w.warmup.note, HR(2))));
     for (const set of w.sets || []) {
-        const work = section(2, set, paceRangePerKm(set.pace) || effortZone(set.effort, PACE(3)));
-        const rec = set.recovery ? section(3, set.recovery, effortZone(set.recovery.note, HR(1))) : null;
-        const members = rec ? [work, rec] : [work];
+        let members;
+        if (set.parts?.length) {
+            // A mixed repeat, "4 × (1 mi @ MP, 1 mi @ threshold)": each part in turn.
+            members = set.parts.map(p => p.recovery
+                ? section(3, p, effortZone(p.note, HR(1)))
+                : section(2, p, paceRangePerKm(p.pace) || effortZone(p.effort, PACE(3))));
+        } else {
+            const work = section(2, set, paceRangePerKm(set.pace) || effortZone(set.effort, PACE(3)));
+            const rec = set.recovery ? section(3, set.recovery, effortZone(set.recovery.note, HR(1))) : null;
+            members = rec ? [work, rec] : [work];
+        }
         if ((set.repeat || 1) > 1) {
             for (let left = set.repeat; left > 0; left -= 20) {
                 out.push({ intervalGroup: true, repeats: Math.min(20, left), sets: members.map(m => ({ ...m })) });

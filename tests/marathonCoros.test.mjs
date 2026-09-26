@@ -1,7 +1,7 @@
 // Unit tests for the coach's own marathon plan as COROS workouts (js/marathonCoros.js). Run: npm run test:static
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { planDayFromMarathon, marathonCourse, marathonTitle } from "../js/marathonCoros.js";
+import { planDayFromMarathon, marathonCourse, marathonTitle, marathonPreview } from "../js/marathonCoros.js";
 
 const PACES = [
     ["Recovery", "8:45–9:30 /mi"], ["Easy", "8:15–9:00 /mi"], ["Long Run", "7:50–8:40 /mi"],
@@ -53,7 +53,7 @@ test("time reps, seconds reps, recoveries as written", () => {
 
 test("finishes, races, and a fueling test that isn't a race", () => {
     const fin = planDayFromMarathon(day("Long run, last 2mi @ Steady", 11, "Steady"), PACES).workout;
-    assert.deepEqual([fin.warmup.amount, fin.sets[0].amount, fin.sets[0].pace, fin.cooldown], [9, 2, "7:20-7:40", null]);
+    assert.deepEqual([fin.warmup, fin.sets[0].amount, fin.sets[0].effort, fin.sets[1].amount, fin.sets[1].pace, fin.cooldown], [null, 9, "easy", 2, "7:20-7:40", null]);
     const tenK = marathonCourse(day("RACE: 10K Tune-Up (Sun Sep 13) + warm-up/cooldown", 8, "Race"), PACES);
     assert.equal(tenK.courseName, "10K Tune-Up · 8 mi");
     assert.equal(Math.round(tenK.sections[1].targetValue), 9978);
@@ -72,4 +72,41 @@ test("easy days are one heart-rate section; rest days send nothing", () => {
     assert.equal(marathonCourse(day("Rest", 0, ""), PACES), null);
     assert.equal(marathonTitle("Long run - comfortable, finish strong"), "Long run");
     assert.equal(marathonTitle("6mi, last 2mi @ Steady", 6), "Run");
+});
+
+// Custom workouts written on the Marathon page: what the watch gets.
+const preview = (session, miles, pace = "Threshold") => marathonPreview(day(session, miles, pace), PACES);
+
+test("custom: exact paces, rep times, reps without units, distance recoveries", () => {
+    assert.deepEqual(preview("8x800 @ 2:55, 400m jog", 7).steps, ["0.5 mi warm-up", "8 × 800 m @ 5:52/mi with 400 m jog", "0.5 mi cool-down"]);
+    assert.deepEqual(preview("4 easy + 2 @ 6:45", 6).steps, ["4 mi easy (heart-rate zone 2)", "2 mi @ 6:45/mi"]);
+    assert.deepEqual(preview("5x1mi @ 6:30, 2min rest", 8).steps, ["1 mi warm-up", "5 × 1 mi @ 6:30/mi with 2 min rest", "1 mi cool-down"]);
+    assert.deepEqual(preview("12x400 @ 85s, 200m jog", 7).steps[1], "12 × 400 m @ 5:42/mi with 200 m jog");
+    assert.deepEqual(preview("6x1K @ 3:45/km, 2min jog", 8).steps[1], "6 × 1 km @ 6:02/mi with 2 min jog");
+    assert.deepEqual(preview("1.5 WU, 20min @ tempo, 1.5 CD", 6).steps, ["1.5 mi warm-up", "20 min @ 6:35–6:50/mi", "1.5 mi cool-down"]);
+    assert.deepEqual(preview("10mi w/ last 3 @ MP", 10, "MP").steps, ["7 mi easy (heart-rate zone 2)", "3 mi @ 6:58–7:05/mi"]);
+    assert.deepEqual(preview("6 easy + 6x20s strides", 6.5, "Easy").steps[1], "6 × 0:20 @ strides (pace zone 6) with 1 min jog");
+    // The watch gets the same: 800 m reps at 5:52/mi = 219 s/km.
+    const c = marathonCourse(day("8x800 @ 2:55, 400m jog", 7, "VO2max"), PACES);
+    assert.deepEqual(c.sections[1].sets, [
+        { sectionType: 2, targetType: 1, targetValue: 800, intensityType: 2, intensityValueStart: 219, intensityValueEnd: 219 },
+        { sectionType: 3, targetType: 1, targetValue: 400, intensityType: 1, sectionIntensity: 1 }
+    ]);
+});
+
+test("custom: mixed repeats go to COROS as one interval group", () => {
+    const text = "2 mi warm up, 4x(1mi @ MP, 1mi @ threshold), 2 mi cool down";
+    assert.deepEqual(preview(text, 12, "MP").steps, ["2 mi warm-up", "4 × (1 mi @ 6:58–7:05/mi, 1 mi @ 6:35–6:50/mi)", "2 mi cool-down"]);
+    const g = marathonCourse(day(text, 12, "MP"), PACES).sections[1];
+    assert.equal(g.repeats, 4);
+    assert.deepEqual(g.sets.map(s => [s.sectionType, s.targetValue, s.intensityValueStart]), [[2, 1609, 260], [2, 1609, 245]]);
+    assert.match(marathonCourse(day(text, 12, "MP"), PACES).courseDescription, /4 × \(1 mi @ 6:58–7:05\/mi, 1 mi @ 6:35–6:50\/mi\)/);
+});
+
+test("custom: says what it couldn't read and when the parts don't add up", () => {
+    const p = preview("2mi WU, 3x2mi @ 6:40-6:50 w/ 3min jog, 2mi CD", 10);
+    assert.deepEqual(p.notes, ["These parts add up to about 11 mi; the day says 10 mi."]);
+    const q = preview("3mi easy, 4x(fast-ish bits), 2mi @ MP", 8);
+    assert.deepEqual(q.unread, ["4x(fast-ish bits)"]);
+    assert.equal(preview("Rest", 0, ""), null);
 });

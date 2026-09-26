@@ -40,6 +40,18 @@
       <div class="mp-stat"><div class="mp-stat-val" id="mp-stat-pct">0%</div><div class="mp-stat-label">Completed</div></div>
     </div>
     <div id="marathonCoros" class="sb-coros-bar" hidden></div>
+    <details class="mp-coros-tips">
+      <summary>How to write a workout for your watch</summary>
+      <p>Type it in a day's box and press Enter. The line under the day shows exactly what your watch will get. Mix and match:</p>
+      <ul>
+        <li><code>8x800 @ 2:55, 400m jog</code> reps with a time per rep (or <code>@ 5:50</code> per mile, <code>@ 3:40/km</code>)</li>
+        <li><code>4 easy + 2 @ 6:45</code> an easy start, then 2 miles at 6:45</li>
+        <li><code>2mi WU, 3x2mi @ threshold w/ 3min jog, 1.5mi CD</code> your own warm-up and cool-down</li>
+        <li><code>5x1mi @ 6:30, 2min rest</code> · <code>20min @ tempo</code> · <code>6x1K @ 10K</code></li>
+        <li><code>14mi w/ last 3 @ MP</code> · <code>4x(1mi @ MP, 1mi @ threshold)</code></li>
+      </ul>
+      <p>Words use your pace table: MP, half, threshold / tempo, 10K, 5K, steady. Easy and recovery go by heart rate; hills, strides and surges by effort zone. Whatever your parts don't cover of the day's miles becomes warm-up and cool-down.</p>
+    </details>
   </div>
 
   <div class="mp-chart-wrap">
@@ -62,8 +74,9 @@
 </div>
 
 <script type="module">
-    import { mountMarathonCoros } from "./js/marathonCorosButton.js";
+    import { mountMarathonCoros, watchMarathonPreviews } from "./js/marathonCorosButton.js";
     mountMarathonCoros(document.getElementById("marathonCoros"));
+    watchMarathonPreviews(document.getElementById("mp-detail"));
 </script>
 
 <script type="module">
@@ -672,7 +685,7 @@
         <div class="mp-check ${checked ? "checked" : ""}" data-toggle="${key}">${checked ? "&#10003;" : ""}</div>
         <div class="mp-day-abbr">${key}</div>
         <input class="mp-day-session-input ${d.race ? "mp-day-race-tag" : ""}" data-day="${key}" data-field="session" value="${escapeAttr(d.session)}" spellcheck="false">
-        <div style="display:flex;align-items:center;justify-content:flex-end;">
+        <div class="mp-day-miles" style="display:flex;align-items:center;justify-content:flex-end;">
           <input type="number" step="0.1" min="0" class="mp-day-miles-input mp-mono" data-day="${key}" data-field="miles" value="${d.miles}">
           <span class="mp-mono" style="color:var(--text-dim);font-size:11px;">mi</span>
         </div>
@@ -685,6 +698,7 @@
       </div>`;
     });
 
+    el.dataset.week = selectedWeek;  // read by the watch preview (js/marathonCorosButton.js)
     el.innerHTML = `
       <div class="mp-detail-head">
         <div>

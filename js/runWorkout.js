@@ -135,6 +135,8 @@ export function targetText(set) {
 
 export function setText(set) {
     const reps = set.repeat > 1 ? `${set.repeat} × ` : "";
+    // A mixed repeat (the coach's own marathon plan): "4 × (1 mi @ 6:58–7:05/mi, 1 mi @ 6:35–6:50/mi)"
+    if (set.parts?.length) return `${reps}(${set.parts.map(p => p.recovery ? `${amountText(p)} ${p.note || "recovery"}` : `${amountText(p)}${targetText(p) ? ` @ ${targetText(p)}` : ""}`).join(", ")})`;
     const target = targetText(set);
     const rec = set.recovery ? ` (${amountText(set.recovery)}${set.recovery.note ? ` ${set.recovery.note}` : " recovery"})` : "";
     return `${reps}${amountText(set)}${target ? ` @ ${target}` : ""}${rec}`;

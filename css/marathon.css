@@ -1831,3 +1831,135 @@ body{
     }
 
 }
+
+/* ==========================================================
+   WATCH PREVIEW — under each day: exactly what Send to COROS
+   puts on the watch (js/marathonCorosButton.js)
+========================================================== */
+.mp-coros-preview{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin:-6px 0 2px;
+    padding:9px 14px;
+    border:1px dashed rgba(201,173,132,.28);
+    border-radius:12px;
+    background:rgba(201,173,132,.05);
+    color:var(--muted);
+    font-size:.84rem;
+    line-height:1.45;
+}
+
+.mp-coros-preview.has-warning{
+    border-color:rgba(240,167,66,.55);
+}
+
+.mp-coros-preview-icon svg{
+    width:17px;
+    height:17px;
+    margin-top:1px;
+    color:var(--primary);
+    flex-shrink:0;
+}
+
+.mp-coros-preview-body{
+    min-width:0;
+    flex:1;
+}
+
+.mp-coros-steps{
+    color:var(--text);
+}
+
+.mp-coros-arrow{
+    color:var(--primary);
+}
+
+.mp-coros-status{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    margin-left:8px;
+    font-size:.78rem;
+    font-weight:600;
+    white-space:nowrap;
+}
+
+.mp-coros-status svg{
+    width:14px;
+    height:14px;
+}
+
+.mp-coros-status.is-sent{
+    color:var(--sage, #8FB39B);
+}
+
+.mp-coros-status.is-changed{
+    color:#F0A742;
+}
+
+.mp-coros-warn{
+    margin-top:4px;
+    color:#F0A742;
+    font-size:.8rem;
+}
+
+.mp-coros-warn svg{
+    width:13px;
+    height:13px;
+    vertical-align:-2px;
+}
+
+/* Phones: day + miles on top, the workout text full width (it's where
+   custom workouts are typed), then the pace tag and timing. */
+@media (max-width:850px){
+    .mp-days .mp-day-row{
+        grid-template-columns:30px minmax(0,1fr) auto auto;
+        grid-template-areas:
+            "check abbr miles toggle"
+            "session session session session"
+            "pace pace timing timing";
+        align-items:center;
+        gap:10px 10px;
+    }
+
+    .mp-days .mp-day-row > .mp-check{ grid-area:check; }
+    .mp-days .mp-day-row > .mp-day-abbr{ grid-area:abbr; }
+    .mp-days .mp-day-row > .mp-day-miles{ grid-area:miles; justify-self:end; }
+    .mp-days .mp-day-row > .mp-day-expand-toggle{ grid-area:toggle; justify-self:end; margin-top:0; }
+    .mp-days .mp-day-row > .mp-day-session-input{ grid-area:session; width:100%; min-width:0; }
+    .mp-days .mp-day-row > .mp-pace-chip{ grid-area:pace; justify-self:start; }
+    .mp-days .mp-day-row > .mp-day-timing{ grid-area:timing; justify-self:end; text-align:right; white-space:normal; min-width:0; }
+    .mp-days .mp-day-row > *{ min-width:0; }
+}
+
+.mp-coros-tips{
+    margin-top:10px;
+    color:var(--muted);
+    font-size:.86rem;
+    line-height:1.5;
+}
+
+.mp-coros-tips summary{
+    cursor:pointer;
+    color:var(--primary);
+    font-weight:600;
+}
+
+.mp-coros-tips ul{
+    margin:6px 0;
+    padding-left:18px;
+}
+
+.mp-coros-tips li{
+    margin:4px 0;
+}
+
+.mp-coros-tips code{
+    padding:1px 6px;
+    border-radius:6px;
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    font-family:var(--font-mono, monospace);
+    font-size:.82rem;
+}
