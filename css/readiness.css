@@ -213,3 +213,11 @@
     .rd-ring{ width:96px; height:96px; }
     .rd-parts{ grid-template-columns:1fr 1fr; }
 }
+
+/* No score today: the last one, and a way to ask COROS again */
+.rd-last{ margin:6px 0 0; color:var(--muted); font-size:.86rem; }
+.rd-last strong{ color:var(--text); }
+.rd-last strong.green{ color:var(--good); }
+.rd-last strong.yellow{ color:var(--primary); }
+.rd-last strong.red{ color:var(--bad); }
+.rd-refresh{ margin-top:10px; }

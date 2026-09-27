@@ -11,8 +11,8 @@
    for the score. Data: js/readinessData.js.
 ========================================== */
 
-import { computeReadiness, adviceFor, sleepCoach, insights, checkinsUntilInsights, kindOfDay, TAGS, hm, colorOf } from "./readiness.js";
-import { refreshHealth, inputs, loadCheckins, saveCheckin, loadSettings, saveSettings, isoDate, load, recompute, pushCloud } from "./readinessData.js";
+import { computeReadiness, adviceFor, sleepCoach, insights, checkinsUntilInsights, kindOfDay, TAGS, hm, colorOf, missingReason } from "./readiness.js";
+import { refreshHealth, healthRefreshing, lastHealthError, inputs, loadCheckins, saveCheckin, loadSettings, saveSettings, isoDate, load, recompute, pushCloud } from "./readinessData.js";
 import { READINESS_KEY } from "./readiness.js";
 import { isCorosConnected } from "./corosClient.js";
 import { cachedRole } from "./role.js";
@@ -183,6 +183,10 @@ async function render() {
     const connected = isCorosConnected();
     const easy = advice.swap && role === "coach" && workout.week ? await nextEasyDay(workout) : null;
     const checkin = data.checkins[today];
+    const flagged = r.flags.some(f => f.key === "sick" || f.key === "pain");
+    const missing = r.score == null ? missingReason({ connected, refreshing: healthRefreshing(), error: lastHealthError(), health: data.health, history, today }) : null;
+    const adviceText = missing && !flagged ? missing.text : advice.text;
+    const lastDay = d => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
     el.hidden = false;
     el.className = `rd-card ${r.color}`;
@@ -193,14 +197,16 @@ async function render() {
             </div>
             <div class="rd-summary">
                 <div class="sb-eyebrow rd-eyebrow">Readiness${r.score != null ? ` · ${COLOR_WORD[r.color]}` : ""}</div>
-                <p class="rd-advice">${esc(advice.text)}</p>
+                <p class="rd-advice">${esc(adviceText)}</p>
+                ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
+                ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
                 ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
                 ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}
                 ${r.flags.filter(f => f.key !== "pain" && f.key !== "sick").map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
             </div>
         </div>
         ${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}
-        ${connected ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score from HRV, resting heart rate and sleep.</p>`}
+        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score from HRV, resting heart rate and sleep.</p>`}
         ${weekDots(today)}
         ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
         <div class="rd-checkin-row">
@@ -214,6 +220,7 @@ async function render() {
     el.onclick = async event => {
         const act = event.target.closest("[data-act]")?.dataset.act;
         if (act === "checkin") openCheckin(today, render);
+        if (act === "refresh") { const done = refreshHealth({ force: true }); render(); await done; render(); }
         if (act === "need") {
             const value = await sbPrompt("How many hours of sleep do you need a night?", { title: "Sleep need", defaultValue: String(loadSettings().sleepNeedMin / 60), placeholder: "7.5" });
             const hours = parseFloat(String(value ?? "").replace(",", "."));
@@ -231,9 +238,10 @@ async function init() {
     const el = $("readinessCard");
     if (!el) return;
     recompute();
+    const fetching = refreshHealth();                  // marks itself running first, so the card can say so
     await render();
     window.addEventListener("sb:readiness-updated", render);
-    refreshHealth();
+    await fetching;
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

@@ -150,6 +150,37 @@ export function computeReadiness(date, { health = {}, fitness = {}, checkins = {
     };
 }
 
+// ---------- why there's no score today ----------
+
+const shortDay = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+/**
+ * No score today: say exactly why, and what to do.
+ * { connected (COROS on this device), refreshing, error (last fetch's message or null),
+ *   health (by wake-up day), history (readiness by day), today }
+ * -> { text, latest: { date, score, color } | null, canRefresh }
+ */
+export function missingReason({ connected, refreshing = false, error = null, health = {}, history = {}, today }) {
+    const latestDate = Object.keys(history).filter(d => d < today && history[d]?.score != null).sort().at(-1);
+    const latest = latestDate ? { date: latestDate, ...history[latestDate] } : null;
+    const lastNight = Object.keys(health).filter(d => health[d]?.hrv || health[d]?.sleep).sort().at(-1);
+    if (refreshing) return { text: "Getting last night's sleep and HRV from COROS…", latest, canRefresh: false };
+    if (!connected) {
+        return {
+            text: lastNight
+                ? `COROS isn't connected on this device, so last night's sleep can't come in here. Connect it in Settings (or open Southbound where it is connected).`
+                : "Connect COROS in Settings: your score comes from last night's HRV, resting heart rate and sleep.",
+            latest, canRefresh: false
+        };
+    }
+    if (error) return { text: `COROS didn't answer just now (${error}). Tap Refresh to try again.`, latest, canRefresh: true };
+    if (!lastNight) return { text: "COROS hasn't sent any sleep or HRV yet. Wear your watch overnight, open the COROS app so it syncs, then tap Refresh.", latest, canRefresh: true };
+    return {
+        text: `COROS doesn't have last night's sleep yet (the newest is ${shortDay(lastNight)}). Open the COROS app so your watch syncs, then tap Refresh.`,
+        latest, canRefresh: true
+    };
+}
+
 // ---------- advice for today's workout ----------
 
 /**
@@ -162,7 +193,7 @@ export function adviceFor(r, workout = { kind: "none" }, before = []) {
     if (r?.flags?.some(f => f.key === "sick")) return { text: "Feeling sick: rest today. If it's mild and above the neck only, 20–30 minutes very easy at most.", swap: kind === "quality" || kind === "long" };
     const pain = r?.flags?.find(f => f.key === "pain");
     if (pain && (kind === "quality" || kind === "long" || kind === "race")) return { text: `You logged ${pain.text.toLowerCase()}. Swap ${title} for an easy run or cross-training, and tell your coach if it's still there tomorrow.`, swap: kind !== "race" };
-    if (!r || r.score == null) return { text: "Sync your COROS watch (or check in) to see today's readiness.", swap: false };
+    if (!r || r.score == null) return { text: "Sync your COROS watch to see today's readiness.", swap: false };
     const c = r.color;
     const yellowRun = c === "yellow" && before.length >= 2 && before.slice(0, 2).every(x => x === "yellow" || x === "red");
     if (kind === "race") return { text: c === "red" ? "Race day with low readiness: start conservatively and build into it." : "Race day: trust your training.", swap: false };

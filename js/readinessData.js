@@ -18,6 +18,7 @@ import { FITNESS_KEY, fitnessDays, mergeFitness } from "./corosHistory.js";
 import { computeReadiness, SETTINGS_KEY, CHECKIN_KEY, READINESS_KEY, DEFAULT_SLEEP_NEED } from "./readiness.js";
 
 const FETCHED_KEY = "coros-health-fetched";   // this device only
+const ERROR_KEY = "coros-health-error";       // the last fetch's problem, this device only
 const pad = n => String(n).padStart(2, "0");
 export const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const ymd = d => isoDate(d).replace(/-/g, "");
@@ -71,6 +72,10 @@ function due(today) {
 }
 
 let running = null;
+export const healthRefreshing = () => Boolean(running);
+export function lastHealthError() {
+    try { const e = JSON.parse(localStorage.getItem(ERROR_KEY) || "null"); return e && Date.now() - e.at < 6 * 3600e3 ? e.message : null; } catch { return null; }
+}
 
 /** Brings COROS health up to date (when due). Resolves true when something was fetched. */
 export function refreshHealth({ force = false } = {}) {
@@ -100,7 +105,9 @@ export function refreshHealth({ force = false } = {}) {
                     if (key === "rhr") { try { replies.rhr = await callTool(name, { days: 7 }); } catch {} }
                 }
             }
+            if (!Object.keys(replies).length) throw new Error("no replies");
             save(HEALTH_KEY, mergeHealth(load(HEALTH_KEY, {}), healthDays(replies), today));
+            localStorage.removeItem(ERROR_KEY);
             if (replies.recovery) save(FITNESS_KEY, mergeFitness(load(FITNESS_KEY, {}), fitnessDays(today, { recovery: replies.recovery }), today));
             recompute(today);
             pushCloud();
@@ -108,6 +115,9 @@ export function refreshHealth({ force = false } = {}) {
             return true;
         } catch (error) {
             console.warn("Southbound: COROS health refresh failed.", error);
+            const message = /401|Reconnect/i.test(error?.message || "") ? "your COROS sign-in expired: reconnect in Settings" : /no replies/.test(error?.message || "") ? "no data came back" : "a connection problem";
+            localStorage.setItem(ERROR_KEY, JSON.stringify({ message, at: Date.now() }));
+            window.dispatchEvent(new CustomEvent("sb:readiness-updated"));
             return false;
         } finally {
             running = null;

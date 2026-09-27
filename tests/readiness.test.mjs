@@ -104,3 +104,23 @@ test("kind of day in the marathon plan", () => {
     assert.equal(kindOfDay({ miles: 19, pace: "MP" }, { workout: { sets: [{ effort: "easy" }, { pace: "6:58-7:05" }] } }), "long");
     assert.equal(kindOfDay({ miles: 16, pace: "Long run" }, { workout: null }), "long");
 });
+
+test("no score today: the card says exactly why", async () => {
+    const { missingReason } = await import("../js/readiness.js");
+    const today = "2026-09-28";
+    const history = { "2026-09-26": { score: 78, color: "green" }, "2026-09-27": { score: 64, color: "yellow" } };
+    const health = { "2026-09-27": { hrv: { avg: 80 }, sleep: { asleepMin: 420 } } };
+    let m = missingReason({ connected: true, health, history, today });
+    assert.match(m.text, /doesn't have last night's sleep yet \(the newest is Sun, Sep 27\)\. Open the COROS app/);
+    assert.deepEqual(m.latest, { date: "2026-09-27", score: 64, color: "yellow" });
+    assert.equal(m.canRefresh, true);
+    assert.match(missingReason({ connected: true, refreshing: true, health, history, today }).text, /Getting last night's/);
+    m = missingReason({ connected: false, health, history, today });
+    assert.match(m.text, /isn't connected on this device/);
+    assert.equal(m.canRefresh, false);
+    assert.match(missingReason({ connected: false, today }).text, /^Connect COROS in Settings/);
+    assert.match(missingReason({ connected: true, error: "a connection problem", health, history, today }).text, /didn't answer just now \(a connection problem\)/);
+    m = missingReason({ connected: true, today });
+    assert.match(m.text, /hasn't sent any sleep or HRV yet/);
+    assert.equal(m.latest, null);
+});
