@@ -76,12 +76,20 @@ export async function pullFromCloud(){
     const cloudTimes=cloud.keyUpdatedAt||{};
     const localTimes=getKeyTimes();
     const legacy=legacyTimestamp(cloud.updatedAt);
+    // What this device last synced: anything that differs from it now was
+    // changed here and not pushed yet (keys are only timestamped on push).
+    // That copy is the newer one: keep it and push it, never overwrite it
+    // with the cloud's older copy (which reloaded pages that save as they
+    // go, like the COROS history filling in, over and over -- 2026-09-27).
+    const synced=lastSyncedData();
     let applied=0;
     for(const key of Object.keys(stored)){
       const ct=Number(cloudTimes[key]||legacy||0);
       const lt=Number(localTimes[key]||0);
       if(lt>ct) continue;
-      const changed=localStorage.getItem(key)!==stored[key];
+      const local=localStorage.getItem(key);
+      if(synced!==null && local!==null && local!==(synced[key]??null)){ localTimes[key]=Date.now(); continue; }
+      const changed=local!==stored[key];
       localStorage.setItem(key,stored[key]);
       if(ct>0) localTimes[key]=ct;
       if(changed) applied++;

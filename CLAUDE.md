@@ -177,6 +177,8 @@ Eddie's handoff for turning Southbound into a connected client-management platfo
 - **`.sb-wait` placeholders shimmer until they have text.** If code can leave one empty on purpose, give it text or remove the class, or it shimmers forever.
 - **The `.primary-btn`/`.coach-button` tan-to-blue gradient** (`#2D7FFF`, pre-rebrand) was still live until 2026-09-25. Search for gradients before assuming the palette is clean.
 
+- **Cloud sync timestamps a key only when it's pushed.** A pull used to overwrite anything changed on this device since the last push with the cloud's older copy, then reload the page. Pages that save as they go (the COROS history filling in a week at a time) reloaded over and over and lost what they'd saved (2026-09-27). `pullFromCloud` now keeps any key that differs from the last-synced snapshot (`__cloudSyncSnapshot`) and stamps it so the next push sends it. Changes from another device to keys untouched here still come in.
+
 ## Testing
 
 - `npm install` once, then `npm test` runs everything: `npm run test:static` (every script parses, every local link/asset/import exists, public pages have meta descriptions and no placeholder text, `site-manifest.json` is current) and `npm run test:rules` (the Firestore emulator against `firestore.rules`). GitHub Actions (`.github/workflows/ci.yml`) runs both on every push.
