@@ -64,6 +64,16 @@ export function getCurrentUser() {
 }
 
 // ==========================================
+// Sign-in token (for Southbound's own helpers, e.g. the AI helper)
+// ==========================================
+
+export async function getIdToken() {
+
+    return auth.currentUser ? auth.currentUser.getIdToken() : null;
+
+}
+
+// ==========================================
 // Wait for Authentication
 // ==========================================
 

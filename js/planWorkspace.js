@@ -552,8 +552,9 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 return regenerateDialog({
                     firstName: first, record: data.record, plan: state.editing.plan,
                     done: new Set(doneMarks(state.editing.planId).keys()),
-                    onApply: ({ plan, kind, message }) => {
+                    onApply: ({ plan, kind, message, notes = [] }) => {
                         state.editing.kind = kind;
+                        if (notes.length) state.editing.notes = [...notes, ...(state.editing.notes || [])];
                         runOp(message, current => {
                             for (const key of Object.keys(current)) delete current[key];
                             Object.assign(current, plan);
@@ -990,8 +991,8 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
     function openGenerate() {
         generateDialog({
             firstName: first, record: data.record,
-            onCreate: ({ name, kind, plan, warnings, summary }) => {
-                startNew({ name, kind, plan, notes: warnings });
+            onCreate: ({ name, kind, plan, warnings, summary, notes = [] }) => {
+                startNew({ name, kind, plan, notes: [...notes, ...warnings] });
                 toast(`Generated ${summary.weeks} weeks: ${summary.miles} mi, peak ${summary.peak} mi a week, ${summary.workouts} workouts, ${summary.strength} strength sessions. Change anything, then publish.`, { duration: 7000 });
             }
         });
