@@ -43,3 +43,32 @@ export function workoutToolDetails(tools) {
         .sort((a, b) => a.name.localeCompare(b.name))
         .map(t => ({ name: t.name, description: t.description || "", inputSchema: t.inputSchema || {} }));
 }
+
+// Daily health data (sleep, HRV, resting heart rate, stress...): which read
+// tools might have it. Decides how close a WHOOP-style readiness score can
+// get. The five Analytics already uses don't count (recovery status is
+// read on its own).
+const HEALTH = /sleep|hrv|heart|rhr|resting|daily|wellness|body|stress|spo2|oxygen|breath|respir|metric|health|recovery|readiness|battery/i;
+const ALREADY = new Set(["querySportRecords", "getActivityDetail", "queryTrainingLoadAssessment", "queryFitnessAssessmentOverview"]);
+
+export function healthTools(tools) {
+    return (tools || [])
+        .filter(t => t?.name && READ.test(t.name) && !ALREADY.has(t.name) && (HEALTH.test(t.name) || HEALTH.test(t.description || "")) && !WORKOUTISH.test(t.name))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(t => ({ name: t.name, description: t.description || "", inputSchema: t.inputSchema || {} }));
+}
+
+// The diagnostic's line about it.
+export function healthSummary(tools) {
+    const found = healthTools(tools);
+    const words = found.map(t => t.name);
+    const text = `${found.map(t => `${t.name} ${t.description}`).join(" ")}`;
+    const has = { sleep: /sleep/i.test(text), hrv: /hrv|heart rate variability/i.test(text), rhr: /resting/i.test(text) };
+    const listed = [has.sleep && "sleep", has.hrv && "HRV", has.rhr && "resting heart rate"].filter(Boolean);
+    return {
+        status: listed.length ? "pass" : "warn",
+        text: found.length
+            ? `COROS shares: ${words.join(", ")}${listed.length ? ` (mentions ${listed.join(", ")})` : ""}.`
+            : "No sleep / HRV / resting heart rate tools listed beyond recovery status."
+    };
+}

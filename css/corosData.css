@@ -173,3 +173,14 @@
         grid-template-columns:1fr;
     }
 }
+
+/* Saved run history: "312 runs saved, back to Sep 28, 2025" (js/corosHistory.js) */
+.coros-history-status{
+    margin:8px 2px 0;
+    color:var(--muted);
+    font-size:.8rem;
+}
+
+.coros-history-status[hidden]{
+    display:none;
+}

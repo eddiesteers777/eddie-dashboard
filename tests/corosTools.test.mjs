@@ -34,3 +34,17 @@ test("workout tool details: only workout / plan tools, with their fields", async
     assert.deepEqual(details[0].inputSchema, { properties: { name: { type: "string" } } });
     assert.equal(details[1].description, "");
 });
+
+test("health data: which read tools might have sleep / HRV / resting heart rate", async () => {
+    const { healthTools, healthSummary } = await import("../js/corosTools.js");
+    const tools = [
+        { name: "querySportRecords" }, { name: "getActivityDetail" }, { name: "queryTrainingLoadAssessment" },
+        { name: "queryRecoveryStatus", description: "Current recovery percentage and HRV status" },
+        { name: "querySleepRecords", description: "Nightly sleep stages" },
+        { name: "queryDailyMetrics", description: "Resting heart rate and steps by day" },
+        { name: "createScheduledWorkout" }, { name: "queryTrainingSchedule" }
+    ];
+    assert.deepEqual(healthTools(tools).map(t => t.name), ["queryDailyMetrics", "queryRecoveryStatus", "querySleepRecords"]);
+    assert.deepEqual(healthSummary(tools), { status: "pass", text: "COROS shares: queryDailyMetrics, queryRecoveryStatus, querySleepRecords (mentions sleep, HRV, resting heart rate)." });
+    assert.equal(healthSummary([{ name: "querySportRecords" }]).status, "warn");
+});

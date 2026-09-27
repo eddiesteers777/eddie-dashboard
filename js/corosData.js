@@ -4,6 +4,7 @@ import { getTokenRecord } from "./corosAuth.js";
 import { mcpRequest } from "./corosClient.js";
 import { unwrapResult, findRecords, normalizeActivity } from "./corosParse.js";
 import { readLoad, readRecovery, readFitness, recentRunRows } from "./corosMetrics.js";
+import { HISTORY_KEY, FITNESS_KEY, emptyHistory, mergeRuns, markCovered, windowsToFetch, runsBetween, historyStatus, fitnessDays, mergeFitness, isoDate, addDays } from "./corosHistory.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 const $ = id => document.getElementById(id);
@@ -198,80 +199,94 @@ function isRun(activity) {
     );
 }
 
-function dedupe(items) {
-    const seen = new Set();
+// ---------- Saved run history (js/corosHistory.js) ----------
 
-    return items.filter(item => {
-        const key =
-            recordId(item) ||
-            `${activityDate(item)}|${activityMeters(item)}`;
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+const dayOf = iso => new Date(`${iso}T12:00:00`);
 
-        if (seen.has(key)) return false;
-
-        seen.add(key);
-        return true;
-    });
+function loadJSON(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || "null") || fallback; } catch { return fallback; }
+}
+function saveJSON(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+}
+function pushCloud() {
+    import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});
 }
 
-async function queryRecords(toolDefinition) {
-    const today = new Date();
-    const all = [];
-
-    // COROS documents a maximum 7-day window for the activity-record query.
-    for (let chunk = 0; chunk < 4; chunk++) {
-        const end = new Date(today);
-        end.setDate(
-            end.getDate() - chunk * 7
-        );
-
-        const start = new Date(end);
-        start.setDate(
-            start.getDate() - 6
-        );
-
-        // Small retry protects against transient server errors.
-        let lastError;
-
-        for (let attempt = 0; attempt < 3; attempt++) {
-            try {
-                const result =
-                    await mcpRequest(
-                        "tools/call",
-                        {
-                            name: toolDefinition.name,
-                            arguments:
-                                buildArgs(
-                                    toolDefinition,
-                                    start,
-                                    end
-                                )
-                        },
-                        toolDefinition.name
-                    );
-
-                all.push(...parseRecords(result));
-                lastError = null;
-                break;
-            } catch (error) {
-                lastError = error;
-
-                if (attempt < 2) {
-                    await new Promise(resolve =>
-                        setTimeout(
-                            resolve,
-                            500 * (attempt + 1)
-                        )
-                    );
-                }
-            }
-        }
-
-        if (lastError) {
-            throw lastError;
+// One 7-day window of runs (a small retry for COROS's occasional hiccup).
+async function fetchWindow(toolDefinition, win) {
+    let lastError;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const result = await mcpRequest(
+                "tools/call",
+                { name: toolDefinition.name, arguments: buildArgs(toolDefinition, dayOf(win.start), dayOf(win.end)) },
+                toolDefinition.name
+            );
+            return parseRecords(result);
+        } catch (error) {
+            lastError = error;
+            if (/401|Reconnect COROS|not connected/i.test(error.message || "")) break;
+            if (attempt < 2) await pause(500 * (attempt + 1));
         }
     }
+    throw lastError;
+}
 
-    return dedupe(all);
+async function fetchInto(history, toolDefinition, wins, today, onWeek) {
+    let h = history;
+    for (let i = 0; i < wins.length; i++) {
+        if (i) await pause(350);
+        const runs = await fetchWindow(toolDefinition, wins[i]);
+        h = mergeRuns(h, runs, today).history;
+        h = markCovered(h, wins[i].start, wins[i].end);
+        saveJSON(HISTORY_KEY, h);
+        onWeek?.(h);
+    }
+    return h;
+}
+
+function renderHistoryStatus(history) {
+    const el = $("corosHistoryStatus");
+    if (!el) return;
+    const text = historyStatus(history, isoDate(new Date()));
+    el.textContent = text;
+    el.hidden = !text;
+}
+
+// The older weeks, a week at a time in the background; resumes next time if interrupted.
+let backfilling = false;
+async function backfillHistory(toolDefinition) {
+    if (backfilling) return;
+    backfilling = true;
+    const today = isoDate(new Date());
+    try {
+        const { backfill } = windowsToFetch(loadJSON(HISTORY_KEY, null) || emptyHistory(), today);
+        if (!backfill.length) return;
+        await fetchInto(loadJSON(HISTORY_KEY, null) || emptyHistory(), toolDefinition, backfill, today, renderHistoryStatus);
+        pushCloud();
+        window.dispatchEvent(new CustomEvent("eddieos:coros-history-updated"));
+    } catch (error) {
+        console.warn("Southbound: loading older COROS runs paused.", error);
+        const el = $("corosHistoryStatus");
+        if (el) el.textContent += " · paused, tap Refresh COROS to continue";
+    } finally {
+        backfilling = false;
+    }
+}
+
+/** Brings the history up to date at the recent end -> the last 28 days of runs. */
+async function queryRecords(toolDefinition) {
+    const today = isoDate(new Date());
+    const history = loadJSON(HISTORY_KEY, null) || emptyHistory();
+    const { recent, backfill } = windowsToFetch(history, today);
+    // First time: the whole last 28 days now, so the page is complete; the rest in the background.
+    const monthAgo = addDays(today, -27);
+    const now = [...recent, ...backfill.filter(w => w.end >= monthAgo)];
+    const updated = await fetchInto(history, toolDefinition, now, today, renderHistoryStatus);
+    renderHistoryStatus(updated);
+    return runsBetween(updated, monthAgo, today);
 }
 
 function parseDetail(result) {
@@ -458,7 +473,15 @@ async function loadRecentData() {
         JSON.stringify(snapshot)
     );
 
+    // Fitness numbers by day, so they become trend lines.
+    const today = isoDate(new Date());
+    saveJSON(FITNESS_KEY, mergeFitness(loadJSON(FITNESS_KEY, {}), fitnessDays(today, snapshot), today));
+    pushCloud();
+
     renderSnapshot(snapshot);
+
+    // The rest of the year, in the background.
+    backfillHistory(sportTool);
 
     window.dispatchEvent(
         new CustomEvent(
@@ -615,6 +638,7 @@ function init() {
 
         renderSnapshot(cached);
     } catch {}
+    renderHistoryStatus(loadJSON(HISTORY_KEY, null) || emptyHistory());
 
     if (accessToken()) {
         loadRecentData().catch(error => {

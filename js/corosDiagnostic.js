@@ -8,7 +8,8 @@ import {
 } from "./corosAuth.js";
 
 import { icon } from "./icons.js";
-import { corosToolsSummary, workoutToolDetails } from "./corosTools.js";
+import { corosToolsSummary, workoutToolDetails, healthTools, healthSummary } from "./corosTools.js";
+import { callTool } from "./corosClient.js";
 import { unwrapResult, findRecords, describeShape, normalizeActivity } from "./corosParse.js";
 import { replyText } from "./corosMetrics.js";
 
@@ -80,6 +81,8 @@ async function runCorosDiagnostic() {
 
     const checks = [];
     let workoutTools = [];
+    let healthDetails = [];
+    let runDetail = "";
     let sampleReply = "";
 
     // Client metadata.
@@ -361,6 +364,28 @@ async function runCorosDiagnostic() {
             workoutTools = workoutToolDetails(tools);
             const summary = corosToolsSummary(tools);
             checks.push(row("What COROS lets Southbound do", summary.status, summary.text));
+            // Sleep / HRV / resting heart rate: how close a readiness score can get.
+            healthDetails = healthTools(tools);
+            const health = healthSummary(tools);
+            checks.push(row("Health data COROS shares", health.status, health.text));
+            // One run's full details (laps, heart rate...), to see what COROS gives per run.
+            const detailTool = tools.find(t => t?.name === "getActivityDetail");
+            let latest = null;
+            try {
+                const hist = JSON.parse(localStorage.getItem("coros-run-history") || "null");
+                latest = Object.values(hist?.runs || {}).sort((a, b) => String(b.startTime || b.date).localeCompare(String(a.startTime || a.date)))[0] || null;
+            } catch {}
+            if (detailTool && latest?.labelId) {
+                try {
+                    const props = detailTool.inputSchema?.properties || {};
+                    const args = {};
+                    if ("labelId" in props) args.labelId = String(latest.labelId);
+                    if ("sportType" in props) args.sportType = latest.sportType;
+                    runDetail = `Run: ${latest.name || ""} ${latest.date || ""}\n\n${JSON.stringify(await callTool(detailTool.name, args), null, 1)}`;
+                } catch (error) {
+                    runDetail = `getActivityDetail failed: ${error.message}`;
+                }
+            }
             const activityTool = tools.find(t => t?.name === "querySportRecords");
             if (activityTool) {
                 const fields = Object.keys(activityTool.inputSchema?.properties || {});
@@ -388,6 +413,8 @@ async function runCorosDiagnostic() {
                 [part("Training load", snap.trainingLoad), part("Recovery", snap.recovery), part("Fitness", snap.fitness)].join("\n\n").slice(0, 15000));
         }
     } catch {}
+    if (healthDetails.length) addCopyBlock(results, "copyCorosHealthTools", "Copy COROS health data details", `Copies COROS's instructions for its ${healthDetails.length} health data ${healthDetails.length === 1 ? "tool" : "tools"} (sleep, heart rate...), to paste to your developer.`, JSON.stringify(healthDetails, null, 2));
+    if (runDetail) addCopyBlock(results, "copyCorosRunDetail", "Copy one run's details", "Copies everything COROS gives for your latest run (laps, heart rate...), to paste to your developer.", runDetail.slice(0, 15000));
     if (workoutTools.length) addCopyBlock(results, "copyCorosWorkoutTools", "Copy COROS workout tool details", `Copies COROS's instructions for its ${workoutTools.length} workout and plan tools, to paste to your developer.`, JSON.stringify(workoutTools, null, 2));
 
     const failures =
