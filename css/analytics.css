@@ -742,11 +742,11 @@ canvas{
 }
 
 /* ==========================================
-   Data Connections — de-emphasized on purpose.
+   Data Connections — below the trends on purpose.
 
-   COROS has known server-side reliability problems (see
-   js/corosStatus.js), so this section stays secondary: your own
-   logged data above is the page's centerpiece, this is supplementary.
+   The trends above are drawn from what COROS sent and Southbound
+   saved, so they still show when COROS is slow (js/corosStatus.js);
+   this section is where the connection itself is managed.
 ========================================== */
 
 .data-connections{
@@ -799,6 +799,24 @@ canvas{
 
     max-width:640px;
 
+}
+
+/* The COROS connection card: copy + status on the left, what it
+   brings in + the button on the right (stacked on phones). */
+.coros-connection-content{ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:20px 32px; }
+.coros-connection-copy{ flex:1 1 320px; min-width:0; }
+.coros-connection-copy h2{ margin:4px 0 6px; }
+.coros-connection-copy p{ margin:0; color:var(--muted); font-size:.92rem; line-height:1.5; }
+.coros-eyebrow{ display:block; color:var(--primary); font-size:.75rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+.coros-status{ display:flex; align-items:center; gap:8px; margin-top:12px; color:var(--text); font-size:.9rem; font-weight:600; }
+.coros-status-dot{ width:9px; height:9px; flex:0 0 9px; border-radius:50%; background:var(--muted); }
+.coros-connection-action{ flex:0 1 340px; display:grid; gap:10px; }
+.coros-data-preview{ padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm, 10px); background:rgba(255,255,255,.02); }
+.coros-data-preview span{ display:block; color:var(--muted); font-size:.72rem; font-weight:700; letter-spacing:.08em; }
+.coros-data-preview strong{ display:block; margin-top:2px; color:var(--text); font-size:.9rem; }
+.coros-connection-action .coros-connect-btn{ justify-self:start; }
+@media (max-width:700px){
+    .coros-connection-action{ flex-basis:100%; }
 }
 
 /* ==========================================

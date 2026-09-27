@@ -107,6 +107,11 @@ html{
 
     --on-primary:#0F2019;
 
+    /* Muted status colors that sit well on forest: on target / good day
+       (--good) and off target / rough day (--bad). Analytics, Readiness. */
+    --good:#8FB39B;
+    --bad:#D08466;
+
     --green:#22C55E;
 
     --yellow:#FACC15;

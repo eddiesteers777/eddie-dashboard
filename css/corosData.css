@@ -148,6 +148,11 @@
 }
 
 @media(max-width:700px){
+    .coros-data-panel > .panel-header{
+        flex-wrap:wrap;
+        align-items:flex-start;
+    }
+
     .coros-data-actions{
         margin-top:12px;
         width:100%;

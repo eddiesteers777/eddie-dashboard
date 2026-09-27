@@ -49,11 +49,11 @@ export function inputs() {
     return { health: load(HEALTH_KEY, {}), fitness: load(FITNESS_KEY, {}), checkins: loadCheckins(), settings: loadSettings() };
 }
 
-/** Recompute and save readiness for the last 8 days. */
-export function recompute(today = isoDate(new Date())) {
+/** Recompute and save readiness for the last `days` days (8 unless backfilling). */
+export function recompute(today = isoDate(new Date()), days = 8) {
     const data = inputs();
     const history = load(READINESS_KEY, {});
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < days; i++) {
         const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i);
         const date = isoDate(d);
         const r = computeReadiness(date, data);

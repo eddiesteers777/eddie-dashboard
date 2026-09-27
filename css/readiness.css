@@ -12,9 +12,9 @@
     background:var(--surface);
 }
 .rd-card[hidden], .rd-card [hidden]{ display:none !important; }
-.rd-card.green{ --rd-tone:#8FB39B; }
+.rd-card.green{ --rd-tone:var(--good); }
 .rd-card.yellow{ --rd-tone:var(--primary); }
-.rd-card.red{ --rd-tone:#D08466; }
+.rd-card.red{ --rd-tone:var(--bad); }
 
 .rd-head{
     display:flex;
@@ -91,9 +91,9 @@
     width:var(--v);
     background:var(--muted);
 }
-.rd-bar.green{ background:#8FB39B; }
+.rd-bar.green{ background:var(--good); }
 .rd-bar.yellow{ background:var(--primary); }
-.rd-bar.red{ background:#D08466; }
+.rd-bar.red{ background:var(--bad); }
 
 .rd-connect{
     margin:14px 0 0;
@@ -118,9 +118,9 @@
     background:rgba(255,255,255,.03);
     border-top:3px solid rgba(255,255,255,.08);
 }
-.rd-dot.green{ border-top-color:#8FB39B; }
+.rd-dot.green{ border-top-color:var(--good); }
 .rd-dot.yellow{ border-top-color:var(--primary); }
-.rd-dot.red{ border-top-color:#D08466; }
+.rd-dot.red{ border-top-color:var(--bad); }
 .rd-dot b{ font-size:.9rem; color:var(--text); }
 .rd-dot i{ font-style:normal; font-size:.72rem; color:var(--muted); }
 
@@ -154,7 +154,7 @@
     margin-top:16px;
 }
 .rd-checkin-row small{ color:var(--muted); font-size:.82rem; }
-.rd-done{ color:#8FB39B; font-weight:600; font-size:.9rem; }
+.rd-done{ color:var(--good); font-weight:600; font-size:.9rem; }
 
 .rd-insights{ margin-top:14px; }
 .rd-insights summary{
@@ -166,8 +166,8 @@
 .rd-insights summary svg{ width:15px; height:15px; vertical-align:-3px; }
 .rd-insights p, .rd-insights li{ color:var(--muted); font-size:.86rem; line-height:1.45; }
 .rd-insights-list{ margin:8px 0 0; padding-left:18px; }
-.rd-insights-list li.helps strong{ color:#8FB39B; }
-.rd-insights-list li.hurts strong{ color:#D08466; }
+.rd-insights-list li.helps strong{ color:var(--good); }
+.rd-insights-list li.hurts strong{ color:var(--bad); }
 .rd-insights-list li strong{ color:var(--text); }
 
 /* Check-in dialog */
