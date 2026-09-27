@@ -83,6 +83,7 @@ async function runCorosDiagnostic() {
     let workoutTools = [];
     let healthDetails = [];
     let runDetail = "";
+    let healthReplies = "";
     let sampleReply = "";
 
     // Client metadata.
@@ -382,9 +383,42 @@ async function runCorosDiagnostic() {
                     if ("labelId" in props) args.labelId = String(latest.labelId);
                     if ("sportType" in props) args.sportType = latest.sportType;
                     runDetail = `Run: ${latest.name || ""} ${latest.date || ""}\n\n${JSON.stringify(await callTool(detailTool.name, args), null, 1)}`;
+                    // Its laps too (rep-by-rep checks of key workouts).
+                    const lapTool = tools.find(t => t?.name === "queryActivityLapData");
+                    if (lapTool) {
+                        const lp = lapTool.inputSchema?.properties || {};
+                        const lapArgs = {};
+                        if ("labelId" in lp) lapArgs.labelId = String(latest.labelId);
+                        if ("sportType" in lp) lapArgs.sportType = latest.sportType;
+                        try { runDetail += `\n\n=== Laps (${lapTool.name}) ===\n${JSON.stringify(await callTool(lapTool.name, lapArgs), null, 1).slice(0, 6000)}`; }
+                        catch (error) { runDetail += `\n\n=== Laps failed: ${error.message}`; }
+                    }
                 } catch (error) {
                     runDetail = `getActivityDetail failed: ${error.message}`;
                 }
+            }
+            // What COROS actually sends for sleep / HRV / resting heart rate (the last 7 days),
+            // so readiness reads the real wording. Only these daily summaries, not raw time series.
+            if (healthDetails.length) {
+                const pad = n => String(n).padStart(2, "0");
+                const ymd = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+                const end = new Date(), start = new Date(); start.setDate(start.getDate() - 6);
+                const range = { startDate: ymd(start), endDate: ymd(end), days: 7 };
+                const asks = [
+                    ["queryRecoveryStatus", {}],
+                    ["querySleepOverview", { days: 7 }],
+                    ["querySleepHrv", range],
+                    ["queryRestingHeartRate", { days: 7 }],
+                    ["queryDailyHealthData", { days: 7 }],
+                    ["queryStressLevel", { days: 7 }],
+                    ["queryAvgHeartRate", { days: 7 }]
+                ].filter(([name]) => tools.some(t => t?.name === name));
+                const parts = [];
+                for (const [name, args] of asks) {
+                    try { parts.push(`=== ${name} ===\n${JSON.stringify(await callTool(name, args), null, 1).slice(0, 5000)}`); }
+                    catch (error) { parts.push(`=== ${name} failed: ${error.message}`); }
+                }
+                healthReplies = parts.join("\n\n");
             }
             const activityTool = tools.find(t => t?.name === "querySportRecords");
             if (activityTool) {
@@ -414,6 +448,7 @@ async function runCorosDiagnostic() {
         }
     } catch {}
     if (healthDetails.length) addCopyBlock(results, "copyCorosHealthTools", "Copy COROS health data details", `Copies COROS's instructions for its ${healthDetails.length} health data ${healthDetails.length === 1 ? "tool" : "tools"} (sleep, heart rate...), to paste to your developer.`, JSON.stringify(healthDetails, null, 2));
+    if (healthReplies) addCopyBlock(results, "copyCorosHealthReplies", "Copy COROS's health replies", "Copies what COROS sent for your last 7 days of sleep, HRV, resting heart rate and stress, to paste to your developer.", healthReplies.slice(0, 30000));
     if (runDetail) addCopyBlock(results, "copyCorosRunDetail", "Copy one run's details", "Copies everything COROS gives for your latest run (laps, heart rate...), to paste to your developer.", runDetail.slice(0, 15000));
     if (workoutTools.length) addCopyBlock(results, "copyCorosWorkoutTools", "Copy COROS workout tool details", `Copies COROS's instructions for its ${workoutTools.length} workout and plan tools, to paste to your developer.`, JSON.stringify(workoutTools, null, 2));
 
