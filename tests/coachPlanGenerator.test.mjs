@@ -42,7 +42,7 @@ test("a race plan: structure, workouts with paces, race day", () => {
     assert.equal(plan.weeks.length, 12);
     assert.equal(plan.weeks[0].startDate, "2026-09-28");
     assert.equal(plan.raceDate, "2026-12-20");
-    assert.deepEqual([at(plan, "2026-12-20").type, at(plan, "2026-12-20").miles], ["race", 13]);
+    assert.deepEqual([at(plan, "2026-12-20").type, at(plan, "2026-12-20").miles], ["race", 13.1]);
     assert.equal(plan.weeks[0].phase, "Foundation");
     assert.equal(plan.weeks.at(-1).phase, "Taper");
     // Runs only on the chosen days; the long run on Sunday.

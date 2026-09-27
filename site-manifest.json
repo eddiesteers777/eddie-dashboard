@@ -125,6 +125,7 @@
     "js/planGenerateDialogs.js",
     "js/planOps.js",
     "js/planRelease.js",
+    "js/planShape.js",
     "js/planWindow.js",
     "js/planWorkspace.js",
     "js/plannerEvents.js",

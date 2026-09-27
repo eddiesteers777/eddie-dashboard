@@ -10,9 +10,9 @@
      regeneratePlan(current, settings, { from, to, scope, replaceEdits, today, done, now })
         -> { plan, changes, keptEdited, keptDone }
 
-   Mileage, long runs, cutbacks, phases and taper come from the engines
-   clients already use (js/racePlanGenerator.js, js/trainingPlanGenerator.js).
-   On top of them:
+   Weeks, phases, weekly miles, long runs, cutbacks, taper and each day's
+   run come from js/planShape.js (plain coaching rules that hold for any
+   settings, with warnings when a request can't be met safely). On top:
      - quality days get a structured workout (warm-up, reps, recoveries,
        cool-down, why + cue) sized to the day's miles, with pace ranges
        when there's a goal time (otherwise effort words)
@@ -28,8 +28,7 @@
    Unit-tested in tests/coachPlanGenerator.test.mjs.
 ========================================== */
 
-import { generateRacePlan, RACE_PROFILES } from "./racePlanGenerator.js";
-import { generateTrainingPlan } from "./trainingPlanGenerator.js";
+import { shapePlan, RACE_INFO } from "./planShape.js";
 import { sanitizeWorkout, workoutSummary } from "./runWorkout.js";
 import { sanitizeStrength } from "./strengthWorkout.js";
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
@@ -123,11 +122,12 @@ export function checkSettings(s) {
     if ((s.runDays || []).length < 2) out.push("Pick at least two run days.");
     else if (!(s.runDays || []).includes(s.longRunDay)) out.push("The long run day has to be one of the run days.");
     if (s.mode === "race") {
-        if (!RACE_PROFILES[s.raceType]) out.push("Pick a race distance.");
+        if (!RACE_INFO[s.raceType]) out.push("Pick a race distance.");
         if (!/^\d{4}-\d{2}-\d{2}$/.test(s.raceDate || "")) out.push("Pick the race date.");
         else if (s.raceDate < addDays(s.startDate, 20)) out.push("The race needs to be at least 3 weeks after the start.");
     } else if (!/^\d{4}-\d{2}-\d{2}$/.test(s.endDate || "") || s.endDate < addDays(s.startDate, 6)) out.push("The plan needs to run at least a week.");
-    if (!(Number(s.peakMiles) >= Number(s.currentMiles))) out.push("Peak miles can't be lower than their current miles.");
+    if (!(Number(s.peakMiles) >= 3)) out.push("Set the miles a week to build to (3 or more).");
+    else if (!(Number(s.peakMiles) >= Number(s.currentMiles))) out.push("Peak miles can't be lower than their current miles.");
     return out;
 }
 
@@ -244,9 +244,23 @@ export function qualityWorkout(s, phase, index, miles) {
     const options = table ? (table[phase] || table.Build) : (TRAINING_QUALITY[s.trainingGoal] || TRAINING_QUALITY.BASE_BUILD);
     const [name, why, cue, template] = options[index % options.length];
     const sets = clone(template);
-    // Fewer reps when the day is short (keep at least a mile of warm-up + cool-down).
+    // Fewer reps when the day is short (keep at least a mile of warm-up + cool-down),
+    // then shorter reps if even one is too long for the day.
+    const room = Math.max(1, miles - 1.5);
     for (const set of sets) {
-        while (set.repeat > 2 && workMiles(sets) > miles - 1.5) set.repeat--;
+        while (set.repeat > 2 && workMiles(sets) > room) set.repeat--;
+    }
+    for (const set of sets) {
+        while (set.repeat > 1 && workMiles(sets) > room && ["mi", "km", "min"].includes(set.unit)) set.repeat--;
+    }
+    if (workMiles(sets) > room) {
+        const scale = room / workMiles(sets);
+        for (const set of sets) {
+            if (set.unit === "mi" || set.unit === "km") set.amount = Math.max(0.5, Math.floor(set.amount * scale * 2) / 2);
+            else if (set.unit === "min") set.amount = Math.max(1, Math.floor(set.amount * scale));
+            else if (set.unit === "m") set.amount = Math.max(200, Math.floor(set.amount * scale / 100) * 100);
+            if (set.recovery?.unit === "mi") set.recovery.amount = Math.max(0.25, Math.floor(set.recovery.amount * scale * 4) / 4);
+        }
     }
     const paces = pacesFor(s);
     for (const set of sets) if (paces?.[set.effort]) set.pace = paces[set.effort];
@@ -367,67 +381,50 @@ export function compose(date, run, strength) {
     return day;
 }
 
-const cleanLabel = text => String(text || "").replace(/\s*—\s*[\d.]+\s*mi\b.*$/i, "").replace(/\s*\([\d.]+ mi\)\s*$/i, "").trim();
-
-// ---------- generate ----------
-
-function engineWeeks(s) {
-    if (s.mode === "race") {
-        const plan = generateRacePlan({
-            raceType: s.raceType, trainingStartDate: s.startDate, raceDate: s.raceDate,
-            runDays: s.runDays, longRunDay: s.longRunDay, speedDays: s.speedDays, strengthDays: 0, crossDays: 0,
-            currentMileage: s.currentMiles, peakMileage: s.peakMiles, longestRun: s.longestRun, experience: s.experience,
-            goalType: s.goalTime ? "TIME" : "FINISH", goalTime: s.goalTime,
-            hills: "NO", threshold: "YES", racePaceLongRuns: "SOMETIMES", longRunStyle: "MIXED", backToBack: "NO"
-        });
-        return { weeks: plan.weeks, warnings: plan.warnings || [] };
-    }
-    const { generatedPlan, warnings } = generateTrainingPlan({
-        primaryGoal: s.trainingGoal, secondaryGoals: [], name: "", startDate: s.startDate, endDate: s.endDate,
-        runDays: s.runDays.length, runDayCodes: s.runDays, longRunDay: s.longRunDay, speedDays: s.speedDays,
-        liftDays: 0, crossDays: 0, sundayRest: false, allowDoubles: false, maxDoubles: 0,
-        currentMiles: s.currentMiles, targetMiles: s.peakMiles, maxMiles: s.peakMiles,
-        longMin: s.longestRun, longMax: Math.max(s.longestRun, Math.round(s.peakMiles * 0.3))
-    });
-    return { weeks: generatedPlan.weeks, warnings: warnings || [] };
-}
-
 /** settings -> a whole coach plan. */
 export function generateCoachPlan(settings, { now = Date.now() } = {}) {
     const runDays = CODES.filter(c => (settings.runDays || []).includes(c));
     const s = { ...settings, runDays, trainDays: CODES.filter(c => runDays.includes(c) || (settings.trainDays || []).includes(c)) };
     const problems = checkSettings(s);
     if (problems.length) throw new Error(problems[0]);
-    const { weeks: raw, warnings } = engineWeeks(s);
+    const { weeks: shaped, warnings } = shapePlan(s);
     const pool = strengthPool(s);
     let quality = 0, mainN = 0, lightN = 0;
     const raceGuard = s.mode === "race" ? addDays(s.raceDate, -3) : null;
-    const weeks = raw.map((w, wi) => {
+    const raceLabel = RACE_INFO[s.raceType]?.label || "race";
+    const weeks = shaped.map((w, wi) => {
         const phase = w.phase || "";
-        const lightWeek = /taper|cutback/i.test(phase) || (s.mode === "race" && wi === raw.length - 1);
-        const days = (w.days || []).map(d => {
-            const type = d.type === "endurance" ? "easy" : d.type;
-            const day = { date: d.date, day: d.day, type, miles: roundHalf(Number(d.miles) || 0), session: "" };
+        const lightWeek = /taper|cutback/i.test(phase) || w.cutback || (s.mode === "race" && wi === shaped.length - 1);
+        const weekMiles = w.days.reduce((t, d) => t + (d.type === "race" ? 0 : Number(d.miles) || 0), 0);
+        const runWalk = s.experience === "NEW" && weekMiles < 12;
+        const days = w.days.map(d => {
+            const type = d.type || "rest";
+            const day = { date: d.date, day: d.day, type, miles: type === "race" ? d.miles : roundHalf(Number(d.miles) || 0), session: "" };
             if (type === "workout" && day.miles < 3) {
-                // Too short for a session (race week): easy with strides.
+                // Too short for a session: easy with strides.
                 Object.assign(day, { type: "easy", session: "Easy + 4 strides (20 sec quick, relaxed)" });
             } else if (type === "workout") {
                 const q = qualityWorkout(s, phase, quality++, day.miles || 5);
                 day.workout = q.workout;
                 day.session = `${q.name}: ${workoutSummary(q.workout)}`.slice(0, 300);
-            } else if (type === "long") day.session = cleanLabel(d.session) || "Long run";
-            else if (type === "race") day.session = d.session || "Race day";
+            } else if (type === "long") day.session = runWalk ? "Long run/walk: easy, walk breaks are fine" : "Long run";
+            else if (type === "race") day.session = `Race day — ${raceLabel}`;
             else if (type === "recovery") day.session = "Very easy — slower than you think";
-            else if (type === "easy") day.session = "Easy, conversational";
+            else if (type === "easy") {
+                day.session = d.note === "shakeout" ? "Shakeout: very easy + 4 strides"
+                    : d.note === "back-to-back" ? "Back-to-back: easy on tired legs, time on feet"
+                    : runWalk ? "Easy run/walk: 1 min run, 1 min walk"
+                    : "Easy, conversational";
+            }
             return day;
         });
-        const week = { week: wi + 1, phase, startDate: w.startDate || mondayOf(days[0]?.date), days, supplemental: [] };
+        const week = { week: wi + 1, phase, startDate: w.startDate, days, supplemental: [], ...(w.cutback ? { cutback: true } : {}) };
         // Strength
         const picks = strengthDays(s, week);
         const long = days.find(d => d.type === "long")?.day;
         for (const code of picks) {
             const day = days.find(d => d.day === code);
-            if (!day || (raceGuard && day.date >= raceGuard)) continue;
+            if (!day || day.date < s.startDate || (raceGuard && day.date >= raceGuard)) continue;
             const light = lightWeek || code === CODES[(CODES.indexOf(long) + 6) % 7] || (s.strengthLevel === "none" && wi < 2);
             const id = light ? pool.light[lightN++ % pool.light.length] : pool.main[mainN++ % pool.main.length];
             const strength = strengthFromLibrary(id, { light: lightWeek });
@@ -439,7 +436,7 @@ export function generateCoachPlan(settings, { now = Date.now() } = {}) {
         let cross = Math.max(0, Number(s.crossDays) || 0);
         for (const day of days) {
             if (!cross) break;
-            if (day.type === "rest" && s.trainDays.includes(day.day) && !(raceGuard && day.date >= raceGuard)) {
+            if (day.type === "rest" && day.date >= s.startDate && s.trainDays.includes(day.day) && !(raceGuard && day.date >= raceGuard)) {
                 Object.assign(day, { type: "cross", miles: 0, session: "Easy cross-training: bike, swim or elliptical, 30–45 min" });
                 cross--;
             }
