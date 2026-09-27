@@ -77,7 +77,35 @@
 .tr-mini .tr-line{ height:50px; margin-top:8px; }
 .tr-mini small{ display:block; margin-top:6px; color:var(--muted); font-size:.75rem; }
 
+/* All your running */
+.tr-ytd{ margin-top:12px; }
+.tr-cols{ display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:8px 28px; margin-top:16px; }
+.tr-h3{ margin:0 0 4px; color:var(--text); font-size:.95rem; }
+.tr-recs{ list-style:none; margin:0; padding:0; }
+.tr-recs li{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 12px; padding:8px 0; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums; }
+.tr-recs li span{ color:var(--muted); font-size:.86rem; }
+.tr-recs li strong{ color:var(--text); text-align:right; }
+.tr-recs li small{ grid-column:1 / -1; color:var(--muted); font-size:.78rem; }
+.tr-note a{ color:var(--primary); }
+
+/* Import from Strava (js/stravaImport.js) */
+.sv-panel [hidden]{ display:none !important; }
+.sv-panel h2{ margin:4px 0 6px; }
+.sv-lead{ margin:0; max-width:720px; color:var(--muted); font-size:.92rem; line-height:1.5; }
+.sv-status{ margin:14px 0 0; color:var(--text); font-size:.92rem; }
+.sv-actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+.sv-progress{ display:flex; align-items:center; gap:12px; margin-top:14px; color:var(--muted); font-size:.86rem; }
+.sv-progress progress{ flex:1 1 auto; max-width:360px; height:8px; accent-color:var(--primary); }
+.sv-result{ margin:14px 0 0; padding:12px 14px; border:1px solid var(--border); border-left:3px solid var(--good); border-radius:var(--radius-sm); color:var(--text); font-size:.9rem; line-height:1.45; }
+.sv-result.is-error{ border-left-color:var(--bad); }
+.sv-how{ margin-top:14px; color:var(--muted); font-size:.88rem; }
+.sv-how summary{ cursor:pointer; color:var(--primary); font-weight:600; padding:6px 0; }
+.sv-how ol{ margin:8px 0; padding-left:20px; line-height:1.55; }
+.sv-how strong{ color:var(--text); }
+.sv-remove{ margin-top:12px; }
+
 @media (max-width:600px){
+    .sv-actions .sb-btn{ flex:1 1 100%; }
     .tr-grid{ grid-template-columns:1fr; }
     .tr-bars{ gap:2px; height:130px; }
     .tr-bar small{ font-size:.6875rem; transform:rotate(-50deg); transform-origin:center; margin-top:4px; }

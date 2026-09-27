@@ -19,6 +19,8 @@ import { READINESS_KEY } from "./readiness.js";
 import { callTool, isCorosConnected } from "./corosClient.js";
 import { recompute, load, pushCloud, isoDate } from "./readinessData.js";
 import { parseLaps, addDays } from "./trends.js";
+import { combineRuns } from "./stravaHistory.js";
+import { loadStrava } from "./stravaStore.js";
 
 const LAPS_KEY = "coros-laps";
 const BACKFILL_KEY = "coros-health-backfill";
@@ -30,9 +32,18 @@ export function planWeeks() {
     return WEEKS.map((_, i) => ({ week: i + 1, start: isoDate(weekStart(i + 1)), planned: getAdjustedWeekMileage(i + 1) }));
 }
 
-export function allRuns(today = isoDate(new Date())) {
-    return runsBetween(load(HISTORY_KEY, null) || emptyHistory(), addDays(today, -400), today);
+/** Every run: COROS's, plus the imported Strava runs COROS doesn't have (js/stravaHistory.js). */
+export function everyRun(today = isoDate(new Date())) {
+    const coros = runsBetween(load(HISTORY_KEY, null) || emptyHistory(), "1970-01-01", today);
+    return combineRuns(coros, loadStrava().acts).runs.filter(r => r.date <= today);
 }
+
+export function allRuns(today = isoDate(new Date())) {
+    const from = addDays(today, -400);
+    return everyRun(today).filter(r => r.date >= from);
+}
+
+export const stravaActs = () => loadStrava().acts;
 
 export const health = () => load(HEALTH_KEY, {});
 export const readiness = () => load(READINESS_KEY, {});

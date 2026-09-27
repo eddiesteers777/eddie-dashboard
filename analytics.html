@@ -143,12 +143,13 @@
         <section class="data-connections">
 
             <div class="data-connections-intro">
-                <span>COROS</span>
+                <span>COROS + Strava</span>
                 <h2>Data Connections</h2>
                 <p>
-                    The charts above come from COROS: your runs, laps, sleep,
-                    HRV and resting heart rate. Southbound keeps a copy on your
-                    account, so they stay here even when COROS is slow.
+                    The charts above come from COROS (your runs, laps, sleep,
+                    HRV and resting heart rate) and your imported Strava history.
+                    Southbound keeps a copy on your account, so they stay here
+                    even when COROS is slow.
                 </p>
             </div>
 
@@ -210,6 +211,47 @@
 
                 </div>
 
+            </section>
+
+            <!-- ==========================================
+                 STRAVA ARCHIVE IMPORT (js/stravaImport.js)
+            ========================================== -->
+
+            <section class="panel sv-panel" id="stravaImportPanel">
+                <span class="coros-eyebrow">Strava archive</span>
+                <h2>Import from Strava</h2>
+                <p class="sv-lead">
+                    Adds your whole Strava history to the charts above. Runs COROS
+                    already has are recognized and counted once. Your phone or
+                    computer reads the archive itself: only a summary of each
+                    activity is saved to your account, never your routes.
+                </p>
+                <p class="sv-status" id="stravaStatus">No Strava history imported yet.</p>
+                <div class="sv-actions">
+                    <button type="button" class="sb-btn sb-btn-primary" id="stravaZipBtn">Choose the Strava .zip</button>
+                    <button type="button" class="sb-btn sb-btn-secondary sv-folder" id="stravaFolderBtn">Choose the unzipped folder</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="stravaFilesBtn">Choose files</button>
+                    <input type="file" id="stravaZipInput" accept=".zip,application/zip" hidden>
+                    <input type="file" id="stravaFolderInput" webkitdirectory multiple hidden>
+                    <input type="file" id="stravaFilesInput" accept=".csv,.fit,.gz,.zip" multiple hidden>
+                </div>
+                <div class="sv-progress" id="stravaProgress" hidden>
+                    <progress id="stravaProgressBar" max="1" value="0"></progress>
+                    <span id="stravaProgressText"></span>
+                </div>
+                <p class="sv-result" id="stravaResult" role="status" hidden></p>
+                <details class="sv-how">
+                    <summary>How to get your Strava archive</summary>
+                    <ol>
+                        <li>On a computer, go to strava.com and sign in.</li>
+                        <li>Click your picture (top right), then <strong>Settings</strong>, then <strong>My Account</strong>.</li>
+                        <li>Under "Download or Delete Your Account", click <strong>Get Started</strong>.</li>
+                        <li>Under "Download Request", click <strong>Request Your Archive</strong>. Strava emails you a link (it can take a few hours).</li>
+                        <li>Download the .zip from that email, then come back here and click <strong>Choose the Strava .zip</strong>. Already unzipped it? Choose the folder instead.</li>
+                    </ol>
+                    <p>Importing again later is safe: activities already here are updated, not doubled.</p>
+                </details>
+                <button type="button" class="sb-btn sb-btn-tertiary sv-remove" id="stravaRemoveBtn" hidden>Remove Strava history</button>
             </section>
 
             <div class="coros-diagnostic-tools">
@@ -430,6 +472,7 @@
 
     <script type="module" src="js/analytics.js"></script>
     <script type="module" src="js/trendsView.js"></script>
+    <script type="module" src="js/stravaImport.js"></script>
     <script type="module" src="js/corosAuth.js"></script>
     <script type="module" src="js/corosData.js"></script>
     <script type="module" src="js/corosDiagnostic.js"></script>

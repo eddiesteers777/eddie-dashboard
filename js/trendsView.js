@@ -10,7 +10,9 @@
 
 import { planVsActual, longRuns, aerobicTrend, loadTrend, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
 import { barsHtml, lineSvg } from "./svgCharts.js";
-import { planWeeks, allRuns, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
+import { planWeeks, allRuns, everyRun, stravaActs, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
+import { yearStats, fastestEfforts, otherCounts, EFFORT_LABELS } from "./stravaHistory.js";
+import { syncStrava, STRAVA_EVENT } from "./stravaStore.js";
 import { loadSettings, isoDate } from "./readinessData.js";
 import { isCorosConnected } from "./corosClient.js";
 
@@ -46,7 +48,8 @@ function workoutRow(w, saved) {
     // Mile-long laps read as miles (a marathon-pace run, mile repeats); anything else as reps.
     const unit = c?.laps.filter(l => l.work).every(l => Math.abs(l.m - 1609) < 60) ? "miles" : "reps";
     const off = c ? [c.fast ? `${c.fast} too fast` : "", c.slow ? `${c.slow} too slow` : ""].filter(Boolean).join(", ") : "";
-    const verdict = !lapData ? (!isCorosConnected() ? "Connect COROS to check this one lap by lap."
+    const verdict = w.run.source === "strava" ? "From your Strava history (laps are checked on COROS runs)."
+        : !lapData ? (!isCorosConnected() ? "Connect COROS to check this one lap by lap."
             : lapState(w.run.labelId) === "loading" ? "Laps loading from COROS…"
             : lapState(w.run.labelId) === "failed" ? "COROS didn't send the laps this time. Southbound asks again next visit."
             : "Laps come in on your next visit.")
@@ -132,6 +135,38 @@ function predictionPanel() {
         : `<p class="tr-note">Builds into a trend line as COROS's prediction is saved day by day.</p>`);
 }
 
+const month = ym => new Date(`${ym}-15T12:00:00`).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+const longDay = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+const OTHER_WORDS = { ride: ["ride", "rides"], walk: ["walk", "walks"], hike: ["hike", "hikes"], swim: ["swim", "swims"], strength: ["strength session", "strength sessions"], workout: ["workout", "workouts"], row: ["row", "rows"], cardio: ["cardio session", "cardio sessions"], other: ["other activity", "other activities"] };
+
+function yearsPanel(today) {
+    const s = yearStats(everyRun(today), today);
+    const acts = stravaActs();
+    const hasStrava = Object.keys(acts).length > 0;
+    const invite = `<p class="tr-note">Import your Strava archive (<a href="#stravaImportPanel">below</a>) to add the years before COROS.</p>`;
+    if (!s) return panel("trendsYears", "All your running", "", `${empty("No runs saved yet.")}${invite}`);
+    const bars = s.years.map(y => ({ label: `’${String(y.year).slice(2)}`, value: y.miles, current: y.year === Number(today.slice(0, 4)), title: `${y.year}: ${Math.round(y.miles).toLocaleString()} mi, ${plural(y.runs, "run", "runs")}` }));
+    const ytd = s.ytd.lastYear > 0
+        ? `This year so far: <strong>${Math.round(s.ytd.miles).toLocaleString()} mi</strong> · last year by today: ${Math.round(s.ytd.lastYear).toLocaleString()} mi (${s.ytd.miles >= s.ytd.lastYear ? "+" : "−"}${Math.abs(Math.round((s.ytd.miles / s.ytd.lastYear - 1) * 100))}%)`
+        : `This year so far: <strong>${Math.round(s.ytd.miles).toLocaleString()} mi</strong>`;
+    const recs = [
+        ["Longest run", `${mi(s.longest.miles)} mi`, `${longDay(s.longest.date)}${s.longest.name && s.longest.name !== "Run" ? ` · ${esc(s.longest.name)}` : ""}`],
+        ["Biggest week", `${mi(s.biggestWeek.miles)} mi`, `week of ${longDay(s.biggestWeek.start)}`],
+        ["Biggest month", `${mi(s.biggestMonth.miles)} mi`, month(s.biggestMonth.month)]
+    ];
+    const f = fastestEfforts(acts);
+    const efforts = EFFORT_LABELS.filter(([key]) => f[key]).map(([key, label]) => [label, f[key].sec >= 3600 ? clock(f[key].sec) : mmss(f[key].sec), `${longDay(f[key].date)}${f[key].name ? ` · ${esc(f[key].name)}` : ""}`]);
+    const list = rows => `<ul class="tr-recs">${rows.map(([k, v, d]) => `<li><span>${k}</span><strong>${v}</strong><small>${d}</small></li>`).join("")}</ul>`;
+    const other = Object.entries(otherCounts(acts)).sort((a, b) => b[1] - a[1]).map(([type, n]) => { const [one, many] = OTHER_WORDS[type] || OTHER_WORDS.other; return plural(n, one, many); });
+    return panel("trendsYears", "All your running",
+        `<strong>${s.total.runs.toLocaleString()} runs · ${s.total.miles.toLocaleString()} mi</strong> since ${longDay(s.total.since)}${hasStrava ? " (COROS + Strava, each run counted once)" : ""}`,
+        `${barsHtml(bars)}<p class="tr-sub tr-ytd">${ytd}</p>
+        <div class="tr-cols"><div><h3 class="tr-h3">Records</h3>${list(recs)}</div>
+        <div><h3 class="tr-h3">Fastest efforts inside your runs</h3>${efforts.length ? list(efforts) : `<p class="tr-note">From the watch files in your Strava archive: the fastest mile, 5K, 10K, half and marathon found anywhere inside a run.</p>`}</div></div>
+        ${other.length ? `<p class="tr-note">Also in your Strava history: ${other.join(" · ")}.</p>` : ""}
+        ${hasStrava ? "" : invite}`);
+}
+
 export function renderTrends() {
     const el = document.getElementById("trends");
     if (!el) return;
@@ -142,7 +177,8 @@ export function renderTrends() {
         workoutsPanel(today),
         `<div class="tr-grid">${longPanel(runs)}${aerobicPanel(runs)}</div>`,
         `<div class="tr-grid">${loadPanel(today, runs)}${predictionPanel()}</div>`,
-        bodyPanel(today)
+        bodyPanel(today),
+        yearsPanel(today)
     ].join("");
 }
 
@@ -150,7 +186,8 @@ async function init() {
     const today = isoDate(new Date());
     const lapsDone = fetchLaps(keyWorkouts(today), { onBatch: renderTrends });   // marks its runs "loading" first
     renderTrends();
-    for (const e of ["eddieos:coros-history-updated", "eddieos:coros-data-updated", "sb:readiness-updated"]) window.addEventListener(e, renderTrends);
+    for (const e of ["eddieos:coros-history-updated", "eddieos:coros-data-updated", "sb:readiness-updated", STRAVA_EVENT]) window.addEventListener(e, renderTrends);
+    syncStrava();                                  // redraws through sb:strava-updated when the account's copy is newer
     if (await lapsDone) renderTrends();
     if (await backfillHealth(today)) renderTrends();
 }
