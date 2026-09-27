@@ -192,6 +192,18 @@ export async function readZipEntry(blob, entry) {
 
 // ---------- the archive ----------
 
+// Lets the page draw the progress bar between batches. A message, not a
+// timer: browsers slow timers in a tab that isn't in front (to once a
+// minute after a few minutes), which made a big archive crawl.
+function breather() {
+    if (typeof MessageChannel !== "function") return Promise.resolve();
+    return new Promise(resolve => {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = () => { channel.port1.close(); resolve(); };
+        channel.port2.postMessage(0);
+    });
+}
+
 const base = path => String(path || "").split("/").pop().toLowerCase();
 const isFit = name => /\.fit(\.gz)?$/i.test(name);
 const pad = n => String(n).padStart(2, "0");
@@ -279,7 +291,7 @@ export async function readArchive(files, { onProgress = () => {} } = {}) {
     const fits = [];                                    // [row|null, fit, name]
     for (let i = 0; i < sources.length; i++) {
         const src = sources[i];
-        if (i % 20 === 0) { onProgress({ done: i, total: sources.length }); await new Promise(r => setTimeout(r, 0)); }
+        if (i % 20 === 0) { onProgress({ done: i, total: sources.length }); await breather(); }
         try {
             let bytes = await src.read();
             if (/\.gz$/i.test(src.name)) bytes = await gunzip(bytes);

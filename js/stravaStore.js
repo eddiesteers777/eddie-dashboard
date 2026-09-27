@@ -78,8 +78,12 @@ export async function syncStrava() {
     }
 }
 
-/** Saves an updated history here and on the account; tells the page. */
-export async function saveStrava(store) {
+/**
+ * Saves an updated history on this device at once (and tells the page),
+ * then on the account. Resolves when the account has it (true) or
+ * couldn't take it (false); callers don't wait on it to carry on.
+ */
+export function saveStrava(store) {
     saveLocal(store);
     window.dispatchEvent(new CustomEvent(STRAVA_EVENT));
     return pushStrava(store);

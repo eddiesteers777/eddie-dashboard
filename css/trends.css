@@ -112,3 +112,4 @@
     .tr-minis{ grid-template-columns:1fr 1fr; }
     .tr-list li{ gap:10px; }
 }
+.sv-saving{ color:var(--muted); }

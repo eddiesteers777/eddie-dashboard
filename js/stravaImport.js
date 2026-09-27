@@ -60,17 +60,22 @@ async function importFiles(files) {
         const { store, added, updated } = mergeActivities(loadStrava(), activities);
         const imported = Object.fromEntries(activities.map(a => [a.k, store.acts[a.k]]));
         const { overlap } = combineRuns(corosRuns(), imported);
-        const saved = await saveStrava(store);
+        // Saved on this device right away; the account copy follows in the
+        // background (it can take a while on a slow connection).
+        const accountSave = saveStrava(store);
         const runs = activities.filter(a => a.y === "run").length;
         const parts = [
             `Read ${plural(activities.length, "activity", "activities")} (${plural(runs, "run", "runs")}): ${n(added)} new${updated ? `, ${n(updated)} updated` : ""}.`,
             overlap ? `${plural(overlap, "run was", "runs were")} already here from COROS, so ${overlap === 1 ? "it's" : "they're"} counted once.` : "",
-            stats.unreadable ? `${plural(stats.unreadable, "file", "files")} couldn't be read.` : "",
-            saved ? "" : "Saved on this device; it goes to your account next time you're online."
+            stats.unreadable ? `${plural(stats.unreadable, "file", "files")} couldn't be read.` : ""
         ];
-        result.textContent = parts.filter(Boolean).join(" ");
+        result.innerHTML = `${parts.filter(Boolean).join(" ")} <span class="sv-saving" data-el="saving">Saving to your account…</span>`;
         result.hidden = false;
         toast(added ? "Strava history imported" : "Strava history up to date");
+        accountSave.then(ok => {
+            const el = result.querySelector('[data-el="saving"]');
+            if (el) el.textContent = ok ? "Saved to your account." : "Saved on this device; it goes to your account the next time you open Analytics online.";
+        });
     } catch (error) {
         result.textContent = /zip/i.test(error?.message || "") ? error.message : friendlyError(error, "read that archive");
         result.classList.add("is-error");
