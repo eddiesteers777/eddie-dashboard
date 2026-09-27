@@ -749,3 +749,23 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
     .pw-gen-grid{ grid-template-columns:1fr 1fr; }
     .pw-gen-grid .pw-label{ font-size:13px; }
 }
+
+/* ---- What the client sees (js/planWindow.js): this week and next ---- */
+.pw-week-hidden{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:2px 8px;
+    border:1px dashed var(--border);
+    border-radius:999px;
+    color:var(--muted);
+    font-size:11.5px;
+    font-weight:700;
+}
+.pw-see{ display:grid; gap:8px; margin:0; padding:0; border:0; }
+.pw-see legend{ margin-bottom:6px; padding:0; }
+.pw-see .pw-check{ align-items:flex-start; min-height:32px; }
+.pw-see .pw-check input{ margin-top:2px; flex-shrink:0; }
+.pw-hidden-changes{ display:flex; align-items:flex-start; gap:6px; }
+.pw-version.is-auto{ padding:8px 0; }
+.pw-version.is-auto .pw-meta{ display:inline-flex; align-items:flex-start; gap:6px; font-weight:500; }

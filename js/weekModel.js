@@ -61,7 +61,9 @@ export function planContext(plans, date) {
         const weeks = plan.generatedPlan?.weeks || [];
         const index = weeks.findIndex(w => (w.days || []).some(d => d.date === date));
         if (index >= 0) {
-            return { planId: plan.id, planName: plan.name || "Your plan", weekNumber: weeks[index].week ?? index + 1, totalWeeks: weeks.length, phase: weeks[index].phase || "" };
+            // A coach plan shown two weeks at a time still counts all its weeks.
+            const totalWeeks = plan.generatedPlan.window?.totalWeeks || weeks.length;
+            return { planId: plan.id, planName: plan.name || "Your plan", weekNumber: weeks[index].week ?? index + 1, totalWeeks, phase: weeks[index].phase || "" };
         }
     }
     return null;

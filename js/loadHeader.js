@@ -226,6 +226,11 @@ fetch("components/header.html")
                 const { getNavAccess, applyNavAccess } = await import("./navAccess.js");
                 const access = await getNavAccess();
                 applyNavAccess(document, access);
+                // Coaches: open each client's next week of their plan when it's due
+                // (clients see this week and next; js/planRelease.js, once a day).
+                if (access.isCoach) {
+                    import("./planRelease.js").then(m => m.releaseDuePlans()).catch(() => {});
+                }
                 // Clients: let the coach see when they last opened the app.
                 if (!access.isCoach && access.status === "active") {
                     import("./userProfile.js").then(m => m.touchLastSeen()).catch(() => {});

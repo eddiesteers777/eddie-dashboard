@@ -45,8 +45,13 @@ rules_version = '2';
 //                              that they viewed / acknowledged a version.
 //     .../versions/{n}         Each published version. Written once by
 //                              the coach, never changed or deleted.
+//                              A version holds only the weeks the client
+//                              may see (this week and next, unless the
+//                              coach shows the whole plan).
 //   coachingPlanDrafts/{id}    The coach's work in progress. Coach only --
 //                              the client never sees an unpublished plan.
+//   coachingPlanMasters/{id}   The coach's whole published plan, weeks the
+//                              client can't see yet included. Coach only.
 //   workoutResults/{client_plan_date[_strength]}  How a client's planned
 //                              workout went (done/skipped, distance, time,
 //                              effort, pain, note; for strength, the sets
@@ -314,7 +319,19 @@ service cloud.firestore {
         && d.coachNote is string && d.coachNote.size() <= 2000
         && d.changes is list && d.changes.size() <= 40
         && d.startDate is string && d.endDate is string
-        && d.coachName is string && d.coachName.size() <= 100;
+        && d.coachName is string && d.coachName.size() <= 100
+        && validPlanWindow(d);
+    }
+
+    // What the client sees: through a date (this week and next), or the
+    // whole plan. noticeVersion is the newest version worth telling them
+    // about (the coach's app opening the next week isn't news). All three
+    // are optional: plans published before them are shown whole.
+    function validPlanWindow(d) {
+      return (!("noticeVersion" in d) || (d.noticeVersion is int && d.noticeVersion >= 1 && d.noticeVersion <= d.version))
+        && (!("releasedThrough" in d) || d.releasedThrough == null
+            || (d.releasedThrough is string && d.releasedThrough.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (!("showAll" in d) || d.showAll is bool);
     }
 
     function versionPath(planId, version) {
@@ -330,7 +347,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(["coachUid", "coachName", "clientUid", "name", "kind", "status",
              "version", "publishedAt", "coachNote", "changes", "startDate", "endDate", "createdAt", "updatedAt",
-             "viewedVersion", "viewedAt", "ackVersion", "ackAt", "adoptedFrom"])
+             "viewedVersion", "viewedAt", "ackVersion", "ackAt", "adoptedFrom", "noticeVersion", "releasedThrough", "showAll"])
         // The client's own plan this one replaces (their app retires it).
         && (!("adoptedFrom" in request.resource.data) || request.resource.data.adoptedFrom == null
             || (request.resource.data.adoptedFrom is map
@@ -351,18 +368,20 @@ service cloud.firestore {
         && existsAfter(versionPath(planId, 1));
 
       // Coach: publish the next version (with its version doc in the same
-      // batch) or archive/restore. Never re-points the plan to another
-      // client, never goes back a version.
+      // batch), open the next week (a version too, publishedAt kept), or
+      // archive/restore. Never re-points the plan to another client,
+      // never goes back a version.
       allow update: if signedIn()
         && resource.data.coachUid == request.auth.uid
         && linked(request.auth.uid, resource.data.clientUid)
         && onlyChanges(["name", "kind", "status", "version", "publishedAt", "coachNote", "changes",
-             "startDate", "endDate", "updatedAt", "coachName"])
+             "startDate", "endDate", "updatedAt", "coachName", "noticeVersion", "releasedThrough", "showAll"])
         && validPlanHeaderFields(request.resource.data)
         && request.resource.data.updatedAt == request.time
         && (request.resource.data.version == resource.data.version
             || (request.resource.data.version == resource.data.version + 1
-                && request.resource.data.publishedAt == request.time
+                && (request.resource.data.publishedAt == request.time
+                    || request.resource.data.publishedAt == resource.data.publishedAt)
                 && existsAfter(versionPath(planId, request.resource.data.version))));
 
       // Client: only "I've seen it" / "Got it", for a version that exists,
@@ -390,7 +409,11 @@ service cloud.firestore {
         // Written once, alongside the header that points at it.
         allow create: if signedIn()
           && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "planId", "version", "name", "kind",
-               "plan", "changes", "coachNote", "publishedAt"])
+               "plan", "changes", "coachNote", "publishedAt", "releasedThrough", "auto"])
+          && (!("releasedThrough" in request.resource.data) || request.resource.data.releasedThrough == null
+              || (request.resource.data.releasedThrough is string
+                  && request.resource.data.releasedThrough.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && (!("auto" in request.resource.data) || request.resource.data.auto is bool)
           && request.resource.data.coachUid == request.auth.uid
           && linked(request.auth.uid, request.resource.data.clientUid)
           && request.resource.data.planId == planId
@@ -424,6 +447,24 @@ service cloud.firestore {
         && request.resource.data.name is string && request.resource.data.name.size() <= 120
         && request.resource.data.plan is map
         && request.resource.data.updatedAt == request.time;
+    }
+
+    // The coach's whole published plan, including the weeks the client
+    // can't see yet (their versions hold only this week and next). No
+    // client clause: the client can never read ahead. Kept, not deleted.
+    match /coachingPlanMasters/{planId} {
+      allow read: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "plan", "version", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && (resource == null || (resource.data.coachUid == request.auth.uid
+            && resource.data.clientUid == request.resource.data.clientUid))
+        && request.resource.data.plan is map
+        && request.resource.data.version is int && request.resource.data.version >= 1
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
     }
 
     // ---- Workout results: the client owns what they did ----

@@ -504,6 +504,62 @@ test("coaching plans: the client can only say they saw it / got it", async () =>
     await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1/versions/2"), { plan: {} }));
 });
 
+// ---- Rolling plans: the client sees this week and next ----
+
+const master = extra => ({ coachUid: "coach", clientUid: "client", plan: PLAN, version: 1, updatedAt: serverTimestamp(), ...extra });
+
+test("rolling plans: the coach's whole plan is coach-only; publishing writes it with the window", async () => {
+    await seedLinkAndBooking();
+    // As js/coachingPlans.js publishes: header + window version + the whole plan, one batch.
+    const coachDb = as("coach");
+    const batch = writeBatch(coachDb);
+    batch.set(doc(coachDb, "coachingPlans/p1"), header({ noticeVersion: 1, releasedThrough: "2026-10-11", showAll: false }));
+    batch.set(doc(coachDb, "coachingPlans/p1/versions/1"), version(1, { releasedThrough: "2026-10-11", auto: false }));
+    batch.set(doc(coachDb, "coachingPlanMasters/p1"), master());
+    await assertSucceeds(batch.commit());
+    await assertSucceeds(getDoc(doc(as("coach"), "coachingPlanMasters/p1")));
+    // The client (and anyone else) can never read ahead.
+    await assertFails(getDoc(doc(as("client"), "coachingPlanMasters/p1")));
+    await assertFails(getDocs(query(collection(as("client"), "coachingPlanMasters"), where("clientUid", "==", "client"))));
+    await assertFails(getDoc(doc(as("stranger"), "coachingPlanMasters/p1")));
+    await assertSucceeds(getDoc(doc(as("client"), "coachingPlans/p1/versions/1")));
+    // Only the linked coach writes it, only known fields, never re-pointed or deleted.
+    await assertFails(setDoc(doc(as("client"), "coachingPlanMasters/p2"), master({ coachUid: "client" })));
+    await assertFails(setDoc(doc(as("coach"), "coachingPlanMasters/p3"), master({ clientUid: "stranger" })));
+    await assertFails(setDoc(doc(as("coach"), "coachingPlanMasters/p1"), master({ clientUid: "stranger" })));
+    await assertFails(setDoc(doc(as("coach"), "coachingPlanMasters/p1"), master({ secret: true })));
+    await assertFails(setDoc(doc(as("coach"), "coachingPlanMasters/p1"), master({ version: 0 })));
+    await assertSucceeds(setDoc(doc(as("coach"), "coachingPlanMasters/p1"), master({ version: 2 })));
+    await assertFails(deleteDoc(doc(as("coach"), "coachingPlanMasters/p1")));
+});
+
+test("rolling plans: opening the next week keeps the publish date and the notice; the client can't move the window", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(firstPublish(as("coach"), { head: { noticeVersion: 1, releasedThrough: "2026-10-11", showAll: false }, ver: { releasedThrough: "2026-10-11", auto: false } }));
+    // The coach's app finds its plans and opens the next week: a new version, same publishedAt.
+    await assertSucceeds(getDocs(query(collection(as("coach"), "coachingPlans"), where("coachUid", "==", "coach"))));
+    const coachDb = as("coach");
+    const release = writeBatch(coachDb);
+    release.update(doc(coachDb, "coachingPlans/p1"), { version: 2, releasedThrough: "2026-10-18", updatedAt: serverTimestamp() });
+    release.set(doc(coachDb, "coachingPlans/p1/versions/2"), version(2, { releasedThrough: "2026-10-18", auto: true, publishedAt: serverTimestamp() }));
+    await assertSucceeds(release.commit());
+    // Got it on the newest version is still fine.
+    await assertSucceeds(updateDoc(doc(as("client"), "coachingPlans/p1"), { ackVersion: 2, ackAt: serverTimestamp() }));
+    // Bad values.
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1"), { noticeVersion: 3, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1"), { releasedThrough: "next week", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), "coachingPlans/p1"), { showAll: "yes", updatedAt: serverTimestamp() }));
+    await assertFails(publishNext(as("coach"), 3, { ver: { auto: "yes" } }));
+    await assertFails(publishNext(as("coach"), 3, { ver: { releasedThrough: "soon" } }));
+    // A publish with a made-up date is still refused.
+    await assertFails(publishNext(as("coach"), 3, { head: { publishedAt: Timestamp.fromMillis(Date.now() - DAY) } }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "coachingPlans/p1"), { showAll: true, releasedThrough: "2026-10-04", updatedAt: serverTimestamp() }));
+    // The client can't open weeks, show the whole plan or silence the notice themselves.
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { releasedThrough: "2026-12-31" }));
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { showAll: false }));
+    await assertFails(updateDoc(doc(as("client"), "coachingPlans/p1"), { noticeVersion: 2 }));
+});
+
 test("plan drafts: coach only -- the client never sees an unpublished plan", async () => {
     await seedLinkAndBooking();
     const draft = extra => ({ coachUid: "coach", clientUid: "client", name: "Winter base", kind: "training", plan: PLAN, basedOnVersion: 0, adoptedFrom: null, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra });

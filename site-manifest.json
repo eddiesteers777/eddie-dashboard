@@ -124,6 +124,8 @@
     "js/personalRecords.js",
     "js/planGenerateDialogs.js",
     "js/planOps.js",
+    "js/planRelease.js",
+    "js/planWindow.js",
     "js/planWorkspace.js",
     "js/plannerEvents.js",
     "js/profile.js",

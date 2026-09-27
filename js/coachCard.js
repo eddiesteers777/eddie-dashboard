@@ -17,6 +17,7 @@ import { getMyClientRecord } from "./clientRecords.js";
 import { isIntakeComplete } from "./clientRecordSchema.js";
 import { listMyUpdates } from "./clientNotes.js";
 import { listMyPlans } from "./coachingPlans.js";
+import { awaitingAck, noticeVersionOf } from "./planWindow.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
 
@@ -81,11 +82,11 @@ export async function renderCoachCard(container) {
     const rows = [];
 
     // ---- A plan the coach published and they haven't said "Got it" to ----
-    for (const plan of plans.filter(p => p.status === "active" && (p.ackVersion || 0) < p.version)) {
+    for (const plan of plans.filter(awaitingAck)) {
         rows.push(row({
             iconName: "calendar",
             color: "var(--primary)",
-            title: plan.version > 1 ? "Your plan was updated" : "Your plan is ready",
+            title: noticeVersionOf(plan) > 1 ? "Your plan was updated" : "Your plan is ready",
             detail: `${plan.name}${plan.changes?.length ? ` · ${plan.changes.length} change${plan.changes.length === 1 ? "" : "s"}` : ""}`,
             note: plan.coachNote ? (plan.coachNote.length > 140 ? `${plan.coachNote.slice(0, 140).trim()}…` : plan.coachNote) : "",
             link: `plan.html?plan=${encodeURIComponent(plan.id)}`

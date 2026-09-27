@@ -12,6 +12,9 @@
        the client's done marks shown read-only
      - Save draft (only the coach sees it) / Review & publish (shows
        exactly what changes, optional note, then the client gets it)
+     - what the client sees: this week and next (the default; each new
+       week opens by itself, js/planRelease.js) or the whole plan. Weeks
+       they can't see yet are marked in the editor (js/planWindow.js).
      - version history
    Data: js/coachingPlans.js. Change lists: js/coachingPlanModel.js.
    Replaces the old edit-the-client's-copy editor (js/planEditor.js):
@@ -23,8 +26,9 @@
 ========================================== */
 
 import {
-    newPlanId, saveDraft, deleteDraft, publishPlan, setPlanArchived, listVersions, previewChanges
+    newPlanId, saveDraft, deleteDraft, publishPlan, publishPreview, setPlanArchived, listVersions, previewChanges
 } from "./coachingPlans.js";
+import { noticeVersionOf, isRolling, releaseThrough, opensOn, weekHidden } from "./planWindow.js";
 import {
     DAY_TYPES, typeLabel, blankPlan, addWeeks, stripRuntime, recalcPlannedMiles, planDateRange,
     changeLines, shortDay, isoDate
@@ -85,12 +89,20 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         return marks;
     }
 
+    // What the client sees of a published plan, in a few words.
+    function seesText(h) {
+        if (isRolling(h)) return `Sees through ${shortDay(h.releasedThrough)}`;
+        return h.showAll ? "Sees the whole plan" : "";
+    }
+
     function statusChips(h) {
         const chips = [];
+        const notice = noticeVersionOf(h);
         if (h.status === "archived") chips.push(`<span class="pw-chip">Archived</span>`);
-        else if ((h.ackVersion || 0) >= h.version) chips.push(`<span class="pw-chip is-good">${icon("check")} Got it ${esc(niceDate(toMillis(h.ackAt)))}</span>`);
-        else if ((h.viewedVersion || 0) >= h.version) chips.push(`<span class="pw-chip">${icon("eye")} Seen ${esc(niceDate(toMillis(h.viewedAt)))}</span>`);
+        else if ((h.ackVersion || 0) >= notice) chips.push(`<span class="pw-chip is-good">${icon("check")} Got it ${esc(niceDate(toMillis(h.ackAt)))}</span>`);
+        else if ((h.viewedVersion || 0) >= notice) chips.push(`<span class="pw-chip">${icon("eye")} Seen ${esc(niceDate(toMillis(h.viewedAt)))}</span>`);
         else chips.push(`<span class="pw-chip is-wait">Not opened yet</span>`);
+        if (h.status === "active" && seesText(h)) chips.push(`<span class="pw-chip">${icon(isRolling(h) ? "lock" : "eye")} ${esc(seesText(h))}</span>`);
         if (drafts().some(d => d.id === h.id)) chips.push(`<span class="pw-chip is-draft">${icon("edit")} Unpublished changes</span>`);
         return chips.join("");
     }
@@ -110,7 +122,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 <div class="pw-head">
                     <div>
                         <h2>${esc(first)}'s plans</h2>
-                        <p class="clients-card-note">You build it here; ${esc(first)} sees it once you publish. Every published version is kept.</p>
+                        <p class="clients-card-note">You build it here; ${esc(first)} sees it once you publish, this week and next, with each new week opening as they go. Every published version is kept.</p>
                     </div>
                     <button type="button" class="sb-btn sb-btn-primary" data-act="new">${icon("plus")} New plan</button>
                 </div>
@@ -119,7 +131,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                     <div class="clients-card pw-plan">
                         <div class="pw-plan-main">
                             <strong>${esc(h.name)}</strong>
-                            <span class="pw-meta">Version ${h.version} · published ${esc(niceDate(toMillis(h.publishedAt)))}${range(h) ? ` · ${esc(range(h))}` : ""}</span>
+                            <span class="pw-meta">Published ${esc(niceDate(toMillis(h.publishedAt)))}${range(h) ? ` · ${esc(range(h))}` : ""}</span>
                             <div class="pw-chips">${statusChips(h)}</div>
                         </div>
                         <button type="button" class="sb-btn sb-btn-secondary" data-act="open" data-id="${esc(h.id)}">Open</button>
@@ -159,7 +171,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                         <summary>Archived (${archived.length})</summary>
                         ${archived.map(h => `
                             <div class="pw-plan pw-plan-archived">
-                                <div class="pw-plan-main"><strong>${esc(h.name)}</strong><span class="pw-meta">Version ${h.version}</span></div>
+                                <div class="pw-plan-main"><strong>${esc(h.name)}</strong><span class="pw-meta">Published ${esc(niceDate(toMillis(h.publishedAt)))}</span></div>
                                 <button type="button" class="sb-btn sb-btn-tertiary" data-act="restore" data-id="${esc(h.id)}">Restore</button>
                             </div>`).join("")}
                     </details>` : ""}
@@ -201,14 +213,30 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         renderEditor();
     }
 
+    // The last date the client sees (null = the whole plan): what's
+    // published, or for a new plan what publishing today would show.
+    function visibleThrough() {
+        const h = state.editing.header;
+        if (h && !isRolling(h)) return null;
+        if (h) return h.releasedThrough;
+        return releaseThrough(state.editing.plan, isoDate(new Date()));
+    }
+
     function editorStatus() {
         const e = state.editing;
         if (!e.header) return `Not published yet. ${esc(first)} can't see this until you publish it.`;
         const h = e.header;
-        const seen = (h.ackVersion || 0) >= h.version ? `${esc(first)} tapped "Got it" ${esc(niceDate(toMillis(h.ackAt)))}`
-            : (h.viewedVersion || 0) >= h.version ? `${esc(first)} saw it ${esc(niceDate(toMillis(h.viewedAt)))}`
+        const notice = noticeVersionOf(h);
+        const seen = (h.ackVersion || 0) >= notice ? `${esc(first)} tapped "Got it" ${esc(niceDate(toMillis(h.ackAt)))}`
+            : (h.viewedVersion || 0) >= notice ? `${esc(first)} saw it ${esc(niceDate(toMillis(h.viewedAt)))}`
             : `${esc(first)} hasn't opened it yet`;
-        return `Version ${h.version} published ${esc(niceDate(toMillis(h.publishedAt)))} · ${seen}.`;
+        let sees = h.showAll ? ` ${esc(first)} sees the whole plan.` : "";
+        if (isRolling(h)) {
+            const hidden = (e.plan.weeks || []).findIndex((w, i) => weekHidden(e.plan, i, h.releasedThrough));
+            const next = hidden >= 0 ? opensOn(e.plan, hidden) : null;
+            sees = ` ${esc(first)} sees through ${esc(shortDay(h.releasedThrough))}.${next ? ` The next week opens for them ${esc(shortDay(next))} (Southbound does it the next time you open the app).` : ""}`;
+        }
+        return `Published ${esc(niceDate(toMillis(h.publishedAt)))} · ${seen}.${sees}`;
     }
 
     function renderEditor({ keepScroll = false } = {}) {
@@ -219,6 +247,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         const today = isoDate(new Date());
         const weeks = e.plan.weeks || [];
         const currentIndex = weeks.findIndex(w => (w.days || []).some(d => d.date === today));
+        const through = visibleThrough();
 
         container.innerHTML = `
             <div class="pw pw-editor">
@@ -241,6 +270,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                                 Week ${week.week ?? wi + 1}
                                 <input class="pw-phase" type="text" maxlength="40" value="${esc(week.phase || "")}" placeholder="Phase (optional)" aria-label="Week ${wi + 1} phase" data-field="phase">
                                 ${wi === currentIndex ? `<span class="clients-week-now">This week</span>` : ""}
+                                ${weekHidden(e.plan, wi, through) ? `<span class="pw-week-hidden" title="${esc(first)} can't see this week yet">${icon("lock")} ${opensOn(e.plan, wi) ? `Opens ${esc(shortDay(opensOn(e.plan, wi)))}` : "Not shown yet"}</span>` : ""}
                                 <span class="clients-week-done" data-el="miles-${wi}">${week.plannedMiles || 0} mi</span>
                                 <button type="button" class="sb-btn sb-btn-icon pw-menu-btn" data-act="week-menu" aria-label="Week ${wi + 1} options: copy, templates, clear">${icon("moreVertical")}</button>
                             </div>
@@ -290,13 +320,16 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             const versions = await listVersions(state.editing.planId);
             el.innerHTML = `
                 <details class="pw-archived">
-                    <summary>Version history (${versions.length})</summary>
-                    ${versions.map(v => `
+                    <summary>Version history (${versions.filter(v => !v.auto).length})</summary>
+                    ${versions.map(v => v.auto ? `
+                        <div class="pw-version is-auto">
+                            <span class="pw-meta">${icon("lock")} ${esc(niceDate(toMillis(v.publishedAt)))} · the next week opened for ${esc(first)} (through ${esc(shortDay(v.releasedThrough || ""))})</span>
+                        </div>` : `
                         <div class="pw-version">
-                            <strong>Version ${v.version}</strong>
+                            <strong>${v.version === 1 ? "First published" : "Update"}</strong>
                             <span class="pw-meta">${esc(niceDate(toMillis(v.publishedAt)))}</span>
                             ${v.coachNote ? `<p class="hub-quote">"${esc(v.coachNote)}"</p>` : ""}
-                            ${v.changes?.length ? `<ul>${v.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : `<p class="pw-meta">${v.version === 1 ? "First version." : "No day-by-day changes."}</p>`}
+                            ${v.changes?.length ? `<ul>${v.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : (v.version === 1 ? "" : `<p class="pw-meta">${"releasedThrough" in v ? `No changes ${esc(first)} could see yet.` : "No day-by-day changes."}</p>`)}
                         </div>`).join("")}
                 </details>`;
         } catch (error) {
@@ -642,7 +675,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
 
     async function discard() {
         const e = state.editing;
-        if (!(await sbConfirm(`You'll be back to version ${e.header.version}, the one ${first} has.`, { title: "Discard this draft?", confirmLabel: "Discard", danger: true }))) return;
+        if (!(await sbConfirm(`You'll be back to the plan you last published.`, { title: "Discard this draft?", confirmLabel: "Discard", danger: true }))) return;
         await deleteDraft(e.planId);
         data.planDrafts = drafts().filter(d => d.id !== e.planId);
         toast("Draft discarded");
@@ -1004,60 +1037,105 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
 
     function review() {
         const e = state.editing;
-        if (!e.name.trim()) { toast("Give the plan a name first.", { type: "info" }); return; }
+        const name = e.name.trim();
+        if (!name) { toast("Give the plan a name first.", { type: "info" }); return; }
         const firstPublish = !e.header;
-        const changes = firstPublish ? [] : previewChanges(e.header.plan, e.plan);
-        const renamed = !firstPublish && e.header.name !== e.name.trim();
-        if (!firstPublish && !changes.length && !renamed) {
-            toast(`Nothing has changed since version ${e.header.version}.`, { type: "info" });
-            return;
-        }
-        const lines = changeLines(changes, { limit: 30 });
+        const today = isoDate(new Date());
+        const wasAll = Boolean(e.header?.showAll);
+        const anyChange = firstPublish || previewChanges(e.header.plan, e.plan).length > 0 || e.header.name !== name;
         const { startDate, endDate } = planDateRange(e.plan);
+        const weekCount = e.plan.weeks.length;
         const d = dialog(`
             <form class="sb-dialog-form">
-                <h2 class="sb-dialog-title">${firstPublish ? `Publish to ${esc(first)}?` : `Publish version ${e.header.version + 1}?`}</h2>
-                ${firstPublish
-                    ? `<p class="sb-dialog-message"><strong>${esc(e.name)}</strong>: ${e.plan.weeks.length} week${e.plan.weeks.length === 1 ? "" : "s"}, ${esc(shortDay(startDate))} – ${esc(shortDay(endDate))}.${e.adoptedFrom ? ` It replaces the plan ${esc(first)} made in their app (their done marks carry over).` : ""}</p>`
-                    : `<div class="pw-changes"><p class="pw-label">What ${esc(first)} will see changed</p><ul>${renamed ? `<li>Renamed to "${esc(e.name.trim())}"</li>` : ""}${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul></div>`}
+                <h2 class="sb-dialog-title">${firstPublish ? `Publish to ${esc(first)}?` : anyChange ? `Publish your changes to ${esc(first)}?` : `Change what ${esc(first)} sees?`}</h2>
+                ${firstPublish ? `<p class="sb-dialog-message"><strong>${esc(name)}</strong>: ${weekCount} week${weekCount === 1 ? "" : "s"}, ${esc(shortDay(startDate))} – ${esc(shortDay(endDate))}.${e.adoptedFrom ? ` It replaces the plan ${esc(first)} made in their app (their done marks carry over).` : ""}</p>` : ""}
+                ${!anyChange ? `<p class="sb-dialog-message">No days have changed since you last published.</p>` : ""}
+                <fieldset class="pw-see">
+                    <legend class="pw-label">What ${esc(first)} sees</legend>
+                    <label class="pw-check"><input type="radio" name="see" value="window"${wasAll ? "" : " checked"}> <span>This week and next <span class="pw-meta">— each new week opens as they go</span></span></label>
+                    <label class="pw-check"><input type="radio" name="see" value="all"${wasAll ? " checked" : ""}> <span>The whole plan</span></label>
+                </fieldset>
+                <div data-el="preview"></div>
                 <label class="pw-label">A note to ${esc(first)} (optional)
                     <textarea class="sb-dialog-input" name="note" rows="3" maxlength="2000" placeholder="${firstPublish ? "Here's your plan. Start easy this week..." : "Backing off Saturday because of your fatigue this week."}"></textarea>
                 </label>
-                <p class="sb-dialog-message">${esc(first)} gets an email and sees it in their app with a "Got it" button.</p>
+                <p class="sb-dialog-message" data-el="tell"></p>
                 <div class="sb-dialog-actions">
                     <button type="button" class="sb-btn sb-btn-secondary" data-cancel>Keep editing</button>
                     <button type="submit" class="sb-btn sb-btn-primary">${icon("send")} Publish to ${esc(first)}</button>
                 </div>
             </form>`);
+        const form = d.querySelector("form");
+        const submit = form.querySelector('button[type="submit"]');
+        const showAll = () => form.elements.see.value === "all";
+        const preview = () => publishPreview({
+            header: e.header, previousPlan: e.header?.plan || null, plan: e.plan, name,
+            coachNote: form.elements.note.value, showAll: showAll(), today
+        });
+        function update() {
+            const p = preview();
+            const sees = showAll() ? `${first} sees all ${weekCount} week${weekCount === 1 ? "" : "s"}.`
+                : p.through ? `${first} sees through ${shortDay(p.through)}. After that, each new week opens for them on its own.` : "";
+            form.querySelector('[data-el="preview"]').innerHTML = `
+                ${!firstPublish && p.lines.length ? `<div class="pw-changes"><p class="pw-label">What ${esc(first)} will see changed</p><ul>${p.lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul></div>` : ""}
+                ${!firstPublish && p.hidden ? `<p class="pw-meta pw-hidden-changes">${icon("lock")} ${p.hidden} more change${p.hidden === 1 ? "" : "s"} in weeks ${esc(first)} can't see yet. They'll just see those days when the weeks open.</p>` : ""}
+                ${sees ? `<p class="pw-meta">${esc(sees)}</p>` : ""}`;
+            form.querySelector('[data-el="tell"]').textContent = p.notice
+                ? `${first} gets an email and sees it in their app with a "Got it" button.`
+                : `Nothing ${first} can see has changed, so no email or notice goes out.`;
+            submit.disabled = !anyChange && showAll() === wasAll;
+        }
+        form.addEventListener("input", update);
+        form.addEventListener("change", update);
+        update();
         d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
-        d.querySelector("form").addEventListener("submit", async ev => {
+        form.addEventListener("submit", async ev => {
             ev.preventDefault();
-            const btn = ev.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
+            submit.disabled = true;
             try {
                 const header = await publishPlan({
                     planId: e.planId, clientUid, clientName, clientEmail,
-                    name: e.name.trim(), kind: e.kind, plan: e.plan,
-                    coachNote: new FormData(ev.target).get("note"),
-                    header: e.header, previousPlan: e.header?.plan || null, adoptedFrom: e.adoptedFrom
+                    name, kind: e.kind, plan: e.plan,
+                    coachNote: form.elements.note.value,
+                    header: e.header, previousPlan: e.header?.plan || null, adoptedFrom: e.adoptedFrom,
+                    showAll: showAll(), today
                 });
-                header.plan = recalcPlannedMiles(stripRuntime(e.plan));
                 const list = data.coachingPlans || (data.coachingPlans = []);
                 const i = list.findIndex(h => h.id === e.planId);
                 if (i >= 0) list[i] = header; else list.push(header);
                 data.planDrafts = drafts().filter(x => x.id !== e.planId);
                 d.close();
-                toast(`Published${header.version > 1 ? ` version ${header.version}` : ""} to ${first}. They'll get an email.`);
+                toast(header.notice ? `Published to ${first}. They'll get an email.` : `Published. Nothing ${first} can see changed, so no email went out.`);
                 state.editing.dirty = false;
                 onChange?.();
                 renderList();
             } catch (error) {
                 console.error("Publishing failed:", error);
-                btn.disabled = false;
+                submit.disabled = false;
                 toast(friendlyError(error, "publish that"), { type: "error" });
             }
         });
     }
+
+    // The coach's app opened a client's next week (js/planRelease.js): keep what's shown current.
+    const onReleased = ev => {
+        if (!container.isConnected) { window.removeEventListener("sb:plans-released", onReleased); return; }
+        let touched = false;
+        for (const r of ev.detail || []) {
+            const h = published().find(x => x.id === r.id);
+            if (!h) continue;
+            h.version = (h.version || 0) + 1;
+            h.releasedThrough = r.through;
+            touched = true;
+        }
+        if (!touched) return;
+        if (state.view === "list") renderList();
+        else {
+            const status = container.querySelector('[data-el="status"]');
+            if (status) status.innerHTML = editorStatus();
+        }
+    };
+    window.addEventListener("sb:plans-released", onReleased);
 
     renderList();
     return {

@@ -26,6 +26,7 @@
 
 import { isIntakeComplete, athleteDisplayName } from "./clientRecordSchema.js";
 import { mergeRuntimeByDate } from "./coachingPlanModel.js";
+import { awaitingView, noticeVersionOf } from "./planWindow.js";
 import { checkinFlags, reasonLabel } from "./feedbackModel.js";
 
 export const SERVICE_LABELS = {
@@ -73,16 +74,16 @@ export function serviceLabels(services = []) {
 
 // ---------- Plans ----------
 
-// published: coachingPlans headers, each with the current version's
-// `plan` when known. The client's mirrored copy (shared.coachPlans) has
-// their "done" marks; until their app has pulled the newest version,
-// the published plan stands in (with whatever marks the copy has).
+// published: coachingPlans headers, each with the whole published `plan`
+// when known (the coach's master: the client's own copy holds only the
+// weeks they can see). The prescription comes from it; the client's
+// mirrored copy (shared.coachPlans) gives their "done" marks by date.
+// Without it, the copy stands in.
 function allPlans(shared, published = []) {
     const copies = (shared?.coachPlans || []).map(p => ({ ...p, planType: "coach" }));
-    const coach = copies.filter(c => !published.some(h => h.id === c.coachPlanId && h.plan && (c.coachVersion || 0) < h.version));
+    const coach = copies.filter(c => !published.some(h => h.id === c.coachPlanId && h.plan));
     for (const h of published) {
         const copy = copies.find(c => c.coachPlanId === h.id);
-        if (copy && (copy.coachVersion || 0) >= h.version) continue;
         if (!h.plan) continue;
         // Done marks: from their copy, or (first version, not synced yet)
         // from their own plan the coach took over.
@@ -114,8 +115,9 @@ export function planPosition(program, today) {
     const weeks = program?.generatedPlan?.weeks || [];
     if (!weeks.length) return null;
     const startDate = weeks[0].startDate || weeks[0].days?.[0]?.date || null;
-    const endDate = weekEnd(weeks.at(-1));
-    const totalWeeks = weeks.length;
+    // A coach plan shown two weeks at a time knows its real length.
+    const endDate = program.generatedPlan.window?.endDate || weekEnd(weeks.at(-1));
+    const totalWeeks = program.generatedPlan.window?.totalWeeks || weeks.length;
     if (startDate && today < startDate) return { state: "upcoming", week: weeks[0], weekNumber: 1, totalWeeks, startDate, endDate };
     if (endDate && today > endDate) return { state: "finished", week: weeks.at(-1), weekNumber: totalWeeks, totalWeeks, startDate, endDate };
     const index = weeks.findIndex(w => {
@@ -292,11 +294,11 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     // A plan update they haven't opened after two days.
     for (const h of coachingPlans) {
         const published = toMillis(h.publishedAt);
-        if (h.status !== "active" || (h.viewedVersion || 0) >= h.version || !published) continue;
+        if (!awaitingView(h) || !published) continue;
         if (published <= new Date(`${today}T00:00:00`).getTime() - 2 * 86400000) {
             items.push({
                 kind: "plan-unseen",
-                text: h.version > 1 ? `Hasn't opened your ${h.name} update (v${h.version})` : `Hasn't opened ${h.name} yet`,
+                text: noticeVersionOf(h) > 1 ? `Hasn't opened your ${h.name} update` : `Hasn't opened ${h.name} yet`,
                 tab: "plan"
             });
         }
@@ -343,8 +345,8 @@ export function buildTimeline({ profile, link, checkins, requests, record, updat
         if (c.status === "resolved") push(c.resolvedAt, "change-reply", `You answered their change request`);
     }
     for (const h of coachingPlans || []) {
-        push(h.publishedAt, "plan-published", `You published ${h.name}${h.version > 1 ? ` (v${h.version})` : ""}`);
-        if (h.ackVersion) push(h.ackAt, "plan-ack", `Got your plan${h.ackVersion > 1 ? ` update (v${h.ackVersion})` : ""}`);
+        push(h.publishedAt, "plan-published", `You published ${noticeVersionOf(h) > 1 ? `an update to ${h.name}` : h.name}`);
+        if (h.ackVersion) push(h.ackAt, "plan-ack", `Got your plan${h.ackVersion > 1 ? " update" : ""}`);
     }
     for (const u of updates || []) {
         push(u.createdAt, "update", "You sent them an update");

@@ -8,7 +8,9 @@
      sharedPlans (js/coachAccess.js readSharedPlanDoc)
      checkins    (js/checkins.js listCheckinsForMyClients)
      bookingRequests (js/scheduling.js listRequestsForMyClients)
-     coachingPlans / drafts (js/coachingPlans.js) -- plans the coach publishes
+     coachingPlans / drafts / masters (js/coachingPlans.js) -- plans the
+               coach publishes; `plan` is the whole plan, not the client's
+               two-week window
      clientRecords (js/clientRecords.js getClientRecord) -- the profile;
                `record` is null when not filled in, undefined when it
                couldn't be read (e.g. rules not published yet)
@@ -21,7 +23,8 @@ import { listCheckinsForMyClients } from "./checkins.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { getClientRecord } from "./clientRecords.js";
 import { listPrivateNotes, listUpdatesForClient } from "./clientNotes.js";
-import { listPlansForClient, listDraftsForClient, getVersion } from "./coachingPlans.js";
+import { listPlansForClient, listDraftsForClient, getVersion, getMaster } from "./coachingPlans.js";
+import { isRolling } from "./planWindow.js";
 import { listResultsForClient } from "./workoutResults.js";
 import { listChangeRequestsForCoach } from "./changeRequests.js";
 
@@ -31,14 +34,21 @@ const resultsFor = uid => listResultsForClient(uid).catch(error => {
     return [];
 });
 
-// Published plans for one client, each active one with its current
-// version's plan attached (so the hub is right even before the client's
-// app has pulled it). [] if they can't be read (rules not published).
+// Published plans for one client, each active one with the WHOLE plan
+// attached (the coach's master, weeks the client can't see yet included;
+// so the hub is right even before the client's app has pulled it).
+// Plans from before masters existed use their newest version, which is
+// whole. A plan opened week by week never falls back to a version (that
+// holds only two weeks: editing it would drop the rest). [] if they
+// can't be read (rules not published).
 async function publishedPlans(clientUid) {
     try {
         const headers = await listPlansForClient(clientUid);
         return Promise.all(headers.map(async h => {
             if (h.status !== "active") return h;
+            const master = await getMaster(h.id).catch(() => null);
+            if (master?.plan) return { ...h, plan: master.plan };
+            if (isRolling(h)) return { ...h, plan: null };
             const v = await getVersion(h.id, h.version).catch(() => null);
             return { ...h, plan: v?.plan || null };
         }));

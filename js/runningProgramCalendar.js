@@ -99,7 +99,7 @@ function renderContext() {
             countdown = daysToRace >= 0 ? ` · ${daysToRace} days to race day` : "";
         }
         const phase = activeWeek?.phase && activeWeek.phase !== program.name ? ` · ${activeWeek.phase}` : "";
-        context.textContent = `${program.name} · Week ${activeWeek?.week || "—"} of ${program.generatedPlan.totalWeeks || weeks.length}${phase}${countdown}`;
+        context.textContent = `${program.name} · Week ${activeWeek?.week || "—"} of ${program.generatedPlan.window?.totalWeeks || program.generatedPlan.totalWeeks || weeks.length}${phase}${countdown}`;
         context.dataset.generatedPlanContext = program.id;
         return;
     }

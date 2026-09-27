@@ -9,7 +9,9 @@
        seen (markPlanViewed). Both are shown to the coach.
      - the big picture: plan, version, coach, goal, week X of Y
      - the whole week, one week at a time: everything in it from every
-       source (js/weekModel.js), with Mark done on each workout
+       source (js/weekModel.js), with Mark done on each workout. A coach
+       plan shows this week and next (js/planWindow.js); "next" stops at
+       the last week that's open, and a line says more open as they go.
      - "Need a change?": ask the coach instead of editing their plan,
        and the coach's answers (js/changeRequestDialog.js)
 ========================================== */
@@ -27,11 +29,14 @@ import { cachedRole } from "./role.js";
 import { toast, emptyHtml, friendlyError, sbChoose, sbAlert } from "./ui.js";
 import { icon } from "./icons.js";
 import { listMyChangeRequests } from "./changeRequests.js";
+import { awaitingAck, awaitingView, noticeVersionOf } from "./planWindow.js";
 import { openChangeRequestDialog, changeRequestsHtml, bindChangeRequestActions } from "./changeRequestDialog.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const today = isoDate(new Date());
+const niceDate = ms => ms ? new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+const millis = value => typeof value === "number" ? value : value?.toMillis?.() || 0;
 
 const state = { plans: [], headers: [], selected: null, monday: "", goal: "", sessions: [], items: new Map(), coaches: [], requests: [] };
 
@@ -49,17 +54,18 @@ function activePlans() {
 // ---------- Update notice ----------
 
 function renderNotice() {
-    const pending = state.headers.filter(h => h.status === "active" && (h.ackVersion || 0) < h.version);
+    const pending = state.headers.filter(awaitingAck);
     $("planNotice").innerHTML = pending.map(h => `
         <div class="clients-card myplan-notice" data-plan="${esc(h.id)}">
             <div class="myplan-notice-head">
                 <span class="myplan-notice-icon">${icon("send")}</span>
                 <div>
-                    <strong>${h.version > 1 ? `${esc(h.coachName || "Your coach")} updated your plan` : `Your plan is ready`}</strong>
-                    <span class="myplan-meta">${esc(h.name)}${h.version > 1 ? ` · version ${h.version}` : ""}</span>
+                    <strong>${noticeVersionOf(h) > 1 ? `${esc(h.coachName || "Your coach")} updated your plan` : `Your plan is ready`}</strong>
+                    <span class="myplan-meta">${esc(h.name)}${millis(h.publishedAt) ? ` · ${esc(niceDate(millis(h.publishedAt)))}` : ""}</span>
                 </div>
             </div>
             ${h.coachNote ? `<p class="myplan-note">"${esc(h.coachNote)}"</p>` : ""}
+            ${noticeVersionOf(h) <= 1 && h.showAll === false ? `<p class="myplan-meta">You'll see this week and next. New weeks open as you go.</p>` : ""}
             ${h.changes?.length ? `
                 <p class="myplan-label">What changed</p>
                 <ul class="myplan-changes">${h.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
@@ -97,13 +103,18 @@ function renderPlan() {
     let overview = "";
     if (plan) {
         const weeks = plan.generatedPlan.weeks;
+        const win = plan.generatedPlan.window || null;
+        const total = win?.totalWeeks || weeks.length;
         const position = planWeekFor(plan.generatedPlan, today);
-        const { startDate, endDate } = planDateRange(plan.generatedPlan);
+        const { startDate } = planDateRange(plan.generatedPlan);
+        const endDate = win?.endDate || planDateRange(plan.generatedPlan).endDate;
         const header = state.headers.find(h => h.id === plan.coachPlanId);
         const raceDate = plan.generatedPlan.raceDate;
-        const where = position.state === "current" ? `Week ${position.index + 1} of ${weeks.length}`
+        const where = position.state === "current" ? `Week ${position.index + 1} of ${total}`
             : position.state === "upcoming" ? `Starts ${shortDay(startDate)}`
-            : position.state === "finished" ? "Finished" : `${weeks.length} weeks`;
+            : position.state === "finished" && win && today <= win.endDate ? "Your next week is on its way"
+            : position.state === "finished" ? "Finished" : `${total} weeks`;
+        const updated = millis(plan.publishedAt) || millis(header?.publishedAt);
         overview = `
             ${state.plans.length > 1 ? `
                 <div class="clients-tabs myplan-switch" role="tablist">
@@ -112,7 +123,7 @@ function renderPlan() {
             <section class="clients-card myplan-overview">
                 <div class="myplan-title">
                     <h2>${esc(plan.name)}</h2>
-                    <span class="myplan-meta">From ${esc(plan.coachName || header?.coachName || "your coach")} · version ${plan.coachVersion}</span>
+                    <span class="myplan-meta">From ${esc(plan.coachName || header?.coachName || "your coach")}${updated ? ` · updated ${esc(niceDate(updated))}` : ""}</span>
                 </div>
                 <dl class="myplan-facts">
                     ${state.goal ? `<div><dt>Goal</dt><dd>${esc(state.goal)}</dd></div>` : ""}
@@ -125,6 +136,8 @@ function renderPlan() {
 
     const ctx = week.context;
     const title = ctx ? `Week ${ctx.weekNumber} of ${ctx.totalWeeks}${ctx.phase ? ` · ${ctx.phase}` : ""}` : state.monday === thisMonday ? "This week" : "Week";
+    const edge = lastOpenMonday();
+    const atEdge = Boolean(edge && state.monday >= edge);
     $("planBody").innerHTML = `
         ${overview}
         <section class="clients-card myplan-week">
@@ -134,9 +147,10 @@ function renderPlan() {
                     <strong>${esc(title)}</strong>
                     <span>${esc(shortDay(week.monday))} – ${esc(shortDay(week.sunday))}${ctx && !plan ? ` · ${esc(ctx.planName)}` : ""}</span>
                 </div>
-                <button type="button" class="sb-btn sb-btn-icon" data-week="1" aria-label="Next week">${icon("chevronRight")}</button>
+                <button type="button" class="sb-btn sb-btn-icon" data-week="1" aria-label="Next week"${atEdge ? " disabled" : ""}>${icon("chevronRight")}</button>
             </div>
             ${state.monday !== thisMonday ? `<button type="button" class="sb-btn sb-btn-tertiary wk-this-week" data-week="now">Back to this week</button>` : ""}
+            ${atEdge ? `<p class="clients-card-note myplan-window">${icon("lock")} ${esc(plan?.coachName || "Your coach")} shares your plan two weeks at a time. The next week opens as this one goes by.</p>` : ""}
             ${week.summary.planned || week.summary.sessions ? `<p class="myplan-progress">${esc(summaryLine(week.summary))}</p>` : ""}
             ${weekListHtml(week)}
             <div class="myplan-foot">
@@ -176,7 +190,7 @@ $("planBody").addEventListener("click", async event => {
         return;
     }
     const weekBtn = event.target.closest("[data-week]");
-    if (weekBtn) {
+    if (weekBtn && !weekBtn.disabled) {
         state.monday = weekBtn.dataset.week === "now" ? mondayOf(today) : addDays(state.monday, 7 * Number(weekBtn.dataset.week));
         renderPlan();
         return;
@@ -241,7 +255,9 @@ async function addToCalendar() {
     const restWeeks = [];
     if (end) for (let m = from; m <= end && restWeeks.length < 30; m = addDays(m, 7)) restWeeks.push(m);
     const choices = [{ value: "week", label: "This week", primary: restWeeks.length <= 1 }];
-    if (restWeeks.length > 1) choices.push({ value: "plan", label: `Rest of the plan (${restWeeks.length} weeks)`, primary: true });
+    // A plan shown two weeks at a time only has the weeks that are open.
+    const open = plan?.generatedPlan?.window ? "Every week that's open" : "Rest of the plan";
+    if (restWeeks.length > 1) choices.push({ value: "plan", label: `${open} (${restWeeks.length} weeks)`, primary: true });
     const choice = await sbChoose("Your workouts and sessions go into your phone's calendar, each with a link back to Southbound. Adding them again later updates them.", { title: "Add to your calendar", choices });
     if (!choice) return;
     const { downloadCalendar } = await import("./calendarButton.js");
@@ -251,6 +267,12 @@ async function addToCalendar() {
         const slug = String(plan.name || "plan").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "plan";
         downloadCalendar(restWeeks.map(m => buildWeek(m, inputs, today)), { filename: `southbound-${slug}.ics`, name: plan.name || "Southbound Training" });
     }
+}
+
+// A coach plan shown two weeks at a time: the Monday of the last week that's open.
+function lastOpenMonday() {
+    const through = state.selected?.generatedPlan?.window?.through;
+    return through ? mondayOf(through) : null;
 }
 
 // The week to open on: this week, or the plan's first week if it hasn't started.
@@ -291,7 +313,7 @@ listenForAuth(async user => {
     renderNotice();
     // Opening the page counts as seeing the newest version.
     for (const h of headers) {
-        if (h.status === "active" && (h.viewedVersion || 0) < h.version) {
+        if (awaitingView(h)) {
             markPlanViewed(h).then(() => { h.viewedVersion = h.version; }).catch(() => {});
         }
     }

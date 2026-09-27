@@ -256,11 +256,24 @@ test("coach plans: an update not opened for two days needs attention; timeline s
     const plans = summarizePlans({}, "2026-09-25");
     const base = { profile: { services: ["running"] }, plans, sessions: { waiting: [], upcoming: [] }, checkins: { needsReview: [], thisWeek: { status: "submitted" } }, today: "2026-09-25", record: undefined };
     const unseen = { id: "p1", name: "Fall 10K", version: 3, status: "active", viewedVersion: 2, publishedAt: at("2026-09-21") };
-    assert.ok(needsAttention({ ...base, coachingPlans: [unseen] }).some(i => i.kind === "plan-unseen" && /update \(v3\)/.test(i.text)));
+    assert.ok(needsAttention({ ...base, coachingPlans: [unseen] }).some(i => i.kind === "plan-unseen" && /Hasn't opened your Fall 10K update/.test(i.text)));
+    // Weeks the coach's app opened since (versions 4-5) aren't updates to open.
+    assert.ok(!needsAttention({ ...base, coachingPlans: [{ ...unseen, version: 5, noticeVersion: 3, viewedVersion: 3 }] }).some(i => i.kind === "plan-unseen"));
     assert.ok(!needsAttention({ ...base, coachingPlans: [{ ...unseen, publishedAt: at("2026-09-24") }] }).some(i => i.kind === "plan-unseen"), "not yet: only a day old");
     assert.ok(!needsAttention({ ...base, coachingPlans: [{ ...unseen, viewedVersion: 3 }] }).some(i => i.kind === "plan-unseen"));
     const tl = buildTimeline({ coachingPlans: [{ ...unseen, ackVersion: 2, ackAt: at("2026-09-22") }] });
-    assert.deepEqual(tl.map(e => e.text), ["Got your plan update (v2)", "You published Fall 10K (v3)"]);
+    assert.deepEqual(tl.map(e => e.text), ["Got your plan update", "You published an update to Fall 10K"]);
+});
+
+test("coach plans: the whole plan comes from the coach's copy, marks from the client's two weeks", () => {
+    // The client's copy holds only weeks 1-2 (this week and next); the coach's plan has 3.
+    const copy = coachCopy(4, "2026-09-22");
+    copy.generatedPlan.weeks = copy.generatedPlan.weeks.slice(0, 2);
+    const whole = makePlan().generatedPlan;
+    const s = summarizePlans({ coachPlans: [copy] }, "2026-09-23", [{ id: "p1", version: 4, name: "Fall 10K", status: "active", plan: whole }]);
+    assert.equal(s.activeCount, 1);
+    assert.equal(s.week.completed, 2, "their done marks carry over by date");
+    assert.equal(s.primary.totalWeeks, 3, "the coach sees the whole plan");
 });
 
 // ---- Workout results ----
