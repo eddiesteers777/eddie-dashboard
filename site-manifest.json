@@ -120,6 +120,7 @@
     "js/nutrition.js",
     "js/nutritionGoals.js",
     "js/pace-calculator.js",
+    "js/personalRecords.js",
     "js/planOps.js",
     "js/planWorkspace.js",
     "js/plannerEvents.js",

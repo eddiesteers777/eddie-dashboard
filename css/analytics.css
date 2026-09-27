@@ -913,3 +913,17 @@ canvas{
     height:14px;
 
 }
+
+/* Where each record came from (js/personalRecords.js) */
+.record [hidden]{ display:none !important; }
+.record{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+.record h3{ margin:0; }
+.record-source{ color:var(--muted); font-size:.78rem; line-height:1.4; white-space:normal; }
+.record-link{ margin-top:4px; padding:4px 8px; border:0; background:none; color:var(--primary); font-size:.78rem; cursor:pointer; }
+.record-link:hover{ text-decoration:underline; }
+@media (max-width:600px){
+    .records-grid{ grid-template-columns:1fr 1fr; gap:12px; }
+    .record{ padding:16px 10px; border-radius:16px; }
+    .record h3{ font-size:26px; }
+    .record:last-child:nth-child(odd){ grid-column:1 / -1; }
+}
