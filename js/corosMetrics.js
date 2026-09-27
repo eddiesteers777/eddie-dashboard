@@ -17,6 +17,13 @@ export function replyText(value) {
     if (value == null) return "";
     if (typeof value === "string") return value;
     if (typeof value.text === "string" && Object.keys(value).length === 1) return value.text;
+    // A raw tool result: its text items (COROS puts a JSON string inside).
+    if (Array.isArray(value.content)) {
+        return value.content.map(c => {
+            if (typeof c?.text !== "string") return "";
+            try { const v = JSON.parse(c.text); return typeof v === "string" ? v : JSON.stringify(v, null, 1); } catch { return c.text; }
+        }).join("\n");
+    }
     try { return JSON.stringify(value, null, 1); } catch { return String(value); }
 }
 
@@ -59,7 +66,8 @@ export function readRecovery(value) {
     const percent = number(text, new RegExp(String.raw`recover\w*` + String.raw`[^\d\n]{0,30}?(\d{1,3}(?:\.\d+)?)\s*%`, "i"))
         ?? number(text, new RegExp(String.raw`recovery[\s_-]*(?:percent\w*|rate|score|pct|value)` + LABEL_GAP + String.raw`(\d{1,3}(?:\.\d+)?)`, "i"));
     const status = (text.match(/(?:recovery[\s_-]*)?(?:status|state|level)"?\s*[:=]\s*"?([A-Za-z][^"\n|,]{1,60})/i)?.[1] || "").trim();
-    const hours = number(text, /(\d{1,3})\s*(?:h\b|hrs?\b|hours?)[^\n]{0,20}(?:to|until|left|remaining)?[^\n]{0,20}recover/i)
+    const hours = number(text, /full\s+recovery[^\d\n]{0,12}(\d{1,3})\s*h/i)    // "Estimated Full Recovery: 34h"
+        ?? number(text, /(\d{1,3})\s*(?:h\b|hrs?\b|hours?)[^\n]{0,20}(?:to|until|left|remaining)?[^\n]{0,20}recover/i)
         ?? number(text, new RegExp(String.raw`(?:full[\s_-]*)?recovery[\s_-]*(?:time|hours)` + LABEL_GAP + String.raw`(\d{1,3})`, "i"));
     return { percent: percent != null && percent <= 100 ? percent : null, status, hours };
 }

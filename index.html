@@ -17,6 +17,7 @@
           href="css/dashboard.css">
 
     <link rel="stylesheet" href="css/week.css">
+    <link rel="stylesheet" href="css/readiness.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
@@ -83,6 +84,13 @@
             </div>
 
         </section>
+
+        <!-- ==========================================
+             Readiness (js/readinessCard.js): HRV, resting HR,
+             sleep, recovery + the morning check-in
+        =========================================== -->
+
+        <section id="readinessCard" class="rd-card" data-requires="training" hidden aria-label="Readiness"></section>
 
         <!-- ==========================================
              Today
@@ -259,6 +267,7 @@
 
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/readinessCard.js"></script>
 
     <script src="js/registerSW.js"></script>
 
