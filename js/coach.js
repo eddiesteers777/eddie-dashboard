@@ -19,7 +19,6 @@ import { summarizeClient, isoDate } from "./clientSummary.js";
 import { attentionQueue } from "./feedbackModel.js";
 import { icon } from "./icons.js";
 import { emptyHtml } from "./ui.js";
-import { isAiConfigured } from "./aiConfig.js";
 
 // ---- Who needs you today (every client's attention items, most urgent first) ----
 
@@ -172,8 +171,7 @@ function renderSetupChecklist() {
     const email = getEmailSetupStatus();
     const items = [
         { on: email.coachAlerts, name: "Emails to you", detail: "You aren't emailed about new booking requests, applications or check-ins yet. Needs the EmailJS \"Coach alert\" template." },
-        { on: email.clientUpdates, name: "Emails to clients", detail: "Clients aren't emailed when you answer a booking or reply to a check-in yet. Needs the EmailJS \"Client update\" template." },
-        { on: isAiConfigured(), name: "AI plan helper", detail: "\"Describe it in your own words\" (Client Hub → Plan → Generate) is off until the AI helper is set up: an Anthropic account and a small Cloudflare relay.", link: "https://github.com/eddiesteers777/eddie-dashboard/blob/main/docs/AI_HELPER_SETUP.md", linkLabel: "Setup steps" }
+        { on: email.clientUpdates, name: "Emails to clients", detail: "Clients aren't emailed when you answer a booking or reply to a check-in yet. Needs the EmailJS \"Client update\" template." }
     ].filter(item => !item.on);
 
     document.getElementById("setupCard").hidden = items.length === 0;
@@ -182,7 +180,7 @@ function renderSetupChecklist() {
             <span class="coach-setup-pill">Off</span>
             <div>
                 <strong>${item.name}</strong>
-                <span>${item.detail}${item.link ? ` <a href="${item.link}" target="_blank" rel="noopener">${item.linkLabel}</a>` : ""}</span>
+                <span>${item.detail}</span>
             </div>
         </div>
     `).join("");

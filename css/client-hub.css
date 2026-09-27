@@ -769,31 +769,3 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 .pw-hidden-changes{ display:flex; align-items:flex-start; gap:6px; }
 .pw-version.is-auto{ padding:8px 0; }
 .pw-version.is-auto .pw-meta{ display:inline-flex; align-items:flex-start; gap:6px; font-weight:500; }
-
-/* ---- "Describe it": the AI helper fills in the Generate form (js/planGenerateDialogs.js) ---- */
-.pw-describe{
-    display:grid;
-    gap:8px;
-    margin:0;
-    padding:12px 14px;
-    border:1px solid var(--border);
-    border-left:3px solid var(--primary);
-    border-radius:12px;
-    background:var(--surface-light);
-}
-.pw-describe textarea{ min-height:96px; resize:vertical; }
-.pw-describe-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
-.pw-describe-row .pw-meta{ font-weight:600; }
-.pw-describe-result{ font-size:14px; }
-.pw-describe-result ul{ margin:4px 0 8px 18px; color:var(--text-secondary); line-height:1.5; }
-.pw-describe-result .pw-label{ flex-direction:row; align-items:center; gap:6px; margin:6px 0 0; }
-.pw-describe-result .pw-label svg{ flex-shrink:0; width:16px; height:16px; color:var(--primary); }
-.pw-describe-result .pw-meta{ margin:2px 0; }
-.pw-describe-head .pw-meta{ margin-left:6px; font-weight:600; }
-.pw-describe-privacy{ margin:0; font-weight:500; }
-.pw-filled{
-    border-radius:10px;
-    outline:2px solid var(--primary);
-    outline-offset:4px;
-}
-.pw-describe [hidden]{ display:none !important; }

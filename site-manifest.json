@@ -43,7 +43,6 @@
   ],
   "scripts": [
     "js/activeProgramSources.js",
-    "js/aiConfig.js",
     "js/analytics.js",
     "js/app.js",
     "js/apply.js",
@@ -123,8 +122,6 @@
     "js/nutritionGoals.js",
     "js/pace-calculator.js",
     "js/personalRecords.js",
-    "js/planDescribe.js",
-    "js/planDescribeClient.js",
     "js/planGenerateDialogs.js",
     "js/planOps.js",
     "js/planRelease.js",

@@ -10,10 +10,6 @@
      (runs + strength / runs / strength), from which date to which, and
      whether days changed by hand are replaced too. Shows the change list
      first; Apply hands the new plan back (the workspace adds Undo).
-   Both open with "Describe it in your own words" once the AI helper is
-   set up (js/aiConfig.js): the AI fills in the form (js/planDescribe.js),
-   the changed fields are highlighted, and what it understood + notes for
-   the coach show above. Notes go on to the editor's "Worth a look" box.
 ========================================== */
 
 import {
@@ -22,8 +18,6 @@ import {
 } from "./coachPlanGenerator.js";
 import { shortDay, isoDate, planDateRange, addDays } from "./coachingPlanModel.js";
 import { icon } from "./icons.js";
-import { isAiConfigured } from "./aiConfig.js";
-import { SETTING_LABELS, MAX_DESCRIPTION } from "./planDescribe.js";
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const DAY_LABEL = { MON: "Mon", TUE: "Tue", WED: "Wed", THU: "Thu", FRI: "Fri", SAT: "Sat", SUN: "Sun" };
@@ -145,90 +139,7 @@ function showError(d, text) {
     if (text) el.scrollIntoView({ block: "nearest" });
 }
 
-// ---------- "Describe it" (AI helper) ----------
-
-function describeHtml(first, placeholder) {
-    if (!isAiConfigured()) return "";
-    return `
-        <section class="pw-describe" data-el="describe">
-            <label class="pw-label"><span class="pw-describe-head">Describe it in your own words<span class="pw-meta">optional</span></span>
-                <textarea class="sb-dialog-input" name="describe" rows="4" maxlength="${MAX_DESCRIPTION}" placeholder="${esc(placeholder)}"></textarea>
-            </label>
-            <div class="pw-describe-row">
-                <button type="button" class="sb-btn sb-btn-secondary" data-act="describe">${icon("bolt")} Fill in from my description</button>
-                <span class="pw-meta" data-el="describe-status" role="status"></span>
-            </div>
-            <div class="pw-describe-result" data-el="describe-result" hidden></div>
-            <p class="pw-meta pw-describe-privacy">Your words go to the AI (Claude) only to fill in these settings. Check them before you generate.</p>
-        </section>`;
-}
-
-// Puts settings into the form (the same fields settingsHtml draws).
-function fillForm(d, st) {
-    const form = d.querySelector("form");
-    form.querySelectorAll('[name="mode"]').forEach(r => { r.checked = r.value === st.mode; });
-    d.querySelectorAll("[data-show]").forEach(el => { el.hidden = el.dataset.show !== st.mode; });
-    for (const key of ["raceType", "raceDate", "goalTime", "trainingGoal", "endDate", "startDate", "experience", "longRunDay",
-        "speedDays", "currentMiles", "peakMiles", "longestRun", "crossDays", "strengthDays", "strengthLevel", "equipment"]) {
-        const el = form.querySelector(`[name="${key}"]`);
-        if (el) el.value = st[key] ?? "";
-    }
-    for (const key of ["trainDays", "runDays"]) {
-        form.querySelectorAll(`[name="${key}"]`).forEach(c => { c.checked = (st[key] || []).includes(c.value); });
-    }
-}
-
-// Where a setting sits on the form, to highlight it.
-function fieldBox(form, key) {
-    const el = form.querySelector(`[name="${key}"]`);
-    if (!el) return null;
-    return key === "mode" ? el.closest(".pw-gen-kind") : el.closest("fieldset.pw-days") || el.closest(".pw-label");
-}
-
-/**
- * Wires the Describe box. current(): the form's settings now.
- * onResult(result) lets the dialog use the name / notes.
- */
-function wireDescribe(d, { current, onResult }) {
-    const box = d.querySelector('[data-el="describe"]');
-    if (!box) return;
-    const form = d.querySelector("form");
-    const status = box.querySelector('[data-el="describe-status"]');
-    const out = box.querySelector('[data-el="describe-result"]');
-    const btn = box.querySelector('[data-act="describe"]');
-    // A highlighted field stops being highlighted once the coach touches it.
-    form.addEventListener("input", ev => fieldBox(form, ev.target.name)?.classList.remove("pw-filled"));
-    form.addEventListener("change", ev => fieldBox(form, ev.target.name)?.classList.remove("pw-filled"));
-    btn.addEventListener("click", async () => {
-        const text = String(form.querySelector('[name="describe"]').value || "").trim();
-        if (text.length < 10) { status.textContent = "Write a sentence or two first."; return; }
-        btn.disabled = true;
-        status.textContent = "Reading your description…";
-        out.hidden = true;
-        try {
-            const { describePlan } = await import("./planDescribeClient.js");
-            const result = await describePlan({ description: text, settings: current(), today: isoDate(new Date()) });
-            fillForm(d, result.settings);
-            form.querySelectorAll(".pw-filled").forEach(el => el.classList.remove("pw-filled"));
-            for (const key of result.changed) fieldBox(form, key)?.classList.add("pw-filled");
-            onResult?.(result);
-            status.textContent = result.changed.length
-                ? `Filled in ${result.changed.length} setting${result.changed.length === 1 ? "" : "s"}. Check the highlighted ones below.`
-                : "Nothing to change from that. The settings already match.";
-            out.innerHTML = `
-                ${result.understood.length ? `<p class="pw-label">What I understood</p><ul>${result.understood.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
-                ${result.changed.length ? `<p class="pw-meta">Changed: ${esc(result.changed.map(k => SETTING_LABELS[k]).join(", "))}</p>` : ""}
-                ${result.notes.length ? `<p class="pw-label">${icon("alertTriangle")} For you to handle</p><ul>${result.notes.map(l => `<li>${esc(l)}</li>`).join("")}</ul><p class="pw-meta">These go into the plan's "Worth a look" box.</p>` : ""}`;
-            out.hidden = !out.innerHTML.trim();
-        } catch (error) {
-            status.textContent = error?.message || "Couldn't read that. Try again.";
-        } finally {
-            btn.disabled = false;
-        }
-    });
-}
-
-/** New plan -> Generate. onCreate({ name, kind, plan, warnings, summary, notes }). */
+/** New plan -> Generate. onCreate({ name, kind, plan, warnings, summary }). */
 export function generateDialog({ firstName, record, onCreate }) {
     const today = isoDate(new Date());
     const s = settingsFromProfile(record, today);
@@ -236,7 +147,6 @@ export function generateDialog({ firstName, record, onCreate }) {
         <form class="sb-dialog-form" novalidate>
             <h2 class="sb-dialog-title">Generate a plan for ${esc(firstName)}</h2>
             ${profileNotes(record, firstName)}
-            ${describeHtml(firstName, `e.g. Half marathon on April 18, wants 1:45. Runs about 25 miles a week on Tue, Thu, Sat and Sun, long run Sunday. Dumbbells at home. Left Achilles gets tight on hills.`)}
             <label class="pw-label">Plan name<input class="sb-dialog-input" name="name" maxlength="120" required value="${esc(s.mode === "race" ? `${RACES.find(r => r[0] === s.raceType)?.[1] || "Race"} plan` : "Training plan")}"></label>
             ${settingsHtml(s)}
             <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
@@ -247,18 +157,6 @@ export function generateDialog({ firstName, record, onCreate }) {
             </div>
         </form>`);
     wireForm(d);
-    let described = null;
-    wireDescribe(d, {
-        current: () => readSettings(d.querySelector("form"), s),
-        onResult: result => {
-            described = result;
-            if (result.name) {
-                const nameEl = d.querySelector('[name="name"]');
-                nameEl.value = result.name;
-                nameEl.closest(".pw-label")?.classList.add("pw-filled");
-            }
-        }
-    });
     d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
     d.querySelector("form").addEventListener("submit", ev => {
         ev.preventDefault();
@@ -269,7 +167,7 @@ export function generateDialog({ firstName, record, onCreate }) {
         try {
             const result = generateCoachPlan(settings);
             d.close();
-            onCreate({ name, kind: settings.mode === "race" ? "race" : "training", ...result, notes: described?.notes || [] });
+            onCreate({ name, kind: settings.mode === "race" ? "race" : "training", ...result });
         } catch (error) {
             showError(d, error.message || "Couldn't build that plan. Check the settings.");
         }
@@ -291,7 +189,6 @@ export function regenerateDialog({ firstName, record, plan, done, onApply }) {
         <form class="sb-dialog-form" novalidate>
             <h2 class="sb-dialog-title">${saved ? "Regenerate" : "Generate into this plan"}</h2>
             <p class="sb-dialog-message">${saved ? "Change any setting, pick what to redo, and preview it before anything changes." : "This plan wasn't generated. Days you already filled in are kept; empty days get filled."} Days ${esc(firstName)} marked done and days before today never change.</p>
-            ${describeHtml(firstName, `e.g. Her Achilles is sore: drop to 3 runs a week (Tue, Thu, Sun), no speed work, and cap it at 25 miles.`)}
             <fieldset class="pw-gen-what">
                 <legend class="pw-label">What to redo</legend>
                 <label><input type="radio" name="scope" value="all" checked><span>Runs and strength</span></label>
@@ -317,11 +214,6 @@ export function regenerateDialog({ firstName, record, plan, done, onApply }) {
             </div>
         </form>`);
     wireForm(d);
-    let described = null;
-    wireDescribe(d, {
-        current: () => readSettings(d.querySelector("form"), s),
-        onResult: result => { described = result; if (result.changed.length) d.querySelector(".pw-gen-settings").open = true; }
-    });
     d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
     d.querySelector("form").addEventListener("submit", ev => {
         ev.preventDefault();
@@ -368,7 +260,7 @@ export function regenerateDialog({ firstName, record, plan, done, onApply }) {
         p.querySelector("form").addEventListener("submit", ev => {
             ev.preventDefault();
             p.close();
-            onApply({ plan: result.plan, kind: settings.mode === "race" ? "race" : "training", message: `Regenerated ${what}: ${dates.length} day${dates.length === 1 ? "" : "s"} changed.`, notes: described?.notes || [] });
+            onApply({ plan: result.plan, kind: settings.mode === "race" ? "race" : "training", message: `Regenerated ${what}: ${dates.length} day${dates.length === 1 ? "" : "s"} changed.` });
         });
     }
 }
