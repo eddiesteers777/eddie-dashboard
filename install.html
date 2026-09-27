@@ -11,8 +11,11 @@
     <meta property="og:title" content="Get Southbound | Install on Your Phone">
     <meta property="og:description" content="Install the Southbound app on your iPhone or Android home screen in a few taps, with no app store needed.">
     <meta property="og:url" content="https://southboundcoaching.com/install.html">
-    <meta property="og:image" content="https://southboundcoaching.com/icons/icon-512.png">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/install.css">
     <link rel="manifest" href="manifest.json">
@@ -20,96 +23,236 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="icons/favicon-32.png">
 </head>
-<body>
+<body class="install-body">
 
     <header class="install-topbar">
-        <a href="index.html" class="install-topbar-brand">
-            <img src="icons/icon-192.png" alt="" class="install-logo">
-            <span class="brand-word">Southbound</span>
+        <a href="index.html" class="install-topbar-brand" aria-label="Southbound Coaching">
+            <img src="brand/sb-mark.svg" alt="" class="brand-mark">
+            <span class="install-topbar-word"><span class="brand-word">Southbound</span><span class="install-topbar-sub">Coaching</span></span>
         </a>
     </header>
 
     <main class="install-page">
 
         <section class="install-hero">
-            <div class="install-kicker">GET THE APP</div>
-            <h1>Your training, right on your home screen.</h1>
-            <p>Southbound installs like a real app straight from this page — no App Store, no download. Takes about 20 seconds.</p>
+            <img src="brand/sb-tile.svg" alt="The Southbound app icon" class="install-app-icon" width="84" height="84">
+            <div class="install-kicker">Get the app</div>
+            <!-- js/install.js swaps these for the visitor's device. -->
+            <h1 id="installTitle">Get Southbound on your phone</h1>
+            <p id="installLead">Southbound installs straight from this page: no App Store, no download. It takes about 20 seconds.</p>
         </section>
 
-        <div id="installAlreadyInstalled" class="install-already" hidden>
+        <div id="installAlreadyInstalled" class="install-done" hidden>
             <span data-icon="checkCircle"></span>
-            <span>You're already using the installed app.</span>
+            <div>
+                <strong>You're using the installed app.</strong>
+                <span>Nothing more to do here. <a href="index.html">Go to Today</a></span>
+            </div>
+        </div>
+
+        <div id="installSuccess" class="install-done" role="status" hidden>
+            <span data-icon="checkCircle"></span>
+            <div>
+                <strong>Southbound is installed.</strong>
+                <span>Open it from your home screen (or your apps) and sign in there.</span>
+            </div>
         </div>
 
         <div id="installBody">
 
-            <nav class="install-tabs" id="installTabs" role="tablist" aria-label="Choose your phone">
-                <button type="button" class="install-tab" data-platform="ios" role="tab">iPhone</button>
-                <button type="button" class="install-tab" data-platform="android" role="tab">Android</button>
+            <nav class="install-tabs" id="installTabs" role="tablist" aria-label="Choose your device" hidden>
+                <button type="button" class="install-tab" data-platform="ios" role="tab" aria-controls="installPanelIos">iPhone &amp; iPad</button>
+                <button type="button" class="install-tab" data-platform="android" role="tab" aria-controls="installPanelAndroid">Android</button>
+                <button type="button" class="install-tab" data-platform="desktop" role="tab" aria-controls="installPanelDesktop" hidden>Computer</button>
             </nav>
 
-            <section class="install-panel" data-platform-panel="ios">
+            <!-- ============ iPhone & iPad ============ -->
+            <section class="install-panel" id="installPanelIos" data-platform-panel="ios" role="tabpanel">
 
-                <div class="install-warning" id="iosBrowserWarning" hidden>
+                <div class="install-warning" id="iosInAppWarning" hidden>
                     <span data-icon="alertTriangle"></span>
                     <div>
                         <strong>Open this page in Safari first</strong>
-                        <span>Installing only works from Safari — tap the ••• or share menu in your current browser and choose "Open in Safari."</span>
+                        <span>You're in another app's browser, which can't add apps to your Home Screen. Tap ••• (or the Share button) and choose "Open in Safari", then follow these steps.</span>
                     </div>
                 </div>
 
-                <ol class="install-steps">
-                    <li>
-                        <span class="install-step-num">1</span>
-                        <div><strong>Tap the Share icon</strong><span>The square with an arrow pointing up, in Safari's toolbar.</span></div>
-                    </li>
-                    <li>
-                        <span class="install-step-num">2</span>
-                        <div><strong>Scroll down and tap "Add to Home Screen"</strong><span>It's a bit further down the share sheet.</span></div>
-                    </li>
-                    <li>
-                        <span class="install-step-num">3</span>
-                        <div><strong>Tap "Add"</strong><span>Top-right corner. The Southbound icon appears on your home screen.</span></div>
-                    </li>
-                </ol>
+                <div class="install-note" id="iosOtherBrowserNote" hidden>
+                    <span data-icon="info"></span>
+                    <span>Not in Safari? In Chrome, Share is at the right end of the address bar. If "Add to Home Screen" isn't in the list, open this page in Safari.</span>
+                </div>
+
+                <p class="install-readfirst">Read all three steps first: Safari's Share menu covers this page.</p>
+
+                <div class="install-guide" data-guide>
+                    <div class="install-guide-head" data-guide-head hidden>
+                        <span class="install-guide-count" aria-live="polite">Step <b data-guide-current>1</b> of <span data-guide-total>3</span></span>
+                        <div class="install-guide-dots" data-guide-dots></div>
+                    </div>
+
+                    <ol class="install-guide-steps">
+                        <li class="install-guide-step">
+                            <figure class="install-art" aria-hidden="true">
+                                <div class="art-screen art-safari">
+                                    <div class="art-lines"><i></i><i></i><i></i></div>
+                                    <div class="art-address">southboundcoaching.com</div>
+                                    <div class="art-toolbar">
+                                        <span class="art-glyph"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+                                        <span class="art-glyph"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span>
+                                        <span class="art-glyph art-hit"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M7 10H5.5a1 1 0 0 0-1 1v8.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1V11a1 1 0 0 0-1-1H17"/></svg></span>
+                                        <span class="art-glyph"><svg viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg></span>
+                                        <span class="art-glyph"><svg viewBox="0 0 24 24"><rect x="8" y="3" width="12" height="12" rx="2"/><path d="M4 8v11a1 1 0 0 0 1 1h11"/></svg></span>
+                                    </div>
+                                </div>
+                            </figure>
+                            <h2><span class="install-step-num">1</span>Tap the Share button</h2>
+                            <p>The square with an arrow pointing up <span class="install-share-glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M7 10H5.5a1 1 0 0 0-1 1v8.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1V11a1 1 0 0 0-1-1H17"/></svg></span>, in Safari's toolbar at the bottom of the screen (at the top on an iPad).</p>
+                            <p class="install-tip">Don't see it? Tap ••• next to the address first, then Share.</p>
+                        </li>
+
+                        <li class="install-guide-step">
+                            <figure class="install-art" aria-hidden="true">
+                                <div class="art-screen art-sheet">
+                                    <div class="art-sheet-head">
+                                        <img src="brand/sb-tile.svg" alt="" class="art-app-icon">
+                                        <div><b>Southbound</b><small>southboundcoaching.com</small></div>
+                                    </div>
+                                    <ul class="art-list">
+                                        <li><span>Copy</span></li>
+                                        <li><span>Add to Favorites</span></li>
+                                        <li class="art-hit"><span>Add to Home Screen</span><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></li>
+                                        <li class="art-fade"><span>Edit Actions…</span></li>
+                                    </ul>
+                                    <span class="art-scroll"><svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+                                </div>
+                            </figure>
+                            <h2><span class="install-step-num">2</span>Find "Add to Home Screen"</h2>
+                            <p>Scroll down the list that opens. It's usually below Copy and Add to Favorites.</p>
+                            <p class="install-tip">Not in the list? Tap More or Edit Actions at the bottom, then turn on Add to Home Screen.</p>
+                        </li>
+
+                        <li class="install-guide-step">
+                            <figure class="install-art" aria-hidden="true">
+                                <div class="art-screen art-add">
+                                    <div class="art-add-bar"><span>Cancel</span><b>Add to Home Screen</b><span class="art-hit art-hit-text">Add</span></div>
+                                    <div class="art-add-body">
+                                        <img src="brand/sb-tile.svg" alt="" class="art-app-icon art-app-icon-big">
+                                        <div><span class="art-field">Southbound</span><small>southboundcoaching.com</small></div>
+                                    </div>
+                                </div>
+                            </figure>
+                            <h2><span class="install-step-num">3</span>Tap "Add to Home Screen", then "Add"</h2>
+                            <p>"Add" is in the top-right corner. Southbound appears on your Home Screen: open it from there and sign in.</p>
+                        </li>
+                    </ol>
+
+                    <div class="install-guide-nav" data-guide-nav hidden>
+                        <button type="button" class="sb-btn sb-btn-secondary" data-guide-back><span data-icon="chevronLeft"></span>Back</button>
+                        <button type="button" class="sb-btn sb-btn-primary" data-guide-next>Next<span data-icon="chevronRight"></span></button>
+                    </div>
+                </div>
+
+                <p class="install-recap"><span class="install-recap-label">In short</span> <span>Share</span> <span class="install-recap-arrow" aria-hidden="true">→</span> <span>Add to Home Screen</span> <span class="install-recap-arrow" aria-hidden="true">→</span> <span>Add</span></p>
 
             </section>
 
-            <section class="install-panel" data-platform-panel="android" hidden>
+            <!-- ============ Android ============ -->
+            <section class="install-panel" id="installPanelAndroid" data-platform-panel="android" role="tabpanel" hidden>
 
-                <button type="button" class="install-primary-btn" id="androidInstallBtn" hidden>
-                    <span data-icon="download"></span> Install App
-                </button>
+                <div class="install-ready" data-install-ready hidden>
+                    <button type="button" class="install-primary-btn" data-install-btn><span data-icon="download"></span>Install Southbound</button>
+                    <p>Your phone asks you to confirm, then Southbound is on your home screen.</p>
+                </div>
 
-                <ol class="install-steps">
-                    <li>
-                        <span class="install-step-num">1</span>
-                        <div><strong>Tap the ⋮ menu</strong><span>Top-right corner in Chrome.</span></div>
-                    </li>
-                    <li>
-                        <span class="install-step-num">2</span>
-                        <div><strong>Tap "Install app"</strong><span>Some phones call this "Add to Home screen" instead.</span></div>
-                    </li>
-                    <li>
-                        <span class="install-step-num">3</span>
-                        <div><strong>Tap "Install"</strong><span>The Southbound icon appears on your home screen.</span></div>
-                    </li>
-                </ol>
+                <p class="install-readfirst" data-manual-lead>Install it from your browser's menu:</p>
+
+                <div class="install-guide" data-guide>
+                    <div class="install-guide-head" data-guide-head hidden>
+                        <span class="install-guide-count" aria-live="polite">Step <b data-guide-current>1</b> of <span data-guide-total>3</span></span>
+                        <div class="install-guide-dots" data-guide-dots></div>
+                    </div>
+
+                    <ol class="install-guide-steps">
+                        <li class="install-guide-step">
+                            <figure class="install-art" aria-hidden="true">
+                                <div class="art-screen art-chrome">
+                                    <div class="art-chrome-bar">
+                                        <div class="art-address">southboundcoaching.com</div>
+                                        <span class="art-glyph art-hit"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="18.5" r="1.4"/></svg></span>
+                                    </div>
+                                    <div class="art-lines"><i></i><i></i><i></i></div>
+                                </div>
+                            </figure>
+                            <h2><span class="install-step-num">1</span>Tap the ⋮ menu</h2>
+                            <p>Three dots in the top-right corner of Chrome.</p>
+                            <p class="install-tip">Samsung Internet: tap ≡ at the bottom, then "Add page to".</p>
+                        </li>
+
+                        <li class="install-guide-step">
+                            <figure class="install-art" aria-hidden="true">
+                                <div class="art-screen art-chrome">
+                                    <ul class="art-list art-menu">
+                                        <li><span>New tab</span></li>
+                                        <li><span>History</span></li>
+                                        <li class="art-hit"><span>Install app</span><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 8v6M9.5 11.5L12 14l2.5-2.5"/></svg></li>
+                                        <li class="art-fade"><span>Settings</span></li>
+                                    </ul>
+                                </div>
+                            </figure>
+                            <h2><span class="install-step-num">2</span>Tap "Install app"</h2>
+                            <p>Some phones call it "Add to Home screen" instead.</p>
+                        </li>
+
+                        <li class="install-guide-step">
+                            <figure class="install-art" aria-hidden="true">
+                                <div class="art-screen art-dialog">
+                                    <div class="art-dialog-box">
+                                        <b>Install app</b>
+                                        <div class="art-add-body">
+                                            <img src="brand/sb-tile.svg" alt="" class="art-app-icon">
+                                            <div><span>Southbound</span><small>southboundcoaching.com</small></div>
+                                        </div>
+                                        <div class="art-dialog-actions"><span>Cancel</span><span class="art-hit art-hit-text">Install</span></div>
+                                    </div>
+                                </div>
+                            </figure>
+                            <h2><span class="install-step-num">3</span>Tap "Install"</h2>
+                            <p>Southbound appears on your home screen and in your apps: open it from there and sign in.</p>
+                        </li>
+                    </ol>
+
+                    <div class="install-guide-nav" data-guide-nav hidden>
+                        <button type="button" class="sb-btn sb-btn-secondary" data-guide-back><span data-icon="chevronLeft"></span>Back</button>
+                        <button type="button" class="sb-btn sb-btn-primary" data-guide-next>Next<span data-icon="chevronRight"></span></button>
+                    </div>
+                </div>
+
+                <p class="install-recap"><span class="install-recap-label">In short</span> <span>⋮ menu</span> <span class="install-recap-arrow" aria-hidden="true">→</span> <span>Install app</span> <span class="install-recap-arrow" aria-hidden="true">→</span> <span>Install</span></p>
 
             </section>
 
-            <section class="install-panel" data-platform-panel="desktop" hidden>
-                <p class="install-desktop-note">You're viewing this on a computer. Scan the QR code or send yourself the link below to install it on your phone.</p>
+            <!-- ============ Computer ============ -->
+            <section class="install-panel" id="installPanelDesktop" data-platform-panel="desktop" role="tabpanel" hidden>
+
+                <div class="install-ready" data-install-ready hidden>
+                    <button type="button" class="install-primary-btn" data-install-btn><span data-icon="download"></span>Install on this computer</button>
+                    <p>Southbound opens in its own window, like any other app.</p>
+                </div>
+
+                <div class="install-desktop-card">
+                    <strong>Install on this computer</strong>
+                    <p>In Chrome or Edge, click the install icon at the right end of the address bar. In Safari on a Mac, choose File, then Add to Dock.</p>
+                </div>
+
             </section>
 
-            <section class="install-share">
+            <section class="install-share" id="installShare">
                 <div class="install-qr-card">
                     <img src="icons/install-qr.svg" alt="QR code that opens this page" width="180" height="180">
                 </div>
                 <div class="install-share-info">
-                    <strong>Scan to open this page on your phone</strong>
-                    <p>Or copy the link and text it to yourself.</p>
+                    <strong data-share-title>Scan to open this page on your phone</strong>
+                    <p data-share-text>Or copy the link and text it to yourself.</p>
                     <div class="install-link-row">
                         <input type="text" id="installLinkInput" readonly aria-label="Install page link">
                         <button type="button" id="installCopyBtn" class="install-secondary-btn">

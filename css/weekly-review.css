@@ -19,24 +19,6 @@
 
 }
 
-.wr-hero::before{
-
-    content:"";
-    position:absolute;
-    top:-45px;
-    right:-25px;
-    width:195px;
-    height:195px;
-    background-image:url('../brand/sb-mark.svg');
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
-    opacity:.05;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
-
-}
 
 .wr-hero h1{
 

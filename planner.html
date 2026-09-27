@@ -25,16 +25,16 @@
     position:relative;
 }
 
-.planner-page::before{
-    content:"";
+
+.planner-page > .sb-brand-tile{
     position:absolute;
-    top:-30px;
+    top:0;
     right:0;
-    width:200px;
-    height:200px;
-    background:url('brand/sb-mark.svg') center/contain no-repeat;
-    opacity:.045;
-    pointer-events:none;
+}
+
+.planner-page > h1,
+.planner-page > .planner-intro{
+    padding-right:calc(var(--sb-tile) + 20px);
 }
 
 .planner-page h1{
@@ -290,6 +290,7 @@
 <div id="header"></div>
 
 <main class="planner-page">
+    <div class="sb-brand-tile" aria-hidden="true"></div>
 
     <div class="sb-eyebrow">Your calendar</div>
     <h1>Planner</h1>

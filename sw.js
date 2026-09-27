@@ -29,7 +29,7 @@
    dropped on activate instead of lingering.
 ========================================== */
 
-const CACHE_NAME = "eddieos-shell-v5";
+const CACHE_NAME = "eddieos-shell-v6";
 
 const CORE_ASSETS = [
     "index.html",
@@ -42,7 +42,10 @@ const CORE_ASSETS = [
     "manifest.json",
     "icons/icon-192.png",
     "icons/icon-512.png",
+    "icons/apple-touch-icon.png",
+    "icons/favicon-32.png",
     "brand/sb-mark.svg",
+    "brand/sb-tile.svg",
     "fonts/inter-latin-var.woff2",
     "fonts/bebas-neue-latin-400.woff2",
     "fonts/saira-latin-800.woff2"
@@ -57,12 +60,12 @@ const OFFLINE_PAGE = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"
 @font-face{font-family:'Inter';font-weight:100 900;src:url('fonts/inter-latin-var.woff2') format('woff2');}
 html,body{margin:0;height:100%;background:#0F2019;color:#F2EEE4;font-family:'Inter',system-ui,sans-serif;}
 main{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;box-sizing:border-box;}
-img{width:64px;height:auto;opacity:.9;}
+img{width:72px;height:auto;}
 h1{margin:0;font-size:22px;}
 p{margin:0;max-width:320px;color:#C3C9BD;line-height:1.55;}
 a{display:inline-block;margin-top:6px;padding:12px 22px;border-radius:999px;background:#C9AD84;color:#0F2019;font-weight:700;text-decoration:none;}
 </style></head><body><main>
-<img src="brand/sb-mark.svg" alt="">
+<img src="brand/sb-tile.svg" alt="">
 <h1>You're offline</h1>
 <p>This page hasn't been saved on this device yet. Reconnect and try again, or go back to Today.</p>
 <a href="index.html">Go to Today</a>

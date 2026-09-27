@@ -19,22 +19,6 @@
     padding-right:4px;
 }
 
-.page-title::before{
-    content:"";
-    position:absolute;
-    top:-40px;
-    right:-30px;
-    width:180px;
-    height:180px;
-    background-image:url('../brand/sb-mark.svg');
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
-    opacity:.05;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
-}
 
 .page-title h1{
     font-family:var(--font-display);

@@ -13,6 +13,7 @@
 ========================================== */
 
 .hero{
+    display:block;          /* not the global two-column .hero grid */
     margin-bottom:30px;
 }
 

@@ -28,21 +28,22 @@ html{
 
 }
 
-body{
-
-    padding:40px;
-
-}
 
 /* ==========================================
    Main Container
 ========================================== */
 
+/* The page column carries the gutter, not body: body padding squeezed
+   the shared header on small phones. */
 #mp-root{
+
+    width:calc(100% - 64px);
 
     max-width:1350px;
 
-    margin:auto;
+    margin:0 auto;
+
+    padding:40px 0;
 
 }
 
@@ -80,24 +81,6 @@ body{
 
 }
 
-.mp-hero::before{
-
-    content:"";
-    position:absolute;
-    top:-55px;
-    right:-20px;
-    width:240px;
-    height:240px;
-    background-image:url('../brand/sb-mark.svg');
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
-    opacity:.06;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
-
-}
 
 .mp-hero-top{
 
@@ -1370,9 +1353,11 @@ body{
 
 @media (max-width:850px){
 
-    body{
+    #mp-root{
 
-        padding:20px;
+        width:calc(100% - 40px);
+
+        padding:20px 0;
 
     }
 
@@ -1391,6 +1376,8 @@ body{
     .mp-goal-block{
 
         width:100%;
+
+        min-width:0;
 
         text-align:left;
 

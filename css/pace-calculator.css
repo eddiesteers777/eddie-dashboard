@@ -23,17 +23,18 @@ html{
 
 }
 
-body{
 
-    padding:40px;
-
-}
-
+/* The page column carries the gutter, not body: body padding squeezed
+   the shared header on small phones. */
 #pc-root{
+
+    width:calc(100% - 64px);
 
     max-width:900px;
 
-    margin:auto;
+    margin:0 auto;
+
+    padding:40px 0;
 
 }
 
@@ -768,9 +769,11 @@ body{
 
 @media (max-width:700px){
 
-    body{
+    #pc-root{
 
-        padding:20px;
+        width:calc(100% - 40px);
+
+        padding:20px 0;
 
     }
 

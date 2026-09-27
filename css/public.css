@@ -117,6 +117,14 @@ body.pub-body{
     .pub-nav-links{gap:0;}
     .pub-nav-link{padding:7px 8px;font-size:12.5px;}
     .pub-nav-link.pub-nav-app{gap:4px;}
+    /* Small phones: a smaller logo and Sign In, so the wordmark never
+       runs under the button (it did at 320px). */
+    .pub-navbar{gap:12px;padding:14px 16px;}
+    .pub-logo{gap:8px;}
+    .pub-logo .brand-mark{height:32px;}
+    .pub-logo .brand-word{font-size:18px;}
+    .pub-logo-sub{font-size:8.5px;letter-spacing:.38em;}
+    .pub-signin-btn{padding:8px 14px;}
 }
 
 /* ---- Page shell ---- */
@@ -430,7 +438,7 @@ body.pub-body{
     position:static;
     width:46%;
     height:auto;
-    border-radius:26%;
+    border-radius:22.5%;
     box-shadow:0 24px 60px rgba(0,0,0,.45);
 }
 
@@ -538,6 +546,16 @@ body.pub-body{
 .pub-package .pub-feature-list li{font-size:14px;}
 .pub-package .pub-btn-primary,
 .pub-package .pub-btn-secondary{width:100%;}
+/* The brand tile (css/style.css) sits in each card's top corner, the
+   same place whatever the card's height; the title keeps clear of it. */
+.pub-package > .pub-package-mark{
+    --sb-tile:46px;
+    position:absolute;
+    top:22px;
+    right:22px;
+}
+.pub-package h3,
+.pub-package-for{padding-right:58px;}
 
 .pub-pricing-note{
     text-align:center;
@@ -722,6 +740,20 @@ select.pub-input{appearance:auto;}
     font-size:12.5px;
 }
 .pub-footer a{color:var(--muted);}
+/* Footer sign-off: the mark + wordmark, smaller than the header's. */
+.pub-footer-brand{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin:0 auto 14px;
+    color:var(--cream) !important;
+    text-decoration:none;
+}
+.pub-footer-brand .brand-mark{height:30px;width:auto;}
+.pub-footer-word{display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+.pub-footer-word .brand-word{font-size:17px;}
+.pub-footer-sub{font:700 9px/1 var(--font-body);letter-spacing:.42em;text-transform:uppercase;color:var(--primary);}
+.pub-footer p{margin:0;}
 
 /* Shown until real prices are set -- reads as intentional, not blank. */
 .pub-package-price.pub-package-price-tbd{

@@ -2,8 +2,11 @@
    Southbound — Install / Get the App
    ========================================== */
 
-body{
-    background:var(--bg);
+body.install-body{
+    background:
+        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201,173,132,.09), transparent 70%),
+        var(--bg);
+    min-height:100vh;
 }
 /* Several elements on this page set their own display property
    (flex/none-toggling panels, etc.), and any author rule that sets
@@ -12,7 +15,8 @@ body{
    with its own display rule renders visible regardless of the
    hidden attribute. One blanket rule here instead of chasing it
    down per element. */
-.install-page [hidden]{
+.install-page [hidden],
+.install-topbar [hidden]{
     display:none !important;
 }
 
@@ -22,7 +26,9 @@ body{
 .install-topbar{
     display:flex;
     align-items:center;
-    padding:16px 20px;
+    width:min(560px,92%);
+    margin:0 auto;
+    padding:18px 0 6px;
 }
 .install-topbar-brand{
     display:inline-flex;
@@ -30,123 +36,227 @@ body{
     gap:10px;
     text-decoration:none;
     color:var(--text);
-    font-family:var(--font-display);
-    font-size:20px;
-    letter-spacing:.3px;
 }
-.install-logo{
-    width:32px;
-    height:32px;
-    border-radius:9px;
+.install-topbar-brand .brand-mark{height:32px;}
+.install-topbar-word{display:flex;flex-direction:column;gap:3px;}
+.install-topbar-word .brand-word{font-size:18px;}
+.install-topbar-sub{
+    font:700 8.5px/1 var(--font-body);
+    letter-spacing:.4em;
+    text-transform:uppercase;
+    color:var(--primary);
 }
 
 .install-page{
-    width:min(520px,92%);
+    width:min(560px,92%);
     margin:0 auto;
-    padding:20px 0 80px;
+    padding:18px 0 80px;
 }
+
+/* ---- Hero ---- */
 
 .install-hero{
     text-align:center;
     margin-bottom:24px;
 }
+.install-app-icon{
+    display:block;
+    width:84px;
+    height:84px;
+    margin:0 auto 18px;
+    object-fit:contain;
+    filter:drop-shadow(0 14px 28px rgba(0,0,0,.35));
+}
 .install-kicker{
-    color:var(--muted);
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.12em;
+    color:var(--primary);
+    font:800 11px/1 var(--font-body);
+    letter-spacing:.16em;
     text-transform:uppercase;
-    margin-bottom:8px;
+    margin-bottom:10px;
 }
 .install-hero h1{
+    text-wrap:balance;
     font-family:var(--font-display);
-    font-size:36px;
+    font-size:42px;
     font-weight:400;
     letter-spacing:.3px;
-    line-height:1.08;
+    line-height:1.02;
     margin:0 0 12px;
 }
 .install-hero p{
     color:var(--text-secondary);
-    font-size:14px;
+    font-size:15px;
     line-height:1.5;
-    max-width:400px;
+    max-width:420px;
     margin:0 auto;
 }
 
-.install-already{
+/* ---- Installed / success ---- */
+
+.install-done{
     display:flex;
-    align-items:center;
-    gap:10px;
-    justify-content:center;
-    background:rgba(34,197,94,.08);
-    border:1px solid rgba(34,197,94,.3);
-    color:var(--green);
-    border-radius:14px;
-    padding:14px 16px;
-    font-size:13px;
-    font-weight:700;
+    align-items:flex-start;
+    gap:12px;
+    background:rgba(143,179,155,.10);
+    border:1px solid rgba(143,179,155,.35);
+    border-radius:18px;
+    padding:15px 16px;
     margin-bottom:20px;
+    color:var(--good);
 }
+.install-done .ui-icon{width:22px;height:22px;flex-shrink:0;}
+.install-done strong{display:block;color:var(--text);font-size:14.5px;margin-bottom:3px;}
+.install-done span{font-size:13.5px;color:var(--text-secondary);line-height:1.45;}
+.install-done a{color:var(--primary);font-weight:700;}
+
+/* ---- Device tabs ---- */
 
 .install-tabs{
     display:flex;
     width:max-content;
     max-width:100%;
-    margin:0 auto 20px;
+    margin:0 auto 18px;
     gap:4px;
     padding:4px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:999px;
+    border-radius:var(--radius-pill);
 }
 .install-tab{
     appearance:none;
     border:0;
     background:transparent;
     color:var(--text-secondary);
-    padding:9px 22px;
-    border-radius:999px;
-    font:700 13px/1 var(--font-body);
+    min-height:38px;
+    padding:0 18px;
+    border-radius:var(--radius-pill);
+    font:700 13.5px/1 var(--font-body);
+    white-space:nowrap;
     cursor:pointer;
     transition:background .15s ease,color .15s ease;
 }
 .install-tab:hover{color:var(--text);}
-.install-tab.active{background:var(--primary);color:#0f2019;}
+.install-tab.active{background:var(--primary);color:var(--on-primary);}
 
-.install-panel[hidden]{display:none !important;}
+/* ---- Notes above the guide ---- */
 
-.install-warning{
+.install-warning,
+.install-note{
     display:flex;
     gap:10px;
     align-items:flex-start;
+    border-radius:16px;
+    padding:13px 14px;
+    margin-bottom:14px;
+    font-size:13px;
+    line-height:1.45;
+}
+.install-warning{
     background:rgba(250,204,21,.08);
     border:1px solid rgba(250,204,21,.3);
-    border-radius:14px;
-    padding:13px 14px;
-    margin-bottom:16px;
     color:var(--yellow);
 }
-.install-warning strong{display:block;color:var(--text);font-size:13px;margin-bottom:3px;}
-.install-warning span{display:block;font-size:12.5px;color:var(--text-secondary);line-height:1.4;}
-
-.install-steps{
-    list-style:none;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    padding:0;
-    margin:0 0 24px;
-}
-.install-steps li{
-    display:flex;
-    gap:14px;
-    align-items:flex-start;
+.install-warning strong{display:block;color:var(--text);font-size:13.5px;margin-bottom:3px;}
+.install-warning span{display:block;color:var(--text-secondary);}
+.install-note{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:16px;
-    padding:14px 16px;
-    box-shadow:0 8px 20px rgba(0,0,0,.18);
+    color:var(--text-secondary);
+}
+.install-note > .ui-icon,
+.install-note > [data-icon]{color:var(--primary);flex-shrink:0;}
+.install-warning .ui-icon,
+.install-note .ui-icon{width:18px;height:18px;}
+
+.install-readfirst{
+    text-align:center;
+    color:var(--text-secondary);
+    font-size:13.5px;
+    line-height:1.45;
+    margin:0 0 12px;
+}
+
+/* ---- The guide: one step at a time once the script runs ---- */
+
+.install-guide{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 16px 18px;
+    box-shadow:var(--shadow);
+}
+.install-guide-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 2px 12px;
+}
+.install-guide-count{
+    font:700 12px/1 var(--font-body);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+.install-guide-count b{color:var(--primary);}
+.install-guide-dots{display:flex;align-items:center;}
+.install-guide-dot{
+    appearance:none;
+    border:0;
+    background:none;
+    padding:0;
+    width:24px;
+    height:24px;
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+}
+.install-guide-dot::before{
+    content:"";
+    display:block;
+    width:8px;
+    height:8px;
+    border-radius:var(--radius-pill);
+    background:rgba(255,255,255,.18);
+    transition:width .2s ease,background .2s ease;
+}
+.install-guide-dot.done::before{background:var(--primary-dark);}
+.install-guide-dot.active::before{width:20px;background:var(--primary);}
+
+.install-guide-steps{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+}
+/* Every step sits in the same grid cell, so the card keeps the height
+   of the longest step and doesn't jump as you go. */
+.install-guide.is-stepper .install-guide-steps{
+    display:grid;
+}
+.install-guide.is-stepper .install-guide-step{
+    grid-area:1 / 1;
+    visibility:hidden;
+}
+.install-guide.is-stepper .install-guide-step.is-current{
+    visibility:visible;
+    animation:installStepIn .28s ease both;
+}
+@keyframes installStepIn{
+    from{opacity:0;transform:translateX(14px);}
+    to{opacity:1;transform:none;}
+}
+
+.install-guide-step h2{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font:700 17px/1.3 var(--font-body);
+    color:var(--text);
+    margin:16px 0 6px;
+    outline:none;
 }
 .install-step-num{
     flex-shrink:0;
@@ -154,52 +264,117 @@ body{
     height:26px;
     border-radius:50%;
     background:var(--primary);
-    color:#0f2019;
-    font-weight:800;
+    color:var(--on-primary);
+    font:800 13px/1 var(--font-body);
+    display:grid;
+    place-items:center;
+}
+.install-guide-step p{
+    margin:0 0 8px;
+    color:var(--text-secondary);
+    font-size:14px;
+    line-height:1.5;
+}
+.install-guide-step p.install-tip{
+    margin:10px 0 0;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(255,255,255,.04);
+    border-left:3px solid var(--primary-dark);
+    color:var(--text-secondary);
     font-size:13px;
+}
+.install-share-glyph{
+    display:inline-grid;
+    place-items:center;
+    vertical-align:-4px;
+    width:22px;
+    height:22px;
+    margin:0 1px;
+    border-radius:6px;
+    background:rgba(201,173,132,.14);
+    color:var(--primary);
+}
+.install-share-glyph svg{width:15px;height:15px;}
+
+.install-guide-nav{
     display:flex;
+    gap:10px;
+    margin-top:18px;
+}
+.install-guide-nav .sb-btn{flex:1 1 0;}
+.install-guide-nav .sb-btn .ui-icon{width:16px;height:16px;}
+.install-guide-nav .sb-btn.is-restart [data-icon]{display:none;}
+.install-guide-nav .sb-btn:disabled{opacity:.4;cursor:default;}
+
+/* The whole thing in one line, for after the page is covered. */
+.install-recap{
+    display:flex;
+    flex-wrap:wrap;
     align-items:center;
     justify-content:center;
+    gap:6px 8px;
+    margin:16px 0 26px;
+    font:700 13.5px/1.3 var(--font-body);
+    color:var(--text);
 }
-.install-steps strong{display:block;font-size:14px;margin-bottom:3px;}
-.install-steps li div span{display:block;font-size:12.5px;color:var(--text-secondary);line-height:1.45;}
+.install-recap-label{
+    width:100%;
+    text-align:center;
+    color:var(--primary);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+.install-recap-arrow{color:var(--primary);font-weight:400;}
 
+/* ---- A real install button, only when the browser offers one ---- */
+
+.install-ready{
+    text-align:center;
+    margin-bottom:18px;
+}
+.install-ready p{
+    margin:10px 0 0;
+    color:var(--text-secondary);
+    font-size:13px;
+}
 .install-primary-btn,
 .install-secondary-btn{
     appearance:none;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    gap:7px;
-    border-radius:999px;
-    padding:12px 22px;
-    font:700 13px/1 var(--font-body);
+    gap:8px;
+    border-radius:var(--radius-pill);
+    font:700 14px/1 var(--font-body);
     cursor:pointer;
-    transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,color .15s ease;
+    transition:transform .15s ease,background-color .15s ease,border-color .15s ease,color .15s ease;
 }
 .install-primary-btn{
     width:100%;
+    min-height:52px;
+    padding:0 22px;
     background:var(--primary);
-    color:#0f2019;
+    color:var(--on-primary);
     border:1px solid var(--primary);
-    box-shadow:0 6px 18px rgba(201,173,132,.28);
-    margin-bottom:16px;
+    font-size:15.5px;
 }
-.install-primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(201,173,132,.36);}
+.install-primary-btn:hover{background:var(--primary-light);border-color:var(--primary-light);}
 .install-primary-btn:active{transform:scale(.98);}
-.install-primary-btn[hidden]{display:none !important;}
+.install-primary-btn .ui-icon{width:18px;height:18px;}
 
-.install-desktop-note{
-    text-align:center;
-    color:var(--text-secondary);
-    font-size:13.5px;
-    line-height:1.5;
+.install-desktop-card{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:16px;
-    padding:16px;
-    margin-bottom:24px;
+    border-radius:18px;
+    padding:16px 18px;
+    margin-bottom:18px;
 }
+.install-desktop-card strong{display:block;font-size:14.5px;margin-bottom:5px;}
+.install-desktop-card p{margin:0;color:var(--text-secondary);font-size:13.5px;line-height:1.5;}
+
+/* ---- Link + QR ---- */
 
 .install-share{
     display:flex;
@@ -219,16 +394,19 @@ body{
     line-height:0;
 }
 .install-qr-card img{display:block;width:100px;height:100px;}
+/* On a phone the code would only point back at itself. */
+body[data-device="ios"] .install-qr-card,
+body[data-device="android"] .install-qr-card{display:none;}
 .install-share-info{flex:1;min-width:0;}
 .install-share-info strong{display:block;font-size:14px;margin-bottom:4px;}
-.install-share-info p{margin:0 0 10px;color:var(--text-secondary);font-size:12.5px;}
+.install-share-info p{margin:0 0 10px;color:var(--text-secondary);font-size:13px;}
 .install-link-row{display:flex;gap:8px;}
 .install-link-row input{
     flex:1;
     min-width:0;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:999px;
+    border-radius:var(--radius-pill);
     color:var(--text-secondary);
     padding:9px 14px;
     font-size:12px;
@@ -239,14 +417,227 @@ body{
     background:var(--surface-light);
     color:var(--text-secondary);
     border:1px solid var(--border);
-    padding:9px 16px;
+    min-height:40px;
+    padding:0 16px;
+    font-size:13px;
 }
 .install-secondary-btn:hover{border-color:var(--primary);color:var(--text);}
-.install-secondary-btn.copied{border-color:var(--green);color:var(--green);}
+.install-secondary-btn.copied{border-color:var(--good);color:var(--good);}
+
+/* ==========================================
+   Step drawings: a few shapes of the real
+   screens, in Southbound colours, with the
+   thing to tap ringed in tan.
+   ========================================== */
+
+.install-art{margin:0;}
+.install-art svg,
+.install-share-glyph svg{
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+}
+.art-screen{
+    position:relative;
+    height:172px;
+    border-radius:18px;
+    border:1px solid var(--border);
+    background:linear-gradient(180deg,var(--surface-light),var(--bg));
+    overflow:hidden;
+    padding:14px;
+    font-family:var(--font-body);
+}
+.art-lines{display:flex;flex-direction:column;gap:7px;}
+.art-lines i{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.07);}
+.art-lines i:nth-child(2){width:78%;}
+.art-lines i:nth-child(3){width:52%;}
+.art-address{
+    text-align:center;
+    font:600 11px/1 var(--font-body);
+    color:var(--text-secondary);
+    background:rgba(255,255,255,.07);
+    border-radius:var(--radius-pill);
+    padding:8px 12px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.art-glyph{
+    width:34px;
+    height:34px;
+    display:grid;
+    place-items:center;
+    border-radius:10px;
+    color:var(--muted);
+}
+.art-glyph svg{width:20px;height:20px;}
+.art-app-icon{width:30px;height:30px;flex-shrink:0;display:block;}
+.art-app-icon-big{width:52px;height:52px;}
+
+/* The thing to tap */
+.art-hit{
+    position:relative;
+    color:var(--primary) !important;
+    background:rgba(201,173,132,.14) !important;
+    box-shadow:0 0 0 2px var(--primary);
+}
+.art-hit::after{
+    content:"";
+    position:absolute;
+    inset:-5px;
+    border-radius:inherit;
+    border:2px solid var(--primary);
+    opacity:0;
+    animation:artPulse 1.8s ease-out infinite;
+    pointer-events:none;
+}
+@keyframes artPulse{
+    0%{opacity:.7;transform:scale(.96);}
+    100%{opacity:0;transform:scale(1.12);}
+}
+
+/* Safari: page, address, toolbar */
+.art-safari{display:flex;flex-direction:column;gap:10px;}
+.art-safari .art-lines{margin-bottom:auto;}
+.art-toolbar{display:flex;justify-content:space-around;align-items:center;}
+
+/* Share sheet */
+.art-sheet{display:flex;flex-direction:column;gap:9px;padding:12px 14px;}
+.art-sheet-head{display:flex;align-items:center;gap:10px;}
+.art-sheet-head b{display:block;font-size:12px;color:var(--text);}
+.art-sheet-head small,
+.art-add-body small{display:block;font-size:10.5px;color:var(--muted);margin-top:2px;}
+.art-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;}
+.art-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:5px 10px;
+    min-height:22px;
+    border-radius:9px;
+    background:rgba(255,255,255,.05);
+    font:600 11.5px/1.2 var(--font-body);
+    color:var(--text-secondary);
+}
+.art-list li svg{width:16px;height:16px;flex-shrink:0;}
+.art-list li.art-hit{color:var(--text) !important;}
+.art-list li.art-hit svg{color:var(--primary);}
+.art-fade{opacity:.45;}
+/* The list runs on below the fold: a fade and a small arrow say so. */
+.art-sheet::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:30px;
+    background:linear-gradient(180deg,transparent,var(--bg) 85%);
+    pointer-events:none;
+}
+.art-scroll{
+    position:absolute;
+    left:50%;
+    bottom:4px;
+    z-index:1;
+    margin-left:-7px;
+    color:var(--primary);
+    animation:artScroll 1.4s ease-in-out infinite;
+}
+.art-scroll svg{width:14px;height:14px;display:block;}
+@keyframes artScroll{
+    0%,100%{transform:translateY(-3px);opacity:.5;}
+    50%{transform:translateY(4px);opacity:1;}
+}
+
+/* Add to Home Screen */
+.art-add{padding:0;}
+.art-add-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+    font:600 11.5px/1 var(--font-body);
+    color:var(--muted);
+}
+.art-add-bar b{color:var(--text);font-size:12px;white-space:nowrap;}
+.art-hit-text{
+    padding:6px 11px;
+    border-radius:var(--radius-pill);
+    font-weight:800;
+}
+.art-add-body{display:flex;align-items:center;gap:12px;padding:20px 16px;}
+.art-add-body > div{flex:1;min-width:0;}
+.art-field{
+    display:block;
+    padding:7px 10px;
+    border-radius:8px;
+    background:rgba(255,255,255,.07);
+    color:var(--text);
+    font-size:13px;
+    font-weight:600;
+}
+
+/* Chrome: address bar + ⋮, then its menu */
+.art-chrome{display:flex;flex-direction:column;gap:14px;}
+.art-chrome-bar{display:flex;align-items:center;gap:8px;}
+.art-chrome-bar .art-address{flex:1;text-align:left;}
+.art-chrome-bar .art-glyph svg circle{fill:currentColor;stroke:none;}
+.art-menu{
+    position:absolute;
+    top:12px;
+    right:12px;
+    width:min(64%,230px);
+    padding:6px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:0 14px 30px rgba(0,0,0,.35);
+}
+.art-menu li{background:transparent;}
+
+/* Install dialog */
+.art-dialog{display:grid;place-items:center;background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.32)),var(--bg);}
+.art-dialog-box{
+    width:min(86%,300px);
+    padding:14px 14px 10px;
+    border-radius:16px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    box-shadow:0 14px 30px rgba(0,0,0,.35);
+}
+.art-dialog-box > b{display:block;font-size:13px;color:var(--text);}
+.art-dialog-box .art-add-body{padding:12px 0;}
+.art-dialog-box .art-add-body span{font-size:12.5px;font-weight:700;color:var(--text);}
+.art-dialog-actions{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:14px;
+    font:700 12px/1 var(--font-body);
+    color:var(--muted);
+}
+
+@media (prefers-reduced-motion:reduce){
+    .art-hit::after,
+    .art-scroll,
+    .install-guide.is-stepper .install-guide-step.is-current{animation:none;}
+}
 
 @media(max-width:520px){
-    .install-hero h1{font-size:30px;}
+    .install-hero h1{font-size:34px;}
+    .install-app-icon{width:72px;height:72px;margin-bottom:14px;}
+    .install-guide{padding:14px 14px 16px;}
     .install-share{flex-direction:column;text-align:center;}
     .install-share-info{width:100%;}
     .install-link-row{flex-direction:column;}
+}
+
+@media(max-width:360px){
+    .install-tab{padding:0 13px;font-size:13px;}
+    .install-guide-step h2{font-size:16px;}
 }

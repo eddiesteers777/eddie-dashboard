@@ -51,17 +51,6 @@
     margin:0;
     max-width:720px;
 }
-.programs-hero-mark{
-    width:100px;
-    height:100px;
-    flex:0 0 100px;
-    border:1px solid rgba(201,173,132,.12);
-    border-radius:24px;
-    background:
-        linear-gradient(135deg,rgba(201,173,132,.08),transparent 65%),
-        url('../brand/sb-mark.svg') center/64% no-repeat;
-    opacity:.5;
-}
 .programs-tabs{
     display:flex;
     width:max-content;
@@ -302,7 +291,6 @@
     .programs-page{padding-top:22px;}
     .programs-hero{min-height:90px;}
     .programs-hero h1{font-size:38px;}
-    .programs-hero-mark{width:72px;height:72px;flex-basis:72px;border-radius:18px;}
     .programs-panel-heading{align-items:flex-start;flex-direction:column;}
     .programs-primary-btn,.programs-secondary-btn{width:100%;}
     .program-main{grid-template-columns:1fr;}

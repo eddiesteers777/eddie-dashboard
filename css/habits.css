@@ -34,24 +34,6 @@
 
 }
 
-.habits-hero::before{
-
-    content:"";
-    position:absolute;
-    top:-50px;
-    right:-25px;
-    width:200px;
-    height:200px;
-    background-image:url('../brand/sb-mark.svg');
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
-    opacity:.05;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
-
-}
 
 .habits-hero h1{
 

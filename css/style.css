@@ -440,16 +440,6 @@ section{
     white-space:nowrap;
 }
 
-.logo-dot{
-    width:36px;
-    height:36px;
-    flex:0 0 36px;
-    border-radius:10px;
-    background-image:url('../icons/icon-512.png');
-    background-size:cover;
-    background-position:center;
-    box-shadow:0 0 14px rgba(201,173,132,.35);
-}
 
 /* Southbound logo: the SB mark (brand/sb-mark.svg) plus the squared
    heavy wordmark from the brand board. Used by every header. */
@@ -891,6 +881,15 @@ section{
         height:28px;
     }
 
+    /* The logo steps down with the bar's own width (a page with body
+       padding, or a very small phone, makes the bar narrower than the
+       window): smaller first, then the mark alone. It never runs under
+       the buttons. */
+    .eos-mobile-topbar{
+        container:sbmtop / inline-size;
+        grid-template-columns:44px minmax(0,1fr) 44px;
+    }
+
     #mobileSearchBtn{
         justify-self:end;
     }
@@ -1299,24 +1298,6 @@ section{
 
 }
 
-.hero::before{
-
-    content:"";
-    position:absolute;
-    top:-100px;
-    right:-60px;
-    width:340px;
-    height:340px;
-    background-image:url('../brand/sb-mark.svg');
-    background-size:contain;
-    background-repeat:no-repeat;
-    background-position:center;
-    opacity:.045;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
-
-}
 
 .hero-left{
 
@@ -3141,27 +3122,108 @@ body.has-bottomnav .sb-toast-host{ bottom:96px; }
     pointer-events:none;
 }
 
-.eos-today-hero::after{
-    content:"";
-    position:absolute;
-    top:50%;
-    right:4px;
-    width:190px;
-    height:190px;
-    transform:translateY(-50%);
-    background-image:url('../brand/sb-mark.svg');
-    background-size:contain;
-    background-position:center;
-    background-repeat:no-repeat;
-    opacity:.045;
-    mix-blend-mode:screen;
-    filter:saturate(.9) brightness(1.15);
-    pointer-events:none;
+
+.eos-today-hero{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
 }
 
 .eos-today-hero > div{
     position:relative;
     z-index:1;
+    flex:1 1 auto;
+    min-width:0;
+}
+
+/* ==========================================================
+   BRAND TILE: the SB mark (brand/sb-mark.svg) in its own rounded
+   box, wherever the logo is decoration (page headers, Programs).
+   It's part of the layout, never behind text; the whole mark
+   always shows (contain, inside padding); --sb-tile sizes it.
+     <div class="sb-brand-tile" aria-hidden="true"></div>
+   Where it goes:
+     .eos-today-hero        the header's own ::after, right of the title
+     .sb-hero-tiled         a flex header with stats / a button on the
+                            right: the tile comes last on computers and
+                            sits beside the title on phones
+     .sb-hero-corner        a block header: top-right corner, and the
+                            text keeps clear of it
+========================================================== */
+
+@container sbmtop (max-width:300px){
+    .eos-mobile-topbar-logo{ gap:7px; font-size:1rem; }
+    .eos-mobile-topbar-logo .brand-mark{ height:24px; }
+}
+@container sbmtop (max-width:240px){
+    .eos-mobile-topbar-logo .brand-word{ display:none; }
+    .eos-mobile-topbar-logo .brand-mark{ height:28px; }
+}
+
+:root{ --sb-tile:96px; }
+
+.sb-brand-tile,
+html body .eos-today-hero::after{
+    content:"";
+    box-sizing:border-box;
+    display:block;
+    position:relative;
+    width:var(--sb-tile);
+    height:var(--sb-tile);
+    flex:0 0 var(--sb-tile);
+    padding:calc(var(--sb-tile) * .17);
+    border-radius:26%;
+    border:1px solid rgba(201,173,132,.22);
+    background:
+        url('../brand/sb-mark.svg') center / contain no-repeat content-box,
+        linear-gradient(150deg, rgba(201,173,132,.14), rgba(201,173,132,.04) 55%, rgba(0,0,0,.16)) border-box;
+    box-shadow:inset 0 1px 0 rgba(243,239,230,.06), 0 12px 30px rgba(0,0,0,.18);
+    opacity:.78;
+    pointer-events:none;
+}
+
+html body .eos-today-hero::after{
+    z-index:1;
+}
+
+.sb-hero-tiled{
+    position:relative;
+    justify-content:flex-start !important;
+}
+
+.sb-hero-tiled > :first-child{
+    margin-right:auto;
+}
+
+.sb-hero-corner{
+    position:relative;
+    min-height:var(--sb-tile);
+    padding-right:calc(var(--sb-corner-right, 0px) + var(--sb-tile) + 20px) !important;
+}
+
+.sb-hero-corner > .sb-brand-tile{
+    position:absolute;
+    top:var(--sb-corner-top, 0px);
+    right:var(--sb-corner-right, 0px);
+}
+
+@media (max-width:900px){
+    :root{ --sb-tile:80px; }
+}
+
+@media (max-width:600px){
+    :root{ --sb-tile:58px; }
+    .sb-hero-tiled > .sb-brand-tile{
+        position:absolute;
+        top:0;
+        right:0;
+    }
+    .sb-hero-tiled > :first-child{
+        padding-right:calc(var(--sb-tile) + 14px);
+        margin-right:0;
+        flex:1 1 100%;
+    }
 }
 
 html body :is(.eos-today-eyebrow, .sb-eyebrow, .ct-eyebrow, .pc-eyebrow, .programs-kicker){
@@ -3222,14 +3284,6 @@ html body :is(
     }
 }
 
-@media (max-width:700px){
-    .eos-today-hero::after{
-        width:150px;
-        height:150px;
-        right:-8px;
-        opacity:.035;
-    }
-}
 
 @media (max-width:640px){
     html body :is(
@@ -3406,12 +3460,6 @@ html body :is(
     :root{
         --page-wide:1200px;
         --page-narrow:900px;
-    }
-
-    /* A few older pages padded the body instead of their column. */
-    html body:has(> #ct-root, > #pc-root, > #mp-root){
-        padding-left:0;
-        padding-right:0;
     }
 
     html body .navbar{
