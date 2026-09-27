@@ -532,9 +532,12 @@ export function generateTrainingPlan(settings) {
     const restDays = new Set(settings.sundayRest ? ["SUN"] : []);
     const available = ALL_DAYS.filter(day => !restDays.has(day));
 
-    const runCount = clampInt(settings.runDays, 0, available.length);
-    const longDay = runCount > 0 ? resolveLongDay(available, settings.longRunDay) : null;
-    const runDays = pickRunDays(available, runCount, longDay);
+    // A coach can name the exact run days (runDayCodes, e.g. ["TUE","THU","SAT"]);
+    // otherwise the generator picks them from a count.
+    const fixedDays = Array.isArray(settings.runDayCodes) ? ALL_DAYS.filter(day => settings.runDayCodes.includes(day)) : [];
+    const runCount = fixedDays.length || clampInt(settings.runDays, 0, available.length);
+    const longDay = runCount > 0 ? resolveLongDay(fixedDays.length ? fixedDays : available, settings.longRunDay) : null;
+    const runDays = fixedDays.length ? fixedDays : pickRunDays(available, runCount, longDay);
     const requestedSpeedDays = clampInt(settings.speedDays, 0, runDays.length);
     const qualityResult = pickQualityDays(runDays, longDay, requestedSpeedDays);
     const qualityDays = qualityResult.days;

@@ -4,7 +4,10 @@
    Where the coach builds and publishes a client's plan:
      - the client's published plans (version, seen / got it), drafts,
        and plans the client made themselves ("Take over this plan")
-     - New plan (blank, from a start date and a number of weeks)
+     - New plan: Generate (from the client's profile, runs + strength,
+       js/coachPlanGenerator.js via js/planGenerateDialogs.js) or blank
+     - Regenerate any part later (runs / strength / a date range), keeping
+       days the coach changed by hand and days the client already did
      - the editor: every day's type / miles / workout, add weeks,
        the client's done marks shown read-only
      - Save draft (only the coach sees it) / Review & publish (shows
@@ -41,6 +44,7 @@ import {
     RUN_FOLDERS, STRENGTH_FOLDERS
 } from "./planOps.js";
 import { dayEntries, weekEntries, saveEntry, deleteEntry } from "./coachLibrary.js";
+import { generateDialog, regenerateDialog } from "./planGenerateDialogs.js";
 
 // Day types a structured run workout applies to.
 const RUN_TYPES = ["easy", "long", "workout", "race", "tempo", "recovery"];
@@ -188,10 +192,11 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         renderEditor();
     }
 
-    function startNew({ name, kind, plan, adoptedFrom = null }) {
+    function startNew({ name, kind, plan, adoptedFrom = null, notes = [] }) {
         state.editing = {
             planId: newPlanId(), header: null, name, kind,
-            plan: recalcPlannedMiles(stripRuntime(plan)), basedOnVersion: 0, adoptedFrom, draftExists: false, dirty: true
+            plan: recalcPlannedMiles(stripRuntime(plan)), basedOnVersion: 0, adoptedFrom, draftExists: false, dirty: true,
+            notes
         };
         renderEditor();
     }
@@ -222,6 +227,11 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                     <label class="sr-only" for="pwName">Plan name</label>
                     <input id="pwName" class="pw-name" type="text" maxlength="120" value="${esc(e.name)}">
                     <p class="clients-card-note" data-el="status">${editorStatus()}</p>
+                    <div class="pw-gen-row">
+                        <button type="button" class="sb-btn sb-btn-secondary" data-act="regen">${icon("refresh")} ${e.plan.generator ? "Regenerate…" : "Generate into this plan…"}</button>
+                        ${e.plan.generator ? `<span class="pw-meta">Generated from ${esc(first)}'s settings${e.plan.generator.settings?.mode === "race" ? ` for ${esc(shortDay(e.plan.generator.settings.raceDate))}` : ""}. Days you change stay yours when you regenerate.</span>` : ""}
+                    </div>
+                    ${e.notes?.length ? `<div class="pw-gen-notes" data-el="notes"><strong>${icon("info")} Worth a look</strong><ul>${e.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul><button type="button" class="sb-btn sb-btn-tertiary" data-act="notes-ok">Got it</button></div>` : ""}
                 </div>
 
                 <div class="pw-weeks" data-el="weeks">
@@ -505,6 +515,20 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         const act = btn.dataset.act;
         try {
             if (act === "new") return newPlanDialog();
+            if (act === "regen") {
+                return regenerateDialog({
+                    firstName: first, record: data.record, plan: state.editing.plan,
+                    done: new Set(doneMarks(state.editing.planId).keys()),
+                    onApply: ({ plan, kind, message }) => {
+                        state.editing.kind = kind;
+                        runOp(message, current => {
+                            for (const key of Object.keys(current)) delete current[key];
+                            Object.assign(current, plan);
+                        });
+                    }
+                });
+            }
+            if (act === "notes-ok") { state.editing.notes = []; container.querySelector('[data-el="notes"]')?.remove(); return; }
             if (act === "open") return openEditor(btn.dataset.id);
             if (act === "adopt") return adopt(btn.dataset.store, btn.dataset.id);
             if (act === "restore") {
@@ -930,6 +954,16 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         container.querySelectorAll(".is-dragging, .is-drop").forEach(el => el.classList.remove("is-dragging", "is-drop"));
     });
 
+    function openGenerate() {
+        generateDialog({
+            firstName: first, record: data.record,
+            onCreate: ({ name, kind, plan, warnings, summary }) => {
+                startNew({ name, kind, plan, notes: warnings });
+                toast(`Generated ${summary.weeks} weeks: ${summary.miles} mi, peak ${summary.peak} mi a week, ${summary.workouts} workouts, ${summary.strength} strength sessions. Change anything, then publish.`, { duration: 7000 });
+            }
+        });
+    }
+
     function newPlanDialog() {
         const nextMonday = (() => {
             const dt = new Date();
@@ -939,6 +973,11 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         const d = dialog(`
             <form class="sb-dialog-form">
                 <h2 class="sb-dialog-title">New plan for ${esc(first)}</h2>
+                <button type="button" class="pw-gen-pick" data-act="generate">
+                    <strong>${icon("bolt")} Generate it from ${esc(first)}'s profile</strong>
+                    <span>Runs and strength for every day, built from their goal, race, miles and the days they can train. You edit anything after.</span>
+                </button>
+                <p class="pw-gen-or">or start blank</p>
                 <label class="pw-label">Name<input class="sb-dialog-input" name="name" maxlength="120" required placeholder="e.g. Spring 10K build"></label>
                 <label class="pw-label">Starts the week of<input class="sb-dialog-input" name="start" type="date" required value="${nextMonday}"></label>
                 <label class="pw-label">How many weeks<input class="sb-dialog-input" name="weeks" type="number" min="1" max="52" required value="8"></label>
@@ -949,6 +988,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 </div>
             </form>`);
         d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+        d.querySelector('[data-act="generate"]').addEventListener("click", () => { d.close(); openGenerate(); });
         d.querySelector("form").addEventListener("submit", ev => {
             ev.preventDefault();
             const f = new FormData(ev.target);
