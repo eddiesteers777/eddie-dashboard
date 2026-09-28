@@ -286,6 +286,9 @@ export function qualityWorkout(s, phase, index, miles) {
 
 const byId = Object.fromEntries(BUILT_IN_WORKOUTS.map(w => [w.id, w]));
 const RUNNER_MAIN = ["marathon-strength-a", "marathon-strength-b", "single-leg-foundation", "glute-posterior", "lower-body-25", "full-body-30", "beginner-foundation", "minimal-full-body", "dumbbell-only-30", "bands-only-25", "bodyweight-full-body"];
+// New runners (run/walk plans): whole-body basics, no marathon sessions.
+const NEW_RUNNER_MAIN = ["beginner-foundation", "bodyweight-full-body", "single-leg-foundation", "minimal-full-body", "lower-body-25", "full-body-30", "dumbbell-only-30", "bands-only-25"];
+const NEW_RUNNER_LIGHT = ["runner-core-stability", "core-20", "calves-feet-15", "mobility-strength-20", "bodyweight-circuit-20"];
 const RUNNER_LIGHT = ["marathon-strength-light", "marathon-maintenance-25", "runner-core-stability", "pre-long-run-support", "core-20", "calves-feet-15", "mobility-strength-20", "bodyweight-circuit-20"];
 const GOAL_MAIN = {
     STRENGTH: ["lower-strength-a", "upper-strength-a", "full-body-45", "full-body-60", "push-day", "pull-day", "beginner-foundation", "dumbbell-only-30", "bands-only-25", "bodyweight-full-body"],
@@ -306,10 +309,11 @@ export function strengthPool(s) {
         const w = byId[id];
         return w && (EQUIPMENT_OK[s.equipment] || EQUIPMENT_OK.gym)(w.equipment || "") && (LEVEL_OK[s.strengthLevel] || LEVEL_OK.some)(w.level || "");
     };
-    const mainIds = (s.mode === "training" && GOAL_MAIN[s.trainingGoal]) || RUNNER_MAIN;
+    const runWalk = isRunWalk(s);
+    const mainIds = runWalk ? NEW_RUNNER_MAIN : (s.mode === "training" && GOAL_MAIN[s.trainingGoal]) || RUNNER_MAIN;
     let main = mainIds.filter(fits);
     if (s.strengthLevel === "experienced") main = [...main.filter(id => byId[id].level === "Intermediate"), ...main.filter(id => byId[id].level !== "Intermediate")];
-    const light = RUNNER_LIGHT.filter(fits);
+    const light = (runWalk ? NEW_RUNNER_LIGHT : RUNNER_LIGHT).filter(fits);
     return { main: main.length ? main : light, light: light.length ? light : main };
 }
 

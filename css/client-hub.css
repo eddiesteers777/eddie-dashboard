@@ -730,6 +730,14 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 .pw-gen-profile p{ margin:2px 0; color:var(--text-secondary); }
 .pw-gen-profile strong{ color:var(--text); }
 .pw-gen-warn, .pw-gen-warn strong{ color:var(--bad) !important; }
+.pw-chat{ width:min(720px, calc(100vw - 32px)); }
+.pw-chat textarea{ width:100%; resize:vertical; line-height:1.45; }
+.pw-chat-out, .pw-chat-reply{ font-family:var(--font-mono); font-size:13px; }
+.pw-chat-ok{ display:flex; align-items:flex-start; gap:8px; margin:0 0 8px; color:var(--text); font-size:14px; line-height:1.5; }
+.pw-chat-ok svg{ flex-shrink:0; margin-top:3px; color:var(--good); }
+.pw-chat-changes{ max-height:42vh; overflow:auto; margin:0; padding:10px 12px 10px 28px; border:1px solid var(--border); border-radius:12px; font-size:14px; line-height:1.5; color:var(--text-secondary); }
+.pw-chat-changes strong{ color:var(--text); }
+.pw-chat-problems code{ font-family:var(--font-mono); font-size:12.5px; overflow-wrap:anywhere; }
 .pw-gen-note{ grid-column:1 / -1; margin:0; color:var(--text-secondary); font-size:13.5px; line-height:1.45; }
 .pw-gen-error{ margin:0; color:var(--bad); font-weight:700; font-size:14px; }
 .pw-gen-pick{ display:flex; flex-direction:column; gap:4px; width:100%; padding:14px 16px; border:1px solid var(--primary); border-radius:14px; background:rgba(201,173,132,.08); color:var(--text); text-align:left; cursor:pointer; }

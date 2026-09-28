@@ -135,6 +135,7 @@ test("through the generator: sessions, strength, checks, regenerate", () => {
     const days = plan.weeks.flatMap(w => w.days);
     assert.ok(days.filter(d => d.workout).every(d => d.type === "easy" && /Run\/walk|Easy run/.test(d.session)));
     assert.ok(days.every(d => !d.strength || d.type !== "race"));
+    assert.ok(days.filter(d => d.strength).every(d => !/marathon|long-run/i.test(d.strength.title)), "beginner strength, not marathon sessions");
     assert.ok(plan.weeks.every(w => w.plannedMiles > 0 && w.plannedMiles < 15));
     // Same settings again: nothing to change.
     const again = regeneratePlan(plan, plan.generator.settings, { from: START, today: START });

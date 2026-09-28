@@ -49,6 +49,7 @@ import {
 } from "./planOps.js";
 import { dayEntries, weekEntries, saveEntry, deleteEntry } from "./coachLibrary.js";
 import { generateDialog, regenerateDialog } from "./planGenerateDialogs.js";
+import { promptDialog, pasteDialog } from "./planPromptDialogs.js";
 
 // Day types a structured run workout applies to.
 const RUN_TYPES = ["easy", "long", "workout", "race", "tempo", "recovery"];
@@ -258,6 +259,8 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                     <p class="clients-card-note" data-el="status">${editorStatus()}</p>
                     <div class="pw-gen-row">
                         <button type="button" class="sb-btn sb-btn-secondary" data-act="regen">${icon("refresh")} ${e.plan.generator ? "Regenerate…" : "Generate into this plan…"}</button>
+                        <button type="button" class="sb-btn sb-btn-secondary" data-act="chat-prompt">${icon("copy")} Copy chatbot prompt</button>
+                        <button type="button" class="sb-btn sb-btn-secondary" data-act="chat-paste">${icon("clipboard")} Paste chatbot plan</button>
                         ${e.plan.generator ? `<span class="pw-meta">Generated from ${esc(first)}'s settings${e.plan.generator.settings?.mode === "race" ? ` for ${esc(shortDay(e.plan.generator.settings.raceDate))}` : ""}. Days you change stay yours when you regenerate.</span>` : ""}
                     </div>
                     ${e.notes?.length ? `<div class="pw-gen-notes" data-el="notes"><strong>${icon("info")} Worth a look</strong><ul>${e.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul><button type="button" class="sb-btn sb-btn-tertiary" data-act="notes-ok">Got it</button></div>` : ""}
@@ -554,6 +557,22 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                     done: new Set(doneMarks(state.editing.planId).keys()),
                     onApply: ({ plan, kind, message }) => {
                         state.editing.kind = kind;
+                        runOp(message, current => {
+                            for (const key of Object.keys(current)) delete current[key];
+                            Object.assign(current, plan);
+                        });
+                    }
+                });
+            }
+            if (act === "chat-prompt") {
+                return promptDialog({ clientUid, firstName: first, record: data.record, plan: state.editing.plan, done: new Set(doneMarks(state.editing.planId).keys()) });
+            }
+            if (act === "chat-paste") {
+                return pasteDialog({
+                    clientUid, firstName: first, record: data.record, plan: state.editing.plan,
+                    done: new Set(doneMarks(state.editing.planId).keys()),
+                    onApply: ({ plan, message, notes }) => {
+                        state.editing.notes = notes;
                         runOp(message, current => {
                             for (const key of Object.keys(current)) delete current[key];
                             Object.assign(current, plan);
