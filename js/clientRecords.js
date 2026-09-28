@@ -13,6 +13,7 @@ import {
     doc, getDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { sanitizeClientRecord, isIntakeComplete } from "./clientRecordSchema.js";
+import { nextConfirmedAt } from "./profileChecks.js";
 
 const recordDoc = uid => doc(db, "clientRecords", uid);
 
@@ -30,7 +31,9 @@ export async function getMyClientRecord() {
 
 // Saves the form values over the stored record. `existing` is the record
 // as loaded (or null), so the first completion can be timestamped once.
-export async function saveClientRecord(clientUid, values, existing = null) {
+// `confirm`: tracked answers the person just confirmed (js/profileChecks.js);
+// any tracked answer that changed is stamped too.
+export async function saveClientRecord(clientUid, values, existing = null, { confirm = [] } = {}) {
     const user = await waitForUser();
     if (!user) throw new Error("not-signed-in");
 
@@ -40,6 +43,7 @@ export async function saveClientRecord(clientUid, values, existing = null) {
         ...fields,
         clientUid,
         intakeComplete: complete,
+        confirmedAt: nextConfirmedAt(existing?.confirmedAt, existing, fields, confirm, Date.now()),
         updatedAt: serverTimestamp(),
         updatedBy: user.uid
     };
@@ -48,3 +52,17 @@ export async function saveClientRecord(clientUid, values, existing = null) {
     await setDoc(recordDoc(clientUid), payload, { merge: true });
     return { ...(existing || {}), ...payload, updatedAt: Date.now(), intakeCompletedAt: existing?.intakeCompletedAt || (complete ? Date.now() : undefined) };
 }
+
+// "Yes, still right": stamps these answers as confirmed now, changing nothing else.
+export async function confirmClientFields(clientUid, keys, existing = null) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const now = Date.now();
+    const confirmedAt = { ...(existing?.confirmedAt || {}) };
+    for (const key of keys) confirmedAt[key] = now;
+    const ref = recordDoc(clientUid);
+    const write = setDoc(ref, { clientUid, confirmedAt, updatedAt: serverTimestamp(), updatedBy: user.uid }, { merge: true });
+    return { write, ref, record: { ...(existing || {}), confirmedAt, updatedAt: now } };
+}
+
+export const clientRecordRef = uid => recordDoc(uid);

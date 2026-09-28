@@ -14,7 +14,8 @@ import { getMyClientRecord } from "./clientRecords.js";
 import { isIntakeComplete } from "./clientRecordSchema.js";
 import { mountProfileForm } from "./clientProfileForm.js";
 import { mountIntakeGuide } from "./intakeGuide.js";
-import { recentWeeklyMiles, sportFromServices } from "./intakeFlow.js";
+import { sportFromServices } from "./intakeFlow.js";
+import { deviceMilesSuggestion } from "./profileCheckCard.js";
 
 const $ = id => document.getElementById(id);
 
@@ -24,26 +25,6 @@ function showIntro(record) {
         ? `<strong>Thanks, your coach has this.</strong> Update it any time something changes: a new goal, a new schedule, a niggle.`
         : `<strong>About 3 minutes.</strong> The more your coach knows, the better your plan fits. Only the main goal is required, and only you and your coach can see any of this.`;
     intro.hidden = false;
-}
-
-const readJson = key => {
-    try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
-};
-
-const todayIso = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
-
-// About how many miles a week they've run lately, from what this device
-// already has (their COROS history and Running Log, both cloud-synced).
-function milesSuggestion() {
-    const coros = readJson("coros-run-history");
-    const log = readJson("running-log");
-    return recentWeeklyMiles({
-        corosRuns: Object.values(coros?.runs || {}),
-        logEntries: Array.isArray(log?.entries) ? log.entries : []
-    }, todayIso());
 }
 
 let started = false;
@@ -92,11 +73,16 @@ listenForAuth(async user => {
     }
 
     $("profileGuide").hidden = false;
+    // ?ask=goal,event&back=index.html: a quick update from a "Still right?" card.
+    const params = new URLSearchParams(location.search);
+    const back = params.get("back") || "";
     mountIntakeGuide($("profileGuide"), {
         clientUid: user.uid,
         record,
         prefill,
-        suggestion: milesSuggestion(),
+        suggestion: deviceMilesSuggestion(),
+        ask: (params.get("ask") || "").split(",").filter(Boolean),
+        backTo: /^[a-z-]+\.html$/.test(back) ? back : "index.html",
         onFullForm: () => { location.href = "profile.html?edit=all"; }
     });
 });

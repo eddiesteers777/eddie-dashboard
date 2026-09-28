@@ -137,6 +137,8 @@
     "js/planWorkspace.js",
     "js/plannerEvents.js",
     "js/profile.js",
+    "js/profileCheckCard.js",
+    "js/profileChecks.js",
     "js/programs.js",
     "js/racePlanEditor.js",
     "js/racePlanGenerator.js",

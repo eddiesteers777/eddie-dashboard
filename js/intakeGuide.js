@@ -23,6 +23,7 @@ import {
 import { FIELDS, SECTIONS, DAYS, SPORTS, STRENGTH_LEVELS, displayValue } from "./clientRecordSchema.js";
 import { saveClientRecord } from "./clientRecords.js";
 import { settleWrite } from "./offlineWrite.js";
+import { TRACKED, nextConfirmedAt } from "./profileChecks.js";
 import { icon } from "./icons.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -34,7 +35,7 @@ const SPORT_ICONS = { running: "activity", strength: "dumbbell", soccer: "target
 // Phrasing for "me" vs "my child".
 const say = (child, self, other) => (child ? other : self);
 
-export function mountIntakeGuide(container, { clientUid, record = null, prefill = {}, suggestion = null, onFullForm } = {}) {
+export function mountIntakeGuide(container, { clientUid, record = null, prefill = {}, suggestion = null, onFullForm, ask = [], backTo = "index.html" } = {}) {
     // What's saved (the record) plus what's being answered on this device.
     let saved = record ? { ...record } : null;
     // Saved answers (plus what's been committed on this device). Prefills
@@ -42,9 +43,13 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
     // screens; they're saved when the person accepts them with Next.
     let answers = { whoTrains: "self", ...(record || {}) };
     let draft = {};                   // taps on the current screen, not saved yet
-    let step = startStep(record);
+    // Quick update (?ask=goal,event&back=index.html from a "Still right?"
+    // card): just those questions, then back where they came from.
+    const askSteps = ask.filter(id => ESSENTIALS.some(e => e.id === id) || MORE.some(m => m.id === id));
+    let step = askSteps[0] || startStep(record);
     let returnTo = null;              // "review" while changing one answer from the review
     let status = "";
+    let lastWrite = Promise.resolve();
 
     const child = () => answers.whoTrains === "child";
     const done = () => essentialsDone(saved);
@@ -53,11 +58,15 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
     function save(values) {
         answers = { ...answers, ...values };
         const existing = saved;
-        const write = saveClientRecord(clientUid, answers, existing);
-        saved = { ...(existing || {}), ...answers };
+        // What they answer on a screen counts as confirmed (js/profileChecks.js).
+        const confirm = Object.keys(values).filter(k => TRACKED.includes(k));
+        const write = saveClientRecord(clientUid, answers, existing, { confirm });
+        saved = { ...(existing || {}), ...answers,
+            confirmedAt: nextConfirmedAt(existing?.confirmedAt, existing, answers, confirm, Date.now()) };
         if (!existing?.intakeCompletedAt && answers.primaryGoal && answers.primarySport) saved.intakeCompletedAt = Date.now();
         setStatus("Saving…");
-        settleWrite(write, "Your profile").then(
+        lastWrite = settleWrite(write, "Your profile");
+        lastWrite.then(
             ({ queued }) => setStatus(queued ? "Saved on this phone. It'll sync when you're back online." : "Saved"),
             error => {
                 console.error("Saving the profile failed:", error);
@@ -88,7 +97,18 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         container.querySelector(".ig-title")?.focus({ preventScroll: true });
     }
 
+    async function exitAsk() {
+        setStatus("Saving…");
+        try { await lastWrite; } catch { /* the error is on screen */ return; }
+        try { sessionStorage.setItem("sb-profile-updated", "1"); } catch { /* fine */ }
+        location.href = backTo;
+    }
+
     function advance() {
+        if (askSteps.length) {
+            const i = askSteps.indexOf(step);
+            return i >= 0 && i < askSteps.length - 1 ? go(askSteps[i + 1]) : exitAsk();
+        }
         if (returnTo) {
             const back = returnTo;
             returnTo = null;
@@ -104,6 +124,10 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
 
     // ---------- screens ----------
     function progressHtml() {
+        if (askSteps.length) {
+            const k = askSteps.indexOf(step);
+            return `<div class="ig-progress"><div class="ig-progress-text">Quick update${askSteps.length > 1 ? ` · ${k + 1} of ${askSteps.length}` : ""}</div></div>`;
+        }
         const i = ESSENTIALS.findIndex(s => s.id === step);
         if (i >= 0) {
             return `<div class="ig-progress" aria-label="Question ${i + 1} of ${ESSENTIALS.length}">
@@ -125,7 +149,7 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         `<button type="button" class="ig-chip${big ? " is-big" : ""}${on ? " is-on" : ""}" aria-pressed="${on}" ${attrs}>${iconName ? icon(iconName) : ""}<span>${esc(label)}</span></button>`;
 
     function screen({ title, sub = "", body = "", next = "Next", canNext = true, skip = false, back = true, nextId = "next" }) {
-        const prev = returnTo ? returnTo : prevStep(step);
+        const prev = askSteps.length ? askSteps[askSteps.indexOf(step) - 1] : (returnTo ? returnTo : prevStep(step));
         return `
             <div class="ig-card">
                 ${progressHtml()}
@@ -135,7 +159,7 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
                 <div class="ig-foot">
                     ${back && prev ? `<button type="button" class="sb-btn sb-btn-tertiary ig-back" data-go="${prev}">${icon("chevronLeft")} Back</button>` : "<span></span>"}
                     <div class="ig-foot-right">
-                        ${skip ? `<button type="button" class="sb-btn sb-btn-tertiary" data-act="skip">${returnTo ? "Cancel" : "Skip for now"}</button>` : ""}
+                        ${skip ? `<button type="button" class="sb-btn sb-btn-tertiary" data-act="skip">${askSteps.length || returnTo ? "Cancel" : "Skip for now"}</button>` : ""}
                         ${next ? `<button type="button" class="sb-btn sb-btn-primary" data-act="${nextId}" ${canNext ? "" : "disabled"}>${esc(next)}</button>` : ""}
                     </div>
                 </div>
@@ -414,7 +438,10 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         if (d.go) { returnTo = null; return go(d.go); }
         if (d.change) { returnTo = "review"; return go(d.change); }
         if (d.act === "full") return onFullForm?.();
-        if (d.act === "skip") return advance();
+        if (d.act === "skip") {
+            if (askSteps.length) { location.href = backTo; return; }
+            return advance();
+        }
         if (d.act === "next") {
             if (step !== "more") commitCurrent();
             return advance();

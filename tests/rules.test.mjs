@@ -354,6 +354,27 @@ test("client profiles: only known fields, sane values, honest who/when", async (
     await assertSucceeds(setDoc(mine, { phone: "555-0199", clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "client" }, { merge: true }));
 });
 
+test("client profiles: 'still right?' confirmations are ms times for known answers only", async () => {
+    await seedLinkAndBooking();
+    const mine = doc(as("client"), "clientRecords/client");
+    const now = Date.now();
+    const confirm = confirmedAt => ({ clientUid: "client", confirmedAt, updatedAt: serverTimestamp(), updatedBy: "client" });
+    await assertSucceeds(setDoc(mine, profile("client", "client", { intakeCompletedAt: serverTimestamp(), confirmedAt: { weeklyMileage: now, injuries: now } })));
+    // "Yes, still right" on one answer merges into the map.
+    await assertSucceeds(setDoc(mine, confirm({ availabilityDays: now }), { merge: true }));
+    // The linked coach editing the profile stamps what changed.
+    await assertSucceeds(setDoc(doc(as("coach"), "clientRecords/client"),
+        { primaryGoal: "Sub-44 10K", confirmedAt: { primaryGoal: now }, clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "coach" }, { merge: true }));
+    // Only the tracked answers, only numbers, not years ahead.
+    await assertFails(setDoc(mine, confirm({ isCoachApproved: now }), { merge: true }));
+    await assertFails(setDoc(mine, confirm({ injuries: "yesterday" }), { merge: true }));
+    await assertSucceeds(setDoc(mine, confirm({ injuries: now + 3 * 86400000 }), { merge: true })); // a phone clock a few days off still saves
+    await assertFails(setDoc(mine, confirm({ injuries: now + 400 * 86400000 }), { merge: true }));
+    await assertFails(setDoc(mine, confirm("today"), { merge: true }));
+    // Someone who isn't linked can't confirm anything.
+    await assertFails(setDoc(doc(as("stranger"), "clientRecords/client"), { ...confirm({ injuries: now }), updatedBy: "stranger" }, { merge: true }));
+});
+
 // ---- Private coach notes + client updates ----
 
 const note = (coachUid, clientUid, extra = {}) => ({

@@ -13,6 +13,7 @@
 import { SECTIONS, DAYS } from "./clientRecordSchema.js";
 import { saveClientRecord } from "./clientRecords.js";
 import { toast } from "./ui.js";
+import { TRACKED } from "./profileChecks.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -132,7 +133,8 @@ export function mountProfileForm(container, { clientUid, record = null, mode = "
         const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
         try {
-            current = await saveClientRecord(clientUid, values, current);
+            // The client going over the whole form confirms every answer on it.
+            current = await saveClientRecord(clientUid, values, current, { confirm: mode === "client" ? TRACKED : [] });
             toast(mode === "client" ? "Profile saved. Your coach can see it now." : "Profile saved.");
             onSaved?.(current);
         } catch (error) {

@@ -14,7 +14,7 @@ import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const EXACT_KEYS = ["training-progress","training-overrides","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history"];
+const EXACT_KEYS = ["training-progress","training-overrides","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks"];
 const KEY_PREFIXES = ["nutrition-","fueling-","cross-training-"];
 // Plans the coach can see through sharedPlans (js/coachAccess.js).
 const MIRRORED_KEYS = ["training-programs","running-programs","coach-plans"];
