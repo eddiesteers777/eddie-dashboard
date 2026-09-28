@@ -17,6 +17,7 @@ import {
     collection, query, where, getDocs,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { settleWrite } from "./offlineWrite.js";
 import { cleanCheckinAnswers } from "./feedbackModel.js";
 
 // Monday-start week key (YYYY-MM-DD of that week's Monday) so every
@@ -57,7 +58,8 @@ export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf
     try {
         isNew = !(await getDoc(ref)).exists();
     } catch (error) {
-        if (error?.code !== "permission-denied") throw error;
+        // Offline with no copy of it on the device: most likely this week's first.
+        if (error?.code !== "permission-denied" && error?.code !== "unavailable") throw error;
     }
 
     const payload = {
@@ -81,8 +83,9 @@ export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf
     // whatever the coach last wrote in place.
     if (isNew) payload.coachFeedback = "";
 
-    await setDoc(ref, payload, { merge: true });
-    return { id: ref.id, ...payload };
+    // Offline it's kept on this device and sent later (js/offlineWrite.js).
+    const { queued } = await settleWrite(setDoc(ref, payload, { merge: true }), "Your check-in");
+    return { id: ref.id, ...payload, pendingSync: queued };
 }
 
 export async function listMyCheckins() {

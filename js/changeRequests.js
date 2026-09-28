@@ -15,8 +15,9 @@
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import {
-    collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, serverTimestamp
+    collection, doc, setDoc, getDocs, updateDoc, deleteDoc, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { settleWrite } from "./offlineWrite.js";
 import { reasonLabel } from "./feedbackModel.js";
 import { sendChangeRequestEmail, sendChangeReplyEmail } from "./emailNotify.js";
 import { shortDay } from "./coachingPlanModel.js";
@@ -47,9 +48,11 @@ export async function askForChange({ coachUid, planId = null, date = null, reaso
         createdAt: serverTimestamp(),
         resolvedAt: null
     };
-    const ref = await addDoc(collection(db, "changeRequests"), data);
+    // The ID is made here, so a request asked offline is sent once, later.
+    const ref = doc(collection(db, "changeRequests"));
+    const { queued } = await settleWrite(setDoc(ref, data), "Your change request");
     sendChangeRequestEmail({ clientName: data.clientName, reasonLabel: reasonLabel(reason).toLowerCase(), date: data.date ? shortDay(data.date) : "", message: data.message });
-    return { id: ref.id, ...data, createdAt: null };
+    return { id: ref.id, ...data, createdAt: null, pendingSync: queued };
 }
 
 export async function listMyChangeRequests() {

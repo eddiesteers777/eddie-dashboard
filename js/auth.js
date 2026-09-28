@@ -2,7 +2,7 @@
 // Southbound Authentication
 // ==========================================
 
-import { auth } from "./firebase.js";
+import { auth, clearOfflineCopy } from "./firebase.js";
 
 import {
     GoogleAuthProvider,
@@ -50,6 +50,13 @@ export async function logout() {
         console.error("Logout Error:", error);
 
     }
+
+    // What this device kept for the account that just left: its offline
+    // Firestore copy and what the nav / sync remembered about it.
+    for (const key of ["sb-nav-access", "__cloudSyncVersion", "__cloudSyncFullPullAt"]) {
+        try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
+    }
+    await clearOfflineCopy();
 
 }
 

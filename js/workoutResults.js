@@ -20,6 +20,7 @@ import { waitForUser } from "./auth.js";
 import {
     collection, doc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { settleWrite } from "./offlineWrite.js";
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
 import { sendPainFlagEmail } from "./emailNotify.js";
 import { sanitizeActual } from "./strengthWorkout.js";
@@ -75,16 +76,20 @@ export async function saveMyResult({ planId, coachUid, date, clientName, kind = 
     const user = await me();
     const id = resultId(user.uid, planId, date, kind);
     const values = clean(fields, kind);
+    // Offline, the log is kept on this device and sent when the connection
+    // comes back (js/offlineWrite.js); the fixed doc ID means it's one record.
+    let write;
     if (existing) {
         const patch = Object.fromEntries([...EDITABLE, ...(kind === "strength" ? ["exercises"] : [])].map(k => [k, values[k]]));
-        await updateDoc(doc(db, "workoutResults", id), { ...patch, updatedAt: serverTimestamp() });
+        write = updateDoc(doc(db, "workoutResults", id), { ...patch, updatedAt: serverTimestamp() });
     } else {
-        await setDoc(doc(db, "workoutResults", id), {
+        write = setDoc(doc(db, "workoutResults", id), {
             clientUid: user.uid, coachUid, planId, date, ...(kind === "strength" ? { kind } : {}), ...values,
             createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
             coachComment: "", coachCommentAt: null
         });
     }
+    const { queued } = await settleWrite(write, values.title || "Your workout");
     const done = values.status === "completed";
     await markLocal(planId, date, kind === "strength"
         ? { strengthCompleted: done, strengthSkipped: !done, strengthResultId: id, strengthRpe: done ? values.rpe : null, strengthPain: values.pain }
@@ -94,7 +99,7 @@ export async function saveMyResult({ planId, coachUid, date, clientName, kind = 
     if (values.pain && (!existing?.pain || existing.painNote !== values.painNote)) {
         sendPainFlagEmail({ clientName: clientName || user.displayName, date, title: values.title, painNote: values.painNote });
     }
-    return { ...(existing || { id, clientUid: user.uid, coachUid, planId, date, coachComment: "", coachCommentAt: null, ...(kind === "strength" ? { kind } : {}) }), ...values, id, updatedAt: Date.now() };
+    return { ...(existing || { id, clientUid: user.uid, coachUid, planId, date, coachComment: "", coachCommentAt: null, ...(kind === "strength" ? { kind } : {}) }), ...values, id, updatedAt: Date.now(), pendingSync: queued };
 }
 
 export async function deleteMyResult(result) {

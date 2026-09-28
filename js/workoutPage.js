@@ -28,6 +28,7 @@ import {
     executionSteps, amountText, targetText, compareRun, parseDuration, formatDuration, formatPace
 } from "./runWorkout.js";
 import { listMyResults, saveMyResult, deleteMyResult, isStrengthResult } from "./workoutResults.js";
+import { QUEUED_NOTE } from "./offlineWrite.js";
 import { toast, sbConfirm, sbAlert, friendlyError, emptyHtml } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
@@ -462,7 +463,7 @@ function openLogForm(prefill = {}) {
             }, state.result);
             d.close();
             refresh();
-            toast(skipped ? "Saved. Your coach will see you skipped it." : `${title()} logged. Nice work.`);
+            toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : `${title()} logged. Nice work.`);
         } catch (error) {
             console.error("Saving the run failed:", error);
             errorEl.textContent = friendlyError(error, "save that");

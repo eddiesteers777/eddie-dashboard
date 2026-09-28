@@ -6,9 +6,9 @@ import { auth } from "./firebase.js";
 import { toast } from "./ui.js";
 
 import {
-    onAuthStateChanged,
-    signOut
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { logout } from "./auth.js";
 
 import { getUserSettings, saveUserSettings } from "./userSettings.js";
 
@@ -119,7 +119,7 @@ logoutBtn.addEventListener("click", async () => {
 
     try {
 
-        await signOut(auth);
+        await logout();
 
         window.location.href = "index.html";
 

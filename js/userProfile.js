@@ -42,13 +42,20 @@ function profileDoc(uid) {
 // sign-in), otherwise just returns the existing one. Always starts
 // unapproved and pending -- see firestore.rules for why a create
 // can't set anything else.
+// This account's own profile, read once per page load and shared by every
+// caller (loadHeader's ensureProfile + nav access, the pages that check
+// the role). A write to it here clears the copy.
+let myProfile = null;
+function forgetMyProfile() { myProfile = null; }
+
 export async function ensureProfile() {
     const user = await waitForUser();
     if (!user) return null;
 
     const ref = profileDoc(user.uid);
-    const existing = await getDoc(ref);
-    if (existing.exists()) return { uid: user.uid, ...existing.data() };
+    const existing = await getMyProfile();
+    if (existing) return existing;
+    forgetMyProfile();
 
     const profile = {
         uid: user.uid,
@@ -61,14 +68,22 @@ export async function ensureProfile() {
         createdAt: serverTimestamp()
     };
     await setDoc(ref, profile);
+    forgetMyProfile();
     return profile;
 }
 
 export async function getMyProfile() {
-    const user = await waitForUser();
-    if (!user) return null;
-    const snap = await getDoc(profileDoc(user.uid));
-    return snap.exists() ? { uid: user.uid, ...snap.data() } : null;
+    if (!myProfile) {
+        myProfile = (async () => {
+            const user = await waitForUser();
+            if (!user) return null;
+            const snap = await getDoc(profileDoc(user.uid));
+            return snap.exists() ? { uid: user.uid, ...snap.data() } : null;
+        })();
+        // A failed read (offline, rules) is tried again next time.
+        myProfile.catch(forgetMyProfile);
+    }
+    return myProfile;
 }
 
 export async function getProfile(uid) {
@@ -138,6 +153,7 @@ export async function submitApplication(requestedServices, message) {
         applicationMessage: message || "",
         applicationSubmittedAt: serverTimestamp()
     });
+    forgetMyProfile();
 }
 
 // "Last in the app" for the coach (the Client Hub, "Hasn't opened the app

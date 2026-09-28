@@ -23,6 +23,7 @@ import {
     compareStrength, repsNumber
 } from "./strengthWorkout.js";
 import { listMyResults, saveMyResult, deleteMyResult, isStrengthResult } from "./workoutResults.js";
+import { QUEUED_NOTE } from "./offlineWrite.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { parseDuration, formatDuration } from "./runWorkout.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
@@ -433,7 +434,7 @@ function openLogForm({ actual = null, durationSec = null } = {}) {
             }, state.result);
             d.close();
             render();
-            toast(skipped ? "Saved. Your coach will see you skipped it." : `${state.lift.title} logged. Nice work.`);
+            toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : `${state.lift.title} logged. Nice work.`);
         } catch (error) {
             console.error("Saving the session failed:", error);
             errorEl.textContent = friendlyError(error, "save that");

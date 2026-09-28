@@ -1,0 +1,49 @@
+{
+  "eddie-hero.jpg": {
+    "sha256": "eca4c65ec0fe63ac",
+    "widths": [
+      560,
+      840,
+      1120
+    ]
+  },
+  "offer-online-coaching.jpg": {
+    "sha256": "ebed63725cf57fa9",
+    "widths": [
+      480,
+      800,
+      1280
+    ]
+  },
+  "offer-running-strength.jpg": {
+    "sha256": "ca9d9794773285e5",
+    "widths": [
+      480,
+      800,
+      1280
+    ]
+  },
+  "offer-soccer-1on1.jpg": {
+    "sha256": "cb3024fc3219385a",
+    "widths": [
+      480,
+      800,
+      1280
+    ]
+  },
+  "offer-soccer-group.jpg": {
+    "sha256": "99b21dd91abff37f",
+    "widths": [
+      480,
+      800,
+      1280
+    ]
+  },
+  "gallery-1.jpg": {
+    "sha256": "e906c94dae41a808",
+    "widths": [
+      500,
+      1000
+    ]
+  }
+}

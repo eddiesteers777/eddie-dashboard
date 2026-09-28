@@ -277,53 +277,80 @@ fetch("components/header.html")
         // is left out of the array entirely rather than rendered and
         // hidden, since the bottom nav is built fresh here rather than
         // toggling existing static markup.
-        const navAccess = await navFilterReady;
-        const visibleTabs = BOTTOM_TABS.filter(tab => {
-            if (!tab.requires) return true;
-            return tab.requires === "training" ? navAccess.hasTrainingAccess
-                : tab.requires === "client-training" ? !navAccess.isCoach && navAccess.hasTrainingAccess
-                : tab.requires === "soccer" ? navAccess.hasSoccerAccess
-                : tab.requires === "coach" ? navAccess.isCoach
-                : true;
-        });
+        // The tab bar is drawn from what this device last knew about the
+        // account (js/navAccess.js) the moment the header arrives, and
+        // redrawn only if the fresh profile says something different, so
+        // a slow or offline connection never leaves a phone without
+        // navigation. A first visit (nothing remembered) waits as before.
+        const { cachedNavAccess } = await import("./navAccess.js");
+        let navAccess = cachedNavAccess();
+        let drawnAccess = null;
+        const accessKey = access => access ? [access.isCoach, access.hasTrainingAccess, access.hasSoccerAccess].join() : "";
 
-        // Schedule and Check-in belong to the Coach tab for a coach, but
-        // a client uses them too and has no Coach tab -- fall back to
-        // More so they still get a highlighted tab and never see the
-        // coach-only subnav pills.
-        let activeTab = PAGE_TAB[page] || null;
-        if (activeTab && !visibleTabs.some(tab => tab.key === activeTab)) activeTab = "more";
+        function drawBottomNav(access) {
+            if (drawnAccess !== null && accessKey(access) === drawnAccess) return;
+            drawnAccess = accessKey(access);
+            const visibleTabs = BOTTOM_TABS.filter(tab => {
+                if (!tab.requires) return true;
+                return tab.requires === "training" ? access.hasTrainingAccess
+                    : tab.requires === "client-training" ? !access.isCoach && access.hasTrainingAccess
+                    : tab.requires === "soccer" ? access.hasSoccerAccess
+                    : tab.requires === "coach" ? access.isCoach
+                    : true;
+            });
 
-        document.body.classList.add("has-bottomnav");
-        document.body.insertAdjacentHTML("beforeend", `
-            <nav class="eos-bottomnav" aria-label="Primary">
-                ${visibleTabs.map(tab => `
-                    <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}" style="--tab-color:${tab.color}">
-                        <span class="eos-bottomnav-icon">${icon(tab.icon)}</span>
-                        <span>${tab.label}</span>
-                    </a>
-                `).join("")}
-            </nav>
-        `);
+            // Schedule and Check-in belong to the Coach tab for a coach, but
+            // a client uses them too and has no Coach tab -- fall back to
+            // More so they still get a highlighted tab and never see the
+            // coach-only subnav pills.
+            let activeTab = PAGE_TAB[page] || null;
+            if (activeTab && !visibleTabs.some(tab => tab.key === activeTab)) activeTab = "more";
 
-        const subnavPages = SUBNAV_GROUPS[activeTab];
-
-        if (subnavPages) {
-            document.getElementById("header").insertAdjacentHTML("afterend", `
-                <nav class="eos-subnav" aria-label="Section pages">
-                    ${subnavPages.map(p => {
-                        const current = p.href === page || (page === "client.html" && p.href === "clients.html");
-                        return `<a href="${p.href}" class="eos-subnav-link ${current ? "active" : ""}"${current ? ` aria-current="page"` : ""}>${p.label}</a>`;
-                    }).join("")}
+            document.querySelector(".eos-bottomnav")?.remove();
+            document.querySelector(".eos-subnav")?.remove();
+            document.body.classList.add("has-bottomnav");
+            document.body.insertAdjacentHTML("beforeend", `
+                <nav class="eos-bottomnav" aria-label="Primary">
+                    ${visibleTabs.map(tab => `
+                        <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}" style="--tab-color:${tab.color}">
+                            <span class="eos-bottomnav-icon">${icon(tab.icon)}</span>
+                            <span>${tab.label}</span>
+                        </a>
+                    `).join("")}
                 </nav>
             `);
-            // On a phone the row scrolls sideways: keep the current page's chip in view.
-            const subnav = document.querySelector(".eos-subnav");
-            const current = subnav?.querySelector(".eos-subnav-link.active");
-            if (subnav && current && subnav.scrollWidth > subnav.clientWidth) {
-                subnav.scrollLeft = current.offsetLeft - (subnav.clientWidth - current.offsetWidth) / 2;
+
+            const subnavPages = SUBNAV_GROUPS[activeTab];
+
+            if (subnavPages) {
+                document.getElementById("header").insertAdjacentHTML("afterend", `
+                    <nav class="eos-subnav" aria-label="Section pages">
+                        ${subnavPages.map(p => {
+                            const current = p.href === page || (page === "client.html" && p.href === "clients.html");
+                            return `<a href="${p.href}" class="eos-subnav-link ${current ? "active" : ""}"${current ? ` aria-current="page"` : ""}>${p.label}</a>`;
+                        }).join("")}
+                    </nav>
+                `);
+                // On a phone the row scrolls sideways: keep the current page's chip in view.
+                const subnav = document.querySelector(".eos-subnav");
+                const current = subnav?.querySelector(".eos-subnav-link.active");
+                if (subnav && current && subnav.scrollWidth > subnav.clientWidth) {
+                    subnav.scrollLeft = current.offsetLeft - (subnav.clientWidth - current.offsetWidth) / 2;
+                }
             }
         }
+
+        if (navAccess) {
+            const { applyNavAccess } = await import("./navAccess.js");
+            applyNavAccess(document, navAccess);
+            drawBottomNav(navAccess);
+        }
+        const freshAccess = navFilterReady.then(access => {
+            navAccess = access;
+            drawBottomNav(access);
+            return access;
+        });
+        if (!navAccess) navAccess = await freshAccess;
 
         // ---- Mobile quick-add (+) menu ----
 
@@ -559,6 +586,8 @@ fetch("components/header.html")
 
         }
 
+        let syncStatusTimer = null;
+
         async function refreshSyncStatus() {
 
             if (!syncBtn || !syncText) return;
@@ -567,7 +596,13 @@ fetch("components/header.html")
 
             const status = getSyncStatus();
 
-            if (status.lastError && status.lastError !== "not-signed-in") {
+            if (navigator.onLine === false) {
+
+                syncBtn.classList.remove("sync-error");
+                syncText.textContent = "Offline \u2014 last synced " + formatRelativeTime(status.lastSyncedAt);
+                syncBtn.title = "Changes save on this device and sync when you're back online";
+
+            } else if (status.lastError && status.lastError !== "not-signed-in") {
 
                 syncBtn.classList.add("sync-error");
                 syncText.textContent = "Sync error \u2014 tap to retry";
@@ -597,7 +632,7 @@ fetch("components/header.html")
                 // then push (make sure this device's current state is
                 // saved too) \u2014 a manual tap should leave both sides
                 // fully caught up, not just check one direction.
-                await pullFromCloud();
+                await pullFromCloud({ force: true });
                 await pushToCloud();
 
                 syncBtn.classList.remove("sync-syncing");
@@ -665,11 +700,14 @@ fetch("components/header.html")
                         refreshSyncStatus();
 
                         // Keep the displayed "Xm ago" honest without
-                        // requiring a reload \u2014 background syncs
-                        // (visibilitychange/interval) update the
-                        // underlying status even if this tab never
-                        // reloads.
-                        setInterval(refreshSyncStatus, 15000);
+                        // requiring a reload: sync events redraw it at
+                        // once, a slow timer keeps the "ago" current.
+                        if (!syncStatusTimer) {
+                            syncStatusTimer = setInterval(() => { if (!document.hidden) refreshSyncStatus(); }, 30000);
+                            window.addEventListener("sb:sync-status", refreshSyncStatus);
+                            window.addEventListener("online", refreshSyncStatus);
+                            window.addEventListener("offline", refreshSyncStatus);
+                        }
 
                     }
 

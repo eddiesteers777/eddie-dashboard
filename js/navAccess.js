@@ -26,6 +26,27 @@
 const TRAINING_SERVICES = ["online_coaching", "running", "strength"];
 const SOCCER_SERVICES = ["soccer_1on1", "soccer_group"];
 
+// The last access this device worked out (device-only, like
+// sb-account-role in js/role.js, never synced): js/loadHeader.js draws
+// the tab bar from it straight away, then redraws only if the fresh
+// profile says otherwise. Offline, it's what the nav shows.
+const ACCESS_KEY = "sb-nav-access";
+export function cachedNavAccess() {
+    try {
+        const access = JSON.parse(localStorage.getItem(ACCESS_KEY) || "null");
+        return access && typeof access === "object" ? access : null;
+    } catch {
+        return null;
+    }
+}
+function rememberNavAccess(access) {
+    try {
+        if (access) localStorage.setItem(ACCESS_KEY, JSON.stringify(access));
+        else localStorage.removeItem(ACCESS_KEY);
+    } catch { /* storage unavailable: just not remembered */ }
+    return access;
+}
+
 export async function getNavAccess() {
     try {
         const { getMyProfile } = await import("./userProfile.js");
@@ -36,19 +57,23 @@ export async function getNavAccess() {
         if (!profile) {
             // Not signed in, or no profile yet -- narrowest view.
             setCachedRole(null);
+            rememberNavAccess(null);
             return { isCoach: false, hasTrainingAccess: false, hasSoccerAccess: false, status: null };
         }
 
         const services = profile.services || [];
         const isCoach = Boolean(profile.isCoachApproved);
         setCachedRole(isCoach ? "coach" : "client");
-        return {
+        return rememberNavAccess({
             isCoach,
             hasTrainingAccess: isCoach || services.some(s => TRAINING_SERVICES.includes(s)),
             hasSoccerAccess: isCoach || services.some(s => SOCCER_SERVICES.includes(s)),
             status: profile.status || null
-        };
+        });
     } catch (error) {
+        // Offline or unreachable: what this device last knew, else fail open.
+        const known = cachedNavAccess();
+        if (known) return known;
         console.warn("Southbound: nav access check failed — showing full nav rather than hiding it.", error);
         return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true, status: null };
     }

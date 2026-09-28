@@ -69,9 +69,47 @@ function loadEmailJs() {
     return loadPromise;
 }
 
+// Emails asked for while the phone is offline (a pain flag logged on a
+// run, a check-in) wait here, on this device only, and go out when the
+// connection comes back (js/netStatus.js calls flushEmailOutbox), at
+// most 20 and for up to 3 days.
+const OUTBOX_KEY = "sb-email-outbox";
+function readOutbox() {
+    try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || "[]") || []; } catch { return []; }
+}
+function writeOutbox(items) {
+    try {
+        if (items.length) localStorage.setItem(OUTBOX_KEY, JSON.stringify(items));
+        else localStorage.removeItem(OUTBOX_KEY);
+    } catch { /* storage unavailable: the email is lost, as before */ }
+}
+function queueEmail(templateId, params) {
+    writeOutbox([...readOutbox(), { templateId, params, at: Date.now() }].slice(-20));
+}
+let flushing = false;
+export async function flushEmailOutbox() {
+    if (flushing || navigator.onLine === false) return 0;
+    flushing = true;
+    let sent = 0;
+    try {
+        const fresh = readOutbox().filter(item => Date.now() - item.at < 3 * 86400000);
+        writeOutbox([]);
+        for (const item of fresh) {
+            if (await send(item.templateId, item.params)) sent++;
+        }
+    } finally {
+        flushing = false;
+    }
+    return sent;
+}
+
 async function send(templateId, params) {
     if (!coreConfigured() || !isSet(templateId)) {
         console.warn("Southbound: this email isn't set up yet (js/emailNotify.js) — skipped it; everything else still went through.");
+        return false;
+    }
+    if (navigator.onLine === false) {
+        queueEmail(templateId, params);
         return false;
     }
     try {
@@ -81,7 +119,8 @@ async function send(templateId, params) {
         await emailjs.send(SERVICE_ID, templateId, plain);
         return true;
     } catch (error) {
-        console.warn("Southbound: email notification failed to send.", error);
+        if (navigator.onLine === false) queueEmail(templateId, params);
+        else console.warn("Southbound: email notification failed to send.", error);
         return false;
     }
 }

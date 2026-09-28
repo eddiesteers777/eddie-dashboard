@@ -7,7 +7,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { dirname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildManifest } from "../scripts/build-manifest.mjs";
+import { buildManifest, precacheBlock, currentPrecacheBlock } from "../scripts/build-manifest.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const manifest = buildManifest();
@@ -31,6 +31,13 @@ function resolveRef(fromFile, ref, baseIsRoot = false) {
 
 test("site-manifest.json is up to date (run `npm run manifest` if this fails)", () => {
     assert.deepEqual(JSON.parse(read("site-manifest.json")), manifest);
+});
+
+// The service worker serves these files from the phone and only fetches
+// new copies when their fingerprint in sw.js changes: a file changed
+// without re-running the manifest would stay old on installed phones.
+test("sw.js precache list matches the files (run `npm run manifest` if this fails)", () => {
+    assert.equal(currentPrecacheBlock(read("sw.js")), precacheBlock());
 });
 
 test("every script parses", () => {
@@ -175,5 +182,17 @@ test("fonts are self-hosted (no Google Fonts) and every font file exists", () =>
     }
     for (const page of [...manifest.pages, ...manifest.partials]) {
         assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(read(page)), `${page} still loads Google Fonts`);
+    }
+});
+
+// Public photos load phone-sized WebP copies (scripts/build-images.py).
+// Replacing a photo without rebuilding them would keep the old picture.
+test("photo size copies match their photos (run `python3 scripts/build-images.py` if this fails)", async () => {
+    const { createHash } = await import("node:crypto");
+    const sizes = JSON.parse(read("images/sizes.json"));
+    for (const [name, { sha256, widths }] of Object.entries(sizes)) {
+        const hash = createHash("sha256").update(readFileSync(join(root, "images", name))).digest("hex").slice(0, 16);
+        assert.equal(hash, sha256, `images/${name} changed: rebuild its sizes`);
+        for (const w of widths) assert.ok(existsSync(join(root, "images", name.replace(/\.jpe?g$/i, `-${w}.webp`))), `missing ${name} ${w}w`);
     }
 });

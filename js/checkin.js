@@ -3,6 +3,7 @@ import { toast } from "./ui.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { isApprovedCoach } from "./userProfile.js";
 import { submitCheckin, listMyCheckins, listCheckinsForMyClients, reviewCheckin, weekKeyFor } from "./checkins.js";
+import { QUEUED_NOTE } from "./offlineWrite.js";
 import { sendCheckinSubmittedEmail, sendCheckinReviewedEmail } from "./emailNotify.js";
 import { WELLBEING, weekSnapshot, snapshotLines, checkinFlags } from "./feedbackModel.js";
 import { checkinDetailsHtml } from "./checkinView.js";
@@ -232,7 +233,7 @@ checkinSubmitBtn?.addEventListener("click", async () => {
             week: currentWeek
         });
 
-        toast("Check-in sent. Your coach will reply here and by email.");
+        toast(result.pendingSync ? QUEUED_NOTE : "Check-in sent. Your coach will reply here and by email.");
         checkinSubmitMsg.hidden = true;
 
         sendCheckinSubmittedEmail({

@@ -366,7 +366,7 @@
             // then push (make sure this device's current state is
             // saved too) -- a manual tap should leave both sides
             // fully caught up, not just check one direction.
-            await pullFromCloud();
+            await pullFromCloud({ force: true });
             await pushToCloud();
 
             statusEl.classList.remove("sync-syncing");

@@ -12,6 +12,7 @@
 ========================================== */
 
 import { askForChange, withdrawChangeRequest } from "./changeRequests.js";
+import { QUEUED_NOTE } from "./offlineWrite.js";
 import { CHANGE_REASONS, reasonLabel } from "./feedbackModel.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
@@ -73,7 +74,7 @@ export function openChangeRequestDialog({ coach, planId = null, date = "", dates
             btn.disabled = true;
             try {
                 result = await askForChange({ coachUid: coach.coachUid, planId, date: String(f.get("date") || date || ""), reason: String(f.get("reason")), message });
-                toast(`Sent to ${coachName.split(" ")[0]}. They'll reply here and by email.`);
+                toast(result.pendingSync ? QUEUED_NOTE : `Sent to ${coachName.split(" ")[0]}. They'll reply here and by email.`);
                 d.close();
             } catch (error) {
                 console.error("Couldn't send the change request:", error);
