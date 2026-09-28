@@ -321,26 +321,6 @@
 
 }
 
-.habits-row-icon{
-
-    flex-shrink:0;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:30px;
-    height:30px;
-    border-radius:9px;
-    background:color-mix(in srgb, currentColor 16%, transparent);
-
-}
-
-.habits-row-icon .ui-icon{
-
-    width:16px;
-    height:16px;
-
-}
-
 /* ==========================
    Calendar panel
 ========================== */
@@ -466,7 +446,7 @@
 
 }
 
-.habits-manage-item span{
+.habits-manage-item > span{
 
     display:inline-flex;
     align-items:center;

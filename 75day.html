@@ -222,6 +222,18 @@ body{
     box-shadow:0 8px 24px rgba(0,0,0,.16);
 }
 
+/* These panels share the class name with the dashboard's link cards in
+   css/style.css: turn off that card's hover lift, its "→" and the
+   invisible glow layer, which sat over the panel and swallowed taps on
+   "Edit / add / remove habits". */
+.card::before,
+.card::after{ content:none; }
+.card:hover{
+    transform:none;
+    border-color:var(--border);
+    box-shadow:0 8px 24px rgba(0,0,0,.16);
+}
+
 .card h2{
     margin:0 0 18px;
     display:flex;
@@ -293,23 +305,6 @@ body{
     gap:10px;
     font-size:15px;
     font-weight:500;
-}
-
-.habit-row-icon{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:26px;
-    height:26px;
-    border-radius:8px;
-    background:color-mix(in srgb, currentColor 16%, transparent);
-    margin-right:2px;
-    vertical-align:middle;
-}
-
-.habit-row-icon .ui-icon{
-    width:14px;
-    height:14px;
 }
 
 .habit-name.done{
@@ -630,10 +625,12 @@ body{
 
 <script type="module">
     import { icon } from "./js/icons.js";
-    import { inferHabitVisual, habitVisual } from "./js/habitIcons.js";
+    import { storedIcon, habitIconId } from "./js/habitIconSet.js";
+    import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon } from "./js/habitIconPicker.js";
     window.icon = icon;
-    window.inferHabitVisual = inferHabitVisual;
-    window.habitVisual = habitVisual;
+    window.sbHabitIcons = { storedIcon, habitIconId, habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon };
+    // The page may have drawn already (its data can load first): draw again with the icons.
+    if (window.__habitsDrawn) window.render?.();
 </script>
 
 <script>
@@ -661,16 +658,16 @@ const QUOTES = [
 ];
 
 const DEFAULT_HABITS = [
-  {id:'h1',name:'Prayer',icon:'pray'},
-  {id:'h2',name:'Bible',icon:'bookOpen'},
-  {id:'h3',name:'Training Complete',icon:'activity'},
-  {id:'h4',name:'Strength',icon:'dumbbell'},
-  {id:'h5',name:'Stretch / Mobility',icon:'stretch'},
-  {id:'h6',name:'Protein Goal',icon:'drumstick'},
-  {id:'h7',name:'Water Goal',icon:'droplet'},
-  {id:'h8',name:'Sleep 7+ hrs',icon:'moon'},
-  {id:'h9',name:'Read 10 Pages',icon:'bookOpen'},
-  {id:'h10',name:'Time with Wife',icon:'heart'}
+  {id:'h1',name:'Prayer',icon:'hb:pray'},
+  {id:'h2',name:'Bible',icon:'hb:bible'},
+  {id:'h3',name:'Training Complete',icon:'hb:run'},
+  {id:'h4',name:'Strength',icon:'hb:strength'},
+  {id:'h5',name:'Stretch / Mobility',icon:'hb:stretch'},
+  {id:'h6',name:'Protein Goal',icon:'hb:protein'},
+  {id:'h7',name:'Water Goal',icon:'hb:water'},
+  {id:'h8',name:'Sleep 7+ hrs',icon:'hb:sleep'},
+  {id:'h9',name:'Read 10 Pages',icon:'hb:read'},
+  {id:'h10',name:'Time with Wife',icon:'hb:love'}
 ];
 
 // Habits saved before icons existed have the emoji baked into the
@@ -682,10 +679,9 @@ function habitLabel(h){
   return h.name.replace(EMOJI_PREFIX, '').trim();
 }
 
-function habitIcon(h){
-  if(!window.icon || !window.habitVisual) return '';
-  const v = window.habitVisual(h);
-  return '<span class="habit-row-icon" style="color:'+v.color+'">'+window.icon(v.icon)+'</span>';
+// The drawn Southbound icon (habit-icons/*.svg, js/habitIconPicker.js).
+function habitIcon(h, options){
+  return window.sbHabitIcons ? window.sbHabitIcons.habitIconHtml(h, options) : '';
 }
 
 function toDate(s){
@@ -1219,7 +1215,7 @@ function render(){
     const item=el('div','manage-item');
 
     item.innerHTML=`
-      <span>${habitIcon(h)} ${habitLabel(h)}</span>
+      <span>${habitIcon(h, { edit:true })} ${habitLabel(h)}</span>
 
       <button
         class="habit-del"
@@ -1565,6 +1561,36 @@ function wireEvents(){
 
   }
 
+  document.querySelectorAll('[data-change-icon]').forEach(btn=>{
+
+    btn.addEventListener('click',async()=>{
+
+      const habit=habits.find(h=>h.id===btn.dataset.changeIcon);
+
+      if(!habit || !window.sbHabitIcons) return;
+
+      const iconId=await window.sbHabitIcons.pickHabitIcon({
+        name:habitLabel(habit),
+        current:window.sbHabitIcons.habitIconId(habit),
+        title:'Change the icon'
+      });
+
+      if(!iconId) return;
+
+      habit.icon=window.sbHabitIcons.storedIcon(iconId);
+
+      delete habit.color;
+
+      saveHabits();
+
+      manageOpen=true;
+
+      render();
+
+    });
+
+  });
+
   document.querySelectorAll('[data-del]').forEach(btn=>{
 
     btn.addEventListener('click',()=>{
@@ -1583,21 +1609,23 @@ function wireEvents(){
 
   if(addBtn){
 
-    const addHabit=()=>{
+    const addHabit=async()=>{
 
       const input=document.getElementById('newHabitInput');
 
       const value=input.value.trim();
 
-      if(!value) return;
+      if(!value || !window.sbHabitIcons) return;
 
-      const visual = window.inferHabitVisual ? window.inferHabitVisual(value) : {};
+      // The chip they tapped, else the best fit, else the picker asks.
+      const iconId=await window.sbHabitIcons.iconForNewHabit(value, input._iconSuggest);
+
+      if(!iconId){ input.focus(); return; }
 
       habits.push({
         id:'h'+Date.now(),
         name:value,
-        icon:visual.icon,
-        color:visual.color
+        icon:window.sbHabitIcons.storedIcon(iconId)
       });
 
       saveHabits();
@@ -1607,6 +1635,12 @@ function wireEvents(){
       render();
 
     };
+
+    const newInput=document.getElementById('newHabitInput');
+
+    if(window.sbHabitIcons && newInput){
+      window.sbHabitIcons.attachIconSuggestions(newInput, { anchor:newInput.closest('.add-row') });
+    }
 
     addBtn.addEventListener('click',addHabit);
 
@@ -1716,6 +1750,7 @@ function wireEvents(){
     initCloudSync().then(() => {
 
       loadData();
+      window.__habitsDrawn = true;
       render();
 
     });

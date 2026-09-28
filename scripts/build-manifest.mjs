@@ -39,7 +39,8 @@ export function precacheFiles() {
         ...list("fonts", ".woff2"),
         ...list("brand", ".svg"),
         ...list("icons", /\.(png|svg)$/).filter(f => f !== "icons/og-image.png"),
-        ...list("emoji", ".svg")
+        ...list("emoji", ".svg"),
+        ...list("habit-icons", ".svg")
     ].sort();
 }
 

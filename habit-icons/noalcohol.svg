@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<path d="M20 8h24q2 18-12 24q-14-6-12-24z" fill="#F2EEE4" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<clipPath id="hb-noalcohol-glass"><path d="M20 8h24q2 18-12 24q-14-6-12-24z"/></clipPath>
+<rect x="18" y="16" width="28" height="18" fill="#C97A6E" clip-path="url(#hb-noalcohol-glass)"/>
+<path d="M20 8h24q2 18-12 24q-14-6-12-24z" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32 32v18M22 54h20" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 52L52 12" stroke="#0F2019" stroke-width="10" stroke-linecap="round"/>
+<path d="M12 52L52 12" stroke="#B9573F" stroke-width="4.6" stroke-linecap="round"/></svg>

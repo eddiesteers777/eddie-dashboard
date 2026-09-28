@@ -14,45 +14,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT_DIR = join(root, "emoji");
 
-// ---- The rule book ----
-const INK = "#0F2019";      // outline (the app's --bg)
-const W = 3.5;              // outline weight
-const TAN = "#C9AD84";
-const TAN_D = "#AE9068";    // tan in shadow
-const CREAM = "#F2EEE4";
-const STONE = "#E3DDD0";
-const SAGE = "#8FA388";
-const SAGE_D = "#6F8769";
-const FOREST = "#173226";
-const FLAME = "#E07A3F";
-const FLAME_L = "#F2B35E";
-const WATER = "#7FB2CF";
-const GOLD = "#D8A444";
-
-const line = `stroke="${INK}" stroke-width="${W}" stroke-linecap="round" stroke-linejoin="round"`;
-const ink = (extra = "") => `fill="none" ${line}${extra}`;
-
-// Composite shapes get one clean outer outline: draw every piece with
-// a doubled stroke first, then every fill on top.
-function outlined(pieces) {
-    const back = pieces.map(p => p.replace("/>", ` stroke="${INK}" stroke-width="${W * 2}" stroke-linejoin="round" stroke-linecap="round"/>`)).join("");
-    return back + pieces.join("");
-}
-
-// The family signature: three speed streaks on the left.
-const streaks = (x = 4, y = 26, color = TAN) => `
-    <path d="M${x + 4} ${y}h9M${x} ${y + 7}h12M${x + 5} ${y + 14}h8" stroke="${color}" stroke-width="3.2" stroke-linecap="round"/>`;
-
-// A face: tan disc, shaded lower edge, outline.
-const face = (inner, { cx = 32, cy = 33, r = 25 } = {}) => `
-    <clipPath id="f"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="${TAN}"/>
-    <circle cx="${cx + 7}" cy="${cy + 9}" r="${r}" fill="${TAN_D}" opacity=".45" clip-path="url(#f)"/>
-    ${inner}
-    <circle cx="${cx}" cy="${cy}" r="${r}" ${ink()}/>`;
-
-const eyeDot = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="2.6" ry="3.4" fill="${INK}"/>`;
-const drop = (x, y, s = 1) => `<path d="M${x} ${y}c${-3 * s} ${4.5 * s} ${-4.5 * s} ${6.5 * s} ${-4.5 * s} ${8.5 * s}a${4.5 * s} ${4.5 * s} 0 0 0 ${9 * s} 0c0 ${-2 * s} ${-1.5 * s} ${-4 * s} ${-4.5 * s} ${-8.5 * s}z" fill="${WATER}" ${line}/>`;
+import { INK, W, TAN, TAN_D, CREAM, STONE, SAGE, SAGE_D, FOREST, FLAME, FLAME_L, WATER, GOLD, line, ink, outlined, streaks, face, eyeDot, drop } from "./drawKit.mjs";
 
 // ---- The SB mark, read from brand/sb-mark.svg (never redrawn by hand) ----
 const markSvg = readFileSync(join(root, "brand/sb-mark.svg"), "utf8");

@@ -8,7 +8,8 @@
 ========================================== */
 
 import { icon } from "./icons.js";
-import { inferHabitVisual, habitVisual } from "./habitIcons.js";
+import { storedIcon, habitIconId } from "./habitIconSet.js";
+import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
 
 // Habits saved before icons existed have the emoji baked into the
@@ -21,34 +22,35 @@ function habitLabel(h) {
     return h.name.replace(EMOJI_PREFIX, "").trim();
 }
 
-function habitIcon(h) {
-    const { icon: iconName, color } = habitVisual(h);
-    return `<span class="habits-row-icon" style="color:${color}">${icon(iconName)}</span>`;
+// The drawn Southbound icon (habit-icons/*.svg): the one picked for the
+// habit, else the one its name suggests (js/habitIconSet.js).
+function habitIcon(h, options) {
+    return habitIconHtml(h, options);
 }
 
 // Eddie's own starting list (the coach account). Its ids (h1-h10) are
 // what his saved check-offs point at, so don't renumber them.
 const COACH_HABITS = [
-    { id: "h1", name: "Prayer", icon: "pray" },
-    { id: "h2", name: "Bible", icon: "bookOpen" },
-    { id: "h3", name: "Training Complete", icon: "activity" },
-    { id: "h4", name: "Strength", icon: "dumbbell" },
-    { id: "h5", name: "Stretch / Mobility", icon: "stretch" },
-    { id: "h6", name: "Protein Goal", icon: "drumstick" },
-    { id: "h7", name: "Water Goal", icon: "droplet" },
-    { id: "h8", name: "Sleep 7+ hrs", icon: "moon" },
-    { id: "h9", name: "Read 10 Pages", icon: "bookOpen" },
-    { id: "h10", name: "Time with Wife", icon: "heart" }
+    { id: "h1", name: "Prayer", icon: "hb:pray" },
+    { id: "h2", name: "Bible", icon: "hb:bible" },
+    { id: "h3", name: "Training Complete", icon: "hb:run" },
+    { id: "h4", name: "Strength", icon: "hb:strength" },
+    { id: "h5", name: "Stretch / Mobility", icon: "hb:stretch" },
+    { id: "h6", name: "Protein Goal", icon: "hb:protein" },
+    { id: "h7", name: "Water Goal", icon: "hb:water" },
+    { id: "h8", name: "Sleep 7+ hrs", icon: "hb:sleep" },
+    { id: "h9", name: "Read 10 Pages", icon: "hb:read" },
+    { id: "h10", name: "Time with Wife", icon: "hb:love" }
 ];
 
 // What a client starts with before editing their own list. Nothing
 // personal -- just the basics every athlete tracks.
 const CLIENT_HABITS = [
-    { id: "c1", name: "Training Complete", icon: "activity" },
-    { id: "c2", name: "Stretch / Mobility", icon: "stretch" },
-    { id: "c3", name: "Protein Goal", icon: "drumstick" },
-    { id: "c4", name: "Water Goal", icon: "droplet" },
-    { id: "c5", name: "Sleep 7+ hrs", icon: "moon" }
+    { id: "c1", name: "Training Complete", icon: "hb:run" },
+    { id: "c2", name: "Stretch / Mobility", icon: "hb:stretch" },
+    { id: "c3", name: "Protein Goal", icon: "hb:protein" },
+    { id: "c4", name: "Water Goal", icon: "hb:water" },
+    { id: "c5", name: "Sleep 7+ hrs", icon: "hb:sleep" }
 ];
 
 const DEFAULT_HABITS = showsPersonalPlan() ? COACH_HABITS : CLIENT_HABITS;
@@ -394,7 +396,7 @@ function renderManage() {
 
     list.innerHTML = habits.map(h => `
         <div class="habits-manage-item">
-            <span>${habitIcon(h)} ${escapeHtml(habitLabel(h))}</span>
+            <span>${habitIcon(h, { edit: true })} ${escapeHtml(habitLabel(h))}</span>
             <button
                 type="button"
                 class="habits-del-btn"
@@ -500,6 +502,13 @@ document.addEventListener("click", e => {
         return;
     }
 
+    const iconBtn = target.closest("[data-change-icon]");
+
+    if (iconBtn) {
+        changeIcon(iconBtn.dataset.changeIcon);
+        return;
+    }
+
     const delBtn = target.closest("[data-del-habit]");
 
     if (delBtn) {
@@ -522,7 +531,7 @@ document.addEventListener("keydown", e => {
     }
 });
 
-function addNewHabit() {
+async function addNewHabit() {
     const input = document.getElementById("newHabitInput");
     const name = input?.value.trim();
 
@@ -530,23 +539,54 @@ function addNewHabit() {
         return;
     }
 
-    const visual = inferHabitVisual(name);
+    // The chip they tapped, else the best fit, else the picker asks.
+    // Closing the picker without choosing leaves the name in the field.
+    const iconId = await iconForNewHabit(name, input._iconSuggest);
+
+    if (!iconId) {
+        input?.focus();
+        return;
+    }
 
     habits.push({
         id: "h" + Date.now(),
         name,
-        icon: visual.icon,
-        color: visual.color
+        icon: storedIcon(iconId)
     });
 
     saveHabits();
 
     if (input) {
         input.value = "";
+        input._iconSuggest?.reset();
     }
 
     renderManage();
     renderHero();
+}
+
+async function changeIcon(habitId) {
+    const habit = habits.find(h => h.id === habitId);
+
+    if (!habit) {
+        return;
+    }
+
+    const iconId = await pickHabitIcon({
+        name: habitLabel(habit),
+        current: habitIconId(habit),
+        title: "Change the icon"
+    });
+
+    if (!iconId) {
+        return;
+    }
+
+    habit.icon = storedIcon(iconId);
+    delete habit.color;
+    saveHabits();
+    renderAll();
+    document.querySelector(`[data-change-icon="${CSS.escape(habitId)}"]`)?.focus();
 }
 
 /* ==========================================
@@ -555,6 +595,11 @@ function addNewHabit() {
 
 loadData();
 renderAll();
+
+{
+    const input = document.getElementById("newHabitInput");
+    if (input) attachIconSuggestions(input, { anchor: input.closest(".habits-add-row") });
+}
 
 import("./cloudSync.js").then(({ initCloudSync }) => {
     initCloudSync().then(() => {
