@@ -50,7 +50,7 @@ export async function askForChange({ coachUid, planId = null, date = null, reaso
     };
     // The ID is made here, so a request asked offline is sent once, later.
     const ref = doc(collection(db, "changeRequests"));
-    const { queued } = await settleWrite(setDoc(ref, data), "Your change request");
+    const { queued } = await settleWrite(setDoc(ref, data), "Your change request", ref);
     sendChangeRequestEmail({ clientName: data.clientName, reasonLabel: reasonLabel(reason).toLowerCase(), date: data.date ? shortDay(data.date) : "", message: data.message });
     return { id: ref.id, ...data, createdAt: null, pendingSync: queued };
 }

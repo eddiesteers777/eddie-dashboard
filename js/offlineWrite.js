@@ -12,14 +12,26 @@
    "sb:write-synced" / "sb:write-failed" go out for the offline indicator
    (js/netStatus.js), which tells the person.
 
-   await settleWrite(setDoc(...), "Your run") -> { queued: false } saved
+   await settleWrite(setDoc(ref, ...), "Your run", ref) -> { queued: false } saved
                                              -> { queued: true } on this device
    A real refusal while online (e.g. permission-denied) still throws.
 ========================================== */
 
 const WAIT_MS = 8000;
 
-export async function settleWrite(write, label = "Your change") {
+// Firestore runs its work in order, so a read from the device copy queued
+// right after a write only finishes once that write is stored on the
+// device. Without this wait, a write made on a page opened offline could
+// be lost if the app was closed straight away (2026-09-28).
+async function storedOnDevice(ref) {
+    if (!ref) return;
+    try {
+        const { getDocFromCache } = await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js");
+        await Promise.race([getDocFromCache(ref).catch(() => null), new Promise(resolve => setTimeout(resolve, 3000))]);
+    } catch { /* best effort */ }
+}
+
+export async function settleWrite(write, label = "Your change", ref = null) {
     const report = queued => {
         if (!queued) return;
         write.then(
@@ -29,6 +41,7 @@ export async function settleWrite(write, label = "Your change") {
     };
     if (navigator.onLine === false) {
         report(true);
+        await storedOnDevice(ref);
         return { queued: true };
     }
     let timer;
@@ -37,6 +50,7 @@ export async function settleWrite(write, label = "Your change") {
         const outcome = await Promise.race([write.then(() => "done"), slow]);
         if (outcome === "slow") {
             report(true);
+            await storedOnDevice(ref);
             return { queued: true };
         }
         return { queued: false };

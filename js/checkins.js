@@ -84,7 +84,7 @@ export async function submitCheckin({ coachUid, coachName, rating, notes, weekOf
     if (isNew) payload.coachFeedback = "";
 
     // Offline it's kept on this device and sent later (js/offlineWrite.js).
-    const { queued } = await settleWrite(setDoc(ref, payload, { merge: true }), "Your check-in");
+    const { queued } = await settleWrite(setDoc(ref, payload, { merge: true }), "Your check-in", ref);
     return { id: ref.id, ...payload, pendingSync: queued };
 }
 

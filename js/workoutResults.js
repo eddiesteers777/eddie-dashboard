@@ -79,17 +79,18 @@ export async function saveMyResult({ planId, coachUid, date, clientName, kind = 
     // Offline, the log is kept on this device and sent when the connection
     // comes back (js/offlineWrite.js); the fixed doc ID means it's one record.
     let write;
+    const ref = doc(db, "workoutResults", id);
     if (existing) {
         const patch = Object.fromEntries([...EDITABLE, ...(kind === "strength" ? ["exercises"] : [])].map(k => [k, values[k]]));
-        write = updateDoc(doc(db, "workoutResults", id), { ...patch, updatedAt: serverTimestamp() });
+        write = updateDoc(ref, { ...patch, updatedAt: serverTimestamp() });
     } else {
-        write = setDoc(doc(db, "workoutResults", id), {
+        write = setDoc(ref, {
             clientUid: user.uid, coachUid, planId, date, ...(kind === "strength" ? { kind } : {}), ...values,
             createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
             coachComment: "", coachCommentAt: null
         });
     }
-    const { queued } = await settleWrite(write, values.title || "Your workout");
+    const { queued } = await settleWrite(write, values.title || "Your workout", ref);
     const done = values.status === "completed";
     await markLocal(planId, date, kind === "strength"
         ? { strengthCompleted: done, strengthSkipped: !done, strengthResultId: id, strengthRpe: done ? values.rpe : null, strengthPain: values.pain }

@@ -4,11 +4,10 @@
 // Registers sw.js and loads the connection / version pill
 // (js/netStatus.js). When a new version of the site has finished
 // downloading in the background (a "waiting" worker), the pill offers
-// Refresh; otherwise the new version simply takes over on the next page
-// the person opens: every in-app link is a fresh page load, so asking
-// the waiting worker to take over as this page is left never swaps
-// code under something they're typing. The page is only ever reloaded
-// by their own Refresh tap.
+// Refresh; otherwise the new version takes over on the next page the
+// person opens (sw.js answers that page with an instant reload served by
+// the new version), so code never swaps under something they're typing.
+// This page is only ever reloaded by their own Refresh tap.
 // ==========================================
 
 (function () {
@@ -23,8 +22,7 @@
         const offer = worker => {
             if (!worker || !navigator.serviceWorker.controller) return; // first install: nothing to replace
             netStatus.then(m => m?.announceUpdate(worker));
-            // Leaving this page: let the next one start on the new version.
-            window.addEventListener("pagehide", () => worker.postMessage({ type: "SKIP_WAITING" }), { once: true });
+            // Otherwise the next page opened switches to it (sw.js, switchVersion).
         };
         if (registration.waiting) offer(registration.waiting);
         registration.addEventListener("updatefound", () => {
