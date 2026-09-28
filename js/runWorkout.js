@@ -173,6 +173,16 @@ export function plannedMiles(workout) {
     return { miles: round1(miles), exact };
 }
 
+// Total minutes when every part is timed (a run/walk session), else null.
+export function timedMinutes(workout) {
+    if (!workout) return null;
+    const parts = [workout.warmup, ...(workout.sets || []).flatMap(set => [set, set.recovery]), workout.cooldown].filter(Boolean);
+    if (!parts.length || parts.some(p => p.unit !== "min") || (workout.sets || []).some(set => set.parts?.length)) return null;
+    let total = (workout.warmup?.amount || 0) + (workout.cooldown?.amount || 0);
+    for (const set of workout.sets || []) total += set.amount * set.repeat + (set.recovery?.amount || 0) * Math.max(0, set.repeat - 1);
+    return Math.round(total);
+}
+
 // The steps workout mode walks through, in order.
 export function executionSteps(workout) {
     if (!workout) return [];

@@ -17,6 +17,7 @@ import {
     settingsFromProfile, checkSettings, generateCoachPlan, regeneratePlan, nextMonday, normalGoal, compactChange
 } from "./coachPlanGenerator.js";
 import { shortDay, isoDate, planDateRange, addDays } from "./coachingPlanModel.js";
+import { START_LEVELS, RUN_WALK_GOALS, isRunWalk } from "./runWalk.js";
 import { icon } from "./icons.js";
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -52,6 +53,9 @@ function profileNotes(record, first) {
 }
 
 function settingsHtml(s) {
+    const rw = isRunWalk(s);
+    // data-rw="miles": only for people already running; data-rw="walk": only for a run/walk start.
+    const only = (kind, extra = "") => `data-rw="${kind}"${(kind === "walk") === rw ? "" : " hidden"}${extra}`;
     return `
         <div class="pw-gen-kind" role="radiogroup" aria-label="Plan type">
             <label><input type="radio" name="mode" value="race"${s.mode === "race" ? " checked" : ""}><span>Race plan</span></label>
@@ -60,7 +64,7 @@ function settingsHtml(s) {
         <div class="pw-gen-grid" data-show="race"${s.mode === "race" ? "" : " hidden"}>
             <label class="pw-label">Race<select class="sb-dialog-input" name="raceType">${options(RACES, s.raceType)}</select></label>
             <label class="pw-label">Race date<input class="sb-dialog-input" type="date" name="raceDate" value="${esc(s.raceDate)}"></label>
-            <label class="pw-label">Goal time (optional)<input class="sb-dialog-input" name="goalTime" value="${esc(s.goalTime)}" placeholder="1:45:00" inputmode="numeric"></label>
+            <label class="pw-label" ${only("miles")}>Goal time (optional)<input class="sb-dialog-input" name="goalTime" value="${esc(s.goalTime)}" placeholder="1:45:00" inputmode="numeric"></label>
         </div>
         <div class="pw-gen-grid" data-show="training"${s.mode === "training" ? "" : " hidden"}>
             <label class="pw-label">Goal<select class="sb-dialog-input" name="trainingGoal">${options(TRAINING_GOALS, s.trainingGoal)}</select></label>
@@ -68,16 +72,21 @@ function settingsHtml(s) {
         </div>
         <div class="pw-gen-grid">
             <label class="pw-label">Starts<input class="sb-dialog-input" type="date" name="startDate" value="${esc(s.startDate)}"></label>
-            <label class="pw-label">Running experience<select class="sb-dialog-input" name="experience">${options(EXPERIENCE, s.experience)}</select></label>
+            <label class="pw-label pw-gen-wide">Starting point<select class="sb-dialog-input" name="start">${options(START_LEVELS, s.start || "RUNNING")}</select></label>
+            <label class="pw-label" ${only("miles")}>Running experience<select class="sb-dialog-input" name="experience">${options(EXPERIENCE, s.experience)}</select></label>
+        </div>
+        <div class="pw-gen-grid" ${only("walk")}>
+            <label class="pw-label pw-gen-wide">Build to<select class="sb-dialog-input" name="runWalkGoal">${options(RUN_WALK_GOALS, s.runWalkGoal || "CONTINUOUS")}</select></label>
+            <p class="pw-gen-note">Timed run/walk sessions that build up week by week, on up to four of their run days (three works best, with a day off between). Leads to a 5K or 10K, or general fitness. Plan length is up to you: a shorter plan climbs faster, a longer one repeats weeks.</p>
         </div>
         ${dayChips("trainDays", s.trainDays, "Days they can train")}
         ${dayChips("runDays", s.runDays, "Run days")}
         <div class="pw-gen-grid">
-            <label class="pw-label">Long run day<select class="sb-dialog-input" name="longRunDay">${options(CODES.map(c => [c, DAY_LABEL[c]]), s.longRunDay)}</select></label>
-            <label class="pw-label">Quality runs / week<select class="sb-dialog-input" name="speedDays">${options(counts(2), s.speedDays)}</select></label>
-            <label class="pw-label">Miles / week now<input class="sb-dialog-input" type="number" min="0" max="150" step="1" name="currentMiles" value="${esc(s.currentMiles)}"></label>
-            <label class="pw-label"><span data-show="race"${s.mode === "race" ? "" : " hidden"}>Peak miles / week</span><span data-show="training"${s.mode === "training" ? "" : " hidden"}>Build to miles / week</span><input class="sb-dialog-input" type="number" min="0" max="150" step="1" name="peakMiles" value="${esc(s.peakMiles)}"></label>
-            <label class="pw-label">Longest recent run (mi)<input class="sb-dialog-input" type="number" min="1" max="30" step="0.5" name="longestRun" value="${esc(s.longestRun)}"></label>
+            <label class="pw-label" ${only("miles")}>Long run day<select class="sb-dialog-input" name="longRunDay">${options(CODES.map(c => [c, DAY_LABEL[c]]), s.longRunDay)}</select></label>
+            <label class="pw-label" ${only("miles")}>Quality runs / week<select class="sb-dialog-input" name="speedDays">${options(counts(2), s.speedDays)}</select></label>
+            <label class="pw-label" ${only("miles")}>Miles / week now<input class="sb-dialog-input" type="number" min="0" max="150" step="1" name="currentMiles" value="${esc(s.currentMiles)}"></label>
+            <label class="pw-label" ${only("miles")}><span data-show="race"${s.mode === "race" ? "" : " hidden"}>Peak miles / week</span><span data-show="training"${s.mode === "training" ? "" : " hidden"}>Build to miles / week</span><input class="sb-dialog-input" type="number" min="0" max="150" step="1" name="peakMiles" value="${esc(s.peakMiles)}"></label>
+            <label class="pw-label" ${only("miles")}>Longest recent run (mi)<input class="sb-dialog-input" type="number" min="1" max="30" step="0.5" name="longestRun" value="${esc(s.longestRun)}"></label>
             <label class="pw-label">Cross-training / week<select class="sb-dialog-input" name="crossDays">${options(counts(3), s.crossDays)}</select></label>
         </div>
         <div class="pw-gen-grid">
@@ -85,6 +94,12 @@ function settingsHtml(s) {
             <label class="pw-label">Strength experience<select class="sb-dialog-input" name="strengthLevel">${options(STRENGTH_LEVELS, s.strengthLevel)}</select></label>
             <label class="pw-label">Equipment<select class="sb-dialog-input" name="equipment">${options(EQUIPMENT, s.equipment)}</select></label>
         </div>`;
+}
+
+function planName(s) {
+    const race = RACES.find(r => r[0] === s.raceType)?.[1] || "Race";
+    if (isRunWalk(s)) return s.mode === "race" ? `Run/walk to ${race}` : "Run/walk plan";
+    return s.mode === "race" ? `${race} plan` : "Training plan";
 }
 
 function readSettings(form, base = {}) {
@@ -101,6 +116,8 @@ function readSettings(form, base = {}) {
         endDate: String(f.get("endDate") || ""),
         startDate: String(f.get("startDate") || ""),
         experience: String(f.get("experience") || "RECREATIONAL"),
+        start: String(f.get("start") || "RUNNING"),
+        runWalkGoal: String(f.get("runWalkGoal") || "CONTINUOUS"),
         trainDays: f.getAll("trainDays").map(String),
         runDays: f.getAll("runDays").map(String),
         longRunDay: String(f.get("longRunDay") || ""),
@@ -118,9 +135,19 @@ function readSettings(form, base = {}) {
 // Race / training fields, and run days always being days they can train.
 function wireForm(d) {
     const form = d.querySelector("form");
+    // The plan name follows the settings until the coach types their own.
+    const name = form.querySelector('[name="name"]');
+    name?.addEventListener("input", () => { name.dataset.touched = "1"; });
     form.addEventListener("change", ev => {
+        const error = d.querySelector('[data-el="error"]');
+        if (error && !error.hidden) error.hidden = true;   // they're fixing it
+        if (name && !name.dataset.touched && ["mode", "raceType", "start"].includes(ev.target.name)) name.value = planName(readSettings(form));
         const mode = form.querySelector('[name="mode"]:checked')?.value;
         if (ev.target.name === "mode") d.querySelectorAll("[data-show]").forEach(el => { el.hidden = el.dataset.show !== mode; });
+        if (ev.target.name === "start") {
+            const walk = ev.target.value !== "RUNNING";
+            d.querySelectorAll("[data-rw]").forEach(el => { el.hidden = (el.dataset.rw === "walk") !== walk; });
+        }
         if (ev.target.name === "runDays" && ev.target.checked) {
             const train = form.querySelector(`[name="trainDays"][value="${ev.target.value}"]`);
             if (train) train.checked = true;
@@ -147,7 +174,7 @@ export function generateDialog({ firstName, record, onCreate }) {
         <form class="sb-dialog-form" novalidate>
             <h2 class="sb-dialog-title">Generate a plan for ${esc(firstName)}</h2>
             ${profileNotes(record, firstName)}
-            <label class="pw-label">Plan name<input class="sb-dialog-input" name="name" maxlength="120" required value="${esc(s.mode === "race" ? `${RACES.find(r => r[0] === s.raceType)?.[1] || "Race"} plan` : "Training plan")}"></label>
+            <label class="pw-label">Plan name<input class="sb-dialog-input" name="name" maxlength="120" required value="${esc(planName(s))}"></label>
             ${settingsHtml(s)}
             <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
             <p class="sb-dialog-message">You'll see every day in the editor next and can change anything. Nothing is sent to ${esc(firstName)} until you publish.</p>

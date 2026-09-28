@@ -5,8 +5,9 @@
      - what to do: title, distance, why this workout, the coach's cue,
        and every step (warm-up, main set, recovery, cool-down)
      - Start workout: a full-screen, step-by-step workout mode with a
-       timer per step (counts down for timed steps) that keeps the
-       screen awake where the phone allows it
+       timer per step (counts down for timed steps, which move on by
+       themselves with a beep + buzz, so run/walk intervals need no taps)
+       that keeps the screen awake where the phone allows it
      - Log this run (coach plans): done or skipped, distance, time ->
        pace, effort 1-10, pain / discomfort, a note to the coach. Saved
        to workoutResults (js/workoutResults.js); the coach sees planned
@@ -25,7 +26,7 @@ import { fuelForRun, gelCues } from "./workoutFuel.js";
 import { formatClock } from "./fuelSchedule.js";
 import { shortDay, typeLabel, isoDate } from "./coachingPlanModel.js";
 import {
-    executionSteps, amountText, targetText, compareRun, parseDuration, formatDuration, formatPace
+    executionSteps, amountText, targetText, compareRun, parseDuration, formatDuration, formatPace, timedMinutes
 } from "./runWorkout.js";
 import { listMyResults, saveMyResult, deleteMyResult, isStrengthResult } from "./workoutResults.js";
 import { QUEUED_NOTE } from "./offlineWrite.js";
@@ -60,7 +61,7 @@ function findDay() {
 }
 
 const isCoachPlan = () => state.program?.source === "coach" && state.program.coachPlanId;
-const title = () => RUN_TITLES[state.day.type] || typeLabel(state.day.type);
+const title = () => (/^Run\/walk/.test(state.day.session || "") ? "Run/walk" : RUN_TITLES[state.day.type] || typeLabel(state.day.type));
 
 // ---------- Page ----------
 
@@ -159,6 +160,8 @@ function render() {
     const { day, week, program } = state;
     const workout = day.workout;
     const miles = Number(day.miles) || 0;
+    // A timed session (run/walk) reads by time, not an estimated distance.
+    const timed = timedMinutes(workout);
     const item = buildDay(date, weekInputs(), isoDate(new Date())).items.find(i => i.source?.programId === program.id && i.kind === "run");
     const done = state.result ? state.result.status === "completed" : Boolean(day.completed);
 
@@ -167,7 +170,7 @@ function render() {
             <span class="wo-eyebrow">${esc(shortDay(date))} · Week ${week.week ?? state.weekIndex + 1}${week.phase ? ` · ${esc(week.phase)}` : ""}</span>
             <div class="wo-title">
                 <h1>${esc(title())}</h1>
-                ${miles ? `<span class="wk-big">${miles}<small> mi</small></span>` : ""}
+                ${timed ? `<span class="wk-big">${timed}<small> min</small></span>` : miles ? `<span class="wk-big">${miles}<small> mi</small></span>` : ""}
             </div>
             <span class="wo-meta">${program.source === "coach" ? `From ${esc(program.coachName || "your coach")} · ` : ""}${esc(program.name || "")}</span>
         </section>
@@ -280,6 +283,25 @@ async function startWorkoutMode() {
     let stepStart = Date.now();
     const started = Date.now();
     let timer = null;
+    // A short beep when a timed step ends (iPhones can't vibrate from a web page).
+    // Made on the Start tap, which is what lets a phone play it later.
+    let audio = null;
+    try { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.resume?.(); } catch { audio = null; }
+    const beep = () => {
+        if (!audio) return;
+        try {
+            for (const [at, freq] of [[0, 880], [0.22, 1175]]) {
+                const osc = audio.createOscillator(), gain = audio.createGain();
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.0001, audio.currentTime + at);
+                gain.gain.exponentialRampToValueAtTime(0.3, audio.currentTime + at + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + at + 0.18);
+                osc.connect(gain).connect(audio.destination);
+                osc.start(audio.currentTime + at);
+                osc.stop(audio.currentTime + at + 0.2);
+            }
+        } catch { /* sound is a nice-to-have */ }
+    };
 
     const overlay = document.createElement("div");
     overlay.className = "wo-mode";
@@ -291,6 +313,18 @@ async function startWorkoutMode() {
     try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { wakeLock = null; }
 
     const paint = () => {
+        // A timed step that's over moves on by itself (run/walk intervals would
+        // otherwise need a tap every minute); the last one waits for Finish.
+        let moved = false;
+        while (index < steps.length - 1 && steps[index].seconds && Date.now() - stepStart >= steps[index].seconds * 1000) {
+            stepStart += steps[index].seconds * 1000;
+            index++;
+            moved = true;
+        }
+        if (moved) {
+            beep();
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        }
         const step = steps[index];
         const elapsed = Math.floor((Date.now() - stepStart) / 1000);
         const remaining = step.seconds ? step.seconds - elapsed : null;
@@ -316,7 +350,7 @@ async function startWorkoutMode() {
                 <button type="button" class="sb-btn sb-btn-secondary" data-mode="back"${index === 0 ? " disabled" : ""}>${icon("chevronLeft")} Back</button>
                 <button type="button" class="sb-btn sb-btn-primary" data-mode="next">${index === steps.length - 1 ? `${icon("check")} Finish` : `Next step ${icon("chevronRight")}`}</button>
             </div>`;
-        if (remaining === 0 && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        if (remaining === 0) { beep(); if (navigator.vibrate) navigator.vibrate([200, 100, 200]); }
         const elapsedNow = Math.floor((Date.now() - started) / 1000);
         if (gelCues(state.fuel).some(c => c.min * 60 === elapsedNow) && navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
     };
@@ -327,6 +361,7 @@ async function startWorkoutMode() {
         document.body.classList.remove("wo-mode-open");
         wakeLock?.release?.().catch(() => {});
         wakeLock = null;
+        audio?.close?.().catch?.(() => {});
     };
 
     overlay.addEventListener("click", async event => {

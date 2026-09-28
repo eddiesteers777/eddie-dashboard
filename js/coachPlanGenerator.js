@@ -29,6 +29,7 @@
 ========================================== */
 
 import { shapePlan, RACE_INFO } from "./planShape.js";
+import { shapeRunWalk, isRunWalk, sessionDays, RUN_WALK_RACES } from "./runWalk.js";
 import { sanitizeWorkout, workoutSummary } from "./runWorkout.js";
 import { sanitizeStrength } from "./strengthWorkout.js";
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
@@ -92,16 +93,23 @@ export function settingsFromProfile(record = {}, today) {
     const strengthLevel = ["none", "some", "experienced"].includes(r.strengthExperience) ? r.strengthExperience : "some";
     const sport = r.primarySport || "running";
     const goalText = String(r.primaryGoal || "").toLowerCase();
+    // Little or no running now: start them on run/walk.
+    const aboutText = `${goalText} ${String(r.currentTraining || "").toLowerCase()}`;
+    const barelyRuns = sport === "running" && ((r.weeklyMileage !== undefined && r.weeklyMileage !== "" && r.weeklyMileage !== null && Number(r.weeklyMileage) <= 3)
+        || /couch|run\s*\/?\s*walk|walk\/run|never (ran|run)|not running|first 5k|beginner|new to running/.test(aboutText));
+    const startLevel = barelyRuns ? "RUN1" : "RUNNING";
     return {
-        mode: race && raceDate ? "race" : "training",
-        raceType: race || "HALF",
+        mode: race && raceDate && (!barelyRuns || RUN_WALK_RACES.includes(race)) ? "race" : "training",
+        raceType: race || (barelyRuns ? "5K" : "HALF"),
+        start: startLevel,
+        runWalkGoal: "CONTINUOUS",
         raceDate,
         goalTime,
         trainingGoal: sport === "strength" ? "STRENGTH" : sport === "soccer" ? "ATHLETIC" : /fast|speed|pr\b|pb\b/.test(goalText) ? "SPEED" : "BASE_BUILD",
         startDate: start,
         endDate: addDays(start, 12 * 7 - 1),
         trainDays,
-        runDays,
+        runDays: barelyRuns ? sessionDays(trainDays, 3) : runDays,
         longRunDay,
         speedDays: runDays.length >= 5 ? 2 : 1,
         strengthDays: sport === "strength" ? 3 : strengthLevel === "none" ? 1 : 2,
@@ -119,13 +127,16 @@ export function settingsFromProfile(record = {}, today) {
 export function checkSettings(s) {
     const out = [];
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s.startDate || "")) out.push("Pick a start date.");
+    const runWalk = isRunWalk(s);
     if ((s.runDays || []).length < 2) out.push("Pick at least two run days.");
-    else if (!(s.runDays || []).includes(s.longRunDay)) out.push("The long run day has to be one of the run days.");
+    else if (!runWalk && !(s.runDays || []).includes(s.longRunDay)) out.push("The long run day has to be one of the run days.");
     if (s.mode === "race") {
         if (!RACE_INFO[s.raceType]) out.push("Pick a race distance.");
+        else if (runWalk && !RUN_WALK_RACES.includes(s.raceType)) out.push("A run/walk start leads to a 5K or 10K. Pick one of those, or General training.");
         if (!/^\d{4}-\d{2}-\d{2}$/.test(s.raceDate || "")) out.push("Pick the race date.");
         else if (s.raceDate < addDays(s.startDate, 20)) out.push("The race needs to be at least 3 weeks after the start.");
     } else if (!/^\d{4}-\d{2}-\d{2}$/.test(s.endDate || "") || s.endDate < addDays(s.startDate, 6)) out.push("The plan needs to run at least a week.");
+    if (runWalk) return out;   // run/walk plans go by minutes, not miles
     if (!(Number(s.peakMiles) >= 3)) out.push("Set the miles a week to build to (3 or more).");
     else if (!(Number(s.peakMiles) >= Number(s.currentMiles))) out.push("Peak miles can't be lower than their current miles.");
     return out;
@@ -387,7 +398,8 @@ export function generateCoachPlan(settings, { now = Date.now() } = {}) {
     const s = { ...settings, runDays, trainDays: CODES.filter(c => runDays.includes(c) || (settings.trainDays || []).includes(c)) };
     const problems = checkSettings(s);
     if (problems.length) throw new Error(problems[0]);
-    const { weeks: shaped, warnings } = shapePlan(s);
+    // Starting from little or no running: the time-based run/walk ladder (js/runWalk.js).
+    const { weeks: shaped, warnings } = isRunWalk(s) ? shapeRunWalk(s) : shapePlan(s);
     const pool = strengthPool(s);
     let quality = 0, mainN = 0, lightN = 0;
     const raceGuard = s.mode === "race" ? addDays(s.raceDate, -3) : null;
@@ -400,7 +412,12 @@ export function generateCoachPlan(settings, { now = Date.now() } = {}) {
         const days = w.days.map(d => {
             const type = d.type || "rest";
             const day = { date: d.date, day: d.day, type, miles: type === "race" ? d.miles : roundHalf(Number(d.miles) || 0), session: "" };
-            if (type === "workout" && day.miles < 3) {
+            if (d.workout) {
+                // Already a full session (run/walk).
+                Object.assign(day, { miles: d.miles, session: d.session, workout: clone(d.workout) });
+            } else if (type === "race" && d.session) {
+                day.session = d.session;
+            } else if (type === "workout" && day.miles < 3) {
                 // Too short for a session: easy with strides.
                 Object.assign(day, { type: "easy", session: "Easy + 4 strides (20 sec quick, relaxed)" });
             } else if (type === "workout") {
@@ -545,7 +562,9 @@ export function regeneratePlan(current, settings, { from, to = null, scope = "al
 // ---------- what changed on a day, in a few words ----------
 
 const TYPE_WORDS = { rest: "Rest", easy: "Easy", recovery: "Recovery", long: "Long run", workout: "Workout", race: "Race", cross: "Cross-training", strength: "Strength" };
-const sessionName = run => (run.type === "workout" ? String(run.session).split(":")[0] : "") || TYPE_WORDS[run.type] || run.type;
+const sessionName = run => (run.type === "workout" ? String(run.session).split(":")[0] : /^Run\/walk/.test(run.session || "") ? "Run/walk" : "") || TYPE_WORDS[run.type] || run.type;
+// "Run/walk about 30 min: 6 × 2 min run, 1:30 walk" -> "6 × 2 min run, 1:30 walk"
+const gist = text => String(text || "").split(": ").slice(1).join(": ") || String(text || "");
 const mi = n => `${Math.round(n * 10) / 10}`;
 
 /** "Workout: 5 → 5.5 mi", "Easy → Rest", "strength: Core 20 → Marathon Strength A" for one date. */
@@ -556,7 +575,10 @@ export function compactChange(before, after) {
     if (a.type !== b.type) parts.push(`${a.type === "rest" ? "Rest" : `${mi(a.miles)} mi ${sessionName(a)}`} → ${b.type === "rest" ? "Rest" : `${mi(b.miles)} mi ${sessionName(b)}`}`);
     else if (b.type !== "rest") {
         const bits = [];
-        if (sessionName(a) !== sessionName(b)) bits.push(`${sessionName(a)} → ${sessionName(b)}`);
+        // Written-out sessions (run/walk, easy days): say what the session became.
+        const described = b.type !== "workout" && a.session && b.session && a.session !== b.session;
+        if (described) bits.push(`${gist(a.session)} → ${gist(b.session)}`.slice(0, 140));
+        else if (sessionName(a) !== sessionName(b)) bits.push(`${sessionName(a)} → ${sessionName(b)}`);
         if (a.miles !== b.miles) bits.push(`${mi(a.miles)} → ${mi(b.miles)} mi`);
         if (!bits.length && (stable(a.workout) !== stable(b.workout) || a.session !== b.session)) bits.push("details changed");
         if (bits.length) parts.push(`${sessionName(b)}: ${bits.join(", ")}`);

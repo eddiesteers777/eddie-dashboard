@@ -730,6 +730,7 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 .pw-gen-profile p{ margin:2px 0; color:var(--text-secondary); }
 .pw-gen-profile strong{ color:var(--text); }
 .pw-gen-warn, .pw-gen-warn strong{ color:var(--bad) !important; }
+.pw-gen-note{ grid-column:1 / -1; margin:0; color:var(--text-secondary); font-size:13.5px; line-height:1.45; }
 .pw-gen-error{ margin:0; color:var(--bad); font-weight:700; font-size:14px; }
 .pw-gen-pick{ display:flex; flex-direction:column; gap:4px; width:100%; padding:14px 16px; border:1px solid var(--primary); border-radius:14px; background:rgba(201,173,132,.08); color:var(--text); text-align:left; cursor:pointer; }
 .pw-gen-pick strong{ display:flex; align-items:center; gap:8px; color:var(--primary); font-size:15px; }
@@ -748,6 +749,7 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 @media (max-width:600px){
     .pw-gen-grid{ grid-template-columns:1fr 1fr; }
     .pw-gen-grid .pw-label{ font-size:13px; }
+    .pw-gen-grid .pw-gen-wide{ grid-column:1 / -1; }
 }
 
 /* ---- What the client sees (js/planWindow.js): this week and next ---- */

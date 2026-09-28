@@ -142,6 +142,7 @@
     "js/readinessData.js",
     "js/registerSW.js",
     "js/role.js",
+    "js/runWalk.js",
     "js/runWorkout.js",
     "js/runningCalendar.js",
     "js/runningLog.js",
