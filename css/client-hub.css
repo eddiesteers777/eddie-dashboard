@@ -50,6 +50,10 @@
     line-height:1.05;
 }
 .hub-services{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px 10px;
     margin-top:4px;
     color:var(--primary);
     font-size:12.5px;
@@ -57,6 +61,11 @@
     letter-spacing:.08em;
     text-transform:uppercase;
 }
+.hub-services-none{ display:inline-flex; align-items:center; gap:6px; color:var(--bad); text-transform:none; letter-spacing:0; font-size:13.5px; }
+.hub-services-edit{ display:inline-flex; align-items:center; gap:5px; min-height:32px; padding:0 12px; border:1px solid var(--border); border-radius:var(--radius-pill); background:transparent; color:var(--text-secondary); font-size:12.5px; font-weight:700; letter-spacing:0; text-transform:none; cursor:pointer; }
+.hub-services-edit:hover{ color:var(--text); border-color:var(--primary); }
+.hub-services-edit svg{ width:14px; height:14px; }
+.hub-services-checks{ display:grid; gap:10px; margin:4px 0 6px; }
 .hub-since{ margin-top:2px; color:var(--muted); font-size:13px; }
 .hub-email{ display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
 

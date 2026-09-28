@@ -328,6 +328,8 @@ async function refreshPending() {
 
         row.querySelector('[data-action="approve"]').addEventListener("click", async () => {
             const services = [...row.querySelectorAll(".clients-service-check input:checked")].map(el => el.value);
+            // Their menu follows these, so approving with none leaves them with only the basics.
+            if (!services.length && !(await sbConfirm("With no services ticked they'll only see the basics: no Plan, Train or Health pages. You can change it later in their Client Hub.", { title: "Approve with no services?", confirmLabel: "Approve anyway", cancelLabel: "Choose services" }))) return;
             const approveBtn = row.querySelector('[data-action="approve"]');
             approveBtn.disabled = true;
             await approveClient(profile.uid, services);

@@ -123,6 +123,12 @@ export async function approveClient(uid, services) {
     });
 }
 
+// Change what an approved client has (their menu follows it: js/navAccess.js).
+export async function setClientServices(uid, services) {
+    const allowed = new Set(SERVICES.map(s => s.value));
+    await updateDoc(profileDoc(uid), { services: [...new Set(services || [])].filter(s => allowed.has(s)) });
+}
+
 export async function denyProfile(uid) {
     await updateDoc(profileDoc(uid), { status: "archived" });
 }

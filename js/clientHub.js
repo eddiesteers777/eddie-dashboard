@@ -152,7 +152,9 @@ function renderHeader() {
     $("hubAvatar").textContent = name.slice(0, 1).toUpperCase();
     $("hubName").textContent = name;
     const services = serviceLabels(profile?.services || []);
-    $("hubServices").textContent = services.length ? services.join(" · ") : "No services assigned yet";
+    $("hubServices").innerHTML = services.length
+        ? `<span>${esc(services.join(" · "))}</span> <button type="button" class="hub-services-edit" data-act="services">${icon("edit")} Edit</button>`
+        : `<span class="hub-services-none">${icon("alertTriangle")} No services yet — ${esc(firstName())} only sees the basics</span> <button type="button" class="hub-services-edit" data-act="services">Choose services</button>`;
     const since = toMillis(profile?.approvedAt) || toMillis(link?.linkedAt);
     const status = profile?.status && profile.status !== "active" ? `${profile.status[0].toUpperCase()}${profile.status.slice(1)} · ` : "Active · ";
     const seen = toMillis(profile?.lastSeenAt);
@@ -895,6 +897,58 @@ function renderAll() {
     renderNotes();
     import("./icons.js").then(m => m.hydrate());
 }
+
+// ---- Services (what they signed up for; their menu follows it) ----
+
+async function editServices() {
+    const { SERVICES, setClientServices } = await import("./userProfile.js");
+    const current = new Set(record.profile?.services || []);
+    const requested = new Set(record.profile?.requestedServices || []);
+    // Nothing assigned yet: start from what they asked for when they applied.
+    const checked = current.size ? current : requested;
+    const d = document.createElement("dialog");
+    d.className = "sb-dialog hub-services-dialog";
+    d.innerHTML = `
+        <form class="sb-dialog-form" novalidate>
+            <h2 class="sb-dialog-title">${esc(firstName())}'s services</h2>
+            <p class="sb-dialog-message">What they're coached for. Their app's menu follows this: running, strength or online coaching opens the training pages (Plan, Train, Health, Habits); soccer opens booking.</p>
+            ${requested.size ? `<p class="sb-dialog-message">They asked for: ${esc(SERVICES.filter(s => requested.has(s.value)).map(s => s.label).join(", "))}.</p>` : ""}
+            <div class="hub-services-checks">
+                ${SERVICES.map(s => `<label class="pw-check"><input type="checkbox" name="services" value="${esc(s.value)}"${checked.has(s.value) ? " checked" : ""}><span>${esc(s.label)}</span></label>`).join("")}
+            </div>
+            <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
+            <div class="sb-dialog-actions">
+                <button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button>
+                <button type="submit" class="sb-btn sb-btn-primary">Save</button>
+            </div>
+        </form>`;
+    document.body.appendChild(d);
+    d.addEventListener("close", () => d.remove());
+    d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+    d.querySelector("form").addEventListener("submit", async ev => {
+        ev.preventDefault();
+        const services = new FormData(ev.target).getAll("services").map(String);
+        const btn = ev.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            await setClientServices(clientUid, services);
+            record.profile = { ...(record.profile || {}), services };
+            d.close();
+            summarize();
+            renderAll();
+            toast(`Saved. ${firstName()}'s menu updates the next time they open Southbound.`);
+        } catch (error) {
+            const err = d.querySelector('[data-el="error"]');
+            err.textContent = friendlyError(error, "save their services");
+            err.hidden = false;
+            btn.disabled = false;
+        }
+    });
+    d.showModal();
+}
+$("hubServices").addEventListener("click", event => {
+    if (event.target.closest('[data-act="services"]')) editServices();
+});
 
 // ---- Load ----
 
