@@ -152,8 +152,8 @@ body.install-body{
     line-height:1.45;
 }
 .install-warning{
-    background:rgba(250,204,21,.08);
-    border:1px solid rgba(250,204,21,.3);
+    background:color-mix(in srgb, var(--yellow) 8%, transparent);
+    border:1px solid color-mix(in srgb, var(--yellow) 30%, transparent);
     color:var(--yellow);
 }
 .install-warning strong{display:block;color:var(--text);font-size:13.5px;margin-bottom:3px;}

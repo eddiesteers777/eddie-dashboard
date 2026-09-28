@@ -18,7 +18,7 @@
     border:1px solid var(--border);
     border-radius:18px;
 }
-.wk-card.is-done{ border-color:rgba(34,197,94,.35); }
+.wk-card.is-done{ border-color:color-mix(in srgb, var(--green) 35%, transparent); }
 .wk-card-top{ display:flex; align-items:flex-start; gap:12px; }
 .wk-icon{
     flex-shrink:0;
@@ -57,7 +57,7 @@
     font:700 14px/1 var(--font-body);
     cursor:pointer;
 }
-.wk-done.is-done{ background:var(--success-bg); border-color:rgba(34,197,94,.45); color:var(--success); }
+.wk-done.is-done{ background:var(--success-bg); border-color:color-mix(in srgb, var(--green) 45%, transparent); color:var(--success); }
 .wk-done.is-compact{
     flex:0 0 auto;
     width:40px;

@@ -760,7 +760,7 @@
     border-radius:8px;
     transition:.15s;
 }
-.food-log-remove:hover{ color:var(--red); background:rgba(239,68,68,.12); }
+.food-log-remove:hover{ color:var(--red); background:color-mix(in srgb, var(--red) 12%, transparent); }
 
 .food-scanner-overlay{
     display:none;
@@ -807,7 +807,7 @@
     font-size:1.1rem;
     transition:.2s;
 }
-.food-scanner-close:hover{ background:rgba(239,68,68,.2); color:#fca5a5; }
+.food-scanner-close:hover{ background:color-mix(in srgb, var(--red) 20%, transparent); color:var(--red); }
 .food-scanner-body{ padding:18px 20px 22px; overflow:auto; }
 #foodScannerReader{
     width:100%;

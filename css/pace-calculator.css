@@ -477,7 +477,7 @@ html{
 
     margin-top:14px;
 
-    color:#fca5a5;
+    color:var(--red);
 
     font-size:.85rem;
 

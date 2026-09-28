@@ -480,11 +480,11 @@
 
 .fuel-btn.danger{
 
-    background:rgba(239,68,68,.12);
+    background:color-mix(in srgb, var(--red) 12%, transparent);
 
     color:var(--red);
 
-    border:1px solid rgba(239,68,68,.35);
+    border:1px solid color-mix(in srgb, var(--red) 35%, transparent);
 
 }
 
@@ -492,7 +492,7 @@
 
     background:var(--red);
 
-    color:white;
+    color:var(--on-primary);
 
     transform:translateY(-2px);
 
@@ -811,7 +811,7 @@
 
     color:var(--yellow);
 
-    border-color:rgba(250,204,21,.3);
+    border-color:color-mix(in srgb, var(--yellow) 30%, transparent);
 
 }
 
@@ -825,9 +825,9 @@
 
 .fuel-tag.sodium{
 
-    color:#C4B5FD;
+    color:var(--purple);
 
-    border-color:rgba(196,181,253,.3);
+    border-color:color-mix(in srgb, var(--purple) 30%, transparent);
 
 }
 
@@ -835,7 +835,7 @@
 
     color:var(--green);
 
-    border-color:rgba(34,197,94,.3);
+    border-color:color-mix(in srgb, var(--green) 30%, transparent);
 
 }
 
@@ -1536,7 +1536,7 @@
 
 .workout-day-row.has-plan{
 
-    border-color:rgba(34,197,94,.35);
+    border-color:color-mix(in srgb, var(--green) 35%, transparent);
 
 }
 
@@ -1826,7 +1826,7 @@
 }
 
 .marathon-calendar-day.has-plan{
-    border-color:rgba(34,197,94,.45);
+    border-color:color-mix(in srgb, var(--green) 45%, transparent);
 }
 
 .marathon-calendar-day .calendar-day-date,
@@ -2245,8 +2245,8 @@
     flex-direction:column;
     gap:6px;
     border-radius:14px;
-    background:rgba(255,176,32,.08);
-    border:1px solid rgba(255,176,32,.25);
+    background:color-mix(in srgb, var(--amber) 8%, transparent);
+    border:1px solid color-mix(in srgb, var(--amber) 25%, transparent);
     color:var(--amber-light);
     font-size:13px;
     line-height:1.5;
@@ -2278,9 +2278,9 @@
     letter-spacing:.06em;
     color:rgba(242,238,228,.7);
 }
-.fs-band-0{background:rgba(6,182,212,.14);}
-.fs-band-1{background:rgba(6,182,212,.24);}
-.fs-band-2{background:rgba(6,182,212,.34);}
+.fs-band-0{background:color-mix(in srgb, var(--cyan) 14%, transparent);}
+.fs-band-1{background:color-mix(in srgb, var(--cyan) 24%, transparent);}
+.fs-band-2{background:color-mix(in srgb, var(--cyan) 34%, transparent);}
 .fs-course-gel{
     position:absolute;
     top:50%;
@@ -2322,7 +2322,7 @@
 }
 .fs-dot-gel{background:var(--yellow);}
 .fs-dot-caffeine{background:var(--orange);}
-.fs-dot-bottle{background:rgba(6,182,212,.6);border-radius:3px;}
+.fs-dot-bottle{background:color-mix(in srgb, var(--cyan) 60%, transparent);border-radius:3px;}
 
 /* ---- Checkpoints ---- */
 .fs-events{
@@ -2384,7 +2384,7 @@
 .fs-event:last-child .fs-event-mark::after{display:none;}
 .fs-event-gel .fs-event-mark::before{background:var(--yellow);border-color:var(--yellow);}
 .fs-event-gel.is-caffeine .fs-event-mark::before{background:var(--orange);border-color:var(--orange);}
-.fs-event-bottle .fs-event-mark::before{background:rgba(6,182,212,.6);border-color:var(--cyan);border-radius:4px;}
+.fs-event-bottle .fs-event-mark::before{background:color-mix(in srgb, var(--cyan) 60%, transparent);border-color:var(--cyan);border-radius:4px;}
 .fs-event-finish .fs-event-mark::before{background:var(--primary);border-color:var(--primary);}
 .fs-event-title{
     font-size:14.5px;
@@ -2403,7 +2403,7 @@
     margin-left:4px;
     padding:2px 7px;
     border-radius:999px;
-    background:rgba(251,146,60,.16);
+    background:color-mix(in srgb, var(--orange) 16%, transparent);
     color:var(--orange);
     font-size:10.5px;
     font-weight:800;
@@ -2420,7 +2420,7 @@
 }
 .fs-bottle{
     border-radius:14px;
-    border:1px solid rgba(6,182,212,.3);
+    border:1px solid color-mix(in srgb, var(--cyan) 30%, transparent);
     padding:14px;
 }
 .fs-bottle-top{
@@ -2512,9 +2512,9 @@
     font-weight:800;
     white-space:nowrap;
 }
-.fs-pill-ok{background:rgba(34,197,94,.14);color:var(--green);}
-.fs-pill-low{background:rgba(255,176,32,.14);color:var(--amber);}
-.fs-pill-high{background:rgba(6,182,212,.14);color:var(--cyan-light);}
+.fs-pill-ok{background:color-mix(in srgb, var(--green) 14%, transparent);color:var(--green);}
+.fs-pill-low{background:color-mix(in srgb, var(--amber) 14%, transparent);color:var(--amber);}
+.fs-pill-high{background:color-mix(in srgb, var(--cyan) 14%, transparent);color:var(--cyan-light);}
 
 @media (max-width:560px){
     .fs-event{grid-template-columns:70px 20px 1fr;gap:8px;}

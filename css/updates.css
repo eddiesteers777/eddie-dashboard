@@ -33,8 +33,8 @@ a.updates-item:hover{ border-color:var(--primary); }
     background:rgba(201,173,132,.14);
     color:var(--primary);
 }
-.kind-feedback .updates-icon{ color:var(--amber); background:rgba(245,158,11,.12); }
-.kind-session .updates-icon{ color:var(--purple); background:rgba(139,92,246,.12); }
+.kind-feedback .updates-icon{ color:var(--amber); background:color-mix(in srgb, var(--amber) 12%, transparent); }
+.kind-session .updates-icon{ color:var(--purple); background:color-mix(in srgb, var(--purple-light) 12%, transparent); }
 
 .updates-body{ display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
 .updates-head{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }

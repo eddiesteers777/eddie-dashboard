@@ -593,11 +593,11 @@ html{
 
 .ct-card-btn.ct-card-btn-danger:hover{
 
-    background:rgba(239,68,68,.15);
+    background:color-mix(in srgb, var(--red) 15%, transparent);
 
-    border-color:rgba(239,68,68,.4);
+    border-color:color-mix(in srgb, var(--red) 40%, transparent);
 
-    color:#fca5a5;
+    color:var(--red);
 
 }
 
@@ -829,7 +829,7 @@ html{
 
     color:var(--green);
 
-    background:rgba(34,197,94,.15);
+    background:color-mix(in srgb, var(--green) 15%, transparent);
 
     border-radius:999px;
 
@@ -975,11 +975,11 @@ html{
 
     appearance:none;
 
-    border:1px solid rgba(239,68,68,.3);
+    border:1px solid color-mix(in srgb, var(--red) 30%, transparent);
 
-    background:rgba(239,68,68,.1);
+    background:color-mix(in srgb, var(--red) 10%, transparent);
 
-    color:#fca5a5;
+    color:var(--red);
 
     border-radius:8px;
 
@@ -997,9 +997,9 @@ html{
 
 .ct-detach-btn:hover{
 
-    background:#ef4444;
+    background:var(--red);
 
-    color:white;
+    color:var(--on-primary);
 
 }
 
@@ -1059,7 +1059,7 @@ html{
 
     margin-top:12px;
 
-    color:#fca5a5;
+    color:var(--red);
 
     font-size:.85rem;
 
@@ -1189,9 +1189,9 @@ html{
 
 .ct-modal-close:hover{
 
-    background:rgba(239,68,68,.2);
+    background:color-mix(in srgb, var(--red) 20%, transparent);
 
-    color:#fca5a5;
+    color:var(--red);
 
 }
 
@@ -1430,11 +1430,11 @@ html{
 
     appearance:none;
 
-    border:1px solid rgba(239,68,68,.3);
+    border:1px solid color-mix(in srgb, var(--red) 30%, transparent);
 
-    background:rgba(239,68,68,.1);
+    background:color-mix(in srgb, var(--red) 10%, transparent);
 
-    color:#fca5a5;
+    color:var(--red);
 
     border-radius:8px;
 
@@ -1452,9 +1452,9 @@ html{
 
 .ct-block-remove:hover{
 
-    background:#ef4444;
+    background:var(--red);
 
-    color:white;
+    color:var(--on-primary);
 
 }
 

@@ -112,33 +112,33 @@ html{
     --good:#8FB39B;
     --bad:#D08466;
 
-    --green:#22C55E;
+    --green:#94B89D;
 
-    --yellow:#FACC15;
+    --yellow:#D6C07C;
 
-    --orange:#FB923C;
+    --orange:#D29470;
 
-    --red:#EF4444;
+    --red:#D27A62;
 
-    --purple:#A78BFA;
+    --purple:#A89FC6;
 
-    --purple-light:#8B5CF6;
+    --purple-light:#9C94BE;
 
-    --pink:#EC4899;
+    --pink:#CC939D;
 
-    --pink-light:#F472B6;
+    --pink-light:#D6A5AD;
 
-    --cyan:#06B6D4;
+    --cyan:#87B5AE;
 
-    --cyan-light:#22D3EE;
+    --cyan-light:#9CC6BF;
 
-    --amber:#FFB020;
+    --amber:#D4AA62;
 
-    --amber-light:#FBBF24;
+    --amber-light:#DDBA7A;
 
-    --teal:#2FB6B0;
+    --teal:#87B5AE;
 
-    --indigo:#6366F1;
+    --indigo:#9C9CC4;
 
     --radius:22px;
 
@@ -159,12 +159,12 @@ html{
     --radius-pill:999px;       /* every main action button */
     --control-height:44px;
     --focus-ring:0 0 0 3px rgba(201,173,132,.45);
-    --danger:#EF4444;
-    --danger-bg:rgba(239,68,68,.12);
-    --success:#22C55E;
-    --success-bg:rgba(34,197,94,.12);
-    --warning:#F59E0B;
-    --warning-bg:rgba(245,158,11,.12);
+    --danger:#D9705A;
+    --danger-bg:color-mix(in srgb, var(--danger) 14%, transparent);
+    --success:var(--green);
+    --success-bg:color-mix(in srgb, var(--green) 14%, transparent);
+    --warning:var(--amber);
+    --warning-bg:color-mix(in srgb, var(--amber) 14%, transparent);
 
     /* Native pickers, scrollbars and dropdown menus render dark. */
     color-scheme:dark;
@@ -673,12 +673,12 @@ section{
 }
 
 .sync-status-btn.sync-error{
-    border-color:#EF4444;
-    color:#EF4444;
+    border-color:var(--red);
+    color:var(--red);
 }
 
 .sync-status-btn.sync-error:hover{
-    background:rgba(239,68,68,.12);
+    background:color-mix(in srgb, var(--red) 12%, transparent);
 }
 
 #user-name{
@@ -1775,8 +1775,8 @@ section{
 
     background:linear-gradient(
         90deg,
-        #C9AD84,
-        #7DD3FC
+        var(--primary),
+        var(--primary-light)
     );
 
 }
@@ -1785,8 +1785,8 @@ section{
 
     background:linear-gradient(
         90deg,
-        #22C55E,
-        #4ADE80
+        var(--green),
+        var(--green)
     );
 
 }
@@ -1795,8 +1795,8 @@ section{
 
     background:linear-gradient(
         90deg,
-        #F59E0B,
-        #FBBF24
+        var(--amber),
+        var(--amber-light)
     );
 
 }
@@ -1805,8 +1805,8 @@ section{
 
     background:linear-gradient(
         90deg,
-        #EF4444,
-        #FB7185
+        var(--red),
+        var(--pink)
     );
 
 }
@@ -1910,11 +1910,11 @@ section{
 
     border-radius:999px;
 
-    background:rgba(34,197,94,.14);
+    background:color-mix(in srgb, var(--green) 14%, transparent);
 
-    border:1px solid rgba(34,197,94,.30);
+    border:1px solid color-mix(in srgb, var(--green) 30%, transparent);
 
-    color:#4ADE80;
+    color:var(--green);
 
     font-weight:700;
 
@@ -1932,9 +1932,9 @@ section{
 
     border-radius:50%;
 
-    background:#22C55E;
+    background:var(--green);
 
-    box-shadow:0 0 12px #22C55E;
+    box-shadow:0 0 12px var(--green);
 
 }
 .coach-grid{
@@ -2246,15 +2246,12 @@ section{
 
     font-size:1.75rem;
 
-    color:var(--primary);
+    /* Accent tile (ACCENT TILES below): its card's earthy tone, gold on hover. */
+    color:var(--accent, var(--primary));
 
-    background:linear-gradient(
-        135deg,
-        rgba(201,173,132,.18),
-        rgba(201,173,132,.08)
-    );
+    background:color-mix(in srgb, var(--accent, var(--primary)) 16%, transparent);
 
-    border:1px solid rgba(201,173,132,.18);
+    border:1px solid color-mix(in srgb, var(--accent, var(--primary)) 32%, transparent);
 
     transition:.35s;
 
@@ -2263,6 +2260,12 @@ section{
 .card:hover .card-icon{
 
     transform:scale(1.08) rotate(-6deg);
+
+    color:var(--primary-light);
+
+    background:color-mix(in srgb, var(--primary) 22%, transparent);
+
+    border-color:var(--primary);
 
     box-shadow:0 12px 30px rgba(201,173,132,.22);
 
@@ -2296,40 +2299,20 @@ section{
 
 }
 
-.card:nth-child(1) .card-icon{
-
-    background:linear-gradient(135deg,#A68A62,#B89A70);
-
-}
-
-.card:nth-child(2) .card-icon{
-
-    background:linear-gradient(135deg,#22C55E,#4ADE80);
-
-}
-
-.card:nth-child(3) .card-icon{
-
-    background:linear-gradient(135deg,#F59E0B,#FBBF24);
-
-}
-.card:nth-child(4) .card-icon{
-
-    background:linear-gradient(135deg,#8B5CF6,#A855F7);
-
-}
-
-.card:nth-child(5) .card-icon{
-
-    background:linear-gradient(135deg,#EC4899,#F472B6);
-
-}
-
-.card:nth-child(6) .card-icon{
-
-    background:linear-gradient(135deg,#06B6D4,#22D3EE);
-
-}
+/* ACCENT TILES: one earthy tone per area, the same everywhere (Today's cards,
+   More, the menus): running gold, strength clay, cross-training slate teal,
+   nutrition sage, fueling ochre, habits dusk, health rose. Tiles are tinted
+   with their tone and turn gold on hover. */
+.card[href*="strength"] .card-icon{ --accent:var(--orange); }
+.card[href*="cross-training"] .card-icon{ --accent:var(--cyan); }
+.card[href*="nutrition"] .card-icon{ --accent:var(--green); }
+.card[href*="fueling"] .card-icon{ --accent:var(--amber); }
+.card[href*="habits"] .card-icon{ --accent:var(--purple); }
+.card[href*="planner"] .card-icon{ --accent:var(--cyan-light); }
+.card[href*="gear"] .card-icon{ --accent:var(--pink); }
+.card[href*="weekly-review"] .card-icon{ --accent:var(--purple-light); }
+.card[href*="analytics"] .card-icon{ --accent:var(--amber); }
+.card[href*="settings"] .card-icon{ --accent:var(--stone); }
 
 @media (max-width:700px){
 
@@ -2384,8 +2367,8 @@ section{
 
     background:linear-gradient(
         90deg,
-        #C9AD84,
-        #64C7FF
+        var(--primary),
+        var(--primary-light)
     );
 
 }
@@ -2568,8 +2551,8 @@ section{
 
     background:linear-gradient(
         90deg,
-        #22C55E,
-        #4ADE80
+        var(--green),
+        var(--green)
     );
 
 }
@@ -2598,8 +2581,8 @@ section{
 
     background:linear-gradient(
         90deg,
-        #22C55E,
-        #4ADE80
+        var(--green),
+        var(--green)
     );
 
     transition:width .6s ease;
@@ -2913,7 +2896,7 @@ section{
 .sb-btn-secondary:hover:not(:disabled){ border-color:var(--primary); }
 .sb-btn-tertiary{ background:transparent; color:var(--text-secondary); padding:0 12px; }
 .sb-btn-tertiary:hover:not(:disabled){ color:var(--primary); }
-.sb-btn-danger{ background:var(--danger); color:#fff; border-color:var(--danger); }
+.sb-btn-danger{ background:var(--danger); color:var(--on-primary); border-color:var(--danger); }
 .sb-btn-danger:hover:not(:disabled){ filter:brightness(1.08); }
 .sb-btn-icon{ width:var(--control-height); padding:0; border-radius:var(--radius-sm); background:var(--surface-light); color:var(--text); border-color:var(--border); }
 
@@ -2979,7 +2962,7 @@ body.has-bottomnav .sb-toast-host{ bottom:96px; }
 }
 .sb-toast-icon{ flex-shrink:0; display:flex; margin-top:1px; color:var(--primary); }
 .sb-toast.is-success .sb-toast-icon{ color:var(--success); }
-.sb-toast.is-error{ border-color:rgba(239,68,68,.45); }
+.sb-toast.is-error{ border-color:color-mix(in srgb, var(--red) 45%, transparent); }
 .sb-toast.is-error .sb-toast-icon{ color:var(--danger); }
 
 .sb-dialog{

@@ -196,3 +196,24 @@ test("photo size copies match their photos (run `python3 scripts/build-images.py
         for (const w of widths) assert.ok(existsSync(join(root, "images", name.replace(/\.jpe?g$/i, `-${w}.webp`))), `missing ${name} ${w}w`);
     }
 });
+
+// The neon palette from before the Southbound rebrand (Tailwind greens,
+// reds, purples...) clashed with forest + gold. Every color now comes
+// from the earthy tokens in css/style.css ("--green" is a sage, "--red" a
+// brick...), so a typed-in neon color is a regression.
+test("no neon colors from before the rebrand (use the tokens in css/style.css)", () => {
+    const NEON = ["22C55E", "16A34A", "4ADE80", "10B981", "34D399", "FACC15", "EAB308", "FB923C", "F97316", "EF4444", "DC2626", "F87171",
+        "A78BFA", "7C3AED", "8B5CF6", "A855F7", "EC4899", "DB2777", "F472B6", "06B6D4", "0EA5E9", "3B82F6", "2563EB", "60A5FA", "2D7FFF",
+        "22D3EE", "14B8A6", "2FB6B0", "FFB020", "F59E0B", "FBBF24", "6366F1", "818CF8",
+        "FCA5A5", "FECACA", "86EFAC", "DCFCE7", "C4B5FD", "7DD3FC", "FB7185", "64C7FF", "38BDF8", "2FD4C0", "6C8CFF", "F0A742"];
+    const rgb = h => [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)).join(",\\s*");
+    const hexRe = new RegExp(`#(${NEON.join("|")})\\b`, "i");
+    const rgbRe = new RegExp(`rgba?\\(\\s*(${NEON.map(rgb).join("|")})\\s*[,)]`);
+    const offenders = [];
+    for (const file of [...manifest.styles, ...manifest.scripts, ...manifest.pages, ...manifest.partials]) {
+        read(file).split("\n").forEach((line, i) => {
+            if (hexRe.test(line) || rgbRe.test(line)) offenders.push(`${file}:${i + 1}: ${line.trim().slice(0, 100)}`);
+        });
+    }
+    assert.deepEqual(offenders, [], `Use a color token (var(--green) etc.) instead:\n${offenders.join("\n")}`);
+});

@@ -1435,9 +1435,9 @@ function render(){
       let color='var(--surface-light)';
 
       if(pct>0 && pct<50){
-        color='rgba(255,176,32,.35)';
+        color='color-mix(in srgb, var(--amber) 35%, transparent)';
       }else if(pct>=50 && pct<100){
-        color='rgba(47,182,176,.55)';
+        color='color-mix(in srgb, var(--teal) 55%, transparent)';
       }else if(pct===100){
         color='var(--primary)';
       }
@@ -1466,8 +1466,8 @@ function render(){
       'heat-legend',
       `
       <span class="sw" style="background:var(--surface-light)"></span> none
-      <span class="sw" style="background:rgba(255,176,32,.35)"></span> partial
-      <span class="sw" style="background:rgba(47,182,176,.55)"></span> most
+      <span class="sw" style="background:color-mix(in srgb, var(--amber) 35%, transparent)"></span> partial
+      <span class="sw" style="background:color-mix(in srgb, var(--teal) 55%, transparent)"></span> most
       <span class="sw" style="background:var(--primary)"></span> perfect
       <span class="sw" style="background:var(--surface-light);opacity:.35"></span> upcoming
       `

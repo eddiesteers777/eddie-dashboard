@@ -32,7 +32,7 @@ const macros = {
 
         step:10,
 
-        color:"#22C55E"
+        color:"var(--green)"
 
     },
 
@@ -46,7 +46,7 @@ const macros = {
 
         step:25,
 
-        color:"#FACC15"
+        color:"var(--yellow)"
 
     },
 
@@ -60,7 +60,7 @@ const macros = {
 
         step:5,
 
-        color:"#F97316"
+        color:"var(--orange)"
 
     },
 
@@ -74,7 +74,7 @@ const macros = {
 
         step:8,
 
-        color:"#38BDF8"
+        color:"var(--cyan)"
 
     },
 
@@ -88,7 +88,7 @@ const macros = {
 
         step:250,
 
-        color:"#A855F7"
+        color:"var(--purple)"
 
     }
 

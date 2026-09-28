@@ -333,11 +333,11 @@ function setConnectionStatus(text, connected) {
 
     if (dot) {
         dot.style.background =
-            connected ? "#22C55E" : "#94A3B8";
+            connected ? "var(--green)" : "#94A3B8";
 
         dot.style.boxShadow =
             connected
-                ? "0 0 10px rgba(34,197,94,.55)"
+                ? "0 0 10px color-mix(in srgb, var(--green) 55%, transparent)"
                 : "none";
     }
 

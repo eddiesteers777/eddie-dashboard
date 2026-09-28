@@ -33,7 +33,7 @@
     margin-bottom:6px;
 }
 .coach-stat-card.coach-stat-neutral .coach-stat-number{color:var(--text);}
-.coach-stat-card.coach-stat-attention .coach-stat-number{color:#EF4444;}
+.coach-stat-card.coach-stat-attention .coach-stat-number{color:var(--primary);}
 .coach-stat-label{
     color:var(--text-secondary);
     font-size:13px;
@@ -122,8 +122,8 @@
     margin-top:1px;
     padding:3px 9px;
     border-radius:999px;
-    background:rgba(245,158,11,.15);
-    color:#F59E0B;
+    background:color-mix(in srgb, var(--amber) 15%, transparent);
+    color:var(--amber);
     font-size:11px;
     font-weight:800;
     text-transform:uppercase;
@@ -254,7 +254,7 @@
 .coach-queue-item > .ui-icon:last-child{ margin-left:auto; flex-shrink:0; color:var(--muted); margin-top:2px; }
 .coach-queue-icon{ display:flex; flex-shrink:0; margin-top:1px; color:var(--primary); }
 .coach-queue-text{ flex:1; min-width:0; }
-.coach-queue-item.is-pain{ border-color:rgba(245,158,11,.6); background:var(--warning-bg); }
+.coach-queue-item.is-pain{ border-color:color-mix(in srgb, var(--amber) 60%, transparent); background:var(--warning-bg); }
 .coach-queue-item.is-pain .coach-queue-icon{ color:var(--warning); }
 .coach-queue-item.is-change{ border-color:rgba(201,173,132,.5); }
 .coach-queue [hidden]{ display:none !important; }

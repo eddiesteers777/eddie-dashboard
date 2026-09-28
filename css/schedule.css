@@ -154,7 +154,7 @@
     display:flex;
     padding:2px;
 }
-.sched-blackout-chip button:hover{color:#EF4444;}
+.sched-blackout-chip button:hover{color:var(--red);}
 
 /* ---- Request rows (extends .clients-row) ---- */
 
@@ -199,8 +199,8 @@
     letter-spacing:.04em;
     width:max-content;
 }
-.sched-request-status.requested{background:rgba(250,204,21,.1);color:var(--yellow);}
-.sched-request-status.approved{background:rgba(34,197,94,.1);color:var(--green);}
+.sched-request-status.requested{background:color-mix(in srgb, var(--yellow) 10%, transparent);color:var(--yellow);}
+.sched-request-status.approved{background:color-mix(in srgb, var(--green) 10%, transparent);color:var(--green);}
 .sched-request-status.denied,
 .sched-request-status.cancelled{background:rgba(142,154,137,.1);color:var(--muted);}
 .sched-request-note{font-size:12px;color:var(--text-secondary);}

@@ -155,7 +155,7 @@
 .strength-day-tab-remove:hover{
 
     opacity:1;
-    background:rgba(239,68,68,.35);
+    background:color-mix(in srgb, var(--red) 35%, transparent);
 
 }
 
@@ -348,7 +348,7 @@
 .strength-exercise-remove:hover{
 
     color:var(--red);
-    background:rgba(239,68,68,.12);
+    background:color-mix(in srgb, var(--red) 12%, transparent);
 
 }
 
@@ -604,8 +604,8 @@
 
 .strength-search-close:hover{
 
-    background:rgba(239,68,68,.2);
-    color:#fca5a5;
+    background:color-mix(in srgb, var(--red) 20%, transparent);
+    color:var(--red);
 
 }
 
@@ -1056,12 +1056,12 @@
 }
 
 .strength-group-badge-circuit{
-    background:rgba(34,197,94,.10);
+    background:color-mix(in srgb, var(--green) 10%, transparent);
     color:var(--green);
 }
 
 .strength-group-badge-warmup{
-    background:rgba(234,179,8,.14);
+    background:color-mix(in srgb, var(--yellow) 14%, transparent);
     color:var(--yellow);
 }
 
@@ -2312,7 +2312,7 @@
     z-index:1400;
     background:var(--bg);
     overflow:hidden;
-    --workout-accent: #ec4899;
+    --workout-accent: var(--pink);
 }
 
 .strength-workout-overlay.open{
@@ -2355,7 +2355,7 @@ html.strength-workout-open body{
         linear-gradient(
             135deg,
             rgba(201,173,132,.16),
-            rgba(236,72,153,.14)
+            color-mix(in srgb, var(--pink) 14%, transparent)
         ),
         var(--surface);
 }
@@ -2431,13 +2431,13 @@ html.strength-workout-open body{
     font-weight:800;
     cursor:pointer;
     font-family:inherit;
-    box-shadow:0 6px 18px rgba(34,197,94,.28);
+    box-shadow:0 6px 18px color-mix(in srgb, var(--green) 28%, transparent);
     transition:transform .15s ease, box-shadow .15s ease;
 }
 
 .strength-workout-finish-btn:hover{
     transform:translateY(-1px);
-    box-shadow:0 8px 22px rgba(34,197,94,.36);
+    box-shadow:0 8px 22px color-mix(in srgb, var(--green) 36%, transparent);
 }
 
 .strength-workout-close-btn{
@@ -2455,8 +2455,8 @@ html.strength-workout-open body{
 }
 
 .strength-workout-close-btn:hover{
-    background:rgba(239,68,68,.2);
-    color:#fca5a5;
+    background:color-mix(in srgb, var(--red) 20%, transparent);
+    color:var(--red);
 }
 
 .strength-workout-body{
@@ -2793,7 +2793,7 @@ html.strength-workout-open body{
 }
 
 .strength-workout-set-row.done{
-    background:rgba(34,197,94,.08);
+    background:color-mix(in srgb, var(--green) 8%, transparent);
 }
 
 .strength-workout-set-index{
@@ -2959,8 +2959,8 @@ html.strength-workout-open body{
 }
 
 .strength-workout-remove-set:hover{
-    background:rgba(239,68,68,.12);
-    border-color:rgba(239,68,68,.35);
+    background:color-mix(in srgb, var(--red) 12%, transparent);
+    border-color:color-mix(in srgb, var(--red) 35%, transparent);
     color:var(--red);
 }
 

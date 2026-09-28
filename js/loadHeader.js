@@ -50,11 +50,11 @@ const BOTTOM_TABS = [
     { key: "today", label: "Today", icon: "home", href: "index.html", color: "var(--primary)" },
     // A client's week and plan (js/myPlan.js). The coach's own tools stay as they were.
     { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client-training" },
-    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--orange)", requires: "training" },
-    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--pink)", requires: "training" },
-    { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--purple)" },
-    { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--red)", requires: "coach" },
-    { key: "more", label: "More", icon: "grid", href: "more.html", color: "var(--muted)" }
+    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--primary)", requires: "training" },
+    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--primary)", requires: "training" },
+    { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--primary)" },
+    { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--primary)", requires: "coach" },
+    { key: "more", label: "More", icon: "grid", href: "more.html", color: "var(--primary)" }
 ];
 
 const PAGE_TAB = {
@@ -121,7 +121,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Cross-Training", href: "cross-training.html", icon: "bike", color: "var(--cyan)" },
     { label: "Habits", href: "habits.html", icon: "checkCircle", color: "var(--purple)" },
     { label: "Nutrition", href: "nutrition.html", icon: "apple", color: "var(--green)" },
-    { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--red)" },
+    { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)" },
     // The coach's personal tools (built around his own race block) --
     // hidden from clients, like their More rows and menu links.
     { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)", requires: "coach" },
@@ -133,7 +133,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)" },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)" },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
-    { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, #0EA5E9)", requires: "coach" },
+    { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
     { label: "Schedule", href: "schedule.html", icon: "calendar", color: "var(--purple)" },
     { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },

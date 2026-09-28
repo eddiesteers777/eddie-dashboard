@@ -54,7 +54,7 @@ function setConnectionStatus(text, connected) {
 
     if (dot) {
         dot.style.background = connected ? "var(--green)" : "";
-        dot.style.boxShadow = connected ? "0 0 0 4px rgba(34,197,94,.15)" : "";
+        dot.style.boxShadow = connected ? "0 0 0 4px color-mix(in srgb, var(--green) 15%, transparent)" : "";
     }
 
     if (button) {

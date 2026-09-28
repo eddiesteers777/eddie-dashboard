@@ -182,8 +182,8 @@
 }
 
 .strength-library-badge.mine{
-    border-color:rgba(34,197,94,.25);
-    color:#86efac;
+    border-color:color-mix(in srgb, var(--green) 25%, transparent);
+    color:var(--green);
 }
 
 .strength-library-favorite{
@@ -198,7 +198,7 @@
 }
 
 .strength-library-favorite.active{
-    border-color:rgba(234,179,8,.28);
+    border-color:color-mix(in srgb, var(--yellow) 28%, transparent);
     color:#fde68a;
 }
 
@@ -301,10 +301,10 @@
 
 .strength-library-delete{
     padding:7px 8px;
-    border:1px solid rgba(239,68,68,.2);
+    border:1px solid color-mix(in srgb, var(--red) 20%, transparent);
     border-radius:8px;
     background:transparent;
-    color:#fca5a5;
+    color:var(--red);
     cursor:pointer;
     font:inherit;
     font-size:9px;

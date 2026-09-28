@@ -491,7 +491,7 @@
 .habits-del-btn:hover{
 
     color:var(--red);
-    background:rgba(239,68,68,.12);
+    background:color-mix(in srgb, var(--red) 12%, transparent);
 
 }
 

@@ -113,7 +113,7 @@ export const PHASES = {
 
         label:"Aerobic & Threshold Build",
 
-        color:"#2FD4C0"
+        color:"#87B5AE"
 
     },
 
@@ -121,7 +121,7 @@ export const PHASES = {
 
         label:"Marathon-Specific Development",
 
-        color:"#6C8CFF"
+        color:"#A89FC6"
 
     },
 
@@ -129,7 +129,7 @@ export const PHASES = {
 
         label:"Peak & Race Simulation",
 
-        color:"#F0A742"
+        color:"#D4AA62"
 
     },
 

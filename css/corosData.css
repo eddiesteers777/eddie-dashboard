@@ -46,12 +46,12 @@
 }
 
 .coros-data-status[data-status="success"]{
-    border-color:rgba(34,197,94,.28);
+    border-color:color-mix(in srgb, var(--green) 28%, transparent);
 }
 
 .coros-data-status[data-status="error"]{
-    border-color:rgba(239,68,68,.35);
-    color:#fecaca;
+    border-color:color-mix(in srgb, var(--red) 35%, transparent);
+    color:var(--red);
 }
 
 .coros-data-grid{

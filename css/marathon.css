@@ -683,13 +683,13 @@ html{
 
     background:
 
-        rgba(34,197,94,.12);
+        color-mix(in srgb, var(--green) 12%, transparent);
 
     border:
 
-        1px solid rgba(34,197,94,.35);
+        1px solid color-mix(in srgb, var(--green) 35%, transparent);
 
-    color:#dcfce7;
+    color:var(--green);
 
 }
 /* ==========================================
@@ -768,7 +768,7 @@ html{
 
         linear-gradient(
             90deg,
-            rgba(245,158,11,.12),
+            color-mix(in srgb, var(--amber) 12%, transparent),
             rgba(255,255,255,.02)
         );
 
@@ -1150,19 +1150,19 @@ html{
 
 .mp-reset-btn{
 
-    background:rgba(239,68,68,.12);
+    background:color-mix(in srgb, var(--red) 12%, transparent);
 
-    color:#fca5a5;
+    color:var(--red);
 
-    border:1px solid rgba(239,68,68,.30);
+    border:1px solid color-mix(in srgb, var(--red) 30%, transparent);
 
 }
 
 .mp-reset-btn:hover{
 
-    background:#ef4444;
+    background:var(--red);
 
-    color:white;
+    color:var(--on-primary);
 
 }
 
@@ -1504,7 +1504,7 @@ html{
 
 .mp-day-expand-toggle.mp-has-notes{
 
-    border-color:rgba(34,197,94,.4);
+    border-color:color-mix(in srgb, var(--green) 40%, transparent);
 
     color:var(--green);
 
@@ -1657,11 +1657,11 @@ html{
 
     appearance:none;
 
-    border:1px solid rgba(239,68,68,.3);
+    border:1px solid color-mix(in srgb, var(--red) 30%, transparent);
 
-    background:rgba(239,68,68,.1);
+    background:color-mix(in srgb, var(--red) 10%, transparent);
 
-    color:#fca5a5;
+    color:var(--red);
 
     border-radius:6px;
 
@@ -1683,9 +1683,9 @@ html{
 
 .mp-extra-remove:hover{
 
-    background:#ef4444;
+    background:var(--red);
 
-    color:white;
+    color:var(--on-primary);
 
 }
 
@@ -1838,7 +1838,7 @@ html{
 }
 
 .mp-coros-preview.has-warning{
-    border-color:rgba(240,167,66,.55);
+    border-color:color-mix(in srgb, var(--amber) 55%, transparent);
 }
 
 .mp-coros-preview-icon svg{
@@ -1882,12 +1882,12 @@ html{
 }
 
 .mp-coros-status.is-changed{
-    color:#F0A742;
+    color:var(--amber);
 }
 
 .mp-coros-warn{
     margin-top:4px;
-    color:#F0A742;
+    color:var(--amber);
     font-size:.8rem;
 }
 

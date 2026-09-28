@@ -54,7 +54,7 @@
 
 /* ---- Result: planned vs actual ---- */
 
-.wo-result{ border-color:rgba(34,197,94,.35); }
+.wo-result{ border-color:color-mix(in srgb, var(--green) 35%, transparent); }
 .wo-result.is-skipped{ border-color:var(--border); }
 .wo-result h2 .ui-icon{ color:var(--success); }
 .wo-result.is-skipped h2 .ui-icon{ color:var(--muted); }

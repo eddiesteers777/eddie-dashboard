@@ -179,7 +179,7 @@
 
 .eos-today-complete-btn.done{
 
-    background:rgba(34,197,94,.12);
+    background:color-mix(in srgb, var(--green) 12%, transparent);
     border-color:var(--green);
     color:var(--green);
 
@@ -187,7 +187,7 @@
 
 .eos-today-complete-btn.done:hover{
 
-    background:rgba(34,197,94,.2);
+    background:color-mix(in srgb, var(--green) 20%, transparent);
 
 }
 

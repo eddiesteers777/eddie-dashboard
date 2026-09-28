@@ -59,9 +59,9 @@
       <span>Weekly Mileage - click a week to open it</span>
       <span class="mp-legend">
         <span><i style="background:#4c8b6e"></i>Rebuild</span>
-        <span><i style="background:#2fd4c0"></i>Build</span>
-        <span><i style="background:#6c8cff"></i>MP Development</span>
-        <span><i style="background:#f0a742"></i>Peak</span>
+        <span><i style="background:#87b5ae"></i>Build</span>
+        <span><i style="background:#a89fc6"></i>MP Development</span>
+        <span><i style="background:#d4aa62"></i>Peak</span>
         <span><i style="background:#c2694a"></i>Taper</span>
       </span>
     </div>
@@ -101,9 +101,9 @@
 
   const PHASES = {
     rebuild:  { label: "Rebuild & Consistency",           color: "#4c8b6e" },
-    build:    { label: "Aerobic & Threshold Build",        color: "#2fd4c0" },
-    mp:       { label: "Marathon-Specific Development",    color: "#6c8cff" },
-    peak:     { label: "Peak & Race Simulation",           color: "#f0a742" },
+    build:    { label: "Aerobic & Threshold Build",        color: "#87b5ae" },
+    mp:       { label: "Marathon-Specific Development",    color: "#a89fc6" },
+    peak:     { label: "Peak & Race Simulation",           color: "#d4aa62" },
     taper:    { label: "Taper & Race",                     color: "#c2694a" },
   };
 
@@ -631,7 +631,7 @@
         <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="3" fill="${color}" opacity="${isSel ? 1 : 0.85}" class="${isSel ? "mp-bar-selected" : ""}"></rect>
         <text x="${x + barW / 2}" y="${h - padB + 13}" text-anchor="middle" font-size="9.5" fill="#8b96a3">${n}</text>
         ${isRace ? `<text x="${x + barW / 2}" y="${y - 5}" text-anchor="middle" font-size="11">&#127937;</text>` : ""}
-        ${inWeek ? `<text x="${x + barW / 2}" y="${h - 4}" text-anchor="middle" font-size="8" fill="#f0a742" font-weight="700">TODAY</text>` : ""}
+        ${inWeek ? `<text x="${x + barW / 2}" y="${h - 4}" text-anchor="middle" font-size="8" fill="#d4aa62" font-weight="700">TODAY</text>` : ""}
       </g>`;
     });
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);

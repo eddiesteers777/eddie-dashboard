@@ -352,7 +352,7 @@
 
 .gear-card.over-threshold{
 
-    border-color:rgba(239,68,68,.5);
+    border-color:color-mix(in srgb, var(--red) 50%, transparent);
 
 }
 
@@ -454,8 +454,8 @@
 
 .gear-modal-close:hover{
 
-    background:rgba(239,68,68,.2);
-    color:#fca5a5;
+    background:color-mix(in srgb, var(--red) 20%, transparent);
+    color:var(--red);
 
 }
 

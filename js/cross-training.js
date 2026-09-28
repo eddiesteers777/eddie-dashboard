@@ -34,14 +34,14 @@ var LIBRARY_KEY = "cross-training-library";
 
 var CATEGORIES = {
 
-    cycling:    { label:"Cycling",          icon:"bike",      color:"#3b82f6" },
-    swimming:   { label:"Swimming",         icon:"swim",      color:"#22d3ee" },
-    elliptical: { label:"Elliptical",       icon:"refresh",   color:"#a855f7" },
-    rowing:     { label:"Rowing",           icon:"row",       color:"#f59e0b" },
-    yoga:       { label:"Yoga",             icon:"stretch",   color:"#22c55e" },
-    circuit:    { label:"Strength Circuit", icon:"dumbbell",  color:"#ef4444" },
-    mobility:   { label:"Mobility",         icon:"activity",  color:"#60a5fa" },
-    other:      { label:"Other",            icon:"bolt",      color:"#9aa8c7" }
+    cycling:    { label:"Cycling",          icon:"bike",      color:"var(--cyan)" },
+    swimming:   { label:"Swimming",         icon:"swim",      color:"var(--cyan-light)" },
+    elliptical: { label:"Elliptical",       icon:"refresh",   color:"var(--purple)" },
+    rowing:     { label:"Rowing",           icon:"row",       color:"var(--amber)" },
+    yoga:       { label:"Yoga",             icon:"stretch",   color:"var(--green)" },
+    circuit:    { label:"Strength Circuit", icon:"dumbbell",  color:"var(--red)" },
+    mobility:   { label:"Mobility",         icon:"activity",  color:"var(--cyan)" },
+    other:      { label:"Other",            icon:"bolt",      color:"var(--sage)" }
 
 };
 

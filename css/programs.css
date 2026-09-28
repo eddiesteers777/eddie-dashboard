@@ -163,8 +163,8 @@
     background:rgba(255,255,255,.06);
     color:var(--muted);
 }
-.program-status.active{background:rgba(34,197,94,.1);color:var(--green);}
-.program-status.paused{background:rgba(250,204,21,.08);color:var(--yellow);}
+.program-status.active{background:color-mix(in srgb, var(--green) 10%, transparent);color:var(--green);}
+.program-status.paused{background:color-mix(in srgb, var(--yellow) 8%, transparent);color:var(--yellow);}
 .program-status.archived{background:rgba(142,154,137,.08);color:var(--muted);}
 .program-status.draft{background:rgba(201,173,132,.08);color:var(--primary);}
 .program-card h3{font-size:15px;margin:0 0 5px;}
@@ -186,7 +186,7 @@
 }
 .program-card-link:hover{background:rgba(201,173,132,.1);text-decoration:none;}
 .program-card-link.program-card-danger{color:var(--red);}
-.program-card-link.program-card-danger:hover{background:rgba(239,68,68,.1);}
+.program-card-link.program-card-danger:hover{background:color-mix(in srgb, var(--red) 10%, transparent);}
 .program-coach-note{
     margin-top:12px;
     padding:10px 12px;

@@ -57,7 +57,7 @@
 }
 .rd-flag{
     margin:6px 0 0;
-    color:#F0A742;
+    color:var(--amber);
     font-size:.85rem;
 }
 .rd-flag svg, .rd-connect svg, .rd-done svg{ width:15px; height:15px; vertical-align:-3px; }
