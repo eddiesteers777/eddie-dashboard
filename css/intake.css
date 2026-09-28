@@ -1,0 +1,204 @@
+/* ==========================================
+   Southbound — the guided profile (js/intakeGuide.js on profile.html)
+   One question per card, tap-first answers, a review at the end.
+========================================== */
+
+.ig [hidden], .ig-back-link[hidden]{ display:none !important; }
+
+.ig{ max-width:640px; margin:0 auto; }
+
+.ig-card{
+    padding:24px 24px 16px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius, 18px);
+}
+
+/* ---------- progress ---------- */
+.ig-progress{ margin-bottom:18px; }
+.ig-progress-text{
+    margin-bottom:8px;
+    color:var(--primary);
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.ig-bar{
+    height:6px;
+    border-radius:99px;
+    background:rgba(243,239,230,.08);
+    overflow:hidden;
+}
+.ig-bar span{
+    display:block;
+    height:100%;
+    min-width:6px;
+    border-radius:99px;
+    background:var(--primary);
+    transition:width .35s ease;
+}
+.ig-bar.is-more span{ background:var(--green); }
+
+/* ---------- question ---------- */
+.ig-title{
+    margin:0;
+    font-family:var(--font-display);
+    font-size:34px;
+    font-weight:400;
+    letter-spacing:.4px;
+    line-height:1.05;
+    outline:none;
+}
+.ig-sub{ margin:8px 0 0; color:var(--text-secondary); font-size:15px; line-height:1.5; }
+.ig-body{ display:flex; flex-direction:column; gap:10px; margin-top:20px; }
+.ig-q{ margin-top:6px; color:var(--text); font-size:14.5px; font-weight:600; }
+.ig-light{ color:var(--muted); font-weight:400; }
+.ig-hint{ display:flex; align-items:center; gap:6px; margin:0; color:var(--text-secondary); font-size:13.5px; }
+.ig-hint .ui-icon{ width:16px; height:16px; color:var(--green); flex-shrink:0; }
+.ig-or{ color:var(--muted); font-size:13px; text-align:center; }
+
+.ig-input{
+    width:100%;
+    padding:12px 14px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    font:16px var(--font-body);
+    color-scheme:dark;
+}
+.ig-input:focus{ outline:none; border-color:var(--primary); }
+textarea.ig-input{ resize:vertical; min-height:88px; line-height:1.5; }
+.ig-short{ max-width:220px; }
+.ig-tiny{ display:inline-block; width:90px; margin:0 6px; padding:8px 10px; }
+.ig-exact{ display:flex; align-items:center; flex-wrap:wrap; font-size:13.5px; }
+
+/* ---------- tap answers ---------- */
+.ig-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.ig-days{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; }
+.ig-grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+
+.ig-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:44px;
+    padding:8px 16px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill, 999px);
+    background:rgba(243,239,230,.04);
+    color:var(--text);
+    font:500 14.5px var(--font-body);
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background-color .15s ease, transform .1s ease;
+}
+.ig-days .ig-chip{ padding:8px 0; border-radius:12px; }
+.ig-chip:hover{ border-color:rgba(201,173,132,.6); }
+.ig-chip:active{ transform:scale(.97); }
+.ig-chip.is-on{
+    border:2px solid var(--primary);
+    background:rgba(201,173,132,.16);
+    color:var(--text);
+    font-weight:600;
+}
+.ig-chip .ui-icon{ width:20px; height:20px; color:var(--primary); flex-shrink:0; }
+.ig-chip.is-big{
+    justify-content:flex-start;
+    width:100%;
+    min-height:56px;
+    padding:12px 18px;
+    border-radius:14px;
+    font-size:15.5px;
+    text-align:left;
+}
+
+.ig-presets{ display:flex; flex-wrap:wrap; gap:4px 14px; }
+.ig-link{
+    min-height:40px;
+    padding:0 2px;
+    border:0;
+    background:none;
+    color:var(--primary);
+    font:600 14px var(--font-body);
+    text-decoration:underline;
+    text-underline-offset:3px;
+    cursor:pointer;
+}
+.ig-link:hover{ color:var(--primary-light, var(--primary)); }
+.ig-finish{ align-self:flex-start; }
+
+/* ---------- footer ---------- */
+.ig-foot{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:24px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+}
+.ig-foot-right{ display:flex; align-items:center; gap:8px; margin-left:auto; }
+.ig-back .ui-icon{ width:16px; height:16px; }
+.ig-status{ min-height:18px; margin:10px 0 0; color:var(--muted); font-size:12.5px; text-align:right; }
+.ig-status.is-error{ color:var(--danger); }
+
+/* ---------- review ---------- */
+.ig-review-head{ display:flex; align-items:center; gap:16px; margin-bottom:8px; }
+.ig-ring{
+    --pct:0;
+    flex-shrink:0;
+    display:grid;
+    place-items:center;
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    background:conic-gradient(var(--primary) calc(var(--pct) * 1%), rgba(243,239,230,.1) 0);
+}
+.ig-ring span{
+    display:grid;
+    place-items:center;
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    background:var(--surface);
+    font:700 15px var(--font-body);
+}
+.ig-resume{ margin:8px 0 4px; }
+.ig-review-section{ margin-top:18px; }
+.ig-review-section h3{
+    margin:0 0 4px;
+    color:var(--primary);
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.ig-row{
+    display:grid;
+    grid-template-columns:150px minmax(0, 1fr) auto;
+    align-items:start;
+    gap:4px 14px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(243,239,230,.06);
+}
+.ig-row:last-child{ border-bottom:0; }
+.ig-row-label{ color:var(--muted); font-size:13.5px; padding-top:2px; }
+.ig-row-value{ color:var(--text); font-size:14.5px; line-height:1.45; overflow-wrap:anywhere; white-space:pre-line; }
+.ig-row .ig-link{ min-height:0; padding-top:2px; font-size:13.5px; }
+.ig-row.is-open .ig-row-label{ color:var(--amber); }
+.ig-review .ig-foot{ flex-wrap:wrap; }
+.ig-back-link{ display:inline-block; margin-top:14px; }
+
+@media (max-width:600px){
+    .ig-card{ padding:20px 16px 12px; }
+    .ig-title{ font-size:30px; }
+    .ig-grid{ grid-template-columns:1fr; }
+    .ig-days{ gap:4px; }
+    .ig-days .ig-chip{ font-size:13px; }
+    .ig-row{ grid-template-columns:minmax(0, 1fr) auto; }
+    .ig-row-label{ grid-column:1 / -1; padding-top:0; }
+    .ig-foot .sb-btn{ padding-left:14px; padding-right:14px; }
+}

@@ -14,7 +14,7 @@ import { listMyCheckins, weekKeyFor } from "./checkins.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { getMyProfile } from "./userProfile.js";
 import { getMyClientRecord } from "./clientRecords.js";
-import { isIntakeComplete } from "./clientRecordSchema.js";
+import { essentialsDone, ESSENTIALS } from "./intakeFlow.js";
 import { listMyUpdates } from "./clientNotes.js";
 import { listMyPlans } from "./coachingPlans.js";
 import { awaitingAck, noticeVersionOf } from "./planWindow.js";
@@ -107,12 +107,17 @@ export async function renderCoachCard(container) {
     }
 
     // ---- Profile (entered once, remembered) ----
-    if (coach && record !== undefined && !isIntakeComplete(record)) {
+    // Until the six essentials are answered (js/intakeFlow.js), with how
+    // far they got, so it reads as nearly done rather than a chore.
+    const answered = essentialsDone(record);
+    if (coach && record !== undefined && answered < ESSENTIALS.length) {
         rows.push(row({
             iconName: "user",
             color: "var(--primary)",
-            title: "Tell your coach about you",
-            detail: "Goals, schedule, what's worked before — about 3 minutes",
+            title: answered ? "Finish your profile" : "Tell your coach about you",
+            detail: answered
+                ? `${answered} of ${ESSENTIALS.length} quick questions done — pick up where you left off`
+                : `${ESSENTIALS.length} quick questions, mostly taps — about a minute`,
             link: "profile.html"
         }));
     }

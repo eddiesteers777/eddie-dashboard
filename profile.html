@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/clients.css">
     <link rel="stylesheet" href="css/client-profile.css">
+    <link rel="stylesheet" href="css/intake.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
@@ -29,13 +30,15 @@
             <div>
                 <div class="eos-today-eyebrow">Coaching</div>
                 <h1>My Profile</h1>
-                <p class="eos-today-phase">Tell your coach about you once, and it's remembered.</p>
+                <p class="eos-today-phase" id="profileSub">Tell your coach about you — one tap at a time.</p>
             </div>
         </section>
 
         <div id="profileLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span><span class="sb-skeleton" style="width:84%"></span></div></div>
+        <div id="profileGuide" class="ig" hidden></div>
         <div id="profileIntro" class="profile-intro" hidden></div>
-        <div id="profileForm"></div>
+        <div id="profileForm" hidden></div>
+        <a id="profileBackToGuide" class="ig-link ig-back-link" href="profile.html" hidden>Back to my profile summary</a>
 
     </main>
 

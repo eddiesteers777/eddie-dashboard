@@ -27,6 +27,7 @@ import { reviewCheckin } from "./checkins.js";
 import { sendCheckinReviewedEmail } from "./emailNotify.js";
 import { icon } from "./icons.js";
 import { FIELDS, displayValue, athleteDisplayName } from "./clientRecordSchema.js";
+import { realAnswer } from "./intakeFlow.js";
 import {
     addPrivateNote, updatePrivateNote, deletePrivateNote,
     sendClientUpdate, deleteClientUpdate
@@ -181,7 +182,7 @@ function renderHeader() {
     }
     const goal = $("hubGoal");
     if (rec?.primaryGoal) {
-        const target = [rec.targetEvent, rec.targetDate ? displayValue(FIELDS.find(f => f.key === "targetDate"), rec.targetDate) : ""].filter(Boolean).join(", ");
+        const target = [realAnswer(rec.targetEvent), rec.targetDate ? displayValue(FIELDS.find(f => f.key === "targetDate"), rec.targetDate) : ""].filter(Boolean).join(", ");
         goal.innerHTML = `<span>Goal</span> ${esc(rec.primaryGoal)}${target ? ` <em>· ${esc(target)}</em>` : ""}`;
         goal.hidden = false;
     } else {
@@ -204,6 +205,7 @@ function renderAbout() {
     const val = key => displayValue(f(key), rec[key]);
     const rows = [
         ["Aiming for", [rec.targetEvent, val("targetDate")].filter(Boolean).join(", ")],
+        ["Injuries / limits", rec.injuries && !realAnswer(rec.injuries) ? rec.injuries : ""],
         ["Sport", [val("primarySport"), rec.teamOrLevel].filter(Boolean).join(" · ")],
         ["Training now", [rec.currentTraining, val("weeklyMileage")].filter(Boolean).join(" · ")],
         ["Available", [val("availabilityDays"), rec.availabilityNotes].filter(Boolean).join(" · ")],
@@ -218,7 +220,7 @@ function renderAbout() {
                 <h2>About ${esc(athleteDisplayName(rec, displayName()).split(" ")[0])}</h2>
                 <button type="button" class="clients-btn-secondary" data-go-tab="profile">Full profile</button>
             </div>
-            ${rec.injuries ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Injuries / limits:</strong> ${esc(rec.injuries)}</span></div>` : ""}
+            ${realAnswer(rec.injuries) ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Injuries / limits:</strong> ${esc(rec.injuries)}</span></div>` : ""}
             ${rows.length ? `<dl class="hub-facts">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
         </div>`;
 }

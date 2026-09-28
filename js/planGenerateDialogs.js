@@ -19,6 +19,7 @@ import {
 import { shortDay, isoDate, planDateRange, addDays } from "./coachingPlanModel.js";
 import { START_LEVELS, RUN_WALK_GOALS, isRunWalk } from "./runWalk.js";
 import { icon } from "./icons.js";
+import { realAnswer } from "./intakeFlow.js";
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const DAY_LABEL = { MON: "Mon", TUE: "Tue", WED: "Wed", THU: "Thu", FRI: "Fri", SAT: "Sat", SUN: "Sun" };
@@ -46,8 +47,8 @@ function profileNotes(record, first) {
     const r = record || {};
     const notes = [];
     if (r.primaryGoal) notes.push(`<p><strong>Goal:</strong> ${esc(r.primaryGoal)}</p>`);
-    if (r.targetEvent) notes.push(`<p><strong>Aiming for:</strong> ${esc(r.targetEvent)}${r.targetDate ? ` (${esc(shortDay(r.targetDate))})` : ""}</p>`);
-    if (r.injuries) notes.push(`<p class="pw-gen-warn">${icon("alertTriangle")} <strong>Injuries / limits:</strong> ${esc(r.injuries)}</p>`);
+    if (realAnswer(r.targetEvent)) notes.push(`<p><strong>Aiming for:</strong> ${esc(r.targetEvent)}${r.targetDate ? ` (${esc(shortDay(r.targetDate))})` : ""}</p>`);
+    if (realAnswer(r.injuries)) notes.push(`<p class="pw-gen-warn">${icon("alertTriangle")} <strong>Injuries / limits:</strong> ${esc(r.injuries)}</p>`);
     if (r.availabilityNotes) notes.push(`<p><strong>Schedule:</strong> ${esc(r.availabilityNotes)}</p>`);
     return notes.length ? `<div class="pw-gen-profile">${notes.join("")}</div>` : `<p class="sb-dialog-message">${esc(first)} hasn't filled in their profile yet, so these are starting guesses.</p>`;
 }

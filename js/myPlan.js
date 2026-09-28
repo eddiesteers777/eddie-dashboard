@@ -16,6 +16,7 @@
        and the coach's answers (js/changeRequestDialog.js)
 ========================================== */
 
+import { realAnswer } from "./intakeFlow.js";
 import { listenForAuth } from "./auth.js";
 import { loadCoachPlans } from "./coachPlanStore.js";
 import { listMyPlans, markPlanViewed, acknowledgePlan } from "./coachingPlans.js";
@@ -307,7 +308,7 @@ listenForAuth(async user => {
     state.headers = headers;
     state.coaches = coaches;
     state.requests = requests;
-    state.goal = [record?.primaryGoal, record?.targetEvent].filter(Boolean).join(" · ");
+    state.goal = [record?.primaryGoal, realAnswer(record?.targetEvent)].filter(Boolean).join(" · ");
     $("planLoading").hidden = true;
 
     renderNotice();
