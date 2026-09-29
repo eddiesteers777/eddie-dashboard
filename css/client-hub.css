@@ -1008,3 +1008,122 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
     overflow-wrap:anywhere;
 }
 .hub-hist-more{ margin-top:12px; }
+
+
+/* ---- Progress summary (Phase 7 step 1) ---- */
+
+.hub-progress-note{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    margin-bottom:14px;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:rgba(255,255,255,.02);
+    color:var(--muted);
+    font-size:13.5px;
+    line-height:1.5;
+}
+.hub-progress-note svg{ flex:0 0 auto; width:16px; height:16px; margin-top:2px; color:var(--primary); }
+.hub-progress-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+    margin-bottom:12px;
+}
+.hub-progress-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+}
+.hub-section-kicker{
+    display:block;
+    margin-bottom:3px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+}
+.hub-progress-head h2{ margin:0; }
+.hub-progress-pill{
+    flex:0 0 auto;
+    padding:4px 9px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--text-secondary);
+    font-size:12px;
+    font-weight:700;
+}
+.hub-progress-primary{
+    font-size:22px;
+    font-weight:700;
+    line-height:1.2;
+}
+.hub-progress-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:12px;
+}
+.hub-progress-metrics{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:1px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    border-radius:12px;
+}
+.hub-progress-metric{
+    min-width:0;
+    padding:12px;
+    background:var(--surface);
+}
+.hub-progress-metric:nth-child(n+3){ border-top:1px solid var(--border); }
+.hub-progress-metric:nth-child(2n){ border-left:1px solid var(--border); }
+.hub-progress-metric strong{
+    display:block;
+    margin-top:2px;
+    font-size:19px;
+}
+.hub-progress-detail{
+    display:block;
+    margin-top:2px;
+    color:var(--muted);
+    font-size:12.5px;
+}
+.hub-progress-trend{
+    display:grid;
+    gap:12px;
+}
+.hub-progress-trend > div{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:18px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(243,239,230,.06);
+}
+.hub-progress-trend > div:last-child{ border-bottom:0; }
+.hub-progress-trend strong{ font-size:14px; }
+.hub-progress-trend span{
+    color:var(--text-secondary);
+    font-size:13.5px;
+    text-align:right;
+}
+.hub-progress-footer{ margin:14px 2px 0; }
+
+@media (max-width:760px){
+    .hub-progress-grid{ grid-template-columns:1fr; }
+}
+@media (max-width:520px){
+    .hub-progress-trend > div{ display:block; }
+    .hub-progress-trend span{
+        display:block;
+        margin-top:3px;
+        text-align:left;
+    }
+}

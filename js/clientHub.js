@@ -21,7 +21,7 @@ import { loadClientRecord, loadHistoryExtras } from "./clientDirectory.js";
 import { TIMELINE_GROUPS, filterTimeline, groupCounts, groupByMonth, historyStats, statsLine, eventDay, HISTORY_PAGE } from "./clientTimeline.js";
 import { applicationLines } from "./applicationForm.js";
 import {
-    summarizePlans, summarizeSessions, summarizeCheckins, needsAttention,
+    summarizePlans, summarizeSessions, summarizeCheckins, summarizeProgress, needsAttention,
     buildTimeline, serviceLabels, isoDate, shortDate, toMillis
 } from "./clientSummary.js";
 import { SESSION_TYPES } from "./scheduling.js";
@@ -517,7 +517,109 @@ function renderTimeline() {
     $("hubSeeHistory").textContent = all.length > events.length ? `See their whole history (${all.length}) →` : "See their whole history →";
 }
 
-// ---- History: the whole relationship (js/clientTimeline.js) ----
+
+function progressMetric(label, value, detail = "") {
+    return '<div class="hub-progress-metric">' +
+        '<span class="hub-glance-label">' + esc(label) + '</span>' +
+        '<strong>' + esc(value) + '</strong>' +
+        (detail ? '<span class="hub-progress-detail">' + esc(detail) + '</span>' : '') +
+        '</div>';
+}
+
+function progressPctChange(value) {
+    if (value == null) return "";
+    return value > 0 ? "+" + value + "%" : value + "%";
+}
+
+function renderProgress() {
+    const progress = summarizeProgress({
+        plans: record.summary.plans,
+        results: record.results || [],
+        sessions: sessionList(record.requests, isoDate(new Date())),
+        checkins: record.checkins || [],
+        today: isoDate(new Date())
+    });
+    const p = progress.plan;
+    const a = progress.activity;
+    const t = progress.trend;
+    const c = progress.checkins;
+
+    const dueLine = p.week?.due
+        ? p.week.completed + " of " + p.week.due + " due completed"
+        : p.week?.planned ? "No workouts due yet" : "No active plan";
+    const mileLine = p.week?.plannedMiles
+        ? p.week.completedMiles + " / " + p.week.plannedMiles + " mi this week"
+        : "Mileage not part of this plan";
+    const trendMiles = (t.priorMiles || t.recentMiles)
+        ? "Previous 14 days: " + t.priorMiles + " mi · Recent 14 days: " + t.recentMiles + " mi" + (t.milesChangePct != null ? " · " + progressPctChange(t.milesChangePct) : "")
+        : "No run mileage logged in the last 28 days.";
+    const trendWorkouts = (t.priorCompleted || t.recentCompleted)
+        ? "Previous 14 days: " + t.priorCompleted + " · Recent 14 days: " + t.recentCompleted + (t.completedChangePct != null ? " · " + progressPctChange(t.completedChangePct) : "")
+        : "No coach-plan workouts logged in the last 28 days.";
+
+    $("hubProgress").innerHTML =
+        '<div class="hub-progress-note">' +
+            '<span>' + icon("activity") + '</span>' +
+            '<span>Derived from the coaching data you already see in Southbound. This is a snapshot of the last 28 days, not a separate tracking system.</span>' +
+        '</div>' +
+
+        '<div class="hub-progress-grid">' +
+            '<section class="clients-card">' +
+                '<div class="hub-progress-head">' +
+                    '<div><span class="hub-section-kicker">Current plan</span>' +
+                    '<h2>' + esc(p.name || "No active plan") + '</h2></div>' +
+                    (p.weekNumber && p.totalWeeks ? '<span class="hub-progress-pill">Week ' + p.weekNumber + ' of ' + p.totalWeeks + '</span>' : '') +
+                '</div>' +
+                '<div class="hub-progress-primary">' + esc(dueLine) + '</div>' +
+                '<p class="clients-card-note">' + esc(mileLine) + '</p>' +
+                '<div class="hub-progress-actions"><button type="button" class="clients-btn-secondary" data-go-tab="plan">' + icon("edit") + ' View plan</button></div>' +
+            '</section>' +
+
+            '<section class="clients-card">' +
+                '<div class="hub-progress-head"><div><span class="hub-section-kicker">Last 28 days</span><h2>Training activity</h2></div></div>' +
+                '<div class="hub-progress-metrics">' +
+                    progressMetric("Coach-plan workouts", String(a.completedWorkouts), a.skippedWorkouts ? a.skippedWorkouts + " skipped" : "completed") +
+                    progressMetric("Run volume", a.runMiles + " mi", a.runSessions + " run" + (a.runSessions === 1 ? "" : "s") + " logged") +
+                    progressMetric("Strength", String(a.strengthSessions), a.strengthSets ? a.strengthSets + " sets logged" : "sessions logged") +
+                    progressMetric("Soccer", String(a.soccerCompleted), a.soccerCounted ? a.soccerCompleted + " of " + a.soccerCounted : "completed sessions") +
+                '</div>' +
+            '</section>' +
+        '</div>' +
+
+        '<section class="clients-card">' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">Trajectory</span><h2>Recent vs. previous 14 days</h2></div></div>' +
+            '<div class="hub-progress-trend">' +
+                '<div><strong>Run volume</strong><span>' + esc(trendMiles) + '</span></div>' +
+                '<div><strong>Completed coach-plan workouts</strong><span>' + esc(trendWorkouts) + '</span></div>' +
+            '</div>' +
+        '</section>' +
+
+        '<div class="hub-progress-grid">' +
+            '<section class="clients-card">' +
+                '<div class="hub-progress-head"><div><span class="hub-section-kicker">Check-ins</span><h2>' +
+                    (c.average != null ? c.average + " / 5" : "No rating yet") +
+                '</h2></div><span class="hub-progress-pill">' + c.count + ' in 28 days</span></div>' +
+                '<p class="clients-card-note">' +
+                    (c.latestRating != null ? "Latest rating: " + c.latestRating + "/5" : "No rated check-in in the window.") +
+                '</p>' +
+                '<div class="hub-progress-actions"><button type="button" class="clients-btn-secondary" data-go-tab="checkins">' + icon("star") + ' View check-ins</button></div>' +
+            '</section>' +
+
+            '<section class="clients-card">' +
+                '<div class="hub-progress-head"><div><span class="hub-section-kicker">Flags</span><h2>' +
+                    (progress.painFlags ? progress.painFlags : "None") +
+                '</h2></div></div>' +
+                '<p class="clients-card-note">' +
+                    (progress.painFlags ? "Pain or discomfort was reported on a logged workout in the last 28 days." : "No pain flags were reported on logged coach-plan workouts in the last 28 days.") +
+                '</p>' +
+                (progress.painFlags ? '<div class="hub-progress-actions"><button type="button" class="clients-btn-secondary" data-go-tab="workouts">' + icon("alertTriangle") + ' Review workouts</button></div>' : '') +
+            '</section>' +
+        '</div>' +
+
+        '<p class="clients-card-note hub-progress-footer">Personal COROS/Strava history, habits, nutrition, and other private device data are not exposed here. The summary only uses information already shared with your coaching relationship.</p>';
+}
+
+// ---- History: the whole relationship (js/clientTimeline.js) ----// ---- History: the whole relationship (js/clientTimeline.js) ----
 
 const hist = { group: "all", query: "", shown: HISTORY_PAGE };
 
@@ -1344,6 +1446,7 @@ function renderAll() {
     renderPinned();
     renderAbout();
     renderNext();
+    renderProgress();
     renderTimeline();
     renderHistory();
     renderApplication();
