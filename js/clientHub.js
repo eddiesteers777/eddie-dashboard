@@ -26,7 +26,7 @@ import { SESSION_TYPES } from "./scheduling.js";
 import { reviewCheckin } from "./checkins.js";
 import { sendCheckinReviewedEmail, sendProfileAskEmail } from "./emailNotify.js";
 import { ASKS, openAsks, answerFreshness, ageText } from "./profileChecks.js";
-import { allEssentialsDone } from "./intakeFlow.js";
+import { allEssentialsDone, essentialsDone, ESSENTIALS } from "./intakeFlow.js";
 import { icon } from "./icons.js";
 import { FIELDS, displayValue, athleteDisplayName } from "./clientRecordSchema.js";
 import { realAnswer } from "./intakeFlow.js";
@@ -203,7 +203,15 @@ function renderHeader() {
 // version is the Profile tab).
 function renderAbout() {
     const rec = record.record;
-    if (!rec) { $("hubAbout").innerHTML = ""; return; }
+    if (rec === undefined) { $("hubAbout").innerHTML = ""; return; }   // couldn't read it
+    if (!rec || !anyAnswer(rec)) {
+        $("hubAbout").innerHTML = `
+            <div class="clients-card hub-about">
+                <div class="hub-about-head"><h2>About ${esc(firstName())}</h2></div>
+                ${freshLine(rec)}
+            </div>`;
+        return;
+    }
     const f = key => FIELDS.find(x => x.key === key);
     const val = key => displayValue(f(key), rec[key]);
     const rows = [
@@ -236,10 +244,18 @@ const todayIso = () => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+const anyAnswer = rec => ESSENTIALS.some(e => e.done(rec || {}));
+
 // One line for the Overview's About card.
 function freshLine(rec) {
-    if (!allEssentialsDone(rec)) return "";
-    const asks = openAsks(rec);
+    const asks = openAsks(rec || {});
+    const since = at => ageText(Math.floor((Date.now() - at) / 86400000));
+    if (!rec || !allEssentialsDone(rec)) {
+        const n = essentialsDone(rec);
+        const text = n ? `Profile: ${n} of ${ESSENTIALS.length} essentials answered` : "Hasn't filled in their profile yet";
+        return `<p class="hub-fresh-line is-stale">${icon("clock")}<span>${asks.length ? `${text} · you asked ${since(asks[0].at)} — waiting on ${esc(firstName())}` : `<strong>${text}</strong>`}</span>
+            ${asks.length ? "" : `<button type="button" class="hub-link" data-act="ask-update">Ask ${esc(firstName())} to ${n ? "finish it" : "fill it in"}</button>`}</p>`;
+    }
     const stale = answerFreshness(rec, Date.now(), todayIso()).filter(f => f.stale);
     const updated = toMillis(rec.updatedAt);
     const parts = [updated ? `Profile updated ${ageText(Math.floor((Date.now() - updated) / 86400000))}` : ""];
@@ -254,9 +270,9 @@ function renderProfileFresh() {
     const el = $("hubProfileFresh");
     const rec = record?.record;
     if (!el) return;
-    if (!rec || !allEssentialsDone(rec)) { el.innerHTML = ""; return; }
-    const fresh = answerFreshness(rec, Date.now(), todayIso());
-    const asks = openAsks(rec);
+    if (rec === undefined) { el.innerHTML = ""; return; }   // couldn't read it
+    const fresh = answerFreshness(rec || {}, Date.now(), todayIso());
+    const asks = openAsks(rec || {});
     const askedFor = key => asks.find(a => a.keys.includes(key));
     el.innerHTML = `
         <div class="clients-card hub-fresh">
@@ -267,9 +283,9 @@ function renderProfileFresh() {
             <ul class="hub-fresh-list">
                 ${fresh.map(f => {
                     const ask = askedFor(f.key);
-                    return `<li class="${f.stale && !ask ? "is-stale" : ""}">
+                    return `<li class="${(f.stale || f.missing) && !ask ? "is-stale" : ""}">
                         <span class="hub-fresh-label">${esc(f.label)}</span>
-                        <span class="hub-fresh-when">${Number.isFinite(f.days) ? `confirmed ${esc(ageText(f.days))}` : "not confirmed yet"}</span>
+                        <span class="hub-fresh-when">${f.missing ? "not answered yet" : Number.isFinite(f.days) ? `confirmed ${esc(ageText(f.days))}` : "not confirmed yet"}</span>
                         ${ask ? `<span class="hub-fresh-tag is-asked">Asked ${esc(ageText(Math.floor((Date.now() - ask.at) / 86400000)))}</span>`
                             : f.stale ? `<span class="hub-fresh-tag">${esc(f.reason)}</span>` : ""}
                     </li>`;
@@ -283,14 +299,16 @@ async function askToUpdate() {
     const { askClientToUpdate } = await import("./clientRecords.js");
     const rec = record.record || {};
     const fresh = answerFreshness(rec, Date.now(), todayIso());
-    const staleKeys = new Set(fresh.filter(f => f.stale).map(f => f.key));
+    const staleKeys = new Set(fresh.filter(f => f.stale || f.missing).map(f => f.key));
     const asks = openAsks(rec);
     const email = record.profile?.email || record.link?.clientEmail || "";
     const first = firstName();
     const whenFor = ask => {
         // The oldest answer it covers (miles can be stale while strength isn't).
-        const ages = ask.keys.map(k => fresh.find(f => f.key === k)?.days).filter(Number.isFinite);
-        return ages.length ? `confirmed ${ageText(Math.max(...ages))}` : "not answered";
+        const rows = ask.keys.map(k => fresh.find(f => f.key === k)).filter(Boolean);
+        if (rows.some(f => f.missing)) return "not answered yet";
+        const ages = rows.map(f => f.days).filter(Number.isFinite);
+        return ages.length ? `confirmed ${ageText(Math.max(...ages))}` : "not answered yet";
     };
     const d = document.createElement("dialog");
     d.className = "sb-dialog hub-ask-dialog";

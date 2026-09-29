@@ -134,7 +134,11 @@ export function answerFreshness(record, now, today) {
     for (const key of TRACKED) {
         if (key === "weeklyMileage" && !asksMiles(r.primarySport)) continue;
         const value = r[key];
-        if (value === null || value === undefined || value === "" || (Array.isArray(value) && !value.length)) continue;
+        if (value === null || value === undefined || value === "" || (Array.isArray(value) && !value.length)) {
+            // Not answered yet (a profile started on the old form, or not at all).
+            if (key !== "targetEvent" || !r.targetDate) out.push({ key, label: FRESH_LABELS[key], days: Infinity, stale: false, missing: true, reason: "not answered yet" });
+            continue;
+        }
         const days = ageDays(r, key, now);
         let stale = MAX_AGE_DAYS[key] !== undefined && days >= MAX_AGE_DAYS[key];
         let reason = stale ? "may be out of date" : "";
@@ -150,7 +154,7 @@ export function answerFreshness(record, now, today) {
 // "Miles per week (6 weeks ago), Target event (the date has passed)".
 export function staleSummary(record, now, today) {
     return answerFreshness(record, now, today)
-        .filter(f => f.stale)
+        .filter(f => f.stale && !f.missing)
         .map(f => `${f.label.toLowerCase()} (${f.reason === "the date has passed" ? "the date has passed" : `confirmed ${ageText(f.days)}`})`);
 }
 
@@ -164,27 +168,33 @@ export function staleSummary(record, now, today) {
  */
 export function profileChecks(record, { today, now, pain = [], suggestion = null } = {}) {
     const r = record || {};
-    if (!allEssentialsDone(r)) return [];     // the "Finish your profile" prompt handles that
     const child = r.whoTrains === "child";
     const you = child ? "they" : "you";
     const your = child ? "their" : "your";
     const checks = [];
 
-    // ---- the coach asked ----
+    // ---- the coach asked (even on a profile that isn't finished) ----
     const asks = openAsks(r);
     if (asks.length) {
         const list = asks.map(a => a.short);
         const named = list.length === 1 ? list[0] : `${list.slice(0, -1).join(", ")} and ${list.at(-1)}`;
+        const blank = asks.every(a => a.keys.every(k => r[k] === undefined || r[k] === null || r[k] === "" || (Array.isArray(r[k]) && !r[k].length)));
         checks.push({
             id: `ask:${asks.map(a => a.id).join(",")}:${Math.max(...asks.map(a => a.at))}`, kind: "ask",
-            title: `Your coach asked you to check ${your} ${named}`,
+            title: `Your coach asked you to ${blank ? "fill in" : "check"} ${your} ${named}`,
             detail: `So ${your} plan fits where ${you} are now. It takes a few seconds.`,
-            actions: [
-                { label: "Update now", act: "ask", steps: [...new Set(asks.flatMap(a => a.steps))], primary: true },
-                { label: "It's all still right", act: "confirm", keys: [...new Set(asks.flatMap(a => a.keys))] }
-            ]
+            actions: blank
+                ? [{ label: "Fill it in", act: "ask", steps: [...new Set(asks.flatMap(a => a.steps))], primary: true }]
+                : [
+                    { label: "Update now", act: "ask", steps: [...new Set(asks.flatMap(a => a.steps))], primary: true },
+                    { label: "It's all still right", act: "confirm", keys: [...new Set(asks.flatMap(a => a.keys))] }
+                ]
         });
     }
+
+    // Everything else waits for the essentials (the "Finish your profile"
+    // prompt on Today handles those).
+    if (!allEssentialsDone(r)) return checks;
 
     // ---- the race date has passed ----
     if (/^\d{4}-\d{2}-\d{2}$/.test(r.targetDate || "") && r.targetDate < today) {

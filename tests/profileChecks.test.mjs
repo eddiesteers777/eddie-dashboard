@@ -159,3 +159,18 @@ test("the coach's view: how current each answer is", () => {
     assert.ok(!answerFreshness({ ...rec, injuries: NONE_INJURIES, confirmedAt: { ...fresh, injuries: daysAgo(300) } }, NOW, TODAY).find(f => f.key === "injuries").stale);
     assert.deepEqual([0, 1, 5, 20, 90, Infinity].map(ageText), ["today", "yesterday", "5 days ago", "3 weeks ago", "3 months ago", "never"]);
 });
+
+test("unfinished profiles: the coach can still ask, and sees what's missing", () => {
+    const old = { primarySport: "running", primaryGoal: "Get faster", updatedAt: daysAgo(30) };   // the old form: goal + sport
+    const rows = answerFreshness(old, NOW, TODAY);
+    assert.deepEqual(rows.filter(f => f.missing).map(f => f.key), ["targetEvent", "availabilityDays", "weeklyMileage", "strengthExperience", "injuries"]);
+    assert.deepEqual(staleSummary(old, NOW, TODAY), [], "missing isn't 'out of date'");
+    assert.deepEqual(profileChecks(old, ctx()), [], "no routine questions until the essentials are done");
+    const asked = { ...old, askedAt: { days: daysAgo(1), limits: daysAgo(1) } };
+    const [check] = profileChecks(asked, ctx());
+    assert.equal(check.title, "Your coach asked you to fill in your training days and injuries and limits");
+    assert.deepEqual(check.actions.map(a => a.label), ["Fill it in"], "nothing to confirm on blank answers");
+    const blankRecord = { askedAt: { goal: daysAgo(1) } };                  // a profile the coach's ask created
+    assert.equal(profileChecks(blankRecord, ctx())[0].title, "Your coach asked you to fill in your goal");
+    assert.deepEqual(profileChecks({ ...old, askedAt: { goal: daysAgo(1) } }, ctx())[0].actions.map(a => a.label), ["Update now", "It's all still right"]);
+});
