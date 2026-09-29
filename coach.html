@@ -59,6 +59,11 @@
 
             <div class="coach-stat-grid">
 
+                <a href="#applications" class="coach-stat-card" id="statNewApplications">
+                    <div class="coach-stat-number" id="statNewApplicationsNum">0</div>
+                    <div class="coach-stat-label">New applications</div>
+                </a>
+
                 <a href="#inquiries" class="coach-stat-card" id="statNewInquiries">
                     <div class="coach-stat-number" id="statNewInquiriesNum">0</div>
                     <div class="coach-stat-label">New website questions</div>
@@ -90,6 +95,15 @@
                 <h2 class="clients-section-title">Still to set up</h2>
                 <div id="setupList" class="coach-setup-list"></div>
             </div>
+
+            <section id="applications" class="coach-inquiries">
+                <div class="coach-inq-head">
+                    <h2 class="clients-section-title">Applications</h2>
+                    <button type="button" id="appToggleHandled" class="coach-inq-toggle" hidden>Show handled</button>
+                </div>
+                <div id="heardTally" class="coach-heard" hidden></div>
+                <div id="applicationList" class="coach-inq-list"></div>
+            </section>
 
             <section id="inquiries" class="coach-inquiries">
                 <div class="coach-inq-head">

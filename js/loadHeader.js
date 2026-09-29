@@ -235,15 +235,12 @@ fetch("components/header.html")
                 if (!access.isCoach && access.status === "active") {
                     import("./userProfile.js").then(m => m.touchLastSeen()).catch(() => {});
                 }
-                // Keep a pending applicant's standing invite fresh so the
-                // coach's "Approve" can link them (js/coachAccess.js).
+                // Keep every pending account's standing invite fresh so the
+                // coach's "Approve" can link them (js/coachAccess.js). Most
+                // applied without an account (apply.html), so there's no
+                // application on the profile to wait for.
                 if (access.status === "pending") {
-                    Promise.all([import("./userProfile.js"), import("./coachAccess.js")])
-                        .then(async ([{ getMyProfile }, { ensureApplyCode }]) => {
-                            const profile = await getMyProfile();
-                            if (profile?.applicationSubmittedAt) await ensureApplyCode();
-                        })
-                        .catch(() => {});
+                    import("./coachAccess.js").then(m => m.ensureApplyCode()).catch(() => {});
                 }
                 if (leaveCoachOnlyPage()) return access;
                 // This page rendered before the account's role was known on

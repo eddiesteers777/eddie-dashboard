@@ -45,6 +45,8 @@
     "js/activeProgramSources.js",
     "js/analytics.js",
     "js/app.js",
+    "js/applicationForm.js",
+    "js/applications.js",
     "js/apply.js",
     "js/auth.js",
     "js/barcodeScanner.js",

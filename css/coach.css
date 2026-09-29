@@ -229,6 +229,45 @@
     text-align:center;
 }
 
+/* ---- Applications (apply.html) ---- */
+
+.coach-app-lines{
+    margin:10px 0 14px;
+    padding:0;
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-size:14px;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+}
+.coach-app-account{
+    margin:-4px 0 12px;
+    font-size:13px;
+    color:var(--green);
+}
+.coach-app-account a{color:var(--primary);font-weight:700;}
+.coach-heard{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px 8px;
+    margin:0 0 12px;
+    font-size:13px;
+    color:var(--text-secondary);
+}
+.coach-heard strong{color:var(--text);font-weight:700;margin-right:2px;}
+.coach-heard-chip{
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text);
+    white-space:nowrap;
+}
+.coach-heard-chip b{color:var(--primary);margin-left:4px;}
+
 /* ---- Who needs you today (coaching Phase F) ---- */
 
 .coach-queue{ margin-bottom:22px; }

@@ -265,6 +265,58 @@ test("the coach can list questions and mark them handled, but not rewrite them",
     await assertFails(updateDoc(doc(as("coach"), "inquiries/q1"), { status: "deleted" }));
 });
 
+// ---- Applications without an account (apply.html) ----
+
+function application(overrides = {}) {
+    return {
+        name: "Pat Parent", email: "pat@example.com", phone: "555-0100", who: "child", athleteName: "Jamie",
+        ageRange: "10-13", services: ["soccer_1on1"], goal: "Make the team", startWhen: "month",
+        coachedBefore: "never", heardFrom: "friend", heardDetail: "Sam", contactBy: ["text"], contactTime: ["evening"],
+        message: "", status: "new", createdAt: serverTimestamp(), ...overrides
+    };
+}
+
+test("applications: anyone can apply without an account, only the coach reads them", async () => {
+    await assertSucceeds(setDoc(doc(guest(), "applications/a1"), application()));
+    await assertSucceeds(setDoc(doc(guest(), "applications/a2"), application({ email: "", who: "self", athleteName: "", services: ["running", "strength"] })));
+    // Someone signed in may attach their own uid, never someone else's.
+    await assertSucceeds(setDoc(doc(as("stranger"), "applications/a3"), application({ uid: "stranger" })));
+    await assertFails(setDoc(doc(as("stranger"), "applications/a4"), application({ uid: "client" })));
+    await assertFails(setDoc(doc(guest(), "applications/a5"), application({ uid: "client" })));
+    await assertFails(getDoc(doc(guest(), "applications/a1")));
+    await assertFails(getDocs(collection(guest(), "applications")));
+    await assertFails(getDocs(collection(as("client"), "applications")));
+    await assertSucceeds(getDocs(collection(as("coach"), "applications")));
+});
+
+test("applications: every answer must be one of the choices, with contact info", async () => {
+    const bad = [
+        { email: "", phone: "" }, { email: "nope" }, { name: "" }, { who: "coach" }, { ageRange: "12" },
+        { services: [] }, { services: ["free_money"] }, { goal: "" }, { goal: "x".repeat(301) },
+        { startWhen: "yesterday" }, { coachedBefore: "maybe" }, { heardFrom: "radio" }, { contactBy: ["pigeon"] },
+        { contactTime: ["midnight"] }, { message: "x".repeat(1001) }, { status: "handled" },
+        { createdAt: Timestamp.fromMillis(0) }, { isCoachApproved: true }
+    ];
+    for (const [i, change] of bad.entries()) {
+        await assertFails(setDoc(doc(guest(), `applications/bad${i}`), application(change)));
+    }
+    const { goal, ...missing } = application();
+    await assertFails(setDoc(doc(guest(), "applications/missing"), missing));
+});
+
+test("applications: the coach marks them handled and matches them to an account; nobody rewrites them", async () => {
+    await assertSucceeds(setDoc(doc(guest(), "applications/a1"), application()));
+    await assertFails(updateDoc(doc(guest(), "applications/a1"), { goal: "changed" }));
+    await assertFails(deleteDoc(doc(guest(), "applications/a1")));
+    await assertFails(updateDoc(doc(as("client"), "applications/a1"), { matchedUid: "client" }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "applications/a1"), { status: "handled", handledAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "applications/a1"), { matchedUid: "client", matchedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "applications/a1"), { matchedUid: null, matchedAt: null }));
+    await assertFails(updateDoc(doc(as("coach"), "applications/a1"), { goal: "rewritten" }));
+    await assertFails(updateDoc(doc(as("coach"), "applications/a1"), { status: "deleted" }));
+    await assertSucceeds(deleteDoc(doc(as("coach"), "applications/a1")));
+});
+
 // ---- Applying leaves a standing invite; "Approve" links in one step ----
 // (js/coachAccess.js ensureApplyCode + linkApplicant). No rules change:
 // it's the same code-burning batch as a typed invite code.

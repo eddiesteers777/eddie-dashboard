@@ -615,6 +615,53 @@ service cloud.firestore {
         && d.createdAt == request.time;
     }
 
+    // Applications from apply.html. Like inquiries, anyone can send one
+    // without signing in, so every field is checked (the choices match
+    // js/applicationForm.js). Someone signed in may attach their own uid.
+    function strMax(v, n) {
+      return v is string && v.size() <= n;
+    }
+    function validApplication(d) {
+      return d.keys().hasOnly(["name", "email", "phone", "who", "athleteName", "ageRange", "services",
+                               "goal", "startWhen", "coachedBefore", "heardFrom", "heardDetail",
+                               "contactBy", "contactTime", "message", "uid", "status", "createdAt"])
+        && d.keys().hasAll(["name", "email", "phone", "who", "athleteName", "ageRange", "services",
+                            "goal", "startWhen", "coachedBefore", "heardFrom", "heardDetail",
+                            "contactBy", "contactTime", "message", "status", "createdAt"])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && strMax(d.email, 200) && (d.email.size() == 0 || d.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'))
+        && strMax(d.phone, 40)
+        && (d.email.size() > 0 || d.phone.size() > 0)
+        && d.who in ["self", "child", "other"]
+        && strMax(d.athleteName, 60)
+        && d.ageRange in ["u10", "10-13", "14-18", "19-29", "30-39", "40-49", "50+"]
+        && d.services is list && d.services.size() > 0 && d.services.size() <= 5
+        && d.services.hasOnly(["online_coaching", "running", "strength", "soccer_1on1", "soccer_group"])
+        && d.goal is string && d.goal.size() > 0 && d.goal.size() <= 300
+        && d.startWhen in ["now", "month", "later", "looking"]
+        && d.coachedBefore in ["never", "past", "now"]
+        && d.heardFrom in ["instagram", "facebook", "tiktok", "google", "friend", "client", "team", "event", "other"]
+        && strMax(d.heardDetail, 100)
+        && d.contactBy is list && d.contactBy.size() <= 3 && d.contactBy.hasOnly(["text", "call", "email"])
+        && d.contactTime is list && d.contactTime.size() <= 3 && d.contactTime.hasOnly(["morning", "afternoon", "evening"])
+        && strMax(d.message, 1000)
+        && (!("uid" in d) || (request.auth != null && d.uid == request.auth.uid))
+        && d.status == "new"
+        && d.createdAt == request.time;
+    }
+
+    match /applications/{applicationId} {
+      allow create: if validApplication(request.resource.data);
+      allow read: if isApprovedCoach();
+      // The coach marks it handled and ties it to the account it belongs to.
+      allow update: if isApprovedCoach()
+        && request.resource.data.status in ["new", "handled"]
+        && onlyChanges(["status", "handledAt", "matchedUid", "matchedAt"])
+        && (!("matchedUid" in request.resource.data) || request.resource.data.matchedUid == null
+            || request.resource.data.matchedUid is string);
+      allow delete: if isApprovedCoach();
+    }
+
     match /inquiries/{inquiryId} {
       allow create: if validInquiry(request.resource.data);
       allow read: if isApprovedCoach();

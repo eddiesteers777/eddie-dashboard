@@ -576,38 +576,6 @@ body.pub-body{
     border-radius:var(--radius);
     padding:32px;
 }
-.pub-apply-signedout{
-    text-align:center;
-    padding:20px 0;
-}
-.pub-apply-signedout p{
-    color:var(--text-secondary);
-    font-size:14.5px;
-    margin:0 0 20px;
-}
-.pub-apply-identity{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding-bottom:20px;
-    margin-bottom:20px;
-    border-bottom:1px solid var(--border);
-}
-.pub-apply-avatar{
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    background:var(--primary);
-    color:#0f2019;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:800;
-    flex-shrink:0;
-}
-.pub-apply-identity strong{display:block;font-size:14.5px;}
-.pub-apply-identity span{display:block;font-size:12.5px;color:var(--text-secondary);}
-
 .pub-field-label{
     display:block;
     font-size:12.5px;
@@ -716,7 +684,22 @@ select.pub-input{appearance:auto;}
 }
 .pub-contact-alt a,
 .pub-apply-alt a{color:var(--primary);font-weight:700;}
-.pub-apply-signedout .pub-apply-alt{margin:20px 0 0;font-size:13.5px;}
+/* The open Apply form (apply.html): the guided screens use css/intake.css. */
+.pub-apply-guide{margin:0 auto;}
+.pub-apply-guide .ig-error{
+    margin:14px 0 0;
+    padding:10px 14px;
+    border-radius:var(--radius-sm);
+    border:1px solid color-mix(in srgb, var(--red) 45%, transparent);
+    background:color-mix(in srgb, var(--red) 12%, transparent);
+    color:var(--text);
+    font-size:14px;
+    line-height:1.45;
+}
+.pub-apply-done{text-align:center;}
+.pub-apply-done .pub-card-icon{margin:0 auto 12px;}
+.pub-apply-done .ig-foot{justify-content:center;flex-wrap:wrap;gap:10px;}
+.pub-apply-foot{text-align:center;color:var(--text-secondary);font-size:13.5px;margin:22px 0 0;}
 .pub-cta-actions{
     display:flex;
     flex-wrap:wrap;

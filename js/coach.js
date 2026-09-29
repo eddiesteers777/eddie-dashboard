@@ -14,6 +14,8 @@ import { listRequestsForMyClients } from "./scheduling.js";
 import { listCheckinsForMyClients } from "./checkins.js";
 import { getEmailSetupStatus } from "./emailNotify.js";
 import { listInquiries, setInquiryHandled, interestLabel } from "./inquiries.js";
+import { listApplications, setApplicationHandled } from "./applications.js";
+import { applicationLines, heardTally, matchApplication, SERVICE_OPTIONS, labelOf } from "./applicationForm.js";
 import { loadClientDirectory } from "./clientDirectory.js";
 import { summarizeClient, isoDate } from "./clientSummary.js";
 import { attentionQueue } from "./feedbackModel.js";
@@ -165,6 +167,110 @@ inquiryListEl.addEventListener("click", async event => {
     }
 });
 
+// ---- Applications (from the open apply.html) ----
+
+const applicationListEl = document.getElementById("applicationList");
+const appToggleBtn = document.getElementById("appToggleHandled");
+const heardTallyEl = document.getElementById("heardTally");
+let applications = [];
+let applicationsFailed = false;
+let applicationsLoaded = false;
+let showHandledApps = false;
+let pendingProfiles = [];
+
+// The pending account an application belongs to, if they've signed in.
+function pendingAccountFor(app) {
+    return pendingProfiles.find(p => matchApplication(p, [app])) || null;
+}
+
+function applicationRow(a) {
+    const handled = a.status === "handled";
+    const phoneDigits = (a.phone || "").replace(/[^\d+]/g, "");
+    const subject = encodeURIComponent("Your application to Southbound Coaching");
+    const contact = [a.email, a.phone].filter(Boolean).map(escapeHtml).join(" &middot; ");
+    const account = !handled && pendingAccountFor(a);
+    return `
+        <div class="coach-inq-row${handled ? " coach-inq-handled" : ""}">
+            <div class="coach-inq-top">
+                <strong>${escapeHtml(a.name)}</strong>
+                ${(a.services || []).map(v => `<span class="coach-inq-pill">${escapeHtml(labelOf(SERVICE_OPTIONS, v))}</span>`).join("")}
+                <span class="coach-inq-date">${shortDate(a.createdAt)}</span>
+            </div>
+            ${contact ? `<div class="coach-inq-meta">${contact}</div>` : ""}
+            <ul class="coach-app-lines">${applicationLines(a).map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+            ${account ? `<p class="coach-app-account">They've signed in to the app. <a href="clients.html?tab=pending">Approve them in Pending →</a></p>` : ""}
+            <div class="coach-inq-actions">
+                ${a.email ? `<a class="coach-inq-btn" href="mailto:${encodeURIComponent(a.email)}?subject=${subject}">Email</a>` : ""}
+                ${phoneDigits ? `<a class="coach-inq-btn" href="sms:${phoneDigits}">Text</a><a class="coach-inq-btn" href="tel:${phoneDigits}">Call</a>` : ""}
+                <button type="button" class="coach-inq-btn coach-inq-done" data-app="${escapeHtml(a.id)}" data-handled="${handled ? "1" : ""}">
+                    ${handled ? "Move back to new" : "Mark handled"}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderApplications() {
+    const fresh = applications.filter(a => a.status !== "handled");
+    const handledCount = applications.length - fresh.length;
+
+    statNewApplicationsNum.textContent = fresh.length;
+    statNewApplications.classList.toggle("coach-stat-attention", fresh.length > 0);
+    statNewApplications.classList.toggle("coach-stat-neutral", fresh.length === 0);
+
+    appToggleBtn.hidden = handledCount === 0;
+    appToggleBtn.textContent = showHandledApps ? "Hide handled" : `Show handled (${handledCount})`;
+
+    const tally = heardTally(applications);
+    heardTallyEl.hidden = tally.length === 0;
+    heardTallyEl.innerHTML = tally.length
+        ? `<strong>Where people heard about you:</strong>${tally.map(t => `<span class="coach-heard-chip">${escapeHtml(t.label)}<b>${t.count}</b></span>`).join("")}`
+        : "";
+
+    if (applicationsFailed) {
+        applicationListEl.innerHTML = `<div class="coach-inq-empty">Couldn't load applications. If this keeps happening, make sure the latest Firestore rules are published.</div>`;
+        return;
+    }
+    const shown = showHandledApps ? applications : fresh;
+    applicationListEl.innerHTML = shown.length
+        ? shown.map(applicationRow).join("")
+        : `<div class="coach-inq-empty">${applications.length ? "You're all caught up." : "No applications yet. They show up here when someone fills in the Apply page."}</div>`;
+}
+
+async function loadApplications() {
+    try {
+        applications = await listApplications();
+        applicationsFailed = false;
+    } catch (error) {
+        console.warn("Southbound: couldn't load applications.", error);
+        applications = [];
+        applicationsFailed = true;
+    }
+    applicationsLoaded = true;
+    renderApplications();
+}
+
+appToggleBtn.addEventListener("click", () => {
+    showHandledApps = !showHandledApps;
+    renderApplications();
+});
+
+applicationListEl.addEventListener("click", async event => {
+    const btn = event.target.closest("[data-app]");
+    if (!btn) return;
+    btn.disabled = true;
+    const makeHandled = !btn.dataset.handled;
+    try {
+        await setApplicationHandled(btn.dataset.app, makeHandled);
+        const a = applications.find(item => item.id === btn.dataset.app);
+        if (a) a.status = makeHandled ? "handled" : "new";
+        renderApplications();
+    } catch (error) {
+        console.error("Couldn't update application:", error);
+        btn.disabled = false;
+    }
+});
+
 // Features that need an outside account before they work. Each one
 // silently does nothing until then, so the dashboard says so.
 function renderSetupChecklist() {
@@ -198,6 +304,8 @@ const statPendingCheckins = document.getElementById("statPendingCheckins");
 const statPendingCheckinsNum = document.getElementById("statPendingCheckinsNum");
 const statActiveClientsNum = document.getElementById("statActiveClientsNum");
 const statNewInquiries = document.getElementById("statNewInquiries");
+const statNewApplications = document.getElementById("statNewApplications");
+const statNewApplicationsNum = document.getElementById("statNewApplicationsNum");
 const statNewInquiriesNum = document.getElementById("statNewInquiriesNum");
 
 async function refreshDashboard() {
@@ -224,6 +332,9 @@ async function refreshDashboard() {
     statPendingCheckins.classList.toggle("coach-stat-neutral", pendingCheckinCount === 0);
 
     statActiveClientsNum.textContent = clients.length;
+
+    pendingProfiles = pending;
+    if (applicationsLoaded) renderApplications();
 }
 
 listenForAuth(async user => {
@@ -243,6 +354,7 @@ listenForAuth(async user => {
     renderSetupChecklist();
     loadQueue();
     refreshDashboard();
+    loadApplications();
     loadInquiries();
 });
 
@@ -253,6 +365,7 @@ function refreshIfShowing() {
     if (document.visibilityState !== "visible" || dashboardEl.hidden) return;
     loadQueue();
     refreshDashboard();
+    loadApplications();
     loadInquiries();
 }
 document.addEventListener("visibilitychange", refreshIfShowing);

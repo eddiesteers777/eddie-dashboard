@@ -23,6 +23,7 @@
    Coach Dashboard's "Still to set up" card shows which are off.
 ========================================== */
 import { emojiPlainText } from "./emoji.js";
+import { applicationLines } from "./applicationForm.js";
 
 const SERVICE_ID = "service_vgrqpxp";
 const TEMPLATE_COACH_ALERT_ID = "template_09f1ynl";
@@ -174,16 +175,18 @@ export function sendBookingRequestEmail({ clientName, dates, ...session }) {
     });
 }
 
-export function sendApplicationEmail({ applicantName, applicantEmail, requestedServices, message }) {
+// An application from the open Apply form (js/applicationForm.js shape).
+export function sendApplicationEmail(app) {
+    const name = app?.name || "someone new";
     return coachAlert({
-        subject: `New application: ${applicantName || "someone new"}`,
-        headline: `${applicantName || "Someone"} applied to train with you.`,
+        subject: `New application: ${name}`,
+        headline: `${app?.name || "Someone"} applied to train with you.`,
         details: lines(
-            applicantEmail ? `Email: ${applicantEmail}` : "",
-            `Interested in: ${(requestedServices || []).map(v => SERVICE_LABELS[v] || v).join(", ") || "not specified"}`,
-            message ? `Message: ${message}` : ""
+            app?.email ? `Email: ${app.email}` : "",
+            app?.phone ? `Phone: ${app.phone}` : "",
+            ...applicationLines(app || {})
         ),
-        page: "clients.html?tab=pending"
+        page: "coach.html#applications"
     });
 }
 

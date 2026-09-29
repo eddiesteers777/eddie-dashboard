@@ -22,6 +22,9 @@ import {
     SERVICES, isApprovedCoach, listPendingProfiles,
     approveClient, denyProfile, promoteToCoach
 } from "./userProfile.js";
+import { listApplications, matchApplicationTo, setApplicationHandled } from "./applications.js";
+import { matchApplication, unmatchedApplications, applicationLines, recordFromApplication } from "./applicationForm.js";
+import { getClientRecord, saveClientRecord } from "./clientRecords.js";
 
 const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
@@ -274,8 +277,41 @@ const pendingCount = document.getElementById("pendingCount");
 const pendingList = document.getElementById("pendingList");
 const pendingEmptyMsg = document.getElementById("pendingEmptyMsg");
 
-function pendingCardHtml(profile) {
-    const requested = new Set(profile.requestedServices || []);
+// Applications (apply.html, no account needed) are tied to a pending
+// account by email, or by the coach picking one when the emails differ.
+let applications = [];
+
+const appDate = ts => {
+    const d = ts?.toDate ? ts.toDate() : null;
+    return d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+};
+
+function applicationHtml(app, profile, taken) {
+    if (app) {
+        const manual = app.matchedUid === profile.uid && app.uid !== profile.uid;
+        return `
+            <div class="clients-app">
+                <div class="clients-app-head">Applied ${escapeHtml(appDate(app.createdAt))}${app.email && app.email.toLowerCase() !== String(profile.email || "").toLowerCase() ? ` as ${escapeHtml(app.email)}` : ""}</div>
+                <ul class="clients-app-lines">${applicationLines(app).map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+                ${manual ? `<button type="button" class="clients-app-link" data-action="unmatch">Not their application? Unmatch</button>` : ""}
+            </div>`;
+    }
+    const open = unmatchedApplications(applications).filter(a => !taken.has(a.id));
+    if (!open.length) return `<div class="clients-service-note">No application found for ${escapeHtml(profile.email || "this email")}.</div>`;
+    return `
+        <label class="clients-app-match">
+            <span>No application under ${escapeHtml(profile.email || "this email")}. Applied with another email?</span>
+            <select data-action="match">
+                <option value="">Match to an application…</option>
+                ${open.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml([a.name, a.email || a.phone, appDate(a.createdAt)].filter(Boolean).join(" · "))}</option>`).join("")}
+            </select>
+        </label>`;
+}
+
+function pendingCardHtml(profile, app, taken) {
+    // What they asked for: on their account (they applied signed in, the
+    // old way) or on the application they sent without an account.
+    const requested = new Set(profile.requestedServices?.length ? profile.requestedServices : (app?.services || []));
     const services = SERVICES.map(s => `
         <label class="clients-service-check">
             <input type="checkbox" value="${escapeHtml(s.value)}" ${requested.has(s.value) ? "checked" : ""}>
@@ -283,15 +319,12 @@ function pendingCardHtml(profile) {
         </label>
     `).join("");
 
-    // requestedServices/applicationMessage only exist if they applied
-    // through the public site's apply form (js/apply.js) -- someone
-    // whose profile was only ever auto-created by signing into the
-    // internal app won't have these, and that's fine, just fewer
-    // details to show.
-    const requestedNote = profile.requestedServices?.length
+    // requestedServices/applicationMessage only exist on accounts that
+    // applied while signed in; the application itself says more.
+    const requestedNote = !app && profile.requestedServices?.length
         ? `<div class="clients-service-note">Requested: ${profile.requestedServices.map(v => escapeHtml(SERVICES.find(s => s.value === v)?.label || v)).join(", ")}</div>`
         : "";
-    const messageNote = profile.applicationMessage
+    const messageNote = !app && profile.applicationMessage
         ? `<div class="clients-service-note">"${escapeHtml(profile.applicationMessage)}"</div>`
         : "";
 
@@ -303,6 +336,7 @@ function pendingCardHtml(profile) {
                 <span>${escapeHtml(profile.email || "")} &middot; wants: ${escapeHtml(profile.role || "client")}</span>
                 ${requestedNote}
                 ${messageNote}
+                ${applicationHtml(app, profile, taken)}
                 <div class="clients-service-list">${services}</div>
             </div>
             <div class="clients-pending-actions">
@@ -314,17 +348,70 @@ function pendingCardHtml(profile) {
     `;
 }
 
+// After approving: tie the application to them, mark it handled and,
+// once linked, start their profile from it so they aren't asked again.
+async function settleApplication(app, uid, linked) {
+    if (!app) return;
+    try {
+        if (app.uid !== uid && app.matchedUid !== uid) await matchApplicationTo(app.id, uid);
+        await setApplicationHandled(app.id, true);
+    } catch (error) {
+        console.warn("Couldn't mark the application handled:", error);
+    }
+    if (!linked) return;
+    try {
+        const existing = await getClientRecord(uid);
+        if (!existing) await saveClientRecord(uid, recordFromApplication(app));
+    } catch (error) {
+        console.warn("Couldn't start their profile from the application:", error);
+    }
+}
+
 async function refreshPending() {
-    const pending = await listPendingProfiles();
+    const [pending, apps] = await Promise.all([
+        listPendingProfiles(),
+        listApplications().catch(error => { console.warn("Couldn't load applications:", error); return []; })
+    ]);
+    applications = apps;
     pendingCount.hidden = pending.length === 0;
     pendingCount.textContent = pending.length || "";
     pendingList.innerHTML = "";
     pendingEmptyMsg.hidden = pending.length > 0;
 
+    // Each application goes to one account at most.
+    const matched = new Map();
+    const taken = new Set();
     for (const profile of pending) {
+        const app = matchApplication(profile, applications.filter(a => !taken.has(a.id)));
+        if (app) { matched.set(profile.uid, app); taken.add(app.id); }
+    }
+
+    for (const profile of pending) {
+        const app = matched.get(profile.uid) || null;
         const wrap = document.createElement("div");
-        wrap.innerHTML = pendingCardHtml(profile);
+        wrap.innerHTML = pendingCardHtml(profile, app, taken);
         const row = wrap.firstElementChild;
+
+        row.querySelector('[data-action="match"]')?.addEventListener("change", async event => {
+            const id = event.target.value;
+            if (!id) return;
+            event.target.disabled = true;
+            try {
+                await matchApplicationTo(id, profile.uid);
+                toast("Matched. Their answers are on the card now.");
+            } catch (error) {
+                toast("Couldn't match that application.", { type: "error" });
+            }
+            refreshPending();
+        });
+        row.querySelector('[data-action="unmatch"]')?.addEventListener("click", async () => {
+            try {
+                await matchApplicationTo(app.id, null);
+            } catch (error) {
+                toast("Couldn't unmatch it.", { type: "error" });
+            }
+            refreshPending();
+        });
 
         row.querySelector('[data-action="approve"]').addEventListener("click", async () => {
             const services = [...row.querySelectorAll(".clients-service-check input:checked")].map(el => el.value);
@@ -333,9 +420,9 @@ async function refreshPending() {
             const approveBtn = row.querySelector('[data-action="approve"]');
             approveBtn.disabled = true;
             await approveClient(profile.uid, services);
-            // Link them in the same step using the code their application
-            // left (js/coachAccess.js). Older applications won't have one;
-            // those still link the usual way, with an invite code.
+            // Link them in the same step using the standing code their
+            // app leaves while pending (js/coachAccess.js). Accounts on an
+            // older app won't have one; those link with an invite code.
             let linked = false;
             try {
                 await linkApplicant(profile.uid);
@@ -343,6 +430,7 @@ async function refreshPending() {
             } catch (error) {
                 console.info("Approved without auto-link:", error.message);
             }
+            await settleApplication(app, profile.uid, linked);
             if (linked) {
                 toast(`${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and in My Clients now.`);
             } else {
