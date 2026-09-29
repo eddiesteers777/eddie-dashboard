@@ -121,3 +121,13 @@ textarea.cp-input{ resize:vertical; min-height:74px; line-height:1.5; }
     line-height:1.6;
 }
 .profile-intro strong{ color:var(--text); }
+
+/* Health check on the one-page form: a checkbox per question. */
+.cp-health{ display:flex; flex-direction:column; gap:8px; }
+.cp-health-row{
+    display:flex; align-items:flex-start; gap:10px; cursor:pointer;
+    padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    font-size:14px; line-height:1.45;
+}
+.cp-health-row input{ margin-top:3px; flex-shrink:0; }
+.cp-health-row:has(input:checked){ border-color:var(--amber); }

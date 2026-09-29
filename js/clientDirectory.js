@@ -27,6 +27,7 @@ import { listPlansForClient, listDraftsForClient, getVersion, getMaster } from "
 import { isRolling } from "./planWindow.js";
 import { listResultsForClient } from "./workoutResults.js";
 import { listChangeRequestsForCoach } from "./changeRequests.js";
+import { healthReviewed } from "./healthReviewed.js";
 
 // [] if results can't be read (rules not published yet, offline...).
 const resultsFor = uid => listResultsForClient(uid).catch(error => {
@@ -100,6 +101,7 @@ export async function loadClientDirectory() {
         changesFor()
     ]);
     const checkinsBy = groupByClient(checkins);
+    const reviewed = healthReviewed();
     const requestsBy = groupByClient(requests);
     const changesBy = groupByClient(changes);
 
@@ -118,6 +120,7 @@ export async function loadClientDirectory() {
             record,
             coachingPlans,
             results,
+            healthReviewedAt: reviewed[link.clientUid] || 0,
             checkins: checkinsBy.get(link.clientUid) || [],
             requests: requestsBy.get(link.clientUid) || [],
             changes: changesBy.get(link.clientUid) || []

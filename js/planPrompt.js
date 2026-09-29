@@ -35,6 +35,7 @@ import { strengthFromLibrary } from "./coachPlanGenerator.js";
 import { recalcPlannedMiles, shortDay } from "./coachingPlanModel.js";
 import { applyPrescription } from "./planOps.js";
 import { START_LEVELS, RUN_WALK_GOALS, isRunWalk } from "./runWalk.js";
+import { FIELDS, displayValue } from "./clientRecordSchema.js";
 
 const CODES = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const WEEKDAY = { MON: "Mon", TUE: "Tue", WED: "Wed", THU: "Thu", FRI: "Fri", SAT: "Sat", SUN: "Sun" };
@@ -109,6 +110,10 @@ const DAY_NAMES = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", 
 const START_TEXT = Object.fromEntries(START_LEVELS);
 const GOAL_TEXT = Object.fromEntries(RUN_WALK_GOALS);
 
+// A profile answer in words (js/clientRecordSchema.js). Health answers and
+// contacts are never put in a prompt.
+const show = (key, r) => displayValue(FIELDS.find(f => f.key === key), r[key]);
+
 function athleteLines(firstName, r = {}, today) {
     const year = Number(String(today || "").slice(0, 4)) || new Date().getFullYear();
     const lines = [`- Name: ${firstName || "the athlete"} (first name only)`];
@@ -122,10 +127,17 @@ function athleteLines(firstName, r = {}, today) {
     if (r.targetEvent || r.targetDate) add("Aiming for", `${r.targetEvent || "an event"}${r.targetDate ? ` on ${shortDay(r.targetDate)}, ${r.targetDate.slice(0, 4)}` : ""}`);
     add("Training right now", r.currentTraining);
     if (r.weeklyMileage !== undefined && r.weeklyMileage !== null && r.weeklyMileage !== "") add("Miles per week right now", r.weeklyMileage);
+    if (Number.isInteger(r.runsPerWeek)) add("Runs a week", r.runsPerWeek);
+    if (Number(r.longestRun) > 0) add("Longest recent run", `${r.longestRun} mi`);
+    add("Running for", show("yearsRunning", r));
+    if (r.runStart && r.runStart !== "running") add("Can run non-stop for", show("runStart", r));
+    add("Soccer", [show("soccerPosition", r), show("soccerLevel", r)].filter(Boolean).join(", "));
     add("Strength experience", r.strengthExperience);
+    add("Equipment", show("equipment", r));
+    add("Time per session", show("sessionLength", r));
     if ((r.availabilityDays || []).length) add("Days they can train", r.availabilityDays.map(d => DAY_NAMES[d] || d).join(", "));
     add("Schedule notes", r.availabilityNotes);
-    add("Injuries / limits", r.injuries);
+    add("Injuries / limits", [r.injuries, show("injuryAreas", r), show("injuryStatus", r)].filter(Boolean).join(" · "));
     add("What has worked", r.workedBefore);
     add("What hasn't worked", r.notWorked);
     add("What they want from a coach", r.coachingWants);

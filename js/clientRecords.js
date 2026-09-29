@@ -53,6 +53,8 @@ export async function saveClientRecord(clientUid, values, existing = null, { con
     const settled = asksSettledBy(existing, Object.keys(confirmedAt).filter(k => confirmedAt[k] === now));
     if (settled.length) payload.askedAt = Object.fromEntries(settled.map(id => [id, deleteField()]));
     if (complete && !existing?.intakeCompletedAt) payload.intakeCompletedAt = serverTimestamp();
+    // When they answered the health check (a device time, like confirmedAt).
+    if (Number.isInteger(values.healthCheckedAt) && values.healthCheckedAt > 0) payload.healthCheckedAt = values.healthCheckedAt;
 
     await setDoc(recordDoc(clientUid), payload, { merge: true });
     return { ...(existing || {}), ...payload, askedAt: withoutAsks(existing?.askedAt, settled), updatedAt: Date.now(), intakeCompletedAt: existing?.intakeCompletedAt || (complete ? Date.now() : undefined) };

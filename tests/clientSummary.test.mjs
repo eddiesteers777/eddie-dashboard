@@ -317,3 +317,14 @@ test("strength logs: decide a strength-only day, never the run next to them; tim
     const t = buildTimeline({ results });
     assert.ok(t.some(e => e.text === "Logged Lower — 2 sets"), JSON.stringify(t));
 });
+
+test("a 'yes' on the health check needs the coach until they mark it reviewed", () => {
+    const today = "2026-09-26";
+    const base = { profile: { services: ["soccer_group"] }, plans: summarizePlans({}, today), sessions: summarizeSessions([], today), checkins: summarizeCheckins([], today), today };
+    const record = { primarySport: "soccer", primaryGoal: "Make the team", healthFlags: ["heart", "joints"], healthCheckedAt: 1000 };
+    const item = needsAttention({ ...base, record }).find(i => i.kind === "health");
+    assert.equal(item.text, "Health check: said yes to heart condition or high blood pressure, bone, joint or muscle problem. Check with them before training gets harder");
+    assert.equal(needsAttention({ ...base, record, healthReviewedAt: 1000 }).some(i => i.kind === "health"), false, "reviewed");
+    assert.equal(needsAttention({ ...base, record: { ...record, healthCheckedAt: 2000 }, healthReviewedAt: 1000 }).some(i => i.kind === "health"), true, "new answers show again");
+    assert.equal(needsAttention({ ...base, record: { ...record, healthFlags: [] } }).some(i => i.kind === "health"), false, "no to all");
+});

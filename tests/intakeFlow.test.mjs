@@ -5,39 +5,49 @@ import assert from "node:assert/strict";
 import {
     ESSENTIALS, MORE, NONE_EVENT, NONE_INJURIES, isNoneAnswer, realAnswer, essentialsDone, allEssentialsDone,
     startStep, nextStep, prevStep, goalIdeas, milesChoice, MILES_CHOICES, togglePhrase, hasPhrase,
-    recentWeeklyMiles, sportFromServices, asksMiles
+    recentWeeklyMiles, sportFromServices, asksMiles, answersDone, screenKeys, moreFor, eventTypesFor,
+    longestChoice, injurySummary, essentialsWord
 } from "../js/intakeFlow.js";
 import { FIELD_KEYS, sanitizeClientRecord } from "../js/clientRecordSchema.js";
 
 const FULL = {
     primarySport: "running", primaryGoal: "Run a faster race", targetEvent: "Indy Half", targetDate: "2026-12-20",
-    availabilityDays: ["tue", "thu", "sat"], weeklyMileage: 20, strengthExperience: "some", injuries: NONE_INJURIES
+    availabilityDays: ["tue", "thu", "sat"], weeklyMileage: 20, strengthExperience: "some", injuries: NONE_INJURIES,
+    healthFlags: [], healthCheckedAt: 1790000000000
 };
 
-test("six essentials, each using only real profile fields", () => {
-    assert.equal(ESSENTIALS.length, 6);
+test("seven essentials (the health check last), each using only real profile fields", () => {
+    assert.equal(ESSENTIALS.length, 7);
+    assert.equal(ESSENTIALS.at(-1).id, "health");
+    assert.equal(essentialsWord(), "Seven");
     for (const step of ESSENTIALS) for (const key of step.keys) assert.ok(FIELD_KEYS.includes(key), `${step.id}: ${key}`);
-    for (const step of MORE) assert.ok(FIELD_KEYS.includes(step.key), step.id);
-    // Every essential is kept by the sanitizer the save path uses (so no rules change is needed).
+    for (const step of MORE) for (const key of step.keys || [step.key]) assert.ok(FIELD_KEYS.includes(key), `${step.id}: ${key}`);
+    // The six training answers survive the sanitizer the save path uses; the
+    // health check's time is stored beside them (a meta key).
     const saved = sanitizeClientRecord(FULL);
     assert.equal(essentialsDone(saved), 6);
+    assert.ok(answersDone(saved), "the six training answers are there");
+    assert.equal(essentialsDone({ ...saved, healthCheckedAt: 1790000000000 }), 7);
 });
 
 test("essentials count up one by one, and 'none' answers count as answered", () => {
     assert.equal(essentialsDone(null), 0);
     assert.equal(essentialsDone({ primarySport: "running" }), 1);
     assert.equal(essentialsDone({ primarySport: "running", primaryGoal: "  " }), 1, "a blank goal isn't a goal");
-    assert.equal(essentialsDone({ ...FULL, targetEvent: NONE_EVENT, targetDate: "" }), 6);
-    assert.equal(essentialsDone({ ...FULL, targetEvent: "", targetDate: "2027-04-01" }), 6, "a date alone answers it");
-    assert.equal(essentialsDone({ ...FULL, injuries: "" }), 5);
+    assert.equal(essentialsDone({ ...FULL, targetEvent: NONE_EVENT, targetDate: "" }), 7);
+    assert.equal(essentialsDone({ ...FULL, targetEvent: "", targetDate: "2027-04-01" }), 7, "a date alone answers it");
+    assert.equal(essentialsDone({ ...FULL, injuries: "" }), 6);
+    assert.equal(essentialsDone({ ...FULL, healthCheckedAt: undefined }), 6, "the health check needs its own answer");
     assert.ok(allEssentialsDone(FULL));
+    assert.ok(!allEssentialsDone({ ...FULL, healthCheckedAt: undefined }));
+    assert.ok(answersDone({ ...FULL, healthCheckedAt: undefined }), "…but not for the training answers");
 });
 
 test("starting point: runners need miles and strength; others only strength", () => {
-    assert.equal(essentialsDone({ ...FULL, weeklyMileage: null }), 5);
-    assert.equal(essentialsDone({ ...FULL, weeklyMileage: 0 }), 6, "0 miles is an answer");
-    assert.equal(essentialsDone({ ...FULL, primarySport: "soccer", weeklyMileage: null }), 6);
-    assert.equal(essentialsDone({ ...FULL, primarySport: "soccer", strengthExperience: "" }), 5);
+    assert.equal(essentialsDone({ ...FULL, weeklyMileage: null }), 6);
+    assert.equal(essentialsDone({ ...FULL, weeklyMileage: 0 }), 7, "0 miles is an answer");
+    assert.equal(essentialsDone({ ...FULL, primarySport: "soccer", weeklyMileage: null }), 7);
+    assert.equal(essentialsDone({ ...FULL, primarySport: "soccer", strengthExperience: "" }), 6);
     assert.ok(asksMiles("running") && asksMiles("general") && !asksMiles("soccer") && !asksMiles("strength"));
 });
 
@@ -47,12 +57,40 @@ test("where the guide opens, and the order of screens", () => {
     assert.equal(startStep({ primarySport: "running", primaryGoal: "x" }), "event", "picks up where they left off");
     assert.equal(startStep({ ...FULL, availabilityDays: [] }), "days");
     assert.equal(startStep(FULL), "review");
-    assert.deepEqual(["welcome", "sport", "goal", "event", "days", "level", "limits", "more"].map(nextStep),
-        ["sport", "goal", "event", "days", "level", "limits", "more", "birthYear"]);
-    assert.equal(nextStep("notWorked"), "review");
-    assert.equal(prevStep("sport"), "welcome");
-    assert.equal(prevStep("birthYear"), "more");
-    assert.equal(prevStep("welcome"), null);
+    assert.deepEqual(["welcome", "sport", "goal", "event", "days", "level", "limits", "health", "more"].map(id => nextStep(id, FULL)),
+        ["sport", "goal", "event", "days", "level", "limits", "health", "more", "birthYear"]);
+    assert.equal(nextStep("notWorked", FULL), "review");
+    assert.equal(prevStep("sport", FULL), "welcome");
+    assert.equal(prevStep("birthYear", FULL), "more");
+    assert.equal(prevStep("welcome", FULL), null);
+});
+
+test("optional screens fit the person: running or soccer, a guardian only for someone who may be under 18", () => {
+    const ids = r => moreFor(r).map(m => m.id);
+    assert.ok(ids(FULL).includes("running") && !ids(FULL).includes("soccer"));
+    const soccer = { ...FULL, primarySport: "soccer" };
+    assert.ok(ids(soccer).includes("soccer") && !ids(soccer).includes("running") && !ids(soccer).includes("teamOrLevel"));
+    assert.equal(nextStep("phone", soccer), "contacts");
+    assert.equal(nextStep("contacts", soccer), "soccer", "the running screen is skipped");
+    const contacts = MORE.find(m => m.id === "contacts");
+    assert.ok(screenKeys(contacts, { birthYear: 2011 }, 2026).includes("guardianName"));
+    assert.ok(!screenKeys(contacts, { birthYear: 1990 }).includes("guardianName"), "adults aren't asked for a guardian");
+    assert.ok(!screenKeys(contacts, { whoTrains: "child" }).includes("guardianName"), "a parent's account is the guardian");
+    const running = MORE.find(m => m.id === "running");
+    assert.ok(screenKeys(running, { weeklyMileage: 3 }).includes("runStart"));
+    assert.ok(!screenKeys(running, { weeklyMileage: 30 }).includes("runStart"), "no run/walk question for someone running 30 a week");
+});
+
+test("event kinds, longest-run buttons and the injury summary", () => {
+    assert.ok(eventTypesFor("running").includes("half"));
+    assert.deepEqual(eventTypesFor("soccer"), ["tryout", "season", "tournament", "other"]);
+    assert.equal(longestChoice(null), null);
+    assert.equal(longestChoice(2.5), 2);
+    assert.equal(longestChoice(13.1), 16);
+    assert.equal(longestChoice(26.2), 20);
+    const labels = { areas: { knee: "Knee", ankle: "Ankle" }, status: { recovering: "Getting better" } };
+    assert.equal(injurySummary(["knee", "ankle"], "recovering", labels), "Knee, Ankle — getting better");
+    assert.equal(injurySummary([], "", labels), "");
 });
 
 test("'none' answers are recognised, real ones never are", () => {

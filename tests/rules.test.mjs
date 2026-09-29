@@ -445,6 +445,55 @@ test("client profiles: the linked coach can ask for an update, and the client cl
     await assertFails(setDoc(doc(as("stranger"), "clientRecords/client"), ask("stranger", { level: now }), { merge: true }));
 });
 
+test("client profiles: the tap answers, contacts and health check take only their choices", async () => {
+    await seedLinkAndBooking();
+    const mine = doc(as("client"), "clientRecords/client");
+    const taps = {
+        emergencyName: "Pat Client", emergencyPhone: "555-0111", emergencyRelation: "Partner",
+        guardianName: "", guardianPhone: "", runsPerWeek: 4, longestRun: 8.5, yearsRunning: "3-5", runStart: "running",
+        timeOfDay: ["early", "evening"], sessionLength: "60", trainWhere: ["outside", "gym"], equipment: ["dumbbells", "bands"],
+        soccerPosition: "", soccerLevel: "", strongFoot: "", yearsPlaying: "", eventType: "10k",
+        feedbackStyle: "direct", obstacle: "time", injuryAreas: ["ankle"], injuryStatus: "past",
+        healthFlags: ["joints"], healthNote: "Old ankle sprain", healthCheckedAt: Date.now()
+    };
+    await assertSucceeds(setDoc(mine, profile("client", "client", { intakeCompletedAt: serverTimestamp(), ...taps })));
+    // The coach can correct them too.
+    await assertSucceeds(setDoc(doc(as("coach"), "clientRecords/client"),
+        { soccerPosition: "midfield", clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "coach" }, { merge: true }));
+    const bad = extra => setDoc(mine, { clientUid: "client", updatedAt: serverTimestamp(), updatedBy: "client", ...extra }, { merge: true });
+    await assertFails(bad({ runsPerWeek: 9 }));
+    await assertFails(bad({ runsPerWeek: 3.5 }));
+    await assertFails(bad({ longestRun: 250 }));
+    await assertFails(bad({ eventType: "ironman" }));
+    await assertFails(bad({ sessionLength: 60 }));
+    await assertFails(bad({ equipment: ["dumbbells", "yacht"] }));
+    await assertFails(bad({ injuryAreas: "knee" }));
+    await assertFails(bad({ healthFlags: ["heart", "nosy"] }));
+    await assertFails(bad({ healthCheckedAt: "today" }));
+    await assertFails(bad({ healthCheckedAt: Date.now() + 400 * 86400000 }));
+    await assertFails(bad({ emergencyPhone: "5".repeat(31) }));
+    await assertSucceeds(bad({ healthFlags: [], healthCheckedAt: Date.now() })); // "none of these"
+    await assertSucceeds(bad({ runsPerWeek: null, longestRun: null }));
+    // Everything answered at once, with every confirmation and ask: still
+    // within Firestore's 1,000-check limit per save.
+    const now = Date.now();
+    const all = { primaryGoal: now, targetEvent: now, availabilityDays: now, weeklyMileage: now, strengthExperience: now, injuries: now };
+    await assertSucceeds(setDoc(doc(as("coach"), "clientRecords/client"), profile("client", "coach", {
+        ...taps, guardianName: "Jo Parent", guardianPhone: "555-0199", soccerPosition: "gk", soccerLevel: "academy",
+        strongFoot: "both", yearsPlaying: "10+", availabilityDays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+        timeOfDay: ["early", "morning", "midday", "afternoon", "evening"], trainWhere: ["gym", "home", "outside", "trails", "track", "field"],
+        equipment: ["bodyweight", "bands", "dumbbells", "kettlebells", "barbell", "machines", "treadmill"],
+        injuryAreas: ["neck", "shoulder", "back", "hip", "hamstring", "quad", "knee", "shin", "calf", "ankle", "foot", "other"],
+        healthFlags: ["heart", "chest", "dizzy", "chronic", "meds", "joints", "supervised"],
+        confirmedAt: all, askedAt: { goal: now, days: now, level: now, limits: now }, intakeCompletedAt: serverTimestamp()
+    }), { merge: true }));
+    // Still private: an approved coach who isn't linked can't read the health answers.
+    await env.withSecurityRulesDisabled(async ctx => {
+        await setDoc(doc(ctx.firestore(), "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [] });
+    });
+    await assertFails(getDoc(doc(as("coach2"), "clientRecords/client")));
+});
+
 // ---- Private coach notes + client updates ----
 
 const note = (coachUid, clientUid, extra = {}) => ({

@@ -23,7 +23,7 @@
    tests/profileChecks.test.mjs.
 ========================================== */
 
-import { NONE_EVENT, NONE_INJURIES, isNoneAnswer, realAnswer, asksMiles, allEssentialsDone } from "./intakeFlow.js";
+import { NONE_EVENT, NONE_INJURIES, isNoneAnswer, realAnswer, asksMiles, answersDone } from "./intakeFlow.js";
 
 export const DAY_MS = 86400000;
 export const WEEK_MS = 7 * DAY_MS;
@@ -194,7 +194,7 @@ export function profileChecks(record, { today, now, pain = [], suggestion = null
 
     // Everything else waits for the essentials (the "Finish your profile"
     // prompt on Today handles those).
-    if (!allEssentialsDone(r)) return checks;
+    if (!answersDone(r)) return checks;
 
     // ---- the race date has passed ----
     if (/^\d{4}-\d{2}-\d{2}$/.test(r.targetDate || "") && r.targetDate < today) {

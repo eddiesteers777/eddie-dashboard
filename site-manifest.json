@@ -111,6 +111,7 @@
     "js/habitIconPicker.js",
     "js/habitIconSet.js",
     "js/habits.js",
+    "js/healthReviewed.js",
     "js/icons.js",
     "js/inquiries.js",
     "js/install.js",

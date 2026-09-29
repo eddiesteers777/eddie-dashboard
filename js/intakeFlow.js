@@ -33,28 +33,55 @@ const RUNNERS = ["running", "general", ""];
 // Does this sport ask for weekly miles?
 export const asksMiles = sport => RUNNERS.includes(sport || "");
 
-// The six essentials, in order. done(record) reads only the record.
+// The seven essentials, in order. done(record) reads only the record. The
+// health check (added 2026-09-29) is last: "None of these" is one tap.
 export const ESSENTIALS = [
     { id: "sport", title: "What are you training for mostly?", keys: ["primarySport"], done: r => filled(r.primarySport) },
     { id: "goal", title: "What's the main thing you want to achieve?", keys: ["primaryGoal"], done: r => filled(String(r.primaryGoal || "").trim()) },
     { id: "event", title: "Aiming for a race, tryout or season?", keys: ["targetEvent", "targetDate"], done: r => filled(String(r.targetEvent || "").trim()) || filled(r.targetDate) },
     { id: "days", title: "Which days can you usually train?", keys: ["availabilityDays"], done: r => filled(r.availabilityDays) },
     { id: "level", title: "Where are you starting from?", keys: ["weeklyMileage", "strengthExperience"], done: r => (asksMiles(r.primarySport) ? filled(r.weeklyMileage) : true) && filled(r.strengthExperience) },
-    { id: "limits", title: "Anything that limits your training?", keys: ["injuries"], done: r => filled(String(r.injuries || "").trim()) }
+    { id: "limits", title: "Anything that limits your training?", keys: ["injuries", "injuryAreas", "injuryStatus"], done: r => filled(String(r.injuries || "").trim()) },
+    { id: "health", title: "A quick health check", keys: ["healthFlags", "healthNote"], done: r => Number(r.healthCheckedAt) > 0 }
 ];
 
-// Optional questions, one per screen, after the essentials.
+const isChild = r => r?.whoTrains === "child";
+const underEighteen = (r, year = new Date().getFullYear()) => !r?.birthYear || year - Number(r.birthYear) < 18;
+
+// Optional questions after the essentials: one field per screen (`key`), or
+// a few taps together (`keys`, with a title). `show(record)` hides screens
+// that don't apply (soccer questions for a runner...).
 export const MORE = [
     { id: "birthYear", key: "birthYear" },
     { id: "phone", key: "phone" },
-    { id: "teamOrLevel", key: "teamOrLevel" },
+    { id: "contacts", keys: ["emergencyName", "emergencyPhone", "emergencyRelation", "guardianName", "guardianPhone"],
+        title: "Who should your coach call in an emergency?", titleChild: "Who should your coach call in an emergency, besides you?" },
+    { id: "running", keys: ["runsPerWeek", "longestRun", "yearsRunning", "runStart"], title: "About your running", titleChild: "About their running",
+        show: r => asksMiles(r?.primarySport) },
+    { id: "soccer", keys: ["soccerPosition", "soccerLevel", "strongFoot", "yearsPlaying"], title: "About your soccer", titleChild: "About their soccer",
+        show: r => r?.primarySport === "soccer" },
+    { id: "setup", keys: ["timeOfDay", "sessionLength", "trainWhere", "equipment"], title: "When and where you train", titleChild: "When and where they train" },
+    { id: "teamOrLevel", key: "teamOrLevel", show: r => r?.primarySport !== "soccer" },
     { id: "currentTraining", key: "currentTraining" },
     { id: "availabilityNotes", key: "availabilityNotes" },
     { id: "secondaryGoals", key: "secondaryGoals" },
     { id: "coachingWants", key: "coachingWants" },
+    { id: "style", keys: ["feedbackStyle", "obstacle"], title: "How you like to be coached", titleChild: "How they like to be coached" },
     { id: "workedBefore", key: "workedBefore" },
     { id: "notWorked", key: "notWorked" }
 ];
+
+// Which keys a screen actually asks, for this record (the guardian only for
+// someone training themselves who may be under 18; "how long can you run
+// non-stop" only for low-mileage runners).
+export function screenKeys(item, record = {}) {
+    let keys = item.keys || [item.key];
+    if (item.id === "contacts" && (isChild(record) || !underEighteen(record))) keys = keys.filter(k => !k.startsWith("guardian"));
+    if (item.id === "running" && Number(record.weeklyMileage) > 10) keys = keys.filter(k => k !== "runStart");
+    return keys;
+}
+
+const shows = (item, record) => !item.show || item.show(record || {});
 
 export function essentialsDone(record) {
     const r = record || {};
@@ -62,6 +89,11 @@ export function essentialsDone(record) {
 }
 
 export const allEssentialsDone = record => essentialsDone(record) === ESSENTIALS.length;
+
+// The six training answers (every essential but the health check): what the
+// "still right?" checks and the coach's freshness line work from, so an
+// unanswered health check doesn't silence them.
+export const answersDone = record => ESSENTIALS.filter(e => e.id !== "health").every(e => e.done(record || {}));
 
 // Where the guide opens: the welcome screen for someone new, else the first
 // essential not answered yet, else the review.
@@ -73,17 +105,55 @@ export function startStep(record) {
 }
 
 // The screen after `id` (essentials, then the "tell Eddie more?" offer, then
-// the optional ones, then the review).
-export function nextStep(id) {
-    const order = ["welcome", ...ESSENTIALS.map(s => s.id), "more", ...MORE.map(s => s.id), "review"];
-    const i = order.indexOf(id);
-    return i < 0 || i >= order.length - 1 ? "review" : order[i + 1];
+// the optional ones that apply, then the review).
+function order(record) {
+    return ["welcome", ...ESSENTIALS.map(s => s.id), "more", ...MORE.filter(m => shows(m, record)).map(s => s.id)];
 }
 
-export function prevStep(id) {
-    const order = ["welcome", ...ESSENTIALS.map(s => s.id), "more", ...MORE.map(s => s.id)];
-    const i = order.indexOf(id);
-    return i <= 0 ? null : order[i - 1];
+export function nextStep(id, record) {
+    const list = [...order(record), "review"];
+    const i = list.indexOf(id);
+    return i < 0 || i >= list.length - 1 ? "review" : list[i + 1];
+}
+
+export function prevStep(id, record) {
+    const list = order(record);
+    const i = list.indexOf(id);
+    return i <= 0 ? null : list[i - 1];
+}
+
+// Optional screens that apply to this record (for "3 of 12").
+export const moreFor = record => MORE.filter(m => shows(m, record));
+
+// "Seven quick questions" for the welcome screen.
+export const essentialsWord = () => ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"][ESSENTIALS.length] || String(ESSENTIALS.length);
+
+// Event kinds to tap, by sport.
+export function eventTypesFor(sport) {
+    if (sport === "soccer") return ["tryout", "season", "tournament", "other"];
+    if (sport === "strength") return ["season", "tournament", "5k", "other"];
+    return ["5k", "10k", "half", "marathon", "ultra", "trail", "triathlon", "other"];
+}
+
+// Longest-run buttons: what they tap -> miles stored.
+export const LONGEST_CHOICES = [
+    { label: "Under 3 mi", value: 2 }, { label: "3–5", value: 4 }, { label: "6–9", value: 8 },
+    { label: "10–13", value: 12 }, { label: "14–19", value: 16 }, { label: "20+", value: 20 }
+];
+export function longestChoice(miles) {
+    if (miles === null || miles === undefined || miles === "") return null;
+    const n = Number(miles);
+    return n < 3 ? 2 : n <= 5 ? 4 : n <= 9 ? 8 : n <= 13 ? 12 : n <= 19 ? 16 : 20;
+}
+
+// Emergency contact relation, one tap (stored as the words).
+export const RELATIONS = ["Parent", "Spouse / partner", "Sibling", "Friend", "Other family"];
+
+// "Knee, ankle — getting better": the injury text when only taps were given.
+export function injurySummary(areas = [], status = "", labels = {}) {
+    const where = areas.map(a => labels.areas?.[a] || a).join(", ");
+    const how = labels.status?.[status] || "";
+    return [where, how.toLowerCase()].filter(Boolean).join(" — ");
 }
 
 // Tap-to-fill goals for the main sport (they can edit the text after).

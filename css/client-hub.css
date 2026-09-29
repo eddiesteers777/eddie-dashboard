@@ -842,3 +842,10 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 @media (max-width:600px){
     .hub-fresh-label{ min-width:0; flex:0 0 100%; }
 }
+
+/* Health check "yes" (profile step 2): same amber box as injuries, with a
+   "Mark as reviewed" that clears it from Who needs you today. */
+.hub-health span{ display:block; }
+.hub-health-btn{ display:block; margin-top:8px; }
+.hub-health-done{ display:block; margin-top:6px; font-style:normal; font-size:12.5px; color:var(--text-secondary); }
+.hub-injury-where{ color:var(--text-secondary); }

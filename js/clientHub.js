@@ -26,9 +26,15 @@ import { SESSION_TYPES } from "./scheduling.js";
 import { reviewCheckin } from "./checkins.js";
 import { sendCheckinReviewedEmail, sendProfileAskEmail } from "./emailNotify.js";
 import { ASKS, openAsks, answerFreshness, ageText } from "./profileChecks.js";
-import { allEssentialsDone, essentialsDone, ESSENTIALS } from "./intakeFlow.js";
+import { answersDone, essentialsDone, ESSENTIALS, injurySummary } from "./intakeFlow.js";
 import { icon } from "./icons.js";
-import { FIELDS, displayValue, athleteDisplayName } from "./clientRecordSchema.js";
+import { FIELDS, displayValue, athleteDisplayName, healthYeses, BODY_AREAS, INJURY_STATUS } from "./clientRecordSchema.js";
+
+const INJURY_LABELS = {
+    areas: Object.fromEntries(BODY_AREAS.map(o => [o.value, o.label])),
+    status: Object.fromEntries(INJURY_STATUS.map(o => [o.value, o.label]))
+};
+import { healthReviewed, markHealthReviewed } from "./healthReviewed.js";
 import { realAnswer } from "./intakeFlow.js";
 import {
     addPrivateNote, updatePrivateNote, deletePrivateNote,
@@ -119,6 +125,15 @@ function selectTab(name) {
 
 document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
 document.addEventListener("click", event => {
+    if (event.target.closest('[data-act="health-reviewed"]')) {
+        markHealthReviewed(record.link.clientUid, record.record?.healthCheckedAt);
+        summarize();
+        renderAttention();
+        renderAbout();
+        import("./icons.js").then(m => m.hydrate());
+        toast("Marked as reviewed. It'll show again if their answers change.");
+        return;
+    }
     const go = event.target.closest("[data-go-tab]");
     if (!go) return;
     event.preventDefault();
@@ -214,17 +229,38 @@ function renderAbout() {
     }
     const f = key => FIELDS.find(x => x.key === key);
     const val = key => displayValue(f(key), rec[key]);
+    const join = (...parts) => parts.filter(Boolean).join(" · ");
+    const contact = (name, relation, phone) => name ? join(relation ? `${name} (${relation})` : name, phone) : "";
     const rows = [
-        ["Aiming for", [rec.targetEvent, val("targetDate")].filter(Boolean).join(", ")],
+        ["Aiming for", join([realAnswer(rec.targetEvent), val("targetDate")].filter(Boolean).join(", "), rec.eventType && realAnswer(rec.targetEvent) !== val("eventType") ? val("eventType") : "")],
         ["Injuries / limits", rec.injuries && !realAnswer(rec.injuries) ? rec.injuries : ""],
-        ["Sport", [val("primarySport"), rec.teamOrLevel].filter(Boolean).join(" · ")],
-        ["Training now", [rec.currentTraining, val("weeklyMileage")].filter(Boolean).join(" · ")],
-        ["Available", [val("availabilityDays"), rec.availabilityNotes].filter(Boolean).join(" · ")],
+        ["Sport", join(val("primarySport"), rec.teamOrLevel)],
+        ["Training now", join(rec.currentTraining, val("weeklyMileage"))],
+        ["Running", join(rec.runsPerWeek != null ? `${rec.runsPerWeek} runs a week` : "", rec.longestRun != null ? `longest ${rec.longestRun} mi` : "", rec.yearsRunning ? `running ${val("yearsRunning").toLowerCase()}` : "", rec.runStart && rec.runStart !== "running" ? `runs non-stop: ${val("runStart").toLowerCase()}` : "")],
+        ["Soccer", join(val("soccerPosition"), val("soccerLevel"), rec.strongFoot ? `${val("strongFoot").toLowerCase()} foot` : "", rec.yearsPlaying ? `playing ${val("yearsPlaying").toLowerCase()}` : "")],
+        ["Available", join(val("availabilityDays"), val("timeOfDay"), rec.sessionLength ? `${val("sessionLength")} a session` : "", rec.availabilityNotes)],
+        ["Trains", join(val("trainWhere"), val("equipment"))],
+        ["Coaching style", join(val("feedbackStyle"), rec.obstacle ? `gets in the way: ${val("obstacle").toLowerCase()}` : "")],
+        ["Emergency contact", contact(rec.emergencyName, rec.emergencyRelation, rec.emergencyPhone)],
+        ["Parent / guardian", rec.whoTrains === "child" ? "" : contact(rec.guardianName, "", rec.guardianPhone)],
+        ["Health check", Number(rec.healthCheckedAt) > 0 ? (healthYeses(rec).length ? "" : "No to all") : "Not answered yet"],
         ["Other goals", rec.secondaryGoals],
         ["Wants from a coach", rec.coachingWants],
         ["What's worked", rec.workedBefore],
         ["What hasn't", rec.notWorked]
     ].filter(([, v]) => v);
+    const yeses = healthYeses(rec);
+    const reviewed = Number(healthReviewed()[record.link.clientUid]) >= Number(rec.healthCheckedAt);
+    const health = yeses.length ? `
+            <div class="hub-injury hub-health">${icon("alertTriangle")}<span>
+                <strong>Health check:</strong> said yes to ${esc(yeses.join(", ").toLowerCase())}.${rec.healthNote ? ` “${esc(rec.healthNote)}”` : ""}
+                Check with them (and their doctor) before training gets harder.
+                ${reviewed ? `<em class="hub-health-done">Reviewed</em>` : `<button type="button" class="clients-btn-secondary hub-health-btn" data-act="health-reviewed">Mark as reviewed</button>`}
+            </span></div>` : "";
+    // Where / how it is, unless the injury text is already just those taps.
+    const tapped = join(val("injuryAreas"), val("injuryStatus").toLowerCase());
+    const where = tapped && rec.injuries !== injurySummary(rec.injuryAreas || [], rec.injuryStatus || "", INJURY_LABELS)
+        ? ` <span class="hub-injury-where">(${esc(tapped)})</span>` : "";
     $("hubAbout").innerHTML = `
         <div class="clients-card hub-about">
             <div class="hub-about-head">
@@ -232,7 +268,8 @@ function renderAbout() {
                 <button type="button" class="clients-btn-secondary" data-go-tab="profile">Full profile</button>
             </div>
             ${freshLine(rec)}
-            ${realAnswer(rec.injuries) ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Injuries / limits:</strong> ${esc(rec.injuries)}</span></div>` : ""}
+            ${health}
+            ${realAnswer(rec.injuries) ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Injuries / limits:</strong> ${esc(rec.injuries)}${where}</span></div>` : ""}
             ${rows.length ? `<dl class="hub-facts">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
         </div>`;
 }
@@ -250,9 +287,9 @@ const anyAnswer = rec => ESSENTIALS.some(e => e.done(rec || {}));
 function freshLine(rec) {
     const asks = openAsks(rec || {});
     const since = at => ageText(Math.floor((Date.now() - at) / 86400000));
-    if (!rec || !allEssentialsDone(rec)) {
-        const n = essentialsDone(rec);
-        const text = n ? `Profile: ${n} of ${ESSENTIALS.length} essentials answered` : "Hasn't filled in their profile yet";
+    if (!rec || !answersDone(rec)) {
+        const n = ESSENTIALS.filter(e => e.id !== "health" && e.done(rec || {})).length;
+        const text = n ? `Profile: ${n} of ${ESSENTIALS.length - 1} essentials answered` : "Hasn't filled in their profile yet";
         return `<p class="hub-fresh-line is-stale">${icon("clock")}<span>${asks.length ? `${text} · you asked ${since(asks[0].at)} — waiting on ${esc(firstName())}` : `<strong>${text}</strong>`}</span>
             ${asks.length ? "" : `<button type="button" class="hub-link" data-act="ask-update">Ask ${esc(firstName())} to ${n ? "finish it" : "fill it in"}</button>`}</p>`;
     }
@@ -1018,7 +1055,7 @@ function summarize() {
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [] }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0 }),
         timeline: buildTimeline(record)
     };
 }

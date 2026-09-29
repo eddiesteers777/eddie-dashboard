@@ -18,9 +18,12 @@
 
 import {
     ESSENTIALS, MORE, NONE_EVENT, NONE_INJURIES, essentialsDone, startStep, nextStep, prevStep,
-    goalIdeas, MILES_CHOICES, milesChoice, COACHING_WANTS, togglePhrase, hasPhrase, DAY_PRESETS, asksMiles, isNoneAnswer
+    goalIdeas, MILES_CHOICES, milesChoice, COACHING_WANTS, togglePhrase, hasPhrase, DAY_PRESETS, asksMiles, isNoneAnswer,
+    eventTypesFor, LONGEST_CHOICES, longestChoice, RELATIONS, injurySummary, screenKeys, moreFor, essentialsWord
 } from "./intakeFlow.js";
-import { FIELDS, SECTIONS, DAYS, SPORTS, STRENGTH_LEVELS, displayValue } from "./clientRecordSchema.js";
+import {
+    FIELDS, SECTIONS, DAYS, SPORTS, STRENGTH_LEVELS, EVENT_TYPES, BODY_AREAS, INJURY_STATUS, HEALTH_QUESTIONS, displayValue
+} from "./clientRecordSchema.js";
 import { saveClientRecord } from "./clientRecords.js";
 import { settleWrite } from "./offlineWrite.js";
 import { TRACKED, nextConfirmedAt, asksSettledBy } from "./profileChecks.js";
@@ -34,6 +37,13 @@ const SPORT_ICONS = { running: "activity", strength: "dumbbell", soccer: "target
 
 // Phrasing for "me" vs "my child".
 const say = (child, self, other) => (child ? other : self);
+const labelIn = (list, value) => list.find(o => o.value === value)?.label || "";
+const LABELS = {
+    areas: Object.fromEntries(BODY_AREAS.map(o => [o.value, o.label])),
+    status: Object.fromEntries(INJURY_STATUS.map(o => [o.value, o.label]))
+};
+// A MORE screen that applies to someone of this sport / age.
+const moreItem = id => MORE.find(m => m.id === id);
 
 export function mountIntakeGuide(container, { clientUid, record = null, prefill = {}, suggestion = null, onFullForm, ask = [], backTo = "index.html" } = {}) {
     // What's saved (the record) plus what's being answered on this device.
@@ -116,7 +126,7 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
             returnTo = null;
             return go(back);
         }
-        go(nextStep(step));
+        go(nextStep(step, answers));
     }
 
     window.addEventListener("popstate", event => {
@@ -137,11 +147,12 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
                 <div class="ig-bar"><span style="width:${Math.round((i / ESSENTIALS.length) * 100)}%"></span></div>
             </div>`;
         }
-        const j = MORE.findIndex(s => s.id === step);
+        const list = moreFor(answers);
+        const j = list.findIndex(s => s.id === step);
         if (j >= 0) {
             return `<div class="ig-progress">
-                <div class="ig-progress-text">More about ${say(child(), "you", "them")} · ${j + 1} of ${MORE.length} · all optional</div>
-                <div class="ig-bar is-more"><span style="width:${Math.round((j / MORE.length) * 100)}%"></span></div>
+                <div class="ig-progress-text">More about ${say(child(), "you", "them")} · ${j + 1} of ${list.length} · all optional</div>
+                <div class="ig-bar is-more"><span style="width:${Math.round((j / list.length) * 100)}%"></span></div>
             </div>`;
         }
         return "";
@@ -151,7 +162,7 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         `<button type="button" class="ig-chip${big ? " is-big" : ""}${on ? " is-on" : ""}" aria-pressed="${on}" ${attrs}>${iconName ? icon(iconName) : ""}<span>${esc(label)}</span></button>`;
 
     function screen({ title, sub = "", body = "", next = "Next", canNext = true, skip = false, back = true, nextId = "next" }) {
-        const prev = askSteps.length ? askSteps[askSteps.indexOf(step) - 1] : (returnTo ? returnTo : prevStep(step));
+        const prev = askSteps.length ? askSteps[askSteps.indexOf(step) - 1] : (returnTo ? returnTo : prevStep(step, answers));
         return `
             <div class="ig-card">
                 ${progressHtml()}
@@ -175,7 +186,7 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
             const nameKey = who === "child" ? "athleteName" : "preferredName";
             return screen({
                 title: "Let's set up your profile",
-                sub: "Six quick questions so your coach can build training around you. Mostly taps, about a minute. Only you and your coach see this.",
+                sub: `${essentialsWord()} quick questions so your coach can build training around you. Mostly taps, about a minute. Only you and your coach see this.`,
                 back: false,
                 next: "Let's go",
                 body: `
@@ -214,16 +225,20 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         },
 
         event() {
-            const event = isNoneAnswer(answers.targetEvent) ? "" : (answers.targetEvent || "");
+            const typeLabel = labelIn(EVENT_TYPES, answers.eventType);
+            const event = isNoneAnswer(answers.targetEvent) || answers.targetEvent === typeLabel ? "" : (answers.targetEvent || "");
+            draft.eventType ??= answers.targetEvent === NONE_EVENT ? "" : (answers.eventType || "");
             return screen({
                 title: say(child(), "Aiming for a race, tryout or season?", "Are they aiming for a race, tryout or season?"),
                 sub: "It helps your coach time the plan. If there's nothing yet, that's fine.",
-                canNext: Boolean(event.trim() || answers.targetDate),
+                canNext: Boolean(event.trim() || answers.targetDate || draft.eventType),
                 skip: true,
                 body: `
                     ${chip(NONE_EVENT, { on: answers.targetEvent === NONE_EVENT, big: true, attrs: 'data-none="event"' })}
                     <div class="ig-or">or</div>
-                    <label class="ig-q" for="igEvent">What is it?</label>
+                    <div class="ig-q">What kind?</div>
+                    <div class="ig-chips">${eventTypesFor(answers.primarySport).map(v => chip(labelIn(EVENT_TYPES, v), { on: draft.eventType === v, attrs: `data-etype="${v}"` })).join("")}</div>
+                    <label class="ig-q" for="igEvent">What's it called? <span class="ig-light">(optional)</span></label>
                     <input id="igEvent" class="ig-input" type="text" maxlength="120" placeholder="e.g. Indy Half Marathon, fall tryouts" value="${esc(event)}">
                     <label class="ig-q" for="igDate">When is it? <span class="ig-light">(a rough date is fine)</span></label>
                     <input id="igDate" class="ig-input ig-short" type="date" value="${esc(answers.targetDate || "")}">`
@@ -268,17 +283,58 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         },
 
         limits() {
-            const text = isNoneAnswer(answers.injuries) ? "" : (answers.injuries || "");
+            const none = answers.injuries === NONE_INJURIES;
+            draft.areas ??= none ? [] : [...(answers.injuryAreas || [])];
+            draft.status ??= none ? "" : (answers.injuryStatus || "");
+            const summary = injurySummary(answers.injuryAreas || [], answers.injuryStatus || "", LABELS);
+            const text = isNoneAnswer(answers.injuries) || answers.injuries === summary ? "" : (answers.injuries || "");
             return screen({
                 title: say(child(), "Anything that limits your training?", "Anything that limits their training?"),
-                sub: "An injury, a niggle, a health thing, or “no running on Sundays”. Only you and your coach see this.",
-                canNext: Boolean(text.trim()),
+                sub: "An injury, a niggle, or “no running on Sundays”. Only you and your coach see this.",
+                canNext: Boolean(text.trim() || draft.areas.length),
+                skip: true,
+                body: `
+                    ${chip(NONE_INJURIES, { on: none, big: true, attrs: 'data-none="injuries"' })}
+                    <div class="ig-or">or</div>
+                    <div class="ig-q">Where? <span class="ig-light">(tap any)</span></div>
+                    <div class="ig-chips">${BODY_AREAS.map(o => chip(o.label, { on: draft.areas.includes(o.value), attrs: `data-area="${o.value}"` })).join("")}</div>
+                    <div class="ig-q">How is it now?</div>
+                    <div class="ig-chips">${INJURY_STATUS.map(o => chip(o.label, { on: draft.status === o.value, attrs: `data-istatus="${o.value}"` })).join("")}</div>
+                    <label class="ig-q" for="igText">Anything else about it? <span class="ig-light">(optional)</span></label>
+                    <textarea id="igText" class="ig-input" rows="2" maxlength="1000" placeholder="e.g. Sore on downhills, fine on flat runs">${esc(text)}</textarea>`
+            });
+        },
+
+        health() {
+            // yes / no per question; answered before = what was saved then.
+            if (!draft.health) {
+                draft.health = {};
+                if (Number(answers.healthCheckedAt) > 0) for (const q of HEALTH_QUESTIONS) draft.health[q.value] = (answers.healthFlags || []).includes(q.value) ? "yes" : "no";
+            }
+            const yes = HEALTH_QUESTIONS.filter(q => draft.health[q.value] === "yes");
+            const allNo = Number(answers.healthCheckedAt) > 0 && !(answers.healthFlags || []).length;
+            return screen({
+                title: say(child(), "A quick health check", "A quick health check for them"),
+                sub: "The same few yes/no questions most coaches and gyms ask before training starts. Only you and your coach see the answers.",
+                canNext: HEALTH_QUESTIONS.every(q => draft.health[q.value]),
                 next: "Save",
                 skip: true,
                 body: `
-                    ${chip(NONE_INJURIES, { on: answers.injuries === NONE_INJURIES, big: true, attrs: 'data-none="injuries"' })}
-                    <div class="ig-or">or</div>
-                    <textarea id="igText" class="ig-input" rows="3" maxlength="1000" placeholder="e.g. Left knee gets sore on downhills">${esc(text)}</textarea>`
+                    ${chip("No to all of these", { on: allNo, big: true, attrs: 'data-none="health"' })}
+                    <div class="ig-or">or answer each</div>
+                    <div class="ig-hq-list">${HEALTH_QUESTIONS.map(q => `
+                        <div class="ig-hq">
+                            <p>${esc(child() ? q.askChild : q.ask)}</p>
+                            <div class="ig-chips ig-yn">
+                                ${chip("Yes", { on: draft.health[q.value] === "yes", attrs: `data-hq="${q.value}" data-yn="yes"` })}
+                                ${chip("No", { on: draft.health[q.value] === "no", attrs: `data-hq="${q.value}" data-yn="no"` })}
+                            </div>
+                        </div>`).join("")}</div>
+                    <div class="ig-health-yes"${yes.length ? "" : " hidden"}>
+                        <p class="ig-hint">${icon("alertTriangle")} Because of that yes, check with ${say(child(), "your", "their")} doctor before training gets harder. Your coach will see it and can adjust the plan.</p>
+                        <label class="ig-q" for="igText">Anything your coach should know about it? <span class="ig-light">(optional)</span></label>
+                        <textarea id="igText" class="ig-input" rows="2" maxlength="500">${esc(answers.healthNote || "")}</textarea>
+                    </div>`
             });
         },
 
@@ -301,9 +357,9 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
             const rows = SECTIONS.map(section => {
                 const items = section.fields
                     .filter(f => !f.when || f.when === (answers.whoTrains === "child" ? "child" : "self"))
-                    .filter(f => f.key !== "whoTrains")
+                    .filter(f => f.key !== "whoTrains" && applies(f.key))
                     .map(f => {
-                        const value = displayValue(f, saved?.[f.key]);
+                        const value = f.key === "healthFlags" ? healthText(saved) : displayValue(f, saved?.[f.key]);
                         const stepId = stepFor(f.key);
                         // Flag only what an unanswered essential still needs.
                         const owner = ESSENTIALS.find(e => e.keys.includes(f.key));
@@ -314,6 +370,7 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
                             ${stepId ? `<button type="button" class="ig-link" data-change="${stepId}">${value ? "Change" : "Answer"}</button>` : ""}
                         </div>`;
                     }).join("");
+                if (!items) return "";
                 return `<section class="ig-review-section"><h3>${esc(section.title === "About you" && child() ? "About them" : section.title)}</h3>${items}</section>`;
             }).join("");
             return `
@@ -338,8 +395,46 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         }
     };
 
+    // A few taps together (contacts, running, soccer, setup, style).
+    function tapGroup(field) {
+        const value = draft.values[field.key];
+        const ask = child() && field.askChild ? field.askChild : field.ask;
+        const q = `<div class="ig-q">${esc(ask.replace(/ \((runners|soccer players)\)$/, ""))}</div>`;
+        switch (field.type) {
+            case "select":
+                return q + `<div class="ig-chips">${field.options.map(o => chip(o.label, { on: value === o.value, attrs: `data-pk="${field.key}" data-value="${o.value}"` })).join("")}</div>`;
+            case "multi":
+                return q + `<div class="ig-chips">${field.options.map(o => chip(o.label, { on: (value || []).includes(o.value), attrs: `data-mk="${field.key}" data-value="${o.value}"` })).join("")}</div>`;
+            case "count":
+                return q + `<div class="ig-chips">${Array.from({ length: field.max + 1 }, (_, n) => chip(String(n), { on: value === n, attrs: `data-pk="${field.key}" data-value="${n}" data-num="1"` })).join("")}</div>`;
+            case "miles":
+                return q + `<div class="ig-chips">${LONGEST_CHOICES.map(c => chip(c.label, { on: longestChoice(value) === c.value, attrs: `data-pk="${field.key}" data-value="${c.value}" data-num="1"` })).join("")}</div>`;
+            case "tel":
+                return `<label class="ig-q" for="ig-${field.key}">${esc(ask)}</label><input id="ig-${field.key}" data-key="${field.key}" class="ig-input" type="tel" autocomplete="off" maxlength="${field.max}" value="${esc(value ?? "")}">`;
+            default: {
+                const fill = field.key === "emergencyRelation"
+                    ? `<div class="ig-chips">${RELATIONS.map(r => chip(r, { on: value === r, attrs: `data-fill="${field.key}" data-value="${esc(r)}"` })).join("")}</div>` : "";
+                return `<label class="ig-q" for="ig-${field.key}">${esc(ask)}</label>${fill}<input id="ig-${field.key}" data-key="${field.key}" class="ig-input" type="text" autocomplete="off" maxlength="${field.max}" value="${esc(value ?? "")}">`;
+            }
+        }
+    }
+
+    for (const item of MORE.filter(m => m.keys)) {
+        SCREENS[item.id] = () => {
+            const keys = screenKeys(item, answers);
+            draft.values ??= Object.fromEntries(keys.map(k => [k, answers[k] ?? (fieldOf(k).type === "multi" ? [] : fieldOf(k).type === "count" || fieldOf(k).type === "miles" ? null : "")]));
+            return screen({
+                title: child() && item.titleChild ? item.titleChild : item.title,
+                sub: item.id === "contacts" ? "Only your coach sees this. It's for the rare day something goes wrong at a session." : "Tap what fits. All optional.",
+                body: keys.map(k => tapGroup(fieldOf(k))).join(""),
+                skip: true,
+                next: returnTo ? "Save" : "Next"
+            });
+        };
+    }
+
     // The optional one-field screens.
-    for (const item of MORE) {
+    for (const item of MORE.filter(m => m.key)) {
         SCREENS[item.id] = () => {
             const field = fieldOf(item.key);
             const value = answers[item.key] ?? "";
@@ -360,10 +455,24 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         };
     }
 
+    // Whether a field is asked of this person (soccer questions for soccer...).
+    function applies(key) {
+        const item = MORE.find(m => m.key === key || m.keys?.includes(key));
+        if (!item) return !(key === "healthNote" && !(saved?.healthFlags || []).length);
+        return (!item.show || item.show(answers)) && screenKeys(item, answers).includes(key);
+    }
+
+    function healthText(record) {
+        if (!(Number(record?.healthCheckedAt) > 0)) return "";
+        const yes = (record.healthFlags || []).map(v => labelIn(HEALTH_QUESTIONS, v));
+        return yes.length ? `Yes: ${yes.join(", ")}` : "No to all";
+    }
+
     function stepFor(key) {
         const essential = ESSENTIALS.find(e => e.keys.includes(key));
         if (essential) return essential.id;
-        if (MORE.some(m => m.key === key)) return MORE.find(m => m.key === key).id;
+        const more = MORE.find(m => m.key === key || m.keys?.includes(key));
+        if (more) return more.id;
         if (["preferredName", "athleteName", "whoTrains"].includes(key)) return "welcome";
         return null;
     }
@@ -386,7 +495,12 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
             }
             case "sport": save({ primarySport: answers.primarySport || prefill.primarySport || "" }); break;
             case "goal": save({ primaryGoal: textValue() }); break;
-            case "event": save({ targetEvent: q("#igEvent").value.trim(), targetDate: q("#igDate").value }); break;
+            case "event": {
+                const name = q("#igEvent").value.trim();
+                const type = draft.eventType || "";
+                save({ eventType: type, targetEvent: name || (type && type !== "other" ? labelIn(EVENT_TYPES, type) : ""), targetDate: q("#igDate").value });
+                break;
+            }
             case "days": save({ availabilityDays: draft.days || [] }); break;
             case "level": {
                 const exact = q("#igMiles")?.value;
@@ -395,10 +509,24 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
                 save(values);
                 break;
             }
-            case "limits": save({ injuries: textValue() }); break;
+            case "limits": {
+                const areas = draft.areas || [];
+                const status = areas.length ? (draft.status || "") : "";
+                save({ injuries: textValue() || injurySummary(areas, status, LABELS), injuryAreas: areas, injuryStatus: status });
+                break;
+            }
+            case "health": {
+                const flags = HEALTH_QUESTIONS.map(x => x.value).filter(v => draft.health?.[v] === "yes");
+                save({ healthFlags: flags, healthNote: flags.length ? textValue() : "", healthCheckedAt: Date.now() });
+                break;
+            }
             default: {
                 const item = MORE.find(m => m.id === step);
-                if (item) save({ [item.key]: textValue() });
+                if (item?.keys) {
+                    const values = { ...draft.values };
+                    container.querySelectorAll("[data-key]").forEach(el => { values[el.dataset.key] = el.value.trim(); });
+                    save(values);
+                } else if (item) save({ [item.key]: textValue() });
             }
         }
     }
@@ -407,8 +535,10 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         const next = q('[data-act="next"]');
         if (!next) return;
         let ok = true;
-        if (step === "goal" || step === "limits") ok = Boolean(textValue());
-        if (step === "event") ok = Boolean(q("#igEvent").value.trim() || q("#igDate").value);
+        if (step === "goal") ok = Boolean(textValue());
+        if (step === "limits") ok = Boolean(textValue() || (draft.areas || []).length);
+        if (step === "health") ok = HEALTH_QUESTIONS.every(x => draft.health?.[x.value]);
+        if (step === "event") ok = Boolean(q("#igEvent").value.trim() || q("#igDate").value || draft.eventType);
         if (step === "days") ok = (draft.days || []).length > 0;
         if (step === "level") {
             const exact = q("#igMiles")?.value;
@@ -461,12 +591,64 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
             return advance();
         }
         if (d.none === "event") {
-            save({ targetEvent: NONE_EVENT, targetDate: "" });
+            save({ targetEvent: NONE_EVENT, targetDate: "", eventType: "" });
             return advance();
         }
         if (d.none === "injuries") {
-            save({ injuries: NONE_INJURIES });
+            save({ injuries: NONE_INJURIES, injuryAreas: [], injuryStatus: "" });
             return advance();
+        }
+        if (d.none === "health") {
+            save({ healthFlags: [], healthNote: "", healthCheckedAt: Date.now() });
+            return advance();
+        }
+        const pickOne = (sel, el) => container.querySelectorAll(sel).forEach(b => { const on = b === el && !b.classList.contains("is-on"); b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on); });
+        if (d.etype) {
+            draft.eventType = draft.eventType === d.etype ? "" : d.etype;
+            pickOne("[data-etype]", t);
+            container.querySelectorAll("[data-none]").forEach(b => { b.classList.remove("is-on"); b.setAttribute("aria-pressed", "false"); });
+            return refreshNext();
+        }
+        if (d.area) {
+            const set = new Set(draft.areas || []);
+            set.has(d.area) ? set.delete(d.area) : set.add(d.area);
+            draft.areas = BODY_AREAS.map(o => o.value).filter(v => set.has(v));
+            t.classList.toggle("is-on", set.has(d.area));
+            t.setAttribute("aria-pressed", set.has(d.area));
+            container.querySelectorAll("[data-none]").forEach(b => { b.classList.remove("is-on"); b.setAttribute("aria-pressed", "false"); });
+            return refreshNext();
+        }
+        if (d.istatus) {
+            draft.status = draft.status === d.istatus ? "" : d.istatus;
+            pickOne("[data-istatus]", t);
+            return refreshNext();
+        }
+        if (d.hq) {
+            draft.health = { ...(draft.health || {}), [d.hq]: d.yn };
+            container.querySelectorAll(`[data-hq="${d.hq}"]`).forEach(b => { const on = b === t; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on); });
+            container.querySelectorAll('[data-none="health"]').forEach(b => { b.classList.remove("is-on"); b.setAttribute("aria-pressed", "false"); });
+            q(".ig-health-yes").hidden = !Object.values(draft.health).includes("yes");
+            return refreshNext();
+        }
+        if (d.pk) {
+            const value = d.num ? Number(d.value) : d.value;
+            draft.values[d.pk] = draft.values[d.pk] === value ? (d.num ? null : "") : value;
+            pickOne(`[data-pk="${d.pk}"]`, t);
+            return;
+        }
+        if (d.mk) {
+            const set = new Set(draft.values[d.mk] || []);
+            set.has(d.value) ? set.delete(d.value) : set.add(d.value);
+            draft.values[d.mk] = fieldOf(d.mk).options.map(o => o.value).filter(v => set.has(v));
+            t.classList.toggle("is-on", set.has(d.value));
+            t.setAttribute("aria-pressed", set.has(d.value));
+            return;
+        }
+        if (d.fill) {
+            const input = q(`#ig-${d.fill}`);
+            input.value = d.value;
+            container.querySelectorAll(`[data-fill="${d.fill}"]`).forEach(b => { const on = b === t; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on); });
+            return;
         }
         if (d.goal) {
             q("#igText").value = d.goal;

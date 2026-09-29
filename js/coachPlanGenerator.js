@@ -62,6 +62,46 @@ export function nextMonday(today) {
     return codeOf(today) === "MON" ? today : addDays(mondayOf(today), 7);
 }
 
+// Profile answers (js/clientRecordSchema.js) -> generator settings.
+const RACE_FROM_TYPE = { "5k": "5K", "10k": "10K", half: "HALF", marathon: "MARATHON", ultra: "50K" };
+const START_FROM_PROFILE = { running: "RUNNING", run20: "RUN20", run10: "RUN10", run5: "RUN5", run1: "RUN1", walk: "WALK" };
+
+/** The strength equipment setting from what they said they can use (default: a full gym). */
+export function equipmentFromProfile(r = {}) {
+    const has = new Set(r.equipment || []);
+    if (!has.size) return (r.trainWhere || []).length && !(r.trainWhere || []).includes("gym") ? "bodyweight" : "gym";
+    if (has.has("barbell") || has.has("machines") || (r.trainWhere || []).includes("gym")) return "gym";
+    if (has.has("dumbbells") || has.has("kettlebells")) return "dumbbells";
+    if (has.has("bands")) return "bands";
+    return "bodyweight";
+}
+
+// n of their days: as few back-to-back pairs as possible (the week wraps
+// Sunday to Monday), then the widest gaps, and a weekend day for the long run.
+export function spreadWithWeekend(days, n) {
+    const pool = CODES.filter(c => days.includes(c));
+    if (pool.length <= n) return pool;
+    let best = null;
+    const score = pick => {
+        const idx = pick.map(c => CODES.indexOf(c));
+        const gaps = idx.map((v, i) => (i ? v - idx[i - 1] : v + 7 - idx[idx.length - 1]));
+        const adjacent = gaps.filter(g => g === 1).length;
+        const weekend = pick.includes("SUN") || pick.includes("SAT") ? 1 : 0;
+        return [-adjacent, weekend, Math.min(...gaps), pick.includes("SUN") ? 1 : 0];
+    };
+    const better = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] > b[i]; return false; };
+    const walk = (from, chosen) => {
+        if (chosen.length === n) {
+            const sc = score(chosen);
+            if (!best || better(sc, best.sc)) best = { pick: [...chosen], sc };
+            return;
+        }
+        for (let i = from; i < pool.length; i++) { chosen.push(pool[i]); walk(i + 1, chosen); chosen.pop(); }
+    };
+    walk(0, []);
+    return best.pick;
+}
+
 function raceFromText(text) {
     const t = String(text || "").toLowerCase();
     if (/50\s*(mi|mile)/.test(t)) return "50_MILE";
@@ -83,10 +123,14 @@ export function settingsFromProfile(record = {}, today) {
     const start = nextMonday(today);
     const train = CODES.filter(c => (r.availabilityDays || []).includes(c.toLowerCase()));
     const trainDays = train.length ? train : ["TUE", "WED", "THU", "SAT", "SUN"];
-    const runDays = trainDays.length > 5 ? trainDays.filter(c => c !== "MON" && c !== "FRI").slice(0, 5) : trainDays;
+    // Runs a week (profile step 2) picks that many of their days, spread out
+    // and keeping the weekend for the long run.
+    const perWeek = Number.isInteger(r.runsPerWeek) && r.runsPerWeek >= 2 ? Math.min(r.runsPerWeek, trainDays.length) : 0;
+    const runDays = perWeek ? spreadWithWeekend(trainDays, perWeek)
+        : trainDays.length > 5 ? trainDays.filter(c => c !== "MON" && c !== "FRI").slice(0, 5) : trainDays;
     const longRunDay = runDays.includes("SUN") ? "SUN" : runDays.includes("SAT") ? "SAT" : runDays.at(-1);
     const current = Number(r.weeklyMileage) > 0 ? Math.round(Number(r.weeklyMileage)) : 15;
-    const race = raceFromText(`${r.targetEvent || ""} ${r.primaryGoal || ""}`);
+    const race = RACE_FROM_TYPE[r.eventType] || raceFromText(`${r.targetEvent || ""} ${r.primaryGoal || ""}`);
     const raceDate = /^\d{4}-\d{2}-\d{2}$/.test(r.targetDate || "") && r.targetDate >= addDays(start, 27) ? r.targetDate : "";
     const goalTime = normalGoal((String(r.primaryGoal || "").match(/\b(\d{1,2}:\d{2}(?::\d{2})?)\b/) || [])[1] || "", race || "HALF");
     const minPeak = MIN_PEAK[race] || 20;
@@ -95,9 +139,12 @@ export function settingsFromProfile(record = {}, today) {
     const goalText = String(r.primaryGoal || "").toLowerCase();
     // Little or no running now: start them on run/walk.
     const aboutText = `${goalText} ${String(r.currentTraining || "").toLowerCase()}`;
-    const barelyRuns = sport === "running" && ((r.weeklyMileage !== undefined && r.weeklyMileage !== "" && r.weeklyMileage !== null && Number(r.weeklyMileage) <= 3)
-        || /couch|run\s*\/?\s*walk|walk\/run|never (ran|run)|not running|first 5k|beginner|new to running/.test(aboutText));
-    const startLevel = barelyRuns ? "RUN1" : "RUNNING";
+    // "How long can you run without stopping?" (profile step 2) decides it
+    // when answered; otherwise low miles or words like "couch to 5K" do.
+    const told = START_FROM_PROFILE[r.runStart];
+    const barelyRuns = sport === "running" && (told ? told !== "RUNNING" : ((r.weeklyMileage !== undefined && r.weeklyMileage !== "" && r.weeklyMileage !== null && Number(r.weeklyMileage) <= 3)
+        || /couch|run\s*\/?\s*walk|walk\/run|never (ran|run)|not running|first 5k|beginner|new to running/.test(aboutText)));
+    const startLevel = barelyRuns ? (told && told !== "RUNNING" ? told : "RUN1") : "RUNNING";
     return {
         mode: race && raceDate && (!barelyRuns || RUN_WALK_RACES.includes(race)) ? "race" : "training",
         raceType: race || (barelyRuns ? "5K" : "HALF"),
@@ -116,10 +163,11 @@ export function settingsFromProfile(record = {}, today) {
         crossDays: 0,
         currentMiles: current,
         peakMiles: Math.round(Math.min(Math.max(current * 1.35, minPeak), Math.max(minPeak, current * 1.6))),
-        longestRun: Math.max(3, Math.round(current * 0.3)),
-        experience: current >= 55 ? "ADVANCED" : current >= 40 ? "INTERMEDIATE" : current <= 10 ? "NEW" : "RECREATIONAL",
+        longestRun: Number(r.longestRun) > 0 ? Math.max(1, Math.round(Number(r.longestRun))) : Math.max(3, Math.round(current * 0.3)),
+        experience: ["new", "lt1"].includes(r.yearsRunning) && current < 25 ? "NEW"
+            : current >= 55 ? "ADVANCED" : current >= 40 ? "INTERMEDIATE" : current <= 10 ? "NEW" : "RECREATIONAL",
         strengthLevel,
-        equipment: "gym"
+        equipment: equipmentFromProfile(r)
     };
 }
 

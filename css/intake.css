@@ -192,6 +192,19 @@ textarea.ig-input{ resize:vertical; min-height:88px; line-height:1.5; }
 .ig-review .ig-foot{ flex-wrap:wrap; }
 .ig-back-link{ display:inline-block; margin-top:14px; }
 
+/* Health check: one question per row, Yes / No beside it. */
+.ig-hq-list{ display:flex; flex-direction:column; gap:10px; }
+.ig-hq{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:color-mix(in srgb, var(--surface-light) 55%, transparent);
+}
+.ig-hq p{ margin:0; font-size:14.5px; line-height:1.45; }
+.ig-yn{ flex-shrink:0; flex-wrap:nowrap; }
+.ig-yn .ig-chip{ min-width:56px; justify-content:center; }
+.ig-health-yes .ig-hint{ align-items:flex-start; color:var(--text); margin-top:4px; }
+.ig-health-yes .ig-hint .ui-icon{ color:var(--amber); margin-top:2px; }
+
 @media (max-width:600px){
     .ig-card{ padding:20px 16px 12px; }
     .ig-title{ font-size:30px; }

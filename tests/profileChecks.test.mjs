@@ -126,7 +126,8 @@ test("saving stamps what they confirmed and what changed, nothing else", () => {
 
 test("the tracked answers match firestore.rules and the stored keys", () => {
     const rules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
-    const listed = rules.match(/m\.keys\(\)\.hasOnly\(\[([^\]]+)\]\)/)[1].match(/"([a-zA-Z]+)"/g).map(s => s.slice(1, -1));
+    const block = rules.slice(rules.indexOf("function confirmedAtOk"));
+    const listed = block.match(/m\.keys\(\)\.join\(","\)\.matches\('\^\(\(([^)]+)\)/)[1].split("|");
     assert.deepEqual([...listed].sort(), [...TRACKED].sort());
     assert.ok(META_KEYS.includes("confirmedAt"));
 });

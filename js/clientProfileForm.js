@@ -44,6 +44,22 @@ function fieldHtml(field, value, mode, whoTrains) {
                 <label class="cp-day"><input type="checkbox" name="${field.key}" value="${d.value}" ${(value || []).includes(d.value) ? "checked" : ""}><span>${d.label}</span></label>`).join("")}
             </div>`;
             break;
+        case "multi":
+            control = `<div class="cp-days cp-multi" role="group" aria-label="${esc(label)}">${field.options.map(o => `
+                <label class="cp-day"><input type="checkbox" name="${field.key}" value="${o.value}" ${(value || []).includes(o.value) ? "checked" : ""}><span>${esc(o.label)}</span></label>`).join("")}
+            </div>`;
+            break;
+        case "health":
+            control = `<div class="cp-health" role="group" aria-label="${esc(label)}">${field.options.map(o => `
+                <label class="cp-health-row"><input type="checkbox" name="${field.key}" value="${o.value}" ${(value || []).includes(o.value) ? "checked" : ""}><span>${esc(mode === "client" ? (whoTrains === "child" ? o.askChild : o.ask) : o.label)}</span></label>`).join("")}
+            </div>`;
+            break;
+        case "count":
+            control = `<select id="${id}" name="${field.key}" class="cp-input cp-short">
+                <option value="">Choose…</option>
+                ${Array.from({ length: field.max + 1 }, (_, n) => `<option value="${n}" ${value === n ? "selected" : ""}>${n}</option>`).join("")}
+            </select>`;
+            break;
         case "textarea":
             control = `<textarea id="${id}" name="${field.key}" class="cp-input" rows="3" maxlength="${field.max}">${esc(value || "")}</textarea>`;
             break;
@@ -63,7 +79,7 @@ function fieldHtml(field, value, mode, whoTrains) {
             control = `<input id="${id}" name="${field.key}" class="cp-input" type="text" maxlength="${field.max}" value="${esc(value || "")}">`;
     }
 
-    const labelTag = ["choice", "days"].includes(field.type) ? "span" : `label for="${id}"`;
+    const labelTag = ["choice", "days", "multi", "health"].includes(field.type) ? "span" : `label for="${id}"`;
     return `
         <div class="cp-field" data-field="${field.key}" data-when="${field.when || ""}"${hidden}>
             <${labelTag} class="cp-label">${esc(label)}${required}</${labelTag.split(" ")[0]}>
@@ -77,7 +93,7 @@ function collect(form) {
     const data = new FormData(form);
     for (const section of SECTIONS) {
         for (const field of section.fields) {
-            values[field.key] = field.type === "days" ? data.getAll(field.key) : (data.get(field.key) ?? "");
+            values[field.key] = ["days", "multi", "health"].includes(field.type) ? data.getAll(field.key) : (data.get(field.key) ?? "");
         }
     }
     return values;
@@ -134,6 +150,9 @@ export function mountProfileForm(container, { clientUid, record = null, mode = "
         btn.disabled = true;
         try {
             // The client going over the whole form confirms every answer on it.
+            // The client going over the whole form has answered the health
+            // check too (nothing ticked = no to all).
+            if (mode === "client") values.healthCheckedAt = Date.now();
             current = await saveClientRecord(clientUid, values, current, { confirm: mode === "client" ? TRACKED : [] });
             toast(mode === "client" ? "Profile saved. Your coach can see it now." : "Profile saved.");
             onSaved?.(current);

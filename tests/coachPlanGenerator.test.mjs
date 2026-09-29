@@ -175,3 +175,20 @@ test("what changed on a day, in a few words", async () => {
     assert.equal(compactChange({ type: "easy", miles: 4, session: "Easy", strength: lift("Core 20") }, { type: "easy", miles: 4, session: "Easy", strength: lift("Marathon Strength A") }), "strength: Core 20 → Marathon Strength A");
     assert.equal(compactChange({ type: "rest" }, { type: "strength", miles: 0, session: "Core 20", strength: lift("Core 20") }), "+ strength (Core 20)");
 });
+
+test("the profile's tap answers set up Generate: race, runs a week, longest run, run/walk start, equipment", () => {
+    const today = "2026-09-29";
+    const s = settingsFromProfile({ primarySport: "running", availabilityDays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"], weeklyMileage: 25,
+        runsPerWeek: 4, longestRun: 9, eventType: "half", targetEvent: "Spring race", targetDate: "2027-03-21", equipment: ["dumbbells", "bands"], primaryGoal: "Run well" }, today);
+    assert.equal(s.raceType, "HALF", "from the event type, even when the name doesn't say");
+    assert.equal(s.mode, "race");
+    assert.deepEqual(s.runDays, ["MON", "WED", "FRI", "SUN"], "4 runs, spread out, the long run on the weekend");
+    assert.equal(s.longRunDay, "SUN");
+    assert.equal(s.longestRun, 9);
+    assert.equal(s.equipment, "dumbbells");
+    const walker = settingsFromProfile({ primarySport: "running", availabilityDays: ["tue", "thu", "sat"], weeklyMileage: 0, runStart: "run5" }, today);
+    assert.equal(walker.start, "RUN5", "their own answer, not a guess");
+    assert.equal(settingsFromProfile({ primarySport: "running", weeklyMileage: 2, runStart: "running" }, today).start, "RUNNING");
+    assert.equal(settingsFromProfile({ primarySport: "running", equipment: ["bodyweight"] }, today).equipment, "bodyweight");
+    assert.equal(settingsFromProfile({ primarySport: "running", equipment: ["barbell"] }, today).equipment, "gym");
+});

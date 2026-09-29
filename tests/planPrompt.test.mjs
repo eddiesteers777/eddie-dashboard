@@ -190,3 +190,14 @@ test("safety checks", () => {
     assert.ok(warnings.some(w => /Week 5 has no rest day/.test(w)));
     assert.ok(warnings.some(w => /can't train/.test(w)));
 });
+
+test("the prompt uses training answers but never health answers or contacts", () => {
+    const plan = generateCoachPlan(HALF);
+    const record = { ...RECORD, runsPerWeek: 4, longestRun: 10, equipment: ["dumbbells"], injuryAreas: ["knee"], injuryStatus: "recovering",
+        healthFlags: ["heart"], healthNote: "Beta blockers", healthCheckedAt: 1, emergencyName: "Pat Smith", emergencyPhone: "555-0199",
+        guardianName: "Jo Smith", guardianPhone: "555-0111" };
+    const text = buildPrompt({ firstName: "Sam", record, plan, from: HALF.startDate, today: HALF.startDate });
+    assert.ok(text.includes("- Runs a week: 4") && text.includes("- Longest recent run: 10 mi") && text.includes("- Equipment: Dumbbells"));
+    assert.ok(/Injuries \/ limits: .*Knee · Getting better/.test(text));
+    for (const secret of ["Beta blockers", "heart", "Pat Smith", "555-0199", "Jo Smith", "555-0111"]) assert.ok(!text.includes(secret), secret);
+});

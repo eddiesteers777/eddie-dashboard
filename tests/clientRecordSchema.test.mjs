@@ -71,10 +71,41 @@ test("display values", () => {
     assert.equal(displayValue(f("phone"), ""), "");
 });
 
-test("firestore.rules allows exactly the schema's fields", () => {
+test("firestore.rules holds exactly the profile rule the schema makes (node scripts/build-profile-rules.mjs)", async () => {
+    const { profileRule, currentProfileRule } = await import("../scripts/build-profile-rules.mjs");
     const rules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
-    const block = rules.slice(rules.indexOf("function validClientRecord"));
-    const list = block.slice(block.indexOf("hasOnly([") + 9, block.indexOf("])"));
-    const ruleKeys = [...list.matchAll(/"([a-zA-Z]+)"/g)].map(m => m[1]).sort();
-    assert.deepEqual(ruleKeys, [...FIELD_KEYS, ...META_KEYS].sort());
+    assert.equal(currentProfileRule(rules), profileRule(), "run: node scripts/build-profile-rules.mjs");
+    const keys = currentProfileRule(rules).match(/join\(","\)\.matches\('\^\(\(([^)]+)\)/)[1].split("|").sort();
+    assert.deepEqual(keys, [...FIELD_KEYS, ...META_KEYS].sort());
+});
+
+test("sanitize: the tap answers keep only their choices", () => {
+    const out = sanitizeClientRecord({
+        runsPerWeek: "4", longestRun: "130", eventType: "ironman", yearsRunning: "3-5",
+        equipment: ["dumbbells", "yacht", "bands", "dumbbells"], timeOfDay: "morning",
+        injuryAreas: ["knee", "ankle"], injuryStatus: "recovering", healthFlags: ["joints", "nosy"],
+        emergencyName: "  Pat  ", guardianName: "Jo"
+    });
+    assert.equal(out.runsPerWeek, 4);
+    assert.equal(out.longestRun, 100, "capped at 100 miles");
+    assert.equal(out.eventType, "");
+    assert.equal(out.yearsRunning, "3-5");
+    assert.deepEqual(out.equipment, ["bands", "dumbbells"], "known ones, in list order, once");
+    assert.deepEqual(out.timeOfDay, []);
+    assert.deepEqual(out.injuryAreas, ["knee", "ankle"]);
+    assert.deepEqual(out.healthFlags, ["joints"]);
+    assert.equal(out.emergencyName, "Pat");
+    assert.equal(out.guardianName, "Jo");
+    assert.equal(sanitizeClientRecord({ runsPerWeek: "12" }).runsPerWeek, 7);
+    assert.equal(sanitizeClientRecord({ runsPerWeek: "" }).runsPerWeek, null);
+    assert.equal(sanitizeClientRecord({ whoTrains: "child", guardianName: "Jo" }).guardianName, "", "a parent's account is already the guardian");
+});
+
+test("display values for the tap answers", () => {
+    const f = key => FIELDS.find(x => x.key === key);
+    assert.equal(displayValue(f("runsPerWeek"), 4), "4 a week");
+    assert.equal(displayValue(f("equipment"), ["dumbbells", "bands"]), "Bands, Dumbbells");
+    assert.equal(displayValue(f("healthFlags"), ["heart"]), "Heart condition or high blood pressure");
+    assert.equal(displayValue(f("sessionLength"), "60"), "An hour");
+    assert.equal(displayValue(f("equipment"), []), "");
 });

@@ -24,12 +24,12 @@
      changes   changeRequests (asks for a plan change; js/changeRequests.js)
 ========================================== */
 
-import { isIntakeComplete, athleteDisplayName } from "./clientRecordSchema.js";
+import { isIntakeComplete, athleteDisplayName, healthYeses } from "./clientRecordSchema.js";
 import { mergeRuntimeByDate } from "./coachingPlanModel.js";
 import { awaitingView, noticeVersionOf } from "./planWindow.js";
 import { checkinFlags, reasonLabel } from "./feedbackModel.js";
 import { staleSummary, openAsks, ageText } from "./profileChecks.js";
-import { allEssentialsDone } from "./intakeFlow.js";
+import { answersDone } from "./intakeFlow.js";
 
 export const SERVICE_LABELS = {
     online_coaching: "Online Coaching",
@@ -244,8 +244,13 @@ export function summarizeCheckins(checkins, today) {
 
 // What the coach should act on for this client, most urgent first.
 // Each: { kind, text, tab } -- tab is the Client Hub tab that handles it.
-export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now() }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0 }) {
     const items = [];
+    // A "yes" on their health check the coach hasn't marked reviewed.
+    const yeses = healthYeses(record);
+    if (yeses.length && !(Number(healthReviewedAt) >= Number(record.healthCheckedAt))) {
+        items.push({ kind: "health", text: `Health check: said yes to ${yeses.join(", ").toLowerCase()}. Check with them before training gets harder`, tab: "overview" });
+    }
     // Pain flagged on a workout, not yet answered: first thing to see.
     for (const r of results.filter(x => x.pain && !x.coachComment && x.date >= addDays(today, -14))) {
         items.push({ kind: "pain", text: `Flagged pain on ${shortDate(r.date)} (${r.title || "workout"})${r.painNote ? `: "${r.painNote}"` : ""}`, tab: "workouts" });
@@ -276,7 +281,7 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     }
     // Profile answers gone stale (js/profileChecks.js). Their app asks them
     // too; this is for the coach, and waits while an ask of theirs is open.
-    if (record && allEssentialsDone(record)) {
+    if (record && answersDone(record)) {
         const asks = openAsks(record);
         const waited = asks.length ? Math.floor((now - asks[0].at) / 86400000) : 0;
         if (asks.length && waited >= 7) {
@@ -388,11 +393,11 @@ export function shortDate(iso) {
 
 // ---------- One-line row for the client list ----------
 
-export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [] }, today) {
+export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [], healthReviewedAt = 0 }, today) {
     const plans = summarizePlans(shared, today, coachingPlans, results);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes, healthReviewedAt });
     const name = profile?.displayName || link?.clientName || "Client";
     const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
     const goesBy = athleteDisplayName(record, "");
