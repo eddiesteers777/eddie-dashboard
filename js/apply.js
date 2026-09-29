@@ -180,7 +180,11 @@ function showError(text) {
 }
 
 function readFields() {
-    root.querySelectorAll("[data-field]").forEach(el => { answers[el.dataset.field] = el.value; });
+    root.querySelectorAll("[data-field]").forEach(el => {
+        // An empty "own words" box doesn't undo a goal idea they tapped.
+        if (el.dataset.field === "goal" && !el.value.trim() && root.querySelector('[data-pick="goal"].is-on')) return;
+        answers[el.dataset.field] = el.value;
+    });
     saveDraft();
 }
 
@@ -287,6 +291,16 @@ async function send() {
         done();
     } catch (error) {
         console.error("Application failed:", error);
+        // Saving was refused (the rules for "applications" aren't published
+        // yet): the email alert still carries every answer, so it isn't lost.
+        if (error?.code === "permission-denied") {
+            const { sendApplicationEmail } = await import("./emailNotify.js");
+            if (await sendApplicationEmail(cleanApplication(answers)).catch(() => false)) {
+                if (signedInUser) alsoOnAccount().catch(() => {});
+                done();
+                return;
+            }
+        }
         showError(error.message === "timeout"
             ? "This is taking too long — your network may be blocking it. Try again on another connection (like cell data)."
             : "Couldn't send your application. Check your connection and try again.");
