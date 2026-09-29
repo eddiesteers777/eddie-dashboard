@@ -98,6 +98,20 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
+    // Compare a stored YYYY-MM-DD occurrence to the server's current
+    // calendar date. Session dates are date-only strings, while request.time
+    // provides the trusted server timestamp (in UTC).
+    function sessionDateIsPastOrToday(date) {
+      return date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && (
+          int(date[0:4]) < request.time.year()
+          || (int(date[0:4]) == request.time.year() && int(date[5:7]) < request.time.month())
+          || (int(date[0:4]) == request.time.year()
+              && int(date[5:7]) == request.time.month()
+              && int(date[8:10]) <= request.time.day())
+        );
+    }
+
     match /users/{uid}/sync/{docId} {
       allow read, write: if isUser(uid);
     }
@@ -205,20 +219,6 @@ service cloud.firestore {
       );
 
       allow delete: if false;
-    }
-
-    // Compare a stored YYYY-MM-DD occurrence to the server's current
-    // calendar date. Session dates are date-only strings, while request.time
-    // provides the trusted server timestamp (in UTC).
-    function sessionDateIsPastOrToday(date) {
-      return date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && (
-          int(date[0:4]) < request.time.year()
-          || (int(date[0:4]) == request.time.year() && int(date[5:7]) < request.time.month())
-          || (int(date[0:4]) == request.time.year()
-              && int(date[5:7]) == request.time.month()
-              && int(date[8:10]) <= request.time.day())
-        );
     }
 
     function validSessionLog(d, logId) {
