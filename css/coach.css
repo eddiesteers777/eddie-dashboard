@@ -363,6 +363,58 @@
 .coach-queue-item.is-health{ border-color:color-mix(in srgb, var(--amber) 60%, transparent); }
 
 .coach-clients{ margin-bottom:22px; }
+
+/* Sessions this week (Phase 6) */
+.coach-week{ margin-bottom:22px; }
+.coach-week [hidden]{ display:none !important; }
+.coach-week-nav{ display:inline-flex; align-items:center; gap:4px; padding:3px; border:1px solid var(--border); border-radius:var(--radius-pill); background:var(--surface); }
+.coach-week-nav .coach-view-btn{ min-width:36px; padding:0 10px; font-size:16px; }
+.coach-week-label{ min-width:110px; text-align:center; color:var(--text-secondary); font-size:13px; font-weight:600; }
+.coach-week-list{ display:flex; flex-direction:column; gap:12px; }
+.coach-week-day h3{
+    margin:0 0 6px;
+    color:var(--primary);
+    font:700 12px var(--font-body);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+.coach-week-day.is-today h3{ color:var(--primary-light); }
+.coach-week-day{ display:flex; flex-direction:column; gap:6px; }
+.coach-week-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    color:var(--text);
+    text-decoration:none;
+    font-size:14.5px;
+}
+.coach-week-row:hover{ border-color:rgba(201,173,132,.5); }
+.coach-week-time{ flex:0 0 72px; color:var(--text-secondary); font-size:13px; font-weight:700; }
+.coach-week-who{ flex:1; min-width:0; }
+.coach-week-pill{
+    flex-shrink:0;
+    padding:3px 10px;
+    border-radius:var(--radius-pill);
+    background:var(--surface-light);
+    color:var(--muted);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+.coach-week-pill.is-done{ background:color-mix(in srgb, var(--green) 14%, transparent); color:var(--green); }
+.coach-week-pill.is-bad{ background:color-mix(in srgb, var(--red) 16%, transparent); color:var(--red); }
+.coach-week-pill.is-new{ background:color-mix(in srgb, var(--amber) 16%, transparent); color:var(--amber); }
+.coach-week-pill.is-off{ text-decoration:line-through; }
+@media (max-width:600px){
+    .coach-week-row{ flex-wrap:wrap; gap:4px 10px; }
+    .coach-week-time{ flex-basis:auto; }
+    .coach-week-who{ flex:0 0 100%; order:3; }
+}
 .coach-clients [hidden]{ display:none !important; }
 .coach-clients-all{ color:var(--primary-light); font-size:13.5px; font-weight:600; text-decoration:none; }
 .coach-clients-all:hover{ text-decoration:underline; }

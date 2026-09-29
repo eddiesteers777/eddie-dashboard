@@ -51,6 +51,7 @@ import { answerChangeRequest } from "./changeRequests.js";
 import { reasonLabel } from "./feedbackModel.js";
 import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
+import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -445,10 +446,12 @@ function renderGlance() {
     // lead with their sessions instead.
     if (!trains && services.length) {
         const lastPast = sessions.past[0];
+        const att = attendance(sessionList(record.requests, isoDate(new Date())));
         $("hubGlance").innerHTML = [
             glanceItem("Next session", next ? dayName(next.date) : "None booked", next ? `${niceTime(next.startTime)} · ${sessionLabel(next)}` : "", "sessions"),
             glanceItem("Waiting on you", sessions.waiting.length ? `${sessions.waiting.length} request${sessions.waiting.length === 1 ? "" : "s"}` : "Nothing", "", "sessions"),
-            glanceItem("Sessions done", String(sessions.past.length), lastPast ? `Last: ${dayName(lastPast.date)}` : "", "sessions"),
+            glanceItem("Sessions done", String(att.completed),
+                att.counted ? `Attended ${att.completed} of ${att.counted}` : sessions.past.length ? "No sessions logged yet" : "", "sessions"),
             glanceItem("Booked ahead", String(sessions.upcoming.length), "", "sessions")
         ].join("");
         return;
@@ -755,25 +758,208 @@ function sessionRow(o, extra = "") {
         </div>`;
 }
 
+// ---- Sessions: every booked date, what happened, notes (Phase 6) ----
+
+const STATE_PILL = {
+    completed: ["Completed", "is-done"], "no-show": ["No-show", "is-bad"], "late-cancel": ["Cancelled late", "is-bad"],
+    cancelled: ["Cancelled", ""], "to-log": ["Not logged yet", "is-new"], "not-logged": ["Not logged", ""],
+    today: ["Today", "is-new"], upcoming: ["Booked", ""]
+};
+
+function sessionLogRow(s) {
+    const [pill, tone] = STATE_PILL[s.state] || ["", ""];
+    const past = s.state !== "upcoming";
+    const legacy = !s.log && s.coachNote && legacyNoteAt.has(`${s.bookingId}|${s.date}`) ? `<span class="hub-quote">Your earlier note: "${esc(s.coachNote)}"</span>` : "";
+    const words = s.log ? [s.log.workedOn ? `<span><b>Worked on:</b> ${renderEmojiText(esc(s.log.workedOn))}</span>` : "",
+        s.log.nextTime ? `<span><b>For next time:</b> ${renderEmojiText(esc(s.log.nextTime))}</span>` : ""].join("") : "";
+    const actions = s.state === "to-log" || s.state === "today"
+        ? `<button type="button" class="clients-btn-primary" data-log="${esc(s.bookingId)}|${esc(s.date)}">Log it</button>
+           <button type="button" class="clients-btn-secondary" data-noshow="${esc(s.bookingId)}|${esc(s.date)}">No-show</button>`
+        : s.log || past
+            ? `<button type="button" class="hub-link-btn" data-log="${esc(s.bookingId)}|${esc(s.date)}">${s.log ? "Edit" : "Log it"}</button>`
+            : `<button type="button" class="hub-link-btn" data-log="${esc(s.bookingId)}|${esc(s.date)}" data-cancel-only="1">Cancel this one</button>`;
+    return `
+        <div class="hub-session hub-session-log">
+            <div class="hub-session-date"><strong>${esc(dayName(s.date))}</strong><span>${esc(niceTime(s.startTime))}</span></div>
+            <div class="hub-session-text">
+                <strong>${esc(sessionLabel(s))} ${pill ? `<span class="hub-pill ${tone}">${esc(pill)}</span>` : ""}</strong>
+                ${words ? `<span class="hub-session-words">${words}</span>` : legacy}
+            </div>
+            <div class="hub-session-actions">${actions}</div>
+        </div>`;
+}
+
+// An older booking's single note (from before session logs) sits on its
+// last past date, and only while that booking has no logs.
+let legacyNoteAt = new Set();
+
 function renderSessions() {
-    const { upcoming, past, waiting } = record.summary.sessions;
+    const { waiting } = record.summary.sessions;
+    const all = sessionList(record.requests, isoDate(new Date()));
+    legacyNoteAt = new Set((record.requests || [])
+        .filter(r => r.status === "approved" && r.coachNote && !Object.keys(r.logs || {}).length)
+        .map(r => `${r.id}|${(r.allDates || r.dates || []).filter(d => d <= isoDate(new Date())).sort().pop()}`));
+    const toLog = all.filter(s => s.state === "to-log" || s.state === "today").reverse();
+    const upcoming = all.filter(s => s.state === "upcoming");
+    const cancelledAhead = all.filter(s => s.log && CANCELLED.includes(s.log.status) && s.date > isoDate(new Date()));
+    const past = all.filter(s => s.date <= isoDate(new Date()) && s.state !== "to-log" && s.state !== "today").reverse();
+    const stats = attendance(all);
     const badge = $("hubSessionBadge");
-    badge.hidden = !waiting.length;
-    badge.textContent = waiting.length || "";
-    const section = (title, body, empty) => `
+    const count = waiting.length + all.filter(s => s.state === "to-log").length;
+    badge.hidden = !count;
+    badge.textContent = count || "";
+    const section = (title, body, empty, note = "") => `
         <div class="clients-card">
             <h2>${title}</h2>
+            ${note ? `<p class="clients-card-note">${note}</p>` : ""}
             ${body || `<p class="clients-card-note">${empty}</p>`}
         </div>`;
     $("hubSessions").innerHTML =
-        (waiting.length ? section("Waiting on you",
-            waiting.map(r => sessionRow({ ...r, date: r.dates?.[0] },
+        (stats.line ? `<p class="hub-attendance">${icon("checkCircle")} ${esc(stats.line)}</p>` : "")
+        + (waiting.length ? section("Waiting on you",
+            waiting.map(r => sessionRow({ ...r, date: r.dates?.[0], coachNote: "" },
                 `<span class="clients-card-note">${r.dates?.length > 1 ? `${r.dates.length} weeks · ` : ""}${r.clientNote ? `"${esc(r.clientNote)}"` : ""}</span>`)).join("")
             + `<a class="clients-btn-primary hub-inline-btn" href="schedule.html?tab=availability">Answer in Schedule</a>`, "") : "")
-        + section("Upcoming", upcoming.slice(0, 12).map(o => sessionRow(o)).join(""), "No upcoming sessions booked.")
-        + section("Past sessions", past.slice(0, 20).map(o => sessionRow(o)).join(""), "No past sessions yet.")
-        + `<p class="clients-card-note">Session notes are added from <a href="schedule.html?tab=availability">Schedule</a> (Session Notes on an approved session).</p>`;
+        + (toLog.length ? section(`To log <span class="hub-count">${toLog.length}</span>`, toLog.map(sessionLogRow).join(""), "",
+            `How did it go? ${esc(firstName())} sees what you worked on and what's next.`) : "")
+        + section("Upcoming", upcoming.slice(0, 12).map(sessionLogRow).join("")
+            + cancelledAhead.map(sessionLogRow).join(""), "No upcoming sessions booked.")
+        + section("Past sessions", past.slice(0, 30).map(sessionLogRow).join(""), "No past sessions yet.");
 }
+
+function findSession(key) {
+    const [bookingId, date] = key.split("|");
+    return sessionList(record.requests, isoDate(new Date())).find(s => s.bookingId === bookingId && s.date === date) || null;
+}
+
+async function saveLog(s, fields) {
+    const { saveSessionLog } = await import("./sessionLogs.js");
+    const log = await saveSessionLog({ bookingId: s.bookingId, date: s.date, clientUid, ...fields });
+    setLog(s, log);
+    return log;
+}
+
+function setLog(s, log) {
+    const logs = record.requests.flatMap(r => Object.values(r.logs || {})).filter(l => !(l.bookingId === s.bookingId && l.date === s.date));
+    if (log) logs.push(log);
+    record.requests = attachLogs(record.requests, logs);
+    summarize();
+    renderAll();
+    selectTab("sessions");
+}
+
+async function logSessionDialog(s, { cancelOnly = false } = {}) {
+    const future = s.date > isoDate(new Date());
+    const choices = SESSION_STATUSES.filter(o => !future || CANCELLED.includes(o.value));
+    const current = s.log?.status || (cancelOnly || future ? "cancelled" : "completed");
+    const d = document.createElement("dialog");
+    d.className = "sb-dialog hub-log-dialog";
+    d.innerHTML = `
+        <form class="sb-dialog-form" novalidate>
+            <h2 class="sb-dialog-title">${esc(sessionLabel(s))} · ${esc(dayName(s.date))}</h2>
+            <p class="sb-dialog-message">${esc(niceTime(s.startTime))} with ${esc(firstName())}</p>
+            <div class="hub-log-status" role="radiogroup" aria-label="What happened">
+                ${choices.map(o => `<label class="hub-log-chip"><input type="radio" name="status" value="${o.value}"${o.value === current ? " checked" : ""}><span>${esc(o.label)}</span></label>`).join("")}
+            </div>
+            <div class="hub-log-words">
+                <label class="hub-log-field"><span>What did you work on? <em>${esc(firstName())} sees this</em></span>
+                    <textarea name="workedOn" rows="3" maxlength="1000" data-emoji placeholder="First touch, weak-foot passing, 1v1 finishing">${esc(s.log?.workedOn || "")}</textarea></label>
+                <label class="hub-log-field"><span>For next time <em>${esc(firstName())} sees this</em></span>
+                    <textarea name="nextTime" rows="2" maxlength="1000" data-emoji placeholder="Wall passes 10 minutes a day">${esc(s.log?.nextTime || "")}</textarea></label>
+                <label class="hub-log-field hub-log-private"><span>${icon("lock")} Private note <em>only you</em></span>
+                    <textarea name="private" rows="2" maxlength="4000" placeholder="How they did, anything to remember"></textarea></label>
+            </div>
+            <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
+            <div class="sb-dialog-actions">
+                ${s.log ? `<button type="button" class="sb-btn sb-btn-tertiary" data-remove>Remove log</button>` : ""}
+                <button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button>
+                <button type="submit" class="sb-btn sb-btn-primary">Save</button>
+            </div>
+        </form>`;
+    document.body.appendChild(d);
+    const form = d.querySelector("form");
+    const syncWords = () => {
+        const status = new FormData(form).get("status");
+        d.querySelector(".hub-log-words").hidden = status !== "completed";
+    };
+    form.addEventListener("change", syncWords);
+    syncWords();
+    d.addEventListener("close", () => d.remove());
+    d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+    d.querySelector("[data-remove]")?.addEventListener("click", async () => {
+        const { deleteSessionLog } = await import("./sessionLogs.js");
+        try {
+            await deleteSessionLog(s.bookingId, s.date);
+            d.close();
+            setLog(s, null);
+            toast("Log removed");
+        } catch (error) {
+            const err = d.querySelector('[data-el="error"]');
+            err.textContent = friendlyError(error, "remove that");
+            err.hidden = false;
+        }
+    });
+    form.addEventListener("submit", async ev => {
+        ev.preventDefault();
+        const data = new FormData(form);
+        const status = String(data.get("status") || "completed");
+        const words = status === "completed";
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            await saveLog(s, {
+                status,
+                workedOn: words ? String(data.get("workedOn") || "") : "",
+                nextTime: words ? String(data.get("nextTime") || "") : ""
+            });
+            const priv = words ? String(data.get("private") || "").trim() : "";
+            if (priv) {
+                const note = await addPrivateNote(clientUid, `${sessionLabel(s)}, ${dayName(s.date)}: ${priv}`);
+                record.privateNotes = [note, ...(record.privateNotes || [])];
+                sortNotes();
+                summarize();
+                renderAll();
+                selectTab("sessions");
+            }
+            d.close();
+            toast(status === "completed" ? `Logged. ${firstName()} sees your notes in their app.` : `Saved as ${statusLabel(status).toLowerCase()}.`);
+        } catch (error) {
+            const err = d.querySelector('[data-el="error"]');
+            err.textContent = friendlyError(error, "save that");
+            err.hidden = false;
+            btn.disabled = false;
+        }
+    });
+    d.showModal();
+}
+
+$("hubSessions").addEventListener("click", async event => {
+    const logBtn = event.target.closest("[data-log]");
+    if (logBtn) {
+        const s = findSession(logBtn.dataset.log);
+        if (s) logSessionDialog(s, { cancelOnly: Boolean(logBtn.dataset.cancelOnly) });
+        return;
+    }
+    const noShow = event.target.closest("[data-noshow]");
+    if (noShow) {
+        const s = findSession(noShow.dataset.noshow);
+        if (!s) return;
+        noShow.disabled = true;
+        try {
+            await saveLog(s, { status: "no-show" });
+            toast("Marked as a no-show", {
+                action: { label: "Undo", onClick: async () => {
+                    const { deleteSessionLog } = await import("./sessionLogs.js");
+                    await deleteSessionLog(s.bookingId, s.date);
+                    setLog(s, null);
+                } }
+            });
+        } catch (error) {
+            toast(friendlyError(error, "save that"), { type: "error" });
+            noShow.disabled = false;
+        }
+    }
+});
 
 // ---- Notes: private notes vs. updates they see ----
 
@@ -1146,7 +1332,7 @@ function summarize() {
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0 }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0, requests: record.requests || [] }),
         timeline: buildTimeline({ ...record, today })
     };
 }

@@ -20,6 +20,22 @@ import {
     collection, query, where, getDocs, addDoc, updateDoc, deleteDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { attachLogs } from "./sessionModel.js";
+
+// Session logs (js/sessionLogs.js) ride along with the requests: each
+// request gets `logs` and `allDates`, and cancelled dates leave `dates`.
+// Logs that can't be read (rules not published yet, offline with nothing
+// cached) = the requests exactly as before, with no `logs` at all, so
+// nothing nags about sessions that can't be logged.
+async function withLogs(requests, role) {
+    try {
+        const { listSessionLogs } = await import("./sessionLogs.js");
+        return attachLogs(requests, await listSessionLogs(role));
+    } catch (error) {
+        if (error?.code !== "permission-denied") console.warn("Southbound: session logs unavailable.", error);
+        return requests;
+    }
+}
 
 export const SESSION_TYPES = [
     { value: "soccer", label: "Soccer" },
@@ -151,14 +167,14 @@ export async function listMyBookingRequests() {
     const user = await waitForUser();
     if (!user) return [];
     const snap = await getDocs(query(collection(db, "bookingRequests"), where("clientUid", "==", user.uid)));
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return withLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })), "client");
 }
 
 export async function listRequestsForMyClients() {
     const user = await waitForUser();
     if (!user) return [];
     const snap = await getDocs(query(collection(db, "bookingRequests"), where("coachUid", "==", user.uid)));
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return withLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })), "coach");
 }
 
 export async function respondToRequest(requestId, status, coachNote) {

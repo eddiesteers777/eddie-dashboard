@@ -162,6 +162,8 @@
     "js/runningPrograms.js",
     "js/schedule.js",
     "js/scheduling.js",
+    "js/sessionLogs.js",
+    "js/sessionModel.js",
     "js/settings.js",
     "js/stravaArchive.js",
     "js/stravaAuth.js",

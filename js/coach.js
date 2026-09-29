@@ -21,6 +21,7 @@ import { summarizeClient, isoDate, serviceLabels, clientStatusLines } from "./cl
 import { attentionQueue } from "./feedbackModel.js";
 import { icon } from "./icons.js";
 import { emptyHtml, toast } from "./ui.js";
+import { sessionList, weekAgenda } from "./sessionModel.js";
 import { newPeopleItems, splitDone, pruneDone, groupByTask, groupByPerson, greeting, summaryLine, waitedText, itemKey } from "./coachToday.js";
 
 // ---- Who needs you today (js/coachToday.js) ----
@@ -32,6 +33,7 @@ const QUEUE_ICONS = {
     pain: "alertTriangle", health: "heart", change: "calendar", checkin: "star", missed: "clock", skipped: "clock",
     booking: "calendar", "plan-unseen": "eye", race: "flag", plan: "clipboard", quiet: "moon",
     "no-checkin": "star", profile: "user", sessions: "calendar", intake: "user",
+    "session-log": "clipboard", "no-show": "alertTriangle",
     pending: "checkCircle", application: "mail", question: "messageSquare"
 };
 const DONE_KEY = "coach-queue-done";
@@ -55,8 +57,13 @@ function queueView() {
 async function loadQueue() {
     try {
         const day = isoDate(new Date());
-        today.clients = (await loadClientDirectory()).map(c => summarizeClient(c, day));
+        const directory = await loadClientDirectory();
+        today.clients = directory.map(c => summarizeClient(c, day));
         today.clientItems = attentionQueue(today.clients);
+        // Every booked session across clients, for Sessions this week.
+        today.sessions = directory.flatMap(c => sessionList(c.requests, day).map(s => ({
+            ...s, clientName: c.profile?.displayName || c.link?.clientName || s.clientName || "Client"
+        })));
         today.failed = false;
     } catch (error) {
         console.warn("Southbound: couldn't build the attention queue.", error);
@@ -64,6 +71,7 @@ async function loadQueue() {
         today.clients = today.clients || [];
     }
     renderToday();
+    renderWeek();
     renderClientList();
 }
 
@@ -163,6 +171,53 @@ document.getElementById("coachQueueHidden").addEventListener("click", () => {
 document.querySelectorAll(".coach-view-btn").forEach(btn => btn.addEventListener("click", () => {
     try { localStorage.setItem(VIEW_KEY, btn.dataset.view); } catch { /* this visit only */ }
     renderToday();
+}));
+
+// ---- Sessions this week (js/sessionModel.js weekAgenda) ----
+
+const WEEK_STATES = {
+    completed: ["Completed", "is-done"], "no-show": ["No-show", "is-bad"], "late-cancel": ["Cancelled late", "is-bad"],
+    cancelled: ["Cancelled", "is-off"], "to-log": ["To log", "is-new"], "not-logged": ["Not logged", "is-off"],
+    today: ["Today", "is-new"], upcoming: ["Booked", ""]
+};
+let weekOffset = 0;
+
+function renderWeek() {
+    const el = document.getElementById("coachWeekList");
+    if (!today.sessions) return;
+    const day = isoDate(new Date());
+    const [y, m, d] = day.split("-").map(Number);
+    const anchor = isoDate(new Date(y, m - 1, d + weekOffset * 7));
+    const week = weekAgenda(today.sessions, anchor);
+    const fmt = (iso, opts) => { const [yy, mm, dd] = iso.split("-").map(Number); return new Date(yy, mm - 1, dd).toLocaleDateString("en-US", opts); };
+    document.getElementById("coachWeekLabel").textContent = weekOffset === 0 ? "This week"
+        : `${fmt(week[0].date, { month: "short", day: "numeric" })} – ${fmt(week[6].date, { month: "short", day: "numeric" })}`;
+    const days = week.filter(w => w.sessions.length);
+    if (!days.length) {
+        el.innerHTML = `<p class="clients-card-note">${weekOffset === 0 ? "No sessions booked this week." : "No sessions booked that week."}</p>`;
+        return;
+    }
+    el.innerHTML = days.map(w => `
+        <div class="coach-week-day${w.date === day ? " is-today" : ""}">
+            <h3>${escapeHtml(w.date === day ? `Today · ${fmt(w.date, { weekday: "short", month: "short", day: "numeric" })}` : fmt(w.date, { weekday: "long", month: "short", day: "numeric" }))}</h3>
+            ${w.sessions.map(s => {
+                const [label, tone] = WEEK_STATES[s.state] || ["", ""];
+                const [hh, mi] = String(s.startTime || "0:0").split(":").map(Number);
+                const time = s.startTime ? `${((hh + 11) % 12) + 1}:${String(mi).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}` : "";
+                const type = { soccer: "Soccer", running: "Running", strength: "Strength", general: "Session" }[s.sessionType] || "Session";
+                return `
+                <a class="coach-week-row" href="client.html?uid=${encodeURIComponent(s.clientUid)}&tab=sessions">
+                    <span class="coach-week-time">${escapeHtml(time)}</span>
+                    <span class="coach-week-who"><strong>${escapeHtml(s.clientName)}</strong> ${escapeHtml(type)}${s.label ? ` · ${escapeHtml(s.label)}` : ""}</span>
+                    ${label ? `<span class="coach-week-pill ${tone}">${escapeHtml(label)}</span>` : ""}
+                </a>`;
+            }).join("")}
+        </div>`).join("");
+}
+
+document.querySelectorAll("[data-week-step]").forEach(btn => btn.addEventListener("click", () => {
+    weekOffset += Number(btn.dataset.weekStep);
+    renderWeek();
 }));
 
 // ---- Your clients (search; the full filters live on My Clients) ----
