@@ -250,6 +250,18 @@ export function sendCoachUpdateEmail({ clientEmail, clientName, coachName, text 
     });
 }
 
+// Coach asked the client to check some profile answers (Client Hub).
+export function sendProfileAskEmail({ clientEmail, clientName, coachName, items = [] }) {
+    return clientUpdate({
+        toEmail: clientEmail,
+        toName: clientName,
+        subject: "A quick question from your coach",
+        headline: `${coachName || "Your coach"} asked you to check your profile.`,
+        details: items.length ? `Can you check: ${items.join(", ")}? It's on your Today screen and takes a few seconds.` : "",
+        page: "index.html"
+    });
+}
+
 // Coach published a plan or a new version of one (js/coachingPlans.js).
 export function sendPlanPublishedEmail({ clientEmail, clientName, coachName, planName, firstVersion }) {
     return clientUpdate({

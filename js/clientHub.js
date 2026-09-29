@@ -24,7 +24,9 @@ import {
 } from "./clientSummary.js";
 import { SESSION_TYPES } from "./scheduling.js";
 import { reviewCheckin } from "./checkins.js";
-import { sendCheckinReviewedEmail } from "./emailNotify.js";
+import { sendCheckinReviewedEmail, sendProfileAskEmail } from "./emailNotify.js";
+import { ASKS, openAsks, answerFreshness, ageText } from "./profileChecks.js";
+import { allEssentialsDone } from "./intakeFlow.js";
 import { icon } from "./icons.js";
 import { FIELDS, displayValue, athleteDisplayName } from "./clientRecordSchema.js";
 import { realAnswer } from "./intakeFlow.js";
@@ -106,6 +108,7 @@ function selectTab(name) {
                 summarize();
                 renderAll();
                 renderProfileNote();
+                renderProfileFresh();
             }
         }));
     }
@@ -220,10 +223,130 @@ function renderAbout() {
                 <h2>About ${esc(athleteDisplayName(rec, displayName()).split(" ")[0])}</h2>
                 <button type="button" class="clients-btn-secondary" data-go-tab="profile">Full profile</button>
             </div>
+            ${freshLine(rec)}
             ${realAnswer(rec.injuries) ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Injuries / limits:</strong> ${esc(rec.injuries)}</span></div>` : ""}
             ${rows.length ? `<dl class="hub-facts">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
         </div>`;
 }
+
+// ---- How current the profile is (js/profileChecks.js) ----
+
+const todayIso = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+// One line for the Overview's About card.
+function freshLine(rec) {
+    if (!allEssentialsDone(rec)) return "";
+    const asks = openAsks(rec);
+    const stale = answerFreshness(rec, Date.now(), todayIso()).filter(f => f.stale);
+    const updated = toMillis(rec.updatedAt);
+    const parts = [updated ? `Profile updated ${ageText(Math.floor((Date.now() - updated) / 86400000))}` : ""];
+    if (asks.length) parts.push(`you asked ${ageText(Math.floor((Date.now() - asks[0].at) / 86400000))} — waiting on ${esc(firstName())}`);
+    else if (stale.length) parts.push(`<strong>${stale.length} answer${stale.length === 1 ? "" : "s"} may be out of date</strong>`);
+    return `<p class="hub-fresh-line${stale.length && !asks.length ? " is-stale" : ""}">${icon("clock")}<span>${parts.filter(Boolean).join(" · ")}</span>
+        ${stale.length && !asks.length ? `<button type="button" class="hub-link" data-act="ask-update">Ask ${esc(firstName())} to update</button>` : ""}</p>`;
+}
+
+// The Profile tab's "how current is it" card.
+function renderProfileFresh() {
+    const el = $("hubProfileFresh");
+    const rec = record?.record;
+    if (!el) return;
+    if (!rec || !allEssentialsDone(rec)) { el.innerHTML = ""; return; }
+    const fresh = answerFreshness(rec, Date.now(), todayIso());
+    const asks = openAsks(rec);
+    const askedFor = key => asks.find(a => a.keys.includes(key));
+    el.innerHTML = `
+        <div class="clients-card hub-fresh">
+            <div class="hub-about-head">
+                <h2>How current is it?</h2>
+                <button type="button" class="clients-btn-secondary" data-act="ask-update">Ask ${esc(firstName())} to update…</button>
+            </div>
+            <ul class="hub-fresh-list">
+                ${fresh.map(f => {
+                    const ask = askedFor(f.key);
+                    return `<li class="${f.stale && !ask ? "is-stale" : ""}">
+                        <span class="hub-fresh-label">${esc(f.label)}</span>
+                        <span class="hub-fresh-when">${Number.isFinite(f.days) ? `confirmed ${esc(ageText(f.days))}` : "not confirmed yet"}</span>
+                        ${ask ? `<span class="hub-fresh-tag is-asked">Asked ${esc(ageText(Math.floor((Date.now() - ask.at) / 86400000)))}</span>`
+                            : f.stale ? `<span class="hub-fresh-tag">${esc(f.reason)}</span>` : ""}
+                    </li>`;
+                }).join("")}
+            </ul>
+            <p class="clients-card-note">${esc(firstName())}'s app also asks about old answers on their Today screen, one quick question a week.</p>
+        </div>`;
+}
+
+async function askToUpdate() {
+    const { askClientToUpdate } = await import("./clientRecords.js");
+    const rec = record.record || {};
+    const fresh = answerFreshness(rec, Date.now(), todayIso());
+    const staleKeys = new Set(fresh.filter(f => f.stale).map(f => f.key));
+    const asks = openAsks(rec);
+    const email = record.profile?.email || record.link?.clientEmail || "";
+    const first = firstName();
+    const whenFor = ask => {
+        // The oldest answer it covers (miles can be stale while strength isn't).
+        const ages = ask.keys.map(k => fresh.find(f => f.key === k)?.days).filter(Number.isFinite);
+        return ages.length ? `confirmed ${ageText(Math.max(...ages))}` : "not answered";
+    };
+    const d = document.createElement("dialog");
+    d.className = "sb-dialog hub-ask-dialog";
+    d.innerHTML = `
+        <form class="sb-dialog-form" novalidate>
+            <h2 class="sb-dialog-title">Ask ${esc(first)} to update</h2>
+            <p class="sb-dialog-message">${esc(first)} will see a quick question on their Today screen and can answer in a few taps. Pick what to check:</p>
+            <div class="hub-ask-checks">
+                ${ASKS.map(a => {
+                    const open = asks.find(x => x.id === a.id);
+                    const stale = a.keys.some(k => staleKeys.has(k));
+                    return `<label class="pw-check"><input type="checkbox" name="asks" value="${a.id}"${stale && !open ? " checked" : ""}>
+                        <span>${esc(a.label)} <em class="hub-ask-when${stale ? " is-stale" : ""}">${esc(open ? `asked ${ageText(Math.floor((Date.now() - open.at) / 86400000))}` : whenFor(a))}</em></span></label>`;
+                }).join("")}
+            </div>
+            <label class="pw-check hub-ask-email"><input type="checkbox" name="email"${email ? " checked" : " disabled"}><span>${email ? `Also email ${esc(first)} a heads-up` : "No email on file"}</span></label>
+            <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
+            <div class="sb-dialog-actions">
+                <button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button>
+                <button type="submit" class="sb-btn sb-btn-primary">Ask ${esc(first)}</button>
+            </div>
+        </form>`;
+    document.body.appendChild(d);
+    d.addEventListener("close", () => d.remove());
+    d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+    d.querySelector("form").addEventListener("submit", async ev => {
+        ev.preventDefault();
+        const data = new FormData(ev.target);
+        const ids = data.getAll("asks").map(String);
+        const err = d.querySelector('[data-el="error"]');
+        if (!ids.length) { err.textContent = "Pick at least one thing to check."; err.hidden = false; return; }
+        const btn = ev.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            record.record = await askClientToUpdate(clientUid, ids, record.record);
+            if (data.get("email") && email) {
+                sendProfileAskEmail({
+                    clientEmail: email, clientName: first, coachName: record.link?.coachName || "",
+                    items: ASKS.filter(a => ids.includes(a.id)).map(a => a.short)
+                }).catch(() => {});
+            }
+            d.close();
+            summarize();
+            renderAll();
+            toast(`Asked. ${first} will see it on their Today screen.`);
+        } catch (error) {
+            err.textContent = friendlyError(error, "send that");
+            err.hidden = false;
+            btn.disabled = false;
+        }
+    });
+    d.showModal();
+}
+document.addEventListener("click", event => {
+    if (event.target.closest('[data-act="ask-update"]')) askToUpdate();
+});
 
 function renderProfileNote() {
     const rec = record.record;
@@ -897,6 +1020,7 @@ function renderAll() {
     renderWorkouts();
     renderChanges();
     renderNotes();
+    renderProfileFresh();
     import("./icons.js").then(m => m.hydrate());
 }
 

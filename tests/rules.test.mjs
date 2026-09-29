@@ -4,12 +4,13 @@
 // here, next to the legitimate flow it must not break.
 import { test, before, after, beforeEach } from "node:test";
 import { readFileSync } from "node:fs";
+import assert from "node:assert/strict";
 import {
     initializeTestEnvironment, assertFails, assertSucceeds
 } from "@firebase/rules-unit-testing";
 import {
     doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch,
-    collection, getDocs, query, where, serverTimestamp, Timestamp
+    collection, getDocs, query, where, serverTimestamp, Timestamp, deleteField
 } from "firebase/firestore";
 
 let env;
@@ -373,6 +374,23 @@ test("client profiles: 'still right?' confirmations are ms times for known answe
     await assertFails(setDoc(mine, confirm("today"), { merge: true }));
     // Someone who isn't linked can't confirm anything.
     await assertFails(setDoc(doc(as("stranger"), "clientRecords/client"), { ...confirm({ injuries: now }), updatedBy: "stranger" }, { merge: true }));
+});
+
+test("client profiles: the linked coach can ask for an update, and the client clears it", async () => {
+    await seedLinkAndBooking();
+    const now = Date.now();
+    await assertSucceeds(setDoc(doc(as("client"), "clientRecords/client"), profile("client", "client", { intakeCompletedAt: serverTimestamp() })));
+    const ask = (who, askedAt) => ({ clientUid: "client", askedAt, updatedAt: serverTimestamp(), updatedBy: who });
+    await assertSucceeds(setDoc(doc(as("coach"), "clientRecords/client"), ask("coach", { level: now, limits: now }), { merge: true }));
+    // Answering deletes that ask.
+    await assertSucceeds(setDoc(doc(as("client"), "clientRecords/client"),
+        { ...ask("client", { level: deleteField() }), confirmedAt: { weeklyMileage: now } }, { merge: true }));
+    const left = (await getDoc(doc(as("client"), "clientRecords/client"))).data().askedAt;
+    assert.deepEqual(Object.keys(left), ["limits"]);
+    // Only the known questions, as times; strangers can't ask.
+    await assertFails(setDoc(doc(as("coach"), "clientRecords/client"), ask("coach", { phone: now }), { merge: true }));
+    await assertFails(setDoc(doc(as("coach"), "clientRecords/client"), ask("coach", { level: "please" }), { merge: true }));
+    await assertFails(setDoc(doc(as("stranger"), "clientRecords/client"), ask("stranger", { level: now }), { merge: true }));
 });
 
 // ---- Private coach notes + client updates ----

@@ -127,7 +127,7 @@ export function checkinFlags(c) {
 // Most urgent first; anything unknown sorts last.
 export const ATTENTION_ORDER = [
     "pain", "change", "checkin", "missed", "skipped", "booking", "plan-unseen",
-    "race", "plan", "quiet", "no-checkin", "sessions", "intake"
+    "race", "plan", "quiet", "no-checkin", "profile", "sessions", "intake"
 ];
 
 /**

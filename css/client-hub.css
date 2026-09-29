@@ -788,3 +788,57 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 .pw-hidden-changes{ display:flex; align-items:flex-start; gap:6px; }
 .pw-version.is-auto{ padding:8px 0; }
 .pw-version.is-auto .pw-meta{ display:inline-flex; align-items:flex-start; gap:6px; font-weight:500; }
+
+/* ---------- How current the profile is (js/profileChecks.js) ---------- */
+.hub-fresh-line{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px 8px;
+    margin:0 0 12px;
+    color:var(--muted);
+    font-size:13.5px;
+}
+.hub-fresh-line .ui-icon{ width:15px; height:15px; flex-shrink:0; }
+.hub-fresh-line.is-stale strong{ color:var(--amber); font-weight:600; }
+.hub-link{
+    min-height:32px;
+    padding:0 2px;
+    border:0;
+    background:none;
+    color:var(--primary);
+    font:600 13.5px var(--font-body);
+    text-decoration:underline;
+    text-underline-offset:3px;
+    cursor:pointer;
+}
+.hub-fresh{ margin-bottom:14px; }
+.hub-fresh-list{ list-style:none; margin:4px 0 10px; padding:0; }
+.hub-fresh-list li{
+    display:flex;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:4px 12px;
+    padding:9px 0;
+    border-bottom:1px solid rgba(243,239,230,.06);
+}
+.hub-fresh-list li:last-child{ border-bottom:0; }
+.hub-fresh-label{ min-width:170px; color:var(--text); font-size:14px; font-weight:600; }
+.hub-fresh-when{ color:var(--muted); font-size:13.5px; }
+.hub-fresh-tag{
+    padding:2px 9px;
+    border-radius:99px;
+    background:color-mix(in srgb, var(--amber) 16%, transparent);
+    color:var(--amber);
+    font-size:12px;
+    font-weight:600;
+}
+.hub-fresh-tag.is-asked{ background:rgba(201,173,132,.14); color:var(--primary); }
+.hub-fresh-list li.is-stale .hub-fresh-when{ color:var(--amber); }
+.hub-ask-checks{ display:flex; flex-direction:column; gap:10px; margin:6px 0 14px; }
+.hub-ask-when{ display:block; color:var(--muted); font-size:12.5px; font-style:normal; }
+.hub-ask-when.is-stale{ color:var(--amber); }
+.hub-ask-email{ padding-top:12px; border-top:1px solid var(--border); }
+@media (max-width:600px){
+    .hub-fresh-label{ min-width:0; flex:0 0 100%; }
+}

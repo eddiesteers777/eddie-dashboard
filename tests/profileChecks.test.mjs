@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
     profileChecks, pickCheck, afterAnswer, nextConfirmedAt, recentPain, confirmedMs, ageDays, toMs,
-    TRACKED, MAX_AGE_DAYS, DAY_MS, WEEK_MS
+    TRACKED, MAX_AGE_DAYS, DAY_MS, WEEK_MS, ASKS, openAsks, asksSettledBy, answerFreshness, staleSummary, ageText
 } from "../js/profileChecks.js";
 import { NONE_EVENT, NONE_INJURIES } from "../js/intakeFlow.js";
 import { META_KEYS } from "../js/clientRecordSchema.js";
@@ -129,4 +129,33 @@ test("the tracked answers match firestore.rules and the stored keys", () => {
     const listed = rules.match(/m\.keys\(\)\.hasOnly\(\[([^\]]+)\]\)/)[1].match(/"([a-zA-Z]+)"/g).map(s => s.slice(1, -1));
     assert.deepEqual([...listed].sort(), [...TRACKED].sort());
     assert.ok(META_KEYS.includes("confirmedAt"));
+});
+
+test("the coach's asks: open until any of their answers is confirmed after the ask", () => {
+    const rec = { ...RUNNER, askedAt: { level: daysAgo(2), limits: daysAgo(3), days: daysAgo(5) },
+        confirmedAt: { ...fresh, injuries: daysAgo(10), weeklyMileage: daysAgo(10), strengthExperience: daysAgo(10), availabilityDays: daysAgo(1) } };
+    assert.deepEqual(openAsks(rec).map(a => a.id), ["limits", "level"], "days was confirmed after it was asked; oldest first");
+    assert.deepEqual(asksSettledBy(rec, ["weeklyMileage"]), ["level"]);
+    assert.deepEqual(asksSettledBy(rec, ["primaryGoal"]), []);
+    const [check] = profileChecks(rec, ctx());
+    assert.equal(check.kind, "ask");
+    assert.equal(check.title, "Your coach asked you to check your injuries and limits and starting point");
+    assert.deepEqual(check.actions[0].steps, ["limits", "level"]);
+    assert.deepEqual(check.actions[1].keys, ["injuries", "weeklyMileage", "strengthExperience"]);
+    assert.equal(pickCheck([check], afterAnswer({}, { id: "x", kind: "days" }, NOW), NOW + DAY_MS), check, "asks don't wait for the weekly slot");
+    assert.equal(afterAnswer({}, check, NOW, { snooze: true }).snoozed[check.id], NOW + DAY_MS, "'Not now' on an ask: a day");
+    assert.deepEqual(ASKS.flatMap(a => a.keys).filter(k => !TRACKED.includes(k)), [], "every ask is about tracked answers");
+    assert.equal(profileChecks({ ...RUNNER, whoTrains: "child", askedAt: { goal: daysAgo(1) }, confirmedAt: { ...fresh, primaryGoal: daysAgo(3), targetEvent: daysAgo(3) } }, ctx())[0].title,
+        "Your coach asked you to check their goal");
+});
+
+test("the coach's view: how current each answer is", () => {
+    const rec = { ...RUNNER, targetDate: "2026-09-01", confirmedAt: { ...fresh, weeklyMileage: daysAgo(42) } };
+    const fresh1 = answerFreshness(rec, NOW, TODAY);
+    assert.deepEqual(fresh1.map(f => f.key), TRACKED);
+    assert.deepEqual(fresh1.filter(f => f.stale).map(f => [f.key, f.reason]), [["targetEvent", "the date has passed"], ["weeklyMileage", "may be out of date"]]);
+    assert.deepEqual(staleSummary(rec, NOW, TODAY), ["target event (the date has passed)", "miles per week (confirmed 6 weeks ago)"]);
+    assert.ok(!answerFreshness({ ...rec, primarySport: "soccer" }, NOW, TODAY).some(f => f.key === "weeklyMileage"), "no miles row for soccer");
+    assert.ok(!answerFreshness({ ...rec, injuries: NONE_INJURIES, confirmedAt: { ...fresh, injuries: daysAgo(300) } }, NOW, TODAY).find(f => f.key === "injuries").stale);
+    assert.deepEqual([0, 1, 5, 20, 90, Infinity].map(ageText), ["today", "yesterday", "5 days ago", "3 weeks ago", "3 months ago", "never"]);
 });

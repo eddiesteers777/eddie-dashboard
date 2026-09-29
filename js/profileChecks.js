@@ -35,7 +35,7 @@ export const TRACKED = ["primaryGoal", "targetEvent", "availabilityDays", "weekl
 export const MAX_AGE_DAYS = { weeklyMileage: 28, injuries: 28, availabilityDays: 56, primaryGoal: 84, strengthExperience: 182 };
 
 export const STATE_KEY = "profile-checks";
-const URGENT = ["race", "pain"];
+const URGENT = ["ask", "race", "pain"];
 
 // Firestore Timestamp / { seconds } / ms / ISO -> ms (or 0).
 export function toMs(value) {
@@ -85,6 +85,75 @@ export function recentPain({ results = [], checkins = [] } = {}, today, days = 2
     return out.sort((a, b) => b.at - a.at);
 }
 
+// What the coach can ask a client to update (Client Hub → "Ask … to
+// update"). Stored as clientRecords.askedAt { id: ms } (also in
+// firestore.rules); an ask is answered once any of its answers is
+// confirmed after it, and the client's app clears it when they answer.
+export const ASKS = [
+    { id: "goal", label: "Goal and target event", short: "goal", keys: ["primaryGoal", "targetEvent"], steps: ["goal", "event"] },
+    { id: "days", label: "Days they can train", short: "training days", keys: ["availabilityDays"], steps: ["days"] },
+    { id: "level", label: "Starting point (miles, strength)", short: "starting point", keys: ["weeklyMileage", "strengthExperience"], steps: ["level"] },
+    { id: "limits", label: "Injuries and limits", short: "injuries and limits", keys: ["injuries"], steps: ["limits"] }
+];
+export const ASK_IDS = ASKS.map(a => a.id);
+const askById = id => ASKS.find(a => a.id === id);
+
+// Asks still waiting on the client, oldest first: [{ ...ask, at }].
+export function openAsks(record) {
+    const asked = record?.askedAt || {};
+    return ASKS
+        .map(a => ({ ...a, at: toMs(asked[a.id]) }))
+        .filter(a => a.at && !a.keys.some(k => toMs(record?.confirmedAt?.[k]) >= a.at))
+        .sort((a, b) => a.at - b.at);
+}
+
+// The asks a save or confirmation of these answers settles.
+export const asksSettledBy = (record, keys = []) =>
+    openAsks(record).filter(a => a.keys.some(k => keys.includes(k))).map(a => a.id);
+
+// "today", "yesterday", "5 days", "3 weeks", "4 months".
+export function ageText(days) {
+    if (!Number.isFinite(days)) return "never";
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 14) return `${days} days ago`;
+    if (days < 61) return `${Math.round(days / 7)} weeks ago`;
+    return `${Math.round(days / 30.4)} months ago`;
+}
+
+const FRESH_LABELS = {
+    primaryGoal: "Main goal", targetEvent: "Target event", availabilityDays: "Days they can train",
+    weeklyMileage: "Miles per week", strengthExperience: "Strength experience", injuries: "Injuries / limits"
+};
+
+// How current each tracked answer is, for the coach:
+// [{ key, label, days, stale, reason }] (answers that don't apply are left out).
+export function answerFreshness(record, now, today) {
+    const r = record || {};
+    const out = [];
+    for (const key of TRACKED) {
+        if (key === "weeklyMileage" && !asksMiles(r.primarySport)) continue;
+        const value = r[key];
+        if (value === null || value === undefined || value === "" || (Array.isArray(value) && !value.length)) continue;
+        const days = ageDays(r, key, now);
+        let stale = MAX_AGE_DAYS[key] !== undefined && days >= MAX_AGE_DAYS[key];
+        let reason = stale ? "may be out of date" : "";
+        if (key === "injuries" && isNoneAnswer(value)) { stale = false; reason = ""; }
+        if (key === "targetEvent" && /^\d{4}-\d{2}-\d{2}$/.test(r.targetDate || "") && today && r.targetDate < today) {
+            stale = true; reason = "the date has passed";
+        }
+        out.push({ key, label: FRESH_LABELS[key], days, stale, reason });
+    }
+    return out;
+}
+
+// "Miles per week (6 weeks ago), Target event (the date has passed)".
+export function staleSummary(record, now, today) {
+    return answerFreshness(record, now, today)
+        .filter(f => f.stale)
+        .map(f => `${f.label.toLowerCase()} (${f.reason === "the date has passed" ? "the date has passed" : `confirmed ${ageText(f.days)}`})`);
+}
+
 /**
  * Every question worth asking now, most important first.
  * ctx: { today: "yyyy-mm-dd", now: ms, pain: recentPain(...), suggestion: { miles, source } | null, child }
@@ -100,6 +169,22 @@ export function profileChecks(record, { today, now, pain = [], suggestion = null
     const you = child ? "they" : "you";
     const your = child ? "their" : "your";
     const checks = [];
+
+    // ---- the coach asked ----
+    const asks = openAsks(r);
+    if (asks.length) {
+        const list = asks.map(a => a.short);
+        const named = list.length === 1 ? list[0] : `${list.slice(0, -1).join(", ")} and ${list.at(-1)}`;
+        checks.push({
+            id: `ask:${asks.map(a => a.id).join(",")}:${Math.max(...asks.map(a => a.at))}`, kind: "ask",
+            title: `Your coach asked you to check ${your} ${named}`,
+            detail: `So ${your} plan fits where ${you} are now. It takes a few seconds.`,
+            actions: [
+                { label: "Update now", act: "ask", steps: [...new Set(asks.flatMap(a => a.steps))], primary: true },
+                { label: "It's all still right", act: "confirm", keys: [...new Set(asks.flatMap(a => a.keys))] }
+            ]
+        });
+    }
 
     // ---- the race date has passed ----
     if (/^\d{4}-\d{2}-\d{2}$/.test(r.targetDate || "") && r.targetDate < today) {
@@ -217,9 +302,10 @@ export function pickCheck(checks, state = {}, now, { anyTime = false } = {}) {
 }
 
 // The cadence state after they answer (or tap "Not now" on) a check.
+// "Not now" on the coach's own question hides it for a day, others a week.
 export function afterAnswer(state = {}, check, now, { snooze = false } = {}) {
     const snoozed = Object.fromEntries(Object.entries(state?.snoozed || {}).filter(([, until]) => until > now));
-    if (snooze && check) snoozed[check.id] = now + WEEK_MS;
+    if (snooze && check) snoozed[check.id] = now + (check.kind === "ask" ? DAY_MS : WEEK_MS);
     return { answeredAt: now, snoozed };
 }
 

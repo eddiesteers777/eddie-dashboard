@@ -94,7 +94,7 @@ export const FIELDS = SECTIONS.flatMap(s => s.fields);
 export const FIELD_KEYS = FIELDS.map(f => f.key);
 
 // Stored alongside the fields (also listed in firestore.rules).
-export const META_KEYS = ["clientUid", "intakeComplete", "intakeCompletedAt", "updatedAt", "updatedBy", "confirmedAt"];
+export const META_KEYS = ["clientUid", "intakeComplete", "intakeCompletedAt", "updatedAt", "updatedBy", "confirmedAt", "askedAt"];
 
 const YEAR_MIN = 1920;
 

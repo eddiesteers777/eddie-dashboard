@@ -232,13 +232,22 @@ service cloud.firestore {
         && confirmedOk(m, "strengthExperience") && confirmedOk(m, "injuries");
     }
 
+    // The coach's "please check these" (Client Hub → Ask to update): ms
+    // times by what was asked; the client's app deletes one when answered.
+    function askedAtOk(m) {
+      return m is map
+        && m.keys().hasOnly(["goal", "days", "level", "limits"])
+        && confirmedOk(m, "goal") && confirmedOk(m, "days")
+        && confirmedOk(m, "level") && confirmedOk(m, "limits");
+    }
+
     function validClientRecord(d, clientUid) {
       return d.keys().hasOnly([
           "clientUid", "whoTrains", "preferredName", "athleteName", "birthYear", "phone",
           "primarySport", "teamOrLevel", "currentTraining", "weeklyMileage", "strengthExperience",
           "availabilityDays", "availabilityNotes", "primaryGoal", "secondaryGoals",
           "targetEvent", "targetDate", "coachingWants", "workedBefore", "notWorked", "injuries",
-          "intakeComplete", "intakeCompletedAt", "updatedAt", "updatedBy", "confirmedAt"])
+          "intakeComplete", "intakeCompletedAt", "updatedAt", "updatedBy", "confirmedAt", "askedAt"])
         && d.clientUid == clientUid
         && d.updatedBy == request.auth.uid
         && d.updatedAt == request.time
@@ -263,6 +272,7 @@ service cloud.firestore {
             && (d.targetDate == "" || d.targetDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))))
         && (!("intakeComplete" in d) || d.intakeComplete is bool)
         && (!("confirmedAt" in d) || confirmedAtOk(d.confirmedAt))
+        && (!("askedAt" in d) || askedAtOk(d.askedAt))
         && (!("intakeCompletedAt" in d) || d.intakeCompletedAt == request.time
             || (resource != null && "intakeCompletedAt" in resource.data
                 && d.intakeCompletedAt == resource.data.intakeCompletedAt));

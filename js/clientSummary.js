@@ -28,6 +28,8 @@ import { isIntakeComplete, athleteDisplayName } from "./clientRecordSchema.js";
 import { mergeRuntimeByDate } from "./coachingPlanModel.js";
 import { awaitingView, noticeVersionOf } from "./planWindow.js";
 import { checkinFlags, reasonLabel } from "./feedbackModel.js";
+import { staleSummary, openAsks, ageText } from "./profileChecks.js";
+import { allEssentialsDone } from "./intakeFlow.js";
 
 export const SERVICE_LABELS = {
     online_coaching: "Online Coaching",
@@ -242,7 +244,7 @@ export function summarizeCheckins(checkins, today) {
 
 // What the coach should act on for this client, most urgent first.
 // Each: { kind, text, tab } -- tab is the Client Hub tab that handles it.
-export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [] }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now() }) {
     const items = [];
     // Pain flagged on a workout, not yet answered: first thing to see.
     for (const r of results.filter(x => x.pain && !x.coachComment && x.date >= addDays(today, -14))) {
@@ -271,6 +273,18 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     // Profile not filled in (only when we could actually read it).
     if (record !== undefined && !isIntakeComplete(record)) {
         items.push({ kind: "intake", text: "Hasn't filled in their profile yet", tab: "profile" });
+    }
+    // Profile answers gone stale (js/profileChecks.js). Their app asks them
+    // too; this is for the coach, and waits while an ask of theirs is open.
+    if (record && allEssentialsDone(record)) {
+        const asks = openAsks(record);
+        const waited = asks.length ? Math.floor((now - asks[0].at) / 86400000) : 0;
+        if (asks.length && waited >= 7) {
+            items.push({ kind: "profile", text: `Hasn't answered your profile question (asked ${ageText(waited)})`, tab: "profile" });
+        } else if (!asks.length) {
+            const stale = staleSummary(record, now, today);
+            if (stale.length) items.push({ kind: "profile", text: `Profile may be out of date: ${stale.join(", ")}`, tab: "profile" });
+        }
     }
     if (trains && !plans.primary) {
         items.push({ kind: "plan", text: "No active training plan", tab: "plan" });

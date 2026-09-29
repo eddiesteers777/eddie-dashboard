@@ -23,7 +23,7 @@ import {
 import { FIELDS, SECTIONS, DAYS, SPORTS, STRENGTH_LEVELS, displayValue } from "./clientRecordSchema.js";
 import { saveClientRecord } from "./clientRecords.js";
 import { settleWrite } from "./offlineWrite.js";
-import { TRACKED, nextConfirmedAt } from "./profileChecks.js";
+import { TRACKED, nextConfirmedAt, asksSettledBy } from "./profileChecks.js";
 import { icon } from "./icons.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -61,8 +61,10 @@ export function mountIntakeGuide(container, { clientUid, record = null, prefill 
         // What they answer on a screen counts as confirmed (js/profileChecks.js).
         const confirm = Object.keys(values).filter(k => TRACKED.includes(k));
         const write = saveClientRecord(clientUid, answers, existing, { confirm });
-        saved = { ...(existing || {}), ...answers,
-            confirmedAt: nextConfirmedAt(existing?.confirmedAt, existing, answers, confirm, Date.now()) };
+        const confirmedAt = nextConfirmedAt(existing?.confirmedAt, existing, answers, confirm, Date.now());
+        const settled = asksSettledBy(existing, Object.keys(confirmedAt).filter(k => confirmedAt[k] !== existing?.confirmedAt?.[k]));
+        saved = { ...(existing || {}), ...answers, confirmedAt,
+            askedAt: Object.fromEntries(Object.entries(existing?.askedAt || {}).filter(([id]) => !settled.includes(id))) };
         if (!existing?.intakeCompletedAt && answers.primaryGoal && answers.primarySport) saved.intakeCompletedAt = Date.now();
         setStatus("Saving…");
         lastWrite = settleWrite(write, "Your profile");
