@@ -98,6 +98,30 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
+    // True when a stored YYYY-MM-DD session date is today or earlier.
+    // The comparison uses the trusted server timestamp, not the client's clock.
+    function sessionDateKey(date) {
+      return int(date[0]) * 10000000
+        + int(date[1]) * 1000000
+        + int(date[2]) * 100000
+        + int(date[3]) * 10000
+        + int(date[5]) * 1000
+        + int(date[6]) * 100
+        + int(date[8]) * 10
+        + int(date[9]);
+    }
+
+    function todayKey() {
+      return request.time.year() * 10000
+        + request.time.month() * 100
+        + request.time.day();
+    }
+
+    function sessionDateIsPastOrToday(date) {
+      return date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && sessionDateKey(date) <= todayKey();
+    }
+
     match /users/{uid}/sync/{docId} {
       allow read, write: if isUser(uid);
     }
@@ -223,6 +247,8 @@ service cloud.firestore {
         && b.status == "approved"
         && d.date in b.dates
         && d.status in ["completed", "no-show", "cancelled", "late-cancel"]
+        // Future occurrences may only be reserved as cancellations.
+        && (sessionDateIsPastOrToday(d.date) || d.status == "cancelled" || d.status == "late-cancel")
         && d.workedOn is string && d.workedOn.size() <= 1000
         && d.nextTime is string && d.nextTime.size() <= 1000
         && d.updatedAt == request.time;

@@ -879,22 +879,22 @@ test("session logs: the coach logs a session of an approved booking; the client 
         const db = ctx.firestore();
         await setDoc(doc(db, "bookingRequests/b2"), {
             coachUid: "coach", clientUid: "client", status: "approved", coachNote: "",
-            dates: ["2026-10-01", "2026-10-08", "2026-10-22"], startTime: "09:00", endTime: "10:00", slotId: "s1"
+            dates: ["2026-09-01", "2026-09-08", "2026-09-22", "2026-10-08", "2026-10-22", "2099-01-15"], startTime: "09:00", endTime: "10:00", slotId: "s1"
         });
         await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [] });
     });
     const log = (extra = {}) => ({
-        coachUid: "coach", clientUid: "client", bookingId: "b2", date: "2026-10-01", status: "completed",
+        coachUid: "coach", clientUid: "client", bookingId: "b2", date: "2026-09-01", status: "completed",
         workedOn: "First touch and weak-foot passing", nextTime: "Wall passes 10 min a day",
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
     });
-    const ref = doc(as("coach"), "sessionLogs/b2_2026-10-01");
+    const ref = doc(as("coach"), "sessionLogs/b2_2026-09-01");
     await assertSucceeds(setDoc(ref, log()));
     // Both of them can read it and list their own.
-    await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-10-01")));
+    await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
     await assertSucceeds(getDocs(query(collection(as("client"), "sessionLogs"), where("clientUid", "==", "client"))));
     await assertSucceeds(getDocs(query(collection(as("coach"), "sessionLogs"), where("coachUid", "==", "coach"))));
-    await assertFails(getDoc(doc(as("stranger"), "sessionLogs/b2_2026-10-01")));
+    await assertFails(getDoc(doc(as("stranger"), "sessionLogs/b2_2026-09-01")));
     await assertFails(getDocs(query(collection(as("stranger"), "sessionLogs"), where("clientUid", "==", "client"))));
     // The coach changes it (no-show), keeping who / which / when.
     await assertSucceeds(updateDoc(ref, { status: "no-show", workedOn: "", nextTime: "", updatedAt: serverTimestamp() }));
@@ -903,10 +903,14 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await assertFails(updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
     // A future date of the series can be cancelled in advance.
     await assertSucceeds(setDoc(doc(as("coach"), "sessionLogs/b2_2026-10-08"), log({ date: "2026-10-08", status: "cancelled", workedOn: "", nextTime: "" })));
+    // But a future outcome cannot be forged before the occurrence happens.
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2099-01-15"), log({ date: "2099-01-15" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2099-01-15"), log({ date: "2099-01-15", status: "no-show", workedOn: "", nextTime: "" })));
+    await assertSucceeds(setDoc(doc(as("coach"), "sessionLogs/b2_2099-01-15"), log({ date: "2099-01-15", status: "late-cancel", workedOn: "", nextTime: "" })));
     // The client can't write or change a log; another coach can't either.
-    await assertFails(setDoc(doc(as("client"), "sessionLogs/b2_2026-10-01"), log({ coachUid: "client" })));
-    await assertFails(updateDoc(doc(as("client"), "sessionLogs/b2_2026-10-01"), { status: "completed", updatedAt: serverTimestamp() }));
-    await assertFails(deleteDoc(doc(as("client"), "sessionLogs/b2_2026-10-01")));
+    await assertFails(setDoc(doc(as("client"), "sessionLogs/b2_2026-09-01"), log({ coachUid: "client" })));
+    await assertFails(updateDoc(doc(as("client"), "sessionLogs/b2_2026-09-01"), { status: "completed", updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
     await assertFails(setDoc(doc(as("coach2"), "sessionLogs/b2_2026-10-15"), log({ coachUid: "coach2", date: "2026-10-15" })));
     // Attacks on create: a date not in the booking, a request not yet approved, a wrong id,
     // a different client, unknown fields, oversized words, a forged time.
@@ -918,7 +922,7 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await assertFails(bad("b2_2026-10-22", { date: "2026-10-22", rating: 5 }));
     await assertFails(bad("b2_2026-10-22", { date: "2026-10-22", workedOn: "x".repeat(1001) }));
     await assertFails(bad("b2_2026-10-22", { date: "2026-10-22", createdAt: new Date("2020-01-01") }));
-    await assertSucceeds(bad("b2_2026-10-22", { date: "2026-10-22" }));
+    await assertFails(bad("b2_2026-10-22", { date: "2026-10-22" }));
     // Undo: the coach deletes it.
     await assertSucceeds(deleteDoc(ref));
 });
