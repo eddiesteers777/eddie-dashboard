@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
     planPosition, summarizePlans, summarizeSessions, summarizeCheckins,
-    needsAttention, buildTimeline, summarizeClient, weekKey, buildCoachFeed
+    needsAttention, buildTimeline, summarizeClient, weekKey, buildCoachFeed, summarizeProgress
 } from "../js/clientSummary.js";
 
 // A 3-week plan starting Mon 2026-09-14 (weeks: 14-20, 21-27, 28-Oct 4).
@@ -327,4 +327,66 @@ test("a 'yes' on the health check needs the coach until they mark it reviewed", 
     assert.equal(needsAttention({ ...base, record, healthReviewedAt: 1000 }).some(i => i.kind === "health"), false, "reviewed");
     assert.equal(needsAttention({ ...base, record: { ...record, healthCheckedAt: 2000 }, healthReviewedAt: 1000 }).some(i => i.kind === "health"), true, "new answers show again");
     assert.equal(needsAttention({ ...base, record: { ...record, healthFlags: [] } }).some(i => i.kind === "health"), false, "no to all");
+});
+
+
+test("progress: derives a 28-day coaching snapshot without another data source", () => {
+    const progress = summarizeProgress({
+        today: "2026-09-29",
+        plans: {
+            primary: { name: "Fall Marathon", weekNumber: 4, totalWeeks: 16, state: "current" },
+            week: { planned: 5, dueSoFar: 4, completed: 3, missed: 1, skipped: 0, plannedMiles: 28, completedMiles: 18 }
+        },
+        results: [
+            { date: "2026-09-10", status: "completed", distance: 5 },
+            { date: "2026-09-18", status: "completed", distance: 6, rpe: 6 },
+            { date: "2026-09-20", status: "skipped" },
+            { date: "2026-09-22", status: "completed", distance: 7, pain: true },
+            { date: "2026-09-24", status: "completed", kind: "strength", exercises: [{ name: "Squat", sets: [{ weight: 135, reps: 5 }, { weight: 135, reps: 5 }] }] },
+            { date: "2026-09-27", status: "completed", distance: 4 }
+        ],
+        sessions: [
+            { date: "2026-09-15", sessionType: "soccer_1on1", log: { status: "completed" } },
+            { date: "2026-09-20", sessionType: "soccer_1on1", log: { status: "no-show" } },
+            { date: "2026-09-28", sessionType: "soccer_1on1", log: { status: "completed" } }
+        ],
+        checkins: [
+            { weekOf: "2026-09-15", rating: 3 },
+            { weekOf: "2026-09-22", rating: 5 }
+        ]
+    });
+
+    assert.equal(progress.plan.name, "Fall Marathon");
+    assert.equal(progress.plan.week.completed, 3);
+    assert.equal(progress.plan.week.due, 4);
+    assert.equal(progress.activity.completedWorkouts, 4);
+    assert.equal(progress.activity.skippedWorkouts, 1);
+    assert.equal(progress.activity.runSessions, 3);
+    assert.equal(progress.activity.runMiles, 22);
+    assert.equal(progress.activity.strengthSessions, 1);
+    assert.equal(progress.activity.strengthSets, 2);
+    assert.equal(progress.activity.soccerCompleted, 2);
+    assert.equal(progress.activity.soccerNoShows, 1);
+    assert.equal(progress.activity.soccerCounted, 3);
+    assert.equal(progress.checkins.average, 4);
+    assert.equal(progress.painFlags, 1);
+    assert.equal(progress.trend.priorMiles, 5);
+    assert.equal(progress.trend.recentMiles, 22);
+});
+
+test("progress: prior 14-day comparison is descriptive and handles zero baselines", () => {
+    const progress = summarizeProgress({
+        today: "2026-09-29",
+        results: [
+            { date: "2026-08-31", status: "completed", distance: 5 },
+            { date: "2026-09-03", status: "completed", distance: 3 },
+            { date: "2026-09-20", status: "completed", distance: 4 },
+            { date: "2026-09-28", status: "completed", distance: 6 }
+        ]
+    });
+
+    assert.equal(progress.trend.priorMiles, 8);
+    assert.equal(progress.trend.recentMiles, 10);
+    assert.equal(progress.trend.milesChangePct, 25);
+    assert.equal(progress.trend.completedChangePct, 0);
 });
