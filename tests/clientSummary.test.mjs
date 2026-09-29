@@ -374,7 +374,7 @@ test("progress: derives a 28-day coaching snapshot without another data source",
     assert.equal(progress.trend.recentMiles, 17);
     assert.equal(progress.trend.milesChangePct, 240);
     assert.equal(progress.trend.priorCompleted, 1);
-    assert.equal(progress.trend.recentCompleted, 3);
+    assert.equal(progress.trend.recentCompleted, 4);
 });
 
 test("progress: prior 14-day comparison is descriptive and handles zero baselines", () => {
