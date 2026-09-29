@@ -450,8 +450,8 @@ function renderGlance() {
         $("hubGlance").innerHTML = [
             glanceItem("Next session", next ? dayName(next.date) : "None booked", next ? `${niceTime(next.startTime)} · ${sessionLabel(next)}` : "", "sessions"),
             glanceItem("Waiting on you", sessions.waiting.length ? `${sessions.waiting.length} request${sessions.waiting.length === 1 ? "" : "s"}` : "Nothing", "", "sessions"),
-            glanceItem("Sessions done", String(att.counted ? att.completed : sessions.past.length),
-                att.counted ? `Attended ${att.completed} of ${att.counted}` : lastPast ? `Last: ${dayName(lastPast.date)}` : "", "sessions"),
+            glanceItem("Sessions done", String(att.completed),
+                att.counted ? `Attended ${att.completed} of ${att.counted}` : sessions.past.length ? "No sessions logged yet" : "", "sessions"),
             glanceItem("Booked ahead", String(sessions.upcoming.length), "", "sessions")
         ].join("");
         return;
