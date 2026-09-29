@@ -849,3 +849,98 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 .hub-health-btn{ display:block; margin-top:8px; }
 .hub-health-done{ display:block; margin-top:6px; font-style:normal; font-size:12.5px; color:var(--text-secondary); }
 .hub-injury-where{ color:var(--text-secondary); }
+
+/* ---- History: the whole relationship (Phase 4) ---- */
+
+.hub-see-all{
+    margin-top:10px;
+    padding:0;
+    background:none;
+    border:0;
+    color:var(--primary-light);
+    font:600 13.5px var(--font-body);
+    cursor:pointer;
+}
+.hub-see-all:hover{ text-decoration:underline; }
+
+.hub-app-lines{ margin:6px 0 0; padding-left:18px; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+
+.hub-history-head h2{ margin-bottom:4px; }
+.hub-history-head .clients-card-note{ margin:0 0 6px; }
+.hub-history-key{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:0 0 12px;
+    color:var(--muted);
+    font-size:12.5px;
+}
+.hub-history-key .hub-who{ margin-left:6px; }
+.hub-history-key .hub-who:first-child{ margin-left:0; }
+
+.hub-who{
+    flex:0 0 auto;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--muted);
+}
+.hub-who-coach{ background:var(--primary); }
+.hub-who-client{ background:var(--green); }
+
+.hub-hist-month + .hub-hist-month{ margin-top:14px; }
+.hub-hist-month h3{
+    margin:0 0 4px;
+    color:var(--primary);
+    font:700 12px var(--font-body);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+.hub-hist-items{ list-style:none; margin:0; padding:0; }
+.hub-hist-item{
+    position:relative;
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding-left:1px;
+}
+/* The line joining the dots. */
+.hub-hist-item::before{
+    content:"";
+    position:absolute;
+    left:5px;
+    top:0;
+    bottom:0;
+    width:0;
+    border-left:1px solid var(--border);
+}
+.hub-hist-item:first-child::before{ top:16px; }
+.hub-hist-item:last-child::before{ bottom:calc(100% - 16px); }
+.hub-hist-item .hub-who{ position:relative; margin-top:12px; box-shadow:0 0 0 3px var(--surface); }
+.hub-hist-body{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:8px 10px;
+    margin:0 -10px 0 0;
+    background:none;
+    border:0;
+    border-radius:10px;
+    color:var(--text);
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+}
+.hub-hist-body:hover{ background:var(--surface-light); }
+.hub-hist-meta{ color:var(--muted); font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.hub-hist-meta .sb-icon, .hub-hist-meta svg{ width:12px; height:12px; }
+.hub-hist-text{ font-size:14.5px; }
+.hub-hist-detail{
+    color:var(--text-secondary);
+    font-size:13.5px;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+}
+.hub-hist-more{ margin-top:12px; }

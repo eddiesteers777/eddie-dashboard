@@ -1154,6 +1154,23 @@ Goal:
 
 > Eddie can understand the whole client relationship chronologically.
 
+**Built 2026-09-29, derived instead of stored.** Every event on the list
+already has its own timestamp in Firestore, so the hub builds the history
+from them (`buildTimeline` in `js/clientSummary.js`, filters / months /
+counts in `js/clientTimeline.js`) rather than writing a separate timeline
+collection. That way older history shows too, nothing can fall out of step
+with the real records, and no rules change was needed. The Client Hub's
+**History** tab lists it all: application (from `applications`), approval,
+connection, profile / health check / "please check" asks, every plan
+publish (from the versions; automatic week openings left out), got it,
+archived, change requests + answers, workouts + replies, check-ins +
+replies, booking requests / answers / sessions that happened (with the
+session notes), updates sent / read, and private notes. Filters, search,
+month headings, who did it (you / the client), each item opens its tab.
+What a derived history can't show: things that were deleted (an unsent
+update, a withdrawn change request) and edits made after the fact (only
+the latest profile change is dated).
+
 ---
 
 ## Phase 5 — Dashboard / Needs Attention

@@ -64,6 +64,7 @@
     "js/clientRecordSchema.js",
     "js/clientRecords.js",
     "js/clientSummary.js",
+    "js/clientTimeline.js",
     "js/clients.js",
     "js/cloudSync.js",
     "js/coach.js",

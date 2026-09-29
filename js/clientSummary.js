@@ -343,44 +343,171 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
 
 // ---------- Timeline ----------
 
-// Recent activity derived from existing data (no timeline collection yet).
-// Each: { at (millis), date (iso), kind, text }
-export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans, results, changes }) {
-    const events = [];
-    const push = (at, kind, text) => { const ms = toMillis(at); if (ms) events.push({ at: ms, date: isoDate(new Date(ms)), kind, text }); };
+// The whole client relationship, derived from what's already stored (no
+// timeline collection: every event below already has its own timestamp,
+// and deriving means older history shows too, nothing can fall out of
+// step, and no rules change). Newest first. Each:
+//   { at (millis), date (iso), kind, group, by ("client" | "coach" | ""),
+//     text, detail, tab }
+// `group` feeds the History filters (TIMELINE_GROUPS in
+// js/clientTimeline.js), `tab` is the hub tab it links to. Optional
+// extras the hub loads after the page draws: `application` (their
+// applications doc), `planVersions` ({ planId: versions }, every publish
+// instead of only the latest) and `privateNotes`; `today` turns approved
+// bookings whose dates have passed into "Session held".
+const TIMELINE_KINDS = {
+    application: ["account", "client", "overview"],
+    approved: ["account", "coach", "profile"],
+    linked: ["account", "", "profile"],
+    intake: ["profile", "client", "profile"],
+    profile: ["profile", "client", "profile"],
+    "profile-coach": ["profile", "coach", "profile"],
+    asked: ["profile", "coach", "profile"],
+    health: ["profile", "client", "overview"],
+    workout: ["workouts", "client", "workouts"],
+    "workout-skipped": ["workouts", "client", "workouts"],
+    "workout-reply": ["workouts", "coach", "workouts"],
+    change: ["plan", "client", "plan"],
+    "change-reply": ["plan", "coach", "plan"],
+    "plan-published": ["plan", "coach", "plan"],
+    "plan-ack": ["plan", "client", "plan"],
+    "plan-archived": ["plan", "coach", "plan"],
+    update: ["messages", "coach", "notes"],
+    "update-read": ["messages", "client", "notes"],
+    checkin: ["checkins", "client", "checkins"],
+    feedback: ["checkins", "coach", "checkins"],
+    booking: ["sessions", "client", "sessions"],
+    booked: ["sessions", "coach", "sessions"],
+    denied: ["sessions", "coach", "sessions"],
+    cancelled: ["sessions", "client", "sessions"],
+    session: ["sessions", "", "sessions"],
+    note: ["notes", "coach", "notes"]
+};
 
-    push(profile?.applicationSubmittedAt, "application", "Application submitted");
+const clip = (text, n = 200) => {
+    const s = String(text || "").replace(/\s+/g, " ").trim();
+    return s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
+};
+
+const ASK_WORDS = { goal: "goal", days: "training days", level: "starting point", limits: "injuries and limits" };
+const SESSION_WORDS = { soccer: "Soccer session", running: "Running session", strength: "Strength session", general: "Session" };
+
+export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans, results, changes, application = null, planVersions = null, privateNotes = null, today = "" }) {
+    const events = [];
+    const push = (at, kind, text, detail = "") => {
+        const ms = toMillis(at);
+        if (!ms) return;
+        const [group, by, tab] = TIMELINE_KINDS[kind] || ["account", "", "overview"];
+        events.push({ at: ms, date: isoDate(new Date(ms)), kind, group, by, text, detail: clip(detail), tab });
+    };
+    const clientUid = link?.clientUid || profile?.uid || "";
+
+    // Account: applied, approved, connected.
+    const appAt = toMillis(application?.createdAt);
+    if (appAt) {
+        const services = serviceLabels(application.services || []);
+        push(appAt, "application", `Applied${services.length ? ` for ${services.join(", ").toLowerCase()}` : ""}`, application.goal ? `Goal: ${application.goal}` : application.message);
+    }
+    // An application sent from a signed-in account is on the profile too: once.
+    const profileApp = toMillis(profile?.applicationSubmittedAt);
+    if (profileApp && !(appAt && Math.abs(profileApp - appAt) < 6 * 3600000)) {
+        push(profileApp, "application", "Application submitted", profile?.applicationMessage);
+    }
     push(profile?.approvedAt, "approved", "Account approved");
     push(link?.linkedAt, "linked", "Connected to you");
-    push(record?.intakeCompletedAt, "intake", "Filled in their profile");
+
+    // Profile.
+    const intakeAt = toMillis(record?.intakeCompletedAt);
+    push(intakeAt, "intake", "Filled in their profile");
+    const profileAt = toMillis(record?.updatedAt);
+    if (profileAt && (!intakeAt || Math.abs(profileAt - intakeAt) > 60000)) {
+        const byCoach = record.updatedBy && clientUid && record.updatedBy !== clientUid;
+        push(profileAt, byCoach ? "profile-coach" : "profile", byCoach ? "You edited their profile (latest change)" : "Updated their profile (latest change)");
+    }
+    if (record?.healthCheckedAt) {
+        const yeses = healthYeses(record);
+        push(record.healthCheckedAt, "health", "Answered the health check", yeses.length ? `Said yes to: ${yeses.join("; ")}` : "No to all of it");
+    }
+    const asks = Object.entries(record?.askedAt || {}).filter(([id]) => ASK_WORDS[id]);
+    const askGroups = new Map();
+    for (const [id, at] of asks) {
+        const ms = toMillis(at);
+        if (!ms) continue;
+        const key = Math.round(ms / 60000);
+        if (!askGroups.has(key)) askGroups.set(key, { ms, ids: [] });
+        askGroups.get(key).ids.push(id);
+    }
+    const stillOpen = new Set(openAsks(record).map(a => a.id));
+    for (const { ms, ids } of askGroups.values()) {
+        push(ms, "asked", `You asked them to check their ${ids.map(id => ASK_WORDS[id]).join(" and ")}`,
+            ids.some(id => stillOpen.has(id)) ? "Still waiting on their answer" : "They've answered");
+    }
+
+    // Workouts.
     for (const r of results || []) {
         push(r.createdAt, r.status === "skipped" ? "workout-skipped" : "workout",
             r.status === "skipped" ? `Skipped ${r.title || "a workout"} (${shortDate(r.date)})`
-                : `Logged ${r.title || "a workout"}${r.distance ? ` — ${r.distance} mi` : ""}${r.kind === "strength" && r.exercises?.length ? ` — ${r.exercises.reduce((n, e) => n + (e.sets?.length || 0), 0)} sets` : ""}${r.rpe ? `, effort ${r.rpe}/10` : ""}${r.pain ? ", pain flagged" : ""}`);
-        if (r.coachComment) push(r.coachCommentAt, "workout-reply", `You replied on ${r.title || "their workout"} (${shortDate(r.date)})`);
+                : `Logged ${r.title || "a workout"}${r.distance ? ` — ${r.distance} mi` : ""}${r.kind === "strength" && r.exercises?.length ? ` — ${r.exercises.reduce((n, e) => n + (e.sets?.length || 0), 0)} sets` : ""}${r.rpe ? `, effort ${r.rpe}/10` : ""}${r.pain ? ", pain flagged" : ""}`,
+            [r.pain && r.painNote ? `Pain: ${r.painNote}` : "", r.note].filter(Boolean).join(" · "));
+        if (r.coachComment) push(r.coachCommentAt, "workout-reply", `You replied on ${r.title || "their workout"} (${shortDate(r.date)})`, r.coachComment);
     }
+
+    // Plan: change requests, publishes, got it, archived.
     for (const c of changes || []) {
-        push(c.createdAt, "change", `Asked for a change (${reasonLabel(c.reason).toLowerCase()})${c.date ? ` for ${shortDate(c.date)}` : ""}`);
-        if (c.status === "resolved") push(c.resolvedAt, "change-reply", `You answered their change request`);
+        push(c.createdAt, "change", `Asked for a change (${reasonLabel(c.reason).toLowerCase()})${c.date ? ` for ${shortDate(c.date)}` : ""}`, c.message);
+        if (c.status === "resolved") push(c.resolvedAt, "change-reply", `You answered their change request`, c.coachReply);
     }
     for (const h of coachingPlans || []) {
-        push(h.publishedAt, "plan-published", `You published ${noticeVersionOf(h) > 1 ? `an update to ${h.name}` : h.name}`);
-        if (h.ackVersion) push(h.ackAt, "plan-ack", `Got your plan${h.ackVersion > 1 ? " update" : ""}`);
+        const versions = planVersions?.[h.id];
+        if (Array.isArray(versions) && versions.length) {
+            // Every publish; week openings (auto) are routine and left out.
+            for (const v of versions) {
+                if (v.auto) continue;
+                const lines = Array.isArray(v.changes) ? v.changes : [];
+                const detail = [v.coachNote ? `Your note: ${v.coachNote}` : "",
+                    lines.length ? `${lines.length} change${lines.length === 1 ? "" : "s"}: ${lines.slice(0, 3).join("; ")}${lines.length > 3 ? "…" : ""}` : ""].filter(Boolean).join(" · ");
+                push(v.publishedAt, "plan-published", v.version > 1 ? `You updated ${v.name || h.name}` : `You published ${v.name || h.name}`,
+                    detail || (v.version > 1 ? "Nothing they can see changed" : ""));
+            }
+        } else {
+            push(h.publishedAt, "plan-published", `You published ${noticeVersionOf(h) > 1 ? `an update to ${h.name}` : h.name}`, h.coachNote ? `Your note: ${h.coachNote}` : "");
+        }
+        if (h.ackVersion) push(h.ackAt, "plan-ack", `Got your plan${h.ackVersion > 1 ? " update" : ""}`, h.name);
+        if (h.status === "archived") push(h.updatedAt, "plan-archived", `You archived ${h.name}`);
     }
+
+    // Updates they see, and your private notes.
     for (const u of updates || []) {
-        push(u.createdAt, "update", "You sent them an update");
+        push(u.createdAt, "update", "You sent them an update", u.text);
         push(u.readAt, "update-read", "They read your update");
     }
+    for (const n of privateNotes || []) push(n.createdAt, "note", "You wrote a private note", n.text);
+
+    // Check-ins.
     for (const c of checkins || []) {
-        push(c.submittedAt, "checkin", `Weekly check-in sent${c.rating ? ` — ${c.rating}/5` : ""}`);
-        if (c.status === "reviewed") push(c.reviewedAt, "feedback", "You replied to their check-in");
+        push(c.submittedAt, "checkin", `Weekly check-in sent${c.rating ? ` — ${c.rating}/5` : ""}`,
+            [c.pain ? `Pain${c.painNote ? `: ${c.painNote}` : ""}` : "", c.wentWell ? `Went well: ${c.wentWell}` : "", c.change ? `Would change: ${c.change}` : "", c.notes].filter(Boolean).join(" · "));
+        if (c.status === "reviewed") push(c.reviewedAt, "feedback", "You replied to their check-in", c.coachFeedback);
     }
+
+    // Sessions: requests, answers, and the ones that happened.
     for (const r of requests || []) {
         const when = r.dates?.[0] ? ` for ${shortDate(r.dates[0])}` : "";
-        push(r.createdAt, "booking", `Requested a session${when}`);
-        if (r.status === "approved") push(r.respondedAt, "booked", `Session booked${when}`);
+        const more = (r.dates?.length || 0) > 1 ? ` (+${r.dates.length - 1} more)` : "";
+        push(r.createdAt, "booking", `Requested a session${when}${more}`, r.clientNote);
+        if (r.status === "approved") push(r.respondedAt, "booked", `Session booked${when}${more}`);
         if (r.status === "denied") push(r.respondedAt, "denied", `Session request declined${when}`);
         if (r.status === "cancelled") push(r.respondedAt, "cancelled", `Session cancelled${when}`);
+        if (r.status === "approved" && today) {
+            const held = (r.dates || []).filter(d => d < today).sort();
+            held.forEach((d, i) => {
+                const [y, m, day] = d.split("-").map(Number);
+                const [hh, mm] = String(r.startTime || "12:00").split(":").map(Number);
+                push(new Date(y, m - 1, day, hh || 12, mm || 0).getTime(), "session",
+                    `${SESSION_WORDS[r.sessionType] || "Session"}${r.label ? ` · ${r.label}` : ""}`,
+                    i === held.length - 1 ? (r.coachNote ? `Your notes: ${r.coachNote}` : "") : "");
+            });
+        }
     }
     return events.sort((a, b) => b.at - a.at);
 }

@@ -17,7 +17,9 @@
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
-import { loadClientRecord } from "./clientDirectory.js";
+import { loadClientRecord, loadHistoryExtras } from "./clientDirectory.js";
+import { TIMELINE_GROUPS, filterTimeline, groupCounts, groupByMonth, historyStats, statsLine, eventDay, HISTORY_PAGE } from "./clientTimeline.js";
+import { applicationLines } from "./applicationForm.js";
 import {
     summarizePlans, summarizeSessions, summarizeCheckins, needsAttention,
     buildTimeline, serviceLabels, isoDate, shortDate, toMillis
@@ -499,7 +501,8 @@ function renderNext() {
 }
 
 function renderTimeline() {
-    const events = record.summary.timeline.slice(0, 8);
+    const all = record.summary.timeline;
+    const events = all.slice(0, 8);
     $("hubTimeline").innerHTML = events.length
         ? events.map(e => `
             <div class="hub-timeline-item">
@@ -507,11 +510,99 @@ function renderTimeline() {
                 <span>${esc(e.text)}</span>
             </div>`).join("")
         : `<p class="clients-card-note">No activity yet.</p>`;
+    $("hubSeeHistory").hidden = !all.length;
+    $("hubSeeHistory").textContent = all.length > events.length ? `See their whole history (${all.length}) →` : "See their whole history →";
 }
 
+// ---- History: the whole relationship (js/clientTimeline.js) ----
+
+const hist = { group: "all", query: "", shown: HISTORY_PAGE };
+
+function whoLabel(e) {
+    if (e.by === "coach") return "You";
+    if (e.by === "client") return firstName();
+    return "";
+}
+
+function historyItem(e) {
+    const who = whoLabel(e);
+    return `
+        <li class="hub-hist-item">
+            <span class="hub-who hub-who-${esc(e.by || "none")}" aria-hidden="true"></span>
+            <button type="button" class="hub-hist-body" data-go-tab="${esc(e.tab)}">
+                <span class="hub-hist-meta">${esc(eventDay(e))}${who ? ` · ${esc(who)}` : ""}${e.kind === "note" ? ` · ${icon("lock")} only you` : ""}</span>
+                <span class="hub-hist-text">${esc(e.text)}</span>
+                ${e.detail ? `<span class="hub-hist-detail">${renderEmojiText(esc(e.detail))}</span>` : ""}
+            </button>
+        </li>`;
+}
+
+function renderHistoryList() {
+    const all = record.summary.timeline;
+    const counts = groupCounts(filterTimeline(all, { query: hist.query }));
+    const chips = [{ value: "all", label: "All" }, ...TIMELINE_GROUPS]
+        .filter(g => g.value === "all" || g.value === hist.group || counts[g.value]);
+    $("hubHistoryFilters").innerHTML = chips.map(g => `
+        <button type="button" class="clients-filter${hist.group === g.value ? " active" : ""}" data-hist-group="${g.value}" aria-pressed="${hist.group === g.value}">
+            ${esc(g.label)} <span class="clients-filter-count">${counts[g.value] || 0}</span>
+        </button>`).join("");
+    const events = filterTimeline(all, hist);
+    if (!events.length) {
+        $("hubHistoryList").innerHTML = `<p class="clients-card-note">${all.length ? "Nothing matches that." : "Nothing has happened yet."}</p>`;
+        return;
+    }
+    const shown = events.slice(0, hist.shown);
+    $("hubHistoryList").innerHTML = groupByMonth(shown).map(m => `
+        <section class="hub-hist-month">
+            <h3>${esc(m.label)}</h3>
+            <ol class="hub-hist-items">${m.events.map(historyItem).join("")}</ol>
+        </section>`).join("")
+        + (events.length > shown.length ? `<button type="button" class="clients-btn-secondary hub-hist-more" data-hist-more>Show older (${events.length - shown.length} more)</button>` : "");
+}
+
+function renderHistory() {
+    const all = record.summary.timeline;
+    $("hubHistoryName").textContent = firstName();
+    $("hubHistoryThem").textContent = firstName();
+    const stats = historyStats(all);
+    const since = stats.since ? `Since ${new Date(`${stats.since}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "";
+    const line = statsLine(stats);
+    $("hubHistoryStats").textContent = [since, line].filter(Boolean).join(": ") + (record.historyExtras ? "" : (since ? " · " : "") + "loading older plan versions…");
+    renderHistoryList();
+}
+
+$("hubHistory").addEventListener("click", event => {
+    const chip = event.target.closest("[data-hist-group]");
+    if (chip) {
+        hist.group = chip.dataset.histGroup;
+        hist.shown = HISTORY_PAGE;
+        renderHistoryList();
+        return;
+    }
+    if (event.target.closest("[data-hist-more]")) {
+        hist.shown += HISTORY_PAGE;
+        renderHistoryList();
+        import("./icons.js").then(m => m.hydrate());
+    }
+});
+$("hubHistorySearch").addEventListener("input", event => {
+    hist.query = event.target.value;
+    hist.shown = HISTORY_PAGE;
+    renderHistoryList();
+    import("./icons.js").then(m => m.hydrate());
+});
+
 function renderApplication() {
-    const { profile } = record;
+    const { profile, application } = record;
     const requested = serviceLabels(profile?.requestedServices || []);
+    if (application) {
+        const when = toMillis(application.createdAt);
+        $("hubApplication").hidden = false;
+        $("hubApplicationBody").innerHTML = `
+            ${when ? `<p class="clients-card-note">Applied ${esc(new Date(when).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }))}</p>` : ""}
+            <ul class="hub-app-lines">${applicationLines(application).map(l => `<li>${esc(l)}</li>`).join("")}</ul>`;
+        return;
+    }
     if (!profile?.applicationMessage && !requested.length) return;
     $("hubApplication").hidden = false;
     $("hubApplicationBody").innerHTML = `
@@ -1056,7 +1147,7 @@ function summarize() {
     record.summary = {
         plans, sessions, checkins,
         attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0 }),
-        timeline: buildTimeline(record)
+        timeline: buildTimeline({ ...record, today })
     };
 }
 
@@ -1068,6 +1159,7 @@ function renderAll() {
     renderAbout();
     renderNext();
     renderTimeline();
+    renderHistory();
     renderApplication();
     renderActions();
     renderCheckins();
@@ -1157,4 +1249,14 @@ listenForAuth(async user => {
     renderAll();
     const requested = new URLSearchParams(location.search).get("tab");
     if (requested) selectTab(requested);
+    // Their application and every plan version, for History (after the page is up).
+    const extras = await loadHistoryExtras(record).catch(() => ({ application: null, planVersions: {} }));
+    record.application = extras.application;
+    record.planVersions = extras.planVersions;
+    record.historyExtras = true;
+    summarize();
+    renderTimeline();
+    renderHistory();
+    renderApplication();
+    import("./icons.js").then(m => m.hydrate());
 });

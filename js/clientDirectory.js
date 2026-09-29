@@ -23,7 +23,7 @@ import { listCheckinsForMyClients } from "./checkins.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { getClientRecord } from "./clientRecords.js";
 import { listPrivateNotes, listUpdatesForClient } from "./clientNotes.js";
-import { listPlansForClient, listDraftsForClient, getVersion, getMaster } from "./coachingPlans.js";
+import { listPlansForClient, listDraftsForClient, getVersion, getMaster, listVersions } from "./coachingPlans.js";
 import { isRolling } from "./planWindow.js";
 import { listResultsForClient } from "./workoutResults.js";
 import { listChangeRequestsForCoach } from "./changeRequests.js";
@@ -160,4 +160,22 @@ export async function loadClientRecord(clientUid) {
         checkins: (checkins || []).filter(c => c.clientUid === clientUid),
         requests: (requests || []).filter(r => r.clientUid === clientUid)
     };
+}
+
+// For the hub's History (loaded after the page draws, so it never slows
+// it down): the application this client sent (applications, matched by
+// account or email) and every published version of each plan (week
+// openings included; the timeline leaves those out). Either is empty
+// when it can't be read.
+export async function loadHistoryExtras(record) {
+    const profile = { uid: record.link.clientUid, email: record.profile?.email || record.link?.clientEmail || "" };
+    const [application, versions] = await Promise.all([
+        import("./applications.js")
+            .then(m => m.listApplications())
+            .then(apps => import("./applicationForm.js").then(f => f.matchApplication(profile, apps)))
+            .catch(() => null),
+        Promise.all((record.coachingPlans || []).map(h =>
+            listVersions(h.id).then(v => [h.id, v]).catch(() => [h.id, null])))
+    ]);
+    return { application, planVersions: Object.fromEntries(versions.filter(([, v]) => v)) };
 }
