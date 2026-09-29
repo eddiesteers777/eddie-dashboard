@@ -798,15 +798,6 @@ service cloud.firestore {
     }
   }
 }
-)
-        && (
-          int(date[0:4]) < request.time.year()
-          || (int(date[0:4]) == request.time.year() && int(date[5:7]) < request.time.month())
-          || (int(date[0:4]) == request.time.year()
-              && int(date[5:7]) == request.time.month()
-              && int(date[8:10]) <= request.time.day())
-        );
-    }
 
     // What happened at one session of a booking (Client Hub Phase 6,
     // js/sessionLogs.js): one doc per booking + date. The coach writes it
@@ -827,7 +818,7 @@ service cloud.firestore {
         // A future occurrence may only be reserved as a cancellation.
         // Completed / no-show / late-cancel are outcomes of a session that
         // has already reached its calendar date.
-        && (d.date <= serverDate() || d.status == "cancelled" || d.status == "late-cancel")
+        && (sessionDateIsPastOrToday(d.date) || d.status == "cancelled" || d.status == "late-cancel")
         && d.workedOn is string && d.workedOn.size() <= 1000
         && d.nextTime is string && d.nextTime.size() <= 1000
         && d.updatedAt == request.time;
