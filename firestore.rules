@@ -207,6 +207,16 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Firestore Rules timestamps are UTC; normalize the current server date
+    // to the same YYYY-MM-DD string used by booking occurrence dates.
+    function serverDate() {
+      let m = string(request.time.month());
+      let d = string(request.time.day());
+      return string(request.time.year()) + "-"
+        + (request.time.month() < 10 ? "0" + m : m) + "-"
+        + (request.time.day() < 10 ? "0" + d : d);
+    }
+
     // What happened at one session of a booking (Client Hub Phase 6,
     // js/sessionLogs.js): one doc per booking + date. The coach writes it
     // (completed / no-show / cancelled / cancelled late, plus what they
@@ -223,6 +233,10 @@ service cloud.firestore {
         && b.status == "approved"
         && d.date in b.dates
         && d.status in ["completed", "no-show", "cancelled", "late-cancel"]
+        // A future occurrence may only be reserved as a cancellation.
+        // Completed / no-show / late-cancel are outcomes of a session that
+        // has already reached its calendar date.
+        && (d.date <= serverDate() || d.status == "cancelled" || d.status == "late-cancel")
         && d.workedOn is string && d.workedOn.size() <= 1000
         && d.nextTime is string && d.nextTime.size() <= 1000
         && d.updatedAt == request.time;
