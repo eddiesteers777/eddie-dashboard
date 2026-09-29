@@ -666,3 +666,120 @@ export function buildCoachFeed({ updates = [], checkins = [], requests = [], res
     }
     return feed.filter(f => f.at).sort((a, b) => b.at - a.at);
 }
+
+/* ---------- Progress summary (coach-visible data only) ---------- */
+
+/**
+ * One descriptive progress snapshot for the Client Hub.
+ *
+ * This derives only from data the coach can already read:
+ * the current plan summary, coach-plan workout results, logged coach
+ * sessions, and weekly check-ins. It does not read or create a second
+ * source of truth.
+ */
+export function summarizeProgress({ plans = {}, results = [], sessions = [], checkins = [], today = "" } = {}) {
+    if (!today) return emptyProgress();
+
+    const inWindow = (date, from, to = today) => String(date || "") >= from && String(date || "") <= to;
+    const recentFrom = addDays(today, -27);
+    const priorFrom = addDays(today, -55);
+    const priorTo = addDays(today, -28);
+
+    const recentResults = results.filter(r => inWindow(r.date, recentFrom));
+    const priorResults = results.filter(r => inWindow(r.date, priorFrom, priorTo));
+
+    const isStrength = r => r?.kind === "strength";
+    const completed = r => r?.status === "completed";
+    const run = r => !isStrength(r);
+    const sumMiles = list => round1(list.filter(r => completed(r) && run(r)).reduce((sum, r) => sum + (Number(r.distance) || 0), 0));
+    const strengthSets = list => list
+        .filter(r => completed(r) && isStrength(r))
+        .reduce((sum, r) => sum + (r.exercises || []).reduce((n, e) => n + (Array.isArray(e.sets) ? e.sets.length : 0), 0), 0);
+
+    const recentCompleted = recentResults.filter(completed);
+    const priorCompleted = priorResults.filter(completed);
+    const recentRuns = recentCompleted.filter(run);
+    const recentStrength = recentCompleted.filter(isStrength);
+    const recentPain = recentResults.filter(r => r.pain).length;
+
+    const recentSessions = sessions.filter(s => inWindow(s.date, recentFrom) && s.date <= today && s.log);
+    const recentSoccer = recentSessions.filter(s => String(s.sessionType || "").toLowerCase().includes("soccer"));
+    const soccerCompleted = recentSoccer.filter(s => s.log?.status === "completed").length;
+    const soccerNoShows = recentSoccer.filter(s => s.log?.status === "no-show").length;
+    const soccerLateCancels = recentSoccer.filter(s => s.log?.status === "late-cancel").length;
+    const soccerCounted = soccerCompleted + soccerNoShows + soccerLateCancels;
+
+    const recentCheckins = checkins
+        .filter(c => c.weekOf && inWindow(c.weekOf, recentFrom))
+        .sort((a, b) => String(b.weekOf).localeCompare(String(a.weekOf)));
+    const rated = recentCheckins.filter(c => Number.isFinite(Number(c.rating)) && Number(c.rating) > 0);
+
+    const recentMiles = sumMiles(recentResults);
+    const priorMiles = sumMiles(priorResults);
+    const percentChange = (recent, prior) => prior > 0 ? Math.round(((recent - prior) / prior) * 100) : null;
+
+    return {
+        window: { from: recentFrom, to: today, days: 28 },
+        plan: {
+            name: plans.primary?.name || "",
+            weekNumber: plans.primary?.weekNumber ?? null,
+            totalWeeks: plans.primary?.totalWeeks ?? null,
+            state: plans.primary?.state || null,
+            week: plans.week ? {
+                planned: plans.week.planned || 0,
+                due: plans.week.dueSoFar || 0,
+                completed: plans.week.completed || 0,
+                missed: plans.week.missed || 0,
+                skipped: plans.week.skipped || 0,
+                plannedMiles: plans.week.plannedMiles || 0,
+                completedMiles: plans.week.completedMiles || 0
+            } : null
+        },
+        activity: {
+            completedWorkouts: recentCompleted.length,
+            skippedWorkouts: recentResults.filter(r => r?.status === "skipped").length,
+            runSessions: recentRuns.length,
+            runMiles: recentMiles,
+            strengthSessions: recentStrength.length,
+            strengthSets: strengthSets(recentResults),
+            soccerSessions: recentSoccer.length,
+            soccerCompleted,
+            soccerNoShows,
+            soccerLateCancels,
+            soccerCounted
+        },
+        trend: {
+            recentMiles,
+            priorMiles,
+            recentCompleted: recentCompleted.length,
+            priorCompleted: priorCompleted.length,
+            milesChangePct: percentChange(recentMiles, priorMiles),
+            completedChangePct: percentChange(recentCompleted.length, priorCompleted.length)
+        },
+        checkins: {
+            count: recentCheckins.length,
+            rated: rated.length,
+            average: rated.length ? Math.round((rated.reduce((sum, c) => sum + Number(c.rating), 0) / rated.length) * 10) / 10 : null,
+            latestRating: rated[0] ? Number(rated[0].rating) : null
+        },
+        painFlags: recentPain,
+        hasActivity: recentResults.length > 0 || recentSessions.length > 0 || recentCheckins.length > 0
+    };
+}
+
+function emptyProgress() {
+    return {
+        window: { from: "", to: "", days: 28 },
+        plan: { name: "", weekNumber: null, totalWeeks: null, state: null, week: null },
+        activity: {
+            completedWorkouts: 0, skippedWorkouts: 0, runSessions: 0, runMiles: 0,
+            strengthSessions: 0, strengthSets: 0, soccerSessions: 0, soccerCompleted: 0,
+            soccerNoShows: 0, soccerLateCancels: 0, soccerCounted: 0
+        },
+        trend: { recentMiles: 0, priorMiles: 0, recentCompleted: 0, priorCompleted: 0, milesChangePct: null, completedChangePct: null },
+        checkins: { count: 0, rated: 0, average: null, latestRating: null },
+        painFlags: 0,
+        hasActivity: false
+    };
+}
+
