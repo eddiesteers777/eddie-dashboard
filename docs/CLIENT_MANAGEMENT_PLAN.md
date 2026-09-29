@@ -1188,6 +1188,19 @@ Goal:
 
 > Eddie opens Southbound and immediately knows what needs attention.
 
+**Built 2026-09-29 (no rules change).** Most of the list already existed as
+"Who needs you today" (coaching Phase F). This step made the dashboard
+answer "what do I need to do today?": a greeting with one summary line
+("6 things need you today. 1 urgent · 3 waiting on your reply · 2 new
+people."), the list grouped **by task** (Urgent / Waiting on your reply /
+New people / Plans and training / Follow up; a By client switch keeps the
+old layout), new people in the same list (applications, website
+questions, accounts to approve; an application whose person has signed
+in shows once), how long each item has waited, **Done for today** on
+every item (with Undo; back tomorrow if it still needs you), and a
+searchable **Your clients** list on the dashboard (the full filters stay
+on My Clients). `js/coachToday.js` (pure, `tests/coachToday.test.mjs`).
+
 ---
 
 ## Phase 6 — Calendar + session history

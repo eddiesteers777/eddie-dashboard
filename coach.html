@@ -27,11 +27,9 @@
 
         <section class="eos-today-hero">
             <div>
-                <div class="eos-today-eyebrow">Coaching</div>
-                <h1>Coach Dashboard</h1>
-                <p class="eos-today-phase">
-                    What needs your attention today, and quick links into the rest of My Clients and Schedule.
-                </p>
+                <div class="eos-today-eyebrow">Coach Dashboard</div>
+                <h1 id="coachGreeting">Coach Dashboard</h1>
+                <p class="eos-today-phase" id="coachSummary">What needs you today, then your clients.</p>
             </div>
         </section>
 
@@ -50,11 +48,24 @@
             <section class="coach-queue" aria-labelledby="coachQueueTitle">
                 <div class="coach-queue-head">
                     <h2 class="clients-section-title" id="coachQueueTitle">Who needs you today</h2>
-                    <span class="coach-queue-count" id="coachQueueCount"></span>
+                    <div class="coach-view" role="group" aria-label="Group the list">
+                        <button type="button" class="coach-view-btn" data-view="task" aria-pressed="true">By task</button>
+                        <button type="button" class="coach-view-btn" data-view="person" aria-pressed="false">By client</button>
+                    </div>
                 </div>
                 <div id="coachQueueList" class="coach-queue-list">
                     <div class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:64%"></span></div></div>
                 </div>
+                <button type="button" class="coach-queue-hidden" id="coachQueueHidden" hidden></button>
+            </section>
+
+            <section class="coach-clients" aria-labelledby="coachClientsTitle">
+                <div class="coach-queue-head">
+                    <h2 class="clients-section-title" id="coachClientsTitle">Your clients</h2>
+                    <a class="coach-clients-all" href="clients.html?tab=coach">Filters and more in My Clients →</a>
+                </div>
+                <input type="search" id="coachClientSearch" class="clients-search" placeholder="Search by name, nickname or email" autocomplete="off" aria-label="Search your clients">
+                <div id="coachClientList" class="coach-client-list"></div>
             </section>
 
             <div class="coach-stat-grid">

@@ -75,6 +75,7 @@
     "js/coachPlanGenerator.js",
     "js/coachPlanStore.js",
     "js/coachPlanSync.js",
+    "js/coachToday.js",
     "js/coachingPlanModel.js",
     "js/coachingPlans.js",
     "js/contact.js",

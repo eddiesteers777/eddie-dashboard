@@ -17,7 +17,7 @@ import {
     listMyCoaches, removeLink
 } from "./coachAccess.js";
 import { loadClientDirectory } from "./clientDirectory.js";
-import { summarizeClient, serviceLabels, isoDate, shortDate } from "./clientSummary.js";
+import { summarizeClient, serviceLabels, isoDate, shortDate, clientStatusLines } from "./clientSummary.js";
 import {
     SERVICES, isApprovedCoach, listPendingProfiles,
     approveClient, denyProfile, promoteToCoach
@@ -83,25 +83,6 @@ const FILTERS = {
     online: c => c.services.includes("online_coaching")
 };
 
-function planLine(c) {
-    const p = c.plans.primary;
-    if (!p) return "No active plan";
-    if (p.state === "upcoming") return `${p.name} · starts ${shortDate(p.startDate)}`;
-    if (p.state === "finished") return `${p.name} · finished`;
-    return `${p.name} · Week ${p.weekNumber} of ${p.totalWeeks}`;
-}
-
-function sessionLine(c) {
-    const next = c.sessions.upcoming[0];
-    return next ? `Next session ${shortDate(next.date)}` : "";
-}
-
-function checkinLine(c) {
-    const latest = c.checkins.latest;
-    if (!latest) return "";
-    return latest.status === "submitted" ? "Check-in needs reply" : `Check-in ${shortDate(latest.weekOf)} reviewed`;
-}
-
 function renderClientRows() {
     const q = (clientSearch.value || "").trim().toLowerCase();
     const shown = clientRows
@@ -115,7 +96,7 @@ function renderClientRows() {
     for (const c of shown) {
         const row = document.createElement("div");
         row.className = "clients-row clients-client-row";
-        const meta = [planLine(c), sessionLine(c), checkinLine(c)].filter(Boolean);
+        const meta = clientStatusLines(c);
         row.innerHTML = `
             <a class="clients-client-link" href="client.html?uid=${encodeURIComponent(c.uid)}">
                 <div class="clients-row-avatar">${escapeHtml((c.name || "?").slice(0, 1).toUpperCase())}</div>

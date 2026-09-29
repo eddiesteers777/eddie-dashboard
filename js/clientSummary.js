@@ -244,6 +244,10 @@ export function summarizeCheckins(checkins, today) {
 
 // What the coach should act on for this client, most urgent first.
 // Each: { kind, text, tab } -- tab is the Client Hub tab that handles it.
+// { at } when an item has been waiting since a known moment (the coach
+// dashboard shows "2 days ago"); nothing otherwise.
+const since = value => { const ms = toMillis(value); return ms && Number.isFinite(ms) ? { at: ms } : {}; };
+
 export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0 }) {
     const items = [];
     // A "yes" on their health check the coach hasn't marked reviewed.
@@ -253,7 +257,7 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     }
     // Pain flagged on a workout, not yet answered: first thing to see.
     for (const r of results.filter(x => x.pain && !x.coachComment && x.date >= addDays(today, -14))) {
-        items.push({ kind: "pain", text: `Flagged pain on ${shortDate(r.date)} (${r.title || "workout"})${r.painNote ? `: "${r.painNote}"` : ""}`, tab: "workouts" });
+        items.push({ kind: "pain", text: `Flagged pain on ${shortDate(r.date)} (${r.title || "workout"})${r.painNote ? `: "${r.painNote}"` : ""}`, tab: "workouts", ...since(r.createdAt) });
     }
     const services = profile?.services || [];
     const trains = services.some(s => TRAINING_SERVICES.includes(s));
@@ -265,15 +269,17 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
         items.push({
             kind: "change",
             text: `Asked for a change${c.date ? ` for ${shortDate(c.date)}` : ""} (${reasonLabel(c.reason).toLowerCase()})${message ? `: "${message.length > 90 ? `${message.slice(0, 90)}…` : message}"` : ""}`,
-            tab: "plan"
+            tab: "plan",
+            ...since(c.createdAt)
         });
     }
     for (const c of checkins.needsReview) {
         const flags = checkinFlags(c);
-        items.push({ kind: "checkin", text: `Check-in for week of ${shortDate(c.weekOf)} needs your reply${flags.length ? ` — ${flags.join(", ").toLowerCase()}` : ""}`, tab: "checkins" });
+        items.push({ kind: "checkin", text: `Check-in for week of ${shortDate(c.weekOf)} needs your reply${flags.length ? ` — ${flags.join(", ").toLowerCase()}` : ""}`, tab: "checkins", ...since(c.submittedAt) });
     }
     if (sessions.waiting.length) {
-        items.push({ kind: "booking", text: `${sessions.waiting.length} session request${sessions.waiting.length === 1 ? "" : "s"} waiting on you`, tab: "sessions" });
+        const oldest = Math.min(...sessions.waiting.map(r => toMillis(r.createdAt) || Infinity));
+        items.push({ kind: "booking", text: `${sessions.waiting.length} session request${sessions.waiting.length === 1 ? "" : "s"} waiting on you`, tab: "sessions", ...since(oldest) });
     }
     // Profile not filled in (only when we could actually read it).
     if (record !== undefined && !isIntakeComplete(record)) {
@@ -519,6 +525,24 @@ export function shortDate(iso) {
 }
 
 // ---------- One-line row for the client list ----------
+
+// The status bits under a client's name in a list: plan week, next
+// session, check-in (My Clients and the Coach Dashboard).
+export function clientStatusLines(c) {
+    const p = c.plans?.primary;
+    const trains = (c.services || []).some(v => TRAINING_SERVICES.includes(v));
+    const plan = !p ? (trains || !c.services?.length ? "No active plan" : "")
+        : p.state === "upcoming" ? `${p.name} · starts ${shortDate(p.startDate)}`
+        : p.state === "finished" ? `${p.name} · finished`
+        : `${p.name} · Week ${p.weekNumber} of ${p.totalWeeks}`;
+    const next = c.sessions?.upcoming?.[0];
+    const latest = c.checkins?.latest;
+    return [
+        plan,
+        next ? `Next session ${shortDate(next.date)}` : "",
+        !latest ? "" : latest.status === "submitted" ? "Check-in needs reply" : `Check-in ${shortDate(latest.weekOf)} reviewed`
+    ].filter(Boolean);
+}
 
 export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [], healthReviewedAt = 0 }, today) {
     const plans = summarizePlans(shared, today, coachingPlans, results);

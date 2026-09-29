@@ -17,53 +17,194 @@ import { listInquiries, setInquiryHandled, interestLabel } from "./inquiries.js"
 import { listApplications, setApplicationHandled } from "./applications.js";
 import { applicationLines, heardTally, matchApplication, SERVICE_OPTIONS, labelOf } from "./applicationForm.js";
 import { loadClientDirectory } from "./clientDirectory.js";
-import { summarizeClient, isoDate } from "./clientSummary.js";
+import { summarizeClient, isoDate, serviceLabels, clientStatusLines } from "./clientSummary.js";
 import { attentionQueue } from "./feedbackModel.js";
 import { icon } from "./icons.js";
-import { emptyHtml } from "./ui.js";
+import { emptyHtml, toast } from "./ui.js";
+import { newPeopleItems, splitDone, pruneDone, groupByTask, groupByPerson, greeting, summaryLine, waitedText, itemKey } from "./coachToday.js";
 
-// ---- Who needs you today (every client's attention items, most urgent first) ----
+// ---- Who needs you today (js/coachToday.js) ----
+// Every client's attention items plus new people (applications, website
+// questions, accounts to approve), by task or by client, with "Done for
+// today" (coach-queue-done, cloud-synced, resets tomorrow).
 
 const QUEUE_ICONS = {
-    pain: "alertTriangle", change: "calendar", checkin: "star", missed: "clock", skipped: "clock",
+    pain: "alertTriangle", health: "heart", change: "calendar", checkin: "star", missed: "clock", skipped: "clock",
     booking: "calendar", "plan-unseen": "eye", race: "flag", plan: "clipboard", quiet: "moon",
-    "no-checkin": "star", sessions: "calendar", intake: "user"
+    "no-checkin": "star", profile: "user", sessions: "calendar", intake: "user",
+    pending: "checkCircle", application: "mail", question: "messageSquare"
 };
+const DONE_KEY = "coach-queue-done";
+const VIEW_KEY = "sb-coach-queue-view";   // this device only
+
+const today = { clients: null, clientItems: [], failed: false, name: "", showHidden: false };
+
+function readJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
+}
+function doneMarks() {
+    return pruneDone(readJson(DONE_KEY, {}), isoDate(new Date()));
+}
+function saveDone(done) {
+    try { localStorage.setItem(DONE_KEY, JSON.stringify(done)); } catch { /* private window: this visit only */ }
+}
+function queueView() {
+    try { return localStorage.getItem(VIEW_KEY) === "person" ? "person" : "task"; } catch { return "task"; }
+}
 
 async function loadQueue() {
-    const list = document.getElementById("coachQueueList");
-    const count = document.getElementById("coachQueueCount");
     try {
-        const today = isoDate(new Date());
-        const clients = (await loadClientDirectory()).map(c => summarizeClient(c, today));
-        const queue = attentionQueue(clients);
-        const people = new Set(queue.map(q => q.uid)).size;
-        count.textContent = queue.length ? `${people} client${people === 1 ? "" : "s"}` : "";
-        if (!queue.length) {
-            list.innerHTML = `<div class="clients-card">${emptyHtml({
-                iconName: "checkCircle",
-                title: clients.length ? "You're all caught up" : "No clients yet",
-                text: clients.length ? "No pain flags, change requests, check-ins or missed workouts waiting on you." : "When clients connect with you, anything that needs you shows up here."
-            })}</div>`;
-            return;
-        }
-        let last = null;
-        list.innerHTML = queue.map(q => {
-            const head = q.uid !== last ? `<div class="coach-queue-name">${escapeHtml(q.name)}</div>` : "";
-            last = q.uid;
-            return `${head}
-                <a class="coach-queue-item is-${escapeHtml(q.kind)}" href="${escapeHtml(q.href)}">
-                    <span class="coach-queue-icon">${icon(QUEUE_ICONS[q.kind] || "info")}</span>
-                    <span class="coach-queue-text">${escapeHtml(q.text)}</span>
-                    ${icon("chevronRight")}
-                </a>`;
-        }).join("");
+        const day = isoDate(new Date());
+        today.clients = (await loadClientDirectory()).map(c => summarizeClient(c, day));
+        today.clientItems = attentionQueue(today.clients);
+        today.failed = false;
     } catch (error) {
         console.warn("Southbound: couldn't build the attention queue.", error);
-        count.textContent = "";
-        list.innerHTML = `<div class="coach-inq-empty">Couldn't load your clients right now. Open <a href="clients.html">My Clients</a>.</div>`;
+        today.failed = true;
+        today.clients = today.clients || [];
     }
+    renderToday();
+    renderClientList();
 }
+
+function allItems() {
+    const people = newPeopleItems({
+        applications: applicationsLoaded ? applications : [],
+        inquiries: inquiries.map(q => ({ ...q, topic: interestLabel(q.interest) })),
+        pending: pendingProfiles,
+        matchOf: p => matchApplication(p, applications),
+        serviceLabel: v => labelOf(SERVICE_OPTIONS, v)
+    });
+    return [...today.clientItems, ...people];
+}
+
+function queueRow(item, { withName, hidden = false }) {
+    const when = waitedText(item.at);
+    return `
+        <div class="coach-queue-row${hidden ? " is-done" : ""}">
+            <a class="coach-queue-item is-${escapeHtml(item.kind)}" href="${escapeHtml(item.href)}">
+                <span class="coach-queue-icon">${icon(QUEUE_ICONS[item.kind] || "info")}</span>
+                <span class="coach-queue-text">${withName ? `<strong>${escapeHtml(item.name)}</strong> ` : ""}${escapeHtml(item.text)}${when ? `<span class="coach-queue-when">${escapeHtml(when)}</span>` : ""}</span>
+                ${icon("chevronRight")}
+            </a>
+            <button type="button" class="coach-queue-done" data-done="${escapeHtml(itemKey(item))}" data-undo="${hidden ? "1" : ""}"
+                aria-label="${hidden ? "Show again today" : "Done for today"}: ${escapeHtml(item.name)}, ${escapeHtml(item.text)}">
+                ${hidden ? "Undo" : `${icon("check")}<span>Done</span>`}
+            </button>
+        </div>`;
+}
+
+function renderToday() {
+    const list = document.getElementById("coachQueueList");
+    const hiddenBtn = document.getElementById("coachQueueHidden");
+    const view = queueView();
+    document.querySelectorAll(".coach-view-btn").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+    document.getElementById("coachGreeting").textContent = greeting(new Date(), today.name);
+
+    const { shown, hidden } = splitDone(allItems(), doneMarks(), isoDate(new Date()));
+    const groups = groupByTask(shown);
+    const line = summaryLine(groups, hidden.length);
+    document.getElementById("coachSummary").textContent = today.clients ? [line.headline, line.detail].filter(Boolean).join(". ").replace(/\.\. /, ". ") : "Checking on your clients…";
+
+    if (!today.clients) return;   // still loading: keep the shimmer
+    hiddenBtn.hidden = !hidden.length;
+    hiddenBtn.textContent = today.showHidden ? "Hide the ones marked done" : `${hidden.length} marked done for today · Show them`;
+
+    let html = "";
+    if (today.failed) {
+        html += `<div class="coach-inq-empty">Couldn't load your clients right now. Open <a href="clients.html">My Clients</a>.</div>`;
+    }
+    if (!shown.length && !today.failed) {
+        html += `<div class="clients-card">${emptyHtml({
+            iconName: "checkCircle",
+            title: hidden.length ? "That's everything for today" : today.clients.length ? "You're all caught up" : "No clients yet",
+            text: hidden.length ? "The rest are marked done. They come back tomorrow if they still need you."
+                : today.clients.length ? "No pain flags, replies, new people or plan work waiting on you."
+                : "When clients connect with you, anything that needs you shows up here."
+        })}</div>`;
+    } else if (view === "person") {
+        html += groupByPerson(shown).map(p => `
+            <div class="coach-queue-name">${escapeHtml(p.name)}</div>
+            ${p.items.map(item => queueRow(item, { withName: false })).join("")}`).join("");
+    } else {
+        html += groupByTask(shown).map(g => `
+            <div class="coach-queue-group">
+                <h3 class="coach-queue-group-title">${escapeHtml(g.label)} <span>${g.items.length}</span></h3>
+                ${g.items.map(item => queueRow(item, { withName: true })).join("")}
+            </div>`).join("");
+    }
+    if (today.showHidden && hidden.length) {
+        html += `<div class="coach-queue-group"><h3 class="coach-queue-group-title">Done for today <span>${hidden.length}</span></h3>
+            ${hidden.map(item => queueRow(item, { withName: true, hidden: true })).join("")}</div>`;
+    }
+    list.innerHTML = html;
+}
+
+document.getElementById("coachQueueList").addEventListener("click", event => {
+    const btn = event.target.closest("[data-done]");
+    if (!btn) return;
+    const key = btn.dataset.done;
+    const done = doneMarks();
+    const undo = Boolean(btn.dataset.undo);
+    if (undo) delete done[key];
+    else done[key] = isoDate(new Date());
+    saveDone(done);
+    renderToday();
+    if (!undo) {
+        toast("Hidden until tomorrow", {
+            action: { label: "Undo", onClick: () => { const d = doneMarks(); delete d[key]; saveDone(d); renderToday(); } }
+        });
+    }
+});
+document.getElementById("coachQueueHidden").addEventListener("click", () => {
+    today.showHidden = !today.showHidden;
+    renderToday();
+});
+document.querySelectorAll(".coach-view-btn").forEach(btn => btn.addEventListener("click", () => {
+    try { localStorage.setItem(VIEW_KEY, btn.dataset.view); } catch { /* this visit only */ }
+    renderToday();
+}));
+
+// ---- Your clients (search; the full filters live on My Clients) ----
+
+const CLIENTS_SHOWN = 8;
+let showAllClients = false;
+
+function renderClientList() {
+    const el = document.getElementById("coachClientList");
+    if (!today.clients) return;
+    const q = (document.getElementById("coachClientSearch").value || "").trim().toLowerCase();
+    const rows = today.clients
+        .filter(c => !q || c.searchText.includes(q))
+        .sort((a, b) => (b.attention.length > 0) - (a.attention.length > 0) || String(a.name).localeCompare(String(b.name)));
+    if (!today.clients.length) {
+        el.innerHTML = `<p class="clients-card-note">No clients yet. Approve someone in <a href="clients.html?tab=pending">Pending</a>, or enter a client's code in <a href="clients.html?tab=coach">My Clients</a>.</p>`;
+        return;
+    }
+    if (!rows.length) {
+        el.innerHTML = `<p class="clients-card-note">No clients match “${escapeHtml(q)}”.</p>`;
+        return;
+    }
+    const shown = q || showAllClients ? rows : rows.slice(0, CLIENTS_SHOWN);
+    el.innerHTML = shown.map(c => `
+        <a class="coach-client-row" href="client.html?uid=${encodeURIComponent(c.uid)}">
+            <span class="clients-row-avatar">${escapeHtml((c.name || "?").slice(0, 1).toUpperCase())}</span>
+            <span class="coach-client-info">
+                <strong>${escapeHtml(c.name)}${c.athlete ? ` <span class="clients-client-athlete">for ${escapeHtml(c.athlete)}</span>` : c.goesBy ? ` <span class="clients-client-athlete">(${escapeHtml(c.goesBy)})</span>` : ""}${c.attention.length ? ` <span class="clients-attn-badge" title="Needs attention">${c.attention.length}</span>` : ""}</strong>
+                <span>${escapeHtml(serviceLabels(c.services).join(" · ") || c.email)}</span>
+                <span class="coach-client-meta">${clientStatusLines(c).map(escapeHtml).join(" · ")}</span>
+            </span>
+            ${icon("chevronRight")}
+        </a>`).join("")
+        + (shown.length < rows.length ? `<button type="button" class="coach-queue-hidden" data-all-clients>Show all ${rows.length} clients</button>` : "");
+}
+
+document.getElementById("coachClientSearch").addEventListener("input", renderClientList);
+document.getElementById("coachClientList").addEventListener("click", event => {
+    if (!event.target.closest("[data-all-clients]")) return;
+    showAllClients = true;
+    renderClientList();
+});
 
 function escapeHtml(value) {
     return String(value ?? "")
@@ -132,6 +273,7 @@ function renderInquiries() {
     inquiryListEl.innerHTML = shown.length
         ? shown.map(inquiryRow).join("")
         : `<div class="coach-inq-empty">${inquiries.length ? "You're all caught up." : "No questions yet. They show up here when someone uses the Contact page."}</div>`;
+    renderToday();
 }
 
 async function loadInquiries() {
@@ -235,6 +377,7 @@ function renderApplications() {
     applicationListEl.innerHTML = shown.length
         ? shown.map(applicationRow).join("")
         : `<div class="coach-inq-empty">${applications.length ? "You're all caught up." : "No applications yet. They show up here when someone fills in the Apply page."}</div>`;
+    renderToday();
 }
 
 async function loadApplications() {
@@ -335,6 +478,7 @@ async function refreshDashboard() {
 
     pendingProfiles = pending;
     if (applicationsLoaded) renderApplications();
+    else renderToday();
 }
 
 listenForAuth(async user => {
@@ -351,6 +495,7 @@ listenForAuth(async user => {
     }
 
     dashboardEl.hidden = false;
+    today.name = user.displayName || "";
     renderSetupChecklist();
     loadQueue();
     refreshDashboard();
