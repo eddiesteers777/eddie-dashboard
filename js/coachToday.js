@@ -18,7 +18,7 @@ export const TASK_GROUPS = [
     { id: "reply", label: "Waiting on your reply", kinds: ["change", "checkin", "booking"] },
     { id: "new", label: "New people", kinds: ["pending", "application", "question"] },
     { id: "plans", label: "Plans and training", kinds: ["missed", "skipped", "plan-unseen", "race", "plan"] },
-    { id: "followup", label: "Follow up", kinds: ["quiet", "no-checkin", "profile", "sessions", "intake"] }
+    { id: "followup", label: "Follow up", kinds: ["session-log", "no-show", "quiet", "no-checkin", "profile", "sessions", "intake"] }
 ];
 
 const groupOf = kind => TASK_GROUPS.find(g => g.kinds.includes(kind)) || TASK_GROUPS[TASK_GROUPS.length - 1];

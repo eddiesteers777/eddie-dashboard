@@ -1220,6 +1220,18 @@ Goal:
 
 > Every real coaching interaction becomes part of the client's record.
 
+**Built 2026-09-29 (RULES CHANGED: `sessionLogs`).** Scheduling wasn't
+rebuilt: a booking still holds its dates, and what happened at each one is
+a session log (`sessionLogs/{bookingId}_{date}`): completed / no-show /
+cancelled / cancelled late, what they worked on and what's next (the
+client reads those). Anything private goes into the coach's private notes
+from the same dialog. The hub's Sessions tab lists To log (Log it /
+No-show), Upcoming (Cancel this one), Past with the notes, and an
+attendance line; the dashboard asks for unlogged sessions and shows
+Sessions this week; a cancelled date leaves the client's week, Today and
+calendar; the client sees each session's notes on Schedule, Today and From
+Your Coach; History shows each session's outcome.
+
 ---
 
 ## Phase 7 — Progress integration

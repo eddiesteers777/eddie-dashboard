@@ -59,6 +59,18 @@
                 <button type="button" class="coach-queue-hidden" id="coachQueueHidden" hidden></button>
             </section>
 
+            <section class="coach-week" aria-labelledby="coachWeekTitle">
+                <div class="coach-queue-head">
+                    <h2 class="clients-section-title" id="coachWeekTitle">Sessions this week</h2>
+                    <div class="coach-week-nav">
+                        <button type="button" class="coach-view-btn" data-week-step="-1" aria-label="Previous week">‹</button>
+                        <span id="coachWeekLabel" class="coach-week-label"></span>
+                        <button type="button" class="coach-view-btn" data-week-step="1" aria-label="Next week">›</button>
+                    </div>
+                </div>
+                <div id="coachWeekList" class="coach-week-list"></div>
+            </section>
+
             <section class="coach-clients" aria-labelledby="coachClientsTitle">
                 <div class="coach-queue-head">
                     <h2 class="clients-section-title" id="coachClientsTitle">Your clients</h2>

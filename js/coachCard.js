@@ -20,6 +20,7 @@ import { listMyPlans } from "./coachingPlans.js";
 import { awaitingAck, noticeVersionOf } from "./planWindow.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
+import { latestSessionNotes } from "./sessionModel.js";
 
 function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -149,19 +150,16 @@ export async function renderCoachCard(container) {
         }));
     }
 
-    // Notes from the most recent session that has happened.
-    const withNotes = requests
-        .filter(r => r.status === "approved" && r.coachNote)
-        .map(r => ({ ...r, lastDate: (r.dates || []).filter(d => d <= today).sort().pop() }))
-        .filter(r => r.lastDate)
-        .sort((a, b) => b.lastDate.localeCompare(a.lastDate));
-    if (withNotes[0]) {
+    // Notes from the most recent session that has happened (its session
+    // log, js/sessionModel.js; an older booking's single note otherwise).
+    const lastNotes = latestSessionNotes(requests, today);
+    if (lastNotes) {
         rows.push(row({
             iconName: "clipboard",
             color: "var(--primary)",
             title: "Notes from your last session",
-            detail: `${sessionLabel(withNotes[0])} · ${niceDate(withNotes[0].lastDate)}`,
-            note: withNotes[0].coachNote,
+            detail: `${sessionLabel(lastNotes.request)} · ${niceDate(lastNotes.date)}`,
+            note: lastNotes.text.replace(/\n/g, " · "),
             link: "schedule.html"
         }));
     }

@@ -30,6 +30,7 @@ import { awaitingView, noticeVersionOf } from "./planWindow.js";
 import { checkinFlags, reasonLabel } from "./feedbackModel.js";
 import { staleSummary, openAsks, ageText } from "./profileChecks.js";
 import { answersDone } from "./intakeFlow.js";
+import { sessionList, sessionsToLog, noShowStreak } from "./sessionModel.js";
 
 export const SERVICE_LABELS = {
     online_coaching: "Online Coaching",
@@ -248,7 +249,7 @@ export function summarizeCheckins(checkins, today) {
 // dashboard shows "2 days ago"); nothing otherwise.
 const since = value => { const ms = toMillis(value); return ms && Number.isFinite(ms) ? { at: ms } : {}; };
 
-export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0 }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0, requests = [] }) {
     const items = [];
     // A "yes" on their health check the coach hasn't marked reviewed.
     const yeses = healthYeses(record);
@@ -280,6 +281,28 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     if (sessions.waiting.length) {
         const oldest = Math.min(...sessions.waiting.map(r => toMillis(r.createdAt) || Infinity));
         items.push({ kind: "booking", text: `${sessions.waiting.length} session request${sessions.waiting.length === 1 ? "" : "s"} waiting on you`, tab: "sessions", ...since(oldest) });
+    }
+    // Sessions that happened and aren't logged yet (js/sessionModel.js),
+    // and a run of no-shows. Only when the logs could be read (`logs` is
+    // attached to each request by js/scheduling.js).
+    const withLogs = (requests || []).filter(r => r.logs);
+    if (withLogs.length) {
+        const all = sessionList(withLogs, today);
+        const toLog = sessionsToLog(all, today);
+        if (toLog.length) {
+            const first = toLog[0];
+            const [y, m, d] = first.date.split("-").map(Number);
+            items.push({
+                kind: "session-log",
+                text: toLog.length === 1
+                    ? `Log how their session on ${shortDate(first.date)} went`
+                    : `Log ${toLog.length} sessions (${toLog.map(s => shortDate(s.date)).join(", ")})`,
+                tab: "sessions",
+                at: new Date(y, m - 1, d, 12).getTime()
+            });
+        }
+        const streak = noShowStreak(all);
+        if (streak >= 2) items.push({ kind: "no-show", text: `Missed their last ${streak} sessions (no-shows)`, tab: "sessions" });
     }
     // Profile not filled in (only when we could actually read it).
     if (record !== undefined && !isIntakeComplete(record)) {
@@ -397,6 +420,7 @@ const clip = (text, n = 200) => {
 
 const ASK_WORDS = { goal: "goal", days: "training days", level: "starting point", limits: "injuries and limits" };
 const SESSION_WORDS = { soccer: "Soccer session", running: "Running session", strength: "Strength session", general: "Session" };
+const SESSION_STATUS_WORDS = { completed: "completed", "no-show": "no-show", "late-cancel": "cancelled late", cancelled: "cancelled" };
 
 export function buildTimeline({ profile, link, checkins, requests, record, updates, coachingPlans, results, changes, application = null, planVersions = null, privateNotes = null, today = "" }) {
     const events = [];
@@ -505,13 +529,20 @@ export function buildTimeline({ profile, link, checkins, requests, record, updat
         if (r.status === "denied") push(r.respondedAt, "denied", `Session request declined${when}`);
         if (r.status === "cancelled") push(r.respondedAt, "cancelled", `Session cancelled${when}`);
         if (r.status === "approved" && today) {
-            const held = (r.dates || []).filter(d => d < today).sort();
+            // Each date that has passed, with what the session log says
+            // (js/sessionModel.js); an older booking's single note sits on
+            // its last date when it has no logs.
+            const logs = r.logs || {};
+            const held = (r.allDates || r.dates || []).filter(d => d < today).sort();
+            const name = `${SESSION_WORDS[r.sessionType] || "Session"}${r.label ? ` · ${r.label}` : ""}`;
             held.forEach((d, i) => {
                 const [y, m, day] = d.split("-").map(Number);
                 const [hh, mm] = String(r.startTime || "12:00").split(":").map(Number);
+                const log = logs[d];
+                const words = log ? [log.workedOn ? `Worked on: ${log.workedOn}` : "", log.nextTime ? `For next time: ${log.nextTime}` : ""].filter(Boolean).join(" · ") : "";
                 push(new Date(y, m - 1, day, hh || 12, mm || 0).getTime(), "session",
-                    `${SESSION_WORDS[r.sessionType] || "Session"}${r.label ? ` · ${r.label}` : ""}`,
-                    i === held.length - 1 ? (r.coachNote ? `Your notes: ${r.coachNote}` : "") : "");
+                    log ? `${name}: ${SESSION_STATUS_WORDS[log.status] || "logged"}` : name,
+                    log ? words : (!Object.keys(logs).length && i === held.length - 1 && r.coachNote ? `Your notes: ${r.coachNote}` : ""));
             });
         }
     }
@@ -548,7 +579,7 @@ export function summarizeClient({ profile, link, shared, checkins, requests, rec
     const plans = summarizePlans(shared, today, coachingPlans, results);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes, healthReviewedAt });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes, healthReviewedAt, requests });
     const name = profile?.displayName || link?.clientName || "Client";
     const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
     const goesBy = athleteDisplayName(record, "");
@@ -610,8 +641,21 @@ export function buildCoachFeed({ updates = [], checkins = [], requests = [], res
         });
     }
     for (const r of requests) {
-        if (r.status !== "approved" || !r.coachNote) continue;
-        const last = (r.dates || []).filter(d => d <= today).sort().pop();
+        if (r.status !== "approved") continue;
+        // Session logs (js/sessionModel.js): one item per session with notes.
+        const logs = Object.values(r.logs || {});
+        for (const l of logs) {
+            if (l.status !== "completed" || l.date > today || !(l.workedOn || l.nextTime)) continue;
+            const [ly, lm, ld] = l.date.split("-").map(Number);
+            feed.push({
+                at: toMillis(l.updatedAt) || new Date(ly, lm - 1, ld, 12).getTime(), kind: "session",
+                title: "Notes from your session", detail: shortDate(l.date),
+                text: [l.workedOn ? `Worked on: ${l.workedOn}` : "", l.nextTime ? `For next time: ${l.nextTime}` : ""].filter(Boolean).join("\n"),
+                link: "schedule.html", unread: false
+            });
+        }
+        if (logs.length || !r.coachNote) continue;
+        const last = (r.allDates || r.dates || []).filter(d => d <= today).sort().pop();
         if (!last) continue;
         const [y, m, d] = last.split("-").map(Number);
         feed.push({

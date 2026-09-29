@@ -16,8 +16,9 @@ import {
     getCoachAvailability, addAvailabilitySlot, removeAvailabilitySlot, toggleAvailabilitySlot,
     addBlackoutDate, removeBlackoutDate,
     generateWeeklyDates, requestBooking, listMyBookingRequests, listRequestsForMyClients,
-    respondToRequest, cancelBookingRequest, getApprovedCountForSlotDate, setSessionNotes
+    respondToRequest, cancelBookingRequest, getApprovedCountForSlotDate
 } from "./scheduling.js";
+import { sessionList, statusLabel, CANCELLED } from "./sessionModel.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
 
 let currentUser = null;
@@ -217,9 +218,10 @@ async function refreshRequests() {
     requestsEmptyMsg.hidden = requests.length > 0;
 
     for (const req of requests) {
-        const datesLabel = req.dates.length > 1
-            ? `${formatDateShort(req.dates[0])} (+${req.dates.length - 1} more, weekly)`
-            : formatDateShort(req.dates[0]);
+        const booked = req.allDates || req.dates || [];
+        const datesLabel = booked.length > 1
+            ? `${formatDateShort(booked[0])} (+${booked.length - 1} more, weekly)`
+            : formatDateShort(booked[0]);
 
         let capacityNote = "";
         if (req.status === "requested") {
@@ -248,14 +250,13 @@ async function refreshRequests() {
                     <button type="button" class="clients-btn-secondary" data-action="deny">Deny</button>
                 ` : ""}
                 ${req.status === "approved" ? `
-                    <button type="button" class="clients-btn-secondary" data-action="notes">${req.coachNote ? "Edit Notes" : "Session Notes"}</button>
+                    <a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(req.clientUid)}&tab=sessions">Log sessions</a>
                 ` : ""}
             </div>
         `;
 
         row.querySelector('[data-action="approve"]')?.addEventListener("click", () => respond(req, "approved"));
         row.querySelector('[data-action="deny"]')?.addEventListener("click", () => respond(req, "denied"));
-        row.querySelector('[data-action="notes"]')?.addEventListener("click", () => editSessionNotes(req));
 
         requestsList.appendChild(row);
     }
@@ -272,20 +273,6 @@ async function fullDates(req) {
         if (already >= cap) full.push(`${formatDateShort(date)} (${already}/${cap})`);
     }
     return full;
-}
-
-async function editSessionNotes(req) {
-    const note = await sbPrompt("What you worked on, homework for next time. They'll see this on their Today screen and in Schedule.", {
-        title: `Session notes for ${req.clientName}`,
-        defaultValue: req.coachNote || "",
-        multiline: true,
-        maxLength: 2000,
-        confirmLabel: "Save notes"
-    });
-    if (note === null) return;
-    await setSessionNotes(req.id, note.trim());
-    toast("Session notes saved");
-    refreshRequests();
 }
 
 async function respond(req, status) {
@@ -377,9 +364,18 @@ async function refreshMyRequests() {
     myRequestsEmptyMsg.hidden = requests.length > 0;
 
     for (const req of requests) {
-        const datesLabel = req.dates.length > 1
-            ? `${formatDateShort(req.dates[0])} (+${req.dates.length - 1} more, weekly)`
-            : formatDateShort(req.dates[0]);
+        const booked = req.allDates || req.dates || [];
+        const datesLabel = booked.length > 1
+            ? `${formatDateShort(booked[0])} (+${booked.length - 1} more, weekly)`
+            : formatDateShort(booked[0]);
+        // Each session your coach logged (js/sessionModel.js), newest first.
+        const logged = sessionList([req], new Date().toLocaleDateString("en-CA")).filter(s => s.log).reverse().slice(0, 8);
+        const sessionsHtml = logged.length ? `<ul class="sched-session-log">${logged.map(s => `
+            <li class="${CANCELLED.includes(s.log.status) || s.log.status === "no-show" ? "is-off" : ""}">
+                <b>${escapeHtml(formatDateShort(s.date))} · ${escapeHtml(statusLabel(s.log.status))}</b>
+                ${s.log.workedOn ? `<span>Worked on: ${escapeHtml(s.log.workedOn)}</span>` : ""}
+                ${s.log.nextTime ? `<span>For next time: ${escapeHtml(s.log.nextTime)}</span>` : ""}
+            </li>`).join("")}</ul>` : "";
 
         const row = document.createElement("div");
         row.className = "clients-row sched-request-row";
@@ -388,6 +384,7 @@ async function refreshMyRequests() {
                 <strong>${escapeHtml(req.coachName)} &middot; ${escapeHtml(typeLabel(req.sessionType))}${req.label ? ` (${escapeHtml(req.label)})` : ""}</strong>
                 <span>${escapeHtml(DAY_NAMES[req.dayOfWeek])}s, ${formatTime(req.startTime)}&ndash;${formatTime(req.endTime)} &middot; ${escapeHtml(datesLabel)}</span>
                 ${req.coachNote ? `<div class="sched-request-note sched-coach-note">${req.status === "approved" ? "Notes from your coach" : "Coach"}: "${escapeHtml(req.coachNote)}"</div>` : ""}
+                ${sessionsHtml}
                 <span class="sched-request-status ${req.status}">${req.status}</span>
             </div>
             <div class="sched-request-actions">

@@ -294,3 +294,27 @@
     color:var(--amber);
     font-weight:700;
 }
+
+/* What happened at each session (the coach's session logs, Phase 6). */
+.sched-session-log{
+    list-style:none;
+    margin:6px 0 0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+.sched-session-log li{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:8px 10px;
+    border-left:2px solid var(--green);
+    background:var(--surface-light);
+    border-radius:0 10px 10px 0;
+    font-size:13px;
+    color:var(--text-secondary);
+    overflow-wrap:anywhere;
+}
+.sched-session-log li.is-off{ border-left-color:var(--muted); }
+.sched-session-log b{ color:var(--text); font-weight:600; }

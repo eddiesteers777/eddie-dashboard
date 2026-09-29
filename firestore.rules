@@ -207,6 +207,42 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // What happened at one session of a booking (Client Hub Phase 6,
+    // js/sessionLogs.js): one doc per booking + date. The coach writes it
+    // (completed / no-show / cancelled / cancelled late, plus what they
+    // worked on and what's next -- the client reads those words, so
+    // nothing private goes here: private thoughts are coachNotes). Only
+    // for an approved booking of theirs, only for one of its dates.
+    function validSessionLog(d, logId) {
+      let b = get(/databases/$(database)/documents/bookingRequests/$(d.bookingId)).data;
+      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "createdAt", "updatedAt"])
+        && d.coachUid == request.auth.uid
+        && logId == d.bookingId + "_" + d.date
+        && b.coachUid == request.auth.uid
+        && b.clientUid == d.clientUid
+        && b.status == "approved"
+        && d.date in b.dates
+        && d.status in ["completed", "no-show", "cancelled", "late-cancel"]
+        && d.workedOn is string && d.workedOn.size() <= 1000
+        && d.nextTime is string && d.nextTime.size() <= 1000
+        && d.updatedAt == request.time;
+    }
+
+    match /sessionLogs/{logId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && validSessionLog(request.resource.data, logId)
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && validSessionLog(request.resource.data, logId)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      // Undo a log ("mark it not logged").
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
     // Client profile (js/clientRecordSchema.js has the same fields). The
     // client fills it in once; their linked coach can read and edit it.
     function textOk(d, key, max) {
