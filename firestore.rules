@@ -100,16 +100,26 @@ service cloud.firestore {
 
     // True when a stored YYYY-MM-DD session date is today or earlier.
     // The comparison uses the trusted server timestamp, not the client's clock.
+    function sessionDateKey(date) {
+      return int(date[0]) * 10000000
+        + int(date[1]) * 1000000
+        + int(date[2]) * 100000
+        + int(date[3]) * 10000
+        + int(date[5]) * 1000
+        + int(date[6]) * 100
+        + int(date[8]) * 10
+        + int(date[9]);
+    }
+
+    function todayKey() {
+      return request.time.year() * 10000
+        + request.time.month() * 100
+        + request.time.day();
+    }
+
     function sessionDateIsPastOrToday(date) {
       return date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && (
-          int(date[0:4]) < request.time.year()
-          || (int(date[0:4]) == request.time.year()
-              && int(date[5:7]) < request.time.month())
-          || (int(date[0:4]) == request.time.year()
-              && int(date[5:7]) == request.time.month()
-              && int(date[8:10]) <= request.time.day())
-        );
+        && sessionDateKey(date) <= todayKey();
     }
 
     match /users/{uid}/sync/{docId} {
