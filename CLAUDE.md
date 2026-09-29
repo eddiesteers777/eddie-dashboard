@@ -304,8 +304,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
 - [x] Firestore rules published (2026-09-24, including `inquiries`). Re-paste the whole file whenever it changes.
-- [ ] **Publish the updated rules (apply step 1, 2026-09-29: the new `applications` collection).** Pushed live before the rules (Eddie couldn't reach the Firebase Console on school internet): until they're published, applications arrive by email only (not on the Coach Dashboard or in Pending), and "Ask … to update" fails.
-  The same paste also covers profile steps 2-3 (`confirmedAt`, `askedAt` on `clientRecords`) if those weren't pasted yet.
+- [x] **Published the updated rules (2026-09-29; apply step 1: `applications`; profile steps 2-3: `confirmedAt`, `askedAt` on `clientRecords`).** Re-paste the whole file whenever it changes.
 - [x] **Published the updated rules (2026-09-28; Phase F: `changeRequests`, richer `checkins`, `lastSeenAt` on `userProfiles`; strength logs in `workoutResults` for coaching Phase D, `workoutResults` for coaching Phase C and `coachingPlans` + `coachingPlanDrafts` for coaching Phase A; `coachingPlanMasters` + the window fields for plan generation step 2; also includes `clientRecords`, `coachNotes`, `clientUpdates`).** Re-paste the whole file whenever it changes.
 - [ ] Photos: the hero, all four offer cards and gallery-1 are Unsplash stock (free license, graded to match; hero alt text doesn't claim it's Eddie). Still needed from Eddie: `eddie-portrait.jpg`, `eddie-about.jpg`, `gallery-2/3.jpg` (filenames in `images/README.md`). Swap the hero for a real photo of Eddie when he has one.
 - [ ] Send real **prices** for `packages.html` (monthly coaching, per soccer session, 5-pack, 10-pack, group drop-in, group monthly). Until then each package says "Pricing on request".
