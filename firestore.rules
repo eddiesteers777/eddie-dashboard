@@ -207,14 +207,601 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Firestore Rules timestamps are UTC; normalize the current server date
-    // to the same YYYY-MM-DD string used by booking occurrence dates.
-    function serverDate() {
-      let m = string(request.time.month());
-      let d = string(request.time.day());
-      return string(request.time.year()) + "-"
-        + (request.time.month() < 10 ? "0" + m : m) + "-"
-        + (request.time.day() < 10 ? "0" + d : d);
+    // Compare a stored YYYY-MM-DD occurrence to the server's current
+    // calendar date. Session dates are date-only strings, while request.time
+    // provides the trusted server timestamp (in UTC).
+    function sessionDateIsPastOrToday(date) {
+      return date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}// What happened at one session of a booking (Client Hub Phase 6,
+    // js/sessionLogs.js): one doc per booking + date. The coach writes it
+    // (completed / no-show / cancelled / cancelled late, plus what they
+    // worked on and what's next -- the client reads those words, so
+    // nothing private goes here: private thoughts are coachNotes). Only
+    // for an approved booking of theirs, only for one of its dates.
+    function validSessionLog(d, logId) {
+      let b = get(/databases/$(database)/documents/bookingRequests/$(d.bookingId)).data;
+      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "createdAt", "updatedAt"])
+        && d.coachUid == request.auth.uid
+        && logId == d.bookingId + "_" + d.date
+        && b.coachUid == request.auth.uid
+        && b.clientUid == d.clientUid
+        && b.status == "approved"
+        && d.date in b.dates
+        && d.status in ["completed", "no-show", "cancelled", "late-cancel"]
+        // A future occurrence may only be reserved as a cancellation.
+        // Completed / no-show / late-cancel are outcomes of a session that
+        // has already reached its calendar date.
+        && (sessionDateIsPastOrToday(d.date) || d.status == "cancelled" || d.status == "late-cancel")
+        && d.workedOn is string && d.workedOn.size() <= 1000
+        && d.nextTime is string && d.nextTime.size() <= 1000
+        && d.updatedAt == request.time;
+    }
+
+    match /sessionLogs/{logId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && validSessionLog(request.resource.data, logId)
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && validSessionLog(request.resource.data, logId)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      // Undo a log ("mark it not logged").
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // Client profile (js/clientRecordSchema.js has the same fields). The
+    // client fills it in once; their linked coach can read and edit it.
+    function textOk(d, key, max) {
+      return !(key in d) || (d[key] is string && d[key].size() <= max);
+    }
+
+    function optionOk(d, key, options) {
+      return !(key in d) || d[key] in options;
+    }
+
+    // When each tracked answer was last confirmed ("Still right?",
+    // js/profileChecks.js): ms times from the person's device. Loose on
+    // purpose (a phone with a wrong clock must still be able to save its
+    // profile); the most it can do is make its own answer look fresh.
+    // Each value: a positive ms time, not over a year ahead (a missing key
+    // reads as 1 and passes). Inline, not a helper per key: every function
+    // call counts toward Firestore's 1,000-check limit per save.
+    function confirmedAtOk(m) {
+      let lim = request.time.toMillis() + 31536000000;
+      return m is map
+        && m.keys().join(",").matches('^((primaryGoal|targetEvent|availabilityDays|weeklyMileage|strengthExperience|injuries)(,|$))*$')
+        && m.get("primaryGoal", 1) is int && m.get("primaryGoal", 1) > 0 && m.get("primaryGoal", 1) <= lim
+        && m.get("targetEvent", 1) is int && m.get("targetEvent", 1) > 0 && m.get("targetEvent", 1) <= lim
+        && m.get("availabilityDays", 1) is int && m.get("availabilityDays", 1) > 0 && m.get("availabilityDays", 1) <= lim
+        && m.get("weeklyMileage", 1) is int && m.get("weeklyMileage", 1) > 0 && m.get("weeklyMileage", 1) <= lim
+        && m.get("strengthExperience", 1) is int && m.get("strengthExperience", 1) > 0 && m.get("strengthExperience", 1) <= lim
+        && m.get("injuries", 1) is int && m.get("injuries", 1) > 0 && m.get("injuries", 1) <= lim;
+    }
+
+    // The coach's "please check these" (Client Hub → Ask to update): ms
+    // times by what was asked; the client's app deletes one when answered.
+    function askedAtOk(m) {
+      let lim = request.time.toMillis() + 31536000000;
+      return m is map
+        && m.keys().join(",").matches('^((goal|days|level|limits)(,|$))*$')
+        && m.get("goal", 1) is int && m.get("goal", 1) > 0 && m.get("goal", 1) <= lim
+        && m.get("days", 1) is int && m.get("days", 1) > 0 && m.get("days", 1) <= lim
+        && m.get("level", 1) is int && m.get("level", 1) > 0 && m.get("level", 1) <= lim
+        && m.get("limits", 1) is int && m.get("limits", 1) > 0 && m.get("limits", 1) <= lim;
+    }
+
+    // BEGIN generated profile rule (scripts/build-profile-rules.mjs)
+    // The client profile (clientRecords): only its own keys; every choice,
+    // list and date joined into one string and checked by one pattern;
+    // numbers typed and in range; text within its length; honest who/when.
+    function validClientRecord(d, clientUid) {
+      return d.keys().join(",").matches('^((whoTrains|preferredName|athleteName|birthYear|phone|emergencyName|emergencyPhone|emergencyRelation|guardianName|guardianPhone|primarySport|teamOrLevel|currentTraining|weeklyMileage|runsPerWeek|longestRun|yearsRunning|runStart|strengthExperience|availabilityDays|availabilityNotes|timeOfDay|sessionLength|trainWhere|equipment|soccerPosition|soccerLevel|strongFoot|yearsPlaying|primaryGoal|secondaryGoals|eventType|targetEvent|targetDate|coachingWants|workedBefore|notWorked|feedbackStyle|obstacle|injuries|injuryAreas|injuryStatus|healthFlags|healthNote|clientUid|intakeComplete|intakeCompletedAt|updatedAt|updatedBy|confirmedAt|askedAt|healthCheckedAt)(,|$))*$')
+        && d.clientUid == clientUid
+        && d.updatedBy == request.auth.uid
+        && d.updatedAt == request.time
+        && (d.get("whoTrains", "") + ";"
+          + d.get("primarySport", "") + ";"
+          + d.get("yearsRunning", "") + ";"
+          + d.get("runStart", "") + ";"
+          + d.get("strengthExperience", "") + ";"
+          + d.get("availabilityDays", []).join(",") + ";"
+          + d.get("timeOfDay", []).join(",") + ";"
+          + d.get("sessionLength", "") + ";"
+          + d.get("trainWhere", []).join(",") + ";"
+          + d.get("equipment", []).join(",") + ";"
+          + d.get("soccerPosition", "") + ";"
+          + d.get("soccerLevel", "") + ";"
+          + d.get("strongFoot", "") + ";"
+          + d.get("yearsPlaying", "") + ";"
+          + d.get("eventType", "") + ";"
+          + d.get("targetDate", "") + ";"
+          + d.get("feedbackStyle", "") + ";"
+          + d.get("obstacle", "") + ";"
+          + d.get("injuryAreas", []).join(",") + ";"
+          + d.get("injuryStatus", "") + ";"
+          + d.get("healthFlags", []).join(",")).matches(
+          '^(self|child)?;(running|strength|soccer|general|other)?;(new|lt1|1-3|3-5|5-10|10\\+)?;(running|run20|run10|run5|run1|walk)?;(none|some|experienced)?;((mon|tue|wed|thu|fri|sat|sun)(,(mon|tue|wed|thu|fri|sat|sun))*)?;((early|morning|midday|afternoon|evening)(,(early|morning|midday|afternoon|evening))*)?;(20|30|45|60|90)?;((gym|home|outside|trails|track|field)(,(gym|home|outside|trails|track|field))*)?;((bodyweight|bands|dumbbells|kettlebells|barbell|machines|treadmill)(,(bodyweight|bands|dumbbells|kettlebells|barbell|machines|treadmill))*)?;(gk|defender|midfield|forward|anywhere)?;(rec|school|club|travel|academy|college|adult)?;(right|left|both)?;(new|lt1|1-3|3-5|5-10|10\\+)?;(5k|10k|half|marathon|ultra|trail|triathlon|tryout|season|tournament|other)?;([0-9]{4}-[0-9]{2}-[0-9]{2})?;(direct|encouraging|detailed|mix)?;(time|motivation|consistency|injury|knowhow|energy|other)?;((neck|shoulder|back|hip|hamstring|quad|knee|shin|calf|ankle|foot|other)(,(neck|shoulder|back|hip|hamstring|quad|knee|shin|calf|ankle|foot|other))*)?;(now|recovering|past)?;((heart|chest|dizzy|chronic|meds|joints|supervised)(,(heart|chest|dizzy|chronic|meds|joints|supervised))*)?$')
+        && (d.get("birthYear", null) == null || (d.get("birthYear", null) is int && d.get("birthYear", null) >= 1920 && d.get("birthYear", null) <= 2100))
+        && (d.get("weeklyMileage", null) == null || (d.get("weeklyMileage", null) is number && d.get("weeklyMileage", null) >= 0 && d.get("weeklyMileage", null) <= 500))
+        && (d.get("runsPerWeek", null) == null || (d.get("runsPerWeek", null) is int && d.get("runsPerWeek", null) >= 0 && d.get("runsPerWeek", null) <= 7))
+        && (d.get("longestRun", null) == null || (d.get("longestRun", null) is number && d.get("longestRun", null) >= 0 && d.get("longestRun", null) <= 100))
+        && (d.get("preferredName", "") + "").size() <= 60 && (d.get("athleteName", "") + "").size() <= 60
+        && (d.get("phone", "") + "").size() <= 30 && (d.get("emergencyName", "") + "").size() <= 80
+        && (d.get("emergencyPhone", "") + "").size() <= 30 && (d.get("emergencyRelation", "") + "").size() <= 40
+        && (d.get("guardianName", "") + "").size() <= 80 && (d.get("guardianPhone", "") + "").size() <= 30
+        && (d.get("teamOrLevel", "") + "").size() <= 120 && (d.get("currentTraining", "") + "").size() <= 1000
+        && (d.get("availabilityNotes", "") + "").size() <= 300 && (d.get("primaryGoal", "") + "").size() <= 500
+        && (d.get("secondaryGoals", "") + "").size() <= 500 && (d.get("targetEvent", "") + "").size() <= 120
+        && (d.get("coachingWants", "") + "").size() <= 1000 && (d.get("workedBefore", "") + "").size() <= 1000
+        && (d.get("notWorked", "") + "").size() <= 1000 && (d.get("injuries", "") + "").size() <= 1000
+        && (d.get("healthNote", "") + "").size() <= 500
+        && (!("intakeComplete" in d) || d.intakeComplete is bool)
+        && (!("confirmedAt" in d) || confirmedAtOk(d.confirmedAt))
+        && (!("askedAt" in d) || askedAtOk(d.askedAt))
+        && (!("healthCheckedAt" in d) || (d.healthCheckedAt is int && d.healthCheckedAt > 0
+            && d.healthCheckedAt < request.time.toMillis() + 31536000000))
+        && (!("intakeCompletedAt" in d) || d.intakeCompletedAt == request.time
+            || (resource != null && "intakeCompletedAt" in resource.data
+                && d.intakeCompletedAt == resource.data.intakeCompletedAt));
+    }
+    // END generated profile rule
+
+    match /clientRecords/{clientUid} {
+      allow read: if isUser(clientUid)
+        || (signedIn() && linked(request.auth.uid, clientUid));
+      allow create, update: if (isUser(clientUid)
+          || (signedIn() && linked(request.auth.uid, clientUid)))
+        && validClientRecord(request.resource.data, clientUid);
+      allow delete: if false;
+    }
+
+    // A coach's private notes about a client. Readable ONLY by the coach
+    // who wrote them: there is no client clause here on purpose, so a
+    // private note can never reach the client.
+    function validNoteText(t, max) {
+      return t is string && t.size() > 0 && t.size() <= max;
+    }
+
+    match /coachNotes/{noteId} {
+      allow read: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "text", "pinned", "createdAt", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && validNoteText(request.resource.data.text, 4000)
+        && request.resource.data.pinned is bool
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if signedIn() && resource.data.coachUid == request.auth.uid
+        && onlyChanges(["text", "pinned", "updatedAt"])
+        && validNoteText(request.resource.data.text, 4000)
+        && request.resource.data.pinned is bool
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // Updates a coach sends a client: both can read them, only the
+    // (linked) coach writes them, and the client can only mark them read.
+    match /clientUpdates/{updateId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "coachName", "clientUid", "text", "createdAt", "readAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && request.resource.data.coachName is string
+        && request.resource.data.coachName.size() <= 100
+        && validNoteText(request.resource.data.text, 2000)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.readAt == null;
+      allow update: if signedIn() && resource.data.clientUid == request.auth.uid
+        && onlyChanges(["readAt"])
+        && request.resource.data.readAt == request.time;
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // ---- Coaching plans: the coach owns the prescription ----
+
+    function validPlanHeaderFields(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 120
+        && d.kind in ["race", "training", "custom"]
+        && d.status in ["active", "archived"]
+        && d.version is int && d.version >= 1
+        && d.coachNote is string && d.coachNote.size() <= 2000
+        && d.changes is list && d.changes.size() <= 40
+        && d.startDate is string && d.endDate is string
+        && d.coachName is string && d.coachName.size() <= 100
+        && validPlanWindow(d);
+    }
+
+    // What the client sees: through a date (this week and next), or the
+    // whole plan. noticeVersion is the newest version worth telling them
+    // about (the coach's app opening the next week isn't news). All three
+    // are optional: plans published before them are shown whole.
+    function validPlanWindow(d) {
+      return (!("noticeVersion" in d) || (d.noticeVersion is int && d.noticeVersion >= 1 && d.noticeVersion <= d.version))
+        && (!("releasedThrough" in d) || d.releasedThrough == null
+            || (d.releasedThrough is string && d.releasedThrough.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (!("showAll" in d) || d.showAll is bool);
+    }
+
+    function versionPath(planId, version) {
+      return /databases/$(database)/documents/coachingPlans/$(planId)/versions/$(string(version));
+    }
+
+    match /coachingPlans/{planId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+
+      // First publish: the header and version 1 go in one batch.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "coachName", "clientUid", "name", "kind", "status",
+             "version", "publishedAt", "coachNote", "changes", "startDate", "endDate", "createdAt", "updatedAt",
+             "viewedVersion", "viewedAt", "ackVersion", "ackAt", "adoptedFrom", "noticeVersion", "releasedThrough", "showAll"])
+        // The client's own plan this one replaces (their app retires it).
+        && (!("adoptedFrom" in request.resource.data) || request.resource.data.adoptedFrom == null
+            || (request.resource.data.adoptedFrom is map
+                && request.resource.data.adoptedFrom.keys().hasOnly(["store", "id"])
+                && request.resource.data.adoptedFrom.store in ["running", "training"]
+                && request.resource.data.adoptedFrom.id is string))
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && validPlanHeaderFields(request.resource.data)
+        && request.resource.data.version == 1
+        && request.resource.data.status == "active"
+        && request.resource.data.publishedAt == request.time
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.viewedVersion == 0 && request.resource.data.viewedAt == null
+        && request.resource.data.ackVersion == 0 && request.resource.data.ackAt == null
+        && existsAfter(versionPath(planId, 1));
+
+      // Coach: publish the next version (with its version doc in the same
+      // batch), open the next week (a version too, publishedAt kept), or
+      // archive/restore. Never re-points the plan to another client,
+      // never goes back a version.
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && linked(request.auth.uid, resource.data.clientUid)
+        && onlyChanges(["name", "kind", "status", "version", "publishedAt", "coachNote", "changes",
+             "startDate", "endDate", "updatedAt", "coachName", "noticeVersion", "releasedThrough", "showAll"])
+        && validPlanHeaderFields(request.resource.data)
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.version == resource.data.version
+            || (request.resource.data.version == resource.data.version + 1
+                && (request.resource.data.publishedAt == request.time
+                    || request.resource.data.publishedAt == resource.data.publishedAt)
+                && existsAfter(versionPath(planId, request.resource.data.version))));
+
+      // Client: only "I've seen it" / "Got it", for a version that exists,
+      // never going backwards, stamped by the server.
+      allow update: if signedIn()
+        && resource.data.clientUid == request.auth.uid
+        && onlyChanges(["viewedVersion", "viewedAt", "ackVersion", "ackAt"])
+        && request.resource.data.viewedVersion is int
+        && request.resource.data.viewedVersion >= resource.data.viewedVersion
+        && request.resource.data.viewedVersion <= resource.data.version
+        && request.resource.data.ackVersion is int
+        && request.resource.data.ackVersion >= resource.data.ackVersion
+        && request.resource.data.ackVersion <= resource.data.version
+        && (request.resource.data.viewedAt == resource.data.viewedAt || request.resource.data.viewedAt == request.time)
+        && (request.resource.data.ackAt == resource.data.ackAt || request.resource.data.ackAt == request.time);
+
+      // Plans are archived, never deleted: they're the coaching record.
+      allow delete: if false;
+
+      match /versions/{version} {
+        allow read: if signedIn()
+          && (resource.data.coachUid == request.auth.uid
+              || resource.data.clientUid == request.auth.uid);
+
+        // Written once, alongside the header that points at it.
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "planId", "version", "name", "kind",
+               "plan", "changes", "coachNote", "publishedAt", "releasedThrough", "auto"])
+          && (!("releasedThrough" in request.resource.data) || request.resource.data.releasedThrough == null
+              || (request.resource.data.releasedThrough is string
+                  && request.resource.data.releasedThrough.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && (!("auto" in request.resource.data) || request.resource.data.auto is bool)
+          && request.resource.data.coachUid == request.auth.uid
+          && linked(request.auth.uid, request.resource.data.clientUid)
+          && request.resource.data.planId == planId
+          && request.resource.data.version is int
+          && string(request.resource.data.version) == version
+          && request.resource.data.plan is map
+          && request.resource.data.name is string && request.resource.data.name.size() <= 120
+          && request.resource.data.changes is list && request.resource.data.changes.size() <= 40
+          && request.resource.data.coachNote is string && request.resource.data.coachNote.size() <= 2000
+          && request.resource.data.publishedAt == request.time
+          && getAfter(/databases/$(database)/documents/coachingPlans/$(planId)).data.version == request.resource.data.version
+          && getAfter(/databases/$(database)/documents/coachingPlans/$(planId)).data.clientUid == request.resource.data.clientUid
+          && getAfter(/databases/$(database)/documents/coachingPlans/$(planId)).data.coachUid == request.auth.uid;
+
+        allow update, delete: if false;
+      }
+    }
+
+    // The coach's unpublished work. No client clause: a client never
+    // sees a draft.
+    match /coachingPlanDrafts/{planId} {
+      allow read, delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "name", "kind", "plan",
+             "basedOnVersion", "adoptedFrom", "createdAt", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && (resource == null || (resource.data.coachUid == request.auth.uid
+            && resource.data.clientUid == request.resource.data.clientUid))
+        && request.resource.data.name is string && request.resource.data.name.size() <= 120
+        && request.resource.data.plan is map
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // The coach's whole published plan, including the weeks the client
+    // can't see yet (their versions hold only this week and next). No
+    // client clause: the client can never read ahead. Kept, not deleted.
+    match /coachingPlanMasters/{planId} {
+      allow read: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "plan", "version", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && (resource == null || (resource.data.coachUid == request.auth.uid
+            && resource.data.clientUid == request.resource.data.clientUid))
+        && request.resource.data.plan is map
+        && request.resource.data.version is int && request.resource.data.version >= 1
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    // ---- Workout results: the client owns what they did ----
+
+    function validResult(d) {
+      return d.status in ["completed", "skipped"]
+        && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && (d.distance == null || (d.distance is number && d.distance >= 0 && d.distance <= 200))
+        && (d.durationSec == null || (d.durationSec is int && d.durationSec >= 0 && d.durationSec <= 172800))
+        && (d.rpe == null || (d.rpe is int && d.rpe >= 1 && d.rpe <= 10))
+        && d.pain is bool
+        && d.painNote is string && d.painNote.size() <= 300
+        && d.note is string && d.note.size() <= 1000
+        && d.title is string && d.title.size() <= 120
+        && d.plannedMiles is number && d.plannedMiles >= 0 && d.plannedMiles <= 200
+        && d.planVersion is int && d.planVersion >= 1
+        // A strength log: what was lifted, exercise by exercise.
+        && d.get("kind", "run") in ["run", "strength"]
+        && (!("exercises" in d) || (d.kind == "strength" && d.exercises is list && d.exercises.size() <= 20));
+    }
+
+    match /workoutResults/{resultId} {
+      allow read: if signedIn()
+        && (resource.data.clientUid == request.auth.uid
+            || resource.data.coachUid == request.auth.uid);
+
+      // One result per planned day (and one per strength session that
+      // day): the id is client_plan_date[_strength], and the plan must be
+      // one this coach published to this client.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["clientUid", "coachUid", "planId", "planVersion", "date", "title",
+             "plannedMiles", "status", "distance", "durationSec", "rpe", "pain", "painNote", "note",
+             "createdAt", "updatedAt", "coachComment", "coachCommentAt", "kind", "exercises"])
+        && request.resource.data.clientUid == request.auth.uid
+        && resultId == request.auth.uid + "_" + request.resource.data.planId + "_" + request.resource.data.date
+             + (request.resource.data.get("kind", "run") == "strength" ? "_strength" : "")
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && get(/databases/$(database)/documents/coachingPlans/$(request.resource.data.planId)).data.clientUid == request.auth.uid
+        && get(/databases/$(database)/documents/coachingPlans/$(request.resource.data.planId)).data.coachUid == request.resource.data.coachUid
+        && validResult(request.resource.data)
+        && request.resource.data.coachComment == "" && request.resource.data.coachCommentAt == null
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // The client edits what they did -- never who/which/when, never the
+      // coach's comment.
+      allow update: if signedIn()
+        && resource.data.clientUid == request.auth.uid
+        && onlyChanges(["status", "distance", "durationSec", "rpe", "pain", "painNote", "note",
+             "title", "plannedMiles", "planVersion", "updatedAt", "exercises"])
+        && validResult(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      // The coach only adds / edits their comment.
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && linked(request.auth.uid, resource.data.clientUid)
+        && onlyChanges(["coachComment", "coachCommentAt"])
+        && request.resource.data.coachComment is string
+        && request.resource.data.coachComment.size() <= 1000
+        && request.resource.data.coachCommentAt == request.time;
+
+      allow delete: if signedIn() && resource.data.clientUid == request.auth.uid;
+    }
+
+    // ---- Change requests: the client asks, the coach decides ----
+
+    match /changeRequests/{requestId} {
+      allow read: if signedIn()
+        && (resource.data.clientUid == request.auth.uid
+            || resource.data.coachUid == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["clientUid", "clientName", "coachUid", "planId", "date",
+             "reason", "message", "status", "coachReply", "createdAt", "resolvedAt"])
+        && request.resource.data.clientUid == request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && request.resource.data.clientName is string && request.resource.data.clientName.size() <= 120
+        && (request.resource.data.planId == null || (request.resource.data.planId is string && request.resource.data.planId.size() <= 100))
+        && (request.resource.data.date == null || (request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && request.resource.data.reason in ["work", "fatigue", "travel", "pain", "event", "other"]
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 1 && request.resource.data.message.size() <= 1000
+        && request.resource.data.status == "open"
+        && request.resource.data.coachReply == ""
+        && request.resource.data.resolvedAt == null
+        && request.resource.data.createdAt == request.time;
+
+      // The coach answers (and resolves, or reopens) -- nothing else.
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && linked(request.auth.uid, resource.data.clientUid)
+        && onlyChanges(["coachReply", "status", "resolvedAt"])
+        && request.resource.data.coachReply is string && request.resource.data.coachReply.size() <= 1000
+        && ((request.resource.data.status == "resolved" && request.resource.data.resolvedAt == request.time)
+            || (request.resource.data.status == "open" && request.resource.data.resolvedAt == null));
+
+      // The client can take back a request the coach hasn't answered yet.
+      allow delete: if signedIn()
+        && resource.data.clientUid == request.auth.uid
+        && resource.data.status == "open";
+    }
+
+    // Questions from the public Contact page. Anyone may send one
+    // (no sign-in), so every field is checked; only approved coaches
+    // can read them, and the coach can only mark them handled.
+    function validInquiry(d) {
+      return d.keys().hasOnly(["name", "email", "phone", "interest", "who",
+                               "athleteAge", "message", "status", "createdAt"])
+        && d.keys().hasAll(["name", "email", "phone", "interest", "who",
+                            "athleteAge", "message", "status", "createdAt"])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && d.email is string && d.email.size() <= 200
+        && (d.email.size() == 0 || d.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'))
+        && d.phone is string && d.phone.size() <= 40
+        && (d.email.size() > 0 || d.phone.size() > 0)
+        && d.interest in ["online_coaching", "running_strength", "soccer_1on1", "soccer_group", "other"]
+        && d.who in ["self", "child"]
+        && d.athleteAge is string && d.athleteAge.size() <= 20
+        && d.message is string && d.message.size() > 0 && d.message.size() <= 2000
+        && d.status == "new"
+        && d.createdAt == request.time;
+    }
+
+    // Applications from apply.html. Like inquiries, anyone can send one
+    // without signing in, so every field is checked (the choices match
+    // js/applicationForm.js). Someone signed in may attach their own uid.
+    function strMax(v, n) {
+      return v is string && v.size() <= n;
+    }
+    function validApplication(d) {
+      return d.keys().hasOnly(["name", "email", "phone", "who", "athleteName", "ageRange", "services",
+                               "goal", "startWhen", "coachedBefore", "heardFrom", "heardDetail",
+                               "contactBy", "contactTime", "message", "uid", "status", "createdAt"])
+        && d.keys().hasAll(["name", "email", "phone", "who", "athleteName", "ageRange", "services",
+                            "goal", "startWhen", "coachedBefore", "heardFrom", "heardDetail",
+                            "contactBy", "contactTime", "message", "status", "createdAt"])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && strMax(d.email, 200) && (d.email.size() == 0 || d.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'))
+        && strMax(d.phone, 40)
+        && (d.email.size() > 0 || d.phone.size() > 0)
+        && d.who in ["self", "child", "other"]
+        && strMax(d.athleteName, 60)
+        && d.ageRange in ["u10", "10-13", "14-18", "19-29", "30-39", "40-49", "50+"]
+        && d.services is list && d.services.size() > 0 && d.services.size() <= 5
+        && d.services.hasOnly(["online_coaching", "running", "strength", "soccer_1on1", "soccer_group"])
+        && d.goal is string && d.goal.size() > 0 && d.goal.size() <= 300
+        && d.startWhen in ["now", "month", "later", "looking"]
+        && d.coachedBefore in ["never", "past", "now"]
+        && d.heardFrom in ["instagram", "facebook", "tiktok", "google", "friend", "client", "team", "event", "other"]
+        && strMax(d.heardDetail, 100)
+        && d.contactBy is list && d.contactBy.size() <= 3 && d.contactBy.hasOnly(["text", "call", "email"])
+        && d.contactTime is list && d.contactTime.size() <= 3 && d.contactTime.hasOnly(["morning", "afternoon", "evening"])
+        && strMax(d.message, 1000)
+        && (!("uid" in d) || (request.auth != null && d.uid == request.auth.uid))
+        && d.status == "new"
+        && d.createdAt == request.time;
+    }
+
+    match /applications/{applicationId} {
+      allow create: if validApplication(request.resource.data);
+      allow read: if isApprovedCoach();
+      // The coach marks it handled and ties it to the account it belongs to.
+      allow update: if isApprovedCoach()
+        && request.resource.data.status in ["new", "handled"]
+        && onlyChanges(["status", "handledAt", "matchedUid", "matchedAt"])
+        && (!("matchedUid" in request.resource.data) || request.resource.data.matchedUid == null
+            || request.resource.data.matchedUid is string);
+      allow delete: if isApprovedCoach();
+    }
+
+    match /inquiries/{inquiryId} {
+      allow create: if validInquiry(request.resource.data);
+      allow read: if isApprovedCoach();
+      allow update: if isApprovedCoach()
+        && request.resource.data.status in ["new", "handled"]
+        && onlyChanges(["status", "handledAt"]);
+      allow delete: if isApprovedCoach();
+    }
+
+    // 1-5, or not answered.
+    function score5(v) {
+      return v == null || (v is int && v >= 1 && v <= 5);
+    }
+
+    // What a client may say in a check-in (older app versions send only
+    // rating + notes, which still passes).
+    function validCheckin(d) {
+      return d.rating is int && d.rating >= 1 && d.rating <= 5
+        && d.get("notes", "") is string && d.get("notes", "").size() <= 2000
+        && score5(d.get("energy", null)) && score5(d.get("recovery", null)) && score5(d.get("motivation", null))
+        && d.get("pain", false) is bool
+        && d.get("painNote", "") is string && d.get("painNote", "").size() <= 300
+        && d.get("wentWell", "") is string && d.get("wentWell", "").size() <= 1000
+        && d.get("change", "") is string && d.get("change", "").size() <= 1000
+        // The week they're checking in about, worked out by their app.
+        && (!("week" in d) || (d.week is map && d.week.size() <= 16));
+    }
+
+    match /checkins/{checkinId} {
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.clientUid
+            || request.auth.uid == resource.data.coachUid);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["clientUid", "clientName", "clientEmail", "coachUid", "coachName",
+             "weekOf", "rating", "notes", "status", "reviewedAt", "submittedAt", "coachFeedback",
+             "energy", "recovery", "motivation", "pain", "painNote", "wentWell", "change", "week"])
+        && request.auth.uid == request.resource.data.clientUid
+        && checkinId == request.auth.uid + '_' + request.resource.data.weekOf
+        && request.resource.data.status == "submitted"
+        && request.resource.data.coachFeedback == ""
+        && validCheckin(request.resource.data)
+        && linked(request.resource.data.coachUid, request.auth.uid);
+
+      allow update: if signedIn() && (
+        // The client resubmits their check-in, which puts it back in
+        // the coach's queue.
+        (request.auth.uid == resource.data.clientUid
+          && request.resource.data.status == "submitted"
+          && validCheckin(request.resource.data)
+          && onlyChanges(["rating", "notes", "status", "reviewedAt", "submittedAt",
+                          "clientName", "clientEmail", "coachName",
+                          "energy", "recovery", "motivation", "pain", "painNote", "wentWell", "change", "week"]))
+        ||
+        // The coach writes feedback and marks it reviewed.
+        (request.auth.uid == resource.data.coachUid
+          && request.resource.data.status == "reviewed"
+          && onlyChanges(["coachFeedback", "status", "reviewedAt"]))
+      );
+    }
+  }
+}
+)
+        && (
+          int(date[0:4]) < request.time.year()
+          || (int(date[0:4]) == request.time.year() && int(date[5:7]) < request.time.month())
+          || (int(date[0:4]) == request.time.year()
+              && int(date[5:7]) == request.time.month()
+              && int(date[8:10]) <= request.time.day())
+        );
     }
 
     // What happened at one session of a booking (Client Hub Phase 6,
