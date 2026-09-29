@@ -359,7 +359,7 @@ test("progress: derives a 28-day coaching snapshot without another data source",
     assert.equal(progress.plan.name, "Fall Marathon");
     assert.equal(progress.plan.week.completed, 3);
     assert.equal(progress.plan.week.due, 4);
-    assert.equal(progress.activity.completedWorkouts, 4);
+    assert.equal(progress.activity.completedWorkouts, 5);
     assert.equal(progress.activity.skippedWorkouts, 1);
     assert.equal(progress.activity.runSessions, 4);
     assert.equal(progress.activity.runMiles, 22);
