@@ -361,7 +361,7 @@ test("progress: derives a 28-day coaching snapshot without another data source",
     assert.equal(progress.plan.week.due, 4);
     assert.equal(progress.activity.completedWorkouts, 4);
     assert.equal(progress.activity.skippedWorkouts, 1);
-    assert.equal(progress.activity.runSessions, 3);
+    assert.equal(progress.activity.runSessions, 4);
     assert.equal(progress.activity.runMiles, 22);
     assert.equal(progress.activity.strengthSessions, 1);
     assert.equal(progress.activity.strengthSets, 2);
@@ -371,7 +371,10 @@ test("progress: derives a 28-day coaching snapshot without another data source",
     assert.equal(progress.checkins.average, 4);
     assert.equal(progress.painFlags, 1);
     assert.equal(progress.trend.priorMiles, 5);
-    assert.equal(progress.trend.recentMiles, 22);
+    assert.equal(progress.trend.recentMiles, 17);
+    assert.equal(progress.trend.milesChangePct, 240);
+    assert.equal(progress.trend.priorCompleted, 1);
+    assert.equal(progress.trend.recentCompleted, 3);
 });
 
 test("progress: prior 14-day comparison is descriptive and handles zero baselines", () => {
@@ -385,8 +388,18 @@ test("progress: prior 14-day comparison is descriptive and handles zero baseline
         ]
     });
 
-    assert.equal(progress.trend.priorMiles, 8);
+    assert.equal(progress.trend.priorMiles, 3);
     assert.equal(progress.trend.recentMiles, 10);
-    assert.equal(progress.trend.milesChangePct, 25);
-    assert.equal(progress.trend.completedChangePct, 0);
+    assert.equal(progress.trend.milesChangePct, 233);
+    assert.equal(progress.trend.priorCompleted, 1);
+    assert.equal(progress.trend.recentCompleted, 2);
+    assert.equal(progress.trend.completedChangePct, 100);
+
+    const zeroBaseline = summarizeProgress({
+        today: "2026-09-29",
+        results: [{ date: "2026-09-28", status: "completed", distance: 6 }]
+    });
+    assert.equal(zeroBaseline.trend.priorMiles, 0);
+    assert.equal(zeroBaseline.trend.recentMiles, 6);
+    assert.equal(zeroBaseline.trend.milesChangePct, null);
 });
