@@ -684,9 +684,14 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
     const recentFrom = addDays(today, -27);
     const priorFrom = addDays(today, -55);
     const priorTo = addDays(today, -28);
+    const recent14From = addDays(today, -13);
+    const prior14From = addDays(today, -27);
+    const prior14To = addDays(today, -14);
 
     const recentResults = results.filter(r => inWindow(r.date, recentFrom));
     const priorResults = results.filter(r => inWindow(r.date, priorFrom, priorTo));
+    const recentTrendResults = results.filter(r => inWindow(r.date, recent14From));
+    const priorTrendResults = results.filter(r => inWindow(r.date, prior14From, prior14To));
 
     const isStrength = r => r?.kind === "strength";
     const completed = r => r?.status === "completed";
@@ -716,6 +721,10 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
 
     const recentMiles = sumMiles(recentResults);
     const priorMiles = sumMiles(priorResults);
+    const recentTrendMiles = sumMiles(recentTrendResults);
+    const priorTrendMiles = sumMiles(priorTrendResults);
+    const recentTrendCompleted = recentTrendResults.filter(completed).length;
+    const priorTrendCompleted = priorTrendResults.filter(completed).length;
     const percentChange = (recent, prior) => prior > 0 ? Math.round(((recent - prior) / prior) * 100) : null;
 
     return {
@@ -749,12 +758,12 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
             soccerCounted
         },
         trend: {
-            recentMiles,
-            priorMiles,
-            recentCompleted: recentCompleted.length,
-            priorCompleted: priorCompleted.length,
-            milesChangePct: percentChange(recentMiles, priorMiles),
-            completedChangePct: percentChange(recentCompleted.length, priorCompleted.length)
+            recentMiles: recentTrendMiles,
+            priorMiles: priorTrendMiles,
+            recentCompleted: recentTrendCompleted,
+            priorCompleted: priorTrendCompleted,
+            milesChangePct: percentChange(recentTrendMiles, priorTrendMiles),
+            completedChangePct: percentChange(recentTrendCompleted, priorTrendCompleted)
         },
         checkins: {
             count: recentCheckins.length,
