@@ -51,6 +51,21 @@ test("every date is a session with a state", () => {
     assert.deepEqual(sessionsToLog(list, TODAY, 3).map(s => s.date), []);
 });
 
+test("sessions done: only explicitly completed logs count", () => {
+    const pastBookings = { ...weekly, dates: ["2026-09-08", "2026-09-15", "2026-09-22", "2026-09-29"] };
+
+    const unlogged = attendance(sessionList([pastBookings], "2026-10-01"));
+    assert.equal(unlogged.completed, 0, "past bookings are not completed until a session is logged");
+
+    const withLogs = attachLogs([pastBookings], [
+        log("b1", "2026-09-08", "completed"),
+        log("b1", "2026-09-15", "no-show"),
+        log("b1", "2026-09-22", "cancelled")
+    ]);
+    const logged = attendance(sessionList(withLogs, "2026-10-01"));
+    assert.equal(logged.completed, 1, "only the explicitly completed occurrence counts as done");
+});
+
 test("attendance and no-show streaks", () => {
     const [r] = attachLogs([weekly], [
         log("b1", "2026-09-08", "completed"), log("b1", "2026-09-15", "no-show"),
