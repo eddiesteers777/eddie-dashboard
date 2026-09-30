@@ -1276,6 +1276,8 @@ Goal:
 
 ## Phase 9 — Packages / billing
 
+**Step 1 built 2026-09-30.** Southbound now has a canonical package catalog covering the currently advertised package shapes: online monthly coaching, 1-on-1 soccer single/5/10-session options, group soccer drop-in, and group soccer monthly. Prices remain unset. No payment provider, billing collection, or checkout flow was added; future package assignment and session accounting should reuse this catalog.
+
 Only after the client-management system is stable:
 
 - packages
