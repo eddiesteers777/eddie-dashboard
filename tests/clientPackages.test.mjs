@@ -1,8 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getPackage, isFiniteSessionPackage } from "../js/packageCatalog.js";
-import { packageRemainingSessions, packageCatalogOptions } from "../js/clientPackageModel.js";
-import { PACKAGE_STATUSES } from "../js/clientPackages.js";
+import { PACKAGE_STATUSES, packageRemainingSessions, packageCatalogOptions } from "../js/clientPackageModel.js";
 
 test("package statuses stay explicit and finite", () => {
     assert.deepEqual(PACKAGE_STATUSES, ["active", "paused", "completed", "cancelled"]);
