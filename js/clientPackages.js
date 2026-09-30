@@ -1,8 +1,8 @@
 /* ==========================================
    Southbound — client package entitlements
 
-   A package assignment is a coaching entitlement, not proof of payment.
-   Payment provider data is deliberately not stored here yet.
+   A package assignment is a coaching entitlement. Stripe reconciliation
+   fields may be written by the server; clients never write them.
 
    clientPackages/{id}
    - coachUid / clientUid: ownership and link

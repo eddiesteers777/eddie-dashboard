@@ -3,7 +3,9 @@
 // ==============================
 
 import { auth } from "./firebase.js";
-import { toast } from "./ui.js";
+import { toast, friendlyError } from "./ui.js";
+import { listMyPackages } from "./clientPackages.js";
+import { openStripeCustomerPortal } from "./stripeBilling.js";
 
 import {
     onAuthStateChanged
@@ -25,6 +27,8 @@ const displayEmail = document.getElementById("displayEmail");
 const avatar = document.getElementById("settingsAvatar");
 
 const logoutBtn = document.getElementById("logoutBtn");
+const billingCard = document.getElementById("billingCard");
+const manageBillingBtn = document.getElementById("manageBillingBtn");
 
 // Units, week start, goal time, weekly mileage and the "AI Coach"
 // switches used to live here too; nothing ever read them, so they were
@@ -85,6 +89,21 @@ onAuthStateChanged(auth, async (user) => {
 
     const saved = getUserSettings();
 
+    // Stripe Customer Portal is available only after the server/webhook
+    // has established a Stripe customer for at least one package.
+    if (billingCard) {
+        try {
+            const packages = await listMyPackages();
+            const hasStripeCustomer = (packages || []).some(pkg =>
+                typeof pkg.stripeCustomerId === "string" && pkg.stripeCustomerId.trim()
+            );
+            billingCard.hidden = !hasStripeCustomer;
+        } catch (error) {
+            console.warn("Southbound: billing status unavailable.", error);
+            billingCard.hidden = true;
+        }
+    }
+
     usdaApiKey.value = saved.usdaApiKey || "";
 
 });
@@ -110,6 +129,23 @@ function saveSettings() {
 // =====================================
 
 usdaApiKey.addEventListener("change", saveSettings);
+
+// =====================================
+// Billing
+// =====================================
+
+manageBillingBtn?.addEventListener("click", async () => {
+    if (!manageBillingBtn) return;
+    manageBillingBtn.disabled = true;
+    manageBillingBtn.textContent = "Opening…";
+    try {
+        await openStripeCustomerPortal();
+    } catch (error) {
+        manageBillingBtn.disabled = false;
+        manageBillingBtn.textContent = "Manage Billing";
+        toast(friendlyError(error, "open billing management"), { type: "error" });
+    }
+});
 
 // =====================================
 // Logout

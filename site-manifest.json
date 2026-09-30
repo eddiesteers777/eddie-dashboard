@@ -185,6 +185,7 @@
     "js/strengthSession.js",
     "js/strengthWorkout.js",
     "js/strengthWorkoutMode.js",
+    "js/stripeBilling.js",
     "js/svgCharts.js",
     "js/todayClient.js",
     "js/trainingPlanGenerator.js",

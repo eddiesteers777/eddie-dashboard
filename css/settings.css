@@ -524,3 +524,17 @@ input[type="checkbox"]{
     background:transparent;
     color:var(--text-secondary);
 }
+
+/* Stripe billing (clients with an established Stripe customer). */
+.billing-intro{
+    color:var(--text-secondary);
+    font-size:.9rem;
+    line-height:1.55;
+    margin:-8px 0 18px;
+}
+.billing-note{
+    color:var(--muted);
+    font-size:.8rem;
+    line-height:1.45;
+    margin:10px 0 0;
+}
