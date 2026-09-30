@@ -3,7 +3,7 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { defineJsonSecret, defineString } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import Stripe from 'stripe';
-import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS } from './billingModel.js';
+import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent } from './billingModel.js';
 
 initializeApp();
 const db = getFirestore();
@@ -173,6 +173,36 @@ export const stripeWebhook = onRequest(
 
         try {
             switch (event.type) {
+                case 'customer.subscription.created':
+                case 'customer.subscription.updated':
+                case 'customer.subscription.deleted': {
+                    const subscription = event.data.object;
+                    const clientUid = subscription.metadata?.clientUid || '';
+                    const packageAssignmentId = subscription.metadata?.packageAssignmentId || '';
+                    if (clientUid && packageAssignmentId) {
+                        const lifecycleUpdate = lifecycleUpdateForSubscriptionEvent(event.type, subscription.status);
+                        const ref = db.collection('clientPackages').doc(packageAssignmentId);
+                        const snap = await ref.get();
+                        if (snap.exists && snap.data().clientUid === clientUid) {
+                            await ref.set({
+                                stripeSubscriptionId: subscription.id,
+                                stripeSubscriptionStatus: subscription.status || null,
+                                ...(typeof subscription.customer === 'string' ? { stripeCustomerId: subscription.customer } : {}),
+                                ...lifecycleUpdate,
+                                updatedAt: FieldValue.serverTimestamp()
+                            }, { merge: true });
+
+                            if (typeof subscription.customer === 'string') {
+                                await db.collection('billingAccounts').doc(clientUid).set({
+                                    clientUid,
+                                    stripeCustomerId: subscription.customer,
+                                    updatedAt: FieldValue.serverTimestamp()
+                                }, { merge: true });
+                            }
+                        }
+                    }
+                    break;
+                }
                 case 'checkout.session.completed':
                 case 'checkout.session.async_payment_succeeded': {
                     const session = event.data.object;
