@@ -1148,6 +1148,56 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 .hub-progress-week-row span:not(:first-child){ text-align:right; }
 .hub-progress-compare-note{ margin-top:10px; }
 
+.hub-progress-trend-summary{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:12px;
+}
+.hub-progress-trend-summary span{
+    padding:7px 10px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--text-secondary);
+    font-size:12px;
+}
+.hub-progress-trend-summary strong{ color:var(--text); }
+
+.hub-progress-week-trend{
+    display:grid;
+    gap:12px;
+}
+.hub-progress-trend-row{
+    display:grid;
+    gap:6px;
+}
+.hub-progress-trend-label{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+}
+.hub-progress-trend-label strong{ font-size:13px; }
+.hub-progress-trend-label span{
+    color:var(--muted);
+    font-size:12px;
+    text-align:right;
+}
+.hub-progress-trend-bar{
+    height:8px;
+    overflow:hidden;
+    border-radius:999px;
+    background:rgba(255,255,255,.06);
+}
+.hub-progress-trend-bar span{
+    display:block;
+    height:100%;
+    min-width:0;
+    border-radius:inherit;
+    background:var(--primary);
+}
+.hub-progress-trend-note{ margin-top:12px; }
+
 .hub-progress-trend{
     display:grid;
     gap:12px;
