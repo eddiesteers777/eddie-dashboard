@@ -677,6 +677,90 @@ export function buildCoachFeed({ updates = [], checkins = [], requests = [], res
  * sessions, and weekly check-ins. It does not read or create a second
  * source of truth.
  */
+/**
+ * Compare the primary coach plan with logged execution.
+ *
+ * Uses the coach-owned plan prescription plus workoutResults. Future days
+ * are never treated as missed, and current-week percentages only use days
+ * that are due through today. No device-only COROS/Strava history is read.
+ */
+function summarizePlanVsActual(plans, results, today) {
+    const primary = plans?.primary;
+    const source = (plans?.plans || []).find(p => p?.coachPlanId && p.coachPlanId === primary?.coachPlanId);
+    const weeks = source?.generatedPlan?.weeks || [];
+    if (!primary?.coachPlanId || !weeks.length || !today) {
+        return { available: false, rows: [], completedWeeks: 0, plannedMiles: 0, actualMiles: 0, milesPct: null };
+    }
+
+    const resultMap = new Map();
+    for (const r of results || []) {
+        const kind = r?.kind === "strength" ? "strength" : "run";
+        resultMap.set(`${r?.planId}|${r?.date}|${kind}`, r);
+    }
+
+    const weekStart = w => w?.startDate || (w?.days || []).map(d => d?.date).filter(Boolean).sort()[0] || "";
+    const weekEnd = w => (w?.days || []).map(d => d?.date).filter(Boolean).sort().at(-1) || "";
+    const isWorkoutDay = d => Boolean(d?.type) && d.type !== "rest";
+    const planMiles = days => days.reduce((sum, d) => sum + (Number(d?.miles) || 0), 0);
+    const runResult = (r, d) => d?.type !== "strength" && r?.kind !== "strength";
+    const actualMiles = (rows) => rows.reduce((sum, x) => sum + (x.result && x.result.status === "completed" && runResult(x.result, x.day) ? (Number(x.result.distance) || 0) : 0), 0);
+
+    const built = weeks.map(w => {
+        const start = weekStart(w), end = weekEnd(w);
+        if (!start || !end) return null;
+        const days = (w.days || []).filter(isWorkoutDay);
+        const dueDays = days.filter(d => d.date <= today);
+        const entries = days.map(day => ({
+            day,
+            result: resultMap.get(`${primary.coachPlanId}|${day.date}|${day.type === "strength" ? "strength" : "run"}`)
+        }));
+        const dueEntries = entries.filter(x => x.day.date <= today);
+        const completed = dueEntries.filter(x => x.result?.status === "completed").length;
+        const skipped = dueEntries.filter(x => x.result?.status === "skipped").length;
+        const missed = dueEntries.filter(x => x.day.date < today && !x.result).length;
+        const duePlannedMiles = planMiles(dueDays);
+        const planned = planMiles(days);
+        const actual = actualMiles(dueEntries);
+        const current = today >= start && today <= end;
+        const future = start > today;
+        return {
+            week: w.week,
+            start,
+            end,
+            plannedMiles: round1(planned),
+            actualMiles: round1(actual),
+            duePlannedMiles: round1(duePlannedMiles),
+            plannedWorkouts: days.length,
+            dueWorkouts: dueDays.length,
+            completedWorkouts: completed,
+            skippedWorkouts: skipped,
+            missedWorkouts: missed,
+            mileagePct: duePlannedMiles > 0 ? Math.round(actual / duePlannedMiles * 100) : null,
+            completionPct: dueDays.length > 0 ? Math.round(completed / dueDays.length * 100) : null,
+            isCurrent: current,
+            isFuture: future
+        };
+    }).filter(Boolean);
+
+    const currentIndex = built.findIndex(w => w.isCurrent);
+    const anchor = currentIndex >= 0 ? currentIndex : built.findIndex(w => !w.isFuture) >= 0 ? built.findIndex(w => !w.isFuture) : 0;
+    const rows = built.slice(Math.max(0, anchor - 3), anchor + 1);
+    if (!rows.length) return { available: false, rows: [], completedWeeks: 0, plannedMiles: 0, actualMiles: 0, milesPct: null };
+
+    const completedRows = rows.filter(w => !w.isCurrent && !w.isFuture);
+    const plannedMiles = round1(completedRows.reduce((sum, w) => sum + w.plannedMiles, 0));
+    const actualMilesTotal = round1(completedRows.reduce((sum, w) => sum + w.actualMiles, 0));
+
+    return {
+        available: true,
+        rows,
+        completedWeeks: completedRows.length,
+        plannedMiles,
+        actualMiles: actualMilesTotal,
+        milesPct: plannedMiles > 0 ? Math.round(actualMilesTotal / plannedMiles * 100) : null
+    };
+}
+
 export function summarizeProgress({ plans = {}, results = [], sessions = [], checkins = [], today = "" } = {}) {
     if (!today) return emptyProgress();
 
@@ -726,11 +810,13 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
     const recentTrendCompleted = recentTrendResults.filter(completed).length;
     const priorTrendCompleted = priorTrendResults.filter(completed).length;
     const percentChange = (recent, prior) => prior > 0 ? Math.round(((recent - prior) / prior) * 100) : null;
+    const planVsActual = summarizePlanVsActual(plans, results, today);
 
     return {
         window: { from: recentFrom, to: today, days: 28 },
         plan: {
             name: plans.primary?.name || "",
+            planType: plans.primary?.planType || "",
             weekNumber: plans.primary?.weekNumber ?? null,
             totalWeeks: plans.primary?.totalWeeks ?? null,
             state: plans.primary?.state || null,
@@ -746,6 +832,7 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
                 completedMiles: plans.week.completedMiles || 0
             } : null
         },
+        planVsActual,
         activity: {
             completedWorkouts: recentCompleted.length,
             skippedWorkouts: recentResults.filter(r => r?.status === "skipped").length,
@@ -782,6 +869,7 @@ function emptyProgress() {
     return {
         window: { from: "", to: "", days: 28 },
         plan: { name: "", weekNumber: null, totalWeeks: null, state: null, week: null },
+        planVsActual: { available: false, rows: [], completedWeeks: 0, plannedMiles: 0, actualMiles: 0, milesPct: null },
         activity: {
             completedWorkouts: 0, skippedWorkouts: 0, runSessions: 0, runMiles: 0,
             strengthSessions: 0, strengthSets: 0, soccerSessions: 0, soccerCompleted: 0,
