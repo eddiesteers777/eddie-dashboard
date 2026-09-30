@@ -425,6 +425,123 @@ service cloud.firestore {
       allow delete: if signedIn() && request.auth.uid == resource.data.clientUid;
     }
 
+    function wearableRecoveryConsent(coachUid, clientUid) {
+      let ref = /databases/$(database)/documents/wearableShares/$(coachUid + "_" + clientUid);
+      return exists(ref)
+        && get(ref).data.coachUid == coachUid
+        && get(ref).data.clientUid == clientUid
+        && get(ref).data.status == "active"
+        && get(ref).data.permissions.recovery == true;
+    }
+
+    function validSharedWearableRecoveryDay(r) {
+      return r is map
+        && r.keys().hasOnly([
+            "date", "sleepScore", "asleepMinutes", "hrvAvg", "hrvStatus",
+            "restingHeartRate", "stressAvg", "stressLevel",
+            "recoveryPercent", "recoveryStatus", "recoveryHours"
+        ])
+        && r.keys().hasAll([
+            "date", "sleepScore", "asleepMinutes", "hrvAvg", "hrvStatus",
+            "restingHeartRate", "stressAvg", "stressLevel",
+            "recoveryPercent", "recoveryStatus", "recoveryHours"
+        ])
+        && r.date is string && r.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && (r.sleepScore == null || (r.sleepScore is number && r.sleepScore > 0 && r.sleepScore <= 100))
+        && (r.asleepMinutes == null || (r.asleepMinutes is number && r.asleepMinutes > 0 && r.asleepMinutes <= 1440))
+        && (r.hrvAvg == null || (r.hrvAvg is number && r.hrvAvg > 0 && r.hrvAvg <= 500))
+        && r.hrvStatus is string && r.hrvStatus.size() <= 64
+        && (r.restingHeartRate == null || (r.restingHeartRate is number && r.restingHeartRate > 0 && r.restingHeartRate <= 260))
+        && (r.stressAvg == null || (r.stressAvg is number && r.stressAvg >= 0 && r.stressAvg <= 100))
+        && r.stressLevel is string && r.stressLevel.size() <= 64
+        && (r.recoveryPercent == null || (r.recoveryPercent is number && r.recoveryPercent > 0 && r.recoveryPercent <= 100))
+        && r.recoveryStatus is string && r.recoveryStatus.size() <= 128
+        && (r.recoveryHours == null || (r.recoveryHours is number && r.recoveryHours > 0 && r.recoveryHours <= 720));
+    }
+
+    function validSharedWearableRecovery(d) {
+      return d.keys().hasOnly([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentDays", "updatedAt"
+        ])
+        && d.keys().hasAll([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentDays", "updatedAt"
+        ])
+        && d.version == 1
+        && d.source == "coros"
+        && d.coachUid is string && d.coachUid.size() > 0 && d.coachUid.size() <= 128
+        && d.clientUid is string && d.clientUid.size() > 0 && d.clientUid.size() <= 128
+        && d.windowFrom is string && d.windowFrom.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.windowTo is string && d.windowTo.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.summary is map
+        && d.summary.keys().hasOnly([
+            "daysWithData", "averageSleepScore", "averageAsleepMinutes",
+            "averageHrv", "averageRestingHeartRate", "averageStress",
+            "averageRecoveryPercent", "latestSleepScore", "latestAsleepMinutes",
+            "latestHrv", "latestRestingHeartRate", "latestRecoveryPercent",
+            "latestRecoveryStatus", "latestRecoveryHours"
+        ])
+        && d.summary.keys().hasAll([
+            "daysWithData", "averageSleepScore", "averageAsleepMinutes",
+            "averageHrv", "averageRestingHeartRate", "averageStress",
+            "averageRecoveryPercent", "latestSleepScore", "latestAsleepMinutes",
+            "latestHrv", "latestRestingHeartRate", "latestRecoveryPercent",
+            "latestRecoveryStatus", "latestRecoveryHours"
+        ])
+        && d.summary.daysWithData is int && d.summary.daysWithData >= 0 && d.summary.daysWithData <= 400
+        && (d.summary.averageSleepScore == null || (d.summary.averageSleepScore is number && d.summary.averageSleepScore > 0 && d.summary.averageSleepScore <= 100))
+        && (d.summary.averageAsleepMinutes == null || (d.summary.averageAsleepMinutes is number && d.summary.averageAsleepMinutes > 0 && d.summary.averageAsleepMinutes <= 1440))
+        && (d.summary.averageHrv == null || (d.summary.averageHrv is number && d.summary.averageHrv > 0 && d.summary.averageHrv <= 500))
+        && (d.summary.averageRestingHeartRate == null || (d.summary.averageRestingHeartRate is number && d.summary.averageRestingHeartRate > 0 && d.summary.averageRestingHeartRate <= 260))
+        && (d.summary.averageStress == null || (d.summary.averageStress is number && d.summary.averageStress >= 0 && d.summary.averageStress <= 100))
+        && (d.summary.averageRecoveryPercent == null || (d.summary.averageRecoveryPercent is number && d.summary.averageRecoveryPercent > 0 && d.summary.averageRecoveryPercent <= 100))
+        && (d.summary.latestSleepScore == null || (d.summary.latestSleepScore is number && d.summary.latestSleepScore > 0 && d.summary.latestSleepScore <= 100))
+        && (d.summary.latestAsleepMinutes == null || (d.summary.latestAsleepMinutes is number && d.summary.latestAsleepMinutes > 0 && d.summary.latestAsleepMinutes <= 1440))
+        && (d.summary.latestHrv == null || (d.summary.latestHrv is number && d.summary.latestHrv > 0 && d.summary.latestHrv <= 500))
+        && (d.summary.latestRestingHeartRate == null || (d.summary.latestRestingHeartRate is number && d.summary.latestRestingHeartRate > 0 && d.summary.latestRestingHeartRate <= 260))
+        && (d.summary.latestRecoveryPercent == null || (d.summary.latestRecoveryPercent is number && d.summary.latestRecoveryPercent > 0 && d.summary.latestRecoveryPercent <= 100))
+        && d.summary.latestRecoveryStatus is string && d.summary.latestRecoveryStatus.size() <= 128
+        && (d.summary.latestRecoveryHours == null || (d.summary.latestRecoveryHours is number && d.summary.latestRecoveryHours > 0 && d.summary.latestRecoveryHours <= 720))
+        && d.recentDays is list && d.recentDays.size() <= 8
+        && (d.recentDays.size() < 1 || validSharedWearableRecoveryDay(d.recentDays[0]))
+        && (d.recentDays.size() < 2 || validSharedWearableRecoveryDay(d.recentDays[1]))
+        && (d.recentDays.size() < 3 || validSharedWearableRecoveryDay(d.recentDays[2]))
+        && (d.recentDays.size() < 4 || validSharedWearableRecoveryDay(d.recentDays[3]))
+        && (d.recentDays.size() < 5 || validSharedWearableRecoveryDay(d.recentDays[4]))
+        && (d.recentDays.size() < 6 || validSharedWearableRecoveryDay(d.recentDays[5]))
+        && (d.recentDays.size() < 7 || validSharedWearableRecoveryDay(d.recentDays[6]))
+        && (d.recentDays.size() < 8 || validSharedWearableRecoveryDay(d.recentDays[7]))
+        && d.updatedAt == request.time;
+    }
+
+    match /sharedWearableRecovery/{shareId} {
+      allow get: if signedIn()
+        && (request.auth.uid == resource.data.clientUid
+            || (request.auth.uid == resource.data.coachUid
+                && linked(request.auth.uid, resource.data.clientUid)
+                && wearableRecoveryConsent(resource.data.coachUid, resource.data.clientUid)));
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.clientUid
+        && shareId == request.resource.data.coachUid + "_" + request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && wearableRecoveryConsent(request.resource.data.coachUid, request.auth.uid)
+        && validSharedWearableRecovery(request.resource.data);
+
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.clientUid
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.version == resource.data.version
+        && onlyChanges(["source", "windowFrom", "windowTo", "summary", "recentDays", "updatedAt"])
+        && wearableRecoveryConsent(request.resource.data.coachUid, request.resource.data.clientUid)
+        && validSharedWearableRecovery(request.resource.data);
+
+      allow delete: if signedIn() && request.auth.uid == resource.data.clientUid;
+    }
+
     match /coachAvailability/{coachUid} {
       allow write: if isUser(coachUid);
       allow read: if isUser(coachUid)
