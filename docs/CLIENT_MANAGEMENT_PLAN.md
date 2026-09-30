@@ -1241,6 +1241,8 @@ Read existing training/running/strength/soccer data where possible.
 Create a Client Hub summary rather than duplicate data entry.
 
 Goal:
+**Step 1 built 2026-09-29; Step 2 built 2026-09-30.** The Client Hub Progress tab now derives a descriptive 28-day coaching snapshot and a weekly Plan vs. Actual view from the coach-owned plan prescription plus logged workout results. It does not create a second source of truth.
+
 
 > Eddie can see the client's trajectory without opening five different tools.
 
