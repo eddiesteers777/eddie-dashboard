@@ -125,6 +125,34 @@ async function subscriptionTarget(stripe, subscriptionId) {
     };
 }
 
+export const createStripeCustomerPortalSession = onCall(
+    { region: 'us-central1', secrets: [stripeConfig] },
+    async request => {
+        const clientUid = requireAuth(request);
+        const billingRef = db.collection('billingAccounts').doc(clientUid);
+        const billingSnap = await billingRef.get();
+        const billing = billingSnap.data();
+
+        if (!billingSnap.exists || !billing?.stripeCustomerId) {
+            throw new HttpsError('failed-precondition', 'Stripe billing is not available for this account yet.');
+        }
+
+        const stripe = getStripe();
+        const origin = appOrigin.value().replace(/\/$/, '');
+
+        try {
+            const session = await stripe.billingPortal.sessions.create({
+                customer: billing.stripeCustomerId,
+                return_url: origin + '/settings.html'
+            });
+            return { url: session.url };
+        } catch (error) {
+            console.error('Southbound Stripe Customer Portal session creation failed.', error);
+            throw new HttpsError('internal', 'Southbound could not open billing management.');
+        }
+    }
+);
+
 export const stripeWebhook = onRequest(
     { region: 'us-central1', secrets: [stripeConfig], timeoutSeconds: 60 },
     async (req, res) => {
