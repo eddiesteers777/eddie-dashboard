@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Progress | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/trends.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+<body>
+    <div id="header"></div>
+
+    <main class="container">
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Your Progress</div>
+                <h1>See what your training is building.</h1>
+                <p id="progressIntro" class="eos-today-phase">Your recent Southbound training, plan progress, and check-in trends.</p>
+            </div>
+        </section>
+
+        <section id="progressMetrics" class="stats" aria-label="Progress summary"></section>
+
+        <section class="eos-today-card" id="currentWeekCard" hidden>
+            <div class="eos-today-card-header">
+                <h2>This Week</h2>
+                <span id="currentWeekLabel" class="eos-today-date"></span>
+            </div>
+            <div id="currentWeekBody"></div>
+        </section>
+
+        <section class="eos-today-card">
+            <div class="eos-today-card-header">
+                <h2>Six-Week Training Trend</h2>
+            </div>
+            <div id="trendBody"></div>
+        </section>
+
+        <section class="eos-today-card" id="planProgressCard" hidden>
+            <div class="eos-today-card-header">
+                <h2>Your Plan</h2>
+            </div>
+            <div id="planProgressBody"></div>
+        </section>
+
+        <section class="eos-today-card" id="checkinProgressCard" hidden>
+            <div class="eos-today-card-header">
+                <h2>Check-in Trend</h2>
+            </div>
+            <div id="checkinProgressBody"></div>
+        </section>
+
+        <section class="eos-today-card" id="emptyProgressCard" hidden>
+            <div class="eos-today-card-header">
+                <h2>Getting Started</h2>
+            </div>
+            <p class="tr-empty">Your progress will build as you complete and log workouts in Southbound. Your coach's plan and your own logged training will appear here automatically.</p>
+        </section>
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/clientProgress.js"></script>
+    <script src="js/registerSW.js"></script>
+</body>
+</html>
