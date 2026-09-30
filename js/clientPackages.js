@@ -16,8 +16,8 @@
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import { getPackage, isFiniteSessionPackage } from "./packageCatalog.js";
-import { PACKAGE_STATUSES } from "./clientPackageModel.js";
-export { PACKAGE_STATUSES, packageRemainingSessions, packageCatalogOptions } from "./clientPackageModel.js";
+import { PACKAGE_STATUSES, PAYMENT_STATUSES } from "./clientPackageModel.js";
+export { PACKAGE_STATUSES, PAYMENT_STATUSES, packageRemainingSessions, packageCatalogOptions } from "./clientPackageModel.js";
 import {
     collection, doc, getDocs, query, where, setDoc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -97,6 +97,7 @@ export async function createPackageForClient(clientUid, packageId, options = {})
         clientUid,
         ...snapshotPackage(pkg),
         status: PACKAGE_STATUSES.includes(options.status) ? options.status : "active",
+        paymentStatus: PAYMENT_STATUSES.includes(options.paymentStatus) ? options.paymentStatus : "pending",
         startsAt: dates.startsAt,
         endsAt: dates.endsAt,
         coachNote: clean(options.coachNote),
@@ -115,6 +116,7 @@ export async function updateClientPackage(id, changes = {}) {
 
     const next = {};
     if (PACKAGE_STATUSES.includes(changes.status)) next.status = changes.status;
+    if (PAYMENT_STATUSES.includes(changes.paymentStatus)) next.paymentStatus = changes.paymentStatus;
     if ("startsAt" in changes || "endsAt" in changes) {
         const dates = normalizeDates(changes);
         next.startsAt = dates.startsAt;
