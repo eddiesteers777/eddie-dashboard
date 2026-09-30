@@ -667,3 +667,39 @@
     .eos-package-row{ align-items:flex-start; }
     .eos-package-link{ margin-top:2px; }
 }
+
+/* ---- Client package payment action (Phase 10) ---- */
+
+.eos-package-actions{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.eos-package-pay{
+    border:0;
+    border-radius:999px;
+    padding:8px 13px;
+    background:var(--primary);
+    color:var(--bg);
+    font:inherit;
+    font-size:12px;
+    font-weight:800;
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.eos-package-pay:hover{ filter:brightness(1.05); }
+.eos-package-pay:disabled{ opacity:.55; cursor:wait; }
+
+@media (max-width:620px){
+    .eos-package-actions{
+        width:100%;
+        justify-content:flex-start;
+    }
+    .eos-package-pay{
+        flex:0 0 auto;
+    }
+}
