@@ -28,6 +28,15 @@ jobs:
 
       - run: npm ci
 
+      - name: Verify service worker checkout
+        run: |
+          echo "HEAD: $(git rev-parse HEAD)"
+          echo "Committed sw.js:"
+          git show HEAD:sw.js | grep -m1 'const VERSION'
+          echo "Working sw.js:"
+          grep -m1 'const VERSION' sw.js
+          git diff --exit-code -- sw.js
+
       - name: Static checks (syntax, links, imports, site manifest)
         run: npm run test:static
 
