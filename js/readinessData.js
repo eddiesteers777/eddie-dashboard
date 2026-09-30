@@ -16,6 +16,7 @@ import { callTool, isCorosConnected } from "./corosClient.js";
 import { HEALTH_KEY, healthDays, mergeHealth } from "./corosHealth.js";
 import { FITNESS_KEY, fitnessDays, mergeFitness } from "./corosHistory.js";
 import { computeReadiness, SETTINGS_KEY, CHECKIN_KEY, READINESS_KEY, DEFAULT_SLEEP_NEED } from "./readiness.js";
+import { syncSharedWearableRecovery } from "./wearableRecovery.js";
 
 const FETCHED_KEY = "coros-health-fetched";   // this device only
 const ERROR_KEY = "coros-health-error";       // the last fetch's problem, this device only
@@ -111,6 +112,13 @@ export function refreshHealth({ force = false } = {}) {
             if (replies.recovery) save(FITNESS_KEY, mergeFitness(load(FITNESS_KEY, {}), fitnessDays(today, { recovery: replies.recovery }), today));
             recompute(today);
             pushCloud();
+
+            // Step 5C: project only the client-approved Recovery & sleep fields.
+            // Readiness/check-ins remain private and are never copied to coaches.
+            syncSharedWearableRecovery().catch(error => {
+                console.warn("Southbound: shared COROS recovery sync failed.", error?.code || error);
+            });
+
             window.dispatchEvent(new CustomEvent("sb:readiness-updated"));
             return true;
         } catch (error) {

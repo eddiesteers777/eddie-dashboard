@@ -310,6 +310,101 @@ test("shared COROS performance: coach access follows Performance consent", async
     await assertFails(getDoc(performanceRef));
 });
 
+test("shared COROS recovery: coach access follows Recovery consent", async () => {
+    await seedLinkAndBooking();
+    const shareRef = doc(as("client"), "wearableShares/coach_client");
+    const recoveryRef = doc(as("client"), "sharedWearableRecovery/coach_client");
+
+    await assertSucceeds(setDoc(shareRef, {
+        version: 1,
+        coachUid: "coach",
+        clientUid: "client",
+        status: "active",
+        permissions: { activity: false, performance: false, recovery: true },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    }));
+
+    const recovery = {
+        version: 1,
+        source: "coros",
+        coachUid: "coach",
+        clientUid: "client",
+        windowFrom: "2026-09-03",
+        windowTo: "2026-09-30",
+        summary: {
+            daysWithData: 2,
+            averageSleepScore: 85,
+            averageAsleepMinutes: 435,
+            averageHrv: 77,
+            averageRestingHeartRate: 49,
+            averageStress: 28,
+            averageRecoveryPercent: 76,
+            latestSleepScore: 88,
+            latestAsleepMinutes: 450,
+            latestHrv: 81,
+            latestRestingHeartRate: 48,
+            latestRecoveryPercent: 76,
+            latestRecoveryStatus: "Moderate training recommended",
+            latestRecoveryHours: 34
+        },
+        recentDays: [{
+            date: "2026-09-29",
+            sleepScore: 88,
+            asleepMinutes: 450,
+            hrvAvg: 81,
+            hrvStatus: "Normal",
+            restingHeartRate: 48,
+            stressAvg: 25,
+            stressLevel: "Relaxed",
+            recoveryPercent: 76,
+            recoveryStatus: "Moderate training recommended",
+            recoveryHours: 34
+        }],
+        updatedAt: serverTimestamp()
+    };
+
+    await assertSucceeds(setDoc(recoveryRef, recovery));
+    await assertSucceeds(getDoc(doc(as("client"), "sharedWearableRecovery/coach_client")));
+    await assertSucceeds(getDoc(doc(as("coach"), "sharedWearableRecovery/coach_client")));
+    await assertFails(getDoc(doc(as("stranger"), "sharedWearableRecovery/coach_client")));
+    await assertFails(updateDoc(recoveryRef, {
+        recentDays: [{ ...recovery.recentDays[0], secret: "nope" }],
+        updatedAt: serverTimestamp()
+    }));
+
+    // Activity + Performance consent without Recovery must not expose Recovery.
+    await assertSucceeds(updateDoc(shareRef, {
+        status: "active",
+        permissions: { activity: true, performance: true, recovery: false },
+        updatedAt: serverTimestamp()
+    }));
+    await assertFails(getDoc(doc(as("coach"), "sharedWearableRecovery/coach_client")));
+    await assertFails(setDoc(recoveryRef, recovery));
+
+    // Re-enabling Recovery restores the coach read/write boundary.
+    await assertSucceeds(updateDoc(shareRef, {
+        status: "active",
+        permissions: { activity: true, performance: true, recovery: true },
+        updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(recoveryRef, {
+        summary: { ...recovery.summary, daysWithData: 3 },
+        updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(getDoc(doc(as("coach"), "sharedWearableRecovery/coach_client")));
+
+    // Revoking wearable sharing removes the coach read path.
+    await assertSucceeds(updateDoc(shareRef, {
+        status: "revoked",
+        permissions: { activity: false, performance: false, recovery: false },
+        updatedAt: serverTimestamp()
+    }));
+    await assertFails(getDoc(doc(as("coach"), "sharedWearableRecovery/coach_client")));
+    await assertSucceeds(deleteDoc(recoveryRef));
+    await assertFails(getDoc(recoveryRef));
+});
+
 // ---- Profile privacy (critical) ----
 
 test("other users cannot read or list profiles", async () => {
