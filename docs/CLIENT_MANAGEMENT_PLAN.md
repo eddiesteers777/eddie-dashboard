@@ -1304,6 +1304,17 @@ Goal:
 
 ---
 
+## Phase 10 — Stripe payments
+
+**Step 1 built 2026-09-30.** Stripe payment infrastructure now has a secure Firebase Cloud Functions boundary. `createStripeCheckoutSession` validates the signed-in client's active package assignment and creates a Stripe-hosted Checkout Session from a configured Stripe Price ID. `stripeWebhook` verifies Stripe signatures and updates package billing status from payment events. Stripe secret material stays in Firebase Secret Manager; the static client never receives the secret key.
+
+Not included yet:
+- Stripe Price IDs have not been populated.
+- No live/test payment flow has been deployed yet.
+- No client-facing Pay button or billing screen has been wired into the app yet.
+- No customer portal UI has been added yet.
+
+Next Stripe slices should connect the configured prices to the package catalog, add the client Pay action, and then add the Customer Portal for subscription/payment-method management.
 # 25. What the Final Southbound Experience Should Feel Like
 
 ## Eddie's side
