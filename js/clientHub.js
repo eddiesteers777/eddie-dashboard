@@ -531,6 +531,14 @@ function progressPctChange(value) {
     return value > 0 ? "+" + value + "%" : value + "%";
 }
 
+function activityDurationText(seconds) {
+    const total = Math.max(0, Math.round(Number(seconds) || 0));
+    if (!total) return "0 min";
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.round((total % 3600) / 60);
+    return hours ? hours + "h " + String(minutes).padStart(2, "0") + "m" : minutes + " min";
+}
+
 
 function renderProgress() {
     const progress = summarizeProgress({
@@ -550,6 +558,29 @@ function renderProgress() {
 
     const hasTrainingService = services.some(s => ["online_coaching", "running", "strength"].includes(s));
     const showRunning = services.includes("running") || p.planType === "running" || a.runSessions > 0;
+    const sharedActivity = record.sharedWearableActivity;
+    const activityShareEnabled = record.wearableShare?.status === "active" && record.wearableShare?.permissions?.activity === true;
+    const sharedActivitySummary = sharedActivity?.summary || {};
+    const sharedActivityRuns = Array.isArray(sharedActivity?.recentRuns) ? sharedActivity.recentRuns : [];
+    const sharedActivityBody = activityShareEnabled
+        ? sharedActivitySummary.runCount
+            ? '<div class="hub-progress-metrics">' +
+                progressMetric("COROS runs", String(sharedActivitySummary.runCount), "last 28 days") +
+                progressMetric("Distance", String(sharedActivitySummary.distanceMiles || 0) + " mi", "COROS running") +
+                progressMetric("Moving time", activityDurationText(sharedActivitySummary.durationSeconds), "COROS running") +
+              '</div>' +
+              (sharedActivityRuns.length
+                  ? '<div class="hub-progress-trend">' +
+                      sharedActivityRuns.map(run =>
+                          '<div><strong>' + esc(shortDate(run.date)) + '</strong><span>' +
+                              esc(String(run.distanceMiles || 0) + " mi · " + activityDurationText(run.durationSeconds)) +
+                          '</span></div>'
+                      ).join("") +
+                    '</div>'
+                  : '') +
+              '<p class="clients-card-note">This is a client-shared COROS activity view. It is kept separate from Southbound logged workouts so the same run is not counted twice.</p>'
+            : '<div class="hub-progress-empty"><strong>No COROS runs in the last 28 days</strong><span>Training activity sharing is on, but Southbound has no recent COROS running data to show.</span></div>'
+        : '<div class="hub-progress-empty"><strong>No COROS activity shared</strong><span>The client has not enabled Training activity for this coaching relationship.</span></div>';
     const showStrength = services.includes("strength") || a.strengthSessions > 0;
     const showSoccer = services.some(s => ["soccer_1on1", "soccer_group"].includes(s)) || a.soccerSessions > 0;
     const showPlanWorkouts = hasTrainingService || Boolean(p.name) || a.completedWorkouts > 0 || a.skippedWorkouts > 0;
@@ -715,6 +746,13 @@ function renderProgress() {
                     : "The client has not enabled wearable-data sharing with you.") +
             '</p>' +
             '<p class="clients-card-note">Sharing permissions are client-controlled. This record contains consent settings, not COROS sign-in tokens or raw wearable data.</p>' +
+        '</section>' +
+
+        '<section class="clients-card">' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">COROS activity</span><h2>Client-shared running</h2></div>' +
+                (activityShareEnabled ? '<span class="hub-progress-pill">Activity shared</span>' : '') +
+            '</div>' +
+            sharedActivityBody +
         '</section>' +
 
         '<section class="clients-card">' +
