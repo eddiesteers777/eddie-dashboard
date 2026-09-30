@@ -132,6 +132,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 | `userProfiles/{uid}` | `role`, `isCoachApproved`, `status` (`pending`/`active`/`archived`), `services[]`, application fields, `lastSeenAt` (Phase F: the client's app stamps it at most every 6 hours via `touchLastSeen()` from `js/loadHeader.js`; the rules accept only the server's clock). Readable only by the owner and approved coaches. Users may only edit their own application fields; role/status/services/isCoachApproved are coach-only. |
 | `inviteCodes/{code}` | One-time codes a client gives a coach. Never listable; expire after 7 days. |
 | `coachLinks/{coachUid}_{clientUid}` | Proof a client linked a coach. It gates everything below. Only an approved coach can create one, in the same batch that deletes (burns) a valid code from that client (`redeemInviteCode` in `js/coachAccess.js`). |
+| `wearableShares/{coachUid}_{clientUid}` | Client-controlled wearable consent categories; no COROS tokens or raw wearable data. Coach reads only while linked; client creates/updates/revokes. |
 | `sharedPlans/{clientUid}` | Mirror of the client's training/race plans + coach notes |
 | `coachAvailability/{coachUid}` | Weekly slots + blackout dates |
 | `bookingRequests/{id}` | Session requests (single or recurring). Only the coach can approve/deny; the client can only cancel; booking details never change after creation. |
@@ -341,3 +342,6 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 10. **Business tools:** payments, packages checkout.
 
 The brand is Southbound Coaching (decided 2026-09-24 from Eddie's brand board: SB speed monogram, forest green / sage / tan / stone / cream).
+
+
+**Wearable sharing (Phase 7, 2026-09-30):** `wearableShares/{coachUid}_{clientUid}` is consent metadata only. It stores three booleans (`activity`, `performance`, `recovery`) plus status/version/timestamps. It never stores COROS OAuth tokens.
