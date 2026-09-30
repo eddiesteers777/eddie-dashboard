@@ -24,7 +24,7 @@ function paymentStatusLabel(status) {
     return status === "paid" ? "Paid" : status === "past_due" ? "Past due" : status === "comped" ? "Comped" : "Pending";
 }
 
-function paymentAction(pkg) {
+export function paymentAction(pkg) {
     if (pkg.status !== "active") return null;
     if (pkg.paymentStatus === "comped" || pkg.paymentStatus === "paid") return null;
     if (pkg.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId) {
@@ -35,7 +35,7 @@ function paymentAction(pkg) {
         : (pkg.paymentStatus === "past_due" ? "Retry payment" : "Pay now");
 }
 
-function paymentActionType(pkg) {
+export function paymentActionType(pkg) {
     return pkg.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId
         ? "portal"
         : "checkout";
