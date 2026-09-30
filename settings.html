@@ -160,6 +160,18 @@
 
             </div>
 
+            <!-- Stripe setup (coach only) -->
+            <div class="settings-card" id="stripeSetupCard" data-requires="coach" hidden>
+                <h3><span data-icon="link"></span> Stripe Setup</h3>
+                <p class="stripe-setup-intro">
+                    Check whether Stripe is ready for test payments. This never displays your Stripe secret or Price IDs.
+                </p>
+                <button type="button" class="settings-btn" id="checkStripeSetupBtn">
+                    Check Stripe Setup
+                </button>
+                <div id="stripeSetupResult" class="stripe-setup-result" hidden role="status" aria-live="polite"></div>
+            </div>
+
             <!-- Billing (clients with a Stripe customer) -->
             <div class="settings-card" id="billingCard" data-requires="client" hidden>
                 <h3><span data-icon="link"></span> Billing</h3>
