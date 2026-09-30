@@ -8,6 +8,7 @@
 import { PACKAGE_CATALOG, isFiniteSessionPackage } from "./packageCatalog.js";
 
 export const PACKAGE_STATUSES = Object.freeze(["active", "paused", "completed", "cancelled"]);
+export const PAYMENT_STATUSES = Object.freeze(["pending", "paid", "past_due", "comped"]);
 
 export function packageRemainingSessions(pkg, countedSessions = 0) {
     if (!isFiniteSessionPackage(pkg)) return null;
