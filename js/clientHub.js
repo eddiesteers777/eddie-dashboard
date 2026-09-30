@@ -544,6 +544,7 @@ function renderProgress() {
     const a = progress.activity;
     const t = progress.trend;
     const c = progress.checkins;
+    const pva = progress.planVsActual;
     const services = record.profile?.services || [];
 
     const hasTrainingService = services.some(s => ["online_coaching", "running", "strength"].includes(s));
@@ -648,6 +649,31 @@ function renderProgress() {
                 activityBody +
             '</section>' +
         '</div>' +
+
+
+        '<section class="clients-card">' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">Plan vs. actual</span><h2>Weekly training</h2></div>' +
+                (pva.milesPct != null ? '<span class="hub-progress-pill">' + pva.milesPct + '% of plan</span>' : '') +
+            '</div>' +
+            (pva.available
+                ? '<div class="hub-progress-week-table">' +
+                    '<div class="hub-progress-week-row hub-progress-week-head"><span>Week</span><span>Planned</span><span>Actual</span><span>Workouts</span></div>' +
+                    pva.rows.map(w => '<div class="hub-progress-week-row">' +
+                        '<strong>W' + w.week + (w.isCurrent ? ' · current' : '') + (w.isFuture ? ' · upcoming' : '') + '</strong>' +
+                        '<span>' + w.plannedMiles + ' mi</span>' +
+                        '<span>' + (w.isFuture ? '—' : w.actualMiles + ' mi') + '</span>' +
+                        '<span>' + (w.isFuture ? '—' : w.completedWorkouts + '/' + w.dueWorkouts + (w.missedWorkouts ? ' · ' + w.missedWorkouts + ' missed' : '')) + '</span>' +
+                    '</div>').join("") +
+                  '</div>' +
+                '<p class="clients-card-note hub-progress-compare-note">' +
+                    (pva.completedWeeks
+                        ? 'Last ' + pva.completedWeeks + ' completed week' + (pva.completedWeeks === 1 ? '' : 's') + ': ' + pva.actualMiles + ' of ' + pva.plannedMiles + ' mi logged (' + pva.milesPct + '% of planned mileage).' 
+                        : pva.rows.some(w => w.isCurrent)
+                            ? 'Current week shows actual mileage through today; future days are not counted as missed.'
+                            : 'The plan has not started yet.') +
+                '</p>'
+                : '<div class="hub-progress-empty"><strong>No plan comparison yet</strong><span>An active coach plan and its logged results are needed to compare planned and actual training.</span></div>') +
+        '</section>' +
 
         '<section class="clients-card">' +
             '<div class="hub-progress-head"><div><span class="hub-section-kicker">Activity trend</span><h2>Recent vs. previous 14 days</h2></div></div>' +
