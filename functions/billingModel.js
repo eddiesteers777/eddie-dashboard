@@ -32,3 +32,19 @@ export function stripeMetadata({ clientUid, packageAssignmentId, packageId }) {
         packageId: String(packageId || '')
     };
 }
+
+export function paymentStatusForSubscriptionStatus(status) {
+    if (status === 'past_due' || status === 'unpaid') return 'past_due';
+    if (status === 'incomplete' || status === 'incomplete_expired') return 'pending';
+    if (status === 'active' || status === 'trialing') return 'paid';
+    return null;
+}
+
+export function lifecycleUpdateForSubscriptionEvent(eventType, status) {
+    if (eventType === 'customer.subscription.deleted') {
+        return { status: 'cancelled' };
+    }
+
+    const paymentStatus = paymentStatusForSubscriptionStatus(status);
+    return paymentStatus ? { paymentStatus } : {};
+}
