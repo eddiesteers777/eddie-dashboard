@@ -1276,7 +1276,7 @@ Goal:
 
 ## Phase 9 — Packages / billing
 
-**Step 2 built 2026-09-30.** Client package entitlements now have a dedicated, coach-controlled data model. Assignments snapshot the catalog package identity and finite session allowance, while status/window/coach notes can change without changing package identity. Session usage is intentionally derived from existing session logs rather than stored as a mutable counter. No payment records or payment provider integration were added.
+**Step 2 built 2026-09-30.** Client package entitlements now have a dedicated, coach-controlled data model. Assignments snapshot the catalog package identity and finite session allowance, while status/window/coach notes can change without changing package identity. Session usage is not stored as a manually edited counter; the next step will connect package usage to session history. No payment records or payment provider integration were added.
 
 **Step 1 built 2026-09-30.** Southbound now has a canonical package catalog covering the currently advertised package shapes: online monthly coaching, 1-on-1 soccer single/5/10-session options, group soccer drop-in, and group soccer monthly. Prices remain unset. No payment provider, billing collection, or checkout flow was added; future package assignment and session accounting should reuse this catalog.
 
