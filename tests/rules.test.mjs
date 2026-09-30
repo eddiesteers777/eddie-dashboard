@@ -873,6 +873,27 @@ test("client packages: linked coach can assign, client can read, identity cannot
     await assertFails(getDoc(doc(as("stranger"), "clientPackages/p1")));
 });
 
+test("client packages: Stripe-managed billing cannot be manually overridden", async () => {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(async ctx => {
+        await setDoc(doc(ctx.firestore(), "clientPackages/stripe-managed"), clientPackage({
+            paymentStatus: "past_due",
+            stripeSubscriptionId: "sub_123",
+            stripeCustomerId: "cus_123"
+        }));
+    });
+
+    await assertFails(updateDoc(
+        doc(as("coach"), "clientPackages/stripe-managed"),
+        { paymentStatus: "paid", updatedAt: serverTimestamp() }
+    ));
+
+    await assertSucceeds(updateDoc(
+        doc(as("coach"), "clientPackages/stripe-managed"),
+        { status: "paused", updatedAt: serverTimestamp() }
+    ));
+});
+
 test("client packages: only valid catalog shapes are accepted", async () => {
     await seedLinkAndBooking();
     const bad = (id, extra) => setDoc(doc(as("coach"), `clientPackages/${id}`), clientPackage(extra));

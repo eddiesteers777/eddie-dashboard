@@ -827,6 +827,15 @@ service cloud.firestore {
         && d.get("coachNote", "") is string && d.get("coachNote", "").size() <= 500;
     }
 
+    function stripeManagedPackage(d) {
+      return d.get("stripeCheckoutSessionId", "") is string
+        && d.get("stripeCheckoutSessionId", "") != ""
+        || d.get("stripeSubscriptionId", "") is string
+        && d.get("stripeSubscriptionId", "") != ""
+        || d.get("stripeCustomerId", "") is string
+        && d.get("stripeCustomerId", "") != "";
+    }
+
     match /clientPackages/{packageAssignmentId} {
       allow read: if signedIn()
         && (resource.data.coachUid == request.auth.uid
@@ -858,6 +867,8 @@ service cloud.firestore {
         && request.resource.data.sessionAllowance == resource.data.sessionAllowance
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt == request.time
+        && (request.resource.data.get("paymentStatus", "") == resource.data.get("paymentStatus", "")
+            || !stripeManagedPackage(resource.data))
         && validClientPackage(request.resource.data);
 
       allow delete: if false;

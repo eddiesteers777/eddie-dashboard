@@ -1321,6 +1321,10 @@ Next Stripe slices should connect the configured prices to the package catalog, 
 
 Prices are still intentionally unconfigured until the Stripe Products/Prices are created and the `STRIPE_CONFIG` secret is populated.
 
+### Step 6 — lock manual billing edits
+
+**Step 6 built 2026-09-30.** Once Stripe has attached checkout, customer, or subscription state to a client package, the coach can no longer manually change its billing status. The Client Hub replaces the billing dropdown with a Stripe-managed status, while the Firestore rule enforces the same restriction at the security boundary. Manual billing remains available for packages that have never entered Stripe management.
+
 ### Step 5 — duplicate subscription protection
 
 **Step 5 built 2026-09-30.** Existing Stripe subscriptions can no longer accidentally create a second subscription from Southbound. The server rejects Checkout creation when a recurring package already has a Stripe subscription, while the client routes a past-due recurring package to Manage Billing instead of starting another subscription.

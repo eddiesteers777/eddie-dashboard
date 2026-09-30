@@ -46,3 +46,16 @@ export function packageCanConsumeSession(pkg, date, countedSessions = 0) {
     if (!packageDateInWindow(pkg, date)) return false;
     return packageRemainingSessions(pkg, countedSessions) > 0;
 }
+
+    
+// Once Stripe has created checkout/customer/subscription state, billing is
+// server-managed and the coach UI should not offer a manual override.
+export function isStripeManagedPackage(pkg) {
+    return Boolean(
+        typeof pkg?.stripeCheckoutSessionId === "string" && pkg.stripeCheckoutSessionId.trim()
+    ) || Boolean(
+        typeof pkg?.stripeSubscriptionId === "string" && pkg.stripeSubscriptionId.trim()
+    ) || Boolean(
+        typeof pkg?.stripeCustomerId === "string" && pkg.stripeCustomerId.trim()
+    );
+}
