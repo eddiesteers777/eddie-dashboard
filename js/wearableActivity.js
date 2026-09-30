@@ -10,11 +10,6 @@
 ========================================== */
 
 import { HISTORY_KEY, emptyHistory, isoDate, addDays, runsBetween } from "./corosHistory.js";
-import {
-    listMyWearableShares,
-    writeSharedWearableActivity,
-    deleteSharedWearableActivity
-} from "./coachAccess.js";
 
 const WINDOW_DAYS = 28;
 const RECENT_RUN_LIMIT = 8;
@@ -80,6 +75,11 @@ export function buildSharedActivity(history, today = isoDate(new Date()), days =
  * participate in this write.
  */
 export async function syncSharedWearableActivity() {
+    const {
+        listMyWearableShares,
+        writeSharedWearableActivity,
+        deleteSharedWearableActivity
+    } = await import("./coachAccess.js");
     const shares = await listMyWearableShares();
     const payload = buildSharedActivity(loadHistory());
 
