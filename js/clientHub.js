@@ -53,7 +53,7 @@ import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
-import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES } from "./clientPackageModel.js";
+import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES, isStripeManagedPackage } from "./clientPackageModel.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -1025,7 +1025,7 @@ function renderPackages() {
             <div class="hub-package-main">
                 <div class="hub-package-head"><strong>${esc(pkg.packageName || pkg.packageId)}</strong><span class="hub-pill ${pkg.status === "active" ? "is-new" : ""}">${esc(packageStatusLabel(pkg.status))}</span></div>
                 <span class="hub-package-detail">${esc(packageAllowance(pkg, sessionHistory))}${packageDateRange(pkg) ? ` · ${esc(packageDateRange(pkg))}` : ""}</span>
-                <div class="hub-package-payment"><span>Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span><select class="hub-package-payment-select" aria-label="Billing status" data-package-payment="${esc(pkg.id)}">${PAYMENT_STATUSES.map(status => `<option value="${status}"${status === (pkg.paymentStatus || "pending") ? " selected" : ""}>${esc(paymentStatusLabel(status))}</option>`).join("")}</select></div>
+                <div class="hub-package-payment"><span>Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>${isStripeManagedPackage(pkg) ? `<span class="hub-package-stripe-managed">${pkg.stripeSubscriptionStatus ? `Stripe — ${esc(pkg.stripeSubscriptionStatus)}` : "Stripe-managed"}</span>` : `<select class="hub-package-payment-select" aria-label="Billing status" data-package-payment="${esc(pkg.id)}">${PAYMENT_STATUSES.map(status => `<option value="${status}"${status === (pkg.paymentStatus || "pending") ? " selected" : ""}>${esc(paymentStatusLabel(status))}</option>`).join("")}</select>`}</div>
                 ${pkg.coachNote ? `<span class="hub-package-note">${esc(pkg.coachNote)}</span>` : ""}
             </div>
             ${pkg.status === "active" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="paused">Pause</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : pkg.status === "paused" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="active">Resume</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : ""}
