@@ -1405,7 +1405,7 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
                             const used = countCompletedPackageSessions(p.id, historyWithoutCurrent);
                             const remaining = packageRemainingSessions(p, used);
                             const selected = p.id === s.log?.packageAssignmentId ? " selected" : "";
-                            return \`<option value="${esc(p.id)}"${selected}>${esc(p.packageName || p.packageId)} — ${remaining} remaining</option>\`;
+                            return '<option value="' + esc(p.id) + '"' + selected + '>' + esc(p.packageName || p.packageId) + ' — ' + remaining + ' remaining</option>';
                         }).join("")}
                     </select>
                 </label>
