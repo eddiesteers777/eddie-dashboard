@@ -254,40 +254,45 @@ service cloud.firestore {
 
       allow delete: if false;
     }
-    match /wearableShares/{shareId}/activities/{activityId} {
-      function validWearableActivity(d, id) {
-        return d.keys().hasOnly(["version", "labelId", "date", "startTime", "sport", "name", "distanceMeters", "durationSeconds", "syncedAt"])
-          && d.keys().hasAll(["version", "labelId", "date", "startTime", "sport", "name", "distanceMeters", "durationSeconds", "syncedAt"])
+    match /wearableActivityData/{shareId} {
+      function validWearableActivityData(d) {
+        return d.keys().hasOnly(["version", "coachUid", "clientUid", "activityShared", "activities", "updatedAt"])
+          && d.keys().hasAll(["version", "coachUid", "clientUid", "activityShared", "activities", "updatedAt"])
           && d.version == 1
-          && d.labelId is string && d.labelId.size() > 0 && d.labelId.size() <= 128
-          && id == d.labelId
-          && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-          && d.startTime is string && d.startTime.size() > 0 && d.startTime.size() <= 80
-          && d.sport is string && d.sport.size() > 0 && d.sport.size() <= 80
-          && d.name is string && d.name.size() > 0 && d.name.size() <= 200
-          && d.distanceMeters is number && d.distanceMeters >= 0 && d.distanceMeters <= 2000000
-          && d.durationSeconds is number && d.durationSeconds >= 0 && d.durationSeconds <= 172800
-          && d.syncedAt == request.time;
+          && d.coachUid is string && d.coachUid.size() > 0 && d.coachUid.size() <= 128
+          && d.clientUid is string && d.clientUid.size() > 0 && d.clientUid.size() <= 128
+          && d.coachUid != d.clientUid
+          && shareId == d.coachUid + "_" + d.clientUid
+          && d.activityShared is bool
+          && d.activities is list
+          && d.activities.size() <= 100
+          && d.updatedAt == request.time;
       }
 
-      allow get, list: if signedIn() && wearableActivityAccess(shareId);
+      allow get: if signedIn()
+        && validWearableActivityData(resource.data)
+        && (request.auth.uid == resource.data.clientUid
+            || (request.auth.uid == resource.data.coachUid
+                && linked(resource.data.coachUid, resource.data.clientUid)
+                && resource.data.activityShared == true));
+      allow list: if false;
 
       allow create: if signedIn()
-        && request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
-        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.status == "active"
-        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.permissions.activity == true
-        && validWearableActivity(request.resource.data, activityId);
+        && request.auth.uid == request.resource.data.clientUid
+        && request.resource.data.coachUid != request.auth.uid
+        && shareId == request.resource.data.coachUid + "_" + request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && validWearableActivityData(request.resource.data);
 
       allow update: if signedIn()
-        && request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
-        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.status == "active"
-        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.permissions.activity == true
-        && resource.data.labelId == request.resource.data.labelId
-        && validWearableActivity(request.resource.data, activityId);
+        && request.auth.uid == resource.data.clientUid
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.version == resource.data.version
+        && onlyChanges(["activityShared", "activities", "updatedAt"])
+        && validWearableActivityData(request.resource.data);
 
-      allow delete: if signedIn()
-        && request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
-        && resource.data.labelId == activityId;
+      allow delete: if false;
     }
 
     match /coachAvailability/{coachUid} {
