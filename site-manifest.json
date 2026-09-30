@@ -60,6 +60,8 @@
     "js/clientDirectory.js",
     "js/clientHub.js",
     "js/clientNotes.js",
+    "js/clientPackageModel.js",
+    "js/clientPackages.js",
     "js/clientProfileForm.js",
     "js/clientRecordSchema.js",
     "js/clientRecords.js",
