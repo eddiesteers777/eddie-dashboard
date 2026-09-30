@@ -1287,6 +1287,8 @@ Goal:
 
 **Step 1 built 2026-09-30.** Southbound now has a canonical package catalog covering the currently advertised package shapes: online monthly coaching, 1-on-1 soccer single/5/10-session options, group soccer drop-in, and group soccer monthly. Prices remain unset. No payment provider, billing collection, or checkout flow was added; future package assignment and session accounting should reuse this catalog.
 
+**Step 5 built 2026-09-30.** Package-backed session logging now guards package eligibility in the coach/client workflow: new credits only use active packages inside their optional date window with derived credits remaining. Firestore independently enforces the package relationship, soccer service, finite allowance, and active date window for new assignments; historical logs remain editable after a package is later closed. No mutable usage counter was introduced.
+
 Only after the client-management system is stable:
 
 - packages

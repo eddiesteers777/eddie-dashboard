@@ -580,18 +580,42 @@ service cloud.firestore {
     // worked on and what's next -- the client reads those words, so
     // nothing private goes here: private thoughts are coachNotes). Only
     // for an approved booking of theirs, only for one of its dates.
+    function validSessionPackage(d) {
+      let packageId = d.get("packageAssignmentId", null);
+      let packagePath = /databases/$(database)/documents/clientPackages/$(packageId);
+      return packageId is string
+        && packageId.size() > 0 && packageId.size() <= 200
+        && exists(packagePath)
+        && get(packagePath).data.coachUid == d.coachUid
+        && get(packagePath).data.clientUid == d.clientUid
+        && (get(packagePath).data.get("service", "") == "soccer_1on1"
+            || get(packagePath).data.get("service", "") == "soccer_group")
+        && get(packagePath).data.get("sessionAllowance", null) is int
+        && get(packagePath).data.get("sessionAllowance", 0) >= 1
+        && (get(packagePath).data.get("startsAt", null) == null
+            || (get(packagePath).data.get("startsAt", "") is string && d.date >= get(packagePath).data.get("startsAt", "")))
+        && (get(packagePath).data.get("endsAt", null) == null
+            || (get(packagePath).data.get("endsAt", "") is string && d.date <= get(packagePath).data.get("endsAt", "")));
+    }
+
+    function validNewSessionPackage(d) {
+      let packageId = d.get("packageAssignmentId", null);
+      let packagePath = /databases/$(database)/documents/clientPackages/$(packageId);
+      return packageId == null
+        || (d.status == "completed"
+            && validSessionPackage(d)
+            && get(packagePath).data.get("status", "") == "active");
+    }
+
+    // A package link is valid only for the same coach/client and a completed
+    // soccer session. New package assignments also require an active package
+    // inside its optional date window. Existing linked logs may still be edited
+    // after the package is later closed so history remains accurate.
     function validSessionLog(d, logId) {
       let b = get(/databases/$(database)/documents/bookingRequests/$(d.bookingId)).data;
       let packageId = d.get("packageAssignmentId", null);
       let packageOk = packageId == null
-        || (packageId is string
-            && packageId.size() > 0 && packageId.size() <= 200
-            && d.status == "completed"
-            && b.sessionType == "soccer"
-            && get(/databases/$(database)/documents/clientPackages/$(packageId)).data.coachUid == d.coachUid
-            && get(/databases/$(database)/documents/clientPackages/$(packageId)).data.clientUid == d.clientUid
-            && (get(/databases/$(database)/documents/clientPackages/$(packageId)).data.get("service", "") == "soccer_1on1"
-                || get(/databases/$(database)/documents/clientPackages/$(packageId)).data.get("service", "") == "soccer_group"));
+        || (d.status == "completed" && b.sessionType == "soccer" && validSessionPackage(d));
       return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "packageAssignmentId", "createdAt", "updatedAt"])
         && d.coachUid == request.auth.uid
         && logId == d.bookingId + "_" + d.date
@@ -600,7 +624,6 @@ service cloud.firestore {
         && b.status == "approved"
         && d.date in b.dates
         && (d.status == "completed" || d.status == "no-show" || d.status == "cancelled" || d.status == "late-cancel")
-        // Future occurrences may only be reserved as cancellations.
         && (sessionDateIsPastOrToday(d.date) || d.status == "cancelled" || d.status == "late-cancel")
         && d.workedOn is string && d.workedOn.size() <= 1000
         && d.nextTime is string && d.nextTime.size() <= 1000
@@ -613,10 +636,13 @@ service cloud.firestore {
             || resource.data.clientUid == request.auth.uid);
       allow create: if signedIn()
         && validSessionLog(request.resource.data, logId)
+        && validNewSessionPackage(request.resource.data)
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn()
         && resource.data.coachUid == request.auth.uid
         && validSessionLog(request.resource.data, logId)
+        && (request.resource.data.get("packageAssignmentId", null) == resource.data.get("packageAssignmentId", null)
+            || validNewSessionPackage(request.resource.data))
         && request.resource.data.createdAt == resource.data.createdAt;
       // Undo a log ("mark it not logged").
       allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;

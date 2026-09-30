@@ -1224,7 +1224,7 @@ test("session logs: the coach logs a session of an approved booking; the client 
             coachUid: "coach", clientUid: "client",
             packageId: "soccer_1on1_10", packageName: "1-on-1 Soccer — 10 Sessions",
             service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
-            sessionAllowance: 10, status: "active", startsAt: "2026-09-01", endsAt: null,
+            sessionAllowance: 10, status: "active", paymentStatus: "pending", startsAt: "2026-09-01", endsAt: null,
             coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
         });
         await setDoc(doc(db, "clientPackages/p2"), {
@@ -1241,6 +1241,27 @@ test("session logs: the coach logs a session of an approved booking; the client 
             sessionAllowance: 1, status: "active", startsAt: "2026-09-01", endsAt: null,
             coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
         });
+        await setDoc(doc(db, "clientPackages/p4"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "paused", paymentStatus: "pending", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p5"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "active", paymentStatus: "pending", startsAt: "2026-09-15", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p6"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "active", paymentStatus: "pending", startsAt: "2026-09-01", endsAt: "2026-09-15",
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
     });
     const log = (extra = {}) => ({
         coachUid: "coach", clientUid: "client", bookingId: "b2", date: "2026-09-01", status: "completed",
@@ -1251,6 +1272,11 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await assertSucceeds(setDoc(ref, log({ packageAssignmentId: "p1" })));
     // The client can read a linked package-backed session just like any other session log.
     await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
+    // New package-backed sessions require an active package inside its date window.
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-08"), log({ date: "2026-09-08", packageAssignmentId: "p4" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-08"), log({ date: "2026-09-08", packageAssignmentId: "p5" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-22"), log({ date: "2026-09-22", packageAssignmentId: "p6" })));
+
     // A package link is valid only for the same coach/client and a completed soccer session.
     await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-08"), log({
         date: "2026-09-08", packageAssignmentId: "p2"
@@ -1265,6 +1291,9 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
     await assertSucceeds(getDocs(query(collection(as("client"), "sessionLogs"), where("clientUid", "==", "client"))));
     await assertSucceeds(getDocs(query(collection(as("coach"), "sessionLogs"), where("coachUid", "==", "coach"))));
+    // Historical package-backed logs remain editable after the package is later paused.
+    await assertSucceeds(updateDoc(doc(as("coach"), "clientPackages/p1"), { status: "paused", updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(ref, { workedOn: "Updated after package was paused.", updatedAt: serverTimestamp() }));
     await assertFails(getDoc(doc(as("stranger"), "sessionLogs/b2_2026-09-01")));
     await assertFails(getDocs(query(collection(as("stranger"), "sessionLogs"), where("clientUid", "==", "client"))));
     // The coach changes it (no-show), keeping who / which / when.

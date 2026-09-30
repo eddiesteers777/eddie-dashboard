@@ -53,7 +53,7 @@ import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
-import { countCompletedPackageSessions, packageRemainingSessions, PAYMENT_STATUSES } from "./clientPackageModel.js";
+import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES } from "./clientPackageModel.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -1034,7 +1034,7 @@ function renderPackages() {
         <div class="hub-package-heading"><div><span class="hub-section-kicker">Client package</span><h2>Packages</h2></div><button type="button" class="clients-btn-secondary" data-act="assign-package">Add package</button></div>
         ${active.length ? active.map(row).join("") : empty}
         ${history.length ? `<details class="hub-package-history"><summary>Recent package history (${history.length})</summary>${history.map(row).join("")}</details>` : ""}
-        <p class="clients-card-note hub-package-footnote">Session allowance is stored with the package. Package usage will be connected to session history in the next step.</p>`;
+        <p class="clients-card-note hub-package-footnote">Finite package usage is derived from completed linked session history — there is no manual session counter to drift.</p>`;
 }
 
 async function changePackagePaymentStatus(id, paymentStatus) {
@@ -1354,6 +1354,11 @@ function findSession(key) {
     return sessionList(record.requests, isoDate(new Date())).find(s => s.bookingId === bookingId && s.date === date) || null;
 }
 
+function sessionHistoryForPackage(currentSession) {
+    return sessionList(record.requests || [], isoDate(new Date()))
+        .filter(x => !(x.bookingId === currentSession.bookingId && x.date === currentSession.date));
+}
+
 async function saveLog(s, fields) {
     const { saveSessionLog } = await import("./sessionLogs.js");
     const log = await saveSessionLog({ bookingId: s.bookingId, date: s.date, clientUid, ...fields });
@@ -1374,24 +1379,33 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
     const future = s.date > isoDate(new Date());
     const choices = SESSION_STATUSES.filter(o => !future || CANCELLED.includes(o.value));
     const current = s.log?.status || (cancelOnly || future ? "cancelled" : "completed");
+    const sessionHistory = sessionList(record.requests || [], isoDate(new Date()));
+    // A package is offered for a new credit only when it is active, inside
+    // its date window, and still has a derived credit remaining. Keep the
+    // currently assigned package visible so a historical log can still be
+    // edited after that package is later paused/completed/cancelled.
     const availablePackages = s.sessionType === "soccer"
-        ? (record.packages || []).filter(p => p.status === "active" && Number.isFinite(p.sessionAllowance))
+        ? (record.packages || []).filter(p => {
+            const historyWithoutCurrent = sessionHistory.filter(x => !(x.bookingId === s.bookingId && x.date === s.date));
+            const used = countCompletedPackageSessions(p.id, historyWithoutCurrent);
+            return packageCanConsumeSession(p, s.date, used);
+        })
         : [];
     const selectedPackage = s.log?.packageAssignmentId
         ? (record.packages || []).find(p => p.id === s.log.packageAssignmentId)
         : null;
     if (selectedPackage && !availablePackages.some(p => p.id === selectedPackage.id)) availablePackages.push(selectedPackage);
-    const sessionHistory = sessionList(record.requests || [], isoDate(new Date()));
     const packageFieldHtml = availablePackages.length
         ? `
                 <label class="hub-log-field"><span>Package credit <em>Optional — completed sessions only</em></span>
                     <select name="packageAssignmentId">
                         <option value="">No package credit</option>
                         ${availablePackages.map(p => {
-                            const used = countCompletedPackageSessions(p.id, sessionHistory);
+                            const historyWithoutCurrent = sessionHistory.filter(x => !(x.bookingId === s.bookingId && x.date === s.date));
+                            const used = countCompletedPackageSessions(p.id, historyWithoutCurrent);
                             const remaining = packageRemainingSessions(p, used);
                             const selected = p.id === s.log?.packageAssignmentId ? " selected" : "";
-                            return `<option value="${esc(p.id)}"${selected}>${esc(p.packageName || p.packageId)} — ${remaining} remaining</option>`;
+                            return \`<option value="${esc(p.id)}"${selected}>${esc(p.packageName || p.packageId)} — ${remaining} remaining</option>\`;
                         }).join("")}
                     </select>
                 </label>
@@ -1453,11 +1467,21 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
         const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
         try {
+            const packageAssignmentId = words ? String(data.get("packageAssignmentId") || "") || null : null;
+            if (packageAssignmentId) {
+                const pkg = (record.packages || []).find(p => p.id === packageAssignmentId);
+                const historyWithoutCurrent = sessionHistoryForPackage(s);
+                const used = countCompletedPackageSessions(packageAssignmentId, historyWithoutCurrent);
+                const alreadyAssigned = s.log?.packageAssignmentId === packageAssignmentId && s.log?.status === "completed";
+                if (!pkg || (!alreadyAssigned && !packageCanConsumeSession(pkg, s.date, used))) {
+                    throw new Error("package-not-available");
+                }
+            }
             await saveLog(s, {
                 status,
                 workedOn: words ? String(data.get("workedOn") || "") : "",
                 nextTime: words ? String(data.get("nextTime") || "") : "",
-                packageAssignmentId: words ? String(data.get("packageAssignmentId") || "") || null : null
+                packageAssignmentId
             });
             const priv = words ? String(data.get("private") || "").trim() : "";
             if (priv) {
