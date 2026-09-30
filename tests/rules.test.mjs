@@ -1218,6 +1218,27 @@ test("session logs: the coach logs a session of an approved booking; the client 
             dates: ["2026-09-01", "2026-09-08", "2026-09-22", "2026-10-08", "2026-10-22", "2099-01-15"], startTime: "09:00", endTime: "10:00", slotId: "s1"
         });
         await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [] });
+        await setDoc(doc(db, "clientPackages/p1"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_10", packageName: "1-on-1 Soccer — 10 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 10, status: "active", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p2"), {
+            coachUid: "coach2", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "active", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p3"), {
+            coachUid: "coach", clientUid: "stranger",
+            packageId: "soccer_1on1_single", packageName: "1-on-1 Soccer — Single Session",
+            service: "soccer_1on1", billingModel: "single", cadence: "one_time",
+            sessionAllowance: 1, status: "active", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
     });
     const log = (extra = {}) => ({
         coachUid: "coach", clientUid: "client", bookingId: "b2", date: "2026-09-01", status: "completed",
@@ -1225,7 +1246,19 @@ test("session logs: the coach logs a session of an approved booking; the client 
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
     });
     const ref = doc(as("coach"), "sessionLogs/b2_2026-09-01");
-    await assertSucceeds(setDoc(ref, log()));
+    await assertSucceeds(setDoc(ref, log({ packageAssignmentId: "p1" })));
+    // The client can read a linked package-backed session just like any other session log.
+    await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
+    // A package link is valid only for the same coach/client and a completed soccer session.
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-08"), log({
+        date: "2026-09-08", packageAssignmentId: "p2"
+    })));
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-22"), log({
+        date: "2026-09-22", packageAssignmentId: "p3"
+    })));
+    await assertFails(updateDoc(ref, {
+        status: "no-show", workedOn: "", nextTime: "", packageAssignmentId: "p1", updatedAt: serverTimestamp()
+    }));
     // Both of them can read it and list their own.
     await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
     await assertSucceeds(getDocs(query(collection(as("client"), "sessionLogs"), where("clientUid", "==", "client"))));
