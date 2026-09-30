@@ -828,12 +828,12 @@ service cloud.firestore {
     }
 
     function stripeManagedPackage(d) {
-      return (d.get("stripeCheckoutSessionId", null) is string
-              && d.get("stripeCheckoutSessionId", "").size() > 0)
-        || (d.get("stripeSubscriptionId", null) is string
-              && d.get("stripeSubscriptionId", "").size() > 0)
-        || (d.get("stripeCustomerId", null) is string
-              && d.get("stripeCustomerId", "").size() > 0);
+      return d.get("stripeCheckoutSessionId", "") is string
+        && d.get("stripeCheckoutSessionId", "") != ""
+        || d.get("stripeSubscriptionId", "") is string
+        && d.get("stripeSubscriptionId", "") != ""
+        || d.get("stripeCustomerId", "") is string
+        && d.get("stripeCustomerId", "") != "";
     }
 
     match /clientPackages/{packageAssignmentId} {
