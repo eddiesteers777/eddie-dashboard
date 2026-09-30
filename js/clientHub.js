@@ -551,19 +551,6 @@ function performanceNumber(value, digits = 1) {
     return Number.isFinite(n) && n > 0 ? n.toFixed(digits) : "—";
 }
 
-function recoverySleepText(minutes) {
-    const total = Math.max(0, Math.round(Number(minutes) || 0));
-    if (!total) return "—";
-    const hours = Math.floor(total / 60);
-    const mins = total % 60;
-    return hours ? hours + "h " + String(mins).padStart(2, "0") + "m" : mins + "m";
-}
-
-function recoveryStatusText(value) {
-    const text = String(value || "").trim();
-    return text || "—";
-}
-
 function renderProgress() {
     const progress = summarizeProgress({
         plans: record.summary.plans,
@@ -590,10 +577,6 @@ function renderProgress() {
     const performanceShareEnabled = record.wearableShare?.status === "active" && record.wearableShare?.permissions?.performance === true;
     const performanceSummary = sharedPerformance?.summary || {};
     const performanceRuns = Array.isArray(sharedPerformance?.recentRuns) ? sharedPerformance.recentRuns : [];
-    const sharedRecovery = record.sharedWearableRecovery;
-    const recoveryShareEnabled = record.wearableShare?.status === "active" && record.wearableShare?.permissions?.recovery === true;
-    const recoverySummary = sharedRecovery?.summary || {};
-    const recoveryDays = Array.isArray(sharedRecovery?.recentDays) ? sharedRecovery.recentDays : [];
     const sharedActivityBody = activityShareEnabled
         ? sharedActivitySummary.runCount
             ? '<div class="hub-progress-metrics">' +
@@ -822,50 +805,6 @@ function renderProgress() {
                       '<p class="clients-card-note">This is a client-shared COROS performance view. Recovery, sleep, and other private wearable data are not included.</p>'
                     : '<div class="hub-progress-empty"><strong>No shared performance data yet</strong><span>Performance sharing is on, but Southbound has no recent COROS performance data to show.</span></div>')
                 : '<div class="hub-progress-empty"><strong>No COROS performance shared</strong><span>The client has not enabled Performance for this coaching relationship.</span></div>') +
-        '</section>' +
-
-        '<section class="clients-card">' +
-            '<div class="hub-progress-head"><div><span class="hub-section-kicker">COROS recovery</span><h2>Shared recovery &amp; sleep</h2></div>' +
-                (recoveryShareEnabled ? '<span class="hub-progress-pill">Recovery shared</span>' : '') +
-            '</div>' +
-            (recoveryShareEnabled
-                ? ((recoverySummary.daysWithData || recoverySummary.latestRecoveryPercent || recoverySummary.latestSleepScore || recoverySummary.latestHrv)
-                    ? '<div class="hub-progress-metrics">' +
-                        progressMetric("Sleep", recoverySleepText(recoverySummary.latestAsleepMinutes), recoverySummary.latestSleepScore ? "score " + Math.round(recoverySummary.latestSleepScore) : "latest shared night") +
-                        progressMetric("HRV", recoverySummary.latestHrv ? Math.round(recoverySummary.latestHrv) + " ms" : "—", "latest shared night") +
-                        progressMetric("Resting HR", recoverySummary.latestRestingHeartRate ? Math.round(recoverySummary.latestRestingHeartRate) + " bpm" : "—", "latest shared day") +
-                        progressMetric("Recovery", recoverySummary.latestRecoveryPercent ? Math.round(recoverySummary.latestRecoveryPercent) + "%" : "—", recoveryStatusText(recoverySummary.latestRecoveryStatus)) +
-                      '</div>' +
-                      ((recoverySummary.averageAsleepMinutes || recoverySummary.averageHrv || recoverySummary.averageRestingHeartRate || recoverySummary.averageRecoveryPercent)
-                          ? '<p class="clients-card-note">28-day averages: ' +
-                              (recoverySummary.averageAsleepMinutes ? recoverySleepText(recoverySummary.averageAsleepMinutes) + " sleep" : '') +
-                              (recoverySummary.averageHrv ? ' · HRV ' + Math.round(recoverySummary.averageHrv) + " ms" : '') +
-                              (recoverySummary.averageRestingHeartRate ? ' · RHR ' + Math.round(recoverySummary.averageRestingHeartRate) + " bpm" : '') +
-                              (recoverySummary.averageRecoveryPercent ? ' · recovery ' + Math.round(recoverySummary.averageRecoveryPercent) + "%" : '') +
-                          '.</p>'
-                          : '') +
-                      (recoverySummary.latestRecoveryHours
-                          ? '<p class="clients-card-note">Estimated time to full recovery: <strong>' + Math.round(recoverySummary.latestRecoveryHours) + ' h</strong>.</p>'
-                          : '') +
-                      (recoveryDays.length
-                          ? '<div class="hub-progress-trend">' +
-                              recoveryDays.map(day =>
-                                  '<div><strong>' + esc(shortDate(day.date)) + '</strong><span>' +
-                                      esc(
-                                          [
-                                              day.asleepMinutes ? recoverySleepText(day.asleepMinutes) + " sleep" : "",
-                                              day.hrvAvg ? "HRV " + Math.round(day.hrvAvg) + " ms" : "",
-                                              day.restingHeartRate ? "RHR " + Math.round(day.restingHeartRate) + " bpm" : "",
-                                              day.recoveryPercent ? "Recovery " + Math.round(day.recoveryPercent) + "%" : ""
-                                          ].filter(Boolean).join(" · ")
-                                      ) +
-                                  '</span></div>'
-                              ).join("") +
-                            '</div>'
-                          : '') +
-                      '<p class="clients-card-note">This is a client-shared COROS recovery view. Readiness scores, check-ins, and other private data are not included.</p>'
-                    : '<div class="hub-progress-empty"><strong>No shared recovery data yet</strong><span>Recovery &amp; sleep sharing is on, but Southbound has no recent COROS health data to show.</span></div>')
-                : '<div class="hub-progress-empty"><strong>No COROS recovery shared</strong><span>The client has not enabled Recovery &amp; sleep for this coaching relationship.</span></div>') +
         '</section>' +
 
         '<section class="clients-card">' +
