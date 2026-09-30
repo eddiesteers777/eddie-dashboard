@@ -9,7 +9,7 @@
 import { listMyPackages } from "./clientPackages.js";
 import { listSessionLogs } from "./sessionLogs.js";
 import { countCompletedPackageSessions, packageRemainingSessions } from "./clientPackageModel.js";
-import { startStripeCheckout } from "./stripeBilling.js";
+import { openStripeCustomerPortal, startStripeCheckout } from "./stripeBilling.js";
 import { friendlyError, toast } from "./ui.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"]/g, c =>
@@ -24,12 +24,21 @@ function paymentStatusLabel(status) {
     return status === "paid" ? "Paid" : status === "past_due" ? "Past due" : status === "comped" ? "Comped" : "Pending";
 }
 
-function paymentAction(pkg) {
+export function paymentAction(pkg) {
     if (pkg.status !== "active") return null;
     if (pkg.paymentStatus === "comped" || pkg.paymentStatus === "paid") return null;
+    if (pkg.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId) {
+        return "Manage Billing";
+    }
     return pkg.billingModel === "subscription"
         ? (pkg.paymentStatus === "past_due" ? "Retry payment" : "Subscribe")
         : (pkg.paymentStatus === "past_due" ? "Retry payment" : "Pay now");
+}
+
+export function paymentActionType(pkg) {
+    return pkg.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId
+        ? "portal"
+        : "checkout";
 }
 
 function handleStripeReturn() {
@@ -106,7 +115,7 @@ export async function renderClientPackageCard() {
                     </div>
                     <div class="eos-package-actions">
                         <a class="eos-package-link" href="${destination}">${linkLabel} <span aria-hidden="true">→</span></a>
-                        ${payLabel ? `<button type="button" class="eos-package-pay" data-pay-package="${esc(pkg.id)}">${payLabel}</button>` : ""}
+                        ${payLabel ? `<button type="button" class="eos-package-pay" data-pay-package="${esc(pkg.id)}" data-pay-action="${paymentActionType(pkg)}">${payLabel}</button>` : ""}
                     </div>
                 </div>`;
         }).join("");
@@ -115,10 +124,15 @@ export async function renderClientPackageCard() {
         body.querySelectorAll("[data-pay-package]").forEach(button => {
             button.addEventListener("click", async () => {
                 const id = button.dataset.payPackage;
+                const action = button.dataset.payAction;
                 button.disabled = true;
                 button.textContent = "Opening…";
                 try {
-                    await startStripeCheckout(id);
+                    if (action === "portal") {
+                        await openStripeCustomerPortal();
+                    } else {
+                        await startStripeCheckout(id);
+                    }
                 } catch (error) {
                     button.disabled = false;
                     button.textContent = paymentAction(visible.find(pkg => pkg.id === id)) || "Pay";

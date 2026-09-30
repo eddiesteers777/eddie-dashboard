@@ -9,6 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Reset worktree to exact commit
+        run: git reset --hard "${{ github.sha }}"
 
       - uses: actions/setup-node@v4
         with:
@@ -22,6 +27,7 @@ jobs:
           java-version: 21
 
       - run: npm ci
+
 
       - name: Static checks (syntax, links, imports, site manifest)
         run: npm run test:static

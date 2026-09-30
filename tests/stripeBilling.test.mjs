@@ -9,7 +9,8 @@ import {
     stripeMetadata,
     paymentStatusForSubscriptionStatus,
     lifecycleUpdateForSubscriptionEvent,
-    validateStripeConfig
+    validateStripeConfig,
+    checkoutBlockedReason
 } from "../functions/billingModel.js";
 
 const functionsSource = readFileSync(new URL("../functions/index.js", import.meta.url), "utf8");
@@ -112,5 +113,29 @@ test("Stripe configuration validator identifies the first missing required price
             prices
         }),
         { ok: false, reason: "missing-price-online_monthly" }
+    );
+});
+
+test("paid packages and existing subscriptions are blocked from creating checkout", () => {
+    assert.equal(checkoutBlockedReason({ paymentStatus: "paid" }, "payment"), "already-paid");
+    assert.equal(
+        checkoutBlockedReason({
+            paymentStatus: "past_due",
+            stripeSubscriptionId: "sub_123"
+        }, "subscription"),
+        "existing-subscription"
+    );
+    assert.equal(
+        checkoutBlockedReason({
+            paymentStatus: "past_due",
+            stripeSubscriptionId: "sub_123"
+        }, "payment"),
+        null
+    );
+    assert.equal(
+        checkoutBlockedReason({
+            paymentStatus: "pending"
+        }, "subscription"),
+        null
     );
 });

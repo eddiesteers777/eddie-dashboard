@@ -1321,6 +1321,10 @@ Next Stripe slices should connect the configured prices to the package catalog, 
 
 Prices are still intentionally unconfigured until the Stripe Products/Prices are created and the `STRIPE_CONFIG` secret is populated.
 
+### Step 5 — duplicate subscription protection
+
+**Step 5 built 2026-09-30.** Existing Stripe subscriptions can no longer accidentally create a second subscription from Southbound. The server rejects Checkout creation when a recurring package already has a Stripe subscription, while the client routes a past-due recurring package to Manage Billing instead of starting another subscription.
+
 ### Step 4 — subscription lifecycle sync
 
 **Step 4 built 2026-09-30.** Stripe subscription created/updated/deleted webhook events are now reconciled to the linked Southbound package. Southbound stores the Stripe subscription status, maps payment-related statuses such as `active`, `past_due`, `unpaid`, and `incomplete` to its existing billing states, and marks the package cancelled when Stripe reports the subscription has ended. This keeps access/billing state tied to Stripe's asynchronous subscription events instead of the browser.

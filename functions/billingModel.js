@@ -73,3 +73,9 @@ export function validateStripeConfig(config = {}) {
 
     return { ok: true };
 }
+
+export function checkoutBlockedReason(pkg, mode) {
+    if (pkg?.paymentStatus === 'paid') return 'already-paid';
+    if (mode === 'subscription' && pkg?.stripeSubscriptionId) return 'existing-subscription';
+    return null;
+}
