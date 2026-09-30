@@ -538,3 +538,23 @@ input[type="checkbox"]{
     line-height:1.45;
     margin:10px 0 0;
 }
+
+/* Stripe setup status (coach only). */
+.stripe-setup-intro{
+    color:var(--text-secondary);
+    font-size:.9rem;
+    line-height:1.55;
+    margin:-8px 0 18px;
+}
+.stripe-setup-result{
+    margin-top:12px;
+    padding:11px 13px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text-secondary);
+    font-size:.85rem;
+    line-height:1.45;
+}
+.stripe-setup-result[data-state="ready"]{ color:var(--text); }
+.stripe-setup-result[data-state="live"]{ color:var(--amber); }
+.stripe-setup-result[data-state="error"]{ color:var(--text-secondary); }
