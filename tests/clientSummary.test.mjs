@@ -403,3 +403,18 @@ test("progress: prior 14-day comparison is descriptive and handles zero baseline
     assert.equal(zeroBaseline.trend.recentMiles, 6);
     assert.equal(zeroBaseline.trend.milesChangePct, null);
 });
+
+
+test("progress: upcoming plan has a real state and no-data snapshot", () => {
+    const progress = summarizeProgress({
+        today: "2026-09-29",
+        plans: {
+            primary: { name: "Homewood 5k", weekNumber: 1, totalWeeks: 9, state: "upcoming", startDate: "2026-10-05" },
+            week: { planned: 0, dueSoFar: 0, completed: 0, missed: 0, skipped: 0, plannedMiles: 0, completedMiles: 0 }
+        }
+    });
+
+    assert.equal(progress.plan.state, "upcoming");
+    assert.equal(progress.plan.startDate, "2026-10-05");
+    assert.equal(progress.hasActivity, false);
+});

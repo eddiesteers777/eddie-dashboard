@@ -531,6 +531,7 @@ function progressPctChange(value) {
     return value > 0 ? "+" + value + "%" : value + "%";
 }
 
+
 function renderProgress() {
     const progress = summarizeProgress({
         plans: record.summary.plans,
@@ -543,19 +544,86 @@ function renderProgress() {
     const a = progress.activity;
     const t = progress.trend;
     const c = progress.checkins;
+    const services = record.profile?.services || [];
 
-    const dueLine = p.week?.due
-        ? p.week.completed + " of " + p.week.due + " due completed"
-        : p.week?.planned ? "No workouts due yet" : "No active plan";
-    const mileLine = p.week?.plannedMiles
-        ? p.week.completedMiles + " / " + p.week.plannedMiles + " mi this week"
-        : "Mileage not part of this plan";
-    const trendMiles = (t.priorMiles || t.recentMiles)
-        ? "Previous 14 days: " + t.priorMiles + " mi · Recent 14 days: " + t.recentMiles + " mi" + (t.milesChangePct != null ? " · " + progressPctChange(t.milesChangePct) : "")
-        : "No run mileage logged in the last 28 days.";
-    const trendWorkouts = (t.priorCompleted || t.recentCompleted)
-        ? "Previous 14 days: " + t.priorCompleted + " · Recent 14 days: " + t.recentCompleted + (t.completedChangePct != null ? " · " + progressPctChange(t.completedChangePct) : "")
-        : "No coach-plan workouts logged in the last 28 days.";
+    const hasTrainingService = services.some(s => ["online_coaching", "running", "strength"].includes(s));
+    const showRunning = services.includes("running") || p.planType === "running" || a.runSessions > 0;
+    const showStrength = services.includes("strength") || a.strengthSessions > 0;
+    const showSoccer = services.some(s => ["soccer_1on1", "soccer_group"].includes(s)) || a.soccerSessions > 0;
+    const showPlanWorkouts = hasTrainingService || Boolean(p.name) || a.completedWorkouts > 0 || a.skippedWorkouts > 0;
+    const hasTrainingActivity = a.completedWorkouts > 0 || a.skippedWorkouts > 0 || a.soccerSessions > 0;
+
+    const planKicker = p.state === "upcoming" ? "Upcoming plan" : p.state === "finished" ? "Plan" : "Current plan";
+    const planHeadline = p.state === "upcoming"
+        ? "Starts " + shortDate(p.startDate)
+        : p.state === "finished"
+            ? "Finished " + shortDate(p.endDate)
+            : p.week?.due
+                ? p.week.completed + " of " + p.week.due + " due completed"
+                : p.week?.planned ? "No workouts due yet" : "No active plan";
+    const mileLine = p.state === "upcoming"
+        ? "Training begins on " + shortDate(p.startDate)
+        : p.week?.plannedMiles
+            ? p.week.completedMiles + " / " + p.week.plannedMiles + " mi this week"
+            : "Mileage not part of this plan";
+
+    const metricItems = [];
+    if (showPlanWorkouts) {
+        metricItems.push(progressMetric(
+            "Coach-plan workouts",
+            String(a.completedWorkouts),
+            a.completedWorkouts || a.skippedWorkouts
+                ? (a.skippedWorkouts ? a.skippedWorkouts + " skipped" : "completed")
+                : "No workouts logged"
+        ));
+    }
+    if (showRunning) {
+        metricItems.push(progressMetric(
+            "Logged run volume",
+            a.runMiles + " mi",
+            a.runSessions ? a.runSessions + " run" + (a.runSessions === 1 ? "" : "s") + " logged" : "No runs logged"
+        ));
+    }
+    if (showStrength) {
+        metricItems.push(progressMetric(
+            "Strength",
+            String(a.strengthSessions),
+            a.strengthSessions ? (a.strengthSets ? a.strengthSets + " sets logged" : "sessions logged") : "No sessions logged"
+        ));
+    }
+    if (showSoccer) {
+        metricItems.push(progressMetric(
+            "Soccer",
+            String(a.soccerCompleted),
+            a.soccerCompleted ? (a.soccerCompleted + " of " + a.soccerCounted + " counted") : "No completed sessions"
+        ));
+    }
+
+    const activityBody = hasTrainingActivity
+        ? '<div class="hub-progress-metrics' + (metricItems.length === 1 ? ' hub-progress-metrics-single' : '') + '">' + metricItems.join("") + '</div>'
+        : '<div class="hub-progress-empty">' +
+            (p.state === "upcoming"
+                ? '<strong>No activity logged yet</strong><span>Progress will appear here when ' + esc(p.name || "the plan") + ' starts on ' + esc(shortDate(p.startDate)) + '.</span>'
+                : '<strong>No training activity logged</strong><span>There is no logged training activity in the last 28 days.</span>') +
+          '</div>';
+
+    const trendRows = [];
+    if (showRunning) {
+        const trendMiles = (t.priorMiles || t.recentMiles)
+            ? "Previous 14 days: " + t.priorMiles + " mi · Recent 14 days: " + t.recentMiles + (t.milesChangePct != null ? " · " + progressPctChange(t.milesChangePct) : "")
+            : "No run mileage logged in the last 28 days.";
+        trendRows.push('<div><strong>Run volume</strong><span>' + esc(trendMiles) + '</span></div>');
+    }
+    if (showPlanWorkouts) {
+        const trendWorkouts = (t.priorCompleted || t.recentCompleted)
+            ? "Previous 14 days: " + t.priorCompleted + " · Recent 14 days: " + t.recentCompleted + (t.completedChangePct != null ? " · " + progressPctChange(t.completedChangePct) : "")
+            : "No coach-plan workouts logged in the last 28 days.";
+        trendRows.push('<div><strong>Completed coach-plan workouts</strong><span>' + esc(trendWorkouts) + '</span></div>');
+    }
+
+    const trendBody = trendRows.length
+        ? '<div class="hub-progress-trend">' + trendRows.join("") + '</div>'
+        : '<div class="hub-progress-empty"><strong>No activity trend yet</strong><span>There is not enough logged activity in the last 28 days to compare.</span></div>';
 
     $("hubProgress").innerHTML =
         '<div class="hub-progress-note">' +
@@ -566,32 +634,24 @@ function renderProgress() {
         '<div class="hub-progress-grid">' +
             '<section class="clients-card">' +
                 '<div class="hub-progress-head">' +
-                    '<div><span class="hub-section-kicker">Current plan</span>' +
+                    '<div><span class="hub-section-kicker">' + esc(planKicker) + '</span>' +
                     '<h2>' + esc(p.name || "No active plan") + '</h2></div>' +
                     (p.weekNumber && p.totalWeeks ? '<span class="hub-progress-pill">Week ' + p.weekNumber + ' of ' + p.totalWeeks + '</span>' : '') +
                 '</div>' +
-                '<div class="hub-progress-primary">' + esc(dueLine) + '</div>' +
+                '<div class="hub-progress-primary">' + esc(planHeadline) + '</div>' +
                 '<p class="clients-card-note">' + esc(mileLine) + '</p>' +
-                '<div class="hub-progress-actions"><button type="button" class="clients-btn-secondary" data-go-tab="plan">' + icon("edit") + ' View plan</button></div>' +
+                (p.name ? '<div class="hub-progress-actions"><button type="button" class="clients-btn-secondary" data-go-tab="plan">' + icon("edit") + ' View plan</button></div>' : '') +
             '</section>' +
 
             '<section class="clients-card">' +
                 '<div class="hub-progress-head"><div><span class="hub-section-kicker">Last 28 days</span><h2>Training activity</h2></div></div>' +
-                '<div class="hub-progress-metrics">' +
-                    progressMetric("Coach-plan workouts", String(a.completedWorkouts), a.skippedWorkouts ? a.skippedWorkouts + " skipped" : "completed") +
-                    progressMetric("Run volume", a.runMiles + " mi", a.runSessions + " run" + (a.runSessions === 1 ? "" : "s") + " logged") +
-                    progressMetric("Strength", String(a.strengthSessions), a.strengthSets ? a.strengthSets + " sets logged" : "sessions logged") +
-                    progressMetric("Soccer", String(a.soccerCompleted), a.soccerCounted ? a.soccerCompleted + " of " + a.soccerCounted : "completed sessions") +
-                '</div>' +
+                activityBody +
             '</section>' +
         '</div>' +
 
         '<section class="clients-card">' +
-            '<div class="hub-progress-head"><div><span class="hub-section-kicker">Trajectory</span><h2>Recent vs. previous 14 days</h2></div></div>' +
-            '<div class="hub-progress-trend">' +
-                '<div><strong>Run volume</strong><span>' + esc(trendMiles) + '</span></div>' +
-                '<div><strong>Completed coach-plan workouts</strong><span>' + esc(trendWorkouts) + '</span></div>' +
-            '</div>' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">Activity trend</span><h2>Recent vs. previous 14 days</h2></div></div>' +
+            trendBody +
         '</section>' +
 
         '<div class="hub-progress-grid">' +
