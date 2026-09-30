@@ -113,7 +113,7 @@ export async function syncWearableActivityForCoach(coachUid, { days = 28 } = {})
     const records = findRecords(result).map(normalizeActivity);
     const activities = records.map(compact).filter(Boolean);
 
-    await saveSharedWearableActivities(coachUid, activities);
+    if (activities.length) await saveSharedWearableActivities(coachUid, activities);
     return {
         count: activities.length,
         from: start,
