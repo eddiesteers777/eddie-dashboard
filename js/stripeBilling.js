@@ -10,6 +10,11 @@ import { app } from './firebase.js';
 const functions = getFunctions(app, 'us-central1');
 const createCheckout = httpsCallable(functions, 'createStripeCheckoutSession');
 
+export async function getStripeBillingReadiness() {
+    const result = await httpsCallable(functions, 'getStripeBillingReadiness')();
+    return result?.data || {};
+}
+
 export async function openStripeCustomerPortal() {
     const result = await httpsCallable(functions, 'createStripeCustomerPortalSession')();
     const url = result?.data?.url;
