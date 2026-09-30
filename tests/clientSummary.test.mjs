@@ -485,7 +485,7 @@ test("training trends: builds six weekly activity buckets with partial current w
 
     assert.equal(trends.weeks.length, 6);
     assert.deepEqual(trends.weeks.map(w => [w.start, w.runMiles, w.runSessions, w.completedWorkouts, w.skippedWorkouts]), [
-        ["2026-08-31", 0, 0, 0, 0],
+        ["2026-08-31", 12, 2, 2, 0],
         ["2026-09-07", 6, 1, 1, 1],
         ["2026-09-14", 4, 1, 2, 0],
         ["2026-09-21", 0, 0, 0, 0],
