@@ -70,7 +70,7 @@ $("wearableSharingList")?.addEventListener("click", async event => {
     }
 });
 
-function render() {
+async function render() {
     const connected = Boolean(getTokenRecord()?.access_token);
     const off = $("disconnectCorosBtn");
     if (off) off.hidden = !connected;
