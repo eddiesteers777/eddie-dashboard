@@ -247,6 +247,70 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // Step 5A: the client's small coach-visible COROS Training activity
+    // projection. The private COROS history remains in users/{uid}/sync.
+    function wearableActivityConsent(coachUid, clientUid) {
+      let ref = /databases/$(database)/documents/wearableShares/$(coachUid + "_" + clientUid);
+      return exists(ref)
+        && get(ref).data.coachUid == coachUid
+        && get(ref).data.clientUid == clientUid
+        && get(ref).data.status == "active"
+        && get(ref).data.permissions.activity == true;
+    }
+
+    function validSharedWearableActivity(d) {
+      return d.keys().hasOnly([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"
+        ])
+        && d.keys().hasAll([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"
+        ])
+        && d.version == 1
+        && d.source == "coros"
+        && d.coachUid is string && d.coachUid.size() > 0 && d.coachUid.size() <= 128
+        && d.clientUid is string && d.clientUid.size() > 0 && d.clientUid.size() <= 128
+        && d.windowFrom is string && d.windowFrom.size() == 10
+        && d.windowTo is string && d.windowTo.size() == 10
+        && d.summary is map
+        && d.summary.keys().hasOnly(["runCount", "distanceMiles", "durationSeconds"])
+        && d.summary.keys().hasAll(["runCount", "distanceMiles", "durationSeconds"])
+        && d.summary.runCount is int && d.summary.runCount >= 0 && d.summary.runCount <= 200
+        && d.summary.distanceMiles is number && d.summary.distanceMiles >= 0 && d.summary.distanceMiles <= 1000
+        && d.summary.durationSeconds is int && d.summary.durationSeconds >= 0 && d.summary.durationSeconds <= 1000000
+        && d.recentRuns is list && d.recentRuns.size() <= 8
+        && d.updatedAt == request.time;
+    }
+
+    match /sharedWearableActivity/{shareId} {
+      allow get: if signedIn()
+        && (request.auth.uid == resource.data.clientUid
+            || (request.auth.uid == resource.data.coachUid
+                && linked(request.auth.uid, resource.data.clientUid)
+                && wearableActivityConsent(resource.data.coachUid, resource.data.clientUid)));
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.clientUid
+        && shareId == request.resource.data.coachUid + "_" + request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && wearableActivityConsent(request.resource.data.coachUid, request.auth.uid)
+        && validSharedWearableActivity(request.resource.data);
+
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.clientUid
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.version == resource.data.version
+        && onlyChanges(["source", "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"])
+        && wearableActivityConsent(request.resource.data.coachUid, request.resource.data.clientUid)
+        && validSharedWearableActivity(request.resource.data);
+
+      allow delete: if signedIn() && request.auth.uid == resource.data.clientUid;
+    }
+
     match /coachAvailability/{coachUid} {
       allow write: if isUser(coachUid);
       allow read: if isUser(coachUid)
