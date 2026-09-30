@@ -238,3 +238,5 @@ self.addEventListener("fetch", event => {
     }
     // Everything else (Firestore, sign-in, COROS...) goes straight to the network.
 });
+
+// Phase 7 shared wearable activity sync.
