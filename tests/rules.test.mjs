@@ -105,6 +105,52 @@ test("without a link, nobody else can read a client's shared plans", async () =>
     await assertSucceeds(getDoc(doc(as("client"), "sharedPlans/client")));
 });
 
+// ---- Wearable sharing consent (Phase 7) ----
+
+test("wearable sharing: only a linked client can create and control their consent", async () => {
+    await seedLinkAndBooking();
+    const id = "coach_client";
+    const base = {
+        version: 1,
+        coachUid: "coach",
+        clientUid: "client",
+        status: "active",
+        permissions: { activity: true, performance: true, recovery: false },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+    const ref = doc(as("client"), "wearableShares/" + id);
+    await assertSucceeds(setDoc(ref, base));
+    await assertSucceeds(getDoc(doc(as("coach"), "wearableShares/" + id)));
+    await assertSucceeds(getDoc(doc(as("client"), "wearableShares/" + id)));
+
+    await assertSucceeds(updateDoc(ref, {
+        permissions: { activity: true, performance: false, recovery: true },
+        status: "active",
+        updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(ref, {
+        permissions: { activity: false, performance: false, recovery: false },
+        status: "revoked",
+        updatedAt: serverTimestamp()
+    }));
+
+    const coachRef = doc(as("coach"), "wearableShares/" + id);
+    await assertFails(updateDoc(coachRef, { permissions: { activity: true, performance: true, recovery: true }, updatedAt: serverTimestamp(), status: "active" }));
+    await assertFails(deleteDoc(coachRef));
+
+    await assertFails(getDoc(doc(as("stranger"), "wearableShares/" + id)));
+    await assertFails(setDoc(doc(as("stranger"), "wearableShares/" + id), { ...base, clientUid: "stranger" }));
+
+    await assertFails(setDoc(doc(as("client"), "wearableShares/other_client"), { ...base, coachUid: "coach2", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { coachUid: "coach2", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+
+    await assertFails(setDoc(doc(as("client"), "wearableShares/bad1"), { ...base, permissions: { activity: true, performance: false, recovery: false, extra: true }, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(as("client"), "wearableShares/bad2"), { ...base, status: "active", permissions: { activity: false, performance: false, recovery: false }, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(as("client"), "wearableShares/bad3"), { ...base, status: "revoked", permissions: { activity: true, performance: false, recovery: false }, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+});
+
 // ---- Profile privacy (critical) ----
 
 test("other users cannot read or list profiles", async () => {
