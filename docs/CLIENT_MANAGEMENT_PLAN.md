@@ -1321,6 +1321,10 @@ Next Stripe slices should connect the configured prices to the package catalog, 
 
 Prices are still intentionally unconfigured until the Stripe Products/Prices are created and the `STRIPE_CONFIG` secret is populated.
 
+### Step 4 — subscription lifecycle sync
+
+**Step 4 built 2026-09-30.** Stripe subscription created/updated/deleted webhook events are now reconciled to the linked Southbound package. Southbound stores the Stripe subscription status, maps payment-related statuses such as `active`, `past_due`, `unpaid`, and `incomplete` to its existing billing states, and marks the package cancelled when Stripe reports the subscription has ended. This keeps access/billing state tied to Stripe's asynchronous subscription events instead of the browser.
+
 ### Step 3 — Customer Portal
 
 **Step 3 built 2026-09-30.** Clients who have an established Stripe Customer can open Stripe Customer Portal from Settings. The portal session is created by an authenticated Firebase callable function from the server; the client never handles Stripe secret credentials or constructs a billing-portal URL itself.
