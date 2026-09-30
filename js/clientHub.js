@@ -1346,6 +1346,29 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
     const future = s.date > isoDate(new Date());
     const choices = SESSION_STATUSES.filter(o => !future || CANCELLED.includes(o.value));
     const current = s.log?.status || (cancelOnly || future ? "cancelled" : "completed");
+    const availablePackages = s.sessionType === "soccer"
+        ? (record.packages || []).filter(p => p.status === "active" && Number.isFinite(p.sessionAllowance))
+        : [];
+    const selectedPackage = s.log?.packageAssignmentId
+        ? (record.packages || []).find(p => p.id === s.log.packageAssignmentId)
+        : null;
+    if (selectedPackage && !availablePackages.some(p => p.id === selectedPackage.id)) availablePackages.push(selectedPackage);
+    const sessionHistory = sessionList(record.requests || [], isoDate(new Date()));
+    const packageFieldHtml = availablePackages.length
+        ? `
+                <label class="hub-log-field"><span>Package credit <em>Optional — completed sessions only</em></span>
+                    <select name="packageAssignmentId">
+                        <option value="">No package credit</option>
+                        ${availablePackages.map(p => {
+                            const used = countCompletedPackageSessions(p.id, sessionHistory);
+                            const remaining = packageRemainingSessions(p, used);
+                            const selected = p.id === s.log?.packageAssignmentId ? " selected" : "";
+                            return \`<option value="${esc(p.id)}"${selected}>${esc(p.packageName || p.packageId)} — ${remaining} remaining</option>\`;
+                        }).join("")}
+                    </select>
+                </label>
+`
+        : "";
     const d = document.createElement("dialog");
     d.className = "sb-dialog hub-log-dialog";
     d.innerHTML = `
@@ -1355,6 +1378,7 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
             <div class="hub-log-status" role="radiogroup" aria-label="What happened">
                 ${choices.map(o => `<label class="hub-log-chip"><input type="radio" name="status" value="${o.value}"${o.value === current ? " checked" : ""}><span>${esc(o.label)}</span></label>`).join("")}
             </div>
+            ${packageFieldHtml}
             <div class="hub-log-words">
                 <label class="hub-log-field"><span>What did you work on? <em>${esc(firstName())} sees this</em></span>
                     <textarea name="workedOn" rows="3" maxlength="1000" data-emoji placeholder="First touch, weak-foot passing, 1v1 finishing">${esc(s.log?.workedOn || "")}</textarea></label>
@@ -1404,7 +1428,8 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
             await saveLog(s, {
                 status,
                 workedOn: words ? String(data.get("workedOn") || "") : "",
-                nextTime: words ? String(data.get("nextTime") || "") : ""
+                nextTime: words ? String(data.get("nextTime") || "") : "",
+                packageAssignmentId: words ? String(data.get("packageAssignmentId") || "") || null : null
             });
             const priv = words ? String(data.get("private") || "").trim() : "";
             if (priv) {
