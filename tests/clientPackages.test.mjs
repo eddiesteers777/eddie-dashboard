@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getPackage, isFiniteSessionPackage } from "../js/packageCatalog.js";
-import { PACKAGE_STATUSES, packageRemainingSessions, packageCatalogOptions } from "../js/clientPackageModel.js";
+import { PACKAGE_STATUSES, packageRemainingSessions, packageCatalogOptions, countCompletedPackageSessions } from "../js/clientPackageModel.js";
 
 test("package statuses stay explicit and finite", () => {
     assert.deepEqual(PACKAGE_STATUSES, ["active", "paused", "completed", "cancelled"]);
@@ -31,4 +31,17 @@ test("catalog options mirror the active catalog", () => {
         "soccer_group_drop_in",
         "soccer_group_monthly"
     ]);
+});
+
+test("package usage counts only completed linked sessions", () => {
+    const sessions = [
+        { log: { status: "completed", packageAssignmentId: "p1" } },
+        { log: { status: "completed", packageAssignmentId: "p1" } },
+        { log: { status: "no-show", packageAssignmentId: "p1" } },
+        { log: { status: "completed", packageAssignmentId: "p2" } },
+        { log: { status: "completed" } }
+    ];
+    assert.equal(countCompletedPackageSessions("p1", sessions), 2);
+    assert.equal(countCompletedPackageSessions("p2", sessions), 1);
+    assert.equal(countCompletedPackageSessions("p3", sessions), 0);
 });
