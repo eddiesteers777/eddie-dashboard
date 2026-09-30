@@ -146,7 +146,7 @@ function renderPlan(progress) {
                 <small>${esc(state)}</small>
             </div>
             <div class="tr-mini">
-                <div class="tr-mini-top"><span>Last 14 days</span><strong>${esc(p.milesChangePct == null ? "—" : pct(progress.trend.milesChangePct) + " miles")}</strong></div>
+                <div class="tr-mini-top"><span>Last 14 days</span><strong>${esc(progress.trend.milesChangePct == null ? "—" : pct(progress.trend.milesChangePct))}</strong></div>
                 <small>${esc(progress.trend.recentMiles)} mi recent · ${esc(progress.trend.priorMiles)} mi previous</small>
             </div>
         </div>
