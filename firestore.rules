@@ -580,33 +580,69 @@ service cloud.firestore {
     // worked on and what's next -- the client reads those words, so
     // nothing private goes here: private thoughts are coachNotes). Only
     // for an approved booking of theirs, only for one of its dates.
+    function validSessionPackage(d) {
+      let packageId = d.get("packageAssignmentId", null);
+      let packagePath = /databases/$(database)/documents/clientPackages/$(packageId);
+      return packageId is string
+        && packageId.size() > 0 && packageId.size() <= 200
+        && exists(packagePath)
+        && get(packagePath).data.coachUid == d.coachUid
+        && get(packagePath).data.clientUid == d.clientUid
+        && (get(packagePath).data.get("service", "") == "soccer_1on1"
+            || get(packagePath).data.get("service", "") == "soccer_group")
+        && get(packagePath).data.get("sessionAllowance", null) is int
+        && get(packagePath).data.get("sessionAllowance", 0) >= 1
+        && (get(packagePath).data.get("startsAt", null) == null
+            || (get(packagePath).data.get("startsAt", "") is string && d.date >= get(packagePath).data.get("startsAt", "")))
+        && (get(packagePath).data.get("endsAt", null) == null
+            || (get(packagePath).data.get("endsAt", "") is string && d.date <= get(packagePath).data.get("endsAt", "")));
+    }
+
+    function validNewSessionPackage(d) {
+      let packageId = d.get("packageAssignmentId", null);
+      let packagePath = /databases/$(database)/documents/clientPackages/$(packageId);
+      return packageId == null
+        || (d.status == "completed"
+            && validSessionPackage(d)
+            && get(packagePath).data.get("status", "") == "active");
+    }
+
+    // A package link is valid only for the same coach/client and a completed
+    // soccer session. New package assignments also require an active package
+    // inside its optional date window. Existing linked logs may still be edited
+    // after the package is later closed so history remains accurate.
     function validSessionLog(d, logId) {
       let b = get(/databases/$(database)/documents/bookingRequests/$(d.bookingId)).data;
-      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "createdAt", "updatedAt"])
+      let packageId = d.get("packageAssignmentId", null);
+      let packageOk = packageId == null
+        || (d.status == "completed" && b.sessionType == "soccer" && validSessionPackage(d));
+      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "packageAssignmentId", "createdAt", "updatedAt"])
         && d.coachUid == request.auth.uid
         && logId == d.bookingId + "_" + d.date
         && b.coachUid == request.auth.uid
         && b.clientUid == d.clientUid
         && b.status == "approved"
         && d.date in b.dates
-        && d.status in ["completed", "no-show", "cancelled", "late-cancel"]
-        // Future occurrences may only be reserved as cancellations.
+        && (d.status == "completed" || d.status == "no-show" || d.status == "cancelled" || d.status == "late-cancel")
         && (sessionDateIsPastOrToday(d.date) || d.status == "cancelled" || d.status == "late-cancel")
         && d.workedOn is string && d.workedOn.size() <= 1000
         && d.nextTime is string && d.nextTime.size() <= 1000
+        && packageOk
         && d.updatedAt == request.time;
     }
-
     match /sessionLogs/{logId} {
       allow read: if signedIn()
         && (resource.data.coachUid == request.auth.uid
             || resource.data.clientUid == request.auth.uid);
       allow create: if signedIn()
         && validSessionLog(request.resource.data, logId)
+        && validNewSessionPackage(request.resource.data)
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn()
         && resource.data.coachUid == request.auth.uid
         && validSessionLog(request.resource.data, logId)
+        && (request.resource.data.get("packageAssignmentId", null) == resource.data.get("packageAssignmentId", null)
+            || validNewSessionPackage(request.resource.data))
         && request.resource.data.createdAt == resource.data.createdAt;
       // Undo a log ("mark it not logged").
       allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
@@ -766,6 +802,77 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
     }
 
+    // ---- Client package entitlements ----
+    // A package assignment is coaching/entitlement metadata; payment status
+    // is a manually maintained business status, not a transaction record.
+    // Only the linked coach may create/change it; the client can read it.
+    function validClientPackage(d) {
+      return (d.get("packageId", "") == "online_monthly"
+          || d.get("packageId", "") == "soccer_1on1_single"
+          || d.get("packageId", "") == "soccer_1on1_5"
+          || d.get("packageId", "") == "soccer_1on1_10"
+          || d.get("packageId", "") == "soccer_group_drop_in"
+          || d.get("packageId", "") == "soccer_group_monthly")
+        && d.get("coachUid", "") is string
+        && d.get("clientUid", "") is string
+        && d.get("packageName", "") is string && d.get("packageName", "").size() > 0 && d.get("packageName", "").size() <= 120
+        && (d.get("service", "") == "online_coaching" || d.get("service", "") == "soccer_1on1" || d.get("service", "") == "soccer_group")
+        && (d.get("billingModel", "") == "subscription" || d.get("billingModel", "") == "single" || d.get("billingModel", "") == "session_pack")
+        && (d.get("cadence", "") == "monthly" || d.get("cadence", "") == "weekly" || d.get("cadence", "") == "one_time")
+        && (d.get("sessionAllowance", null) == null || (d.get("sessionAllowance", null) is int && d.get("sessionAllowance", null) >= 1 && d.get("sessionAllowance", null) <= 1000))
+        && (d.get("status", "") == "active" || d.get("status", "") == "paused" || d.get("status", "") == "completed" || d.get("status", "") == "cancelled")
+        && (d.get("paymentStatus", "") == "pending" || d.get("paymentStatus", "") == "paid" || d.get("paymentStatus", "") == "past_due" || d.get("paymentStatus", "") == "comped")
+        && (d.get("startsAt", null) == null || (d.get("startsAt", null) is string && d.get("startsAt", null).matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (d.get("endsAt", null) == null || (d.get("endsAt", null) is string && d.get("endsAt", null).matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && d.get("coachNote", "") is string && d.get("coachNote", "").size() <= 500;
+    }
+
+    function stripeManagedPackage(d) {
+      return d.get("stripeCheckoutSessionId", "") is string
+        && d.get("stripeCheckoutSessionId", "") != ""
+        || d.get("stripeSubscriptionId", "") is string
+        && d.get("stripeSubscriptionId", "") != ""
+        || d.get("stripeCustomerId", "") is string
+        && d.get("stripeCustomerId", "") != "";
+    }
+
+    match /clientPackages/{packageAssignmentId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+            "coachUid", "clientUid", "packageId", "packageName", "service",
+            "billingModel", "cadence", "sessionAllowance", "status", "paymentStatus",
+            "startsAt", "endsAt", "coachNote", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.coachUid == request.auth.uid
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && validClientPackage(request.resource.data);
+
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && linked(request.auth.uid, resource.data.clientUid)
+        && onlyChanges(["status", "paymentStatus", "startsAt", "endsAt", "coachNote", "updatedAt"])
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.packageId == resource.data.packageId
+        && request.resource.data.packageName == resource.data.packageName
+        && request.resource.data.get("service", "") == resource.data.get("service", "")
+        && request.resource.data.billingModel == resource.data.billingModel
+        && request.resource.data.cadence == resource.data.cadence
+        && request.resource.data.sessionAllowance == resource.data.sessionAllowance
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.get("paymentStatus", "") == resource.data.get("paymentStatus", "")
+            || !stripeManagedPackage(resource.data))
+        && validClientPackage(request.resource.data);
+
+      allow delete: if false;
+    }
     // ---- Coaching plans: the coach owns the prescription ----
 
     function validPlanHeaderFields(d) {

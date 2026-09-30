@@ -160,6 +160,18 @@
 
             </div>
 
+            <!-- Billing (clients with a Stripe customer) -->
+            <div class="settings-card" id="billingCard" data-requires="client" hidden>
+                <h3><span data-icon="link"></span> Billing</h3>
+                <p class="billing-intro">
+                    Manage your payment method, subscriptions, and billing details through Stripe.
+                </p>
+                <button type="button" class="settings-btn" id="manageBillingBtn">
+                    Manage Billing
+                </button>
+                <p class="billing-note" id="billingStatus" hidden></p>
+            </div>
+
             <!-- About -->
 
             <div class="settings-card">

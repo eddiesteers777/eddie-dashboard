@@ -613,3 +613,93 @@
 }
 
 .eos-coach-empty a{color:var(--primary);}
+
+/* ---- Client package card (Phase 9) ---- */
+
+.eos-client-package{ margin-top:18px; }
+.eos-package-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:13px 0;
+    border-top:1px solid var(--border);
+}
+.eos-package-row:first-child{ border-top:0; }
+.eos-package-main{ min-width:0; }
+.eos-package-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.eos-package-head strong{ font-size:15px; }
+.eos-package-status{
+    display:inline-flex;
+    align-items:center;
+    min-height:22px;
+    padding:0 8px;
+    border-radius:999px;
+    background:var(--surface-light);
+    color:var(--text-secondary);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.02em;
+}
+.eos-package-status.is-paused{ color:var(--text-secondary); }
+.eos-package-detail{
+    display:block;
+    margin-top:4px;
+    color:var(--text-secondary);
+    font-size:13px;
+    line-height:1.45;
+}
+.eos-package-link{
+    flex:0 0 auto;
+    color:var(--primary);
+    font-size:13px;
+    font-weight:700;
+    text-decoration:none;
+    white-space:nowrap;
+}
+.eos-package-link:hover{ text-decoration:underline; }
+@media (max-width:620px){
+    .eos-package-row{ align-items:flex-start; }
+    .eos-package-link{ margin-top:2px; }
+}
+
+/* ---- Client package payment action (Phase 10) ---- */
+
+.eos-package-actions{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.eos-package-pay{
+    border:0;
+    border-radius:999px;
+    padding:8px 13px;
+    background:var(--primary);
+    color:var(--bg);
+    font:inherit;
+    font-size:12px;
+    font-weight:800;
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.eos-package-pay:hover{ filter:brightness(1.05); }
+.eos-package-pay:disabled{ opacity:.55; cursor:wait; }
+
+@media (max-width:620px){
+    .eos-package-actions{
+        width:100%;
+        justify-content:flex-start;
+    }
+    .eos-package-pay{
+        flex:0 0 auto;
+    }
+}

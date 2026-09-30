@@ -26,6 +26,7 @@ import { listPrivateNotes, listUpdatesForClient } from "./clientNotes.js";
 import { listPlansForClient, listDraftsForClient, getVersion, getMaster, listVersions } from "./coachingPlans.js";
 import { isRolling } from "./planWindow.js";
 import { listResultsForClient } from "./workoutResults.js";
+import { listPackagesForClient } from "./clientPackages.js";
 import { listChangeRequestsForCoach } from "./changeRequests.js";
 import { healthReviewed } from "./healthReviewed.js";
 
@@ -144,6 +145,10 @@ export async function loadClientRecord(clientUid) {
         publishedPlans(clientUid),
         listDraftsForClient(clientUid).catch(() => []),
         resultsFor(clientUid),
+        listPackagesForClient(clientUid).catch(error => {
+            console.warn("Southbound: client packages unavailable.", error);
+            return [];
+        }),
         changesFor(clientUid),
         readWearableShare(link.coachUid, clientUid).catch(() => null),
         import("./coachAccess.js").then(m => m.readSharedWearableActivity(link.coachUid, clientUid)).catch(() => null),
@@ -160,6 +165,7 @@ export async function loadClientRecord(clientUid) {
         coachingPlans,
         planDrafts,
         results,
+        packages,
         changes,
         wearableShare,
         sharedWearableActivity,

@@ -848,6 +848,65 @@ test("client updates: the linked coach sends, the client reads and can only mark
     await assertSucceeds(deleteDoc(doc(as("coach"), "clientUpdates/u1")));
 });
 
+// ---- Client package entitlements ----
+
+const clientPackage = (extra = {}) => ({
+    coachUid: "coach", clientUid: "client", packageId: "soccer_1on1_10",
+    packageName: "1-on-1 Soccer — 10 Sessions", service: "soccer_1on1",
+    billingModel: "session_pack", cadence: "one_time", sessionAllowance: 10,
+    status: "active", paymentStatus: "pending", startsAt: "2026-10-01", endsAt: null, coachNote: "",
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
+});
+
+test("client packages: linked coach can assign, client can read, identity cannot change", async () => {
+    await seedLinkAndBooking();
+    const ref = doc(as("coach"), "clientPackages/p1");
+    await assertSucceeds(setDoc(ref, clientPackage()));
+    await assertSucceeds(getDoc(doc(as("client"), "clientPackages/p1")));
+    await assertSucceeds(getDocs(query(collection(as("client"), "clientPackages"), where("clientUid", "==", "client"))));
+    await assertSucceeds(updateDoc(ref, { status: "paused", paymentStatus: "paid", coachNote: "Pause until October 15.", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { packageId: "soccer_1on1_5", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { paymentStatus: "refunded", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { clientUid: "stranger", updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(ref));
+    await assertFails(setDoc(doc(as("client"), "clientPackages/p2"), clientPackage()));
+    await assertFails(getDoc(doc(as("stranger"), "clientPackages/p1")));
+});
+
+test("client packages: Stripe-managed billing cannot be manually overridden", async () => {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(async ctx => {
+        await setDoc(doc(ctx.firestore(), "clientPackages/stripe-managed"), clientPackage({
+            paymentStatus: "past_due",
+            stripeSubscriptionId: "sub_123",
+            stripeCustomerId: "cus_123"
+        }));
+    });
+
+    await assertFails(updateDoc(
+        doc(as("coach"), "clientPackages/stripe-managed"),
+        { paymentStatus: "paid", updatedAt: serverTimestamp() }
+    ));
+
+    await assertSucceeds(updateDoc(
+        doc(as("coach"), "clientPackages/stripe-managed"),
+        { status: "paused", updatedAt: serverTimestamp() }
+    ));
+});
+
+test("client packages: only valid catalog shapes are accepted", async () => {
+    await seedLinkAndBooking();
+    const bad = (id, extra) => setDoc(doc(as("coach"), `clientPackages/${id}`), clientPackage(extra));
+    await assertSucceeds(bad("good", {}));
+    await assertFails(bad("unknown-package", { packageId: "free_coaching" }));
+    await assertFails(bad("bad-status", { status: "expired" }));
+    await assertFails(bad("bad-count", { sessionAllowance: 0 }));
+    await assertFails(bad("bad-date", { startsAt: "next month" }));
+    await assertFails(bad("bad-field", { extra: true }));
+    await assertFails(bad("bad-price", { priceCents: 10000 }));
+    await assertFails(bad("bad-payment", { paymentStatus: "refunded" }));
+});
+
 // ---- Coaching plans: the coach owns the prescription ----
 
 const PLAN = { weeks: [{ week: 1, startDate: "2026-09-28", days: [{ date: "2026-09-28", day: "MON", type: "easy", miles: 5, session: "" }] }] };
@@ -1178,10 +1237,52 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await env.withSecurityRulesDisabled(async ctx => {
         const db = ctx.firestore();
         await setDoc(doc(db, "bookingRequests/b2"), {
-            coachUid: "coach", clientUid: "client", status: "approved", coachNote: "",
+            coachUid: "coach", clientUid: "client", status: "approved", coachNote: "", sessionType: "soccer",
             dates: ["2026-09-01", "2026-09-08", "2026-09-22", "2026-10-08", "2026-10-22", "2099-01-15"], startTime: "09:00", endTime: "10:00", slotId: "s1"
         });
         await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [] });
+        await setDoc(doc(db, "clientPackages/p1"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_10", packageName: "1-on-1 Soccer — 10 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 10, status: "active", paymentStatus: "pending", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p2"), {
+            coachUid: "coach2", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "active", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p3"), {
+            coachUid: "coach", clientUid: "stranger",
+            packageId: "soccer_1on1_single", packageName: "1-on-1 Soccer — Single Session",
+            service: "soccer_1on1", billingModel: "single", cadence: "one_time",
+            sessionAllowance: 1, status: "active", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p4"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "paused", paymentStatus: "pending", startsAt: "2026-09-01", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p5"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "active", paymentStatus: "pending", startsAt: "2026-09-15", endsAt: null,
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientPackages/p6"), {
+            coachUid: "coach", clientUid: "client",
+            packageId: "soccer_1on1_5", packageName: "1-on-1 Soccer — 5 Sessions",
+            service: "soccer_1on1", billingModel: "session_pack", cadence: "one_time",
+            sessionAllowance: 5, status: "active", paymentStatus: "pending", startsAt: "2026-09-01", endsAt: "2026-09-15",
+            coachNote: "", createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+        });
     });
     const log = (extra = {}) => ({
         coachUid: "coach", clientUid: "client", bookingId: "b2", date: "2026-09-01", status: "completed",
@@ -1189,15 +1290,35 @@ test("session logs: the coach logs a session of an approved booking; the client 
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
     });
     const ref = doc(as("coach"), "sessionLogs/b2_2026-09-01");
-    await assertSucceeds(setDoc(ref, log()));
+    await assertSucceeds(setDoc(ref, log({ packageAssignmentId: "p1" })));
+    // The client can read a linked package-backed session just like any other session log.
+    await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
+    // New package-backed sessions require an active package inside its date window.
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-08"), log({ date: "2026-09-08", packageAssignmentId: "p4" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-08"), log({ date: "2026-09-08", packageAssignmentId: "p5" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-22"), log({ date: "2026-09-22", packageAssignmentId: "p6" })));
+
+    // A package link is valid only for the same coach/client and a completed soccer session.
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-08"), log({
+        date: "2026-09-08", packageAssignmentId: "p2"
+    })));
+    await assertFails(setDoc(doc(as("coach"), "sessionLogs/b2_2026-09-22"), log({
+        date: "2026-09-22", packageAssignmentId: "p3"
+    })));
+    await assertFails(updateDoc(ref, {
+        status: "no-show", workedOn: "", nextTime: "", packageAssignmentId: "p1", updatedAt: serverTimestamp()
+    }));
     // Both of them can read it and list their own.
     await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
     await assertSucceeds(getDocs(query(collection(as("client"), "sessionLogs"), where("clientUid", "==", "client"))));
     await assertSucceeds(getDocs(query(collection(as("coach"), "sessionLogs"), where("coachUid", "==", "coach"))));
+    // Historical package-backed logs remain editable after the package is later paused.
+    await assertSucceeds(updateDoc(doc(as("coach"), "clientPackages/p1"), { status: "paused", updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(ref, { workedOn: "Updated after package was paused.", updatedAt: serverTimestamp() }));
     await assertFails(getDoc(doc(as("stranger"), "sessionLogs/b2_2026-09-01")));
     await assertFails(getDocs(query(collection(as("stranger"), "sessionLogs"), where("clientUid", "==", "client"))));
     // The coach changes it (no-show), keeping who / which / when.
-    await assertSucceeds(updateDoc(ref, { status: "no-show", workedOn: "", nextTime: "", updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(ref, { status: "no-show", workedOn: "", nextTime: "", packageAssignmentId: null, updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { date: "2026-10-08", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { status: "great", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));

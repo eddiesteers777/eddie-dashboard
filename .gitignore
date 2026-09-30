@@ -1,2 +1,4 @@
 node_modules/
 *.log
+functions/.secret.local
+functions/.env*

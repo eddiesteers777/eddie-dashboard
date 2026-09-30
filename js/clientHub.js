@@ -52,6 +52,8 @@ import { reasonLabel } from "./feedbackModel.js";
 import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
+import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
+import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES, isStripeManagedPackage } from "./clientPackageModel.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -127,7 +129,18 @@ function selectTab(name) {
 }
 
 document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+document.addEventListener("change", event => {
+    const select = event.target.closest("[data-package-payment]");
+    if (select) {
+        changePackagePaymentStatus(select.dataset.packagePayment, select.value);
+    }
+});
 document.addEventListener("click", event => {
+    const packageStatus = event.target.closest("[data-package-status]");
+    if (packageStatus) {
+        changePackageStatus(packageStatus.dataset.packageId, packageStatus.dataset.packageStatus);
+        return;
+    }
     if (event.target.closest('[data-act="health-reviewed"]')) {
         markHealthReviewed(record.link.clientUid, record.record?.healthCheckedAt);
         summarize();
@@ -976,6 +989,134 @@ $("hubHistorySearch").addEventListener("input", event => {
     import("./icons.js").then(m => m.hydrate());
 });
 
+function packageDateRange(pkg) {
+    const start = pkg.startsAt ? `Starts ${shortDate(pkg.startsAt)}` : "";
+    const end = pkg.endsAt ? `Ends ${shortDate(pkg.endsAt)}` : "";
+    return [start, end].filter(Boolean).join(" · ");
+}
+
+function packageAllowance(pkg, sessionHistory = []) {
+    if (Number.isFinite(pkg?.sessionAllowance)) {
+        const used = countCompletedPackageSessions(pkg.id, sessionHistory);
+        const remaining = packageRemainingSessions(pkg, used);
+        return `${used} of ${pkg.sessionAllowance} completed · ${remaining} remaining`;
+    }
+    return pkg?.cadence === "monthly" ? "Monthly coaching" : pkg?.cadence === "weekly" ? "Weekly" : "Ongoing";
+}
+
+function packageStatusLabel(status) {
+    return status === "paused" ? "Paused" : status === "completed" ? "Completed" : status === "cancelled" ? "Cancelled" : "Active";
+}
+
+function paymentStatusLabel(status) {
+    return status === "paid" ? "Paid" : status === "past_due" ? "Past due" : status === "comped" ? "Comped" : "Pending";
+}
+
+function renderPackages() {
+    const packages = Array.isArray(record.packages) ? record.packages : [];
+    const sessionHistory = sessionList(record.requests || [], isoDate(new Date()));
+    const el = $("hubPackages");
+    if (!el) return;
+    const active = packages.filter(p => ["active", "paused"].includes(p.status));
+    const history = packages.filter(p => !["active", "paused"].includes(p.status)).slice(0, 4);
+    const empty = `<p class="clients-card-note">No package assigned yet. Services control what the client can access; packages track the coaching entitlement separately.</p>`;
+    const row = pkg => `
+        <div class="hub-package-row">
+            <div class="hub-package-main">
+                <div class="hub-package-head"><strong>${esc(pkg.packageName || pkg.packageId)}</strong><span class="hub-pill ${pkg.status === "active" ? "is-new" : ""}">${esc(packageStatusLabel(pkg.status))}</span></div>
+                <span class="hub-package-detail">${esc(packageAllowance(pkg, sessionHistory))}${packageDateRange(pkg) ? ` · ${esc(packageDateRange(pkg))}` : ""}</span>
+                <div class="hub-package-payment"><span>Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>${isStripeManagedPackage(pkg) ? `<span class="hub-package-stripe-managed">${pkg.stripeSubscriptionStatus ? `Stripe — ${esc(pkg.stripeSubscriptionStatus)}` : "Stripe-managed"}</span>` : `<select class="hub-package-payment-select" aria-label="Billing status" data-package-payment="${esc(pkg.id)}">${PAYMENT_STATUSES.map(status => `<option value="${status}"${status === (pkg.paymentStatus || "pending") ? " selected" : ""}>${esc(paymentStatusLabel(status))}</option>`).join("")}</select>`}</div>
+                ${pkg.coachNote ? `<span class="hub-package-note">${esc(pkg.coachNote)}</span>` : ""}
+            </div>
+            ${pkg.status === "active" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="paused">Pause</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : pkg.status === "paused" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="active">Resume</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : ""}
+        </div>`;
+    el.innerHTML = `
+        <div class="hub-package-heading"><div><span class="hub-section-kicker">Client package</span><h2>Packages</h2></div><button type="button" class="clients-btn-secondary" data-act="assign-package">Add package</button></div>
+        ${active.length ? active.map(row).join("") : empty}
+        ${history.length ? `<details class="hub-package-history"><summary>Recent package history (${history.length})</summary>${history.map(row).join("")}</details>` : ""}
+        <p class="clients-card-note hub-package-footnote">Finite package usage is derived from completed linked session history — there is no manual session counter to drift.</p>`;
+}
+
+async function changePackagePaymentStatus(id, paymentStatus) {
+    if (!PAYMENT_STATUSES.includes(paymentStatus)) return;
+    const pkg = (record.packages || []).find(p => p.id === id);
+    if (!pkg) return;
+    const previous = pkg.paymentStatus || "pending";
+    try {
+        await updateClientPackage(id, { paymentStatus });
+        pkg.paymentStatus = paymentStatus;
+        toast("Billing marked " + paymentStatusLabel(paymentStatus).toLowerCase() + ".");
+    } catch (error) {
+        const selects = document.querySelectorAll("[data-package-payment]");
+        selects.forEach(select => { if (select.dataset.packagePayment === id) select.value = previous; });
+        toast(friendlyError(error, "update the billing status"));
+    }
+}
+
+async function changePackageStatus(id, status) {
+    const pkg = (record.packages || []).find(p => p.id === id);
+    if (!pkg || !["active", "paused", "completed", "cancelled"].includes(status)) return;
+    if (status === "cancelled" && !(await sbConfirm("This keeps the package in history but makes it inactive.", { title: "Cancel package?", confirmLabel: "Cancel package", cancelLabel: "Keep active", danger: true }))) return;
+    try {
+        await updateClientPackage(id, { status });
+        pkg.status = status;
+        pkg.updatedAt = Date.now();
+        renderPackages();
+        toast(`Package marked ${packageStatusLabel(status).toLowerCase()}.`);
+    } catch (error) {
+        toast(friendlyError(error, "update the package"));
+    }
+}
+
+async function assignPackageDialog() {
+    const options = packageCatalogOptions();
+    const d = document.createElement("dialog");
+    d.className = "sb-dialog hub-package-dialog";
+    d.innerHTML = `
+        <form class="sb-dialog-form">
+            <h2 class="sb-dialog-title">Add a package</h2>
+            <p class="sb-dialog-message">Assign a coaching entitlement from the Southbound package catalog. This does not record a payment.</p>
+            <label class="sb-dialog-label">Package<select class="sb-dialog-input" name="packageId" required>${options.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${Number.isFinite(p.sessionAllowance) ? ` — ${p.sessionAllowance} sessions` : ""}</option>`).join("")}</select></label>
+            <div class="hub-package-dates"><label class="sb-dialog-label">Starts<input class="sb-dialog-input" type="date" name="startsAt"></label><label class="sb-dialog-label">Ends<input class="sb-dialog-input" type="date" name="endsAt"></label></div>
+            <label class="sb-dialog-label">Billing status<select class="sb-dialog-input" name="paymentStatus">${PAYMENT_STATUSES.map(status => `<option value="${status}">${esc(paymentStatusLabel(status))}</option>`).join("")}</select></label>
+            <label class="sb-dialog-label">Coach note<textarea class="sb-dialog-input" name="coachNote" rows="3" maxlength="500" placeholder="Optional internal note"></textarea></label>
+            <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
+            <div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button><button type="submit" class="sb-btn sb-btn-primary">Assign package</button></div>
+        </form>`;
+    document.body.appendChild(d);
+    d.addEventListener("close", () => d.remove());
+    d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+    d.querySelector("form").addEventListener("submit", async event => {
+        event.preventDefault();
+        const form = event.target;
+        const data = new FormData(form);
+        const startsAt = String(data.get("startsAt") || "");
+        const endsAt = String(data.get("endsAt") || "");
+        const err = d.querySelector('[data-el="error"]');
+        err.hidden = true;
+        if (startsAt && endsAt && endsAt < startsAt) { err.textContent = "The end date must be on or after the start date."; err.hidden = false; return; }
+        const btn = form.querySelector("button[type=\"submit\"]");
+        btn.disabled = true;
+        try {
+            const pkg = await createPackageForClient(clientUid, String(data.get("packageId") || ""), {
+                startsAt, endsAt, paymentStatus: String(data.get("paymentStatus") || "pending"), coachNote: String(data.get("coachNote") || "")
+            });
+            record.packages = [pkg, ...(record.packages || [])];
+            d.close();
+            renderPackages();
+            toast("Package assigned.");
+        } catch (error) {
+            err.textContent = friendlyError(error, "assign the package");
+            err.hidden = false;
+            btn.disabled = false;
+        }
+    });
+    d.showModal();
+}
+
+document.addEventListener("click", event => {
+    if (event.target.closest('[data-act="assign-package"]')) assignPackageDialog();
+});
 function renderApplication() {
     const { profile, application } = record;
     const requested = serviceLabels(profile?.requestedServices || []);
@@ -1213,6 +1354,11 @@ function findSession(key) {
     return sessionList(record.requests, isoDate(new Date())).find(s => s.bookingId === bookingId && s.date === date) || null;
 }
 
+function sessionHistoryForPackage(currentSession) {
+    return sessionList(record.requests || [], isoDate(new Date()))
+        .filter(x => !(x.bookingId === currentSession.bookingId && x.date === currentSession.date));
+}
+
 async function saveLog(s, fields) {
     const { saveSessionLog } = await import("./sessionLogs.js");
     const log = await saveSessionLog({ bookingId: s.bookingId, date: s.date, clientUid, ...fields });
@@ -1233,6 +1379,38 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
     const future = s.date > isoDate(new Date());
     const choices = SESSION_STATUSES.filter(o => !future || CANCELLED.includes(o.value));
     const current = s.log?.status || (cancelOnly || future ? "cancelled" : "completed");
+    const sessionHistory = sessionList(record.requests || [], isoDate(new Date()));
+    // A package is offered for a new credit only when it is active, inside
+    // its date window, and still has a derived credit remaining. Keep the
+    // currently assigned package visible so a historical log can still be
+    // edited after that package is later paused/completed/cancelled.
+    const availablePackages = s.sessionType === "soccer"
+        ? (record.packages || []).filter(p => {
+            const historyWithoutCurrent = sessionHistory.filter(x => !(x.bookingId === s.bookingId && x.date === s.date));
+            const used = countCompletedPackageSessions(p.id, historyWithoutCurrent);
+            return packageCanConsumeSession(p, s.date, used);
+        })
+        : [];
+    const selectedPackage = s.log?.packageAssignmentId
+        ? (record.packages || []).find(p => p.id === s.log.packageAssignmentId)
+        : null;
+    if (selectedPackage && !availablePackages.some(p => p.id === selectedPackage.id)) availablePackages.push(selectedPackage);
+    const packageFieldHtml = availablePackages.length
+        ? `
+                <label class="hub-log-field"><span>Package credit <em>Optional — completed sessions only</em></span>
+                    <select name="packageAssignmentId">
+                        <option value="">No package credit</option>
+                        ${availablePackages.map(p => {
+                            const historyWithoutCurrent = sessionHistory.filter(x => !(x.bookingId === s.bookingId && x.date === s.date));
+                            const used = countCompletedPackageSessions(p.id, historyWithoutCurrent);
+                            const remaining = packageRemainingSessions(p, used);
+                            const selected = p.id === s.log?.packageAssignmentId ? " selected" : "";
+                            return '<option value="' + esc(p.id) + '"' + selected + '>' + esc(p.packageName || p.packageId) + ' — ' + remaining + ' remaining</option>';
+                        }).join("")}
+                    </select>
+                </label>
+`
+        : "";
     const d = document.createElement("dialog");
     d.className = "sb-dialog hub-log-dialog";
     d.innerHTML = `
@@ -1242,6 +1420,7 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
             <div class="hub-log-status" role="radiogroup" aria-label="What happened">
                 ${choices.map(o => `<label class="hub-log-chip"><input type="radio" name="status" value="${o.value}"${o.value === current ? " checked" : ""}><span>${esc(o.label)}</span></label>`).join("")}
             </div>
+            ${packageFieldHtml}
             <div class="hub-log-words">
                 <label class="hub-log-field"><span>What did you work on? <em>${esc(firstName())} sees this</em></span>
                     <textarea name="workedOn" rows="3" maxlength="1000" data-emoji placeholder="First touch, weak-foot passing, 1v1 finishing">${esc(s.log?.workedOn || "")}</textarea></label>
@@ -1288,10 +1467,21 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
         const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
         try {
+            const packageAssignmentId = words ? String(data.get("packageAssignmentId") || "") || null : null;
+            if (packageAssignmentId) {
+                const pkg = (record.packages || []).find(p => p.id === packageAssignmentId);
+                const historyWithoutCurrent = sessionHistoryForPackage(s);
+                const used = countCompletedPackageSessions(packageAssignmentId, historyWithoutCurrent);
+                const alreadyAssigned = s.log?.packageAssignmentId === packageAssignmentId && s.log?.status === "completed";
+                if (!pkg || (!alreadyAssigned && !packageCanConsumeSession(pkg, s.date, used))) {
+                    throw new Error("package-not-available");
+                }
+            }
             await saveLog(s, {
                 status,
                 workedOn: words ? String(data.get("workedOn") || "") : "",
-                nextTime: words ? String(data.get("nextTime") || "") : ""
+                nextTime: words ? String(data.get("nextTime") || "") : "",
+                packageAssignmentId
             });
             const priv = words ? String(data.get("private") || "").trim() : "";
             if (priv) {
@@ -1729,6 +1919,7 @@ function renderAll() {
     renderTimeline();
     renderHistory();
     renderApplication();
+    renderPackages();
     renderActions();
     renderCheckins();
     renderSessions();

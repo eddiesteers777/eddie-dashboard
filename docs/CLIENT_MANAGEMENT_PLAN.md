@@ -1246,6 +1246,8 @@ Goal:
 
 **Step 1 built 2026-09-29; Step 2 built 2026-09-30.** The Client Hub Progress tab now derives a descriptive 28-day coaching snapshot and a weekly Plan vs. Actual view from the coach-owned plan prescription plus logged workout results. It does not create a second source of truth.
 
+**Step 4 built 2026-09-30.** The client home now shows active or paused package entitlements in a read-only **Your Package** card. Finite soccer packages show completed and remaining sessions from session history; online/monthly coaching stays non-counting. Coach notes and management controls remain hidden from the client.
+
 **Step 3 built 2026-09-30.** Added a six-week training trend model to the Client Hub Progress tab using only already-shared Southbound workout results. The model is intentionally small and reusable so a later client-facing view and explicitly shared wearable data can add richer pace, heart-rate, recovery, and other trends without creating another source of truth.
 
 **Step 4 built 2026-09-30.** Established client-controlled wearable sharing permissions. `wearableShares/{coachUid}_{clientUid}` records only whether the client allows training activity, performance, and recovery/sleep categories to be shared with a linked coach. It contains no COROS credentials or raw wearable data. The client controls creation, updates, and revocation; the linked coach can read the consent status.
@@ -1276,6 +1278,17 @@ Goal:
 
 ## Phase 9 — Packages / billing
 
+**Step 4 built 2026-09-30.** Package assignments now carry a manual billing status (pending, paid, past_due, or comped). Coaches can update that status from the Client Hub, and clients can see the current status on their package card. This remains business metadata only; no payment transaction, processor, invoice, or checkout data is stored.
+
+
+**Step 3 built 2026-09-30.** Completed soccer session logs can now carry the package assignment they consume. The Client Hub calculates completed package sessions and remaining sessions from linked session history instead of storing a mutable usage counter. Non-completed sessions do not consume package credits.
+
+**Step 2 built 2026-09-30.** Client package entitlements now have a dedicated, coach-controlled data model. Assignments snapshot the catalog package identity and finite session allowance, while status/window/coach notes can change without changing package identity. Session usage is not stored as a manually edited counter; completed package-backed soccer sessions derive usage from session history. No payment records or payment provider integration were added.
+
+**Step 1 built 2026-09-30.** Southbound now has a canonical package catalog covering the currently advertised package shapes: online monthly coaching, 1-on-1 soccer single/5/10-session options, group soccer drop-in, and group soccer monthly. Prices remain unset. No payment provider, billing collection, or checkout flow was added; future package assignment and session accounting should reuse this catalog.
+
+**Step 5 built 2026-09-30.** Package-backed session logging now guards package eligibility in the coach/client workflow: new credits only use active packages inside their optional date window with derived credits remaining. Firestore independently enforces the package relationship, soccer service, finite allowance, and active date window for new assignments; historical logs remain editable after a package is later closed. No mutable usage counter was introduced.
+
 Only after the client-management system is stable:
 
 - packages
@@ -1291,6 +1304,42 @@ Goal:
 
 ---
 
+## Phase 10 — Stripe payments
+
+**Step 1 built 2026-09-30.** Stripe payment infrastructure now has a secure Firebase Cloud Functions boundary. `createStripeCheckoutSession` validates the signed-in client's active package assignment and creates a Stripe-hosted Checkout Session from a configured Stripe Price ID. `stripeWebhook` verifies Stripe signatures and updates package billing status from payment events. Stripe secret material stays in Firebase Secret Manager; the static client never receives the secret key.
+
+Not included yet:
+- Stripe Price IDs have not been populated.
+- No live/test payment flow has been deployed yet.
+- No client-facing Pay button or billing screen has been wired into the app yet.
+- No customer portal UI has been added yet.
+
+Next Stripe slices should connect the configured prices to the package catalog, add the client Pay action, and then add the Customer Portal for subscription/payment-method management.
+### Step 2 — client Checkout action
+
+**Step 2 built 2026-09-30.** The client package card now exposes a payment action for active packages that are still pending or past due. The action calls the authenticated Firebase Checkout function and redirects the client to Stripe-hosted Checkout. Returning to Southbound only shows a confirmation message; package billing remains server/webhook-driven.
+
+Prices are still intentionally unconfigured until the Stripe Products/Prices are created and the `STRIPE_CONFIG` secret is populated.
+
+### Step 7 — webhook idempotency
+
+**Step 7 built 2026-09-30.** Stripe webhook event IDs are now tracked server-side so duplicate deliveries are acknowledged without replaying the billing logic. Interrupted or failed events can be retried safely after the stale-claim window.
+
+### Step 6 — lock manual billing edits
+
+**Step 6 built 2026-09-30.** Once Stripe has attached checkout, customer, or subscription state to a client package, the coach can no longer manually change its billing status. The Client Hub replaces the billing dropdown with a Stripe-managed status, while the Firestore rule enforces the same restriction at the security boundary. Manual billing remains available for packages that have never entered Stripe management.
+
+### Step 5 — duplicate subscription protection
+
+**Step 5 built 2026-09-30.** Existing Stripe subscriptions can no longer accidentally create a second subscription from Southbound. The server rejects Checkout creation when a recurring package already has a Stripe subscription, while the client routes a past-due recurring package to Manage Billing instead of starting another subscription.
+
+### Step 4 — subscription lifecycle sync
+
+**Step 4 built 2026-09-30.** Stripe subscription created/updated/deleted webhook events are now reconciled to the linked Southbound package. Southbound stores the Stripe subscription status, maps payment-related statuses such as `active`, `past_due`, `unpaid`, and `incomplete` to its existing billing states, and marks the package cancelled when Stripe reports the subscription has ended. This keeps access/billing state tied to Stripe's asynchronous subscription events instead of the browser.
+
+### Step 3 — Customer Portal
+
+**Step 3 built 2026-09-30.** Clients who have an established Stripe Customer can open Stripe Customer Portal from Settings. The portal session is created by an authenticated Firebase callable function from the server; the client never handles Stripe secret credentials or constructs a billing-portal URL itself.
 # 25. What the Final Southbound Experience Should Feel Like
 
 ## Eddie's side

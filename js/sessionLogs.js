@@ -28,7 +28,7 @@ export async function listSessionLogs(role = "coach") {
 }
 
 // Coach: save what happened at one session (creates or replaces it).
-export async function saveSessionLog({ bookingId, date, clientUid, status, workedOn = "", nextTime = "" }) {
+export async function saveSessionLog({ bookingId, date, clientUid, status, workedOn = "", nextTime = "", packageAssignmentId = null }) {
     const user = await waitForUser();
     const id = logId(bookingId, date);
     const ref = doc(db, "sessionLogs", id);
@@ -36,6 +36,7 @@ export async function saveSessionLog({ bookingId, date, clientUid, status, worke
     const data = {
         coachUid: user.uid, clientUid, bookingId, date, status,
         workedOn: clean(workedOn), nextTime: clean(nextTime),
+        packageAssignmentId: packageAssignmentId ? clean(packageAssignmentId, 200) : null,
         createdAt: existing?.exists() ? existing.data().createdAt : serverTimestamp(),
         updatedAt: serverTimestamp()
     };
