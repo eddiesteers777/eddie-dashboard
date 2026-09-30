@@ -28,3 +28,6 @@ jobs:
 
       - name: Firestore security rules (emulator)
         run: npm run test:rules
+
+      - name: Stripe functions checks
+        run: npm run test:stripe
