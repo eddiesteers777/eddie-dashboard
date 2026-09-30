@@ -792,7 +792,7 @@ service cloud.firestore {
         && d.coachUid is string
         && d.clientUid is string
         && d.packageName is string && d.packageName.size() > 0 && d.packageName.size() <= 120
-        && (d.service == "online_coaching" || d.service == "soccer_1on1" || d.service == "soccer_group")
+        && (d.get("service", "") == "online_coaching" || d.get("service", "") == "soccer_1on1" || d.get("service", "") == "soccer_group")
         && (d.billingModel == "subscription" || d.billingModel == "single" || d.billingModel == "session_pack")
         && (d.cadence == "monthly" || d.cadence == "weekly" || d.cadence == "one_time")
         && (d.sessionAllowance == null || (d.sessionAllowance is int && d.sessionAllowance >= 1 && d.sessionAllowance <= 1000))
@@ -1138,8 +1138,8 @@ service cloud.firestore {
         && d.who in ["self", "child", "other"]
         && strMax(d.athleteName, 60)
         && d.ageRange in ["u10", "10-13", "14-18", "19-29", "30-39", "40-49", "50+"]
-        && d.services is list && d.services.size() > 0 && d.services.size() <= 5
-        && d.services.hasOnly(["online_coaching", "running", "strength", "soccer_1on1", "soccer_group"])
+        && d.get("service", "")s is list && d.get("service", "")s.size() > 0 && d.get("service", "")s.size() <= 5
+        && d.get("service", "")s.hasOnly(["online_coaching", "running", "strength", "soccer_1on1", "soccer_group"])
         && d.goal is string && d.goal.size() > 0 && d.goal.size() <= 300
         && d.startWhen in ["now", "month", "later", "looking"]
         && d.coachedBefore in ["never", "past", "now"]
