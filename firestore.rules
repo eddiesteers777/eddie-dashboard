@@ -256,6 +256,16 @@ service cloud.firestore {
         && get(ref).data.permissions.activity == true;
     }
 
+    function validSharedWearableActivityRun(r) {
+      return r is map
+        && r.keys().hasOnly(["date", "startTime", "distanceMiles", "durationSeconds"])
+        && r.keys().hasAll(["date", "startTime", "distanceMiles", "durationSeconds"])
+        && r.date is string && r.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && r.startTime is string && r.startTime.size() <= 40
+        && r.distanceMiles is number && r.distanceMiles > 0 && r.distanceMiles <= 1000
+        && r.durationSeconds is int && r.durationSeconds >= 0 && r.durationSeconds <= 1000000;
+    }
+
     function validSharedWearableActivity(d) {
       return d.keys().hasOnly([
           "version", "source", "coachUid", "clientUid",
@@ -278,14 +288,14 @@ service cloud.firestore {
         && d.summary.distanceMiles is number && d.summary.distanceMiles >= 0 && d.summary.distanceMiles <= 100000
         && d.summary.durationSeconds is int && d.summary.durationSeconds >= 0 && d.summary.durationSeconds <= 1000000000
         && d.recentRuns is list && d.recentRuns.size() <= 8
-        && d.recentRuns.all(r,
-            r is map
-            && r.keys().hasOnly(["date", "startTime", "distanceMiles", "durationSeconds"])
-            && r.keys().hasAll(["date", "startTime", "distanceMiles", "durationSeconds"])
-            && r.date is string && r.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-            && r.startTime is string && r.startTime.size() <= 40
-            && r.distanceMiles is number && r.distanceMiles > 0 && r.distanceMiles <= 1000
-            && r.durationSeconds is int && r.durationSeconds >= 0 && r.durationSeconds <= 1000000)
+        && (d.recentRuns.size() < 1 || validSharedWearableActivityRun(d.recentRuns[0]))
+        && (d.recentRuns.size() < 2 || validSharedWearableActivityRun(d.recentRuns[1]))
+        && (d.recentRuns.size() < 3 || validSharedWearableActivityRun(d.recentRuns[2]))
+        && (d.recentRuns.size() < 4 || validSharedWearableActivityRun(d.recentRuns[3]))
+        && (d.recentRuns.size() < 5 || validSharedWearableActivityRun(d.recentRuns[4]))
+        && (d.recentRuns.size() < 6 || validSharedWearableActivityRun(d.recentRuns[5]))
+        && (d.recentRuns.size() < 7 || validSharedWearableActivityRun(d.recentRuns[6]))
+        && (d.recentRuns.size() < 8 || validSharedWearableActivityRun(d.recentRuns[7]))
         && d.updatedAt == request.time;
     }
 
