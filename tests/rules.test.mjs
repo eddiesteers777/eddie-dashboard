@@ -1214,7 +1214,7 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await env.withSecurityRulesDisabled(async ctx => {
         const db = ctx.firestore();
         await setDoc(doc(db, "bookingRequests/b2"), {
-            coachUid: "coach", clientUid: "client", status: "approved", coachNote: "",
+            coachUid: "coach", clientUid: "client", status: "approved", coachNote: "", sessionType: "soccer",
             dates: ["2026-09-01", "2026-09-08", "2026-09-22", "2026-10-08", "2026-10-22", "2099-01-15"], startTime: "09:00", endTime: "10:00", slotId: "s1"
         });
         await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [] });
