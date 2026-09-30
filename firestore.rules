@@ -781,47 +781,7 @@ service cloud.firestore {
         && d.cadence in ["monthly", "weekly", "one_time"]
         && (d.sessionAllowance == null || (d.sessionAllowance is int && d.sessionAllowance >= 1 && d.sessionAllowance <= 1000))
         && d.status in ["active", "paused", "completed", "cancelled"]
-        && (d.startsAt == null || (d.startsAt is string && d.startsAt.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
-        && (d.endsAt == null || (d.endsAt is string && d.endsAt.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
-        && d.coachNote is string && d.coachNote.size() <= 500;
-    }
-
-    match /clientPackages/{packageAssignmentId} {
-      allow read: if signedIn()
-        && (resource.data.coachUid == request.auth.uid
-            || resource.data.clientUid == request.auth.uid);
-
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly([
-            "coachUid", "clientUid", "packageId", "packageName", "service",
-            "billingModel", "cadence", "sessionAllowance", "status",
-            "startsAt", "endsAt", "coachNote", "createdAt", "updatedAt"
-        ])
-        && request.resource.data.coachUid == request.auth.uid
-        && linked(request.auth.uid, request.resource.data.clientUid)
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time
-        && validClientPackage(request.resource.data);
-
-      allow update: if signedIn()
-        && resource.data.coachUid == request.auth.uid
-        && linked(request.auth.uid, resource.data.clientUid)
-        && onlyChanges(["status", "startsAt", "endsAt", "coachNote", "updatedAt"])
-        && request.resource.data.coachUid == resource.data.coachUid
-        && request.resource.data.clientUid == resource.data.clientUid
-        && request.resource.data.packageId == resource.data.packageId
-        && request.resource.data.packageName == resource.data.packageName
-        && request.resource.data.service == resource.data.service
-        && request.resource.data.billingModel == resource.data.billingModel
-        && request.resource.data.cadence == resource.data.cadence
-        && request.resource.data.sessionAllowance == resource.data.sessionAllowance
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.updatedAt == request.time
-        && validClientPackage(request.resource.data);
-
-      // Package history should remain intact; archive/complete it instead.
-      allow delete: if false;
-    }
+        && (d.startsAt == null || (d.startsAt is string && d.startsAt.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
 
     function validPlanHeaderFields(d) {
       return d.name is string && d.name.size() > 0 && d.name.size() <= 120
@@ -1601,9 +1561,7 @@ service cloud.firestore {
   }
 }
 )))
-        && d.coachNote is string && d.coachNote.size() <= 500
-        && d.createdAt == request.time
-        && d.updatedAt == request.time;
+        && d.coachNote is string && d.coachNote.size() <= 500;
     }
 
     match /clientPackages/{packageAssignmentId} {
@@ -1619,6 +1577,8 @@ service cloud.firestore {
         ])
         && request.resource.data.coachUid == request.auth.uid
         && linked(request.auth.uid, request.resource.data.clientUid)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
         && validClientPackage(request.resource.data);
 
       allow update: if signedIn()
@@ -1634,12 +1594,12 @@ service cloud.firestore {
         && request.resource.data.cadence == resource.data.cadence
         && request.resource.data.sessionAllowance == resource.data.sessionAllowance
         && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
         && validClientPackage(request.resource.data);
 
       // Package history should remain intact; archive/complete it instead.
       allow delete: if false;
     }
-
     // ---- Coaching plans: the coach owns the prescription ----
 
     function validPlanHeaderFields(d) {
