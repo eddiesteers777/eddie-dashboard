@@ -97,6 +97,13 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + clientUid));
     }
 
+    function wearableActivityAccess(shareId) {
+      let share = get(/databases/$(database)/documents/wearableShares/$(shareId)).data;
+      return share.status == "active"
+        && share.permissions.activity == true
+        && (request.auth.uid == share.clientUid || request.auth.uid == share.coachUid);
+    }
+
     // True when an update touches only the listed fields.
     function onlyChanges(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
@@ -263,11 +270,7 @@ service cloud.firestore {
           && d.syncedAt == request.time;
       }
 
-      allow get, list: if signedIn()
-        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.status == "active"
-        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.permissions.activity == true
-        && (request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
-            || request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.coachUid);
+      allow get, list: if signedIn() && wearableActivityAccess(shareId);
 
       allow create: if signedIn()
         && request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
