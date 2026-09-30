@@ -10,7 +10,8 @@ import {
     paymentStatusForSubscriptionStatus,
     lifecycleUpdateForSubscriptionEvent,
     validateStripeConfig,
-    checkoutBlockedReason
+    checkoutBlockedReason,
+    stripeConfigSummary
 } from "../functions/billingModel.js";
 
 const functionsSource = readFileSync(new URL("../functions/index.js", import.meta.url), "utf8");
@@ -138,4 +139,32 @@ test("paid packages and existing subscriptions are blocked from creating checkou
         }, "subscription"),
         null
     );
+});
+
+test("Stripe readiness summary exposes only safe configuration state", () => {
+    const complete = {
+        secretKey: "sk_test_123456",
+        webhookSecret: "whsec_123456",
+        prices: Object.fromEntries(STRIPE_PACKAGE_IDS.map(id => [id, "price_1234567890"]))
+    };
+    assert.deepEqual(
+        stripeConfigSummary(complete),
+        {
+            ready: true,
+            mode: "test",
+            webhookConfigured: true,
+            configuredPrices: 6,
+            totalPrices: 6,
+            reason: null
+        }
+    );
+    assert.equal(stripeConfigSummary({ secretKey: "sk_live_123456" }).mode, "live");
+    assert.equal(stripeConfigSummary({}).mode, null);
+});
+
+test("Stripe readiness endpoint is coach-only and returns a summary rather than secret values", () => {
+    assert.match(functionsSource, /getStripeBillingReadiness/);
+    assert.match(functionsSource, /profile\?\.role !== 'coach'/);
+    assert.match(functionsSource, /profile\?\.isCoachApproved !== true/);
+    assert.match(functionsSource, /return stripeConfigSummary\(config\)/);
 });
