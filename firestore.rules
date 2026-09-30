@@ -97,13 +97,18 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + clientUid));
     }
 
+    function wearableSharePath(shareId) {
+      return /databases/$(database)/documents/wearableShares/$(shareId);
+    }
+
     function wearableShareData(shareId) {
-      return get(/databases/$(database)/documents/wearableShares/$(shareId)).data;
+      return get(wearableSharePath(shareId)).data;
     }
 
     function wearableActivityShared(shareId) {
-      let d = wearableShareData(shareId);
-      return d.status == "active" && d.permissions.get("activity", false) == true;
+      return exists(wearableSharePath(shareId))
+        && wearableShareData(shareId).get("status", "") == "active"
+        && wearableShareData(shareId).get(["permissions", "activity"], false) == true;
     }
 
     // True when an update touches only the listed fields.
@@ -274,22 +279,22 @@ service cloud.firestore {
 
       allow get, list: if signedIn()
         && wearableActivityShared(shareId)
-        && (request.auth.uid == wearableShareData(shareId).clientUid
-            || request.auth.uid == wearableShareData(shareId).coachUid);
+        && (request.auth.uid == wearableShareData(shareId).get("clientUid", "")
+            || request.auth.uid == wearableShareData(shareId).get("coachUid", ""));
 
       allow create: if signedIn()
-        && request.auth.uid == wearableShareData(shareId).clientUid
+        && request.auth.uid == wearableShareData(shareId).get("clientUid", "")
         && wearableActivityShared(shareId)
         && validWearableActivity(request.resource.data, activityId);
 
       allow update: if signedIn()
-        && request.auth.uid == wearableShareData(shareId).clientUid
+        && request.auth.uid == wearableShareData(shareId).get("clientUid", "")
         && wearableActivityShared(shareId)
         && resource.data.labelId == request.resource.data.labelId
         && validWearableActivity(request.resource.data, activityId);
 
       allow delete: if signedIn()
-        && request.auth.uid == wearableShareData(shareId).clientUid
+        && request.auth.uid == wearableShareData(shareId).get("clientUid", "")
         && resource.data.labelId == activityId;
     }
 
