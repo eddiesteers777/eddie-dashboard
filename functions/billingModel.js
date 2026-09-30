@@ -79,3 +79,29 @@ export function checkoutBlockedReason(pkg, mode) {
     if (mode === 'subscription' && pkg?.stripeSubscriptionId) return 'existing-subscription';
     return null;
 }
+
+export function stripeConfigSummary(config = {}) {
+    const secretKey = typeof config?.secretKey === 'string' ? config.secretKey : '';
+    const mode = secretKey.startsWith('sk_live_')
+        ? 'live'
+        : secretKey.startsWith('sk_test_')
+            ? 'test'
+            : null;
+    const webhookConfigured = typeof config?.webhookSecret === 'string'
+        && /^whsec_[A-Za-z0-9]+$/.test(config.webhookSecret);
+
+    const configuredPrices = STRIPE_PACKAGE_IDS.filter(packageId =>
+        typeof config?.prices?.[packageId] === 'string'
+        && /^price_[A-Za-z0-9]+$/.test(config.prices[packageId])
+    ).length;
+
+    const validation = validateStripeConfig(config);
+    return {
+        ready: validation.ok,
+        mode,
+        webhookConfigured,
+        configuredPrices,
+        totalPrices: STRIPE_PACKAGE_IDS.length,
+        reason: validation.ok ? null : validation.reason
+    };
+}
