@@ -53,7 +53,7 @@ import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
-import { countCompletedPackageSessions, packageRemainingSessions } from "./clientPackageModel.js";
+import { countCompletedPackageSessions, packageRemainingSessions, PAYMENT_STATUSES } from "./clientPackageModel.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -129,6 +129,12 @@ function selectTab(name) {
 }
 
 document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+document.addEventListener("change", event => {
+    const select = event.target.closest("[data-package-payment]");
+    if (select) {
+        changePackagePaymentStatus(select.dataset.packagePayment, select.value);
+    }
+});
 document.addEventListener("click", event => {
     const packageStatus = event.target.closest("[data-package-status]");
     if (packageStatus) {
@@ -1002,6 +1008,10 @@ function packageStatusLabel(status) {
     return status === "paused" ? "Paused" : status === "completed" ? "Completed" : status === "cancelled" ? "Cancelled" : "Active";
 }
 
+function paymentStatusLabel(status) {
+    return status === "paid" ? "Paid" : status === "past_due" ? "Past due" : status === "comped" ? "Comped" : "Pending";
+}
+
 function renderPackages() {
     const packages = Array.isArray(record.packages) ? record.packages : [];
     const sessionHistory = sessionList(record.requests || [], isoDate(new Date()));
@@ -1015,6 +1025,7 @@ function renderPackages() {
             <div class="hub-package-main">
                 <div class="hub-package-head"><strong>${esc(pkg.packageName || pkg.packageId)}</strong><span class="hub-pill ${pkg.status === "active" ? "is-new" : ""}">${esc(packageStatusLabel(pkg.status))}</span></div>
                 <span class="hub-package-detail">${esc(packageAllowance(pkg, sessionHistory))}${packageDateRange(pkg) ? ` · ${esc(packageDateRange(pkg))}` : ""}</span>
+                <div class="hub-package-payment"><span>Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span><select class="hub-package-payment-select" aria-label="Billing status" data-package-payment="${esc(pkg.id)}">${PAYMENT_STATUSES.map(status => `<option value="${status}"${status === (pkg.paymentStatus || "pending") ? " selected" : ""}>${esc(paymentStatusLabel(status))}</option>`).join("")}</select></div>
                 ${pkg.coachNote ? `<span class="hub-package-note">${esc(pkg.coachNote)}</span>` : ""}
             </div>
             ${pkg.status === "active" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="paused">Pause</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : pkg.status === "paused" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="active">Resume</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : ""}
@@ -1024,6 +1035,22 @@ function renderPackages() {
         ${active.length ? active.map(row).join("") : empty}
         ${history.length ? `<details class="hub-package-history"><summary>Recent package history (${history.length})</summary>${history.map(row).join("")}</details>` : ""}
         <p class="clients-card-note hub-package-footnote">Session allowance is stored with the package. Package usage will be connected to session history in the next step.</p>`;
+}
+
+async function changePackagePaymentStatus(id, paymentStatus) {
+    if (!PAYMENT_STATUSES.includes(paymentStatus)) return;
+    const pkg = (record.packages || []).find(p => p.id === id);
+    if (!pkg) return;
+    const previous = pkg.paymentStatus || "pending";
+    try {
+        await updateClientPackage(id, { paymentStatus });
+        pkg.paymentStatus = paymentStatus;
+        toast("Billing marked " + paymentStatusLabel(paymentStatus).toLowerCase() + ".");
+    } catch (error) {
+        const selects = document.querySelectorAll("[data-package-payment]");
+        selects.forEach(select => { if (select.dataset.packagePayment === id) select.value = previous; });
+        toast(friendlyError(error, "update the billing status"));
+    }
 }
 
 async function changePackageStatus(id, status) {
@@ -1051,6 +1078,7 @@ async function assignPackageDialog() {
             <p class="sb-dialog-message">Assign a coaching entitlement from the Southbound package catalog. This does not record a payment.</p>
             <label class="sb-dialog-label">Package<select class="sb-dialog-input" name="packageId" required>${options.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${Number.isFinite(p.sessionAllowance) ? ` — ${p.sessionAllowance} sessions` : ""}</option>`).join("")}</select></label>
             <div class="hub-package-dates"><label class="sb-dialog-label">Starts<input class="sb-dialog-input" type="date" name="startsAt"></label><label class="sb-dialog-label">Ends<input class="sb-dialog-input" type="date" name="endsAt"></label></div>
+            <label class="sb-dialog-label">Billing status<select class="sb-dialog-input" name="paymentStatus">${PAYMENT_STATUSES.map(status => `<option value="${status}">${esc(paymentStatusLabel(status))}</option>`).join("")}</select></label>
             <label class="sb-dialog-label">Coach note<textarea class="sb-dialog-input" name="coachNote" rows="3" maxlength="500" placeholder="Optional internal note"></textarea></label>
             <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
             <div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button><button type="submit" class="sb-btn sb-btn-primary">Assign package</button></div>
@@ -1071,7 +1099,7 @@ async function assignPackageDialog() {
         btn.disabled = true;
         try {
             const pkg = await createPackageForClient(clientUid, String(data.get("packageId") || ""), {
-                startsAt, endsAt, coachNote: String(data.get("coachNote") || "")
+                startsAt, endsAt, paymentStatus: String(data.get("paymentStatus") || "pending"), coachNote: String(data.get("coachNote") || "")
             });
             record.packages = [pkg, ...(record.packages || [])];
             d.close();
