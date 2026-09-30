@@ -6,7 +6,9 @@ import {
     STRIPE_PACKAGE_IDS,
     checkoutModeForPackage,
     priceIdForPackage,
-    stripeMetadata
+    stripeMetadata,
+    paymentStatusForSubscriptionStatus,
+    lifecycleUpdateForSubscriptionEvent
 } from "../functions/billingModel.js";
 
 const functionsSource = readFileSync(new URL("../functions/index.js", import.meta.url), "utf8");
