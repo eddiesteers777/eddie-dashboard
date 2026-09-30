@@ -94,7 +94,7 @@ test("Stripe configuration validator accepts a complete test-mode configuration"
         secretKey: "sk_test_123456",
         webhookSecret: "whsec_123456",
         prices: Object.fromEntries(
-            STRIPE_PACKAGE_IDS.map(id => [id, "price_" + id + "123"])
+            STRIPE_PACKAGE_IDS.map(id => [id, "price_1234567890"])
         )
     });
     assert.deepEqual(result, { ok: true });
@@ -102,7 +102,7 @@ test("Stripe configuration validator accepts a complete test-mode configuration"
 
 test("Stripe configuration validator identifies the first missing required price", () => {
     const prices = Object.fromEntries(
-        STRIPE_PACKAGE_IDS.map(id => [id, "price_" + id + "123"])
+        STRIPE_PACKAGE_IDS.map(id => [id, "price_1234567890"])
     );
     delete prices.online_monthly;
     assert.deepEqual(
