@@ -542,6 +542,105 @@ service cloud.firestore {
       allow delete: if signedIn() && request.auth.uid == resource.data.clientUid;
     }
 
+    function wearablePerformanceConsent(coachUid, clientUid) {
+      let ref = /databases/$(database)/documents/wearableShares/$(coachUid + "_" + clientUid);
+      return exists(ref)
+        && get(ref).data.coachUid == coachUid
+        && get(ref).data.clientUid == clientUid
+        && get(ref).data.status == "active"
+        && get(ref).data.permissions.performance == true;
+    }
+
+    function validSharedWearablePerformanceRun(r) {
+      return r is map
+        && r.keys().hasOnly(["date", "startTime", "distanceMiles", "durationSeconds", "paceSecondsPerMile", "avgHeartRate"])
+        && r.keys().hasAll(["date", "startTime", "distanceMiles", "durationSeconds", "paceSecondsPerMile", "avgHeartRate"])
+        && r.date is string && r.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && r.startTime is string && r.startTime.size() <= 40
+        && r.distanceMiles is number && r.distanceMiles > 0 && r.distanceMiles <= 1000
+        && r.durationSeconds is int && r.durationSeconds >= 0 && r.durationSeconds <= 1000000
+        && r.paceSecondsPerMile is int && r.paceSecondsPerMile >= 0 && r.paceSecondsPerMile <= 3600
+        && r.avgHeartRate is int && r.avgHeartRate >= 0 && r.avgHeartRate <= 260;
+    }
+
+    function validSharedWearablePerformance(d) {
+      return d.keys().hasOnly([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"
+        ])
+        && d.keys().hasAll([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"
+        ])
+        && d.version == 1
+        && d.source == "coros"
+        && d.coachUid is string && d.coachUid.size() > 0 && d.coachUid.size() <= 128
+        && d.clientUid is string && d.clientUid.size() > 0 && d.clientUid.size() <= 128
+        && d.windowFrom is string && d.windowFrom.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.windowTo is string && d.windowTo.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.summary is map
+        && d.summary.keys().hasOnly([
+            "runCount", "averagePaceSecondsPerMile", "averageHeartRate",
+            "bestPaceSecondsPerMile", "bestPaceDistanceMiles", "vo2Max",
+            "thresholdPaceSecondsPerMile", "marathonPrediction",
+            "trainingLoadRatio", "shortTermLoad", "longTermLoad"
+        ])
+        && d.summary.keys().hasAll([
+            "runCount", "averagePaceSecondsPerMile", "averageHeartRate",
+            "bestPaceSecondsPerMile", "bestPaceDistanceMiles", "vo2Max",
+            "thresholdPaceSecondsPerMile", "marathonPrediction",
+            "trainingLoadRatio", "shortTermLoad", "longTermLoad"
+        ])
+        && d.summary.runCount is int && d.summary.runCount >= 0 && d.summary.runCount <= 1000
+        && (d.summary.averagePaceSecondsPerMile == null || (d.summary.averagePaceSecondsPerMile is int && d.summary.averagePaceSecondsPerMile > 0 && d.summary.averagePaceSecondsPerMile <= 3600))
+        && (d.summary.averageHeartRate == null || (d.summary.averageHeartRate is int && d.summary.averageHeartRate > 0 && d.summary.averageHeartRate <= 260))
+        && (d.summary.bestPaceSecondsPerMile == null || (d.summary.bestPaceSecondsPerMile is int && d.summary.bestPaceSecondsPerMile > 0 && d.summary.bestPaceSecondsPerMile <= 3600))
+        && (d.summary.bestPaceDistanceMiles == null || (d.summary.bestPaceDistanceMiles is number && d.summary.bestPaceDistanceMiles > 0 && d.summary.bestPaceDistanceMiles <= 1000))
+        && (d.summary.vo2Max == null || (d.summary.vo2Max is number && d.summary.vo2Max > 0 && d.summary.vo2Max <= 150))
+        && (d.summary.thresholdPaceSecondsPerMile == null || (d.summary.thresholdPaceSecondsPerMile is int && d.summary.thresholdPaceSecondsPerMile > 0 && d.summary.thresholdPaceSecondsPerMile <= 3600))
+        && d.summary.marathonPrediction is string && d.summary.marathonPrediction.size() <= 16
+        && (d.summary.trainingLoadRatio == null || (d.summary.trainingLoadRatio is number && d.summary.trainingLoadRatio > 0 && d.summary.trainingLoadRatio <= 10))
+        && (d.summary.shortTermLoad == null || (d.summary.shortTermLoad is number && d.summary.shortTermLoad > 0 && d.summary.shortTermLoad <= 10000))
+        && (d.summary.longTermLoad == null || (d.summary.longTermLoad is number && d.summary.longTermLoad > 0 && d.summary.longTermLoad <= 10000))
+        && d.recentRuns is list && d.recentRuns.size() <= 8
+        && (d.recentRuns.size() < 1 || validSharedWearablePerformanceRun(d.recentRuns[0]))
+        && (d.recentRuns.size() < 2 || validSharedWearablePerformanceRun(d.recentRuns[1]))
+        && (d.recentRuns.size() < 3 || validSharedWearablePerformanceRun(d.recentRuns[2]))
+        && (d.recentRuns.size() < 4 || validSharedWearablePerformanceRun(d.recentRuns[3]))
+        && (d.recentRuns.size() < 5 || validSharedWearablePerformanceRun(d.recentRuns[4]))
+        && (d.recentRuns.size() < 6 || validSharedWearablePerformanceRun(d.recentRuns[5]))
+        && (d.recentRuns.size() < 7 || validSharedWearablePerformanceRun(d.recentRuns[6]))
+        && (d.recentRuns.size() < 8 || validSharedWearablePerformanceRun(d.recentRuns[7]))
+        && d.updatedAt == request.time;
+    }
+
+    match /sharedWearablePerformance/{shareId} {
+      allow get: if signedIn()
+        && (request.auth.uid == resource.data.clientUid
+            || (request.auth.uid == resource.data.coachUid
+                && linked(request.auth.uid, resource.data.clientUid)
+                && wearablePerformanceConsent(resource.data.coachUid, resource.data.clientUid)));
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.clientUid
+        && shareId == request.resource.data.coachUid + "_" + request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && wearablePerformanceConsent(request.resource.data.coachUid, request.auth.uid)
+        && validSharedWearablePerformance(request.resource.data);
+
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.clientUid
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.version == resource.data.version
+        && onlyChanges(["source", "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"])
+        && wearablePerformanceConsent(request.resource.data.coachUid, request.resource.data.clientUid)
+        && validSharedWearablePerformance(request.resource.data);
+
+      allow delete: if signedIn() && request.auth.uid == resource.data.clientUid;
+    }
+
     match /coachAvailability/{coachUid} {
       allow write: if isUser(coachUid);
       allow read: if isUser(coachUid)
