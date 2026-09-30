@@ -761,6 +761,51 @@ function summarizePlanVsActual(plans, results, today) {
     };
 }
 
+/**
+ * Build a simple six-week training history from data already visible to
+ * the coach. The shape is intentionally small so the same trend model can
+ * later feed a client-facing view and can accept richer wearable metrics.
+ */
+export function summarizeTrainingTrends({ results = [], today = "" } = {}) {
+    if (!today) return { weeks: [], hasData: false };
+
+    const todayDate = new Date(today + "T00:00:00");
+    const dayOfWeek = todayDate.getDay();
+    const currentMonday = addDays(today, -((dayOfWeek + 6) % 7));
+    const starts = Array.from({ length: 6 }, (_, i) => addDays(currentMonday, -7 * (5 - i)));
+
+    const inRange = (date, from, to) => String(date || "") >= from && String(date || "") <= to;
+    const completed = r => r?.status === "completed";
+    const isStrength = r => r?.kind === "strength";
+    const run = r => !isStrength(r);
+
+    const weeks = starts.map(start => {
+        const end = addDays(start, 6);
+        const items = (results || []).filter(r => inRange(r.date, start, end));
+        const completedItems = items.filter(completed);
+        const runItems = completedItems.filter(run);
+        const rpes = completedItems
+            .map(r => Number(r.rpe))
+            .filter(r => Number.isFinite(r) && r >= 1 && r <= 10);
+
+        return {
+            start,
+            end,
+            runMiles: round1(runItems.reduce((sum, r) => sum + (Number(r.distance) || 0), 0)),
+            runSessions: runItems.length,
+            completedWorkouts: completedItems.length,
+            skippedWorkouts: items.filter(r => r?.status === "skipped").length,
+            averageRpe: rpes.length ? round1(rpes.reduce((sum, r) => sum + r, 0) / rpes.length) : null,
+            isCurrent: inRange(today, start, end)
+        };
+    });
+
+    return {
+        weeks,
+        hasData: weeks.some(w => w.runSessions || w.completedWorkouts || w.skippedWorkouts)
+    };
+}
+
 export function summarizeProgress({ plans = {}, results = [], sessions = [], checkins = [], today = "" } = {}) {
     if (!today) return emptyProgress();
 
@@ -811,6 +856,7 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
     const priorTrendCompleted = priorTrendResults.filter(completed).length;
     const percentChange = (recent, prior) => prior > 0 ? Math.round(((recent - prior) / prior) * 100) : null;
     const planVsActual = summarizePlanVsActual(plans, results, today);
+    const trainingTrends = summarizeTrainingTrends({ results, today });
 
     return {
         window: { from: recentFrom, to: today, days: 28 },
@@ -833,6 +879,7 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
             } : null
         },
         planVsActual,
+        trainingTrends,
         activity: {
             completedWorkouts: recentCompleted.length,
             skippedWorkouts: recentResults.filter(r => r?.status === "skipped").length,
@@ -870,6 +917,7 @@ function emptyProgress() {
         window: { from: "", to: "", days: 28 },
         plan: { name: "", weekNumber: null, totalWeeks: null, state: null, week: null },
         planVsActual: { available: false, rows: [], completedWeeks: 0, plannedMiles: 0, actualMiles: 0, milesPct: null },
+        trainingTrends: { weeks: [], hasData: false },
         activity: {
             completedWorkouts: 0, skippedWorkouts: 0, runSessions: 0, runMiles: 0,
             strengthSessions: 0, strengthSets: 0, soccerSessions: 0, soccerCompleted: 0,
