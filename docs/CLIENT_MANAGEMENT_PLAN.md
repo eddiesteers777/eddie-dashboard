@@ -1315,6 +1315,11 @@ Not included yet:
 - No customer portal UI has been added yet.
 
 Next Stripe slices should connect the configured prices to the package catalog, add the client Pay action, and then add the Customer Portal for subscription/payment-method management.
+### Step 2 — client Checkout action
+
+**Step 2 built 2026-09-30.** The client package card now exposes a payment action for active packages that are still pending or past due. The action calls the authenticated Firebase Checkout function and redirects the client to Stripe-hosted Checkout. Returning to Southbound only shows a confirmation message; package billing remains server/webhook-driven.
+
+Prices are still intentionally unconfigured until the Stripe Products/Prices are created and the `STRIPE_CONFIG` secret is populated.
 # 25. What the Final Southbound Experience Should Feel Like
 
 ## Eddie's side
