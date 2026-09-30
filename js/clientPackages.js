@@ -15,7 +15,8 @@
 
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
-import { PACKAGE_CATALOG, getPackage, isFiniteSessionPackage } from "./packageCatalog.js";
+import { getPackage, isFiniteSessionPackage } from "./packageCatalog.js";
+export { packageRemainingSessions, packageCatalogOptions } from "./clientPackageModel.js";
 import {
     collection, doc, getDocs, query, where, setDoc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -131,20 +132,4 @@ export async function updateClientPackage(id, changes = {}) {
     next.updatedAt = serverTimestamp();
     await updateDoc(doc(db, "clientPackages", id), next);
     return next;
-}
-
-// Pure helper used by future session accounting UI.
-// A null allowance means the package does not have a finite session cap.
-export function packageRemainingSessions(pkg, countedSessions = 0) {
-    if (!isFiniteSessionPackage(pkg)) return null;
-    return Math.max(0, pkg.sessionAllowance - Math.max(0, Number(countedSessions) || 0));
-}
-
-export function packageCatalogOptions() {
-    return PACKAGE_CATALOG.filter(pkg => pkg.active).map(pkg => ({
-        id: pkg.id,
-        name: pkg.name,
-        service: pkg.service,
-        sessionAllowance: pkg.sessionAllowance
-    }));
 }
