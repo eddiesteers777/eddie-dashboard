@@ -195,7 +195,6 @@
     "js/userSettings.js",
     "js/wearableActivity.js",
     "js/wearablePerformance.js",
-    "js/wearableRecovery.js",
     "js/weekData.js",
     "js/weekModel.js",
     "js/weekView.js",
