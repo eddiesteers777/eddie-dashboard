@@ -22,3 +22,10 @@ export function packageCatalogOptions() {
         sessionAllowance: pkg.sessionAllowance
     }));
 }
+
+export function countCompletedPackageSessions(packageId, sessions = []) {
+    if (!packageId) return 0;
+    return (sessions || []).filter(s =>
+        s?.log?.status === "completed" && s.log.packageAssignmentId === packageId
+    ).length;
+}
