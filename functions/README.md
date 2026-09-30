@@ -6,6 +6,7 @@ This backend is separate from the static GitHub Pages site.
 
 - `createStripeCheckoutSession` — authenticated callable function that validates a client package assignment and creates a Stripe-hosted Checkout Session.
 - `stripeWebhook` — public HTTPS webhook that verifies Stripe signatures and updates Southbound package billing state after Stripe confirms payment events.
+- `createStripeCustomerPortalSession` — authenticated callable function that creates a short-lived Stripe Customer Portal session for a client with an established Stripe Customer.
 
 ## Secret configuration
 
