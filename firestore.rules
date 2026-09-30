@@ -587,8 +587,8 @@ service cloud.firestore {
             && d.packageAssignmentId.size() > 0 && d.packageAssignmentId.size() <= 200
             && d.status == "completed"
             && b.sessionType == "soccer"
-            && (get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.coachUid == d.coachUid)
-            && (get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.clientUid == d.clientUid)
+            && get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.coachUid == d.coachUid
+            && get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.clientUid == d.clientUid
             && (get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.service == "soccer_1on1"
                 || get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.service == "soccer_group"));
       return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "packageAssignmentId", "createdAt", "updatedAt"])
