@@ -10,6 +10,15 @@ import { app } from './firebase.js';
 const functions = getFunctions(app, 'us-central1');
 const createCheckout = httpsCallable(functions, 'createStripeCheckoutSession');
 
+export async function openStripeCustomerPortal() {
+    const result = await httpsCallable(functions, 'createStripeCustomerPortalSession')();
+    const url = result?.data?.url;
+    if (typeof url !== 'string' || !/^https:\/\/billing\.stripe\.com\//.test(url)) {
+        throw new Error('invalid-portal-url');
+    }
+    window.location.assign(url);
+}
+
 export async function startStripeCheckout(packageAssignmentId) {
     if (!packageAssignmentId) throw new Error('missing-package');
     const result = await createCheckout({ packageAssignmentId });
