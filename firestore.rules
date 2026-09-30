@@ -303,6 +303,75 @@ service cloud.firestore {
       allow delete: if signedIn() && request.auth.uid == resource.data.clientUid;
     }
 
+    function wearableActivityConsent(coachUid, clientUid) {
+      let ref = /databases/$(database)/documents/wearableShares/$(coachUid + "_" + clientUid);
+      return exists(ref)
+        && get(ref).data.coachUid == coachUid
+        && get(ref).data.clientUid == clientUid
+        && get(ref).data.status == "active"
+        && get(ref).data.permissions.activity == true;
+    }
+
+    function validSharedWearableActivity(d) {
+      return d.keys().hasOnly([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"
+        ])
+        && d.keys().hasAll([
+          "version", "source", "coachUid", "clientUid",
+          "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"
+        ])
+        && d.version == 1
+        && d.source == "coros"
+        && d.coachUid is string && d.coachUid.size() > 0 && d.coachUid.size() <= 128
+        && d.clientUid is string && d.clientUid.size() > 0 && d.clientUid.size() <= 128
+        && d.windowFrom is string && d.windowFrom.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.windowTo is string && d.windowTo.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.summary is map
+        && d.summary.keys().hasOnly(["runCount", "distanceMiles", "durationSeconds"])
+        && d.summary.keys().hasAll(["runCount", "distanceMiles", "durationSeconds"])
+        && d.summary.runCount is int && d.summary.runCount >= 0 && d.summary.runCount <= 1000
+        && d.summary.distanceMiles is number && d.summary.distanceMiles >= 0 && d.summary.distanceMiles <= 100000
+        && d.summary.durationSeconds is int && d.summary.durationSeconds >= 0 && d.summary.durationSeconds <= 1000000000
+        && d.recentRuns is list && d.recentRuns.size() <= 8
+        && d.recentRuns.all(r,
+            r is map
+            && r.keys().hasOnly(["date", "startTime", "distanceMiles", "durationSeconds"])
+            && r.keys().hasAll(["date", "startTime", "distanceMiles", "durationSeconds"])
+            && r.date is string && r.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+            && r.startTime is string && r.startTime.size() <= 40
+            && r.distanceMiles is number && r.distanceMiles > 0 && r.distanceMiles <= 1000
+            && r.durationSeconds is int && r.durationSeconds >= 0 && r.durationSeconds <= 1000000)
+        && d.updatedAt == request.time;
+    }
+
+    match /sharedWearableActivity/{shareId} {
+      allow get: if signedIn()
+        && (request.auth.uid == resource.data.clientUid
+            || (request.auth.uid == resource.data.coachUid
+                && linked(request.auth.uid, resource.data.clientUid)
+                && wearableActivityConsent(resource.data.coachUid, resource.data.clientUid)));
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.clientUid
+        && shareId == request.resource.data.coachUid + "_" + request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && wearableActivityConsent(request.resource.data.coachUid, request.auth.uid)
+        && validSharedWearableActivity(request.resource.data);
+
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.clientUid
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.version == resource.data.version
+        && onlyChanges(["source", "windowFrom", "windowTo", "summary", "recentRuns", "updatedAt"])
+        && wearableActivityConsent(request.resource.data.coachUid, request.resource.data.clientUid)
+        && validSharedWearableActivity(request.resource.data);
+
+      allow delete: if signedIn() && request.auth.uid == resource.data.clientUid;
+    }
+
     match /coachAvailability/{coachUid} {
       allow write: if isUser(coachUid);
       allow read: if isUser(coachUid)
