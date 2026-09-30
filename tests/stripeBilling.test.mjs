@@ -8,7 +8,8 @@ import {
     priceIdForPackage,
     stripeMetadata,
     paymentStatusForSubscriptionStatus,
-    lifecycleUpdateForSubscriptionEvent
+    lifecycleUpdateForSubscriptionEvent,
+    validateStripeConfig
 } from "../functions/billingModel.js";
 
 const functionsSource = readFileSync(new URL("../functions/index.js", import.meta.url), "utf8");
@@ -85,5 +86,31 @@ test("subscription deletion ends the linked package, while ordinary updates only
     assert.deepEqual(
         lifecycleUpdateForSubscriptionEvent("customer.subscription.updated", "active"),
         { paymentStatus: "paid" }
+    );
+});
+
+test("Stripe configuration validator accepts a complete test-mode configuration", () => {
+    const result = validateStripeConfig({
+        secretKey: "sk_test_123456",
+        webhookSecret: "whsec_123456",
+        prices: Object.fromEntries(
+            STRIPE_PACKAGE_IDS.map(id => [id, "price_" + id + "123"])
+        )
+    });
+    assert.deepEqual(result, { ok: true });
+});
+
+test("Stripe configuration validator identifies the first missing required price", () => {
+    const prices = Object.fromEntries(
+        STRIPE_PACKAGE_IDS.map(id => [id, "price_" + id + "123"])
+    );
+    delete prices.online_monthly;
+    assert.deepEqual(
+        validateStripeConfig({
+            secretKey: "sk_test_123456",
+            webhookSecret: "whsec_123456",
+            prices
+        }),
+        { ok: false, reason: "missing-price-online_monthly" }
     );
 });
