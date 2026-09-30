@@ -734,6 +734,8 @@ export function summarizeProgress({ plans = {}, results = [], sessions = [], che
             weekNumber: plans.primary?.weekNumber ?? null,
             totalWeeks: plans.primary?.totalWeeks ?? null,
             state: plans.primary?.state || null,
+            startDate: plans.primary?.startDate || null,
+            endDate: plans.primary?.endDate || null,
             week: plans.week ? {
                 planned: plans.week.planned || 0,
                 due: plans.week.dueSoFar || 0,
