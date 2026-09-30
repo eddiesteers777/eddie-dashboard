@@ -183,7 +183,7 @@ test("wearable activity sharing: coach read follows client consent", async () =>
     await assertSucceeds(getDocs(collection(as("coach"), "wearableShares/coach_client/activities")));
 
     await assertSucceeds(updateDoc(shareRef, {
-        status: "active",
+        status: "revoked",
         permissions: { activity: false, performance: false, recovery: false },
         updatedAt: serverTimestamp()
     }));
