@@ -1,3 +1,4 @@
+// Southbound billing cache sync marker — generated precache block follows.
 /* ==========================================
    Southbound Service Worker
 
