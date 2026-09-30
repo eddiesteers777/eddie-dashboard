@@ -53,6 +53,7 @@ import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
+import { countCompletedPackageSessions, packageRemainingSessions } from "./clientPackageModel.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -988,8 +989,12 @@ function packageDateRange(pkg) {
     return [start, end].filter(Boolean).join(" · ");
 }
 
-function packageAllowance(pkg) {
-    if (Number.isFinite(pkg?.sessionAllowance)) return `${pkg.sessionAllowance} sessions included`;
+function packageAllowance(pkg, sessionHistory = []) {
+    if (Number.isFinite(pkg?.sessionAllowance)) {
+        const used = countCompletedPackageSessions(pkg.id, sessionHistory);
+        const remaining = packageRemainingSessions(pkg, used);
+        return `${used} of ${pkg.sessionAllowance} completed · ${remaining} remaining`;
+    }
     return pkg?.cadence === "monthly" ? "Monthly coaching" : pkg?.cadence === "weekly" ? "Weekly" : "Ongoing";
 }
 
@@ -999,6 +1004,7 @@ function packageStatusLabel(status) {
 
 function renderPackages() {
     const packages = Array.isArray(record.packages) ? record.packages : [];
+    const sessionHistory = sessionList(record.requests || [], isoDate(new Date()));
     const el = $("hubPackages");
     if (!el) return;
     const active = packages.filter(p => ["active", "paused"].includes(p.status));
@@ -1008,7 +1014,7 @@ function renderPackages() {
         <div class="hub-package-row">
             <div class="hub-package-main">
                 <div class="hub-package-head"><strong>${esc(pkg.packageName || pkg.packageId)}</strong><span class="hub-pill ${pkg.status === "active" ? "is-new" : ""}">${esc(packageStatusLabel(pkg.status))}</span></div>
-                <span class="hub-package-detail">${esc(packageAllowance(pkg))}${packageDateRange(pkg) ? ` · ${esc(packageDateRange(pkg))}` : ""}</span>
+                <span class="hub-package-detail">${esc(packageAllowance(pkg, sessionHistory))}${packageDateRange(pkg) ? ` · ${esc(packageDateRange(pkg))}` : ""}</span>
                 ${pkg.coachNote ? `<span class="hub-package-note">${esc(pkg.coachNote)}</span>` : ""}
             </div>
             ${pkg.status === "active" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="paused">Pause</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : pkg.status === "paused" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="active">Resume</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : ""}
