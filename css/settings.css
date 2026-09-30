@@ -447,3 +447,80 @@ input[type="checkbox"]{
         align-items:flex-start;
     }
 }
+
+/* Coach/client wearable sharing permissions (consent metadata only). */
+.wearable-sharing-intro{
+    color:var(--text-secondary);
+    font-size:.9rem;
+    line-height:1.55;
+    margin:-8px 0 18px;
+}
+.settings-sharing-empty{
+    padding:12px 14px;
+    border:1px dashed var(--border);
+    border-radius:12px;
+    color:var(--muted);
+    font-size:.88rem;
+    line-height:1.5;
+}
+.wearable-share-row{
+    padding:16px 0;
+    border-top:1px solid var(--border);
+}
+.wearable-share-head{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    align-items:flex-start;
+    margin-bottom:10px;
+}
+.wearable-share-head strong{ display:block; color:var(--text); }
+.wearable-share-head span:not(.wearable-share-status){
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:.8rem;
+}
+.wearable-share-status{
+    flex-shrink:0;
+    padding:4px 8px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--text-secondary);
+    font-size:.75rem;
+    font-weight:700;
+}
+.wearable-share-row label{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    padding:11px 0;
+    border-top:1px solid rgba(243,239,230,.06);
+    cursor:pointer;
+}
+.wearable-share-row label span{ min-width:0; }
+.wearable-share-row label strong{
+    display:block;
+    color:var(--text);
+    font-size:.9rem;
+}
+.wearable-share-row label small{
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:.78rem;
+    line-height:1.4;
+}
+.wearable-share-row input{ flex-shrink:0; }
+.wearable-share-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:12px;
+}
+.wearable-share-actions .settings-btn{ width:auto; }
+.wearable-share-revoke{
+    background:transparent;
+    color:var(--text-secondary);
+}

@@ -11,10 +11,66 @@
 
 import { getTokenRecord, clearCorosToken } from "./corosAuth.js";
 import { autoSendOn, setAutoSend, runCorosAutoSend } from "./corosAutoSend.js";
+import { listMyWearableShares, saveWearableShare } from "./coachAccess.js";
 
 const $ = id => document.getElementById(id);
+const esc = value => String(value ?? "").replace(/[&<>"\']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-function render() {
+async function renderWearableSharing() {
+    const list = $("wearableSharingList");
+    if (!list) return;
+
+    const rows = await listMyWearableShares().catch(error => {
+        console.warn("Southbound: wearable sharing unavailable.", error?.code || error);
+        return [];
+    });
+    if (!rows.length) {
+        list.innerHTML = '<div class="settings-sharing-empty">Connect a coach first. Once you have a linked coach, you can choose exactly which wearable categories to share.</div>';
+        return;
+    }
+
+    list.innerHTML = rows.map(({ link, share }) => {
+        const p = share?.permissions || {};
+        const active = share?.status === "active";
+        const labels = [p.activity ? "training activity" : "", p.performance ? "performance" : "", p.recovery ? "recovery & sleep" : ""].filter(Boolean);
+        return '<div class="wearable-share-row" data-coach-uid="' + esc(link.coachUid) + '">' +
+            '<div class="wearable-share-head"><div><strong>' + esc(link.coachName || "Your coach") + '</strong>' +
+            '<span>' + (active ? "Sharing " + labels.join(", ") : "Not shared") + '</span></div>' +
+            '<span class="wearable-share-status">' + (active ? "Active" : "Off") + '</span></div>' +
+            '<label><span><strong>Training activity</strong><small>Dates, distance, and duration</small></span><input type="checkbox" data-share="activity" ' + (p.activity ? "checked" : "") + '></label>' +
+            '<label><span><strong>Performance</strong><small>Pace, heart rate, load, and fitness metrics</small></span><input type="checkbox" data-share="performance" ' + (p.performance ? "checked" : "") + '></label>' +
+            '<label><span><strong>Recovery &amp; sleep</strong><small>Sleep, HRV, resting heart rate, and recovery/stress</small></span><input type="checkbox" data-share="recovery" ' + (p.recovery ? "checked" : "") + '></label>' +
+            '<div class="wearable-share-actions"><button type="button" class="settings-btn" data-share-save>Save sharing</button>' +
+            (active ? '<button type="button" class="settings-btn wearable-share-revoke" data-share-revoke>Stop sharing</button>' : '') +
+            '</div></div>';
+    }).join("");
+}
+
+$("wearableSharingList")?.addEventListener("click", async event => {
+    const save = event.target.closest("[data-share-save]");
+    const revoke = event.target.closest("[data-share-revoke]");
+    const row = event.target.closest("[data-coach-uid]");
+    if (!row || (!save && !revoke)) return;
+
+    const coachUid = row.dataset.coachUid;
+    const permissions = revoke
+        ? { activity: false, performance: false, recovery: false }
+        : Object.fromEntries([...row.querySelectorAll("[data-share]")].map(input => [input.dataset.share, input.checked]));
+
+    const button = save || revoke;
+    button.disabled = true;
+    try {
+        await saveWearableShare(coachUid, permissions);
+        window.SB?.toast?.(revoke ? "Wearable sharing stopped." : "Wearable sharing settings saved.");
+        await renderWearableSharing();
+    } catch (error) {
+        console.error("Wearable sharing save failed:", error);
+        window.SB?.toast?.("Couldn't save wearable sharing. Try again.", { type: "error" });
+        button.disabled = false;
+    }
+});
+
+async function render() {
     const connected = Boolean(getTokenRecord()?.access_token);
     const off = $("disconnectCorosBtn");
     if (off) off.hidden = !connected;
@@ -23,6 +79,7 @@ function render() {
     if (row) row.hidden = !connected;
     const toggle = $("corosAutoToggle");
     if (toggle) toggle.checked = autoSendOn();
+    await renderWearableSharing();
 }
 
 $("corosAutoToggle")?.addEventListener("change", event => {
@@ -49,5 +106,5 @@ $("disconnectCorosBtn")?.addEventListener("click", async () => {
     window.SB?.toast?.("COROS disconnected.");
 });
 
-window.addEventListener("eddieos:coros-auth-changed", render);
+window.addEventListener("eddieos:coros-auth-changed", () => { render(); renderWearableSharing(); });
 render();

@@ -44,6 +44,47 @@ function sharedPlanDoc(clientUid) {
     return doc(db, "sharedPlans", clientUid);
 }
 
+function wearableShareDoc(coachUid, clientUid) {
+    return doc(db, "wearableShares", coachUid + "_" + clientUid);
+}
+
+export async function readWearableShare(coachUid, clientUid) {
+    if (!coachUid || !clientUid) return null;
+    const snap = await getDoc(wearableShareDoc(coachUid, clientUid));
+    return snap.exists() ? snap.data() : null;
+}
+
+export async function listMyWearableShares() {
+    const coaches = await listMyCoaches();
+    return Promise.all(coaches.map(async link => ({
+        link,
+        share: await readWearableShare(link.coachUid, link.clientUid)
+    })));
+}
+
+export async function saveWearableShare(coachUid, permissions = {}) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const clean = {
+        activity: permissions.activity === true,
+        performance: permissions.performance === true,
+        recovery: permissions.recovery === true
+    };
+    const active = clean.activity || clean.performance || clean.recovery;
+    const ref = wearableShareDoc(coachUid, user.uid);
+    const existing = await getDoc(ref);
+    const payload = {
+        version: 1,
+        coachUid,
+        clientUid: user.uid,
+        status: active ? "active" : "revoked",
+        permissions: clean,
+        updatedAt: serverTimestamp()
+    };
+    if (!existing.exists()) payload.createdAt = serverTimestamp();
+    await setDoc(ref, payload, { merge: true });
+    return { ...payload, active };
+}
 // Firestore doesn't guarantee a nested map's field order survives a
 // round trip, so comparing plain JSON.stringify() output before vs.
 // after a pull can report "changed" even when nothing actually is --
