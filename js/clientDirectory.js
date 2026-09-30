@@ -17,7 +17,7 @@
    js/clientSummary.js turns the result into what the pages show.
 ========================================== */
 
-import { listMyClients, readSharedPlanDoc, readWearableShare } from "./coachAccess.js";
+import { listMyClients, readSharedPlanDoc, readWearableShare, listSharedWearableActivities } from "./coachAccess.js";
 import { getProfile } from "./userProfile.js";
 import { listCheckinsForMyClients } from "./checkins.js";
 import { listRequestsForMyClients } from "./scheduling.js";
@@ -133,7 +133,7 @@ export async function loadClientRecord(clientUid) {
     const links = await listMyClients();
     const link = links.find(l => l.clientUid === clientUid);
     if (!link) return null;
-    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts, results, changes, wearableShare] = await Promise.all([
+    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts, results, changes, wearableShare, wearableActivities] = await Promise.all([
         quiet(getProfile(clientUid)),
         quiet(readSharedPlanDoc(clientUid)),
         quiet(listCheckinsForMyClients()),
@@ -145,7 +145,8 @@ export async function loadClientRecord(clientUid) {
         listDraftsForClient(clientUid).catch(() => []),
         resultsFor(clientUid),
         changesFor(clientUid),
-        readWearableShare(link.coachUid, clientUid).catch(() => null)
+        readWearableShare(link.coachUid, clientUid).catch(() => null),
+        listSharedWearableActivities(link.coachUid, clientUid).catch(() => [])
     ]);
     return {
         link,
@@ -159,6 +160,7 @@ export async function loadClientRecord(clientUid) {
         results,
         changes,
         wearableShare,
+        wearableActivities,
         checkins: (checkins || []).filter(c => c.clientUid === clientUid),
         requests: (requests || []).filter(r => r.clientUid === clientUid)
     };
