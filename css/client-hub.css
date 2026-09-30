@@ -1230,3 +1230,89 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
         text-align:left;
     }
 }
+
+/* ---- Packages (Phase 9) ---- */
+
+.hub-packages-card{ margin-bottom:18px; }
+.hub-package-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:12px;
+}
+.hub-package-heading h2{ margin:0; }
+.hub-package-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    padding:13px 0;
+    border-top:1px solid rgba(243,239,230,.06);
+}
+.hub-package-row:first-of-type{ border-top:0; }
+.hub-package-main{ min-width:0; flex:1; }
+.hub-package-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.hub-package-head strong{ font-size:14.5px; }
+.hub-package-detail{
+    display:block;
+    margin-top:3px;
+    color:var(--text-secondary);
+    font-size:13px;
+}
+.hub-package-note{
+    display:block;
+    margin-top:5px;
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.45;
+}
+.hub-package-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+    flex:0 0 auto;
+}
+.hub-package-actions .hub-link-btn.is-danger{ color:var(--amber); }
+.hub-package-history{
+    margin-top:2px;
+    border-top:1px solid rgba(243,239,230,.06);
+}
+.hub-package-history summary{
+    padding:11px 0 3px;
+    color:var(--text-secondary);
+    font-size:13px;
+    cursor:pointer;
+}
+.hub-package-history .hub-package-row:first-of-type{ border-top:1px solid rgba(243,239,230,.06); }
+.hub-package-footnote{ margin:10px 0 0; }
+.hub-package-dates{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.sb-dialog-label{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    color:var(--text-secondary);
+    font-size:13px;
+    font-weight:600;
+}
+.sb-dialog-label + .sb-dialog-label{ margin-top:12px; }
+@media (max-width:620px){
+    .hub-package-row{ display:block; }
+    .hub-package-actions{
+        justify-content:flex-start;
+        margin-top:10px;
+    }
+}
+@media (max-width:520px){
+    .hub-package-dates{ grid-template-columns:1fr; }
+}
