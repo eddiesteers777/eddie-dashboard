@@ -18,6 +18,10 @@ function statusLabel(status) {
     return status === "paused" ? "Paused" : status === "completed" ? "Completed" : status === "cancelled" ? "Cancelled" : "Active";
 }
 
+function paymentStatusLabel(status) {
+    return status === "paid" ? "Paid" : status === "past_due" ? "Past due" : status === "comped" ? "Comped" : "Pending";
+}
+
 function packageLink(pkg) {
     return ["soccer_1on1", "soccer_group"].includes(pkg?.service) ? "schedule.html" : "plan.html";
 }
@@ -70,7 +74,7 @@ export async function renderClientPackageCard() {
                             <strong>${esc(pkg.packageName || pkg.packageId)}</strong>
                             <span class="eos-package-status ${pkg.status === "paused" ? "is-paused" : ""}">${esc(statusLabel(pkg.status))}</span>
                         </div>
-                        <span class="eos-package-detail">${esc(allowance)}${range ? ` · ${esc(range)}` : ""}</span>
+                        <span class="eos-package-detail">${esc(allowance)}${range ? ` · ${esc(range)}` : ""} · Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>
                     </div>
                     <a class="eos-package-link" href="${destination}">${linkLabel} <span aria-hidden="true">→</span></a>
                 </div>`;
