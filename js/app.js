@@ -156,6 +156,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 console.warn("Southbound: couldn't load the coach card.", error);
                 coachSection.hidden = true;
             });
+        import("./clientPackageCard.js")
+            .then(({ renderClientPackageCard }) => renderClientPackageCard())
+            .catch(error => console.warn("Southbound: client package card failed to load.", error));
     }
 
 });
