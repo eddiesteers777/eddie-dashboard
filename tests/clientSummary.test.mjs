@@ -418,3 +418,51 @@ test("progress: upcoming plan has a real state and no-data snapshot", () => {
     assert.equal(progress.plan.startDate, "2026-10-05");
     assert.equal(progress.hasActivity, false);
 });
+
+
+test("progress: compares planned and actual miles by plan week", () => {
+    const progress = summarizeProgress({
+        today: "2026-10-06",
+        plans: {
+            primary: { name: "Fall 10K", coachPlanId: "p1", weekNumber: 2, totalWeeks: 4, state: "current", startDate: "2026-09-28", endDate: "2026-10-25", planType: "running" },
+            week: { planned: 5, dueSoFar: 2, completed: 1, missed: 1, skipped: 0, plannedMiles: 10, completedMiles: 5 },
+            plans: [{
+                coachPlanId: "p1",
+                generatedPlan: {
+                    weeks: [
+                        { week: 1, startDate: "2026-09-28", days: [
+                            { date: "2026-09-28", type: "easy", miles: 5 },
+                            { date: "2026-09-29", type: "rest", miles: 0 },
+                            { date: "2026-10-01", type: "easy", miles: 5 },
+                            { date: "2026-10-04", type: "rest", miles: 0 }
+                        ]},
+                        { week: 2, startDate: "2026-10-05", days: [
+                            { date: "2026-10-05", type: "easy", miles: 5 },
+                            { date: "2026-10-06", type: "easy", miles: 5 },
+                            { date: "2026-10-11", type: "rest", miles: 0 }
+                        ]},
+                        { week: 3, startDate: "2026-10-12", days: [
+                            { date: "2026-10-12", type: "easy", miles: 6 },
+                            { date: "2026-10-13", type: "easy", miles: 4 }
+                        ]}
+                    ]
+                }
+            }]
+        },
+        results: [
+            { planId: "p1", date: "2026-09-28", status: "completed", distance: 4.5 },
+            { planId: "p1", date: "2026-10-01", status: "completed", distance: 5 },
+            { planId: "p1", date: "2026-10-05", status: "completed", distance: 4 }
+        ]
+    });
+
+    assert.equal(progress.planVsActual.available, true);
+    assert.deepEqual(progress.planVsActual.rows.map(w => [w.week, w.plannedMiles, w.actualMiles, w.completedWorkouts, w.dueWorkouts, w.missedWorkouts]), [
+        [1, 10, 9.5, 2, 2, 0],
+        [2, 10, 4, 1, 2, 0]
+    ]);
+    assert.equal(progress.planVsActual.completedWeeks, 1);
+    assert.equal(progress.planVsActual.plannedMiles, 10);
+    assert.equal(progress.planVsActual.actualMiles, 9.5);
+    assert.equal(progress.planVsActual.milesPct, 95);
+});
