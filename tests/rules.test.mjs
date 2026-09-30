@@ -1266,7 +1266,7 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await assertFails(getDoc(doc(as("stranger"), "sessionLogs/b2_2026-09-01")));
     await assertFails(getDocs(query(collection(as("stranger"), "sessionLogs"), where("clientUid", "==", "client"))));
     // The coach changes it (no-show), keeping who / which / when.
-    await assertSucceeds(updateDoc(ref, { status: "no-show", workedOn: "", nextTime: "", updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(ref, { status: "no-show", workedOn: "", nextTime: "", packageAssignmentId: null, updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { date: "2026-10-08", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { status: "great", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
