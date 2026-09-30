@@ -8,7 +8,8 @@
 ========================================== */
 
 import { getTokenRecord } from "./corosAuth.js";
-import { callTool } from "./corosClient.js";
+import { waitForUser } from "./auth.js";
+import { callTool, mcpRequest } from "./corosClient.js";
 import { findRecords, normalizeActivity } from "./corosParse.js";
 import {
     readWearableShare,
@@ -58,7 +59,7 @@ function formatCorosDate(iso) {
 }
 
 async function activityTool() {
-    const result = await callTool("tools/list");
+    const result = await mcpRequest("tools/list");
     const tools = Array.isArray(result?.tools) ? result.tools : [];
     const tool = tools.find(t => t?.name === "querySportRecords");
     if (!tool) throw new Error("COROS did not expose its activity history tool.");
@@ -98,7 +99,9 @@ export async function syncWearableActivityForCoach(coachUid, { days = 28 } = {})
     if (!coachUid) throw new Error("No coach selected.");
     if (!getTokenRecord()?.access_token) throw new Error("Connect COROS before sharing activity.");
 
-    const share = await readWearableShare(coachUid);
+    const user = await waitForUser();
+    if (!user) throw new Error("Sign in before sharing activity.");
+    const share = await readWearableShare(coachUid, user.uid);
     if (share?.status !== "active" || share.permissions?.activity !== true) {
         throw new Error("Turn on Training activity sharing before syncing.");
     }
