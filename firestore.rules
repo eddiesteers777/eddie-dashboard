@@ -851,8 +851,6 @@ service cloud.firestore {
         && linked(request.auth.uid, request.resource.data.clientUid)
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
-        && (request.resource.data.get("paymentStatus", "") == resource.data.get("paymentStatus", "")
-            || !stripeManagedPackage(resource.data))
         && validClientPackage(request.resource.data);
 
       allow update: if signedIn()
@@ -869,6 +867,8 @@ service cloud.firestore {
         && request.resource.data.sessionAllowance == resource.data.sessionAllowance
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt == request.time
+        && (request.resource.data.get("paymentStatus", "") == resource.data.get("paymentStatus", "")
+            || !stripeManagedPackage(resource.data))
         && validClientPackage(request.resource.data);
 
       allow delete: if false;
