@@ -5,7 +5,7 @@
 import { auth } from "./firebase.js";
 import { toast, friendlyError } from "./ui.js";
 import { listMyPackages } from "./clientPackages.js";
-import { openStripeCustomerPortal } from "./stripeBilling.js";
+import { getStripeBillingReadiness, openStripeCustomerPortal } from "./stripeBilling.js";
 
 import {
     onAuthStateChanged
@@ -29,6 +29,9 @@ const avatar = document.getElementById("settingsAvatar");
 const logoutBtn = document.getElementById("logoutBtn");
 const billingCard = document.getElementById("billingCard");
 const manageBillingBtn = document.getElementById("manageBillingBtn");
+const stripeSetupCard = document.getElementById("stripeSetupCard");
+const checkStripeSetupBtn = document.getElementById("checkStripeSetupBtn");
+const stripeSetupResult = document.getElementById("stripeSetupResult");
 
 // Units, week start, goal time, weekly mileage and the "AI Coach"
 // switches used to live here too; nothing ever read them, so they were
@@ -131,6 +134,49 @@ function saveSettings() {
 usdaApiKey.addEventListener("change", saveSettings);
 
 // =====================================
+// Stripe Setup
+// =====================================
+
+function stripeSetupMessage(summary) {
+    if (!summary?.mode) return "Stripe is not configured yet. Add the STRIPE_CONFIG secret first.";
+    const prices = `${Number(summary.configuredPrices || 0)}/${Number(summary.totalPrices || 0)} Prices connected`;
+    const webhook = summary.webhookConfigured ? "Webhook secret set" : "Webhook secret missing";
+    if (summary.ready && summary.mode === "test") {
+        return `Ready for test payments · ${prices} · ${webhook}`;
+    }
+    if (summary.ready && summary.mode === "live") {
+        return `Stripe is configured in LIVE mode · ${prices} · ${webhook}`;
+    }
+    const reason = String(summary.reason || "configuration-incomplete")
+        .replace(/^missing-price-/, "Missing Price: ")
+        .replace(/-/g, " ");
+    return `Not ready · ${reason} · ${prices} · ${webhook}`;
+}
+
+async function refreshStripeSetup() {
+    if (!stripeSetupResult || !checkStripeSetupBtn) return;
+    checkStripeSetupBtn.disabled = true;
+    checkStripeSetupBtn.textContent = "Checking…";
+    stripeSetupResult.hidden = false;
+    stripeSetupResult.textContent = "Checking Stripe configuration…";
+    stripeSetupResult.dataset.state = "checking";
+    try {
+        const summary = await getStripeBillingReadiness();
+        stripeSetupResult.textContent = stripeSetupMessage(summary);
+        stripeSetupResult.dataset.state = summary.ready
+            ? (summary.mode === "test" ? "ready" : "live")
+            : "incomplete";
+    } catch (error) {
+        console.error("Stripe setup check failed:", error);
+        stripeSetupResult.textContent = "Couldn't check Stripe setup right now. Make sure the Stripe Functions are deployed.";
+        stripeSetupResult.dataset.state = "error";
+    } finally {
+        checkStripeSetupBtn.disabled = false;
+        checkStripeSetupBtn.textContent = "Check Stripe Setup";
+    }
+}
+
+// =====================================
 // Billing
 // =====================================
 
@@ -146,6 +192,8 @@ manageBillingBtn?.addEventListener("click", async () => {
         toast(friendlyError(error, "open billing management"), { type: "error" });
     }
 });
+
+checkStripeSetupBtn?.addEventListener("click", refreshStripeSetup);
 
 // =====================================
 // Logout
