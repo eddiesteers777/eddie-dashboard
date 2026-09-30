@@ -265,8 +265,7 @@ service cloud.firestore {
           && shareId == d.coachUid + "_" + d.clientUid
           && d.activityShared is bool
           && d.activities is list
-          && d.activities.size() <= 100
-          && d.updatedAt == request.time;
+          && d.activities.size() <= 100;
       }
 
       allow get: if signedIn()
@@ -282,7 +281,8 @@ service cloud.firestore {
         && request.resource.data.coachUid != request.auth.uid
         && shareId == request.resource.data.coachUid + "_" + request.auth.uid
         && linked(request.resource.data.coachUid, request.auth.uid)
-        && validWearableActivityData(request.resource.data);
+        && validWearableActivityData(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
 
       allow update: if signedIn()
         && request.auth.uid == resource.data.clientUid
@@ -290,7 +290,8 @@ service cloud.firestore {
         && request.resource.data.clientUid == resource.data.clientUid
         && request.resource.data.version == resource.data.version
         && onlyChanges(["activityShared", "activities", "updatedAt"])
-        && validWearableActivityData(request.resource.data);
+        && validWearableActivityData(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
 
       allow delete: if false;
     }
