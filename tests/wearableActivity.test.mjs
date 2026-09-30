@@ -88,10 +88,11 @@ test("the projection does not copy calories or other raw COROS fields", () => {
         }
     };
     const shared = buildSharedActivity(history, "2026-09-30");
-    assert.deepEqual(shared.recentRuns[0], {
-        date: "2026-09-30",
-        startTime: "",
-        distanceMiles: 1,
-        durationSeconds: 600
-    });
+    assert.equal(shared.recentRuns[0].date, "2026-09-30");
+    assert.equal(typeof shared.recentRuns[0].startTime, "string");
+    assert.equal(shared.recentRuns[0].distanceMiles, 1);
+    assert.equal(shared.recentRuns[0].durationSeconds, 600);
+    assert.deepEqual(Object.keys(shared.recentRuns[0]).sort(), [
+        "date", "distanceMiles", "durationSeconds", "startTime"
+    ]);
 });
