@@ -49,3 +49,6 @@ firebase deploy --only functions
 After deployment, register the `stripeWebhook` HTTPS URL in Stripe Workbench and use its `whsec_...` signing secret in `STRIPE_CONFIG`.
 
 Keep the Stripe account in test mode until checkout and webhook behavior has been verified end-to-end.
+
+
+The coach-only getStripeBillingReadiness callable reports safe configuration state (mode, configured Price count, and webhook-secret presence) without returning secret values or Price IDs.
