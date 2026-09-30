@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildClientProgressModel, formatMiles } from "../js/clientProgress.js";
+import { buildClientProgressModel, formatMiles } from "../js/clientProgressModel.js";
 
 test("formatMiles keeps client progress compact", () => {
     assert.equal(formatMiles(12.34), "12.3");
