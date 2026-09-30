@@ -1272,6 +1272,8 @@ Goal:
 
 > Client interaction becomes simple and low-friction.
 
+**First Phase 8 slice built 2026-09-30.** The client home now includes a compact **Recent Progress** card. It reuses the existing `summarizeProgress()` model and `workoutResults` data to show completed workouts, recent run mileage, a 14-day comparison, and the last six weeks of logged training. No new Firestore collection or duplicate progress source was introduced.
+
 ---
 
 ## Phase 9 — Packages / billing

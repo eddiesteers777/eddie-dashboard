@@ -61,6 +61,8 @@
     "js/clientHub.js",
     "js/clientNotes.js",
     "js/clientProfileForm.js",
+    "js/clientProgress.js",
+    "js/clientProgressModel.js",
     "js/clientRecordSchema.js",
     "js/clientRecords.js",
     "js/clientSummary.js",

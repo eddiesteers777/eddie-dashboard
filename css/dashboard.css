@@ -613,3 +613,117 @@
 }
 
 .eos-coach-empty a{color:var(--primary);}
+
+.eos-client-progress[hidden]{display:none;}
+
+.eos-progress-summary{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-bottom:14px;
+}
+
+.eos-progress-summary > div{
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.eos-progress-summary strong{
+    font-size:22px;
+    line-height:1;
+}
+
+.eos-progress-summary span{
+    color:var(--text-secondary);
+    font-size:12.5px;
+}
+
+.eos-progress-comparison{
+    margin:0 0 14px;
+    color:var(--text-secondary);
+    font-size:13px;
+}
+
+.eos-progress-weeks{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:8px;
+}
+
+.eos-progress-week{
+    min-width:0;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px 8px;
+    background:var(--surface-light);
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    text-align:center;
+}
+
+.eos-progress-week span{
+    color:var(--text-secondary);
+    font-size:11px;
+}
+
+.eos-progress-week strong{
+    font-size:14px;
+}
+
+.eos-progress-week small{
+    color:var(--text-secondary);
+    font-size:10.5px;
+    line-height:1.25;
+}
+
+.eos-progress-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:12px;
+    color:var(--text-secondary);
+    font-size:11.5px;
+}
+
+.eos-progress-footer a{
+    color:var(--primary);
+    white-space:nowrap;
+}
+
+.eos-progress-empty{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    color:var(--text-secondary);
+    font-size:13.5px;
+    line-height:1.5;
+}
+
+.eos-progress-empty strong{
+    color:var(--text);
+}
+
+.eos-progress-empty a{
+    color:var(--primary);
+    width:max-content;
+    margin-top:3px;
+}
+
+@media (max-width:700px){
+    .eos-progress-weeks{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+
+    .eos-progress-footer{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+}
+
