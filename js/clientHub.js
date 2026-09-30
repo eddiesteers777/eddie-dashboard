@@ -52,6 +52,7 @@ import { reasonLabel } from "./feedbackModel.js";
 import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
+import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -128,6 +129,11 @@ function selectTab(name) {
 
 document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
 document.addEventListener("click", event => {
+    const packageStatus = event.target.closest("[data-package-status]");
+    if (packageStatus) {
+        changePackageStatus(packageStatus.dataset.packageId, packageStatus.dataset.packageStatus);
+        return;
+    }
     if (event.target.closest('[data-act="health-reviewed"]')) {
         markHealthReviewed(record.link.clientUid, record.record?.healthCheckedAt);
         summarize();
@@ -976,6 +982,107 @@ $("hubHistorySearch").addEventListener("input", event => {
     import("./icons.js").then(m => m.hydrate());
 });
 
+function packageDateRange(pkg) {
+    const start = pkg.startsAt ? `Starts ${shortDate(pkg.startsAt)}` : "";
+    const end = pkg.endsAt ? `Ends ${shortDate(pkg.endsAt)}` : "";
+    return [start, end].filter(Boolean).join(" · ");
+}
+
+function packageAllowance(pkg) {
+    if (Number.isFinite(pkg?.sessionAllowance)) return `${pkg.sessionAllowance} sessions included`;
+    return pkg?.cadence === "monthly" ? "Monthly coaching" : pkg?.cadence === "weekly" ? "Weekly" : "Ongoing";
+}
+
+function packageStatusLabel(status) {
+    return status === "paused" ? "Paused" : status === "completed" ? "Completed" : status === "cancelled" ? "Cancelled" : "Active";
+}
+
+function renderPackages() {
+    const packages = Array.isArray(record.packages) ? record.packages : [];
+    const el = $("hubPackages");
+    if (!el) return;
+    const active = packages.filter(p => ["active", "paused"].includes(p.status));
+    const history = packages.filter(p => !["active", "paused"].includes(p.status)).slice(0, 4);
+    const empty = `<p class="clients-card-note">No package assigned yet. Services control what the client can access; packages track the coaching entitlement separately.</p>`;
+    const row = pkg => `
+        <div class="hub-package-row">
+            <div class="hub-package-main">
+                <div class="hub-package-head"><strong>${esc(pkg.packageName || pkg.packageId)}</strong><span class="hub-pill ${pkg.status === "active" ? "is-new" : ""}">${esc(packageStatusLabel(pkg.status))}</span></div>
+                <span class="hub-package-detail">${esc(packageAllowance(pkg))}${packageDateRange(pkg) ? ` · ${esc(packageDateRange(pkg))}` : ""}</span>
+                ${pkg.coachNote ? `<span class="hub-package-note">${esc(pkg.coachNote)}</span>` : ""}
+            </div>
+            ${pkg.status === "active" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="paused">Pause</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : pkg.status === "paused" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="active">Resume</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : ""}
+        </div>`;
+    el.innerHTML = `
+        <div class="hub-package-heading"><div><span class="hub-section-kicker">Client package</span><h2>Packages</h2></div><button type="button" class="clients-btn-secondary" data-act="assign-package">Add package</button></div>
+        ${active.length ? active.map(row).join("") : empty}
+        ${history.length ? `<details class="hub-package-history"><summary>Recent package history (${history.length})</summary>${history.map(row).join("")}</details>` : ""}
+        <p class="clients-card-note hub-package-footnote">Session allowance is stored with the package; usage will be calculated from session history rather than edited manually.</p>`;
+}
+
+async function changePackageStatus(id, status) {
+    const pkg = (record.packages || []).find(p => p.id === id);
+    if (!pkg || !["active", "paused", "completed", "cancelled"].includes(status)) return;
+    if (status === "cancelled" && !(await sbConfirm("This keeps the package in history but makes it inactive.", { title: "Cancel package?", confirmLabel: "Cancel package", cancelLabel: "Keep active", danger: true }))) return;
+    try {
+        await updateClientPackage(id, { status });
+        pkg.status = status;
+        pkg.updatedAt = Date.now();
+        renderPackages();
+        toast(`Package marked ${packageStatusLabel(status).toLowerCase()}.`);
+    } catch (error) {
+        toast(friendlyError(error, "update the package"));
+    }
+}
+
+async function assignPackageDialog() {
+    const options = packageCatalogOptions();
+    const d = document.createElement("dialog");
+    d.className = "sb-dialog hub-package-dialog";
+    d.innerHTML = `
+        <form class="sb-dialog-form">
+            <h2 class="sb-dialog-title">Add a package</h2>
+            <p class="sb-dialog-message">Assign a coaching entitlement from the Southbound package catalog. This does not record a payment.</p>
+            <label class="sb-dialog-label">Package<select class="sb-dialog-input" name="packageId" required>${options.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${Number.isFinite(p.sessionAllowance) ? ` — ${p.sessionAllowance} sessions` : ""}</option>`).join("")}</select></label>
+            <div class="hub-package-dates"><label class="sb-dialog-label">Starts<input class="sb-dialog-input" type="date" name="startsAt"></label><label class="sb-dialog-label">Ends<input class="sb-dialog-input" type="date" name="endsAt"></label></div>
+            <label class="sb-dialog-label">Coach note<textarea class="sb-dialog-input" name="coachNote" rows="3" maxlength="500" placeholder="Optional internal note"></textarea></label>
+            <p class="pw-gen-error" data-el="error" role="alert" hidden></p>
+            <div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button><button type="submit" class="sb-btn sb-btn-primary">Assign package</button></div>
+        </form>`;
+    document.body.appendChild(d);
+    d.addEventListener("close", () => d.remove());
+    d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+    d.querySelector("form").addEventListener("submit", async event => {
+        event.preventDefault();
+        const form = event.target;
+        const data = new FormData(form);
+        const startsAt = String(data.get("startsAt") || "");
+        const endsAt = String(data.get("endsAt") || "");
+        const err = d.querySelector('[data-el="error"]');
+        err.hidden = true;
+        if (startsAt && endsAt && endsAt < startsAt) { err.textContent = "The end date must be on or after the start date."; err.hidden = false; return; }
+        const btn = form.querySelector("button[type=\"submit\"]");
+        btn.disabled = true;
+        try {
+            const pkg = await createPackageForClient(clientUid, String(data.get("packageId") || ""), {
+                startsAt, endsAt, coachNote: String(data.get("coachNote") || "")
+            });
+            record.packages = [pkg, ...(record.packages || [])];
+            d.close();
+            renderPackages();
+            toast("Package assigned.");
+        } catch (error) {
+            err.textContent = friendlyError(error, "assign the package");
+            err.hidden = false;
+            btn.disabled = false;
+        }
+    });
+    d.showModal();
+}
+
+document.addEventListener("click", event => {
+    if (event.target.closest('[data-act="assign-package"]')) assignPackageDialog();
+});
 function renderApplication() {
     const { profile, application } = record;
     const requested = serviceLabels(profile?.requestedServices || []);
@@ -1729,6 +1836,7 @@ function renderAll() {
     renderTimeline();
     renderHistory();
     renderApplication();
+    renderPackages();
     renderActions();
     renderCheckins();
     renderSessions();
