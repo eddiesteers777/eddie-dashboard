@@ -49,3 +49,7 @@ firebase deploy --only functions
 After deployment, register the `stripeWebhook` HTTPS URL in Stripe Workbench and use its `whsec_...` signing secret in `STRIPE_CONFIG`.
 
 Keep the Stripe account in test mode until checkout and webhook behavior has been verified end-to-end.
+
+## Webhook idempotency
+
+Stripe webhook deliveries are tracked in the server-only stripeWebhookEvents/{eventId} collection. A processed event is acknowledged without running its business logic again; a failed or stale in-progress event can be retried. Clients have no Firestore access to this collection.

@@ -1,9 +1,9 @@
 import { initializeApp } from 'firebase-admin/app';
-import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { defineJsonSecret, defineString } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import Stripe from 'stripe';
-import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent, checkoutBlockedReason } from './billingModel.js';
+import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent, checkoutBlockedReason, stripeWebhookEventDecision } from './billingModel.js';
 
 initializeApp();
 const db = getFirestore();
@@ -177,7 +177,31 @@ export const stripeWebhook = onRequest(
             return;
         }
 
+        const eventRef = db.collection('stripeWebhookEvents').doc(event.id);
+        let shouldProcess = false;
         try {
+            await db.runTransaction(async transaction => {
+                const snap = await transaction.get(eventRef);
+                const decision = stripeWebhookEventDecision(
+                    snap.exists ? snap.data() : null
+                );
+                if (decision === 'skip') return;
+                shouldProcess = true;
+                const now = Timestamp.now();
+                transaction.set(eventRef, {
+                    eventId: event.id,
+                    eventType: event.type,
+                    status: 'processing',
+                    updatedAt: now,
+                    ...(snap.exists ? {} : { createdAt: now })
+                }, { merge: true });
+            });
+
+            if (!shouldProcess) {
+                res.status(200).json({ received: true, duplicate: true });
+                return;
+            }
+
             switch (event.type) {
                 case 'customer.subscription.created':
                 case 'customer.subscription.updated':
@@ -256,8 +280,20 @@ export const stripeWebhook = onRequest(
                 default:
                     break;
             }
+            await eventRef.set({
+                status: 'processed',
+                processedAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp()
+            }, { merge: true });
             res.status(200).json({ received: true });
         } catch (error) {
+            if (shouldProcess) {
+                await eventRef.set({
+                    status: 'failed',
+                    updatedAt: FieldValue.serverTimestamp(),
+                    errorMessage: String(error?.message || 'Webhook processing failed').slice(0, 500)
+                }, { merge: true }).catch(() => {});
+            }
             console.error('Southbound Stripe webhook processing failed.', error);
             res.status(500).send('Webhook processing failed');
         }

@@ -10,7 +10,8 @@ import {
     paymentStatusForSubscriptionStatus,
     lifecycleUpdateForSubscriptionEvent,
     validateStripeConfig,
-    checkoutBlockedReason
+    checkoutBlockedReason,
+    stripeWebhookEventDecision
 } from "../functions/billingModel.js";
 
 const functionsSource = readFileSync(new URL("../functions/index.js", import.meta.url), "utf8");
@@ -137,5 +138,25 @@ test("paid packages and existing subscriptions are blocked from creating checkou
             paymentStatus: "pending"
         }, "subscription"),
         null
+    );
+});
+
+test("Stripe webhook idempotency processes new events and skips processed or actively claimed events", () => {
+    const now = 1_800_000_000_000;
+    assert.equal(stripeWebhookEventDecision(null, now), "process");
+    assert.equal(stripeWebhookEventDecision({ status: "processed" }, now), "skip");
+    assert.equal(
+        stripeWebhookEventDecision({
+            status: "processing",
+            updatedAt: { toMillis: () => now - 60_000 }
+        }, now),
+        "skip"
+    );
+    assert.equal(
+        stripeWebhookEventDecision({
+            status: "failed",
+            updatedAt: { toMillis: () => now - (6 * 60_000) }
+        }, now),
+        "process"
     );
 });

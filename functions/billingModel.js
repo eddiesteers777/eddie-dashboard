@@ -79,3 +79,14 @@ export function checkoutBlockedReason(pkg, mode) {
     if (mode === 'subscription' && pkg?.stripeSubscriptionId) return 'existing-subscription';
     return null;
 }
+
+    
+export function stripeWebhookEventDecision(record, nowMs = Date.now(), staleAfterMs = 5 * 60 * 1000) {
+    if (!record) return "process";
+    if (record.status === "processed") return "skip";
+    const updatedMs = typeof record.updatedAt?.toMillis === "function"
+        ? record.updatedAt.toMillis()
+        : Number(record.updatedAt);
+    if (Number.isFinite(updatedMs) && nowMs - updatedMs < staleAfterMs) return "skip";
+    return "process";
+}
