@@ -33,13 +33,10 @@ test("Stripe price IDs are validated against the known package catalog", () => {
         priceIdForPackage("online_monthly", { prices: { online_monthly: "price_123" } }),
         "price_123"
     );
-    assert.throws(
-        () => priceIdForPackage("not_a_package", { prices: {} }),
-        /unknown Stripe package/
-    );
-    assert.throws(
-        () => priceIdForPackage("online_monthly", { prices: { online_monthly: "not-a-price" } }),
-        /invalid Stripe price ID/
+    assert.equal(priceIdForPackage("not_a_package", { prices: {} }), null);
+    assert.equal(
+        priceIdForPackage("online_monthly", { prices: { online_monthly: "not-a-price" } }),
+        null
     );
 });
 
