@@ -3,7 +3,7 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { defineJsonSecret, defineString } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import Stripe from 'stripe';
-import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent } from './billingModel.js';
+import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent, checkoutBlockedReason } from './billingModel.js';
 
 initializeApp();
 const db = getFirestore();
@@ -35,8 +35,11 @@ async function loadClientPackage(clientUid, packageAssignmentId) {
     if (pkg.endsAt && String(pkg.endsAt) < todayIso()) throw new HttpsError('failed-precondition', 'That package has ended.');
     const mode = checkoutModeForPackage(pkg);
     if (!mode) throw new HttpsError('failed-precondition', 'That package cannot be purchased through Stripe.');
-    if (pkg.paymentStatus === 'paid') throw new HttpsError('already-exists', 'That package is already marked paid.');
-    if (mode === 'subscription' && pkg.stripeSubscriptionId) {
+    const blockedReason = checkoutBlockedReason(pkg, mode);
+    if (blockedReason === 'already-paid') {
+        throw new HttpsError('already-exists', 'That package is already marked paid.');
+    }
+    if (blockedReason === 'existing-subscription') {
         throw new HttpsError('failed-precondition', 'This package already has a Stripe subscription. Use Manage Billing to update it.');
     }
     if (!STRIPE_PACKAGE_IDS.includes(pkg.packageId)) throw new HttpsError('failed-precondition', 'That package is not in the Stripe catalog.');
