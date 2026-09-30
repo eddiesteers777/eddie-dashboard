@@ -1230,3 +1230,36 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
         text-align:left;
     }
 }
+
+.hub-progress-wearable-summary{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:12px;
+}
+.hub-progress-wearable-summary span{
+    padding:7px 10px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--text-secondary);
+    font-size:12px;
+}
+.hub-progress-wearable-summary strong{ color:var(--text); }
+.hub-wearable-activity-list{ display:grid; gap:8px; }
+.hub-wearable-activity-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 0;
+    border-top:1px solid rgba(243,239,230,.06);
+}
+.hub-wearable-activity-row:first-child{ border-top:0; }
+.hub-wearable-activity-row > div:last-child{ text-align:right; }
+.hub-wearable-activity-row strong{ display:block; color:var(--text); font-size:13px; }
+.hub-wearable-activity-row span{
+    display:block;
+    margin-top:2px;
+    color:var(--muted);
+    font-size:11.5px;
+}
+.hub-progress-wearable-note{ margin-top:12px; }

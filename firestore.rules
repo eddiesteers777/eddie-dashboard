@@ -97,6 +97,13 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + clientUid));
     }
 
+    function wearableActivityAccess(shareId) {
+      let share = get(/databases/$(database)/documents/wearableShares/$(shareId)).data;
+      return share.status == "active"
+        && share.permissions.activity == true
+        && (request.auth.uid == share.clientUid || request.auth.uid == share.coachUid);
+    }
+
     // True when an update touches only the listed fields.
     function onlyChanges(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
@@ -247,6 +254,48 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+    match /wearableActivityData/{shareId} {
+      function validWearableActivityData(d) {
+        return d.keys().hasOnly(["version", "coachUid", "clientUid", "activityShared", "activities", "updatedAt"])
+          && d.keys().hasAll(["version", "coachUid", "clientUid", "activityShared", "activities", "updatedAt"])
+          && d.version == 1
+          && d.coachUid is string && d.coachUid.size() > 0 && d.coachUid.size() <= 128
+          && d.clientUid is string && d.clientUid.size() > 0 && d.clientUid.size() <= 128
+          && d.coachUid != d.clientUid
+          && shareId == d.coachUid + "_" + d.clientUid
+          && d.activityShared is bool
+          && d.activities is list
+          && d.activities.size() <= 100;
+      }
+
+      allow get: if signedIn()
+        && validWearableActivityData(resource.data)
+        && (request.auth.uid == resource.data.clientUid
+            || (request.auth.uid == resource.data.coachUid
+                && linked(resource.data.coachUid, resource.data.clientUid)
+                && resource.data.activityShared == true));
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.clientUid
+        && request.resource.data.coachUid != request.auth.uid
+        && shareId == request.resource.data.coachUid + "_" + request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && validWearableActivityData(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.clientUid
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.version == resource.data.version
+        && onlyChanges(["activityShared", "activities", "updatedAt"])
+        && validWearableActivityData(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
     match /coachAvailability/{coachUid} {
       allow write: if isUser(coachUid);
       allow read: if isUser(coachUid)

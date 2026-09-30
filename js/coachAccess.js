@@ -85,6 +85,68 @@ export async function saveWearableShare(coachUid, permissions = {}) {
     await setDoc(ref, payload, { merge: true });
     return { ...payload, active };
 }
+
+export async function listSharedWearableActivities(coachUid, clientUid) {
+    if (!coachUid || !clientUid) return [];
+    const share = await readWearableShare(coachUid, clientUid);
+    if (share?.status !== "active" || share.permissions?.activity !== true) return [];
+    const snap = await getDoc(doc(db, "wearableActivityData", coachUid + "_" + clientUid));
+    if (!snap.exists() || snap.data()?.activityShared !== true) return [];
+    return Array.isArray(snap.data()?.activities)
+        ? snap.data().activities.map(activity => ({ ...activity }))
+            .sort((a, b) => String(b.startTime || b.date || "").localeCompare(String(a.startTime || a.date || "")))
+        : [];
+}
+
+export async function saveSharedWearableActivities(coachUid, activities = []) {
+    const user = await waitForUser();
+    if (!user || !coachUid) throw new Error("not-signed-in");
+    const shareId = coachUid + "_" + user.uid;
+    const share = await readWearableShare(coachUid, user.uid);
+    if (share?.status !== "active" || share.permissions?.activity !== true) {
+        throw new Error("wearable-activity-sharing-not-enabled");
+    }
+
+    const compact = activities
+        .filter(activity => activity?.labelId)
+        .map(activity => ({
+            labelId: String(activity.labelId).slice(0, 128),
+            date: String(activity.date || ""),
+            startTime: String(activity.startTime || "").slice(0, 80),
+            sport: String(activity.sport || "Activity").slice(0, 80),
+            name: String(activity.name || activity.sport || "Activity").slice(0, 200),
+            distanceMeters: Math.max(0, Number(activity.distanceMeters) || 0),
+            durationSeconds: Math.max(0, Number(activity.durationSeconds) || 0)
+        }))
+        .slice(0, 100);
+
+    await setDoc(doc(db, "wearableActivityData", shareId), {
+        version: 1,
+        coachUid,
+        clientUid: user.uid,
+        activityShared: true,
+        activities: compact,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    return compact.length;
+}
+
+export async function clearSharedWearableActivities(coachUid) {
+    const user = await waitForUser();
+    if (!user || !coachUid) throw new Error("not-signed-in");
+    const shareId = coachUid + "_" + user.uid;
+    await setDoc(doc(db, "wearableActivityData", shareId), {
+        version: 1,
+        coachUid,
+        clientUid: user.uid,
+        activityShared: false,
+        activities: [],
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+    return true;
+}
+
 // Firestore doesn't guarantee a nested map's field order survives a
 // round trip, so comparing plain JSON.stringify() output before vs.
 // after a pull can report "changed" even when nothing actually is --

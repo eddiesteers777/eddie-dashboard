@@ -133,6 +133,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 | `inviteCodes/{code}` | One-time codes a client gives a coach. Never listable; expire after 7 days. |
 | `coachLinks/{coachUid}_{clientUid}` | Proof a client linked a coach. It gates everything below. Only an approved coach can create one, in the same batch that deletes (burns) a valid code from that client (`redeemInviteCode` in `js/coachAccess.js`). |
 | `wearableShares/{coachUid}_{clientUid}` | Client-controlled wearable consent categories; no COROS tokens or raw wearable data. Coach reads only while linked; client creates/updates/revokes. |
+| `wearableShares/{coachUid}_{clientUid}/activities/{activityId}` | Client-shared compact COROS activity summaries; readable only while activity sharing is active; client controls writes. |
 | `sharedPlans/{clientUid}` | Mirror of the client's training/race plans + coach notes |
 | `coachAvailability/{coachUid}` | Weekly slots + blackout dates |
 | `bookingRequests/{id}` | Session requests (single or recurring). Only the coach can approve/deny; the client can only cancel; booking details never change after creation. |

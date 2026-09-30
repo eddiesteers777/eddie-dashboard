@@ -151,6 +151,56 @@ test("wearable sharing: only a linked client can create and control their consen
     await assertFails(setDoc(doc(as("client"), "wearableShares/bad3"), { ...base, status: "revoked", permissions: { activity: true, performance: false, recovery: false }, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
 });
 
+// ---- Shared wearable activity data (Phase 7 Step 5A) ----
+
+test("wearable activity sharing: coach read follows client consent", async () => {
+    await seedLinkAndBooking();
+    const ref = doc(as("client"), "wearableActivityData/coach_client");
+    const base = {
+        version: 1,
+        coachUid: "coach",
+        clientUid: "client",
+        activityShared: true,
+        activities: [{
+            labelId: "run123",
+            date: "2026-10-01",
+            startTime: "2026-10-01T07:30:00.000Z",
+            sport: "Outdoor Run",
+            name: "Easy Run",
+            distanceMeters: 8046.7,
+            durationSeconds: 2520
+        }],
+        updatedAt: serverTimestamp()
+    };
+
+    await assertSucceeds(setDoc(ref, base));
+    await assertSucceeds(getDoc(doc(as("coach"), "wearableActivityData/coach_client")));
+    await assertSucceeds(getDoc(doc(as("client"), "wearableActivityData/coach_client")));
+
+    await assertSucceeds(updateDoc(ref, {
+        activityShared: false,
+        activities: [],
+        updatedAt: serverTimestamp()
+    }));
+    await assertFails(getDoc(doc(as("coach"), "wearableActivityData/coach_client")));
+    await assertSucceeds(getDoc(ref));
+
+    await assertFails(setDoc(doc(as("stranger"), "wearableActivityData/coach_client"), { ...base, clientUid: "stranger", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), "wearableActivityData/coach_client"), { activityShared: true, activities: base.activities, updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(ref));
+
+    await assertSucceeds(updateDoc(ref, {
+        activityShared: true,
+        activities: base.activities,
+        updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(getDoc(doc(as("coach"), "wearableActivityData/coach_client")));
+
+    await assertFails(updateDoc(ref, { coachUid: "coach2", updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(as("client"), "wearableActivityData/wrong_id"), { ...base, updatedAt: serverTimestamp() }));
+});
+
+
 // ---- Profile privacy (critical) ----
 
 test("other users cannot read or list profiles", async () => {

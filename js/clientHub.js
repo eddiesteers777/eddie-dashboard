@@ -546,6 +546,7 @@ function renderProgress() {
     const c = progress.checkins;
     const pva = progress.planVsActual;
     const tt = progress.trainingTrends;
+    const wearableActivities = Array.isArray(record.wearableActivities) ? record.wearableActivities : [];
     const services = record.profile?.services || [];
 
     const hasTrainingService = services.some(s => ["online_coaching", "running", "strength"].includes(s));
@@ -715,6 +716,24 @@ function renderProgress() {
                     : "The client has not enabled wearable-data sharing with you.") +
             '</p>' +
             '<p class="clients-card-note">Sharing permissions are client-controlled. This record contains consent settings, not COROS sign-in tokens or raw wearable data.</p>' +
+        '</section>' +
+
+        '<section class="clients-card hub-progress-shared-wearable-card">' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">Shared COROS activity</span><h2>' +
+                (record.wearableShare?.status === "active" && record.wearableShare?.permissions?.activity ? "Available" : "Not shared") +
+            '</h2></div></div>' +
+            (record.wearableShare?.status === "active" && record.wearableShare?.permissions?.activity
+                ? (wearableActivities.length
+                    ? '<div class="hub-progress-wearable-summary">' +
+                        '<span><strong>' + wearableActivities.length + '</strong> activities</span>' +
+                        '<span><strong>' + (wearableActivities.filter(x => /run|trail/i.test(x.sport || x.name)).reduce((sum, x) => sum + (Number(x.distanceMeters) || 0), 0) / 1609.344).toFixed(1) + ' mi</strong> running</span>' +
+                      '</div>' +
+                      '<div class="hub-wearable-activity-list">' +
+                        wearableActivities.slice(0, 5).map(x => '<div class="hub-wearable-activity-row"><div><strong>' + esc(x.name || x.sport || "Activity") + '</strong><span>' + esc(x.date || "") + '</span></div><div><strong>' + ((Number(x.distanceMeters) || 0) / 1609.344).toFixed((Number(x.distanceMeters) || 0) / 1609.344 < 10 ? 2 : 1) + ' mi</strong><span>' + Math.round(Number(x.durationSeconds) || 0) + ' sec</span></div></div>').join("") +
+                      '</div>'
+                    : '<div class="hub-progress-empty"><strong>No shared COROS activity yet</strong><span>The client has enabled activity sharing, but no activity has been synced yet.</span></div>')
+                : '<div class="hub-progress-empty"><strong>Wearable activity is private</strong><span>The client has not enabled Training activity sharing with you.</span></div>') +
+            '<p class="clients-card-note hub-progress-wearable-note">Only the client can connect COROS and send activity data. This card contains shared activity summaries, not COROS credentials.</p>' +
         '</section>' +
 
         '<section class="clients-card">' +

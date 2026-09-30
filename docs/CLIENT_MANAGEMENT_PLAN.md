@@ -1251,6 +1251,7 @@ Goal:
 **Step 4 in progress 2026-09-30.** Established client-controlled wearable sharing permissions. `wearableShares/{coachUid}_{clientUid}` records only whether the client allows training activity, performance, and recovery/sleep categories to be shared with a linked coach. It contains no COROS credentials or raw wearable data. The client controls creation, updates, and revocation; the linked coach can read the consent status.
 ---
 
+**Step 5A in progress 2026-09-30.** Added the first shared wearable-data pipeline for COROS training activity. A client uses their own COROS connection to sync compact activity summaries to their explicitly permitted coach; the Client Hub reads those shared summaries. The initial payload is limited to activity date, sport/name, distance, and duration. No COROS credentials are shared.
 ## Phase 8 — Improve client-side experience
 
 The client gets:

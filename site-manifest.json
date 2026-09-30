@@ -193,6 +193,7 @@
     "js/updates.js",
     "js/userProfile.js",
     "js/userSettings.js",
+    "js/wearableActivitySync.js",
     "js/weekData.js",
     "js/weekModel.js",
     "js/weekView.js",
