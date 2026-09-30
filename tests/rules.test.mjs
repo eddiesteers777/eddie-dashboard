@@ -151,6 +151,53 @@ test("wearable sharing: only a linked client can create and control their consen
     await assertFails(setDoc(doc(as("client"), "wearableShares/bad3"), { ...base, status: "revoked", permissions: { activity: true, performance: false, recovery: false }, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
 });
 
+// ---- Shared wearable activity data (Phase 7 Step 5A) ----
+
+test("wearable activity sharing: coach read follows client consent", async () => {
+    await seedLinkAndBooking();
+    const shareRef = doc(as("client"), "wearableShares/coach_client");
+    await assertSucceeds(setDoc(shareRef, {
+        version: 1,
+        coachUid: "coach",
+        clientUid: "client",
+        status: "active",
+        permissions: { activity: true, performance: false, recovery: false },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    }));
+
+    const activity = {
+        version: 1,
+        labelId: "run123",
+        date: "2026-10-01",
+        startTime: "2026-10-01T07:30:00.000Z",
+        sport: "Outdoor Run",
+        name: "Easy Run",
+        distanceMeters: 8046.7,
+        durationSeconds: 2520,
+        syncedAt: serverTimestamp()
+    };
+    const activityRef = doc(as("client"), "wearableShares/coach_client/activities/run123");
+    await assertSucceeds(setDoc(activityRef, activity));
+    await assertSucceeds(getDoc(doc(as("coach"), "wearableShares/coach_client/activities/run123")));
+    await assertSucceeds(getDocs(collection(as("coach"), "wearableShares/coach_client/activities")));
+
+    await assertSucceeds(updateDoc(shareRef, {
+        status: "active",
+        permissions: { activity: false, performance: false, recovery: false },
+        updatedAt: serverTimestamp()
+    }));
+    await assertFails(getDoc(doc(as("coach"), "wearableShares/coach_client/activities/run123")));
+    await assertFails(getDocs(collection(as("coach"), "wearableShares/coach_client/activities")));
+
+    await assertSucceeds(getDoc(activityRef));
+    await assertSucceeds(deleteDoc(activityRef));
+
+    // Coach and stranger cannot write activity data.
+    await assertFails(setDoc(doc(as("coach"), "wearableShares/coach_client/activities/run124"), { ...activity, labelId: "run124", syncedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(as("stranger"), "wearableShares/coach_client/activities/run125"), { ...activity, labelId: "run125", syncedAt: serverTimestamp() }));
+});
+
 // ---- Profile privacy (critical) ----
 
 test("other users cannot read or list profiles", async () => {
