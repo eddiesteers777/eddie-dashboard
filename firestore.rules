@@ -777,18 +777,16 @@ service cloud.firestore {
     }
 
     // ---- Client package entitlements ----
-    // A package assignment is coaching/entitlement metadata, not payment
-    // proof. Only the linked coach may create or change it; the client
-    // can read their own assignments. Package identity never changes.
+    // A package assignment is coaching/entitlement metadata; payment status
+    // is a manually maintained business status, not a transaction record.
+    // Only the linked coach may create/change it; the client can read it.
     function validClientPackage(d) {
-      return (
-          d.get("packageId", "") == "online_monthly"
+      return (d.get("packageId", "") == "online_monthly"
           || d.get("packageId", "") == "soccer_1on1_single"
           || d.get("packageId", "") == "soccer_1on1_5"
           || d.get("packageId", "") == "soccer_1on1_10"
           || d.get("packageId", "") == "soccer_group_drop_in"
-          || d.get("packageId", "") == "soccer_group_monthly"
-        )
+          || d.get("packageId", "") == "soccer_group_monthly")
         && d.get("coachUid", "") is string
         && d.get("clientUid", "") is string
         && d.get("packageName", "") is string && d.get("packageName", "").size() > 0 && d.get("packageName", "").size() <= 120
@@ -797,6 +795,7 @@ service cloud.firestore {
         && (d.get("cadence", "") == "monthly" || d.get("cadence", "") == "weekly" || d.get("cadence", "") == "one_time")
         && (d.get("sessionAllowance", null) == null || (d.get("sessionAllowance", null) is int && d.get("sessionAllowance", null) >= 1 && d.get("sessionAllowance", null) <= 1000))
         && (d.get("status", "") == "active" || d.get("status", "") == "paused" || d.get("status", "") == "completed" || d.get("status", "") == "cancelled")
+        && (d.get("paymentStatus", "") == "pending" || d.get("paymentStatus", "") == "paid" || d.get("paymentStatus", "") == "past_due" || d.get("paymentStatus", "") == "comped")
         && (d.get("startsAt", null) == null || (d.get("startsAt", null) is string && d.get("startsAt", null).matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
         && (d.get("endsAt", null) == null || (d.get("endsAt", null) is string && d.get("endsAt", null).matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
         && d.get("coachNote", "") is string && d.get("coachNote", "").size() <= 500;
@@ -810,7 +809,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly([
             "coachUid", "clientUid", "packageId", "packageName", "service",
-            "billingModel", "cadence", "sessionAllowance", "status",
+            "billingModel", "cadence", "sessionAllowance", "status", "paymentStatus",
             "startsAt", "endsAt", "coachNote", "createdAt", "updatedAt"
         ])
         && request.resource.data.coachUid == request.auth.uid
@@ -822,7 +821,7 @@ service cloud.firestore {
       allow update: if signedIn()
         && resource.data.coachUid == request.auth.uid
         && linked(request.auth.uid, resource.data.clientUid)
-        && onlyChanges(["status", "startsAt", "endsAt", "coachNote", "updatedAt"])
+        && onlyChanges(["status", "paymentStatus", "startsAt", "endsAt", "coachNote", "updatedAt"])
         && request.resource.data.coachUid == resource.data.coachUid
         && request.resource.data.clientUid == resource.data.clientUid
         && request.resource.data.packageId == resource.data.packageId
@@ -835,7 +834,6 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time
         && validClientPackage(request.resource.data);
 
-      // Package history should remain intact; archive/complete it instead.
       allow delete: if false;
     }
     // ---- Coaching plans: the coach owns the prescription ----
