@@ -9,6 +9,8 @@
 import { listMyPackages } from "./clientPackages.js";
 import { listSessionLogs } from "./sessionLogs.js";
 import { countCompletedPackageSessions, packageRemainingSessions } from "./clientPackageModel.js";
+import { startStripeCheckout } from "./stripeBilling.js";
+import { friendlyError, toast } from "./ui.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"]/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"' : "&quot;" }[c])
@@ -20,6 +22,30 @@ function statusLabel(status) {
 
 function paymentStatusLabel(status) {
     return status === "paid" ? "Paid" : status === "past_due" ? "Past due" : status === "comped" ? "Comped" : "Pending";
+}
+
+function paymentAction(pkg) {
+    if (pkg.status !== "active") return null;
+    if (pkg.paymentStatus === "comped" || pkg.paymentStatus === "paid") return null;
+    return pkg.billingModel === "subscription"
+        ? (pkg.paymentStatus === "past_due" ? "Retry payment" : "Subscribe")
+        : (pkg.paymentStatus === "past_due" ? "Retry payment" : "Pay now");
+}
+
+function handleStripeReturn() {
+    const params = new URLSearchParams(location.search);
+    const result = params.get("stripe");
+    if (!result) return;
+    if (result === "success") {
+        toast("Payment submitted. Stripe is confirming it now. Your package will update after Stripe confirms payment.");
+    } else if (result === "cancelled") {
+        toast("Payment cancelled. Your package was not marked paid.", { type: "info" });
+    }
+    params.delete("stripe");
+    params.delete("session_id");
+    const next = params.toString();
+    const cleanUrl = location.pathname + (next ? "?" + next : "") + location.hash;
+    history.replaceState(null, "", cleanUrl);
 }
 
 function packageLink(pkg) {
@@ -34,6 +60,7 @@ function dateRange(pkg) {
 }
 
 export async function renderClientPackageCard() {
+    handleStripeReturn();
     const section = document.getElementById("clientPackageSection");
     const body = document.getElementById("clientPackageBody");
     if (!section || !body) return;
@@ -67,6 +94,7 @@ export async function renderClientPackageCard() {
             const range = dateRange(pkg);
             const destination = packageLink(pkg);
             const linkLabel = ["soccer_1on1", "soccer_group"].includes(pkg.service) ? "View Sessions" : "View Plan";
+            const payLabel = paymentAction(pkg);
             return `
                 <div class="eos-package-row">
                     <div class="eos-package-main">
@@ -76,11 +104,28 @@ export async function renderClientPackageCard() {
                         </div>
                         <span class="eos-package-detail">${esc(allowance)}${range ? ` · ${esc(range)}` : ""} · Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>
                     </div>
-                    <a class="eos-package-link" href="${destination}">${linkLabel} <span aria-hidden="true">→</span></a>
+                    <div class="eos-package-actions">
+                        <a class="eos-package-link" href="${destination}">${linkLabel} <span aria-hidden="true">→</span></a>
+                        ${payLabel ? `<button type="button" class="eos-package-pay" data-pay-package="${esc(pkg.id)}">${payLabel}</button>` : ""}
+                    </div>
                 </div>`;
         }).join("");
 
         section.hidden = false;
+        body.querySelectorAll("[data-pay-package]").forEach(button => {
+            button.addEventListener("click", async () => {
+                const id = button.dataset.payPackage;
+                button.disabled = true;
+                button.textContent = "Opening…";
+                try {
+                    await startStripeCheckout(id);
+                } catch (error) {
+                    button.disabled = false;
+                    button.textContent = paymentAction(visible.find(pkg => pkg.id === id)) || "Pay";
+                    toast(friendlyError(error, "start payment"), { type: "error" });
+                }
+            });
+        });
     } catch (error) {
         console.warn("Southbound: client package card unavailable.", error);
         section.hidden = true;
