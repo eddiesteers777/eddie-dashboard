@@ -1248,7 +1248,9 @@ Goal:
 
 **Step 3 built 2026-09-30.** Added a six-week training trend model to the Client Hub Progress tab using only already-shared Southbound workout results. The model is intentionally small and reusable so a later client-facing view and explicitly shared wearable data can add richer pace, heart-rate, recovery, and other trends without creating another source of truth.
 
-**Step 4 in progress 2026-09-30.** Established client-controlled wearable sharing permissions. `wearableShares/{coachUid}_{clientUid}` records only whether the client allows training activity, performance, and recovery/sleep categories to be shared with a linked coach. It contains no COROS credentials or raw wearable data. The client controls creation, updates, and revocation; the linked coach can read the consent status.
+**Step 4 built 2026-09-30.** Established client-controlled wearable sharing permissions. `wearableShares/{coachUid}_{clientUid}` records only whether the client allows training activity, performance, and recovery/sleep categories to be shared with a linked coach. It contains no COROS credentials or raw wearable data. The client controls creation, updates, and revocation; the linked coach can read the consent status.
+
+**Step 5A built 2026-09-30 on the feature branch.** Training Activity sharing now projects the client's private COROS run history into `sharedWearableActivity/{coachUid}_{clientUid}` only when the client has enabled the Activity permission. The coach sees a compact last-28-days summary and recent run dates/distance/duration. Pace, heart rate, calories, recovery, sleep, and COROS credentials are not copied into this Step 5A projection. The shared activity is deliberately kept separate from Southbound logged workouts so the same run is not counted twice.
 ---
 
 ## Phase 8 — Improve client-side experience

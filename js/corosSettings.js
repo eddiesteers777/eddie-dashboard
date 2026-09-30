@@ -12,6 +12,7 @@
 import { getTokenRecord, clearCorosToken } from "./corosAuth.js";
 import { autoSendOn, setAutoSend, runCorosAutoSend } from "./corosAutoSend.js";
 import { listMyWearableShares, saveWearableShare } from "./coachAccess.js";
+import { syncSharedWearableActivity } from "./wearableActivity.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"\']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -61,6 +62,7 @@ $("wearableSharingList")?.addEventListener("click", async event => {
     button.disabled = true;
     try {
         await saveWearableShare(coachUid, permissions);
+        await syncSharedWearableActivity();
         window.SB?.toast?.(revoke ? "Wearable sharing stopped." : "Wearable sharing settings saved.");
         await renderWearableSharing();
     } catch (error) {

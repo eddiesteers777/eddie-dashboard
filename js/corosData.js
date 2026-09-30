@@ -5,6 +5,7 @@ import { mcpRequest } from "./corosClient.js";
 import { unwrapResult, findRecords, normalizeActivity } from "./corosParse.js";
 import { readLoad, readRecovery, readFitness, recentRunRows } from "./corosMetrics.js";
 import { HISTORY_KEY, FITNESS_KEY, emptyHistory, mergeRuns, markCovered, windowsToFetch, runsBetween, historyStatus, fitnessDays, mergeFitness, isoDate, addDays } from "./corosHistory.js";
+import { syncSharedWearableActivity } from "./wearableActivity.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 const $ = id => document.getElementById(id);
@@ -477,6 +478,13 @@ async function loadRecentData() {
     const today = isoDate(new Date());
     saveJSON(FITNESS_KEY, mergeFitness(loadJSON(FITNESS_KEY, {}), fitnessDays(today, snapshot), today));
     pushCloud();
+
+    // Step 5A: project only the client-approved Training activity fields
+    // into the coach-visible relationship document. The private COROS
+    // token and full local history never leave the client account.
+    syncSharedWearableActivity().catch(error => {
+        console.warn("Southbound: shared COROS activity sync failed.", error?.code || error);
+    });
 
     renderSnapshot(snapshot);
 

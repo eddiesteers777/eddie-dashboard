@@ -85,6 +85,56 @@ export async function saveWearableShare(coachUid, permissions = {}) {
     await setDoc(ref, payload, { merge: true });
     return { ...payload, active };
 }
+
+function sharedWearableActivityDoc(coachUid, clientUid) {
+    return doc(db, "sharedWearableActivity", coachUid + "_" + clientUid);
+}
+
+export async function readSharedWearableActivity(coachUid, clientUid) {
+    if (!coachUid || !clientUid) return null;
+    const snap = await getDoc(sharedWearableActivityDoc(coachUid, clientUid));
+    return snap.exists() ? snap.data() : null;
+}
+
+export async function writeSharedWearableActivity(coachUid, payload = {}) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+
+    const recentRuns = Array.isArray(payload.recentRuns)
+        ? payload.recentRuns.slice(0, 8).map(run => ({
+            date: String(run?.date || ""),
+            startTime: String(run?.startTime || ""),
+            distanceMiles: Number(run?.distanceMiles) || 0,
+            durationSeconds: Math.max(0, Math.round(Number(run?.durationSeconds) || 0))
+        }))
+        : [];
+
+    const clean = {
+        version: 1,
+        source: "coros",
+        coachUid,
+        clientUid: user.uid,
+        windowFrom: String(payload.windowFrom || ""),
+        windowTo: String(payload.windowTo || ""),
+        summary: {
+            runCount: Math.max(0, Math.round(Number(payload.summary?.runCount) || 0)),
+            distanceMiles: Math.max(0, Number(payload.summary?.distanceMiles) || 0),
+            durationSeconds: Math.max(0, Math.round(Number(payload.summary?.durationSeconds) || 0))
+        },
+        recentRuns,
+        updatedAt: serverTimestamp()
+    };
+
+    await setDoc(sharedWearableActivityDoc(coachUid, user.uid), clean);
+    return clean;
+}
+
+export async function deleteSharedWearableActivity(coachUid, clientUid) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    if (clientUid !== user.uid) throw new Error("not-your-shared-activity");
+    await deleteDoc(sharedWearableActivityDoc(coachUid, clientUid));
+}
 // Firestore doesn't guarantee a nested map's field order survives a
 // round trip, so comparing plain JSON.stringify() output before vs.
 // after a pull can report "changed" even when nothing actually is --

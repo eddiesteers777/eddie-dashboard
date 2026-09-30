@@ -151,6 +151,79 @@ test("wearable sharing: only a linked client can create and control their consen
     await assertFails(setDoc(doc(as("client"), "wearableShares/bad3"), { ...base, status: "revoked", permissions: { activity: true, performance: false, recovery: false }, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
 });
 
+test("shared COROS activity: coach access follows Training activity consent", async () => {
+    await seedLinkAndBooking();
+    const shareRef = doc(as("client"), "wearableShares/coach_client");
+    const activityRef = doc(as("client"), "sharedWearableActivity/coach_client");
+    const consent = {
+        version: 1,
+        coachUid: "coach",
+        clientUid: "client",
+        status: "active",
+        permissions: { activity: true, performance: false, recovery: false },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+    await assertSucceeds(setDoc(shareRef, consent));
+
+    const activity = {
+        version: 1,
+        source: "coros",
+        coachUid: "coach",
+        clientUid: "client",
+        windowFrom: "2026-09-03",
+        windowTo: "2026-09-30",
+        summary: { runCount: 4, distanceMiles: 24.2, durationSeconds: 12900 },
+        recentRuns: [
+            { date: "2026-09-29", startTime: "", distanceMiles: 6.1, durationSeconds: 3300 }
+        ],
+        updatedAt: serverTimestamp()
+    };
+    await assertSucceeds(setDoc(activityRef, activity));
+    await assertSucceeds(getDoc(doc(as("coach"), "sharedWearableActivity/coach_client")));
+    await assertSucceeds(getDoc(activityRef));
+    await assertFails(getDoc(doc(as("stranger"), "sharedWearableActivity/coach_client")));
+    await assertFails(updateDoc(doc(as("coach"), "sharedWearableActivity/coach_client"), {
+        summary: { runCount: 99, distanceMiles: 999, durationSeconds: 1 }, updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(activityRef, {
+        recentRuns: [{ date: "2026-09-29", startTime: "", distanceMiles: 6, durationSeconds: 3000, secret: "nope" }],
+        updatedAt: serverTimestamp()
+    }));
+
+    // Performance-only consent must not expose an activity projection.
+    await assertSucceeds(updateDoc(shareRef, {
+        status: "active",
+        permissions: { activity: false, performance: true, recovery: false },
+        updatedAt: serverTimestamp()
+    }));
+    await assertFails(getDoc(doc(as("coach"), "sharedWearableActivity/coach_client")));
+    await assertFails(setDoc(activityRef, activity));
+
+    // Re-enabling Training activity restores the coach's read/write path.
+    await assertSucceeds(updateDoc(shareRef, {
+        status: "active",
+        permissions: { activity: true, performance: true, recovery: false },
+        updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(activityRef, {
+        summary: { runCount: 5, distanceMiles: 29.2, durationSeconds: 15900 },
+        recentRuns: [],
+        updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(getDoc(doc(as("coach"), "sharedWearableActivity/coach_client")));
+
+    // Revoking all wearable sharing removes the coach's read path.
+    await assertSucceeds(updateDoc(shareRef, {
+        status: "revoked",
+        permissions: { activity: false, performance: false, recovery: false },
+        updatedAt: serverTimestamp()
+    }));
+    await assertFails(getDoc(doc(as("coach"), "sharedWearableActivity/coach_client")));
+    await assertSucceeds(deleteDoc(activityRef));
+    await assertFails(getDoc(activityRef));
+});
+
 // ---- Profile privacy (critical) ----
 
 test("other users cannot read or list profiles", async () => {
