@@ -1119,6 +1119,35 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 .hub-progress-empty strong{ font-size:14px; }
 .hub-progress-empty span{ color:var(--muted); font-size:13px; line-height:1.5; }
 
+.hub-progress-week-table{
+    overflow:hidden;
+    border:1px solid var(--border);
+    border-radius:12px;
+}
+.hub-progress-week-row{
+    display:grid;
+    grid-template-columns:1.1fr .8fr .8fr 1.1fr;
+    gap:10px;
+    align-items:center;
+    padding:10px 12px;
+    border-top:1px solid rgba(243,239,230,.06);
+    color:var(--text-secondary);
+    font-size:13px;
+}
+.hub-progress-week-row:first-child{ border-top:0; }
+.hub-progress-week-row strong{ color:var(--text); }
+.hub-progress-week-head{
+    background:rgba(255,255,255,.025);
+    color:var(--muted);
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+.hub-progress-week-head span:not(:first-child),
+.hub-progress-week-row span:not(:first-child){ text-align:right; }
+.hub-progress-compare-note{ margin-top:10px; }
+
 .hub-progress-trend{
     display:grid;
     gap:12px;
