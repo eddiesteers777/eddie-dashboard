@@ -156,6 +156,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 console.warn("Southbound: couldn't load the coach card.", error);
                 coachSection.hidden = true;
             });
+
+        import("./clientProgress.js")
+            .then(({ initClientProgress }) => initClientProgress())
+            .catch(error => {
+                console.warn("Southbound: couldn't load client progress.", error);
+                const section = document.getElementById("clientProgressSection");
+                if (section) section.hidden = true;
+            });
     }
 
 });
