@@ -1246,6 +1246,8 @@ Goal:
 
 **Step 1 built 2026-09-29; Step 2 built 2026-09-30.** The Client Hub Progress tab now derives a descriptive 28-day coaching snapshot and a weekly Plan vs. Actual view from the coach-owned plan prescription plus logged workout results. It does not create a second source of truth.
 
+**Step 4 built 2026-09-30.** The client home now shows active or paused package entitlements in a read-only **Your Package** card. Finite soccer packages show completed and remaining sessions from session history; online/monthly coaching stays non-counting. Coach notes and management controls remain hidden from the client.
+
 **Step 3 built 2026-09-30.** Added a six-week training trend model to the Client Hub Progress tab using only already-shared Southbound workout results. The model is intentionally small and reusable so a later client-facing view and explicitly shared wearable data can add richer pace, heart-rate, recovery, and other trends without creating another source of truth.
 
 **Step 4 built 2026-09-30.** Established client-controlled wearable sharing permissions. `wearableShares/{coachUid}_{clientUid}` records only whether the client allows training activity, performance, and recovery/sleep categories to be shared with a linked coach. It contains no COROS credentials or raw wearable data. The client controls creation, updates, and revocation; the linked coach can read the consent status.
