@@ -539,6 +539,17 @@ function activityDurationText(seconds) {
     return hours ? hours + "h " + String(minutes).padStart(2, "0") + "m" : minutes + " min";
 }
 
+function performancePaceText(seconds) {
+    const total = Math.max(0, Math.round(Number(seconds) || 0));
+    if (!total) return "—";
+    const minutes = Math.floor(total / 60);
+    return minutes + ":" + String(total % 60).padStart(2, "0") + "/mi";
+}
+
+function performanceNumber(value, digits = 1) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n.toFixed(digits) : "—";
+}
 
 function renderProgress() {
     const progress = summarizeProgress({
@@ -562,6 +573,10 @@ function renderProgress() {
     const activityShareEnabled = record.wearableShare?.status === "active" && record.wearableShare?.permissions?.activity === true;
     const sharedActivitySummary = sharedActivity?.summary || {};
     const sharedActivityRuns = Array.isArray(sharedActivity?.recentRuns) ? sharedActivity.recentRuns : [];
+    const sharedPerformance = record.sharedWearablePerformance;
+    const performanceShareEnabled = record.wearableShare?.status === "active" && record.wearableShare?.permissions?.performance === true;
+    const performanceSummary = sharedPerformance?.summary || {};
+    const performanceRuns = Array.isArray(sharedPerformance?.recentRuns) ? sharedPerformance.recentRuns : [];
     const sharedActivityBody = activityShareEnabled
         ? sharedActivitySummary.runCount
             ? '<div class="hub-progress-metrics">' +
@@ -753,6 +768,43 @@ function renderProgress() {
                 (activityShareEnabled ? '<span class="hub-progress-pill">Activity shared</span>' : '') +
             '</div>' +
             sharedActivityBody +
+        '</section>' +
+
+        '<section class="clients-card">' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">COROS performance</span><h2>Shared performance</h2></div>' +
+                (performanceShareEnabled ? '<span class="hub-progress-pill">Performance shared</span>' : '') +
+            '</div>' +
+            (performanceShareEnabled
+                ? ((performanceSummary.runCount || performanceSummary.vo2Max || performanceSummary.thresholdPaceSecondsPerMile || performanceSummary.trainingLoadRatio)
+                    ? '<div class="hub-progress-metrics">' +
+                        progressMetric("Avg pace", performancePaceText(performanceSummary.averagePaceSecondsPerMile), performanceSummary.runCount ? performanceSummary.runCount + " runs" : "COROS") +
+                        progressMetric("Avg heart rate", performanceSummary.averageHeartRate ? performanceSummary.averageHeartRate + " bpm" : "—", "running activity") +
+                        progressMetric("Best pace", performancePaceText(performanceSummary.bestPaceSecondsPerMile), performanceSummary.bestPaceDistanceMiles ? performanceSummary.bestPaceDistanceMiles + " mi run" : "28-day window") +
+                        progressMetric("VO₂ max", performanceNumber(performanceSummary.vo2Max), "latest shared COROS") +
+                        progressMetric("Threshold", performancePaceText(performanceSummary.thresholdPaceSecondsPerMile), "latest shared COROS") +
+                      '</div>' +
+                      (performanceSummary.marathonPrediction
+                          ? '<p class="clients-card-note">COROS marathon prediction: <strong>' + esc(performanceSummary.marathonPrediction) + '</strong>.</p>'
+                          : '') +
+                      ((performanceSummary.trainingLoadRatio || performanceSummary.shortTermLoad || performanceSummary.longTermLoad)
+                          ? '<p class="clients-card-note">Training load: ' +
+                              (performanceSummary.trainingLoadRatio ? 'ratio ' + performanceNumber(performanceSummary.trainingLoadRatio, 2) : '') +
+                              (performanceSummary.shortTermLoad ? ' · short-term ' + Math.round(performanceSummary.shortTermLoad) : '') +
+                              (performanceSummary.longTermLoad ? ' · long-term ' + Math.round(performanceSummary.longTermLoad) : '') +
+                          '.</p>'
+                          : '') +
+                      (performanceRuns.length
+                          ? '<div class="hub-progress-trend">' +
+                              performanceRuns.map(run =>
+                                  '<div><strong>' + esc(shortDate(run.date)) + '</strong><span>' +
+                                      esc(String(run.distanceMiles || 0) + " mi · " + performancePaceText(run.paceSecondsPerMile) + " · " + (run.avgHeartRate ? run.avgHeartRate + " bpm" : "HR —")) +
+                                  '</span></div>'
+                              ).join("") +
+                            '</div>'
+                          : '') +
+                      '<p class="clients-card-note">This is a client-shared COROS performance view. Recovery, sleep, and other private wearable data are not included.</p>'
+                    : '<div class="hub-progress-empty"><strong>No shared performance data yet</strong><span>Performance sharing is on, but Southbound has no recent COROS performance data to show.</span></div>')
+                : '<div class="hub-progress-empty"><strong>No COROS performance shared</strong><span>The client has not enabled Performance for this coaching relationship.</span></div>') +
         '</section>' +
 
         '<section class="clients-card">' +

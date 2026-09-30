@@ -6,6 +6,7 @@ import { unwrapResult, findRecords, normalizeActivity } from "./corosParse.js";
 import { readLoad, readRecovery, readFitness, recentRunRows } from "./corosMetrics.js";
 import { HISTORY_KEY, FITNESS_KEY, emptyHistory, mergeRuns, markCovered, windowsToFetch, runsBetween, historyStatus, fitnessDays, mergeFitness, isoDate, addDays } from "./corosHistory.js";
 import { syncSharedWearableActivity } from "./wearableActivity.js";
+import { syncSharedWearablePerformance } from "./wearablePerformance.js";
 
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 const $ = id => document.getElementById(id);
@@ -484,6 +485,13 @@ async function loadRecentData() {
     // token and full local history never leave the client account.
     syncSharedWearableActivity().catch(error => {
         console.warn("Southbound: shared COROS activity sync failed.", error?.code || error);
+    });
+
+    // Step 5B: project only the client-approved Performance fields.
+    // Pace, heart rate, and compact fitness indicators stay separate
+    // from the activity-only projection and from recovery/sleep.
+    syncSharedWearablePerformance().catch(error => {
+        console.warn("Southbound: shared COROS performance sync failed.", error?.code || error);
     });
 
     renderSnapshot(snapshot);

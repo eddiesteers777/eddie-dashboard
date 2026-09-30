@@ -1251,6 +1251,8 @@ Goal:
 **Step 4 built 2026-09-30.** Established client-controlled wearable sharing permissions. `wearableShares/{coachUid}_{clientUid}` records only whether the client allows training activity, performance, and recovery/sleep categories to be shared with a linked coach. It contains no COROS credentials or raw wearable data. The client controls creation, updates, and revocation; the linked coach can read the consent status.
 
 **Step 5A built 2026-09-30 on the feature branch.** Training Activity sharing now projects the client's private COROS run history into `sharedWearableActivity/{coachUid}_{clientUid}` only when the client has enabled the Activity permission. The coach sees a compact last-28-days summary and recent run dates/distance/duration. Pace, heart rate, calories, recovery, sleep, and COROS credentials are not copied into this Step 5A projection. The shared activity is deliberately kept separate from Southbound logged workouts so the same run is not counted twice.
+
+**Step 5B built 2026-09-30 on the feature branch.** Performance sharing projects a compact `sharedWearablePerformance/{coachUid}_{clientUid}` view only when the client has enabled the Performance permission. The coach sees pace, heart rate, VO₂ max, threshold pace, marathon prediction, and training-load indicators when available, plus up to 8 recent performance rows. Recovery, sleep, and COROS credentials remain excluded.
 ---
 
 ## Phase 8 — Improve client-side experience

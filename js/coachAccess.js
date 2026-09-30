@@ -135,6 +135,72 @@ export async function deleteSharedWearableActivity(coachUid, clientUid) {
     if (clientUid !== user.uid) throw new Error("not-your-shared-activity");
     await deleteDoc(sharedWearableActivityDoc(coachUid, clientUid));
 }
+
+function sharedWearablePerformanceDoc(coachUid, clientUid) {
+    return doc(db, "sharedWearablePerformance", coachUid + "_" + clientUid);
+}
+
+export async function readSharedWearablePerformance(coachUid, clientUid) {
+    if (!coachUid || !clientUid) return null;
+    const snap = await getDoc(sharedWearablePerformanceDoc(coachUid, clientUid));
+    return snap.exists() ? snap.data() : null;
+}
+
+export async function writeSharedWearablePerformance(coachUid, payload = {}) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+
+    const recentRuns = Array.isArray(payload.recentRuns)
+        ? payload.recentRuns.slice(0, 8).map(run => ({
+            date: String(run?.date || ""),
+            startTime: String(run?.startTime || ""),
+            distanceMiles: Number(run?.distanceMiles) || 0,
+            durationSeconds: Math.max(0, Math.round(Number(run?.durationSeconds) || 0)),
+            paceSecondsPerMile: Math.max(0, Math.round(Number(run?.paceSecondsPerMile) || 0)),
+            avgHeartRate: Math.max(0, Math.round(Number(run?.avgHeartRate) || 0))
+        }))
+        : [];
+
+    const summary = payload.summary || {};
+    const clean = {
+        version: 1,
+        source: "coros",
+        coachUid,
+        clientUid: user.uid,
+        windowFrom: String(payload.windowFrom || ""),
+        windowTo: String(payload.windowTo || ""),
+        summary: {
+            runCount: Math.max(0, Math.round(Number(summary.runCount) || 0)),
+            averagePaceSecondsPerMile: positivePerformanceNumber(summary.averagePaceSecondsPerMile),
+            averageHeartRate: positivePerformanceNumber(summary.averageHeartRate),
+            bestPaceSecondsPerMile: positivePerformanceNumber(summary.bestPaceSecondsPerMile),
+            bestPaceDistanceMiles: positivePerformanceNumber(summary.bestPaceDistanceMiles),
+            vo2Max: positivePerformanceNumber(summary.vo2Max),
+            thresholdPaceSecondsPerMile: positivePerformanceNumber(summary.thresholdPaceSecondsPerMile),
+            marathonPrediction: String(summary.marathonPrediction || ""),
+            trainingLoadRatio: positivePerformanceNumber(summary.trainingLoadRatio),
+            shortTermLoad: positivePerformanceNumber(summary.shortTermLoad),
+            longTermLoad: positivePerformanceNumber(summary.longTermLoad)
+        },
+        recentRuns,
+        updatedAt: serverTimestamp()
+    };
+
+    await setDoc(sharedWearablePerformanceDoc(coachUid, user.uid), clean);
+    return clean;
+}
+
+function positivePerformanceNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export async function deleteSharedWearablePerformance(coachUid, clientUid) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    if (clientUid !== user.uid) throw new Error("not-your-shared-performance");
+    await deleteDoc(sharedWearablePerformanceDoc(coachUid, clientUid));
+}
 // Firestore doesn't guarantee a nested map's field order survives a
 // round trip, so comparing plain JSON.stringify() output before vs.
 // after a pull can report "changed" even when nothing actually is --

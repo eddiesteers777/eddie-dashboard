@@ -133,7 +133,7 @@ export async function loadClientRecord(clientUid) {
     const links = await listMyClients();
     const link = links.find(l => l.clientUid === clientUid);
     if (!link) return null;
-    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts, results, changes, wearableShare, sharedWearableActivity] = await Promise.all([
+    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts, results, changes, wearableShare, sharedWearableActivity, sharedWearablePerformance] = await Promise.all([
         quiet(getProfile(clientUid)),
         quiet(readSharedPlanDoc(clientUid)),
         quiet(listCheckinsForMyClients()),
@@ -146,7 +146,8 @@ export async function loadClientRecord(clientUid) {
         resultsFor(clientUid),
         changesFor(clientUid),
         readWearableShare(link.coachUid, clientUid).catch(() => null),
-        import("./coachAccess.js").then(m => m.readSharedWearableActivity(link.coachUid, clientUid)).catch(() => null)
+        import("./coachAccess.js").then(m => m.readSharedWearableActivity(link.coachUid, clientUid)).catch(() => null),
+        import("./coachAccess.js").then(m => m.readSharedWearablePerformance(link.coachUid, clientUid)).catch(() => null)
     ]);
     return {
         link,
@@ -161,6 +162,7 @@ export async function loadClientRecord(clientUid) {
         changes,
         wearableShare,
         sharedWearableActivity,
+        sharedWearablePerformance,
         checkins: (checkins || []).filter(c => c.clientUid === clientUid),
         requests: (requests || []).filter(r => r.clientUid === clientUid)
     };
