@@ -201,6 +201,80 @@ export async function deleteSharedWearablePerformance(coachUid, clientUid) {
     if (clientUid !== user.uid) throw new Error("not-your-shared-performance");
     await deleteDoc(sharedWearablePerformanceDoc(coachUid, clientUid));
 }
+
+function sharedWearableRecoveryDoc(coachUid, clientUid) {
+    return doc(db, "sharedWearableRecovery", coachUid + "_" + clientUid);
+}
+
+export async function readSharedWearableRecovery(coachUid, clientUid) {
+    if (!coachUid || !clientUid) return null;
+    const snap = await getDoc(sharedWearableRecoveryDoc(coachUid, clientUid));
+    return snap.exists() ? snap.data() : null;
+}
+
+export async function writeSharedWearableRecovery(coachUid, payload = {}) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+
+    const summary = payload.summary || {};
+    const recentDays = Array.isArray(payload.recentDays)
+        ? payload.recentDays.slice(0, 8).map(day => ({
+            date: String(day?.date || ""),
+            sleepScore: numberOrNull(day?.sleepScore),
+            asleepMinutes: numberOrNull(day?.asleepMinutes),
+            hrvAvg: numberOrNull(day?.hrvAvg),
+            hrvStatus: String(day?.hrvStatus || ""),
+            restingHeartRate: numberOrNull(day?.restingHeartRate),
+            stressAvg: numberOrNull(day?.stressAvg),
+            stressLevel: String(day?.stressLevel || ""),
+            recoveryPercent: numberOrNull(day?.recoveryPercent),
+            recoveryStatus: String(day?.recoveryStatus || ""),
+            recoveryHours: numberOrNull(day?.recoveryHours)
+        }))
+        : [];
+
+    const clean = {
+        version: 1,
+        source: "coros",
+        coachUid,
+        clientUid: user.uid,
+        windowFrom: String(payload.windowFrom || ""),
+        windowTo: String(payload.windowTo || ""),
+        summary: {
+            daysWithData: Math.max(0, Math.round(Number(summary.daysWithData) || 0)),
+            averageSleepScore: numberOrNull(summary.averageSleepScore),
+            averageAsleepMinutes: numberOrNull(summary.averageAsleepMinutes),
+            averageHrv: numberOrNull(summary.averageHrv),
+            averageRestingHeartRate: numberOrNull(summary.averageRestingHeartRate),
+            averageStress: numberOrNull(summary.averageStress),
+            averageRecoveryPercent: numberOrNull(summary.averageRecoveryPercent),
+            latestSleepScore: numberOrNull(summary.latestSleepScore),
+            latestAsleepMinutes: numberOrNull(summary.latestAsleepMinutes),
+            latestHrv: numberOrNull(summary.latestHrv),
+            latestRestingHeartRate: numberOrNull(summary.latestRestingHeartRate),
+            latestRecoveryPercent: numberOrNull(summary.latestRecoveryPercent),
+            latestRecoveryStatus: String(summary.latestRecoveryStatus || ""),
+            latestRecoveryHours: numberOrNull(summary.latestRecoveryHours)
+        },
+        recentDays,
+        updatedAt: serverTimestamp()
+    };
+
+    await setDoc(sharedWearableRecoveryDoc(coachUid, user.uid), clean);
+    return clean;
+}
+
+function numberOrNull(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+export async function deleteSharedWearableRecovery(coachUid, clientUid) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    if (clientUid !== user.uid) throw new Error("not-your-shared-recovery");
+    await deleteDoc(sharedWearableRecoveryDoc(coachUid, clientUid));
+}
 // Firestore doesn't guarantee a nested map's field order survives a
 // round trip, so comparing plain JSON.stringify() output before vs.
 // after a pull can report "changed" even when nothing actually is --
