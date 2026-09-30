@@ -854,7 +854,7 @@ const clientPackage = (extra = {}) => ({
     coachUid: "coach", clientUid: "client", packageId: "soccer_1on1_10",
     packageName: "1-on-1 Soccer — 10 Sessions", service: "soccer_1on1",
     billingModel: "session_pack", cadence: "one_time", sessionAllowance: 10,
-    status: "active", startsAt: "2026-10-01", endsAt: null, coachNote: "",
+    status: "active", paymentStatus: "pending", startsAt: "2026-10-01", endsAt: null, coachNote: "",
     createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
 });
 
@@ -864,8 +864,9 @@ test("client packages: linked coach can assign, client can read, identity cannot
     await assertSucceeds(setDoc(ref, clientPackage()));
     await assertSucceeds(getDoc(doc(as("client"), "clientPackages/p1")));
     await assertSucceeds(getDocs(query(collection(as("client"), "clientPackages"), where("clientUid", "==", "client"))));
-    await assertSucceeds(updateDoc(ref, { status: "paused", coachNote: "Pause until October 15.", updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(ref, { status: "paused", paymentStatus: "paid", coachNote: "Pause until October 15.", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { packageId: "soccer_1on1_5", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { paymentStatus: "refunded", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { clientUid: "stranger", updatedAt: serverTimestamp() }));
     await assertFails(deleteDoc(ref));
     await assertFails(setDoc(doc(as("client"), "clientPackages/p2"), clientPackage()));
@@ -882,6 +883,7 @@ test("client packages: only valid catalog shapes are accepted", async () => {
     await assertFails(bad("bad-date", { startsAt: "next month" }));
     await assertFails(bad("bad-field", { extra: true }));
     await assertFails(bad("bad-price", { priceCents: 10000 }));
+    await assertFails(bad("bad-payment", { paymentStatus: "refunded" }));
 });
 
 // ---- Coaching plans: the coach owns the prescription ----
