@@ -5,7 +5,8 @@ import {
     PACKAGE_STATUSES,
     packageRemainingSessions,
     packageCatalogOptions
-} from "../js/clientPackages.js";
+} from "../js/clientPackageModel.js";
+import { PACKAGE_STATUSES } from "../js/clientPackages.js";
 
 test("package statuses stay explicit and finite", () => {
     assert.deepEqual(PACKAGE_STATUSES, ["active", "paused", "completed", "cancelled"]);
