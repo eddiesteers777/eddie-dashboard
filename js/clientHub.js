@@ -702,6 +702,22 @@ function renderProgress() {
         '</section>' +
 
         '<section class="clients-card">' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">Wearable sharing</span><h2>' +
+                (record.wearableShare?.status === "active" ? "Shared with you" : "Not shared") +
+            '</h2></div></div>' +
+            '<p class="clients-card-note">' +
+                (record.wearableShare?.status === "active"
+                    ? "Client has allowed: " + [
+                        record.wearableShare.permissions?.activity ? "training activity" : "",
+                        record.wearableShare.permissions?.performance ? "performance" : "",
+                        record.wearableShare.permissions?.recovery ? "recovery & sleep" : ""
+                    ].filter(Boolean).join(", ") + "."
+                    : "The client has not enabled wearable-data sharing with you.") +
+            '</p>' +
+            '<p class="clients-card-note">Sharing permissions are client-controlled. This record contains consent settings, not COROS sign-in tokens or raw wearable data.</p>' +
+        '</section>' +
+
+        '<section class="clients-card">' +
             '<div class="hub-progress-head"><div><span class="hub-section-kicker">Activity trend</span><h2>Recent vs. previous 14 days</h2></div></div>' +
             trendBody +
         '</section>' +
