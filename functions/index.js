@@ -3,7 +3,7 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { defineJsonSecret, defineString } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import Stripe from 'stripe';
-import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent, checkoutBlockedReason } from './billingModel.js';
+import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent, checkoutBlockedReason, stripeConfigSummary } from './billingModel.js';
 
 initializeApp();
 const db = getFirestore();
@@ -45,6 +45,28 @@ async function loadClientPackage(clientUid, packageAssignmentId) {
     if (!STRIPE_PACKAGE_IDS.includes(pkg.packageId)) throw new HttpsError('failed-precondition', 'That package is not in the Stripe catalog.');
     return { ref, pkg, mode };
 }
+
+export const getStripeBillingReadiness = onCall(
+    { region: 'us-central1', secrets: [stripeConfig] },
+    async request => {
+        const uid = requireAuth(request);
+        const profileSnap = await db.collection('userProfiles').doc(uid).get();
+        const profile = profileSnap.data();
+
+        if (!profileSnap.exists || profile?.role !== 'coach' || profile?.isCoachApproved !== true) {
+            throw new HttpsError('permission-denied', 'Only an approved coach can check Stripe setup.');
+        }
+
+        let config = null;
+        try {
+            config = stripeConfig.value();
+        } catch {
+            config = null;
+        }
+
+        return stripeConfigSummary(config);
+    }
+);
 
 export const createStripeCheckoutSession = onCall(
     { region: 'us-central1', secrets: [stripeConfig] },
