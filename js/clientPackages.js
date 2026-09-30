@@ -16,20 +16,14 @@
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import { getPackage, isFiniteSessionPackage } from "./packageCatalog.js";
-export { packageRemainingSessions, packageCatalogOptions } from "./clientPackageModel.js";
+import { PACKAGE_STATUSES } from "./clientPackageModel.js";
+export { PACKAGE_STATUSES, packageRemainingSessions, packageCatalogOptions } from "./clientPackageModel.js";
 import {
     collection, doc, getDocs, query, where, setDoc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const withId = snap => ({ id: snap.id, ...snap.data() });
 const clean = (text, max = 500) => String(text || "").trim().slice(0, max);
-
-export const PACKAGE_STATUSES = Object.freeze([
-    "active",
-    "paused",
-    "completed",
-    "cancelled"
-]);
 
 function packageDocId() {
     return window.crypto?.randomUUID
