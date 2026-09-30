@@ -24,6 +24,10 @@ rules_version = '2';
 //                              redeemed twice.
 //   sharedPlans/{clientUid}    Client's plan mirror; a linked coach can
 //                              read and edit it.
+//   wearableShares/{coach}_{client}  Client-controlled wearable sharing
+//                              permissions. No COROS tokens or raw wearable
+//                              data live here; it only records what the
+//                              client has chosen to share with a linked coach.
 //   coachAvailability/{coach}  Weekly slots; visible to linked clients.
 //   bookingRequests/{id}       Client requests; only the coach can approve
 //                              or deny, the client can only cancel, and
@@ -199,6 +203,50 @@ service cloud.firestore {
         || (signedIn() && linked(request.auth.uid, clientUid));
     }
 
+    function validWearableShare(d) {
+      return d.keys().hasOnly(["version", "coachUid", "clientUid", "status", "permissions", "createdAt", "updatedAt"])
+        && d.keys().hasAll(["version", "coachUid", "clientUid", "status", "permissions", "createdAt", "updatedAt"])
+        && d.version == 1
+        && d.coachUid is string && d.coachUid.size() > 0 && d.coachUid.size() <= 128
+        && d.clientUid is string && d.clientUid.size() > 0 && d.clientUid.size() <= 128
+        && d.permissions is map
+        && d.permissions.keys().hasOnly(["activity", "performance", "recovery"])
+        && d.permissions.keys().hasAll(["activity", "performance", "recovery"])
+        && d.permissions.activity is bool
+        && d.permissions.performance is bool
+        && d.permissions.recovery is bool
+        && d.status in ["active", "revoked"]
+        && ((d.status == "active" && (d.permissions.activity || d.permissions.performance || d.permissions.recovery))
+            || (d.status == "revoked" && !d.permissions.activity && !d.permissions.performance && !d.permissions.recovery))
+        && d.updatedAt == request.time;
+    }
+
+    match /wearableShares/{shareId} {
+      allow get: if signedIn()
+        && (request.auth.uid == resource.data.clientUid
+            || (request.auth.uid == resource.data.coachUid
+                && linked(request.auth.uid, resource.data.clientUid)));
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == request.resource.data.clientUid
+        && request.resource.data.coachUid != request.auth.uid
+        && shareId == request.resource.data.coachUid + "_" + request.auth.uid
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && request.resource.data.createdAt == request.time
+        && validWearableShare(request.resource.data);
+
+      allow update: if signedIn()
+        && resource.data.clientUid == request.auth.uid
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.version == resource.data.version
+        && request.resource.data.createdAt == resource.data.createdAt
+        && onlyChanges(["status", "permissions", "updatedAt"])
+        && validWearableShare(request.resource.data);
+
+      allow delete: if false;
+    }
     match /coachAvailability/{coachUid} {
       allow write: if isUser(coachUid);
       allow read: if isUser(coachUid)
