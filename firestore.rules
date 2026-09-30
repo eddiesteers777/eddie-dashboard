@@ -247,6 +247,52 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+    match /wearableShares/{shareId}/activities/{activityId} {
+      function share() {
+        return get(/databases/$(database)/documents/wearableShares/$(shareId));
+      }
+
+      function activityShareEnabled() {
+        return share().data.status == "active"
+          && share().data.permissions.activity == true;
+      }
+
+      function validWearableActivity(d, id) {
+        return d.keys().hasOnly(["version", "labelId", "date", "startTime", "sport", "name", "distanceMeters", "durationSeconds", "syncedAt"])
+          && d.keys().hasAll(["version", "labelId", "date", "startTime", "sport", "name", "distanceMeters", "durationSeconds", "syncedAt"])
+          && d.version == 1
+          && d.labelId is string && d.labelId.size() > 0 && d.labelId.size() <= 128
+          && id == d.labelId
+          && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && d.startTime is string && d.startTime.size() > 0 && d.startTime.size() <= 80
+          && d.sport is string && d.sport.size() > 0 && d.sport.size() <= 80
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 200
+          && d.distanceMeters is number && d.distanceMeters >= 0 && d.distanceMeters <= 2000000
+          && d.durationSeconds is number && d.durationSeconds >= 0 && d.durationSeconds <= 172800
+          && d.syncedAt == request.time;
+      }
+
+      allow get, list: if signedIn()
+        && activityShareEnabled()
+        && (request.auth.uid == share().data.clientUid
+            || request.auth.uid == share().data.coachUid);
+
+      allow create: if signedIn()
+        && request.auth.uid == share().data.clientUid
+        && activityShareEnabled()
+        && validWearableActivity(request.resource.data, activityId);
+
+      allow update: if signedIn()
+        && request.auth.uid == share().data.clientUid
+        && activityShareEnabled()
+        && resource.data.labelId == request.resource.data.labelId
+        && validWearableActivity(request.resource.data, activityId);
+
+      allow delete: if signedIn()
+        && request.auth.uid == share().data.clientUid
+        && resource.data.labelId == activityId;
+    }
+
     match /coachAvailability/{coachUid} {
       allow write: if isUser(coachUid);
       allow read: if isUser(coachUid)
