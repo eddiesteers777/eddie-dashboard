@@ -36,6 +36,9 @@ async function loadClientPackage(clientUid, packageAssignmentId) {
     const mode = checkoutModeForPackage(pkg);
     if (!mode) throw new HttpsError('failed-precondition', 'That package cannot be purchased through Stripe.');
     if (pkg.paymentStatus === 'paid') throw new HttpsError('already-exists', 'That package is already marked paid.');
+    if (mode === 'subscription' && pkg.stripeSubscriptionId) {
+        throw new HttpsError('failed-precondition', 'This package already has a Stripe subscription. Use Manage Billing to update it.');
+    }
     if (!STRIPE_PACKAGE_IDS.includes(pkg.packageId)) throw new HttpsError('failed-precondition', 'That package is not in the Stripe catalog.');
     return { ref, pkg, mode };
 }
