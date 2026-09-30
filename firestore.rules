@@ -97,20 +97,6 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + clientUid));
     }
 
-    function wearableSharePath(shareId) {
-      return /databases/$(database)/documents/wearableShares/$(shareId);
-    }
-
-    function wearableShareData(shareId) {
-      return get(wearableSharePath(shareId)).data;
-    }
-
-    function wearableActivityShared(shareId) {
-      return exists(wearableSharePath(shareId))
-        && wearableShareData(shareId).get("status", "") == "active"
-        && wearableShareData(shareId).get(["permissions", "activity"], false) == true;
-    }
-
     // True when an update touches only the listed fields.
     function onlyChanges(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
@@ -278,23 +264,26 @@ service cloud.firestore {
       }
 
       allow get, list: if signedIn()
-        && wearableActivityShared(shareId)
-        && (request.auth.uid == wearableShareData(shareId).get("clientUid", "")
-            || request.auth.uid == wearableShareData(shareId).get("coachUid", ""));
+        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.status == "active"
+        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.permissions.activity == true
+        && (request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
+            || request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.coachUid);
 
       allow create: if signedIn()
-        && request.auth.uid == wearableShareData(shareId).get("clientUid", "")
-        && wearableActivityShared(shareId)
+        && request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
+        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.status == "active"
+        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.permissions.activity == true
         && validWearableActivity(request.resource.data, activityId);
 
       allow update: if signedIn()
-        && request.auth.uid == wearableShareData(shareId).get("clientUid", "")
-        && wearableActivityShared(shareId)
+        && request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
+        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.status == "active"
+        && get(/databases/$(database)/documents/wearableShares/$(shareId)).data.permissions.activity == true
         && resource.data.labelId == request.resource.data.labelId
         && validWearableActivity(request.resource.data, activityId);
 
       allow delete: if signedIn()
-        && request.auth.uid == wearableShareData(shareId).get("clientUid", "")
+        && request.auth.uid == get(/databases/$(database)/documents/wearableShares/$(shareId)).data.clientUid
         && resource.data.labelId == activityId;
     }
 
