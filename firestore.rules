@@ -582,18 +582,28 @@ service cloud.firestore {
     // for an approved booking of theirs, only for one of its dates.
     function validSessionLog(d, logId) {
       let b = get(/databases/$(database)/documents/bookingRequests/$(d.bookingId)).data;
-      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "createdAt", "updatedAt"])
+      let packageOk = !("packageAssignmentId" in d) || d.packageAssignmentId == null
+        || (d.packageAssignmentId is string
+            && d.packageAssignmentId.size() > 0 && d.packageAssignmentId.size() <= 200
+            && d.status == "completed"
+            && b.sessionType == "soccer"
+            && (get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.coachUid == d.coachUid)
+            && (get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.clientUid == d.clientUid)
+            && (get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.service == "soccer_1on1"
+                || get(/databases/$(database)/documents/clientPackages/$(d.packageAssignmentId)).data.service == "soccer_group"));
+      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "packageAssignmentId", "createdAt", "updatedAt"])
         && d.coachUid == request.auth.uid
         && logId == d.bookingId + "_" + d.date
         && b.coachUid == request.auth.uid
         && b.clientUid == d.clientUid
         && b.status == "approved"
         && d.date in b.dates
-        && d.status in ["completed", "no-show", "cancelled", "late-cancel"]
+        && (d.status == "completed" || d.status == "no-show" || d.status == "cancelled" || d.status == "late-cancel")
         // Future occurrences may only be reserved as cancellations.
         && (sessionDateIsPastOrToday(d.date) || d.status == "cancelled" || d.status == "late-cancel")
         && d.workedOn is string && d.workedOn.size() <= 1000
         && d.nextTime is string && d.nextTime.size() <= 1000
+        && packageOk
         && d.updatedAt == request.time;
     }
 
