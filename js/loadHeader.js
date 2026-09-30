@@ -84,6 +84,7 @@ const PAGE_TAB = {
     "schedule.html": "coach",
     "checkin.html": "coach",
     "install.html": "more",
+    "progress.html": "more",
     "more.html": "more"
 };
 
