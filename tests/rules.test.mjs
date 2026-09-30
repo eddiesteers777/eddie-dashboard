@@ -183,6 +183,13 @@ test("shared COROS activity: coach access follows Training activity consent", as
     await assertSucceeds(getDoc(doc(as("coach"), "sharedWearableActivity/coach_client")));
     await assertSucceeds(getDoc(activityRef));
     await assertFails(getDoc(doc(as("stranger"), "sharedWearableActivity/coach_client")));
+    await assertFails(updateDoc(doc(as("coach"), "sharedWearableActivity/coach_client"), {
+        summary: { runCount: 99, distanceMiles: 999, durationSeconds: 1 }, updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(activityRef, {
+        recentRuns: [{ date: "2026-09-29", startTime: "", distanceMiles: 6, durationSeconds: 3000, secret: "nope" }],
+        updatedAt: serverTimestamp()
+    }));
 
     // Performance-only consent must not expose an activity projection.
     await assertSucceeds(updateDoc(shareRef, {
