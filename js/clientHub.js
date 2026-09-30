@@ -1017,7 +1017,7 @@ function renderPackages() {
         <div class="hub-package-heading"><div><span class="hub-section-kicker">Client package</span><h2>Packages</h2></div><button type="button" class="clients-btn-secondary" data-act="assign-package">Add package</button></div>
         ${active.length ? active.map(row).join("") : empty}
         ${history.length ? `<details class="hub-package-history"><summary>Recent package history (${history.length})</summary>${history.map(row).join("")}</details>` : ""}
-        <p class="clients-card-note hub-package-footnote">Session allowance is stored with the package; usage will be calculated from session history rather than edited manually.</p>`;
+        <p class="clients-card-note hub-package-footnote">Session allowance is stored with the package. Package usage will be connected to session history in the next step.</p>`;
 }
 
 async function changePackageStatus(id, status) {
