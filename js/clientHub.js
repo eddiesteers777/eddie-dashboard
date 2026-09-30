@@ -545,6 +545,7 @@ function renderProgress() {
     const t = progress.trend;
     const c = progress.checkins;
     const pva = progress.planVsActual;
+    const tt = progress.trainingTrends;
     const services = record.profile?.services || [];
 
     const hasTrainingService = services.some(s => ["online_coaching", "running", "strength"].includes(s));
@@ -673,6 +674,31 @@ function renderProgress() {
                             : 'The plan has not started yet.') +
                 '</p>'
                 : '<div class="hub-progress-empty"><strong>No plan comparison yet</strong><span>An active coach plan and its logged results are needed to compare planned and actual training.</span></div>') +
+        '</section>' +
+
+
+        '<section class="clients-card hub-progress-trends-card">' +
+            '<div class="hub-progress-head"><div><span class="hub-section-kicker">Training trends</span><h2>Last 6 weeks</h2></div></div>' +
+            (tt.hasData
+                ? '<div class="hub-progress-trend-summary">' +
+                    '<span><strong>' + tt.weeks.reduce((sum, w) => sum + w.runMiles, 0) + ' mi</strong> logged</span>' +
+                    '<span><strong>' + tt.weeks.reduce((sum, w) => sum + w.completedWorkouts, 0) + '</strong> workouts completed</span>' +
+                  '</div>' +
+                  '<div class="hub-progress-week-trend">' +
+                    tt.weeks.map(w => {
+                        const maxMiles = Math.max(1, ...tt.weeks.map(x => x.runMiles));
+                        const width = w.runMiles ? Math.max(4, Math.round(w.runMiles / maxMiles * 100)) : 0;
+                        const labelDate = shortDate(w.start);
+                        const effort = w.averageRpe != null ? ' · avg effort ' + w.averageRpe + '/10' : '';
+                        return '<div class="hub-progress-trend-row">' +
+                            '<div class="hub-progress-trend-label"><strong>' + esc(labelDate) + (w.isCurrent ? ' · current' : '') + '</strong>' +
+                                '<span>' + w.runMiles + ' mi · ' + w.runSessions + ' run' + (w.runSessions === 1 ? '' : 's') + ' · ' + w.completedWorkouts + ' completed' + effort + '</span></div>' +
+                            '<div class="hub-progress-trend-bar" aria-hidden="true"><span style="width:' + width + '%"></span></div>' +
+                        '</div>';
+                    }).join("") +
+                  '</div>' +
+                  '<p class="clients-card-note hub-progress-trend-note">Logged Southbound workout data only. This is a descriptive history; deeper pace, heart-rate, recovery, and other wearable trends can be added when those data are shared.</p>'
+                : '<div class="hub-progress-empty"><strong>No training trend yet</strong><span>Once workouts are logged, Southbound will build a six-week history here.</span></div>') +
         '</section>' +
 
         '<section class="clients-card">' +
