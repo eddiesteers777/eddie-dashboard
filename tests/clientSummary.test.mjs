@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
     planPosition, summarizePlans, summarizeSessions, summarizeCheckins,
-    needsAttention, buildTimeline, summarizeClient, weekKey, buildCoachFeed, summarizeProgress
+    needsAttention, buildTimeline, summarizeClient, weekKey, buildCoachFeed, summarizeProgress, summarizeTrainingTrends
 } from "../js/clientSummary.js";
 
 // A 3-week plan starting Mon 2026-09-14 (weeks: 14-20, 21-27, 28-Oct 4).
@@ -465,4 +465,34 @@ test("progress: compares planned and actual miles by plan week", () => {
     assert.equal(progress.planVsActual.plannedMiles, 10);
     assert.equal(progress.planVsActual.actualMiles, 9.5);
     assert.equal(progress.planVsActual.milesPct, 95);
+});
+
+
+test("training trends: builds six weekly activity buckets with partial current week", () => {
+    const trends = summarizeTrainingTrends({
+        today: "2026-10-06",
+        results: [
+            { date: "2026-09-01", status: "completed", distance: 5, rpe: 5 },
+            { date: "2026-09-03", status: "completed", distance: 7, rpe: 7 },
+            { date: "2026-09-08", status: "completed", distance: 6, rpe: 6 },
+            { date: "2026-09-10", status: "skipped" },
+            { date: "2026-09-14", status: "completed", kind: "strength", rpe: 8, exercises: [] },
+            { date: "2026-09-15", status: "completed", distance: 4, rpe: 5 },
+            { date: "2026-10-05", status: "completed", distance: 5, rpe: 6 },
+            { date: "2026-10-06", status: "completed", distance: 4, rpe: 8 }
+        ]
+    });
+
+    assert.equal(trends.weeks.length, 6);
+    assert.deepEqual(trends.weeks.map(w => [w.start, w.runMiles, w.runSessions, w.completedWorkouts, w.skippedWorkouts]), [
+        ["2026-08-31", 0, 0, 0, 0],
+        ["2026-09-07", 6, 1, 1, 1],
+        ["2026-09-14", 4, 1, 2, 0],
+        ["2026-09-21", 0, 0, 0, 0],
+        ["2026-09-28", 0, 0, 0, 0],
+        ["2026-10-05", 9, 2, 2, 0]
+    ]);
+    assert.equal(trends.weeks[2].averageRpe, 6.5);
+    assert.equal(trends.weeks.at(-1).isCurrent, true);
+    assert.equal(trends.hasData, true);
 });
