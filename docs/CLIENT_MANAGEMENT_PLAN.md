@@ -1321,6 +1321,10 @@ Next Stripe slices should connect the configured prices to the package catalog, 
 
 Prices are still intentionally unconfigured until the Stripe Products/Prices are created and the `STRIPE_CONFIG` secret is populated.
 
+### Step 7 — Stripe setup readiness
+
+**Step 7 built 2026-09-30.** Approved coaches now have a Stripe Setup check in Settings. It reports whether the Stripe secret is present, whether the account is in test or live mode, how many canonical Southbound Prices are connected, and whether a webhook signing secret is configured. It never returns Stripe secret material or Price IDs to the browser.
+
 ### Step 6 — lock manual billing edits
 
 **Step 6 built 2026-09-30.** Once Stripe has attached checkout, customer, or subscription state to a client package, the coach can no longer manually change its billing status. The Client Hub replaces the billing dropdown with a Stripe-managed status, while the Firestore rule enforces the same restriction at the security boundary. Manual billing remains available for packages that have never entered Stripe management.
