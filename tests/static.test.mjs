@@ -122,6 +122,15 @@ test("auth consumers wait for account isolation", () => {
     assert.match(auth, /setStorageOwner\(null\);\s*await clearOfflineCopy\(\);\s*preparedAccountUid = null/);
 });
 
+test("client profiles repair their directory projection when loaded", () => {
+    const profile = read("js/userProfile.js");
+    assert.match(
+        profile,
+        /const profile = \{ uid: user\.uid, \.\.\.snap\.data\(\) \};\s*await syncClientDirectory\(profile\);\s*return profile;/
+    );
+    assert.match(profile, /async function syncClientDirectory\(profile\)/);
+});
+
 test("Firestore uses single-tab persistent caching", () => {
     const firebase = read("js/firebase.js");
     assert.match(firebase, /persistentLocalCache\(\{\s*tabManager:\s*persistentSingleTabManager\(\)\s*\}\)/);
