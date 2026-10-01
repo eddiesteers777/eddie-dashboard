@@ -161,7 +161,20 @@ export async function approveClient(uid, services, identity = {}) {
 // Change what an approved client has (their menu follows it: js/navAccess.js).
 export async function setClientServices(uid, services) {
     const allowed = new Set(SERVICES.map(s => s.value));
-    await updateDoc(profileDoc(uid), { services: [...new Set(services || [])].filter(s => allowed.has(s)) });
+    const cleanServices = [...new Set(services || [])].filter(s => allowed.has(s));
+    await updateDoc(profileDoc(uid), { services: cleanServices });
+    const directory = await getDoc(clientDirectoryDoc(uid));
+    if (directory.exists() && directory.data().status === "active") {
+        const data = directory.data();
+        await setDoc(clientDirectoryDoc(uid), {
+            uid,
+            displayName: String(data.displayName || ""),
+            email: String(data.email || ""),
+            services: cleanServices,
+            status: "active",
+            updatedAt: serverTimestamp()
+        });
+    }
 }
 
 export async function denyProfile(uid) {
