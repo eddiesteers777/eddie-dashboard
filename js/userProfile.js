@@ -210,6 +210,7 @@ export async function submitApplication(requestedServices, message) {
         applicationSubmittedAt: serverTimestamp()
     });
     forgetMyProfile();
+    await syncClientDirectory(await getMyProfile());
 }
 
 // "Last in the app" for the coach (the Client Hub, "Hasn't opened the app
