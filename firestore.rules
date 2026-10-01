@@ -219,7 +219,7 @@ service cloud.firestore {
 
     function invitedCoachLink() {
       return validCoachLinkData()
-      return request.resource.data.inviteCode is string
+        && request.resource.data.inviteCode is string
         && request.resource.data.inviteCode.size() > 0
         && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode))
         && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.clientUid
