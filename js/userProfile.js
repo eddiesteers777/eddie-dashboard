@@ -94,6 +94,7 @@ export async function ensureProfile() {
     };
     await setDoc(ref, profile);
     forgetMyProfile();
+    await syncClientDirectory(profile);
     return profile;
 }
 
@@ -129,7 +130,7 @@ export async function isApprovedCoach() {
 export async function listPendingProfiles() {
     const user = await waitForUser();
     if (!user) return [];
-    const snap = await getDocs(query(collection(db, "userProfiles"), where("status", "==", "pending")));
+    const snap = await getDocs(query(collection(db, "clientDirectory"), where("status", "==", "pending")));
     return snap.docs
         .map(d => ({ uid: d.id, ...d.data() }))
         .filter(p => p.uid !== user.uid);
@@ -165,6 +166,7 @@ export async function setClientServices(uid, services) {
 
 export async function denyProfile(uid) {
     await updateDoc(profileDoc(uid), { status: "archived" });
+    await setDoc(clientDirectoryDoc(uid), { uid, status: "archived", displayName: "", email: "", services: [], updatedAt: serverTimestamp() });
 }
 
 export async function promoteToCoach(uid) {
