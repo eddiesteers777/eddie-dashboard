@@ -139,9 +139,8 @@ async function prepareAccountState(user) {
     const firstPreparation = preparedAccountUid === undefined;
     const uidChanged = !firstPreparation && preparedAccountUid !== nextUid;
     const ownerMismatch = nextUid && owner && owner !== nextUid;
-    const legacyAccountData = nextUid && !owner && hasAccountSensitiveBrowserState();
     const signedOutOwner = !nextUid && owner;
-    const changed = Boolean(uidChanged || ownerMismatch || legacyAccountData || signedOutOwner);
+    const changed = Boolean(uidChanged || ownerMismatch || signedOutOwner);
 
     if (changed) {
         clearAccountSensitiveBrowserState();
