@@ -191,6 +191,9 @@ test("direct assignment refuses pending clients, coach accounts, self-links, fak
     // Extra fields cannot be smuggled into the relationship document.
     await assertFails(direct(as("coach"), "coach", "client", { extra: "not-allowed" }));
 
+    // The signed-in coach must own the relationship document.
+    await assertFails(direct(as("coach"), "coach2", "client"));
+
     // Unapproved accounts cannot use direct assignment.
     await assertFails(direct(as("stranger"), "stranger", "client"));
 });
