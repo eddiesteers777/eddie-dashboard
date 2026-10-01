@@ -38,6 +38,22 @@ function profileDoc(uid) {
     return doc(db, "userProfiles", uid);
 }
 
+function clientDirectoryDoc(uid) {
+    return doc(db, "clientDirectory", uid);
+}
+
+async function syncClientDirectory(profile) {
+    if (!profile || profile.role !== "client" || profile.isCoachApproved === true || profile.status !== "active") return;
+    await setDoc(clientDirectoryDoc(profile.uid), {
+        uid: profile.uid,
+        displayName: String(profile.displayName || ""),
+        email: String(profile.email || ""),
+        services: Array.isArray(profile.services) ? [...profile.services] : [],
+        status: "active",
+        updatedAt: serverTimestamp()
+    });
+}
+
 // Creates this user's profile the first time it's missing (new
 // sign-in), otherwise just returns the existing one. Always starts
 // unapproved and pending -- see firestore.rules for why a create
@@ -54,7 +70,10 @@ export async function ensureProfile() {
 
     const ref = profileDoc(user.uid);
     const existing = await getMyProfile();
-    if (existing) return existing;
+    if (existing) {
+        await syncClientDirectory(existing);
+        return existing;
+    }
     forgetMyProfile();
 
     const profile = {
@@ -121,6 +140,8 @@ export async function approveClient(uid, services) {
         services: services || [],
         approvedAt: serverTimestamp()
     });
+    const profile = await getProfile(uid);
+    await syncClientDirectory(profile);
 }
 
 // Change what an approved client has (their menu follows it: js/navAccess.js).
