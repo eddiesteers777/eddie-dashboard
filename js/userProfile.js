@@ -179,7 +179,7 @@ export async function setClientServices(uid, services) {
 
 export async function denyProfile(uid) {
     await updateDoc(profileDoc(uid), { status: "archived" });
-    await deleteDoc(clientDirectoryDoc(uid);
+    await deleteDoc(clientDirectoryDoc(uid));
 }
 
 export async function promoteToCoach(uid) {
