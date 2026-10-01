@@ -21,7 +21,7 @@
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import {
-    doc, getDoc, setDoc, updateDoc,
+    doc, getDoc, setDoc, updateDoc, deleteDoc,
     collection, query, where, getDocs,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -134,14 +134,21 @@ export async function listPendingProfiles() {
 // isCoachApproved -- promoting someone to coach is a separate,
 // deliberate action (see promoteToCoach) so it can't happen by
 // accident while approving an ordinary client.
-export async function approveClient(uid, services) {
+export async function approveClient(uid, services, identity = {}) {
+    const cleanServices = Array.isArray(services) ? [...services] : [];
     await updateDoc(profileDoc(uid), {
         status: "active",
-        services: services || [],
+        services: cleanServices,
         approvedAt: serverTimestamp()
     });
-    const profile = await getProfile(uid);
-    await syncClientDirectory(profile);
+    await setDoc(clientDirectoryDoc(uid), {
+        uid,
+        displayName: String(identity.displayName || ""),
+        email: String(identity.email || ""),
+        services: cleanServices,
+        status: "active",
+        updatedAt: serverTimestamp()
+    });
 }
 
 // Change what an approved client has (their menu follows it: js/navAccess.js).
@@ -160,6 +167,7 @@ export async function promoteToCoach(uid) {
         isCoachApproved: true,
         status: "active"
     });
+    await deleteDoc(clientDirectoryDoc(uid));
 }
 
 // ---- Guest application (public site) ----
