@@ -73,7 +73,14 @@ const as = uid => env.authenticatedContext(uid).firestore();
 function redeem(db, coachUid, clientUid, code) {
     const batch = writeBatch(db);
     batch.set(doc(db, `coachLinks/${coachUid}_${clientUid}`), {
-        coachUid, clientUid, inviteCode: code, linkedAt: serverTimestamp()
+        coachUid,
+        coachName: coachUid === "coach2" ? "Coach Two" : "Coach One",
+        coachEmail: coachUid === "coach2" ? "coach2@example.com" : "coach@example.com",
+        clientUid,
+        clientName: "Cam Client",
+        clientEmail: "client@example.com",
+        inviteCode: code,
+        linkedAt: serverTimestamp()
     });
     batch.delete(doc(db, `inviteCodes/${code}`));
     return batch.commit();
