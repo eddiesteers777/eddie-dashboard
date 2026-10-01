@@ -6,10 +6,10 @@
    their nutrition, strength, gear, or other private data. Two
    pieces make that possible:
 
-   1. coachLinks/{coachUid}_{clientUid} -- proof a client
-      consented to give a specific coach access. Created only by
-      redeeming a one-time invite code the client generated, so a
-      coach can never link themselves to an account uninvited.
+   1. coachLinks/{coachUid}_{clientUid} -- the relationship between
+      one coach and one client. It can be created directly by an
+      approved coach for an active client account, or through the
+      legacy one-time client invite-code flow.
    2. sharedPlans/{clientUid} -- a mirror of just the client's
       training-programs and running-programs localStorage keys,
       plus coach notes. The client's device keeps this mirror
