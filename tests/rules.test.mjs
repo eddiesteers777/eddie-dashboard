@@ -121,6 +121,20 @@ test("an unapproved account cannot redeem a valid code", async () => {
     await assertFails(redeem(as("stranger"), "stranger", "client", "GOOD01"));
 });
 
+test("client directory rejects forged identity, access fields, and inactive promotion", async () => {
+    await assertFails(setDoc(doc(as("stranger"), "clientDirectory/stranger"), {
+        uid: "stranger", displayName: "Pending Client", email: "pending@example.com",
+        services: ["running"], status: "active", isCoachApproved: true, updatedAt: serverTimestamp()
+    }));
+    await assertFails(setDoc(doc(as("coach"), "clientDirectory/fake"), {
+        uid: "fake", displayName: "Fake", email: "fake@example.com",
+        services: [], status: "active", updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(doc(as("stranger"), "clientDirectory/stranger"), {
+        status: "active", updatedAt: serverTimestamp()
+    }));
+});
+
 test("an approved coach can directly assign an active client without an invite", async () => {
     const db = as("coach");
 
