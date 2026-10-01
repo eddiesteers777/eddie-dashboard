@@ -6,10 +6,10 @@
    their nutrition, strength, gear, or other private data. Two
    pieces make that possible:
 
-   1. coachLinks/{coachUid}_{clientUid} -- proof a client
-      consented to give a specific coach access. Created only by
-      redeeming a one-time invite code the client generated, so a
-      coach can never link themselves to an account uninvited.
+   1. coachLinks/{coachUid}_{clientUid} -- the relationship between
+      one coach and one client. It can be created directly by an
+      approved coach for an active client account, or through the
+      legacy one-time client invite-code flow.
    2. sharedPlans/{clientUid} -- a mirror of just the client's
       training-programs and running-programs localStorage keys,
       plus coach notes. The client's device keeps this mirror
@@ -406,6 +406,62 @@ async function linkWithCode(code) {
     return { clientUid: invite.clientUid, clientName: invite.clientName || "Client" };
 }
 
+// ---- Direct coach assignment ----
+// Approved coaches may find active client accounts and create the same
+// coachLinks relationship used by the invite flow. This does not grant
+// wearable permissions; wearableShares remains client-controlled.
+export async function listAssignableClients() {
+    const user = await waitForUser();
+    if (!user) return [];
+
+    const [directory, links] = await Promise.all([
+        getDocs(query(collection(db, "clientDirectory"), where("status", "==", "active"))),
+        listMyClients()
+    ]);
+
+    const linked = new Set(links.map(link => link.clientUid));
+    return directory.docs
+        .map(d => {
+            const data = d.data() || {};
+            return {
+                uid: d.id,
+                displayName: String(data.displayName || ""),
+                email: String(data.email || ""),
+                services: Array.isArray(data.services) ? [...data.services] : []
+            };
+        })
+        .filter(profile => profile.uid !== user.uid && !linked.has(profile.uid))
+        .sort((a, b) => (a.displayName || a.email).localeCompare(b.displayName || b.email));
+}
+
+export async function assignClient(clientUid) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    if (!clientUid || clientUid === user.uid) throw new Error("cannot-link-self");
+
+    const directorySnap = await getDoc(doc(db, "clientDirectory", clientUid));
+    if (!directorySnap.exists()) throw new Error("client-not-found");
+
+    const client = directorySnap.data() || {};
+    if (client.status !== "active") throw new Error("client-not-assignable");
+
+    const linkRef = doc(db, "coachLinks", user.uid + "_" + clientUid);
+    const existing = await getDoc(linkRef);
+    if (existing.exists()) throw new Error("already-linked");
+
+    await setDoc(linkRef, {
+        coachUid: user.uid,
+        coachName: user.displayName || "Coach",
+        coachEmail: user.email || "",
+        clientUid,
+        clientName: client.displayName || "Client",
+        clientEmail: client.email || "",
+        inviteCode: "",
+        linkedAt: serverTimestamp()
+    });
+
+    return { clientUid, clientName: client.displayName || "Client" };
+}
 export async function listMyClients() {
     const user = await waitForUser();
     if (!user) return [];

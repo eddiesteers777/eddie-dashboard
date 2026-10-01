@@ -21,7 +21,7 @@
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import {
-    doc, getDoc, setDoc, updateDoc,
+    doc, getDoc, setDoc, updateDoc, deleteDoc,
     collection, query, where, getDocs,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -36,6 +36,28 @@ export const SERVICES = [
 
 function profileDoc(uid) {
     return doc(db, "userProfiles", uid);
+}
+
+function clientDirectoryDoc(uid) {
+    return doc(db, "clientDirectory", uid);
+}
+
+async function syncClientDirectory(profile) {
+    if (!profile || profile.role !== "client" || profile.isCoachApproved === true) return;
+    const payload = {
+        uid: profile.uid,
+        displayName: String(profile.displayName || ""),
+        email: String(profile.email || ""),
+        services: Array.isArray(profile.services) ? [...profile.services] : [],
+        status: profile.status,
+        updatedAt: serverTimestamp()
+    };
+    if (profile.status === "pending") {
+        payload.requestedServices = Array.isArray(profile.requestedServices) ? [...profile.requestedServices] : [];
+        payload.applicationMessage = String(profile.applicationMessage || "");
+        payload.applicationSubmittedAt = profile.applicationSubmittedAt || null;
+    }
+    await setDoc(clientDirectoryDoc(profile.uid), payload);
 }
 
 // Creates this user's profile the first time it's missing (new
@@ -54,7 +76,10 @@ export async function ensureProfile() {
 
     const ref = profileDoc(user.uid);
     const existing = await getMyProfile();
-    if (existing) return existing;
+    if (existing) {
+        await syncClientDirectory(existing);
+        return existing;
+    }
     forgetMyProfile();
 
     const profile = {
@@ -69,6 +94,7 @@ export async function ensureProfile() {
     };
     await setDoc(ref, profile);
     forgetMyProfile();
+    await syncClientDirectory(profile);
     return profile;
 }
 
@@ -104,7 +130,7 @@ export async function isApprovedCoach() {
 export async function listPendingProfiles() {
     const user = await waitForUser();
     if (!user) return [];
-    const snap = await getDocs(query(collection(db, "userProfiles"), where("status", "==", "pending")));
+    const snap = await getDocs(query(collection(db, "clientDirectory"), where("status", "==", "pending")));
     return snap.docs
         .map(d => ({ uid: d.id, ...d.data() }))
         .filter(p => p.uid !== user.uid);
@@ -115,22 +141,45 @@ export async function listPendingProfiles() {
 // isCoachApproved -- promoting someone to coach is a separate,
 // deliberate action (see promoteToCoach) so it can't happen by
 // accident while approving an ordinary client.
-export async function approveClient(uid, services) {
+export async function approveClient(uid, services, identity = {}) {
+    const cleanServices = Array.isArray(services) ? [...services] : [];
     await updateDoc(profileDoc(uid), {
         status: "active",
-        services: services || [],
+        services: cleanServices,
         approvedAt: serverTimestamp()
+    });
+    await setDoc(clientDirectoryDoc(uid), {
+        uid,
+        displayName: String(identity.displayName || ""),
+        email: String(identity.email || ""),
+        services: cleanServices,
+        status: "active",
+        updatedAt: serverTimestamp()
     });
 }
 
 // Change what an approved client has (their menu follows it: js/navAccess.js).
 export async function setClientServices(uid, services) {
     const allowed = new Set(SERVICES.map(s => s.value));
-    await updateDoc(profileDoc(uid), { services: [...new Set(services || [])].filter(s => allowed.has(s)) });
+    const cleanServices = [...new Set(services || [])].filter(s => allowed.has(s));
+    await updateDoc(profileDoc(uid), { services: cleanServices });
+    const directory = await getDoc(clientDirectoryDoc(uid));
+    if (directory.exists() && directory.data().status === "active") {
+        const data = directory.data();
+        await setDoc(clientDirectoryDoc(uid), {
+            uid,
+            displayName: String(data.displayName || ""),
+            email: String(data.email || ""),
+            services: cleanServices,
+            status: "active",
+            updatedAt: serverTimestamp()
+        });
+    }
 }
 
 export async function denyProfile(uid) {
     await updateDoc(profileDoc(uid), { status: "archived" });
+    await deleteDoc(clientDirectoryDoc(uid));
 }
 
 export async function promoteToCoach(uid) {
@@ -139,6 +188,7 @@ export async function promoteToCoach(uid) {
         isCoachApproved: true,
         status: "active"
     });
+    await deleteDoc(clientDirectoryDoc(uid));
 }
 
 // ---- Guest application (public site) ----
@@ -160,6 +210,7 @@ export async function submitApplication(requestedServices, message) {
         applicationSubmittedAt: serverTimestamp()
     });
     forgetMyProfile();
+    await syncClientDirectory(await getMyProfile());
 }
 
 // "Last in the app" for the coach (the Client Hub, "Hasn't opened the app

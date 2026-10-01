@@ -31,9 +31,46 @@ beforeEach(async () => {
     await env.clearFirestore();
     await env.withSecurityRulesDisabled(async ctx => {
         const db = ctx.firestore();
-        await setDoc(doc(db, "userProfiles/coach"), { uid: "coach", role: "coach", isCoachApproved: true, status: "active", services: [] });
-        await setDoc(doc(db, "userProfiles/client"), { uid: "client", role: "client", isCoachApproved: false, status: "active", services: ["online_coaching"], email: "client@example.com" });
+        await setDoc(doc(db, "userProfiles/coach"), { uid: "coach", role: "coach", isCoachApproved: true, status: "active", services: [], displayName: "Coach One", email: "coach@example.com" });
+        await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [], displayName: "Coach Two", email: "coach2@example.com" });
+        await setDoc(doc(db, "userProfiles/client"), { uid: "client", role: "client", isCoachApproved: false, status: "active", services: ["online_coaching"], email: "client@example.com", displayName: "Cam Client" });
+        await setDoc(doc(db, "clientDirectory/client"), {
+            uid: "client", displayName: "Cam Client", email: "client@example.com",
+            services: ["online_coaching"], status: "active", updatedAt: Timestamp.now()
+        });
         await setDoc(doc(db, "userProfiles/stranger"), { uid: "stranger", role: "client", isCoachApproved: false, status: "pending", services: [] });
+        await setDoc(doc(db, "clientDirectory/stranger"), {
+            uid: "stranger", displayName: "Pending Client", email: "pending@example.com",
+            services: [], status: "pending", requestedServices: ["running"],
+            applicationMessage: "I want coaching.", applicationSubmittedAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+        });
+        await setDoc(doc(db, "clientRecords/client"), {
+            clientUid: "client",
+            updatedBy: "client",
+            updatedAt: Timestamp.now(),
+            whoTrains: "",
+            primarySport: "",
+            yearsRunning: "",
+            runStart: "",
+            strengthExperience: "",
+            availabilityDays: [],
+            timeOfDay: [],
+            sessionLength: "",
+            trainWhere: [],
+            equipment: [],
+            soccerPosition: "",
+            soccerLevel: "",
+            strongFoot: "",
+            yearsPlaying: "",
+            eventType: "",
+            targetDate: "",
+            feedbackStyle: "",
+            obstacle: "",
+            injuryAreas: [],
+            injuryStatus: "",
+            healthFlags: ""
+        });
         await setDoc(doc(db, "inviteCodes/GOOD01"), { clientUid: "client", clientName: "Cam", clientEmail: "client@example.com", createdAt: Timestamp.now() });
         await setDoc(doc(db, "inviteCodes/OLD001"), { clientUid: "client", clientName: "Cam", clientEmail: "client@example.com", createdAt: Timestamp.fromMillis(Date.now() - 8 * DAY) });
         await setDoc(doc(db, "inviteCodes/OTHER1"), { clientUid: "other", clientName: "Oz", clientEmail: "", createdAt: Timestamp.now() });
@@ -46,7 +83,14 @@ const as = uid => env.authenticatedContext(uid).firestore();
 function redeem(db, coachUid, clientUid, code) {
     const batch = writeBatch(db);
     batch.set(doc(db, `coachLinks/${coachUid}_${clientUid}`), {
-        coachUid, clientUid, inviteCode: code, linkedAt: serverTimestamp()
+        coachUid,
+        coachName: coachUid === "coach2" ? "Coach Two" : "Coach One",
+        coachEmail: coachUid === "coach2" ? "coach2@example.com" : "coach@example.com",
+        clientUid,
+        clientName: "Cam Client",
+        clientEmail: "client@example.com",
+        inviteCode: code,
+        linkedAt: serverTimestamp()
     });
     batch.delete(doc(db, `inviteCodes/${code}`));
     return batch.commit();
@@ -79,6 +123,113 @@ test("even an approved coach cannot create a link without burning a code", async
 
 test("an unapproved account cannot redeem a valid code", async () => {
     await assertFails(redeem(as("stranger"), "stranger", "client", "GOOD01"));
+});
+
+test("client directory rejects forged identity, access fields, and inactive promotion", async () => {
+    await assertFails(setDoc(doc(as("stranger"), "clientDirectory/stranger"), {
+        uid: "stranger", displayName: "Pending Client", email: "pending@example.com",
+        services: ["running"], status: "active", isCoachApproved: true, updatedAt: serverTimestamp()
+    }));
+    await assertFails(setDoc(doc(as("coach"), "clientDirectory/fake"), {
+        uid: "fake", displayName: "Fake", email: "fake@example.com",
+        services: [], status: "active", updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(doc(as("stranger"), "clientDirectory/stranger"), {
+        status: "active", updatedAt: serverTimestamp()
+    }));
+});
+
+test("an approved coach can directly assign an active client without an invite", async () => {
+    const db = as("coach");
+
+    // Before the relationship exists, the client's coaching profile is private.
+    await assertFails(getDoc(doc(db, "clientRecords/client")));
+
+    const link = doc(db, "coachLinks/coach_client");
+    await assertSucceeds(setDoc(link, {
+        coachUid: "coach",
+        coachName: "Coach One",
+        coachEmail: "coach@example.com",
+        clientUid: "client",
+        clientName: "Cam Client",
+        clientEmail: "client@example.com",
+        inviteCode: "",
+        linkedAt: serverTimestamp()
+    }));
+
+    await assertSucceeds(getDoc(link));
+    // The new relationship immediately unlocks the existing Client Hub profile boundary.
+    await assertSucceeds(getDoc(doc(db, "clientRecords/client")));
+});
+
+test("direct assignment still supports multiple coaches for one client", async () => {
+    await assertSucceeds(setDoc(doc(as("coach"), "coachLinks/coach_client"), {
+        coachUid: "coach",
+        coachName: "Coach One",
+        coachEmail: "coach@example.com",
+        clientUid: "client",
+        clientName: "Cam Client",
+        clientEmail: "client@example.com",
+        inviteCode: "",
+        linkedAt: serverTimestamp()
+    }));
+
+    await assertSucceeds(setDoc(doc(as("coach2"), "coachLinks/coach2_client"), {
+        coachUid: "coach2",
+        coachName: "Coach Two",
+        coachEmail: "coach2@example.com",
+        clientUid: "client",
+        clientName: "Cam Client",
+        clientEmail: "client@example.com",
+        inviteCode: "",
+        linkedAt: serverTimestamp()
+    }));
+
+    await assertSucceeds(getDoc(doc(as("coach"), "coachLinks/coach_client")));
+    await assertSucceeds(getDoc(doc(as("coach2"), "coachLinks/coach2_client")));
+    await assertSucceeds(getDoc(doc(as("client"), "coachLinks/coach_client")));
+    await assertSucceeds(getDoc(doc(as("client"), "coachLinks/coach2_client")));
+});
+
+test("direct assignment refuses pending clients, coach accounts, self-links, fake invites, and unapproved coaches", async () => {
+    const direct = (db, coachUid, clientUid, extra = {}) => setDoc(
+        doc(db, "coachLinks/" + coachUid + "_" + clientUid),
+        {
+            coachUid,
+            coachName: coachUid === "coach2" ? "Coach Two" : "Coach One",
+            coachEmail: coachUid === "coach2" ? "coach2@example.com" : "coach@example.com",
+            clientUid,
+            clientName: clientUid === "client" ? "Cam Client" : "Other",
+            clientEmail: clientUid === "client" ? "client@example.com" : "",
+            inviteCode: "",
+            linkedAt: serverTimestamp(),
+            ...extra
+        }
+    );
+
+    // Pending "stranger" is not an assignable active client.
+    await assertFails(direct(as("coach"), "coach", "stranger"));
+
+    // Another approved coach account is not a client.
+    await assertFails(direct(as("coach"), "coach", "coach2"));
+
+    // A coach cannot assign themselves.
+    await assertFails(direct(as("coach"), "coach", "coach"));
+
+    // An arbitrary non-empty invite string does not bypass the real invite path.
+    await assertFails(direct(as("coach"), "coach", "client", { inviteCode: "FAKE01" }));
+
+    // The relationship identity must match the authoritative client profile.
+    await assertFails(direct(as("coach"), "coach", "client", { clientName: "Forged Name" }));
+
+    // Extra fields cannot be smuggled into the relationship document.
+    await assertFails(direct(as("coach"), "coach", "client", { extra: "not-allowed" }));
+
+    // The signed-in coach must own the relationship document.
+    await assertFails(direct(as("coach"), "coach2", "client"));
+
+    // Unapproved accounts cannot use direct assignment.
+    await assertFails(direct(as("stranger"), "stranger", "client"));
 });
 
 test("an approved coach redeems a valid code atomically, and only once", async () => {
@@ -413,10 +564,14 @@ test("other users cannot read or list profiles", async () => {
     await assertFails(getDocs(query(collection(as("client"), "userProfiles"), where("status", "==", "pending"))));
 });
 
-test("owners read their own profile; approved coaches can list pending accounts", async () => {
+test("profiles stay private while coaches use the minimal directory projection", async () => {
     await assertSucceeds(getDoc(doc(as("client"), "userProfiles/client")));
     await assertSucceeds(getDoc(doc(as("brandnew"), "userProfiles/brandnew")));
-    await assertSucceeds(getDocs(query(collection(as("coach"), "userProfiles"), where("status", "==", "pending"))));
+    await assertFails(getDoc(doc(as("coach"), "userProfiles/client")));
+    await assertFails(getDocs(query(collection(as("coach"), "userProfiles"), where("status", "==", "pending"))));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "clientDirectory"), where("status", "==", "pending"))));
+    await assertSucceeds(getDoc(doc(as("coach"), "clientDirectory/stranger")));
+    await assertFails(getDoc(doc(as("stranger"), "clientDirectory/client")));
 });
 
 test("a new profile can only start as a pending client with no services", async () => {

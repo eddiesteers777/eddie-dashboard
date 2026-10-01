@@ -2,9 +2,9 @@
    Southbound — My Clients
 
    Two roles live on one page since any account can be both a coach
-   and a client: "Coach a Client" (this account editing someone
-   else's Training/Race Plans) and "Share My Plans" (this account
-   granting a coach access to its own). See js/coachAccess.js for
+   and a client: "Coach a Client" (this account managing someone
+   else's coaching data) and "My Coaches" (this account seeing and
+   removing its coach relationships). See js/coachAccess.js for
    the Firestore access this drives, and firestore.rules for what
    actually enforces the boundary.
 ========================================== */
@@ -13,8 +13,8 @@ import { listenForAuth } from "./auth.js";
 import { sbConfirm, sbAlert, toast, loadingHtml } from "./ui.js";
 import { cachedRole } from "./role.js";
 import {
-    createInviteCode, redeemInviteCode, linkApplicant,
-    listMyCoaches, removeLink
+    createInviteCode, redeemInviteCode,
+    listMyCoaches, removeLink, listAssignableClients, assignClient
 } from "./coachAccess.js";
 import { loadClientDirectory } from "./clientDirectory.js";
 import { summarizeClient, serviceLabels, isoDate, shortDate, clientStatusLines } from "./clientSummary.js";
@@ -25,6 +25,7 @@ import {
 import { listApplications, matchApplicationTo, setApplicationHandled } from "./applications.js";
 import { matchApplication, unmatchedApplications, applicationLines, recordFromApplication } from "./applicationForm.js";
 import { getClientRecord, saveClientRecord } from "./clientRecords.js";
+import { filterAssignableClients, displayNameForAssignment } from "./clientAssignmentModel.js";
 
 const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
@@ -58,6 +59,125 @@ const redeemBtn = document.getElementById("redeemBtn");
 const redeemMsg = document.getElementById("redeemMsg");
 const clientsList = document.getElementById("clientsList");
 const clientsEmptyMsg = document.getElementById("clientsEmptyMsg");
+
+const assignSearchForm = document.getElementById("assignSearchForm");
+const assignSearchInput = document.getElementById("assignSearchInput");
+const assignSearchBtn = document.getElementById("assignSearchBtn");
+const assignSearchResults = document.getElementById("assignSearchResults");
+const assignSearchMsg = document.getElementById("assignSearchMsg");
+
+let assignableClients = null;
+let assignableClientsPromise = null;
+
+function assignMessage(text, isError = false) {
+    assignSearchMsg.textContent = text;
+    assignSearchMsg.classList.toggle("clients-msg-error", isError);
+    assignSearchMsg.hidden = false;
+}
+
+function clearAssignMessage() {
+    assignSearchMsg.hidden = true;
+    assignSearchMsg.textContent = "";
+    assignSearchMsg.classList.remove("clients-msg-error");
+}
+
+async function getAssignableClients() {
+    if (assignableClients) return assignableClients;
+    if (!assignableClientsPromise) {
+        assignableClientsPromise = listAssignableClients()
+            .then(rows => {
+                assignableClients = rows;
+                return rows;
+            })
+            .finally(() => {
+                assignableClientsPromise = null;
+            });
+    }
+    return assignableClientsPromise;
+}
+
+function renderAssignmentResults(rows) {
+    if (!rows.length) {
+        assignSearchResults.innerHTML = '<p class="clients-card-note">No active client account matched that search.</p>';
+        assignSearchResults.hidden = false;
+        return;
+    }
+
+    assignSearchResults.innerHTML = rows.map(client => {
+        const services = serviceLabels(client.services || []);
+        return `
+            <div class="clients-row clients-assign-row" data-assign-uid="${escapeHtml(client.uid)}">
+                <div class="clients-row-avatar">${escapeHtml(displayNameForAssignment(client).slice(0, 1).toUpperCase())}</div>
+                <div class="clients-row-info">
+                    <strong>${escapeHtml(displayNameForAssignment(client))}</strong>
+                    <span>${escapeHtml(client.email || "No email on account")}</span>
+                    ${services.length ? `<span>${escapeHtml(services.join(" · "))}</span>` : ""}
+                </div>
+                <button type="button" class="clients-btn-primary" data-action="assign">Assign</button>
+            </div>
+        `;
+    }).join("");
+    assignSearchResults.hidden = false;
+}
+
+assignSearchForm?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const query = (assignSearchInput.value || "").trim();
+    clearAssignMessage();
+    assignSearchResults.hidden = true;
+
+    if (query.length < 2) {
+        assignSearchResults.innerHTML = '<p class="clients-card-note">Type at least 2 characters to search.</p>';
+        assignSearchResults.hidden = false;
+        return;
+    }
+
+    assignSearchBtn.disabled = true;
+    assignSearchBtn.textContent = "Searching…";
+
+    try {
+        const rows = filterAssignableClients(await getAssignableClients(), query);
+        renderAssignmentResults(rows);
+    } catch (error) {
+        console.error("Client search failed:", error);
+        assignMessage("Couldn't search client accounts right now. Try again.", true);
+    } finally {
+        assignSearchBtn.disabled = false;
+        assignSearchBtn.textContent = "Search";
+    }
+});
+
+assignSearchResults?.addEventListener("click", async event => {
+    const button = event.target.closest('[data-action="assign"]');
+    const row = event.target.closest("[data-assign-uid]");
+    if (!button || !row) return;
+
+    button.disabled = true;
+    button.textContent = "Adding…";
+    clearAssignMessage();
+
+    try {
+        const result = await assignClient(row.dataset.assignUid);
+        assignableClients = (assignableClients || []).filter(client => client.uid !== result.clientUid);
+        renderAssignmentResults(filterAssignableClients(assignableClients, assignSearchInput.value));
+        assignMessage(`${result.clientName} is now your client.`);
+        await refreshClients();
+    } catch (error) {
+        console.error("Direct client assignment failed:", error);
+        const message = {
+            "already-linked": "That client is already in your list.",
+            "client-not-found": "That client account no longer exists.",
+            "client-not-assignable": "That account is not an active client account.",
+            "cannot-link-self": "You can't add yourself as a client.",
+            "not-signed-in": "Please sign in again."
+        }[error.message] || "Couldn't add that client. Try again.";
+        assignMessage(message, true);
+        button.disabled = false;
+        button.textContent = "Assign";
+    }
+});
+
+
 
 function showMsg(el, text, isError = false) {
     el.textContent = text;
@@ -112,7 +232,7 @@ function renderClientRows() {
             </button>
         `;
         row.querySelector('[data-action="remove"]').addEventListener("click", async () => {
-            if (!(await sbConfirm("You'll lose access to their plans, check-ins and sessions until they send you a new code.", { title: `Remove ${c.name}?`, confirmLabel: "Remove", danger: true }))) return;
+            if (!(await sbConfirm("You'll lose access to their plans, check-ins and sessions until you are assigned again.", { title: `Remove ${c.name}?`, confirmLabel: "Remove", danger: true }))) return;
             await removeLink(c.linkId);
             refreshClients();
         });
@@ -400,13 +520,15 @@ async function refreshPending() {
             if (!services.length && !(await sbConfirm("With no services ticked they'll only see the basics: no Plan, Train or Health pages. You can change it later in their Client Hub.", { title: "Approve with no services?", confirmLabel: "Approve anyway", cancelLabel: "Choose services" }))) return;
             const approveBtn = row.querySelector('[data-action="approve"]');
             approveBtn.disabled = true;
-            await approveClient(profile.uid, services);
-            // Link them in the same step using the standing code their
-            // app leaves while pending (js/coachAccess.js). Accounts on an
-            // older app won't have one; those link with an invite code.
+            await approveClient(profile.uid, services, { displayName: profile.displayName, email: profile.email });
+            // Approval makes the account active, so the approving coach can
+            // directly create the same coachLinks relationship used by Find a Client.
+            // This removes the old requirement that a newly approved client generate
+            // an invite code first. The legacy code path remains available for older
+            // clients/coaches through the secondary invite-code UI.
             let linked = false;
             try {
-                await linkApplicant(profile.uid);
+                await assignClient(profile.uid);
                 linked = true;
             } catch (error) {
                 console.info("Approved without auto-link:", error.message);
@@ -415,7 +537,7 @@ async function refreshPending() {
             if (linked) {
                 toast(`${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and in My Clients now.`);
             } else {
-                await sbAlert("They aren't linked to you yet. Ask them to open More > Connect with Coach in their app and send you the code, then enter it under Coach a Client.", { title: `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved` });
+                await sbAlert("They are approved but aren't linked to you yet. Use Find a Client above and click Assign when their active account appears.", { title: `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved` });
             }
             refreshPending();
             refreshClients();
@@ -436,10 +558,10 @@ async function refreshPending() {
 }
 
 // ---- Coach vs client view ----
-// A coach manages clients here (Coach a Client + Pending) and has no
-// use for sharing their own plans. A client only ever uses this page to
-// connect with their coach, so they get just that (More -> Connect with
-// Coach links here). Guessed from the role remembered on this device
+// A coach manages clients here (Coach a Client + Pending). A client
+// sees their connected coaches and may still use the legacy invite
+// fallback if an older coach asks for one. Guessed from the role
+// remembered on this device
 // (js/role.js) so there's no flash, then confirmed from the profile.
 
 const titleEl = document.getElementById("clientsTitle");
@@ -453,7 +575,7 @@ function setClientsView(isCoach) {
     titleEl.textContent = isCoach ? coachTitle : "Connect with Your Coach";
     introEl.textContent = isCoach
         ? coachIntro
-        : "Link your account to your coach so they can build your plan, read your check-ins and book your sessions.";
+        : "Your coach can find your account and assign you directly. Use My Coaches to see or remove connected coaches.";
     if (!isCoach) selectTab("share");
     else if (document.querySelector('.clients-tab.active')?.dataset.tab === "share") selectTab("coach");
 }

@@ -10,18 +10,18 @@ rules_version = '2';
 // Collections:
 //   users/{uid}/sync/{docId}   Each user's private data blob. Owner only.
 //   userProfiles/{uid}         Role / status / services. Readable only by
-//                              the owner and approved coaches (who need
-//                              the Pending list). A user can only edit
-//                              their own application fields; everything
-//                              that grants access is coach-only.
+//                              the owner, pending-account coaches, or a
+//                              coach already linked to that client. Full
+//                              profiles are never used as a directory.
 //   inviteCodes/{code}         One-time codes a client hands a coach.
 //                              Never listable; expire after 7 days.
-//   coachLinks/{coach}_{client} Proof a client invited a coach. Can only
-//                              be created by an approved coach, in the
-//                              same atomic batch that deletes (burns) a
-//                              valid invite code from that client -- so a
-//                              link can't be forged and a code can't be
-//                              redeemed twice.
+//   clientDirectory/{uid}     Minimal coach-facing discovery projection.
+//                              It contains only identity/service fields
+//                              needed to find a client; the full profile
+//                              remains private.
+//   coachLinks/{coach}_{client} Relationship between one coach and one
+//                              client. Direct assignment or the legacy
+//                              one-time invite path can create it.
 //   sharedPlans/{clientUid}    Client's plan mirror; a linked coach can
 //                              read and edit it.
 //   wearableShares/{coach}_{client}  Client-controlled wearable sharing
@@ -131,8 +131,9 @@ service cloud.firestore {
     }
 
     match /userProfiles/{uid} {
-      allow get: if isUser(uid) || isApprovedCoach();
-      allow list: if isApprovedCoach();
+      // Active client discovery uses clientDirectory; full profiles are not a search directory.
+      allow get: if isUser(uid) || (isApprovedCoach() && (resource.data.status == "pending" || linked(request.auth.uid, uid)));
+      allow list: if false;
 
       // Self-signup always starts as an unapproved, pending client with
       // no services -- it can never grant itself anything.
@@ -152,6 +153,71 @@ service cloud.firestore {
         // "Last in the app": only ever the server's clock, nothing else.
         || (isUser(uid) && onlyChanges(["lastSeenAt"]) && request.resource.data.lastSeenAt == request.time)
         || isApprovedCoach();
+    }
+
+    match /clientDirectory/{uid} {
+      // Minimal coach-facing projection. Full userProfiles stay private.
+      allow get, list: if isApprovedCoach();
+
+      allow create: if (
+          isUser(uid)
+          && request.resource.data.keys().hasOnly([
+              "uid", "displayName", "email", "services", "status",
+              "updatedAt", "requestedServices", "applicationMessage",
+              "applicationSubmittedAt"
+          ])
+          && request.resource.data.uid == uid
+          && request.resource.data.status in ["pending", "active"]
+          && request.resource.data.services is list
+          && get(profilePath(uid)).data.role == "client"
+          && get(profilePath(uid)).data.isCoachApproved == false
+          && get(profilePath(uid)).data.status == request.resource.data.status
+          && request.resource.data.updatedAt == request.time
+        )
+        || (
+          isApprovedCoach()
+          && request.resource.data.keys().hasOnly(["uid", "displayName", "email", "services", "status", "updatedAt"])
+          && request.resource.data.uid == uid
+          && request.resource.data.status == "active"
+          && request.resource.data.services is list
+          && get(profilePath(uid)).data.role == "client"
+          && get(profilePath(uid)).data.isCoachApproved == false
+          && get(profilePath(uid)).data.status == "active"
+          && request.resource.data.displayName == get(profilePath(uid)).data.displayName
+          && request.resource.data.email == get(profilePath(uid)).data.email
+          && request.resource.data.services == get(profilePath(uid)).data.services
+          && request.resource.data.updatedAt == request.time
+        );
+
+      allow update: if (
+          isUser(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "displayName", "email", "services", "status", "updatedAt",
+              "requestedServices", "applicationMessage", "applicationSubmittedAt"
+          ])
+          && request.resource.data.uid == uid
+          && request.resource.data.status == get(profilePath(uid)).data.status
+          && request.resource.data.updatedAt == request.time
+        )
+        || (
+          isApprovedCoach()
+          && request.resource.data.keys().hasOnly(["uid", "displayName", "email", "services", "status", "updatedAt"])
+          && request.resource.data.uid == uid
+          && request.resource.data.status in ["active", "archived"]
+          && get(profilePath(uid)).data.role == "client"
+          && get(profilePath(uid)).data.isCoachApproved == false
+          && get(profilePath(uid)).data.status == request.resource.data.status
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.displayName == get(profilePath(uid)).data.displayName
+          && request.resource.data.email == get(profilePath(uid)).data.email
+          && request.resource.data.services == get(profilePath(uid)).data.services
+        );
+
+      allow delete: if isApprovedCoach()
+        && (
+          (get(profilePath(uid)).data.role == "coach" && get(profilePath(uid)).data.isCoachApproved == true)
+          || (get(profilePath(uid)).data.role == "client" && get(profilePath(uid)).data.status == "archived")
+        );
     }
 
     match /inviteCodes/{code} {
@@ -174,22 +240,81 @@ service cloud.firestore {
       );
     }
 
-    match /coachLinks/{linkId} {
-      allow read: if signedIn()
-        && (request.auth.uid == resource.data.coachUid
-            || request.auth.uid == resource.data.clientUid);
+    function activeClientAccount(clientUid) {
+      let ref = profilePath(clientUid);
+      return exists(ref)
+        && get(ref).data.uid == clientUid
+        && get(ref).data.role == "client"
+        && get(ref).data.isCoachApproved == false
+        && get(ref).data.status == "active";
+    }
 
-      allow create: if isApprovedCoach()
-        && request.resource.data.coachUid == request.auth.uid
-        && request.resource.data.clientUid != request.auth.uid
-        && linkId == request.auth.uid + '_' + request.resource.data.clientUid
+    function validCoachLinkData() {
+      return request.resource.data.keys().hasOnly([
+          "coachUid", "coachName", "coachEmail",
+          "clientUid", "clientName", "clientEmail",
+          "inviteCode", "linkedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "coachUid", "coachName", "coachEmail",
+          "clientUid", "clientName", "clientEmail",
+          "inviteCode", "linkedAt"
+        ])
+        && request.resource.data.coachUid is string
+        && request.resource.data.coachUid.size() > 0
+        && request.resource.data.coachName is string
+        && request.resource.data.coachName.size() <= 120
+        && request.resource.data.coachEmail is string
+        && request.resource.data.coachEmail.size() <= 320
+        && request.resource.data.clientUid is string
+        && request.resource.data.clientUid.size() > 0
+        && request.resource.data.clientName is string
+        && request.resource.data.clientName.size() <= 120
+        && request.resource.data.clientEmail is string
+        && request.resource.data.clientEmail.size() <= 320
         && request.resource.data.inviteCode is string
+        && request.resource.data.linkedAt == request.time
+        && request.resource.data.coachUid == request.auth.uid;
+    }
+
+    function directCoachLink() {
+      return validCoachLinkData()
+        && request.resource.data.inviteCode == ""
+        && activeClientAccount(request.resource.data.clientUid);
+    }
+
+    function invitedCoachLink() {
+      return validCoachLinkData()
+        && request.resource.data.inviteCode is string
+        && request.resource.data.inviteCode.size() > 0
         && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode))
         && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.clientUid
              == request.resource.data.clientUid
         && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.createdAt
              > request.time - duration.value(7, 'd')
         && !existsAfter(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode));
+    }
+
+    match /coachLinks/{linkId} {
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.coachUid
+            || request.auth.uid == resource.data.clientUid);
+
+      // There are now two supported creation paths:
+      // 1) direct assignment by an approved coach to an already-active client;
+      // 2) the original one-time client invite code for backwards compatibility.
+      // Both still require the exact coach/client document ID and an
+      // approved coach. Neither grants wearable access.
+      allow create: if isApprovedCoach()
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid != request.auth.uid
+        && linkId == request.auth.uid + '_' + request.resource.data.clientUid
+        && (
+          (directCoachLink()
+            && request.resource.data.clientName == get(profilePath(request.resource.data.clientUid)).data.displayName
+            && request.resource.data.clientEmail == get(profilePath(request.resource.data.clientUid)).data.email)
+          || invitedCoachLink()
+        );
 
       allow update: if false;
 
