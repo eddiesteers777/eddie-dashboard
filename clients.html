@@ -53,14 +53,25 @@
             <section class="clients-panel" data-panel="coach">
 
                 <div class="clients-card">
-                    <h2>Add a client</h2>
-                    <p class="clients-card-note">Anyone who applied through the website is linked automatically when you approve them. For anyone else: ask them to open More &rarr; Connect with Coach in their app and send you the code it gives them.</p>
+                    <h2>Find a client</h2>
+                    <p class="clients-card-note">Search active Southbound client accounts by name or email. Assigning a client opens their Client Hub and coaching profile. Their COROS, recovery, and other wearable data stays private until they choose to share it.</p>
+                    <form id="assignSearchForm" class="clients-redeem-row">
+                        <input type="search" id="assignSearchInput" placeholder="Name or email" autocomplete="off" spellcheck="false" aria-label="Search client accounts">
+                        <button type="submit" id="assignSearchBtn" class="clients-btn-primary">Search</button>
+                    </form>
+                    <div id="assignSearchResults" class="clients-list" hidden></div>
+                    <p id="assignSearchMsg" class="clients-msg" hidden></p>
+                </div>
+
+                <details class="clients-card clients-secondary-card">
+                    <summary>Use a client invite code instead</summary>
+                    <p class="clients-card-note">This keeps the older invite process available for existing clients who already have a code.</p>
                     <form id="redeemForm" class="clients-redeem-row">
                         <input type="text" id="redeemInput" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
-                        <button type="submit" id="redeemBtn" class="clients-btn-primary">Add Client</button>
+                        <button type="submit" id="redeemBtn" class="clients-btn-secondary">Use Code</button>
                     </form>
                     <p id="redeemMsg" class="clients-msg" hidden></p>
-                </div>
+                </details>
 
                 <div id="clientsListWrap">
                     <h2 class="clients-section-title">Your clients</h2>
@@ -74,7 +85,7 @@
                         <button type="button" class="clients-filter" data-filter="online">Online <span class="clients-filter-count"></span></button>
                     </div>
                     <div id="clientsList" class="clients-list"></div>
-                    <p id="clientsEmptyMsg" class="clients-card-note" hidden>No clients yet — add one with a code above.</p>
+                    <p id="clientsEmptyMsg" class="clients-card-note" hidden>No clients yet — search above to add one.</p>
                 </div>
 
             </section>
