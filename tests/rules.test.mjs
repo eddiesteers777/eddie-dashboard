@@ -219,6 +219,9 @@ test("direct assignment refuses pending clients, coach accounts, self-links, fak
     // An arbitrary non-empty invite string does not bypass the real invite path.
     await assertFails(direct(as("coach"), "coach", "client", { inviteCode: "FAKE01" }));
 
+    // The relationship identity must match the authoritative client profile.
+    await assertFails(direct(as("coach"), "coach", "client", { clientName: "Forged Name" }));
+
     // Extra fields cannot be smuggled into the relationship document.
     await assertFails(direct(as("coach"), "coach", "client", { extra: "not-allowed" }));
 
