@@ -34,6 +34,10 @@ beforeEach(async () => {
         await setDoc(doc(db, "userProfiles/coach"), { uid: "coach", role: "coach", isCoachApproved: true, status: "active", services: [], displayName: "Coach One", email: "coach@example.com" });
         await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [], displayName: "Coach Two", email: "coach2@example.com" });
         await setDoc(doc(db, "userProfiles/client"), { uid: "client", role: "client", isCoachApproved: false, status: "active", services: ["online_coaching"], email: "client@example.com", displayName: "Cam Client" });
+        await setDoc(doc(db, "clientDirectory/client"), {
+            uid: "client", displayName: "Cam Client", email: "client@example.com",
+            services: ["online_coaching"], status: "active", updatedAt: Timestamp.now()
+        });
         await setDoc(doc(db, "userProfiles/stranger"), { uid: "stranger", role: "client", isCoachApproved: false, status: "pending", services: [] });
         await setDoc(doc(db, "clientDirectory/stranger"), {
             uid: "stranger", displayName: "Pending Client", email: "pending@example.com",
