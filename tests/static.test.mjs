@@ -83,6 +83,29 @@ test("every relative JS import points at a real module", () => {
     assert.deepEqual(missing, [], `Broken imports:\n${missing.join("\n")}`);
 });
 
+test("logout clears known account-sensitive browser storage", () => {
+    const auth = read("js/auth.js");
+    const requiredLocal = [
+        "__cloudSyncMeta",
+        "__cloudSyncSnapshot",
+        "__cloudSyncKeyTimes",
+        "__eddieos_strava_oauth_v1",
+        "__eddieos_strava_data_snapshot_v1",
+        "strava-history",
+        "plan-coach-notes"
+    ];
+    const requiredSession = [
+        "__eddieos_strava_oauth_pending_v1",
+        "sb-apply-draft"
+    ];
+    for (const key of requiredLocal) {
+        assert.match(auth, new RegExp(`["']${key.replace(/[.*+?^\${}()|[\]\\]/g, "\\\\$&")}["']`), `logout cleanup is missing ${key}`);
+    }
+    for (const key of requiredSession) {
+        assert.match(auth, new RegExp(`["']${key.replace(/[.*+?^\${}()|[\]\\]/g, "\\\\$&")}["']`), `logout cleanup is missing session key ${key}`);
+    }
+});
+
 test("firestore.rules has no leftover wide-open rules", () => {
     const rules = read("firestore.rules");
     assert.ok(!/allow\s+(read|write|read,\s*write)\s*:\s*if\s+true/.test(rules), "a rule allows everyone");
