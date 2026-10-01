@@ -414,30 +414,23 @@ export async function listAssignableClients() {
     const user = await waitForUser();
     if (!user) return [];
 
-    const [profiles, links] = await Promise.all([
-        getDocs(query(collection(db, "userProfiles"), where("status", "==", "active"))),
+    const [directory, links] = await Promise.all([
+        getDocs(query(collection(db, "clientDirectory"), where("status", "==", "active"))),
         listMyClients()
     ]);
 
     const linked = new Set(links.map(link => link.clientUid));
-    return profiles.docs
+    return directory.docs
         .map(d => {
             const data = d.data() || {};
             return {
                 uid: d.id,
                 displayName: String(data.displayName || ""),
                 email: String(data.email || ""),
-                role: data.role,
-                isCoachApproved: data.isCoachApproved === true,
-                status: data.status,
                 services: Array.isArray(data.services) ? [...data.services] : []
             };
         })
-        .filter(profile => profile.uid !== user.uid
-            && profile.role === "client"
-            && profile.isCoachApproved === false
-            && profile.status === "active"
-            && !linked.has(profile.uid))
+        .filter(profile => profile.uid !== user.uid && !linked.has(profile.uid))
         .sort((a, b) => (a.displayName || a.email).localeCompare(b.displayName || b.email));
 }
 
@@ -446,13 +439,11 @@ export async function assignClient(clientUid) {
     if (!user) throw new Error("not-signed-in");
     if (!clientUid || clientUid === user.uid) throw new Error("cannot-link-self");
 
-    const clientSnap = await getDoc(doc(db, "userProfiles", clientUid));
-    if (!clientSnap.exists()) throw new Error("client-not-found");
+    const directorySnap = await getDoc(doc(db, "clientDirectory", clientUid));
+    if (!directorySnap.exists()) throw new Error("client-not-found");
 
-    const client = clientSnap.data() || {};
-    if (client.role !== "client" || client.isCoachApproved === true || client.status !== "active") {
-        throw new Error("client-not-assignable");
-    }
+    const client = directorySnap.data() || {};
+    if (client.status !== "active") throw new Error("client-not-assignable");
 
     const linkRef = doc(db, "coachLinks", user.uid + "_" + clientUid);
     const existing = await getDoc(linkRef);
