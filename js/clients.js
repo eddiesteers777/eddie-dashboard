@@ -521,12 +521,14 @@ async function refreshPending() {
             const approveBtn = row.querySelector('[data-action="approve"]');
             approveBtn.disabled = true;
             await approveClient(profile.uid, services);
-            // Applicants still use the standing invite created while they
-            // are pending. Existing active clients can instead be added
-            // directly above, without any client action.
+            // Approval makes the account active, so the approving coach can
+            // directly create the same coachLinks relationship used by Find a Client.
+            // This removes the old requirement that a newly approved client generate
+            // an invite code first. The legacy code path remains available for older
+            // clients/coaches through the secondary invite-code UI.
             let linked = false;
             try {
-                await linkApplicant(profile.uid);
+                await assignClient(profile.uid);
                 linked = true;
             } catch (error) {
                 console.info("Approved without auto-link:", error.message);
@@ -535,7 +537,7 @@ async function refreshPending() {
             if (linked) {
                 toast(`${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and in My Clients now.`);
             } else {
-                await sbAlert("They aren't linked to you yet. Ask them to open More > Connect with Coach in their app and send you the code, then enter it under Coach a Client.", { title: `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved` });
+                await sbAlert("They are approved but aren't linked to you yet. Use Find a Client above and click Assign when their active account appears.", { title: `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved` });
             }
             refreshPending();
             refreshClients();
