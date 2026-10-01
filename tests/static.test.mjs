@@ -109,12 +109,18 @@ test("logout clears known account-sensitive browser storage", () => {
 test("auth consumers wait for account isolation", () => {
     const auth = read("js/auth.js");
     assert.match(auth, /ACCOUNT_STORAGE_OWNER_KEY = ["']sb-account-storage-owner["']/);
-    assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\);\s*\}\)/);
+    assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\)\.then\(result => reloadAfterAccountTransition\(result\.changed\)\);\s*\}\)/);
     assert.match(auth, /await waitForAccountIsolation\(\)/);
     assert.match(auth, /accountReloadRequested = false/);
     assert.match(auth, /reloadAfterAccountTransition\(result\.changed\)/);
     assert.match(auth, /queueAccountPreparation\(user\)\.then\(result => \{[\s\S]*resolve\(user\)/);
     assert.match(auth, /setStorageOwner\(null\);\s*await clearOfflineCopy\(\);\s*preparedAccountUid = null/);
+});
+
+test("Firestore uses single-tab persistent caching", () => {
+    const firebase = read("js/firebase.js");
+    assert.match(firebase, /persistentLocalCache\(\{\s*tabManager:\s*persistentSingleTabManager\(\)\s*\}\)/);
+    assert.doesNotMatch(firebase, /persistentMultipleTabManager/);
 });
 
 test("auth-dependent modules use the centralized isolation guard", () => {
