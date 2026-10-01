@@ -97,7 +97,8 @@ test("an approved coach can directly assign an active client without an invite",
     }));
 
     await assertSucceeds(getDoc(link));
-    await assertSucceeds(getDoc(doc(db, "clientRecords/client")).catch(() => null));
+    // The new relationship immediately unlocks the existing Client Hub profile boundary.
+    await assertSucceeds(getDoc(doc(db, "clientRecords/client")));
 });
 
 test("direct assignment still supports multiple coaches for one client", async () => {
