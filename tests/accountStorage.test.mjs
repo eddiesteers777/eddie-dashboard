@@ -74,7 +74,7 @@ test("cleanup removes account data but preserves device UI preferences", () => {
 
     const removed = clearAccountLocalData(storage);
 
-    assert.equal(removed, 9);
+    assert.equal(removed, 11);
     assert.deepEqual(storage.snapshot(), {
         "programs-tab": "training",
         "eddieos-splash-shown": "1"
