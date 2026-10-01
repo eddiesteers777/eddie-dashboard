@@ -104,7 +104,10 @@ export async function getMyProfile() {
             const user = await waitForUser();
             if (!user) return null;
             const snap = await getDoc(profileDoc(user.uid));
-            return snap.exists() ? { uid: user.uid, ...snap.data() } : null;
+            if (!snap.exists()) return null;
+            const profile = { uid: user.uid, ...snap.data() };
+            await syncClientDirectory(profile);
+            return profile;
         })();
         // A failed read (offline, rules) is tried again next time.
         myProfile.catch(forgetMyProfile);
