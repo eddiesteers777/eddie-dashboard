@@ -111,7 +111,9 @@ test("auth consumers wait for account isolation", () => {
     assert.match(auth, /ACCOUNT_STORAGE_OWNER_KEY = ["']sb-account-storage-owner["']/);
     assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\);\s*\}\)/);
     assert.match(auth, /await waitForAccountIsolation\(\)/);
-    assert.match(auth, /queueAccountPreparation\(user\)\.then\(\(\) => resolve\(user\)\)/);
+    assert.match(auth, /accountReloadRequested = false/);
+    assert.match(auth, /reloadAfterAccountTransition\(result\.changed\)/);
+    assert.match(auth, /queueAccountPreparation\(user\)\.then\(result => \{[\s\S]*resolve\(user\)/);
     assert.match(auth, /setStorageOwner\(null\);\s*await clearOfflineCopy\(\);\s*preparedAccountUid = null/);
 });
 
