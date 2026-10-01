@@ -37,6 +37,8 @@ test("account-local key audit includes cloud, special, OAuth, and account UI dat
         "__eddieos_strava_oauth_v1",
         "plan-coach-notes",
         "sb-email-outbox",
+        "__cloudSyncSnapshot",
+        "__cloudSyncKeyTimes",
         "coros-health-fetched",
         "coros-health-error",
         "coros-auto-noticed",
@@ -110,6 +112,9 @@ test("active account marker identifies transitions without becoming account data
 test("the central lists stay internally consistent", () => {
     assert.ok(CLOUD_SYNC_EXACT_KEYS.length > 20);
     assert.ok(SPECIAL_ACCOUNT_LOCAL_KEYS.length >= 10);
+    assert.equal(ACCOUNT_LOCAL_EXACT_KEYS.includes("__cloudSyncSnapshot"), true);
+    assert.equal(ACCOUNT_LOCAL_EXACT_KEYS.includes("__cloudSyncKeyTimes"), true);
+    assert.equal(ACCOUNT_LOCAL_EXACT_KEYS.includes("__cloudSyncVersion"), true);
     assert.ok(ACCOUNT_UI_KEYS.every(key => ACCOUNT_LOCAL_EXACT_KEYS.includes(key)));
     assert.equal(new Set(ACCOUNT_LOCAL_EXACT_KEYS).size, ACCOUNT_LOCAL_EXACT_KEYS.length);
     assert.equal(ACCOUNT_LOCAL_PREFIXES.length, 3);
