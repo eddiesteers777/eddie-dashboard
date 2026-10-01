@@ -2,7 +2,6 @@
 // Southbound Settings
 // ==============================
 
-import { auth } from "./firebase.js";
 import { toast, friendlyError } from "./ui.js";
 import { listMyPackages } from "./clientPackages.js";
 import { openStripeCustomerPortal } from "./stripeBilling.js";
