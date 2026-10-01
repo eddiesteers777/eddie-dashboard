@@ -98,24 +98,6 @@ function setStorageOwner(uid) {
     } catch { /* storage unavailable */ }
 }
 
-function hasAccountSensitiveBrowserState() {
-    try {
-        for (const key of ACCOUNT_LOCAL_STORAGE_KEYS) {
-            if (localStorage.getItem(key) !== null) return true;
-        }
-        for (const prefix of ACCOUNT_LOCAL_STORAGE_PREFIXES) {
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                if (key?.startsWith(prefix)) return true;
-            }
-        }
-        for (const key of ACCOUNT_SESSION_STORAGE_KEYS) {
-            if (sessionStorage.getItem(key) !== null) return true;
-        }
-    } catch { /* storage unavailable */ }
-    return false;
-}
-
 export function clearAccountSensitiveBrowserState() {
     for (const key of ACCOUNT_LOCAL_STORAGE_KEYS) {
         try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
