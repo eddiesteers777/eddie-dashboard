@@ -13,7 +13,7 @@ import { listenForAuth } from "./auth.js";
 import { sbConfirm, sbAlert, toast, loadingHtml } from "./ui.js";
 import { cachedRole } from "./role.js";
 import {
-    createInviteCode, redeemInviteCode, linkApplicant,
+    createInviteCode, redeemInviteCode,
     listMyCoaches, removeLink, listAssignableClients, assignClient
 } from "./coachAccess.js";
 import { loadClientDirectory } from "./clientDirectory.js";
