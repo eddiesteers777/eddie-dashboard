@@ -133,7 +133,7 @@ service cloud.firestore {
     match /userProfiles/{uid} {
       // Active client discovery uses clientDirectory; full profiles are not a search directory.
       allow get: if isUser(uid) || (isApprovedCoach() && resource.data.status == "pending");
-      allow list: if isApprovedCoach();
+      allow list: if false;
 
       // Self-signup always starts as an unapproved, pending client with
       // no services -- it can never grant itself anything.
@@ -156,27 +156,63 @@ service cloud.firestore {
     }
 
     match /clientDirectory/{uid} {
-      // Minimal discovery projection only: no application message, last-seen data,
-      // or other private profile fields are exposed to coaches.
+      // Minimal coach-facing projection. Full userProfiles stay private.
       allow get, list: if isApprovedCoach();
-      allow create: if isUser(uid)
-        && request.resource.data.keys().hasOnly(["uid", "displayName", "email", "services", "status", "updatedAt"])
-        && request.resource.data.uid == uid
-        && request.resource.data.status == "active"
-        && request.resource.data.services is list
-        && get(profilePath(uid)).data.role == "client"
-        && get(profilePath(uid)).data.isCoachApproved == false
-        && get(profilePath(uid)).data.status == "active"
-        && request.resource.data.updatedAt == request.time;
-      allow update: if isUser(uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["displayName", "email", "services", "status", "updatedAt"])
-        && request.resource.data.uid == uid
-        && request.resource.data.status == "active"
-        && request.resource.data.services is list
-        && get(profilePath(uid)).data.role == "client"
-        && get(profilePath(uid)).data.isCoachApproved == false
-        && get(profilePath(uid)).data.status == "active"
-        && request.resource.data.updatedAt == request.time;
+
+      allow create: if (
+          isUser(uid)
+          && request.resource.data.keys().hasOnly([
+              "uid", "displayName", "email", "services", "status",
+              "updatedAt", "requestedServices", "applicationMessage",
+              "applicationSubmittedAt"
+          ])
+          && request.resource.data.uid == uid
+          && request.resource.data.status in ["pending", "active"]
+          && request.resource.data.services is list
+          && get(profilePath(uid)).data.role == "client"
+          && get(profilePath(uid)).data.isCoachApproved == false
+          && get(profilePath(uid)).data.status == request.resource.data.status
+          && request.resource.data.updatedAt == request.time
+        )
+        || (
+          isApprovedCoach()
+          && request.resource.data.keys().hasOnly(["uid", "displayName", "email", "services", "status", "updatedAt"])
+          && request.resource.data.uid == uid
+          && request.resource.data.status == "active"
+          && request.resource.data.services is list
+          && get(profilePath(uid)).data.role == "client"
+          && get(profilePath(uid)).data.isCoachApproved == false
+          && get(profilePath(uid)).data.status == "active"
+          && request.resource.data.displayName == get(profilePath(uid)).data.displayName
+          && request.resource.data.email == get(profilePath(uid)).data.email
+          && request.resource.data.services == get(profilePath(uid)).data.services
+          && request.resource.data.updatedAt == request.time
+        );
+
+      allow update: if (
+          isUser(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "displayName", "email", "services", "status", "updatedAt",
+              "requestedServices", "applicationMessage", "applicationSubmittedAt"
+          ])
+          && request.resource.data.uid == uid
+          && request.resource.data.status == get(profilePath(uid)).data.status
+          && request.resource.data.updatedAt == request.time
+        )
+        || (
+          isApprovedCoach()
+          && request.resource.data.keys().hasOnly(["uid", "displayName", "email", "services", "status", "updatedAt"])
+          && request.resource.data.uid == uid
+          && request.resource.data.status in ["active", "archived"]
+          && get(profilePath(uid)).data.role == "client"
+          && get(profilePath(uid)).data.isCoachApproved == false
+          && get(profilePath(uid)).data.status == request.resource.data.status
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.displayName == get(profilePath(uid)).data.displayName
+          && request.resource.data.email == get(profilePath(uid)).data.email
+          && request.resource.data.services == get(profilePath(uid)).data.services
+        );
+
       allow delete: if isApprovedCoach()
         && get(profilePath(uid)).data.role == "coach"
         && get(profilePath(uid)).data.isCoachApproved == true;
