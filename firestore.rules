@@ -174,22 +174,45 @@ service cloud.firestore {
       );
     }
 
-    match /coachLinks/{linkId} {
-      allow read: if signedIn()
-        && (request.auth.uid == resource.data.coachUid
-            || request.auth.uid == resource.data.clientUid);
+    function activeClientAccount(clientUid) {
+      let ref = profilePath(clientUid);
+      return exists(ref)
+        && get(ref).data.role == "client"
+        && get(ref).data.isCoachApproved == false
+        && get(ref).data.status == "active";
+    }
 
-      allow create: if isApprovedCoach()
-        && request.resource.data.coachUid == request.auth.uid
-        && request.resource.data.clientUid != request.auth.uid
-        && linkId == request.auth.uid + '_' + request.resource.data.clientUid
-        && request.resource.data.inviteCode is string
+    function directCoachLink() {
+      return request.resource.data.inviteCode == ""
+        && activeClientAccount(request.resource.data.clientUid);
+    }
+
+    function invitedCoachLink() {
+      return request.resource.data.inviteCode is string
+        && request.resource.data.inviteCode.size() > 0
         && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode))
         && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.clientUid
              == request.resource.data.clientUid
         && get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.createdAt
              > request.time - duration.value(7, 'd')
         && !existsAfter(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode));
+    }
+
+    match /coachLinks/{linkId} {
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.coachUid
+            || request.auth.uid == resource.data.clientUid);
+
+      // There are now two supported creation paths:
+      // 1) direct assignment by an approved coach to an already-active client;
+      // 2) the original one-time client invite code for backwards compatibility.
+      // Both still require the exact coach/client document ID and an
+      // approved coach. Neither grants wearable access.
+      allow create: if isApprovedCoach()
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid != request.auth.uid
+        && linkId == request.auth.uid + '_' + request.resource.data.clientUid
+        && (directCoachLink() || invitedCoachLink());
 
       allow update: if false;
 
