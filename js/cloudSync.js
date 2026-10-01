@@ -11,7 +11,7 @@
 // Status for the page (the offline/sync indicator, the header's sync
 // button) goes out as a "sb:sync-status" event: { state, pending, lastSyncedAt }.
 import { db } from "./firebase.js";
-import { waitForUser } from "./auth.js";
+import { waitForUser, getCurrentUser } from "./auth.js";
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const EXACT_KEYS = ["training-progress","training-overrides","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks","coach-health-reviewed","coach-queue-done"];
@@ -62,6 +62,7 @@ export function exportAllData(){
 // 30-second check compares against it without re-reading or re-parsing
 // the (large) stored snapshot.
 let syncedCache;
+let syncUserUid = null;
 function lastSyncedData(){
   if(syncedCache!==undefined) return syncedCache;
   try{ const raw=localStorage.getItem(SNAPSHOT_KEY); syncedCache=raw===null?null:(JSON.parse(raw)||{}); }catch(e){ syncedCache=null; }
@@ -105,7 +106,24 @@ function legacyTimestamp(value){
 }
 async function syncDocs(){
   const user=await waitForUser();
-  return user?{ data:doc(db,"users",user.uid,"sync","localStorage"), meta:doc(db,"users",user.uid,"sync","meta") }:null;
+  if(!user){
+    syncUserUid=null;
+    syncedCache=undefined;
+    return null;
+  }
+  if(syncUserUid!==user.uid){
+    syncUserUid=user.uid;
+    syncedCache=undefined;
+  }
+  return {
+    user,
+    uid:user.uid,
+    data:doc(db,"users",user.uid,"sync","localStorage"),
+    meta:doc(db,"users",user.uid,"sync","meta")
+  };
+}
+function currentAccountIs(uid){
+  return Boolean(uid && getCurrentUser()?.uid===uid);
 }
 
 // ---- Status for the page ----
@@ -127,12 +145,14 @@ export async function pullFromCloud({ force=false }={}){
   try{
     const refs=await syncDocs();
     if(!refs){ saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:"not-signed-in"}); return {ok:false,applied:0}; }
+    const uid=refs.uid;
     if(isOffline()){ emit("offline"); return {ok:false,applied:0,offline:true}; }
     emit("syncing");
     // Nothing new in the cloud since this device last read it: skip the big read.
     let cloudVersion=null;
     try{
       const metaSnap=await getDoc(refs.meta);
+      if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
       if(metaSnap.metadata?.fromCache){ emit("offline"); return {ok:false,applied:0,offline:true}; }
       cloudVersion=metaSnap.exists()?(metaSnap.data().v||null):null;
     }catch(e){ cloudVersion=null; }
@@ -143,8 +163,14 @@ export async function pullFromCloud({ force=false }={}){
       return {ok:true,applied:0,skipped:true};
     }
     const snap=await getDoc(refs.data);
+    if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     if(snap.metadata?.fromCache){ emit("offline"); return {ok:false,applied:0,offline:true}; }
-    if(!snap.exists()){ markSynced(); saveSyncMeta({lastSyncedAt:Date.now(),lastError:null}); emit("synced"); return {ok:false,applied:0}; }
+    if(!snap.exists()){
+      markSynced();
+      saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
+      emit("synced");
+      return {ok:false,applied:0};
+    }
     const cloud=snap.data()||{};
     const stored=cloud.data||{};
     const cloudTimes=cloud.keyUpdatedAt||{};
@@ -168,9 +194,11 @@ export async function pullFromCloud({ force=false }={}){
       localStorage.setItem(key,stored[key]);
       applied++;
     }
+    if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     try{
       const {pullSharedPlanUpdates}=await import("./coachAccess.js");
-      applied+=await pullSharedPlanUpdates(localTimes);
+      applied+=await pullSharedPlanUpdates(localTimes, uid);
+      if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     }catch(error){ console.warn("Coach-shared plan pull failed:",error); }
     saveKeyTimes(localTimes);
     markSynced();
@@ -180,6 +208,7 @@ export async function pullFromCloud({ force=false }={}){
       cloudVersion=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
       try{ await setDoc(refs.meta,{v:cloudVersion,updatedAt:serverTimestamp()}); }catch(e){ cloudVersion=null; }
     }
+    if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     try{
       if(cloudVersion) localStorage.setItem(VERSION_KEY,cloudVersion);
       localStorage.setItem(FULL_PULL_KEY,String(Date.now()));
@@ -196,12 +225,29 @@ export async function pullFromCloud({ force=false }={}){
 }
 
 let pushing=null;
+let pushingUid=null;
 export async function pushToCloud({ force=false }={}){
-  if(pushing) return pushing;
-  pushing=(async()=>{
+  const user=await waitForUser();
+  if(!user){
+    saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:"not-signed-in"});
+    return false;
+  }
+  const uid=user.uid;
+  if(pushing && pushingUid===uid) return pushing;
+  if(syncUserUid!==uid){
+    syncUserUid=uid;
+    syncedCache=undefined;
+  }
+  const promise=(async()=>{
   try{
-    const refs=await syncDocs();
-    if(!refs){ saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:"not-signed-in"}); return false; }
+    const refs={
+      user,
+      uid,
+      data:doc(db,"users",uid,"sync","localStorage"),
+      meta:doc(db,"users",uid,"sync","meta")
+    };
+    const localData=currentLocalData();
+    const changed=lastSyncedData()===null?Object.keys(localData):changedLocalKeys(localData);
     const localData=currentLocalData();
     const changed=lastSyncedData()===null?Object.keys(localData):changedLocalKeys(localData);
     // Nothing changed here since the last sync: no reads, no writes.
@@ -210,6 +256,7 @@ export async function pushToCloud({ force=false }={}){
     emit("syncing");
     const localTimes=stampChangedKeys(localData);
     const version=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+    if(!currentAccountIs(uid)) return false;
     const result=await runTransaction(db,async tx=>{
       const snap=await tx.get(refs.data);
       const existing=snap.exists()?(snap.data()||{}):{};
@@ -225,6 +272,7 @@ export async function pushToCloud({ force=false }={}){
       tx.set(refs.meta,{v:version,updatedAt:serverTimestamp()});
       return {data:cloudData,times:cloudTimes};
     });
+    if(!currentAccountIs(uid)) return false;
     const finalTimes=result.times;
     const nowTimes=getKeyTimes();
     for(const [key,value] of Object.entries(result.data)){
@@ -237,9 +285,10 @@ export async function pushToCloud({ force=false }={}){
     try{ localStorage.setItem(VERSION_KEY,version); }catch(e){}
     saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
     if(force || changed.some(k=>MIRRORED_KEYS.includes(k))){
+      if(!currentAccountIs(uid)) return false;
       try{
         const {mirrorPlansToShared}=await import("./coachAccess.js");
-        await mirrorPlansToShared(localData,finalTimes);
+        await mirrorPlansToShared(localData,finalTimes,uid);
       }catch(error){ console.warn("Coach-shared plan mirror failed:",error); }
     }
     emit(hasLocalChanges()?"pending":"synced");
@@ -251,7 +300,14 @@ export async function pushToCloud({ force=false }={}){
     console.error("Cloud sync (push) error:",error); return false;
   }
   })();
-  try{ return await pushing; } finally { pushing=null; }
+  pushingUid=uid;
+  pushing=promise;
+  try{ return await promise; } finally {
+    if(pushing===promise){
+      pushing=null;
+      pushingUid=null;
+    }
+  }
 }
 
 // Several pages call this besides js/loadHeader.js: one pull per page
