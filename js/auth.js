@@ -26,10 +26,12 @@ const provider = new GoogleAuthProvider();
 export async function login() {
 
     try {
-        // If a user is still signed in, this may be an account switch.
-        // Give the current account one last cloud push when possible, then
-        // remove its browser data before the next account can use this tab.
-        if (auth.currentUser) {
+        const previousUid = auth.currentUser?.uid || null;
+
+        // Finish any local changes for the current account before opening
+        // Google's account picker. If the popup is cancelled, the same
+        // account stays signed in and its local state remains intact.
+        if (previousUid) {
             try {
                 const { pushToCloud } = await import("./cloudSync.js");
                 await pushToCloud({ force: true });
@@ -38,16 +40,23 @@ export async function login() {
             }
         }
 
-        clearAccountLocalData();
-        clearAccountSessionData();
-        setActiveAccountUid(null);
-        await clearOfflineCopy();
-
         await signInWithPopup(auth, provider);
-        if (auth.currentUser) setActiveAccountUid(auth.currentUser.uid);
 
-        // Start the newly signed-in account with fresh in-memory page state.
-        window.location.reload();
+        const nextUid = auth.currentUser?.uid || null;
+        if (previousUid && nextUid && nextUid !== previousUid) {
+            // The popup actually switched accounts. Now remove the previous
+            // account's browser state and Firestore persistence before the
+            // new account can reload the app.
+            clearAccountLocalData();
+            clearAccountSessionData();
+            setActiveAccountUid(null);
+            await clearOfflineCopy();
+        }
+
+        if (nextUid) setActiveAccountUid(nextUid);
+
+        // Any actual account change starts a fresh page with fresh in-memory state.
+        if (nextUid && nextUid !== previousUid) window.location.reload();
         return true;
 
     } catch (error) {
@@ -112,6 +121,12 @@ let observedAccountUid = null;
 
 async function prepareAccountIdentity(user) {
     if (!user) {
+        const markerUid = getActiveAccountUid();
+        if (observedAccountUid || markerUid) {
+            clearAccountLocalData();
+            clearAccountSessionData();
+            await clearOfflineCopy();
+        }
         observedAccountUid = null;
         setActiveAccountUid(null);
         return;
