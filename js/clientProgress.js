@@ -35,11 +35,25 @@ function pct(value) {
 
 function renderMetrics(progress) {
     const items = [
-        ["Completed workouts", progress.activity.completedWorkouts, "last 28 days"],
-        ["Run volume", progress.activity.runMiles + " mi", progress.activity.runSessions + " logged runs"],
-        ["Strength", progress.activity.strengthSessions, progress.activity.strengthSets + " sets logged"],
-        ["Check-ins", progress.checkins.count, progress.checkins.average ? "Average " + progress.checkins.average + "/5" : "No ratings yet"]
+        ["Completed workouts", progress.activity.completedWorkouts, "last 28 days"]
     ];
+
+    if (progress.activity.runSessions) {
+        items.push(["Run volume", progress.activity.runMiles + " mi", progress.activity.runSessions + " logged runs"]);
+    }
+    if (progress.activity.strengthSessions) {
+        items.push(["Strength", progress.activity.strengthSessions, progress.activity.strengthSets + " sets logged"]);
+    }
+    if (progress.activity.soccerSessions) {
+        items.push(["Soccer", progress.activity.soccerCompleted, progress.activity.soccerCounted + " counted sessions"]);
+    }
+
+    items.push([
+        "Check-ins",
+        progress.checkins.count,
+        progress.checkins.average ? "Average " + progress.checkins.average + "/5" : "No ratings yet"
+    ]);
+
     $("progressMetrics").innerHTML = items.map(([label, value, detail]) => `
         <div class="stat-card">
             <span>${esc(label)}</span>
@@ -85,10 +99,15 @@ function renderTrend(progress) {
         return;
     }
 
-    const maxMiles = Math.max(1, ...weeks.map(w => Number(w.runMiles) || 0));
+    const useRunVolume = weeks.some(w => Number(w.runSessions) > 0);
+    const metricLabel = useRunVolume ? "Logged run volume" : "Completed workouts";
+    const metricValue = week => useRunVolume ? Number(week.runMiles) || 0 : Number(week.completedWorkouts) || 0;
+    const metricUnit = useRunVolume ? " mi" : " workout";
+    const maxValue = Math.max(1, ...weeks.map(metricValue));
+
     const rows = weeks.map(week => {
-        const height = Math.max(4, Math.round(((Number(week.runMiles) || 0) / maxMiles) * 100));
-        const range = shortDate(week.start) + "–" + shortDate(week.end);
+        const value = metricValue(week);
+        const height = Math.max(4, Math.round((value / maxValue) * 100));
         const detail = [
             week.completedWorkouts + " completed",
             week.runMiles + " mi",
@@ -97,34 +116,33 @@ function renderTrend(progress) {
         return `
             <div class="tr-bar${week.isCurrent ? " is-current" : ""}">
                 <div class="tr-bar-track" title="${esc(detail)}">
-                    <div class="tr-bar-fill${week.runMiles >= 0 && week.runMiles > 0 ? "" : ""}" style="height:${height}%"></div>
+                    <div class="tr-bar-fill" style="height:${height}%"></div>
                 </div>
-                <small>${esc(range)}</small>
+                <small>${esc(shortDate(week.start))}</small>
             </div>
         `;
     }).join("");
 
     $("trendBody").innerHTML = `
-        <div class="tr-bars" aria-label="Six week run volume">
+        <div class="tr-bars" aria-label="Six week training trend">
             ${rows}
         </div>
         <div class="tr-legend">
-            <span><span class="tr-key fill"></span>Logged run volume</span>
+            <span><span class="tr-key fill"></span>${esc(metricLabel)}</span>
             <span>The current week is outlined.</span>
         </div>
-        <div class="tr-list">
+        <ul class="tr-list">
             ${weeks.map(w => `
                 <li>
                     <strong>${esc(shortDate(w.start))}</strong>
-                    <span>${esc(w.runMiles + " mi")}</span>
+                    <span>${esc(String(metricValue(w)) + metricUnit + (useRunVolume ? "" : "s"))}</span>
                     <span>${esc(w.completedWorkouts + " workouts")}</span>
                     <span>${esc(w.averageRpe ? "RPE " + w.averageRpe : "—")}</span>
                 </li>
             `).join("")}
-        </div>
+        </ul>
     `;
 }
-
 function renderPlan(progress) {
     const p = progress.plan;
     const card = $("planProgressCard");
