@@ -122,7 +122,8 @@ const SEARCH_DESTINATIONS = [
     { label: "Cross-Training", href: "cross-training.html", icon: "bike", color: "var(--cyan)" },
     { label: "Habits", href: "habits.html", icon: "checkCircle", color: "var(--purple)" },
     { label: "Nutrition", href: "nutrition.html", icon: "apple", color: "var(--green)" },
-    { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)" },\n    { label: "My Progress", href: "progress.html", icon: "trendingUp", color: "var(--primary)", requires: "training" },
+    { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)" },
+    { label: "My Progress", href: "progress.html", icon: "trendingUp", color: "var(--primary)", requires: "training" },
     // The coach's personal tools (built around his own race block) --
     // hidden from clients, like their More rows and menu links.
     { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)", requires: "coach" },
