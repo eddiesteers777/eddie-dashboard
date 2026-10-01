@@ -132,7 +132,7 @@ service cloud.firestore {
 
     match /userProfiles/{uid} {
       // Active client discovery uses clientDirectory; full profiles are not a search directory.
-      allow get: if isUser(uid) || (isApprovedCoach() && resource.data.status == "pending");
+      allow get: if isUser(uid) || (isApprovedCoach() && (resource.data.status == "pending" || linked(request.auth.uid, uid)));
       allow list: if false;
 
       // Self-signup always starts as an unapproved, pending client with
