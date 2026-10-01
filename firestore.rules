@@ -207,7 +207,8 @@ service cloud.firestore {
         && request.resource.data.clientEmail is string
         && request.resource.data.clientEmail.size() <= 320
         && request.resource.data.inviteCode is string
-        && request.resource.data.linkedAt == request.time;
+        && request.resource.data.linkedAt == request.time
+        && request.resource.data.coachUid == request.auth.uid;
     }
 
     function directCoachLink() {
