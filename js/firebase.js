@@ -25,24 +25,25 @@ const app = initializeApp(firebaseConfig);
 // Initialize services
 const auth = getAuth(app);
 
-// Firestore keeps a copy of what this account has read, and any writes
-// not yet sent, on this device (IndexedDB): pages still show the plan,
-// check-ins and coach replies they last loaded when the phone is
-// offline, and a workout logged offline is sent when the connection
-// comes back, even after the app was closed. Reads still go to the
-// server whenever it's reachable, so nothing is shown stale while
-// online. Several open tabs share the one cache. If the browser won't
-// allow IndexedDB (private windows, strict tracking protection) the SDK
-// falls back to memory, as before. Signing out clears it (js/loadHeader.js).
-let db;
-try {
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-  });
-} catch (error) {
-  console.warn("Southbound: offline copy unavailable, using memory only.", error);
-  db = getFirestore(app);
+const FIRESTORE_OPTIONS = {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+};
+
+function createFirestoreDb() {
+  try {
+    return initializeFirestore(app, FIRESTORE_OPTIONS);
+  } catch (error) {
+    console.warn("Southbound: offline copy unavailable, using memory only.", error);
+    return getFirestore(app);
+  }
 }
+
+// Firestore keeps a copy of what this account has read, and any writes
+// not yet sent, on this device (IndexedDB). That copy must not survive an
+// account transition because Firestore's persistence is shared by this app.
+// The account-transition cleanup in js/auth.js clears it before another
+// account is allowed to use the database.
+let db = createFirestoreDb();
 
 // Auth defaults to IndexedDB-backed persistence, which browsers with
 // strict tracking/storage protections (e.g. Edge's Tracking Prevention)
@@ -50,16 +51,30 @@ try {
 // page load. Plain localStorage persistence sidesteps that entirely.
 setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-// Sign-out wipes this device's offline copy of the account's Firestore
-// data (js/auth.js). Firestore can't be used again on this page after
-// it; every sign-out reloads the page.
+// Wipe this app's Firestore persistence and immediately create a fresh
+// Firestore instance for the next account. Older code terminated the
+// instance and never rebuilt it, which made a same-page logout/login
+// unusable and made account switching harder to reason about.
 async function clearOfflineCopy() {
+  const oldDb = db;
+  let clearError = null;
+
   try {
-    await terminate(db);
-    await clearIndexedDbPersistence(db);
+    await terminate(oldDb);
   } catch (error) {
-    console.warn("Southbound: couldn't clear the offline copy.", error);
+    // Termination can already have happened during a prior transition.
+    console.warn("Southbound: Firestore termination during account reset:", error);
   }
+
+  try {
+    await clearIndexedDbPersistence(oldDb);
+  } catch (error) {
+    clearError = error;
+    console.warn("Southbound: couldn't clear the offline Firestore copy.", error);
+  }
+
+  db = createFirestoreDb();
+  return !clearError;
 }
 
 // Export for use in other files
