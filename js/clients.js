@@ -520,7 +520,7 @@ async function refreshPending() {
             if (!services.length && !(await sbConfirm("With no services ticked they'll only see the basics: no Plan, Train or Health pages. You can change it later in their Client Hub.", { title: "Approve with no services?", confirmLabel: "Approve anyway", cancelLabel: "Choose services" }))) return;
             const approveBtn = row.querySelector('[data-action="approve"]');
             approveBtn.disabled = true;
-            await approveClient(profile.uid, services);
+            await approveClient(profile.uid, services, { displayName: profile.displayName, email: profile.email });
             // Approval makes the account active, so the approving coach can
             // directly create the same coachLinks relationship used by Find a Client.
             // This removes the old requirement that a newly approved client generate
