@@ -43,15 +43,21 @@ function clientDirectoryDoc(uid) {
 }
 
 async function syncClientDirectory(profile) {
-    if (!profile || profile.role !== "client" || profile.isCoachApproved === true || profile.status !== "active") return;
-    await setDoc(clientDirectoryDoc(profile.uid), {
+    if (!profile || profile.role !== "client" || profile.isCoachApproved === true) return;
+    const payload = {
         uid: profile.uid,
         displayName: String(profile.displayName || ""),
         email: String(profile.email || ""),
         services: Array.isArray(profile.services) ? [...profile.services] : [],
-        status: "active",
+        status: profile.status,
         updatedAt: serverTimestamp()
-    });
+    };
+    if (profile.status === "pending") {
+        payload.requestedServices = Array.isArray(profile.requestedServices) ? [...profile.requestedServices] : [];
+        payload.applicationMessage = String(profile.applicationMessage || "");
+        payload.applicationSubmittedAt = profile.applicationSubmittedAt || null;
+    }
+    await setDoc(clientDirectoryDoc(profile.uid), payload);
 }
 
 // Creates this user's profile the first time it's missing (new
