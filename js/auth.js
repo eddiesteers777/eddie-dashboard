@@ -46,6 +46,8 @@ export async function login() {
         await signInWithPopup(auth, provider);
         if (auth.currentUser) setActiveAccountUid(auth.currentUser.uid);
 
+        // Start the newly signed-in account with fresh in-memory page state.
+        window.location.reload();
         return true;
 
     } catch (error) {
