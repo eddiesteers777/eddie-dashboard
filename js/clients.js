@@ -2,9 +2,9 @@
    Southbound — My Clients
 
    Two roles live on one page since any account can be both a coach
-   and a client: "Coach a Client" (this account editing someone
-   else's Training/Race Plans) and "Share My Plans" (this account
-   granting a coach access to its own). See js/coachAccess.js for
+   and a client: "Coach a Client" (this account managing someone
+   else's coaching data) and "My Coaches" (this account seeing and
+   removing its coach relationships). See js/coachAccess.js for
    the Firestore access this drives, and firestore.rules for what
    actually enforces the boundary.
 ========================================== */
@@ -521,9 +521,9 @@ async function refreshPending() {
             const approveBtn = row.querySelector('[data-action="approve"]');
             approveBtn.disabled = true;
             await approveClient(profile.uid, services);
-            // Link them in the same step using the standing code their
-            // app leaves while pending (js/coachAccess.js). Accounts on an
-            // older app won't have one; those link with an invite code.
+            // Applicants still use the standing invite created while they
+            // are pending. Existing active clients can instead be added
+            // directly above, without any client action.
             let linked = false;
             try {
                 await linkApplicant(profile.uid);
@@ -556,10 +556,10 @@ async function refreshPending() {
 }
 
 // ---- Coach vs client view ----
-// A coach manages clients here (Coach a Client + Pending) and has no
-// use for sharing their own plans. A client only ever uses this page to
-// connect with their coach, so they get just that (More -> Connect with
-// Coach links here). Guessed from the role remembered on this device
+// A coach manages clients here (Coach a Client + Pending). A client
+// sees their connected coaches and may still use the legacy invite
+// fallback if an older coach asks for one. Guessed from the role
+// remembered on this device
 // (js/role.js) so there's no flash, then confirmed from the profile.
 
 const titleEl = document.getElementById("clientsTitle");
