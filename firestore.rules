@@ -177,17 +177,47 @@ service cloud.firestore {
     function activeClientAccount(clientUid) {
       let ref = profilePath(clientUid);
       return exists(ref)
+        && get(ref).data.uid == clientUid
         && get(ref).data.role == "client"
         && get(ref).data.isCoachApproved == false
         && get(ref).data.status == "active";
     }
 
+    function validCoachLinkData() {
+      return request.resource.data.keys().hasOnly([
+          "coachUid", "coachName", "coachEmail",
+          "clientUid", "clientName", "clientEmail",
+          "inviteCode", "linkedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "coachUid", "coachName", "coachEmail",
+          "clientUid", "clientName", "clientEmail",
+          "inviteCode", "linkedAt"
+        ])
+        && request.resource.data.coachUid is string
+        && request.resource.data.coachUid.size() > 0
+        && request.resource.data.coachName is string
+        && request.resource.data.coachName.size() <= 120
+        && request.resource.data.coachEmail is string
+        && request.resource.data.coachEmail.size() <= 320
+        && request.resource.data.clientUid is string
+        && request.resource.data.clientUid.size() > 0
+        && request.resource.data.clientName is string
+        && request.resource.data.clientName.size() <= 120
+        && request.resource.data.clientEmail is string
+        && request.resource.data.clientEmail.size() <= 320
+        && request.resource.data.inviteCode is string
+        && request.resource.data.linkedAt == request.time;
+    }
+
     function directCoachLink() {
-      return request.resource.data.inviteCode == ""
+      return validCoachLinkData()
+        && request.resource.data.inviteCode == ""
         && activeClientAccount(request.resource.data.clientUid);
     }
 
     function invitedCoachLink() {
+      return validCoachLinkData()
       return request.resource.data.inviteCode is string
         && request.resource.data.inviteCode.size() > 0
         && exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode))
