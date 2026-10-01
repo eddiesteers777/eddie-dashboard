@@ -131,7 +131,8 @@ service cloud.firestore {
     }
 
     match /userProfiles/{uid} {
-      allow get: if isUser(uid) || isApprovedCoach();
+      // Active client discovery uses clientDirectory; full profiles are not a search directory.
+      allow get: if isUser(uid) || (isApprovedCoach() && resource.data.status == "pending");
       allow list: if isApprovedCoach();
 
       // Self-signup always starts as an unapproved, pending client with
@@ -152,6 +153,31 @@ service cloud.firestore {
         // "Last in the app": only ever the server's clock, nothing else.
         || (isUser(uid) && onlyChanges(["lastSeenAt"]) && request.resource.data.lastSeenAt == request.time)
         || isApprovedCoach();
+    }
+
+    match /clientDirectory/{uid} {
+      // Minimal discovery projection only: no application message, last-seen data,
+      // or other private profile fields are exposed to coaches.
+      allow get, list: if isApprovedCoach();
+      allow create: if isUser(uid)
+        && request.resource.data.keys().hasOnly(["uid", "displayName", "email", "services", "status", "updatedAt"])
+        && request.resource.data.uid == uid
+        && request.resource.data.status == "active"
+        && request.resource.data.services is list
+        && get(profilePath(uid)).data.role == "client"
+        && get(profilePath(uid)).data.isCoachApproved == false
+        && get(profilePath(uid)).data.status == "active"
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isUser(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["displayName", "email", "services", "status", "updatedAt"])
+        && request.resource.data.uid == uid
+        && request.resource.data.status == "active"
+        && request.resource.data.services is list
+        && get(profilePath(uid)).data.role == "client"
+        && get(profilePath(uid)).data.isCoachApproved == false
+        && get(profilePath(uid)).data.status == "active"
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
     }
 
     match /inviteCodes/{code} {
