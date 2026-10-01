@@ -112,6 +112,8 @@ test("logout clears known account-sensitive browser storage", () => {
 test("auth consumers wait for account isolation", () => {
     const auth = read("js/auth.js");
     assert.match(auth, /ACCOUNT_STORAGE_OWNER_KEY = ["']sb-account-storage-owner["']/);
+    assert.match(auth, /function hasLegacyAccountState\(\)/);
+    assert.match(auth, /legacyAccountState = nextUid && !owner && hasLegacyAccountState\(\)/);
     assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\)\.then\(result => reloadAfterAccountTransition\(result\.changed\)\);\s*\}\)/);
     assert.match(auth, /await waitForAccountIsolation\(\)/);
     assert.match(auth, /accountReloadRequested = false/);
