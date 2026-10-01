@@ -1261,6 +1261,8 @@ Goal:
 
 ## Phase 8 — Improve client-side experience
 
+**Client Progress page built 2026-10-01.** Added a dedicated `progress.html` page for clients. It reuses the existing `summarizeProgress()` model and the client's existing workout results, check-ins, booking/session data, and synced coach plan. It shows a simple 28-day snapshot, current-week plan progress, a six-week training trend, and recent check-in trend. Running/strength/soccer metrics are shown only when that activity exists. No new Firestore collection or rules change was needed.
+
 The client gets:
 
 - Today
