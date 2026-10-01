@@ -3,6 +3,12 @@
 // ==========================================
 
 import { auth, clearOfflineCopy } from "./firebase.js";
+import {
+    clearAccountLocalData,
+    clearAccountSessionData,
+    getActiveAccountUid,
+    setActiveAccountUid
+} from "./accountStorage.js";
 
 import {
     GoogleAuthProvider,
@@ -20,8 +26,25 @@ const provider = new GoogleAuthProvider();
 export async function login() {
 
     try {
+        // If a user is still signed in, this may be an account switch.
+        // Give the current account one last cloud push when possible, then
+        // remove its browser data before the next account can use this tab.
+        if (auth.currentUser) {
+            try {
+                const { pushToCloud } = await import("./cloudSync.js");
+                await pushToCloud({ force: true });
+            } catch (error) {
+                console.warn("Southbound: couldn't finish the previous account's cloud sync before login.", error);
+            }
+        }
+
+        clearAccountLocalData();
+        clearAccountSessionData();
+        setActiveAccountUid(null);
+        await clearOfflineCopy();
 
         await signInWithPopup(auth, provider);
+        if (auth.currentUser) setActiveAccountUid(auth.currentUser.uid);
 
         return true;
 
@@ -34,7 +57,6 @@ export async function login() {
     }
 
 }
-
 // ==========================================
 // Logout
 // ==========================================
@@ -42,8 +64,25 @@ export async function login() {
 export async function logout() {
 
     try {
+        // Preserve anything that was entered since the last 30-second sync
+        // when the network is available. Privacy cleanup below still runs
+        // if this fails or the browser is offline.
+        try {
+            const { pushToCloud } = await import("./cloudSync.js");
+            await pushToCloud({ force: true });
+        } catch (error) {
+            console.warn("Southbound: couldn't finish the current account's cloud sync before logout.", error);
+        }
 
+        clearAccountLocalData();
+        clearAccountSessionData();
+        setActiveAccountUid(null);
+        await clearOfflineCopy();
         await signOut(auth);
+
+        // Clear in-memory page state and initialize the next auth session
+        // against a freshly initialized Firestore instance.
+        window.location.reload();
 
     } catch (error) {
 
@@ -51,15 +90,7 @@ export async function logout() {
 
     }
 
-    // What this device kept for the account that just left: its offline
-    // Firestore copy and what the nav / sync remembered about it.
-    for (const key of ["sb-nav-access", "__cloudSyncVersion", "__cloudSyncFullPullAt"]) {
-        try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
-    }
-    await clearOfflineCopy();
-
 }
-
 // ==========================================
 // Current User
 // ==========================================
@@ -74,21 +105,46 @@ export function getCurrentUser() {
 // Wait for Authentication
 // ==========================================
 
+let accountIdentityPromise = Promise.resolve();
+
+async function prepareAccountIdentity(user) {
+    if (!user) {
+        setActiveAccountUid(null);
+        return;
+    }
+
+    const previousUid = getActiveAccountUid();
+    const uidChanged = previousUid !== user.uid;
+
+    if (uidChanged) {
+        clearAccountLocalData();
+        clearAccountSessionData();
+        setActiveAccountUid(null);
+        await clearOfflineCopy();
+    }
+
+    setActiveAccountUid(user.uid);
+}
+
 export function waitForUser() {
 
     return new Promise((resolve) => {
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-
-            unsubscribe();
-            resolve(user);
-
+            accountIdentityPromise = accountIdentityPromise
+                .then(() => prepareAccountIdentity(user))
+                .catch(error => {
+                    console.error("Southbound: account transition cleanup failed.", error);
+                })
+                .then(() => {
+                    unsubscribe();
+                    resolve(user);
+                });
         });
 
     });
 
 }
-
 // ==========================================
 // Protect Pages
 // ==========================================
