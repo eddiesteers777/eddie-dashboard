@@ -177,7 +177,9 @@ service cloud.firestore {
         && get(profilePath(uid)).data.isCoachApproved == false
         && get(profilePath(uid)).data.status == "active"
         && request.resource.data.updatedAt == request.time;
-      allow delete: if false;
+      allow delete: if isApprovedCoach()
+        && get(profilePath(uid)).data.role == "coach"
+        && get(profilePath(uid)).data.isCoachApproved == true;
     }
 
     match /inviteCodes/{code} {
