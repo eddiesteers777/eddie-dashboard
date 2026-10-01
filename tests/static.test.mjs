@@ -92,11 +92,14 @@ test("logout clears known account-sensitive browser storage", () => {
         "__eddieos_strava_oauth_v1",
         "__eddieos_strava_data_snapshot_v1",
         "strava-history",
-        "plan-coach-notes"
+        "plan-coach-notes",
+        "sb-email-outbox",
+        "sb-plan-release-day"
     ];
     const requiredSession = [
         "__eddieos_strava_oauth_pending_v1",
-        "sb-apply-draft"
+        "sb-apply-draft",
+        "sb-profile-updated"
     ];
     for (const key of requiredLocal) {
         assert.match(auth, new RegExp(`["']${key.replace(/[.*+?^\${}()|[\]\\]/g, "\\\\$&")}["']`), `logout cleanup is missing ${key}`);
@@ -130,6 +133,24 @@ test("auth-dependent modules use the centralized isolation guard", () => {
     assert.doesNotMatch(firestore, /onAuthStateChanged/);
     assert.match(settings, /import \{ logout, listenForAuth \} from ["']\.\/auth\.js["']/);
     assert.doesNotMatch(settings, /onAuthStateChanged/);
+});
+
+test("cloud sync cannot reuse account A state for account B", () => {
+    const sync = read("js/cloudSync.js");
+    assert.match(sync, /let syncUserUid = null/);
+    assert.match(sync, /if\(syncUserUid!==user\.uid\)\{\s*syncUserUid=user\.uid;\s*syncedCache=undefined;/);
+    assert.match(sync, /function currentAccountIs\(uid\)/);
+    assert.match(sync, /if\(!currentAccountIs\(uid\)\) return \{ok:false,applied:0,stale:true\}/);
+    assert.match(sync, /mirrorPlansToShared\(localData,finalTimes,uid\)/);
+    assert.match(sync, /pullSharedPlanUpdates\(localTimes, uid\)/);
+});
+
+test("shared plan sync verifies the source account before applying data", () => {
+    const coachAccess = read("js/coachAccess.js");
+    assert.match(coachAccess, /mirrorPlansToShared\(localData, localTimes, expectedUid = null\)/);
+    assert.match(coachAccess, /user\.uid !== expectedUid/);
+    assert.match(coachAccess, /getCurrentUser\(\)\?\.uid !== user\.uid/);
+    assert.match(coachAccess, /pullSharedPlanUpdates\(localTimes, expectedUid = null\)/);
 });
 
 test("firestore.rules has no leftover wide-open rules", () => {
