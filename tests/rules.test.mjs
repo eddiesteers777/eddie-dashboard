@@ -35,6 +35,32 @@ beforeEach(async () => {
         await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [], displayName: "Coach Two", email: "coach2@example.com" });
         await setDoc(doc(db, "userProfiles/client"), { uid: "client", role: "client", isCoachApproved: false, status: "active", services: ["online_coaching"], email: "client@example.com", displayName: "Cam Client" });
         await setDoc(doc(db, "userProfiles/stranger"), { uid: "stranger", role: "client", isCoachApproved: false, status: "pending", services: [] });
+        await setDoc(doc(db, "clientRecords/client"), {
+            clientUid: "client",
+            updatedBy: "client",
+            updatedAt: Timestamp.now(),
+            whoTrains: "",
+            primarySport: "",
+            yearsRunning: "",
+            runStart: "",
+            strengthExperience: "",
+            availabilityDays: [],
+            timeOfDay: [],
+            sessionLength: "",
+            trainWhere: [],
+            equipment: [],
+            soccerPosition: "",
+            soccerLevel: "",
+            strongFoot: "",
+            yearsPlaying: "",
+            eventType: "",
+            targetDate: "",
+            feedbackStyle: "",
+            obstacle: "",
+            injuryAreas: [],
+            injuryStatus: "",
+            healthFlags: ""
+        });
         await setDoc(doc(db, "inviteCodes/GOOD01"), { clientUid: "client", clientName: "Cam", clientEmail: "client@example.com", createdAt: Timestamp.now() });
         await setDoc(doc(db, "inviteCodes/OLD001"), { clientUid: "client", clientName: "Cam", clientEmail: "client@example.com", createdAt: Timestamp.fromMillis(Date.now() - 8 * DAY) });
         await setDoc(doc(db, "inviteCodes/OTHER1"), { clientUid: "other", clientName: "Oz", clientEmail: "", createdAt: Timestamp.now() });
@@ -84,6 +110,10 @@ test("an unapproved account cannot redeem a valid code", async () => {
 
 test("an approved coach can directly assign an active client without an invite", async () => {
     const db = as("coach");
+
+    // Before the relationship exists, the client's coaching profile is private.
+    await assertFails(getDoc(doc(db, "clientRecords/client")));
+
     const link = doc(db, "coachLinks/coach_client");
     await assertSucceeds(setDoc(link, {
         coachUid: "coach",
@@ -157,6 +187,9 @@ test("direct assignment refuses pending clients, coach accounts, self-links, fak
 
     // An arbitrary non-empty invite string does not bypass the real invite path.
     await assertFails(direct(as("coach"), "coach", "client", { inviteCode: "FAKE01" }));
+
+    // Extra fields cannot be smuggled into the relationship document.
+    await assertFails(direct(as("coach"), "coach", "client", { extra: "not-allowed" }));
 
     // Unapproved accounts cannot use direct assignment.
     await assertFails(direct(as("stranger"), "stranger", "client"));
