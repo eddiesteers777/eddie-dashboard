@@ -137,6 +137,28 @@ test("auth-dependent modules use the centralized isolation guard", () => {
     assert.doesNotMatch(settings, /onAuthStateChanged/);
 });
 
+test("Firebase auth-state listeners are centralized", () => {
+    for (const file of manifest.scripts.filter(file => file !== "js/auth.js")) {
+        assert.doesNotMatch(read(file), /\bonAuthStateChanged\s*\(/, file + " must use js/auth.js auth listeners");
+    }
+});
+
+test("every cloud-synced local key is included in account cleanup", () => {
+    const auth = read("js/auth.js");
+    const sync = read("js/cloudSync.js");
+    const exact = sync.match(/EXACT_KEYS\s*=\s*\[([\s\S]*?)\]/);
+    const prefixes = sync.match(/KEY_PREFIXES\s*=\s*\[([\s\S]*?)\]/);
+    const accountKeys = auth.match(/ACCOUNT_LOCAL_STORAGE_KEYS\s*=\s*\[([\s\S]*?)\]/);
+    const accountPrefixes = auth.match(/ACCOUNT_LOCAL_STORAGE_PREFIXES\s*=\s*\[([\s\S]*?)\]/);
+    assert.ok(exact && prefixes && accountKeys && accountPrefixes, "account/sync storage registries must exist");
+    const readStrings = block => [...block.matchAll(/["']([^"']+)["']/g)].map(m => m[1]);
+    const syncedKeys = readStrings(exact[1]);
+    const syncedPrefixes = readStrings(prefixes[1]);
+    const cleanupKeys = readStrings(accountKeys[1]);
+    const cleanupPrefixes = readStrings(accountPrefixes[1]);
+    assert.deepEqual(syncedKeys.filter(key => !cleanupKeys.includes(key)), [], "a cloud-synced key is missing from account cleanup");
+    assert.deepEqual(syncedPrefixes.filter(prefix => !cleanupPrefixes.includes(prefix)), [], "a cloud-synced prefix is missing from account cleanup");
+});
 test("cloud sync cannot reuse account A state for account B", () => {
     const sync = read("js/cloudSync.js");
     assert.match(sync, /let syncUserUid = null/);
