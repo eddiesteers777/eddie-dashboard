@@ -232,7 +232,7 @@ function renderClientRows() {
             </button>
         `;
         row.querySelector('[data-action="remove"]').addEventListener("click", async () => {
-            if (!(await sbConfirm("You'll lose access to their plans, check-ins and sessions until they send you a new code.", { title: `Remove ${c.name}?`, confirmLabel: "Remove", danger: true }))) return;
+            if (!(await sbConfirm("You'll lose access to their plans, check-ins and sessions until you are assigned again.", { title: `Remove ${c.name}?`, confirmLabel: "Remove", danger: true }))) return;
             await removeLink(c.linkId);
             refreshClients();
         });
@@ -573,7 +573,7 @@ function setClientsView(isCoach) {
     titleEl.textContent = isCoach ? coachTitle : "Connect with Your Coach";
     introEl.textContent = isCoach
         ? coachIntro
-        : "Link your account to your coach so they can build your plan, read your check-ins and book your sessions.";
+        : "Your coach can find your account and assign you directly. Use My Coaches to see or remove connected coaches.";
     if (!isCoach) selectTab("share");
     else if (document.querySelector('.clients-tab.active')?.dataset.tab === "share") selectTab("coach");
 }
