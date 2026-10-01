@@ -214,8 +214,10 @@ service cloud.firestore {
         );
 
       allow delete: if isApprovedCoach()
-        && get(profilePath(uid)).data.role == "coach"
-        && get(profilePath(uid)).data.isCoachApproved == true;
+        && (
+          (get(profilePath(uid)).data.role == "coach" && get(profilePath(uid)).data.isCoachApproved == true)
+          || (get(profilePath(uid)).data.role == "client" && get(profilePath(uid)).data.status == "archived")
+        );
     }
 
     match /inviteCodes/{code} {
