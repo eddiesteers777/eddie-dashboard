@@ -108,15 +108,23 @@ export function getCurrentUser() {
 // ==========================================
 
 let accountIdentityPromise = Promise.resolve();
+let observedAccountUid = null;
 
 async function prepareAccountIdentity(user) {
     if (!user) {
+        observedAccountUid = null;
         setActiveAccountUid(null);
         return;
     }
 
-    const previousUid = getActiveAccountUid();
-    const uidChanged = previousUid !== user.uid;
+    const markerUid = getActiveAccountUid();
+    // Keep a tab-local observation as well as the shared marker. If another
+    // tab changes the Firebase account first, the shared marker may already
+    // contain the new UID by the time this tab's auth listener fires; the
+    // tab-local UID still catches the in-memory account transition.
+    const uidChanged = observedAccountUid !== null
+        ? observedAccountUid !== user.uid
+        : markerUid !== user.uid;
 
     if (uidChanged) {
         clearAccountLocalData();
@@ -125,6 +133,7 @@ async function prepareAccountIdentity(user) {
         await clearOfflineCopy();
     }
 
+    observedAccountUid = user.uid;
     setActiveAccountUid(user.uid);
 }
 
