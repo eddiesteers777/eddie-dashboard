@@ -13,6 +13,67 @@ import {
 
 const provider = new GoogleAuthProvider();
 
+// Account-sensitive browser state must not survive an account switch.
+// Device-only UI preferences are deliberately not in this list.
+const ACCOUNT_LOCAL_STORAGE_KEYS = [
+    "sb-nav-access",
+    "sb-account-role",
+    "__cloudSyncVersion",
+    "__cloudSyncFullPullAt",
+    "strava-history",
+    "coros-auto-send",
+    "coros-auto-noticed",
+    "coros-health-fetched",
+    "__eddieos_coros_oauth_v2",
+    "__eddieos_coros_oauth_token",
+    "coros-run-history",
+    "coros-fitness-history",
+    "coros-health-history",
+    "coros-health-backfill",
+    "coros-laps",
+    "coros-sent",
+    "readiness-checkins",
+    "readiness-settings",
+    "readiness-history",
+    "training-progress",
+    "training-overrides",
+    "habits",
+    "entries",
+    "user-settings",
+    "__eddieos_coros_data_snapshot_v2",
+    "strength-plan",
+    "strength-exercise-library",
+    "strength-workout-library",
+    "strength-workout-favorites",
+    "strength-schedule",
+    "gear-shoes",
+    "strength-history",
+    "running-log",
+    "personal-records",
+    "running-programs",
+    "training-programs",
+    "planner-events",
+    "coach-plans",
+    "coach-exercise-videos",
+    "coach-workout-library",
+    "coach-plan-prompts",
+    "coach-health-reviewed",
+    "coach-queue-done",
+    "profile-checks"
+];
+
+const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
+    "nutrition-",
+    "fueling-",
+    "cross-training-"
+];
+
+const ACCOUNT_SESSION_STORAGE_KEYS = [
+    "__eddieos_coros_oauth_pending_v2",
+    "__eddieos_coros_oauth_pending",
+    "sb-role-reloaded"
+];
+
 // ==========================================
 // Login
 // ==========================================
@@ -51,11 +112,25 @@ export async function logout() {
 
     }
 
-    // What this device kept for the account that just left: its offline
-    // Firestore copy and what the nav / sync remembered about it.
-    for (const key of ["sb-nav-access", "__cloudSyncVersion", "__cloudSyncFullPullAt"]) {
+    // Remove account-sensitive browser state before another account can
+    // sign in on this device. Firestore's IndexedDB cache is cleared below;
+    // this list covers the localStorage/sessionStorage copies that Firestore
+    // cannot clear for us, including COROS OAuth credentials and Strava data.
+    for (const key of ACCOUNT_LOCAL_STORAGE_KEYS) {
         try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
+    for (const prefix of ACCOUNT_LOCAL_STORAGE_PREFIXES) {
+        try {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key?.startsWith(prefix)) localStorage.removeItem(key);
+            }
+        } catch { /* storage unavailable */ }
+    }
+    for (const key of ACCOUNT_SESSION_STORAGE_KEYS) {
+        try { sessionStorage.removeItem(key); } catch { /* storage unavailable */ }
+    }
+
     await clearOfflineCopy();
 
 }
