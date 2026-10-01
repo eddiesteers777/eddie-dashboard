@@ -34,9 +34,11 @@ function pct(value) {
 }
 
 function renderMetrics(progress) {
-    const items = [
-        ["Completed workouts", progress.activity.completedWorkouts, "last 28 days"]
-    ];
+    const items = [];
+    const hasTrainingActivity = progress.activity.completedWorkouts || progress.activity.runSessions || progress.activity.strengthSessions;
+    if (hasTrainingActivity) {
+        items.push(["Completed workouts", progress.activity.completedWorkouts, "last 28 days"]);
+    }
 
     if (progress.activity.runSessions) {
         items.push(["Run volume", progress.activity.runMiles + " mi", progress.activity.runSessions + " logged runs"]);
