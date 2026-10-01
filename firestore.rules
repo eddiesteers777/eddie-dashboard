@@ -10,18 +10,18 @@ rules_version = '2';
 // Collections:
 //   users/{uid}/sync/{docId}   Each user's private data blob. Owner only.
 //   userProfiles/{uid}         Role / status / services. Readable only by
-//                              the owner and approved coaches (who need
-//                              the Pending list). A user can only edit
-//                              their own application fields; everything
-//                              that grants access is coach-only.
+//                              the owner, pending-account coaches, or a
+//                              coach already linked to that client. Full
+//                              profiles are never used as a directory.
 //   inviteCodes/{code}         One-time codes a client hands a coach.
 //                              Never listable; expire after 7 days.
-//   coachLinks/{coach}_{client} Proof a client invited a coach. Can only
-//                              be created by an approved coach, in the
-//                              same atomic batch that deletes (burns) a
-//                              valid invite code from that client -- so a
-//                              link can't be forged and a code can't be
-//                              redeemed twice.
+//   clientDirectory/{uid}     Minimal coach-facing discovery projection.
+//                              It contains only identity/service fields
+//                              needed to find a client; the full profile
+//                              remains private.
+//   coachLinks/{coach}_{client} Relationship between one coach and one
+//                              client. Direct assignment or the legacy
+//                              one-time invite path can create it.
 //   sharedPlans/{clientUid}    Client's plan mirror; a linked coach can
 //                              read and edit it.
 //   wearableShares/{coach}_{client}  Client-controlled wearable sharing
