@@ -57,6 +57,7 @@
     "js/checkin.js",
     "js/checkinView.js",
     "js/checkins.js",
+    "js/clientAssignmentModel.js",
     "js/clientDirectory.js",
     "js/clientHub.js",
     "js/clientNotes.js",
