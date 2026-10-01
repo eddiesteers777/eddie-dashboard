@@ -20,7 +20,12 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "sb-account-role",
     "__cloudSyncVersion",
     "__cloudSyncFullPullAt",
+    "__cloudSyncMeta",
+    "__cloudSyncSnapshot",
+    "__cloudSyncKeyTimes",
     "strava-history",
+    "__eddieos_strava_oauth_v1",
+    "__eddieos_strava_data_snapshot_v1",
     "coros-auto-send",
     "coros-auto-noticed",
     "coros-health-fetched",
@@ -59,6 +64,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coach-plan-prompts",
     "coach-health-reviewed",
     "coach-queue-done",
+    "plan-coach-notes",
     "profile-checks"
 ];
 
@@ -71,6 +77,8 @@ const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
 const ACCOUNT_SESSION_STORAGE_KEYS = [
     "__eddieos_coros_oauth_pending_v2",
     "__eddieos_coros_oauth_pending",
+    "__eddieos_strava_oauth_pending_v1",
+    "sb-apply-draft",
     "sb-role-reloaded"
 ];
 
