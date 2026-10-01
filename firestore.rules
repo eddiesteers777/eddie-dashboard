@@ -309,7 +309,12 @@ service cloud.firestore {
         && request.resource.data.coachUid == request.auth.uid
         && request.resource.data.clientUid != request.auth.uid
         && linkId == request.auth.uid + '_' + request.resource.data.clientUid
-        && (directCoachLink() || invitedCoachLink());
+        && (
+          (directCoachLink()
+            && request.resource.data.clientName == get(profilePath(request.resource.data.clientUid)).data.displayName
+            && request.resource.data.clientEmail == get(profilePath(request.resource.data.clientUid)).data.email)
+          || invitedCoachLink()
+        );
 
       allow update: if false;
 
