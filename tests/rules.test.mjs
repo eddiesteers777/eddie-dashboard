@@ -35,6 +35,12 @@ beforeEach(async () => {
         await setDoc(doc(db, "userProfiles/coach2"), { uid: "coach2", role: "coach", isCoachApproved: true, status: "active", services: [], displayName: "Coach Two", email: "coach2@example.com" });
         await setDoc(doc(db, "userProfiles/client"), { uid: "client", role: "client", isCoachApproved: false, status: "active", services: ["online_coaching"], email: "client@example.com", displayName: "Cam Client" });
         await setDoc(doc(db, "userProfiles/stranger"), { uid: "stranger", role: "client", isCoachApproved: false, status: "pending", services: [] });
+        await setDoc(doc(db, "clientDirectory/stranger"), {
+            uid: "stranger", displayName: "Pending Client", email: "pending@example.com",
+            services: [], status: "pending", requestedServices: ["running"],
+            applicationMessage: "I want coaching.", applicationSubmittedAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+        });
         await setDoc(doc(db, "clientRecords/client"), {
             clientUid: "client",
             updatedBy: "client",
@@ -537,10 +543,14 @@ test("other users cannot read or list profiles", async () => {
     await assertFails(getDocs(query(collection(as("client"), "userProfiles"), where("status", "==", "pending"))));
 });
 
-test("owners read their own profile; approved coaches can list pending accounts", async () => {
+test("profiles stay private while coaches use the minimal directory projection", async () => {
     await assertSucceeds(getDoc(doc(as("client"), "userProfiles/client")));
     await assertSucceeds(getDoc(doc(as("brandnew"), "userProfiles/brandnew")));
-    await assertSucceeds(getDocs(query(collection(as("coach"), "userProfiles"), where("status", "==", "pending"))));
+    await assertFails(getDoc(doc(as("coach"), "userProfiles/client")));
+    await assertFails(getDocs(query(collection(as("coach"), "userProfiles"), where("status", "==", "pending"))));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "clientDirectory"), where("status", "==", "pending"))));
+    await assertSucceeds(getDoc(doc(as("coach"), "clientDirectory/stranger")));
+    await assertFails(getDoc(doc(as("stranger"), "clientDirectory/client")));
 });
 
 test("a new profile can only start as a pending client with no services", async () => {
