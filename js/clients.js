@@ -14,7 +14,7 @@ import { sbConfirm, sbAlert, toast, loadingHtml } from "./ui.js";
 import { cachedRole } from "./role.js";
 import {
     createInviteCode, redeemInviteCode, linkApplicant,
-    listMyCoaches, removeLink
+    listMyCoaches, removeLink, listAssignableClients, assignClient
 } from "./coachAccess.js";
 import { loadClientDirectory } from "./clientDirectory.js";
 import { summarizeClient, serviceLabels, isoDate, shortDate, clientStatusLines } from "./clientSummary.js";
@@ -25,6 +25,7 @@ import {
 import { listApplications, matchApplicationTo, setApplicationHandled } from "./applications.js";
 import { matchApplication, unmatchedApplications, applicationLines, recordFromApplication } from "./applicationForm.js";
 import { getClientRecord, saveClientRecord } from "./clientRecords.js";
+import { filterAssignableClients, displayNameForAssignment } from "./clientAssignmentModel.js";
 
 const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
@@ -58,6 +59,125 @@ const redeemBtn = document.getElementById("redeemBtn");
 const redeemMsg = document.getElementById("redeemMsg");
 const clientsList = document.getElementById("clientsList");
 const clientsEmptyMsg = document.getElementById("clientsEmptyMsg");
+
+const assignSearchForm = document.getElementById("assignSearchForm");
+const assignSearchInput = document.getElementById("assignSearchInput");
+const assignSearchBtn = document.getElementById("assignSearchBtn");
+const assignSearchResults = document.getElementById("assignSearchResults");
+const assignSearchMsg = document.getElementById("assignSearchMsg");
+
+let assignableClients = null;
+let assignableClientsPromise = null;
+
+function assignMessage(text, isError = false) {
+    assignSearchMsg.textContent = text;
+    assignSearchMsg.classList.toggle("clients-msg-error", isError);
+    assignSearchMsg.hidden = false;
+}
+
+function clearAssignMessage() {
+    assignSearchMsg.hidden = true;
+    assignSearchMsg.textContent = "";
+    assignSearchMsg.classList.remove("clients-msg-error");
+}
+
+async function getAssignableClients() {
+    if (assignableClients) return assignableClients;
+    if (!assignableClientsPromise) {
+        assignableClientsPromise = listAssignableClients()
+            .then(rows => {
+                assignableClients = rows;
+                return rows;
+            })
+            .finally(() => {
+                assignableClientsPromise = null;
+            });
+    }
+    return assignableClientsPromise;
+}
+
+function renderAssignmentResults(rows) {
+    if (!rows.length) {
+        assignSearchResults.innerHTML = '<p class="clients-card-note">No active client account matched that search.</p>';
+        assignSearchResults.hidden = false;
+        return;
+    }
+
+    assignSearchResults.innerHTML = rows.map(client => {
+        const services = serviceLabels(client.services || []);
+        return `
+            <div class="clients-row clients-assign-row" data-assign-uid="${escapeHtml(client.uid)}">
+                <div class="clients-row-avatar">${escapeHtml(displayNameForAssignment(client).slice(0, 1).toUpperCase())}</div>
+                <div class="clients-row-info">
+                    <strong>${escapeHtml(displayNameForAssignment(client))}</strong>
+                    <span>${escapeHtml(client.email || "No email on account")}</span>
+                    ${services.length ? `<span>${escapeHtml(services.join(" · "))}</span>` : ""}
+                </div>
+                <button type="button" class="clients-btn-primary" data-action="assign">Assign</button>
+            </div>
+        `;
+    }).join("");
+    assignSearchResults.hidden = false;
+}
+
+assignSearchForm?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const query = (assignSearchInput.value || "").trim();
+    clearAssignMessage();
+    assignSearchResults.hidden = true;
+
+    if (query.length < 2) {
+        assignSearchResults.innerHTML = '<p class="clients-card-note">Type at least 2 characters to search.</p>';
+        assignSearchResults.hidden = false;
+        return;
+    }
+
+    assignSearchBtn.disabled = true;
+    assignSearchBtn.textContent = "Searching…";
+
+    try {
+        const rows = filterAssignableClients(await getAssignableClients(), query);
+        renderAssignmentResults(rows);
+    } catch (error) {
+        console.error("Client search failed:", error);
+        assignMessage("Couldn't search client accounts right now. Try again.", true);
+    } finally {
+        assignSearchBtn.disabled = false;
+        assignSearchBtn.textContent = "Search";
+    }
+});
+
+assignSearchResults?.addEventListener("click", async event => {
+    const button = event.target.closest('[data-action="assign"]');
+    const row = event.target.closest("[data-assign-uid]");
+    if (!button || !row) return;
+
+    button.disabled = true;
+    button.textContent = "Adding…";
+    clearAssignMessage();
+
+    try {
+        const result = await assignClient(row.dataset.assignUid);
+        assignableClients = (assignableClients || []).filter(client => client.uid !== result.clientUid);
+        renderAssignmentResults(filterAssignableClients(assignableClients, assignSearchInput.value));
+        assignMessage(`${result.clientName} is now your client.`);
+        await refreshClients();
+    } catch (error) {
+        console.error("Direct client assignment failed:", error);
+        const message = {
+            "already-linked": "That client is already in your list.",
+            "client-not-found": "That client account no longer exists.",
+            "client-not-assignable": "That account is not an active client account.",
+            "cannot-link-self": "You can't add yourself as a client.",
+            "not-signed-in": "Please sign in again."
+        }[error.message] || "Couldn't add that client. Try again.";
+        assignMessage(message, true);
+        button.disabled = false;
+        button.textContent = "Assign";
+    }
+});
+
+
 
 function showMsg(el, text, isError = false) {
     el.textContent = text;
