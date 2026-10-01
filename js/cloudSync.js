@@ -248,8 +248,6 @@ export async function pushToCloud({ force=false }={}){
     };
     const localData=currentLocalData();
     const changed=lastSyncedData()===null?Object.keys(localData):changedLocalKeys(localData);
-    const localData=currentLocalData();
-    const changed=lastSyncedData()===null?Object.keys(localData):changedLocalKeys(localData);
     // Nothing changed here since the last sync: no reads, no writes.
     if(!force && !changed.length) return true;
     if(isOffline()){ emit("offline"); return false; }
