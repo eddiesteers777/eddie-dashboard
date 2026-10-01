@@ -74,6 +74,14 @@ export const SPECIAL_ACCOUNT_LOCAL_KEYS = [
 ];
 
 // Cached role/navigation is account-dependent even though it is device-only.
+export const SYNC_BOOKKEEPING_KEYS = [
+    "__cloudSyncMeta",
+    "__cloudSyncSnapshot",
+    "__cloudSyncKeyTimes",
+    "__cloudSyncVersion",
+    "__cloudSyncFullPullAt"
+];
+
 export const ACCOUNT_UI_KEYS = [
     "sb-account-role",
     "sb-nav-access"
@@ -82,6 +90,7 @@ export const ACCOUNT_UI_KEYS = [
 export const ACCOUNT_LOCAL_EXACT_KEYS = [
     ...CLOUD_SYNC_EXACT_KEYS,
     ...SPECIAL_ACCOUNT_LOCAL_KEYS,
+    ...SYNC_BOOKKEEPING_KEYS,
     ...ACCOUNT_UI_KEYS
 ];
 
