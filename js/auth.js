@@ -65,7 +65,9 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coach-health-reviewed",
     "coach-queue-done",
     "plan-coach-notes",
-    "profile-checks"
+    "profile-checks",
+    "sb-email-outbox",
+    "sb-plan-release-day"
 ];
 
 const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
@@ -79,6 +81,7 @@ const ACCOUNT_SESSION_STORAGE_KEYS = [
     "__eddieos_coros_oauth_pending",
     "__eddieos_strava_oauth_pending_v1",
     "sb-apply-draft",
+    "sb-profile-updated",
     "sb-role-reloaded"
 ];
 
