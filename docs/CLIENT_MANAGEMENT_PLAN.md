@@ -45,10 +45,11 @@ The current system already has the following pieces:
 
 ### Coach/client relationship
 - `coachLinks/{coachUid}_{clientUid}`
-- one-time invite codes
-- client can grant coach access
-- approved coach can connect with clients
+- approved coach can find and directly assign an active client account
+- legacy one-time invite codes remain supported for compatibility
+- client can see/remove connected coaches
 - Firestore rules enforce the relationship
+- wearable sharing remains a separate client-controlled permission
 
 ### Training / plans
 - Training Plans
