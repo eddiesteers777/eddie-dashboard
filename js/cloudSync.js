@@ -142,10 +142,11 @@ export function currentSyncState(){ return currentState; }
 // whether a fresh page load needs to reload itself to show newly
 // pulled data.
 export async function pullFromCloud({ force=false }={}){
+  let uid=null;
   try{
     const refs=await syncDocs();
     if(!refs){ saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:"not-signed-in"}); return {ok:false,applied:0}; }
-    const uid=refs.uid;
+    uid=refs.uid;
     if(isOffline()){ emit("offline"); return {ok:false,applied:0,offline:true}; }
     emit("syncing");
     // Nothing new in the cloud since this device last read it: skip the big read.
@@ -218,6 +219,7 @@ export async function pullFromCloud({ force=false }={}){
     if(applied) console.log(`☁️ Pulled ${applied} item(s) from the cloud.`);
     return {ok:true,applied};
   }catch(error){
+    if(uid && !currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:error.code||error.message||"pull-failed"});
     emit(isOffline()?"offline":"error");
     console.error("Cloud sync (pull) error:",error); return {ok:false,applied:0};
@@ -293,6 +295,7 @@ export async function pushToCloud({ force=false }={}){
     console.log(`💾 Synced ${changed.length} changed item(s) with the cloud.`);
     return true;
   }catch(error){
+    if(!currentAccountIs(uid)) return false;
     saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:error.code||error.message||"push-failed"});
     emit(isOffline()?"offline":"error");
     console.error("Cloud sync (push) error:",error); return false;
