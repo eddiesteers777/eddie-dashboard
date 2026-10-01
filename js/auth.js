@@ -85,6 +85,7 @@ const ACCOUNT_SESSION_STORAGE_KEYS = [
 const ACCOUNT_STORAGE_OWNER_KEY = "sb-account-storage-owner";
 let preparedAccountUid;
 let accountPreparation = Promise.resolve();
+let accountReloadRequested = false;
 
 function getStorageOwner() {
     try { return localStorage.getItem(ACCOUNT_STORAGE_OWNER_KEY); } catch { return null; }
@@ -140,8 +141,9 @@ async function prepareAccountState(user) {
     const ownerMismatch = nextUid && owner && owner !== nextUid;
     const legacyAccountData = nextUid && !owner && hasAccountSensitiveBrowserState();
     const signedOutOwner = !nextUid && owner;
+    const changed = Boolean(uidChanged || ownerMismatch || legacyAccountData || signedOutOwner);
 
-    if (uidChanged || ownerMismatch || legacyAccountData || signedOutOwner) {
+    if (changed) {
         clearAccountSensitiveBrowserState();
         setStorageOwner(null);
         await clearOfflineCopy();
@@ -149,6 +151,13 @@ async function prepareAccountState(user) {
 
     setStorageOwner(nextUid);
     preparedAccountUid = nextUid;
+    return { changed };
+}
+
+function reloadAfterAccountTransition(changed) {
+    if (!changed || accountReloadRequested || typeof window === "undefined") return;
+    accountReloadRequested = true;
+    window.location.reload();
 }
 
 function queueAccountPreparation(user) {
@@ -162,7 +171,7 @@ function queueAccountPreparation(user) {
 // Every caller below waits for its cleanup work, so a changed Firebase user
 // cannot immediately inherit the prior account's browser/Firestore state.
 onAuthStateChanged(auth, (user) => {
-    queueAccountPreparation(user);
+    queueAccountPreparation(user).then(result => reloadAfterAccountTransition(result.changed));
 });
 
 export function waitForAccountIsolation() {
@@ -239,7 +248,10 @@ export function waitForUser() {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
 
             unsubscribe();
-            queueAccountPreparation(user).then(() => resolve(user));
+            queueAccountPreparation(user).then(result => {
+                reloadAfterAccountTransition(result.changed);
+                resolve(user);
+            });
 
         });
 
@@ -275,7 +287,10 @@ export function listenForAuth(callback) {
 
     return onAuthStateChanged(auth, (user) => {
 
-        queueAccountPreparation(user).then(() => callback(user));
+        queueAccountPreparation(user).then(result => {
+            reloadAfterAccountTransition(result.changed);
+            callback(user);
+        });
 
     });
 
