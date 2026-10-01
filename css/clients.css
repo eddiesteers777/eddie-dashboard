@@ -110,6 +110,30 @@
     text-transform:uppercase;
 }
 
+.clients-assign-row{
+    align-items:center;
+    padding-right:10px;
+}
+.clients-assign-row .clients-btn-primary{
+    flex-shrink:0;
+}
+.clients-secondary-card{
+    margin-top:0;
+}
+.clients-secondary-card > summary{
+    cursor:pointer;
+    color:var(--text);
+    font-size:14px;
+    font-weight:800;
+    list-style-position:inside;
+}
+.clients-secondary-card[open] > summary{
+    margin-bottom:12px;
+}
+.clients-secondary-card > summary::marker{
+    color:var(--muted);
+}
+
 .clients-btn-primary,
 .clients-btn-secondary,
 .clients-btn-icon{
