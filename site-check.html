@@ -854,8 +854,14 @@
         let fail = 0, pass = 0;
 
         let syncCode;
+        let accountStorageCode;
 
-        try{ syncCode = await fetchText("js/cloudSync.js"); }
+        try{
+            [syncCode, accountStorageCode] = await Promise.all([
+                fetchText("js/cloudSync.js"),
+                fetchText("js/accountStorage.js")
+            ]);
+        }
         catch(e){
 
             rows.push(row("fail", "js/cloudSync.js", "Could not fetch cloudSync.js at all."));
@@ -875,6 +881,18 @@
         const keyPrefixes = prefixMatch
             ? [...prefixMatch[1].matchAll(/["']([^"']+)["']/g)].map(m => m[1])
             : [];
+
+        // accountStorage.js is the explicit privacy boundary: these
+        // device-local/account-transition keys are intentionally NOT
+        // cloud-synced and should not be reported as missing coverage.
+        const localOnlyExact = new Set();
+        const accountExact = accountStorageCode
+            ? accountStorageCode.match(/export const ACCOUNT_LOCAL_EXACT_KEYS = \[([\\s\\S]*?)\]/)
+            : null;
+        if (accountExact) {
+            [...accountExact[1].matchAll(/["']([^"']+)["']/g)].forEach(m => localOnlyExact.add(m[1]));
+        }
+        localOnlyExact.add("sb-active-account-uid");
 
         const usedExact = new Set();
 
@@ -897,6 +915,8 @@
         function isCovered(key){
 
             if (exactKeys.includes(key)) return true;
+
+            if (localOnlyExact.has(key)) return true;
 
             return keyPrefixes.some(p => key.startsWith(p));
 
