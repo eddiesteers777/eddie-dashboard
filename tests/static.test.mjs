@@ -106,6 +106,24 @@ test("logout clears known account-sensitive browser storage", () => {
     }
 });
 
+test("auth consumers wait for account isolation", () => {
+    const auth = read("js/auth.js");
+    assert.match(auth, /ACCOUNT_STORAGE_OWNER_KEY = ["']sb-account-storage-owner["']/);
+    assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\);\s*\}\)/);
+    assert.match(auth, /await waitForAccountIsolation\(\)/);
+    assert.match(auth, /queueAccountPreparation\(user\)\.then\(\(\) => resolve\(user\)\)/);
+    assert.match(auth, /setStorageOwner\(null\);\s*await clearOfflineCopy\(\);\s*preparedAccountUid = null/);
+});
+
+test("auth-dependent modules use the centralized isolation guard", () => {
+    const firestore = read("js/firestore.js");
+    const settings = read("js/settings.js");
+    assert.match(firestore, /import \{ waitForUser \} from ["']\.\/auth\.js["']/);
+    assert.doesNotMatch(firestore, /onAuthStateChanged/);
+    assert.match(settings, /import \{ logout, listenForAuth \} from ["']\.\/auth\.js["']/);
+    assert.doesNotMatch(settings, /onAuthStateChanged/);
+});
+
 test("firestore.rules has no leftover wide-open rules", () => {
     const rules = read("firestore.rules");
     assert.ok(!/allow\s+(read|write|read,\s*write)\s*:\s*if\s+true/.test(rules), "a rule allows everyone");
