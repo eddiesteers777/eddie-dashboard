@@ -10,8 +10,6 @@
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
-import { app } from "./firebase.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
 import { sbConfirm, sbAlert, toast, loadingHtml } from "./ui.js";
 import { cachedRole } from "./role.js";
 import {
@@ -71,24 +69,6 @@ const assignSearchMsg = document.getElementById("assignSearchMsg");
 let assignableClients = null;
 let assignableClientsPromise = null;
 
-let directoryRepairPromise = null;
-
-async function repairLegacyClientDirectory() {
-    if (!directoryRepairPromise) {
-        directoryRepairPromise = (async () => {
-            const functions = getFunctions(app, "us-central1");
-            const repair = httpsCallable(functions, "backfillClientDirectory");
-            const result = await repair({});
-            return Number(result.data?.repaired) || 0;
-        })().finally(() => {
-            directoryRepairPromise = null;
-        });
-    }
-    return directoryRepairPromise;
-}
-
-
-
 function assignMessage(text, isError = false) {
     assignSearchMsg.textContent = text;
     assignSearchMsg.classList.toggle("clients-msg-error", isError);
@@ -112,22 +92,7 @@ async function getAssignableClients() {
             // Check that authoritative state before running the directory query so
             // a local role mismatch cannot look like a broken search.
             if (!(await isApprovedCoach())) throw new Error("not-approved-coach");
-
-            let rows = await listAssignableClients();
-
-            // Older active accounts predate clientDirectory. Repair that minimal
-            // discovery projection from the server, then read the directory again.
-            // The callable function re-checks coach approval server-side and never
-            // returns the client records themselves.
-            if (!rows.length) {
-                try {
-                    const repaired = await repairLegacyClientDirectory();
-                    if (repaired > 0) rows = await listAssignableClients();
-                } catch (error) {
-                    console.warn("Legacy client directory repair failed:", error);
-                }
-            }
-
+            const rows = await listAssignableClients();
             assignableClients = rows;
             return rows;
         })().finally(() => {
@@ -141,7 +106,7 @@ function renderAssignmentResults(rows) {
     if (!rows.length) {
         const message = assignableClients?.length
             ? "No active client account matched that search. Search uses name or email and only active accounts appear."
-            : "Your coach access is working, but there are no active client profiles currently available to assign.";
+            : "Your coach access is working, but there are no active client profiles in the searchable directory yet. A client account must be active and have its client profile synchronized before it can be found here.";
         assignSearchResults.innerHTML = `<p class="clients-card-note">${escapeHtml(message)}</p>`;
         assignSearchResults.hidden = false;
         return;
