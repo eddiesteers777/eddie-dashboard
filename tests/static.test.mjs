@@ -141,6 +141,7 @@ test("client assignment search refreshes the directory per search", () => {
     assert.match(block, /assignableClientsPromise\s*=\s*\(async \(\) => \{/);
     assert.match(block, /if \(!\(await isApprovedCoach\(\)\)\) throw new Error\("not-approved-coach"\)/);
     assert.match(block, /const rows = await listAssignableClients\(\)/);
+    assert.match(block, /repairLegacyClientDirectory/);
 });
 
 test("Firestore uses single-tab persistent caching", () => {
