@@ -120,6 +120,8 @@ test("auth consumers wait for account isolation", () => {
     assert.match(auth, /reloadAfterAccountTransition\(result\.changed\)/);
     assert.match(auth, /queueAccountPreparation\(user\)\.then\(result => \{[\s\S]*resolve\(user\)/);
     assert.match(auth, /setStorageOwner\(null\);\s*await clearOfflineCopy\(\);\s*preparedAccountUid = null/);
+    assert.match(auth, /const \{ ensureProfile \} = await import\("\.\/userProfile\.js"\)/);
+    assert.match(auth, /await ensureProfile\(\)/);
 });
 
 test("client profiles repair their directory projection when loaded", () => {
