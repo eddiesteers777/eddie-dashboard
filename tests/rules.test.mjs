@@ -139,6 +139,23 @@ test("client directory rejects forged identity, access fields, and inactive prom
     }));
 });
 
+test("an active client can repair a missing directory projection using the app's write shape", async () => {
+    await env.withSecurityRulesDisabled(async ctx => {
+        await deleteDoc(doc(ctx.firestore(), "clientDirectory/client"));
+    });
+
+    await assertSucceeds(setDoc(doc(as("client"), "clientDirectory/client"), {
+        uid: "client",
+        displayName: "Cam Client",
+        email: "client@example.com",
+        services: ["online_coaching"],
+        status: "active",
+        updatedAt: serverTimestamp()
+    }));
+
+    await assertSucceeds(getDoc(doc(as("coach"), "clientDirectory/client")));
+});
+
 test("an approved coach can directly assign an active client without an invite", async () => {
     const db = as("coach");
 
