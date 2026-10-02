@@ -114,12 +114,14 @@ test("auth consumers wait for account isolation", () => {
     assert.match(auth, /ACCOUNT_STORAGE_OWNER_KEY = ["']sb-account-storage-owner["']/);
     assert.match(auth, /function hasLegacyAccountState\(\)/);
     assert.match(auth, /legacyAccountState = nextUid && !owner && hasLegacyAccountState\(\)/);
-    assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\)\.then\(result => reloadAfterAccountTransition\(result\.changed\)\);\s*\}\)/);
+    assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\)\.then\(async result => \{[\s\S]*?const \{ ensureProfile \} = await import\("\.\/userProfile\.js"\)[\s\S]*?await ensureProfile\(\)[\s\S]*?reloadAfterAccountTransition\(result\.changed\)/);
     assert.match(auth, /await waitForAccountIsolation\(\)/);
     assert.match(auth, /accountReloadRequested = false/);
     assert.match(auth, /reloadAfterAccountTransition\(result\.changed\)/);
     assert.match(auth, /queueAccountPreparation\(user\)\.then\(result => \{[\s\S]*resolve\(user\)/);
     assert.match(auth, /setStorageOwner\(null\);\s*await clearOfflineCopy\(\);\s*preparedAccountUid = null/);
+    assert.match(auth, /const \{ ensureProfile \} = await import\("\.\/userProfile\.js"\)/);
+    assert.match(auth, /await ensureProfile\(\)/);
 });
 
 test("client profiles repair their directory projection when loaded", () => {

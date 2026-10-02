@@ -174,7 +174,23 @@ function queueAccountPreparation(user) {
 // Every caller below waits for its cleanup work, so a changed Firebase user
 // cannot immediately inherit the prior account's browser/Firestore state.
 onAuthStateChanged(auth, (user) => {
-    queueAccountPreparation(user).then(result => reloadAfterAccountTransition(result.changed));
+    queueAccountPreparation(user).then(async result => {
+        // Seed/repair the account profile and its minimal client directory
+        // before an account-transition reload. This removes the race where
+        // the old auth flow could reload before page bootstrap repaired an
+        // existing active client account.
+        if (user) {
+            try {
+                const { ensureProfile } = await import("./userProfile.js");
+                await ensureProfile();
+            } catch (error) {
+                // A temporary Firestore failure must not make sign-in fail.
+                // The normal page bootstrap will retry on the next load.
+                console.warn("Southbound: signed-in account bootstrap failed.", error);
+            }
+        }
+        reloadAfterAccountTransition(result.changed);
+    });
 });
 
 export function waitForAccountIsolation() {
