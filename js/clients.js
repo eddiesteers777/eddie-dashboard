@@ -86,21 +86,28 @@ async function getAssignableClients() {
     // cannot remain hidden behind a stale page-session cache. Concurrent searches
     // still share one in-flight request.
     if (!assignableClientsPromise) {
-        assignableClientsPromise = listAssignableClients()
-            .then(rows => {
-                assignableClients = rows;
-                return rows;
-            })
-            .finally(() => {
-                assignableClientsPromise = null;
-            });
+        assignableClientsPromise = (async () => {
+            // The UI can remember "coach" locally, but Firestore only recognizes
+            // an account as a coach when its own profile says isCoachApproved=true.
+            // Check that authoritative state before running the directory query so
+            // a local role mismatch cannot look like a broken search.
+            if (!(await isApprovedCoach())) throw new Error("not-approved-coach");
+            const rows = await listAssignableClients();
+            assignableClients = rows;
+            return rows;
+        })().finally(() => {
+            assignableClientsPromise = null;
+        });
     }
     return assignableClientsPromise;
 }
 
 function renderAssignmentResults(rows) {
     if (!rows.length) {
-        assignSearchResults.innerHTML = '<p class="clients-card-note">No active client account matched that search.</p>';
+        const message = assignableClients?.length
+            ? "No active client account matched that search. Search uses name or email and only active accounts appear."
+            : "Your coach access is working, but there are no active client profiles in the searchable directory yet. A client account must be active and have its client profile synchronized before it can be found here.";
+        assignSearchResults.innerHTML = `<p class="clients-card-note">${escapeHtml(message)}</p>`;
         assignSearchResults.hidden = false;
         return;
     }
@@ -143,10 +150,13 @@ assignSearchForm?.addEventListener("submit", async event => {
     } catch (error) {
         console.error("Client search failed:", error);
         const denied = error?.code === "permission-denied" || /permission-denied|missing or insufficient permissions/i.test(error?.message || "");
+        const notApproved = error?.message === "not-approved-coach";
         assignMessage(
-            denied
-                ? "Couldn't search client accounts. The latest Firestore rules may not be published yet."
-                : "Couldn't search client accounts right now. Try again.",
+            notApproved
+                ? "This account is not marked as an approved coach in Firestore. The local coach label alone does not grant client-search access."
+                : denied
+                    ? "Couldn't search client accounts because Firestore denied the coach directory request. Check that the deployed rules match the current main branch."
+                    : "Couldn't search client accounts right now. Check the browser console for the underlying Firestore error.",
             true
         );
     } finally {
