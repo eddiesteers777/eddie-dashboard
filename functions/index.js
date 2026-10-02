@@ -4,6 +4,7 @@ import { defineJsonSecret, defineString } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import Stripe from 'stripe';
 import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent, checkoutBlockedReason, stripeWebhookEventDecision } from './billingModel.js';
+import { clientDirectoryFields, isActiveClientProfile } from './clientDirectoryModel.js';
 
 initializeApp();
 const db = getFirestore();
@@ -130,6 +131,49 @@ async function subscriptionTarget(stripe, subscriptionId) {
         packageId: subscription.metadata?.packageId || ''
     };
 }
+
+
+export const backfillClientDirectory = onCall(
+    { region: 'us-central1' },
+    async request => {
+        const coachUid = request.auth?.uid;
+        if (!coachUid) throw new HttpsError('unauthenticated', 'Sign in as a coach to repair the client directory.');
+
+        const coachSnap = await db.collection('userProfiles').doc(coachUid).get();
+        if (!coachSnap.exists || coachSnap.data()?.isCoachApproved !== true) {
+            throw new HttpsError('permission-denied', 'Only approved coaches can repair the client directory.');
+        }
+
+        const activeProfiles = await db.collection('userProfiles')
+            .where('status', '==', 'active')
+            .get();
+
+        const candidates = activeProfiles.docs
+            .map(snapshot => ({ uid: snapshot.id, ...snapshot.data() }))
+            .filter(isActiveClientProfile);
+
+        const directory = db.collection('clientDirectory');
+        let repaired = 0;
+
+        // Firestore batches are limited to 500 writes. Stay below the limit.
+        for (let start = 0; start < candidates.length; start += 450) {
+            const batch = db.batch();
+            const chunk = candidates.slice(start, start + 450);
+            for (const profile of chunk) {
+                batch.set(directory.doc(profile.uid), {
+                    ...clientDirectoryFields(profile),
+                    updatedAt: FieldValue.serverTimestamp()
+                });
+            }
+            if (chunk.length) {
+                await batch.commit();
+                repaired += chunk.length;
+            }
+        }
+
+        return { repaired };
+    }
+);
 
 export const createStripeCustomerPortalSession = onCall(
     { region: 'us-central1', secrets: [stripeConfig] },
