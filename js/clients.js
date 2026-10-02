@@ -82,7 +82,9 @@ function clearAssignMessage() {
 }
 
 async function getAssignableClients() {
-    if (assignableClients) return assignableClients;
+    // Refresh the directory on each search so newly approved/self-synced clients
+    // cannot remain hidden behind a stale page-session cache. Concurrent searches
+    // still share one in-flight request.
     if (!assignableClientsPromise) {
         assignableClientsPromise = listAssignableClients()
             .then(rows => {
