@@ -131,6 +131,16 @@ test("client profiles repair their directory projection when loaded", () => {
     assert.match(profile, /async function syncClientDirectory\(profile\)/);
 });
 
+test("client assignment search refreshes the directory per search", () => {
+    const clients = read("js/clients.js");
+    const start = clients.indexOf("async function getAssignableClients()");
+    const end = clients.indexOf("function renderAssignmentResults", start);
+    assert.ok(start >= 0 && end > start, "assignment search loader must exist");
+    const block = clients.slice(start, end);
+    assert.doesNotMatch(block, /if\s*\(assignableClients\)\s*return\s+assignableClients/);
+    assert.match(block, /assignableClientsPromise\s*=\s*listAssignableClients\(\)/);
+});
+
 test("Firestore uses single-tab persistent caching", () => {
     const firebase = read("js/firebase.js");
     assert.match(firebase, /persistentLocalCache\(\{\s*tabManager:\s*persistentSingleTabManager\(\)\s*\}\)/);
