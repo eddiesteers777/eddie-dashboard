@@ -138,7 +138,9 @@ test("client assignment search refreshes the directory per search", () => {
     assert.ok(start >= 0 && end > start, "assignment search loader must exist");
     const block = clients.slice(start, end);
     assert.doesNotMatch(block, /if\s*\(assignableClients\)\s*return\s+assignableClients/);
-    assert.match(block, /assignableClientsPromise\s*=\s*listAssignableClients\(\)/);
+    assert.match(block, /assignableClientsPromise\s*=\s*\(async \(\) => \{/);
+    assert.match(block, /if \(!\(await isApprovedCoach\(\)\)\) throw new Error\("not-approved-coach"\)/);
+    assert.match(block, /const rows = await listAssignableClients\(\)/);
 });
 
 test("Firestore uses single-tab persistent caching", () => {
