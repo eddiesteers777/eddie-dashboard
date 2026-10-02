@@ -5,7 +5,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
-  getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  getFirestore, initializeFirestore, persistentLocalCache, persistentSingleTabManager,
   terminate, clearIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
@@ -31,13 +31,16 @@ const auth = getAuth(app);
 // offline, and a workout logged offline is sent when the connection
 // comes back, even after the app was closed. Reads still go to the
 // server whenever it's reachable, so nothing is shown stale while
-// online. Several open tabs share the one cache. If the browser won't
-// allow IndexedDB (private windows, strict tracking protection) the SDK
-// falls back to memory, as before. Signing out clears it (js/loadHeader.js).
+// online. Only one tab owns the persistent cache; additional tabs fall
+// back to memory. This keeps another tab from holding the IndexedDB cache
+// open while an account transition clears it. If the browser won't allow
+// IndexedDB (private windows, strict tracking protection) the SDK falls
+// back to memory, as before. Signing out clears the persistent copy
+// (js/auth.js).
 let db;
 try {
   db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
   });
 } catch (error) {
   console.warn("Southbound: offline copy unavailable, using memory only.", error);

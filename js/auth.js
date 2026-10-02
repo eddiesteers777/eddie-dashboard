@@ -20,7 +20,12 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "sb-account-role",
     "__cloudSyncVersion",
     "__cloudSyncFullPullAt",
+    "__cloudSyncMeta",
+    "__cloudSyncSnapshot",
+    "__cloudSyncKeyTimes",
     "strava-history",
+    "__eddieos_strava_oauth_v1",
+    "__eddieos_strava_data_snapshot_v1",
     "coros-auto-send",
     "coros-auto-noticed",
     "coros-health-fetched",
@@ -59,7 +64,10 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coach-plan-prompts",
     "coach-health-reviewed",
     "coach-queue-done",
-    "profile-checks"
+    "plan-coach-notes",
+    "profile-checks",
+    "sb-email-outbox",
+    "sb-plan-release-day"
 ];
 
 const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
@@ -71,8 +79,107 @@ const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
 const ACCOUNT_SESSION_STORAGE_KEYS = [
     "__eddieos_coros_oauth_pending_v2",
     "__eddieos_coros_oauth_pending",
+    "__eddieos_strava_oauth_pending_v1",
+    "sb-apply-draft",
+    "sb-profile-updated",
     "sb-role-reloaded"
 ];
+
+const ACCOUNT_STORAGE_OWNER_KEY = "sb-account-storage-owner";
+let preparedAccountUid;
+let accountPreparation = Promise.resolve();
+let accountReloadRequested = false;
+
+function getStorageOwner() {
+    try { return localStorage.getItem(ACCOUNT_STORAGE_OWNER_KEY); } catch { return null; }
+}
+
+function setStorageOwner(uid) {
+    try {
+        if (uid) localStorage.setItem(ACCOUNT_STORAGE_OWNER_KEY, uid);
+        else localStorage.removeItem(ACCOUNT_STORAGE_OWNER_KEY);
+    } catch { /* storage unavailable */ }
+}
+
+function hasLegacyAccountState() {
+    try {
+        for (const key of ACCOUNT_LOCAL_STORAGE_KEYS) {
+            if (localStorage.getItem(key) !== null) return true;
+        }
+        for (const prefix of ACCOUNT_LOCAL_STORAGE_PREFIXES) {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key?.startsWith(prefix)) return true;
+            }
+        }
+        for (const key of ACCOUNT_SESSION_STORAGE_KEYS) {
+            if (sessionStorage.getItem(key) !== null) return true;
+        }
+    } catch { /* storage unavailable */ }
+    return false;
+}
+
+export function clearAccountSensitiveBrowserState() {
+    for (const key of ACCOUNT_LOCAL_STORAGE_KEYS) {
+        try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
+    }
+    for (const prefix of ACCOUNT_LOCAL_STORAGE_PREFIXES) {
+        try {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key?.startsWith(prefix)) localStorage.removeItem(key);
+            }
+        } catch { /* storage unavailable */ }
+    }
+    for (const key of ACCOUNT_SESSION_STORAGE_KEYS) {
+        try { sessionStorage.removeItem(key); } catch { /* storage unavailable */ }
+    }
+}
+
+async function prepareAccountState(user) {
+    const nextUid = user?.uid || null;
+    const owner = getStorageOwner();
+    const firstPreparation = preparedAccountUid === undefined;
+    const uidChanged = !firstPreparation && preparedAccountUid !== nextUid;
+    const ownerMismatch = nextUid && owner && owner !== nextUid;
+    const signedOutOwner = !nextUid && owner;
+    const legacyAccountState = nextUid && !owner && hasLegacyAccountState();
+    const changed = Boolean(uidChanged || ownerMismatch || signedOutOwner || legacyAccountState);
+
+    if (changed) {
+        clearAccountSensitiveBrowserState();
+        setStorageOwner(null);
+        await clearOfflineCopy();
+    }
+
+    setStorageOwner(nextUid);
+    preparedAccountUid = nextUid;
+    return { changed };
+}
+
+function reloadAfterAccountTransition(changed) {
+    if (!changed || accountReloadRequested || typeof window === "undefined") return;
+    accountReloadRequested = true;
+    window.location.reload();
+}
+
+function queueAccountPreparation(user) {
+    accountPreparation = accountPreparation
+        .catch(() => {})
+        .then(() => prepareAccountState(user));
+    return accountPreparation;
+}
+
+// A single auth-state watcher is installed as soon as this module loads.
+// Every caller below waits for its cleanup work, so a changed Firebase user
+// cannot immediately inherit the prior account's browser/Firestore state.
+onAuthStateChanged(auth, (user) => {
+    queueAccountPreparation(user).then(result => reloadAfterAccountTransition(result.changed));
+});
+
+export function waitForAccountIsolation() {
+    return accountPreparation;
+}
 
 // ==========================================
 // Login
@@ -83,6 +190,7 @@ export async function login() {
     try {
 
         await signInWithPopup(auth, provider);
+        await waitForAccountIsolation();
 
         return true;
 
@@ -112,26 +220,13 @@ export async function logout() {
 
     }
 
-    // Remove account-sensitive browser state before another account can
-    // sign in on this device. Firestore's IndexedDB cache is cleared below;
-    // this list covers the localStorage/sessionStorage copies that Firestore
-    // cannot clear for us, including COROS OAuth credentials and Strava data.
-    for (const key of ACCOUNT_LOCAL_STORAGE_KEYS) {
-        try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
-    }
-    for (const prefix of ACCOUNT_LOCAL_STORAGE_PREFIXES) {
-        try {
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                if (key?.startsWith(prefix)) localStorage.removeItem(key);
-            }
-        } catch { /* storage unavailable */ }
-    }
-    for (const key of ACCOUNT_SESSION_STORAGE_KEYS) {
-        try { sessionStorage.removeItem(key); } catch { /* storage unavailable */ }
-    }
-
+    // The auth-state watcher also performs this cleanup for passive
+    // account transitions in other tabs. Do it here too so an explicit
+    // logout does not depend on callback timing.
+    clearAccountSensitiveBrowserState();
+    setStorageOwner(null);
     await clearOfflineCopy();
+    preparedAccountUid = null;
 
 }
 
@@ -156,7 +251,10 @@ export function waitForUser() {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
 
             unsubscribe();
-            resolve(user);
+            queueAccountPreparation(user).then(result => {
+                reloadAfterAccountTransition(result.changed);
+                resolve(user);
+            });
 
         });
 
@@ -190,7 +288,14 @@ export async function requireLogin() {
 
 export function listenForAuth(callback) {
 
-    return onAuthStateChanged(auth, callback);
+    return onAuthStateChanged(auth, (user) => {
+
+        queueAccountPreparation(user).then(result => {
+            reloadAfterAccountTransition(result.changed);
+            callback(user);
+        });
+
+    });
 
 }
 
@@ -208,21 +313,25 @@ export function setupHeader() {
 
     onAuthStateChanged(auth, (user) => {
 
-        if (user) {
+        queueAccountPreparation(user).then(() => {
+
+            if (user) {
 
             userName.textContent = user.displayName || "Runner";
 
             loginBtn.style.display = "none";
             logoutBtn.style.display = "inline-block";
 
-        } else {
+            } else {
 
-            userName.textContent = "Guest";
+                userName.textContent = "Guest";
 
-            loginBtn.style.display = "inline-block";
-            logoutBtn.style.display = "none";
+                loginBtn.style.display = "inline-block";
+                logoutBtn.style.display = "none";
 
-        }
+            }
+
+        });
 
     });
 

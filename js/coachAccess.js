@@ -21,7 +21,7 @@
 ========================================== */
 
 import { db } from "./firebase.js";
-import { waitForUser } from "./auth.js";
+import { waitForUser, getCurrentUser } from "./auth.js";
 import {
     doc, getDoc, setDoc, deleteDoc, writeBatch,
     collection, query, where, getDocs,
@@ -500,10 +500,9 @@ export async function writeSharedPlanMirror(clientUid, payload, keyUpdatedAtPatc
 
 // ---- Client-side mirror sync (called from cloudSync.js) ----
 
-export async function mirrorPlansToShared(localData, localTimes) {
+export async function mirrorPlansToShared(localData, localTimes, expectedUid = null) {
     const user = await waitForUser();
-    if (!user) return;
-
+    if (!user || (expectedUid && user.uid !== expectedUid)) return;
     const payload = {};
     const keyUpdatedAt = {};
     if ("training-programs" in localData) {
@@ -520,6 +519,7 @@ export async function mirrorPlansToShared(localData, localTimes) {
     }
     if (!Object.keys(payload).length) return;
 
+    if (getCurrentUser()?.uid !== user.uid || (expectedUid && user.uid !== expectedUid)) return;
     payload.updatedBy = user.uid;
     await writeSharedPlanMirror(user.uid, payload, keyUpdatedAt);
 }
@@ -528,13 +528,14 @@ export async function mirrorPlansToShared(localData, localTimes) {
 // pull, using the same last-write-wins comparison as the main sync
 // doc -- a coach edit only "wins" if it's newer than this device's
 // own last local change to that same plan.
-export async function pullSharedPlanUpdates(localTimes) {
+export async function pullSharedPlanUpdates(localTimes, expectedUid = null) {
     const user = await waitForUser();
-    if (!user) return 0;
+    if (!user || (expectedUid && user.uid !== expectedUid)) return 0;
 
     const shared = await readSharedPlanDoc(user.uid);
-    if (!shared) return 0;
+    if (!shared || getCurrentUser()?.uid !== user.uid) return 0;
 
+    if (getCurrentUser()?.uid !== user.uid || (expectedUid && user.uid !== expectedUid)) return 0;
     const cloudTimes = shared.keyUpdatedAt || {};
     const map = { "training-programs": shared.trainingPrograms, "running-programs": shared.runningPrograms };
     let applied = 0;
@@ -545,6 +546,7 @@ export async function pullSharedPlanUpdates(localTimes) {
         const lt = Number(localTimes[key] || 0);
         if (lt > ct) continue;
 
+        if (getCurrentUser()?.uid !== user.uid || (expectedUid && user.uid !== expectedUid)) return applied;
         const currentRaw = localStorage.getItem(key);
         let currentCanonical = null;
         try { currentCanonical = currentRaw !== null ? stableStringify(JSON.parse(currentRaw)) : null; }
@@ -556,6 +558,7 @@ export async function pullSharedPlanUpdates(localTimes) {
         if (changed) applied++;
     }
 
+    if (getCurrentUser()?.uid !== user.uid || (expectedUid && user.uid !== expectedUid)) return applied;
     setLocalCoachNotes(shared.notes || {});
 
     return applied;

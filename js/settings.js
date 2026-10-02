@@ -2,15 +2,11 @@
 // Southbound Settings
 // ==============================
 
-import { auth } from "./firebase.js";
 import { toast, friendlyError } from "./ui.js";
 import { listMyPackages } from "./clientPackages.js";
 import { openStripeCustomerPortal } from "./stripeBilling.js";
 
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { logout } from "./auth.js";
+import { logout, listenForAuth } from "./auth.js";
 
 import { getUserSettings, saveUserSettings } from "./userSettings.js";
 
@@ -40,7 +36,7 @@ const usdaApiKey = document.getElementById("usdaApiKey");
 // Load User + Settings
 // =====================================
 
-onAuthStateChanged(auth, async (user) => {
+listenForAuth(async (user) => {
 
     if (!user) {
         window.location.href = "index.html";

@@ -83,6 +83,109 @@ test("every relative JS import points at a real module", () => {
     assert.deepEqual(missing, [], `Broken imports:\n${missing.join("\n")}`);
 });
 
+test("logout clears known account-sensitive browser storage", () => {
+    const auth = read("js/auth.js");
+    const requiredLocal = [
+        "__cloudSyncMeta",
+        "__cloudSyncSnapshot",
+        "__cloudSyncKeyTimes",
+        "__eddieos_strava_oauth_v1",
+        "__eddieos_strava_data_snapshot_v1",
+        "strava-history",
+        "plan-coach-notes",
+        "sb-email-outbox",
+        "sb-plan-release-day"
+    ];
+    const requiredSession = [
+        "__eddieos_strava_oauth_pending_v1",
+        "sb-apply-draft",
+        "sb-profile-updated"
+    ];
+    for (const key of requiredLocal) {
+        assert.match(auth, new RegExp(`["']${key.replace(/[.*+?^\${}()|[\]\\]/g, "\\\\$&")}["']`), `logout cleanup is missing ${key}`);
+    }
+    for (const key of requiredSession) {
+        assert.match(auth, new RegExp(`["']${key.replace(/[.*+?^\${}()|[\]\\]/g, "\\\\$&")}["']`), `logout cleanup is missing session key ${key}`);
+    }
+});
+
+test("auth consumers wait for account isolation", () => {
+    const auth = read("js/auth.js");
+    assert.match(auth, /ACCOUNT_STORAGE_OWNER_KEY = ["']sb-account-storage-owner["']/);
+    assert.match(auth, /function hasLegacyAccountState\(\)/);
+    assert.match(auth, /legacyAccountState = nextUid && !owner && hasLegacyAccountState\(\)/);
+    assert.match(auth, /onAuthStateChanged\(auth, \(user\) => \{\s*queueAccountPreparation\(user\)\.then\(result => reloadAfterAccountTransition\(result\.changed\)\);\s*\}\)/);
+    assert.match(auth, /await waitForAccountIsolation\(\)/);
+    assert.match(auth, /accountReloadRequested = false/);
+    assert.match(auth, /reloadAfterAccountTransition\(result\.changed\)/);
+    assert.match(auth, /queueAccountPreparation\(user\)\.then\(result => \{[\s\S]*resolve\(user\)/);
+    assert.match(auth, /setStorageOwner\(null\);\s*await clearOfflineCopy\(\);\s*preparedAccountUid = null/);
+});
+
+test("client profiles repair their directory projection when loaded", () => {
+    const profile = read("js/userProfile.js");
+    assert.match(
+        profile,
+        /const profile = \{ uid: user\.uid, \.\.\.snap\.data\(\) \};\s*await syncClientDirectory\(profile\);\s*return profile;/
+    );
+    assert.match(profile, /async function syncClientDirectory\(profile\)/);
+});
+
+test("Firestore uses single-tab persistent caching", () => {
+    const firebase = read("js/firebase.js");
+    assert.match(firebase, /persistentLocalCache\(\{\s*tabManager:\s*persistentSingleTabManager\(\)\s*\}\)/);
+    assert.doesNotMatch(firebase, /persistentMultipleTabManager/);
+});
+
+test("auth-dependent modules use the centralized isolation guard", () => {
+    const firestore = read("js/firestore.js");
+    const settings = read("js/settings.js");
+    assert.match(firestore, /import \{ waitForUser \} from ["']\.\/auth\.js["']/);
+    assert.doesNotMatch(firestore, /onAuthStateChanged/);
+    assert.match(settings, /import \{ logout, listenForAuth \} from ["']\.\/auth\.js["']/);
+    assert.doesNotMatch(settings, /onAuthStateChanged/);
+});
+
+test("Firebase auth-state listeners are centralized", () => {
+    for (const file of manifest.scripts.filter(file => file !== "js/auth.js")) {
+        assert.doesNotMatch(read(file), /\bonAuthStateChanged\s*\(/, file + " must use js/auth.js auth listeners");
+    }
+});
+
+test("every cloud-synced local key is included in account cleanup", () => {
+    const auth = read("js/auth.js");
+    const sync = read("js/cloudSync.js");
+    const exact = sync.match(/EXACT_KEYS\s*=\s*\[([\s\S]*?)\]/);
+    const prefixes = sync.match(/KEY_PREFIXES\s*=\s*\[([\s\S]*?)\]/);
+    const accountKeys = auth.match(/ACCOUNT_LOCAL_STORAGE_KEYS\s*=\s*\[([\s\S]*?)\]/);
+    const accountPrefixes = auth.match(/ACCOUNT_LOCAL_STORAGE_PREFIXES\s*=\s*\[([\s\S]*?)\]/);
+    assert.ok(exact && prefixes && accountKeys && accountPrefixes, "account/sync storage registries must exist");
+    const readStrings = block => [...block.matchAll(/["']([^"']+)["']/g)].map(m => m[1]);
+    const syncedKeys = readStrings(exact[1]);
+    const syncedPrefixes = readStrings(prefixes[1]);
+    const cleanupKeys = readStrings(accountKeys[1]);
+    const cleanupPrefixes = readStrings(accountPrefixes[1]);
+    assert.deepEqual(syncedKeys.filter(key => !cleanupKeys.includes(key)), [], "a cloud-synced key is missing from account cleanup");
+    assert.deepEqual(syncedPrefixes.filter(prefix => !cleanupPrefixes.includes(prefix)), [], "a cloud-synced prefix is missing from account cleanup");
+});
+test("cloud sync cannot reuse account A state for account B", () => {
+    const sync = read("js/cloudSync.js");
+    assert.match(sync, /let syncUserUid = null/);
+    assert.match(sync, /if\(syncUserUid!==user\.uid\)\{\s*syncUserUid=user\.uid;\s*syncedCache=undefined;/);
+    assert.match(sync, /function currentAccountIs\(uid\)/);
+    assert.match(sync, /if\(!currentAccountIs\(uid\)\) return \{ok:false,applied:0,stale:true\}/);
+    assert.match(sync, /mirrorPlansToShared\(localData,finalTimes,uid\)/);
+    assert.match(sync, /pullSharedPlanUpdates\(localTimes, uid\)/);
+});
+
+test("shared plan sync verifies the source account before applying data", () => {
+    const coachAccess = read("js/coachAccess.js");
+    assert.match(coachAccess, /mirrorPlansToShared\(localData, localTimes, expectedUid = null\)/);
+    assert.match(coachAccess, /user\.uid !== expectedUid/);
+    assert.match(coachAccess, /getCurrentUser\(\)\?\.uid !== user\.uid/);
+    assert.match(coachAccess, /pullSharedPlanUpdates\(localTimes, expectedUid = null\)/);
+});
+
 test("firestore.rules has no leftover wide-open rules", () => {
     const rules = read("firestore.rules");
     assert.ok(!/allow\s+(read|write|read,\s*write)\s*:\s*if\s+true/.test(rules), "a rule allows everyone");

@@ -140,7 +140,13 @@ assignSearchForm?.addEventListener("submit", async event => {
         renderAssignmentResults(rows);
     } catch (error) {
         console.error("Client search failed:", error);
-        assignMessage("Couldn't search client accounts right now. Try again.", true);
+        const denied = error?.code === "permission-denied" || /permission-denied|missing or insufficient permissions/i.test(error?.message || "");
+        assignMessage(
+            denied
+                ? "Couldn't search client accounts. The latest Firestore rules may not be published yet."
+                : "Couldn't search client accounts right now. Try again.",
+            true
+        );
     } finally {
         assignSearchBtn.disabled = false;
         assignSearchBtn.textContent = "Search";
@@ -170,7 +176,9 @@ assignSearchResults?.addEventListener("click", async event => {
             "client-not-assignable": "That account is not an active client account.",
             "cannot-link-self": "You can't add yourself as a client.",
             "not-signed-in": "Please sign in again."
-        }[error.message] || "Couldn't add that client. Try again.";
+        }[error.message] || ((error?.code === "permission-denied" || /permission-denied|missing or insufficient permissions/i.test(error?.message || ""))
+            ? "Couldn't add that client. The latest Firestore rules may not be published yet."
+            : "Couldn't add that client. Try again.");
         assignMessage(message, true);
         button.disabled = false;
         button.textContent = "Assign";
