@@ -321,7 +321,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
 - [x] Firestore rules published (2026-09-24, including `inquiries`). Re-paste the whole file whenever it changes.
-- [ ] **Publish the updated rules (2026-09-29; Client Hub Phase 6: `sessionLogs`).** Until then logging a session says it couldn't save, and nothing else changes. Re-paste the whole file whenever it changes.
+- [ ] **Publish the updated rules (2026-09-29; Client Hub Phase 6: `sessionLogs`; since then `main` also added `clientDirectory`, `clientPackages`, `wearableShares`, `sharedWearable*`).** Until then logging a session says it couldn't save, and Pending, Find a Client, packages and wearable sharing are refused. Re-paste the whole file whenever it changes.
 - [x] **Published the updated rules (2026-09-29; profile step 2: the new profile fields, contacts and health check on `clientRecords`, the generated profile rule).** Re-paste the whole file whenever it changes.
 - [x] **Published the updated rules (2026-09-29; apply step 1: `applications`; profile steps 2-3: `confirmedAt`, `askedAt` on `clientRecords`).** Re-paste the whole file whenever it changes.
 - [x] **Published the updated rules (2026-09-28; Phase F: `changeRequests`, richer `checkins`, `lastSeenAt` on `userProfiles`; strength logs in `workoutResults` for coaching Phase D, `workoutResults` for coaching Phase C and `coachingPlans` + `coachingPlanDrafts` for coaching Phase A; `coachingPlanMasters` + the window fields for plan generation step 2; also includes `clientRecords`, `coachNotes`, `clientUpdates`).** Re-paste the whole file whenever it changes.
@@ -332,7 +332,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 ## What's next (roadmap)
 
-**Active track: Client management** (`docs/CLIENT_MANAGEMENT_PLAN.md`) -- Phases 1-6 done; Phase 7 (progress) next.
+**Active track: Client management** (`docs/CLIENT_MANAGEMENT_PLAN.md`) -- Phases 1-6 done; Phase 7 (progress) on hold. **Phase 11 (client experience / service entitlements): audited 2026-10-03, plan in `docs/PHASE_11_PLAN.md`, waiting on Eddie's go-ahead and the decisions at its end.** Its step 4 (Progress) covers Phase 7 and replaces PR #20.
 
 **Queued plans from Eddie (2026-09-25). Agreed order: polish foundation (done), coaching platform phases A-G (done), the full polish audit and the custom reactions (both done 2026-09-26); the email switch whenever his accounts are ready:**
 - `docs/COACHING_PLATFORM_PLAN.md`: the coach-delivery platform. The coach owns a published plan in Firestore (draft/publish, versions, acknowledgement); the client gets a unified Today / My Week / workout detail; structured run and strength workouts with planned-vs-actual results. Its phases A-I absorb Client Management phases 4-9.
