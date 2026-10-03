@@ -163,6 +163,10 @@ test("an approved coach can directly assign an active client without an invite",
     await assertFails(getDoc(doc(db, "clientRecords/client")));
 
     const link = doc(db, "coachLinks/coach_client");
+    // Reading a link that doesn't exist yet is refused (the rule reads the
+    // stored doc), so assignClient must write without checking first: that
+    // pre-read made every assignment fail on the live site (2026-10-03).
+    await assertFails(getDoc(link));
     await assertSucceeds(setDoc(link, {
         coachUid: "coach",
         coachName: "Coach One",
@@ -175,6 +179,13 @@ test("an approved coach can directly assign an active client without an invite",
     }));
 
     await assertSucceeds(getDoc(link));
+    // Assigning again is refused (links are never updated); the app then
+    // tells "already your client" apart by listing its links.
+    await assertFails(setDoc(link, {
+        coachUid: "coach", coachName: "Coach One", coachEmail: "coach@example.com",
+        clientUid: "client", clientName: "Cam Client", clientEmail: "client@example.com",
+        inviteCode: "", linkedAt: serverTimestamp()
+    }));
     // The new relationship immediately unlocks the existing Client Hub profile boundary.
     await assertSucceeds(getDoc(doc(db, "clientRecords/client")));
 });
@@ -288,7 +299,10 @@ test("wearable sharing: only a linked client can create and control their consen
         updatedAt: serverTimestamp()
     };
     const ref = doc(as("client"), "wearableShares/" + id);
-    await assertSucceeds(setDoc(ref, base));
+    // Not there yet: even the client's own read is refused, so
+    // saveWearableShare treats a refused read as "first share".
+    await assertFails(getDoc(ref));
+    await assertSucceeds(setDoc(ref, base, { merge: true }));
     await assertSucceeds(getDoc(doc(as("coach"), "wearableShares/" + id)));
     await assertSucceeds(getDoc(doc(as("client"), "wearableShares/" + id)));
 

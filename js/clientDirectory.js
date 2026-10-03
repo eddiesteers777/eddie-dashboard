@@ -134,46 +134,43 @@ export async function loadClientRecord(clientUid) {
     const links = await listMyClients();
     const link = links.find(l => l.clientUid === clientUid);
     if (!link) return null;
-    const [profile, shared, checkins, requests, record, privateNotes, updates, coachingPlans, planDrafts, results, changes, wearableShare, sharedWearableActivity, sharedWearablePerformance, sharedWearableRecovery] = await Promise.all([
-        quiet(getProfile(clientUid)),
-        quiet(readSharedPlanDoc(clientUid)),
-        quiet(listCheckinsForMyClients()),
-        quiet(listRequestsForMyClients()),
-        readRecord(clientUid),
-        orUndefined(listPrivateNotes(clientUid)),
-        orUndefined(listUpdatesForClient(clientUid)),
-        publishedPlans(clientUid),
-        listDraftsForClient(clientUid).catch(() => []),
-        resultsFor(clientUid),
-        listPackagesForClient(clientUid).catch(error => {
+    // Named, not positional: a part added to a positional list without its
+    // name shifted every later value by one and broke the hub for every
+    // client (2026-09-30, "packages is not defined").
+    const parts = await allNamed({
+        profile: quiet(getProfile(clientUid)),
+        shared: quiet(readSharedPlanDoc(clientUid)),
+        checkins: quiet(listCheckinsForMyClients()),
+        requests: quiet(listRequestsForMyClients()),
+        record: readRecord(clientUid),
+        privateNotes: orUndefined(listPrivateNotes(clientUid)),
+        updates: orUndefined(listUpdatesForClient(clientUid)),
+        coachingPlans: publishedPlans(clientUid),
+        planDrafts: listDraftsForClient(clientUid).catch(() => []),
+        results: resultsFor(clientUid),
+        packages: listPackagesForClient(clientUid).catch(error => {
             console.warn("Southbound: client packages unavailable.", error);
             return [];
         }),
-        changesFor(clientUid),
-        readWearableShare(link.coachUid, clientUid).catch(() => null),
-        import("./coachAccess.js").then(m => m.readSharedWearableActivity(link.coachUid, clientUid)).catch(() => null),
-        import("./coachAccess.js").then(m => m.readSharedWearablePerformance(link.coachUid, clientUid)).catch(() => null),
-        import("./coachAccess.js").then(m => m.readSharedWearableRecovery(link.coachUid, clientUid)).catch(() => null)
-    ]);
+        changes: changesFor(clientUid),
+        wearableShare: readWearableShare(link.coachUid, clientUid).catch(() => null),
+        sharedWearableActivity: import("./coachAccess.js").then(m => m.readSharedWearableActivity(link.coachUid, clientUid)).catch(() => null),
+        sharedWearablePerformance: import("./coachAccess.js").then(m => m.readSharedWearablePerformance(link.coachUid, clientUid)).catch(() => null),
+        sharedWearableRecovery: import("./coachAccess.js").then(m => m.readSharedWearableRecovery(link.coachUid, clientUid)).catch(() => null)
+    });
     return {
         link,
-        profile,
-        shared,
-        record,
-        privateNotes,
-        updates,
-        coachingPlans,
-        planDrafts,
-        results,
-        packages,
-        changes,
-        wearableShare,
-        sharedWearableActivity,
-        sharedWearablePerformance,
-        sharedWearableRecovery,
-        checkins: (checkins || []).filter(c => c.clientUid === clientUid),
-        requests: (requests || []).filter(r => r.clientUid === clientUid)
+        ...parts,
+        checkins: (parts.checkins || []).filter(c => c.clientUid === clientUid),
+        requests: (parts.requests || []).filter(r => r.clientUid === clientUid)
     };
+}
+
+// Promise.all over an object: { name: promise } -> { name: value }.
+export async function allNamed(promises) {
+    const names = Object.keys(promises);
+    const values = await Promise.all(names.map(name => promises[name]));
+    return Object.fromEntries(names.map((name, i) => [name, values[i]]));
 }
 
 // For the hub's History (loaded after the page draws, so it never slows

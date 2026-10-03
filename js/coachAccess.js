@@ -72,7 +72,13 @@ export async function saveWearableShare(coachUid, permissions = {}) {
     };
     const active = clean.activity || clean.performance || clean.recovery;
     const ref = wearableShareDoc(coachUid, user.uid);
-    const existing = await getDoc(ref);
+    // A share that doesn't exist yet can't be read (the rule reads the
+    // stored doc), so a refused read means "first time": every first share
+    // failed before this (2026-10-03).
+    const exists = await getDoc(ref).then(snap => snap.exists(), error => {
+        if (error?.code === "permission-denied") return false;
+        throw error;
+    });
     const payload = {
         version: 1,
         coachUid,
@@ -81,7 +87,7 @@ export async function saveWearableShare(coachUid, permissions = {}) {
         permissions: clean,
         updatedAt: serverTimestamp()
     };
-    if (!existing.exists()) payload.createdAt = serverTimestamp();
+    if (!exists) payload.createdAt = serverTimestamp();
     await setDoc(ref, payload, { merge: true });
     return { ...payload, active };
 }
@@ -445,20 +451,32 @@ export async function assignClient(clientUid) {
     const client = directorySnap.data() || {};
     if (client.status !== "active") throw new Error("client-not-assignable");
 
+    // No "does the link exist?" read first: the coachLinks rule reads the
+    // stored doc, so reading a link that doesn't exist yet is refused
+    // (permission-denied, not "missing"), which made every assignment fail.
+    // Writing over an existing link is refused too (links are never
+    // updated), so an already-linked client is told apart after the fact.
     const linkRef = doc(db, "coachLinks", user.uid + "_" + clientUid);
-    const existing = await getDoc(linkRef);
-    if (existing.exists()) throw new Error("already-linked");
-
-    await setDoc(linkRef, {
-        coachUid: user.uid,
-        coachName: user.displayName || "Coach",
-        coachEmail: user.email || "",
-        clientUid,
-        clientName: client.displayName || "Client",
-        clientEmail: client.email || "",
-        inviteCode: "",
-        linkedAt: serverTimestamp()
-    });
+    try {
+        await setDoc(linkRef, {
+            coachUid: user.uid,
+            coachName: user.displayName || "Coach",
+            coachEmail: user.email || "",
+            clientUid,
+            // The rules require the name and email exactly as on their
+            // profile (which the directory copies), so no "Client" stand-in.
+            clientName: String(client.displayName || ""),
+            clientEmail: String(client.email || ""),
+            inviteCode: "",
+            linkedAt: serverTimestamp()
+        });
+    } catch (error) {
+        if (error?.code === "permission-denied") {
+            const links = await listMyClients().catch(() => []);
+            if (links.some(link => link.clientUid === clientUid)) throw new Error("already-linked");
+        }
+        throw error;
+    }
 
     return { clientUid, clientName: client.displayName || "Client" };
 }

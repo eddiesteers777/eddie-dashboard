@@ -25,7 +25,7 @@ import {
 import { listApplications, matchApplicationTo, setApplicationHandled } from "./applications.js";
 import { matchApplication, unmatchedApplications, applicationLines, recordFromApplication } from "./applicationForm.js";
 import { getClientRecord, saveClientRecord } from "./clientRecords.js";
-import { filterAssignableClients, displayNameForAssignment } from "./clientAssignmentModel.js";
+import { filterAssignableClients, displayNameForAssignment, normalizeClientSearch } from "./clientAssignmentModel.js";
 
 const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
@@ -102,11 +102,18 @@ async function getAssignableClients() {
     return assignableClientsPromise;
 }
 
-function renderAssignmentResults(rows) {
-    if (!rows.length) {
-        const message = assignableClients?.length
-            ? "No active client account matched that search. Search uses name or email and only active accounts appear."
-            : "Your coach access is working, but there are no active client profiles in the searchable directory yet. A client account must be active and have its client profile synchronized before it can be found here.";
+// Clients this coach already has, matched by the same search. Find a Client
+// lists only people not yet linked, so without these a search for an
+// existing client found "nobody" (2026-10-03).
+function linkedMatches(query) {
+    const q = normalizeClientSearch(query);
+    return q ? clientRows.filter(c => c.searchText.includes(q)) : [];
+}
+
+function renderAssignmentResults(rows, query = assignSearchInput.value) {
+    const linked = linkedMatches(query);
+    if (!rows.length && !linked.length) {
+        const message = "No one matched that name or email. A client shows up here once their account is approved and they've opened the Southbound app since the last update. If they haven't, ask them to open it once, or to send you a code (More → Connect with Coach) and enter it under “Use a client invite code instead”.";
         assignSearchResults.innerHTML = `<p class="clients-card-note">${escapeHtml(message)}</p>`;
         assignSearchResults.hidden = false;
         return;
@@ -125,8 +132,21 @@ function renderAssignmentResults(rows) {
                 <button type="button" class="clients-btn-primary" data-action="assign">Assign</button>
             </div>
         `;
-    }).join("");
+    }).join("") + linked.map(c => `
+            <div class="clients-row clients-client-row clients-assign-linked">
+                <a class="clients-client-link" href="client.html?uid=${encodeURIComponent(c.uid)}">
+                    <div class="clients-row-avatar">${escapeHtml((c.name || "?").slice(0, 1).toUpperCase())}</div>
+                    <div class="clients-row-info">
+                        <strong>${escapeHtml(c.name)}</strong>
+                        <span>${escapeHtml(c.email || serviceLabels(c.services).join(" · "))}</span>
+                        <span class="clients-client-meta">Already your client · Open</span>
+                    </div>
+                    <span class="clients-client-chevron" data-icon="chevronRight"></span>
+                </a>
+            </div>
+        `).join("");
     assignSearchResults.hidden = false;
+    if (linked.length) import("./icons.js").then(m => m.hydrate());
 }
 
 assignSearchForm?.addEventListener("submit", async event => {
@@ -177,9 +197,9 @@ assignSearchResults?.addEventListener("click", async event => {
     try {
         const result = await assignClient(row.dataset.assignUid);
         assignableClients = (assignableClients || []).filter(client => client.uid !== result.clientUid);
+        await refreshClients();
         renderAssignmentResults(filterAssignableClients(assignableClients, assignSearchInput.value));
         assignMessage(`${result.clientName} is now your client.`);
-        await refreshClients();
     } catch (error) {
         console.error("Direct client assignment failed:", error);
         const message = {

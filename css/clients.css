@@ -110,6 +110,12 @@
     text-transform:uppercase;
 }
 
+/* The search box shares the invite-code row, but names aren't codes. */
+.clients-redeem-row #assignSearchInput{
+    font-family:var(--font-body);
+    letter-spacing:normal;
+    text-transform:none;
+}
 .clients-assign-row{
     align-items:center;
     padding-right:10px;
