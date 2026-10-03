@@ -202,7 +202,24 @@ Each step is one reviewable commit with tests, then "push it".
    - `syncClientDirectory` fire-and-forget.
    - Archived accounts.
    - Optional rules changes (Eddie's call): validate `userProfiles.services` values; a booking's type must match the client's services. Each needs rules tests + a paste.
-7. **Docs + full regression.**
+7. **Docs + full regression.** ✅ Done 2026-10-03.
+   - CLAUDE.md and this plan describe what was built.
+   - All 51 older browser suites were re-run against the finished phase.
+     - 41 passed as they were.
+     - `apply` passes (48/48) after its test expected the old lowercase "1-on-1 soccer" label (step 1 unified the labels).
+     - `sync-loop` found a cloud-sync bug from before Phase 11 (below). Fixed: 6/6, and the offline suite still 24/24.
+   - The rest fail for known reasons, none of them Phase 11:
+     - `phaseA` (44/50) and `phaseC` (52/53) fail exactly the same checks on the code from before Phase 11 (commit 76a207f). They depend on the date: they assume today isn't a weekend.
+     - `pcheck`: its soccer-only parent has no plan, so the check-in page now sends them to Today. That's decision 3.
+     - `phase2` and `polish` test the one-page profile the guided profile replaced. `phase2-full` covers the form and passes 23/23.
+     - `describe` tests the AI helper that was taken out (2026-09-27).
+     - `main-hub` and `main-phaseB` point at an old copy of `main` that no longer exists.
+   - **The cloud-sync bug** (in `js/cloudSync.js` since the speed work of 2026-09-28):
+     - Each page's first pull kept a change made on this device that hadn't been pushed yet, which is correct. But it then recorded that change as synced.
+     - Pushes only send changed keys, so the change stayed on that device until something else changed there.
+     - It happened when another device had synced in between, or on the 6-hourly full read. It also hit a brand-new account's first data.
+     - Now `markPulled` counts only what the cloud also holds as synced, so the next push sends the rest.
+   - The browser suites (the legacy-account one included) live outside the repo; CI runs the static + rules tests. The legacy-account checks that can live in the repo are in `tests/rules.test.mjs` (assign without a pre-read, the profile opens to the coach once linked) and `tests/clientAssignment.test.mjs`.
 
 ---
 

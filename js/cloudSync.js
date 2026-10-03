@@ -80,6 +80,16 @@ function markSynced(data=currentLocalData()){
   syncedCache={...data};
   try{ localStorage.setItem(SNAPSHOT_KEY,JSON.stringify(data)); }catch(e){}
 }
+// After a pull, only what the cloud holds too counts as synced. A key
+// changed here and not pushed yet (or one the cloud doesn't have) stays
+// out of the snapshot, so the next push still sends it. Marking it
+// synced kept it on this device until something else changed there
+// (pushes only send when a key changed; 2026-10-03).
+function markPulled(cloudData){
+  const synced={};
+  for(const [key,value] of Object.entries(currentLocalData())) if(cloudData[key]===value) synced[key]=value;
+  markSynced(synced);
+}
 function changedLocalKeys(data){
   const prev=lastSyncedData();
   if(prev===null) return [];
@@ -167,9 +177,9 @@ export async function pullFromCloud({ force=false }={}){
     if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     if(snap.metadata?.fromCache){ emit("offline"); return {ok:false,applied:0,offline:true}; }
     if(!snap.exists()){
-      markSynced();
+      markPulled({});
       saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
-      emit("synced");
+      emit(hasLocalChanges()?"pending":"synced");
       return {ok:false,applied:0};
     }
     const cloud=snap.data()||{};
@@ -202,7 +212,7 @@ export async function pullFromCloud({ force=false }={}){
       if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     }catch(error){ console.warn("Coach-shared plan pull failed:",error); }
     saveKeyTimes(localTimes);
-    markSynced();
+    markPulled(stored);
     // Accounts from before the version doc get one now, so the next page
     // load can skip the big read.
     if(!cloudVersion){
