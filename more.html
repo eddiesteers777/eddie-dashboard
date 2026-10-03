@@ -360,6 +360,7 @@
                 accountStatusEl.textContent = access.isCoach ? "Coach account"
                     : access.status === "active" ? "Client account"
                     : access.status === "pending" ? "Pending approval — some sections hidden"
+                    : access.status === "archived" ? "Account not active"
                     : "";
                 accountStatusEl.hidden = !accountStatusEl.textContent;
             } catch {

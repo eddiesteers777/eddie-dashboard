@@ -666,9 +666,27 @@ test("the coach can approve or deny, but cannot rewrite the booking", async () =
 test("booking requests must start as requested and need a coach link", async () => {
     await seedLinkAndBooking();
     const fresh = { coachUid: "coach", clientUid: "client", coachNote: "", dates: ["2026-10-02"] };
+    // In-person sessions are soccer only: an online-coaching client can't ask (Phase 11 step 6)...
+    await assertFails(setDoc(doc(as("client"), "bookingRequests/b0"), { ...fresh, status: "requested" }));
+    // ...a soccer client can, while active.
+    await env.withSecurityRulesDisabled(ctx => updateDoc(doc(ctx.firestore(), "userProfiles/client"), { services: ["running", "soccer_1on1"] }));
     await assertSucceeds(setDoc(doc(as("client"), "bookingRequests/b2"), { ...fresh, status: "requested" }));
     await assertFails(setDoc(doc(as("client"), "bookingRequests/b3"), { ...fresh, status: "approved" }));
     await assertFails(setDoc(doc(as("stranger"), "bookingRequests/b4"), { ...fresh, clientUid: "stranger", status: "requested" }));
+    await env.withSecurityRulesDisabled(ctx => updateDoc(doc(ctx.firestore(), "userProfiles/client"), { status: "archived" }));
+    await assertFails(setDoc(doc(as("client"), "bookingRequests/b5"), { ...fresh, status: "requested" }), "an archived account can't book");
+});
+
+test("a coach can only give the five known services", async () => {
+    const ref = doc(as("coach"), "userProfiles/client");
+    await assertSucceeds(updateDoc(ref, { services: ["running", "soccer_group"] }));
+    await assertSucceeds(updateDoc(ref, { services: [] }));
+    await assertFails(updateDoc(ref, { services: ["running", "vip_everything"] }));
+    await assertFails(updateDoc(ref, { services: ["Running"] }), "ids, not labels");
+    // Other coach edits on a profile still work, services untouched.
+    await assertSucceeds(updateDoc(ref, { status: "active", approvedAt: serverTimestamp() }));
+    // The client still can't give themselves any.
+    await assertFails(updateDoc(doc(as("client"), "userProfiles/client"), { services: ["running"] }));
 });
 
 // ---- Weekly check-ins ----

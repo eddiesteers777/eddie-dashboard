@@ -152,7 +152,12 @@ service cloud.firestore {
         ]))
         // "Last in the app": only ever the server's clock, nothing else.
         || (isUser(uid) && onlyChanges(["lastSeenAt"]) && request.resource.data.lastSeenAt == request.time)
-        || isApprovedCoach();
+        // A coach may change anything, but services stay the five known
+        // ids (js/services.js; tests/services.test.mjs keeps this list in
+        // step). Profiles whose services aren't touched pass as they are.
+        || (isApprovedCoach()
+            && (request.resource.data.get("services", []) == resource.data.get("services", [])
+                || request.resource.data.get("services", []).hasOnly(["online_coaching", "running", "strength", "soccer_1on1", "soccer_group"])));
     }
 
     match /clientDirectory/{uid} {
@@ -682,7 +687,11 @@ service cloud.firestore {
         && request.resource.data.clientUid == request.auth.uid
         && request.resource.data.status == "requested"
         && request.resource.data.coachNote == ""
-        && linked(request.resource.data.coachUid, request.auth.uid);
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        // In-person sessions are soccer for now (Eddie, 2026-10-03): only an
+        // active client with a soccer service can ask for one.
+        && get(profilePath(request.auth.uid)).data.get("status", "") == "active"
+        && get(profilePath(request.auth.uid)).data.get("services", []).hasAny(["soccer_1on1", "soccer_group"]);
 
       allow update: if signedIn() && (
         // The coach approves, denies or cancels, with an optional note.

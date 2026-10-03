@@ -128,9 +128,12 @@ test("client profiles repair their directory projection when loaded", () => {
     const profile = read("js/userProfile.js");
     assert.match(
         profile,
-        /const profile = \{ uid: user\.uid, \.\.\.snap\.data\(\) \};\s*await syncClientDirectory\(profile\);\s*return profile;/
+        /const profile = \{ uid: user\.uid, \.\.\.snap\.data\(\) \};\s*syncDirectoryQuietly\(profile\);\s*return profile;/
     );
     assert.match(profile, /async function syncClientDirectory\(profile\)/);
+    // ...without waiting on it: a refused save must never fail the profile
+    // read (Phase 11 step 6).
+    assert.match(profile, /function syncDirectoryQuietly\(profile\) \{\s*syncClientDirectory\(profile\)\.catch\(/);
 });
 
 test("client assignment search refreshes the directory per search", () => {

@@ -80,6 +80,10 @@ test("the rules' service lists match the registry", () => {
     const listIn = re => JSON.parse(`[${rules.match(re)[1]}]`);
     // applications: every service someone can apply for.
     assert.deepEqual(listIn(/d\.services\.hasOnly\(\[([^\]]+)\]\)/), SERVICE_IDS);
+    // userProfiles: what a coach may give (Phase 11 step 6).
+    assert.deepEqual(listIn(/request\.resource\.data\.get\("services", \[\]\)\.hasOnly\(\[([^\]]+)\]\)/), SERVICE_IDS);
+    // bookingRequests: only soccer clients ask for in-person sessions.
+    assert.deepEqual(listIn(/data\.get\("services", \[\]\)\.hasAny\(\[([^\]]+)\]\)/), SOCCER_SERVICES);
     // clientPackages: every service in the package catalog, all known.
     const pkgServices = [...rules.matchAll(/d\.get\("service", ""\) == "([a-z0-9_]+)"/g)].map(m => m[1]);
     assert.deepEqual([...new Set(pkgServices)].sort(), [...new Set(PACKAGE_CATALOG.map(p => p.service))].sort());

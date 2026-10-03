@@ -40,8 +40,19 @@ function clientDirectoryDoc(uid) {
     return doc(db, "clientDirectory", uid);
 }
 
+// Never blocks or breaks the profile read: a failed directory save (rules
+// not published yet, offline) used to make getMyProfile() fail, and with
+// it the account's menu and pages (Phase 11 step 6). The coach's
+// Approve / services edits write it too.
+function syncDirectoryQuietly(profile) {
+    syncClientDirectory(profile).catch(error =>
+        console.warn("Southbound: client directory not updated this time.", error?.code || error));
+}
+
 async function syncClientDirectory(profile) {
     if (!profile || profile.role !== "client" || profile.isCoachApproved === true) return;
+    // Only pending and active accounts belong in the coach's directory.
+    if (!["pending", "active"].includes(profile.status)) return;
     const payload = {
         uid: profile.uid,
         displayName: String(profile.displayName || ""),
@@ -74,10 +85,7 @@ export async function ensureProfile() {
 
     const ref = profileDoc(user.uid);
     const existing = await getMyProfile();
-    if (existing) {
-        await syncClientDirectory(existing);
-        return existing;
-    }
+    if (existing) return existing;
     forgetMyProfile();
 
     const profile = {
@@ -92,7 +100,7 @@ export async function ensureProfile() {
     };
     await setDoc(ref, profile);
     forgetMyProfile();
-    await syncClientDirectory(profile);
+    syncDirectoryQuietly(profile);
     return profile;
 }
 
@@ -104,7 +112,7 @@ export async function getMyProfile() {
             const snap = await getDoc(profileDoc(user.uid));
             if (!snap.exists()) return null;
             const profile = { uid: user.uid, ...snap.data() };
-            await syncClientDirectory(profile);
+            syncDirectoryQuietly(profile);
             return profile;
         })();
         // A failed read (offline, rules) is tried again next time.
@@ -210,7 +218,7 @@ export async function submitApplication(requestedServices, message) {
         applicationSubmittedAt: serverTimestamp()
     });
     forgetMyProfile();
-    await syncClientDirectory(await getMyProfile());
+    await getMyProfile();   // re-reads and refreshes the directory entry
 }
 
 // "Last in the app" for the coach (the Client Hub, "Hasn't opened the app

@@ -198,7 +198,7 @@ Each step is one reviewable commit with tests, then "push it".
    - Today's package card follows the capability.
    - Coach queue: 1 credit left, package ends within 7 days, payment past due / pending over 7 days.
    - Pure, in `feedbackModel` / `coachToday`. No rules change.
-6. **Hardening.**
+6. **Hardening.** ✅ Done 2026-10-03: directory save never blocks the profile read (and skips archived accounts); archived accounts see "isn't active" on Today and More; RULES: known services only on profiles, bookings only from active soccer clients (2 rules tests).
    - `syncClientDirectory` fire-and-forget.
    - Archived accounts.
    - Optional rules changes (Eddie's call): validate `userProfiles.services` values; a booking's type must match the client's services. Each needs rules tests + a paste.

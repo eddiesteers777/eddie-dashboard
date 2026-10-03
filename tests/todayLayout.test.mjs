@@ -27,6 +27,8 @@ test("fail-open shows every client section", () => {
 
 test("the hero line says what's here", () => {
     assert.match(clientHeroLine(who([], "pending")), /waiting for your coach's approval/);
+    assert.match(clientHeroLine(who(["running"], "archived")), /isn't active right now/);
+    assert.deepEqual(shown(who(["running"], "archived")), ["todayTools"], "an archived account sees only the tiles left (Settings)");
     assert.equal(clientHeroLine(who(["running"]), ["Half Marathon"]), "Training: Half Marathon");
     assert.equal(clientHeroLine(who(["soccer_1on1"]), ["Ball mastery"]), "Here's your day. Your sessions and notes from your coach live here.", "no plan line without the plan capability");
     assert.equal(clientHeroLine(who(["running", "soccer_1on1"])), "Here's your day. Your plan, sessions and check-ins all live here.");
