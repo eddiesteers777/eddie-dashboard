@@ -181,7 +181,7 @@ Each step is one reviewable commit with tests, then "push it".
    - A test that the rules' service lists match.
    - Every duplicated list switches to the registry, which unifies the labels.
    - No visible change apart from the labels.
-2. **Nav from capabilities.**
+2. **Nav from capabilities.** ✅ Done 2026-10-03 (`js/navAccess.js`, `tests/navAccess.test.mjs`; Today's rest-day text and the coach card's booking / check-in prompts follow the capabilities too).
    - `getNavAccess()` returns `caps`; `hasTrainingAccess` / `hasSoccerAccess` stay, derived from it, until nothing reads them.
    - `data-requires="running"` etc. are checked against the capabilities.
    - Phone tabs, computer menus, More and search agree.

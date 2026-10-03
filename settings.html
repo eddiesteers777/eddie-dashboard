@@ -88,7 +88,7 @@
 
             <!-- Connections: COROS for anyone who trains (js/corosSettings.js) -->
 
-            <div class="settings-card" id="coros" data-requires="training">
+            <div class="settings-card" id="coros" data-requires="readiness">
 
                 <h3><span data-icon="link"></span> Connections</h3>
 
@@ -111,7 +111,7 @@
                     </div>
                 </div>
 
-                <label class="connection coros-auto-row" id="corosAutoRow" data-requires="client" hidden>
+                <label class="connection coros-auto-row" id="corosAutoRow" data-requires="client+plan" hidden>
                     <div>
                         <strong>Send my coach's workouts automatically</strong>
                         <p>Each time you open Southbound, your coach's next 2 weeks go to your COROS watch, and anything your coach changes is updated there.</p>
@@ -123,7 +123,7 @@
             </div>
 
             <!-- Client-controlled wearable sharing: consent metadata only. -->
-            <div class="settings-card" id="wearableSharingCard" data-requires="client" hidden>
+            <div class="settings-card" id="wearableSharingCard" data-requires="client+readiness" hidden>
                 <h3><span data-icon="link"></span> Share with your coach</h3>
                 <p class="wearable-sharing-intro">
                     Choose which wearable categories Southbound may make available to a linked coach.
@@ -161,7 +161,7 @@
             </div>
 
             <!-- Billing (clients with a Stripe customer) -->
-            <div class="settings-card" id="billingCard" data-requires="client" hidden>
+            <div class="settings-card" id="billingCard" data-requires="client+package" hidden>
                 <h3><span data-icon="link"></span> Billing</h3>
                 <p class="billing-intro">
                     Manage your payment method, subscriptions, and billing details through Stripe.

@@ -25,7 +25,7 @@
 ========================================== */
 
 export const SERVICES = Object.freeze([
-    { value: "online_coaching", label: "Online Coaching", short: "Online", family: "training" },
+    { value: "online_coaching", label: "Online Coaching", short: "Online Coaching", family: "training" },
     { value: "running", label: "Running Coaching", short: "Running", family: "training" },
     { value: "strength", label: "Strength Coaching", short: "Strength", family: "training" },
     { value: "soccer_1on1", label: "1-on-1 Soccer", short: "1-on-1 Soccer", family: "soccer", inPerson: true },

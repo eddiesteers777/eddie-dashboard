@@ -26,7 +26,7 @@ test("one set of labels, long and short", () => {
     assert.equal(serviceLabel("running", { short: true }), "Running");
     assert.equal(serviceLabel("soccer_group"), "Group Soccer");
     assert.equal(serviceLabel("mystery"), "mystery", "unknown ids pass through");
-    assert.deepEqual(serviceLabels(["online_coaching", "soccer_1on1"]), ["Online", "1-on-1 Soccer"]);
+    assert.deepEqual(serviceLabels(["online_coaching", "soccer_1on1"]), ["Online Coaching", "1-on-1 Soccer"]);
     assert.deepEqual(serviceLabels(["strength"], { short: false }), ["Strength Coaching"]);
     // The Apply form's choices are the registry's.
     assert.deepEqual(SERVICE_OPTIONS, SERVICES.map(({ value, label }) => ({ value, label })));

@@ -27,37 +27,37 @@
                     <a href="schedule.html" class="eos-dropdown-link">Schedule</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown" data-requires="training">
+            <details class="nav-dropdown eos-dropdown" data-requires="running,strength,crossTraining,habits">
                 <summary class="eos-dropdown-trigger">
                     <span>Training</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
-                    <a href="running.html" class="eos-dropdown-link">Running</a>
-                    <a href="strength.html" class="eos-dropdown-link">Strength</a>
-                    <a href="cross-training.html" class="eos-dropdown-link">Cross-Training</a>
-                    <a href="habits.html" class="eos-dropdown-link">Habits</a>
+                    <a href="running.html" class="eos-dropdown-link" data-requires="running">Running</a>
+                    <a href="strength.html" class="eos-dropdown-link" data-requires="strength">Strength</a>
+                    <a href="cross-training.html" class="eos-dropdown-link" data-requires="crossTraining">Cross-Training</a>
+                    <a href="habits.html" class="eos-dropdown-link" data-requires="habits">Habits</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown" data-requires="training">
+            <details class="nav-dropdown eos-dropdown" data-requires="nutrition,fueling">
                 <summary class="eos-dropdown-trigger">
                     <span>Health</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
-                    <a href="nutrition.html" class="eos-dropdown-link">Nutrition</a>
-                    <a href="fueling.html" class="eos-dropdown-link">Fueling</a>
+                    <a href="nutrition.html" class="eos-dropdown-link" data-requires="nutrition">Nutrition</a>
+                    <a href="fueling.html" class="eos-dropdown-link" data-requires="fueling">Fueling</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown" data-requires="training">
+            <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
                     <span>Planning</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="planner.html" class="eos-dropdown-link" data-requires="coach">Planner</a>
-                    <a href="plan.html" class="eos-dropdown-link" data-requires="client">My Plan</a>
-                    <a href="programs.html" class="eos-dropdown-link">Programs</a>
+                    <a href="plan.html" class="eos-dropdown-link" data-requires="client+plan">My Plan</a>
+                    <a href="programs.html" class="eos-dropdown-link" data-requires="running,strength">Programs</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown" data-requires="training">
+            <details class="nav-dropdown eos-dropdown" data-requires="coach">
                 <summary class="eos-dropdown-trigger">
                     <span>Progress</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
@@ -72,9 +72,9 @@
                     <span>Tools</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
-                    <a href="pace-calculator.html" class="eos-dropdown-link">Pace Calculator</a>
-                    <a href="schedule.html" class="eos-dropdown-link" data-requires="client">Schedule</a>
-                    <a href="checkin.html" class="eos-dropdown-link" data-requires="client">Weekly Check-in</a>
+                    <a href="pace-calculator.html" class="eos-dropdown-link" data-requires="running">Pace Calculator</a>
+                    <a href="schedule.html" class="eos-dropdown-link" data-requires="client+sessions">Schedule</a>
+                    <a href="checkin.html" class="eos-dropdown-link" data-requires="client+checkins">Weekly Check-in</a>
                     <a href="install.html" class="eos-dropdown-link">Get the App</a>
                 </div>
             </details>
@@ -113,7 +113,7 @@
      app-shell breakpoint (see MOBILE APP SHELL in style.css). -->
 <nav class="eos-mobile-topbar" id="eosMobileTopbar">
 
-    <div class="eos-mobile-quickadd">
+    <div class="eos-mobile-quickadd" data-requires="running,strength">
 
         <button
             type="button"
@@ -126,10 +126,10 @@
         </button>
 
         <div class="eos-mobile-quickadd-menu" id="quickAddMenu">
-            <a href="strength.html" class="eos-mobile-quickadd-link" id="quickAddWorkoutLink">
+            <a href="strength.html" class="eos-mobile-quickadd-link" id="quickAddWorkoutLink" data-requires="strength">
                 <span class="eos-mobile-quickadd-icon" style="color:var(--orange)" data-icon="dumbbell"></span> Start a Workout
             </a>
-            <a href="running.html?addRun=1" class="eos-mobile-quickadd-link">
+            <a href="running.html?addRun=1" class="eos-mobile-quickadd-link" data-requires="running">
                 <span class="eos-mobile-quickadd-icon" style="color:var(--primary)" data-icon="footprint"></span> Add a Run
             </a>
         </div>

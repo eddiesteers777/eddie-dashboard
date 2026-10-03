@@ -16,6 +16,7 @@ import { weekInputs, loadSessions } from "./weekData.js";
 import { workoutCardHtml, weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
 import { mondayOf, isoDate, shortDay } from "./coachingPlanModel.js";
 import { icon } from "./icons.js";
+import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -23,6 +24,16 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 let sessions = [];
 let items = new Map();
 let bound = false;
+
+// Only point at pages this client has (js/navAccess.js): what this device
+// remembers at first, then what the profile says.
+let access = cachedNavAccess();
+const can = capability => meets(capability, access || fallbackAccess());
+function noPlanText() {
+    if (can("running") && can("strength")) return `No plan yet. Log a run on <a href="running.html">Running</a> or start a workout in <a href="strength.html">Strength</a>.`;
+    if (can("sessions")) return `Nothing scheduled today. <a href="schedule.html">Book a session</a> any time.`;
+    return "Nothing scheduled today.";
+}
 
 export function renderClientToday() {
     const today = isoDate(new Date());
@@ -53,7 +64,7 @@ export function renderClientToday() {
                         <strong>Rest day</strong>
                         ${next ? `<span>Next: ${esc(shortDay(next.date))} · ${esc(next.item.kind === "run" && next.item.miles ? `${next.item.miles} mi ${next.item.title.toLowerCase()}` : next.item.title)}</span>`
                             : inputs.plans.length ? `<span>Nothing else scheduled yet.</span>`
-                            : `<span>No plan yet. Log a run on <a href="running.html">Running</a> or start a workout in <a href="strength.html">Strength</a>.</span>`}
+                            : `<span>${noPlanText()}</span>`}
                     </div>
                 </div>`;
         }
@@ -79,6 +90,7 @@ export function renderClientToday() {
 
 export async function initClientToday() {
     renderClientToday();
+    profileAccess().then(fresh => { access = fresh; renderClientToday(); }).catch(() => {});
     import("./icons.js").then(m => m.hydrate());
     sessions = await loadSessions();
     if (sessions.length) renderClientToday();

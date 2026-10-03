@@ -19,27 +19,24 @@ import("./ui.js").catch(error => console.warn("Southbound: UI helpers unavailabl
     }
 })();
 
-// Eddie's own tools (his race plan, personal planner, COROS analytics,
-// gear...) are coach-only. The nav already hides them; this also sends
-// a client who opens one by link back to Today. Only acts on a role
-// that was actually read from the profile ("client" in js/role.js), so
-// a coach who's offline or whose profile didn't load is never bounced.
-const COACH_ONLY_PAGES = new Set([
-    "marathon.html", "75day.html", "planner.html",
-    "analytics.html", "weekly-review.html", "gear.html",
-    "client.html"
-]);
-function leaveCoachOnlyPage() {
+// Pages an account's services don't cover (js/navAccess.js PAGE_REQUIRES:
+// Eddie's own tools and the coach's pages, Running for a soccer-only
+// client, Schedule for a training-only client...) send a client who
+// opens one by link back to Today, with a short note there. Only acts on
+// access read from the profile or remembered from it: an account whose
+// profile didn't load (fallback) is never sent away, and the coach has
+// everything. UX only; Firestore rules are the real boundary.
+const LEFT_PAGE_KEY = "sb-left-page";
+function leaveIfNotEntitled(access, pageAllowed) {
     const page = window.location.pathname.split("/").pop() || "index.html";
-    let role = null;
-    try { role = localStorage.getItem("sb-account-role"); } catch {}
-    if (COACH_ONLY_PAGES.has(page) && role === "client") {
-        window.location.replace("index.html");
-        return true;
-    }
-    return false;
+    if (!access || pageAllowed(page, access)) return false;
+    try { sessionStorage.setItem(LEFT_PAGE_KEY, page); } catch {}
+    window.location.replace("index.html");
+    return true;
 }
-leaveCoachOnlyPage();
+import("./navAccess.js")
+    .then(m => leaveIfNotEntitled(m.cachedNavAccess(), m.pageAllowed))
+    .catch(() => {});
 
 // The mobile app shell (bottom tab bar + the pill row that lets a
 // tab covering several real pages switch between them) is built
@@ -49,10 +46,10 @@ leaveCoachOnlyPage();
 const BOTTOM_TABS = [
     { key: "today", label: "Today", icon: "home", href: "index.html", color: "var(--primary)" },
     // A client's week and plan (js/myPlan.js). The coach's own tools stay as they were.
-    { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client-training" },
-    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--primary)", requires: "training" },
-    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--primary)", requires: "training" },
-    { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--primary)" },
+    { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client+plan" },
+    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
+    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--primary)", requires: "nutrition,fueling" },
+    { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--primary)", requires: "habits" },
     { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--primary)", requires: "coach" },
     { key: "more", label: "More", icon: "grid", href: "more.html", color: "var(--primary)" }
 ];
@@ -116,12 +113,12 @@ const SUBNAV_GROUPS = {
 // nav, More's rows, here) instead of everything defaulting to blue.
 const SEARCH_DESTINATIONS = [
     { label: "Today", href: "index.html", icon: "home", color: "var(--primary)" },
-    { label: "Running", href: "running.html", icon: "activity", color: "var(--primary-dark)" },
-    { label: "Strength", href: "strength.html", icon: "dumbbell", color: "var(--orange)" },
-    { label: "Cross-Training", href: "cross-training.html", icon: "bike", color: "var(--cyan)" },
-    { label: "Habits", href: "habits.html", icon: "checkCircle", color: "var(--purple)" },
-    { label: "Nutrition", href: "nutrition.html", icon: "apple", color: "var(--green)" },
-    { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)" },
+    { label: "Running", href: "running.html", icon: "activity", color: "var(--primary-dark)", requires: "running" },
+    { label: "Strength", href: "strength.html", icon: "dumbbell", color: "var(--orange)", requires: "strength" },
+    { label: "Cross-Training", href: "cross-training.html", icon: "bike", color: "var(--cyan)", requires: "crossTraining" },
+    { label: "Habits", href: "habits.html", icon: "checkCircle", color: "var(--purple)", requires: "habits" },
+    { label: "Nutrition", href: "nutrition.html", icon: "apple", color: "var(--green)", requires: "nutrition" },
+    { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)", requires: "fueling" },
     // The coach's personal tools (built around his own race block) --
     // hidden from clients, like their More rows and menu links.
     { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)", requires: "coach" },
@@ -130,12 +127,12 @@ const SEARCH_DESTINATIONS = [
     { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)", requires: "coach" },
     { label: "Gear", href: "gear.html", icon: "footprint", color: "var(--pink)", requires: "coach" },
     { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)", requires: "coach" },
-    { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)" },
-    { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)" },
+    { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)", requires: "running,strength" },
+    { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)", requires: "running" },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
-    { label: "Schedule", href: "schedule.html", icon: "calendar", color: "var(--purple)" },
-    { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)" },
+    { label: "Schedule", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions" },
+    { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)", requires: "client+checkins" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },
     { label: "Settings", href: "settings.html", icon: "user", color: "var(--muted)" },
     { label: "More", href: "more.html", icon: "grid", color: "var(--muted)" }
@@ -223,7 +220,7 @@ fetch("components/header.html")
                 await ensureProfile();
                 const { showsPersonalPlan } = await import("./role.js");
                 const showedPersonalPlan = showsPersonalPlan();
-                const { getNavAccess, applyNavAccess } = await import("./navAccess.js");
+                const { getNavAccess, applyNavAccess, pageAllowed } = await import("./navAccess.js");
                 const access = await getNavAccess();
                 applyNavAccess(document, access);
                 // Coaches: open each client's next week of their plan when it's due
@@ -242,7 +239,7 @@ fetch("components/header.html")
                 if (access.status === "pending") {
                     import("./coachAccess.js").then(m => m.ensureApplyCode()).catch(() => {});
                 }
-                if (leaveCoachOnlyPage()) return access;
+                if (leaveIfNotEntitled(access, pageAllowed)) return access;
                 // This page rendered before the account's role was known on
                 // this device (first visit, or the role changed): reload once
                 // so the coach's personal plan shows or hides correctly
@@ -254,9 +251,19 @@ fetch("components/header.html")
                 return access;
             } catch (error) {
                 console.warn("Southbound: account profile / nav access bootstrap failed this session.", error);
-                return { isCoach: false, hasTrainingAccess: true, hasSoccerAccess: true };
+                const { fallbackAccess } = await import("./navAccess.js");
+                return fallbackAccess();
             }
         })();
+
+        // Sent back here from a page their services don't cover (above).
+        try {
+            const left = sessionStorage.getItem(LEFT_PAGE_KEY);
+            if (left) {
+                sessionStorage.removeItem(LEFT_PAGE_KEY);
+                import("./ui.js").then(m => m.toast("That page isn't part of your coaching. Ask your coach if you'd like it added.", { type: "info", duration: 6000 })).catch(() => {});
+            }
+        } catch { /* storage unavailable: no note */ }
 
         // The header's icons are injected after icons.js's own
         // DOMContentLoaded hydration already ran, so this content
@@ -279,22 +286,15 @@ fetch("components/header.html")
         // redrawn only if the fresh profile says something different, so
         // a slow or offline connection never leaves a phone without
         // navigation. A first visit (nothing remembered) waits as before.
-        const { cachedNavAccess } = await import("./navAccess.js");
+        const { cachedNavAccess, meets, PAGE_REQUIRES } = await import("./navAccess.js");
         let navAccess = cachedNavAccess();
         let drawnAccess = null;
-        const accessKey = access => access ? [access.isCoach, access.hasTrainingAccess, access.hasSoccerAccess].join() : "";
+        const accessKey = access => access ? [access.isCoach, ...(access.caps || [])].join() : "";
 
         function drawBottomNav(access) {
             if (drawnAccess !== null && accessKey(access) === drawnAccess) return;
             drawnAccess = accessKey(access);
-            const visibleTabs = BOTTOM_TABS.filter(tab => {
-                if (!tab.requires) return true;
-                return tab.requires === "training" ? access.hasTrainingAccess
-                    : tab.requires === "client-training" ? !access.isCoach && access.hasTrainingAccess
-                    : tab.requires === "soccer" ? access.hasSoccerAccess
-                    : tab.requires === "coach" ? access.isCoach
-                    : true;
-            });
+            const visibleTabs = BOTTOM_TABS.filter(tab => meets(tab.requires, access));
 
             // Schedule and Check-in belong to the Coach tab for a coach, but
             // a client uses them too and has no Coach tab -- fall back to
@@ -317,9 +317,11 @@ fetch("components/header.html")
                 </nav>
             `);
 
-            const subnavPages = SUBNAV_GROUPS[activeTab];
+            // Only the sibling pages this account has (a client with Running
+            // but not Cross-Training never sees a chip that sends them away).
+            const subnavPages = SUBNAV_GROUPS[activeTab]?.filter(p => meets(PAGE_REQUIRES[p.href] || "", access));
 
-            if (subnavPages) {
+            if (subnavPages?.length > 1) {
                 document.getElementById("header").insertAdjacentHTML("afterend", `
                     <nav class="eos-subnav" aria-label="Section pages">
                         ${subnavPages.map(p => {
@@ -418,7 +420,7 @@ fetch("components/header.html")
             if (!searchResults) return;
 
             const q = query.trim().toLowerCase();
-            const allowed = SEARCH_DESTINATIONS.filter(d => d.requires !== "coach" || navAccess.isCoach);
+            const allowed = SEARCH_DESTINATIONS.filter(d => meets(d.requires, navAccess));
             const matches = q
                 ? allowed.filter(d => d.label.toLowerCase().includes(q))
                 : allowed;

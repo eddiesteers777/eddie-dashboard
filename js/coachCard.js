@@ -21,6 +21,7 @@ import { awaitingAck, noticeVersionOf } from "./planWindow.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
 import { latestSessionNotes } from "./sessionModel.js";
+import { profileAccess, meets } from "./navAccess.js";
 
 function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -81,6 +82,9 @@ export async function renderCoachCard(container) {
     const coach = coaches[0];
     const today = localIso();
     const rows = [];
+    // What this client has (read from the profile already loaded above).
+    const access = await profileAccess();
+    const can = capability => meets(capability, access);
 
     // ---- A plan the coach published and they haven't said "Got it" to ----
     for (const plan of plans.filter(awaitingAck)) {
@@ -165,7 +169,9 @@ export async function renderCoachCard(container) {
     }
 
     // ---- Weekly check-in ----
-    if (coach) {
+    // Only for clients who have one (soccer-only clients do while their
+    // coach has given them a plan; js/services.js).
+    if (coach && can("checkins")) {
         const thisWeek = checkins.find(c => c.weekOf === weekKeyFor());
         const lastFeedback = checkins.find(c => c.status === "reviewed" && c.coachFeedback);
         if (!thisWeek) {
@@ -204,7 +210,10 @@ export async function renderCoachCard(container) {
                 ${pending
                     ? `Your account is waiting for approval. Once your coach approves it, your sessions, plan and weekly check-ins show up here.`
                     : coach
-                        ? `Nothing new from your coach right now. <a href="schedule.html">Book a session</a> or <a href="checkin.html">check in</a> any time.`
+                        ? `Nothing new from your coach right now.${[
+                            can("sessions") ? ` <a href="schedule.html">Book a session</a>` : "",
+                            can("checkins") ? (can("sessions") ? ` or <a href="checkin.html">check in</a>` : ` <a href="checkin.html">Check in</a>`) : ""
+                        ].join("")}${can("sessions") || can("checkins") ? " any time." : ""}`
                         : `You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> and your sessions and weekly check-ins show up here.`}
             </div>`;
         return { upcomingSessions: upcoming.length };
