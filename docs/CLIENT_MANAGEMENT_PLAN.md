@@ -1237,6 +1237,8 @@ Your Coach; History shows each session's outcome.
 
 ## Phase 7 — Progress integration
 
+> **Built 2026-10-03 as Phase 11 steps 4–5** (`docs/PHASE_11_PLAN.md`): the client's My Progress page (`progress.html`) and package / payment reminders on the coach dashboard. The coach-side progress tab in the hub was already on `main`.
+
 Read existing training/running/strength/soccer data where possible.
 
 Create a Client Hub summary rather than duplicate data entry.
