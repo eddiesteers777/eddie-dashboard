@@ -208,7 +208,7 @@ export async function renderCoachCard(container) {
         container.innerHTML = `
             <div class="eos-coach-empty">
                 ${pending
-                    ? `Your account is waiting for approval. Once your coach approves it, your sessions, plan and weekly check-ins show up here.`
+                    ? `Your account is waiting for approval. Once your coach approves it, your sessions, plan and weekly check-ins show up here. While you wait, <a href="profile.html">tell your coach about you</a>.`
                     : coach
                         ? `Nothing new from your coach right now.${[
                             can("sessions") ? ` <a href="schedule.html">Book a session</a>` : "",

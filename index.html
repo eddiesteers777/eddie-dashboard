@@ -96,7 +96,7 @@
              Today
         =========================================== -->
 
-        <section class="eos-today-card">
+        <section id="todayCard" class="eos-today-card">
 
             <div class="eos-today-card-header">
                 <h2>Today</h2>
@@ -161,20 +161,20 @@
              Quick Stats
         =========================================== -->
 
-        <section class="stats">
+        <section id="todayStats" class="stats">
 
-            <div class="stat-card">
+            <div class="stat-card" data-requires="running">
                 <span>Weekly Mileage</span>
                 <h2 id="weeklyMileage">--</h2>
             </div>
 
-            <div class="stat-card">
+            <div class="stat-card" data-requires="sessions">
                 <span id="recoveryLabel">Recovery</span>
                 <h2 id="recoveryScore">--</h2>
                 <p id="recoveryMeta"></p>
             </div>
 
-            <div class="stat-card">
+            <div class="stat-card" data-requires="habits">
                 <span>Habit Streak</span>
                 <h2 id="streakDays">--</h2>
             </div>
@@ -200,7 +200,7 @@
              Everything Else
         =========================================== -->
 
-        <section class="grid eos-dashboard-grid">
+        <section id="todayTools" class="grid eos-dashboard-grid">
 
             <a href="marathon.html" class="card" data-requires="coach">
                 <div class="card-icon" data-icon="activity"></div>

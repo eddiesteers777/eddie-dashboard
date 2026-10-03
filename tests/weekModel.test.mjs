@@ -98,6 +98,13 @@ test("next workout after a rest day, and the plan week a date falls in", () => {
     assert.equal(planContext(inputs.plans, "2026-10-07").weekNumber, 2);
     assert.equal(planContext(inputs.plans, "2027-01-01"), null);
     assert.equal(nextWorkout({ plans: [] }, "2026-10-02"), null);
+    // A soccer client's next thing is their next booked session (only when asked).
+    const booked = { sessions: [{ id: "b1:2026-10-05", date: "2026-10-05", startTime: "17:00", title: "Soccer session · 1-on-1" }] };
+    assert.equal(nextWorkout(booked, "2026-10-03"), null, "sessions aren't workouts by default");
+    const nextSession = nextWorkout(booked, "2026-10-03", 21, { sessions: true });
+    assert.equal(nextSession.date, "2026-10-05");
+    assert.equal(nextSession.item.kind, "session");
+    assert.match(nextSession.item.detail, /^5:00 PM/);
 });
 
 test("a coach's strength session: the day itself on a strength day, its own item next to a run", () => {

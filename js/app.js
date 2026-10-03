@@ -18,6 +18,8 @@ import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
 import { showsPersonalPlan } from "./role.js";
 import { getActiveProgramEntriesForDate } from "./activeProgramSources.js";
+import { cachedNavAccess, profileAccess, fallbackAccess } from "./navAccess.js";
+import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
 
 // The built-in marathon block (js/marathonData.js) is the coach's own
 // race. Clients get their own plans and a "From your coach" card
@@ -98,6 +100,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderPhaseStatus();
 
+    // Clients: Today's sections and their order follow what they have
+    // (js/todayLayout.js): this device's copy first, then the profile's.
+    if (!PERSONAL_PLAN) {
+        applyClientLayout(cachedNavAccess() || fallbackAccess());
+        profileAccess().then(applyClientLayout).catch(() => {});
+    }
+
     // ==========================================
     // Today
     // ==========================================
@@ -164,6 +173,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 /* ==========================================
+   Client layout (js/todayLayout.js)
+========================================== */
+
+let clientAccess = null;
+
+function applyClientLayout(access) {
+    clientAccess = access;
+    let anchor = document.querySelector(".eos-today-hero");
+    for (const { id, on } of clientTodaySections(access)) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        el.classList.toggle("sb-off", !on);
+        if (anchor) { anchor.after(el); anchor = el; }
+    }
+    renderPhaseStatus();
+}
+
+/* ==========================================
    Phase status
 ========================================== */
 
@@ -183,9 +210,7 @@ function renderPhaseStatus() {
                 if (item.programName && !names.includes(item.programName)) names.push(item.programName);
             }
         }
-        el.textContent = names.length
-            ? `Training: ${names.join(" + ")}`
-            : "Here's your day. Your plan, sessions and check-ins all live here.";
+        el.textContent = clientHeroLine(clientAccess || cachedNavAccess() || fallbackAccess(), names);
         return;
     }
 

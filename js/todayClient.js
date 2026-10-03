@@ -56,13 +56,15 @@ export function renderClientToday() {
         if (workouts.length) {
             container.innerHTML = `<div class="wk-today-cards">${workouts.map(workoutCardHtml).join("")}</div>`;
         } else {
-            const next = nextWorkout(inputs, today);
+            const next = nextWorkout(inputs, today, 21, { sessions: can("sessions") });
             container.innerHTML = `
                 <div class="wk-rest-day">
                     <span class="wk-icon">${icon("moon")}</span>
                     <div>
                         <strong>Rest day</strong>
-                        ${next ? `<span>Next: ${esc(shortDay(next.date))} · ${esc(next.item.kind === "run" && next.item.miles ? `${next.item.miles} mi ${next.item.title.toLowerCase()}` : next.item.title)}</span>`
+                        ${next ? `<span>Next: ${esc(shortDay(next.date))} · ${esc(next.item.kind === "run" && next.item.miles ? `${next.item.miles} mi ${next.item.title.toLowerCase()}`
+                            : next.item.kind === "session" && next.item.startTime ? `${next.item.title} · ${next.item.detail.split(" · ")[0]}`
+                            : next.item.title)}</span>`
                             : inputs.plans.length ? `<span>Nothing else scheduled yet.</span>`
                             : `<span>${noPlanText()}</span>`}
                     </div>

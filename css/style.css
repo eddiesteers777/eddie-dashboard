@@ -3801,3 +3801,10 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
     line-height:1;
     cursor:pointer;
 }
+
+/* ==========================================
+   NOT ENTITLED — a section of Today this client's services don't
+   cover (js/todayLayout.js). Separate from [hidden], which each
+   section's own script uses for "nothing to show right now".
+========================================== */
+.sb-off{ display:none !important; }

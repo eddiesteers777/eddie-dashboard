@@ -230,10 +230,12 @@ export function buildWeek(monday, inputs, today) {
 }
 
 // The next workout after `today` (for a rest day: "Next: Sat, long run").
-export function nextWorkout(inputs, today, horizonDays = 21) {
+// { sessions: true } counts booked sessions too (clients who book them:
+// a soccer client's "Next" is their next session).
+export function nextWorkout(inputs, today, horizonDays = 21, { sessions = false } = {}) {
     for (let i = 1; i <= horizonDays; i++) {
         const date = addDays(today, i);
-        const item = buildDay(date, inputs, today).items.find(x => x.kind !== "session" && x.source.type !== "log");
+        const item = buildDay(date, inputs, today).items.find(x => (sessions || x.kind !== "session") && x.source.type !== "log");
         if (item) return { date, item };
     }
     return null;

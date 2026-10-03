@@ -186,7 +186,7 @@ Each step is one reviewable commit with tests, then "push it".
    - `data-requires="running"` etc. are checked against the capabilities.
    - Phone tabs, computer menus, More and search agree.
    - A client who opens a page they aren't entitled to by link goes to Today with a short note (UX only, like `COACH_ONLY_PAGES`). The coach is unchanged.
-3. **Today composition.**
+3. **Today composition.** ✅ Done 2026-10-03 (`js/todayLayout.js`, `tests/todayLayout.test.mjs`; soccer rest days show the next session).
    - A section list with capabilities + the four states.
    - Soccer-only and pending versions.
    - The stats row, Nutrition snapshot and tiles move under their capability.

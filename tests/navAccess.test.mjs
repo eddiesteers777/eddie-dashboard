@@ -84,7 +84,7 @@ test("every data-requires and tab/search requirement names a real capability", (
     for (const f of files) {
         const src = readFileSync(new URL(f, root), "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
         for (const m of src.matchAll(/data-requires="([^"]*)"|requires: "([^"]*)"/g)) {
-            for (const part of (m[1] ?? m[2]).split(/[,+]/).map(s => s.trim())) if (!known.has(part)) bad.push(`${f}: ${part}`);
+            for (const part of (m[1] ?? m[2]).split(/[,+]/).map(s => s.trim()).filter(Boolean)) if (!known.has(part)) bad.push(`${f}: ${part}`);
         }
     }
     assert.deepEqual(bad, []);
