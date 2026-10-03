@@ -12,6 +12,8 @@
     background:var(--surface);
 }
 .rd-card[hidden], .rd-card [hidden]{ display:none !important; }
+/* A client with no watch connected and no readiness data yet (Phase 8). */
+.rd-card.rd-none{ display:none !important; }
 .rd-card.green{ --rd-tone:var(--good); }
 .rd-card.yellow{ --rd-tone:var(--primary); }
 .rd-card.red{ --rd-tone:var(--bad); }

@@ -120,11 +120,14 @@ export async function profileAccess() {
     }
 }
 
-// Does `access` meet data-requires="a,b+c"?
+// Does `access` meet data-requires="a,b+c"? A part starting with "!" means
+// "not": "client+sessions+!plan" = a client who books sessions and has no
+// plan (the soccer-only Sessions tab).
 export function meets(requires, access) {
     if (!requires || !String(requires).trim()) return true;
     const caps = new Set(access?.caps || []);
-    const one = part => part === "client" ? !access?.isCoach : caps.has(part);
+    const has = part => part === "client" ? !access?.isCoach : caps.has(part);
+    const one = part => part.startsWith("!") ? !has(part.slice(1)) : has(part);
     return String(requires).split(",").map(s => s.trim()).filter(Boolean)
         .some(option => option.split("+").map(s => s.trim()).every(one));
 }

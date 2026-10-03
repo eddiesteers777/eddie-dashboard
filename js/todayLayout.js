@@ -14,12 +14,14 @@
 import { meets } from "./navAccess.js";
 
 // Top to bottom. `requires` uses the data-requires syntax ("a,b" any).
+// Phase 8: TODAY (with NEXT), then the coach, as the plan's mock has it;
+// the readiness gauge and the week come after.
 export const CLIENT_TODAY = Object.freeze([
-    { id: "todayCard", requires: "plan,sessions" },           // today's workouts / sessions, rest day + next
-    { id: "readinessCard", requires: "readiness" },           // HRV, sleep, check-in (needs their own COROS)
-    { id: "weekSection", requires: "plan,sessions" },         // this week, one line a day
+    { id: "todayCard", requires: "plan,sessions" },           // today's workouts / sessions, then NEXT
+    { id: "coachCardSection", requires: "updates,profile" },  // From Your Coach: check-in, updates, notes ("waiting for approval")
     { id: "profileCheck", requires: "profile" },              // one "still right?" question
-    { id: "coachCardSection", requires: "updates,profile" },  // From Your Coach (and "waiting for approval")
+    { id: "readinessCard", requires: "readiness" },           // HRV, sleep, check-in (only with COROS: js/readinessCard.js)
+    { id: "weekSection", requires: "plan,sessions" },         // this week, one line a day (busy days only without a plan)
     { id: "clientPackageSection", requires: "package" },      // their package and credits
     { id: "todayStats", requires: "running,sessions,habits" },// a few numbers (Progress, step 4)
     { id: "nutritionSnap", requires: "nutrition" },           // today's food

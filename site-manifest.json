@@ -193,6 +193,7 @@
     "js/stripeBilling.js",
     "js/svgCharts.js",
     "js/todayClient.js",
+    "js/todayGlance.js",
     "js/todayLayout.js",
     "js/trainingPlanGenerator.js",
     "js/trainingPlanStrengthIntegration.js",

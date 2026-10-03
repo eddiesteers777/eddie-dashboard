@@ -89,9 +89,11 @@ function itemLine(item) {
         </li>`;
 }
 
-// Seven days. `compact` = the Today strip (one line per day).
-export function weekListHtml(week, { compact = false } = {}) {
-    return `<ol class="wk-days${compact ? " is-compact" : ""}">${week.days.map(day => {
+// Seven days. `compact` = the Today strip (one line per day); `busyOnly`
+// leaves out days with nothing on (someone who only books sessions).
+export function weekListHtml(week, { compact = false, busyOnly = false } = {}) {
+    const days = busyOnly ? week.days.filter(d => d.items.length) : week.days;
+    return `<ol class="wk-days${compact ? " is-compact" : ""}">${days.map(day => {
         const [dow, date] = [shortDay(day.date).split(",")[0], shortDay(day.date).split(", ")[1] || ""];
         const statusIcon = day.status === "done" ? `<span class="wk-status is-done">${icon("checkCircle")}<span class="sr-only">Done</span></span>`
             : day.status === "missed" ? `<span class="wk-status is-missed">${icon("alertTriangle")}<span class="sr-only">Missed</span></span>` : "";

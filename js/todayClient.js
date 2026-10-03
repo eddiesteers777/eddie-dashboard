@@ -12,9 +12,10 @@
 ========================================== */
 
 import { buildWeek, buildDay, nextWorkout, planContext } from "./weekModel.js";
-import { weekInputs, loadSessions } from "./weekData.js";
+import { weekInputs, loadSessions, workoutLink } from "./weekData.js";
 import { workoutCardHtml, weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
-import { mondayOf, isoDate, shortDay } from "./coachingPlanModel.js";
+import { mondayOf, isoDate } from "./coachingPlanModel.js";
+import { nextLine, quietDayTitle } from "./todayGlance.js";
 import { icon } from "./icons.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
@@ -50,35 +51,53 @@ export function renderClientToday() {
     const dateLabel = $("todayDateLabel");
     if (dateLabel) dateLabel.textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
+    // TODAY, then NEXT (Phase 8, js/todayGlance.js): what's after today,
+    // a workout or a booked session, so nothing else repeats it.
     const container = $("todayItems");
     if (container) {
         const workouts = day.items;
+        const next = nextWorkout(inputs, today, 21, { sessions: can("sessions") });
+        // Everything on that day, not only the first thing (a run and a session).
+        const nextItems = next ? buildDay(next.date, inputs, today).items.filter(x => (can("sessions") || x.kind !== "session") && x.source?.type !== "log") : [];
+        const line = nextLine(next && { ...next, items: nextItems }, today);
+        const nextHtml = line ? `
+            <a class="wk-next" href="${esc(workoutLink(next.item).href)}">
+                <span class="wk-next-label">Next</span>
+                <span class="wk-next-text"><strong>${esc(line.when)}</strong><span>${esc(line.what)}</span></span>
+                <span class="wk-next-chevron">${icon("chevronRight")}</span>
+            </a>` : "";
         if (workouts.length) {
-            container.innerHTML = `<div class="wk-today-cards">${workouts.map(workoutCardHtml).join("")}</div>`;
+            container.innerHTML = `<div class="wk-today-cards">${workouts.map(workoutCardHtml).join("")}</div>${nextHtml}`;
         } else {
-            const next = nextWorkout(inputs, today, 21, { sessions: can("sessions") });
+            const plan = can("plan");
             container.innerHTML = `
                 <div class="wk-rest-day">
-                    <span class="wk-icon">${icon("moon")}</span>
+                    <span class="wk-icon">${icon(plan ? "moon" : "calendar")}</span>
                     <div>
-                        <strong>Rest day</strong>
-                        ${next ? `<span>Next: ${esc(shortDay(next.date))} · ${esc(next.item.kind === "run" && next.item.miles ? `${next.item.miles} mi ${next.item.title.toLowerCase()}`
-                            : next.item.kind === "session" && next.item.startTime ? `${next.item.title} · ${next.item.detail.split(" · ")[0]}`
-                            : next.item.title)}</span>`
+                        <strong>${quietDayTitle({ plan })}</strong>
+                        ${next ? ""
                             : inputs.plans.length ? `<span>Nothing else scheduled yet.</span>`
                             : `<span>${noPlanText()}</span>`}
                     </div>
-                </div>`;
+                </div>${nextHtml}`;
         }
     }
 
+    // Someone without a plan (soccer sessions only) gets just the days
+    // that have something on, not seven rows of "Rest".
     const section = $("weekSection");
     if (section) {
         const hasWeek = week.days.some(d => d.items.length);
         section.hidden = !hasWeek;
         if (hasWeek) {
             $("weekSummary").textContent = summaryLine(week.summary);
-            $("weekList").innerHTML = weekListHtml(week, { compact: true });
+            $("weekList").innerHTML = weekListHtml(week, { compact: true, busyOnly: !can("plan") });
+            // Without a plan there's no My Plan page: their sessions are.
+            const seeAll = $("weekSeeAll");
+            if (seeAll) {
+                seeAll.href = can("plan") ? "plan.html" : "schedule.html";
+                seeAll.firstChild.textContent = can("plan") ? "Full week " : "All sessions ";
+            }
         }
     }
 

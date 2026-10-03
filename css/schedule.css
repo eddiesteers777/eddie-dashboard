@@ -318,3 +318,12 @@
 }
 .sched-session-log li.is-off{ border-left-color:var(--muted); }
 .sched-session-log b{ color:var(--text); font-weight:600; }
+
+/* The client's Schedule (Phase 8): Coming up / Waiting on your coach /
+   Book a session / Past sessions. */
+.sched-with{ margin:-4px 0 12px; color:var(--text-secondary); font-size:14px; line-height:1.5; }
+.sched-coach-pick{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.sched-coach-pick label{ color:var(--text-secondary); font-size:13px; font-weight:700; }
+.sched-session-words{ color:var(--text-secondary); font-size:13.5px; line-height:1.5; overflow-wrap:anywhere; }
+.sched-session-row.is-off strong{ color:var(--text-secondary); text-decoration:line-through; text-decoration-color:var(--muted); }
+#comingUpWrap, #myRequestsWrap, #availableSlotsWrap, #pastWrap{ margin-bottom:22px; }

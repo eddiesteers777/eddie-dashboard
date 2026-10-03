@@ -275,7 +275,7 @@
 
             <a href="schedule.html" class="more-row" data-requires="client+sessions">
                 <div class="more-row-icon" data-icon="calendar" style="--accent:var(--purple-light)"></div>
-                <span class="more-row-name">Schedule</span>
+                <span class="more-row-name">Sessions</span>
                 <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
@@ -285,7 +285,8 @@
                 <span class="more-row-chevron" data-icon="chevronRight"></span>
             </a>
 
-            <a href="clients.html?tab=share" class="more-row" data-requires="client+updates">
+            <!-- Hidden once they're linked to a coach (Phase 8): linking is setup, not something to come back to. -->
+            <a href="clients.html?tab=share" class="more-row" id="moreConnectRow" data-requires="client+updates">
                 <div class="more-row-icon" data-icon="link" style="--accent:var(--primary)"></div>
                 <span class="more-row-name">Connect with Coach</span>
                 <span class="more-row-chevron" data-icon="chevronRight"></span>
@@ -355,17 +356,27 @@
         async function refreshAccountStatus() {
             const accountStatusEl = document.getElementById("moreAccountStatus");
             try {
-                const { getNavAccess } = await import("./js/navAccess.js");
-                const access = await getNavAccess();
+                // profileAccess: reads without recording the role, so
+                // js/loadHeader.js's "role changed, reload once" still works.
+                const { profileAccess } = await import("./js/navAccess.js");
+                const access = await profileAccess();
                 accountStatusEl.textContent = access.isCoach ? "Coach account"
                     : access.status === "active" ? "Client account"
                     : access.status === "pending" ? "Pending approval — some sections hidden"
                     : access.status === "archived" ? "Account not active"
                     : "";
                 accountStatusEl.hidden = !accountStatusEl.textContent;
+                if (!access.isCoach) hideConnectOnceLinked();
             } catch {
                 accountStatusEl.hidden = true;
             }
+        }
+
+        async function hideConnectOnceLinked() {
+            try {
+                const { listMyCoaches } = await import("./js/coachAccess.js");
+                if ((await listMyCoaches()).length) document.getElementById("moreConnectRow").hidden = true;
+            } catch {}
         }
 
         statusEl?.addEventListener("click", async () => {

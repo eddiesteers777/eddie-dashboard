@@ -176,6 +176,16 @@ async function render() {
     const data = inputs();
     const r = computeReadiness(today, data);
     const history = load(READINESS_KEY, {});
+    // A client sees it once there's something to show: COROS connected on
+    // this device, or scores / health data synced from another one. Without
+    // a watch it was a big card of dashes above their coach's news (Phase 8;
+    // COROS is connected in Settings). The coach always sees his. A class,
+    // not `hidden`: the page's data-requires pass unhides by capability.
+    if (role !== "coach" && !isCorosConnected() && !Object.keys(history).length && !Object.keys(data.health || {}).length) {
+        el.classList.add("rd-none");
+        el.innerHTML = "";
+        return;
+    }
     const before = [1, 2].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); return history[isoDate(d)]?.color; }).filter(Boolean);
     const workout = role === "coach" ? await coachWorkout(today) : await clientWorkout(today);
     const advice = adviceFor(r, workout, before);

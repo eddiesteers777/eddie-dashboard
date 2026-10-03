@@ -8,17 +8,17 @@ import { accessFromProfile, fallbackAccess } from "../js/navAccess.js";
 const who = (services, status = "active", hasCoachPlan = false) => accessFromProfile({ status, services }, { hasCoachPlan });
 const shown = access => clientTodaySections(access).filter(s => s.on).map(s => s.id);
 
-test("running client: everything training, no booking stat on its own", () => {
-    assert.deepEqual(shown(who(["running"])), ["todayCard", "readinessCard", "weekSection", "profileCheck", "coachCardSection", "clientPackageSection", "todayStats", "nutritionSnap", "todayTools"]);
+test("running client: Today, then the coach, then the rest", () => {
+    assert.deepEqual(shown(who(["running"])), ["todayCard", "coachCardSection", "profileCheck", "readinessCard", "weekSection", "clientPackageSection", "todayStats", "nutritionSnap", "todayTools"]);
 });
 
 test("soccer client: sessions first, no readiness, no nutrition", () => {
-    assert.deepEqual(shown(who(["soccer_1on1"])), ["todayCard", "weekSection", "profileCheck", "coachCardSection", "clientPackageSection", "todayStats", "todayTools"]);
+    assert.deepEqual(shown(who(["soccer_1on1"])), ["todayCard", "coachCardSection", "profileCheck", "weekSection", "clientPackageSection", "todayStats", "todayTools"]);
     assert.deepEqual(shown(who(["soccer_group"], "active", true)), shown(who(["soccer_1on1"])), "a coach plan doesn't add nutrition or readiness");
 });
 
 test("pending: just the waiting card (with the profile link) and the tools", () => {
-    assert.deepEqual(shown(who([], "pending")), ["profileCheck", "coachCardSection", "todayTools"]);
+    assert.deepEqual(shown(who([], "pending")), ["coachCardSection", "profileCheck", "todayTools"]);
 });
 
 test("fail-open shows every client section", () => {

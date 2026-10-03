@@ -28,7 +28,7 @@
         <section class="eos-today-hero">
             <div>
                 <div class="eos-today-eyebrow">Coaching</div>
-                <h1>Schedule</h1>
+                <h1 id="scheduleTitle">Schedule</h1>
                 <p class="eos-today-phase" id="scheduleIntro">
                     Set your open training times, or request a session with a coach who's linked you.
                 </p>
@@ -89,25 +89,39 @@
 
             </section>
 
-            <!-- ===== Client view: browse a coach's slots + request ===== -->
+            <!-- ===== Client view (Phase 8): what's booked, what's waiting,
+                 book another, what happened ===== -->
             <section class="clients-panel" data-panel="book" hidden>
 
-                <div class="clients-card">
-                    <h2>Choose a coach</h2>
-                    <select id="coachSelect" class="sched-coach-select"></select>
-                    <p id="noCoachesMsg" class="clients-card-note" hidden>You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> first, then their open times show up here.</p>
+                <p id="noCoachesMsg" class="clients-card clients-card-note" hidden>You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> first, then their open times show up here.</p>
+
+                <div id="comingUpWrap">
+                    <h2 class="clients-section-title">Coming up</h2>
+                    <div id="comingUpList" class="clients-list"></div>
+                    <p id="comingUpEmptyMsg" class="clients-card-note" hidden>Nothing booked yet. Pick an open time below.</p>
+                </div>
+
+                <div id="myRequestsWrap" hidden>
+                    <h2 class="clients-section-title">Waiting on your coach</h2>
+                    <div id="myRequestsList" class="clients-list"></div>
                 </div>
 
                 <div id="availableSlotsWrap">
-                    <h2 class="clients-section-title">Open times</h2>
+                    <h2 class="clients-section-title">Book a session</h2>
+                    <!-- Only when they have more than one coach. -->
+                    <div id="coachPickWrap" class="sched-coach-pick" hidden>
+                        <label for="coachSelect">Coach</label>
+                        <select id="coachSelect" class="sched-coach-select"></select>
+                    </div>
+                    <p id="coachOneLine" class="sched-with" hidden></p>
                     <div id="availableSlotsList" class="sched-slot-list"></div>
-                    <p id="availableSlotsEmptyMsg" class="clients-card-note" hidden>This coach hasn't published any open times yet.</p>
+                    <p id="availableSlotsEmptyMsg" class="clients-card-note" hidden>Your coach hasn't published any open times yet.</p>
                 </div>
 
-                <div id="myRequestsWrap">
-                    <h2 class="clients-section-title">Your requests</h2>
-                    <div id="myRequestsList" class="clients-list"></div>
-                    <p id="myRequestsEmptyMsg" class="clients-card-note" hidden>You haven't requested any sessions yet.</p>
+                <div id="pastWrap" hidden>
+                    <h2 class="clients-section-title">Past sessions</h2>
+                    <p id="attendanceLine" class="sched-with" hidden></p>
+                    <div id="pastList" class="clients-list"></div>
                 </div>
 
             </section>

@@ -30,6 +30,16 @@ test("requirements: any of a,b; all of a+b; client = not the coach", () => {
     assert.equal(meets("client+sessions", { isCoach: true, caps: [...CAPABILITIES] }), false, "the coach reaches Schedule through the Coach section");
     assert.equal(meets("running+sessions,coach", a), true);
     assert.equal(meets("coach", a), false);
+    // "!" = not (Phase 8: the Sessions tab is for clients who book and have no plan).
+    assert.equal(meets("client+sessions+!plan", a), true);
+    assert.equal(meets("client+sessions+!plan", { isCoach: false, caps: ["sessions", "plan"] }), false);
+    assert.equal(meets("!client", a), false);
+});
+
+test("the Sessions tab: soccer clients without a plan, nobody else", () => {
+    const sessionsTab = "client+sessions+!plan";
+    const gets = Object.keys(people).filter(who => meets(sessionsTab, people[who])).sort();
+    assert.deepEqual(gets, ["soccer"], "with a coach plan, sessions live in the Plan tab's week; the coach has the Coach tab");
 });
 
 test("training clients: the training pages, no Schedule, no coach pages", () => {
@@ -84,7 +94,7 @@ test("every data-requires and tab/search requirement names a real capability", (
     for (const f of files) {
         const src = readFileSync(new URL(f, root), "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
         for (const m of src.matchAll(/data-requires="([^"]*)"|requires: "([^"]*)"/g)) {
-            for (const part of (m[1] ?? m[2]).split(/[,+]/).map(s => s.trim()).filter(Boolean)) if (!known.has(part)) bad.push(`${f}: ${part}`);
+            for (const part of (m[1] ?? m[2]).split(/[,+]/).map(s => s.trim().replace(/^!/, "")).filter(Boolean)) if (!known.has(part)) bad.push(`${f}: ${part}`);
         }
     }
     assert.deepEqual(bad, []);

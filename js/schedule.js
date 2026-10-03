@@ -18,7 +18,7 @@ import {
     generateWeeklyDates, requestBooking, listMyBookingRequests, listRequestsForMyClients,
     respondToRequest, cancelBookingRequest, getApprovedCountForSlotDate
 } from "./scheduling.js";
-import { sessionList, statusLabel, CANCELLED } from "./sessionModel.js";
+import { clientSessions, statusLabel, CANCELLED } from "./sessionModel.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
 
 let currentUser = null;
@@ -86,9 +86,12 @@ function setScheduleView(isCoach) {
     // Each account only uses one side: the coach sets times and answers
     // requests, a client books. So no tab bar for either.
     document.querySelector(".clients-tabs").hidden = true;
+    // A client's tab and menus call it Sessions (Phase 8).
+    document.getElementById("scheduleTitle").textContent = isCoach ? "Schedule" : "Sessions";
+    document.title = `${isCoach ? "Schedule" : "Sessions"} | Southbound Coaching`;
     introEl.textContent = isCoach
         ? "Set your open times, block off dates, and answer booking requests."
-        : "Request a session with your coach and see what's booked.";
+        : "What's booked with your coach, and asking for another session.";
     selectTab(isCoach ? "availability" : "book");
 }
 setScheduleView(cachedRole() === "coach");
@@ -311,17 +314,25 @@ async function respond(req, status) {
 // ==========================================
 
 const coachSelect = document.getElementById("coachSelect");
+const coachPickWrap = document.getElementById("coachPickWrap");
+const coachOneLine = document.getElementById("coachOneLine");
 const noCoachesMsg = document.getElementById("noCoachesMsg");
 const availableSlotsList = document.getElementById("availableSlotsList");
 const availableSlotsEmptyMsg = document.getElementById("availableSlotsEmptyMsg");
+const comingUpList = document.getElementById("comingUpList");
+const comingUpEmptyMsg = document.getElementById("comingUpEmptyMsg");
+const myRequestsWrap = document.getElementById("myRequestsWrap");
 const myRequestsList = document.getElementById("myRequestsList");
-const myRequestsEmptyMsg = document.getElementById("myRequestsEmptyMsg");
+const pastWrap = document.getElementById("pastWrap");
+const pastList = document.getElementById("pastList");
+const attendanceLine = document.getElementById("attendanceLine");
 
 async function refreshCoachSelect() {
     myCoaches = await listMyCoaches();
     noCoachesMsg.hidden = myCoaches.length > 0;
-    coachSelect.hidden = myCoaches.length === 0;
     document.getElementById("availableSlotsWrap").hidden = myCoaches.length === 0;
+    // The usual case is one coach: no picker, just who the times are with.
+    coachPickWrap.hidden = myCoaches.length < 2;
 
     coachSelect.innerHTML = myCoaches.map(c => `<option value="${escapeHtml(c.coachUid)}">${escapeHtml(c.coachName || "Coach")}</option>`).join("");
     if (myCoaches.length) {
@@ -339,6 +350,8 @@ coachSelect.addEventListener("change", () => {
 async function refreshAvailableSlots() {
     if (!selectedCoachUid) return;
     const coach = myCoaches.find(c => c.coachUid === selectedCoachUid);
+    coachOneLine.hidden = myCoaches.length !== 1;
+    coachOneLine.textContent = `Open times with ${coach?.coachName || "your coach"}. Tap Request to ask for one.`;
     const { slots } = await getCoachAvailability(selectedCoachUid);
     const openSlots = slots.filter(s => s.active !== false);
 
@@ -356,48 +369,82 @@ async function refreshAvailableSlots() {
     await hydrateIcons();
 }
 
-async function refreshMyRequests() {
-    const requests = await listMyBookingRequests();
-    requests.sort((a, b) => (b.dates?.[0] || "").localeCompare(a.dates?.[0] || ""));
+const localToday = () => new Date().toLocaleDateString("en-CA");
 
-    myRequestsList.innerHTML = "";
-    myRequestsEmptyMsg.hidden = requests.length > 0;
-
-    for (const req of requests) {
-        const booked = req.allDates || req.dates || [];
-        const datesLabel = booked.length > 1
-            ? `${formatDateShort(booked[0])} (+${booked.length - 1} more, weekly)`
-            : formatDateShort(booked[0]);
-        // Each session your coach logged (js/sessionModel.js), newest first.
-        const logged = sessionList([req], new Date().toLocaleDateString("en-CA")).filter(s => s.log).reverse().slice(0, 8);
-        const sessionsHtml = logged.length ? `<ul class="sched-session-log">${logged.map(s => `
-            <li class="${CANCELLED.includes(s.log.status) || s.log.status === "no-show" ? "is-off" : ""}">
-                <b>${escapeHtml(formatDateShort(s.date))} · ${escapeHtml(statusLabel(s.log.status))}</b>
-                ${s.log.workedOn ? `<span>Worked on: ${escapeHtml(s.log.workedOn)}</span>` : ""}
-                ${s.log.nextTime ? `<span>For next time: ${escapeHtml(s.log.nextTime)}</span>` : ""}
-            </li>`).join("")}</ul>` : "";
-
-        const row = document.createElement("div");
-        row.className = "clients-row sched-request-row";
-        row.innerHTML = `
+// One session date: when, what, and (once your coach logs it) what you
+// worked on. `note` = an older booking's single note from the coach.
+function sessionRowHtml(s, note = "") {
+    const off = s.log && (CANCELLED.includes(s.log.status) || s.log.status === "no-show");
+    const chip = s.log ? `<span class="sched-request-status ${s.log.status === "completed" ? "approved" : "cancelled"}">${escapeHtml(statusLabel(s.log.status))}</span>`
+        : s.date === localToday() ? `<span class="sched-request-status requested">Today</span>` : "";
+    return `
+        <div class="clients-row sched-request-row sched-session-row${off ? " is-off" : ""}">
             <div class="sched-request-detail">
-                <strong>${escapeHtml(req.coachName)} &middot; ${escapeHtml(typeLabel(req.sessionType))}${req.label ? ` (${escapeHtml(req.label)})` : ""}</strong>
-                <span>${escapeHtml(DAY_NAMES[req.dayOfWeek])}s, ${formatTime(req.startTime)}&ndash;${formatTime(req.endTime)} &middot; ${escapeHtml(datesLabel)}</span>
-                ${req.coachNote ? `<div class="sched-request-note sched-coach-note">${req.status === "approved" ? "Notes from your coach" : "Coach"}: "${escapeHtml(req.coachNote)}"</div>` : ""}
-                ${sessionsHtml}
-                <span class="sched-request-status ${req.status}">${req.status}</span>
+                <strong>${escapeHtml(formatDateShort(s.date))} &middot; ${formatTime(s.startTime)}${s.endTime ? `&ndash;${formatTime(s.endTime)}` : ""}</strong>
+                <span>${escapeHtml(typeLabel(s.sessionType))}${s.label ? ` &middot; ${escapeHtml(s.label)}` : ""}</span>
+                ${s.log?.workedOn ? `<span class="sched-session-words">Worked on: ${escapeHtml(s.log.workedOn)}</span>` : ""}
+                ${s.log?.nextTime ? `<span class="sched-session-words">For next time: ${escapeHtml(s.log.nextTime)}</span>` : ""}
+                ${note ? `<span class="sched-session-words">Notes from your coach: "${escapeHtml(note)}"</span>` : ""}
+                ${chip}
+            </div>
+        </div>`;
+}
+
+// A request still waiting on the coach (cancel it), or one turned down.
+function requestRowHtml(req) {
+    const booked = req.allDates || req.dates || [];
+    const datesLabel = booked.length > 1
+        ? `${formatDateShort(booked[0])} (+${booked.length - 1} more, weekly)`
+        : formatDateShort(booked[0]);
+    const waiting = req.status === "requested";
+    return `
+        <div class="clients-row sched-request-row" data-id="${escapeHtml(req.id)}">
+            <div class="sched-request-detail">
+                <strong>${escapeHtml(typeLabel(req.sessionType))}${req.label ? ` (${escapeHtml(req.label)})` : ""} &middot; ${escapeHtml(DAY_NAMES[req.dayOfWeek])}s, ${formatTime(req.startTime)}&ndash;${formatTime(req.endTime)}</strong>
+                <span>${escapeHtml(datesLabel)}${req.coachName ? ` &middot; with ${escapeHtml(req.coachName)}` : ""}</span>
+                ${req.coachNote ? `<div class="sched-request-note sched-coach-note">Coach: "${escapeHtml(req.coachNote)}"</div>` : ""}
+                <span class="sched-request-status ${waiting ? "requested" : "denied"}">${waiting ? "Waiting" : "Not booked"}</span>
             </div>
             <div class="sched-request-actions">
-                ${req.status === "requested" ? `<button type="button" class="clients-btn-icon" data-action="cancel" aria-label="Cancel request"><span data-icon="trash"></span></button>` : ""}
+                ${waiting ? `<button type="button" class="clients-btn-icon" data-action="cancel" aria-label="Cancel request"><span data-icon="trash"></span></button>` : ""}
             </div>
-        `;
-        row.querySelector('[data-action="cancel"]')?.addEventListener("click", async () => {
-            if (!(await sbConfirm("Your coach will see it was cancelled.", { title: "Cancel this request?", confirmLabel: "Cancel request", cancelLabel: "Keep it", danger: true }))) return;
-            await cancelBookingRequest(req.id);
-            refreshMyRequests();
-        });
-        myRequestsList.appendChild(row);
-    }
+        </div>`;
+}
+
+// Phase 8: the client's Schedule reads as what's booked, what's waiting,
+// book another, and what happened (js/sessionModel.js clientSessions).
+async function refreshMyRequests() {
+    const requests = await listMyBookingRequests();
+    const today = localToday();
+    const { upcoming, past, waiting, declined, attendance } = clientSessions(requests, today);
+
+    comingUpList.innerHTML = upcoming.slice(0, 6).map(s => sessionRowHtml(s)).join("");
+    comingUpEmptyMsg.hidden = upcoming.length > 0;
+
+    const asked = [...waiting, ...declined];
+    myRequestsWrap.hidden = !asked.length;
+    myRequestsList.innerHTML = asked.map(requestRowHtml).join("");
+    myRequestsList.querySelectorAll('[data-action="cancel"]').forEach(btn => btn.addEventListener("click", async () => {
+        const id = btn.closest("[data-id]")?.dataset.id;
+        if (!id) return;
+        if (!(await sbConfirm("Your coach will see it was cancelled.", { title: "Cancel this request?", confirmLabel: "Cancel request", cancelLabel: "Keep it", danger: true }))) return;
+        await cancelBookingRequest(id);
+        refreshMyRequests();
+    }));
+
+    // An older booking's single note (from before session logs) shows on
+    // its newest past date.
+    const noted = new Set();
+    const byId = new Map(requests.map(r => [r.id, r]));
+    pastWrap.hidden = !past.length;
+    pastList.innerHTML = past.map(s => {
+        const r = byId.get(s.bookingId);
+        const old = r && !Object.keys(r.logs || {}).length && r.coachNote && !noted.has(r.id) ? r.coachNote : "";
+        if (old) noted.add(r.id);
+        return sessionRowHtml(s, old);
+    }).join("");
+    attendanceLine.hidden = !attendance.line;
+    attendanceLine.textContent = attendance.line;
 
     await hydrateIcons();
 }

@@ -1264,6 +1264,15 @@ Goal:
 
 ## Phase 8 — Improve client-side experience
 
+> **Built 2026-10-03** (no rules change). An audit as a runner on a coach plan, a soccer-only client and a client with both, then:
+> - **Today = TODAY, NEXT, CHECK-IN, COACH.** Today's card ends with a NEXT line (everything on the next day with something on, a session with its time). From Your Coach comes right under it: plan to look at, updates, the weekly check-in ("due Sunday" early in the week, "due" from Friday, "sent", the coach's reply while it's this week's or last week's), notes from the last session, requests waiting. The next session isn't repeated.
+> - **Less on screen.** Readiness only with a watch connected or synced data; the week shows only busy days for someone without a plan; "No session today" instead of "Rest day" for soccer-only clients.
+> - **Sessions for soccer clients:** a Sessions tab (soccer without a plan), and the page reads Coming up / Waiting on your coach / Book a session (no picker with one coach) / Past sessions with attendance and notes.
+> - **Fixes:** the top bar's logo for clients without the + button, "Full week" for clients without a plan, "Connect with Coach" hidden once linked.
+> - Left for later, as section 18 says: a "Message your coach" feature (it needs a new collection and rules).
+>
+> Files: `js/todayGlance.js` (pure, `tests/todayGlance.test.mjs`), `js/todayClient.js`, `js/coachCard.js`, `js/todayLayout.js`, `js/readinessCard.js`, `js/sessionModel.js` (`clientSessions`), `js/schedule.js`, `js/navAccess.js` (`!` in requires), `js/loadHeader.js` (Sessions tab, search `also`), `more.html`, `css/week.css`, `css/schedule.css`.
+
 The client gets:
 
 - Today

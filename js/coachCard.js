@@ -1,16 +1,19 @@
 /* ==========================================
    Southbound — "From your coach" (client Today card)
 
-   What a client needs from their coach at a glance: their next
-   session, requests still waiting, notes from their last session,
-   where this week's check-in stands, and new updates. Only reads data the client
-   already has access to under firestore.rules (their own booking
-   requests, check-ins and coach link). Rendered by js/app.js for
-   non-coach accounts.
+   What a client needs from their coach at a glance, right under
+   Today's card (Phase 8): a plan to look at, new updates, this week's
+   check-in (due Sunday; js/todayGlance.js), the coach's reply while
+   it's news, notes from their last session, requests still waiting.
+   Their next session is Today's NEXT line, not repeated here. Only
+   reads data the client already has access to under firestore.rules
+   (their own booking requests, check-ins and coach link). Rendered by
+   js/app.js for non-coach accounts.
 ========================================== */
 
 import { listMyBookingRequests, SESSION_TYPES } from "./scheduling.js";
-import { listMyCheckins, weekKeyFor } from "./checkins.js";
+import { listMyCheckins } from "./checkins.js";
+import { checkinRows } from "./todayGlance.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { getMyProfile } from "./userProfile.js";
 import { getMyClientRecord } from "./clientRecords.js";
@@ -39,13 +42,6 @@ function niceDate(iso) {
     if (iso === tomorrow) return "Tomorrow";
     const [y, m, d] = iso.split("-").map(Number);
     return new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-}
-
-// "17:30" -> "5:30 PM"
-function niceTime(hhmm) {
-    if (!/^\d{1,2}:\d{2}$/.test(hhmm || "")) return hhmm || "";
-    const [h, m] = hhmm.split(":").map(Number);
-    return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 }
 
 const sessionLabel = request =>
@@ -111,48 +107,31 @@ export async function renderCoachCard(container) {
         }));
     }
 
-    // ---- Profile (entered once, remembered) ----
-    // Until the six essentials are answered (js/intakeFlow.js), with how
-    // far they got, so it reads as nearly done rather than a chore.
-    const answered = essentialsDone(record);
-    if (coach && record !== undefined && answered < ESSENTIALS.length) {
-        rows.push(row({
-            iconName: "user",
-            color: "var(--primary)",
-            title: answered ? "Finish your profile" : "Tell your coach about you",
-            detail: answered
-                ? `${answered} of ${ESSENTIALS.length} quick questions done — pick up where you left off`
-                : `${ESSENTIALS.length} quick questions, mostly taps — about a minute`,
-            link: "profile.html"
-        }));
+    // ---- Weekly check-in (due by Sunday) and the coach's reply ----
+    // Only for clients who have one (soccer-only clients do while their
+    // coach has given them a plan; js/services.js). "Due Sunday" early in
+    // the week and "sent" wait at the end of the card; a check-in due now
+    // or a fresh reply comes right after the updates.
+    const CHECKIN_LOOK = {
+        "checkin-due": { iconName: "star", color: "var(--amber)" },
+        "checkin-soon": { iconName: "star", color: "var(--muted)" },
+        "checkin-sent": { iconName: "check", color: "var(--green)" },
+        "checkin-reply": { iconName: "star", color: "var(--primary)" }
+    };
+    const checkinNow = [], checkinLater = [];
+    if (coach && can("checkins")) {
+        for (const r of checkinRows(today, checkins)) {
+            (r.soon ? checkinLater : checkinNow).push(row({ ...CHECKIN_LOOK[r.kind], title: r.title, detail: r.detail, note: r.note || "", link: "checkin.html" }));
+        }
     }
+    rows.push(...checkinNow);
 
     // ---- Sessions ----
+    // The next one is Today's NEXT line; what's here is what the coach
+    // said about the last one, and requests still waiting.
     const upcoming = requests
         .filter(r => r.status === "approved")
-        .flatMap(r => (r.dates || []).filter(d => d >= today).map(date => ({ ...r, date })))
-        .sort((a, b) => a.date.localeCompare(b.date) || String(a.startTime).localeCompare(String(b.startTime)));
-    if (upcoming[0]) {
-        const next = upcoming[0];
-        rows.push(row({
-            iconName: "calendar",
-            color: "var(--purple)",
-            title: `Next session: ${niceDate(next.date)}, ${niceTime(next.startTime)}`,
-            detail: `${sessionLabel(next)}${upcoming.length > 1 ? ` · ${upcoming.length - 1} more booked` : ""}`,
-            link: "schedule.html"
-        }));
-    }
-
-    const waiting = requests.filter(r => r.status === "requested").length;
-    if (waiting) {
-        rows.push(row({
-            iconName: "clock",
-            color: "var(--amber)",
-            title: `${waiting} session request${waiting === 1 ? "" : "s"} waiting on your coach`,
-            detail: "You'll get an email when it's answered",
-            link: "schedule.html"
-        }));
-    }
+        .flatMap(r => (r.dates || []).filter(d => d >= today).map(date => ({ ...r, date })));
 
     // Notes from the most recent session that has happened (its session
     // log, js/sessionModel.js; an older booking's single note otherwise).
@@ -168,40 +147,34 @@ export async function renderCoachCard(container) {
         }));
     }
 
-    // ---- Weekly check-in ----
-    // Only for clients who have one (soccer-only clients do while their
-    // coach has given them a plan; js/services.js).
-    if (coach && can("checkins")) {
-        const thisWeek = checkins.find(c => c.weekOf === weekKeyFor());
-        const lastFeedback = checkins.find(c => c.status === "reviewed" && c.coachFeedback);
-        if (!thisWeek) {
-            rows.push(row({
-                iconName: "star",
-                color: "var(--amber)",
-                title: "Weekly check-in due",
-                detail: "Two minutes: how did this week go?",
-                link: "checkin.html"
-            }));
-        } else if (thisWeek.status !== "reviewed") {
-            rows.push(row({
-                iconName: "check",
-                color: "var(--green)",
-                title: "Check-in sent",
-                detail: "Your coach will reply here and by email",
-                link: "checkin.html"
-            }));
-        }
-        if (lastFeedback) {
-            rows.push(row({
-                iconName: "star",
-                color: "var(--primary)",
-                title: "Latest feedback from your coach",
-                detail: `Week of ${niceDate(lastFeedback.weekOf)}`,
-                note: lastFeedback.coachFeedback,
-                link: "checkin.html"
-            }));
-        }
+    const waiting = requests.filter(r => r.status === "requested").length;
+    if (waiting) {
+        rows.push(row({
+            iconName: "clock",
+            color: "var(--amber)",
+            title: `${waiting} session request${waiting === 1 ? "" : "s"} waiting on your coach`,
+            detail: "You'll get an email when it's answered",
+            link: "schedule.html"
+        }));
     }
+
+    // ---- Profile (entered once, remembered) ----
+    // Until the essentials are answered (js/intakeFlow.js), with how far
+    // they got, so it reads as nearly done rather than a chore.
+    const answered = essentialsDone(record);
+    if (coach && record !== undefined && answered < ESSENTIALS.length) {
+        rows.push(row({
+            iconName: "user",
+            color: "var(--primary)",
+            title: answered ? "Finish your profile" : "Tell your coach about you",
+            detail: answered
+                ? `${answered} of ${ESSENTIALS.length} quick questions done — pick up where you left off`
+                : `${ESSENTIALS.length} quick questions, mostly taps — about a minute`,
+            link: "profile.html"
+        }));
+    }
+
+    rows.push(...checkinLater);
 
     if (!rows.length) {
         const pending = profile?.status === "pending";

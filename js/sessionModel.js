@@ -159,3 +159,25 @@ export function latestSessionNotes(requests = [], today = "") {
     }
     return found.sort((a, b) => b.date.localeCompare(a.date))[0] || null;
 }
+
+/**
+ * The client's Schedule (Phase 8), from their own requests (with logs):
+ *   upcoming  booked dates from today on, soonest first; one the coach
+ *             cancelled ahead stays in the list with its log (marked)
+ *   past      dates before today, newest first (with the log when there
+ *             is one), at most `pastLimit`
+ *   waiting   requests the coach hasn't answered
+ *   declined  requests turned down in the last `declinedDays` days
+ *   attendance  attendance() over every booked date
+ */
+export function clientSessions(requests = [], today = "", { pastLimit = 8, declinedDays = 30 } = {}) {
+    const all = sessionList(requests, today);
+    const since = addDays(today, -declinedDays);
+    return {
+        upcoming: all.filter(s => s.date >= today),
+        past: all.filter(s => s.date < today).reverse().slice(0, pastLimit),
+        waiting: (requests || []).filter(r => r.status === "requested"),
+        declined: (requests || []).filter(r => r.status === "denied" && [...(r.allDates || r.dates || [])].sort().pop() >= since),
+        attendance: attendance(all)
+    };
+}

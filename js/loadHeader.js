@@ -47,6 +47,9 @@ const BOTTOM_TABS = [
     { key: "today", label: "Today", icon: "home", href: "index.html", color: "var(--primary)" },
     // A client's week and plan (js/myPlan.js). The coach's own tools stay as they were.
     { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client+plan" },
+    // Someone who only books sessions (soccer, no plan) gets them as a tab
+    // of their own; with a plan, they're in the Plan tab's week.
+    { key: "sessions", label: "Sessions", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!plan", pages: ["schedule.html"] },
     { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
     { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--primary)", requires: "nutrition,fueling" },
     { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--primary)", requires: "habits" },
@@ -133,7 +136,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)", requires: "running" },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
-    { label: "Schedule", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions" },
+    { label: "Sessions", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions", also: ["schedule", "book a session"] },
     { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)", requires: "client+checkins" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },
     { label: "Settings", href: "settings.html", icon: "user", color: "var(--muted)" },
@@ -302,7 +305,9 @@ fetch("components/header.html")
             // a client uses them too and has no Coach tab -- fall back to
             // More so they still get a highlighted tab and never see the
             // coach-only subnav pills.
-            let activeTab = PAGE_TAB[page] || null;
+            // A visible tab that claims this page (the Sessions tab claims
+            // Schedule) wins over the page's usual tab.
+            let activeTab = visibleTabs.find(tab => tab.pages?.includes(page))?.key || PAGE_TAB[page] || null;
             if (activeTab && !visibleTabs.some(tab => tab.key === activeTab)) activeTab = "more";
 
             document.querySelector(".eos-bottomnav")?.remove();
@@ -424,7 +429,7 @@ fetch("components/header.html")
             const q = query.trim().toLowerCase();
             const allowed = SEARCH_DESTINATIONS.filter(d => meets(d.requires, navAccess));
             const matches = q
-                ? allowed.filter(d => d.label.toLowerCase().includes(q))
+                ? allowed.filter(d => d.label.toLowerCase().includes(q) || d.also?.some(word => word.includes(q)))
                 : allowed;
 
             searchResults.innerHTML = matches.length

@@ -890,7 +890,15 @@ section{
         grid-template-columns:44px minmax(0,1fr) 44px;
     }
 
+    /* Each in its own column: someone without quick add (a soccer-only
+       client) has no + button, and the logo and search used to slide
+       left a column, the logo half off the screen (2026-10-03). */
+    .eos-mobile-quickadd{ grid-column:1; grid-row:1; }
+    .eos-mobile-topbar-logo{ grid-column:2; grid-row:1; }
+
     #mobileSearchBtn{
+        grid-column:3;
+        grid-row:1;
         justify-self:end;
     }
 

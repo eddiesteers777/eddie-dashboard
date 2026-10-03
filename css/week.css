@@ -82,6 +82,35 @@
 .wk-rest-day span{ color:var(--text-secondary); font-size:14.5px; line-height:1.5; }
 .wk-rest-day a{ color:var(--primary); }
 
+/* NEXT, under today's workout or rest day (js/todayGlance.js): one tap
+   to what's after today. */
+.wk-next{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:12px;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    color:var(--text);
+    text-decoration:none;
+    transition:border-color .15s ease, background-color .15s ease;
+}
+.wk-next:hover{ border-color:var(--primary); background:rgba(201,173,132,.06); }
+.wk-next-label{
+    flex-shrink:0;
+    min-width:44px;
+    color:var(--primary);
+    font:800 11px/1 var(--font-body);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.wk-next-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.wk-next-text strong{ font-size:15px; color:var(--text); }
+.wk-next-text span{ color:var(--text-secondary); font-size:14px; line-height:1.4; overflow-wrap:anywhere; }
+.wk-next-chevron{ flex-shrink:0; display:flex; color:var(--muted); }
+.wk-next-chevron .ui-icon{ width:16px; height:16px; }
+
 /* ---- The week ---- */
 
 .wk-see-all{ display:inline-flex; align-items:center; gap:2px; color:var(--primary); font-size:14px; font-weight:700; text-decoration:none; }
