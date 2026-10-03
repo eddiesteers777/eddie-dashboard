@@ -1,6 +1,6 @@
 # Phase 11 — Client experience and service entitlements
 
-Audit of `main` at e334cfa (2026-10-03) and the plan that follows from it. **Nothing in sections 3–6 is built yet.** Waiting on Eddie's go-ahead and the decisions at the end.
+Audit of `main` at e334cfa (2026-10-03) and the plan that follows from it. **Nothing in sections 3–6 is built yet.** Eddie answered the decisions on 2026-10-03 (at the end); the capability table below follows them. Waiting on his go-ahead ("step 1").
 
 ---
 
@@ -127,17 +127,17 @@ No rule starts trusting a capability or anything stored on the device.
 
 | Capability | Granted by | Unlocks |
 |---|---|---|
-| `plan` | online, running, strength | My Plan tab, workout pages, Today's workouts, Send to COROS |
-| `running` | online, running | Running, Pace Calculator, run logging |
-| `strength` | online, strength | Strength page and library (coach-assigned strength days show under `plan` regardless) |
-| `crossTraining` | online, running | Cross-Training |
-| `fueling` | online, running | Fueling page, Fuel card on runs (never soccer-only) |
-| `nutrition` | online, running, strength | Nutrition |
+| `plan` | online, running, strength; soccer-only **while Eddie has given them an active coach plan** | My Plan tab, workout pages, Today's workouts, Send to COROS |
+| `running` | online, running, strength | Running, Pace Calculator, run logging |
+| `strength` | online, running, strength | Strength page and library |
+| `crossTraining` | online, running, strength | Cross-Training |
+| `fueling` | online, running, strength | Fueling page, Fuel card on runs (never soccer-only) |
+| `nutrition` | online, running, strength | Nutrition (never soccer-only) |
 | `readiness` | online, running, strength | Readiness card (still needs their own COROS) |
-| `sessions` | soccer_1on1, soccer_group | Book a session, sessions on Today, session notes |
-| `checkins` | any active service | Weekly check-in (decision 3 for soccer) |
+| `sessions` | soccer_1on1, soccer_group | Book a session (only these clients can request one), sessions on Today, session notes |
+| `checkins` | online, running, strength; soccer-only **only while they have an active coach plan** (work outside sessions) | Weekly check-in |
 | `progress` | any active service | Progress section / page, content per capability |
-| `habits` | any active service | Habits (decision 3) |
+| `habits` | any active service | Habits |
 | `package` | any active service | Package card (shows only when a package exists) |
 | `coach` | `isCoachApproved` | Coach section + personal tools (unchanged) |
 
@@ -245,10 +245,10 @@ Each step is one reviewable commit with tests, then "push it".
 
 ---
 
-## Decisions for Eddie
+## Decisions (Eddie, 2026-10-03)
 
-1. Does **Online Coaching** include both running and strength? (Recommended: yes.)
-2. Should a **running-only** client see the Strength page, and a strength-only client Running? (Recommended: no. Strength days their coach puts in the plan still show either way.)
-3. **Soccer clients:** weekly check-in, Habits, Nutrition — which ones? (Recommended: check-in and Habits yes, Nutrition no.)
-4. **Pending accounts:** only the waiting banner, profile and Get the App? (Recommended: yes.)
-5. Limit **booking requests** to clients with a soccer service? (Recommended: yes in the app. The rules version is optional.)
+1. **Online Coaching includes running and strength.** Yes.
+2. **Running-only and strength-only clients see both** Running and Strength. Yes. So the three training services grant the same capabilities; the real split is training vs soccer.
+3. **Soccer clients:** Habits yes, Nutrition no (and no fueling). The weekly check-in only when Eddie gives them work outside sessions. In the app that means: while a soccer-only client has an active coach plan from Eddie, they get `plan` + `checkins`; without one, neither.
+4. **Pending accounts:** only the waiting banner, their profile and Get the App. Yes.
+5. **Booking requests:** only clients with a soccer service. The only in-person sessions for now are soccer. Done in the app in step 2; a rules check stays optional (step 6).
