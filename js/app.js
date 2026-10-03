@@ -18,8 +18,9 @@ import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
 import { showsPersonalPlan } from "./role.js";
 import { getActiveProgramEntriesForDate } from "./activeProgramSources.js";
-import { cachedNavAccess, profileAccess, fallbackAccess } from "./navAccess.js";
+import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
+import { habitStreak } from "./progressView.js";
 
 // The built-in marathon block (js/marathonData.js) is the coach's own
 // race. Clients get their own plans and a "From your coach" card
@@ -186,6 +187,13 @@ function applyClientLayout(access) {
         if (!el) continue;
         el.classList.toggle("sb-off", !on);
         if (anchor) { anchor.after(el); anchor = el; }
+    }
+    // As many columns as stat boxes this client has (no empty gap).
+    const stats = document.getElementById("todayStats");
+    if (stats) {
+        const n = [...stats.querySelectorAll(".stat-card")].filter(c => c.dataset.requires ? meets(c.dataset.requires, access) : true).length;
+        stats.style.setProperty("--stat-count", String(Math.max(1, n)));
+        stats.classList.add("stats-client");
     }
     renderPhaseStatus();
 }
@@ -570,44 +578,12 @@ function renderRecovery() {
 
 function renderStreak() {
     const valueEl = document.getElementById("streakDays");
-
-    if (!valueEl) {
-        return;
-    }
-
+    if (!valueEl) return;
     let entries = {};
-
-    try {
-        entries = JSON.parse(localStorage.getItem("entries") || "{}");
-    } catch {
-        entries = {};
-    }
-
-    function dayHasEntry(date) {
-        const key = date.toISOString().slice(0, 10);
-        const day = entries[key];
-        return !!(day && Object.values(day).some(Boolean));
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let streak = 0;
-    const cursor = new Date(today);
-
-    // If today has nothing logged yet, that's fine -- start counting
-    // from yesterday so a streak doesn't reset to 0 first thing in
-    // the morning before the day's habits are checked off.
-    if (!dayHasEntry(cursor)) {
-        cursor.setDate(cursor.getDate() - 1);
-    }
-
-    while (dayHasEntry(cursor)) {
-        streak++;
-        cursor.setDate(cursor.getDate() - 1);
-    }
-
-    valueEl.textContent = String(streak);
+    try { entries = JSON.parse(localStorage.getItem("entries") || "{}"); } catch { entries = {}; }
+    // Shared with My Progress (js/progressView.js): by local calendar day,
+    // the same keys the Habits page writes.
+    valueEl.textContent = String(habitStreak(entries));
 }
 
 /* ==========================================

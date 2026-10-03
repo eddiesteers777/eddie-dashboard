@@ -35,14 +35,14 @@ test("requirements: any of a,b; all of a+b; client = not the coach", () => {
 test("training clients: the training pages, no Schedule, no coach pages", () => {
     for (const who of ["running", "strength", "online"]) {
         assert.deepEqual(allowed(who), ["checkin.html", "clients.html", "cross-training.html", "fueling.html", "habits.html",
-            "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "running.html",
+            "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "running.html",
             "strength.html", "updates.html", "workout.html"], who);
     }
 });
 
 test("soccer clients: Schedule and Habits; Plan + check-in only with a coach plan; no fueling or nutrition", () => {
-    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "profile.html", "schedule.html", "updates.html"]);
-    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "plan.html", "profile.html", "schedule.html", "updates.html", "workout.html"]);
+    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "profile.html", "progress.html", "schedule.html", "updates.html"]);
+    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "plan.html", "profile.html", "progress.html", "schedule.html", "updates.html", "workout.html"]);
     assert.ok(!pageAllowed("fueling.html", people.soccerWithPlan) && !pageAllowed("nutrition.html", people.soccerWithPlan));
     assert.ok(pageAllowed("schedule.html", people.hybrid) && pageAllowed("running.html", people.hybrid));
 });

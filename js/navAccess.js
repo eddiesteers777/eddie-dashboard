@@ -146,6 +146,7 @@ export const PAGE_REQUIRES = Object.freeze({
     "fueling.html": "fueling",
     "habits.html": "habits",
     "plan.html": "plan",
+    "progress.html": "progress",
     "workout.html": "plan",
     "programs.html": "running,strength",
     "pace-calculator.html": "running",

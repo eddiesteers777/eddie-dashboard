@@ -1,0 +1,77 @@
+/* ==========================================
+   My Progress (progress.html, js/clientProgress.js)
+========================================== */
+
+.pg-page [hidden]{ display:none !important; }
+
+.pg-metrics{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+    gap:14px;
+    margin:0 0 22px;
+}
+.pg-metric{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-md, 16px);
+    padding:16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+}
+.pg-metric span{
+    color:var(--primary);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+.pg-metric strong{
+    font-family:var(--font-display);
+    font-size:38px;
+    line-height:1;
+    color:var(--text);
+    font-weight:400;
+}
+.pg-metric small{ color:var(--muted); font-size:13px; }
+
+.pg-card{ margin-bottom:22px; }
+.pg-link{
+    color:var(--primary);
+    font-size:14px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:2px;
+}
+.pg-link .ui-icon{ width:16px; height:16px; }
+.pg-note{ color:var(--muted); margin:6px 0 0; line-height:1.5; }
+
+.pg-rows{ list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:10px; }
+.pg-rows li{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    padding:12px 14px;
+    background:color-mix(in srgb, var(--text) 4%, transparent);
+    border-radius:12px;
+}
+.pg-rows li > div{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.pg-rows strong{ color:var(--text); font-weight:600; }
+.pg-rows small{ color:var(--muted); font-size:13px; white-space:pre-line; }
+.pg-rows .pg-tag{ color:var(--primary); font-size:13px; white-space:nowrap; }
+
+.pg-bar{ height:10px; border-radius:6px; background:color-mix(in srgb, var(--text) 8%, transparent); overflow:hidden; margin:12px 0 6px; }
+.pg-bar span{ display:block; height:100%; background:var(--primary); border-radius:6px; }
+
+@media (max-width:600px){
+    .pg-metrics{ grid-template-columns:1fr 1fr; gap:10px; }
+    .pg-metric{ padding:14px; }
+    .pg-metric strong{ font-size:32px; }
+}
+
+/* Six weeks fit flat on a phone (Analytics' charts tilt their many labels). */
+.pg-page .tr-bars{ height:130px; margin-bottom:6px; }
+.pg-page .tr-bar small{ transform:none; margin-top:0; }
