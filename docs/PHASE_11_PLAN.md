@@ -78,7 +78,7 @@ A soccer-only client's rest day says "Log a run on Running or start a workout in
 
 **H. Loose ends in the rules and data:**
 - The rules don't check `userProfiles.services` values, so any string a coach writes is kept.
-- `clientDirectory.services` is copied by the client's own app. A client could make their chips in the coach's search wrong. It's display only.
+- ~~`clientDirectory.services` is client-writable~~ (checked in step 1: the rules require it to equal the profile's `services`, so it can't be forged).
 
 **I. PR #20 (My Progress).**
 - Good: it reuses `summarizeProgress` from `clientSummary.js` (already on `main`) and needs no rules change.
@@ -176,7 +176,7 @@ No rule starts trusting a capability or anything stored on the device.
 Each step is one reviewable commit with tests, then "push it".
 
 0. **Done on the branch:** the hub crash, Assign / auto-link on Approve, the first wearable share, and clearer search.
-1. **Registry + capabilities (pure).**
+1. **Registry + capabilities (pure).** ✅ Done 2026-10-03 (`js/services.js`, `tests/services.test.mjs`; also fixed `tests/clientAssignment.test.mjs`, which wasn't in the suite and expected the wrong order).
    - `js/services.js` and `capabilitiesFor`, with unit tests.
    - A test that the rules' service lists match.
    - Every duplicated list switches to the registry, which unifies the labels.

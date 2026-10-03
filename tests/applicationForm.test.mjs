@@ -103,7 +103,7 @@ test("the coach's summary lines read naturally", () => {
     const lines = applicationLines(FULL);
     assert.deepEqual(lines, [
         "For their child, Jamie · age 10–13",
-        "Interested in: 1-on-1 soccer",
+        "Interested in: 1-on-1 Soccer",
         "Goal: Make the team",
         "Start: Within a month · Coached before: Never",
         "Heard about you: A friend or family member (Sam)",

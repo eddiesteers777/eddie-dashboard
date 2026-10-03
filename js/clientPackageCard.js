@@ -11,6 +11,7 @@ import { listSessionLogs } from "./sessionLogs.js";
 import { countCompletedPackageSessions, packageRemainingSessions } from "./clientPackageModel.js";
 import { openStripeCustomerPortal, startStripeCheckout } from "./stripeBilling.js";
 import { friendlyError, toast } from "./ui.js";
+import { SOCCER_SERVICES } from "./services.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"]/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"' : "&quot;" }[c])
@@ -58,7 +59,7 @@ function handleStripeReturn() {
 }
 
 function packageLink(pkg) {
-    return ["soccer_1on1", "soccer_group"].includes(pkg?.service) ? "schedule.html" : "plan.html";
+    return SOCCER_SERVICES.includes(pkg?.service) ? "schedule.html" : "plan.html";
 }
 
 function dateRange(pkg) {
@@ -102,7 +103,7 @@ export async function renderClientPackageCard() {
                         : "Ongoing coaching";
             const range = dateRange(pkg);
             const destination = packageLink(pkg);
-            const linkLabel = ["soccer_1on1", "soccer_group"].includes(pkg.service) ? "View Sessions" : "View Plan";
+            const linkLabel = SOCCER_SERVICES.includes(pkg.service) ? "View Sessions" : "View Plan";
             const payLabel = paymentAction(pkg);
             return `
                 <div class="eos-package-row">

@@ -14,14 +14,10 @@
 ========================================== */
 
 import { goalIdeas, sportFromServices } from "./intakeFlow.js";
+import { SERVICES } from "./services.js";
 
-export const SERVICE_OPTIONS = [
-    { value: "online_coaching", label: "Online coaching" },
-    { value: "running", label: "Running coaching" },
-    { value: "strength", label: "Strength coaching" },
-    { value: "soccer_1on1", label: "1-on-1 soccer" },
-    { value: "soccer_group", label: "Group soccer" }
-];
+// The services from js/services.js, as the Apply form's choices.
+export const SERVICE_OPTIONS = SERVICES.map(({ value, label }) => ({ value, label }));
 
 export const WHO = [
     { value: "self", label: "Me" },

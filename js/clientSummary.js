@@ -32,16 +32,7 @@ import { staleSummary, openAsks, ageText } from "./profileChecks.js";
 import { answersDone } from "./intakeFlow.js";
 import { sessionList, sessionsToLog, noShowStreak } from "./sessionModel.js";
 
-export const SERVICE_LABELS = {
-    online_coaching: "Online Coaching",
-    running: "Running",
-    strength: "Strength",
-    soccer_1on1: "1-on-1 Soccer",
-    soccer_group: "Group Soccer"
-};
-
-const TRAINING_SERVICES = ["online_coaching", "running", "strength"];
-const SOCCER_SERVICES = ["soccer_1on1", "soccer_group"];
+import { TRAINING_SERVICES, SOCCER_SERVICES, serviceLabels as labelsOf } from "./services.js";
 
 export function isoDate(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -72,7 +63,7 @@ export function weekKey(date) {
 }
 
 export function serviceLabels(services = []) {
-    return services.map(s => SERVICE_LABELS[s] || s);
+    return labelsOf(services, { short: true });
 }
 
 // ---------- Plans ----------

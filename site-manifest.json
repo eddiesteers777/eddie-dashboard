@@ -167,6 +167,7 @@
     "js/runningPrograms.js",
     "js/schedule.js",
     "js/scheduling.js",
+    "js/services.js",
     "js/sessionLogs.js",
     "js/sessionModel.js",
     "js/settings.js",

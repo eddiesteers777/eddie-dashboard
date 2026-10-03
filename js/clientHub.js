@@ -54,6 +54,7 @@ import { renderEmojiText } from "./emoji.js";
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
 import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES, isStripeManagedPackage } from "./clientPackageModel.js";
+import { hasTrainingService, hasSoccerService } from "./services.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -453,7 +454,7 @@ function renderGlance() {
     const latest = checkins.latest;
     const week = plans.week;
     const services = record.profile?.services || [];
-    const trains = services.some(s => ["online_coaching", "running", "strength"].includes(s));
+    const trains = hasTrainingService(services);
 
     // Soccer-only clients have no plan or weekly check-in to speak of:
     // lead with their sessions instead.
@@ -593,7 +594,7 @@ function renderProgress() {
     const tt = progress.trainingTrends;
     const services = record.profile?.services || [];
 
-    const hasTrainingService = services.some(s => ["online_coaching", "running", "strength"].includes(s));
+    const trainsToo = hasTrainingService(services);
     const showRunning = services.includes("running") || p.planType === "running" || a.runSessions > 0;
     const sharedActivity = record.sharedWearableActivity;
     const activityShareEnabled = record.wearableShare?.status === "active" && record.wearableShare?.permissions?.activity === true;
@@ -627,8 +628,8 @@ function renderProgress() {
             : '<div class="hub-progress-empty"><strong>No COROS runs in the last 28 days</strong><span>Training activity sharing is on, but Southbound has no recent COROS running data to show.</span></div>'
         : '<div class="hub-progress-empty"><strong>No COROS activity shared</strong><span>The client has not enabled Training activity for this coaching relationship.</span></div>';
     const showStrength = services.includes("strength") || a.strengthSessions > 0;
-    const showSoccer = services.some(s => ["soccer_1on1", "soccer_group"].includes(s)) || a.soccerSessions > 0;
-    const showPlanWorkouts = hasTrainingService || Boolean(p.name) || a.completedWorkouts > 0 || a.skippedWorkouts > 0;
+    const showSoccer = hasSoccerService(services) || a.soccerSessions > 0;
+    const showPlanWorkouts = trainsToo || Boolean(p.name) || a.completedWorkouts > 0 || a.skippedWorkouts > 0;
     const hasTrainingActivity = a.completedWorkouts > 0 || a.skippedWorkouts > 0 || a.soccerSessions > 0;
 
     const planKicker = p.state === "upcoming" ? "Upcoming plan" : p.state === "finished" ? "Plan" : "Current plan";

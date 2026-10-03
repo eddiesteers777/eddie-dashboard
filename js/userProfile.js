@@ -26,13 +26,11 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-export const SERVICES = [
-    { value: "online_coaching", label: "Online Coaching" },
-    { value: "running", label: "Running Coaching" },
-    { value: "strength", label: "Strength Coaching" },
-    { value: "soccer_1on1", label: "1-on-1 Soccer" },
-    { value: "soccer_group", label: "Group Soccer" }
-];
+import { cleanServices } from "./services.js";
+
+// The service list lives in js/services.js (pure, shared with the nav,
+// Today, emails and the tests).
+export { SERVICES } from "./services.js";
 
 function profileDoc(uid) {
     return doc(db, "userProfiles", uid);
@@ -163,9 +161,8 @@ export async function approveClient(uid, services, identity = {}) {
 
 // Change what an approved client has (their menu follows it: js/navAccess.js).
 export async function setClientServices(uid, services) {
-    const allowed = new Set(SERVICES.map(s => s.value));
-    const cleanServices = [...new Set(services || [])].filter(s => allowed.has(s));
-    await updateDoc(profileDoc(uid), { services: cleanServices });
+    const clean = cleanServices(services);
+    await updateDoc(profileDoc(uid), { services: clean });
     const directory = await getDoc(clientDirectoryDoc(uid));
     if (directory.exists() && directory.data().status === "active") {
         const data = directory.data();
@@ -173,7 +170,7 @@ export async function setClientServices(uid, services) {
             uid,
             displayName: String(data.displayName || ""),
             email: String(data.email || ""),
-            services: cleanServices,
+            services: clean,
             status: "active",
             updatedAt: serverTimestamp()
         });

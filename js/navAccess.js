@@ -23,8 +23,7 @@
    dashboard.
 ========================================== */
 
-const TRAINING_SERVICES = ["online_coaching", "running", "strength"];
-const SOCCER_SERVICES = ["soccer_1on1", "soccer_group"];
+import { TRAINING_SERVICES, SOCCER_SERVICES } from "./services.js";
 
 // The last access this device worked out (device-only, like
 // sb-account-role in js/role.js, never synced): js/loadHeader.js draws

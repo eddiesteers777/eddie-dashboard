@@ -142,16 +142,6 @@ function clientUpdate({ toEmail, toName, subject, headline, details, page }) {
 
 const lines = (...parts) => parts.filter(Boolean).join("\n");
 
-// Same labels as SERVICES in js/userProfile.js (not imported: that
-// module pulls in Firestore, which email sending doesn't need).
-const SERVICE_LABELS = {
-    online_coaching: "Online Coaching",
-    running: "Running Coaching",
-    strength: "Strength Coaching",
-    soccer_1on1: "1-on-1 Soccer",
-    soccer_group: "Group Soccer"
-};
-
 // "2026-09-21" -> "Sep 21"
 function niceDate(isoDate) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate || "")) return isoDate || "";

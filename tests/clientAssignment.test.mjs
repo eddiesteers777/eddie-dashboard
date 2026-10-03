@@ -14,7 +14,7 @@ test("finds assignable clients by name or email", () => {
         { uid: "3", displayName: "Sam Soccer", email: "sam@example.com" }
     ];
     assert.deepEqual(filterAssignableClients(clients, "jane" ).map(c => c.uid), ["1"]);
-    assert.deepEqual(filterAssignableClients(clients, "EXAMPLE.COM").map(c => c.uid), ["1", "2", "3"]);
+    assert.deepEqual(filterAssignableClients(clients, "EXAMPLE.COM").map(c => c.uid), ["2", "1", "3"], "sorted by name");
     assert.deepEqual(filterAssignableClients(clients, "soccer").map(c => c.uid), ["3"]);
     assert.deepEqual(filterAssignableClients(clients, "").length, 0);
 });

@@ -14,6 +14,8 @@
    lets every page that shows them treat those as empty.
 ========================================== */
 
+import { hasSoccerService } from "./services.js";
+
 export const NONE_EVENT = "Nothing planned yet";
 export const NONE_INJURIES = "None right now";
 
@@ -243,7 +245,7 @@ function shiftDay(date, n) {
 // A starting sport from the services they asked for or were given.
 export function sportFromServices(services = []) {
     if (services.includes("running")) return "running";
-    if (services.some(s => String(s).startsWith("soccer"))) return "soccer";
+    if (hasSoccerService(services)) return "soccer";
     if (services.includes("strength")) return "strength";
     if (services.includes("online_coaching")) return "general";
     return "";

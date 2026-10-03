@@ -26,6 +26,7 @@ import { listApplications, matchApplicationTo, setApplicationHandled } from "./a
 import { matchApplication, unmatchedApplications, applicationLines, recordFromApplication } from "./applicationForm.js";
 import { getClientRecord, saveClientRecord } from "./clientRecords.js";
 import { filterAssignableClients, displayNameForAssignment, normalizeClientSearch } from "./clientAssignmentModel.js";
+import { hasSoccerService, serviceLabel } from "./services.js";
 
 const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
@@ -239,7 +240,7 @@ const FILTERS = {
     attention: c => c.attention.length > 0,
     running: c => c.services.includes("running"),
     strength: c => c.services.includes("strength"),
-    soccer: c => c.services.some(s => s.startsWith("soccer")),
+    soccer: c => hasSoccerService(c.services),
     online: c => c.services.includes("online_coaching")
 };
 
@@ -463,7 +464,7 @@ function pendingCardHtml(profile, app, taken) {
     // requestedServices/applicationMessage only exist on accounts that
     // applied while signed in; the application itself says more.
     const requestedNote = !app && profile.requestedServices?.length
-        ? `<div class="clients-service-note">Requested: ${profile.requestedServices.map(v => escapeHtml(SERVICES.find(s => s.value === v)?.label || v)).join(", ")}</div>`
+        ? `<div class="clients-service-note">Requested: ${profile.requestedServices.map(v => escapeHtml(serviceLabel(v))).join(", ")}</div>`
         : "";
     const messageNote = !app && profile.applicationMessage
         ? `<div class="clients-service-note">"${escapeHtml(profile.applicationMessage)}"</div>`
