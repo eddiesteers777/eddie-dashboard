@@ -195,6 +195,17 @@ test("cloud sync cannot reuse account A state for account B", () => {
     assert.match(sync, /pullSharedPlanUpdates\(localTimes, uid\)/);
 });
 
+test("a pull never marks an unpushed change as synced", () => {
+    // Pushes only send keys that differ from the last-synced snapshot, so a
+    // pull may only mark what the cloud also holds (markPulled). A plain
+    // markSynced() there kept offline changes on the phone (2026-10-03).
+    const sync = read("js/cloudSync.js");
+    const pull = sync.slice(sync.indexOf("export async function pullFromCloud"), sync.indexOf("export async function pushToCloud"));
+    assert.ok(pull.length > 100, "pullFromCloud and pushToCloud must both exist");
+    assert.doesNotMatch(pull, /markSynced\(/);
+    assert.equal((pull.match(/markPulled\(/g) || []).length, 2, "both the empty-cloud and the full pull use markPulled");
+});
+
 test("shared plan sync verifies the source account before applying data", () => {
     const coachAccess = read("js/coachAccess.js");
     assert.match(coachAccess, /mirrorPlansToShared\(localData, localTimes, expectedUid = null\)/);
