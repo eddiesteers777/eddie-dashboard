@@ -1270,6 +1270,7 @@ Goal:
 > - **Sessions for soccer clients:** a Sessions tab (soccer without a plan), and the page reads Coming up / Waiting on your coach / Book a session (no picker with one coach) / Past sessions with attendance and notes.
 > - **Fixes:** the top bar's logo for clients without the + button, "Full week" for clients without a plan, "Connect with Coach" hidden once linked.
 > - Left for later, as section 18 says: a "Message your coach" feature (it needs a new collection and rules).
+> - Tested: unit tests for the new logic, a 51-step browser suite, and all 51 older suites re-run (42 pass, four of them updated for the intended changes; the 9 known ones unchanged).
 >
 > Files: `js/todayGlance.js` (pure, `tests/todayGlance.test.mjs`), `js/todayClient.js`, `js/coachCard.js`, `js/todayLayout.js`, `js/readinessCard.js`, `js/sessionModel.js` (`clientSessions`), `js/schedule.js`, `js/navAccess.js` (`!` in requires), `js/loadHeader.js` (Sessions tab, search `also`), `more.html`, `css/week.css`, `css/schedule.css`.
 
