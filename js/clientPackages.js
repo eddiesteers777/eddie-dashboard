@@ -68,6 +68,15 @@ export async function listMyPackages() {
     );
 }
 
+// Coach: every package they've assigned, all clients (the dashboard's
+// reminders; one query instead of one per client).
+export async function listPackagesForCoach() {
+    const user = await waitForUser();
+    if (!user) return [];
+    const snap = await getDocs(query(collection(db, "clientPackages"), where("coachUid", "==", user.uid)));
+    return snap.docs.map(withId);
+}
+
 // Coach: every package entitlement assigned to one linked client.
 export async function listPackagesForClient(clientUid) {
     const user = await waitForUser();

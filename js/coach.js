@@ -33,7 +33,7 @@ const QUEUE_ICONS = {
     pain: "alertTriangle", health: "heart", change: "calendar", checkin: "star", missed: "clock", skipped: "clock",
     booking: "calendar", "plan-unseen": "eye", race: "flag", plan: "clipboard", quiet: "moon",
     "no-checkin": "star", profile: "user", sessions: "calendar", intake: "user",
-    "session-log": "clipboard", "no-show": "alertTriangle",
+    "session-log": "clipboard", "no-show": "alertTriangle", package: "flag",
     pending: "checkCircle", application: "mail", question: "messageSquare"
 };
 const DONE_KEY = "coach-queue-done";

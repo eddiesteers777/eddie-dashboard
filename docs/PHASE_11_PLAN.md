@@ -190,11 +190,11 @@ Each step is one reviewable commit with tests, then "push it".
    - A section list with capabilities + the four states.
    - Soccer-only and pending versions.
    - The stats row, Nutrition snapshot and tiles move under their capability.
-4. **Progress.** ✅ Done 2026-10-03 (`progress.html`, `js/clientProgress.js`, `js/progressView.js`, `tests/progressView.test.mjs`). PR #20 to be closed once this is live.
+4. **Progress.** ✅ Done 2026-10-03 (`progress.html`, `js/clientProgress.js`, `js/progressView.js`, `tests/progressView.test.mjs`). PR #20 closed.
    - `progress.html` + the Today snapshot, rebuilt from PR #20 on top of `summarizeProgress`, per capability.
    - No coach link. Close PR #20.
    - This overlaps Client Management Phase 7 (progress, on hold): do them as one.
-5. **Packages and sessions.**
+5. **Packages and sessions.** ✅ Done 2026-10-03 (`packageAttention`, a Packages and payments group on the dashboard; Today's package card already follows the `package` capability since step 3). PR #20 closed.
    - Today's package card follows the capability.
    - Coach queue: 1 credit left, package ends within 7 days, payment past due / pending over 7 days.
    - Pure, in `feedbackModel` / `coachToday`. No rules change.

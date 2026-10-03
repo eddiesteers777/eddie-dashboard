@@ -1904,7 +1904,7 @@ function summarize() {
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0, requests: record.requests || [] }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0, requests: record.requests || [], packages: record.packages || [] }),
         timeline: buildTimeline({ ...record, today })
     };
 }

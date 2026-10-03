@@ -18,6 +18,7 @@ export const TASK_GROUPS = [
     { id: "reply", label: "Waiting on your reply", kinds: ["change", "checkin", "booking"] },
     { id: "new", label: "New people", kinds: ["pending", "application", "question"] },
     { id: "plans", label: "Plans and training", kinds: ["missed", "skipped", "plan-unseen", "race", "plan"] },
+    { id: "business", label: "Packages and payments", kinds: ["package"] },
     { id: "followup", label: "Follow up", kinds: ["session-log", "no-show", "quiet", "no-checkin", "profile", "sessions", "intake"] }
 ];
 
@@ -29,6 +30,7 @@ const SUMMARY_WORDS = {
     reply: ["waiting on your reply", "waiting on your reply"],
     new: ["new person", "new people"],
     plans: ["plan or training item", "plan and training items"],
+    business: ["package or payment", "packages and payments"],
     followup: ["follow-up", "follow-ups"]
 };
 
@@ -96,8 +98,9 @@ export function pruneDone(done = {}, today = "") {
 const rankIn = (g, kind) => { const i = g.kinds.indexOf(kind); return i < 0 ? g.kinds.length : i; };
 
 // Items -> [{ id, label, items }] in TASK_GROUPS order, empty groups left
-// out. Within a group: the order given (urgency, then client), with the
-// longest-waiting first among items of the same kind.
+// out. Within a group: the order given (urgency, then client), then an
+// item's own `priority` (lower first: a payment past due before one
+// pending), then the longest-waiting first among items of the same kind.
 export function groupByTask(items = []) {
     return TASK_GROUPS
         .map(g => ({
@@ -107,6 +110,7 @@ export function groupByTask(items = []) {
                 .map((item, i) => ({ item, i }))
                 .filter(({ item }) => groupOf(item.kind) === g)
                 .sort((a, b) => rankIn(g, a.item.kind) - rankIn(g, b.item.kind)
+                    || (a.item.priority ?? 9) - (b.item.priority ?? 9)
                     || (a.item.at && b.item.at ? a.item.at - b.item.at : 0) || a.i - b.i)
                 .map(({ item }) => item)
         }))

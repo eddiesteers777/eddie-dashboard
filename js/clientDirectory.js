@@ -26,7 +26,7 @@ import { listPrivateNotes, listUpdatesForClient } from "./clientNotes.js";
 import { listPlansForClient, listDraftsForClient, getVersion, getMaster, listVersions } from "./coachingPlans.js";
 import { isRolling } from "./planWindow.js";
 import { listResultsForClient } from "./workoutResults.js";
-import { listPackagesForClient } from "./clientPackages.js";
+import { listPackagesForClient, listPackagesForCoach } from "./clientPackages.js";
 import { listChangeRequestsForCoach } from "./changeRequests.js";
 import { healthReviewed } from "./healthReviewed.js";
 
@@ -95,12 +95,15 @@ const changesFor = (clientUid = null) => listChangeRequestsForCoach(clientUid).c
 });
 
 export async function loadClientDirectory() {
-    const [links, checkins, requests, changes] = await Promise.all([
+    const [links, checkins, requests, changes, packages] = await Promise.all([
         listMyClients(),
         quiet(listCheckinsForMyClients()),
         quiet(listRequestsForMyClients()),
-        changesFor()
+        changesFor(),
+        // [] until the packages rules are published (or offline).
+        listPackagesForCoach().catch(() => [])
     ]);
+    const packagesBy = groupByClient(packages);
     const checkinsBy = groupByClient(checkins);
     const reviewed = healthReviewed();
     const requestsBy = groupByClient(requests);
@@ -124,7 +127,8 @@ export async function loadClientDirectory() {
             healthReviewedAt: reviewed[link.clientUid] || 0,
             checkins: checkinsBy.get(link.clientUid) || [],
             requests: requestsBy.get(link.clientUid) || [],
-            changes: changesBy.get(link.clientUid) || []
+            changes: changesBy.get(link.clientUid) || [],
+            packages: packagesBy.get(link.clientUid) || []
         };
     }));
 }

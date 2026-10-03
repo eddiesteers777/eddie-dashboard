@@ -1050,6 +1050,11 @@ test("client packages: linked coach can assign, client can read, identity cannot
     await assertSucceeds(setDoc(ref, clientPackage()));
     await assertSucceeds(getDoc(doc(as("client"), "clientPackages/p1")));
     await assertSucceeds(getDocs(query(collection(as("client"), "clientPackages"), where("clientUid", "==", "client"))));
+    // The coach's dashboard lists all their packages at once (Phase 11 step 5);
+    // nobody else can list them by the coach.
+    await assertSucceeds(getDocs(query(collection(as("coach"), "clientPackages"), where("coachUid", "==", "coach"))));
+    await assertFails(getDocs(query(collection(as("stranger"), "clientPackages"), where("coachUid", "==", "coach"))));
+    await assertFails(getDocs(query(collection(as("client"), "clientPackages"), where("coachUid", "==", "coach"))));
     await assertSucceeds(updateDoc(ref, { status: "paused", paymentStatus: "paid", coachNote: "Pause until October 15.", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { packageId: "soccer_1on1_5", updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { paymentStatus: "refunded", updatedAt: serverTimestamp() }));

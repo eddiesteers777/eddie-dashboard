@@ -55,7 +55,7 @@ test("grouped by task, most pressing first; longest waiting first within a kind"
     assert.equal(groups.reduce((n, g) => n + g.items.length, 0), items.length);
     // Every kind needsAttention makes has a group.
     const known = TASK_GROUPS.flatMap(g => g.kinds);
-    for (const kind of ["pain", "health", "change", "checkin", "missed", "skipped", "booking", "plan-unseen", "race", "plan", "quiet", "no-checkin", "profile", "sessions", "intake"]) {
+    for (const kind of ["pain", "health", "change", "checkin", "missed", "skipped", "booking", "plan-unseen", "race", "plan", "quiet", "no-checkin", "profile", "sessions", "intake", "session-log", "no-show", "package"]) {
         assert.ok(known.includes(kind), kind);
     }
     // By person keeps the order given.

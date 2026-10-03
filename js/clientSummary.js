@@ -31,6 +31,7 @@ import { checkinFlags, reasonLabel } from "./feedbackModel.js";
 import { staleSummary, openAsks, ageText } from "./profileChecks.js";
 import { answersDone } from "./intakeFlow.js";
 import { sessionList, sessionsToLog, noShowStreak } from "./sessionModel.js";
+import { packageAttention } from "./clientPackageModel.js";
 
 import { TRAINING_SERVICES, SOCCER_SERVICES, serviceLabels as labelsOf } from "./services.js";
 
@@ -240,7 +241,7 @@ export function summarizeCheckins(checkins, today) {
 // dashboard shows "2 days ago"); nothing otherwise.
 const since = value => { const ms = toMillis(value); return ms && Number.isFinite(ms) ? { at: ms } : {}; };
 
-export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0, requests = [] }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0, requests = [], packages = [] }) {
     const items = [];
     // A "yes" on their health check the coach hasn't marked reviewed.
     const yeses = healthYeses(record);
@@ -295,6 +296,9 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
         const streak = noShowStreak(all);
         if (streak >= 2) items.push({ kind: "no-show", text: `Missed their last ${streak} sessions (no-shows)`, tab: "sessions" });
     }
+    // Packages: payment past due, sessions used up, ended, 1 left, ending
+    // soon, payment pending a week (js/clientPackageModel.js).
+    items.push(...packageAttention(packages, sessionList(requests, today), today, now));
     // Profile not filled in (only when we could actually read it).
     if (record !== undefined && !isIntakeComplete(record)) {
         items.push({ kind: "intake", text: "Hasn't filled in their profile yet", tab: "profile" });
@@ -566,11 +570,11 @@ export function clientStatusLines(c) {
     ].filter(Boolean);
 }
 
-export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [], healthReviewedAt = 0 }, today) {
+export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [], healthReviewedAt = 0, packages = [] }, today) {
     const plans = summarizePlans(shared, today, coachingPlans, results);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes, healthReviewedAt, requests });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes, healthReviewedAt, requests, packages });
     const name = profile?.displayName || link?.clientName || "Client";
     const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
     const goesBy = athleteDisplayName(record, "");

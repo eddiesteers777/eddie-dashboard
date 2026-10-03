@@ -59,3 +59,52 @@ export function isStripeManagedPackage(pkg) {
         typeof pkg?.stripeCustomerId === "string" && pkg.stripeCustomerId.trim()
     );
 }
+
+// ---- Reminders for the coach (Phase 11 step 5) ----
+
+const DAY = 86400000;
+const niceDay = iso => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) return String(iso || "");
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+const addDaysIso = (iso, n) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    const t = new Date(y, m - 1, d + n);
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+};
+const millis = v => typeof v === "number" ? v : v?.toMillis ? v.toMillis() : v?.seconds ? v.seconds * 1000 : v ? Date.parse(v) || 0 : 0;
+
+// What the coach should do about a client's packages, one line each, most
+// pressing first: payment past due, sessions used up, package ended
+// (still active), 1 session left, ends within a week, payment pending a
+// week or more. `sessions` = sessionList(...) (each with its log).
+// -> [{ kind: "package", text, tab: "overview", at? }]
+export function packageAttention(packages = [], sessions = [], today = "", now = Date.now()) {
+    const items = [];
+    for (const pkg of packages || []) {
+        if (!pkg || !["active", "paused"].includes(pkg.status)) continue;
+        const name = pkg.packageName || "Package";
+        const lines = [];
+        if (pkg.paymentStatus === "past_due") lines.push({ rank: 0, text: `${name}: payment past due` });
+        if (pkg.status === "active" && isFiniteSessionPackage(pkg)) {
+            const left = packageRemainingSessions(pkg, countCompletedPackageSessions(pkg.id, sessions));
+            if (left === 0) lines.push({ rank: 1, text: `${name}: all ${pkg.sessionAllowance} sessions used. Renew it or mark it complete` });
+            else if (left === 1) lines.push({ rank: 3, text: `${name}: 1 session left` });
+        }
+        if (pkg.status === "active" && pkg.endsAt && today) {
+            if (pkg.endsAt < today) lines.push({ rank: 2, text: `${name} ended ${niceDay(pkg.endsAt)}. Renew it or mark it complete` });
+            else if (pkg.endsAt <= addDaysIso(today, 7)) lines.push({ rank: 4, text: `${name} ends ${niceDay(pkg.endsAt)}` });
+        }
+        const created = millis(pkg.createdAt);
+        if ((pkg.paymentStatus || "pending") === "pending" && created && now - created >= 7 * DAY) {
+            lines.push({ rank: 5, text: `${name}: payment still pending (${Math.floor((now - created) / DAY)} days)`, at: created });
+        }
+        if (lines.length) {
+            lines.sort((a, b) => a.rank - b.rank);
+            items.push({ kind: "package", text: lines[0].text, tab: "overview", rank: lines[0].rank, ...(lines[0].at ? { at: lines[0].at } : {}) });
+        }
+    }
+    // `priority` orders them on the coach's dashboard (js/coachToday.js).
+    return items.sort((a, b) => a.rank - b.rank).map(({ rank, ...item }) => ({ ...item, priority: rank }));
+}
