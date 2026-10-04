@@ -234,3 +234,34 @@
 .rd-ver{ min-height:36px; padding:4px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:transparent; color:var(--text-secondary); font-size:.85rem; cursor:pointer; }
 .rd-ver.is-on{ border-color:var(--primary); color:var(--on-primary); background:var(--primary); font-weight:600; }
 .rd-version .rd-link{ margin-left:auto; font-size:.85rem; }
+
+/* THIS WEEK (js/thisWeekCard.js): the weekly decision on the coach's Today */
+.tw-card:empty{ display:none; }
+.tw-card[hidden]{ display:none !important; }
+.tw-card{ margin:0 0 20px; padding:18px 20px; border:1px solid var(--border); border-left:4px solid var(--good, var(--green)); border-radius:16px; background:var(--surface); }
+.tw-card.is-absorb{ border-left-color:var(--primary); }
+.tw-card.is-ease{ border-left-color:var(--amber); }
+.tw-card.is-recover, .tw-card.is-checkin{ border-left-color:var(--bad, var(--red)); }
+.tw-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 16px; }
+.tw-level{ margin:0; font-family:var(--font-display); font-weight:400; font-size:36px; line-height:1; color:var(--text); }
+.tw-hint{ margin:0; color:var(--text-secondary); flex:1 1 240px; }
+.tw-summary{ margin:10px 0 0; color:var(--text); line-height:1.5; }
+.tw-domains{ list-style:none; margin:12px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:6px; }
+.tw-domains li{ display:flex; gap:6px; align-items:baseline; padding:4px 10px; border-radius:var(--radius-pill); border:1px solid var(--border); font-size:.82rem; color:var(--muted); }
+.tw-domains b{ font-weight:600; color:var(--text-secondary); }
+.tw-domains .sev-1 b{ color:var(--primary); }
+.tw-domains .sev-2 b{ color:var(--amber); }
+.tw-domains .sev-3 b{ color:var(--bad, var(--red)); }
+.tw-sub{ margin:14px 0 6px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.tw-changes{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.tw-changes li{ display:grid; grid-template-columns:110px 1fr; gap:10px; color:var(--text); font-size:.92rem; }
+.tw-changes span{ color:var(--muted); }
+.tw-notes{ margin:10px 0 0; padding-left:18px; color:var(--text-secondary); font-size:.88rem; }
+.tw-actions, .tw-done{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:14px; }
+.tw-done span{ color:var(--text-secondary); }
+.tw-link{ display:inline-block; margin-top:12px; color:var(--primary); font-weight:600; font-size:.88rem; }
+@media (max-width:600px){
+    .tw-card{ padding:14px; }
+    .tw-level{ font-size:30px; }
+    .tw-changes li{ grid-template-columns:1fr; gap:0; }
+}

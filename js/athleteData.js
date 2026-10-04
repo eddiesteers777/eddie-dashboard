@@ -114,3 +114,11 @@ export function saveLock(lock) {
     save(MODEL_KEY, rec);
     return rec;
 }
+
+/** Changes the model record in one step (weekly snapshots, the decision log, the dial-down policy). */
+export function updateModelRecord(change) {
+    const rec = loadModelRecord();
+    change(rec);
+    save(MODEL_KEY, rec);
+    return rec;
+}
