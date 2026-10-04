@@ -8,8 +8,7 @@
 
 import { listMyPackages } from "./clientPackages.js";
 import { listSessionLogs } from "./sessionLogs.js";
-import { countCompletedPackageSessions, packageRemainingSessions } from "./clientPackageModel.js";
-import { openStripeCustomerPortal, startStripeCheckout } from "./stripeBilling.js";
+import { countCompletedPackageSessions, packageRemainingSessions, paymentAction, paymentActionType, ONLINE_PAYMENTS } from "./clientPackageModel.js";
 import { friendlyError, toast } from "./ui.js";
 import { SOCCER_SERVICES } from "./services.js";
 
@@ -23,23 +22,6 @@ function statusLabel(status) {
 
 function paymentStatusLabel(status) {
     return status === "paid" ? "Paid" : status === "past_due" ? "Past due" : status === "comped" ? "Comped" : "Pending";
-}
-
-export function paymentAction(pkg) {
-    if (pkg.status !== "active") return null;
-    if (pkg.paymentStatus === "comped" || pkg.paymentStatus === "paid") return null;
-    if (pkg.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId) {
-        return "Manage Billing";
-    }
-    return pkg.billingModel === "subscription"
-        ? (pkg.paymentStatus === "past_due" ? "Retry payment" : "Subscribe")
-        : (pkg.paymentStatus === "past_due" ? "Retry payment" : "Pay now");
-}
-
-export function paymentActionType(pkg) {
-    return pkg.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId
-        ? "portal"
-        : "checkout";
 }
 
 function handleStripeReturn() {
@@ -105,6 +87,8 @@ export async function renderClientPackageCard() {
             const destination = packageLink(pkg);
             const linkLabel = SOCCER_SERVICES.includes(pkg.service) ? "View Sessions" : "View Plan";
             const payLabel = paymentAction(pkg);
+            // No online payments yet: say so plainly instead of a button that fails.
+            const owed = !ONLINE_PAYMENTS && pkg.status === "active" && (pkg.paymentStatus === "pending" || pkg.paymentStatus === "past_due");
             return `
                 <div class="eos-package-row">
                     <div class="eos-package-main">
@@ -113,6 +97,7 @@ export async function renderClientPackageCard() {
                             <span class="eos-package-status ${pkg.status === "paused" ? "is-paused" : ""}">${esc(statusLabel(pkg.status))}</span>
                         </div>
                         <span class="eos-package-detail">${esc(allowance)}${range ? ` · ${esc(range)}` : ""} · Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>
+                        ${owed ? `<span class="eos-package-detail">Your coach will let you know how to pay.</span>` : ""}
                     </div>
                     <div class="eos-package-actions">
                         <a class="eos-package-link" href="${destination}">${linkLabel} <span aria-hidden="true">→</span></a>
@@ -129,6 +114,7 @@ export async function renderClientPackageCard() {
                 button.disabled = true;
                 button.textContent = "Opening…";
                 try {
+                    const { openStripeCustomerPortal, startStripeCheckout } = await import("./stripeBilling.js");
                     if (action === "portal") {
                         await openStripeCustomerPortal();
                     } else {

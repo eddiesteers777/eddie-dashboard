@@ -48,6 +48,31 @@ export function packageCanConsumeSession(pkg, date, countedSessions = 0) {
 }
 
     
+// Online payments (Stripe Checkout, functions/) need the Firebase Blaze plan,
+// deployed functions and the prices set (functions/README.md). Until then the
+// client's package card shows no Pay button: it would only fail. Switch this
+// on in the same change that deploys them.
+export const ONLINE_PAYMENTS = false;
+
+// The client's pay button for a package, or null.
+export function paymentAction(pkg, { online = ONLINE_PAYMENTS } = {}) {
+    if (!online) return null;
+    if (pkg?.status !== "active") return null;
+    if (pkg.paymentStatus === "comped" || pkg.paymentStatus === "paid") return null;
+    if (pkg.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId) {
+        return "Manage Billing";
+    }
+    return pkg.billingModel === "subscription"
+        ? (pkg.paymentStatus === "past_due" ? "Retry payment" : "Subscribe")
+        : (pkg.paymentStatus === "past_due" ? "Retry payment" : "Pay now");
+}
+
+export function paymentActionType(pkg) {
+    return pkg?.billingModel === "subscription" && pkg.paymentStatus === "past_due" && pkg.stripeSubscriptionId
+        ? "portal"
+        : "checkout";
+}
+
 // Once Stripe has created checkout/customer/subscription state, billing is
 // server-managed and the coach UI should not offer a manual override.
 export function isStripeManagedPackage(pkg) {

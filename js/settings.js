@@ -4,7 +4,6 @@
 
 import { toast, friendlyError } from "./ui.js";
 import { listMyPackages } from "./clientPackages.js";
-import { openStripeCustomerPortal } from "./stripeBilling.js";
 
 import { logout, listenForAuth } from "./auth.js";
 
@@ -135,6 +134,7 @@ manageBillingBtn?.addEventListener("click", async () => {
     manageBillingBtn.disabled = true;
     manageBillingBtn.textContent = "Opening…";
     try {
+        const { openStripeCustomerPortal } = await import("./stripeBilling.js");
         await openStripeCustomerPortal();
     } catch (error) {
         manageBillingBtn.disabled = false;
