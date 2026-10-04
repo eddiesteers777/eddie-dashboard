@@ -223,3 +223,14 @@
 .rd-last strong.yellow{ color:var(--primary); }
 .rd-last strong.red{ color:var(--bad); }
 .rd-refresh{ margin-top:10px; }
+
+/* READINESS v2 (js/readinessV2.js): what's going well / what to watch, COROS shown not scored, the Classic / New switch */
+.rd-why{ margin:12px 0 0; display:flex; flex-direction:column; gap:4px; font-size:.9rem; color:var(--text-secondary); }
+.rd-why p{ margin:0; }
+.rd-why strong{ color:var(--text); }
+.rd-coros{ margin:8px 0 0; color:var(--muted); font-size:.85rem; }
+.rd-coros small{ font-size:.8rem; }
+.rd-version{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin-top:12px; padding-top:10px; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
+.rd-ver{ min-height:36px; padding:4px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:transparent; color:var(--text-secondary); font-size:.85rem; cursor:pointer; }
+.rd-ver.is-on{ border-color:var(--primary); color:var(--on-primary); background:var(--primary); font-weight:600; }
+.rd-version .rd-link{ margin-left:auto; font-size:.85rem; }

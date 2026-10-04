@@ -9,6 +9,10 @@
    a client is pointed to their coach instead (My Plan → Need a change?).
    Without COROS: the check-in still works, with a note to connect COROS
    for the score. Data: js/readinessData.js.
+   Readiness v2 (js/readinessV2.js, athlete model step 5): the coach can
+   switch the card between Classic (v1, the default) and New (v2, five
+   domains against his own baselines) until the readiness check on
+   Analytics says which predicts rough runs better. Clients stay on v1.
 ========================================== */
 
 import { computeReadiness, adviceFor, sleepCoach, insights, checkinsUntilInsights, kindOfDay, TAGS, hm, colorOf, missingReason } from "./readiness.js";
@@ -18,6 +22,8 @@ import { isCorosConnected } from "./corosClient.js";
 import { cachedRole } from "./role.js";
 import { icon } from "./icons.js";
 import { toast, sbPrompt } from "./ui.js";
+import { readinessV2 } from "./readinessV2.js";
+import { athleteInputs, resetAthleteInputs } from "./readinessV2Data.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -139,6 +145,17 @@ export function openCheckin(date, onSaved) {
 
 // ---------- the card ----------
 
+function v2Html(r, extra) {
+    const rows = r.domains.map(d => ({ label: d.label, value: String(d.score), note: d.note, score: d.score }));
+    return `${rows.length ? `<ul class="rd-parts">${partsHtml(rows)}</ul>` : ""}
+        ${r.positives.length || r.concern ? `<div class="rd-why">
+            ${r.positives.length ? `<p><strong>Going well:</strong> ${esc(r.positives.join(" · "))}</p>` : ""}
+            ${r.concern ? `<p><strong>Watch:</strong> ${esc(r.concern)}</p>` : ""}
+        </div>` : ""}
+        ${r.coros ? `<p class="rd-coros">COROS recovery ${r.coros.percent}%${r.coros.status ? ` · ${esc(r.coros.status)}` : ""} <small>(COROS's own number, shown, not in the score)</small></p>` : ""}
+        ${extra ? "" : `<p class="rd-coros"><small>Training response and load aren't in today's score: the run history couldn't be read.</small></p>`}`;
+}
+
 function partsHtml(parts) {
     return parts.map(p => `<li class="rd-part">
         <div class="rd-part-top"><span>${esc(p.label)}</span><strong>${esc(p.value)}</strong></div>
@@ -147,8 +164,7 @@ function partsHtml(parts) {
     </li>`).join("");
 }
 
-function weekDots(today) {
-    const history = load(READINESS_KEY, {});
+function weekDots(today, history = load(READINESS_KEY, {})) {
     const cells = [];
     for (let i = 6; i >= 0; i--) {
         const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i);
@@ -174,8 +190,12 @@ async function render() {
     const today = isoDate(new Date());
     const role = cachedRole();
     const data = inputs();
-    const r = computeReadiness(today, data);
+    const useV2 = role === "coach" && data.settings.version === "v2";
+    const extra = useV2 ? await athleteInputs(today) : null;
+    const v2data = useV2 ? { ...data, ...(extra || {}) } : null;
+    const r = useV2 ? readinessV2(today, v2data) : computeReadiness(today, data);
     const history = load(READINESS_KEY, {});
+    const shownHistory = useV2 ? Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); const k = isoDate(d); const x = readinessV2(k, v2data); return [k, x.score == null ? null : { score: x.score, color: x.color }]; }).filter(([, v]) => v)) : history;
     // A client sees it once there's something to show: COROS connected on
     // this device, or scores / health data synced from another one. Without
     // a watch it was a big card of dashes above their coach's news (Phase 8;
@@ -186,7 +206,7 @@ async function render() {
         el.innerHTML = "";
         return;
     }
-    const before = [1, 2].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); return history[isoDate(d)]?.color; }).filter(Boolean);
+    const before = [1, 2].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); return shownHistory[isoDate(d)]?.color; }).filter(Boolean);
     const workout = role === "coach" ? await coachWorkout(today) : await clientWorkout(today);
     const advice = adviceFor(r, workout, before);
     const coach = sleepCoach(data.health, today, data.settings.sleepNeedMin);
@@ -215,21 +235,28 @@ async function render() {
                 ${r.flags.filter(f => f.key !== "pain" && f.key !== "sick").map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
             </div>
         </div>
-        ${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}
+        ${useV2 ? v2Html(r, extra) : r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}
         ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score from HRV, resting heart rate and sleep.</p>`}
-        ${weekDots(today)}
+        ${weekDots(today, shownHistory)}
         ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
         <div class="rd-checkin-row">
             ${checkin
                 ? `<span class="rd-done">${icon("checkCircle")} Checked in${checkin.tags?.length ? ` · ${checkin.tags.length} from yesterday` : ""}</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
                 : `<button type="button" class="sb-btn sb-btn-primary" data-act="checkin">${icon("edit")} Morning check-in</button><small>10 seconds: soreness, energy, mood, and what you did yesterday.</small>`}
         </div>
-        ${insightsHtml(today)}`;
+        ${insightsHtml(today)}
+        ${role === "coach" ? `<div class="rd-version" role="group" aria-label="Which readiness score">
+            <span>Score:</span>
+            <button type="button" class="rd-ver${useV2 ? "" : " is-on"}" data-act="v1" aria-pressed="${!useV2}">Classic</button>
+            <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
+            <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
+        </div>` : ""}`;
     import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
 
     el.onclick = async event => {
         const act = event.target.closest("[data-act]")?.dataset.act;
         if (act === "checkin") openCheckin(today, render);
+        if (act === "v1" || act === "v2") { saveSettings({ ...loadSettings(), version: act }); render(); }
         if (act === "refresh") { const done = refreshHealth({ force: true }); render(); await done; render(); }
         if (act === "need") {
             const value = await sbPrompt("How many hours of sleep do you need a night?", { title: "Sleep need", defaultValue: String(loadSettings().sleepNeedMin / 60), placeholder: "7.5" });
@@ -251,6 +278,7 @@ async function init() {
     const fetching = refreshHealth();                  // marks itself running first, so the card can say so
     await render();
     window.addEventListener("sb:readiness-updated", render);
+    window.addEventListener("sb:athlete-answers", () => { resetAthleteInputs(); render(); });
     await fetching;
 }
 

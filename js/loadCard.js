@@ -25,6 +25,9 @@ import { efficiency, effortResponse, qualityHr, executionSummary, decoupling, re
 import { keyWorkouts, allRuns } from "./trendsData.js";
 import { aerobicTrend } from "./trends.js";
 import { lineSvg } from "./svgCharts.js";
+import { readinessCheck } from "./readinessBacktest.js";
+import { READINESS_V2_VERSION } from "./readinessV2.js";
+import { inputs as readinessInputs } from "./readinessData.js";
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -67,7 +70,12 @@ function computeCheck(r) {
     return {
         efficiency: doseBacktest(r.dose, probes),
         effort: doseBacktest(r.dose, effortProbes),
-        noise: { v2: seriesNoise(r.response.eff.weeks.map(w => w.pace)), old: seriesNoise(oldSeries) }
+        noise: { v2: seriesNoise(r.response.eff.weeks.map(w => w.pace)), old: seriesNoise(oldSeries) },
+        readiness: readinessCheck({
+            ...readinessInputs(),
+            response: { effRuns: r.response.eff.runs, effortRows: r.response.effort.rows },
+            loadSeries: r.state.series, quality: r.response.quality.sessions, doses: r.dose.doses
+        }, r.today)
     };
 }
 
@@ -245,16 +253,45 @@ function checkHtml(c) {
             : `<p class="tr-note">Needs a few more weeks of easy runs with heart rate to compare.</p>`}`;
 }
 
+const READY_WORDS = {
+    better: "The new readiness predicts rough runs better than Classic so far. Worth switching it on in Today's Readiness card (Score: New).",
+    worse: "Classic predicts rough runs better than the new readiness so far. Keep Classic.",
+    same: "No clear difference between Classic and the new readiness yet. Classic stays the default; more mornings and more effort answers will separate them."
+};
+
+function renderReadinessCheck() {
+    const el = $("readinessCheckPanel");
+    if (!el || !result) return;
+    const c = result.check?.readiness;
+    const head = `<div class="panel-header"><div>
+            <h2>Model check: readiness</h2>
+            <p>Does a low morning score come before a run that went worse than usual for you (felt harder than expected, or heart rate higher than usual at that pace)? Each morning's number is compared with that day's runs.</p>
+        </div></div>`;
+    if (!c) { el.innerHTML = `${head}<p class="ar-empty sb-wait"></p>`; return; }
+    el.dataset.version = READINESS_V2_VERSION;
+    el.innerHTML = `${head}
+        ${!c.n ? `<p class="ar-empty">No runs with an effort answer or an easy-run heart-rate reading yet.</p>` : `
+            <p class="lc-line">${c.n} days with a measured run in the last year · <strong>${c.rough} rough</strong> (worse than your usual by more than 1 SD).</p>
+            <div class="mc-scroll"><table class="mc-table mc-ready">
+                <thead><tr><th scope="col">Morning number</th><th scope="col">Days</th><th scope="col"><abbr title="0.5 = a coin flip; 1.0 = always lower before a rough run">AUC</abbr></th><th scope="col">95% range</th></tr></thead>
+                <tbody>${c.methods.map(m => `<tr><th scope="row">${esc(m.label)}</th><td>${m.n}</td>${m.auc == null ? `<td colspan="2" class="mc-none">Needs 5 rough and 5 ordinary days</td>` : `<td>${m.auc.toFixed(2)}</td><td>${m.lo.toFixed(2)} to ${m.hi.toFixed(2)}</td>`}</tr>`).join("")}</tbody>
+            </table></div>
+            <p class="lc-line">${c.v2vsV1 ? `${esc(READY_WORDS[c.v2vsV1.verdict])} (New − Classic: ${c.v2vsV1.diff > 0 ? "+" : ""}${minus(c.v2vsV1.diff)}, 95% range ${minus(c.v2vsV1.lo)} to ${minus(c.v2vsV1.hi)}, ${c.v2vsV1.n} days.)` : "Not enough rough and ordinary days with both scores to compare Classic and New yet. Answering \"How hard was it?\" after runs is what fills this in."}</p>
+            <p class="tr-note">AUC: 0.5 means the number tells you nothing about the day's run; 0.7 or more is a useful warning sign. The new readiness only uses runs before each morning, so it can't peek at the answer.</p>`}`;
+}
+
 async function refresh() {
     const inputs = await loadModelInputs();
     result = compute(inputs);
     renderLoad();
     renderAgreement();
+    renderReadinessCheck();
     const mine = result;
     setTimeout(() => {
         if (result !== mine) return;
         mine.check = computeCheck(mine);
         renderAgreement();
+        renderReadinessCheck();
     }, 30);
 }
 

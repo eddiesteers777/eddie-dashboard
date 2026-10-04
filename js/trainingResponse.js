@@ -137,30 +137,44 @@ export function efficiency(sessions, doses, today, { weeks = 16 } = {}) {
         return { week, pace: v > 0.5 ? Math.round(MILE / v) : null, n: pts.length };
     });
 
-    // The signal: last 14 days, weighted toward the newest (τ 7 days).
-    const recent = scored.filter(r => ageDays(r.date, today) <= 13);
-    let signal = { verdict: "few", n: recent.length };
-    if (recent.length >= 3) {
-        const w = recent.map(r => Math.exp(-ageDays(r.date, today) / 7));
-        const sw = w.reduce((a, b) => a + b, 0);
-        const m = recent.reduce((t, r, i) => t + r.residual * w[i], 0) / sw;
-        const nEff = sw * sw / w.reduce((t, x) => t + x * x, 0);
-        const se = sd(recent.map(r => r.residual)) / Math.sqrt(nEff);
-        const slope = median(recent.map(r => r.slope));
-        const vRef = mean(recent.map(r => r.v));
-        const dv = -m / slope;
-        const verdict = Math.abs(m) > 2 && Math.abs(m) > 2 * se ? (m < 0 ? "lower" : "higher") : "none";
-        signal = {
-            verdict, bpm: r1(m), se: r1(se), n: recent.length,
-            paceSec: Math.round(MILE / vRef - MILE / (vRef + dv)),     // + = faster at the same HR
-            from: addDays(today, -BASE_FROM), to: addDays(today, -BASE_TO)
-        };
-    }
+    const signal = efficiencySignal(scored, today);
     const month = Number(today.slice(5, 7));
     return { version: RESPONSE_VERSION, refHr, runs: scored, weeks: series, signal, summer: month >= 6 && month <= 8, count: runs.length };
 }
 
+/**
+ * The efficiency signal as of a morning: the runs of the 14 days to `asOf`
+ * (residuals already against their own earlier baselines), weighted toward
+ * the newest (τ 7 days). -> { verdict: lower|higher|none|few, bpm, se, n, paceSec, from, to }
+ */
+export function efficiencySignal(scored, asOf) {
+    const recent = scored.filter(r => r.date <= asOf && ageDays(r.date, asOf) <= 13);
+    if (recent.length < 3) return { verdict: "few", n: recent.length };
+    const w = recent.map(r => Math.exp(-ageDays(r.date, asOf) / 7));
+    const sw = w.reduce((a, b) => a + b, 0);
+    const m = recent.reduce((t, r, i) => t + r.residual * w[i], 0) / sw;
+    const nEff = sw * sw / w.reduce((t, x) => t + x * x, 0);
+    const se = sd(recent.map(r => r.residual)) / Math.sqrt(nEff);
+    const slope = median(recent.map(r => r.slope));
+    const vRef = mean(recent.map(r => r.v));
+    const dv = -m / slope;
+    const verdict = Math.abs(m) > 2 && Math.abs(m) > 2 * se ? (m < 0 ? "lower" : "higher") : "none";
+    return {
+        verdict, bpm: r1(m), se: r1(se), n: recent.length,
+        paceSec: Math.round(MILE / vRef - MILE / (vRef + dv)),     // + = faster at the same HR
+        from: addDays(asOf, -BASE_FROM), to: addDays(asOf, -BASE_TO)
+    };
+}
+
 // ---------- effort vs expected ----------
+
+/** The effort signal as of a morning: the last `last` answered runs of the `days` to asOf. */
+export function effortSignal(rows, asOf, { last = 5, days = 21 } = {}) {
+    const recent = rows.filter(r => r.date <= asOf && ageDays(r.date, asOf) < days).slice(-last);
+    const m = recent.length ? mean(recent.map(r => r.residual)) : null;
+    return recent.length < 3 ? { verdict: "few", n: recent.length }
+        : { verdict: m >= 1 ? "costlier" : m <= -1 ? "easier" : "usual", mean: r1(m), n: recent.length };
+}
 
 /** What kind of session it was, from its dose. */
 export function sessionClass(dose, session) {
@@ -197,10 +211,7 @@ export function effortResponse(sessions, doses, today, { last = 5, days = 21 } =
         rows.push({ id: d.id, date: d.date, cls, rpe: d.rpe, expected: r1(expected), residual: r1(d.rpe - expected), minutes: Math.round(d.minutes) });
         (seen[cls] ||= []).push({ rpe: d.rpe, minutes: d.minutes });
     }
-    const recent = rows.filter(r => ageDays(r.date, today) < days).slice(-last);
-    const m = recent.length ? mean(recent.map(r => r.residual)) : null;
-    const signal = recent.length < 3 ? { verdict: "few", n: recent.length }
-        : { verdict: m >= 1 ? "costlier" : m <= -1 ? "easier" : "usual", mean: r1(m), n: recent.length };
+    const signal = effortSignal(rows, today, { last, days });
     const recentRuns = doses.filter(d => ageDays(d.date, today) < 14 && d.date <= today).length;
     return { rows, signal, answered: rows.filter(r => ageDays(r.date, today) < 14).length, recentRuns };
 }
