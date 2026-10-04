@@ -4,6 +4,9 @@
 
 import { toast, friendlyError } from "./ui.js";
 import { listMyPackages } from "./clientPackages.js";
+import { ONLINE_PAYMENTS } from "./clientPackageModel.js";
+import { getCoachAvailability, savePaymentNote } from "./scheduling.js";
+import { cachedRole } from "./role.js";
 
 import { logout, listenForAuth } from "./auth.js";
 
@@ -92,7 +95,7 @@ listenForAuth(async (user) => {
             const hasStripeCustomer = (packages || []).some(pkg =>
                 typeof pkg.stripeCustomerId === "string" && pkg.stripeCustomerId.trim()
             );
-            billingCard.hidden = !hasStripeCustomer;
+            billingCard.hidden = !ONLINE_PAYMENTS || !hasStripeCustomer;
         } catch (error) {
             console.warn("Southbound: billing status unavailable.", error);
             billingCard.hidden = true;
@@ -124,6 +127,30 @@ function saveSettings() {
 // =====================================
 
 usdaApiKey.addEventListener("change", saveSettings);
+
+// =====================================
+// How clients pay you (coach)
+// =====================================
+
+const paymentNoteEl = document.getElementById("paymentNote");
+const savePaymentNoteBtn = document.getElementById("savePaymentNoteBtn");
+
+listenForAuth(async user => {
+    if (!user || !paymentNoteEl || cachedRole() !== "coach") return;
+    try { paymentNoteEl.value = (await getCoachAvailability(user.uid)).paymentNote; } catch {}
+});
+
+savePaymentNoteBtn?.addEventListener("click", async () => {
+    savePaymentNoteBtn.disabled = true;
+    try {
+        paymentNoteEl.value = await savePaymentNote(paymentNoteEl.value);
+        toast(paymentNoteEl.value ? "Saved. Clients see it on their package card when a payment is due." : "Removed. Clients see “Your coach will let you know how to pay.”");
+    } catch (error) {
+        toast(friendlyError(error, "save that"), { type: "error" });
+    } finally {
+        savePaymentNoteBtn.disabled = false;
+    }
+});
 
 // =====================================
 // Billing

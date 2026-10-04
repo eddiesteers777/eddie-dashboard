@@ -137,6 +137,11 @@ document.addEventListener("change", event => {
     }
 });
 document.addEventListener("click", event => {
+    const markPaid = event.target.closest("[data-mark-paid]");
+    if (markPaid) {
+        markPackagePaid(markPaid.dataset.markPaid);
+        return;
+    }
     const packageStatus = event.target.closest("[data-package-status]");
     if (packageStatus) {
         changePackageStatus(packageStatus.dataset.packageId, packageStatus.dataset.packageStatus);
@@ -1026,7 +1031,7 @@ function renderPackages() {
             <div class="hub-package-main">
                 <div class="hub-package-head"><strong>${esc(pkg.packageName || pkg.packageId)}</strong><span class="hub-pill ${pkg.status === "active" ? "is-new" : ""}">${esc(packageStatusLabel(pkg.status))}</span></div>
                 <span class="hub-package-detail">${esc(packageAllowance(pkg, sessionHistory))}${packageDateRange(pkg) ? ` · ${esc(packageDateRange(pkg))}` : ""}</span>
-                <div class="hub-package-payment"><span>Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>${isStripeManagedPackage(pkg) ? `<span class="hub-package-stripe-managed">${pkg.stripeSubscriptionStatus ? `Stripe — ${esc(pkg.stripeSubscriptionStatus)}` : "Stripe-managed"}</span>` : `<select class="hub-package-payment-select" aria-label="Billing status" data-package-payment="${esc(pkg.id)}">${PAYMENT_STATUSES.map(status => `<option value="${status}"${status === (pkg.paymentStatus || "pending") ? " selected" : ""}>${esc(paymentStatusLabel(status))}</option>`).join("")}</select>`}</div>
+                <div class="hub-package-payment"><span>Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>${isStripeManagedPackage(pkg) ? `<span class="hub-package-stripe-managed">${pkg.stripeSubscriptionStatus ? `Stripe — ${esc(pkg.stripeSubscriptionStatus)}` : "Stripe-managed"}</span>` : `<select class="hub-package-payment-select" aria-label="Billing status" data-package-payment="${esc(pkg.id)}">${PAYMENT_STATUSES.map(status => `<option value="${status}"${status === (pkg.paymentStatus || "pending") ? " selected" : ""}>${esc(paymentStatusLabel(status))}</option>`).join("")}</select>${["pending", "past_due"].includes(pkg.paymentStatus || "pending") && pkg.status === "active" ? `<button type="button" class="clients-btn-primary hub-mark-paid" data-mark-paid="${esc(pkg.id)}">Mark paid</button>` : ""}`}</div>
                 ${pkg.coachNote ? `<span class="hub-package-note">${esc(pkg.coachNote)}</span>` : ""}
             </div>
             ${pkg.status === "active" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="paused">Pause</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : pkg.status === "paused" ? `<div class="hub-package-actions"><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="active">Resume</button><button type="button" class="hub-link-btn" data-package-id="${esc(pkg.id)}" data-package-status="completed">Complete</button><button type="button" class="hub-link-btn is-danger" data-package-id="${esc(pkg.id)}" data-package-status="cancelled">Cancel</button></div>` : ""}
@@ -1051,6 +1056,24 @@ async function changePackagePaymentStatus(id, paymentStatus) {
         const selects = document.querySelectorAll("[data-package-payment]");
         selects.forEach(select => { if (select.dataset.packagePayment === id) select.value = previous; });
         toast(friendlyError(error, "update the billing status"));
+    }
+}
+
+// One tap when the money arrives (Venmo, Zelle, cash); Undo puts it back.
+async function markPackagePaid(id) {
+    const pkg = (record.packages || []).find(p => p.id === id);
+    if (!pkg) return;
+    const previous = pkg.paymentStatus || "pending";
+    try {
+        await updateClientPackage(id, { paymentStatus: "paid" });
+        pkg.paymentStatus = "paid";
+        renderPackages();
+        toast("Marked paid.", { action: { label: "Undo", onClick: async () => {
+            try { await updateClientPackage(id, { paymentStatus: previous }); pkg.paymentStatus = previous; renderPackages(); }
+            catch (error) { toast(friendlyError(error, "undo that"), { type: "error" }); }
+        } } });
+    } catch (error) {
+        toast(friendlyError(error, "mark it paid"), { type: "error" });
     }
 }
 

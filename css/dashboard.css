@@ -626,7 +626,7 @@
     border-top:1px solid var(--border);
 }
 .eos-package-row:first-child{ border-top:0; }
-.eos-package-main{ min-width:0; }
+.eos-package-main{ flex:1 1 220px; min-width:0; }
 .eos-package-head{
     display:flex;
     align-items:center;
@@ -695,6 +695,9 @@
 .eos-package-pay:disabled{ opacity:.55; cursor:wait; }
 
 @media (max-width:620px){
+    /* The actions take their own line; without wrapping they squeezed the
+       details to a sliver (one letter a line, 2026-10-04). */
+    .eos-package-row{ flex-wrap:wrap; }
     .eos-package-actions{
         width:100%;
         justify-content:flex-start;
@@ -703,3 +706,20 @@
         flex:0 0 auto;
     }
 }
+
+/* How to pay, in the coach's words, while a payment is due (Phase 9). */
+.eos-package-howto{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    margin-top:8px;
+    padding:10px 12px;
+    border-left:2px solid var(--amber);
+    background:color-mix(in srgb, var(--amber) 8%, transparent);
+    border-radius:0 10px 10px 0;
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--text);
+    overflow-wrap:anywhere;
+}
+.eos-package-howto strong{ color:var(--amber); font-size:12px; letter-spacing:.04em; text-transform:uppercase; }

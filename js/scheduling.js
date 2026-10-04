@@ -58,9 +58,22 @@ function uid() {
 
 export async function getCoachAvailability(coachUid) {
     const snap = await getDoc(availabilityDoc(coachUid));
-    if (!snap.exists()) return { slots: [], blackoutDates: [] };
+    if (!snap.exists()) return { slots: [], blackoutDates: [], paymentNote: "" };
     const data = snap.data();
-    return { slots: data.slots || [], blackoutDates: data.blackoutDates || [] };
+    return { slots: data.slots || [], blackoutDates: data.blackoutDates || [], paymentNote: String(data.paymentNote || "") };
+}
+
+// How clients pay the coach (Venmo, Zelle, cash...), shown on a client's
+// package card while a payment is due (Phase 9). Kept on the availability
+// doc: only the coach writes it and only linked clients read it, which is
+// exactly who should see it (no rules change).
+export const PAYMENT_NOTE_MAX = 500;
+export async function savePaymentNote(text) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const paymentNote = String(text || "").replace(/\r/g, "").trim().slice(0, PAYMENT_NOTE_MAX);
+    await setDoc(availabilityDoc(user.uid), { paymentNote, updatedAt: serverTimestamp() }, { merge: true });
+    return paymentNote;
 }
 
 export async function saveCoachAvailability(slots, blackoutDates) {

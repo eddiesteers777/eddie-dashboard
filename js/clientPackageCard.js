@@ -11,6 +11,7 @@ import { listSessionLogs } from "./sessionLogs.js";
 import { countCompletedPackageSessions, packageRemainingSessions, paymentAction, paymentActionType, ONLINE_PAYMENTS } from "./clientPackageModel.js";
 import { friendlyError, toast } from "./ui.js";
 import { SOCCER_SERVICES } from "./services.js";
+import { getCoachAvailability } from "./scheduling.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"]/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"' : "&quot;" }[c])
@@ -73,6 +74,12 @@ export async function renderClientPackageCard() {
         }
 
         const wrappedLogs = (logs || []).map(log => ({ log }));
+        // How to pay, from each coach who has a payment due (their own words).
+        const isOwed = pkg => !ONLINE_PAYMENTS && pkg.status === "active" && (pkg.paymentStatus === "pending" || pkg.paymentStatus === "past_due");
+        const notes = {};
+        await Promise.all([...new Set(visible.filter(isOwed).map(p => p.coachUid).filter(Boolean))].map(async uid => {
+            try { notes[uid] = (await getCoachAvailability(uid)).paymentNote; } catch { notes[uid] = ""; }
+        }));
         body.innerHTML = visible.map(pkg => {
             const used = countCompletedPackageSessions(pkg.id, wrappedLogs);
             const remaining = packageRemainingSessions(pkg, used);
@@ -87,8 +94,9 @@ export async function renderClientPackageCard() {
             const destination = packageLink(pkg);
             const linkLabel = SOCCER_SERVICES.includes(pkg.service) ? "View Sessions" : "View Plan";
             const payLabel = paymentAction(pkg);
-            // No online payments yet: say so plainly instead of a button that fails.
-            const owed = !ONLINE_PAYMENTS && pkg.status === "active" && (pkg.paymentStatus === "pending" || pkg.paymentStatus === "past_due");
+            // No online payments yet: how to pay in the coach's words, never a button that fails.
+            const owed = isOwed(pkg);
+            const howToPay = owed ? (notes[pkg.coachUid] || "") : "";
             return `
                 <div class="eos-package-row">
                     <div class="eos-package-main">
@@ -97,7 +105,9 @@ export async function renderClientPackageCard() {
                             <span class="eos-package-status ${pkg.status === "paused" ? "is-paused" : ""}">${esc(statusLabel(pkg.status))}</span>
                         </div>
                         <span class="eos-package-detail">${esc(allowance)}${range ? ` · ${esc(range)}` : ""} · Billing: ${esc(paymentStatusLabel(pkg.paymentStatus))}</span>
-                        ${owed ? `<span class="eos-package-detail">Your coach will let you know how to pay.</span>` : ""}
+                        ${owed ? (howToPay
+                            ? `<div class="eos-package-howto"><strong>${pkg.paymentStatus === "past_due" ? "Payment overdue · how to pay" : "How to pay"}</strong><span>${esc(howToPay).replace(/\n/g, "<br>")}</span></div>`
+                            : `<span class="eos-package-detail">Your coach will let you know how to pay.</span>`) : ""}
                     </div>
                     <div class="eos-package-actions">
                         <a class="eos-package-link" href="${destination}">${linkLabel} <span aria-hidden="true">→</span></a>

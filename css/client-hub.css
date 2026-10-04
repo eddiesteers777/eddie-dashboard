@@ -1316,3 +1316,6 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 @media (max-width:520px){
     .hub-package-dates{ grid-template-columns:1fr; }
 }
+
+/* One tap when the money arrives (Phase 9). */
+.hub-mark-paid{ margin-left:8px; padding:6px 14px; min-height:34px; font-size:13px; }

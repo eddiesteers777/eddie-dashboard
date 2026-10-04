@@ -160,8 +160,17 @@
 
             </div>
 
-            <!-- Billing (clients with a Stripe customer) -->
-            <div class="settings-card" id="billingCard" data-requires="client+package" hidden>
+            <!-- How clients pay (the coach, Phase 9): shown on a client's package card while a payment is due. -->
+            <div class="settings-card" id="paymentNoteCard" data-requires="coach">
+                <h3><span data-icon="link"></span> How clients pay you</h3>
+                <p class="billing-intro">Clients see this on their package card while a payment is due. For example: “Venmo @your-name, or Zelle to your phone number. Cash at the session is fine too.”</p>
+                <textarea id="paymentNote" class="settings-textarea" rows="4" maxlength="500" placeholder="Venmo, Zelle, cash…"></textarea>
+                <button type="button" class="settings-btn" id="savePaymentNoteBtn">Save</button>
+            </div>
+
+            <!-- Billing (clients with a Stripe customer). No data-requires: it hides itself,
+                 and the nav pass would unhide it (see CLAUDE.md gotchas). -->
+            <div class="settings-card" id="billingCard" hidden>
                 <h3><span data-icon="link"></span> Billing</h3>
                 <p class="billing-intro">
                     Manage your payment method, subscriptions, and billing details through Stripe.

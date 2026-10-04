@@ -538,3 +538,18 @@ input[type="checkbox"]{
     line-height:1.45;
     margin:10px 0 0;
 }
+
+/* How clients pay you (coach, Phase 9). */
+.settings-textarea{
+    width:100%;
+    min-height:96px;
+    margin:4px 0 12px;
+    padding:12px 14px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    font:inherit;
+    line-height:1.5;
+    resize:vertical;
+}

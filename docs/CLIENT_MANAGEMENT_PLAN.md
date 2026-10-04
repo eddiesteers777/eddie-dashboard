@@ -1291,6 +1291,8 @@ Goal:
 
 ## Phase 9 — Packages / billing
 
+> **Payments without Stripe, 2026-10-04** (Eddie: Venmo / Zelle / cash now, Stripe later; prices not set yet; no rules change). The client's package card no longer shows a Pay button that could only fail (every new package starts "pending", and the Stripe functions aren't deployed): `ONLINE_PAYMENTS` in `js/clientPackageModel.js` is off, and the Stripe code loads only when used. The coach writes **How clients pay you** once in Settings (saved as `paymentNote` on `coachAvailability/{coachUid}`, which only the coach writes and only linked clients read); a client sees it in an amber "How to pay" box on their package card while a payment is pending or past due ("Your coach will let you know how to pay." without a note). The Client Hub has **Mark paid** (one tap, Undo) next to the billing status. Settings' Stripe "Manage Billing" card no longer carries `data-requires` (it was being unhidden for every client with a package). The package card's row now wraps on phones. Card payments: `docs/STRIPE_SETUP.md` (prices, Blaze, a Stripe account, then one session together to connect them). Tested: a unit test for the Pay switch and a 15-step browser suite (no note → plain line; the coach saves the note; the client sees it, never the coach's private package note; Mark paid, Undo, paid again; the paid card stops asking; a client who isn't linked can't read the note).
+
 **Step 4 built 2026-09-30.** Package assignments now carry a manual billing status (pending, paid, past_due, or comped). Coaches can update that status from the Client Hub, and clients can see the current status on their package card. This remains business metadata only; no payment transaction, processor, invoice, or checkout data is stored.
 
 
