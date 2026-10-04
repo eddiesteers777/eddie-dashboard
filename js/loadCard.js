@@ -7,10 +7,13 @@
    weeks as bars by intensity with the base and recent lines over them,
    the intensity mix, long runs and how each run was scored. Replaces
    the old Load panel and its acute : chronic "safe range" (3.4 of
-   docs/PERFORMANCE_ENGINE_PLAN.md: no ratio zones). Response signals
-   (easy-run heart rate, effort vs expected) join it in step 4.
-   Also draws "Model check: training load" (how the three dose measures
-   agree) under the race Model check.
+   docs/PERFORMANCE_ENGINE_PLAN.md: no ratio zones). Then "How you
+   responded" (js/trainingResponse.js, step 4): the reading, easy-run
+   efficiency (replaces the old Aerobic fitness panel), effort vs
+   expected, heart rate on quality reps, execution, long-run drift.
+   Also draws "Model check: training load" under the race Model check:
+   how the three dose measures agree, which one best tracks the
+   responses (4.3), and efficiency v2 against the old 140-bpm trend.
 ========================================== */
 
 import { sessionDoses, doseAgreement, DOSE_ASSUMPTIONS, DOSE_VERSION, LONG_RUN } from "./sessionDose.js";
@@ -18,6 +21,10 @@ import { loadState, recentWords, LOAD_VERSION, TAU } from "./loadState.js";
 import { loadChartSvg } from "./svgCharts.js";
 import { loadModelInputs, loadLaps } from "./athleteData.js";
 import { addDays } from "./athleteLedger.js";
+import { efficiency, effortResponse, qualityHr, executionSummary, decoupling, reading, doseBacktest, seriesNoise, RESPONSE_VERSION, RESPONSE_ASSUMPTIONS } from "./trainingResponse.js";
+import { keyWorkouts, allRuns } from "./trendsData.js";
+import { aerobicTrend } from "./trends.js";
+import { lineSvg } from "./svgCharts.js";
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -33,9 +40,82 @@ const SOURCE_WORDS = { pace: "by pace", hr: "by heart rate", effort: "by effort"
 let result = null;
 
 function compute(inputs) {
-    const dose = sessionDoses(inputs.sessions, inputs.today, { laps: loadLaps(), health: inputs.health, fitness: inputs.fitness });
+    const lapStore = loadLaps();
+    const dose = sessionDoses(inputs.sessions, inputs.today, { laps: lapStore, health: inputs.health, fitness: inputs.fitness });
     const state = loadState(dose.doses, inputs.today);
-    return { today: inputs.today, dose, state, agreement: doseAgreement(dose, inputs.today) };
+    const lapsById = Object.fromEntries(Object.entries(lapStore).map(([label, v]) => [`c:${label}`, v?.laps || []]));
+    const eff = efficiency(inputs.sessions, dose.doses, inputs.today);
+    const effort = effortResponse(inputs.sessions, dose.doses, inputs.today);
+    let work = [];
+    try { work = keyWorkouts(inputs.today, { days: 42 }); } catch { work = []; }
+    const response = {
+        eff, effort,
+        quality: qualityHr(dose.doses, lapsById, dose.anchors, inputs.today),
+        execution: executionSummary(work, lapStore, inputs.today),
+        drift: decoupling(dose.doses, lapsById, inputs.today),
+        reading: reading(eff.signal, effort.signal)
+    };
+    return { today: inputs.today, dose, state, agreement: doseAgreement(dose, inputs.today), response };
+}
+
+// The dose test and the noise comparison take a few seconds on years of runs: done after the card draws.
+function computeCheck(r) {
+    const probes = r.response.eff.runs.map(x => ({ date: x.date, residual: x.residual }));
+    const effortProbes = r.response.effort.rows.map(x => ({ date: x.date, residual: x.residual }));
+    let oldSeries = [];
+    try { oldSeries = aerobicTrend(allRuns(r.today)).points.slice(-16).map(p => p.paceAt140); } catch { oldSeries = []; }
+    return {
+        efficiency: doseBacktest(r.dose, probes),
+        effort: doseBacktest(r.dose, effortProbes),
+        noise: { v2: seriesNoise(r.response.eff.weeks.map(w => w.pace)), old: seriesNoise(oldSeries) }
+    };
+}
+
+const CLASS_WORDS = { easy: "Easy", steady: "Steady", long: "Long", tempo: "Tempo", threshold: "Threshold", intervals: "Intervals", race: "Race" };
+const clockPace = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+
+function responseHtml(r, today) {
+    const { eff, effort, quality, execution, drift } = r;
+    const rd = r.reading;
+    const sig = eff.signal;
+    const effLine = sig.verdict === "few"
+        ? `Needs 3+ easy runs with heart rate in the last 2 weeks (and 6 in the 8 weeks before) to say anything.`
+        : sig.verdict === "none"
+            ? `No clear change: your easy runs are within ${Math.max(2, Math.abs(sig.bpm))} bpm of the 8 weeks before at the same pace (${signed(sig.bpm)} bpm, ± ${sig.se}).`
+            : `Your easy runs are <strong>${Math.abs(sig.bpm)} bpm ${sig.verdict} at the same pace</strong> than over the 8 weeks before (${esc(day(sig.from))} – ${esc(day(sig.to))}), worth about ${Math.abs(sig.paceSec)} s/mi ${sig.paceSec > 0 ? "faster" : "slower"} at the same heart rate.`;
+    const weeks = eff.weeks.filter(w => w.pace);
+    const effChart = weeks.length >= 2 ? `${lineSvg(eff.weeks.map(w => w.pace), { invert: true, height: 60 })}<div class="tr-axis"><span>${esc(day(eff.weeks[0].week))}</span><span>Faster is higher</span><span>This week</span></div>` : "";
+    const last = weeks.at(-1);
+    const es = effort.signal;
+    const effortLine = es.verdict === "few"
+        ? `Answer "How hard was it?" after runs: ${effort.answered} of your ${effort.recentRuns} runs in the last 2 weeks have an effort. It needs 3 in the last 3 weeks.`
+        : es.verdict === "costlier" ? `Your last ${es.n} answered runs felt <strong>${es.mean} harder</strong> than usual for you on average (1.0 or more is worth noticing).`
+        : es.verdict === "easier" ? `Your last ${es.n} answered runs felt <strong>${Math.abs(es.mean)} easier</strong> than usual for you.`
+        : `Your last ${es.n} answered runs felt about as hard as usual (${signed(es.mean)}).`;
+    const effortRows = effort.rows.slice(-5).reverse().map(x => `<li><span>${esc(day(x.date))}</span><span>${esc(CLASS_WORDS[x.cls])} · ${x.minutes} min</span><b>${x.rpe}</b><small>expected ${x.expected}</small></li>`).join("");
+    const q = quality.signal;
+    const qualityLine = q.verdict === "few" ? "" : `<li>Heart rate on quality reps: <strong>${signed(q.bpm)} bpm</strong> against your own reps at the same speed over the 8 weeks before (last ${q.n} sessions with laps).</li>`;
+    const ex = execution;
+    const exLine = ex.sessions ? `<li>Quality sessions of the last 6 weeks with laps: <strong>${ex.onTarget} of ${ex.work}</strong> work reps on target${ex.fast ? `, ${ex.fast} too fast` : ""}${ex.slow ? `, ${ex.slow} too slow` : ""} (${ex.sessions} ${ex.sessions === 1 ? "session" : "sessions"}).</li>` : "";
+    const driftLine = drift.length ? `<li>Long runs, second half vs first (heart rate per pace): ${drift.map(d => `${esc(day(d.date))} ${d.miles} mi <strong>${d.drift > 0 ? "+" : ""}${d.drift}%</strong>`).join(" · ")}. Under 5% means you held steady.</li>` : "";
+    return `
+        <p class="rc-sub-h">How you responded</p>
+        <div class="lc-reading is-${esc(rd.key)}"><strong>${esc(rd.title)}</strong><p>${esc(rd.text)}</p>${rd.note ? `<small>${esc(rd.note)}</small>` : ""}</div>
+        <div class="lc-resp">
+            <div class="lc-resp-part">
+                <h3 class="lc-h">Easy-run efficiency</h3>
+                ${last && eff.refHr ? `<p class="lc-big"><strong>${clockPace(last.pace)}</strong>/mi at ${eff.refHr} bpm <small>your usual easy heart rate</small></p>` : ""}
+                ${effChart}
+                <p class="lc-line">${effLine}</p>
+                ${eff.summer && sig.verdict === "higher" ? `<p class="tr-note">It's summer: heat alone raises heart rate at the same pace.</p>` : ""}
+            </div>
+            <div class="lc-resp-part">
+                <h3 class="lc-h">Effort vs what it usually costs you</h3>
+                <p class="lc-line">${effortLine}</p>
+                ${effortRows ? `<ul class="lc-effort">${effortRows}</ul>` : ""}
+            </div>
+        </div>
+        ${qualityLine || exLine || driftLine ? `<ul class="rc-why">${qualityLine}${exLine}${driftLine}</ul>` : ""}`;
 }
 
 function mixLine(weeks) {
@@ -51,7 +131,7 @@ function renderLoad() {
     const el = $("loadPanel");
     if (!el || !result) return;
     const { state, dose, today } = result;
-    el.dataset.version = `${DOSE_VERSION}/${LOAD_VERSION}`;
+    el.dataset.version = `${DOSE_VERSION}/${LOAD_VERSION}/${RESPONSE_VERSION}`;
     const head = `<div class="panel-header"><div><h2>Load and response</h2>
         <p>What your running has asked of you, from every run's pace (or heart rate, or effort), against your own last year.</p></div></div>`;
     if (!state.today) {
@@ -89,11 +169,11 @@ function renderLoad() {
             ${anchor?.v60 ? `<li>Your 1-hour race pace now: <strong>${paceMile(anchor.v60)}/mi</strong>, from ${esc(V60_WORDS[anchor.v60Source] || "your runs")}. 1 hour at that pace = 100 points.</li>` : `<li>No 1-hour pace yet (no races or fast efforts on record), so runs are scored by heart rate or effort.</li>`}
             <li>Runs in the last year: ${esc(scored || "none")}.</li>
         </ul>
-        <p class="tr-note">How your body responded (easy-run heart rate at the same pace, effort against what a run usually costs you) joins this card in the next step.</p>
+        ${responseHtml(result.response, today)}
         <details class="rc-details"><summary>How this is worked out</summary>
-            <p>Dose ${esc(DOSE_VERSION)} · load ${esc(LOAD_VERSION)}. Each run gets one dose, not three added together. Training base and recent load are exponentially weighted daily averages (about ${TAU.base} and ${TAU.recent} days); rest days count as zero. There's no "safe zone": ratios of recent to base load don't predict injury reliably, so this shows where you are against your own year instead.</p>
+            <p>Dose ${esc(DOSE_VERSION)} · load ${esc(LOAD_VERSION)} · response ${esc(RESPONSE_VERSION)}. Each run gets one dose, not three added together. Training base and recent load are exponentially weighted daily averages (about ${TAU.base} and ${TAU.recent} days); rest days count as zero. There's no "safe zone": ratios of recent to base load don't predict injury reliably, so this shows where you are against your own year instead.</p>
             ${anchor ? `<p>Heart rate: max ${anchor.hrMax} (${esc(anchor.hrMaxSource)}), resting ${anchor.hrRest} (${esc(anchor.hrRestSource)}).</p>` : ""}
-            <ul>${DOSE_ASSUMPTIONS.map(a => `<li>${esc(a)}</li>`).join("")}</ul>
+            <ul>${[...DOSE_ASSUMPTIONS, ...RESPONSE_ASSUMPTIONS].map(a => `<li>${esc(a)}</li>`).join("")}</ul>
         </details>`;
 }
 
@@ -117,7 +197,7 @@ function renderAgreement() {
     el.innerHTML = `
         <div class="panel-header"><div>
             <h2>Model check: training load</h2>
-            <p>Pace, heart rate and effort are three readings of the same run. How closely they agree over the last year, on runs that have both.</p>
+            <p>Pace, heart rate and effort are three readings of the same run: how closely they agree over the last year, and which one best tracks how you respond.</p>
         </div></div>
         ${!a.runs ? `<p class="ar-empty">No runs in the last year yet.</p>` : `
             <div class="mc-scroll"><table class="mc-table">
@@ -130,7 +210,39 @@ function renderAgreement() {
                 <li>Could be scored, last year: ${a.coverage.pace} of ${a.runs} by pace, ${a.coverage.hr} by heart rate, ${a.coverage.effort} by effort.</li>
                 <li>Scale used for runs without pace: heart rate × ${s.hr.ratio.toFixed(2)}${s.hr.own ? ` (yours ${s.hr.own.toFixed(2)} from ${s.hr.n} runs, blended with the default ${s.hr.default})` : " (the default until 3+ runs have both)"}; effort × ${s.effort.ratio.toFixed(2)}${s.effort.own ? ` (yours ${s.effort.own.toFixed(2)} from ${s.effort.n} runs)` : " (the default)"}.</li>
             </ul>
-            <p class="tr-note">The real test (which measure best predicts how you respond in the following days) needs the response signals of step 4. Until then pace is the dose because it's the one that tiredness, heat and illness don't move.</p>`}`;
+            ${checkHtml(result.check)}`}`;
+}
+
+const minus = x => (x < 0 ? `−${Math.abs(x).toFixed(2)}` : x.toFixed(2));
+const VERDICT_WORDS = { better: "better", worse: "worse", same: "no clear difference" };
+
+function testTable(t, outcome) {
+    if (!t) return `<p class="ar-empty sb-wait"></p>`;
+    if (t.verdict === "few") return `<p class="tr-note">${esc(outcome)}: needs 20+ runs to test (${t.n} so far).</p>`;
+    return `<div class="mc-scroll"><table class="mc-table mc-dose">
+            <thead><tr><th scope="col">${esc(outcome)} (${t.n} runs)</th><th scope="col">r</th><th scope="col">95% range</th><th scope="col">vs Southbound's</th></tr></thead>
+            <tbody>${t.variants.map(v => `<tr><th scope="row">${esc(v.label)}</th><td>${minus(v.r)}</td><td>${minus(v.lo)} to ${minus(v.hi)}</td><td>${v.vsPrimary ? esc(VERDICT_WORDS[v.vsPrimary]) : "–"}</td></tr>`).join("")}</tbody>
+        </table></div>`;
+}
+
+function checkHtml(c) {
+    const verdict = t => (!t || t.verdict === "few" ? null : !t.link
+        ? "In your runs so far, a higher recent load doesn't show up as this response the next day for any of these measures, so nothing to choose between yet. The dose stays as it is."
+        : t.verdict === "keep"
+        ? "None of the other measures tracks it clearly better, so the dose stays as it is (ties go to the simpler rule)."
+        : `${t.better.map(k => t.variants.find(v => v.key === k).label).join(" and ")} tracked it clearly better. Worth switching the dose once this holds for a few more weeks.`);
+    const n = c?.noise;
+    return `
+        <p class="rc-sub-h">Which load measure tracks how you respond</p>
+        <p class="tr-note">For every easy run with an efficiency reading and every run with an effort answer: did a recent load above your base the day before go with a higher heart rate at the same pace, or a run that felt harder than expected? Higher r = tracks it more closely.</p>
+        ${testTable(c?.efficiency, "Easy-run heart rate")}
+        ${verdict(c?.efficiency) ? `<p class="lc-line">${esc(verdict(c.efficiency))}</p>` : ""}
+        ${testTable(c?.effort, "Effort vs expected")}
+        ${verdict(c?.effort) ? `<p class="lc-line">${esc(verdict(c.effort))}</p>` : ""}
+        <p class="rc-sub-h">Easy-run efficiency vs the old Aerobic fitness</p>
+        ${!c ? `<p class="ar-empty sb-wait"></p>` : n?.v2 && n?.old
+            ? `<p class="lc-line">Week-to-week wobble over the last ${Math.min(n.v2.weeks, n.old.weeks)} weeks: <strong>± ${n.v2.sd} s/mi</strong> for the new easy-run efficiency vs ± ${n.old.sd} s/mi for the old "pace at 140 bpm". ${n.v2.sd < n.old.sd ? "The new one is steadier, so a real change shows sooner." : n.v2.sd > n.old.sd ? "The old one is steadier here; the new one also adjusts for pace and leaves out hilly, hard and treadmill runs." : "About the same."}</p>`
+            : `<p class="tr-note">Needs a few more weeks of easy runs with heart rate to compare.</p>`}`;
 }
 
 async function refresh() {
@@ -138,6 +250,12 @@ async function refresh() {
     result = compute(inputs);
     renderLoad();
     renderAgreement();
+    const mine = result;
+    setTimeout(() => {
+        if (result !== mine) return;
+        mine.check = computeCheck(mine);
+        renderAgreement();
+    }, 30);
 }
 
 function mount() {

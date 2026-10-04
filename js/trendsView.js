@@ -2,14 +2,14 @@
    Southbound — the Analytics trends (js/trends.js + js/trendsData.js)
 
    Panels in #trends, from what was actually run and measured:
-   plan vs actual, key workouts (lap by lap), long runs, aerobic
-   fitness, body (HRV / resting HR / sleep / readiness), the race
-   prediction and all your running. Load has its own card now
-   (js/loadCard.js, the athlete model's dose + load state). Draws from saved data at once, then again when
+   plan vs actual, key workouts (lap by lap), long runs, body (HRV /
+   resting HR / sleep / readiness), the race prediction and all your
+   running. Load and aerobic fitness moved to the athlete model's Load
+   and response card (js/loadCard.js). Draws from saved data at once, then again when
    COROS brings more (laps, 8 weeks of sleep + HRV, new runs).
 ========================================== */
 
-import { planVsActual, longRuns, aerobicTrend, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
+import { planVsActual, longRuns, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
 import { barsHtml, lineSvg } from "./svgCharts.js";
 import { planWeeks, allRuns, everyRun, stravaActs, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
 import { yearStats, fastestEfforts, otherCounts, EFFORT_LABELS } from "./stravaHistory.js";
@@ -85,15 +85,6 @@ function longPanel(runs) {
         `${lineSvg(lr.map(r => r.miles), { height: 70 })}<ul class="tr-list">${lr.slice(-6).reverse().map(r => `<li><span>${day(r.date)}</span><strong>${mi(r.miles)} mi</strong><span>${r.pace ? `${mmss(r.pace)}/mi` : "–"}</span><span>${r.hr ? `${r.hr} bpm` : ""}</span></li>`).join("")}</ul>`);
 }
 
-function aerobicPanel(runs) {
-    const t = aerobicTrend(runs);
-    if (t.points.length < 2) return panel("trendsAerobic", "Aerobic fitness", "", empty("Needs a few weeks of easy runs with heart rate."));
-    const last = t.points.at(-1);
-    const sub = `Easy pace at 140 bpm: <strong>${mmss(last.paceAt140)}/mi</strong>${t.change != null ? ` · ${t.change > 0 ? `${t.change} s/mi faster` : t.change < 0 ? `${-t.change} s/mi slower` : "the same"} than the 4 weeks before` : ""}`;
-    return panel("trendsAerobic", "Aerobic fitness", sub,
-        `${lineSvg(t.points.map(p => p.paceAt140), { invert: true, height: 80 })}<div class="tr-axis"><span>${day(t.points[0].week)}</span><span>Faster is higher</span><span>${day(last.week)}</span></div><p class="tr-note">From easy runs (heart rate under 155): how fast the same heartbeat carries you. It drifts faster as your aerobic fitness grows.</p>`);
-}
-
 function bodyPanel(today) {
     const rows = bodyTrend(health(), readiness(), today);
     const needH = loadSettings().sleepNeedMin / 60;
@@ -167,7 +158,7 @@ export function renderTrends() {
     el.innerHTML = [
         planPanel(today, runs),
         workoutsPanel(today),
-        `<div class="tr-grid">${longPanel(runs)}${aerobicPanel(runs)}</div>`,
+        longPanel(runs),
         predictionPanel(),
         bodyPanel(today),
         yearsPanel(today)

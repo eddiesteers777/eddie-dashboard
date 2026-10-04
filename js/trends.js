@@ -63,6 +63,8 @@ export function longRuns(runs, { minMiles = 10 } = {}) {
 }
 
 // ---------- aerobic fitness: easy pace at the same heart rate ----------
+// No longer drawn (easy-run efficiency in js/trainingResponse.js replaced it);
+// kept so Model check can compare the two.
 
 /**
  * Easy runs (heart rate from 100 to hrCap, 3+ miles): speed per heartbeat

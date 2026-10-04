@@ -1060,3 +1060,27 @@ canvas{
     .lc-stat small{ font-size:12px; }
     .lc-chart{ height:120px; }
 }
+
+/* HOW YOU RESPONDED (js/loadCard.js, js/trainingResponse.js) */
+.lc-reading{ margin:4px 0 14px; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); border-left:4px solid var(--sage, var(--green)); background:color-mix(in srgb, var(--text) 3%, transparent); }
+.lc-reading strong{ display:block; color:var(--text); font-size:16px; }
+.lc-reading p{ margin:4px 0 0; color:var(--text-secondary); }
+.lc-reading small{ display:block; margin-top:6px; color:var(--muted); font-size:13px; }
+.lc-reading.is-adaptation, .lc-reading.is-easier{ border-left-color:var(--good, var(--green)); }
+.lc-reading.is-fatigue, .lc-reading.is-deep{ border-left-color:var(--bad, var(--red)); }
+.lc-reading.is-hrOnly, .lc-reading.is-costlier{ border-left-color:var(--amber); }
+.lc-reading.is-partial{ border-left-color:var(--muted); }
+.lc-resp{ display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; }
+.lc-resp-part{ min-width:0; }
+.lc-h{ margin:0 0 6px; font-size:15px; color:var(--text); font-weight:600; }
+.lc-big{ margin:0; color:var(--text-secondary); }
+.lc-big strong{ font-family:var(--font-display); font-size:30px; font-weight:400; color:var(--text); }
+.lc-big small{ display:block; color:var(--muted); font-size:13px; }
+.lc-resp .tr-line{ height:60px; margin-top:8px; }
+.lc-effort{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; font-size:14px; }
+.lc-effort li{ display:grid; grid-template-columns:62px 1fr auto 92px; gap:8px; align-items:baseline; color:var(--text-secondary); }
+.lc-effort b{ color:var(--text); font-variant-numeric:tabular-nums; }
+.lc-effort small{ color:var(--muted); font-size:13px; text-align:right; }
+@media (max-width:600px){
+    .lc-effort li{ grid-template-columns:54px 1fr auto 84px; gap:6px; }
+}

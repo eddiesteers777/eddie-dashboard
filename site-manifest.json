@@ -208,6 +208,7 @@
     "js/trainingPlanGenerator.js",
     "js/trainingPlanStrengthIntegration.js",
     "js/trainingPrograms.js",
+    "js/trainingResponse.js",
     "js/trends.js",
     "js/trendsData.js",
     "js/trendsView.js",
