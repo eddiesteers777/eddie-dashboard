@@ -1,6 +1,6 @@
 # Southbound Athlete Model — planning document
 
-Working name only. Status (2026-10-04): **Phases 1–5 written; waiting for Eddie's approval of the architecture (and the round-2 questions at the end) before any code.** No app code has changed for this yet.
+Working name only. Status (2026-10-04): **Architecture approved. Steps 0 and 1 built** (cleanup; sessions, races, effort). Next: step 2.
 
 Read with `CLAUDE.md`. Everything below was checked against the code on `main` at `8b8a1db`, not against earlier summaries.
 
@@ -634,7 +634,18 @@ Each step is a normal Southbound step: pure modules with unit tests, a browser s
 
 ---
 
-## Round 2 questions (open)
+## Round 2 answers (Eddie, 2026-10-04)
+
+1. Steps 1 → 2 first, for a range before Indianapolis: **yes**.
+2. The dial-down table in 3.9 as the starting defaults: **yes**.
+3. Morning check-in every day and an effort number after every run: **yes**.
+4. Architecture approved; start with steps 0 and 1: **yes**.
+
+## Build log
+
+- **Step 0 + 1 (2026-10-04):** privacy page sharing text; Settings refreshes all three shared summaries; `js/corosCoach.js` deleted. `js/athleteLedger.js` (session list, plan link, race finder, race record, effort prompts; 13 unit tests), `js/athleteData.js`, **Your races** on Analytics, **How hard was it?** on the coach's Today, effort required on planned-run logs, new synced keys `race-results` and `session-rpe`. Race-finder weights were tuned on test data so a fast weekday tempo isn't a candidate on speed and distance alone (score 5 needed). A 25-step browser suite.
+
+## Round 2 questions (answered above)
 
 1. **Order:** do steps 1 and 2 first so you have a range for Indianapolis before Nov 8 (labelled unvalidated), or the steps in plain order? *Suggested: 1 → 2 first.*
 2. **The dial-down table (3.9):** OK as the starting defaults (Absorb 90%, Ease 80% easy / 85% long / −25% reps, Recover 65%)? You can change them later.

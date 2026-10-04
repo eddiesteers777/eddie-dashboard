@@ -3832,3 +3832,24 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
 }
 .stats .stats-more .ui-icon{ width:16px; height:16px; }
 .stats [hidden]{ display:none !important; }
+
+/* ==========================================================
+   EFFORT AFTER A WATCH RUN — coach's Today, js/effortCard.js
+========================================================== */
+.sb-effort{ margin-top:14px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-md, 14px); background:color-mix(in srgb, var(--primary) 6%, transparent); }
+.sb-effort[hidden]{ display:none !important; }
+.sb-effort-title{ margin:0 0 8px; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.sb-effort-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+.sb-effort-list li{ display:flex; flex-direction:column; gap:6px; }
+.sb-effort-run{ font-size:14px; color:var(--text-secondary); }
+.sb-effort-run strong{ color:var(--text); }
+.sb-effort-scale{ display:flex; flex-wrap:wrap; gap:4px; }
+.sb-effort-scale button{ min-width:36px; height:36px; padding:0 6px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); color:var(--text); font-weight:700; cursor:pointer; }
+.sb-effort-scale button:hover{ border-color:var(--primary); color:var(--primary-light); }
+.sb-effort-scale .sb-effort-skip{ font-weight:500; color:var(--muted); background:transparent; }
+.sb-effort-hint{ margin:8px 0 0; font-size:12px; color:var(--muted); }
+@media (max-width:600px){
+    .sb-effort-scale{ display:grid; grid-template-columns:repeat(5, 1fr); }
+    .sb-effort-scale button{ min-height:40px; }
+    .sb-effort-scale .sb-effort-skip{ grid-column:1 / -1; }
+}

@@ -939,3 +939,33 @@ canvas{
     .record h3{ font-size:26px; }
     .record:last-child:nth-child(odd){ grid-column:1 / -1; }
 }
+
+/* ==========================================
+   YOUR RACES (js/racesCard.js)
+========================================== */
+
+.ar-panel{ margin-bottom:34px; }
+.ar-panel [hidden]{ display:none !important; }
+.ar-h{ display:flex; align-items:center; gap:8px; margin:22px 0 10px; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--primary); }
+.ar-h span{ min-width:22px; padding:1px 8px; border-radius:var(--radius-pill); background:color-mix(in srgb, var(--primary) 16%, transparent); color:var(--text); font-size:12px; text-align:center; letter-spacing:0; }
+.ar-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.ar-row{ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:10px 16px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:color-mix(in srgb, var(--bg) 40%, transparent); }
+.ar-main{ flex:1 1 260px; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.ar-main strong{ font-size:15px; overflow-wrap:anywhere; }
+.ar-main strong em{ font-style:normal; font-size:11px; padding:1px 7px; margin-left:4px; border-radius:var(--radius-pill); background:color-mix(in srgb, var(--green) 18%, transparent); color:var(--green); vertical-align:2px; }
+.ar-main span{ color:var(--text-secondary); font-size:14px; }
+.ar-main small{ color:var(--muted); font-size:13px; }
+.ar-actions{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.ar-empty{ color:var(--muted); font-size:14px; margin:10px 0; }
+.ar-more{ margin-top:8px; }
+.ar-edit{ flex:0 0 100%; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px 14px; padding-top:10px; border-top:1px solid var(--border); }
+.ar-edit label{ display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--text-secondary); }
+.ar-edit label small{ color:var(--muted); }
+.ar-edit select, .ar-edit input:not([type="checkbox"]){ background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 10px; font-size:15px; }
+.ar-edit .ar-check{ grid-column:1 / -1; flex-direction:row; align-items:center; gap:8px; flex-wrap:wrap; }
+.ar-edit .ar-actions{ grid-column:1 / -1; }
+.ar-error{ grid-column:1 / -1; margin:0; color:var(--danger); font-size:13px; }
+@media (max-width:600px){
+    .ar-panel{ padding:18px; }
+    .ar-actions .sb-btn{ flex:1 1 auto; }
+}

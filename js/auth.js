@@ -36,6 +36,8 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coros-health-history",
     "coros-health-backfill",
     "coros-laps",
+    "session-rpe",
+    "race-results",
     "coros-sent",
     "readiness-checkins",
     "readiness-settings",

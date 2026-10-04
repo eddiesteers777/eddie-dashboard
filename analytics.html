@@ -120,6 +120,14 @@
         <div id="trends" class="tr-wrap" aria-live="polite"></div>
 
         <!-- ==========================================
+             YOUR RACES (js/racesCard.js): races found in your runs,
+             confirmed by you; the ground truth the athlete model is
+             checked against
+        ========================================== -->
+
+        <section class="panel ar-panel" id="racesPanel" aria-live="polite"><p class="sb-wait"></p></section>
+
+        <!-- ==========================================
              PERSONAL RECORDS
         ========================================== -->
 
@@ -472,6 +480,7 @@
 
     <script type="module" src="js/analytics.js"></script>
     <script type="module" src="js/trendsView.js"></script>
+    <script type="module" src="js/racesCard.js"></script>
     <script type="module" src="js/stravaImport.js"></script>
     <script type="module" src="js/corosAuth.js"></script>
     <script type="module" src="js/corosData.js"></script>

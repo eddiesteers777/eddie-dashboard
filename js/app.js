@@ -274,6 +274,9 @@ function renderToday() {
     // Send the coach's own marathon runs to his COROS watch.
     import("./marathonCorosButton.js").then(m => m.mountMarathonCoros(document.getElementById("marathonCoros")))
         .catch(error => console.error("Southbound: Send to COROS failed to load.", error));
+    // "How hard was it?" for his recent watch runs (the athlete model's effort numbers).
+    import("./effortCard.js").then(m => m.mountEffortCard(document.getElementById("effortCheck")))
+        .catch(error => console.error("Southbound: effort card failed to load.", error));
 
     if (!container) {
         return;

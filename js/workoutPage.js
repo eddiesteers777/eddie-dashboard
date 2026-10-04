@@ -414,7 +414,7 @@ function openLogForm(prefill = {}) {
                     <label class="pw-label">Time<input class="sb-dialog-input" name="time" type="text" inputmode="numeric" placeholder="45:30" value="${esc(r.durationSec ? formatDuration(r.durationSec) : prefill.durationSec ? formatDuration(prefill.durationSec) : "")}"></label>
                 </div>
                 <p class="wo-pace" data-pace></p>
-                <span class="pw-label">How hard did it feel?</span>
+                <span class="pw-label">How hard did it feel? <small>(required)</small></span>
                 <div class="wo-rpe" role="radiogroup" aria-label="Effort, 1 to 10">
                     ${Array.from({ length: 10 }, (_, i) => i + 1).map(n => `<label title="${RPE_WORDS[n]}"><input type="radio" name="rpe" value="${n}"${Number(r.rpe) === n ? " checked" : ""}><span>${n}</span></label>`).join("")}
                 </div>
@@ -471,6 +471,14 @@ function openLogForm(prefill = {}) {
         const skipped = fd.get("status") === "skipped";
         const timeText = String(fd.get("time") || "").trim();
         const durationSec = timeText ? parseDuration(timeText) : null;
+        // Effort is required on a completed run: it's how your coach (and
+        // Southbound's training model) knows what the run cost you.
+        if (!skipped && !fd.get("rpe")) {
+            errorEl.textContent = "Tap how hard it felt, 1 to 10.";
+            errorEl.hidden = false;
+            form.querySelector('input[name="rpe"]')?.focus();
+            return;
+        }
         if (!skipped && timeText && durationSec === null) {
             errorEl.textContent = "Enter the time like 45:30 or 1:05:00.";
             errorEl.hidden = false;
