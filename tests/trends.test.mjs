@@ -1,7 +1,7 @@
 // Unit tests for Analytics trends (js/trends.js) and charts (js/svgCharts.js). Run: npm run test:static
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { planVsActual, longRuns, aerobicTrend, loadTrend, parseLaps, checkWorkout, bodyTrend, bodySummary, predictionTrend, mondayOf, addDays, mmss, clock } from "../js/trends.js";
+import { planVsActual, longRuns, aerobicTrend, parseLaps, checkWorkout, bodyTrend, bodySummary, predictionTrend, mondayOf, addDays, mmss, clock } from "../js/trends.js";
 import { barsHtml, lineSvg } from "../js/svgCharts.js";
 
 const M = 1609.344;
@@ -36,19 +36,6 @@ test("aerobic fitness: easy pace at 140 bpm, and how it changed", () => {
     assert.equal(t.points[7].paceAt140, 519);
     assert.equal(t.change, 12, "about 12 s/mi faster over 4 weeks");
     assert.equal(aerobicTrend([]).change, null);
-});
-
-test("load: weekly miles and this week vs. the usual (acute : chronic)", () => {
-    const runs = [];
-    for (let i = 0; i < 28; i++) if (i % 7 !== 6) runs.push(run(addDays("2026-09-27", -i), 8, 480, 140));
-    const l = loadTrend(runs, "2026-09-27", { weeks: 6 });
-    assert.equal(l.bars.length, 6);
-    assert.equal(l.bars.at(-1).start, "2026-09-21");
-    assert.equal(l.ratio, 1);
-    assert.equal(l.status, "safe");
-    const spike = loadTrend([...runs, run("2026-09-26", 30, 480, 150)], "2026-09-27");
-    assert.equal(spike.status, "caution");
-    assert.equal(loadTrend([], "2026-09-27").status, "none");
 });
 
 // COROS's real lap reply for the 19-miler (first laps), JSON inside the text item.

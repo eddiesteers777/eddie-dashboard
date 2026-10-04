@@ -7,6 +7,8 @@
      lineSvg    a trend line (gaps where days are missing), an optional
                 band (e.g. your normal HRV range) and goal line; the SVG
                 stretches to its box, strokes keep their width
+     loadChartSvg  weekly load bars stacked by intensity, with the
+                training base and recent load lines over them
    Unit-tested in tests/trends.test.mjs.
 ========================================== */
 
@@ -64,4 +66,34 @@ export function lineSvg(values, { min, max, invert = false, band = null, goal = 
         ? `<line class="tr-path" x1="${Math.max(0, parseFloat(s[0]) - 0.8)}" x2="${Math.min(100, parseFloat(s[0]) + 0.8)}" y1="${s[0].split(",")[1]}" y2="${s[0].split(",")[1]}" vector-effect="non-scaling-stroke"/>`
         : `<polyline class="tr-path" points="${s.join(" ")}" vector-effect="non-scaling-stroke"/>`).join("");
     return `<svg class="tr-line ${cls}" viewBox="0 0 100 ${height}" preserveAspectRatio="none" aria-hidden="true">${bandSvg}${goalSvg}${lines}</svg>`;
+}
+
+/**
+ * The load chart: weekly bars stacked by intensity (easy / threshold / hard,
+ * as a daily average so they share the lines' scale) with two lines over
+ * them, day by day: training base and recent load.
+ * weeks: [{ start, easy, threshold, hard, daysIn }]   (oldest first)
+ * days:  [{ base, recent }]  one per day across those weeks (may end early: the current week)
+ */
+export function loadChartSvg(weeks, days, { height = 100 } = {}) {
+    const n = weeks.length * 7;
+    const perDay = w => ({ easy: w.easy / Math.max(1, w.daysIn ?? 7), threshold: w.threshold / Math.max(1, w.daysIn ?? 7), hard: w.hard / Math.max(1, w.daysIn ?? 7) });
+    const tops = weeks.map(w => { const p = perDay(w); return p.easy + p.threshold + p.hard; });
+    const max = Math.max(1, ...tops, ...days.flatMap(d => [d.base || 0, d.recent || 0])) * 1.08;
+    const y = v => r2(height - v / max * height);
+    const bars = weeks.map((w, i) => {
+        const p = perDay(w);
+        let base = 0;
+        return ["easy", "threshold", "hard"].map(k => {
+            const h = p[k] / max * height;
+            const rect = h > 0 ? `<rect class="lc-${k}${w.current ? " is-current" : ""}" x="${i * 7 + 1}" width="5" y="${r2(height - (base + h))}" height="${r2(h)}"/>` : "";
+            base += h;
+            return rect;
+        }).join("");
+    }).join("");
+    const line = (key, cls) => {
+        const pts = days.map((d, i) => (d[key] == null ? null : `${r2(i + 0.5)},${y(d[key])}`)).filter(Boolean);
+        return pts.length > 1 ? `<polyline class="${cls}" points="${pts.join(" ")}" vector-effect="non-scaling-stroke"/>` : "";
+    };
+    return `<svg class="lc-chart" viewBox="0 0 ${n} ${height}" preserveAspectRatio="none" aria-hidden="true">${bars}${line("base", "lc-base")}${line("recent", "lc-recent")}</svg>`;
 }

@@ -63,10 +63,6 @@
 .tr-list li strong{ color:var(--text); }
 
 /* Load status */
-.tr-safe{ color:var(--good); }
-.tr-caution{ color:var(--primary); }
-.tr-high{ color:var(--bad); }
-.tr-low{ color:var(--muted); }
 
 /* Body minis */
 .tr-minis{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:14px; }

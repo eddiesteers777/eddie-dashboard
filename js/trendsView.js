@@ -1,14 +1,15 @@
 /* ==========================================
    Southbound — the Analytics trends (js/trends.js + js/trendsData.js)
 
-   Seven panels in #trends, from what was actually run and measured:
+   Panels in #trends, from what was actually run and measured:
    plan vs actual, key workouts (lap by lap), long runs, aerobic
-   fitness, load, body (HRV / resting HR / sleep / readiness) and the
-   race prediction. Draws from saved data at once, then again when
+   fitness, body (HRV / resting HR / sleep / readiness), the race
+   prediction and all your running. Load has its own card now
+   (js/loadCard.js, the athlete model's dose + load state). Draws from saved data at once, then again when
    COROS brings more (laps, 8 weeks of sleep + HRV, new runs).
 ========================================== */
 
-import { planVsActual, longRuns, aerobicTrend, loadTrend, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
+import { planVsActual, longRuns, aerobicTrend, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
 import { barsHtml, lineSvg } from "./svgCharts.js";
 import { planWeeks, allRuns, everyRun, stravaActs, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
 import { yearStats, fastestEfforts, otherCounts, EFFORT_LABELS } from "./stravaHistory.js";
@@ -93,15 +94,6 @@ function aerobicPanel(runs) {
         `${lineSvg(t.points.map(p => p.paceAt140), { invert: true, height: 80 })}<div class="tr-axis"><span>${day(t.points[0].week)}</span><span>Faster is higher</span><span>${day(last.week)}</span></div><p class="tr-note">From easy runs (heart rate under 155): how fast the same heartbeat carries you. It drifts faster as your aerobic fitness grows.</p>`);
 }
 
-const LOAD_WORDS = { safe: "in the safe range (0.8–1.3)", caution: "a big jump: ease off or hold here", high: "a very big jump: injury risk goes up", low: "well under your usual (fine for a down or taper week)", none: "" };
-
-function loadPanel(today, runs) {
-    const l = loadTrend(runs, today);
-    const bars = l.bars.map(b => ({ label: `${Number(b.start.slice(5, 7))}/${Number(b.start.slice(8))}`, value: b.miles, current: b.start === l.bars.at(-1).start, title: `Week of ${day(b.start)}: ${mi(b.miles)} mi` }));
-    const sub = l.ratio != null ? `Last 7 days: <strong>${mi(l.acute)} mi</strong> vs your usual ${mi(l.chronic)} a week · <span class="tr-${l.status}">${l.ratio.toFixed(2)}, ${LOAD_WORDS[l.status]}</span>` : "";
-    return panel("trendsLoad", "Load", sub, barsHtml(bars));
-}
-
 function bodyPanel(today) {
     const rows = bodyTrend(health(), readiness(), today);
     const needH = loadSettings().sleepNeedMin / 60;
@@ -176,7 +168,7 @@ export function renderTrends() {
         planPanel(today, runs),
         workoutsPanel(today),
         `<div class="tr-grid">${longPanel(runs)}${aerobicPanel(runs)}</div>`,
-        `<div class="tr-grid">${loadPanel(today, runs)}${predictionPanel()}</div>`,
+        predictionPanel(),
         bodyPanel(today),
         yearsPanel(today)
     ].join("");

@@ -69,7 +69,10 @@ function fromCoros(r) {
         avgHr: num(r.avgHr),
         maxHr: null,
         climb: null,
-        best: null
+        best: null,
+        // Treadmill / indoor runs: the watch's pace isn't trustworthy (js/sessionDose.js leaves it out)
+        indoor: /indoor|treadmill/i.test(String(r.sport || "")) || Number(r.sportType) === 101,
+        trail: /trail/i.test(String(r.sport || "")) || Number(r.sportType) === 102
     };
 }
 
@@ -89,7 +92,9 @@ function fromStrava(a) {
         avgHr: num(a.h),
         maxHr: num(a.x),
         climb: Number.isFinite(Number(a.g)) ? Number(a.g) : null,
-        best: Array.isArray(a.b) ? a.b : null
+        best: Array.isArray(a.b) ? a.b : null,
+        indoor: false,
+        trail: false
     };
 }
 
@@ -109,7 +114,9 @@ function fromLog(e) {
         avgHr: null,
         maxHr: null,
         climb: null,
-        best: null
+        best: null,
+        indoor: false,
+        trail: false
     };
 }
 

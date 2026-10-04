@@ -1028,3 +1028,35 @@ canvas{
     .rc-dur .rc-bar{ grid-column:1 / -1; grid-row:2; }
     .mc-table th, .mc-table td{ padding:6px 6px; }
 }
+
+/* LOAD AND RESPONSE (js/loadCard.js) */
+.lc-panel [hidden]{ display:none !important; }
+.lc-stats{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin:6px 0 12px; }
+.lc-stat{ display:flex; flex-direction:column; gap:2px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:color-mix(in srgb, var(--text) 3%, transparent); }
+.lc-stat span{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.lc-stat strong{ font-family:var(--font-display); font-size:34px; line-height:1.05; color:var(--text); font-weight:400; font-variant-numeric:tabular-nums; }
+.lc-stat small{ color:var(--muted); font-size:13px; }
+.lc-line{ margin:0 0 6px; color:var(--text-secondary); }
+.lc-line strong{ color:var(--text); }
+.lc-figure{ margin-top:10px; }
+.lc-chart{ display:block; width:100%; height:150px; overflow:visible; }
+.lc-easy{ fill:var(--green); opacity:.7; }
+.lc-threshold{ fill:var(--amber); opacity:.8; }
+.lc-hard{ fill:var(--red); opacity:.85; }
+.lc-chart .is-current{ opacity:1; }
+.lc-base, .lc-recent{ fill:none; stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
+.lc-base{ stroke:var(--text); }
+.lc-recent{ stroke:var(--primary); stroke-dasharray:6 4; }
+.lc-key{ display:inline-block; width:12px; height:10px; border-radius:2px; vertical-align:-1px; margin-right:-6px; }
+.lc-key.easy{ background:var(--green); opacity:.7; }
+.lc-key.threshold{ background:var(--amber); }
+.lc-key.hard{ background:var(--red); }
+.lc-key.line{ height:0; border-radius:0; border-top:3px solid var(--text); vertical-align:3px; }
+.lc-key.line.recent{ border-top:3px dashed var(--primary); }
+@media (max-width:600px){
+    .lc-stats{ gap:8px; }
+    .lc-stat{ padding:10px; }
+    .lc-stat strong{ font-size:28px; }
+    .lc-stat small{ font-size:12px; }
+    .lc-chart{ height:120px; }
+}

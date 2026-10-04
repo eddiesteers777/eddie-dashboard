@@ -91,27 +91,6 @@ export function aerobicTrend(runs, { hrCap = 155, at = 140 } = {}) {
     return { points, change };
 }
 
-// ---------- load: this week vs. your usual ----------
-
-/**
- * Weekly miles for the last `weeks` weeks, and the last 7 days against the
- * average week of the last 28 (acute : chronic). 0.8-1.3 is the usual safe band.
- */
-export function loadTrend(runs, today, { weeks = 12 } = {}) {
-    const monday = mondayOf(today);
-    const bars = Array.from({ length: weeks }, (_, i) => {
-        const start = addDays(monday, -7 * (weeks - 1 - i));
-        const end = addDays(start, 6);
-        return { start, miles: round1((runs || []).filter(r => r.date >= start && r.date <= end).reduce((t, r) => t + miles(r), 0)) };
-    });
-    const sum = (from, to) => (runs || []).filter(r => r.date >= from && r.date <= to).reduce((t, r) => t + miles(r), 0);
-    const acute = sum(addDays(today, -6), today);
-    const chronic = sum(addDays(today, -27), today) / 4;
-    const ratio = chronic > 0 ? Math.round(acute / chronic * 100) / 100 : null;
-    const status = ratio == null ? "none" : ratio > 1.5 ? "high" : ratio > 1.3 ? "caution" : ratio >= 0.8 ? "safe" : "low";
-    return { bars, acute: round1(acute), chronic: round1(chronic), ratio, status };
-}
-
 // ---------- laps ----------
 
 /**

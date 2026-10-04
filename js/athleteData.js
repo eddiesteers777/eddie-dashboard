@@ -27,6 +27,8 @@ function save(key, value) {
 
 export const loadRpe = () => read(RPE_KEY, {}) || {};
 export const loadRaces = () => read(RACES_KEY, {}) || {};
+/** COROS laps saved for key workouts (js/trendsData.js): { labelId: { date, laps: [{ m, s, hr }] } }. */
+export const loadLaps = () => read("coros-laps", {}) || {};
 
 /** The coach's own marathon plan as planned days: [{ date, miles, title, race }]. */
 export async function marathonPlanDays() {
