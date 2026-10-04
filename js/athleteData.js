@@ -11,7 +11,8 @@
 ========================================== */
 
 import { buildLedger, RPE_KEY, RACES_KEY } from "./athleteLedger.js";
-import { HISTORY_KEY, emptyHistory, runsBetween, isoDate, addDays } from "./corosHistory.js";
+import { HISTORY_KEY, FITNESS_KEY, emptyHistory, runsBetween, isoDate, addDays } from "./corosHistory.js";
+import { HEALTH_KEY } from "./corosHealth.js";
 import { loadStrava } from "./stravaStore.js";
 
 const read = (key, fallback) => {
@@ -28,7 +29,7 @@ export const loadRpe = () => read(RPE_KEY, {}) || {};
 export const loadRaces = () => read(RACES_KEY, {}) || {};
 
 /** The coach's own marathon plan as planned days: [{ date, miles, title, race }]. */
-async function marathonPlanDays() {
+export async function marathonPlanDays() {
     try {
         const { WEEKS, weekStart, getAdjustedWeekDays } = await import("./marathonData.js");
         const out = [];
@@ -72,3 +73,42 @@ function put(key, session, value) {
 export const saveEffort = (session, record) => put(RPE_KEY, session, record);
 export const saveRace = (session, record) => put(RACES_KEY, session, record);
 export const clearRace = session => put(RACES_KEY, session, null);
+
+// ---------- the athlete model's own record ("athlete-model") ----------
+
+export const MODEL_KEY = "athlete-model";
+export const loadModelRecord = () => read(MODEL_KEY, null) || { version: 1, locks: [] };
+
+/** Everything the model reads: sessions, COROS health and fitness by day, the plan's days. */
+export async function loadModelInputs(today = isoDate(new Date())) {
+    const planDays = await marathonPlanDays();
+    return {
+        today,
+        sessions: await loadLedger(today),
+        health: read(HEALTH_KEY, {}) || {},
+        fitness: read(FITNESS_KEY, {}) || {},
+        planDays
+    };
+}
+
+/** The plan's race day: { date, meters, name, goalSec } or null. */
+export function planRace(planDays = []) {
+    const day = planDays.filter(d => d.race && d.miles >= 3).sort((a, b) => b.miles - a.miles)[0];
+    if (!day) return null;
+    const goal = String(day.title || "").match(/goal\s+(\d{1,2}:\d{2}:\d{2})/i);
+    const [h, m, x] = goal ? goal[1].split(":").map(Number) : [];
+    const meters = day.miles >= 26 ? 42195 : day.miles >= 13 ? 21097.5 : Math.round(day.miles * 1609.344);
+    return {
+        date: day.date, meters,
+        name: String(day.title || "Race day").replace(/^race day:\s*/i, "").split(" - ")[0].trim() || "Race day",
+        goalSec: goal ? h * 3600 + m * 60 + x : null
+    };
+}
+
+/** Saves a locked prediction (kept forever, so it can be scored honestly after the race). */
+export function saveLock(lock) {
+    const rec = loadModelRecord();
+    rec.locks = [...(rec.locks || []), lock];
+    save(MODEL_KEY, rec);
+    return rec;
+}

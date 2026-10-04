@@ -1,6 +1,6 @@
 # Southbound Athlete Model — planning document
 
-Working name only. Status (2026-10-04): **Architecture approved. Steps 0 and 1 built** (cleanup; sessions, races, effort). Next: step 2.
+Working name only. Status (2026-10-04): **Architecture approved. Steps 0, 1 and 2 built** (cleanup; sessions, races, effort; race capability + Model check + race-day lock). Next: step 3.
 
 Read with `CLAUDE.md`. Everything below was checked against the code on `main` at `8b8a1db`, not against earlier summaries.
 
@@ -466,7 +466,7 @@ Five **domains**, each scored against the athlete's own baseline (z-scores, then
 
 **Combining:** precision-weighted mean of the lenses' log-times (weights 1/σ²). Starting σ: R 3%, S 4%, A 6%, each inflated for staleness, few efforts or poor data. These are replaced by measured errors once the backtest has them. If the lenses disagree more than their σ allow, the interval widens: `σ_combined × max(1, √(χ²/df))`. The 80% interval is ±1.28σ.
 
-**Confidence label:** High (80% interval within ±2%), Moderate (±2–4%), Low (wider), always listed with its reasons.
+**Confidence label:** High (80% interval within ±2.5%), Moderate (±2.5–5%), Low (wider), always listed with its reasons. (Widened from ±2/±4% on 2026-10-04: three agreeing sources for a marathon from a 10K showed Low.)
 
 **What the coach sees** (illustrative numbers):
 > **Marathon (Indianapolis, Nov 8):** 3:06 (80% range 3:03–3:11), Moderate confidence.
@@ -644,6 +644,8 @@ Each step is a normal Southbound step: pure modules with unit tests, a browser s
 ## Build log
 
 - **Step 0 + 1 (2026-10-04):** privacy page sharing text; Settings refreshes all three shared summaries; `js/corosCoach.js` deleted. `js/athleteLedger.js` (session list, plan link, race finder, race record, effort prompts; 13 unit tests), `js/athleteData.js`, **Your races** on Analytics, **How hard was it?** on the coach's Today, effort required on planned-run logs, new synced keys `race-results` and `session-rpe`. Race-finder weights were tuned on test data so a fast weekday tempo isn't a candidate on speed and distance alone (score 5 needed). A 25-step browser suite.
+
+- **Step 2 (2026-10-04):** `js/vdot.js`, `js/athleteParams.js`, `js/raceCapability.js` (model 0.1.0), `js/raceBacktest.js`, Race capability + Model check on Analytics, the race-day lock (`athlete-model`). Changes from the 3.7 design found while testing on a made-up athlete: (1) the training lens read several minutes slow because training bests are rarely all-out, so it now carries a personal **race-vs-training factor** (prior 0.97, worth 2 races); (2) added the **track record** calibration from 3.11 now rather than later: earlier races of the same kind of distance against the model's own prediction the day before, shrunk toward no change; without it, a runner whose marathons always trail their shorter races wasn't learned unless the races were paired within 120 days; (3) the speed lens uses the single fastest mile–10K training effort, not the fitted speed curve (long runs flattened the curve's slope); critical speed and the curve are reported, not used for the time; (4) an "18-mile" long run measures 17.99 on GPS, so long runs count from 0.2 mi under; (5) confidence bands widened to ±2.5% / ±5%. 22 unit tests, a 21-step browser suite.
 
 ## Round 2 questions (answered above)
 

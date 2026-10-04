@@ -38,6 +38,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coros-laps",
     "session-rpe",
     "race-results",
+    "athlete-model",
     "coros-sent",
     "readiness-checkins",
     "readiness-settings",

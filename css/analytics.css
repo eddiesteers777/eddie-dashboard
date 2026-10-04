@@ -969,3 +969,62 @@ canvas{
     .ar-panel{ padding:18px; }
     .ar-actions .sb-btn{ flex:1 1 auto; }
 }
+
+/* ==========================================
+   RACE CAPABILITY + MODEL CHECK (js/raceCapabilityCard.js)
+========================================== */
+
+.rc-panel [hidden]{ display:none !important; }
+.rc-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+.rc-chip{ min-height:40px; padding:0 16px; border:1px solid var(--border); border-radius:var(--radius-pill); background:transparent; color:var(--text-secondary); font-weight:600; cursor:pointer; }
+.rc-chip.is-on{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.rc-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 16px; margin-bottom:8px; }
+.rc-time{ font-family:var(--font-display); font-size:56px; line-height:1; color:var(--text); letter-spacing:.02em; }
+.rc-range{ color:var(--text-secondary); font-size:15px; }
+.rc-conf{ font-weight:700; }
+.rc-conf.is-high{ color:var(--good, var(--green)); }
+.rc-conf.is-moderate{ color:var(--amber); }
+.rc-conf.is-low{ color:var(--bad, var(--red)); }
+.rc-race{ margin:6px 0 2px; color:var(--text-secondary); font-size:14px; }
+.rc-race strong{ color:var(--text); }
+.rc-goal{ margin:0 0 8px; font-size:14px; color:var(--primary-light, var(--primary)); }
+.rc-lock{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:10px 0 14px; padding:10px 12px; border:1px dashed var(--border); border-radius:var(--radius-sm); font-size:14px; color:var(--text-secondary); }
+.rc-lock small{ color:var(--muted); flex:1 1 220px; }
+.rc-lock.is-locked{ border-style:solid; border-color:color-mix(in srgb, var(--primary) 45%, transparent); display:block; }
+.rc-lock.is-locked strong{ color:var(--text); }
+.rc-locked-result{ margin:6px 0 0; color:var(--text); }
+.rc-why{ margin:10px 0 14px; padding-left:18px; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+.rc-why li{ margin-bottom:4px; }
+.rc-sub-h{ margin:16px 0 8px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.rc-lenses{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.rc-lens{ display:grid; grid-template-columns:minmax(120px, 1fr) auto auto; align-items:baseline; gap:2px 12px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); }
+.rc-lens strong{ font-size:18px; font-variant-numeric:tabular-nums; }
+.rc-lens-name{ color:var(--text); font-weight:600; }
+.rc-lens-sd{ color:var(--muted); font-size:13px; }
+.rc-lens small{ grid-column:1 / -1; color:var(--muted); font-size:13px; }
+.rc-dur ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.rc-dur li{ display:grid; grid-template-columns:minmax(110px, 140px) 1fr auto; align-items:center; gap:10px; font-size:14px; color:var(--text-secondary); }
+.rc-dur b{ color:var(--text); font-variant-numeric:tabular-nums; font-weight:600; }
+.rc-bar{ height:8px; border-radius:4px; background:color-mix(in srgb, var(--text) 10%, transparent); overflow:hidden; }
+.rc-bar span{ display:block; height:100%; background:var(--primary); border-radius:4px; }
+.rc-details{ margin-top:16px; color:var(--muted); font-size:13px; }
+.rc-details summary{ cursor:pointer; color:var(--text-secondary); min-height:32px; }
+.rc-details ul{ padding-left:18px; }
+.mc-scroll{ overflow-x:auto; margin:6px 0 10px; }
+.mc-table{ width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums; }
+.mc-table th, .mc-table td{ padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+.mc-table thead th{ font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
+.mc-table tbody th{ font-weight:600; color:var(--text); }
+.mc-table small{ display:block; color:var(--muted); font-size:12px; font-weight:400; }
+.mc-summary small{ display:inline; }
+.mc-table small.is-good{ color:var(--good, var(--green)); }
+.mc-table small.is-bad{ color:var(--bad, var(--red)); }
+.mc-none{ color:var(--muted); }
+.mc-actions{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:12px; }
+.mc-actions small{ color:var(--muted); flex:1 1 220px; }
+@media (max-width:600px){
+    .rc-time{ font-size:44px; }
+    .rc-dur li{ grid-template-columns:1fr auto; }
+    .rc-dur .rc-bar{ grid-column:1 / -1; grid-row:2; }
+    .mc-table th, .mc-table td{ padding:6px 6px; }
+}
