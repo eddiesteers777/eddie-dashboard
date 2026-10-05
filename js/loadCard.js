@@ -31,6 +31,7 @@ import { lineSvg } from "./svgCharts.js";
 import { readinessCheck } from "./readinessBacktest.js";
 import { READINESS_V2_VERSION } from "./readinessV2.js";
 import { inputs as readinessInputs } from "./readinessData.js";
+import { kindChip } from "./analyticsSummary.js";
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -94,7 +95,7 @@ function computeCheck(r) {
 const CLASS_WORDS = { easy: "Easy", steady: "Steady", long: "Long", tempo: "Tempo", threshold: "Threshold", intervals: "Intervals", race: "Race" };
 const clockPace = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
-function responseHtml(r, today) {
+function responseHtml(r, today, { heading = true } = {}) {
     const { eff, effort, quality, execution, drift } = r;
     const rd = r.reading;
     const sig = eff.signal;
@@ -119,7 +120,7 @@ function responseHtml(r, today) {
     const exLine = ex.sessions ? `<li>Quality sessions of the last 6 weeks with laps: <strong>${ex.onTarget} of ${ex.work}</strong> work reps on target${ex.fast ? `, ${ex.fast} too fast` : ""}${ex.slow ? `, ${ex.slow} too slow` : ""} (${ex.sessions} ${ex.sessions === 1 ? "session" : "sessions"}).</li>` : "";
     const driftLine = drift.length ? `<li>Long runs, second half vs first (heart rate per pace): ${drift.map(d => `${esc(day(d.date))} ${d.miles} mi <strong>${d.drift > 0 ? "+" : ""}${d.drift}%</strong>`).join(" · ")}. Under 5% means you held steady.</li>` : "";
     return `
-        <p class="rc-sub-h">How you responded</p>
+        ${heading ? `<p class="rc-sub-h">How you responded</p>` : ""}
         <div class="lc-reading is-${esc(rd.key)}"><strong>${esc(rd.title)}</strong><p>${esc(rd.text)}</p>${rd.note ? `<small>${esc(rd.note)}</small>` : ""}</div>
         <div class="lc-resp">
             <div class="lc-resp-part">
@@ -190,8 +191,9 @@ function renderLoad() {
     if (!el || !result) return;
     const { state, dose, today } = result;
     el.dataset.version = `${DOSE_VERSION}/${LOAD_VERSION}/${RESPONSE_VERSION}`;
-    const head = `<div class="panel-header"><div><h2>Load and response</h2>
-        <p>What your running has asked of you: the load of what you did (pace and hills), against your own last year. How hard it landed (heart rate, effort) is kept apart, in How you responded, so a run that felt hard isn't counted twice.</p></div></div>`;
+    const split = Boolean($("responsePanel"));
+    const head = `<div class="panel-header"><div><h2>${split ? "Training load" : "Load and response"} ${kindChip("calculated")}</h2>
+        <p>What your running has asked of you: the load of what you did (pace and hills), against your own last year. How hard it landed (heart rate, effort) is kept apart, in How you responded${split ? " (Response, below)" : ""}, so a run that felt hard isn't counted twice.</p></div></div>`;
     if (!state.today) {
         el.innerHTML = `${head}<p class="ar-empty">No runs with a time yet. Connect COROS or import your Strava archive below.</p>`;
         return;
@@ -237,12 +239,24 @@ function renderLoad() {
             ${corosLine(result.coros)}
         </ul>
         ${totalsHtml(result.totals)}
-        ${responseHtml(result.response, today)}
+        ${split ? "" : responseHtml(result.response, today)}
         <details class="rc-details" id="lcHow"><summary>How this is worked out</summary>
             <p>Dose ${esc(DOSE_VERSION)} · load ${esc(LOAD_VERSION)} · response ${esc(RESPONSE_VERSION)}. Each run's load is what was done (external load); heart rate and effort are how it landed (internal load), shown beside it and read as your response, never added to it. Training base and recent load are exponentially weighted daily averages (about ${TAU.base} and ${TAU.recent} days); rest days count as zero. There's no "safe zone": ratios of recent to base load don't predict injury reliably, so this shows where you are against your own year instead.</p>
             ${anchor ? `<p>Heart rate: max ${anchor.hrMax} (${esc(anchor.hrMaxSource)}), resting ${anchor.hrRest} (${esc(anchor.hrRestSource)}).</p>` : ""}
             <ul>${[...DOSE_ASSUMPTIONS, ...RESPONSE_ASSUMPTIONS].map(a => `<li>${esc(a)}</li>`).join("")}</ul>
         </details>`;
+}
+
+// Phase C: "How you responded" has its own section (Response) when the page has the host.
+function renderResponse() {
+    const el = $("responsePanel");
+    if (!el || !result) return;
+    el.dataset.version = RESPONSE_VERSION;
+    const head = `<div class="panel-header"><div><h2>How you responded ${kindChip("estimated")}</h2>
+        <p>Your easy runs' heart rate at the same pace, how hard runs felt against what they usually cost you, heart rate on quality reps and long-run drift, each against your own recent weeks.</p></div></div>`;
+    el.innerHTML = result.state.today
+        ? `${head}${responseHtml(result.response, result.today, { heading: false })}`
+        : `${head}<p class="ar-empty">No runs with a time yet. Connect COROS or import your Strava archive below.</p>`;
 }
 
 function pairRow(label, p) {
@@ -352,6 +366,10 @@ async function refresh() {
     const inputs = await loadModelInputs();
     result = compute(inputs);
     renderLoad();
+    renderResponse();
+    const facts = { response: result.response, load: result.state.today ? { percentile: result.state.today.percentile } : null };
+    window.__sbAnalyticsFacts = { ...(window.__sbAnalyticsFacts || {}), ...facts };
+    window.dispatchEvent(new CustomEvent("sb:analytics-facts", { detail: facts }));
     renderAgreement();
     renderReadinessCheck();
     const mine = result;

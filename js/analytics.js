@@ -1,33 +1,15 @@
 /* ==========================================
-   Southbound Analytics — the header and Personal Records
+   Southbound Analytics — Bests (Personal Records)
 
-   The header counts down to race day from the Marathon plan; Personal
-   Records fill in from your runs (js/personalRecords.js), and a time you
-   type counts too. The training and body trends below them
-   are js/trendsView.js (from what you actually ran and measured).
+   Bests fill in from your runs (js/personalRecords.js), and a time you
+   type counts too. The rest of the page is drawn by its own cards; the
+   race countdown and the summary are js/analyticsLayout.js.
 ========================================== */
-
-import {
-    WEEKS,
-    getCurrentWeek,
-    getRaceCountdown,
-    getTrainingPhase
-} from "./marathonData.js";
 
 function $(id) {
     return document.getElementById(id);
 }
 
-function setText(id, value) {
-    const el = $(id);
-    if (el) el.textContent = value;
-}
-
-function renderHero() {
-    setText("countdownDays", getRaceCountdown());
-    setText("trainingWeek", `Week ${getCurrentWeek()} of ${WEEKS.length}`);
-    setText("trainingPhase", getTrainingPhase() || "—");
-}
 
 /* ==========================================
    Personal Records: filled in from your runs (js/personalRecords.js),
@@ -107,30 +89,12 @@ async function renderPersonalRecords() {
     });
 }
 
-// Each section is independent: a failure in one must never take down the other.
-function safely(fn) {
-    try {
-        fn();
-    } catch (error) {
-        console.error(`Analytics: ${fn.name} failed`, error);
-    }
-}
-
 function initAnalytics() {
-    safely(renderHero);
     renderPersonalRecords().catch(error => console.error("Analytics: personal records failed", error));
     // New runs (COROS) or an imported Strava archive can set a new record.
     for (const e of ["sb:strava-updated", "eddieos:coros-history-updated"]) {
         window.addEventListener(e, () => renderPersonalRecords().catch(() => {}));
     }
 }
-
-$("viewMarathonPlan")?.addEventListener("click", () => {
-    window.location.href = "marathon.html";
-});
-
-$("viewTodayWorkout")?.addEventListener("click", () => {
-    window.location.href = "index.html";
-});
 
 document.addEventListener("DOMContentLoaded", initAnalytics);

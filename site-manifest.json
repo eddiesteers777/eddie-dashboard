@@ -45,6 +45,8 @@
   "scripts": [
     "js/activeProgramSources.js",
     "js/analytics.js",
+    "js/analyticsLayout.js",
+    "js/analyticsSummary.js",
     "js/app.js",
     "js/applicationForm.js",
     "js/applications.js",

@@ -19,6 +19,7 @@ import { backtest, exportable, METHODS } from "./raceBacktest.js";
 import { loadModelInputs, planRace, loadModelRecord, saveLock } from "./athleteData.js";
 import { isRace } from "./athleteParams.js";
 import { toast } from "./ui.js";
+import { kindChip } from "./analyticsSummary.js";
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -98,10 +99,14 @@ function renderCapability() {
     const target = DISTANCES.find(d => d.key === chosen);
     const r = predictRace({ meters: target.meters, asOf: inputs.today, sessions: inputs.sessions, health: inputs.health, fitness: inputs.fitness });
     el.dataset.version = RACE_MODEL_VERSION;
+    if (r.sec) {
+        window.__sbAnalyticsFacts = { ...(window.__sbAnalyticsFacts || {}), capability: r };
+        window.dispatchEvent(new CustomEvent("sb:analytics-facts", { detail: { capability: r } }));
+    }
     const chips = DISTANCES.map(d => `<button type="button" class="rc-chip${d.key === chosen ? " is-on" : ""}" data-dist="${d.key}" aria-pressed="${d.key === chosen}">${d.label}</button>`).join("");
     el.innerHTML = `
         <div class="panel-header"><div>
-            <h2>Race capability</h2>
+            <h2>Race capability ${kindChip("prediction")}</h2>
             <p>What your evidence says you could run if you raced today, with a range and the reasons. Not validated yet: see Model check below.</p>
         </div></div>
         <div class="rc-chips" role="group" aria-label="Distance">${chips}</div>
@@ -114,7 +119,7 @@ function renderCapability() {
             <ul class="rc-why">${r.explanation.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
             <p class="rc-sub-h">The evidence</p>
             <ul class="rc-lenses">${r.lenses.map(lensRow).join("")}</ul>
-            ${durabilityHtml(r.durability)}
+            ${$("preparationPanel") ? (r.durability ? `<p class="rc-dur-note">Preparation for this distance: ${Math.round(r.durability.readiness * 100)}% of ${r.durability.basis === "yours" ? "your usual block" : "a typical plan"}${r.durability.applied ? ", taken into the time" : ", not taken off the time"}. <a href="#anPreparation">See Preparation</a></p>` : "") : durabilityHtml(r.durability)}
             <details class="rc-details"><summary>How this is worked out</summary>
                 <p>Model ${esc(r.version)} · distance exponent ${r.exponent.toFixed(3)} (${esc(r.params.exponent.source)})${r.params.cs ? ` · critical speed ${esc(clock(1609.344 / r.params.cs.cs))}/mi` : ""}${r.params.hrMax ? ` · max HR ${r.params.hrMax.value}` : ""}${r.params.hrRest ? ` · resting HR ${r.params.hrRest.value}` : ""}.</p>
                 <ul>${ASSUMPTIONS.map(a => `<li>${esc(a)}</li>`).join("")}</ul>

@@ -50,117 +50,91 @@
 
     <main class="analytics-page">
 
-        <!-- ==========================================
-             HERO
-        ========================================== -->
-
-        <section class="hero">
-
-            <div class="hero-left">
-
-                <span class="hero-tag">
-                    SOUTHBOUND PERFORMANCE
-                </span>
-
-                <h1>
-                    Performance Analytics
-                </h1>
-
-                <p>
-                    What you actually ran and how your body is handling it:
-                    plan vs actual, key workouts lap by lap, aerobic fitness,
-                    load, HRV, sleep and your race prediction.
-                </p>
-
-                <div class="hero-buttons">
-
-                    <button
-                        id="viewTodayWorkout"
-                        class="primary-btn">
-                        Today
-                    </button>
-
-                    <button
-                        id="viewMarathonPlan"
-                        class="secondary-btn">
-                        Marathon Plan
-                    </button>
-
-                </div>
-
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Southbound Performance</div>
+                <h1>Analytics</h1>
+                <p class="eos-today-phase">What's happening over time, how sure the numbers are, and what to look into.</p>
             </div>
-
-            <div class="hero-right">
-
-                <div class="hero-stat">
-                    <span>Race Countdown</span>
-                    <h2 id="countdownDays">---</h2>
-                </div>
-
-                <div class="hero-stat">
-                    <span>Current Week</span>
-                    <h2 id="trainingWeek">Loading...</h2>
-                </div>
-
-                <div class="hero-stat">
-                    <span>Training Phase</span>
-                    <h2 id="trainingPhase">Loading...</h2>
-                </div>
-
-            </div>
-
         </section>
 
-        <!-- ==========================================
-             TRENDS (js/trendsView.js): plan vs actual, key
-             workouts lap by lap, long runs, aerobic fitness,
-             load, race prediction, body
-        ========================================== -->
+        <!-- Sections (docs/ATHLETE_MODEL_AUDIT.md section 8): one question each, in coaching order.
+             js/analyticsLayout.js draws the summary, Preparation, Data coverage and keeps Model check folded. -->
+        <nav class="an-nav" aria-label="Analytics sections">
+            <a href="#anSummary">Summary</a><a href="#anCapability">Capability</a><a href="#anTraining">Training</a><a href="#anResponse">Response</a><a href="#anRecovery">Recovery</a><a href="#anPreparation">Preparation</a><a href="#anCheck">Model check</a><a href="#anData">Data</a>
+        </nav>
 
-        <div id="trends" class="tr-wrap" aria-live="polite"></div>
-
-        <!-- LOAD AND RESPONSE (js/loadCard.js): one dose per run, training base vs recent load -->
-        <section class="panel ar-panel lc-panel" id="loadPanel" aria-live="polite"><p class="sb-wait"></p></section>
-
-        <!-- ==========================================
-             YOUR RACES (js/racesCard.js): races found in your runs,
-             confirmed by you; the ground truth the athlete model is
-             checked against
-        ========================================== -->
-
-        <!-- RACE CAPABILITY (js/raceCapabilityCard.js): the athlete model's race prediction -->
-        <section class="panel ar-panel rc-panel" id="capabilityPanel" aria-live="polite"><p class="sb-wait"></p></section>
-
-        <section class="panel ar-panel" id="racesPanel" aria-live="polite"><p class="sb-wait"></p></section>
-
-        <!-- MODEL CHECK (js/raceCapabilityCard.js): every confirmed race predicted from what came before it -->
-        <section class="panel ar-panel rc-panel" id="modelCheckPanel" aria-live="polite"><p class="sb-wait"></p></section>
-
-        <!-- MODEL CHECK: TRAINING LOAD (js/loadCard.js): how pace, heart-rate and effort load agree -->
-        <section class="panel ar-panel rc-panel" id="doseCheckPanel" aria-live="polite"><p class="sb-wait"></p></section>
-
-        <!-- THIS WEEK'S DECISION (js/decisionCard.js): the weekly decision's log, the replay and the dial-down numbers -->
-        <section class="panel ar-panel rc-panel" id="decisionPanel" aria-live="polite"><p class="sb-wait"></p></section>
-
-        <!-- MODEL CHECK: READINESS (js/loadCard.js, js/readinessBacktest.js): Classic vs New readiness before rough runs -->
-        <section class="panel ar-panel rc-panel" id="readinessCheckPanel" aria-live="polite"><p class="sb-wait"></p></section>
-
-        <!-- ==========================================
-             PERSONAL RECORDS
-        ========================================== -->
-
-        <section class="panel">
-
-            <div class="panel-header">
-                <div>
-                    <h2>Personal Records</h2>
-                    <p>Filled in from your runs (COROS and Strava). Tap a time to type your own; the fastest counts.</p>
-                </div>
-            </div>
-
-            <div class="records-grid" id="recordsGrid"></div>
-
+        <!-- 0. SUMMARY: the race countdown and at most 3 things to look into -->
+        <section class="an-section an-summary" id="anSummary" aria-live="polite">
+            <p class="an-countdown" id="anCountdown"></p>
+            <ul class="an-lines" id="summaryLines"><li class="sb-wait"></li></ul>
+            <p class="an-legend">Labels: <span class="an-kind is-measured">measured</span> straight from your watch or what you told us · <span class="an-kind is-calculated">calculated</span> worked out from those · <span class="an-kind is-estimated">estimated</span> with a ± · <span class="an-kind is-prediction">prediction</span> with a range and what it's based on.</p>
         </section>
+
+        <!-- 1. CAPABILITY: what can you run? -->
+        <section class="an-section" id="anCapability">
+            <header class="an-head"><span class="an-num">1</span><div><h2>Capability</h2><p>What could you run if you raced today?</p></div></header>
+            <section class="panel ar-panel rc-panel" id="capabilityPanel" aria-live="polite"><p class="sb-wait"></p></section>
+            <div id="trRace"></div>
+            <section class="panel ar-panel" id="racesPanel" aria-live="polite"><p class="sb-wait"></p></section>
+            <section class="panel" id="recordsPanel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Bests <span class="an-kind is-measured">measured</span></h2>
+                        <p>Your fastest mile to marathon: whole runs and the fastest stretch inside a Strava watch file, or a time you type (the fastest counts). Tap a time to type your own.</p>
+                    </div>
+                </div>
+                <div class="records-grid" id="recordsGrid"></div>
+            </section>
+        </section>
+
+        <!-- 2. TRAINING: how much? -->
+        <section class="an-section" id="anTraining">
+            <header class="an-head"><span class="an-num">2</span><div><h2>Training</h2><p>How much, how hard, and did the key sessions hit their targets?</p></div></header>
+            <div id="trPlan"></div>
+            <section class="panel ar-panel lc-panel" id="loadPanel" aria-live="polite"><p class="sb-wait"></p></section>
+            <div id="trWorkouts"></div>
+            <div id="trYears"></div>
+        </section>
+
+        <!-- 3. RESPONSE: how are you responding? -->
+        <section class="an-section" id="anResponse">
+            <header class="an-head"><span class="an-num">3</span><div><h2>Response</h2><p>How is your body answering the training?</p></div></header>
+            <section class="panel ar-panel lc-panel" id="responsePanel" aria-live="polite"><p class="sb-wait"></p></section>
+        </section>
+
+        <!-- 4. RECOVERY: are you recovering? -->
+        <section class="an-section" id="anRecovery">
+            <header class="an-head"><span class="an-num">4</span><div><h2>Recovery</h2><p>HRV, resting heart rate, sleep and how you feel, against your own normal.</p></div></header>
+            <div id="trBody"></div>
+        </section>
+
+        <!-- 5. PREPARATION: ready for the target race? -->
+        <section class="an-section" id="anPreparation">
+            <header class="an-head"><span class="an-num">5</span><div><h2>Preparation</h2><p>Is this block building what your next race needs?</p></div></header>
+            <section class="panel ar-panel" id="preparationPanel" aria-live="polite"><p class="sb-wait"></p></section>
+            <div id="trLong"></div>
+        </section>
+
+        <!-- 6. MODEL CHECK (folded): how sure, and why -->
+        <section class="an-section" id="anCheck">
+            <details class="an-check" id="anCheckDetails">
+                <summary class="an-head"><span class="an-num">6</span><div><h2>Model check</h2><p>Every model on this page tested against what actually happened. Tap to open.</p></div></summary>
+                <!-- MODEL CHECK (js/raceCapabilityCard.js): every confirmed race predicted from what came before it -->
+                <section class="panel ar-panel rc-panel" id="modelCheckPanel" aria-live="polite"><p class="sb-wait"></p></section>
+                <!-- MODEL CHECK: TRAINING LOAD (js/loadCard.js) -->
+                <section class="panel ar-panel rc-panel" id="doseCheckPanel" aria-live="polite"><p class="sb-wait"></p></section>
+                <!-- MODEL CHECK: READINESS (js/loadCard.js, js/readinessBacktest.js) -->
+                <section class="panel ar-panel rc-panel" id="readinessCheckPanel" aria-live="polite"><p class="sb-wait"></p></section>
+                <!-- THIS WEEK'S DECISION (js/decisionCard.js): the log, the replay and the dial-down numbers -->
+                <section class="panel ar-panel rc-panel" id="decisionPanel" aria-live="polite"><p class="sb-wait"></p></section>
+            </details>
+        </section>
+
+        <!-- 7. DATA: connections, imports and what the numbers stand on -->
+        <section class="an-section" id="anData">
+            <header class="an-head"><span class="an-num">7</span><div><h2>Data</h2><p>Where the numbers come from, and how much of it there is.</p></div></header>
+            <section class="panel ar-panel" id="coveragePanel" aria-live="polite"><p class="sb-wait"></p></section>
 
         <!-- ==========================================
              DATA CONNECTIONS (see css/analytics.css)
@@ -172,7 +146,7 @@
                 <span>COROS + Strava</span>
                 <h2>Data Connections</h2>
                 <p>
-                    The charts above come from COROS (your runs, laps, sleep,
+                    The sections above come from COROS (your runs, laps, sleep,
                     HRV and resting heart rate) and your imported Strava history.
                     Southbound keeps a copy on your account, so they stay here
                     even when COROS is slow.
@@ -492,11 +466,14 @@
 
         </section>
 
+        </section>
+
     </main>
 
     <script src="js/loadHeader.js"></script>
 
     <script type="module" src="js/analytics.js"></script>
+    <script type="module" src="js/analyticsLayout.js"></script>
     <script type="module" src="js/trendsView.js"></script>
     <script type="module" src="js/racesCard.js"></script>
     <script type="module" src="js/raceCapabilityCard.js"></script>

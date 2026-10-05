@@ -40,121 +40,6 @@ body{
 }
 
 /* ==========================================
-   Hero
-========================================== */
-
-.hero{
-
-    background:
-
-        linear-gradient(
-            135deg,
-            #C9AD84,
-            #A68A62
-        );
-
-    border-radius:28px;
-
-    padding:42px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    gap:40px;
-
-    margin-bottom:34px;
-
-    box-shadow:var(--shadow);
-
-}
-
-/* Text on the gold card is dark forest (--on-primary), like every other gold fill. */
-.hero,
-.hero h1,
-.hero p,
-.hero-tag,
-.hero-stat span,
-.hero-stat h2{
-
-    color:var(--on-primary);
-
-}
-
-.hero h1{
-
-    font-size:62px;
-
-    font-weight:800;
-
-    margin-bottom:12px;
-
-}
-
-.hero p{
-
-    font-size:19px;
-
-    max-width:700px;
-
-    opacity:.95;
-
-    line-height:1.7;
-
-}
-
-.hero-right{
-
-    display:grid;
-
-    grid-template-columns:1fr;
-
-    gap:18px;
-
-}
-
-.hero-stat{
-
-    background:
-
-        rgba(255,255,255,.12);
-
-    backdrop-filter:blur(14px);
-
-    border-radius:18px;
-
-    padding:20px 24px;
-
-    min-width:250px;
-
-}
-
-.hero-stat span{
-
-    display:block;
-
-    font-size:14px;
-
-    letter-spacing:.08em;
-
-    text-transform:uppercase;
-
-    opacity:.8;
-
-    margin-bottom:6px;
-
-}
-
-.hero-stat h2{
-
-    font-size:34px;
-
-    font-weight:800;
-
-}
-/* ==========================================
    Live Dashboard
 ========================================== */
 
@@ -1092,3 +977,49 @@ canvas{
 .dc-fields label{ display:grid; grid-template-columns:1fr 84px auto; align-items:center; gap:8px; color:var(--text-secondary); font-size:14px; }
 .dc-fields input{ width:84px; }
 .dc-fields i{ font-style:normal; color:var(--muted); font-size:13px; min-width:30px; }
+
+/* ==========================================
+   SECTIONS (Phase C, docs/ATHLETE_MODEL_AUDIT.md section 8):
+   0 summary, 1 capability … 7 data; one question each
+========================================== */
+.analytics-page [hidden]{display:none!important}
+.an-nav{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow-x:auto;padding:8px;margin:0 0 18px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);scrollbar-width:none}
+.an-nav::-webkit-scrollbar{display:none}
+.an-nav a{flex:0 0 auto;padding:7px 14px;border-radius:var(--radius-pill);border:1px solid var(--border);color:var(--text);font-size:14px;text-decoration:none;white-space:nowrap}
+.an-nav a:hover,.an-nav a:focus-visible{border-color:var(--primary);color:var(--primary-light)}
+.an-section{margin:0 0 40px;scroll-margin-top:64px}
+.an-section > .panel,.an-section > div > .panel,.an-check > .panel{margin-bottom:22px}
+.an-head{display:flex;align-items:flex-start;gap:14px;margin:0 0 16px}
+.an-head h2{font-family:var(--font-display);font-size:34px;letter-spacing:.02em;line-height:1.05;margin:0;color:var(--text)}
+.an-head p{margin:4px 0 0;color:var(--text-secondary,var(--stone));font-size:15px}
+.an-num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 16%,transparent);border:1px solid color-mix(in srgb,var(--primary) 40%,transparent);color:var(--primary-light);font-weight:700;font-size:15px;margin-top:2px}
+.an-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px}
+.an-countdown{margin:0 0 12px;font-weight:600;color:var(--primary-light)}
+.an-lines{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.an-line{border-left:3px solid var(--primary);padding:6px 12px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:color-mix(in srgb,var(--primary) 7%,transparent)}
+.an-line a{color:var(--text);text-decoration:none}
+.an-line a:hover,.an-line a:focus-visible{text-decoration:underline}
+.an-line.is-warn{border-left-color:var(--amber);background:color-mix(in srgb,var(--amber) 9%,transparent)}
+.an-line.is-good{border-left-color:var(--good);background:color-mix(in srgb,var(--good) 9%,transparent)}
+.an-line.is-quiet{border-left-color:var(--sage);color:var(--text-secondary,var(--stone))}
+.an-lines .sb-wait{min-height:22px}
+.an-legend{margin:14px 0 0;font-size:13px;color:var(--text-secondary,var(--stone));line-height:1.9}
+.an-kind{display:inline-block;vertical-align:middle;font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:var(--radius-pill);border:1px solid currentColor;line-height:1.4;margin-left:4px}
+.an-kind.is-measured{color:var(--sage)}
+.an-kind.is-calculated{color:var(--primary-light)}
+.an-kind.is-estimated{color:var(--amber)}
+.an-kind.is-prediction{color:var(--cyan)}
+.an-check > summary{list-style:none;cursor:pointer;border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;background:var(--surface)}
+.an-check > summary::-webkit-details-marker{display:none}
+.an-check > summary::after{content:"Open";margin-left:auto;align-self:center;font-size:13px;color:var(--primary-light);border:1px solid var(--border);border-radius:var(--radius-pill);padding:4px 12px}
+.an-check[open] > summary::after{content:"Close"}
+.an-check[open] > summary{margin-bottom:18px}
+.an-cover{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.an-cover li{display:grid;grid-template-columns:150px 1fr auto;gap:4px 12px;align-items:center}
+.an-cover li small{grid-column:1 / -1;color:var(--text-secondary,var(--stone))}
+@media (max-width:600px){
+    .an-head h2{font-size:28px}
+    .an-cover li{grid-template-columns:1fr auto}
+    .an-cover li .rc-bar{grid-column:1 / -1;grid-row:2}
+    .an-summary{padding:16px}
+}
