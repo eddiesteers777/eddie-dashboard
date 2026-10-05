@@ -3,7 +3,8 @@
 
    Race capability (js/raceCapability.js): what the evidence says you
    could run at 5K / 10K / half / marathon today, with an 80% range,
-   the lenses and why they disagree, durability for the half and up,
+   the lenses and why they disagree, preparation for the half and up
+   (against the athlete's own usual block, its effect learned from their races),
    data quality and the assumptions. For the plan's race, "Lock this
    prediction" saves today's number in "athlete-model" so it can be
    scored honestly after race day (the prospective test).
@@ -52,15 +53,24 @@ function lensRow(l) {
 function durabilityHtml(d) {
     if (!d) return "";
     const p = d.parts;
-    const bar = (v, t) => `<span class="rc-bar"><span style="width:${Math.min(100, Math.round(v / t * 100))}%"></span></span>`;
+    const kind = d.kind === "marathon" ? "marathon" : "half";
+    const usual = d.basis === "yours" ? "usual" : "typical";
+    const bar = (v, t) => `<span class="rc-bar"><span style="width:${t > 0 ? Math.min(100, Math.round(v / t * 100)) : 100}%"></span></span>`;
+    const mins = s => (s >= 60 ? `about ${Math.round(s / 60)} min` : "under a minute");
+    const note = d.applied
+        ? d.effectSec != null && d.beta != null && d.learnedFrom
+            ? `Added to the time above: ${mins(d.effectSec)}, learned from your ${d.learnedFrom} earlier ${kind}${d.learnedFrom === 1 ? "" : "s"} after thinner blocks.`
+            : "Taken off the time above."
+        : d.gap < 0.001 ? "Nothing to take off."
+        : `Not taken off the time: your own races haven't shown yet that a thinner block slows you. It's learned from them as they come in (Model check compares it with leaving it out and with a fixed trim).${d.couldCostSec >= 60 ? ` A typical effect would be up to ${mins(d.couldCostSec)}.` : ""}`;
     return `<div class="rc-dur">
-        <p class="rc-sub-h">Preparation: ${d.kind === "marathon" ? "marathon" : "half"}-specific training · last 12 weeks · ${Math.round(d.readiness * 100)}% of a typical plan</p>
+        <p class="rc-sub-h">Preparation: ${kind}-specific training · last 12 weeks · ${Math.round(d.readiness * 100)}% of ${d.basis === "yours" ? `your usual ${kind} block` : "a typical plan"}</p>
         <ul>
             <li><span>Weekly miles</span>${bar(p.weekly.value, p.weekly.target)}<b>${p.weekly.value} / ${p.weekly.target}</b></li>
             <li><span>Runs of ${p.longRuns.over}+ mi</span>${bar(p.longRuns.value, p.longRuns.target)}<b>${p.longRuns.value} / ${p.longRuns.target}</b></li>
             <li><span>Longest run</span>${bar(p.longest.value, p.longest.target)}<b>${p.longest.value} / ${p.longest.target} mi</b></li>
         </ul>
-        <small class="rc-dur-note">${d.applied ? "Taken off the time above." : d.deficit < 0.001 ? "Nothing to take off." : `Shown, not taken off the time: whether a thinner block slows you is checked on your own races in Model check ("Southbound + preparation trim").${d.couldCostSec >= 60 ? ` A typical effect would be up to about ${Math.round(d.couldCostSec / 60)} min.` : ""}`}</small>
+        <small class="rc-dur-note">${d.basis === "yours" ? `Against your ${usual} block: the median of the 12 weeks before your ${d.blocks} earlier ${kind}s.` : `Against a ${usual} plan for this time until you have 2 earlier ${kind}s to compare with.`} ${note}</small>
     </div>`;
 }
 
@@ -126,13 +136,21 @@ function verdictText(c, name) {
     return `Southbound vs ${name}: not yet distinguishable over ${c.n} races (95% interval ${pct(c.lo)} to ${pct(c.hi)}).`;
 }
 
-// Southbound (preparation shown) vs the same with the preparation trim, on the races both predicted.
+// Southbound (preparation learned) vs the fixed 0.1.0 trim, and vs leaving preparation out.
 function prepVerdict(c) {
-    if (c.verdict === "not enough races") return `Preparation trim: not enough half and marathon races to tell whether it helps yet (${c.n}; needs at least 5). Until then it isn't taken off the time.`;
+    if (c.verdict === "not enough races") return `Fixed preparation trim (0.1.0): not enough half and marathon races to compare yet (${c.n}; needs at least 5).`;
     const diff = `${Math.abs(c.meanDiffPct * 100).toFixed(1)} points`;
-    if (c.verdict === "better") return `Preparation trim: leaving it out misses by ${diff} less over ${c.n} races. It stays off.`;
-    if (c.verdict === "worse") return `Preparation trim: applying it misses by ${diff} less over ${c.n} races. Your races say thinner blocks do slow you down.`;
-    return `Preparation trim: no clear difference over ${c.n} races (95% interval ${pct(c.lo)} to ${pct(c.hi)}).`;
+    if (c.verdict === "better") return `Fixed preparation trim (0.1.0): learning it from your races misses by ${diff} less over ${c.n} races.`;
+    if (c.verdict === "worse") return `Fixed preparation trim (0.1.0): the fixed trim misses by ${diff} less over ${c.n} races. Your races say thinner blocks slow you more than has been learned so far.`;
+    return `Fixed preparation trim (0.1.0): no clear difference from learning it over ${c.n} races (95% interval ${pct(c.lo)} to ${pct(c.hi)}).`;
+}
+
+function learnVerdict(c) {
+    if (c.verdict === "not enough races") return `Preparation learned from your races vs left out: not enough half and marathon races to tell yet (${c.n}; needs at least 5).`;
+    const diff = `${Math.abs(c.meanDiffPct * 100).toFixed(1)} points`;
+    if (c.verdict === "better") return `Preparation learned from your races misses by ${diff} less than leaving it out, over ${c.n} races.`;
+    if (c.verdict === "worse") return `Leaving preparation out misses by ${diff} less than learning it, over ${c.n} races.`;
+    return `Preparation learned vs left out: no clear difference over ${c.n} races (95% interval ${pct(c.lo)} to ${pct(c.hi)}).`;
 }
 
 function errCell(row, key) {
@@ -160,6 +178,7 @@ function renderCheck() {
             <ul class="rc-why">
                 <li>${esc(verdictText(r.vsRiegel, "Riegel"))}</li>
                 <li>${esc(verdictText(r.vsVdot, "VDOT"))}</li>
+                ${r.vsNoPrep?.n ? `<li>${esc(learnVerdict(r.vsNoPrep))}</li>` : ""}
                 ${r.vsPrep?.n ? `<li>${esc(prepVerdict(r.vsPrep))}</li>` : ""}
                 ${r.coverage.n ? `<li>The 80% range held the real time in ${r.coverage.inside} of ${r.coverage.n} races (aim: about 8 in 10).</li>` : ""}
             </ul>

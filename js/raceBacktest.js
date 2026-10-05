@@ -12,11 +12,14 @@
      training  Southbound's training-speed lens alone
      coros     COROS's own prediction (marathon only), as COROS gives it
      southbound  the whole Southbound combination, with its 80% range
-     prep      Southbound with the preparation trim applied (half and
+               (0.3.0: preparation's effect learned from earlier races)
+     noPrep    Southbound with preparation never applied (the 0.2.0 way)
+     prep      Southbound with the fixed preparation trim (half and
                marathon; the 0.1.0 way, COROS untouched)
      corosPrep COROS with the same trim on top (what 0.1.0 did to COROS)
-   prep / corosPrep answer the audit's open question on the athlete's own
-   races: does taking preparation off the time make predictions better?
+   noPrep / prep / corosPrep answer the audit's open question on the
+   athlete's own races: does learning preparation, or assuming it, make
+   predictions better than leaving it out?
    Error = (predicted − actual) / actual: negative = too fast (optimistic).
    With few races the comparison can't separate methods, and the result
    says so instead of crowning a winner.
@@ -35,7 +38,8 @@ export const METHODS = Object.freeze([
     { key: "races", label: "Southbound: races only" },
     { key: "training", label: "Southbound: training only" },
     { key: "coros", label: "COROS (its own number)" },
-    { key: "prep", label: "Southbound + preparation trim" },
+    { key: "noPrep", label: "Southbound without preparation" },
+    { key: "prep", label: "Southbound + fixed trim (0.1.0)" },
     { key: "corosPrep", label: "COROS + preparation trim" },
     { key: "last", label: "Your last time" }
 ]);
@@ -64,7 +68,10 @@ export function predictOne(race, sessions, { health = {}, fitness = {} } = {}) {
         for (const l of sb.lenses) out[l.key] = l.sec;
         // Half and marathon: the same prediction with the preparation trim, and COROS with it.
         if (sb.durability) {
-            const withPrep = predictRace({ meters, asOf, sessions: before, health: pickBefore(health, asOf), fitness: pickBefore(fitness, asOf), applyPreparation: true });
+            const args = { meters, asOf, sessions: before, health: pickBefore(health, asOf), fitness: pickBefore(fitness, asOf) };
+            const off = predictRace({ ...args, preparation: "off" });
+            if (off.sec) out.noPrep = off.sec;
+            const withPrep = predictRace({ ...args, preparation: "trim" });
             if (withPrep.sec) out.prep = withPrep.sec;
             if (out.coros != null) out.corosPrep = out.coros * (1 + sb.durability.deficit);
         }
@@ -133,6 +140,7 @@ export function backtest(sessions, { health = {}, fitness = {} } = {}) {
         vsRiegel: compare(rows, "riegel"),
         vsVdot: compare(rows, "vdot"),
         vsPrep: compare(rows, "prep"),
+        vsNoPrep: compare(rows, "noPrep"),
         skipped
     };
 }
@@ -142,6 +150,6 @@ export function exportable(result) {
     return {
         model: "southbound-race", version: result.version,
         races: result.rows.map(r => ({ date: r.date, meters: r.meters, actual: r.actual, predictions: Object.fromEntries(Object.entries(r.predictions).map(([k, v]) => [k, Math.round(v)])), range: r.range ? [Math.round(r.range.lo), Math.round(r.range.hi)] : null })),
-        summary: result.summary, coverage: result.coverage, vsRiegel: result.vsRiegel, vsVdot: result.vsVdot, vsPrep: result.vsPrep
+        summary: result.summary, coverage: result.coverage, vsRiegel: result.vsRiegel, vsVdot: result.vsVdot, vsPrep: result.vsPrep, vsNoPrep: result.vsNoPrep
     };
 }

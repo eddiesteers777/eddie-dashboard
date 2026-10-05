@@ -59,13 +59,16 @@ test("Copy results holds times and errors only", () => {
     assert.ok(Number.isInteger(out.races[0].predictions.southbound));
 });
 
-test("half and marathon races are also predicted with the preparation trim, and COROS with it, so the athlete's own races can decide (0.2.0)", () => {
+test("half and marathon races are also predicted without preparation and with the fixed trim, and COROS with it, so the athlete's own races can decide", () => {
     const half = predictOne(race("2026-08-08"), sessions);
     assert.ok(half.predictions.prep > 0, "Southbound + preparation trim");
-    assert.ok(half.predictions.prep >= half.predictions.southbound - 1, "the trim can only slow a prediction");
+    assert.ok(half.predictions.prep >= half.predictions.noPrep - 1, "the trim can only slow a prediction");
+    assert.ok(half.predictions.noPrep > 0, "Southbound without preparation (0.2.0)");
+    assert.ok(half.predictions.southbound >= half.predictions.noPrep - 1, "a learned effect can only slow it");
     assert.equal(half.predictions.coros, undefined, "COROS predicts the marathon only");
     const ten = predictOne(race("2026-09-13"), sessions);
     assert.equal(ten.predictions.prep, undefined, "no preparation check below the half");
+    assert.equal(ten.predictions.noPrep, undefined);
     // A marathon with a COROS prediction before it: raw COROS and COROS + trim both scored.
     const mar = { date: "2026-10-03", meters: 42195, sec: Math.round(trueTime(42195) * 1.02) };
     const s = athlete({ asOf: "2026-10-04", weeks: 30, longMiles: 12, easyMiles: 5, races: [...RACES, mar] });
@@ -76,5 +79,6 @@ test("half and marathon races are also predicted with the preparation trim, and 
     const all = backtest(s, { fitness });
     assert.ok(all.summary.coros.n === 1 && all.summary.corosPrep.n === 1 && all.summary.prep.n >= 2);
     assert.equal(all.vsPrep.verdict, "not enough races");
-    assert.ok("vsPrep" in exportable(all));
+    assert.equal(all.vsNoPrep.verdict, "not enough races");
+    assert.ok("vsPrep" in exportable(all) && "vsNoPrep" in exportable(all));
 });
