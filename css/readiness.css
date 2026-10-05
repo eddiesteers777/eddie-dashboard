@@ -253,6 +253,7 @@
 .tw-domains{ list-style:none; margin:12px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:6px; }
 .tw-domains li{ display:flex; gap:6px; align-items:baseline; padding:4px 10px; border-radius:var(--radius-pill); border:1px solid var(--border); font-size:.82rem; color:var(--muted); }
 .tw-domains b{ font-weight:600; color:var(--text-secondary); }
+.tw-groupnote{ margin:6px 0 0; font-size:.78rem; color:var(--muted); }
 .tw-domains .sev-1 b{ color:var(--primary); }
 .tw-domains .sev-2 b{ color:var(--amber); }
 .tw-domains .sev-3 b{ color:var(--bad, var(--red)); }

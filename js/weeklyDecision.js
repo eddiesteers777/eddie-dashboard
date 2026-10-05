@@ -10,14 +10,20 @@
      sleep       the 7-night debt
      subjective  the morning check-ins against their usual
    The level comes from how many agree, so one noisy signal never moves
-   the plan on its own:
+   the plan on its own. Since 0.2.0 (docs/ATHLETE_MODEL_AUDIT.md B6) the
+   five domains vote in three groups, because some of them are the same
+   thing seen twice: stimulus (load) one vote, response (effort vs
+   expected or easy-run heart rate, already the stronger of the two) one
+   vote, and recovery state (HRV / resting HR, sleep, how you feel, which
+   move together) at most two votes, and only when two of them agree.
+   The separate "effort +1.5" shortcut is gone: it's the response vote.
      Proceed   0, or 1 mild                     as planned
      Absorb    2, or 1 moderate                 easy runs 90%, quality at
                                                  the slow end of the range
-     Ease      3, or 2 moderate+, or effort      easy 80%, long 85%, one
-               +1.5 for 3+ runs                  quality session −25% reps
-     Recover   4+, or a second Ease week         65% for 3 days (quality
-                                                 becomes easy), long 75%
+     Ease      3, or 2 moderate+                easy 80%, long 85%, one
+                                                 quality session −25% reps
+     Recover   4 (every group), or a second     65% for 3 days (quality
+               Ease week                         becomes easy), long 75%
      Check in  pain or sickness, or autonomic +  no automatic change
                subjective + response all strong
    It only ever dials down: nothing is set above the plan. Race week only
@@ -35,7 +41,7 @@ import { autonomic, sleepDomain, feelDomain } from "./readinessV2.js";
 import { efficiencySignal, effortSignal } from "./trainingResponse.js";
 import { trainingOutcomes } from "./readinessBacktest.js";
 
-export const DECISION_VERSION = "0.1.0";
+export const DECISION_VERSION = "0.2.0";
 export const LEVELS = Object.freeze(["proceed", "absorb", "ease", "recover", "checkin"]);
 export const LEVEL_WORDS = Object.freeze({ proceed: "Proceed", absorb: "Absorb", ease: "Ease", recover: "Recover", checkin: "Check in" });
 export const DEFAULT_POLICY = Object.freeze({ absorbEasy: 0.9, easeEasy: 0.8, easeLong: 0.85, easeReps: 0.75, recoverEasy: 0.65, recoverLong: 0.75, recoverDays: 3 });
@@ -130,20 +136,34 @@ export function concernDomains(asOf, data = {}) {
 
 // ---------- the level ----------
 
-/** -> { level, count, moderate, reason } (shift moves every count threshold, for the replay's settings). */
-export function decideLevel({ domains, flags, effort }, { previous = null, shift = 0 } = {}) {
+/** Which group each domain votes in: related signals can't stack up as separate votes. */
+export const GROUPS = Object.freeze({ load: "stimulus", response: "response", autonomic: "recovery", sleep: "recovery", subjective: "recovery" });
+export const GROUP_NAMES = Object.freeze({ stimulus: "Load", response: "How runs are going", recovery: "Recovery (HRV, sleep, how you feel)" });
+
+/**
+ * Votes from the domains at or above `min` severity: load 1, response 1,
+ * recovery 1 for one domain and 2 when two or three agree (never 3).
+ */
+export function groupVotes(domains, min = 1) {
+    const n = g => domains.filter(d => GROUPS[d.key] === g && d.severity >= min).length;
+    return { stimulus: n("stimulus") ? 1 : 0, response: n("response") ? 1 : 0, recovery: Math.min(2, n("recovery")) };
+}
+const total = v => v.stimulus + v.response + v.recovery;
+
+/** -> { level, count, moderate, votes, reason } (shift moves every count threshold, for the replay's settings). */
+export function decideLevel({ domains, flags }, { previous = null, shift = 0 } = {}) {
     const sev = k => domains.find(d => d.key === k)?.severity || 0;
-    const count = domains.filter(d => d.severity >= 1).length;
-    const moderate = domains.filter(d => d.severity >= 2).length;
-    if (flags?.length) return { level: "checkin", count, moderate, reason: flags.map(f => f.text).join("; ") };
-    if (sev("autonomic") >= 3 && sev("subjective") >= 3 && sev("response") >= 3) return { level: "checkin", count, moderate, reason: "heart rate variability, how you feel and how runs are going are all strongly off" };
-    const effortHigh = effort?.verdict && effort.verdict !== "few" && effort.mean >= 1.5 && effort.n >= 3;
+    const votes = groupVotes(domains, 1);
+    const count = total(votes);
+    const moderate = total(groupVotes(domains, 2));
+    if (flags?.length) return { level: "checkin", count, moderate, votes, reason: flags.map(f => f.text).join("; ") };
+    if (sev("autonomic") >= 3 && sev("subjective") >= 3 && sev("response") >= 3) return { level: "checkin", count, moderate, votes, reason: "heart rate variability, how you feel and how runs are going are all strongly off" };
     let level = "proceed";
     if (count >= 4 + shift) level = "recover";
-    else if (count >= 3 + shift || moderate >= 2 + Math.max(0, shift) || effortHigh) level = "ease";
+    else if (count >= 3 + shift || moderate >= 2 + Math.max(0, shift)) level = "ease";
     else if (count >= 2 + shift || moderate >= 1) level = "absorb";
     if (level === "ease" && previous === "ease") level = "recover";
-    return { level, count, moderate, reason: previous === "ease" && level === "recover" && count < 4 + shift ? "a second week at Ease" : "" };
+    return { level, count, moderate, votes, reason: previous === "ease" && level === "recover" && count < 4 + shift ? "a second week at Ease" : "" };
 }
 
 // ---------- what to change ----------
@@ -212,23 +232,25 @@ export function suggestChanges(level, planDays = [], policy = DEFAULT_POLICY) {
 
 // ---------- the whole decision ----------
 
-const COUNT_WORDS = ["No signals", "One signal", "Two signals", "Three signals", "Four signals", "Five signals"];
+const COUNT_WORDS = ["No signals", "One signal", "Two signals", "Three signals", "Four signals"];
 
-/** -> { version, asOf, weekOf, level, label, count, domains, flags, changes, notes, summary } */
+/** -> { version, asOf, weekOf, level, label, count, votes, domains, flags, changes, notes, summary } */
 export function weekDecision(asOf, data, planDays = [], { policy = DEFAULT_POLICY, previous = null } = {}) {
     const c = concernDomains(asOf, data);
     const d = decideLevel(c, { previous });
     const { changes, notes } = suggestChanges(d.level, planDays, policy);
     const flagged = c.domains.filter(x => x.severity >= 1).sort((a, b) => b.severity - a.severity);
     const fine = c.domains.filter(x => x.severity === 0).map(x => x.label.toLowerCase());
+    const recoveryFlagged = flagged.filter(x => GROUPS[x.key] === "recovery").length;
+    const related = recoveryFlagged >= 3 ? " HRV, sleep and how you feel are related, so together they count as two signals, not three." : "";
     const summary = d.level === "checkin"
         ? `Check in with yourself before training hard: ${d.reason}.`
         : flagged.length
-            ? `${COUNT_WORDS[flagged.length]} ${flagged.length === 1 ? "is worth noticing" : "agree"}: ${flagged.map(x => x.text).join("; ")}.${fine.length ? ` Fine: ${fine.join(", ")}.` : ""}`
+            ? `${COUNT_WORDS[d.count]} ${d.count === 1 ? "is worth noticing" : "agree"}: ${flagged.map(x => x.text).join("; ")}.${related}${fine.length ? ` Fine: ${fine.join(", ")}.` : ""}`
             : `Nothing's off: ${c.domains.length ? c.domains.map(x => x.label.toLowerCase()).join(", ") + " all look normal" : "not enough data yet to see anything"}.`;
     return {
         version: DECISION_VERSION, asOf, weekOf: mondayOf(asOf),
-        level: d.level, label: LEVEL_WORDS[d.level], count: d.count, reason: d.reason,
+        level: d.level, label: LEVEL_WORDS[d.level], count: d.count, votes: d.votes, reason: d.reason,
         domains: c.domains, flags: c.flags, changes, notes, summary,
         plannedMiles: planDays.reduce((t, x) => t + (Number(x.miles) || 0), 0)
     };

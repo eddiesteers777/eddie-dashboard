@@ -62,6 +62,7 @@ function render() {
         </div>
         <p class="tw-summary">${esc(d.summary)}</p>
         ${d.domains.length ? `<ul class="tw-domains">${d.domains.map(x => `<li class="sev-${x.severity}" title="${esc(x.text)}"><span>${esc(x.label)}</span><b>${esc(x.word)}</b></li>`).join("")}</ul>` : ""}
+        ${d.domains.length ? `<p class="tw-groupnote">Load and how runs are going count once each; HRV, sleep and how you feel move together, so they count at most twice.</p>` : ""}
         ${d.changes.length ? `<p class="tw-sub">Suggested for the next 7 days</p><ul class="tw-changes">${d.changes.map(c => `<li><span>${esc(dayLabel(c.date))}</span>${esc(c.text)}</li>`).join("")}</ul>` : ""}
         ${d.notes.length ? `<ul class="tw-notes">${d.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
         ${undone ? `<p class="tw-notes">You undid this week's changes.</p>` : ""}

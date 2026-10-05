@@ -1,7 +1,7 @@
 // Unit tests for the weekly decision (js/weeklyDecision.js).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { concernDomains, decideLevel, suggestChanges, weekDecision, outcomeOf, replayDecisions, DEFAULT_POLICY, DECISION_VERSION } from "../js/weeklyDecision.js";
+import { concernDomains, decideLevel, groupVotes, suggestChanges, weekDecision, outcomeOf, replayDecisions, DEFAULT_POLICY, DECISION_VERSION } from "../js/weeklyDecision.js";
 import { addDays } from "../js/athleteLedger.js";
 
 const TODAY = "2026-10-04";
@@ -30,11 +30,27 @@ test("the level counts agreeing domains: one noisy signal never moves the plan",
     assert.equal(lv([dom("sleep", 1), dom("load", 1)]), "absorb");
     assert.equal(lv([dom("sleep", 1), dom("load", 1), dom("autonomic", 1)]), "ease");
     assert.equal(lv([dom("sleep", 2), dom("load", 2)]), "ease");
-    assert.equal(lv([], { effort: { verdict: "costlier", mean: 1.6, n: 3 } }), "ease");
-    assert.equal(lv([dom("sleep", 1), dom("load", 1), dom("autonomic", 1), dom("subjective", 1)]), "recover");
+    assert.equal(lv([], { effort: { verdict: "costlier", mean: 1.6, n: 3 } }), "proceed", "B6: no separate effort shortcut (it's the response vote)");
+    assert.equal(lv([dom("response", 3)]), "absorb", "a strong response alone is one moderate vote");
+    assert.equal(lv([dom("sleep", 1), dom("load", 1), dom("autonomic", 1), dom("response", 1)]), "recover", "every group: load, response and two of recovery");
     assert.equal(decideLevel({ domains: [dom("sleep", 2), dom("load", 2)], flags: [] }, { previous: "ease" }).level, "recover", "a second Ease week");
     assert.equal(lv([dom("sleep", 1)], { flags: [{ key: "pain", text: "Pain: knee" }] }), "checkin");
     assert.equal(lv([dom("autonomic", 3), dom("subjective", 3), dom("response", 3)]), "checkin");
+});
+
+test("grouped votes (audit B6): HRV, sleep and feel count at most twice; load and response once each", () => {
+    assert.deepEqual(groupVotes([dom("sleep", 1)]), { stimulus: 0, response: 0, recovery: 1 });
+    assert.deepEqual(groupVotes([dom("sleep", 3), dom("autonomic", 3), dom("subjective", 3)]), { stimulus: 0, response: 0, recovery: 2 });
+    const lv = domains => decideLevel({ domains, flags: [] });
+    // The old count would have been 4 (Recover); the related signals now stay at two votes.
+    const four = lv([dom("sleep", 1), dom("load", 1), dom("autonomic", 1), dom("subjective", 1)]);
+    assert.deepEqual([four.level, four.count], ["ease", 3]);
+    const recov = lv([dom("sleep", 3), dom("autonomic", 3), dom("subjective", 2)]);
+    assert.deepEqual([recov.level, recov.count, recov.moderate], ["ease", 2, 2], "all three recovery signals strong: Ease, not Recover");
+    assert.equal(DECISION_VERSION, "0.2.0");
+    const d = weekDecision(TODAY, { health: health(i => (i < 7 ? { hrv: { avg: 44 }, rhr: 56, sleep: { asleepMin: 300 } } : {})), checkins: Object.fromEntries(Array.from({ length: 14 }, (_, i) => [addDays(TODAY, -i), i < 7 ? { soreness: 5, energy: 1, mood: 1 } : { soreness: 1, energy: 5, mood: 5 }])) }, week);
+    assert.ok(d.domains.filter(x => x.severity >= 1).length === 3 && d.count === 2, JSON.stringify(d.domains.map(x => [x.key, x.severity])));
+    assert.match(d.summary, /^Two signals agree: .+ HRV, sleep and how you feel are related, so together they count as two signals, not three\./);
 });
 
 test("Absorb: easy runs to 90%, quality at the slow end, long run untouched", () => {
