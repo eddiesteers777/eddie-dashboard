@@ -233,7 +233,7 @@ function renderLoad() {
         </ul>
         ${totalsHtml(result.totals)}
         ${responseHtml(result.response, today)}
-        <details class="rc-details"><summary>How this is worked out</summary>
+        <details class="rc-details" id="lcHow"><summary>How this is worked out</summary>
             <p>Dose ${esc(DOSE_VERSION)} · load ${esc(LOAD_VERSION)} · response ${esc(RESPONSE_VERSION)}. Each run gets one dose, not three added together. Training base and recent load are exponentially weighted daily averages (about ${TAU.base} and ${TAU.recent} days); rest days count as zero. There's no "safe zone": ratios of recent to base load don't predict injury reliably, so this shows where you are against your own year instead.</p>
             ${anchor ? `<p>Heart rate: max ${anchor.hrMax} (${esc(anchor.hrMaxSource)}), resting ${anchor.hrRest} (${esc(anchor.hrRestSource)}).</p>` : ""}
             <ul>${[...DOSE_ASSUMPTIONS, ...RESPONSE_ASSUMPTIONS].map(a => `<li>${esc(a)}</li>`).join("")}</ul>
