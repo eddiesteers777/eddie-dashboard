@@ -99,18 +99,56 @@ test("loadTotals: this week's days, weeks with effort load and strain, months ac
     assert.ok(t.months.at(-2).runs >= 26);
 });
 
-test("corosComparison: our base and recent load against COROS's Base Fitness and Load Impact", async () => {
-    const { corosComparison } = await import("../js/loadState.js");
-    const doses = [];
-    for (let i = 0; i < 160; i++) doses.push(dose(addDays("2026-01-01", i), 40 + 30 * Math.sin(i / 9) + (i % 7 === 6 ? 40 : 0)));
-    const s = loadState(doses, addDays("2026-01-01", 159));
-    const fitness = {};
-    s.series.forEach((x, i) => { if (i > 40 && i % 2) fitness[x.date] = { load: { long: Math.round(x.base * 1.3 + 4), short: Math.round(x.recent * 1.1), ratio: 1 } }; });
-    const c = corosComparison(s.series, fitness);
-    assert.ok(c.n > 50);
-    assert.ok(c.rBase > 0.95 && c.rRecent > 0.95, JSON.stringify(c));
-    assert.equal(c.latest.date, Object.keys(fitness).sort().at(-1));
-    assert.equal(corosComparison(s.series, {}), null);
+test("corosComparison (audit A6): week-to-week changes, not levels; a lag; where each puts today", async () => {
+    const { corosComparison, corosWords, spearman } = await import("../js/loadState.js");
+    const rng = seed => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; };
+    // A season's build (both rise through the year) plus each athlete's own 4-week blocks, under random days.
+    const daily = (r, n = 300) => { const blocks = Array.from({ length: Math.ceil(n / 28) }, () => 0.7 + 0.6 * r()); return Array.from({ length: n }, (_, i) => (30 + 0.25 * i) * blocks[Math.floor(i / 28)] + 60 * r() + (i % 7 === 6 ? 50 * r() : 0)); };
+    const START = "2025-12-01";
+    const stateOf = loads => loadState(loads.map((v, i) => dose(addDays(START, i), v)), addDays(START, loads.length - 1));
+    const fitnessFrom = (series, f) => Object.fromEntries(series.filter((_, i) => i > 30).map(x => [x.date, { load: f(x) }]));
+
+    // COROS sees the same training (its own scale, a little noise): the changes agree.
+    const mine = stateOf(daily(rng(1)));
+    const n = rng(9);
+    const same = corosComparison(mine.series, fitnessFrom(mine.series, x => ({ long: Math.round(x.base * 1.3 + 3 * n()), short: Math.round(x.recent * 0.9 + 3 * n()) })));
+    assert.equal(same.base.words, "together", JSON.stringify(same.base));
+    assert.equal(same.recent.words, "together", JSON.stringify(same.recent));
+    assert.ok(same.base.n >= 30);
+    assert.match(corosWords(same), /^Our base and COROS's Base Fitness move together week to week \(ρ 0\.\d+ over \d+ weeks\)/);
+
+    // Unrelated days under both: the smoothed levels still look alike (audit E5), the changes don't.
+    const levelR = [], changeRho = [];
+    for (let k = 0; k < 9; k++) {
+        const a = stateOf(daily(rng(100 + k))), b = stateOf(daily(rng(500 + k)));
+        const bBy = new Map(b.series.map(x => [x.date, x]));
+        const c = corosComparison(a.series, fitnessFrom(a.series, x => ({ long: Math.round(bBy.get(x.date).base), short: Math.round(bBy.get(x.date).recent) })));
+        const pts = a.series.filter((_, i) => i > 30);
+        levelR.push(Math.abs(spearman(pts.map(x => x.base), pts.map(x => bBy.get(x.date).base))));
+        changeRho.push(Math.abs(c.recent.rho));
+    }
+    const med = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
+    assert.ok(med(levelR) > 0.6, `levels look alike: ${med(levelR)}`);
+    assert.ok(med(changeRho) < 0.3, `changes don't: ${med(changeRho)}`);
+
+    // COROS's number moves 3 days after ours: the scan finds it.
+    const byDate = new Map(mine.series.map(x => [x.date, x]));
+    const late = corosComparison(mine.series, fitnessFrom(mine.series, x => { const y = byDate.get(addDays(x.date, -3)); return y ? { long: Math.round(y.base), short: Math.round(y.recent * 10) / 10 } : {}; }));
+    assert.equal(late.recent.lag, -3, JSON.stringify(late.recent));
+    assert.match(corosWords(late), /ours moves about 3 days before COROS's/);
+
+    // Where today sits in each one's last 90 days.
+    const spike = stateOf([...daily(rng(1)).slice(0, 290), ...Array(10).fill(160)]);
+    const flat = corosComparison(spike.series, fitnessFrom(spike.series, x => ({ long: 50, short: 40 + (x.date.endsWith("1") ? 1 : 0) })));
+    assert.ok(flat.recent.standing.gap >= 1, JSON.stringify(flat.recent.standing));
+    assert.match(corosWords(flat), /right now ours puts your recent load higher within your last 90 days than COROS does/i);
+
+    // Too few weeks; nothing at all.
+    const short = corosComparison(mine.series, fitnessFrom(mine.series.slice(-60), x => ({ long: x.base, short: x.recent })));
+    assert.equal(short.base.rho, null);
+    assert.match(corosWords(short), /Not enough weeks of COROS numbers yet/);
+    assert.equal(corosComparison(mine.series, {}), null);
+    assert.equal(corosWords(null), "");
 });
 
 test("week so far (audit A5): against the same day of the last 8 weeks, not a whole week", async () => {

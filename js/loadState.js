@@ -22,7 +22,9 @@
                     8 weeks (weekToDate, audit A5: comparing a Tuesday with
                     a whole week read every normal week as "behind")
      corosComparison  our base / recent next to COROS's Base Fitness /
-                    Load Impact, and how closely they move together
+                    Load Impact: whether their week-to-week changes agree
+                    (Spearman, ±7-day shift) and where each puts today in
+                    its own last 90 days (audit A6; levels always "agree")
    L_t = L_{t−1} + (dose_t − L_{t−1}) × (1 − e^(−1/τ)), started at the
    average daily dose of the first 6 weeks so year one doesn't begin at 0.
    Unit-tested in tests/loadState.test.mjs.
@@ -260,11 +262,80 @@ function pearson(xs, ys) {
     return sxx && syy ? sxy / Math.sqrt(sxx * syy) : null;
 }
 
+const ranks = xs => {
+    const order = xs.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]);
+    const r = new Array(xs.length);
+    for (let i = 0; i < order.length;) {
+        let j = i;
+        while (j + 1 < order.length && order[j + 1][0] === order[i][0]) j++;
+        for (let k = i; k <= j; k++) r[order[k][1]] = (i + j) / 2 + 1;
+        i = j + 1;
+    }
+    return r;
+};
+export const spearman = (xs, ys) => (xs.length >= 3 ? pearson(ranks(xs), ranks(ys)) : null);
+
+export const AGREE_WORDS = Object.freeze({ together: "move together", partly: "partly move together", not: "don't really move together", opposite: "move in opposite directions", few: "not enough weeks yet" });
+const agreeWord = rho => (rho == null ? "few" : rho >= 0.6 ? "together" : rho >= 0.3 ? "partly" : rho > -0.3 ? "not" : "opposite");
+
+/**
+ * Do the week-to-week changes agree? Levels can't say: two loads smoothed over 42 days
+ * correlate ~0.98 even when the days under them are unrelated (audit E5). Every 7 days
+ * back from the newest COROS day: COROS's change over the week before against ours,
+ * Spearman ρ (ranks, so the scales don't matter), with ours shifted −7…+7 days in case
+ * one of them reacts later. A shift is only named when it lines them up well (ρ 0.5+)
+ * and beats no shift by 0.1+, so noise across 14 tries isn't reported as a lag.
+ */
+function changeAgreement(ours, theirs, last) {
+    const at = (d, k) => ours.get(addDays(d, k));
+    const anchors = [];
+    const first = [...theirs.keys()].sort()[0];
+    for (let d = last; first && d >= first; d = addDays(d, -7)) {
+        if (theirs.has(d) && theirs.has(addDays(d, -7))) anchors.push(d);
+    }
+    const rhoAt = k => {
+        const xs = [], ys = [];
+        for (const d of anchors) {
+            const a = at(d, k), b = at(d, k - 7);
+            if (a == null || b == null) continue;
+            xs.push(a - b);
+            ys.push(theirs.get(d) - theirs.get(addDays(d, -7)));
+        }
+        return xs.length >= 8 ? { rho: spearman(xs, ys), n: xs.length } : { rho: null, n: xs.length };
+    };
+    const zero = rhoAt(0);
+    let best = { lag: 0, ...zero };
+    for (let k = -7; k <= 7; k++) {
+        if (!k) continue;
+        const r = rhoAt(k);
+        if (r.rho != null && best.rho != null && r.rho > best.rho + 0.1 && r.rho >= 0.5) best = { lag: k, ...r };
+    }
+    const r2 = x => (x == null || !Number.isFinite(x) ? null : Math.round(x * 100) / 100);
+    return { n: zero.n, rho: r2(zero.rho), words: agreeWord(zero.rho), lag: best.lag, rhoLag: r2(best.rho) };
+}
+
+/** Where today sits in each series' own last 90 days, in SDs; the gap is ours − COROS. */
+function standingGap(ours, theirs, last) {
+    const from = addDays(last, -90);
+    const zOf = (map, d) => {
+        const vals = [...map.entries()].filter(([x]) => x > from && x <= last).map(([, v]) => v);
+        if (vals.length < 20 || !map.has(d)) return null;
+        const m = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const s = Math.sqrt(vals.reduce((a, b) => a + (b - m) ** 2, 0) / (vals.length - 1));
+        return s > 0 ? (map.get(d) - m) / s : null;
+    };
+    const zo = zOf(ours, last), zc = zOf(theirs, last);
+    return zo == null || zc == null ? null : { ours: Math.round(zo * 10) / 10, coros: Math.round(zc * 10) / 10, gap: Math.round((zo - zc) * 10) / 10 };
+}
+
 /**
  * Our training base / recent load against COROS's Base Fitness (long-term
- * load) and Load Impact (short-term load), on the days COROS gave numbers.
- * The scales differ, so it's how they move together that's compared.
- * -> { n, latest: { date, ours: { base, recent }, coros: { base, impact, ratio } }, rBase, rRecent } or null
+ * load) and Load Impact (short-term load), on the days COROS gave numbers
+ * (audit A6). The scales differ and both are smoothed, so what's compared
+ * is whether their week-to-week changes agree (changeAgreement) and where
+ * each puts today within its own last 90 days (standingGap).
+ * -> { n, latest: { date, ours: { base, recent }, coros: { base, impact, ratio } },
+ *      base: { n, rho, words, lag, rhoLag, standing }, recent: { ... } } or null
  */
 export function corosComparison(series = [], fitness = {}, { days = 365 } = {}) {
     const byDate = new Map(series.map(s => [s.date, s]));
@@ -276,15 +347,36 @@ export function corosComparison(series = [], fitness = {}, { days = 365 } = {}) 
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([d, f]) => ({ date: d, ours: byDate.get(d), coros: { base: Number(f.load.long) || null, impact: Number(f.load.short) || null, ratio: Number(f.load.ratio) || null } }));
     if (!pts.length) return null;
-    const pair = (ourKey, theirKey) => {
-        const p = pts.filter(x => x.coros[theirKey] != null);
-        return p.length >= 10 ? Math.round(pearson(p.map(x => x.ours[ourKey]), p.map(x => x.coros[theirKey])) * 100) / 100 : null;
-    };
     const latest = pts.at(-1);
+    const oursMap = key => new Map(series.filter(s => s.date >= addDays(from, -14)).map(s => [s.date, s[key]]));
+    const theirMap = key => new Map(pts.filter(x => x.coros[key] != null).map(x => [x.date, x.coros[key]]));
+    const pair = (ourKey, theirKey) => {
+        const o = oursMap(ourKey), t = theirMap(theirKey);
+        return { ...changeAgreement(o, t, latest.date), standing: standingGap(o, t, latest.date) };
+    };
     return {
         n: pts.length,
         latest: { date: latest.date, ours: { base: r1(latest.ours.base), recent: r1(latest.ours.recent) }, coros: latest.coros },
-        rBase: pair("base", "base"),
-        rRecent: pair("recent", "impact")
+        base: pair("base", "base"),
+        recent: pair("recent", "impact")
     };
+}
+
+/** The comparison in plain words (Analytics and Weekly Review), or "" when there's nothing to say yet. */
+export function corosWords(c) {
+    if (!c) return "";
+    const part = (x, ours, theirs) => {
+        if (!x || x.rho == null) return null;
+        const lag = x.lag && x.rhoLag != null ? (x.lag > 0 ? `; closest when COROS's moves about ${x.lag} ${x.lag === 1 ? "day" : "days"} before ours` : `; closest when ours moves about ${-x.lag} ${x.lag === -1 ? "day" : "days"} before COROS's`) : "";
+        return `${ours} and ${theirs} ${AGREE_WORDS[x.words]} week to week (ρ ${x.rho} over ${x.n} weeks${lag})`;
+    };
+    const parts = [part(c.base, "our base", "COROS's Base Fitness"), part(c.recent, "our recent load", "Load Impact")].filter(Boolean);
+    const off = [["base", "base"], ["recent", "recent load"]].map(([k, name]) => ({ name, g: c[k]?.standing })).filter(x => x.g && Math.abs(x.g.gap) >= 1);
+    const sd = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}`;
+    const stand = off.length === 2 && Math.sign(off[0].g.gap) === Math.sign(off[1].g.gap)
+        ? [`right now ours puts your base and recent load ${off[0].g.gap > 0 ? "higher" : "lower"} within your last 90 days than COROS does (base ${sd(off[0].g.ours)} vs ${sd(off[0].g.coros)} SD, recent ${sd(off[1].g.ours)} vs ${sd(off[1].g.coros)})`]
+        : off.map(({ name, g }) => `right now ours puts your ${name} ${g.gap > 0 ? "higher" : "lower"} within your last 90 days than COROS does (${sd(g.ours)} vs ${sd(g.coros)} SD)`);
+    if (!parts.length) return `Not enough weeks of COROS numbers yet to see whether its load and ours move together (${c.n} ${c.n === 1 ? "day" : "days"} so far; it needs 8 weeks).`;
+    const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+    return `${cap(parts.join("; "))}.${stand.length ? ` ${cap(stand.join("; "))}.` : ""}`;
 }

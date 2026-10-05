@@ -20,7 +20,7 @@
 ========================================== */
 
 import { sessionDoses, doseAgreement, DOSE_ASSUMPTIONS, DOSE_VERSION, LONG_RUN } from "./sessionDose.js";
-import { loadState, recentWords, loadTotals, corosComparison, LOAD_VERSION, TAU } from "./loadState.js";
+import { loadState, recentWords, loadTotals, corosComparison, corosWords, LOAD_VERSION, TAU } from "./loadState.js";
 import { loadChartSvg } from "./svgCharts.js";
 import { loadModelInputs, loadLaps } from "./athleteData.js";
 import { addDays } from "./athleteLedger.js";
@@ -140,10 +140,7 @@ function responseHtml(r, today) {
 
 function corosLine(c) {
     if (!c) return "";
-    const move = c.rBase != null
-        ? ` Over ${c.n} days they move together: r ${c.rBase} for base${c.rRecent != null ? `, ${c.rRecent} for recent` : ""} (1 = perfectly in step).`
-        : "";
-    return `<li>COROS on ${esc(day(c.latest.date))}: Base Fitness <strong>${c.latest.coros.base ?? "—"}</strong>, Load Impact <strong>${c.latest.coros.impact ?? "—"}</strong>${c.latest.coros.ratio ? `, ratio ${c.latest.coros.ratio}` : ""}. Ours that day: base ${c.latest.ours.base}, recent ${c.latest.ours.recent}.${move} Different scales: it's the direction that compares.</li>`;
+    return `<li>COROS on ${esc(day(c.latest.date))}: Base Fitness <strong>${c.latest.coros.base ?? "—"}</strong>, Load Impact <strong>${c.latest.coros.impact ?? "—"}</strong>${c.latest.coros.ratio ? `, ratio ${c.latest.coros.ratio}` : ""}. Ours that day: base ${c.latest.ours.base}, recent ${c.latest.ours.recent}. ${esc(corosWords(c))} <small>Different scales and both smoothed, so the levels always look alike; it's the weekly changes that are compared.</small></li>`;
 }
 
 function monotonyWord(m) {

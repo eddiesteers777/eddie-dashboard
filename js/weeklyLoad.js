@@ -52,7 +52,7 @@ async function compute(today) {
     const monday = totals.days[0].date;
     const rows = tr.effortResponse(inputs.sessions, dr.doses, today).rows.filter(r => r.date >= monday);
     const feel = rows.length ? { n: rows.length, mean: Math.round(rows.reduce((t, r) => t + r.residual, 0) / rows.length * 10) / 10 } : null;
-    return { totals, coros, feel, today };
+    return { totals, coros, corosText: ls.corosWords(coros), feel, today };
 }
 
 const STATUS_WORDS = { usual: "About usual", ahead: "Ahead of usual", behind: "Behind usual" };
@@ -64,7 +64,7 @@ function toDateWords(td, key, fmt, daysIn) {
     return `usually ${fmt(x.usual)} by ${td.dayName}${x.usualWeek ? ` · a usual week ${fmt(x.usualWeek)}` : ""}`;
 }
 
-function render(el, { totals, coros, feel, today }) {
+function render(el, { totals, coros, corosText, feel, today }) {
     // (today: a day with no run yet says so instead of "Rest")
     const w = totals.thisWeek;
     const lastWeek = totals.weeks.at(-2);
@@ -90,7 +90,7 @@ function render(el, { totals, coros, feel, today }) {
             ${mix ? `<li>Mix this week: <strong>${mix[0]}% easy</strong> · ${mix[1]}% steady / threshold · ${mix[2]}% hard.</li>` : ""}
             ${feel ? `<li>${feel.mean >= 1 ? `Runs this week felt <strong>${feel.mean} harder than usual</strong> for what they were (${feel.n} rated).` : feel.mean <= -1 ? `Runs this week felt <strong>${Math.abs(feel.mean)} easier than usual</strong> for what they were (${feel.n} rated).` : `Runs this week felt about as hard as usual for what they were (${feel.n} rated).`}</li>` : ""}
             ${lastWeek?.monotony != null ? `<li>Last week: monotony <strong>${lastWeek.monotony}</strong> (${esc(monotonyWords(lastWeek.monotony))}), strain <strong>${whole(lastWeek.strain)}</strong>${totals.strainUsual ? ` against your usual ${whole(totals.strainUsual)}${lastWeek.strain > totals.strainUsual * 1.3 ? ": well above it" : ""}` : ""}.</li>` : ""}
-            ${coros ? `<li>COROS on ${esc(short(coros.latest.date))}: Base Fitness <strong>${coros.latest.coros.base ?? "—"}</strong>, Load Impact <strong>${coros.latest.coros.impact ?? "—"}</strong>. Ours: base ${coros.latest.ours.base}, recent ${coros.latest.ours.recent}${coros.rBase != null ? ` (they move together: r ${coros.rBase} for base, ${coros.rRecent ?? "–"} for recent, over ${coros.n} days)` : ""}. Different scales; it's the direction that compares.</li>` : ""}
+            ${coros ? `<li>COROS on ${esc(short(coros.latest.date))}: Base Fitness <strong>${coros.latest.coros.base ?? "—"}</strong>, Load Impact <strong>${coros.latest.coros.impact ?? "—"}</strong>. Ours: base ${coros.latest.ours.base}, recent ${coros.latest.ours.recent}. ${esc(corosText)}</li>` : ""}
         </ul>`;
 }
 
