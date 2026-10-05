@@ -78,7 +78,7 @@ test("sessions: shared watch runs get the effort from a logged plan workout; a l
         { id: "c:1", date: "2026-10-02", start: null, distance: 8000, movingSec: 2700, avgHr: 150, rpeAnswered: false }
     ] }, TODAY));
     const results = [
-        { id: "u_p_2026-10-02", date: "2026-10-02", status: "completed", distance: 5, durationSec: 2700, rpe: 6 },
+        { id: "u_p_2026-10-02", date: "2026-10-02", status: "completed", distance: 5, durationSec: 2700, rpe: 6, updatedAt: Date.parse("2026-10-07T09:00:00Z") },
         { id: "u_p_2026-10-03", date: "2026-10-03", status: "completed", distance: 4, durationSec: 2200, rpe: 3 },
         { id: "u_p_2026-10-03_strength", kind: "strength", date: "2026-10-03", status: "completed", rpe: 7 },
         { id: "u_p_2026-10-01", date: "2026-10-01", status: "skipped" }
@@ -86,11 +86,11 @@ test("sessions: shared watch runs get the effort from a logged plan workout; a l
     const s = clientSessions({ shared, results, races: { "c:1": { status: "race", meters: 8000, timeSec: 2700, allOut: true } } });
     assert.equal(s.length, 2);
     assert.equal(s[0].id, "c:1");
-    assert.equal(s[0].rpe, 6);
+    assert.equal(s[0].rpe, 6, "a log saved after the switch is already CR-10");
     assert.equal(s[0].race.status, "race");
     assert.equal(s[1].sources[0], "plan");
     assert.equal(Math.round(s[1].distance), Math.round(4 * MILE));
-    assert.equal(s[1].rpe, 3);
+    assert.equal(s[1].rpe, 2, "a log saved before the switch (the first words' 3, \"Easy\") reads as CR-10 2");
 });
 
 test("targets from the profile", () => {

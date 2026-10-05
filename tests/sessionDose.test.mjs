@@ -94,11 +94,13 @@ test("chooseDose (0.3.0): the dose is what was done (pace); heart rate and effor
     const tmNoHr = sess({ indoor: true, avgHr: null, rpe: 4 });
     assert.equal(chooseDose(tmNoHr, rawDose(tmNoHr, anchor), scale, anchor).source, "miles");
     // Nothing measured at all but time and an effort: effort, flagged.
-    const noHr = sess({ indoor: true, avgHr: null, rpe: 4, distance: null });
+    const noHr = sess({ indoor: true, avgHr: null, rpe: 3, distance: null });
     const byEffort = chooseDose(noHr, rawDose(noHr, anchor), scale, anchor);
     assert.equal(byEffort.source, "effort");
-    assert.equal(byEffort.dose, 60 * 4 * 0.25);
-    assert.equal(byEffort.domains.easy, byEffort.dose);
+    assert.equal(byEffort.dose, 60 * 3 * 0.25);
+    assert.equal(byEffort.domains.easy, byEffort.dose, "CR-10 3 (moderate) is easy running");
+    const hard = sess({ indoor: true, avgHr: null, rpe: 7, distance: null });
+    assert.equal(chooseDose(hard, rawDose(hard, anchor), scale, anchor).domains.hard > 0, true, "CR-10 7 (very hard) is hard");
     const log = { id: "l:1", date: "2026-10-01", distance: 5 * M, movingSec: null, avgHr: null, rpe: null };
     const byMiles = chooseDose(log, rawDose(log, anchor), scale, anchor);
     assert.equal(byMiles.source, "miles");

@@ -10,7 +10,8 @@
        (max HR, climb, elapsed time, fastest efforts, Strava's name)
      the running log (hand-logged runs only; COROS imports are already in)
    each linked to its planned day, with what the athlete told us:
-     session-rpe   { sessionId: { rpe: 1-10 | null, skipped?, at } }
+     session-rpe   { sessionId: { rpe: 1-10 | null, skipped?, at, scale?: "cr10", delayMin? } }
+                   (no scale = the first "sb1" words; read on CR-10 via js/effortScale.js)
      race-results  { sessionId: { status: "race" | "not", … } }
    Nothing here is stored as a new source of truth: the list is rebuilt
    from the sources every time. Only RPE and race answers are new facts.
@@ -25,6 +26,7 @@
 ========================================== */
 
 import { sameRun } from "./stravaHistory.js";
+import { SCALE, scaleOf, toCr10, sessionEndMs, delayMinutes, isLate, PROMPT_WAIT_MIN } from "./effortScale.js";
 
 export const LEDGER_VERSION = 1;
 export const RPE_KEY = "session-rpe";
@@ -209,7 +211,12 @@ export const planEffortKey = date => `plan:${date}`;
 export function attachAnswers(sessions, { rpe = {}, races = {} } = {}) {
     for (const s of sessions) {
         const r = lookup(rpe, s) || (s.planned ? rpe?.[planEffortKey(s.date)] || null : null);
-        s.rpe = r && Number.isInteger(r.rpe) ? r.rpe : null;
+        // On CR-10 for every comparison; the answer itself stays as given (effortScale.js).
+        s.rpeScale = r && Number.isInteger(r.rpe) ? scaleOf(r) : null;
+        s.rpeGiven = r && Number.isInteger(r.rpe) ? r.rpe : null;
+        s.rpe = s.rpeGiven == null ? null : toCr10(s.rpeGiven, s.rpeScale);
+        s.rpeDelayMin = r && Number.isInteger(r.rpe) ? (Number.isFinite(r.delayMin) ? r.delayMin : delayMinutes(r.at, sessionEndMs(s))) : null;
+        s.rpeLate = isLate(s.rpeDelayMin);
         s.rpeAnswered = Boolean(r);
         s.race = lookup(races, s);
     }
@@ -326,18 +333,30 @@ export const notRaceRecord = (at = Date.now()) => ({ status: "not", at });
  * Watch runs from the last `days` days with no effort answer yet,
  * newest first (at most `max`).
  */
-export function effortPrompts(sessions, today, { days = 3, max = 4 } = {}) {
+export function effortPrompts(sessions, today, { days = 3, max = 4, now = null } = {}) {
     const from = addDays(today, -(days - 1));
+    // With `now` (ms): only once the run ended PROMPT_WAIT_MIN ago (effort settles after a run; Foster asked ~30 min after).
+    const settled = s => now == null || !(sessionEndMs(s) > now - PROMPT_WAIT_MIN * 60000);
     return sessions
-        .filter(s => s.date >= from && s.date <= today && !s.rpeAnswered && s.sources.some(x => x === "coros" || x === "strava"))
+        .filter(s => s.date >= from && s.date <= today && !s.rpeAnswered && s.sources.some(x => x === "coros" || x === "strava") && settled(s))
         .sort((a, b) => String(b.start || b.date).localeCompare(String(a.start || a.date)))
         .slice(0, max);
 }
 
 /** The saved effort answer: rpe 1-10, or null with skipped: true. */
-export function effortRecord(rpe, at = Date.now()) {
+export function effortRecord(rpe, at = Date.now(), { endMs = null } = {}) {
     const n = Number(rpe);
-    return Number.isInteger(n) && n >= 1 && n <= 10 ? { rpe: n, at } : { rpe: null, skipped: true, at };
+    if (!(Number.isInteger(n) && n >= 1 && n <= 10)) return { rpe: null, skipped: true, at };
+    const delayMin = delayMinutes(at, endMs);
+    return { rpe: n, scale: SCALE, at, ...(delayMin == null ? {} : { delayMin }) };
+}
+
+/** Runs still waiting for their PROMPT_WAIT_MIN after the end: when the next one is due (ms), or null. */
+export function nextPromptAt(sessions, today, now, { days = 3 } = {}) {
+    const from = addDays(today, -(days - 1));
+    const due = sessions.filter(s => s.date >= from && s.date <= today && !s.rpeAnswered && s.sources.some(x => x === "coros" || x === "strava"))
+        .map(s => sessionEndMs(s)).filter(e => e > now - PROMPT_WAIT_MIN * 60000).map(e => e + PROMPT_WAIT_MIN * 60000);
+    return due.length ? Math.min(...due) : null;
 }
 
 // ---------- small text helpers shared by the views ----------

@@ -112,7 +112,7 @@ function responseHtml(r, today) {
         : es.verdict === "costlier" ? `Your last ${es.n} answered runs felt <strong>${es.mean} harder</strong> than usual for you on average (1.0 or more is worth noticing).`
         : es.verdict === "easier" ? `Your last ${es.n} answered runs felt <strong>${Math.abs(es.mean)} easier</strong> than usual for you.`
         : `Your last ${es.n} answered runs felt about as hard as usual (${signed(es.mean)}).`;
-    const effortRows = effort.rows.slice(-5).reverse().map(x => `<li><span>${esc(day(x.date))}</span><span>${esc(CLASS_WORDS[x.cls])} · ${x.minutes} min</span><b>${x.rpe}</b><small>expected ${x.expected}</small></li>`).join("");
+    const effortRows = effort.rows.slice(-5).reverse().map(x => `<li><span>${esc(day(x.date))}</span><span>${esc(CLASS_WORDS[x.cls])} · ${x.minutes} min</span><b>${x.rpe}</b><small>expected ${x.expected}${x.late ? " · rated late, counts half" : ""}</small></li>`).join("");
     const q = quality.signal;
     const qualityLine = q.verdict === "few" ? "" : `<li>Heart rate on quality reps: <strong>${signed(q.bpm)} bpm</strong> against your own reps at the same speed over the 8 weeks before (last ${q.n} sessions with laps).</li>`;
     const ex = execution;

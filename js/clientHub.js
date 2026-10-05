@@ -16,6 +16,7 @@
    only let a linked coach read any of this anyway.
 ========================================== */
 
+import { effortWords, logScale } from "./effortScale.js";
 import { listenForAuth } from "./auth.js";
 import { loadClientRecord, loadHistoryExtras } from "./clientDirectory.js";
 import { TIMELINE_GROUPS, filterTimeline, groupCounts, groupByMonth, historyStats, statsLine, eventDay, HISTORY_PAGE } from "./clientTimeline.js";
@@ -1815,7 +1816,8 @@ function sortNotes() {
 
 // ---- Workouts: planned vs. actual, reply on each ----
 
-const RPE_WORDS = { 1: "very easy", 2: "easy", 3: "easy", 4: "comfortable", 5: "steady", 6: "moderate", 7: "hard", 8: "very hard", 9: "near max", 10: "all out" };
+// The client's words when they logged it: CR-10, or the first scale for a log saved before the switch (js/effortScale.js).
+const rpeWords = r => effortWords(r.rpe, logScale(r.updatedAt || r.createdAt || (r.date ? `${r.date}T12:00:00Z` : null))).toLowerCase();
 
 // The plan day a result was logged against (for planned details).
 function plannedDay(result) {
@@ -1847,7 +1849,7 @@ function strengthResultHtml(r, day) {
                 <div class="hub-wo-stats">
                     <div><span>Sets</span><strong>${cmp.doneSets}/${cmp.plannedSets}</strong><small>${cmp.pct}% of plan</small></div>
                     <div><span>Time</span><strong>${r.durationSec ? formatDuration(r.durationSec) : "—"}</strong></div>
-                    <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(RPE_WORDS[r.rpe])}</small>` : ""}</div>
+                    <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(rpeWords(r))}</small>` : ""}</div>
                 </div>
                 ${strengthTableHtml(cmp)}
                 ${cmp.highlights.length ? `<ul class="hub-wo-highlights">${cmp.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}` : ""}
@@ -1889,7 +1891,7 @@ function workoutResultHtml(r) {
                     <div><span>Ran</span><strong>${r.distance ? `${r.distance} mi` : "—"}</strong>${cmp.distancePct ? `<small>${cmp.distancePct}% of plan</small>` : ""}</div>
                     <div><span>Time</span><strong>${r.durationSec ? formatDuration(r.durationSec) : "—"}</strong></div>
                     <div><span>Pace</span><strong>${cmp.pace || "—"}</strong>${vs ? `<small>${esc(vs)}</small>` : ""}</div>
-                    <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(RPE_WORDS[r.rpe])}</small>` : ""}</div>
+                    <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(rpeWords(r))}</small>` : ""}</div>
                 </div>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
             ${r.note ? `<p class="hub-quote">"${renderEmojiText(esc(r.note))}"</p>` : ""}

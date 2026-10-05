@@ -25,6 +25,7 @@
 ========================================== */
 
 import { addDays, raceCandidates, confirmedRaces } from "./athleteLedger.js";
+import { toCr10, logScale } from "./effortScale.js";
 import { fillPlanEfforts, effortsFromResults } from "./athleteShare.js";
 import { sessionDoses } from "./sessionDose.js";
 import { loadState, recentWords } from "./loadState.js";
@@ -49,7 +50,7 @@ function fromResult(r) {
         name: r.title || "Plan workout", otherName: "",
         distance: miles * MILE, movingSec: Number(r.durationSec) || null, elapsedSec: null,
         avgHr: null, maxHr: null, climb: null, best: null, indoor: false, trail: false,
-        rpe: Number.isInteger(Number(r.rpe)) && r.rpe >= 1 ? Number(r.rpe) : null,
+        rpe: toCr10(r.rpe, logScale(r.updatedAt || r.createdAt || `${r.date}T12:00:00Z`)),
         rpeAnswered: Number.isInteger(Number(r.rpe)) && r.rpe >= 1,
         race: null
     };

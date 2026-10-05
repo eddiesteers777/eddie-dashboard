@@ -59,7 +59,7 @@ test("plan link: each planned day gets the session closest to its miles", () => 
 test("answers attach by the session id or a Strava alias", () => {
     const c = coros("111", "2026-10-03", 13.1, 420, { hour: 7 });
     const st = strava("f9", "2026-10-03", Math.round(13.1 * M), Math.round(13.1 * 420));
-    const s = buildLedger({ corosRuns: [c], stravaActs: { f9: st }, rpe: { "c:111": { rpe: 8, at: 1 } }, races: { "s:f9": { status: "race", distanceKey: "half" } } });
+    const s = buildLedger({ corosRuns: [c], stravaActs: { f9: st }, rpe: { "c:111": { rpe: 8, at: 1, scale: "cr10" } }, races: { "s:f9": { status: "race", distanceKey: "half" } } });
     assert.equal(s[0].rpe, 8);
     assert.equal(s[0].rpeAnswered, true);
     assert.equal(s[0].race.distanceKey, "half", "a race confirmed when only Strava had it still counts once COROS has the run");
@@ -136,7 +136,8 @@ test("effort prompts: watch runs from the last 3 days with no answer, newest fir
         rpe: { "c:2": { rpe: null, skipped: true, at: 1 } }
     });
     assert.deepEqual(effortPrompts(all, "2026-10-03").map(s => s.id), ["c:3", "c:1"], "skipped one and the hand-logged run aren't asked about");
-    assert.deepEqual(effortRecord(7, 5), { rpe: 7, at: 5 });
+    assert.deepEqual(effortRecord(7, 5), { rpe: 7, scale: "cr10", at: 5 });
+    assert.deepEqual(effortRecord(7, 5 + 40 * 60000, { endMs: 5 }), { rpe: 7, scale: "cr10", at: 5 + 40 * 60000, delayMin: 40 });
     assert.deepEqual(effortRecord(null, 5), { rpe: null, skipped: true, at: 5 });
     assert.deepEqual(effortRecord(11, 5), { rpe: null, skipped: true, at: 5 });
 });
@@ -160,14 +161,14 @@ test("race score: a fast weekday 10K-length tempo with no name isn't a candidate
 test("an effort given on Mark Done before the watch run arrived goes on that day's planned run, not its shakeout", () => {
     const runs = [coros("901", "2026-10-06", 10, 470), coros("902", "2026-10-06", 2, 560, { hour: 17 })];
     const plan = [{ date: "2026-10-06", miles: 10, title: "Tempo" }];
-    const s = buildLedger({ corosRuns: runs, planDays: plan, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1 } } });
+    const s = buildLedger({ corosRuns: runs, planDays: plan, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1, scale: "cr10" } } });
     const main = s.find(x => x.id === "c:901"), shake = s.find(x => x.id === "c:902");
     assert.equal(main.rpe, 7);
     assert.equal(main.rpeAnswered, true);
     assert.equal(shake.rpeAnswered, false, "the other run that day is still asked about");
     assert.deepEqual(effortPrompts(s, "2026-10-06").map(x => x.id), ["c:902"]);
     // The run's own answer wins.
-    const own = buildLedger({ corosRuns: runs, planDays: plan, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1 }, "c:901": { rpe: 5, at: 2 } } });
+    const own = buildLedger({ corosRuns: runs, planDays: plan, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1, scale: "cr10" }, "c:901": { rpe: 5, at: 2, scale: "cr10" } } });
     assert.equal(own.find(x => x.id === "c:901").rpe, 5);
     // Without the plan (a client's own ledger) the day answer isn't used.
     assert.equal(buildLedger({ corosRuns: runs, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1 } } }).find(x => x.id === "c:901").rpeAnswered, false);
@@ -181,4 +182,24 @@ test("addDays across month, year and daylight-saving edges (it is remembered, so
         assert.equal(addDays("2025-12-31", 1), "2026-01-01");
         assert.equal(addDays("2024-03-01", -1), "2024-02-29");
     }
+});
+
+test("effort (audit B5): old answers read on CR-10 but kept as given; delay and late; the 15-minute wait", async () => {
+    const { effortPrompts, nextPromptAt } = await import("../js/athleteLedger.js");
+    const end = Date.parse("2026-10-06T12:00:00Z");
+    const run = { labelId: "77", startTime: "2026-10-06T11:00:00Z", date: "2026-10-06", distance: 16000, duration: 3600, avgHr: 150 };
+    // An answer from before (no scale): "Steady" 5 on the first words is CR-10 4; the answer itself is untouched.
+    const old = buildLedger({ corosRuns: [run], rpe: { "c:77": { rpe: 5, at: end + 30 * 60000 } } })[0];
+    assert.deepEqual([old.rpeGiven, old.rpeScale, old.rpe], [5, "sb1", 4]);
+    assert.equal(old.rpeDelayMin, 30, "worked out from the saved time when the answer has no delay");
+    assert.equal(old.rpeLate, false);
+    const late = buildLedger({ corosRuns: [run], rpe: { "c:77": { rpe: 6, at: end + 30 * 3600000, scale: "cr10", delayMin: 1800 } } })[0];
+    assert.deepEqual([late.rpe, late.rpeDelayMin, late.rpeLate], [6, 1800, true]);
+    // Today asks only once the run ended 15 minutes ago, and says when the next one is due.
+    const fresh = buildLedger({ corosRuns: [run] });
+    assert.equal(effortPrompts(fresh, "2026-10-06", { now: end + 5 * 60000 }).length, 0);
+    assert.equal(nextPromptAt(fresh, "2026-10-06", end + 5 * 60000), end + 15 * 60000);
+    assert.equal(effortPrompts(fresh, "2026-10-06", { now: end + 16 * 60000 }).length, 1);
+    assert.equal(nextPromptAt(fresh, "2026-10-06", end + 16 * 60000), null);
+    assert.equal(effortPrompts(fresh, "2026-10-06").length, 1, "without a clock (tests, older callers) nothing waits");
 });

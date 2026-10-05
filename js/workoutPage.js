@@ -36,6 +36,9 @@ import { icon } from "./icons.js";
 import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
 import { renderEmojiText } from "./emoji.js";
+import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effortScale.js";
+// An earlier log on the first words opens on its CR-10 equivalent, so saving it again keeps its meaning.
+const formRpe = r => (r?.rpe ? toCr10(r.rpe, logScale(r.updatedAt || r.createdAt || (r.date ? `${r.date}T12:00:00Z` : null))) : null);
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -44,7 +47,9 @@ const programId = params.get("program");
 const date = params.get("date");
 const strengthMode = params.get("kind") === "strength";
 
-const RPE_WORDS = { 1: "Very easy", 2: "Easy", 3: "Easy", 4: "Comfortable", 5: "Steady", 6: "Moderate", 7: "Hard", 8: "Very hard", 9: "Near max", 10: "All out" };
+// The effort scale is CR-10 (js/effortScale.js); a log saved before the switch shows its first-scale words.
+const RPE_WORDS = EFFORT_WORDS;
+const savedScale = r => logScale(r?.updatedAt || r?.createdAt || (r?.date ? `${r.date}T12:00:00Z` : null));
 const RUN_TITLES = { easy: "Easy run", recovery: "Recovery run", long: "Long run", workout: "Workout", tempo: "Tempo run", race: "Race" };
 
 const state = { program: null, day: null, week: null, weekIndex: 0, result: null, user: null };
@@ -99,7 +104,7 @@ function resultHtml(result) {
                 <div><span>You ran</span><strong>${result.distance ? `${result.distance} mi` : "—"}</strong>${cmp.distancePct ? `<small>${cmp.distancePct}% of plan</small>` : ""}</div>
                 <div><span>Time</span><strong>${result.durationSec ? formatDuration(result.durationSec) : "—"}</strong></div>
                 <div><span>Pace</span><strong>${cmp.pace || "—"}</strong>${vs ? `<small>${esc(vs)}${cmp.target ? ` (${esc(cmp.target)})` : ""}</small>` : ""}</div>
-                <div><span>Effort</span><strong>${result.rpe ? `${result.rpe}/10` : "—"}</strong>${result.rpe ? `<small>${esc(RPE_WORDS[result.rpe])}</small>` : ""}</div>
+                <div><span>Effort</span><strong>${result.rpe ? `${result.rpe}/10` : "—"}</strong>${result.rpe ? `<small>${esc(effortWords(result.rpe, savedScale(result)))}</small>` : ""}</div>
             </div>
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
             ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
@@ -416,9 +421,9 @@ function openLogForm(prefill = {}) {
                 <p class="wo-pace" data-pace></p>
                 <span class="pw-label">How hard did it feel? <small>(required)</small></span>
                 <div class="wo-rpe" role="radiogroup" aria-label="Effort, 1 to 10">
-                    ${Array.from({ length: 10 }, (_, i) => i + 1).map(n => `<label title="${RPE_WORDS[n]}"><input type="radio" name="rpe" value="${n}"${Number(r.rpe) === n ? " checked" : ""}><span>${n}</span></label>`).join("")}
+                    ${Array.from({ length: 10 }, (_, i) => i + 1).map(n => `<label title="${RPE_WORDS[n]}"><input type="radio" name="rpe" value="${n}"${formRpe(r) === n ? " checked" : ""}><span>${n}</span></label>`).join("")}
                 </div>
-                <p class="wo-rpe-word" data-rpe-word>${r.rpe ? RPE_WORDS[r.rpe] : "1 = very easy, 10 = all out"}</p>
+                <p class="wo-rpe-word" data-rpe-word>${formRpe(r) ? RPE_WORDS[formRpe(r)] : EFFORT_HINT}</p>
             </div>
             <span class="pw-label">Any pain or discomfort?</span>
             <div class="wo-seg" role="radiogroup" aria-label="Any pain or discomfort?">

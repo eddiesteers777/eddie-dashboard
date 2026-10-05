@@ -27,6 +27,7 @@
 ========================================== */
 
 import { RACE_WORDS, NOT_WORDS, addDays } from "./athleteLedger.js";
+import { toCr10, logScale } from "./effortScale.js";
 
 export const SHARE_VERSION = 1;
 export const SHARE_DAYS = { runs: 365, health: 120, checkins: 120 };
@@ -220,8 +221,9 @@ export function effortsFromCoachPlans(plans = []) {
     for (const p of plans || []) {
         for (const week of p?.generatedPlan?.weeks || []) {
             for (const day of week.days || []) {
-                const rpe = Number(day?.rpe);
-                if (day?.date && Number.isInteger(rpe) && rpe >= 1 && rpe <= 10) {
+                // On CR-10, like every effort the model compares (a log saved before CR10_FROM used the first words).
+                const rpe = toCr10(day?.rpe, logScale(day?.completedAt || `${day?.date}T12:00:00Z`));
+                if (day?.date && rpe != null) {
                     out.push({ date: day.date, rpe, miles: Number(day.actualDistance) || Number(day.miles) || 0 });
                 }
             }
@@ -233,7 +235,7 @@ export function effortsFromCoachPlans(plans = []) {
 /** Logged plan workouts (workoutResults, the coach can read them) -> [{ date, miles, rpe }]. */
 export function effortsFromResults(results = []) {
     return (results || []).filter(r => r?.kind !== "strength" && r?.status === "completed" && Number.isInteger(Number(r.rpe)) && r.rpe >= 1 && r.rpe <= 10 && r.date)
-        .map(r => ({ date: r.date, rpe: Number(r.rpe), miles: Number(r.distance) || Number(r.plannedMiles) || 0 }));
+        .map(r => ({ date: r.date, rpe: toCr10(r.rpe, logScale(r.updatedAt || r.createdAt || `${r.date}T12:00:00Z`)), miles: Number(r.distance) || Number(r.plannedMiles) || 0 }));
 }
 
 /**

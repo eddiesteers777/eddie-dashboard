@@ -59,7 +59,8 @@ export const DOMAINS = Object.freeze([
 export const domainOf = intensity => DOMAINS.find(d => intensity < d.max).key;
 // The same split by heart-rate reserve and by effort, when pace can't say.
 const domainOfHr = hrr => (hrr < 0.75 ? "easy" : hrr <= 0.88 ? "threshold" : "hard");
-const domainOfRpe = rpe => (rpe <= 4 ? "easy" : rpe <= 7 ? "threshold" : "hard");
+// CR-10 (js/effortScale.js): up to moderate is easy, somewhat hard to hard+ is threshold, very hard and up is hard.
+const domainOfRpe = rpe => (rpe <= 3 ? "easy" : rpe <= 6 ? "threshold" : "hard");
 
 const CLIMB_FACTOR = 6;            // meters of flat per meter climbed
 const MAX_IF = 1.5;                // faster than this is a GPS glitch
@@ -317,7 +318,7 @@ export function chooseDose(session, raw, scale, anchor) {
         blend: blend != null ? r1(blend) : null, blendSource: used.length > 1 ? "blend" : used[0] || "none", parts,
         miles, minutes, climb: Number(session.climb) > 0 ? Number(session.climb) : 0,
         long: miles >= LONG_RUN.miles || (minutes || 0) >= LONG_RUN.minutes,
-        intensity: raw.intensity, hrr: raw.hrr, rpe: Number.isInteger(session.rpe) ? session.rpe : null,
+        intensity: raw.intensity, hrr: raw.hrr, rpe: Number.isInteger(session.rpe) ? session.rpe : null, rpeLate: Boolean(session.rpeLate),
         raw: { pace: raw.pace, hr: raw.hr, effort: raw.effort },
         laps: raw.laps, flags
     };

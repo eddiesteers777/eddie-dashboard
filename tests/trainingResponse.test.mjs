@@ -84,16 +84,16 @@ test("sessionClass: race, long, intervals, threshold, tempo, steady, easy", () =
 
 test("effort vs expected: defaults first, then your own; 3 harder-than-usual runs = costing more", () => {
     const doses = [];
-    for (let i = 30; i >= 6; i--) doses.push({ id: `c:${i}`, date: addDays(TODAY, -i), intensity: 0.72, dose: 50, domains: { easy: 50, threshold: 0, hard: 0 }, long: false, minutes: 50, rpe: 4 });
-    for (let i = 3; i >= 1; i--) doses.push({ id: `c:${i}`, date: addDays(TODAY, -i), intensity: 0.72, dose: 50, domains: { easy: 50, threshold: 0, hard: 0 }, long: false, minutes: 50, rpe: 6 });
+    for (let i = 30; i >= 6; i--) doses.push({ id: `c:${i}`, date: addDays(TODAY, -i), intensity: 0.72, dose: 50, domains: { easy: 50, threshold: 0, hard: 0 }, long: false, minutes: 50, rpe: 3 });
+    for (let i = 3; i >= 1; i--) doses.push({ id: `c:${i}`, date: addDays(TODAY, -i), intensity: 0.72, dose: 50, domains: { easy: 50, threshold: 0, hard: 0 }, long: false, minutes: 50, rpe: 5 });
     const r = effortResponse([], doses, TODAY);
-    assert.equal(r.rows[0].expected, 3, "the first easy run expects the default 3");
-    assert.ok(r.rows[24].expected > 3.8, "after 24 easy runs at 4, expect about 4");
+    assert.equal(r.rows[0].expected, 2, "the first easy run expects the CR-10 default 2 (easy)");
+    assert.ok(r.rows[24].expected > 2.8, "after 24 easy runs at 3, expect about 3");
     assert.equal(r.signal.verdict, "costlier");
     assert.ok(r.signal.mean >= 1);
     // A long run expects more for its extra hour.
     const long = effortResponse([], [{ id: "x", date: TODAY, intensity: 0.7, dose: 150, domains: { easy: 150, threshold: 0, hard: 0 }, long: true, minutes: 180, rpe: 6 }], TODAY);
-    assert.equal(long.rows[0].expected, 5.8);
+    assert.equal(long.rows[0].expected, 4.8);
     assert.equal(effortResponse([], doses.slice(0, 2), TODAY).signal.verdict, "few");
 });
 
@@ -156,4 +156,14 @@ test("dose test: a response that follows recent load is found; too few probes sa
     assert.equal(doseBacktest(dr, probes.slice(0, 5)).verdict, "few");
     assert.deepEqual(seriesNoise([500, 498, 502, 497, 499]), { weeks: 5, sd: 4 });
     assert.equal(seriesNoise([500, null]), null);
+});
+
+test("effort vs expected (audit B5): answers given more than a day late count half in the baseline", () => {
+    const mk = (i, rpe) => ({ id: `c:${i}`, date: addDays(TODAY, -i), intensity: 0.72, dose: 50, domains: { easy: 50, threshold: 0, hard: 0 }, long: false, minutes: 50, rpe });
+    const doses = [mk(10, 6), mk(9, 6), mk(8, 6), mk(7, 6), mk(1, 3)];
+    const onTime = effortResponse([], doses, TODAY).rows.at(-1).expected;
+    const sessions = [10, 9, 8, 7].map(i => ({ id: `c:${i}`, rpeLate: true }));
+    const late = effortResponse(sessions, doses, TODAY);
+    assert.ok(late.rows.at(-1).expected < onTime, `${late.rows.at(-1).expected} < ${onTime}: four late 6s pull the baseline less`);
+    assert.deepEqual(late.rows.map(r => r.late), [true, true, true, true, false]);
 });

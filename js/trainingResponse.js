@@ -29,7 +29,7 @@ import { addDays } from "./athleteLedger.js";
 import { loadState } from "./loadState.js";
 import { checkWorkout } from "./trends.js";
 
-export const RESPONSE_VERSION = "0.1.0";
+export const RESPONSE_VERSION = "0.2.0";
 const MILE = 1609.344;
 const DAY = 864e5;
 
@@ -37,7 +37,7 @@ export const RESPONSE_ASSUMPTIONS = Object.freeze([
     "Easy runs that count for efficiency: 30–100 minutes, easy intensity (under 85% of your 1-hour race speed), not hilly (under 15 m of climb per km), with heart rate, not a treadmill or a race.",
     "Expected heart rate comes from your own easy runs of the 8 weeks before, leaving out the last 7 days, so a change shows against your recent normal.",
     "A change in easy-run heart rate is only called when it's more than 2 bpm and twice its own uncertainty. Heat raises heart rate: summer readings carry a note.",
-    "Expected effort: your own average for that kind of run (easy 3, steady 5, long 5, tempo 6, threshold 7, intervals 8, race 9 until you have a few of each), plus about 0.8 for every extra hour.",
+    "Expected effort: your own average for that kind of run on the 1–10 CR-10 scale (easy 2, steady 3, long 4, tempo 5, threshold 6, intervals 7, race 9 until you have a few of each), plus about 0.8 for every extra hour. Answers on the first word list count as their CR-10 equivalent; answers given more than a day after the run count half.",
     "Heart rate on quality reps: reps of 2+ minutes at 85%+ of your 1-hour speed, against your own reps of the 8 weeks before at the same speed."
 ]);
 
@@ -46,7 +46,9 @@ const HILLY = 0.015;                // 15 m per km
 const PRIOR_SLOPE = 30;             // bpm per m/s (easy running, about 20 bpm from 8:30 to 7:00 /mi)
 const SLOPE_WEIGHT = 8;             // the prior counts as 8 runs
 const BASE_FROM = 63, BASE_TO = 8;  // baseline window: days before the run
-export const EFFORT_DEFAULTS = Object.freeze({ easy: 3, steady: 5, long: 5, tempo: 6, threshold: 7, intervals: 8, race: 9 });
+// On CR-10 (js/effortScale.js, audit B5): 2 easy · 3 moderate · 4 somewhat hard · 5 hard · 7 very hard · 10 maximal.
+export const EFFORT_DEFAULTS = Object.freeze({ easy: 2, steady: 3, long: 4, tempo: 5, threshold: 6, intervals: 7, race: 9 });
+const LATE_WEIGHT = 0.5;            // an answer given more than a day after the run (recall drifts)
 const DEFAULT_MINUTES = { easy: 50, steady: 60, long: 120, tempo: 50, threshold: 60, intervals: 60 };
 const EFFORT_SHRINK = 4;            // the default counts as 4 sessions of that class
 const PER_HOUR = 0.8;
@@ -204,12 +206,15 @@ export function effortResponse(sessions, doses, today, { last = 5, days = 21 } =
     for (const { d, cls } of answered) {
         const prior = seen[cls] || [];
         const def = EFFORT_DEFAULTS[cls];
-        const own = mean(prior.map(p => p.rpe));
-        const base = own == null ? def : (prior.length * own + EFFORT_SHRINK * def) / (prior.length + EFFORT_SHRINK);
+        const late = Boolean(sById.get(d.id)?.rpeLate);
+        // The athlete's own baseline: late answers count half (audit B5).
+        const w = prior.reduce((t, p) => t + p.w, 0);
+        const own = w ? prior.reduce((t, p) => t + p.rpe * p.w, 0) / w : null;
+        const base = own == null ? def : (w * own + EFFORT_SHRINK * def) / (w + EFFORT_SHRINK);
         const usualMin = prior.length >= 3 ? mean(prior.map(p => p.minutes)) : DEFAULT_MINUTES[cls];
         const expected = Math.max(1, Math.min(10, base + (cls === "race" ? 0 : PER_HOUR * (d.minutes - usualMin) / 60)));
-        rows.push({ id: d.id, date: d.date, cls, rpe: d.rpe, expected: r1(expected), residual: r1(d.rpe - expected), minutes: Math.round(d.minutes) });
-        (seen[cls] ||= []).push({ rpe: d.rpe, minutes: d.minutes });
+        rows.push({ id: d.id, date: d.date, cls, rpe: d.rpe, expected: r1(expected), residual: r1(d.rpe - expected), minutes: Math.round(d.minutes), late });
+        (seen[cls] ||= []).push({ rpe: d.rpe, minutes: d.minutes, w: late ? LATE_WEIGHT : 1 });
     }
     const signal = effortSignal(rows, today, { last, days });
     const recentRuns = doses.filter(d => ageDays(d.date, today) < 14 && d.date <= today).length;

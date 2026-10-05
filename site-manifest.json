@@ -110,6 +110,7 @@
     "js/dashboardData.js",
     "js/decisionCard.js",
     "js/effortCard.js",
+    "js/effortScale.js",
     "js/emailNotify.js",
     "js/emoji.js",
     "js/emojiPicker.js",

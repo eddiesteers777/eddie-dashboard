@@ -1,8 +1,10 @@
 /* ==========================================
    Southbound — "How hard was it?" after a watch run (Today)
 
-   One tap per run: the effort (1-10) for each COROS / Strava run of the
-   last 3 days that hasn't been answered. Effort is how the athlete model
+   One tap per run: the effort (1-10, CR-10 words, js/effortScale.js) for
+   each COROS / Strava run of the last 3 days that hasn't been answered,
+   from 15 minutes after it ended (the card comes back by itself then).
+   Each answer keeps its scale and how long after the run it came. Effort is how the athlete model
    learns what a run cost compared with what it should have
    (docs/PERFORMANCE_ENGINE_PLAN.md 3.5). Saved in "session-rpe"
    (js/athleteData.js), private and cloud-synced. Skip saves "no answer"
@@ -21,13 +23,15 @@
    the same question for one day's run as a dialog (Mark Done on Today).
 ========================================== */
 
-import { effortPrompts, effortRecord, milesText, clockText, planEffortKey } from "./athleteLedger.js";
+import { effortPrompts, effortRecord, nextPromptAt, milesText, clockText, planEffortKey } from "./athleteLedger.js";
+import { EFFORT_WORDS, EFFORT_HINT, sessionEndMs, toCr10, scaleOf, LATE_MIN } from "./effortScale.js";
 import { loadLedger, saveEffort, loadRpe } from "./athleteData.js";
 import { isoDate, addDays } from "./corosHistory.js";
 import { toast, sbScale } from "./ui.js";
 
-export const RPE_WORDS = { 1: "Very easy", 2: "Easy", 3: "Easy", 4: "Comfortable", 5: "Steady", 6: "Moderate", 7: "Hard", 8: "Very hard", 9: "Near max", 10: "All out" };
-const HINT = "1 = very easy · 5 = steady · 7 = hard · 10 = all out";
+// CR-10 (js/effortScale.js, audit B5). RPE_WORDS stays exported for older callers.
+export const RPE_WORDS = EFFORT_WORDS;
+const HINT = EFFORT_HINT;
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -84,18 +88,25 @@ export function mountEffortCard(el, { client = false, days = 3, max = 4 } = {}) 
                     </span>
                 </li>`).join("")}
             </ul>
-            <p class="sb-effort-hint">${HINT}</p>`;
+            <p class="sb-effort-hint">${HINT}</p>
+            ${items.some(s => Date.now() - (sessionEndMs(s) || Date.now()) > LATE_MIN * 60000) ? `<p class="sb-effort-hint">Runs from more than a day ago count half: effort is remembered best soon after.</p>` : ""}`;
     };
 
     let pending = null;
+    let waitTimer = null;
     const refresh = () => {
         if (pending) return pending;
         pending = (async () => {
             try {
                 const today = isoDate(new Date());
                 const sessions = await ledgerFor(client, today);
-                items = sessions ? effortPrompts(sessions, today, { days, max }) : [];
+                const now = Date.now();
+                items = sessions ? effortPrompts(sessions, today, { days, max, now }) : [];
                 render();
+                // A run that just ended is asked about 15 minutes later (audit B5): come back then.
+                clearTimeout(waitTimer);
+                const due = sessions ? nextPromptAt(sessions, today, now, { days }) : null;
+                if (due) waitTimer = setTimeout(refresh, Math.min(due - now + 1000, 30 * 60000));
             } catch (error) {
                 console.error("Southbound: effort card couldn't load.", error);
             } finally {
@@ -113,7 +124,7 @@ export function mountEffortCard(el, { client = false, days = 3, max = 4 } = {}) 
         const value = btn.dataset.rpe === "skip" ? null : Number(btn.dataset.rpe);
         items = items.filter(s => s !== session);
         render();
-        saveEffort(session, effortRecord(value));
+        saveEffort(session, effortRecord(value, Date.now(), { endMs: sessionEndMs(session) }));
         shareSoon();
         toast(value ? `Effort ${value}: ${RPE_WORDS[value].toLowerCase()}` : "Skipped", {
             action: { label: "Undo", onClick: () => { saveEffort(session, null); shareSoon(); } }
@@ -140,14 +151,16 @@ export function mountEffortCard(el, { client = false, days = 3, max = 4 } = {}) 
 export async function askRunEffort(date, { title = "How hard was today's run?" } = {}) {
     const sessions = (await loadLedger(date)).filter(s => s.date === date);
     const run = sessions.find(s => s.planned) || sessions.slice().sort((a, b) => b.distance - a.distance)[0] || null;
-    const current = run?.rpe ?? loadRpe()[planEffortKey(date)]?.rpe ?? null;
+    // An earlier answer, shown on CR-10 (one on the first words reads as its equivalent).
+    const waiting = loadRpe()[planEffortKey(date)];
+    const current = run?.rpe ?? (waiting?.rpe ? toCr10(waiting.rpe, scaleOf(waiting)) : null);
     const message = run
         ? `${milesText(run.distance)}${run.movingSec ? ` · ${clockText(run.movingSec)}` : ""}. Tap a number.`
         : "Tap a number. It's matched to your watch run once COROS sends it.";
     const value = await sbScale(message, { title, words: RPE_WORDS, current, hint: HINT, skipLabel: "Not now" });
     if (value === null || value === "skip") return value;
     const target = run ? { ...run, aliases: [...(run.aliases || []), planEffortKey(date)] } : { id: planEffortKey(date), aliases: [] };
-    saveEffort(target, effortRecord(value));
+    saveEffort(target, effortRecord(value, Date.now(), { endMs: run ? sessionEndMs(run) : null }));
     toast(`Effort ${value}: ${RPE_WORDS[value].toLowerCase()}`, {
         action: { label: "Undo", onClick: () => saveEffort(target, null) }
     });

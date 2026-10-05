@@ -74,7 +74,7 @@ function render(el, { totals, coros, corosText, feel, today }) {
     const dayRows = totals.days.map(d => `
         <li class="wl-day${d.future ? " is-future" : ""}${d.runs ? "" : " is-rest"}">
             <span class="wl-date">${esc(dayName(d.date))}</span>
-            <span class="wl-runs">${d.future ? "" : d.runs ? d.list.map(r => `<span class="wl-run"><strong>${r.miles.toFixed(1)} mi</strong> · load ${Math.round(Math.round(r.dose * 10) / 10)} · ${r.rpe != null ? `effort ${r.rpe}/10` : `<em>not rated</em>`}<small>${esc(partsWords(r))}</small></span>`).join("") : d.date === today ? "Nothing yet today" : "Rest"}</span>
+            <span class="wl-runs">${d.future ? "" : d.runs ? d.list.map(r => `<span class="wl-run"><strong>${r.miles.toFixed(1)} mi</strong> · load ${Math.round(Math.round(r.dose * 10) / 10)} · ${r.rpe != null ? `effort ${r.rpe}/10${r.rpeLate ? " (rated late)" : ""}` : `<em>not rated</em>`}<small>${esc(partsWords(r))}</small></span>`).join("") : d.date === today ? "Nothing yet today" : "Rest"}</span>
             <span class="wl-load">${d.future ? "" : d.runs ? Math.round(d.load) : "—"}</span>
         </li>`).join("");
     el.hidden = false;
