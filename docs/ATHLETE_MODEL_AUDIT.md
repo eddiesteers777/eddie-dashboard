@@ -1,6 +1,8 @@
 # Southbound Athlete Model — Full Audit and Recommended Architecture
 
-*2026-10-05. An audit before any production change, as asked. Nothing in the app has been changed by this document.*
+*2026-10-05. An audit before any production change, as asked.*
+
+**Status:** A1–A2 built (race model 0.2.0: COROS raw, preparation shown not applied, backtest scores the trim both ways). A3–A6 next.
 
 This audit covers everything from the raw watch data through to the weekly decision, and both pages that show it (Analytics and Weekly Review). The code was read in full. Wherever a claim could be tested, it was tested:
 

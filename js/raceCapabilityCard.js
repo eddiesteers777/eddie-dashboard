@@ -45,7 +45,7 @@ function lensRow(l) {
         <span class="rc-lens-name">${esc(l.label)}</span>
         <strong>${esc(clock(l.sec))}</strong>
         <span class="rc-lens-sd">± ${Math.round(l.sigma * 100)}%</span>
-        <small>${esc(l.note)}${l.durabilityApplied ? " · includes the durability trim" : ""}</small>
+        <small>${esc(l.note)}${l.adjusted ? ` · includes the preparation trim (${esc(clock(l.raw))} before it)` : ""}</small>
     </li>`;
 }
 
@@ -54,12 +54,13 @@ function durabilityHtml(d) {
     const p = d.parts;
     const bar = (v, t) => `<span class="rc-bar"><span style="width:${Math.min(100, Math.round(v / t * 100))}%"></span></span>`;
     return `<div class="rc-dur">
-        <p class="rc-sub-h">${d.kind === "marathon" ? "Marathon" : "Half"}-specific training · last 12 weeks · ${Math.round(d.readiness * 100)}% of typical</p>
+        <p class="rc-sub-h">Preparation: ${d.kind === "marathon" ? "marathon" : "half"}-specific training · last 12 weeks · ${Math.round(d.readiness * 100)}% of a typical plan</p>
         <ul>
             <li><span>Weekly miles</span>${bar(p.weekly.value, p.weekly.target)}<b>${p.weekly.value} / ${p.weekly.target}</b></li>
             <li><span>Runs of ${p.longRuns.over}+ mi</span>${bar(p.longRuns.value, p.longRuns.target)}<b>${p.longRuns.value} / ${p.longRuns.target}</b></li>
             <li><span>Longest run</span>${bar(p.longest.value, p.longest.target)}<b>${p.longest.value} / ${p.longest.target} mi</b></li>
         </ul>
+        <small class="rc-dur-note">${d.applied ? "Taken off the time above." : d.deficit < 0.001 ? "Nothing to take off." : `Shown, not taken off the time: whether a thinner block slows you is checked on your own races in Model check ("Southbound + preparation trim").${d.couldCostSec >= 60 ? ` A typical effect would be up to about ${Math.round(d.couldCostSec / 60)} min.` : ""}`}</small>
     </div>`;
 }
 
@@ -125,6 +126,15 @@ function verdictText(c, name) {
     return `Southbound vs ${name}: not yet distinguishable over ${c.n} races (95% interval ${pct(c.lo)} to ${pct(c.hi)}).`;
 }
 
+// Southbound (preparation shown) vs the same with the preparation trim, on the races both predicted.
+function prepVerdict(c) {
+    if (c.verdict === "not enough races") return `Preparation trim: not enough half and marathon races to tell whether it helps yet (${c.n}; needs at least 5). Until then it isn't taken off the time.`;
+    const diff = `${Math.abs(c.meanDiffPct * 100).toFixed(1)} points`;
+    if (c.verdict === "better") return `Preparation trim: leaving it out misses by ${diff} less over ${c.n} races. It stays off.`;
+    if (c.verdict === "worse") return `Preparation trim: applying it misses by ${diff} less over ${c.n} races. Your races say thinner blocks do slow you down.`;
+    return `Preparation trim: no clear difference over ${c.n} races (95% interval ${pct(c.lo)} to ${pct(c.hi)}).`;
+}
+
 function errCell(row, key) {
     const v = row.predictions[key];
     if (v == null) return `<td class="mc-none">—</td>`;
@@ -150,6 +160,7 @@ function renderCheck() {
             <ul class="rc-why">
                 <li>${esc(verdictText(r.vsRiegel, "Riegel"))}</li>
                 <li>${esc(verdictText(r.vsVdot, "VDOT"))}</li>
+                ${r.vsPrep?.n ? `<li>${esc(prepVerdict(r.vsPrep))}</li>` : ""}
                 ${r.coverage.n ? `<li>The 80% range held the real time in ${r.coverage.inside} of ${r.coverage.n} races (aim: about 8 in 10).</li>` : ""}
             </ul>
             <div class="mc-scroll"><table class="mc-table mc-races">

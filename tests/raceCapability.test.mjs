@@ -27,14 +27,40 @@ test("marathon from a 10K with full marathon training: near Riegel, no durabilit
     assert.match(r.explanation.join(" "), /training looks complete/);
 });
 
-test("the same 10K with little marathon training: durability trims time and says why", () => {
-    const full = predictRace({ meters: 42195, asOf: ASOF, sessions: athlete({ asOf: ASOF, longMiles: 20, easyMiles: 9, races: [tenK] }) });
-    const thin = predictRace({ meters: 42195, asOf: ASOF, sessions: athlete({ asOf: ASOF, longMiles: 11, easyMiles: 4, races: [tenK] }) });
+test("the same 10K with little marathon training: preparation is shown, not taken off the time (0.2.0); the old trim only on request", () => {
+    const fullS = athlete({ asOf: ASOF, longMiles: 20, easyMiles: 9, races: [tenK] });
+    const thinS = athlete({ asOf: ASOF, longMiles: 11, easyMiles: 4, races: [tenK] });
+    const full = predictRace({ meters: 42195, asOf: ASOF, sessions: fullS });
+    const thin = predictRace({ meters: 42195, asOf: ASOF, sessions: thinS });
     assert.ok(thin.durability.deficit > 0.03, String(thin.durability.deficit));
-    assert.ok(thin.sec > full.sec * 1.03, `${clock(thin.sec)} vs ${clock(full.sec)}`);
+    assert.equal(thin.durability.applied, false);
+    assert.ok(Math.abs(thin.sec - full.sec) < 1, `${clock(thin.sec)} vs ${clock(full.sec)}: the headline time doesn't move`);
+    assert.ok(thin.lenses.every(l => !l.adjusted));
     const text = thin.explanation.join(" ");
-    assert.match(text, /Marathon-specific training trims about \d+ min/);
+    assert.match(text, /Marathon-specific training is \d+% of a typical plan/);
     assert.match(text, /0 runs of 18\+ mi \(typical 4\)/);
+    assert.match(text, /Not taken off the time.*could cost up to about \d+ min/);
+    assert.ok(thin.durability.couldCostSec > 60);
+    // The 0.1.0 way, for the backtest's comparison.
+    const trimmed = predictRace({ meters: 42195, asOf: ASOF, sessions: thinS, applyPreparation: true });
+    assert.ok(trimmed.durability.applied);
+    assert.ok(trimmed.sec > full.sec * 1.03, `${clock(trimmed.sec)} vs ${clock(full.sec)}`);
+    assert.match(trimmed.explanation.join(" "), /Marathon-specific training trims about \d+ min/);
+    const training = trimmed.lenses.find(l => l.key === "training");
+    assert.ok(training.adjusted && training.sec > training.raw);
+});
+
+test("COROS is used exactly as COROS gives it, even when the preparation trim is applied", () => {
+    const thinS = athlete({ asOf: ASOF, longMiles: 11, easyMiles: 4, races: [tenK] });
+    const fitness = { "2026-10-01": { marathon: "3:10:00" } };
+    for (const applyPreparation of [false, true]) {
+        const r = predictRace({ meters: 42195, asOf: ASOF, sessions: thinS, fitness, applyPreparation });
+        const coros = r.lenses.find(l => l.key === "coros");
+        assert.equal(coros.sec, 11400);
+        assert.equal(coros.raw, 11400);
+        assert.equal(coros.adjusted, false);
+        assert.match(coros.note, /used as it is/);
+    }
 });
 
 test("durability only applies from the half up, and uses typical volume for the predicted time", () => {

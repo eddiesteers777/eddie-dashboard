@@ -58,3 +58,23 @@ test("Copy results holds times and errors only", () => {
     assert.equal(out.races.length, 4);
     assert.ok(Number.isInteger(out.races[0].predictions.southbound));
 });
+
+test("half and marathon races are also predicted with the preparation trim, and COROS with it, so the athlete's own races can decide (0.2.0)", () => {
+    const half = predictOne(race("2026-08-08"), sessions);
+    assert.ok(half.predictions.prep > 0, "Southbound + preparation trim");
+    assert.ok(half.predictions.prep >= half.predictions.southbound - 1, "the trim can only slow a prediction");
+    assert.equal(half.predictions.coros, undefined, "COROS predicts the marathon only");
+    const ten = predictOne(race("2026-09-13"), sessions);
+    assert.equal(ten.predictions.prep, undefined, "no preparation check below the half");
+    // A marathon with a COROS prediction before it: raw COROS and COROS + trim both scored.
+    const mar = { date: "2026-10-03", meters: 42195, sec: Math.round(trueTime(42195) * 1.02) };
+    const s = athlete({ asOf: "2026-10-04", weeks: 30, longMiles: 12, easyMiles: 5, races: [...RACES, mar] });
+    const fitness = { "2026-09-28": { marathon: "3:05:00" } };
+    const row = predictOne(s.find(x => x.date === "2026-10-03" && x.race), s, { fitness });
+    assert.equal(row.predictions.coros, 3 * 3600 + 300, "COROS as COROS gave it");
+    assert.ok(row.predictions.corosPrep > row.predictions.coros, "COROS + trim (the 0.1.0 way) is slower");
+    const all = backtest(s, { fitness });
+    assert.ok(all.summary.coros.n === 1 && all.summary.corosPrep.n === 1 && all.summary.prep.n >= 2);
+    assert.equal(all.vsPrep.verdict, "not enough races");
+    assert.ok("vsPrep" in exportable(all));
+});

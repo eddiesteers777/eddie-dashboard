@@ -12,16 +12,25 @@
                    120 days (inside Strava watch files, or whole runs),
                    moved to the target the same way. Training bests are
                    rarely all-out, so this lens is wider
-     A  device     COROS's marathon prediction (marathon only), wide
+     A  device     COROS's marathon prediction (marathon only), wide, used
+                   exactly as COROS gives it: COROS's predictor already reads
+                   the athlete's training, so nothing of Southbound's is
+                   applied to it (an independent opinion, and its own errors
+                   show in the backtest)
    (Riegel and VDOT are two curve shapes on the same race, so they are
    not two lenses; VDOT is used in the backtest as a comparison.)
-     D  durability half and marathon only: is the training the distance
+     P  preparation  half and marathon only: is the training the distance
                    needs there? Weekly miles, long runs and the longest run
                    of the last 12 weeks against what the predicted time
                    usually takes (Runalyze's "marathon shape" idea; Vickers
                    & Vertosick: volume predicts the marathon beyond a
-                   shorter race). A shortfall becomes a time penalty on S,
-                   A and on races shorter than the target.
+                   shorter race). Since 0.2.0 it is SHOWN, not applied: the
+                   personal exponent from the athlete's own race pairs already
+                   carries how they fade with distance, and whether a thinner
+                   block costs this athlete time is not known until their own
+                   races say so (docs/ATHLETE_MODEL_AUDIT.md, R1–R3). The old
+                   trim (on S and shorter races) runs only with
+                   applyPreparation: true, which the backtest compares.
    Track record: the athlete's earlier races at the same kind of distance
    against what this model said the day before each (no later data);
    the average miss, shrunk toward none, adjusts the result.
@@ -35,15 +44,15 @@
 import { addDays, RACE_DISTANCES } from "./athleteLedger.js";
 import { athleteParams, isRace, envelope } from "./athleteParams.js";
 
-export const RACE_MODEL_VERSION = "0.1.0";
+export const RACE_MODEL_VERSION = "0.2.0";
 const MILE = 1609.344;
 const Z80 = 1.2816;
 
 export const ASSUMPTIONS = Object.freeze([
     "Race lens σ 3% + 0.5% per month since the race + 1.5% per unit of ln(distance ratio)",
     "Training lens σ 5%: training bests from the mile to 10K in the last 120 days, times your own race-vs-training factor (prior 0.97, worth 2 races)",
-    "COROS lens σ 6%, marathon only, its newest prediction within 30 days",
-    "Durability: marathon penalty up to 8%, half up to 3%, from weekly miles, long runs and longest run in 12 weeks",
+    "COROS lens σ 6%, marathon only, its newest prediction within 30 days, used as COROS gives it",
+    "Preparation (half and marathon): weekly miles, long runs and longest run in 12 weeks against a typical plan for the predicted time. Shown, not applied to the time, until your own races show whether a thinner block slows you; the backtest checks both ways (a typical effect would be up to 8% for the marathon, 3% for the half)",
     "Distance exponent: your race pairs shrunk toward Riegel's 1.06 (prior SD 0.03)",
     "Track record: your earlier races at this kind of distance (3 years) against what the model said the day before each; shrunk toward no adjustment as if 2 races had matched"
 ]);
@@ -139,19 +148,25 @@ const bandOf = m => BANDS.findIndex(([lo, hi]) => m >= lo && m < hi);
 const TRACK_WEIGHT = 2;     // shrink toward "no adjustment" as if 2 races had matched exactly
 
 /** -> { value, n, avgMiss } (value multiplies the time; 1 = no adjustment). */
-export function trackRecord(sessions, asOf, meters, { years = 3 } = {}) {
+export function trackRecord(sessions, asOf, meters, { years = 3, applyPreparation = false } = {}) {
     const from = addDays(asOf, -365 * years);
     const band = bandOf(meters);
     const ratios = [];
     for (const r of sessions.filter(s => isRace(s) && s.date >= from && s.date <= asOf && bandOf(s.race.meters) === band)) {
-        const raw = predictRace({ meters: r.race.meters, asOf: addDays(r.date, -1), sessions: sessions.filter(s => s.date < r.date), calibrate: false });
+        const raw = predictRace({ meters: r.race.meters, asOf: addDays(r.date, -1), sessions: sessions.filter(s => s.date < r.date), calibrate: false, applyPreparation });
         if (raw.sec) ratios.push(Math.max(0.9, Math.min(1.12, r.race.timeSec / raw.sec)));
     }
     const value = (TRACK_WEIGHT + ratios.reduce((a, b) => a + b, 0)) / (TRACK_WEIGHT + ratios.length);
     return { value, n: ratios.length, avgMiss: ratios.length ? ratios.reduce((a, b) => a + b, 0) / ratios.length - 1 : 0 };
 }
 
-export function predictRace({ meters, asOf, sessions = [], health = {}, fitness = {}, calibrate = true }) {
+/*
+ * applyPreparation: false (the default since 0.2.0) shows the preparation
+ * check without changing the time; true applies the old trim to the
+ * training lens and to races shorter than the target (never to COROS).
+ * The backtest runs both so the athlete's own races can decide.
+ */
+export function predictRace({ meters, asOf, sessions = [], health = {}, fitness = {}, calibrate = true, applyPreparation = false }) {
     const past = sessions.filter(s => s.date <= asOf);
     const params = athleteParams({ sessions: past, health, asOf });
     const b = params.exponent.value;
@@ -187,27 +202,30 @@ export function predictRace({ meters, asOf, sessions = [], health = {}, fitness 
     const w0 = first.map(([, s]) => 1 / s ** 2);
     const base = Math.exp(first.reduce((t, [sec], i) => t + Math.log(sec) * w0[i], 0) / w0.reduce((a, c) => a + c, 0));
     const dur = durability(past, asOf, meters, base);
-    const pen = dur ? 1 + dur.deficit : 1;
+    const pen = dur && applyPreparation ? 1 + dur.deficit : 1;
+    if (dur) dur.applied = pen > 1;
 
     if (raceEsts.length) {
         const ws = raceEsts.map(r => 1 / r.sigma ** 2);
         const lnMean = raceEsts.reduce((t, r, i) => t + Math.log(r.sec * (r.shorter ? pen : 1)) * ws[i], 0) / ws.reduce((a, c) => a + c, 0);
         const sigma = Math.sqrt(1 / ws.reduce((a, c) => a + c, 0));
         const newest = races.slice().sort((x, y) => y.date.localeCompare(x.date))[0];
+        const rawMean = raceEsts.reduce((t, r, i) => t + Math.log(r.sec) * ws[i], 0) / ws.reduce((a, c) => a + c, 0);
         lenses.push({
-            key: "races", label: "Your races", sec: Math.exp(lnMean), sigma,
+            key: "races", label: "Your races", sec: Math.exp(lnMean), raw: Math.exp(rawMean), sigma,
             note: `${races.length === 1 ? "From" : `${races.length} races, newest`} your ${distanceLabel(newest.race.meters)} on ${shortDate(newest.date)} (${clock(newest.race.timeSec)})`,
-            durabilityApplied: raceEsts.some(r => r.shorter) && pen > 1
+            adjusted: raceEsts.some(r => r.shorter) && pen > 1
         });
     }
     if (speed) {
         lenses.push({
-            key: "training", label: "Your training speed", sec: speed.sec * pen, sigma: 0.05,
+            key: "training", label: "Your training speed", sec: speed.sec * pen, raw: speed.sec, sigma: 0.05,
             note: `Fastest ${distanceLabel(speed.e.meters)} in training (${clock(speed.e.seconds)}, ${shortDate(speed.e.date)})${speed.e.kind === "inside" ? ", inside a longer run" : ""}; ${tf.n ? `your races have run ${Math.round(Math.abs(1 - tf.value) * 100)}% ${tf.value < 1 ? "faster" : "slower"} than your training said (${tf.n} ${tf.n === 1 ? "race" : "races"})` : "assumes a race is about 3% faster than training"}`,
-            durabilityApplied: pen > 1
+            adjusted: pen > 1
         });
     }
-    if (device) lenses.push({ key: "coros", label: "COROS", sec: device.sec * pen, sigma: 0.06, note: `COROS's prediction on ${shortDate(device.day)} (${clock(device.sec)})`, durabilityApplied: pen > 1 });
+    // COROS exactly as COROS gives it (its predictor already reads the training).
+    if (device) lenses.push({ key: "coros", label: "COROS", sec: device.sec, raw: device.sec, sigma: 0.06, note: `COROS's own prediction on ${shortDate(device.day)}, used as it is`, adjusted: false });
 
     const ws = lenses.map(l => 1 / l.sigma ** 2);
     const W = ws.reduce((a, c) => a + c, 0);
@@ -217,7 +235,7 @@ export function predictRace({ meters, asOf, sessions = [], health = {}, fitness 
     const df = lenses.length - 1;
     const inflate = df > 0 ? Math.max(1, Math.sqrt(chi2 / df)) : 1;
     sigma *= inflate;
-    const track = calibrate ? trackRecord(past, asOf, meters) : { value: 1, n: 0, avgMiss: 0 };
+    const track = calibrate ? trackRecord(past, asOf, meters, { applyPreparation }) : { value: 1, n: 0, avgMiss: 0 };
     const sec = Math.exp(lnMean) * track.value;
     const lo = Math.exp(lnMean - Z80 * sigma) * track.value, hi = Math.exp(lnMean + Z80 * sigma) * track.value;
     const halfWidth = (hi - lo) / 2 / sec;
@@ -244,10 +262,16 @@ export function predictRace({ meters, asOf, sessions = [], health = {}, fitness 
     } else explanation.push(`Only one kind of evidence so far (${lenses[0].label.toLowerCase()}), so the range is wide.`);
     if (dur) {
         const p = dur.parts;
-        const mins = Math.round(sec * dur.deficit / (1 + dur.deficit) / 60);
+        const Kind = dur.kind === "marathon" ? "Marathon" : "Half";
+        // What a typical-sized effect would be worth (the old trim), in minutes.
+        const mins = Math.round((dur.applied ? sec * dur.deficit / (1 + dur.deficit) : sec * dur.deficit) / 60);
+        dur.couldCostSec = Math.round(dur.applied ? sec * dur.deficit / (1 + dur.deficit) : sec * dur.deficit);
+        const facts = `${p.weekly.value} mi/week (typical ${p.weekly.target}), ${p.longRuns.value} runs of ${p.longRuns.over}+ mi (typical ${p.longRuns.target}), longest ${p.longest.value} mi (typical ${p.longest.target}) in 12 weeks`;
         explanation.push(dur.deficit < 0.001
-            ? `${dur.kind === "marathon" ? "Marathon" : "Half"}-specific training looks complete: ${p.weekly.value} mi/week, ${p.longRuns.value} runs of ${p.longRuns.over}+ mi, longest ${p.longest.value} mi in 12 weeks.`
-            : `${dur.kind === "marathon" ? "Marathon" : "Half"}-specific training trims ${mins >= 1 ? `about ${mins} min` : "under a minute"}: ${p.weekly.value} mi/week (typical ${p.weekly.target}), ${p.longRuns.value} runs of ${p.longRuns.over}+ mi (typical ${p.longRuns.target}), longest ${p.longest.value} mi (typical ${p.longest.target}) in 12 weeks.`);
+            ? `${Kind}-specific training looks complete: ${p.weekly.value} mi/week, ${p.longRuns.value} runs of ${p.longRuns.over}+ mi, longest ${p.longest.value} mi in 12 weeks.`
+            : dur.applied
+                ? `${Kind}-specific training trims ${mins >= 1 ? `about ${mins} min` : "under a minute"}: ${facts}.`
+                : `${Kind}-specific training is ${Math.round(dur.readiness * 100)}% of a typical plan: ${facts}. Not taken off the time: your own races haven't shown yet whether a thinner block slows you. If it does as much as is typical, it could cost ${mins >= 1 ? `up to about ${mins} min` : "under a minute"}.`);
     }
     if (track.n) {
         const word = { 0: "5K-ish", 1: "10K-ish", 2: "half-length", 3: "marathon-length" }[bandOf(meters)];
