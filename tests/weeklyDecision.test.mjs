@@ -120,3 +120,36 @@ test("what happened next, and the replay's hit / false-alarm / miss rates", () =
     assert.ok(def.flagged > 0 && def.hitRate >= 50, JSON.stringify(def));
     assert.ok(r.settings[0].flagged >= def.flagged && def.flagged >= r.settings[2].flagged, "sensitive flags most, cautious least");
 });
+
+test("no double count (audit A3): the same runs felt harder move 'response', not 'load'", async () => {
+    const { sessionDoses } = await import("../js/sessionDose.js");
+    const { loadState } = await import("../js/loadState.js");
+    const { efficiency, effortResponse } = await import("../js/trainingResponse.js");
+    const { addDays } = await import("../js/athleteLedger.js");
+    const M = 1609.344, TODAY = "2026-10-11";
+    const build = tired => {
+        let seed = 7; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; };
+        const out = [];
+        for (let i = 365; i >= 1; i--) {
+            const date = addDays(TODAY, -i), dow = new Date(`${date}T12:00:00`).getDay();
+            if (dow === 1) continue;
+            const kind = dow === 2 ? "tempo" : dow === 6 ? "long" : "easy";
+            const miles = kind === "long" ? 16 : kind === "tempo" ? 8 : 7, spm = kind === "tempo" ? 410 : kind === "long" ? 500 : 510;
+            const t = tired && i <= 7;
+            out.push({ id: `c:${i}`, aliases: [], sources: ["coros"], date, start: `${date}T11:00:00Z`, distance: miles * M, movingSec: miles * spm, elapsedSec: miles * spm,
+                avgHr: (kind === "tempo" ? 165 : kind === "long" ? 148 : 142) + (rnd() - 0.5) * 6 + (t ? 6 : 0), maxHr: 182, climb: 20,
+                rpe: Math.round((kind === "tempo" ? 7 : kind === "long" ? 5 : 3) + (rnd() - 0.5) + (t ? 2 : 0)), rpeAnswered: true, best: null, race: null });
+        }
+        out.push({ id: "c:race", aliases: [], sources: ["coros"], date: "2026-06-06", distance: 10050, movingSec: 2400, elapsedSec: 2400, avgHr: 172, maxHr: 186, rpe: 9, rpeAnswered: true, race: { status: "race", meters: 10000, timeSec: 2400, allOut: true } });
+        return out.sort((a, b) => a.date.localeCompare(b.date));
+    };
+    const read = tired => {
+        const s = build(tired), dr = sessionDoses(s, TODAY), st = loadState(dr.doses, TODAY);
+        const cd = concernDomains(TODAY, { loadSeries: st.series, response: { effRuns: efficiency(s, dr.doses, TODAY).runs, effortRows: effortResponse(s, dr.doses, TODAY).rows }, health: {}, checkins: {} });
+        return { pct: st.today.percentile, load: cd.domains.find(d => d.key === "load")?.severity, response: cd.domains.find(d => d.key === "response")?.severity };
+    };
+    const normal = read(false), tired = read(true);
+    assert.equal(tired.pct, normal.pct, "recent load's place in the year doesn't move");
+    assert.equal(tired.load, normal.load, "the load domain doesn't move");
+    assert.ok(tired.response > normal.response, `response picks it up: ${normal.response} -> ${tired.response}`);
+});

@@ -2,8 +2,9 @@
    Southbound — Training load this week (Weekly Review)
 
    The athlete model's load for the current Monday–Sunday week, one row a
-   day: each run's blended load (pace, heart rate and your effort on one
-   scale, js/sessionDose.js), the week so far against your usual week
+   day: each run's external load (pace; heart rate only where pace can't
+   measure it, js/sessionDose.js 0.3.0) with heart rate and effort on the
+   same scale beside it, the week so far against your usual week
    (the median of the 4 before), effort load (minutes × effort 1–10), the
    easy / steady / hard mix, last week's monotony and strain against your
    usual, how runs felt for what they were (js/trainingResponse.js), and
@@ -19,13 +20,16 @@ const dayName = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US",
 const short = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const whole = n => Math.round(n).toLocaleString("en-US");
 // (A run's load is rounded the way the day's total is, one decimal first, so a one-run day matches.)
-const SOURCE_WORDS = { blend: "pace, heart rate and effort", pace: "pace", hr: "heart rate", effort: "your effort", miles: "miles only (easy)" };
+const SOURCE_WORDS = { pace: "pace", hr: "heart rate", effort: "your effort", miles: "miles only (easy)" };
 
-/** "pace + heart rate + effort" from a dose's parts. */
+/** What the run was, by each measure on the same scale: "by pace 57 · heart rate 62 · effort 64". */
 function partsWords(d) {
-    const names = { pace: "pace", hr: "heart rate", effort: "effort" };
-    const keys = Object.keys(d.parts || {});
-    return keys.length > 1 ? keys.map(k => `${names[k]} ${d.parts[k].weight}%`).join(" · ") : SOURCE_WORDS[d.source] || "";
+    const bits = [];
+    if (d.source === "pace") bits.push(`by pace ${Math.round(d.dose)}`);
+    else if (d.source !== "none") bits.push(`by ${SOURCE_WORDS[d.source]} ${Math.round(d.dose)}`);
+    if (d.internal?.hr != null && d.source !== "hr") bits.push(`heart rate ${Math.round(d.internal.hr)}`);
+    if (d.internal?.effort != null && d.source !== "effort") bits.push(`effort ${Math.round(d.internal.effort)}`);
+    return bits.join(" · ");
 }
 
 function monotonyWords(m) {
@@ -94,7 +98,7 @@ export function mountWeeklyLoad(el) {
         <h2 class="wr-section-title">Training Load This Week</h2>
         <div class="wl-body"></div>
         <div id="wlEffort" class="sb-effort" hidden></div>
-        <p class="wl-foot">Each run's load blends its pace, heart rate and your effort on one scale (never added up). Effort load is minutes × your 1–10. More in <a href="analytics.html#loadPanel">Analytics → Load and response</a>.</p>`;
+        <p class="wl-foot">Load is what you did (pace and hills; heart rate only when pace can't measure a run). Under each run, heart rate and effort on the same scale show how hard it landed: when they're above the pace, that's a response, not more load. Effort load is minutes × your 1–10. More in <a href="analytics.html#loadPanel">Analytics → Load and response</a>.</p>`;
     // Runs of this week (Monday on) with no effort yet: rate them here.
     const monday = new Date(`${today}T12:00:00`);
     const sinceMonday = (monday.getDay() + 6) % 7;

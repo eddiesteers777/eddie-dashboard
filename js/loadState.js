@@ -16,7 +16,7 @@
                     Foster's monotony (mean ÷ SD of the 7 days) and strain
                     (total × monotony), for the weekly review
      loadTotals     this week's days, 16 weeks and 12 months: runs, miles,
-                    the blended load, effort load (minutes × effort), how
+                    the external load (js/sessionDose.js 0.3.0), effort load (minutes × effort), how
                     many runs are rated, monotony / strain, your usual week
      corosComparison  our base / recent next to COROS's Base Fitness /
                     Load Impact, and how closely they move together
@@ -163,7 +163,7 @@ function sumPeriod(list) {
 
 /**
  * Totals for the days of this week, the last `weeks` Monday–Sunday weeks
- * and the last `months` calendar months, from the doses (one blended load
+ * and the last `months` calendar months, from the doses (one external load
  * per run). -> { days, weeks, months, thisWeek, usualWeek, strainUsual }
  *   usualWeek    the median of the 4 full weeks before this one
  *   strainUsual  the median strain of the full weeks shown
