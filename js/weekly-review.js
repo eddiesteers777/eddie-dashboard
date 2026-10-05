@@ -371,6 +371,10 @@ function init() {
 
 init();
 
+// Training load this week: the athlete model's blended load, by day (js/weeklyLoad.js).
+import("./weeklyLoad.js").then(m => m.mountWeeklyLoad(document.getElementById("wrLoad")))
+    .catch(error => console.error("Southbound: training load section failed to load.", error));
+
 import("./cloudSync.js").then(({ initCloudSync }) => {
     initCloudSync().then(init).catch(() => {});
 }).catch(() => {});

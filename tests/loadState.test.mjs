@@ -69,3 +69,46 @@ test("nothing logged: an empty state, not an error", () => {
     assert.equal(s.today, null);
     assert.deepEqual(s.series, []);
 });
+
+test("loadTotals: this week's days, weeks with effort load and strain, months across a year boundary", async () => {
+    const { loadTotals } = await import("../js/loadState.js");
+    const today = "2026-01-14";   // a Wednesday
+    const doses = [];
+    for (let i = 120; i >= 0; i--) {
+        const date = addDays(today, -i);
+        if (i % 7 === 3) continue;
+        doses.push({ date, dose: 60 + (i % 7) * 5, domains: { easy: 50, threshold: 10 + (i % 7) * 5, hard: 0 }, miles: 6, minutes: 50, rpe: i % 2 ? 4 : null, source: "blend" });
+    }
+    const t = loadTotals(doses, today);
+    assert.equal(t.days.length, 7);
+    assert.equal(t.days[0].date, "2026-01-12");
+    assert.equal(t.days[3].future, true);
+    assert.equal(t.days[0].runs + t.days[1].runs + t.days[2].runs, t.thisWeek.runs);
+    assert.equal(t.weeks.length, 16);
+    assert.ok(t.weeks.at(-2).strain > 0 && t.weeks.at(-2).monotony > 0);
+    assert.equal(t.weeks.at(-1).strain, null, "not until the week is over");
+    const w = t.weeks.at(-2);
+    assert.equal(w.effortLoad, w.rated * 50 * 4);
+    assert.equal(w.rated + w.unrated, w.runs);
+    assert.ok(t.usualWeek && t.usualWeek.n === 4 && t.usualWeek.load > 0);
+    assert.ok(t.strainUsual > 0);
+    assert.equal(t.months.length, 12);
+    assert.equal(t.months.at(-1).label, "Jan 2026");
+    assert.equal(t.months.at(-2).label, "Dec 2025");
+    assert.equal(t.months[0].label, "Feb 2025");
+    assert.ok(t.months.at(-2).runs >= 26);
+});
+
+test("corosComparison: our base and recent load against COROS's Base Fitness and Load Impact", async () => {
+    const { corosComparison } = await import("../js/loadState.js");
+    const doses = [];
+    for (let i = 0; i < 160; i++) doses.push(dose(addDays("2026-01-01", i), 40 + 30 * Math.sin(i / 9) + (i % 7 === 6 ? 40 : 0)));
+    const s = loadState(doses, addDays("2026-01-01", 159));
+    const fitness = {};
+    s.series.forEach((x, i) => { if (i > 40 && i % 2) fitness[x.date] = { load: { long: Math.round(x.base * 1.3 + 4), short: Math.round(x.recent * 1.1), ratio: 1 } }; });
+    const c = corosComparison(s.series, fitness);
+    assert.ok(c.n > 50);
+    assert.ok(c.rBase > 0.95 && c.rRecent > 0.95, JSON.stringify(c));
+    assert.equal(c.latest.date, Object.keys(fitness).sort().at(-1));
+    assert.equal(corosComparison(s.series, {}), null);
+});

@@ -15,6 +15,11 @@
      weeks          per Monday–Sunday week: total, by domain, miles, and
                     Foster's monotony (mean ÷ SD of the 7 days) and strain
                     (total × monotony), for the weekly review
+     loadTotals     this week's days, 16 weeks and 12 months: runs, miles,
+                    the blended load, effort load (minutes × effort), how
+                    many runs are rated, monotony / strain, your usual week
+     corosComparison  our base / recent next to COROS's Base Fitness /
+                    Load Impact, and how closely they move together
    L_t = L_{t−1} + (dose_t − L_{t−1}) × (1 − e^(−1/τ)), started at the
    average daily dose of the first 6 weeks so year one doesn't begin at 0.
    Unit-tested in tests/loadState.test.mjs.
@@ -131,4 +136,109 @@ export function recentWords(percentile) {
     if (percentile >= 40) return "about your usual for the last year";
     if (percentile >= 20) return "on the low side for your last year";
     return "in your lowest 20% of the last year";
+}
+
+// ---------- totals by day, week and month (Weekly Review, Analytics) ----------
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** One period's runs -> its totals. effortLoad = Σ minutes × effort 1–10 (session RPE, Foster) over the rated runs. */
+function sumPeriod(list) {
+    const rated = list.filter(d => d.rpe != null && d.minutes);
+    return {
+        runs: list.length,
+        miles: r1(list.reduce((t, d) => t + (d.miles || 0), 0)),
+        minutes: Math.round(list.reduce((t, d) => t + (d.minutes || 0), 0)),
+        load: r1(list.reduce((t, d) => t + (d.dose || 0), 0)),
+        effortLoad: Math.round(rated.reduce((t, d) => t + d.minutes * d.rpe, 0)),
+        rated: rated.length,
+        unrated: list.filter(d => d.rpe == null && d.minutes && d.source !== "miles").length,
+        domains: {
+            easy: r1(list.reduce((t, d) => t + (d.domains?.easy || 0), 0)),
+            threshold: r1(list.reduce((t, d) => t + (d.domains?.threshold || 0), 0)),
+            hard: r1(list.reduce((t, d) => t + (d.domains?.hard || 0), 0))
+        }
+    };
+}
+
+/**
+ * Totals for the days of this week, the last `weeks` Monday–Sunday weeks
+ * and the last `months` calendar months, from the doses (one blended load
+ * per run). -> { days, weeks, months, thisWeek, usualWeek, strainUsual }
+ *   usualWeek    the median of the 4 full weeks before this one
+ *   strainUsual  the median strain of the full weeks shown
+ */
+export function loadTotals(doses, today, { weeks = 16, months = 12 } = {}) {
+    const usable = doses.filter(d => d.dose != null && d.date <= today);
+    const monday = mondayOf(today);
+    const between = (a, b) => usable.filter(d => d.date >= a && d.date <= b);
+    const days = Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(monday, i);
+        const list = between(date, date);
+        return { date, future: date > today, ...sumPeriod(list), list };
+    });
+    const daily = dailyDoses(usable, today);
+    const strainByWeek = new Map(weeklyTotals(daily, today, { weeks }).map(w => [w.start, w]));
+    const weekRows = Array.from({ length: weeks }, (_, i) => {
+        const start = addDays(monday, -7 * (weeks - 1 - i));
+        const w = strainByWeek.get(start);
+        return { start, end: addDays(start, 6), current: start === monday, ...sumPeriod(between(start, addDays(start, 6))), monotony: w?.monotony ?? null, strain: w?.strain ?? null };
+    });
+    const [ty, tm] = today.split("-").map(Number);
+    const monthRows = Array.from({ length: months }, (_, i) => {
+        const back = months - 1 - i;
+        const idx = ty * 12 + (tm - 1) - back;
+        const y = Math.floor(idx / 12), m = idx % 12;
+        const start = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+        const end = `${y}-${String(m + 1).padStart(2, "0")}-31`;
+        return { start, label: `${MONTHS[m]} ${y}`, current: back === 0, ...sumPeriod(between(start, end)) };
+    });
+    const median = a => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const k = Math.floor(s.length / 2); return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2; };
+    const before = weekRows.filter(w => !w.current).slice(-4).filter(w => w.runs);
+    const strains = weekRows.filter(w => !w.current && w.strain != null && w.runs).map(w => w.strain);
+    return {
+        days, weeks: weekRows, months: monthRows,
+        thisWeek: weekRows.at(-1),
+        usualWeek: before.length >= 2 ? { load: r1(median(before.map(w => w.load))), miles: r1(median(before.map(w => w.miles))), effortLoad: Math.round(median(before.map(w => w.effortLoad))), n: before.length } : null,
+        strainUsual: strains.length >= 4 ? Math.round(median(strains)) : null
+    };
+}
+
+// ---------- COROS's own numbers next to ours ----------
+
+function pearson(xs, ys) {
+    const n = xs.length;
+    const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+    let sxy = 0, sxx = 0, syy = 0;
+    xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) ** 2; syy += (ys[i] - my) ** 2; });
+    return sxx && syy ? sxy / Math.sqrt(sxx * syy) : null;
+}
+
+/**
+ * Our training base / recent load against COROS's Base Fitness (long-term
+ * load) and Load Impact (short-term load), on the days COROS gave numbers.
+ * The scales differ, so it's how they move together that's compared.
+ * -> { n, latest: { date, ours: { base, recent }, coros: { base, impact, ratio } }, rBase, rRecent } or null
+ */
+export function corosComparison(series = [], fitness = {}, { days = 365 } = {}) {
+    const byDate = new Map(series.map(s => [s.date, s]));
+    const last = series.at(-1)?.date;
+    if (!last) return null;
+    const from = addDays(last, -days);
+    const pts = Object.entries(fitness || {})
+        .filter(([d, f]) => d >= from && d <= last && byDate.has(d) && (Number(f?.load?.long) > 0 || Number(f?.load?.short) > 0))
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([d, f]) => ({ date: d, ours: byDate.get(d), coros: { base: Number(f.load.long) || null, impact: Number(f.load.short) || null, ratio: Number(f.load.ratio) || null } }));
+    if (!pts.length) return null;
+    const pair = (ourKey, theirKey) => {
+        const p = pts.filter(x => x.coros[theirKey] != null);
+        return p.length >= 10 ? Math.round(pearson(p.map(x => x.ours[ourKey]), p.map(x => x.coros[theirKey])) * 100) / 100 : null;
+    };
+    const latest = pts.at(-1);
+    return {
+        n: pts.length,
+        latest: { date: latest.date, ours: { base: r1(latest.ours.base), recent: r1(latest.ours.recent) }, coros: latest.coros },
+        rBase: pair("base", "base"),
+        rRecent: pair("recent", "impact")
+    };
 }

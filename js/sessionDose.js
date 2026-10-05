@@ -11,13 +11,17 @@
                   reserve fraction. Male constant; the per-athlete scale
                   below absorbs most of the difference.
      effort load  minutes × RPE (session RPE, Foster).
-   They are NOT added or averaged: they're readings of the same session.
-   The primary dose is the first available of pace → HR → effort (→ miles
-   for a hand-logged run with no time), with HR and effort put on the pace
-   scale by the athlete's own ratio (median over paired sessions, shrunk
-   toward a default until there are plenty). HR and effort stay what they
-   are: response measurements for step 4, where the gaps between them are
-   the signal.
+   They are never added up (that would count one run three times). Since
+   0.2.0 the dose BLENDS them: HR and effort are put on the pace scale by
+   the athlete's own ratio (median over paired sessions, shrunk toward a
+   default until there are plenty), then the dose is their weighted
+   geometric mean, each weighted by how far it can be trusted on that run
+   (`blendWeights`: pace less without laps, on hills or a trail with no
+   climb data, none on a treadmill; heart rate less on short runs; HR and
+   effort less while their scale is still the default). A run with one
+   measure is scored by it alone (→ miles for a hand-logged run with no
+   time). The gaps between the measures are still step 4's response
+   signals.
    Intensity domains: each lap's time goes to easy (IF < 0.80), threshold
    (0.80–1.00, marathon pace included) or hard (> 1.00). Without laps the
    whole run's IF decides (flagged). Mechanical: miles, climb, long runs.
@@ -27,7 +31,7 @@
 import { addDays } from "./athleteLedger.js";
 import { effortsFrom, envelope, personalExponent, hrMaxFrom, hrRestFrom, isRace } from "./athleteParams.js";
 
-export const DOSE_VERSION = "0.1.0";
+export const DOSE_VERSION = "0.2.0";
 const MILE = 1609.344;
 
 /** Plain-language assumptions, shown with the load chart. */
@@ -36,6 +40,7 @@ export const DOSE_ASSUMPTIONS = Object.freeze([
     "Your 1-hour race pace comes from your races of the last 6 months and your fastest training efforts of the last 4 months (training efforts counted 3% slower than a race), with your own distance exponent.",
     "Hills: each meter climbed counts as 6 meters of flat running (total climb only, when Strava has it).",
     "Heart-rate load (TRIMP) and effort load (minutes × effort 1–10) are put on the pace scale with your own ratio from the last year's runs that have both, blended with a default that counts as 10 runs, so yours takes over as they add up.",
+    "Each run's load blends every measure it has (pace, heart rate, your effort), weighted by how far each can be trusted on that run: pace counts fully with laps, less without them, on big hills or a trail, not at all on a treadmill; heart rate counts less on runs under 20 minutes; heart rate and effort count less until your own ratio is known. They're averaged on one scale, never added, so a run isn't counted three times.",
     "Treadmill runs and runs with no usable pace are scored by heart rate, then by effort. Until your watch has recorded a max heart rate, 190 is assumed.",
     "Hand-logged runs with only miles count as easy running at your easy pace (lowest quality)."
 ]);
@@ -232,8 +237,30 @@ function split(load, weights) {
 }
 
 /**
- * Picks the primary dose for one session.
- * -> { id, date, dose, source: pace|hr|effort|miles|none, domains, miles, minutes, climb, long, raw, flags }
+ * How far each measure can be trusted on this run (0 = not used).
+ * -> { pace, hr, effort }
+ */
+export function blendWeights(session, raw, scale) {
+    const sec = num(session.movingSec) ?? num(session.elapsedSec);
+    const meters = num(session.distance);
+    const climbPerKm = meters ? (Number(session.climb) || 0) / (meters / 1000) : 0;
+    let pace = raw.pace > 0 ? 1 : 0;
+    if (pace) {
+        if (!raw.laps) pace *= 0.8;                          // the whole run's pace hides intervals
+        if (session.trail && !(Number(session.climb) > 0)) pace *= 0.5;
+        else if (climbPerKm > 20) pace *= 0.7;              // the climb adjustment is only approximate
+    }
+    let hr = raw.hr > 0 ? 0.8 : 0;
+    if (hr && sec && sec < 20 * 60) hr *= 0.5;               // heart rate lags on short runs
+    if (hr && !scale?.hr?.own) hr *= 0.6;
+    let effort = raw.effort > 0 ? 0.8 : 0;
+    if (effort && !scale?.effort?.own) effort *= 0.6;
+    return { pace, hr, effort };
+}
+
+/**
+ * One dose for one session: the trusted measures blended on the pace scale.
+ * -> { id, date, dose, source: blend|pace|hr|effort|miles|none, parts, domains, miles, minutes, climb, long, raw, flags }
  */
 export function chooseDose(session, raw, scale, anchor) {
     const miles = (Number(session.distance) || 0) / MILE;
@@ -241,12 +268,18 @@ export function chooseDose(session, raw, scale, anchor) {
     const minutes = sec ? sec / 60 : null;
     let dose = null, source = "none", domains = { easy: 0, threshold: 0, hard: 0 };
     const flags = raw.flags.slice();
-    if (raw.pace != null) {
-        dose = raw.pace; source = "pace"; domains = raw.domainsPace;
-    } else if (raw.hr != null) {
-        dose = raw.hr * scale.hr.ratio; source = "hr"; domains = split(dose, raw.domainsHr);
-    } else if (raw.effort != null) {
-        dose = raw.effort * scale.effort.ratio; source = "effort"; domains = { easy: 0, threshold: 0, hard: 0, [domainOfRpe(session.rpe)]: dose };
+    const w = blendWeights(session, raw, scale);
+    const values = { pace: raw.pace, hr: raw.hr != null ? raw.hr * scale.hr.ratio : null, effort: raw.effort != null ? raw.effort * scale.effort.ratio : null };
+    const used = ["pace", "hr", "effort"].filter(k => w[k] > 0 && values[k] > 0);
+    const parts = {};
+    if (used.length) {
+        const W = used.reduce((t, k) => t + w[k], 0);
+        dose = used.length === 1 ? values[used[0]] : Math.exp(used.reduce((t, k) => t + w[k] * Math.log(values[k]), 0) / W);
+        source = used.length > 1 ? "blend" : used[0];
+        for (const k of used) parts[k] = { load: r1(values[k]), weight: Math.round(w[k] / W * 100) };
+        // The intensity split: pace when it's there (lap by lap), else heart rate, else effort.
+        const shape = raw.pace != null ? raw.domainsPace : raw.hr != null ? raw.domainsHr : { easy: 0, threshold: 0, hard: 0, [domainOfRpe(session.rpe)]: 1 };
+        domains = split(dose, shape);
     } else if (miles > 0 && anchor?.v60) {
         // Miles only (hand-logged): easy running at EASY_IF of the 1-hour speed.
         const hours = miles * MILE / (anchor.v60 * EASY_IF) / 3600;
@@ -255,7 +288,7 @@ export function chooseDose(session, raw, scale, anchor) {
     }
     return {
         id: session.id, date: session.date, name: session.name || "",
-        dose, source, domains,
+        dose, source, parts, domains,
         miles, minutes, climb: Number(session.climb) > 0 ? Number(session.climb) : 0,
         long: miles >= LONG_RUN.miles || (minutes || 0) >= LONG_RUN.minutes,
         intensity: raw.intensity, hrr: raw.hrr, rpe: Number.isInteger(session.rpe) ? session.rpe : null,
@@ -266,7 +299,7 @@ export function chooseDose(session, raw, scale, anchor) {
 
 /**
  * Every session's dose. `laps`: the coros-laps store { labelId: { laps } }.
- * -> { version, doses (oldest first), scale, anchors, counts: { pace, hr, effort, miles, none } }
+ * -> { version, doses (oldest first), scale, anchors, counts: { blend, pace, hr, effort, miles, none } }
  */
 export function sessionDoses(sessions, today, { laps = {}, health = {}, fitness = {} } = {}) {
     const past = sessions.filter(s => s.date <= today);
@@ -283,7 +316,7 @@ export function sessionDoses(sessions, today, { laps = {}, health = {}, fitness 
     const scale = calibrate(lastYear.filter(r => r.pace > 0 && (r.hr > 0 || r.effort > 0)).length >= RATIO_MIN_PAIRS ? lastYear : raws.map(x => x.raw));
     const doses = raws.map(x => chooseDose(x.s, x.raw, scale, x.a))
         .sort((a, b) => a.date.localeCompare(b.date));
-    const counts = { pace: 0, hr: 0, effort: 0, miles: 0, none: 0 };
+    const counts = { blend: 0, pace: 0, hr: 0, effort: 0, miles: 0, none: 0 };
     for (const d of doses) counts[d.source]++;
     return { version: DOSE_VERSION, doses, scale, anchors, counts };
 }

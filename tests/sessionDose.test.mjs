@@ -1,7 +1,7 @@
 // Unit tests for one dose per session (js/sessionDose.js).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { rawDose, chooseDose, calibrate, v60At, weeklyAnchors, sessionDoses, doseAgreement, domainOf, DOSE_VERSION } from "../js/sessionDose.js";
+import { rawDose, chooseDose, blendWeights, calibrate, v60At, weeklyAnchors, sessionDoses, doseAgreement, domainOf, DOSE_VERSION } from "../js/sessionDose.js";
 import { athlete, trueTime, M } from "./athleteFixture.mjs";
 
 const ASOF = "2026-10-04";
@@ -61,14 +61,30 @@ test("calibrate: defaults with few pairs, the athlete's own ratio once there are
     assert.equal(many.hr.n, 90);
 });
 
-test("chooseDose: pace first, then HR on the pace scale, then effort, then miles only", () => {
-    const scale = { hr: { ratio: 0.5 }, effort: { ratio: 0.25 } };
+test("chooseDose: blends what the run has on one scale; one measure alone scores it; miles last", () => {
+    const scale = { hr: { ratio: 0.5, own: 0.5 }, effort: { ratio: 0.25, own: 0.25 } };
     const s = sess({ rpe: 5 });
-    assert.equal(chooseDose(s, rawDose(s, anchor), scale, anchor).source, "pace");
+    const raw = rawDose(s, anchor);
+    const b = chooseDose(s, raw, scale, anchor);
+    assert.equal(b.source, "blend");
+    const vals = [raw.pace, raw.hr * 0.5, raw.effort * 0.25];
+    assert.ok(b.dose >= Math.min(...vals) - 1e-9 && b.dose <= Math.max(...vals) + 1e-9, "a weighted average, never a sum");
+    assert.deepEqual(Object.keys(b.parts).sort(), ["effort", "hr", "pace"]);
+    assert.ok(Math.abs(Object.values(b.parts).reduce((t, p) => t + p.weight, 0) - 100) <= 1, "weights are shares of 100%");
+    assert.ok(Math.abs(b.domains.easy + b.domains.threshold + b.domains.hard - b.dose) < 1e-6);
+    // Pace alone (no HR, no effort) is exactly the pace load.
+    const paceOnly = sess({ avgHr: null });
+    assert.equal(chooseDose(paceOnly, rawDose(paceOnly, anchor), scale, anchor).source, "pace");
+    assert.equal(chooseDose(paceOnly, rawDose(paceOnly, anchor), scale, anchor).dose, rawDose(paceOnly, anchor).pace);
+    // Treadmill: no pace, heart rate and effort blended.
     const tm = sess({ indoor: true, rpe: 5 });
-    const byHr = chooseDose(tm, rawDose(tm, anchor), scale, anchor);
+    const byTm = chooseDose(tm, rawDose(tm, anchor), scale, anchor);
+    assert.equal(byTm.source, "blend");
+    assert.equal(byTm.parts.pace, undefined);
+    const tmHr = sess({ indoor: true });
+    const byHr = chooseDose(tmHr, rawDose(tmHr, anchor), scale, anchor);
     assert.equal(byHr.source, "hr");
-    assert.ok(Math.abs(byHr.dose - rawDose(tm, anchor).hr * 0.5) < 1e-9);
+    assert.ok(Math.abs(byHr.dose - rawDose(tmHr, anchor).hr * 0.5) < 1e-9);
     const noHr = sess({ indoor: true, avgHr: null, rpe: 4 });
     const byEffort = chooseDose(noHr, rawDose(noHr, anchor), scale, anchor);
     assert.equal(byEffort.source, "effort");
@@ -79,6 +95,19 @@ test("chooseDose: pace first, then HR on the pace scale, then effort, then miles
     assert.equal(byMiles.source, "miles");
     assert.ok(byMiles.dose > 20 && byMiles.dose < 60, String(byMiles.dose));
     assert.ok(chooseDose(sess({ distance: 17000 }), rawDose(sess({ distance: 17000 }), anchor), scale, anchor).long);
+});
+
+test("blend weights: trust follows the run (no laps, hills, trail, short runs, a default scale)", () => {
+    const own = { hr: { own: 0.5 }, effort: { own: 0.25 } };
+    const raw = { pace: 50, hr: 100, effort: 200, laps: true };
+    assert.deepEqual(blendWeights(sess({ rpe: 5 }), raw, own), { pace: 1, hr: 0.8, effort: 0.8 });
+    assert.equal(blendWeights(sess({}), { ...raw, laps: false }, own).pace, 0.8);
+    assert.equal(blendWeights(sess({ trail: true, climb: 0 }), raw, own).pace, 0.5);
+    assert.equal(blendWeights(sess({ climb: 400 }), raw, own).pace, 0.7);
+    assert.equal(blendWeights(sess({ movingSec: 900 }), raw, own).hr, 0.4);
+    const def = blendWeights(sess({}), raw, { hr: {}, effort: {} });
+    assert.ok(Math.abs(def.hr - 0.48) < 1e-9 && Math.abs(def.effort - 0.48) < 1e-9);
+    assert.equal(blendWeights(sess({}), { pace: null, hr: null, effort: null }, own).pace, 0);
 });
 
 test("v60: from a recent race with the athlete's exponent, else training × 0.97, else COROS threshold", () => {
@@ -122,9 +151,10 @@ test("sessionDoses: every run gets one dose; counts by source; version; easy wee
     const r = sessionDoses(s, ASOF);
     assert.equal(r.version, DOSE_VERSION);
     assert.equal(r.doses.length, s.length);
-    // The first 4 weeks have no 1-hour pace yet (no race, under a month of runs): scored by heart rate.
-    assert.equal(r.counts.pace + r.counts.hr, s.length, JSON.stringify(r.counts));
-    assert.ok(r.counts.pace > s.length / 2 && r.counts.hr >= 1, JSON.stringify(r.counts));
+    // The first 4 weeks have no 1-hour pace yet (no race, under a month of runs): heart rate alone;
+    // after that pace and heart rate together.
+    assert.equal(r.counts.blend + r.counts.hr, s.length, JSON.stringify(r.counts));
+    assert.ok(r.counts.blend > s.length / 2 && r.counts.hr >= 1, JSON.stringify(r.counts));
     const week = r.doses.filter(d => d.date >= "2026-09-21" && d.date <= "2026-09-27");
     const by = k => week.reduce((t, d) => t + d.domains[k], 0);
     assert.ok(by("easy") > by("threshold"), `${by("easy")} vs ${by("threshold")}`);

@@ -27,6 +27,7 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 let host = null;
 let items = [];
 let clientMode = false;
+let windowOpts = { days: 3, max: 4 };
 let shareTimer = null;
 
 function when(date, today) {
@@ -61,9 +62,9 @@ async function refresh() {
         if (!share.sharesAthleteModel()) { items = []; render(); return; }
         const { loadCoachPlans } = await import("./coachPlanStore.js");
         const sessions = share.fillPlanEfforts(await loadLedger(today, { plan: false }), share.effortsFromCoachPlans(loadCoachPlans()));
-        items = effortPrompts(sessions, today);
+        items = effortPrompts(sessions, today, windowOpts);
     } else {
-        items = effortPrompts(await loadLedger(), today);
+        items = effortPrompts(await loadLedger(), today, windowOpts);
     }
     render();
 }
@@ -77,11 +78,15 @@ function shareSoon() {
     }, 4000);
 }
 
-/** Mounts the card into `el` (Today). client: true for a client's Today. */
-export function mountEffortCard(el, { client = false } = {}) {
+/**
+ * Mounts the card into `el` (Today; Weekly Review asks about the whole week:
+ * days 7, max 7). client: true for a client's Today.
+ */
+export function mountEffortCard(el, { client = false, days = 3, max = 4 } = {}) {
     if (!el || host) return;
     host = el;
     clientMode = client;
+    windowOpts = { days, max };
     el.addEventListener("click", event => {
         const btn = event.target.closest("[data-rpe]");
         const id = btn?.closest("[data-id]")?.dataset.id;

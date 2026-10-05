@@ -234,6 +234,7 @@
     "js/weekly-review.js",
     "js/weeklyDecision.js",
     "js/weeklyDecisionData.js",
+    "js/weeklyLoad.js",
     "js/workoutBuilder.js",
     "js/workoutFuel.js",
     "js/workoutPage.js",

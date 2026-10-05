@@ -5,7 +5,10 @@
    (js/loadState.js), drawn as one card: where recent load sits against
    your own last year, the training base and its change, the last 16
    weeks as bars by intensity with the base and recent lines over them,
-   the intensity mix, long runs and how each run was scored. Replaces
+   the intensity mix, long runs, how each run was scored (one blended
+   load from pace, heart rate and effort), COROS's Base Fitness / Load
+   Impact next to ours, and the totals by week (monotony, strain) and by
+   month (js/loadState.js loadTotals). Replaces
    the old Load panel and its acute : chronic "safe range" (3.4 of
    docs/PERFORMANCE_ENGINE_PLAN.md: no ratio zones). Then "How you
    responded" (js/trainingResponse.js, step 4): the reading, easy-run
@@ -17,7 +20,7 @@
 ========================================== */
 
 import { sessionDoses, doseAgreement, DOSE_ASSUMPTIONS, DOSE_VERSION, LONG_RUN } from "./sessionDose.js";
-import { loadState, recentWords, LOAD_VERSION, TAU } from "./loadState.js";
+import { loadState, recentWords, loadTotals, corosComparison, LOAD_VERSION, TAU } from "./loadState.js";
 import { loadChartSvg } from "./svgCharts.js";
 import { loadModelInputs, loadLaps } from "./athleteData.js";
 import { addDays } from "./athleteLedger.js";
@@ -38,7 +41,7 @@ const signed = n => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}`;
 const paceMile = v => { const s = Math.round(1609.344 / v); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const mondayOf = date => { const [y, m, d] = date.split("-").map(Number); const t = new Date(y, m - 1, d); return addDays(date, -((t.getDay() + 6) % 7)); };
 const V60_WORDS = { race: "a recent race", training: "your fastest recent training efforts", coros: "COROS's threshold pace", older: "your last known fitness (nothing recent)" };
-const SOURCE_WORDS = { pace: "by pace", hr: "by heart rate", effort: "by effort", miles: "miles only", none: "not scored" };
+const SOURCE_WORDS = { blend: "blended (two or three measures)", pace: "by pace alone", hr: "by heart rate alone", effort: "by effort alone", miles: "miles only", none: "not scored" };
 
 let result = null;
 
@@ -58,7 +61,10 @@ function compute(inputs) {
         drift: decoupling(dose.doses, lapsById, inputs.today),
         reading: reading(eff.signal, effort.signal)
     };
-    return { today: inputs.today, dose, state, agreement: doseAgreement(dose, inputs.today), response };
+    return {
+        today: inputs.today, dose, state, agreement: doseAgreement(dose, inputs.today), response,
+        totals: loadTotals(dose.doses, inputs.today), coros: corosComparison(state.series, inputs.fitness)
+    };
 }
 
 // The dose test and the noise comparison take a few seconds on years of runs: done after the card draws.
@@ -126,6 +132,47 @@ function responseHtml(r, today) {
         ${qualityLine || exLine || driftLine ? `<ul class="rc-why">${qualityLine}${exLine}${driftLine}</ul>` : ""}`;
 }
 
+function corosLine(c) {
+    if (!c) return "";
+    const move = c.rBase != null
+        ? ` Over ${c.n} days they move together: r ${c.rBase} for base${c.rRecent != null ? `, ${c.rRecent} for recent` : ""} (1 = perfectly in step).`
+        : "";
+    return `<li>COROS on ${esc(day(c.latest.date))}: Base Fitness <strong>${c.latest.coros.base ?? "—"}</strong>, Load Impact <strong>${c.latest.coros.impact ?? "—"}</strong>${c.latest.coros.ratio ? `, ratio ${c.latest.coros.ratio}` : ""}. Ours that day: base ${c.latest.ours.base}, recent ${c.latest.ours.recent}.${move} Different scales: it's the direction that compares.</li>`;
+}
+
+function monotonyWord(m) {
+    return m == null ? "" : m > 2 ? "even" : m > 1.5 ? "some contrast" : "varied";
+}
+
+/** By week (last 8, with monotony and strain) and by month (last 12). */
+function totalsHtml(t) {
+    if (!t) return "";
+    const weeks = t.weeks.filter(w => w.runs || w.current).slice(-8).reverse();
+    const months = t.months.filter(m => m.runs || m.current).reverse();
+    const weekRows = weeks.map(w => `<tr>
+            <th scope="row">${esc(day(w.start))}${w.current ? "<small>so far</small>" : ""}</th>
+            <td>${w.runs}</td><td>${w.miles}</td><td>${whole(w.load)}</td>
+            <td>${whole(w.effortLoad)}<small>${w.rated} of ${w.runs} rated</small></td>
+            <td>${w.monotony ?? "—"}${w.monotony != null ? `<small>${monotonyWord(w.monotony)}</small>` : ""}</td>
+            <td>${w.strain != null ? whole(w.strain) : "—"}${w.strain != null && t.strainUsual && w.strain > t.strainUsual * 1.3 ? `<small class="is-bad">well above your usual</small>` : ""}</td></tr>`).join("");
+    const monthRows = months.map(m => `<tr>
+            <th scope="row">${esc(m.label)}${m.current ? "<small>so far</small>" : ""}</th>
+            <td>${m.runs}</td><td>${whole(m.miles)}</td><td>${whole(m.load)}</td>
+            <td>${whole(m.effortLoad)}<small>${m.rated} of ${m.runs} rated</small></td></tr>`).join("");
+    return `
+        <p class="rc-sub-h">By week and by month</p>
+        <div class="mc-scroll"><table class="mc-table lc-weeks">
+            <thead><tr><th scope="col">Week of</th><th scope="col">Runs</th><th scope="col">Miles</th><th scope="col">Load</th><th scope="col">Effort load</th><th scope="col">Monotony</th><th scope="col">Strain</th></tr></thead>
+            <tbody>${weekRows}</tbody>
+        </table></div>
+        <p class="tr-note">Load is the blended load of every run. Effort load is minutes × your 1–10, for the runs you rated. Monotony is a week's daily average ÷ how much the days differ (over 2 means every day felt the same); strain is the week's load × monotony${t.strainUsual ? `; your usual strain is ${whole(t.strainUsual)}` : ""}. A week stands out when both are high.</p>
+        ${monthRows ? `<details class="rc-details"><summary>By month (last 12)</summary>
+            <div class="mc-scroll"><table class="mc-table lc-months">
+                <thead><tr><th scope="col">Month</th><th scope="col">Runs</th><th scope="col">Miles</th><th scope="col">Load</th><th scope="col">Effort load</th></tr></thead>
+                <tbody>${monthRows}</tbody>
+            </table></div></details>` : ""}`;
+}
+
 function mixLine(weeks) {
     const last4 = weeks.slice(-4);
     const t = k => last4.reduce((s, w) => s + w[k], 0);
@@ -141,7 +188,7 @@ function renderLoad() {
     const { state, dose, today } = result;
     el.dataset.version = `${DOSE_VERSION}/${LOAD_VERSION}/${RESPONSE_VERSION}`;
     const head = `<div class="panel-header"><div><h2>Load and response</h2>
-        <p>What your running has asked of you, from every run's pace (or heart rate, or effort), against your own last year.</p></div></div>`;
+        <p>What your running has asked of you: every run's pace, heart rate and effort blended into one load, against your own last year.</p></div></div>`;
     if (!state.today) {
         el.innerHTML = `${head}<p class="ar-empty">No runs with a time yet. Connect COROS or import your Strava archive below.</p>`;
         return;
@@ -154,9 +201,15 @@ function renderLoad() {
     const days = state.series.filter(s => s.date >= from);
     const slots = weeks.length * 7 - (7 - weeks.at(-1).daysIn);
     const lead = Array.from({ length: Math.max(0, slots - days.length) }, () => ({ base: null, recent: null }));
-    const yearCounts = { pace: 0, hr: 0, effort: 0, miles: 0, none: 0 };
-    for (const d of dose.doses) if (d.date > addDays(today, -365)) yearCounts[d.source]++;
+    const yearCounts = { blend: 0, pace: 0, hr: 0, effort: 0, miles: 0, none: 0 };
+    const usedBy = { pace: 0, hr: 0, effort: 0 };
+    for (const d of dose.doses) {
+        if (d.date <= addDays(today, -365)) continue;
+        yearCounts[d.source]++;
+        for (const k of Object.keys(d.parts || {})) usedBy[k]++;
+    }
     const scored = Object.entries(yearCounts).filter(([, n]) => n).map(([k, n]) => `${whole(n)} ${SOURCE_WORDS[k]}`).join(" · ");
+    const measures = `pace in ${whole(usedBy.pace)}, heart rate in ${whole(usedBy.hr)}, your effort in ${whole(usedBy.effort)}`;
     const ticks = [weeks[0], weeks[Math.floor(weeks.length / 2)], weeks.at(-1)];
 
     el.innerHTML = `${head}
@@ -175,8 +228,10 @@ function renderLoad() {
             ${mixLine(weeks) ? `<li>${mixLine(weeks)}</li>` : ""}
             <li>Long runs (${LONG_RUN.miles}+ mi or ${LONG_RUN.minutes}+ min) in the last 8 weeks: <strong>${state.longRuns.count}</strong>${state.longRuns.count ? `, longest ${state.longRuns.longest} mi` : ""}</li>
             ${anchor?.v60 ? `<li>Your 1-hour race pace now: <strong>${paceMile(anchor.v60)}/mi</strong>, from ${esc(V60_WORDS[anchor.v60Source] || "your runs")}. 1 hour at that pace = 100 points.</li>` : `<li>No 1-hour pace yet (no races or fast efforts on record), so runs are scored by heart rate or effort.</li>`}
-            <li>Runs in the last year: ${esc(scored || "none")}.</li>
+            <li>Runs in the last year: ${esc(scored || "none")}. Measures used: ${esc(measures)}.</li>
+            ${corosLine(result.coros)}
         </ul>
+        ${totalsHtml(result.totals)}
         ${responseHtml(result.response, today)}
         <details class="rc-details"><summary>How this is worked out</summary>
             <p>Dose ${esc(DOSE_VERSION)} · load ${esc(LOAD_VERSION)} · response ${esc(RESPONSE_VERSION)}. Each run gets one dose, not three added together. Training base and recent load are exponentially weighted daily averages (about ${TAU.base} and ${TAU.recent} days); rest days count as zero. There's no "safe zone": ratios of recent to base load don't predict injury reliably, so this shows where you are against your own year instead.</p>
@@ -194,7 +249,7 @@ function agreementWords(p, name) {
     if (!p || p.n < 3) return `Not enough runs with ${name} and pace together yet.`;
     if (p.r != null && p.r >= 0.8 && p.spreadPct <= 15) return `${name} and pace agree closely (r ${p.r.toFixed(2)}, ± ${p.spreadPct}%): either would tell the same story.`;
     if (p.r != null && p.r >= 0.6) return `${name} and pace mostly agree (r ${p.r.toFixed(2)}, ± ${p.spreadPct}%). The runs where they don't are the interesting ones: step 4 reads those gaps as how you responded.`;
-    return `${name} and pace often disagree (r ${p.r == null ? "–" : p.r.toFixed(2)}, ± ${p.spreadPct}%). Pace stays the dose; ${name.toLowerCase()} is kept as a response signal.`;
+    return `${name} and pace often disagree (r ${p.r == null ? "–" : p.r.toFixed(2)}, ± ${p.spreadPct}%). Both go into each run's blended load, and the gap between them is read as how you responded.`;
 }
 
 function renderAgreement() {
