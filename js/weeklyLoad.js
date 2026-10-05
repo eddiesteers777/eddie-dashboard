@@ -4,8 +4,8 @@
    The athlete model's load for the current Monday–Sunday week, one row a
    day: each run's external load (pace; heart rate only where pace can't
    measure it, js/sessionDose.js 0.3.0) with heart rate and effort on the
-   same scale beside it, the week so far against your usual week
-   (the median of the 4 before), effort load (minutes × effort 1–10), the
+   same scale beside it, the week so far against the same day of your
+   last 8 weeks (loadState's weekToDate, audit A5), effort load (minutes × effort 1–10), the
    easy / steady / hard mix, last week's monotony and strain against your
    usual, how runs felt for what they were (js/trainingResponse.js), and
    COROS's own Base Fitness / Load Impact next to ours. Runs of the week
@@ -55,13 +55,21 @@ async function compute(today) {
     return { totals, coros, feel, today };
 }
 
+const STATUS_WORDS = { usual: "About usual", ahead: "Ahead of usual", behind: "Behind usual" };
+const statusChip = x => (x?.status ? `<em class="wl-chip is-${x.status}">${STATUS_WORDS[x.status]}</em>` : "");
+/** "usually 395 by Thursday · a usual week 620" (the same day of your last 8 weeks, audit A5). */
+function toDateWords(td, key, fmt, daysIn) {
+    if (!td) return `${daysIn} of 7 days in · needs 4 of your last 8 weeks with runs to compare`;
+    const x = td[key];
+    return `usually ${fmt(x.usual)} by ${td.dayName}${x.usualWeek ? ` · a usual week ${fmt(x.usualWeek)}` : ""}`;
+}
+
 function render(el, { totals, coros, feel, today }) {
     // (today: a day with no run yet says so instead of "Rest")
     const w = totals.thisWeek;
-    const usual = totals.usualWeek;
     const lastWeek = totals.weeks.at(-2);
     const daysIn = totals.days.filter(d => !d.future).length;
-    const pct = usual?.load ? Math.round(w.load / usual.load * 100) : null;
+    const td = totals.toDate;
     const mix = w.load ? ["easy", "threshold", "hard"].map(k => Math.round(w.domains[k] / w.load * 100)) : null;
     const dayRows = totals.days.map(d => `
         <li class="wl-day${d.future ? " is-future" : ""}${d.runs ? "" : " is-rest"}">
@@ -72,10 +80,11 @@ function render(el, { totals, coros, feel, today }) {
     el.hidden = false;
     el.querySelector(".wl-body").innerHTML = `
         <div class="wl-stats">
-            <div class="wl-stat"><span>Load so far</span><strong>${whole(w.load)}</strong><small>${pct == null ? `${daysIn} of 7 days in` : `${pct}% of your usual week (${whole(usual.load)}), ${daysIn} of 7 days in`}</small></div>
-            <div class="wl-stat"><span>Effort load</span><strong>${whole(w.effortLoad)}</strong><small>minutes × effort · ${w.rated} of ${w.runs} ${w.runs === 1 ? "run" : "runs"} rated${usual?.effortLoad ? ` · usual ${whole(usual.effortLoad)}` : ""}</small></div>
-            <div class="wl-stat"><span>Miles</span><strong>${w.miles}</strong><small>${usual ? `usual ${usual.miles}` : "this week"}</small></div>
+            <div class="wl-stat"><span>Load so far</span><strong>${whole(w.load)}</strong><small>${esc(toDateWords(td, "load", whole, daysIn))}</small>${statusChip(td?.load)}</div>
+            <div class="wl-stat"><span>Effort load</span><strong>${whole(w.effortLoad)}</strong><small>minutes × effort · ${w.rated} of ${w.runs} ${w.runs === 1 ? "run" : "runs"} rated</small></div>
+            <div class="wl-stat"><span>Miles</span><strong>${w.miles}</strong><small>${esc(toDateWords(td, "miles", x => String(x), daysIn))}</small>${statusChip(td?.miles)}</div>
         </div>
+        ${td ? `<p class="wl-todate">Compared with your last ${td.n} weeks up to the same day (${esc(td.dayName)}), not with a whole week: "about usual" covers how much those weeks themselves varied.</p>` : ""}
         <ul class="wl-days">${dayRows}</ul>
         <ul class="wl-notes">
             ${mix ? `<li>Mix this week: <strong>${mix[0]}% easy</strong> · ${mix[1]}% steady / threshold · ${mix[2]}% hard.</li>` : ""}

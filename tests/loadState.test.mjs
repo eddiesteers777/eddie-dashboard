@@ -112,3 +112,37 @@ test("corosComparison: our base and recent load against COROS's Base Fitness and
     assert.equal(c.latest.date, Object.keys(fitness).sort().at(-1));
     assert.equal(corosComparison(s.series, {}), null);
 });
+
+test("week so far (audit A5): against the same day of the last 8 weeks, not a whole week", async () => {
+    const { weekToDate } = await import("../js/loadState.js");
+    const { addDays } = await import("../js/athleteLedger.js");
+    // Rest Monday, quality Tuesday, long run Sunday, a cutback every 4th week; this week is Mon Oct 12.
+    const MON = "2026-10-12";
+    const pattern = [0, 9, 6, 7, 5, 6, 16];            // miles Mon..Sun
+    const week = (start, f = 1, upTo = 6) => pattern.slice(0, upTo + 1).flatMap((m, i) => (m ? [{ date: addDays(start, i), miles: m * f, dose: m * f * 10 }] : []));
+    const history = Array.from({ length: 12 }, (_, k) => week(addDays(MON, -7 * (12 - k)), k % 4 === 3 ? 0.75 : 1)).flat();
+    const on = (date, extra) => weekToDate([...history, ...extra], date);
+    // A normal week reads "about usual" on every day, where the old whole-week comparison said 9–64%.
+    for (const [i, d] of [[1, "Tuesday"], [3, "Thursday"], [5, "Saturday"], [6, "Sunday"]]) {
+        const r = on(addDays(MON, i), week(MON, 1, i));
+        assert.equal(r.dayName, d);
+        assert.equal(r.load.status, "usual", `${d}: ${JSON.stringify(r.load)}`);
+        assert.equal(r.miles.status, "usual");
+        assert.equal(r.load.usualWeek, 490, "a usual week (median of 8) is still shown");
+    }
+    const tue = on(addDays(MON, 1), week(MON, 1, 1));
+    assert.deepEqual([tue.miles.now, tue.miles.usual], [9, 9]);
+    // Clearly more or less than usual by Thursday.
+    assert.equal(on(addDays(MON, 3), week(MON, 1.6, 3)).load.status, "ahead");
+    const sick = on(addDays(MON, 3), week(MON, 1, 1));    // nothing since Tuesday; none yet on Thursday
+    assert.equal(sick.dayName, "Wednesday");
+    assert.equal(sick.load.status, "behind");
+    assert.equal(sick.load.ratio, 0.6);
+    // No run yet today: compared through yesterday. Monday with nothing done yet: nothing to say.
+    const wedMorning = on(addDays(MON, 2), week(MON, 1, 1));
+    assert.equal(wedMorning.dayName, "Tuesday");
+    assert.equal(wedMorning.load.status, "usual");
+    assert.equal(on(MON, []), null);
+    // Under 4 of the last 8 weeks with runs: no comparison.
+    assert.equal(weekToDate([...week(addDays(MON, -7)), ...week(addDays(MON, -14))], addDays(MON, 3)), null);
+});

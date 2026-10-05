@@ -17,7 +17,10 @@
                     (total × monotony), for the weekly review
      loadTotals     this week's days, 16 weeks and 12 months: runs, miles,
                     the external load (js/sessionDose.js 0.3.0), effort load (minutes × effort), how
-                    many runs are rated, monotony / strain, your usual week
+                    many runs are rated, monotony / strain, your usual week,
+                    and the week so far against the same day of your last
+                    8 weeks (weekToDate, audit A5: comparing a Tuesday with
+                    a whole week read every normal week as "behind")
      corosComparison  our base / recent next to COROS's Base Fitness /
                     Load Impact, and how closely they move together
    L_t = L_{t−1} + (dose_t − L_{t−1}) × (1 − e^(−1/τ)), started at the
@@ -164,9 +167,10 @@ function sumPeriod(list) {
 /**
  * Totals for the days of this week, the last `weeks` Monday–Sunday weeks
  * and the last `months` calendar months, from the doses (one external load
- * per run). -> { days, weeks, months, thisWeek, usualWeek, strainUsual }
+ * per run). -> { days, weeks, months, thisWeek, usualWeek, strainUsual, toDate }
  *   usualWeek    the median of the 4 full weeks before this one
  *   strainUsual  the median strain of the full weeks shown
+ *   toDate       the week so far against the same weekday of the last 8 (weekToDate)
  */
 export function loadTotals(doses, today, { weeks = 16, months = 12 } = {}) {
     const usable = doses.filter(d => d.dose != null && d.date <= today);
@@ -200,8 +204,50 @@ export function loadTotals(doses, today, { weeks = 16, months = 12 } = {}) {
         days, weeks: weekRows, months: monthRows,
         thisWeek: weekRows.at(-1),
         usualWeek: before.length >= 2 ? { load: r1(median(before.map(w => w.load))), miles: r1(median(before.map(w => w.miles))), effortLoad: Math.round(median(before.map(w => w.effortLoad))), n: before.length } : null,
-        strainUsual: strains.length >= 4 ? Math.round(median(strains)) : null
+        strainUsual: strains.length >= 4 ? Math.round(median(strains)) : null,
+        toDate: weekToDate(doses, today)
     };
+}
+
+// ---------- this week so far, against the same point in your usual weeks ----------
+
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const medianOf = a => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const k = Math.floor(s.length / 2); return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2; };
+
+/**
+ * docs/ATHLETE_MODEL_AUDIT.md 7.9 (A5). The week so far, through the last
+ * day that's done (today once there's a run today, else yesterday), against
+ * the median of the previous `weeks` full weeks cumulated through the same
+ * weekday. "Ahead" / "behind" only when the log ratio is past the 80th
+ * percentile of how far those weeks themselves sat from that median (at
+ * least 10%), so an ordinary week reads "about usual".
+ * -> null (no day done yet this week, or fewer than 4 of those weeks with runs) or
+ *    { through, dayIndex, dayName, n, load: { now, usual, ratio, band, status, usualWeek }, miles: {...} }
+ *    status: "usual" | "ahead" | "behind"
+ */
+export function weekToDate(doses, today, { weeks = 8 } = {}) {
+    const usable = doses.filter(d => d.dose != null && d.date <= today);
+    const monday = mondayOf(today);
+    const ranToday = usable.some(d => d.date === today);
+    const through = ranToday ? today : addDays(today, -1);
+    if (through < monday) return null;
+    const dayIndex = toDays(monday, through);
+    const sum = (from, to, key) => usable.filter(d => d.date >= from && d.date <= to).reduce((t, d) => t + (Number(d[key]) || 0), 0);
+    const past = Array.from({ length: weeks }, (_, i) => addDays(monday, -7 * (i + 1)));
+    const withRuns = past.filter(m => usable.some(d => d.date >= m && d.date <= addDays(m, 6)));
+    if (withRuns.length < 4) return null;
+    const one = key => {
+        const now = sum(monday, through, key);
+        const cums = past.map(m => sum(m, addDays(m, dayIndex), key));
+        const usual = medianOf(cums);
+        const usualWeek = medianOf(past.map(m => sum(m, addDays(m, 6), key)));
+        if (!(usual > 0)) return { now: r1(now), usual: r1(usual || 0), ratio: null, band: null, status: null, usualWeek: r1(usualWeek || 0) };
+        const devs = cums.filter(c => c > 0).map(c => Math.abs(Math.log(c / usual))).sort((a, b) => a - b);
+        const band = Math.max(0.1, devs.length ? devs[Math.min(devs.length - 1, Math.ceil(0.8 * devs.length) - 1)] : 0.1);
+        const lr = now > 0 ? Math.log(now / usual) : -Infinity;
+        return { now: r1(now), usual: r1(usual), ratio: Math.round(now / usual * 100) / 100, band: Math.round(band * 100) / 100, status: lr > band ? "ahead" : lr < -band ? "behind" : "usual", usualWeek: r1(usualWeek) };
+    };
+    return { through, dayIndex, dayName: DAY_NAMES[dayIndex], n: weeks, load: one("dose"), miles: one("miles") };
 }
 
 // ---------- COROS's own numbers next to ours ----------

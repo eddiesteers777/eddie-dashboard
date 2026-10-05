@@ -2,7 +2,7 @@
 
 *2026-10-05. An audit before any production change, as asked.*
 
-**Status:** A1–A2 built (race model 0.2.0: COROS raw, preparation shown not applied, backtest scores the trim both ways). A3 built (dose 0.3.0: load = external; heart rate and effort kept apart as internal). A4 built (readiness v2 0.2.0 body-only; readiness check 0.2.0 on non-circular outcomes with a "what you already knew" baseline and a week-block bootstrap, E3 now 0.51; decision replay judged on missed sessions and new pain, with the simple way to beat). A5–A6 next.
+**Status:** A1–A2 built (race model 0.2.0: COROS raw, preparation shown not applied, backtest scores the trim both ways). A3 built (dose 0.3.0: load = external; heart rate and effort kept apart as internal). A4 built (readiness v2 0.2.0 body-only; readiness check 0.2.0 on non-circular outcomes with a "what you already knew" baseline and a week-block bootstrap, E3 now 0.51; decision replay judged on missed sessions and new pain, with the simple way to beat). A5 built (Weekly Review's week so far against the same weekday of the last 8 weeks, with a band from their own spread). A6 next.
 
 This audit covers everything from the raw watch data through to the weekly decision, and both pages that show it (Analytics and Weekly Review). The code was read in full. Wherever a claim could be tested, it was tested:
 
