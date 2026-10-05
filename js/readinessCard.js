@@ -154,10 +154,12 @@ function v2Html(r, extra) {
             ${r.positives.length ? `<p><strong>Going well:</strong> ${esc(r.positives.join(" · "))}</p>` : ""}
             ${r.concern ? `<p><strong>Watch:</strong> ${esc(r.concern)}</p>` : ""}
         </div>` : ""}
-        ${r.coros ? `<p class="rd-coros">COROS recovery ${r.coros.percent}%${r.coros.status ? ` · ${esc(r.coros.status)}` : ""} <small>(COROS's own number, shown, not in the score)</small></p>` : ""}
+        ${corosHtml(r)}
         ${(r.context || []).length ? `<div class="rd-context"><p class="rd-context-h">Beside the score, not in it</p><ul>${r.context.map(d => `<li><strong>${esc(d.label)}</strong> ${esc(d.note)}</li>`).join("")}</ul></div>` : ""}
         ${extra ? "" : `<p class="rd-coros"><small>Training response and load can't be shown: the run history couldn't be read.</small></p>`}`;
 }
+
+const corosHtml = r => (r.coros ? `<p class="rd-coros">COROS recovery ${r.coros.percent}%${r.coros.status ? ` · ${esc(r.coros.status)}` : ""} <small>(COROS's own number, shown, not in the score)</small></p>` : "");
 
 function partsHtml(parts) {
     return parts.map(p => `<li class="rd-part">
@@ -238,7 +240,7 @@ async function render() {
                 ${r.flags.filter(f => f.key !== "pain" && f.key !== "sick").map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
             </div>
         </div>
-        ${useV2 ? v2Html(r, extra) : r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}
+        ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
         ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score from HRV, resting heart rate and sleep.</p>`}
         ${weekDots(today, shownHistory)}
         ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}

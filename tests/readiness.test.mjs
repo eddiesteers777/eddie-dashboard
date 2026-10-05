@@ -29,11 +29,15 @@ test("the parts, in plain words", () => {
     assert.equal(hm(450), "7h 30m");
 });
 
-test("Sep 26 before the 19-miler: about 80, green; Sep 20 (low HRV): yellow", () => {
+test("Sep 26 before the 19-miler: about 80, green, COROS recovery shown not scored; Sep 20 (low HRV): yellow", () => {
     const r = computeReadiness("2026-09-26", { health: HEALTH, fitness: FITNESS });
-    assert.equal(r.score, 80);
+    assert.equal(r.score, 81);
     assert.equal(r.color, "green");
-    assert.deepEqual(r.parts.map(p => p.key), ["hrv", "rhr", "sleep", "recovery"]);
+    assert.deepEqual(r.parts.map(p => p.key), ["hrv", "rhr", "sleep"], "COROS recovery isn't scored (audit B7)");
+    assert.deepEqual(r.coros, { percent: 76, status: "Moderate training recommended" }, "but it's kept to show");
+    const noRecovery = computeReadiness("2026-09-26", { health: HEALTH });
+    assert.equal(noRecovery.score, r.score, "the same score with or without COROS's recovery %");
+    assert.equal(noRecovery.coros, null);
     assert.equal(r.needsCheckin, true);
     const low = computeReadiness("2026-09-20", { health: HEALTH });
     assert.equal(low.color, "yellow");
@@ -44,7 +48,7 @@ test("Sep 26 before the 19-miler: about 80, green; Sep 20 (low HRV): yellow", ()
 test("the check-in counts, and sick / pain cap the score", () => {
     const good = computeReadiness("2026-09-26", { health: HEALTH, fitness: FITNESS, checkins: { "2026-09-26": { soreness: 1, energy: 5, mood: 5 } } });
     assert.ok(good.score > 80);
-    assert.equal(good.bodyScore, 80, "the body part ignores how you felt");
+    assert.equal(good.bodyScore, 81, "the body part ignores how you felt");
     const sore = computeReadiness("2026-09-26", { health: HEALTH, fitness: FITNESS, checkins: { "2026-09-26": { soreness: 5, energy: 1, mood: 2 } } });
     assert.ok(sore.score < 80);
     const sick = computeReadiness("2026-09-26", { health: HEALTH, checkins: { "2026-09-26": { sick: true } } });

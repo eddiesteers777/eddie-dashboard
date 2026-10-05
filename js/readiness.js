@@ -7,9 +7,12 @@
      Resting HR       20%  against your average of the previous 30 days
      Sleep            25%  time asleep against your sleep need (7h 30m
                            unless changed) and COROS's sleep score
-     COROS recovery   15%  how much of your training load you've absorbed
      How you feel     15%  the morning check-in, when there is one
                            (soreness, energy, mood)
+   COROS's recovery % is shown next to the score, never in it (audit B7):
+   COROS works it out from the same HRV, resting HR and training load, so
+   scoring it counted those again, and it's COROS's opinion, not a
+   measurement. Before this it was 15%.
    Missing parts are left out and the rest re-weighted; with neither HRV
    nor sleep there's no score. Feeling sick caps it at 30 (red); pain
    caps it at 55 (yellow). Every part is shown in plain words so the
@@ -29,7 +32,7 @@ export const CHECKIN_KEY = "readiness-checkins";
 export const READINESS_KEY = "readiness-history";
 export const DEFAULT_SLEEP_NEED = 450; // 7h 30m
 
-export const WEIGHTS = { hrv: 0.40, rhr: 0.20, sleep: 0.25, recovery: 0.15, feel: 0.15 };
+export const WEIGHTS = { hrv: 0.40, rhr: 0.20, sleep: 0.25, feel: 0.15 };
 
 // "Yesterday, did you…" (WHOOP calls this the Journal).
 export const TAGS = [
@@ -97,9 +100,9 @@ export function sleepPart(sleep, needMin = DEFAULT_SLEEP_NEED) {
     return { key: "sleep", label: "Sleep", value: hm(sleep.asleepMin), note, score: round(score) };
 }
 
-export function recoveryPart(recovery) {
-    if (recovery?.percent == null) return null;
-    return { key: "recovery", label: "COROS recovery", value: `${recovery.percent}%`, note: recovery.status || "", score: round(clamp(recovery.percent)) };
+/** COROS's recovery %, shown beside the score (never in it). */
+export function corosRecovery(recovery) {
+    return recovery?.percent == null ? null : { percent: recovery.percent, status: recovery.status || "" };
 }
 
 export function feelPart(checkin) {
@@ -120,7 +123,7 @@ function weighted(parts) {
 }
 
 /**
- * date + saved data -> { date, score, bodyScore, color, parts, flags, needsCheckin }
+ * date + saved data -> { date, score, bodyScore, color, parts, coros, flags, needsCheckin }
  *   health:   { date: { hrv, rhr, sleep, stress } } (js/corosHealth.js)
  *   fitness:  { date: { recovery: { percent, status } } } (js/corosHistory.js)
  *   checkins: { date: { soreness, energy, mood, sick, pain, tags, note } }
@@ -129,7 +132,7 @@ export function computeReadiness(date, { health = {}, fitness = {}, checkins = {
     const day = health[date] || {};
     const previous = Array.from({ length: 30 }, (_, i) => health[addDays(date, -(i + 1))]?.rhr);
     const checkin = checkins[date] || null;
-    const body = [hrvPart(day.hrv), rhrPart(day.rhr, previous), sleepPart(day.sleep, settings.sleepNeedMin || DEFAULT_SLEEP_NEED), recoveryPart(fitness[date]?.recovery)].filter(Boolean);
+    const body = [hrvPart(day.hrv), rhrPart(day.rhr, previous), sleepPart(day.sleep, settings.sleepNeedMin || DEFAULT_SLEEP_NEED)].filter(Boolean);
     const feel = feelPart(checkin);
     const parts = feel ? [...body, feel] : body;
     const hasCore = body.some(p => (p.key === "hrv" || p.key === "sleep") && p.score != null);
@@ -145,6 +148,7 @@ export function computeReadiness(date, { health = {}, fitness = {}, checkins = {
         bodyScore: bodyScore == null ? null : round(bodyScore),
         color: colorOf(score == null ? null : round(score)),
         parts,
+        coros: corosRecovery(fitness[date]?.recovery),
         flags,
         needsCheckin: !checkin
     };
