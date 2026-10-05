@@ -1159,6 +1159,14 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
     renderList();
     return {
         openPlan: planId => openEditor(planId),
-        isDirty: () => Boolean(state.editing?.dirty && state.view === "editor")
+        isDirty: () => Boolean(state.editing?.dirty && state.view === "editor"),
+        // Changes from elsewhere (the Model tab's weekly decision): open the
+        // plan if it isn't open, then one step with Undo, unpublished.
+        applyToPlan: (planId, mutate, message) => {
+            if (state.view !== "editor" || state.editing?.planId !== planId) openEditor(planId);
+            if (state.editing?.planId !== planId) return false;
+            runOp(message, mutate);
+            return true;
+        }
     };
 }

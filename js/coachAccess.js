@@ -58,7 +58,13 @@ export async function listMyWearableShares() {
     const coaches = await listMyCoaches();
     return Promise.all(coaches.map(async link => ({
         link,
-        share: await readWearableShare(link.coachUid, link.clientUid)
+        // No share yet: the rule reads the stored doc, so reading one that
+        // isn't there is refused, not "missing". Before this, a linked client
+        // who had never shared saw "Connect a coach first" and couldn't start.
+        share: await readWearableShare(link.coachUid, link.clientUid).catch(error => {
+            if (error?.code === "permission-denied") return null;
+            throw error;
+        })
     })));
 }
 
@@ -68,9 +74,12 @@ export async function saveWearableShare(coachUid, permissions = {}) {
     const clean = {
         activity: permissions.activity === true,
         performance: permissions.performance === true,
-        recovery: permissions.recovery === true
+        recovery: permissions.recovery === true,
+        // Athlete model (step 7): a year of runs + 120 days of recovery and
+        // morning check-ins, for the coach's Model tab (js/athleteShare.js).
+        model: permissions.model === true
     };
-    const active = clean.activity || clean.performance || clean.recovery;
+    const active = clean.activity || clean.performance || clean.recovery || clean.model;
     const ref = wearableShareDoc(coachUid, user.uid);
     // A share that doesn't exist yet can't be read (the rule reads the
     // stored doc), so a refused read means "first time": every first share
@@ -281,6 +290,46 @@ export async function deleteSharedWearableRecovery(coachUid, clientUid) {
     if (clientUid !== user.uid) throw new Error("not-your-shared-recovery");
     await deleteDoc(sharedWearableRecoveryDoc(coachUid, clientUid));
 }
+function sharedAthleteModelDoc(coachUid, clientUid) {
+    return doc(db, "sharedAthleteModel", coachUid + "_" + clientUid);
+}
+
+/** The client's shared athlete-model history (js/athleteShare.js), or null. */
+export async function readSharedAthleteModel(coachUid, clientUid) {
+    if (!coachUid || !clientUid) return null;
+    const snap = await getDoc(sharedAthleteModelDoc(coachUid, clientUid));
+    return snap.exists() ? snap.data() : null;
+}
+
+export async function writeSharedAthleteModel(coachUid, payload = {}) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const text = v => (typeof v === "string" ? v : "");
+    const clean = {
+        version: 1,
+        coachUid,
+        clientUid: user.uid,
+        through: String(payload.through || ""),
+        runs: text(payload.runs),
+        health: text(payload.health),
+        checkins: text(payload.checkins),
+        updatedAt: serverTimestamp()
+    };
+    await setDoc(sharedAthleteModelDoc(coachUid, user.uid), clean);
+    return clean;
+}
+
+export async function deleteSharedAthleteModel(coachUid, clientUid) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    if (clientUid !== user.uid) throw new Error("not-your-shared-model");
+    // Nothing shared yet: the rule can't read a doc that isn't there, so a
+    // refusal here just means there was nothing to clear.
+    await deleteDoc(sharedAthleteModelDoc(coachUid, clientUid)).catch(error => {
+        if (error?.code !== "permission-denied") throw error;
+    });
+}
+
 // Firestore doesn't guarantee a nested map's field order survives a
 // round trip, so comparing plain JSON.stringify() output before vs.
 // after a pull can report "changed" even when nothing actually is --

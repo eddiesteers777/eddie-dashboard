@@ -265,6 +265,10 @@ function renderToday() {
         if (clientTodayModule) clientTodayModule.renderClientToday();
         else import("./todayClient.js").then(m => { clientTodayModule = m; m.initClientToday(); })
             .catch(error => console.error("Southbound: client Today failed to load.", error));
+        // "How hard was it?" after their watch runs, while they share the
+        // athlete model with a coach (js/effortCard.js; mounts once).
+        import("./effortCard.js").then(m => m.mountEffortCard(document.getElementById("effortCheck"), { client: true }))
+            .catch(error => console.error("Southbound: effort card failed to load.", error));
         return;
     }
 

@@ -236,6 +236,9 @@ fetch("components/header.html")
                 // Clients: let the coach see when they last opened the app.
                 if (!access.isCoach && access.status === "active") {
                     import("./userProfile.js").then(m => m.touchLastSeen()).catch(() => {});
+                    // Their athlete-model history for a coach they share it with
+                    // (js/athleteShare.js; at most every 6 hours, clears it when they don't).
+                    import("./athleteShare.js").then(m => m.syncSharedAthleteModel()).catch(() => {});
                 }
                 // Keep every pending account's standing invite fresh so the
                 // coach's "Approve" can link them (js/coachAccess.js). Most

@@ -1,5 +1,5 @@
 /* ==========================================
-   Southbound — "How hard was it?" after a watch run (coach's Today)
+   Southbound — "How hard was it?" after a watch run (Today)
 
    One tap per run: the effort (1-10) for each COROS / Strava run of the
    last 3 days that hasn't been answered. Effort is how the athlete model
@@ -7,6 +7,12 @@
    (docs/PERFORMANCE_ENGINE_PLAN.md 3.5). Saved in "session-rpe"
    (js/athleteData.js), private and cloud-synced. Skip saves "no answer"
    so the run isn't asked about again.
+
+   Clients (athlete model step 7) see it too, but only while they share
+   the athlete model with a coach (js/athleteShare.js), without the
+   coach's own marathon plan, and never for a run whose effort they
+   already gave when logging that day's plan workout. Each answer
+   refreshes what the coach sees.
 ========================================== */
 
 import { effortPrompts, effortRecord, milesText, clockText } from "./athleteLedger.js";
@@ -20,6 +26,8 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 
 let host = null;
 let items = [];
+let clientMode = false;
+let shareTimer = null;
 
 function when(date, today) {
     if (date === today) return "Today";
@@ -47,15 +55,33 @@ function render() {
 }
 
 async function refresh() {
-    const sessions = await loadLedger();
-    items = effortPrompts(sessions, isoDate(new Date()));
+    const today = isoDate(new Date());
+    if (clientMode) {
+        const share = await import("./athleteShare.js");
+        if (!share.sharesAthleteModel()) { items = []; render(); return; }
+        const { loadCoachPlans } = await import("./coachPlanStore.js");
+        const sessions = share.fillPlanEfforts(await loadLedger(today, { plan: false }), share.effortsFromCoachPlans(loadCoachPlans()));
+        items = effortPrompts(sessions, today);
+    } else {
+        items = effortPrompts(await loadLedger(), today);
+    }
     render();
 }
 
-/** Mounts the card into `el` (the coach's Today). */
-export function mountEffortCard(el) {
+/** A client's answers reach their coach a few seconds after the last tap. */
+function shareSoon() {
+    if (!clientMode) return;
+    clearTimeout(shareTimer);
+    shareTimer = setTimeout(() => {
+        import("./athleteShare.js").then(m => m.syncSharedAthleteModel({ force: true })).catch(() => {});
+    }, 4000);
+}
+
+/** Mounts the card into `el` (Today). client: true for a client's Today. */
+export function mountEffortCard(el, { client = false } = {}) {
     if (!el || host) return;
     host = el;
+    clientMode = client;
     el.addEventListener("click", event => {
         const btn = event.target.closest("[data-rpe]");
         const id = btn?.closest("[data-id]")?.dataset.id;
@@ -65,10 +91,12 @@ export function mountEffortCard(el) {
         saveEffort(session, effortRecord(value));
         items = items.filter(s => s !== session);
         render();
+        shareSoon();
         toast(value ? `Effort ${value}: ${RPE_WORDS[value].toLowerCase()}` : "Skipped", {
-            action: { label: "Undo", onClick: () => { saveEffort(session, null); refresh(); } }
+            action: { label: "Undo", onClick: () => { saveEffort(session, null); shareSoon(); refresh(); } }
         });
     });
     window.addEventListener("eddieos:coros-history-updated", refresh);
+    window.addEventListener("sb:athlete-share", refresh);
     refresh().catch(error => console.error("Southbound: effort card couldn't load.", error));
 }

@@ -85,6 +85,8 @@ function workoutText(day) {
 
 let planMounted = false;
 let profileMounted = false;
+let modelMounted = false;
+let workspace = null;   // the plan workspace once the Plan tab has opened (a promise)
 let record = null;
 
 function selectTab(name) {
@@ -99,7 +101,7 @@ function selectTab(name) {
     document.querySelectorAll(".hub-page .clients-panel").forEach(p => { p.hidden = p.dataset.panel !== name; });
     if (name === "plan" && !planMounted && record) {
         planMounted = true;
-        import("./planWorkspace.js").then(({ mountPlanWorkspace }) => mountPlanWorkspace($("hubPlan"), {
+        workspace = import("./planWorkspace.js").then(({ mountPlanWorkspace }) => mountPlanWorkspace($("hubPlan"), {
             clientUid,
             clientName: displayName(),
             clientEmail: record.profile?.email || record.link?.clientEmail,
@@ -107,6 +109,20 @@ function selectTab(name) {
             data: record,
             onChange: () => { summarize(); renderAll(); }
         }));
+    }
+    if (name === "model" && !modelMounted && record) {
+        modelMounted = true;
+        import("./clientModelTab.js").then(({ mountClientModel }) => mountClientModel($("hubModel"), {
+            data: record,
+            clientUid,
+            firstName: firstName(),
+            // "Apply as draft": the changes go into the plan workspace, unpublished, with Undo.
+            openDraft: async (planId, mutate, message) => {
+                selectTab("plan");
+                const ws = await workspace;
+                ws?.applyToPlan(planId, mutate, message);
+            }
+        })).catch(error => console.error("Southbound: the Model tab failed to load.", error));
     }
     if (name === "profile" && !profileMounted && record) {
         profileMounted = true;

@@ -15,6 +15,7 @@ import { listMyWearableShares, saveWearableShare } from "./coachAccess.js";
 import { syncSharedWearableActivity } from "./wearableActivity.js";
 import { syncSharedWearablePerformance } from "./wearablePerformance.js";
 import { syncSharedWearableRecovery } from "./wearableRecovery.js";
+import { syncSharedAthleteModel } from "./athleteShare.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"\']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -35,7 +36,7 @@ async function renderWearableSharing() {
     list.innerHTML = rows.map(({ link, share }) => {
         const p = share?.permissions || {};
         const active = share?.status === "active";
-        const labels = [p.activity ? "training activity" : "", p.performance ? "performance" : "", p.recovery ? "recovery & sleep" : ""].filter(Boolean);
+        const labels = [p.activity ? "training activity" : "", p.performance ? "performance" : "", p.recovery ? "recovery & sleep" : "", p.model ? "athlete model" : ""].filter(Boolean);
         return '<div class="wearable-share-row" data-coach-uid="' + esc(link.coachUid) + '">' +
             '<div class="wearable-share-head"><div><strong>' + esc(link.coachName || "Your coach") + '</strong>' +
             '<span>' + (active ? "Sharing " + labels.join(", ") : "Not shared") + '</span></div>' +
@@ -43,6 +44,7 @@ async function renderWearableSharing() {
             '<label><span><strong>Training activity</strong><small>Dates, distance, and duration</small></span><input type="checkbox" data-share="activity" ' + (p.activity ? "checked" : "") + '></label>' +
             '<label><span><strong>Performance</strong><small>Pace, heart rate, load, and fitness metrics</small></span><input type="checkbox" data-share="performance" ' + (p.performance ? "checked" : "") + '></label>' +
             '<label><span><strong>Recovery &amp; sleep</strong><small>Sleep, HRV, resting heart rate, and recovery/stress</small></span><input type="checkbox" data-share="recovery" ' + (p.recovery ? "checked" : "") + '></label>' +
+            '<label><span><strong>Athlete model</strong><small>A year of your runs (distance, time, heart rate, climb, how hard they felt) plus 120 days of sleep, HRV, resting heart rate and morning check-in scores, so your coach can see your training load, how you\'re responding, readiness and race fitness. Never your routes, run names or notes.</small></span><input type="checkbox" data-share="model" ' + (p.model ? "checked" : "") + '></label>' +
             '<div class="wearable-share-actions"><button type="button" class="settings-btn" data-share-save>Save sharing</button>' +
             (active ? '<button type="button" class="settings-btn wearable-share-revoke" data-share-revoke>Stop sharing</button>' : '') +
             '</div></div>';
@@ -57,16 +59,16 @@ $("wearableSharingList")?.addEventListener("click", async event => {
 
     const coachUid = row.dataset.coachUid;
     const permissions = revoke
-        ? { activity: false, performance: false, recovery: false }
+        ? { activity: false, performance: false, recovery: false, model: false }
         : Object.fromEntries([...row.querySelectorAll("[data-share]")].map(input => [input.dataset.share, input.checked]));
 
     const button = save || revoke;
     button.disabled = true;
     try {
         await saveWearableShare(coachUid, permissions);
-        // All three summaries follow the new choices at once (each one
+        // All four summaries follow the new choices at once (each one
         // writes when allowed and clears itself when not).
-        await Promise.allSettled([syncSharedWearableActivity(), syncSharedWearablePerformance(), syncSharedWearableRecovery()]);
+        await Promise.allSettled([syncSharedWearableActivity(), syncSharedWearablePerformance(), syncSharedWearableRecovery(), syncSharedAthleteModel({ force: true })]);
         window.SB?.toast?.(revoke ? "Wearable sharing stopped." : "Wearable sharing settings saved.");
         await renderWearableSharing();
     } catch (error) {

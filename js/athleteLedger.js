@@ -211,8 +211,8 @@ export function raceDistance(meters) {
     return hit || null;
 }
 
-const RACE_WORDS = /\b(race|5\s?k|8\s?k|10\s?k|15\s?k|half|marathon|parkrun|park run|trot|turkey|championships?|xc|cross country|relay|invitational|classic|dash|run for|memorial|\d+(st|nd|rd|th) annual)\b/i;
-const NOT_WORDS = /\b(workout|tempo|intervals?|easy|recovery|long run|warm ?up|cool ?down|shake ?out|pac(ed|ing)|treadmill|fartlek|strides|reps?|progression|steady)\b/i;
+export const RACE_WORDS = /\b(race|5\s?k|8\s?k|10\s?k|15\s?k|half|marathon|parkrun|park run|trot|turkey|championships?|xc|cross country|relay|invitational|classic|dash|run for|memorial|\d+(st|nd|rd|th) annual)\b/i;
+export const NOT_WORDS = /\b(workout|tempo|intervals?|easy|recovery|long run|warm ?up|cool ?down|shake ?out|pac(ed|ing)|treadmill|fartlek|strides|reps?|progression|steady)\b/i;
 const secondsOf = s => s.elapsedSec || s.movingSec;
 const paceOf = s => (secondsOf(s) && s.distance ? secondsOf(s) / s.distance : null);
 

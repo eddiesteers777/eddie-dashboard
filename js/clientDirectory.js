@@ -160,7 +160,9 @@ export async function loadClientRecord(clientUid) {
         wearableShare: readWearableShare(link.coachUid, clientUid).catch(() => null),
         sharedWearableActivity: import("./coachAccess.js").then(m => m.readSharedWearableActivity(link.coachUid, clientUid)).catch(() => null),
         sharedWearablePerformance: import("./coachAccess.js").then(m => m.readSharedWearablePerformance(link.coachUid, clientUid)).catch(() => null),
-        sharedWearableRecovery: import("./coachAccess.js").then(m => m.readSharedWearableRecovery(link.coachUid, clientUid)).catch(() => null)
+        sharedWearableRecovery: import("./coachAccess.js").then(m => m.readSharedWearableRecovery(link.coachUid, clientUid)).catch(() => null),
+        // Athlete model (step 7): refused, so null, unless the client shares it.
+        sharedAthleteModel: import("./coachAccess.js").then(m => m.readSharedAthleteModel(link.coachUid, clientUid)).catch(() => null)
     });
     return {
         link,

@@ -587,6 +587,57 @@ test("shared COROS recovery: coach access follows Recovery consent", async () =>
     await assertFails(getDoc(recoveryRef));
 });
 
+test("shared athlete model: only with Athlete model consent, compact text only, the client owns it", async () => {
+    await seedLinkAndBooking();
+    const shareRef = doc(as("client"), "wearableShares/coach_client");
+    const modelRef = doc(as("client"), "sharedAthleteModel/coach_client");
+    const consent = (model, extra = {}) => ({
+        version: 1, coachUid: "coach", clientUid: "client",
+        status: model || extra.recovery ? "active" : "revoked",
+        permissions: { activity: false, performance: false, recovery: false, model, ...extra },
+        updatedAt: serverTimestamp()
+    });
+    const shared = {
+        version: 1, coachUid: "coach", clientUid: "client", through: "2026-10-04",
+        runs: "c4701234,4ldb,1mx0k8,1zt,9f0,,8e,a1,c,w,6;c4701240,4ldd,,2s8,b1c",
+        health: "4ldb,3c,30,44,3d,1c,ci,4u",
+        checkins: "4ldb,2,4,4;4ldc,3,2,2,sp",
+        updatedAt: serverTimestamp()
+    };
+
+    // An older app's three-key consent still saves; "model" alone is a real choice.
+    await assertSucceeds(setDoc(shareRef, { ...consent(false, { recovery: true }), createdAt: serverTimestamp() }));
+    await assertFails(setDoc(modelRef, shared), "no model consent yet");
+    await assertSucceeds(updateDoc(shareRef, consent(true)));
+    await assertFails(updateDoc(shareRef, { ...consent(true), permissions: { activity: false, performance: false, recovery: false, model: "yes" } }));
+    await assertFails(updateDoc(shareRef, { ...consent(true), status: "revoked" }), "revoked with model on");
+
+    await assertSucceeds(setDoc(modelRef, shared));
+    await assertSucceeds(getDoc(modelRef));
+    await assertSucceeds(getDoc(doc(as("coach"), "sharedAthleteModel/coach_client")));
+    await assertFails(getDoc(doc(as("stranger"), "sharedAthleteModel/coach_client")));
+    await assertFails(getDoc(doc(as("coach2"), "sharedAthleteModel/coach_client")));
+    await assertSucceeds(setDoc(modelRef, { ...shared, through: "2026-10-05" }), "the client refreshes it");
+
+    // Only the client writes it, only the known lists, only the fixed alphabet, within the limits.
+    await assertFails(setDoc(doc(as("coach"), "sharedAthleteModel/coach_client"), shared));
+    await assertFails(setDoc(modelRef, { ...shared, runs: "c1,4ldb,Long run with Sam" }), "names don't fit the alphabet");
+    await assertFails(setDoc(modelRef, { ...shared, checkins: "4ldb,2,4,4,knee hurts" }));
+    await assertFails(setDoc(modelRef, { ...shared, runs: "1".repeat(80001) }));
+    await assertSucceeds(setDoc(modelRef, { ...shared, runs: "1".repeat(80000) }), "a full year fits");
+    await assertFails(setDoc(modelRef, { ...shared, notes: "x" }));
+    await assertFails(setDoc(modelRef, { ...shared, through: "Oct 4" }));
+    await assertFails(setDoc(modelRef, { ...shared, updatedAt: new Date("2020-01-01") }));
+    await assertFails(setDoc(doc(as("client"), "sharedAthleteModel/coach2_client"), { ...shared, coachUid: "coach2" }), "not linked");
+
+    // Turning it off: the coach can't read it even before the client's app clears it.
+    await assertSucceeds(updateDoc(shareRef, consent(false, { recovery: true })));
+    await assertFails(getDoc(doc(as("coach"), "sharedAthleteModel/coach_client")));
+    await assertFails(setDoc(modelRef, shared));
+    await assertSucceeds(deleteDoc(modelRef));
+    await assertFails(getDoc(doc(as("coach"), "sharedAthleteModel/coach_client")));
+});
+
 // ---- Profile privacy (critical) ----
 
 test("other users cannot read or list profiles", async () => {

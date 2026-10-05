@@ -6,8 +6,8 @@
    the coach's own marathon plan — and saves the two new facts the
    athlete tells us: effort after a run ("session-rpe") and race answers
    ("race-results"). Both are private, cloud-synced keys (js/cloudSync.js).
-   Coach only for now (Eddie is the first athlete); clients come with
-   step 7 of docs/PERFORMANCE_ENGINE_PLAN.md.
+   Clients (step 7) answer effort on their Today too, and their ledger
+   (without the coach's plan) is what js/athleteShare.js shares.
 ========================================== */
 
 import { buildLedger, RPE_KEY, RACES_KEY } from "./athleteLedger.js";
@@ -48,8 +48,11 @@ export async function marathonPlanDays() {
     }
 }
 
-/** Every session on this device, linked to the plan, with the athlete's answers. */
-export async function loadLedger(today = isoDate(new Date())) {
+/**
+ * Every session on this device, linked to the plan, with the athlete's answers.
+ * plan: false leaves the coach's marathon plan out (a client's own ledger).
+ */
+export async function loadLedger(today = isoDate(new Date()), { plan = true } = {}) {
     const history = read(HISTORY_KEY, null) || emptyHistory();
     const corosRuns = runsBetween(history, "1970-01-01", addDays(today, 1));
     const runLog = (read("running-log", {}) || {}).entries || [];
@@ -57,7 +60,7 @@ export async function loadLedger(today = isoDate(new Date())) {
         corosRuns,
         stravaActs: loadStrava().acts || {},
         runLog,
-        planDays: await marathonPlanDays(),
+        planDays: plan ? await marathonPlanDays() : [],
         rpe: loadRpe(),
         races: loadRaces()
     });
