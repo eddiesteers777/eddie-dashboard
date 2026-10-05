@@ -6,7 +6,9 @@
    paragraph, each concern domain, the suggested changes to the next 7
    days, and Apply to plan (writes them into the plan, Undo in the toast
    and on the card) or Not this week (with a reason). Coach only; clients
-   come with step 7. Data: js/weeklyDecisionData.js.
+   come with step 7. Data: js/weeklyDecisionData.js. Also on Weekly Review
+   (data-mode="review", audit Phase D): the changes are listed in its Next
+   week section instead, and the decision goes out as sb:week-decision.
 ========================================== */
 
 import { LEVEL_WORDS } from "./weeklyDecision.js";
@@ -53,6 +55,8 @@ function render() {
     const d = current;
     const entry = decisionFor(d.weekOf);
     const undone = entry?.choice === "undone";
+    // On Weekly Review (data-mode="review") the changes are listed day by day in Next week.
+    const review = el.dataset.mode === "review";
     el.className = `tw-card is-${d.level}`;
     el.dataset.version = d.version;
     el.innerHTML = `
@@ -63,7 +67,9 @@ function render() {
         <p class="tw-summary">${esc(d.summary)}</p>
         ${d.domains.length ? `<ul class="tw-domains">${d.domains.map(x => `<li class="sev-${x.severity}" title="${esc(x.text)}"><span>${esc(x.label)}</span><b>${esc(x.word)}</b></li>`).join("")}</ul>` : ""}
         ${d.domains.length ? `<p class="tw-groupnote">Load and how runs are going count once each; HRV, sleep and how you feel move together, so they count at most twice.</p>` : ""}
-        ${d.changes.length ? `<p class="tw-sub">Suggested for the next 7 days</p><ul class="tw-changes">${d.changes.map(c => `<li><span>${esc(dayLabel(c.date))}</span>${esc(c.text)}</li>`).join("")}</ul>` : ""}
+        ${!d.changes.length ? "" : review
+            ? `<p class="tw-pointer">${d.changes.length} ${d.changes.length === 1 ? "day changes" : "days change"} in the next 7: see <a href="#wrNext">Next week</a> below.</p>`
+            : `<p class="tw-sub">Suggested for the next 7 days</p><ul class="tw-changes">${d.changes.map(c => `<li><span>${esc(dayLabel(c.date))}</span>${esc(c.text)}</li>`).join("")}</ul>`}
         ${d.notes.length ? `<ul class="tw-notes">${d.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
         ${undone ? `<p class="tw-notes">You undid this week's changes.</p>` : ""}
         ${choiceHtml(d, undone ? null : entry)}
@@ -74,6 +80,8 @@ async function refresh() {
     const r = await currentDecision(isoToday());
     current = r.decision;
     render();
+    // Weekly Review's story reads the same decision and its evidence (js/weeklyStory.js).
+    window.dispatchEvent(new CustomEvent("sb:week-decision", { detail: { decision: r.decision, data: r.data } }));
 }
 
 async function onClick(event) {

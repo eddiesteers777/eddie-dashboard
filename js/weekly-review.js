@@ -1,5 +1,11 @@
 /* ==========================================
-   Southbound Weekly Review
+   Southbound Weekly Review — the header and "Also this week"
+
+   The week's story (audit Phase D) is js/weeklyStory.js (sentence,
+   glance, response, recovery, reading, next week), js/weeklyLoad.js
+   (training stimulus) and js/thisWeekCard.js (the decision). This file
+   draws the week's dates and the compact list at the end: strength,
+   cross-training, nutrition (with the day bars) and shoes.
 ========================================== */
 
 import {
@@ -8,7 +14,6 @@ import {
     getAdjustedWeekDays
 } from "./marathonData.js";
 
-import { describeCorosFreshness } from "./corosStatus.js";
 
 function escapeHtml(value) {
     return String(value ?? "")
@@ -37,37 +42,6 @@ function thisWeek() {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     return { monday, sunday, from: isoLocal(monday), today: isoLocal(today), to: isoLocal(sunday) };
-}
-
-/* ==========================================
-   Miles run: what you actually ran (COROS, Strava, the Running Log,
-   each run once: js/athleteLedger.js) against what the plan asks for
-========================================== */
-
-function plannedMiles(weekNumber) {
-    try {
-        return getAdjustedWeekDays(weekNumber).reduce((sum, day) => sum + (Number(day.miles) || 0), 0);
-    } catch {
-        return 0;
-    }
-}
-
-async function actualRuns(week) {
-    const { loadLedger } = await import("./athleteData.js");
-    const sessions = await loadLedger(week.today);
-    return sessions.filter(s => s.date >= week.from && s.date <= week.today);
-}
-
-function renderMiles({ miles, runs, planned }) {
-    const valueEl = document.getElementById("wrMilesValue");
-    const metaEl = document.getElementById("wrMilesMeta");
-    if (miles == null) {
-        valueEl.textContent = "—";
-        metaEl.textContent = planned ? `${planned.toFixed(1)} planned this week` : "this week";
-        return;
-    }
-    valueEl.textContent = miles.toFixed(1);
-    metaEl.textContent = `${runs} run${runs === 1 ? "" : "s"}${planned ? ` · ${planned.toFixed(1)} planned this week` : " this week"}`;
 }
 
 /* ==========================================
@@ -221,94 +195,6 @@ function renderNutrition() {
 }
 
 /* ==========================================
-   Recovery (latest COROS snapshot)
-========================================== */
-
-function renderRecovery() {
-    const valueEl = document.getElementById("wrRecoveryValue");
-    const metaEl = document.getElementById("wrRecoveryMeta");
-
-    let snapshot = null;
-
-    try {
-        snapshot = JSON.parse(
-            localStorage.getItem("__eddieos_coros_data_snapshot_v2") || "null"
-        );
-    } catch {
-        snapshot = null;
-    }
-
-    // The newest recovery COROS gave (Today's Readiness card saves it by day).
-    try {
-        const days = JSON.parse(localStorage.getItem("coros-fitness-history") || "{}") || {};
-        const day = Object.keys(days).filter(d => days[d]?.recovery?.percent != null).sort().at(-1);
-        const snapDay = snapshot?.fetchedAt ? isoLocal(new Date(snapshot.fetchedAt)) : "";
-        if (day && day >= snapDay) {
-            const percent = Number(days[day].recovery.percent);
-            valueEl.textContent = `${Math.round(percent)}%`;
-            metaEl.textContent = day === isoLocal(new Date()) ? "COROS, today" : `COROS, ${new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`;
-            return percent;
-        }
-    } catch {}
-
-    if (!snapshot) {
-        valueEl.textContent = "—";
-        metaEl.textContent = "no COROS data synced yet";
-        return null;
-    }
-
-    const recoveryData = snapshot.recovery;
-    const percent = findNumeric(recoveryData, [
-        "recoveryPercentage", "recovery_percent", "recoveryScore", "recovery"
-    ]);
-
-    if (percent === null) {
-        valueEl.textContent = "—";
-        metaEl.textContent = "no recovery value returned";
-        return null;
-    }
-
-    valueEl.textContent = `${Math.round(percent)}%`;
-    metaEl.textContent = describeCorosFreshness(snapshot.fetchedAt);
-
-    return percent;
-}
-
-function findNumeric(data, keys) {
-    if (!data || typeof data !== "object") {
-        return null;
-    }
-
-    const lower = new Map();
-
-    const walk = (value, prefix = "") => {
-        if (!value || typeof value !== "object") return;
-
-        for (const [key, item] of Object.entries(value)) {
-            const normalized = `${prefix}${key}`.toLowerCase();
-            lower.set(normalized, item);
-
-            if (item && typeof item === "object" && !Array.isArray(item)) {
-                walk(item, `${normalized}.`);
-            }
-        }
-    };
-
-    walk(data);
-
-    for (const key of keys) {
-        for (const [candidate, value] of lower.entries()) {
-            if (candidate === key.toLowerCase() || candidate.endsWith(`.${key.toLowerCase()}`)) {
-                const n = Number(value);
-                if (Number.isFinite(n)) return n;
-            }
-        }
-    }
-
-    return null;
-}
-
-/* ==========================================
    Gear
 ========================================== */
 
@@ -341,112 +227,29 @@ function renderGear() {
 }
 
 /* ==========================================
-   Summary synthesis
-========================================== */
-
-function renderSummary(stats) {
-    const el = document.getElementById("wrSummaryText");
-    const notes = [];
-
-    if (stats.miles == null) {
-        notes.push(`<p>Counting this week's runs…</p>`);
-    } else if (stats.miles > 0) {
-        notes.push(`<p>You've run <strong>${stats.miles.toFixed(1)} miles</strong> this week${stats.planned ? ` of the <strong>${stats.planned.toFixed(1)}</strong> your plan has for the whole week` : ""} (${stats.runs} run${stats.runs === 1 ? "" : "s"}).</p>`);
-    } else {
-        notes.push(`<p>No runs yet this week${stats.planned ? ` (${stats.planned.toFixed(1)} miles planned)` : ""}.</p>`);
-    }
-
-    if (stats.strength > 0) {
-        notes.push(`<p>You've lifted <strong>${stats.strength.toLocaleString()} lb</strong> of volume this week.</p>`);
-    }
-
-    if (stats.cross > 0) {
-        notes.push(`<p>Cross-training is planned on <strong>${stats.cross} day${stats.cross === 1 ? "" : "s"}</strong> this week.</p>`);
-    }
-
-    if (stats.nutrition !== null) {
-        const label =
-            stats.nutrition >= 85 && stats.nutrition <= 115
-                ? "right around"
-                : stats.nutrition > 115 ? "above" : "below";
-
-        notes.push(`<p>Nutrition logging is averaging <strong>${label} your calorie goal</strong> (${stats.nutrition}%) on the days you tracked.</p>`);
-    }
-
-    if (stats.recovery !== null) {
-        notes.push(`<p>Your latest COROS recovery reading is <strong>${Math.round(stats.recovery)}%</strong>.</p>`);
-    }
-
-    if (stats.gear > 0) {
-        notes.push(`<p><strong>${stats.gear} pair${stats.gear === 1 ? "" : "s"}</strong> of shoes are getting close to their replacement mileage — worth a look on the Gear page.</p>`);
-    }
-
-    el.innerHTML = notes.join("");
-}
-
-/* ==========================================
    Init
 ========================================== */
 
-let current = null;
-
 function init() {
-    let weekNumber = 1;
     const week = thisWeek();
-
+    const rangeEl = document.getElementById("wrWeekRange");
     try {
-        weekNumber = getCurrentWeek();
-        const planWeek = getWeek(weekNumber);
-        const rangeEl = document.getElementById("wrWeekRange");
-
-        if (planWeek && rangeEl) {
-            rangeEl.textContent = `Week ${weekNumber} of your marathon plan · ${fmtDateRange(week.monday, week.sunday)}`;
-        }
+        const weekNumber = getCurrentWeek();
+        if (getWeek(weekNumber) && rangeEl) rangeEl.textContent = `Week ${weekNumber} of your marathon plan · ${fmtDateRange(week.monday, week.sunday)}`;
     } catch {
         // Fall through with defaults if the plan can't resolve a week.
     }
-
-    const rangeFallback = document.getElementById("wrWeekRange");
-    if (rangeFallback && !rangeFallback.textContent.trim()) rangeFallback.textContent = `Your training this week · ${fmtDateRange(week.monday, week.sunday)}`;
-
-    const planned = plannedMiles(weekNumber);
-    const stats = {
-        miles: current?.miles ?? null,
-        runs: current?.runs ?? 0,
-        planned,
-        strength: renderStrength(week),
-        cross: renderCrossTraining(weekNumber),
-        nutrition: renderNutrition(),
-        recovery: renderRecovery(),
-        gear: renderGear()
-    };
-    renderMiles(stats);
-    renderSummary(stats);
-    countRuns(week, stats);
-}
-
-// The miles come from the run list, which takes a moment: draw, then fill them in.
-async function countRuns(week, stats) {
-    try {
-        const runs = await actualRuns(week);
-        const miles = runs.reduce((sum, s) => sum + (Number(s.distance) || 0), 0) / 1609.344;
-        current = { miles: Math.round(miles * 10) / 10, runs: runs.length };
-        Object.assign(stats, current);
-    } catch (error) {
-        console.error("Southbound: this week's runs couldn't be counted.", error);
-        Object.assign(stats, { miles: 0, runs: 0 });
-    }
-    renderMiles(stats);
-    renderSummary(stats);
+    if (rangeEl && !rangeEl.textContent.trim()) rangeEl.textContent = `Your training this week · ${fmtDateRange(week.monday, week.sunday)}`;
+    let weekNumber = 1;
+    try { weekNumber = getCurrentWeek(); } catch { weekNumber = 1; }
+    renderStrength(week);
+    renderCrossTraining(weekNumber);
+    renderNutrition();
+    renderGear();
 }
 
 init();
 
-// New runs (just pulled from COROS, or a Strava import) update the cards.
-let redrawTimer = null;
-for (const name of ["eddieos:coros-history-updated", "sb:strava-updated"]) {
-    window.addEventListener(name, () => { clearTimeout(redrawTimer); redrawTimer = setTimeout(init, 300); });
-}
 
 // Training load this week: the athlete model's blended load, by day (js/weeklyLoad.js).
 import("./weeklyLoad.js").then(m => m.mountWeeklyLoad(document.getElementById("wrLoad")))

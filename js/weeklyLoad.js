@@ -104,14 +104,16 @@ export function mountWeeklyLoad(el) {
     if (!el) return;
     const today = isoToday();
     el.innerHTML = `
-        <h2 class="wr-section-title">Training Load This Week</h2>
+        <h2 class="wr-section-title">Training stimulus</h2>
         <div class="wl-body"></div>
-        <div id="wlEffort" class="sb-effort" hidden></div>
+        ${document.getElementById("wrRate") ? "" : `<div id="wlEffort" class="sb-effort" hidden></div>`}
         <p class="wl-foot">Load is what you did (pace and hills; heart rate only when pace can't measure a run). Under each run, heart rate and effort on the same scale show how hard it landed: when they're above the pace, that's a response, not more load. Effort load is minutes × your 1–10. More in <a href="analytics.html#loadPanel">Analytics → Load and response</a>.</p>`;
     // Runs of this week (Monday on) with no effort yet: rate them here.
     const monday = new Date(`${today}T12:00:00`);
     const sinceMonday = (monday.getDay() + 6) % 7;
-    import("./effortCard.js").then(m => m.mountEffortCard(el.querySelector("#wlEffort"), { days: sinceMonday + 1, max: 7 }))
+    // Phase D: rated at the end of the page (#wrRate) when the page has it.
+    const rateHost = document.getElementById("wrRate") || el.querySelector("#wlEffort");
+    import("./effortCard.js").then(m => m.mountEffortCard(rateHost, { days: sinceMonday + 1, max: 7 }))
         .catch(error => console.error("Southbound: effort card failed to load.", error));
     let running = false, again = false;
     const draw = async () => {
@@ -120,7 +122,7 @@ export function mountWeeklyLoad(el) {
         try {
             const data = await compute(isoToday());
             if (data.totals.weeks.some(w => w.runs)) render(el, data);
-            else if (el.querySelector("#wlEffort").hidden) el.hidden = true;
+            else if (rateHost.hidden || rateHost.id === "wrRate") el.hidden = true;
         } catch (error) {
             console.error("Southbound: training load this week couldn't be worked out.", error);
         } finally {

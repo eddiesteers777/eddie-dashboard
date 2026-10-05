@@ -270,3 +270,4 @@
     .tw-level{ font-size:30px; }
     .tw-changes li{ grid-template-columns:1fr; gap:0; }
 }
+.tw-pointer{ margin:10px 0 0; color:var(--text); }

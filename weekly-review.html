@@ -22,6 +22,7 @@
     <link
         rel="stylesheet"
         href="css/weekly-review.css">
+    <link rel="stylesheet" href="css/readiness.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
@@ -45,65 +46,61 @@
 
         </section>
 
-        <section class="wr-grid">
+        <!-- A story in one scroll (docs/ATHLETE_MODEL_AUDIT.md section 9): js/weeklyStory.js
+             draws 1, 2, 4, 5, 6 and 8 from the plan, the runs and the weekly decision;
+             3 is js/weeklyLoad.js, 7 is js/thisWeekCard.js, 9 is js/weekly-review.js. -->
 
-            <div class="wr-card wr-card-miles">
-                <span class="wr-card-label">Miles Run</span>
-                <span id="wrMilesValue" class="wr-card-value">—</span>
-                <span id="wrMilesMeta" class="wr-card-meta">this week</span>
-            </div>
+        <!-- 1. This week in a sentence -->
+        <section class="wr-story wr-lead" id="wrSentence" aria-live="polite"><p class="wr-sentence sb-wait"></p></section>
 
-            <div class="wr-card wr-card-strength">
-                <span class="wr-card-label">Strength Volume</span>
-                <span id="wrStrengthValue" class="wr-card-value">—</span>
-                <span id="wrStrengthMeta" class="wr-card-meta">this week</span>
-            </div>
-
-            <div class="wr-card wr-card-cross">
-                <span class="wr-card-label">Cross-Training</span>
-                <span id="wrCrossValue" class="wr-card-value">—</span>
-                <span id="wrCrossMeta" class="wr-card-meta">days this week</span>
-            </div>
-
-            <div class="wr-card wr-card-nutrition">
-                <span class="wr-card-label">Nutrition Adherence</span>
-                <span id="wrNutritionValue" class="wr-card-value">—</span>
-                <span id="wrNutritionMeta" class="wr-card-meta">of calorie goal, avg</span>
-            </div>
-
-            <div class="wr-card wr-card-recovery">
-                <span class="wr-card-label">Recovery</span>
-                <span id="wrRecoveryValue" class="wr-card-value">—</span>
-                <span id="wrRecoveryMeta" class="wr-card-meta">latest COROS reading</span>
-            </div>
-
-            <div class="wr-card wr-card-gear">
-                <span class="wr-card-label">Gear</span>
-                <span id="wrGearValue" class="wr-card-value">—</span>
-                <span id="wrGearMeta" class="wr-card-meta">shoes nearing replacement</span>
-            </div>
-
+        <!-- 2. Week at a glance -->
+        <section class="wr-story" id="wrGlance">
+            <h2 class="wr-section-title">Week at a glance</h2>
+            <div class="wr-glance-body"><p class="sb-wait"></p></div>
         </section>
 
-        <!-- The athlete model's load for this week (js/weeklyLoad.js) -->
+        <!-- 3. Training stimulus (js/weeklyLoad.js) -->
         <section id="wrLoad" class="wr-load" hidden></section>
 
-        <section class="wr-nutrition-days">
-
-            <h2 class="wr-section-title">Nutrition, Day by Day</h2>
-
-            <div id="wrNutritionDays" class="wr-nutrition-grid"></div>
-
+        <!-- 4. Response -->
+        <section class="wr-story" id="wrResponse" hidden>
+            <h2 class="wr-section-title">How the runs landed</h2>
+            <div class="wr-story-body"></div>
         </section>
 
-        <section class="wr-summary">
+        <!-- 5. Recovery -->
+        <section class="wr-story" id="wrRecovery" hidden>
+            <h2 class="wr-section-title">Recovery</h2>
+            <div class="wr-story-body"></div>
+        </section>
 
-            <h2 class="wr-section-title">How This Week Went</h2>
+        <!-- 6. What the model thinks -->
+        <section class="wr-story" id="wrReading" hidden>
+            <h2 class="wr-section-title">What it adds up to</h2>
+            <div class="wr-story-body"></div>
+        </section>
 
-            <div id="wrSummaryText" class="wr-summary-text">
-                Loading…
-            </div>
+        <!-- 7. The decision (js/thisWeekCard.js; Apply / Not this week work here as on Today) -->
+        <section id="thisWeekCard" class="tw-card" data-mode="review" aria-live="polite"></section>
 
+        <!-- 8. Next week -->
+        <section class="wr-story" id="wrNext" hidden>
+            <h2 class="wr-section-title">Next 7 days</h2>
+            <div class="wr-story-body"></div>
+        </section>
+
+        <!-- 9. Rate this week's runs, and the rest -->
+        <div id="wrRate" class="sb-effort wr-rate" hidden></div>
+
+        <section class="wr-story wr-other" id="wrOther">
+            <h2 class="wr-section-title">Also this week</h2>
+            <ul class="wr-other-list">
+                <li><span>Strength</span><b id="wrStrengthValue">—</b><small id="wrStrengthMeta">this week</small></li>
+                <li><span>Cross-training</span><b id="wrCrossValue">—</b><small id="wrCrossMeta">days this week</small></li>
+                <li><span>Nutrition</span><b id="wrNutritionValue">—</b><small id="wrNutritionMeta">of calorie goal, avg</small></li>
+                <li><span>Shoes</span><b id="wrGearValue">—</b><small id="wrGearMeta">nearing replacement</small></li>
+            </ul>
+            <div id="wrNutritionDays" class="wr-nutrition-grid" aria-label="Nutrition, day by day"></div>
         </section>
 
     </main>
@@ -111,6 +108,8 @@
     <script src="js/loadHeader.js"></script>
 
     <script type="module" src="js/weekly-review.js"></script>
+    <script type="module" src="js/weeklyStory.js"></script>
+    <script type="module" src="js/thisWeekCard.js"></script>
 
     <script src="js/registerSW.js"></script>
 

@@ -37,76 +37,10 @@
 
 }
 
-/* ==========================
-   Summary cards
-========================== */
-
-.wr-grid{
-
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
-    gap:14px;
-    margin-bottom:36px;
-
-}
-
-.wr-card{
-
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-left:3px solid var(--primary);
-    border-radius:16px;
-    padding:18px 20px;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-
-}
-
-.wr-card-strength{ border-left-color:var(--orange); }
-.wr-card-cross{ border-left-color:var(--green); }
-.wr-card-nutrition{ border-left-color:var(--yellow); }
-.wr-card-recovery{ border-left-color:var(--purple); }
-.wr-card-gear{ border-left-color:var(--red); }
-
-.wr-card-label{
-
-    font-size:12px;
-    color:var(--text-secondary);
-    text-transform:uppercase;
-    letter-spacing:.03em;
-
-}
-
-.wr-card-value{
-
-    font-family:var(--font-display);
-    font-size:34px;
-    line-height:1.1;
-
-}
-
-.wr-card-meta{
-
-    font-size:12px;
-    color:var(--muted);
-
-}
-
-/* ==========================
-   Nutrition day-by-day
-========================== */
-
 .wr-section-title{
 
     font-size:18px;
     margin-bottom:14px;
-
-}
-
-.wr-nutrition-days{
-
-    margin-bottom:36px;
 
 }
 
@@ -179,43 +113,9 @@
 
 }
 
-/* ==========================
-   Summary
-========================== */
-
-.wr-summary{
-
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:24px;
-
-}
-
-.wr-summary-text{
-
-    color:var(--text-secondary);
-    font-size:14.5px;
-    line-height:1.8;
-
-}
-
-.wr-summary-text p{
-
-    margin-bottom:10px;
-
-}
-
-.wr-summary-text p:last-child{
-
-    margin-bottom:0;
-
-}
-
 @media (max-width:640px){
 
     .wr-hero h1{ font-size:38px; }
-    .wr-card-value{ font-size:28px; }
 
 }
 
@@ -254,4 +154,60 @@
     .wl-day{ grid-template-columns:1fr 48px; }
     .wl-date{ grid-column:1 / -1; }
     .wl-stat strong{ font-size:30px; }
+}
+
+/* ==========================
+   The week as a story (audit Phase D, js/weeklyStory.js)
+========================== */
+
+.wr-page [hidden]{ display:none !important; }
+.wr-story{ margin-bottom:32px; }
+.wr-lead{ background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--primary); border-radius:16px; padding:18px 22px; }
+.wr-sentence{ margin:0; font-size:1.15rem; line-height:1.55; color:var(--text); }
+.wr-sentence.sb-wait{ min-height:28px; }
+.wr-empty{ color:var(--text-secondary); }
+.wr-days{ list-style:none; margin:0 0 10px; padding:0; border:1px solid var(--border); border-radius:16px; background:var(--surface); overflow:hidden; }
+.wr-day{ display:grid; grid-template-columns:52px 1fr 80px 70px; gap:10px; align-items:flex-start; padding:10px 14px; border-top:1px solid var(--border); }
+.wr-day:first-child{ border-top:0; }
+.wr-day-name{ font-weight:700; color:var(--text-secondary); }
+.wr-day-plan small{ display:block; color:var(--text-secondary); font-size:.82rem; }
+.wr-day-done{ font-family:var(--font-mono); text-align:right; }
+.wr-day-state{ font-size:.82rem; text-align:right; color:var(--text-secondary); }
+.wr-day.is-done .wr-day-state{ color:var(--good); }
+.wr-day.is-partial .wr-day-state, .wr-day.is-extra .wr-day-state{ color:var(--amber); }
+.wr-day.is-missed .wr-day-state{ color:var(--bad); }
+.wr-day.is-today{ background:color-mix(in srgb, var(--primary) 6%, transparent); }
+.wr-day.is-upcoming{ opacity:.7; }
+.wr-key{ font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--on-primary); background:var(--primary); border-radius:var(--radius-pill); padding:1px 7px; margin-left:4px; vertical-align:middle; }
+.wr-glance-total{ color:var(--text-secondary); font-size:.92rem; margin:0; }
+.wr-points{ margin:0; padding-left:20px; display:grid; gap:8px; line-height:1.5; }
+.wr-points small{ color:var(--text-secondary); }
+.wr-chg.is-good{ color:var(--good); }
+.wr-chg.is-watch{ color:var(--amber); }
+.wr-reading{ border:1px solid var(--border); border-left:4px solid var(--good); border-radius:16px; padding:14px 18px; background:var(--surface); }
+.wr-reading strong{ font-family:var(--font-display); font-weight:400; font-size:30px; letter-spacing:.02em; display:block; line-height:1.1; }
+.wr-reading p{ margin:6px 0 0; color:var(--text-secondary); }
+.wr-reading.is-fatigue, .wr-reading.is-unusual{ border-left-color:var(--amber); }
+.wr-reading.is-unknown{ border-left-color:var(--sage); }
+.wr-page .tw-card{ margin-bottom:32px; }
+.wr-next{ list-style:none; margin:0 0 10px; padding:0; border:1px solid var(--border); border-radius:16px; background:var(--surface); overflow:hidden; }
+.wr-next li{ display:grid; grid-template-columns:110px 1fr auto; gap:10px; align-items:flex-start; padding:10px 14px; border-top:1px solid var(--border); }
+.wr-next li:first-child{ border-top:0; }
+.wr-next li.is-changed{ background:color-mix(in srgb, var(--amber) 8%, transparent); }
+.wr-change{ color:var(--amber); font-weight:600; text-align:right; }
+.wr-next-total{ color:var(--text-secondary); font-size:.92rem; margin:0 0 10px; }
+.wr-watch{ margin:0; padding:12px 16px; border-radius:12px; background:color-mix(in srgb, var(--primary) 8%, transparent); }
+.wr-rate{ margin-bottom:32px; }
+.wr-other-list{ list-style:none; margin:0 0 14px; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; }
+.wr-other-list li{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 14px; }
+.wr-other-list span{ font-size:.8rem; letter-spacing:.06em; text-transform:uppercase; color:var(--primary); font-weight:700; flex:0 0 100%; }
+.wr-other-list b{ font-family:var(--font-display); font-weight:400; font-size:26px; line-height:1; }
+.wr-other-list small{ color:var(--text-secondary); font-size:.82rem; }
+@media (max-width:640px){
+    .wr-day{ grid-template-columns:40px 1fr 64px; }
+    .wr-day-state{ grid-column:2 / -1; text-align:left; margin-top:-6px; }
+    .wr-day-state:empty{ display:none; }
+    .wr-next li{ grid-template-columns:1fr; gap:2px; }
+    .wr-change{ text-align:left; }
+    .wr-sentence{ font-size:1.05rem; }
 }
