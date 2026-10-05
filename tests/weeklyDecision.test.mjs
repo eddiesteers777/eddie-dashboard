@@ -101,24 +101,42 @@ test("concern domains from real inputs: low HRV and a sleep debt; pain flags a c
     assert.match(weekDecision(TODAY, { health: health() }, week).summary, /^Nothing's off/);
 });
 
-test("what happened next, and the replay's hit / false-alarm / miss rates", () => {
+test("what happened next, and the replay's hit / false-alarm / miss rates (judged on missed sessions and new pain)", () => {
     const decision = { asOf: "2026-09-12" };
-    const effortRows = Array.from({ length: 40 }, (_, i) => ({ date: addDays(TODAY, -i), residual: i >= 14 && i <= 20 ? 3 : 0.1 * (i % 3) }));
-    const data = { effortRows, response: { effortRows, effRuns: [] }, checkins: {}, doses: [{ date: "2026-09-14", miles: 8 }, { date: "2026-09-17", miles: 6 }] };
-    const o = outcomeOf(decision, data, TODAY);
+    const planDays = Array.from({ length: 7 }, (_, i) => ({ date: addDays("2026-09-13", i), miles: 6 }));
+    const doses = [{ date: "2026-09-13", miles: 6 }, { date: "2026-09-14", miles: 8 }, { date: "2026-09-17", miles: 6 }, { date: "2026-09-18", miles: 6 }, { date: "2026-09-19", miles: 6 }];
+    const o = outcomeOf(decision, { planDays, doses, checkins: {} }, TODAY);
+    assert.equal(o.missed, 2, "Sep 15 and 16 skipped");
     assert.equal(o.trouble, true);
-    assert.equal(o.miles, 14);
-    assert.equal(outcomeOf({ asOf: "2026-10-01" }, data, TODAY).pending, true);
-    // 20 weeks: HRV sinks in the week before each troubled stretch.
-    const bad = date => { const n = Math.round((new Date(`${TODAY}T12:00:00`) - new Date(`${date}T12:00:00`)) / 864e5); return n % 28 >= 14 && n % 28 < 21; };
-    const h = {};
-    for (let i = 0; i < 220; i++) { const d = addDays(TODAY, -i); h[d] = { hrv: { avg: bad(addDays(d, -7)) ? 45 : 60 + wobble(i) }, rhr: 48, sleep: { asleepMin: bad(addDays(d, -7)) ? 330 : 450 } }; }
-    const rows = Array.from({ length: 200 }, (_, i) => { const d = addDays(TODAY, -i); return { date: d, residual: bad(d) ? 2.5 : 0.1 * (i % 3) - 0.1 }; });
-    const r = replayDecisions({ health: h, checkins: {}, response: { effortRows: rows, effRuns: [] } }, TODAY, { weeks: 20 });
+    assert.equal(o.miles, 32);
+    assert.equal(outcomeOf({ asOf: "2026-10-01" }, { planDays, doses }, TODAY).pending, true);
+    const fresh = outcomeOf(decision, { planDays, doses: planDays, checkins: { "2026-09-15": { pain: "knee" } } }, TODAY);
+    assert.deepEqual([fresh.missed, fresh.flags, fresh.trouble], [0, 1, true]);
+    const ongoing = outcomeOf(decision, { planDays, doses: planDays, checkins: { "2026-09-10": { pain: "knee" }, "2026-09-15": { pain: "knee" } } }, TODAY);
+    assert.equal(ongoing.trouble, false, "pain that was already there isn't new trouble");
+
+    // 30 weeks of a plan; every 4th week runs get skipped, and HRV and sleep sink the week before.
+    const n = date => Math.round((new Date(`${TODAY}T12:00:00`) - new Date(`${date}T12:00:00`)) / 864e5);
+    const bad = date => n(date) % 28 >= 14 && n(date) % 28 < 21;
+    const before = date => n(date) % 28 >= 21;
+    const h = {}, plan = [], done = [];
+    for (let i = 0; i < 230; i++) {
+        const d = addDays(TODAY, -i);
+        h[d] = { hrv: { avg: before(d) ? 45 : 60 + wobble(i) }, rhr: 48, sleep: { asleepMin: before(d) ? 330 : 450 } };
+        plan.push({ date: d, miles: 6 });
+        if (!(bad(d) && i % 2)) done.push({ date: d, miles: 6 });
+    }
+    const r = replayDecisions({ health: h, checkins: {}, planDays: plan, doses: done }, TODAY, { weeks: 20 });
     const def = r.settings.find(s => s.key === "default");
-    assert.equal(r.settings.length, 3);
-    assert.ok(def.flagged > 0 && def.hitRate >= 50, JSON.stringify(def));
+    assert.equal(r.settings.length, 4);
+    assert.ok(def.troubleWeeks > 0 && def.flagged > 0 && def.hitRate >= 50, JSON.stringify(def));
     assert.ok(r.settings[0].flagged >= def.flagged && def.flagged >= r.settings[2].flagged, "sensitive flags most, cautious least");
+    assert.ok(r.settings.find(s => s.key === "simple"), "the simple way to beat is there");
+
+    // Not circular: runs that felt much harder than usual aren't "trouble" on their own (they're the response domain).
+    const effortRows = Array.from({ length: 200 }, (_, i) => { const d = addDays(TODAY, -i); return { date: d, residual: bad(d) ? 2.5 : 0.1 * (i % 3) - 0.1 }; });
+    const felt = replayDecisions({ health: h, checkins: {}, planDays: plan, doses: plan, response: { effortRows, effRuns: [] } }, TODAY, { weeks: 20 });
+    assert.equal(felt.settings.find(s => s.key === "default").troubleWeeks, 0);
 });
 
 test("no double count (audit A3): the same runs felt harder move 'response', not 'load'", async () => {

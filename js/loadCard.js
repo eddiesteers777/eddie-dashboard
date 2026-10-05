@@ -62,9 +62,14 @@ function compute(inputs) {
         reading: reading(eff.signal, effort.signal)
     };
     return {
-        today: inputs.today, dose, state, agreement: doseAgreement(dose, inputs.today), response,
+        today: inputs.today, planDays: inputs.planDays || [], dose, state, agreement: doseAgreement(dose, inputs.today), response,
         totals: loadTotals(dose.doses, inputs.today), coros: corosComparison(state.series, inputs.fitness)
     };
+}
+
+// Each key workout of the last year against its targets (laps saved on this device).
+function yearOfExecution(today) {
+    try { return executionSummary(keyWorkouts(today, { days: 400 }), loadLaps(), today, { days: 400 }).rows; } catch { return []; }
 }
 
 // The dose test and the noise comparison take a few seconds on years of runs: done after the card draws.
@@ -80,7 +85,8 @@ function computeCheck(r) {
         readiness: readinessCheck({
             ...readinessInputs(),
             response: { effRuns: r.response.eff.runs, effortRows: r.response.effort.rows },
-            loadSeries: r.state.series, quality: r.response.quality.sessions, doses: r.dose.doses
+            loadSeries: r.state.series, quality: r.response.quality.sessions, doses: r.dose.doses,
+            planDays: r.planDays, execution: yearOfExecution(r.today)
         }, r.today)
     };
 }
@@ -311,10 +317,15 @@ function checkHtml(c) {
 }
 
 const READY_WORDS = {
-    better: "The new readiness predicts rough runs better than Classic so far. Worth switching it on in Today's Readiness card (Score: New).",
-    worse: "Classic predicts rough runs better than the new readiness so far. Keep Classic.",
-    same: "No clear difference between Classic and the new readiness yet. Classic stays the default; more mornings and more effort answers will separate them."
+    better: "The new readiness warns of bad training days better than Classic so far. Worth switching it on in Today's Readiness card (Score: New).",
+    worse: "Classic warns of bad training days better than the new readiness so far. Keep Classic.",
+    same: "No clear difference between Classic and the new readiness yet. Classic stays the default; more mornings will separate them."
 };
+const KIND_WORDS = { skipped: "skipped or cut short", slow: "off target", rough: "felt or ran worse than usual", hurt: "pain or sickness next" };
+const vsWords = (name, c) => !c ? `${name}: not enough bad and ordinary days yet to compare with what you already knew.`
+    : c.verdict === "better" ? `${name} adds something: it warns better than just knowing yesterday went badly (+${minus(c.diff)}, 95% range ${minus(c.lo)} to ${minus(c.hi)}).`
+    : c.verdict === "worse" ? `${name} warns worse than just knowing yesterday went badly (${minus(c.diff)}, 95% range ${minus(c.lo)} to ${minus(c.hi)}).`
+    : `${name} doesn't yet warn better than just knowing yesterday went badly (${c.diff > 0 ? "+" : ""}${minus(c.diff)}, 95% range ${minus(c.lo)} to ${minus(c.hi)}).`;
 
 function renderReadinessCheck() {
     const el = $("readinessCheckPanel");
@@ -322,19 +333,22 @@ function renderReadinessCheck() {
     const c = result.check?.readiness;
     const head = `<div class="panel-header"><div>
             <h2>Model check: readiness</h2>
-            <p>Does a low morning score come before a run that went worse than usual for you (felt harder than expected, or heart rate higher than usual at that pace)? Each morning's number is compared with that day's runs.</p>
+            <p>Does a low morning score come before a bad training day: a planned run skipped or cut short, a key workout off its targets, a run that felt or ran worse than usual for you, or pain or sickness in the next 2 days? None of these are inside the score it's checking.</p>
         </div></div>`;
     if (!c) { el.innerHTML = `${head}<p class="ar-empty sb-wait"></p>`; return; }
     el.dataset.version = READINESS_V2_VERSION;
+    el.dataset.check = c.version;
+    const kinds = Object.entries(c.kinds || {}).filter(([, n]) => n).map(([k, n]) => `${n} ${KIND_WORDS[k]}`).join(", ");
     el.innerHTML = `${head}
-        ${!c.n ? `<p class="ar-empty">No runs with an effort answer or an easy-run heart-rate reading yet.</p>` : `
-            <p class="lc-line">${c.n} days with a measured run in the last year · <strong>${c.rough} rough</strong> (worse than your usual by more than 1 SD).</p>
+        ${!c.n ? `<p class="ar-empty">No training days to check yet: it needs your plan or runs, and the morning numbers.</p>` : `
+            <p class="lc-line">${c.n} training days in the last year · <strong>${c.bad} went badly</strong>${kinds ? ` (${esc(kinds)})` : ""}.</p>
             <div class="mc-scroll"><table class="mc-table mc-ready">
-                <thead><tr><th scope="col">Morning number</th><th scope="col">Days</th><th scope="col"><abbr title="0.5 = a coin flip; 1.0 = always lower before a rough run">AUC</abbr></th><th scope="col">95% range</th></tr></thead>
-                <tbody>${c.methods.map(m => `<tr><th scope="row">${esc(m.label)}</th><td>${m.n}</td>${m.auc == null ? `<td colspan="2" class="mc-none">Needs 5 rough and 5 ordinary days</td>` : `<td>${m.auc.toFixed(2)}</td><td>${m.lo.toFixed(2)} to ${m.hi.toFixed(2)}</td>`}</tr>`).join("")}</tbody>
+                <thead><tr><th scope="col">Morning number</th><th scope="col">Days</th><th scope="col"><abbr title="0.5 = a coin flip; 1.0 = always lower before a bad day">AUC</abbr></th><th scope="col">95% range</th></tr></thead>
+                <tbody>${c.methods.map(m => `<tr${m.key === "persist" ? ' class="mc-base"' : ""}><th scope="row">${esc(m.label)}</th><td>${m.n}</td>${m.auc == null ? `<td colspan="2" class="mc-none">Needs 5 bad and 5 ordinary days</td>` : `<td>${m.auc.toFixed(2)}</td><td>${m.lo.toFixed(2)} to ${m.hi.toFixed(2)}</td>`}</tr>`).join("")}</tbody>
             </table></div>
-            <p class="lc-line">${c.v2vsV1 ? `${esc(READY_WORDS[c.v2vsV1.verdict])} (New − Classic: ${c.v2vsV1.diff > 0 ? "+" : ""}${minus(c.v2vsV1.diff)}, 95% range ${minus(c.v2vsV1.lo)} to ${minus(c.v2vsV1.hi)}, ${c.v2vsV1.n} days.)` : "Not enough rough and ordinary days with both scores to compare Classic and New yet. Answering \"How hard was it?\" after runs is what fills this in."}</p>
-            <p class="tr-note">AUC: 0.5 means the number tells you nothing about the day's run; 0.7 or more is a useful warning sign. The new readiness only uses runs before each morning, so it can't peek at the answer.</p>`}`;
+            <p class="lc-line">${c.v2vsV1 ? `${esc(READY_WORDS[c.v2vsV1.verdict])} (New − Classic: ${c.v2vsV1.diff > 0 ? "+" : ""}${minus(c.v2vsV1.diff)}, 95% range ${minus(c.v2vsV1.lo)} to ${minus(c.v2vsV1.hi)}, ${c.v2vsV1.n} days.)` : "Not enough bad and ordinary days with both scores to compare Classic and New yet."}</p>
+            <p class="lc-line">${esc(vsWords("New", c.v2vsPersist))} ${esc(vsWords("Classic", c.v1vsPersist))}</p>
+            <p class="tr-note">AUC: 0.5 means the number tells you nothing about the day; 0.7 or more is a useful warning sign. "What you already knew" is the bar to clear: bad days come in runs, so a score is only worth having if it warns better than yesterday did. The ranges come from drawing whole weeks, not single days, because days next to each other aren't independent.</p>`}`;
 }
 
 async function refresh() {

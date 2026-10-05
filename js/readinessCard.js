@@ -10,9 +10,11 @@
    Without COROS: the check-in still works, with a note to connect COROS
    for the score. Data: js/readinessData.js.
    Readiness v2 (js/readinessV2.js, athlete model step 5): the coach can
-   switch the card between Classic (v1, the default) and New (v2, five
-   domains against his own baselines) until the readiness check on
-   Analytics says which predicts rough runs better. Clients stay on v1.
+   switch the card between Classic (v1, the default) and New (v2: HRV and
+   resting HR, sleep and feel against his own baselines; training
+   response and load shown beside it, not in it) until the readiness
+   check on Analytics says which predicts bad training days better.
+   Clients stay on v1.
 ========================================== */
 
 import { computeReadiness, adviceFor, sleepCoach, insights, checkinsUntilInsights, kindOfDay, TAGS, hm, colorOf, missingReason } from "./readiness.js";
@@ -153,7 +155,8 @@ function v2Html(r, extra) {
             ${r.concern ? `<p><strong>Watch:</strong> ${esc(r.concern)}</p>` : ""}
         </div>` : ""}
         ${r.coros ? `<p class="rd-coros">COROS recovery ${r.coros.percent}%${r.coros.status ? ` · ${esc(r.coros.status)}` : ""} <small>(COROS's own number, shown, not in the score)</small></p>` : ""}
-        ${extra ? "" : `<p class="rd-coros"><small>Training response and load aren't in today's score: the run history couldn't be read.</small></p>`}`;
+        ${(r.context || []).length ? `<div class="rd-context"><p class="rd-context-h">Beside the score, not in it</p><ul>${r.context.map(d => `<li><strong>${esc(d.label)}</strong> ${esc(d.note)}</li>`).join("")}</ul></div>` : ""}
+        ${extra ? "" : `<p class="rd-coros"><small>Training response and load can't be shown: the run history couldn't be read.</small></p>`}`;
 }
 
 function partsHtml(parts) {

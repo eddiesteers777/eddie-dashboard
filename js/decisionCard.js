@@ -7,10 +7,14 @@
                              what happened in the 7 days after it
      Looking back            a replay of the last 26 weeks: when would it
                              have said Ease / Recover / Check in, and did
-                             trouble follow (2+ rough runs, pain or
-                             sickness in the next 14 days)? Three settings
-                             show the trade-off. History can't say whether
-                             following it would have helped: only the log can.
+                             trouble follow (2+ planned sessions missed or
+                             off target, or new pain or sickness, in the
+                             next 14 days: nothing the decision itself
+                             reads)? Three settings show the trade-off,
+                             next to the simple way to beat (easing off
+                             after 2 weeks with that trouble). History
+                             can't say whether following it would have
+                             helped: only the log can.
 ========================================== */
 
 import { outcomeOf, replayDecisions, DEFAULT_POLICY, LEVEL_WORDS, DECISION_VERSION } from "./weeklyDecision.js";
@@ -51,7 +55,7 @@ function logHtml(today) {
         <thead><tr><th scope="col">Week of</th><th scope="col">Said</th><th scope="col">You</th><th scope="col">The 7 days after</th></tr></thead>
         <tbody>${log.map(e => {
             const o = data ? outcomeOf(e, data, today) : { pending: true };
-            const after = o.pending ? "Still to come" : `${o.miles} mi run${e.plannedMiles ? ` of ${Math.round(e.plannedMiles)} planned` : ""} · ${o.rough} rough ${o.rough === 1 ? "run" : "runs"}${o.flags ? ` · ${o.flags} pain / sick ${o.flags === 1 ? "day" : "days"}` : ""}`;
+            const after = o.pending ? "Still to come" : `${o.miles} mi run${e.plannedMiles ? ` of ${Math.round(e.plannedMiles)} planned` : ""} · ${o.missed ? `${o.missed} ${o.missed === 1 ? "session" : "sessions"} missed or off target` : "nothing missed"}${o.flags ? ` · ${o.flags} new pain / sick ${o.flags === 1 ? "day" : "days"}` : ""}`;
             return `<tr><th scope="row">${esc(day(e.weekOf))}</th><td>${esc(LEVEL_WORDS[e.level] || e.level)}</td><td>${esc(CHOICE[e.choice] || e.choice)}${e.reason ? `<small>${esc(e.reason)}</small>` : ""}</td><td>${esc(after)}</td></tr>`;
         }).join("")}</tbody>
     </table></div>`;
@@ -60,15 +64,23 @@ function logHtml(today) {
 function replayHtml() {
     if (!replay) return `<p class="ar-empty sb-wait"></p>`;
     const rows = replay.settings;
-    if (rows.every(s => !s.flagged && !s.troubleWeeks)) return `<p class="ar-empty">Needs a few months of runs with effort answers, heart rate and the morning numbers to replay.</p>`;
+    if (rows.every(s => !s.flagged && !s.troubleWeeks)) return `<p class="ar-empty">Needs a few months of your plan, runs and the morning numbers to replay.</p>`;
     const pct = x => (x == null ? "–" : `${x}%`);
     const def = rows.find(s => s.key === "default");
+    const simple = rows.find(s => s.key === "simple");
+    const beat = simple && simple.troubleWeeks && def.flagged
+        ? (def.hits > simple.hits && def.falseAlarms <= simple.falseAlarms) || (def.hits >= simple.hits && def.falseAlarms < simple.falseAlarms)
+            ? "It does better than the simple way (more trouble seen, or fewer false alarms)."
+            : (simple.hits > def.hits && simple.falseAlarms <= def.falseAlarms) || (simple.hits >= def.hits && simple.falseAlarms < def.falseAlarms)
+                ? "The simple way (easing off after 2 weeks with missed sessions or pain) did better than the engine here."
+                : "Neither clearly beats the other yet: one sees more, the other raises fewer false alarms."
+        : "";
     return `<div class="mc-scroll"><table class="mc-table dc-replay">
             <thead><tr><th scope="col">Setting</th><th scope="col">Weeks it would have eased</th><th scope="col">Then trouble</th><th scope="col">Then nothing</th><th scope="col">Trouble it missed</th></tr></thead>
-            <tbody>${rows.map(s => `<tr><th scope="row">${esc(s.label)}</th><td>${s.flagged}</td><td>${s.hits} (${pct(s.hitRate)})</td><td>${s.falseAlarms} (${pct(s.falseRate)})</td><td>${s.misses} of ${s.troubleWeeks} (${pct(s.missRate)})</td></tr>`).join("")}</tbody>
+            <tbody>${rows.map(s => `<tr${s.key === "simple" ? ' class="mc-base"' : ""}><th scope="row">${esc(s.label)}</th><td>${s.flagged}</td><td>${s.hits} (${pct(s.hitRate)})</td><td>${s.falseAlarms} (${pct(s.falseRate)})</td><td>${s.misses} of ${s.troubleWeeks} (${pct(s.missRate)})</td></tr>`).join("")}</tbody>
         </table></div>
-        <p class="lc-line">${def.flagged ? `On the default setting it would have eased off ${def.flagged} of the last ${replay.weeks} weeks; trouble followed ${def.hits} of them${def.troubleWeeks ? `, and it missed ${def.misses} of ${def.troubleWeeks} troubled weeks` : ""}.` : `On the default setting it wouldn't have eased off in the last ${replay.weeks} weeks${def.troubleWeeks ? `, and ${def.troubleWeeks} weeks had trouble it didn't see coming` : ""}.`} Sensitive eases more often (fewer misses, more false alarms); Cautious the other way.</p>
-        <p class="tr-note">This only shows whether the warnings came before trouble. Whether easing off would have helped can only come from your log, week by week, from now on.</p>`;
+        <p class="lc-line">${def.flagged ? `On the default setting it would have eased off ${def.flagged} of the last ${replay.weeks} weeks; trouble followed ${def.hits} of them${def.troubleWeeks ? `, and it missed ${def.misses} of ${def.troubleWeeks} troubled weeks` : ""}.` : `On the default setting it wouldn't have eased off in the last ${replay.weeks} weeks${def.troubleWeeks ? `, and ${def.troubleWeeks} ${def.troubleWeeks === 1 ? "week" : "weeks"} had trouble it didn't see coming` : ""}.`} ${esc(beat)} Sensitive eases more often (fewer misses, more false alarms); Cautious the other way.</p>
+        <p class="tr-note">Trouble = 2 or more planned sessions skipped, cut short or off target, or new pain or sickness, in the 14 days after. Runs that just felt harder don't count here: that's one of the signals it reads. This only shows whether the warnings came before trouble. Whether easing off would have helped can only come from your log, week by week, from now on.</p>`;
 }
 
 function render() {

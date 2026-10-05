@@ -24,12 +24,16 @@
    ever says Check in or nothing; in a taper, Absorb / Ease only change
    the pace guidance. The percentages are the athlete's policy (defaults
    below, editable on Analytics).
+   Judged (0.2.0 of the replay, docs/ATHLETE_MODEL_AUDIT.md A4) on what
+   the domains don't contain: planned runs skipped or cut short, key
+   workouts off their targets, and new pain or sickness. Not on runs that
+   felt harder than usual: that's the response domain itself.
    Unit-tested in tests/weeklyDecision.test.mjs.
 ========================================== */
 
 import { autonomic, sleepDomain, feelDomain } from "./readinessV2.js";
 import { efficiencySignal, effortSignal } from "./trainingResponse.js";
-import { roughDays } from "./readinessBacktest.js";
+import { trainingOutcomes } from "./readinessBacktest.js";
 
 export const DECISION_VERSION = "0.1.0";
 export const LEVELS = Object.freeze(["proceed", "absorb", "ease", "recover", "checkin"]);
@@ -232,49 +236,68 @@ export function weekDecision(asOf, data, planDays = [], { policy = DEFAULT_POLIC
 
 // ---------- what happened next, and the replay ----------
 
-/** The 7 days after a decision: rough runs, pain / sickness, miles run. */
+// The outcomes the decision can be judged on: none of them is one of its own inputs.
+const MISSED = ["skipped", "slow"];
+const reported = c => Boolean(c && (c.sick || c.pain));
+const flagsIn = (checkins, from, to) => Object.entries(checkins || {}).filter(([d, c]) => d >= from && d < to && reported(c)).length;
+
+/**
+ * Trouble in [from, to): 2+ planned sessions missed (skipped, cut short, off target),
+ * or pain / sickness reported there when none was in the week before `from` (a new one).
+ */
+function troubleIn(outcomes, checkins, from, to) {
+    const missed = [...outcomes.entries()].filter(([d, o]) => d >= from && d < to && o.kinds.some(k => MISSED.includes(k))).length;
+    const fresh = flagsIn(checkins, addDays(from, -7), from) ? 0 : flagsIn(checkins, from, to);
+    return { missed, fresh, trouble: missed >= 2 || fresh > 0 };
+}
+
+/** The 7 days after a decision: sessions missed, new pain / sickness, miles run. */
 export function outcomeOf(decision, data, today) {
-    const from = decision.asOf, to = addDays(decision.asOf, 7);
-    if (to > today) return { pending: true };
-    const rough = roughDays({ effortRows: data.response?.effortRows, effRuns: data.response?.effRuns, quality: data.quality });
-    const roughCount = [...rough.entries()].filter(([d, r]) => r && d > from && d <= to).length;
-    const flags = Object.entries(data.checkins || {}).filter(([d, c]) => d > from && d <= to && (c.sick || c.pain)).length;
-    const miles = (data.doses || []).filter(d => d.date > from && d.date <= to).reduce((t, d) => t + (d.miles || 0), 0);
-    return { pending: false, rough: roughCount, flags, miles: Math.round(miles * 10) / 10, trouble: roughCount >= 2 || flags > 0 };
+    const from = addDays(decision.asOf, 1), to = addDays(decision.asOf, 8);
+    if (addDays(to, 1) > today) return { pending: true };
+    const outcomes = trainingOutcomes(data, today, { from, kinds: MISSED });
+    const t = troubleIn(outcomes, data.checkins, from, to);
+    const miles = (data.doses || []).filter(d => d.date >= from && d.date < to).reduce((s, d) => s + (d.miles || 0), 0);
+    return { pending: false, missed: t.missed, flags: t.fresh, miles: Math.round(miles * 10) / 10, trouble: t.trouble };
 }
 
 /**
  * Replays every Monday of the last `weeks` weeks: what the engine would
- * have said, then whether trouble followed (2+ rough runs or a pain /
- * sickness check-in in the next 14 days). Three settings show the
- * trade-off: Sensitive (every count threshold one lower), Default,
- * Cautious (one higher).
- * -> { weeks, settings: [{ key, label, flagged, hits, falseAlarms, misses, hitRate, falseRate, missRate }] }
+ * have said, then whether trouble followed in the next 14 days (2+
+ * planned sessions missed or off target, or new pain / sickness). Three
+ * settings show the trade-off: Sensitive (every count threshold one
+ * lower), Default, Cautious (one higher); and the simple way to beat:
+ * easing off whenever the 2 weeks before had that same trouble.
+ * -> { version, weeks, settings: [{ key, label, flagged, troubleWeeks, hits, falseAlarms, misses, hitRate, falseRate, missRate }] }
  */
 export function replayDecisions(data, today, { weeks = 26 } = {}) {
-    const rough = roughDays({ effortRows: data.response?.effortRows, effRuns: data.response?.effRuns, quality: data.quality });
     const mondays = Array.from({ length: weeks }, (_, i) => addDays(mondayOf(today), -7 * (i + 2))).reverse();
-    const trouble = m => {
-        const to = addDays(m, 14);
-        const r = [...rough.entries()].filter(([d, x]) => x && d >= m && d < to).length;
-        const f = Object.entries(data.checkins || {}).some(([d, c]) => d >= m && d < to && (c.sick || c.pain));
-        return r >= 2 || f;
-    };
+    const outcomes = trainingOutcomes(data, today, { from: addDays(mondays[0] || today, -21), kinds: MISSED });
+    const trouble = m => troubleIn(outcomes, data.checkins, m, addDays(m, 14)).trouble;
+    const before = m => troubleIn(outcomes, data.checkins, addDays(m, -14), m).missed >= 2 || flagsIn(data.checkins, addDays(m, -14), m) > 0;
     const domainsBy = new Map(mondays.map(m => [m, concernDomains(addDays(m, -1), data)]));
-    const settings = [{ key: "sensitive", label: "Sensitive", shift: -1 }, { key: "default", label: "Default", shift: 0 }, { key: "cautious", label: "Cautious", shift: 1 }].map(s => {
-        let prev = null, hits = 0, falseAlarms = 0, misses = 0, flagged = 0, troubleWeeks = 0;
+    const pct = (a, b) => (b ? Math.round(a / b * 100) : null);
+    const tally = (s, flagOf) => {
+        let hits = 0, falseAlarms = 0, misses = 0, flagged = 0, troubleWeeks = 0;
         for (const m of mondays) {
-            const c = domainsBy.get(m);
-            if (!c.domains.length) continue;
-            const level = decideLevel(c, { previous: prev, shift: s.shift }).level;
-            prev = level;
+            const flag = flagOf(m);
+            if (flag == null) continue;
             const t = trouble(m);
-            const flag = level === "ease" || level === "recover" || level === "checkin";
             if (t) troubleWeeks++;
             if (flag) { flagged++; if (t) hits++; else falseAlarms++; } else if (t) misses++;
         }
-        const pct = (a, b) => (b ? Math.round(a / b * 100) : null);
         return { key: s.key, label: s.label, flagged, troubleWeeks, hits, falseAlarms, misses, hitRate: pct(hits, flagged), falseRate: pct(falseAlarms, flagged), missRate: pct(misses, troubleWeeks) };
+    };
+    const settings = [{ key: "sensitive", label: "Sensitive", shift: -1 }, { key: "default", label: "Default", shift: 0 }, { key: "cautious", label: "Cautious", shift: 1 }].map(s => {
+        let prev = null;
+        return tally(s, m => {
+            const c = domainsBy.get(m);
+            if (!c.domains.length) return null;
+            const level = decideLevel(c, { previous: prev, shift: s.shift }).level;
+            prev = level;
+            return level === "ease" || level === "recover" || level === "checkin";
+        });
     });
-    return { weeks: mondays.length, settings };
+    settings.push(tally({ key: "simple", label: "Last 2 weeks' trouble (the simple way)" }, m => (domainsBy.get(m).domains.length ? before(m) : null)));
+    return { version: "0.2.0", weeks: mondays.length, settings };
 }

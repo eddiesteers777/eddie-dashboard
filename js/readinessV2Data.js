@@ -9,7 +9,11 @@
 
 let cached = null;
 
-/** -> { response: { effRuns, effortRows }, loadSeries, quality, doses } (or null when it can't be built). */
+/**
+ * -> { response: { effRuns, effortRows }, loadSeries, quality, doses, planDays, execution } (or null when it can't be built).
+ * planDays + execution (each key workout's laps against its targets, a year) are what the
+ * readiness check and the decision replay judge outcomes on.
+ */
 export function athleteInputs(today) {
     if (cached?.today === today) return cached.promise;
     const promise = (async () => {
@@ -21,7 +25,14 @@ export function athleteInputs(today) {
             const lapStore = loadLaps();
             const dr = sessionDoses(inputs.sessions, today, { laps: lapStore, health: inputs.health, fitness: inputs.fitness });
             const lapsById = Object.fromEntries(Object.entries(lapStore).map(([label, v]) => [`c:${label}`, v?.laps || []]));
+            let execution = [];
+            try {
+                const [{ keyWorkouts }, { executionSummary }] = [await import("./trendsData.js"), tr];
+                execution = executionSummary(keyWorkouts(today, { days: 400 }), lapStore, today, { days: 400 }).rows;
+            } catch { execution = []; }
             return {
+                planDays: inputs.planDays || [],
+                execution,
                 response: { effRuns: tr.efficiency(inputs.sessions, dr.doses, today).runs, effortRows: tr.effortResponse(inputs.sessions, dr.doses, today).rows },
                 loadSeries: loadState(dr.doses, today).series,
                 quality: tr.qualityHr(dr.doses, lapsById, dr.anchors, today).sessions,

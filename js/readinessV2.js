@@ -1,8 +1,9 @@
 /* ==========================================
    Southbound — Readiness, version 2 (pure)
 
-   Athlete model, layer 6 (docs/PERFORMANCE_ENGINE_PLAN.md 3.6). Five
-   domains, each against the athlete's own baseline, each counted once:
+   Athlete model, layer 6 (docs/PERFORMANCE_ENGINE_PLAN.md 3.6). The
+   score is the body's current state only, three domains, each against
+   the athlete's own baseline, each counted once:
      autonomic   7-day average of ln HRV against the 60 nights before
                  (in the athlete's own SDs; ±0.5 SD = the smallest
                  worthwhile change, Plews 2013) with last night's value,
@@ -16,23 +17,27 @@
                  (8+ check-ins), else as answered. Same weight as
                  autonomic (Saw 2016: how athletes say they feel tracks
                  training stress as well as the physiology does).
+   Shown beside it, not in it (0.2.0, docs/ATHLETE_MODEL_AUDIT.md A4):
      response    effort vs expected and easy-run HR at the same pace,
-                 from js/trainingResponse.js, as of the morning.
-     load        recent load against the athlete's own year: context,
-                 half weight.
-   Score = weighted mean of what's there; it needs last night's HRV or
-   sleep (as v1). Sick caps it at 30, pain at 55 (as v1). COROS recovery
-   is shown beside it, labelled as COROS's, and not scored. v1 stays the
-   default until the readiness check (js/readinessBacktest.js) says v2
-   predicts rough sessions better.
+                 from js/trainingResponse.js, as of the morning: how
+                 training is landing, a different question.
+     load        recent load against the athlete's own year: what was
+                 done, not how the body is.
+   In 0.1.0 both were scored, which made the score partly a restatement
+   of the runs it was then checked against.
+   Score = mean of what's there; it needs last night's HRV or sleep (as
+   v1). Sick caps it at 30, pain at 55 (as v1). COROS recovery is shown
+   beside it, labelled as COROS's, and not scored. v1 stays the default
+   until the readiness check (js/readinessBacktest.js) says v2 predicts
+   bad training days better.
    Unit-tested in tests/readinessV2.test.mjs.
 ========================================== */
 
 import { hrvPart, rhrPart, feelPart, colorOf, hm, DEFAULT_SLEEP_NEED } from "./readiness.js";
 import { efficiencySignal, effortSignal } from "./trainingResponse.js";
 
-export const READINESS_V2_VERSION = "0.1.0";
-export const DOMAIN_WEIGHTS = Object.freeze({ autonomic: 1, sleep: 1, feel: 1, response: 1, load: 0.5 });
+export const READINESS_V2_VERSION = "0.2.0";
+export const DOMAIN_WEIGHTS = Object.freeze({ autonomic: 1, sleep: 1, feel: 1 });
 export const DOMAIN_LABELS = Object.freeze({ autonomic: "HRV and resting HR", sleep: "Sleep", feel: "How you feel", response: "Training response", load: "Recent load" });
 
 const MIN_BASE = 14;
@@ -124,7 +129,7 @@ export function feelDomain(date, checkins = {}) {
     return { key: "feel", score: today.score, note: today.note };
 }
 
-// ---------- training response ----------
+// ---------- training response (shown beside the score) ----------
 
 /** response: { effRuns (js/trainingResponse.js efficiency().runs), effortRows }; only what's before `date` counts. */
 export function responseDomain(date, response) {
@@ -142,7 +147,7 @@ export function responseDomain(date, response) {
     return { key: "response", score: Math.round(mean(parts.map(p => p.score))), note: parts.map(p => p.note).join(" · ") };
 }
 
-// ---------- load context ----------
+// ---------- load context (shown beside the score) ----------
 
 /** series: the load state's daily rows ({ date, recent }); where yesterday's recent load sits in the year before. */
 export function loadDomain(date, series) {
@@ -158,18 +163,18 @@ export function loadDomain(date, series) {
 // ---------- the score ----------
 
 /**
- * -> { version, date, score, color, domains: [{ key, label, score, note }], positives, concern, coros, flags }
+ * -> { version, date, score, color, domains: [{ key, label, score, note }], context: [same, not scored], positives, concern, coros, flags }
  * data: { health, fitness, checkins, settings, response?, loadSeries? }
  */
 export function readinessV2(date, { health = {}, fitness = {}, checkins = {}, settings = {}, response = null, loadSeries = null } = {}) {
     const day = health[date] || {};
+    const label = d => ({ ...d, label: DOMAIN_LABELS[d.key] });
     const domains = [
         autonomic(date, health),
         sleepDomain(date, health, settings.sleepNeedMin || DEFAULT_SLEEP_NEED),
-        feelDomain(date, checkins),
-        responseDomain(date, response),
-        loadDomain(date, loadSeries)
-    ].filter(d => d && d.score != null).map(d => ({ ...d, label: DOMAIN_LABELS[d.key] }));
+        feelDomain(date, checkins)
+    ].filter(d => d && d.score != null).map(label);
+    const context = [responseDomain(date, response), loadDomain(date, loadSeries)].filter(d => d && d.score != null).map(label);
     const hasCore = Boolean(day.hrv?.avg || day.sleep?.asleepMin || day.sleep?.score);
     const tw = domains.reduce((t, d) => t + DOMAIN_WEIGHTS[d.key], 0);
     let score = hasCore && tw ? domains.reduce((t, d) => t + d.score * DOMAIN_WEIGHTS[d.key], 0) / tw : null;
@@ -182,7 +187,7 @@ export function readinessV2(date, { health = {}, fitness = {}, checkins = {}, se
     const low = domains.slice().sort((a, b) => a.score - b.score)[0];
     const rec = fitness[date]?.recovery;
     return {
-        version: READINESS_V2_VERSION, date, score, color: colorOf(score), domains,
+        version: READINESS_V2_VERSION, date, score, color: colorOf(score), domains, context,
         positives, concern: low && low.score < 60 ? low.note : null,
         coros: rec?.percent != null ? { percent: rec.percent, status: rec.status || "" } : null,
         flags, needsCheckin: !c

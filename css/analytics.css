@@ -1021,6 +1021,7 @@ canvas{
 .mc-table small.is-good{ color:var(--good, var(--green)); }
 .mc-table small.is-bad{ color:var(--bad, var(--red)); }
 .mc-none{ color:var(--muted); }
+.mc-table tr.mc-base th, .mc-table tr.mc-base td{ border-top:1px dashed color-mix(in srgb, var(--muted) 50%, transparent); font-style:italic; }
 .mc-actions{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:12px; }
 .mc-actions small{ color:var(--muted); flex:1 1 220px; }
 @media (max-width:600px){

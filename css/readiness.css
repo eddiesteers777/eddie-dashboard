@@ -230,6 +230,10 @@
 .rd-why strong{ color:var(--text); }
 .rd-coros{ margin:8px 0 0; color:var(--muted); font-size:.85rem; }
 .rd-coros small{ font-size:.8rem; }
+.rd-context{ margin:10px 0 0; padding:8px 10px; border:1px dashed color-mix(in srgb, var(--muted) 45%, transparent); border-radius:var(--radius-sm); }
+.rd-context-h{ margin:0 0 4px; font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.rd-context ul{ margin:0; padding:0; list-style:none; display:grid; gap:2px; font-size:.85rem; color:var(--muted); }
+.rd-context strong{ color:var(--text); font-weight:600; margin-right:4px; }
 .rd-version{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin-top:12px; padding-top:10px; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; }
 .rd-ver{ min-height:36px; padding:4px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:transparent; color:var(--text-secondary); font-size:.85rem; cursor:pointer; }
 .rd-ver.is-on{ border-color:var(--primary); color:var(--on-primary); background:var(--primary); font-weight:600; }
