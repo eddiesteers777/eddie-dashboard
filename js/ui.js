@@ -95,7 +95,7 @@ function openDialog({ title, message, body = "", actions, danger = false, onOpen
         });
         dialog.addEventListener("close", () => {
             const input = dialog.querySelector(".sb-dialog-input");
-            resolve({ action: result || "cancel", value: input ? input.value : undefined });
+            resolve({ action: result || dialog.returnValue || "cancel", value: input ? input.value : undefined });
             dialog.remove();
         });
         // Tapping the dimmed backdrop cancels, like a native sheet.
@@ -119,6 +119,24 @@ export async function sbChoose(message, { title = "", choices = [], cancelLabel 
         ]
     });
     return action.startsWith("choice:") ? choices[Number(action.slice(7))].value : null;
+}
+
+// A 1–10 tap scale ("How hard was it?"). Resolves to the number, "skip",
+// or null when closed without an answer (Esc, the backdrop).
+export async function sbScale(message, { title = "", words = {}, current = null, hint = "", skipLabel = "Skip" } = {}) {
+    const buttons = Array.from({ length: 10 }, (_, i) => i + 1).map(n =>
+        `<button type="button" class="sb-scale-btn${n === current ? " is-current" : ""}" data-scale="${n}" title="${esc(words[n] || "")}" aria-label="${n}${words[n] ? `: ${esc(words[n])}` : ""}">${n}</button>`).join("");
+    const { action } = await openDialog({
+        title, message,
+        body: `<div class="sb-scale" role="group" aria-label="${esc(title || message)}">${buttons}</div>${hint ? `<p class="sb-scale-hint">${esc(hint)}</p>` : ""}`,
+        actions: [{ label: skipLabel, value: "skip", className: "sb-btn-tertiary" }],
+        onOpen: d => d.querySelectorAll("[data-scale]").forEach(btn => btn.addEventListener("click", event => {
+            event.preventDefault();
+            d.close(`scale:${btn.dataset.scale}`);
+        }))
+    });
+    if (action.startsWith("scale:")) return Number(action.slice(6));
+    return action === "skip" ? "skip" : null;
 }
 
 export async function sbAlert(message, { title = "", okLabel = "OK" } = {}) {

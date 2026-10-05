@@ -100,6 +100,7 @@
     "js/corosHistory.js",
     "js/corosMetrics.js",
     "js/corosParse.js",
+    "js/corosRuns.js",
     "js/corosSend.js",
     "js/corosSettings.js",
     "js/corosStatus.js",

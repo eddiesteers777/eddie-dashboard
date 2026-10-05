@@ -18,6 +18,7 @@ const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(
 const dayName = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 const short = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const whole = n => Math.round(n).toLocaleString("en-US");
+// (A run's load is rounded the way the day's total is, one decimal first, so a one-run day matches.)
 const SOURCE_WORDS = { blend: "pace, heart rate and effort", pace: "pace", hr: "heart rate", effort: "your effort", miles: "miles only (easy)" };
 
 /** "pace + heart rate + effort" from a dose's parts. */
@@ -61,12 +62,11 @@ function render(el, { totals, coros, feel, today }) {
     const dayRows = totals.days.map(d => `
         <li class="wl-day${d.future ? " is-future" : ""}${d.runs ? "" : " is-rest"}">
             <span class="wl-date">${esc(dayName(d.date))}</span>
-            <span class="wl-runs">${d.future ? "" : d.runs ? d.list.map(r => `<span class="wl-run"><strong>${r.miles.toFixed(1)} mi</strong> · load ${Math.round(r.dose)} · ${r.rpe != null ? `effort ${r.rpe}/10` : `<em>not rated</em>`}<small>${esc(partsWords(r))}</small></span>`).join("") : d.date === today ? "Nothing yet today" : "Rest"}</span>
+            <span class="wl-runs">${d.future ? "" : d.runs ? d.list.map(r => `<span class="wl-run"><strong>${r.miles.toFixed(1)} mi</strong> · load ${Math.round(Math.round(r.dose * 10) / 10)} · ${r.rpe != null ? `effort ${r.rpe}/10` : `<em>not rated</em>`}<small>${esc(partsWords(r))}</small></span>`).join("") : d.date === today ? "Nothing yet today" : "Rest"}</span>
             <span class="wl-load">${d.future ? "" : d.runs ? Math.round(d.load) : "—"}</span>
         </li>`).join("");
     el.hidden = false;
-    el.innerHTML = `
-        <h2 class="wr-section-title">Training Load This Week</h2>
+    el.querySelector(".wl-body").innerHTML = `
         <div class="wl-stats">
             <div class="wl-stat"><span>Load so far</span><strong>${whole(w.load)}</strong><small>${pct == null ? `${daysIn} of 7 days in` : `${pct}% of your usual week (${whole(usual.load)}), ${daysIn} of 7 days in`}</small></div>
             <div class="wl-stat"><span>Effort load</span><strong>${whole(w.effortLoad)}</strong><small>minutes × effort · ${w.rated} of ${w.runs} ${w.runs === 1 ? "run" : "runs"} rated${usual?.effortLoad ? ` · usual ${whole(usual.effortLoad)}` : ""}</small></div>
@@ -78,33 +78,47 @@ function render(el, { totals, coros, feel, today }) {
             ${feel ? `<li>${feel.mean >= 1 ? `Runs this week felt <strong>${feel.mean} harder than usual</strong> for what they were (${feel.n} rated).` : feel.mean <= -1 ? `Runs this week felt <strong>${Math.abs(feel.mean)} easier than usual</strong> for what they were (${feel.n} rated).` : `Runs this week felt about as hard as usual for what they were (${feel.n} rated).`}</li>` : ""}
             ${lastWeek?.monotony != null ? `<li>Last week: monotony <strong>${lastWeek.monotony}</strong> (${esc(monotonyWords(lastWeek.monotony))}), strain <strong>${whole(lastWeek.strain)}</strong>${totals.strainUsual ? ` against your usual ${whole(totals.strainUsual)}${lastWeek.strain > totals.strainUsual * 1.3 ? ": well above it" : ""}` : ""}.</li>` : ""}
             ${coros ? `<li>COROS on ${esc(short(coros.latest.date))}: Base Fitness <strong>${coros.latest.coros.base ?? "—"}</strong>, Load Impact <strong>${coros.latest.coros.impact ?? "—"}</strong>. Ours: base ${coros.latest.ours.base}, recent ${coros.latest.ours.recent}${coros.rBase != null ? ` (they move together: r ${coros.rBase} for base, ${coros.rRecent ?? "–"} for recent, over ${coros.n} days)` : ""}. Different scales; it's the direction that compares.</li>` : ""}
-        </ul>
-        <div id="wlEffort" class="sb-effort" hidden></div>
-        <p class="wl-foot">Each run's load blends its pace, heart rate and your effort on one scale (never added up). Effort load is minutes × your 1–10. More in <a href="analytics.html#loadPanel">Analytics → Load and response</a>.</p>`;
+        </ul>`;
 }
 
-/** Draws the section into `el`, and again whenever an effort is answered. */
+/**
+ * Draws the section into `el`, and again (numbers only) whenever an effort
+ * is answered or new runs arrive. The "How hard was it?" list below the
+ * numbers is mounted once and keeps itself up to date, so a redraw never
+ * empties it.
+ */
 export function mountWeeklyLoad(el) {
     if (!el) return;
+    const today = isoToday();
+    el.innerHTML = `
+        <h2 class="wr-section-title">Training Load This Week</h2>
+        <div class="wl-body"></div>
+        <div id="wlEffort" class="sb-effort" hidden></div>
+        <p class="wl-foot">Each run's load blends its pace, heart rate and your effort on one scale (never added up). Effort load is minutes × your 1–10. More in <a href="analytics.html#loadPanel">Analytics → Load and response</a>.</p>`;
+    // Runs of this week (Monday on) with no effort yet: rate them here.
+    const monday = new Date(`${today}T12:00:00`);
+    const sinceMonday = (monday.getDay() + 6) % 7;
+    import("./effortCard.js").then(m => m.mountEffortCard(el.querySelector("#wlEffort"), { days: sinceMonday + 1, max: 7 }))
+        .catch(error => console.error("Southbound: effort card failed to load.", error));
+    let running = false, again = false;
     const draw = async () => {
+        if (running) { again = true; return; }
+        running = true;
         try {
-            const today = isoToday();
-            const data = await compute(today);
-            if (!data.totals.weeks.some(w => w.runs)) { el.hidden = true; return; }
-            render(el, data);
-            // Runs this week with no effort: rate them here.
-            const box = el.querySelector("#wlEffort");
-            const { mountEffortCard } = await import("./effortCard.js");
-            mountEffortCard(box, { days: Math.max(1, Math.round((new Date(`${today}T12:00`) - new Date(`${data.totals.days[0].date}T12:00`)) / 864e5) + 1), max: 7 });
+            const data = await compute(isoToday());
+            if (data.totals.weeks.some(w => w.runs)) render(el, data);
+            else if (el.querySelector("#wlEffort").hidden) el.hidden = true;
         } catch (error) {
             console.error("Southbound: training load this week couldn't be worked out.", error);
-            el.hidden = true;
+        } finally {
+            running = false;
+            if (again) { again = false; draw(); }
         }
     };
     let timer = null;
-    window.addEventListener("sb:athlete-answers", () => { clearTimeout(timer); timer = setTimeout(draw, 400); });
-    window.addEventListener("sb:strava-updated", draw);
-    window.addEventListener("eddieos:coros-history-updated", draw);
-    draw();
+    const soon = () => { clearTimeout(timer); timer = setTimeout(draw, 400); };
+    for (const name of ["sb:athlete-answers", "sb:strava-updated", "eddieos:coros-history-updated"]) window.addEventListener(name, soon);
+    // Let the rest of the page draw first; this is the heaviest part of it.
+    setTimeout(draw, 50);
 }
 

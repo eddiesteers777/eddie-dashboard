@@ -48,7 +48,20 @@ export const RACE_DISTANCES = Object.freeze([
 const num = v => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null);
 const pad = n => String(n).padStart(2, "0");
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-export function addDays(date, n) { const [y, m, d] = date.split("-").map(Number); return iso(new Date(y, m - 1, d + n)); }
+// Remembered: the models ask for the same few thousand dates over and over (a Date each time was
+// most of the load card's work on a phone).
+const shifted = new Map();
+export function addDays(date, n) {
+    const key = `${date}|${n}`;
+    let out = shifted.get(key);
+    if (out === undefined) {
+        const [y, m, d] = date.split("-").map(Number);
+        out = iso(new Date(y, m - 1, d + n));
+        if (shifted.size > 100000) shifted.clear();
+        shifted.set(key, out);
+    }
+    return out;
+}
 const dayShift = (date, n) => addDays(date, n);
 
 // ---------- building the list ----------
@@ -185,10 +198,17 @@ export function linkPlan(sessions, planDays = []) {
 
 const lookup = (map, s) => [s.id, ...s.aliases].map(id => map?.[id]).find(Boolean) || null;
 
+/**
+ * An effort given for a plan day before the watch run arrived (Mark Done on
+ * Today, js/effortCard.js askRunEffort): it belongs to the run linked to
+ * that day, unless that run has an answer of its own.
+ */
+export const planEffortKey = date => `plan:${date}`;
+
 /** Adds what the athlete told us (effort, race answers) to each session. */
 export function attachAnswers(sessions, { rpe = {}, races = {} } = {}) {
     for (const s of sessions) {
-        const r = lookup(rpe, s);
+        const r = lookup(rpe, s) || (s.planned ? rpe?.[planEffortKey(s.date)] || null : null);
         s.rpe = r && Number.isInteger(r.rpe) ? r.rpe : null;
         s.rpeAnswered = Boolean(r);
         s.race = lookup(races, s);

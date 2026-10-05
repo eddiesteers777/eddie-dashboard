@@ -71,6 +71,8 @@ const num = v => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null
 const median = a => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const mondayOf = date => { const [y, m, d] = date.split("-").map(Number); const t = new Date(y, m - 1, d); return addDays(date, -((t.getDay() + 6) % 7)); };
 const r1 = n => Math.round(n * 10) / 10;
+// The furthest back any weekly anchor looks (personalExponent's 730 days, with a margin).
+const LOOKBACK_DAYS = 740;
 
 // ---------- the athlete's anchors (1-hour speed, HR max / rest) ----------
 
@@ -97,7 +99,8 @@ export function v60At(sessions, asOf, { fitness = {} } = {}) {
     }
     // Training bests only once there's a month of runs: with a week or two of easy runs the
     // "fastest effort" is an easy run, and every run would look hard against it.
-    const recent = sessions.filter(s => s.date <= asOf && s.date >= addDays(asOf, -120));
+    const from120 = addDays(asOf, -120);
+    const recent = sessions.filter(s => s.date <= asOf && s.date >= from120);
     const span = recent.length ? (new Date(`${asOf}T12:00`) - new Date(`${recent.reduce((m, s) => (s.date < m ? s.date : m), asOf)}T12:00`)) / 864e5 : 0;
     if (recent.length >= MIN_TRAINING_RUNS && span >= MIN_TRAINING_DAYS) {
         for (const e of envelope(effortsFrom(sessions, asOf)).filter(e => e.meters <= 25000)) {
@@ -105,7 +108,8 @@ export function v60At(sessions, asOf, { fitness = {} } = {}) {
         }
     }
     if (cands.length) return cands.sort((x, y) => y.v60 - x.v60)[0];
-    const day = Object.keys(fitness || {}).filter(d => d <= asOf && d >= addDays(asOf, -30) && fitness[d]?.threshold).sort().at(-1);
+    const from30 = addDays(asOf, -30);
+    const day = Object.keys(fitness || {}).filter(d => d <= asOf && d >= from30 && fitness[d]?.threshold).sort().at(-1);
     const m = day && String(fitness[day].threshold).match(/(\d{1,2}):(\d{2})/);
     if (m) return { v60: MILE / (Number(m[1]) * 60 + Number(m[2])), source: "coros", date: day };
     return null;
@@ -123,16 +127,20 @@ export function weeklyAnchors(sessions, today, { health = {}, fitness = {} } = {
     let monday = mondayOf(sorted[0].date);
     const last = mondayOf(today);
     // Everything up to the day before each Monday (a running slice, not refiltered from scratch).
+    // v60At and hrMaxFrom look back at most 2 years (the personal exponent's race pairs), so each
+    // week reads only that window: the same answers, without rereading ten years 500 times over.
     // After a long break with nothing recent, the last known 1-hour speed carries on, marked older.
-    let i = 0, lastV = null;
-    const past = [];
+    let i = 0, lo = 0, lastV = null;
     while (monday <= last) {
         const asOf = addDays(monday, -1);
-        while (i < sorted.length && sorted[i].date <= asOf) past.push(sorted[i++]);
-        let v = v60At(past, asOf, { fitness });
+        while (i < sorted.length && sorted[i].date <= asOf) i++;
+        const from = addDays(asOf, -LOOKBACK_DAYS);
+        while (lo < i && sorted[lo].date < from) lo++;
+        const recent = sorted.slice(lo, i);
+        let v = v60At(recent, asOf, { fitness });
         if (v) lastV = v;
         else if (lastV) v = { ...lastV, source: "older" };
-        const hrMax = hrMaxFrom(past, asOf) || hrMaxFrom(past, asOf, { days: 36500 });
+        const hrMax = hrMaxFrom(recent, asOf) || hrMaxFrom(lo ? sorted.slice(0, i) : recent, asOf, { days: 36500 });
         const rest = hrRestFrom(health, asOf);
         out.set(monday, {
             v60: v?.v60 ?? null, v60Source: v?.source ?? null,

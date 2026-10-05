@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
     sessionsFrom, linkPlan, attachAnswers, buildLedger, raceDistance, raceScore, raceCandidates,
-    confirmedRaces, raceRecord, notRaceRecord, effortPrompts, effortRecord, parseClock, clockText, paceText, addDays
+    confirmedRaces, raceRecord, notRaceRecord, effortPrompts, effortRecord, parseClock, clockText, paceText, addDays, planEffortKey
 } from "../js/athleteLedger.js";
 
 const M = 1609.344;
@@ -155,4 +155,30 @@ test("race score: a fast weekday 10K-length tempo with no name isn't a candidate
     const tempo = coros("w", "2026-09-30", 6.22, 420, { hour: 6, name: "Indianapolis" });
     const all = sessionsFrom({ corosRuns: [...trainingAround("2026-09-30"), tempo] });
     assert.equal(raceCandidates(all).length, 0);
+});
+
+test("an effort given on Mark Done before the watch run arrived goes on that day's planned run, not its shakeout", () => {
+    const runs = [coros("901", "2026-10-06", 10, 470), coros("902", "2026-10-06", 2, 560, { hour: 17 })];
+    const plan = [{ date: "2026-10-06", miles: 10, title: "Tempo" }];
+    const s = buildLedger({ corosRuns: runs, planDays: plan, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1 } } });
+    const main = s.find(x => x.id === "c:901"), shake = s.find(x => x.id === "c:902");
+    assert.equal(main.rpe, 7);
+    assert.equal(main.rpeAnswered, true);
+    assert.equal(shake.rpeAnswered, false, "the other run that day is still asked about");
+    assert.deepEqual(effortPrompts(s, "2026-10-06").map(x => x.id), ["c:902"]);
+    // The run's own answer wins.
+    const own = buildLedger({ corosRuns: runs, planDays: plan, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1 }, "c:901": { rpe: 5, at: 2 } } });
+    assert.equal(own.find(x => x.id === "c:901").rpe, 5);
+    // Without the plan (a client's own ledger) the day answer isn't used.
+    assert.equal(buildLedger({ corosRuns: runs, rpe: { [planEffortKey("2026-10-06")]: { rpe: 7, at: 1 } } }).find(x => x.id === "c:901").rpeAnswered, false);
+});
+
+test("addDays across month, year and daylight-saving edges (it is remembered, so check it twice)", () => {
+    for (let k = 0; k < 2; k++) {
+        assert.equal(addDays("2026-03-07", 1), "2026-03-08");
+        assert.equal(addDays("2026-03-08", 1), "2026-03-09");
+        assert.equal(addDays("2026-11-01", -1), "2026-10-31");
+        assert.equal(addDays("2025-12-31", 1), "2026-01-01");
+        assert.equal(addDays("2024-03-01", -1), "2024-02-29");
+    }
 });

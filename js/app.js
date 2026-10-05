@@ -504,6 +504,15 @@ function renderToday() {
                 .catch((error) => console.warn("Cloud progress sync unavailable:", error));
 
             renderToday();
+
+            // Just marked done: how hard was it? (1-10, the athlete model's effort,
+            // js/effortCard.js). Goes on today's watch run, or waits for it.
+            if (progress[w][dayKey]) {
+                const d = new Date();
+                const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                import("./effortCard.js").then(m => m.askRunEffort(date))
+                    .catch(error => console.error("Southbound: effort question failed to load.", error));
+            }
         });
     }
 }

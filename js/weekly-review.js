@@ -5,8 +5,7 @@
 import {
     getCurrentWeek,
     getWeek,
-    getWeekMileage,
-    getWeekDays
+    getAdjustedWeekDays
 } from "./marathonData.js";
 
 import { describeCorosFreshness } from "./corosStatus.js";
@@ -24,63 +23,93 @@ function fmtDateRange(start, end) {
 }
 
 /* ==========================================
-   Marathon miles
+   This week = Monday to Sunday (the marathon plan's weeks start on Mondays too)
 ========================================== */
 
-function renderMiles(weekNumber) {
+const pad2 = n => String(n).padStart(2, "0");
+const isoLocal = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+function thisWeek() {
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { monday, sunday, from: isoLocal(monday), today: isoLocal(today), to: isoLocal(sunday) };
+}
+
+/* ==========================================
+   Miles run: what you actually ran (COROS, Strava, the Running Log,
+   each run once: js/athleteLedger.js) against what the plan asks for
+========================================== */
+
+function plannedMiles(weekNumber) {
+    try {
+        return getAdjustedWeekDays(weekNumber).reduce((sum, day) => sum + (Number(day.miles) || 0), 0);
+    } catch {
+        return 0;
+    }
+}
+
+async function actualRuns(week) {
+    const { loadLedger } = await import("./athleteData.js");
+    const sessions = await loadLedger(week.today);
+    return sessions.filter(s => s.date >= week.from && s.date <= week.today);
+}
+
+function renderMiles({ miles, runs, planned }) {
     const valueEl = document.getElementById("wrMilesValue");
     const metaEl = document.getElementById("wrMilesMeta");
-
-    let miles = 0;
-
-    try {
-        miles = getWeekMileage(weekNumber);
-    } catch {
-        miles = 0;
+    if (miles == null) {
+        valueEl.textContent = "—";
+        metaEl.textContent = planned ? `${planned.toFixed(1)} planned this week` : "this week";
+        return;
     }
-
-    valueEl.textContent = miles ? miles.toFixed(1) : "0";
-    metaEl.textContent = "miles this week";
-
-    return miles;
+    valueEl.textContent = miles.toFixed(1);
+    metaEl.textContent = `${runs} run${runs === 1 ? "" : "s"}${planned ? ` · ${planned.toFixed(1)} planned this week` : " this week"}`;
 }
 
 /* ==========================================
    Strength volume (from the current plan)
 ========================================== */
 
-function renderStrength() {
+function renderStrength(week) {
     const valueEl = document.getElementById("wrStrengthValue");
     const metaEl = document.getElementById("wrStrengthMeta");
 
-    let plan = null;
+    // What was lifted this week (js/strengthHistory.js keeps every logged exercise by day),
+    // plus scheduled sessions ticked off on the Strength calendar.
+    let history = {};
+    let schedule = null;
+    try { history = JSON.parse(localStorage.getItem("strength-history") || "{}") || {}; } catch {}
+    try { schedule = JSON.parse(localStorage.getItem("strength-schedule") || "null"); } catch {}
 
-    try {
-        plan = JSON.parse(localStorage.getItem("strength-plan") || "null");
-    } catch {
-        plan = null;
-    }
+    let volume = 0;
+    let exercises = 0;
+    const days = new Set();
+    Object.values(history).forEach(entries => {
+        (Array.isArray(entries) ? entries : []).forEach(entry => {
+            if (!entry?.date || entry.date < week.from || entry.date > week.to) return;
+            exercises++;
+            days.add(entry.date);
+            (entry.sets || []).forEach(set => { volume += (Number(set.weight) || 0) * (Number(set.reps) || 0); });
+        });
+    });
+    (schedule?.items || []).forEach(item => {
+        if (item.completed && item.date >= week.from && item.date <= week.to) days.add(item.date);
+    });
 
-    if (!plan || !Array.isArray(plan.days) || !plan.days.length) {
+    if (!days.size) {
         valueEl.textContent = "0";
-        metaEl.textContent = "no plan built yet";
+        metaEl.textContent = "no strength logged this week";
         return 0;
     }
 
-    let volume = 0;
-    let exerciseCount = 0;
-
-    plan.days.forEach(day => {
-        (day.exercises || []).forEach(ex => {
-            exerciseCount++;
-            (ex.sets || []).forEach(set => {
-                volume += (Number(set.weight) || 0) * (Number(set.reps) || 0);
-            });
-        });
-    });
-
-    valueEl.textContent = volume.toLocaleString();
-    metaEl.textContent = `lb across ${plan.days.length} day${plan.days.length === 1 ? "" : "s"}, ${exerciseCount} exercises`;
+    valueEl.textContent = volume ? volume.toLocaleString() : String(days.size);
+    metaEl.textContent = volume
+        ? `lb lifted · ${days.size} session${days.size === 1 ? "" : "s"}, ${exercises} exercise${exercises === 1 ? "" : "s"}`
+        : `session${days.size === 1 ? "" : "s"} this week`;
 
     return volume;
 }
@@ -95,8 +124,9 @@ function renderCrossTraining(weekNumber) {
 
     let days = [];
 
+    // The plan's days with your own changes (cross-training is attached there).
     try {
-        days = getWeekDays(weekNumber);
+        days = getAdjustedWeekDays(weekNumber);
     } catch {
         days = [];
     }
@@ -106,7 +136,7 @@ function renderCrossTraining(weekNumber) {
     ).length;
 
     valueEl.textContent = String(covered);
-    metaEl.textContent = `of ${days.length || 7} days this week`;
+    metaEl.textContent = `day${covered === 1 ? "" : "s"} planned this week`;
 
     return covered;
 }
@@ -118,6 +148,10 @@ function renderCrossTraining(weekNumber) {
 function nutritionKeyFor(date) {
     return "nutrition-" + date.toISOString().split("T")[0];
 }
+
+// Your calorie goal from Nutrition ("nutrition-goals"), else its default for you.
+let calorieGoal = 3200;
+try { calorieGoal = Number(JSON.parse(localStorage.getItem("nutrition-goals") || "null")?.calories) || 3200; } catch {}
 
 function renderNutrition() {
     const valueEl = document.getElementById("wrNutritionValue");
@@ -139,7 +173,7 @@ function renderNutrition() {
             day = null;
         }
 
-        const goal = 3200; // matches nutrition.js's default calorie goal
+        const goal = calorieGoal;
         const actual = day?.calories || 0;
         const pct = day ? Math.round((actual / goal) * 100) : null;
 
@@ -203,6 +237,19 @@ function renderRecovery() {
     } catch {
         snapshot = null;
     }
+
+    // The newest recovery COROS gave (Today's Readiness card saves it by day).
+    try {
+        const days = JSON.parse(localStorage.getItem("coros-fitness-history") || "{}") || {};
+        const day = Object.keys(days).filter(d => days[d]?.recovery?.percent != null).sort().at(-1);
+        const snapDay = snapshot?.fetchedAt ? isoLocal(new Date(snapshot.fetchedAt)) : "";
+        if (day && day >= snapDay) {
+            const percent = Number(days[day].recovery.percent);
+            valueEl.textContent = `${Math.round(percent)}%`;
+            metaEl.textContent = day === isoLocal(new Date()) ? "COROS, today" : `COROS, ${new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`;
+            return percent;
+        }
+    } catch {}
 
     if (!snapshot) {
         valueEl.textContent = "—";
@@ -301,18 +348,20 @@ function renderSummary(stats) {
     const el = document.getElementById("wrSummaryText");
     const notes = [];
 
-    if (stats.miles > 0) {
-        notes.push(`<p>You've logged <strong>${stats.miles.toFixed(1)} miles</strong> this week on the marathon plan.</p>`);
+    if (stats.miles == null) {
+        notes.push(`<p>Counting this week's runs…</p>`);
+    } else if (stats.miles > 0) {
+        notes.push(`<p>You've run <strong>${stats.miles.toFixed(1)} miles</strong> this week${stats.planned ? ` of the <strong>${stats.planned.toFixed(1)}</strong> your plan has for the whole week` : ""} (${stats.runs} run${stats.runs === 1 ? "" : "s"}).</p>`);
     } else {
-        notes.push(`<p>No marathon miles logged for this week yet.</p>`);
+        notes.push(`<p>No runs yet this week${stats.planned ? ` (${stats.planned.toFixed(1)} miles planned)` : ""}.</p>`);
     }
 
     if (stats.strength > 0) {
-        notes.push(`<p>Your strength plan totals <strong>${stats.strength.toLocaleString()} lb</strong> of volume across its exercises.</p>`);
+        notes.push(`<p>You've lifted <strong>${stats.strength.toLocaleString()} lb</strong> of volume this week.</p>`);
     }
 
     if (stats.cross > 0) {
-        notes.push(`<p>Cross-training is covered on <strong>${stats.cross} day${stats.cross === 1 ? "" : "s"}</strong> this week.</p>`);
+        notes.push(`<p>Cross-training is planned on <strong>${stats.cross} day${stats.cross === 1 ? "" : "s"}</strong> this week.</p>`);
     }
 
     if (stats.nutrition !== null) {
@@ -339,37 +388,65 @@ function renderSummary(stats) {
    Init
 ========================================== */
 
+let current = null;
+
 function init() {
     let weekNumber = 1;
+    const week = thisWeek();
 
     try {
         weekNumber = getCurrentWeek();
-        const week = getWeek(weekNumber);
+        const planWeek = getWeek(weekNumber);
         const rangeEl = document.getElementById("wrWeekRange");
 
-        if (week && rangeEl) {
-            rangeEl.textContent = `Week ${weekNumber} of your marathon plan`;
+        if (planWeek && rangeEl) {
+            rangeEl.textContent = `Week ${weekNumber} of your marathon plan · ${fmtDateRange(week.monday, week.sunday)}`;
         }
     } catch {
         // Fall through with defaults if the plan can't resolve a week.
     }
 
     const rangeFallback = document.getElementById("wrWeekRange");
-    if (rangeFallback && !rangeFallback.textContent.trim()) rangeFallback.textContent = "Your training this week";
+    if (rangeFallback && !rangeFallback.textContent.trim()) rangeFallback.textContent = `Your training this week · ${fmtDateRange(week.monday, week.sunday)}`;
 
+    const planned = plannedMiles(weekNumber);
     const stats = {
-        miles: renderMiles(weekNumber),
-        strength: renderStrength(),
+        miles: current?.miles ?? null,
+        runs: current?.runs ?? 0,
+        planned,
+        strength: renderStrength(week),
         cross: renderCrossTraining(weekNumber),
         nutrition: renderNutrition(),
         recovery: renderRecovery(),
         gear: renderGear()
     };
+    renderMiles(stats);
+    renderSummary(stats);
+    countRuns(week, stats);
+}
 
+// The miles come from the run list, which takes a moment: draw, then fill them in.
+async function countRuns(week, stats) {
+    try {
+        const runs = await actualRuns(week);
+        const miles = runs.reduce((sum, s) => sum + (Number(s.distance) || 0), 0) / 1609.344;
+        current = { miles: Math.round(miles * 10) / 10, runs: runs.length };
+        Object.assign(stats, current);
+    } catch (error) {
+        console.error("Southbound: this week's runs couldn't be counted.", error);
+        Object.assign(stats, { miles: 0, runs: 0 });
+    }
+    renderMiles(stats);
     renderSummary(stats);
 }
 
 init();
+
+// New runs (just pulled from COROS, or a Strava import) update the cards.
+let redrawTimer = null;
+for (const name of ["eddieos:coros-history-updated", "sb:strava-updated"]) {
+    window.addEventListener(name, () => { clearTimeout(redrawTimer); redrawTimer = setTimeout(init, 300); });
+}
 
 // Training load this week: the athlete model's blended load, by day (js/weeklyLoad.js).
 import("./weeklyLoad.js").then(m => m.mountWeeklyLoad(document.getElementById("wrLoad")))

@@ -3848,6 +3848,12 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
 .sb-effort-scale button:hover{ border-color:var(--primary); color:var(--primary-light); }
 .sb-effort-scale .sb-effort-skip{ font-weight:500; color:var(--muted); background:transparent; }
 .sb-effort-hint{ margin:8px 0 0; font-size:12px; color:var(--muted); }
+/* The 1–10 scale dialog (sbScale in js/ui.js): two rows of five, big enough to tap. */
+.sb-scale{ display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin:4px 0 0; }
+.sb-scale-btn{ min-height:48px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); color:var(--text); font-size:18px; font-weight:700; cursor:pointer; }
+.sb-scale-btn:hover, .sb-scale-btn:focus-visible{ border-color:var(--primary); color:var(--primary-light); }
+.sb-scale-btn.is-current{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.sb-scale-hint{ margin:10px 0 0; font-size:13px; color:var(--muted); }
 @media (max-width:600px){
     .sb-effort-scale{ display:grid; grid-template-columns:repeat(5, 1fr); }
     .sb-effort-scale button{ min-height:40px; }

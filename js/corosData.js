@@ -2,7 +2,8 @@
 
 import { getTokenRecord } from "./corosAuth.js";
 import { mcpRequest } from "./corosClient.js";
-import { unwrapResult, findRecords, normalizeActivity } from "./corosParse.js";
+import { unwrapResult, normalizeActivity } from "./corosParse.js";
+import { supported, buildArgs, parseRecords } from "./corosRuns.js";
 import { readLoad, readRecovery, readFitness, recentRunRows } from "./corosMetrics.js";
 import { HISTORY_KEY, FITNESS_KEY, emptyHistory, mergeRuns, markCovered, windowsToFetch, runsBetween, historyStatus, fitnessDays, mergeFitness, isoDate, addDays } from "./corosHistory.js";
 import { syncSharedWearableActivity } from "./wearableActivity.js";
@@ -40,70 +41,8 @@ function tool(tools, name) {
     );
 }
 
-function supported(schema, key) {
-    return Boolean(
-        schema?.properties &&
-        Object.prototype.hasOwnProperty.call(
-            schema.properties,
-            key
-        )
-    );
-}
-
-function formatCorosDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}${month}${day}`;
-}
-
-function buildArgs(toolDefinition, start, end) {
-    const schema =
-        toolDefinition?.inputSchema || {};
-
-    const args = {};
-
-    if (supported(schema, "startDate")) {
-        args.startDate =
-            formatCorosDate(start);
-    }
-
-    if (supported(schema, "endDate")) {
-        args.endDate =
-            formatCorosDate(end);
-    }
-
-    if (supported(schema, "sportTypeCodes")) {
-        args.sportTypeCodes = [
-            100, // Outdoor Run
-            101, // Indoor Run
-            102, // Trail Run
-            103  // Track Run
-        ];
-    }
-
-    if (supported(schema, "timezone")) {
-        args.timezone =
-            Intl.DateTimeFormat()
-                .resolvedOptions()
-                .timeZone;
-    }
-
-    if (supported(schema, "limit")) {
-        args.limit = 20;
-    }
-
-    return args;
-}
-
 // COROS replies: js/corosParse.js reads them (and finds the activity list wherever it is).
 const unwrap = unwrapResult;
-
-// Every run in one plain shape (meters, seconds, ISO start) for every page.
-function parseRecords(result) {
-    return findRecords(unwrapResult(result)).map(normalizeActivity);
-}
 
 function recordId(activity) {
     return (
