@@ -107,6 +107,7 @@ function recentPlanRuns(today, days) {
                 day: day,
                 planDay: planDay,
                 kind: kind,
+                override: overrides["marathon|" + day.date] || "",
                 category: categoryFor(day, planDay, overrides),
                 autoCategory: autoCategory(day, planDay),
                 title: marathonTitle(day.session, Number(day.miles) || 0),
@@ -267,7 +268,7 @@ function managerRowsHtml(items) {
                 '<label class="ft-manager-row">',
                 '<span><strong>', esc(item.title), '</strong><small>', dayWords(item.date), ' · ', fmtMiles(item.runMiles), '</small></span>',
                 '<select data-ft-category="', esc(item.id), '" aria-label="Featured type for ', esc(item.title), '">',
-                optionsHtml(item.category || ""), '</select></label>'
+                optionsHtml(item.override || (item.category || "")), '</select></label>'
             ].join("");
         }).join("")
         : '<p class="ft-empty">No completed runs found in the last 6 weeks.</p>';
