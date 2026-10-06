@@ -376,7 +376,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 
 ## What's next (roadmap)
 
-**Active track: Weekly Planning** (`docs/WEEKLY_PLANNING_AUDIT.md`, approved 2026-10-06). P1 (the Athlete State), P2 (Planning Context, Brief, the Weekly Planning page and the hub's Planning tab) P3 (planning cycles, rules change) and P4 (plan vs actual) done. Next: P5 the AI relay (privacy page first), P6 learning.
+**Active track: Weekly Planning** (`docs/WEEKLY_PLANNING_AUDIT.md`, approved 2026-10-06). P1 (the Athlete State), P2 (Planning Context, Brief, the Weekly Planning page and the hub's Planning tab) P3 (planning cycles, rules change) and P4 (plan vs actual) done. **P5 (the AI relay) is on hold: Eddie keeps copy / paste with his own chatbot for now (2026-10-06)**; if it's picked up later, the privacy page is updated first. P6 (learning from the saved weeks) needs a few weeks of planned weeks first.
 
 **Active track: the Southbound Athlete Model** (`docs/PERFORMANCE_ENGINE_PLAN.md`, approved 2026-10-04). Steps 0–7 done (sessions, races, effort; race capability, Model check, the race-day lock; one dose per run + the Load and response card; how you responded + the dose test; readiness v2 + the readiness check; the weekly decision for his own plan with Apply / Undo, the log, the replay and his own numbers; client rollout: Athlete model sharing, the client's effort question, the Client Hub's Model tab with Apply as draft). Eddie: confirm races, lock the Indianapolis prediction before Nov 8, answer effort after runs, do the morning check-in, use This week each Monday. Next: step W (watches for everyone: a client-facing watch-history import), or the weekly check-in in the subjective domain, Eddie's pick.
 
