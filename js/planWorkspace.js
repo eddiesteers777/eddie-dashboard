@@ -21,8 +21,10 @@
    the client's device no longer owns a coached plan.
 
    mountPlanWorkspace(container, { clientUid, clientName, clientEmail,
-                                    firstName, data, onChange })
+                                    firstName, data, onChange, onPublished })
      data: the hub's loaded record ({ coachingPlans, planDrafts, shared })
+     onPublished(header): after each publish (weekly planning P3 records
+       what went out against the week it planned)
 ========================================== */
 
 import {
@@ -59,7 +61,7 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 const clone = value => JSON.parse(JSON.stringify(value));
 const niceDate = ms => ms ? new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
 
-export function mountPlanWorkspace(container, { clientUid, clientName, clientEmail, firstName, data, onChange }) {
+export function mountPlanWorkspace(container, { clientUid, clientName, clientEmail, firstName, data, onChange, onPublished }) {
     const state = {
         view: "list",
         editing: null  // { planId, header, name, kind, plan, basedOnVersion, adoptedFrom, draftExists, dirty }
@@ -1127,6 +1129,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 toast(header.notice ? `Published to ${first}. They'll get an email.` : `Published. Nothing ${first} can see changed, so no email went out.`);
                 state.editing.dirty = false;
                 onChange?.();
+                onPublished?.(header);
                 renderList();
             } catch (error) {
                 console.error("Publishing failed:", error);

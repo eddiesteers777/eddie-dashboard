@@ -1607,3 +1607,49 @@ test("session logs: the coach logs a session of an approved booking; the client 
     // Undo: the coach deletes it.
     await assertSucceeds(deleteDoc(ref));
 });
+
+test("planning cycles: the coach's own record of each planned week; the client never sees it", async () => {
+    await seedLinkAndBooking();
+    const cycle = (athlete, weekOf, extra = {}) => ({
+        coachUid: "coach", athleteUid: athlete, weekOf, weekTo: "2026-10-18", version: 1, status: "open",
+        contextHash: "1a2b3c4d", context: JSON.stringify({ sections: [] }), proposals: "[]", review: "[]", approved: "", outcome: "",
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
+    });
+    // A linked client's week, and the coach's own (athlete = the coach).
+    await assertSucceeds(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-12"), cycle("client", "2026-10-12")));
+    await assertSucceeds(setDoc(doc(as("coach"), "planningCycles/coach_coach_2026-10-12"), cycle("coach", "2026-10-12")));
+    // Later saves merge in the answer, the review and the approval.
+    await assertSucceeds(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-12"),
+        { proposals: JSON.stringify([{ id: "a1", days: [] }]), review: "[]", approved: JSON.stringify({ days: [] }), status: "approved", updatedAt: serverTimestamp() }, { merge: true }));
+    await assertSucceeds(getDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-12")));
+    const mine = await getDocs(query(collection(as("coach"), "planningCycles"), where("coachUid", "==", "coach"), where("athleteUid", "==", "client")));
+    assert.equal(mine.size, 1);
+    // No client clause: the client can't read or list it, or write one.
+    await assertFails(getDoc(doc(as("client"), "planningCycles/coach_client_2026-10-12")));
+    await assertFails(getDocs(query(collection(as("client"), "planningCycles"), where("athleteUid", "==", "client"))));
+    await assertFails(setDoc(doc(as("client"), "planningCycles/client_client_2026-10-12"), { ...cycle("client", "2026-10-12"), coachUid: "client" }));
+    // Another coach: no link to the client, can't read the first coach's.
+    await assertFails(setDoc(doc(as("coach2"), "planningCycles/coach2_client_2026-10-12"), { ...cycle("client", "2026-10-12"), coachUid: "coach2" }));
+    await assertFails(getDoc(doc(as("coach2"), "planningCycles/coach_client_2026-10-12")));
+    // An unapproved account can't keep cycles, even for itself.
+    await assertFails(setDoc(doc(as("stranger"), "planningCycles/stranger_stranger_2026-10-12"), { ...cycle("stranger", "2026-10-12"), coachUid: "stranger" }));
+    // Not linked, a wrong id, a forged coach, an unknown status or field, too big, a made-up time.
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_other_2026-10-12"), cycle("other", "2026-10-12")));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-19"), cycle("client", "2026-10-12")));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach2_client_2026-10-12"), { ...cycle("client", "2026-10-12"), coachUid: "coach2" }));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-05"), cycle("client", "2026-10-05", { status: "published!" })));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-05"), cycle("client", "2026-10-05", { secret: "x" })));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-05"), cycle("client", "2026-10-05", { context: "x".repeat(60001) })));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-05"), cycle("client", "2026-10-05", { proposals: [{ id: 1 }] })));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-05"), cycle("client", "2026-10-05", { weekOf: "next week" })));
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-05"), cycle("client", "2026-10-05", { updatedAt: Timestamp.fromMillis(Date.now() - DAY) })));
+    // The athlete and week can't be moved on an existing record.
+    await assertFails(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-12"), { athleteUid: "coach", updatedAt: serverTimestamp() }, { merge: true }));
+    // The full sizes fit.
+    await assertSucceeds(setDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-19"), cycle("client", "2026-10-19", {
+        context: "c".repeat(60000), proposals: "p".repeat(80000), review: "r".repeat(20000), approved: "a".repeat(20000), outcome: "o".repeat(40000)
+    })));
+    // The coach can delete their own.
+    await assertSucceeds(deleteDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-19")));
+    await assertFails(deleteDoc(doc(as("client"), "planningCycles/coach_client_2026-10-12")));
+});

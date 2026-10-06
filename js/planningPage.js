@@ -17,6 +17,7 @@ const adapter = {
     who: "self",
     firstName: "",
     key: "self",
+    athleteUid: "self",
     // His strength lives on its own page; the chatbot copies that column as it is.
     scope: "runs",
     async load(today, { from, to }) {
@@ -30,7 +31,7 @@ const adapter = {
     async apply({ days, from, to }) {
         const id = await applySelf(days, this.planDays || [], { from, to });
         if (!id) return null;
-        return { message: `${days.length} ${days.length === 1 ? "day" : "days"} changed in your plan.`, undo: () => undoSelf(id) };
+        return { message: `${days.length} ${days.length === 1 ? "day" : "days"} changed in your plan.`, undo: () => undoSelf(id), planRef: { store: "self", logId: id } };
     },
     log: () => planningLog(),
     undo: id => undoSelf(id)

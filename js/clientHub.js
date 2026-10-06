@@ -88,6 +88,7 @@ let planMounted = false;
 let profileMounted = false;
 let modelMounted = false;
 let planningMounted = false;
+let planningView = null;   // the Planning tab's handle (refreshes its planned weeks after a publish)
 let workspace = null;   // the plan workspace once the Plan tab has opened (a promise)
 let record = null;
 
@@ -109,7 +110,12 @@ function selectTab(name) {
             clientEmail: record.profile?.email || record.link?.clientEmail,
             firstName: firstName(),
             data: record,
-            onChange: () => { summarize(); renderAll(); }
+            onChange: () => { summarize(); renderAll(); },
+            // Weekly planning P3: what actually went out, against the week that was planned.
+            onPublished: header => import("./planningCycles.js")
+                .then(m => m.markPublished(clientUid, header))
+                .then(n => { if (n) planningView?.refreshHistory?.(); })
+                .catch(error => console.warn("Southbound: the planned week couldn't note the publish.", error?.code || error))
         }));
     }
     if (name === "model" && !modelMounted && record) {
@@ -159,8 +165,8 @@ async function mountHubPlanning() {
         ]);
         const first = firstName();
         let header = null;
-        mountPlanning($("hubPlanning"), {
-            who: "client", firstName: first, key: clientUid, scope: "all",
+        planningView = mountPlanning($("hubPlanning"), {
+            who: "client", firstName: first, key: clientUid, scope: "all", athleteUid: clientUid,
             async load(today) {
                 const { state } = await clientState(record, { clientUid, firstName: first, today });
                 header = currentPlan(record.coachingPlans || [], today);
@@ -182,7 +188,7 @@ async function mountHubPlanning() {
                     for (const key of Object.keys(plan)) delete plan[key];
                     Object.assign(plan, next);
                 }, `${days.length} ${days.length === 1 ? "day" : "days"} from the planned week. Not published yet.`);
-                return ok === false ? { message: "Couldn't open the plan to change it. Open it in the Plan tab and try again." } : { message: "" };
+                return ok === false ? { message: "Couldn't open the plan to change it. Open it in the Plan tab and try again.", failed: true } : { message: "", planRef: { store: "coachingPlans", planId: header.id, draft: true } };
             }
         });
     } catch (error) {

@@ -71,3 +71,13 @@
     .pl-day { grid-template-columns: 1fr; gap: 2px; }
     .pl-pri-item { padding-left: 44px; }
 }
+
+/* Why the coach kept a day (weekly planning P3) */
+.pl-reasons { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 0 40px; }
+.pl-reasons-q { font-size: 13px; color: var(--text-secondary, var(--stone)); margin-right: 4px; }
+.pl-reason { min-height: 32px; padding: 4px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 13px; cursor: pointer; }
+.pl-reason:hover { border-color: var(--primary); }
+.pl-reason.is-on { background: color-mix(in srgb, var(--primary) 18%, transparent); border-color: var(--primary); color: var(--primary-light); }
+.pl-reason-words { flex: 1 1 200px; min-width: 0; padding: 6px 10px; }
+.pl-log li span { min-width: 0; overflow-wrap: anywhere; line-height: 1.45; }
+@media (max-width: 600px) { .pl-reasons { margin-left: 0; } }

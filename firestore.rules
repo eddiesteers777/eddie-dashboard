@@ -1210,6 +1210,49 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ---- Weekly planning cycles (weekly planning P3) ----
+    // One record per athlete per planned week: the context the chatbot saw,
+    // the answers pasted back, the coach's call on each day and what was
+    // approved (js/planningCycle.js). Coach only, no client clause, like
+    // the drafts and masters. The athlete is a linked client, or the coach
+    // himself for his own training. The big parts are JSON strings so
+    // their size can be capped here.
+    function cycleText(d, key, max) {
+      return d.get(key, "") is string && d.get(key, "").size() <= max;
+    }
+
+    function validPlanningCycle(d, cycleId) {
+      return d.keys().hasOnly(["coachUid", "athleteUid", "weekOf", "weekTo", "version", "status",
+               "contextHash", "context", "proposals", "review", "approved", "outcome", "createdAt", "updatedAt"])
+        && d.keys().hasAll(["coachUid", "athleteUid", "weekOf", "weekTo", "version", "status", "updatedAt"])
+        && d.coachUid == request.auth.uid
+        && d.athleteUid is string && d.athleteUid.size() > 0 && d.athleteUid.size() <= 128
+        && d.weekOf is string && d.weekOf.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.weekTo is string && d.weekTo.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && cycleId == d.coachUid + '_' + d.athleteUid + '_' + d.weekOf
+        && d.version == 1
+        && d.status in ["open", "approved", "undone"]
+        && cycleText(d, "contextHash", 16)
+        && cycleText(d, "context", 60000)
+        && cycleText(d, "proposals", 80000)
+        && cycleText(d, "review", 20000)
+        && cycleText(d, "approved", 20000)
+        && cycleText(d, "outcome", 40000)
+        && (!("createdAt" in d) || d.createdAt is timestamp)
+        && d.updatedAt == request.time;
+    }
+
+    match /planningCycles/{cycleId} {
+      allow read, delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create, update: if isApprovedCoach()
+        && validPlanningCycle(request.resource.data, cycleId)
+        && (request.resource.data.athleteUid == request.auth.uid
+            || linked(request.auth.uid, request.resource.data.athleteUid))
+        && (resource == null || (resource.data.coachUid == request.auth.uid
+            && resource.data.athleteUid == request.resource.data.athleteUid
+            && resource.data.weekOf == request.resource.data.weekOf));
+    }
+
     // ---- Workout results: the client owns what they did ----
 
     function validResult(d) {

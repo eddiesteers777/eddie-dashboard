@@ -167,6 +167,8 @@
     "js/plannerEvents.js",
     "js/planningBrief.js",
     "js/planningContext.js",
+    "js/planningCycle.js",
+    "js/planningCycles.js",
     "js/planningData.js",
     "js/planningPage.js",
     "js/planningView.js",

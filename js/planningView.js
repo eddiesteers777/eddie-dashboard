@@ -11,9 +11,11 @@
        "coach-plan-prompts"[key], shared with the hub's Copy chatbot prompt),
        scope: "runs" | "all" (may the chatbot change strength),
        load(today, { from, to }) -> { state, plan, done:Set, record, paces, noPlan }
-       apply({ days, changed, checks, from, to }) -> { message, undo? }
-       log?() -> [{ id, at, from, to, choice, days }]   (self: recent applies)
+       apply({ days, changed, checks, from, to }) -> { message, undo?, planRef }
+       log?() -> [{ id, at, from, to, choice, days }]   (self: recent applies,
+                 the fallback history when planning cycles can't be read)
        undo?(id)
+       athleteUid: "self" | the client's uid (whose planning cycles)
      }
 
    The page: the week being planned (next 7 days / next Mon–Sun), what
@@ -25,6 +27,12 @@
    ticked days. Apply writes only the ticked days (Eddie: straight into
    his plan with Undo; a client: into the plan editor as a draft, with
    Undo, unpublished). Nothing goes anywhere until the coach copies it.
+
+   P3: each week is kept as a planning cycle (js/planningCycle.js, saved
+   by js/planningCycles.js, coach only): the context when it's copied,
+   the answer when it's read, and the coach's call on each changed day
+   (taken / kept yours, with an optional one-tap reason) when it's
+   applied. **Planned weeks** lists them.
 ========================================== */
 
 import { planningContext, planWindow, defaultMode } from "./planningContext.js";
@@ -33,6 +41,7 @@ import { dayLine, parseReply, applyReply, checkPlan } from "./planPrompt.js";
 import { compactChange } from "./coachPlanGenerator.js";
 import { icon } from "./icons.js";
 import { toast, loadingHtml } from "./ui.js";
+import { newCycle, withContext, withProposal, withApproval, withUndo, cycleSummary, REASONS } from "./planningCycle.js";
 
 const NOTES_KEY = "coach-plan-prompts";
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -66,6 +75,15 @@ export function mountPlanning(el, adapter) {
     let win = null;
     let read = null;      // the pasted answer, read
     let ticked = new Set();
+    let reasons = {};     // { date: { key, words } } for days the coach didn't take
+    let proposalId = "";
+    // Planning cycles (P3): this athlete's saved weeks, the one being planned, and why saving failed.
+    let store = null;     // js/planningCycles.js, once loaded
+    let uid = null;
+    let cycles = null;
+    let cycleError = "";
+    let saving = Promise.resolve();
+    let ready = null;     // loadCycles() in flight
 
     const notes = () => el.querySelector('[data-pl="notes"]')?.value ?? savedNotes(adapter.key);
 
@@ -86,7 +104,52 @@ export function mountPlanning(el, adapter) {
         context = planningContext(data.state, { from: win.from, to: win.to, notes: savedNotes(adapter.key), planLines: lines });
         read = null;
         render(pasted);
+        loadCycles();
     }
+
+    // ---------- planning cycles ----------
+
+    const athleteId = () => (adapter.athleteUid === "self" || !adapter.athleteUid ? uid : adapter.athleteUid);
+    const current = () => (cycles || []).find(c => c.weekOf === win.from) || null;
+
+    function loadCycles() {
+        ready = readCycles();
+        return ready;
+    }
+    async function readCycles() {
+        try {
+            store = store || await import("./planningCycles.js");
+            uid = uid || await store.myUid();
+            cycles = await store.listCycles(adapter.athleteUid || "self");
+            cycleError = "";
+        } catch (error) {
+            console.warn("Southbound: planned weeks couldn't be read.", error?.code || error);
+            cycleError = error?.code === "permission-denied" ? "rules" : "other";
+            cycles = cycles || null;
+        }
+        drawHistory();
+    }
+
+    // Change one cycle (default: this week's) and save it, one save at a time.
+    function record(change, target = null) {
+        // Still loading: save it once the store is there.
+        if (!uid || !store) { ready?.then(() => uid && store && record(change, target)); return null; }
+        const base = target || current() || newCycle({ coachUid: uid, athleteUid: athleteId(), from: win.from, to: win.to });
+        const next = change(base);
+        if (!next || next === base) return base;
+        if (base.createdAt) next.createdAt = base.createdAt;
+        cycles = [...(cycles || []).filter(c => c.id !== next.id), next].sort((a, b) => b.weekOf.localeCompare(a.weekOf));
+        saving = saving.then(() => store.saveCycle(next)).then(() => {
+            if (cycleError) { cycleError = ""; drawHistory(); }
+        }).catch(error => {
+            console.warn("Southbound: this planned week couldn't be saved.", error?.code || error);
+            cycleError = error?.code === "permission-denied" ? "rules" : "other";
+            drawHistory();
+        });
+        drawHistory();
+        return next;
+    }
+    const contextNow = () => ({ ...context, notes: String(notes()).trim().slice(0, 2000) });
 
     function fullPrompt() {
         const ctx = { ...context, notes: String(notes()).trim().slice(0, 2000) };
@@ -161,20 +224,48 @@ export function mountPlanning(el, adapter) {
                     <div data-pl="preview"></div>
                 </section>
 
-                ${self && adapter.log ? logHtml() : ""}
+                <section class="pl-card" data-pl-section="history" data-pl="history"></section>
             </div>`;
         import("./icons.js").then(m => m.hydrate()).catch(() => {});
     }
 
-    function logHtml() {
-        const log = adapter.log().slice(-5).reverse();
-        if (!log.length) return "";
-        return `<section class="pl-card" data-pl-section="log">
-            <h2 class="pl-h">Weeks you planned this way</h2>
-            <ul class="pl-log">${log.map(e => `
-                <li><span>${esc(new Date(e.at).toLocaleDateString("en-US", { month: "short", day: "numeric" }))} · ${esc(plural(e.days.length, "day"))} changed (${esc(shortDay(e.from))} – ${esc(shortDay(e.to))})${e.choice === "undone" ? " · undone" : ""}</span>
-                    ${e.choice === "applied" ? `<button type="button" class="sb-btn sb-btn-tertiary" data-pl-undo="${esc(e.id)}">Undo</button>` : ""}</li>`).join("")}</ul>
-        </section>`;
+    // The device's own log of Eddie's applies: the history when cycles can't be read.
+    function logItems() {
+        const log = (adapter.log?.() || []).slice(-5).reverse();
+        return log.map(e => `
+            <li><span>${esc(new Date(e.at).toLocaleDateString("en-US", { month: "short", day: "numeric" }))} · ${esc(plural(e.days.length, "day"))} changed (${esc(shortDay(e.from))} – ${esc(shortDay(e.to))})${e.choice === "undone" ? " · undone" : ""}</span>
+                ${e.choice === "applied" ? `<button type="button" class="sb-btn sb-btn-tertiary" data-pl-undo="${esc(e.id)}">Undo</button>` : ""}</li>`).join("");
+    }
+
+    const CYCLE_STATE = { "applied": "applied to your plan", "in a draft": "in a draft, not published yet", "published": "published", "undone": "undone", "answer read, not applied": "answer read, nothing applied", "brief copied": "brief copied" };
+
+    function drawHistory() {
+        const box = el.querySelector('[data-pl="history"]');
+        if (!box) return;
+        const applied = new Set((adapter.log?.() || []).filter(e => e.choice === "applied").map(e => e.id));
+        const list = (cycles || []).slice(0, 8);
+        const note = cycleError === "rules"
+            ? `<p class="pl-warn">${icon("info")} Planned weeks aren't being saved yet: the Firebase rules need the latest update published.</p>`
+            : cycleError ? `<p class="pl-note">Planned weeks couldn't be ${cycles ? "saved" : "read"} just now. Everything else works.</p>` : "";
+        const rows = list.map(c => {
+            const sm = cycleSummary(c);
+            const pub = c.approved?.published;
+            const bits = [CYCLE_STATE[sm.state] || sm.state];
+            if (pub) bits[0] = `published${pub.edited ? ` (${plural(pub.edited, "day")} edited after)` : ""}`;
+            if (sm.accepted || sm.kept) bits.push(`${sm.accepted} taken${sm.kept ? `, ${sm.kept} kept ${self ? "yours" : "as you had them"}` : ""}`);
+            if (sm.reasons.length) bits.push(sm.reasons.join(", "));
+            const logId = c.approved?.planRef?.store === "self" ? c.approved.planRef.logId : "";
+            return `<li data-cycle="${esc(c.id)}"><span><strong>${esc(shortDay(c.weekOf))} – ${esc(shortDay(c.weekTo))}</strong> · ${esc(bits.join(" · "))}</span>
+                ${c.status === "approved" && logId && applied.has(logId) ? `<button type="button" class="sb-btn sb-btn-tertiary" data-pl-undo="${esc(logId)}">Undo</button>` : ""}</li>`;
+        }).join("");
+        const fallback = !cycles && self ? logItems() : "";
+        box.hidden = !rows && !fallback && !note;
+        box.innerHTML = `
+            <h2 class="pl-h">Planned weeks</h2>
+            <p class="pl-sub">Each week you plan here is kept: what Southbound knew, the answer you pasted, and which days you took. ${self ? "" : `Only you see this; ${esc(name)} never does.`}</p>
+            ${note}
+            ${rows || fallback ? `<ul class="pl-log">${rows || fallback}</ul>` : ""}`;
+        import("./icons.js").then(m => m.hydrate()).catch(() => {});
     }
 
     // ---------- the pasted answer ----------
@@ -198,6 +289,10 @@ export function mountPlanning(el, adapter) {
         read.changed = read.days.filter(d => JSON.stringify(before.get(d.date)) !== JSON.stringify(after.get(d.date)))
             .map(d => ({ ...d, before: before.get(d.date), after: after.get(d.date) }));
         ticked = new Set(read.changed.map(d => d.date));
+        reasons = {};
+        const at = Date.now();
+        proposalId = `a${at.toString(36)}`;
+        record(c => withProposal(c.context ? c : withContext(c, contextNow()), read, { text, at }).cycle);
         drawPreview();
     }
 
@@ -227,6 +322,7 @@ export function mountPlanning(el, adapter) {
                             <span><strong>${esc(shortDay(d.date))}</strong> · ${esc(compactChange(d.before, d.after))}
                             <small>Now: ${esc(d.before?.type === "rest" ? "Rest" : `${Number(d.before?.miles) ? `${d.before.miles} mi ` : ""}${d.before?.session || ""}`)}<br>New: ${esc(d.after?.type === "rest" ? "Rest" : `${Number(d.after?.miles) ? `${d.after.miles} mi ` : ""}${d.text || d.after?.session || ""}`)}${d.note ? ` <em>(${esc(d.note)})</em>` : ""}${read.why?.[d.date] ? `<br>Why: ${esc(read.why[d.date])}` : ""}</small></span>
                         </label>
+                        ${ticked.has(d.date) ? "" : reasonChips(d.date)}
                     </li>`).join("")}</ul>
                 ${checks.length ? `<div class="pl-checks"><strong>${icon("alertTriangle")} Worth a look</strong><ul>${checks.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
                 ${probs.length ? `<div class="pl-checks is-info"><strong>${icon("info")} Not read exactly</strong><ul>${probs.join("")}</ul></div>` : ""}
@@ -239,6 +335,16 @@ export function mountPlanning(el, adapter) {
         import("./icons.js").then(m => m.hydrate()).catch(() => {});
     }
 
+    // Why the coach kept their day: one tap, optional, saved with the week.
+    function reasonChips(date) {
+        const r = reasons[date] || {};
+        return `<div class="pl-reasons" role="group" aria-label="Why keep ${esc(shortDay(date))} as it is">
+            <span class="pl-reasons-q">Why keep it? <small>(optional)</small></span>
+            ${REASONS.map(x => `<button type="button" class="pl-reason${r.key === x.key ? " is-on" : ""}" data-pl-reason="${esc(x.key)}" data-date="${esc(date)}" aria-pressed="${r.key === x.key}">${esc(x.label)}</button>`).join("")}
+            ${r.key === "other" ? `<input class="pl-input pl-reason-words" data-pl-words="${esc(date)}" maxlength="200" placeholder="In a few words" value="${esc(r.words || "")}">` : ""}
+        </div>`;
+    }
+
     async function apply() {
         const accepted = read.changed.filter(d => ticked.has(d.date));
         if (!accepted.length) return;
@@ -248,8 +354,9 @@ export function mountPlanning(el, adapter) {
         try {
             const result = await adapter.apply({ days: accepted, checks, from: win.from, to: win.to });
             if (!result) { btn.disabled = false; return; }
+            if (!result.failed) record(c => withApproval(c, { proposalId, taken: new Set(ticked), reasons, planRef: result.planRef || { store: self ? "self" : "coachingPlans" } }));
             // A client's draft: the plan editor shows its own toast with Undo.
-            if (result.message) toast(result.message, result.undo ? { action: { label: "Undo", onClick: async () => { await result.undo(); toast("Put back the way it was."); if (self) refresh(); } } } : {});
+            if (result.message) toast(result.message, result.undo ? { action: { label: "Undo", onClick: async () => { await undoApply(result.planRef?.logId, result.undo); toast("Put back the way it was."); if (self) refresh(); } } } : {});
             if (self) refresh();
             else {
                 el.querySelector('[data-pl="reply"]').value = "";
@@ -263,7 +370,17 @@ export function mountPlanning(el, adapter) {
         }
     }
 
+    // Eddie's Undo: the plan goes back, and the week's record says so.
+    async function undoApply(logId, run) {
+        const ok = await run();
+        const c = (cycles || []).find(x => x.approved?.planRef?.logId === logId);
+        if (ok !== false && c) record(x => withUndo(x), c);
+        return ok;
+    }
+
     el.addEventListener("input", ev => {
+        const words = ev.target.closest?.("[data-pl-words]");
+        if (words) { reasons[words.dataset.plWords] = { key: "other", words: words.value }; return; }
         if (ev.target.matches('[data-pl="notes"]')) {
             rememberNotes(adapter.key, ev.target.value);
             const out = el.querySelector('[data-pl="out"]');
@@ -286,8 +403,17 @@ export function mountPlanning(el, adapter) {
         const undo = ev.target.closest("[data-pl-undo]");
         if (undo && adapter.undo) {
             undo.disabled = true;
-            if (await adapter.undo(undo.dataset.plUndo)) toast("Put back the way it was.");
+            if (await undoApply(undo.dataset.plUndo, () => adapter.undo(undo.dataset.plUndo))) toast("Put back the way it was.");
             return refresh();
+        }
+        const reason = ev.target.closest("[data-pl-reason]");
+        if (reason && read) {
+            const date = reason.dataset.date;
+            reasons[date] = reasons[date]?.key === reason.dataset.plReason ? undefined : { key: reason.dataset.plReason, words: reasons[date]?.words || "" };
+            if (!reasons[date]) delete reasons[date];
+            drawPreview();
+            if (reasons[date]?.key === "other") el.querySelector(`[data-pl-words="${date}"]`)?.focus();
+            return;
         }
         const act = ev.target.closest("[data-pl-act]")?.dataset.plAct;
         if (!act) return;
@@ -298,6 +424,7 @@ export function mountPlanning(el, adapter) {
             const out = el.querySelector('[data-pl="out"]');
             out.value = text;
             out.dataset.kind = act === "copy" ? "prompt" : "brief";
+            record(c => withContext(c, contextNow()));
             const copied = await copyText(text);
             ok.hidden = false;
             ok.innerHTML = copied
@@ -316,5 +443,5 @@ export function mountPlanning(el, adapter) {
     });
 
     refresh();
-    return { refresh };
+    return { refresh, refreshHistory: loadCycles };
 }
