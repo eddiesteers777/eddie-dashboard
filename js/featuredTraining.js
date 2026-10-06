@@ -209,7 +209,7 @@ function shareFeatured(item) {
             runMeters: item.run.distance,
             runSec: item.run.duration
         });
-        return "execution";
+        return item.id;
     }
 
     const key = registerRunShare(item.run, {
@@ -220,7 +220,7 @@ function shareFeatured(item) {
         runMeters: item.run.distance,
         runSec: item.run.duration
     });
-    return key ? "summary" : null;
+    return key || null;
 }
 
 function cardHtml(item) {
@@ -228,7 +228,7 @@ function cardHtml(item) {
     const actual = Number(run.distance) / MILE;
     const paceSec = run.pace_seconds_per_mile ||
         (run.duration && run.distance ? Number(run.duration) / actual : null);
-    const shareKind = shareFeatured(item);
+    const shareKey = shareFeatured(item);
 
     return [
         '<article class="ft-item">',
@@ -245,7 +245,7 @@ function cardHtml(item) {
         '</div></div>',
         '<div class="ft-actions">',
         '<a class="sb-btn sb-btn-tertiary ft-view" href="marathon.html">View plan</a>',
-        shareKind ? '<button type="button" class="sb-btn sb-btn-secondary ft-share" data-ft-share="' + esc(item.id) + '">Share</button>' : "",
+        shareKey ? '<button type="button" class="sb-btn sb-btn-secondary ft-share" data-ex-share="' + esc(shareKey) + '">Share</button>' : "",
         '</div></article>'
     ].join("");
 }
@@ -322,41 +322,7 @@ export function mountFeaturedTraining(options) {
             });
         }
 
-        if (!host.dataset.shareBound) {
-            host.dataset.shareBound = "true";
-            host.addEventListener("click", function (event) {
-                const btn = event.target.closest("[data-ft-share]");
-                if (!btn) return;
-                const item = featuredTrainingItems(today, { days: 42, limit: 8 })
-                    .find(function (x) { return x.id === btn.dataset.ftShare; });
-                const saved = item?.run?.labelId ? laps()[item.run.labelId] : null;
-                const structured = item?.planDay?.workout?.sets?.some(function (s) {
-                    return Number(s.repeat) > 1 || s.parts || s.pace || s.repTime ||
-                        (s.effort && !["easy", "recovery"].includes(s.effort));
-                });
-                if (item && saved?.laps?.length && structured && item.run.source !== "strava") {
-                    registerShare(reconstructWorkout(item.planDay.workout, saved, {
-                        plannedWorkoutId: item.id,
-                        activityId: "c:" + item.run.labelId
-                    }), {
-                        date: item.date,
-                        name: marathonTitle(item.day.session, item.plannedMiles),
-                        category: item.category,
-                        runMeters: item.run.distance,
-                        runSec: item.run.duration
-                    });
-                } else if (item) {
-                    registerRunShare(item.run, {
-                        date: item.date,
-                        name: marathonTitle(item.day.session, item.plannedMiles),
-                        category: item.category,
-                        plannedMiles: item.plannedMiles,
-                        runMeters: item.run.distance,
-                        runSec: item.run.duration
-                    });
-                }
-            });
-        }
+
     };
 
     render();
