@@ -55,6 +55,7 @@ export function autoRunCategory(run, planDay, planCategory = null) {
     // Explicit workout language in the completed activity is useful even when
     // the run was moved or never had a matching plan entry.
     const speedWords = /\b(intervals?|repeats?|reps?|fartlek|tempo|threshold|progression|speed\s+work|hill\s+repeats?|track|marathon\s+pace|half\s+marathon\s+pace|5k\s+pace|10k\s+pace)\b/i;
+    const repeatFormat = /\b\d+\s*[x×]\s*\d+/i;
     const longWords = /\blong\s+run\b|\bmarathon\s+long\b/i;
 
     // A matched plan day is stronger than a vague activity name such as
@@ -64,7 +65,7 @@ export function autoRunCategory(run, planDay, planCategory = null) {
         return planCategory;
     }
 
-    if (speedWords.test(name)) return FEATURED_CATEGORIES.SPEED_WORK;
+    if (speedWords.test(name) || repeatFormat.test(name)) return FEATURED_CATEGORIES.SPEED_WORK;
     if (longWords.test(name)) return FEATURED_CATEGORIES.LONG_RUN;
 
     // Conservative fallback for genuinely unplanned long efforts.
