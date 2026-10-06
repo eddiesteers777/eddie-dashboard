@@ -16,7 +16,6 @@ import { kindOfDay } from "./readiness.js";
 import { allRuns, fetchLaps, laps } from "./trendsData.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { registerShare, registerRunShare } from "./executionShare.js";
-import { pushToCloud } from "./cloudSync.js";
 
 export const FEATURED_KEY = "featured-training-categories";
 export const FEATURED_CATEGORIES = Object.freeze({
@@ -147,7 +146,7 @@ export function saveCategoryOverride(id, category) {
     else delete overrides[id];
 
     localStorage.setItem(FEATURED_KEY, JSON.stringify(overrides));
-    pushToCloud().catch(function () {});
+    import("./cloudSync.js").then(function (m) { return m.pushToCloud(); }).catch(function () {});
     return overrides;
 }
 
