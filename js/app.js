@@ -119,16 +119,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
 
     const featuredSection = document.getElementById("featuredTraining");
-    if (featuredSection && PERSONAL_PLAN) {
-        featuredSection.hidden = false;
-        import("./featuredTraining.js")
-            .then(({ mountFeaturedTraining }) => mountFeaturedTraining({
-                host: document.getElementById("featuredTrainingBody"),
-                manageButton: document.getElementById("featuredTrainingManage"),
-                today: localIso(new Date())
-            }))
+    if (featuredSection) {
+        // PERSONAL_PLAN is evaluated synchronously when this module starts,
+        // but the account role is learned asynchronously from the profile.
+        // Use the profile access result here so a coach's Featured Runs
+        // section cannot disappear on a fresh device before the role cache
+        // has been populated.
+        profileAccess()
+            .then(access => {
+                if (!access?.isCoach) return;
+                featuredSection.hidden = false;
+                return import("./featuredTraining.js")
+                    .then(({ mountFeaturedTraining }) => mountFeaturedTraining({
+                        host: document.getElementById("featuredTrainingBody"),
+                        manageButton: document.getElementById("featuredTrainingManage"),
+                        today: localIso(new Date())
+                    }));
+            })
             .catch(error => {
-                console.warn("Southbound: Featured Training failed to load.", error);
+                console.warn("Southbound: Featured Runs failed to load.", error);
                 featuredSection.hidden = true;
             });
     }
