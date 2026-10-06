@@ -18,7 +18,7 @@ import { HEALTH_KEY, healthDays, mergeHealth } from "./corosHealth.js";
 import { READINESS_KEY } from "./readiness.js";
 import { callTool, isCorosConnected } from "./corosClient.js";
 import { recompute, load, pushCloud, isoDate } from "./readinessData.js";
-import { parseLaps, addDays } from "./trends.js";
+import { parseLapGroups, addDays } from "./trends.js";
 import { combineRuns } from "./stravaHistory.js";
 import { loadStrava } from "./stravaStore.js";
 
@@ -94,7 +94,9 @@ export async function fetchLaps(items, { max = 18, onBatch } = {}) {
         const r = todo[n].run;
         try {
             const result = await callTool("queryActivityLapData", { labelId: String(r.labelId), sportType: Number(r.sportType) || 100 });
-            saved[r.labelId] = { date: r.date, laps: parseLaps(result) };
+            const parsed = parseLapGroups(result);
+            // kind: "laps" (the watch's workout steps / lap button) or "auto" (every mile).
+            saved[r.labelId] = { date: r.date, laps: parsed.laps, ...(parsed.kind ? { kind: parsed.kind } : {}) };
             lapStatus.delete(String(r.labelId));
             got++;
         } catch (error) {

@@ -254,6 +254,7 @@
     "js/weeklyLoad.js",
     "js/weeklyStory.js",
     "js/workoutBuilder.js",
+    "js/workoutExecution.js",
     "js/workoutFuel.js",
     "js/workoutPage.js",
     "js/workoutResults.js"

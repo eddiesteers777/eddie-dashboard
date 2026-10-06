@@ -102,21 +102,31 @@ export function aerobicTrend(runs, { hrCap = 155, at = 140 } = {}) {
  * used, other groups: those are the reps, so they're preferred.
  */
 export function parseLaps(reply) {
+    return parseLapGroups(reply).laps;
+}
+
+/**
+ * The same, saying which group was kept: kind "laps" (a workout run on the
+ * watch, or the lap button) or "auto" (COROS's every-mile laps), and
+ * COROS's own group type. -> { kind, type, laps }
+ */
+export function parseLapGroups(reply) {
     let data = reply;
     try {
         const text = reply?.content?.find?.(c => typeof c?.text === "string")?.text;
         if (text) { data = JSON.parse(text); if (typeof data === "string") data = JSON.parse(data); }
-    } catch { return []; }
+    } catch { return { kind: null, type: null, laps: [] }; }
     const groups = (data?.lapGroups || []).filter(g => (g.laps || []).length);
-    if (!groups.length) return [];
+    if (!groups.length) return { kind: null, type: null, laps: [] };
     const manual = groups.find(g => g.type !== 10 && g.laps.length >= 2);
     const group = manual || groups[0];
-    return group.laps.map((l, idx) => ({
+    const laps = group.laps.map((l, idx) => ({
         i: l.lapIndex ?? idx + 1,
         m: Math.round((Number(l.distance) || 0) / 100),             // centimeters -> meters
         s: Math.round((Number(l.time) || 0) * 10) / 10,
         hr: Number(l.avgHr) || null
     })).filter(l => l.m > 0 && l.s > 0);
+    return { kind: group.type === 10 ? "auto" : "laps", type: group.type ?? null, laps };
 }
 
 const lapPace = l => l.s / (l.m / MILE);

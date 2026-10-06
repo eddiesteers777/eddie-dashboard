@@ -85,11 +85,17 @@ function exactTarget(text, repMiles) {
     let lo = m ? Number(m[1]) * 60 + Number(m[2]) : Number(secsOnly[1]);
     let hi = m && m[3] ? Number(m[3]) * 60 + Number(m[4]) : lo;
     const perKm = m && /^k/i.test(m[5] || "");
+    let repTime = null;
     if (perKm) { lo *= 1.609344; hi *= 1.609344; }
     // Under 4:00 can't be a per-mile pace here: it's the time for one rep.
-    else if (repMiles && repMiles < 1 && lo < 240) { lo /= repMiles; hi /= repMiles; }
+    // The rep time itself is kept too (repTime), so planned vs actual can
+    // compare 2:27 with the lap's time instead of a rounded pace.
+    else if (repMiles && repMiles < 1 && lo < 240) {
+        repTime = lo === hi ? mmss(lo) : `${mmss(Math.min(lo, hi))}-${mmss(Math.max(lo, hi))}`;
+        lo /= repMiles; hi /= repMiles;
+    }
     if (lo < 180 || hi > 1500) return null;
-    return { pace: Math.round(lo) === Math.round(hi) ? mmss(lo) : `${mmss(Math.min(lo, hi))}-${mmss(Math.max(lo, hi))}` };
+    return { pace: Math.round(lo) === Math.round(hi) ? mmss(lo) : `${mmss(Math.min(lo, hi))}-${mmss(Math.max(lo, hi))}`, ...(repTime ? { repTime } : {}) };
 }
 
 function targetFor(text, table, repMiles) {
