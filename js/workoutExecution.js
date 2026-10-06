@@ -177,9 +177,13 @@ function matchCost(step, laps, kind, workBefore) {
     const t = step.target || (step.repTime && step.distanceM ? { lo: step.repTime.lo / (step.distanceM / MILE), hi: step.repTime.hi / (step.distanceM / MILE) } : null);
     const offBy = p => (p < t.lo ? Math.log(t.lo / p) : p > t.hi ? Math.log(p / t.hi) : 0);
     if (t && pace) {
-        // Mile laps joined into one step: each lap has to fit, so an easy mile can't hide in an average.
-        if (laps.length > 1 && (kind === "auto" || laps.every(splitLap))) c += laps.reduce((sum, l) => sum + Math.max(0, offBy(lapPace(l.m, l.s)) - 0.03) * 8, 0);
-        else c += Math.max(0, offBy(pace) - 0.06) * 8;
+        // Laps joined into one step: each lap has to fit the target on its own, so a jog lap
+        // (a recovery cut short) or an easy mile can't hide in a rep's average. Mile laps are
+        // held closer; a lap of a few seconds (a double press) doesn't count either way.
+        if (laps.length > 1) {
+            const free = kind === "auto" || laps.every(splitLap) ? 0.03 : 0.06;
+            c += laps.filter(l => !tinyLap(l)).reduce((sum, l) => sum + Math.max(0, offBy(lapPace(l.m, l.s)) - free) * 8, 0);
+        } else c += Math.max(0, offBy(pace) - 0.06) * 8;
     }
     if (step.kind === "recovery" && workBefore && pace && pace < workBefore * 1.05) c += 1;
     return c;

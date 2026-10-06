@@ -169,6 +169,8 @@ function render() {
     const timed = timedMinutes(workout);
     const item = buildDay(date, weekInputs(), isoDate(new Date())).items.find(i => i.source?.programId === program.id && i.kind === "run");
     const done = state.result ? state.result.status === "completed" : Boolean(day.completed);
+    // Redrawing (the log result arriving) keeps "Rep by rep" open if it was.
+    const repsOpen = Boolean($("woExecution")?.querySelector(".ex-detail")?.open);
 
     $("woBody").innerHTML = `
         <section class="wo-head">
@@ -205,6 +207,7 @@ function render() {
         ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}
         ${item && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="calendar">${icon("calendar")} Add to calendar</button>` : ""}
         ${state.result ? "" : corosHtml()}`;
+    if (repsOpen) $("woExecution")?.querySelector(".ex-detail")?.setAttribute("open", "");
 }
 
 $("woBody").addEventListener("click", async event => {

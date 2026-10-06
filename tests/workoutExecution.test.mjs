@@ -227,3 +227,17 @@ test("a long block run with the lap button every mile: the six laps join into th
     assert.equal(x.overallStatus, "completed");
     assert.equal(x.matchConfidence, "approximate", "laps joined: not exact");
 });
+
+test("a recovery cut short before the next block never gets folded into it (the Oct 6 threshold mile)", () => {
+    for (const [m, s] of [[150, 60], [100, 40]]) {
+        n = 0;
+        const laps = [lap(3219, 1020, 135)];
+        [142, 146, 142, 146, 144, 141].forEach((t, r) => { laps.push(lap(600, t, 168)); laps.push(r < 5 ? lap(330, 120, 141) : lap(m, s, 141)); });
+        laps.push(lap(1609, 397, 170), lap(2414, 765, 140));
+        const x = reconstructWorkout(EXAMPLE, { laps, kind: "laps" });
+        const thr = x.steps.find(st => st.id === "s2.r1");
+        assert.deepEqual(thr.lapIndexes, [14], `the mile is its own lap (jog cut to ${s} s)`);
+        assert.equal(thr.normalizedSec, 397.1, "6:37, not the jog averaged in");
+        assert.equal(thr.deltaSec, -30.9);
+    }
+});
