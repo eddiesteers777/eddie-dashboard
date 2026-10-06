@@ -39,6 +39,12 @@ test("the plan reads into steps: rep time kept as written, recovery after the la
     assert.equal(steps[0].kind, "warmup");
 });
 
+test("warm-ups, cool-downs and recoveries show pace but are never judged", () => {
+    const x = reconstructWorkout(EXAMPLE, { laps: exampleLaps(), kind: "laps" });
+    for (const s of x.steps.filter(s => s.kind !== "work")) assert.equal(s.verdict, null, s.id);
+    assert.ok(x.steps[0].actual.paceSec > 0);
+});
+
 test("Eddie's example, run as a workout on the watch: rep by rep, exact", () => {
     const laps = exampleLaps({ reps: [143, 146, 144, 148, 145, 146], threshold: 426 });
     const x = reconstructWorkout(EXAMPLE, { laps, kind: "laps" }, { plannedWorkoutId: "marathon|2026-10-13", activityId: "c:123" });
@@ -64,7 +70,7 @@ test("Eddie's example, run as a workout on the watch: rep by rep, exact", () => 
     assert.equal(set.avgDelta, -1.7);
     assert.deepEqual([set.within, set.fast, set.slow], [3, 3, 0]);
     assert.deepEqual(x.targetCompliance, { judged: 7, within: 4, fast: 3, slow: 0, pct: 57 });
-    assert.equal(x.read[0], "Every rep and work step done.");
+    assert.equal(x.read[0], "Every rep and block done.");
     assert.match(x.read[1], /^6 × 600 m \(target 2:27\): averaged 2:25\.3; 3 of 6 within target \(3 fast\); 5 s from fastest to slowest, slowing about 2 s from the first reps to the last\.$/);
     assert.match(x.read[2], /^1 mi \(target 7:08–7:08\)|^1 mi.*7:06.*within target/);
     assert.ok(x.read.some(l => /Faster than the target isn't better/.test(l)), "fast reps aren't praised");
@@ -196,4 +202,16 @@ test("lap groups keep their kind; clock and delta words", () => {
     assert.equal(clockText(3725), "1:02:05");
     assert.equal(deltaText(-4.2), "0:04 fast");
     assert.equal(deltaText(0.3), "on target");
+});
+
+test("mile laps: a block that starts and ends on a mile is found by its pace, lap by lap", () => {
+    const w = planDayFromMarathon({ session: "6mi @ Marathon Pace", miles: 10, pace: "MP" }, PACES).workout;
+    const laps = Array.from({ length: 10 }, (_, k) => ({ i: k + 1, m: 1609, s: k < 2 || k > 7 ? 505 : 422, hr: 150 }));
+    const x = reconstructWorkout(w, { laps, kind: "auto" });
+    const block = x.steps.find(s => s.kind === "work");
+    assert.deepEqual(block.lapIndexes, [3, 4, 5, 6, 7, 8], "the six fast miles, not an easy one averaged in");
+    assert.equal(block.verdict, "within");
+    assert.equal(x.matchConfidence, "low", "mile laps are never more than a rough match");
+    assert.match(x.read[1], /^6 mi \(target 6:58–7:05\/mi\): 42:13 \(7:02\/mi\), within target\.$/);
+    assert.match(x.read.at(-1), /only mile laps/);
 });

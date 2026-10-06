@@ -18,6 +18,8 @@ import { syncStrava, STRAVA_EVENT } from "./stravaStore.js";
 import { loadSettings, loadCheckins, isoDate } from "./readinessData.js";
 import { kindChip } from "./analyticsSummary.js";
 import { isCorosConnected } from "./corosClient.js";
+import { reconstructWorkout } from "./workoutExecution.js";
+import { executionHtml, executionClass } from "./executionView.js";
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const day = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -47,6 +49,15 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 function workoutRow(w, saved) {
     if (!w.run) return `<li class="tr-work"><div class="tr-work-top"><strong>${esc(w.title)}</strong><span>${weekday(w.date)}</span></div><small class="tr-miss">No COROS run that day.</small></li>`;
     const lapData = saved[w.run.labelId]?.laps;
+    // A structured workout with laps: rebuilt step by step (js/workoutExecution.js).
+    const hasWork = w.workout?.sets?.some(s => s.pace || s.repTime || (s.effort && s.effort !== "easy" && s.effort !== "recovery") || s.parts);
+    if (lapData?.length && hasWork && w.run.source !== "strava") {
+        const x = reconstructWorkout(w.workout, saved[w.run.labelId], { plannedWorkoutId: w.id, activityId: `c:${w.run.labelId}` });
+        const lapRows = lapData.map(l => `<tr><td>${l.i}</td><td>${l.m >= 1000 ? `${(l.m / 1609.344).toFixed(2)} mi` : `${l.m} m`}</td><td>${mmss(l.s)}</td><td>${mmss(l.s / (l.m / 1609.344))}</td><td>${l.hr ?? "–"}</td></tr>`).join("");
+        return `<li class="tr-work ${executionClass(x)}"><div class="tr-work-top"><strong>${esc(w.title)}</strong><span>${weekday(w.date)} · ${mi(w.runMiles)} of ${mi(w.plannedMiles)} mi</span></div>
+            ${executionHtml(x)}
+            <details class="tr-laps"><summary>All laps from COROS</summary><table><thead><tr><th>Lap</th><th>Distance</th><th>Time</th><th>Pace</th><th>HR</th></tr></thead><tbody>${lapRows}</tbody></table></details></li>`;
+    }
     const c = lapData?.length ? checkWorkout(w.sets, lapData) : null;
     // Mile-long laps read as miles (a marathon-pace run, mile repeats); anything else as reps.
     const unit = c?.laps.filter(l => l.work).every(l => Math.abs(l.m - 1609) < 60) ? "miles" : "reps";
@@ -76,7 +87,7 @@ function workoutsPanel(today) {
     const rows = items.map(w => workoutRow(w, saved));
     const more = rows.length > SHOW_WORKOUTS
         ? `<details class="tr-more"><summary>${plural(rows.length - SHOW_WORKOUTS, "older workout", "older workouts")}</summary><ul class="tr-works">${rows.slice(SHOW_WORKOUTS).join("")}</ul></details>` : "";
-    return panel("trendsWorkouts", "Key workouts", "Each quality and long-run day of the last 6 weeks: the plan's target pace against your laps.",
+    return panel("trendsWorkouts", "Key workouts", "Each quality and long-run day of the last 6 weeks: the plan step by step against your laps.",
         `<ul class="tr-works">${rows.slice(0, SHOW_WORKOUTS).join("")}</ul>${more}`, "measured");
 }
 

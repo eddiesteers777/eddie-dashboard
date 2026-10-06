@@ -140,7 +140,7 @@ WorkoutExecution {
    - `parseLapGroups` + `kind` saved on new `coros-laps` entries;
    - unit tests.
    - Nothing on screen changed. COROS course sending is unchanged (its tests pass).
-2. **Completed view for Eddie:** a "How it went" card on Analytics' Key workouts and on the Marathon day (rep table, Read, confidence); `keyWorkouts` carries the whole workout.
+2. **Completed view for Eddie — built (2026-10-06):** a "How it went" card on Analytics' Key workouts and on the Marathon day (rep table, Read, confidence); `keyWorkouts` carries the whole workout.
 3. **Swap the engines over:**
    - `executionSummary` / P4 / Weekly Review read the execution, with a before/after on his data;
    - `checkWorkout` stays for the old lap table until everything has moved.

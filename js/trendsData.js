@@ -63,7 +63,7 @@ export function keyWorkouts(today = isoDate(new Date()), { days = 42 } = {}) {
             const kind = kindOfDay(day, planDay);
             if (kind !== "quality" && kind !== "long" && kind !== "race") return;
             const run = runs.filter(r => r.date === date).sort((a, b) => b.distance - a.distance)[0] || null;
-            out.push({ date, kind, title: day.session, plannedMiles: Number(day.miles) || 0, sets: planDay?.workout?.sets || [], run, runMiles: run ? run.distance / MILE : 0 });
+            out.push({ id: `marathon|${date}`, date, kind, title: day.session, plannedMiles: Number(day.miles) || 0, sets: planDay?.workout?.sets || [], workout: planDay?.workout || null, run, runMiles: run ? run.distance / MILE : 0 });
         });
     });
     return out.sort((a, b) => b.date.localeCompare(a.date));

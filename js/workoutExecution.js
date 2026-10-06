@@ -171,9 +171,11 @@ function matchCost(step, laps, kind, workBefore) {
     if (laps.length > 1) c += kind === "auto" ? 0 : 0.6 * (laps.length - 1);
     const pace = lapPace(m, s);
     const t = step.target || (step.repTime && step.distanceM ? { lo: step.repTime.lo / (step.distanceM / MILE), hi: step.repTime.hi / (step.distanceM / MILE) } : null);
+    const offBy = p => (p < t.lo ? Math.log(t.lo / p) : p > t.hi ? Math.log(p / t.hi) : 0);
     if (t && pace) {
-        const off = pace < t.lo ? Math.log(t.lo / pace) : pace > t.hi ? Math.log(pace / t.hi) : 0;
-        c += Math.max(0, off - 0.06) * 8;
+        // Mile laps joined into one step: each lap has to fit, so an easy mile can't hide in an average.
+        if (kind === "auto" && laps.length > 1) c += laps.reduce((sum, l) => sum + Math.max(0, offBy(lapPace(l.m, l.s)) - 0.03) * 8, 0);
+        else c += Math.max(0, offBy(pace) - 0.06) * 8;
     }
     if (step.kind === "recovery" && workBefore && pace && pace < workBefore * 1.05) c += 1;
     return c;
@@ -261,19 +263,20 @@ function compare(step, laps, kind, tol) {
     // Target vs actual, from seconds and meters (never from rounded paces).
     const rangePace = step.target;
     const rangeTime = step.repTime && step.distanceM ? step.repTime : null;
-    if ((rangePace || rangeTime) && paceSec && out.status === "done") {
+    // Only work is judged on pace: warm-ups, cool-downs and recoveries show their pace, nothing more.
+    if (step.kind === "work" && (rangePace || rangeTime) && paceSec && out.status === "done") {
         if (step.distanceM) {
             const miles = step.distanceM / MILE;
             const norm = s * step.distanceM / m;                     // the lap's time at the planned distance
             const t = rangeTime || { lo: rangePace.lo * miles, hi: rangePace.hi * miles };
             const deltaSec = norm < t.lo ? norm - t.lo : norm > t.hi ? norm - t.hi : 0;
-            out.target = { lo: r1(t.lo), hi: r1(t.hi), kind: rangeTime ? "time" : "pace" };
+            out.targetSec = { lo: r1(t.lo), hi: r1(t.hi), kind: rangeTime ? "time" : "pace" };
             out.normalizedSec = r1(norm);
             out.deltaSec = r1(deltaSec);
             out.deltaPace = r1(deltaSec / miles);
         } else {
             const deltaPace = paceSec < rangePace.lo ? paceSec - rangePace.lo : paceSec > rangePace.hi ? paceSec - rangePace.hi : 0;
-            out.target = { lo: rangePace.lo, hi: rangePace.hi, kind: "pace" };
+            out.targetSec = null;   // a timed step is judged on pace (step.target)
             out.deltaSec = null;
             out.deltaPace = r1(deltaPace);
         }
@@ -406,7 +409,8 @@ function setLine(st, steps) {
     const bits = [];
     if (single) {
         const s = reps.find(x => x.status === "done" || x.status === "partial");
-        const time = s.normalizedSec != null ? clockText(s.normalizedSec, { tenths: s.distanceM < 1000 }) : s.actual.paceSec ? `${clockText(s.actual.paceSec)}/mi` : clockText(s.actual.seconds);
+        const long = s.distanceM > MILE * 1.05;
+        const time = s.normalizedSec != null ? `${clockText(s.normalizedSec, { tenths: s.distanceM < 1000 })}${long ? ` (${clockText(s.actual.paceSec)}/mi)` : ""}` : s.actual.paceSec ? `${clockText(s.actual.paceSec)}/mi` : clockText(s.actual.seconds);
         bits.push(`${time}${s.verdict ? `, ${s.verdict === "within" ? "within target" : deltaText(s.deltaSec ?? s.deltaPace) + (s.deltaSec == null ? " per mile" : "")}` : ""}${s.status === "partial" ? ` (${s.notes[0]})` : ""}`);
     } else {
         if (st.avgSec != null) bits.push(`averaged ${clockText(st.avgSec, { tenths: st.avgSec < 600 })}`);
@@ -436,13 +440,16 @@ export function executionRead(x) {
         const work = x.steps.filter(s => s.kind === "work");
         const issues = work.filter(s => s.status !== "done" && s.status !== "unobserved")
             .map(s => `${s.of > 1 ? `rep ${s.rep}` : s.amount} ${s.status === "partial" ? s.notes[0] : "missed"}`);
-        lines.push(c.done === c.planned ? "Every rep and work step done." : `${c.text}${issues.length ? ` (${issues.slice(0, 3).join(", ")})` : ""}.`);
+        const reps = work.some(s => s.of > 1), blocks = work.some(s => s.of === 1);
+        lines.push(c.done === c.planned ? (reps && blocks ? "Every rep and block done." : reps ? "Every rep done." : "The work was done in full.") : `${c.text}${issues.length ? ` (${issues.slice(0, 3).join(", ")})` : ""}.`);
     }
     for (const st of x.sets) { const l = setLine(st, x.steps); if (l) lines.push(l); }
     if (x.targetCompliance && x.targetCompliance.within < x.targetCompliance.judged && x.targetCompliance.fast > x.targetCompliance.slow) {
         lines.push("Faster than the target isn't better here: the session asks for that pace.");
     }
     if (x.matchConfidence === "approximate") lines.push("Laps matched approximately (an extra lap press, GPS drift or a step not run as planned).");
-    if (x.matchConfidence === "low") lines.push("The laps don't line up well with the plan, so treat these numbers as rough.");
+    if (x.matchConfidence === "low") lines.push(x.source.kind === "auto"
+        ? "COROS has only mile laps for this run, so only the parts that start and end on a mile are measured; treat them as rough."
+        : "The laps don't line up well with the plan, so treat these numbers as rough.");
     return lines;
 }
