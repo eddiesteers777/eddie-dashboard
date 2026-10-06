@@ -17,7 +17,8 @@
                   +1.0 = "costing more than usual".
      quality HR   heart rate on quality reps (laps) against the athlete's
                   own reps at that speed over the 8 weeks before.
-     execution    planned reps on target / too fast / too slow (checkWorkout).
+     execution    planned reps on target / too fast / too slow, step by step from
+                  the laps (js/workoutExecution.js; checkWorkout without a structure).
      decoupling   long runs with laps: efficiency, second half vs first.
    Reading: the combination, not a single index, including the ambiguous
    rows (HR down + effort up can be deep fatigue). And the dose test
@@ -28,8 +29,9 @@
 import { addDays } from "./athleteLedger.js";
 import { loadState } from "./loadState.js";
 import { checkWorkout } from "./trends.js";
+import { reconstructWorkout } from "./workoutExecution.js";
 
-export const RESPONSE_VERSION = "0.2.0";
+export const RESPONSE_VERSION = "0.3.0";   // 0.3.0: key-workout execution step by step (js/workoutExecution.js)
 const MILE = 1609.344;
 const DAY = 864e5;
 
@@ -257,18 +259,35 @@ export function qualityHr(doses, laps, anchors, today) {
 
 // ---------- execution and long-run drift ----------
 
-/** keyWork: [{ date, title, kind, sets, run: { labelId } }]; laps by labelId. */
+/**
+ * keyWork: [{ date, title, kind, sets, workout?, run: { labelId } }]; laps by labelId.
+ * A day with its structured workout is rebuilt step by step (js/workoutExecution.js):
+ * work = the work steps judged on pace, plus planned / done / partial / missed, the
+ * completion line and how sure the matching is. Without one, the old lap check.
+ */
 export function executionSummary(keyWork, lapsByLabel, today, { days = 42 } = {}) {
     const rows = [];
     for (const w of keyWork || []) {
         if (ageDays(w.date, today) >= days || w.date > today) continue;
-        const ls = w.run?.labelId != null ? lapsByLabel?.[w.run.labelId]?.laps : null;
+        const entry = w.run?.labelId != null ? lapsByLabel?.[w.run.labelId] : null;
+        const ls = entry?.laps;
         if (!ls?.length) continue;
+        if (w.workout?.sets?.length) {
+            const x = reconstructWorkout(w.workout, entry, { plannedWorkoutId: w.id || null, activityId: `c:${w.run.labelId}` });
+            const t = x.targetCompliance, c = x.completion;
+            if (!t?.judged) continue;
+            rows.push({
+                date: w.date, title: w.title, work: t.judged, onTarget: t.within, fast: t.fast, slow: t.slow,
+                planned: c.planned, done: c.done, partial: c.partial, missed: c.missed,
+                completion: c.text, confidence: x.matchConfidence, method: "steps"
+            });
+            continue;
+        }
         const c = checkWorkout(w.sets, ls);
-        if (c.target && c.work) rows.push({ date: w.date, title: w.title, work: c.work, onTarget: c.onTarget, fast: c.fast, slow: c.slow });
+        if (c.target && c.work) rows.push({ date: w.date, title: w.title, work: c.work, onTarget: c.onTarget, fast: c.fast, slow: c.slow, method: "laps" });
     }
-    const t = k => rows.reduce((s, r) => s + r[k], 0);
-    return { sessions: rows.length, work: t("work"), onTarget: t("onTarget"), fast: t("fast"), slow: t("slow"), rows };
+    const t = k => rows.reduce((s, r) => s + (r[k] || 0), 0);
+    return { sessions: rows.length, work: t("work"), onTarget: t("onTarget"), fast: t("fast"), slow: t("slow"), planned: t("planned"), done: t("done"), partial: t("partial"), missed: t("missed"), rows };
 }
 
 /** Long runs (75+ min) with laps: efficiency (speed per beat), second half vs first, as % lost. */

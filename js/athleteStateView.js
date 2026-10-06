@@ -74,7 +74,7 @@ export function valueText(path, v, { self = false } = {}) {
         case "response.reading": return `${v.title}: ${v.text}`;
         case "response.efficiency": return v.verdict === "none" ? `No clear change (${signed(v.bpm)} bpm ± ${v.se}, ${v.n} runs)` : `${Math.abs(v.bpm)} bpm ${v.verdict} at the same pace (± ${v.se}, ${v.n} runs)`;
         case "response.effort": return `${v.verdict === "usual" ? "As usual" : v.verdict === "costlier" ? `${v.mean} harder than usual` : `${Math.abs(v.mean)} easier than usual`} over ${v.n} runs`;
-        case "response.execution": return `${v.onTarget} of ${v.work} work reps on target${v.fast ? `, ${v.fast} fast` : ""}${v.slow ? `, ${v.slow} slow` : ""} (${v.sessions} ${v.sessions === 1 ? "session" : "sessions"})`;
+        case "response.execution": return `${v.onTarget} of ${v.work} work reps on target${v.fast ? `, ${v.fast} fast` : ""}${v.slow ? `, ${v.slow} slow` : ""}${v.planned && v.done < v.planned ? `; ${v.done} of ${v.planned} planned work steps done in full` : ""} (${v.sessions} ${v.sessions === 1 ? "session" : "sessions"})`;
         case "response.qualityHr": return `${signed(v.bpm)} bpm (${v.verdict}, ${v.n} sessions)`;
         case "response.longRunDrift": return list(v, d => `${day(d.date)} ${d.miles} mi ${signed(d.drift)}%`);
         case "readiness.score": return `${v.score} (${v.color})${v.concern ? ` · watch: ${v.concern}` : ""}`;

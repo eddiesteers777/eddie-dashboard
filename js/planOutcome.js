@@ -117,7 +117,7 @@ export function planOutcome({
         } : null;
         const day = {
             date, planned: { kind: p.kind, miles: p.miles, title: p.title }, actual, status, why, key,
-            ...(ex ? { execution: { work: ex.work, onTarget: ex.onTarget, fast: ex.fast, slow: ex.slow } } : {}),
+            ...(ex ? { execution: { work: ex.work, onTarget: ex.onTarget, fast: ex.fast, slow: ex.slow, ...(ex.completion ? { completion: ex.completion, planned: ex.planned, done: ex.done, confidence: ex.confidence } : {}) } } : {}),
             ...(accepted.includes(date) ? { from: "answer" } : kept.includes(date) ? { from: "kept" } : {})
         };
         day.line = key && status !== "upcoming" ? keyLine(day) : "";
@@ -158,7 +158,9 @@ function keyLine(d) {
     if (!d.actual) return `${head} → not run${d.why === "logged as skipped" ? " (skipped)" : ""}`;
     const bits = [`${d.actual.miles} of ${d.planned.miles} mi`];
     if (d.why && d.status === "modified" && !/^[\d.]+ of /.test(d.why)) bits.push(d.why);
-    if (d.execution?.work) bits.push(`${d.execution.onTarget} of ${d.execution.work} reps on target${d.execution.fast ? `, ${d.execution.fast} fast` : ""}${d.execution.slow ? `, ${d.execution.slow} slow` : ""}`);
+    // Step by step (js/workoutExecution.js): what was left out first, then how the rest landed.
+    if (d.execution?.completion && d.execution.done < d.execution.planned) bits.push(d.execution.completion);
+    if (d.execution?.work) bits.push(`${d.execution.onTarget} of ${d.execution.work} ${d.execution.completion ? "work steps" : "reps"} on target${d.execution.fast ? `, ${d.execution.fast} fast` : ""}${d.execution.slow ? `, ${d.execution.slow} slow` : ""}${d.execution.confidence === "low" ? " (rough: mile laps)" : ""}`);
     if (d.actual.effort != null) bits.push(`effort ${d.actual.effort} (usual ${d.actual.expected})`);
     return `${head} → ${bits.join(", ")}`;
 }

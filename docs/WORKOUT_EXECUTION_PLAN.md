@@ -141,8 +141,8 @@ WorkoutExecution {
    - unit tests.
    - Nothing on screen changed. COROS course sending is unchanged (its tests pass).
 2. **Completed view for Eddie — built (2026-10-06):** a "How it went" card on Analytics' Key workouts and on the Marathon day (rep table, Read, confidence); `keyWorkouts` carries the whole workout.
-3. **Swap the engines over:**
-   - `executionSummary` / P4 / Weekly Review read the execution, with a before/after on his data;
+3. **Swap the engines over — built (2026-10-06):**
+   - `executionSummary` / P4 / Weekly Review read the execution. The before/after on synthetic sessions: the pooled band rated 7 of 7 laps on target where every 600 was 10 s slow; step by step rates 1 of 7. The before/after on Eddie's own laps happens when his next structured workouts come in (his saved laps from before have no `kind`, so they're read from their shape);
    - `checkWorkout` stays for the old lap table until everything has moved.
 4. **Clients:**
    - the client's device fetches laps for their coach-plan runs and shows them the same card;

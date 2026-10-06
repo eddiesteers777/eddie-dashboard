@@ -89,7 +89,7 @@ function renderResponse() {
         ...r.stoodOut.map(s => `<li>${esc(short(s.date))}: ${esc(s.text)}.</li>`),
         // The key-session lines carry the rep counts; execution alone only where a session has no line.
         ...keyLines.map(d => `<li class="wr-keyline"><strong>${esc(d.line.split(": prescribed")[0])}</strong>: prescribed${esc(d.line.split(": prescribed")[1] || "")}.</li>`),
-        ...r.execution.filter(e => !keyLines.some(d => d.date === e.date)).map(e => `<li>${esc(short(e.date))} ${esc(e.title)}: <strong>${e.onTarget} of ${e.work}</strong> work reps on target${e.fast ? `, ${e.fast} too fast` : ""}${e.slow ? `, ${e.slow} too slow` : ""}.</li>`)
+        ...r.execution.filter(e => !keyLines.some(d => d.date === e.date)).map(e => `<li>${esc(short(e.date))} ${esc(e.title)}: ${e.completion && e.done < e.planned ? `${esc(e.completion)}; ` : ""}<strong>${e.onTarget} of ${e.work}</strong> ${e.completion ? "work steps" : "work reps"} on target${e.fast ? `, ${e.fast} too fast` : ""}${e.slow ? `, ${e.slow} too slow` : ""}.</li>`)
     ].filter(Boolean);
     show("wrResponse", `<ul class="wr-points">${lines.join("")}</ul>`);
 }

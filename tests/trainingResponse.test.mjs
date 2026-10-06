@@ -167,3 +167,26 @@ test("effort vs expected (audit B5): answers given more than a day late count ha
     assert.ok(late.rows.at(-1).expected < onTime, `${late.rows.at(-1).expected} < ${onTime}: four late 6s pull the baseline less`);
     assert.deepEqual(late.rows.map(r => r.late), [true, true, true, true, false]);
 });
+
+test("execution: a structured workout is judged step by step, not against one pooled pace band", async () => {
+    const { executionSummary } = await import("../js/trainingResponse.js");
+    const { checkWorkout } = await import("../js/trends.js");
+    const { planDayFromMarathon } = await import("../js/marathonCoros.js");
+    const { PACES } = await import("../js/marathonData.js");
+    const workout = planDayFromMarathon({ session: "2mi WU; 6x600m @ 2:27; 2min jog; 1mi @ 7:08; 1.5mi CD", miles: 8, pace: "Threshold" }, PACES).workout;
+    // Every 600 run at 7:00/mi (2:36.6): 10 s slow each. The threshold mile on target.
+    let i = 0;
+    const laps = [{ i: ++i, m: 3219, s: 1020, hr: 135 }];
+    for (let r = 0; r < 6; r++) laps.push({ i: ++i, m: 600, s: 156.6, hr: 165 }, { i: ++i, m: 330, s: 120, hr: 140 });
+    laps.push({ i: ++i, m: 1609, s: 428, hr: 166 }, { i: ++i, m: 2414, s: 765, hr: 140 });
+    const old = checkWorkout(workout.sets, laps);
+    assert.equal(old.onTarget, 7, "the old pooled band (6:34–7:08) called every 600 at 7:00 on target");
+    const key = [{ id: "marathon|2026-10-13", date: "2026-10-13", title: "Speed + threshold", sets: workout.sets, workout, run: { labelId: "x" } }];
+    const ex = executionSummary(key, { x: { laps, kind: "laps" } }, "2026-10-14");
+    assert.deepEqual([ex.rows[0].work, ex.rows[0].onTarget, ex.rows[0].slow, ex.rows[0].method], [7, 1, 6, "steps"], "each 600 against 2:27: slow; the mile on target");
+    assert.equal(ex.rows[0].completion, "6/6 reps completed · 1 mi done");
+    assert.equal(ex.rows[0].confidence, "exact");
+    // Without a structure the old check still applies.
+    const plain = executionSummary([{ ...key[0], workout: null }], { x: { laps } }, "2026-10-14");
+    assert.equal(plain.rows[0].method, "laps");
+});

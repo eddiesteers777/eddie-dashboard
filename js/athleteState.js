@@ -427,9 +427,9 @@ export function athleteState(inp, { core = null } = {}) {
             evidence: [`Last ${fs.n || 0} answered runs in 3 weeks against what each kind of run usually costs you (CR-10)`, `${c.effort.answered} of ${c.effort.recentRuns} runs in 2 weeks answered`],
             window: win(21), source: `trainingResponse@${RESPONSE_VERSION}#effortSignal`, missing: "Needs an effort answer on 3+ runs in 3 weeks"
         }),
-        execution: S("derived", ex.sessions ? { sessions: ex.sessions, work: ex.work, onTarget: ex.onTarget, fast: ex.fast, slow: ex.slow } : null, {
-            confidence: ex.sessions >= 2 ? "high" : "moderate",
-            evidence: ["Work laps against the plan's pace targets (on target = within 5 s/mi)"], window: win(42),
+        execution: S("derived", ex.sessions ? { sessions: ex.sessions, work: ex.work, onTarget: ex.onTarget, fast: ex.fast, slow: ex.slow, ...(ex.planned ? { planned: ex.planned, done: ex.done, partial: ex.partial, missed: ex.missed } : {}) } : null, {
+            confidence: ex.sessions >= 2 && !(ex.rows || []).some(r => r.confidence === "low") ? "high" : "moderate",
+            evidence: ["Each planned work step matched to its own laps and compared with its own target (on target = within 5 s/mi; js/workoutExecution.js)", "Days without a structured workout: work laps against the plan's pace range"], window: win(42),
             source: `trainingResponse@${RESPONSE_VERSION}#executionSummary`,
             missing: self ? "No key workout of the last 6 weeks has laps saved" : "Laps aren't shared by clients"
         }),

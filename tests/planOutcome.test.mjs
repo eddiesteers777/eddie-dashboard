@@ -96,3 +96,14 @@ test("a week with nothing planned, and one done as written", () => {
     assert.equal(all.week.adherence, 100);
     assert.equal(outcomeLines(all)[1], "Every planned run was done as written.");
 });
+
+test("key-session line: step-by-step execution says what was left out, then how the rest landed", () => {
+    const planDays = prescribedDays(cycle());
+    const o = planOutcome({
+        planDays, sessions: [run("b", "2026-10-13", 8)], from: "2026-10-12", to: "2026-10-18", today: "2026-10-20", doses: [{ id: "b", intensity: 0.95 }],
+        execution: [{ date: "2026-10-13", work: 4, onTarget: 3, fast: 0, slow: 1, planned: 5, done: 4, completion: "4/5 reps completed, 1 cut short", confidence: "approximate" }]
+    });
+    const tue = o.days.find(d => d.date === "2026-10-13");
+    assert.match(tue.line, /8 of 8 mi, 4\/5 reps completed, 1 cut short, 3 of 4 work steps on target, 1 slow$/);
+    assert.equal(tue.execution.completion, "4/5 reps completed, 1 cut short");
+});
