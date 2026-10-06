@@ -77,6 +77,7 @@ export function shareCardModel(x, meta = {}) {
         if (meta.avgHr) runStats.push({ label: "Avg HR", value: String(Math.round(Number(meta.avgHr))) + " bpm" });
         const category = meta.category === "long_run" ? "Long Run" : "Speed Work";
         return {
+            kind: "run",
             date: meta.date ? dateWords(meta.date) : "",
             title: category,
             name: meta.name || "",
@@ -127,6 +128,7 @@ export function shareCardModel(x, meta = {}) {
         summary = c.done + "/" + c.planned + " completed";
     }
     return {
+        kind: "execution",
         date: meta.date ? dateWords(meta.date) : "",
         title,
         name,
@@ -305,7 +307,7 @@ export async function drawShareCard(canvas, model) {
     const url = ctx.measureText("southboundcoaching.com").width;
     ctx.textAlign = "left"; ctx.fillStyle = C.muted; ctx.font = '500 22px "Inter", sans-serif';
     ctx.fillText(fitText(ctx, model.footer, inner - url - 40), PAD, fy + 44);
-    ctx.fillText("Negative = faster than the target", PAD, fy + 76);
+    ctx.fillText(model.kind === "execution" ? "Negative = faster than the target" : "Your training · Southbound Coaching", PAD, fy + 76);
     return canvas;
 }
 
