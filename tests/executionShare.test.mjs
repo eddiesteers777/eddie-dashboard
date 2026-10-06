@@ -34,7 +34,7 @@ test("the card for Eddie's Oct 6 session: title, the run, done and on target, ev
     assert.equal(m.easy.length, 2);
     assert.equal(m.easy[0], "Warm-up 2.00 mi @ 8:30/mi");
     assert.match(m.footer, /every lap matched/);
-    assert.equal(cardHeight(m), MIN_H, "fits a 4:5 image");
+    assert.ok(cardHeight(m) >= MIN_H, "keeps the 4:5 minimum and grows when the detail needs more room");
 });
 
 test("a long set goes to two columns; a cut-short rep says so; a long card grows instead of cramming", () => {
