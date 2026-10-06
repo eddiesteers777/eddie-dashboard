@@ -81,23 +81,21 @@ export function shareCardModel(x, meta = {}) {
     const stats = [];
     if (meta.runMeters) stats.push({ label: "Distance", value: `${(meta.runMeters / MILE).toFixed(2)} mi` });
     if (meta.runSec) stats.push({ label: "Time", value: clockText(meta.runSec) });
-    if (c) stats.push({ label: work.length > 1 && work.every(s => s.of > 1) ? "Reps done" : "Done", value: c.pct == null ? "—" : `${c.done + c.partial}/${c.planned}` });
-    if (t) stats.push({ label: "On target", value: `${t.within}/${t.judged}` });
+    if (c) stats.push({ label: "Complete", value: c.pct == null ? "—" : `${c.done}/${c.planned}` });
+    if (t) stats.push({ label: "Within target", value: `${t.within}/${t.judged}` });
     const easy = x.steps.filter(s => (s.kind === "warmup" || s.kind === "cooldown") && s.actual)
         .map(s => `${s.kind === "warmup" ? "Warm-up" : "Cool-down"} ${(s.actual.meters / MILE).toFixed(2)} mi @ ${clockText(s.actual.paceSec)}/mi`);
     const title = (x.sets || []).map(s => s.label).join(" + ") || "Workout";
     const name = meta.name && !/^\d/.test(meta.name) && meta.name.length <= 40 && meta.name.toLowerCase() !== title.toLowerCase() ? meta.name : "";
     return {
         date: meta.date ? dateWords(meta.date) : "", title, name, stats: stats.slice(0, 4), sets, easy,
-        read: (x.read || [])[0] || "",
         footer: x.matchConfidence === "exact" ? "Planned vs actual · every lap matched to the plan" : x.matchConfidence === "approximate" ? "Planned vs actual · laps matched approximately" : "Planned vs actual · a rough match (mile laps)",
-        who: meta.who || ""
     };
 }
 
 // ---------- layout (pure) ----------
 
-const PAD = 72, ROW = 58, SET_HEAD = 64, SET_GAP = 24, STAT_H = 150, FOOT = 118;
+const PAD = 72, ROW = 66, SET_HEAD = 64, SET_GAP = 24, STAT_H = 150, FOOT = 118;
 const twoCols = n => n > 10;
 
 /** How tall the card draws (at least 1350). */
@@ -214,19 +212,19 @@ export async function drawShareCard(canvas, model) {
             ctx.beginPath(); ctx.moveTo(x0, ry); ctx.lineTo(x0 + colW, ry); ctx.stroke();
             ctx.fillStyle = color; roundRect(ctx, x0, ry + 13, 8, ROW - 26, 4); ctx.fill();
             ctx.fillStyle = C.muted; ctx.font = '600 26px "Inter", sans-serif';
-            ctx.fillText(fitText(ctx, r.label, colW * 0.24), x0 + 24, ry + 39);
+            ctx.fillText(fitText(ctx, r.label, colW * 0.24), x0 + 24, ry + 38);
             ctx.fillStyle = C.text; ctx.font = '500 32px "JetBrains Mono", monospace';
-            ctx.fillText(r.actual || "—", x0 + colW * 0.27, ry + 40);
+            ctx.fillText(r.actual || "—", x0 + colW * 0.27, ry + 38);
             ctx.fillStyle = color; ctx.font = '500 28px "JetBrains Mono", monospace';
-            ctx.fillText(r.delta, x0 + colW * (cols === 1 ? 0.52 : 0.55), ry + 39);
+            ctx.fillText(r.delta, x0 + colW * (cols === 1 ? 0.52 : 0.55), ry + 37);
             ctx.textAlign = "right"; ctx.font = '600 24px "Inter", sans-serif';
-            ctx.fillText(r.result, x0 + colW, ry + 38);
-            if (cols === 1 && r.hr) {
-                // Heart rate in its own column, before the result (one column only).
-                ctx.fillStyle = C.muted; ctx.font = '400 22px "Inter", sans-serif';
-                ctx.fillText(`${r.hr} bpm`, x0 + colW - 172, ry + 38);
-            }
+            ctx.fillText(r.result, x0 + colW, ry + 36);
             ctx.textAlign = "left";
+            if (r.hr) {
+                // Keep heart rate visible in both one- and two-column layouts.
+                ctx.fillStyle = C.muted; ctx.font = '400 20px "Inter", sans-serif';
+                ctx.fillText(`HR ${r.hr}`, x0 + colW * 0.27, ry + 59);
+            }
         });
         y += per * ROW;
         ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
@@ -275,14 +273,14 @@ const fileName = meta => `southbound-workout-${meta.date || "run"}.png`;
 
 export async function openShareCard(x, meta = {}) {
     const model = shareCardModel(x, meta);
-    let file = null, url = "";
+    let file = null, url = "", closed = false;
     const dialog = document.createElement("dialog");
     dialog.className = "sb-dialog ex-share-dialog";
     dialog.innerHTML = `
         <div class="sb-dialog-form">
             <h2 class="sb-dialog-title">Share this workout</h2>
             <div class="ex-share-preview"><p class="clients-card-note sb-wait">Making the image…</p></div>
-            <p class="ex-share-hint">Share opens your phone's share sheet: save it to Photos, then add it to the activity in Strava.</p>
+            <p class="ex-share-hint">Share opens your device's share sheet. Send the image to another app or save it to Photos.</p>
             <div class="sb-dialog-actions">
                 <button type="button" class="sb-btn sb-btn-tertiary" data-act="close">Close</button>
                 <button type="button" class="sb-btn sb-btn-secondary" data-act="save" disabled>Save image</button>
@@ -290,20 +288,23 @@ export async function openShareCard(x, meta = {}) {
             </div>
         </div>`;
     document.body.appendChild(dialog);
-    dialog.addEventListener("close", () => { dialog.remove(); if (url) URL.revokeObjectURL(url); });
+    dialog.addEventListener("close", () => { closed = true; dialog.remove(); if (url) URL.revokeObjectURL(url); });
     dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
     dialog.showModal();
 
     const canvas = document.createElement("canvas");
     await drawShareCard(canvas, model);
+    if (closed) return;
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+    if (closed) return;
     if (!blob) { dialog.querySelector(".ex-share-preview").innerHTML = `<p class="clients-card-note">Couldn't make the image on this device.</p>`; return; }
     file = new File([blob], fileName(meta), { type: "image/png" });
     url = URL.createObjectURL(blob);
     dialog.querySelector(".ex-share-preview").innerHTML = `<img src="${url}" alt="${model.title}: planned vs actual, rep by rep" width="${CARD_W}" height="${canvas.height}">`;
     const share = dialog.querySelector('[data-act="share"]'), save = dialog.querySelector('[data-act="save"]');
     save.disabled = false;
-    const canShare = Boolean(navigator.canShare?.({ files: [file] }));
+    let canShare = false;
+    try { canShare = Boolean(navigator.canShare?.({ files: [file] })); } catch { /* file sharing unavailable */ }
     if (canShare) { share.hidden = false; share.disabled = false; }
 
     dialog.querySelector('[data-act="close"]').addEventListener("click", () => dialog.close());

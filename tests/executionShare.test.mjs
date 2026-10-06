@@ -22,7 +22,7 @@ test("the card for Eddie's Oct 6 session: title, the run, done and on target, ev
     assert.equal(m.title, "6 × 600 m + 1 mi");
     assert.equal(m.name, "", "a name that's just the first step isn't shown");
     assert.equal(m.date, "Tue, Oct 6, 2026");
-    assert.deepEqual(m.stats, [{ label: "Distance", value: "8.01 mi" }, { label: "Time", value: "1:06:55" }, { label: "Done", value: "7/7" }, { label: "On target", value: "2/7" }]);
+    assert.deepEqual(m.stats, [{ label: "Distance", value: "8.01 mi" }, { label: "Time", value: "1:06:55" }, { label: "Complete", value: "7/7" }, { label: "Within target", value: "2/7" }]);
     assert.equal(m.sets[0].head, "6 × 600 m @ 2:27");
     assert.equal(m.sets[0].sub, "2 min jog");
     assert.deepEqual(m.sets[0].rows.map(r => [r.label, r.actual, r.delta, r.result]), [
@@ -34,7 +34,7 @@ test("the card for Eddie's Oct 6 session: title, the run, done and on target, ev
     assert.equal(m.easy.length, 2);
     assert.equal(m.easy[0], "Warm-up 2.00 mi @ 8:30/mi");
     assert.match(m.footer, /every lap matched/);
-    assert.equal(cardHeight(m), MIN_H, "fits a 4:5 image");
+    assert.ok(cardHeight(m) >= MIN_H, "keeps the 4:5 minimum and grows when the detail needs more room");
 });
 
 test("a long set goes to two columns; a cut-short rep says so; a long card grows instead of cramming", () => {
@@ -48,7 +48,8 @@ test("a long set goes to two columns; a cut-short rep says so; a long card grows
     assert.equal(m.name, "Ladder day");
     assert.equal(m.sets[0].rows.length, 16);
     assert.equal(m.sets[0].rows[9].result, "Cut short");
-    assert.equal(m.stats.find(s => s.label === "Reps done").value, "16/16", "cut short still counts as started");
+    assert.equal(m.sets[0].rows[15].hr, 150, "long-set rows retain heart rate for the two-column share layout");
+    assert.equal(m.stats.find(s => s.label === "Complete").value, "15/16", "cut short is not counted as fully complete");
     assert.ok(cardHeight(m) >= MIN_H);
     const twelve = shareCardModel(x, {}); twelve.sets.push(...Array.from({ length: 3 }, () => twelve.sets[0]));
     assert.ok(cardHeight(twelve) > MIN_H, "four long sets: a taller image");
