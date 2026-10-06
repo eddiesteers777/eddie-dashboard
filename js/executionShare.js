@@ -318,7 +318,7 @@ let wired = false;
 export function registerShare(x, meta = {}) {
     if (!x?.plannedWorkoutId) return;
     registry.set(x.plannedWorkoutId, { x, meta });
-    if (wired) return;
+    if (wired) return x.plannedWorkoutId;
     wired = true;
     document.addEventListener("click", event => {
         const btn = event.target.closest?.("[data-ex-share]");
@@ -326,6 +326,7 @@ export function registerShare(x, meta = {}) {
         const hit = registry.get(btn.dataset.exShare);
         if (hit) { event.preventDefault(); openShareCard(hit.x, hit.meta); }
     });
+    return x.plannedWorkoutId;
 }
 
 /** Registers a plain run share in the same image dialog as structured workouts. */
