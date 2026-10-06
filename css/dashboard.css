@@ -762,8 +762,8 @@
 }
 
 .ft-list{
-    display:flex;
-    flex-direction:column;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
     gap:10px;
 }
 
@@ -810,9 +810,16 @@
 }
 
 .ft-main h3{
-    margin:0 0 8px;
+    margin:0 0 4px;
     font-size:15px;
     line-height:1.3;
+}
+
+.ft-plan-note{
+    display:block;
+    margin-bottom:8px;
+    color:var(--text-secondary);
+    font-size:11.5px;
 }
 
 .ft-metrics{
@@ -903,7 +910,11 @@
     font:600 12px/1 inherit;
 }
 
-@media (max-width:640px){
+@media (max-width:760px){
+    .ft-list{
+        grid-template-columns:1fr;
+    }
+
     .ft-header > div{
         display:block;
     }
