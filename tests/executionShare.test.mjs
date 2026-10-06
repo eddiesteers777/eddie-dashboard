@@ -79,7 +79,7 @@ test("a plain featured run gets the same polished share card without inventing a
     assert.deepEqual(m.stats, [
         { label: "Distance", value: "20.08 mi" },
         { label: "Time", value: "2:36:00" },
-        { label: "Avg pace", value: "7:47/mi" },
+        { label: "Avg pace", value: "7:46/mi" },
         { label: "Avg HR", value: "151 bpm" }
     ]);
     assert.equal(m.summary, "20.08 of 20.0 planned miles");
