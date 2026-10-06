@@ -12,21 +12,13 @@
 
 import { WEEKS, getAdjustedWeekDays, PACES } from "./marathonData.js";
 import { planDayFromMarathon, marathonTitle } from "./marathonCoros.js";
-import { kindOfDay } from "./readiness.js";
 import { allRuns, fetchLaps, laps } from "./trendsData.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { registerShare, registerRunShare } from "./executionShare.js";
 
-export const FEATURED_KEY = "featured-training-categories";
-export const FEATURED_CATEGORIES = Object.freeze({
-    LONG_RUN: "long_run",
-    SPEED_WORK: "speed_work",
-    NONE: "none"
-});
+import { FEATURED_KEY, FEATURED_CATEGORIES, categoryFor, autoCategory } from "./featuredTrainingModel.js";
 
 const MILE = 1609.344;
-
-const clean = function (value) { return String(value == null ? "" : value).trim(); };
 
 function todayBack(today, days) {
     const d = new Date(today + "T12:00:00");
@@ -43,43 +35,6 @@ function loadOverrides() {
     } catch {
         return {};
     }
-}
-
-export function autoCategory(day, planDay) {
-    if (!day || !Number(day.miles) || day.race || planDay?.type === "race") return null;
-
-    const session = clean(day.session);
-    const sets = planDay?.workout?.sets || [];
-
-    // Repeats / mixed repeats are an explicit speed signal. This wins
-    // over kindOfDay(), which can call a hard 12+ mile day "long".
-    const repeatedStructure = sets.some(function (s) {
-        return Number(s.repeat) > 1 || (Array.isArray(s.parts) && s.parts.length > 0);
-    });
-    const intervalWords = /\b(intervals?|repeats?|reps?|fartlek|speed\s+work|hill\s+repeats?)\b/i.test(session);
-    const intervalFormat = /\b\d+\s*[x×]\s*\d/i.test(session);
-
-    if (repeatedStructure || intervalWords || intervalFormat) return FEATURED_CATEGORIES.SPEED_WORK;
-
-    if (kindOfDay(day, planDay) === "long" || planDay?.type === "long" || /\blong\s+run\b/i.test(session)) {
-        return FEATURED_CATEGORIES.LONG_RUN;
-    }
-
-    return null;
-}
-
-export function categoryFor(day, planDay, overrides) {
-    const id = "marathon|" + (day?.date || "");
-    const map = overrides || {};
-    const override = map[id];
-
-    if (override === FEATURED_CATEGORIES.LONG_RUN ||
-        override === FEATURED_CATEGORIES.SPEED_WORK ||
-        override === FEATURED_CATEGORIES.NONE) {
-        return override === FEATURED_CATEGORIES.NONE ? null : override;
-    }
-
-    return autoCategory(day, planDay);
 }
 
 function recentPlanRuns(today, days) {
