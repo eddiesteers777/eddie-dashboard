@@ -1010,7 +1010,13 @@ export function getAdjustedWeekDays(weekNumber){
 
                 race:
 
-                    day.race || false,
+                    // A weekly-planning answer can turn a race day into
+                    // training (or the other way); older edits don't say.
+                    edit.race !== undefined
+
+                    ? Boolean(edit.race)
+
+                    : day.race || false,
 
 
                 edited:

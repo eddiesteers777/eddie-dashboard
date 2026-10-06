@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Planning | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/planning.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+<body>
+    <div id="header"></div>
+    <main class="container pl-page">
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coach</div>
+                <h1>Weekly Planning</h1>
+                <p class="eos-today-phase">Southbound gathers the facts and what matters; you and any chatbot plan the week; you decide what changes.</p>
+            </div>
+        </section>
+
+        <!-- Whose week: you, or a client (their week opens in the Client Hub's Planning tab). js/planningPage.js -->
+        <nav class="pl-who" id="plWho" aria-label="Whose week">
+            <span class="pl-chip is-on" aria-current="page">Me</span>
+        </nav>
+
+        <!-- Weekly planning P2 (docs/WEEKLY_PLANNING_AUDIT.md): js/planningView.js -->
+        <div id="planningRoot"></div>
+    </main>
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/planningPage.js"></script>
+    <script src="js/registerSW.js"></script>
+</body>
+</html>

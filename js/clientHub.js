@@ -87,6 +87,7 @@ function workoutText(day) {
 let planMounted = false;
 let profileMounted = false;
 let modelMounted = false;
+let planningMounted = false;
 let workspace = null;   // the plan workspace once the Plan tab has opened (a promise)
 let record = null;
 
@@ -125,6 +126,10 @@ function selectTab(name) {
             }
         })).catch(error => console.error("Southbound: the Model tab failed to load.", error));
     }
+    if (name === "planning" && !planningMounted && record) {
+        planningMounted = true;
+        mountHubPlanning();
+    }
     if (name === "profile" && !profileMounted && record) {
         profileMounted = true;
         renderProfileNote();
@@ -144,6 +149,45 @@ function selectTab(name) {
     const url = new URL(location.href);
     url.searchParams.set("tab", name);
     history.replaceState(null, "", url);
+}
+
+// Weekly planning (P2): the client's brief and the chatbot round trip; accepted days go into the Plan tab as a draft.
+async function mountHubPlanning() {
+    try {
+        const [{ mountPlanning }, { clientState }, { currentPlan }, { applyReply }, { logClientPlanning }] = await Promise.all([
+            import("./planningView.js"), import("./athleteSources.js"), import("./clientModel.js"), import("./planPrompt.js"), import("./planningData.js")
+        ]);
+        const first = firstName();
+        let header = null;
+        mountPlanning($("hubPlanning"), {
+            who: "client", firstName: first, key: clientUid, scope: "all",
+            async load(today) {
+                const { state } = await clientState(record, { clientUid, firstName: first, today });
+                header = currentPlan(record.coachingPlans || [], today);
+                const ids = new Set((record.results || []).filter(r => r.planId === header?.id && ["completed", "skipped"].includes(r.status)).map(r => r.date));
+                const copy = (record.shared?.coachPlans || []).find(p => p.coachPlanId === header?.id);
+                for (const w of copy?.generatedPlan?.weeks || []) for (const d of w.days || []) if (d.completed || d.skipped) ids.add(d.date);
+                return {
+                    state, plan: header?.plan || { weeks: [] }, done: ids, record: record.record || null, paces: "",
+                    noPlan: header ? null : `${first} has no published plan yet. Make one in the Plan tab, then plan the week here. The brief and the prompt still work as a starting point.`
+                };
+            },
+            async apply({ days, from, to }) {
+                if (!header) return null;
+                logClientPlanning(clientUid, { planId: header.id, from, to, days: days.map(d => d.date) });
+                selectTab("plan");
+                const ws = await workspace;
+                const ok = ws?.applyToPlan(header.id, plan => {
+                    const next = applyReply(plan, days);
+                    for (const key of Object.keys(plan)) delete plan[key];
+                    Object.assign(plan, next);
+                }, `${days.length} ${days.length === 1 ? "day" : "days"} from the planned week. Not published yet.`);
+                return ok === false ? { message: "Couldn't open the plan to change it. Open it in the Plan tab and try again." } : { message: "" };
+            }
+        });
+    } catch (error) {
+        console.error("Southbound: the Planning tab failed to load.", error);
+    }
 }
 
 document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));

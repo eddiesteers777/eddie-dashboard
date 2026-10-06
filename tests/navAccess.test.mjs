@@ -67,7 +67,7 @@ test("pending, archived, no services, signed out", () => {
 
 test("the coach opens everything; clients never open the coach's pages", () => {
     assert.deepEqual(allowed("coach"), Object.keys(PAGE_REQUIRES).sort());
-    for (const page of ["coach.html", "client.html", "marathon.html", "75day.html", "planner.html", "analytics.html", "weekly-review.html", "gear.html"]) {
+    for (const page of ["coach.html", "client.html", "marathon.html", "75day.html", "planner.html", "analytics.html", "weekly-review.html", "planning.html", "gear.html"]) {
         for (const who of Object.keys(people).filter(w => w !== "coach")) assert.ok(!pageAllowed(page, people[who]), `${who} ${page}`);
     }
     // A role on the profile grants nothing; only isCoachApproved === true.

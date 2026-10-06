@@ -175,7 +175,6 @@ export function buildPrompt({ firstName = "", record = {}, notes = "", plan, fro
     });
     const settings = settingsLine(plan?.generator?.settings);
     const race = plan?.raceDate ? days.find(d => d.date === plan.raceDate) : null;
-    const library = BUILT_IN_WORKOUTS.map(w => `${w.name} (${w.minutes} min, ${String(w.level || "all levels").toLowerCase()})`).join("; ");
     const runsOnly = scope === "runs";
 
     return [
@@ -207,6 +206,16 @@ export function buildPrompt({ firstName = "", record = {}, notes = "", plan, fro
         "- For someone who barely runs yet, use run/walk sessions (timed, with walk breaks) and build slowly.",
         "- Strength: 1 to 3 sessions a week, not the day before a long run or a race, lighter in race week.",
         "",
+        ...answerFormatLines({ from, last, runsOnly }),
+        "After the code block, add a few lines for me (not the athlete) on what you changed and why.",
+        "",
+        runsOnly ? "" : strengthLibraryLine()
+    ].filter((line, i, all) => line !== "" || all[i - 1] !== "").join("\n").trim() + "\n";
+}
+
+/** The answer format and its examples (shared with the weekly planning prompt, js/planningBrief.js). */
+export function answerFormatLines({ from, last, runsOnly = false }) {
+    return [
         "## Answer format (important)",
         `Put one line per day, for every date from ${from} to ${last} in date order, inside a single code block, with nothing else inside it. Lines starting with # are ignored, so you can keep the week headings.`,
         "Each line: DATE | TYPE | MILES | WORKOUT | STRENGTH | NOTE",
@@ -235,11 +244,13 @@ export function buildPrompt({ firstName = "", record = {}, notes = "", plan, fro
         "2026-10-08 Thu | run/walk |  | 5min WU; 6x2min @ easy; 90s walk; 5min CD | none | Walk breaks are part of the plan.",
         "2026-10-10 Sat | long | 9 | Long run, last 2mi @ 8:30 | none | Finish strong but controlled.",
         "2026-10-11 Sun | cross |  | Bike 40min easy | Beginner Strength Foundation | ",
-        "```",
-        "After the code block, add a few lines for me (not the athlete) on what you changed and why.",
-        "",
-        runsOnly ? "" : `My strength library: ${library}.`
-    ].filter((line, i, all) => line !== "" || all[i - 1] !== "").join("\n").trim() + "\n";
+        "```"
+    ];
+}
+
+/** "My strength library: …" (the session names a STRENGTH column may use). */
+export function strengthLibraryLine() {
+    return `My strength library: ${BUILT_IN_WORKOUTS.map(w => `${w.name} (${w.minutes} min, ${String(w.level || "all levels").toLowerCase()})`).join("; ")}.`;
 }
 
 // ---------- reading the answer ----------
@@ -386,7 +397,7 @@ export function readLine(line) {
         rx.session = `${rx.session}${rx.session ? " — " : ""}${clean(note)}`;
     }
     rx.session = String(rx.session).slice(0, 300);
-    return { date, rx, strength: strength.value, problems };
+    return { date, rx, strength: strength.value, problems, text: workoutText, note: clean(note) };
 }
 
 // A line compared by what it says, not how it's spaced or decorated.
@@ -403,15 +414,19 @@ function lineKey(line) {
 /**
  * The chatbot's whole answer ->
  *   { days: [{ date, rx, strength }], unread: [{ line, why }], skipped: [{ date, why }], problems: [{ date, why }],
- *     same: how many days came back exactly as they were (left untouched) }
+ *     same: how many days came back exactly as they were (left untouched),
+ *     why: { date: the chatbot's reason, from "DATE: why" lines } }
  */
 export function parseReply(text, { plan, from, to = null, done = new Set(), scope = "all" } = {}) {
     const byDate = new Map(daysOf(plan).map(d => [d.date, d]));
-    const out = { days: [], unread: [], skipped: [], problems: [], same: 0 };
+    const out = { days: [], unread: [], skipped: [], problems: [], same: 0, why: {} };
     const seen = new Set();
     for (const raw of String(text || "").split(/\r?\n/)) {
         const line = raw.trim();
         if (!line || line.startsWith("#") || line.startsWith("```") || /^\|?\s*:?-{3,}/.test(line)) continue;
+        // "2026-10-11: shorter because of the notes." -- the chatbot's reason for a day, not a plan line.
+        const because = !line.includes("|") && line.replace(/^[-*>\s]+|\*\*/g, "").match(/^(\d{4}-\d{2}-\d{2})(?:\s+\w{3})?\s*[:\u2013\u2014-]\s*(.+)$/);
+        if (because) { out.why[because[1]] = because[2].trim().slice(0, 300); continue; }
         const read = readLine(line);
         if (!read) {
             // A line that looks like a plan line but has no date we can read.
@@ -427,7 +442,7 @@ export function parseReply(text, { plan, from, to = null, done = new Set(), scop
         // Copied back as it was: the day stays exactly as it is (cue, fuel note and all).
         if (lineKey(line) === lineKey(dayLine(byDate.get(read.date)))) { out.same++; continue; }
         for (const why of read.problems) out.problems.push({ date: read.date, why });
-        out.days.push({ date: read.date, rx: read.rx, strength: scope === "runs" ? undefined : read.strength });
+        out.days.push({ date: read.date, rx: read.rx, strength: scope === "runs" ? undefined : read.strength, text: read.text, note: read.note });
     }
     return out;
 }

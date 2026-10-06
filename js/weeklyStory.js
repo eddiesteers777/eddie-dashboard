@@ -128,7 +128,8 @@ async function renderNext() {
             ${d.change ? `<b class="wr-change">${esc(d.change)}</b>` : ""}
         </li>`).join("")}</ul>
         <p class="wr-next-total">${mi(n.miles)} mi planned${n.changed ? ` · ${n.changed} ${n.changed === 1 ? "day" : "days"} with a suggested change (Apply above to put ${n.changed === 1 ? "it" : "them"} in your plan)` : ""}.</p>
-        ${n.watch ? `<p class="wr-watch"><strong>One thing to watch.</strong> ${esc(n.watch)}</p>` : ""}`);
+        ${n.watch ? `<p class="wr-watch"><strong>One thing to watch.</strong> ${esc(n.watch)}</p>` : ""}
+        <p class="wr-next-total"><a href="planning.html">Plan it in Weekly Planning →</a></p>`);
 }
 
 // ---------- wiring ----------

@@ -31,7 +31,8 @@ export const DOMAIN_TITLES = Object.freeze({
     constraints: "Constraints", preferences: "Preferences", plan: "Plan", decision: "Weekly decision"
 });
 
-const LABELS = {
+/** A signal path's name in words ("load.percentile" -> "Recent load in your year"). */
+export const SIGNAL_LABELS = Object.freeze({
     "goals.primary": "Main goal", "goals.targetRace": "Target race", "goals.goalTime": "Goal time", "goals.daysToRace": "Days to race",
     "goals.phase": "Phase", "goals.secondary": "Other goals",
     "fitness.raceTime": "Race capability", "fitness.raceEvidence": "Recent races", "fitness.easyPace": "Pace at usual easy heart rate", "fitness.coros": "COROS fitness",
@@ -46,7 +47,7 @@ const LABELS = {
     "constraints.limits": "Injuries / limits", "constraints.openRequests": "Open change requests", "constraints.painOrSick": "Pain or sickness reported",
     "preferences.worked": "What has worked", "preferences.notWorked": "What hasn't", "preferences.wants": "Wants from a coach", "preferences.style": "Style",
     "plan.current": "Current plan", "plan.upcoming": "Next 2 weeks", "decision.weekly": "This week's suggestion", "decision.recentChoices": "Recent choices"
-};
+});
 
 const list = (items, fn, max = 4) => (items.length > max ? [...items.slice(0, max).map(fn), `+${items.length - max} more`] : items.map(fn)).join(" · ");
 
@@ -104,7 +105,7 @@ export function valueText(path, v, { self = false } = {}) {
 }
 
 function signalHtml(path, s, self) {
-    const label = LABELS[path] || path.split(".")[1];
+    const label = SIGNAL_LABELS[path] || path.split(".")[1];
     const has = s.value != null;
     return `<li class="as-sig${has ? "" : " is-missing"}" data-path="${esc(path)}">
         <div class="as-sig-head">
