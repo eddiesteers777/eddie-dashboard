@@ -215,3 +215,15 @@ test("mile laps: a block that starts and ends on a mile is found by its pace, la
     assert.match(x.read[1], /^6 mi \(target 6:58–7:05\/mi\): 42:13 \(7:02\/mi\), within target\.$/);
     assert.match(x.read.at(-1), /only mile laps/);
 });
+
+test("a long block run with the lap button every mile: the six laps join into the block", () => {
+    const w = planDayFromMarathon({ session: "2mi WU, 6mi @ Marathon Pace, 2mi CD", miles: 10, pace: "MP" }, PACES).workout;
+    const laps = [{ i: 1, m: 3219, s: 1010, hr: 135 }, ...Array.from({ length: 6 }, (_, k) => ({ i: k + 2, m: 1609, s: 422, hr: 160 })), { i: 8, m: 3219, s: 1020, hr: 140 }];
+    const x = reconstructWorkout(w, { laps, kind: "laps" });
+    const block = x.steps.find(s => s.kind === "work");
+    assert.deepEqual(block.lapIndexes, [2, 3, 4, 5, 6, 7]);
+    assert.equal(block.status, "done");
+    assert.equal(block.verdict, "within");
+    assert.equal(x.overallStatus, "completed");
+    assert.equal(x.matchConfidence, "approximate", "laps joined: not exact");
+});

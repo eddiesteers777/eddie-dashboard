@@ -144,6 +144,8 @@ export function inferLapKind(entry) {
 }
 
 const lapPace = (m, s) => (m > 0 ? s / (m / MILE) : null);
+// A lap about a mile or a km long: a split, not a step of its own.
+const splitLap = l => Math.abs(l.m - MILE) / MILE < 0.03 || Math.abs(l.m - 1000) / 1000 < 0.03;
 
 // ---------- matching ----------
 
@@ -168,13 +170,15 @@ function matchCost(step, laps, kind, workBefore) {
     const ratio = fitRatio(step, m, s);
     if (!(ratio > 0)) return Infinity;
     let c = Math.abs(Math.log(ratio)) * 4;
-    if (laps.length > 1) c += kind === "auto" ? 0 : 0.6 * (laps.length - 1);
+    // Joining laps: free for COROS's mile laps; nearly free for laps pressed every mile or km
+    // (a long block run with the lap button); otherwise an extra lap press costs a little.
+    if (laps.length > 1 && kind !== "auto") c += laps.slice(1).reduce((t, l) => t + (splitLap(l) ? 0.1 : 0.6), 0);
     const pace = lapPace(m, s);
     const t = step.target || (step.repTime && step.distanceM ? { lo: step.repTime.lo / (step.distanceM / MILE), hi: step.repTime.hi / (step.distanceM / MILE) } : null);
     const offBy = p => (p < t.lo ? Math.log(t.lo / p) : p > t.hi ? Math.log(p / t.hi) : 0);
     if (t && pace) {
         // Mile laps joined into one step: each lap has to fit, so an easy mile can't hide in an average.
-        if (kind === "auto" && laps.length > 1) c += laps.reduce((sum, l) => sum + Math.max(0, offBy(lapPace(l.m, l.s)) - 0.03) * 8, 0);
+        if (laps.length > 1 && (kind === "auto" || laps.every(splitLap))) c += laps.reduce((sum, l) => sum + Math.max(0, offBy(lapPace(l.m, l.s)) - 0.03) * 8, 0);
         else c += Math.max(0, offBy(pace) - 0.06) * 8;
     }
     if (step.kind === "recovery" && workBefore && pace && pace < workBefore * 1.05) c += 1;
@@ -187,7 +191,7 @@ const tinyLap = l => l.m < 100 || l.s < 20;
 /** The best order-keeping assignment of laps to steps. -> [lap indexes] per step. */
 function align(steps, laps, kind) {
     const n = steps.length, m = laps.length;
-    const K = kind === "auto" ? 40 : 3;
+    const K = 40;
     const skip = SKIP[kind === "auto" ? "auto" : "laps"];
     const extra = l => (kind === "auto" ? 0.3 : tinyLap(l) ? 0.1 : 1.5);
     const before = workPaceBefore(steps);
