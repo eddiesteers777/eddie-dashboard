@@ -14,6 +14,7 @@
 
 import { WEEKS, getAdjustedWeekDays, PACES } from "./marathonData.js";
 import { planDayFromMarathon, marathonTitle } from "./marathonCoros.js";
+import { kindOfDay } from "./readiness.js";
 import { allRuns, fetchLaps, laps } from "./trendsData.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { registerShare, registerRunShare } from "./executionShare.js";
@@ -66,7 +67,10 @@ function recentPlanDays(today, days) {
                 date: day.date,
                 day,
                 planDay,
-                autoCategory: autoCategory(day, planDay)
+                autoCategory: autoCategory(day, planDay) ||
+                    (day && planDay && !day.race && planDay.type !== "race" && /^(quality)$/i.test(String(kindOfDay(day, planDay) || ""))
+                        ? FEATURED_CATEGORIES.SPEED_WORK
+                        : null)
             });
         });
     });
