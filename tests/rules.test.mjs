@@ -630,6 +630,16 @@ test("shared athlete model: only with Athlete model consent, compact text only, 
     await assertFails(setDoc(modelRef, { ...shared, updatedAt: new Date("2020-01-01") }));
     await assertFails(setDoc(doc(as("client"), "sharedAthleteModel/coach2_client"), { ...shared, coachUid: "coach2" }), "not linked");
 
+    // Laps of the key workouts (structured workouts step 4): optional, same alphabet, within 30,000.
+    const laps = "c4701234,4ldb,l,2hf~25wk~3r,go~ls~4o,96~sg~3w;c4701240,4ldd,a,18p~cw0~4a";
+    await assertSucceeds(setDoc(modelRef, { ...shared, laps }), "laps ride along");
+    await assertSucceeds(getDoc(doc(as("coach"), "sharedAthleteModel/coach_client")), "the coach reads them with the rest");
+    await assertSucceeds(setDoc(modelRef, { ...shared, laps: "1".repeat(30000) }));
+    await assertFails(setDoc(modelRef, { ...shared, laps: "1".repeat(30001) }));
+    await assertFails(setDoc(modelRef, { ...shared, laps: "c1,4ldb,l,Track session" }), "no words in laps");
+    await assertFails(setDoc(modelRef, { ...shared, laps: ["c1"] }), "a string only");
+    await assertSucceeds(setDoc(modelRef, shared), "an older app without laps still saves");
+
     // Turning it off: the coach can't read it even before the client's app clears it.
     await assertSucceeds(updateDoc(shareRef, consent(false, { recovery: true })));
     await assertFails(getDoc(doc(as("coach"), "sharedAthleteModel/coach_client")));

@@ -104,3 +104,22 @@ test("the rule's limits and alphabet match the module's", () => {
     assert.equal(SHARE_PATTERN.source, "^[0-9a-z,;~]*$");
     assert.deepEqual(decodeShare(null).sessions, []);
 });
+
+test("laps of the key workouts: packed in the alphabet, back the same, only 42 days, 40 laps a run", async () => {
+    const { encodeShare, decodeShare, SHARE_PATTERN, MAX_SHARED_LAPS } = await import("../js/athleteShare.js");
+    const today = "2026-10-20";
+    const laps = [
+        { id: "c:4701234", date: "2026-10-13", kind: "laps", laps: [{ m: 3219, s: 1020, hr: 135 }, { m: 600, s: 143.4, hr: 168 }, { m: 330, s: 120, hr: null }] },
+        { id: "c:4701240", date: "2026-10-15", kind: "auto", laps: Array.from({ length: 50 }, () => ({ m: 1609, s: 422, hr: 150 })) },
+        { id: "c:4700001", date: "2026-08-01", kind: "laps", laps: [{ m: 600, s: 150, hr: 160 }] }
+    ];
+    const enc = encodeShare({ laps }, today);
+    assert.ok(SHARE_PATTERN.test(enc.laps));
+    assert.ok(!enc.laps.includes("4700001"), "older than 42 days left out");
+    const back = decodeShare(enc).laps;
+    assert.equal(back.length, 2);
+    assert.deepEqual(back[0], { id: "c:4701234", date: "2026-10-13", kind: "laps", laps: [{ i: 1, m: 3219, s: 1020, hr: 135 }, { i: 2, m: 600, s: 143.4, hr: 168 }, { i: 3, m: 330, s: 120, hr: null }] });
+    assert.equal(back[1].kind, "auto");
+    assert.equal(back[1].laps.length, MAX_SHARED_LAPS);
+    assert.deepEqual(decodeShare({ runs: "", health: "", checkins: "" }).laps, [], "an older app's copy has none");
+});

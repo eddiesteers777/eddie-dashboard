@@ -688,13 +688,15 @@ service cloud.firestore {
     }
 
     function validSharedAthleteModel(d) {
-      return d.keys().hasOnly(["version", "coachUid", "clientUid", "through", "runs", "health", "checkins", "updatedAt"])
+      // laps (structured workouts step 4) is optional: older apps don't send it.
+      return d.keys().hasOnly(["version", "coachUid", "clientUid", "through", "runs", "health", "checkins", "laps", "updatedAt"])
         && d.keys().hasAll(["version", "coachUid", "clientUid", "through", "runs", "health", "checkins", "updatedAt"])
         && d.version == 1
         && d.through is string && d.through.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
         && d.runs is string && d.runs.size() <= 80000 && d.runs.matches("^[0-9a-z,;~]*$")
         && d.health is string && d.health.size() <= 12000 && d.health.matches("^[0-9a-z,;~]*$")
         && d.checkins is string && d.checkins.size() <= 6000 && d.checkins.matches("^[0-9a-z,;~]*$")
+        && (!("laps" in d) || (d.laps is string && d.laps.size() <= 30000 && d.laps.matches("^[0-9a-z,;~]*$")))
         && d.updatedAt == request.time;
     }
 

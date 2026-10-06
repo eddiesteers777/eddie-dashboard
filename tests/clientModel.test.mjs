@@ -129,3 +129,31 @@ test("the whole picture from a shared year: load, response, readiness, race, and
     assert.equal(tier1.readiness, null);
     assert.equal(clientModel({ today: TODAY }).tier, "none");
 });
+
+test("shared laps line up with the plan's structured days: the client's key workouts rebuilt step by step", async () => {
+    const { sharedKeyWork, clientModel } = await import("../js/clientModel.js");
+    const { encodeShare, decodeShare } = await import("../js/athleteShare.js");
+    const today = "2026-10-20";
+    const workout = { warmup: { amount: 1, unit: "mi" }, sets: [{ repeat: 4, amount: 800, unit: "m", pace: "6:40", recovery: { amount: 2, unit: "min", note: "jog" } }], cooldown: { amount: 1, unit: "mi" } };
+    const plan = { weeks: [{ days: [
+        { date: "2026-10-13", type: "workout", miles: 5, session: "4 x 800", workout },
+        { date: "2026-10-14", type: "easy", miles: 4, session: "Easy" },
+        { date: "2026-10-01", type: "workout", miles: 5, session: "old", workout }
+    ] }] };
+    let i = 0;
+    const L = (m, s) => ({ m, s, hr: 160, i: ++i });
+    const laps = [L(1609, 500), ...[0, 1, 2, 3].flatMap(() => [L(800, 166), L(300, 120)]), L(1609, 510)];
+    const shared = decodeShare(encodeShare({ laps: [
+        { id: "c:991", date: "2026-10-13", kind: "laps", laps },
+        { id: "c:992", date: "2026-10-14", kind: "laps", laps: [L(6400, 2000)] }
+    ] }, today));
+    const k = sharedKeyWork(plan, shared.laps, today, { planId: "p1" });
+    assert.equal(k.keyWork.length, 1, "only the structured day; the easy day's laps aren't a key workout");
+    assert.equal(k.keyWork[0].id, "p1|2026-10-13");
+    assert.equal(k.keyWork[0].run.labelId, "991");
+    assert.equal(k.laps["991"].laps.length, laps.length);
+    const m = clientModel({ shared, plan, today });
+    assert.ok(m.core.execution.rows.length === 1, "the client's execution signal comes from the shared laps");
+    assert.equal(m.core.execution.rows[0].method, "steps");
+    assert.equal(m.core.execution.rows[0].completion, "4/4 reps completed");
+});

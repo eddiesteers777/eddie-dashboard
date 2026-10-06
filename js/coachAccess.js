@@ -315,7 +315,16 @@ export async function writeSharedAthleteModel(coachUid, payload = {}) {
         checkins: text(payload.checkins),
         updatedAt: serverTimestamp()
     };
-    await setDoc(sharedAthleteModelDoc(coachUid, user.uid), clean);
+    // Laps of the coach-plan key workouts (structured workouts step 4) only when there are any.
+    if (text(payload.laps)) clean.laps = text(payload.laps);
+    try {
+        await setDoc(sharedAthleteModelDoc(coachUid, user.uid), clean);
+    } catch (error) {
+        // Rules from before laps were allowed: keep sharing everything else.
+        if (!clean.laps || error?.code !== "permission-denied") throw error;
+        delete clean.laps;
+        await setDoc(sharedAthleteModelDoc(coachUid, user.uid), clean);
+    }
     return clean;
 }
 
