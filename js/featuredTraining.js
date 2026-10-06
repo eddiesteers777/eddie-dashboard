@@ -1,13 +1,15 @@
 /* ==========================================
-   Southbound — Featured Training on the dashboard
+   Southbound — Featured Runs on the dashboard
 
-   Keeps the dashboard focused on two share-worthy workout types for now:
-   Long Runs and Speed Work. Auto classification comes from the plan,
-   with interval/repeat formatting taking priority over the generic day
-   kind so a hard long workout does not get mislabeled. A coach can
-   override any recent completed run as Long Run, Speed Work, Auto or
-   Hide. Overrides live in the existing cloud-synced localStorage
-   pattern; no new Firestore collection is needed.
+   The dashboard shows a small curated spotlight of recent completed
+   Long Runs and Speed Work. Actual COROS + Strava runs are the source of
+   truth, so a workout can still be featured when it was moved off the
+   exact planned date or came from Strava only.
+
+   The home page intentionally shows at most one card per category
+   (maximum two cards total). The full recent-run manager stays behind
+   the Customize control so the dashboard does not become a run-history
+   wall.
 ========================================== */
 
 import { WEEKS, getAdjustedWeekDays, PACES } from "./marathonData.js";
@@ -16,9 +18,17 @@ import { allRuns, fetchLaps, laps } from "./trendsData.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { registerShare, registerRunShare } from "./executionShare.js";
 
-import { FEATURED_KEY, FEATURED_CATEGORIES, categoryFor, autoCategory } from "./featuredTrainingModel.js";
+import {
+    FEATURED_KEY,
+    FEATURED_CATEGORIES,
+    categoryFor,
+    autoCategory,
+    autoRunCategory
+} from "./featuredTrainingModel.js";
 
 const MILE = 1609.344;
+const LOOKBACK_DAYS = 42;
+const PLAN_MATCH_DAYS = 2;
 
 function todayBack(today, days) {
     const d = new Date(today + "T12:00:00");
@@ -26,6 +36,12 @@ function todayBack(today, days) {
     return d.getFullYear() + "-" +
         String(d.getMonth() + 1).padStart(2, "0") + "-" +
         String(d.getDate()).padStart(2, "0");
+}
+
+function dayDistance(a, b) {
+    const left = new Date(a + "T12:00:00");
+    const right = new Date(b + "T12:00:00");
+    return Math.abs(Math.round((left - right) / 86400000));
 }
 
 function loadOverrides() {
@@ -37,55 +53,133 @@ function loadOverrides() {
     }
 }
 
-function recentPlanRuns(today, days) {
+function recentPlanDays(today, days) {
     const fromIso = todayBack(today, days);
-    const runs = allRuns(today);
-    const overrides = loadOverrides();
     const out = [];
 
     WEEKS.forEach(function (_, wi) {
-        const weekDays = getAdjustedWeekDays(wi + 1);
-        weekDays.forEach(function (day) {
+        getAdjustedWeekDays(wi + 1).forEach(function (day) {
             if (!day?.miles || !day.date || day.date > today || day.date < fromIso) return;
 
-            const run = runs
-                .filter(function (r) { return r.date === day.date && Number(r.distance) > 0; })
-                .sort(function (a, b) { return Number(b.distance) - Number(a.distance); })[0] || null;
-            if (!run) return;
-
             const planDay = planDayFromMarathon(day, PACES);
-            const kind = kindOfDay(day, planDay);
-
             out.push({
-                id: "marathon|" + day.date,
                 date: day.date,
-                day: day,
-                planDay: planDay,
-                kind: kind,
-                override: overrides["marathon|" + day.date] || "",
-                category: categoryFor(day, planDay, overrides),
-                autoCategory: autoCategory(day, planDay),
-                title: marathonTitle(day.session, Number(day.miles) || 0),
-                run: run,
-                runMiles: Number(run.distance) / MILE,
-                plannedMiles: Number(day.miles) || 0
+                day,
+                planDay,
+                autoCategory: autoCategory(day, planDay)
             });
         });
     });
 
-    return out.sort(function (a, b) { return b.date.localeCompare(a.date); });
+    return out;
 }
 
+function matchPlanDay(run, planDays) {
+    let best = null;
+
+    for (const candidate of planDays) {
+        const delta = dayDistance(run.date, candidate.date);
+        if (delta > PLAN_MATCH_DAYS) continue;
+
+        const category = candidate.autoCategory;
+        const runName = String(run.name || "");
+
+        // Prefer a category-compatible plan day when there are several days
+        // within the matching window. This is especially useful for a moved
+        // quality session sitting beside an easy day.
+        const nameSuggestsSpeed = /\b(intervals?|repeats?|reps?|fartlek|tempo|threshold|progression|speed\s+work|hill\s+repeats?|track|marathon\s+pace|half\s+marathon\s+pace|5k\s+pace|10k\s+pace)\b/i.test(runName);
+        const nameSuggestsLong = /\blong\s+run\b|\bmarathon\s+long\b/i.test(runName);
+        const compatible =
+            (nameSuggestsSpeed && category === FEATURED_CATEGORIES.SPEED_WORK) ||
+            (nameSuggestsLong && category === FEATURED_CATEGORIES.LONG_RUN);
+
+        const score = delta * 10 + (compatible ? -8 : 0);
+        if (!best || score < best.score) {
+            best = { ...candidate, score };
+        }
+    }
+
+    return best;
+}
+
+function actualRunId(run) {
+    if (run?.source && run?.labelId) return "run|" + run.source + "|" + run.labelId;
+    return "run|" + (run?.source || "unknown") + "|" + (run?.date || "") + "|" + Math.round(Number(run?.distance) || 0);
+}
+
+function recentRuns(today, days) {
+    const fromIso = todayBack(today, days);
+    const runs = allRuns(today);
+    const planDays = recentPlanDays(today, days);
+    const overrides = loadOverrides();
+
+    return runs
+        .filter(run => run?.date && run.date >= fromIso && run.date <= today && Number(run.distance) > 0)
+        .map(run => {
+            const id = actualRunId(run);
+            const match = matchPlanDay(run, planDays);
+            const planCategory = match?.autoCategory || null;
+            const legacyId = match ? "marathon|" + match.date : "";
+
+            const auto = autoRunCategory(run, match?.planDay || null, planCategory);
+            const override = overrides[id] ?? (legacyId ? overrides[legacyId] : null) ?? "";
+
+            return {
+                id,
+                legacyId,
+                date: run.date,
+                day: match?.day || null,
+                planDay: match?.planDay || null,
+                matchedPlanDate: match?.date || null,
+                matchedPlanDistance: Number(match?.day?.miles) || 0,
+                kind: auto,
+                override,
+                autoCategory: auto,
+                category: override === FEATURED_CATEGORIES.NONE
+                    ? null
+                    : override || auto,
+                title: match?.day?.session
+                    ? marathonTitle(match.day.session, Number(match.day.miles) || 0)
+                    : (run.name || (auto === FEATURED_CATEGORIES.LONG_RUN ? "Long Run" : "Speed Work")),
+                run,
+                runMiles: Number(run.distance) / MILE,
+                plannedMiles: Number(match?.day?.miles) || 0
+            };
+        })
+        .sort((a, b) => {
+            const dateOrder = b.date.localeCompare(a.date);
+            if (dateOrder) return dateOrder;
+            return Number(b.run.distance || 0) - Number(a.run.distance || 0);
+        });
+}
+
+/**
+ * Curated dashboard selection:
+ * - at most one Long Run
+ * - at most one Speed Work
+ * - newest qualifying session wins within each category
+ *
+ * The full history remains available through manageableTrainingItems().
+ */
 export function featuredTrainingItems(today, options) {
     const opts = options || {};
-    const days = opts.days == null ? 42 : opts.days;
-    const limit = opts.limit == null ? 4 : opts.limit;
-    return recentPlanRuns(today, days).filter(function (item) { return Boolean(item.category); }).slice(0, limit);
+    const days = opts.days == null ? LOOKBACK_DAYS : opts.days;
+    const runs = recentRuns(today, days);
+    const selected = [];
+
+    [FEATURED_CATEGORIES.LONG_RUN, FEATURED_CATEGORIES.SPEED_WORK].forEach(category => {
+        const item = runs.find(run => run.category === category);
+        if (item) selected.push(item);
+    });
+
+    return selected
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, opts.limit == null ? 2 : Math.min(2, opts.limit));
 }
 
 export function manageableTrainingItems(today, options) {
     const opts = options || {};
-    return recentPlanRuns(today, opts.days == null ? 42 : opts.days);
+    return recentRuns(today, opts.days == null ? LOOKBACK_DAYS : opts.days);
 }
 
 export function saveCategoryOverride(id, category) {
@@ -154,12 +248,12 @@ function shareFeatured(item) {
 
     if (lapEntry?.laps?.length && hasStructuredWork && item.run.source !== "strava") {
         const x = reconstructWorkout(item.planDay.workout, lapEntry, {
-            plannedWorkoutId: item.id,
+            plannedWorkoutId: item.legacyId || item.id,
             activityId: "c:" + item.run.labelId
         });
         registerShare(x, {
             date: item.date,
-            name: marathonTitle(item.day.session, item.plannedMiles),
+            name: item.title,
             category: item.category,
             runMeters: item.run.distance,
             runSec: item.run.duration
@@ -169,7 +263,7 @@ function shareFeatured(item) {
 
     const key = registerRunShare(item.run, {
         date: item.date,
-        name: marathonTitle(item.day.session, item.plannedMiles),
+        name: item.title,
         category: item.category,
         plannedMiles: item.plannedMiles,
         runMeters: item.run.distance,
@@ -185,6 +279,12 @@ function cardHtml(item) {
         (run.duration && run.distance ? Number(run.duration) / actual : null);
     const shareKey = shareFeatured(item);
 
+    const planNote = item.plannedMiles > 0
+        ? (item.matchedPlanDate === item.date
+            ? "Planned"
+            : "Completed " + dayWords(item.date))
+        : "";
+
     return [
         '<article class="ft-item">',
         '<div class="ft-main">',
@@ -192,14 +292,14 @@ function cardHtml(item) {
         categoryLabel(item.category).toUpperCase(),
         '</span><span class="ft-date">', dayWords(item.date), '</span></div>',
         '<h3>', esc(item.title), '</h3>',
+        planNote ? '<span class="ft-plan-note">' + esc(planNote) + '</span>' : "",
         '<div class="ft-metrics">',
-        '<span><strong>', fmtMiles(actual), '</strong> actual</span>',
-        '<span><strong>', fmtTime(run.duration), '</strong> time</span>',
-        '<span><strong>', fmtPace(paceSec), '</strong> pace</span>',
+        '<span><strong>', fmtMiles(actual), '</strong></span>',
+        '<span><strong>', fmtTime(run.duration), '</strong></span>',
+        '<span><strong>', fmtPace(paceSec), '</strong></span>',
         run.avgHr ? '<span><strong>' + Math.round(Number(run.avgHr)) + '</strong> bpm</span>' : "",
         '</div></div>',
         '<div class="ft-actions">',
-        '<a class="sb-btn sb-btn-tertiary ft-view" href="marathon.html">View plan</a>',
         shareKey ? '<button type="button" class="sb-btn sb-btn-secondary ft-share" data-ex-share="' + esc(shareKey) + '">Share</button>' : "",
         '</div></article>'
     ].join("");
@@ -232,8 +332,8 @@ function managerRowsHtml(items) {
 function managerHtml(items) {
     return [
         '<dialog class="sb-dialog ft-manager-dialog"><div class="sb-dialog-form">',
-        '<h2 class="sb-dialog-title">Featured Training</h2>',
-        '<p class="clients-card-note">Southbound auto-picks long runs and interval-style speed work. Use the selector to override any recent run.</p>',
+        '<h2 class="sb-dialog-title">Featured Runs</h2>',
+        '<p class="clients-card-note">Southbound auto-picks one Long Run and one Speed Work session. Use the selector to override any recent run.</p>',
         '<div class="ft-manager-list">', managerRowsHtml(items), '</div>',
         '<div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-tertiary" data-ft-close>Done</button></div>',
         '</div></dialog>'
@@ -250,7 +350,7 @@ export function mountFeaturedTraining(options) {
         const items = featuredTrainingItems(today);
         host.innerHTML = items.length
             ? items.map(cardHtml).join("")
-            : '<p class="ft-empty">No long runs or speed work to show yet. Complete one and it will appear here.</p>';
+            : '<p class="ft-empty">No featured runs yet. Complete a long run or quality session and it will appear here.</p>';
 
         if (manageButton && !manageButton.dataset.bound) {
             manageButton.dataset.bound = "true";
@@ -276,20 +376,18 @@ export function mountFeaturedTraining(options) {
                 if (close) close.addEventListener("click", function () { dialog.close(); });
             });
         }
-
-
     };
 
     render();
 
-    // Fetch missing COROS workout laps for interval-style featured sessions so
-    // Speed Work gets the full rep-by-rep share graphic when available.
-    const items = featuredTrainingItems(today, { limit: 8 }).filter(function (item) {
+    // Fetch missing COROS workout laps only for the small candidate set that
+    // could become the featured Speed Work card. Re-render once they arrive.
+    const items = featuredTrainingItems(today, { limit: 2 }).filter(function (item) {
         return item.run.labelId && item.planDay?.workout?.sets?.some(function (s) {
             return Number(s.repeat) > 1 || s.parts;
         });
     });
     if (items.length) {
-        fetchLaps(items, { max: 8, onBatch: render }).then(render).catch(function () {});
+        fetchLaps(items, { max: 4, onBatch: render }).then(render).catch(function () {});
     }
 }
