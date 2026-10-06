@@ -1,10 +1,9 @@
 /* ==========================================
    Southbound — Featured Training classification (pure)
 
-   Automatic classification deliberately stays conservative:
-   repeated / interval-formatted sessions are Speed Work first;
-   otherwise the existing day-kind logic can mark a Long Run.
-   Coach overrides are handled outside this pure model.
+   Plan-aware classification is kept separate from actual-run
+   classification. Featured Runs can therefore use completed COROS +
+   Strava runs even when the athlete moved a workout off its planned day.
 ========================================== */
 
 import { kindOfDay } from "./readiness.js";
@@ -39,6 +38,39 @@ export function autoCategory(day, planDay) {
         /\blong\s+run\b/i.test(session)) {
         return FEATURED_CATEGORIES.LONG_RUN;
     }
+
+    return null;
+}
+
+/**
+ * Classifies a completed run. A nearby plan day is strong evidence, but the
+ * actual run remains the source of truth: moved sessions and Strava-only runs
+ * can still qualify.
+ */
+export function autoRunCategory(run, planDay, planCategory = null) {
+    if (!run || !Number(run.distance) || run.race) return null;
+
+    const name = clean(run.name);
+
+    // Explicit workout language in the completed activity is useful even when
+    // the run was moved or never had a matching plan entry.
+    const speedWords = /\b(intervals?|repeats?|reps?|fartlek|tempo|threshold|progression|speed\s+work|hill\s+repeats?|track|marathon\s+pace|half\s+marathon\s+pace|5k\s+pace|10k\s+pace)\b/i;
+    const longWords = /\blong\s+run\b|\bmarathon\s+long\b/i;
+
+    // A matched plan day is stronger than a vague activity name such as
+    // "Run", but never use a plan category when it is absent.
+    if (planCategory === FEATURED_CATEGORIES.SPEED_WORK ||
+        planCategory === FEATURED_CATEGORIES.LONG_RUN) {
+        return planCategory;
+    }
+
+    if (speedWords.test(name)) return FEATURED_CATEGORIES.SPEED_WORK;
+    if (longWords.test(name)) return FEATURED_CATEGORIES.LONG_RUN;
+
+    // Conservative fallback for genuinely unplanned long efforts.
+    const miles = Number(run.distance) / 1609.344;
+    const minutes = Number(run.duration) / 60;
+    if (miles >= 12 || (miles >= 8 && minutes >= 90)) return FEATURED_CATEGORIES.LONG_RUN;
 
     return null;
 }
