@@ -27,6 +27,7 @@
         rel="stylesheet"
         href="css/analytics.css">
     <link rel="stylesheet" href="css/trends.css">
+    <link rel="stylesheet" href="css/athlete-state.css">
     <link rel="stylesheet" href="css/corosIntegration.css">
     <link rel="stylesheet" href="css/corosData.css">
     <link rel="stylesheet" href="css/stravaIntegration.css">
@@ -135,6 +136,11 @@
         <section class="an-section" id="anData">
             <header class="an-head"><span class="an-num">7</span><div><h2>Data</h2><p>Where the numbers come from, and how much of it there is.</p></div></header>
             <section class="panel ar-panel" id="coveragePanel" aria-live="polite"><p class="sb-wait"></p></section>
+            <!-- ATHLETE STATE (js/athleteStateView.js, weekly planning P1): everything above as planning reads it; worked out when opened -->
+            <details class="as-fold" id="athleteState">
+                <summary><div><h2>Athlete State</h2><p>Everything above in one place, the way weekly planning will read it: what kind of fact each number is, how sure, and what it stands on. Tap to open.</p></div></summary>
+                <section class="panel ar-panel as-panel" id="athleteStatePanel" aria-live="polite"></section>
+            </details>
 
         <!-- ==========================================
              DATA CONNECTIONS (see css/analytics.css)

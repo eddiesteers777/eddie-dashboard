@@ -132,6 +132,22 @@ function bindCheck() {
     });
 }
 
+// ---------- the Athlete State fold (weekly planning P1) ----------
+
+function bindState() {
+    const det = $("athleteState");
+    if (!det) return;
+    if (location.hash === "#athleteState") det.open = true;
+    import("./athleteStateView.js").then(({ mountStateFold }) => {
+        const fold = mountStateFold(det, $("athleteStatePanel"), () => import("./athleteSources.js").then(m => m.selfState(isoToday())));
+        // New answers or runs: forget the old state first, then work it out again (now if it's open).
+        let timer = null;
+        const again = () => { clearTimeout(timer); timer = setTimeout(() => import("./athleteSources.js").then(m => { m.forgetSelfState(); fold?.refresh(); }), 300); };
+        for (const e of ["sb:athlete-answers", "sb:strava-updated", "eddieos:coros-history-updated"]) window.addEventListener(e, again);
+    }).catch(error => console.error("Southbound: the Athlete State panel couldn't load.", error));
+}
+const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
 // ---------- wiring ----------
 
 function redraw() {
@@ -155,6 +171,7 @@ async function refresh() {
 function mount() {
     if (!$("anSummary")) return;
     bindCheck();
+    bindState();
     window.addEventListener("sb:analytics-facts", e => {
         const detail = { ...(e.detail || {}) };
         // The summary and Preparation follow the plan's race distance, not whichever chip is showing.

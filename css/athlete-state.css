@@ -1,0 +1,62 @@
+/* ==========================================
+   Southbound — the Athlete State panel (js/athleteStateView.js)
+   Analytics → Data and the Client Hub's Model tab. Weekly planning P1.
+========================================== */
+
+.as-fold [hidden], .as-panel [hidden] { display: none !important; }
+.as-fold { margin-top: 22px; }
+.as-fold > summary { list-style: none; cursor: pointer; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; background: var(--surface); display: flex; align-items: flex-start; gap: 12px; }
+.as-fold > summary::-webkit-details-marker { display: none; }
+.as-fold > summary::after { content: "Open"; margin-left: auto; align-self: center; font-size: 13px; color: var(--primary-light); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 4px 12px; flex-shrink: 0; }
+.as-fold[open] > summary::after { content: "Close"; }
+.as-fold[open] > summary { margin-bottom: 16px; }
+.as-fold > summary h2, .as-fold > summary h3 { margin: 0; }
+.as-fold > summary p { margin: 4px 0 0; color: var(--text-secondary, var(--stone)); font-size: 14px; }
+
+.as-panel { display: grid; gap: 16px; }
+.as-intro, .as-note { margin: 0; color: var(--text-secondary, var(--stone)); font-size: 14px; line-height: 1.5; }
+.as-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.as-sub { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--primary-light); }
+
+.as-unknowns { border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent); background: color-mix(in srgb, var(--amber) 8%, transparent); border-radius: var(--radius); padding: 14px 16px; }
+.as-unknowns ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.as-unknowns li { font-size: 14px; line-height: 1.45; }
+.as-unknowns li span { color: var(--text-secondary, var(--stone)); }
+
+.as-domains { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); align-items: start; }
+.as-domain { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 14px 16px; min-width: 0; }
+.as-domain h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 22px; letter-spacing: .02em; font-weight: 400; }
+.as-domain h3 small { font-family: var(--font-body); font-size: 12px; color: var(--text-secondary, var(--stone)); margin-left: 6px; }
+.as-sigs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.as-sig { display: grid; gap: 4px; min-width: 0; }
+.as-sig + .as-sig { border-top: 1px solid var(--border); padding-top: 12px; }
+.as-sig-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.as-label { font-weight: 600; font-size: 14px; margin-right: auto; }
+.as-value { margin: 0; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.as-sig.is-missing .as-value { color: var(--text-secondary, var(--stone)); }
+.as-evidence { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-secondary, var(--stone)); line-height: 1.45; }
+.as-source { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary, var(--stone)); overflow-wrap: anywhere; }
+
+.as-kind, .as-conf { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: var(--radius-pill); border: 1px solid currentColor; line-height: 1.4; white-space: nowrap; }
+.as-kind.is-measured { color: var(--sage); }
+.as-kind.is-derived { color: var(--primary-light); }
+.as-kind.is-modeled { color: var(--amber); }
+.as-kind.is-predicted { color: var(--cyan); }
+.as-kind.is-subjective { color: var(--purple); }
+.as-kind.is-coach { color: var(--cream); }
+.as-kind.is-athlete { color: var(--pink); }
+.as-kind.is-vendor { color: var(--stone); }
+.as-conf { border-style: dashed; }
+.as-conf.is-high { color: var(--good, var(--sage)); }
+.as-conf.is-moderate { color: var(--primary-light); }
+.as-conf.is-low { color: var(--amber); }
+.as-conf.is-none { color: var(--text-secondary, var(--stone)); }
+
+.as-rules { font-size: 13px; color: var(--text-secondary, var(--stone)); }
+.as-rules summary { cursor: pointer; min-height: 32px; color: var(--text-secondary, var(--stone)); }
+.as-rules ul { padding-left: 18px; line-height: 1.5; }
+
+@media (max-width: 600px) {
+    .as-fold > summary { padding: 14px; }
+    .as-domain { padding: 12px 14px; }
+}

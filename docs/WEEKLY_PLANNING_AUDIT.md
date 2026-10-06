@@ -1,6 +1,6 @@
 # Weekly Planning — Audit and Architecture
 
-**Status:** audit and proposal only (2026-10-06). No app code was changed for this document.
+**Status:** audit 2026-10-06; Eddie's decisions recorded in section 15. **P1 (Athlete State) built 2026-10-06** (`js/athleteState.js`, `js/athleteSources.js`, `js/athleteStateView.js`; see `CLAUDE.md`).
 **Asked for by Eddie:** a weekly planning capability. Southbound becomes the source of truth for the athlete's training state, an AI planning layer proposes the week, and the coach decides.
 **Read first:** `CLAUDE.md`, `docs/PERFORMANCE_ENGINE_PLAN.md`, `docs/ATHLETE_MODEL_AUDIT.md`. This document builds on them and does not repeat them.
 
@@ -40,10 +40,10 @@ The coach plans for clients are already versioned: draft → publish → version
 | **P2** | **Planning Context + Planning Brief + a Weekly Planning page**: what matters this week, the brief to read or copy, and the existing paste-back flow, now with the athlete's state in it. Works with any chatbot, ChatGPT included. | No | Copy/paste only |
 | **P3** | **Planning cycles**: every week's context, every proposal, every coach edit with an optional reason, and the approved plan, saved as one record. | Yes (one new coach-only collection) | — |
 | **P4** | **Plan outcome**: planned vs actual per session, and how the athlete responded to what was prescribed. It fills in the cycle and feeds the next one. | No | — |
-| **P5** | **AI API**: the coach-only relay (built once on Sep 27, then removed), now sending only the Planning Context and returning a checked, structured proposal. | Yes (client consent switch) | Yes |
+| **P5** | **AI API**: the coach-only relay (built once on Sep 27, then removed), now sending only the Planning Context and returning a checked, structured proposal. | No (consent in person; the privacy page is updated first) | Yes |
 | **P6** | **Learning**: plain descriptive tendencies from the saved cycles (completion by session type, how often the coach changes what, response to load). No machine learning until the history is there. | No | — |
 
-**Decisions only you can make (section 15):**
+**Decisions (section 15), answered by Eddie on 2026-10-06:** 1 yes, 2 yes, 3 **no switch** (he asks clients in person), 4 yes.
 
 1. **Is the "no AI inside Southbound" decision of Sep 27 being reversed?** This request reverses it. My advice: yes, but not until P3–P4. Until then the Brief works with any chatbot at no cost and with no new accounts.
 2. **After Indianapolis, does your own training move into the same plan model as clients?** I recommend yes.
@@ -729,10 +729,9 @@ The Weekly Review gains one line per key session: "Prescribed 6 × 1 mi @ 6:45�
   - a monthly spend limit in the Anthropic console (as in the old setup guide)
   - the relay caps the request size and output tokens
   - optionally a per-coach daily count in Workers KV
-- **Consent:**
-  - A client's context goes to the relay only if they've turned on a new switch: "Let my coach use an AI planning assistant with my training data" (`wearableShares.permissions.ai` or a field on `clientRecords`; rules change + test).
-  - Without the switch, the context drops the shared-model sections and keeps what the privacy page already allows.
-  - The privacy page is updated before anything is sent.
+- **Consent:** Eddie's decision (2026-10-06): **no switch in the app.** He asks each client in person before their training data goes to the AI planner.
+  - Before P5 goes live, the privacy page is updated so it stays true: it currently says Southbound itself sends nothing to an AI service.
+  - The context only ever holds what section 7.2 allows (no contacts, health check, birth year, words or GPS), whoever has agreed.
 - **Retention:**
   - Under Anthropic's commercial API terms, inputs aren't used for training by default and are kept for a limited period. Zero data retention is available by agreement.
   - Check the current terms when setting up, and say what they are on the privacy page.
@@ -770,12 +769,15 @@ These go back into the context as `tendencies` with their n. They're never used 
 
 ## 15. Decisions for Eddie
 
-1. **AI inside Southbound:** you removed it on Sep 27, and this request brings it back.
-   - My advice: build P1–P4 first. They're useful with copy/paste and cost nothing.
-   - Add the relay (P5) once proposals and reviews are being saved, so every AI suggestion is recorded from day one.
-2. **Your own plan store after Indianapolis:** option A (coach yourself in the client plan model; rules change), B (keep the code plan + a log) or C (a separate key). I recommend **A**.
-3. **Client consent for AI:** a separate switch, off by default. I recommend **yes**.
-4. **Who first:** you, then one client who shares the athlete model. I recommend **yes**.
+Answered 2026-10-06:
+
+1. **AI inside Southbound:** **yes**, reversing the Sep 27 decision, built after P1–P4 so every AI suggestion is recorded from day one.
+2. **Your own plan store after Indianapolis:** **A**, Eddie coaches himself in the client plan model (a rules change, at P3 or with the next block).
+3. **Client consent for AI:** **no switch.** Eddie handles consent in person; the privacy page is updated before P5.
+4. **Who first:** **Eddie**, then one client who shares the athlete model.
+
+Still open:
+
 5. **Planning preferences fields** (long-run day, workout days, doubles, disliked sessions): add them in P2 only if the first briefs show they're needed. Your generator settings already hold run days and the long-run day for clients.
 6. **Where the Weekly Planning page lives:**
    - its own coach page (`planning.html`, Coach menu), with an athlete picker: "Me" + each client

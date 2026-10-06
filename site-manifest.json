@@ -55,6 +55,9 @@
     "js/athleteLedger.js",
     "js/athleteParams.js",
     "js/athleteShare.js",
+    "js/athleteSources.js",
+    "js/athleteState.js",
+    "js/athleteStateView.js",
     "js/auth.js",
     "js/barcodeScanner.js",
     "js/calendarButton.js",
@@ -248,6 +251,7 @@
   ],
   "styles": [
     "css/analytics.css",
+    "css/athlete-state.css",
     "css/checkin.css",
     "css/client-hub.css",
     "css/client-model.css",

@@ -14,7 +14,9 @@
    -> load (js/sessionDose.js + js/loadState.js), how they're responding
    (js/trainingResponse.js), readiness v2 (js/readinessV2.js, only with
    shared nights), race capability (js/raceCapability.js) and the weekly
-   decision (js/weeklyDecision.js) on the next 7 days of the coach's plan.
+   decision (js/weeklyDecision.js) on the next 7 days of the coach's plan,
+   all run once by athleteCore() in js/athleteState.js (weekly planning
+   P1); clientInputs() is the client's input for the Athlete State.
 
    applyDecisionToPlan turns the decision's changes into edits of the
    coach's plan (structured workouts included), for the plan workspace to
@@ -27,13 +29,12 @@
 import { addDays, raceCandidates, confirmedRaces } from "./athleteLedger.js";
 import { toCr10, logScale } from "./effortScale.js";
 import { fillPlanEfforts, effortsFromResults } from "./athleteShare.js";
-import { sessionDoses } from "./sessionDose.js";
-import { loadState, recentWords } from "./loadState.js";
-import { efficiency, effortResponse, efficiencySignal, effortSignal, reading } from "./trainingResponse.js";
-import { readinessV2 } from "./readinessV2.js";
-import { predictRace } from "./raceCapability.js";
-import { weekDecision, mondayOf, DEFAULT_POLICY } from "./weeklyDecision.js";
+import { recentWords } from "./loadState.js";
+import { mondayOf, DEFAULT_POLICY } from "./weeklyDecision.js";
+import { athleteCore, targetMeters } from "./athleteState.js";
 import { workoutSummary, plannedMiles } from "./runWorkout.js";
+
+export { targetMeters };
 
 const MILE = 1609.344;
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -196,55 +197,51 @@ export function applyDecisionToPlan(plan, decision) {
 
 // ---------- the whole picture ----------
 
-const TARGETS = { "5k": 5000, "10k": 10000, half: 21097.5, marathon: 42195 };
-/** The race distance the client is training for (their profile), else null. */
-export function targetMeters(record) {
-    if (TARGETS[record?.eventType]) return TARGETS[record.eventType];
-    const t = String(record?.targetEvent || "").toLowerCase();
-    if (/half/.test(t)) return TARGETS.half;
-    if (/marathon/.test(t)) return TARGETS.marathon;
-    if (/10\s?k/.test(t)) return TARGETS["10k"];
-    if (/5\s?k/.test(t)) return TARGETS["5k"];
-    return null;
+/**
+ * A client's inputs for the Athlete State (js/athleteState.js), pure.
+ *   shared   decodeShare(...) or null; results, races, plan (the coach's whole plan)
+ *   record   the client profile; previous last week's level (the second-Ease rule)
+ * Everything else the hub knows (check-ins, requests, bookings...) can be passed through `extra`.
+ */
+export function clientInputs({ shared = null, results = [], races = {}, plan = null, record = null, today, meters = null, previous = null, policy = DEFAULT_POLICY, extra = {} } = {}) {
+    const sessions = clientSessions({ shared, results, races });
+    return {
+        who: "client", today, sessions,
+        health: shared?.health || {}, fitness: shared?.fitness || {}, checkins: shared?.checkins || {},
+        settings: {}, laps: {}, keyWork: [],
+        nextDays: plan ? coachPlanDays(plan, addDays(today, 1), 7).filter(d => !d.done) : [],
+        target: meters || targetMeters(record) || 10000,
+        policy, previous, profile: record, results,
+        tier: shared ? "shared" : sessions.length ? "plan-logs" : "none",
+        through: shared?.through || null,
+        ...extra
+    };
 }
 
 /**
- * Everything the Model tab shows.
+ * Everything the Model tab shows: the Athlete State's engines (athleteCore) for one client.
  *   shared   decodeShare(...) or null; results, races, plan (the coach's whole plan)
  *   record   the client profile; previous last week's level (the second-Ease rule)
  */
-export function clientModel({ shared = null, results = [], races = {}, plan = null, record = null, today, meters = null, previous = null, policy = DEFAULT_POLICY } = {}) {
-    const sessions = clientSessions({ shared, results, races });
-    const health = shared?.health || {}, fitness = shared?.fitness || {}, checkins = shared?.checkins || {};
-    const watchRuns = sessions.filter(s => s.sources[0] !== "plan").length;
-    const tier = shared ? "shared" : sessions.length ? "plan-logs" : "none";
-    const dr = sessionDoses(sessions, today, { laps: {}, health, fitness });
-    const load = loadState(dr.doses, today);
-    const eff = efficiency(sessions, dr.doses, today);
-    const er = effortResponse(sessions, dr.doses, today);
-    const response = { effRuns: eff.runs, effortRows: er.rows };
-    const effSig = efficiencySignal(eff.runs, today);
-    const effortSig = effortSignal(er.rows, today);
-    const data = { health, fitness, checkins, settings: {}, response, loadSeries: load.series, quality: [], doses: dr.doses };
-    const readiness = Object.keys(health).length ? readinessV2(today, data) : null;
-    const target = meters || targetMeters(record) || 10000;
-    const race = sessions.length ? predictRace({ meters: target, asOf: today, sessions, health, fitness }) : null;
-    const planDays = plan ? coachPlanDays(plan, addDays(today, 1), 7).filter(d => !d.done) : [];
-    const decision = weekDecision(today, data, planDays, { policy, previous });
-    const answered = sessions.filter(s => s.date >= addDays(today, -27) && s.rpeAnswered).length;
-    const recent = sessions.filter(s => s.date >= addDays(today, -27)).length;
+export function clientModel(args = {}) {
+    const inputs = clientInputs(args);
+    const { today, sessions } = inputs;
+    const core = athleteCore(inputs);
+    const results = args.results || [];
     return {
-        today, tier, sessions, watchRuns, through: shared?.through || null,
+        today, tier: inputs.tier, sessions, watchRuns: sessions.filter(s => s.sources[0] !== "plan").length, through: inputs.through,
         counts: {
-            runs: sessions.length, recent, answered,
-            nights: Object.keys(health).length, mornings: Object.keys(checkins).length,
-            planLogs: (results || []).filter(r => r?.kind !== "strength" && r?.status === "completed").length
+            runs: sessions.length, recent: sessions.filter(s => s.date >= addDays(today, -27)).length,
+            answered: sessions.filter(s => s.date >= addDays(today, -27) && s.rpeAnswered).length,
+            nights: Object.keys(inputs.health).length, mornings: Object.keys(inputs.checkins).length,
+            planLogs: results.filter(r => r?.kind !== "strength" && r?.status === "completed").length
         },
-        load, loadWords: recentWords(load.today?.percentile), scale: dr.scale, anchors: dr.anchors,
-        response: { efficiency: effSig, effort: effortSig, reading: reading(effSig, effortSig), effortRows: er.rows.slice(-5) },
-        readiness, race, target,
+        load: core.load, loadWords: recentWords(core.load.today?.percentile), scale: core.dose.scale, anchors: core.dose.anchors,
+        response: { efficiency: core.eff.signal, effort: core.effort.signal, reading: core.reading, effortRows: core.effort.rows.slice(-5) },
+        readiness: core.readinessV2, race: core.race, target: core.meters,
         candidates: raceCandidates(sessions).slice(0, 4),
         confirmed: confirmedRaces(sessions),
-        planDays, decision, weekOf: mondayOf(today)
+        planDays: inputs.nextDays, decision: core.decision, weekOf: mondayOf(today),
+        core, inputs
     };
 }

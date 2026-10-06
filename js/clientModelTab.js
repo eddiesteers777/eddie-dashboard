@@ -233,6 +233,7 @@ export function mountClientModel(el, { data, clientUid, firstName = "your client
             return;
         }
         const { m, entry, header } = current;
+        const stateOpen = Boolean(el.querySelector("#cmState")?.open);
         el.innerHTML = `
             <div class="cm">
                 <div class="cm-intro clients-card">
@@ -243,7 +244,25 @@ export function mountClientModel(el, { data, clientUid, firstName = "your client
                 ${decisionHtml(m, entry, header, first)}
                 <div class="cm-grid">${raceHtml(m)}${loadHtml(m, first)}${readinessHtml(m)}</div>
                 ${racesHtml(m, first)}`}
+                <details class="as-fold" id="cmState"${stateOpen ? " open" : ""}>
+                    <summary><div><h3>Athlete State</h3><p>Everything Southbound knows about ${esc(first)}, the way weekly planning will read it: what kind of fact each number is, how sure, and what it stands on. Tap to open.</p></div></summary>
+                    <section class="as-panel" id="cmStatePanel" aria-live="polite"></section>
+                </details>
             </div>`;
+        mountState();
+    }
+
+    // The Athlete State (weekly planning P1): the numbers above, plus the profile, plan and check-ins, worked out when opened.
+    function mountState() {
+        const det = el.querySelector("#cmState");
+        if (!det) return;
+        const { m } = current;
+        import("./athleteStateView.js").then(({ mountStateFold }) => mountStateFold(det, el.querySelector("#cmStatePanel"), async () => {
+            const [{ clientSourceInputs }, { athleteState }] = await Promise.all([import("./athleteSources.js"), import("./athleteState.js")]);
+            const inputs = await clientSourceInputs(data, { clientUid, firstName: first, today: m.today });
+            inputs.target = m.target;
+            return { state: athleteState(inputs, { core: m.core }) };
+        })).catch(error => console.error("Southbound: the Athlete State panel couldn't load.", error));
     }
 
     el.addEventListener("click", async event => {
