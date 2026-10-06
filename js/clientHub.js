@@ -56,6 +56,10 @@ import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statu
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
 import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES, isStripeManagedPackage } from "./clientPackageModel.js";
 import { hasTrainingService, hasSoccerService } from "./services.js";
+import { decodeShare } from "./athleteShare.js";
+import { sharedKeyWork, currentPlan } from "./clientModel.js";
+import { reconstructWorkout } from "./workoutExecution.js";
+import { executionHtml, executionClass } from "./executionView.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -1951,6 +1955,24 @@ function workoutResultHtml(r) {
         </div>`;
 }
 
+// Their key workouts rebuilt rep by rep from the laps they share (structured workouts step 4).
+function repByRepHtml() {
+    if (!record.sharedAthleteModel) return "";
+    const today = isoDate(new Date());
+    const header = currentPlan(record.coachingPlans || [], today);
+    const shared = decodeShare(record.sharedAthleteModel);
+    const { keyWork, laps } = sharedKeyWork(header?.plan, shared.laps, today, { planId: header?.id || "plan" });
+    if (!keyWork.length) return "";
+    const day = d => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    const cards = keyWork.slice(0, 6).map(w => {
+        const x = reconstructWorkout(w.workout, laps[w.run.labelId], { plannedWorkoutId: w.id, activityId: `c:${w.run.labelId}` });
+        return `<li class="ex-run ${executionClass(x)}"><div class="ex-run-top"><strong>${esc(w.title)}</strong><span>${day(w.date)}</span></div>${executionHtml(x)}</li>`;
+    }).join("");
+    return `<section class="clients-card hub-exec-card"><h2>${icon("activity")} Rep by rep, from ${esc(firstName())}'s watch</h2>
+        <p class="clients-card-note">Their key workouts of the last 6 weeks against your plan, step by step from the COROS laps they share with you (Athlete model sharing).</p>
+        <ul class="ex-runs">${cards}</ul></section>`;
+}
+
 function renderWorkouts() {
     const results = record.results || [];
     const badge = $("hubWorkoutBadge");
@@ -1958,11 +1980,13 @@ function renderWorkouts() {
     badge.hidden = !waiting;
     badge.textContent = waiting || "";
     const hasPlan = (record.coachingPlans || []).some(p => p.status === "active");
-    $("hubWorkouts").innerHTML = results.length
+    let reps = "";
+    try { reps = repByRepHtml(); } catch (error) { console.warn("Southbound: rep by rep couldn't draw.", error); }
+    $("hubWorkouts").innerHTML = reps + (results.length
         ? results.map(workoutResultHtml).join("")
         : `<div class="clients-card"><div class="sb-empty"><span class="sb-empty-icon">${icon("activity")}</span>
             <strong class="sb-empty-title">No workouts logged yet</strong>
-            <p class="sb-empty-text">${hasPlan ? `When ${esc(firstName())} logs a run from your plan — distance, time, effort, anything that hurt — it shows up here to reply to.` : `Publish a plan from the Plan tab, and ${esc(firstName())}'s logged runs show up here.`}</p></div></div>`;
+            <p class="sb-empty-text">${hasPlan ? `When ${esc(firstName())} logs a run from your plan — distance, time, effort, anything that hurt — it shows up here to reply to.` : `Publish a plan from the Plan tab, and ${esc(firstName())}'s logged runs show up here.`}</p></div></div>`);
 
     $("hubWorkouts").querySelectorAll("form[data-reply]").forEach(form => form.addEventListener("submit", async event => {
         event.preventDefault();

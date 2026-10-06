@@ -13,6 +13,11 @@
                marathon prediction, threshold pace
      checkins  the last 120 mornings: soreness / energy / mood 1-5, and
                whether they felt sick or reported pain (never the words)
+     laps      the last 42 days' runs on the coach's structured workout
+               days: each lap's meters, seconds and average HR, and
+               whether they're the watch's workout laps or every-mile laps
+               (structured workouts step 4: the coach rebuilds each rep
+               from them against the plan; optional, older apps don't send it)
    Never: GPS, run names or notes (only "looks like a race / a workout"
    from the name), stress, calories, tokens, the private sync document.
 
@@ -30,8 +35,9 @@ import { RACE_WORDS, NOT_WORDS, addDays } from "./athleteLedger.js";
 import { toCr10, logScale } from "./effortScale.js";
 
 export const SHARE_VERSION = 1;
-export const SHARE_DAYS = { runs: 365, health: 120, checkins: 120 };
-export const SHARE_LIMITS = { runs: 80000, health: 12000, checkins: 6000 };
+export const SHARE_DAYS = { runs: 365, health: 120, checkins: 120, laps: 42 };
+export const SHARE_LIMITS = { runs: 80000, health: 12000, checkins: 6000, laps: 30000 };
+export const MAX_SHARED_LAPS = 40;
 /** The characters the rule allows in each list (keep in step with firestore.rules). */
 export const SHARE_PATTERN = /^[0-9a-z,;~]*$/;
 
@@ -164,6 +170,25 @@ function decodeMorning(rec, out) {
     };
 }
 
+// ---------- laps of the coach's key workouts ----------
+
+/** { id: "c:123", date, kind: "laps" | "auto", laps: [{ m, s, hr }] } -> "c123,k2x,l,m~s~hr,…" (s in tenths). */
+function encodeLapRun(r) {
+    const laps = (r.laps || []).filter(l => l && l.m > 0 && l.s > 0).slice(0, MAX_SHARED_LAPS)
+        .map(l => [b36(l.m), b36(Math.round(l.s * 10)), b36(l.hr)].join("~").replace(/~+$/, ""));
+    if (!laps.length || !r.date) return null;
+    return [shortId(r.id), b36(dayNumber(r.date)), r.kind === "auto" ? "a" : "l", ...laps].join(",");
+}
+
+function decodeLapRun(rec) {
+    const [id, day, kind, ...laps] = rec.split(",");
+    if (!id || !day) return null;
+    return {
+        id: longId(id), date: dateOfDay(un36(day)), kind: kind === "a" ? "auto" : "laps",
+        laps: laps.map((l, i) => { const [m, s, hr] = l.split("~"); return { i: i + 1, m: un36(m) || 0, s: (un36(s) || 0) / 10, hr: un36(hr) || null }; }).filter(l => l.m > 0 && l.s > 0)
+    };
+}
+
 /** Joins records newest first until the limit, then puts them back oldest first. */
 function fit(records, limit) {
     const kept = [];
@@ -184,7 +209,7 @@ function fit(records, limit) {
  *   checkins  readiness-checkins
  * -> { version, through, runs, health, checkins } (strings within SHARE_LIMITS)
  */
-export function encodeShare({ sessions = [], health = {}, fitness = {}, checkins = {} } = {}, today) {
+export function encodeShare({ sessions = [], health = {}, fitness = {}, checkins = {}, laps = [] } = {}, today) {
     const from = d => addDays(today, -(SHARE_DAYS[d] - 1));
     const runs = sessions.filter(s => s?.date >= from("runs") && s.date <= today && s.distance > 0)
         .sort((a, b) => a.date.localeCompare(b.date)).map(encodeRun);
@@ -193,23 +218,27 @@ export function encodeShare({ sessions = [], health = {}, fitness = {}, checkins
         .map(d => encodeNight(d, health[d], fitness[d])).filter(Boolean);
     const mornings = Object.keys(checkins || {}).filter(d => d >= from("checkins") && d <= today).sort()
         .map(d => encodeMorning(d, checkins[d])).filter(Boolean);
+    const lapRuns = (laps || []).filter(r => r?.date >= from("laps") && r.date <= today)
+        .sort((a, b) => a.date.localeCompare(b.date)).map(encodeLapRun).filter(Boolean);
     return {
         version: SHARE_VERSION,
         through: today,
         runs: fit(runs, SHARE_LIMITS.runs),
         health: fit(nights, SHARE_LIMITS.health),
-        checkins: fit(mornings, SHARE_LIMITS.checkins)
+        checkins: fit(mornings, SHARE_LIMITS.checkins),
+        laps: fit(lapRuns, SHARE_LIMITS.laps)
     };
 }
 
 /** The shared copy -> { sessions, health, fitness, checkins, through } in the engines' own shapes. */
 export function decodeShare(doc) {
-    const out = { sessions: [], health: {}, fitness: {}, checkins: {}, through: doc?.through || null };
+    const out = { sessions: [], health: {}, fitness: {}, checkins: {}, laps: [], through: doc?.through || null };
     if (!doc) return out;
     const list = s => (typeof s === "string" && s ? s.split(";") : []);
     out.sessions = list(doc.runs).map(decodeRun).filter(Boolean);
     list(doc.health).forEach(r => decodeNight(r, out.health, out.fitness));
     list(doc.checkins).forEach(r => decodeMorning(r, out.checkins));
+    out.laps = list(doc.laps).map(decodeLapRun).filter(Boolean);
     return out;
 }
 
@@ -286,9 +315,17 @@ export async function syncSharedAthleteModel({ force = false } = {}) {
         const read = key => { try { return JSON.parse(localStorage.getItem(key) || "null") || {}; } catch { return {}; } };
         const today = isoDate(new Date());
         const { loadCoachPlans } = await import("./coachPlanStore.js");
+        // The coach's key workouts of the last 6 weeks with their laps (asking COROS for a few missing ones).
+        let laps = [];
+        try {
+            const { planKeyItems, ensureLaps, shareLapRuns } = await import("./planLaps.js");
+            const items = planKeyItems(today, { days: SHARE_DAYS.laps });
+            await ensureLaps(items, { max: 6 }).catch(() => false);
+            laps = shareLapRuns(items);
+        } catch (error) { console.warn("Southbound: key-workout laps left out of the share.", error); }
         payload = encodeShare({
             sessions: fillPlanEfforts(await loadLedger(today, { plan: false }), effortsFromCoachPlans(loadCoachPlans())),
-            health: read(HEALTH_KEY), fitness: read(FITNESS_KEY), checkins: read("readiness-checkins")
+            health: read(HEALTH_KEY), fitness: read(FITNESS_KEY), checkins: read("readiness-checkins"), laps
         }, today);
     }
     const results = await Promise.allSettled(shares.map(async ({ link, share }) => {

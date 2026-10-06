@@ -144,7 +144,7 @@ WorkoutExecution {
 3. **Swap the engines over — built (2026-10-06):**
    - `executionSummary` / P4 / Weekly Review read the execution. The before/after on synthetic sessions: the pooled band rated 7 of 7 laps on target where every 600 was 10 s slow; step by step rates 1 of 7. The before/after on Eddie's own laps happens when his next structured workouts come in (his saved laps from before have no `kind`, so they're read from their shape);
    - `checkWorkout` stays for the old lap table until everything has moved.
-4. **Clients:**
+4. **Clients — built (2026-10-06, rules changed; Eddie's choice: sharing first):**
    - the client's device fetches laps for their coach-plan runs and shows them the same card;
    - the coach sees it only once the client shares it. That's either a field on `workoutResults` or the athlete-model share, **which needs a rules change**.
 5. **FIT fallback:** when only auto laps exist, rebuild reps from the FIT distance stream (daily limit, on request).

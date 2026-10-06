@@ -198,6 +198,30 @@ export function applyDecisionToPlan(plan, decision) {
 // ---------- the whole picture ----------
 
 /**
+ * A client's shared laps (decodeShare(...).laps) lined up with the plan:
+ * each structured day that has a run's laps becomes a key workout, so the
+ * engines (executionSummary) and the hub rebuild it rep by rep.
+ * -> { keyWork: [{ id, date, title, kind, sets, workout, run: { labelId } }], laps: { labelId: { laps, kind } } }
+ */
+export function sharedKeyWork(plan, lapRuns = [], today, { days = 42, planId = "plan" } = {}) {
+    const from = addDays(today, -(days - 1));
+    const byDate = new Map();
+    for (const week of plan?.weeks || []) for (const day of week.days || []) if (day?.date && day.workout?.sets?.length) byDate.set(day.date, day);
+    const keyWork = [], laps = {};
+    for (const r of lapRuns || []) {
+        const day = byDate.get(r.date);
+        if (!day || r.date < from || r.date > today || !r.laps?.length) continue;
+        const labelId = String(r.id || "").replace(/^c:/, "") || r.date;
+        laps[labelId] = { laps: r.laps, kind: r.kind, date: r.date };
+        keyWork.push({
+            id: `${planId}|${r.date}`, date: r.date, title: day.workout ? workoutSummary(day.workout) || day.session || "Workout" : day.session || "Workout",
+            kind: KIND[day.type] || "quality", sets: day.workout.sets, workout: day.workout, run: { labelId }
+        });
+    }
+    return { keyWork: keyWork.sort((a, b) => b.date.localeCompare(a.date)), laps };
+}
+
+/**
  * A client's inputs for the Athlete State (js/athleteState.js), pure.
  *   shared   decodeShare(...) or null; results, races, plan (the coach's whole plan)
  *   record   the client profile; previous last week's level (the second-Ease rule)
@@ -205,10 +229,11 @@ export function applyDecisionToPlan(plan, decision) {
  */
 export function clientInputs({ shared = null, results = [], races = {}, plan = null, record = null, today, meters = null, previous = null, policy = DEFAULT_POLICY, extra = {} } = {}) {
     const sessions = clientSessions({ shared, results, races });
+    const key = sharedKeyWork(plan, shared?.laps || [], today);
     return {
         who: "client", today, sessions,
         health: shared?.health || {}, fitness: shared?.fitness || {}, checkins: shared?.checkins || {},
-        settings: {}, laps: {}, keyWork: [],
+        settings: {}, laps: key.laps, keyWork: key.keyWork,
         nextDays: plan ? coachPlanDays(plan, addDays(today, 1), 7).filter(d => !d.done) : [],
         target: meters || targetMeters(record) || 10000,
         policy, previous, profile: record, results,

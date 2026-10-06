@@ -1,0 +1,80 @@
+/* ==========================================
+   Southbound — a workout rebuilt rep by rep (js/executionView.js)
+   Used on Analytics (key workouts), the workout page (the client's own
+   run) and the Client Hub (a client's shared laps).
+========================================== */
+
+.ex-detail [hidden], .ex-set [hidden]{ display:none !important; }
+
+/* A list of rebuilt workouts outside Analytics (the Client Hub). */
+.ex-runs{ list-style:none; margin:12px 0 0; padding:0; display:grid; gap:10px; }
+.ex-run{ padding:12px 14px; border:1px solid var(--border); border-left:3px solid var(--border); border-radius:12px; background:color-mix(in srgb, var(--text) 2%, transparent); min-width:0; }
+.ex-run.good{ border-left-color:var(--good); }
+.ex-run.ok{ border-left-color:var(--primary); }
+.ex-run.off{ border-left-color:var(--bad); }
+.ex-run-top{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; }
+.ex-run-top strong{ color:var(--text); }
+.ex-run-top span{ color:var(--muted); font-size:.85rem; }
+.hub-exec-card h2{ display:flex; align-items:center; gap:8px; }
+
+.ex-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.ex-chip{ display:inline-flex; align-items:center; padding:3px 10px; border-radius:var(--radius-pill, 999px); border:1px solid var(--border); font-size:.8rem; font-weight:600; color:var(--text); background:color-mix(in srgb, var(--text) 4%, transparent); }
+.ex-chip.good{ border-color:color-mix(in srgb, var(--good) 55%, transparent); color:var(--good); }
+.ex-chip.warn{ border-color:color-mix(in srgb, var(--amber) 55%, transparent); color:var(--amber); }
+.ex-chip.conf{ color:var(--muted); font-weight:500; }
+.ex-chip.ex-conf-low, .ex-chip.ex-conf-unmatched{ color:var(--amber); }
+.ex-read{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:3px; }
+.ex-read li{ color:var(--text); font-size:.86rem; line-height:1.4; }
+.ex-read li:first-child{ font-weight:600; }
+.ex-strip{ display:flex; gap:2px; height:14px; margin-top:10px; border-radius:4px; overflow:hidden; }
+.ex-seg{ flex-basis:0; min-width:3px; background:var(--border); }
+.ex-seg.ex-easy{ background:color-mix(in srgb, var(--muted) 35%, transparent); }
+.ex-seg.ex-rec{ background:color-mix(in srgb, var(--muted) 18%, transparent); }
+.ex-seg.ex-within, .ex-key.ex-within{ background:var(--good); }
+.ex-seg.ex-fast, .ex-key.ex-fast{ background:var(--cyan); }
+.ex-seg.ex-slow, .ex-key.ex-slow{ background:var(--amber); }
+.ex-seg.ex-done, .ex-key.ex-done{ background:var(--primary); }
+.ex-seg.ex-partial, .ex-key.ex-partial{ background:repeating-linear-gradient(135deg, var(--amber) 0 4px, transparent 4px 7px); }
+.ex-seg.ex-missed, .ex-key.ex-missed{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--bad); }
+.ex-seg.ex-unobserved, .ex-key.ex-unobserved{ background:transparent; box-shadow:inset 0 0 0 1px var(--muted); }
+.ex-key.ex-easy{ background:color-mix(in srgb, var(--muted) 35%, transparent); }
+.ex-legend{ display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:6px; color:var(--muted); font-size:.75rem; }
+.ex-legend span{ display:inline-flex; align-items:center; gap:5px; }
+.ex-key{ display:inline-block; width:12px; height:10px; border-radius:2px; }
+.ex-detail{ margin-top:10px; }
+.ex-detail summary{ cursor:pointer; color:var(--primary); font-size:.85rem; font-weight:600; }
+.ex-set{ margin-top:10px; }
+.ex-set-head{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:2px 10px; font-size:.86rem; }
+.ex-set-head strong{ color:var(--text); }
+.ex-set-head span{ color:var(--muted); }
+.ex-table{ width:100%; margin-top:6px; border-collapse:collapse; font-size:.84rem; font-variant-numeric:tabular-nums; }
+.ex-table th, .ex-table td{ padding:6px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
+.ex-table th{ color:var(--muted); font-weight:600; font-size:.78rem; }
+.ex-table td{ color:var(--text); }
+.ex-table td small{ color:var(--muted); font-size:.75rem; }
+.ex-table tr.ex-rec td{ color:var(--muted); font-size:.78rem; padding-top:2px; padding-left:22px; }
+.ex-table tr.ex-row > td:first-child{ border-left:3px solid transparent; }
+.ex-table tr.ex-within > td:first-child{ border-left-color:var(--good); }
+.ex-table tr.ex-fast > td:first-child{ border-left-color:var(--cyan); }
+.ex-table tr.ex-slow > td:first-child{ border-left-color:var(--amber); }
+.ex-table tr.ex-partial > td:first-child, .ex-table tr.ex-missed > td:first-child{ border-left-color:var(--bad); }
+.ex-row.ex-within .ex-result{ color:var(--good); font-weight:700; }
+.ex-row.ex-fast .ex-result{ color:var(--cyan); font-weight:700; }
+.ex-row.ex-slow .ex-result{ color:var(--amber); font-weight:700; }
+.ex-row.ex-missed .ex-result, .ex-row.ex-partial .ex-result{ color:var(--bad); font-weight:700; }
+.ex-easyline{ margin:8px 0 0; color:var(--muted); font-size:.8rem; }
+
+/* Phones: each rep is a small card (label: value), no sideways scroll. */
+@media (max-width:600px){
+    .ex-table thead{ display:none; }
+    .ex-table, .ex-table tbody{ display:block; }
+    .ex-table tr.ex-row{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:2px 10px; padding:8px 10px; margin-top:6px; border:1px solid var(--border); border-left-width:3px; border-radius:10px; }
+    .ex-table tr.ex-within{ border-left-color:var(--good); }
+    .ex-table tr.ex-fast{ border-left-color:var(--cyan); }
+    .ex-table tr.ex-slow{ border-left-color:var(--amber); }
+    .ex-table tr.ex-partial, .ex-table tr.ex-missed{ border-left-color:var(--bad); }
+    .ex-table tr.ex-row td, .ex-table tr.ex-row > td:first-child{ border:0; padding:2px 0; }
+    .ex-table tr.ex-row td::before{ content:attr(data-label); display:block; color:var(--muted); font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .ex-table tr.ex-rec{ display:block; }
+    .ex-table tr.ex-rec td{ display:block; border:0; padding:3px 10px 0; }
+}
