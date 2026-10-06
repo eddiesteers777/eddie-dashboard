@@ -289,23 +289,28 @@ function cardHtml(item) {
             : "Completed " + dayWords(item.date))
         : "";
 
+    const category = categoryLabel(item.category);
+    const metrics = [
+        fmtMiles(actual),
+        fmtTime(run.duration),
+        fmtPace(paceSec),
+        run.avgHr ? Math.round(Number(run.avgHr)) + " bpm" : ""
+    ].filter(Boolean).join(" · ");
+    const status = [
+        category,
+        planNote,
+        metrics
+    ].filter(Boolean).join(" · ");
+
     return [
-        '<article class="ft-item">',
-        '<div class="ft-main">',
-        '<div class="ft-top"><span class="ft-type ft-type-', item.category, '">',
-        categoryLabel(item.category).toUpperCase(),
-        '</span><span class="ft-date">', dayWords(item.date), '</span></div>',
-        '<h3>', esc(item.title), '</h3>',
-        planNote ? '<span class="ft-plan-note">' + esc(planNote) + '</span>' : "",
-        '<div class="ft-metrics">',
-        '<span><strong>', fmtMiles(actual), '</strong></span>',
-        '<span><strong>', fmtTime(run.duration), '</strong></span>',
-        '<span><strong>', fmtPace(paceSec), '</strong></span>',
-        run.avgHr ? '<span><strong>' + Math.round(Number(run.avgHr)) + '</strong> bpm</span>' : "",
-        '</div></div>',
-        '<div class="ft-actions">',
-        shareKey ? '<button type="button" class="sb-btn sb-btn-secondary ft-share" data-ex-share="' + esc(shareKey) + '">Share</button>' : "",
-        '</div></article>'
+        '<li class="tr-work ft-work">',
+        '<div class="tr-work-top">',
+        '<strong>', esc(item.title), '</strong>',
+        '<span>', esc(dayWords(item.date)), ' · ', esc(fmtMiles(actual)), '</span>',
+        '</div>',
+        '<small>', esc(status), '</small>',
+        shareKey ? '<div class="ft-actions"><button type="button" class="sb-btn sb-btn-secondary ft-share" data-ex-share="' + esc(shareKey) + '">Share</button></div>' : "",
+        '</li>'
     ].join("");
 }
 
@@ -353,7 +358,7 @@ export function mountFeaturedTraining(options) {
     const render = function () {
         const items = featuredTrainingItems(today);
         host.innerHTML = items.length
-            ? items.map(cardHtml).join("")
+            ? '<ul class="tr-works ft-works">' + items.map(cardHtml).join("") + '</ul>'
             : '<p class="ft-empty">No featured runs yet. Complete a long run or quality session and it will appear here.</p>';
 
         if (manageButton && !manageButton.dataset.bound) {
