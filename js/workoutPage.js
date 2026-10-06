@@ -299,7 +299,9 @@ async function mountExecution() {
         return;
     }
     const x = reconstructWorkout(state.day.workout, entry, { plannedWorkoutId: `${programId}|${date}`, activityId: `c:${run.labelId}` });
-    show(`${head}${executionHtml(x)}<p class="clients-card-note">From your COROS run on this day (${(run.distance / 1609.344).toFixed(1)} mi). Negative = faster than the target.</p>`);
+    const { registerShare } = await import("./executionShare.js");
+    registerShare(x, { date, name: title(), runMeters: run.distance, runSec: run.duration });
+    show(`${head}${executionHtml(x, { share: true })}<p class="clients-card-note">From your COROS run on this day (${(run.distance / 1609.344).toFixed(1)} mi). Negative = faster than the target.</p>`);
 }
 
 // ---------- Workout mode ----------

@@ -78,3 +78,11 @@
     .ex-table tr.ex-rec{ display:block; }
     .ex-table tr.ex-rec td{ display:block; border:0; padding:3px 10px 0; }
 }
+
+/* Share as an image (js/executionShare.js). */
+.ex-share-btn{ margin-top:12px; }
+.ex-share-dialog{ width:min(520px, calc(100vw - 32px)); }
+.ex-share-dialog [hidden]{ display:none !important; }
+.ex-share-preview{ margin-top:8px; display:flex; justify-content:center; min-height:120px; }
+.ex-share-preview img{ display:block; width:auto; max-width:100%; height:auto; max-height:min(62vh, 640px); border-radius:12px; border:1px solid var(--border); }
+.ex-share-hint{ margin:10px 0 0; color:var(--muted); font-size:.82rem; line-height:1.4; }

@@ -19,7 +19,9 @@ import { loadSettings, loadCheckins, isoDate } from "./readinessData.js";
 import { kindChip } from "./analyticsSummary.js";
 import { isCorosConnected } from "./corosClient.js";
 import { reconstructWorkout } from "./workoutExecution.js";
+import { marathonTitle } from "./marathonCoros.js";
 import { executionHtml, executionClass } from "./executionView.js";
+import { registerShare } from "./executionShare.js";
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const day = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -53,9 +55,10 @@ function workoutRow(w, saved) {
     const hasWork = w.workout?.sets?.some(s => s.pace || s.repTime || (s.effort && s.effort !== "easy" && s.effort !== "recovery") || s.parts);
     if (lapData?.length && hasWork && w.run.source !== "strava") {
         const x = reconstructWorkout(w.workout, saved[w.run.labelId], { plannedWorkoutId: w.id, activityId: `c:${w.run.labelId}` });
+        registerShare(x, { date: w.date, name: marathonTitle(w.title, w.plannedMiles), runMeters: w.run.distance, runSec: w.run.duration });
         const lapRows = lapData.map(l => `<tr><td>${l.i}</td><td>${l.m >= 1000 ? `${(l.m / 1609.344).toFixed(2)} mi` : `${l.m} m`}</td><td>${mmss(l.s)}</td><td>${mmss(l.s / (l.m / 1609.344))}</td><td>${l.hr ?? "–"}</td></tr>`).join("");
         return `<li class="tr-work ${executionClass(x)}"><div class="tr-work-top"><strong>${esc(w.title)}</strong><span>${weekday(w.date)} · ${mi(w.runMiles)} of ${mi(w.plannedMiles)} mi</span></div>
-            ${executionHtml(x)}
+            ${executionHtml(x, { share: true })}
             <details class="tr-laps"><summary>All laps from COROS</summary><table><thead><tr><th>Lap</th><th>Distance</th><th>Time</th><th>Pace</th><th>HR</th></tr></thead><tbody>${lapRows}</tbody></table></details></li>`;
     }
     const c = lapData?.length ? checkWorkout(w.sets, lapData) : null;

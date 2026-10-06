@@ -120,6 +120,7 @@
     "js/emailNotify.js",
     "js/emoji.js",
     "js/emojiPicker.js",
+    "js/executionShare.js",
     "js/executionView.js",
     "js/exerciseSearch.js",
     "js/feedbackModel.js",

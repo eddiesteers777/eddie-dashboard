@@ -140,13 +140,15 @@ export function chipsHtml(x) {
     return `<div class="ex-chips">${chips.join("")}</div>`;
 }
 
-/** The whole card body for one reconstructed workout. */
-export function executionHtml(x, { open = false } = {}) {
+/** The whole card body for one reconstructed workout. share: a Share button (js/executionShare.js). */
+export function executionHtml(x, { open = false, share = false } = {}) {
     const read = x.read.length ? `<ul class="ex-read">${x.read.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : "";
     if (!x.source.laps || (x.source.kind === "auto" && x.completion?.pct == null)) return `${chipsHtml(x)}${read}`;
     const tables = x.sets.map(s => setTable(s, x.steps)).join("");
+    const shareBtn = share && x.plannedWorkoutId && x.completion?.pct != null
+        ? `<button type="button" class="sb-btn sb-btn-secondary ex-share-btn" data-ex-share="${esc(x.plannedWorkoutId)}">Share as an image</button>` : "";
     return `${chipsHtml(x)}${read}${stripHtml(x)}
-        <details class="ex-detail"${open ? " open" : ""}><summary>Rep by rep</summary>${tables}${easyLine(x)}</details>`;
+        <details class="ex-detail"${open ? " open" : ""}><summary>Rep by rep</summary>${tables}${easyLine(x)}</details>${shareBtn}`;
 }
 
 /** The left-border class of a row: good / ok / off, from the share on target (completion shown apart). */
