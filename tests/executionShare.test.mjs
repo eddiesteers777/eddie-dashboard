@@ -22,7 +22,7 @@ test("the card for Eddie's Oct 6 session: title, the run, done and on target, ev
     assert.equal(m.title, "6 × 600 m + 1 mi");
     assert.equal(m.name, "", "a name that's just the first step isn't shown");
     assert.equal(m.date, "Tue, Oct 6, 2026");
-    assert.deepEqual(m.stats, [{ label: "Distance", value: "8.01 mi" }, { label: "Time", value: "1:06:55" }, { label: "Complete", value: "7/7" }, { label: "Within target", value: "2/7" });
+    assert.deepEqual(m.stats, [{ label: "Distance", value: "8.01 mi" }, { label: "Time", value: "1:06:55" }, { label: "Complete", value: "7/7" }, { label: "Within target", value: "2/7" }]);
     assert.equal(m.sets[0].head, "6 × 600 m @ 2:27");
     assert.equal(m.sets[0].sub, "2 min jog");
     assert.deepEqual(m.sets[0].rows.map(r => [r.label, r.actual, r.delta, r.result]), [
