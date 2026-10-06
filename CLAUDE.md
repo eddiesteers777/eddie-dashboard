@@ -361,7 +361,7 @@ Roadmap steps 1–7 are done and live on `main`: audit, account/profile model, c
 **Waiting on Eddie:**
 - [x] Eddie's own account is an approved coach (the Coach Dashboard works for him).
 - [x] Firestore rules published (2026-09-24, including `inquiries`). Re-paste the whole file whenever it changes.
-- [ ] **Publish the updated rules (2026-10-06, weekly planning P3: the new coach-only `planningCycles` collection).** Until then the Weekly Planning page works but says "Planned weeks aren't being saved yet".
+- [x] **Published (Eddie confirmed 2026-10-06) the updated rules (2026-10-06, weekly planning P3: the new coach-only `planningCycles` collection).**
 - [x] **Published (Eddie confirmed 2026-10-05) the updated rules (2026-10-05, athlete model step 7: the optional `model` switch on `wearableShares` and the new `sharedAthleteModel` collection).**
 - [x] **Published (Eddie confirmed 2026-10-05) the updated rules (2026-10-03, Phase 11 step 6: a coach may only give the five known services on `userProfiles`; only an active client with a soccer service may create a `bookingRequests` doc). Also covers everything below that wasn't pasted yet.**
 - [x] **Published (covered by the 2026-10-03 paste) the updated rules (2026-09-29; Client Hub Phase 6: `sessionLogs`; since then `main` also added `clientDirectory`, `clientPackages`, `wearableShares`, `sharedWearable*`).** Until then logging a session says it couldn't save, and Pending, Find a Client, packages and wearable sharing are refused. Re-paste the whole file whenever it changes.
