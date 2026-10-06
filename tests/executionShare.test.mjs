@@ -47,7 +47,8 @@ test("a long set goes to two columns; a cut-short rep says so; a long card grows
     const m = shareCardModel(x, { date: "2026-10-10", name: "Ladder day" });
     assert.equal(m.name, "Ladder day");
     assert.equal(m.sets[0].rows.length, 16);
-    assert.equal(m.sets[0].rows[9].result, "Cut short");\n    assert.equal(m.sets[0].rows[15].hr, 150, "long-set rows retain heart rate for the two-column share layout");
+    assert.equal(m.sets[0].rows[9].result, "Cut short");
+    assert.equal(m.sets[0].rows[15].hr, 150, "long-set rows retain heart rate for the two-column share layout");
     assert.equal(m.stats.find(s => s.label === "Complete").value, "15/16", "cut short is not counted as fully complete");
     assert.ok(cardHeight(m) >= MIN_H);
     const twelve = shareCardModel(x, {}); twelve.sets.push(...Array.from({ length: 3 }, () => twelve.sets[0]));
