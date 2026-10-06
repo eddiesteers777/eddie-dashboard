@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { autoCategory, categoryFor, FEATURED_CATEGORIES } from "../js/featuredTrainingModel.js";
+import { autoCategory, autoRunCategory, categoryFor, FEATURED_CATEGORIES } from "../js/featuredTrainingModel.js";
 
 const plan = (overrides = {}) => ({ workout: { sets: overrides.sets || [] }, type: overrides.type || "workout" });
 
@@ -35,4 +35,39 @@ test("explicit overrides win, including Hide", () => {
     const p = plan({ sets: [{ repeat: 1, amount: 3, unit: "mi", effort: "threshold" }] });
     assert.equal(categoryFor(day, p, { "marathon|2026-10-06": FEATURED_CATEGORIES.SPEED_WORK }), FEATURED_CATEGORIES.SPEED_WORK);
     assert.equal(categoryFor(day, p, { "marathon|2026-10-06": FEATURED_CATEGORIES.NONE }), null);
+});
+
+test("completed run can be Speed Work from its activity name without a plan match", () => {
+    assert.equal(autoRunCategory({
+        date: "2026-10-06",
+        distance: 9800,
+        duration: 3600,
+        name: "6 x 800m"
+    }), FEATURED_CATEGORIES.SPEED_WORK);
+});
+
+test("completed run can be Long Run from its activity name without a plan match", () => {
+    assert.equal(autoRunCategory({
+        date: "2026-10-04",
+        distance: 26000,
+        duration: 8300,
+        name: "Saturday long run"
+    }), FEATURED_CATEGORIES.LONG_RUN);
+});
+
+test("completed run can be Long Run from size alone when it has no plan match", () => {
+    assert.equal(autoRunCategory({
+        date: "2026-10-03",
+        distance: 19300,
+        duration: 6900,
+        name: "Run"
+    }), FEATURED_CATEGORIES.LONG_RUN);
+});
+
+test("a nearby planned Speed Work day can classify a completed run even when it was moved", () => {
+    assert.equal(autoRunCategory(
+        { date: "2026-10-07", distance: 11000, duration: 4200, name: "Run" },
+        plan({ sets: [{ repeat: 5, amount: 1000, unit: "m", effort: "hard" }] }),
+        FEATURED_CATEGORIES.SPEED_WORK
+    ), FEATURED_CATEGORIES.SPEED_WORK);
 });
