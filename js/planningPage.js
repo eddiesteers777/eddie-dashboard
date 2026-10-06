@@ -21,10 +21,10 @@ const adapter = {
     // His strength lives on its own page; the chatbot copies that column as it is.
     scope: "runs",
     async load(today, { from, to }) {
-        const [{ state }, week] = await Promise.all([selfState(today), selfWeek(from, to)]);
+        const [{ state, inputs, core }, week] = await Promise.all([selfState(today), selfWeek(from, to)]);
         this.planDays = week.planDays;
         return {
-            state, plan: week.plan, paces: week.paces, done: new Set(), record: null,
+            state, inputs, core, plan: week.plan, paces: week.paces, done: new Set(), record: null,
             noPlan: week.planDays.length ? null : "Your marathon plan has no days in these dates. Write the week on the Marathon page, or copy the brief to plan it from scratch."
         };
     },

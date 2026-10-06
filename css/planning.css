@@ -81,3 +81,17 @@
 .pl-reason-words { flex: 1 1 200px; min-width: 0; padding: 6px 10px; }
 .pl-log li span { min-width: 0; overflow-wrap: anywhere; line-height: 1.45; }
 @media (max-width: 600px) { .pl-reasons { margin-left: 0; } }
+
+/* How a planned week went (weekly planning P4) */
+.pl-log li { flex-wrap: wrap; }
+.pl-outcome { flex: 0 0 100%; margin: 4px 0 6px; }
+.pl-outcome > summary { cursor: pointer; color: var(--primary-light); font-size: 13px; font-weight: 600; }
+.pl-out-lines { margin: 8px 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; line-height: 1.45; }
+.pl-od-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.pl-od { display: grid; grid-template-columns: 112px 1fr 1.4fr 1.2fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 13px; align-items: start; }
+.pl-od-date { font-weight: 600; }
+.pl-od-state { color: var(--text-secondary, var(--stone)); }
+.pl-od.is-completed .pl-od-state { color: var(--green); }
+.pl-od.is-missed .pl-od-state { color: var(--danger); }
+.pl-od.is-modified .pl-od-state { color: var(--amber); }
+@media (max-width: 600px) { .pl-od { grid-template-columns: 1fr 1fr; } }

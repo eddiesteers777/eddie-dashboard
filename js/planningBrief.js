@@ -53,7 +53,7 @@ export function briefSections(context) {
     const aim = join([top ? sentence(top.title) : "", phase ? sentence(`The plan says: ${phase.value}`) : "", f("goals.primary") ? sentence(`Their goal in their words: ${f("goals.primary").value}`) : ""]);
 
     const weeks = f("load.lastWeeks"), wtd = f("load.weekToDate"), longRuns = f("load.longRuns"), keys = f("preparation.keySessions"), strength = f("load.strength");
-    const recent = join([weeks ? sentence(`Last weeks: ${weeks.value}`) : "", wtd ? sentence(wtd.value) : "", longRuns ? sentence(`Long runs in 8 weeks: ${longRuns.value}`) : "",
+    const recent = join([...(context.previous || []).slice(0, 2).map(sentence), weeks ? sentence(`Last weeks: ${weeks.value}`) : "", wtd ? sentence(wtd.value) : "", longRuns ? sentence(`Long runs in 8 weeks: ${longRuns.value}`) : "",
         keys ? sentence(`Key sessions in 6 weeks: ${keys.value}`) : "", strength ? sentence(`Strength: ${strength.value}`) : ""]) || "Not much logged recently.";
 
     const reading = f("response.reading"), eff = f("response.efficiency"), effort = f("response.effort"), exec = f("response.execution");
@@ -113,6 +113,7 @@ export function chatbotPrompt(context, { runsOnly = false, paces = "" } = {}) {
         "## Southbound's facts (what kind of fact, how sure)",
         ...factLines(context),
         "",
+        ...(context.previous?.length ? ["## The last week planned this way: planned vs done", ...context.previous.map(l => `- ${l}`), ""] : []),
         "## My notes for this week",
         context.notes || "(none)",
         "",

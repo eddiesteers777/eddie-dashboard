@@ -10,7 +10,8 @@
        who: "self" | "client", firstName, key (notes are remembered in
        "coach-plan-prompts"[key], shared with the hub's Copy chatbot prompt),
        scope: "runs" | "all" (may the chatbot change strength),
-       load(today, { from, to }) -> { state, plan, done:Set, record, paces, noPlan }
+       load(today, { from, to }) -> { state, inputs, core, plan, done:Set, record, paces, noPlan, skipped? }
+                 (inputs + core: the engines' run, so a finished week can be judged, P4)
        apply({ days, changed, checks, from, to }) -> { message, undo?, planRef }
        log?() -> [{ id, at, from, to, choice, days }]   (self: recent applies,
                  the fallback history when planning cycles can't be read)
@@ -32,7 +33,10 @@
    by js/planningCycles.js, coach only): the context when it's copied,
    the answer when it's read, and the coach's call on each changed day
    (taken / kept yours, with an optional one-tap reason) when it's
-   applied. **Planned weeks** lists them.
+   applied. **Planned weeks** lists them. P4: once a planned week is over
+   it's judged (js/planOutcome.js) against the plan as approved, saved on
+   the cycle, shown under it ("How it went"), and its three lines go into
+   the next week's brief.
 ========================================== */
 
 import { planningContext, planWindow, defaultMode } from "./planningContext.js";
@@ -42,6 +46,7 @@ import { compactChange } from "./coachPlanGenerator.js";
 import { icon } from "./icons.js";
 import { toast, loadingHtml } from "./ui.js";
 import { newCycle, withContext, withProposal, withApproval, withUndo, cycleSummary, REASONS } from "./planningCycle.js";
+import { planOutcome, prescribedDays, withOutcome } from "./planOutcome.js";
 
 const NOTES_KEY = "coach-plan-prompts";
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -64,6 +69,8 @@ async function copyText(text) {
     try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
 }
 const daysOf = plan => (plan?.weeks || []).flatMap(w => w.days || []);
+const addDays = (date, n) => { const [y, m, d] = date.split("-").map(Number); return iso(new Date(y, m - 1, d + n)); };
+const STATUS_WORDS = { completed: "as planned", modified: "changed", missed: "missed", extra: "extra", rest: "rest", upcoming: "" };
 
 export function mountPlanning(el, adapter) {
     if (!el) return null;
@@ -122,12 +129,50 @@ export function mountPlanning(el, adapter) {
             uid = uid || await store.myUid();
             cycles = await store.listCycles(adapter.athleteUid || "self");
             cycleError = "";
+            fillOutcomes();
         } catch (error) {
             console.warn("Southbound: planned weeks couldn't be read.", error?.code || error);
             cycleError = error?.code === "permission-denied" ? "rules" : "other";
             cycles = cycles || null;
         }
         drawHistory();
+    }
+
+    // P4: a finished week, judged against the plan as approved. Worked out again for a
+    // week after it ends (late logs and ratings), saved only when something changed.
+    function outcomeOf(c) {
+        if (!data?.inputs || !data?.core || !c.context) return null;
+        const planDays = prescribedDays(c);
+        if (!planDays.length) return null;
+        const today = iso(new Date());
+        const { inputs, core } = data;
+        return planOutcome({
+            planDays, sessions: inputs.sessions || [], from: c.weekOf, to: c.weekTo, today,
+            effortRows: core.effort?.rows || [], effRuns: core.eff?.runs || [], execution: core.execution?.rows || [],
+            doses: core.dose?.doses || [], checkins: inputs.checkins || {}, skipped: data.skipped || [],
+            accepted: (c.review || []).filter(r => r.action === "accepted").map(r => r.date),
+            kept: (c.review || []).filter(r => r.action === "kept-mine").map(r => r.date)
+        });
+    }
+    const outcomeKey = o => JSON.stringify([o.days.map(d => [d.status, d.actual?.miles, d.actual?.effort, d.execution?.onTarget]), o.week]);
+    function fillOutcomes() {
+        const today = iso(new Date());
+        for (const c of cycles || []) {
+            if (c.weekTo >= today) continue;
+            const fresh = !c.outcome || (c.outcome.asOf !== today && today <= addDays(c.weekTo, 7));
+            if (!fresh) continue;
+            const o = outcomeOf(c);
+            if (!o || (c.outcome && outcomeKey(c.outcome) === outcomeKey(o))) continue;
+            record(x => withOutcome(x, o), c);
+        }
+        // The last finished week's lines go into this week's brief.
+        const last = (cycles || []).filter(c => c.outcome && c.weekTo < win.from).sort((a, b) => b.weekTo.localeCompare(a.weekTo))[0];
+        const previous = last?.outcome?.lines || [];
+        if (JSON.stringify(previous) !== JSON.stringify(context.previous || [])) {
+            context = { ...context, previous: self ? previous : previous.map(l => l) };
+            const brief = el.querySelector(".pl-brief");
+            if (brief) brief.innerHTML = briefSections(context).map(s => `<li><strong>${esc(s.q)}</strong><p>${esc(s.a)}</p></li>`).join("");
+        }
     }
 
     // Change one cycle (default: this week's) and save it, one save at a time.
@@ -239,6 +284,18 @@ export function mountPlanning(el, adapter) {
 
     const CYCLE_STATE = { "applied": "applied to your plan", "in a draft": "in a draft, not published yet", "published": "published", "undone": "undone", "answer read, not applied": "answer read, nothing applied", "brief copied": "brief copied" };
 
+    // "How it went": the three lines, then a row a day (planned → done).
+    function outcomeHtml(o) {
+        const day = d => {
+            const plan = d.planned.miles ? `${d.planned.miles} mi ${d.planned.kind === "quality" ? "workout" : d.planned.kind === "long" ? "long run" : d.planned.kind}` : "rest";
+            const did = d.actual ? `${d.actual.miles} mi${d.actual.effort != null ? `, effort ${d.actual.effort} (usual ${d.actual.expected})` : ""}${d.execution?.work ? `, ${d.execution.onTarget} of ${d.execution.work} reps on target` : ""}` : "—";
+            return `<li class="pl-od is-${esc(d.status)}"><span class="pl-od-date">${esc(shortDay(d.date))}</span><span>${esc(plan)}</span><span>${esc(did)}</span><span class="pl-od-state">${esc(STATUS_WORDS[d.status] || "")}${d.why && d.status !== "completed" ? ` · ${esc(d.why)}` : ""}${d.from === "answer" ? " · from the answer" : ""}</span></li>`;
+        };
+        return `<details class="pl-outcome"><summary>How it went</summary>
+            <ul class="pl-out-lines">${o.lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
+            <ul class="pl-od-list">${o.days.filter(d => d.status !== "rest").map(day).join("")}</ul></details>`;
+    }
+
     function drawHistory() {
         const box = el.querySelector('[data-pl="history"]');
         if (!box) return;
@@ -255,8 +312,11 @@ export function mountPlanning(el, adapter) {
             if (sm.accepted || sm.kept) bits.push(`${sm.accepted} taken${sm.kept ? `, ${sm.kept} kept ${self ? "yours" : "as you had them"}` : ""}`);
             if (sm.reasons.length) bits.push(sm.reasons.join(", "));
             const logId = c.approved?.planRef?.store === "self" ? c.approved.planRef.logId : "";
+            const o = c.outcome;
+            if (o) bits.push(`done: ${o.week.doneMiles} of ${o.week.plannedToDate} mi${o.week.runDays ? `, ${o.week.completed} of ${o.week.runDays} as planned` : ""}`);
             return `<li data-cycle="${esc(c.id)}"><span><strong>${esc(shortDay(c.weekOf))} – ${esc(shortDay(c.weekTo))}</strong> · ${esc(bits.join(" · "))}</span>
-                ${c.status === "approved" && logId && applied.has(logId) ? `<button type="button" class="sb-btn sb-btn-tertiary" data-pl-undo="${esc(logId)}">Undo</button>` : ""}</li>`;
+                ${c.status === "approved" && logId && applied.has(logId) ? `<button type="button" class="sb-btn sb-btn-tertiary" data-pl-undo="${esc(logId)}">Undo</button>` : ""}
+                ${o ? outcomeHtml(o) : ""}</li>`;
         }).join("");
         const fallback = !cycles && self ? logItems() : "";
         box.hidden = !rows && !fallback && !note;

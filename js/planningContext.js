@@ -20,11 +20,12 @@
                                  base building, how runs are landing, gaps.
                                  Never a phase of its own: the plan's
                                  phase is quoted as the plan has it.
-   planningContext(state, { from, to, notes, planLines })
+   planningContext(state, { from, to, notes, planLines, previous })
                                  -> { version, asOf, window, athlete, sections:
                                       [{ key, title, facts: [{ name, value, kind,
                                       confidence, basis }] }], priorities, unknowns,
-                                      plan, notes }
+                                      plan, previous (last planned week's
+                                      three lines, P4), notes }
    factLines(context)            the facts as plain lines (the prompt)
    Unit-tested in tests/planningContext.test.mjs.
 ========================================== */
@@ -140,7 +141,7 @@ const SECTIONS = [
  * missing goes to unknowns. planLines: the plan's days in the window, one
  * line each (js/planPrompt.js dayLine), as the coach wrote them.
  */
-export function planningContext(state, { from, to, notes = "", planLines = [] } = {}) {
+export function planningContext(state, { from, to, notes = "", planLines = [], previous = [] } = {}) {
     const self = state.identity?.who === "self";
     const byPath = new Map(signalList(state).map(x => [x.path, x.signal]));
     const sections = SECTIONS.map(sec => ({
@@ -160,6 +161,8 @@ export function planningContext(state, { from, to, notes = "", planLines = [] } 
         priorities: candidatePriorities(state).map(p => (self ? p : { ...p, text: their(p.text), evidence: p.evidence.map(their) })),
         unknowns: (state.unknowns || []).slice(0, 6).map(u => (self ? u : { ...u, what: their(u.what), why: their(u.why) })),
         plan: { lines: planLines },
+        // The last planned week, planned vs done (js/planOutcome.js outcomeLines), when there is one.
+        previous: (previous || []).slice(0, 3).map(l => (self ? String(l) : their(l))),
         notes: String(notes || "").trim().slice(0, 2000),
         versions: state.versions
     };

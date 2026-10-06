@@ -152,3 +152,13 @@ test("the chatbot's 'DATE: why' lines are its reasons, not unreadable plan lines
     assert.equal(read.unread.length, 1, "only the undated plan line can't be read");
     assert.equal(read.same, 7);
 });
+
+test("last planned week's lines (P4) go into the brief and the prompt; a client's in their words", () => {
+    const previous = ["Last planned week (Oct 5 – Oct 11): 30 of 36 planned miles; 4 of 5 run days as planned, 1 missed; key sessions 1 of 2.", "Changed or missed: Thu workout missed.", "Days taken from the chatbot's answer: 2 of 2 done as planned."];
+    const ctx = planningContext(clientState(), { from: "2026-10-12", to: "2026-10-18", previous });
+    assert.deepEqual(ctx.previous, previous);
+    assert.match(briefSections(ctx)[2].a, /^Last planned week \(Oct 5 – Oct 11\): 30 of 36 planned miles/);
+    const prompt = chatbotPrompt(ctx);
+    assert.ok(prompt.includes("## The last week planned this way: planned vs done\n- Last planned week"));
+    assert.ok(!chatbotPrompt(planningContext(clientState(), { from: "2026-10-12", to: "2026-10-18" })).includes("planned vs done"), "nothing when there's no earlier week");
+});

@@ -168,13 +168,15 @@ async function mountHubPlanning() {
         planningView = mountPlanning($("hubPlanning"), {
             who: "client", firstName: first, key: clientUid, scope: "all", athleteUid: clientUid,
             async load(today) {
-                const { state } = await clientState(record, { clientUid, firstName: first, today });
+                const { state, inputs, core } = await clientState(record, { clientUid, firstName: first, today });
                 header = currentPlan(record.coachingPlans || [], today);
                 const ids = new Set((record.results || []).filter(r => r.planId === header?.id && ["completed", "skipped"].includes(r.status)).map(r => r.date));
                 const copy = (record.shared?.coachPlans || []).find(p => p.coachPlanId === header?.id);
                 for (const w of copy?.generatedPlan?.weeks || []) for (const d of w.days || []) if (d.completed || d.skipped) ids.add(d.date);
                 return {
-                    state, plan: header?.plan || { weeks: [] }, done: ids, record: record.record || null, paces: "",
+                    state, inputs, core, plan: header?.plan || { weeks: [] }, done: ids, record: record.record || null, paces: "",
+                    // Runs the client logged as skipped (plan vs actual, P4).
+                    skipped: (record.results || []).filter(r => r?.kind !== "strength" && r?.status === "skipped").map(r => r.date),
                     noPlan: header ? null : `${first} has no published plan yet. Make one in the Plan tab, then plan the week here. The brief and the prompt still work as a starting point.`
                 };
             },

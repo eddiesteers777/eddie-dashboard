@@ -12,6 +12,7 @@
 ========================================== */
 
 import { weekGlance, weekSentence, modelReading, responseWeek, nextWeek, recoveryWeek } from "./weekStory.js";
+import { planOutcome } from "./planOutcome.js";
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -24,7 +25,7 @@ const hm = min => `${Math.floor(min / 60)}h ${String(Math.round(min % 60)).padSt
 const mi = n => (Math.round(n * 10) / 10).toString();
 const STATE_WORDS = { done: "Done", partial: "Part", missed: "Missed", today: "Today", upcoming: "", rest: "Rest", extra: "Extra" };
 
-const state = { today: isoToday(), glance: null, weekNumber: null, decision: null, data: null, runs: [] };
+const state = { today: isoToday(), glance: null, weekNumber: null, decision: null, data: null, runs: [], plan: [] };
 
 function show(id, html) {
     const el = $(id);
@@ -74,11 +75,21 @@ function renderResponse() {
     const from = mondayOf(state.today);
     const r = responseWeek({ effortRows: state.data.response.effortRows || [], execution: state.data.execution || [], runs: state.runs, from, to: state.today });
     const dom = state.decision?.domains?.find(d => d.key === "response");
+    // Each key session so far: prescribed → done (weekly planning P4, js/planOutcome.js). Today
+    // counts once there's a run; a key day still to come today isn't called missed.
+    const o = planOutcome({
+        planDays: state.plan.map(p => ({ date: p.date, kind: p.kind, miles: Number(p.miles) || 0, title: p.session })),
+        sessions: state.runs, effortRows: state.data.response.effortRows || [], effRuns: state.data.response.effRuns || [],
+        execution: state.data.execution || [], doses: state.data.doses || [], from, to: addDays(from, 6), today: addDays(state.today, 1)
+    });
+    const keyLines = o.days.filter(d => d.line && !(d.date === state.today && !d.actual));
     const lines = [
         dom ? `<li><strong>${esc(dom.label)}${dom.severity ? ` · ${esc(dom.word)}` : ""}</strong>: ${esc(dom.text)}.</li>` : "",
         `<li>Effort answered on <strong>${r.rated} of ${r.of}</strong> runs this week${r.mean != null ? `; on average they felt <strong>${Math.abs(r.mean)} ${r.mean > 0 ? "harder" : r.mean < 0 ? "easier" : "as hard"}</strong>${r.mean ? " than they usually cost you" : " as usual"}` : ""}.${r.rated < r.of ? ` <a href="#wrRate">Rate the rest below</a>.` : ""}</li>`,
         ...r.stoodOut.map(s => `<li>${esc(short(s.date))}: ${esc(s.text)}.</li>`),
-        ...r.execution.map(e => `<li>${esc(short(e.date))} ${esc(e.title)}: <strong>${e.onTarget} of ${e.work}</strong> work reps on target${e.fast ? `, ${e.fast} too fast` : ""}${e.slow ? `, ${e.slow} too slow` : ""}.</li>`)
+        // The key-session lines carry the rep counts; execution alone only where a session has no line.
+        ...keyLines.map(d => `<li class="wr-keyline"><strong>${esc(d.line.split(": prescribed")[0])}</strong>: prescribed${esc(d.line.split(": prescribed")[1] || "")}.</li>`),
+        ...r.execution.filter(e => !keyLines.some(d => d.date === e.date)).map(e => `<li>${esc(short(e.date))} ${esc(e.title)}: <strong>${e.onTarget} of ${e.work}</strong> work reps on target${e.fast ? `, ${e.fast} too fast` : ""}${e.slow ? `, ${e.slow} too slow` : ""}.</li>`)
     ].filter(Boolean);
     show("wrResponse", `<ul class="wr-points">${lines.join("")}</ul>`);
 }
@@ -140,6 +151,7 @@ async function loadGlance() {
     const [{ planDaysFrom }, { loadLedger }] = await Promise.all([import("./weeklyDecisionData.js"), import("./athleteData.js")]);
     const [plan, sessions] = await Promise.all([planDaysFrom(monday, 7), loadLedger(state.today)]);
     state.runs = sessions.filter(s => s.date >= monday && s.date <= state.today);
+    state.plan = plan;
     state.weekNumber = plan[0]?.week || null;
     state.glance = weekGlance({ planDays: plan, runs: state.runs, today: state.today });
     renderGlance();
