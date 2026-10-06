@@ -124,6 +124,8 @@
     "js/executionShare.js",
     "js/executionView.js",
     "js/exerciseSearch.js",
+    "js/featuredTraining.js",
+    "js/featuredTrainingModel.js",
     "js/feedbackModel.js",
     "js/firebase.js",
     "js/firestore.js",

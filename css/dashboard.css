@@ -723,3 +723,211 @@
     overflow-wrap:anywhere;
 }
 .eos-package-howto strong{ color:var(--amber); font-size:12px; letter-spacing:.04em; text-transform:uppercase; }
+
+
+/* ==========================
+   Featured Training
+========================== */
+.ft-card{
+    padding-bottom:20px;
+}
+
+.ft-header{
+    align-items:center;
+}
+
+.ft-header > div{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+}
+
+.ft-header-note{
+    color:var(--text-secondary);
+    font-size:12.5px;
+    font-weight:500;
+}
+
+.ft-manage-btn{
+    background:transparent;
+    border:0;
+    color:var(--primary);
+    font:600 12.5px/1 inherit;
+    cursor:pointer;
+    padding:6px 2px;
+}
+
+.ft-manage-btn:hover{
+    text-decoration:underline;
+}
+
+.ft-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.ft-item{
+    display:flex;
+    align-items:stretch;
+    justify-content:space-between;
+    gap:18px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:15px 16px;
+}
+
+.ft-main{
+    min-width:0;
+}
+
+.ft-top{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin-bottom:6px;
+}
+
+.ft-type{
+    display:inline-flex;
+    align-items:center;
+    min-height:22px;
+    padding:3px 8px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    color:var(--primary);
+    background:color-mix(in srgb, var(--primary) 8%, transparent);
+    font-size:10.5px;
+    line-height:1;
+    font-weight:800;
+    letter-spacing:.08em;
+}
+
+.ft-date{
+    color:var(--text-secondary);
+    font-size:12px;
+}
+
+.ft-main h3{
+    margin:0 0 8px;
+    font-size:15px;
+    line-height:1.3;
+}
+
+.ft-metrics{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px 14px;
+    color:var(--text-secondary);
+    font-size:12px;
+}
+
+.ft-metrics span{
+    white-space:nowrap;
+}
+
+.ft-metrics strong{
+    color:var(--text);
+    font-size:12.5px;
+}
+
+.ft-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+}
+
+.ft-actions .sb-btn{
+    white-space:nowrap;
+}
+
+.ft-empty{
+    color:var(--text-secondary);
+    font-size:13.5px;
+    line-height:1.55;
+    margin:2px 0;
+}
+
+.ft-manager-dialog{
+    width:min(680px, calc(100vw - 28px));
+}
+
+.ft-manager-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin:18px 0;
+    max-height:min(58vh, 520px);
+    overflow:auto;
+}
+
+.ft-manager-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+}
+
+.ft-manager-row > span{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.ft-manager-row strong{
+    font-size:13px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.ft-manager-row small{
+    color:var(--text-secondary);
+    font-size:11.5px;
+}
+
+.ft-manager-row select{
+    min-width:125px;
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--surface);
+    color:var(--text);
+    font:600 12px/1 inherit;
+}
+
+@media (max-width:640px){
+    .ft-header > div{
+        display:block;
+    }
+
+    .ft-header-note{
+        display:block;
+        margin-top:3px;
+    }
+
+    .ft-item{
+        display:block;
+        padding:13px 14px;
+    }
+
+    .ft-actions{
+        margin-top:12px;
+        justify-content:flex-end;
+    }
+
+    .ft-manager-row{
+        align-items:flex-start;
+    }
+
+    .ft-manager-row select{
+        min-width:112px;
+    }
+}

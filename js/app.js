@@ -115,6 +115,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderToday();
 
     // ==========================================
+    // Featured Training
+    // ==========================================
+
+    const featuredSection = document.getElementById("featuredTraining");
+    if (featuredSection && PERSONAL_PLAN) {
+        featuredSection.hidden = false;
+        import("./featuredTraining.js")
+            .then(({ mountFeaturedTraining }) => mountFeaturedTraining({
+                host: document.getElementById("featuredTrainingBody"),
+                manageButton: document.getElementById("featuredTrainingManage"),
+                today: localIso(new Date())
+            }))
+            .catch(error => {
+                console.warn("Southbound: Featured Training failed to load.", error);
+                featuredSection.hidden = true;
+            });
+    }
+
+    // ==========================================
     // Quick Stats
     // ==========================================
 

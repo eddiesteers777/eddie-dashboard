@@ -27,7 +27,9 @@ export const MIN_H = 1350;   // 4:5, the tallest most feeds show whole
 
 const C = {
     bg: "#0F2019", surface: "#17291F", line: "rgba(243,239,230,0.12)", text: "#F3EFE6", muted: "rgba(243,239,230,0.62)",
-    tan: "#C9AD84", within: "#94B89D", fast: "#87B5AE", slow: "#D4AA62", bad: "#D9705A", done: "#C9AD84", unobserved: "rgba(243,239,230,0.45)"
+    // Within target is the only positive execution state. Fast / slow are
+    // deliberately the same muted neutral so "faster" does not read as "better".
+    tan: "#C9AD84", within: "#94B89D", fast: "#C9AD84", slow: "#C9AD84", bad: "#D9705A", done: "#C9AD84", unobserved: "rgba(243,239,230,0.45)"
 };
 const RESULT = { within: "On target", fast: "Fast", slow: "Slow", partial: "Cut short", missed: "Missed", unobserved: "Not in laps", done: "Done" };
 
@@ -60,42 +62,89 @@ function rowOf(s) {
  * -> { date, title, name, stats: [{ label, value }], sets: [{ head, sub, rows, summary }], easy: [text], read, footer }
  */
 export function shareCardModel(x, meta = {}) {
+    // Plain-run share: the same image system, without inventing a target.
+    // Used for Featured Training's Long Run cards and as a fallback when a
+    // structured speed workout's laps are not available yet.
+    if (meta.runSummary) {
+        const runMeters = Number(meta.runMeters);
+        const runSec = Number(meta.runSec);
+        const miles = Number.isFinite(runMeters) && runMeters > 0 ? runMeters / MILE : null;
+        const paceSec = miles && Number.isFinite(runSec) && runSec > 0 ? runSec / miles : null;
+        const runStats = [];
+        if (miles != null) runStats.push({ label: "Distance", value: miles.toFixed(2) + " mi" });
+        if (runSec) runStats.push({ label: "Time", value: clockText(runSec) });
+        if (paceSec) runStats.push({ label: "Avg pace", value: clockText(paceSec) + "/mi" });
+        if (meta.avgHr) runStats.push({ label: "Avg HR", value: String(Math.round(Number(meta.avgHr))) + " bpm" });
+        const category = meta.category === "long_run" ? "Long Run" : "Speed Work";
+        return {
+            kind: "run",
+            date: meta.date ? dateWords(meta.date) : "",
+            title: category,
+            name: meta.name || "",
+            stats: runStats.slice(0, 4),
+            sets: [],
+            easy: [],
+            summary: meta.plannedMiles && miles != null
+                ? miles.toFixed(2) + " of " + Number(meta.plannedMiles).toFixed(1) + " planned miles"
+                : "Completed training",
+            summaryNote: "Recorded from your run data · Southbound Coaching",
+            footer: category + " · recorded training"
+        };
+    }
+
     const work = x.steps.filter(s => s.kind === "work");
     const sets = (x.sets || []).map(set => {
         const steps = work.filter(s => s.set === set.set);
         const first = steps[0];
         const rec = x.steps.find(s => s.kind === "recovery" && s.set === set.set && !s.part);
         const bits = [];
-        if (set.avgSec != null && steps.length > 1) bits.push(`avg ${clockText(set.avgSec, { tenths: set.avgSec < 300 })}`);
-        else if (set.avgPace && steps.length > 1) bits.push(`avg ${clockText(set.avgPace)}/mi`);
-        if (set.spreadSec != null && steps.length > 2) bits.push(`spread ${Math.round(set.spreadSec * 10) / 10} s`);
-        if (set.avgHr && steps.length > 1) bits.push(`${set.avgHr} bpm`);
+        if (set.avgSec != null && steps.length > 1) bits.push("avg " + clockText(set.avgSec, { tenths: set.avgSec < 300 }));
+        else if (set.avgPace && steps.length > 1) bits.push("avg " + clockText(set.avgPace) + "/mi");
+        if (set.spreadSec != null && steps.length > 2) bits.push("spread " + (Math.round(set.spreadSec * 10) / 10) + " s");
+        if (set.avgHr && steps.length > 1) bits.push(set.avgHr + " bpm");
         return {
-            head: `${set.label}${set.target ? ` @ ${set.target}` : ""}`,
-            sub: rec ? `${rec.amount} ${rec.effort || "recovery"}` : first?.effort && !set.target ? first.effort : "",
+            head: set.label + (set.target ? " @ " + set.target : ""),
+            sub: rec ? rec.amount + " " + (rec.effort || "recovery") : first?.effort && !set.target ? first.effort : "",
             rows: steps.map(rowOf),
             summary: bits.join(" · ")
         };
     });
     const c = x.completion, t = x.targetCompliance;
     const stats = [];
-    if (meta.runMeters) stats.push({ label: "Distance", value: `${(meta.runMeters / MILE).toFixed(2)} mi` });
+    if (meta.runMeters) stats.push({ label: "Distance", value: (meta.runMeters / MILE).toFixed(2) + " mi" });
     if (meta.runSec) stats.push({ label: "Time", value: clockText(meta.runSec) });
-    if (c) stats.push({ label: "Complete", value: c.pct == null ? "—" : `${c.done}/${c.planned}` });
-    if (t) stats.push({ label: "Within target", value: `${t.within}/${t.judged}` });
+    if (c) stats.push({ label: "Complete", value: c.pct == null ? "—" : c.done + "/" + c.planned });
+    if (t) stats.push({ label: "Within target", value: t.within + "/" + t.judged });
     const easy = x.steps.filter(s => (s.kind === "warmup" || s.kind === "cooldown") && s.actual)
-        .map(s => `${s.kind === "warmup" ? "Warm-up" : "Cool-down"} ${(s.actual.meters / MILE).toFixed(2)} mi @ ${clockText(s.actual.paceSec)}/mi`);
+        .map(s => (s.kind === "warmup" ? "Warm-up" : "Cool-down") + " " + (s.actual.meters / MILE).toFixed(2) + " mi @ " + clockText(s.actual.paceSec) + "/mi");
     const title = (x.sets || []).map(s => s.label).join(" + ") || "Workout";
     const name = meta.name && !/^\d/.test(meta.name) && meta.name.length <= 40 && meta.name.toLowerCase() !== title.toLowerCase() ? meta.name : "";
+    let summary = "";
+    let summaryNote = "";
+    if (c && t) {
+        summary = c.done + "/" + c.planned + " completed · " + t.within + "/" + t.judged + " within target";
+        summaryNote = "Within target is the goal — faster is not automatically better.";
+    } else if (c) {
+        summary = c.done + "/" + c.planned + " completed";
+    }
     return {
-        date: meta.date ? dateWords(meta.date) : "", title, name, stats: stats.slice(0, 4), sets, easy,
-        footer: x.matchConfidence === "exact" ? "Planned vs actual · every lap matched to the plan" : x.matchConfidence === "approximate" ? "Planned vs actual · laps matched approximately" : "Planned vs actual · a rough match (mile laps)",
+        kind: "execution",
+        date: meta.date ? dateWords(meta.date) : "",
+        title,
+        name,
+        stats: stats.slice(0, 4),
+        sets,
+        easy,
+        summary,
+        summaryNote,
+        footer: x.matchConfidence === "exact" ? "Planned vs actual · every lap matched to the plan"
+            : x.matchConfidence === "approximate" ? "Planned vs actual · laps matched approximately"
+            : "Planned vs actual · a rough match (mile laps)"
     };
 }
-
 // ---------- layout (pure) ----------
 
-const PAD = 72, ROW = 66, SET_HEAD = 64, SET_GAP = 24, STAT_H = 150, FOOT = 118;
+const PAD = 72, ROW = 66, SET_HEAD = 64, SET_GAP = 24, STAT_H = 150, SUMMARY_H = 102, FOOT = 118;
 const twoCols = n => n > 10;
 
 /** How tall the card draws (at least 1350). */
@@ -103,6 +152,7 @@ export function cardHeight(model) {
     let h = PAD + 64 + 32;                       // brand row
     h += (model.name ? 46 : 0) + 104 * (model.title.length > 22 ? 2 : 1) + 28;
     h += model.stats.length ? STAT_H + 32 : 0;
+    h += model.summary ? SUMMARY_H + 32 : 0;
     for (const s of model.sets) {
         const rows = twoCols(s.rows.length) ? Math.ceil(s.rows.length / 2) : s.rows.length;
         h += SET_HEAD + rows * ROW + (s.summary ? 40 : 0) + SET_GAP;
@@ -196,6 +246,17 @@ export async function drawShareCard(canvas, model) {
         y += STAT_H + 32;
     }
 
+    if (model.summary) {
+        ctx.fillStyle = C.surface; roundRect(ctx, PAD, y, inner, SUMMARY_H, 22); ctx.fill();
+        ctx.fillStyle = C.text; ctx.font = '600 30px "Inter", sans-serif';
+        ctx.fillText(fitText(ctx, model.summary, inner - 48), PAD + 24, y + 40);
+        if (model.summaryNote) {
+            ctx.fillStyle = C.muted; ctx.font = '400 22px "Inter", sans-serif';
+            ctx.fillText(fitText(ctx, model.summaryNote, inner - 48), PAD + 24, y + 76);
+        }
+        y += SUMMARY_H + 32;
+    }
+
     // Each set, rep by rep.
     for (const set of model.sets) {
         ctx.fillStyle = C.tan; ctx.font = '50px "Bebas Neue", sans-serif';
@@ -246,7 +307,7 @@ export async function drawShareCard(canvas, model) {
     const url = ctx.measureText("southboundcoaching.com").width;
     ctx.textAlign = "left"; ctx.fillStyle = C.muted; ctx.font = '500 22px "Inter", sans-serif';
     ctx.fillText(fitText(ctx, model.footer, inner - url - 40), PAD, fy + 44);
-    ctx.fillText("Negative = faster than the target", PAD, fy + 76);
+    ctx.fillText(model.kind === "execution" ? "Negative = faster than the target" : "Your training · Southbound Coaching", PAD, fy + 76);
     return canvas;
 }
 
@@ -259,7 +320,7 @@ let wired = false;
 export function registerShare(x, meta = {}) {
     if (!x?.plannedWorkoutId) return;
     registry.set(x.plannedWorkoutId, { x, meta });
-    if (wired) return;
+    if (wired) return x.plannedWorkoutId;
     wired = true;
     document.addEventListener("click", event => {
         const btn = event.target.closest?.("[data-ex-share]");
@@ -267,7 +328,29 @@ export function registerShare(x, meta = {}) {
         const hit = registry.get(btn.dataset.exShare);
         if (hit) { event.preventDefault(); openShareCard(hit.x, hit.meta); }
     });
+    return x.plannedWorkoutId;
 }
+
+/** Registers a plain run share in the same image dialog as structured workouts. */
+export function registerRunShare(run, meta = {}) {
+    if (!run) return null;
+    const key = "run|" + (run.labelId || meta.date || Date.now());
+    registry.set(key, {
+        x: { plannedWorkoutId: key, steps: [], sets: [], completion: null, targetCompliance: null, matchConfidence: "none" },
+        meta: { ...meta, runSummary: true, avgHr: run.avgHr }
+    });
+    if (!wired) {
+        wired = true;
+        document.addEventListener("click", event => {
+            const btn = event.target.closest?.("[data-ex-share]");
+            if (!btn) return;
+            const hit = registry.get(btn.dataset.exShare);
+            if (hit) { event.preventDefault(); openShareCard(hit.x, hit.meta); }
+        });
+    }
+    return key;
+}
+
 
 const fileName = meta => `southbound-workout-${meta.date || "run"}.png`;
 

@@ -48,6 +48,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "readiness-history",
     "training-progress",
     "training-overrides",
+    "featured-training-categories",
     "habits",
     "entries",
     "user-settings",

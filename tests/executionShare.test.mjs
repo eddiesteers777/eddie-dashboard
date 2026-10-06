@@ -54,3 +54,35 @@ test("a long set goes to two columns; a cut-short rep says so; a long card grows
     const twelve = shareCardModel(x, {}); twelve.sets.push(...Array.from({ length: 3 }, () => twelve.sets[0]));
     assert.ok(cardHeight(twelve) > MIN_H, "four long sets: a taller image");
 });
+
+
+test("a plain featured run gets the same polished share card without inventing a target", () => {
+    const m = shareCardModel({
+        steps: [],
+        sets: [],
+        completion: null,
+        targetCompliance: null,
+        matchConfidence: "none"
+    }, {
+        runSummary: true,
+        category: "long_run",
+        date: "2026-10-10",
+        name: "20-mile long run",
+        plannedMiles: 20,
+        runMeters: 20.08 * 1609.344,
+        runSec: 9360,
+        avgHr: 151
+    });
+    assert.equal(m.kind, "run");
+    assert.equal(m.title, "Long Run");
+    assert.equal(m.name, "20-mile long run");
+    assert.deepEqual(m.stats, [
+        { label: "Distance", value: "20.08 mi" },
+        { label: "Time", value: "2:36:00" },
+        { label: "Avg pace", value: "7:46/mi" },
+        { label: "Avg HR", value: "151 bpm" }
+    ]);
+    assert.equal(m.summary, "20.08 of 20.0 planned miles");
+    assert.equal(m.footer, "Long Run · recorded training");
+    assert.ok(cardHeight(m) >= MIN_H);
+});
