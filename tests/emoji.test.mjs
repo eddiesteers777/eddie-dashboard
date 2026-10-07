@@ -57,7 +57,7 @@ test("inserting at the cursor keeps the spacing tidy", () => {
 
 test("picker exposes an accessible dialog and restores focus to its opener", () => {
     const picker = readFileSync(join(root, "js", "emojiPicker.js"), "utf8");
-    assert.match(picker, /aria-labelledby="sb-emoji-pop-title"/);
+    assert.match(picker, /setAttribute\("aria-labelledby", "sb-emoji-pop-title"\)/);
     assert.match(picker, /id="sb-emoji-pop-title"/);
     assert.match(picker, /aria-label="Close reactions"/);
     assert.match(picker, /opener\?\.focus\(\)/);
