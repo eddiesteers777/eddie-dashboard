@@ -636,14 +636,16 @@ function renderExercise(exercise) {
                     : ""
             }"
             data-exercise-id="${exercise.id}"
-            draggable="true"
+            draggable="false"
         >
 
             <div class="strength-exercise-header">
 
                 <div
                     class="strength-drag-handle"
+                    draggable="true"
                     title="Drag to reorder"
+                    aria-label="Drag to reorder exercise"
                 >
                     ${icon("moreVertical")}${icon("moreVertical")}
                 </div>
@@ -2617,6 +2619,10 @@ document.addEventListener(
             event.target.closest(
                 ".strength-exercise-block"
             );
+
+        if (!event.target.closest(".strength-drag-handle")) {
+            return;
+        }
 
         if (!block) return;
 
