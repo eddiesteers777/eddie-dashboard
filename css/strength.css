@@ -1141,6 +1141,10 @@
 
 .strength-exercise-block{
     position:relative;
+    overflow:hidden;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:rgba(255,255,255,.018);
 }
 
 .strength-exercise-block.dragging{
@@ -1152,13 +1156,104 @@
     box-shadow:0 0 0 2px rgba(201,173,132,.12);
 }
 
-.strength-drag-handle{
-    width:22px;
-    min-width:22px;
+.strength-exercise-summary{
+    display:grid;
+    grid-template-columns:22px minmax(0,1fr) auto;
+    align-items:center;
+    width:100%;
+    gap:10px;
+    padding:11px 12px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    color:var(--text);
+    text-align:left;
+    font:inherit;
+    cursor:pointer;
+}
+
+.strength-exercise-summary:hover{
+    background:rgba(201,173,132,.045);
+}
+
+.strength-exercise-summary:focus-visible{
+    outline:2px solid var(--primary);
+    outline-offset:-2px;
+}
+
+.strength-exercise-summary-main{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+}
+
+.strength-exercise-summary .strength-exercise-image{
+    width:38px;
+    height:38px;
+    border-radius:8px;
+}
+
+.strength-exercise-summary .strength-exercise-info{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+}
+
+.strength-exercise-summary .strength-exercise-name{
+    margin:0;
+    color:var(--text);
+    font-size:13px;
+    font-weight:800;
+    line-height:1.25;
+}
+
+.strength-exercise-summary .strength-exercise-tags{
+    overflow:hidden;
     color:var(--muted);
-    cursor:grab;
-    font-size:18px;
-    user-select:none;
+    font-size:10.5px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.strength-exercise-prescription{
+    overflow:hidden;
+    color:var(--text-secondary);
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    font-weight:700;
+    line-height:1.25;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.strength-exercise-chevron{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:28px;
+    height:28px;
+    color:var(--muted);
+}
+
+.strength-exercise-chevron .ui-icon{
+    width:16px;
+    height:16px;
+}
+
+.strength-exercise-editor{
+    padding:0 12px 12px;
+    border-top:1px solid var(--border);
+    background:rgba(255,255,255,.012);
+}
+
+.strength-exercise-editor-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding-top:10px;
 }
 
 .strength-exercise-actions{
@@ -1175,7 +1270,11 @@
     align-items:center;
     justify-content:center;
     padding:0;
-    font-size:13px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:transparent;
+    color:var(--text-secondary);
+    cursor:pointer;
 }
 
 .strength-icon-btn:hover{
@@ -1183,11 +1282,35 @@
     color:var(--primary);
 }
 
+.strength-icon-btn-danger:hover{
+    border-color:var(--red);
+    color:var(--red);
+    background:color-mix(in srgb, var(--red) 8%, transparent);
+}
+
 .strength-exercise-toolbar{
     display:flex;
     flex-wrap:wrap;
     gap:6px;
-    margin:0 0 12px 58px;
+    min-width:0;
+}
+
+.strength-exercise-details{
+    margin:0 0 14px;
+}
+
+.strength-drag-handle{
+    width:22px;
+    min-width:22px;
+    color:var(--muted);
+    cursor:grab;
+    font-size:18px;
+    line-height:1;
+    user-select:none;
+}
+
+.strength-drag-handle:active{
+    cursor:grabbing;
 }
 
 .strength-mode-btn,
@@ -1399,6 +1522,10 @@
 
 .strength-group-exercises .strength-exercise-block{
     margin:0;
+}
+
+.strength-group-exercises .strength-exercise-editor{
+    padding-bottom:10px;
 }
 
 .strength-empty-exercise-message{
@@ -1626,9 +1753,31 @@
         align-items:flex-start;
     }
 
-    .strength-exercise-toolbar,
-    .strength-exercise-details{
-        margin-left:0;
+    .strength-exercise-summary{
+        gap:8px;
+        padding:10px;
+    }
+
+    .strength-exercise-summary-main{
+        gap:8px;
+    }
+
+    .strength-exercise-summary .strength-exercise-image{
+        width:34px;
+        height:34px;
+    }
+
+    .strength-exercise-prescription{
+        white-space:normal;
+    }
+
+    .strength-exercise-editor-top{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .strength-exercise-toolbar{
+        width:100%;
     }
 
     .strength-exercise-details{
