@@ -618,238 +618,234 @@ function renderSetTable(exercise) {
     `;
 }
 
+
+function formatExerciseRest(seconds) {
+    const total = Math.max(0, Math.round(Number(seconds) || 0));
+    if (!total) return "";
+    if (total < 60) return total + "s";
+
+    const minutes = Math.floor(total / 60);
+    const remainder = total % 60;
+
+    return minutes + ":" + String(remainder).padStart(2, "0");
+}
+
+function formatExercisePrescription(exercise) {
+    const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+    const count = sets.length;
+
+    if (!count) return "No sets";
+
+    const isTime = exercise.mode === "time";
+    const values = sets.map(set =>
+        isTime
+            ? (Number(set.duration) || 0) + " sec"
+            : String(Number(set.reps) || 0)
+    );
+
+    const sameValue = values.every(value => value === values[0]);
+
+    let summary = sameValue
+        ? count + " × " + values[0]
+        : count + " sets";
+
+    if (!isTime) {
+        const loads = sets
+            .map(set => Number(set.weight) || 0)
+            .filter(value => value > 0);
+
+        const uniqueLoads = [...new Set(loads)];
+
+        if (uniqueLoads.length === 1) {
+            summary += " · " + uniqueLoads[0] + " lb";
+        } else if (uniqueLoads.length > 1) {
+            summary += " · Varying load";
+        }
+    }
+
+    const rpes = sets.map(set => Number(set.rpe));
+
+    if (
+        rpes.every(Number.isFinite) &&
+        rpes.every(value => value === rpes[0])
+    ) {
+        summary += " · RPE " + rpes[0];
+    }
+
+    const rest = Number(exercise.restSeconds) || 0;
+
+    if (rest) {
+        summary += " · " + formatExerciseRest(rest);
+    }
+
+    return summary;
+}
+
 function renderExercise(exercise) {
     const detailsOpen =
         expandedExercises.has(exercise.id);
 
     const groupBadge =
         exercise.groupId
-            ? `<span class="strength-group-badge strength-group-badge-${exercise.groupType || "superset"}">
-                ${groupTypeLabel(exercise.groupType)}
-              </span>`
+            ? '<span class="strength-group-badge strength-group-badge-' +
+              (exercise.groupType || "superset") +
+              '">' +
+              escapeHtml(groupTypeLabel(exercise.groupType)) +
+              "</span>"
             : "";
 
-    return `
-        <div
-            class="strength-exercise-block ${
-                exercise.groupId
-                    ? "strength-group-member"
-                    : ""
-            }"
-            data-exercise-id="${exercise.id}"
-            draggable="false"
-        >
+    const exerciseTags = [
+        exercise.equipment || "No equipment",
+        ...(exercise.primaryMuscles || [])
+    ].filter(Boolean).join(" · ");
 
-            <div class="strength-exercise-header">
+    const imageHtml = exercise.image
+        ? '<img class="strength-exercise-image" src="' +
+          escapeHtml(exercise.image) +
+          '" alt="" loading="lazy">'
+        : "";
 
-                <div
-                    class="strength-drag-handle"
-                    draggable="true"
-                    title="Drag to reorder"
-                    aria-label="Drag to reorder exercise"
-                >
-                    ${icon("moreVertical")}${icon("moreVertical")}
-                </div>
+    const restOptions = [
+        30, 45, 60, 75, 90, 120, 150, 180, 240
+    ].map(value =>
+        '<option value="' +
+        value +
+        '"' +
+        (Number(exercise.restSeconds) === value ? " selected" : "") +
+        ">" +
+        value +
+        "s</option>"
+    ).join("");
 
-                ${
-                    exercise.image
-                        ? `<img
-                            class="strength-exercise-image"
-                            src="${escapeHtml(exercise.image)}"
-                            alt=""
-                            loading="lazy"
-                        >`
-                        : `<div class="strength-exercise-image"></div>`
-                }
+    const detailHtml = detailsOpen
+        ? [
+            '<div class="strength-exercise-editor">',
+                '<div class="strength-exercise-editor-top">',
+                    '<div class="strength-exercise-toolbar">',
 
-                <div class="strength-exercise-info">
+                        '<button type="button" class="strength-mode-btn ' +
+                            (exercise.mode === "time" ? "active" : "") +
+                            '" data-toggle-mode="' + exercise.id + '">' +
+                            icon("timer") + " " +
+                            (exercise.mode === "time" ? "Timed" : "Reps") +
+                        "</button>",
 
-                    <div class="strength-exercise-name">
-                        ${escapeHtml(exercise.name)}
-                        ${groupBadge}
-                    </div>
+                        '<button type="button" class="strength-rest-btn" data-rest-exercise="' +
+                            exercise.id + '">' +
+                            "Rest " + exercise.restSeconds + "s" +
+                        "</button>",
 
-                    <div class="strength-exercise-tags">
-                        ${
-                            escapeHtml(
-                                exercise.equipment ||
-                                "No equipment"
-                            )
-                        }${
-                            exercise.primaryMuscles?.length
-                                ? " · " +
-                                  escapeHtml(
-                                      exercise.primaryMuscles.join(
-                                          ", "
-                                      )
-                                  )
-                                : ""
-                        }
-                    </div>
+                        '<button type="button" class="strength-group-btn" data-group-exercise="' +
+                            exercise.id + '">' +
+                            (exercise.groupId ? "Edit Group" : "+ Add to Group") +
+                        "</button>",
 
-                </div>
+                        '<button type="button" class="strength-note-btn" data-toggle-notes="' +
+                            exercise.id + '">' +
+                            (exercise.notes ? "Notes •" : "Notes") +
+                        "</button>",
 
-                <div class="strength-exercise-actions">
+                    "</div>",
 
-                    <button
-                        type="button"
-                        class="strength-icon-btn"
-                        data-move-up="${exercise.id}"
-                        title="Move up"
-                    >
-                        ${icon("arrowUp")}
-                    </button>
+                    '<div class="strength-exercise-actions">',
 
-                    <button
-                        type="button"
-                        class="strength-icon-btn"
-                        data-move-down="${exercise.id}"
-                        title="Move down"
-                    >
-                        ${icon("arrowDown")}
-                    </button>
+                        '<button type="button" class="strength-icon-btn" ' +
+                            'data-duplicate-exercise="' + exercise.id + '" ' +
+                            'title="Duplicate exercise" ' +
+                            'aria-label="Duplicate ' + escapeHtml(exercise.name) + '">' +
+                            icon("copy") +
+                        "</button>",
 
-                    <button
-                        type="button"
-                        class="strength-icon-btn"
-                        data-duplicate-exercise="${exercise.id}"
-                        title="Duplicate exercise"
-                    >
-                        ${icon("copy")}
-                    </button>
+                        '<button type="button" class="strength-icon-btn strength-icon-btn-danger" ' +
+                            'data-remove-exercise="' + exercise.id + '" ' +
+                            'title="Remove exercise" ' +
+                            'aria-label="Remove ' + escapeHtml(exercise.name) + '">' +
+                            icon("close") +
+                        "</button>",
 
-                    <button
-                        type="button"
-                        class="strength-exercise-remove"
-                        data-remove-exercise="${exercise.id}"
-                        title="Remove exercise"
-                    >
-                        ${icon("close")}
-                    </button>
+                    "</div>",
+                "</div>",
 
-                </div>
+                '<div class="strength-exercise-details">',
 
-            </div>
+                    "<label>",
+                        "<span>Rest</span>",
+                        '<select data-rest-select="' + exercise.id + '">',
+                            restOptions,
+                        "</select>",
+                    "</label>",
 
-            <div class="strength-exercise-toolbar">
+                    '<label class="strength-note-field">',
+                        "<span>Exercise note</span>",
+                        '<input type="text" ' +
+                            'data-exercise-note="' + exercise.id + '" ' +
+                            'value="' + escapeHtml(exercise.notes) + '" ' +
+                            'placeholder="e.g. Keep ribs down">',
+                    "</label>",
 
-                <button
-                    type="button"
-                    class="strength-mode-btn ${
-                        exercise.mode === "time" ? "active" : ""
-                    }"
-                    data-toggle-mode="${exercise.id}"
-                >
-                    ${icon("timer")} ${
-                        exercise.mode === "time"
-                            ? "Timed"
-                            : "Reps"
-                    }
-                </button>
+                    '<p class="strength-mode-help">' +
+                        (exercise.mode === "time"
+                            ? "Timed mode is ideal for planks, carries, mobility, and other duration-based work."
+                            : "Rep mode tracks weight and reps. RPE is optional when you want to prescribe or record effort.") +
+                    "</p>",
 
-                <button
-                    type="button"
-                    class="strength-rest-btn"
-                    data-rest-exercise="${exercise.id}"
-                >
-                    Rest ${exercise.restSeconds}s
-                </button>
+                "</div>",
 
-                <button
-                    type="button"
-                    class="strength-group-btn"
-                    data-group-exercise="${exercise.id}"
-                >
-                    ${
-                        exercise.groupId
-                            ? "Edit Group"
-                            : "+ Add to Group"
-                    }
-                </button>
+                renderSetTable(exercise),
 
-                <button
-                    type="button"
-                    class="strength-note-btn"
-                    data-toggle-notes="${exercise.id}"
-                >
-                    ${exercise.notes ? "Notes •" : "Notes"}
-                </button>
+                '<button type="button" class="strength-add-set-btn" data-add-set="' +
+                    exercise.id + '">+ Add Set</button>',
 
-                <button
-                    type="button"
-                    class="strength-collapse-btn"
-                    data-toggle-details="${exercise.id}"
-                >
-                    ${detailsOpen ? "Hide details" : "Details"}
-                </button>
+            "</div>"
+        ].join("")
+        : "";
 
-            </div>
+    return [
+        '<div class="strength-exercise-block ' +
+            (exercise.groupId ? "strength-group-member " : "") +
+            (detailsOpen ? "is-expanded" : "") +
+            '" data-exercise-id="' + exercise.id + '" draggable="false">',
 
-            ${
-                detailsOpen
-                    ? `
-                        <div class="strength-exercise-details">
+            '<button type="button" class="strength-exercise-summary" ' +
+                'data-toggle-details="' + exercise.id + '" ' +
+                'aria-expanded="' + (detailsOpen ? "true" : "false") + '" ' +
+                'aria-label="' + (detailsOpen ? "Collapse" : "Edit") + " " +
+                escapeHtml(exercise.name) + '">',
 
-                            <label>
-                                <span>Rest</span>
+                '<span class="strength-drag-handle" draggable="true" ' +
+                    'title="Drag to reorder" aria-label="Drag to reorder exercise">' +
+                    icon("moreVertical") +
+                    icon("moreVertical") +
+                "</span>",
 
-                                <select data-rest-select="${exercise.id}">
-                                    ${[
-                                        30, 45, 60, 75,
-                                        90, 120, 150,
-                                        180, 240
-                                    ].map(value => `
-                                        <option
-                                            value="${value}"
-                                            ${
-                                                Number(exercise.restSeconds) === value
-                                                    ? "selected"
-                                                    : ""
-                                            }
-                                        >
-                                            ${value}s
-                                        </option>
-                                    `).join("")}
-                                </select>
-                            </label>
+                '<span class="strength-exercise-summary-main">' +
+                    imageHtml +
+                    '<span class="strength-exercise-info">' +
+                        '<span class="strength-exercise-name">' +
+                            escapeHtml(exercise.name) +
+                            groupBadge +
+                        "</span>" +
+                        '<span class="strength-exercise-tags">' +
+                            escapeHtml(exerciseTags) +
+                        "</span>" +
+                        '<span class="strength-exercise-prescription">' +
+                            escapeHtml(formatExercisePrescription(exercise)) +
+                        "</span>" +
+                    "</span>" +
+                "</span>",
 
-                            <label class="strength-note-field">
-                                <span>Exercise note</span>
+                '<span class="strength-exercise-chevron" aria-hidden="true">' +
+                    icon(detailsOpen ? "chevronUp" : "chevronDown") +
+                "</span>",
 
-                                <input
-                                    type="text"
-                                    data-exercise-note="${exercise.id}"
-                                    value="${escapeHtml(exercise.notes)}"
-                                    placeholder="e.g. Keep ribs down"
-                                >
-                            </label>
+            "</button>",
 
-                            <p class="strength-mode-help">
-                                ${
-                                    exercise.mode === "time"
-                                        ? "Timed mode is ideal for planks, wall sits, carries, mobility, and other bodyweight or interval exercises."
-                                        : "Rep mode tracks weight and reps. RPE is optional when you want to record how hard the set felt."
-                                }
-                            </p>
+            detailHtml,
 
-                        </div>
-                    `
-                    : ""
-            }
-
-            ${renderSetTable(exercise)}
-
-            <button
-                type="button"
-                class="strength-add-set-btn"
-                data-add-set="${exercise.id}"
-            >
-                + Add Set
-            </button>
-
-        </div>
-    `;
+        "</div>"
+    ].join("");
 }
+
 
 function renderGrouped(day) {
     const output = [];
@@ -1499,9 +1495,6 @@ function addExercise(
 
     day.exercises.push(item);
 
-    expandedExercises.add(
-        item.id
-    );
 
     savePlan();
     closeExerciseSearch();
@@ -2471,13 +2464,14 @@ document.addEventListener(
             return;
         }
 
-        if (
-            target.matches(
+        const toggleDetailsBtn =
+            target.closest(
                 "[data-toggle-details]"
-            )
-        ) {
+            );
+
+        if (toggleDetailsBtn) {
             const id =
-                target.dataset
+                toggleDetailsBtn.dataset
                     .toggleDetails;
 
             if (
@@ -2562,15 +2556,22 @@ document.addEventListener(
                 "[data-group-exercise]"
             )
         ) {
-            openGroupModal(
+            const exercise =
                 activeDay()?.exercises.find(
                     ex =>
                         ex.id ===
                         target.dataset
                             .groupExercise
-                )?.groupType ||
-                "superset"
-            );
+                );
+
+            if (exercise) {
+                openGroupModal(
+                    exercise.groupType ||
+                    "superset",
+                    exercise.groupId ||
+                    null
+                );
+            }
 
             return;
         }
