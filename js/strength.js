@@ -1081,10 +1081,12 @@ function renderDayContent() {
 
         <button
             type="button"
-            class="strength-add-exercise-btn"
+            class="strength-add-exercise-fab"
             id="addExerciseTrigger"
+            aria-label="Add an exercise to this workout"
         >
-            + Add Exercise
+            <span aria-hidden="true">+</span>
+            <span>Add Exercise</span>
         </button>
 
     `;
