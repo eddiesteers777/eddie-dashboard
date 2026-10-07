@@ -815,6 +815,130 @@
 
 }
 
+
+.strength-search-modal{
+    width:min(620px,100%);
+    max-width:620px;
+    max-height:min(760px,88vh);
+}
+
+.strength-search-header{
+    gap:12px;
+}
+
+.strength-search-title{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.strength-search-title::after{
+    content:"Search the library, then keep adding exercises without reopening this window.";
+    color:var(--muted);
+    font-size:10px;
+    font-weight:500;
+    line-height:1.4;
+}
+
+.strength-search-body{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+}
+
+.strength-search-input{
+    flex-shrink:0;
+    position:sticky;
+    top:0;
+    z-index:2;
+}
+
+.strength-search-results{
+    min-height:0;
+}
+
+.strength-result{
+    min-height:64px;
+    margin-bottom:7px;
+}
+
+.strength-result-info{
+    flex:1;
+}
+
+.strength-result-info strong{
+    line-height:1.25;
+}
+
+.strength-result-info span{
+    display:block;
+    margin-top:3px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.strength-result-add{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    min-width:68px;
+    min-height:32px;
+    padding:6px 9px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:rgba(201,173,132,.05);
+    color:var(--primary);
+    cursor:pointer;
+    font:inherit;
+    font-size:10px;
+    font-weight:800;
+    white-space:nowrap;
+}
+
+.strength-result-add:hover{
+    border-color:var(--primary);
+    background:rgba(201,173,132,.11);
+}
+
+.strength-result-add.is-added{
+    border-color:rgba(116,154,130,.35);
+    background:rgba(116,154,130,.08);
+    color:var(--sage);
+    cursor:default;
+}
+
+.strength-result.is-added{
+    opacity:.78;
+}
+
+.strength-result-image-empty{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
+}
+
+.strength-result-image-empty .ui-icon{
+    width:18px;
+    height:18px;
+}
+
+.strength-search-empty{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.strength-search-empty strong{
+    color:var(--text-secondary);
+}
+
+.strength-search-empty span{
+    color:var(--muted);
+    font-size:11px;
+}
+
 .strength-result{
 
     display:flex;
@@ -1728,6 +1852,44 @@
 .strength-rest-timer-actions button:hover{
     border-color:var(--primary);
     color:var(--primary);
+}
+
+
+@media(max-width:560px){
+    .strength-search-overlay{
+        align-items:flex-end;
+        padding:0;
+    }
+
+    .strength-search-modal{
+        width:100%;
+        max-width:none;
+        max-height:92vh;
+        border-radius:20px 20px 0 0;
+    }
+
+    .strength-search-header{
+        padding:16px;
+    }
+
+    .strength-search-body{
+        padding:14px 16px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .strength-result{
+        gap:9px;
+        padding:9px;
+    }
+
+    .strength-result-image{
+        width:42px;
+        height:42px;
+    }
+
+    .strength-result-add{
+        min-width:62px;
+        min-height:36px;
+    }
 }
 
 @media(max-width:720px){
