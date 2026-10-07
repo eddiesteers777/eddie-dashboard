@@ -284,7 +284,7 @@ function renderSetRow(exercise, set, index) {
     const numberControls = isTime
         ? `
             <div class="strength-workout-adjust">
-                <button type="button" data-adjust="duration" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("minus")}</button>
+                <button type="button" data-adjust="duration" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Decrease duration by 5 seconds">${icon("minus")}</button>
                 <input
                     type="number"
                     class="strength-workout-input"
@@ -292,12 +292,12 @@ function renderSetRow(exercise, set, index) {
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
                     value="${set.duration}">
-                <button type="button" data-adjust="duration" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("plus")}</button>
+                <button type="button" data-adjust="duration" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Increase duration by 5 seconds">${icon("plus")}</button>
             </div>
         `
         : `
             <div class="strength-workout-adjust">
-                <button type="button" data-adjust="weight" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("minus")}</button>
+                <button type="button" data-adjust="weight" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Decrease weight by 5 pounds">${icon("minus")}</button>
                 <input
                     type="number"
                     class="strength-workout-input"
@@ -305,11 +305,11 @@ function renderSetRow(exercise, set, index) {
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
                     value="${set.weight}">
-                <button type="button" data-adjust="weight" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("plus")}</button>
+                <button type="button" data-adjust="weight" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Increase weight by 5 pounds">${icon("plus")}</button>
             </div>
 
             <div class="strength-workout-adjust strength-workout-adjust-reps">
-                <button type="button" data-adjust="reps" data-delta="-1" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("minus")}</button>
+                <button type="button" data-adjust="reps" data-delta="-1" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Decrease reps by 1">${icon("minus")}</button>
                 <input
                     type="number"
                     class="strength-workout-input strength-workout-input-small"
@@ -317,7 +317,7 @@ function renderSetRow(exercise, set, index) {
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
                     value="${set.reps}">
-                <button type="button" data-adjust="reps" data-delta="1" data-set-id="${set.id}" data-exercise-id="${exercise.id}">${icon("plus")}</button>
+                <button type="button" data-adjust="reps" data-delta="1" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Increase reps by 1">${icon("plus")}</button>
             </div>
         `;
 
@@ -332,6 +332,7 @@ function renderSetRow(exercise, set, index) {
                 class="strength-workout-set-index"
                 data-cycle-set-type="${set.id}"
                 data-exercise-id="${exercise.id}"
+                aria-label="${SET_TYPE_LABELS[setType]} — tap to change"
                 title="${SET_TYPE_LABELS[setType]} — tap to change">
                 ${index + 1}
             </button>
@@ -343,7 +344,8 @@ function renderSetRow(exercise, set, index) {
                 class="strength-workout-done-btn ${set.done ? "checked" : ""}"
                 data-toggle-workout-set="${set.id}"
                 data-exercise-id="${exercise.id}"
-                title="Mark set complete">
+                aria-label="${set.done ? "Mark set incomplete" : "Mark set complete"}"
+                title="${set.done ? "Mark set incomplete" : "Mark set complete"}">
                 ${icon("check")}
             </button>
 
@@ -352,6 +354,7 @@ function renderSetRow(exercise, set, index) {
                 class="strength-workout-remove-set"
                 data-remove-workout-set="${set.id}"
                 data-exercise-id="${exercise.id}"
+                aria-label="Remove set"
                 title="Remove set">
                 ${icon("close")}
             </button>
@@ -400,7 +403,9 @@ function renderExerciseBlock(exercise) {
             <button
                 type="button"
                 class="strength-workout-exercise-summary"
-                data-toggle-exercise="${exercise.id}">
+                data-toggle-exercise="${exercise.id}"
+                aria-expanded="${expanded ? "true" : "false"}"
+                aria-controls="strength-workout-exercise-body-${exercise.id}">
 
                 <span class="strength-workout-exercise-chevron">${icon("chevronDown")}</span>
 
@@ -416,7 +421,7 @@ function renderExerciseBlock(exercise) {
             </button>
 
             <div class="strength-workout-exercise-collapse">
-            <div class="strength-workout-exercise-body">
+            <div class="strength-workout-exercise-body" id="strength-workout-exercise-body-${exercise.id}">
 
                 <div class="strength-workout-prev">
                     <span class="strength-workout-prev-icon">${icon("clock")}</span>
