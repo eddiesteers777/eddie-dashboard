@@ -44,7 +44,7 @@ function buildDialog() {
             <button type="button" class="sb-emoji-pop-close" aria-label="Close reactions">×</button>
         </div>
         ${EMOJI_CATEGORIES.map(cat => `
-            <div class="sb-emoji-cat">
+            <section class="sb-emoji-cat" aria-label="${esc(cat.label)}">
                 <div class="sb-emoji-cat-label">${esc(cat.label)}</div>
                 <div class="sb-emoji-grid">
                     ${EMOJI.filter(e => e.category === cat.key).map(e => `
@@ -60,7 +60,6 @@ function buildDialog() {
         if (choice && target) {
             insertInto(target, choice.dataset.emojiId);
             close();
-            target?.focus();
         }
     });
     d.addEventListener("close", () => {
