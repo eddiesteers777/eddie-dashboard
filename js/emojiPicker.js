@@ -37,11 +37,11 @@ function insertInto(textarea, id) {
 function buildDialog() {
     const d = document.createElement("dialog");
     d.className = "sb-emoji-pop";
-    d.setAttribute("aria-label", "Southbound reactions");
+    d.setAttribute("aria-labelledby", "sb-emoji-pop-title");
     d.innerHTML = `
         <div class="sb-emoji-pop-head">
-            <span class="sb-emoji-pop-title">Southbound</span>
-            <button type="button" class="sb-emoji-pop-close" aria-label="Close">×</button>
+            <span class="sb-emoji-pop-title" id="sb-emoji-pop-title">Southbound reactions</span>
+            <button type="button" class="sb-emoji-pop-close" aria-label="Close reactions">×</button>
         </div>
         ${EMOJI_CATEGORIES.map(cat => `
             <div class="sb-emoji-cat">
@@ -63,7 +63,12 @@ function buildDialog() {
             target?.focus();
         }
     });
-    d.addEventListener("close", () => { opener?.setAttribute("aria-expanded", "false"); });
+    d.addEventListener("close", () => {
+        opener?.setAttribute("aria-expanded", "false");
+        opener?.focus();
+        target = null;
+        opener = null;
+    });
     document.body.appendChild(d);
     return d;
 }
