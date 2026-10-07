@@ -1370,8 +1370,26 @@ function renderSearchResults(
 
     if (!container) return;
 
-    lastSearchResults =
-        results;
+    lastSearchResults = results;
+
+    const day = activeDay();
+    const existingIds = new Set(
+        (day?.exercises || [])
+            .map(ex => ex.exerciseId ? String(ex.exerciseId) : "")
+            .filter(Boolean)
+    );
+    const existingNames = new Set(
+        (day?.exercises || [])
+            .map(ex => String(ex.name || "").trim().toLowerCase())
+            .filter(Boolean)
+    );
+
+    results = results.map(ex => ({
+        ...ex,
+        isAdded:
+            existingIds.has(String(ex.id)) ||
+            existingNames.has(String(ex.name || "").trim().toLowerCase())
+    }));
 
     container.innerHTML =
         results.length
@@ -1380,6 +1398,7 @@ function renderSearchResults(
                     <div
                         class="strength-result"
                         data-result-index="${index}"
+                        class="${ex.isAdded ? "strength-result is-added" : "strength-result"}"
                     >
 
                         ${
@@ -1420,9 +1439,14 @@ function renderSearchResults(
                             </span>
                         </div>
 
-                        <span class="strength-add-result">
-                            +
-                        </span>
+                        <button
+                            type="button"
+                            class="strength-result-add ${ex.isAdded ? "is-added" : ""}"
+                            data-add-result="${index}"
+                            ${ex.isAdded ? "disabled" : ""}
+                        >
+                            ${ex.isAdded ? icon("check") + " Added" : icon("plus") + " Add"}
+                        </button>
 
                     </div>
                 `
@@ -1497,8 +1521,20 @@ function addExercise(
 
 
     savePlan();
-    closeExerciseSearch();
     renderAll();
+
+    const query =
+        $("exerciseSearchInput")?.value ||
+        "";
+
+    searchExercisesForBuilder(query)
+        .then(renderSearchResults)
+        .catch(() => {});
+
+    toast(
+        `${exercise.name} added to ${day.name}.`,
+        { type: "success" }
+    );
 }
 
 /* ==========================================
@@ -2283,24 +2319,22 @@ document.addEventListener(
             return;
         }
 
-        const result =
+        const resultAddBtn =
             target.closest(
-                ".strength-result"
+                "[data-add-result]"
             );
 
-        if (result) {
+        if (resultAddBtn) {
             const exercise =
                 lastSearchResults[
                     Number(
-                        result.dataset
-                            .resultIndex
+                        resultAddBtn.dataset
+                            .addResult
                     )
                 ];
 
             if (exercise) {
-                addExercise(
-                    exercise
-                );
+                addExercise(exercise);
             }
 
             return;
