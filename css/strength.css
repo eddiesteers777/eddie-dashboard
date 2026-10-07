@@ -527,6 +527,67 @@
 }
 
 /* ==========================
+   Builder add-exercise FAB
+========================== */
+
+.strength-add-exercise-fab{
+    position:fixed;
+    right:24px;
+    bottom:24px;
+    z-index:260;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-height:48px;
+    padding:0 18px;
+    border:0;
+    border-radius:999px;
+    background:var(--primary);
+    color:#0f2019;
+    box-shadow:0 12px 30px rgba(201,173,132,.35);
+    font:800 14px var(--font-body);
+    cursor:pointer;
+    transition:transform .15s ease,background .15s ease,box-shadow .15s ease;
+}
+
+.strength-add-exercise-fab > span:first-child{
+    font-size:19px;
+    line-height:1;
+}
+
+.strength-add-exercise-fab:hover{
+    transform:translateY(-1px);
+    background:var(--primary-light);
+    box-shadow:0 16px 34px rgba(201,173,132,.42);
+}
+
+.strength-add-exercise-fab:active{
+    transform:translateY(0) scale(.98);
+}
+
+.strength-add-exercise-fab:focus-visible{
+    outline:2px solid var(--primary);
+    outline-offset:3px;
+}
+
+@media (max-width:900px){
+    .strength-add-exercise-fab{
+        right:18px;
+        bottom:calc(78px + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width:480px){
+    .strength-add-exercise-fab{
+        right:14px;
+        bottom:calc(74px + env(safe-area-inset-bottom));
+        min-height:46px;
+        padding:0 16px;
+    }
+}
+
+/* ==========================
    Exercise search modal
 ========================== */
 
@@ -2047,8 +2108,8 @@
 }
 
 .strength-editor-modal{
-    width:min(1150px,100%);
-    height:min(92vh,100%);
+    width:min(960px,calc(100vw - 32px));
+    height:min(88vh,calc(100vh - 32px));
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -2076,7 +2137,7 @@
     max-width:62ch;
     margin-top:5px;
     color:var(--text-secondary);
-    font-size:10px;
+    font-size:13px;
     line-height:1.45;
 }
 
@@ -2114,7 +2175,7 @@
 .strength-editor-body{
     flex:1;
     overflow-y:auto;
-    padding:15px;
+    padding:18px 18px 86px;
 }
 
 .strength-editor-workout-tabs .strength-day-content{
