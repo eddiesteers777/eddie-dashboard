@@ -20,8 +20,8 @@ import { EMOJI, EMOJI_CATEGORIES, QUICK_REACTIONS, emojiImg, hasEmoji, renderEmo
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 let dialog = null;
-let target = null;       // the textarea the open picker writes into
-let opener = null;       // the button that opened it
+let target = null;
+let opener = null;
 
 function insertInto(textarea, id) {
     const start = textarea.selectionStart ?? textarea.value.length;
@@ -37,14 +37,14 @@ function insertInto(textarea, id) {
 function buildDialog() {
     const d = document.createElement("dialog");
     d.className = "sb-emoji-pop";
-    d.setAttribute("aria-label", "Southbound reactions");
+    d.setAttribute("aria-labelledby", "sb-emoji-pop-title");
     d.innerHTML = `
         <div class="sb-emoji-pop-head">
-            <span class="sb-emoji-pop-title">Southbound</span>
-            <button type="button" class="sb-emoji-pop-close" aria-label="Close">×</button>
+            <span class="sb-emoji-pop-title" id="sb-emoji-pop-title">Southbound reactions</span>
+            <button type="button" class="sb-emoji-pop-close" aria-label="Close reactions">×</button>
         </div>
         ${EMOJI_CATEGORIES.map(cat => `
-            <div class="sb-emoji-cat">
+            <section class="sb-emoji-cat" aria-label="${esc(cat.label)}">
                 <div class="sb-emoji-cat-label">${esc(cat.label)}</div>
                 <div class="sb-emoji-grid">
                     ${EMOJI.filter(e => e.category === cat.key).map(e => `
@@ -52,18 +52,22 @@ function buildDialog() {
                             ${emojiImg(e.id, { size: 32 })}
                         </button>`).join("")}
                 </div>
-            </div>`).join("")}`;
+            </section>`).join("")}`;
     d.addEventListener("click", event => {
-        if (event.target === d) return close();                 // the backdrop
+        if (event.target === d) return close();
         if (event.target.closest(".sb-emoji-pop-close")) return close();
         const choice = event.target.closest("[data-emoji-id]");
         if (choice && target) {
             insertInto(target, choice.dataset.emojiId);
             close();
-            target?.focus();
         }
     });
-    d.addEventListener("close", () => { opener?.setAttribute("aria-expanded", "false"); });
+    d.addEventListener("close", () => {
+        opener?.setAttribute("aria-expanded", "false");
+        opener?.focus();
+        target = null;
+        opener = null;
+    });
     document.body.appendChild(d);
     return d;
 }
@@ -90,7 +94,7 @@ function open(textarea, button) {
     }
     button.setAttribute("aria-expanded", "true");
     dialog.showModal();
-    dialog.querySelector(".sb-emoji-choice")?.focus();
+    requestAnimationFrame(() => dialog.querySelector(".sb-emoji-choice")?.focus());
 }
 
 function updatePreview(textarea, preview) {
@@ -121,8 +125,6 @@ export function attachEmojiPicker(textarea) {
         if (o) open(textarea, o);
     });
     textarea.addEventListener("input", () => updatePreview(textarea, preview));
-    // Pages also set the text in code (prefill, clear after sending),
-    // which fires no input event: keep the preview in step anyway.
     const native = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
     Object.defineProperty(textarea, "value", {
         configurable: true,
