@@ -588,6 +588,110 @@
 }
 
 /* ==========================
+   Compact builder exercise cards
+========================== */
+
+.strength-exercise-list{
+    gap:10px;
+}
+
+.strength-exercise-block{
+    border-radius:14px;
+    padding:13px 16px 15px;
+}
+
+.strength-exercise-header{
+    gap:10px;
+    margin-bottom:10px;
+    min-height:40px;
+}
+
+.strength-exercise-image{
+    width:40px;
+    height:40px;
+    border-radius:9px;
+}
+
+.strength-exercise-name{
+    font-size:16px;
+}
+
+.strength-exercise-tags{
+    font-size:12px;
+}
+
+.strength-drag-handle{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:26px;
+    min-width:26px;
+    height:34px;
+    border:1px solid transparent;
+    border-radius:8px;
+    cursor:grab;
+    touch-action:none;
+}
+
+.strength-drag-handle:hover,
+.strength-drag-handle:focus-visible{
+    border-color:var(--border);
+    background:var(--surface-light);
+    color:var(--primary);
+}
+
+.strength-drag-handle:active{
+    cursor:grabbing;
+}
+
+.strength-exercise-actions{
+    gap:2px;
+}
+
+.strength-icon-btn{
+    width:30px;
+    height:30px;
+}
+
+.strength-exercise-toolbar{
+    margin:0 0 9px 46px;
+    gap:5px;
+}
+
+.strength-mode-btn,
+.strength-rest-btn,
+.strength-group-btn,
+.strength-note-btn,
+.strength-collapse-btn{
+    padding:5px 8px;
+    font-size:10px;
+}
+
+.strength-set-table thead th{
+    padding:0 8px 6px;
+    font-size:10px;
+}
+
+.strength-set-table tbody td{
+    padding:6px 8px;
+}
+
+.strength-set-input{
+    width:58px;
+}
+
+.strength-exercise-block.dragging{
+    opacity:.55;
+    transform:scale(.995);
+}
+
+.strength-exercise-block.drag-over{
+    position:relative;
+    border-color:var(--primary);
+    box-shadow:0 -2px 0 0 var(--primary), 0 0 0 1px rgba(201,173,132,.12);
+}
+
+/* ==========================
    Exercise search modal
 ========================== */
 
