@@ -23,6 +23,7 @@ let lastSearchResults = [];
 let expandedExercises = new Set();
 let pendingRenameDayId = null;
 let pendingGroupType = "superset";
+let pendingGroupId = null;
 let draggedExerciseId = null;
 let restTimerInterval = null;
 let restEndsAt = 0;
@@ -1620,8 +1621,19 @@ function reorderExercise(
    Grouping
 ========================================== */
 
+function getGroupMembers(groupId, day = activeDay()) {
+    if (!day || !groupId) {
+        return [];
+    }
+
+    return day.exercises.filter(
+        exercise => exercise.groupId === groupId
+    );
+}
+
 function openGroupModal(
-    type
+    type,
+    groupId = null
 ) {
     const overlay =
         $("strengthGroupOverlay");
@@ -1640,44 +1652,110 @@ function openGroupModal(
     }
 
     pendingGroupType =
-        type;
+        normalizeGroupType(type) ||
+        "superset";
+
+    pendingGroupId =
+        groupId || null;
+
+    const existingMembers =
+        getGroupMembers(groupId, day);
+
+    const availableExercises =
+        day.exercises.filter(
+            exercise =>
+                groupId
+                    ? !exercise.groupId
+                    : !exercise.groupId
+        );
 
     const title =
         $("strengthGroupModalTitle");
 
-    if (title) {
-        title.textContent =
-            `Create ${groupTypeLabel(type)}`;
+    const help =
+        overlay.querySelector(
+            ".strength-group-modal-help"
+        );
+
+    const saveButton =
+        $("strengthGroupSave");
+
+    if (pendingGroupId) {
+        if (title) {
+            title.textContent =
+                `Add to ${groupTypeLabel(pendingGroupType)}`;
+        }
+
+        if (help) {
+            const memberNames =
+                existingMembers
+                    .map(exercise => exercise.name)
+                    .join(" + ");
+
+            help.textContent =
+                memberNames
+                    ? `Add another exercise to ${memberNames}. The existing group members stay selected automatically.`
+                    : "Choose one or more ungrouped exercises to add to this group.";
+        }
+
+        if (saveButton) {
+            saveButton.textContent =
+                "Add Exercise";
+            saveButton.disabled =
+                availableExercises.length === 0;
+        }
+    } else {
+        if (title) {
+            title.textContent =
+                `Create ${groupTypeLabel(pendingGroupType)}`;
+        }
+
+        if (help) {
+            help.textContent =
+                "Select two or more ungrouped exercises. Southbound keeps their current order when it creates the group.";
+        }
+
+        if (saveButton) {
+            saveButton.textContent =
+                "Create Group";
+            saveButton.disabled =
+                availableExercises.length < 2;
+        }
     }
 
-    list.innerHTML =
-        day.exercises.map(
-            exercise => `
-                <label class="strength-group-option">
+    if (!availableExercises.length) {
+        list.innerHTML = `
+            <div class="strength-group-empty">
+                <strong>No ungrouped exercises available.</strong>
+                <span>Add another exercise to this workout first.</span>
+            </div>
+        `;
+    } else {
+        list.innerHTML =
+            availableExercises.map(
+                exercise => `
+                    <label class="strength-group-option">
 
-                    <input
-                        type="checkbox"
-                        value="${exercise.id}"
-                        data-group-choice
-                    >
+                        <input
+                            type="checkbox"
+                            value="${exercise.id}"
+                            data-group-choice
+                        >
 
-                    <span>
-                        <strong>
-                            ${escapeHtml(exercise.name)}
-                        </strong>
+                        <span>
+                            <strong>
+                                ${escapeHtml(exercise.name)}
+                            </strong>
 
-                        <small>
-                            ${
-                                exercise.groupId
-                                    ? `Already in ${groupTypeLabel(exercise.groupType).toLowerCase()}`
-                                    : "Not grouped"
-                            }
-                        </small>
-                    </span>
+                            <small>
+                                Ready to add
+                            </small>
+                        </span>
 
-                </label>
-            `
-        ).join("");
+                    </label>
+                `
+            ).join("");
+    }
 
     overlay.classList.add(
         "open"
@@ -1687,6 +1765,8 @@ function openGroupModal(
 function closeGroupModal() {
     $("strengthGroupOverlay")
         ?.classList.remove("open");
+
+    pendingGroupId = null;
 }
 
 function createGroupFromModal() {
@@ -1697,12 +1777,21 @@ function createGroupFromModal() {
     const ids =
         Array.from(
             document.querySelectorAll(
-                "[data-group-choice]:checked"
+                "#strengthGroupOverlay [data-group-choice]:checked"
             )
         ).map(
             input =>
                 input.value
         );
+
+    if (pendingGroupId) {
+        addExercisesToGroupFromModal(
+            pendingGroupId,
+            ids
+        );
+
+        return;
+    }
 
     if (ids.length < 2) {
         toast("Select at least two exercises.", { type: "info" });
@@ -1721,8 +1810,15 @@ function createGroupFromModal() {
             ex =>
                 selected.has(
                     ex.id
-                )
+                ) &&
+                !ex.groupId
         );
+
+    if (members.length < 2) {
+        toast("Select at least two ungrouped exercises.", { type: "info" });
+
+        return;
+    }
 
     const groupId =
         uid();
@@ -1774,6 +1870,92 @@ function createGroupFromModal() {
     } else if (pendingGroupType === "warmup") {
         day.groupRounds[groupId] = 1;
     }
+
+    savePlan();
+    closeGroupModal();
+    renderAll();
+}
+
+function addExercisesToGroupFromModal(
+    groupId,
+    ids
+) {
+    const day = activeDay();
+
+    if (!day) return;
+
+    const groupMembers =
+        getGroupMembers(groupId, day);
+
+    if (!groupMembers.length) {
+        toast("That group is no longer available.", { type: "info" });
+        closeGroupModal();
+        return;
+    }
+
+    if (!ids.length) {
+        toast("Choose at least one exercise to add.", { type: "info" });
+        return;
+    }
+
+    const selected =
+        new Set(ids);
+
+    const selectedExercises =
+        day.exercises.filter(
+            exercise =>
+                selected.has(exercise.id) &&
+                !exercise.groupId
+        );
+
+    if (!selectedExercises.length) {
+        toast("Choose an ungrouped exercise to add.", { type: "info" });
+        return;
+    }
+
+    const targetType =
+        normalizeGroupType(
+            groupMembers[0].groupType
+        ) || "superset";
+
+    selectedExercises.forEach(
+        exercise => {
+            exercise.groupId =
+                groupId;
+
+            exercise.groupType =
+                targetType;
+        }
+    );
+
+    const original =
+        [...day.exercises];
+
+    const remaining =
+        original.filter(
+            exercise =>
+                !selected.has(exercise.id)
+        );
+
+    const lastGroupMemberId =
+        groupMembers[groupMembers.length - 1].id;
+
+    const lastGroupIndex =
+        remaining.findIndex(
+            exercise =>
+                exercise.id === lastGroupMemberId
+        );
+
+    remaining.splice(
+        lastGroupIndex >= 0
+            ? lastGroupIndex + 1
+            : remaining.length,
+        0,
+        ...selectedExercises
+    );
+
+    day.exercises =
+        remaining;
 
     savePlan();
     closeGroupModal();
@@ -2411,14 +2593,23 @@ document.addEventListener(
                 "[data-add-to-group]"
             )
         ) {
-            openGroupModal(
+            const groupId =
+                target.dataset.addToGroup;
+
+            const groupMember =
                 activeDay()?.exercises.find(
                     ex =>
                         ex.groupId ===
-                        target.dataset.addToGroup
-                )?.groupType ||
-                "superset"
-            );
+                        groupId
+                );
+
+            if (groupMember) {
+                openGroupModal(
+                    groupMember.groupType ||
+                    "superset",
+                    groupId
+                );
+            }
 
             return;
         }
