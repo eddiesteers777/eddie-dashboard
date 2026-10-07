@@ -53,3 +53,14 @@ test("inserting at the cursor keeps the spacing tidy", () => {
     assert.deepEqual(insertToken("Nice work", "sb_pr", 4), { text: "Nice :sb_pr: work", cursor: 12 });
     assert.deepEqual(insertToken("Nice work", "sb_pr", 5, 9), { text: "Nice :sb_pr: ", cursor: 13 });
 });
+
+
+test("picker exposes an accessible dialog and restores focus to its opener", () => {
+    const picker = readFileSync(join(root, "js", "emojiPicker.js"), "utf8");
+    assert.match(picker, /aria-labelledby="sb-emoji-pop-title"/);
+    assert.match(picker, /id="sb-emoji-pop-title"/);
+    assert.match(picker, /aria-label="Close reactions"/);
+    assert.match(picker, /opener\?\.focus\(\)/);
+    assert.match(picker, /requestAnimationFrame\(\(\) => dialog\.querySelector\("\.sb-emoji-choice"\)\?\.focus\(\)\)/);
+    assert.match(picker, /<section class="sb-emoji-cat" aria-label="\$\{esc\(cat\.label\)\}">/);
+});
