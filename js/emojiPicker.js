@@ -20,8 +20,8 @@ import { EMOJI, EMOJI_CATEGORIES, QUICK_REACTIONS, emojiImg, hasEmoji, renderEmo
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 let dialog = null;
-let target = null;       // the textarea the open picker writes into
-let opener = null;       // the button that opened it
+let target = null;
+let opener = null;
 
 function insertInto(textarea, id) {
     const start = textarea.selectionStart ?? textarea.value.length;
@@ -52,9 +52,9 @@ function buildDialog() {
                             ${emojiImg(e.id, { size: 32 })}
                         </button>`).join("")}
                 </div>
-            </div>`).join("")}`;
+            </section>`).join("")}`;
     d.addEventListener("click", event => {
-        if (event.target === d) return close();                 // the backdrop
+        if (event.target === d) return close();
         if (event.target.closest(".sb-emoji-pop-close")) return close();
         const choice = event.target.closest("[data-emoji-id]");
         if (choice && target) {
@@ -94,7 +94,7 @@ function open(textarea, button) {
     }
     button.setAttribute("aria-expanded", "true");
     dialog.showModal();
-    dialog.querySelector(".sb-emoji-choice")?.focus();
+    requestAnimationFrame(() => dialog.querySelector(".sb-emoji-choice")?.focus());
 }
 
 function updatePreview(textarea, preview) {
@@ -125,8 +125,6 @@ export function attachEmojiPicker(textarea) {
         if (o) open(textarea, o);
     });
     textarea.addEventListener("input", () => updatePreview(textarea, preview));
-    // Pages also set the text in code (prefill, clear after sending),
-    // which fires no input event: keep the preview in step anyway.
     const native = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
     Object.defineProperty(textarea, "value", {
         configurable: true,
