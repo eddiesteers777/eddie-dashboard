@@ -348,3 +348,13 @@ test("no neon colors from before the rebrand (use the tokens in css/style.css)",
     }
     assert.deepEqual(offenders, [], `Use a color token (var(--green) etc.) instead:\n${offenders.join("\n")}`);
 });
+
+
+test("shared dialogs expose accessible names and restore focus to their opener", () => {
+    const ui = readFileSync(join(root, "js", "ui.js"), "utf8");
+    assert.match(ui, /dialogId/);
+    assert.match(ui, /setAttribute\("aria-labelledby", titleId\)/);
+    assert.match(ui, /setAttribute\("aria-describedby", messageId\)/);
+    assert.match(ui, /opener\?\.focus\(\)/);
+    assert.match(ui, /if \(!onOpen\) dialog\.querySelector\("\.sb-dialog-actions button"\)\?\.focus\(\)/);
+});
