@@ -117,7 +117,7 @@ export function openCheckin(date, onSaved) {
         ${scale("mood", "Mood", "Low", "Great", c.mood)}
         <label class="rd-check"><input type="checkbox" name="sick" ${c.sick ? "checked" : ""}> Feeling sick</label>
         <label class="rd-field">Any pain? <input type="text" name="pain" maxlength="80" placeholder="e.g. left Achilles" value="${esc(c.pain || "")}"></label>
-        <fieldset class="rd-tags"><legend>Yesterday, did you…</legend>
+        <fieldset class="rd-tags"><legend>Yesterday or last night, did you…</legend>
             ${TAGS.map(t => `<label class="rd-tag"><input type="checkbox" name="tags" value="${t.id}" ${(c.tags || []).includes(t.id) ? "checked" : ""}><span>${esc(t.label)}</span></label>`).join("")}
         </fieldset>
         <label class="rd-field">Note <textarea name="note" rows="2" maxlength="500">${esc(c.note || "")}</textarea></label>
@@ -168,6 +168,18 @@ function partsHtml(parts) {
         ${p.score != null ? `<span class="rd-bar ${colorOf(p.score)}" style="--v:${p.score}%" aria-hidden="true"></span>` : ""}
     </li>`).join("");
 }
+
+// A small ring: its fill is the part's score (0-100), the colour green / yellow / red.
+function gauge({ cls, score, big, label, sub }) {
+    return `<div class="rd-gauge ${cls}">
+        <div class="rd-ring rd-mini ${colorOf(score ?? null)}" style="--pct:${score ?? 0}" role="img" aria-label="${esc(label)} ${score ?? "not available"}"><b>${big}</b></div>
+        <span class="rd-glabel">${esc(label)}</span>
+        ${sub ? `<small class="rd-gsub">${esc(sub)}</small>` : ""}
+    </div>`;
+}
+
+// "normal" / "above normal" / "low" from the HRV part's own note.
+const hrvWord = p => (/below/.test(p.note) ? "below normal" : /above/.test(p.note) ? "above normal" : "normal");
 
 function weekDots(today, history = load(READINESS_KEY, {})) {
     const cells = [];
@@ -225,37 +237,50 @@ async function render() {
 
     el.hidden = false;
     el.className = `rd-card ${r.color}`;
+    // WHOOP-style: three rings (sleep · readiness · HRV), one line of advice,
+    // the check-in; everything else folds under Details (Eddie: "less busy").
+    const base = useV2 ? computeReadiness(today, data) : r;
+    const sleepP = base.parts.find(p => p.key === "sleep"), hrvP = base.parts.find(p => p.key === "hrv");
+    const flagLines = r.flags.filter(f => f.key !== "pain" && f.key !== "sick");
+    const detailsOpen = el.querySelector(".rd-more")?.open ? " open" : "";
     el.innerHTML = `
-        <div class="rd-head">
-            <div class="rd-ring" style="--pct:${r.score ?? 0}" role="img" aria-label="Readiness ${r.score ?? "not available"}">
-                <strong>${r.score ?? "–"}</strong><span>Readiness</span>
+        <div class="rd-rings">
+            ${gauge({ cls: "rd-side", score: sleepP?.score, big: sleepP ? `${sleepP.score}<small>%</small>` : "–", label: "Sleep", sub: sleepP?.value })}
+            <div class="rd-gauge rd-main">
+                <div class="rd-ring" style="--pct:${r.score ?? 0}" role="img" aria-label="Readiness ${r.score ?? "not available"}">
+                    <strong>${r.score ?? "–"}</strong>
+                </div>
+                <span class="rd-glabel">Readiness</span>
+                ${r.score != null ? `<small class="rd-gsub rd-tone">${COLOR_WORD[r.color]}</small>` : ""}
             </div>
-            <div class="rd-summary">
-                <div class="sb-eyebrow rd-eyebrow">Readiness${r.score != null ? ` · ${COLOR_WORD[r.color]}` : ""}</div>
-                <p class="rd-advice">${esc(adviceText)}</p>
-                ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
-                ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
-                ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
-                ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}
-                ${r.flags.filter(f => f.key !== "pain" && f.key !== "sick").map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
-            </div>
+            ${gauge({ cls: "rd-side", score: hrvP?.score, big: hrvP ? `${hrvP.value.replace(" ms", "")}<small>ms</small>` : "–", label: "HRV", sub: hrvP ? hrvWord(hrvP) : "" })}
         </div>
-        ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
-        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score from HRV, resting heart rate and sleep.</p>`}
-        ${weekDots(today, shownHistory)}
-        ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
+        <div class="rd-advice-box">
+            <p class="rd-advice">${esc(adviceText)}</p>
+            ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
+            ${flagLines.map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
+            ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
+            ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
+            ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}
+        </div>
+        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score.</p>`}
         <div class="rd-checkin-row">
             ${checkin
-                ? `<span class="rd-done">${icon("checkCircle")} Checked in${checkin.tags?.length ? ` · ${checkin.tags.length} from yesterday` : ""}</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
-                : `<button type="button" class="sb-btn sb-btn-primary" data-act="checkin">${icon("edit")} Morning check-in</button><small>10 seconds: soreness, energy, mood, and what you did yesterday.</small>`}
+                ? `<span class="rd-done">${icon("checkCircle")} Checked in</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
+                : `<button type="button" class="sb-btn sb-btn-primary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
         </div>
-        ${insightsHtml(today)}
-        ${role === "coach" ? `<div class="rd-version" role="group" aria-label="Which readiness score">
-            <span>Score:</span>
-            <button type="button" class="rd-ver${useV2 ? "" : " is-on"}" data-act="v1" aria-pressed="${!useV2}">Classic</button>
-            <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
-            <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
-        </div>` : ""}`;
+        <details class="rd-more"${detailsOpen}><summary>Details</summary>
+            ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
+            ${weekDots(today, shownHistory)}
+            ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
+            ${insightsHtml(today)}
+            ${role === "coach" ? `<div class="rd-version" role="group" aria-label="Which readiness score">
+                <span>Score:</span>
+                <button type="button" class="rd-ver${useV2 ? "" : " is-on"}" data-act="v1" aria-pressed="${!useV2}">Classic</button>
+                <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
+                <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
+            </div>` : ""}
+        </details>`;
     import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
 
     el.onclick = async event => {

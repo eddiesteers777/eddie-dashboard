@@ -34,7 +34,7 @@ export const DEFAULT_SLEEP_NEED = 450; // 7h 30m
 
 export const WEIGHTS = { hrv: 0.40, rhr: 0.20, sleep: 0.25, feel: 0.15 };
 
-// "Yesterday, did you…" (WHOOP calls this the Journal).
+// "Yesterday or last night, did you…" (WHOOP calls this the Journal).
 export const TAGS = [
     { id: "alcohol", label: "Alcohol" },
     { id: "late-caffeine", label: "Caffeine after 2 pm" },
@@ -47,7 +47,9 @@ export const TAGS = [
     { id: "foam", label: "Foam rolled" },
     { id: "hydrated", label: "Drank plenty of water" },
     { id: "sauna", label: "Sauna / hot bath" },
-    { id: "magnesium", label: "Took magnesium" }
+    { id: "magnesium", label: "Took magnesium" },
+    { id: "nose-strip", label: "Nose strip overnight" },
+    { id: "mouth-tape", label: "Mouth tape overnight" }
 ];
 
 const clamp = (n, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));

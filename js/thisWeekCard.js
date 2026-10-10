@@ -38,6 +38,7 @@ const REASONS = [
 ];
 
 let current = null;
+const groupNote = `<p class="tw-groupnote">Load and how runs are going count once each; HRV, sleep and how you feel move together, so they count at most twice.</p>`;
 
 function choiceHtml(d, entry) {
     if (entry?.choice === "applied") return `<div class="tw-done"><span>Applied ${esc(WHEN(entry.at))}.</span><button type="button" class="sb-btn sb-btn-tertiary" data-tw="undo">Undo</button></div>`;
@@ -64,9 +65,9 @@ function render() {
             <div><div class="sb-eyebrow">This week</div><h2 class="tw-level">${esc(LEVEL_WORDS[d.level])}</h2></div>
             <p class="tw-hint">${esc(LEVEL_HINT[d.level])}</p>
         </div>
-        <p class="tw-summary">${esc(d.summary)}</p>
         ${d.domains.length ? `<ul class="tw-domains">${d.domains.map(x => `<li class="sev-${x.severity}" title="${esc(x.text)}"><span>${esc(x.label)}</span><b>${esc(x.word)}</b></li>`).join("")}</ul>` : ""}
-        ${d.domains.length ? `<p class="tw-groupnote">Load and how runs are going count once each; HRV, sleep and how you feel move together, so they count at most twice.</p>` : ""}
+        ${review ? `<p class="tw-summary">${esc(d.summary)}</p>${d.domains.length ? groupNote : ""}`
+            : `<details class="tw-why"><summary>Why</summary><p class="tw-summary">${esc(d.summary)}</p>${d.domains.length ? groupNote : ""}</details>`}
         ${!d.changes.length ? "" : review
             ? `<p class="tw-pointer">${d.changes.length} ${d.changes.length === 1 ? "day changes" : "days change"} in the next 7: see <a href="#wrNext">Next week</a> below.</p>`
             : `<p class="tw-sub">Suggested for the next 7 days</p><ul class="tw-changes">${d.changes.map(c => `<li><span>${esc(dayLabel(c.date))}</span>${esc(c.text)}</li>`).join("")}</ul>`}
