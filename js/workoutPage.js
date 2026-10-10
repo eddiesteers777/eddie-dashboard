@@ -109,8 +109,19 @@ function resultHtml(result) {
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
             ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
             ${coachReplyHtml(result)}
-            <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button></div>
+            <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button><button type="button" class="sb-btn sb-btn-primary" data-act="share-result">${icon("upload")} Share workout</button></div>
         </section>`;
+}
+
+// Optional: the logged run as a share image (js/sessionShare.js).
+async function shareResult(result) {
+    try {
+        const [{ sessionFromResult }, { shareSession }] = await Promise.all([import("./completedSessions.js"), import("./sessionShare.js")]);
+        const session = sessionFromResult(result);
+        if (session) shareSession(session);
+    } catch {
+        toast("Couldn't open the share card. Check your connection and try again.", { type: "error" });
+    }
 }
 
 function coachReplyHtml(result) {
@@ -217,6 +228,7 @@ $("woBody").addEventListener("click", async event => {
     const act = btn.dataset.act;
     if (act === "start") return startWorkoutMode();
     if (act === "log") return openLogForm();
+    if (act === "share-result") return shareResult(state.result);
     if (act === "change") {
         const { openChangeRequestDialog } = await import("./changeRequestDialog.js");
         return openChangeRequestDialog({ coach: { coachUid: state.program.coachUid, coachName: state.program.coachName }, planId: state.program.coachPlanId, date, dates: [date] });

@@ -142,6 +142,7 @@ export function can(capability, access = cachedNavAccess()) {
 // signed in (Today, More, Settings, Get the App). The coach has every
 // capability, so is never sent away.
 export const PAGE_REQUIRES = Object.freeze({
+    "train.html": "running,strength,crossTraining",
     "running.html": "running",
     "strength.html": "strength",
     "cross-training.html": "crossTraining",

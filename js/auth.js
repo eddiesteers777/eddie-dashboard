@@ -74,6 +74,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coach-queue-done",
     "plan-coach-notes",
     "profile-checks",
+    "workout-shares",
     "sb-email-outbox",
     "sb-plan-release-day"
 ];
@@ -81,7 +82,8 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
 const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
     "nutrition-",
     "fueling-",
-    "cross-training-"
+    "cross-training-",
+    "workout-session-"
 ];
 
 const ACCOUNT_SESSION_STORAGE_KEYS = [

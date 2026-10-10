@@ -16,6 +16,10 @@ import {
 } from "./strengthHistory.js";
 
 import { icon } from "./icons.js";
+import { strengthSession, strengthTotals, resumableSession, newSessionId, clock } from "./completedSessions.js";
+import { storedSessions, saveSession } from "./sessionStore.js";
+import { logSession } from "./strengthHistory.js";
+import { sbConfirm, toast } from "./ui.js";
 import { recordsOn } from "./strengthProgress.js";
 import { restAfterSet, SET_TYPES, SET_TYPE_WORDS, repsMaxValue } from "./strengthBuilderModel.js";
 import {
@@ -34,6 +38,11 @@ const BAR_WEIGHT = 45;
 const PLATE_SIZES = [45, 35, 25, 10, 5, 2.5];
 
 let activeDayId = null;
+// The completed session this run of Workout Mode becomes: { dayId, id, startedAt, resumed? }.
+// Kept in sessionStorage so a reload mid-workout keeps its id and its start time.
+let activeSession = null;
+let finishing = false;
+const ACTIVE_KEY = "sb-strength-active";
 let timerStartedAt = null;
 let timerInterval = null;
 let swappingExerciseId = null;
@@ -119,8 +128,8 @@ function formatElapsed(ms) {
     return `${min}:${String(sec).padStart(2, "0")}`;
 }
 
-function startTimer() {
-    timerStartedAt = Date.now();
+function startTimer(from = Date.now()) {
+    timerStartedAt = from;
     clearInterval(timerInterval);
 
     timerInterval = setInterval(() => {
@@ -655,13 +664,33 @@ function openWorkoutMode(dayId) {
     document.documentElement.classList.add("strength-workout-open");
     renderBody();
     updateProgress();
-    startTimer();
+    activeSession = sessionFor(dayId);
+    startTimer(activeSession.resumed ? Date.now() : activeSession.startedAt);
 
     const timerEl = $("workoutModeTimer");
 
     if (timerEl) {
-        timerEl.textContent = "0:00";
+        timerEl.textContent = formatElapsed(Date.now() - timerStartedAt);
     }
+}
+
+// Which completed session this opening of Workout Mode is: the one just
+// finished today (opened again to fix something: finishing updates it),
+// the one in progress before a reload, or a new one.
+function sessionFor(dayId) {
+    const now = Date.now();
+    let resume = null;
+    try { resume = resumableSession(storedSessions(), dayId, now); } catch { resume = null; }
+    if (resume) {
+        return { dayId: String(dayId), id: resume.id, startedAt: resume.startedAt, completedAt: resume.completedAt, durationSec: resume.durationSec, resumed: true };
+    }
+    try {
+        const saved = JSON.parse(sessionStorage.getItem(ACTIVE_KEY) || "null");
+        if (saved && saved.dayId === String(dayId) && saved.id && now - saved.startedAt < 6 * 3600 * 1000) return saved;
+    } catch { /* storage unavailable */ }
+    const fresh = { dayId: String(dayId), id: newSessionId("strength", now), startedAt: now };
+    try { sessionStorage.setItem(ACTIVE_KEY, JSON.stringify(fresh)); } catch { /* storage unavailable */ }
+    return fresh;
 }
 
 function closeWorkoutMode() {
@@ -700,8 +729,12 @@ function updateProgress() {
     fill.style.width = `${computeProgress(day)}%`;
 }
 
+// While a summary is built: only the sets ticked off, when any were (the same
+// rule the saved session uses).
+let summaryTickedOnly = false;
+
 function meaningfulSetsFor(exercise) {
-    const sets = exercise.sets || [];
+    const sets = (exercise.sets || []).filter(set => !summaryTickedOnly || set.done);
 
     const withData = sets.filter(set =>
         exercise.mode === "time"
@@ -806,7 +839,8 @@ function groupExercisesForSummary(day) {
     return groups;
 }
 
-function buildWorkoutSummary(day, elapsedMs) {
+function buildWorkoutSummary(day, durationSec) {
+    summaryTickedOnly = day.exercises.some(ex => (ex.sets || []).some(set => set.done));
     const blocks = groupExercisesForSummary(day)
         .map(group => {
             if (group.solo) {
@@ -836,67 +870,38 @@ function buildWorkoutSummary(day, elapsedMs) {
     }
 
     return [
-        `${day.name} — ${formatElapsed(elapsedMs)}`,
+        durationSec ? `${day.name} — ${clock(durationSec)}` : day.name,
         ...blocks
     ].join("\n\n");
 }
 
-// Total volume only counts weight-bearing (reps-mode) sets --
-// timed exercises (planks, mobility circuits) don't have a
-// comparable "lb moved" figure, so they're left out of that stat
-// but still count toward sets/exercises completed.
-function computeWorkoutStats(day) {
-    let totalVolume = 0;
-    let setsCompleted = 0;
-    let exercisesCompleted = 0;
-
-    day.exercises.forEach(exercise => {
-        const doneSets = (exercise.sets || []).filter(set => set.done);
-
-        if (doneSets.length) {
-            exercisesCompleted++;
-        }
-
-        setsCompleted += doneSets.length;
-
-        if (exercise.mode !== "time") {
-            doneSets.forEach(set => {
-                totalVolume += (Number(set.weight) || 0) * (Number(set.reps) || 0);
-            });
-        }
-    });
-
-    return { totalVolume, setsCompleted, exercisesCompleted };
-}
-
-function renderSummaryStats(stats, elapsedMs) {
+// The finish screen reads the saved session (js/completedSessions.js), so
+// it says exactly what the share card and Recent Workouts say. Volume
+// counts weighted working sets only (no warm-ups, bodyweight or holds).
+function renderSummaryStats(session) {
     const el = $("strengthSummaryStats");
 
     if (!el) {
         return;
     }
 
-    el.innerHTML = `
+    const t = strengthTotals(session);
+    const stat = (value, label) => `
         <div class="strength-summary-stat">
-            <span class="strength-summary-stat-value">${formatElapsed(elapsedMs)}</span>
-            <span class="strength-summary-stat-label">Duration</span>
-        </div>
-        <div class="strength-summary-stat">
-            <span class="strength-summary-stat-value">${volumeText(stats.totalVolume, units()).replace(/ (lb|kg)$/, "")}</span>
-            <span class="strength-summary-stat-label">${unitLabel(units())} Volume</span>
-        </div>
-        <div class="strength-summary-stat">
-            <span class="strength-summary-stat-value">${stats.setsCompleted}</span>
-            <span class="strength-summary-stat-label">Sets</span>
-        </div>
-        <div class="strength-summary-stat">
-            <span class="strength-summary-stat-value">${stats.exercisesCompleted}</span>
-            <span class="strength-summary-stat-label">Exercises</span>
-        </div>
-    `;
+            <span class="strength-summary-stat-value">${escapeHtml(value)}</span>
+            <span class="strength-summary-stat-label">${escapeHtml(label)}</span>
+        </div>`;
+    el.innerHTML = [
+        session.durationSec ? stat(clock(session.durationSec), "Duration") : "",
+        stat(String(t.exercises), t.exercises === 1 ? "Exercise" : "Exercises"),
+        stat(String(t.sets), t.sets === 1 ? "Set" : "Sets"),
+        t.volumeLb > 0 ? stat(volumeText(t.volumeLb, units()).replace(/ (lb|kg)$/, ""), `${unitLabel(units())} Volume`) : ""
+    ].join("");
 }
 
-function openSummaryModal(text, stats, elapsedMs) {
+let summarySession = null;
+
+function openSummaryModal(text, session) {
     const overlay = $("strengthSummaryOverlay");
     const textarea = $("strengthSummaryText");
 
@@ -904,7 +909,8 @@ function openSummaryModal(text, stats, elapsedMs) {
         return;
     }
 
-    renderSummaryStats(stats, elapsedMs);
+    summarySession = session;
+    renderSummaryStats(session);
     textarea.value = text;
     overlay.classList.add("open");
 }
@@ -957,26 +963,93 @@ function renderSummaryRecords(records) {
         : "";
 }
 
-function finishWorkout() {
+async function finishWorkout() {
+    if (finishing) return;   // a double tap never saves twice
+    finishing = true;
+    try { await finishWorkoutNow(); } finally { finishing = false; }
+}
+
+async function finishWorkoutNow() {
     const day = getActiveDay();
-    const elapsedMs = timerStartedAt ? Date.now() - timerStartedAt : 0;
-    let summary = day ? buildWorkoutSummary(day, elapsedMs) : null;
-    const stats = day ? computeWorkoutStats(day) : null;
+    const session = activeSession;
+    if (!day || !session) { closeWorkoutMode(); return; }
+    const now = Date.now();
+    const anyTicked = day.exercises.some(ex => (ex.sets || []).some(set => set.done));
 
-    if (day) {
-        day.exercises.forEach(logExercise);
+    if (!anyTicked && session.resumed) {
+        closeWorkoutMode();
+        toast("Nothing ticked off, so the workout you finished earlier stays as it was.", { type: "info" });
+        return;
     }
-    const records = day ? workoutRecords(day) : [];
-    if (summary && records.length) {
-        summary += `\n\nNew ${records.length === 1 ? "record" : "records"}:\n${records.map(r => `${r.name}: ${r.line}`).join("\n")}`;
+    if (!anyTicked) {
+        const ok = await sbConfirm("Save every set that has numbers in it as done? Choose Not now to leave without saving.", {
+            title: "Nothing is ticked off",
+            confirmLabel: "Save them all",
+            cancelLabel: "Not now"
+        });
+        if (!ok) { closeWorkoutMode(); clearActive(); return; }
     }
 
+    const record = strengthSession(day, {
+        id: session.id,
+        startedAt: session.startedAt,
+        completedAt: session.resumed ? session.completedAt : now,
+        now,
+        includeAll: !anyTicked,
+        isBodyweight
+    });
+    if (!record) {
+        closeWorkoutMode();
+        clearActive();
+        toast("There were no sets with numbers to save.", { type: "info" });
+        return;
+    }
+    // Opened again to fix a set: the time it took stays what it was.
+    if (session.resumed) record.durationSec = session.durationSec ?? null;
+
+    let saved;
+    try {
+        saved = saveSession(record);
+        logSession(saved);
+    } catch {
+        toast("Couldn't save this workout: your phone's storage may be full. Nothing was lost from the workout itself.", { type: "error" });
+        return;
+    }
+
+    const summary = buildWorkoutSummary(day, saved.durationSec);
+    const records = workoutRecords(day);
+    let text = summary;
+    if (text && records.length) {
+        text += `\n\nNew ${records.length === 1 ? "record" : "records"}:\n${records.map(r => `${r.name}: ${r.line}`).join("\n")}`;
+    }
+
+    // The template is ready for next time; the session keeps what was done.
+    updatePlan(d => {
+        d.exercises.forEach(ex => (ex.sets || []).forEach(set => { set.done = false; }));
+    });
+    markScheduledDone(day.id, saved.date);
+    clearActive();
     closeWorkoutMode();
 
-    if (summary && stats) {
-        renderSummaryRecords(records);
-        openSummaryModal(summary, stats, elapsedMs);
-    }
+    renderSummaryRecords(records);
+    openSummaryModal(text || "", saved);
+}
+
+function clearActive() {
+    activeSession = null;
+    try { sessionStorage.removeItem(ACTIVE_KEY); } catch { /* storage unavailable */ }
+}
+
+// Today's scheduled run of this workout (Strength → Schedule) counts as done.
+function markScheduledDone(dayId, date) {
+    try {
+        const schedule = JSON.parse(localStorage.getItem("strength-schedule") || "null");
+        const item = (schedule?.items || []).find(i => i.date === date && i.workoutId === `plan-${dayId}` && !i.completed);
+        if (!item) return;
+        item.completed = true;
+        localStorage.setItem("strength-schedule", JSON.stringify(schedule));
+        window.dispatchEvent(new CustomEvent("eddieos:strength-schedule-updated"));
+    } catch { /* leave the schedule as it was */ }
 }
 
 function openSwapPanel(exerciseId) {
@@ -1417,5 +1490,13 @@ document.addEventListener("click", event => {
 
     if (target.closest("#strengthSummaryCopy")) {
         copySummaryText();
+        return;
+    }
+
+    if (target.closest("#strengthSummaryShare") && summarySession) {
+        const session = summarySession;
+        import("./sessionShare.js").then(m => m.shareSession(session)).catch(() => {
+            toast("Couldn't open the share card. Check your connection and try again.", { type: "error" });
+        });
     }
 });

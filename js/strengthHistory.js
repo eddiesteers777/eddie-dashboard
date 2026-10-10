@@ -110,3 +110,57 @@ export function getPreviousPerformance(exercise) {
 
     return previous;
 }
+
+/* ==========================================
+   One finished session at a time (js/completedSessions.js)
+
+   Entries a stored session wrote carry its id (`sid`), so finishing the
+   same session again, editing it or deleting it replaces exactly its own
+   entries: Progress never counts a workout twice.
+========================================== */
+
+function insertByDate(list, entry) {
+    // Newest first, as every reader expects.
+    const i = list.findIndex(e => String(e.date || "") < entry.date);
+    if (i === -1) list.push(entry); else list.splice(i, 0, entry);
+}
+
+function dropSession(history, sid) {
+    let dropped = 0;
+    for (const key of Object.keys(history)) {
+        if (!Array.isArray(history[key])) continue;
+        const before = history[key].length;
+        history[key] = history[key].filter(e => e?.sid !== sid);
+        dropped += before - history[key].length;
+        if (!history[key].length) delete history[key];
+    }
+    return dropped;
+}
+
+/** Writes (or rewrites) a stored strength session's lifts into strength-history. */
+export function logSession(session) {
+    if (!session?.id || session.type !== "strength") return;
+    const history = loadHistory();
+    dropSession(history, session.id);
+    for (const ex of session.strength?.exercises || []) {
+        const key = String(ex.name || "").trim().toLowerCase();
+        if (!key || !ex.sets?.length) continue;
+        if (!Array.isArray(history[key])) history[key] = [];
+        insertByDate(history[key], {
+            date: session.date,
+            mode: ex.mode === "time" ? "time" : "reps",
+            name: String(ex.name).trim().slice(0, 80),
+            sid: session.id,
+            ...(ex.bw ? { bw: true } : {}),
+            sets: ex.sets.map(s => ({ weight: s.w || 0, reps: s.r || 0, duration: s.d || 0, ...(s.t ? { type: s.t } : {}) }))
+        });
+        history[key] = history[key].slice(0, MAX_ENTRIES_PER_EXERCISE);
+    }
+    saveHistory(history);
+}
+
+/** Takes a deleted session's lifts back out of strength-history. */
+export function removeSessionHistory(sid) {
+    const history = loadHistory();
+    if (dropSession(history, sid)) saveHistory(history);
+}

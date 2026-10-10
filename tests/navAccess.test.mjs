@@ -46,7 +46,7 @@ test("training clients: the training pages, no Schedule, no coach pages", () => 
     for (const who of ["running", "strength", "online"]) {
         assert.deepEqual(allowed(who), ["checkin.html", "clients.html", "cross-training.html", "fueling.html", "habits.html",
             "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "running.html",
-            "strength.html", "updates.html", "workout.html"], who);
+            "strength.html", "train.html", "updates.html", "workout.html"], who);
     }
 });
 

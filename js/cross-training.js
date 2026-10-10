@@ -354,7 +354,9 @@ function renderLibraryGrid(){
 
             '<div class="ct-card-actions">' +
 
-                '<button type="button" class="ct-card-btn ct-card-btn-primary" data-action="attach" data-id="' + workout.id + '">Attach</button>' +
+                '<button type="button" class="ct-card-btn ct-card-btn-primary" data-action="log" data-id="' + workout.id + '">Log it</button>' +
+
+                '<button type="button" class="ct-card-btn" data-action="attach" data-id="' + workout.id + '">Attach</button>' +
 
                 '<button type="button" class="ct-card-btn" data-action="edit" data-id="' + workout.id + '">Edit</button>' +
 
@@ -378,7 +380,14 @@ function renderLibraryGrid(){
 
             var action = btn.dataset.action;
 
-            if(action === "attach"){
+            if(action === "log"){
+
+                // Done it: a completed session (js/sessionDialogs.js), kept apart from this template.
+                import("./sessionDialogs.js").then(function(m){ m.openCrossLog({ workoutId: id }); })
+                    .catch(function(){ toast("Couldn't open the log. Check your connection and try again.", { type: "error" }); });
+
+            }
+            else if(action === "attach"){
 
                 ct$("ct-attach-workout-select").value = id;
 
@@ -1267,6 +1276,19 @@ function renderStats(){
 ========================================== */
 
 function attachEvents(){
+
+    var logBtn = ct$("ct-log-session-btn");
+
+    if(logBtn){
+
+        logBtn.addEventListener("click", function(){
+
+            import("./sessionDialogs.js").then(function(m){ m.openCrossLog(); })
+                .catch(function(){ toast("Couldn't open the log. Check your connection and try again.", { type: "error" }); });
+
+        });
+
+    }
 
     ct$("ct-new-workout-btn").addEventListener("click", function(){
 

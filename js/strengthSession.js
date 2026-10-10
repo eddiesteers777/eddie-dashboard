@@ -132,7 +132,7 @@ function resultHtml(result) {
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
             ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
             ${coachReplyHtml(result)}
-            <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button></div>
+            <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button><button type="button" class="sb-btn sb-btn-primary" data-act="share-result">${icon("upload")} Share workout</button></div>
         </section>`;
 }
 
@@ -493,6 +493,11 @@ export async function mountStrengthSession({ found, date, user, openLog }) {
         if (!btn) return;
         if (btn.dataset.act === "start") startSession();
         if (btn.dataset.act === "log") openLogForm();
+        if (btn.dataset.act === "share-result" && state.result) {
+            Promise.all([import("./completedSessions.js"), import("./sessionShare.js")])
+                .then(([{ sessionFromResult }, { shareSession }]) => { const s = sessionFromResult(state.result); if (s) shareSession(s); })
+                .catch(() => toast("Couldn't open the share card. Check your connection and try again.", { type: "error" }));
+        }
         if (btn.dataset.act === "change") {
             import("./changeRequestDialog.js").then(({ openChangeRequestDialog }) => openChangeRequestDialog({
                 coach: { coachUid: state.program.coachUid, coachName: state.program.coachName },

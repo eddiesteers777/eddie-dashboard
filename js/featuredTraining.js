@@ -266,6 +266,7 @@ function shareFeatured(item) {
     }
 
     const key = registerRunShare(item.run, {
+        id: item.id,
         date: item.date,
         name: item.title,
         category: item.category,

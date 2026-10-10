@@ -4147,3 +4147,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
 .strength-workspace-nav{ grid-template-columns:repeat(4,minmax(0,1fr)) auto; }
 @media (max-width:850px){ .strength-workspace-nav{ grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media (max-width:640px){ .strength-workspace-nav{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Finish screen: an optional Share workout (js/sessionShare.js) */
+.strength-summary-share{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:14px 0 4px; min-height:44px; }
+.strength-summary-share svg{ width:18px; height:18px; }

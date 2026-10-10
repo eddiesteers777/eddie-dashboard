@@ -245,6 +245,7 @@ function saveRunModal() {
     }
 
     const data = loadLog();
+    let newEntry = null;
 
     const entryData = {
         date,
@@ -261,16 +262,30 @@ function saveRunModal() {
             Object.assign(existing, entryData);
         }
     } else {
-        data.entries.push({
+        newEntry = {
             id: uid(),
             source: "manual",
             corosActivityId: null,
             ...entryData
-        });
+        };
+        data.entries.push(newEntry);
     }
 
     saveLog(data);
     closeRunModal();
+
+    // A new run: saved, with an optional share image (Train → Recent Workouts has it too).
+    if (newEntry) {
+        const saved = newEntry;
+        import("./ui.js").then(({ toast }) => toast("Run saved.", {
+            action: {
+                label: "Share",
+                onClick: () => Promise.all([import("./completedSessions.js"), import("./sessionShare.js")])
+                    .then(([{ runFromLog }, { shareSession }]) => { const session = runFromLog(saved); if (session) shareSession(session); })
+                    .catch(() => {})
+            }
+        })).catch(() => {});
+    }
 
     window.dispatchEvent(new CustomEvent("eddieos:running-log-changed"));
 }

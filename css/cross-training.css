@@ -1753,3 +1753,7 @@ html{
 .ct-no-plan [data-action="attach"]{
     display:none !important;
 }
+
+/* "Log a session": a done session (js/sessionDialogs.js), quieter than + New Workout. */
+.ct-new-btn.ct-log-btn{ background:transparent; color:var(--primary-light, var(--primary)); border:1px solid var(--primary); }
+.ct-new-btn.ct-log-btn:hover{ background:color-mix(in srgb, var(--primary) 12%, transparent); }
