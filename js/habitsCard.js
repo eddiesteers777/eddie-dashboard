@@ -14,7 +14,7 @@
 
 import { inputs, load } from "./readinessData.js";
 import { READINESS_KEY, TAGS, colorOf, hm, computeReadiness } from "./readiness.js";
-import { nightsFrom, habitEffects, monthRecap, changeText, nightsToGo, prevMonth, nextMonth, addDays, OUTCOMES, MIN_EACH, MIN_WATER_DAYS, IMPACT_VERSION } from "./habitImpact.js";
+import { nightsFrom, habitEffects, monthRecap, changeText, nightsToGo, prevMonth, nextMonth, addDays, OUTCOMES, MIN_EACH, MIN_WATER_DAYS, IMPACT_VERSION, AMOUNTS } from "./habitImpact.js";
 import { kindChip } from "./analyticsSummary.js";
 
 const $ = id => document.getElementById(id);
@@ -37,8 +37,9 @@ function nutritionDays() {
             const k = localStorage.key(i);
             const m = /^nutrition-(\d{4}-\d{2}-\d{2})$/.exec(k || "");
             if (!m) continue;
-            const water = Number(JSON.parse(localStorage.getItem(k) || "null")?.water);
-            if (water > 0) out[m[1]] = { water };
+            const day = JSON.parse(localStorage.getItem(k) || "null") || {};
+            const water = Number(day.water) || 0, protein = Number(day.protein) || 0;
+            if (water > 0 || protein > 0) out[m[1]] = { water, protein };
         }
     } catch {}
     return out;
@@ -73,7 +74,11 @@ function tilesHtml(r) {
 
 function habitChips(r) {
     const chips = r.habits.filter(h => h.nights).map((h, i) => `<button type="button" class="hb-chip${focus === h.id ? " is-on" : ""}" data-focus="${h.id}" style="--dot:${DOT_COLORS[i % DOT_COLORS.length]}"><i></i>${esc(h.label)} <b>${h.nights}</b></button>`).join("");
-    const water = r.water.days ? `<span class="hb-water">Water: <b>${Math.round(r.water.avg)} oz</b> a day on ${r.water.days} ${r.water.days === 1 ? "day" : "days"} logged${r.water.prev != null ? ` (${changeText(r.water.avg - r.water.prev, "oz")} vs ${shortMonth(prevMonth(r.month))})` : ""}</span>` : `<span class="hb-water">No water logged this month: add it in the morning check-in.</span>`;
+    const NAMES = { water: "Water", protein: "Protein" };
+    const amountLine = a => { const x = r.amounts[a.id]; return x.days
+        ? `<span class="hb-water">${NAMES[a.id]}: <b>${Math.round(x.avg)} ${a.unit}</b> a day on ${x.days} ${x.days === 1 ? "day" : "days"} logged${x.prev != null ? ` (${changeText(x.avg - x.prev, a.unit)} vs ${shortMonth(prevMonth(r.month))})` : ""}</span>`
+        : `<span class="hb-water">No ${a.id} logged this month: add it in the morning check-in.</span>`; };
+    const water = AMOUNTS.map(amountLine).join("");
     return `<div class="hb-chips">${chips || `<span class="hb-muted">No habits ticked this month yet.</span>`}</div>${water}`;
 }
 
@@ -91,7 +96,7 @@ function calendarHtml(r, today) {
         const later = date > today;
         const dots = row ? dotIds.map((id, i) => (row.tags.has(id) ? `<i style="background:${DOT_COLORS[i]}"></i>` : "")).join("") : "";
         const lit = focus && row?.tags.has(focus);
-        const label = row ? `${dayText(date)}: readiness ${score ?? "–"}${row.water != null ? `, ${row.water} oz water the day before` : ""}${[...row.tags].length ? `, ${[...row.tags].map(t => TAGS.find(x => x.id === t)?.label || t).join(", ")}` : ""}` : dayText(date);
+        const label = row ? `${dayText(date)}: readiness ${score ?? "–"}${row.water != null ? `, ${row.water} oz water` : ""}${row.protein != null ? `, ${row.protein} g protein` : ""}${row.water != null || row.protein != null ? " the day before" : ""}${[...row.tags].length ? `, ${[...row.tags].map(t => TAGS.find(x => x.id === t)?.label || t).join(", ")}` : ""}` : dayText(date);
         cells.push(`<span class="hb-cell ${later ? "is-later" : colorOf(score ?? null)}${lit ? " is-lit" : ""}${focus && !lit ? " is-dim" : ""}" title="${esc(label)}"><em>${n}</em><b>${later || score == null ? "" : score}</b><span class="hb-dots">${dots}</span></span>`);
     }
     return `<div class="hb-cal" role="img" aria-label="${esc(monthName(r.month))}: readiness by day with habit dots">
@@ -101,10 +106,10 @@ function calendarHtml(r, today) {
 
 function effectRow(e) {
     const unread = e.results.filter(r => r.verdict === "few");
-    if (e.water && e.need != null) return `<li class="hb-eff"><div class="hb-eff-top"><strong>${esc(e.label)}</strong><span>${e.total} of ${MIN_WATER_DAYS} days with water logged</span></div><p class="hb-muted">Log water on ${e.need} more ${e.need === 1 ? "day" : "days"} to see what it does.</p></li>`;
+    if (e.amount && e.need != null) return `<li class="hb-eff"><div class="hb-eff-top"><strong>${esc(e.label)}</strong><span>${e.total} of ${MIN_WATER_DAYS} days with ${e.id} logged</span></div><p class="hb-muted">Log ${e.id} on ${e.need} more ${e.need === 1 ? "day" : "days"} to see what it does.</p></li>`;
     const toGo = nightsToGo(e);
     const linked = e.linked.map(r => `<span class="hb-link ${r.verdict}">${esc(r.label)} ${changeText(r.diff, r.unit)}<small>${changeText(r.lo, r.unit)} to ${changeText(r.hi, r.unit)}</small></span>`).join("");
-    const head = `<div class="hb-eff-top"><strong>${esc(e.label)}</strong><span>${e.nights} ${e.nights === 1 ? "night" : "nights"} with${e.water ? "" : ` · ${e.total - e.nights} without`}</span></div>`;
+    const head = `<div class="hb-eff-top"><strong>${esc(e.label)}</strong><span>${e.nights} ${e.nights === 1 ? "night" : "nights"} with${e.amount ? "" : ` · ${e.total - e.nights} without`}</span></div>`;
     if (toGo) return `<li class="hb-eff is-few">${head}<p class="hb-muted">${e.nights < MIN_EACH ? `${MIN_EACH - e.nights} more ${MIN_EACH - e.nights === 1 ? "night" : "nights"} with it` : `${toGo} more ${toGo === 1 ? "night" : "nights"} without it`} before this shows (5 of each, like WHOOP's Journal).</p></li>`;
     const table = `<details class="hb-more"><summary>Every number</summary><table class="hb-table"><thead><tr><th></th><th>With vs without</th><th>90% range</th><th>Nights</th></tr></thead><tbody>${e.results.filter(r => r.verdict !== "nodata").map(r => r.verdict === "few"
         ? `<tr><th>${esc(r.label)}</th><td colspan="3" class="hb-muted">not enough nights</td></tr>`
@@ -121,10 +126,10 @@ function howHtml() {
             <li>Each night's number is compared with <b>your own baseline</b>: the median of the 28 nights before it. A training block, heat or a new season moves the baseline, so they don't get credited to a habit.</li>
             <li>A habit compares nights with it against nights without, over the <b>last 90 days</b> of check-ins. Like WHOOP's Journal, it needs <b>5 of each</b> before it says anything.</li>
             <li>"Linked" means the whole 90% range sits on one side of zero. Otherwise it says no clear link yet. It's your own pattern, not proof: habits come together (a late dinner on alcohol nights), and it says so when two mostly share nights.</li>
-            <li>Water: days at or above your own usual amount against the rest, the next night's numbers, once 10 days have water logged. The check-in's amount is yesterday's and goes into that day's Nutrition log too.</li>
+            <li>Water and protein: days at or above your own usual amount against the rest, the next night's numbers, once 10 days are logged. The check-in's amounts are yesterday's and go into that day's Nutrition log too.</li>
             <li>Readiness here is the body part only (HRV, resting HR, sleep), so how you said you felt can't count twice.</li>
         </ul>
-        <p class="hb-research"><b>What studies say so far.</b> Mouth taping: a 2025 systematic review (10 small studies) found little good evidence it helps sleep in most people, some benefit only in mild sleep apnea, and safety concerns; don't tape if you can't breathe freely through your nose. Nasal strips: they open the nose and help some people with congestion or snoring, but trials on sleep quality are mixed. Hydration: being clearly dehydrated (about 3% of body weight) lowered HRV in a small study of athletes. Your own data, with enough nights, is the better guide for you.</p>
+        <p class="hb-research"><b>What studies say so far.</b> Mouth taping: a 2025 systematic review (10 small studies) found little good evidence it helps sleep in most people, some benefit only in mild sleep apnea, and safety concerns; don't tape if you can't breathe freely through your nose. Nasal strips: they open the nose and help some people with congestion or snoring, but trials on sleep quality are mixed. Hydration: being clearly dehydrated (about 3% of body weight) lowered HRV in a small study of athletes. Protein: in trials with elite athletes, 40 g of protein before bed didn't help or hurt sleep, so a link here more likely says something about your day (training, meals) than the protein itself. A new or different bed: the "first-night effect" is well known in sleep labs, with lighter sleep and more waking on the first night somewhere unfamiliar. Your own data, with enough nights, is the better guide for you.</p>
         <p class="hb-muted">Habit analysis ${IMPACT_VERSION}</p>
     </details>`;
 }
@@ -140,8 +145,8 @@ function render() {
     const effects = habitEffects(rows, { to: end });
     const anyCheckins = Object.keys(d.checkins).length;
     // Only habits ticked at least once in the window; the rest are one line.
-    const shown = effects.filter(e => e.nights || (e.water && e.total));
-    const untried = effects.filter(e => !e.water && !e.nights && !TAGS.find(t => t.id === e.id)?.retired);
+    const shown = effects.filter(e => e.nights || (e.amount && e.total));
+    const untried = effects.filter(e => !e.amount && !e.nights && !TAGS.find(t => t.id === e.id)?.retired);
     const isNow = month >= today.slice(0, 7);
     el.innerHTML = `
         <div class="panel-header"><div>

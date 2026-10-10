@@ -38,6 +38,7 @@ export const WEIGHTS = { hrv: 0.40, rhr: 0.20, sleep: 0.25, feel: 0.15 };
 export const TAGS = [
     { id: "nose-strip", label: "Nose strip", when: "night" },
     { id: "mouth-tape", label: "Mouth tape", when: "night" },
+    { id: "different-bed", label: "Different bed", when: "night" },
     { id: "screens", label: "Screens in bed", when: "night" },
     { id: "magnesium", label: "Took magnesium", when: "night" },
     { id: "alcohol", label: "Alcohol", when: "day" },

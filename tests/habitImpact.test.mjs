@@ -102,3 +102,23 @@ test("water split never puts every day on one side", () => {
     assert.match(water.label, /^More than 70 oz/);
     assert.ok(water.nights > 0 && water.nights < water.total);
 });
+
+test("protein: from the check-in or Nutrition, compared like water, and in the month's recap", async () => {
+    const { amountOn } = await import("../js/habitImpact.js");
+    assert.equal(amountOn("protein", "2026-10-09", { "2026-10-10": { proteinG: 160 } }, {}), 160);
+    assert.equal(amountOn("protein", "2026-10-09", {}, { "2026-10-09": { protein: 95, water: 0 } }), 95);
+    const w = world();
+    let i = 0;
+    for (const d of Object.keys(w.checkins).sort()) {
+        const high = i++ % 2 === 0;
+        w.checkins[d].proteinG = high ? 180 : 110;
+        // the check-in on morning d is about the day before; that night (wake-up day d) sleeps 25 minutes longer
+        if (high) w.health[d].sleep.asleepMin += 25;
+    }
+    const eff = habitEffects(nightsFrom(w), { to: w.to }).find(e => e.id === "protein");
+    assert.match(eff.label, / g of protein$/);
+    assert.equal(eff.results.find(r => r.key === "sleep").verdict, "better");
+    const r = monthRecap({ ...w, month: "2026-09", today: w.to });
+    assert.equal(Math.round(r.amounts.protein.avg), 145);
+    assert.equal(r.amounts.protein.unit, "g");
+});

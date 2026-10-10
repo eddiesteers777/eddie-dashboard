@@ -360,3 +360,5 @@
 /* This week on Today: the reasoning folds under Why */
 .tw-why{ margin-top:10px; }
 .tw-why > summary{ cursor:pointer; color:var(--primary); font-weight:600; font-size:.9rem; }
+.rd-amount[data-amount="protein"] .rd-wbar i{ background:var(--green); }
+.rd-amount[data-amount="protein"] .rd-wpreset.is-on{ border-color:var(--green); background:color-mix(in srgb, var(--green) 18%, transparent); }

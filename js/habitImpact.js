@@ -18,8 +18,8 @@
        when the whole range is on one side of zero, else "no clear link
        yet". It's your own pattern, not proof: habits travel together, so
        habits that mostly share nights with another are said to;
-     · water: nights after your higher-water days (at or above your own
-       median) vs. the rest, needing 10+ days with water logged.
+     · water and protein: nights after your higher days (at or above your
+       own median) vs. the rest, needing 10+ days logged.
 
    nightsFrom(...)            one row per check-in morning
    habitEffects(nights, ...)  every habit × every number
@@ -31,7 +31,12 @@ import { TAGS } from "./readiness.js";
 
 export const IMPACT_VERSION = "0.1.0";
 export const MIN_EACH = 5;          // WHOOP's Journal: 5 yes + 5 no in 90 days
-export const MIN_WATER_DAYS = 10;
+export const MIN_WATER_DAYS = 10;   // any amount (water, protein): days logged before it's compared
+// Amounts the check-in asks about (yesterday's), each also kept in that day's Nutrition log.
+export const AMOUNTS = [
+    { id: "water", field: "waterOz", nutrition: "water", unit: "oz", noun: "of water" },
+    { id: "protein", field: "proteinG", nutrition: "protein", unit: "g", noun: "of protein" }
+];
 export const WINDOW_DAYS = 90;
 export const BASELINE_DAYS = 28;
 export const BASELINE_MIN = 7;
@@ -53,13 +58,15 @@ const variance = a => { const m = mean(a); return a.length > 1 ? a.reduce((t, x)
 // Two-sided 90% t critical value, close to the table for every df ≥ 2.
 export const tCrit90 = df => 1.645 + 1.86 / Math.pow(Math.max(df, 1), 1.05);
 
-/** Water drunk on `day`: the check-in's answer the next morning, else the Nutrition log. */
-export function waterOn(day, checkins = {}, nutrition = {}) {
-    const fromCheckin = num(checkins[addDays(day, 1)]?.waterOz);
+/** An amount on `day` (water oz, protein g): the check-in's answer the next morning, else the Nutrition log. */
+export function amountOn(id, day, checkins = {}, nutrition = {}) {
+    const a = AMOUNTS.find(x => x.id === id);
+    const fromCheckin = num(checkins[addDays(day, 1)]?.[a.field]);
     if (fromCheckin != null) return fromCheckin;
-    const logged = num(nutrition[day]?.water);
+    const logged = num(nutrition[day]?.[a.nutrition]);
     return logged ? logged : null;
 }
+export const waterOn = (day, checkins, nutrition) => amountOn("water", day, checkins, nutrition);
 
 /**
  * One row per date in [from, to]: { date, checkedIn, tags:Set, water, values:{key:value}, dev:{key:deviation} }
@@ -85,7 +92,8 @@ export function nightsFrom({ from, to, checkins = {}, health = {}, fitness = {},
             }
             dev[o.key] = prior.length >= BASELINE_MIN ? v - median(prior) : null;
         }
-        rows.push({ date: d, checkedIn: !!c, tags: new Set(c?.tags || []), water: waterOn(addDays(d, -1), checkins, nutrition), values, dev });
+        const amounts = Object.fromEntries(AMOUNTS.map(a => [a.id, amountOn(a.id, addDays(d, -1), checkins, nutrition)]));
+        rows.push({ date: d, checkedIn: !!c, tags: new Set(c?.tags || []), ...amounts, values, dev });
     }
     return rows;
 }
@@ -107,15 +115,16 @@ function compare(withRows, withoutRows, o) {
     return { key: o.key, label: o.label, unit: o.unit, nWith: a.length, nWithout: b.length, diff, lo, hi, verdict: clear ? (good ? "better" : "worse") : "unclear" };
 }
 
-/** The factors: every check-in answer plus higher-water days. */
+/** The factors: every check-in answer plus the higher-amount days (water, protein). */
 export function factorsFor(rows) {
     const out = TAGS.map(t => ({ id: t.id, label: t.label, has: r => r.tags.has(t.id), pool: r => r.checkedIn }));
-    const waters = rows.map(r => r.water).filter(v => v != null);
-    if (waters.length) {
-        const cut = median(waters);
+    for (const a of AMOUNTS) {
+        const vals = rows.map(r => r[a.id]).filter(v => v != null);
+        if (!vals.length) continue;
+        const cut = median(vals);
         // When half the days sit exactly on the median, ">= median" would be every day: split above it instead.
-        const strict = !waters.some(v => v < cut);
-        out.push({ id: "water", label: strict ? `More than ${Math.round(cut)} oz of water` : `${Math.round(cut)}+ oz of water`, cut, has: r => (strict ? r.water > cut : r.water >= cut), pool: r => r.water != null, days: waters.length });
+        const strict = !vals.some(v => v < cut);
+        out.push({ id: a.id, amount: true, label: strict ? `More than ${Math.round(cut)} ${a.unit} ${a.noun}` : `${Math.round(cut)}+ ${a.unit} ${a.noun}`, cut, has: r => (strict ? r[a.id] > cut : r[a.id] >= cut), pool: r => r[a.id] != null, days: vals.length });
     }
     return out;
 }
@@ -132,18 +141,18 @@ export function habitEffects(rows, { to } = {}) {
     const effects = factors.map(f => {
         const pool = window.filter(f.pool);
         const yes = pool.filter(f.has), no = pool.filter(r => !f.has(r));
-        if (f.id === "water" && pool.length < MIN_WATER_DAYS) {
-            return { id: f.id, label: f.label, nights: yes.length, total: pool.length, results: [], linked: [], need: MIN_WATER_DAYS - pool.length, water: true };
+        if (f.amount && pool.length < MIN_WATER_DAYS) {
+            return { id: f.id, label: f.label, nights: yes.length, total: pool.length, results: [], linked: [], need: MIN_WATER_DAYS - pool.length, amount: true };
         }
         const results = OUTCOMES.map(o => compare(yes, no, o));
-        return { id: f.id, label: f.label, nights: yes.length, total: pool.length, results, linked: results.filter(r => r.verdict === "better" || r.verdict === "worse"), water: f.id === "water", cut: f.cut, yesDates: new Set(yes.map(r => r.date)) };
+        return { id: f.id, label: f.label, nights: yes.length, total: pool.length, results, linked: results.filter(r => r.verdict === "better" || r.verdict === "worse"), amount: !!f.amount, cut: f.cut, yesDates: new Set(yes.map(r => r.date)) };
     });
     // Habits that mostly share their nights with another (alcohol + ate late…).
     for (const e of effects) {
         if (!e.yesDates?.size) continue;
         let best = null;
         for (const other of effects) {
-            if (other === e || other.water || e.water || !other.yesDates?.size) continue;
+            if (other === e || other.amount || e.amount || !other.yesDates?.size) continue;
             const shared = [...e.yesDates].filter(d => other.yesDates.has(d)).length;
             const share = shared / e.yesDates.size;
             if (share >= 0.6 && (!best || share > best.share)) best = { id: other.id, label: other.label, share };
@@ -187,19 +196,17 @@ export function monthRecap({ month, today, checkins = {}, health = {}, fitness =
     });
     const habits = TAGS.map(t => ({ id: t.id, label: t.label, nights: rows.filter(r => r.tags.has(t.id)).length, prev: prev.filter(r => r.tags.has(t.id)).length }))
         .filter(h => h.nights || h.prev).sort((a, b) => b.nights - a.nights);
-    const water = list => {
-        // Water for each day of the month itself (its check-in is the next morning).
-        const v = list.map(r => waterOn(r.date, checkins, nutrition)).filter(x => x != null);
-        return { avg: mean(v), days: v.length };
-    };
-    const w = water(rows), pw = water(prev);
+    // Amounts for each day of the month itself (its check-in is the next morning).
+    const avgAmount = (id, list) => { const v = list.map(r => amountOn(id, r.date, checkins, nutrition)).filter(x => x != null); return { avg: mean(v), days: v.length }; };
+    const amounts = Object.fromEntries(AMOUNTS.map(a => { const cur = avgAmount(a.id, rows), before = avgAmount(a.id, prev); return [a.id, { avg: cur.avg, days: cur.days, prev: before.avg, unit: a.unit }]; }));
     const scored = rows.filter(r => r.values.readiness != null);
     const byScore = [...scored].sort((a, b) => b.values.readiness - a.values.readiness);
     return {
         month, from, to, days: rows.length,
         checkins: rows.filter(r => r.checkedIn).length,
         averages, habits,
-        water: { avg: w.avg, days: w.days, prev: pw.avg },
+        amounts,
+        water: amounts.water,
         rows,
         best: byScore[0] || null,
         worst: byScore.length > 1 ? byScore.at(-1) : null

@@ -106,8 +106,11 @@ const SCALES = [
     { name: "soreness", label: "Soreness", words: ["None", "A little", "Some", "Sore", "Very sore"] },
     { name: "mood", label: "Mood", words: ["Low", "Flat", "Okay", "Good", "Great"] }
 ];
-const WATER_STEP = 8;
-const WATER_PRESETS = [64, 80, 100, 120];
+// Yesterday's amounts, each a stepper with quick picks, kept in step with that day's Nutrition log.
+const AMOUNT_INPUTS = [
+    { id: "water", field: "waterOz", nutrition: "water", title: "Water yesterday", unit: "oz", step: 8, start: 64, presets: [64, 80, 100, 120], fallbackGoal: 100 },
+    { id: "protein", field: "proteinG", nutrition: "protein", title: "Protein yesterday", unit: "g", step: 10, start: 120, presets: [100, 140, 180, 220], fallbackGoal: 150 }
+];
 
 function scale({ name, label, words }, value) {
     return `<fieldset class="rd-scale" data-scale="${name}"><legend>${esc(label)}<span class="rd-scale-word">${value ? esc(words[value - 1]) : ""}</span></legend>
@@ -118,35 +121,35 @@ function scale({ name, label, words }, value) {
 const tagChips = (when, c) => TAGS.filter(t => t.when === when && (!t.retired || (c.tags || []).includes(t.id)))
     .map(t => `<label class="rd-tag"><input type="checkbox" name="tags" value="${t.id}" ${(c.tags || []).includes(t.id) ? "checked" : ""}><span>${icon("check")}${esc(t.label)}</span></label>`).join("");
 
-function nutritionWater(day) {
-    try { const n = JSON.parse(localStorage.getItem(`nutrition-${day}`) || "null"); return Number(n?.water) || null; } catch { return null; }
+function nutritionAmount(day, key) {
+    try { const n = JSON.parse(localStorage.getItem(`nutrition-${day}`) || "null"); return Number(n?.[key]) || null; } catch { return null; }
 }
 
-async function waterGoal() {
+async function nutritionGoals() {
     try {
         const { resolveGoals } = await import("./nutritionGoals.js");
-        return resolveGoals(load("nutrition-goals", null), { isCoach: cachedRole() === "coach" }).water || 100;
-    } catch { return 100; }
+        return resolveGoals(load("nutrition-goals", null), { isCoach: cachedRole() === "coach" }).goals || {};
+    } catch { return {}; }
 }
 
-// The check-in's water is yesterday's: it goes into that day's Nutrition log too, so both agree.
-function saveNutritionWater(day, oz) {
-    const key = `nutrition-${day}`;
+// The check-in's amounts are yesterday's: they go into that day's Nutrition log too, so both agree.
+function saveNutritionAmount(day, key, value) {
     let entry = null;
-    try { entry = JSON.parse(localStorage.getItem(key) || "null"); } catch {}
+    try { entry = JSON.parse(localStorage.getItem(`nutrition-${day}`) || "null"); } catch {}
     if (!entry) {
         entry = { breakfast: "", lunch: "", dinner: "", snacks: "", workoutTitle: "Rest Day", workoutDescription: "No workout scheduled.",
             foodLog: { breakfast: [], lunch: [], dinner: [], snacks: [] }, calories: 0, protein: 0, carbs: 0, fat: 0, water: 0, sodium: 0 };
     }
-    entry.water = oz;
-    localStorage.setItem(key, JSON.stringify(entry));
+    entry[key] = value;
+    localStorage.setItem(`nutrition-${day}`, JSON.stringify(entry));
 }
 
 export async function openCheckin(date, onSaved) {
     const c = loadCheckins()[date] || {};
     const yesterday = (() => { const d = new Date(`${date}T12:00:00`); d.setDate(d.getDate() - 1); return isoDate(d); })();
-    let water = c.waterOz ?? nutritionWater(yesterday);
-    const goal = await waterGoal();
+    const goals = await nutritionGoals();
+    const amounts = Object.fromEntries(AMOUNT_INPUTS.map(a => [a.id, c[a.field] ?? nutritionAmount(yesterday, a.nutrition)]));
+    const goalOf = a => Number(goals[a.nutrition]) || a.fallbackGoal;
     const when = new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
     const dialog = document.createElement("dialog");
     dialog.className = "sb-dialog rd-dialog";
@@ -168,16 +171,16 @@ export async function openCheckin(date, onSaved) {
             <section class="rd-sec"><h3>Last night</h3>
                 <div class="rd-tags">${tagChips("night", c)}</div>
             </section>
-            <section class="rd-sec"><h3>Water yesterday</h3>
+            ${AMOUNT_INPUTS.map(a => `<section class="rd-sec rd-amount" data-amount="${a.id}"><h3>${a.title}</h3>
                 <div class="rd-water">
-                    <button type="button" class="rd-wbtn" data-w="-" aria-label="${WATER_STEP} oz less">−</button>
-                    <div class="rd-wval"><strong data-wv>${water ?? "–"}</strong><span>oz</span></div>
-                    <button type="button" class="rd-wbtn" data-w="+" aria-label="${WATER_STEP} oz more">+</button>
+                    <button type="button" class="rd-wbtn" data-w="-" aria-label="${a.step} ${a.unit} less">−</button>
+                    <div class="rd-wval"><strong data-wv>–</strong><span>${a.unit}</span></div>
+                    <button type="button" class="rd-wbtn" data-w="+" aria-label="${a.step} ${a.unit} more">+</button>
                 </div>
                 <div class="rd-wbar" aria-hidden="true"><i data-wbar></i></div>
                 <p class="rd-wgoal" data-wgoal></p>
-                <div class="rd-wpresets">${WATER_PRESETS.map(v => `<button type="button" class="rd-wpreset" data-wset="${v}">${v}</button>`).join("")}<button type="button" class="rd-wpreset rd-wclear" data-wset="">Not sure</button></div>
-            </section>
+                <div class="rd-wpresets">${a.presets.map(v => `<button type="button" class="rd-wpreset" data-wset="${v}">${v}</button>`).join("")}<button type="button" class="rd-wpreset rd-wclear" data-wset="">Not sure</button></div>
+            </section>`).join("")}
             <section class="rd-sec"><h3>Yesterday</h3>
                 <div class="rd-tags">${tagChips("day", c)}</div>
             </section>
@@ -187,20 +190,26 @@ export async function openCheckin(date, onSaved) {
     </form>`;
     document.body.appendChild(dialog);
     const form = dialog.querySelector("form");
-    const drawWater = () => {
-        dialog.querySelector("[data-wv]").textContent = water ?? "–";
-        dialog.querySelector("[data-wbar]").style.width = `${Math.min(100, ((water || 0) / goal) * 100)}%`;
-        dialog.querySelector("[data-wgoal]").textContent = water == null ? `Your goal is ${goal} oz. Tap + or a number.`
-            : water >= goal ? `Goal reached (${goal} oz).` : `${goal - water} oz short of your ${goal} oz goal.`;
-        dialog.querySelectorAll("[data-wset]").forEach(b => b.classList.toggle("is-on", String(water ?? "") === b.dataset.wset));
+    const drawAmount = a => {
+        const box = dialog.querySelector(`[data-amount="${a.id}"]`);
+        const v = amounts[a.id], goal = goalOf(a);
+        box.querySelector("[data-wv]").textContent = v ?? "–";
+        box.querySelector("[data-wbar]").style.width = `${Math.min(100, ((v || 0) / goal) * 100)}%`;
+        box.querySelector("[data-wgoal]").textContent = v == null ? `Your goal is ${goal} ${a.unit}. Tap + or a number.`
+            : v >= goal ? `Goal reached (${goal} ${a.unit}).` : `${goal - v} ${a.unit} short of your ${goal} ${a.unit} goal.`;
+        box.querySelectorAll("[data-wset]").forEach(b => b.classList.toggle("is-on", String(v ?? "") === b.dataset.wset));
     };
-    drawWater();
+    AMOUNT_INPUTS.forEach(drawAmount);
     dialog.addEventListener("click", event => {
         const t = event.target.closest("button");
         if (!t) return;
         if (t.value === "cancel") dialog.close();
-        if (t.dataset.w) { water = Math.max(0, Math.min(400, (water ?? (t.dataset.w === "+" ? 64 - WATER_STEP : WATER_STEP)) + (t.dataset.w === "+" ? WATER_STEP : -WATER_STEP))); drawWater(); }
-        if ("wset" in t.dataset) { water = t.dataset.wset === "" ? null : Number(t.dataset.wset); drawWater(); }
+        const a = AMOUNT_INPUTS.find(x => x.id === t.closest("[data-amount]")?.dataset.amount);
+        if (!a) return;
+        const v = amounts[a.id];
+        if (t.dataset.w) amounts[a.id] = Math.max(0, Math.min(a.unit === "oz" ? 400 : 600, (v ?? (t.dataset.w === "+" ? a.start - a.step : a.step)) + (t.dataset.w === "+" ? a.step : -a.step)));
+        if ("wset" in t.dataset) amounts[a.id] = t.dataset.wset === "" ? null : Number(t.dataset.wset);
+        drawAmount(a);
     });
     form.addEventListener("change", event => {
         const fs = event.target.closest("[data-scale]");
@@ -222,9 +231,9 @@ export async function openCheckin(date, onSaved) {
         saveCheckin(date, {
             soreness: n("soreness"), energy: n("energy"), mood: n("mood"),
             sick: f.get("sick") === "on", pain,
-            tags: f.getAll("tags"), waterOz: water, note: String(f.get("note") || "").trim()
+            tags: f.getAll("tags"), ...Object.fromEntries(AMOUNT_INPUTS.map(a => [a.field, amounts[a.id]])), note: String(f.get("note") || "").trim()
         });
-        if (water != null) saveNutritionWater(yesterday, water);
+        for (const a of AMOUNT_INPUTS) if (amounts[a.id] != null) saveNutritionAmount(yesterday, a.nutrition, amounts[a.id]);
         dialog.close();
         toast("Check-in saved.");
         onSaved?.();
