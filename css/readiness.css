@@ -18,45 +18,59 @@
 .rd-card.yellow{ --rd-tone:var(--primary); }
 .rd-card.red{ --rd-tone:var(--bad); }
 
-.rd-head{
-    display:flex;
-    align-items:flex-start;
-    gap:18px;
+/* Three rings, WHOOP-style: sleep · readiness · HRV */
+.rd-rings{
+    display:grid;
+    grid-template-columns:1fr 1.25fr 1fr;
+    align-items:start;
+    gap:8px;
+    max-width:520px;
+    margin:0 auto;
 }
+.rd-gauge{ display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0; }
 .rd-ring{
     --pct:0;
-    flex:0 0 auto;
-    width:108px;
-    height:108px;
+    --tone:var(--rd-tone);
+    width:116px;
+    height:116px;
     border-radius:50%;
     display:grid;
     place-items:center;
-    align-content:center;
     background:
-        radial-gradient(closest-side, var(--surface) 80%, transparent 81%),
-        conic-gradient(var(--rd-tone) calc(var(--pct) * 1%), rgba(255,255,255,.08) 0);
+        radial-gradient(closest-side, var(--surface) 84%, transparent 85%),
+        conic-gradient(var(--tone) calc(var(--pct) * 1%), rgba(255,255,255,.08) 0);
 }
-.rd-ring strong{
-    font-family:var(--font-display);
-    font-size:2.6rem;
-    line-height:1;
-    color:var(--text);
-}
-.rd-ring span{
-    margin-top:2px;
+.rd-ring.rd-mini{ width:84px; height:84px; margin-top:16px; --tone:var(--muted); }
+.rd-ring.rd-mini.green{ --tone:var(--good); }
+.rd-ring.rd-mini.yellow{ --tone:var(--primary); }
+.rd-ring.rd-mini.red{ --tone:var(--bad); }
+.rd-ring strong{ font-family:var(--font-display); font-size:3rem; line-height:1; color:var(--text); }
+.rd-ring b{ font-family:var(--font-display); font-size:1.9rem; font-weight:400; line-height:1; color:var(--text); }
+.rd-ring b small{ font-family:var(--font-body); font-size:.42em; font-weight:600; margin-left:2px; color:var(--muted); }
+.rd-glabel{
+    margin-top:8px;
     font-size:.72rem;
-    letter-spacing:.08em;
+    font-weight:700;
+    letter-spacing:.1em;
     text-transform:uppercase;
-    color:var(--muted);
-}
-.rd-summary{ min-width:0; flex:1; }
-.rd-eyebrow{ color:var(--rd-tone); }
-.rd-advice{
-    margin:6px 0 10px;
     color:var(--text);
-    font-size:1rem;
-    line-height:1.45;
 }
+.rd-gsub{ margin-top:2px; font-size:.78rem; color:var(--muted); }
+.rd-gsub.rd-tone{ color:var(--rd-tone); font-weight:600; }
+
+.rd-advice-box{
+    margin-top:16px;
+    padding:12px 14px;
+    border-radius:12px;
+    background:rgba(255,255,255,.04);
+}
+.rd-advice{ margin:0; color:var(--text); font-size:.95rem; line-height:1.45; }
+.rd-advice-box .sb-btn{ margin-top:10px; }
+.rd-advice-box .rd-link{ display:inline-block; margin-top:8px; }
+
+.rd-more{ margin-top:12px; border-top:1px solid var(--border); padding-top:10px; }
+.rd-more > summary{ cursor:pointer; color:var(--primary); font-weight:600; font-size:.9rem; }
+.rd-more > .rd-parts:first-of-type{ margin-top:12px; }
 .rd-flag{
     margin:6px 0 0;
     color:var(--amber);
@@ -210,9 +224,10 @@
 
 @media (max-width:560px){
     .rd-card{ padding:16px; }
-    .rd-ring strong{ font-size:2.1rem; }
-    .rd-ring span{ font-size:.6875rem; letter-spacing:0; }
-    .rd-ring{ width:96px; height:96px; }
+    .rd-ring{ width:100px; height:100px; }
+    .rd-ring strong{ font-size:2.6rem; }
+    .rd-ring.rd-mini{ width:72px; height:72px; margin-top:14px; }
+    .rd-ring b{ font-size:1.6rem; }
     .rd-parts{ grid-template-columns:1fr 1fr; }
 }
 
@@ -271,3 +286,7 @@
     .tw-changes li{ grid-template-columns:1fr; gap:0; }
 }
 .tw-pointer{ margin:10px 0 0; color:var(--text); }
+
+/* This week on Today: the reasoning folds under Why */
+.tw-why{ margin-top:10px; }
+.tw-why > summary{ cursor:pointer; color:var(--primary); font-weight:600; font-size:.9rem; }

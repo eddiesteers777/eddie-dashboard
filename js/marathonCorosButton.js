@@ -46,7 +46,7 @@ function statusLine(entries, today) {
     if (st === "changed") return "Today's run changed since you sent it. Send again to update it on COROS.";
     const sent = loadSent();
     const upcoming = entries.filter(e => e.course && sent[e.key]).length;
-    return upcoming ? `${upcoming} upcoming ${upcoming === 1 ? "run is" : "runs are"} on your COROS schedule.` : "Put your runs on your COROS watch: warm-up, reps at your plan's paces, cool-down.";
+    return upcoming ? `${upcoming} upcoming ${upcoming === 1 ? "run is" : "runs are"} on your COROS schedule.` : "Send your runs to your watch.";
 }
 
 export function mountMarathonCoros(el) {
