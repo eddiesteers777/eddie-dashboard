@@ -153,3 +153,22 @@ export function weeklyVolume(history, today, weeks = 8) {
     }
     return out.map(w => ({ start: w.start, volume: Math.round(w.volume), sessions: w.days.size }));
 }
+
+// A client's logged strength sessions on a coach plan (workoutResults with kind "strength":
+// { date, status, exercises: [{ name, sets: [{ weight lb, reps }] }] }) in strength-history's shape,
+// so the same progress maths reads them. Skipped logs and empty exercises are left out.
+export function historyFromResults(results = []) {
+    const out = {};
+    for (const r of Array.isArray(results) ? results : []) {
+        if (r?.kind !== "strength" || r.status === "skipped" || !r.date) continue;
+        for (const ex of Array.isArray(r.exercises) ? r.exercises : []) {
+            const name = String(ex?.name || "").trim();
+            const sets = (Array.isArray(ex?.sets) ? ex.sets : []).filter(s => Number(s?.weight) > 0 || Number(s?.reps) > 0);
+            if (!name || !sets.length) continue;
+            const key = name.toLowerCase();
+            (out[key] = out[key] || []).push({ date: r.date, mode: "reps", name, sets: sets.map(s => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 })) });
+        }
+    }
+    for (const key of Object.keys(out)) out[key].sort((a, b) => b.date.localeCompare(a.date));
+    return out;
+}

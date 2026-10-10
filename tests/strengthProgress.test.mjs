@@ -72,3 +72,19 @@ test("weekly volume, Monday to Sunday", () => {
     assert.deepEqual(w.map(x => x.volume), [0, 500, 1000]);
     assert.deepEqual(w.map(x => x.sessions), [0, 1, 1]);
 });
+
+import { historyFromResults } from "../js/strengthProgress.js";
+test("a client's coach-plan strength logs read as lift history", () => {
+    const h = historyFromResults([
+        { kind: "strength", status: "completed", date: "2026-10-01", exercises: [{ name: "Goblet Squat", sets: [{ weight: 50, reps: 10 }, { weight: 0, reps: 0 }] }, { name: "Plank", sets: [] }] },
+        { kind: "strength", status: "completed", date: "2026-10-08", exercises: [{ name: "goblet squat", sets: [{ weight: 55, reps: 10 }] }] },
+        { kind: "strength", status: "skipped", date: "2026-10-05", exercises: [{ name: "Goblet Squat", sets: [{ weight: 99, reps: 9 }] }] },
+        { status: "completed", date: "2026-10-02", distance: 5 }
+    ]);
+    assert.deepEqual(Object.keys(h), ["goblet squat"]);
+    assert.deepEqual(h["goblet squat"].map(e => e.date), ["2026-10-08", "2026-10-01"]);
+    assert.equal(h["goblet squat"][1].sets.length, 1, "an empty set is left out");
+    const p = allProgress(h, "2026-10-10")[0];
+    assert.equal(p.count, 2);
+    assert.ok(p.sessions[1].pr.includes("e1rm"));
+});

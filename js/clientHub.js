@@ -60,6 +60,9 @@ import { decodeShare } from "./athleteShare.js";
 import { sharedKeyWork, currentPlan } from "./clientModel.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { executionHtml, executionClass } from "./executionView.js";
+import { allProgress, historyFromResults } from "./strengthProgress.js";
+import { headline as liftHeadline, trendChip as liftTrend, liftBodyHtml, dateText as liftDate, EPLEY_NOTE } from "./strengthProgressHtml.js";
+import { SETTINGS_KEY as STRENGTH_SETTINGS, cleanSettings as cleanStrengthSettings } from "./strengthUnits.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -656,6 +659,34 @@ function recoveryStatusText(value) {
     return text || "—";
 }
 
+// Their lifts over time, from the strength sessions they logged on your plan (workoutResults).
+// Same maths and drawing as your own Strength → Progress; shown in your Strength unit.
+function strengthProgressHtml() {
+    const lifts = allProgress(historyFromResults(record.results || []), isoDate(new Date()));
+    if (!lifts.length) return "";
+    let unit = "lb";
+    try { unit = cleanStrengthSettings(JSON.parse(localStorage.getItem(STRENGTH_SETTINGS) || "null")).unit; } catch {}
+    const name = firstName() || "They";
+    return '<section class="clients-card sp-hub" id="hubStrengthProgress">' +
+        '<div class="hub-progress-head"><div><span class="hub-section-kicker">Strength</span>' +
+        '<h2>' + esc(name) + "'s lifts</h2></div>" +
+        '<span class="hub-progress-pill">' + lifts.length + ' lift' + (lifts.length === 1 ? '' : 's') + '</span></div>' +
+        '<p class="clients-card-note">From the strength sessions ' + esc(name) + ' logged on your plan. Tap a lift to see it over time.</p>' +
+        '<div class="sp-list">' + lifts.map(p =>
+            '<details class="sp-lift" data-sp-lift="' + esc(p.key) + '">' +
+                '<summary class="sp-row">' +
+                    '<span class="sp-row-main"><strong>' + esc(p.name) + '</strong>' +
+                    '<span>Last ' + liftDate(p.last) + ' · ' + p.count + ' session' + (p.count === 1 ? '' : 's') +
+                    (p.prCount ? ' · ' + p.prCount + ' record' + (p.prCount === 1 ? '' : 's') : '') + '</span></span>' +
+                    '<span class="sp-row-side"><span class="sp-row-best">' + esc(liftHeadline(p, unit)) + '</span>' + liftTrend(p.trend) + '</span>' +
+                    '<span class="sp-row-go" aria-hidden="true">' + icon("chevronDown") + '</span>' +
+                '</summary>' +
+                '<div class="sp-lift-body">' + liftBodyHtml(p, unit, { showAll: true }) + '</div>' +
+            '</details>').join("") + '</div>' +
+        '<p class="sp-note">' + esc(EPLEY_NOTE) + '</p>' +
+    '</section>';
+}
+
 function renderProgress() {
     const progress = summarizeProgress({
         plans: record.summary.plans,
@@ -986,6 +1017,8 @@ function renderProgress() {
                 (progress.painFlags ? '<div class="hub-progress-actions"><button type="button" class="clients-btn-secondary" data-go-tab="workouts">' + icon("alertTriangle") + ' Review workouts</button></div>' : '') +
             '</section>' +
         '</div>' +
+
+        strengthProgressHtml() +
 
         '<p class="clients-card-note hub-progress-footer">Personal COROS/Strava history, habits, nutrition, and other private device data are not exposed here. The summary only uses information already shared with your coaching relationship.</p>';
 }
