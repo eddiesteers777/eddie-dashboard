@@ -138,3 +138,28 @@ test("lastLifts before a date, and the words for a lift", async () => {
     assert.equal(lastLiftWords(lastLifts(h).plank).what, "60 sec");
     assert.equal(lastLiftWords(null), null);
 });
+
+test("recordsOn: what a day beat, one line per lift", async () => {
+    const { recordsOn } = await import("../js/strengthProgress.js");
+    const h = {
+        "back squat": [
+            { date: "2026-10-13", name: "Back Squat", mode: "reps", sets: [{ weight: 185, reps: 5 }] },
+            { date: "2026-10-06", name: "Back Squat", mode: "reps", sets: [{ weight: 175, reps: 5 }] }
+        ],
+        "pull-up": [
+            { date: "2026-10-13", name: "Pull-up", mode: "reps", bw: true, sets: [{ weight: 0, reps: 10 }] },
+            { date: "2026-10-06", name: "Pull-up", mode: "reps", bw: true, sets: [{ weight: 0, reps: 8 }] }
+        ],
+        "deadlift": [
+            { date: "2026-10-13", name: "Deadlift", mode: "reps", sets: [{ weight: 200, reps: 5 }] },
+            { date: "2026-10-01", name: "Deadlift", mode: "reps", sets: [{ weight: 250, reps: 5 }] }
+        ],
+        "plank": [{ date: "2026-10-13", name: "Plank", mode: "time", sets: [{ duration: 60 }] }]
+    };
+    const recs = recordsOn(h, "2026-10-13");
+    assert.deepEqual(recs.map(r => r.name), ["Back Squat", "Pull-up"], "a lower deadlift and a first plank aren't records");
+    assert.match(recs[0].line, /^est\. 1RM 216 lb \(best was 204\)$/);
+    assert.equal(recs[1].line, "most reps: 10 (was 8)");
+    assert.deepEqual(recordsOn(h, "2026-10-06").map(r => r.name), [], "first sessions set no records");
+    assert.deepEqual(recordsOn({}, "2026-10-13"), []);
+});

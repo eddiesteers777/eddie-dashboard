@@ -218,3 +218,28 @@ export function lastLiftWords(lift) {
     else what = `${num(lift.top.weight)} × ${lift.top.reps}`;
     return { when, what, sets: lift.sets || 0 };
 }
+
+// The records set on one day, one line per lift: what beat everything logged before it.
+// [{ key, name, kind, line }] — kind is the headline record (est. 1RM first, then heaviest, reps, hold, volume).
+export function recordsOn(history = {}, date) {
+    const out = [];
+    const num = n => (Math.round(Number(n) * 10) / 10).toLocaleString("en-US");
+    for (const [key, all] of Object.entries(history || {})) {
+        const entries = (Array.isArray(all) ? all : []).filter(e => e?.date && e.date <= date);
+        const sessions = withRecords(sessionsOf(entries));
+        const day = sessions[sessions.length - 1];
+        if (!day || day.date !== date || !day.pr.length) continue;
+        const before = sessions.slice(0, -1);
+        const max = f => Math.max(0, ...before.map(f).filter(v => v != null));
+        const name = entries.find(e => e?.name)?.name || titleCase(key);
+        let kind, line;
+        if (day.pr.includes("e1rm")) { kind = "e1rm"; line = `est. 1RM ${num(Math.round(day.e1rm))} lb (best was ${num(Math.round(max(s => s.e1rm)))})`; }
+        else if (day.pr.includes("weight")) { kind = "weight"; line = `heaviest yet: ${num(day.heaviest)} lb (was ${num(max(s => s.heaviest))})`; }
+        else if (day.pr.includes("reps")) { kind = "reps"; line = `most reps: ${day.mostReps} (was ${max(s => s.mostReps)})`; }
+        else if (day.pr.includes("longest")) { kind = "longest"; line = `longest: ${day.bestDuration} sec (was ${max(s => s.bestDuration)})`; }
+        else { kind = "volume"; line = `most volume: ${num(day.volume)} lb (was ${num(max(s => s.volume))})`; }
+        out.push({ key, name, kind, line });
+    }
+    const order = ["e1rm", "weight", "reps", "longest", "volume"];
+    return out.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || a.name.localeCompare(b.name));
+}

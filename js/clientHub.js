@@ -60,7 +60,7 @@ import { decodeShare } from "./athleteShare.js";
 import { sharedKeyWork, currentPlan } from "./clientModel.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { executionHtml, executionClass } from "./executionView.js";
-import { allProgress, historyFromResults } from "./strengthProgress.js";
+import { allProgress, historyFromResults, recordsOn } from "./strengthProgress.js";
 import { headline as liftHeadline, trendChip as liftTrend, liftBodyHtml, dateText as liftDate, EPLEY_NOTE } from "./strengthProgressHtml.js";
 import { SETTINGS_KEY as STRENGTH_SETTINGS, cleanSettings as cleanStrengthSettings } from "./strengthUnits.js";
 
@@ -1922,6 +1922,15 @@ function plannedText(r, day) {
     return `${miles ? `${miles} mi ` : ""}${String(r.title || "run").toLowerCase()}`;
 }
 
+// Records that log set, against everything they logged on your plans before it.
+let hubLiftHistory = null, hubLiftFrom = null;
+function hubRecordsHtml(r) {
+    if (hubLiftFrom !== record.results) { hubLiftFrom = record.results; hubLiftHistory = historyFromResults(record.results || []); }
+    const recs = recordsOn(hubLiftHistory, r.date);
+    if (!recs.length) return "";
+    return `<div class="st-records"><strong>${icon("trophy")} ${recs.length === 1 ? "New record" : `${recs.length} new records`}</strong><ul>${recs.map(x => `<li><b>${esc(x.name)}</b> ${esc(x.line)}</li>`).join("")}</ul></div>`;
+}
+
 // A strength log: every exercise planned vs lifted.
 function strengthResultHtml(r, day) {
     const lift = day?.strength;
@@ -1942,6 +1951,7 @@ function strengthResultHtml(r, day) {
                 </div>
                 ${strengthTableHtml(cmp)}
                 ${cmp.highlights.length ? `<ul class="hub-wo-highlights">${cmp.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}` : ""}
+            ${r.status === "completed" ? hubRecordsHtml(r) : ""}
             ${r.status === "completed" && !cmp ? `<p class="hub-wo-planned"><span>Logged</span> ${esc((r.exercises || []).map(e => `${e.name} (${e.sets?.length || 0} sets)`).join(", "))}</p>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
             ${r.note ? `<p class="hub-quote">"${renderEmojiText(esc(r.note))}"</p>` : ""}

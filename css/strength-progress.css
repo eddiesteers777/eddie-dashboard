@@ -61,3 +61,10 @@
 .sp-lift[open] > summary{ border-color:var(--primary); }
 .sp-lift[open] > summary .sp-row-go svg{ transform:rotate(180deg); }
 .sp-lift-body{ padding:12px 2px 6px; }
+
+/* Records a strength session set (js/strengthSession.js recordsHtml; also in the Client Hub). */
+.st-records{ margin:0 0 12px; padding:10px 12px; border:1px solid color-mix(in srgb, var(--primary) 45%, transparent); border-radius:var(--radius-sm); background:color-mix(in srgb, var(--primary) 12%, transparent); }
+.st-records strong{ display:flex; align-items:center; gap:6px; color:var(--primary-light, var(--primary)); font-size:14px; }
+.st-records strong svg{ width:16px; height:16px; }
+.st-records ul{ margin:6px 0 0; padding-left:18px; color:var(--text); font-size:14px; line-height:1.5; }
+.st-records li b{ margin-right:4px; }

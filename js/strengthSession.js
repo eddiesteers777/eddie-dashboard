@@ -31,7 +31,7 @@ import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
-import { historyFromResults, mergeHistories, lastLifts, lastLiftWords } from "./strengthProgress.js";
+import { historyFromResults, mergeHistories, lastLifts, lastLiftWords, recordsOn } from "./strengthProgress.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -40,13 +40,29 @@ const RPE_WORDS = EFFORT_WORDS;
 const savedScale = r => logScale(r?.updatedAt || r?.createdAt || (r?.date ? `${r.date}T12:00:00Z` : null));
 const formRpe = r => (r?.rpe ? toCr10(r.rpe, savedScale(r)) : null);
 
-const state = { program: null, day: null, week: null, weekIndex: 0, lift: null, result: null, user: null, date: "", lifts: {} };
+const state = { program: null, day: null, week: null, weekIndex: 0, lift: null, result: null, user: null, date: "", lifts: {}, results: [] };
 
 // What they lifted before this day: their logs on any coach plan + their own Strength page sessions.
-function liftsBefore(results, date) {
+function liftHistory(results) {
     let own = {};
     try { own = JSON.parse(localStorage.getItem("strength-history") || "{}") || {}; } catch {}
-    return lastLifts(mergeHistories(own, historyFromResults(results)), { before: date });
+    return mergeHistories(own, historyFromResults(results));
+}
+function liftsBefore(results, date) {
+    return lastLifts(liftHistory(results), { before: date });
+}
+
+// Records this session set (against everything logged before it), for the result card.
+function recordsHtml(result) {
+    if (result?.status !== "completed") return "";
+    const others = state.results.filter(r => !(r.planId === result.planId && r.date === result.date && isStrengthResult(r)));
+    const recs = recordsOn(liftHistory([...others, { ...result, kind: "strength" }]), state.date);
+    if (!recs.length) return "";
+    return `
+        <div class="st-records" role="status">
+            <strong>${icon("trophy")} ${recs.length === 1 ? "New record" : `${recs.length} new records`}</strong>
+            <ul>${recs.map(r => `<li><b>${esc(r.name)}</b> ${esc(r.line)}</li>`).join("")}</ul>
+        </div>`;
 }
 
 function lastTimeText(name) {
@@ -111,6 +127,7 @@ function resultHtml(result) {
                 <div><span>Time</span><strong>${result.durationSec ? formatDuration(result.durationSec) : "—"}</strong></div>
                 <div><span>Effort</span><strong>${result.rpe ? `${result.rpe}/10` : "—"}</strong>${result.rpe ? `<small>${esc(effortWords(result.rpe, savedScale(result)))}</small>` : ""}</div>
             </div>
+            ${recordsHtml(result)}
             ${strengthTableHtml(cmp)}
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
             ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
@@ -454,7 +471,8 @@ function openLogForm({ actual = null, durationSec = null } = {}) {
             }, state.result);
             d.close();
             render();
-            toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : `${state.lift.title} logged. Nice work.`);
+            const newRecords = skipped ? 0 : document.querySelectorAll(".st-records li").length;
+            toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : newRecords ? `${state.lift.title} logged. ${newRecords === 1 ? "A new record" : `${newRecords} new records`}!` : `${state.lift.title} logged. Nice work.`);
         } catch (error) {
             console.error("Saving the session failed:", error);
             errorEl.textContent = friendlyError(error, "save that");
@@ -487,6 +505,7 @@ export async function mountStrengthSession({ found, date, user, openLog }) {
     try {
         const results = await listMyResults();
         state.result = results.find(r => r.planId === state.program.coachPlanId && r.date === date && isStrengthResult(r)) || null;
+        state.results = results;
         state.lifts = liftsBefore(results, date);
     } catch (error) {
         console.warn("Southbound: workout results unavailable.", error?.code || error);
