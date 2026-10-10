@@ -1319,3 +1319,11 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 
 /* One tap when the money arrives (Phase 9). */
 .hub-mark-paid{ margin-left:8px; padding:6px 14px; min-height:34px; font-size:13px; }
+
+/* "Last time" under an exercise in the plan's strength builder (what the client last logged). */
+.sb-ex-last{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin:2px 0 6px; padding:6px 10px; border-radius:var(--radius-sm); background:color-mix(in srgb, var(--orange) 10%, transparent); color:var(--muted); font-size:13px; }
+.sb-ex-last[hidden]{ display:none !important; }
+.sb-ex-last-text{ display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.sb-ex-last-text strong{ color:var(--text); }
+.sb-ex-last svg{ width:14px; height:14px; flex:0 0 auto; }
+.sb-ex-use{ min-height:32px; padding:4px 10px; font-size:13px; }

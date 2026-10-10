@@ -187,3 +187,18 @@ export function mergeHistories(own = {}, extra = {}) {
     }
     return out;
 }
+
+// Each lift's most recent session (for the coach's plan builder: "Last time · Oct 6: 175 × 5").
+// key (lower-case name) -> { name, date, mode, bw, sets, top, e1rm, best }.
+export function lastLifts(history = {}) {
+    const out = {};
+    for (const [key, entries] of Object.entries(history || {})) {
+        const sessions = sessionsOf(entries);
+        const last = sessions[sessions.length - 1];
+        if (!last) continue;
+        const named = (Array.isArray(entries) ? entries : []).find(e => e?.name)?.name;
+        const best = Math.max(0, ...sessions.map(s => s.e1rm || 0)) || null;
+        out[key] = { name: named || titleCase(key), date: last.date, mode: last.mode, bw: Boolean(last.bw), sets: last.sets, top: last.top, e1rm: last.e1rm, best, bestDuration: last.bestDuration || 0 };
+    }
+    return out;
+}

@@ -106,3 +106,21 @@ test("mergeHistories adds plan logs without doubling a day already logged", asyn
     assert.equal(allProgress(merged, "2026-10-10").length, 2);
     assert.deepEqual(mergeHistories(null, null), {});
 });
+
+test("lastLifts: each lift's latest session, top set and best estimate", async () => {
+    const { lastLifts } = await import("../js/strengthProgress.js");
+    const lifts = lastLifts({
+        "back squat": [
+            { date: "2026-10-06", mode: "reps", name: "Back Squat", sets: [{ weight: 175, reps: 5 }, { weight: 175, reps: 5 }] },
+            { date: "2026-09-01", mode: "reps", name: "Back Squat", sets: [{ weight: 190, reps: 5 }] }
+        ],
+        "pull-up": [{ date: "2026-10-01", mode: "reps", name: "Pull-up", bw: true, sets: [{ weight: 0, reps: 9 }] }]
+    });
+    assert.equal(lifts["back squat"].date, "2026-10-06");
+    assert.deepEqual(lifts["back squat"].top, { weight: 175, reps: 5 });
+    assert.equal(lifts["back squat"].sets, 2);
+    assert.ok(lifts["back squat"].best > lifts["back squat"].e1rm, "the best estimate is the September one");
+    assert.equal(lifts["pull-up"].top.reps, 9);
+    assert.equal(lifts["pull-up"].bw, true);
+    assert.deepEqual(lastLifts(null), {});
+});
