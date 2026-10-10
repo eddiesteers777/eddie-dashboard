@@ -1023,3 +1023,76 @@ canvas{
     .an-cover li .rc-bar{grid-column:1 / -1;grid-row:2}
     .an-summary{padding:16px}
 }
+
+/* ==========================================================
+   HABITS AND RECOVERY (js/habitsCard.js): month recap + habit effects
+========================================================== */
+.hb-panel [hidden]{display:none!important}
+.hb-month{display:flex;align-items:center;justify-content:center;gap:14px;margin:4px 0 2px}
+.hb-month h3{margin:0;min-width:180px;text-align:center;font-family:var(--font-display);font-size:1.7rem;font-weight:400;letter-spacing:.02em}
+.hb-nav{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);font-size:1.3rem;cursor:pointer}
+.hb-nav:disabled{opacity:.35;cursor:default}
+.hb-sub{margin:0 0 14px;text-align:center;color:var(--muted);font-size:.85rem}
+.hb-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.hb-tile{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025)}
+.hb-tile span{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.hb-tile strong{font-family:var(--font-display);font-size:1.9rem;font-weight:400;line-height:1.05;color:var(--text)}
+.hb-tile small{color:var(--muted);font-size:.8rem}
+.hb-tile small.good{color:var(--good)}
+.hb-tile small.bad{color:var(--bad)}
+.hb-h{margin:22px 0 10px;font-size:.95rem;color:var(--text);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.hb-h span{color:var(--muted);font-weight:400;font-size:.82rem}
+.hb-chips{display:flex;flex-wrap:wrap;gap:8px}
+.hb-chip{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:6px 13px;border:1px solid var(--border);border-radius:var(--radius-pill);background:transparent;color:var(--text);font-size:.86rem;cursor:pointer}
+.hb-chip i{width:9px;height:9px;border-radius:50%;background:var(--dot)}
+.hb-chip b{color:var(--muted);font-weight:600}
+.hb-chip.is-on{border-color:var(--dot);background:color-mix(in srgb,var(--dot) 16%,transparent)}
+.hb-water{display:block;margin-top:10px;color:var(--muted);font-size:.86rem}
+.hb-water b{color:var(--text)}
+.hb-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:14px;max-width:560px}
+.hb-dow{text-align:center;color:var(--muted);font-size:.72rem;font-weight:600}
+.hb-cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:54px;padding:4px 2px;border-radius:10px;background:rgba(255,255,255,.03);border-top:3px solid rgba(255,255,255,.07);transition:opacity .15s}
+.hb-cell.is-blank{background:none;border:0}
+.hb-cell.is-later{opacity:.35}
+.hb-cell.green{border-top-color:var(--good)}
+.hb-cell.yellow{border-top-color:var(--primary)}
+.hb-cell.red{border-top-color:var(--bad)}
+.hb-cell em{position:absolute;top:3px;left:6px;font-style:normal;font-size:.68rem;color:var(--muted)}
+.hb-cell b{font-size:.95rem;color:var(--text);margin-top:6px}
+.hb-dots{display:flex;gap:3px;min-height:6px;margin-top:3px}
+.hb-dots i{width:6px;height:6px;border-radius:50%}
+.hb-cell.is-dim{opacity:.3}
+.hb-cell.is-lit{box-shadow:0 0 0 2px var(--primary) inset}
+.hb-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 0;color:var(--muted);font-size:.78rem}
+.hb-legend span{display:inline-flex;align-items:center;gap:5px}
+.hb-legend i{width:12px;height:4px;border-radius:2px;background:var(--muted)}
+.hb-legend i.green{background:var(--good)}.hb-legend i.yellow{background:var(--primary)}.hb-legend i.red{background:var(--bad)}
+.hb-effs{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hb-eff{padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025)}
+.hb-eff-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline}
+.hb-eff-top strong{color:var(--text)}
+.hb-eff-top span{color:var(--muted);font-size:.8rem}
+.hb-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+.hb-link{display:inline-flex;flex-direction:column;padding:6px 11px;border-radius:12px;font-weight:600;font-size:.9rem}
+.hb-link small{font-weight:400;font-size:.72rem;opacity:.8}
+.hb-link.better{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+.hb-link.worse{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.hb-muted{margin:6px 0 0;color:var(--muted);font-size:.85rem;line-height:1.45}
+.hb-note{margin:8px 0 0;color:var(--amber);font-size:.82rem}
+.hb-more{margin-top:8px}
+.hb-more summary,.hb-how summary{cursor:pointer;color:var(--primary);font-weight:600;font-size:.85rem}
+.hb-table{width:100%;margin-top:8px;border-collapse:collapse;font-size:.84rem}
+.hb-table th,.hb-table td{padding:5px 6px;text-align:left;border-bottom:1px solid var(--border);color:var(--text)}
+.hb-table thead th{color:var(--muted);font-weight:600;font-size:.75rem}
+.hb-table tr.better td{color:var(--good)}
+.hb-table tr.worse td{color:var(--bad)}
+.hb-how{margin-top:16px}
+.hb-how ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:.85rem;line-height:1.5}
+.hb-research{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.5}
+.hb-research b{color:var(--text)}
+@media (max-width:600px){
+  .hb-tiles{grid-template-columns:1fr 1fr}
+  .hb-cal{gap:4px}
+  .hb-cell{min-height:46px}
+  .hb-month h3{min-width:0;font-size:1.45rem}
+}

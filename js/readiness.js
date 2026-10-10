@@ -36,20 +36,21 @@ export const WEIGHTS = { hrv: 0.40, rhr: 0.20, sleep: 0.25, feel: 0.15 };
 
 // "Yesterday or last night, did you…" (WHOOP calls this the Journal).
 export const TAGS = [
-    { id: "alcohol", label: "Alcohol" },
-    { id: "late-caffeine", label: "Caffeine after 2 pm" },
-    { id: "late-meal", label: "Ate late" },
-    { id: "screens", label: "Screens in bed" },
-    { id: "stress", label: "Stressful day" },
-    { id: "travel", label: "Traveled" },
-    { id: "nap", label: "Napped" },
-    { id: "stretch", label: "Stretched / mobility" },
-    { id: "foam", label: "Foam rolled" },
-    { id: "hydrated", label: "Drank plenty of water" },
-    { id: "sauna", label: "Sauna / hot bath" },
-    { id: "magnesium", label: "Took magnesium" },
-    { id: "nose-strip", label: "Nose strip overnight" },
-    { id: "mouth-tape", label: "Mouth tape overnight" }
+    { id: "nose-strip", label: "Nose strip", when: "night" },
+    { id: "mouth-tape", label: "Mouth tape", when: "night" },
+    { id: "screens", label: "Screens in bed", when: "night" },
+    { id: "magnesium", label: "Took magnesium", when: "night" },
+    { id: "alcohol", label: "Alcohol", when: "day" },
+    { id: "late-caffeine", label: "Caffeine after 2 pm", when: "day" },
+    { id: "late-meal", label: "Ate late", when: "day" },
+    { id: "stress", label: "Stressful day", when: "day" },
+    { id: "travel", label: "Traveled", when: "day" },
+    { id: "nap", label: "Napped", when: "day" },
+    { id: "stretch", label: "Stretched / mobility", when: "day" },
+    { id: "foam", label: "Foam rolled", when: "day" },
+    { id: "sauna", label: "Sauna / hot bath", when: "day" },
+    // Replaced by the exact water amount (2026-10-10); kept so older mornings still count.
+    { id: "hydrated", label: "Drank plenty of water", when: "day", retired: true }
 ];
 
 const clamp = (n, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));

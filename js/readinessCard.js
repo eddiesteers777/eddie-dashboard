@@ -100,49 +100,138 @@ async function swapDays(a, b) {
 
 // ---------- check-in ----------
 
-function scale(name, label, left, right, value) {
-    return `<fieldset class="rd-scale"><legend>${esc(label)}</legend>
-        <div class="rd-scale-row">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${name}" value="${n}" ${value === n ? "checked" : ""}><span>${n}</span></label>`).join("")}</div>
-        <div class="rd-scale-ends"><span>${esc(left)}</span><span>${esc(right)}</span></div></fieldset>`;
+// Each 1-5 answer in words, so a tap reads back as something (2026-10-10 redesign).
+const SCALES = [
+    { name: "energy", label: "Energy", words: ["Drained", "Low", "Okay", "Good", "Great"] },
+    { name: "soreness", label: "Soreness", words: ["None", "A little", "Some", "Sore", "Very sore"] },
+    { name: "mood", label: "Mood", words: ["Low", "Flat", "Okay", "Good", "Great"] }
+];
+const WATER_STEP = 8;
+const WATER_PRESETS = [64, 80, 100, 120];
+
+function scale({ name, label, words }, value) {
+    return `<fieldset class="rd-scale" data-scale="${name}"><legend>${esc(label)}<span class="rd-scale-word">${value ? esc(words[value - 1]) : ""}</span></legend>
+        <div class="rd-scale-row">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${name}" value="${n}" ${value === n ? "checked" : ""}><span aria-label="${n}: ${esc(words[n - 1])}">${n}</span></label>`).join("")}</div>
+        <div class="rd-scale-ends"><span>${esc(words[0])}</span><span>${esc(words[4])}</span></div></fieldset>`;
 }
 
-export function openCheckin(date, onSaved) {
+const tagChips = (when, c) => TAGS.filter(t => t.when === when && (!t.retired || (c.tags || []).includes(t.id)))
+    .map(t => `<label class="rd-tag"><input type="checkbox" name="tags" value="${t.id}" ${(c.tags || []).includes(t.id) ? "checked" : ""}><span>${icon("check")}${esc(t.label)}</span></label>`).join("");
+
+function nutritionWater(day) {
+    try { const n = JSON.parse(localStorage.getItem(`nutrition-${day}`) || "null"); return Number(n?.water) || null; } catch { return null; }
+}
+
+async function waterGoal() {
+    try {
+        const { resolveGoals } = await import("./nutritionGoals.js");
+        return resolveGoals(load("nutrition-goals", null), { isCoach: cachedRole() === "coach" }).water || 100;
+    } catch { return 100; }
+}
+
+// The check-in's water is yesterday's: it goes into that day's Nutrition log too, so both agree.
+function saveNutritionWater(day, oz) {
+    const key = `nutrition-${day}`;
+    let entry = null;
+    try { entry = JSON.parse(localStorage.getItem(key) || "null"); } catch {}
+    if (!entry) {
+        entry = { breakfast: "", lunch: "", dinner: "", snacks: "", workoutTitle: "Rest Day", workoutDescription: "No workout scheduled.",
+            foodLog: { breakfast: [], lunch: [], dinner: [], snacks: [] }, calories: 0, protein: 0, carbs: 0, fat: 0, water: 0, sodium: 0 };
+    }
+    entry.water = oz;
+    localStorage.setItem(key, JSON.stringify(entry));
+}
+
+export async function openCheckin(date, onSaved) {
     const c = loadCheckins()[date] || {};
+    const yesterday = (() => { const d = new Date(`${date}T12:00:00`); d.setDate(d.getDate() - 1); return isoDate(d); })();
+    let water = c.waterOz ?? nutritionWater(yesterday);
+    const goal = await waterGoal();
+    const when = new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
     const dialog = document.createElement("dialog");
     dialog.className = "sb-dialog rd-dialog";
     dialog.innerHTML = `<form method="dialog" class="sb-dialog-form rd-form">
-        <h2 class="sb-dialog-title">Morning check-in</h2>
-        ${scale("soreness", "How sore are you?", "Not at all", "Very", c.soreness)}
-        ${scale("energy", "Energy", "Drained", "Great", c.energy)}
-        ${scale("mood", "Mood", "Low", "Great", c.mood)}
-        <label class="rd-check"><input type="checkbox" name="sick" ${c.sick ? "checked" : ""}> Feeling sick</label>
-        <label class="rd-field">Any pain? <input type="text" name="pain" maxlength="80" placeholder="e.g. left Achilles" value="${esc(c.pain || "")}"></label>
-        <fieldset class="rd-tags"><legend>Yesterday or last night, did you…</legend>
-            ${TAGS.map(t => `<label class="rd-tag"><input type="checkbox" name="tags" value="${t.id}" ${(c.tags || []).includes(t.id) ? "checked" : ""}><span>${esc(t.label)}</span></label>`).join("")}
-        </fieldset>
-        <label class="rd-field">Note <textarea name="note" rows="2" maxlength="500">${esc(c.note || "")}</textarea></label>
-        <div class="sb-dialog-actions">
-            <button type="button" class="sb-btn sb-btn-tertiary" value="cancel">Cancel</button>
-            <button type="submit" class="sb-btn sb-btn-primary" value="save">Save check-in</button>
+        <header class="rd-form-head">
+            <div class="sb-eyebrow">${esc(when)}</div>
+            <h2 class="sb-dialog-title">Morning check-in</h2>
+            <button type="button" class="rd-x" value="cancel" aria-label="Close">${icon("close")}</button>
+        </header>
+        <div class="rd-form-body">
+            <section class="rd-sec"><h3>How you feel</h3>
+                ${SCALES.map(sc => scale(sc, c[sc.name])).join("")}
+                <div class="rd-flags">
+                    <label class="rd-tag rd-tag-warn"><input type="checkbox" name="sick" ${c.sick ? "checked" : ""}><span>${icon("check")}Feeling sick</span></label>
+                    <label class="rd-tag rd-tag-warn"><input type="checkbox" name="hurts" ${c.pain ? "checked" : ""}><span>${icon("check")}Something hurts</span></label>
+                </div>
+                <label class="rd-field rd-pain"${c.pain ? "" : " hidden"}>Where? <input type="text" name="pain" maxlength="80" placeholder="e.g. left Achilles" value="${esc(c.pain || "")}"></label>
+            </section>
+            <section class="rd-sec"><h3>Last night</h3>
+                <div class="rd-tags">${tagChips("night", c)}</div>
+            </section>
+            <section class="rd-sec"><h3>Water yesterday</h3>
+                <div class="rd-water">
+                    <button type="button" class="rd-wbtn" data-w="-" aria-label="${WATER_STEP} oz less">−</button>
+                    <div class="rd-wval"><strong data-wv>${water ?? "–"}</strong><span>oz</span></div>
+                    <button type="button" class="rd-wbtn" data-w="+" aria-label="${WATER_STEP} oz more">+</button>
+                </div>
+                <div class="rd-wbar" aria-hidden="true"><i data-wbar></i></div>
+                <p class="rd-wgoal" data-wgoal></p>
+                <div class="rd-wpresets">${WATER_PRESETS.map(v => `<button type="button" class="rd-wpreset" data-wset="${v}">${v}</button>`).join("")}<button type="button" class="rd-wpreset rd-wclear" data-wset="">Not sure</button></div>
+            </section>
+            <section class="rd-sec"><h3>Yesterday</h3>
+                <div class="rd-tags">${tagChips("day", c)}</div>
+            </section>
+            <section class="rd-sec"><label class="rd-field">Note <textarea name="note" rows="2" maxlength="500" placeholder="Anything else worth remembering">${esc(c.note || "")}</textarea></label></section>
         </div>
+        <footer class="rd-form-foot"><button type="submit" class="sb-btn sb-btn-primary" value="save">Save check-in</button></footer>
     </form>`;
     document.body.appendChild(dialog);
-    dialog.querySelector('[value="cancel"]').addEventListener("click", () => dialog.close());
-    dialog.querySelector("form").addEventListener("submit", event => {
+    const form = dialog.querySelector("form");
+    const drawWater = () => {
+        dialog.querySelector("[data-wv]").textContent = water ?? "–";
+        dialog.querySelector("[data-wbar]").style.width = `${Math.min(100, ((water || 0) / goal) * 100)}%`;
+        dialog.querySelector("[data-wgoal]").textContent = water == null ? `Your goal is ${goal} oz. Tap + or a number.`
+            : water >= goal ? `Goal reached (${goal} oz).` : `${goal - water} oz short of your ${goal} oz goal.`;
+        dialog.querySelectorAll("[data-wset]").forEach(b => b.classList.toggle("is-on", String(water ?? "") === b.dataset.wset));
+    };
+    drawWater();
+    dialog.addEventListener("click", event => {
+        const t = event.target.closest("button");
+        if (!t) return;
+        if (t.value === "cancel") dialog.close();
+        if (t.dataset.w) { water = Math.max(0, Math.min(400, (water ?? (t.dataset.w === "+" ? 64 - WATER_STEP : WATER_STEP)) + (t.dataset.w === "+" ? WATER_STEP : -WATER_STEP))); drawWater(); }
+        if ("wset" in t.dataset) { water = t.dataset.wset === "" ? null : Number(t.dataset.wset); drawWater(); }
+    });
+    form.addEventListener("change", event => {
+        const fs = event.target.closest("[data-scale]");
+        if (fs) {
+            const sc = SCALES.find(x => x.name === fs.dataset.scale);
+            fs.querySelector(".rd-scale-word").textContent = sc.words[Number(event.target.value) - 1];
+        }
+        if (event.target.name === "hurts") {
+            const box = dialog.querySelector(".rd-pain");
+            box.hidden = !event.target.checked;
+            if (event.target.checked) box.querySelector("input").focus();
+        }
+    });
+    form.addEventListener("submit", event => {
         event.preventDefault();
-        const f = new FormData(event.target);
+        const f = new FormData(form);
         const n = k => (f.get(k) ? Number(f.get(k)) : null);
+        const pain = f.get("hurts") === "on" ? (String(f.get("pain") || "").trim() || "yes") : "";
         saveCheckin(date, {
             soreness: n("soreness"), energy: n("energy"), mood: n("mood"),
-            sick: f.get("sick") === "on", pain: String(f.get("pain") || "").trim(),
-            tags: f.getAll("tags"), note: String(f.get("note") || "").trim()
+            sick: f.get("sick") === "on", pain,
+            tags: f.getAll("tags"), waterOz: water, note: String(f.get("note") || "").trim()
         });
+        if (water != null) saveNutritionWater(yesterday, water);
         dialog.close();
         toast("Check-in saved.");
         onSaved?.();
     });
     dialog.addEventListener("close", () => dialog.remove());
     dialog.showModal();
+    import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
 }
 
 // ---------- the card ----------
@@ -198,7 +287,8 @@ function insightsHtml(today) {
     const body = list.length
         ? `<ul class="rd-insights-list">${list.map(o => `<li class="${o.effect}"><strong>${esc(o.label)}</strong> ${o.effect === "none" ? "no clear effect" : `readiness ${Math.abs(o.diff)} ${o.diff > 0 ? "higher" : "lower"} the next morning`} <small>(${o.times} ${o.times === 1 ? "time" : "times"})</small></li>`).join("")}</ul>`
         : `<p>${left ? `Check in for ${left} more ${left === 1 ? "morning" : "mornings"}, ticking what you did the day before, and this starts showing what helps and what hurts your readiness.` : "Keep ticking what you did the day before: each answer needs 4 mornings with it and 4 without before it shows here."}</p>`;
-    return `<details class="rd-insights"><summary>${icon("activity")} What's helping, what's hurting</summary>${body}</details>`;
+    const recap = cachedRole() === "coach" ? `<p><a class="rd-link" href="analytics.html#habitsPanel">Your monthly recap and every habit's numbers →</a></p>` : "";
+    return `<details class="rd-insights"><summary>${icon("activity")} What's helping, what's hurting</summary>${body}${recap}</details>`;
 }
 
 async function render() {
