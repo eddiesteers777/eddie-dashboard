@@ -458,8 +458,9 @@
                     <button
                         type="button"
                         class="strength-editor-close"
-                        id="strengthEditorClose">
-                        ×
+                        id="strengthEditorClose"
+                        aria-label="Close the builder">
+                        <span data-icon="close"></span>
                     </button>
 
                 </div>
@@ -475,6 +476,17 @@
                     ></div>
                 </div>
 
+            </div>
+
+            <div class="strength-editor-footer">
+                <button
+                    type="button"
+                    class="strength-editor-add"
+                    id="addExerciseTrigger"
+                    aria-label="Add exercises to this workout">
+                    <span data-icon="plus"></span>
+                    <span>Add exercises</span>
+                </button>
             </div>
 
         </div>
@@ -591,7 +603,7 @@
             <div class="strength-search-header">
 
                 <span class="strength-search-title">
-                    Add an Exercise
+                    Add exercises
                 </span>
 
                 <div class="strength-search-header-actions">
@@ -606,8 +618,9 @@
                     <button
                         type="button"
                         class="strength-search-close"
-                        id="exerciseSearchClose">
-                        ×
+                        id="exerciseSearchClose"
+                        aria-label="Close">
+                        <span data-icon="close"></span>
                     </button>
 
                 </div>
@@ -627,6 +640,12 @@
                     class="strength-search-results">
                 </div>
 
+            </div>
+
+            <div class="strength-picker-footer" id="exercisePickerFooter" hidden>
+                <span class="strength-picker-count" id="exercisePickerCount"></span>
+                <button type="button" class="strength-picker-btn strength-picker-btn-secondary" id="exercisePickerSuperset" hidden>Add as superset</button>
+                <button type="button" class="strength-picker-btn" id="exercisePickerAdd">Add 1 exercise</button>
             </div>
 
         </div>

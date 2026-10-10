@@ -667,6 +667,7 @@ function formatExercisePrescription(exercise) {
 
     if (
         rpes.every(Number.isFinite) &&
+        rpes[0] > 0 &&
         rpes.every(value => value === rpes[0])
     ) {
         summary += " · RPE " + rpes[0];
@@ -994,7 +995,7 @@ function renderDayContent() {
 
                 <div>
                     <span class="strength-session-eyebrow">
-                        WORKOUT BUILDER
+                        THIS WORKOUT
                     </span>
 
                     <h2>
@@ -1071,22 +1072,13 @@ function renderDayContent() {
                 day.exercises.length
                     ? renderGrouped(day)
                     : `
-                        <div class="strength-empty-exercise-message">
-                            Add your first exercise to build this workout.
-                        </div>
+                        <button type="button" class="strength-empty-exercise-message" data-open-picker>
+                            <strong>Add your first exercises</strong>
+                            <span>Pick several at once, or start from a template in the Workout Library.</span>
+                        </button>
                     `
             }
         </div>
-
-        <button
-            type="button"
-            class="strength-add-exercise-fab"
-            id="addExerciseTrigger"
-            aria-label="Add an exercise to this workout"
-        >
-            <span aria-hidden="true">+</span>
-            <span>Add Exercise</span>
-        </button>
 
     `;
 }
@@ -1333,6 +1325,65 @@ function closeCustomExerciseModal() {
         ?.classList.remove("open");
 }
 
+// The picker (2026-10-11 rework, after Hevy / Strong): tap rows to tick them,
+// then "Add N exercises" or "Add as superset" once. Recent exercises show
+// before anything is typed. Nothing is added behind the picker while it's open.
+let pickerSelected = new Map();   // name (lower case) -> search result
+
+function pickerKey(ex) {
+    return String(ex?.name || "").trim().toLowerCase();
+}
+
+/** Exercises already used in any workout (newest workouts first) + My Library, for an empty search. */
+function recentExercises() {
+    const seen = new Set();
+    const out = [];
+    const days = [...(plan.days || [])].reverse();
+    for (const day of days) {
+        for (const ex of day.exercises || []) {
+            const key = pickerKey(ex);
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            out.push({
+                id: ex.exerciseId || ex.id,
+                name: ex.name,
+                equipment: ex.equipment || "",
+                primaryMuscles: ex.primaryMuscles || [],
+                image: ex.image || null,
+                recent: true
+            });
+        }
+    }
+    for (const ex of searchCustomLibrary("")) {
+        const key = pickerKey(ex);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(ex);
+    }
+    return out.slice(0, 20);
+}
+
+function renderPickerFooter() {
+    const footer = $("exercisePickerFooter");
+    if (!footer) return;
+    const n = pickerSelected.size;
+    footer.hidden = n === 0;
+    const add = $("exercisePickerAdd");
+    const sup = $("exercisePickerSuperset");
+    if (add) add.textContent = n === 1 ? "Add 1 exercise" : `Add ${n} exercises`;
+    if (sup) sup.hidden = n < 2;
+    const count = $("exercisePickerCount");
+    if (count) count.textContent = n ? `${n} selected` : "";
+}
+
+function showRecentInPicker() {
+    const recent = recentExercises();
+    renderSearchResults(recent, {
+        heading: recent.length ? "Recent and My Library" : "",
+        empty: "Search 800+ exercises by name, muscle or equipment."
+    });
+}
+
 function openExerciseSearch() {
     const overlay =
         $("exerciseSearchOverlay");
@@ -1340,30 +1391,31 @@ function openExerciseSearch() {
     const input =
         $("exerciseSearchInput");
 
-    const results =
-        $("exerciseSearchResults");
-
+    pickerSelected = new Map();
     overlay?.classList.add("open");
+    document.documentElement.classList.add("strength-picker-open");
 
     if (input) {
         input.value = "";
-        input.focus();
-    }
-
-    if (results) {
-        results.innerHTML = "";
+        // Focusing at once on a phone pops the keyboard over the recents; only on computers.
+        if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) input.focus();
     }
 
     lastSearchResults = [];
+    showRecentInPicker();
+    renderPickerFooter();
 }
 
 function closeExerciseSearch() {
     $("exerciseSearchOverlay")
         ?.classList.remove("open");
+    document.documentElement.classList.remove("strength-picker-open");
+    pickerSelected = new Map();
 }
 
 function renderSearchResults(
-    results
+    results,
+    { heading = "", empty = "No matches. Try a different search, or add it to My Library." } = {}
 ) {
     const container =
         $("exerciseSearchResults");
@@ -1373,89 +1425,64 @@ function renderSearchResults(
     lastSearchResults = results;
 
     const day = activeDay();
-    const existingIds = new Set(
+    const existing = new Set(
         (day?.exercises || [])
-            .map(ex => ex.exerciseId ? String(ex.exerciseId) : "")
+            .map(ex => pickerKey(ex))
             .filter(Boolean)
     );
-    const existingNames = new Set(
-        (day?.exercises || [])
-            .map(ex => String(ex.name || "").trim().toLowerCase())
-            .filter(Boolean)
-    );
-
-    results = results.map(ex => ({
-        ...ex,
-        isAdded:
-            existingIds.has(String(ex.id)) ||
-            existingNames.has(String(ex.name || "").trim().toLowerCase())
-    }));
 
     container.innerHTML =
-        results.length
+        (heading && results.length ? `<p class="strength-picker-heading">${escapeHtml(heading)}</p>` : "") +
+        (results.length
             ? results.map(
-                (ex, index) => `
-                    <div
-                        class="strength-result"
-                        data-result-index="${index}"
-                        class="${ex.isAdded ? "strength-result is-added" : "strength-result"}"
+                (ex, index) => {
+                    const key = pickerKey(ex);
+                    const picked = pickerSelected.has(key);
+                    const inWorkout = existing.has(key);
+                    const meta = [ex.equipment, (ex.primaryMuscles || []).join(", ")].filter(Boolean).join(" · ");
+                    return `
+                    <button
+                        type="button"
+                        class="strength-result${picked ? " is-picked" : ""}${inWorkout ? " is-added" : ""}"
+                        data-pick-result="${index}"
+                        aria-pressed="${picked}"
                     >
-
                         ${
                             ex.image
-                                ? `
-                                    <img
-                                        class="strength-result-image"
-                                        src="${escapeHtml(ex.image)}"
-                                        alt=""
-                                        loading="lazy"
-                                    >
-                                `
-                                : `<div class="strength-result-image"></div>`
+                                ? `<img class="strength-result-image" src="${escapeHtml(ex.image)}" alt="" loading="lazy">`
+                                : `<span class="strength-result-image strength-result-image-empty">${icon("dumbbell")}</span>`
                         }
-
-                        <div class="strength-result-info">
+                        <span class="strength-result-info">
                             <strong>
                                 ${escapeHtml(ex.name)}
-                                ${
-                                    ex.isCustom
-                                        ? `<span class="strength-custom-badge">My Library</span>`
-                                        : ""
-                                }
+                                ${ex.isCustom ? `<span class="strength-custom-badge">My Library</span>` : ""}
                             </strong>
-
-                            <span>
-                                ${escapeHtml(ex.equipment)}
-                                ${
-                                    ex.primaryMuscles.length
-                                        ? " · " +
-                                          escapeHtml(
-                                              ex.primaryMuscles.join(
-                                                  ", "
-                                              )
-                                          )
-                                        : ""
-                                }
-                            </span>
-                        </div>
-
-                        <button
-                            type="button"
-                            class="strength-result-add ${ex.isAdded ? "is-added" : ""}"
-                            data-add-result="${index}"
-                            ${ex.isAdded ? "disabled" : ""}
-                        >
-                            ${ex.isAdded ? icon("check") + " Added" : icon("plus") + " Add"}
-                        </button>
-
-                    </div>
-                `
+                            <span>${escapeHtml(meta)}${inWorkout ? `${meta ? " · " : ""}<em>in this workout</em>` : ""}</span>
+                        </span>
+                        <span class="strength-result-check" aria-hidden="true">${icon("check")}</span>
+                    </button>`;
+                }
             ).join("")
             : `
                 <div class="strength-search-empty">
-                    No matches. Try a different search.
+                    ${escapeHtml(empty)}
                 </div>
-            `;
+            `);
+}
+
+function togglePick(index) {
+    const ex = lastSearchResults[index];
+    if (!ex) return;
+    const key = pickerKey(ex);
+    if (pickerSelected.has(key)) pickerSelected.delete(key);
+    else pickerSelected.set(key, ex);
+    const row = document.querySelector(`[data-pick-result="${index}"]`);
+    if (row) {
+        const picked = pickerSelected.has(key);
+        row.classList.toggle("is-picked", picked);
+        row.setAttribute("aria-pressed", String(picked));
+    }
+    renderPickerFooter();
 }
 
 async function searchExercisesForBuilder(query = "") {
@@ -1497,13 +1524,15 @@ async function searchExercisesForBuilder(query = "") {
         .slice(0, 25);
 }
 
-function addExercise(
-    exercise
+function addExercises(
+    exercises,
+    { superset = false } = {}
 ) {
     const day = activeDay();
-    if (!day) return;
+    if (!day || !exercises.length) return;
 
-    const item =
+    const groupId = superset && exercises.length > 1 ? uid() : null;
+    const items = exercises.map(exercise =>
         normalizeExercise({
             id: uid(),
             exerciseId: exercise.id,
@@ -1514,27 +1543,59 @@ function addExercise(
             image: exercise.image,
             mode: "reps",
             restSeconds: DEFAULT_REST,
-            notes: ""
-        });
+            notes: "",
+            groupId,
+            groupType: groupId ? "superset" : null
+        })
+    );
 
-    day.exercises.push(item);
-
+    day.exercises.push(...items);
 
     savePlan();
+    closeExerciseSearch();
     renderAll();
+    revealExercises(items.map(item => item.id));
 
-    const query =
-        $("exerciseSearchInput")?.value ||
-        "";
-
-    searchExercisesForBuilder(query)
-        .then(renderSearchResults)
-        .catch(() => {});
-
+    const ids = new Set(items.map(item => item.id));
     toast(
-        `${exercise.name} added to ${day.name}.`,
-        { type: "success" }
+        items.length === 1
+            ? `${items[0].name} added.`
+            : `${items.length} exercises added${groupId ? " as a superset" : ""}.`,
+        {
+            type: "success",
+            action: {
+                label: "Undo",
+                onClick: () => {
+                    const current = plan.days.find(d => d.id === day.id);
+                    if (!current) return;
+                    current.exercises = current.exercises.filter(ex => !ids.has(ex.id));
+                    cleanupGroups(current);
+                    savePlan();
+                    renderAll();
+                }
+            }
+        }
     );
+}
+
+// Kept for anything that adds one exercise directly.
+function addExercise(exercise) {
+    addExercises([exercise]);
+}
+
+/** Scroll the builder to the first of these exercises and flash them so it's clear where they went. */
+function revealExercises(ids) {
+    requestAnimationFrame(() => {
+        const cards = ids
+            .map(id => document.querySelector(`#strengthExerciseList .strength-exercise-block[data-exercise-id="${id}"]`))
+            .filter(Boolean);
+        if (!cards.length) return;
+        cards[0].scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        cards.forEach(card => {
+            card.classList.add("is-new");
+            setTimeout(() => card.classList.remove("is-new"), 1600);
+        });
+    });
 }
 
 /* ==========================================
@@ -2176,7 +2237,7 @@ document.addEventListener(
     "click",
     event => {
         const target =
-            event.target;
+            event.target.closest("button") || event.target;  // a tap on the icon or label inside a button counts
 
         const tab =
             target.closest(
@@ -2319,24 +2380,23 @@ document.addEventListener(
             return;
         }
 
-        const resultAddBtn =
+        const pickBtn =
             target.closest(
-                "[data-add-result]"
+                "[data-pick-result]"
             );
 
-        if (resultAddBtn) {
-            const exercise =
-                lastSearchResults[
-                    Number(
-                        resultAddBtn.dataset
-                            .addResult
-                    )
-                ];
+        if (pickBtn) {
+            togglePick(Number(pickBtn.dataset.pickResult));
+            return;
+        }
 
-            if (exercise) {
-                addExercise(exercise);
-            }
+        if (target.closest("#exercisePickerAdd") || target.closest("#exercisePickerSuperset")) {
+            addExercises([...pickerSelected.values()], { superset: !!target.closest("#exercisePickerSuperset") });
+            return;
+        }
 
+        if (target.closest("[data-open-picker]")) {
+            openExerciseSearch();
             return;
         }
 
@@ -2349,6 +2409,8 @@ document.addEventListener(
             const day = activeDay();
 
             if (day) {
+                const before = JSON.parse(JSON.stringify(day.exercises));
+                const gone = day.exercises.find(ex => ex.id === removeExerciseBtn.dataset.removeExercise);
                 day.exercises =
                     day.exercises.filter(
                         ex =>
@@ -2360,6 +2422,18 @@ document.addEventListener(
                 cleanupGroups(day);
                 savePlan();
                 renderAll();
+                toast(`${gone?.name || "Exercise"} removed.`, {
+                    action: {
+                        label: "Undo",
+                        onClick: () => {
+                            const current = plan.days.find(d => d.id === day.id);
+                            if (!current) return;
+                            current.exercises = before.map(normalizeExercise);
+                            savePlan();
+                            renderAll();
+                        }
+                    }
+                });
             }
 
             return;
@@ -3017,7 +3091,7 @@ document.addEventListener(
                 $("exerciseSearchResults");
 
             if (!query.trim()) {
-                results.innerHTML = "";
+                showRecentInPicker();
                 return;
             }
 
@@ -3444,15 +3518,26 @@ function openStrengthEditor(dayId = null) {
         );
 
     overlay?.classList.add("open");
+    document.documentElement.classList.add("strength-editor-open");
 }
 
 function closeStrengthEditor() {
+    closeExerciseSearch();
     document
         .getElementById(
             "strengthEditorOverlay"
         )
         ?.classList.remove("open");
+    document.documentElement.classList.remove("strength-editor-open");
 }
+
+// Escape closes the top-most layer: the picker first, then the builder.
+document.addEventListener("keydown", event => {
+    if (event.key !== "Escape") return;
+    if ($("exerciseSearchOverlay")?.classList.contains("open")) { closeExerciseSearch(); return; }
+    if (document.querySelector(".strength-group-overlay.open, .strength-rename-overlay.open, .strength-schedule-overlay.open")) return;
+    if ($("strengthEditorOverlay")?.classList.contains("open")) closeStrengthEditor();
+});
 
 window.addEventListener(
     "eddieos:strength-open-editor",
@@ -3487,7 +3572,7 @@ document.addEventListener(
     "click",
     event => {
         const target =
-            event.target;
+            event.target.closest("button") || event.target;  // a tap on the icon or label inside a button counts
 
         if (
             target.matches(
