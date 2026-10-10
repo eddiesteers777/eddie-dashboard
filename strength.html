@@ -100,6 +100,14 @@
 
                 <button
                     type="button"
+                    class="strength-workspace-tab"
+                    data-strength-view="progress">
+                    <span>Progress</span>
+                    <small>Your lifts over time</small>
+                </button>
+
+                <button
+                    type="button"
                     class="strength-workspace-create"
                     id="strengthQuickNewWorkout">
                     + New Workout
@@ -413,6 +421,15 @@
 
                 </div>
 
+            </section>
+
+            <!-- Progress: every lift you've logged, over time (js/strengthProgressView.js) -->
+
+            <section
+                class="strength-workspace-panel"
+                data-strength-panel="progress"
+                id="strengthProgressPanel">
+                <div class="strength-myworkouts-panel sp-panel" id="strengthProgress"></div>
             </section>
 
         </section>
@@ -1135,6 +1152,11 @@
     <script
         type="module"
         src="js/strengthWorkoutMode.js">
+    </script>
+
+    <script
+        type="module"
+        src="js/strengthProgressView.js">
     </script>
 
     <script src="js/registerSW.js"></script>

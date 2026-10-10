@@ -8,8 +8,16 @@
    reads from.
 ========================================== */
 
+import { isBodyweight } from "./strengthUnits.js";
+
 const HISTORY_KEY = "strength-history";
-const MAX_ENTRIES_PER_EXERCISE = 20;
+// Enough for years of progress (Strength → Progress); an entry is ~100 bytes.
+const MAX_ENTRIES_PER_EXERCISE = 400;
+
+// The phone's own calendar day (toISOString is UTC, so an evening session was dated tomorrow).
+function localDay(d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 function loadHistory() {
     try {
@@ -23,6 +31,7 @@ function loadHistory() {
 
 function saveHistory(history) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    window.dispatchEvent(new CustomEvent("eddieos:strength-history-updated"));
 
     import("./cloudSync.js")
         .then(({ pushToCloud }) => pushToCloud())
@@ -44,7 +53,11 @@ function historyKeyFor(exercise) {
  * always one that was added but never actually logged.
  */
 export function logExercise(exercise) {
-    const meaningfulSets = (exercise.sets || []).filter(set =>
+    // Only the sets ticked off, when any were (a set left unticked wasn't done); otherwise every
+    // set with numbers in it, as before.
+    const all = exercise.sets || [];
+    const ticked = all.filter(set => set.done);
+    const meaningfulSets = (ticked.length ? ticked : all).filter(set =>
         exercise.mode === "time"
             ? Number(set.duration) > 0
             : Number(set.weight) > 0 || Number(set.reps) > 0
@@ -62,12 +75,15 @@ export function logExercise(exercise) {
     }
 
     history[key].unshift({
-        date: new Date().toISOString().slice(0, 10),
+        date: localDay(),
         mode: exercise.mode,
+        name: String(exercise.name || "").trim().slice(0, 80),
+        ...(exercise.mode !== "time" && isBodyweight(exercise) ? { bw: true } : {}),
         sets: meaningfulSets.map(set => ({
             weight: Number(set.weight) || 0,
             reps: Number(set.reps) || 0,
-            duration: Number(set.duration) || 0
+            duration: Number(set.duration) || 0,
+            ...(set.type && set.type !== "working" ? { type: set.type } : {})
         }))
     });
 
@@ -89,7 +105,7 @@ export function getPreviousPerformance(exercise) {
         return null;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDay();
     const previous = entries.find(entry => entry.date !== today) || null;
 
     return previous;

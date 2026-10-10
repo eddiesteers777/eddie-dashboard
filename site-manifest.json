@@ -228,6 +228,8 @@
     "js/strengthHistory.js",
     "js/strengthLibrary.js",
     "js/strengthLibraryData.js",
+    "js/strengthProgress.js",
+    "js/strengthProgressView.js",
     "js/strengthSchedule.js",
     "js/strengthSession.js",
     "js/strengthUnits.js",

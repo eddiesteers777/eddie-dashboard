@@ -1,0 +1,74 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { e1rm, sessionsOf, withRecords, trendOf, exerciseProgress, allProgress, weeklyVolume, titleCase } from "../js/strengthProgress.js";
+
+test("estimated 1-rep max (Epley) only for 1–12 reps with a weight", () => {
+    assert.equal(e1rm(225, 1), 225);
+    assert.equal(e1rm(200, 5), 233.3);
+    assert.equal(e1rm(100, 15), null);
+    assert.equal(e1rm(0, 10), null);
+});
+
+test("sessions: same-day logs join, warm-ups don't count, top set by e1RM", () => {
+    const s = sessionsOf([
+        { date: "2026-10-08", mode: "reps", sets: [{ weight: 135, reps: 10, type: "warmup" }, { weight: 225, reps: 5 }, { weight: 245, reps: 2 }] },
+        { date: "2026-10-08", mode: "reps", sets: [{ weight: 185, reps: 8 }] },
+        { date: "2026-10-01", mode: "reps", sets: [{ weight: 215, reps: 5 }] }
+    ]);
+    assert.equal(s.length, 2);
+    assert.equal(s[0].date, "2026-10-01");
+    assert.deepEqual(s[1].top, { weight: 225, reps: 5 }, "225×5 (262.5) beats 245×2 (261.3)");
+    assert.equal(s[1].sets, 3, "the warm-up isn't a work set");
+    assert.equal(s[1].volume, 225 * 5 + 245 * 2 + 185 * 8);
+});
+
+test("records against everything before; bodyweight counts reps; timed counts seconds", () => {
+    const r = withRecords(sessionsOf([
+        { date: "2026-09-01", mode: "reps", sets: [{ weight: 200, reps: 5 }] },
+        { date: "2026-09-08", mode: "reps", sets: [{ weight: 205, reps: 5 }] },
+        { date: "2026-09-15", mode: "reps", sets: [{ weight: 195, reps: 5 }] }
+    ]));
+    assert.deepEqual(r[0].pr, [], "the first session isn't a record");
+    assert.ok(r[1].pr.includes("e1rm") && r[1].pr.includes("weight"));
+    assert.deepEqual(r[2].pr, []);
+    const bw = withRecords(sessionsOf([{ date: "2026-09-01", sets: [{ weight: 0, reps: 8 }] }, { date: "2026-09-03", sets: [{ weight: 0, reps: 11 }] }]));
+    assert.deepEqual(bw[1].pr, ["reps"]);
+    const t = withRecords(sessionsOf([{ date: "2026-09-01", mode: "time", sets: [{ duration: 45 }] }, { date: "2026-09-03", mode: "time", sets: [{ duration: 60 }] }]));
+    assert.deepEqual(t[1].pr, ["longest"]);
+});
+
+test("trend: last 6 weeks' best against the 6 before", () => {
+    const sessions = sessionsOf([
+        { date: "2026-08-10", sets: [{ weight: 200, reps: 5 }] },
+        { date: "2026-10-01", sets: [{ weight: 215, reps: 5 }] }
+    ]);
+    const t = trendOf(sessions, "2026-10-10");
+    assert.equal(t.word, "up");
+    assert.equal(t.pct, 7.5);
+    assert.equal(trendOf(sessions.slice(1), "2026-10-10"), null, "nothing in the 6 weeks before");
+});
+
+test("exercise progress and the list, newest first, names kept", () => {
+    const history = {
+        "barbell squat": [{ date: "2026-10-05", name: "Barbell Squat", sets: [{ weight: 275, reps: 3 }] }, { date: "2026-09-20", sets: [{ weight: 265, reps: 3 }] }],
+        "pull-up": [{ date: "2026-10-08", sets: [{ weight: 0, reps: 10 }] }],
+        "plank": [{ date: "2026-09-01", mode: "time", sets: [{ duration: 60 }] }]
+    };
+    const all = allProgress(history, "2026-10-10");
+    assert.deepEqual(all.map(x => x.name), ["Pull-Up", "Barbell Squat", "Plank"]);
+    const sq = all[1];
+    assert.equal(sq.count, 2);
+    assert.equal(sq.best.e1rm.value, 302.5);
+    assert.equal(sq.prCount, 1);
+    assert.equal(all[0].bw, true);
+    assert.equal(all[2].best.duration.value, 60);
+    assert.equal(exerciseProgress("x", [], "2026-10-10"), null);
+    assert.equal(titleCase("dumbbell row (single arm)"), "Dumbbell Row (Single Arm)");
+});
+
+test("weekly volume, Monday to Sunday", () => {
+    const w = weeklyVolume({ a: [{ date: "2026-10-06", sets: [{ weight: 100, reps: 10 }] }, { date: "2026-10-04", sets: [{ weight: 100, reps: 5 }] }] }, "2026-10-10", 3);
+    assert.deepEqual(w.map(x => x.start), ["2026-09-21", "2026-09-28", "2026-10-05"]);
+    assert.deepEqual(w.map(x => x.volume), [0, 500, 1000]);
+    assert.deepEqual(w.map(x => x.sessions), [0, 1, 1]);
+});
