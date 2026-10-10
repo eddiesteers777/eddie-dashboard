@@ -88,3 +88,21 @@ test("a client's coach-plan strength logs read as lift history", () => {
     assert.equal(p.count, 2);
     assert.ok(p.sessions[1].pr.includes("e1rm"));
 });
+
+test("mergeHistories adds plan logs without doubling a day already logged", async () => {
+    const { mergeHistories, allProgress } = await import("../js/strengthProgress.js");
+    const own = { "back squat": [{ date: "2026-10-05", mode: "reps", name: "Back Squat", sets: [{ weight: 185, reps: 5 }] }] };
+    const extra = {
+        "back squat": [
+            { date: "2026-10-05", mode: "reps", name: "Back Squat", sets: [{ weight: 185, reps: 5 }] },
+            { date: "2026-09-28", mode: "reps", name: "Back Squat", sets: [{ weight: 175, reps: 5 }] }
+        ],
+        "pull-up": [{ date: "2026-10-01", mode: "reps", name: "Pull-up", sets: [{ weight: 0, reps: 8 }] }]
+    };
+    const merged = mergeHistories(own, extra);
+    assert.deepEqual(merged["back squat"].map(e => e.date), ["2026-10-05", "2026-09-28"]);
+    assert.equal(merged["pull-up"].length, 1);
+    assert.equal(own["back squat"].length, 1, "the device's history isn't changed");
+    assert.equal(allProgress(merged, "2026-10-10").length, 2);
+    assert.deepEqual(mergeHistories(null, null), {});
+});

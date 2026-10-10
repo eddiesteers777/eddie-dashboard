@@ -1,6 +1,7 @@
 // Strength → Progress: every lift from strength-history over time (js/strengthProgress.js does the maths).
 // Weights are stored in lb and shown in the Strength page's unit (strength-settings).
-import { allProgress, weeklyVolume, addDaysIso } from "./strengthProgress.js";
+import { allProgress, weeklyVolume, addDaysIso, historyFromResults, mergeHistories } from "./strengthProgress.js";
+import { showsPersonalPlan } from "./role.js";
 import { SETTINGS_KEY, cleanSettings, volumeText } from "./strengthUnits.js";
 import { esc, dateText, headline, trendChip, liftBodyHtml, EPLEY_NOTE } from "./strengthProgressHtml.js";
 import { icon } from "./icons.js";
@@ -83,9 +84,27 @@ function detailHtml(p, u) {
         <p class="sp-note">${EPLEY_NOTE}</p>`;
 }
 
+// A client's strength sessions logged on their coach's plan live in workoutResults, not in
+// strength-history: read them once in a while and count them too (the coach's own don't exist).
+let planLifts = {};
+let planLiftsAt = 0;
+async function loadPlanLifts(force = false) {
+    if (showsPersonalPlan() || (!force && Date.now() - planLiftsAt < 60000)) return;
+    planLiftsAt = Date.now();
+    try {
+        const { listMyResults } = await import("./workoutResults.js");
+        const next = historyFromResults(await listMyResults());
+        if (JSON.stringify(next) === JSON.stringify(planLifts)) return;
+        planLifts = next;
+        render();
+    } catch (error) {
+        console.warn("Couldn't read the strength sessions logged on your plan:", error);
+    }
+}
+
 function render() {
     if (!host) return;
-    const history = read("strength-history", {}) || {};
+    const history = mergeHistories(read("strength-history", {}) || {}, planLifts);
     const today = localToday();
     const u = unit();
     const all = allProgress(history, today);
@@ -94,7 +113,7 @@ function render() {
             <div class="sp-head"><div><span class="strength-library-eyebrow">PROGRESS</span><h2>Your lifts</h2></div></div>
             <div class="sp-empty-state">
                 <strong>Nothing logged yet</strong>
-                <p>Start a workout, tick your sets and tap Finish. Each lift shows up here with your best sets, estimated 1-rep max and records.</p>
+                <p>Start a workout, tick your sets and tap Finish${showsPersonalPlan() ? "" : ", or log a strength session from your coach's plan"}. Each lift shows up here with your best sets, estimated 1-rep max and records.</p>
             </div>`;
         return;
     }
@@ -136,10 +155,11 @@ host?.addEventListener("input", event => {
 });
 
 document.addEventListener("click", event => {
-    if (event.target.closest('[data-strength-view="progress"]')) render();
+    if (event.target.closest('[data-strength-view="progress"]')) { render(); loadPlanLifts(); }
 });
 window.addEventListener("sb:strength-settings", render);
 window.addEventListener("storage", e => { if (e.key === "strength-history" || e.key === SETTINGS_KEY) render(); });
 window.addEventListener("eddieos:strength-history-updated", render);
 
 render();
+loadPlanLifts(true);

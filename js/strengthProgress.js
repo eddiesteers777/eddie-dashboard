@@ -172,3 +172,18 @@ export function historyFromResults(results = []) {
     for (const key of Object.keys(out)) out[key].sort((a, b) => b.date.localeCompare(a.date));
     return out;
 }
+
+// The device's own strength-history plus lifts logged elsewhere (a client's coach-plan sessions,
+// historyFromResults): an exercise's day that's already in the history isn't added twice.
+export function mergeHistories(own = {}, extra = {}) {
+    const out = {};
+    for (const [key, list] of Object.entries(own || {})) if (Array.isArray(list)) out[key] = list.slice();
+    for (const [key, list] of Object.entries(extra || {})) {
+        if (!Array.isArray(list)) continue;
+        const have = new Set((out[key] || []).map(e => e?.date));
+        const add = list.filter(e => e?.date && !have.has(e.date));
+        if (!add.length) continue;
+        out[key] = [...(out[key] || []), ...add].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    }
+    return out;
+}
