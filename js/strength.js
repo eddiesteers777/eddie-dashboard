@@ -17,6 +17,10 @@ import {
     setType, nextSetType, restValue, restLabel, repsText, repsMaxValue,
     estimateMinutes, moveInList, canMove, cleanWorkoutName, uniqueWorkoutName, exerciseFromQuery
 } from "./strengthBuilderModel.js";
+import {
+    SETTINGS_KEY, cleanSettings, toDisplay, fromDisplay, unitLabel, unitWord, stepFor,
+    isBodyweight, loadText, setShort, effortLabel, effortText, effortOptions, volumeText
+} from "./strengthUnits.js";
 
 const STORAGE_KEY = "strength-plan";
 const LIBRARY_KEY = "strength-exercise-library";
@@ -287,6 +291,7 @@ function normalizeExercise(ex = {}) {
         mode,
         restSeconds: restValue(ex.restSeconds),   // 0 = No rest
         repRange: Boolean(ex.repRange),
+        ...(ex.load === "bw" || ex.load === "weighted" ? { load: ex.load } : {}),   // bodyweight: the weight box is load added
         notes: ex.notes || "",
         groupId: ex.groupId || null,
         groupType: normalizeGroupType(ex.groupType),
@@ -421,6 +426,21 @@ function savePlan() {
     return true;
 }
 
+// lb / kg and RPE / reps in reserve: one choice for the whole Strength page and workout mode
+// (strength-settings, cloud-synced). Weights stay stored in pounds (js/strengthUnits.js).
+function strengthSettings() {
+    try { return cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null")); }
+    catch { return cleanSettings(null); }
+}
+
+function saveStrengthSettings(next) {
+    const settings = cleanSettings({ ...strengthSettings(), ...next });
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+    window.dispatchEvent(new CustomEvent("sb:strength-settings", { detail: settings }));
+    import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});
+    return settings;
+}
+
 // One polite live region for things a screen reader should hear (moves, set kinds).
 function announce(text) {
     let el = document.getElementById("strengthAnnounce");
@@ -480,7 +500,10 @@ function renderVolume() {
         });
     });
 
-    el.textContent = total.toLocaleString();
+    const { unit } = strengthSettings();
+    el.textContent = volumeText(total, unit).replace(/ (lb|kg)$/, "");
+    const word = document.querySelector(".strength-hero-unit");
+    if (word) word.textContent = `${unitLabel(unit)} this week`;
 }
 
 /* ==========================================
@@ -567,15 +590,15 @@ function lastLogged(exercise) {
 function renderSetTable(exercise) {
     const timeMode = exercise.mode === "time";
     const last = lastLogged(exercise);
+    const { unit, effort } = strengthSettings();
+    const bw = isBodyweight(exercise);
     let working = 0;
 
     const rows = exercise.sets.map((set, index) => {
         const type = setType(set);
         const label = SET_TYPE_BADGE[type] || String(++working);
         const prev = last?.sets?.[index] || null;
-        const prevText = prev
-            ? (timeMode ? `${prev.duration || 0}s` : `${prev.weight ? `${prev.weight}×` : ""}${prev.reps || 0}`)
-            : "–";
+        const prevText = prev ? setShort(prev, unit, { time: timeMode, bodyweight: bw }) : "–";
         return `
             <div class="strength-set-row is-${type}" data-set-id="${set.id}">
                 <button type="button" class="strength-set-badge" data-cycle-type="${set.id}" data-exercise-id="${exercise.id}"
@@ -583,9 +606,9 @@ function renderSetTable(exercise) {
                 ${prev
                     ? `<button type="button" class="strength-set-prev" data-use-prev="${index}" data-exercise-id="${exercise.id}" data-set-id="${set.id}" title="Use last time's numbers">${escapeHtml(prevText)}</button>`
                     : `<span class="strength-set-prev is-empty">–</span>`}
-                <input type="number" inputmode="decimal" class="strength-set-input" aria-label="Weight, set ${index + 1}"
+                <input type="number" inputmode="decimal" class="strength-set-input" aria-label="${bw ? "Added weight" : "Weight"} in ${unitWord(unit)}, set ${index + 1}"
                     data-field="weight" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
-                    value="${Number(set.weight) || ""}" placeholder="0" min="0" step="5">
+                    value="${Number(set.weight) ? toDisplay(set.weight, unit) : ""}" placeholder="${bw ? "BW" : "0"}" min="0" step="any">
                 ${timeMode
                     ? `<input type="number" inputmode="numeric" class="strength-set-input" aria-label="Seconds, set ${index + 1}"
                         data-field="duration" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
@@ -601,9 +624,9 @@ function renderSetTable(exercise) {
                     : `<input type="number" inputmode="numeric" class="strength-set-input" aria-label="Reps, set ${index + 1}"
                         data-field="reps" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
                         value="${Number(set.reps) || ""}" placeholder="0" min="0" step="1">`}
-                <select class="strength-set-rpe" aria-label="RPE, set ${index + 1}" data-field="rpe" data-exercise-id="${exercise.id}" data-set-id="${set.id}">
+                <select class="strength-set-rpe" aria-label="${effort === "rir" ? "Reps in reserve" : "RPE"}, set ${index + 1}" data-field="rpe" data-exercise-id="${exercise.id}" data-set-id="${set.id}">
                     <option value="">–</option>
-                    ${Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}" ${Number(set.rpe) === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("")}
+                    ${effortOptions(effort, set.rpe).map(o => `<option value="${o.value}" ${o.selected ? "selected" : ""}>${o.label}</option>`).join("")}
                 </select>
                 <button type="button" class="strength-set-remove" data-remove-set="${set.id}" data-exercise-id="${exercise.id}" aria-label="Remove set ${index + 1}">${icon("close")}</button>
             </div>`;
@@ -612,10 +635,12 @@ function renderSetTable(exercise) {
     return `
         <div class="strength-sets${exercise.repRange && !timeMode ? " has-range" : ""}" role="group" aria-label="Sets">
             <div class="strength-set-head">
-                <span aria-hidden="true">Set</span><span aria-hidden="true">Previous</span><span aria-hidden="true">lb</span>${timeMode
+                <span aria-hidden="true">Set</span><span aria-hidden="true">Previous</span><button type="button" class="strength-set-head-btn" data-toggle-unit
+                    title="Show weights in ${unit === "kg" ? "pounds" : "kilograms"}" aria-label="Weights in ${unitWord(unit)}. Switch to ${unit === "kg" ? "pounds" : "kilograms"}">${bw ? "+" : ""}${unitLabel(unit)}</button>${timeMode
                     ? `<span aria-hidden="true">Sec</span>`
                     : `<button type="button" class="strength-set-head-btn" data-toggle-range="${exercise.id}" aria-pressed="${exercise.repRange ? "true" : "false"}"
-                        title="${exercise.repRange ? "Back to a single number of reps" : "Use a rep range, like 8–10"}">${exercise.repRange ? "Rep range" : "Reps"} ${icon("chevronDown")}</button>`}<span aria-hidden="true">RPE</span><span></span>
+                        title="${exercise.repRange ? "Back to a single number of reps" : "Use a rep range, like 8–10"}">${exercise.repRange ? "Rep range" : "Reps"} ${icon("chevronDown")}</button>`}<button type="button" class="strength-set-head-btn" data-toggle-effort
+                    title="${effort === "rir" ? "Show effort as RPE (1–10)" : "Show effort as reps in reserve"}" aria-label="Effort as ${effort === "rir" ? "reps in reserve" : "RPE"}. Switch to ${effort === "rir" ? "RPE" : "reps in reserve"}">${effortLabel(effort)}</button><span></span>
             </div>
             ${rows}
         </div>
@@ -653,7 +678,9 @@ function formatExercisePrescription(exercise) {
         ? count + " × " + values[0]
         : count + " sets";
 
+    const { unit, effort } = strengthSettings();
     if (!isTime) {
+        const bw = isBodyweight(exercise);
         const loads = sets
             .map(set => Number(set.weight) || 0)
             .filter(value => value > 0);
@@ -661,9 +688,11 @@ function formatExercisePrescription(exercise) {
         const uniqueLoads = [...new Set(loads)];
 
         if (uniqueLoads.length === 1) {
-            summary += " · " + uniqueLoads[0] + " lb";
+            summary += " · " + loadText(uniqueLoads[0], unit, bw);
         } else if (uniqueLoads.length > 1) {
             summary += " · Varying load";
+        } else if (bw) {
+            summary += " · BW";
         }
     }
 
@@ -674,7 +703,7 @@ function formatExercisePrescription(exercise) {
         rpes[0] > 0 &&
         rpes.every(value => value === rpes[0])
     ) {
-        summary += " · RPE " + rpes[0];
+        summary += " · " + effortText(rpes[0], effort);
     }
 
     summary += " · " + (Number(exercise.restSeconds) ? formatExerciseRest(exercise.restSeconds) + " rest" : "No rest");
@@ -736,6 +765,13 @@ function renderExercise(exercise) {
                         icon("timer") + " " +
                         (exercise.mode === "time" ? "Timed" : "Reps") +
                     "</button>",
+
+                    (exercise.mode === "time" ? "" :
+                    '<button type="button" class="strength-mode-btn ' + (isBodyweight(exercise) ? "active" : "") +
+                        '" data-toggle-bw="' + exercise.id + '" aria-pressed="' + (isBodyweight(exercise) ? "true" : "false") +
+                        '" title="Bodyweight: the weight box is extra load (a vest, a plate, a belt)">' +
+                        icon("user") + " Bodyweight" +
+                    "</button>"),
 
                     '<label class="strength-rest-field">',
                         "<span>Rest</span>",
@@ -2364,6 +2400,39 @@ document.addEventListener(
             return;
         }
 
+        if (target.closest("[data-toggle-unit]")) {
+            const { unit } = saveStrengthSettings({ unit: strengthSettings().unit === "kg" ? "lb" : "kg" });
+            renderVolume();
+            renderDayContent();
+            document.querySelector("[data-toggle-unit]")?.focus();
+            announce(`Weights in ${unitWord(unit)}`);
+            toast(`Weights in ${unitWord(unit)}. Saved weights are the same, just shown in ${unitLabel(unit)}.`, { duration: 2600 });
+            return;
+        }
+
+        if (target.closest("[data-toggle-effort]")) {
+            const { effort } = saveStrengthSettings({ effort: strengthSettings().effort === "rir" ? "rpe" : "rir" });
+            renderDayContent();
+            document.querySelector("[data-toggle-effort]")?.focus();
+            const words = effort === "rir" ? "reps in reserve (0 = nothing left, 2 = two more reps in the tank)" : "RPE (10 = nothing left)";
+            announce(`Effort as ${effort === "rir" ? "reps in reserve" : "RPE"}`);
+            toast(`Effort shown as ${words}.`, { duration: 3000 });
+            return;
+        }
+
+        const bwBtn = target.closest("[data-toggle-bw]");
+        if (bwBtn) {
+            const exercise = activeDay()?.exercises.find(ex => ex.id === bwBtn.dataset.toggleBw);
+            if (exercise) {
+                exercise.load = isBodyweight(exercise) ? "weighted" : "bw";
+                savePlan();
+                renderDayContent();
+                document.querySelector(`[data-toggle-bw="${exercise.id}"]`)?.focus();
+                announce(isBodyweight(exercise) ? "Bodyweight: the weight is extra load" : "Weighted");
+            }
+            return;
+        }
+
         const rangeBtn = target.closest("[data-toggle-range]");
         if (rangeBtn) {
             const exercise = activeDay()?.exercises.find(ex => ex.id === rangeBtn.dataset.toggleRange);
@@ -3122,7 +3191,9 @@ document.addEventListener(
                 );
 
             if (set) {
-                if (target.dataset.field === "repsMax") {
+                if (target.dataset.field === "weight") {
+                    set.weight = fromDisplay(target.value, strengthSettings().unit);
+                } else if (target.dataset.field === "repsMax") {
                     const top = repsMaxValue(set.reps, target.value);
                     if (top) set.repsMax = top; else delete set.repsMax;
                 } else {

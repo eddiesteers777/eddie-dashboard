@@ -58,6 +58,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "strength-workout-library",
     "strength-workout-favorites",
     "strength-schedule",
+    "strength-settings",
     "gear-shoes",
     "strength-history",
     "running-log",

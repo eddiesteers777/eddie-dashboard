@@ -3525,7 +3525,7 @@ html.strength-workout-open body{
 @media (max-width:480px){
     .strength-workout-set-row{
         display:grid;
-        grid-template-columns:24px minmax(0, 1.25fr) minmax(0, 1fr) 36px;
+        grid-template-columns:24px minmax(0, 1.4fr) minmax(0, 1fr) 36px;
         grid-template-areas:"idx weight reps done";
         align-items:center;
         column-gap:6px;
@@ -3544,7 +3544,7 @@ html.strength-workout-open body{
 
     .strength-workout-adjust button{
         min-width:0;
-        width:30px;
+        width:28px;
         height:34px;
         padding:0;
         box-shadow:none;
@@ -4130,3 +4130,12 @@ button.strength-set-prev:hover{ color:var(--primary); }
     .strength-name-field input{ font-size:26px; }
     .strength-session-actions .strength-builder-btn{ flex:1 1 auto; justify-content:center; }
 }
+
+/* ==========================================================
+   UNITS (2026-10-11): lb / kg and RPE / RIR column heads are
+   buttons; bodyweight exercises; the unit beside workout mode's
+   weight box; the bar under the plate math.
+========================================================== */
+.strength-set-head .strength-set-head-btn{ justify-self:center; }
+.strength-workout-unit{ flex:0 0 auto; margin:0 -1px; color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.strength-plate-bar{ display:block; margin-top:2px; color:var(--muted); font-size:12px; }

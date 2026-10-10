@@ -17,6 +17,16 @@ import {
 
 import { icon } from "./icons.js";
 import { restAfterSet, SET_TYPES, SET_TYPE_WORDS, repsMaxValue } from "./strengthBuilderModel.js";
+import {
+    SETTINGS_KEY, cleanSettings, toDisplay, fromDisplay, unitLabel, unitWord, stepFor, nudge,
+    isBodyweight, loadText, setShort, plateMath, volumeText
+} from "./strengthUnits.js";
+
+// lb or kg, set on the Strength page (strength-settings); weights stay stored in pounds.
+function units() {
+    try { return cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null")).unit; }
+    catch { return "lb"; }
+}
 
 const PLAN_KEY = "strength-plan";
 const BAR_WEIGHT = 45;
@@ -237,24 +247,23 @@ function calculatePlates(targetWeight) {
 }
 
 function renderPlateCalc(weight) {
-    const numWeight = Number(weight) || 0;
+    const unit = units();
+    const math = plateMath(weight, unit);
 
-    if (numWeight <= BAR_WEIGHT) {
+    if (!math.perSide) {
         return `
             <div class="strength-plate-result">
-                Just the bar (${BAR_WEIGHT} lb) or lighter — no plates needed.
+                Just the bar (${math.bar} ${unitLabel(unit)}) or lighter — no plates needed.
             </div>
         `;
     }
 
-    const perSide = (numWeight - BAR_WEIGHT) / 2;
-    const plates = calculatePlates(numWeight);
-
     return `
         <div class="strength-plate-result">
-            <strong>${perSide.toFixed(1)} lb per side</strong>
+            <strong>${math.perSide.toFixed(unit === "kg" ? 2 : 1).replace(/\.?0+$/, "")} ${unitLabel(unit)} per side</strong>
+            <span class="strength-plate-bar">on a ${math.bar} ${unitLabel(unit)} bar</span>
             <div class="strength-plate-chips">
-                ${plates.map(p => `<span class="strength-plate-chip">${p}</span>`).join("")}
+                ${math.plates.map(p => `<span class="strength-plate-chip">${p}</span>`).join("")}
             </div>
         </div>
     `;
@@ -279,6 +288,8 @@ function renderSetRow(exercise, set, index) {
     const isTime = exercise.mode === "time";
     const setType = SET_TYPE_ORDER.includes(set.type) ? set.type : "working";
     const repTop = repsMaxValue(set.reps, set.repsMax);
+    const unit = units();
+    const bw = isBodyweight(exercise);
 
     const numberControls = isTime
         ? `
@@ -296,15 +307,19 @@ function renderSetRow(exercise, set, index) {
         `
         : `
             <div class="strength-workout-adjust">
-                <button type="button" data-adjust="weight" data-delta="-5" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Decrease weight by 5 pounds">${icon("minus")}</button>
+                <button type="button" data-adjust="weight" data-delta="-1" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Decrease weight by ${stepFor(unit)} ${unitWord(unit)}">${icon("minus")}</button>
                 <input
                     type="number"
                     class="strength-workout-input"
                     data-field="weight"
                     data-set-id="${set.id}"
                     data-exercise-id="${exercise.id}"
-                    value="${set.weight}">
-                <button type="button" data-adjust="weight" data-delta="5" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Increase weight by 5 pounds">${icon("plus")}</button>
+                    inputmode="decimal" step="any"
+                    aria-label="${bw ? "Added weight" : "Weight"} in ${unitWord(unit)}"
+                    placeholder="${bw ? "BW" : "0"}"
+                    value="${Number(set.weight) ? toDisplay(set.weight, unit) : ""}">
+                <span class="strength-workout-unit" aria-hidden="true">${bw ? "+" : ""}${unitLabel(unit)}</span>
+                <button type="button" data-adjust="weight" data-delta="1" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Increase weight by ${stepFor(unit)} ${unitWord(unit)}">${icon("plus")}</button>
             </div>
 
             <div class="strength-workout-adjust strength-workout-adjust-reps">
@@ -366,14 +381,15 @@ function renderSetRow(exercise, set, index) {
 // Small rounded chips (one per set) instead of one run-on
 // comma-separated string -- reads as a designed UI element rather
 // than a raw data dump.
-function renderSetChips(sets, isTime) {
+function renderSetChips(sets, isTime, bodyweight = false) {
+    const unit = units();
     if (!sets.length) {
         return "";
     }
 
     return sets
         .map(s => {
-            const label = isTime ? `${s.duration}s` : `${s.weight}×${s.reps}`;
+            const label = setShort(s, unit, { time: isTime, bodyweight });
             const color = SET_TYPE_COLORS[s.type] || SET_TYPE_COLORS.working;
             return `<span class="strength-workout-chip" style="--set-color:${color}">${escapeHtml(label)}</span>`;
         })
@@ -392,7 +408,7 @@ function renderExerciseBlock(exercise) {
     const allDone = totalCount > 0 && doneCount === totalCount;
     const expanded = expandedExerciseIds.has(exercise.id);
     const currentSummary = totalCount
-        ? renderSetChips(exercise.sets, isTime)
+        ? renderSetChips(exercise.sets, isTime, isBodyweight(exercise))
         : `<span class="strength-workout-mini-empty">No sets yet</span>`;
 
     return `
@@ -427,7 +443,7 @@ function renderExerciseBlock(exercise) {
                     <span class="strength-workout-prev-icon">${icon("clock")}</span>
                     <span class="strength-workout-prev-text">
                         ${previous
-                            ? `<span class="strength-workout-prev-label">Last time</span> ${renderSetChips(previous.sets, isTime)}`
+                            ? `<span class="strength-workout-prev-label">Last time</span> ${renderSetChips(previous.sets, isTime, isBodyweight(exercise))}`
                             : "No previous session logged yet"}
                     </span>
                 </div>
@@ -469,7 +485,7 @@ function renderExerciseBlock(exercise) {
                         ${icon("plus")} Add Set
                     </button>
 
-                    ${!isTime ? `
+                    ${!isTime && !isBodyweight(exercise) ? `
                         <button
                             type="button"
                             class="strength-row-btn"
@@ -704,7 +720,7 @@ function meaningfulSetsFor(exercise) {
         : withData;
 }
 
-function formatSetLine(set, isTime) {
+function formatSetLine(set, isTime, bodyweight = false) {
     if (isTime) {
         const seconds = Number(set.duration) || 0;
 
@@ -722,7 +738,8 @@ function formatSetLine(set, isTime) {
         return "Done";
     }
 
-    return weight > 0 ? `${weight} lb × ${reps}` : `${reps} reps`;
+    const load = loadText(weight, units(), bodyweight);
+    return load ? `${load} × ${reps}` : `${reps} reps`;
 }
 
 // One completed exercise's worth of summary text -- a single clean
@@ -736,7 +753,7 @@ function formatExerciseBlock(exercise) {
         return null;
     }
 
-    const setLines = sets.map(set => formatSetLine(set, isTime));
+    const setLines = sets.map(set => formatSetLine(set, isTime, isBodyweight(exercise)));
     const allSame = setLines.every(line => line === setLines[0]);
     const notes = exercise.notes?.trim();
 
@@ -864,8 +881,8 @@ function renderSummaryStats(stats, elapsedMs) {
             <span class="strength-summary-stat-label">Duration</span>
         </div>
         <div class="strength-summary-stat">
-            <span class="strength-summary-stat-value">${stats.totalVolume.toLocaleString()}</span>
-            <span class="strength-summary-stat-label">lb Volume</span>
+            <span class="strength-summary-stat-value">${volumeText(stats.totalVolume, units()).replace(/ (lb|kg)$/, "")}</span>
+            <span class="strength-summary-stat-label">${unitLabel(units())} Volume</span>
         </div>
         <div class="strength-summary-stat">
             <span class="strength-summary-stat-value">${stats.setsCompleted}</span>
@@ -1272,14 +1289,16 @@ document.addEventListener("click", event => {
                 return;
             }
 
-            set[field] = Math.max(0, (Number(set[field]) || 0) + delta);
+            set[field] = field === "weight"
+                ? nudge(set.weight, units(), delta)   // 5 lb or 2.5 kg a tap, stored in lb
+                : Math.max(0, (Number(set[field]) || 0) + delta);
 
             const input = document.querySelector(
                 `.strength-workout-input[data-field="${field}"][data-set-id="${setId}"]`
             );
 
             if (input) {
-                input.value = set[field];
+                input.value = field === "weight" ? (Number(set.weight) ? toDisplay(set.weight, units()) : "") : set[field];
             }
 
             const platePanel = $(`plateCalc-${exerciseId}`);
@@ -1308,7 +1327,9 @@ document.addEventListener("input", event => {
             const set = exercise && findSet(exercise, setId);
 
             if (set) {
-                set[field] = Number(target.value) || 0;
+                set[field] = field === "weight"
+                    ? fromDisplay(target.value, units())
+                    : Number(target.value) || 0;
             }
         });
         return;
