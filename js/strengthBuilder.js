@@ -16,11 +16,10 @@
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
 import { sanitizeStrength, exerciseLabels, strengthSummary, MAX_EXERCISES } from "./strengthWorkout.js";
 import { icon } from "./icons.js";
+import { lastLiftWords } from "./strengthProgress.js";
 
 const VIDEOS_KEY = "coach-exercise-videos";
 const REST_CHOICES = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const shortDate = iso => { const [, m, d] = String(iso || "").split("-").map(Number); return m && d ? `${MONTHS[m - 1]} ${d}` : ""; };
 const num = n => (Math.round(Number(n) * 10) / 10).toLocaleString("en-US");
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const restLabel = s => (!s ? "No rest" : s < 60 ? `${s} sec` : s % 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : `${s / 60} min`);
@@ -79,18 +78,14 @@ export function rememberVideos(clean) {
 // What the client last logged for this exercise on your plan (lifts = lastLifts(...) in
 // js/strengthProgress.js, keyed by lower-case name). Weights in lb, like the builder.
 export function lastLiftHtml(lift) {
-    if (!lift?.top && !lift?.bestDuration) return "";
-    const when = shortDate(lift.date);
-    let what;
-    if (lift.mode === "time") what = `${lift.bestDuration} sec`;
-    else if (!lift.top.weight) what = `${lift.top.reps} reps${lift.bw ? " (bodyweight)" : ""}`;
-    else what = `${num(lift.top.weight)} × ${lift.top.reps}`;
-    const sets = lift.sets > 1 ? ` (${lift.sets} sets)` : "";
+    const w = lastLiftWords(lift);
+    if (!w) return "";
+    const sets = w.sets > 1 ? ` (${w.sets} sets)` : "";
     const e1 = lift.e1rm ? ` · est. 1RM ${num(Math.round(lift.e1rm))} lb` : "";
     const use = lift.mode !== "time" && lift.top?.weight
         ? ` <button type="button" class="sb-btn sb-btn-tertiary sb-ex-use" data-act="sb-use-last" data-weight="${esc(lift.top.weight)}">Use ${num(lift.top.weight)} lb</button>`
         : "";
-    return `<span class="sb-ex-last-text">${icon("clock")} Last time${when ? ` · ${esc(when)}` : ""}: <strong>${esc(what)}</strong>${esc(sets)}${esc(e1)}</span>${use}`;
+    return `<span class="sb-ex-last-text">${icon("clock")} Last time${w.when ? ` · ${esc(w.when)}` : ""}: <strong>${esc(w.what)}</strong>${esc(sets)}${esc(e1)}</span>${use}`;
 }
 
 const liftFor = (lifts, name) => lifts?.[String(name || "").trim().toLowerCase()] || null;

@@ -190,9 +190,11 @@ export function mergeHistories(own = {}, extra = {}) {
 
 // Each lift's most recent session (for the coach's plan builder: "Last time · Oct 6: 175 × 5").
 // key (lower-case name) -> { name, date, mode, bw, sets, top, e1rm, best }.
-export function lastLifts(history = {}) {
+// { before: "YYYY-MM-DD" } leaves out that day and later (a session page shows what came before it).
+export function lastLifts(history = {}, { before = null } = {}) {
     const out = {};
-    for (const [key, entries] of Object.entries(history || {})) {
+    for (const [key, all] of Object.entries(history || {})) {
+        const entries = before && Array.isArray(all) ? all.filter(e => e?.date && e.date < before) : all;
         const sessions = sessionsOf(entries);
         const last = sessions[sessions.length - 1];
         if (!last) continue;
@@ -201,4 +203,18 @@ export function lastLifts(history = {}) {
         out[key] = { name: named || titleCase(key), date: last.date, mode: last.mode, bw: Boolean(last.bw), sets: last.sets, top: last.top, e1rm: last.e1rm, best, bestDuration: last.bestDuration || 0 };
     }
     return out;
+}
+
+// The words for one lift's last session: { when: "Oct 6", what: "175 × 5", sets: 3 }.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export function lastLiftWords(lift) {
+    if (!lift || (!lift.top && !lift.bestDuration)) return null;
+    const [, m, d] = String(lift.date || "").split("-").map(Number);
+    const when = m && d ? `${MONTHS[m - 1]} ${d}` : "";
+    const num = n => (Math.round(Number(n) * 10) / 10).toLocaleString("en-US");
+    let what;
+    if (lift.mode === "time") what = `${lift.bestDuration} sec`;
+    else if (!lift.top.weight) what = `${lift.top.reps} reps${lift.bw ? " (bodyweight)" : ""}`;
+    else what = `${num(lift.top.weight)} × ${lift.top.reps}`;
+    return { when, what, sets: lift.sets || 0 };
 }

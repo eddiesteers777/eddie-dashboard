@@ -124,3 +124,17 @@ test("lastLifts: each lift's latest session, top set and best estimate", async (
     assert.equal(lifts["pull-up"].bw, true);
     assert.deepEqual(lastLifts(null), {});
 });
+
+test("lastLifts before a date, and the words for a lift", async () => {
+    const { lastLifts, lastLiftWords } = await import("../js/strengthProgress.js");
+    const h = { "back squat": [
+        { date: "2026-10-13", mode: "reps", sets: [{ weight: 185, reps: 5 }] },
+        { date: "2026-10-06", mode: "reps", sets: [{ weight: 175, reps: 5 }, { weight: 175, reps: 5 }] }
+    ], "plank": [{ date: "2026-10-20", mode: "time", sets: [{ duration: 60 }] }] };
+    const before = lastLifts(h, { before: "2026-10-13" });
+    assert.equal(before["back squat"].date, "2026-10-06", "the session's own day is left out");
+    assert.equal(before.plank, undefined, "nothing before the date = no entry");
+    assert.deepEqual(lastLiftWords(before["back squat"]), { when: "Oct 6", what: "175 × 5", sets: 2 });
+    assert.equal(lastLiftWords(lastLifts(h).plank).what, "60 sec");
+    assert.equal(lastLiftWords(null), null);
+});

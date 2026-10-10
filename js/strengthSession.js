@@ -31,6 +31,7 @@ import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
+import { historyFromResults, mergeHistories, lastLifts, lastLiftWords } from "./strengthProgress.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -39,7 +40,20 @@ const RPE_WORDS = EFFORT_WORDS;
 const savedScale = r => logScale(r?.updatedAt || r?.createdAt || (r?.date ? `${r.date}T12:00:00Z` : null));
 const formRpe = r => (r?.rpe ? toCr10(r.rpe, savedScale(r)) : null);
 
-const state = { program: null, day: null, week: null, weekIndex: 0, lift: null, result: null, user: null, date: "" };
+const state = { program: null, day: null, week: null, weekIndex: 0, lift: null, result: null, user: null, date: "", lifts: {} };
+
+// What they lifted before this day: their logs on any coach plan + their own Strength page sessions.
+function liftsBefore(results, date) {
+    let own = {};
+    try { own = JSON.parse(localStorage.getItem("strength-history") || "{}") || {}; } catch {}
+    return lastLifts(mergeHistories(own, historyFromResults(results)), { before: date });
+}
+
+function lastTimeText(name) {
+    const w = lastLiftWords(state.lifts[String(name || "").trim().toLowerCase()]);
+    if (!w) return "";
+    return `Last time${w.when ? ` · ${w.when}` : ""}: ${w.what}${w.sets > 1 ? ` (${w.sets} sets)` : ""}`;
+}
 
 const coachName = () => state.program.coachName || "your coach";
 const hydrate = () => import("./icons.js").then(m => m.hydrate());
@@ -64,6 +78,7 @@ function exercisesHtml(lift) {
                         <div class="st-ex-top"><strong>${esc(ex.name)}</strong>${demoLink(ex)}</div>
                         <span class="st-ex-rx">${esc(setsText(ex))}</span>
                         ${targetText(ex) ? `<span class="st-ex-target">${esc(targetText(ex))}${group.length > 1 && k === group.length - 1 ? " after each round" : ""}</span>` : ""}
+                        ${lastTimeText(ex.name) ? `<span class="st-ex-last">${icon("clock")} ${esc(lastTimeText(ex.name))}</span>` : ""}
                         ${ex.note ? `<p class="st-ex-note">${esc(ex.note)}</p>` : ""}
                     </div>
                 </div>`;
@@ -192,6 +207,7 @@ async function startSession() {
                 <span class="wo-mode-phase">${esc(labels[step.ex])} · Set ${step.set} of ${step.of}</span>
                 <h2>${esc(ex.name)}</h2>
                 <span class="wo-mode-target">${esc(ex.reps)}${ex.weight ? ` @ ${ex.weight} lb` : ""}${ex.rpe ? ` · RPE ${ex.rpe}` : ""}${Number.isInteger(ex.rir) ? ` · ${ex.rir} in reserve` : ""}</span>
+                ${lastTimeText(ex.name) ? `<p class="st-mode-last">${esc(lastTimeText(ex.name))}</p>` : ""}
                 ${ex.note ? `<p class="st-mode-note">${esc(ex.note)}</p>` : ""}
                 <div class="st-mode-inputs">
                     <label>Weight (lb)<input class="st-big-input" type="number" inputmode="decimal" min="0" max="2000" step="2.5" data-in="weight" value="${esc(set.weight ?? "")}" placeholder="—"></label>
@@ -466,10 +482,12 @@ export async function mountStrengthSession({ found, date, user, openLog }) {
             }));
         }
     });
+    state.lifts = liftsBefore([], date);
     render();
     try {
-        const results = await listMyResults(state.program.coachPlanId);
-        state.result = results.find(r => r.date === date && isStrengthResult(r)) || null;
+        const results = await listMyResults();
+        state.result = results.find(r => r.planId === state.program.coachPlanId && r.date === date && isStrengthResult(r)) || null;
+        state.lifts = liftsBefore(results, date);
     } catch (error) {
         console.warn("Southbound: workout results unavailable.", error?.code || error);
     }

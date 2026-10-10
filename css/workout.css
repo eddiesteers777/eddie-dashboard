@@ -248,3 +248,8 @@ body.wo-mode-open{ overflow:hidden; }
 .wo-coros p{ margin:0; color:var(--text-secondary); font-size:14px; }
 .wo-coros.is-sent{ flex-direction:row; align-items:center; color:var(--text-secondary); font-size:14px; }
 .wo-coros.is-sent .ui-icon{ color:var(--green); flex-shrink:0; }
+
+/* What they lifted last time (their earlier logs), under each exercise and in the session. */
+.st-ex-last{ display:inline-flex; align-items:center; gap:6px; color:var(--text-secondary); font-size:13px; }
+.st-ex-last svg{ width:14px; height:14px; color:var(--orange); }
+.st-mode-last{ margin:4px 0 0; color:var(--text-secondary); font-size:14px; }
