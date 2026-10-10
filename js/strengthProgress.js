@@ -1,3 +1,4 @@
+import { LB_PER_KG } from "./strengthUnits.js";
 // Strength progress (pure, no DOM, no storage): tests/strengthProgress.test.mjs.
 // Reads strength-history ({ exerciseName lower-case: [{ date, mode, name?, bw?, sets: [{ weight lb, reps, duration, type? }] }] },
 // newest first) and works out, per exercise: each session's top set, estimated 1-rep max, volume,
@@ -221,9 +222,12 @@ export function lastLiftWords(lift) {
 
 // The records set on one day, one line per lift: what beat everything logged before it.
 // [{ key, name, kind, line }] — kind is the headline record (est. 1RM first, then heaviest, reps, hold, volume).
-export function recordsOn(history = {}, date) {
+// { unit: "kg" } shows weights in kg (they're stored in lb).
+export function recordsOn(history = {}, date, { unit = "lb" } = {}) {
     const out = [];
     const num = n => (Math.round(Number(n) * 10) / 10).toLocaleString("en-US");
+    const w = lb => num(unit === "kg" ? Number(lb) / LB_PER_KG : lb);
+    const wr = lb => num(Math.round(unit === "kg" ? Number(lb) / LB_PER_KG : lb));
     for (const [key, all] of Object.entries(history || {})) {
         const entries = (Array.isArray(all) ? all : []).filter(e => e?.date && e.date <= date);
         const sessions = withRecords(sessionsOf(entries));
@@ -233,11 +237,11 @@ export function recordsOn(history = {}, date) {
         const max = f => Math.max(0, ...before.map(f).filter(v => v != null));
         const name = entries.find(e => e?.name)?.name || titleCase(key);
         let kind, line;
-        if (day.pr.includes("e1rm")) { kind = "e1rm"; line = `est. 1RM ${num(Math.round(day.e1rm))} lb (best was ${num(Math.round(max(s => s.e1rm)))})`; }
-        else if (day.pr.includes("weight")) { kind = "weight"; line = `heaviest yet: ${num(day.heaviest)} lb (was ${num(max(s => s.heaviest))})`; }
+        if (day.pr.includes("e1rm")) { kind = "e1rm"; line = `est. 1RM ${wr(day.e1rm)} ${unit} (best was ${wr(max(s => s.e1rm))})`; }
+        else if (day.pr.includes("weight")) { kind = "weight"; line = `heaviest yet: ${w(day.heaviest)} ${unit} (was ${w(max(s => s.heaviest))})`; }
         else if (day.pr.includes("reps")) { kind = "reps"; line = `most reps: ${day.mostReps} (was ${max(s => s.mostReps)})`; }
         else if (day.pr.includes("longest")) { kind = "longest"; line = `longest: ${day.bestDuration} sec (was ${max(s => s.bestDuration)})`; }
-        else { kind = "volume"; line = `most volume: ${num(day.volume)} lb (was ${num(max(s => s.volume))})`; }
+        else { kind = "volume"; line = `most volume: ${wr(day.volume)} ${unit} (was ${wr(max(s => s.volume))})`; }
         out.push({ key, name, kind, line });
     }
     const order = ["e1rm", "weight", "reps", "longest", "volume"];

@@ -16,6 +16,7 @@ import {
 } from "./strengthHistory.js";
 
 import { icon } from "./icons.js";
+import { recordsOn } from "./strengthProgress.js";
 import { restAfterSet, SET_TYPES, SET_TYPE_WORDS, repsMaxValue } from "./strengthBuilderModel.js";
 import {
     SETTINGS_KEY, cleanSettings, toDisplay, fromDisplay, unitLabel, unitWord, stepFor, nudge,
@@ -936,19 +937,44 @@ async function copySummaryText() {
     }
 }
 
+// Records this workout set, from strength-history just after it was logged (today, this day's lifts).
+function workoutRecords(day) {
+    let history = {};
+    try { history = JSON.parse(localStorage.getItem("strength-history") || "{}") || {}; } catch {}
+    const names = new Set((day.exercises || []).map(ex => String(ex.name || "").trim().toLowerCase()));
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return recordsOn(history, today, { unit: units() }).filter(r => names.has(r.key));
+}
+
+function renderSummaryRecords(records) {
+    const el = $("strengthSummaryRecords");
+    if (!el) return;
+    el.hidden = !records.length;
+    el.innerHTML = records.length
+        ? `<strong>${icon("trophy")} ${records.length === 1 ? "New record" : `${records.length} new records`}</strong>
+           <ul>${records.map(r => `<li><b>${escapeHtml(r.name)}</b> ${escapeHtml(r.line)}</li>`).join("")}</ul>`
+        : "";
+}
+
 function finishWorkout() {
     const day = getActiveDay();
     const elapsedMs = timerStartedAt ? Date.now() - timerStartedAt : 0;
-    const summary = day ? buildWorkoutSummary(day, elapsedMs) : null;
+    let summary = day ? buildWorkoutSummary(day, elapsedMs) : null;
     const stats = day ? computeWorkoutStats(day) : null;
 
     if (day) {
         day.exercises.forEach(logExercise);
     }
+    const records = day ? workoutRecords(day) : [];
+    if (summary && records.length) {
+        summary += `\n\nNew ${records.length === 1 ? "record" : "records"}:\n${records.map(r => `${r.name}: ${r.line}`).join("\n")}`;
+    }
 
     closeWorkoutMode();
 
     if (summary && stats) {
+        renderSummaryRecords(records);
         openSummaryModal(summary, stats, elapsedMs);
     }
 }

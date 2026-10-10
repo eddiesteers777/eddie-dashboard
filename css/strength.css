@@ -832,7 +832,7 @@
     gap:3px;
 }
 
-.strength-search-title::after{
+#exerciseSearchOverlay .strength-search-title::after{
     content:"Search the library, then keep adding exercises without reopening this window.";
     color:var(--muted);
     font-size:10px;
@@ -3860,7 +3860,7 @@ button.strength-empty-exercise-message:hover{ border-color:var(--primary); }
 
 /* Picker */
 html.strength-picker-open .strength-search-overlay{ display:flex; }
-.strength-search-title::after{ content:"Tap to pick as many as you like, then add them in one go."; font-size:12px; }
+#exerciseSearchOverlay .strength-search-title::after{ content:"Tap to pick as many as you like, then add them in one go."; font-size:12px; }
 .strength-search-close{ width:40px; height:40px; display:grid; place-items:center; border-radius:50%; cursor:pointer; }
 .strength-search-close .ui-icon svg{ width:18px; height:18px; }
 .strength-picker-heading{ margin:4px 2px 8px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }

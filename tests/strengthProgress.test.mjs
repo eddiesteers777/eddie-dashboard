@@ -163,3 +163,12 @@ test("recordsOn: what a day beat, one line per lift", async () => {
     assert.deepEqual(recordsOn(h, "2026-10-06").map(r => r.name), [], "first sessions set no records");
     assert.deepEqual(recordsOn({}, "2026-10-13"), []);
 });
+
+test("recordsOn shows weights in kg when asked", async () => {
+    const { recordsOn } = await import("../js/strengthProgress.js");
+    const h = { "back squat": [
+        { date: "2026-10-13", name: "Back Squat", mode: "reps", sets: [{ weight: 185, reps: 5 }] },
+        { date: "2026-10-06", name: "Back Squat", mode: "reps", sets: [{ weight: 175, reps: 5 }] }
+    ] };
+    assert.equal(recordsOn(h, "2026-10-13", { unit: "kg" })[0].line, "est. 1RM 98 kg (best was 93)");
+});
