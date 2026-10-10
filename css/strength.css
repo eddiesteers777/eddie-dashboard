@@ -3928,3 +3928,112 @@ button.strength-result.is-added:not(.is-picked){ opacity:.75; }
     .strength-picker-count{ flex:0 0 100%; }
     .strength-picker-btn{ flex:1 1 0; }
 }
+
+/* ==========================================================
+   SET ROWS (2026-10-11, after Strong / Hevy): one grid row per
+   set that fits a phone. Set badge (tap: working → warm-up →
+   drop) · Previous (tap to copy) · lb · reps/sec · RPE · remove.
+   Sets come first in the open card; tools and the note after.
+========================================================== */
+.strength-sets{ display:grid; gap:6px; margin:4px 0 8px; }
+.strength-set-head,
+.strength-set-row{
+    display:grid;
+    grid-template-columns:36px minmax(52px,1fr) 66px 56px 50px 34px;
+    align-items:center;
+    gap:6px;
+}
+.strength-set-head span{ color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+.strength-set-head span:nth-child(2){ text-align:left; padding-left:4px; }
+.strength-set-row{ padding:4px 0; border-radius:10px; }
+.strength-set-row.is-warmup{ background:color-mix(in srgb, var(--amber) 7%, transparent); }
+.strength-set-row.is-drop{ background:color-mix(in srgb, var(--orange) 7%, transparent); }
+.strength-set-badge{
+    width:34px; height:34px; border-radius:10px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.05);
+    color:var(--text);
+    font:800 14px var(--font-body);
+    cursor:pointer;
+}
+.strength-set-row.is-warmup .strength-set-badge{ color:var(--amber); border-color:color-mix(in srgb, var(--amber) 55%, transparent); }
+.strength-set-row.is-drop .strength-set-badge{ color:var(--orange); border-color:color-mix(in srgb, var(--orange) 55%, transparent); }
+.strength-set-prev{
+    min-width:0;
+    padding:6px 4px;
+    border:0; background:none;
+    color:var(--muted);
+    font:600 13px var(--font-mono, var(--font-body));
+    text-align:left;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    cursor:pointer;
+}
+button.strength-set-prev:hover{ color:var(--primary); }
+.strength-set-prev.is-empty{ cursor:default; padding-left:8px; }
+.strength-sets .strength-set-input,
+.strength-sets .strength-set-rpe{
+    width:100%;
+    min-width:0;
+    height:38px;
+    padding:0 6px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(255,255,255,.04);
+    color:var(--text);
+    font:700 15px var(--font-body);
+    text-align:center;
+}
+.strength-sets .strength-set-rpe{ font-weight:600; font-size:14px; padding:0 2px; text-align-last:center; }
+.strength-sets .strength-set-input:focus,
+.strength-sets .strength-set-rpe:focus{ border-color:var(--primary); outline:none; box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 35%, transparent); }
+.strength-sets .strength-set-remove{
+    width:32px; height:32px;
+    display:grid; place-items:center;
+    border:0; border-radius:50%;
+    background:transparent; color:var(--muted);
+    cursor:pointer;
+}
+.strength-sets .strength-set-remove:hover{ color:var(--danger); background:color-mix(in srgb, var(--danger) 12%, transparent); }
+.strength-sets .strength-set-remove svg{ width:15px; height:15px; }
+
+.strength-add-set-btn{
+    width:100%;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    min-height:40px;
+    border:1px dashed var(--border); border-radius:12px;
+    background:transparent; color:var(--primary);
+    font:700 14px var(--font-body);
+    cursor:pointer;
+}
+.strength-add-set-btn .ui-icon svg{ width:15px; height:15px; }
+.strength-add-set-btn:hover{ border-color:var(--primary); }
+
+.strength-exercise-tools{
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+    margin-top:12px;
+}
+.strength-exercise-tools .strength-mode-btn,
+.strength-exercise-tools .strength-group-btn{
+    min-height:36px; padding:0 12px;
+    border:1px solid var(--border); border-radius:999px;
+    background:transparent; color:var(--text);
+    font:600 13px var(--font-body); cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px;
+}
+.strength-exercise-tools .strength-mode-btn.active{ border-color:var(--primary); color:var(--primary); }
+.strength-exercise-tools .strength-mode-btn svg{ width:14px; height:14px; }
+.strength-rest-field{ display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:13px; }
+.strength-rest-field select{ height:36px; border-radius:999px; padding:0 10px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text); font:600 13px var(--font-body); }
+.strength-exercise-tools .strength-exercise-actions{ margin-left:auto; display:inline-flex; gap:6px; }
+.strength-exercise-editor .strength-note-field{ display:block; margin-top:10px; }
+.strength-exercise-editor .strength-note-field input{
+    width:100%; height:40px; padding:0 12px;
+    border:1px solid var(--border); border-radius:10px;
+    background:rgba(255,255,255,.03); color:var(--text);
+}
+
+@media (max-width:420px){
+    .strength-set-head,
+    .strength-set-row{ grid-template-columns:32px minmax(44px,1fr) 60px 50px 46px 30px; gap:5px; }
+    .strength-sets .strength-set-input{ font-size:16px; }   /* no iOS zoom */
+}

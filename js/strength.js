@@ -462,6 +462,7 @@ function renderDayTabs() {
    Set / exercise rendering
 ========================================== */
 
+// eslint-disable-next-line no-unused-vars -- kept for anything that still renders the old select
 function setTypeOptions(value) {
     return `
         <option value="working" ${
@@ -478,142 +479,66 @@ function setTypeOptions(value) {
     `;
 }
 
+// The last time this exercise was logged (strength-history, newest first), for the Previous column.
+function lastLogged(exercise) {
+    try {
+        const history = JSON.parse(localStorage.getItem("strength-history") || "{}") || {};
+        const entries = history[String(exercise.name || "").trim().toLowerCase()];
+        return Array.isArray(entries) && entries.length ? entries[0] : null;
+    } catch {
+        return null;
+    }
+}
+
+const SET_TYPES = ["working", "warmup", "drop"];
+const SET_TYPE_BADGE = { warmup: "W", drop: "D" };
+const SET_TYPE_WORDS = { working: "Working set", warmup: "Warm-up set", drop: "Drop set" };
+
+// Sets as rows that fit a phone (2026-10-11, after Strong / Hevy):
+// SET (tap to switch working / warm-up / drop) · PREVIOUS (tap to copy) · LB · REPS or SEC · RPE · remove.
 function renderSetTable(exercise) {
     const timeMode = exercise.mode === "time";
+    const last = lastLogged(exercise);
+    let working = 0;
+
+    const rows = exercise.sets.map((set, index) => {
+        const type = SET_TYPES.includes(set.type) ? set.type : "working";
+        const label = SET_TYPE_BADGE[type] || String(++working);
+        const prev = last?.sets?.[index] || null;
+        const prevText = prev
+            ? (timeMode ? `${prev.duration || 0}s` : `${prev.weight ? `${prev.weight}×` : ""}${prev.reps || 0}`)
+            : "–";
+        return `
+            <div class="strength-set-row is-${type}" data-set-id="${set.id}">
+                <button type="button" class="strength-set-badge" data-cycle-type="${set.id}" data-exercise-id="${exercise.id}"
+                    title="${SET_TYPE_WORDS[type]}: tap to change" aria-label="Set ${index + 1}, ${SET_TYPE_WORDS[type]}. Tap to change the kind of set.">${label}</button>
+                ${prev
+                    ? `<button type="button" class="strength-set-prev" data-use-prev="${index}" data-exercise-id="${exercise.id}" data-set-id="${set.id}" title="Use last time's numbers">${escapeHtml(prevText)}</button>`
+                    : `<span class="strength-set-prev is-empty">–</span>`}
+                <input type="number" inputmode="decimal" class="strength-set-input" aria-label="Weight, set ${index + 1}"
+                    data-field="weight" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                    value="${Number(set.weight) || ""}" placeholder="0" min="0" step="5">
+                ${timeMode
+                    ? `<input type="number" inputmode="numeric" class="strength-set-input" aria-label="Seconds, set ${index + 1}"
+                        data-field="duration" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                        value="${set.duration || 30}" min="1" step="5">`
+                    : `<input type="number" inputmode="numeric" class="strength-set-input" aria-label="Reps, set ${index + 1}"
+                        data-field="reps" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                        value="${Number(set.reps) || ""}" placeholder="0" min="0" step="1">`}
+                <select class="strength-set-rpe" aria-label="RPE, set ${index + 1}" data-field="rpe" data-exercise-id="${exercise.id}" data-set-id="${set.id}">
+                    <option value="">–</option>
+                    ${Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}" ${Number(set.rpe) === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("")}
+                </select>
+                <button type="button" class="strength-set-remove" data-remove-set="${set.id}" data-exercise-id="${exercise.id}" aria-label="Remove set ${index + 1}">${icon("close")}</button>
+            </div>`;
+    }).join("");
 
     return `
-        <div class="strength-table-scroll">
-            <table class="strength-set-table">
-                <thead>
-                    <tr>
-                        <th>Set</th>
-                        <th>Type</th>
-                        <th>Weight</th>
-                        <th>${timeMode ? "Time" : "Reps"}</th>
-                        <th>RPE</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    ${exercise.sets.map((set, index) => `
-                        <tr data-set-id="${set.id}">
-                            <td class="strength-set-index">
-                                ${index + 1}
-                            </td>
-
-                            <td>
-                                <select
-                                    class="strength-set-type"
-                                    data-field="type"
-                                    data-exercise-id="${exercise.id}"
-                                    data-set-id="${set.id}"
-                                >
-                                    ${setTypeOptions(set.type)}
-                                </select>
-                            </td>
-
-                            <td>
-                                <input
-                                    type="number"
-                                    class="strength-set-input"
-                                    data-field="weight"
-                                    data-exercise-id="${exercise.id}"
-                                    data-set-id="${set.id}"
-                                    value="${set.weight}"
-                                    min="0"
-                                    step="5"
-                                >
-                                <span class="strength-set-unit">lb</span>
-                            </td>
-
-                            <td>
-                                ${
-                                    timeMode
-                                        ? `
-                                            <input
-                                                type="number"
-                                                class="strength-set-input"
-                                                data-field="duration"
-                                                data-exercise-id="${exercise.id}"
-                                                data-set-id="${set.id}"
-                                                value="${set.duration || 30}"
-                                                min="1"
-                                                step="5"
-                                            >
-                                            <span class="strength-set-unit">sec</span>
-                                        `
-                                        : `
-                                            <input
-                                                type="number"
-                                                class="strength-set-input"
-                                                data-field="reps"
-                                                data-exercise-id="${exercise.id}"
-                                                data-set-id="${set.id}"
-                                                value="${set.reps}"
-                                                min="0"
-                                                step="1"
-                                            >
-                                        `
-                                }
-                            </td>
-
-                            <td>
-                                <select
-                                    class="strength-set-rpe"
-                                    data-field="rpe"
-                                    data-exercise-id="${exercise.id}"
-                                    data-set-id="${set.id}"
-                                >
-                                    <option value="">—</option>
-                                    ${Array.from(
-                                        { length: 10 },
-                                        (_, i) => `
-                                            <option
-                                                value="${i + 1}"
-                                                ${
-                                                    Number(set.rpe) === i + 1
-                                                        ? "selected"
-                                                        : ""
-                                                }
-                                            >
-                                                ${i + 1}
-                                            </option>
-                                        `
-                                    ).join("")}
-                                </select>
-                            </td>
-
-                            <td>
-                                <button
-                                    type="button"
-                                    class="strength-set-done ${
-                                        set.done ? "checked" : ""
-                                    }"
-                                    data-toggle-set="${set.id}"
-                                    data-exercise-id="${exercise.id}"
-                                    title="Complete set"
-                                >
-                                    ${icon("check")}
-                                </button>
-                            </td>
-
-                            <td>
-                                <button
-                                    type="button"
-                                    class="strength-set-remove"
-                                    data-remove-set="${set.id}"
-                                    data-exercise-id="${exercise.id}"
-                                    title="Remove set"
-                                >
-                                    ${icon("close")}
-                                </button>
-                            </td>
-                        </tr>
-                    `).join("")}
-                </tbody>
-            </table>
+        <div class="strength-sets" role="group" aria-label="Sets">
+            <div class="strength-set-head" aria-hidden="true">
+                <span>Set</span><span>Previous</span><span>lb</span><span>${timeMode ? "Sec" : "Reps"}</span><span>RPE</span><span></span>
+            </div>
+            ${rows}
         </div>
     `;
 }
@@ -721,34 +646,35 @@ function renderExercise(exercise) {
     const detailHtml = detailsOpen
         ? [
             '<div class="strength-exercise-editor">',
-                '<div class="strength-exercise-editor-top">',
-                    '<div class="strength-exercise-toolbar">',
 
-                        '<button type="button" class="strength-mode-btn ' +
-                            (exercise.mode === "time" ? "active" : "") +
-                            '" data-toggle-mode="' + exercise.id + '">' +
-                            icon("timer") + " " +
-                            (exercise.mode === "time" ? "Timed" : "Reps") +
-                        "</button>",
+                // Sets first: they're what you came to change.
+                renderSetTable(exercise),
 
-                        '<button type="button" class="strength-rest-btn" data-rest-exercise="' +
-                            exercise.id + '">' +
-                            "Rest " + exercise.restSeconds + "s" +
-                        "</button>",
+                '<button type="button" class="strength-add-set-btn" data-add-set="' +
+                    exercise.id + '">' + icon("plus") + " Add set</button>",
 
-                        '<button type="button" class="strength-group-btn" data-group-exercise="' +
-                            exercise.id + '">' +
-                            (exercise.groupId ? "Edit Group" : "+ Add to Group") +
-                        "</button>",
+                '<div class="strength-exercise-tools">',
 
-                        '<button type="button" class="strength-note-btn" data-toggle-notes="' +
-                            exercise.id + '">' +
-                            (exercise.notes ? "Notes •" : "Notes") +
-                        "</button>",
+                    '<button type="button" class="strength-mode-btn ' +
+                        (exercise.mode === "time" ? "active" : "") +
+                        '" data-toggle-mode="' + exercise.id + '" title="Switch between reps and timed sets">' +
+                        icon("timer") + " " +
+                        (exercise.mode === "time" ? "Timed" : "Reps") +
+                    "</button>",
 
-                    "</div>",
+                    '<label class="strength-rest-field">',
+                        "<span>Rest</span>",
+                        '<select data-rest-select="' + exercise.id + '">',
+                            restOptions,
+                        "</select>",
+                    "</label>",
 
-                    '<div class="strength-exercise-actions">',
+                    '<button type="button" class="strength-group-btn" data-group-exercise="' +
+                        exercise.id + '">' +
+                        (exercise.groupId ? "Edit group" : "Superset / circuit") +
+                    "</button>",
+
+                    '<span class="strength-exercise-actions">',
 
                         '<button type="button" class="strength-icon-btn" ' +
                             'data-duplicate-exercise="' + exercise.id + '" ' +
@@ -761,41 +687,19 @@ function renderExercise(exercise) {
                             'data-remove-exercise="' + exercise.id + '" ' +
                             'title="Remove exercise" ' +
                             'aria-label="Remove ' + escapeHtml(exercise.name) + '">' +
-                            icon("close") +
+                            icon("trash") +
                         "</button>",
 
-                    "</div>",
+                    "</span>",
                 "</div>",
 
-                '<div class="strength-exercise-details">',
-
-                    "<label>",
-                        "<span>Rest</span>",
-                        '<select data-rest-select="' + exercise.id + '">',
-                            restOptions,
-                        "</select>",
-                    "</label>",
-
-                    '<label class="strength-note-field">',
-                        "<span>Exercise note</span>",
-                        '<input type="text" ' +
-                            'data-exercise-note="' + exercise.id + '" ' +
-                            'value="' + escapeHtml(exercise.notes) + '" ' +
-                            'placeholder="e.g. Keep ribs down">',
-                    "</label>",
-
-                    '<p class="strength-mode-help">' +
-                        (exercise.mode === "time"
-                            ? "Timed mode is ideal for planks, carries, mobility, and other duration-based work."
-                            : "Rep mode tracks weight and reps. RPE is optional when you want to prescribe or record effort.") +
-                    "</p>",
-
-                "</div>",
-
-                renderSetTable(exercise),
-
-                '<button type="button" class="strength-add-set-btn" data-add-set="' +
-                    exercise.id + '">+ Add Set</button>',
+                '<label class="strength-note-field">',
+                    '<span class="sr-only">Exercise note</span>',
+                    '<input type="text" ' +
+                        'data-exercise-note="' + exercise.id + '" ' +
+                        'value="' + escapeHtml(exercise.notes) + '" ' +
+                        'placeholder="Add a note (e.g. keep ribs down)">',
+                "</label>",
 
             "</div>"
         ].join("")
@@ -1550,6 +1454,8 @@ function addExercises(
     );
 
     day.exercises.push(...items);
+    // The first one opens straight to its sets, ready to fill in.
+    expandedExercises.add(items[0].id);
 
     savePlan();
     closeExerciseSearch();
@@ -2380,6 +2286,35 @@ document.addEventListener(
             return;
         }
 
+        const cycleBtn = target.closest("[data-cycle-type]");
+        if (cycleBtn) {
+            const exercise = activeDay()?.exercises.find(ex => ex.id === cycleBtn.dataset.exerciseId);
+            const set = exercise?.sets.find(item => item.id === cycleBtn.dataset.cycleType);
+            if (set) {
+                const now = SET_TYPES.includes(set.type) ? set.type : "working";
+                set.type = SET_TYPES[(SET_TYPES.indexOf(now) + 1) % SET_TYPES.length];
+                savePlan();
+                renderDayContent();
+                document.querySelector(`[data-cycle-type="${set.id}"]`)?.focus();
+                toast(SET_TYPE_WORDS[set.type], { duration: 1200 });
+            }
+            return;
+        }
+
+        const prevBtn = target.closest("[data-use-prev]");
+        if (prevBtn) {
+            const exercise = activeDay()?.exercises.find(ex => ex.id === prevBtn.dataset.exerciseId);
+            const set = exercise?.sets.find(item => item.id === prevBtn.dataset.setId);
+            const prev = exercise && lastLogged(exercise)?.sets?.[Number(prevBtn.dataset.usePrev)];
+            if (set && prev) {
+                if (exercise.mode === "time") set.duration = Number(prev.duration) || set.duration;
+                else { set.weight = Number(prev.weight) || 0; set.reps = Number(prev.reps) || 0; }
+                savePlan();
+                renderAll();
+            }
+            return;
+        }
+
         const pickBtn =
             target.closest(
                 "[data-pick-result]"
@@ -2808,7 +2743,8 @@ document.addEventListener(
                                 ? 0
                                 : last?.reps || 8,
                         duration:
-                            last?.duration || 30
+                            last?.duration || 30,
+                        rpe: last?.rpe || ""
                     })
                 );
 
