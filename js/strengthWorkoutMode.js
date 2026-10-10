@@ -16,6 +16,7 @@ import {
 } from "./strengthHistory.js";
 
 import { icon } from "./icons.js";
+import { restAfterSet, SET_TYPES, SET_TYPE_WORDS, repsMaxValue } from "./strengthBuilderModel.js";
 
 const PLAN_KEY = "strength-plan";
 const BAR_WEIGHT = 45;
@@ -266,20 +267,18 @@ function renderPlateCalc(weight) {
 const SET_TYPE_COLORS = {
     working: "var(--primary)",
     warmup: "var(--yellow)",
-    drop: "var(--purple)"
+    drop: "var(--purple)",
+    failure: "var(--red)"
 };
 
-const SET_TYPE_ORDER = ["working", "warmup", "drop"];
+const SET_TYPE_ORDER = SET_TYPES;
 
-const SET_TYPE_LABELS = {
-    working: "Working set",
-    warmup: "Warm-up set",
-    drop: "Drop set"
-};
+const SET_TYPE_LABELS = SET_TYPE_WORDS;
 
 function renderSetRow(exercise, set, index) {
     const isTime = exercise.mode === "time";
-    const setType = set.type || "working";
+    const setType = SET_TYPE_ORDER.includes(set.type) ? set.type : "working";
+    const repTop = repsMaxValue(set.reps, set.repsMax);
 
     const numberControls = isTime
         ? `
@@ -319,6 +318,7 @@ function renderSetRow(exercise, set, index) {
                     value="${set.reps}">
                 <button type="button" data-adjust="reps" data-delta="1" data-set-id="${set.id}" data-exercise-id="${exercise.id}" aria-label="Increase reps by 1">${icon("plus")}</button>
             </div>
+            ${repTop ? `<span class="strength-workout-range" title="Target rep range">${Number(set.reps) || 0}–${repTop} reps</span>` : ""}
         `;
 
     return `
@@ -374,7 +374,7 @@ function renderSetChips(sets, isTime) {
     return sets
         .map(s => {
             const label = isTime ? `${s.duration}s` : `${s.weight}×${s.reps}`;
-            const color = SET_TYPE_COLORS[s.type || "working"];
+            const color = SET_TYPE_COLORS[s.type] || SET_TYPE_COLORS.working;
             return `<span class="strength-workout-chip" style="--set-color:${color}">${escapeHtml(label)}</span>`;
         })
         .join("");
@@ -1118,7 +1118,8 @@ document.addEventListener("click", event => {
             if (set) {
                 set.done = !set.done;
                 justCompleted = set.done;
-                restSeconds = exercise.restSeconds;
+                // "No rest" (0) and the set before a drop set start no timer.
+                restSeconds = restAfterSet(exercise, exercise.sets.indexOf(set));
                 renderExercise(exercise);
             }
         });

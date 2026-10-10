@@ -224,6 +224,7 @@
     "js/stravaStore.js",
     "js/strength.js",
     "js/strengthBuilder.js",
+    "js/strengthBuilderModel.js",
     "js/strengthHistory.js",
     "js/strengthLibrary.js",
     "js/strengthLibraryData.js",

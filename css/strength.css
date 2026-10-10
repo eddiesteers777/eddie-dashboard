@@ -4037,3 +4037,96 @@ button.strength-set-prev:hover{ color:var(--primary); }
     .strength-set-row{ grid-template-columns:32px minmax(44px,1fr) 60px 50px 46px 30px; gap:5px; }
     .strength-sets .strength-set-input{ font-size:16px; }   /* no iOS zoom */
 }
+
+/* ==========================================================
+   BUILDER v3 (2026-10-11): name in place, estimate, save
+   status, Schedule, grouping under one fold, rep ranges,
+   failure sets, move up / down, create-from-search.
+========================================================== */
+.strength-editor-overlay [hidden]{ display:none !important; }
+.strength-session-toolbar{ align-items:flex-start; }
+.strength-session-meta{ flex:1 1 280px; flex-direction:column; align-items:stretch; gap:8px; min-width:0; }
+.strength-name-field{ display:block; min-width:0; }
+.strength-name-field input{
+    width:100%;
+    padding:6px 10px;
+    margin-left:-10px;
+    border:1px solid transparent;
+    border-radius:10px;
+    background:transparent;
+    color:var(--text);
+    font:400 30px/1.1 var(--font-display);
+    letter-spacing:.02em;
+}
+/* st-big-input opts the name out of style.css's 16px phone rule (it's a title, well above 16px, so no iOS zoom). */
+.strength-name-field input:hover{ border-color:var(--border); }
+.strength-name-field input:focus{ border-color:var(--primary); background:rgba(255,255,255,.03); outline:none; }
+.strength-session-sub{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; }
+.strength-duration-control{ font-size:13px; }
+.strength-estimate{ color:var(--muted); font-size:13px; }
+.strength-estimate-use{
+    margin-left:4px; padding:3px 10px; min-height:28px;
+    border:1px solid var(--border); border-radius:999px;
+    background:transparent; color:var(--primary);
+    font:700 12px var(--font-body); cursor:pointer;
+}
+.strength-estimate-use:hover{ border-color:var(--primary); }
+.strength-save-status{ margin:0; color:var(--muted); font-size:12px; }
+.strength-save-status[data-state="synced"]{ color:var(--good, var(--green)); }
+.strength-save-status[data-state="offline"]{ color:var(--amber); }
+.strength-save-status[data-state="error"]{ color:var(--danger); font-weight:700; }
+.strength-session-actions{ align-items:flex-start; }
+.strength-session-actions .strength-builder-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    min-height:38px; padding:0 14px;
+    border-radius:999px; font-size:13px;
+}
+.strength-session-actions .strength-builder-btn svg{ width:15px; height:15px; }
+.strength-builder-btn-main{ border-color:var(--primary) !important; color:var(--primary) !important; }
+.strength-builder-btn:disabled{ opacity:.45; cursor:not-allowed; }
+.strength-more-actions{ position:relative; }
+.strength-more-actions > summary{ list-style:none; }
+.strength-more-actions > summary::-webkit-details-marker{ display:none; }
+.strength-more-actions-list{
+    display:flex; flex-wrap:wrap; gap:6px;
+    margin-top:8px;
+}
+
+.strength-set-head-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:2px;
+    min-height:28px; padding:0 4px;
+    border:0; border-radius:8px;
+    background:none; color:var(--primary);
+    font:700 11px var(--font-body); letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer; white-space:nowrap;
+}
+.strength-set-head-btn svg{ width:12px; height:12px; }
+.strength-sets.has-range .strength-set-head,
+.strength-sets.has-range .strength-set-row{ grid-template-columns:36px minmax(44px,1fr) 62px 92px 50px 34px; }
+.strength-set-range{ display:grid; grid-template-columns:1fr 10px 1fr; align-items:center; text-align:center; color:var(--muted); min-width:0; }
+.strength-set-row.is-failure{ background:color-mix(in srgb, var(--red) 7%, transparent); }
+.strength-set-row.is-failure .strength-set-badge{ color:var(--red); border-color:color-mix(in srgb, var(--red) 55%, transparent); }
+
+.strength-exercise-tools .strength-icon-btn{ width:38px; height:38px; display:inline-grid; place-items:center; }
+.strength-exercise-tools .strength-icon-btn:disabled{ opacity:.3; cursor:default; }
+
+.strength-search-empty p{ margin:0 0 10px; }
+.strength-search-empty .strength-picker-btn{ margin:4px 4px 0 0; }
+.strength-create-row{
+    width:100%;
+    display:flex; align-items:center; gap:8px;
+    margin-top:8px; padding:12px;
+    border:1px dashed var(--border); border-radius:12px;
+    background:transparent; color:var(--primary);
+    font:700 14px var(--font-body); text-align:left; cursor:pointer;
+}
+.strength-create-row svg{ width:15px; height:15px; }
+.strength-create-row:hover{ border-color:var(--primary); }
+.strength-workout-range{ align-self:center; color:var(--muted); font-size:12px; white-space:nowrap; }
+
+@media (max-width:420px){
+    .strength-sets.has-range .strength-set-head,
+    .strength-sets.has-range .strength-set-row{ grid-template-columns:30px minmax(36px,1fr) 54px 84px 44px 28px; gap:4px; }
+    .strength-name-field input{ font-size:26px; }
+    .strength-session-actions .strength-builder-btn{ flex:1 1 auto; justify-content:center; }
+}
