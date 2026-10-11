@@ -950,6 +950,7 @@ $("diySodiumTarget").addEventListener("input", () => {
 ["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyExistingSodium"].forEach(id => $(id)?.addEventListener("input", () => {
     refreshDiySnapshot();
     renderComposition();
+    renderPlanSummary();
 }));
 
 $("diyNotes").addEventListener("input", () => {
