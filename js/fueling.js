@@ -499,6 +499,8 @@ function renderPaceEstimate() {
 
     if (distance > 0 && pace != null) {
         const durationMin = durationFromDistanceAndPace(distance, pace);
+        // Keep the visible duration field synced as soon as a valid distance + pace exists.
+        $("duration").value = durationMin;
         $("estimatedDuration").textContent = `${durationLabel(durationMin)} (${formatClock(durationMin)})`;
         $("estimatedPace").textContent = `${formatPaceMinutes(pace)} /mi`;
         $("paceDurationNote").textContent =
