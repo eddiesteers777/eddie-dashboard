@@ -246,6 +246,7 @@
     "js/strengthSession.js",
     "js/strengthUnits.js",
     "js/strengthWorkout.js",
+    "js/strengthWorkoutList.js",
     "js/strengthWorkoutMode.js",
     "js/stripeBilling.js",
     "js/svgCharts.js",

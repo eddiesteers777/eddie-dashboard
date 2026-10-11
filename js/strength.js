@@ -12,6 +12,7 @@ import { searchExercises } from "./exerciseSearch.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
 import { toast } from "./ui.js";
+import { removeWorkout, restoreWorkout } from "./strengthWorkoutList.js";
 import {
     DEFAULT_REST, REST_OPTIONS, SET_TYPES, SET_TYPE_BADGE, SET_TYPE_WORDS,
     setType, nextSetType, restValue, restLabel, repsText, repsMaxValue,
@@ -1137,28 +1138,59 @@ function createDay(
     return day.id;
 }
 
-function removeDay(dayId) {
-    plan.days =
-        plan.days.filter(
-            day =>
-                day.id !== dayId
-        );
-
-    if (
-        plan.activeDay ===
-        dayId
-    ) {
-        plan.activeDay =
-            plan.days[0]?.id ||
-            null;
-    }
-
-    savePlan();
-    renderAll();
+function localDay(date = new Date()) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function duplicateDay() {
-    const source = activeDay();
+function readSchedule() {
+    try {
+        const value = JSON.parse(localStorage.getItem("strength-schedule") || "null");
+        if (value && Array.isArray(value.items)) return value;
+    } catch { /* unreadable */ }
+    return { version: 1, items: [] };
+}
+
+function writeSchedule(value) {
+    try { localStorage.setItem("strength-schedule", JSON.stringify(value)); } catch { /* full */ }
+}
+
+// Deletes a saved workout and its scheduled days from today on that aren't
+// done (past and done ones stay as history; completed sessions are never
+// touched), with Undo that puts both back exactly.
+function removeDay(dayId) {
+    if (!plan.days.some(day => day.id === dayId)) return;
+    if (document.getElementById("strengthEditorOverlay")?.classList.contains("open") && plan.activeDay === dayId) {
+        closeStrengthEditor();
+    }
+    const schedule = readSchedule();
+    const removed = removeWorkout(plan.days, schedule.items, dayId, localDay());
+    plan.days = removed.days;
+    if (plan.activeDay === dayId) plan.activeDay = plan.days[0]?.id || null;
+    writeSchedule({ ...schedule, items: removed.items });
+    savePlan();
+    renderAll();
+
+    const name = removed.day?.name || "Workout";
+    const n = removed.removedItems.length;
+    toast(`Deleted “${name}”${n ? ` and ${n === 1 ? "its scheduled day" : `its ${n} scheduled days`}` : ""}.`, {
+        type: "success",
+        action: {
+            label: "Undo",
+            onClick: () => {
+                const now = readSchedule();
+                const back = restoreWorkout(plan.days, now.items, removed);
+                plan.days = back.days;
+                writeSchedule({ ...now, items: back.items });
+                savePlan();
+                renderAll();
+                toast(`“${name}” is back.`);
+            }
+        }
+    });
+}
+
+function duplicateDay(dayId = null, { openCopy = true } = {}) {
+    const source = dayId ? plan.days.find(day => day.id === dayId) : activeDay();
     if (!source) return;
 
     const copy =
@@ -1229,12 +1261,14 @@ function duplicateDay() {
 
     copy.groupRounds = rounds;
 
-    plan.days.push(copy);
-    plan.activeDay = copy.id;
+    // The copy sits right after the workout it came from.
+    plan.days.splice(plan.days.indexOf(source) + 1, 0, copy);
+    if (openCopy) plan.activeDay = copy.id;
 
     savePlan();
     renderAll();
-    toast(`Duplicated as “${copy.name}”. You're editing the copy now.`);
+    toast(openCopy ? `Duplicated as “${copy.name}”. You're editing the copy now.` : `Duplicated as “${copy.name}”.`);
+    return copy.id;
 }
 
 function parseTemplateWorkout(text) {
@@ -3711,6 +3745,14 @@ window.addEventListener(
         );
     }
 );
+
+window.addEventListener("eddieos:strength-delete-workout", event => {
+    if (event.detail?.dayId) removeDay(event.detail.dayId);
+});
+
+window.addEventListener("eddieos:strength-duplicate-workout", event => {
+    if (event.detail?.dayId) duplicateDay(event.detail.dayId, { openCopy: false });
+});
 
 window.addEventListener(
     "eddieos:strength-close-editor",

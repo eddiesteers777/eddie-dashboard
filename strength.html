@@ -76,53 +76,17 @@
 
         <section class="strength-workspace" id="strengthWorkspace">
 
-            <div class="strength-workspace-nav">
-
-                <button
-                    type="button"
-                    class="strength-workspace-tab active"
-                    data-strength-view="schedule">
-                    <span>Schedule</span>
-                    <small>Calendar & upcoming</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-workspace-tab"
-                    data-strength-view="library">
-                    <span>Workout Library</span>
-                    <small>Ready-to-use templates</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-workspace-tab"
-                    data-strength-view="mine">
-                    <span>My Workouts</span>
-                    <small>Build & organize</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-workspace-tab"
-                    data-strength-view="progress">
-                    <span>Progress</span>
-                    <small>Your lifts over time</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-workspace-create"
-                    id="strengthQuickNewWorkout">
-                    + New Workout
-                </button>
-
+            <div class="strength-workspace-nav" role="tablist" aria-label="Strength">
+                <button type="button" role="tab" class="strength-workspace-tab active" data-strength-view="mine" aria-selected="true">Workouts</button>
+                <button type="button" role="tab" class="strength-workspace-tab" data-strength-view="schedule" aria-selected="false">Schedule</button>
+                <button type="button" role="tab" class="strength-workspace-tab" data-strength-view="library" aria-selected="false">Library</button>
+                <button type="button" role="tab" class="strength-workspace-tab" data-strength-view="progress" aria-selected="false">Progress</button>
             </div>
 
             <!-- Schedule / Calendar -->
 
             <section
-                class="strength-workspace-panel active"
+                class="strength-workspace-panel"
                 data-strength-panel="schedule"
                 id="strengthSchedulePanel">
 
@@ -386,36 +350,20 @@
             <!-- My Workouts -->
 
             <section
-                class="strength-workspace-panel"
+                class="strength-workspace-panel active"
                 data-strength-panel="mine"
                 id="strengthMyWorkoutsPanel">
 
-                <div class="strength-myworkouts-panel">
+                <div class="strength-myworkouts-panel st-mine">
 
-                    <div class="strength-myworkouts-header">
-
-                        <div>
-                            <span class="strength-library-eyebrow">
-                                MY WORKOUTS
-                            </span>
-
-                            <h2>
-                                Your Saved Builds
-                            </h2>
-
-                            <p>
-                                Your workout designs stay here until you decide
-                                to edit, schedule, duplicate, or delete them.
-                            </p>
-                        </div>
-
+                    <div class="st-mine-head">
+                        <h2>My Workouts <span id="strengthMyWorkoutsCount" class="st-mine-count"></span></h2>
                         <button
                             type="button"
-                            class="strength-library-header-btn primary"
+                            class="sb-btn sb-btn-primary st-mine-new"
                             id="strengthMyWorkoutsNew">
                             + New Workout
                         </button>
-
                     </div>
 
                     <div
@@ -1001,91 +949,6 @@
                 id="strengthRestTimerClose">
                 Close
             </button>
-
-        </div>
-
-    </div>
-
-    <!-- Workout Mode -->
-
-    <div
-        class="strength-workout-overlay"
-        id="strengthWorkoutOverlay">
-
-        <div class="strength-workout-modal">
-
-            <div class="strength-workout-header">
-
-                <div>
-                    <div
-                        id="workoutModeDayName"
-                        class="strength-workout-day-name">
-                        Workout
-                    </div>
-                    <div
-                        id="workoutModeTimer"
-                        class="strength-workout-timer">
-                        0:00
-                    </div>
-                </div>
-
-                <div class="strength-workout-header-actions">
-
-                    <button
-                        type="button"
-                        id="workoutModeFinish"
-                        class="strength-workout-finish-btn">
-                        Finish
-                    </button>
-
-                    <button
-                        type="button"
-                        id="workoutModeClose"
-                        class="strength-workout-close-btn"
-                        title="Close without finishing">
-                        <span data-icon="close"></span>
-                    </button>
-
-                </div>
-
-            </div>
-
-            <div class="strength-workout-progress-track">
-                <div
-                    id="workoutModeProgressFill"
-                    class="strength-workout-progress-fill"
-                    style="width:0%"></div>
-            </div>
-
-            <div
-                id="workoutModeBody"
-                class="strength-workout-body"></div>
-
-            <div
-                id="workoutRestBar"
-                class="strength-rest-bar">
-
-                <div class="strength-rest-track">
-                    <div id="workoutRestFill" class="strength-rest-fill"></div>
-                </div>
-
-                <div class="strength-rest-row">
-
-                    <div class="strength-rest-info">
-                        <span class="strength-rest-icon" data-icon="timer"></span>
-                        <span class="strength-rest-label">Rest</span>
-                        <span id="workoutRestTime" class="strength-rest-time">0:00</span>
-                    </div>
-
-                    <div class="strength-rest-actions">
-                        <button type="button" id="workoutRestMinus" class="strength-rest-adjust">−15s</button>
-                        <button type="button" id="workoutRestPlus" class="strength-rest-adjust">+15s</button>
-                        <button type="button" id="workoutRestSkip" class="strength-rest-skip">Skip</button>
-                    </div>
-
-                </div>
-
-            </div>
 
         </div>
 
