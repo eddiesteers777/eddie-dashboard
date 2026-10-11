@@ -282,7 +282,10 @@ export function buildSchedule(input) {
         min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n,
         caffeine: b.caffeineMg > 0, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}`
     }));
-    gels.forEach(g => events.push({ min: g.min, mile: g.mile, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, carbs: g.carbs, sodium: g.sodium }));
+    gels.forEach(g => events.push({
+        min: g.min, mile: g.mile, kind: "gel", gel: g.n, text: g.name,
+        caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium
+    }));
     events.push({ min: durationMin, mile: distanceMi || null, kind: "finish", text: bottles.length ? `Finish · Bottle ${bottles.length} empty` : "Finish" });
     events.sort((a, b) => a.min - b.min || (a.kind === "bottle" ? -1 : 1));
 
