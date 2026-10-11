@@ -1887,6 +1887,10 @@ if (plan.diyInputs) {
 
     $("diyCarbSource").value =
         plan.diyInputs.carbSource || "table-sugar";
+    $("diyMaltodextrinPercent").value =
+        plan.diyInputs.maltodextrinPercent ?? 50;
+    $("diyExistingSodium").value =
+        plan.diyInputs.existingSodium || 0;
 
     $("diySodiumSource").value =
         plan.diyInputs.sodiumSource || "table-salt";
