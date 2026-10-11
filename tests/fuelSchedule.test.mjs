@@ -170,3 +170,34 @@ test("schedule can pass blend percentages and existing electrolyte sodium into p
     assert.equal(s.mix.sodiumShortfall, Math.max(0, Math.round(2058 / 3) - Math.round(1620 / 3)));
     assert.ok(s.warnings.some(w => w.includes("aid stations")), "flags when bottle fluid does not cover the whole fluid target");
 });
+
+test("DIY mix subtracts sodium already supplied by the electrolyte product", () => {
+    const mix = diyMix({
+        carbTarget: 97,
+        sodiumTarget: 2058,
+        carbSource: "blend",
+        maltodextrinPercent: 50,
+        sodiumSource: "table-salt",
+        existingSodium: 1620
+    });
+    assert.equal(mix.sodiumShortfall, 438);
+    assert.equal(mix.sodiumGrams, Math.round((438 / 393) * 100) / 100);
+});
+
+test("distance plus explicit pace determines run duration for mile checkpoint calculations", () => {
+    const distanceMi = 20;
+    const paceMinPerMile = 8;
+    const durationMin = Math.round(distanceMi * paceMinPerMile);
+    const s = buildSchedule({
+        durationMin,
+        distanceMi,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: { bottleCount: 3, bottleSize: 15, carbs: 97, sodium: 2058, carbSource: "blend", maltodextrinPercent: 50, sodiumSource: "table-salt", existingSodium: 1620 },
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 }
+    });
+    assert.equal(s.durationMin, 160);
+    assert.equal(s.bottles.at(-1).endMile, 20);
+    assert.equal(s.gels.length, 3);
+    assert.ok(s.gels.every(g => g.mile !== null));
+    assert.equal(s.mix.sodiumShortfall, 146, "per bottle: 686 mg target minus 540 mg electrolyte sodium");
+});
