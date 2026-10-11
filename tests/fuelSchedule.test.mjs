@@ -127,7 +127,7 @@ test("drink is left out when unchecked or bottles are missing", () => {
 
 test("formatting helpers", () => {
     assert.equal(formatTsp(2.3), "2 ¼");
-    assert.equal(formatTsp(0.13), "⅛");
+    assert.equal(formatTsp(0.13), "0.13", "small salt measures should not round up to a larger teaspoon amount");
     assert.equal(formatTsp(0.02), "a pinch");
     assert.equal(formatTsp(0.065), "a pinch", "avoid overstating tiny measured salt amounts");
     assert.equal(formatTsp(3), "3");
