@@ -817,7 +817,12 @@ function computeComposition() {
     const includeDrink = $("includeHomemadeDrink").checked;
 
     const drinkCarbs = includeDrink ? (Number($("diyCarbTarget").value) || 0) : 0;
-    const drinkSodium = includeDrink ? (Number($("diySodiumTarget").value) || 0) : 0;
+    const drinkSodium = includeDrink
+        ? Math.max(
+            Number($("diySodiumTarget").value) || 0,
+            Number($("diyExistingSodium").value) || 0
+        )
+        : 0;
 
     const totalCarbs = gelCarbs + drinkCarbs;
     const totalSodium = gelSodium + drinkSodium;
@@ -909,6 +914,7 @@ function currentDiyMix() {
         bottleCount,
         carbTarget,
         sodiumTarget,
+        totalSodium: Math.max(sodiumTarget, existingSodium),
         totalFluid: bottleSize * bottleCount,
         sugarGrams: carbSource === "blend" || carbSource === "table-sugar"
             ? (mix.tableSugarGrams ?? mix.carbGrams)
@@ -954,7 +960,7 @@ function renderDiyResult() {
         : " No caffeine added to the drink.";
 
     $("diyPerBottleSummary").textContent =
-        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g ${(mix.primaryCarbLabel || "table sugar").toLowerCase()} · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.sodiumTarget / perBottle)} mg total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
+        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g ${(mix.primaryCarbLabel || "table sugar").toLowerCase()} · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.totalSodium / perBottle)} mg actual total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
     $("diyResults").style.display = "flex";
     $("diyPerBottleSummary").style.display = "";
     $("diyConversionNote").style.display = "";
