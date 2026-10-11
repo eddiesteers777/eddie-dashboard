@@ -926,12 +926,42 @@ function currentDiyMix() {
         notes: $("diyNotes").value
     };
 }
+function renderDiyResult() {
+    const mix = currentDiyMix();
+    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
+    const perBottle = Math.max(1, mix.bottleCount || 1);
+
+    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
+    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
+    $("diyMaltodextrinGrams").textContent = `${mix.maltodextrinGrams || 0} g`;
+    $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
+    $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
+    $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
+
+    const addedSodiumText = (mix.sodiumShortfall || 0) <= 0
+        ? "no additional salt needed; the electrolyte sodium meets the target"
+        : hasSalt
+            ? `add ${(mix.saltGrams / perBottle).toFixed(2)} g table salt per bottle`
+            : `use the product label to supply the remaining ${Math.round((mix.sodiumShortfall || 0) / perBottle)} mg sodium per bottle`;
+    const caffeineText = mix.caffeineBottles.length
+        ? ` Caffeine: ${mix.caffeinePerBottleMg} mg in bottle${mix.caffeineBottles.length > 1 ? "s" : ""} ${mix.caffeineBottles.join(", ")} (${mix.totalCaffeineMg} mg total from the drink).`
+        : " No caffeine added to the drink.";
+
+    $("diyPerBottleSummary").textContent =
+        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g table sugar · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.sodiumTarget / perBottle)} mg total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
+    $("diyResults").style.display = "flex";
+    $("diyPerBottleSummary").style.display = "";
+    $("diyConversionNote").style.display = "";
+    $("diyResults").dataset.snapshot = JSON.stringify(mix);
+}
+
 function refreshDiySnapshot() {
     $("diyResults").dataset.snapshot = JSON.stringify(currentDiyMix());
 }
 
 $("includeHomemadeDrink").addEventListener("change", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
     renderPlanSummary();
 });
@@ -950,6 +980,7 @@ $("diySodiumTarget").addEventListener("input", () => {
 
 ["diyBottleSize", "diyBottleCount"].forEach(id => $(id).addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
 }));
 
@@ -1023,39 +1054,9 @@ function renderSchedule() {
 ========================================== */
 
 $("diyCalculateBtn").addEventListener("click", () => {
-
-    const mix = currentDiyMix();
-    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
-
-    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
-    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
-    $("diyMaltodextrinGrams").textContent = `${mix.maltodextrinGrams || 0} g`;
-    $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
-    $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
-    const perBottle = Math.max(1, mix.bottleCount || 1);
-    const hasAddedSalt = hasSalt && mix.saltGrams > 0;
-    const addedSodiumText = (mix.sodiumShortfall || 0) <= 0
-        ? "no additional salt needed; the electrolyte sodium meets the target"
-        : hasSalt
-            ? `add ${(mix.saltGrams / perBottle).toFixed(2)} g table salt per bottle`
-            : `use the product label to supply the remaining ${Math.round((mix.sodiumShortfall || 0) / perBottle)} mg sodium per bottle`;
-    const caffeineText = mix.caffeineBottles.length
-        ? ` Caffeine: ${mix.caffeinePerBottleMg} mg in bottle${mix.caffeineBottles.length > 1 ? "s" : ""} ${mix.caffeineBottles.join(", ")} (${mix.totalCaffeineMg} mg total from the drink).`
-        : " No caffeine added to the drink.";
-    $("diyPerBottleSummary").textContent =
-        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g table sugar · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.sodiumTarget / perBottle)} mg total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
-    $("diyPerBottleSummary").style.display = "";
-    $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
-
-    $("diyResults").style.display = "flex";
-    $("diyPerBottleSummary").style.display = "";
-    $("diyConversionNote").style.display = "";
-
-    $("diyResults").dataset.snapshot = JSON.stringify(mix);
-
+    renderDiyResult();
     renderComposition();
     renderPlanSummary();
-
 });
 
 $("saveDiyRecipeBtn").addEventListener("click", async () => {
@@ -1995,6 +1996,8 @@ if (plan.diyInputs) {
 
     $("diySodiumSource").value =
         plan.diyInputs.sodiumSource || "table-salt";
+    $("diyCaffeinePerBottleMg").value = plan.diyInputs.caffeinePerBottleMg ?? 60;
+    $("diyCaffeineBottleNumbers").value = plan.diyInputs.caffeineBottleNumbers ?? "";
 
     $("diyNotes").value =
         plan.diyInputs.notes || "";
@@ -2023,8 +2026,7 @@ if (plan.diySnapshot) {
     $("diySaltTsp").textContent =
         plan.diySnapshot.saltTsp ?? "Use product label";
 
-    $("diyResults").style.display = "flex";
-    $("diyConversionNote").style.display = "";
+    renderDiyResult();
 }
 
 
