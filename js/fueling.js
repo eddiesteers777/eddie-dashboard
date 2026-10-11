@@ -478,9 +478,28 @@ function readSession() {
    Render — Targets
 ========================================== */
 
+function parsePaceMinutes(value) {
+    const match = String(value || "").trim().match(/^(\d{1,2})(?::([0-5]?\d))?$/);
+    if (!match) return null;
+    const minutes = Number(match[1]);
+    const seconds = Number(match[2] || 0);
+    const pace = minutes + seconds / 60;
+    return pace > 0 ? pace : null;
+}
+
 function runCalculation() {
 
     const session = readSession();
+    const explicitPace = parsePaceMinutes(session.pace);
+
+    if (session.distance > 0 && explicitPace !== null) {
+        session.duration = Math.round(session.distance * explicitPace);
+        $("duration").value = session.duration;
+    } else if (session.distance > 0 && session.duration > 0) {
+        const paceSeconds = Math.round(session.duration * 60 / session.distance);
+        session.pace = `${Math.floor(paceSeconds / 60)}:${String(paceSeconds % 60).padStart(2, "0")}`;
+        $("pace").value = session.pace;
+    }
 
     const targets = calculateTargets(session);
 
@@ -503,9 +522,9 @@ function runCalculation() {
     $("sodiumPerHour").value = targets.sodiumPerHour;
 
     $("calcNote").textContent =
-        `Estimated from a ${targets.duration}-minute session, your fueling tolerance, ` +
-        `sensitivity, and the conditions entered above. These are starting targets — ` +
-        `adjust anything to match what actually works for your gut.`;
+        `Estimated duration: ${formatClock(targets.duration)}. ` +
+        `Pace: ${session.distance > 0 ? (session.duration / session.distance).toFixed(2) + " min/mi" : "enter distance to calculate mile markers"}. ` +
+        `Targets account for workout type, fueling tolerance, stomach sensitivity, and conditions; adjust them to what you know works for you.`;
 
     updatePlanWorkoutLabel();
     updateTotalsAndTimeline(true);
@@ -804,23 +823,28 @@ function currentDiyMix() {
     const sodiumTarget = Number($("diySodiumTarget").value) || 0;
     const carbSource = $("diyCarbSource").value;
     const sodiumSource = $("diySodiumSource").value;
-    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource });
+    const maltodextrinPercent = Number($("diyMaltodextrinPercent")?.value) || 0;
+    const existingSodium = Number($("diyExistingSodium")?.value) || 0;
+    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource, maltodextrinPercent, existingSodium });
     return {
         bottleSize,
         bottleCount,
         carbTarget,
         sodiumTarget,
         totalFluid: bottleSize * bottleCount,
-        sugarGrams: mix.carbGrams,
+        sugarGrams: mix.tableSugarGrams ?? mix.carbGrams,
+        maltodextrinGrams: mix.maltodextrinGrams || 0,
         saltGrams: mix.sodiumGrams ?? 0,
         sugarTsp: mix.carbTsp != null ? Math.round(mix.carbTsp * 4) / 4 : null,
         saltTsp: mix.sodiumTsp != null ? Math.round(mix.sodiumTsp * 8) / 8 : null,
         carbSource,
+        maltodextrinPercent,
         sodiumSource,
+        existingSodium,
+        sodiumShortfall: mix.sodiumShortfall,
         notes: $("diyNotes").value
     };
 }
-
 function refreshDiySnapshot() {
     $("diyResults").dataset.snapshot = JSON.stringify(currentDiyMix());
 }
@@ -848,7 +872,7 @@ $("diySodiumTarget").addEventListener("input", () => {
     renderComposition();
 }));
 
-["diyCarbSource", "diySodiumSource"].forEach(id => $(id).addEventListener("change", () => {
+["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyExistingSodium"].forEach(id => $(id)?.addEventListener("change", () => {
     refreshDiySnapshot();
     renderComposition();
 }));
@@ -923,6 +947,7 @@ $("diyCalculateBtn").addEventListener("click", () => {
 
     $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
     $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
+    $("diyMaltodextrinGrams").textContent = `${mix.maltodextrinGrams || 0} g`;
     $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
     $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
     $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
@@ -1436,7 +1461,9 @@ function buildPlanObject() {
             carbTarget: Number($("diyCarbTarget").value) || 0,
             sodiumTarget: Number($("diySodiumTarget").value) || 0,
             carbSource: $("diyCarbSource").value,
+            maltodextrinPercent: Number($("diyMaltodextrinPercent").value) || 0,
             sodiumSource: $("diySodiumSource").value,
+            existingSodium: Number($("diyExistingSodium").value) || 0,
             notes: $("diyNotes").value
         },
         preWorkoutFood,
