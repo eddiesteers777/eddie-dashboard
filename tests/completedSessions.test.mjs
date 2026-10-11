@@ -153,6 +153,11 @@ test("share history counts shares and saves", () => {
     assert.deepEqual(shares["c:1"], { count: 2, lastAt: 20, via: "save" });
 });
 
+test("a typed share title survives the share count", () => {
+    const shares = recordShare({ "c:1": { title: "Progression 20" } }, "c:1", "share", 10);
+    assert.deepEqual(shares["c:1"], { title: "Progression 20", count: 1, lastAt: 10, via: "share" });
+});
+
 test("this week's totals by type only add what was measured", () => {
     const today = "2026-10-10";
     const feed = [

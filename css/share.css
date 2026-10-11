@@ -28,3 +28,9 @@
     .ex-share-actions [data-act="close"]{ order:9; grid-column:1 / -1; }
     .ex-share-actions [data-act="share"]{ grid-column:1 / -1; order:-1; }
 }
+/* Title the person can change (kept per workout in workout-shares) */
+.ex-share-title{ margin-top:6px; }
+.ex-share-title label{ display:block; font-size:.8rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
+.ex-share-title-row{ display:flex; gap:8px; align-items:center; }
+.ex-share-title-row input{ flex:1; min-width:0; }
+.ex-share-title[hidden], .ex-share-title [hidden]{ display:none !important; }

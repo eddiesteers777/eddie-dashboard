@@ -414,7 +414,7 @@ export function resumableSession(stored, dayId, now = Date.now()) {
 export function recordShare(shares, id, via, now = Date.now()) {
     const all = shares && typeof shares === "object" ? { ...shares } : {};
     const prev = all[id] || {};
-    all[id] = { count: (Number(prev.count) || 0) + 1, lastAt: now, via: via === "save" ? "save" : "share" };
+    all[id] = { ...prev, count: (Number(prev.count) || 0) + 1, lastAt: now, via: via === "save" ? "save" : "share" };
     return all;
 }
 

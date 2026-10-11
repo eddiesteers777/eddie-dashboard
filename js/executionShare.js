@@ -634,6 +634,26 @@ export function isAppleMobile(nav = typeof navigator !== "undefined" ? navigator
 export const fileNameFor = (model, date) =>
     `southbound-${model?.kind === "strength" ? "strength" : model?.kind === "cross" ? "cross-training" : model?.kind === "splits" ? "run" : "workout"}-${date || "session"}.png`;
 
+// A title typed in the dialog, kept per card in `workout-shares` (cloud-synced)
+// so the picture says the same next time. Empty = the title Southbound picked.
+const SHARES = "workout-shares";
+export const TITLE_MAX = 40;
+export const cleanTitle = t => String(t ?? "").replace(/\s+/g, " ").trim().slice(0, TITLE_MAX);
+export const titleKey = (sessionId, model, date) => sessionId || (date && model ? `card:${date}:${model.kind || "run"}` : null);
+function readShares() { try { return JSON.parse(localStorage.getItem(SHARES) || "{}") || {}; } catch { return {}; } }
+export function savedTitle(key) { return key ? cleanTitle(readShares()[key]?.title) : ""; }
+export function saveTitle(key, title) {
+    if (!key) return;
+    try {
+        const all = readShares();
+        const t = cleanTitle(title);
+        const entry = { ...(all[key] || {}) };
+        if (t) entry.title = t; else delete entry.title;
+        if (Object.keys(entry).length) all[key] = entry; else delete all[key];
+        localStorage.setItem(SHARES, JSON.stringify(all));
+    } catch { /* storage full or blocked: the picture still works this time */ }
+}
+
 const note = sessionId => (via) => {
     if (!sessionId) return;
     import("./sessionStore.js").then(m => m.noteShared(sessionId, via)).catch(() => {});
@@ -657,6 +677,13 @@ export async function openCardDialog(modelOrPromise, { date = "", sessionId = nu
     dialog.innerHTML = `
         <div class="sb-dialog-form">
             <h2 class="sb-dialog-title">Share this workout</h2>
+            <div class="ex-share-title" hidden>
+                <label for="exShareTitle">Title</label>
+                <div class="ex-share-title-row">
+                    <input id="exShareTitle" type="text" maxlength="${TITLE_MAX}" autocomplete="off" enterkeyhint="done">
+                    <button type="button" class="sb-btn sb-btn-tertiary" data-act="reset" hidden>Reset</button>
+                </div>
+            </div>
             <div class="ex-share-preview" aria-live="polite"><p class="clients-card-note sb-wait">Making the image…</p></div>
             <p class="ex-share-status" role="status" hidden></p>
             <p class="ex-share-hint" data-hint></p>
@@ -704,23 +731,62 @@ export async function openCardDialog(modelOrPromise, { date = "", sessionId = nu
     };
 
     if (!model) { fail(); return dialog; }
-    let blob = null, height = 0;
-    try {
-        const canvas = document.createElement("canvas");
-        await drawShareCard(canvas, model);
-        height = canvas.height;
-        if (closed) return dialog;
-        blob = await new Promise(resolve => {
-            try { canvas.toBlob(resolve, "image/png"); } catch { resolve(null); }
-        });
-    } catch { blob = null; }
-    if (closed) return dialog;
-    if (!blob) { fail(); return dialog; }
+    const original = model.title;
+    const key = titleKey(sessionId, model, date);
+    const typed = savedTitle(key);
+    if (typed) { model = { ...model, title: typed }; caption = captionText(model); }
+    const titleBox = $(".ex-share-title"), titleInput = $("#exShareTitle"), reset = $('[data-act="reset"]');
+    let name = fileNameFor(model, date);
+    let drawn = 0;
+    // Draws the picture for the current model; a newer draw wins.
+    const render = async () => {
+        const mine = ++drawn;
+        // Share / Save wait for the new picture, so they never send the old title.
+        const busy = [share, save].map(btn => [btn, btn.disabled]);
+        busy.forEach(([btn]) => { btn.disabled = true; });
+        const done = () => { if (mine === drawn) busy.forEach(([btn, was]) => { btn.disabled = was; }); };
+        let blob = null, height = 0;
+        try {
+            const canvas = document.createElement("canvas");
+            await drawShareCard(canvas, model);
+            height = canvas.height;
+            if (closed || mine !== drawn) return null;
+            blob = await new Promise(resolve => {
+                try { canvas.toBlob(resolve, "image/png"); } catch { resolve(null); }
+            });
+        } catch { blob = null; }
+        if (closed || mine !== drawn) return null;
+        done();
+        if (!blob) return false;
+        if (url) URL.revokeObjectURL(url);
+        file = new File([blob], name, { type: "image/png" });
+        url = URL.createObjectURL(blob);
+        preview.innerHTML = `<img src="${url}" alt="${escHtml(`${model.title}: ${model.stats.map(st => `${st.label} ${st.value}`).join(", ")}`)}" width="${CARD_W}" height="${height}">`;
+        return true;
+    };
+    const first = await render();
+    if (closed || first === null) return dialog;
+    if (!first) { fail(); return dialog; }
 
-    const name = fileNameFor(model, date);
-    file = new File([blob], name, { type: "image/png" });
-    url = URL.createObjectURL(blob);
-    preview.innerHTML = `<img src="${url}" alt="${escHtml(`${model.title}: ${model.stats.map(st => `${st.label} ${st.value}`).join(", ")}`)}" width="${CARD_W}" height="${height}">`;
+    titleBox.hidden = false;
+    titleInput.value = model.title;
+    titleInput.placeholder = original;
+    reset.hidden = model.title === original;
+    let timer = 0;
+    const retitle = () => {
+        const t = cleanTitle(titleInput.value) || original;
+        reset.hidden = t === original;
+        if (t === model.title) return;
+        model = { ...model, title: t };
+        caption = captionText(model);
+        saveTitle(key, t === original ? "" : t);
+        render().then(ok => { if (ok === false) say("Couldn't redraw the picture with that title.", "error"); });
+    };
+    titleInput.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(retitle, 450); });
+    titleInput.addEventListener("change", () => { clearTimeout(timer); retitle(); });
+    titleInput.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); titleInput.blur(); } });
+    reset.addEventListener("click", () => { titleInput.value = original; clearTimeout(timer); retitle(); });
+
     let canShare = false;
     try { canShare = Boolean(navigator.canShare?.({ files: [file] })); } catch { canShare = false; }
     if (canShare) { share.hidden = false; share.disabled = false; }

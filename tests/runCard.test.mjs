@@ -102,3 +102,12 @@ test("watch-workout laps that don't fit the plan show the watch's own laps, with
     assert.equal(runCardModel({ run, workout: exact.workout, entry: { laps, kind: "laps" } }).kind, "execution");
     // Auto mile laps keep the looser rule (they never fit a plan's steps exactly).
 });
+
+test("share titles: cleaned, capped, keyed by session or by day", async () => {
+    const { cleanTitle, titleKey, TITLE_MAX } = await import("../js/executionShare.js");
+    assert.equal(cleanTitle("  Progression   20  "), "Progression 20");
+    assert.equal(cleanTitle("x".repeat(60)).length, TITLE_MAX);
+    assert.equal(titleKey("c:9", { kind: "splits" }, "2026-10-11"), "c:9");
+    assert.equal(titleKey(null, { kind: "execution" }, "2026-10-11"), "card:2026-10-11:execution");
+    assert.equal(titleKey(null, { kind: "run" }, ""), null);
+});
