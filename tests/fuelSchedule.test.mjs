@@ -129,6 +129,7 @@ test("formatting helpers", () => {
     assert.equal(formatTsp(2.3), "2 ¼");
     assert.equal(formatTsp(0.13), "⅛");
     assert.equal(formatTsp(0.02), "a pinch");
+    assert.equal(formatTsp(0.065), "a pinch", "avoid overstating tiny measured salt amounts");
     assert.equal(formatTsp(3), "3");
     assert.equal(formatClock(185), "3:05");
     assert.equal(formatClock(7), "0:07");
@@ -279,4 +280,19 @@ test("DIY drink schedule splits caffeine by selected bottle and counts total sod
     assert.equal(s.bottles[2].endMile, 20);
     assert.equal(s.mix.existingSodium, 540);
     assert.equal(s.mix.sodiumGrams, 0.37);
+});
+
+
+test("adjustable 45-minute gel spacing creates a practical long-run schedule by time and mile", () => {
+    const s = buildSchedule({
+        durationMin: 160,
+        distanceMi: 20,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: null,
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 },
+        firstGelMin: 30,
+        gelIntervalMin: 45
+    });
+    assert.deepEqual(s.gels.map(g => g.min), [30, 75, 120]);
+    assert.deepEqual(s.gels.map(g => g.mile), [3.8, 9.4, 15]);
 });
