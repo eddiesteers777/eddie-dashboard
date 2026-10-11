@@ -88,6 +88,7 @@ export function diyMix({
 // 2.3 -> "2 ¼", 0.125 -> "⅛". Rounds to the nearest eighth.
 export function formatTsp(tsp) {
     if (tsp == null || !isFinite(tsp)) return "";
+    if (tsp < 0.1) return "a pinch";
     const eighths = Math.round(tsp * 8);
     if (eighths === 0) return "a pinch";
     const whole = Math.floor(eighths / 8);
