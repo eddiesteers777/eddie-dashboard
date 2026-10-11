@@ -95,15 +95,17 @@ function eventsHTML(s) {
 function bottlesHTML(s) {
     if (!s.bottles.length) return "";
     const m = s.mix;
-    const carbAmount = m
-        ? (m.maltodextrinGrams || m.tableSugarGrams
-            ? `${m.maltodextrinGrams || 0} g maltodextrin + ${m.tableSugarGrams || 0} g table sugar`
-            : `${m.carbGrams} g ${esc(m.carbLabel.toLowerCase())}${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}`)
-        : "";
+    const carbAmount = !m ? "" : m.isBlend
+        ? `${m.maltodextrinGrams} g maltodextrin + ${m.tableSugarGrams} g table sugar`
+        : m.carbSource === "maltodextrin"
+            ? `${m.maltodextrinGrams} g maltodextrin`
+            : m.carbSource === "table-sugar"
+                ? `${m.tableSugarGrams} g table sugar${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}`
+                : `${m.carbGrams} g ${esc(m.carbLabel.toLowerCase())}${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}`;
     const sodiumAmount = m
         ? (m.sodiumGrams != null
-            ? `${m.sodiumGrams} g ${esc(m.sodiumLabel.toLowerCase())}${m.sodiumTsp != null ? ` (${formatTsp(m.sodiumTsp)} tsp)` : ""}`
-            : `${s.bottles[0].sodium} mg sodium from ${esc(m.sodiumLabel.toLowerCase())} (see label)`)
+            ? `${m.sodiumGrams} g added ${esc(m.sodiumLabel.toLowerCase())}${m.sodiumTsp != null ? ` (${formatTsp(m.sodiumTsp)} tsp)` : ""}`
+            : `${s.bottles[0].sodium} mg sodium from ${esc(m.sodiumLabel.toLowerCase())} (use product label)`)
         : "";
     return `
         <h4 class="fs-heading">Bottles</h4>
@@ -126,6 +128,7 @@ function bottlesHTML(s) {
         <div class="fs-mix">
             <span class="fs-mix-label">Mix each bottle</span>
             <span>${s.bottles[0].oz} oz water + ${carbAmount} + ${sodiumAmount}</span>
+            ${m?.existingSodium ? `<span class="fs-muted">Includes ${Math.round(m.existingSodium)} mg sodium already supplied by your electrolyte mix per bottle.</span>` : ""}
             ${s.concentration != null ? `<span class="fs-muted">${s.concentration}% carb solution</span>` : ""}
         </div>` : ""}`;
 }
