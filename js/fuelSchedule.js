@@ -31,6 +31,10 @@ export const DIY_SODIUM_SOURCES = {
     "other": { label: "Other", sodiumPerGram: 0 }
 };
 
+// Older names the page's menu used ("juice", "sports-powder") read as these.
+const CARB_ALIASES = { juice: "fruit-juice", "sports-powder": "sports-drink-powder" };
+export const carbSourceKey = key => (DIY_CARB_SOURCES[key] ? key : CARB_ALIASES[key] || "table-sugar");
+
 export const DEFAULT_FIRST_GEL_MIN = 30;
 // A gel taken in the last ~15 minutes can't be absorbed in time to help.
 export const FINAL_GEL_BUFFER_MIN = 15;
@@ -44,7 +48,7 @@ const round1 = value => Math.round(value * 10) / 10;
 // where the ingredient has a standard measure), or null grams when the
 // amount has to come from the product's own label.
 export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-sugar", sodiumSource = "table-salt" }) {
-    const carb = DIY_CARB_SOURCES[carbSource] || DIY_CARB_SOURCES["table-sugar"];
+    const carb = DIY_CARB_SOURCES[carbSourceKey(carbSource)];
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
     const carbGrams = round1(carbTarget / carb.carbsPerGram);
     const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumTarget / sodium.sodiumPerGram) * 100) / 100 : null;
@@ -56,6 +60,100 @@ export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-s
         sodiumGrams,
         sodiumTsp: sodium.gPerTsp && sodiumGrams != null ? sodiumGrams / sodium.gPerTsp : null
     };
+}
+
+/**
+ * The homemade drink, for the whole batch and for one bottle:
+ * up to two carb sources (carbShare2 = the part of the carbs from the
+ * second, 0-1), an optional electrolyte powder (mg sodium a scoop, scoops
+ * a bottle) and the chosen sodium source for whatever sodium is left.
+ * Targets are for the whole batch, as the page has always asked.
+ * -> { bottles, bottleOz, carbs: [{ key, label, carbs, grams, tsp,
+ *      bottle: { grams, tsp } }], electrolyte: { mgPerScoop, scoops, bottleScoops, mg } | null,
+ *      sodium: { key, label, mg, grams, tsp, bottle: { mg, grams, tsp }, fromLabel } | null,
+ *      over: mg of sodium past the target from the powder alone, totals: { carbs, sodium } }
+ */
+export function drinkRecipe({
+    carbTarget = 0, sodiumTarget = 0, bottleCount = 1, bottleSize = 0,
+    carbSource = "table-sugar", carbSource2 = "", carbShare2 = 0.5,
+    electroMg = 0, electroScoops = 0, sodiumSource = "table-salt"
+} = {}) {
+    const n = Math.max(1, Math.round(Number(bottleCount) || 1));
+    const carbsTotal = Math.max(0, Number(carbTarget) || 0);
+    const sodiumTotal = Math.max(0, Number(sodiumTarget) || 0);
+    const r2 = (v, step = 100) => Math.round(v * step) / step;
+    const second = carbSource2 && carbSourceKey(carbSource2) !== carbSourceKey(carbSource) ? carbSourceKey(carbSource2) : "";
+    const share2 = second ? Math.min(0.9, Math.max(0.1, Number(carbShare2) || 0.5)) : 0;
+    const part = (key, carbs) => {
+        const src = DIY_CARB_SOURCES[key];
+        const grams = round1(carbs / src.carbsPerGram);
+        const bottleGrams = round1(grams / n);
+        return {
+            key, label: src.label, carbs: round1(carbs), grams,
+            tsp: src.gPerTsp ? grams / src.gPerTsp : null,
+            bottle: { grams: bottleGrams, tsp: src.gPerTsp ? bottleGrams / src.gPerTsp : null }
+        };
+    };
+    const carbs = carbsTotal > 0
+        ? [part(carbSourceKey(carbSource), carbsTotal * (1 - share2)), ...(second ? [part(second, carbsTotal * share2)] : [])]
+        : [];
+    const perScoop = Math.max(0, Number(electroMg) || 0);
+    const bottleScoops = Math.max(0, Number(electroScoops) || 0);
+    const electroTotal = perScoop * bottleScoops * n;
+    const electrolyte = perScoop > 0 && bottleScoops > 0
+        ? { mgPerScoop: perScoop, bottleScoops, scoops: r2(bottleScoops * n, 10), mg: Math.round(electroTotal) }
+        : null;
+    const left = Math.max(0, sodiumTotal - (electrolyte ? electroTotal : 0));
+    const src = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
+    let sodium = null;
+    if (left > 0) {
+        const grams = src.sodiumPerGram ? r2(left / src.sodiumPerGram) : null;
+        const bottleGrams = grams != null ? r2(grams / n) : null;
+        sodium = {
+            key: DIY_SODIUM_SOURCES[sodiumSource] ? sodiumSource : "table-salt",
+            label: src.label, mg: Math.round(left), grams,
+            tsp: grams != null && src.gPerTsp ? grams / src.gPerTsp : null,
+            bottle: { mg: Math.round(left / n), grams: bottleGrams, tsp: bottleGrams != null && src.gPerTsp ? bottleGrams / src.gPerTsp : null }
+        };
+    }
+    return {
+        bottles: n,
+        bottleOz: Math.max(0, Number(bottleSize) || 0),
+        carbs, electrolyte, sodium,
+        over: electrolyte ? Math.max(0, Math.round(electroTotal - sodiumTotal)) : 0,
+        totals: { carbs: Math.round(carbsTotal), sodium: Math.round(Math.max(sodiumTotal, electroTotal)) }
+    };
+}
+
+// A teaspoon amount in words: "3 ⅝ tsp", "a pinch".
+export function tspWords(tsp) {
+    const t = formatTsp(tsp);
+    return !t ? "" : t === "a pinch" ? t : `${t} tsp`;
+}
+
+// One bottle's (or the batch's) ingredients in words: "30 g maltodextrin
+// (no tsp) · 15 g table sugar (3 ½ tsp) · 1 scoop electrolyte (300 mg) · 0.51 g salt".
+export function recipeParts(recipe, { batch = false } = {}) {
+    if (!recipe) return [];
+    const out = recipe.carbs.map(c => {
+        const g = batch ? c.grams : c.bottle.grams;
+        const tsp = batch ? c.tsp : c.bottle.tsp;
+        return `${g} g ${c.label.toLowerCase()}${tsp != null ? ` (${tspWords(tsp)})` : ""}`;
+    });
+    if (recipe.electrolyte) {
+        const e = recipe.electrolyte;
+        const scoops = batch ? e.scoops : e.bottleScoops;
+        out.push(`${scoops} scoop${scoops === 1 ? "" : "s"} electrolyte powder (${Math.round(e.mgPerScoop * scoops)} mg sodium)`);
+    }
+    if (recipe.sodium) {
+        const s = recipe.sodium;
+        const g = batch ? s.grams : s.bottle.grams;
+        const tsp = batch ? s.tsp : s.bottle.tsp;
+        out.push(g != null
+            ? `${g} g ${s.label.toLowerCase()}${tsp != null ? ` (${tspWords(tsp)})` : ""}`
+            : `${batch ? s.mg : s.bottle.mg} mg sodium from ${s.label.toLowerCase()} (see its label)`);
+    }
+    return out;
 }
 
 // 2.3 -> "2 ¼", 0.125 -> "⅛". Rounds to the nearest eighth.
@@ -135,9 +233,15 @@ export function scheduleInputFromPlan(plan) {
             bottleCount: Math.max(1, Math.round(Number(diy.bottleCount) || 1)),
             bottleSize: Number(diy.bottleSize) || 0,
             carbs: Number(diy.carbTarget) || 0,
-            sodium: Number(diy.sodiumTarget) || 0,
+            // Electrolyte powder past the target still goes in the bottles.
+            sodium: Math.max(Number(diy.sodiumTarget) || 0,
+                (Number(diy.electroMg) || 0) * (Number(diy.electroScoops) || 0) * Math.max(1, Math.round(Number(diy.bottleCount) || 1))),
             carbSource: diy.carbSource || "table-sugar",
-            sodiumSource: diy.sodiumSource || "table-salt"
+            sodiumSource: diy.sodiumSource || "table-salt",
+            carbSource2: diy.carbSource2 || "",
+            carbShare2: Number(diy.carbShare2) || 0.5,
+            electroMg: Number(diy.electroMg) || 0,
+            electroScoops: Number(diy.electroScoops) || 0
         } : null,
         targets: {
             carbsPerHour: Number(plan.carbsPerHour) || 0,
@@ -236,6 +340,12 @@ export function buildSchedule(input) {
             sodiumTarget: sodiumEach,
             carbSource: drink.carbSource,
             sodiumSource: drink.sodiumSource
+        });
+        // The whole recipe (two carbs, powder + salt for the rest), per bottle.
+        mix.recipe = drinkRecipe({
+            carbTarget: drink.carbs, sodiumTarget: drink.sodium, bottleCount: count, bottleSize: drink.bottleSize,
+            carbSource: drink.carbSource, carbSource2: drink.carbSource2, carbShare2: drink.carbShare2,
+            electroMg: drink.electroMg, electroScoops: drink.electroScoops, sodiumSource: drink.sodiumSource
         });
         for (let i = 0; i < count; i++) {
             const startMin = perBottleMin * i;

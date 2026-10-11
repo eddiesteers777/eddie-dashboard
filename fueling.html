@@ -707,7 +707,7 @@
 
                 <h2>
 
-                    Homemade Drink — Sugar + Salt Calculator
+                    Homemade Drink
 
                 </h2>
 
@@ -819,8 +819,8 @@
                                 <option value="table-sugar" selected>Table Sugar</option>
                                 <option value="maltodextrin">Maltodextrin</option>
                                 <option value="honey">Honey</option>
-                                <option value="juice">Fruit Juice</option>
-                                <option value="sports-powder">Sports Drink Powder</option>
+                                <option value="fruit-juice">Fruit Juice</option>
+                                <option value="sports-drink-powder">Sports Drink Powder</option>
                                 <option value="other">Other</option>
 
                             </select>
@@ -828,8 +828,44 @@
                         </label>
 
                         <label class="fuel-field">
+                            <span>Second carb source (optional)</span>
+                            <select id="diyCarbSource2">
+                                <option value="" selected>None</option>
+                                <option value="table-sugar">Table Sugar</option>
+                                <option value="maltodextrin">Maltodextrin</option>
+                                <option value="honey">Honey</option>
+                                <option value="fruit-juice">Fruit Juice</option>
+                                <option value="sports-drink-powder">Sports Drink Powder</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </label>
 
-                            <span>Sodium Source</span>
+                        <label class="fuel-field" id="diyCarbShareField" hidden>
+                            <span>Carbs from the second (%)</span>
+                            <input type="number" id="diyCarbShare2" min="10" max="90" step="5" value="50" inputmode="numeric">
+                        </label>
+
+                    </div>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+                            <span>Electrolyte powder: sodium per scoop (mg, optional)</span>
+                            <input type="number" id="diyElectroMg" min="0" max="2000" step="10" inputmode="numeric" placeholder="e.g. 300">
+                        </label>
+
+                        <label class="fuel-field">
+                            <span>Scoops per bottle</span>
+                            <input type="number" id="diyElectroScoops" min="0" max="10" step="0.5" inputmode="decimal" placeholder="e.g. 1">
+                        </label>
+
+                    </div>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Sodium for the rest</span>
 
                             <select id="diySodiumSource">
 
@@ -872,26 +908,7 @@
                 id="diyResults"
                 style="display:none;">
 
-                <div class="fuel-diy-stat">
-
-                    <span id="diyWaterAmount">0 oz</span>
-                    <small>water</small>
-
-                </div>
-
-                <div class="fuel-diy-stat">
-
-                    <span id="diySugarGrams">0 g</span>
-                    <small>table sugar (≈ <span id="diySugarTsp">0</span> tsp)</small>
-
-                </div>
-
-                <div class="fuel-diy-stat">
-
-                    <span id="diySaltGrams">0 g</span>
-                    <small>table salt (≈ <span id="diySaltTsp">0</span> tsp)</small>
-
-                </div>
+                <div class="fuel-diy-recipe" id="diyRecipeTable" aria-live="polite"></div>
 
                 <button
                     class="fuel-btn secondary"

@@ -2702,3 +2702,21 @@ html.fs-sheet-open{overflow:hidden;}
 .fuel-unit-row .fuel-unit-switch{margin-left:0}
 .fuel-muted-line{display:block;color:var(--muted)}
 .fs-event-next{margin-top:4px;font-size:12.5px;color:var(--primary-light, var(--primary))}
+
+/* Homemade drink: per bottle and whole batch side by side (js/fueling.js showDiyResults) */
+.fuel-diy-recipe{flex:1 1 100%;min-width:0}
+.fuel-diy-recipe table{width:100%;border-collapse:collapse;font-size:14px}
+.fuel-diy-recipe th,.fuel-diy-recipe td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+.fuel-diy-recipe th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.fuel-diy-recipe td:not(:first-child),.fuel-diy-recipe th:not(:first-child){text-align:right;white-space:nowrap}
+.fuel-diy-recipe td small{display:block;color:var(--muted);font-size:12px}
+.fuel-diy-recipe .fuel-diy-note{margin:10px 0 0;color:var(--muted);font-size:13px}
+.fuel-diy-recipe .fuel-diy-note.is-warn{color:var(--warning)}
+#diyCarbShareField[hidden]{display:none!important}
+@media(max-width:600px){
+    .fuel-diy-recipe table{table-layout:fixed;font-size:13px}
+    .fuel-diy-recipe th:first-child,.fuel-diy-recipe td:first-child{width:40%}
+    .fuel-diy-recipe td:not(:first-child),.fuel-diy-recipe th:not(:first-child){white-space:normal;overflow-wrap:anywhere}
+    .fuel-diy-recipe th,.fuel-diy-recipe td{padding:8px 4px}
+    .fuel-diy-recipe th{font-size:11px;letter-spacing:.03em}
+}

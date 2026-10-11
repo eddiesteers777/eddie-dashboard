@@ -6,9 +6,9 @@ import { icon } from "./icons.js";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
     DIY_SODIUM_SOURCES, DIY_CARB_SOURCES, DEFAULT_FIRST_GEL_MIN, drinkIncluded, firstGelValue, sodiumText,
-    isSipped, caffeineMg
+    isSipped, caffeineMg, drinkRecipe, recipeParts, carbSourceKey, tspWords
 } from "./fuelSchedule.js";
-import { fluidUnit, toFluid, fromFluid, fluidText } from "./fluidUnits.js";
+import { fluidUnit, toFluid, ML_PER_OZ, fromFluid, fluidText } from "./fluidUnits.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
 import {
     calculateTargets, estimateDurationMinutes, resolveRun, formatPace, formatDuration, paceForLabel
@@ -17,7 +17,7 @@ import { showsPersonalPlan } from "./role.js";
 import { toast, sbConfirm, sbPrompt } from "./ui.js";
 
 const $ = (id) => document.getElementById(id);
-const DIY_CARB_LABEL = source => (DIY_CARB_SOURCES[source] || DIY_CARB_SOURCES["table-sugar"]).label;
+const DIY_CARB_LABEL = source => DIY_CARB_SOURCES[carbSourceKey(source)].label;
 
 /* ==========================================
    State
@@ -857,7 +857,7 @@ function computeComposition() {
     });
 
     const drinkCarbs = includeDrink ? (Number($("diyCarbTarget").value) || 0) : 0;
-    const drinkSodium = includeDrink ? (Number($("diySodiumTarget").value) || 0) : 0;
+    const drinkSodium = includeDrink ? drinkRecipe(drinkInputs()).totals.sodium : 0;
 
     const totalCarbs = gelCarbs + drinkCarbs;
     const totalSodium = gelSodium + drinkSodium;
@@ -932,39 +932,80 @@ function renderComposition() {
 
 // The homemade drink's ingredient amounts for the current inputs, from
 // the same ingredient table the race-day schedule uses.
-function currentDiyMix() {
-    const bottleSize = fluidInput("diyBottleSize");
-    const bottleCount = Math.max(1, Number($("diyBottleCount").value) || 1);
-    const carbTarget = Number($("diyCarbTarget").value) || 0;
-    const sodiumTarget = Number($("diySodiumTarget").value) || 0;
-    const carbSource = $("diyCarbSource").value;
-    const sodiumSource = $("diySodiumSource").value;
-    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource });
+// The drink's inputs as saved on a plan (fluid in oz).
+function drinkInputs() {
+    const second = $("diyCarbSource2").value;
     return {
-        bottleSize,
-        bottleCount,
-        carbTarget,
-        sodiumTarget,
-        totalFluid: bottleSize * bottleCount,
-        sugarGrams: mix.carbGrams,
-        saltGrams: mix.sodiumGrams,
-        sugarTsp: mix.carbTsp != null ? Math.round(mix.carbTsp * 4) / 4 : null,
-        saltTsp: mix.sodiumTsp != null ? Math.round(mix.sodiumTsp * 8) / 8 : null,
-        carbSource,
-        sodiumSource,
+        bottleSize: fluidInput("diyBottleSize"),
+        bottleCount: Math.max(1, Number($("diyBottleCount").value) || 1),
+        carbTarget: Number($("diyCarbTarget").value) || 0,
+        sodiumTarget: Number($("diySodiumTarget").value) || 0,
+        carbSource: $("diyCarbSource").value,
+        carbSource2: second,
+        carbShare2: second ? Math.min(90, Math.max(10, Number($("diyCarbShare2").value) || 50)) / 100 : 0.5,
+        electroMg: Math.max(0, Number($("diyElectroMg").value) || 0),
+        electroScoops: Math.max(0, Number($("diyElectroScoops").value) || 0),
+        sodiumSource: $("diySodiumSource").value,
         notes: $("diyNotes").value
     };
+}
+
+function currentDiyMix() {
+    const d = drinkInputs();
+    const recipe = drinkRecipe(d);
+    const first = recipe.carbs[0] || null;
+    return {
+        ...d,
+        totalFluid: d.bottleSize * d.bottleCount,
+        recipe,
+        // Older readers (saved recipes, the plan summary): the first carb
+        // source and the salt, batch amounts.
+        sugarGrams: first ? first.grams : 0,
+        saltGrams: recipe.sodium?.grams ?? null,
+        sugarTsp: first?.tsp != null ? Math.round(first.tsp * 4) / 4 : null,
+        saltTsp: recipe.sodium?.tsp != null ? Math.round(recipe.sodium.tsp * 8) / 8 : null
+    };
+}
+
+// "2 × 590 ml · each: 30 g maltodextrin + 15 g table sugar + 0.5 g table salt"
+function drinkLine(mix) {
+    if (!mix) return "";
+    if (!mix.recipe) {
+        return `${fl(mix.totalFluid)} water · ${mix.sugarGrams} g ${DIY_CARB_LABEL(mix.carbSource).toLowerCase()} · ${sodiumText(mix)}`;
+    }
+    const parts = recipeParts(mix.recipe);
+    const n = mix.recipe.bottles;
+    return `${n} × ${fl(mix.bottleSize)}${parts.length ? ` · ${n > 1 ? "each: " : ""}${parts.join(" + ")}` : " of water"}`;
 }
 
 // The recipe on screen, from the current inputs (also on every change,
 // so it never disagrees with the plan summary or what's saved).
 function showDiyResults(mix) {
-    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
-    $("diyWaterAmount").textContent = fl(mix.totalFluid);
-    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
-    $("diySaltGrams").textContent = hasSalt && mix.saltGrams != null ? `${mix.saltGrams} g` : `${mix.sodiumTarget} mg sodium — see the label`;
-    $("diySugarTsp").textContent = mix.sugarTsp != null ? formatTsp(mix.sugarTsp) : "Use product label";
-    $("diySaltTsp").textContent = hasSalt && mix.saltTsp != null ? formatTsp(mix.saltTsp) : "Use product label";
+    const r = mix.recipe || drinkRecipe(mix);
+    const n = r.bottles;
+    const tsp = t => (t != null ? ` <small>${tspWords(t)}</small>` : "");
+    const rows = [
+        [`Water`, fl(r.bottleOz), fl(r.bottleOz * n)],
+        ...r.carbs.map(c => [`${escapeHTML(c.label)} <small>${c.carbs} g carbs in all</small>`, `${c.bottle.grams} g${tsp(c.bottle.tsp)}`, `${c.grams} g${tsp(c.tsp)}`]),
+        ...(r.electrolyte ? [[`Electrolyte powder <small>${r.electrolyte.mgPerScoop} mg sodium a scoop</small>`,
+            `${r.electrolyte.bottleScoops} scoop${r.electrolyte.bottleScoops === 1 ? "" : "s"}`,
+            `${r.electrolyte.scoops} scoop${r.electrolyte.scoops === 1 ? "" : "s"}`]] : []),
+        ...(r.sodium ? [[`${escapeHTML(r.sodium.label)}${r.electrolyte ? " <small>for the sodium the powder doesn't cover</small>" : ""}`,
+            r.sodium.bottle.grams != null ? `${r.sodium.bottle.grams} g${tsp(r.sodium.bottle.tsp)}` : `${r.sodium.bottle.mg} mg sodium <small>see the label</small>`,
+            r.sodium.grams != null ? `${r.sodium.grams} g${tsp(r.sodium.tsp)}` : `${r.sodium.mg} mg sodium <small>see the label</small>`]] : [])
+    ];
+    const perBottleCarbs = n ? r.totals.carbs / n : 0;
+    const pct = r.bottleOz > 0 ? Math.round(perBottleCarbs / (r.bottleOz * ML_PER_OZ) * 1000) / 10 : null;
+    const notes = [];
+    notes.push(`Each bottle: ${Math.round(perBottleCarbs)} g carbs · ${Math.round(r.totals.sodium / n)} mg sodium${pct != null ? ` · ${pct}% carb mix` : ""}.`);
+    if (r.over) notes.push(`<span class="is-warn">The powder alone gives ${r.over} mg more sodium than the target, so no salt is added.</span>`);
+    if (pct != null && pct > 10) notes.push(`<span class="is-warn">Stronger than the 6-8% most stomachs handle easily: practice it first, or use more water.</span>`);
+    $("diyRecipeTable").innerHTML = `
+        <table>
+            <thead><tr><th scope="col">Ingredient</th><th scope="col">Per bottle</th><th scope="col">${n === 2 ? "Both bottles" : n > 2 ? `All ${n} bottles` : "Whole batch"}</th></tr></thead>
+            <tbody>${rows.map(([a, b, c]) => `<tr><td>${a}</td><td>${b}</td><td>${c}</td></tr>`).join("")}</tbody>
+        </table>
+        ${notes.map(t => `<p class="fuel-diy-note">${t}</p>`).join("")}`;
 }
 
 function refreshDiySnapshot() {
@@ -997,7 +1038,17 @@ $("diySodiumTarget").addEventListener("input", () => {
     renderPlanSummary();
 }));
 
-["diyCarbSource", "diySodiumSource"].forEach(id => $(id).addEventListener("change", () => {
+["diyCarbShare2", "diyElectroMg", "diyElectroScoops"].forEach(id => $(id).addEventListener("input", () => {
+    refreshDiySnapshot();
+    renderComposition();
+    renderPlanSummary();
+}));
+
+$("diyCarbSource2").addEventListener("change", () => {
+    $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
+});
+
+["diyCarbSource", "diyCarbSource2", "diySodiumSource"].forEach(id => $(id).addEventListener("change", () => {
     refreshDiySnapshot();
     renderComposition();
     renderPlanSummary();
@@ -1123,7 +1174,7 @@ function renderDiyRecipes() {
             <div>
                 <strong>${escapeHTML(r.name)}</strong>
                 <div class="fuel-saved-item-meta">
-                    ${escapeHTML(`${r.sugarGrams} g ${(DIY_CARB_LABEL(r.carbSource)).toLowerCase()} · ${sodiumText(r)} · ${fl(r.totalFluid)} water`)}
+                    ${escapeHTML(drinkLine(r))}
                 </div>
             </div>
 
@@ -1490,7 +1541,7 @@ function renderPlanSummary() {
             html += `
                 <div class="fuel-plan-row">
                     <span>Homemade Drink</span>
-                    <span>${escapeHTML(snapshot ? `${fl(snapshot.totalFluid)} water · ${snapshot.sugarGrams} g ${DIY_CARB_LABEL(snapshot.carbSource).toLowerCase()} · ${sodiumText(snapshot)}` : `${c.drinkCarbs} g carb · ${c.drinkSodium} mg sodium`)}</span>
+                    <span>${escapeHTML(snapshot ? drinkLine(snapshot) : `${c.drinkCarbs} g carb · ${c.drinkSodium} mg sodium`)}</span>
                 </div>
             `;
 
@@ -1587,15 +1638,7 @@ function buildPlanObject() {
         items: planItems,
         includeHomemadeDrink: $("includeHomemadeDrink").checked,
         diySnapshot,
-        diyInputs: {
-            bottleSize: fluidInput("diyBottleSize"),
-            bottleCount: Number($("diyBottleCount").value) || 1,
-            carbTarget: Number($("diyCarbTarget").value) || 0,
-            sodiumTarget: Number($("diySodiumTarget").value) || 0,
-            carbSource: $("diyCarbSource").value,
-            sodiumSource: $("diySodiumSource").value,
-            notes: $("diyNotes").value
-        },
+        diyInputs: drinkInputs(),
         preWorkoutFood,
         firstGelMin: firstGelValue($("firstGelMin").value),
         startTime: $("startTime").value || "",
@@ -2014,55 +2057,28 @@ function openPlan(id) {
     $("includeHomemadeDrink").checked = plan.includeHomemadeDrink !== false;
 
 if (plan.diyInputs) {
-    setFluidInput("diyBottleSize", plan.diyInputs.bottleSize || 20);
-
-    $("diyBottleCount").value =
-        plan.diyInputs.bottleCount || 1;
-
-    $("diyCarbTarget").value =
-        plan.diyInputs.carbTarget || 0;
-
-    $("diySodiumTarget").value =
-        plan.diyInputs.sodiumTarget || 0;
-
-    $("diyCarbSource").value =
-        plan.diyInputs.carbSource || "table-sugar";
-
-    $("diySodiumSource").value =
-        plan.diyInputs.sodiumSource || "table-salt";
-
-    $("diyNotes").value =
-        plan.diyInputs.notes || "";
-
-    refreshDiySnapshot();
+    const d = plan.diyInputs;
+    setFluidInput("diyBottleSize", d.bottleSize || 20);
+    $("diyBottleCount").value = d.bottleCount || 1;
+    $("diyCarbTarget").value = d.carbTarget || 0;
+    $("diySodiumTarget").value = d.sodiumTarget || 0;
+    $("diyCarbSource").value = carbSourceKey(d.carbSource || "table-sugar");
+    $("diyCarbSource2").value = d.carbSource2 ? carbSourceKey(d.carbSource2) : "";
+    $("diyCarbShare2").value = Math.round((Number(d.carbShare2) || 0.5) * 100);
+    $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
+    $("diyElectroMg").value = d.electroMg || "";
+    $("diyElectroScoops").value = d.electroScoops || "";
+    $("diySodiumSource").value = d.sodiumSource || "table-salt";
+    $("diyNotes").value = d.notes || "";
 }
 
-if (plan.diySnapshot) {
-    $("diyResults").dataset.snapshot =
-        JSON.stringify(plan.diySnapshot);
-
-    $("diyWaterAmount").textContent =
-        fl(plan.diySnapshot.totalFluid);
-
-    $("diySugarGrams").textContent =
-        `${plan.diySnapshot.sugarGrams} g`;
-
-    $("diySaltGrams").textContent =
-        `${plan.diySnapshot.saltGrams} g`;
-
-    $("diySaltGrams").textContent =
-        plan.diySnapshot.saltGrams != null && DIY_SODIUM_SOURCES[plan.diySnapshot.sodiumSource || "table-salt"]?.sodiumPerGram > 0
-            ? `${plan.diySnapshot.saltGrams} g`
-            : `${plan.diySnapshot.sodiumTarget ?? 0} mg sodium — see the label`;
-
-    $("diySugarTsp").textContent =
-        plan.diySnapshot.sugarTsp != null ? formatTsp(plan.diySnapshot.sugarTsp) : "Use product label";
-
-    $("diySaltTsp").textContent =
-        plan.diySnapshot.saltTsp != null ? formatTsp(plan.diySnapshot.saltTsp) : "Use product label";
-
+// The recipe is worked out again from the inputs (the same numbers a
+// saved snapshot holds), so it always reads the way the page does now.
+refreshDiySnapshot();
+if (plan.diySnapshot || plan.diyInputs) {
     $("diyResults").style.display = "flex";
     $("diyConversionNote").style.display = "";
+    showDiyResults(currentDiyMix());
 }
 
 

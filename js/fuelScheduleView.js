@@ -6,7 +6,7 @@
    same thing. Styles: .fs-* in css/fueling.css.
 ========================================== */
 
-import { formatClock, formatTsp } from "./fuelSchedule.js";
+import { formatClock, formatTsp, recipeParts } from "./fuelSchedule.js";
 import { fluidText, fluidWords } from "./fluidUnits.js";
 
 // The fluid unit for this render ("oz" | "ml"); set by scheduleHTML.
@@ -151,7 +151,7 @@ function bottlesHTML(s) {
         ${m ? `
         <div class="fs-mix">
             <span class="fs-mix-label">Mix each bottle</span>
-            <span>${fl(s.bottles[0].oz)} water + ${carbAmount} + ${sodiumAmount}</span>
+            <span>${fl(s.bottles[0].oz)} water + ${m.recipe ? esc(recipeParts(m.recipe).join(" + ")) : [carbAmount, sodiumAmount].filter(Boolean).join(" + ")}</span>
             ${s.concentration != null ? `<span class="fs-muted">${s.concentration}% carb solution</span>` : ""}
         </div>` : ""}`;
 }

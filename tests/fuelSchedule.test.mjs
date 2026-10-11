@@ -135,7 +135,7 @@ test("formatting helpers", () => {
 // ---- Fueling audit step 1: the duration rule, inputs, the drink, saved plans ----
 import { parsePace, formatPace, resolveRun, estimateDurationMinutes, calculateTargets, baseCarbsPerHour, paceForLabel } from "../js/fuelTargets.js";
 import { toFluid, fromFluid, fluidText, fluidWords } from "../js/fluidUnits.js";
-import { drinkIncluded, firstGelValue, sodiumText, isSipped, parseStartTime, timeOfDay } from "../js/fuelSchedule.js";
+import { drinkIncluded, firstGelValue, sodiumText, isSipped, parseStartTime, timeOfDay, drinkRecipe, recipeParts, carbSourceKey } from "../js/fuelSchedule.js";
 
 test("paces are read per mile or per km, ranges by their middle, words not at all", () => {
     assert.equal(parsePace("8:30"), 8.5);
@@ -362,4 +362,48 @@ test("every checkpoint says what's next to take in, how long and how far (test 2
     // 18 mi at 8:30: a gel at 1:16 or 1:17 lands at mile 8.9 / 9.1.
     const two = buildSchedule({ durationMin: 153, distanceMi: 18, items: [{ name: "Gel", carbs: 25, qty: 2 }], firstGelMin: 77, targets: {} });
     assert.equal(two.gels[0].mile, 9.1);
+});
+
+test("homemade drink: two carb sources, per bottle and whole batch (test 5)", () => {
+    const r = drinkRecipe({ carbTarget: 60, sodiumTarget: 0, bottleCount: 2, bottleSize: 20, carbSource: "maltodextrin", carbSource2: "table-sugar", carbShare2: 0.5 });
+    assert.deepEqual(r.carbs.map(c => [c.key, c.carbs, c.grams, c.bottle.grams]), [["maltodextrin", 30, 31.6, 15.8], ["table-sugar", 30, 30, 15]]);
+    assert.equal(r.totals.carbs, 60);
+    assert.ok(Math.abs(r.carbs[1].tsp - 30 / 4.2) < 0.01);
+    assert.equal(r.carbs[0].tsp, null, "maltodextrin has no teaspoon measure");
+    // The same source twice is one source.
+    assert.equal(drinkRecipe({ carbTarget: 60, carbSource: "honey", carbSource2: "honey" }).carbs.length, 1);
+    assert.deepEqual(recipeParts(r), ["15.8 g maltodextrin", "15 g table sugar (3 ⅝ tsp)"]);
+    assert.deepEqual(recipeParts(r, { batch: true }), ["31.6 g maltodextrin", "30 g table sugar (7 ⅛ tsp)"]);
+});
+
+test("electrolyte powder covers what it can and salt only the rest (test 6)", () => {
+    const r = drinkRecipe({ carbTarget: 0, sodiumTarget: 500, bottleCount: 1, electroMg: 300, electroScoops: 1 });
+    assert.equal(r.electrolyte.mg, 300);
+    assert.equal(r.sodium.mg, 200);
+    assert.equal(r.sodium.grams, 0.51);
+    assert.equal(r.totals.sodium, 500, "each source counted once");
+    // The powder alone past the target: no salt, the extra said.
+    const over = drinkRecipe({ sodiumTarget: 500, bottleCount: 2, electroMg: 400, electroScoops: 1 });
+    assert.equal(over.sodium, null);
+    assert.equal(over.over, 300);
+    assert.equal(over.totals.sodium, 800);
+    // Sodium from a product with no fixed measure: in mg, never "0 g salt".
+    const tabs = drinkRecipe({ sodiumTarget: 500, sodiumSource: "salt-tabs" });
+    assert.equal(tabs.sodium.grams, null);
+    assert.deepEqual(recipeParts(tabs), ["500 mg sodium from salt tabs (see its label)"]);
+    // In the schedule: the bottle's mix, and the powder's extra sodium counted.
+    const s = buildSchedule(scheduleInputFromPlan({
+        duration: 120, carbsPerHour: 45, sodiumPerHour: 400, includeHomemadeDrink: true,
+        diyInputs: { bottleSize: 20, bottleCount: 2, carbTarget: 60, sodiumTarget: 500, carbSource: "maltodextrin", carbSource2: "table-sugar", carbShare2: 0.5, electroMg: 400, electroScoops: 1, sodiumSource: "table-salt" }
+    }));
+    assert.deepEqual(recipeParts(s.mix.recipe), ["15.8 g maltodextrin", "15 g table sugar (3 ⅝ tsp)", "1 scoop electrolyte powder (400 mg sodium)"]);
+    assert.equal(s.totals.sodium, 800);
+    assert.equal(s.bottles[0].sodium, 400);
+});
+
+test("the menu's old carb names read as the right ingredient", () => {
+    assert.equal(carbSourceKey("juice"), "fruit-juice");
+    assert.equal(carbSourceKey("sports-powder"), "sports-drink-powder");
+    assert.equal(carbSourceKey("nonsense"), "table-sugar");
+    assert.equal(diyMix({ carbTarget: 11, carbSource: "juice" }).carbGrams, 100, "juice is 11% carbs, not sugar");
 });
