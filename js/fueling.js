@@ -1910,6 +1910,8 @@ if (plan.diySnapshot) {
 
     $("diySugarGrams").textContent =
         `${plan.diySnapshot.sugarGrams} g`;
+    $("diyMaltodextrinGrams").textContent =
+        `${plan.diySnapshot.maltodextrinGrams || 0} g`;
 
     $("diySaltGrams").textContent =
         `${plan.diySnapshot.saltGrams} g`;
