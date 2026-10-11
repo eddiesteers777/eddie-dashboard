@@ -2023,6 +2023,8 @@ if (plan.diyInputs) {
         plan.diyInputs.maltodextrinCarbsPerGram ?? 0.95;
     $("diyExistingSodium").value =
         plan.diyInputs.existingSodium ?? 0;
+    $("diyMaltodextrinCarbsPerGram").value =
+        plan.diyInputs.maltodextrinCarbsPerGram ?? 0.95;
 
     $("diySodiumSource").value =
         plan.diyInputs.sodiumSource || "table-salt";
