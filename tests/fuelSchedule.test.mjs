@@ -131,3 +131,122 @@ test("formatting helpers", () => {
     assert.equal(formatClock(7), "0:07");
     assert.equal(diyMix({ carbTarget: 0, sodiumTarget: 0 }).carbGrams, 0);
 });
+
+// ---- Fueling audit step 1: the duration rule, inputs, the drink, saved plans ----
+import { parsePace, formatPace, resolveDuration, estimateDurationMinutes, calculateTargets } from "../js/fuelTargets.js";
+import { drinkIncluded, firstGelValue, sodiumText } from "../js/fuelSchedule.js";
+
+test("paces are read per mile or per km, ranges by their middle, words not at all", () => {
+    assert.equal(parsePace("8:30"), 8.5);
+    assert.equal(parsePace("8:30/mi"), 8.5);
+    assert.equal(parsePace(" 8:30 per mile "), 8.5);
+    assert.equal(parsePace("8:15-8:45"), 8.5);
+    assert.equal(parsePace("8"), 8);
+    assert.ok(Math.abs(parsePace("5:17/km") - 8.505) < 0.01);
+    for (const bad of ["", "Easy", "MP", "8:75", "2:00", "45:00", "abc", "-1"]) assert.equal(parsePace(bad), null, bad);
+    assert.equal(formatPace(8.5), "8:30");
+    assert.equal(formatPace(7.999), "8:00");
+});
+
+test("18 mi at 8:30 is 153 min, and that fills the duration (test 1)", () => {
+    const r = resolveDuration({ distance: 18, pace: "8:30", workoutType: "long" });
+    assert.equal(r.minutes, 153);
+    assert.equal(r.source, "distance-pace");
+    assert.equal(r.conflict, null);
+    // The old code: 90 left in the box beat the distance; blank used a fixed 8:15.
+    assert.equal(estimateDurationMinutes({ distance: 18, pace: "8:30", workoutType: "long" }), 153);
+});
+
+test("a typed duration wins, and a disagreement is said, not hidden", () => {
+    const r = resolveDuration({ distance: 18, pace: "8:30", duration: 90, durationTyped: true });
+    assert.equal(r.minutes, 90);
+    assert.deepEqual(r.conflict, { typed: 90, fromPace: 153 });
+    assert.ok(r.problems.some(p => /5:00 a mile/.test(p)) === false, "5:00/mi is a real pace, no problem line");
+    // Within 3 min / 3%: no conflict.
+    assert.equal(resolveDuration({ distance: 18, pace: "8:30", duration: 155, durationTyped: true }).conflict, null);
+    // A number in the box that wasn't typed (filled in earlier) doesn't count.
+    assert.equal(resolveDuration({ distance: 18, pace: "8:30", duration: 90, durationTyped: false }).minutes, 153);
+    // Duration + distance, no pace: the pace it implies.
+    const implied = resolveDuration({ distance: 10, duration: 80, durationTyped: true });
+    assert.equal(implied.paceSource, "implied");
+    assert.equal(formatPace(implied.paceMin), "8:00");
+});
+
+test("a distance alone uses a typical pace and says so; nothing at all makes no plan (test 10)", () => {
+    const d = resolveDuration({ distance: 12, workoutType: "long" });
+    assert.equal(d.source, "distance-typical");
+    assert.equal(d.minutes, 99);
+    const none = resolveDuration({});
+    assert.equal(none.minutes, null);
+    assert.equal(none.source, "none");
+});
+
+test("blank, zero, negative and huge inputs give no NaN, no Infinity and a plain message (test 10)", () => {
+    const cases = [
+        { distance: "", pace: "", duration: "" },
+        { distance: 0, pace: "0:00", duration: 0, durationTyped: true },
+        { distance: -5, pace: "8:00" },
+        { distance: 1e9, pace: "8:00" },
+        { distance: 10, duration: 1e9, durationTyped: true },
+        { distance: 10, duration: 5, durationTyped: true },
+        { distance: "abc", pace: "fast" }
+    ];
+    for (const c of cases) {
+        const r = resolveDuration(c);
+        assert.ok(r.minutes === null || (Number.isFinite(r.minutes) && r.minutes > 0), JSON.stringify(c));
+        if (r.paceMin != null) assert.ok(Number.isFinite(r.paceMin), JSON.stringify(c));
+        if (r.minutes) {
+            const t = calculateTargets({ duration: r.minutes });
+            for (const v of Object.values(t)) assert.ok(Number.isFinite(v), JSON.stringify(c));
+        }
+    }
+    assert.ok(resolveDuration({ distance: -5, pace: "8:00" }).problems.length);
+    assert.ok(resolveDuration({ distance: 10, pace: "fast" }).problems.some(p => /Couldn't read the pace/.test(p)));
+    assert.ok(resolveDuration({ distance: 10, duration: 5, durationTyped: true }).problems.some(p => /a mile/.test(p)), "0:30/mi flagged");
+});
+
+test("the drink counts in the totals and the schedule by the same rule (defect 6)", () => {
+    assert.equal(drinkIncluded(true, { bottleSize: 0, bottleCount: 2 }), false);
+    assert.equal(drinkIncluded(true, { bottleSize: 20, bottleCount: 2 }), true);
+    assert.equal(drinkIncluded(false, { bottleSize: 20, bottleCount: 2 }), false);
+    const plan = { duration: 120, carbsPerHour: 60, includeHomemadeDrink: true, diyInputs: { bottleSize: 0, bottleCount: 2, carbTarget: 60 } };
+    assert.equal(scheduleInputFromPlan(plan).drink, null);
+});
+
+test("first gel at 0 is the earliest (5 min), not 30; blank is the default (defect 12)", () => {
+    assert.equal(firstGelValue(0), 5);
+    assert.equal(firstGelValue("0"), 5);
+    assert.equal(firstGelValue(""), 30);
+    assert.equal(firstGelValue(null), 30);
+    assert.equal(firstGelValue(45), 45);
+    const s = buildSchedule({ ...marathon, firstGelMin: 0 });
+    assert.equal(s.gels[0].min, 5);
+});
+
+test("an electrolyte mix is described by its sodium, never “0 g salt” (defect 7)", () => {
+    assert.equal(sodiumText({ sodiumSource: "electrolyte-mix", sodiumTarget: 500, saltGrams: null }), "500 mg sodium from Electrolyte Mix (see its label)");
+    assert.equal(sodiumText({ sodiumSource: "electrolyte-mix", sodiumTarget: 500, saltGrams: 0 }), "500 mg sodium from Electrolyte Mix (see its label)");
+    assert.equal(sodiumText({ sodiumSource: "table-salt", sodiumTarget: 500, saltGrams: 1.27, saltTsp: 0.25 }), "1.27 g salt (¼ tsp)");
+    assert.equal(sodiumText({ sodiumSource: "table-salt", sodiumTarget: 393 }), "1 g salt");
+});
+
+test("saved plans from before still give the same schedule (test 11)", () => {
+    // The shapes buildPlanObject() wrote before this change.
+    const old = [
+        { duration: 90, session: { workoutType: "long", duration: 90, distance: 18, pace: "8:30" }, items: [{ name: "Gel", carbs: 22, sodium: 60, qty: 2 }], carbsPerHour: 45, fluidPerHour: 22, sodiumPerHour: 450, firstGelMin: 30, includeHomemadeDrink: true, diyInputs: { bottleSize: 20, bottleCount: 2, carbTarget: 60, sodiumTarget: 400, carbSource: "table-sugar", sodiumSource: "table-salt" } },
+        { duration: 149, session: { workoutType: "long", duration: 0, distance: 18 }, items: [], carbsPerHour: 45, fluidPerHour: 22, sodiumPerHour: 450 },
+        { duration: 185, marathonRef: { miles: 26.2 }, items: [{ name: "Gel", carbs: 25, sodium: 50, qty: 6 }], carbsPerHour: 75, fluidPerHour: 24, sodiumPerHour: 500, firstGelMin: 40 }
+    ];
+    const expected = [
+        { durationMin: 90, distanceMi: 18, gels: [30, 75], firstGelMin: 30 },
+        { durationMin: 149, distanceMi: 18, gels: [], firstGelMin: 30 },
+        { durationMin: 185, distanceMi: 26.2, gels: [40, 66, 92, 118, 144, 170], firstGelMin: 40 }
+    ];
+    old.forEach((p, i) => {
+        const s = buildSchedule(scheduleInputFromPlan(p));
+        assert.equal(s.durationMin, expected[i].durationMin);
+        assert.equal(s.distanceMi, expected[i].distanceMi);
+        assert.equal(s.firstGelMin, expected[i].firstGelMin);
+        assert.deepEqual(s.gels.map(g => g.min), expected[i].gels);
+    });
+});

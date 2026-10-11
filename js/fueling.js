@@ -5,14 +5,17 @@
 import { icon } from "./icons.js";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
-    DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN
+    DIY_SODIUM_SOURCES, DIY_CARB_SOURCES, DEFAULT_FIRST_GEL_MIN, drinkIncluded, firstGelValue, sodiumText
 } from "./fuelSchedule.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
-import { calculateTargets, estimateDurationMinutes } from "./fuelTargets.js";
+import {
+    calculateTargets, estimateDurationMinutes, resolveDuration, formatPace, formatDuration
+} from "./fuelTargets.js";
 import { showsPersonalPlan } from "./role.js";
 import { toast, sbConfirm, sbPrompt } from "./ui.js";
 
 const $ = (id) => document.getElementById(id);
+const DIY_CARB_LABEL = source => (DIY_CARB_SOURCES[source] || DIY_CARB_SOURCES["table-sugar"]).label;
 
 /* ==========================================
    State
@@ -31,6 +34,7 @@ let planItems = [];       // library items added to the current plan build
 let currentPlanId = null; // set when editing a saved plan
 let marathonRef = null;   // { week, dayKey } when this plan is tied to a Marathon workout
 let preWorkoutFood = "";
+let durationTyped = false; // the duration box holds a number typed by hand (it then wins over distance + pace)
 
 let library = [];
 let diyRecipes = [];
@@ -447,7 +451,8 @@ function readSession() {
     return {
 
         workoutType: $("workoutType").value,
-        duration: Number($("duration").value) || 0,
+        duration: durationTyped ? Number($("duration").value) || 0 : 0,
+        durationTyped,
         distance: Number($("distance").value) || 0,
         pace: $("pace").value.trim(),
 
@@ -478,11 +483,65 @@ function readSession() {
    Render — Targets
 ========================================== */
 
+// The run's length by the page's one rule (js/fuelTargets.js
+// resolveDuration), said in words under the workout fields.
+function currentResolve() {
+    return resolveDuration({
+        duration: $("duration").value,
+        durationTyped,
+        distance: $("distance").value,
+        pace: $("pace").value,
+        workoutType: $("workoutType").value
+    });
+}
+
+function renderDurationStatus(r = currentResolve()) {
+    const el = $("durationStatus");
+    if (!el) return r;
+    const dist = Number($("distance").value) || 0;
+    const parts = [];
+    if (r.source === "distance-pace") {
+        parts.push(`${dist} mi at ${formatPace(r.paceMin)}/mi = <strong>${formatDuration(r.minutes)}</strong> (${r.minutes} min).`);
+    } else if (r.source === "distance-typical") {
+        parts.push(`About <strong>${formatDuration(r.minutes)}</strong>, from a typical ${formatPace(r.paceMin)}/mi for this kind of run. Add your pace for a closer number.`);
+    } else if (r.source === "typed") {
+        if (r.conflict) {
+            parts.push(`Using the ${r.conflict.typed} min you typed. ${dist} mi at ${escapeHTML($("pace").value.trim())}/mi would be ${formatDuration(r.conflict.fromPace)} (${r.conflict.fromPace} min). <button type="button" class="fuel-btn secondary small" id="useFromPaceBtn">Use ${r.conflict.fromPace} min</button>`);
+        } else if (r.paceSource === "implied") {
+            parts.push(`${r.minutes} min for ${dist} mi is ${formatPace(r.paceMin)}/mi.`);
+        }
+    } else {
+        parts.push("Enter a duration, or a distance and pace, to build the plan.");
+    }
+    r.problems.forEach(p => parts.push(`<span class="fuel-duration-problem">${escapeHTML(p)}</span>`));
+    el.innerHTML = parts.join(" ");
+    el.classList.toggle("is-conflict", !!r.conflict || r.problems.length > 0);
+    // The box shows what distance + pace work out to, unless a number was typed.
+    if (!durationTyped) $("duration").value = r.source === "distance-pace" ? r.minutes : "";
+    $("duration").placeholder = r.source === "distance-typical" ? `about ${r.minutes}` : "from distance + pace";
+    return r;
+}
+
 function runCalculation() {
 
-    const session = readSession();
+    const resolved = renderDurationStatus();
 
-    const targets = calculateTargets(session);
+    if (!resolved.minutes) {
+        lastSession = null;
+        lastTargets = null;
+        $("targetsPanel").style.display = "none";
+        $("compositionPanel").style.display = "none";
+        $("timelinePanel").style.display = "none";
+        renderSchedule();
+        renderPlanSummary();
+        $("durationStatus")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+    }
+
+    const session = readSession();
+    session.durationResolved = resolved.minutes;
+
+    const targets = calculateTargets({ ...session, duration: resolved.minutes });
 
     lastSession = session;
 
@@ -514,9 +573,11 @@ function runCalculation() {
 
 function currentDurationMinutes() {
 
+    if (lastSession?.durationResolved > 0) return lastSession.durationResolved;
+
     if (lastSession) return estimateDurationMinutes(lastSession);
 
-    return Number($("duration").value) || 60;
+    return currentResolve().minutes || 0;
 
 }
 
@@ -566,7 +627,7 @@ function setMode(next) {
 
         lastSession.mode = mode;
 
-        const targets = calculateTargets(lastSession);
+        const targets = calculateTargets({ ...lastSession, duration: currentDurationMinutes() });
 
         $("carbsPerHour").value = targets.carbsPerHour;
         $("fluidPerHour").value = targets.fluidPerHour;
@@ -601,6 +662,31 @@ $("calculateBtn").addEventListener("click", runCalculation);
 });
 
 $("firstGelMin").addEventListener("input", renderSchedule);
+
+// The workout and athlete inputs: the duration line follows at once, and
+// once a plan is showing, everything recalculates as you type (no need to
+// press Calculate again).
+let liveTimer = null;
+function onSessionInput(e) {
+    if (e?.target?.id === "duration") durationTyped = $("duration").value.trim() !== "";
+    renderDurationStatus();
+    if (!lastTargets && !lastSession) return;
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(runCalculation, 250);
+}
+["workoutType", "duration", "distance", "pace", "bodyWeight", "currentCarbIntake", "tolerance", "stomachSensitivity",
+    "temperature", "humidity", "sweatRate", "sweatSodium", "typicalSodiumIntake", "caffeineWanted"].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener("input", onSessionInput);
+    if (el.tagName === "SELECT" || el.type === "checkbox") el.addEventListener("change", onSessionInput);
+});
+$("fuelPreferences")?.addEventListener("change", onSessionInput);
+$("durationStatus")?.addEventListener("click", e => {
+    if (!e.target.closest("#useFromPaceBtn")) return;
+    durationTyped = false;
+    onSessionInput();
+});
 
 /* ==========================================
    Marathon Integration
@@ -668,12 +754,13 @@ function applyMarathonWorkout(workout, week, dayKey) {
 
     }[paceLabel] || 8.3;
 
-    const estimatedDuration = Math.round(miles * minPerMile);
-
     $("workoutType").value = workoutType;
     $("distance").value = miles || "";
-    $("duration").value = estimatedDuration || "";
-    $("pace").value = workout.pace || "";
+    // The pace label ("Long Run", "MP") as a number, so distance + pace
+    // set the duration by the page's one rule.
+    durationTyped = false;
+    $("duration").value = "";
+    $("pace").value = miles ? formatPace(minPerMile) : "";
 
     marathonRef = { week, dayKey, workoutLabel: workout.session || "Workout", miles, pace: workout.pace || "" };
 
@@ -721,7 +808,10 @@ function computeComposition() {
     const gelCarbs = planItems.reduce((s, p) => s + p.carbs * p.qty, 0);
     const gelSodium = planItems.reduce((s, p) => s + p.sodium * p.qty, 0);
 
-    const includeDrink = $("includeHomemadeDrink").checked;
+    // Same rule as the schedule: no bottles, no drink in the totals.
+    const includeDrink = drinkIncluded($("includeHomemadeDrink").checked, {
+        bottleSize: $("diyBottleSize").value, bottleCount: $("diyBottleCount").value
+    });
 
     const drinkCarbs = includeDrink ? (Number($("diyCarbTarget").value) || 0) : 0;
     const drinkSodium = includeDrink ? (Number($("diySodiumTarget").value) || 0) : 0;
@@ -775,7 +865,9 @@ function renderComposition() {
 
         ${c.includeDrink
             ? `<div class="fuel-plan-row"><span>Homemade Drink</span><span>${c.drinkCarbs} g carb · ${c.drinkSodium} mg sodium</span></div>`
-            : ""
+            : $("includeHomemadeDrink").checked
+                ? `<p class="fuel-note">The homemade drink isn't counted yet: set a bottle size and how many bottles below.</p>`
+                : ""
         }
 
         <div class="fuel-plan-row fuel-plan-total">
@@ -812,7 +904,7 @@ function currentDiyMix() {
         sodiumTarget,
         totalFluid: bottleSize * bottleCount,
         sugarGrams: mix.carbGrams,
-        saltGrams: mix.sodiumGrams ?? 0,
+        saltGrams: mix.sodiumGrams,
         sugarTsp: mix.carbTsp != null ? Math.round(mix.carbTsp * 4) / 4 : null,
         saltTsp: mix.sodiumTsp != null ? Math.round(mix.sodiumTsp * 8) / 8 : null,
         carbSource,
@@ -821,8 +913,21 @@ function currentDiyMix() {
     };
 }
 
+// The recipe on screen, from the current inputs (also on every change,
+// so it never disagrees with the plan summary or what's saved).
+function showDiyResults(mix) {
+    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
+    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
+    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
+    $("diySaltGrams").textContent = hasSalt && mix.saltGrams != null ? `${mix.saltGrams} g` : `${mix.sodiumTarget} mg sodium — see the label`;
+    $("diySugarTsp").textContent = mix.sugarTsp != null ? formatTsp(mix.sugarTsp) : "Use product label";
+    $("diySaltTsp").textContent = hasSalt && mix.saltTsp != null ? formatTsp(mix.saltTsp) : "Use product label";
+}
+
 function refreshDiySnapshot() {
-    $("diyResults").dataset.snapshot = JSON.stringify(currentDiyMix());
+    const mix = currentDiyMix();
+    $("diyResults").dataset.snapshot = JSON.stringify(mix);
+    if ($("diyResults").style.display === "flex") showDiyResults(mix);
 }
 
 $("includeHomemadeDrink").addEventListener("change", () => {
@@ -846,11 +951,13 @@ $("diySodiumTarget").addEventListener("input", () => {
 ["diyBottleSize", "diyBottleCount"].forEach(id => $(id).addEventListener("input", () => {
     refreshDiySnapshot();
     renderComposition();
+    renderPlanSummary();
 }));
 
 ["diyCarbSource", "diySodiumSource"].forEach(id => $(id).addEventListener("change", () => {
     refreshDiySnapshot();
     renderComposition();
+    renderPlanSummary();
 }));
 
 $("diyNotes").addEventListener("input", () => {
@@ -919,13 +1026,8 @@ function renderSchedule() {
 $("diyCalculateBtn").addEventListener("click", () => {
 
     const mix = currentDiyMix();
-    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
 
-    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
-    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
-    $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
-    $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
-    $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
+    showDiyResults(mix);
 
     $("diyResults").style.display = "flex";
     $("diyConversionNote").style.display = "";
@@ -978,7 +1080,7 @@ function renderDiyRecipes() {
             <div>
                 <strong>${escapeHTML(r.name)}</strong>
                 <div class="fuel-saved-item-meta">
-                    ${r.sugarGrams}g sugar · ${r.saltGrams}g salt · ${r.totalFluid} oz water
+                    ${escapeHTML(`${r.sugarGrams} g ${(DIY_CARB_LABEL(r.carbSource)).toLowerCase()} · ${sodiumText(r)} · ${r.totalFluid} oz water`)}
                 </div>
             </div>
 
@@ -1333,7 +1435,7 @@ function renderPlanSummary() {
             html += `
                 <div class="fuel-plan-row">
                     <span>Homemade Drink</span>
-                    <span>${snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.sugarGrams}g sugar · ${snapshot.saltGrams}g salt` : `${c.drinkCarbs}g carb · ${c.drinkSodium}mg sodium (calculate below)`}</span>
+                    <span>${escapeHTML(snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.sugarGrams} g ${DIY_CARB_LABEL(snapshot.carbSource).toLowerCase()} · ${sodiumText(snapshot)}` : `${c.drinkCarbs} g carb · ${c.drinkSodium} mg sodium`)}</span>
                 </div>
             `;
 
@@ -1440,7 +1542,7 @@ function buildPlanObject() {
             notes: $("diyNotes").value
         },
         preWorkoutFood,
-        firstGelMin: Number($("firstGelMin").value) || DEFAULT_FIRST_GEL_MIN,
+        firstGelMin: firstGelValue($("firstGelMin").value),
         session: lastSession
 
     };
@@ -1518,6 +1620,7 @@ $("clearPlanBtn").addEventListener("click", () => {
     preWorkoutFood = "";
     lastTargets = null;
     lastSession = null;
+    durationTyped = false;
 
     $("planName").value = "";
     $("preWorkoutFood").value = "";
@@ -1529,6 +1632,7 @@ $("clearPlanBtn").addEventListener("click", () => {
     $("diyConversionNote").style.display = "none";
 
     updatePlanWorkoutLabel();
+    renderDurationStatus();
     renderPlanSummary();
 
 });
@@ -1809,7 +1913,10 @@ function openPlan(id) {
         lastSession = { ...plan.session };
 
         $("workoutType").value = plan.session.workoutType;
-        $("duration").value = plan.session.duration;
+        // Older plans had no flag: a duration they saved was typed in.
+        durationTyped = plan.session.durationTyped ?? Number(plan.session.duration) > 0;
+        lastSession.durationResolved = Number(plan.duration) || estimateDurationMinutes(plan.session);
+        $("duration").value = durationTyped ? plan.session.duration : "";
         $("distance").value = plan.session.distance || "";
         $("pace").value = plan.session.pace || "";
         $("bodyWeight").value = plan.session.bodyWeight || "";
@@ -1883,11 +1990,16 @@ if (plan.diySnapshot) {
     $("diySaltGrams").textContent =
         `${plan.diySnapshot.saltGrams} g`;
 
+    $("diySaltGrams").textContent =
+        plan.diySnapshot.saltGrams != null && DIY_SODIUM_SOURCES[plan.diySnapshot.sodiumSource || "table-salt"]?.sodiumPerGram > 0
+            ? `${plan.diySnapshot.saltGrams} g`
+            : `${plan.diySnapshot.sodiumTarget ?? 0} mg sodium — see the label`;
+
     $("diySugarTsp").textContent =
-        plan.diySnapshot.sugarTsp ?? "Use product label";
+        plan.diySnapshot.sugarTsp != null ? formatTsp(plan.diySnapshot.sugarTsp) : "Use product label";
 
     $("diySaltTsp").textContent =
-        plan.diySnapshot.saltTsp ?? "Use product label";
+        plan.diySnapshot.saltTsp != null ? formatTsp(plan.diySnapshot.saltTsp) : "Use product label";
 
     $("diyResults").style.display = "flex";
     $("diyConversionNote").style.display = "";
@@ -1896,6 +2008,7 @@ if (plan.diySnapshot) {
 
     updatePlanWorkoutLabel();
 
+    renderDurationStatus();
     renderComposition();
     renderPlanSummary();
 
@@ -1935,6 +2048,8 @@ function renderFuelingPage() {
 
     initCollapsiblePanels();
 
+    renderDurationStatus();
+
     prefillFromWorkoutLink();
 
     // Picking a workout from the marathon block only makes sense for the
@@ -1960,7 +2075,7 @@ function prefillFromWorkoutLink() {
     const miles = Number(params.get("miles"));
     const duration = Number(params.get("duration"));
     if (miles > 0) $("distance").value = miles;
-    if (duration > 0) $("duration").value = duration;
+    if (duration > 0) { $("duration").value = duration; durationTyped = true; }
     const last = [...plans].filter(p => p?.session).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0]?.session;
     if (last) {
         for (const id of ["bodyWeight", "currentCarbIntake", "temperature", "humidity", "typicalSodiumIntake"]) {

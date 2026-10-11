@@ -73,13 +73,40 @@ export function formatClock(minutes) {
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
+// The homemade drink counts (in the totals and the schedule alike) only
+// when it's switched on and has bottles to go in.
+export function drinkIncluded(include, diy = {}) {
+    return include !== false && (Number(diy.bottleCount) || 0) > 0 && (Number(diy.bottleSize) || 0) > 0;
+}
+
+// "First gel at": blank -> the default; 0 or less -> 5 (the earliest the
+// schedule places one); never silently 30 for a typed 0.
+export function firstGelValue(value) {
+    if (value === "" || value == null) return DEFAULT_FIRST_GEL_MIN;
+    const n = Number(value);
+    if (!isFinite(n)) return DEFAULT_FIRST_GEL_MIN;
+    return Math.min(240, Math.max(5, Math.round(n)));
+}
+
+// What a drink's sodium comes from, in words: "1.27 g salt (¼ tsp)", or
+// "500 mg sodium from Electrolyte Mix (see its label)".
+export function sodiumText({ sodiumSource = "table-salt", sodiumTarget = 0, saltGrams = null, saltTsp = null } = {}) {
+    const src = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
+    if (src.sodiumPerGram > 0) {
+        const g = saltGrams ?? Math.round((Number(sodiumTarget) || 0) / src.sodiumPerGram * 100) / 100;
+        const tsp = saltTsp != null ? formatTsp(saltTsp) : "";
+        return `${g} g salt${tsp ? ` (${tsp} tsp)` : ""}`;
+    }
+    return `${Math.round(Number(sodiumTarget) || 0)} mg sodium from ${src.label} (see its label)`;
+}
+
 // Reads what the schedule needs off a saved plan object (the shape
 // buildPlanObject() in js/fueling.js writes). Works for plans saved
 // before the schedule existed, too.
 export function scheduleInputFromPlan(plan) {
     const session = plan.session || {};
     const diy = plan.diyInputs || {};
-    const includeDrink = plan.includeHomemadeDrink !== false && (diy.bottleCount || 0) > 0 && (diy.bottleSize || 0) > 0;
+    const includeDrink = drinkIncluded(plan.includeHomemadeDrink, diy);
     return {
         durationMin: Number(plan.duration) || Number(session.duration) || 0,
         distanceMi: Number(session.distance) || Number(plan.marathonRef?.miles) || 0,
@@ -97,7 +124,7 @@ export function scheduleInputFromPlan(plan) {
             fluidPerHour: Number(plan.fluidPerHour) || 0,
             sodiumPerHour: Number(plan.sodiumPerHour) || 0
         },
-        firstGelMin: plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN
+        firstGelMin: firstGelValue(plan.firstGelMin)
     };
 }
 
@@ -119,7 +146,7 @@ export function buildSchedule(input) {
     const minPerMile = durationMin > 0 && distanceMi > 0 ? durationMin / distanceMi : null;
     const mileAt = min => (minPerMile ? round1(min / minPerMile) : null);
     const targets = input.targets || {};
-    const firstGelMin = Number(input.firstGelMin) || DEFAULT_FIRST_GEL_MIN;
+    const firstGelMin = firstGelValue(input.firstGelMin);
 
     // ---- Gels ----
     const servings = [];

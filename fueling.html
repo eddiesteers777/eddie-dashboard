@@ -236,8 +236,9 @@
                                 type="number"
                                 id="duration"
                                 min="0"
-                                step="5"
-                                value="90">
+                                step="1"
+                                inputmode="numeric"
+                                placeholder="from distance + pace">
 
                         </label>
 
@@ -258,7 +259,7 @@
 
                     <label class="fuel-field">
 
-                        <span>Pace (per mile, optional)</span>
+                        <span>Pace (per mile, or /km)</span>
 
                         <input
                             type="text"
@@ -266,6 +267,8 @@
                             placeholder="e.g. 8:15">
 
                     </label>
+
+                    <p class="fuel-note fuel-duration-status" id="durationStatus" aria-live="polite"></p>
 
                 </div>
 
@@ -652,7 +655,7 @@
                         type="number"
                         id="firstGelMin"
                         min="5"
-                        max="90"
+                        max="240"
                         step="5"
                         value="30">
                     min

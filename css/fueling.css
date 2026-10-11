@@ -242,7 +242,7 @@
     display:grid;
 
     grid-template-columns:
-        repeat(auto-fit,minmax(260px,1fr));
+        repeat(auto-fit,minmax(min(260px,100%),1fr));
 
     gap:20px;
 
@@ -538,7 +538,7 @@
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));
 
     gap:20px;
 
@@ -1003,7 +1003,7 @@
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));
 
     gap:16px;
 
@@ -1205,7 +1205,7 @@
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));
 
     gap:16px;
 
@@ -1380,15 +1380,17 @@
     .fuel-library-grid,
     .fuel-saved-plans-grid{
 
-        grid-template-columns:1fr;
+        grid-template-columns:minmax(0,1fr);
 
     }
 
     .fuel-field-row{
 
-        grid-template-columns:1fr;
+        grid-template-columns:minmax(0,1fr);
 
     }
+
+    .fuel-card{min-width:0}
 
     .fuel-timeline-item{
 
@@ -2677,3 +2679,10 @@ html.fs-sheet-open{overflow:hidden;}
     cursor:pointer;
 }
 .fuel-collapse-btn:hover{ color:var(--text); border-color:var(--primary); }
+
+/* How long the run is (js/fueling.js renderDurationStatus) */
+.fuel-duration-status{margin:2px 0 0;min-height:1.2em}
+.fuel-duration-status strong{color:var(--text)}
+.fuel-duration-status.is-conflict{color:var(--warning)}
+.fuel-duration-status .fuel-btn{margin-left:6px;vertical-align:middle}
+.fuel-duration-problem{display:block;color:var(--warning)}
