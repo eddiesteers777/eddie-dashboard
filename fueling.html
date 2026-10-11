@@ -753,6 +753,18 @@
 
                     </div>
 
+                    <div class="fuel-field-row">
+                        <label class="fuel-field">
+                            <span>Caffeine per selected bottle (mg)</span>
+                            <input type="number" id="diyCaffeinePerBottleMg" min="0" step="5" value="60">
+                        </label>
+                        <label class="fuel-field">
+                            <span>Bottles with caffeine (numbers)</span>
+                            <input type="text" id="diyCaffeineBottleNumbers" placeholder="e.g. 2,3" inputmode="numeric">
+                        </label>
+                    </div>
+                    <small>Example: 60 mg in bottles 2 and 3 = 120 mg total from your drink. Leave bottle numbers blank for no caffeine in the drink.</small>
+
                 </div>
 
                 <div class="fuel-card">
@@ -1042,6 +1054,11 @@
                     <label class="fuel-checkbox fuel-lib-caffeine">
                         <input type="checkbox" id="libCaffeine">
                         <span>Contains Caffeine</span>
+                    </label>
+
+                    <label class="fuel-field">
+                        <span>Caffeine (mg per serving, from label)</span>
+                        <input type="number" id="libCaffeineMg" min="0" step="5" value="0">
                     </label>
 
                 </div>
