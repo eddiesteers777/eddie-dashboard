@@ -383,7 +383,11 @@ function renderAll() {
     const saved = $("fuelSavedCount");
     if (saved) saved.textContent = A?.plans()?.length ? `(${A.plans().length})` : "";
     const link = $("fuelMyPlansLink");
-    if (link) link.textContent = drafts.length ? `My fueling plans · ${drafts.length} draft${drafts.length === 1 ? "" : "s"}` : "My fueling plans";
+    if (link) {
+        link.textContent = drafts.length ? `My fueling plans · ${drafts.length} draft${drafts.length === 1 ? "" : "s"}` : "My fueling plans";
+        // Follows the link to the drafts when there are some.
+        link.dataset.openTab = drafts.length ? "drafts" : "saved";
+    }
 }
 
 function renderBanner() {
@@ -576,7 +580,11 @@ export function initFuelingPlans(adapter, { linkQuery: query = "" } = {}) {
         fillFromProfile();
     }
     // After the calculator's own start (a workout link fills in right after this).
-    setTimeout(() => { markBaseline(); refreshTags(); renderAll(); }, 0);
+    setTimeout(() => {
+        markBaseline(); refreshTags(); renderAll();
+        // Drafts first when there are some, else the saved plans.
+        selectTab(allDrafts().some(x => x.id !== active?.id) ? "drafts" : "saved");
+    }, 0);
     wire();
     return { restored };
 }
@@ -685,6 +693,7 @@ function wire() {
         }
         baseline = A.captureState();
         renderAll();
+        selectTab("saved");
         schedulePush("Plan");
     });
     // Start a new plan: the open draft stays a draft.
