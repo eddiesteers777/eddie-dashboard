@@ -919,11 +919,11 @@ function currentDiyMix() {
         sugarGrams: carbSource === "blend" || carbSource === "table-sugar"
             ? (mix.tableSugarGrams ?? mix.carbGrams)
             : (carbSource === "maltodextrin" ? 0 : mix.carbGrams),
-        primaryCarbLabel: carbSource === "blend" ? "table sugar" : mix.carbLabel,
+        primaryCarbLabel: carbSource === "blend" || carbSource === "maltodextrin" ? "table sugar" : mix.carbLabel,
         maltodextrinGrams: mix.maltodextrinGrams || 0,
         saltGrams: mix.sodiumGrams ?? 0,
         sugarTsp: mix.carbTsp != null ? Math.round(mix.carbTsp * 4) / 4 : null,
-        saltTsp: mix.sodiumTsp != null ? Math.round(mix.sodiumTsp * 8) / 8 : null,
+        saltTsp: mix.sodiumTsp != null ? mix.sodiumTsp : null,
         carbSource,
         maltodextrinPercent,
         maltodextrinCarbsPerGram,
