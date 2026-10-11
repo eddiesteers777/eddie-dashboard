@@ -916,6 +916,7 @@ function currentDiyMix() {
         saltTsp: mix.sodiumTsp != null ? Math.round(mix.sodiumTsp * 8) / 8 : null,
         carbSource,
         maltodextrinPercent,
+        maltodextrinCarbsPerGram,
         sodiumSource,
         existingSodium,
         sodiumShortfall: mix.sodiumShortfall,
@@ -1562,6 +1563,7 @@ function buildPlanObject() {
             sodiumTarget: Number($("diySodiumTarget").value) || 0,
             carbSource: $("diyCarbSource").value,
             maltodextrinPercent: Number($("diyMaltodextrinPercent").value) || 0,
+            maltodextrinCarbsPerGram: Number($("diyMaltodextrinYield").value) || 0.95,
             sodiumSource: $("diySodiumSource").value,
             existingSodium: Number($("diyExistingSodium").value) || 0,
             caffeinePerBottleMg: Number($("diyCaffeinePerBottleMg").value) || 0,
@@ -1991,6 +1993,8 @@ if (plan.diyInputs) {
         plan.diyInputs.carbSource || "table-sugar";
     $("diyMaltodextrinPercent").value =
         plan.diyInputs.maltodextrinPercent ?? 50;
+    $("diyMaltodextrinYield").value =
+        plan.diyInputs.maltodextrinCarbsPerGram ?? 0.95;
     $("diyExistingSodium").value =
         plan.diyInputs.existingSodium ?? 0;
 
