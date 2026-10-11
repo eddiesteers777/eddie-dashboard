@@ -261,9 +261,15 @@ export function buildSchedule(input) {
 
     // ---- One chronological checklist ----
     const events = [];
-    if (bottles.length) events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "bottle", bottle: 1, text: `Start Bottle 1` });
+    if (bottles.length) events.push({
+        min: 0, mile: distanceMi ? 0 : null, kind: "bottle", bottle: 1,
+        caffeine: bottles[0].caffeineMg > 0, text: `Start Bottle 1`
+    });
     else events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "start", text: "Start" });
-    bottles.slice(1).forEach(b => events.push({ min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}` }));
+    bottles.slice(1).forEach(b => events.push({
+        min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n,
+        caffeine: b.caffeineMg > 0, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}`
+    }));
     gels.forEach(g => events.push({ min: g.min, mile: g.mile, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, carbs: g.carbs, sodium: g.sodium }));
     events.push({ min: durationMin, mile: distanceMi || null, kind: "finish", text: bottles.length ? `Finish · Bottle ${bottles.length} empty` : "Finish" });
     events.sort((a, b) => a.min - b.min || (a.kind === "bottle" ? -1 : 1));
