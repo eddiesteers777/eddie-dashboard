@@ -150,6 +150,7 @@ test("mixed carb recipe splits carb target into maltodextrin and table sugar", (
     assert.equal(mix.tableSugarCarbs, 48.5);
     assert.equal(mix.maltodextrinGrams, Math.round((48.5 / (14 / 16)) * 10) / 10);
     assert.equal(mix.tableSugarGrams, 48.5);
+    assert.ok(Math.abs(mix.carbTsp - (48.5 / 4.2)) < 0.001, "teaspoon estimate reflects only table sugar in the blend");
     assert.equal(mix.sodiumShortfall, 438);
     assert.equal(mix.sodiumGrams, Math.round((438 / 393) * 100) / 100);
 });
