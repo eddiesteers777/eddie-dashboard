@@ -23,6 +23,7 @@ import { getActiveRunningPrograms } from "./activeProgramSources.js";
 import { buildDay } from "./weekModel.js";
 import { weekInputs, toggleDone, fuelContext } from "./weekData.js";
 import { fuelForRun, gelCues } from "./workoutFuel.js";
+import { workoutSegments, segmentsVary } from "./paceSegments.js";
 import { formatClock } from "./fuelSchedule.js";
 import { shortDay, typeLabel, isoDate } from "./coachingPlanModel.js";
 import {
@@ -147,7 +148,7 @@ function fuelHtml() {
     const typeParam = { tempo: "workout" }[state.day.type] || state.day.type;
     // The workout's parts (not the coach's words) so Fueling's gel miles follow its paces.
     const w = state.day.workout;
-    const wParam = w && (w.sets?.length || w.warmup || w.cooldown)
+    const wParam = w && segmentsVary(workoutSegments(w))
         ? `&w=${encodeURIComponent(JSON.stringify({ warmup: w.warmup || null, sets: w.sets || [], cooldown: w.cooldown || null }))}`
         : "";
     return `

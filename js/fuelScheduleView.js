@@ -124,7 +124,7 @@ function partWords(part) {
 // How the mile markers were placed.
 function pacingHTML(s, controls) {
     if (s.paced?.mismatch) {
-        return `<p class="fs-pacing">The workout's parts add up to ${mi(s.paced.partsMiles)} mi, not ${mi(s.distanceMi)} mi, so the mile markers use one even pace.</p>`;
+        return `<p class="fs-pacing">The workout's parts add up to ${+s.paced.partsMiles.toFixed(1)} mi, not ${+s.distanceMi.toFixed(1)} mi, so the mile markers use one even pace.</p>`;
     }
     if (!s.paced) return "";
     return `<p class="fs-pacing">Mile markers follow the workout's own paces: faster on the reps, slower on the warm-up, jogs and cool-down.${controls ? ` <button type="button" class="fuel-link-btn" data-even-pace>Use one even pace</button>` : ""}</p>`;

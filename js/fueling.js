@@ -11,7 +11,7 @@ import {
 import { fluidUnit, toFluid, ML_PER_OZ, fromFluid, fluidText } from "./fluidUnits.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
 import { workoutSegments, segmentsVary } from "./paceSegments.js";
-import { workoutSummary, sanitizeWorkout } from "./runWorkout.js";
+import { workoutSummary } from "./runWorkout.js";
 import {
     calculateTargets, estimateDurationMinutes, resolveRun, formatPace, formatDuration, paceForLabel
 } from "./fuelTargets.js";
@@ -46,7 +46,7 @@ let runSegmentsText = "";
 function setSegments(workout, paces = null) {
     const segs = workout ? workoutSegments(workout, { paces }) : [];
     runSegments = segmentsVary(segs) ? segs : null;
-    runSegmentsText = runSegments ? workoutSummary(workout) : "";
+    runSegmentsText = runSegments ? String(workoutSummary(workout)).slice(0, 300) : "";
 }
 // Distance / pace / duration the person typed, most recent first: the two
 // most recent work out the third (js/fuelTargets.js resolveRun).
@@ -2186,7 +2186,12 @@ function prefillFromWorkoutLink() {
     if (duration > 0) $("duration").value = duration;
     runOrder = [duration > 0 ? "duration" : null, miles > 0 ? "distance" : null].filter(Boolean);
     // The coach's structured workout (from its page), so gels land at the right miles.
-    try { setSegments(sanitizeWorkout(JSON.parse(params.get("w") || "null"))); } catch { setSegments(null); }
+    // (Read as is: js/paceSegments.js only takes numbers and pace words from it,
+    // and sanitizeWorkout would round a 0.25 mi jog to 0.3.)
+    try {
+        const w = JSON.parse(params.get("w") || "null");
+        setSegments(w && typeof w === "object" && !Array.isArray(w) ? w : null);
+    } catch { setSegments(null); }
     const last = [...plans].filter(p => p?.session).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0]?.session;
     if (last) {
         for (const id of ["bodyWeight", "currentCarbIntake", "temperature", "humidity", "typicalSodiumIntake"]) {
