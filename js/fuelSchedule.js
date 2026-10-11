@@ -78,6 +78,7 @@ export function diyMix({
         carbTsp: carb.gPerTsp ? carbGrams / carb.gPerTsp : (useBlend ? tableSugarGrams / DIY_CARB_SOURCES["table-sugar"].gPerTsp : null),
         sodiumGrams,
         sodiumTsp: sodium.gPerTsp && sodiumGrams != null ? sodiumGrams / sodium.gPerTsp : null,
+        existingSodium: Math.max(0, Number(existingSodium) || 0),
         sodiumShortfall
     };
 }
