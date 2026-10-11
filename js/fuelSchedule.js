@@ -145,9 +145,9 @@ export function scheduleInputFromPlan(plan) {
     };
 }
 
-// Gel (and chew/bar) times, spread evenly between the first-gel time and
-// FINAL_GEL_BUFFER_MIN before the end. Caffeinated servings go last,
-// where the lift matters most.
+// Gel (and chew/bar) times use the preferred interval when it fits before
+// FINAL_GEL_BUFFER_MIN; otherwise distribute servings evenly across the
+// usable window. Caffeinated servings are placed last where possible.
 function gelTimes(count, durationMin, firstGelMin, gelIntervalMin = DEFAULT_GEL_INTERVAL_MIN) {
     if (count === 0) return [];
     const start = Math.min(Math.max(firstGelMin, 5), durationMin);
