@@ -5,7 +5,7 @@
 import { icon } from "./icons.js";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
-    DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN
+    parseBottleNumbers, DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN
 } from "./fuelSchedule.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
 import {
@@ -498,12 +498,11 @@ function renderPaceEstimate() {
     const card = $("paceDurationPreview");
 
     if (distance > 0 && pace != null) {
-        const exactMinutes = distance * pace;
         const durationMin = durationFromDistanceAndPace(distance, pace);
         $("estimatedDuration").textContent = `${durationLabel(durationMin)} (${formatClock(durationMin)})`;
         $("estimatedPace").textContent = `${formatPaceMinutes(pace)} /mi`;
         $("paceDurationNote").textContent =
-            `${distance.toFixed(2).replace(/\\.00$/, "")} miles × ${formatPaceMinutes(pace)} per mile = about ${formatClock(durationMin)} elapsed. This duration drives the fueling totals and mileage checkpoints.`;
+            `${distance.toFixed(2).replace(/\.00$/, "")} miles × ${formatPaceMinutes(pace)} per mile = about ${formatClock(durationMin)} elapsed. This duration drives the fueling totals and mileage checkpoints.`;
         card?.classList.add("is-ready");
         return;
     }
@@ -900,6 +899,9 @@ function currentDiyMix() {
     const sodiumSource = $("diySodiumSource").value;
     const maltodextrinPercent = Number($("diyMaltodextrinPercent")?.value) || 0;
     const existingSodium = Number($("diyExistingSodium")?.value) || 0;
+    const caffeinePerBottleMg = Math.max(0, Number($("diyCaffeinePerBottleMg")?.value) || 0);
+    const caffeineBottleNumbers = $("diyCaffeineBottleNumbers")?.value || "";
+    const caffeineBottles = parseBottleNumbers(caffeineBottleNumbers, bottleCount);
     const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource, maltodextrinPercent, existingSodium });
     return {
         bottleSize,
@@ -917,6 +919,10 @@ function currentDiyMix() {
         sodiumSource,
         existingSodium,
         sodiumShortfall: mix.sodiumShortfall,
+        caffeinePerBottleMg,
+        caffeineBottleNumbers,
+        caffeineBottles,
+        totalCaffeineMg: caffeinePerBottleMg * caffeineBottles.length,
         notes: $("diyNotes").value
     };
 }
@@ -947,7 +953,7 @@ $("diySodiumTarget").addEventListener("input", () => {
     renderComposition();
 }));
 
-["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyExistingSodium"].forEach(id => $(id)?.addEventListener("input", () => {
+["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyExistingSodium", "diyCaffeinePerBottleMg", "diyCaffeineBottleNumbers"].forEach(id => $(id)?.addEventListener("input", () => {
     refreshDiySnapshot();
     renderComposition();
     renderPlanSummary();
@@ -1027,8 +1033,15 @@ $("diyCalculateBtn").addEventListener("click", () => {
     $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
     $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
     const perBottle = Math.max(1, mix.bottleCount || 1);
+    const hasAddedSalt = hasSalt && mix.saltGrams > 0;
+    const addedSodiumText = hasSalt
+        ? `add ${(mix.saltGrams / perBottle).toFixed(2)} g table salt per bottle`
+        : `use the product label to supply the remaining ${Math.round((mix.sodiumShortfall || 0) / perBottle)} mg sodium per bottle`;
+    const caffeineText = mix.caffeineBottles.length
+        ? ` Caffeine: ${mix.caffeinePerBottleMg} mg in bottle${mix.caffeineBottles.length > 1 ? "s" : ""} ${mix.caffeineBottles.join(", ")} (${mix.totalCaffeineMg} mg total from the drink).`
+        : " No caffeine added to the drink.";
     $("diyPerBottleSummary").textContent =
-        `Per bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g table sugar · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.sodiumTarget / perBottle)} mg total sodium. Electrolyte powder supplies ${Math.round(mix.existingSodium / perBottle)} mg sodium per bottle; add ${(mix.saltGrams / perBottle).toFixed(2)} g salt per bottle to cover the remainder.`;
+        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g table sugar · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.sodiumTarget / perBottle)} mg total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
     $("diyPerBottleSummary").style.display = "";
     $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
 
@@ -1225,6 +1238,7 @@ function resetLibraryForm() {
     $("libServing").value = "";
     $("libPrice").value = "";
     $("libCaffeine").checked = false;
+    $("libCaffeineMg").value = 0;
 
 }
 
@@ -1242,7 +1256,8 @@ $("libraryForm").addEventListener("submit", (e) => {
         carbs: Number($("libCarbs").value) || 0,
         sodium: Number($("libSodium").value) || 0,
         fluid: Number($("libFluid").value) || 0,
-        caffeine: $("libCaffeine").checked,
+        caffeine: $("libCaffeine").checked || (Number($("libCaffeineMg").value) || 0) > 0,
+        caffeineMg: Math.max(0, Number($("libCaffeineMg").value) || 0),
         serving: $("libServing").value.trim(),
         price: $("libPrice").value.trim()
 
@@ -1287,6 +1302,7 @@ $("libraryGrid").addEventListener("click", (e) => {
         $("libServing").value = item.serving || "";
         $("libPrice").value = item.price || "";
         $("libCaffeine").checked = !!item.caffeine;
+        $("libCaffeineMg").value = Number(item.caffeineMg) || 0;
 
         $("libraryForm").style.display = "";
 
@@ -1321,7 +1337,7 @@ $("libraryGrid").addEventListener("click", (e) => {
         const existing = planItems.find(p => String(p.id) === addId);
 
         if (existing) existing.qty += 1;
-        else planItems.push({ id: item.id, name: item.name, carbs: item.carbs, sodium: item.sodium, fluid: item.fluid, caffeine: item.caffeine, qty: 1 });
+        else planItems.push({ id: item.id, name: item.name, carbs: item.carbs, sodium: item.sodium, fluid: item.fluid, caffeine: item.caffeine, caffeineMg: item.caffeineMg || 0, qty: 1 });
 
         renderComposition();
         renderPlanSummary();
@@ -1439,7 +1455,7 @@ function renderPlanSummary() {
             html += `
                 <div class="fuel-plan-row">
                     <span>Homemade Drink</span>
-                    <span>${snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.sugarGrams}g sugar · ${snapshot.saltGrams}g salt` : `${c.drinkCarbs}g carb · ${c.drinkSodium}mg sodium (calculate below)`}</span>
+                    <span>${snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.maltodextrinGrams || 0}g maltodextrin · ${snapshot.sugarGrams}g sugar · ${snapshot.saltGrams}g added salt · ${snapshot.totalCaffeineMg || 0}mg drink caffeine` : `${c.drinkCarbs}g carb · ${c.drinkSodium}mg sodium (calculate below)`}</span>
                 </div>
             `;
 
@@ -1545,6 +1561,8 @@ function buildPlanObject() {
             maltodextrinPercent: Number($("diyMaltodextrinPercent").value) || 0,
             sodiumSource: $("diySodiumSource").value,
             existingSodium: Number($("diyExistingSodium").value) || 0,
+            caffeinePerBottleMg: Number($("diyCaffeinePerBottleMg").value) || 0,
+            caffeineBottleNumbers: $("diyCaffeineBottleNumbers").value,
             notes: $("diyNotes").value
         },
         preWorkoutFood,
