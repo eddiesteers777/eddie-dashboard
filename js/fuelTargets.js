@@ -82,6 +82,7 @@ export function paceMinutesPerMile(session) {
 export function calculateTargets(session) {
 
     const duration = estimateDurationMinutes(session);
+    const workoutType = session.workoutType;
 
     /* ---- Carbohydrates ---- */
 
@@ -92,7 +93,7 @@ export function calculateTargets(session) {
     else if (duration <= 150) baseCarbs = 45;
     else baseCarbs = 60;
 
-    if (session.mode === "race" && duration > 150) baseCarbs = 75;
+    if ((workoutType === "race" || workoutType === "marathon" || session.mode === "race") && duration > 150) baseCarbs = 75;
 
     const toleranceFactor = { low: 0.7, moderate: 1, high: 1.25 }[session.tolerance] || 1;
 
