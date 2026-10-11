@@ -20,7 +20,9 @@
    so the shape follows the workout while the totals stay the run's.
    Returns null when the parts don't describe this run (their miles are
    more than 25% off the run's distance). mileAt(min) / partAt(min) read
-   it. No DOM or storage; unit-tested in tests/fuelSchedule.test.mjs.
+   it; hardAt(min) / easyNear(min) let the schedule move a gel off a hard
+   rep onto the nearest jog. No DOM or storage; unit-tested in
+   tests/fuelSchedule.test.mjs.
 ========================================== */
 
 import { parsePace, paceForLabel } from "./fuelTargets.js";
@@ -79,7 +81,12 @@ export function workoutSegments(workout, { paces = null } = {}) {
         }
     });
     if (workout.cooldown) push(stretch(workout.cooldown, workout.cooldown.pace ? stepPace(workout.cooldown, ctx) : easy, "Cool-down"));
-    return out.map(s => ({ label: s.label, miles: round2(s.miles), minutes: round2(s.minutes), pace: s.pace == null ? null : round2(s.pace) }));
+    // Hard = running clearly faster than easy (a rep, a tempo block, a fast
+    // finish); an easy block inside the main set isn't.
+    return out.map(s => ({
+        label: s.label, miles: round2(s.miles), minutes: round2(s.minutes), pace: s.pace == null ? null : round2(s.pace),
+        hard: s.pace != null && s.pace < easy * 0.95 && !/^(Warm-up|Recovery|Cool-down)$/.test(s.label)
+    }));
 }
 
 /** True when the stretches run at more than one pace (otherwise an even pace says the same). */
@@ -104,7 +111,8 @@ export function segmentTimeline(segments, durationMin, distanceMi) {
     for (const s of list) {
         min += Number(s.minutes) * ts;
         mi += (Number(s.miles) || 0) * ds;
-        points.push({ min, mi, label: s.label });
+        // Older saved stretches have no `hard`: a rep or main set is.
+        points.push({ min, mi, label: s.label, hard: s.hard ?? /^(Rep |Main set)/.test(s.label) });
     }
     // The segment a minute falls in: the first point at or past it.
     const index = t => {
@@ -119,5 +127,22 @@ export function segmentTimeline(segments, durationMin, distanceMi) {
         return b.min > a.min ? a.mi + (b.mi - a.mi) * (t - a.min) / (b.min - a.min) : b.mi;
     };
     const partAt = t => points[index(Math.min(t, durationMin))].label;
-    return { mismatch: false, points, partsMiles: round2(D), mileAt, partAt };
+    const hardAt = t => !!points[index(Math.min(t, durationMin))].hard;
+    // The whole minute nearest t that falls in an easy stretch (a jog, the
+    // warm-up or cool-down), at most `within` minutes away, else null;
+    // the jog after a rep is preferred to the one before it.
+    const easyNear = (t, within = 10) => {
+        let best = null;
+        for (let i = 1; i < points.length; i++) {
+            if (points[i].hard) continue;
+            const lo = Math.ceil(points[i - 1].min + 0.01), hi = Math.floor(points[i].min - 0.01);
+            if (lo > hi) continue;
+            const at = Math.min(hi, Math.max(lo, Math.round(t)));
+            // Later is better (the jog after the rep): earlier counts double.
+            const cost = x => (x < t ? 2 : 1) * Math.abs(x - t);
+            if (Math.abs(at - t) <= within && (best == null || cost(at) < cost(best))) best = at;
+        }
+        return best;
+    };
+    return { mismatch: false, points, partsMiles: round2(D), mileAt, partAt, hardAt, easyNear };
 }

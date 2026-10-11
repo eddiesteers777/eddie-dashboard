@@ -11,7 +11,9 @@ const library = [
 ];
 
 test("targets: the Fueling page's math, now shared", () => {
-    assert.deepEqual(calculateTargets({ workoutType: "long", distance: 12, mode: "training" }), { duration: 99, carbsPerHour: 40, fluidPerHour: 22, sodiumPerHour: 450 });
+    const { why, ...t } = calculateTargets({ workoutType: "long", distance: 12, mode: "training" });
+    assert.deepEqual(t, { duration: 99, carbsPerHour: 40, fluidPerHour: 22, sodiumPerHour: 450 });
+    assert.equal(why.length, 1, "a long run: just the base");
     assert.equal(estimateDurationMinutes({ duration: 70 }), 70);
     assert.equal(calculateTargets({ workoutType: "easy", duration: 40 }).carbsPerHour, 0, "under 45 min: no carbs");
     assert.equal(calculateTargets({ workoutType: "race", duration: 200, mode: "race" }).carbsPerHour, 80);
@@ -76,7 +78,7 @@ test("a structured workout: gels at the same times, at the miles its own paces r
     };
     const plain = fuelForRun({ type: "long", miles: 18 });
     const paced = fuelForRun({ type: "long", miles: 18, workout });
-    assert.deepEqual(paced.gels.map(g => g.min), plain.gels.map(g => g.min));
+    assert.deepEqual(paced.gels.map(g => g.movedFrom?.min ?? g.min), plain.gels.map(g => g.min));
     assert.notDeepEqual(paced.gels.map(g => g.mile), plain.gels.map(g => g.mile));
-    assert.ok(paced.gels.some(g => /^Rep /.test(g.part)), "a gel lands during a rep");
+    assert.ok(paced.gels.some(g => g.movedFrom && /^Rep /.test(g.movedFrom.part)), "a gel due during a rep moves to a jog");
 });

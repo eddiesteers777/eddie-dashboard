@@ -591,10 +591,15 @@ function runCalculation() {
     setFluidInput("fluidPerHour", targets.fluidPerHour);
     $("sodiumPerHour").value = targets.sodiumPerHour;
 
-    $("calcNote").textContent =
+    // Each step of the carb target in words, so nothing is a black box.
+    const steps = (targets.why || []).map((w, i) =>
+        `<li>${escapeHTML(w.label)}${i || w.value ? ` <span class="fuel-why-val">${w.value} g/hr</span>` : ""}</li>`).join("");
+    $("calcNote").innerHTML =
         `Estimated from a ${targets.duration}-minute session, your fueling tolerance, ` +
-        `sensitivity, and the conditions entered above. These are starting targets — ` +
-        `adjust anything to match what actually works for your gut.`;
+        `sensitivity, and the conditions entered above.` +
+        (steps ? `<span class="fuel-why-title">How the carb target was set</span><ol class="fuel-why">${steps}</ol>` : "") +
+        `<span class="fuel-why-foot">General guidance, not medical advice. These are starting targets — ` +
+        `change any number to match what works for your gut.</span>`;
 
     updatePlanWorkoutLabel();
     updateTotalsAndTimeline(true);

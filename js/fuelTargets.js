@@ -40,6 +40,15 @@ export const CARB_CURVE = {
     race: [[45, 0], [60, 25], [90, 40], [150, 70], [210, 80]]
 };
 
+/* Workout type on a training run: general guidance, not a rule. Easy and
+   recovery runs sit at the lower end, tempo / interval sessions at the
+   upper end; long runs and the rest use the curve as it is. */
+export const TYPE_CARBS = {
+    easy: { factor: 0.85, words: "Easy run: the lower end" },
+    recovery: { factor: 0.85, words: "Recovery run: the lower end" },
+    workout: { factor: 1.1, words: "Workout (tempo / intervals): the upper end" }
+};
+
 export function baseCarbsPerHour(durationMin, mode = "training") {
     const pts = CARB_CURVE[mode === "race" ? "race" : "training"];
     const d = Number(durationMin) || 0;
@@ -95,32 +104,54 @@ export function paceMinutesPerMile(session) {
 export function calculateTargets(session) {
 
     const duration = estimateDurationMinutes(session);
+    const race = session.mode === "race";
+    // How the carb target was set, step by step, in plain words.
+    const why = [];
+    const step = (label, value) => why.push({ label, value: Math.round(value) });
 
     /* ---- Carbohydrates ---- */
 
     // Rises gradually with the run's length (no jump at 75 or 150 min).
     const baseCarbs = baseCarbsPerHour(duration, session.mode);
+    let carbsPerHour = baseCarbs;
+    if (!baseCarbs) why.push({ label: `Under ${CARB_CURVE.training[0][0]} minutes: no carbs needed during the run`, value: 0 });
+    else step(`A ${duration}-minute ${race ? "race" : "training run"}`, baseCarbs);
+
+    // Training runs: how hard it is moves the target within the usual
+    // 30-60 g/hr range (harder running burns more carbohydrate). Race
+    // mode has its own curve.
+    const intensity = race ? null : TYPE_CARBS[session.workoutType];
+    if (baseCarbs && intensity) {
+        carbsPerHour *= intensity.factor;
+        step(intensity.words, carbsPerHour);
+    }
 
     const toleranceFactor = { low: 0.7, moderate: 1, high: 1.25 }[session.tolerance] || 1;
 
-    let carbsPerHour = baseCarbs * toleranceFactor;
+    if (baseCarbs && toleranceFactor !== 1) {
+        carbsPerHour *= toleranceFactor;
+        step(toleranceFactor < 1 ? "Your gut tolerance: low" : "Your gut tolerance: high", carbsPerHour);
+    }
 
-    if (session.currentCarbIntake > 0) {
+    if (baseCarbs && session.currentCarbIntake > 0) {
 
-        if (session.mode === "training") {
+        if (!race) {
 
+            const was = carbsPerHour;
             carbsPerHour = Math.min(Math.max(carbsPerHour, session.currentCarbIntake), session.currentCarbIntake + 15);
+            if (Math.round(was) !== Math.round(carbsPerHour)) step(`What you take now (${session.currentCarbIntake} g/hr), raised by no more than 15`, carbsPerHour);
 
         } else {
 
             carbsPerHour = session.currentCarbIntake;
+            step(`Race day: what you've practised (${session.currentCarbIntake} g/hr)`, carbsPerHour);
 
         }
 
     }
 
-    if (session.stomachSensitivity === "sensitive") carbsPerHour *= 0.85;
-    if (session.stomachSensitivity === "iron") carbsPerHour *= 1.1;
+    if (baseCarbs && session.stomachSensitivity === "sensitive") { carbsPerHour *= 0.85; step("Sensitive stomach", carbsPerHour); }
+    if (baseCarbs && session.stomachSensitivity === "iron") { carbsPerHour *= 1.1; step("Iron stomach", carbsPerHour); }
 
     carbsPerHour = clampRound(carbsPerHour, 0, 100, 5);
 
@@ -159,7 +190,7 @@ export function calculateTargets(session) {
 
     sodiumPerHour = clampRound(sodiumPerHour, 0, 1500, 25);
 
-    return { duration, carbsPerHour, fluidPerHour, sodiumPerHour };
+    return { duration, carbsPerHour, fluidPerHour, sodiumPerHour, why };
 
 }
 

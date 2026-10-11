@@ -2740,3 +2740,23 @@ html.fs-sheet-open{overflow:hidden;}
     .fuel-diy-recipe th,.fuel-diy-recipe td{padding:8px 4px}
     .fuel-diy-recipe th{font-size:11px;letter-spacing:.03em}
 }
+
+/* ---- How the carb target was set (calcNote) ---- */
+.fuel-why-title{
+    display:block;
+    margin-top:8px;
+    font-weight:600;
+    color:var(--text);
+}
+.fuel-why{
+    margin:4px 0 6px;
+    padding-left:20px;
+}
+.fuel-why li{ margin:2px 0; }
+.fuel-why-val{
+    color:var(--primary-light);
+    font-family:var(--font-mono);
+    font-size:.92em;
+    white-space:nowrap;
+}
+.fuel-why-foot{ display:block; }

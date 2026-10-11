@@ -88,7 +88,8 @@ function eventsHTML(s) {
         let meta = "";
         if (e.kind === "gel") {
             title = `Gel ${e.gel} <span class="fs-muted">·</span> ${esc(e.text)}`;
-            meta = `${partWords(e.part)}${e.carbs} g carb · ${e.sodium} mg sodium · chase with a few sips`;
+            const moved = e.movedFrom ? `moved off ${esc(e.movedFrom.part.toLowerCase())} (due at ${formatClock(e.movedFrom.min)}) · ` : "";
+            meta = `${partWords(e.part)}${moved}${e.carbs} g carb · ${e.sodium} mg sodium · chase with a few sips`;
         } else if (e.kind === "sip") {
             title = `Drink ${e.sip} <span class="fs-muted">·</span> ${esc(e.text)}`;
             const until = e.endMile != null ? `mile ${mi(e.endMile)}` : formatClock(e.endMin);
@@ -127,7 +128,8 @@ function pacingHTML(s, controls) {
         return `<p class="fs-pacing">The workout's parts add up to ${+s.paced.partsMiles.toFixed(1)} mi, not ${+s.distanceMi.toFixed(1)} mi, so the mile markers use one even pace.</p>`;
     }
     if (!s.paced) return "";
-    return `<p class="fs-pacing">Mile markers follow the workout's own paces: faster on the reps, slower on the warm-up, jogs and cool-down.${controls ? ` <button type="button" class="fuel-link-btn" data-even-pace>Use one even pace</button>` : ""}</p>`;
+    const moved = (s.gels || []).filter(g => g.movedFrom).length;
+    return `<p class="fs-pacing">Mile markers follow the workout's own paces: faster on the reps, slower on the warm-up, jogs and cool-down.${moved ? ` ${moved === 1 ? "A gel that fell" : `${moved} gels that fell`} in the middle of a hard rep ${moved === 1 ? "moves" : "move"} to the nearest easy stretch.` : ""}${controls ? ` <button type="button" class="fuel-link-btn" data-even-pace>Use one even pace</button>` : ""}</p>`;
 }
 
 // "Next: Gel 2 in 36 min · 4.2 mi (8:21 AM)"

@@ -191,7 +191,7 @@ test("blank, zero, negative and huge inputs give no NaN, no Infinity and a plain
         const r = resolveRun(c);
         assert.ok(r.minutes === null || (Number.isFinite(r.minutes) && r.minutes > 0), JSON.stringify(c));
         if (r.paceMin != null) assert.ok(Number.isFinite(r.paceMin), JSON.stringify(c));
-        if (r.minutes) for (const v of Object.values(calculateTargets({ duration: r.minutes }))) assert.ok(Number.isFinite(v), JSON.stringify(c));
+        if (r.minutes) for (const v of Object.values(calculateTargets({ duration: r.minutes })).filter(v => !Array.isArray(v))) assert.ok(Number.isFinite(v), JSON.stringify(c));
     }
     assert.ok(resolveRun({ distance: -5, pace: "8:00" }).problems.length);
     assert.ok(resolveRun({ distance: 10, pace: "fast" }).problems.some(p => /Couldn't read the pace/.test(p)));
@@ -455,9 +455,9 @@ test("buildSchedule: with segments each checkpoint follows the stretch it falls 
 
     const plain = buildSchedule(base);
     const paced = buildSchedule({ ...base, segments: workoutSegments(longWorkout) });
-    assert.deepEqual(plain.gels.map(g => g.min), paced.gels.map(g => g.min), "same times; only the miles move");
+    assert.deepEqual(plain.gels.map(g => g.min), paced.gels.map(g => g.movedFrom?.min ?? g.min), "same times (unless moved off a rep); the miles move");
     assert.notDeepEqual(plain.gels.map(g => g.mile), paced.gels.map(g => g.mile));
-    assert.equal(paced.gels[1].part, "Rep 6 of 6");
+    assert.equal(paced.gels[1].movedFrom?.part, "Rep 6 of 6");
     assert.equal(plain.gels[1].part, "");
     assert.ok(paced.paced && !paced.paced.mismatch);
     assert.equal(plain.paced, null);
@@ -495,4 +495,58 @@ test("pace segments: a Marathon plan day, bottles and saved plans", () => {
     assert.equal(scheduleInputFromPlan(plan).segments.length, 13);
     assert.ok(buildSchedule(scheduleInputFromPlan(plan)).paced);
     assert.equal(scheduleInputFromPlan({ duration: 60, session: { distance: 7 } }).segments, null);
+});
+
+// ---- Step 8: workout type + intensity ----
+import { TYPE_CARBS } from "../js/fuelTargets.js";
+
+test("workout type: easy runs at the lower end, workouts at the upper end, said step by step", () => {
+    const at = (workoutType, extra = {}) => calculateTargets({ workoutType, duration: 150, mode: "training", ...extra });
+    const long = at("long"), easy = at("easy"), workout = at("workout");
+    assert.equal(long.carbsPerHour, 55, "150 min on the curve");
+    assert.ok(easy.carbsPerHour < long.carbsPerHour && workout.carbsPerHour > long.carbsPerHour, [easy.carbsPerHour, workout.carbsPerHour]);
+    assert.equal(easy.carbsPerHour, 45); // 55 × 0.85 = 46.75 → 45
+    assert.equal(workout.carbsPerHour, 60); // 55 × 1.1 = 60.5 → 60
+    assert.deepEqual(long.why.map(w => w.label), ["A 150-minute training run"]);
+    assert.deepEqual(workout.why.map(w => w.label), ["A 150-minute training run", TYPE_CARBS.workout.words]);
+    // Race mode has its own curve: type doesn't move it.
+    assert.equal(at("workout", { mode: "race" }).carbsPerHour, at("race", { mode: "race" }).carbsPerHour);
+    // Each personal factor is a line too.
+    const me = at("easy", { tolerance: "low", stomachSensitivity: "sensitive" });
+    assert.equal(me.why.length, 4);
+    assert.ok(/gut tolerance: low/.test(me.why[2].label) && /Sensitive stomach/.test(me.why[3].label));
+    // Under 45 minutes: one line, nothing to eat.
+    const short = at("workout", { duration: 40 });
+    assert.equal(short.carbsPerHour, 0);
+    assert.equal(short.why.length, 1);
+    assert.match(short.why[0].label, /no carbs needed/);
+});
+
+test("a gel due during a hard rep moves to the nearest jog, preferring the one after", () => {
+    const segs = workoutSegments(longWorkout);
+    assert.deepEqual(segs.filter(s => s.hard).map(s => s.label).slice(0, 2), ["Rep 1 of 6", "Rep 2 of 6"]);
+    assert.ok(!segs.find(s => s.label === "Recovery").hard && !segs[0].hard);
+    const t = segmentTimeline(segs, 153, 18);
+    assert.ok(t.hardAt(30) && !t.hardAt(10));
+    const at = t.easyNear(30);
+    assert.ok(at > 30 && !t.hardAt(at) && t.partAt(at) === "Recovery", `${at} ${t.partAt(at)}`);
+    assert.equal(t.easyNear(30, 0.5), null, "nothing easy that close");
+
+    const s = buildSchedule({ durationMin: 153, distanceMi: 18, items: [{ name: "Gel", carbs: 25, qty: 4 }], targets: { carbsPerHour: 50 }, segments: segs });
+    const g1 = s.gels[0];
+    assert.deepEqual(g1.movedFrom, { min: 30, part: "Rep 2 of 6" });
+    assert.equal(g1.part, "Recovery");
+    assert.ok(s.gels.every(g => !t.hardAt(g.min)), s.gels.map(g => [g.min, g.part]));
+    for (let i = 1; i < s.gels.length; i++) assert.ok(s.gels[i].min - s.gels[i - 1].min >= 10, "still spread out");
+    // Even pace: nothing moves.
+    const even = buildSchedule({ durationMin: 153, distanceMi: 18, items: [{ name: "Gel", carbs: 25, qty: 4 }], targets: { carbsPerHour: 50 } });
+    assert.ok(even.gels.every(g => g.movedFrom === null));
+    // A long tempo block with no jog nearby: the gel stays, inside the block.
+    const tempo = workoutSegments({ warmup: { amount: 1, unit: "mi" }, sets: [{ repeat: 1, amount: 10, unit: "mi", pace: "6:50" }], cooldown: { amount: 1, unit: "mi" } });
+    const ts = buildSchedule({ durationMin: 90, distanceMi: 12, items: [{ name: "Gel", carbs: 25, qty: 1 }], targets: { carbsPerHour: 30 }, segments: tempo });
+    assert.equal(ts.gels[0].movedFrom, null);
+    assert.equal(ts.gels[0].part, "Main set");
+    // Older saved stretches without `hard` still work: reps count as hard.
+    const old = segs.map(({ hard, ...rest }) => rest);
+    assert.ok(segmentTimeline(old, 153, 18).hardAt(30));
 });

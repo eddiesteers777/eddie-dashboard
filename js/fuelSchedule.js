@@ -303,6 +303,20 @@ export function buildSchedule(input) {
     const hasCaffeine = item => !!item.caffeine || caffeineMg(item) > 0;
     servings.sort((a, b) => Number(hasCaffeine(a)) - Number(hasCaffeine(b)));
     const times = gelTimes(servings.length, durationMin, firstGelMin);
+    // A gel due in the middle of a hard rep moves to the nearest easy
+    // stretch (the jog after it, usually) within 10 minutes, as long as it
+    // stays 10+ minutes from the gels either side and out of the last 15.
+    const movedFrom = times.map(() => null);
+    if (paced) {
+        times.forEach((t, i) => {
+            if (!paced.hardAt(t)) return;
+            const at = paced.easyNear(t, 10);
+            if (at == null || at > durationMin - FINAL_GEL_BUFFER_MIN || at < 5) return;
+            if ((i > 0 && at - times[i - 1] < 10) || (i < times.length - 1 && times[i + 1] - at < 10)) return;
+            movedFrom[i] = { min: t, part: paced.partAt(t) };
+            times[i] = at;
+        });
+    }
     const gels = servings.map((item, i) => ({
         n: i + 1,
         name: item.name,
@@ -313,7 +327,8 @@ export function buildSchedule(input) {
         caffeineMg: caffeineMg(item),
         min: times[i],
         mile: mileAt(times[i]),
-        part: partAt(times[i])
+        part: partAt(times[i]),
+        movedFrom: movedFrom[i]
     }));
     const sips = sipServings.map((item, i) => {
         const span = durationMin / sipServings.length;
@@ -426,7 +441,7 @@ export function buildSchedule(input) {
     else events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "start", text: "Start" });
     bottles.slice(1).forEach(b => events.push({ min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}` }));
     sips.forEach(d => events.push({ min: d.startMin, mile: d.startMile, part: partAt(d.startMin), kind: "sip", sip: d.n, text: d.name, caffeine: d.caffeine, caffeineMg: d.caffeineMg, carbs: d.carbs, sodium: d.sodium, fluid: d.fluid, endMin: d.endMin, endMile: d.endMile }));
-    gels.forEach(g => events.push({ min: g.min, mile: g.mile, part: partAt(g.min), kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium }));
+    gels.forEach(g => events.push({ min: g.min, mile: g.mile, part: partAt(g.min), movedFrom: g.movedFrom, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium }));
     events.push({ min: durationMin, mile: distanceMi || null, kind: "finish", text: bottles.length ? `Finish · Bottle ${bottles.length} empty` : "Finish" });
     const order = { start: 0, bottle: 1, sip: 2, gel: 3, finish: 4 };
     events.sort((a, b) => a.min - b.min || order[a.kind] - order[b.kind]);
