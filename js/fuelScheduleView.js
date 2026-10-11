@@ -39,7 +39,9 @@ function statsHTML(s) {
         ["Carbs", `${avgCarbs}`, "g/hr"],
         ["Gels", `${s.gels.length}`, ""],
         ["Bottles", `${s.bottles.length + (s.sips?.length || 0)}`, ""],
-        s.totals.caffeineMg ? ["Caffeine", `${s.totals.caffeineMg}`, "mg"] : null
+        s.totals.caffeineMg ? ["Caffeine", `${s.totals.caffeineMg}`, "mg"] : null,
+        s.startTod ? ["Start", s.startTod.replace(/ [AP]M$/, ""), s.startTod.slice(-2)] : null,
+        s.finishTod ? ["Finish", s.finishTod.replace(/ [AP]M$/, ""), s.finishTod.slice(-2)] : null
     ].filter(Boolean);
     return `<div class="fs-stats">${stats.map(([label, value, unit]) => `
         <div class="fs-stat"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>
@@ -81,7 +83,7 @@ function courseHTML(s) {
 function eventsHTML(s) {
     return `<ol class="fs-events">${s.events.map(e => {
         const where = e.mile != null ? `Mile ${mi(e.mile)}` : formatClock(e.min);
-        const when = e.mile != null ? formatClock(e.min) : "";
+        const when = [e.mile != null ? formatClock(e.min) : "", e.tod].filter(Boolean).join(" · ");
         let title = esc(e.text);
         let meta = "";
         if (e.kind === "gel") {
@@ -104,9 +106,20 @@ function eventsHTML(s) {
                 <div class="fs-event-body">
                     <div class="fs-event-title">${title}${caffeineTag(e)}</div>
                     ${meta ? `<div class="fs-event-meta">${meta}</div>` : ""}
+                    ${nextHTML(e)}
                 </div>
             </li>`;
     }).join("")}</ol>`;
+}
+
+// "Next: Gel 2 in 36 min · 4.2 mi (8:21 AM)"
+function nextHTML(e) {
+    const n = e.next;
+    if (!n || e.kind === "finish") return "";
+    const what = `${n.kind === "gel" ? "Gel" : "Drink"} ${n.n}`;
+    const gap = n.inMin === 0 ? "right away" : `in ${n.inMin < 60 ? `${n.inMin} min` : formatClock(n.inMin)}`;
+    const far = n.inMi ? ` · ${mi(n.inMi)} mi` : "";
+    return `<div class="fs-event-next">${e.kind === "start" || (e.kind === "bottle" && e.bottle === 1) ? "First" : "Next"}: ${what} ${gap}${far}${n.tod ? ` (${n.tod})` : ""}</div>`;
 }
 
 function bottlesHTML(s) {

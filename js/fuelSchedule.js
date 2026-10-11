@@ -73,6 +73,26 @@ export function formatClock(minutes) {
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
+// Start time: "07:00" / "7:00" / "7:00 PM" -> minutes after midnight, else null.
+export function parseStartTime(text) {
+    const m = String(text ?? "").trim().toLowerCase().match(/^(\d{1,2}):(\d{2})\s*(am|pm)?$/);
+    if (!m) return null;
+    let h = Number(m[1]);
+    const min = Number(m[2]);
+    if (min > 59 || h > 23 || (m[3] && (h < 1 || h > 12))) return null;
+    if (m[3] === "pm" && h < 12) h += 12;
+    if (m[3] === "am" && h === 12) h = 0;
+    return h * 60 + min;
+}
+
+// Minutes after midnight -> "7:45 AM" (past midnight wraps to the next day).
+export function timeOfDay(minutes) {
+    if (minutes == null || !isFinite(minutes)) return "";
+    const total = ((Math.round(minutes) % 1440) + 1440) % 1440;
+    const h = Math.floor(total / 60), m = total % 60;
+    return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
 // The homemade drink counts (in the totals and the schedule alike) only
 // when it's switched on and has bottles to go in.
 export function drinkIncluded(include, diy = {}) {
@@ -124,7 +144,8 @@ export function scheduleInputFromPlan(plan) {
             fluidPerHour: Number(plan.fluidPerHour) || 0,
             sodiumPerHour: Number(plan.sodiumPerHour) || 0
         },
-        firstGelMin: firstGelValue(plan.firstGelMin)
+        firstGelMin: firstGelValue(plan.firstGelMin),
+        startMin: parseStartTime(plan.startTime ?? session.startTime)
     };
 }
 
@@ -289,6 +310,24 @@ export function buildSchedule(input) {
     const order = { start: 0, bottle: 1, sip: 2, gel: 3, finish: 4 };
     events.sort((a, b) => a.min - b.min || order[a.kind] - order[b.kind]);
 
+    // Clock times (with a start time) and, at every checkpoint, the next
+    // thing to take in: how long and how far until it.
+    const startMin = input.startMin != null && isFinite(input.startMin) ? Number(input.startMin) : null;
+    const tod = min => (startMin == null ? "" : timeOfDay(startMin + min));
+    const isFuel = e => e.kind === "gel" || e.kind === "sip";
+    events.forEach((e, i) => {
+        e.tod = tod(e.min);
+        const next = events.slice(i + 1).find(isFuel);
+        e.next = next ? {
+            kind: next.kind,
+            n: next.kind === "gel" ? next.gel : next.sip,
+            name: next.text,
+            inMin: Math.max(0, next.min - e.min),
+            inMi: next.mile != null && e.mile != null ? round1(next.mile - e.mile) : null,
+            tod: next.tod || tod(next.min)
+        } : null;
+    });
+
     const fluidFromDrink = drink ? drink.bottleSize * drink.bottleCount : 0;
     const all = [...gels, ...sips];
     const totals = {
@@ -327,6 +366,9 @@ export function buildSchedule(input) {
         durationMin,
         distanceMi,
         minPerMile,
+        startMin,
+        startTod: tod(0),
+        finishTod: tod(durationMin),
         firstGelMin,
         gels,
         sips,

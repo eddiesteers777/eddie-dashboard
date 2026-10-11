@@ -135,7 +135,7 @@ test("formatting helpers", () => {
 // ---- Fueling audit step 1: the duration rule, inputs, the drink, saved plans ----
 import { parsePace, formatPace, resolveRun, estimateDurationMinutes, calculateTargets, baseCarbsPerHour, paceForLabel } from "../js/fuelTargets.js";
 import { toFluid, fromFluid, fluidText, fluidWords } from "../js/fluidUnits.js";
-import { drinkIncluded, firstGelValue, sodiumText, isSipped } from "../js/fuelSchedule.js";
+import { drinkIncluded, firstGelValue, sodiumText, isSipped, parseStartTime, timeOfDay } from "../js/fuelSchedule.js";
 
 test("paces are read per mile or per km, ranges by their middle, words not at all", () => {
     assert.equal(parsePace("8:30"), 8.5);
@@ -320,4 +320,46 @@ test("fluid is stored in oz and shown in oz or ml", () => {
     assert.equal(fluidText(16.9, "oz"), "16.9 oz");
     assert.equal(fluidWords("Bottles hold {fluid:40} of {fluid:68}", "ml"), "Bottles hold 1180 ml of 2010 ml");
     assert.equal(fluidWords("Bottles hold {fluid:40}", "oz"), "Bottles hold 40 oz");
+});
+
+test("start time: clock times on every checkpoint and the finish (test 4)", () => {
+    assert.equal(parseStartTime("07:00"), 420);
+    assert.equal(parseStartTime("7:05 pm"), 1145);
+    assert.equal(parseStartTime("12:00 AM"), 0);
+    for (const bad of ["", "7", "25:00", "7:60", "13:00 pm", "abc"]) assert.equal(parseStartTime(bad), null, bad);
+    assert.equal(timeOfDay(465), "7:45 AM");
+    assert.equal(timeOfDay(12 * 60), "12:00 PM");
+    assert.equal(timeOfDay(1440 + 30), "12:30 AM", "past midnight wraps");
+    const s = buildSchedule({ ...marathon, startMin: 420 });
+    assert.equal(s.startTod, "7:00 AM");
+    assert.equal(s.finishTod, "10:05 AM");
+    const gel1 = s.events.find(e => e.kind === "gel" && e.gel === 1);
+    assert.equal(gel1.tod, "7:30 AM");
+    // No start time: no clock times anywhere.
+    const plain = buildSchedule(marathon);
+    assert.equal(plain.startTod, "");
+    assert.ok(plain.events.every(e => e.tod === ""));
+    // Saved plans carry it through.
+    assert.equal(scheduleInputFromPlan({ duration: 60, startTime: "06:30" }).startMin, 390);
+    assert.equal(scheduleInputFromPlan({ duration: 60, session: { startTime: "6:30" } }).startMin, 390);
+    assert.equal(scheduleInputFromPlan({ duration: 60 }).startMin, null);
+});
+
+test("every checkpoint says what's next to take in, how long and how far (test 2 for one pace)", () => {
+    const s = buildSchedule({
+        durationMin: 153, distanceMi: 18, startMin: 420,
+        items: [{ name: "Gel", carbs: 25, sodium: 50, qty: 4 }],
+        targets: { carbsPerHour: 45 }, firstGelMin: 30
+    });
+    const start = s.events[0];
+    assert.equal(start.kind, "start");
+    assert.deepEqual([start.next.kind, start.next.n, start.next.inMin, start.next.inMi, start.next.tod], ["gel", 1, 30, 3.5, "7:30 AM"]);
+    const gels = s.events.filter(e => e.kind === "gel");
+    assert.equal(gels[0].next.n, 2);
+    assert.equal(gels[0].next.inMin, gels[1].min - gels[0].min);
+    assert.ok(Math.abs(gels[0].next.inMi - (gels[1].mile - gels[0].mile)) <= 0.1);
+    assert.equal(gels.at(-1).next, null, "nothing after the last gel");
+    // 18 mi at 8:30: a gel at 1:16 or 1:17 lands at mile 8.9 / 9.1.
+    const two = buildSchedule({ durationMin: 153, distanceMi: 18, items: [{ name: "Gel", carbs: 25, qty: 2 }], firstGelMin: 77, targets: {} });
+    assert.equal(two.gels[0].mile, 9.1);
 });

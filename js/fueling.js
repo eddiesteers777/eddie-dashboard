@@ -461,6 +461,7 @@ function readSession() {
         distance: Number($("distance").value) || 0,
         pace: $("pace").value.trim(),
         order: [...runOrder],
+        startTime: $("startTime").value || "",
 
         bodyWeight: Number($("bodyWeight").value) || 0,
         currentCarbIntake: Number($("currentCarbIntake").value) || 0,
@@ -678,6 +679,11 @@ $("calculateBtn").addEventListener("click", runCalculation);
 });
 
 $("firstGelMin").addEventListener("input", renderSchedule);
+// Clock times only: the targets don't change.
+$("startTime").addEventListener("input", () => {
+    if (lastSession) lastSession.startTime = $("startTime").value || "";
+    renderSchedule();
+});
 
 // The workout and athlete inputs: the duration line follows at once, and
 // once a plan is showing, everything recalculates as you type (no need to
@@ -1592,6 +1598,7 @@ function buildPlanObject() {
         },
         preWorkoutFood,
         firstGelMin: firstGelValue($("firstGelMin").value),
+        startTime: $("startTime").value || "",
         session: lastSession
 
     };
@@ -1673,6 +1680,7 @@ $("clearPlanBtn").addEventListener("click", () => {
 
     $("planName").value = "";
     $("preWorkoutFood").value = "";
+    $("startTime").value = "";
     $("targetsPanel").style.display = "none";
     $("compositionPanel").style.display = "none";
     $("timelinePanel").style.display = "none";
@@ -1971,6 +1979,7 @@ function openPlan(id) {
         $("duration").value = Number(plan.session.duration) > 0 ? plan.session.duration : (Number(plan.duration) || "");
         $("distance").value = plan.session.distance || "";
         $("pace").value = plan.session.pace || "";
+        $("startTime").value = plan.startTime || plan.session.startTime || "";
         $("bodyWeight").value = plan.session.bodyWeight || "";
         $("currentCarbIntake").value = plan.session.currentCarbIntake || "";
         $("tolerance").value = plan.session.tolerance;
