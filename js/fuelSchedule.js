@@ -102,7 +102,7 @@ export function formatClock(minutes) {
 // duplicates and out-of-range entries.
 export function parseBottleNumbers(value, bottleCount) {
     const count = Math.max(0, Math.floor(Number(bottleCount) || 0));
-    const values = Array.isArray(value) ? value : String(value ?? "").split(/[\\s,;]+/);
+    const values = Array.isArray(value) ? value : String(value ?? "").split(/[\s,;]+/);
     return [...new Set(values.map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= count))].sort((a, b) => a - b);
 }
 
