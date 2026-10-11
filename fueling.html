@@ -122,6 +122,11 @@
                 </div>
             </div>
 
+            <div class="fuel-save-row">
+                <p class="fuel-save-status" id="fuelSaveStatus" role="status" aria-live="polite"></p>
+                <a class="fuel-myplans-link" href="#myFuelingPlans" id="fuelMyPlansLink">My fueling plans</a>
+            </div>
+
             <div class="marathon-integration" id="marathonIntegration">
 
                 <button
@@ -141,6 +146,9 @@
             </div>
 
         </section>
+
+        <!-- An unfinished plan to pick up (js/fuelingPlans.js). -->
+        <section class="fuel-draft-banner" id="fuelDraftBanner" hidden aria-labelledby="fuelDraftBannerTitle"></section>
 
         <!-- ============================================
              SELECT MARATHON WORKOUT (the coach's own race
@@ -302,15 +310,24 @@
 
                     <h3>Athlete</h3>
 
+                    <div class="fuel-weight-unit">
+                        <span>Weight in</span>
+                        <div class="fuel-unit-switch" role="group" aria-label="Weight unit" id="weightUnitSwitch">
+                            <button type="button" data-wunit="lb" aria-pressed="true">lb</button>
+                            <button type="button" data-wunit="kg" aria-pressed="false">kg</button>
+                        </div>
+                    </div>
+
                     <label class="fuel-field">
 
-                        <span>Body Weight (lb)</span>
+                        <span>Body Weight (<span data-weight-unit>lb</span>)</span>
 
                         <input
                             type="number"
                             id="bodyWeight"
                             min="0"
-                            step="1"
+                            step="0.1"
+                            inputmode="decimal"
                             value="165">
 
                     </label>
@@ -408,6 +425,25 @@
 
                     </label>
 
+                    <label class="fuel-field">
+
+                        <span>Measured Sweat Rate (<span data-fluid-unit>oz</span>/hr)</span>
+
+                        <input
+                            type="number"
+                            id="sweatRateMeasured"
+                            min="0"
+                            step="any"
+                            inputmode="decimal"
+                            placeholder="optional, from a sweat test">
+
+                    </label>
+
+                    <details class="fuel-howto">
+                        <summary>How to measure your sweat rate</summary>
+                        <p>Weigh yourself without clothes right before and right after an hour's run, without peeing in between. Every pound lost is about 16 oz (450 ml) of sweat; add what you drank during the run. Measure again in hot weather: it changes a lot.</p>
+                    </details>
+
                 </div>
 
                 <!-- Sodium -->
@@ -428,6 +464,20 @@
                             <option value="heavy">Heavy (salty, salt-crusted skin)</option>
 
                         </select>
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Measured Sweat Sodium (mg/L)</span>
+
+                        <input
+                            type="number"
+                            id="sweatSodiumMeasured"
+                            min="0"
+                            step="10"
+                            inputmode="numeric"
+                            placeholder="optional, from a sweat test">
 
                     </label>
 
@@ -972,6 +1022,7 @@
                 id="libraryTabs">
 
                 <button class="fuel-tab active" data-category="all">All</button>
+                <button class="fuel-tab" data-category="usual">Your usual</button>
                 <button class="fuel-tab" data-category="gels">Gels</button>
                 <button class="fuel-tab" data-category="drinkmix">Drink Mixes</button>
                 <button class="fuel-tab" data-category="chews">Chews</button>
@@ -1185,7 +1236,7 @@
                     class="fuel-btn secondary"
                     id="clearPlanBtn">
 
-                    Clear Plan
+                    Start a New Plan
 
                 </button>
 
@@ -1203,30 +1254,39 @@
         </section>
 
         <!-- ============================================
-             SAVED FUELING PLANS
+             MY FUELING PLANS: drafts, saved plans and the
+             athlete profile (js/fuelingPlans.js)
         ============================================= -->
 
-        <section class="fuel-panel">
+        <section class="fuel-panel" id="myFuelingPlans" aria-labelledby="myFuelingPlansTitle">
 
             <div class="fuel-panel-header">
 
-                <h2>
+                <h2 id="myFuelingPlansTitle">
 
-                    Saved Fueling Plans
+                    My Fueling Plans
 
                 </h2>
 
             </div>
 
-            <div id="savedPlansGrid">
-
-                <p class="fuel-empty-state">
-
-                    No saved plans yet.
-
-                </p>
-
+            <div class="fuel-myplans-tabs" role="tablist" aria-label="My fueling plans">
+                <button type="button" role="tab" id="fuelTabDrafts" aria-controls="fuelDraftsPane" aria-selected="true" data-fuel-tab="drafts">Drafts <span class="fuel-tab-count" id="fuelDraftCount"></span></button>
+                <button type="button" role="tab" id="fuelTabSaved" aria-controls="fuelSavedPane" aria-selected="false" tabindex="-1" data-fuel-tab="saved">Saved Plans <span class="fuel-tab-count" id="fuelSavedCount"></span></button>
+                <button type="button" role="tab" id="fuelTabProfile" aria-controls="fuelProfilePane" aria-selected="false" tabindex="-1" data-fuel-tab="profile">Athlete Profile</button>
             </div>
+
+            <div class="fuel-myplans-pane" id="fuelDraftsPane" role="tabpanel" aria-labelledby="fuelTabDrafts">
+                <div id="fuelDraftList"></div>
+            </div>
+
+            <div class="fuel-myplans-pane" id="fuelSavedPane" role="tabpanel" aria-labelledby="fuelTabSaved" hidden>
+                <div id="savedPlansGrid">
+                    <p class="fuel-empty-state">No saved plans yet.</p>
+                </div>
+            </div>
+
+            <div class="fuel-myplans-pane" id="fuelProfilePane" role="tabpanel" aria-labelledby="fuelTabProfile" hidden></div>
 
         </section>
 

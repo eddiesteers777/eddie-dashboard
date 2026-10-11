@@ -191,7 +191,7 @@ test("blank, zero, negative and huge inputs give no NaN, no Infinity and a plain
         const r = resolveRun(c);
         assert.ok(r.minutes === null || (Number.isFinite(r.minutes) && r.minutes > 0), JSON.stringify(c));
         if (r.paceMin != null) assert.ok(Number.isFinite(r.paceMin), JSON.stringify(c));
-        if (r.minutes) for (const v of Object.values(calculateTargets({ duration: r.minutes })).filter(v => !Array.isArray(v))) assert.ok(Number.isFinite(v), JSON.stringify(c));
+        if (r.minutes) for (const v of Object.values(calculateTargets({ duration: r.minutes })).filter(v => typeof v === "number")) assert.ok(Number.isFinite(v), JSON.stringify(c));
     }
     assert.ok(resolveRun({ distance: -5, pace: "8:00" }).problems.length);
     assert.ok(resolveRun({ distance: 10, pace: "fast" }).problems.some(p => /Couldn't read the pace/.test(p)));

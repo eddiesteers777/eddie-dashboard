@@ -293,9 +293,10 @@ async function applyGoals(){
         try { isCoach = localStorage.getItem("sb-account-role") === "coach"; } catch {}
         let bodyWeightLb = null;
         const plans = read("fueling-plans");
-        if (!isCoach && Array.isArray(plans) && plans.length) {
+        const fuelingProfile = read("fueling-profile");
+        if (!isCoach && ((Array.isArray(plans) && plans.length) || fuelingProfile?.fields?.bodyWeight)) {
             const { profileFromPlans } = await import("./workoutFuel.js");
-            bodyWeightLb = Number(profileFromPlans(plans).bodyWeight) || null;
+            bodyWeightLb = Number(profileFromPlans(Array.isArray(plans) ? plans : [], fuelingProfile).bodyWeight) || null;
         }
         const { goals, custom } = goalsModule.resolveGoals(savedGoals, { isCoach, bodyWeightLb });
         Object.entries(goals).forEach(([key, value]) => { if (macros[key]) macros[key].goal = value; });

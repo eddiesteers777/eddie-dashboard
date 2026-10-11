@@ -117,10 +117,11 @@ export function fuelContext() {
         try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
     };
     const plans = read("fueling-plans", []);
+    const fuelingProfile = read("fueling-profile", null);
     return {
         library: read("fueling-library", []),
-        profile: profileFromPlans(Array.isArray(plans) ? plans : []),
-        hasProfile: Array.isArray(plans) && plans.some(p => p?.session),
+        profile: profileFromPlans(Array.isArray(plans) ? plans : [], fuelingProfile),
+        hasProfile: (Array.isArray(plans) && plans.some(p => p?.session)) || Object.keys(fuelingProfile?.fields || {}).length > 0,
         unit: read("fueling-units", {})?.fluid === "ml" ? "ml" : "oz"
     };
 }

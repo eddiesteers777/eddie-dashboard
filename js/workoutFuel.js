@@ -26,18 +26,27 @@ const TYPE_MAP = { easy: "easy", recovery: "recovery", long: "long", workout: "w
 // A gel for when their library has none.
 const GENERIC_GEL = { name: "Energy gel", carbs: 25, sodium: 50, fluid: 0, caffeine: false };
 
-// Inputs we reuse from their last saved fueling plan (the Fueling page's form).
+// Inputs we reuse from their fueling profile, else their last saved
+// fueling plan (the Fueling page's form).
 const PROFILE_KEYS = ["bodyWeight", "currentCarbIntake", "tolerance", "stomachSensitivity", "temperature",
     "humidity", "sweatRate", "sweatSodium", "typicalSodiumIntake", "caffeineWanted"];
 
-export function profileFromPlans(savedPlans) {
+export function profileFromPlans(savedPlans, fuelingProfile = null) {
     const latest = [...(savedPlans || [])]
         .filter(p => p?.session)
         .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0];
-    if (!latest) return {};
     const out = {};
-    for (const key of PROFILE_KEYS) if (latest.session[key] !== undefined) out[key] = latest.session[key];
-    if (latest.caffeine) out.caffeineWanted = true;
+    if (latest) {
+        for (const key of PROFILE_KEYS) if (latest.session[key] !== undefined) out[key] = latest.session[key];
+        if (latest.caffeine) out.caffeineWanted = true;
+    }
+    // The athlete's saved fueling profile (js/fuelProfile.js) wins: it's
+    // what they say about themselves now, not what an old plan used.
+    const fields = fuelingProfile?.fields || {};
+    for (const key of [...PROFILE_KEYS, "sweatRateMeasured", "sweatSodiumMeasured"]) {
+        const v = fields[key]?.v;
+        if (v != null && v !== "") out[key] = v;
+    }
     return out;
 }
 

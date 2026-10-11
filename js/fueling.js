@@ -8,15 +8,17 @@ import {
     DIY_SODIUM_SOURCES, DIY_CARB_SOURCES, DEFAULT_FIRST_GEL_MIN, drinkIncluded, firstGelValue, sodiumText,
     isSipped, caffeineMg, drinkRecipe, recipeParts, carbSourceKey, tspWords
 } from "./fuelSchedule.js";
-import { fluidUnit, toFluid, ML_PER_OZ, fromFluid, fluidText } from "./fluidUnits.js";
+import { fluidUnit, toFluid, ML_PER_OZ, fromFluid, fluidText, fluidWords } from "./fluidUnits.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
 import { workoutSegments, segmentsVary } from "./paceSegments.js";
 import { workoutSummary } from "./runWorkout.js";
 import {
-    calculateTargets, estimateDurationMinutes, resolveRun, formatPace, formatDuration, paceForLabel
+    calculateTargets, estimateDurationMinutes, resolveRun, formatPace, formatDuration, paceForLabel, intakeChecks
 } from "./fuelTargets.js";
 import { showsPersonalPlan } from "./role.js";
 import { toast, sbConfirm, sbPrompt } from "./ui.js";
+import { weightIn, weightFromDisplay } from "./fuelProfile.js";
+import { initFuelingPlans, currentProfile, updateProfile } from "./fuelingPlans.js";
 
 const $ = (id) => document.getElementById(id);
 const DIY_CARB_LABEL = source => DIY_CARB_SOURCES[carbSourceKey(source)].label;
@@ -52,6 +54,11 @@ function setSegments(workout, paces = null) {
 // most recent work out the third (js/fuelTargets.js resolveRun).
 let runOrder = [];
 let unit = "oz"; // fluid shown in "oz" | "ml"; stored in oz (js/fluidUnits.js)
+let weightUnit = "lb"; // body weight shown in "lb" | "kg"; stored in lb (js/fuelProfile.js)
+// Targets the person typed over the worked-out ones (kept in a draft and
+// put back after the targets are worked out again on resume).
+let typedTargets = {};
+let calcTargets = null;   // the last worked-out targets, before any typing over them
 const fl = oz => fluidText(oz, unit);
 const setFluidInput = (id, oz) => { $(id).value = oz === "" || oz == null ? "" : toFluid(oz, unit); };
 const fluidInput = id => fromFluid($(id).value, unit) || 0;
@@ -476,7 +483,7 @@ function readSession() {
         startTime: $("startTime").value || "",
         ...(runSegments ? { segments: runSegments, segmentsText: runSegmentsText } : {}),
 
-        bodyWeight: Number($("bodyWeight").value) || 0,
+        bodyWeight: $("bodyWeight").value === "" ? 0 : (weightFromDisplay($("bodyWeight").value, weightUnit) || 0),
         currentCarbIntake: Number($("currentCarbIntake").value) || 0,
         tolerance: $("tolerance").value,
         stomachSensitivity: $("stomachSensitivity").value,
@@ -484,6 +491,8 @@ function readSession() {
         temperature: Number($("temperature").value) || 0,
         humidity: Number($("humidity").value) || 0,
         sweatRate: $("sweatRate").value,
+        sweatRateMeasured: fluidInput("sweatRateMeasured"),
+        sweatSodiumMeasured: Number($("sweatSodiumMeasured").value) || 0,
 
         sweatSodium: $("sweatSodium").value,
         typicalSodiumIntake: Number($("typicalSodiumIntake").value) || 0,
@@ -574,6 +583,8 @@ function runCalculation() {
     const targets = calculateTargets({ ...session, duration: resolved.minutes });
 
     lastSession = session;
+    typedTargets = {};
+    calcTargets = { carbsPerHour: targets.carbsPerHour, fluidPerHour: targets.fluidPerHour, sodiumPerHour: targets.sodiumPerHour };
 
     lastTargets = {
 
@@ -596,12 +607,23 @@ function runCalculation() {
     // Each step of the carb target in words, so nothing is a black box.
     const steps = (targets.why || []).map((w, i) =>
         `<li>${escapeHTML(w.label)}${i || w.value ? ` <span class="fuel-why-val">${w.value} g/hr</span>` : ""}</li>`).join("");
+    const valueText = w => w.value == null ? "" : w.unit === "fluid" ? `${fl(w.value)}/hr` : `${w.value} mg/hr`;
+    const list = rows => rows.map(w => `<li>${escapeHTML(w.label)}${w.value != null ? ` <span class="fuel-why-val">${valueText(w)}</span>` : ""}</li>`).join("");
+    const BASIS = { measured: "Measured", yours: "Your number", estimate: "Estimate" };
+    const basisChip = b => `<span class="fuel-basis is-${b}">${BASIS[b] || "Estimate"}</span>`;
+    const fluidHint = targets.basis?.fluid === "estimate"
+        ? `<span class="fuel-why-hint">An estimate from your guess and the weather. A measured sweat rate (above) makes it much closer.</span>` : "";
+    const sodiumHint = targets.basis?.sodium === "estimate"
+        ? `<span class="fuel-why-hint">Sweat sodium varies a lot from person to person; this is a middle starting point, not a prescription.</span>` : "";
     $("calcNote").innerHTML =
         `Estimated from a ${targets.duration}-minute session, your fueling tolerance, ` +
         `sensitivity, and the conditions entered above.` +
         (steps ? `<span class="fuel-why-title">How the carb target was set</span><ol class="fuel-why">${steps}</ol>` : "") +
+        (targets.fluidWhy?.length ? `<span class="fuel-why-title">How the fluid target was set ${basisChip(targets.basis.fluid)}</span><ol class="fuel-why">${list(targets.fluidWhy)}</ol>${fluidHint}` : "") +
+        (targets.sodiumWhy?.length ? `<span class="fuel-why-title">How the sodium target was set ${basisChip(targets.basis.sodium)}</span><ol class="fuel-why">${list(targets.sodiumWhy)}</ol>${sodiumHint}` : "") +
         `<span class="fuel-why-foot">General guidance, not medical advice. These are starting targets — ` +
-        `change any number to match what works for your gut.</span>`;
+        `change any number to match what works for your gut. Never drink more than you sweat.</span>`;
+    renderTypedNote();
 
     updatePlanWorkoutLabel();
     updateTotalsAndTimeline(true);
@@ -661,19 +683,9 @@ function setMode(next) {
         ? "Race mode: exact planned fueling, consistent timing, minimal surprises."
         : "Training mode: practice fueling, train your gut, and experiment in small steps.";
 
-    if (lastSession) {
-
-        lastSession.mode = mode;
-
-        const targets = calculateTargets({ ...lastSession, duration: currentDurationMinutes() });
-
-        $("carbsPerHour").value = targets.carbsPerHour;
-        setFluidInput("fluidPerHour", targets.fluidPerHour);
-        $("sodiumPerHour").value = targets.sodiumPerHour;
-
-        updateTotalsAndTimeline(true);
-
-    }
+    // One path for working targets out (the same as Calculate), so the
+    // words under the targets always match the numbers.
+    if (lastSession) runCalculation();
 
 }
 
@@ -695,9 +707,33 @@ $("calculateBtn").addEventListener("click", runCalculation);
 
 ["carbsPerHour", "fluidPerHour", "sodiumPerHour"].forEach(id => {
 
-    $(id).addEventListener("input", () => updateTotalsAndTimeline(false));
+    $(id).addEventListener("input", () => {
+        // Typed over the worked-out target: remembered (in oz for fluid)
+        // so a resumed draft keeps it.
+        if ($(id).value === "") delete typedTargets[id];
+        else typedTargets[id] = id === "fluidPerHour" ? fluidInput(id) : Number($(id).value) || 0;
+        updateTotalsAndTimeline(false);
+        renderTypedNote();
+    });
 
 });
+
+// "You set carbs to 60 g/hr (worked out: 55)" under the targets.
+function renderTypedNote() {
+    let el = $("fuelTypedNote");
+    if (!el) {
+        el = document.createElement("p");
+        el.id = "fuelTypedNote";
+        el.className = "fuel-note fuel-typed-note";
+        $("calcNote").after(el);
+    }
+    const words = { carbsPerHour: ["carbs", v => `${v} g/hr`], fluidPerHour: ["fluid", v => `${fl(v)}/hr`], sodiumPerHour: ["sodium", v => `${v} mg/hr`] };
+    const parts = Object.entries(typedTargets)
+        .filter(([k, v]) => calcTargets && Math.round(v) !== Math.round(calcTargets[k]))
+        .map(([k, v]) => `${words[k][0]} to ${words[k][1](v)} (worked out: ${words[k][1](calcTargets[k])})`);
+    el.hidden = !parts.length;
+    el.textContent = parts.length ? `This plan uses ${parts.join(", ")}. Those numbers are kept; press Calculate to go back to the worked-out ones.` : "";
+}
 
 $("firstGelMin").addEventListener("input", renderSchedule);
 // Clock times only: the targets don't change.
@@ -724,7 +760,7 @@ function onSessionInput(e) {
     liveTimer = setTimeout(runCalculation, 250);
 }
 ["workoutType", "duration", "distance", "pace", "bodyWeight", "currentCarbIntake", "tolerance", "stomachSensitivity",
-    "temperature", "humidity", "sweatRate", "sweatSodium", "typicalSodiumIntake", "caffeineWanted"].forEach(id => {
+    "temperature", "humidity", "sweatRate", "sweatRateMeasured", "sweatSodium", "sweatSodiumMeasured", "typicalSodiumIntake", "caffeineWanted"].forEach(id => {
     const el = $(id);
     if (!el) return;
     el.addEventListener("input", onSessionInput);
@@ -737,7 +773,8 @@ function applyUnit(next) {
     const before = {
         fluidPerHour: $("fluidPerHour").value === "" ? "" : fluidInput("fluidPerHour"),
         diyBottleSize: $("diyBottleSize").value === "" ? "" : fluidInput("diyBottleSize"),
-        libFluid: $("libFluid").value === "" ? "" : fluidInput("libFluid")
+        libFluid: $("libFluid").value === "" ? "" : fluidInput("libFluid"),
+        sweatRateMeasured: $("sweatRateMeasured").value === "" ? "" : fluidInput("sweatRateMeasured")
     };
     unit = next === "ml" ? "ml" : "oz";
     Object.entries(before).forEach(([id, oz]) => setFluidInput(id, oz));
@@ -750,10 +787,26 @@ $("fluidUnitSwitch").addEventListener("click", e => {
     applyUnit(b.dataset.unit);
     saveJSON("fueling-units", { fluid: unit });
     updateTotalsAndTimeline(false);
+    if (lastSession) runCalculation();
     refreshDiySnapshot();
     renderLibrary();
     renderSavedPlans();
     renderPlanSummary();
+});
+
+// lb / kg: only how body weight is shown and typed; stored in lb.
+function applyWeightUnit(next) {
+    const lb = $("bodyWeight").value === "" ? "" : weightFromDisplay($("bodyWeight").value, weightUnit);
+    weightUnit = next === "kg" ? "kg" : "lb";
+    $("bodyWeight").value = lb === "" ? "" : weightIn(lb, weightUnit);
+    document.querySelectorAll("[data-weight-unit]").forEach(el => { el.textContent = weightUnit; });
+    document.querySelectorAll("#weightUnitSwitch [data-wunit]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.wunit === weightUnit)));
+}
+$("weightUnitSwitch").addEventListener("click", e => {
+    const b = e.target.closest("[data-wunit]");
+    if (!b || b.dataset.wunit === weightUnit) return;
+    applyWeightUnit(b.dataset.wunit);
+    updateProfile({ weightUnit });
 });
 
 /* ==========================================
@@ -949,11 +1002,31 @@ function renderComposition() {
             <span>${c.targetCarbs} g carb · ${c.targetSodium} mg sodium ${onTarget ? `— on target ${icon("check")}` : "— adjust products or drink"}</span>
         </div>
 
+        ${planChecksHtml(c)}
+
     `;
 
     // Anything that changes the composition changes the schedule too.
     renderSchedule();
 
+}
+
+// Where what's in the plan is well off its targets (js/fuelTargets.js intakeChecks).
+function planChecksHtml(c) {
+    const d = drinkInputs();
+    const fluidOz = planItems.reduce((s, p) => s + (Number(p.fluid) || 0) * (Number(p.qty) || 0), 0)
+        + (c.includeDrink ? (Number(d.bottleSize) || 0) * (Number(d.bottleCount) || 0) : 0);
+    const caffeine = planItems.reduce((s, p) => s + caffeineMg(p) * (Number(p.qty) || 0), 0);
+    const session = readSession();
+    const checks = intakeChecks({
+        durationMin: c.duration,
+        targets: lastTargets,
+        planned: { carbs: c.totalCarbs, sodium: c.totalSodium, fluidOz, caffeineMg: caffeine },
+        bodyWeightLb: session.bodyWeight,
+        sweatRateMeasured: session.sweatRateMeasured
+    });
+    if (!checks.length) return "";
+    return `<ul class="fuel-plan-checks">${checks.map(x => `<li class="is-${x.level}">${escapeHTML(fluidWords(x.text, unit))}</li>`).join("")}</ul>`;
 }
 
 // The homemade drink's ingredient amounts for the current inputs, from
@@ -1192,6 +1265,7 @@ $("saveDiyRecipeBtn").addEventListener("click", async () => {
 function renderDiyRecipes() {
 
     const list = $("diyRecipeList");
+    const usualRecipe = String(currentProfile()?.fields?.preferredRecipe?.v || "");
 
     list.innerHTML = "";
 
@@ -1212,7 +1286,11 @@ function renderDiyRecipes() {
                 </div>
             </div>
 
-            <button class="fuel-btn secondary small" data-delete-recipe="${r.id}">Delete</button>
+            <div class="fuel-recipe-actions">
+                ${r.recipe ? `<button type="button" class="fuel-btn secondary small" data-use-recipe="${r.id}">Use</button>` : ""}
+                <button type="button" class="fuel-star${usualRecipe === String(r.id) ? " is-on" : ""}" data-usual-recipe="${r.id}" aria-pressed="${usualRecipe === String(r.id)}" aria-label="Your usual drink: ${escapeHTML(r.name)}">${icon("star")}<span>Usual</span></button>
+                <button type="button" class="fuel-btn secondary small" data-delete-recipe="${r.id}">Delete</button>
+            </div>
 
         `;
 
@@ -1224,7 +1302,20 @@ function renderDiyRecipes() {
 
 $("diyRecipeList").addEventListener("click", (e) => {
 
-    const id = e.target.dataset.deleteRecipe;
+    const use = e.target.closest("[data-use-recipe]");
+    if (use) { useRecipe(use.dataset.useRecipe); return; }
+
+    const usual = e.target.closest("[data-usual-recipe]");
+    if (usual) {
+        const was = String(currentProfile()?.fields?.preferredRecipe?.v || "");
+        const next = was === usual.dataset.usualRecipe ? "" : usual.dataset.usualRecipe;
+        updateProfile({ preferredRecipe: next }, { allowBlank: true });
+        renderDiyRecipes();
+        toast(next ? "New plans start with this drink." : "No usual drink.");
+        return;
+    }
+
+    const id = e.target.closest("[data-delete-recipe]")?.dataset.deleteRecipe;
 
     if (!id) return;
 
@@ -1236,6 +1327,34 @@ $("diyRecipeList").addEventListener("click", (e) => {
 
 });
 
+// Fills the drink inputs from a saved recipe (recipes saved with their
+// inputs; older ones only have the result and can't be reloaded).
+function useRecipe(id, { quiet = false } = {}) {
+    const r = diyRecipes.find(x => String(x.id) === String(id));
+    if (!r || !r.recipe) return false;
+    setFluidInput("diyBottleSize", r.bottleSize || 20);
+    $("diyBottleCount").value = r.bottleCount || 1;
+    $("diyCarbTarget").value = r.carbTarget || 0;
+    $("diySodiumTarget").value = r.sodiumTarget || 0;
+    $("diyCarbSource").value = carbSourceKey(r.carbSource || "table-sugar");
+    $("diyCarbSource2").value = r.carbSource2 ? carbSourceKey(r.carbSource2) : "";
+    $("diyCarbShare2").value = Math.round((Number(r.carbShare2) || 0.5) * 100);
+    $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
+    $("diyElectroMg").value = r.electroMg || "";
+    $("diyElectroScoops").value = r.electroScoops || "";
+    $("diySodiumSource").value = r.sodiumSource || "table-salt";
+    $("diyNotes").value = r.notes || "";
+    $("includeHomemadeDrink").checked = true;
+    refreshDiySnapshot();
+    $("diyResults").style.display = "flex";
+    $("diyConversionNote").style.display = "";
+    showDiyResults(currentDiyMix());
+    renderComposition();
+    renderPlanSummary();
+    if (!quiet) toast(`Using “${r.name}”.`);
+    return true;
+}
+
 /* ==========================================
    Commercial Fueling Library
 ========================================== */
@@ -1246,13 +1365,17 @@ function renderLibrary() {
 
     grid.innerHTML = "";
 
-    const items = activeLibraryTab === "all"
+    const preferred = new Set((currentProfile()?.fields?.preferredItems?.v || []).map(String));
+    const shown = activeLibraryTab === "all"
         ? library
-        : library.filter(i => i.category === activeLibraryTab);
+        : activeLibraryTab === "usual" ? library.filter(i => preferred.has(String(i.id)))
+            : library.filter(i => i.category === activeLibraryTab);
+    // The athlete's usual products first.
+    const items = [...shown].sort((a, b) => Number(preferred.has(String(b.id))) - Number(preferred.has(String(a.id))));
 
     if (!items.length) {
 
-        grid.innerHTML = `<p class="fuel-empty-state">No items in this category yet.</p>`;
+        grid.innerHTML = `<p class="fuel-empty-state">${activeLibraryTab === "usual" ? "Star the products you usually use and they show here, and first everywhere." : "No items in this category yet."}</p>`;
 
         return;
 
@@ -1285,6 +1408,7 @@ function renderLibrary() {
 
             <div class="fuel-lib-actions">
                 <button class="add-to-plan" data-add="${item.id}">Add to Plan</button>
+                <button type="button" class="fuel-star${preferred.has(String(item.id)) ? " is-on" : ""}" data-star="${item.id}" aria-pressed="${preferred.has(String(item.id))}" aria-label="One of your usual products: ${escapeHTML(item.name)}">${icon("star")}<span>Usual</span></button>
                 <button data-edit="${item.id}">Edit</button>
                 <button data-delete="${item.id}">Delete</button>
             </div>
@@ -1394,6 +1518,16 @@ $("libraryForm").addEventListener("submit", (e) => {
 });
 
 $("libraryGrid").addEventListener("click", (e) => {
+
+    const star = e.target.closest("[data-star]");
+    if (star) {
+        const list = (currentProfile()?.fields?.preferredItems?.v || []).map(String);
+        const id = star.dataset.star;
+        const next = list.includes(id) ? list.filter(x => x !== id) : [...list, id];
+        updateProfile({ preferredItems: next }, { allowBlank: true });
+        renderLibrary();
+        return;
+    }
 
     const editId = e.target.dataset.edit;
     const deleteId = e.target.dataset.delete;
@@ -1662,6 +1796,7 @@ function buildPlanObject() {
         mode,
         marathonRef: marathonRef ? { ...marathonRef } : null,
         date: new Date().toISOString(),
+        updatedAt: Date.now(),
         carbsPerHour: lastTargets ? lastTargets.carbsPerHour : 0,
         fluidPerHour: lastTargets ? lastTargets.fluidPerHour : 0,
         sodiumPerHour: lastTargets ? lastTargets.sodiumPerHour : 0,
@@ -1708,6 +1843,9 @@ $("savePlanBtn").addEventListener("click", () => {
 
     if (selectedWeek) renderDayListIfVisible();
 
+    // The draft it came from is done (js/fuelingPlans.js).
+    window.dispatchEvent(new CustomEvent("sb:fuel-plan-saved", { detail: { planId: plan.id } }));
+
     openPlanSheet(plan.id, marathonRef ? "Saved to this workout" : "Saved");
 
 });
@@ -1746,6 +1884,18 @@ $("duplicatePlanBtn").addEventListener("click", () => {
 });
 
 $("clearPlanBtn").addEventListener("click", () => {
+    resetPage();
+    // js/fuelingPlans.js keeps the draft that was open and fills the
+    // athlete's details back in from their profile.
+    window.dispatchEvent(new CustomEvent("sb:fuel-new-plan"));
+});
+
+function resetPage() {
+
+    // A new plan: the workout and its drink amounts start empty (the
+    // athlete's own details stay; js/fuelingPlans.js refills them from the
+    // profile).
+    ["duration", "distance", "pace", "diyCarbTarget", "diySodiumTarget"].forEach(id => { $(id).value = ""; });
 
     currentPlanId = null;
     marathonRef = null;
@@ -1766,11 +1916,16 @@ $("clearPlanBtn").addEventListener("click", () => {
     $("diyResults").style.display = "none";
     $("diyConversionNote").style.display = "none";
 
+    typedTargets = {};
+    calcTargets = null;
+    renderTypedNote();
+    $("diyResults").dataset.snapshot = "";
+
     updatePlanWorkoutLabel();
     renderDurationStatus();
     renderPlanSummary();
 
-});
+}
 
 $("deletePlanBtn").addEventListener("click", async () => {
 
@@ -2098,7 +2253,9 @@ function openPlan(id) {
         $("distance").value = plan.session.distance || "";
         $("pace").value = plan.session.pace || "";
         $("startTime").value = plan.startTime || plan.session.startTime || "";
-        $("bodyWeight").value = plan.session.bodyWeight || "";
+        $("bodyWeight").value = plan.session.bodyWeight ? weightIn(plan.session.bodyWeight, weightUnit) : "";
+        setFluidInput("sweatRateMeasured", plan.session.sweatRateMeasured || "");
+        $("sweatSodiumMeasured").value = plan.session.sweatSodiumMeasured || "";
         $("currentCarbIntake").value = plan.session.currentCarbIntake || "";
         $("tolerance").value = plan.session.tolerance;
         $("stomachSensitivity").value = plan.session.stomachSensitivity;
@@ -2128,6 +2285,17 @@ function openPlan(id) {
     $("carbsPerHour").value = plan.carbsPerHour;
     setFluidInput("fluidPerHour", plan.fluidPerHour);
     $("sodiumPerHour").value = plan.sodiumPerHour;
+
+    // What its inputs work out to today: a saved number that differs
+    // (typed over, or an older version of the math) is kept and said.
+    calcTargets = null;
+    typedTargets = {};
+    if (plan.session) {
+        const now = calculateTargets({ ...plan.session, duration: lastSession.durationResolved });
+        calcTargets = { carbsPerHour: now.carbsPerHour, fluidPerHour: now.fluidPerHour, sodiumPerHour: now.sodiumPerHour };
+        for (const k of Object.keys(calcTargets)) if (Number(plan[k]) !== calcTargets[k]) typedTargets[k] = Number(plan[k]) || 0;
+    }
+    renderTypedNote();
 
     $("includeHomemadeDrink").checked = plan.includeHomemadeDrink !== false;
 
@@ -2165,7 +2333,159 @@ if (plan.diySnapshot || plan.diyInputs) {
 
     document.querySelector(".page-title").scrollIntoView({ behavior: scrollMotion() });
 
+    // Viewing a saved plan isn't editing it: a draft starts with the first change.
+    window.dispatchEvent(new CustomEvent("sb:fuel-loaded", { detail: { planId: plan.id } }));
+
 }
+
+/* ==========================================
+   Drafts: the whole page as data, and back
+   (js/fuelingPlans.js keeps it; js/fuelDrafts.js says what it holds)
+========================================== */
+
+// Plain inputs kept exactly as typed. The worked-out targets aren't here:
+// they're worked out again on resume (typedTargets keeps any typed over).
+const DRAFT_FIELDS = ["workoutType", "duration", "distance", "pace", "startTime", "currentCarbIntake", "tolerance",
+    "stomachSensitivity", "temperature", "humidity", "sweatRate", "sweatSodium", "sweatSodiumMeasured", "typicalSodiumIntake",
+    "firstGelMin", "planName", "preWorkoutFood", "diyBottleCount", "diyCarbTarget", "diySodiumTarget", "diyCarbSource",
+    "diyCarbSource2", "diyCarbShare2", "diyElectroMg", "diyElectroScoops", "diySodiumSource", "diyNotes"];
+const DRAFT_CHECKS = ["caffeineWanted", "includeHomemadeDrink"];
+// Inputs shown in the athlete's unit: kept in lb / oz so a unit switch isn't a change.
+const DRAFT_CANON = {
+    bodyWeight: { read: () => ($("bodyWeight").value === "" ? "" : weightFromDisplay($("bodyWeight").value, weightUnit)), write: v => { $("bodyWeight").value = v === "" || v == null ? "" : weightIn(v, weightUnit); } },
+    sweatRateMeasured: { read: () => ($("sweatRateMeasured").value === "" ? "" : fluidInput("sweatRateMeasured")), write: v => setFluidInput("sweatRateMeasured", v) },
+    diyBottleSize: { read: () => ($("diyBottleSize").value === "" ? "" : fluidInput("diyBottleSize")), write: v => setFluidInput("diyBottleSize", v) }
+};
+
+function captureState() {
+    const fields = {};
+    DRAFT_FIELDS.forEach(id => { fields[id] = $(id)?.value ?? ""; });
+    DRAFT_CHECKS.forEach(id => { fields[id] = Boolean($(id)?.checked); });
+    Object.entries(DRAFT_CANON).forEach(([id, c]) => { const v = c.read(); fields[id] = v === "" ? "" : Math.round(Number(v) * 100) / 100; });
+    return {
+        v: 1,
+        fields,
+        fuelPreferences: [...document.querySelectorAll("#fuelPreferences input:checked")].map(el => el.value),
+        order: [...runOrder],
+        items: planItems.map(i => ({ ...i })),
+        mode,
+        segments: runSegments,
+        segmentsText: runSegmentsText,
+        marathonRef: marathonRef ? { ...marathonRef } : null,
+        planId: currentPlanId ?? null,
+        typedTargets: { ...typedTargets },
+        calculated: Boolean(lastTargets),
+        diyShown: $("diyResults").style.display === "flex"
+    };
+}
+
+// Puts a draft back exactly, then works everything derived out again
+// through the same path as Calculate.
+function applyState(state) {
+    if (!state) return;
+    resetPage();
+    const f = state.fields || {};
+    DRAFT_FIELDS.forEach(id => { if (id in f && $(id)) $(id).value = f[id] ?? ""; });
+    DRAFT_CHECKS.forEach(id => { if (id in f && $(id)) $(id).checked = Boolean(f[id]); });
+    Object.entries(DRAFT_CANON).forEach(([id, c]) => { if (id in f) c.write(f[id]); });
+    if (Array.isArray(state.fuelPreferences)) {
+        document.querySelectorAll("#fuelPreferences input").forEach(el => { el.checked = state.fuelPreferences.includes(el.value); });
+    }
+    $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
+    preWorkoutFood = f.preWorkoutFood || "";
+    runOrder = Array.isArray(state.order) ? state.order.filter(x => FIELD_OF[x]) : [];
+    planItems = Array.isArray(state.items) ? state.items.map(i => ({ ...i })) : [];
+    runSegments = Array.isArray(state.segments) ? state.segments : null;
+    runSegmentsText = runSegments ? String(state.segmentsText || "") : "";
+    marathonRef = state.marathonRef ? { ...state.marathonRef } : null;
+    currentPlanId = state.planId ?? null;
+    setMode(state.mode === "race" ? "race" : "training");
+
+    refreshDiySnapshot();
+    if (state.diyShown) {
+        $("diyResults").style.display = "flex";
+        $("diyConversionNote").style.display = "";
+        showDiyResults(currentDiyMix());
+    }
+
+    if (state.calculated && currentResolve().minutes) {
+        runCalculation();
+        const typed = state.typedTargets || {};
+        for (const [k, v] of Object.entries(typed)) {
+            if (!["carbsPerHour", "fluidPerHour", "sodiumPerHour"].includes(k)) continue;
+            if (k === "fluidPerHour") setFluidInput(k, v); else $(k).value = v;
+            typedTargets[k] = Number(v) || 0;
+        }
+        if (Object.keys(typed).length) updateTotalsAndTimeline(false);
+        renderTypedNote();
+    } else {
+        renderDurationStatus();
+    }
+    updatePlanWorkoutLabel();
+    renderComposition();
+    renderPlanSummary();
+}
+
+// The profile's answers into the athlete inputs (a new plan's starting point).
+function applyProfileValues(values) {
+    const set = (id, v) => { if ($(id) && v !== undefined && v !== null) $(id).value = v; };
+    if (values.bodyWeight !== "" && values.bodyWeight != null) $("bodyWeight").value = weightIn(values.bodyWeight, weightUnit);
+    set("currentCarbIntake", values.currentCarbIntake || "");
+    ["tolerance", "stomachSensitivity", "sweatRate", "sweatSodium"].forEach(id => {
+        if (values[id] && [...$(id).options].some(o => o.value === values[id])) $(id).value = values[id];
+    });
+    setFluidInput("sweatRateMeasured", values.sweatRateMeasured || "");
+    set("sweatSodiumMeasured", values.sweatSodiumMeasured || "");
+    set("typicalSodiumIntake", values.typicalSodiumIntake || "");
+    set("temperature", values.temperature);
+    set("humidity", values.humidity);
+    if (values.firstGelMin) $("firstGelMin").value = values.firstGelMin;
+    if (Array.isArray(values.fuelPreferences)) {
+        document.querySelectorAll("#fuelPreferences input").forEach(el => { el.checked = values.fuelPreferences.includes(el.value); });
+    }
+    $("caffeineWanted").checked = Boolean(values.caffeineWanted);
+    if (lastSession) runCalculation(); else renderDurationStatus();
+}
+
+// The athlete's own answers as they stand on the page, in lb / oz.
+function athleteValuesOnPage() {
+    return {
+        bodyWeight: $("bodyWeight").value === "" ? "" : weightFromDisplay($("bodyWeight").value, weightUnit),
+        currentCarbIntake: $("currentCarbIntake").value,
+        tolerance: $("tolerance").value,
+        stomachSensitivity: $("stomachSensitivity").value,
+        sweatRate: $("sweatRate").value,
+        sweatRateMeasured: $("sweatRateMeasured").value === "" ? "" : fluidInput("sweatRateMeasured"),
+        sweatSodium: $("sweatSodium").value,
+        sweatSodiumMeasured: $("sweatSodiumMeasured").value,
+        typicalSodiumIntake: $("typicalSodiumIntake").value,
+        fuelPreferences: [...document.querySelectorAll("#fuelPreferences input:checked")].map(el => el.value),
+        caffeineWanted: $("caffeineWanted").checked,
+        firstGelMin: $("firstGelMin").value
+    };
+}
+
+const fuelingAdapter = {
+    captureState,
+    applyState,
+    resetPage,
+    applyProfileValues,
+    athleteValuesOnPage,
+    applyWeightUnit,
+    weightUnit: () => weightUnit,
+    fluidUnit: () => unit,
+    fluidText: oz => fl(oz),
+    toFluid: oz => toFluid(oz, unit),
+    fromFluid: v => fromFluid(v, unit),
+    savePlan: () => $("savePlanBtn").click(),
+    openSavedPlan: id => openPlan(id),
+    useRecipe: (id, opts) => useRecipe(id, opts),
+    plans: () => plans,
+    library: () => library,
+    renderLibrary,
+    renderDiyRecipes,
+    showSaved: () => renderSavedPlans()
+};
 
 /* ==========================================
    Utilities
@@ -2190,6 +2510,7 @@ function renderFuelingPage() {
     loadPersistedState();
 
     applyUnit(fluidUnit());
+    applyWeightUnit(currentProfile()?.fields?.weightUnit?.v || "lb");
 
     setMode(mode);
     renderLibrary();
@@ -2203,7 +2524,12 @@ function renderFuelingPage() {
 
     renderDurationStatus();
 
-    prefillFromWorkoutLink();
+    // Drafts and the athlete profile (js/fuelingPlans.js): picks up the
+    // draft that was open on this device, else fills the athlete's details
+    // in from their profile. A link from a workout starts its own plan.
+    const linked = hasWorkoutLink();
+    const { restored } = initFuelingPlans(fuelingAdapter, { linkQuery: linked ? location.search : "" });
+    if (!restored && linked) prefillFromWorkoutLink();
 
     // Picking a workout from the marathon block only makes sense for the
     // coach's own plan; everyone else enters their session directly.
@@ -2220,6 +2546,11 @@ function renderFuelingPage() {
 // &duration=99. Fills the session in, with the athlete's details from their
 // last saved plan, and calculates -- the same starting point the workout's
 // own fuel plan used (js/workoutFuel.js).
+function hasWorkoutLink() {
+    const params = new URLSearchParams(location.search);
+    return Boolean(params.get("type")) && !params.get("week");
+}
+
 function prefillFromWorkoutLink() {
     const params = new URLSearchParams(location.search);
     if (!params.get("type") || params.get("week")) return;
@@ -2237,11 +2568,14 @@ function prefillFromWorkoutLink() {
         const w = JSON.parse(params.get("w") || "null");
         setSegments(w && typeof w === "object" && !Array.isArray(w) ? w : null);
     } catch { setSegments(null); }
-    const last = [...plans].filter(p => p?.session).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0]?.session;
+    // No fueling profile yet: the athlete's details from their last saved plan.
+    const hasProfile = Object.values(currentProfile()?.fields || {}).some(f => f?.v != null);
+    const last = hasProfile ? null : [...plans].filter(p => p?.session).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0]?.session;
     if (last) {
-        for (const id of ["bodyWeight", "currentCarbIntake", "temperature", "humidity", "typicalSodiumIntake"]) {
+        for (const id of ["currentCarbIntake", "temperature", "humidity", "typicalSodiumIntake"]) {
             if (last[id]) $(id).value = last[id];
         }
+        if (last.bodyWeight) $("bodyWeight").value = weightIn(last.bodyWeight, weightUnit);
         for (const id of ["tolerance", "stomachSensitivity", "sweatRate", "sweatSodium"]) {
             if (last[id] && [...$(id).options].some(o => o.value === last[id])) $(id).value = last[id];
         }

@@ -11,7 +11,7 @@ const library = [
 ];
 
 test("targets: the Fueling page's math, now shared", () => {
-    const { why, ...t } = calculateTargets({ workoutType: "long", distance: 12, mode: "training" });
+    const { why, fluidWhy, sodiumWhy, basis, ...t } = calculateTargets({ workoutType: "long", distance: 12, mode: "training" });
     assert.deepEqual(t, { duration: 99, carbsPerHour: 40, fluidPerHour: 22, sodiumPerHour: 450 });
     assert.equal(why.length, 1, "a long run: just the base");
     assert.equal(estimateDurationMinutes({ duration: 70 }), 70);
@@ -81,4 +81,54 @@ test("a structured workout: gels at the same times, at the miles its own paces r
     assert.deepEqual(paced.gels.map(g => g.movedFrom?.min ?? g.min), plain.gels.map(g => g.min));
     assert.notDeepEqual(paced.gels.map(g => g.mile), plain.gels.map(g => g.mile));
     assert.ok(paced.gels.some(g => g.movedFrom && /^Rep /.test(g.movedFrom.part)), "a gel due during a rep moves to a jog");
+});
+
+test("a measured sweat rate replaces most of what's lost, never more, and at most a liter an hour", () => {
+    const base = { workoutType: "long", duration: 120 };
+    const guess = calculateTargets(base);
+    assert.equal(guess.basis.fluid, "estimate");
+    assert.ok(guess.fluidWhy.length >= 1);
+    const m = calculateTargets({ ...base, sweatRateMeasured: 30 });
+    assert.equal(m.fluidPerHour, 21, "70% of 30");
+    assert.equal(m.basis.fluid, "measured");
+    const heavy = calculateTargets({ ...base, sweatRateMeasured: 70 });
+    assert.equal(heavy.fluidPerHour, 34, "capped");
+    assert.match(heavy.fluidWhy.at(-1).label, /Capped/);
+    // Weather and weight don't move a measured number.
+    assert.equal(calculateTargets({ ...base, sweatRateMeasured: 30, temperature: 95, bodyWeight: 220 }).fluidPerHour, 21);
+});
+
+test("measured sweat sodium covers the sodium in what you'll drink; else what you take now; else an estimate", () => {
+    const base = { workoutType: "long", duration: 120, sweatRateMeasured: 30 };
+    const m = calculateTargets({ ...base, sweatSodiumMeasured: 1000, typicalSodiumIntake: 300 });
+    assert.equal(m.basis.sodium, "measured");
+    assert.equal(m.sodiumPerHour, 625, "1,000 mg/L x 21 oz (0.62 L) to the nearest 25");
+    assert.ok(m.sodiumWhy.some(w => /take about 300/.test(w.label)));
+    assert.equal(calculateTargets({ ...base, typicalSodiumIntake: 300 }).basis.sodium, "yours");
+    const e = calculateTargets({ workoutType: "long", duration: 120, temperature: 90 });
+    assert.equal(e.basis.sodium, "estimate");
+    assert.equal(e.sodiumPerHour, 550);
+});
+
+test("workout pages use the fueling profile first, then the last saved plan", () => {
+    const plans = [{ date: "2026-10-01", session: { bodyWeight: 170, tolerance: "low" } }];
+    const profile = { v: 1, fields: { bodyWeight: { v: 158, at: 1 }, sweatRateMeasured: { v: 30, at: 1 }, tolerance: { v: null, at: 2, cleared: true } } };
+    const p = profileFromPlans(plans, profile);
+    assert.equal(p.bodyWeight, 158);
+    assert.equal(p.sweatRateMeasured, 30);
+    assert.equal(p.tolerance, "low", "a cleared answer falls back to the plan");
+    assert.deepEqual(profileFromPlans([], null), {});
+});
+
+test("intake checks: carbs and sodium off target, drinking past sweat, too much caffeine", async () => {
+    const { intakeChecks } = await import("../js/fuelTargets.js");
+    const base = { durationMin: 120, targets: { carbsPerHour: 60, fluidPerHour: 20, sodiumPerHour: 500 }, bodyWeightLb: 150, sweatRateMeasured: 20 };
+    assert.deepEqual(intakeChecks({ ...base, planned: { carbs: 120, sodium: 1000, fluidOz: 30 } }), [], "on target");
+    const low = intakeChecks({ ...base, planned: { carbs: 75, sodium: 400, fluidOz: 30 } });
+    assert.deepEqual(low.map(c => c.kind), ["carbs", "sodium"]);
+    assert.match(low[0].text, /38% under the 120 g/);
+    const wet = intakeChecks({ ...base, planned: { carbs: 120, sodium: 1000, fluidOz: 50 } });
+    assert.match(wet[0].text, /\{fluid:50\}.*\{fluid:40\}/);
+    assert.equal(intakeChecks({ ...base, planned: { carbs: 120, sodium: 1000, caffeineMg: 450 } })[0].kind, "caffeine");
+    assert.deepEqual(intakeChecks({ ...base, durationMin: 0, planned: { carbs: 1 } }), []);
 });
