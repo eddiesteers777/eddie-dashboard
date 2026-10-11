@@ -5,6 +5,9 @@ import assert from "node:assert/strict";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock, FINAL_GEL_BUFFER_MIN
 } from "../js/fuelSchedule.js";
+import {
+    parsePaceMinutes, formatPaceMinutes, durationFromDistanceAndPace
+} from "../js/fuelTargets.js";
 
 const marathon = {
     durationMin: 185,
@@ -200,4 +203,38 @@ test("distance plus explicit pace determines run duration for mile checkpoint ca
     assert.equal(s.gels.length, 3);
     assert.ok(s.gels.every(g => g.mile !== null));
     assert.equal(s.mix.sodiumShortfall, 146, "per bottle: 686 mg target minus 540 mg electrolyte sodium");
+});
+
+
+test("distance plus average pace calculates duration without a separate pace calculator", () => {
+    assert.equal(parsePaceMinutes("8:15"), 8.25);
+    assert.equal(parsePaceMinutes("8"), 8);
+    assert.equal(parsePaceMinutes("8.25"), 8.25);
+    assert.equal(parsePaceMinutes("8:75"), null);
+    assert.equal(formatPaceMinutes(8.25), "8:15");
+    assert.equal(durationFromDistanceAndPace(20, "8:00"), 160);
+    assert.equal(durationFromDistanceAndPace(20, "8:15"), 165);
+    assert.equal(durationFromDistanceAndPace(13.1, "8:15"), 108);
+    assert.equal(durationFromDistanceAndPace(0, "8:15"), null);
+});
+
+test("DIY blend reports actual maltodextrin and sugar grams and subtracts electrolyte sodium", () => {
+    const mix = diyMix({
+        carbTarget: 97,
+        sodiumTarget: 2058,
+        carbSource: "blend",
+        maltodextrinPercent: 50,
+        sodiumSource: "table-salt",
+        existingSodium: 1620
+    });
+    assert.equal(mix.maltodextrinGrams, 51.1);
+    assert.equal(mix.tableSugarGrams, 48.5);
+    assert.equal(mix.sodiumShortfall, 438);
+    assert.equal(mix.sodiumGrams, 1.11);
+    assert.equal(mix.isBlend, true);
+});
+
+test("legacy DIY source names still resolve to their intended recipe ingredients", () => {
+    assert.equal(diyMix({ carbTarget: 20, carbSource: "juice" }).carbLabel, "Fruit Juice");
+    assert.equal(diyMix({ carbTarget: 20, carbSource: "sports-powder" }).carbLabel, "Sports Drink Powder");
 });
