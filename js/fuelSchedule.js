@@ -98,6 +98,14 @@ export function formatClock(minutes) {
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
+// Accept bottle numbers such as "2,3", "2 3", or [2, 3], ignoring
+// duplicates and out-of-range entries.
+export function parseBottleNumbers(value, bottleCount) {
+    const count = Math.max(0, Math.floor(Number(bottleCount) || 0));
+    const values = Array.isArray(value) ? value : String(value ?? "").split(/[\\s,;]+/);
+    return [...new Set(values.map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= count))].sort((a, b) => a - b);
+}
+
 // Reads what the schedule needs off a saved plan object (the shape
 // buildPlanObject() in js/fueling.js writes). Works for plans saved
 // before the schedule existed, too.
@@ -117,7 +125,9 @@ export function scheduleInputFromPlan(plan) {
             carbSource: diy.carbSource || "table-sugar",
             maltodextrinPercent: Number(diy.maltodextrinPercent) || 0,
             sodiumSource: diy.sodiumSource || "table-salt",
-            existingSodium: Number(diy.existingSodium) || 0
+            existingSodium: Number(diy.existingSodium) || 0,
+            caffeinePerBottleMg: Number(diy.caffeinePerBottleMg) || 0,
+            caffeineBottleNumbers: diy.caffeineBottleNumbers || ""
         } : null,
         targets: {
             carbsPerHour: Number(plan.carbsPerHour) || 0,
@@ -161,7 +171,8 @@ export function buildSchedule(input) {
         carbs: Number(item.carbs) || 0,
         sodium: Number(item.sodium) || 0,
         fluid: Number(item.fluid) || 0,
-        caffeine: !!item.caffeine,
+        caffeine: !!item.caffeine || Number(item.caffeineMg) > 0,
+        caffeineMg: Math.max(0, Number(item.caffeineMg) || 0),
         min: times[i],
         mile: mileAt(times[i])
     }));
@@ -176,6 +187,8 @@ export function buildSchedule(input) {
         const perBottleMi = distanceMi ? distanceMi / count : null;
         const carbsEach = drink.carbs / count;
         const sodiumEach = drink.sodium / count;
+        const caffeineBottles = parseBottleNumbers(drink.caffeineBottleNumbers ?? drink.caffeineBottles, count);
+        const caffeinePerBottleMg = Math.max(0, Number(drink.caffeinePerBottleMg) || 0);
         mix = diyMix({
             carbTarget: carbsEach,
             sodiumTarget: sodiumEach,
@@ -196,6 +209,7 @@ export function buildSchedule(input) {
                 oz: drink.bottleSize,
                 carbs: Math.round(carbsEach),
                 sodium: Math.round(sodiumEach),
+                caffeineMg: caffeineBottles.includes(i + 1) ? caffeinePerBottleMg : 0,
                 ozPerMile: perBottleMi ? round1(drink.bottleSize / perBottleMi) : null,
                 ozPer10Min: round1(drink.bottleSize / (perBottleMin / 10)),
                 gulpsPerMile: perBottleMi ? Math.max(1, Math.round(drink.bottleSize / perBottleMi / OZ_PER_GULP)) : null
@@ -254,7 +268,11 @@ export function buildSchedule(input) {
     const totals = {
         carbs: Math.round(gels.reduce((s, g) => s + g.carbs, 0) + (drink?.carbs || 0)),
         sodium: Math.round(gels.reduce((s, g) => s + g.sodium, 0) + (drink?.sodium || 0)),
-        fluid: Math.round(gels.reduce((s, g) => s + g.fluid, 0) + fluidFromDrink)
+        fluid: Math.round(gels.reduce((s, g) => s + g.fluid, 0) + fluidFromDrink),
+        caffeineMg: Math.round(
+            gels.reduce((sum, g) => sum + g.caffeineMg, 0) +
+            bottles.reduce((sum, b) => sum + b.caffeineMg, 0)
+        )
     };
     const hoursTotal = durationMin / 60;
     const concentration = drink && drink.bottleSize
