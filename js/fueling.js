@@ -5,7 +5,7 @@
 import { icon } from "./icons.js";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
-    parseBottleNumbers, DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN
+    parseBottleNumbers, DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN, DEFAULT_GEL_INTERVAL_MIN
 } from "./fuelSchedule.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
 import {
@@ -694,6 +694,7 @@ $("workoutType").addEventListener("change", () => {
 });
 
 $("firstGelMin").addEventListener("input", renderSchedule);
+$("gelIntervalMin").addEventListener("input", renderSchedule);
 
 /* ==========================================
    Marathon Integration
@@ -1588,6 +1589,7 @@ function buildPlanObject() {
         },
         preWorkoutFood,
         firstGelMin: Number($("firstGelMin").value) || DEFAULT_FIRST_GEL_MIN,
+        gelIntervalMin: Number($("gelIntervalMin").value) || DEFAULT_GEL_INTERVAL_MIN,
         session: lastSession
 
     };
@@ -1947,6 +1949,7 @@ function openPlan(id) {
     planItems = (plan.items || []).map(i => ({ ...i }));
 
     $("firstGelMin").value = plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN;
+    $("gelIntervalMin").value = plan.gelIntervalMin ?? DEFAULT_GEL_INTERVAL_MIN;
 
     preWorkoutFood = plan.preWorkoutFood || "";
     $("preWorkoutFood").value = preWorkoutFood;
