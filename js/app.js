@@ -142,6 +142,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
     }
 
+    // The last two weeks' run laps in the background (a few a visit), so
+    // every run's share card has its reps or splits ready.
+    import("./runCardData.js").then(m => m.prefetchRecentLaps()).catch(() => {});
+
     // ==========================================
     // Quick Stats
     // ==========================================

@@ -81,3 +81,13 @@
 
 /* Share as an image (js/executionShare.js). */
 .ex-share-btn{ margin-top:12px; }
+
+/* A run's splits (js/executionView.js splitsHtml): one row per mile / lap. */
+.ex-splits{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:0; }
+.ex-split{ display:grid; grid-template-columns:minmax(64px, 1fr) minmax(70px, 1fr) minmax(52px, .8fr) minmax(58px, .8fr) minmax(56px, .8fr); gap:8px; align-items:center; padding:8px 0; border-top:1px solid var(--border); font-variant-numeric:tabular-nums; font-size:.9rem; }
+.ex-split:first-child{ border-top:0; }
+.ex-split strong{ font-family:var(--font-mono); font-weight:500; }
+.ex-split em{ font-style:normal; text-align:right; color:var(--muted); font-size:.82rem; }
+.ex-split.is-within em, .ex-split.is-within strong{ color:var(--good, var(--green)); }
+.ex-split > span:nth-child(3){ font-family:var(--font-mono); color:var(--text-secondary, var(--muted)); }
+.ex-split > span:nth-child(4){ color:var(--muted); font-size:.82rem; }

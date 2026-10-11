@@ -265,6 +265,92 @@ export function sessionCardModel(session, { unit = "lb" } = {}) {
     return null;
 }
 
+// ---------- splits (pure) ----------
+
+const MILE_M = 1609.344;
+const nearMile = m => Math.abs(m - MILE_M) <= 60;
+const nearKm = m => Math.abs(m - 1000) <= 40;
+
+/**
+ * A run's laps as rows: auto mile (or km) laps read as "Mile 3 · 8:24/mi",
+ * anything else as "Lap 3 · 0.50 mi · 3:21 · 6:42/mi". Scraps under 0.05 mi
+ * (a stop pressed late) are left out. -> { unit: "mile" | "km" | "lap", rows }
+ */
+export function splitRows(entry) {
+    const laps = (entry?.laps || []).filter(l => Number(l.m) >= 80 && Number(l.s) > 0);
+    if (!laps.length) return { unit: "lap", rows: [] };
+    const full = laps.slice(0, -1);
+    const unit = full.length && full.every(l => nearMile(l.m)) ? "mile" : full.length && full.every(l => nearKm(l.m)) ? "km" : laps.length === 1 && nearMile(laps[0].m) ? "mile" : "lap";
+    let n = 0;
+    const rows = laps.map((l, i) => {
+        const pace = l.s / (l.m / MILE_M);
+        const whole = unit === "mile" ? nearMile(l.m) : unit === "km" ? nearKm(l.m) : true;
+        if (whole) n++;
+        const dist = l.m >= 1000 || unit === "mile" ? `${(l.m / MILE_M).toFixed(2)} mi` : `${Math.round(l.m)} m`;
+        return {
+            i, meters: l.m, sec: l.s, pace, hr: Number(l.hr) || null,
+            label: unit === "lap" ? `Lap ${i + 1}` : whole ? `${unit === "mile" ? "Mile" : "Km"} ${n}` : dist,
+            dist, partial: !whole
+        };
+    });
+    return { unit, rows };
+}
+
+/**
+ * The splits card: every lap of a run with its pace (or time) and heart rate,
+ * the fastest and slowest whole split marked, and how the second half went
+ * against the first. Only from the laps the watch saved; nothing estimated.
+ * meta: { date, name, category ("long_run" / "speed_work"), runMeters, runSec, avgHr }
+ */
+export function splitsCardModel(entry, meta = {}) {
+    const { unit, rows } = splitRows(entry);
+    if (!rows.length) return null;
+    const base = shareCardModel(null, { ...meta, runSummary: true, plannedMiles: null });
+    const whole = rows.filter(r => !r.partial);
+    const judge = whole.length >= 3 ? whole : [];
+    const fastest = judge.length ? judge.reduce((a, b) => (b.pace < a.pace ? b : a)) : null;
+    const slowest = judge.length ? judge.reduce((a, b) => (b.pace > a.pace ? b : a)) : null;
+    const totalM = rows.reduce((t, r) => t + r.meters, 0), totalS = rows.reduce((t, r) => t + r.sec, 0);
+    const avgPace = totalS / (totalM / MILE_M);
+    const byPace = unit !== "lap";
+    const out = rows.map(r => ({
+        label: r.label,
+        actual: byPace ? `${clockText(r.pace)}/mi` : clockText(r.sec, { tenths: r.sec < 300 }),
+        delta: byPace ? (r.partial ? "" : signed(r.pace - avgPace)) : `${clockText(r.pace)}/mi`,
+        state: r === fastest ? "within" : r === slowest ? "unobserved" : "done",
+        result: r === fastest ? "Fastest" : r === slowest ? "Slowest" : r.partial ? r.dist : "",
+        hr: r.hr, note: ""
+    }));
+    // The halves, by distance, from the laps themselves.
+    let half = "";
+    if (whole.length >= 4) {
+        let acc = 0, s1 = 0, m1 = 0;
+        for (const r of rows) {
+            if (acc + r.meters <= totalM / 2 + 1) { s1 += r.sec; m1 += r.meters; }
+            acc += r.meters;
+        }
+        const p1 = s1 / (m1 / MILE_M), p2 = (totalS - s1) / ((totalM - m1) / MILE_M);
+        const d = Math.round(p2 - p1);
+        half = Math.abs(d) <= 3 ? "Even halves" : d < 0 ? `Negative split · 2nd half ${clockText(-d)}/mi faster` : `2nd half ${clockText(d)}/mi slower`;
+    }
+    const hrs = rows.map(r => r.hr).filter(Boolean);
+    return {
+        ...base,
+        kind: "splits",
+        stats: base.stats.length ? base.stats : [{ label: "Distance", value: `${(totalM / MILE_M).toFixed(2)} mi` }, { label: "Time", value: clockText(totalS) }],
+        summary: "",
+        summaryNote: "",
+        sets: [{
+            head: unit === "mile" ? "Mile splits" : unit === "km" ? "Km splits" : "Laps",
+            sub: byPace ? `avg ${clockText(avgPace)}/mi` : `${rows.length} laps`,
+            rows: out,
+            summary: [half, byPace && hrs.length ? `HR ${Math.min(...hrs)}–${Math.max(...hrs)}` : ""].filter(Boolean).join(" · ")
+        }],
+        easy: [],
+        footer: `Splits from your watch · ${byPace ? "difference from your average pace" : "time and pace per lap"}`
+    };
+}
+
 /** Plain words of a card, to paste under the photo (Strava's description, a message). */
 export function captionText(model) {
     if (!model) return "";
@@ -445,7 +531,7 @@ export async function drawShareCard(canvas, model) {
     const url = ctx.measureText("southboundcoaching.com").width;
     ctx.textAlign = "left"; ctx.fillStyle = C.muted; ctx.font = '500 22px "Inter", sans-serif';
     ctx.fillText(fitText(ctx, model.footer, inner - url - 40), PAD, fy + 44);
-    ctx.fillText(model.kind === "execution" ? "Negative = faster than the target" : "Your training · Southbound Coaching", PAD, fy + 76);
+    ctx.fillText(model.kind === "execution" ? "Negative = faster than the target" : model.kind === "splits" ? "Negative = faster than your average" : "Your training · Southbound Coaching", PAD, fy + 76);
     return canvas;
 }
 
@@ -471,8 +557,19 @@ function wireClicks() {
         const btn = event.target.closest?.("[data-ex-share]");
         if (!btn) return;
         const hit = registry.get(btn.dataset.exShare);
-        if (hit) { event.preventDefault(); openShareCard(hit.x, hit.meta); }
+        if (!hit) return;
+        event.preventDefault();
+        if (hit.model) openCardDialog(hit.model, hit.opts);
+        else openShareCard(hit.x, hit.meta);
     });
+}
+
+/** Remembers a ready card model (a run's splits) for a data-ex-share button. */
+export function registerCard(key, model, opts = {}) {
+    if (!key || !model) return null;
+    registry.set(key, { model, opts });
+    wireClicks();
+    return key;
 }
 
 /** Remembers an execution so its Share button (data-ex-share = plannedWorkoutId) can open it. */
@@ -527,7 +624,7 @@ export function isAppleMobile(nav = typeof navigator !== "undefined" ? navigator
 }
 
 export const fileNameFor = (model, date) =>
-    `southbound-${model?.kind === "strength" ? "strength" : model?.kind === "cross" ? "cross-training" : "workout"}-${date || "session"}.png`;
+    `southbound-${model?.kind === "strength" ? "strength" : model?.kind === "cross" ? "cross-training" : model?.kind === "splits" ? "run" : "workout"}-${date || "session"}.png`;
 
 const note = sessionId => (via) => {
     if (!sessionId) return;
@@ -535,15 +632,18 @@ const note = sessionId => (via) => {
 };
 
 /**
- * The dialog itself. model: a card model (null = couldn't be made).
+ * The dialog itself. model: a card model, or a promise of one (a run's laps
+ * may still be on their way from COROS); null = couldn't be made.
  * opts: { date, sessionId }
  */
-export async function openCardDialog(model, { date = "", sessionId = null } = {}) {
+export async function openCardDialog(modelOrPromise, { date = "", sessionId = null } = {}) {
     ensureStyles();
     const noted = note(sessionId);
     let file = null, url = "", closed = false;
     const apple = isAppleMobile();
-    const caption = model ? captionText(model) : "";
+    const pending = modelOrPromise && typeof modelOrPromise.then === "function";
+    let model = pending ? null : modelOrPromise;
+    let caption = model ? captionText(model) : "";
     const dialog = document.createElement("dialog");
     dialog.className = "sb-dialog ex-share-dialog";
     dialog.innerHTML = `
@@ -582,9 +682,16 @@ export async function openCardDialog(model, { date = "", sessionId = null } = {}
     });
     try { dialog.showModal(); } catch { dialog.setAttribute("open", ""); }
 
+    if (pending) {
+        try { model = await modelOrPromise; } catch { model = null; }
+        if (closed) return dialog;
+        caption = model ? captionText(model) : "";
+        $('[data-act="caption"]').hidden = !caption;
+    }
+
     const fail = () => {
         preview.innerHTML = `<div class="ex-share-error"><p>Couldn't make the image on this device.</p><button type="button" class="sb-btn sb-btn-secondary" data-act="retry">Try again</button></div>`;
-        preview.querySelector('[data-act="retry"]').addEventListener("click", () => { dialog.close(); openCardDialog(model, { date, sessionId }); });
+        preview.querySelector('[data-act="retry"]').addEventListener("click", () => { dialog.close(); openCardDialog(model || modelOrPromise, { date, sessionId }); });
         hint.textContent = caption ? "You can still copy the caption." : "";
     };
 

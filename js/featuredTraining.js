@@ -12,12 +12,12 @@
    wall.
 ========================================== */
 
-import { WEEKS, getAdjustedWeekDays, PACES } from "./marathonData.js";
+import { WEEKS, getAdjustedWeekDays, PACES, weekStart } from "./marathonData.js";
 import { planDayFromMarathon, marathonTitle } from "./marathonCoros.js";
 import { kindOfDay } from "./readiness.js";
 import { allRuns, fetchLaps, laps } from "./trendsData.js";
-import { reconstructWorkout } from "./workoutExecution.js";
-import { registerShare, registerRunShare } from "./executionShare.js";
+import { registerShare, registerRunShare, registerCard } from "./executionShare.js";
+import { runCardModel } from "./runCard.js";
 
 import {
     FEATURED_KEY,
@@ -59,8 +59,13 @@ function recentPlanDays(today, days) {
     const out = [];
 
     WEEKS.forEach(function (_, wi) {
-        getAdjustedWeekDays(wi + 1).forEach(function (day) {
-            if (!day?.miles || !day.date || day.date > today || day.date < fromIso) return;
+        getAdjustedWeekDays(wi + 1).forEach(function (raw, di) {
+            // Plan days carry no date of their own (they never matched a run
+            // before 2026-10-10): Monday of the week + the day's place.
+            const d = new Date(weekStart(wi + 1));
+            d.setDate(d.getDate() + di);
+            const day = { ...raw, date: d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") };
+            if (!day?.miles || day.date > today || day.date < fromIso) return;
 
             const planDay = planDayFromMarathon(day, PACES);
             out.push({
@@ -97,7 +102,12 @@ function matchPlanDay(run, planDays) {
             (nameSuggestsSpeed && category === FEATURED_CATEGORIES.SPEED_WORK) ||
             (nameSuggestsLong && category === FEATURED_CATEGORIES.LONG_RUN);
 
-        const score = delta * 10 + (compatible ? -8 : 0);
+        // Distance matters too: a 12-mile run the day after a planned long run
+        // is that long run, not the 3-mile recovery jog planned for its own date.
+        const runMiles = Number(run.distance) / 1609.344;
+        const planMiles = Number(candidate.day?.miles) || 0;
+        const sizeGap = runMiles > 0 && planMiles > 0 ? Math.abs(Math.log(runMiles / planMiles)) * 12 : 0;
+        const score = delta * 10 + sizeGap + (compatible ? -8 : 0);
         if (!best || score < best.score) {
             best = { ...candidate, score };
         }
@@ -242,39 +252,24 @@ const dayWords = function (date) {
 };
 
 function shareFeatured(item) {
-    const saved = laps();
-    const lapEntry = item.run.labelId ? saved[item.run.labelId] : null;
-    const sets = item.planDay?.workout?.sets || [];
-    const hasStructuredWork = sets.some(function (s) {
-        return Number(s.repeat) > 1 || s.parts || s.pace || s.repTime ||
-            (s.effort && !["easy", "recovery"].includes(s.effort));
-    });
-
-    if (lapEntry?.laps?.length && hasStructuredWork && item.run.source !== "strava") {
-        const x = reconstructWorkout(item.planDay.workout, lapEntry, {
-            plannedWorkoutId: item.legacyId || item.id,
-            activityId: "c:" + item.run.labelId
-        });
-        registerShare(x, {
-            date: item.date,
-            name: item.title,
-            category: item.category,
-            runMeters: item.run.distance,
-            runSec: item.run.duration
-        });
-        return item.id;
-    }
-
-    const key = registerRunShare(item.run, {
-        id: item.id,
+    // One rule with Train and Analytics (js/runCard.js): rep by rep against the
+    // plan when it has targets and the laps are in, else the run's splits, else
+    // the plain run card.
+    const entry = item.run.labelId ? laps()[item.run.labelId] : null;
+    const sessionId = item.run.labelId ? "c:" + item.run.labelId : item.run.key ? "s:" + item.run.key : null;
+    const meta = {
         date: item.date,
         name: item.title,
         category: item.category,
         plannedMiles: item.plannedMiles,
         runMeters: item.run.distance,
-        runSec: item.run.duration
-    });
-    return key || null;
+        runSec: item.run.duration,
+        sessionId
+    };
+    const card = runCardModel({ run: item.run, workout: item.planDay?.workout, entry, id: item.legacyId || item.id, meta });
+    if (card.kind === "execution") return registerShare(card.x, meta);
+    if (card.kind === "splits") return registerCard("splits|" + item.id, card.model, { date: item.date, sessionId });
+    return registerRunShare(item.run, { id: item.id, ...meta }) || null;
 }
 
 function cardHtml(item) {
@@ -392,10 +387,10 @@ export function mountFeaturedTraining(options) {
 
     // Fetch missing COROS workout laps only for the small candidate set that
     // could become the featured Speed Work card. Re-render once they arrive.
+    // Every featured run's laps (speed work and long runs alike), so each
+    // card can show its reps or its splits.
     const items = featuredTrainingItems(today, { limit: 2 }).filter(function (item) {
-        return item.run.labelId && item.planDay?.workout?.sets?.some(function (s) {
-            return Number(s.repeat) > 1 || s.parts;
-        });
+        return item.run.labelId && item.run.source !== "strava";
     });
     if (items.length) {
         fetchLaps(items, { max: 4, onBatch: render }).then(render).catch(function () {});

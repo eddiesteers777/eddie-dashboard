@@ -204,6 +204,8 @@
     "js/readinessV2Data.js",
     "js/registerSW.js",
     "js/role.js",
+    "js/runCard.js",
+    "js/runCardData.js",
     "js/runWalk.js",
     "js/runWorkout.js",
     "js/runningCalendar.js",

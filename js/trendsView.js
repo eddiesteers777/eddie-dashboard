@@ -21,7 +21,7 @@ import { isCorosConnected } from "./corosClient.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { marathonTitle } from "./marathonCoros.js";
 import { executionHtml, executionClass } from "./executionView.js";
-import { registerShare } from "./executionShare.js";
+import { registerShare, registerCard, splitsCardModel } from "./executionShare.js";
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const day = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -78,7 +78,14 @@ function workoutRow(w, saved) {
     const pace = l => l.s / (l.m / 1609.344);
     const flag = l => (!l.work ? "" : l.onTarget ? "on" : "off");
     const table = lapData?.length ? `<details class="tr-laps"><summary>Laps</summary><table><thead><tr><th>Lap</th><th>Distance</th><th>Time</th><th>Pace</th><th>HR</th></tr></thead><tbody>${(c?.laps || lapData).map(l => `<tr class="${flag(l)}"><td>${l.i}</td><td>${l.m >= 1000 ? `${(l.m / 1609.344).toFixed(2)} mi` : `${l.m} m`}</td><td>${mmss(l.s)}</td><td>${mmss(pace(l))}</td><td>${l.hr ?? "–"}</td></tr>`).join("")}</tbody></table></details>` : "";
-    return `<li class="tr-work ${cls}"><div class="tr-work-top"><strong>${esc(w.title)}</strong><span>${weekday(w.date)} · ${mi(w.runMiles)} of ${mi(w.plannedMiles)} mi</span></div><small>${esc(verdict)}</small>${table}</li>`;
+    // No targets to check (a plain long run): its splits can still be shared.
+    let share = "";
+    if (lapData?.length && w.run.source !== "strava") {
+        const model = splitsCardModel(saved[w.run.labelId], { date: w.date, name: marathonTitle(w.title, w.plannedMiles), category: w.kind === "long" ? "long_run" : null, runMeters: w.run.distance, runSec: w.run.duration, avgHr: w.run.avgHr });
+        const key = registerCard(`splits|${w.id}`, model, { date: w.date, sessionId: `c:${w.run.labelId}` });
+        if (key) share = `<button type="button" class="sb-btn sb-btn-secondary ex-share-btn" data-ex-share="${esc(key)}">Share splits as an image</button>`;
+    }
+    return `<li class="tr-work ${cls}"><div class="tr-work-top"><strong>${esc(w.title)}</strong><span>${weekday(w.date)} · ${mi(w.runMiles)} of ${mi(w.plannedMiles)} mi</span></div><small>${esc(verdict)}</small>${table}${share}</li>`;
 }
 
 const SHOW_WORKOUTS = 5;

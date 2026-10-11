@@ -33,7 +33,8 @@ const unit = () => { try { return cleanSettings(JSON.parse(localStorage.getItem(
 const volume = lb => volumeText(lb, unit());
 const dayWords = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
-const state = { tab: null, filter: "all", shown: PAGE, feed: [], results: null, byId: new Map() };
+const state = { tab: null, filter: "all", shown: PAGE, feed: [], results: null, byId: new Map(), kinds: new Map() };
+const KIND_TAG = { reps: "Rep by rep", splits: "Splits" };
 
 function tabs() {
     const allowed = TABS.filter(t => can(t.cap));
@@ -96,6 +97,7 @@ function itemHtml(s) {
     if (s.type === "run" && s.run?.category) tags.push(s.run.category);
     if (SOURCE[s.source]) tags.push(SOURCE[s.source]);
     if (s.edited) tags.push("Edited");
+    if (KIND_TAG[state.kinds.get(s.id)]) tags.push(KIND_TAG[state.kinds.get(s.id)]);
     if (s.share?.count) tags.push(s.share.via === "save" ? "Image saved" : "Shared");
     const line = sessionLine(s, { volume }) || (s.type === "run" ? milesText(s.run?.meters) : "");
     const editable = s.source === "strength" || s.source === "cross";
@@ -151,6 +153,13 @@ async function refresh({ account = false } = {}) {
             return;
         }
     }
+    // Which runs already have their laps (Rep by rep / Splits), for the tags.
+    try {
+        const { cardKindFor } = await import("./runCardData.js");
+        const runs = state.feed.filter(s => s.type === "run").slice(0, 60);
+        const kinds = await Promise.all(runs.map(s => cardKindFor(s).catch(() => null)));
+        state.kinds = new Map(runs.map((s, i) => [s.id, kinds[i]]));
+    } catch { /* tags are a nicety */ }
     drawAll();
 }
 
@@ -202,8 +211,10 @@ document.addEventListener("keydown", event => {
 
 let pending = null;
 const soon = () => { clearTimeout(pending); pending = setTimeout(() => refresh(), 150); };
-["sb:sessions-changed", "eddieos:coros-history-updated", "sb:strava-updated", "eddieos:strength-history-updated"].forEach(name => window.addEventListener(name, soon));
+["sb:sessions-changed", "sb:laps-updated", "eddieos:coros-history-updated", "sb:strava-updated", "eddieos:strength-history-updated"].forEach(name => window.addEventListener(name, soon));
 // Another tab (or a cloud pull) changed a session.
 window.addEventListener("storage", e => { if (!e.key || e.key.startsWith("workout-") || e.key === "running-log" || e.key === "coros-run-history") soon(); });
 
 refresh().then(() => refresh({ account: true }));
+// The last two weeks' laps, so a run's share card has its splits ready.
+import("./runCardData.js").then(m => m.prefetchRecentLaps()).catch(() => {});

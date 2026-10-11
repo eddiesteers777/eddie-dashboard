@@ -15,6 +15,12 @@ function unit() {
 }
 
 export function shareSession(session) {
+    // A run: rep by rep when its plan day has targets, else its splits, else
+    // the plain card (js/runCard.js); the laps are asked of COROS if needed.
+    if (session?.type === "run") {
+        const card = import("./runCardData.js").then(m => m.runCardForSession(session)).then(c => c.model).catch(() => null);
+        return openCardDialog(card, { date: session.date, sessionId: session.id || null });
+    }
     let model = null;
     try { model = sessionCardModel(session, { unit: unit() }); } catch { model = null; }
     return openCardDialog(model, { date: session?.date, sessionId: session?.id || null });

@@ -195,7 +195,7 @@ function render() {
 
         ${state.result ? resultHtml(state.result) : ""}
 
-        ${workout?.sets?.length && date <= isoDate(new Date()) ? `<section class="clients-card wo-exec" id="woExecution"${executionCache.html ? "" : " hidden"}>${executionCache.html}</section>` : ""}
+        ${date <= isoDate(new Date()) && day?.type !== "rest" ? `<section class="clients-card wo-exec" id="woExecution"${executionCache.html ? "" : " hidden"}>${executionCache.html}</section>` : ""}
 
         ${workout?.why ? `<section class="clients-card wo-why"><h2>Why this workout</h2><p>${esc(workout.why)}</p></section>` : ""}
         ${workout?.cue ? `<section class="wo-cue">${icon("send")}<div><span>Coach cue</span><p>${esc(workout.cue)}</p></div></section>` : ""}
@@ -290,11 +290,12 @@ const executionCache = { html: "", tried: false };
 
 /** The day's COROS run against this workout, step by step (structured workouts step 4). */
 async function mountExecution() {
-    if (executionCache.tried || !state.day?.workout?.sets?.length || date > isoDate(new Date())) return;
+    if (executionCache.tried || !state.day || state.day.type === "rest" || date > isoDate(new Date())) return;
     executionCache.tried = true;
-    const [{ corosRunOn, lapEntry, ensureLaps }, { reconstructWorkout }, { executionHtml }] = await Promise.all([
-        import("./planLaps.js"), import("./workoutExecution.js"), import("./executionView.js")
+    const [{ corosRunOn, lapEntry, ensureLaps }, { reconstructWorkout }, { executionHtml, splitsHtml }, { hasTargets }] = await Promise.all([
+        import("./planLaps.js"), import("./workoutExecution.js"), import("./executionView.js"), import("./runCard.js")
     ]);
+    const structured = hasTargets(state.day.workout);
     const run = corosRunOn(date);
     if (!run) return;
     const show = html => {
@@ -302,7 +303,7 @@ async function mountExecution() {
         const el = $("woExecution");
         if (el) { el.innerHTML = html; el.hidden = false; }
     };
-    const head = `<h2>${icon("activity")} Rep by rep, from your watch</h2>`;
+    const head = `<h2>${icon("activity")} ${structured ? "Rep by rep" : "Splits"}, from your watch</h2>`;
     let entry = lapEntry(run);
     if (!entry && isCorosConnected()) {
         show(`${head}<p class="clients-card-note sb-wait">Getting this run's laps from COROS…</p>`);
@@ -310,7 +311,16 @@ async function mountExecution() {
         entry = lapEntry(run);
     }
     if (!entry) {
-        show(`${head}<p class="clients-card-note">${isCorosConnected() ? "COROS didn't send laps for this run yet. Southbound asks again next time you open it." : "Connect COROS in Settings to see each rep from your watch."}</p>`);
+        show(`${head}<p class="clients-card-note">${isCorosConnected() ? "COROS didn't send laps for this run yet. Southbound asks again next time you open it." : `Connect COROS in Settings to see ${structured ? "each rep" : "your splits"} from your watch.`}</p>`);
+        return;
+    }
+    // No targets to check (a long or easy run): its splits, mile by mile.
+    if (!structured) {
+        const { splitsCardModel, registerCard } = await import("./executionShare.js");
+        const model = splitsCardModel(entry, { date, name: title(), runMeters: run.distance, runSec: run.duration, avgHr: run.avgHr, category: state.day.type === "long" ? "long_run" : null });
+        if (!model) { show(`${head}<p class="clients-card-note">COROS has no laps for this run.</p>`); return; }
+        const key = registerCard(`splits|${programId}|${date}`, model, { date, sessionId: `c:${run.labelId}` });
+        show(`${head}${splitsHtml(model, { shareKey: key })}<p class="clients-card-note">From your COROS run on this day (${(run.distance / 1609.344).toFixed(1)} mi). Negative = faster than your average.</p>`);
         return;
     }
     const x = reconstructWorkout(state.day.workout, entry, { plannedWorkoutId: `${programId}|${date}`, activityId: `c:${run.labelId}` });

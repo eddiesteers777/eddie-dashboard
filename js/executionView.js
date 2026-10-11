@@ -157,3 +157,17 @@ export function executionClass(x) {
     if (!t) return x.overallStatus === "completed" ? "good" : "";
     return t.pct >= 80 ? "good" : t.pct >= 50 ? "ok" : "off";
 }
+
+/**
+ * A run's splits as a compact list (the workout page, for runs with no
+ * targets to check): "Mile 3 · 8:24/mi · 151 bpm", fastest / slowest marked.
+ * model: splitsCardModel(...) from js/executionShare.js.
+ */
+export function splitsHtml(model, { shareKey = "" } = {}) {
+    const set = model?.sets?.[0];
+    if (!set?.rows?.length) return "";
+    const rows = set.rows.map(r => `<li class="ex-split is-${esc(r.state)}"><span>${esc(r.label)}</span><strong>${esc(r.actual)}</strong><span>${esc(r.delta)}</span><span>${r.hr ? `${esc(r.hr)} bpm` : ""}</span><em>${esc(r.result)}</em></li>`).join("");
+    return `<p class="ex-chips"><span class="ex-chip">${esc(set.head)}</span><span class="ex-chip">${esc(set.sub)}</span></p>
+        <details class="ex-detail" open><summary>${esc(set.head)}</summary><ol class="ex-splits">${rows}</ol>${set.summary ? `<p class="ex-read">${esc(set.summary)}</p>` : ""}</details>
+        ${shareKey ? `<button type="button" class="sb-btn sb-btn-secondary ex-share-btn" data-ex-share="${esc(shareKey)}">Share as an image</button>` : ""}`;
+}
