@@ -131,3 +131,41 @@ test("formatting helpers", () => {
     assert.equal(formatClock(7), "0:07");
     assert.equal(diyMix({ carbTarget: 0, sodiumTarget: 0 }).carbGrams, 0);
 });
+
+test("mixed carb recipe splits carb target into maltodextrin and table sugar", () => {
+    const mix = diyMix({
+        carbTarget: 97,
+        sodiumTarget: 2058,
+        carbSource: "blend",
+        maltodextrinPercent: 50,
+        sodiumSource: "table-salt",
+        existingSodium: 1620
+    });
+    assert.equal(mix.maltodextrinCarbs, 48.5);
+    assert.equal(mix.tableSugarCarbs, 48.5);
+    assert.equal(mix.maltodextrinGrams, Math.round((48.5 / 0.95) * 10) / 10);
+    assert.equal(mix.tableSugarGrams, 48.5);
+    assert.equal(mix.sodiumShortfall, 438);
+    assert.equal(mix.sodiumGrams, Math.round((438 / 393) * 100) / 100);
+});
+
+test("schedule can pass blend percentages and existing electrolyte sodium into per-bottle recipe", () => {
+    const s = buildSchedule({
+        durationMin: 160,
+        distanceMi: 20,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: {
+            bottleCount: 3,
+            bottleSize: 15,
+            carbs: 97,
+            sodium: 2058,
+            carbSource: "blend",
+            maltodextrinPercent: 50,
+            sodiumSource: "table-salt",
+            existingSodium: 1620
+        },
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 }
+    });
+    assert.equal(s.bottles.length, 3);
+    assert.equal(s.mix.sodiumShortfall, 0, "per-bottle mix is a fraction of the batch: existing-sodium should also be divided by bottle count upstream");
+});
