@@ -51,27 +51,28 @@ export function diyMix({
     maltodextrinPercent = 0,
     existingSodium = 0
 }) {
-    const carb = DIY_CARB_SOURCES[carbSource] || DIY_CARB_SOURCES["table-sugar"];
+    const requestedSource = carbSource;
+    const useBlend = requestedSource === "blend";
+    const carb = DIY_CARB_SOURCES[useBlend ? "table-sugar" : requestedSource] || DIY_CARB_SOURCES["table-sugar"];
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
     const target = Math.max(0, Number(carbTarget) || 0);
     const maltoShare = Math.min(100, Math.max(0, Number(maltodextrinPercent) || 0)) / 100;
-    const isBlend = carbSource === "blend";
-    const maltodextrinCarbs = isBlend ? round1(target * maltoShare) : (carbSource === "maltodextrin" ? target : 0);
-    const sugarCarbs = isBlend ? Math.max(0, round1(target - maltodextrinCarbs)) : (carbSource === "table-sugar" ? target : 0);
+    const maltodextrinCarbs = useBlend ? round1(target * maltoShare) : (requestedSource === "maltodextrin" ? target : 0);
+    const sugarCarbs = useBlend ? Math.max(0, round1(target - maltodextrinCarbs)) : (requestedSource === "table-sugar" ? target : 0);
     const carbGrams = round1(target / carb.carbsPerGram);
-    const maltodextrinGrams = isBlend || carbSource === "maltodextrin" ? round1(maltodextrinCarbs / DIY_CARB_SOURCES.maltodextrin.carbsPerGram) : 0;
-    const tableSugarGrams = isBlend || carbSource === "table-sugar" ? round1(sugarCarbs / DIY_CARB_SOURCES["table-sugar"].carbsPerGram) : 0;
+    const maltodextrinGrams = useBlend || requestedSource === "maltodextrin" ? round1(maltodextrinCarbs / DIY_CARB_SOURCES.maltodextrin.carbsPerGram) : 0;
+    const tableSugarGrams = useBlend || requestedSource === "table-sugar" ? round1(sugarCarbs) : 0;
     const sodiumShortfall = Math.max(0, (Number(sodiumTarget) || 0) - (Number(existingSodium) || 0));
     const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumShortfall / sodium.sodiumPerGram) * 100) / 100 : null;
     return {
-        carbLabel: isBlend ? "Maltodextrin + Table Sugar" : carb.label,
+        carbLabel: useBlend ? "Maltodextrin + Table Sugar" : carb.label,
         sodiumLabel: sodium.label,
         carbGrams,
         maltodextrinGrams,
         tableSugarGrams,
         maltodextrinCarbs,
         tableSugarCarbs: sugarCarbs,
-        carbTsp: carb.gPerTsp ? carbGrams / carb.gPerTsp : (isBlend ? tableSugarGrams / DIY_CARB_SOURCES["table-sugar"].gPerTsp : null),
+        carbTsp: carb.gPerTsp ? carbGrams / carb.gPerTsp : (useBlend ? tableSugarGrams / DIY_CARB_SOURCES["table-sugar"].gPerTsp : null),
         sodiumGrams,
         sodiumTsp: sodium.gPerTsp && sodiumGrams != null ? sodiumGrams / sodium.gPerTsp : null,
         sodiumShortfall
