@@ -79,7 +79,9 @@ export function diyMix({
         tableSugarGrams,
         maltodextrinCarbs,
         tableSugarCarbs: sugarCarbs,
-        carbTsp: carb.gPerTsp ? carbGrams / carb.gPerTsp : (useBlend ? tableSugarGrams / DIY_CARB_SOURCES["table-sugar"].gPerTsp : null),
+        carbTsp: useBlend
+            ? tableSugarGrams / DIY_CARB_SOURCES["table-sugar"].gPerTsp
+            : (carb.gPerTsp ? carbGrams / carb.gPerTsp : null),
         sodiumGrams,
         sodiumTsp: sodium.gPerTsp && sodiumGrams != null ? sodiumGrams / sodium.gPerTsp : null,
         existingSodium: Math.max(0, Number(existingSodium) || 0),
