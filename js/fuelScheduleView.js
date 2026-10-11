@@ -152,7 +152,7 @@ function bottlesHTML(s) {
             : `${s.bottles[0].sodium} mg sodium from ${esc(m.sodiumLabel.toLowerCase())} (see label)`)
         : "";
     return `
-        <h4 class="fs-heading">Bottles</h4>
+        <h3 class="fs-heading">Bottles</h3>
         <div class="fs-bottles">${s.bottles.map(b => `
             <div class="fs-bottle fs-band-${(b.n - 1) % 3}">
                 <div class="fs-bottle-top">
@@ -189,7 +189,7 @@ function hoursHTML(s) {
     if (!s.hours.length) return "";
     const statusLabel = { ok: "On target", low: "Under", high: "Over", none: "" };
     return `
-        <h4 class="fs-heading">Hour by hour</h4>
+        <h3 class="fs-heading">Hour by hour</h3>
         <div class="fs-hours">
             <div class="fs-hour fs-hour-head">
                 <span>Hour</span><span>Carbs</span><span>Sodium</span><span>Fluid</span><span></span>
@@ -224,7 +224,7 @@ export function scheduleHTML(s, { preWorkoutFood = "", unit = "oz", segmentContr
             ${courseHTML(s)}
             ${pacingHTML(s, segmentControls)}
             ${preWorkoutFood ? `<div class="fs-mix"><span class="fs-mix-label">Before the run</span><span>${esc(preWorkoutFood)}</span></div>` : ""}
-            <h4 class="fs-heading">Checkpoints</h4>
+            <h3 class="fs-heading">Checkpoints</h3>
             ${eventsHTML(s)}
             ${bottlesHTML(s)}
             ${caffeineHTML(s)}

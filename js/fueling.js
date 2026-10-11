@@ -440,7 +440,7 @@ function selectDay(index, day, dayKey, weekOverride = selectedWeek) {
 
             openPlan(existingPlan.id);
 
-            $("planSummary").scrollIntoView({ behavior: "smooth" });
+            $("planSummary").scrollIntoView({ behavior: scrollMotion() });
 
         });
 
@@ -563,7 +563,7 @@ function runCalculation() {
         $("timelinePanel").style.display = "none";
         renderSchedule();
         renderPlanSummary();
-        $("durationStatus")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        $("durationStatus")?.scrollIntoView({ behavior: scrollMotion(), block: "center" });
         return;
     }
 
@@ -586,6 +586,8 @@ function runCalculation() {
     $("targetsPanel").style.display = "";
     $("compositionPanel").style.display = "";
     $("timelinePanel").style.display = "";
+
+    announce(`Targets for a ${targets.duration}-minute run: ${targets.carbsPerHour} grams of carbs, ${fl(targets.fluidPerHour)} of fluid and ${targets.sodiumPerHour} milligrams of sodium an hour.`);
 
     $("carbsPerHour").value = targets.carbsPerHour;
     setFluidInput("fluidPerHour", targets.fluidPerHour);
@@ -651,6 +653,7 @@ function setMode(next) {
     document.querySelectorAll(".mode-btn").forEach(btn => {
 
         btn.classList.toggle("active", btn.dataset.mode === mode);
+        btn.setAttribute("aria-pressed", String(btn.dataset.mode === mode));
 
     });
 
@@ -841,7 +844,7 @@ async function applyMarathonWorkout(workout, week, dayKey) {
 
     runCalculation();
 
-    document.getElementById("targetsPanel").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("targetsPanel").scrollIntoView({ behavior: scrollMotion() });
 
 }
 
@@ -1100,7 +1103,7 @@ $("autoFillDrinkBtn").addEventListener("click", () => {
     refreshDiySnapshot();
     renderComposition();
 
-    document.getElementById("diyPanelAnchor").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("diyPanelAnchor").scrollIntoView({ behavior: scrollMotion() });
 
 });
 
@@ -1265,7 +1268,7 @@ function renderLibrary() {
 
             <div class="fuel-lib-item-top">
                 <div>
-                    <h4>${escapeHTML(item.name)}</h4>
+                    <h3>${escapeHTML(item.name)}</h3>
                     <span class="fuel-lib-category">${categoryLabel(item.category)}</span>
                 </div>
             </div>
@@ -1415,7 +1418,7 @@ $("libraryGrid").addEventListener("click", (e) => {
 
         $("libraryForm").style.display = "";
 
-        $("libraryForm").scrollIntoView({ behavior: "smooth", block: "center" });
+        $("libraryForm").scrollIntoView({ behavior: scrollMotion(), block: "center" });
 
     }
 
@@ -1485,7 +1488,7 @@ function renderPreWorkoutGroups() {
     container.innerHTML = PRE_WORKOUT_OPTIONS.map(group => `
 
         <div class="pre-workout-group">
-            <h4>${escapeHTML(group.label)}</h4>
+            <h3>${escapeHTML(group.label)}</h3>
             <div class="pre-workout-chips">
                 ${group.options.map(opt => `<button type="button" class="pre-workout-chip" data-food="${escapeHTML(opt)}">${escapeHTML(opt)}</button>`).join("")}
             </div>
@@ -1592,7 +1595,7 @@ function renderPlanSummary() {
 
             <span class="fuel-tag">
                 ${p.qty}× ${escapeHTML(p.name)}
-                <button data-remove-plan-item="${p.id}" style="background:none;border:none;color:var(--muted);cursor:pointer;">${icon("close")}</button>
+                <button type="button" class="fuel-tag-remove" data-remove-plan-item="${p.id}" aria-label="Remove ${escapeHTML(p.name)} from the plan">${icon("close")}</button>
             </span>
 
         `).join("") + `</div>`;
@@ -1888,7 +1891,7 @@ function planCardHTML(plan) {
 
         <div class="fuel-saved-plan-card">
 
-            <h4><button type="button" class="fuel-saved-plan-title" data-view="${escapeHTML(plan.id)}">${escapeHTML(plan.name)}</button></h4>
+            <h3><button type="button" class="fuel-saved-plan-title" data-view="${escapeHTML(plan.id)}">${escapeHTML(plan.name)}</button></h3>
 
             <div class="fuel-saved-plan-meta">
                 ${plan.marathonRef ? `${plan.marathonRef.dayKey} · ` : ""}${escapeHTML(plan.workout)} · ${plan.duration} min${dateLabel ? " · " + dateLabel : ""}
@@ -1941,17 +1944,45 @@ function openPlanSheet(id, note = "") {
     $("fuelSheetSub").textContent = plan.workout || "";
     $("fuelSheetBody").innerHTML = scheduleHTML(schedule, { preWorkoutFood: plan.preWorkoutFood, unit });
 
+    sheetOpener = document.activeElement;
     $("fuelPlanSheet").hidden = false;
+    // The page behind can't be reached by Tab or a screen reader while the sheet is open.
+    document.querySelector("main")?.setAttribute("inert", "");
     document.documentElement.classList.add("fs-sheet-open");
     $("fuelPlanSheet").querySelector(".fs-sheet-panel").scrollTop = 0;
     $("fuelPlanSheet").querySelector(".fs-sheet-close").focus();
 
 }
 
+let sheetOpener = null;
+
+// One polite announcement for screen readers, after typing settles, and
+// only when it says something new.
+let announceTimer = null;
+let lastAnnounced = "";
+function announce(text) {
+    clearTimeout(announceTimer);
+    announceTimer = setTimeout(() => {
+        if (text === lastAnnounced) return;
+        lastAnnounced = text;
+        const el = document.getElementById("fuelAnnounce");
+        if (el) el.textContent = text;
+    }, 900);
+}
+
+// Smooth scrolling only when the phone isn't set to reduce motion.
+function scrollMotion() {
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
+
 function closePlanSheet() {
 
     $("fuelPlanSheet").hidden = true;
+    document.querySelector("main")?.removeAttribute("inert");
     document.documentElement.classList.remove("fs-sheet-open");
+    // Back to whatever opened it (the plan's View button), if it's still there.
+    if (sheetOpener?.isConnected) sheetOpener.focus({ preventScroll: true });
+    sheetOpener = null;
 
 }
 
@@ -1964,6 +1995,15 @@ $("fuelPlanSheet").addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
 
     if (e.key === "Escape" && !$("fuelPlanSheet").hidden) closePlanSheet();
+    // Keep Tab inside the open sheet.
+    if (e.key === "Tab" && !$("fuelPlanSheet").hidden) {
+        const items = [...$("fuelPlanSheet").querySelectorAll("button, a[href], input, select, textarea, [tabindex]:not([tabindex='-1'])")]
+            .filter(el => !el.disabled && el.getClientRects().length);
+        if (!items.length) return;
+        const first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
 
 });
 
@@ -2123,7 +2163,7 @@ if (plan.diySnapshot || plan.diyInputs) {
     renderComposition();
     renderPlanSummary();
 
-    document.querySelector(".page-title").scrollIntoView({ behavior: "smooth" });
+    document.querySelector(".page-title").scrollIntoView({ behavior: scrollMotion() });
 
 }
 

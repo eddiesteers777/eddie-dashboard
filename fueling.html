@@ -79,19 +79,25 @@
 
             <div
                 class="mode-toggle"
-                id="modeToggle">
+                id="modeToggle"
+                role="group"
+                aria-label="Fueling mode">
 
                 <button
+                    type="button"
                     class="mode-btn active"
-                    data-mode="training">
+                    data-mode="training"
+                    aria-pressed="true">
 
                     Training
 
                 </button>
 
                 <button
+                    type="button"
                     class="mode-btn"
-                    data-mode="race">
+                    data-mode="race"
+                    aria-pressed="false">
 
                     Race
 
@@ -532,7 +538,7 @@
 
                 <div class="fuel-target-card" style="--fuel-color:var(--yellow)">
 
-                    <span class="fuel-target-label">Carbohydrates</span>
+                    <label class="fuel-target-label" for="carbsPerHour">Carbohydrates</label>
 
                     <div class="fuel-target-value">
 
@@ -556,7 +562,7 @@
 
                 <div class="fuel-target-card" style="--fuel-color:var(--cyan)">
 
-                    <span class="fuel-target-label">Fluids</span>
+                    <label class="fuel-target-label" for="fluidPerHour">Fluids</label>
 
                     <div class="fuel-target-value">
 
@@ -581,7 +587,7 @@
 
                 <div class="fuel-target-card" style="--fuel-color:var(--purple)">
 
-                    <span class="fuel-target-label">Sodium</span>
+                    <label class="fuel-target-label" for="sodiumPerHour">Sodium</label>
 
                     <div class="fuel-target-value">
 
@@ -1235,6 +1241,9 @@
         </p>
 
     </main>
+
+    <!-- Screen readers hear the targets when they change (js/fueling.js announce()). -->
+    <p class="sr-only" id="fuelAnnounce" aria-live="polite" aria-atomic="true"></p>
 
     <!-- Saved-plan sheet: the full race-day breakdown for one plan. -->
     <div class="fs-sheet" id="fuelPlanSheet" hidden>

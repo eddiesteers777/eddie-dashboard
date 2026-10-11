@@ -1033,7 +1033,7 @@
 
 }
 
-.fuel-lib-item-top h4{
+.fuel-lib-item-top h3{
 
     font-size:15px;
 
@@ -1223,7 +1223,7 @@
 
 }
 
-.fuel-saved-plan-card h4{
+.fuel-saved-plan-card h3{
 
     font-size:16px;
 
@@ -2032,7 +2032,7 @@
 
 }
 
-.pre-workout-group h4{
+.pre-workout-group h3{
 
     font-size:13px;
 
@@ -2760,3 +2760,29 @@ html.fs-sheet-open{overflow:hidden;}
     white-space:nowrap;
 }
 .fuel-why-foot{ display:block; }
+
+/* ---- Phone + accessibility polish (audit step 9) ---- */
+.fuel-lib-item-top h3,
+.fuel-saved-plan-card h3,
+.pre-workout-group h3{ margin:0; }
+.fuel-tag-remove{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:32px;
+    min-height:32px;
+    margin:-6px -8px -6px 0;
+    padding:0;
+    background:none;
+    border:0;
+    border-radius:50%;
+    color:var(--muted);
+    cursor:pointer;
+}
+.fuel-tag-remove:hover{ color:var(--text); }
+.fuel-unit-switch button{ min-height:40px; }
+label.fuel-target-label{ display:block; cursor:pointer; }
+/* Rows whose value wraps keep a gap from their label and align right. */
+.fuel-plan-row{ gap:12px; }
+.fuel-plan-row span:first-child{ flex-shrink:0; }
+.fuel-plan-row span:last-child{ text-align:right; }
