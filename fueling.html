@@ -785,6 +785,8 @@
 
                     <h3>Ingredients</h3>
 
+                    <p class="fuel-note">For a mixed-carb drink, enter the total drink carbs above, then choose the percentage supplied by maltodextrin. Table sugar supplies both glucose and fructose. Use sodium already supplied by your electrolyte powder below so added salt only fills the remaining gap.</p>
+
                     <div class="fuel-field-row">
 
                         <label class="fuel-field">
@@ -801,6 +803,24 @@
                                 <option value="other">Other</option>
 
                             </select>
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Maltodextrin Share (%)</span>
+                            <input type="number" id="diyMaltodextrinPercent" min="0" max="100" step="5" value="50">
+
+                        </label>
+
+                    </div>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Sodium Already in Electrolytes (mg)</span>
+                            <input type="number" id="diyExistingSodium" min="0" step="25" value="0">
 
                         </label>
 
@@ -860,6 +880,13 @@
 
                     <span id="diySugarGrams">0 g</span>
                     <small>table sugar (≈ <span id="diySugarTsp">0</span> tsp)</small>
+
+                </div>
+
+                <div class="fuel-diy-stat">
+
+                    <span id="diyMaltodextrinGrams">0 g</span>
+                    <small>maltodextrin</small>
 
                 </div>
 
