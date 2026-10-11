@@ -178,7 +178,7 @@ export function buildSchedule(input) {
             carbSource: drink.carbSource,
             maltodextrinPercent: drink.maltodextrinPercent,
             sodiumSource: drink.sodiumSource,
-            existingSodium: drink.existingSodium
+            existingSodium: (Number(drink.existingSodium) || 0) / count
         });
         for (let i = 0; i < count; i++) {
             const startMin = perBottleMin * i;
