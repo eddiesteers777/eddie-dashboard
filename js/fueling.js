@@ -501,6 +501,11 @@ function runCalculation() {
         $("pace").value = session.pace;
     }
 
+    // Keep duration-derived mile markers consistent if athlete manually edits duration.
+    if (session.duration <= 0 && session.distance > 0 && explicitPace !== null) {
+        session.duration = Math.round(session.distance * explicitPace);
+    }
+
     const targets = calculateTargets(session);
 
     lastSession = session;
