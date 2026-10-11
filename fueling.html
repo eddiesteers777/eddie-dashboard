@@ -63,9 +63,9 @@
 
             <p class="page-blurb">
 
-                Enter a workout or race and this builds your carb, fluid and sodium
-                targets, a gel + homemade drink breakdown, and a mile-by-mile race-day
-                schedule you can adjust to fit what actually works for your gut.
+                Enter the distance and average pace once. The calculator estimates duration,
+                uses it for fueling targets, then lays out gels, bottles, caffeine doses,
+                DIY ingredients, and mile/time checkpoints in one plan.
 
             </p>
 
@@ -217,7 +217,10 @@
 
                             <option value="easy">Easy Run</option>
                             <option value="long">Long Run</option>
-                            <option value="workout">Workout</option>
+                            <option value="workout">Workout / Mixed Pace</option>
+                            <option value="tempo">Tempo / Threshold</option>
+                            <option value="intervals">Intervals / Repeats</option>
+                            <option value="progression">Progression / Fast Finish</option>
                             <option value="marathon">Marathon</option>
                             <option value="race">Race</option>
                             <option value="other">Other</option>
@@ -230,7 +233,7 @@
 
                         <label class="fuel-field">
 
-                            <span>Duration (min)</span>
+                            <span>Duration (min, auto-filled from distance + pace)</span>
 
                             <input
                                 type="number"
@@ -258,14 +261,30 @@
 
                     <label class="fuel-field">
 
-                        <span>Pace (per mile, optional)</span>
+                        <span>Goal Average Pace (min:sec per mile)</span>
 
                         <input
                             type="text"
                             id="pace"
-                            placeholder="e.g. 8:15">
+                            inputmode="numeric"
+                            placeholder="e.g. 8:15"
+                            aria-describedby="paceHelp">
+
+                        <small id="paceHelp">Enter miles + pace to calculate duration automatically. For intervals or a fast finish, use your expected average pace for the whole session, including warm-up, recoveries and cool-down.</small>
 
                     </label>
+
+                    <div class="fuel-pace-estimate" id="paceDurationPreview" aria-live="polite">
+                        <div>
+                            <span class="fuel-pace-estimate-label">Estimated duration</span>
+                            <strong id="estimatedDuration">Enter distance and pace</strong>
+                        </div>
+                        <div>
+                            <span class="fuel-pace-estimate-label">Average pace</span>
+                            <strong id="estimatedPace">—</strong>
+                        </div>
+                        <p id="paceDurationNote">This estimate drives the fueling targets and the mile/time schedule below.</p>
+                    </div>
 
                 </div>
 
@@ -476,7 +495,7 @@
                 class="fuel-btn primary fuel-calc-btn"
                 id="calculateBtn">
 
-                Calculate Fueling Plan
+                Update Fueling Plan
 
             </button>
 
@@ -645,27 +664,39 @@
 
                 </h2>
 
-                <label class="fs-control">
-
-                    First gel at
-                    <input
-                        type="number"
-                        id="firstGelMin"
-                        min="5"
-                        max="90"
-                        step="5"
-                        value="30">
-                    min
-
-                </label>
+                <div class="fs-schedule-controls">
+                    <label class="fs-control">
+                        First gel at
+                        <input
+                            type="number"
+                            id="firstGelMin"
+                            min="5"
+                            max="90"
+                            step="5"
+                            value="30">
+                        min
+                    </label>
+                    <label class="fs-control">
+                        Gel interval
+                        <input
+                            type="number"
+                            id="gelIntervalMin"
+                            min="10"
+                            max="120"
+                            step="5"
+                            value="45">
+                        min
+                    </label>
+                </div>
 
             </div>
 
             <p class="fuel-note fs-intro">
 
-                Every gel by mile and time, which miles each bottle covers and how much to sip,
-                and an hour-by-hour check against your targets. Gels are spaced evenly and stop
-                15 minutes before the finish, when they can no longer help. Caffeinated gels go last.
+                Every gel and bottle checkpoint by elapsed time and approximate mile, plus an
+                hour-by-hour check against your targets. Set the first gel and preferred interval;
+                if that spacing does not fit, the calculator spaces gels across the usable window.
+                Caffeinated products are scheduled toward the end when possible.
 
             </p>
 
@@ -734,17 +765,29 @@
 
                     </div>
 
+                    <div class="fuel-field-row">
+                        <label class="fuel-field">
+                            <span>Caffeine per selected bottle (mg)</span>
+                            <input type="number" id="diyCaffeinePerBottleMg" min="0" step="5" value="60">
+                        </label>
+                        <label class="fuel-field">
+                            <span>Bottles with caffeine (numbers)</span>
+                            <input type="text" id="diyCaffeineBottleNumbers" placeholder="e.g. 2,3" inputmode="numeric">
+                        </label>
+                    </div>
+                    <small>Example: 60 mg in bottles 2 and 3 = 120 mg total from your drink. Leave bottle numbers blank for no caffeine in the drink.</small>
+
                 </div>
 
                 <div class="fuel-card">
 
-                    <h3>Targets (total across bottles)</h3>
+                    <h3>Targets (entire batch)</h3>
 
                     <div class="fuel-field-row">
 
                         <label class="fuel-field">
 
-                            <span>Carbs (g)</span>
+                            <span>Carbs (g, from all carbohydrate ingredients)</span>
 
                             <input
                                 type="number"
@@ -757,7 +800,7 @@
 
                         <label class="fuel-field">
 
-                            <span>Sodium (mg)</span>
+                            <span>Total sodium target (mg)</span>
 
                             <input
                                 type="number"
@@ -785,6 +828,8 @@
 
                     <h3>Ingredients</h3>
 
+                    <p class="fuel-note">For a mixed-carb drink, enter the total drink carbs above, then choose the percentage supplied by maltodextrin. Table sugar supplies both glucose and fructose. Use sodium already supplied by your electrolyte powder below so added salt only fills the remaining gap.</p>
+
                     <div class="fuel-field-row">
 
                         <label class="fuel-field">
@@ -795,12 +840,39 @@
 
                                 <option value="table-sugar" selected>Table Sugar</option>
                                 <option value="maltodextrin">Maltodextrin</option>
+                                <option value="blend">Maltodextrin + Table Sugar Blend</option>
                                 <option value="honey">Honey</option>
                                 <option value="juice">Fruit Juice</option>
                                 <option value="sports-powder">Sports Drink Powder</option>
                                 <option value="other">Other</option>
 
                             </select>
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Carbs from Maltodextrin (%)</span>
+                            <input type="number" id="diyMaltodextrinPercent" min="0" max="100" step="5" value="50">
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Maltodextrin Carbs per Gram (from label)</span>
+                            <input type="number" id="diyMaltodextrinYield" min="0.5" max="1" step="0.005" value="0.95">
+                            <small>Example: 14 g carbs ÷ 16 g powder = 0.875.</small>
+
+                        </label>
+
+                    </div>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Sodium Already in Electrolytes (mg)</span>
+                            <input type="number" id="diyExistingSodium" min="0" step="25" value="0">
 
                         </label>
 
@@ -859,7 +931,14 @@
                 <div class="fuel-diy-stat">
 
                     <span id="diySugarGrams">0 g</span>
-                    <small>table sugar (≈ <span id="diySugarTsp">0</span> tsp)</small>
+                    <small><span id="diyPrimaryCarbLabel">table sugar</span> · <span id="diySugarTsp">0 tsp</span></small>
+
+                </div>
+
+                <div class="fuel-diy-stat">
+
+                    <span id="diyMaltodextrinGrams">0 g</span>
+                    <small>maltodextrin</small>
 
                 </div>
 
@@ -879,6 +958,8 @@
                 </button>
 
             </div>
+
+            <p class="fuel-note" id="diyPerBottleSummary" style="display:none;"></p>
 
             <p class="fuel-note" id="diyConversionNote" style="display:none;">
 
@@ -993,6 +1074,11 @@
                     <label class="fuel-checkbox fuel-lib-caffeine">
                         <input type="checkbox" id="libCaffeine">
                         <span>Contains Caffeine</span>
+                    </label>
+
+                    <label class="fuel-field">
+                        <span>Caffeine (mg per serving, from label)</span>
+                        <input type="number" id="libCaffeineMg" min="0" step="5" value="0">
                     </label>
 
                 </div>

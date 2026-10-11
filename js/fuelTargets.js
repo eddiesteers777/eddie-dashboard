@@ -14,43 +14,75 @@
               sweatRate, sweatSodium, typicalSodiumIntake }
 ========================================== */
 
-export function estimateDurationMinutes(session) {
+// Accept mm:ss (preferred) or decimal minutes per mile (e.g. 8.25).
+export function parsePaceMinutes(value) {
+    const text = String(value ?? "").trim();
+    if (!text) return null;
 
+    const mmss = text.match(/^(\d{1,2}):([0-5]?\d)$/);
+    if (mmss) {
+        const pace = Number(mmss[1]) + Number(mmss[2]) / 60;
+        return pace > 0 ? pace : null;
+    }
+
+    if (/^\d{1,2}(\.\d+)?$/.test(text)) {
+        const pace = Number(text);
+        return Number.isFinite(pace) && pace > 0 ? pace : null;
+    }
+
+    return null;
+}
+
+export function formatPaceMinutes(value) {
+    const pace = Number(value);
+    if (!Number.isFinite(pace) || pace <= 0) return "";
+    const totalSeconds = Math.round(pace * 60);
+    return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+}
+
+export function durationFromDistanceAndPace(distance, pace) {
+    const miles = Number(distance);
+    const minPerMile = typeof pace === "number" ? pace : parsePaceMinutes(pace);
+    if (!Number.isFinite(miles) || miles <= 0 || minPerMile == null || minPerMile <= 0) return null;
+    // Fueling checkpoints are minute-based; round the predicted finish time to the nearest minute.
+    return Math.round(miles * minPerMile);
+}
+
+export function estimateDurationMinutes(session) {
     if (session.duration > 0) return session.duration;
 
     if (session.distance > 0) {
-
         const minPerMile = paceMinutesPerMile(session);
-
         return Math.round(session.distance * minPerMile);
-
     }
 
     return 60;
-
 }
 
 export function paceMinutesPerMile(session) {
+    const explicit = parsePaceMinutes(session.pace);
+    if (explicit != null) return explicit;
 
     const table = {
-
         recovery: 9.1,
         easy: 8.6,
         long: 8.25,
         workout: 7.5,
+        tempo: 7.1,
+        intervals: 7.0,
+        progression: 7.6,
         marathon: 7.05,
         race: 7.05,
         other: 8.5
-
     };
 
     return table[session.workoutType] || 8.5;
-
 }
 
 export function calculateTargets(session) {
 
     const duration = estimateDurationMinutes(session);
+    const workoutType = session.workoutType;
 
     /* ---- Carbohydrates ---- */
 
@@ -61,7 +93,7 @@ export function calculateTargets(session) {
     else if (duration <= 150) baseCarbs = 45;
     else baseCarbs = 60;
 
-    if (session.mode === "race" && duration > 150) baseCarbs = 75;
+    if ((workoutType === "race" || workoutType === "marathon" || session.mode === "race") && duration > 150) baseCarbs = 75;
 
     const toleranceFactor = { low: 0.7, moderate: 1, high: 1.25 }[session.tolerance] || 1;
 

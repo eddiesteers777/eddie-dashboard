@@ -5,6 +5,9 @@ import assert from "node:assert/strict";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock, FINAL_GEL_BUFFER_MIN
 } from "../js/fuelSchedule.js";
+import {
+    parsePaceMinutes, formatPaceMinutes, durationFromDistanceAndPace
+} from "../js/fuelTargets.js";
 
 const marathon = {
     durationMin: 185,
@@ -124,10 +127,173 @@ test("drink is left out when unchecked or bottles are missing", () => {
 
 test("formatting helpers", () => {
     assert.equal(formatTsp(2.3), "2 ¼");
-    assert.equal(formatTsp(0.13), "⅛");
+    assert.equal(formatTsp(0.13), "0.13", "small salt measures should not round up to a larger teaspoon amount");
     assert.equal(formatTsp(0.02), "a pinch");
+    assert.equal(formatTsp(0.065), "a pinch", "avoid overstating tiny measured salt amounts");
     assert.equal(formatTsp(3), "3");
     assert.equal(formatClock(185), "3:05");
     assert.equal(formatClock(7), "0:07");
     assert.equal(diyMix({ carbTarget: 0, sodiumTarget: 0 }).carbGrams, 0);
+});
+
+test("mixed carb recipe splits carb target into maltodextrin and table sugar", () => {
+    const mix = diyMix({
+        carbTarget: 97,
+        sodiumTarget: 2058,
+        carbSource: "blend",
+        maltodextrinPercent: 50,
+        maltodextrinCarbsPerGram: 14 / 16,
+        sodiumSource: "table-salt",
+        existingSodium: 1620
+    });
+    assert.equal(mix.maltodextrinCarbs, 48.5);
+    assert.equal(mix.tableSugarCarbs, 48.5);
+    assert.equal(mix.maltodextrinGrams, Math.round((48.5 / (14 / 16)) * 10) / 10);
+    assert.equal(mix.tableSugarGrams, 48.5);
+    assert.ok(Math.abs(mix.carbTsp - (48.5 / 4.2)) < 0.001, "teaspoon estimate reflects only table sugar in the blend");
+    assert.equal(mix.sodiumShortfall, 438);
+    assert.equal(mix.sodiumGrams, Math.round((438 / 393) * 100) / 100);
+});
+
+test("schedule can pass blend percentages and existing electrolyte sodium into per-bottle recipe", () => {
+    const s = buildSchedule({
+        durationMin: 160,
+        distanceMi: 20,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: {
+            bottleCount: 3,
+            bottleSize: 15,
+            carbs: 97,
+            sodium: 2058,
+            carbSource: "blend",
+            maltodextrinPercent: 50,
+            maltodextrinCarbsPerGram: 14 / 16,
+            sodiumSource: "table-salt",
+            existingSodium: 1620
+        },
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 }
+    });
+    assert.equal(s.bottles.length, 3);
+    assert.equal(s.mix.sodiumShortfall, Math.max(0, Math.round(2058 / 3) - Math.round(1620 / 3)));
+    assert.ok(s.warnings.some(w => w.includes("aid stations")), "flags when bottle fluid does not cover the whole fluid target");
+});
+
+test("DIY mix subtracts sodium already supplied by the electrolyte product", () => {
+    const mix = diyMix({
+        carbTarget: 97,
+        sodiumTarget: 2058,
+        carbSource: "blend",
+        maltodextrinPercent: 50,
+        sodiumSource: "table-salt",
+        existingSodium: 1620
+    });
+    assert.equal(mix.sodiumShortfall, 438);
+    assert.equal(mix.sodiumGrams, Math.round((438 / 393) * 100) / 100);
+});
+
+test("distance plus explicit pace determines run duration for mile checkpoint calculations", () => {
+    const distanceMi = 20;
+    const paceMinPerMile = 8;
+    const durationMin = Math.round(distanceMi * paceMinPerMile);
+    const s = buildSchedule({
+        durationMin,
+        distanceMi,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: { bottleCount: 3, bottleSize: 15, carbs: 97, sodium: 2058, carbSource: "blend", maltodextrinPercent: 50, sodiumSource: "table-salt", existingSodium: 1620 },
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 }
+    });
+    assert.equal(s.durationMin, 160);
+    assert.equal(s.bottles.at(-1).endMile, 20);
+    assert.equal(s.gels.length, 3);
+    assert.ok(s.gels.every(g => g.mile !== null));
+    assert.equal(s.mix.sodiumShortfall, 146, "per bottle: 686 mg target minus 540 mg electrolyte sodium");
+});
+
+
+test("distance plus average pace calculates duration without a separate pace calculator", () => {
+    assert.equal(parsePaceMinutes("8:15"), 8.25);
+    assert.equal(parsePaceMinutes("8"), 8);
+    assert.equal(parsePaceMinutes("8.25"), 8.25);
+    assert.equal(parsePaceMinutes("8:75"), null);
+    assert.equal(formatPaceMinutes(8.25), "8:15");
+    assert.equal(durationFromDistanceAndPace(20, "8:00"), 160);
+    assert.equal(durationFromDistanceAndPace(20, "8:15"), 165);
+    assert.equal(durationFromDistanceAndPace(13.1, "8:15"), 108);
+    assert.equal(durationFromDistanceAndPace(0, "8:15"), null);
+});
+
+test("DIY blend reports actual maltodextrin and sugar grams and subtracts electrolyte sodium", () => {
+    const mix = diyMix({
+        carbTarget: 97,
+        sodiumTarget: 2058,
+        carbSource: "blend",
+        maltodextrinPercent: 50,
+        sodiumSource: "table-salt",
+        existingSodium: 1620
+    });
+    assert.equal(mix.maltodextrinGrams, 51.1);
+    assert.equal(mix.tableSugarGrams, 48.5);
+    assert.equal(mix.sodiumShortfall, 438);
+    assert.equal(mix.sodiumGrams, 1.11);
+    assert.equal(mix.isBlend, true);
+});
+
+test("legacy DIY source names still resolve to their intended recipe ingredients", () => {
+    assert.equal(diyMix({ carbTarget: 20, carbSource: "juice" }).carbLabel, "Fruit Juice");
+    assert.equal(diyMix({ carbTarget: 20, carbSource: "sports-powder" }).carbLabel, "Sports Drink Powder");
+});
+
+test("pace parser accepts mm:ss and decimal-minute formats", async () => {
+    const { parsePaceMinutes, durationFromDistanceAndPace, formatPaceMinutes } = await import("../js/fuelTargets.js");
+    assert.equal(parsePaceMinutes("8:15"), 8.25);
+    assert.equal(parsePaceMinutes("8.25"), 8.25);
+    assert.equal(durationFromDistanceAndPace(20, "8:00"), 160);
+    assert.equal(formatPaceMinutes(8.25), "8:15");
+    assert.equal(parsePaceMinutes("abc"), null);
+});
+
+
+test("DIY drink schedule splits caffeine by selected bottle and counts total sodium once", () => {
+    const s = buildSchedule({
+        durationMin: 160,
+        distanceMi: 20,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: {
+            bottleCount: 3,
+            bottleSize: 15,
+            carbs: 97,
+            sodium: 2058,
+            carbSource: "blend",
+            maltodextrinPercent: 50,
+            sodiumSource: "table-salt",
+            existingSodium: 1620,
+            caffeinePerBottleMg: 60,
+            caffeineBottleNumbers: "2,3"
+        },
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 },
+        firstGelMin: 30
+    });
+    assert.equal(s.totals.carbs, 160);
+    assert.equal(s.totals.sodium, 2133);
+    assert.equal(s.totals.caffeineMg, 120);
+    assert.deepEqual(s.bottles.map(b => b.caffeineMg), [0, 60, 60]);
+    assert.equal(s.bottles[1].startMile, 6.7);
+    assert.equal(s.bottles[2].endMile, 20);
+    assert.equal(s.mix.existingSodium, 540);
+    assert.equal(s.mix.sodiumGrams, 0.37);
+});
+
+
+test("adjustable 45-minute gel spacing creates a practical long-run schedule by time and mile", () => {
+    const s = buildSchedule({
+        durationMin: 160,
+        distanceMi: 20,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: null,
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 },
+        firstGelMin: 30,
+        gelIntervalMin: 45
+    });
+    assert.deepEqual(s.gels.map(g => g.min), [30, 75, 120]);
+    assert.deepEqual(s.gels.map(g => g.mile), [3.8, 9.4, 15]);
 });

@@ -5,10 +5,13 @@
 import { icon } from "./icons.js";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
-    DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN
+    parseBottleNumbers, DIY_SODIUM_SOURCES, DEFAULT_FIRST_GEL_MIN, DEFAULT_GEL_INTERVAL_MIN
 } from "./fuelSchedule.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
-import { calculateTargets, estimateDurationMinutes } from "./fuelTargets.js";
+import {
+    calculateTargets, estimateDurationMinutes, parsePaceMinutes,
+    formatPaceMinutes, durationFromDistanceAndPace
+} from "./fuelTargets.js";
 import { showsPersonalPlan } from "./role.js";
 import { toast, sbConfirm, sbPrompt } from "./ui.js";
 
@@ -478,9 +481,64 @@ function readSession() {
    Render — Targets
 ========================================== */
 
+function durationLabel(minutes) {
+    const rounded = Math.max(0, Math.round(minutes));
+    const hours = Math.floor(rounded / 60);
+    const mins = rounded % 60;
+    if (hours && mins) return `${hours} hr ${mins} min`;
+    if (hours) return `${hours} hr`;
+    return `${mins} min`;
+}
+
+function renderPaceEstimate() {
+    const distance = Number($("distance").value) || 0;
+    const duration = Number($("duration").value) || 0;
+    const paceText = $("pace").value.trim();
+    const pace = parsePaceMinutes(paceText);
+    const card = $("paceDurationPreview");
+
+    if (distance > 0 && pace != null) {
+        const durationMin = durationFromDistanceAndPace(distance, pace);
+        // Keep the visible duration field synced as soon as a valid distance + pace exists.
+        $("duration").value = durationMin;
+        $("estimatedDuration").textContent = `${durationLabel(durationMin)} (${formatClock(durationMin)})`;
+        $("estimatedPace").textContent = `${formatPaceMinutes(pace)} /mi`;
+        $("paceDurationNote").textContent =
+            `${distance.toFixed(2).replace(/\.00$/, "")} miles × ${formatPaceMinutes(pace)} per mile = about ${formatClock(durationMin)} elapsed. This duration drives the fueling totals and mileage checkpoints.`;
+        card?.classList.add("is-ready");
+        return;
+    }
+
+    if (distance > 0 && duration > 0 && !paceText) {
+        const calculatedPace = duration / distance;
+        $("estimatedDuration").textContent = `${durationLabel(duration)} (${formatClock(duration)})`;
+        $("estimatedPace").textContent = `${formatPaceMinutes(calculatedPace)} /mi`;
+        $("paceDurationNote").textContent =
+            `Using your entered duration, average pace is approximately ${formatPaceMinutes(calculatedPace)} per mile. Enter a goal pace to calculate duration from distance instead.`;
+        card?.classList.add("is-ready");
+        return;
+    }
+
+    $("estimatedDuration").textContent = "Enter distance + pace";
+    $("estimatedPace").textContent = "—";
+    $("paceDurationNote").textContent =
+        "Enter a distance and a pace such as 20 miles at 8:15/mi. The calculator will estimate elapsed time and use it for the fueling schedule.";
+    card?.classList.remove("is-ready");
+}
 function runCalculation() {
 
     const session = readSession();
+    const explicitPace = parsePaceMinutes(session.pace);
+
+    if (session.distance > 0 && explicitPace !== null) {
+        session.duration = durationFromDistanceAndPace(session.distance, explicitPace);
+        $("duration").value = session.duration;
+    }
+
+    // Keep duration-derived mile markers consistent if athlete manually edits duration.
+    if (session.duration <= 0 && session.distance > 0 && explicitPace !== null) {
+        session.duration = Math.round(session.distance * explicitPace);
+    }
 
     const targets = calculateTargets(session);
 
@@ -503,12 +561,13 @@ function runCalculation() {
     $("sodiumPerHour").value = targets.sodiumPerHour;
 
     $("calcNote").textContent =
-        `Estimated from a ${targets.duration}-minute session, your fueling tolerance, ` +
-        `sensitivity, and the conditions entered above. These are starting targets — ` +
-        `adjust anything to match what actually works for your gut.`;
+        `Estimated duration: ${formatClock(targets.duration)}. ` +
+        `Average pace: ${session.distance > 0 ? formatPaceMinutes(session.duration / session.distance) + "/mi" : "enter distance to calculate mile markers"}. ` +
+        `Workout: ${session.workoutType}. Starting targets depend mainly on duration, training/race mode, fueling experience, stomach sensitivity, and conditions; adjust them to what you know works for you.`;
 
     updatePlanWorkoutLabel();
     updateTotalsAndTimeline(true);
+    renderPaceEstimate();
 
 }
 
@@ -594,6 +653,42 @@ $("modeToggle").addEventListener("click", (e) => {
 
 $("calculateBtn").addEventListener("click", runCalculation);
 
+// Pace + distance now drive the estimate directly. Preview while typing,
+// then rebuild the targets and exact mile/time checkpoints when a field is committed.
+["distance", "pace"].forEach(id => {
+    $(id).addEventListener("input", renderPaceEstimate);
+    $(id).addEventListener("change", () => {
+        renderPaceEstimate();
+        const distance = Number($("distance").value) || 0;
+        const pace = parsePaceMinutes($("pace").value);
+        const paceText = $("pace").value.trim();
+        if (distance > 0 && pace != null) {
+            $("duration").value = durationFromDistanceAndPace(distance, pace);
+            runCalculation();
+        } else if (id === "pace" && !paceText && lastTargets) {
+            runCalculation();
+        }
+    });
+});
+
+$("duration").addEventListener("input", renderPaceEstimate);
+$("duration").addEventListener("change", () => {
+    if (parsePaceMinutes($("pace").value) != null && Number($("distance").value) > 0) {
+        $("duration").value = durationFromDistanceAndPace(Number($("distance").value), $("pace").value);
+    }
+    if (lastTargets || (Number($("duration").value) > 0 && Number($("distance").value) > 0)) runCalculation();
+});
+
+$("workoutType").addEventListener("change", () => {
+    if (lastTargets) runCalculation();
+});
+
+["bodyWeight", "currentCarbIntake", "tolerance", "stomachSensitivity", "temperature", "humidity", "sweatRate", "sweatSodium", "typicalSodiumIntake", "caffeineWanted"].forEach(id => {
+    $(id).addEventListener("change", () => {
+        if (lastTargets) runCalculation();
+    });
+});
+
 ["carbsPerHour", "fluidPerHour", "sodiumPerHour"].forEach(id => {
 
     $(id).addEventListener("input", () => updateTotalsAndTimeline(false));
@@ -601,6 +696,7 @@ $("calculateBtn").addEventListener("click", runCalculation);
 });
 
 $("firstGelMin").addEventListener("input", renderSchedule);
+$("gelIntervalMin").addEventListener("input", renderSchedule);
 
 /* ==========================================
    Marathon Integration
@@ -668,12 +764,19 @@ function applyMarathonWorkout(workout, week, dayKey) {
 
     }[paceLabel] || 8.3;
 
-    const estimatedDuration = Math.round(miles * minPerMile);
+    const explicitPace = parsePaceMinutes(workout.pace);
+    const estimatedDuration = miles > 0 && explicitPace != null
+        ? durationFromDistanceAndPace(miles, explicitPace)
+        : Math.round(miles * minPerMile);
 
     $("workoutType").value = workoutType;
     $("distance").value = miles || "";
     $("duration").value = estimatedDuration || "";
-    $("pace").value = workout.pace || "";
+    // The Marathon calendar stores descriptive pace labels; keep that label in
+    // marathonRef, but show the numeric estimated average pace in the calculator.
+    $("pace").value = miles > 0 && estimatedDuration > 0
+        ? formatPaceMinutes(estimatedDuration / miles)
+        : "";
 
     marathonRef = { week, dayKey, workoutLabel: workout.session || "Workout", miles, pace: workout.pace || "" };
 
@@ -724,7 +827,12 @@ function computeComposition() {
     const includeDrink = $("includeHomemadeDrink").checked;
 
     const drinkCarbs = includeDrink ? (Number($("diyCarbTarget").value) || 0) : 0;
-    const drinkSodium = includeDrink ? (Number($("diySodiumTarget").value) || 0) : 0;
+    const drinkSodium = includeDrink
+        ? Math.max(
+            Number($("diySodiumTarget").value) || 0,
+            Number($("diyExistingSodium").value) || 0
+        )
+        : 0;
 
     const totalCarbs = gelCarbs + drinkCarbs;
     const totalSodium = gelSodium + drinkSodium;
@@ -804,21 +912,69 @@ function currentDiyMix() {
     const sodiumTarget = Number($("diySodiumTarget").value) || 0;
     const carbSource = $("diyCarbSource").value;
     const sodiumSource = $("diySodiumSource").value;
-    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource });
+    const maltodextrinPercent = Number($("diyMaltodextrinPercent")?.value) || 0;
+    const maltodextrinCarbsPerGram = Number($("diyMaltodextrinYield")?.value) || 0.95;
+    const existingSodium = Number($("diyExistingSodium")?.value) || 0;
+    const caffeinePerBottleMg = Math.max(0, Number($("diyCaffeinePerBottleMg")?.value) || 0);
+    const caffeineBottleNumbers = $("diyCaffeineBottleNumbers")?.value || "";
+    const caffeineBottles = parseBottleNumbers(caffeineBottleNumbers, bottleCount);
+    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource, maltodextrinPercent, maltodextrinCarbsPerGram, existingSodium });
     return {
         bottleSize,
         bottleCount,
         carbTarget,
         sodiumTarget,
+        totalSodium: Math.max(sodiumTarget, existingSodium),
         totalFluid: bottleSize * bottleCount,
-        sugarGrams: mix.carbGrams,
+        sugarGrams: carbSource === "blend" || carbSource === "table-sugar"
+            ? (mix.tableSugarGrams ?? mix.carbGrams)
+            : (carbSource === "maltodextrin" ? 0 : mix.carbGrams),
+        primaryCarbLabel: carbSource === "blend" || carbSource === "maltodextrin" ? "table sugar" : mix.carbLabel,
+        maltodextrinGrams: mix.maltodextrinGrams || 0,
         saltGrams: mix.sodiumGrams ?? 0,
         sugarTsp: mix.carbTsp != null ? Math.round(mix.carbTsp * 4) / 4 : null,
-        saltTsp: mix.sodiumTsp != null ? Math.round(mix.sodiumTsp * 8) / 8 : null,
+        saltTsp: mix.sodiumTsp != null ? mix.sodiumTsp : null,
         carbSource,
+        maltodextrinPercent,
+        maltodextrinCarbsPerGram,
         sodiumSource,
+        existingSodium,
+        sodiumShortfall: mix.sodiumShortfall,
+        caffeinePerBottleMg,
+        caffeineBottleNumbers,
+        caffeineBottles,
+        totalCaffeineMg: caffeinePerBottleMg * caffeineBottles.length,
         notes: $("diyNotes").value
     };
+}
+function renderDiyResult() {
+    const mix = currentDiyMix();
+    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
+    const perBottle = Math.max(1, mix.bottleCount || 1);
+
+    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
+    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
+    $("diyPrimaryCarbLabel").textContent = mix.primaryCarbLabel || "table sugar";
+    $("diyMaltodextrinGrams").textContent = `${mix.maltodextrinGrams || 0} g`;
+    $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
+    $("diySugarTsp").textContent = mix.sugarTsp !== null ? `${formatTsp(mix.sugarTsp)} tsp` : "use product label for measure";
+    $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
+
+    const addedSodiumText = (mix.sodiumShortfall || 0) <= 0
+        ? "no additional salt needed; the electrolyte sodium meets the target"
+        : hasSalt
+            ? `add ${(mix.saltGrams / perBottle).toFixed(2)} g table salt per bottle`
+            : `use the product label to supply the remaining ${Math.round((mix.sodiumShortfall || 0) / perBottle)} mg sodium per bottle`;
+    const caffeineText = mix.caffeineBottles.length
+        ? ` Caffeine: ${mix.caffeinePerBottleMg} mg in bottle${mix.caffeineBottles.length > 1 ? "s" : ""} ${mix.caffeineBottles.join(", ")} (${mix.totalCaffeineMg} mg total from the drink).`
+        : " No caffeine added to the drink.";
+
+    $("diyPerBottleSummary").textContent =
+        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g ${(mix.primaryCarbLabel || "table sugar").toLowerCase()} · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.totalSodium / perBottle)} mg actual total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
+    $("diyResults").style.display = "flex";
+    $("diyPerBottleSummary").style.display = "";
+    $("diyConversionNote").style.display = "";
+    $("diyResults").dataset.snapshot = JSON.stringify(mix);
 }
 
 function refreshDiySnapshot() {
@@ -827,30 +983,36 @@ function refreshDiySnapshot() {
 
 $("includeHomemadeDrink").addEventListener("change", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
     renderPlanSummary();
 });
 
 $("diyCarbTarget").addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
     renderPlanSummary();
 });
 
 $("diySodiumTarget").addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
     renderPlanSummary();
 });
 
 ["diyBottleSize", "diyBottleCount"].forEach(id => $(id).addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
 }));
 
-["diyCarbSource", "diySodiumSource"].forEach(id => $(id).addEventListener("change", () => {
+["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyMaltodextrinYield", "diyExistingSodium", "diyCaffeinePerBottleMg", "diyCaffeineBottleNumbers"].forEach(id => $(id)?.addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
+    renderPlanSummary();
 }));
 
 $("diyNotes").addEventListener("input", () => {
@@ -917,24 +1079,9 @@ function renderSchedule() {
 ========================================== */
 
 $("diyCalculateBtn").addEventListener("click", () => {
-
-    const mix = currentDiyMix();
-    const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
-
-    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
-    $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
-    $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
-    $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
-    $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
-
-    $("diyResults").style.display = "flex";
-    $("diyConversionNote").style.display = "";
-
-    $("diyResults").dataset.snapshot = JSON.stringify(mix);
-
+    renderDiyResult();
     renderComposition();
     renderPlanSummary();
-
 });
 
 $("saveDiyRecipeBtn").addEventListener("click", async () => {
@@ -978,7 +1125,7 @@ function renderDiyRecipes() {
             <div>
                 <strong>${escapeHTML(r.name)}</strong>
                 <div class="fuel-saved-item-meta">
-                    ${r.sugarGrams}g sugar · ${r.saltGrams}g salt · ${r.totalFluid} oz water
+                    ${r.maltodextrinGrams || 0}g maltodextrin · ${r.sugarGrams}g ${r.primaryCarbLabel || "sugar"} · ${r.saltGrams}g added salt · ${r.totalFluid} oz water
                 </div>
             </div>
 
@@ -1047,7 +1194,7 @@ function renderLibrary() {
                 <span><b>${item.carbs}g</b> carb</span>
                 <span><b>${item.sodium}mg</b> sodium</span>
                 ${item.fluid ? `<span><b>${item.fluid}oz</b> fluid</span>` : ""}
-                ${item.caffeine ? `<span><b>Caffeine</b></span>` : ""}
+                ${item.caffeineMg ? `<span><b>${item.caffeineMg} mg caffeine</b></span>` : (item.caffeine ? `<span><b>Caffeine dose not entered</b></span>` : "")}
                 ${item.serving ? `<span>${escapeHTML(item.serving)}</span>` : ""}
                 ${item.price ? `<span>${escapeHTML(item.price)}</span>` : ""}
             </div>
@@ -1119,6 +1266,7 @@ function resetLibraryForm() {
     $("libServing").value = "";
     $("libPrice").value = "";
     $("libCaffeine").checked = false;
+    $("libCaffeineMg").value = 0;
 
 }
 
@@ -1136,7 +1284,8 @@ $("libraryForm").addEventListener("submit", (e) => {
         carbs: Number($("libCarbs").value) || 0,
         sodium: Number($("libSodium").value) || 0,
         fluid: Number($("libFluid").value) || 0,
-        caffeine: $("libCaffeine").checked,
+        caffeine: $("libCaffeine").checked || (Number($("libCaffeineMg").value) || 0) > 0,
+        caffeineMg: Math.max(0, Number($("libCaffeineMg").value) || 0),
         serving: $("libServing").value.trim(),
         price: $("libPrice").value.trim()
 
@@ -1181,6 +1330,7 @@ $("libraryGrid").addEventListener("click", (e) => {
         $("libServing").value = item.serving || "";
         $("libPrice").value = item.price || "";
         $("libCaffeine").checked = !!item.caffeine;
+        $("libCaffeineMg").value = Number(item.caffeineMg) || 0;
 
         $("libraryForm").style.display = "";
 
@@ -1215,7 +1365,7 @@ $("libraryGrid").addEventListener("click", (e) => {
         const existing = planItems.find(p => String(p.id) === addId);
 
         if (existing) existing.qty += 1;
-        else planItems.push({ id: item.id, name: item.name, carbs: item.carbs, sodium: item.sodium, fluid: item.fluid, caffeine: item.caffeine, qty: 1 });
+        else planItems.push({ id: item.id, name: item.name, carbs: item.carbs, sodium: item.sodium, fluid: item.fluid, caffeine: item.caffeine, caffeineMg: item.caffeineMg || 0, qty: 1 });
 
         renderComposition();
         renderPlanSummary();
@@ -1333,7 +1483,7 @@ function renderPlanSummary() {
             html += `
                 <div class="fuel-plan-row">
                     <span>Homemade Drink</span>
-                    <span>${snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.sugarGrams}g sugar · ${snapshot.saltGrams}g salt` : `${c.drinkCarbs}g carb · ${c.drinkSodium}mg sodium (calculate below)`}</span>
+                    <span>${snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.maltodextrinGrams || 0}g maltodextrin · ${snapshot.sugarGrams}g ${snapshot.primaryCarbLabel || "sugar"} · ${snapshot.saltGrams}g added salt · ${snapshot.totalCaffeineMg || 0}mg drink caffeine` : `${c.drinkCarbs}g carb · ${c.drinkSodium}mg sodium (calculate below)`}</span>
                 </div>
             `;
 
@@ -1378,7 +1528,9 @@ function workoutSummaryLabel() {
 
     const typeLabels = {
 
-        easy: "Easy Run", long: "Long Run", workout: "Workout",
+        easy: "Easy Run", long: "Long Run", workout: "Workout / Mixed Pace",
+        tempo: "Tempo / Threshold", intervals: "Intervals / Repeats",
+        progression: "Progression / Fast Finish",
         marathon: "Marathon", race: "Race", other: "Other"
 
     };
@@ -1436,11 +1588,17 @@ function buildPlanObject() {
             carbTarget: Number($("diyCarbTarget").value) || 0,
             sodiumTarget: Number($("diySodiumTarget").value) || 0,
             carbSource: $("diyCarbSource").value,
+            maltodextrinPercent: Number($("diyMaltodextrinPercent").value) || 0,
+            maltodextrinCarbsPerGram: Number($("diyMaltodextrinYield").value) || 0.95,
             sodiumSource: $("diySodiumSource").value,
+            existingSodium: Number($("diyExistingSodium").value) || 0,
+            caffeinePerBottleMg: Number($("diyCaffeinePerBottleMg").value) || 0,
+            caffeineBottleNumbers: $("diyCaffeineBottleNumbers").value,
             notes: $("diyNotes").value
         },
         preWorkoutFood,
         firstGelMin: Number($("firstGelMin").value) || DEFAULT_FIRST_GEL_MIN,
+        gelIntervalMin: Number($("gelIntervalMin").value) || DEFAULT_GEL_INTERVAL_MIN,
         session: lastSession
 
     };
@@ -1800,6 +1958,7 @@ function openPlan(id) {
     planItems = (plan.items || []).map(i => ({ ...i }));
 
     $("firstGelMin").value = plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN;
+    $("gelIntervalMin").value = plan.gelIntervalMin ?? DEFAULT_GEL_INTERVAL_MIN;
 
     preWorkoutFood = plan.preWorkoutFood || "";
     $("preWorkoutFood").value = preWorkoutFood;
@@ -1860,9 +2019,17 @@ if (plan.diyInputs) {
 
     $("diyCarbSource").value =
         plan.diyInputs.carbSource || "table-sugar";
+    $("diyMaltodextrinPercent").value =
+        plan.diyInputs.maltodextrinPercent ?? 50;
+    $("diyMaltodextrinYield").value =
+        plan.diyInputs.maltodextrinCarbsPerGram ?? 0.95;
+    $("diyExistingSodium").value =
+        plan.diyInputs.existingSodium ?? 0;
 
     $("diySodiumSource").value =
         plan.diyInputs.sodiumSource || "table-salt";
+    $("diyCaffeinePerBottleMg").value = plan.diyInputs.caffeinePerBottleMg ?? 60;
+    $("diyCaffeineBottleNumbers").value = plan.diyInputs.caffeineBottleNumbers ?? "";
 
     $("diyNotes").value =
         plan.diyInputs.notes || "";
@@ -1879,18 +2046,20 @@ if (plan.diySnapshot) {
 
     $("diySugarGrams").textContent =
         `${plan.diySnapshot.sugarGrams} g`;
+    $("diyPrimaryCarbLabel").textContent = plan.diySnapshot.primaryCarbLabel || "table sugar";
+    $("diyMaltodextrinGrams").textContent =
+        `${plan.diySnapshot.maltodextrinGrams || 0} g`;
 
     $("diySaltGrams").textContent =
         `${plan.diySnapshot.saltGrams} g`;
 
     $("diySugarTsp").textContent =
-        plan.diySnapshot.sugarTsp ?? "Use product label";
+        plan.diySnapshot.sugarTsp != null ? `${formatTsp(plan.diySnapshot.sugarTsp)} tsp` : "use product label for measure";
 
     $("diySaltTsp").textContent =
         plan.diySnapshot.saltTsp ?? "Use product label";
 
-    $("diyResults").style.display = "flex";
-    $("diyConversionNote").style.display = "";
+    renderDiyResult();
 }
 
 
@@ -1935,6 +2104,7 @@ function renderFuelingPage() {
 
     initCollapsiblePanels();
 
+    renderPaceEstimate();
     prefillFromWorkoutLink();
 
     // Picking a workout from the marathon block only makes sense for the

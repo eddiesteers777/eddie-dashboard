@@ -32,7 +32,8 @@ function statsHTML(s) {
         s.minPerMile ? ["Pace", paceLabel(s.minPerMile), "/mi"] : null,
         ["Carbs", `${avgCarbs}`, "g/hr"],
         ["Gels", `${s.gels.length}`, ""],
-        ["Bottles", `${s.bottles.length}`, ""]
+        ["Bottles", `${s.bottles.length}`, ""],
+        s.totals.caffeineMg > 0 ? ["Caffeine", `${s.totals.caffeineMg}`, "mg total"] : null
     ].filter(Boolean);
     return `<div class="fs-stats">${stats.map(([label, value, unit]) => `
         <div class="fs-stat"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>
@@ -73,11 +74,11 @@ function eventsHTML(s) {
         let meta = "";
         if (e.kind === "gel") {
             title = `Gel ${e.gel} <span class="fs-muted">·</span> ${esc(e.text)}`;
-            meta = `${e.carbs} g carb · ${e.sodium} mg sodium · chase with a few sips`;
+            meta = `${e.carbs} g carb · ${e.sodium} mg sodium${e.caffeineMg ? ` · ${e.caffeineMg} mg caffeine` : ""} · chase with a few sips`;
         } else if (e.kind === "bottle") {
             const b = s.bottles[e.bottle - 1];
             meta = b
-                ? `${b.oz} oz · ${b.carbs} g carb · ${b.sodium} mg sodium${b.ozPerMile != null ? ` · sip ~${b.ozPerMile} oz each mile` : ` · sip ~${b.ozPer10Min} oz every 10 min`}`
+                ? `${b.oz} oz · ${b.carbs} g carb · ${b.sodium} mg sodium${b.caffeineMg ? ` · ${b.caffeineMg} mg caffeine` : ""}${b.ozPerMile != null ? ` · sip ~${b.ozPerMile} oz each mile` : ` · sip ~${b.ozPer10Min} oz every 10 min`}`
                 : "";
         }
         return `
@@ -95,11 +96,17 @@ function eventsHTML(s) {
 function bottlesHTML(s) {
     if (!s.bottles.length) return "";
     const m = s.mix;
-    const carbAmount = m ? `${m.carbGrams} g ${esc(m.carbLabel.toLowerCase())}${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}` : "";
+    const carbAmount = !m ? "" : m.isBlend
+        ? `${m.maltodextrinGrams} g maltodextrin + ${m.tableSugarGrams} g table sugar`
+        : m.carbSource === "maltodextrin"
+            ? `${m.maltodextrinGrams} g maltodextrin`
+            : m.carbSource === "table-sugar"
+                ? `${m.tableSugarGrams} g table sugar${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}`
+                : `${m.carbGrams} g ${esc(m.carbLabel.toLowerCase())}${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}`;
     const sodiumAmount = m
         ? (m.sodiumGrams != null
-            ? `${m.sodiumGrams} g ${esc(m.sodiumLabel.toLowerCase())}${m.sodiumTsp != null ? ` (${formatTsp(m.sodiumTsp)} tsp)` : ""}`
-            : `${s.bottles[0].sodium} mg sodium from ${esc(m.sodiumLabel.toLowerCase())} (see label)`)
+            ? `${m.sodiumGrams} g added ${esc(m.sodiumLabel.toLowerCase())}${m.sodiumTsp != null ? ` (${formatTsp(m.sodiumTsp)} tsp)` : ""}`
+            : `${s.bottles[0].sodium} mg sodium from ${esc(m.sodiumLabel.toLowerCase())} (use product label)`)
         : "";
     return `
         <h4 class="fs-heading">Bottles</h4>
@@ -115,13 +122,14 @@ function bottlesHTML(s) {
                         ? `Sip <strong>~${b.ozPerMile} oz</strong> every mile <span class="fs-muted">(${b.gulpsPerMile} ${b.gulpsPerMile === 1 ? "gulp" : "gulps"})</span>`
                         : `Sip <strong>~${b.ozPer10Min} oz</strong> every 10 min`}
                 </div>
-                <div class="fs-bottle-macros">${b.oz} oz · ${b.carbs} g carb · ${b.sodium} mg sodium</div>
+                <div class="fs-bottle-macros">${b.oz} oz · ${b.carbs} g carb · ${b.sodium} mg sodium${b.caffeineMg ? ` · ${b.caffeineMg} mg caffeine` : ""}</div>
             </div>`).join("")}
         </div>
         ${m ? `
         <div class="fs-mix">
             <span class="fs-mix-label">Mix each bottle</span>
             <span>${s.bottles[0].oz} oz water + ${carbAmount} + ${sodiumAmount}</span>
+            ${m?.existingSodium ? `<span class="fs-muted">Includes ${Math.round(m.existingSodium)} mg sodium already supplied by your electrolyte mix per bottle.</span>` : ""}
             ${s.concentration != null ? `<span class="fs-muted">${s.concentration}% carb solution</span>` : ""}
         </div>` : ""}`;
 }
