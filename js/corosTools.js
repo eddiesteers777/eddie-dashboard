@@ -72,3 +72,25 @@ export function healthSummary(tools) {
             : "No sleep / HRV / resting heart rate tools listed beyond recovery status."
     };
 }
+
+// Can COROS take a strength workout from Southbound? Read from the
+// workout tools' own descriptions and fields (the connection only lists
+// what it accepts), so the answer comes from the real account, not a guess.
+// -> { status: "pass" | "warn", answer: "yes" | "no" | "unclear", text }
+// Not "sets" / "reps": a run's interval groups use those words too.
+const STRENGTH = /strength|\bgym\b|weight ?(training|lifting)|weightlifting|barbell|dumbbell/i;
+export function strengthSupport(tools) {
+    const writers = (tools || []).filter(t => t?.name && !READ.test(t.name) && WORKOUTISH.test(t.name));
+    if (!writers.length) return { status: "warn", answer: "no", text: "No: COROS lists no tool that can send a workout." };
+    const hits = writers.filter(t => STRENGTH.test(`${t.description || ""} ${JSON.stringify(t.inputSchema || {})}`));
+    if (hits.length) return { status: "pass", answer: "yes", text: `Maybe: ${hits.map(t => t.name).join(", ")} mention strength. Tap "Copy COROS workout tool details" and send it over so it can be built.` };
+    const sport = writers.map(t => t.inputSchema?.properties?.sportType || t.inputSchema?.properties?.course?.properties?.sportType).find(Boolean);
+    const words = sport ? [sport.description, Array.isArray(sport.enum) ? `takes ${sport.enum.join(", ")}` : ""].filter(Boolean).join("; ") : "";
+    return {
+        status: "warn",
+        answer: sport ? "no" : "unclear",
+        text: sport
+            ? `Not that we can see: ${writers.map(t => t.name).join(", ")} say nothing about strength${words ? ` (sport type: ${words.slice(0, 160)})` : ""}.`
+            : `Unclear: ${writers.map(t => t.name).join(", ")} don't say which sports they take. Tap "Copy COROS workout tool details" and send it over.`
+    };
+}

@@ -48,3 +48,15 @@ test("health data: which read tools might have sleep / HRV / resting heart rate"
     assert.deepEqual(healthSummary(tools), { status: "pass", text: "COROS shares: queryDailyMetrics, queryRecoveryStatus, querySleepRecords (mentions sleep, HRV, resting heart rate)." });
     assert.equal(healthSummary([{ name: "querySportRecords" }]).status, "warn");
 });
+
+test("strength to the watch: read from the real workout tools, never guessed", async () => {
+    const { strengthSupport } = await import("../js/corosTools.js");
+    const runOnly = [{ name: "createScheduledWorkout", description: "Schedule a structured workout with interval sets and reps", inputSchema: { properties: { course: { properties: { sportType: { type: "integer", description: "1 = running", enum: [1] } } } } } }];
+    const no = strengthSupport(runOnly);
+    assert.equal(no.answer, "no");
+    assert.match(no.text, /say nothing about strength.*1 = running; takes 1/);
+    const yes = strengthSupport([{ name: "createScheduledWorkout", description: "Run or strength training workouts" }]);
+    assert.equal(yes.answer, "yes");
+    assert.equal(strengthSupport([{ name: "createScheduledWorkout" }]).answer, "unclear");
+    assert.equal(strengthSupport([{ name: "queryTrainingSchedule" }]).answer, "no");
+});

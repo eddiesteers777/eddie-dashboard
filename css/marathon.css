@@ -1950,3 +1950,22 @@ html{
     font-family:var(--font-mono, monospace);
     font-size:.82rem;
 }
+
+/* One workout to the watch, under its day (js/marathonCorosButton.js) */
+.mp-coros-send{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:8px;
+    min-height:36px;
+    padding:6px 14px;
+    border:1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+    border-radius:var(--radius-pill, 999px);
+    background:transparent;
+    color:var(--primary-light, var(--primary));
+    font:600 .82rem var(--font-body, inherit);
+    cursor:pointer;
+}
+.mp-coros-send:hover{ background:color-mix(in srgb, var(--primary) 12%, transparent); }
+.mp-coros-send:disabled{ opacity:.6; cursor:default; }
+.mp-coros-send svg{ width:14px; height:14px; }
