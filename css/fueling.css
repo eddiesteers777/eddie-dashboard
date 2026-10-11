@@ -2677,3 +2677,86 @@ html.fs-sheet-open{overflow:hidden;}
     cursor:pointer;
 }
 .fuel-collapse-btn:hover{ color:var(--text); border-color:var(--primary); }
+
+
+/* ==========================================================
+   PACE → DURATION ESTIMATE
+   Live estimate used by the fueling planner; no separate pace
+   calculator is needed.
+========================================================== */
+
+.fuel-pace-estimate {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 18px;
+    padding: 16px 18px;
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-light);
+    transition: border-color .2s ease, background .2s ease;
+}
+
+.fuel-pace-estimate.is-ready {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}
+
+.fuel-pace-estimate > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fuel-pace-estimate-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fuel-pace-estimate strong {
+    color: var(--text);
+    font-size: clamp(20px, 3vw, 28px);
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.fuel-pace-estimate p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+#paceHelp {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+#diyPerBottleSummary {
+    padding: 12px 14px;
+    border-left: 3px solid var(--primary);
+    background: var(--surface-light);
+    border-radius: 0 10px 10px 0;
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+    .fuel-pace-estimate {
+        padding: 14px;
+        gap: 10px;
+    }
+
+    .fuel-pace-estimate strong {
+        font-size: 20px;
+    }
+}
