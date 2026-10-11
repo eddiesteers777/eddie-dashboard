@@ -49,6 +49,7 @@ export function diyMix({
     carbSource = "table-sugar",
     sodiumSource = "table-salt",
     maltodextrinPercent = 0,
+    maltodextrinCarbsPerGram = DIY_CARB_SOURCES.maltodextrin.carbsPerGram,
     existingSodium = 0
 }) {
     const aliases = { juice: "fruit-juice", "sports-powder": "sports-drink-powder" };
@@ -58,10 +59,11 @@ export function diyMix({
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
     const carbGoal = Math.max(0, Number(carbTarget) || 0);
     const maltoShare = Math.min(100, Math.max(0, Number(maltodextrinPercent) || 0)) / 100;
+    const maltoYield = Math.min(1, Math.max(0.5, Number(maltodextrinCarbsPerGram) || DIY_CARB_SOURCES.maltodextrin.carbsPerGram));
     const maltodextrinCarbs = useBlend ? round1(carbGoal * maltoShare) : (requestedSource === "maltodextrin" ? carbGoal : 0);
     const sugarCarbs = useBlend ? Math.max(0, round1(carbGoal - maltodextrinCarbs)) : (requestedSource === "table-sugar" ? carbGoal : 0);
-    const carbGrams = round1(carbGoal / carb.carbsPerGram);
-    const maltodextrinGrams = useBlend || requestedSource === "maltodextrin" ? round1(maltodextrinCarbs / DIY_CARB_SOURCES.maltodextrin.carbsPerGram) : 0;
+    const carbGrams = round1(carbGoal / (requestedSource === "maltodextrin" ? maltoYield : carb.carbsPerGram));
+    const maltodextrinGrams = useBlend || requestedSource === "maltodextrin" ? round1(maltodextrinCarbs / maltoYield) : 0;
     const tableSugarGrams = useBlend || requestedSource === "table-sugar" ? round1(sugarCarbs) : 0;
     const sodiumShortfall = Math.max(0, (Number(sodiumTarget) || 0) - (Number(existingSodium) || 0));
     const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumShortfall / sodium.sodiumPerGram) * 100) / 100 : null;
@@ -124,6 +126,7 @@ export function scheduleInputFromPlan(plan) {
             sodium: Number(diy.sodiumTarget) || 0,
             carbSource: diy.carbSource || "table-sugar",
             maltodextrinPercent: Number(diy.maltodextrinPercent) || 0,
+            maltodextrinCarbsPerGram: Number(diy.maltodextrinCarbsPerGram) || DIY_CARB_SOURCES.maltodextrin.carbsPerGram,
             sodiumSource: diy.sodiumSource || "table-salt",
             existingSodium: Number(diy.existingSodium) || 0,
             caffeinePerBottleMg: Number(diy.caffeinePerBottleMg) || 0,
@@ -194,6 +197,7 @@ export function buildSchedule(input) {
             sodiumTarget: sodiumEach,
             carbSource: drink.carbSource,
             maltodextrinPercent: drink.maltodextrinPercent,
+            maltodextrinCarbsPerGram: drink.maltodextrinCarbsPerGram,
             sodiumSource: drink.sodiumSource,
             existingSodium: (Number(drink.existingSodium) || 0) / count
         });
