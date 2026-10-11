@@ -992,7 +992,7 @@ $("diySodiumTarget").addEventListener("input", () => {
     renderComposition();
 }));
 
-["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyExistingSodium", "diyCaffeinePerBottleMg", "diyCaffeineBottleNumbers"].forEach(id => $(id)?.addEventListener("input", () => {
+["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyMaltodextrinYield", "diyExistingSodium", "diyCaffeinePerBottleMg", "diyCaffeineBottleNumbers"].forEach(id => $(id)?.addEventListener("input", () => {
     refreshDiySnapshot();
     if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
