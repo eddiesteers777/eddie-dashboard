@@ -1025,7 +1025,6 @@ $("diyCalculateBtn").addEventListener("click", () => {
     $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
     $("diyMaltodextrinGrams").textContent = `${mix.maltodextrinGrams || 0} g`;
     $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
-    $("diyMaltodextrinGrams").textContent = `${mix.maltodextrinGrams || 0} g`;
     $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
     const perBottle = Math.max(1, mix.bottleCount || 1);
     $("diyPerBottleSummary").textContent =
@@ -1972,13 +1971,10 @@ if (plan.diyInputs) {
     $("diyMaltodextrinPercent").value =
         plan.diyInputs.maltodextrinPercent ?? 50;
     $("diyExistingSodium").value =
-        plan.diyInputs.existingSodium || 0;
+        plan.diyInputs.existingSodium ?? 0;
 
     $("diySodiumSource").value =
         plan.diyInputs.sodiumSource || "table-salt";
-
-    $("diyMaltodextrinPercent").value = plan.diyInputs.maltodextrinPercent ?? 50;
-    $("diyExistingSodium").value = plan.diyInputs.existingSodium ?? 0;
 
     $("diyNotes").value =
         plan.diyInputs.notes || "";
