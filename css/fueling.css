@@ -2760,3 +2760,32 @@ html.fs-sheet-open{overflow:hidden;}
         font-size: 20px;
     }
 }
+
+
+.fs-schedule-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fs-schedule-controls .fs-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fs-schedule-controls input {
+    width: 64px;
+}
+
+@media (max-width: 600px) {
+    .fs-schedule-controls {
+        width: 100%;
+    }
+
+    .fs-schedule-controls .fs-control {
+        flex: 1 1 140px;
+        justify-content: space-between;
+    }
+}
