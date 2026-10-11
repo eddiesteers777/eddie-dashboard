@@ -43,18 +43,38 @@ const round1 = value => Math.round(value * 10) / 10;
 // How much of an ingredient a drink needs. Returns grams (and teaspoons
 // where the ingredient has a standard measure), or null grams when the
 // amount has to come from the product's own label.
-export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-sugar", sodiumSource = "table-salt" }) {
+export function diyMix({
+    carbTarget = 0,
+    sodiumTarget = 0,
+    carbSource = "table-sugar",
+    sodiumSource = "table-salt",
+    maltodextrinPercent = 0,
+    existingSodium = 0
+}) {
     const carb = DIY_CARB_SOURCES[carbSource] || DIY_CARB_SOURCES["table-sugar"];
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
-    const carbGrams = round1(carbTarget / carb.carbsPerGram);
-    const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumTarget / sodium.sodiumPerGram) * 100) / 100 : null;
+    const target = Math.max(0, Number(carbTarget) || 0);
+    const maltoShare = Math.min(100, Math.max(0, Number(maltodextrinPercent) || 0)) / 100;
+    const isBlend = carbSource === "blend";
+    const maltodextrinCarbs = isBlend ? round1(target * maltoShare) : (carbSource === "maltodextrin" ? target : 0);
+    const sugarCarbs = isBlend ? Math.max(0, round1(target - maltodextrinCarbs)) : (carbSource === "table-sugar" ? target : 0);
+    const carbGrams = round1(target / carb.carbsPerGram);
+    const maltodextrinGrams = isBlend || carbSource === "maltodextrin" ? round1(maltodextrinCarbs / DIY_CARB_SOURCES.maltodextrin.carbsPerGram) : 0;
+    const tableSugarGrams = isBlend || carbSource === "table-sugar" ? round1(sugarCarbs / DIY_CARB_SOURCES["table-sugar"].carbsPerGram) : 0;
+    const sodiumShortfall = Math.max(0, (Number(sodiumTarget) || 0) - (Number(existingSodium) || 0));
+    const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumShortfall / sodium.sodiumPerGram) * 100) / 100 : null;
     return {
-        carbLabel: carb.label,
+        carbLabel: isBlend ? "Maltodextrin + Table Sugar" : carb.label,
         sodiumLabel: sodium.label,
         carbGrams,
-        carbTsp: carb.gPerTsp ? carbGrams / carb.gPerTsp : null,
+        maltodextrinGrams,
+        tableSugarGrams,
+        maltodextrinCarbs,
+        tableSugarCarbs: sugarCarbs,
+        carbTsp: carb.gPerTsp ? carbGrams / carb.gPerTsp : (isBlend ? tableSugarGrams / DIY_CARB_SOURCES["table-sugar"].gPerTsp : null),
         sodiumGrams,
-        sodiumTsp: sodium.gPerTsp && sodiumGrams != null ? sodiumGrams / sodium.gPerTsp : null
+        sodiumTsp: sodium.gPerTsp && sodiumGrams != null ? sodiumGrams / sodium.gPerTsp : null,
+        sodiumShortfall
     };
 }
 
@@ -90,7 +110,9 @@ export function scheduleInputFromPlan(plan) {
             carbs: Number(diy.carbTarget) || 0,
             sodium: Number(diy.sodiumTarget) || 0,
             carbSource: diy.carbSource || "table-sugar",
-            sodiumSource: diy.sodiumSource || "table-salt"
+            maltodextrinPercent: Number(diy.maltodextrinPercent) || 0,
+            sodiumSource: diy.sodiumSource || "table-salt",
+            existingSodium: Number(diy.existingSodium) || 0
         } : null,
         targets: {
             carbsPerHour: Number(plan.carbsPerHour) || 0,
@@ -153,7 +175,9 @@ export function buildSchedule(input) {
             carbTarget: carbsEach,
             sodiumTarget: sodiumEach,
             carbSource: drink.carbSource,
-            sodiumSource: drink.sodiumSource
+            maltodextrinPercent: drink.maltodextrinPercent,
+            sodiumSource: drink.sodiumSource,
+            existingSodium: drink.existingSodium
         });
         for (let i = 0; i < count; i++) {
             const startMin = perBottleMin * i;
