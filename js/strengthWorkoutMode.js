@@ -20,7 +20,9 @@ import { strengthSession, strengthTotals, resumableSession, newSessionId, clock 
 import { storedSessions, saveSession } from "./sessionStore.js";
 import { logSession } from "./strengthHistory.js";
 import { sbConfirm, toast } from "./ui.js";
-import { recordsOn } from "./strengthProgress.js";
+import { recordsOn, lastLifts } from "./strengthProgress.js";
+import { planRunSteps, runnerStep } from "./strengthRunSteps.js";
+import { runSets } from "./setRunner.js";
 import { restAfterSet, SET_TYPES, SET_TYPE_WORDS, repsMaxValue } from "./strengthBuilderModel.js";
 import {
     SETTINGS_KEY, cleanSettings, toDisplay, fromDisplay, unitLabel, unitWord, stepFor, nudge,
@@ -650,28 +652,59 @@ function renderBody() {
    Open / close
 ========================================== */
 
-function openWorkoutMode(dayId) {
+// Start: the same set-by-set screen a client gets for the coach's session
+// (js/setRunner.js). Each Done set is saved on the workout at once (so a
+// reload picks up where it left off); the end goes through finishWorkout.
+async function openWorkoutMode(dayId) {
     activeDayId = dayId;
-    expandedExerciseIds = new Set();
-
-    const overlay = $("strengthWorkoutOverlay");
-
-    if (!overlay) {
+    const day = getActiveDay();
+    if (!day) return;
+    activeSession = sessionFor(dayId);
+    const order = planRunSteps(day);
+    if (!order.length) {
+        toast("This workout has no sets yet. Add exercises first.", { type: "info" });
+        activeDayId = null;
         return;
     }
+    const unit = units();
+    let effort = "rpe";
+    try { effort = cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null")).effort; } catch { /* default */ }
+    let lifts = {};
+    try { lifts = lastLifts(JSON.parse(localStorage.getItem("strength-history") || "{}") || {}, { before: localDate() }); } catch { lifts = {}; }
+    const steps = order.map(step => runnerStep(step, { unit, effort, last: lifts[String(step.name).trim().toLowerCase()] }));
+    const first = steps.findIndex(s => !s.done);
+    await runSets({
+        steps,
+        startIndex: first < 0 ? 0 : first,
+        startedAt: activeSession.resumed ? Date.now() : activeSession.startedAt,
+        ariaLabel: day.name || "Strength workout",
+        onDone(step, got) {
+            updatePlan(d => {
+                const set = findExercise(d, step.exId)?.sets?.find(x => x.id === step.setId);
+                if (!set) return;
+                if (step.time) {
+                    if (got.duration !== "") set.duration = Math.max(0, Math.round(Number(got.duration) || 0));
+                } else {
+                    set.weight = got.weight === "" ? 0 : fromDisplay(got.weight, unit);
+                    if (got.reps !== "") set.reps = Math.max(0, Math.round(Number(got.reps) || 0));
+                }
+                set.done = true;
+            });
+        },
+        onSkip(step) {
+            updatePlan(d => {
+                const set = findExercise(d, step.exId)?.sets?.find(x => x.id === step.setId);
+                if (set) set.done = false;
+            });
+        },
+        onFinish: () => finishWorkout(),
+        onClose: () => closeWorkoutMode(),
+        platesHtml: (step, got) => renderPlateCalc(got.weight === "" ? step.weight : fromDisplay(got.weight, unit))
+    });
+}
 
-    overlay.classList.add("open");
-    document.documentElement.classList.add("strength-workout-open");
-    renderBody();
-    updateProgress();
-    activeSession = sessionFor(dayId);
-    startTimer(activeSession.resumed ? Date.now() : activeSession.startedAt);
-
-    const timerEl = $("workoutModeTimer");
-
-    if (timerEl) {
-        timerEl.textContent = formatElapsed(Date.now() - timerStartedAt);
-    }
+function localDate(d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // Which completed session this opening of Workout Mode is: the one just

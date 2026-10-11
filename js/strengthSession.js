@@ -29,6 +29,7 @@ import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effo
 import { parseDuration, formatDuration } from "./runWorkout.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
+import { runSets } from "./setRunner.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
 import { historyFromResults, mergeHistories, lastLifts, lastLiftWords, recordsOn } from "./strengthProgress.js";
@@ -182,150 +183,45 @@ function render() {
 }
 
 // ---------- Session mode ----------
-
-let wakeLock = null;
+// The set-by-set screen is shared with the Strength page's Start (js/setRunner.js).
 
 async function startSession() {
-    const steps = sessionSteps(state.lift);
-    if (!steps.length) return;
+    const order = sessionSteps(state.lift);
+    if (!order.length) return;
     const actual = blankActual(state.lift);
     const labels = exerciseLabels(state.lift.exercises);
-    const started = Date.now();
-    let index = 0;
-    let resting = null;   // { until, next }
-    let timer = null;
-
-    const overlay = document.createElement("div");
-    overlay.className = "wo-mode st-mode";
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-label", "Strength session");
-    document.body.appendChild(overlay);
-    document.body.classList.add("wo-mode-open");
-    try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { wakeLock = null; }
-
-    const doneCount = () => actual.reduce((n, ex) => n + ex.sets.filter(s => s.done).length, 0);
-    const top = () => `
-        <div class="wo-mode-top">
-            <span>Set ${index + 1} of ${steps.length}</span>
-            <span>${formatDuration(Math.floor((Date.now() - started) / 1000)) || "0:00"} total</span>
-            <button type="button" class="wo-mode-close" data-mode="end" aria-label="End session">${icon("close")}</button>
-        </div>
-        <div class="wo-mode-progress"><span style="width:${Math.round((doneCount() / steps.length) * 100)}%"></span></div>`;
-
-    const stepHtml = () => {
-        const step = steps[index];
+    const steps = order.map(step => {
         const ex = state.lift.exercises[step.ex];
         const set = actual[step.ex].sets[step.set - 1];
-        const next = steps[index + 1];
-        return `
-            ${top()}
-            <div class="wo-mode-main phase-work st-mode-main">
-                <span class="wo-mode-phase">${esc(labels[step.ex])} · Set ${step.set} of ${step.of}</span>
-                <h2>${esc(ex.name)}</h2>
-                <span class="wo-mode-target">${esc(ex.reps)}${ex.weight ? ` @ ${ex.weight} lb` : ""}${ex.rpe ? ` · RPE ${ex.rpe}` : ""}${Number.isInteger(ex.rir) ? ` · ${ex.rir} in reserve` : ""}</span>
-                ${lastTimeText(ex.name) ? `<p class="st-mode-last">${esc(lastTimeText(ex.name))}</p>` : ""}
-                ${ex.note ? `<p class="st-mode-note">${esc(ex.note)}</p>` : ""}
-                <div class="st-mode-inputs">
-                    <label>Weight (lb)<input class="st-big-input" type="number" inputmode="decimal" min="0" max="2000" step="2.5" data-in="weight" value="${esc(set.weight ?? "")}" placeholder="—"></label>
-                    <label>Reps<input class="st-big-input" type="number" inputmode="numeric" min="0" max="1000" data-in="reps" value="${esc(set.reps ?? "")}"></label>
-                </div>
-                ${demoLink(ex)}
-            </div>
-            <p class="wo-mode-next">${next ? `Next: ${esc(state.lift.exercises[next.ex].name)} · set ${next.set}${step.restAfter ? ` after ${restText(step.restAfter)} rest` : ""}` : "Last set"}</p>
-            <div class="wo-mode-actions">
-                <button type="button" class="sb-btn sb-btn-secondary" data-mode="skip">Skip set</button>
-                <button type="button" class="sb-btn sb-btn-primary" data-mode="done">${icon("check")} ${next ? "Done set" : "Finish"}</button>
-            </div>`;
-    };
-
-    const restHtml = () => {
-        const left = Math.ceil((resting.until - Date.now()) / 1000);
-        const next = steps[index];
-        const ex = state.lift.exercises[next.ex];
-        return `
-            ${top()}
-            <div class="wo-mode-main phase-recovery">
-                <span class="wo-mode-phase">Rest</span>
-                <span class="wo-mode-clock${left <= 0 ? " is-over" : ""}" aria-live="off">${left > 0 ? formatDuration(left) || "0:00" : "Go!"}</span>
-                <span class="wo-mode-clock-label">${left > 0 ? "until your next set" : "rest is up"}</span>
-            </div>
-            <p class="wo-mode-next">Next: ${esc(labels[next.ex])} ${esc(ex.name)} · set ${next.set} of ${next.of} · ${esc(ex.reps)}${ex.weight ? ` @ ${ex.weight} lb` : ""}</p>
-            <div class="wo-mode-actions">
-                <button type="button" class="sb-btn sb-btn-secondary" data-mode="more">+30 sec</button>
-                <button type="button" class="sb-btn sb-btn-primary" data-mode="go">Next set ${icon("chevronRight")}</button>
-            </div>`;
-    };
-
-    let buzzed = false;
-    const paint = () => {
-        if (resting && !buzzed && Date.now() >= resting.until) {
-            buzzed = true;
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-        }
-        // Don't rebuild the inputs under the athlete's thumb every second.
-        if (!resting && overlay.querySelector("[data-in]")) {
-            const clock = overlay.querySelector(".wo-mode-top span:nth-child(2)");
-            if (clock) clock.textContent = `${formatDuration(Math.floor((Date.now() - started) / 1000)) || "0:00"} total`;
-            return;
-        }
-        overlay.innerHTML = resting ? restHtml() : stepHtml();
-    };
-
-    const close = () => {
-        clearInterval(timer);
-        overlay.remove();
-        document.body.classList.remove("wo-mode-open");
-        wakeLock?.release?.().catch(() => {});
-        wakeLock = null;
-    };
-
-    const finish = () => {
-        const total = Math.floor((Date.now() - started) / 1000);
-        close();
-        openLogForm({ actual, durationSec: total });
-    };
-
-    const advance = () => {
-        const step = steps[index];
-        index++;
-        if (index >= steps.length) return finish();
-        if (step.restAfter) { resting = { until: Date.now() + step.restAfter * 1000 }; buzzed = false; }
-        overlay.innerHTML = resting ? restHtml() : stepHtml();
-    };
-
-    overlay.addEventListener("click", async event => {
-        const btn = event.target.closest("[data-mode]");
-        if (!btn) return;
-        const what = btn.dataset.mode;
-        if (what === "done" || what === "skip") {
-            const step = steps[index];
-            const set = actual[step.ex].sets[step.set - 1];
-            if (what === "done") {
-                const w = overlay.querySelector('[data-in="weight"]').value;
-                const r = overlay.querySelector('[data-in="reps"]').value;
-                set.weight = w === "" ? null : Number(w);
-                set.reps = r === "" ? repsNumber(state.lift.exercises[step.ex].reps) : Number(r);
-                set.done = true;
-                // The next set of this exercise starts from what they just lifted.
-                const later = actual[step.ex].sets[step.set];
-                if (later && !later.done && set.weight) later.weight = set.weight;
-            } else {
-                set.done = false;
-            }
-            return advance();
-        }
-        if (what === "more" && resting) { resting.until += 30000; buzzed = false; return paint(); }
-        if (what === "go") { resting = null; overlay.innerHTML = stepHtml(); return; }
-        if (what === "end") {
-            if (!(await sbConfirm(doneCount() ? "What you've done so far goes into the log." : "You can log it afterwards.", { title: "End the session?", confirmLabel: "End session", cancelLabel: "Keep going" }))) return;
-            if (doneCount()) return finish();
-            close();
-        }
+        return {
+            ...step,
+            phase: `${labels[step.ex]} · Set ${step.set} of ${step.of}`,
+            name: ex.name,
+            label: labels[step.ex],
+            setNo: step.set,
+            target: `${ex.reps}${ex.weight ? ` @ ${ex.weight} lb` : ""}${ex.rpe ? ` · RPE ${ex.rpe}` : ""}${Number.isInteger(ex.rir) ? ` · ${ex.rir} in reserve` : ""}`,
+            targetShort: `${ex.reps}${ex.weight ? ` @ ${ex.weight} lb` : ""}`,
+            last: lastTimeText(ex.name),
+            note: ex.note || "",
+            extra: demoLink(ex),
+            carry: `ex${step.ex}`,
+            inputs: [
+                { key: "weight", label: "Weight (lb)", value: set.weight ?? "", placeholder: "—", inputmode: "decimal", step: "2.5", min: 0, max: 2000 },
+                { key: "reps", label: "Reps", value: set.reps ?? "", inputmode: "numeric", step: "1", min: 0, max: 1000 }
+            ]
+        };
     });
-
-    overlay.innerHTML = stepHtml();
-    timer = setInterval(() => { if (resting) overlay.innerHTML = restHtml(); else paint(); }, 1000);
+    await runSets({
+        steps,
+        onDone(step, got) {
+            const set = actual[step.ex].sets[step.set - 1];
+            set.weight = got.weight === "" ? null : Number(got.weight);
+            set.reps = got.reps === "" ? repsNumber(state.lift.exercises[step.ex].reps) : Number(got.reps);
+            set.done = true;
+        },
+        onSkip(step) { actual[step.ex].sets[step.set - 1].done = false; },
+        onFinish({ durationSec }) { openLogForm({ actual, durationSec }); }
+    });
 }
 
 // ---------- Log it ----------

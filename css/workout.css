@@ -217,6 +217,13 @@ body.wo-mode-open{ overflow:hidden; }
     font:800 30px var(--font-body) !important;
 }
 .st-mode .wo-mode-main h2{ font-size:clamp(30px, 8vw, 48px); line-height:1.05; }
+/* The boxes size to the column on any page (the Strength page has no form styles of its own here). */
+.st-mode-inputs label{ min-width:0; }
+.st-mode-inputs input{ width:100%; min-width:0; box-sizing:border-box; }
+.st-mode-inputs.is-one{ grid-template-columns:1fr; width:min(220px, 100%); }
+.st-mode-tool{ min-height:40px; }
+.st-mode-plates{ width:min(360px, 100%); }
+.st-mode-plates .strength-plate-result{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
 .st-mode .wo-mode-actions{ grid-template-columns:1fr 2fr; }
 .wo-change{ margin-top:6px; padding-left:0; color:var(--text-secondary); }
 
