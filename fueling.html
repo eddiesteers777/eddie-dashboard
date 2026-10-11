@@ -217,7 +217,10 @@
 
                             <option value="easy">Easy Run</option>
                             <option value="long">Long Run</option>
-                            <option value="workout">Workout</option>
+                            <option value="workout">Workout / Mixed Pace</option>
+                            <option value="tempo">Tempo / Threshold</option>
+                            <option value="intervals">Intervals / Repeats</option>
+                            <option value="progression">Progression / Fast Finish</option>
                             <option value="marathon">Marathon</option>
                             <option value="race">Race</option>
                             <option value="other">Other</option>
@@ -258,14 +261,30 @@
 
                     <label class="fuel-field">
 
-                        <span>Pace (per mile, optional)</span>
+                        <span>Goal Average Pace (min:sec per mile)</span>
 
                         <input
                             type="text"
                             id="pace"
-                            placeholder="e.g. 8:15">
+                            inputmode="numeric"
+                            placeholder="e.g. 8:15"
+                            aria-describedby="paceHelp">
+
+                        <small id="paceHelp">Enter miles + pace to calculate duration automatically. For workouts with intervals or a fast finish, use your expected average pace for the whole session.</small>
 
                     </label>
+
+                    <div class="fuel-pace-estimate" id="paceDurationPreview" aria-live="polite">
+                        <div>
+                            <span class="fuel-pace-estimate-label">Estimated duration</span>
+                            <strong id="estimatedDuration">Enter distance and pace</strong>
+                        </div>
+                        <div>
+                            <span class="fuel-pace-estimate-label">Average pace</span>
+                            <strong id="estimatedPace">—</strong>
+                        </div>
+                        <p id="paceDurationNote">This estimate drives the fueling targets and the mile/time schedule below.</p>
+                    </div>
 
                 </div>
 
@@ -738,13 +757,13 @@
 
                 <div class="fuel-card">
 
-                    <h3>Targets (total across bottles)</h3>
+                    <h3>Targets (entire batch)</h3>
 
                     <div class="fuel-field-row">
 
                         <label class="fuel-field">
 
-                            <span>Carbs (g)</span>
+                            <span>Carbs (g, from all carbohydrate ingredients)</span>
 
                             <input
                                 type="number"
@@ -757,7 +776,7 @@
 
                         <label class="fuel-field">
 
-                            <span>Sodium (mg)</span>
+                            <span>Total sodium target (mg)</span>
 
                             <input
                                 type="number"
@@ -797,6 +816,7 @@
 
                                 <option value="table-sugar" selected>Table Sugar</option>
                                 <option value="maltodextrin">Maltodextrin</option>
+                                <option value="blend">Maltodextrin + Table Sugar</option>
                                 <option value="blend">Maltodextrin + Table Sugar Blend</option>
                                 <option value="honey">Honey</option>
                                 <option value="juice">Fruit Juice</option>
@@ -893,6 +913,13 @@
 
                 <div class="fuel-diy-stat">
 
+                    <span id="diyMaltodextrinGrams">0 g</span>
+                    <small>maltodextrin</small>
+
+                </div>
+
+                <div class="fuel-diy-stat">
+
                     <span id="diySaltGrams">0 g</span>
                     <small>table salt (≈ <span id="diySaltTsp">0</span> tsp)</small>
 
@@ -907,6 +934,8 @@
                 </button>
 
             </div>
+
+            <p class="fuel-note" id="diyPerBottleSummary" style="display:none;"></p>
 
             <p class="fuel-note" id="diyConversionNote" style="display:none;">
 
