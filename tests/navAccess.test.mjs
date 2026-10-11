@@ -45,14 +45,14 @@ test("the Sessions tab: soccer clients without a plan, nobody else", () => {
 test("training clients: the training pages, no Schedule, no coach pages", () => {
     for (const who of ["running", "strength", "online"]) {
         assert.deepEqual(allowed(who), ["checkin.html", "clients.html", "cross-training.html", "fueling.html", "habits.html",
-            "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "running.html",
+            "messages.html", "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "running.html",
             "strength.html", "train.html", "updates.html", "workout.html"], who);
     }
 });
 
 test("soccer clients: Schedule and Habits; Plan + check-in only with a coach plan; no fueling or nutrition", () => {
-    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "profile.html", "progress.html", "schedule.html", "updates.html"]);
-    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "plan.html", "profile.html", "progress.html", "schedule.html", "updates.html", "workout.html"]);
+    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "messages.html", "profile.html", "progress.html", "schedule.html", "updates.html"]);
+    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "messages.html", "plan.html", "profile.html", "progress.html", "schedule.html", "updates.html", "workout.html"]);
     assert.ok(!pageAllowed("fueling.html", people.soccerWithPlan) && !pageAllowed("nutrition.html", people.soccerWithPlan));
     assert.ok(pageAllowed("schedule.html", people.hybrid) && pageAllowed("running.html", people.hybrid));
 });
@@ -60,7 +60,7 @@ test("soccer clients: Schedule and Habits; Plan + check-in only with a coach pla
 test("pending, archived, no services, signed out", () => {
     assert.deepEqual(allowed("pending"), ["profile.html"]);
     assert.deepEqual(allowed("archived"), []);
-    assert.deepEqual(allowed("noServices"), ["clients.html", "profile.html", "updates.html"]);
+    assert.deepEqual(allowed("noServices"), ["clients.html", "messages.html", "profile.html", "updates.html"]);
     assert.deepEqual(allowed("signedOut"), []);
     for (const who of Object.keys(people)) assert.ok(pageAllowed("index.html", people[who]) && pageAllowed("settings.html", people[who]) && pageAllowed("more.html", people[who]), who);
 });

@@ -296,3 +296,25 @@ export function sendChangeReplyEmail({ clientEmail, clientName, coachName, text 
         page: "plan.html"
     });
 }
+
+// ---- Messages (js/messages.js; only the first unread message of a run) ----
+
+export function sendClientMessageEmail({ clientName, clientUid, text }) {
+    return coachAlert({
+        subject: `${clientName || "A client"} sent you a message`,
+        headline: `${clientName || "A client"} sent you a message.`,
+        details: text ? `"${text}"` : "",
+        page: clientUid ? `client.html?uid=${encodeURIComponent(clientUid)}&tab=messages` : "coach.html"
+    });
+}
+
+export function sendCoachMessageEmail({ clientEmail, clientName, coachName, text }) {
+    return clientUpdate({
+        toEmail: clientEmail,
+        toName: clientName,
+        subject: "A message from your coach",
+        headline: `${coachName || "Your coach"} sent you a message.`,
+        details: text ? `"${text}"` : "",
+        page: "messages.html"
+    });
+}

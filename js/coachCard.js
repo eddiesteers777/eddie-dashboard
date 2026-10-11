@@ -19,6 +19,8 @@ import { getMyProfile } from "./userProfile.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { essentialsDone, ESSENTIALS } from "./intakeFlow.js";
 import { listMyUpdates } from "./clientNotes.js";
+import { listMyMessages } from "./messages.js";
+import { unreadFor } from "./messageThread.js";
 import { listMyPlans } from "./coachingPlans.js";
 import { awaitingAck, noticeVersionOf } from "./planWindow.js";
 import { icon } from "./icons.js";
@@ -64,7 +66,7 @@ function row({ iconName, color, title, detail, note, link }) {
 export async function renderCoachCard(container) {
     if (!container) return null;
 
-    const [coaches, requests, checkins, profile, record, updates, plans] = await Promise.all([
+    const [coaches, requests, checkins, profile, record, updates, plans, messages] = await Promise.all([
         listMyCoaches().catch(() => []),
         listMyBookingRequests().catch(() => []),
         listMyCheckins().catch(() => []),
@@ -72,7 +74,9 @@ export async function renderCoachCard(container) {
         // undefined = couldn't read (don't nag), null = not filled in yet
         getMyClientRecord().catch(() => undefined),
         listMyUpdates().catch(() => []),
-        listMyPlans().catch(() => [])
+        listMyPlans().catch(() => []),
+        // [] until the messages rules are published.
+        listMyMessages().catch(() => [])
     ]);
 
     const coach = coaches[0];
@@ -91,6 +95,20 @@ export async function renderCoachCard(container) {
             detail: `${plan.name}${plan.changes?.length ? ` · ${plan.changes.length} change${plan.changes.length === 1 ? "" : "s"}` : ""}`,
             note: plan.coachNote ? (plan.coachNote.length > 140 ? `${plan.coachNote.slice(0, 140).trim()}…` : plan.coachNote) : "",
             link: `plan.html?plan=${encodeURIComponent(plan.id)}`
+        }));
+    }
+
+    // ---- Messages from the coach (messages.html marks them read) ----
+    const unreadMessages = unreadFor(messages, "client");
+    if (unreadMessages.length) {
+        const last = unreadMessages[unreadMessages.length - 1];
+        rows.push(row({
+            iconName: "messageSquare",
+            color: "var(--primary)",
+            title: unreadMessages.length === 1 ? `New message from ${last.senderName || "your coach"}` : `${unreadMessages.length} new messages from ${last.senderName || "your coach"}`,
+            detail: "",
+            note: last.text.length > 140 ? `${last.text.slice(0, 140).replace(/:sb_[a-z_]*$/, "").trim()}…` : last.text,
+            link: `messages.html?coach=${encodeURIComponent(last.coachUid)}`
         }));
     }
 

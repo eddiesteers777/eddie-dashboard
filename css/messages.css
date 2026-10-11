@@ -1,0 +1,193 @@
+/* ==========================================
+   Southbound — the message thread (js/messageView.js)
+   Used by messages.html (client) and the Client Hub's Messages tab.
+========================================== */
+
+.msg-thread [hidden]{ display:none !important; }
+
+.msg-thread{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+}
+
+.msg-intro{
+    margin:0 0 4px;
+    color:var(--text-secondary);
+    font-size:14px;
+    line-height:1.5;
+}
+
+.msg-list{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    min-height:220px;
+    max-height:min(62vh, 640px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    padding:14px 12px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:color-mix(in srgb, var(--surface) 70%, var(--bg));
+}
+
+.msg-day{
+    display:flex;
+    justify-content:center;
+    margin:12px 0 6px;
+}
+.msg-day:first-child{ margin-top:0; }
+.msg-day span{
+    padding:3px 10px;
+    border-radius:var(--radius-pill);
+    background:var(--surface);
+    color:var(--muted);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.02em;
+}
+
+.msg-row{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    flex-shrink:0;
+    max-width:82%;
+}
+.msg-row.is-first{ margin-top:8px; }
+.msg-day + .msg-row.is-first{ margin-top:0; }
+.msg-row.is-mine{ align-self:flex-end; align-items:flex-end; }
+
+.msg-bubble{
+    position:relative;
+    padding:9px 12px 6px;
+    border-radius:18px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-size:15px;
+    line-height:1.45;
+    overflow-wrap:anywhere;
+}
+.msg-row.is-mine .msg-bubble{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:var(--on-primary);
+}
+.msg-row.is-theirs.is-first .msg-bubble{ border-top-left-radius:6px; }
+.msg-row.is-mine.is-first .msg-bubble{ border-top-right-radius:6px; }
+
+.msg-bubble.is-emoji{
+    padding:4px 6px;
+    background:none !important;
+    border-color:transparent !important;
+}
+
+.msg-text{ white-space:pre-wrap; }
+.msg-text a{ color:inherit; text-decoration:underline; }
+.msg-text img{ vertical-align:-5px; }
+
+.msg-time{
+    display:block;
+    margin-top:2px;
+    font-size:11px;
+    opacity:.7;
+    text-align:right;
+}
+.msg-bubble.is-emoji .msg-time{ color:var(--muted); opacity:1; }
+
+.msg-unsend{
+    margin-top:2px;
+    padding:2px 4px;
+    border:0;
+    background:none;
+    color:var(--muted);
+    font-size:12px;
+    cursor:pointer;
+}
+.msg-unsend:hover{ color:var(--danger); }
+
+.msg-seen{
+    margin:0 4px;
+    min-height:16px;
+    color:var(--muted);
+    font-size:12px;
+    text-align:right;
+}
+
+.msg-empty{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    flex:1;
+    padding:28px 16px;
+    color:var(--text-secondary);
+    text-align:center;
+    font-size:14px;
+    line-height:1.5;
+}
+.msg-empty strong{ color:var(--text); font-size:16px; }
+.msg-empty .ui-icon{ width:28px; height:28px; color:var(--primary); }
+
+.msg-compose{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.msg-input{
+    flex:1 1 200px;
+    min-width:0;
+    min-height:46px;
+    max-height:160px;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:22px;
+    background:var(--surface);
+    color:var(--text);
+    font-size:16px;
+    line-height:1.35;
+    resize:none;
+}
+.msg-send{
+    flex:0 0 auto;
+    min-height:46px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+}
+.msg-send .ui-icon{ width:18px; height:18px; }
+/* The reaction bar js/emojiPicker.js adds under the textarea takes its own row. */
+.msg-compose > :not(.msg-input):not(.msg-send):not(label){ flex:0 0 100%; order:3; }
+
+.msg-error{
+    margin:0;
+    color:var(--danger);
+    font-size:14px;
+}
+
+@media (max-width:600px){
+    .msg-row{ max-width:88%; }
+    .msg-list{ max-height:none; min-height:50vh; padding:12px 8px; }
+    .msg-send .msg-send-label{ display:none; }
+    .msg-send{ width:46px; padding:0; justify-content:center; }
+}
+
+/* messages.html: one chip per coach when there's more than one. */
+.messages-page [hidden]{ display:none !important; }
+.msg-coaches{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.msg-coach-chip{
+    min-height:40px;
+    padding:0 16px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill);
+    background:var(--surface);
+    color:var(--text-secondary);
+    font-weight:700;
+    cursor:pointer;
+}
+.msg-coach-chip[aria-pressed="true"]{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }

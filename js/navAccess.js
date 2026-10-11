@@ -157,6 +157,7 @@ export const PAGE_REQUIRES = Object.freeze({
     "schedule.html": "sessions",
     "checkin.html": "checkins",
     "updates.html": "updates",
+    "messages.html": "updates",
     "profile.html": "profile",
     "clients.html": "coach,updates",
     // Eddie's own tools and the coach's pages.

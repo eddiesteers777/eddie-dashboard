@@ -1113,6 +1113,59 @@ test("client updates: the linked coach sends, the client reads and can only mark
     await assertSucceeds(deleteDoc(doc(as("coach"), "clientUpdates/u1")));
 });
 
+// ---- Messages ----
+
+const message = (from, extra = {}) => ({
+    coachUid: "coach", clientUid: "client", from, senderName: from === "coach" ? "Eddie" : "Sam",
+    text: "How did the long run feel?", createdAt: serverTimestamp(), readAt: null, ...extra
+});
+
+test("messages: either side of a linked pair writes as themselves; the other only marks read; unsend while unread", async () => {
+    await seedLinkAndBooking();
+    // Both directions.
+    await assertSucceeds(setDoc(doc(as("coach"), "messages/m1"), message("coach")));
+    await assertSucceeds(setDoc(doc(as("client"), "messages/m2"), message("client", { text: "Legs were heavy :sb_recovery:" })));
+    // Each lists the thread by their own side.
+    await assertSucceeds(getDocs(query(collection(as("client"), "messages"), where("clientUid", "==", "client"))));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "messages"), where("coachUid", "==", "coach"))));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "messages"), where("coachUid", "==", "coach"), where("clientUid", "==", "client"))));
+    await assertFails(getDocs(query(collection(as("stranger"), "messages"), where("clientUid", "==", "client"))));
+    await assertFails(getDoc(doc(as("stranger"), "messages/m1")));
+    // Pretending to be the other side, or writing for someone you're not linked to.
+    await assertFails(setDoc(doc(as("client"), "messages/x1"), message("coach")));
+    await assertFails(setDoc(doc(as("coach"), "messages/x2"), message("client")));
+    await assertFails(setDoc(doc(as("stranger"), "messages/x3"), message("client", { clientUid: "stranger" })));
+    await assertFails(setDoc(doc(as("coach"), "messages/x4"), message("coach", { clientUid: "stranger" })));
+    // Well-formed only.
+    await assertFails(setDoc(doc(as("coach"), "messages/x5"), message("coach", { text: "" })));
+    await assertFails(setDoc(doc(as("coach"), "messages/x6"), message("coach", { text: "x".repeat(2001) })));
+    await assertFails(setDoc(doc(as("coach"), "messages/x7"), message("coach", { readAt: serverTimestamp() })));
+    await assertFails(setDoc(doc(as("coach"), "messages/x8"), message("coach", { createdAt: new Date(2020, 0, 1) })));
+    await assertFails(setDoc(doc(as("coach"), "messages/x9"), message("coach", { pinned: true })));
+    await assertFails(setDoc(doc(as("coach"), "messages/x10"), message("teacher")));
+    // Only the recipient marks it read, only readAt, only with the server's clock.
+    await assertFails(updateDoc(doc(as("coach"), "messages/m1"), { readAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "messages/m1"), { text: "edited" }));
+    await assertFails(updateDoc(doc(as("client"), "messages/m1"), { readAt: new Date(2030, 0, 1) }));
+    await assertSucceeds(updateDoc(doc(as("client"), "messages/m1"), { readAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "messages/m2"), { readAt: serverTimestamp() }));
+    // Read already: can't be stamped again or taken back.
+    await assertFails(updateDoc(doc(as("client"), "messages/m1"), { readAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("coach"), "messages/m1")));
+    // Unsend while unread, only by the sender.
+    await assertSucceeds(setDoc(doc(as("client"), "messages/m3"), message("client", { text: "Oops, wrong thread" })));
+    await assertFails(deleteDoc(doc(as("coach"), "messages/m3")));
+    await assertFails(deleteDoc(doc(as("stranger"), "messages/m3")));
+    await assertSucceeds(deleteDoc(doc(as("client"), "messages/m3")));
+});
+
+test("messages: nothing once the link is gone", async () => {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(async ctx => { await deleteDoc(doc(ctx.firestore(), "coachLinks/coach_client")); });
+    await assertFails(setDoc(doc(as("client"), "messages/n1"), message("client")));
+    await assertFails(setDoc(doc(as("coach"), "messages/n2"), message("coach")));
+});
+
 // ---- Client package entitlements ----
 
 const clientPackage = (extra = {}) => ({

@@ -95,6 +95,7 @@ let planMounted = false;
 let profileMounted = false;
 let modelMounted = false;
 let planningMounted = false;
+let messagesMounted = false;
 let planningView = null;   // the Planning tab's handle (refreshes its planned weeks after a publish)
 let workspace = null;   // the plan workspace once the Plan tab has opened (a promise)
 let record = null;
@@ -124,6 +125,22 @@ function selectTab(name) {
                 .then(n => { if (n) planningView?.refreshHistory?.(); })
                 .catch(error => console.warn("Southbound: the planned week couldn't note the publish.", error?.code || error))
         }));
+    }
+    if (name === "messages" && !messagesMounted && record) {
+        messagesMounted = true;
+        Promise.all([import("./messageView.js"), import("./emailNotify.js"), import("./auth.js")]).then(([{ mountThread }, { sendCoachMessageEmail }, { getCurrentUser }]) => {
+            const coachName = getCurrentUser()?.displayName || "Your coach";
+            mountThread($("hubMessages"), {
+                role: "coach",
+                otherUid: clientUid,
+                otherName: firstName(),
+                myName: coachName,
+                intro: `Only you and ${firstName()} see this thread. Private notes stay in the Notes tab.`,
+                email: text => sendCoachMessageEmail({ clientEmail: record.profile?.email || record.link?.clientEmail, clientName: firstName(), coachName, text }),
+                // Reading here clears "Waiting on your reply"; their new ones add to it.
+                onChange: messages => { record.messages = messages; summarize(); renderAttention(); renderMessageBadge(); }
+            });
+        });
     }
     if (name === "model" && !modelMounted && record) {
         modelMounted = true;
@@ -1268,6 +1285,7 @@ function renderApplication() {
 function renderActions() {
     const email = record.profile?.email || record.link?.clientEmail;
     $("hubActions").innerHTML = `
+        <button type="button" class="clients-btn-secondary" data-go-tab="messages">${icon("messageSquare")} Message ${esc(firstName())}</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="notes" data-focus="noteText">${icon("lock")} Private note</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="notes" data-focus="updateText">${icon("send")} Send update</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="plan">${icon("edit")} Edit plan</button>
@@ -2064,13 +2082,22 @@ function summarize() {
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0, requests: record.requests || [], packages: record.packages || [] }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0, requests: record.requests || [], packages: record.packages || [], messages: record.messages || [] }),
         timeline: buildTimeline({ ...record, today })
     };
 }
 
+// Unread messages from them on the Messages tab.
+function renderMessageBadge() {
+    const badge = $("hubMessageBadge");
+    const n = (record.messages || []).filter(m => m.from === "client" && !m.readAt).length;
+    badge.hidden = !n;
+    badge.textContent = n || "";
+}
+
 function renderAll() {
     renderHeader();
+    renderMessageBadge();
     renderGlance();
     renderAttention();
     renderPinned();
