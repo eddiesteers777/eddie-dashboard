@@ -67,3 +67,16 @@ test("their inputs and gels, or sensible defaults", () => {
     // A run's own planned duration wins over the estimate.
     assert.equal(fuelForRun({ type: "long", miles: 12, durationMin: 110 }).durationMin, 110);
 });
+
+test("a structured workout: gels at the same times, at the miles its own paces reach", () => {
+    const workout = {
+        warmup: { amount: 2, unit: "mi" },
+        sets: [{ repeat: 6, amount: 1, unit: "mi", pace: "6:50", recovery: { amount: 0.25, unit: "mi", note: "jog" } }],
+        cooldown: { amount: 8.75, unit: "mi" }
+    };
+    const plain = fuelForRun({ type: "long", miles: 18 });
+    const paced = fuelForRun({ type: "long", miles: 18, workout });
+    assert.deepEqual(paced.gels.map(g => g.min), plain.gels.map(g => g.min));
+    assert.notDeepEqual(paced.gels.map(g => g.mile), plain.gels.map(g => g.mile));
+    assert.ok(paced.gels.some(g => /^Rep /.test(g.part)), "a gel lands during a rep");
+});

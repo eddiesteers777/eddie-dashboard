@@ -6,10 +6,12 @@
    for every gel, which miles each bottle covers and how much to sip,
    and an hour-by-hour check against the targets.
 
-   Pure functions only (no DOM, no imports) so the same math runs in
+   Pure functions only (no DOM; the only import is the pure js/paceSegments.js) so the same math runs in
    the builder, the saved-plan view, and the unit tests
    (tests/fuelSchedule.test.mjs).
 ========================================== */
+
+import { segmentTimeline, segmentsVary } from "./paceSegments.js";
 
 // Homemade-drink ingredients. carbsPerGram / sodiumPerGram are per gram
 // of ingredient; gPerTsp converts grams to teaspoons for measuring.
@@ -249,7 +251,9 @@ export function scheduleInputFromPlan(plan) {
             sodiumPerHour: Number(plan.sodiumPerHour) || 0
         },
         firstGelMin: firstGelValue(plan.firstGelMin),
-        startMin: parseStartTime(plan.startTime ?? session.startTime)
+        startMin: parseStartTime(plan.startTime ?? session.startTime),
+        // The workout's own paces, when the plan was built from one.
+        segments: Array.isArray(session.segments) ? session.segments : null
     };
 }
 
@@ -281,7 +285,12 @@ export function buildSchedule(input) {
     const durationMin = Math.max(0, Number(input.durationMin) || 0);
     const distanceMi = Math.max(0, Number(input.distanceMi) || 0);
     const minPerMile = durationMin > 0 && distanceMi > 0 ? durationMin / distanceMi : null;
-    const mileAt = min => (minPerMile ? round1(min / minPerMile) : null);
+    // A structured workout's own paces (js/paceSegments.js) put each minute
+    // at the mile it really falls at; otherwise one even pace.
+    const timeline = segmentsVary(input.segments) ? segmentTimeline(input.segments, durationMin, distanceMi) : null;
+    const paced = timeline && !timeline.mismatch ? timeline : null;
+    const mileAt = min => (!minPerMile ? null : round1(paced ? paced.mileAt(min) : min / minPerMile));
+    const partAt = min => (paced ? paced.partAt(min) : "");
     const targets = input.targets || {};
     const firstGelMin = firstGelValue(input.firstGelMin);
 
@@ -303,7 +312,8 @@ export function buildSchedule(input) {
         caffeine: hasCaffeine(item),
         caffeineMg: caffeineMg(item),
         min: times[i],
-        mile: mileAt(times[i])
+        mile: mileAt(times[i]),
+        part: partAt(times[i])
     }));
     const sips = sipServings.map((item, i) => {
         const span = durationMin / sipServings.length;
@@ -332,7 +342,7 @@ export function buildSchedule(input) {
     if (drink && durationMin > 0) {
         const count = drink.bottleCount;
         const perBottleMin = durationMin / count;
-        const perBottleMi = distanceMi ? distanceMi / count : null;
+        const evenMi = distanceMi ? distanceMi / count : null;
         const carbsEach = drink.carbs / count;
         const sodiumEach = drink.sodium / count;
         mix = diyMix({
@@ -350,6 +360,7 @@ export function buildSchedule(input) {
         for (let i = 0; i < count; i++) {
             const startMin = perBottleMin * i;
             const endMin = perBottleMin * (i + 1);
+            const perBottleMi = !evenMi ? null : paced ? Math.max(0.1, paced.mileAt(endMin) - paced.mileAt(startMin)) : evenMi;
             bottles.push({
                 n: i + 1,
                 startMin: round(startMin),
@@ -414,8 +425,8 @@ export function buildSchedule(input) {
     if (bottles.length) events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "bottle", bottle: 1, text: `Start Bottle 1` });
     else events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "start", text: "Start" });
     bottles.slice(1).forEach(b => events.push({ min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}` }));
-    sips.forEach(d => events.push({ min: d.startMin, mile: d.startMile, kind: "sip", sip: d.n, text: d.name, caffeine: d.caffeine, caffeineMg: d.caffeineMg, carbs: d.carbs, sodium: d.sodium, fluid: d.fluid, endMin: d.endMin, endMile: d.endMile }));
-    gels.forEach(g => events.push({ min: g.min, mile: g.mile, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium }));
+    sips.forEach(d => events.push({ min: d.startMin, mile: d.startMile, part: partAt(d.startMin), kind: "sip", sip: d.n, text: d.name, caffeine: d.caffeine, caffeineMg: d.caffeineMg, carbs: d.carbs, sodium: d.sodium, fluid: d.fluid, endMin: d.endMin, endMile: d.endMile }));
+    gels.forEach(g => events.push({ min: g.min, mile: g.mile, part: partAt(g.min), kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium }));
     events.push({ min: durationMin, mile: distanceMi || null, kind: "finish", text: bottles.length ? `Finish · Bottle ${bottles.length} empty` : "Finish" });
     const order = { start: 0, bottle: 1, sip: 2, gel: 3, finish: 4 };
     events.sort((a, b) => a.min - b.min || order[a.kind] - order[b.kind]);
@@ -476,6 +487,9 @@ export function buildSchedule(input) {
         durationMin,
         distanceMi,
         minPerMile,
+        // How the mile markers were placed: the workout's paces, or why not.
+        paced: paced ? { parts: (input.segments || []).length, partsMiles: paced.partsMiles }
+            : timeline?.mismatch ? { mismatch: true, partsMiles: timeline.partsMiles } : null,
         startMin,
         startTod: tod(0),
         finishTod: tod(durationMin),

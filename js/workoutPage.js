@@ -137,7 +137,7 @@ function currentFuel() {
     if (!miles) return null;
     const ctx = fuelContext();
     state.fuelContext = ctx;
-    return fuelForRun({ type: state.day.type, miles, coachNote: state.day.workout?.fuel || "" }, ctx);
+    return fuelForRun({ type: state.day.type, miles, workout: state.day.workout || null, coachNote: state.day.workout?.fuel || "" }, ctx);
 }
 
 function fuelHtml() {
@@ -145,6 +145,11 @@ function fuelHtml() {
     if (!fuel || (fuel.level === "none" && !fuel.coachNote && !["workout", "tempo"].includes(state.day.type))) return "";
     const coach = state.program.coachName || "your coach";
     const typeParam = { tempo: "workout" }[state.day.type] || state.day.type;
+    // The workout's parts (not the coach's words) so Fueling's gel miles follow its paces.
+    const w = state.day.workout;
+    const wParam = w && (w.sets?.length || w.warmup || w.cooldown)
+        ? `&w=${encodeURIComponent(JSON.stringify({ warmup: w.warmup || null, sets: w.sets || [], cooldown: w.cooldown || null }))}`
+        : "";
     return `
         <section class="clients-card wo-fuel">
             <h2>${icon("fuel")} Fuel</h2>
@@ -168,7 +173,7 @@ function fuelHtml() {
                 </div>
             </div>
             <p class="clients-card-note">About ${fuel.durationMin} min, estimated from the distance. ${state.fuelContext?.hasProfile ? "Targets use your last fueling plan's details." : "Save a plan in Fueling (your weight, sweat rate, stomach) and these fit you better."}
-                <a href="fueling.html?type=${encodeURIComponent(typeParam)}&miles=${encodeURIComponent(fuel.miles)}&duration=${fuel.durationMin}">Fine-tune in Fueling →</a></p>
+                <a href="fueling.html?type=${encodeURIComponent(typeParam)}&miles=${encodeURIComponent(fuel.miles)}&duration=${fuel.durationMin}${wParam}">Fine-tune in Fueling →</a></p>
         </section>`;
 }
 

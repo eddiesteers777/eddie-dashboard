@@ -18,6 +18,7 @@
 import { calculateTargets, paceMinutesPerMile } from "./fuelTargets.js";
 import { fluidText } from "./fluidUnits.js";
 import { buildSchedule, formatClock, DEFAULT_FIRST_GEL_MIN } from "./fuelSchedule.js";
+import { workoutSegments } from "./paceSegments.js";
 
 // Plan day types -> the Fueling page's workout types.
 const TYPE_MAP = { easy: "easy", recovery: "recovery", long: "long", workout: "workout", tempo: "workout", race: "race" };
@@ -88,7 +89,9 @@ export function fuelForRun(run, { profile = {}, library = [], unit = "oz" } = {}
         if (caffeinated && count > 0) items.push({ ...caffeinated, qty: 1 });
         schedule = buildSchedule({
             durationMin, distanceMi: miles, items: items.filter(i => i.qty > 0), drink: null,
-            targets, firstGelMin: DEFAULT_FIRST_GEL_MIN
+            targets, firstGelMin: DEFAULT_FIRST_GEL_MIN,
+            // A structured workout: gels land at the mile its own paces reach.
+            segments: run?.workout ? workoutSegments(run.workout) : null
         });
         gels = schedule.gels.map(g => ({ ...g, clock: formatClock(g.min) }));
     }

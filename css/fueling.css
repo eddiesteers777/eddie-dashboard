@@ -2254,6 +2254,26 @@
     line-height:1.5;
 }
 
+/* ---- Pace segments: how the mile markers were placed ---- */
+.fs-pacing{
+    margin:0;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--muted);
+}
+.fs-pacing .fuel-link-btn{
+    background:none;
+    border:0;
+    padding:0;
+    min-height:0;
+    color:var(--primary-light);
+    font:inherit;
+    font-weight:600;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer;
+}
+
 /* ---- Course bar ---- */
 .fs-course-track{
     position:relative;

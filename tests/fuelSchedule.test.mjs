@@ -407,3 +407,92 @@ test("the menu's old carb names read as the right ingredient", () => {
     assert.equal(carbSourceKey("nonsense"), "table-sugar");
     assert.equal(diyMix({ carbTarget: 11, carbSource: "juice" }).carbGrams, 100, "juice is 11% carbs, not sugar");
 });
+
+// ---- Pace segments: mile markers follow the workout's own paces ----
+import { workoutSegments, segmentTimeline, segmentsVary } from "../js/paceSegments.js";
+import { planDayFromMarathon } from "../js/marathonCoros.js";
+
+const longWorkout = {
+    warmup: { amount: 2, unit: "mi", pace: "9:00" },
+    sets: [{ repeat: 6, amount: 1, unit: "mi", pace: "6:50", recovery: { amount: 0.25, unit: "mi", note: "jog" } }],
+    cooldown: { amount: 8.75, unit: "mi", pace: "9:00" }
+};
+
+test("workoutSegments: warm-up, reps with recoveries between, cool-down, each at its pace", () => {
+    const segs = workoutSegments(longWorkout);
+    assert.equal(segs.length, 1 + 6 + 5 + 1, "no recovery after the last rep");
+    assert.deepEqual(segs.map(s => s.label).slice(0, 4), ["Warm-up", "Rep 1 of 6", "Recovery", "Rep 2 of 6"]);
+    assert.equal(segs[1].pace, 6.83);
+    assert.ok(segs[2].pace > 9, "a jog runs a little slower than easy");
+    assert.equal(Math.round(segs.reduce((t, s) => t + s.miles, 0) * 100) / 100, 18);
+    assert.ok(segmentsVary(segs));
+    // Timed steps, walks, rests and effort words.
+    const runWalk = workoutSegments({ sets: [{ repeat: 2, amount: 1, unit: "min", effort: "easy", recovery: { amount: 1.5, unit: "min", note: "walk" } }] });
+    assert.equal(runWalk[1].pace, 17, "a walk at 17:00/mi");
+    assert.equal(runWalk[0].minutes, 1);
+    const rest = workoutSegments({ sets: [{ repeat: 2, amount: 400, unit: "m", effort: "5K", recovery: { amount: 2, unit: "min", note: "rest" } }] });
+    assert.equal(rest[1].miles, 0, "standing rest covers no ground");
+    assert.equal(rest[1].minutes, 2);
+    assert.deepEqual(workoutSegments(null), []);
+    assert.ok(!segmentsVary(workoutSegments({ sets: [{ repeat: 1, amount: 6, unit: "mi", pace: "8:00" }] })), "one pace: nothing to follow");
+});
+
+test("buildSchedule: with segments each checkpoint follows the stretch it falls in", () => {
+    // Audit test 2: minute 76.5 of 18 mi at 8:30 is mile 9.0 at an even pace.
+    const base = { durationMin: 153, distanceMi: 18, items: [{ name: "Gel", carbs: 25, qty: 4 }], targets: { carbsPerHour: 50 } };
+    const even = segmentTimeline(null, 153, 18);
+    assert.equal(even, null);
+    const t = segmentTimeline(workoutSegments(longWorkout), 153, 18);
+    assert.equal(t.mileAt(0), 0);
+    assert.equal(t.mileAt(153), 18);
+    assert.equal(t.partAt(10), "Warm-up");
+    assert.equal(t.partAt(30), "Rep 2 of 6");
+    assert.equal(t.partAt(120), "Cool-down");
+    // The warm-up runs slower than the average, so its miles come later in time...
+    assert.ok(t.mileAt(18) < 2, "2 mi at 9:00 takes more than 18 of 153 scaled minutes");
+    // ...and the fast reps pull later minutes further down the road.
+    assert.ok(t.mileAt(76.5) > 9.4, `mile at 76.5 is ${t.mileAt(76.5)}`);
+
+    const plain = buildSchedule(base);
+    const paced = buildSchedule({ ...base, segments: workoutSegments(longWorkout) });
+    assert.deepEqual(plain.gels.map(g => g.min), paced.gels.map(g => g.min), "same times; only the miles move");
+    assert.notDeepEqual(plain.gels.map(g => g.mile), paced.gels.map(g => g.mile));
+    assert.equal(paced.gels[1].part, "Rep 6 of 6");
+    assert.equal(plain.gels[1].part, "");
+    assert.ok(paced.paced && !paced.paced.mismatch);
+    assert.equal(plain.paced, null);
+    const gelEvent = paced.events.find(e => e.kind === "gel");
+    assert.ok(gelEvent.part, "events say where in the workout they land");
+    assert.equal(paced.events.at(-1).mile, 18, "the finish is the run's distance");
+});
+
+test("buildSchedule: segments that don't describe the run are left out, and say why", () => {
+    const s = buildSchedule({ durationMin: 100, distanceMi: 12, items: [{ name: "Gel", carbs: 25, qty: 2 }], targets: { carbsPerHour: 40 }, segments: workoutSegments(longWorkout) });
+    assert.deepEqual(s.paced, { mismatch: true, partsMiles: 18 });
+    assert.equal(s.gels[0].mile, Math.round(s.gels[0].min / (100 / 12) * 10) / 10, "even pace");
+    // Within 25%: scaled to the run's own distance and time.
+    const close = buildSchedule({ durationMin: 140, distanceMi: 16, items: [{ name: "Gel", carbs: 25, qty: 2 }], targets: { carbsPerHour: 40 }, segments: workoutSegments(longWorkout) });
+    assert.ok(close.paced && !close.paced.mismatch);
+    assert.equal(close.events.at(-1).mile, 16);
+});
+
+test("pace segments: a Marathon plan day, bottles and saved plans", () => {
+    const PACES = [["Easy", "8:15–9:00 /mi"], ["Threshold", "6:35–6:50 /mi"]];
+    const day = planDayFromMarathon({ session: "Mile repeats: 6x1mi @ Threshold w/ 0.25mi jog", miles: 10, pace: "Threshold" }, PACES);
+    const segs = workoutSegments(day.workout, { paces: PACES });
+    assert.equal(segs[0].label, "Warm-up");
+    assert.ok(segs[0].pace > 8.5 && segs[1].pace < 6.9, "easy warm-up, threshold reps from the plan's own table");
+    // Bottles: sip guidance per mile follows the miles each bottle really covers.
+    const input = {
+        durationMin: 153, distanceMi: 18, items: [], targets: { carbsPerHour: 50, fluidPerHour: 20 },
+        drink: { bottleCount: 2, bottleSize: 20, carbs: 100, sodium: 600, carbSource: "table-sugar", sodiumSource: "table-salt" }
+    };
+    const plain = buildSchedule(input), paced = buildSchedule({ ...input, segments: workoutSegments(longWorkout) });
+    assert.equal(plain.bottles[0].ozPerMile, plain.bottles[1].ozPerMile);
+    assert.notEqual(paced.bottles[0].ozPerMile, paced.bottles[1].ozPerMile);
+    // Saved on the session; older plans have none.
+    const plan = { duration: 153, session: { distance: 18, segments: workoutSegments(longWorkout) }, items: [{ name: "Gel", carbs: 25, qty: 3 }], carbsPerHour: 50 };
+    assert.equal(scheduleInputFromPlan(plan).segments.length, 13);
+    assert.ok(buildSchedule(scheduleInputFromPlan(plan)).paced);
+    assert.equal(scheduleInputFromPlan({ duration: 60, session: { distance: 7 } }).segments, null);
+});

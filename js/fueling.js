@@ -10,6 +10,8 @@ import {
 } from "./fuelSchedule.js";
 import { fluidUnit, toFluid, ML_PER_OZ, fromFluid, fluidText } from "./fluidUnits.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
+import { workoutSegments, segmentsVary } from "./paceSegments.js";
+import { workoutSummary, sanitizeWorkout } from "./runWorkout.js";
 import {
     calculateTargets, estimateDurationMinutes, resolveRun, formatPace, formatDuration, paceForLabel
 } from "./fuelTargets.js";
@@ -36,6 +38,16 @@ let planItems = [];       // library items added to the current plan build
 let currentPlanId = null; // set when editing a saved plan
 let marathonRef = null;   // { week, dayKey } when this plan is tied to a Marathon workout
 let preWorkoutFood = "";
+// The workout's own stretches (js/paceSegments.js) when the run is a
+// structured workout: the schedule's mile markers follow them.
+let runSegments = null;
+let runSegmentsText = "";
+
+function setSegments(workout, paces = null) {
+    const segs = workout ? workoutSegments(workout, { paces }) : [];
+    runSegments = segmentsVary(segs) ? segs : null;
+    runSegmentsText = runSegments ? workoutSummary(workout) : "";
+}
 // Distance / pace / duration the person typed, most recent first: the two
 // most recent work out the third (js/fuelTargets.js resolveRun).
 let runOrder = [];
@@ -462,6 +474,7 @@ function readSession() {
         pace: $("pace").value.trim(),
         order: [...runOrder],
         startTime: $("startTime").value || "",
+        ...(runSegments ? { segments: runSegments, segmentsText: runSegmentsText } : {}),
 
         bodyWeight: Number($("bodyWeight").value) || 0,
         currentCarbIntake: Number($("currentCarbIntake").value) || 0,
@@ -804,6 +817,11 @@ async function applyMarathonWorkout(workout, week, dayKey) {
     $("duration").value = "";
     $("pace").value = miles ? formatPace(minPerMile) : "";
     runOrder = miles ? ["pace", "distance"] : [];
+    // Its warm-up, reps and jogs at their own paces.
+    try {
+        const { planDayFromMarathon } = await import("./marathonCoros.js");
+        setSegments(planDayFromMarathon(workout, planPaces)?.workout, planPaces);
+    } catch { setSegments(null); }
 
     marathonRef = { week, dayKey, workoutLabel: workout.session || "Workout", miles, pace: workout.pace || "" };
 
@@ -1088,6 +1106,14 @@ $("autoFillDrinkBtn").addEventListener("click", () => {
    js/fuelScheduleView.js.
 ========================================== */
 
+// "Use one even pace": drop the workout's stretches for this plan.
+document.getElementById("fuelSchedule")?.addEventListener("click", event => {
+    if (!event.target.closest("[data-even-pace]")) return;
+    setSegments(null);
+    runCalculation();
+    toast("Mile markers now use one even pace.");
+});
+
 function renderSchedule() {
 
     const container = $("fuelSchedule");
@@ -1104,7 +1130,7 @@ function renderSchedule() {
 
     const schedule = buildSchedule(scheduleInputFromPlan(buildPlanObject()));
 
-    container.innerHTML = scheduleHTML(schedule, { preWorkoutFood, unit });
+    container.innerHTML = scheduleHTML(schedule, { preWorkoutFood, unit, segmentControls: true });
 
 }
 
@@ -1720,6 +1746,7 @@ $("clearPlanBtn").addEventListener("click", () => {
     lastTargets = null;
     lastSession = null;
     runOrder = [];
+    setSegments(null);
 
     $("planName").value = "";
     $("preWorkoutFood").value = "";
@@ -1998,6 +2025,7 @@ function openPlan(id) {
 
     currentPlanId = plan.id;
     marathonRef = plan.marathonRef ? { ...plan.marathonRef } : null;
+    setSegments(null);
 
     $("planName").value = plan.name;
 
@@ -2011,6 +2039,8 @@ function openPlan(id) {
     if (plan.session) {
 
         lastSession = { ...plan.session };
+        runSegments = Array.isArray(plan.session.segments) ? plan.session.segments : null;
+        runSegmentsText = runSegments ? String(plan.session.segmentsText || "") : "";
 
         $("workoutType").value = plan.session.workoutType;
         // The order the fields were typed in; older plans: a saved duration
@@ -2155,6 +2185,8 @@ function prefillFromWorkoutLink() {
     if (miles > 0) $("distance").value = miles;
     if (duration > 0) $("duration").value = duration;
     runOrder = [duration > 0 ? "duration" : null, miles > 0 ? "distance" : null].filter(Boolean);
+    // The coach's structured workout (from its page), so gels land at the right miles.
+    try { setSegments(sanitizeWorkout(JSON.parse(params.get("w") || "null"))); } catch { setSegments(null); }
     const last = [...plans].filter(p => p?.session).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0]?.session;
     if (last) {
         for (const id of ["bodyWeight", "currentCarbIntake", "temperature", "humidity", "typicalSodiumIntake"]) {

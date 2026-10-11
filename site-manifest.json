@@ -164,6 +164,7 @@
     "js/nutritionGoals.js",
     "js/offlineWrite.js",
     "js/pace-calculator.js",
+    "js/paceSegments.js",
     "js/packageCatalog.js",
     "js/personalRecords.js",
     "js/planGenerateDialogs.js",

@@ -88,11 +88,11 @@ function eventsHTML(s) {
         let meta = "";
         if (e.kind === "gel") {
             title = `Gel ${e.gel} <span class="fs-muted">·</span> ${esc(e.text)}`;
-            meta = `${e.carbs} g carb · ${e.sodium} mg sodium · chase with a few sips`;
+            meta = `${partWords(e.part)}${e.carbs} g carb · ${e.sodium} mg sodium · chase with a few sips`;
         } else if (e.kind === "sip") {
             title = `Drink ${e.sip} <span class="fs-muted">·</span> ${esc(e.text)}`;
             const until = e.endMile != null ? `mile ${mi(e.endMile)}` : formatClock(e.endMin);
-            meta = `${e.fluid ? `${fl(e.fluid)} · ` : ""}${e.carbs} g carb · ${e.sodium} mg sodium · sip it steadily until ${until}`;
+            meta = `${partWords(e.part)}${e.fluid ? `${fl(e.fluid)} · ` : ""}${e.carbs} g carb · ${e.sodium} mg sodium · sip it steadily until ${until}`;
         } else if (e.kind === "bottle") {
             const b = s.bottles[e.bottle - 1];
             meta = b
@@ -110,6 +110,24 @@ function eventsHTML(s) {
                 </div>
             </li>`;
     }).join("")}</ol>`;
+}
+
+// Where in the workout a checkpoint lands (with the workout's paces).
+function partWords(part) {
+    if (!part) return "";
+    const words = /^Rep /.test(part) ? `During ${part.toLowerCase()}`
+        : part === "Recovery" ? "On a recovery"
+        : `In the ${part.toLowerCase()}`;
+    return `${esc(words)} · `;
+}
+
+// How the mile markers were placed.
+function pacingHTML(s, controls) {
+    if (s.paced?.mismatch) {
+        return `<p class="fs-pacing">The workout's parts add up to ${mi(s.paced.partsMiles)} mi, not ${mi(s.distanceMi)} mi, so the mile markers use one even pace.</p>`;
+    }
+    if (!s.paced) return "";
+    return `<p class="fs-pacing">Mile markers follow the workout's own paces: faster on the reps, slower on the warm-up, jogs and cool-down.${controls ? ` <button type="button" class="fuel-link-btn" data-even-pace>Use one even pace</button>` : ""}</p>`;
 }
 
 // "Next: Gel 2 in 36 min · 4.2 mi (8:21 AM)"
@@ -192,7 +210,7 @@ function hoursHTML(s) {
         </div>`;
 }
 
-export function scheduleHTML(s, { preWorkoutFood = "", unit = "oz" } = {}) {
+export function scheduleHTML(s, { preWorkoutFood = "", unit = "oz", segmentControls = false } = {}) {
     U = unit === "ml" ? "ml" : "oz";
     if (!s.durationMin) {
         return `<p class="fuel-empty-state">Add a duration or distance to build the schedule.</p>`;
@@ -202,6 +220,7 @@ export function scheduleHTML(s, { preWorkoutFood = "", unit = "oz" } = {}) {
             ${statsHTML(s)}
             ${s.warnings.length ? `<ul class="fs-warnings">${s.warnings.map(w => `<li>${esc(fluidWords(w, U))}</li>`).join("")}</ul>` : ""}
             ${courseHTML(s)}
+            ${pacingHTML(s, segmentControls)}
             ${preWorkoutFood ? `<div class="fs-mix"><span class="fs-mix-label">Before the run</span><span>${esc(preWorkoutFood)}</span></div>` : ""}
             <h4 class="fs-heading">Checkpoints</h4>
             ${eventsHTML(s)}
