@@ -1034,9 +1034,11 @@ $("diyCalculateBtn").addEventListener("click", () => {
     $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
     const perBottle = Math.max(1, mix.bottleCount || 1);
     const hasAddedSalt = hasSalt && mix.saltGrams > 0;
-    const addedSodiumText = hasSalt
-        ? `add ${(mix.saltGrams / perBottle).toFixed(2)} g table salt per bottle`
-        : `use the product label to supply the remaining ${Math.round((mix.sodiumShortfall || 0) / perBottle)} mg sodium per bottle`;
+    const addedSodiumText = (mix.sodiumShortfall || 0) <= 0
+        ? "no additional salt needed; the electrolyte sodium meets the target"
+        : hasSalt
+            ? `add ${(mix.saltGrams / perBottle).toFixed(2)} g table salt per bottle`
+            : `use the product label to supply the remaining ${Math.round((mix.sodiumShortfall || 0) / perBottle)} mg sodium per bottle`;
     const caffeineText = mix.caffeineBottles.length
         ? ` Caffeine: ${mix.caffeinePerBottleMg} mg in bottle${mix.caffeineBottles.length > 1 ? "s" : ""} ${mix.caffeineBottles.join(", ")} (${mix.totalCaffeineMg} mg total from the drink).`
         : " No caffeine added to the drink.";
@@ -1166,7 +1168,7 @@ function renderLibrary() {
                 <span><b>${item.carbs}g</b> carb</span>
                 <span><b>${item.sodium}mg</b> sodium</span>
                 ${item.fluid ? `<span><b>${item.fluid}oz</b> fluid</span>` : ""}
-                ${item.caffeine ? `<span><b>Caffeine</b></span>` : ""}
+                ${item.caffeineMg ? `<span><b>${item.caffeineMg} mg caffeine</b></span>` : (item.caffeine ? `<span><b>Caffeine dose not entered</b></span>` : "")}
                 ${item.serving ? `<span>${escapeHTML(item.serving)}</span>` : ""}
                 ${item.price ? `<span>${escapeHTML(item.price)}</span>` : ""}
             </div>
