@@ -32,7 +32,8 @@ export const DIY_SODIUM_SOURCES = {
 };
 
 export const DEFAULT_FIRST_GEL_MIN = 30;
-// A gel taken in the last ~15 minutes can't be absorbed in time to help.
+export const DEFAULT_GEL_INTERVAL_MIN = 45;
+// A gel taken in the last ~15 minutes may not have time to help.
 export const FINAL_GEL_BUFFER_MIN = 15;
 const OZ_TO_ML = 29.5735;
 const OZ_PER_GULP = 1; // a typical running gulp is ~1 oz (~30 ml)
@@ -139,18 +140,25 @@ export function scheduleInputFromPlan(plan) {
             fluidPerHour: Number(plan.fluidPerHour) || 0,
             sodiumPerHour: Number(plan.sodiumPerHour) || 0
         },
-        firstGelMin: plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN
+        firstGelMin: plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN,
+        gelIntervalMin: plan.gelIntervalMin ?? DEFAULT_GEL_INTERVAL_MIN
     };
 }
 
 // Gel (and chew/bar) times, spread evenly between the first-gel time and
 // FINAL_GEL_BUFFER_MIN before the end. Caffeinated servings go last,
 // where the lift matters most.
-function gelTimes(count, durationMin, firstGelMin) {
+function gelTimes(count, durationMin, firstGelMin, gelIntervalMin = DEFAULT_GEL_INTERVAL_MIN) {
     if (count === 0) return [];
     const start = Math.min(Math.max(firstGelMin, 5), durationMin);
     const end = Math.max(start, durationMin - FINAL_GEL_BUFFER_MIN);
     if (count === 1) return [round((start + end) / 2)];
+
+    const interval = Math.max(10, Number(gelIntervalMin) || DEFAULT_GEL_INTERVAL_MIN);
+    const fixedTimes = Array.from({ length: count }, (_, i) => round(start + interval * i));
+    if (fixedTimes[fixedTimes.length - 1] <= end) return fixedTimes;
+
+    // If the selected spacing does not fit, distribute gels evenly within the usable window.
     const gap = (end - start) / (count - 1);
     return Array.from({ length: count }, (_, i) => round(start + gap * i));
 }
@@ -162,6 +170,7 @@ export function buildSchedule(input) {
     const mileAt = min => (minPerMile ? round1(min / minPerMile) : null);
     const targets = input.targets || {};
     const firstGelMin = Number(input.firstGelMin) || DEFAULT_FIRST_GEL_MIN;
+    const gelIntervalMin = Math.max(10, Number(input.gelIntervalMin) || DEFAULT_GEL_INTERVAL_MIN);
 
     // ---- Gels ----
     const servings = [];
@@ -169,7 +178,7 @@ export function buildSchedule(input) {
         for (let i = 0; i < (Number(item.qty) || 0); i++) servings.push(item);
     });
     servings.sort((a, b) => Number(!!a.caffeine) - Number(!!b.caffeine));
-    const times = gelTimes(servings.length, durationMin, firstGelMin);
+    const times = gelTimes(servings.length, durationMin, firstGelMin, gelIntervalMin);
     const gels = servings.map((item, i) => ({
         n: i + 1,
         name: item.name,
@@ -316,6 +325,7 @@ export function buildSchedule(input) {
         distanceMi,
         minPerMile,
         firstGelMin,
+        gelIntervalMin,
         gels,
         bottles,
         mix,
