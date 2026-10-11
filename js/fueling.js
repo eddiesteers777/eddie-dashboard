@@ -909,7 +909,10 @@ function currentDiyMix() {
         carbTarget,
         sodiumTarget,
         totalFluid: bottleSize * bottleCount,
-        sugarGrams: mix.tableSugarGrams ?? mix.carbGrams,
+        sugarGrams: carbSource === "blend" || carbSource === "table-sugar"
+            ? (mix.tableSugarGrams ?? mix.carbGrams)
+            : (carbSource === "maltodextrin" ? 0 : mix.carbGrams),
+        primaryCarbLabel: carbSource === "blend" ? "table sugar" : mix.carbLabel,
         maltodextrinGrams: mix.maltodextrinGrams || 0,
         saltGrams: mix.sodiumGrams ?? 0,
         sugarTsp: mix.carbTsp != null ? Math.round(mix.carbTsp * 4) / 4 : null,
@@ -934,9 +937,10 @@ function renderDiyResult() {
 
     $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
     $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
+    $("diyPrimaryCarbLabel").textContent = mix.primaryCarbLabel || "table sugar";
     $("diyMaltodextrinGrams").textContent = `${mix.maltodextrinGrams || 0} g`;
     $("diySaltGrams").textContent = hasSalt ? `${mix.saltGrams} g` : "Use product label";
-    $("diySugarTsp").textContent = mix.sugarTsp !== null ? formatTsp(mix.sugarTsp) : "Use product label";
+    $("diySugarTsp").textContent = mix.sugarTsp !== null ? `${formatTsp(mix.sugarTsp)} tsp` : "use product label for measure";
     $("diySaltTsp").textContent = mix.saltTsp !== null ? formatTsp(mix.saltTsp) : "Use product label";
 
     const addedSodiumText = (mix.sodiumShortfall || 0) <= 0
@@ -949,7 +953,7 @@ function renderDiyResult() {
         : " No caffeine added to the drink.";
 
     $("diyPerBottleSummary").textContent =
-        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g table sugar · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.sodiumTarget / perBottle)} mg total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
+        `Batch: ${mix.totalFluid} oz across ${mix.bottleCount} bottles. Each bottle: ${mix.bottleSize} oz water · ${(mix.sugarGrams / perBottle).toFixed(1)} g ${(mix.primaryCarbLabel || "table sugar").toLowerCase()} · ${((mix.maltodextrinGrams || 0) / perBottle).toFixed(1)} g maltodextrin · ${Math.round(mix.sodiumTarget / perBottle)} mg total sodium (${Math.round(mix.existingSodium / perBottle)} mg from electrolyte powder); ${addedSodiumText}.` + caffeineText;
     $("diyResults").style.display = "flex";
     $("diyPerBottleSummary").style.display = "";
     $("diyConversionNote").style.display = "";
@@ -1104,7 +1108,7 @@ function renderDiyRecipes() {
             <div>
                 <strong>${escapeHTML(r.name)}</strong>
                 <div class="fuel-saved-item-meta">
-                    ${r.maltodextrinGrams || 0}g maltodextrin · ${r.sugarGrams}g sugar · ${r.saltGrams}g salt · ${r.totalFluid} oz water
+                    ${r.maltodextrinGrams || 0}g maltodextrin · ${r.sugarGrams}g ${r.primaryCarbLabel || "sugar"} · ${r.saltGrams}g added salt · ${r.totalFluid} oz water
                 </div>
             </div>
 
@@ -1462,7 +1466,7 @@ function renderPlanSummary() {
             html += `
                 <div class="fuel-plan-row">
                     <span>Homemade Drink</span>
-                    <span>${snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.maltodextrinGrams || 0}g maltodextrin · ${snapshot.sugarGrams}g sugar · ${snapshot.saltGrams}g added salt · ${snapshot.totalCaffeineMg || 0}mg drink caffeine` : `${c.drinkCarbs}g carb · ${c.drinkSodium}mg sodium (calculate below)`}</span>
+                    <span>${snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.maltodextrinGrams || 0}g maltodextrin · ${snapshot.sugarGrams}g ${snapshot.primaryCarbLabel || "sugar"} · ${snapshot.saltGrams}g added salt · ${snapshot.totalCaffeineMg || 0}mg drink caffeine` : `${c.drinkCarbs}g carb · ${c.drinkSodium}mg sodium (calculate below)`}</span>
                 </div>
             `;
 
@@ -2021,6 +2025,7 @@ if (plan.diySnapshot) {
 
     $("diySugarGrams").textContent =
         `${plan.diySnapshot.sugarGrams} g`;
+    $("diyPrimaryCarbLabel").textContent = plan.diySnapshot.primaryCarbLabel || "table sugar";
     $("diyMaltodextrinGrams").textContent =
         `${plan.diySnapshot.maltodextrinGrams || 0} g`;
 
@@ -2028,7 +2033,7 @@ if (plan.diySnapshot) {
         `${plan.diySnapshot.saltGrams} g`;
 
     $("diySugarTsp").textContent =
-        plan.diySnapshot.sugarTsp ?? "Use product label";
+        plan.diySnapshot.sugarTsp != null ? `${formatTsp(plan.diySnapshot.sugarTsp)} tsp` : "use product label for measure";
 
     $("diySaltTsp").textContent =
         plan.diySnapshot.saltTsp ?? "Use product label";
