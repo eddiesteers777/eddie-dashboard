@@ -51,7 +51,8 @@ export function diyMix({
     maltodextrinPercent = 0,
     existingSodium = 0
 }) {
-    const requestedSource = carbSource;
+    const aliases = { juice: "fruit-juice", "sports-powder": "sports-drink-powder" };
+    const requestedSource = aliases[carbSource] || carbSource;
     const useBlend = requestedSource === "blend";
     const carb = DIY_CARB_SOURCES[useBlend ? "table-sugar" : requestedSource] || DIY_CARB_SOURCES["table-sugar"];
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
@@ -66,6 +67,8 @@ export function diyMix({
     const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumShortfall / sodium.sodiumPerGram) * 100) / 100 : null;
     return {
         carbLabel: useBlend ? "Maltodextrin + Table Sugar" : carb.label,
+        carbSource: requestedSource,
+        isBlend: useBlend,
         sodiumLabel: sodium.label,
         carbGrams,
         maltodextrinGrams,
