@@ -91,6 +91,9 @@ export function diyMix({
 export function formatTsp(tsp) {
     if (tsp == null || !isFinite(tsp)) return "";
     if (tsp < 0.1) return "a pinch";
+    // Standard eighth-teaspoon rounding can exaggerate small salt quantities;
+    // keep sub-quarter-teaspoon measures as decimals instead.
+    if (tsp < 0.25) return Number(tsp.toFixed(2)).toString();
     const eighths = Math.round(tsp * 8);
     if (eighths === 0) return "a pinch";
     const whole = Math.floor(eighths / 8);
