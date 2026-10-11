@@ -238,3 +238,12 @@ test("legacy DIY source names still resolve to their intended recipe ingredients
     assert.equal(diyMix({ carbTarget: 20, carbSource: "juice" }).carbLabel, "Fruit Juice");
     assert.equal(diyMix({ carbTarget: 20, carbSource: "sports-powder" }).carbLabel, "Sports Drink Powder");
 });
+
+test("pace parser accepts mm:ss and decimal-minute formats", async () => {
+    const { parsePaceMinutes, durationFromDistanceAndPace, formatPaceMinutes } = await import("../js/fuelTargets.js");
+    assert.equal(parsePaceMinutes("8:15"), 8.25);
+    assert.equal(parsePaceMinutes("8.25"), 8.25);
+    assert.equal(durationFromDistanceAndPace(20, "8:00"), 160);
+    assert.equal(formatPaceMinutes(8.25), "8:15");
+    assert.equal(parsePaceMinutes("abc"), null);
+});
