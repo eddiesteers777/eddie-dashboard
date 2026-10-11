@@ -318,7 +318,7 @@ export function splitsCardModel(entry, meta = {}) {
         actual: byPace ? `${clockText(r.pace)}/mi` : clockText(r.sec, { tenths: r.sec < 300 }),
         delta: byPace ? (r.partial ? "" : signed(r.pace - avgPace)) : `${clockText(r.pace)}/mi`,
         state: r === fastest ? "within" : r === slowest ? "unobserved" : "done",
-        result: r === fastest ? "Fastest" : r === slowest ? "Slowest" : r.partial ? r.dist : "",
+        result: r === fastest ? "Fastest" : r === slowest ? "Slowest" : r.partial || unit === "lap" ? r.dist : "",
         hr: r.hr, note: ""
     }));
     // The halves, by distance, from the laps themselves.
@@ -333,6 +333,14 @@ export function splitsCardModel(entry, meta = {}) {
         const d = Math.round(p2 - p1);
         half = Math.abs(d) <= 3 ? "Even halves" : d < 0 ? `Negative split · 2nd half ${clockText(-d)}/mi faster` : `2nd half ${clockText(d)}/mi slower`;
     }
+    // A progression: every whole split no slower than the one before (2 s/mi
+    // of slack) and the last at least 10 s/mi faster than the first.
+    let prog = "";
+    if (whole.length >= 3) {
+        const steady = whole.every((r, i) => !i || r.pace <= whole[i - 1].pace + 2);
+        const drop = whole[0].pace - whole[whole.length - 1].pace;
+        if (steady && drop >= 10) prog = `Progression · every ${unit === "lap" ? "lap" : "split"} faster, ${clockText(whole[0].pace)} → ${clockText(whole[whole.length - 1].pace)}/mi`;
+    }
     const hrs = rows.map(r => r.hr).filter(Boolean);
     return {
         ...base,
@@ -344,7 +352,7 @@ export function splitsCardModel(entry, meta = {}) {
             head: unit === "mile" ? "Mile splits" : unit === "km" ? "Km splits" : "Laps",
             sub: byPace ? `avg ${clockText(avgPace)}/mi` : `${rows.length} laps`,
             rows: out,
-            summary: [half, byPace && hrs.length ? `HR ${Math.min(...hrs)}–${Math.max(...hrs)}` : ""].filter(Boolean).join(" · ")
+            summary: [prog || half, hrs.length > 1 ? `HR ${Math.min(...hrs)}–${Math.max(...hrs)}` : ""].filter(Boolean).join(" · ")
         }],
         easy: [],
         footer: `Splits from your watch · ${byPace ? "difference from your average pace" : "time and pace per lap"}`

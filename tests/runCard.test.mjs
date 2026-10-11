@@ -29,7 +29,10 @@ test("the splits card: every mile with pace, fastest and slowest, halves, no tar
     assert.equal(m.sets[0].rows[7].result, "Fastest");
     assert.equal(m.sets[0].rows[0].result, "Slowest");
     assert.equal(m.sets[0].rows[0].actual, "8:40/mi");
-    assert.match(m.sets[0].summary, /^Negative split · 2nd half 0:\d\d\/mi faster · HR 140–147$/);
+    // Every mile faster than the one before: a progression (which says more than "negative split").
+    assert.match(m.sets[0].summary, /^Progression · every split faster, 8:40 → 7:50\/mi · HR 140–147$/);
+    const neg = splitsCardModel({ laps: miles([520, 500, 515, 495, 505, 490, 498, 470]) }, { date: "2026-10-03" });
+    assert.match(neg.sets[0].summary, /^Negative split · 2nd half 0:\d\d\/mi faster/);
     assert.deepEqual(m.stats.map(s => s.label), ["Distance", "Time", "Avg pace", "Avg HR"]);
     assert.ok(!m.stats.some(s => /target/i.test(s.label)));
     assert.ok(cardHeight(m) >= MIN_H);
@@ -79,4 +82,23 @@ test("a structured day whose laps match nothing falls back to the splits", () =>
     n = 0;
     const r = runCardModel({ run: RUN, workout: { sets: [{ repeat: 4, amount: 400, unit: "m", pace: "5:40-5:50" }] }, entry: { laps: [lap(20, 10)] }, meta: {} });
     assert.ok(["splits", "plain"].includes(r.kind));
+});
+
+test("watch-workout laps that don't fit the plan show the watch's own laps, with the progression", async () => {
+    const { planDayFromMarathon } = await import("../js/marathonCoros.js");
+    const { PACES } = await import("../js/marathonData.js");
+    const M = 1609.344;
+    const laps = [[6, 8.5], [4, 7.75], [3, 7.4], [4, 7.1], [3, 6.9]].map(([mi, p]) => ({ m: mi * M, s: mi * p * 60, hr: 140 + mi }));
+    const run = { labelId: "x", distance: 20 * M, duration: laps.reduce((t, l) => t + l.s, 0), date: "2026-10-11" };
+    // The plan says 13 + 4 + 3; the watch ran a 5-step progression.
+    const loose = planDayFromMarathon({ session: "13 easy + 4 @ MP + 3 easy", miles: 20, pace: "MP" }, PACES);
+    const r = runCardModel({ run, workout: loose.workout, entry: { laps, kind: "laps" } });
+    assert.equal(r.kind, "splits");
+    assert.equal(r.model.sets[0].rows.length, 5);
+    assert.match(r.model.sets[0].summary, /^Progression · every lap faster, 8:30 → 6:54\/mi/);
+    assert.deepEqual(r.model.sets[0].rows.slice(1, 4).map(x => x.result), ["4.00 mi", "3.00 mi", "4.00 mi"]);
+    // A plan written the way it was run still gets rep by rep.
+    const exact = planDayFromMarathon({ session: "6mi WU; 4mi @ MP; 3mi easy; 4mi @ MP; 3mi CD", miles: 20, pace: "MP" }, PACES);
+    assert.equal(runCardModel({ run, workout: exact.workout, entry: { laps, kind: "laps" } }).kind, "execution");
+    // Auto mile laps keep the looser rule (they never fit a plan's steps exactly).
 });

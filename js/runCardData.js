@@ -103,7 +103,10 @@ export async function cardKindFor(session) {
     const entry = lapsOf(session.id.slice(2));
     if (!entry) return null;
     const plan = await planOn(session.date);
-    return plan && hasTargets(plan.workout) ? "reps" : "splits";
+    if (!plan || !hasTargets(plan.workout)) return "splits";
+    // Same rule as the picture itself: rep by rep only when the laps fit the plan.
+    const card = await runCardForSession(session, { fetch: false }).catch(() => null);
+    return card?.kind === "execution" ? "reps" : "splits";
 }
 
 /** Laps for the last `days` days' COROS runs not saved yet, a few a visit. */
