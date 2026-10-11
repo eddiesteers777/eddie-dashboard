@@ -898,11 +898,12 @@ function currentDiyMix() {
     const carbSource = $("diyCarbSource").value;
     const sodiumSource = $("diySodiumSource").value;
     const maltodextrinPercent = Number($("diyMaltodextrinPercent")?.value) || 0;
+    const maltodextrinCarbsPerGram = Number($("diyMaltodextrinYield")?.value) || 0.95;
     const existingSodium = Number($("diyExistingSodium")?.value) || 0;
     const caffeinePerBottleMg = Math.max(0, Number($("diyCaffeinePerBottleMg")?.value) || 0);
     const caffeineBottleNumbers = $("diyCaffeineBottleNumbers")?.value || "";
     const caffeineBottles = parseBottleNumbers(caffeineBottleNumbers, bottleCount);
-    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource, maltodextrinPercent, existingSodium });
+    const mix = diyMix({ carbTarget, sodiumTarget, carbSource, sodiumSource, maltodextrinPercent, maltodextrinCarbsPerGram, existingSodium });
     return {
         bottleSize,
         bottleCount,
