@@ -123,7 +123,8 @@ export function scheduleInputFromPlan(plan) {
             bottleCount: Math.max(1, Math.round(Number(diy.bottleCount) || 1)),
             bottleSize: Number(diy.bottleSize) || 0,
             carbs: Number(diy.carbTarget) || 0,
-            sodium: Number(diy.sodiumTarget) || 0,
+            sodium: Math.max(Number(diy.sodiumTarget) || 0, Number(diy.existingSodium) || 0),
+            sodiumTarget: Number(diy.sodiumTarget) || 0,
             carbSource: diy.carbSource || "table-sugar",
             maltodextrinPercent: Number(diy.maltodextrinPercent) || 0,
             maltodextrinCarbsPerGram: Number(diy.maltodextrinCarbsPerGram) || DIY_CARB_SOURCES.maltodextrin.carbsPerGram,
@@ -299,8 +300,11 @@ export function buildSchedule(input) {
     if (concentration !== null && concentration > 10) {
         warnings.push(`Your drink is a ${concentration}% carb mix — stronger than the 6-8% most stomachs handle easily. Practice it in training first, or spread it over more water.`);
     }
+    if (drink && Number(drink.existingSodium) > Number(drink.sodiumTarget ?? drink.sodium)) {
+        warnings.push(`Your electrolyte powder alone provides ${Math.round(Number(drink.existingSodium))} mg sodium, more than the ${Math.round(Number(drink.sodiumTarget ?? drink.sodium))} mg drink target. The drink will exceed that target even with no added salt.`);
+    }
     if (drink && targetFluid && fluidFromDrink < targetFluid * 0.8) {
-        warnings.push(`Your bottles hold ${fluidFromDrink} oz of the ${targetFluid} oz fluid target. Plan on about ${targetFluid - fluidFromDrink} oz of water from aid stations.`);
+        warnings.push(`Your bottles hold ${fluidFromDrink} oz of the ${targetFluid} oz fluid target. Plan on about ${targetFluid - fluidFromDrink} oz of water from aid stations, adjusted to thirst and conditions.`);
     }
     if (!minPerMile && durationMin) {
         warnings.push("Add the run's distance to see mile markers, not just times.");
