@@ -762,12 +762,19 @@ function applyMarathonWorkout(workout, week, dayKey) {
 
     }[paceLabel] || 8.3;
 
-    const estimatedDuration = Math.round(miles * minPerMile);
+    const explicitPace = parsePaceMinutes(workout.pace);
+    const estimatedDuration = miles > 0 && explicitPace != null
+        ? durationFromDistanceAndPace(miles, explicitPace)
+        : Math.round(miles * minPerMile);
 
     $("workoutType").value = workoutType;
     $("distance").value = miles || "";
     $("duration").value = estimatedDuration || "";
-    $("pace").value = workout.pace || "";
+    // The Marathon calendar stores descriptive pace labels; keep that label in
+    // marathonRef, but show the numeric estimated average pace in the calculator.
+    $("pace").value = miles > 0 && estimatedDuration > 0
+        ? formatPaceMinutes(estimatedDuration / miles)
+        : "";
 
     marathonRef = { week, dayKey, workoutLabel: workout.session || "Workout", miles, pace: workout.pace || "" };
 
