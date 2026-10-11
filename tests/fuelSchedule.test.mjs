@@ -247,3 +247,34 @@ test("pace parser accepts mm:ss and decimal-minute formats", async () => {
     assert.equal(formatPaceMinutes(8.25), "8:15");
     assert.equal(parsePaceMinutes("abc"), null);
 });
+
+
+test("DIY drink schedule splits caffeine by selected bottle and counts total sodium once", () => {
+    const s = buildSchedule({
+        durationMin: 160,
+        distanceMi: 20,
+        items: [{ name: "Hammer Gel", carbs: 21, sodium: 25, qty: 3 }],
+        drink: {
+            bottleCount: 3,
+            bottleSize: 15,
+            carbs: 97,
+            sodium: 2058,
+            carbSource: "blend",
+            maltodextrinPercent: 50,
+            sodiumSource: "table-salt",
+            existingSodium: 1620,
+            caffeinePerBottleMg: 60,
+            caffeineBottleNumbers: "2,3"
+        },
+        targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 },
+        firstGelMin: 30
+    });
+    assert.equal(s.totals.carbs, 160);
+    assert.equal(s.totals.sodium, 2133);
+    assert.equal(s.totals.caffeineMg, 120);
+    assert.deepEqual(s.bottles.map(b => b.caffeineMg), [0, 60, 60]);
+    assert.equal(s.bottles[1].startMile, 6.7);
+    assert.equal(s.bottles[2].endMile, 20);
+    assert.equal(s.mix.existingSodium, 540);
+    assert.equal(s.mix.sodiumGrams, 0.37);
+});
