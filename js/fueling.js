@@ -969,12 +969,14 @@ $("includeHomemadeDrink").addEventListener("change", () => {
 
 $("diyCarbTarget").addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
     renderPlanSummary();
 });
 
 $("diySodiumTarget").addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
     renderPlanSummary();
 });
@@ -987,6 +989,7 @@ $("diySodiumTarget").addEventListener("input", () => {
 
 ["diyCarbSource", "diySodiumSource", "diyMaltodextrinPercent", "diyExistingSodium", "diyCaffeinePerBottleMg", "diyCaffeineBottleNumbers"].forEach(id => $(id)?.addEventListener("input", () => {
     refreshDiySnapshot();
+    if ($("diyResults").style.display !== "none") renderDiyResult();
     renderComposition();
     renderPlanSummary();
 }));
