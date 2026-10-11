@@ -141,12 +141,13 @@ test("mixed carb recipe splits carb target into maltodextrin and table sugar", (
         sodiumTarget: 2058,
         carbSource: "blend",
         maltodextrinPercent: 50,
+        maltodextrinCarbsPerGram: 14 / 16,
         sodiumSource: "table-salt",
         existingSodium: 1620
     });
     assert.equal(mix.maltodextrinCarbs, 48.5);
     assert.equal(mix.tableSugarCarbs, 48.5);
-    assert.equal(mix.maltodextrinGrams, Math.round((48.5 / 0.95) * 10) / 10);
+    assert.equal(mix.maltodextrinGrams, Math.round((48.5 / (14 / 16)) * 10) / 10);
     assert.equal(mix.tableSugarGrams, 48.5);
     assert.equal(mix.sodiumShortfall, 438);
     assert.equal(mix.sodiumGrams, Math.round((438 / 393) * 100) / 100);
@@ -164,6 +165,7 @@ test("schedule can pass blend percentages and existing electrolyte sodium into p
             sodium: 2058,
             carbSource: "blend",
             maltodextrinPercent: 50,
+            maltodextrinCarbsPerGram: 14 / 16,
             sodiumSource: "table-salt",
             existingSodium: 1620
         },
