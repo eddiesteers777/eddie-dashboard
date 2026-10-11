@@ -560,8 +560,8 @@ function runCalculation() {
 
     $("calcNote").textContent =
         `Estimated duration: ${formatClock(targets.duration)}. ` +
-        `Pace: ${session.distance > 0 ? formatPaceMinutes(session.duration / session.distance) + "/mi" : "enter distance to calculate mile markers"}. ` +
-        `Targets account for workout type, fueling tolerance, stomach sensitivity, and conditions; adjust them to what you know works for you.`;
+        `Average pace: ${session.distance > 0 ? formatPaceMinutes(session.duration / session.distance) + "/mi" : "enter distance to calculate mile markers"}. ` +
+        `Workout: ${session.workoutType}. Starting targets depend mainly on duration, training/race mode, fueling experience, stomach sensitivity, and conditions; adjust them to what you know works for you.`;
 
     updatePlanWorkoutLabel();
     updateTotalsAndTimeline(true);
@@ -1512,7 +1512,9 @@ function workoutSummaryLabel() {
 
     const typeLabels = {
 
-        easy: "Easy Run", long: "Long Run", workout: "Workout",
+        easy: "Easy Run", long: "Long Run", workout: "Workout / Mixed Pace",
+        tempo: "Tempo / Threshold", intervals: "Intervals / Repeats",
+        progression: "Progression / Fast Finish",
         marathon: "Marathon", race: "Race", other: "Other"
 
     };
