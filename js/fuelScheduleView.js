@@ -95,7 +95,11 @@ function eventsHTML(s) {
 function bottlesHTML(s) {
     if (!s.bottles.length) return "";
     const m = s.mix;
-    const carbAmount = m ? `${m.carbGrams} g ${esc(m.carbLabel.toLowerCase())}${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}` : "";
+    const carbAmount = m
+        ? (m.maltodextrinGrams || m.tableSugarGrams
+            ? `${m.maltodextrinGrams || 0} g maltodextrin + ${m.tableSugarGrams || 0} g table sugar`
+            : `${m.carbGrams} g ${esc(m.carbLabel.toLowerCase())}${m.carbTsp != null ? ` (${formatTsp(m.carbTsp)} tsp)` : ""}`)
+        : "";
     const sodiumAmount = m
         ? (m.sodiumGrams != null
             ? `${m.sodiumGrams} g ${esc(m.sodiumLabel.toLowerCase())}${m.sodiumTsp != null ? ` (${formatTsp(m.sodiumTsp)} tsp)` : ""}`
