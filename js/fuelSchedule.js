@@ -491,6 +491,8 @@ export function buildSchedule(input) {
         paced: paced ? { parts: (input.segments || []).length, partsMiles: paced.partsMiles }
             : timeline?.mismatch ? { mismatch: true, partsMiles: timeline.partsMiles } : null,
         startMin,
+        // The mile reached halfway through the time (the course bar's middle).
+        midMile: mileAt(durationMin / 2),
         startTod: tod(0),
         finishTod: tod(durationMin),
         firstGelMin,

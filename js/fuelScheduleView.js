@@ -68,7 +68,7 @@ function courseHTML(s) {
             <div class="fs-course-track">${bands}${sips}${gels}</div>
             <div class="fs-course-labels">
                 <span>Start</span>
-                ${s.distanceMi ? `<span>Mile ${mi(s.distanceMi / 2)}</span>` : `<span>${formatClock(d / 2)}</span>`}
+                ${s.distanceMi ? `<span>Mile ${mi(s.midMile ?? s.distanceMi / 2)}</span>` : `<span>${formatClock(d / 2)}</span>`}
                 <span>${s.distanceMi ? `${mi(s.distanceMi)} mi` : "Finish"} · ${formatClock(d)}</span>
             </div>
             <div class="fs-legend">
