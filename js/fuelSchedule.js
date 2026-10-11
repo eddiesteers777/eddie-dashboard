@@ -59,6 +59,7 @@ export function diyMix({
     const carb = DIY_CARB_SOURCES[useBlend ? "table-sugar" : requestedSource] || DIY_CARB_SOURCES["table-sugar"];
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
     const carbGoal = Math.max(0, Number(carbTarget) || 0);
+    const maltoYield = Math.min(1, Math.max(0.01, Number(maltodextrinCarbsPerGram) || 0.95));
     const maltoShare = Math.min(100, Math.max(0, Number(maltodextrinPercent) || 0)) / 100;
     const maltoYield = Math.min(1, Math.max(0.5, Number(maltodextrinCarbsPerGram) || DIY_CARB_SOURCES.maltodextrin.carbsPerGram));
     const maltodextrinCarbs = useBlend ? round1(carbGoal * maltoShare) : (requestedSource === "maltodextrin" ? carbGoal : 0);
@@ -75,6 +76,7 @@ export function diyMix({
         sodiumLabel: sodium.label,
         carbGrams,
         maltodextrinGrams,
+        maltodextrinCarbsPerGram: maltoYield,
         tableSugarGrams,
         maltodextrinCarbs,
         tableSugarCarbs: sugarCarbs,
