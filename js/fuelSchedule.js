@@ -57,9 +57,9 @@ export function diyMix({
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
     const target = Math.max(0, Number(carbTarget) || 0);
     const maltoShare = Math.min(100, Math.max(0, Number(maltodextrinPercent) || 0)) / 100;
-    const maltodextrinCarbs = useBlend ? round1(target * maltoShare) : (requestedSource === "maltodextrin" ? target : 0);
-    const sugarCarbs = useBlend ? Math.max(0, round1(target - maltodextrinCarbs)) : (requestedSource === "table-sugar" ? target : 0);
-    const carbGrams = round1(target / carb.carbsPerGram);
+    const maltodextrinCarbs = useBlend ? round1(carbGoal * maltoShare) : (requestedSource === "maltodextrin" ? carbGoal : 0);
+    const sugarCarbs = useBlend ? Math.max(0, round1(carbGoal - maltodextrinCarbs)) : (requestedSource === "table-sugar" ? carbGoal : 0);
+    const carbGrams = round1(carbGoal / carb.carbsPerGram);
     const maltodextrinGrams = useBlend || requestedSource === "maltodextrin" ? round1(maltodextrinCarbs / DIY_CARB_SOURCES.maltodextrin.carbsPerGram) : 0;
     const tableSugarGrams = useBlend || requestedSource === "table-sugar" ? round1(sugarCarbs) : 0;
     const sodiumShortfall = Math.max(0, (Number(sodiumTarget) || 0) - (Number(existingSodium) || 0));
