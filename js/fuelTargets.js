@@ -30,6 +30,50 @@ export function estimateDurationMinutes(session) {
 
 }
 
+/* Carbs an hour before tolerance / stomach / habit, by the run's length:
+   straight lines between these points, flat past the last one. Training
+   and racing agree up to 90 min; a race asks a little more after that.
+   General starting points (30-60 g/hr for 1-2.5 h, up to ~90 g/hr for
+   longer races in trained guts), meant to be edited. */
+export const CARB_CURVE = {
+    training: [[45, 0], [60, 25], [90, 40], [150, 55], [210, 60]],
+    race: [[45, 0], [60, 25], [90, 40], [150, 70], [210, 80]]
+};
+
+export function baseCarbsPerHour(durationMin, mode = "training") {
+    const pts = CARB_CURVE[mode === "race" ? "race" : "training"];
+    const d = Number(durationMin) || 0;
+    if (d <= pts[0][0]) return 0;
+    for (let i = 1; i < pts.length; i++) {
+        const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+        if (d <= x1) return y0 + (y1 - y0) * (d - x0) / (x1 - x0);
+    }
+    return pts[pts.length - 1][1];
+}
+
+/* The one pace table for estimating how long a run takes, by workout
+   type (the Fueling page and every workout page) and by the plan's pace
+   words (the Marathon picker). The plan's own PACES ranges win when given. */
+const LABEL_PACES = {
+    recovery: 9.1, easy: 8.6, "long run": 8.25, long: 8.25, steady: 7.5,
+    threshold: 6.7, cruise: 6.6, "cruise intervals": 6.6, "10k pace": 6.33, vo2max: 6.1, "5k / vo₂max": 6.1,
+    fartlek: 8.3, "hill effort": 8.5, "hill repeats / fartlek": 8.3, progression: 7.6,
+    "fast finish": 7.2, mp: 7.05, "marathon pace": 7.05, race: 7.05
+};
+
+/** "Long Run" -> 8.0 (the middle of the plan's 7:50-8:40), else the table, else null. */
+export function paceForLabel(label, paces = null) {
+    const key = String(label || "").trim().toLowerCase();
+    if (!key) return null;
+    if (Array.isArray(paces)) {
+        const row = paces.find(([name]) => String(name).toLowerCase() === key)
+            || paces.find(([name]) => String(name).toLowerCase().split(/[ /]+/).includes(key));
+        const p = row ? parsePace(String(row[1])) : null;
+        if (p) return p;
+    }
+    return LABEL_PACES[key] ?? null;
+}
+
 export function paceMinutesPerMile(session) {
 
     const table = {
@@ -54,14 +98,8 @@ export function calculateTargets(session) {
 
     /* ---- Carbohydrates ---- */
 
-    let baseCarbs;
-
-    if (duration < 45) baseCarbs = 0;
-    else if (duration < 75) baseCarbs = 30;
-    else if (duration <= 150) baseCarbs = 45;
-    else baseCarbs = 60;
-
-    if (session.mode === "race" && duration > 150) baseCarbs = 75;
+    // Rises gradually with the run's length (no jump at 75 or 150 min).
+    const baseCarbs = baseCarbsPerHour(duration, session.mode);
 
     const toleranceFactor = { low: 0.7, moderate: 1, high: 1.25 }[session.tolerance] || 1;
 
@@ -168,56 +206,62 @@ export function formatDuration(minutes) {
 }
 
 /**
- * The run's length from what's typed, by one plain rule:
- *   distance + pace work it out, unless the duration was typed by hand
- *   (durationTyped), which then wins; when the two disagree by more than
- *   3 minutes and 3%, `conflict` says so. A typed duration with a distance
- *   gives the pace it implies. A distance alone uses a typical pace for
- *   the workout type (said so). Nothing usable -> minutes null (no
- *   made-up 60-minute run).
- * input: { duration, durationTyped, distance, pace, workoutType }
- * -> { minutes, source: "typed" | "distance-pace" | "distance-typical" | "none",
- *      paceMin, paceSource: "typed" | "implied" | "typical" | null,
- *      fromPace (distance x pace, when both), conflict, problems: [text] }
+ * Distance, pace and duration, adaptable: whichever two were typed most
+ * recently work out the third, like a pace calculator.
+ * input: { distance, pace, duration, order (the typed fields, most recent
+ *          first: "distance" | "pace" | "duration"), workoutType }
+ * -> { minutes, distance, paceMin, computed: "duration" | "pace" |
+ *      "distance" | null, source: "two" | "duration" | "distance-typical" | "none",
+ *      paceSource: "typed" | "worked out" | "typical" | null, problems: [text] }
+ * A distance alone uses a typical pace for the workout type (said so);
+ * a duration alone needs nothing else; nothing usable -> minutes null.
  */
-export function resolveDuration(input = {}) {
-    const num = v => {
-        const n = Number(v);
-        return isFinite(n) ? n : NaN;
-    };
+export function resolveRun(input = {}) {
     const problems = [];
-    const distRaw = num(input.distance);
-    const durRaw = num(input.duration);
+    const blank = v => String(v ?? "").trim() === "";
+    const n = v => (blank(v) ? NaN : Number(v));
+    const dist = n(input.distance), dur = n(input.duration);
     const paceText = String(input.pace ?? "").trim();
-    const distance = distRaw > 0 && distRaw <= 200 ? distRaw : 0;
-    if (String(input.distance ?? "").trim() !== "" && !(distRaw > 0 && distRaw <= 200)) problems.push("Distance should be between 0.1 and 200 miles.");
-    const typed = input.durationTyped && durRaw > 0 && durRaw <= 2880 ? Math.round(durRaw) : 0;
-    if (input.durationTyped && String(input.duration ?? "").trim() !== "" && !(durRaw > 0 && durRaw <= 2880)) problems.push("Duration should be between 1 and 2,880 minutes.");
     const pace = parsePace(paceText);
-    if (paceText && pace == null) problems.push(`Couldn't read the pace “${paceText}”. Type it like 8:30 (per mile) or 5:17/km.`);
-    const fromPace = distance && pace ? Math.round(distance * pace) : null;
-    const out = { minutes: null, source: "none", paceMin: null, paceSource: null, fromPace, conflict: null, problems };
-    if (typed) {
-        out.minutes = typed;
-        out.source = "typed";
-        if (pace) { out.paceMin = pace; out.paceSource = "typed"; }
-        else if (distance) { out.paceMin = typed / distance; out.paceSource = "implied"; }
-        if (fromPace && Math.abs(fromPace - typed) > 3 && Math.abs(fromPace - typed) / fromPace > 0.03) {
-            out.conflict = { typed, fromPace };
-            out.paceMin = typed / distance;
-            out.paceSource = "implied";
-        }
-        if (out.paceSource === "implied" && (out.paceMin < 3 || out.paceMin > 30)) {
-            problems.push(`${typed} min for ${distance} mi is ${formatPace(out.paceMin)} a mile. Check the duration or the distance.`);
+    const ok = {
+        distance: dist > 0 && dist <= 200,
+        duration: dur > 0 && dur <= 2880,
+        pace: pace != null
+    };
+    if (!blank(input.distance) && !ok.distance) problems.push("Distance should be between 0.1 and 200 miles.");
+    if (!blank(input.duration) && !ok.duration) problems.push("Duration should be between 1 and 2,880 minutes.");
+    if (paceText && !ok.pace) problems.push(`Couldn't read the pace “${paceText}”. Type it like 8:30 (per mile) or 5:17/km.`);
+    const typed = [...new Set([...(input.order || []), "duration", "distance", "pace"])].filter(f => ok[f]);
+    const out = { minutes: null, distance: ok.distance ? dist : null, paceMin: ok.pace ? pace : null, computed: null, source: "none", paceSource: ok.pace ? "typed" : null, problems };
+    // Something typed that doesn't read (yet): never work anything out over
+    // it; say what's wrong and wait.
+    if ((input.order || []).some(f => !blank(input[f]) && !ok[f])) {
+        out.waiting = true;
+        return out;
+    }
+    if (typed.length >= 2) {
+        const use = typed.slice(0, 2);
+        out.source = "two";
+        if (!use.includes("duration")) {
+            out.computed = "duration";
+            out.minutes = Math.round(dist * pace);
+        } else if (!use.includes("pace")) {
+            out.computed = "pace";
+            out.minutes = Math.round(dur);
+            out.paceMin = dur / dist;
+            out.paceSource = "worked out";
+            if (out.paceMin < 3 || out.paceMin > 30) problems.push(`${Math.round(dur)} min for ${dist} mi is ${formatPace(out.paceMin)} a mile. Check the duration or the distance.`);
+        } else {
+            out.computed = "distance";
+            out.minutes = Math.round(dur);
+            out.distance = Math.round(dur / pace * 100) / 100;
         }
         return out;
     }
-    if (fromPace) {
-        return { ...out, minutes: fromPace, source: "distance-pace", paceMin: pace, paceSource: "typed" };
-    }
-    if (distance) {
+    if (ok.duration) return { ...out, minutes: Math.round(dur), source: "duration" };
+    if (ok.distance) {
         const typical = paceMinutesPerMile({ workoutType: input.workoutType });
-        return { ...out, minutes: Math.round(distance * typical), source: "distance-typical", paceMin: typical, paceSource: "typical" };
+        return { ...out, minutes: Math.round(dist * typical), source: "distance-typical", paceMin: typical, paceSource: "typical" };
     }
     return out;
 }

@@ -133,8 +133,9 @@ test("formatting helpers", () => {
 });
 
 // ---- Fueling audit step 1: the duration rule, inputs, the drink, saved plans ----
-import { parsePace, formatPace, resolveDuration, estimateDurationMinutes, calculateTargets } from "../js/fuelTargets.js";
-import { drinkIncluded, firstGelValue, sodiumText } from "../js/fuelSchedule.js";
+import { parsePace, formatPace, resolveRun, estimateDurationMinutes, calculateTargets, baseCarbsPerHour, paceForLabel } from "../js/fuelTargets.js";
+import { toFluid, fromFluid, fluidText, fluidWords } from "../js/fluidUnits.js";
+import { drinkIncluded, firstGelValue, sodiumText, isSipped } from "../js/fuelSchedule.js";
 
 test("paces are read per mile or per km, ranges by their middle, words not at all", () => {
     assert.equal(parsePace("8:30"), 8.5);
@@ -148,61 +149,79 @@ test("paces are read per mile or per km, ranges by their middle, words not at al
     assert.equal(formatPace(7.999), "8:00");
 });
 
-test("18 mi at 8:30 is 153 min, and that fills the duration (test 1)", () => {
-    const r = resolveDuration({ distance: 18, pace: "8:30", workoutType: "long" });
-    assert.equal(r.minutes, 153);
-    assert.equal(r.source, "distance-pace");
-    assert.equal(r.conflict, null);
-    // The old code: 90 left in the box beat the distance; blank used a fixed 8:15.
+test("adaptable: the two typed most recently work out the third (test 1)", () => {
+    const a = resolveRun({ distance: 18, pace: "8:30", order: ["pace", "distance"] });
+    assert.equal(a.minutes, 153);
+    assert.equal(a.computed, "duration");
+    // Then the duration is typed: distance + duration now set the pace.
+    const b = resolveRun({ distance: 18, pace: "8:30", duration: 150, order: ["duration", "distance"] });
+    assert.equal(b.computed, "pace");
+    assert.equal(b.minutes, 150);
+    assert.equal(formatPace(b.paceMin), "8:20");
+    // Pace + duration set the distance.
+    const c = resolveRun({ distance: 18, pace: "8:00", duration: 160, order: ["pace", "duration"] });
+    assert.equal(c.computed, "distance");
+    assert.equal(c.distance, 20);
+    // Untracked typed fields (an older plan) still count, after the tracked ones.
+    assert.equal(resolveRun({ distance: 18, duration: 90 }).computed, "pace");
     assert.equal(estimateDurationMinutes({ distance: 18, pace: "8:30", workoutType: "long" }), 153);
 });
 
-test("a typed duration wins, and a disagreement is said, not hidden", () => {
-    const r = resolveDuration({ distance: 18, pace: "8:30", duration: 90, durationTyped: true });
-    assert.equal(r.minutes, 90);
-    assert.deepEqual(r.conflict, { typed: 90, fromPace: 153 });
-    assert.ok(r.problems.some(p => /5:00 a mile/.test(p)) === false, "5:00/mi is a real pace, no problem line");
-    // Within 3 min / 3%: no conflict.
-    assert.equal(resolveDuration({ distance: 18, pace: "8:30", duration: 155, durationTyped: true }).conflict, null);
-    // A number in the box that wasn't typed (filled in earlier) doesn't count.
-    assert.equal(resolveDuration({ distance: 18, pace: "8:30", duration: 90, durationTyped: false }).minutes, 153);
-    // Duration + distance, no pace: the pace it implies.
-    const implied = resolveDuration({ distance: 10, duration: 80, durationTyped: true });
-    assert.equal(implied.paceSource, "implied");
-    assert.equal(formatPace(implied.paceMin), "8:00");
-});
-
-test("a distance alone uses a typical pace and says so; nothing at all makes no plan (test 10)", () => {
-    const d = resolveDuration({ distance: 12, workoutType: "long" });
+test("one field: a duration alone is enough, a distance uses a typical pace, nothing makes no plan (test 10)", () => {
+    assert.equal(resolveRun({ duration: 75 }).minutes, 75);
+    const d = resolveRun({ distance: 12, workoutType: "long" });
     assert.equal(d.source, "distance-typical");
     assert.equal(d.minutes, 99);
-    const none = resolveDuration({});
+    const none = resolveRun({});
     assert.equal(none.minutes, null);
-    assert.equal(none.source, "none");
+    assert.equal(resolveRun({ pace: "8:00" }).minutes, null, "a pace alone isn't a run");
 });
 
 test("blank, zero, negative and huge inputs give no NaN, no Infinity and a plain message (test 10)", () => {
     const cases = [
         { distance: "", pace: "", duration: "" },
-        { distance: 0, pace: "0:00", duration: 0, durationTyped: true },
+        { distance: 0, pace: "0:00", duration: 0 },
         { distance: -5, pace: "8:00" },
         { distance: 1e9, pace: "8:00" },
-        { distance: 10, duration: 1e9, durationTyped: true },
-        { distance: 10, duration: 5, durationTyped: true },
+        { distance: 10, duration: 1e9 },
+        { distance: 10, duration: 5, order: ["duration", "distance"] },
         { distance: "abc", pace: "fast" }
     ];
     for (const c of cases) {
-        const r = resolveDuration(c);
+        const r = resolveRun(c);
         assert.ok(r.minutes === null || (Number.isFinite(r.minutes) && r.minutes > 0), JSON.stringify(c));
         if (r.paceMin != null) assert.ok(Number.isFinite(r.paceMin), JSON.stringify(c));
-        if (r.minutes) {
-            const t = calculateTargets({ duration: r.minutes });
-            for (const v of Object.values(t)) assert.ok(Number.isFinite(v), JSON.stringify(c));
+        if (r.minutes) for (const v of Object.values(calculateTargets({ duration: r.minutes }))) assert.ok(Number.isFinite(v), JSON.stringify(c));
+    }
+    assert.ok(resolveRun({ distance: -5, pace: "8:00" }).problems.length);
+    assert.ok(resolveRun({ distance: 10, pace: "fast" }).problems.some(p => /Couldn't read the pace/.test(p)));
+    assert.ok(resolveRun({ distance: 10, duration: 5, order: ["duration", "distance"] }).problems.some(p => /a mile/.test(p)));
+});
+
+test("carbs rise gradually with the run's length: no jump at 75 or 150 min", () => {
+    for (const mode of ["training", "race"]) {
+        let prev = 0;
+        for (let d = 30; d <= 300; d += 1) {
+            const v = baseCarbsPerHour(d, mode);
+            assert.ok(v >= prev - 1e-9, `${mode} never drops (${d})`);
+            assert.ok(v - prev <= 2.01, `${mode} rises at most 2 g/hr a minute (${d}: ${prev} -> ${v})`);
+            prev = v;
         }
     }
-    assert.ok(resolveDuration({ distance: -5, pace: "8:00" }).problems.length);
-    assert.ok(resolveDuration({ distance: 10, pace: "fast" }).problems.some(p => /Couldn't read the pace/.test(p)));
-    assert.ok(resolveDuration({ distance: 10, duration: 5, durationTyped: true }).problems.some(p => /a mile/.test(p)), "0:30/mi flagged");
+    assert.equal(baseCarbsPerHour(40), 0);
+    assert.equal(baseCarbsPerHour(90), 40);
+    assert.ok(baseCarbsPerHour(151, "race") - baseCarbsPerHour(149, "race") < 1, "the old 45 -> 75 cliff is gone");
+    assert.ok(baseCarbsPerHour(200, "race") > baseCarbsPerHour(200, "training"), "a race asks a little more on long runs");
+    assert.equal(baseCarbsPerHour(90, "race"), baseCarbsPerHour(90, "training"));
+});
+
+test("one pace table: the plan's own ranges first, then the shared words", () => {
+    const PACES = [["Easy", "8:15–9:00 /mi"], ["Long Run", "7:50–8:40 /mi"], ["Marathon Pace", "6:58–7:05 /mi"], ["Hill Repeats / Fartlek", "Run by effort"]];
+    assert.equal(formatPace(paceForLabel("Long Run", PACES)), "8:15");
+    assert.equal(formatPace(paceForLabel("marathon pace", PACES)), "7:02");
+    assert.equal(paceForLabel("Fartlek", PACES), 8.3, "a range it can't read falls back to the table");
+    assert.equal(paceForLabel("Threshold"), 6.7);
+    assert.equal(paceForLabel(""), null);
 });
 
 test("the drink counts in the totals and the schedule by the same rule (defect 6)", () => {
@@ -249,4 +268,56 @@ test("saved plans from before still give the same schedule (test 11)", () => {
         assert.equal(s.firstGelMin, expected[i].firstGelMin);
         assert.deepEqual(s.gels.map(g => g.min), expected[i].gels);
     });
+});
+
+test("drink mixes and tablets are sipped over the run, not taken like gels (test 9)", () => {
+    const s = buildSchedule({
+        durationMin: 120, distanceMi: 15,
+        items: [
+            { name: "Gel", category: "gels", carbs: 25, sodium: 50, qty: 2 },
+            { name: "Isotonic Drink Mix", category: "drinkmix", carbs: 22, sodium: 300, fluid: 16, qty: 2 },
+            { name: "Electrolyte Tablet", category: "other", carbs: 0, sodium: 250, fluid: 0, qty: 1 }
+        ],
+        targets: { carbsPerHour: 45, fluidPerHour: 22, sodiumPerHour: 500 }, firstGelMin: 30
+    });
+    assert.equal(s.gels.length, 2, "only the gels take a moment");
+    assert.equal(s.sips.length, 3);
+    assert.deepEqual(s.sips.map(d => [d.startMin, d.endMin]), [[0, 40], [40, 80], [80, 120]]);
+    assert.ok(s.events.some(e => e.kind === "sip" && e.text === "Isotonic Drink Mix"));
+    // Every gram counted once: hour by hour adds up to the totals.
+    const sum = k => s.hours.reduce((n, h) => n + h[k], 0);
+    assert.equal(s.totals.carbs, 25 * 2 + 22 * 2);
+    assert.ok(Math.abs(sum("carbs") - s.totals.carbs) <= 1);
+    assert.ok(Math.abs(sum("sodium") - s.totals.sodium) <= 1);
+    assert.ok(Math.abs(sum("fluid") - s.totals.fluid) <= 1);
+    assert.equal(isSipped({ category: "gels", carbs: 25 }), false);
+    assert.equal(isSipped({ category: "other", carbs: 0, sodium: 250 }), true);
+});
+
+test("caffeine in mg: per serving, in total, and unknown ones counted, never guessed (test 8)", () => {
+    const s = buildSchedule({
+        durationMin: 150, distanceMi: 18,
+        items: [
+            { name: "Gel", carbs: 25, sodium: 50, qty: 2 },
+            { name: "Caf Gel", carbs: 25, sodium: 50, caffeineMg: 100, caffeine: true, qty: 1 },
+            { name: "Old Caf Gel", carbs: 25, sodium: 50, caffeine: true, qty: 1 }
+        ],
+        targets: { carbsPerHour: 45 }
+    });
+    assert.equal(s.totals.caffeineMg, 100);
+    assert.equal(s.totals.caffeineUnknown, 1);
+    assert.equal(s.totals.carbs, 100, "caffeine doesn't change carbs");
+    assert.deepEqual(s.gels.map(g => g.caffeine), [false, false, true, true], "caffeinated last");
+    assert.equal(s.gels.find(g => g.name === "Caf Gel").caffeineMg, 100);
+});
+
+test("fluid is stored in oz and shown in oz or ml", () => {
+    assert.equal(toFluid(20, "oz"), 20);
+    assert.equal(toFluid(20, "ml"), 590);
+    assert.equal(toFluid(4, "ml"), 120);
+    assert.equal(fromFluid(500, "ml"), 16.91);
+    assert.equal(toFluid(fromFluid(500, "ml"), "ml"), 500, "500 ml comes back as 500 ml");
+    assert.equal(fluidText(16.9, "oz"), "16.9 oz");
+    assert.equal(fluidWords("Bottles hold {fluid:40} of {fluid:68}", "ml"), "Bottles hold 1180 ml of 2010 ml");
+    assert.equal(fluidWords("Bottles hold {fluid:40}", "oz"), "Bottles hold 40 oz");
 });

@@ -16,6 +16,7 @@
 ========================================== */
 
 import { calculateTargets, paceMinutesPerMile } from "./fuelTargets.js";
+import { fluidText } from "./fluidUnits.js";
 import { buildSchedule, formatClock, DEFAULT_FIRST_GEL_MIN } from "./fuelSchedule.js";
 
 // Plan day types -> the Fueling page's workout types.
@@ -56,7 +57,8 @@ const roundTo = (n, step) => Math.round(n / step) * step;
  *      schedule, before: [{ when, text }], during: [lines], after: [lines],
  *      coachNote, summary }
  */
-export function fuelForRun(run, { profile = {}, library = [] } = {}) {
+export function fuelForRun(run, { profile = {}, library = [], unit = "oz" } = {}) {
+    const fl = oz => fluidText(oz, unit);
     const type = TYPE_MAP[run?.type] || "easy";
     const miles = Math.max(0, Number(run?.miles) || 0);
     const durationMin = Number(run?.durationMin) > 0
@@ -94,7 +96,7 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
         ? ["No fuel needed. Water if it's hot."]
         : [
             `${targets.carbsPerHour} g carbs an hour${gels.length ? ` — ${gels.length} gel${gels.length === 1 ? "" : "s"}` : ""}`,
-            `${targets.fluidPerHour} oz fluid an hour`,
+            `${fl(targets.fluidPerHour)} fluid an hour`,
             `${targets.sodiumPerHour} mg sodium an hour`
         ];
 
@@ -115,13 +117,13 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
     if (level === "full" || hard) {
         const carbs = lbs ? `about ${roundTo(lbs * 0.45, 10)} g carbs` : "60-80 g carbs";
         after.push(`Within 30-60 min: ${carbs} + 20-30 g protein (e.g. chocolate milk and a bagel).`);
-        after.push("Drink 16-24 oz over the next hour — more if it was hot or you finished thirsty.");
+        after.push(`Drink ${unit === "ml" ? "about 500-700 ml" : "16-24 oz"} over the next hour — more if it was hot or you finished thirsty.`);
     } else {
         after.push("Your next normal meal, with some protein, within a couple of hours.");
     }
 
     const summary = level === "none" ? ""
-        : `${gels.length ? `${gels.length} gel${gels.length === 1 ? "" : "s"}, first at ${formatClock(gels[0].min)}` : `${targets.carbsPerHour} g carbs/hr`} · ${targets.fluidPerHour} oz/hr`;
+        : `${gels.length ? `${gels.length} gel${gels.length === 1 ? "" : "s"}, first at ${formatClock(gels[0].min)}` : `${targets.carbsPerHour} g carbs/hr`} · ${fl(targets.fluidPerHour)}/hr`;
 
     return { level, durationMin, miles, targets, gels, schedule, before, during, after, coachNote, summary };
 }

@@ -132,6 +132,7 @@
     "js/firebase.js",
     "js/firestore.js",
     "js/fitParse.js",
+    "js/fluidUnits.js",
     "js/foodSearch.js",
     "js/fuelSchedule.js",
     "js/fuelScheduleView.js",

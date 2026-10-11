@@ -5,11 +5,13 @@
 import { icon } from "./icons.js";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
-    DIY_SODIUM_SOURCES, DIY_CARB_SOURCES, DEFAULT_FIRST_GEL_MIN, drinkIncluded, firstGelValue, sodiumText
+    DIY_SODIUM_SOURCES, DIY_CARB_SOURCES, DEFAULT_FIRST_GEL_MIN, drinkIncluded, firstGelValue, sodiumText,
+    isSipped, caffeineMg
 } from "./fuelSchedule.js";
+import { fluidUnit, toFluid, fromFluid, fluidText } from "./fluidUnits.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
 import {
-    calculateTargets, estimateDurationMinutes, resolveDuration, formatPace, formatDuration
+    calculateTargets, estimateDurationMinutes, resolveRun, formatPace, formatDuration, paceForLabel
 } from "./fuelTargets.js";
 import { showsPersonalPlan } from "./role.js";
 import { toast, sbConfirm, sbPrompt } from "./ui.js";
@@ -34,7 +36,13 @@ let planItems = [];       // library items added to the current plan build
 let currentPlanId = null; // set when editing a saved plan
 let marathonRef = null;   // { week, dayKey } when this plan is tied to a Marathon workout
 let preWorkoutFood = "";
-let durationTyped = false; // the duration box holds a number typed by hand (it then wins over distance + pace)
+// Distance / pace / duration the person typed, most recent first: the two
+// most recent work out the third (js/fuelTargets.js resolveRun).
+let runOrder = [];
+let unit = "oz"; // fluid shown in "oz" | "ml"; stored in oz (js/fluidUnits.js)
+const fl = oz => fluidText(oz, unit);
+const setFluidInput = (id, oz) => { $(id).value = oz === "" || oz == null ? "" : toFluid(oz, unit); };
+const fluidInput = id => fromFluid($(id).value, unit) || 0;
 
 let library = [];
 let diyRecipes = [];
@@ -89,19 +97,17 @@ function saveJSON(key, value) {
 
 function loadLibrary() {
 
-    let saved = loadJSON("fueling-library", null);
+    const saved = loadJSON("fueling-library", null);
 
-    if (!saved) {
+    if (Array.isArray(saved)) return saved;
 
-        saved = defaultLibrary();
+    // First visit only: a starting library (with the Hammer gels), saved
+    // once. Deleting any of them later sticks.
+    const fresh = ensureHammerGels(defaultLibrary());
 
-    }
+    saveJSON("fueling-library", fresh);
 
-    saved = ensureHammerGels(saved);
-
-    saveJSON("fueling-library", saved);
-
-    return saved;
+    return fresh;
 
 }
 
@@ -451,10 +457,10 @@ function readSession() {
     return {
 
         workoutType: $("workoutType").value,
-        duration: durationTyped ? Number($("duration").value) || 0 : 0,
-        durationTyped,
+        duration: Number($("duration").value) || 0,
         distance: Number($("distance").value) || 0,
         pace: $("pace").value.trim(),
+        order: [...runOrder],
 
         bodyWeight: Number($("bodyWeight").value) || 0,
         currentCarbIntake: Number($("currentCarbIntake").value) || 0,
@@ -483,42 +489,51 @@ function readSession() {
    Render — Targets
 ========================================== */
 
-// The run's length by the page's one rule (js/fuelTargets.js
-// resolveDuration), said in words under the workout fields.
+// Distance, pace and duration, adaptable: the two typed most recently
+// work out the third (js/fuelTargets.js resolveRun), said in words under
+// the fields; the worked-out box is marked.
 function currentResolve() {
-    return resolveDuration({
+    return resolveRun({
         duration: $("duration").value,
-        durationTyped,
         distance: $("distance").value,
         pace: $("pace").value,
+        order: runOrder,
         workoutType: $("workoutType").value
     });
 }
 
+const FIELD_OF = { duration: "duration", distance: "distance", pace: "pace" };
+
 function renderDurationStatus(r = currentResolve()) {
     const el = $("durationStatus");
+    // Fill in the worked-out field; it isn't "typed" any more.
+    if (r.computed === "duration") $("duration").value = r.minutes;
+    if (r.computed === "pace") $("pace").value = formatPace(r.paceMin);
+    if (r.computed === "distance") $("distance").value = r.distance;
+    if (r.computed) runOrder = runOrder.filter(f => f !== r.computed);
+    Object.keys(FIELD_OF).forEach(f => {
+        $(f).classList.toggle("fuel-computed", r.computed === f);
+        $(f).setAttribute("aria-description", r.computed === f ? "worked out from the other two" : "");
+    });
     if (!el) return r;
-    const dist = Number($("distance").value) || 0;
+    const dist = r.distance;
     const parts = [];
-    if (r.source === "distance-pace") {
-        parts.push(`${dist} mi at ${formatPace(r.paceMin)}/mi = <strong>${formatDuration(r.minutes)}</strong> (${r.minutes} min).`);
+    if (r.computed === "duration") {
+        parts.push(`Duration <strong>${formatDuration(r.minutes)}</strong> (${r.minutes} min), from ${dist} mi at ${formatPace(r.paceMin)}/mi.`);
+    } else if (r.computed === "pace") {
+        parts.push(`Pace <strong>${formatPace(r.paceMin)}/mi</strong>, from ${dist} mi in ${formatDuration(r.minutes)}.`);
+    } else if (r.computed === "distance") {
+        parts.push(`Distance <strong>${dist} mi</strong>, from ${formatDuration(r.minutes)} at ${formatPace(r.paceMin)}/mi.`);
     } else if (r.source === "distance-typical") {
-        parts.push(`About <strong>${formatDuration(r.minutes)}</strong>, from a typical ${formatPace(r.paceMin)}/mi for this kind of run. Add your pace for a closer number.`);
-    } else if (r.source === "typed") {
-        if (r.conflict) {
-            parts.push(`Using the ${r.conflict.typed} min you typed. ${dist} mi at ${escapeHTML($("pace").value.trim())}/mi would be ${formatDuration(r.conflict.fromPace)} (${r.conflict.fromPace} min). <button type="button" class="fuel-btn secondary small" id="useFromPaceBtn">Use ${r.conflict.fromPace} min</button>`);
-        } else if (r.paceSource === "implied") {
-            parts.push(`${r.minutes} min for ${dist} mi is ${formatPace(r.paceMin)}/mi.`);
-        }
-    } else {
-        parts.push("Enter a duration, or a distance and pace, to build the plan.");
+        parts.push(`About <strong>${formatDuration(r.minutes)}</strong>, from a typical ${formatPace(r.paceMin)}/mi for this kind of run. Add your pace or time for a closer number.`);
+    } else if (r.source === "none") {
+        parts.push("Enter any two of distance, pace and duration (or just a duration) to build the plan.");
     }
+    if (r.computed) parts.push(`<span class="fuel-muted-line">Change any two and the third follows.</span>`);
     r.problems.forEach(p => parts.push(`<span class="fuel-duration-problem">${escapeHTML(p)}</span>`));
     el.innerHTML = parts.join(" ");
-    el.classList.toggle("is-conflict", !!r.conflict || r.problems.length > 0);
-    // The box shows what distance + pace work out to, unless a number was typed.
-    if (!durationTyped) $("duration").value = r.source === "distance-pace" ? r.minutes : "";
-    $("duration").placeholder = r.source === "distance-typical" ? `about ${r.minutes}` : "from distance + pace";
+    el.classList.toggle("is-conflict", r.problems.length > 0);
+    $("duration").placeholder = r.source === "distance-typical" ? `about ${r.minutes}` : "min";
     return r;
 }
 
@@ -540,6 +555,7 @@ function runCalculation() {
 
     const session = readSession();
     session.durationResolved = resolved.minutes;
+    if (resolved.distance) session.distance = resolved.distance;
 
     const targets = calculateTargets({ ...session, duration: resolved.minutes });
 
@@ -558,7 +574,7 @@ function runCalculation() {
     $("timelinePanel").style.display = "";
 
     $("carbsPerHour").value = targets.carbsPerHour;
-    $("fluidPerHour").value = targets.fluidPerHour;
+    setFluidInput("fluidPerHour", targets.fluidPerHour);
     $("sodiumPerHour").value = targets.sodiumPerHour;
 
     $("calcNote").textContent =
@@ -586,7 +602,7 @@ function updateTotalsAndTimeline(regenerateTimeline) {
     if (!lastTargets) return;
 
     const carbsPerHour = Number($("carbsPerHour").value) || 0;
-    const fluidPerHour = Number($("fluidPerHour").value) || 0;
+    const fluidPerHour = fluidInput("fluidPerHour");
     const sodiumPerHour = Number($("sodiumPerHour").value) || 0;
 
     lastTargets = { carbsPerHour, fluidPerHour, sodiumPerHour };
@@ -595,7 +611,7 @@ function updateTotalsAndTimeline(regenerateTimeline) {
     const hours = duration / 60;
 
     $("carbsTotal").textContent = `${Math.round(carbsPerHour * hours)} g`;
-    $("fluidTotal").textContent = `${Math.round(fluidPerHour * hours)} oz`;
+    $("fluidTotal").textContent = fl(Math.round(fluidPerHour * hours));
     $("sodiumTotal").textContent = `${Math.round(sodiumPerHour * hours)} mg`;
 
     renderComposition();
@@ -630,7 +646,7 @@ function setMode(next) {
         const targets = calculateTargets({ ...lastSession, duration: currentDurationMinutes() });
 
         $("carbsPerHour").value = targets.carbsPerHour;
-        $("fluidPerHour").value = targets.fluidPerHour;
+        setFluidInput("fluidPerHour", targets.fluidPerHour);
         $("sodiumPerHour").value = targets.sodiumPerHour;
 
         updateTotalsAndTimeline(true);
@@ -668,9 +684,15 @@ $("firstGelMin").addEventListener("input", renderSchedule);
 // press Calculate again).
 let liveTimer = null;
 function onSessionInput(e) {
-    if (e?.target?.id === "duration") durationTyped = $("duration").value.trim() !== "";
-    renderDurationStatus();
+    const f = e?.target?.id;
+    if (FIELD_OF[f]) {
+        runOrder = runOrder.filter(x => x !== f);
+        if ($(f).value.trim() !== "") runOrder.unshift(f);
+    }
+    const r = renderDurationStatus();
     if (!lastTargets && !lastSession) return;
+    // Mid-typing ("8:" on the way to "8:30"): keep the plan as it is.
+    if (r.waiting || !r.minutes) { clearTimeout(liveTimer); return; }
     clearTimeout(liveTimer);
     liveTimer = setTimeout(runCalculation, 250);
 }
@@ -682,10 +704,29 @@ function onSessionInput(e) {
     if (el.tagName === "SELECT" || el.type === "checkbox") el.addEventListener("change", onSessionInput);
 });
 $("fuelPreferences")?.addEventListener("change", onSessionInput);
-$("durationStatus")?.addEventListener("click", e => {
-    if (!e.target.closest("#useFromPaceBtn")) return;
-    durationTyped = false;
-    onSessionInput();
+
+// oz / ml: only how fluid is shown and typed; everything stays in oz.
+function applyUnit(next) {
+    const before = {
+        fluidPerHour: $("fluidPerHour").value === "" ? "" : fluidInput("fluidPerHour"),
+        diyBottleSize: $("diyBottleSize").value === "" ? "" : fluidInput("diyBottleSize"),
+        libFluid: $("libFluid").value === "" ? "" : fluidInput("libFluid")
+    };
+    unit = next === "ml" ? "ml" : "oz";
+    Object.entries(before).forEach(([id, oz]) => setFluidInput(id, oz));
+    document.querySelectorAll("[data-fluid-unit]").forEach(el => { el.textContent = unit; });
+    document.querySelectorAll("#fluidUnitSwitch [data-unit]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.unit === unit)));
+}
+$("fluidUnitSwitch").addEventListener("click", e => {
+    const b = e.target.closest("[data-unit]");
+    if (!b || b.dataset.unit === unit) return;
+    applyUnit(b.dataset.unit);
+    saveJSON("fueling-units", { fluid: unit });
+    updateTotalsAndTimeline(false);
+    refreshDiySnapshot();
+    renderLibrary();
+    renderSavedPlans();
+    renderPlanSummary();
 });
 
 /* ==========================================
@@ -733,7 +774,7 @@ $("useMarathonWorkoutBtn").addEventListener("click", async () => {
 
 });
 
-function applyMarathonWorkout(workout, week, dayKey) {
+async function applyMarathonWorkout(workout, week, dayKey) {
 
     const miles = workout.miles || 0;
 
@@ -745,22 +786,18 @@ function applyMarathonWorkout(workout, week, dayKey) {
     else if (paceLabel.includes("long")) workoutType = "long";
     else if (paceLabel === "recovery" || (miles > 0 && miles <= 4)) workoutType = "easy";
 
-    const minPerMile = {
-
-        recovery: 9.1, easy: 8.6, "long run": 8.25, steady: 7.5,
-        threshold: 6.7, cruise: 6.6, "10k pace": 6.33, vo2max: 6.1,
-        fartlek: 8.3, "hill effort": 8.5, progression: 7.6,
-        "fast finish": 7.2, mp: 7.05, race: 7.05
-
-    }[paceLabel] || 8.3;
+    // One pace table (js/fuelTargets.js): the plan's own PACES ranges first.
+    let planPaces = null;
+    try { planPaces = (await getMarathonModule()).PACES; } catch { /* no plan here */ }
+    const minPerMile = paceForLabel(workout.race ? "marathon pace" : workout.pace, planPaces) || 8.3;
 
     $("workoutType").value = workoutType;
     $("distance").value = miles || "";
-    // The pace label ("Long Run", "MP") as a number, so distance + pace
-    // set the duration by the page's one rule.
-    durationTyped = false;
+    // The pace label ("Long Run", "MP") as a number: distance + pace
+    // work out the duration.
     $("duration").value = "";
     $("pace").value = miles ? formatPace(minPerMile) : "";
+    runOrder = miles ? ["pace", "distance"] : [];
 
     marathonRef = { week, dayKey, workoutLabel: workout.session || "Workout", miles, pace: workout.pace || "" };
 
@@ -810,7 +847,7 @@ function computeComposition() {
 
     // Same rule as the schedule: no bottles, no drink in the totals.
     const includeDrink = drinkIncluded($("includeHomemadeDrink").checked, {
-        bottleSize: $("diyBottleSize").value, bottleCount: $("diyBottleCount").value
+        bottleSize: fluidInput("diyBottleSize"), bottleCount: $("diyBottleCount").value
     });
 
     const drinkCarbs = includeDrink ? (Number($("diyCarbTarget").value) || 0) : 0;
@@ -890,7 +927,7 @@ function renderComposition() {
 // The homemade drink's ingredient amounts for the current inputs, from
 // the same ingredient table the race-day schedule uses.
 function currentDiyMix() {
-    const bottleSize = Number($("diyBottleSize").value) || 0;
+    const bottleSize = fluidInput("diyBottleSize");
     const bottleCount = Math.max(1, Number($("diyBottleCount").value) || 1);
     const carbTarget = Number($("diyCarbTarget").value) || 0;
     const sodiumTarget = Number($("diySodiumTarget").value) || 0;
@@ -917,7 +954,7 @@ function currentDiyMix() {
 // so it never disagrees with the plan summary or what's saved).
 function showDiyResults(mix) {
     const hasSalt = DIY_SODIUM_SOURCES[mix.sodiumSource]?.sodiumPerGram > 0;
-    $("diyWaterAmount").textContent = `${mix.totalFluid} oz`;
+    $("diyWaterAmount").textContent = fl(mix.totalFluid);
     $("diySugarGrams").textContent = `${mix.sugarGrams} g`;
     $("diySaltGrams").textContent = hasSalt && mix.saltGrams != null ? `${mix.saltGrams} g` : `${mix.sodiumTarget} mg sodium — see the label`;
     $("diySugarTsp").textContent = mix.sugarTsp != null ? formatTsp(mix.sugarTsp) : "Use product label";
@@ -1010,7 +1047,7 @@ function renderSchedule() {
 
     const schedule = buildSchedule(scheduleInputFromPlan(buildPlanObject()));
 
-    container.innerHTML = scheduleHTML(schedule, { preWorkoutFood });
+    container.innerHTML = scheduleHTML(schedule, { preWorkoutFood, unit });
 
 }
 
@@ -1080,7 +1117,7 @@ function renderDiyRecipes() {
             <div>
                 <strong>${escapeHTML(r.name)}</strong>
                 <div class="fuel-saved-item-meta">
-                    ${escapeHTML(`${r.sugarGrams} g ${(DIY_CARB_LABEL(r.carbSource)).toLowerCase()} · ${sodiumText(r)} · ${r.totalFluid} oz water`)}
+                    ${escapeHTML(`${r.sugarGrams} g ${(DIY_CARB_LABEL(r.carbSource)).toLowerCase()} · ${sodiumText(r)} · ${fl(r.totalFluid)} water`)}
                 </div>
             </div>
 
@@ -1148,8 +1185,9 @@ function renderLibrary() {
             <div class="fuel-lib-macros">
                 <span><b>${item.carbs}g</b> carb</span>
                 <span><b>${item.sodium}mg</b> sodium</span>
-                ${item.fluid ? `<span><b>${item.fluid}oz</b> fluid</span>` : ""}
-                ${item.caffeine ? `<span><b>Caffeine</b></span>` : ""}
+                ${item.fluid ? `<span><b>${fl(item.fluid)}</b> fluid</span>` : ""}
+                ${caffeineMg(item) ? `<span><b>${caffeineMg(item)} mg</b> caffeine</span>` : item.caffeine ? `<span><b>Caffeine</b></span>` : ""}
+                ${isSipped(item) ? `<span>Sipped over the run</span>` : ""}
                 ${item.serving ? `<span>${escapeHTML(item.serving)}</span>` : ""}
                 ${item.price ? `<span>${escapeHTML(item.price)}</span>` : ""}
             </div>
@@ -1221,6 +1259,7 @@ function resetLibraryForm() {
     $("libServing").value = "";
     $("libPrice").value = "";
     $("libCaffeine").checked = false;
+    $("libCaffeineMg").value = "";
 
 }
 
@@ -1237,8 +1276,9 @@ $("libraryForm").addEventListener("submit", (e) => {
         category: $("libCategory").value,
         carbs: Number($("libCarbs").value) || 0,
         sodium: Number($("libSodium").value) || 0,
-        fluid: Number($("libFluid").value) || 0,
-        caffeine: $("libCaffeine").checked,
+        fluid: fluidInput("libFluid"),
+        caffeineMg: Math.max(0, Math.min(500, Math.round(Number($("libCaffeineMg").value) || 0))),
+        caffeine: $("libCaffeine").checked || Number($("libCaffeineMg").value) > 0,
         serving: $("libServing").value.trim(),
         price: $("libPrice").value.trim()
 
@@ -1279,10 +1319,11 @@ $("libraryGrid").addEventListener("click", (e) => {
         $("libCategory").value = item.category;
         $("libCarbs").value = item.carbs;
         $("libSodium").value = item.sodium;
-        $("libFluid").value = item.fluid;
+        setFluidInput("libFluid", item.fluid);
+        $("libCaffeineMg").value = caffeineMg(item) || "";
         $("libServing").value = item.serving || "";
         $("libPrice").value = item.price || "";
-        $("libCaffeine").checked = !!item.caffeine;
+        $("libCaffeine").checked = !!item.caffeine && !caffeineMg(item);
 
         $("libraryForm").style.display = "";
 
@@ -1317,7 +1358,7 @@ $("libraryGrid").addEventListener("click", (e) => {
         const existing = planItems.find(p => String(p.id) === addId);
 
         if (existing) existing.qty += 1;
-        else planItems.push({ id: item.id, name: item.name, carbs: item.carbs, sodium: item.sodium, fluid: item.fluid, caffeine: item.caffeine, qty: 1 });
+        else planItems.push({ id: item.id, name: item.name, category: item.category, carbs: item.carbs, sodium: item.sodium, fluid: item.fluid, caffeine: item.caffeine, caffeineMg: caffeineMg(item), qty: 1 });
 
         renderComposition();
         renderPlanSummary();
@@ -1396,6 +1437,14 @@ $("preWorkoutFood").addEventListener("input", () => {
    Complete Fueling Plan — Summary + Save
 ========================================== */
 
+// The plan's caffeine: mg from the products added, said plainly.
+function caffeineLine() {
+    const mg = planItems.reduce((sum, p) => sum + caffeineMg(p) * (Number(p.qty) || 0), 0);
+    const unknown = planItems.filter(p => p.caffeine && !caffeineMg(p)).reduce((n, p) => n + (Number(p.qty) || 0), 0);
+    if (!mg && !unknown) return "None";
+    return [mg ? `${mg} mg` : "", unknown ? `${unknown} caffeinated ${unknown === 1 ? "serving" : "servings"} with no mg on file` : ""].filter(Boolean).join(" + ");
+}
+
 function renderPlanSummary() {
 
     const container = $("planSummary");
@@ -1423,9 +1472,9 @@ function renderPlanSummary() {
             <div class="fuel-plan-row"><span>Workout</span><span>${escapeHTML(workoutSummaryLabel())}</span></div>
             <div class="fuel-plan-row"><span>Duration</span><span>${duration} min</span></div>
             <div class="fuel-plan-row"><span>Carb Target</span><span>${Math.round(lastTargets.carbsPerHour * hours)} g total (${lastTargets.carbsPerHour} g/hr)</span></div>
-            <div class="fuel-plan-row"><span>Fluid Target</span><span>${Math.round(lastTargets.fluidPerHour * hours)} oz total (${lastTargets.fluidPerHour} oz/hr)</span></div>
+            <div class="fuel-plan-row"><span>Fluid Target</span><span>${fl(Math.round(lastTargets.fluidPerHour * hours))} total (${fl(lastTargets.fluidPerHour)}/hr)</span></div>
             <div class="fuel-plan-row"><span>Sodium Target</span><span>${Math.round(lastTargets.sodiumPerHour * hours)} mg total (${lastTargets.sodiumPerHour} mg/hr)</span></div>
-            <div class="fuel-plan-row"><span>Caffeine</span><span>${lastSession && lastSession.caffeineWanted ? "Yes" : "No"}</span></div>
+            <div class="fuel-plan-row"><span>Caffeine</span><span>${escapeHTML(caffeineLine())}</span></div>
         `;
 
         if (c.includeDrink) {
@@ -1435,7 +1484,7 @@ function renderPlanSummary() {
             html += `
                 <div class="fuel-plan-row">
                     <span>Homemade Drink</span>
-                    <span>${escapeHTML(snapshot ? `${snapshot.totalFluid} oz water · ${snapshot.sugarGrams} g ${DIY_CARB_LABEL(snapshot.carbSource).toLowerCase()} · ${sodiumText(snapshot)}` : `${c.drinkCarbs} g carb · ${c.drinkSodium} mg sodium`)}</span>
+                    <span>${escapeHTML(snapshot ? `${fl(snapshot.totalFluid)} water · ${snapshot.sugarGrams} g ${DIY_CARB_LABEL(snapshot.carbSource).toLowerCase()} · ${sodiumText(snapshot)}` : `${c.drinkCarbs} g carb · ${c.drinkSodium} mg sodium`)}</span>
                 </div>
             `;
 
@@ -1533,7 +1582,7 @@ function buildPlanObject() {
         includeHomemadeDrink: $("includeHomemadeDrink").checked,
         diySnapshot,
         diyInputs: {
-            bottleSize: Number($("diyBottleSize").value) || 0,
+            bottleSize: fluidInput("diyBottleSize"),
             bottleCount: Number($("diyBottleCount").value) || 1,
             carbTarget: Number($("diyCarbTarget").value) || 0,
             sodiumTarget: Number($("diySodiumTarget").value) || 0,
@@ -1620,7 +1669,7 @@ $("clearPlanBtn").addEventListener("click", () => {
     preWorkoutFood = "";
     lastTargets = null;
     lastSession = null;
-    durationTyped = false;
+    runOrder = [];
 
     $("planName").value = "";
     $("preWorkoutFood").value = "";
@@ -1764,7 +1813,7 @@ function planCardHTML(plan) {
 
             <div class="fuel-saved-plan-targets">
                 <span>${plan.carbsPerHour} g/hr carbs</span>
-                <span>${plan.fluidPerHour} oz/hr fluid</span>
+                <span>${fl(plan.fluidPerHour)}/hr fluid</span>
                 <span>${plan.sodiumPerHour} mg/hr sodium</span>
             </div>
 
@@ -1807,7 +1856,7 @@ function openPlanSheet(id, note = "") {
 
     $("fuelSheetTitle").textContent = plan.name;
     $("fuelSheetSub").textContent = plan.workout || "";
-    $("fuelSheetBody").innerHTML = scheduleHTML(schedule, { preWorkoutFood: plan.preWorkoutFood });
+    $("fuelSheetBody").innerHTML = scheduleHTML(schedule, { preWorkoutFood: plan.preWorkoutFood, unit });
 
     $("fuelPlanSheet").hidden = false;
     document.documentElement.classList.add("fs-sheet-open");
@@ -1913,10 +1962,13 @@ function openPlan(id) {
         lastSession = { ...plan.session };
 
         $("workoutType").value = plan.session.workoutType;
-        // Older plans had no flag: a duration they saved was typed in.
-        durationTyped = plan.session.durationTyped ?? Number(plan.session.duration) > 0;
+        // The order the fields were typed in; older plans: a saved duration
+        // was typed (with the distance), else distance + pace.
+        const legacyTyped = plan.session.durationTyped ?? Number(plan.session.duration) > 0;
+        runOrder = Array.isArray(plan.session.order) ? plan.session.order.filter(f => FIELD_OF[f])
+            : legacyTyped ? ["duration", "distance"] : ["pace", "distance"];
         lastSession.durationResolved = Number(plan.duration) || estimateDurationMinutes(plan.session);
-        $("duration").value = durationTyped ? plan.session.duration : "";
+        $("duration").value = Number(plan.session.duration) > 0 ? plan.session.duration : (Number(plan.duration) || "");
         $("distance").value = plan.session.distance || "";
         $("pace").value = plan.session.pace || "";
         $("bodyWeight").value = plan.session.bodyWeight || "";
@@ -1947,14 +1999,13 @@ function openPlan(id) {
     $("timelinePanel").style.display = "";
 
     $("carbsPerHour").value = plan.carbsPerHour;
-    $("fluidPerHour").value = plan.fluidPerHour;
+    setFluidInput("fluidPerHour", plan.fluidPerHour);
     $("sodiumPerHour").value = plan.sodiumPerHour;
 
     $("includeHomemadeDrink").checked = plan.includeHomemadeDrink !== false;
 
 if (plan.diyInputs) {
-    $("diyBottleSize").value =
-        plan.diyInputs.bottleSize || 20;
+    setFluidInput("diyBottleSize", plan.diyInputs.bottleSize || 20);
 
     $("diyBottleCount").value =
         plan.diyInputs.bottleCount || 1;
@@ -1982,7 +2033,7 @@ if (plan.diySnapshot) {
         JSON.stringify(plan.diySnapshot);
 
     $("diyWaterAmount").textContent =
-        `${plan.diySnapshot.totalFluid} oz`;
+        fl(plan.diySnapshot.totalFluid);
 
     $("diySugarGrams").textContent =
         `${plan.diySnapshot.sugarGrams} g`;
@@ -2038,6 +2089,8 @@ function renderFuelingPage() {
 
     loadPersistedState();
 
+    applyUnit(fluidUnit());
+
     setMode(mode);
     renderLibrary();
     renderDiyRecipes();
@@ -2075,7 +2128,8 @@ function prefillFromWorkoutLink() {
     const miles = Number(params.get("miles"));
     const duration = Number(params.get("duration"));
     if (miles > 0) $("distance").value = miles;
-    if (duration > 0) { $("duration").value = duration; durationTyped = true; }
+    if (duration > 0) $("duration").value = duration;
+    runOrder = [duration > 0 ? "duration" : null, miles > 0 ? "distance" : null].filter(Boolean);
     const last = [...plans].filter(p => p?.session).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0]?.session;
     if (last) {
         for (const id of ["bodyWeight", "currentCarbIntake", "temperature", "humidity", "typicalSodiumIntake"]) {

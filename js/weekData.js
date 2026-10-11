@@ -117,7 +117,12 @@ export function fuelContext() {
         try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
     };
     const plans = read("fueling-plans", []);
-    return { library: read("fueling-library", []), profile: profileFromPlans(Array.isArray(plans) ? plans : []), hasProfile: Array.isArray(plans) && plans.some(p => p?.session) };
+    return {
+        library: read("fueling-library", []),
+        profile: profileFromPlans(Array.isArray(plans) ? plans : []),
+        hasProfile: Array.isArray(plans) && plans.some(p => p?.session),
+        unit: read("fueling-units", {})?.fluid === "ml" ? "ml" : "oz"
+    };
 }
 
 // A plan run's fuel plan (null for anything that isn't a planned run).

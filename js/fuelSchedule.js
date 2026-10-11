@@ -128,6 +128,18 @@ export function scheduleInputFromPlan(plan) {
     };
 }
 
+// Products you drink instead of eat: a drink mix, or anything with no
+// carbs (an electrolyte tablet in water). They're sipped across their own
+// stretch of the run, like a bottle, instead of taking a gel's moment.
+export function isSipped(item) {
+    if (!item) return false;
+    if (item.kind) return item.kind === "drink" || item.kind === "electrolyte";
+    return item.category === "drinkmix" || (Number(item.carbs) || 0) <= 0;
+}
+
+// Caffeine of one serving in mg (0 when not known or none).
+export const caffeineMg = item => Math.max(0, Math.round(Number(item?.caffeineMg) || 0));
+
 // Gel (and chew/bar) times, spread evenly between the first-gel time and
 // FINAL_GEL_BUFFER_MIN before the end. Caffeinated servings go last,
 // where the lift matters most.
@@ -148,12 +160,14 @@ export function buildSchedule(input) {
     const targets = input.targets || {};
     const firstGelMin = firstGelValue(input.firstGelMin);
 
-    // ---- Gels ----
+    // ---- Gels (and chews / bars) at a moment; drinks sipped over a stretch ----
     const servings = [];
+    const sipServings = [];
     (input.items || []).forEach(item => {
-        for (let i = 0; i < (Number(item.qty) || 0); i++) servings.push(item);
+        for (let i = 0; i < (Number(item.qty) || 0); i++) (isSipped(item) ? sipServings : servings).push(item);
     });
-    servings.sort((a, b) => Number(!!a.caffeine) - Number(!!b.caffeine));
+    const hasCaffeine = item => !!item.caffeine || caffeineMg(item) > 0;
+    servings.sort((a, b) => Number(hasCaffeine(a)) - Number(hasCaffeine(b)));
     const times = gelTimes(servings.length, durationMin, firstGelMin);
     const gels = servings.map((item, i) => ({
         n: i + 1,
@@ -161,10 +175,30 @@ export function buildSchedule(input) {
         carbs: Number(item.carbs) || 0,
         sodium: Number(item.sodium) || 0,
         fluid: Number(item.fluid) || 0,
-        caffeine: !!item.caffeine,
+        caffeine: hasCaffeine(item),
+        caffeineMg: caffeineMg(item),
         min: times[i],
         mile: mileAt(times[i])
     }));
+    const sips = sipServings.map((item, i) => {
+        const span = durationMin / sipServings.length;
+        const startMin = span * i, endMin = span * (i + 1);
+        return {
+            n: i + 1,
+            name: item.name,
+            carbs: Number(item.carbs) || 0,
+            sodium: Number(item.sodium) || 0,
+            fluid: Number(item.fluid) || 0,
+            caffeine: hasCaffeine(item),
+            caffeineMg: caffeineMg(item),
+            exactStart: startMin,
+            exactEnd: endMin,
+            startMin: round(startMin),
+            endMin: round(endMin),
+            startMile: mileAt(startMin),
+            endMile: mileAt(endMin)
+        };
+    });
 
     // ---- Bottles: evenly across the whole run ----
     const drink = input.drink;
@@ -217,7 +251,12 @@ export function buildSchedule(input) {
     for (const [from, to] of windows) {
         const span = to - from;
         const inWindow = gels.filter(g => g.min >= from && (g.min < to || (to === durationMin && g.min <= to)));
-        const carbs = Math.round(inWindow.reduce((s, g) => s + g.carbs, 0) + drinkRate.carbs * span);
+        // A sipped product adds its share of whatever part of it falls in this hour.
+        const sipShare = key => sips.reduce((sum, d) => {
+            const overlap = Math.max(0, Math.min(to, d.exactEnd) - Math.max(from, d.exactStart));
+            return sum + (d.exactEnd > d.exactStart ? d[key] * overlap / (d.exactEnd - d.exactStart) : 0);
+        }, 0);
+        const carbs = Math.round(inWindow.reduce((s, g) => s + g.carbs, 0) + drinkRate.carbs * span + sipShare("carbs"));
         const targetCarbs = Math.round((targets.carbsPerHour || 0) * span / 60);
         hours.push({
             n: hours.length + 1,
@@ -226,8 +265,8 @@ export function buildSchedule(input) {
             fromMile: mileAt(from),
             toMile: mileAt(to),
             carbs,
-            sodium: Math.round(inWindow.reduce((s, g) => s + g.sodium, 0) + drinkRate.sodium * span),
-            fluid: Math.round(inWindow.reduce((s, g) => s + g.fluid, 0) + drinkRate.fluid * span),
+            sodium: Math.round(inWindow.reduce((s, g) => s + g.sodium, 0) + drinkRate.sodium * span + sipShare("sodium")),
+            fluid: Math.round(inWindow.reduce((s, g) => s + g.fluid, 0) + drinkRate.fluid * span + sipShare("fluid")),
             targetCarbs,
             targetSodium: Math.round((targets.sodiumPerHour || 0) * span / 60),
             targetFluid: Math.round((targets.fluidPerHour || 0) * span / 60),
@@ -244,15 +283,21 @@ export function buildSchedule(input) {
     if (bottles.length) events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "bottle", bottle: 1, text: `Start Bottle 1` });
     else events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "start", text: "Start" });
     bottles.slice(1).forEach(b => events.push({ min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}` }));
-    gels.forEach(g => events.push({ min: g.min, mile: g.mile, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, carbs: g.carbs, sodium: g.sodium }));
+    sips.forEach(d => events.push({ min: d.startMin, mile: d.startMile, kind: "sip", sip: d.n, text: d.name, caffeine: d.caffeine, caffeineMg: d.caffeineMg, carbs: d.carbs, sodium: d.sodium, fluid: d.fluid, endMin: d.endMin, endMile: d.endMile }));
+    gels.forEach(g => events.push({ min: g.min, mile: g.mile, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium }));
     events.push({ min: durationMin, mile: distanceMi || null, kind: "finish", text: bottles.length ? `Finish · Bottle ${bottles.length} empty` : "Finish" });
-    events.sort((a, b) => a.min - b.min || (a.kind === "bottle" ? -1 : 1));
+    const order = { start: 0, bottle: 1, sip: 2, gel: 3, finish: 4 };
+    events.sort((a, b) => a.min - b.min || order[a.kind] - order[b.kind]);
 
     const fluidFromDrink = drink ? drink.bottleSize * drink.bottleCount : 0;
+    const all = [...gels, ...sips];
     const totals = {
-        carbs: Math.round(gels.reduce((s, g) => s + g.carbs, 0) + (drink?.carbs || 0)),
-        sodium: Math.round(gels.reduce((s, g) => s + g.sodium, 0) + (drink?.sodium || 0)),
-        fluid: Math.round(gels.reduce((s, g) => s + g.fluid, 0) + fluidFromDrink)
+        carbs: Math.round(all.reduce((s, g) => s + g.carbs, 0) + (drink?.carbs || 0)),
+        sodium: Math.round(all.reduce((s, g) => s + g.sodium, 0) + (drink?.sodium || 0)),
+        fluid: Math.round(all.reduce((s, g) => s + g.fluid, 0) + fluidFromDrink),
+        caffeineMg: all.reduce((s, g) => s + g.caffeineMg, 0),
+        // Caffeinated servings with no mg on file: counted, not guessed.
+        caffeineUnknown: all.filter(g => g.caffeine && !g.caffeineMg).length
     };
     const hoursTotal = durationMin / 60;
     const concentration = drink && drink.bottleSize
@@ -269,8 +314,10 @@ export function buildSchedule(input) {
     if (concentration !== null && concentration > 10) {
         warnings.push(`Your drink is a ${concentration}% carb mix — stronger than the 6-8% most stomachs handle easily. Practice it in training first, or spread it over more water.`);
     }
-    if (drink && targetFluid && fluidFromDrink < targetFluid * 0.8) {
-        warnings.push(`Your bottles hold ${fluidFromDrink} oz of the ${targetFluid} oz fluid target. Plan on about ${targetFluid - fluidFromDrink} oz of water from aid stations.`);
+    const carried = fluidFromDrink + sips.reduce((s, d) => s + d.fluid, 0);
+    if ((drink || sips.length) && targetFluid && carried < targetFluid * 0.8) {
+        // Words with {fluid:n} markers so the view can show oz or ml.
+        warnings.push(`Your bottles hold {fluid:${carried}} of the {fluid:${targetFluid}} fluid target. Plan on about {fluid:${targetFluid - carried}} of water from aid stations.`);
     }
     if (!minPerMile && durationMin) {
         warnings.push("Add the run's distance to see mile markers, not just times.");
@@ -282,6 +329,7 @@ export function buildSchedule(input) {
         minPerMile,
         firstGelMin,
         gels,
+        sips,
         bottles,
         mix,
         concentration,

@@ -2686,3 +2686,18 @@ html.fs-sheet-open{overflow:hidden;}
 .fuel-duration-status.is-conflict{color:var(--warning)}
 .fuel-duration-status .fuel-btn{margin-left:6px;vertical-align:middle}
 .fuel-duration-problem{display:block;color:var(--warning)}
+
+/* Drink-mix products sipped over a stretch (js/fuelScheduleView.js) */
+.fs-course-band.fs-band-sip{top:auto;height:40%;background:color-mix(in srgb, var(--amber) 40%, transparent);border-top:1px solid color-mix(in srgb, var(--amber) 70%, transparent)}
+.fs-course-band.fs-band-sip span{top:auto;bottom:2px}
+.fs-dot-sip{background:color-mix(in srgb, var(--amber) 60%, transparent);border-radius:3px;}
+.fs-event-sip .fs-event-mark::before{background:color-mix(in srgb, var(--amber) 60%, transparent);border-color:var(--amber);border-radius:4px;}
+
+/* oz / ml switch (js/fueling.js) */
+.fuel-unit-switch{display:inline-flex;gap:4px;margin-left:auto}
+.fuel-unit-switch button{min-width:44px;padding:6px 10px;border-radius:var(--radius-pill);border:1px solid var(--border);background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.fuel-unit-switch button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.fuel-computed{border-color:color-mix(in srgb, var(--primary) 45%, transparent)!important}
+.fuel-unit-row{display:flex;align-items:center;gap:10px;margin:10px 0 0;color:var(--muted);font-size:13px}
+.fuel-unit-row .fuel-unit-switch{margin-left:0}
+.fuel-muted-line{display:block;color:var(--muted)}

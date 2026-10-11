@@ -11,10 +11,10 @@ const library = [
 ];
 
 test("targets: the Fueling page's math, now shared", () => {
-    assert.deepEqual(calculateTargets({ workoutType: "long", distance: 12, mode: "training" }), { duration: 99, carbsPerHour: 45, fluidPerHour: 22, sodiumPerHour: 450 });
+    assert.deepEqual(calculateTargets({ workoutType: "long", distance: 12, mode: "training" }), { duration: 99, carbsPerHour: 40, fluidPerHour: 22, sodiumPerHour: 450 });
     assert.equal(estimateDurationMinutes({ duration: 70 }), 70);
     assert.equal(calculateTargets({ workoutType: "easy", duration: 40 }).carbsPerHour, 0, "under 45 min: no carbs");
-    assert.equal(calculateTargets({ workoutType: "race", duration: 200, mode: "race" }).carbsPerHour, 75);
+    assert.equal(calculateTargets({ workoutType: "race", duration: 200, mode: "race" }).carbsPerHour, 80);
     assert.equal(calculateTargets({ workoutType: "long", duration: 100, tolerance: "low" }).carbsPerHour, 30);
 });
 
@@ -24,6 +24,10 @@ test("a long run: before, gels by time and mile (caffeine last), after", () => {
     assert.equal(f.durationMin, 99);
     assert.deepEqual(f.gels.map(g => [g.clock, g.mile, g.name]), [["0:30", 3.6, "Hammer Gel"], ["0:57", 6.9, "Hammer Gel"], ["1:24", 10.2, "Caffeinated Carb Gel"]]);
     assert.equal(f.summary, "3 gels, first at 0:30 · 21 oz/hr");
+    // In ml when that's their choice.
+    const ml = fuelForRun({ type: "long", miles: 12 }, { profile: { bodyWeight: 160 }, library, unit: "ml" });
+    assert.match(ml.summary, / · 620 ml\/hr$/);
+    assert.ok(ml.during.includes("620 ml fluid an hour"));
     assert.match(f.before[0].text, /^About 70 g of carbs/);
     assert.equal(f.before[1].when, "15-30 min before");
     assert.match(f.after[0], /about 70 g carbs \+ 20-30 g protein/);
