@@ -167,5 +167,6 @@ test("schedule can pass blend percentages and existing electrolyte sodium into p
         targets: { carbsPerHour: 60, fluidPerHour: 25, sodiumPerHour: 800 }
     });
     assert.equal(s.bottles.length, 3);
-    assert.equal(s.mix.sodiumShortfall, 0, "per-bottle mix is a fraction of the batch: existing-sodium should also be divided by bottle count upstream");
+    assert.equal(s.mix.sodiumShortfall, Math.max(0, Math.round(2058 / 3) - Math.round(1620 / 3)));
+    assert.ok(s.warnings.some(w => w.includes("aid stations")), "flags when bottle fluid does not cover the whole fluid target");
 });
