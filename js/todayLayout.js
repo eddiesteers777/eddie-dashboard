@@ -34,7 +34,15 @@ export function clientTodaySections(access) {
 }
 
 // The line under "Good morning, Sam".
-export function clientHeroLine(access, planNames = []) {
+export function clientHeroLine(access, planNames = [], raceText = "") {
+    const line = clientHeroBase(access, planNames);
+    // Only for a live account: a pending or archived one has its own message.
+    const live = access?.status !== "archived" && access?.status !== "pending";
+    if (!live || !raceText || !meets("plan", access)) return line;
+    return `${line.replace(/\.$/, "")} · ${raceText}`;
+}
+
+function clientHeroBase(access, planNames) {
     if (access?.status === "archived") return "Your account isn't active right now. If that's a mistake, get in touch with your coach through the Contact page.";
     if (access?.status === "pending") return "Your account is waiting for your coach's approval. Your plan and sessions show up here once you're in.";
     if (planNames.length && meets("plan", access)) return `Training: ${planNames.join(" + ")}`;

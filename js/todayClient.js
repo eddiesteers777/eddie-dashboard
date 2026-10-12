@@ -17,6 +17,7 @@ import { workoutCardHtml, weekListHtml, summaryLine, bindWeekActions } from "./w
 import { mondayOf, isoDate, addDays } from "./coachingPlanModel.js";
 import { changeMode } from "./weekChanges.js";
 import { nextLine, quietDayTitle } from "./todayGlance.js";
+import { nextRace, raceCountdownText } from "./raceCountdown.js";
 import { icon } from "./icons.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
@@ -61,7 +62,10 @@ export function renderClientToday() {
     // Where they are in their plan, in the hero.
     const ctx = planContext(inputs.plans, today);
     const phase = $("phaseStatus");
-    if (phase && ctx) phase.textContent = `Week ${ctx.weekNumber} of ${ctx.totalWeeks} · ${ctx.planName}${ctx.phase ? ` · ${ctx.phase}` : ""}`;
+    if (phase && ctx) {
+        const race = raceCountdownText(nextRace(inputs.plans, today));
+        phase.textContent = `Week ${ctx.weekNumber} of ${ctx.totalWeeks} · ${ctx.planName}${ctx.phase ? ` · ${ctx.phase}` : ""}${race ? ` · ${race}` : ""}`;
+    }
 
     const dateLabel = $("todayDateLabel");
     if (dateLabel) dateLabel.textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });

@@ -17,7 +17,8 @@ import { getUpcomingPlannerEvents, categoryFor, formatTime } from "./plannerEven
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
 import { showsPersonalPlan } from "./role.js";
-import { getActiveProgramEntriesForDate } from "./activeProgramSources.js";
+import { getActiveProgramEntriesForDate, getActiveRunningPrograms } from "./activeProgramSources.js";
+import { nextRace, raceCountdownText } from "./raceCountdown.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
 import { habitStreak } from "./progressView.js";
@@ -250,7 +251,8 @@ function renderPhaseStatus() {
                 if (item.programName && !names.includes(item.programName)) names.push(item.programName);
             }
         }
-        el.textContent = clientHeroLine(clientAccess || cachedNavAccess() || fallbackAccess(), names);
+        const race = nextRace(getActiveRunningPrograms(), localIso(today));
+        el.textContent = clientHeroLine(clientAccess || cachedNavAccess() || fallbackAccess(), names, raceCountdownText(race));
         return;
     }
 
