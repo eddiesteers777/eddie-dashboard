@@ -223,7 +223,13 @@
 
             </div>
 
-            <div class="fuel-input-grid">
+            <!-- Once the athlete profile has the basics, Athlete / Sodium / Preferences fold under this line (js/fuelingPlans.js, js/fuelDetails.js). -->
+            <div class="fuel-details-bar" id="fuelDetailsBar" hidden>
+                <p class="fuel-details-text"><strong>Your details</strong> <span id="fuelDetailsSummary"></span></p>
+                <button type="button" class="fuel-btn secondary small" id="fuelDetailsToggle" aria-expanded="false" aria-controls="fuelAthleteCard fuelSodiumCard fuelPrefsCard">Edit my details</button>
+            </div>
+
+            <div class="fuel-input-grid" id="fuelInputGrid">
 
                 <!-- Workout -->
 
@@ -306,7 +312,7 @@
 
                 <!-- Athlete -->
 
-                <div class="fuel-card" style="--fuel-color:var(--primary)">
+                <div class="fuel-card" id="fuelAthleteCard" data-details-card style="--fuel-color:var(--primary)">
 
                     <h3>Athlete</h3>
 
@@ -448,7 +454,7 @@
 
                 <!-- Sodium -->
 
-                <div class="fuel-card" style="--fuel-color:var(--purple)">
+                <div class="fuel-card" id="fuelSodiumCard" data-details-card style="--fuel-color:var(--purple)">
 
                     <h3>Sodium</h3>
 
@@ -498,7 +504,7 @@
 
                 <!-- Fueling Preferences -->
 
-                <div class="fuel-card fuel-card-wide">
+                <div class="fuel-card fuel-card-wide" id="fuelPrefsCard" data-details-card>
 
                     <h3>Fueling Preferences</h3>
 

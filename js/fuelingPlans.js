@@ -27,6 +27,7 @@ import {
     PROFILE_KEY, PROFILE_FIELDS, readProfile, setProfileFields, clearProfileField, profileValue, fieldStatus,
     sessionFromProfile, validateField, STATUS_WORDS, weightIn, weightFromDisplay, ASSUMED, FUEL_PREFERENCES
 } from "./fuelProfile.js";
+import { profileKnowsEssentials, detailsSummary, detailsBarText, startsFolded } from "./fuelDetails.js";
 import {
     DRAFT_PREFIX, draftKey, newDraftId, createDraft, updateDraft, renameDraft, duplicateDraft, deletedMarker,
     parseDraft, listDrafts, draftSummary, draftTitle, STATUS_LABELS, agoText, isMeaningful, sameState
@@ -40,6 +41,7 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const ACTIVE_KEY = "sb-fuel-active-draft";
 const DEVICE_KEY = "sb-device-id";
 const BANNER_HIDDEN_KEY = "sb-fuel-banner-hidden";
+const DETAILS_KEY = "sb-fuel-details";   // "open" | "folded": what this device last chose (not synced)
 const SAVE_DELAY = 600;
 const PUSH_DELAY = 1500;
 
@@ -223,6 +225,58 @@ function refreshTags() {
         tag.textContent = t.text;
         tag.title = t.title;
     }
+    if (detailsShown) paintDetailsBar();
+}
+
+/* ---------- your details (folded cards) ---------- */
+
+let detailsFolded = false;
+let detailsShown = false;       // the bar is only for an athlete whose profile has the basics
+
+function selectText(id) {
+    const el = $(id);
+    return el?.tagName === "SELECT" ? el.value : "";
+}
+// What the plan is using right now, as the words under "Your details".
+function detailsWords() {
+    const prefs = [...document.querySelectorAll("#fuelPreferences input[type=checkbox]:checked")].map(c => c.parentElement?.textContent.trim().toLowerCase()).filter(Boolean);
+    return detailsSummary({
+        weight: $("bodyWeight")?.value, weightUnit: A?.weightUnit?.(),
+        currentCarbIntake: $("currentCarbIntake")?.value,
+        tolerance: selectText("tolerance"), stomach: selectText("stomachSensitivity"),
+        sweatRate: selectText("sweatRate"), sweatRateMeasured: $("sweatRateMeasured")?.value, fluidUnit: A?.fluidUnit?.(),
+        sweatSodium: selectText("sweatSodium"), sweatSodiumMeasured: $("sweatSodiumMeasured")?.value,
+        typicalSodiumIntake: $("typicalSodiumIntake")?.value,
+        preferences: prefs, caffeine: Boolean($("caffeineWanted")?.checked)
+    });
+}
+function paintDetailsBar() {
+    const bar = $("fuelDetailsBar");
+    if (!bar) return;
+    bar.hidden = !detailsShown;
+    $("fuelInputGrid")?.classList.toggle("is-details-folded", detailsShown && detailsFolded);
+    if (!detailsShown) return;
+    const text = detailsBarText(detailsFolded, detailsWords());
+    $("fuelDetailsSummary").textContent = text.lead;
+    const button = $("fuelDetailsToggle");
+    button.textContent = text.button;
+    button.setAttribute("aria-expanded", String(text.expanded));
+}
+// Decided once when the page opens: an athlete who is mid-edit never has the cards fold away under them.
+function initDetailsBar() {
+    const profile = currentProfile();
+    const known = profileKnowsEssentials(profile);
+    let choice = null;
+    try { choice = localStorage.getItem(DETAILS_KEY); } catch { /* fine */ }
+    const hasProblem = TAGGED.some(key => tagFor(key, profile).cls === "is-bad");
+    detailsShown = known;
+    detailsFolded = startsFolded({ known, choice, hasProblem });
+    paintDetailsBar();
+}
+function toggleDetails() {
+    detailsFolded = !detailsFolded;
+    try { localStorage.setItem(DETAILS_KEY, detailsFolded ? "folded" : "open"); } catch { /* fine */ }
+    paintDetailsBar();
 }
 
 /* ---------- drafts ---------- */
@@ -581,7 +635,7 @@ export function initFuelingPlans(adapter, { linkQuery: query = "" } = {}) {
     }
     // After the calculator's own start (a workout link fills in right after this).
     setTimeout(() => {
-        markBaseline(); refreshTags(); renderAll();
+        markBaseline(); initDetailsBar(); refreshTags(); renderAll();
         // Drafts first when there are some, else the saved plans.
         selectTab(allDrafts().some(x => x.id !== active?.id) ? "drafts" : "saved");
     }, 0);
@@ -594,7 +648,7 @@ function wire() {
     if (wired) return;
     wired = true;
     const main = document.querySelector("main");
-    const outside = t => t.closest("#myFuelingPlans, #fuelDraftBanner, #fuelPlanSheet, #libraryForm, .sb-dialog");
+    const outside = t => t.closest("#myFuelingPlans, #fuelDraftBanner, #fuelPlanSheet, #libraryForm, #fuelDetailsBar, .sb-dialog");
     // Input and change events only come from the person (the calculator sets
     // values without firing them), so any of them is a real edit.
     const onEdit = event => {
@@ -613,6 +667,8 @@ function wire() {
         if (!event.isTrusted || !(event.target instanceof Element)) return;
         if (event.target.closest("button, [role=button], input[type=checkbox]") && !outside(event.target)) noteUserEdit();
     });
+
+    $("fuelDetailsToggle")?.addEventListener("click", toggleDetails);
 
     // Draft and banner actions.
     document.addEventListener("click", async event => {

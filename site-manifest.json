@@ -142,6 +142,7 @@
     "js/fluidUnits.js",
     "js/foodSearch.js",
     "js/formDraft.js",
+    "js/fuelDetails.js",
     "js/fuelDrafts.js",
     "js/fuelPdf.js",
     "js/fuelPdfModel.js",
