@@ -186,7 +186,7 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
     padding-top:1px;
 }
 
-.hub-quote{ margin:6px 0 0; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+.hub-quote{ margin:6px 0 0; color:var(--text-secondary); font-size:14px; line-height:1.55; white-space:pre-line; }
 
 .hub-actions{
     display:flex;

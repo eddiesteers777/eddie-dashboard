@@ -14,6 +14,7 @@ import { icon } from "./icons.js";
 import { toggleDone, workoutLink, fuelForItem } from "./weekData.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, friendlyError } from "./ui.js";
+import { itemActions } from "./weekChanges.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -33,6 +34,20 @@ function doneButton(item, compact = false) {
         aria-pressed="${item.done}" aria-label="${item.done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`}">
         ${icon(item.done ? "checkCircle" : "check")}${compact ? "" : `<span>${item.done ? "Done" : "Mark done"}</span>`}
     </button>`;
+}
+
+// The ⋮ that opens Move / Skip / Not this one (js/weekChangeDialogs.js).
+function changeButton(item, compact = false) {
+    if (!itemActions(item).length) return "";
+    return `<button type="button" class="wk-change${compact ? " is-compact" : ""}" data-change="${esc(item.id)}"
+        aria-label="Change ${esc(item.title)}: move or skip it">${icon("moreVertical")}${compact ? "" : "<span>Change</span>"}</button>`;
+}
+
+// "Skipped · Too busy" / "Eased off · was 10 mi Long run"
+function changeNote(item) {
+    if (item.state === "skipped" && item.skipReason) return `<small class="wk-change-note">Skipped · ${esc(item.skipReason)}</small>`;
+    if (item.adjusted && !item.done) return `<small class="wk-change-note">Eased off · was ${esc(item.adjusted)}</small>`;
+    return "";
 }
 
 // "Fuel: 3 gels, first at 0:30 · 21 oz/hr" on a run that needs fueling.
@@ -59,6 +74,7 @@ export function workoutCardHtml(item) {
                 ${bigNumber}
             </div>
             ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            ${changeNote(item) ? `<p class="wk-detail">${changeNote(item)}</p>` : ""}
             ${fuelLine(item)}
             ${item.kind === "strength" && item.actual && item.done ? `<p class="wk-logged">${icon("checkCircle")} Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.actual?.distance ? `<p class="wk-logged">${icon("checkCircle")} You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
@@ -66,6 +82,7 @@ export function workoutCardHtml(item) {
             <div class="wk-actions">
                 ${doneButton(item)}
                 <a class="sb-btn sb-btn-secondary" href="${esc(link.href)}">${esc(link.label)} ${icon("chevronRight")}</a>
+                ${changeButton(item)}
             </div>
         </div>`;
 }
@@ -80,12 +97,14 @@ function itemLine(item) {
             <span class="wk-item-text">
                 ${(item.kind === "run" && item.source?.type === "plan") || item.source?.strength ? `<a class="wk-item-link" href="${esc(workoutLink(item).href)}">${esc(text)}</a>` : `<span>${esc(text)}</span>`}
                 ${item.detail ? `<small>${esc(item.detail)}</small>` : ""}
+                ${changeNote(item)}
                 ${item.kind === "strength" && item.actual && item.done ? `<small class="wk-logged-inline">Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</small>`
                     : item.actual?.distance ? `<small class="wk-logged-inline">You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</small>`
                     : item.logged && item.title !== "Logged run" ? `<small class="wk-logged-inline">Logged ${item.logged} mi</small>` : ""}
             </span>
             ${item.state === "missed" ? `<span class="wk-missed">Missed</span>` : item.state === "skipped" ? `<span class="wk-skipped">Skipped</span>` : ""}
             ${(item.autoDone || item.actual) && item.done ? `<span class="wk-status is-done" title="Logged">${icon("checkCircle")}<span class="sr-only">Done (logged)</span></span>` : doneButton(item, true)}
+            ${changeButton(item, true)}
         </li>`;
 }
 
@@ -128,9 +147,15 @@ export function summaryLine(summary) {
     return parts.join(" · ");
 }
 
-// Mark done / undo anywhere inside `root`.
-export function bindWeekActions(root, { getItem, onChange }) {
+// Mark done / undo anywhere inside `root`; ⋮ opens `onChangeItem(item)`.
+export function bindWeekActions(root, { getItem, onChange, onChangeItem }) {
     root.addEventListener("click", async event => {
+        const change = event.target.closest("[data-change]");
+        if (change) {
+            const item = getItem(change.dataset.change);
+            if (item && onChangeItem) onChangeItem(item);
+            return;
+        }
         const btn = event.target.closest("[data-toggle]");
         if (!btn) return;
         const item = getItem(btn.dataset.toggle);

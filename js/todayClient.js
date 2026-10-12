@@ -14,7 +14,8 @@
 import { buildWeek, buildDay, nextWorkout, planContext } from "./weekModel.js";
 import { weekInputs, loadSessions, workoutLink } from "./weekData.js";
 import { workoutCardHtml, weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
-import { mondayOf, isoDate } from "./coachingPlanModel.js";
+import { mondayOf, isoDate, addDays } from "./coachingPlanModel.js";
+import { changeMode } from "./weekChanges.js";
 import { nextLine, quietDayTitle } from "./todayGlance.js";
 import { icon } from "./icons.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
@@ -25,6 +26,17 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 let sessions = [];
 let items = new Map();
 let bound = false;
+let current = { week: null, inputs: null, today: "" };
+
+// Anything this week or the next 7 days they could ease off?
+function hasChangeable(inputs, today) {
+    for (let i = 0; i < 7; i++) {
+        if (buildDay(addDays(today, i), inputs, today).items.some(x => changeMode(x) && !x.done && x.state !== "skipped")) return true;
+    }
+    return false;
+}
+
+const changeCtx = () => ({ ...current, onChange: () => renderClientToday() });
 
 // Only point at pages this client has (js/navAccess.js): what this device
 // remembers at first, then what the profile says.
@@ -42,6 +54,9 @@ export function renderClientToday() {
     const day = buildDay(today, inputs, today);
     const week = buildWeek(mondayOf(today), inputs, today);
     items = new Map([...week.days.flatMap(d => d.items)].map(i => [i.id, i]));
+    current = { week, inputs, today };
+    const feelHtml = hasChangeable(inputs, today)
+        ? `<button type="button" class="wk-feel" data-feel>${icon("heart")} Not feeling 100%? <span>Ease off for a few days</span></button>` : "";
 
     // Where they are in their plan, in the hero.
     const ctx = planContext(inputs.plans, today);
@@ -67,7 +82,7 @@ export function renderClientToday() {
                 <span class="wk-next-chevron">${icon("chevronRight")}</span>
             </a>` : "";
         if (workouts.length) {
-            container.innerHTML = `<div class="wk-today-cards">${workouts.map(workoutCardHtml).join("")}</div>${nextHtml}`;
+            container.innerHTML = `<div class="wk-today-cards">${workouts.map(workoutCardHtml).join("")}</div>${nextHtml}${feelHtml}`;
         } else {
             const plan = can("plan");
             container.innerHTML = `
@@ -79,7 +94,7 @@ export function renderClientToday() {
                             : inputs.plans.length ? `<span>Nothing else scheduled yet.</span>`
                             : `<span>${noPlanText()}</span>`}
                     </div>
-                </div>${nextHtml}`;
+                </div>${nextHtml}${feelHtml}`;
         }
     }
 
@@ -105,7 +120,13 @@ export function renderClientToday() {
         bound = true;
         const onChange = () => renderClientToday();
         const getItem = id => items.get(id);
-        if (container) bindWeekActions(container, { getItem, onChange });
+        const onChangeItem = item => import("./weekChangeDialogs.js").then(m => m.openChangeMenu(item, changeCtx()));
+        if (container) {
+            bindWeekActions(container, { getItem, onChange, onChangeItem });
+            container.addEventListener("click", event => {
+                if (event.target.closest("[data-feel]")) import("./weekChangeDialogs.js").then(m => m.openFeelDialog(changeCtx()));
+            });
+        }
     }
 }
 

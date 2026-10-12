@@ -99,6 +99,8 @@ function renderPlan() {
     const inputs = weekInputs(state.sessions);
     const week = buildWeek(state.monday, inputs, today);
     state.items = new Map(week.days.flatMap(d => d.items).map(i => [i.id, i]));
+    state.week = week;
+    state.inputs = inputs;
     const thisMonday = mondayOf(today);
 
     let overview = "";
@@ -155,10 +157,11 @@ function renderPlan() {
             ${week.summary.planned || week.summary.sessions ? `<p class="myplan-progress">${esc(summaryLine(week.summary))}</p>` : ""}
             ${weekListHtml(week)}
             <div class="myplan-foot">
-                <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done.</p>
+                <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done, ${icon("moreVertical")} to move or skip it.</p>
                 <div class="myplan-foot-actions">
                     <button type="button" class="sb-btn sb-btn-secondary" data-act="calendar">${icon("calendar")} Add to calendar</button>
                     ${corosOn() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="coros-week">${icon("send")} Send week to COROS</button>` : ""}
+                    <button type="button" class="sb-btn sb-btn-secondary" data-act="feel">${icon("heart")} Not feeling 100%?</button>
                     ${currentCoach() ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="change">${icon("messageSquare")} Need a change?</button>` : ""}
                 </div>
             </div>
@@ -177,6 +180,11 @@ $("planBody").addEventListener("click", async event => {
     }
     if (event.target.closest('[data-act="calendar"]')) {
         await addToCalendar();
+        return;
+    }
+    if (event.target.closest('[data-act="feel"]')) {
+        const { openFeelDialog } = await import("./weekChangeDialogs.js");
+        await openFeelDialog(changeCtx());
         return;
     }
     if (event.target.closest('[data-act="change"]')) {
@@ -204,7 +212,22 @@ $("planBody").addEventListener("click", async event => {
     }
 });
 
-bindWeekActions($("planBody"), { getItem: id => state.items.get(id), onChange: () => renderPlan() });
+// Move / skip a workout, or ease off (js/weekChangeDialogs.js).
+function changeCtx() {
+    return {
+        week: state.week,
+        inputs: state.inputs,
+        today,
+        onChange: () => renderPlan(),
+        onRequest: saved => { state.requests.unshift(saved); renderPlan(); }
+    };
+}
+
+bindWeekActions($("planBody"), {
+    getItem: id => state.items.get(id),
+    onChange: () => renderPlan(),
+    onChangeItem: item => import("./weekChangeDialogs.js").then(m => m.openChangeMenu(item, changeCtx()))
+});
 bindChangeRequestActions($("planBody"), id => { state.requests = state.requests.filter(r => r.id !== id); renderPlan(); });
 
 // ---------- Send to COROS (js/corosSend.js) ----------

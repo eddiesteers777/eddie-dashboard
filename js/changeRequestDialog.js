@@ -27,18 +27,18 @@ const when = ts => { const ms = ts?.toMillis?.() ?? (typeof ts === "number" ? ts
  * date: preselected day; dates: [iso] the client can pick from.
  * Resolves to the saved request, or null if they cancelled.
  */
-export function openChangeRequestDialog({ coach, planId = null, date = "", dates = [] }) {
+export function openChangeRequestDialog({ coach, planId = null, date = "", dates = [], message: prefill = "", reason: preReason = "", title = "Need a change?" }) {
     return new Promise(resolve => {
         const d = document.createElement("dialog");
         d.className = "sb-dialog cr-dialog";
         const coachName = coach.coachName || "your coach";
         d.innerHTML = `
             <form class="sb-dialog-form" novalidate>
-                <h2 class="sb-dialog-title">Need a change?</h2>
+                <h2 class="sb-dialog-title">${esc(title)}</h2>
                 <p class="sb-dialog-message">Tell ${esc(coachName)} what's going on. They'll adjust your plan and reply here.</p>
                 <span class="pw-label">What's up?</span>
                 <div class="cr-reasons" role="radiogroup" aria-label="Reason">
-                    ${CHANGE_REASONS.map((r, i) => `<label><input type="radio" name="reason" value="${r.value}"${i === 0 ? " checked" : ""}><span>${esc(r.label)}</span></label>`).join("")}
+                    ${CHANGE_REASONS.map((r, i) => `<label><input type="radio" name="reason" value="${r.value}"${(preReason ? r.value === preReason : i === 0) ? " checked" : ""}><span>${esc(r.label)}</span></label>`).join("")}
                 </div>
                 ${dates.length ? `
                 <label class="pw-label">Which day? (optional)
@@ -47,7 +47,7 @@ export function openChangeRequestDialog({ coach, planId = null, date = "", dates
                         ${dates.map(x => `<option value="${x}"${x === date ? " selected" : ""}>${esc(shortDay(x))}</option>`).join("")}
                     </select>
                 </label>` : ""}
-                <label class="pw-label">Message<textarea class="sb-dialog-input" name="message" rows="3" maxlength="1000" required placeholder="I can't do Tuesday's workout this week. Could it move to Wednesday?"></textarea></label>
+                <label class="pw-label">Message<textarea class="sb-dialog-input" name="message" rows="3" maxlength="1000" required placeholder="I can't do Tuesday's workout this week. Could it move to Wednesday?">${esc(prefill)}</textarea></label>
                 <p class="clients-msg clients-msg-error" data-error hidden></p>
                 <div class="sb-dialog-actions">
                     <button type="button" class="sb-btn sb-btn-secondary" data-cancel>Cancel</button>
