@@ -93,7 +93,7 @@ function exercisesHtml(lift) {
                 <div class="st-ex">
                     <span class="st-ex-num">${esc(labels[i])}</span>
                     <div class="st-ex-body">
-                        <div class="st-ex-top"><strong>${esc(ex.name)}</strong>${demoLink(ex)}${hasHowTo(ex.name) ? `<button type="button" class="wo-demo st-howto" data-howto="${esc(ex.name)}" data-video="${esc(ex.video || "")}" data-note="${esc(ex.note || "")}">${icon("play")} How to</button>` : ""}</div>
+                        <div class="st-ex-top"><strong>${esc(ex.name)}</strong>${demoLink(ex)}${hasHowTo(ex.name) ? `<button type="button" class="wo-howto st-howto" data-howto="${esc(ex.name)}" data-video="${esc(ex.video || "")}" data-note="${esc(ex.note || "")}">${icon("play")} How to</button>` : ""}</div>
                         <span class="st-ex-rx">${esc(setsText(ex))}</span>
                         ${targetText(ex) ? `<span class="st-ex-target">${esc(targetText(ex))}${group.length > 1 && k === group.length - 1 ? " after each round" : ""}</span>` : ""}
                         ${lastTimeText(ex.name) ? `<span class="st-ex-last">${icon("clock")} ${esc(lastTimeText(ex.name))}</span>` : ""}

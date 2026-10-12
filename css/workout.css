@@ -177,7 +177,7 @@ body.wo-mode-open{ overflow:hidden; }
 .st-ex-rx{ color:var(--text); font-size:15.5px; font-weight:700; }
 .st-ex-target{ color:var(--text-secondary); font-size:14px; }
 .st-ex-note{ margin:2px 0 0; color:var(--text-secondary); font-size:14px; font-style:italic; line-height:1.45; }
-.wo-demo{
+.wo-demo, .wo-howto{
     display:inline-flex;
     align-items:center;
     gap:5px;
@@ -190,7 +190,7 @@ body.wo-mode-open{ overflow:hidden; }
     font-weight:700;
     text-decoration:none;
 }
-.wo-demo .ui-icon{ width:12px; height:12px; }
+.wo-demo .ui-icon, .wo-howto .ui-icon{ width:12px; height:12px; }
 
 .st-log .st-log-list{ display:flex; flex-direction:column; gap:10px; max-height:46vh; overflow:auto; padding-right:4px; }
 .st-log-ex{ margin:0; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
@@ -261,3 +261,4 @@ body.wo-mode-open{ overflow:hidden; }
 .st-ex-last svg{ width:14px; height:14px; color:var(--orange); }
 .st-mode-last{ margin:4px 0 0; color:var(--text-secondary); font-size:14px; }
 
+.wo-howto{ background:transparent; cursor:pointer; font-family:inherit; }
