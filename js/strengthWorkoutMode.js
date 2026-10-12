@@ -16,6 +16,7 @@ import { sbConfirm, toast } from "./ui.js";
 import { recordsOn, lastLifts } from "./strengthProgress.js";
 import { planRunSteps, runnerStep } from "./strengthRunSteps.js";
 import { runSets } from "./setRunner.js";
+import { muscleMapHtml, workoutMuscles, ensureMuscleMapStyles } from "./muscleMap.js";
 import {
     SETTINGS_KEY, cleanSettings, fromDisplay, unitLabel,
     isBodyweight, loadText, plateMath, volumeText
@@ -441,6 +442,18 @@ function workoutRecords(day) {
     return recordsOn(history, today, { unit: units() }).filter(r => names.has(r.key));
 }
 
+// What the workout worked, as the flat muscle map (js/muscleMap.js).
+function renderSummaryMuscles(day, session) {
+    const el = $("strengthSummaryMuscles");
+    if (!el) return;
+    const done = new Set((session?.strength?.exercises || []).map(ex => String(ex.name || "").trim().toLowerCase()));
+    const exercises = (day.exercises || []).filter(ex => done.has(String(ex.name || "").trim().toLowerCase()));
+    const html = muscleMapHtml(workoutMuscles(exercises.map(ex => ({ ...ex, sets: [] }))), { id: "wcm" });
+    el.hidden = !html;
+    el.innerHTML = html;
+    if (html) ensureMuscleMapStyles();
+}
+
 function renderSummaryRecords(records) {
     const el = $("strengthSummaryRecords");
     if (!el) return;
@@ -520,6 +533,7 @@ async function finishWorkoutNow() {
     closeWorkoutMode();
 
     renderSummaryRecords(records);
+    renderSummaryMuscles(day, saved);
     openSummaryModal(text || "", saved);
 }
 

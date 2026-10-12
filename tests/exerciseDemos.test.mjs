@@ -122,3 +122,23 @@ test("the muscle map lights the worked muscles", () => {
     assert.match(svg, /rgb\(2\d\d,1[0-2]\d,\d+\)/, "clay for the main muscle");
     assert.ok(!/rgb\(30,62,46\)/.test(svg), "no shirt on the map");
 });
+
+test("the flat muscle map: lit muscles, front and back, chips, a workout's muscles", async () => {
+    const { muscleMapSvg, muscleMapHtml, workoutMuscles, levelsOf } = await import("../js/muscleMap.js");
+    const levels = levelsOf({ primary: ["chest", "glutes"], secondary: ["triceps"] });
+    const front = muscleMapSvg(levels, { view: "front", id: "a" });
+    const back = muscleMapSvg(levels, { view: "back", id: "b" });
+    assert.ok(!/NaN|undefined/.test(front + back));
+    assert.match(front, /data-muscle="chest" data-level="primary"/);
+    assert.ok(!/data-muscle="glutes"/.test(front), "glutes are on the back");
+    assert.match(back, /data-muscle="glutes" data-level="primary"/);
+    assert.match(back, /data-muscle="triceps" data-level="secondary"/);
+    const html = muscleMapHtml({ primary: ["chest"], secondary: ["triceps"] });
+    assert.match(html, /mm-chip is-primary">Chest</);
+    assert.match(html, /mm-chip is-secondary">Triceps</);
+    assert.equal(muscleMapHtml({ primary: [], secondary: [] }), "");
+    const w = workoutMuscles([{ name: "Goblet Squat" }, { name: "Push-Up" }, { name: "Lat Pulldown", sets: [{ done: false }] }]);
+    assert.ok(w.primary.includes("quadriceps") && w.primary.includes("chest"));
+    assert.ok(!w.primary.includes("lats"), "no sets done, not counted");
+    assert.ok(w.secondary.every(m => !w.primary.includes(m)));
+});

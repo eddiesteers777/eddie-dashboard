@@ -1102,6 +1102,9 @@
     border-radius:20px;
     max-width:460px;
     width:100%;
+    max-height:calc(100dvh - 40px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
     padding:22px;
     box-shadow:0 30px 70px rgba(0,0,0,.5);
     animation:strengthFadeUp .25s ease;

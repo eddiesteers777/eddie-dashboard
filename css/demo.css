@@ -53,9 +53,6 @@
 .dm-sheet{ display:flex; flex-direction:column; gap:14px; padding:18px 18px 22px; }
 .dm-eyebrow{ color:var(--primary); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
 .dm-title{ margin:2px 0 0; font-family:var(--font-display); font-size:32px; line-height:1; letter-spacing:.02em; color:var(--text); }
-.dm-works{ margin:8px 0 0; color:var(--text); font-size:14.5px; line-height:1.45; }
-.dm-works strong{ margin-right:6px; color:var(--primary); font-size:12px; letter-spacing:.1em; text-transform:uppercase; }
-.dm-works span{ color:var(--text-secondary); }
 .dm-steps{ display:flex; flex-direction:column; gap:12px; margin:0; padding:0; list-style:none; counter-reset:dm; }
 .dm-steps li{ position:relative; padding-left:40px; counter-increment:dm; }
 .dm-steps li::before{

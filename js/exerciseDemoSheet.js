@@ -17,7 +17,8 @@
 
 import { skeleton, poseAt, frameSvg, fitBox } from "./demoFigure.js";
 import { demoFor } from "./exerciseDemos.js";
-import { musclesFor, muscleWords, hasHowTo } from "./exerciseMuscles.js";
+import { musclesFor, hasHowTo } from "./exerciseMuscles.js";
+import { muscleMapHtml, ensureMuscleMapStyles } from "./muscleMap.js";
 import { icon } from "./icons.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -104,6 +105,7 @@ export function openExerciseDemo(name, { muscles: given = {}, note = "", video =
     const demo = demoFor(name);
     if (!demo) return Promise.resolve();
     ensureStyles();
+    ensureMuscleMapStyles();
     const muscles = musclesFor(name, given);
     const size = frameSize(demo);
     return new Promise(resolve => {
@@ -128,13 +130,13 @@ export function openExerciseDemo(name, { muscles: given = {}, note = "", video =
                 <div>
                     <span class="dm-eyebrow">How to</span>
                     <h2 class="dm-title">${esc(name)}</h2>
-                    ${muscles.primary.length ? `<p class="dm-works"><strong>Works</strong> ${esc(muscleWords(muscles.primary))}${muscles.secondary.length ? `<span> · also ${esc(muscleWords(muscles.secondary))}</span>` : ""}</p>` : ""}
                 </div>
                 <ol class="dm-steps">
                     <li><h3>Start</h3><p>${esc(demo.start)}</p></li>
                     <li><h3>Move</h3><p>${esc(demo.move)}</p></li>
                     <li><h3>Cue</h3><p>${esc(demo.cue)}</p></li>
                 </ol>
+                ${muscleMapHtml(muscles, { id: "dmm" })}
                 ${note ? `<div class="dm-note"><h3>From your coach</h3><p>${esc(note)}</p></div>` : ""}
                 ${/^https:\/\//i.test(video) ? `<a class="sb-btn sb-btn-tertiary dm-link" href="${esc(video)}" target="_blank" rel="noopener noreferrer">${icon("play")} Watch your coach's video</a>` : ""}
             </div>`;
