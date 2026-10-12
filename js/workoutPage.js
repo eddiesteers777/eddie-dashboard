@@ -38,6 +38,7 @@ import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from 
 import { sendableDate } from "./corosWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effortScale.js";
+import { draftKey, loadDraft, keepOrForget, clearDraft, sameValues } from "./formDraft.js";
 // An earlier log on the first words opens on its CR-10 equivalent, so saving it again keeps its meaning.
 const formRpe = r => (r?.rpe ? toCr10(r.rpe, logScale(r.updatedAt || r.createdAt || (r.date ? `${r.date}T12:00:00Z` : null))) : null);
 
@@ -477,6 +478,7 @@ function openLogForm(prefill = {}) {
     d.innerHTML = `
         <form class="sb-dialog-form" novalidate>
             <h2 class="sb-dialog-title">How did it go?</h2>
+            <p class="clients-msg" data-draft-note role="status" hidden>We kept what you typed last time. <button type="button" class="sb-btn sb-btn-tertiary" data-draft-reset>Start over</button></p>
             <div class="wo-seg" role="radiogroup" aria-label="Did you do it?">
                 <label><input type="radio" name="status" value="completed"${status === "completed" ? " checked" : ""}><span>${icon("check")} Done</span></label>
                 <label><input type="radio" name="status" value="skipped"${status === "skipped" ? " checked" : ""}><span>Skipped</span></label>
@@ -523,12 +525,66 @@ function openLogForm(prefill = {}) {
         updatePace();
     });
     updatePace();
-    d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
+
+    // Keep what's typed until it's saved (js/formDraft.js): a phone that locks
+    // or an app that closes mid-log no longer loses the words.
+    const draftId = draftKey("workout-log", `${state.program?.coachPlanId || ""}:${date}`);
+    const readForm = () => {
+        const fd = new FormData(form);
+        return {
+            status: fd.get("status") || "completed", distance: String(fd.get("distance") || ""), time: String(fd.get("time") || ""),
+            rpe: fd.get("rpe") || null, pain: fd.get("pain") || "no", painNote: String(fd.get("painNote") || ""), note: String(fd.get("note") || "")
+        };
+    };
+    const untouched = readForm();
+    const showForm = v => {
+        form.querySelector(`input[name="status"][value="${v.status}"]`).checked = true;
+        form.distance.value = v.distance; form.time.value = v.time;
+        const rpe = v.rpe && form.querySelector(`input[name="rpe"][value="${v.rpe}"]`);
+        form.querySelectorAll('input[name="rpe"]').forEach(r => { r.checked = false; });
+        if (rpe) rpe.checked = true;
+        form.querySelector(`input[name="pain"][value="${v.pain}"]`).checked = true;
+        form.painNote.value = v.painNote; form.note.value = v.note;
+        d.querySelector(".wo-done-fields").hidden = v.status === "skipped";
+        d.querySelector(".wo-pain-field").hidden = v.pain !== "yes";
+        d.querySelector("[data-rpe-word]").textContent = v.rpe ? RPE_WORDS[v.rpe] : EFFORT_HINT;
+        updatePace();
+    };
+    // A run just finished in workout mode brings its own time: that wins over an old draft.
+    const kept = prefill.durationSec ? null : loadDraft(draftId);
+    if (kept && !sameValues({ ...untouched, ...kept }, untouched)) {
+        showForm({ ...untouched, ...kept });
+        d.querySelector("[data-draft-note]").hidden = false;
+    }
+    let draftTimer = null;
+    let finished = false;   // saved, removed or cancelled on purpose: nothing left to keep
+    const saveNow = () => { clearTimeout(draftTimer); if (!finished) keepOrForget(draftId, readForm(), untouched); };
+    const forget = () => { finished = true; clearTimeout(draftTimer); clearDraft(draftId); };
+    const onHidden = () => { if (document.hidden) saveNow(); };
+    form.addEventListener("input", () => { clearTimeout(draftTimer); draftTimer = setTimeout(saveNow, 400); });
+    form.addEventListener("change", () => { clearTimeout(draftTimer); draftTimer = setTimeout(saveNow, 400); });
+    window.addEventListener("pagehide", saveNow);
+    document.addEventListener("visibilitychange", onHidden);
+    // Closed some other way (Escape, a tap outside): keep what was typed.
+    d.addEventListener("close", () => {
+        saveNow();
+        window.removeEventListener("pagehide", saveNow);
+        document.removeEventListener("visibilitychange", onHidden);
+    });
+    d.querySelector("[data-draft-reset]").addEventListener("click", () => {
+        clearTimeout(draftTimer);
+        clearDraft(draftId);
+        showForm(untouched);
+        d.querySelector("[data-draft-note]").hidden = true;
+    });
+
+    d.querySelector("[data-cancel]").addEventListener("click", () => { forget(); d.close(); });
     d.querySelector("[data-remove]")?.addEventListener("click", async () => {
         if (!(await sbConfirm("Your coach won't see it any more.", { title: "Remove this log?", confirmLabel: "Remove", danger: true }))) return;
         try {
             await deleteMyResult(state.result);
             state.result = null;
+            forget();
             d.close();
             refresh();
             toast("Log removed");
@@ -577,6 +633,7 @@ function openLogForm(prefill = {}) {
                 painNote: fd.get("painNote"),
                 note: fd.get("note")
             }, state.result);
+            forget();
             d.close();
             refresh();
             toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : `${title()} logged. Nice work.`);

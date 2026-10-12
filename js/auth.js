@@ -83,7 +83,8 @@ const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
     "nutrition-",
     "fueling-",
     "cross-training-",
-    "workout-session-"
+    "workout-session-",
+    "sb-draft:"   // unsent check-in / workout-log words (js/formDraft.js): device-only
 ];
 
 const ACCOUNT_SESSION_STORAGE_KEYS = [
