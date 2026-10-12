@@ -101,6 +101,7 @@
     "js/coachingPlans.js",
     "js/completedSessions.js",
     "js/contact.js",
+    "js/contactRequests.js",
     "js/corosAuth.js",
     "js/corosAutoSend.js",
     "js/corosClient.js",
