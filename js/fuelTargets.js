@@ -144,7 +144,7 @@ export function calculateTargets(session) {
         } else {
 
             carbsPerHour = session.currentCarbIntake;
-            step(`Race day: what you've practised (${session.currentCarbIntake} g/hr)`, carbsPerHour);
+            step(`Race day: what you've practiced (${session.currentCarbIntake} g/hr)`, carbsPerHour);
 
         }
 
@@ -356,7 +356,7 @@ export function intakeChecks({ durationMin = 0, targets = {}, planned = {}, body
     if (carbsWant > 0 && carbsHave > 0) {
         const d = off(carbsHave, carbsWant);
         if (d <= -0.2) out.push({ kind: "carbs", level: "warn", text: `The plan gives ${carbsHave} g of carbs, ${pct(d)} under the ${carbsWant} g target. Add a gel or more in the drink.` });
-        else if (d >= 0.2) out.push({ kind: "carbs", level: "warn", text: `The plan gives ${carbsHave} g of carbs, ${pct(d)} over the ${carbsWant} g target. Only go above what you've practised in training.` });
+        else if (d >= 0.2) out.push({ kind: "carbs", level: "warn", text: `The plan gives ${carbsHave} g of carbs, ${pct(d)} over the ${carbsWant} g target. Only go above what you've practiced in training.` });
     }
     const sodiumWant = Math.round((Number(targets.sodiumPerHour) || 0) * hours);
     const sodiumHave = Math.round(Number(planned.sodium) || 0);
