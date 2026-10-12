@@ -326,7 +326,7 @@ fetch("components/header.html")
             document.body.insertAdjacentHTML("beforeend", `
                 <nav class="eos-bottomnav" aria-label="Primary">
                     ${visibleTabs.map(tab => `
-                        <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}" style="--tab-color:${tab.color}">
+                        <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}"${tab.key === activeTab ? ` aria-current="page"` : ""} style="--tab-color:${tab.color}">
                             <span class="eos-bottomnav-icon">${icon(tab.icon)}</span>
                             <span>${tab.label}</span>
                         </a>

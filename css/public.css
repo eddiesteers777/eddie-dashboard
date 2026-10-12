@@ -723,6 +723,13 @@ select.pub-input{appearance:auto;}
     font-size:12.5px;
 }
 .pub-footer a{color:var(--muted);}
+/* The page links in the footer are a menu, not words in a sentence: give each a
+   32px tap area (WCAG 2.2 asks 24px at least) without changing how the line looks. */
+.pub-footer p a{
+    display:inline-block;
+    padding:8px 4px;
+    line-height:16px;
+}
 /* Footer sign-off: the mark + wordmark, smaller than the header's. */
 .pub-footer-brand{
     display:inline-flex;
