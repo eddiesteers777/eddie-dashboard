@@ -73,6 +73,7 @@ export function planRunSteps(day) {
                     duration: Number(set.duration) || 0,
                     rpe: Number(set.rpe) || null,
                     note: String(ex.notes || ex.note || "").trim(),
+                    muscles: { primary: ex.primaryMuscles || [], secondary: ex.secondaryMuscles || [] },
                     restAfter: last ? restAfterSet(ex, r) : 0,
                     done: Boolean(set.done)
                 });

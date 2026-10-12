@@ -29,6 +29,7 @@ import { icon } from "./icons.js";
 import { sbConfirm } from "./ui.js";
 import { formatDuration } from "./runWorkout.js";
 import { restText } from "./strengthWorkout.js";
+import { hasHowTo } from "./exerciseMuscles.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -75,6 +76,10 @@ export async function runSets({
         </div>
         <div class="wo-mode-progress"><span style="width:${Math.round((doneCount() / steps.length) * 100)}%"></span></div>`;
 
+    // "How to": the demo figure and the muscle map (js/exerciseDemoSheet.js).
+    const howToButton = (step, text = "How to") => hasHowTo(step.name, step.muscles)
+        ? `<button type="button" class="sb-btn sb-btn-tertiary st-mode-tool st-howto" data-mode="howto">${icon("play")} ${esc(text)}</button>` : "";
+
     const values = () => Object.fromEntries([...overlay.querySelectorAll("[data-in]")].map(i => [i.dataset.in, i.value]));
 
     const stepHtml = () => {
@@ -88,6 +93,7 @@ export async function runSets({
                 <span class="wo-mode-target">${esc(step.target)}</span>
                 ${step.last ? `<p class="st-mode-last">${esc(step.last)}</p>` : ""}
                 ${step.note ? `<p class="st-mode-note">${esc(step.note)}</p>` : ""}
+                ${howToButton(step)}
                 <div class="st-mode-inputs${step.inputs.length === 1 ? " is-one" : ""}">
                     ${step.inputs.map(i => `<label>${esc(i.label)}<input class="st-big-input" type="number" inputmode="${i.inputmode || "decimal"}" min="${i.min ?? 0}" max="${i.max ?? 2000}" step="${i.step || "any"}" data-in="${esc(i.key)}" value="${esc(i.value ?? "")}"${i.placeholder ? ` placeholder="${esc(i.placeholder)}"` : ""}></label>`).join("")}
                 </div>
@@ -113,6 +119,7 @@ export async function runSets({
                 <span class="wo-mode-clock-label">${left > 0 ? "until your next set" : "rest is up"}</span>
             </div>
             <p class="wo-mode-next">Next: ${esc(next.label)} ${esc(next.name)} · set ${next.setNo} of ${next.of} · ${esc(next.targetShort ?? next.target)}</p>
+            ${howToButton(next, `How to: ${next.name}`)}
             <div class="wo-mode-actions">
                 <button type="button" class="sb-btn sb-btn-secondary" data-mode="more">+30 sec</button>
                 <button type="button" class="sb-btn sb-btn-primary" data-mode="go">Next set ${icon("chevronRight")}</button>
@@ -183,6 +190,14 @@ export async function runSets({
                 await onSkip(step, index);
             }
             return advance();
+        }
+        if (what === "howto") {
+            const step = steps[index];
+            const keep = values();
+            const { openExerciseDemo } = await import("./exerciseDemoSheet.js");
+            await openExerciseDemo(step.name, { muscles: step.muscles, note: step.note, video: step.video });
+            restore(keep);
+            return;
         }
         if (what === "plates") { platesOpen = !platesOpen; const keep = values(); draw(); restore(keep); return; }
         if (what === "more" && resting) { resting.until += 30000; buzzed = false; return draw(); }

@@ -30,6 +30,7 @@ import { parseDuration, formatDuration } from "./runWorkout.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { runSets } from "./setRunner.js";
+import { hasHowTo } from "./exerciseMuscles.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
 import { historyFromResults, mergeHistories, lastLifts, lastLiftWords, recordsOn } from "./strengthProgress.js";
@@ -92,7 +93,7 @@ function exercisesHtml(lift) {
                 <div class="st-ex">
                     <span class="st-ex-num">${esc(labels[i])}</span>
                     <div class="st-ex-body">
-                        <div class="st-ex-top"><strong>${esc(ex.name)}</strong>${demoLink(ex)}</div>
+                        <div class="st-ex-top"><strong>${esc(ex.name)}</strong>${demoLink(ex)}${hasHowTo(ex.name) ? `<button type="button" class="wo-demo st-howto" data-howto="${esc(ex.name)}" data-video="${esc(ex.video || "")}" data-note="${esc(ex.note || "")}">${icon("play")} How to</button>` : ""}</div>
                         <span class="st-ex-rx">${esc(setsText(ex))}</span>
                         ${targetText(ex) ? `<span class="st-ex-target">${esc(targetText(ex))}${group.length > 1 && k === group.length - 1 ? " after each round" : ""}</span>` : ""}
                         ${lastTimeText(ex.name) ? `<span class="st-ex-last">${icon("clock")} ${esc(lastTimeText(ex.name))}</span>` : ""}
@@ -204,6 +205,7 @@ async function startSession() {
             last: lastTimeText(ex.name),
             note: ex.note || "",
             extra: demoLink(ex),
+            video: ex.video || "",
             carry: `ex${step.ex}`,
             inputs: [
                 { key: "weight", label: "Weight (lb)", value: set.weight ?? "", placeholder: "—", inputmode: "decimal", step: "2.5", min: 0, max: 2000 },
@@ -385,6 +387,12 @@ export async function mountStrengthSession({ found, date, user, openLog }) {
     Object.assign(state, found, { lift: found.day.strength, date, user });
     document.title = `${state.lift.title} | Southbound`;
     $("woBody").addEventListener("click", event => {
+        const how = event.target.closest("[data-howto]");
+        if (how) {
+            import("./exerciseDemoSheet.js").then(({ openExerciseDemo }) => openExerciseDemo(how.dataset.howto, { note: how.dataset.note, video: how.dataset.video }))
+                .catch(() => toast("Couldn't open the demo. Check your connection and try again.", { type: "error" }));
+            return;
+        }
         const btn = event.target.closest("[data-act]");
         if (!btn) return;
         if (btn.dataset.act === "start") startSession();
