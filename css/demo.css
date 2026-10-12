@@ -1,65 +1,83 @@
 /* ==========================================
    Southbound — "How to" sheet (js/exerciseDemoSheet.js)
-   The demo figure on a cream card, camera angles to tap, the words,
-   and the muscle map. A bottom sheet on phones.
+   The demo figure leads, edge to edge like a looping video: tap to
+   pause, a progress bar for each rep, angle and speed pills on the
+   video. Then the name, what it works, Start / Move / Cue.
+   A bottom sheet on phones.
 ========================================== */
 
-.dm-dialog{ width:min(520px, calc(100vw - 24px)); max-height:calc(100dvh - 32px); overflow:auto; }
+.dm-dialog{ width:min(500px, calc(100vw - 24px)); max-height:calc(100dvh - 32px); overflow:auto; overscroll-behavior:contain; }
 .dm-dialog [hidden]{ display:none !important; }
-.dm-sheet{ display:flex; flex-direction:column; gap:12px; padding:18px 18px 22px; }
-.dm-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-.dm-eyebrow{ color:var(--primary); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
-.dm-title{ margin:2px 0 0; font-family:var(--font-display); font-size:32px; line-height:1; letter-spacing:.02em; color:var(--text); }
+
+/* The video */
+.dm-video{
+    position:relative; width:100%; max-height:62dvh; overflow:hidden;
+    background:linear-gradient(180deg, #F7F4EE 0%, #E7E0D2 100%);
+}
+.dm-stage, .dm-stage svg{ display:block; width:100%; height:100%; }
+.dm-tap{
+    position:absolute; inset:0; z-index:1; display:flex; align-items:center; justify-content:center;
+    padding:0; border:0; background:transparent; cursor:pointer;
+}
+.dm-tap:focus-visible{ box-shadow:inset 0 0 0 3px var(--primary); }
+.dm-play{
+    display:flex; align-items:center; justify-content:center; width:64px; height:64px; border-radius:50%;
+    background:rgba(14,37,27,.78); color:#F3EFE6; opacity:0; transform:scale(.85);
+    transition:opacity .18s ease, transform .18s ease;
+}
+.dm-play .ui-icon{ width:26px; height:26px; margin-left:3px; }
+.dm-video.is-paused .dm-play{ opacity:1; transform:none; }
+.dm-bug{ position:absolute; z-index:2; top:12px; left:14px; width:34px; height:auto; opacity:.55; pointer-events:none; }
 .dm-close{
-    flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
-    width:40px; height:40px; border-radius:50%;
-    background:var(--surface-light); border:1px solid var(--border); color:var(--text); cursor:pointer;
+    position:absolute; z-index:2; top:10px; right:10px;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:40px; height:40px; border-radius:50%; border:0; cursor:pointer;
+    background:rgba(14,37,27,.72); color:#F3EFE6;
 }
 .dm-close .ui-icon{ width:18px; height:18px; }
-
-.dm-stage{ border-radius:16px; overflow:hidden; background:#EFEBE2; aspect-ratio:480 / 300; }
-.dm-stage svg{ display:block; width:100%; height:100%; }
-.dm-thumbs{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
-.dm-thumbs button{
-    padding:0; border-radius:10px; overflow:hidden; cursor:pointer;
-    background:#EFEBE2; border:2px solid transparent;
+.dm-video-foot{
+    position:absolute; z-index:2; left:10px; right:10px; bottom:14px;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
 }
-.dm-thumbs button[aria-pressed="true"]{ border-color:var(--primary); }
-.dm-thumbs button:focus-visible{ box-shadow:var(--focus-ring); }
-.dm-thumbs svg{ display:block; width:100%; height:auto; }
-.dm-thumbs span{ display:block; padding:3px 0; background:var(--surface-light); color:var(--text-secondary); font-size:11.5px; font-weight:700; }
-.dm-controls{ display:flex; gap:8px; }
-.dm-controls .sb-btn{ flex:1 1 0; }
-.dm-controls .ui-icon{ width:14px; height:14px; }
-
-.dm-steps{ display:flex; flex-direction:column; gap:8px; }
-.dm-steps > div, .dm-note{ padding:12px 14px; border-radius:14px; background:var(--surface-light); }
-.dm-steps h3, .dm-note h3, .dm-section{
-    margin:0 0 4px; color:var(--primary); font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+.dm-angles{ display:flex; flex-wrap:wrap; gap:6px; }
+.dm-angles button, .dm-speed{
+    min-height:32px; padding:0 12px; border-radius:var(--radius-pill); border:0; cursor:pointer;
+    background:rgba(14,37,27,.62); color:#F3EFE6; font-size:12.5px; font-weight:700; letter-spacing:.02em;
 }
-.dm-section{ margin:6px 0 0; }
+.dm-angles button[aria-pressed="true"], .dm-speed[aria-pressed="true"]{ background:var(--primary); color:var(--on-primary); }
+.dm-angles button:focus-visible, .dm-speed:focus-visible, .dm-close:focus-visible{ box-shadow:var(--focus-ring); }
+.dm-bar{ position:absolute; z-index:2; left:0; right:0; bottom:0; height:4px; background:rgba(14,37,27,.14); }
+.dm-bar span{ display:block; height:100%; background:var(--primary); transform-origin:left; transform:scaleX(0); }
+
+/* Under the video */
+.dm-sheet{ display:flex; flex-direction:column; gap:14px; padding:18px 18px 22px; }
+.dm-eyebrow{ color:var(--primary); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.dm-title{ margin:2px 0 0; font-family:var(--font-display); font-size:32px; line-height:1; letter-spacing:.02em; color:var(--text); }
+.dm-works{ margin:8px 0 0; color:var(--text); font-size:14.5px; line-height:1.45; }
+.dm-works strong{ margin-right:6px; color:var(--primary); font-size:12px; letter-spacing:.1em; text-transform:uppercase; }
+.dm-works span{ color:var(--text-secondary); }
+.dm-steps{ display:flex; flex-direction:column; gap:12px; margin:0; padding:0; list-style:none; counter-reset:dm; }
+.dm-steps li{ position:relative; padding-left:40px; counter-increment:dm; }
+.dm-steps li::before{
+    content:counter(dm); position:absolute; left:0; top:0;
+    display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%;
+    background:color-mix(in srgb, var(--primary) 18%, transparent); color:var(--primary);
+    font-family:var(--font-display); font-size:17px;
+}
+.dm-steps h3, .dm-note h3{ margin:0 0 2px; color:var(--text-secondary); font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
 .dm-steps p, .dm-note p{ margin:0; color:var(--text); font-size:15px; line-height:1.5; }
-.dm-none{ margin:0; color:var(--text-secondary); }
-.dm-video{ align-self:flex-start; }
-
-.dm-map{ display:flex; flex-direction:column; gap:10px; padding:12px; border-radius:16px; background:#EFEBE2; }
-.dm-map-figs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-.dm-map-figs figure{ margin:0; text-align:center; }
-.dm-map-figs svg{ display:block; width:100%; height:auto; max-height:260px; }
-.dm-map-figs figcaption{ color:#4A5A50; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-.dm-map-key{ display:flex; flex-direction:column; gap:4px; }
-.dm-map-key p{ display:flex; gap:8px; align-items:baseline; margin:0; color:#1F2E26; font-size:14px; line-height:1.4; }
-.dm-map-key strong{ margin-right:4px; }
-.dm-dot{ flex:0 0 auto; width:10px; height:10px; border-radius:50%; transform:translateY(1px); }
-.dm-dot.is-primary{ background:rgb(210,112,74); }
-.dm-dot.is-secondary{ background:rgb(227,172,120); }
+.dm-note{ padding:12px 14px; border-radius:14px; background:var(--surface-light); }
+.dm-link{ align-self:flex-start; }
 
 /* The How to button on the set-by-set screen and the session list. */
 .st-howto{ display:inline-flex; align-items:center; gap:6px; }
 .st-howto .ui-icon{ width:14px; height:14px; }
 
 @media (max-width:600px){
-    .dm-dialog{ width:100vw; max-width:100vw; margin:auto 0 0; border-radius:20px 20px 0 0; max-height:92dvh; }
+    .dm-dialog{ width:100vw; max-width:100vw; margin:auto 0 0; border-radius:20px 20px 0 0; max-height:94dvh; }
     .dm-sheet{ padding:16px 16px calc(20px + env(safe-area-inset-bottom)); }
     .dm-title{ font-size:28px; }
+}
+@media (prefers-reduced-motion: reduce){
+    .dm-play{ transition:none; }
 }

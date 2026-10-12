@@ -1,7 +1,7 @@
 /* ==========================================
    Southbound — which muscles an exercise works (pure)
 
-   The muscle map (js/demoFigure.js, map mode) uses the 17 names of the
+   The How to sheet's "Works" line uses the 17 names of the
    exercise database the Strength search already uses (free-exercise-db,
    js/exerciseSearch.js): an exercise picked from search carries its own
    primaryMuscles / secondaryMuscles. Southbound's library exercises
@@ -92,9 +92,9 @@ export function musclesFor(name, given = {}) {
     return { primary, secondary: clean(row.secondary).filter(m => !primary.includes(m)) };
 }
 
-/** Is there a demo or a muscle map to show for this exercise? */
-export function hasHowTo(name, given = {}) {
-    return Boolean(demoFor(name) || musclesFor(name, given).primary.length);
+/** Is there a demo to show for this exercise? (The How to sheet is the moving figure.) */
+export function hasHowTo(name) {
+    return Boolean(demoFor(name));
 }
 
 /** "Quads, Glutes" */

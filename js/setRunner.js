@@ -77,7 +77,7 @@ export async function runSets({
         <div class="wo-mode-progress"><span style="width:${Math.round((doneCount() / steps.length) * 100)}%"></span></div>`;
 
     // "How to": the demo figure and the muscle map (js/exerciseDemoSheet.js).
-    const howToButton = (step, text = "How to") => hasHowTo(step.name, step.muscles)
+    const howToButton = (step, text = "How to") => hasHowTo(step.name)
         ? `<button type="button" class="sb-btn sb-btn-tertiary st-mode-tool st-howto" data-mode="howto">${icon("play")} ${esc(text)}</button>` : "";
 
     const values = () => Object.fromEntries([...overlay.querySelectorAll("[data-in]")].map(i => [i.dataset.in, i.value]));
