@@ -2,7 +2,7 @@
    Southbound — "How to" sheet (js/exerciseDemoSheet.js)
    The demo figure leads, edge to edge like a looping video: tap to
    pause, a progress bar for each rep, angle and speed pills on the
-   video. Then the name, what it works, Start / Move / Cue.
+   video (a 3D clip, or the drawn figure). Then the name, Start / Move / Cue, the muscle map.
    A bottom sheet on phones.
 ========================================== */
 
@@ -15,6 +15,13 @@
     background:linear-gradient(180deg, #F7F4EE 0%, #E7E0D2 100%);
 }
 .dm-stage, .dm-stage svg{ display:block; width:100%; height:100%; }
+/* A 3D clip (js/exerciseClips.js): the video's own backdrop colour, so it sits edge to edge. */
+.dm-video.is-clip{ background:#ECE8E0; }
+.dm-clip{ display:block; width:100%; height:100%; object-fit:contain; }
+.dm-video.is-offline::after{
+    content:"The video needs a connection the first time."; position:absolute; z-index:2; left:50%; top:50%; transform:translate(-50%, -50%);
+    padding:8px 14px; border-radius:var(--radius-pill); background:rgba(14,37,27,.78); color:#F3EFE6; font-size:13px; font-weight:600; white-space:nowrap;
+}
 .dm-tap{
     position:absolute; inset:0; z-index:1; display:flex; align-items:center; justify-content:center;
     padding:0; border:0; background:transparent; cursor:pointer;

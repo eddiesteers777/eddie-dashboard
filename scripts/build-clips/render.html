@@ -1,0 +1,69 @@
+<!doctype html><html><body style="margin:0">
+<script type="importmap">{"imports":{"three":"./vendor/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { makeScene } from "./scene.js";
+import { ALL } from "./exercises.js";
+const q = new URLSearchParams(location.search);
+const size = Number(q.get("size") || 1080);
+const ctx = await makeScene(size);
+const ex = ALL[q.get("ex") || "squat"];
+const before = new Set(ctx.scene.children);
+ex.setup(ctx.scene, ctx.rig); ctx.rig.reset();
+const gear = ctx.scene.children.filter(o => !before.has(o));
+const setCam = (c = ex.camera) => {
+    const y = c.yaw * Math.PI / 180, p = c.pitch * Math.PI / 180;
+    const T = new THREE.Vector3(...c.target);
+    ctx.camera.position.set(T.x + Math.sin(y) * Math.cos(p) * c.dist, T.y + Math.sin(p) * c.dist, T.z + Math.cos(y) * Math.cos(p) * c.dist);
+    ctx.camera.lookAt(T);
+};
+// Fixed camera that keeps the whole body and the equipment in view in every frame.
+function autoFit() {
+    const pts = [];
+    for (let i = 0; i < 36; i++) {
+        ctx.rig.reset(); ex.pose(ctx.rig, i / 36); ctx.scene.updateMatrixWorld(true);
+        for (const [n, b] of Object.entries(ctx.rig.b)) {
+            if (/Hand[A-Z]|Eye/.test(n)) continue;
+            const p = b.getWorldPosition(new THREE.Vector3());
+            const r = n === "HeadTop_End" ? 0.03 : /Head$/.test(n) ? 0.13 : 0.08;
+            for (const d of [[r,0,0],[-r,0,0],[0,r,0],[0,-r,0],[0,0,r],[0,0,-r]]) pts.push(p.clone().add(new THREE.Vector3(...d)));
+        }
+        for (const g of gear) {
+            const bx = new THREE.Box3().setFromObject(g);
+            for (const x of [bx.min.x, bx.max.x]) for (const y of [bx.min.y, bx.max.y]) for (const z of [bx.min.z, bx.max.z]) pts.push(new THREE.Vector3(x, y, z));
+        }
+    }
+    const box = new THREE.Box3().setFromPoints(pts);
+    const c = ex.camera;
+    let target = box.getCenter(new THREE.Vector3());
+    const fill = c.fill || 0.84;
+    const fits = (dist, tg) => {
+        setCam({ ...c, target: tg.toArray(), dist }); ctx.camera.updateMatrixWorld(); ctx.camera.updateProjectionMatrix();
+        let mx = [1e9, -1e9, 1e9, -1e9];
+        for (const p of pts) { const q = p.clone().project(ctx.camera); mx = [Math.min(mx[0], q.x), Math.max(mx[1], q.x), Math.min(mx[2], q.y), Math.max(mx[3], q.y)]; }
+        return mx;
+    };
+    for (let pass = 0; pass < 3; pass++) {
+        let lo = 0.5, hi = 30;
+        for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; const m = fits(mid, target); if (Math.max(-m[0], m[1], -m[2], m[3]) > fill) lo = mid; else hi = mid; }
+        const m = fits(hi, target);
+        // Re-centre: move the target by the projected offset.
+        const off = new THREE.Vector3((m[0] + m[1]) / 2, (m[2] + m[3]) / 2 + (c.lift || 0), 0.5).unproject(ctx.camera);
+        const ctr = new THREE.Vector3(0, 0, 0.5).unproject(ctx.camera);
+        target = target.clone().add(off.sub(ctr).multiplyScalar(ctx.camera.position.distanceTo(target) / ctx.camera.position.distanceTo(ctr) ));
+        ex.camera = { ...c, target: target.toArray(), dist: hi };
+    }
+}
+autoFit();
+window.renderAt = (t, cam) => {
+    ctx.rig.reset();
+    ex.pose(ctx.rig, t);
+    ctx.scene.updateMatrixWorld(true);
+    setCam(cam ? { ...ex.camera, ...cam } : undefined);
+    ctx.renderer.render(ctx.scene, ctx.camera);
+    return ctx.renderer.domElement.toDataURL("image/png");
+};
+window.seconds = () => ex.seconds;
+window.info = () => ({ len: ctx.rig.len });
+window.READY = true;
+</script></body></html>

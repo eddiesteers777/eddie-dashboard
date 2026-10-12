@@ -127,6 +127,7 @@
     "js/emojiPicker.js",
     "js/executionShare.js",
     "js/executionView.js",
+    "js/exerciseClips.js",
     "js/exerciseDemoSheet.js",
     "js/exerciseDemos.js",
     "js/exerciseMuscles.js",

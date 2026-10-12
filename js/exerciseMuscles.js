@@ -13,6 +13,7 @@
 ========================================== */
 
 import { demoFor, normalizeName } from "./exerciseDemos.js";
+import { clipFor } from "./exerciseClips.js";
 
 export const MUSCLES = ["abdominals", "abductors", "adductors", "biceps", "calves", "chest", "forearms", "glutes", "hamstrings", "lats", "lower back", "middle back", "neck", "quadriceps", "shoulders", "traps", "triceps"];
 
@@ -86,15 +87,15 @@ export function musclesFor(name, given = {}) {
     const own = { primary: clean(given.primary || given.primaryMuscles), secondary: clean(given.secondary || given.secondaryMuscles) };
     if (own.primary.length) return { primary: own.primary, secondary: own.secondary.filter(m => !own.primary.includes(m)) };
     const demo = demoFor(name);
-    const row = demo?.muscles || TABLE[normalizeName(name)] || null;
+    const row = demo?.muscles || clipFor(name)?.muscles || TABLE[normalizeName(name)] || null;
     if (!row) return { primary: [], secondary: [] };
     const primary = clean(row.primary);
     return { primary, secondary: clean(row.secondary).filter(m => !primary.includes(m)) };
 }
 
-/** Is there a demo to show for this exercise? (The How to sheet is the moving figure.) */
+/** Is there a How to for this exercise: a 3D clip (js/exerciseClips.js) or the drawn figure? */
 export function hasHowTo(name) {
-    return Boolean(demoFor(name));
+    return Boolean(clipFor(name) || demoFor(name));
 }
 
 /** "Quads, Glutes" */

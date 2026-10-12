@@ -142,3 +142,23 @@ test("the flat muscle map: lit muscles, front and back, chips, a workout's muscl
     assert.ok(!w.primary.includes("lats"), "no sets done, not counted");
     assert.ok(w.secondary.every(m => !w.primary.includes(m)));
 });
+
+test("3D clips: found by name, files in videos/, How to for exercises with no figure", async () => {
+    const { CLIPS, clipFor, clipSources } = await import("../js/exerciseClips.js");
+    const { existsSync } = await import("node:fs");
+    for (const c of CLIPS) {
+        const src = clipSources(c);
+        for (const f of [src.webm, src.mp4, src.poster]) assert.ok(existsSync(new URL(`../${f}`, import.meta.url)), `${f} exists`);
+        const full = clipFor(c.name);
+        for (const k of ["start", "move", "cue"]) assert.ok(full[k], `${c.name} has ${k}`);
+        assert.ok(full.muscles?.primary?.length, `${c.name} has muscles`);
+        assert.ok(c.seconds >= 6 && c.seconds <= 10, "6–10 s loop");
+    }
+    assert.equal(clipFor("back squat")?.id, "barbell-back-squat");
+    assert.equal(clipFor("Pull-Ups")?.id, "pull-up");
+    assert.equal(clipFor("Pushups")?.id, "push-up", "the figure's own names find the clip too");
+    assert.equal(clipFor("Squat"), null, "a plain squat stays the bodyweight figure");
+    assert.equal(hasHowTo("Barbell Back Squat"), true);
+    assert.equal(hasHowTo("Pull Ups"), true);
+    assert.deepEqual(musclesFor("Pull-Ups").primary, ["lats"]);
+});
