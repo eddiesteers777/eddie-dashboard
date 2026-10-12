@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Free Pace Calculator | Southbound Coaching</title>
+
+    <meta name="description" content="A free pace calculator for runners: convert pace, time and distance, plan race-day splits and get training paces from a real result. No account needed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Free Pace Calculator | Southbound Coaching">
+    <meta property="og:description" content="A free pace calculator for runners: convert pace, time and distance, plan race-day splits and get training paces from a real result. No account needed.">
+    <meta property="og:url" content="https://southboundcoaching.com/pace.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/pace-calculator.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page">
+
+        <section class="pub-hero">
+            <div class="pub-hero-kicker">Free tool</div>
+            <h1>Pace calculator</h1>
+            <p>Convert pace, time and distance, plan race-day splits, and get training paces from a real result. Works right here, no account needed, and nothing you type is saved or sent anywhere.</p>
+        </section>
+
+        <!-- The same calculator as the app's Pace Calculator (pace-calculator.html): tests/publicTools.test.mjs keeps the two in step. -->
+        <div id="pc-root">
+
+  <div class="pc-tool-tabs" id="pc-tool-tabs">
+    <button type="button" class="pc-tool-tab active" data-pc-tool="calculator">Pace Calculator</button>
+    <button type="button" class="pc-tool-tab" data-pc-tool="splits">Race Splits</button>
+    <button type="button" class="pc-tool-tab" data-pc-tool="zones">Training Zones</button>
+  </div>
+
+  <div class="pc-tool-panel active" data-pc-panel="calculator">
+
+  <div class="pc-card">
+
+    <div class="pc-solve-row">
+      <span class="pc-solve-label">Solve for</span>
+      <div class="pc-solve-tabs" id="pc-solve-tabs">
+        <button type="button" class="pc-solve-tab active" data-solve="pace">Pace</button>
+        <button type="button" class="pc-solve-tab" data-solve="time">Time</button>
+        <button type="button" class="pc-solve-tab" data-solve="distance">Distance</button>
+      </div>
+    </div>
+
+    <div class="pc-unit-row">
+      <span class="pc-solve-label">Units</span>
+      <div class="pc-unit-toggle" id="pc-unit-toggle">
+        <button type="button" class="pc-unit-btn active" data-unit="mi">Miles</button>
+        <button type="button" class="pc-unit-btn" data-unit="km">Kilometers</button>
+      </div>
+    </div>
+
+    <div class="pc-fields" id="pc-fields">
+
+      <div class="pc-field" id="pc-field-distance">
+        <label class="pc-field-label">Distance</label>
+        <div class="pc-input-row">
+          <input
+            type="number"
+            step="0.001"
+            min="0"
+            class="pc-input pc-input-wide"
+            id="pc-distance-input"
+            placeholder="e.g. 26.2">
+          <span class="pc-unit-suffix" id="pc-distance-unit-label">mi</span>
+        </div>
+        <select class="pc-preset-select" id="pc-distance-preset">
+          <option value="">Common distances…</option>
+          <option value="1.60934">1 Mile</option>
+          <option value="5">5K</option>
+          <option value="10">10K</option>
+          <option value="15">15K</option>
+          <option value="16.09344">10 Mile</option>
+          <option value="21.0975">Half Marathon</option>
+          <option value="42.195">Marathon</option>
+        </select>
+      </div>
+
+      <div class="pc-field" id="pc-field-time">
+        <label class="pc-field-label">Time</label>
+        <div class="pc-input-row pc-time-inputs">
+          <input type="number" min="0" class="pc-input pc-input-narrow" id="pc-time-h" placeholder="HH">
+          <span class="pc-colon">:</span>
+          <input type="number" min="0" max="59" class="pc-input pc-input-narrow" id="pc-time-m" placeholder="MM">
+          <span class="pc-colon">:</span>
+          <input type="number" min="0" max="59" class="pc-input pc-input-narrow" id="pc-time-s" placeholder="SS">
+        </div>
+      </div>
+
+      <div class="pc-field" id="pc-field-pace">
+        <label class="pc-field-label">Pace <span id="pc-pace-unit-label">(per mile)</span></label>
+        <div class="pc-input-row pc-time-inputs">
+          <input type="number" min="0" class="pc-input pc-input-narrow" id="pc-pace-m" placeholder="MM">
+          <span class="pc-colon">:</span>
+          <input type="number" min="0" max="59" class="pc-input pc-input-narrow" id="pc-pace-s" placeholder="SS">
+        </div>
+      </div>
+
+    </div>
+
+    <button type="button" class="pc-calculate-btn" id="pc-calculate-btn">Calculate</button>
+
+    <div class="pc-error" id="pc-error"></div>
+
+  </div>
+
+  <div class="pc-result-card" id="pc-result-card">
+
+    <div class="pc-result-top">
+      <div class="pc-result-block">
+        <div class="pc-result-label" id="pc-result-label">Your Pace</div>
+        <div class="pc-result-value" id="pc-result-value">--:--</div>
+      </div>
+      <div class="pc-result-sub">
+        <div class="pc-result-chip">
+          <span class="pc-result-chip-label">Speed</span>
+          <span class="pc-result-chip-value" id="pc-result-speed">--</span>
+        </div>
+        <div class="pc-result-chip">
+          <span class="pc-result-chip-label">Distance</span>
+          <span class="pc-result-chip-value" id="pc-result-distance">--</span>
+        </div>
+        <div class="pc-result-chip">
+          <span class="pc-result-chip-label">Time</span>
+          <span class="pc-result-chip-value" id="pc-result-time">--</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc-splits-wrap">
+      <div class="pc-splits-title">Finish times at this pace</div>
+      <div class="pc-splits-grid" id="pc-splits-grid"></div>
+    </div>
+
+  </div>
+
+  </div>
+
+  <!-- Race Splits -->
+
+  <div class="pc-tool-panel" data-pc-panel="splits">
+
+    <div class="pc-card">
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label">Distance</label>
+          <select id="rs-distance-preset" class="pc-select"></select>
+        </div>
+
+        <div class="pc-field">
+          <label class="pc-field-label">Goal Time</label>
+          <div class="pc-time-inputs">
+            <input type="number" id="rs-goal-h" placeholder="H" min="0" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="rs-goal-m" placeholder="MM" min="0" max="59" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="rs-goal-s" placeholder="SS" min="0" max="59" class="pc-time-input">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label">Split Style</label>
+          <div class="pc-unit-toggle" id="rs-style-toggle">
+            <button type="button" class="pc-unit-btn active" data-rs-style="even">Even</button>
+            <button type="button" class="pc-unit-btn" data-rs-style="negative">Negative Split</button>
+          </div>
+        </div>
+
+        <div class="pc-field">
+          <label class="pc-field-label">Units</label>
+          <div class="pc-unit-toggle" id="rs-unit-toggle">
+            <button type="button" class="pc-unit-btn active" data-rs-unit="mi">Miles</button>
+            <button type="button" class="pc-unit-btn" data-rs-unit="km">Kilometers</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button type="button" id="rs-calc-btn" class="pc-calc-btn">Generate Splits</button>
+
+      <div id="rs-error" class="pc-error" style="display:none;"></div>
+
+    </div>
+
+    <div class="pc-card" id="rs-result-card" style="display:none;">
+      <div class="pc-splits-title">Your Splits</div>
+      <div class="pc-splits-table" id="rs-splits-table"></div>
+    </div>
+
+  </div>
+
+  <!-- Training Zones -->
+
+  <div class="pc-tool-panel" data-pc-panel="zones">
+
+    <div class="pc-card">
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label">Recent Race Distance</label>
+          <select id="tz-distance-preset" class="pc-select"></select>
+        </div>
+
+        <div class="pc-field">
+          <label class="pc-field-label">Finish Time</label>
+          <div class="pc-time-inputs">
+            <input type="number" id="tz-time-h" placeholder="H" min="0" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="tz-time-m" placeholder="MM" min="0" max="59" class="pc-time-input">
+            <span>:</span>
+            <input type="number" id="tz-time-s" placeholder="SS" min="0" max="59" class="pc-time-input">
+          </div>
+        </div>
+
+      </div>
+
+      <button type="button" id="tz-calc-btn" class="pc-calc-btn">Calculate Training Paces</button>
+
+      <div id="tz-error" class="pc-error" style="display:none;"></div>
+
+    </div>
+
+    <div class="pc-card" id="tz-result-card" style="display:none;">
+
+      <div class="pc-splits-title">
+        Your Training Paces
+        <span id="tz-vdot-label" class="pc-vdot-label"></span>
+      </div>
+
+      <div class="pc-zones-table" id="tz-zones-table"></div>
+
+      <p class="pc-zones-note">
+        Based on the Jack Daniels VDOT method — a widely used way to derive personalized
+        training paces from a real race result rather than a fixed guess.
+      </p>
+
+    </div>
+
+  </div>
+
+        </div>
+
+        <section class="pub-section">
+            <div class="pub-cta-band">
+                <h2>Want training built around these paces?</h2>
+                <p>Tell me your goal and I'll build the plan, check in every week and adjust it as you go.</p>
+                <div class="pub-cta-actions">
+                    <a href="apply.html?service=running" class="pub-btn-primary">Apply to Train With Me</a>
+                    <a href="contact.html?about=running_strength" class="pub-btn-secondary">Ask a Question</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="pub-footer">
+        <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span><span class="pub-footer-sub">Coaching</span></span></a>
+        <p>&copy; 2026 Southbound &middot; <a href="about.html">About</a> &middot; <a href="packages.html">Packages</a> &middot; <a href="contact.html">Contact</a> &middot; <a href="apply.html">Apply</a> &middot; <a href="privacy.html">Privacy</a></p>
+    </footer>
+
+    <script src="js/pace-calculator.js"></script>
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/loadPublicHeader.js"></script>
+
+</body>
+
+</html>
