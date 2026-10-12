@@ -2,8 +2,8 @@
    Southbound — the muscle map (pure)
 
    A flat body, front and back, with the muscles an exercise or a whole
-   workout worked: the main ones in clay, the ones helping in light tan,
-   the rest a quiet stone. Drawn apart from the moving demo figure
+   workout worked, in Southbound's colours: the main ones in tan, the ones
+   helping in sage, the rest a quiet forest. Apart from the moving figure
    (js/demoFigure.js): this is the at-a-glance diagram, that's the video.
 
    muscleMapSvg(levels, { view, id })   one view as an <svg>
@@ -20,11 +20,13 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 
 const W = 200, H = 436;
 const C = {
-    body: "#F6F3EC",
-    line: "#7D877F",
-    idle: "#DFD9CD",
-    main: ["#EE9A63", "#C95F38"],
-    help: ["#F0CFA0", "#DDAA70"]
+    // Southbound's own colours: a forest body with a cream line, tan for
+    // the main muscles, sage for the ones helping.
+    body: "#1F3428",
+    line: "#C8BFAE",
+    idle: "#2D4537",
+    main: ["#E6CDA2", "#B89B6E"],
+    help: ["#B7D0BC", "#7FA488"]
 };
 
 // The body, viewer's left half (mirrored for the right). Lines are limbs

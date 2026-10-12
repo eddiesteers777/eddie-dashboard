@@ -1,16 +1,16 @@
 /* ==========================================
    Southbound — the muscle map (js/muscleMap.js)
-   A flat body, front and back, on a cream card: main muscles clay,
-   helping light tan; chips under it.
+   A flat body, front and back, on a forest card in Southbound's colours:
+   main muscles tan, helping sage; chips under it.
 ========================================== */
 
-.mm{ display:flex; flex-direction:column; gap:10px; padding:14px 14px 16px; border-radius:16px; background:#EFEBE2; color:#1F2E26; }
-.mm-title{ margin:0; color:#7A5B33; font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+.mm{ display:flex; flex-direction:column; gap:10px; padding:14px 14px 16px; border-radius:16px; background:#0E251B; border:1px solid color-mix(in srgb, var(--primary, #C9AD84) 22%, transparent); color:var(--text, #F3EFE6); }
+.mm-title{ margin:0; color:var(--primary, #C9AD84); font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
 .mm-figs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .mm-figs figure{ margin:0; text-align:center; }
 .mm-figs svg{ display:block; width:100%; height:auto; max-height:300px; }
-.mm-figs figcaption{ margin-top:4px; color:#5E6A62; font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.mm-figs figcaption{ margin-top:4px; color:var(--text-secondary, #A9B3AA); font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 .mm-chips{ display:flex; flex-wrap:wrap; gap:6px; margin:0; padding:0; list-style:none; }
 .mm-chip{ padding:5px 11px; border-radius:var(--radius-pill, 999px); font-size:13px; font-weight:700; line-height:1.2; }
-.mm-chip.is-primary{ background:#D2704A; color:#FFF8F0; }
-.mm-chip.is-secondary{ background:#FFFFFF; color:#7A5B33; box-shadow:inset 0 0 0 1px #E3C9A4; }
+.mm-chip.is-primary{ background:var(--primary, #C9AD84); color:var(--on-primary, #0E251B); }
+.mm-chip.is-secondary{ background:color-mix(in srgb, var(--green, #94B89D) 16%, transparent); color:var(--green, #94B89D); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--green, #94B89D) 45%, transparent); }
