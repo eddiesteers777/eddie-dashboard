@@ -218,10 +218,15 @@ function ensure(k, h, title) {
     if (k.y + h > PAGE.bottom) newPage(k, title);
 }
 
-// A section heading never sits alone at the foot of a page: `need` is the
-// room its first block takes.
+// What fits on one page below the running header.
+const PAGE_ROOM = PAGE.bottom - 62;
+
+// A section stays on one page: `need` is the whole section's height (its
+// heading is ~30 more), so when it won't fit where we are it starts on the
+// next page. Only a section taller than a page splits, and then it starts
+// at the top of one.
 function section(k, num, title, note, titleForPages, need = 40) {
-    ensure(k, 34 + need, titleForPages);
+    ensure(k, Math.min(30 + need, PAGE_ROOM), titleForPages);
     const { M, W } = k;
     k.y += 16;
     k.slash(M, k.y - 13, 16);
@@ -357,7 +362,14 @@ function headerBand(k, model) {
 
 function planSection(k, model, title) {
     const { doc, M, W } = k;
-    section(k, 1, "The plan", "per hour  ·  what you carry", title, 190);
+    let left = 4;
+    model.brief.forEach((line, i) => {
+        k.setF(i === 0 ? "bodyBold" : "body", i === 0 ? 10 : 9.5);
+        left += k.wrap(line, 262 - 14).length * (i === 0 ? 13.5 : 12.8) + 5;
+    });
+    k.setF("body", 7.5);
+    const whyH = model.why.length ? 12 + model.why.reduce((n, w) => n + k.wrap(w, k.CW).length * 9.5, 0) : 0;
+    section(k, 1, "The plan", "per hour  ·  what you carry", title, Math.max(left, 182) + 4 + whyH);
     const top = k.y;
     // Left: the plan in plain words, the way a coach would say it.
     const lw = 262;
@@ -400,7 +412,6 @@ function planSection(k, model, title) {
 
     k.y = Math.max(ly, ry) + 4;
     if (model.why.length) {
-        ensure(k, 30, title);
         k.setF("bodyBold", 6.5, C.tanDeep);
         k.text("HOW THESE WERE SET", M, k.y + 6, { charSpace: 1.2 });
         k.y += 10;
@@ -490,31 +501,52 @@ function scheduleSection(k, model, title) {
     if (!model.schedule.length) return;
     const { doc, M, W } = k;
     const hasClock = model.schedule.some(r => r.clock);
-    section(k, 3, model.isRace ? "Race-day schedule" : "Run schedule", hasClock ? "time  ·  clock  ·  mile" : "time  ·  mile", title, 80);
     const xTime = M + 10, xClock = M + 50, xMile = M + (hasClock ? 104 : 54), xIcon = xMile + 46, xWhat = xIcon + 20;
     const ww = W - M - xWhat - 8;
+    // Normal rows, or compact ones when that keeps the whole schedule on one
+    // page (a long race with 20+ checkpoints).
+    const sizes = compact => compact
+        ? { what: 8.5, whatLine: 10, detail: 6.8, detailLine: 8.2, pad: 6, time: 8.8, base: 10.5, icon: 0.8 }
+        : { what: 9.5, whatLine: 11.5, detail: 7.5, detailLine: 9.5, pad: 10, time: 10, base: 12.5, icon: 1 };
+    const rowH = (r, z) => {
+        k.setF("bodyBold", z.what); const a = k.wrap(r.what, ww).length;
+        k.setF("body", z.detail); const b = r.detail ? k.wrap(r.detail, ww).length : 0;
+        return z.pad + a * z.whatLine + b * z.detailLine;
+    };
+    const total = z => model.schedule.reduce((n, r) => n + rowH(r, z), 0) + 4;
+    const roomed = PAGE_ROOM - 30;
+    const z = total(sizes(false)) > roomed && total(sizes(true)) <= roomed ? sizes(true) : sizes(false);
+    const heading = model.isRace ? "Race-day schedule" : "Run schedule";
+    section(k, 3, heading, hasClock ? "time  ·  clock  ·  mile" : "time  ·  mile", title, total(z));
     model.schedule.forEach((r, i) => {
-        k.setF("bodyBold", 9.5);
+        k.setF("bodyBold", z.what);
         const what = k.wrap(r.what, ww);
-        k.setF("body", 7.5);
+        k.setF("body", z.detail);
         const detail = r.detail ? k.wrap(r.detail, ww) : [];
-        const h = 10 + what.length * 11.5 + detail.length * 9.5;
-        ensure(k, h, title);
+        const h = z.pad + what.length * z.whatLine + detail.length * z.detailLine;
+        if (k.y + h > PAGE.bottom) {
+            newPage(k, title);
+            k.setF("bodyBold", 7, C.tanDeep);
+            k.text(`${heading.toUpperCase()}  ·  CONTINUED`, M, k.y + 2, { charSpace: 1.2 });
+            k.y += 12;
+        }
         const y = k.y;
+        const base = y + z.base;
         if (i % 2 === 0) { k.fill(C.panel2); doc.rect(M, y, k.CW, h, "F"); }
         const accent = r.kind === "gel" ? (r.caffeine ? C.ochre : C.tan) : r.kind === "bottle" ? C.slate : r.kind === "sip" ? C.ochreLight : C.forest;
         k.fill(accent); doc.rect(M, y, 3, h, "F");
-        k.setF("mono", 10, C.forest); k.text(r.time, xTime, y + 13);
-        if (hasClock) { k.setF("mono", 7.5, C.muted); k.text(r.clock, xClock, y + 12.5); }
-        k.setF("mono", 7.5, C.ink); k.text(r.mile !== "" ? `MI ${r.mile}` : "", xMile, y + 12.5);
-        if (r.kind === "gel") gelIcon(k, xIcon, y + 3, r.caffeine ? C.ochre : C.tan);
-        else if (r.kind === "bottle") bottleIcon(k, xIcon, y + 3);
-        else if (r.kind === "sip") bottleIcon(k, xIcon, y + 3, C.ochreLight);
-        else if (r.kind === "finish") flagIcon(k, xIcon, y + 3);
-        else startIcon(k, xIcon, y + 3);
-        let yy = y + 12.5;
-        k.setF("bodyBold", 9.5, C.ink); what.forEach(l => { doc.text(l, xWhat, yy); yy += 11.5; });
-        k.setF("body", 7.5, C.muted); detail.forEach(l => { doc.text(l, xWhat, yy - 1.5); yy += 9.5; });
+        k.setF("mono", z.time, C.forest); k.text(r.time, xTime, base + 0.5);
+        if (hasClock) { k.setF("mono", z.detail, C.muted); k.text(r.clock, xClock, base); }
+        k.setF("mono", z.detail, C.ink); k.text(r.mile !== "" ? `MI ${r.mile}` : "", xMile, base);
+        const iy = base - 9.5 * z.icon;
+        if (r.kind === "gel") gelIcon(k, xIcon, iy, r.caffeine ? C.ochre : C.tan);
+        else if (r.kind === "bottle") bottleIcon(k, xIcon, iy);
+        else if (r.kind === "sip") bottleIcon(k, xIcon, iy, C.ochreLight);
+        else if (r.kind === "finish") flagIcon(k, xIcon, iy);
+        else startIcon(k, xIcon, iy);
+        let yy = base;
+        k.setF("bodyBold", z.what, C.ink); what.forEach(l => { doc.text(l, xWhat, yy); yy += z.whatLine; });
+        k.setF("body", z.detail, C.muted); detail.forEach(l => { doc.text(l, xWhat, yy - 1.5); yy += z.detailLine; });
         k.y += h;
     });
     k.y += 4;
@@ -585,7 +617,7 @@ function hoursSection(k, model, title) {
     if (!model.hours.length) return;
     const { doc, M, W } = k;
     const rowH = 30;
-    section(k, 5, "Hour by hour", "what you take in against the target", title, Math.min(model.hours.length * rowH + 4, 300));
+    section(k, 5, "Hour by hour", "what you take in against the target", title, model.hours.length * rowH + 4);
     const metrics = [["carbs", "Carbs", "g"], ["fluid", "Fluid", null], ["sodium", "Sodium", "mg"]];
     model.hours.forEach((h, i) => {
         ensure(k, rowH, title);
@@ -618,7 +650,11 @@ function notesSection(k, model, title) {
     const hasWarn = model.warnings.length > 0;
     const extra = model.isRace ? model.sideways : model.practice;
     if (!hasWarn && !(extra && extra.length)) return;
-    section(k, 6, model.isRace ? "Coach's notes" : "Coach's notes + your log", "", title, hasWarn ? 60 : 90);
+    k.setF("body", 8.5);
+    const warnH = hasWarn ? 22 + model.warnings.reduce((n, w) => n + k.wrap(w, k.CW - 30).length, 0) * 11 + 8 : 0;
+    const sideH = model.isRace && model.sideways.length ? 28 + model.sideways.length * 13 : 0;
+    const logH = !model.isRace && model.practice?.length ? 30 + model.practice.length * 22 + 16 + 8 : 0;
+    section(k, 6, model.isRace ? "Coach's notes" : "Coach's notes + your log", "", title, warnH + sideH + logH);
     if (hasWarn) {
         k.setF("body", 8.5);
         const lines = model.warnings.flatMap(w => k.wrap(w, k.CW - 30).map((l, i) => [i === 0, l]));
@@ -722,8 +758,7 @@ function pocketCards(k, model, title) {
     const dense = rows.length > 18;
     const rh = dense ? 10.5 : 13, cw = 250, gap = k.CW - cw * 2;
     const ch = 40 + rows.length * rh + 20;
-    if (k.y + ch + 46 > PAGE.bottom) newPage(k, title);
-    section(k, 8, "Pocket card", "cut along the dashed line  ·  one for your pocket, one for your bottle", title);
+    section(k, 8, "Pocket card", "cut along the dashed line  ·  one for your pocket, one for your bottle", title, ch + 18);
     const top = k.y + 4;
     const hasClock = rows.some(r => r.clock);
     [0, 1].forEach(c => {
@@ -819,8 +854,13 @@ function drawShelf(k, sources, { first = true } = {}) {
     if (first) shelfHeader(k, sources);
     else { k.doc.addPage(); k.paper(); shelfHeader(k, sources); }
     const gap = 10, w = (k.CW - gap) / 2;
+    const pairH = pair => 56 + Math.max(...pair.map(it => (it.note ? Math.min(2, k.wrap(it.note, w - 24).length) * 8.5 + 4 : 0)));
     for (const g of sources.groups) {
-        ensure(k, 100, shelfTitle);
+        // A group (heading + all its cards) stays on one page.
+        k.setF("body", 6.6);
+        let groupH = 34;
+        for (let i = 0; i < g.items.length; i += 2) groupH += pairH(g.items.slice(i, i + 2)) + gap;
+        ensure(k, Math.min(groupH, PAGE_ROOM), shelfTitle);
         k.y += 6;
         k.image(SHELF_ART[g.id] || "fuel", M, k.y - 4, 22, 22);
         k.setF("display", 17, C.forest);
@@ -831,7 +871,7 @@ function drawShelf(k, sources, { first = true } = {}) {
         k.setF("body", 6.6);
         for (let i = 0; i < g.items.length; i += 2) {
             const pair = g.items.slice(i, i + 2);
-            const h = 56 + Math.max(...pair.map(it => (it.note ? Math.min(2, k.wrap(it.note, w - 24).length) * 8.5 + 4 : 0)));
+            const h = pairH(pair);
             ensure(k, h + gap, shelfTitle);
             pair.forEach((it, j) => shelfCard(k, it, M + j * (w + gap), k.y, w, h));
             k.setF("body", 6.6);
