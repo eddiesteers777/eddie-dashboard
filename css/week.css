@@ -147,8 +147,8 @@
     flex-shrink:0;
     padding:2px 8px;
     border-radius:999px;
-    background:var(--warning-bg);
-    color:var(--warning);
+    background:color-mix(in srgb, var(--muted) 18%, transparent);
+    color:var(--text-secondary);
     font-size:11px;
     font-weight:800;
     text-transform:uppercase;
@@ -156,7 +156,8 @@
 }
 .wk-status{ display:flex; flex-shrink:0; }
 .wk-status.is-done{ color:var(--success); }
-.wk-status.is-missed{ color:var(--warning); }
+/* A workout that didn't happen is neutral, not a warning: the Change button beside it is the way back. */
+.wk-status.is-missed{ color:var(--muted); }
 
 /* The Today strip: one line per day. */
 .wk-days.is-compact .wk-day{ display:flex; align-items:center; gap:12px; min-height:44px; padding:6px 8px; }

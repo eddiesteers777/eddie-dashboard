@@ -21,7 +21,7 @@ import { getActiveProgramEntriesForDate, getActiveRunningPrograms } from "./acti
 import { nextRace, raceCountdownText } from "./raceCountdown.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
-import { habitStreak } from "./progressView.js";
+import { habitStreak, streakDetail } from "./progressView.js";
 
 // The built-in marathon block (js/marathonData.js) is the coach's own
 // race. Clients get their own plans and a "From your coach" card
@@ -633,7 +633,10 @@ function renderStreak() {
     try { entries = JSON.parse(localStorage.getItem("entries") || "{}"); } catch { entries = {}; }
     // Shared with My Progress (js/progressView.js): by local calendar day,
     // the same keys the Habits page writes.
-    valueEl.textContent = String(habitStreak(entries));
+    const streak = habitStreak(entries);
+    valueEl.textContent = String(streak);
+    const meta = document.getElementById("streakMeta");
+    if (meta) meta.textContent = streakDetail(streak);
 }
 
 /* ==========================================

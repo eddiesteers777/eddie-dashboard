@@ -102,7 +102,7 @@ function itemLine(item) {
                     : item.actual?.distance ? `<small class="wk-logged-inline">You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</small>`
                     : item.logged && item.title !== "Logged run" ? `<small class="wk-logged-inline">Logged ${item.logged} mi</small>` : ""}
             </span>
-            ${item.state === "missed" ? `<span class="wk-missed">Missed</span>` : item.state === "skipped" ? `<span class="wk-skipped">Skipped</span>` : ""}
+            ${item.state === "missed" ? `<span class="wk-missed">Not done</span>` : item.state === "skipped" ? `<span class="wk-skipped">Skipped</span>` : ""}
             ${(item.autoDone || item.actual) && item.done ? `<span class="wk-status is-done" title="Logged">${icon("checkCircle")}<span class="sr-only">Done (logged)</span></span>` : doneButton(item, true)}
             ${changeButton(item, true)}
         </li>`;
@@ -115,7 +115,7 @@ export function weekListHtml(week, { compact = false, busyOnly = false } = {}) {
     return `<ol class="wk-days${compact ? " is-compact" : ""}">${days.map(day => {
         const [dow, date] = [shortDay(day.date).split(",")[0], shortDay(day.date).split(", ")[1] || ""];
         const statusIcon = day.status === "done" ? `<span class="wk-status is-done">${icon("checkCircle")}<span class="sr-only">Done</span></span>`
-            : day.status === "missed" ? `<span class="wk-status is-missed">${icon("alertTriangle")}<span class="sr-only">Missed</span></span>` : "";
+            : day.status === "missed" ? `<span class="wk-status is-missed">${icon("minus")}<span class="sr-only">Not done</span></span>` : "";
         if (compact) {
             const summary = day.items.length
                 ? day.items.map(i => i.kind === "run" && i.miles && i.title !== "Logged run" ? `${i.miles} mi ${i.title.toLowerCase()}` : i.title).join(" + ")
