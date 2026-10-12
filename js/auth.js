@@ -224,6 +224,17 @@ export async function login() {
 
         console.error("Login Error:", error);
 
+        // Say why, unless the person just closed the Google window themselves.
+        // Imported when needed so sign-in code carries no UI on its own.
+        try {
+            const [{ signInFailureMessage }, { toast }] = await Promise.all([
+                import("./signInErrors.js"),
+                import("./ui.js")
+            ]);
+            const message = signInFailureMessage(error);
+            if (message) toast(message, { type: "error" });
+        } catch { /* the message is a courtesy; failing to show it changes nothing */ }
+
         return false;
 
     }

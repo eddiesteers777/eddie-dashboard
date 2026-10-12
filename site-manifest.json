@@ -242,6 +242,7 @@
     "js/sessionStore.js",
     "js/setRunner.js",
     "js/settings.js",
+    "js/signInErrors.js",
     "js/stravaArchive.js",
     "js/stravaAuth.js",
     "js/stravaConfig.js",
