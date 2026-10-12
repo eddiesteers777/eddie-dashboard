@@ -106,7 +106,7 @@ test("muscles: what the exercise brings first, then its demo, then the table", (
     assert.equal(muscleWords(["quadriceps", "middle back"]), "Quads, Upper back");
     assert.ok(MUSCLES.every(m => MUSCLE_LABELS[m]));
     assert.equal(hasHowTo("Bird Dog"), true);
-    assert.equal(hasHowTo("Lat Pulldown"), true, "a muscle map without a demo still counts");
+    assert.equal(hasHowTo("Lat Pulldown"), false, "no demo, no How to");
     assert.equal(hasHowTo("Underwater basket weaving"), false);
 });
 

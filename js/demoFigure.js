@@ -482,8 +482,9 @@ export function frameSvg(sk, cam, box, { width = 480, height = 300, equipment = 
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${r1(box.x)} ${r1(box.y)} ${r1(box.w)} ${r1(box.h)}" role="img"${label ? ` aria-label="${label.replace(/"/g, "&quot;")}"` : ""}>${bg}<defs>${ctx.defs.join("")}</defs>${under}${parts.map(p => p.svg).join("")}</svg>`;
 }
 
-/** A frame box that fits every frame of an animation from one camera. */
-export function fitBox(skeletons, cam, { aspect = 480 / 300, pad = 18, extra = 0 } = {}) {
+/** A frame box that fits every frame of an animation from one camera.
+ *  bottom: extra room under the floor, e.g. for controls drawn over the frame. */
+export function fitBox(skeletons, cam, { aspect = 480 / 300, pad = 18, extra = 0, bottom = 0 } = {}) {
     const M = camera(cam);
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const sk of skeletons) for (const v of Object.values(sk.pts)) {
@@ -491,6 +492,8 @@ export function fitBox(skeletons, cam, { aspect = 480 / 300, pad = 18, extra = 0
         x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
     }
     x0 -= extra; x1 += extra; y0 -= extra;
+    // bottom: room kept under the floor (for controls drawn over the frame).
+    y1 += bottom;
     let w = x1 - x0 + pad * 2, h = y1 - y0 + pad * 2 + 10;
     if (w / h > aspect) h = w / aspect; else w = h * aspect;
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 + 4;
