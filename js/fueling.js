@@ -2172,6 +2172,87 @@ $("fuelSheetEdit").addEventListener("click", () => {
 
 $("fuelSheetPrint").addEventListener("click", () => window.print());
 
+// The plan as a PDF (js/fuelPdf.js loads the PDF maker on the first tap).
+function fuelPdf() { return import("./fuelPdf.js"); }
+
+$("fuelSheetPdf").addEventListener("click", async (e) => {
+    const plan = plans.find(p => String(p.id) === String(sheetPlanId));
+    if (!plan) return;
+    (await fuelPdf()).downloadFuelPdf(plan, { unit, button: e.currentTarget });
+});
+
+$("downloadPdfBtn").addEventListener("click", async (e) => {
+    if (!lastTargets) {
+        toast("Calculate your fueling targets first, then download the plan.", { type: "info" });
+        return;
+    }
+    const button = e.currentTarget;
+    (await fuelPdf()).downloadFuelPdf(buildPlanObject(), { unit, button });
+});
+
+/* ==========================================
+   Popular products: add one to the library in a tap
+========================================== */
+
+$("popularSourcesBtn").addEventListener("click", async () => {
+    const { sourcesByGroup, sourceLine, toLibraryItem, SOURCES_NOTE } = await import("./fuelSources.js");
+    const inLibrary = src => library.some(i => i.sourceId === src.id || String(i.name).trim().toLowerCase() === src.name.toLowerCase());
+    const dialog = document.createElement("dialog");
+    dialog.className = "sb-dialog fuel-src-dialog";
+    dialog.setAttribute("aria-labelledby", "fuelSrcTitle");
+    const groups = sourcesByGroup();
+    dialog.innerHTML = `
+        <div class="fuel-src-head">
+            <h2 id="fuelSrcTitle">Popular products</h2>
+            <button type="button" class="fs-sheet-close" data-src-close aria-label="Close">${icon("close")}</button>
+        </div>
+        <p class="fuel-src-note">${escapeHTML(SOURCES_NOTE)} Added items can be edited like your own.</p>
+        <div class="fuel-src-list">
+            ${groups.map(g => `
+                <section class="fuel-src-group">
+                    <h3>${escapeHTML(g.title)}</h3>
+                    <p class="fuel-src-gnote">${escapeHTML(g.note)}</p>
+                    ${g.items.map(src => `
+                        <div class="fuel-src-row">
+                            <div>
+                                <b>${escapeHTML(src.name)}</b>
+                                <span>${escapeHTML(src.serving)} · ${escapeHTML(sourceLine(src, fl))}</span>
+                                ${src.note ? `<small>${escapeHTML(src.note)}</small>` : ""}
+                            </div>
+                            <button type="button" class="fuel-btn small ${inLibrary(src) ? "secondary" : "primary"}" data-src-add="${src.id}" ${inLibrary(src) ? "disabled" : ""}
+                                aria-label="${inLibrary(src) ? "In your library" : "Add"}: ${escapeHTML(src.name)}">${inLibrary(src) ? "In library" : "Add"}</button>
+                        </div>`).join("")}
+                </section>`).join("")}
+        </div>
+        <div class="fuel-src-foot">
+            <button type="button" class="fuel-btn secondary" data-src-pdf>Download this list (PDF)</button>
+            <button type="button" class="fuel-btn primary" data-src-close>Done</button>
+        </div>`;
+    document.body.appendChild(dialog);
+    dialog.addEventListener("close", () => dialog.remove());
+    dialog.addEventListener("click", async (e) => {
+        if (e.target === dialog || e.target.closest("[data-src-close]")) { dialog.close(); return; }
+        if (e.target.closest("[data-src-pdf]")) {
+            (await fuelPdf()).downloadSourcesPdf({ unit, button: e.target.closest("[data-src-pdf]") });
+            return;
+        }
+        const btn = e.target.closest("[data-src-add]");
+        if (!btn) return;
+        const src = groups.flatMap(g => g.items).find(x => x.id === btn.dataset.srcAdd);
+        if (!src || inLibrary(src)) return;
+        let id = Date.now();
+        while (library.some(i => Number(i.id) === id)) id += 1;
+        library.push(toLibraryItem(src, id));
+        saveJSON("fueling-library", library);
+        renderLibrary();
+        btn.textContent = "In library";
+        btn.disabled = true;
+        btn.classList.replace("primary", "secondary");
+        toast(`${src.name} added to your library.`);
+    });
+    dialog.showModal();
+});
+
 $("savedPlansGrid").addEventListener("click", async (e) => {
 
     const viewId = e.target.closest("[data-view]")?.dataset.view;
