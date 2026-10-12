@@ -917,7 +917,7 @@ async function assets() {
 }
 
 /** The PDF as a Blob, for a plan object (buildPlanObject's shape). */
-export async function fuelPdfBlob(plan, { unit = "oz", sources = true } = {}) {
+export async function fuelPdfBlob(plan, { unit = "oz", sources = false } = {}) {
     const { JsPDF, fonts, art } = await assets();
     const schedule = buildSchedule(scheduleInputFromPlan(plan));
     const model = pdfModel(plan, schedule, { unit, sources });
