@@ -167,6 +167,7 @@
     "js/install.js",
     "js/intakeFlow.js",
     "js/intakeGuide.js",
+    "js/interestPicker.js",
     "js/loadCard.js",
     "js/loadHeader.js",
     "js/loadPublicHeader.js",

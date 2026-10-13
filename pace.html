@@ -270,6 +270,17 @@
 
         </div>
 
+        <section class="pub-section pub-interest" id="interestPicker" data-watch="#pc-result-card, #rs-result-card, #tz-result-card" aria-labelledby="interestTitle" hidden>
+            <h2 id="interestTitle">What are you training for?</h2>
+            <p>Pick one and I'll start your application with it chosen. It takes about a minute and needs no account.</p>
+            <div class="pub-interest-row">
+                <a class="pub-interest-btn" href="apply.html?service=running" data-interest="running"><span data-icon="activity"></span><span>Running</span></a>
+                <a class="pub-interest-btn" href="apply.html?service=strength" data-interest="strength"><span data-icon="dumbbell"></span><span>Strength</span></a>
+                <a class="pub-interest-btn" href="apply.html?service=soccer_1on1" data-interest="soccer"><span data-icon="footprint"></span><span>Soccer <small>1-on-1 or group</small></span></a>
+            </div>
+            <p class="pub-interest-skip">Just using the calculator? <button type="button" data-interest-dismiss>No thanks</button></p>
+        </section>
+
         <section class="pub-section">
             <div class="pub-cta-band">
                 <h2>Want training built around these paces?</h2>
@@ -292,6 +303,7 @@
     <script src="js/pace-calculator.js"></script>
     <script type="module" src="js/icons.js"></script>
     <script type="module" src="js/loadPublicHeader.js"></script>
+    <script type="module" src="js/interestPicker.js"></script>
 
 </body>
 

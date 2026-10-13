@@ -15,8 +15,8 @@ function calculatorMarkup(html, endMarker) {
 
 test("the public Pace Calculator is the same calculator as the app's", () => {
     const app = calculatorMarkup(read("pace-calculator.html"), '<script src="js/pace-calculator.js">');
-    const pub = calculatorMarkup(read("pace.html"), '<section class="pub-section">');
-    // The app page closes #pc-root right before its script; the public page closes it before the call to action.
+    const pub = calculatorMarkup(read("pace.html"), '<section class="pub-section pub-interest"');
+    // The app page closes #pc-root right before its script; the public page closes it before the interest picker.
     const trim = s => s.replace(/(<\/div>\s*)+$/, "").trim();
     assert.equal(trim(pub), trim(app), "pace.html's calculator drifted from pace-calculator.html: change both, or neither");
 });
