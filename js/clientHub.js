@@ -100,13 +100,29 @@ let planningView = null;   // the Planning tab's handle (refreshes its planned w
 let workspace = null;   // the plan workspace once the Plan tab has opened (a promise)
 let record = null;
 
+// Every tab, in the main row or under More (they keep their names: links and "go to" buttons use them).
+const HUB_TAB = ".hub-tabs-wrap .clients-tab[data-tab]";
+const moreMenu = () => document.getElementById("hubMoreMenu");
+
 function selectTab(name) {
-    const tab = document.querySelector(`.hub-tabs .clients-tab[data-tab="${name}"]`);
+    const tab = document.querySelector(`${HUB_TAB}[data-tab="${name}"]`);
     if (!tab) return;
-    document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.classList.toggle("active", t === tab));
-    // On phones the tab bar scrolls sideways; keep the chosen tab in view.
-    const bar = tab.parentElement;
-    if (tab.offsetLeft + tab.offsetWidth > bar.scrollLeft + bar.clientWidth || tab.offsetLeft < bar.scrollLeft) {
+    document.querySelectorAll(HUB_TAB).forEach(t => {
+        t.classList.toggle("active", t === tab);
+        if (t === tab) t.setAttribute("aria-current", "true"); else t.removeAttribute("aria-current");
+    });
+    // A tab under More shows its own name on the More button, so you can see where you are.
+    const inMore = Boolean(moreMenu()?.contains(tab));
+    const moreBtn = document.getElementById("hubMoreBtn");
+    if (moreBtn) {
+        moreBtn.classList.toggle("active", inMore);
+        const label = document.getElementById("hubMoreLabel");
+        if (label) label.textContent = inMore ? tab.firstChild.textContent.trim() : "More";
+    }
+    setMoreOpen(false);
+    // On a narrow phone the main row can scroll sideways; keep the chosen tab in view.
+    const bar = tab.closest(".hub-tabs");
+    if (bar && (tab.offsetLeft + tab.offsetWidth > bar.scrollLeft + bar.clientWidth || tab.offsetLeft < bar.scrollLeft)) {
         bar.scrollLeft = tab.offsetLeft - (bar.clientWidth - tab.offsetWidth) / 2;
     }
     document.querySelectorAll(".hub-page .clients-panel").forEach(p => { p.hidden = p.dataset.panel !== name; });
@@ -222,7 +238,53 @@ async function mountHubPlanning() {
     }
 }
 
-document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+document.querySelectorAll(HUB_TAB).forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+
+// ---- The More menu ----
+function setMoreOpen(open, { focus = false } = {}) {
+    const menu = moreMenu();
+    const btn = document.getElementById("hubMoreBtn");
+    if (!menu || !btn) return;
+    menu.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    if (open && focus) menu.querySelector(".clients-tab.active, .clients-tab")?.focus();
+    if (open) {
+        // On a phone the tab bar sits at the bottom: scroll just enough that the whole menu is in view above it.
+        const bar = document.querySelector(".eos-bottomnav");
+        const limit = (bar ? bar.getBoundingClientRect().top : window.innerHeight) - 12;
+        const over = menu.getBoundingClientRect().bottom - limit;
+        if (over > 0) window.scrollBy({ top: over, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }
+}
+// One dot on More with the waiting counts of the tabs inside it (Check-ins, Sessions).
+function updateMoreBadge() {
+    const badge = document.getElementById("hubMoreBadge");
+    const menu = moreMenu();
+    if (!badge || !menu) return;
+    const total = [...menu.querySelectorAll(".clients-tab-badge:not([hidden])")].reduce((n, b) => n + (Number(b.textContent) || 1), 0);
+    badge.hidden = total === 0;
+    badge.textContent = total > 99 ? "99+" : String(total);
+}
+document.getElementById("hubMoreBtn")?.addEventListener("click", () => setMoreOpen(moreMenu().hidden, { focus: false }));
+document.addEventListener("click", event => {
+    if (moreMenu() && !moreMenu().hidden && !event.target.closest(".hub-tabs-wrap")) setMoreOpen(false);
+});
+document.getElementById("hubMoreBtn")?.addEventListener("keydown", event => {
+    if (event.key === "ArrowDown") { event.preventDefault(); setMoreOpen(true, { focus: true }); }
+});
+moreMenu()?.addEventListener("keydown", event => {
+    const items = [...moreMenu().querySelectorAll(".clients-tab")];
+    const i = items.indexOf(document.activeElement);
+    if (event.key === "Escape") { event.preventDefault(); setMoreOpen(false); document.getElementById("hubMoreBtn")?.focus(); }
+    else if (event.key === "ArrowDown") { event.preventDefault(); items[(i + 1) % items.length]?.focus(); }
+    else if (event.key === "ArrowUp") { event.preventDefault(); items[(i - 1 + items.length) % items.length]?.focus(); }
+    else if (event.key === "Home") { event.preventDefault(); items[0]?.focus(); }
+    else if (event.key === "End") { event.preventDefault(); items[items.length - 1]?.focus(); }
+    else if (event.key === "Tab") setMoreOpen(false);
+});
+// The badges are filled in by each tab's own code: follow them.
+if (moreMenu()) new MutationObserver(updateMoreBadge).observe(moreMenu(), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["hidden"] });
+updateMoreBadge();
 document.addEventListener("change", event => {
     const select = event.target.closest("[data-package-payment]");
     if (select) {
