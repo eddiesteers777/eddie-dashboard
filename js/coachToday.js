@@ -160,7 +160,8 @@ export function waitedText(at, now = Date.now()) {
     if (!at) return "";
     const mins = Math.max(0, Math.round((now - at) / 60000));
     if (mins < 60) return mins <= 1 ? "just now" : `${mins} min ago`;
-    const hours = Math.round(mins / 60);
+    // Whole hours, rounded down: rounding up turned 23.5 h into "0 days ago".
+    const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
     const days = Math.floor(mins / 1440);
     if (days === 1) return "yesterday";

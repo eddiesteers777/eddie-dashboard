@@ -403,3 +403,11 @@
 @media (min-width:641px){
     .wk-card .wk-actions .sb-btn, .wk-card .wk-actions .wk-done{ flex:0 1 220px; }
 }
+
+/* The week list in direction A: today marked by a tan rule, not a filled box. */
+.wk-nav-title strong{ font:800 24px/1 var(--font-display); text-transform:uppercase; letter-spacing:.01em; }
+.wk-nav-title span{ font:500 11.5px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
+.wk-day.is-today{ background:transparent; border-radius:0; border-left:2px solid var(--primary); padding-left:12px; }
+.wk-day-date{ font:800 18px/1.05 var(--font-display); text-transform:uppercase; letter-spacing:.02em; }
+.wk-day-date small{ font:500 10.5px/1.4 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; }
+.wk-today{ border-radius:var(--radius-sm); font-family:var(--font-mono); }

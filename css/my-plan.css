@@ -58,3 +58,20 @@
 .myplan-progress{ margin:8px 0 10px; text-align:center; color:var(--text-secondary); font-size:14px; font-weight:600; }
 .myplan-hint{ margin-top:12px; }
 .myplan-hint a{ color:var(--primary); }
+
+/* ==========================================================
+   DIRECTION A (2026-10-14, .claude/skills/southbound-design):
+   the plan is one line with its details folded, so the week is on
+   the first screen (redesign step 6); facts are lines, not tiles.
+========================================================== */
+.myplan-overview{ margin:0 0 16px; padding:0 2px 12px; border-bottom:1px solid var(--border); }
+.myplan-line{ margin:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; color:var(--text-secondary); font-size:14px; line-height:1.4; }
+.myplan-line strong{ color:var(--text); font:800 22px/1 var(--font-display); text-transform:uppercase; letter-spacing:.01em; }
+.myplan-kicker{ color:var(--primary); font:600 11px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; }
+.myplan-details{ margin-top:8px; }
+.myplan-details summary{ cursor:pointer; color:var(--primary); font-weight:600; font-size:14px; min-height:32px; display:inline-flex; align-items:center; }
+.myplan-details .myplan-facts{ display:block; margin-top:6px; }
+.myplan-details .myplan-facts div{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; background:transparent; border-radius:0; border-top:1px solid var(--border); }
+.myplan-details .myplan-facts dt{ font:600 11px/1.4 var(--font-mono); letter-spacing:.12em; }
+.myplan-details .myplan-facts dd{ margin:0; text-align:right; font-weight:600; }
+.myplan-progress{ font-size:13.5px; }

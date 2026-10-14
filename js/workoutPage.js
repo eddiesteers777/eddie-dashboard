@@ -212,8 +212,6 @@ function render() {
             ${workout && (workout.sets?.length || workout.warmup || workout.cooldown) ? stepsHtml(workout) : `<p class="wo-plain">${esc(day.session && day.session.toLowerCase() !== String(day.type).toLowerCase() ? day.session : `${miles ? `${miles} mi ` : ""}${title().toLowerCase()} at a comfortable effort`)}</p>`}
         </section>
 
-        ${fuelHtml()}
-
         ${state.result ? "" : `
         <div class="wo-actions wo-main-actions">
             ${workout && executionSteps(workout).length ? `<button type="button" class="sb-btn sb-btn-primary" data-act="start">${icon("play")} Start workout</button>` : ""}
@@ -222,6 +220,8 @@ function render() {
                 : item ? `<button type="button" class="sb-btn ${workout ? "sb-btn-secondary" : "sb-btn-primary"}" data-act="toggle">${icon(done ? "checkCircle" : "check")} ${done ? "Done" : "Mark done"}</button>` : ""}
         </div>`}
         ${isCoachPlan() && !state.result ? `<p class="clients-card-note wo-hint">Logging tells your coach how it went, including anything that hurt.</p>` : ""}
+        ${/* Fuel after the actions (redesign step 7): Start / Log are one scroll from the steps. */ ""}
+        ${fuelHtml()}
         ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}
         ${item && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="calendar">${icon("calendar")} Add to calendar</button>` : ""}
         ${state.result ? "" : corosHtml()}`;

@@ -90,6 +90,7 @@ test("greeting, summary, waited", () => {
     assert.equal(waitedText(NOW - 20 * 60000, NOW), "20 min ago");
     assert.equal(waitedText(NOW - 3 * H, NOW), "3 hours ago");
     assert.equal(waitedText(NOW - 30 * H, NOW), "yesterday");
+    assert.equal(waitedText(NOW - 23.7 * H, NOW), "23 hours ago", "never \"0 days ago\"");
     assert.equal(waitedText(NOW - 4 * D, NOW), "4 days ago");
     assert.equal(waitedText(NOW - 22 * D, NOW), "3 weeks ago");
     assert.equal(waitedText(undefined, NOW), "");

@@ -123,17 +123,21 @@ function renderPlan() {
                 <div class="clients-tabs myplan-switch" role="tablist">
                     ${state.plans.map(p => `<button type="button" class="clients-tab${p.id === plan.id ? " active" : ""}" data-select="${esc(p.id)}">${esc(p.name)}</button>`).join("")}
                 </div>` : ""}
-            <section class="clients-card myplan-overview">
-                <div class="myplan-title">
-                    <h2>${esc(plan.name)}</h2>
-                    <span class="myplan-meta">From ${esc(plan.coachName || header?.coachName || "your coach")}${updated ? ` · updated ${esc(niceDate(updated))}` : ""}</span>
-                </div>
-                <dl class="myplan-facts">
-                    ${state.goal ? `<div><dt>Goal</dt><dd>${esc(state.goal)}</dd></div>` : ""}
-                    <div><dt>Where you are</dt><dd>${esc(where)}</dd></div>
-                    <div><dt>Dates</dt><dd>${esc(shortDay(startDate))} – ${esc(shortDay(endDate))}</dd></div>
-                    ${raceDate ? `<div><dt>Race day</dt><dd>${esc(shortDay(raceDate))}</dd></div>` : ""}
-                </dl>
+            <section class="myplan-overview">
+                <p class="myplan-line">
+                    <span class="myplan-kicker">Plan</span>
+                    <strong>${esc(plan.name)}</strong>
+                    <span>${esc([`From ${plan.coachName || header?.coachName || "your coach"}`, where, raceDate ? `Race ${shortDay(raceDate)}` : ""].filter(Boolean).join(" · "))}</span>
+                </p>
+                <details class="myplan-details">
+                    <summary>Plan details</summary>
+                    <dl class="myplan-facts">
+                        ${state.goal ? `<div><dt>Goal</dt><dd>${esc(state.goal)}</dd></div>` : ""}
+                        <div><dt>Dates</dt><dd>${esc(shortDay(startDate))} – ${esc(shortDay(endDate))}</dd></div>
+                        ${raceDate ? `<div><dt>Race day</dt><dd>${esc(shortDay(raceDate))}</dd></div>` : ""}
+                        ${updated ? `<div><dt>Updated</dt><dd>${esc(niceDate(updated))}</dd></div>` : ""}
+                    </dl>
+                </details>
             </section>`;
     }
 
