@@ -362,3 +362,47 @@
 .tw-why > summary{ cursor:pointer; color:var(--primary); font-weight:600; font-size:.9rem; }
 .rd-amount[data-amount="protein"] .rd-wbar i{ background:var(--green); }
 .rd-amount[data-amount="protein"] .rd-wpreset.is-on{ border-color:var(--green); background:color-mix(in srgb, var(--green) 18%, transparent); }
+
+
+/* Compact, expandable decision card on Today. Weekly Review remains full-size. */
+.tw-card{
+    margin-bottom:18px;padding:15px 18px;border:1px solid rgba(235,232,220,.085);
+    border-left:3px solid var(--good,var(--green));border-radius:20px;
+    background:linear-gradient(145deg,rgba(25,44,32,.97),rgba(12,25,18,.98));
+    box-shadow:0 16px 38px rgba(0,0,0,.17),inset 0 1px 0 rgba(255,255,255,.025);
+}
+.tw-card.is-absorb{border-left-color:var(--primary)}
+.tw-card.is-ease{border-left-color:var(--amber)}
+.tw-card.is-recover,.tw-card.is-checkin{border-left-color:var(--bad,var(--red))}
+.tw-compact-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px 20px}
+.tw-compact-title{min-width:100px}
+.tw-compact-title .sb-eyebrow{
+    margin-bottom:2px;color:var(--primary);font-family:var(--font-mono);font-size:.65rem;
+    letter-spacing:.12em;text-transform:uppercase
+}
+.tw-compact-head .tw-level{font-size:clamp(25px,2.4vw,32px);line-height:.96}
+.tw-compact-head .tw-hint{min-width:0;flex:initial;font-size:.86rem;line-height:1.4}
+.tw-disclosure{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 12px;
+    border:1px solid rgba(235,232,220,.13);border-radius:999px;background:rgba(255,255,255,.025);
+    color:var(--text-secondary);font:600 .78rem/1 var(--font-body);white-space:nowrap;cursor:pointer;
+    transition:background-color .18s ease,border-color .18s ease,color .18s ease
+}
+.tw-disclosure:hover{border-color:rgba(201,173,132,.42);background:rgba(201,173,132,.08);color:var(--cream)}
+.tw-disclosure:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+.tw-disclosure-chevron{color:var(--primary);font-size:1rem;line-height:1}
+.tw-details{margin-top:13px;padding-top:12px;border-top:1px solid rgba(235,232,220,.08)}
+.tw-details[hidden]{display:none !important}
+.tw-details .tw-domains{margin-top:0}
+.tw-details .tw-why{margin-top:12px}
+.tw-details .tw-sub{margin-top:12px}
+.tw-details .tw-actions,.tw-details .tw-done{margin-top:12px}
+.tw-details .tw-link{margin-top:10px}
+@media (max-width:700px){
+    .tw-card{padding:13px 14px;border-radius:17px}
+    .tw-compact-head{grid-template-columns:minmax(0,1fr) auto;gap:5px 10px}
+    .tw-compact-title{grid-column:1;grid-row:1}
+    .tw-compact-head .tw-hint{grid-column:1 / -1;grid-row:2;font-size:.8rem}
+    .tw-disclosure{grid-column:2;grid-row:1;min-height:32px;padding:0 10px;font-size:.74rem}
+    .tw-compact-head .tw-level{font-size:29px}
+}
