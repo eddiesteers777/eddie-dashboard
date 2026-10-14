@@ -6,5 +6,13 @@
       "Bash(git merge *)",
       "Bash(git push origin main)"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "southbound-tools": {
+      "source": { "source": "github", "repo": "eddiesteers777/eddie-dashboard" }
+    }
+  },
+  "enabledPlugins": {
+    "auto-model@southbound-tools": true
   }
 }
