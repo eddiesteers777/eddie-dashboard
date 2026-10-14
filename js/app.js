@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // dashboardData.js -- that was always "Eddie" for literally
     // anyone who opened this dashboard, signed in or not.
     if (welcomeHeading) {
-        welcomeHeading.innerHTML = `${greeting},<br>Guest`;
+        welcomeHeading.innerHTML = `${greeting}, <br>Guest`;
 
         import("./auth.js").then(({ listenForAuth }) => {
             listenForAuth(user => {
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ? (user.displayName ? user.displayName.split(" ")[0] : "Runner")
                     : "Guest";
 
-                welcomeHeading.innerHTML = `${greeting},<br>${escapeHtml(name)}`;
+                welcomeHeading.innerHTML = `${greeting}, <br>${escapeHtml(name)}`;
             });
         }).catch(() => {});
     }

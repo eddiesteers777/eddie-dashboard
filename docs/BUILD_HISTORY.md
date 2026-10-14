@@ -146,3 +146,5 @@ The brand is Southbound Coaching (decided 2026-09-24 from Eddie's brand board: S
 
 
 **Wearable sharing (Phase 7, 2026-09-30):** `wearableShares/{coachUid}_{clientUid}` is consent metadata only. It stores three booleans (`activity`, `performance`, `recovery`) plus status/version/timestamps. It never stores COROS OAuth tokens. Step 5A also adds `sharedWearableActivity/{coachUid}_{clientUid}` as a client-generated activity-only projection (last 28 days + up to 8 recent runs).
+
+**Redesign step 1: phone header budget (2026-10-14, no rules change):** under 600px wide, page headers drop the brand tile (the top bar already shows the logo), the title is 34px on one line, spacing is tighter, and a page that starts with its header loses the container's extra top padding. Today's greeting fits one line on phones (`, <br>` in `js/app.js`, the `<br>` hidden under 600px; desktop keeps two lines). Measured at 390×844 against the emulator harness: Today's header ends at 194px (was 275), the coach's Today 173, My Plan 168 (was 224), Progress 173 (was 237), More 189 (was 236); no horizontal overflow on any app page at 390; desktop unchanged.

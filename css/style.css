@@ -3297,6 +3297,51 @@ html body :is(
     }
 }
 
+/* Phone header budget (redesign step 1, 2026-10-14). On a phone the
+   header took 26-33% of the first screen (half of a 320x568 one), so
+   the day's plan started below it. Under 600px: no brand tile in page
+   headers (the top bar already shows the logo), a smaller one-line
+   title, tighter spacing, and no extra container padding above a
+   header that starts the page. Other uses of the tile (Programs,
+   package cards) are untouched. */
+@media (max-width:600px){
+    html body .eos-today-hero::after,
+    .sb-hero-tiled > .sb-brand-tile,
+    .sb-hero-corner > .sb-brand-tile{
+        display:none;
+    }
+    .sb-hero-corner{
+        min-height:0;
+        padding-right:0 !important;
+    }
+    .sb-hero-tiled > :first-child{
+        padding-right:0;
+    }
+    .eos-today-hero{
+        margin-bottom:14px;
+    }
+    /* Today's "Good evening, <br>Sam" fits on one line here. */
+    #welcomeHeading br{
+        display:none;
+    }
+    :is(main.container, .clients-page):has(> .eos-today-hero:first-child){
+        padding-top:4px;
+    }
+    html body :is(.eos-today-eyebrow, .sb-eyebrow, .ct-eyebrow, .pc-eyebrow, .programs-kicker){
+        margin-bottom:5px;
+    }
+    html body :is(
+        .eos-today-hero h1, .sb-page-title,
+        .running-hero h1, .strength-hero h1, .habits-hero h1, .programs-hero h1,
+        .gear-hero h1, .wr-hero h1, .settings-page .hero h1, .planner-page > h1,
+        .nutrition-page .page-title h1, .fueling-page .page-title h1,
+        .ct-hero .ct-title, .pc-hero .pc-title
+    ){
+        font-size:34px;
+        margin-bottom:4px;
+    }
+}
+
 /* ==========================================================
    SOUTHBOUND REACTIONS (js/emoji.js, js/emojiPicker.js)
    Personal reactions only; working icons stay in js/icons.js.

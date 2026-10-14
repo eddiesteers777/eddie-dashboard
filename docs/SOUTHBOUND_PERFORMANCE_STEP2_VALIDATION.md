@@ -83,6 +83,10 @@ The three generated concepts are a good read on mood (dark forest, cream type, s
 
 ## 6. Decisions for Eddie
 
+**Decided 2026-10-14 (Eddie chose the recommended option on all five):** dock = Today · Plan · Train · **Fuel** · More for training clients, Today · Coach · Train · Fuel · More for the coach, soccer-only unchanged, pending Today · More (Habits gets a check-off row on Today; "Health" is renamed "Fuel"); the plan tab keeps the name "Plan"; workout cards: Start is the main button before the workout, Mark done after; no photos in the app; the coach's Today shows today's run first with readiness as a strip under it.
+
+**Done:** step 1 (phone header budget), 2026-10-14.
+
 1. **Phone dock.** The blueprint proposes Today · My Week · Progress · More for everyone. Evidence pushes back: Train (strength workouts, Log a run) and Health (meals logged several times a day) are daily-use, while My Progress is a four-week summary that's useful weekly at most. Putting Progress in the dock and Train/Health in More adds a tap to the most frequent actions.
    - **Recommended:** a maximum of 5, based on services. Training client: **Today · Plan · Train · Fuel · More**. Coach: **Today · Coach · Train · Fuel · More**. Soccer only: **Today · Sessions · Habits · More** (unchanged). Pending: **Today · More**. Habits gets an inline "Today's habits" check-off row on Today (one tap, as now) and stays in More; Progress is linked from Today's stats row ("See your progress", already there) and sits first in More.
    - **Alternative (blueprint as written):** Today · Plan · Progress · More. It's simpler, but Train, Fuel and Habits each cost an extra tap.
