@@ -39,8 +39,12 @@
 
     <main class="pub-page">
 
-        <section class="pub-hero pub-hero-split">
-            <div>
+        <!-- Direction A (2026-10-14): the golden-hour photo fills the hero, the words sit over its dark side. -->
+        <section class="pub-hero pub-hero-poster">
+            <div class="pub-hero-poster-photo" aria-hidden="true">
+                <img src="images/eddie-hero.jpg" srcset="images/eddie-hero-560.webp 560w, images/eddie-hero-840.webp 840w, images/eddie-hero-1120.webp 1120w" sizes="(max-width: 900px) 100vw, 1120px" width="1120" height="1400" fetchpriority="high" decoding="async" alt="" onerror="this.remove()">
+            </div>
+            <div class="pub-hero-poster-text">
                 <div class="pub-hero-kicker pub-tagline">Faster <i></i> Stronger <i></i> Smarter</div>
                 <h1>Training built around you.</h1>
                 <p>Online coaching, running and strength programming, and 1-on-1 or group soccer training — all through one coach, one plan, one app.</p>
@@ -48,10 +52,6 @@
                     <a href="apply.html" class="pub-btn-primary">Apply to Train With Me</a>
                     <a href="packages.html" class="pub-btn-secondary">See Packages</a>
                 </div>
-            </div>
-            <div class="pub-photo pub-hero-photo">
-                <img src="images/eddie-hero.jpg" srcset="images/eddie-hero-560.webp 560w, images/eddie-hero-840.webp 840w, images/eddie-hero-1120.webp 1120w" sizes="(max-width: 900px) 62vw, 500px" width="1120" height="1400" fetchpriority="high" decoding="async" alt="Runner on a track at sunrise" onerror="this.remove()">
-                <span class="pub-photo-fallback" data-icon="user"></span>
             </div>
         </section>
 

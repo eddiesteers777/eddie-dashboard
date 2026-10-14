@@ -6,9 +6,11 @@ Moved word for word out of `CLAUDE.md` on 2026-10-14 to keep that file small. Th
 
 **Public site** (uses `components/publicHeader.html` + `js/loadPublicHeader.js` + `css/public.css`)
 
+Direction A on the website (2026-10-14): the "Direction A" blocks at the end of `css/public.css` square the buttons and nav pills (`--radius-pill`), drop the gold glow, set kickers / "Learn more" / the package badge and "Pricing on request" in mono, and offer and package names in the display face with a tan top rule. Same palette as the app.
+
 | Page | Purpose |
 |---|---|
-| `home.html` | Guest "dashboard": hero photo, the four offerings as photo cards, meet-your-coach, what the app gives clients, how it works |
+| `home.html` | Guest "dashboard": a poster hero (`.pub-hero-poster`: the photo fills the right two-thirds and fades into forest behind the headline; on phones it sits on top and the text overlaps its fade), the four offerings as photo cards, meet-your-coach, what the app gives clients, how it works |
 | `about.html` | Photo + bio (bio text is still placeholder) + 3-photo gallery |
 | `packages.html` | Online Coaching / 1-on-1 Soccer / Group Soccer packages (prices are still `$—`) |
 | `coaching.html`, `soccer.html` | Offering detail pages (linked from Home cards and footers, not the top nav). `coaching.html` has **"What a week looks like"** (`#example-week`, `css/public-example.css`, 2026-10-13): one made-up week for "Sam" (seven days, Tuesday's 6 × 800 m up close, the long run's fuel line, a Sunday check-in with the coach's reply), badged "Example only. Not a real client, and not a promise of results." `tests/exampleWeek.test.mjs` keeps it labelled, adds its miles up, and fails on testimonials, guarantees or result claims. Keep it that way: it is illustration, never a claim. |
