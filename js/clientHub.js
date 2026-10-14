@@ -979,7 +979,7 @@ function renderProgress() {
                     ].filter(Boolean).join(", ") + "."
                     : "The client has not enabled wearable-data sharing with you.") +
             '</p>' +
-            '<p class="clients-card-note">Sharing permissions are client-controlled. This record contains consent settings, not COROS sign-in tokens or raw wearable data.</p>' +
+            '<p class="clients-card-note">Your client decides what they share and can change it any time. You see only what they allow, never their COROS sign-in.</p>' +
         '</section>' +
 
         '<section class="clients-card">' +
@@ -1210,7 +1210,7 @@ function renderPackages() {
     if (!el) return;
     const active = packages.filter(p => ["active", "paused"].includes(p.status));
     const history = packages.filter(p => !["active", "paused"].includes(p.status)).slice(0, 4);
-    const empty = `<p class="clients-card-note">No package assigned yet. Services control what the client can access; packages track the coaching entitlement separately.</p>`;
+    const empty = `<p class="clients-card-note">No package yet. Services decide which parts of the app they see; a package is what they signed up for (sessions or monthly coaching) and whether it's paid.</p>`;
     const row = pkg => `
         <div class="hub-package-row">
             <div class="hub-package-main">
@@ -1225,7 +1225,7 @@ function renderPackages() {
         <div class="hub-package-heading"><div><span class="hub-section-kicker">Client package</span><h2>Packages</h2></div><button type="button" class="clients-btn-secondary" data-act="assign-package">Add package</button></div>
         ${active.length ? active.map(row).join("") : empty}
         ${history.length ? `<details class="hub-package-history"><summary>Recent package history (${history.length})</summary>${history.map(row).join("")}</details>` : ""}
-        <p class="clients-card-note hub-package-footnote">Finite package usage is derived from completed linked session history — there is no manual session counter to drift.</p>`;
+        ${active.some(p => Number.isFinite(p.sessionAllowance)) ? `<p class="clients-card-note hub-package-footnote">Sessions used count themselves: each session you log as completed under a package comes off it, so there's nothing to count by hand.</p>` : ""}`;
 }
 
 async function changePackagePaymentStatus(id, paymentStatus) {
@@ -1284,7 +1284,7 @@ async function assignPackageDialog() {
     d.innerHTML = `
         <form class="sb-dialog-form">
             <h2 class="sb-dialog-title">Add a package</h2>
-            <p class="sb-dialog-message">Assign a coaching entitlement from the Southbound package catalog. This does not record a payment.</p>
+            <p class="sb-dialog-message">Pick one of your packages for this client. It doesn't take a payment or mark one as paid.</p>
             <label class="sb-dialog-label">Package<select class="sb-dialog-input" name="packageId" required>${options.map(p => `<option value="${esc(p.id)}">${esc(p.name)}${Number.isFinite(p.sessionAllowance) ? ` — ${p.sessionAllowance} sessions` : ""}</option>`).join("")}</select></label>
             <div class="hub-package-dates"><label class="sb-dialog-label">Starts<input class="sb-dialog-input" type="date" name="startsAt"></label><label class="sb-dialog-label">Ends<input class="sb-dialog-input" type="date" name="endsAt"></label></div>
             <label class="sb-dialog-label">Billing status<select class="sb-dialog-input" name="paymentStatus">${PAYMENT_STATUSES.map(status => `<option value="${status}">${esc(paymentStatusLabel(status))}</option>`).join("")}</select></label>
