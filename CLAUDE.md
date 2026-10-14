@@ -148,7 +148,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 **Known gaps (Eddie's call):** Garmin and other watches (needs Garmin's partner program + Blaze); the coach can't set a client's nutrition goals (needs fields + a rules change); old school/course dates remain in git history (scrubbing needs a force-push, only with Eddie's go-ahead); card payments wait on prices + Blaze + Stripe (`docs/STRIPE_SETUP.md`); whether Google's sign-in pop-up works in the iPhone home-screen app is untested.
 
 **Active tracks**
-- **Redesign (Southbound Performance):** blueprint `docs/SOUTHBOUND_PERFORMANCE_VISUAL_BLUEPRINT.md`, Step 2 evidence and plan `docs/SOUTHBOUND_PERFORMANCE_STEP2_VALIDATION.md`. Eddie's decisions are recorded in its §6 (2026-10-14). Build order in §9: step 1 (phone header) done; next step 2 (coach Today: run first, readiness strip).
+- **Redesign (Southbound Performance):** blueprint `docs/SOUTHBOUND_PERFORMANCE_VISUAL_BLUEPRINT.md`, Step 2 evidence and plan `docs/SOUTHBOUND_PERFORMANCE_STEP2_VALIDATION.md`. Eddie's decisions are recorded in its §6 (2026-10-14). Build order in §9: steps 1 (phone header) and 2 (coach Today: run first, readiness strip) done; next step 3 (phone dock + grouped More).
 - **Weekly planning** (`docs/WEEKLY_PLANNING_AUDIT.md`): P1–P4 done; P5 (AI relay) on hold (Eddie uses copy/paste with his own chatbot); P6 needs a few weeks of planned weeks.
 - **Athlete model** (`docs/PERFORMANCE_ENGINE_PLAN.md`, `docs/ATHLETE_MODEL_AUDIT.md`): steps 0–7 and audit phases A–D done.
 - **Email** (`docs/EMAIL_NOTIFICATIONS_PLAN.md`): move from EmailJS to Cloud Functions + Resend when Eddie's accounts are ready.

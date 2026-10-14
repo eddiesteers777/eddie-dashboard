@@ -406,3 +406,19 @@
     .tw-disclosure{grid-column:2;grid-row:1;min-height:32px;padding:0 10px;font-size:.74rem}
     .tw-compact-head .tw-level{font-size:29px}
 }
+
+/* The coach's Today: readiness as one strip under today's run
+   (redesign step 2, 2026-10-14). The three rings live under Details. */
+.rd-card.rd-compact{ padding:14px 16px; }
+.rd-strip{ display:flex; align-items:center; gap:14px; }
+.rd-ring.rd-strip-ring{ width:64px; height:64px; flex:0 0 64px; }
+.rd-ring.rd-strip-ring strong{ font-size:1.9rem; }
+.rd-strip-body{ flex:1 1 auto; min-width:0; }
+.rd-strip-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; margin:0 0 4px; }
+.rd-strip-head .rd-glabel{ margin-top:0; }
+.rd-strip-head .rd-tone{ color:var(--rd-tone); font-size:.82rem; font-weight:600; }
+.rd-strip-facts{ color:var(--muted); font-size:.82rem; }
+.rd-compact .rd-strip .rd-advice{ font-size:.92rem; }
+.rd-compact .rd-extras{ margin-top:12px; }
+.rd-compact .rd-checkin-row{ margin-top:12px; }
+.rd-compact .rd-more .rd-rings{ margin:12px auto 6px; }

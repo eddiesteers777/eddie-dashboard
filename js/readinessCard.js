@@ -335,14 +335,19 @@ async function render() {
     const lastDay = d => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
     el.hidden = false;
-    el.className = `rd-card ${r.color}`;
+    // The coach's Today shows readiness as one strip under today's run
+    // (redesign step 2, Eddie 2026-10-14): a small score ring, the word,
+    // sleep + HRV in a line, the advice, the check-in; the three rings and
+    // everything else fold under Details. Clients keep the rings.
+    const compact = role === "coach";
+    el.className = `rd-card ${r.color}${compact ? " rd-compact" : ""}`;
     // WHOOP-style: three rings (sleep · readiness · HRV), one line of advice,
     // the check-in; everything else folds under Details (Eddie: "less busy").
     const base = useV2 ? computeReadiness(today, data) : r;
     const sleepP = base.parts.find(p => p.key === "sleep"), hrvP = base.parts.find(p => p.key === "hrv");
     const flagLines = r.flags.filter(f => f.key !== "pain" && f.key !== "sick");
     const detailsOpen = el.querySelector(".rd-more")?.open ? " open" : "";
-    el.innerHTML = `
+    const rings = `
         <div class="rd-rings">
             ${gauge({ cls: "rd-side", score: sleepP?.score, big: sleepP ? `${sleepP.score}<small>%</small>` : "–", label: "Sleep", sub: sleepP?.value })}
             <div class="rd-gauge rd-main">
@@ -353,15 +358,30 @@ async function render() {
                 ${r.score != null ? `<small class="rd-gsub rd-tone">${COLOR_WORD[r.color]}</small>` : ""}
             </div>
             ${gauge({ cls: "rd-side", score: hrvP?.score, big: hrvP ? `${hrvP.value.replace(" ms", "")}<small>ms</small>` : "–", label: "HRV", sub: hrvP ? hrvWord(hrvP) : "" })}
-        </div>
-        <div class="rd-advice-box">
-            <p class="rd-advice">${esc(adviceText)}</p>
+        </div>`;
+    const extras = `
             ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
             ${flagLines.map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
             ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
             ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
-            ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}
+            ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}`;
+    const facts = [sleepP && `Sleep ${sleepP.value}`, hrvP && `HRV ${hrvP.value}`].filter(Boolean).join(" · ");
+    const top = compact
+        ? `<div class="rd-strip">
+            <div class="rd-ring rd-strip-ring" style="--pct:${r.score ?? 0}" role="img" aria-label="Readiness ${r.score ?? "not available"}"><strong>${r.score ?? "–"}</strong></div>
+            <div class="rd-strip-body">
+                <p class="rd-strip-head"><span class="rd-glabel">Readiness</span>${r.score != null ? `<span class="rd-tone">${COLOR_WORD[r.color]}</span>` : ""}${facts ? `<span class="rd-strip-facts">${esc(facts)}</span>` : ""}</p>
+                <p class="rd-advice">${esc(adviceText)}</p>
+            </div>
         </div>
+        ${extras.trim() ? `<div class="rd-advice-box rd-extras">${extras}</div>` : ""}`
+        : `${rings}
+        <div class="rd-advice-box">
+            <p class="rd-advice">${esc(adviceText)}</p>
+            ${extras}
+        </div>`;
+    el.innerHTML = `
+        ${top}
         ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score.</p>`}
         <div class="rd-checkin-row">
             ${checkin
@@ -369,6 +389,7 @@ async function render() {
                 : `<button type="button" class="sb-btn sb-btn-primary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
         </div>
         <details class="rd-more"${detailsOpen}><summary>Details</summary>
+            ${compact ? rings : ""}
             ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
             ${weekDots(today, shownHistory)}
             ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
