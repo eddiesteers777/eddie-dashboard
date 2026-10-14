@@ -82,6 +82,7 @@ body.install-body{
     letter-spacing:.3px;
     line-height:1.02;
     margin:0 0 12px;
+    text-transform:uppercase;
 }
 .install-hero p{
     color:var(--text-secondary);

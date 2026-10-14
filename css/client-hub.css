@@ -39,6 +39,7 @@
     color:var(--on-primary);
     font-family:var(--font-display);
     font-size:32px;
+    text-transform:uppercase;
 }
 .hub-identity{ flex:1; min-width:180px; }
 .hub-identity h1{
@@ -48,6 +49,7 @@
     font-weight:400;
     letter-spacing:.02em;
     line-height:1.05;
+    text-transform:uppercase;
 }
 .hub-services{
     display:flex;

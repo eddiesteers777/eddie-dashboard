@@ -35,6 +35,7 @@
     letter-spacing:.5px;
     line-height:1;
     margin-bottom:10px;
+    text-transform:uppercase;
 
 }
 
@@ -62,6 +63,7 @@
     font-size:64px;
     line-height:1;
     color:var(--primary);
+    text-transform:uppercase;
 
 }
 
@@ -3115,6 +3117,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     color:var(--text);
     font:400 30px/1.1 var(--font-display);
     letter-spacing:.02em;
+    text-transform:uppercase;
 }
 /* st-big-input opts the name out of style.css's 16px phone rule (it's a title, well above 16px, so no iOS zoom). */
 .strength-name-field input:hover{ border-color:var(--border); }
@@ -3279,6 +3282,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     font-weight:400;
     letter-spacing:.5px;
     line-height:1;
+    text-transform:uppercase;
 }
 
 .st-mine-count{

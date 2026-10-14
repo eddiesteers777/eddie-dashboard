@@ -47,6 +47,39 @@
     font-display:swap;
     src:url('../fonts/jetbrains-mono-latin-var.woff2') format('woff2');
 }
+/* Southbound look, direction A (2026-10-14, Eddie: "more like A, keep my
+   palette"): Big Shoulders Display headlines (always uppercase), Instrument
+   Sans text, IBM Plex Mono for numbers and small labels. Self-hosted like
+   the rest. Bebas / Inter / JetBrains stay loaded: the share images
+   (js/executionShare.js) still draw with them by name. */
+@font-face{
+    font-family:'Big Shoulders Display';
+    font-style:normal;
+    font-weight:700 900;
+    font-display:swap;
+    src:url('../fonts/big-shoulders-display-latin-var.woff2') format('woff2');
+}
+@font-face{
+    font-family:'Instrument Sans';
+    font-style:normal;
+    font-weight:400 700;
+    font-display:swap;
+    src:url('../fonts/instrument-sans-latin-var.woff2') format('woff2');
+}
+@font-face{
+    font-family:'IBM Plex Mono';
+    font-style:normal;
+    font-weight:500;
+    font-display:swap;
+    src:url('../fonts/ibm-plex-mono-latin-500.woff2') format('woff2');
+}
+@font-face{
+    font-family:'IBM Plex Mono';
+    font-style:normal;
+    font-weight:600;
+    font-display:swap;
+    src:url('../fonts/ibm-plex-mono-latin-600.woff2') format('woff2');
+}
 
 *,
 *::before,
@@ -140,23 +173,23 @@ html{
 
     --indigo:#9C9CC4;
 
-    --radius:22px;
+    --radius:12px;
 
     --shadow:0 18px 40px rgba(0,0,0,.22);
 
-    --font-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    --font-body:'Instrument Sans','Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
 
-    --font-display:'Bebas Neue','Arial Narrow',Impact,sans-serif;
+    --font-display:'Big Shoulders Display','Bebas Neue','Arial Narrow',Impact,sans-serif;
 
     --font-brand:'Saira',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
 
-    --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --font-mono:'IBM Plex Mono','JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 
     /* ---- Controls: one shape and one set of states everywhere ---- */
 
-    --radius-sm:10px;          /* small tool buttons, inputs, chips */
-    --radius-md:14px;          /* inputs, list rows */
-    --radius-pill:999px;       /* every main action button */
+    --radius-sm:6px;           /* small tool buttons, inputs, chips */
+    --radius-md:8px;           /* inputs, list rows */
+    --radius-pill:6px;         /* every main action button (direction A: squared, not pills; the name stays) */
     --control-height:44px;
     --focus-ring:0 0 0 3px rgba(201,173,132,.45);
     --danger:#D9705A;
@@ -3248,7 +3281,7 @@ html body :is(
     font-weight:400;
     letter-spacing:.5px;
     line-height:1;
-    text-transform:none;
+    text-transform:uppercase;
     background:none;
     -webkit-text-fill-color:currentColor;
 }
@@ -3438,6 +3471,7 @@ html body :is(
     font-family:var(--font-display);
     font-size:22px;
     letter-spacing:.5px;
+    text-transform:uppercase;
 }
 .sb-emoji-pop-close{
     width:40px;
@@ -3630,7 +3664,7 @@ html body :is(
 }
 .sb-hip [hidden]{ display:none !important; }
 .sb-hip-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-.sb-hip-title{ font-family:var(--font-display); font-size:26px; letter-spacing:.5px; line-height:1.1; }
+.sb-hip-title{ font-family:var(--font-display); font-size:26px; letter-spacing:.5px; line-height:1.1; text-transform:uppercase; }
 .sb-hip-sub{ margin-top:2px; color:var(--muted); font-size:14px; }
 .sb-hip-close{
     flex-shrink:0;

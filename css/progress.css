@@ -33,6 +33,7 @@
     line-height:1;
     color:var(--text);
     font-weight:400;
+    text-transform:uppercase;
 }
 .pg-metric small{ color:var(--muted); font-size:13px; }
 

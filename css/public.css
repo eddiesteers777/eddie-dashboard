@@ -40,6 +40,7 @@ body.pub-body{
     font-size:20px;
     letter-spacing:.3px;
     flex-shrink:0;
+    text-transform:uppercase;
 }
 .pub-logo .brand-mark{height:38px;}
 .pub-logo-text{display:flex;flex-direction:column;gap:3px;}
@@ -160,6 +161,7 @@ body.pub-body{
     letter-spacing:.3px;
     line-height:1.05;
     margin:0 0 18px;
+    text-transform:uppercase;
 }
 .pub-hero p{
     color:var(--text-secondary);
@@ -222,6 +224,7 @@ body.pub-body{
     font-size:clamp(28px,4vw,38px);
     font-weight:400;
     margin:0 0 12px;
+    text-transform:uppercase;
 }
 .pub-section-head p{
     color:var(--text-secondary);
@@ -282,6 +285,7 @@ body.pub-body{
     font-size:clamp(26px,4vw,34px);
     font-weight:400;
     margin:0 0 12px;
+    text-transform:uppercase;
 }
 .pub-cta-band p{
     color:var(--text-secondary);
@@ -397,6 +401,7 @@ body.pub-body{
     font-size:clamp(28px,4vw,38px);
     font-weight:400;
     margin:0 0 14px;
+    text-transform:uppercase;
 }
 .pub-feature-text p{
     color:var(--text-secondary);
@@ -528,6 +533,7 @@ body.pub-body{
     font-size:44px;
     line-height:1;
     color:var(--text);
+    text-transform:uppercase;
 }
 .pub-package-unit{color:var(--muted);font-size:13.5px;font-weight:600;margin-left:4px;}
 .pub-package-options{

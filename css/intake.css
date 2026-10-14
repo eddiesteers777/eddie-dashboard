@@ -49,6 +49,7 @@
     letter-spacing:.4px;
     line-height:1.05;
     outline:none;
+    text-transform:uppercase;
 }
 .ig-sub{ margin:8px 0 0; color:var(--text-secondary); font-size:15px; line-height:1.5; }
 .ig-body{ display:flex; flex-direction:column; gap:10px; margin-top:20px; }

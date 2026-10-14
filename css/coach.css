@@ -31,6 +31,7 @@
     line-height:1;
     color:var(--primary);
     margin-bottom:6px;
+    text-transform:uppercase;
 }
 .coach-stat-card.coach-stat-neutral .coach-stat-number{color:var(--text);}
 .coach-stat-card.coach-stat-attention .coach-stat-number{color:var(--primary);}

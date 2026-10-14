@@ -8,7 +8,7 @@
 .wo-head{ display:flex; flex-direction:column; gap:4px; margin:4px 0 16px; }
 .wo-eyebrow{ color:var(--primary); font-size:12.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .wo-title{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
-.wo-title h1{ margin:0; font-family:var(--font-display); font-weight:400; font-size:clamp(34px, 7vw, 48px); letter-spacing:.02em; line-height:1; }
+.wo-title h1{ margin:0; font-family:var(--font-display); font-weight:400; font-size:clamp(34px, 7vw, 48px); letter-spacing:.02em; line-height:1; text-transform:uppercase; }
 .wo-meta{ color:var(--muted); font-size:13.5px; font-weight:600; }
 
 .wo-why p{ margin:0; color:var(--text); font-size:15.5px; line-height:1.6; }
@@ -153,7 +153,7 @@ body.wo-mode-open{ overflow:hidden; }
 }
 .wo-mode-phase{ padding:4px 12px; border-radius:999px; background:var(--surface-light); color:var(--text-secondary); font-size:12.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .phase-work .wo-mode-phase{ background:var(--primary); color:var(--on-primary); }
-.wo-mode-main h2{ margin:4px 0 0; font-family:var(--font-display); font-weight:400; font-size:clamp(34px, 9vw, 56px); letter-spacing:.02em; }
+.wo-mode-main h2{ margin:4px 0 0; font-family:var(--font-display); font-weight:400; font-size:clamp(34px, 9vw, 56px); letter-spacing:.02em; text-transform:uppercase; }
 .wo-mode-amount{ font:800 clamp(44px, 14vw, 88px)/1 var(--font-body); letter-spacing:-.02em; }
 .wo-mode-target{ color:var(--primary); font-size:clamp(20px, 5vw, 28px); font-weight:800; }
 .wo-mode-clock{ margin-top:14px; font:700 clamp(40px, 12vw, 72px)/1 var(--font-mono); color:var(--text); }

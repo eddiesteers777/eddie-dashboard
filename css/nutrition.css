@@ -27,6 +27,7 @@
     letter-spacing:.5px;
     line-height:1;
     margin-bottom:6px;
+    text-transform:uppercase;
 }
 
 .page-title p{

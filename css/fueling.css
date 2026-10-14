@@ -2230,6 +2230,7 @@
     font-weight:400;
     line-height:1;
     color:var(--text);
+    text-transform:uppercase;
 }
 .fs-stat small{
     margin-left:3px;
@@ -2369,6 +2370,7 @@
     font-weight:400;
     line-height:1;
     color:var(--text);
+    text-transform:uppercase;
 }
 .fs-event-where span{
     display:block;
@@ -2457,6 +2459,7 @@
     font-size:19px;
     color:var(--text);
     white-space:nowrap;
+    text-transform:uppercase;
 }
 .fs-bottle-when{
     margin-top:2px;
@@ -2633,6 +2636,7 @@ html.fs-sheet-open{overflow:hidden;}
     font-weight:400;
     line-height:1.05;
     color:var(--text);
+    text-transform:uppercase;
 }
 .fs-sheet-sub{font-size:13px;color:var(--text-secondary);}
 .fs-sheet-close{
@@ -2904,7 +2908,7 @@ label.fuel-target-label{ display:block; cursor:pointer; }
 .fuel-src-dialog{ width:min(620px, calc(100vw - 24px)); display:flex; flex-direction:column; }
 .fuel-src-dialog:not([open]){ display:none; }
 .fuel-src-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:18px 20px 4px; }
-.fuel-src-head h2{ font-family:var(--font-display); font-size:30px; letter-spacing:.5px; line-height:1; }
+.fuel-src-head h2{ font-family:var(--font-display); font-size:30px; letter-spacing:.5px; line-height:1; text-transform:uppercase; }
 .fuel-src-note{ padding:0 20px 10px; color:var(--text-secondary); font-size:13px; line-height:1.45; }
 .fuel-src-list{ overflow-y:auto; padding:0 20px 8px; flex:1 1 auto; min-height:0; }
 .fuel-src-group{ padding-top:12px; }

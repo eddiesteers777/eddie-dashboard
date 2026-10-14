@@ -15,7 +15,7 @@
 .pl-dates { margin: 0; font-size: 14px; color: var(--text-secondary, var(--stone)); }
 
 .pl-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 18px; min-width: 0; }
-.pl-h { margin: 0 0 4px; font-family: var(--font-display); font-weight: 400; font-size: 26px; letter-spacing: .02em; }
+.pl-h { margin: 0 0 4px; font-family: var(--font-display); font-weight: 400; font-size: 26px; letter-spacing: .02em; text-transform:uppercase; }
 .pl-h3 { margin: 0 0 6px; font-size: 16px; }
 .pl-sub, .pl-note { margin: 0 0 12px; color: var(--text-secondary, var(--stone)); font-size: 14px; line-height: 1.5; }
 .pl-note:last-child { margin-bottom: 0; }

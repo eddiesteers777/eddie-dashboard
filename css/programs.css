@@ -43,6 +43,7 @@
     letter-spacing:.5px;
     line-height:1;
     margin:5px 0 6px;
+    text-transform:uppercase;
 }
 .programs-hero p,
 .programs-panel-heading p{
@@ -90,6 +91,7 @@
     font-size:30px;
     font-weight:400;
     margin:3px 0 5px;
+    text-transform:uppercase;
 }
 .programs-primary-btn,
 .programs-secondary-btn{

@@ -16,7 +16,7 @@
 .tr-since{ margin:0 0 10px; color:var(--muted); font-size:.85rem; }
 .tr-tiles{ display:grid; grid-template-columns:repeat(auto-fit, minmax(92px, 1fr)); gap:10px; }
 .tr-tile{ display:flex; flex-direction:column; gap:2px; padding:12px; border-radius:var(--radius-sm, 10px); background:color-mix(in srgb, var(--text) 4%, transparent); border:1px solid var(--border); min-width:0; }
-.tr-tile strong{ font-family:var(--font-display); font-size:2rem; font-weight:400; line-height:1; color:var(--text); overflow-wrap:anywhere; }
+.tr-tile strong{ font-family:var(--font-display); font-size:2rem; font-weight:400; line-height:1; color:var(--text); overflow-wrap:anywhere; text-transform:uppercase; }
 .tr-tile span{ color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; }
 .tr-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
 .tr-actions .sb-btn{ display:inline-flex; align-items:center; gap:6px; min-height:44px; }

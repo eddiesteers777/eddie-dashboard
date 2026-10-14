@@ -59,7 +59,7 @@
 /* Under the video */
 .dm-sheet{ display:flex; flex-direction:column; gap:14px; padding:18px 18px 22px; }
 .dm-eyebrow{ color:var(--primary); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
-.dm-title{ margin:2px 0 0; font-family:var(--font-display); font-size:32px; line-height:1; letter-spacing:.02em; color:var(--text); }
+.dm-title{ margin:2px 0 0; font-family:var(--font-display); font-size:32px; line-height:1; letter-spacing:.02em; color:var(--text); text-transform:uppercase; }
 .dm-steps{ display:flex; flex-direction:column; gap:12px; margin:0; padding:0; list-style:none; counter-reset:dm; }
 .dm-steps li{ position:relative; padding-left:40px; counter-increment:dm; }
 .dm-steps li::before{
@@ -67,6 +67,7 @@
     display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%;
     background:color-mix(in srgb, var(--primary) 18%, transparent); color:var(--primary);
     font-family:var(--font-display); font-size:17px;
+    text-transform:uppercase;
 }
 .dm-steps h3, .dm-note h3{ margin:0 0 2px; color:var(--text-secondary); font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
 .dm-steps p, .dm-note p{ margin:0; color:var(--text); font-size:15px; line-height:1.5; }
