@@ -3,8 +3,8 @@
 
    A Share button on the rep-by-rep card (Analytics' key workouts, the
    client's workout page) opens a preview of one tall image in
-   Southbound's own style (forest, tan, cream; Bebas / Inter / JetBrains
-   Mono; the SB mark): the workout, the run's distance and time, how much
+   Southbound's own style (forest, tan, cream; Big Shoulders Display /
+   Instrument Sans / IBM Plex Mono, as in the app; the SB mark): the workout, the run's distance and time, how much
    was done and how much was on target, every rep with its time and its
    difference from the target, recoveries, warm-up and cool-down. Share
    opens the phone's share sheet (save to Photos, Strava, Messages...);
@@ -432,7 +432,7 @@ const markImage = () => new Promise(resolve => {
 async function fontsReady() {
     if (!document.fonts?.load) return;
     await Promise.all([
-        '96px "Bebas Neue"', '600 28px "Inter"', '400 28px "Inter"', '500 32px "JetBrains Mono"', '800 30px "Saira"'
+        '700 96px "Big Shoulders Display"', '600 28px "Instrument Sans"', '400 28px "Instrument Sans"', '500 32px "IBM Plex Mono"', '600 24px "IBM Plex Mono"', '800 30px "Saira"'
     ].map(f => document.fonts.load(f).catch(() => null)));
 }
 
@@ -453,14 +453,14 @@ export async function drawShareCard(canvas, model) {
     if (mark) ctx.drawImage(mark, PAD, y, 64 * (186 / 119), 64);
     ctx.fillStyle = C.text; ctx.font = '800 30px "Saira", sans-serif'; ctx.textBaseline = "middle";
     ctx.fillText("SOUTHBOUND", PAD + (mark ? 64 * (186 / 119) + 20 : 0), y + 32);
-    ctx.textAlign = "right"; ctx.fillStyle = C.tan; ctx.font = '600 26px "Inter", sans-serif';
+    ctx.textAlign = "right"; ctx.fillStyle = C.tan; ctx.font = '600 24px "IBM Plex Mono", monospace';
     ctx.fillText(model.date.toUpperCase(), W - PAD, y + 32);
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     y += 64 + 32;
 
     // Title.
-    if (model.name) { ctx.fillStyle = C.tan; ctx.font = '600 30px "Inter", sans-serif'; ctx.fillText(fitText(ctx, model.name.toUpperCase(), inner), PAD, y + 30); y += 46; }
-    ctx.fillStyle = C.text; ctx.font = '96px "Bebas Neue", sans-serif';
+    if (model.name) { ctx.fillStyle = C.tan; ctx.font = '600 26px "IBM Plex Mono", monospace'; ctx.fillText(fitText(ctx, model.name.toUpperCase(), inner), PAD, y + 30); y += 46; }
+    ctx.fillStyle = C.text; ctx.font = '700 96px \"Big Shoulders Display\", sans-serif';
     for (const line of wrap(ctx, model.title.toUpperCase(), inner, 2)) { y += 96; ctx.fillText(line, PAD, y); y += 8; }
     y += 28;
 
@@ -469,21 +469,21 @@ export async function drawShareCard(canvas, model) {
         const gap = 18, w = (inner - gap * (model.stats.length - 1)) / model.stats.length;
         model.stats.forEach((s, i) => {
             const x0 = PAD + i * (w + gap);
-            ctx.fillStyle = C.surface; roundRect(ctx, x0, y, w, STAT_H, 22); ctx.fill();
-            ctx.fillStyle = C.text; ctx.font = '62px "Bebas Neue", sans-serif';
-            ctx.fillText(fitText(ctx, s.value, w - 40), x0 + 24, y + 82);
-            ctx.fillStyle = C.tan; ctx.font = '600 21px "Inter", sans-serif';
+            ctx.fillStyle = C.surface; roundRect(ctx, x0, y, w, STAT_H, 14); ctx.fill();
+            ctx.fillStyle = C.text; ctx.font = '700 62px \"Big Shoulders Display\", sans-serif';
+            ctx.fillText(fitText(ctx, s.value.toUpperCase(), w - 40), x0 + 24, y + 82);
+            ctx.fillStyle = C.tan; ctx.font = '600 19px "IBM Plex Mono", monospace';
             ctx.fillText(s.label.toUpperCase(), x0 + 24, y + 122);
         });
         y += STAT_H + 32;
     }
 
     if (model.summary) {
-        ctx.fillStyle = C.surface; roundRect(ctx, PAD, y, inner, SUMMARY_H, 22); ctx.fill();
-        ctx.fillStyle = C.text; ctx.font = '600 30px "Inter", sans-serif';
+        ctx.fillStyle = C.surface; roundRect(ctx, PAD, y, inner, SUMMARY_H, 14); ctx.fill();
+        ctx.fillStyle = C.text; ctx.font = '600 30px "Instrument Sans", sans-serif';
         ctx.fillText(fitText(ctx, model.summary, inner - 48), PAD + 24, y + 40);
         if (model.summaryNote) {
-            ctx.fillStyle = C.muted; ctx.font = '400 22px "Inter", sans-serif';
+            ctx.fillStyle = C.muted; ctx.font = '400 22px "Instrument Sans", sans-serif';
             ctx.fillText(fitText(ctx, model.summaryNote, inner - 48), PAD + 24, y + 76);
         }
         y += SUMMARY_H + 32;
@@ -491,9 +491,9 @@ export async function drawShareCard(canvas, model) {
 
     // Each set, rep by rep.
     for (const set of model.sets) {
-        ctx.fillStyle = C.tan; ctx.font = '50px "Bebas Neue", sans-serif';
+        ctx.fillStyle = C.tan; ctx.font = '700 50px \"Big Shoulders Display\", sans-serif';
         ctx.fillText(fitText(ctx, set.head.toUpperCase(), inner * 0.68), PAD, y + 44);
-        if (set.sub) { ctx.textAlign = "right"; ctx.fillStyle = C.muted; ctx.font = '500 24px "Inter", sans-serif'; ctx.fillText(fitText(ctx, set.sub, inner * 0.3), W - PAD, y + 40); ctx.textAlign = "left"; }
+        if (set.sub) { ctx.textAlign = "right"; ctx.fillStyle = C.muted; ctx.font = '500 24px "Instrument Sans", sans-serif'; ctx.fillText(fitText(ctx, set.sub, inner * 0.3), W - PAD, y + 40); ctx.textAlign = "left"; }
         y += SET_HEAD;
         const cols = twoCols(set.rows.length) ? 2 : 1;
         const per = Math.ceil(set.rows.length / cols);
@@ -504,40 +504,40 @@ export async function drawShareCard(canvas, model) {
             ctx.strokeStyle = C.line; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(x0, ry); ctx.lineTo(x0 + colW, ry); ctx.stroke();
             ctx.fillStyle = color; roundRect(ctx, x0, ry + 13, 8, ROW - 26, 4); ctx.fill();
-            ctx.fillStyle = C.muted; ctx.font = '600 26px "Inter", sans-serif';
+            ctx.fillStyle = C.muted; ctx.font = '600 26px "Instrument Sans", sans-serif';
             ctx.fillText(fitText(ctx, r.label, colW * 0.24), x0 + 24, ry + 38);
-            ctx.fillStyle = C.text; ctx.font = '500 32px "JetBrains Mono", monospace';
+            ctx.fillStyle = C.text; ctx.font = '500 32px "IBM Plex Mono", monospace';
             ctx.fillText(r.actual || "—", x0 + colW * 0.27, ry + 38);
-            ctx.fillStyle = color; ctx.font = '500 28px "JetBrains Mono", monospace';
+            ctx.fillStyle = color; ctx.font = '500 28px "IBM Plex Mono", monospace';
             ctx.fillText(r.delta, x0 + colW * (cols === 1 ? 0.52 : 0.55), ry + 37);
-            ctx.textAlign = "right"; ctx.font = '600 24px "Inter", sans-serif';
+            ctx.textAlign = "right"; ctx.font = '600 24px "Instrument Sans", sans-serif';
             ctx.fillText(r.result, x0 + colW, ry + 36);
             ctx.textAlign = "left";
             if (r.hr) {
                 // Keep heart rate visible in both one- and two-column layouts.
-                ctx.fillStyle = C.muted; ctx.font = '400 20px "Inter", sans-serif';
+                ctx.fillStyle = C.muted; ctx.font = '400 20px "Instrument Sans", sans-serif';
                 ctx.fillText(`HR ${r.hr}`, x0 + colW * 0.27, ry + 59);
             }
         });
         y += per * ROW;
         ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
-        if (set.summary) { ctx.fillStyle = C.muted; ctx.font = '500 24px "Inter", sans-serif'; ctx.fillText(set.summary, PAD, y + 34); y += 40; }
+        if (set.summary) { ctx.fillStyle = C.muted; ctx.font = '500 24px "Instrument Sans", sans-serif'; ctx.fillText(set.summary, PAD, y + 34); y += 40; }
         y += SET_GAP;
     }
 
     // Warm-up and cool-down.
     if (model.easy.length) {
-        ctx.fillStyle = C.muted; ctx.font = '400 25px "Inter", sans-serif';
+        ctx.fillStyle = C.muted; ctx.font = '400 25px "Instrument Sans", sans-serif';
         ctx.fillText(fitText(ctx, model.easy.join("   ·   "), inner), PAD, y + 30); y += 54;
     }
 
     // Footer.
     const fy = H - PAD - 64;
     ctx.strokeStyle = C.tan; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(PAD, fy); ctx.lineTo(PAD + 120, fy); ctx.stroke();
-    ctx.textAlign = "right"; ctx.fillStyle = C.tan; ctx.font = '600 24px "Inter", sans-serif';
+    ctx.textAlign = "right"; ctx.fillStyle = C.tan; ctx.font = '600 24px "Instrument Sans", sans-serif';
     ctx.fillText("southboundcoaching.com", W - PAD, fy + 44);
     const url = ctx.measureText("southboundcoaching.com").width;
-    ctx.textAlign = "left"; ctx.fillStyle = C.muted; ctx.font = '500 22px "Inter", sans-serif';
+    ctx.textAlign = "left"; ctx.fillStyle = C.muted; ctx.font = '500 22px "Instrument Sans", sans-serif';
     ctx.fillText(fitText(ctx, model.footer, inner - url - 40), PAD, fy + 44);
     ctx.fillText(model.kind === "execution" ? "Negative = faster than the target" : model.kind === "splits" ? "Negative = faster than your average" : "Your training · Southbound Coaching", PAD, fy + 76);
     return canvas;

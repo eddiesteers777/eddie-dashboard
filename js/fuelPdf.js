@@ -9,8 +9,8 @@
    Nothing is uploaded: the PDF is made on the device.
 
    It's drawn as Southbound, not as a generic report: the app's own fonts
-   (fonts/pdf/, made by scripts/build-pdf-fonts.py: Bebas Neue titles,
-   Inter text, JetBrains Mono numbers, the Saira wordmark), the forest /
+   (fonts/pdf/, made by scripts/build-pdf-fonts.py: Big Shoulders Display
+   titles, Instrument Sans text, IBM Plex Mono numbers, the Saira wordmark), the forest /
    tan / cream palette, the SB mark and its tan slash, the reaction
    drawings, a race-bib header, a course map of every gel and bottle, and
    a pocket card to cut out. Without the fonts (a failed load) it falls
@@ -44,10 +44,10 @@ function loadJsPdf() {
 // ---------- Fonts ----------
 
 const FONT_FILES = {
-    display: ["BebasNeue.ttf", "SBDisplay", "normal"],
-    body: ["Inter-Regular.ttf", "SBBody", "normal"],
-    bodyBold: ["Inter-Bold.ttf", "SBBody", "bold"],
-    mono: ["JetBrainsMono-Medium.ttf", "SBMono", "normal"],
+    display: ["BigShouldersDisplay-Bold.ttf", "SBDisplay", "normal"],
+    body: ["InstrumentSans-Regular.ttf", "SBBody", "normal"],
+    bodyBold: ["InstrumentSans-Bold.ttf", "SBBody", "bold"],
+    mono: ["IBMPlexMono-Medium.ttf", "SBMono", "normal"],
     brand: ["Saira-ExtraBold.ttf", "SBBrand", "normal"]
 };
 
@@ -133,7 +133,7 @@ function kit(JsPDF, { fonts = null, art = {} } = {}) {
     }
     const k = {
         doc, art, fonts: Boolean(fonts), W: PAGE.w, H: PAGE.h, M: PAGE.m, CW: PAGE.w - 2 * PAGE.m, y: 0,
-        // Bebas Neue is capitals only; the fallback isn't, so match it.
+        // Display text is always capitals (as in the app), the fallback too.
         setF(kind, size, color = C.ink) {
             doc.setFont(...fam[kind]);
             doc.setFontSize(size);
@@ -325,7 +325,7 @@ function headerBand(k, model) {
     k.setF("bodyBold", 7.5, C.tan);
     k.text(`FUEL PLAN  ·  ${model.isRace ? "RACE DAY" : "TRAINING RUN"}`, M, 92, { charSpace: 1.6 });
 
-    // The title in Bebas, the way every Southbound page header reads.
+    // The title in the display face, the way every Southbound page header reads.
     k.setF("display", 40, C.cream);
     lines.forEach((line, i) => k.text(line, M, 126 + i * 33));
     k.setF("body", 9.5, C.tanLight);
@@ -560,14 +560,17 @@ function needSection(k, model, title) {
     k.setF("body", 7.5);
     const carryH = 22 + model.carry.length * 26 + (model.before ? 14 + k.wrap(model.before, colW - 20).length * 10 : 0);
     const dx = M + colW + 18, dw = W - M - dx;
+    const drinkFont = kind => kind === "perBottle" ? k.setF("bodyBold", 8.5, C.cream)
+        : kind === "totals" ? k.setF("mono", 7.5, C.tan) : k.setF("body", 8, C.tanLight);
     let drinkLines = [];
     if (model.drink) {
-        k.setF("body", 8.5);
+        // Each line is measured in the font it's drawn in (below).
+        const wrapIn = (kind, text) => { drinkFont(kind); return k.wrap(text, dw - 24).map(l => [kind, l]); };
         drinkLines = [
-            ...k.wrap(model.drink.perBottle, dw - 24).map(l => ["perBottle", l]),
-            ...(model.drink.batch ? k.wrap(model.drink.batch, dw - 24).map(l => ["batch", l]) : []),
+            ...wrapIn("perBottle", model.drink.perBottle),
+            ...(model.drink.batch ? wrapIn("batch", model.drink.batch) : []),
             ["totals", model.drink.totals],
-            ...(model.drink.notes ? k.wrap(model.drink.notes, dw - 24).map(l => ["notes", l]) : [])
+            ...(model.drink.notes ? wrapIn("notes", model.drink.notes) : [])
         ];
     }
     const drinkH = model.drink ? 52 + drinkLines.length * 11 : 0;
@@ -604,9 +607,7 @@ function needSection(k, model, title) {
         k.text(`${model.drink.bottles} bottle${model.drink.bottles === 1 ? "" : "s"}, each:`, dx + 14, top + 38);
         let yy = top + 54;
         drinkLines.forEach(([kind, l]) => {
-            if (kind === "perBottle") k.setF("bodyBold", 8.5, C.cream);
-            else if (kind === "totals") k.setF("mono", 7.5, C.tan);
-            else k.setF("body", 8, C.tanLight);
+            drinkFont(kind);
             doc.text(l, dx + 14, yy); yy += 11;
         });
     }
@@ -830,7 +831,7 @@ function shelfCard(k, item, x, y, w, h) {
     k.text(k.fit(item.name, w - 24), x + 12, y + 14);
     k.setF("body", 6.8, C.muted);
     k.text(k.fit(item.serving, w - 24), x + 12, y + 23.5);
-    // Carbs: a bar against 80 g and the number in Bebas.
+    // Carbs: a bar against 80 g and the number in the display face.
     k.setF("display", 17, C.forest);
     k.text(`${carbs}`, x + 12, y + 43);
     const cw = k.width(`${carbs}`);

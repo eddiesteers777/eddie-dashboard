@@ -128,7 +128,7 @@ test("the PDF's own fonts ship with the site and are kept offline", async () => 
     const { readFileSync, existsSync } = await import("node:fs");
     const src = readFileSync(new URL("../js/fuelPdf.js", import.meta.url), "utf8");
     const files = [...src.matchAll(/"([\w-]+\.ttf)"/g)].map(m => m[1]);
-    assert.deepEqual(files.sort(), ["BebasNeue.ttf", "Inter-Bold.ttf", "Inter-Regular.ttf", "JetBrainsMono-Medium.ttf", "Saira-ExtraBold.ttf"]);
+    assert.deepEqual(files.sort(), ["BigShouldersDisplay-Bold.ttf", "IBMPlexMono-Medium.ttf", "InstrumentSans-Bold.ttf", "InstrumentSans-Regular.ttf", "Saira-ExtraBold.ttf"]);
     const sw = readFileSync(new URL("../sw.js", import.meta.url), "utf8");
     for (const f of files) {
         assert.ok(existsSync(new URL(`../fonts/pdf/${f}`, import.meta.url)), f);

@@ -4,10 +4,11 @@ jsPDF can only embed TrueType fonts, and it embeds the whole file, so this
 turns the site's own self-hosted web fonts (fonts/*.woff2, SIL OFL; their
 licenses sit next to them) into small static .ttf files in fonts/pdf/:
 
-  Bebas Neue      titles and big numbers (as on every page header)
-  Inter 400 / 700 body text (the variable font pinned to two weights)
-  JetBrains Mono  times, miles and amounts in the schedule
-  Saira 800       the Southbound wordmark
+  Big Shoulders Display 700  titles and big numbers (as on every page header)
+  Instrument Sans 400 / 700  body text (the variable font pinned to two weights)
+  IBM Plex Mono 500          times, miles and amounts in the schedule
+  Saira 800                  the Southbound wordmark
+(the app's direction A fonts, 2026-10-14)
 
 Run after changing a font:  python3 scripts/build-pdf-fonts.py
 (needs:  pip install fonttools brotli)
@@ -27,10 +28,10 @@ OUT.mkdir(exist_ok=True)
 TEXT = "".join(chr(c) for c in range(0x20, 0x7F)) + "".join(chr(c) for c in range(0xA0, 0x100)) + "–—‘’“”•…·−"
 
 JOBS = [
-    ("bebas-neue-latin-400.woff2", None, "BebasNeue.ttf"),
-    ("inter-latin-var.woff2", 400, "Inter-Regular.ttf"),
-    ("inter-latin-var.woff2", 700, "Inter-Bold.ttf"),
-    ("jetbrains-mono-latin-var.woff2", 500, "JetBrainsMono-Medium.ttf"),
+    ("big-shoulders-display-latin-var.woff2", 700, "BigShouldersDisplay-Bold.ttf"),
+    ("instrument-sans-latin-var.woff2", 400, "InstrumentSans-Regular.ttf"),
+    ("instrument-sans-latin-var.woff2", 700, "InstrumentSans-Bold.ttf"),
+    ("ibm-plex-mono-latin-500.woff2", None, "IBMPlexMono-Medium.ttf"),
     ("saira-latin-800.woff2", None, "Saira-ExtraBold.ttf"),
 ]
 

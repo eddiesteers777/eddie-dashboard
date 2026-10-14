@@ -10,21 +10,14 @@
 
 /* Fonts are hosted with the site (fonts/, SIL Open Font License) instead
    of Google Fonts, so the installed app looks the same offline and no
-   request leaves for a third party. Latin subset; Inter and JetBrains
-   Mono are variable fonts, so every weight comes from one file. */
+   request leaves for a third party. Latin subset; the variable fonts give
+   every weight from one file. */
 @font-face{
     font-family:'Inter';
     font-style:normal;
     font-weight:100 900;
     font-display:swap;
     src:url('../fonts/inter-latin-var.woff2') format('woff2');
-}
-@font-face{
-    font-family:'Bebas Neue';
-    font-style:normal;
-    font-weight:400;
-    font-display:swap;
-    src:url('../fonts/bebas-neue-latin-400.woff2') format('woff2');
 }
 @font-face{
     font-family:'Saira';
@@ -40,18 +33,11 @@
     font-display:swap;
     src:url('../fonts/saira-latin-900-italic.woff2') format('woff2');
 }
-@font-face{
-    font-family:'JetBrains Mono';
-    font-style:normal;
-    font-weight:100 800;
-    font-display:swap;
-    src:url('../fonts/jetbrains-mono-latin-var.woff2') format('woff2');
-}
 /* Southbound look, direction A (2026-10-14, Eddie: "more like A, keep my
    palette"): Big Shoulders Display headlines (always uppercase), Instrument
    Sans text, IBM Plex Mono for numbers and small labels. Self-hosted like
-   the rest. Bebas / Inter / JetBrains stay loaded: the share images
-   (js/executionShare.js) still draw with them by name. */
+   the rest; the share images and the fueling PDF use them too (A5).
+   Inter stays as the body fallback (scripts/build-icons.mjs uses it). */
 @font-face{
     font-family:'Big Shoulders Display';
     font-style:normal;
@@ -179,11 +165,11 @@ html{
 
     --font-body:'Instrument Sans','Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
 
-    --font-display:'Big Shoulders Display','Bebas Neue','Arial Narrow',Impact,sans-serif;
+    --font-display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
 
     --font-brand:'Saira',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
 
-    --font-mono:'IBM Plex Mono','JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 
     /* ---- Controls: one shape and one set of states everywhere ---- */
 
@@ -3112,7 +3098,7 @@ body.has-bottomnav .sb-toast-host{ bottom:96px; }
 
 /* ==========================================================
    PAGE HEADER — one system on every app page
-   eyebrow (small tan caps) · title (Bebas) · one-line subtitle.
+   eyebrow (small tan caps) · title (display face) · one-line subtitle.
 
    New pages use:
      <section class="eos-today-hero"><div>
