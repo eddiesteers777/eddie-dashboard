@@ -174,6 +174,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (label) label.textContent = "Sessions Booked";
     }
     renderStreak();
+    // A habit ticked on Today's habit row (js/todayHabits.js).
+    window.addEventListener("sb:habits-changed", renderStreak);
 
     // ==========================================
     // Nutrition Snapshot

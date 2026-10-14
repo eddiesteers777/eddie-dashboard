@@ -9,11 +9,11 @@ const who = (services, status = "active", hasCoachPlan = false) => accessFromPro
 const shown = access => clientTodaySections(access).filter(s => s.on).map(s => s.id);
 
 test("running client: Today, then the coach, then the rest", () => {
-    assert.deepEqual(shown(who(["running"])), ["todayCard", "coachCardSection", "profileCheck", "readinessCard", "weekSection", "clientPackageSection", "todayStats", "nutritionSnap", "todayTools"]);
+    assert.deepEqual(shown(who(["running"])), ["todayCard", "coachCardSection", "profileCheck", "readinessCard", "weekSection", "todayHabits", "clientPackageSection", "todayStats", "nutritionSnap", "todayTools"]);
 });
 
 test("soccer client: sessions first, no readiness, no nutrition", () => {
-    assert.deepEqual(shown(who(["soccer_1on1"])), ["todayCard", "coachCardSection", "profileCheck", "weekSection", "clientPackageSection", "todayStats", "todayTools"]);
+    assert.deepEqual(shown(who(["soccer_1on1"])), ["todayCard", "coachCardSection", "profileCheck", "weekSection", "todayHabits", "clientPackageSection", "todayStats", "todayTools"]);
     assert.deepEqual(shown(who(["soccer_group"], "active", true)), shown(who(["soccer_1on1"])), "a coach plan doesn't add nutrition or readiness");
 });
 

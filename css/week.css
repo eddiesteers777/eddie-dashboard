@@ -312,3 +312,26 @@
     }
     .wc-dialog .sb-dialog-form{ padding:18px 16px calc(18px + env(safe-area-inset-bottom)); }
 }
+
+/* ==========================================================
+   TODAY'S HABITS (js/todayHabits.js, redesign step 3)
+   One tap per habit; the whole row is the button.
+========================================================== */
+.th-card[hidden], .th-card [hidden]{ display:none !important; }
+.th-count{ color:var(--muted); font-size:.85rem; font-variant-numeric:tabular-nums; }
+.th-list{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px; }
+.th-row{
+    display:flex; align-items:center; gap:12px; width:100%; min-height:48px;
+    padding:8px 12px; border:1px solid var(--border); border-radius:14px;
+    background:rgba(255,255,255,.03); color:var(--text); font:inherit; text-align:left; cursor:pointer;
+}
+.th-row:hover{ border-color:color-mix(in srgb, var(--primary) 45%, transparent); }
+.th-check{
+    flex:0 0 24px; width:24px; height:24px; display:grid; place-items:center;
+    border:2px solid var(--muted); border-radius:8px; color:var(--on-primary);
+}
+.th-row.is-on .th-check{ background:var(--green); border-color:var(--green); }
+.th-name{ flex:1 1 auto; min-width:0; font-weight:600; }
+.th-row.is-on .th-name{ color:var(--text-secondary); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--text-secondary) 60%, transparent); }
+.th-empty{ margin:0; color:var(--text-secondary); }
+.th-all{ display:inline-flex; align-items:center; gap:4px; margin-top:12px; color:var(--primary); font-weight:600; text-decoration:none; min-height:32px; }

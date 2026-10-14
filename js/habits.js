@@ -11,6 +11,7 @@ import { icon } from "./icons.js";
 import { storedIcon, habitIconId } from "./habitIconSet.js";
 import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
+import { COACH_HABITS, CLIENT_HABITS } from "./habitDefaults.js";
 
 // Habits saved before icons existed have the emoji baked into the
 // name itself (e.g. "🙏 Prayer") -- strip it so it isn't shown
@@ -28,32 +29,10 @@ function habitIcon(h, options) {
     return habitIconHtml(h, options);
 }
 
-// Eddie's own starting list (the coach account). Its ids (h1-h10) are
-// what his saved check-offs point at, so don't renumber them.
-const COACH_HABITS = [
-    { id: "h1", name: "Prayer", icon: "hb:pray" },
-    { id: "h2", name: "Bible", icon: "hb:bible" },
-    { id: "h3", name: "Training Complete", icon: "hb:run" },
-    { id: "h4", name: "Strength", icon: "hb:strength" },
-    { id: "h5", name: "Stretch / Mobility", icon: "hb:stretch" },
-    { id: "h6", name: "Protein Goal", icon: "hb:protein" },
-    { id: "h7", name: "Water Goal", icon: "hb:water" },
-    { id: "h8", name: "Sleep 7+ hrs", icon: "hb:sleep" },
-    { id: "h9", name: "Read 10 Pages", icon: "hb:read" },
-    { id: "h10", name: "Time with Wife", icon: "hb:love" }
-];
-
-// What a client starts with before editing their own list. Nothing
-// personal -- just the basics every athlete tracks.
-const CLIENT_HABITS = [
-    { id: "c1", name: "Training Complete", icon: "hb:run" },
-    { id: "c2", name: "Stretch / Mobility", icon: "hb:stretch" },
-    { id: "c3", name: "Protein Goal", icon: "hb:protein" },
-    { id: "c4", name: "Water Goal", icon: "hb:water" },
-    { id: "c5", name: "Sleep 7+ hrs", icon: "hb:sleep" }
-];
-
-const DEFAULT_HABITS = showsPersonalPlan() ? COACH_HABITS : CLIENT_HABITS;
+// The starting lists live in js/habitDefaults.js (shared with Today's
+// habit row). Copies: the page edits habits in place (rename, icon) and
+// the shared lists are frozen.
+const DEFAULT_HABITS = (showsPersonalPlan() ? COACH_HABITS : CLIENT_HABITS).map(h => ({ ...h }));
 
 let habits = [];
 let entries = {};
@@ -118,9 +97,9 @@ function escapeHtml(value) {
 function loadData() {
     try {
         const h = localStorage.getItem("habits");
-        habits = h ? JSON.parse(h) : [...DEFAULT_HABITS];
+        habits = h ? JSON.parse(h) : DEFAULT_HABITS.map(x => ({ ...x }));
     } catch {
-        habits = [...DEFAULT_HABITS];
+        habits = DEFAULT_HABITS.map(x => ({ ...x }));
     }
 
     try {

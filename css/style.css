@@ -3984,7 +3984,7 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
   }
   .eos-bottomnav-item{
     flex:1 1 0;min-width:0;min-height:47px;gap:3px;padding:5px 2px;border-radius:999px;
-    color:rgba(227,221,208,.68);font-size:.65rem;font-weight:650;letter-spacing:0
+    color:rgba(227,221,208,.68);font-size:.72rem;font-weight:650;letter-spacing:0
   }
   .eos-bottomnav-item .ui-icon{width:18px;height:18px}
   .eos-bottomnav-item.active{color:var(--on-primary);background:var(--primary);box-shadow:0 4px 16px rgba(201,173,132,.16)}
@@ -3996,7 +3996,7 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
 }
 @media (max-width:380px){
   .eos-bottomnav{left:8px;right:8px;padding:4px 5px}
-  .eos-bottomnav-item{font-size:.6rem}
+  .eos-bottomnav-item{font-size:.6875rem}
 }
 @media (prefers-reduced-motion:reduce){
   .eos-navbar .eos-nav-item,.eos-navbar .eos-dropdown-trigger,.eos-bottomnav-item{transition:none}

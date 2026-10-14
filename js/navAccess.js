@@ -190,4 +190,11 @@ export function applyNavAccess(root, access) {
         const links = [...dropdown.querySelectorAll(".eos-dropdown-link")];
         dropdown.hidden = links.length > 0 && links.every(a => a.hidden);
     });
+
+    // A titled group of links (More's sections): hidden when the account
+    // can open none of its links, so no heading sits over nothing.
+    root.querySelectorAll("[data-nav-group]").forEach(group => {
+        const links = [...group.querySelectorAll("a")];
+        group.hidden = links.length > 0 && links.every(a => a.hidden);
+    });
 }

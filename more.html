@@ -118,7 +118,21 @@
         .more-list{
             display:flex;
             flex-direction:column;
+            gap:22px;
+        }
+        .more-group{
+            display:flex;
+            flex-direction:column;
             gap:8px;
+        }
+        .more-group-title{
+            margin:0 0 2px 4px;
+            color:var(--muted);
+            font-family:var(--font-body);
+            font-size:12px;
+            font-weight:700;
+            letter-spacing:.12em;
+            text-transform:uppercase;
         }
         .more-row{
             display:flex;
@@ -199,123 +213,120 @@
             <button type="button" id="moreLogoutBtn" class="eos-more-account-btn" style="display:none;">Sign Out</button>
         </section>
 
+        <!-- Grouped by task (redesign step 3, 2026-10-14). Pages with a tab of
+             their own aren't repeated here; a group with nothing this account
+             can open hides itself (data-nav-group, js/navAccess.js). -->
         <section class="more-list">
-
-            <a href="marathon.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="activity" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">Marathon Plan</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="75day.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="flame" style="--accent:var(--green)"></div>
-                <span class="more-row-name">75-Day Challenge</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="analytics.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="trendingUp" style="--accent:var(--amber)"></div>
-                <span class="more-row-name">Analytics</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="weekly-review.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="clipboard" style="--accent:var(--purple-light)"></div>
-                <span class="more-row-name">Weekly Review</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="planning.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="edit" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">Weekly Planning</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="gear.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="footprint" style="--accent:var(--pink)"></div>
-                <span class="more-row-name">Gear</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="planner.html" class="more-row" data-requires="coach">
-                <div class="more-row-icon" data-icon="calendar" style="--accent:var(--cyan)"></div>
-                <span class="more-row-name">Planner</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="programs.html" class="more-row" data-requires="running,strength">
-                <div class="more-row-icon" data-icon="target" style="--accent:var(--indigo)"></div>
-                <span class="more-row-name">Programs</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="pace-calculator.html" class="more-row" data-requires="running">
-                <div class="more-row-icon" data-icon="timer" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">Pace Calculator</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="plan.html" class="more-row" data-requires="client+plan">
-                <div class="more-row-icon" data-icon="calendar" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">My Plan</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="progress.html" class="more-row" data-requires="client+progress">
-                <div class="more-row-icon" data-icon="trendingUp" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">My Progress</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="messages.html" class="more-row" data-requires="client+updates">
-                <div class="more-row-icon" data-icon="messageSquare" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">Messages</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="updates.html" class="more-row" data-requires="client+updates">
-                <div class="more-row-icon" data-icon="send" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">From Your Coach</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="profile.html" class="more-row" data-requires="client+profile">
-                <div class="more-row-icon" data-icon="user" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">My Profile</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="schedule.html" class="more-row" data-requires="client+sessions">
-                <div class="more-row-icon" data-icon="calendar" style="--accent:var(--purple-light)"></div>
-                <span class="more-row-name">Sessions</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="checkin.html" class="more-row" data-requires="client+checkins">
-                <div class="more-row-icon" data-icon="star" style="--accent:var(--amber)"></div>
-                <span class="more-row-name">Weekly Check-in</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <!-- Hidden once they're linked to a coach (Phase 8): linking is setup, not something to come back to. -->
-            <a href="clients.html?tab=share" class="more-row" id="moreConnectRow" data-requires="client+updates">
-                <div class="more-row-icon" data-icon="link" style="--accent:var(--primary)"></div>
-                <span class="more-row-name">Connect with Coach</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="install.html" class="more-row">
-                <div class="more-row-icon" data-icon="download" style="--accent:var(--green)"></div>
-                <span class="more-row-name">Get the App</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
-            <a href="settings.html" class="more-row">
-                <div class="more-row-icon" data-icon="user" style="--accent:var(--sage)"></div>
-                <span class="more-row-name">Settings</span>
-                <span class="more-row-chevron" data-icon="chevronRight"></span>
-            </a>
-
+            <div class="more-group" data-nav-group>
+                <h2 class="more-group-title">Your progress</h2>
+                <a href="progress.html" class="more-row" data-requires="client+progress">
+                    <div class="more-row-icon" data-icon="trendingUp" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">My Progress</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="checkin.html" class="more-row" data-requires="client+checkins">
+                    <div class="more-row-icon" data-icon="star" style="--accent:var(--amber)"></div>
+                    <span class="more-row-name">Weekly Check-in</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="habits.html" class="more-row" data-requires="habits+nutrition,habits+fueling">
+                    <div class="more-row-icon" data-icon="checkCircle" style="--accent:var(--purple-light)"></div>
+                    <span class="more-row-name">Habits</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+            </div>
+            <div class="more-group" data-nav-group>
+                <h2 class="more-group-title">Your coach</h2>
+                <a href="messages.html" class="more-row" data-requires="client+updates">
+                    <div class="more-row-icon" data-icon="messageSquare" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">Messages</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="updates.html" class="more-row" data-requires="client+updates">
+                    <div class="more-row-icon" data-icon="send" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">From Your Coach</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="profile.html" class="more-row" data-requires="client+profile">
+                    <div class="more-row-icon" data-icon="user" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">My Profile</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="schedule.html" class="more-row" data-requires="client+sessions+plan">
+                    <div class="more-row-icon" data-icon="calendar" style="--accent:var(--purple-light)"></div>
+                    <span class="more-row-name">Sessions</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="clients.html?tab=share" class="more-row" id="moreConnectRow" data-requires="client+updates">
+                    <div class="more-row-icon" data-icon="link" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">Connect with Coach</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+            </div>
+            <div class="more-group" data-nav-group>
+                <h2 class="more-group-title">My training</h2>
+                <a href="marathon.html" class="more-row" data-requires="coach">
+                    <div class="more-row-icon" data-icon="activity" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">Marathon Plan</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="analytics.html" class="more-row" data-requires="coach">
+                    <div class="more-row-icon" data-icon="trendingUp" style="--accent:var(--amber)"></div>
+                    <span class="more-row-name">Analytics</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="weekly-review.html" class="more-row" data-requires="coach">
+                    <div class="more-row-icon" data-icon="clipboard" style="--accent:var(--purple-light)"></div>
+                    <span class="more-row-name">Weekly Review</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="planning.html" class="more-row" data-requires="coach">
+                    <div class="more-row-icon" data-icon="edit" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">Weekly Planning</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="planner.html" class="more-row" data-requires="coach">
+                    <div class="more-row-icon" data-icon="calendar" style="--accent:var(--cyan)"></div>
+                    <span class="more-row-name">Planner</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="75day.html" class="more-row" data-requires="coach">
+                    <div class="more-row-icon" data-icon="flame" style="--accent:var(--green)"></div>
+                    <span class="more-row-name">75-Day Challenge</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="gear.html" class="more-row" data-requires="coach">
+                    <div class="more-row-icon" data-icon="footprint" style="--accent:var(--pink)"></div>
+                    <span class="more-row-name">Gear</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+            </div>
+            <div class="more-group" data-nav-group>
+                <h2 class="more-group-title">Tools</h2>
+                <a href="programs.html" class="more-row" data-requires="running,strength">
+                    <div class="more-row-icon" data-icon="target" style="--accent:var(--indigo)"></div>
+                    <span class="more-row-name">Programs</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="pace-calculator.html" class="more-row" data-requires="running">
+                    <div class="more-row-icon" data-icon="timer" style="--accent:var(--primary)"></div>
+                    <span class="more-row-name">Pace Calculator</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+            </div>
+            <div class="more-group" data-nav-group>
+                <h2 class="more-group-title">App</h2>
+                <a href="install.html" class="more-row">
+                    <div class="more-row-icon" data-icon="download" style="--accent:var(--green)"></div>
+                    <span class="more-row-name">Get the App</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+                <a href="settings.html" class="more-row">
+                    <div class="more-row-icon" data-icon="gear" style="--accent:var(--sage)"></div>
+                    <span class="more-row-name">Settings</span>
+                    <span class="more-row-chevron" data-icon="chevronRight"></span>
+                </a>
+            </div>
         </section>
 
     </main>

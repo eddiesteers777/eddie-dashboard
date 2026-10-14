@@ -50,10 +50,15 @@ const BOTTOM_TABS = [
     // Someone who only books sessions (soccer, no plan) gets them as a tab
     // of their own; with a plan, they're in the Plan tab's week.
     { key: "sessions", label: "Sessions", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!plan", pages: ["schedule.html"] },
-    { key: "train", label: "Train", icon: "dumbbell", href: "train.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
-    { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--primary)", requires: "nutrition,fueling" },
-    { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--primary)", requires: "habits" },
+    // Five tabs at most (redesign step 3, Eddie 2026-10-14): training
+    // clients get Today · Plan · Train · Fuel · More, the coach Today ·
+    // Coach · Train · Fuel · More. Habits stays a tab only for accounts
+    // without Fuel (soccer); everyone else checks habits off on Today
+    // and finds the page in More.
     { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--primary)", requires: "coach" },
+    { key: "train", label: "Train", icon: "dumbbell", href: "train.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
+    { key: "health", label: "Fuel", icon: "fuel", href: "nutrition.html", color: "var(--primary)", requires: "nutrition,fueling" },
+    { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--primary)", requires: "habits+!nutrition+!fueling" },
     { key: "more", label: "More", icon: "grid", href: "more.html", color: "var(--primary)" }
 ];
 
