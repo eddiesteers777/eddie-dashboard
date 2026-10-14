@@ -110,7 +110,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 - **Honeypot fields must not look like real fields** (autofill filled one labelled "Company" and real questions were dropped). Keep `sbLeaveEmpty` ("Leave this empty", `autocomplete="off"`).
 - **`Promise.all` with a long positional list breaks silently.** Use `allNamed({ name: promise })` for more than three or four.
 - **Hand-uploaded files can drop rules.** If Eddie uploads a file, diff it against the previous version.
-- **Phone inputs must be 16px+** or iOS zooms on focus. Phone overrides in `css/style.css` need `!important` (page stylesheets load after it).
+- **Phone tap targets are 44px+** (block at the end of `css/style.css`; inline links get an invisible `::after` hit area). **Phone inputs must be 16px+** or iOS zooms on focus. Phone overrides in `css/style.css` need `!important` (page stylesheets load after it).
 - **Cloud sync never carries a deleted key.** A deletable synced item needs a marker (`{ deleted: true, updatedAt }`), and a list that grows on several devices needs one key per item (a prefix).
 - **Reading your own not-yet-created doc is permission-denied, not "missing".** It has broken first check-ins, `assignClient` and first wearable shares. Write without a pre-read; treat permission-denied on your own doc ID as "new"; test the real create path.
 - **Page CSS resets body padding on phones.** `loadHeader` adds `body.has-bottomnav`, padded with `!important`.
@@ -148,7 +148,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 **Known gaps (Eddie's call):** Garmin and other watches (needs Garmin's partner program + Blaze); the coach can't set a client's nutrition goals (needs fields + a rules change); old school/course dates remain in git history (scrubbing needs a force-push, only with Eddie's go-ahead); card payments wait on prices + Blaze + Stripe (`docs/STRIPE_SETUP.md`); whether Google's sign-in pop-up works in the iPhone home-screen app is untested.
 
 **Active tracks**
-- **Redesign (Southbound Performance):** look = direction A on the original palette (A1 fonts + shapes, A2 Today, A3 My Plan / workout page / coach dashboard, A4 website, A5 share images + PDF all done 2026-10-14). blueprint `docs/SOUTHBOUND_PERFORMANCE_VISUAL_BLUEPRINT.md`, Step 2 evidence and plan `docs/SOUTHBOUND_PERFORMANCE_STEP2_VALIDATION.md`. Eddie's decisions are recorded in its §6 (2026-10-14). Build order in §9: steps 1–7 done; left: tap targets / small text, desktop two-column Today, Client Hub package copy.
+- **Redesign (Southbound Performance):** look = direction A on the original palette (A1 fonts + shapes, A2 Today, A3 My Plan / workout page / coach dashboard, A4 website, A5 share images + PDF all done 2026-10-14). blueprint `docs/SOUTHBOUND_PERFORMANCE_VISUAL_BLUEPRINT.md`, Step 2 evidence and plan `docs/SOUTHBOUND_PERFORMANCE_STEP2_VALIDATION.md`. Eddie's decisions are recorded in its §6 (2026-10-14). Build order in §9: steps 1–7 and 9 (tap targets, small text) done; left: desktop two-column Today, Client Hub package copy.
 - **Weekly planning** (`docs/WEEKLY_PLANNING_AUDIT.md`): P1–P4 done; P5 (AI relay) on hold (Eddie uses copy/paste with his own chatbot); P6 needs a few weeks of planned weeks.
 - **Athlete model** (`docs/PERFORMANCE_ENGINE_PLAN.md`, `docs/ATHLETE_MODEL_AUDIT.md`): steps 0–7 and audit phases A–D done.
 - **Email** (`docs/EMAIL_NOTIFICATIONS_PLAN.md`): move from EmailJS to Cloud Functions + Resend when Eddie's accounts are ready.

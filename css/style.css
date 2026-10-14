@@ -2860,7 +2860,7 @@ section{
     #habitsPrevDay, #habitsNextDay,
     #strengthCalendarPrev, #strengthCalendarNext,
     .fuel-week-tab,
-    .clients-btn-icon{ min-width:40px !important; min-height:40px !important; }
+    .clients-btn-icon{ min-width:44px !important; min-height:44px !important; }
 
     .running-view-btn,
     .habits-view-btn,
@@ -2881,15 +2881,15 @@ section{
     #installCopyBtn,
     .fuel-lib-actions button,
     #autoFillDrinkBtn,
-    #addLibraryItemBtn{ min-height:40px !important; }
+    #addLibraryItemBtn{ min-height:44px !important; }
 
-    .eos-nutrition-snap-header a{ display:inline-flex; align-items:center; min-height:40px; }
-    #saveBtn, #exportBtn, #resetBtn, .manage-toggle{ min-height:40px !important; padding:0 8px !important; }
-    .sched-blackout-chip button{ min-width:32px; min-height:32px; align-items:center; justify-content:center; }
+    .eos-nutrition-snap-header a{ display:inline-flex; align-items:center; min-height:44px; }
+    #saveBtn, #exportBtn, #resetBtn, .manage-toggle{ min-height:44px !important; padding:0 8px !important; }
+    .sched-blackout-chip button{ min-width:44px; min-height:44px; align-items:center; justify-content:center; }
 
-    .controls{ grid-template-columns:36px minmax(0,1fr) 36px !important; }
-    .adjust-btn{ width:36px !important; height:36px !important; }
-    .goal-btn{ min-height:36px; padding:9px 14px !important; font-size:12px !important; }
+    .controls{ grid-template-columns:44px minmax(0,1fr) 44px !important; }
+    .adjust-btn{ width:44px !important; height:44px !important; }
+    .goal-btn{ min-height:44px; padding:9px 14px !important; font-size:12px !important; }
 }
 
 /* ==========================================================
@@ -4020,4 +4020,47 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
 }
 @media (prefers-reduced-motion:reduce){
   .eos-navbar .eos-nav-item,.eos-navbar .eos-dropdown-trigger,.eos-bottomnav-item{transition:none}
+}
+
+/* ==========================================================
+   PHONE TAP TARGETS + SMALL TEXT (redesign step 9, 2026-10-14)
+   Measured at 390px: every control people tap gets at least a 44px tall
+   hit area, and no reading text is under 11px. Inline text links keep
+   their look; an invisible ::after grows what a finger can hit.
+   !important because page stylesheets load after this file.
+   ========================================================== */
+@media (max-width:600px){
+    /* Buttons and tabs: 44px tall (square ones 44x44). */
+    .eos-mobile-icon-btn,
+    .adjust-btn, .day-btn, .food-scan-btn, .hb-nav{ min-width:44px !important; min-height:44px !important; }
+    .eos-mobile-icon-btn{ width:44px !important; height:44px !important; }
+    .wk-feel, .th-all, .goal-btn, .meal-tab, .eos-subnav-link, .eos-more-account-btn,
+    .coach-view-btn, .coach-inq-btn, .clients-btn-secondary, .clients-tab, .clients-filter, .hub-back,
+    .hub-services-edit, .eos-today-complete-btn, .sb-effort-scale button, .rd-ver,
+    .tw-disclosure, .ft-manage-btn, .rc-chip, .an-nav a,
+    .myplan-details > summary, .rd-more > summary, .rc-details > summary, .hb-how > summary, .rd-insights > summary, .clients-secondary-card > summary{
+        min-height:44px !important;
+    }
+    :is(.wk-feel, .th-all, .goal-btn, .meal-tab, .eos-subnav-link, .coach-view-btn, .hub-services-edit,
+        .tw-disclosure, .ft-manage-btn, .rc-chip, .an-nav a){ display:inline-flex; align-items:center; justify-content:center; }
+    .myplan-details > summary, .rd-more > summary, .rc-details > summary, .hb-how > summary, .rd-insights > summary, .clients-secondary-card > summary{ box-sizing:border-box; padding-block:11px !important; }
+    .an-nav input[type=number], .an-section input[type=number]{ min-height:44px !important; }
+
+    /* Inline text links: same look, a taller invisible hit area. */
+    :is(.wk-see-all, .stats .stats-more, .pg-link, .wk-item-link, .ig-link, .eos-more-sync-btn,
+        .coach-clients-all, .hub-see-all, .rd-link, .rd-link-btn, .eos-snap-link, .eos-mobile-topbar-logo){ position:relative; }
+    /* My Plan's small row buttons keep their 40px look (bigger squeezed the
+       workout text); a 2px ring brings the hit area to 44. */
+    :is(.wk-change, .wk-done).is-compact{ position:relative; }
+    :is(.wk-change, .wk-done).is-compact::after{ content:""; position:absolute; inset:-2px; }
+    :is(.wk-see-all, .stats .stats-more, .pg-link, .wk-item-link, .ig-link, .eos-more-sync-btn,
+        .coach-clients-all, .hub-see-all, .rd-link, .rd-link-btn, .eos-snap-link, .eos-mobile-topbar-logo)::after{
+        content:""; position:absolute; inset:-14px -4px;
+    }
+
+    /* Reading text: nothing under 11px; nutrition's numbers at 12.5px. */
+    .stat-card p{ font-size:12px !important; }
+    .wk-day-date small, .ft-type{ font-size:11px !important; }
+    html body .sb-eyebrow{ font-size:11px !important; }
+    .metric-display .label, .remaining, .stat-name, .stat-value, .meal-tab{ font-size:12.5px !important; }
 }
