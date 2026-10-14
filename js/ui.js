@@ -30,6 +30,7 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 // ---------- Toasts ----------
 
 let toastHost = null;
+let dialogId = 0;
 
 function host() {
     if (toastHost && document.body.contains(toastHost)) return toastHost;
@@ -66,13 +67,20 @@ export function toast(message, { type = "success", duration = 3200, action = nul
 // ---------- Dialogs ----------
 
 function openDialog({ title, message, body = "", actions, danger = false, onOpen }) {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const id = ++dialogId;
+    const titleId = `sb-dialog-title-${id}`;
+    const messageId = `sb-dialog-message-${id}`;
     return new Promise(resolve => {
         const dialog = document.createElement("dialog");
         dialog.className = `sb-dialog${danger ? " is-danger" : ""}`;
+        if (title) dialog.setAttribute("aria-labelledby", titleId);
+        else if (message) dialog.setAttribute("aria-label", message);
+        if (message) dialog.setAttribute("aria-describedby", messageId);
         dialog.innerHTML = `
             <form method="dialog" class="sb-dialog-form">
-                ${title ? `<h2 class="sb-dialog-title">${esc(title)}</h2>` : ""}
-                ${message ? `<p class="sb-dialog-message">${esc(message)}</p>` : ""}
+                ${title ? `<h2 class="sb-dialog-title" id="${titleId}">${esc(title)}</h2>` : ""}
+                ${message ? `<p class="sb-dialog-message" id="${messageId}">${esc(message)}</p>` : ""}
                 ${body}
                 <div class="sb-dialog-actions">
                     ${actions.map(a => `<button type="${a.submit ? "submit" : "button"}" value="${a.value}" class="sb-btn ${a.className}">${esc(a.label)}</button>`).join("")}
@@ -97,6 +105,7 @@ function openDialog({ title, message, body = "", actions, danger = false, onOpen
             const input = dialog.querySelector(".sb-dialog-input");
             resolve({ action: result || dialog.returnValue || "cancel", value: input ? input.value : undefined });
             dialog.remove();
+            opener?.focus();
         });
         // Tapping the dimmed backdrop cancels, like a native sheet.
         dialog.addEventListener("click", event => {
@@ -105,6 +114,7 @@ function openDialog({ title, message, body = "", actions, danger = false, onOpen
 
         dialog.showModal();
         onOpen?.(dialog);
+        if (!onOpen) dialog.querySelector(".sb-dialog-actions button")?.focus();
     });
 }
 
