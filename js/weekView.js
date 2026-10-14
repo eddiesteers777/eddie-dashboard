@@ -28,9 +28,9 @@ const KIND = {
 // A logged coach-plan workout is done or skipped by its log (edit it on the workout page), not a tap.
 const canToggle = item => ["plan", "extra", "strength"].includes(item.source?.type) && !item.autoDone && !item.actual;
 
-function doneButton(item, compact = false) {
+function doneButton(item, compact = false, secondary = false) {
     if (!canToggle(item)) return "";
-    return `<button type="button" class="wk-done${item.done ? " is-done" : ""}${compact ? " is-compact" : ""}" data-toggle="${esc(item.id)}"
+    return `<button type="button" class="wk-done${item.done ? " is-done" : ""}${compact ? " is-compact" : ""}${secondary ? " is-secondary" : ""}" data-toggle="${esc(item.id)}"
         aria-pressed="${item.done}" aria-label="${item.done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`}">
         ${icon(item.done ? "checkCircle" : "check")}${compact ? "" : `<span>${item.done ? "Done" : "Mark done"}</span>`}
     </button>`;
@@ -59,17 +59,24 @@ function fuelLine(item) {
 }
 
 // Today's workout, front and center.
+// Direction A (2026-10-14): a mono kicker (kind · from your coach · plan)
+// over the name in the display face, the miles big in tan, a tan rule
+// instead of a box; Start / Log it is the main button until it's done.
+const KIND_WORD = { run: "Run", strength: "Strength", cross: "Cross-training", session: "Session" };
+
 export function workoutCardHtml(item) {
     const k = KIND[item.kind] || KIND.run;
     const link = workoutLink(item);
     const bigNumber = item.kind === "run" && item.miles ? `<span class="wk-big">${item.miles}<small> mi</small></span>` : "";
+    const kicker = [KIND_WORD[item.kind] || "", item.kind === "session" ? "" : item.planName || (item.fromCoach ? "From your coach" : "")].filter(Boolean).join(" · ");
+    const startFirst = !item.done && !item.skipped && ["Start", "Log it"].includes(link.label);
+    const linkBtn = `<a class="sb-btn ${startFirst ? "sb-btn-primary" : "sb-btn-secondary"}" href="${esc(link.href)}">${esc(link.label)} ${icon("chevronRight")}</a>`;
     return `
         <div class="wk-card is-${item.kind}${item.done ? " is-done" : ""}">
             <div class="wk-card-top">
-                <span class="wk-icon" style="color:${k.color}">${icon(k.icon)}</span>
                 <div class="wk-card-title">
+                    <span class="wk-kicker" style="--kind:${k.color}">${icon(k.icon)}${esc(kicker)}</span>
                     <strong>${esc(item.title)}</strong>
-                    ${item.kind !== "session" && (item.planName || item.fromCoach) ? `<span class="wk-meta">${esc([item.fromCoach ? "From your coach" : "", item.planName].filter(Boolean).join(" · "))}</span>` : ""}
                 </div>
                 ${bigNumber}
             </div>
@@ -80,9 +87,8 @@ export function workoutCardHtml(item) {
                 : item.actual?.distance ? `<p class="wk-logged">${icon("checkCircle")} You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.logged ? `<p class="wk-logged">${icon("activity")} You logged ${item.logged} mi${item.autoDone ? " — counts as done" : ""}</p>` : ""}
             <div class="wk-actions">
-                ${doneButton(item)}
-                <a class="sb-btn sb-btn-secondary" href="${esc(link.href)}">${esc(link.label)} ${icon("chevronRight")}</a>
-                ${changeButton(item)}
+                ${startFirst ? `${linkBtn}${doneButton(item, false, true)}` : `${doneButton(item)}${linkBtn}`}
+                ${changeButton(item, true)}
             </div>
         </div>`;
 }

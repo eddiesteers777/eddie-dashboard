@@ -335,3 +335,71 @@
 .th-row.is-on .th-name{ color:var(--text-secondary); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--text-secondary) 60%, transparent); }
 .th-empty{ margin:0; color:var(--text-secondary); }
 .th-all{ display:inline-flex; align-items:center; gap:4px; margin-top:12px; color:var(--primary); font-weight:600; text-decoration:none; min-height:32px; }
+
+/* ==========================================================
+   DIRECTION A (2026-10-14, .claude/skills/southbound-design):
+   lines over boxes. Today's workout sits under a 2px tan rule (sage
+   when done) instead of in a box inside the Today card; a mono kicker,
+   the name in the display face, the miles big in tan.
+========================================================== */
+.wk-card{
+    padding:14px 0 0;
+    background:transparent;
+    border:0;
+    border-top:2px solid var(--primary);
+    border-radius:0;
+}
+.wk-card.is-done{ border-top-color:var(--green); }
+.wk-today-cards{ gap:22px; }
+.wk-kicker{
+    display:block;
+    color:var(--primary);
+    font:600 11px/1.3 var(--font-mono);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.wk-kicker .ui-icon{ display:inline-block; width:13px; height:13px; margin-right:6px; vertical-align:-2px; color:var(--kind, var(--primary)); }
+.wk-card .wk-actions .wk-change.is-compact{ width:var(--control-height); min-height:var(--control-height); }
+.wk-card.is-done .wk-kicker{ color:var(--green); }
+.wk-card-title{ gap:6px; }
+.wk-card-title strong{
+    font:800 30px/0.95 var(--font-display);
+    letter-spacing:.01em;
+    text-transform:uppercase;
+}
+.wk-big{
+    font:900 44px/0.9 var(--font-display);
+    color:var(--primary);
+    text-transform:uppercase;
+}
+.wk-big small{ font:600 13px var(--font-mono); color:var(--text-secondary); letter-spacing:.06em; }
+.wk-detail{ color:var(--text-secondary); font-size:15px; }
+.wk-done.is-secondary{ background:transparent; border-color:var(--border); color:var(--text); }
+
+.wk-rest-day{
+    padding:14px 0 0;
+    background:transparent;
+    border-top:2px solid var(--border);
+    border-radius:0;
+}
+.wk-rest-day .wk-icon{ display:none; }
+.wk-rest-day strong{ font:800 28px/0.95 var(--font-display); text-transform:uppercase; }
+
+.wk-next{
+    padding:12px 0;
+    border:0;
+    border-top:1px solid var(--border);
+    border-radius:0;
+}
+.wk-next:hover{ background:transparent; border-top-color:var(--primary); }
+.wk-next-label{ font:600 11px/1 var(--font-mono); letter-spacing:.14em; }
+.wk-card .wk-actions .sb-btn, .wk-card .wk-actions .wk-done{ flex:1 1 0; min-width:0; padding-left:10px; padding-right:10px; }
+
+/* Today's habits: lines, not a box per habit (direction A). */
+.th-list{ gap:0 18px; }
+.th-row{ background:transparent; border:0; border-top:1px solid var(--border); border-radius:0; padding:10px 2px; }
+.th-row:hover{ border-top-color:var(--primary); }
+.th-check{ border-radius:var(--radius-sm); }
+@media (min-width:641px){
+    .wk-card .wk-actions .sb-btn, .wk-card .wk-actions .wk-done{ flex:0 1 220px; }
+}
