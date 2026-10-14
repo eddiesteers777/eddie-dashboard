@@ -38,6 +38,7 @@ const REASONS = [
 ];
 
 let current = null;
+let detailsExpanded = false;
 const groupNote = `<p class="tw-groupnote">Load and how runs are going count once each; HRV, sleep and how you feel move together, so they count at most twice.</p>`;
 
 function choiceHtml(d, entry) {
@@ -56,27 +57,64 @@ function render() {
     const d = current;
     const entry = decisionFor(d.weekOf);
     const undone = entry?.choice === "undone";
-    // On Weekly Review (data-mode="review") the changes are listed day by day in Next week.
+    // Weekly Review remains expanded; Today uses the compact disclosure.
     const review = el.dataset.mode === "review";
     el.className = `tw-card is-${d.level}`;
     el.dataset.version = d.version;
-    el.innerHTML = `
-        <div class="tw-head">
-            <div><div class="sb-eyebrow">This week</div><h2 class="tw-level">${esc(LEVEL_WORDS[d.level])}</h2></div>
-            <p class="tw-hint">${esc(LEVEL_HINT[d.level])}</p>
-        </div>
-        ${d.domains.length ? `<ul class="tw-domains">${d.domains.map(x => `<li class="sev-${x.severity}" title="${esc(x.text)}"><span>${esc(x.label)}</span><b>${esc(x.word)}</b></li>`).join("")}</ul>` : ""}
-        ${review ? `<p class="tw-summary">${esc(d.summary)}</p>${d.domains.length ? groupNote : ""}`
-            : `<details class="tw-why"><summary>Why</summary><p class="tw-summary">${esc(d.summary)}</p>${d.domains.length ? groupNote : ""}</details>`}
-        ${!d.changes.length ? "" : review
-            ? `<p class="tw-pointer">${d.changes.length} ${d.changes.length === 1 ? "day changes" : "days change"} in the next 7: see <a href="#wrNext">Next week</a> below.</p>`
-            : `<p class="tw-sub">Suggested for the next 7 days</p><ul class="tw-changes">${d.changes.map(c => `<li><span>${esc(dayLabel(c.date))}</span>${esc(c.text)}</li>`).join("")}</ul>`}
-        ${d.notes.length ? `<ul class="tw-notes">${d.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
-        ${undone ? `<p class="tw-notes">You undid this week's changes.</p>` : ""}
-        ${choiceHtml(d, undone ? null : entry)}
-        <a class="tw-link" href="analytics.html#decisionPanel">Your log and the numbers →</a>`;
-}
 
+    const domains = d.domains.length
+        ? `<ul class="tw-domains">${d.domains.map(x => `<li class="sev-${x.severity}" title="${esc(x.text)}"><span>${esc(x.label)}</span><b>${esc(x.word)}</b></li>`).join("")}</ul>`
+        : "";
+    const why = review
+        ? `<p class="tw-summary">${esc(d.summary)}</p>${d.domains.length ? groupNote : ""}`
+        : `<details class="tw-why"><summary>Why</summary><p class="tw-summary">${esc(d.summary)}</p>${d.domains.length ? groupNote : ""}</details>`;
+    const changes = !d.changes.length ? "" : review
+        ? `<p class="tw-pointer">${d.changes.length} ${d.changes.length === 1 ? "day changes" : "days change"} in the next 7: see <a href="#wrNext">Next week</a> below.</p>`
+        : `<p class="tw-sub">Suggested for the next 7 days</p><ul class="tw-changes">${d.changes.map(c => `<li><span>${esc(dayLabel(c.date))}</span>${esc(c.text)}</li>`).join("")}</ul>`;
+    const notes = d.notes.length ? `<ul class="tw-notes">${d.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : "";
+    const undoneNote = undone ? `<p class="tw-notes">You undid this week's changes.</p>` : "";
+    const actions = choiceHtml(d, undone ? null : entry);
+    const link = `<a class="tw-link" href="analytics.html#decisionPanel">Your log and the numbers →</a>`;
+
+    if (review) {
+        el.innerHTML = `
+            <div class="tw-head">
+                <div><div class="sb-eyebrow">This week</div><h2 class="tw-level">${esc(LEVEL_WORDS[d.level])}</h2></div>
+                <p class="tw-hint">${esc(LEVEL_HINT[d.level])}</p>
+            </div>
+            ${domains}
+            ${why}
+            ${changes}
+            ${notes}
+            ${undoneNote}
+            ${actions}
+            ${link}`;
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="tw-compact-head">
+            <div class="tw-compact-title">
+                <div class="sb-eyebrow">This week</div>
+                <h2 class="tw-level">${esc(LEVEL_WORDS[d.level])}</h2>
+            </div>
+            <p class="tw-hint">${esc(LEVEL_HINT[d.level])}</p>
+            <button type="button" class="tw-disclosure" data-tw="toggle"
+                aria-expanded="${detailsExpanded ? "true" : "false"}" aria-controls="twDetails">
+                <span>${detailsExpanded ? "Hide details" : "Show details"}</span>
+                <span class="tw-disclosure-chevron" aria-hidden="true">${detailsExpanded ? "−" : "+"}</span>
+            </button>
+        </div>
+        <div class="tw-details" id="twDetails" ${detailsExpanded ? "" : "hidden"}>
+            ${domains}
+            ${why}
+            ${changes}
+            ${notes}
+            ${undoneNote}
+            ${actions}
+            ${link}
+        </div>`;
+}
 async function refresh() {
     const r = await currentDecision(isoToday());
     current = r.decision;
@@ -88,6 +126,11 @@ async function refresh() {
 async function onClick(event) {
     const act = event.target.closest("[data-tw]")?.dataset.tw;
     if (!act || !current) return;
+    if (act === "toggle") {
+        detailsExpanded = !detailsExpanded;
+        render();
+        return;
+    }
     if (act === "apply") {
         const undo = await applyDecision(current);
         render();
