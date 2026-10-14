@@ -358,3 +358,20 @@ test("shared dialogs expose accessible names and restore focus to their opener",
     assert.match(ui, /opener\?\.focus\(\)/);
     assert.match(ui, /if \(!onOpen\) dialog\.querySelector\("\.sb-dialog-actions button"\)\?\.focus\(\)/);
 });
+
+
+test("dashboard This Week decision has an accessible compact disclosure", () => {
+    const source = read("js/thisWeekCard.js");
+    assert.match(source, /data-tw="toggle"/);
+    assert.match(source, /aria-expanded=/);
+    assert.match(source, /aria-controls="twDetails"/);
+    assert.match(source, /if \(act === "toggle"\)/);
+    assert.match(source, /detailsExpanded/);
+});
+
+test("desktop and mobile app navigation use floating capsule surfaces", () => {
+    const css = read("css/style.css");
+    assert.match(css, /SOUTHBOUND PERFORMANCE SHELL/);
+    assert.match(css, /\.eos-nav-links\s*\{[\s\S]*?border-radius:\s*999px/);
+    assert.match(css, /\.eos-bottomnav\s*\{[\s\S]*?border-radius:\s*999px/);
+});
