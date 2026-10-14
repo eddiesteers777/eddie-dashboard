@@ -659,7 +659,6 @@
 }
 
 .strength-mode-btn,
-.strength-rest-btn,
 .strength-group-btn,
 .strength-note-btn,
 .strength-collapse-btn{
@@ -832,7 +831,7 @@
     gap:3px;
 }
 
-.strength-search-title::after{
+#exerciseSearchOverlay .strength-search-title::after{
     content:"Search the library, then keep adding exercises without reopening this window.";
     color:var(--muted);
     font-size:10px;
@@ -1103,6 +1102,9 @@
     border-radius:20px;
     max-width:460px;
     width:100%;
+    max-height:calc(100dvh - 40px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
     padding:22px;
     box-shadow:0 30px 70px rgba(0,0,0,.5);
     animation:strengthFadeUp .25s ease;
@@ -1225,7 +1227,6 @@
 .strength-builder-btn,
 .strength-icon-btn,
 .strength-mode-btn,
-.strength-rest-btn,
 .strength-group-btn,
 .strength-note-btn,
 .strength-collapse-btn,
@@ -1247,7 +1248,6 @@
 
 .strength-builder-btn:hover,
 .strength-mode-btn:hover,
-.strength-rest-btn:hover,
 .strength-group-btn:hover,
 .strength-note-btn:hover,
 .strength-collapse-btn:hover,
@@ -1438,7 +1438,6 @@
 }
 
 .strength-mode-btn,
-.strength-rest-btn,
 .strength-group-btn,
 .strength-note-btn,
 .strength-collapse-btn{
@@ -2094,18 +2093,6 @@
     color:var(--primary);
 }
 
-.strength-workspace-create{
-    padding:0 16px;
-    border:1px solid var(--primary);
-    border-radius:12px;
-    background:var(--primary);
-    color:#0f2019;
-    cursor:pointer;
-    font:inherit;
-    font-size:11px;
-    font-weight:800;
-    white-space:nowrap;
-}
 
 .strength-workspace-panel{
     display:none;
@@ -2137,8 +2124,7 @@
 
 .strength-calendar-header,
 .strength-agenda-header,
-.strength-upcoming-strip,
-.strength-myworkouts-header{
+.strength-upcoming-strip{
     display:flex;
     align-items:flex-start;
     justify-content:space-between;
@@ -2445,17 +2431,6 @@
    My workouts
 ------------------------- */
 
-.strength-myworkouts-header h2{
-    font-size:21px;
-}
-
-.strength-myworkouts-header p{
-    max-width:58ch;
-    margin-top:6px;
-    color:var(--text-secondary);
-    font-size:11px;
-    line-height:1.5;
-}
 
 .strength-myworkouts-list{
     display:grid;
@@ -2718,10 +2693,7 @@
         grid-template-columns:repeat(3,1fr);
     }
 
-    .strength-workspace-create{
-        grid-column:1/-1;
-        min-height:40px;
-    }
+    
 
     .strength-schedule-overview{
         grid-template-columns:1fr;
@@ -2798,701 +2770,14 @@
 }
 
 /* ==========================
-   Workout Mode
+   Plate calculator (the set-by-set screen's Plates, js/setRunner.js)
 ========================== */
-
-.strength-workout-overlay{
-    display:none;
-    position:fixed;
-    inset:0;
-    /* Above the mobile bottom tab bar (z-index:1300) so a live
-       workout session -- meant to feel like its own full-screen
-       app, not a page with the site chrome still peeking through --
-       fully covers it instead of the tab bar floating on top. */
-    z-index:1400;
-    background:var(--bg);
-    overflow:hidden;
-    --workout-accent: var(--pink);
-}
-
-.strength-workout-overlay.open{
-    display:flex;
-    flex-direction:column;
-    /* Vertical scrolling only -- no sideways drift or pinch-zoom of
-       the whole workout screen mid-set. */
-    touch-action:pan-y;
-    overscroll-behavior:none;
-}
-
-/* While a workout is open the page underneath must not scroll or
-   rubber-band (iOS lets a fixed overlay drift sideways with it). */
-html.strength-workout-open,
-html.strength-workout-open body{
-    overflow:hidden;
-    overscroll-behavior:none;
-}
-
-.strength-workout-modal{
-    position:relative;
-    display:flex;
-    flex-direction:column;
-    height:100%;
-    max-width:720px;
-    width:100%;
-    margin:0 auto;
-}
-
-.strength-workout-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    flex-shrink:0;
-    padding:14px 16px;
-    padding-top:calc(14px + env(safe-area-inset-top));
-    border-bottom:1px solid var(--border);
-    background:
-        linear-gradient(
-            135deg,
-            rgba(201,173,132,.16),
-            color-mix(in srgb, var(--pink) 14%, transparent)
-        ),
-        var(--surface);
-}
-
-.strength-workout-progress-track{
-    height:5px;
-    background:rgba(255,255,255,.06);
-}
-
-.strength-workout-progress-fill{
-    height:100%;
-    background:
-        linear-gradient(
-            90deg,
-            var(--primary),
-            var(--workout-accent)
-        );
-    transition:width .35s ease;
-}
-
-/* The name/timer block is the header's first child: let it shrink and
-   cap a long day name at two lines so it can't push the buttons
-   around or eat half the screen. */
-.strength-workout-header > :first-child{
-    flex:1;
-    min-width:0;
-}
-
-.strength-workout-day-name{
-    font-family:var(--font-display);
-    font-size:26px;
-    font-weight:400;
-    line-height:1.1;
-    letter-spacing:.03em;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-    overflow-wrap:anywhere;
-}
-
-@media (max-width:480px){
-    .strength-workout-day-name{
-        font-size:22px;
-    }
-
-    .strength-workout-finish-btn{
-        padding:10px 16px;
-    }
-}
-
-.strength-workout-timer{
-    font-family:var(--font-mono);
-    font-size:14px;
-    color:var(--primary);
-    margin-top:2px;
-}
-
-.strength-workout-header-actions{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-shrink:0;
-}
-
-.strength-workout-finish-btn{
-    background:var(--green);
-    color:#05130a;
-    border:none;
-    border-radius:var(--radius-pill);
-    padding:11px 22px;
-    font-size:14px;
-    font-weight:800;
-    cursor:pointer;
-    font-family:inherit;
-    box-shadow:0 6px 18px color-mix(in srgb, var(--green) 28%, transparent);
-    transition:transform .15s ease, box-shadow .15s ease;
-}
-
-.strength-workout-finish-btn:hover{
-    transform:translateY(-1px);
-    box-shadow:0 8px 22px color-mix(in srgb, var(--green) 36%, transparent);
-}
-
-.strength-workout-close-btn{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:rgba(255,255,255,.06);
-    border:none;
-    color:var(--text-secondary);
-    width:38px;
-    height:38px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:1.2rem;
-}
-
-.strength-workout-close-btn:hover{
-    background:color-mix(in srgb, var(--red) 20%, transparent);
-    color:var(--red);
-}
-
-.strength-workout-body{
-    flex:1;
-    min-height:0;
-    overflow-y:auto;
-    overflow-x:hidden;
-    overscroll-behavior:contain;
-    padding:14px 16px calc(120px + env(safe-area-inset-bottom));
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-/* Cards clip their own overflow, which makes their flex min-height 0
-   -- without this, a long workout squashed every card down to a
-   sliver (and the slivers stacked under each other, stealing taps). */
-.strength-workout-body > *,
-.strength-workout-group > *{
-    flex-shrink:0;
-}
-
-.strength-workout-empty{
-    text-align:center;
-    color:var(--text-secondary);
-    padding:60px 20px;
-}
-
-/* Exercise block */
-
-.strength-workout-exercise{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-left:3px solid var(--primary);
-    border-radius:16px;
-    box-shadow:0 8px 20px rgba(0,0,0,.16);
-    overflow:hidden;
-}
-
-/* Grouped (superset/circuit/warmup) card -- one connected unit
-   instead of a string of unrelated exercise cards, matching the
-   plan editor's own grouping display. */
-
-.strength-workout-group{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    padding:12px;
-    border:1px solid var(--border);
-    border-radius:18px;
-    background:rgba(255,255,255,.02);
-}
-
-.strength-workout-group .strength-workout-exercise{
-    border-left:3px solid transparent;
-    box-shadow:none;
-}
-
-.strength-workout-group-superset{
-    border-left:3px solid var(--primary);
-}
-
-.strength-workout-group-circuit{
-    border-left:3px solid var(--green);
-}
-
-.strength-workout-group-warmup{
-    border-left:3px solid var(--yellow);
-}
-
-.strength-workout-group-header{
-    display:flex;
-    align-items:baseline;
-    gap:10px;
-    padding:2px 4px;
-}
-
-.strength-workout-group-label{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    color:var(--primary);
-}
-
-.strength-workout-group-label .ui-icon{
-    width:12px;
-    height:12px;
-}
-
-.strength-workout-group-circuit .strength-workout-group-label{
-    color:var(--green);
-}
-
-.strength-workout-group-warmup .strength-workout-group-label{
-    color:var(--yellow);
-}
-
-.strength-workout-group-rounds{
-    color:var(--muted);
-    font-size:12px;
-}
-
-/* Collapsed summary row -- always visible, tap to expand. This is
-   the whole point: a day's exercises stay glanceable as a list of
-   short rows instead of every exercise's full editor being open
-   and stacked on top of each other at once. */
-
-.strength-workout-exercise-summary{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    width:100%;
-    padding:13px 14px;
-    background:none;
-    border:none;
-    color:var(--text);
-    font:inherit;
-    text-align:left;
-    cursor:pointer;
-    transition:background-color .15s ease;
-}
-
-.strength-workout-exercise-summary:hover,
-.strength-workout-exercise-summary:focus-visible{
-    background:rgba(255,255,255,.03);
-}
-
-.strength-workout-exercise-chevron{
-    flex-shrink:0;
-    display:flex;
-    color:var(--muted);
-    transition:transform .2s ease;
-}
-
-.strength-workout-exercise-chevron .ui-icon{
-    width:16px;
-    height:16px;
-}
-
-.strength-workout-exercise.expanded .strength-workout-exercise-chevron{
-    transform:rotate(180deg);
-    color:var(--workout-accent, var(--primary));
-}
-
-.strength-workout-exercise-summary-text{
-    flex:1;
-    min-width:0;
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-}
-
-.strength-workout-exercise-summary-text strong{
-    font-size:15.5px;
-    font-weight:700;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.strength-workout-mini-sets{
-    display:flex;
-    flex-wrap:nowrap;
-    gap:4px;
-    overflow:hidden;
-    -webkit-mask-image:linear-gradient(to right, black 85%, transparent 100%);
-    mask-image:linear-gradient(to right, black 85%, transparent 100%);
-}
-
-.strength-workout-mini-empty{
-    font-family:var(--font-mono);
-    font-size:12px;
-    color:var(--text-secondary);
-}
-
-.strength-workout-chip{
-    flex-shrink:0;
-    display:inline-flex;
-    align-items:center;
-    background:color-mix(in srgb, var(--set-color, var(--primary)) 16%, transparent);
-    color:var(--set-color, var(--primary));
-    font-family:var(--font-mono);
-    font-size:11.5px;
-    font-weight:700;
-    padding:3px 8px;
-    border-radius:999px;
-    white-space:nowrap;
-}
-
-.strength-workout-set-tally{
-    flex-shrink:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    min-width:34px;
-    height:26px;
-    padding:0 8px;
-    border-radius:999px;
-    background:var(--surface-light);
-    color:var(--text-secondary);
-    font-family:var(--font-mono);
-    font-size:12px;
-    font-weight:700;
-}
-
-.strength-workout-set-tally.complete{
-    background:var(--green);
-    color:#05130a;
-}
-
-.strength-workout-exercise-complete{
-    border-left-color:var(--green);
-}
-
-/* Smooth expand/collapse instead of an instant display:none/block
-   flip -- the grid-template-rows 0fr/1fr trick animates to the
-   content's real height without needing to measure it in JS. */
-
-.strength-workout-exercise-collapse{
-    display:grid;
-    grid-template-rows:0fr;
-    grid-template-columns:minmax(0, 1fr);
-    transition:grid-template-rows .25s ease;
-}
-
-.strength-workout-exercise.expanded .strength-workout-exercise-collapse{
-    grid-template-rows:1fr;
-}
-
-.strength-workout-exercise-body{
-    min-width:0;
-    min-height:0;
-    overflow:hidden;
-    padding:2px 14px 14px;
-    transition:padding .25s ease, visibility 0s linear 0s;
-}
-
-/* A 0fr row still leaves the padding showing -- a strip of the hidden
-   editor peeked out under every collapsed card. Collapse the padding
-   too, and hide it so its inputs aren't reachable by Tab. */
-.strength-workout-exercise:not(.expanded) .strength-workout-exercise-body{
-    padding-top:0;
-    padding-bottom:0;
-    visibility:hidden;
-    transition:padding .25s ease, visibility 0s linear .25s;
-}
-
-.strength-workout-prev{
-    display:flex;
-    align-items:flex-start;
-    gap:8px;
-    margin-bottom:12px;
-    padding:9px 12px;
-    background:var(--surface-light);
-    border-radius:10px;
-    min-width:0;
-}
-
-.strength-workout-prev-icon{
-    flex-shrink:0;
-    display:flex;
-    margin-top:1px;
-    color:var(--muted);
-}
-
-.strength-workout-prev-icon .ui-icon{
-    width:13px;
-    height:13px;
-}
-
-.strength-workout-prev-text{
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-    gap:4px 6px;
-    min-width:0;
-    flex:1;
-    font-size:12px;
-    line-height:1.5;
-    color:var(--text-secondary);
-    font-family:var(--font-mono);
-    overflow-wrap:break-word;
-    word-break:break-word;
-}
-
-.strength-workout-prev-label{
-    font-family:var(--font-body);
-    font-weight:700;
-    color:var(--muted);
-    margin-right:2px;
-}
-
-/* Swap panel */
-
-.strength-workout-swap-panel{
-    margin-bottom:12px;
-    padding:12px;
-    background:var(--surface-light);
-    border-radius:12px;
-}
-
-.strength-workout-swap-input{
-    margin-bottom:8px;
-}
-
-.strength-workout-swap-results{
-    max-height:220px;
-    overflow-y:auto;
-    margin-bottom:8px;
-}
-
-/* Set rows -- the main event; big, thumb-friendly */
-
-.strength-workout-sets{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    margin-bottom:14px;
-}
-
-.strength-workout-set-row{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background:var(--surface-light);
-    border-left:3px solid var(--set-color, var(--primary));
-    border-radius:14px;
-    padding:10px 10px 10px 12px;
-    flex-wrap:wrap;
-}
-
-.strength-workout-set-row.done{
-    background:color-mix(in srgb, var(--green) 8%, transparent);
-}
-
-.strength-workout-set-index{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:var(--font-mono);
-    color:#0f2019;
-    background:var(--set-color, var(--primary));
-    font-size:13px;
-    font-weight:800;
-    width:26px;
-    height:26px;
-    border-radius:999px;
-    border:none;
-    flex-shrink:0;
-    cursor:pointer;
-    padding:0;
-    transition:transform .15s ease;
-}
-
-.strength-workout-set-index:hover{
-    transform:scale(1.08);
-}
-
-.strength-workout-set-index:active{
-    transform:scale(.92);
-}
-
-.strength-workout-adjust{
-    display:flex;
-    align-items:center;
-    gap:4px;
-}
-
-/* Icons -- shared .ui-icon component (js/icons.js) used throughout
-   Workout Mode's controls instead of plain ×/✓/−/+ text characters.
-   Icon-only buttons get a larger, centered icon; icons inline with
-   button text get a smaller one with a little breathing room. */
 
 .strength-row-btn .ui-icon{
     width:11px;
     height:11px;
     margin-right:4px;
     vertical-align:-1px;
-}
-
-.strength-workout-adjust button,
-.strength-workout-done-btn,
-.strength-workout-remove-set{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.strength-workout-adjust button .ui-icon{
-    width:13px;
-    height:13px;
-}
-
-.strength-workout-done-btn .ui-icon{
-    width:18px;
-    height:18px;
-}
-
-.strength-workout-remove-set .ui-icon{
-    width:15px;
-    height:15px;
-}
-
-.strength-workout-adjust button{
-    background:var(--surface-light);
-    border:1px solid var(--border);
-    color:var(--text);
-    border-radius:999px;
-    min-width:36px;
-    height:36px;
-    font-size:12px;
-    font-weight:700;
-    font-family:inherit;
-    cursor:pointer;
-    flex-shrink:0;
-    box-shadow:0 4px 10px rgba(0,0,0,.2);
-    transition:transform .15s ease,background .15s ease,color .15s ease,border-color .15s ease;
-}
-
-.strength-workout-adjust button:hover{
-    border-color:var(--set-color, var(--primary));
-    color:var(--set-color, var(--primary));
-    transform:translateY(-1px);
-}
-
-.strength-workout-adjust button:active{
-    transform:scale(.92);
-}
-
-.strength-workout-input{
-    width:56px;
-    height:38px;
-    text-align:center;
-    background:var(--surface);
-    border:1px solid var(--border);
-    color:var(--text);
-    border-radius:9px;
-    font-family:var(--font-mono);
-    font-size:15px;
-    font-weight:700;
-}
-
-.strength-workout-input-small{
-    width:44px;
-}
-
-.strength-workout-done-btn{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:40px;
-    height:40px;
-    border-radius:999px;
-    border:1px solid var(--border);
-    background:var(--surface-light);
-    color:var(--text-secondary);
-    font-size:18px;
-    cursor:pointer;
-    flex-shrink:0;
-    margin-left:auto;
-    box-shadow:0 4px 10px rgba(0,0,0,.2);
-    transition:transform .15s ease,background .15s ease,border-color .15s ease,color .15s ease;
-}
-
-.strength-workout-done-btn:hover{
-    border-color:var(--green);
-    color:var(--green);
-    transform:translateY(-1px);
-}
-
-.strength-workout-done-btn:active{
-    transform:scale(.92);
-}
-
-.strength-workout-done-btn.checked{
-    background:var(--green);
-    border-color:var(--green);
-    color:#05130a;
-}
-
-.strength-workout-remove-set{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:34px;
-    height:34px;
-    border-radius:999px;
-    background:transparent;
-    border:1px solid transparent;
-    color:var(--muted);
-    font-size:16px;
-    cursor:pointer;
-    padding:0;
-    flex-shrink:0;
-    transition:.15s ease;
-}
-
-.strength-workout-remove-set:hover{
-    background:color-mix(in srgb, var(--red) 12%, transparent);
-    border-color:color-mix(in srgb, var(--red) 35%, transparent);
-    color:var(--red);
-}
-
-/* Footer: add set / plates / notes */
-
-.strength-workout-exercise-footer{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
-}
-
-.strength-workout-notes{
-    display:block;
-    width:100%;
-    margin-top:10px;
-    background:var(--surface-light);
-    border:1px solid var(--border);
-    color:var(--text);
-    border-radius:10px;
-    padding:9px 12px;
-    font-size:13px;
-    font-family:inherit;
-}
-
-/* Plate calculator */
-
-.strength-plate-calc{
-    margin-top:12px;
-    padding:12px;
-    background:var(--surface-light);
-    border-radius:12px;
 }
 
 .strength-plate-result strong{
@@ -3515,233 +2800,6 @@ html.strength-workout-open body{
     font-weight:800;
     padding:5px 9px;
     border-radius:8px;
-}
-
-/* Phones: one tidy grid per set -- number, weight stepper, reps
-   stepper, done -- with the remove button tucked in at the end. The
-   old rule here set the inputs to width:auto, which on a phone means
-   the browser's ~150px default: every stepper blew past the screen
-   edge and wrapped unpredictably. */
-@media (max-width:480px){
-    .strength-workout-set-row{
-        display:grid;
-        grid-template-columns:24px minmax(0, 1.25fr) minmax(0, 1fr) 36px;
-        grid-template-areas:"idx weight reps done";
-        align-items:center;
-        column-gap:6px;
-        padding:8px 8px 8px 10px;
-    }
-
-    .strength-workout-set-index{ grid-area:idx; width:24px; height:24px; }
-    .strength-workout-adjust{ grid-area:weight; gap:3px; min-width:0; }
-    .strength-workout-adjust-reps{ grid-area:reps; }
-    .strength-workout-done-btn{ grid-area:done; width:36px; height:36px; margin-left:0; }
-
-    /* Time-based sets have a single stepper: let it use both columns. */
-    .strength-workout-set-row:not(:has(.strength-workout-adjust-reps)) .strength-workout-adjust{
-        grid-column:weight-start / reps-end;
-    }
-
-    .strength-workout-adjust button{
-        min-width:0;
-        width:30px;
-        height:34px;
-        padding:0;
-        box-shadow:none;
-    }
-
-    .strength-workout-input{
-        flex:1;
-        min-width:0;
-        width:auto;
-        height:36px;
-        padding:0 2px;
-        font-size:14px;
-    }
-
-    .strength-workout-input-small{
-        width:auto;
-    }
-
-    /* The remove button becomes a small corner badge instead of a
-       fifth column that doesn't fit. */
-    .strength-workout-set-row{
-        position:relative;
-    }
-
-    .strength-workout-remove-set{
-        position:absolute;
-        top:-10px;
-        right:-6px;
-        width:22px;
-        height:22px;
-        background:var(--surface);
-        border:1px solid var(--border);
-    }
-
-    .strength-workout-remove-set .ui-icon{
-        width:11px;
-        height:11px;
-    }
-}
-
-/* Very narrow phones: weight on the first line, reps under it, so
-   neither number box gets squeezed down to a digit or two. */
-@media (max-width:350px){
-    .strength-workout-set-row{
-        grid-template-columns:24px minmax(0, 1fr) 36px;
-        grid-template-areas:
-            "idx weight done"
-            ".   reps   .";
-        row-gap:6px;
-    }
-
-    .strength-workout-set-row:not(:has(.strength-workout-adjust-reps)) .strength-workout-adjust{
-        grid-column:weight;
-    }
-}
-
-/* ==========================================
-   Rest timer -- pinned to the bottom of the
-   Workout Mode modal, slides up when a set is
-   marked done and auto-hides a few seconds
-   after it completes.
-========================================== */
-
-.strength-rest-bar{
-    position:absolute;
-    left:0;
-    right:0;
-    bottom:0;
-    background:var(--surface);
-    border-top:1px solid var(--border);
-    border-radius:20px 20px 0 0;
-    box-shadow:0 -12px 30px rgba(0,0,0,.35);
-    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
-    transform:translateY(100%);
-    transition:transform .25s ease;
-    z-index:5;
-}
-
-.strength-rest-bar.open{
-    transform:translateY(0);
-}
-
-.strength-rest-track{
-    height:5px;
-    border-radius:999px;
-    background:var(--border);
-    overflow:hidden;
-    margin-bottom:10px;
-}
-
-.strength-rest-fill{
-    height:100%;
-    width:100%;
-    background:var(--primary);
-    border-radius:999px;
-    transition:width .25s linear;
-}
-
-.strength-rest-bar.complete .strength-rest-fill{
-    background:var(--green);
-}
-
-.strength-rest-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    flex-wrap:wrap;
-}
-
-.strength-rest-info{
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-
-.strength-rest-icon{
-    display:flex;
-    color:var(--primary);
-}
-
-.strength-rest-bar.complete .strength-rest-icon{
-    color:var(--green);
-}
-
-.strength-rest-icon .ui-icon{
-    width:16px;
-    height:16px;
-}
-
-.strength-rest-label{
-    font-size:12px;
-    font-weight:700;
-    color:var(--text-secondary);
-    text-transform:uppercase;
-    letter-spacing:.06em;
-}
-
-.strength-rest-time{
-    font-family:var(--font-mono);
-    font-size:20px;
-    font-weight:800;
-    color:var(--text);
-}
-
-.strength-rest-bar.complete .strength-rest-time::after{
-    content:" \2014 Go";
-    font-size:12px;
-    font-weight:700;
-    color:var(--green);
-    text-transform:uppercase;
-}
-
-.strength-rest-actions{
-    display:flex;
-    align-items:center;
-    gap:6px;
-}
-
-.strength-rest-adjust,
-.strength-rest-skip{
-    appearance:none;
-    -webkit-appearance:none;
-    border:1px solid var(--border);
-    background:var(--surface-light);
-    color:var(--text-secondary);
-    font-family:inherit;
-    font-size:12px;
-    font-weight:700;
-    padding:8px 14px;
-    border-radius:999px;
-    cursor:pointer;
-    transition:transform .15s ease,border-color .15s ease,color .15s ease,background .15s ease;
-}
-
-.strength-rest-adjust:hover,
-.strength-rest-skip:hover{
-    border-color:var(--primary);
-    color:var(--primary);
-    transform:translateY(-1px);
-}
-
-.strength-rest-skip{
-    background:var(--surface);
-    color:var(--text);
-}
-
-@media (max-width:480px){
-    .strength-rest-row{
-        justify-content:center;
-        text-align:center;
-    }
-
-    .strength-rest-actions{
-        width:100%;
-        justify-content:center;
-    }
 }
 
 /* ==========================================
@@ -3784,4 +2842,681 @@ html.strength-workout-open body{
     .strength-summary-stats{
         grid-template-columns:repeat(2, minmax(0, 1fr));
     }
+}
+
+/* ==========================================================
+   BUILDER + PICKER REWORK (2026-10-11, after Hevy / Strong)
+   · the builder sits above the app's top bar and tab bar
+     (1300) and covers the whole phone screen; the page behind
+     doesn't scroll;
+   · "Add exercises" is docked at the bottom of the builder,
+     not floating over the page;
+   · the picker is a sheet above the builder: tap rows to tick,
+     then one "Add N exercises" / "Add as superset".
+========================================================== */
+html.strength-editor-open,
+html.strength-editor-open body{ overflow:hidden; }
+
+.strength-editor-overlay{ z-index:1350; }
+.strength-search-overlay{ z-index:1360; }
+.strength-group-overlay,
+.strength-rename-overlay,
+.strength-summary-overlay{ z-index:1370; }
+.strength-schedule-overlay{ z-index:1370; }
+.strength-rest-timer{ z-index:1380; }
+
+.strength-editor-header{ align-items:center; }
+.strength-editor-close{
+    width:40px; height:40px;
+    display:grid; place-items:center;
+    border-radius:50%;
+}
+.strength-editor-close .ui-icon, .strength-editor-close svg{ width:18px; height:18px; }
+.strength-editor-body{ padding-bottom:18px; overscroll-behavior:contain; }
+
+.strength-editor-footer{
+    flex-shrink:0;
+    padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(18,32,25,.96),rgba(14,26,20,.99));
+}
+.strength-editor-add{
+    width:100%;
+    min-height:50px;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:0; border-radius:var(--radius-pill, 999px);
+    background:var(--primary);
+    color:var(--on-primary);
+    font:800 15px var(--font-body);
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease;
+}
+.strength-editor-add:hover{ background:var(--primary-light); }
+.strength-editor-add:active{ transform:scale(.985); }
+.strength-editor-add .ui-icon svg{ width:18px; height:18px; }
+
+/* The empty workout is one big tap target */
+button.strength-empty-exercise-message{
+    width:100%;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:34px 20px;
+    background:transparent;
+    color:var(--muted);
+    font:inherit;
+    cursor:pointer;
+}
+button.strength-empty-exercise-message strong{ color:var(--primary); font-size:15px; }
+button.strength-empty-exercise-message span{ font-size:13px; }
+button.strength-empty-exercise-message:hover{ border-color:var(--primary); }
+
+/* New exercises flash once where they landed */
+.strength-exercise-block.is-new{ animation:strengthNewPulse 1.5s ease; }
+@keyframes strengthNewPulse{
+    0%,35%{ box-shadow:0 0 0 2px var(--primary), 0 0 24px color-mix(in srgb, var(--primary) 35%, transparent); }
+    100%{ box-shadow:0 0 0 0 transparent; }
+}
+
+/* Picker */
+html.strength-picker-open .strength-search-overlay{ display:flex; }
+#exerciseSearchOverlay .strength-search-title::after{ content:"Tap to pick as many as you like, then add them in one go."; font-size:12px; }
+.strength-search-close{ width:40px; height:40px; display:grid; place-items:center; border-radius:50%; cursor:pointer; }
+.strength-search-close .ui-icon svg{ width:18px; height:18px; }
+.strength-picker-heading{ margin:4px 2px 8px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+button.strength-result{
+    width:100%;
+    display:flex; align-items:center; gap:12px;
+    padding:8px 12px 8px 8px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:rgba(255,255,255,.025);
+    color:var(--text);
+    font:inherit; text-align:left;
+    cursor:pointer;
+    transition:background .12s ease, border-color .12s ease;
+}
+button.strength-result:hover{ border-color:color-mix(in srgb, var(--primary) 50%, var(--border)); }
+button.strength-result .strength-result-image{ width:46px; height:46px; flex-shrink:0; border-radius:10px; object-fit:cover; display:grid; place-items:center; background:rgba(255,255,255,.05); color:var(--muted); }
+button.strength-result .strength-result-image .ui-icon svg{ width:20px; height:20px; }
+button.strength-result .strength-result-info{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+button.strength-result .strength-result-info strong{ font-size:14px; }
+button.strength-result .strength-result-info > span{ color:var(--muted); font-size:12px; text-transform:capitalize; }
+button.strength-result .strength-result-info em{ font-style:normal; color:var(--primary); text-transform:none; }
+.strength-result-check{
+    margin-left:auto; flex-shrink:0;
+    width:28px; height:28px; border-radius:50%;
+    display:grid; place-items:center;
+    border:2px solid var(--border);
+    color:transparent;
+    transition:background .12s ease, border-color .12s ease;
+}
+.strength-result-check .ui-icon svg{ width:15px; height:15px; }
+button.strength-result.is-picked{ border-color:var(--primary); background:color-mix(in srgb, var(--primary) 12%, transparent); }
+button.strength-result.is-picked .strength-result-check{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+button.strength-result.is-added:not(.is-picked){ opacity:.75; }
+
+.strength-picker-footer{
+    flex-shrink:0;
+    display:flex; align-items:center; gap:10px;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--border);
+    background:rgba(14,26,20,.98);
+    animation:strengthFadeUp .18s ease;
+}
+.strength-picker-footer[hidden]{ display:none; }
+.strength-picker-count{ color:var(--muted); font-size:13px; margin-right:auto; }
+.strength-picker-btn{
+    min-height:46px; padding:0 18px;
+    border:0; border-radius:var(--radius-pill, 999px);
+    background:var(--primary); color:var(--on-primary);
+    font:800 14px var(--font-body); cursor:pointer;
+}
+.strength-picker-btn[hidden]{ display:none; }
+.strength-picker-btn-secondary{ background:transparent; color:var(--primary); border:1px solid var(--primary); }
+
+@media (max-width:700px){
+    /* The builder is the whole screen on a phone */
+    .strength-editor-overlay{ padding:0; }
+    .strength-editor-modal{ width:100vw; height:100dvh; max-height:none; border-radius:0; border:0; }
+    .strength-editor-header{ padding:calc(10px + env(safe-area-inset-top)) 14px 10px; }
+    .strength-editor-header p{ display:none; }
+    .strength-editor-header h2{ font-size:19px; }
+    .strength-editor-header-actions{ flex-direction:row; align-items:center; }
+    .strength-search-modal{ max-height:94dvh; }
+    .strength-picker-footer{ flex-wrap:wrap; }
+    .strength-picker-count{ flex:0 0 100%; }
+    .strength-picker-btn{ flex:1 1 0; }
+}
+
+/* ==========================================================
+   SET ROWS (2026-10-11, after Strong / Hevy): one grid row per
+   set that fits a phone. Set badge (tap: working → warm-up →
+   drop) · Previous (tap to copy) · lb · reps/sec · RPE · remove.
+   Sets come first in the open card; tools and the note after.
+========================================================== */
+.strength-sets{ display:grid; gap:6px; margin:4px 0 8px; }
+.strength-set-head,
+.strength-set-row{
+    display:grid;
+    grid-template-columns:36px minmax(52px,1fr) 66px 56px 50px 34px;
+    align-items:center;
+    gap:6px;
+}
+.strength-set-head span{ color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; text-align:center; }
+.strength-set-head span:nth-child(2){ text-align:left; padding-left:4px; }
+.strength-set-row{ padding:4px 0; border-radius:10px; }
+.strength-set-row.is-warmup{ background:color-mix(in srgb, var(--amber) 7%, transparent); }
+.strength-set-row.is-drop{ background:color-mix(in srgb, var(--orange) 7%, transparent); }
+.strength-set-badge{
+    width:34px; height:34px; border-radius:10px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.05);
+    color:var(--text);
+    font:800 14px var(--font-body);
+    cursor:pointer;
+}
+.strength-set-row.is-warmup .strength-set-badge{ color:var(--amber); border-color:color-mix(in srgb, var(--amber) 55%, transparent); }
+.strength-set-row.is-drop .strength-set-badge{ color:var(--orange); border-color:color-mix(in srgb, var(--orange) 55%, transparent); }
+.strength-set-prev{
+    min-width:0;
+    padding:6px 4px;
+    border:0; background:none;
+    color:var(--muted);
+    font:600 13px var(--font-mono, var(--font-body));
+    text-align:left;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    cursor:pointer;
+}
+button.strength-set-prev:hover{ color:var(--primary); }
+.strength-set-prev.is-empty{ cursor:default; padding-left:8px; }
+.strength-sets .strength-set-input,
+.strength-sets .strength-set-rpe{
+    width:100%;
+    min-width:0;
+    height:38px;
+    padding:0 6px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(255,255,255,.04);
+    color:var(--text);
+    font:700 15px var(--font-body);
+    text-align:center;
+}
+.strength-sets .strength-set-rpe{ font-weight:600; font-size:14px; padding:0 2px; text-align-last:center; }
+.strength-sets .strength-set-input:focus,
+.strength-sets .strength-set-rpe:focus{ border-color:var(--primary); outline:none; box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 35%, transparent); }
+.strength-sets .strength-set-remove{
+    width:32px; height:32px;
+    display:grid; place-items:center;
+    border:0; border-radius:50%;
+    background:transparent; color:var(--muted);
+    cursor:pointer;
+}
+.strength-sets .strength-set-remove:hover{ color:var(--danger); background:color-mix(in srgb, var(--danger) 12%, transparent); }
+.strength-sets .strength-set-remove svg{ width:15px; height:15px; }
+
+.strength-add-set-btn{
+    width:100%;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    min-height:40px;
+    border:1px dashed var(--border); border-radius:12px;
+    background:transparent; color:var(--primary);
+    font:700 14px var(--font-body);
+    cursor:pointer;
+}
+.strength-add-set-btn .ui-icon svg{ width:15px; height:15px; }
+.strength-add-set-btn:hover{ border-color:var(--primary); }
+
+.strength-exercise-tools{
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+    margin-top:12px;
+}
+.strength-exercise-tools .strength-mode-btn,
+.strength-exercise-tools .strength-group-btn{
+    min-height:36px; padding:0 12px;
+    border:1px solid var(--border); border-radius:999px;
+    background:transparent; color:var(--text);
+    font:600 13px var(--font-body); cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px;
+}
+.strength-exercise-tools .strength-mode-btn.active{ border-color:var(--primary); color:var(--primary); }
+.strength-exercise-tools .strength-mode-btn svg{ width:14px; height:14px; }
+.strength-rest-field{ display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:13px; }
+.strength-rest-field select{ height:36px; border-radius:999px; padding:0 10px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text); font:600 13px var(--font-body); }
+.strength-exercise-tools .strength-exercise-actions{ margin-left:auto; display:inline-flex; gap:6px; }
+.strength-exercise-editor .strength-note-field{ display:block; margin-top:10px; }
+.strength-exercise-editor .strength-note-field input{
+    width:100%; height:40px; padding:0 12px;
+    border:1px solid var(--border); border-radius:10px;
+    background:rgba(255,255,255,.03); color:var(--text);
+}
+
+@media (max-width:420px){
+    .strength-set-head,
+    .strength-set-row{ grid-template-columns:32px minmax(44px,1fr) 60px 50px 46px 30px; gap:5px; }
+    .strength-sets .strength-set-input{ font-size:16px; }   /* no iOS zoom */
+}
+
+/* ==========================================================
+   BUILDER v3 (2026-10-11): name in place, estimate, save
+   status, Schedule, grouping under one fold, rep ranges,
+   failure sets, move up / down, create-from-search.
+========================================================== */
+.strength-editor-overlay [hidden]{ display:none !important; }
+.strength-session-toolbar{ align-items:flex-start; }
+.strength-session-meta{ flex:1 1 280px; flex-direction:column; align-items:stretch; gap:8px; min-width:0; }
+.strength-name-field{ display:block; min-width:0; }
+.strength-name-field input{
+    width:100%;
+    padding:6px 10px;
+    margin-left:-10px;
+    border:1px solid transparent;
+    border-radius:10px;
+    background:transparent;
+    color:var(--text);
+    font:400 30px/1.1 var(--font-display);
+    letter-spacing:.02em;
+}
+/* st-big-input opts the name out of style.css's 16px phone rule (it's a title, well above 16px, so no iOS zoom). */
+.strength-name-field input:hover{ border-color:var(--border); }
+.strength-name-field input:focus{ border-color:var(--primary); background:rgba(255,255,255,.03); outline:none; }
+.strength-session-sub{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; }
+.strength-duration-control{ font-size:13px; }
+.strength-estimate{ color:var(--muted); font-size:13px; }
+.strength-estimate-use{
+    margin-left:4px; padding:3px 10px; min-height:28px;
+    border:1px solid var(--border); border-radius:999px;
+    background:transparent; color:var(--primary);
+    font:700 12px var(--font-body); cursor:pointer;
+}
+.strength-estimate-use:hover{ border-color:var(--primary); }
+.strength-save-status{ margin:0; color:var(--muted); font-size:12px; }
+.strength-save-status[data-state="synced"]{ color:var(--good, var(--green)); }
+.strength-save-status[data-state="offline"]{ color:var(--amber); }
+.strength-save-status[data-state="error"]{ color:var(--danger); font-weight:700; }
+.strength-session-actions{ align-items:flex-start; }
+.strength-session-actions .strength-builder-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    min-height:38px; padding:0 14px;
+    border-radius:999px; font-size:13px;
+}
+.strength-session-actions .strength-builder-btn svg{ width:15px; height:15px; }
+.strength-builder-btn-main{ border-color:var(--primary) !important; color:var(--primary) !important; }
+.strength-builder-btn:disabled{ opacity:.45; cursor:not-allowed; }
+.strength-more-actions{ position:relative; }
+.strength-more-actions > summary{ list-style:none; }
+.strength-more-actions > summary::-webkit-details-marker{ display:none; }
+.strength-more-actions-list{
+    display:flex; flex-wrap:wrap; gap:6px;
+    margin-top:8px;
+}
+
+.strength-set-head-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:2px;
+    min-height:28px; padding:0 4px;
+    border:0; border-radius:8px;
+    background:none; color:var(--primary);
+    font:700 11px var(--font-body); letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer; white-space:nowrap;
+}
+.strength-set-head-btn svg{ width:12px; height:12px; }
+.strength-sets.has-range .strength-set-head,
+.strength-sets.has-range .strength-set-row{ grid-template-columns:36px minmax(44px,1fr) 62px 92px 50px 34px; }
+.strength-set-range{ display:grid; grid-template-columns:1fr 10px 1fr; align-items:center; text-align:center; color:var(--muted); min-width:0; }
+.strength-set-row.is-failure{ background:color-mix(in srgb, var(--red) 7%, transparent); }
+.strength-set-row.is-failure .strength-set-badge{ color:var(--red); border-color:color-mix(in srgb, var(--red) 55%, transparent); }
+
+.strength-exercise-tools .strength-icon-btn{ width:38px; height:38px; display:inline-grid; place-items:center; }
+.strength-exercise-tools .strength-icon-btn:disabled{ opacity:.3; cursor:default; }
+
+.strength-search-empty p{ margin:0 0 10px; }
+.strength-search-empty .strength-picker-btn{ margin:4px 4px 0 0; }
+.strength-create-row{
+    width:100%;
+    display:flex; align-items:center; gap:8px;
+    margin-top:8px; padding:12px;
+    border:1px dashed var(--border); border-radius:12px;
+    background:transparent; color:var(--primary);
+    font:700 14px var(--font-body); text-align:left; cursor:pointer;
+}
+.strength-create-row svg{ width:15px; height:15px; }
+.strength-create-row:hover{ border-color:var(--primary); }
+
+
+@media (max-width:420px){
+    .strength-sets.has-range .strength-set-head,
+    .strength-sets.has-range .strength-set-row{ grid-template-columns:30px minmax(36px,1fr) 54px 84px 44px 28px; gap:4px; }
+    .strength-name-field input{ font-size:26px; }
+    .strength-session-actions .strength-builder-btn{ flex:1 1 auto; justify-content:center; }
+}
+
+/* ==========================================================
+   UNITS (2026-10-11): lb / kg and RPE / RIR column heads are
+   buttons; bodyweight exercises; the unit beside workout mode's
+   weight box; the bar under the plate math.
+========================================================== */
+.strength-set-head .strength-set-head-btn{ justify-self:center; }
+
+.strength-plate-bar{ display:block; margin-top:2px; color:var(--muted); font-size:12px; }
+
+/* ==========================================================
+   PROGRESS (2026-10-11): Strength → Progress, every lift over
+   time from strength-history (js/strengthProgressView.js).
+========================================================== */
+.strength-workspace-nav{ grid-template-columns:repeat(4,minmax(0,1fr)) auto; }
+@media (max-width:850px){ .strength-workspace-nav{ grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media (max-width:640px){ .strength-workspace-nav{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Finish screen: an optional Share workout (js/sessionShare.js) */
+.strength-summary-share{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:14px 0 4px; min-height:44px; }
+.strength-summary-share svg{ width:18px; height:18px; }
+
+/* ==========================================================
+   APP LAYOUT (2026-10-11): Workouts first, one segmented tab
+   bar, workout cards with a big Start and a ⋮ sheet
+   (js/strengthSchedule.js renderMyWorkouts / openWorkoutMenu).
+========================================================== */
+
+.strength-page [hidden]{ display:none !important; }
+
+.strength-workspace .strength-workspace-nav{
+    display:flex;
+    gap:4px;
+    padding:4px;
+    margin-bottom:16px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill);
+    background:var(--surface);
+}
+
+.strength-workspace .strength-workspace-tab{
+    flex:1 1 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+    min-height:40px;
+    padding:8px 6px;
+    border:0;
+    border-radius:var(--radius-pill);
+    background:transparent;
+    color:var(--text-secondary);
+    font-size:14px;
+    font-weight:700;
+    text-align:center;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.strength-workspace .strength-workspace-tab:hover{ color:var(--text); }
+
+.strength-workspace .strength-workspace-tab.active{
+    background:var(--primary);
+    color:var(--on-primary);
+}
+
+/* My Workouts: the cards are the surfaces, not a panel around them. */
+.strength-myworkouts-panel.st-mine{
+    padding:0;
+    border:0;
+    background:none;
+}
+
+.st-mine-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.st-mine-head h2{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--font-display);
+    font-size:30px;
+    font-weight:400;
+    letter-spacing:.5px;
+    line-height:1;
+}
+
+.st-mine-count{
+    min-width:24px;
+    padding:3px 8px;
+    border-radius:var(--radius-pill);
+    background:color-mix(in srgb, var(--primary) 16%, transparent);
+    color:var(--primary-light, var(--primary));
+    font-family:var(--font-body, inherit);
+    font-size:13px;
+    font-weight:800;
+    text-align:center;
+    letter-spacing:0;
+}
+
+.st-mine-count:empty{ display:none; }
+
+.st-mine-new{ flex-shrink:0; }
+
+.strength-myworkouts-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
+    gap:12px;
+}
+
+.st-card{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:var(--surface);
+    overflow:hidden;
+    flex-shrink:0;
+    transition:border-color .15s ease;
+}
+
+.st-card:hover{ border-color:color-mix(in srgb, var(--primary) 45%, transparent); }
+
+.st-card-body{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:4px;
+    width:100%;
+    padding:16px 16px 10px;
+    border:0;
+    background:none;
+    color:var(--text);
+    text-align:left;
+    cursor:pointer;
+}
+
+.st-card-name{
+    font-size:18px;
+    font-weight:800;
+    line-height:1.25;
+    overflow-wrap:anywhere;
+}
+
+.st-card-preview{
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    color:var(--text-secondary);
+    font-size:14px;
+    line-height:1.4;
+}
+
+.st-card-more-count{ color:var(--muted); white-space:nowrap; }
+
+.st-card-meta{
+    color:var(--muted);
+    font-size:13px;
+}
+
+.st-card-when{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 12px;
+    margin-top:4px;
+    color:var(--text-secondary);
+    font-size:13px;
+}
+
+.st-card-next{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    color:var(--primary);
+    font-weight:700;
+}
+
+.st-card-next .ui-icon{ width:14px; height:14px; }
+
+.st-card-actions{
+    display:flex;
+    gap:8px;
+    margin-top:auto;
+    padding:4px 12px 12px;
+}
+
+.st-card-start{
+    flex:1;
+    min-height:46px;
+    font-size:15px;
+}
+
+.st-card-menu{
+    flex:0 0 46px;
+    width:46px;
+    height:46px;
+}
+
+/* Empty: one clear way in. */
+.st-mine-empty{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:36px 20px;
+    border:1px dashed var(--border);
+    border-radius:18px;
+    color:var(--text-secondary);
+    text-align:center;
+}
+
+.st-mine-empty strong{ color:var(--text); font-size:18px; }
+
+.st-mine-empty-icon{
+    display:grid;
+    place-items:center;
+    width:56px;
+    height:56px;
+    border-radius:16px;
+    background:color-mix(in srgb, var(--orange) 16%, transparent);
+    border:1px solid color-mix(in srgb, var(--orange) 32%, transparent);
+    color:var(--orange);
+}
+
+.st-mine-empty-icon .ui-icon{ width:26px; height:26px; }
+
+.st-mine-empty-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px;
+    margin-top:8px;
+}
+
+/* The ⋮ sheet */
+.st-sheet{ width:min(380px, calc(100vw - 32px)); }
+
+.st-sheet-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:14px 14px 6px 20px;
+}
+
+.st-sheet-head strong{
+    min-width:0;
+    font-size:17px;
+    overflow-wrap:anywhere;
+}
+
+.st-sheet-list{
+    display:flex;
+    flex-direction:column;
+    padding:4px 10px 14px;
+}
+
+.st-sheet-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    width:100%;
+    min-height:52px;
+    padding:0 12px;
+    border:0;
+    border-radius:12px;
+    background:none;
+    color:var(--text);
+    font-size:16px;
+    font-weight:600;
+    text-align:left;
+    cursor:pointer;
+}
+
+.st-sheet-row:hover,
+.st-sheet-row:focus-visible{ background:color-mix(in srgb, var(--primary) 10%, transparent); }
+
+.st-sheet-row .ui-icon{ width:20px; height:20px; color:var(--primary); flex-shrink:0; }
+
+.st-sheet-row.is-danger,
+.st-sheet-row.is-danger .ui-icon{ color:var(--danger); }
+
+@media (max-width:640px){
+    /* A smaller header so the workouts start near the top of a phone. */
+    .strength-page{ padding:18px 16px 80px; }
+    .strength-hero{
+        align-items:center;
+        gap:10px;
+        margin-bottom:14px;
+        flex-wrap:nowrap;
+    }
+    .strength-hero .sb-brand-tile{ display:none; }
+    .strength-hero-text h1{ font-size:38px; margin-bottom:4px; }
+    .strength-week-context{
+        display:-webkit-box;
+        -webkit-line-clamp:2;
+        -webkit-box-orient:vertical;
+        overflow:hidden;
+        font-size:13px;
+        line-height:1.4;
+    }
+    .strength-hero-stat{ flex-direction:column; align-items:flex-end; gap:0; }
+    .strength-hero-number{ font-size:32px; }
+    .strength-hero-unit{ font-size:12px; white-space:nowrap; }
+
+    .strength-workspace .strength-workspace-tab{ font-size:13px; padding:8px 2px; }
+
+    .st-mine-head h2{ font-size:26px; }
+    .strength-myworkouts-list{ grid-template-columns:1fr; }
+
+    .st-sheet{
+        width:100%;
+        max-width:100%;
+        margin:auto 0 0;
+        border-radius:20px 20px 0 0;
+        border-bottom:0;
+        padding-bottom:env(safe-area-inset-bottom);
+    }
+}
+
+@media (max-width:360px){
+    .strength-workspace .strength-workspace-tab{ font-size:12px; }
+    .st-mine-new{ padding-inline:12px; }
 }

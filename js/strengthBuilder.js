@@ -16,9 +16,11 @@
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
 import { sanitizeStrength, exerciseLabels, strengthSummary, MAX_EXERCISES } from "./strengthWorkout.js";
 import { icon } from "./icons.js";
+import { lastLiftWords } from "./strengthProgress.js";
 
 const VIDEOS_KEY = "coach-exercise-videos";
 const REST_CHOICES = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
+const num = n => (Math.round(Number(n) * 10) / 10).toLocaleString("en-US");
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const restLabel = s => (!s ? "No rest" : s < 60 ? `${s} sec` : s % 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : `${s / 60} min`);
 
@@ -73,7 +75,22 @@ export function rememberVideos(clean) {
     } catch {}
 }
 
-function exerciseHtml(ex, i, count, label) {
+// What the client last logged for this exercise on your plan (lifts = lastLifts(...) in
+// js/strengthProgress.js, keyed by lower-case name). Weights in lb, like the builder.
+export function lastLiftHtml(lift) {
+    const w = lastLiftWords(lift);
+    if (!w) return "";
+    const sets = w.sets > 1 ? ` (${w.sets} sets)` : "";
+    const e1 = lift.e1rm ? ` · est. 1RM ${num(Math.round(lift.e1rm))} lb` : "";
+    const use = lift.mode !== "time" && lift.top?.weight
+        ? ` <button type="button" class="sb-btn sb-btn-tertiary sb-ex-use" data-act="sb-use-last" data-weight="${esc(lift.top.weight)}">Use ${num(lift.top.weight)} lb</button>`
+        : "";
+    return `<span class="sb-ex-last-text">${icon("clock")} Last time${w.when ? ` · ${esc(w.when)}` : ""}: <strong>${esc(w.what)}</strong>${esc(sets)}${esc(e1)}</span>${use}`;
+}
+
+const liftFor = (lifts, name) => lifts?.[String(name || "").trim().toLowerCase()] || null;
+
+function exerciseHtml(ex, i, count, label, lifts) {
     const rest = Number(ex.restSec ?? 90);
     const rests = REST_CHOICES.includes(rest) ? REST_CHOICES : [...REST_CHOICES, rest].sort((a, b) => a - b);
     return `
@@ -92,6 +109,7 @@ function exerciseHtml(ex, i, count, label) {
                 <label>In reserve<input data-sb="exercises.${i}.rir" type="number" min="0" max="10" value="${esc(ex.rir ?? "")}" placeholder="—"></label>
                 <label>Rest<select data-sb="exercises.${i}.restSec">${rests.map(s => `<option value="${s}"${s === rest ? " selected" : ""}>${restLabel(s)}</option>`).join("")}</select></label>
             </div>
+            <div class="sb-ex-last" data-sb-last="${i}"${liftFor(lifts, ex.name) ? "" : " hidden"}>${lastLiftHtml(liftFor(lifts, ex.name))}</div>
             <div class="sb-ex-row sb-ex-extra">
                 ${i > 0 ? `<label class="sb-ex-pair"><input data-sb="exercises.${i}.superset" type="checkbox"${ex.superset ? " checked" : ""}> Superset with the one above</label>` : ""}
                 <input data-sb="exercises.${i}.note" type="text" maxlength="200" value="${esc(ex.note)}" placeholder="Coach note (e.g. leave 3 reps in the tank)" aria-label="Exercise ${i + 1} note">
@@ -100,7 +118,7 @@ function exerciseHtml(ex, i, count, label) {
         </div>`;
 }
 
-export function strengthBuilderHtml(raw) {
+export function strengthBuilderHtml(raw, { lifts = null } = {}) {
     const clean = sanitizeStrength(raw);
     const exercises = raw.exercises || [];
     const labels = exerciseLabels(exercises.map((e, i) => ({ superset: Boolean(e.superset) && i > 0 })));
@@ -118,12 +136,21 @@ export function strengthBuilderHtml(raw) {
             </div>
             <label class="wb-field">Goal<input data-sb="goal" type="text" maxlength="120" value="${esc(raw.goal)}" placeholder="Strength + running support"></label>
             <label class="wb-field">Coach notes<textarea data-sb="notes" rows="2" maxlength="400" placeholder="Leave reps in the tank. Don't chase a max today.">${esc(raw.notes)}</textarea></label>
-            ${exercises.map((ex, i) => exerciseHtml(ex, i, exercises.length, labels[i])).join("")}
+            ${exercises.map((ex, i) => exerciseHtml(ex, i, exercises.length, labels[i], lifts)).join("")}
             ${exercises.length < MAX_EXERCISES ? `<button type="button" class="sb-btn sb-btn-tertiary wb-add" data-act="sb-add-ex">${icon("plus")} Add an exercise</button>` : ""}
             <div class="wb-summary" data-sb-summary>${strengthSummaryHtml(clean)}</div>
             <button type="button" class="sb-btn sb-btn-tertiary wb-clear" data-act="sb-clear">Remove strength session</button>
             <datalist id="sbExerciseNames">${EXERCISE_NAMES.map(n => `<option value="${esc(n)}"></option>`).join("")}</datalist>
         </div>`;
+}
+
+// Refresh one exercise's "Last time" line after its name changes.
+export function updateLastLift(exEl, lifts) {
+    const box = exEl?.querySelector("[data-sb-last]");
+    if (!box) return;
+    const lift = liftFor(lifts, exEl.querySelector(".sb-ex-name")?.value);
+    box.innerHTML = lastLiftHtml(lift);
+    box.hidden = !lift;
 }
 
 export function strengthSummaryHtml(clean) {

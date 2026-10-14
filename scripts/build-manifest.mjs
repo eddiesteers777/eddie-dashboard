@@ -37,6 +37,8 @@ export function precacheFiles() {
         ...m.pages, ...m.partials, ...m.scripts, ...m.styles,
         "manifest.json",
         ...list("fonts", ".woff2"),
+        // The fueling PDF's fonts (scripts/build-pdf-fonts.py), so a PDF made offline still looks like Southbound.
+        ...list("fonts/pdf", ".ttf"),
         ...list("brand", ".svg"),
         ...list("icons", /\.(png|svg)$/).filter(f => f !== "icons/og-image.png"),
         ...list("emoji", ".svg"),

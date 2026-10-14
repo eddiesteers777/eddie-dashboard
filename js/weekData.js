@@ -117,7 +117,13 @@ export function fuelContext() {
         try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
     };
     const plans = read("fueling-plans", []);
-    return { library: read("fueling-library", []), profile: profileFromPlans(Array.isArray(plans) ? plans : []), hasProfile: Array.isArray(plans) && plans.some(p => p?.session) };
+    const fuelingProfile = read("fueling-profile", null);
+    return {
+        library: read("fueling-library", []),
+        profile: profileFromPlans(Array.isArray(plans) ? plans : [], fuelingProfile),
+        hasProfile: (Array.isArray(plans) && plans.some(p => p?.session)) || Object.keys(fuelingProfile?.fields || {}).length > 0,
+        unit: read("fueling-units", {})?.fluid === "ml" ? "ml" : "oz"
+    };
 }
 
 // A plan run's fuel plan (null for anything that isn't a planned run).

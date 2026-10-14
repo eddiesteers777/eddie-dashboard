@@ -58,6 +58,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "strength-workout-library",
     "strength-workout-favorites",
     "strength-schedule",
+    "strength-settings",
     "gear-shoes",
     "strength-history",
     "running-log",
@@ -73,6 +74,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coach-queue-done",
     "plan-coach-notes",
     "profile-checks",
+    "workout-shares",
     "sb-email-outbox",
     "sb-plan-release-day"
 ];
@@ -80,7 +82,9 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
 const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
     "nutrition-",
     "fueling-",
-    "cross-training-"
+    "cross-training-",
+    "workout-session-",
+    "sb-draft:"   // unsent check-in / workout-log words (js/formDraft.js): device-only
 ];
 
 const ACCOUNT_SESSION_STORAGE_KEYS = [
@@ -220,6 +224,17 @@ export async function login() {
     } catch (error) {
 
         console.error("Login Error:", error);
+
+        // Say why, unless the person just closed the Google window themselves.
+        // Imported when needed so sign-in code carries no UI on its own.
+        try {
+            const [{ signInFailureMessage }, { toast }] = await Promise.all([
+                import("./signInErrors.js"),
+                import("./ui.js")
+            ]);
+            const message = signInFailureMessage(error);
+            if (message) toast(message, { type: "error" });
+        } catch { /* the message is a courtesy; failing to show it changes nothing */ }
 
         return false;
 

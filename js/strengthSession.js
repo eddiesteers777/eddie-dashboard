@@ -29,8 +29,11 @@ import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effo
 import { parseDuration, formatDuration } from "./runWorkout.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
+import { runSets } from "./setRunner.js";
+import { hasHowTo } from "./exerciseMuscles.js";
 import { icon } from "./icons.js";
 import { renderEmojiText } from "./emoji.js";
+import { historyFromResults, mergeHistories, lastLifts, lastLiftWords, recordsOn } from "./strengthProgress.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -39,7 +42,36 @@ const RPE_WORDS = EFFORT_WORDS;
 const savedScale = r => logScale(r?.updatedAt || r?.createdAt || (r?.date ? `${r.date}T12:00:00Z` : null));
 const formRpe = r => (r?.rpe ? toCr10(r.rpe, savedScale(r)) : null);
 
-const state = { program: null, day: null, week: null, weekIndex: 0, lift: null, result: null, user: null, date: "" };
+const state = { program: null, day: null, week: null, weekIndex: 0, lift: null, result: null, user: null, date: "", lifts: {}, results: [] };
+
+// What they lifted before this day: their logs on any coach plan + their own Strength page sessions.
+function liftHistory(results) {
+    let own = {};
+    try { own = JSON.parse(localStorage.getItem("strength-history") || "{}") || {}; } catch {}
+    return mergeHistories(own, historyFromResults(results));
+}
+function liftsBefore(results, date) {
+    return lastLifts(liftHistory(results), { before: date });
+}
+
+// Records this session set (against everything logged before it), for the result card.
+function recordsHtml(result) {
+    if (result?.status !== "completed") return "";
+    const others = state.results.filter(r => !(r.planId === result.planId && r.date === result.date && isStrengthResult(r)));
+    const recs = recordsOn(liftHistory([...others, { ...result, kind: "strength" }]), state.date);
+    if (!recs.length) return "";
+    return `
+        <div class="st-records" role="status">
+            <strong>${icon("trophy")} ${recs.length === 1 ? "New record" : `${recs.length} new records`}</strong>
+            <ul>${recs.map(r => `<li><b>${esc(r.name)}</b> ${esc(r.line)}</li>`).join("")}</ul>
+        </div>`;
+}
+
+function lastTimeText(name) {
+    const w = lastLiftWords(state.lifts[String(name || "").trim().toLowerCase()]);
+    if (!w) return "";
+    return `Last time${w.when ? ` · ${w.when}` : ""}: ${w.what}${w.sets > 1 ? ` (${w.sets} sets)` : ""}`;
+}
 
 const coachName = () => state.program.coachName || "your coach";
 const hydrate = () => import("./icons.js").then(m => m.hydrate());
@@ -61,9 +93,10 @@ function exercisesHtml(lift) {
                 <div class="st-ex">
                     <span class="st-ex-num">${esc(labels[i])}</span>
                     <div class="st-ex-body">
-                        <div class="st-ex-top"><strong>${esc(ex.name)}</strong>${demoLink(ex)}</div>
+                        <div class="st-ex-top"><strong>${esc(ex.name)}</strong>${demoLink(ex)}${hasHowTo(ex.name) ? `<button type="button" class="wo-howto st-howto" data-howto="${esc(ex.name)}" data-video="${esc(ex.video || "")}" data-note="${esc(ex.note || "")}">${icon("play")} How to</button>` : ""}</div>
                         <span class="st-ex-rx">${esc(setsText(ex))}</span>
                         ${targetText(ex) ? `<span class="st-ex-target">${esc(targetText(ex))}${group.length > 1 && k === group.length - 1 ? " after each round" : ""}</span>` : ""}
+                        ${lastTimeText(ex.name) ? `<span class="st-ex-last">${icon("clock")} ${esc(lastTimeText(ex.name))}</span>` : ""}
                         ${ex.note ? `<p class="st-ex-note">${esc(ex.note)}</p>` : ""}
                     </div>
                 </div>`;
@@ -96,11 +129,12 @@ function resultHtml(result) {
                 <div><span>Time</span><strong>${result.durationSec ? formatDuration(result.durationSec) : "—"}</strong></div>
                 <div><span>Effort</span><strong>${result.rpe ? `${result.rpe}/10` : "—"}</strong>${result.rpe ? `<small>${esc(effortWords(result.rpe, savedScale(result)))}</small>` : ""}</div>
             </div>
+            ${recordsHtml(result)}
             ${strengthTableHtml(cmp)}
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
             ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
             ${coachReplyHtml(result)}
-            <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button></div>
+            <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button><button type="button" class="sb-btn sb-btn-primary" data-act="share-result">${icon("upload")} Share workout</button></div>
         </section>`;
 }
 
@@ -150,149 +184,46 @@ function render() {
 }
 
 // ---------- Session mode ----------
-
-let wakeLock = null;
+// The set-by-set screen is shared with the Strength page's Start (js/setRunner.js).
 
 async function startSession() {
-    const steps = sessionSteps(state.lift);
-    if (!steps.length) return;
+    const order = sessionSteps(state.lift);
+    if (!order.length) return;
     const actual = blankActual(state.lift);
     const labels = exerciseLabels(state.lift.exercises);
-    const started = Date.now();
-    let index = 0;
-    let resting = null;   // { until, next }
-    let timer = null;
-
-    const overlay = document.createElement("div");
-    overlay.className = "wo-mode st-mode";
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-label", "Strength session");
-    document.body.appendChild(overlay);
-    document.body.classList.add("wo-mode-open");
-    try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { wakeLock = null; }
-
-    const doneCount = () => actual.reduce((n, ex) => n + ex.sets.filter(s => s.done).length, 0);
-    const top = () => `
-        <div class="wo-mode-top">
-            <span>Set ${index + 1} of ${steps.length}</span>
-            <span>${formatDuration(Math.floor((Date.now() - started) / 1000)) || "0:00"} total</span>
-            <button type="button" class="wo-mode-close" data-mode="end" aria-label="End session">${icon("close")}</button>
-        </div>
-        <div class="wo-mode-progress"><span style="width:${Math.round((doneCount() / steps.length) * 100)}%"></span></div>`;
-
-    const stepHtml = () => {
-        const step = steps[index];
+    const steps = order.map(step => {
         const ex = state.lift.exercises[step.ex];
         const set = actual[step.ex].sets[step.set - 1];
-        const next = steps[index + 1];
-        return `
-            ${top()}
-            <div class="wo-mode-main phase-work st-mode-main">
-                <span class="wo-mode-phase">${esc(labels[step.ex])} · Set ${step.set} of ${step.of}</span>
-                <h2>${esc(ex.name)}</h2>
-                <span class="wo-mode-target">${esc(ex.reps)}${ex.weight ? ` @ ${ex.weight} lb` : ""}${ex.rpe ? ` · RPE ${ex.rpe}` : ""}${Number.isInteger(ex.rir) ? ` · ${ex.rir} in reserve` : ""}</span>
-                ${ex.note ? `<p class="st-mode-note">${esc(ex.note)}</p>` : ""}
-                <div class="st-mode-inputs">
-                    <label>Weight (lb)<input class="st-big-input" type="number" inputmode="decimal" min="0" max="2000" step="2.5" data-in="weight" value="${esc(set.weight ?? "")}" placeholder="—"></label>
-                    <label>Reps<input class="st-big-input" type="number" inputmode="numeric" min="0" max="1000" data-in="reps" value="${esc(set.reps ?? "")}"></label>
-                </div>
-                ${demoLink(ex)}
-            </div>
-            <p class="wo-mode-next">${next ? `Next: ${esc(state.lift.exercises[next.ex].name)} · set ${next.set}${step.restAfter ? ` after ${restText(step.restAfter)} rest` : ""}` : "Last set"}</p>
-            <div class="wo-mode-actions">
-                <button type="button" class="sb-btn sb-btn-secondary" data-mode="skip">Skip set</button>
-                <button type="button" class="sb-btn sb-btn-primary" data-mode="done">${icon("check")} ${next ? "Done set" : "Finish"}</button>
-            </div>`;
-    };
-
-    const restHtml = () => {
-        const left = Math.ceil((resting.until - Date.now()) / 1000);
-        const next = steps[index];
-        const ex = state.lift.exercises[next.ex];
-        return `
-            ${top()}
-            <div class="wo-mode-main phase-recovery">
-                <span class="wo-mode-phase">Rest</span>
-                <span class="wo-mode-clock${left <= 0 ? " is-over" : ""}" aria-live="off">${left > 0 ? formatDuration(left) || "0:00" : "Go!"}</span>
-                <span class="wo-mode-clock-label">${left > 0 ? "until your next set" : "rest is up"}</span>
-            </div>
-            <p class="wo-mode-next">Next: ${esc(labels[next.ex])} ${esc(ex.name)} · set ${next.set} of ${next.of} · ${esc(ex.reps)}${ex.weight ? ` @ ${ex.weight} lb` : ""}</p>
-            <div class="wo-mode-actions">
-                <button type="button" class="sb-btn sb-btn-secondary" data-mode="more">+30 sec</button>
-                <button type="button" class="sb-btn sb-btn-primary" data-mode="go">Next set ${icon("chevronRight")}</button>
-            </div>`;
-    };
-
-    let buzzed = false;
-    const paint = () => {
-        if (resting && !buzzed && Date.now() >= resting.until) {
-            buzzed = true;
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-        }
-        // Don't rebuild the inputs under the athlete's thumb every second.
-        if (!resting && overlay.querySelector("[data-in]")) {
-            const clock = overlay.querySelector(".wo-mode-top span:nth-child(2)");
-            if (clock) clock.textContent = `${formatDuration(Math.floor((Date.now() - started) / 1000)) || "0:00"} total`;
-            return;
-        }
-        overlay.innerHTML = resting ? restHtml() : stepHtml();
-    };
-
-    const close = () => {
-        clearInterval(timer);
-        overlay.remove();
-        document.body.classList.remove("wo-mode-open");
-        wakeLock?.release?.().catch(() => {});
-        wakeLock = null;
-    };
-
-    const finish = () => {
-        const total = Math.floor((Date.now() - started) / 1000);
-        close();
-        openLogForm({ actual, durationSec: total });
-    };
-
-    const advance = () => {
-        const step = steps[index];
-        index++;
-        if (index >= steps.length) return finish();
-        if (step.restAfter) { resting = { until: Date.now() + step.restAfter * 1000 }; buzzed = false; }
-        overlay.innerHTML = resting ? restHtml() : stepHtml();
-    };
-
-    overlay.addEventListener("click", async event => {
-        const btn = event.target.closest("[data-mode]");
-        if (!btn) return;
-        const what = btn.dataset.mode;
-        if (what === "done" || what === "skip") {
-            const step = steps[index];
-            const set = actual[step.ex].sets[step.set - 1];
-            if (what === "done") {
-                const w = overlay.querySelector('[data-in="weight"]').value;
-                const r = overlay.querySelector('[data-in="reps"]').value;
-                set.weight = w === "" ? null : Number(w);
-                set.reps = r === "" ? repsNumber(state.lift.exercises[step.ex].reps) : Number(r);
-                set.done = true;
-                // The next set of this exercise starts from what they just lifted.
-                const later = actual[step.ex].sets[step.set];
-                if (later && !later.done && set.weight) later.weight = set.weight;
-            } else {
-                set.done = false;
-            }
-            return advance();
-        }
-        if (what === "more" && resting) { resting.until += 30000; buzzed = false; return paint(); }
-        if (what === "go") { resting = null; overlay.innerHTML = stepHtml(); return; }
-        if (what === "end") {
-            if (!(await sbConfirm(doneCount() ? "What you've done so far goes into the log." : "You can log it afterwards.", { title: "End the session?", confirmLabel: "End session", cancelLabel: "Keep going" }))) return;
-            if (doneCount()) return finish();
-            close();
-        }
+        return {
+            ...step,
+            phase: `${labels[step.ex]} · Set ${step.set} of ${step.of}`,
+            name: ex.name,
+            label: labels[step.ex],
+            setNo: step.set,
+            target: `${ex.reps}${ex.weight ? ` @ ${ex.weight} lb` : ""}${ex.rpe ? ` · RPE ${ex.rpe}` : ""}${Number.isInteger(ex.rir) ? ` · ${ex.rir} in reserve` : ""}`,
+            targetShort: `${ex.reps}${ex.weight ? ` @ ${ex.weight} lb` : ""}`,
+            last: lastTimeText(ex.name),
+            note: ex.note || "",
+            extra: demoLink(ex),
+            video: ex.video || "",
+            carry: `ex${step.ex}`,
+            inputs: [
+                { key: "weight", label: "Weight (lb)", value: set.weight ?? "", placeholder: "—", inputmode: "decimal", step: "2.5", min: 0, max: 2000 },
+                { key: "reps", label: "Reps", value: set.reps ?? "", inputmode: "numeric", step: "1", min: 0, max: 1000 }
+            ]
+        };
     });
-
-    overlay.innerHTML = stepHtml();
-    timer = setInterval(() => { if (resting) overlay.innerHTML = restHtml(); else paint(); }, 1000);
+    await runSets({
+        steps,
+        onDone(step, got) {
+            const set = actual[step.ex].sets[step.set - 1];
+            set.weight = got.weight === "" ? null : Number(got.weight);
+            set.reps = got.reps === "" ? repsNumber(state.lift.exercises[step.ex].reps) : Number(got.reps);
+            set.done = true;
+        },
+        onSkip(step) { actual[step.ex].sets[step.set - 1].done = false; },
+        onFinish({ durationSec }) { openLogForm({ actual, durationSec }); }
+    });
 }
 
 // ---------- Log it ----------
@@ -438,7 +369,8 @@ function openLogForm({ actual = null, durationSec = null } = {}) {
             }, state.result);
             d.close();
             render();
-            toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : `${state.lift.title} logged. Nice work.`);
+            const newRecords = skipped ? 0 : document.querySelectorAll(".st-records li").length;
+            toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : newRecords ? `${state.lift.title} logged. ${newRecords === 1 ? "A new record" : `${newRecords} new records`}!` : `${state.lift.title} logged. Nice work.`);
         } catch (error) {
             console.error("Saving the session failed:", error);
             errorEl.textContent = friendlyError(error, "save that");
@@ -455,10 +387,21 @@ export async function mountStrengthSession({ found, date, user, openLog }) {
     Object.assign(state, found, { lift: found.day.strength, date, user });
     document.title = `${state.lift.title} | Southbound`;
     $("woBody").addEventListener("click", event => {
+        const how = event.target.closest("[data-howto]");
+        if (how) {
+            import("./exerciseDemoSheet.js").then(({ openExerciseDemo }) => openExerciseDemo(how.dataset.howto, { note: how.dataset.note, video: how.dataset.video }))
+                .catch(() => toast("Couldn't open the demo. Check your connection and try again.", { type: "error" }));
+            return;
+        }
         const btn = event.target.closest("[data-act]");
         if (!btn) return;
         if (btn.dataset.act === "start") startSession();
         if (btn.dataset.act === "log") openLogForm();
+        if (btn.dataset.act === "share-result" && state.result) {
+            Promise.all([import("./completedSessions.js"), import("./sessionShare.js")])
+                .then(([{ sessionFromResult }, { shareSession }]) => { const s = sessionFromResult(state.result); if (s) shareSession(s); })
+                .catch(() => toast("Couldn't open the share card. Check your connection and try again.", { type: "error" }));
+        }
         if (btn.dataset.act === "change") {
             import("./changeRequestDialog.js").then(({ openChangeRequestDialog }) => openChangeRequestDialog({
                 coach: { coachUid: state.program.coachUid, coachName: state.program.coachName },
@@ -466,10 +409,13 @@ export async function mountStrengthSession({ found, date, user, openLog }) {
             }));
         }
     });
+    state.lifts = liftsBefore([], date);
     render();
     try {
-        const results = await listMyResults(state.program.coachPlanId);
-        state.result = results.find(r => r.date === date && isStrengthResult(r)) || null;
+        const results = await listMyResults();
+        state.result = results.find(r => r.planId === state.program.coachPlanId && r.date === date && isStrengthResult(r)) || null;
+        state.results = results;
+        state.lifts = liftsBefore(results, date);
     } catch (error) {
         console.warn("Southbound: workout results unavailable.", error?.code || error);
     }

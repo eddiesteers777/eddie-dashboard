@@ -46,9 +46,15 @@ export function progressHighlights({ progress, access, attendance = null, streak
         out.push({ key: "checkins", label: "Check-ins", value: `${c.count || 0}`, detail: c.average ? `Average ${c.average}/5` : "Rate your week each check-in" });
     }
     if (can("habits") && streak != null) {
-        out.push({ key: "streak", label: "Habit streak", value: `${streak}`, detail: streak === 1 ? "day" : "days" });
+        out.push({ key: "streak", label: "Habit streak", value: `${streak}`, detail: streakDetail(streak) });
     }
     return out;
+}
+
+// The words under the habit streak. After a break it's an invitation, not a score.
+export function streakDetail(streak) {
+    if (!(streak > 0)) return "Check a habit off today to start one";
+    return streak === 1 ? "day in a row" : "days in a row";
 }
 
 // Which cards the page shows.

@@ -98,6 +98,7 @@ test("what's helping and what's hurting (needs 4 mornings with and without)", ()
     assert.equal(checkinsUntilInsights({}), 8);
     assert.equal(checkinsUntilInsights(checkins), 0);
     assert.ok(TAGS.length >= 10);
+    assert.ok(["nose-strip", "mouth-tape"].every(id => TAGS.some(t => t.id === id)), "overnight tags");
 });
 
 test("kind of day in the marathon plan", () => {

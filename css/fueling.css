@@ -242,7 +242,7 @@
     display:grid;
 
     grid-template-columns:
-        repeat(auto-fit,minmax(260px,1fr));
+        repeat(auto-fit,minmax(min(260px,100%),1fr));
 
     gap:20px;
 
@@ -538,7 +538,7 @@
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));
 
     gap:20px;
 
@@ -1003,7 +1003,7 @@
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));
 
     gap:16px;
 
@@ -1033,7 +1033,7 @@
 
 }
 
-.fuel-lib-item-top h4{
+.fuel-lib-item-top h3{
 
     font-size:15px;
 
@@ -1205,7 +1205,7 @@
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));
 
     gap:16px;
 
@@ -1223,7 +1223,7 @@
 
 }
 
-.fuel-saved-plan-card h4{
+.fuel-saved-plan-card h3{
 
     font-size:16px;
 
@@ -1380,15 +1380,17 @@
     .fuel-library-grid,
     .fuel-saved-plans-grid{
 
-        grid-template-columns:1fr;
+        grid-template-columns:minmax(0,1fr);
 
     }
 
     .fuel-field-row{
 
-        grid-template-columns:1fr;
+        grid-template-columns:minmax(0,1fr);
 
     }
+
+    .fuel-card{min-width:0}
 
     .fuel-timeline-item{
 
@@ -2030,7 +2032,7 @@
 
 }
 
-.pre-workout-group h4{
+.pre-workout-group h3{
 
     font-size:13px;
 
@@ -2250,6 +2252,26 @@
     color:var(--amber-light);
     font-size:13px;
     line-height:1.5;
+}
+
+/* ---- Pace segments: how the mile markers were placed ---- */
+.fs-pacing{
+    margin:0;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--muted);
+}
+.fs-pacing .fuel-link-btn{
+    background:none;
+    border:0;
+    padding:0;
+    min-height:0;
+    color:var(--primary-light);
+    font:inherit;
+    font-weight:600;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer;
 }
 
 /* ---- Course bar ---- */
@@ -2677,3 +2699,258 @@ html.fs-sheet-open{overflow:hidden;}
     cursor:pointer;
 }
 .fuel-collapse-btn:hover{ color:var(--text); border-color:var(--primary); }
+
+/* How long the run is (js/fueling.js renderDurationStatus) */
+.fuel-duration-status{margin:2px 0 0;min-height:1.2em}
+.fuel-duration-status strong{color:var(--text)}
+.fuel-duration-status.is-conflict{color:var(--warning)}
+.fuel-duration-status .fuel-btn{margin-left:6px;vertical-align:middle}
+.fuel-duration-problem{display:block;color:var(--warning)}
+
+/* Drink-mix products sipped over a stretch (js/fuelScheduleView.js) */
+.fs-course-band.fs-band-sip{top:auto;height:40%;background:color-mix(in srgb, var(--amber) 40%, transparent);border-top:1px solid color-mix(in srgb, var(--amber) 70%, transparent)}
+.fs-course-band.fs-band-sip span{top:auto;bottom:2px}
+.fs-dot-sip{background:color-mix(in srgb, var(--amber) 60%, transparent);border-radius:3px;}
+.fs-event-sip .fs-event-mark::before{background:color-mix(in srgb, var(--amber) 60%, transparent);border-color:var(--amber);border-radius:4px;}
+
+/* oz / ml switch (js/fueling.js) */
+.fuel-unit-switch{display:inline-flex;gap:4px;margin-left:auto}
+.fuel-unit-switch button{min-width:44px;padding:6px 10px;border-radius:var(--radius-pill);border:1px solid var(--border);background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.fuel-unit-switch button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.fuel-computed{border-color:color-mix(in srgb, var(--primary) 45%, transparent)!important}
+.fuel-unit-row{display:flex;align-items:center;gap:10px;margin:10px 0 0;color:var(--muted);font-size:13px}
+.fuel-unit-row .fuel-unit-switch{margin-left:0}
+.fuel-muted-line{display:block;color:var(--muted)}
+.fs-event-next{margin-top:4px;font-size:12.5px;color:var(--primary-light, var(--primary))}
+
+/* Homemade drink: per bottle and whole batch side by side (js/fueling.js showDiyResults) */
+.fuel-diy-recipe{flex:1 1 100%;min-width:0}
+.fuel-diy-recipe table{width:100%;border-collapse:collapse;font-size:14px}
+.fuel-diy-recipe th,.fuel-diy-recipe td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+.fuel-diy-recipe th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.fuel-diy-recipe td:not(:first-child),.fuel-diy-recipe th:not(:first-child){text-align:right;white-space:nowrap}
+.fuel-diy-recipe td small{display:block;color:var(--muted);font-size:12px}
+.fuel-diy-recipe .fuel-diy-note{margin:10px 0 0;color:var(--muted);font-size:13px}
+.fuel-diy-recipe .fuel-diy-note.is-warn{color:var(--warning)}
+#diyCarbShareField[hidden]{display:none!important}
+@media(max-width:600px){
+    .fuel-diy-recipe table{table-layout:fixed;font-size:13px}
+    .fuel-diy-recipe th:first-child,.fuel-diy-recipe td:first-child{width:40%}
+    .fuel-diy-recipe td:not(:first-child),.fuel-diy-recipe th:not(:first-child){white-space:normal;overflow-wrap:anywhere}
+    .fuel-diy-recipe th,.fuel-diy-recipe td{padding:8px 4px}
+    .fuel-diy-recipe th{font-size:11px;letter-spacing:.03em}
+}
+
+/* ---- How the carb target was set (calcNote) ---- */
+.fuel-why-title{
+    display:block;
+    margin-top:8px;
+    font-weight:600;
+    color:var(--text);
+}
+.fuel-why{
+    margin:4px 0 6px;
+    padding-left:20px;
+}
+.fuel-why li{ margin:2px 0; }
+.fuel-why-val{
+    color:var(--primary-light);
+    font-family:var(--font-mono);
+    font-size:.92em;
+    white-space:nowrap;
+}
+.fuel-why-foot{ display:block; }
+
+/* ---- Phone + accessibility polish (audit step 9) ---- */
+.fuel-lib-item-top h3,
+.fuel-saved-plan-card h3,
+.pre-workout-group h3{ margin:0; }
+.fuel-tag-remove{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:32px;
+    min-height:32px;
+    margin:-6px -8px -6px 0;
+    padding:0;
+    background:none;
+    border:0;
+    border-radius:50%;
+    color:var(--muted);
+    cursor:pointer;
+}
+.fuel-tag-remove:hover{ color:var(--text); }
+.fuel-unit-switch button{ min-height:40px; }
+label.fuel-target-label{ display:block; cursor:pointer; }
+/* Rows whose value wraps keep a gap from their label and align right. */
+.fuel-plan-row{ gap:12px; }
+.fuel-plan-row span:first-child{ flex-shrink:0; }
+.fuel-plan-row span:last-child{ text-align:right; }
+
+/* ==========================================
+   DRAFTS + ATHLETE PROFILE (js/fuelingPlans.js)
+========================================== */
+.fueling-page [hidden]{display:none!important}
+
+/* Save status under the toolbar */
+.fuel-save-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin-top:10px;min-height:22px}
+.fuel-save-status{margin:0;font-size:13px;color:var(--muted);flex:1 1 220px;min-width:0}
+.fuel-save-status:empty{display:none}
+.fuel-save-status[data-state="synced"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);margin-right:7px;vertical-align:middle}
+.fuel-save-status[data-state="saving"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--primary);margin-right:7px;vertical-align:middle}
+.fuel-save-status[data-state="offline"],.fuel-save-status[data-state="error"]{color:var(--warning)}
+.fuel-myplans-link{font-size:13px;color:var(--primary-light);text-decoration:none;white-space:nowrap}
+.fuel-myplans-link:hover{text-decoration:underline}
+
+/* Continue draft */
+.fuel-draft-banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;margin:0 0 18px;padding:14px 16px;border:1px solid color-mix(in srgb,var(--primary) 45%,transparent);border-radius:var(--radius-md,14px);background:color-mix(in srgb,var(--primary) 9%,var(--surface))}
+.fuel-draft-banner-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 220px}
+.fuel-draft-banner-text strong{font-size:16px;color:var(--text);overflow-wrap:anywhere}
+.fuel-draft-banner-text span{font-size:13px;color:var(--muted)}
+.fuel-draft-banner-kicker{display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.08em;font-size:11px!important;color:var(--primary-light)!important;font-weight:600}
+.fuel-draft-banner-kicker svg{width:14px;height:14px}
+.fuel-draft-banner-actions{display:flex;flex-wrap:wrap;gap:8px}
+.fuel-draft-banner-actions .fuel-btn{text-decoration:none}
+
+/* Weight unit + measuring help */
+.fuel-weight-unit{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin:-4px 0 10px}
+.fuel-weight-unit .fuel-unit-switch{margin-left:0}
+.fuel-howto{font-size:13px;color:var(--muted);margin:2px 0 4px}
+.fuel-howto summary{cursor:pointer;color:var(--primary-light);min-height:32px;display:flex;align-items:center}
+.fuel-howto p{margin:4px 0 0;line-height:1.5}
+
+/* Status next to each athlete answer */
+.fuel-pf-tag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:var(--radius-pill);font-style:normal;font-size:11px;font-weight:600;letter-spacing:.02em;vertical-align:middle;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.fuel-pf-tag:empty{display:none}
+.fuel-pf-tag.is-measured{color:var(--success);border-color:color-mix(in srgb,var(--success) 50%,transparent);background:color-mix(in srgb,var(--success) 12%,transparent)}
+.fuel-pf-tag.is-yours{color:var(--primary-light);border-color:color-mix(in srgb,var(--primary) 45%,transparent)}
+.fuel-pf-tag.is-estimate,.fuel-pf-tag.is-unset{color:var(--muted)}
+.fuel-pf-tag.is-plan{color:var(--warning);border-color:color-mix(in srgb,var(--warning) 45%,transparent)}
+.fuel-pf-tag.is-bad{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 50%,transparent)}
+
+/* Targets: measured vs estimate, typed-over note */
+.fuel-basis{display:inline-block;margin-left:6px;padding:0 7px;border-radius:var(--radius-pill);font-size:11px;font-weight:600;border:1px solid var(--border);color:var(--muted);vertical-align:middle}
+.fuel-basis.is-measured{color:var(--success);border-color:color-mix(in srgb,var(--success) 50%,transparent)}
+.fuel-basis.is-yours{color:var(--primary-light);border-color:color-mix(in srgb,var(--primary) 45%,transparent)}
+.fuel-why-hint{display:block;margin:0 0 6px;color:var(--muted);font-size:.95em}
+.fuel-typed-note{color:var(--warning)}
+.fuel-plan-checks{margin:10px 0 0;padding-left:20px;font-size:14px;line-height:1.45}
+.fuel-plan-checks li{margin:4px 0}
+.fuel-plan-checks .is-warn{color:var(--warning)}
+.fuel-plan-checks .is-note{color:var(--muted)}
+
+/* Usual products and recipes */
+.fuel-star{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:4px 10px;border-radius:var(--radius-pill);border:1px solid var(--border);background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.fuel-star svg{width:15px;height:15px}
+.fuel-star.is-on{color:var(--primary-light);border-color:color-mix(in srgb,var(--primary) 55%,transparent);background:color-mix(in srgb,var(--primary) 12%,transparent)}
+.fuel-star.is-on svg polygon{fill:currentColor}
+.fuel-recipe-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+
+/* My Fueling Plans tabs */
+.fuel-myplans-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 16px;border-bottom:1px solid var(--border)}
+.fuel-myplans-tabs button{min-height:44px;padding:8px 14px;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.fuel-myplans-tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--primary)}
+.fuel-tab-count{color:var(--muted);font-weight:500}
+
+.fuel-drafts-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.fuel-drafts-head .fuel-note{margin:0;flex:1 1 240px}
+.fuel-drafts-head .fuel-btn{display:inline-flex;align-items:center;gap:6px}
+.fuel-drafts-head .fuel-btn svg{width:16px;height:16px}
+.fuel-draft-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.fuel-draft{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px 16px;padding:14px;border:1px solid var(--border);border-radius:var(--radius-md,14px);background:var(--surface)}
+.fuel-draft.is-open{border-color:color-mix(in srgb,var(--primary) 55%,transparent)}
+.fuel-draft.is-conflict{border-style:dashed}
+.fuel-draft-main{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 240px}
+.fuel-draft-main strong{color:var(--text);overflow-wrap:anywhere}
+.fuel-draft-meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--muted)}
+.fuel-draft-status{font-weight:600;color:var(--warning)}
+.fuel-draft-status.is-ready{color:var(--primary-light)}
+.fuel-draft-status.is-conflict{color:var(--danger)}
+.fuel-draft-open{color:var(--success);font-weight:600}
+.fuel-draft-actions{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Athlete Profile tab */
+.fuel-pf-count{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.fuel-pf-group{border:1px solid var(--border);border-radius:var(--radius-md,14px);padding:10px 14px 6px;margin:0 0 14px;min-width:0}
+.fuel-pf-group legend{padding:0 6px;color:var(--primary-light);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.fuel-pf-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto auto;gap:6px 10px;align-items:center;padding:8px 0;border-top:1px solid color-mix(in srgb,var(--border) 60%,transparent)}
+.fuel-pf-row:first-of-type{border-top:0}
+.fuel-pf-label{font-size:14px;color:var(--text)}
+.fuel-pf-label small{color:var(--muted)}
+.fuel-pf-input input[type=number],.fuel-pf-input select{width:100%;min-width:0}
+.fuel-pf-row .fuel-pf-tag{margin-left:0}
+.fuel-pf-clear{background:none;border:0;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;min-height:36px;padding:0 6px;text-decoration:underline}
+.fuel-pf-problem{grid-column:1/-1;margin:0;color:var(--danger);font-size:13px}
+.fuel-pf-prefs{display:flex;flex-wrap:wrap;gap:6px 14px}
+.fuel-pf-usual{margin:6px 0 8px;padding-left:20px}
+@media (max-width:600px){
+    .fuel-pf-row{grid-template-columns:minmax(0,1fr) auto;}
+    .fuel-pf-label{grid-column:1/-1}
+    .fuel-pf-input{grid-column:1/-1}
+    .fuel-draft-actions{width:100%}
+    .fuel-draft-banner-actions{width:100%}
+    .fuel-draft-banner-actions .fuel-btn{flex:1 1 auto;text-align:center}
+}
+.fuel-pf-row .fuel-pf-tag{justify-self:start}
+.fuel-pf-input input[type=number],.fuel-pf-input select{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;outline:none}
+.fuel-pf-input input:focus,.fuel-pf-input select:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 20%,transparent)}
+
+/* ==========================================
+   POPULAR PRODUCTS (js/fuelSources.js) + PDF
+========================================== */
+
+.fuel-lib-head-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.fuel-src-dialog{ width:min(620px, calc(100vw - 24px)); display:flex; flex-direction:column; }
+.fuel-src-dialog:not([open]){ display:none; }
+.fuel-src-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:18px 20px 4px; }
+.fuel-src-head h2{ font-family:var(--font-display); font-size:30px; letter-spacing:.5px; line-height:1; }
+.fuel-src-note{ padding:0 20px 10px; color:var(--text-secondary); font-size:13px; line-height:1.45; }
+.fuel-src-list{ overflow-y:auto; padding:0 20px 8px; flex:1 1 auto; min-height:0; }
+.fuel-src-group{ padding-top:12px; }
+.fuel-src-group h3{ color:var(--primary); font-size:13px; text-transform:uppercase; letter-spacing:.08em; }
+.fuel-src-gnote{ color:var(--muted); font-size:12px; margin:2px 0 6px; }
+.fuel-src-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--border); }
+.fuel-src-row > div{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.fuel-src-row b{ font-size:14px; }
+.fuel-src-row span{ color:var(--text-secondary); font-size:13px; }
+.fuel-src-row small{ color:var(--muted); font-size:12px; }
+.fuel-src-row .fuel-btn{ flex-shrink:0; min-width:96px; }
+.fuel-src-foot{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; padding:12px 20px 18px; border-top:1px solid var(--border); }
+
+@media (max-width:600px){
+    .fuel-src-dialog{ width:100vw; max-width:100vw; max-height:92dvh; margin:auto 0 0; border-radius:20px 20px 0 0; }
+    .fuel-src-foot .fuel-btn{ flex:1 1 0; }
+}
+
+
+/* ==========================================
+   YOUR DETAILS (the folded Athlete / Sodium / Preferences cards)
+   Shown once the athlete profile has the basics.
+========================================== */
+.fuel-details-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px 16px;
+    flex-wrap:wrap;
+    margin:0 0 14px;
+    padding:12px 16px;
+    background:var(--surface-light);
+    border:1px solid var(--border);
+    border-left:3px solid var(--primary);
+    border-radius:14px;
+}
+.fuel-details-bar[hidden]{ display:none !important; }
+.fuel-details-text{
+    flex:1 1 260px;
+    min-width:0;
+    margin:0;
+    color:var(--text-secondary);
+    font-size:14px;
+    line-height:1.45;
+    overflow-wrap:anywhere;
+}
+.fuel-details-text strong{ color:var(--text); margin-right:6px; }
+.fuel-details-bar .fuel-btn{ flex:0 0 auto; min-height:40px; }
+.fuel-input-grid.is-details-folded > [data-details-card]{ display:none !important; }

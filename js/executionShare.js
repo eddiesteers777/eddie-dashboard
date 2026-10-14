@@ -75,20 +75,20 @@ export function shareCardModel(x, meta = {}) {
         if (runSec) runStats.push({ label: "Time", value: clockText(runSec) });
         if (paceSec) runStats.push({ label: "Avg pace", value: clockText(paceSec) + "/mi" });
         if (meta.avgHr) runStats.push({ label: "Avg HR", value: String(Math.round(Number(meta.avgHr))) + " bpm" });
-        const category = meta.category === "long_run" ? "Long Run" : "Speed Work";
+        const category = meta.category === "long_run" ? "Long Run" : meta.category === "speed_work" ? "Speed Work" : "";
         return {
             kind: "run",
             date: meta.date ? dateWords(meta.date) : "",
-            title: category,
-            name: meta.name || "",
+            title: category || meta.name || "Run",
+            name: category ? meta.name || "" : "",
             stats: runStats.slice(0, 4),
             sets: [],
             easy: [],
             summary: meta.plannedMiles && miles != null
                 ? miles.toFixed(2) + " of " + Number(meta.plannedMiles).toFixed(1) + " planned miles"
-                : "Completed training",
-            summaryNote: "Recorded from your run data · Southbound Coaching",
-            footer: category + " · recorded training"
+                : category ? "Completed training" : "",
+            summaryNote: meta.plannedMiles || category ? "Recorded from your run data · Southbound Coaching" : "",
+            footer: (category || "Run") + " · recorded training"
         };
     }
 
@@ -142,6 +142,238 @@ export function shareCardModel(x, meta = {}) {
             : "Planned vs actual · a rough match (mile laps)"
     };
 }
+// ---------- strength and cross-training (pure) ----------
+
+const KG = 2.20462262;
+const weightWords = (lb, unit) => {
+    const v = unit === "kg" ? Math.round((lb / KG) * 10) / 10 : Math.round(lb * 10) / 10;
+    return `${Number.isInteger(v) ? v : v.toFixed(1)}`;
+};
+const thousands = n => Math.round(n).toLocaleString("en-US");
+const holdText = sec => (sec >= 60 ? clockText(sec) : `${sec} s`);
+
+function setWords(set, ex, unit) {
+    if (ex.mode === "time") return set.d ? holdText(set.d) : "Done";
+    const reps = set.r || 0;
+    if (ex.bw) return set.w > 0 ? `BW+${weightWords(set.w, unit)} × ${reps}` : `BW × ${reps}`;
+    if (set.w > 0) return `${weightWords(set.w, unit)} × ${reps}`;
+    return `${reps} reps`;
+}
+const SET_LABEL = { warmup: "Warm-up", drop: "Drop", failure: "To failure" };
+// More rows than this and each exercise becomes one line (top set, sets, volume).
+export const MAX_SET_ROWS = 24;
+
+/**
+ * The share card for a completed session (js/completedSessions.js) in the
+ * same shape shareCardModel gives, so drawShareCard draws all of them.
+ * Only what the session has: no duration without a timer, no volume
+ * without weighted sets, no intensity nobody chose.
+ * opts: { unit: "lb" | "kg" }
+ */
+export function sessionCardModel(session, { unit = "lb" } = {}) {
+    const date = session?.date ? dateWords(session.date) : "";
+    const u = unit === "kg" ? "kg" : "lb";
+    if (session?.type === "run") {
+        const r = session.run || {};
+        const category = r.category === "Long Run" ? "long_run" : r.category === "Speed Work" ? "speed_work" : null;
+        return shareCardModel(null, {
+            runSummary: true, date: session.date, category,
+            name: session.title && session.title !== "Run" ? session.title : "",
+            plannedMiles: r.plannedMiles, runMeters: r.meters, runSec: session.durationSec, avgHr: r.avgHr
+        });
+    }
+    if (session?.type === "strength") {
+        const exercises = session.strength?.exercises || [];
+        let sets = 0, volume = 0;
+        for (const ex of exercises) for (const st of ex.sets || []) {
+            if (st.t === "warmup") continue;
+            sets++;
+            if (ex.mode !== "time" && !ex.bw && st.w > 0 && st.r > 0) volume += st.w * st.r;
+        }
+        const totalRows = exercises.reduce((t, ex) => t + (ex.sets || []).length, 0);
+        const compact = totalRows > MAX_SET_ROWS;
+        const stats = [];
+        if (session.durationSec) stats.push({ label: "Duration", value: clockText(session.durationSec) });
+        stats.push({ label: exercises.length === 1 ? "Exercise" : "Exercises", value: String(exercises.length) });
+        stats.push({ label: sets === 1 ? "Set" : "Sets", value: String(sets) });
+        if (volume > 0) stats.push({ label: `Volume (${u})`, value: thousands(u === "kg" ? volume / KG : volume) });
+        const blocks = exercises.map(ex => {
+            const working = (ex.sets || []).filter(st => st.t !== "warmup");
+            const exVolume = ex.mode !== "time" && !ex.bw ? working.reduce((t, st) => t + (st.w > 0 && st.r > 0 ? st.w * st.r : 0), 0) : 0;
+            const top = working.reduce((best, st) => {
+                if (!best) return st;
+                if (ex.mode === "time") return st.d > best.d ? st : best;
+                return st.w > best.w || (st.w === best.w && st.r > best.r) ? st : best;
+            }, null);
+            let n = 0;
+            const rows = compact ? [] : (ex.sets || []).map(st => {
+                const warm = st.t === "warmup";
+                if (!warm) n++;
+                return {
+                    label: warm ? "Warm-up" : SET_LABEL[st.t] ? `${SET_LABEL[st.t]}` : `Set ${n}`,
+                    actual: setWords(st, ex, u), delta: "", state: warm ? "unobserved" : "done", result: "", hr: null, note: ""
+                };
+            });
+            const bits = [];
+            if (compact && top) bits.push(`Top ${setWords(top, ex, u)}`);
+            if (exVolume > 0) bits.push(`${thousands(u === "kg" ? exVolume / KG : exVolume)} ${u}`);
+            else if (ex.bw) bits.push("Bodyweight");
+            return {
+                head: ex.name,
+                sub: `${working.length} set${working.length === 1 ? "" : "s"}`,
+                rows,
+                summary: bits.join(" · ")
+            };
+        });
+        return {
+            kind: "strength", date,
+            title: session.title || "Strength workout",
+            name: "Strength",
+            stats: stats.slice(0, 4),
+            sets: blocks, easy: [],
+            summary: "", summaryNote: "",
+            footer: volume > 0 ? "Volume = weight × reps on working sets" : "Strength training"
+        };
+    }
+    if (session?.type === "cross") {
+        const c = session.cross || {};
+        const blocks = c.blocks || [];
+        const activity = { cycling: "Cycling", swimming: "Swimming", elliptical: "Elliptical", rowing: "Rowing", yoga: "Yoga", circuit: "Strength Circuit", mobility: "Mobility", other: "Cross-training" }[c.activity] || "Cross-training";
+        const level = c.intensity ? c.intensity[0].toUpperCase() + c.intensity.slice(1) : "";
+        const stats = [];
+        if (session.durationSec) stats.push({ label: "Duration", value: `${Math.round(session.durationSec / 60)} min` });
+        if (level) stats.push({ label: "Intensity", value: level });
+        if (blocks.length) stats.push({ label: "Blocks", value: `${blocks.filter(b => b.done).length}/${blocks.length}` });
+        const title = session.title || activity;
+        return {
+            kind: "cross", date, title,
+            name: title.toLowerCase() === activity.toLowerCase() ? "Cross-training" : activity,
+            stats,
+            sets: blocks.length ? [{
+                head: "Blocks", sub: "",
+                rows: blocks.map(b => ({
+                    label: b.label, actual: b.min ? `${b.min} min` : "—",
+                    delta: b.intensity ? b.intensity[0].toUpperCase() + b.intensity.slice(1) : "",
+                    state: b.done ? "done" : "unobserved", result: b.done ? "Done" : "Skipped", hr: null, note: ""
+                })),
+                summary: ""
+            }] : [],
+            easy: [], summary: "", summaryNote: "",
+            footer: activity
+        };
+    }
+    return null;
+}
+
+// ---------- splits (pure) ----------
+
+const MILE_M = 1609.344;
+const nearMile = m => Math.abs(m - MILE_M) <= 60;
+const nearKm = m => Math.abs(m - 1000) <= 40;
+
+/**
+ * A run's laps as rows: auto mile (or km) laps read as "Mile 3 · 8:24/mi",
+ * anything else as "Lap 3 · 0.50 mi · 3:21 · 6:42/mi". Scraps under 0.05 mi
+ * (a stop pressed late) are left out. -> { unit: "mile" | "km" | "lap", rows }
+ */
+export function splitRows(entry) {
+    const laps = (entry?.laps || []).filter(l => Number(l.m) >= 80 && Number(l.s) > 0);
+    if (!laps.length) return { unit: "lap", rows: [] };
+    const full = laps.slice(0, -1);
+    const unit = full.length && full.every(l => nearMile(l.m)) ? "mile" : full.length && full.every(l => nearKm(l.m)) ? "km" : laps.length === 1 && nearMile(laps[0].m) ? "mile" : "lap";
+    let n = 0;
+    const rows = laps.map((l, i) => {
+        const pace = l.s / (l.m / MILE_M);
+        const whole = unit === "mile" ? nearMile(l.m) : unit === "km" ? nearKm(l.m) : true;
+        if (whole) n++;
+        const dist = l.m >= 1000 || unit === "mile" ? `${(l.m / MILE_M).toFixed(2)} mi` : `${Math.round(l.m)} m`;
+        return {
+            i, meters: l.m, sec: l.s, pace, hr: Number(l.hr) || null,
+            label: unit === "lap" ? `Lap ${i + 1}` : whole ? `${unit === "mile" ? "Mile" : "Km"} ${n}` : dist,
+            dist, partial: !whole
+        };
+    });
+    return { unit, rows };
+}
+
+/**
+ * The splits card: every lap of a run with its pace (or time) and heart rate,
+ * the fastest and slowest whole split marked, and how the second half went
+ * against the first. Only from the laps the watch saved; nothing estimated.
+ * meta: { date, name, category ("long_run" / "speed_work"), runMeters, runSec, avgHr }
+ */
+export function splitsCardModel(entry, meta = {}) {
+    const { unit, rows } = splitRows(entry);
+    if (!rows.length) return null;
+    const base = shareCardModel(null, { ...meta, runSummary: true, plannedMiles: null });
+    const whole = rows.filter(r => !r.partial);
+    const judge = whole.length >= 3 ? whole : [];
+    const fastest = judge.length ? judge.reduce((a, b) => (b.pace < a.pace ? b : a)) : null;
+    const slowest = judge.length ? judge.reduce((a, b) => (b.pace > a.pace ? b : a)) : null;
+    const totalM = rows.reduce((t, r) => t + r.meters, 0), totalS = rows.reduce((t, r) => t + r.sec, 0);
+    const avgPace = totalS / (totalM / MILE_M);
+    const byPace = unit !== "lap";
+    const out = rows.map(r => ({
+        label: r.label,
+        actual: byPace ? `${clockText(r.pace)}/mi` : clockText(r.sec, { tenths: r.sec < 300 }),
+        delta: byPace ? (r.partial ? "" : signed(r.pace - avgPace)) : `${clockText(r.pace)}/mi`,
+        state: r === fastest ? "within" : r === slowest ? "unobserved" : "done",
+        result: r === fastest ? "Fastest" : r === slowest ? "Slowest" : r.partial || unit === "lap" ? r.dist : "",
+        hr: r.hr, note: ""
+    }));
+    // The halves, by distance, from the laps themselves.
+    let half = "";
+    if (whole.length >= 4) {
+        let acc = 0, s1 = 0, m1 = 0;
+        for (const r of rows) {
+            if (acc + r.meters <= totalM / 2 + 1) { s1 += r.sec; m1 += r.meters; }
+            acc += r.meters;
+        }
+        const p1 = s1 / (m1 / MILE_M), p2 = (totalS - s1) / ((totalM - m1) / MILE_M);
+        const d = Math.round(p2 - p1);
+        half = Math.abs(d) <= 3 ? "Even halves" : d < 0 ? `Negative split · 2nd half ${clockText(-d)}/mi faster` : `2nd half ${clockText(d)}/mi slower`;
+    }
+    // A progression: every whole split no slower than the one before (2 s/mi
+    // of slack) and the last at least 10 s/mi faster than the first.
+    let prog = "";
+    if (whole.length >= 3) {
+        const steady = whole.every((r, i) => !i || r.pace <= whole[i - 1].pace + 2);
+        const drop = whole[0].pace - whole[whole.length - 1].pace;
+        if (steady && drop >= 10) prog = `Progression · every ${unit === "lap" ? "lap" : "split"} faster, ${clockText(whole[0].pace)} → ${clockText(whole[whole.length - 1].pace)}/mi`;
+    }
+    const hrs = rows.map(r => r.hr).filter(Boolean);
+    return {
+        ...base,
+        kind: "splits",
+        stats: base.stats.length ? base.stats : [{ label: "Distance", value: `${(totalM / MILE_M).toFixed(2)} mi` }, { label: "Time", value: clockText(totalS) }],
+        summary: "",
+        summaryNote: "",
+        sets: [{
+            head: unit === "mile" ? "Mile splits" : unit === "km" ? "Km splits" : "Laps",
+            sub: byPace ? `avg ${clockText(avgPace)}/mi` : `${rows.length} laps`,
+            rows: out,
+            summary: [prog || half, hrs.length > 1 ? `HR ${Math.min(...hrs)}–${Math.max(...hrs)}` : ""].filter(Boolean).join(" · ")
+        }],
+        easy: [],
+        footer: `Splits from your watch · ${byPace ? "difference from your average pace" : "time and pace per lap"}`
+    };
+}
+
+/** Plain words of a card, to paste under the photo (Strava's description, a message). */
+export function captionText(model) {
+    if (!model) return "";
+    const lines = [[model.name, model.title].filter(Boolean).join(": ")];
+    if (model.stats.length) lines.push(model.stats.map(s => `${s.label}: ${s.value}`).join(" · "));
+    if (model.summary) lines.push(model.summary);
+    for (const set of model.sets) {
+        const rows = set.rows.length ? set.rows.map(r => r.actual).filter(Boolean).join(", ") : "";
+        lines.push(`${set.head}${set.sub ? ` (${set.sub})` : ""}${rows ? `: ${rows}` : ""}${set.summary ? ` · ${set.summary}` : ""}`);
+    }
+    if (model.easy.length) lines.push(model.easy.join(" · "));
+    lines.push("Logged with Southbound Coaching");
+    return lines.filter(Boolean).join("\n");
+}
+
 // ---------- layout (pure) ----------
 
 const PAD = 72, ROW = 66, SET_HEAD = 64, SET_GAP = 24, STAT_H = 150, SUMMARY_H = 102, FOOT = 118;
@@ -307,101 +539,293 @@ export async function drawShareCard(canvas, model) {
     const url = ctx.measureText("southboundcoaching.com").width;
     ctx.textAlign = "left"; ctx.fillStyle = C.muted; ctx.font = '500 22px "Inter", sans-serif';
     ctx.fillText(fitText(ctx, model.footer, inner - url - 40), PAD, fy + 44);
-    ctx.fillText(model.kind === "execution" ? "Negative = faster than the target" : "Your training · Southbound Coaching", PAD, fy + 76);
+    ctx.fillText(model.kind === "execution" ? "Negative = faster than the target" : model.kind === "splits" ? "Negative = faster than your average" : "Your training · Southbound Coaching", PAD, fy + 76);
     return canvas;
 }
 
+
 // ---------- the preview dialog ----------
+//
+// One dialog for every card (key workouts, Featured Runs, completed
+// sessions). It never leaves the person stuck: a card that can't be
+// drawn says so with Try again; Share is offered only when the device
+// can share files; a failed share says what to do instead of
+// downloading behind their back; on an iPhone / iPad (where a download
+// from an installed app opens a viewer with no way back) Save shows how
+// to keep the picture instead. Every share or save is noted
+// (js/sessionStore.js noteShared) when the card belongs to a session.
 
 const registry = new Map();
 let wired = false;
 
-/** Remembers an execution so its Share button (data-ex-share = plannedWorkoutId) can open it. */
-export function registerShare(x, meta = {}) {
-    if (!x?.plannedWorkoutId) return;
-    registry.set(x.plannedWorkoutId, { x, meta });
-    if (wired) return x.plannedWorkoutId;
+function wireClicks() {
+    if (wired) return;
     wired = true;
     document.addEventListener("click", event => {
         const btn = event.target.closest?.("[data-ex-share]");
         if (!btn) return;
         const hit = registry.get(btn.dataset.exShare);
-        if (hit) { event.preventDefault(); openShareCard(hit.x, hit.meta); }
+        if (!hit) return;
+        event.preventDefault();
+        if (hit.model) openCardDialog(hit.model, hit.opts);
+        else openShareCard(hit.x, hit.meta);
     });
+}
+
+/** Remembers a ready card model (a run's splits) for a data-ex-share button. */
+export function registerCard(key, model, opts = {}) {
+    if (!key || !model) return null;
+    registry.set(key, { model, opts });
+    wireClicks();
+    return key;
+}
+
+/** Remembers an execution so its Share button (data-ex-share = plannedWorkoutId) can open it. */
+export function registerShare(x, meta = {}) {
+    if (!x?.plannedWorkoutId) return null;
+    registry.set(x.plannedWorkoutId, { x, meta });
+    wireClicks();
     return x.plannedWorkoutId;
 }
 
-/** Registers a plain run share in the same image dialog as structured workouts. */
+/**
+ * Registers a plain run share in the same image dialog as structured
+ * workouts. The key is the run's own id (meta.id, else COROS label /
+ * Strava key), so two runs on one day never open each other's card.
+ */
 export function registerRunShare(run, meta = {}) {
     if (!run) return null;
-    const key = "run|" + (run.labelId || meta.date || Date.now());
+    const own = meta.id || run.labelId || (run.source === "strava" && run.key ? `s:${run.key}` : "");
+    const key = "run|" + (own || `${meta.date || run.date || ""}|${Math.round(Number(run.distance) || 0)}`);
     registry.set(key, {
         x: { plannedWorkoutId: key, steps: [], sets: [], completion: null, targetCompliance: null, matchConfidence: "none" },
         meta: { ...meta, runSummary: true, avgHr: run.avgHr }
     });
-    if (!wired) {
-        wired = true;
-        document.addEventListener("click", event => {
-            const btn = event.target.closest?.("[data-ex-share]");
-            if (!btn) return;
-            const hit = registry.get(btn.dataset.exShare);
-            if (hit) { event.preventDefault(); openShareCard(hit.x, hit.meta); }
-        });
-    }
+    wireClicks();
     return key;
 }
 
+/** Opens the share dialog for an execution or a plain run (meta.runSummary). */
+export function openShareCard(x, meta = {}) {
+    let model = null;
+    try { model = shareCardModel(x, meta); } catch { model = null; }
+    return openCardDialog(model, { date: meta.date, sessionId: meta.sessionId || null });
+}
 
-const fileName = meta => `southbound-workout-${meta.date || "run"}.png`;
+// The dialog's look lives in css/share.css, loaded here so it works on any page.
+function ensureStyles() {
+    if (document.querySelector('link[data-share-css]')) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "css/share.css";
+    link.dataset.shareCss = "";
+    document.head.appendChild(link);
+}
+if (typeof document !== "undefined") ensureStyles();
 
-export async function openShareCard(x, meta = {}) {
-    const model = shareCardModel(x, meta);
+const escHtml = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/** iPhone / iPad (iPadOS says it's a Mac with touch). */
+export function isAppleMobile(nav = typeof navigator !== "undefined" ? navigator : {}) {
+    const ua = nav.userAgent || "";
+    return /iPhone|iPad|iPod/i.test(ua) || (nav.platform === "MacIntel" && Number(nav.maxTouchPoints) > 1);
+}
+
+export const fileNameFor = (model, date) =>
+    `southbound-${model?.kind === "strength" ? "strength" : model?.kind === "cross" ? "cross-training" : model?.kind === "splits" ? "run" : "workout"}-${date || "session"}.png`;
+
+// A title typed in the dialog, kept per card in `workout-shares` (cloud-synced)
+// so the picture says the same next time. Empty = the title Southbound picked.
+const SHARES = "workout-shares";
+export const TITLE_MAX = 40;
+export const cleanTitle = t => String(t ?? "").replace(/\s+/g, " ").trim().slice(0, TITLE_MAX);
+export const titleKey = (sessionId, model, date) => sessionId || (date && model ? `card:${date}:${model.kind || "run"}` : null);
+function readShares() { try { return JSON.parse(localStorage.getItem(SHARES) || "{}") || {}; } catch { return {}; } }
+export function savedTitle(key) { return key ? cleanTitle(readShares()[key]?.title) : ""; }
+export function saveTitle(key, title) {
+    if (!key) return;
+    try {
+        const all = readShares();
+        const t = cleanTitle(title);
+        const entry = { ...(all[key] || {}) };
+        if (t) entry.title = t; else delete entry.title;
+        if (Object.keys(entry).length) all[key] = entry; else delete all[key];
+        localStorage.setItem(SHARES, JSON.stringify(all));
+    } catch { /* storage full or blocked: the picture still works this time */ }
+}
+
+const note = sessionId => (via) => {
+    if (!sessionId) return;
+    import("./sessionStore.js").then(m => m.noteShared(sessionId, via)).catch(() => {});
+};
+
+/**
+ * The dialog itself. model: a card model, or a promise of one (a run's laps
+ * may still be on their way from COROS); null = couldn't be made.
+ * opts: { date, sessionId }
+ */
+export async function openCardDialog(modelOrPromise, { date = "", sessionId = null } = {}) {
+    ensureStyles();
+    const noted = note(sessionId);
     let file = null, url = "", closed = false;
+    const apple = isAppleMobile();
+    const pending = modelOrPromise && typeof modelOrPromise.then === "function";
+    let model = pending ? null : modelOrPromise;
+    let caption = model ? captionText(model) : "";
     const dialog = document.createElement("dialog");
     dialog.className = "sb-dialog ex-share-dialog";
     dialog.innerHTML = `
         <div class="sb-dialog-form">
             <h2 class="sb-dialog-title">Share this workout</h2>
-            <div class="ex-share-preview"><p class="clients-card-note sb-wait">Making the image…</p></div>
-            <p class="ex-share-hint">Share opens your device's share sheet. Send the image to another app or save it to Photos.</p>
-            <div class="sb-dialog-actions">
+            <div class="ex-share-title" hidden>
+                <label for="exShareTitle">Title</label>
+                <div class="ex-share-title-row">
+                    <input id="exShareTitle" type="text" maxlength="${TITLE_MAX}" autocomplete="off" enterkeyhint="done">
+                    <button type="button" class="sb-btn sb-btn-tertiary" data-act="reset" hidden>Reset</button>
+                </div>
+            </div>
+            <div class="ex-share-preview" aria-live="polite"><p class="clients-card-note sb-wait">Making the image…</p></div>
+            <p class="ex-share-status" role="status" hidden></p>
+            <p class="ex-share-hint" data-hint></p>
+            <details class="ex-share-strava">
+                <summary>Add it to Strava</summary>
+                <ol>
+                    <li>${apple ? "Tap <strong>Share</strong>, then <strong>Save Image</strong> (or press and hold the picture and tap <strong>Save to Photos</strong>)." : "Tap <strong>Save image</strong> (or <strong>Share</strong> and save it to your photos)."}</li>
+                    <li>In the Strava app, open the activity, tap <strong>Edit</strong> and add a photo: pick this image.</li>
+                    <li>Optional: <strong>Copy caption</strong> below and paste it into the description.</li>
+                </ol>
+                <p class="ex-share-fine">Southbound can't post to Strava or attach the photo for you: Strava only lets you add photos inside its own app.</p>
+            </details>
+            <div class="sb-dialog-actions ex-share-actions">
                 <button type="button" class="sb-btn sb-btn-tertiary" data-act="close">Close</button>
+                <button type="button" class="sb-btn sb-btn-secondary" data-act="caption"${caption ? "" : " hidden"}>Copy caption</button>
                 <button type="button" class="sb-btn sb-btn-secondary" data-act="save" disabled>Save image</button>
                 <button type="button" class="sb-btn sb-btn-primary" data-act="share" disabled hidden>Share</button>
             </div>
         </div>`;
     document.body.appendChild(dialog);
+    const $ = sel => dialog.querySelector(sel);
+    const preview = $(".ex-share-preview"), status = $(".ex-share-status"), hint = $("[data-hint]");
+    const share = $('[data-act="share"]'), save = $('[data-act="save"]');
+    const say = (text, kind = "info") => { status.textContent = text; status.dataset.kind = kind; status.hidden = !text; };
     dialog.addEventListener("close", () => { closed = true; dialog.remove(); if (url) URL.revokeObjectURL(url); });
     dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
-    dialog.showModal();
-
-    const canvas = document.createElement("canvas");
-    await drawShareCard(canvas, model);
-    if (closed) return;
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
-    if (closed) return;
-    if (!blob) { dialog.querySelector(".ex-share-preview").innerHTML = `<p class="clients-card-note">Couldn't make the image on this device.</p>`; return; }
-    file = new File([blob], fileName(meta), { type: "image/png" });
-    url = URL.createObjectURL(blob);
-    dialog.querySelector(".ex-share-preview").innerHTML = `<img src="${url}" alt="${model.title}: planned vs actual, rep by rep" width="${CARD_W}" height="${canvas.height}">`;
-    const share = dialog.querySelector('[data-act="share"]'), save = dialog.querySelector('[data-act="save"]');
-    save.disabled = false;
-    let canShare = false;
-    try { canShare = Boolean(navigator.canShare?.({ files: [file] })); } catch { /* file sharing unavailable */ }
-    if (canShare) { share.hidden = false; share.disabled = false; }
-
-    dialog.querySelector('[data-act="close"]').addEventListener("click", () => dialog.close());
-    save.addEventListener("click", () => {
-        const a = document.createElement("a");
-        a.href = url; a.download = fileName(meta);
-        document.body.appendChild(a); a.click(); a.remove();
+    $('[data-act="close"]').addEventListener("click", () => dialog.close());
+    $('[data-act="caption"]').addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(caption); say("Caption copied. Paste it into the activity's description."); }
+        catch { say("Couldn't copy here. Press and hold to select the words in your notes instead.", "error"); }
     });
-    share.addEventListener("click", async () => {
+    try { dialog.showModal(); } catch { dialog.setAttribute("open", ""); }
+
+    if (pending) {
+        try { model = await modelOrPromise; } catch { model = null; }
+        if (closed) return dialog;
+        caption = model ? captionText(model) : "";
+        $('[data-act="caption"]').hidden = !caption;
+    }
+
+    const fail = () => {
+        preview.innerHTML = `<div class="ex-share-error"><p>Couldn't make the image on this device.</p><button type="button" class="sb-btn sb-btn-secondary" data-act="retry">Try again</button></div>`;
+        preview.querySelector('[data-act="retry"]').addEventListener("click", () => { dialog.close(); openCardDialog(model || modelOrPromise, { date, sessionId }); });
+        hint.textContent = caption ? "You can still copy the caption." : "";
+    };
+
+    if (!model) { fail(); return dialog; }
+    const original = model.title;
+    const key = titleKey(sessionId, model, date);
+    const typed = savedTitle(key);
+    if (typed) { model = { ...model, title: typed }; caption = captionText(model); }
+    const titleBox = $(".ex-share-title"), titleInput = $("#exShareTitle"), reset = $('[data-act="reset"]');
+    let name = fileNameFor(model, date);
+    let drawn = 0;
+    // Draws the picture for the current model; a newer draw wins.
+    const render = async () => {
+        const mine = ++drawn;
+        // Share / Save wait for the new picture, so they never send the old title.
+        const busy = [share, save].map(btn => [btn, btn.disabled]);
+        busy.forEach(([btn]) => { btn.disabled = true; });
+        const done = () => { if (mine === drawn) busy.forEach(([btn, was]) => { btn.disabled = was; }); };
+        let blob = null, height = 0;
         try {
-            await navigator.share({ files: [file], title: model.title });
-            dialog.close();
-        } catch (error) {
-            if (error?.name !== "AbortError") save.click();   // the share sheet failed: save it instead
+            const canvas = document.createElement("canvas");
+            await drawShareCard(canvas, model);
+            height = canvas.height;
+            if (closed || mine !== drawn) return null;
+            blob = await new Promise(resolve => {
+                try { canvas.toBlob(resolve, "image/png"); } catch { resolve(null); }
+            });
+        } catch { blob = null; }
+        if (closed || mine !== drawn) return null;
+        done();
+        if (!blob) return false;
+        if (url) URL.revokeObjectURL(url);
+        file = new File([blob], name, { type: "image/png" });
+        url = URL.createObjectURL(blob);
+        preview.innerHTML = `<img src="${url}" alt="${escHtml(`${model.title}: ${model.stats.map(st => `${st.label} ${st.value}`).join(", ")}`)}" width="${CARD_W}" height="${height}">`;
+        return true;
+    };
+    const first = await render();
+    if (closed || first === null) return dialog;
+    if (!first) { fail(); return dialog; }
+
+    titleBox.hidden = false;
+    titleInput.value = model.title;
+    titleInput.placeholder = original;
+    reset.hidden = model.title === original;
+    let timer = 0;
+    const retitle = () => {
+        const t = cleanTitle(titleInput.value) || original;
+        reset.hidden = t === original;
+        if (t === model.title) return;
+        model = { ...model, title: t };
+        caption = captionText(model);
+        saveTitle(key, t === original ? "" : t);
+        render().then(ok => { if (ok === false) say("Couldn't redraw the picture with that title.", "error"); });
+    };
+    titleInput.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(retitle, 450); });
+    titleInput.addEventListener("change", () => { clearTimeout(timer); retitle(); });
+    titleInput.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); titleInput.blur(); } });
+    reset.addEventListener("click", () => { titleInput.value = original; clearTimeout(timer); retitle(); });
+
+    let canShare = false;
+    try { canShare = Boolean(navigator.canShare?.({ files: [file] })); } catch { canShare = false; }
+    if (canShare) { share.hidden = false; share.disabled = false; }
+    if (apple) {
+        // A download from an installed app on iOS opens a viewer with no way back.
+        save.hidden = true;
+        hint.textContent = canShare
+            ? "Tap Share, then Save Image to keep it in Photos, or send it to another app."
+            : "Press and hold the picture, then tap Save to Photos.";
+    } else {
+        save.disabled = false;
+        hint.textContent = canShare
+            ? "Share opens your device's share sheet: send the image to another app or save it."
+            : "Save image downloads it to this device.";
+    }
+
+    save.addEventListener("click", () => {
+        try {
+            const a = document.createElement("a");
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click(); a.remove();
+            noted("save");
+            say("Image saved to your downloads.");
+        } catch {
+            say("Couldn't save it here. Press and hold the picture to save it instead.", "error");
         }
     });
+    share.addEventListener("click", async () => {
+        say("");
+        try {
+            await navigator.share({ files: [file], title: model.title });
+            noted("share");
+            dialog.close();
+        } catch (error) {
+            if (error?.name === "AbortError") return;   // they closed the share sheet
+            say(apple
+                ? "Sharing didn't work this time. Press and hold the picture, then tap Save to Photos."
+                : "Sharing didn't work this time. Tap Save image to keep it instead.", "error");
+        }
+    });
+    return dialog;
 }

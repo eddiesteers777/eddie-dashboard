@@ -6,7 +6,13 @@
    same thing. Styles: .fs-* in css/fueling.css.
 ========================================== */
 
-import { formatClock, formatTsp } from "./fuelSchedule.js";
+import { formatClock, formatTsp, recipeParts } from "./fuelSchedule.js";
+import { fluidText, fluidWords } from "./fluidUnits.js";
+
+// The fluid unit for this render ("oz" | "ml"); set by scheduleHTML.
+let U = "oz";
+const fl = oz => fluidText(oz, U);
+const caffeineTag = e => e.caffeine ? ` <span class="fs-tag">${e.caffeineMg ? `${e.caffeineMg} mg caffeine` : "Caffeine"}</span>` : "";
 
 function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -32,7 +38,10 @@ function statsHTML(s) {
         s.minPerMile ? ["Pace", paceLabel(s.minPerMile), "/mi"] : null,
         ["Carbs", `${avgCarbs}`, "g/hr"],
         ["Gels", `${s.gels.length}`, ""],
-        ["Bottles", `${s.bottles.length}`, ""]
+        ["Bottles", `${s.bottles.length + (s.sips?.length || 0)}`, ""],
+        s.totals.caffeineMg ? ["Caffeine", `${s.totals.caffeineMg}`, "mg"] : null,
+        s.startTod ? ["Start", s.startTod.replace(/ [AP]M$/, ""), s.startTod.slice(-2)] : null,
+        s.finishTod ? ["Finish", s.finishTod.replace(/ [AP]M$/, ""), s.finishTod.slice(-2)] : null
     ].filter(Boolean);
     return `<div class="fs-stats">${stats.map(([label, value, unit]) => `
         <div class="fs-stat"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>
@@ -41,9 +50,14 @@ function statsHTML(s) {
 
 function courseHTML(s) {
     const d = s.durationMin;
+    const d0 = d;
     const bands = s.bottles.map(b => `
         <div class="fs-course-band fs-band-${(b.n - 1) % 3}" style="left:${pct(b.startMin, d)}%;width:${pct(b.endMin, d) - pct(b.startMin, d)}%">
             <span>B${b.n}</span>
+        </div>`).join("");
+    const sips = (s.sips || []).map(d => `
+        <div class="fs-course-band fs-band-sip" style="left:${pct(d.startMin, d0)}%;width:${pct(d.endMin, d0) - pct(d.startMin, d0)}%">
+            <span>D${d.n}</span>
         </div>`).join("");
     const gels = s.gels.map(g => `
         <div class="fs-course-gel${g.caffeine ? " is-caffeine" : ""}" style="left:${pct(g.min, d)}%" title="Gel ${g.n}${g.mile != null ? ` · mile ${mi(g.mile)}` : ""} · ${formatClock(g.min)}">
@@ -51,16 +65,17 @@ function courseHTML(s) {
         </div>`).join("");
     return `
         <div class="fs-course" aria-hidden="true">
-            <div class="fs-course-track">${bands}${gels}</div>
+            <div class="fs-course-track">${bands}${sips}${gels}</div>
             <div class="fs-course-labels">
                 <span>Start</span>
-                ${s.distanceMi ? `<span>Mile ${mi(s.distanceMi / 2)}</span>` : `<span>${formatClock(d / 2)}</span>`}
+                ${s.distanceMi ? `<span>Mile ${mi(s.midMile ?? s.distanceMi / 2)}</span>` : `<span>${formatClock(d / 2)}</span>`}
                 <span>${s.distanceMi ? `${mi(s.distanceMi)} mi` : "Finish"} · ${formatClock(d)}</span>
             </div>
             <div class="fs-legend">
                 ${s.gels.length ? `<span><i class="fs-dot fs-dot-gel"></i>Gel</span>` : ""}
                 ${s.gels.some(g => g.caffeine) ? `<span><i class="fs-dot fs-dot-caffeine"></i>Caffeinated</span>` : ""}
                 ${s.bottles.length ? `<span><i class="fs-dot fs-dot-bottle"></i>Bottle</span>` : ""}
+                ${s.sips?.length ? `<span><i class="fs-dot fs-dot-sip"></i>Drink mix</span>` : ""}
             </div>
         </div>`;
 }
@@ -68,16 +83,21 @@ function courseHTML(s) {
 function eventsHTML(s) {
     return `<ol class="fs-events">${s.events.map(e => {
         const where = e.mile != null ? `Mile ${mi(e.mile)}` : formatClock(e.min);
-        const when = e.mile != null ? formatClock(e.min) : "";
+        const when = [e.mile != null ? formatClock(e.min) : "", e.tod].filter(Boolean).join(" · ");
         let title = esc(e.text);
         let meta = "";
         if (e.kind === "gel") {
             title = `Gel ${e.gel} <span class="fs-muted">·</span> ${esc(e.text)}`;
-            meta = `${e.carbs} g carb · ${e.sodium} mg sodium · chase with a few sips`;
+            const moved = e.movedFrom ? `moved off ${esc(e.movedFrom.part.toLowerCase())} (due at ${formatClock(e.movedFrom.min)}) · ` : "";
+            meta = `${partWords(e.part)}${moved}${e.carbs} g carb · ${e.sodium} mg sodium · chase with a few sips`;
+        } else if (e.kind === "sip") {
+            title = `Drink ${e.sip} <span class="fs-muted">·</span> ${esc(e.text)}`;
+            const until = e.endMile != null ? `mile ${mi(e.endMile)}` : formatClock(e.endMin);
+            meta = `${partWords(e.part)}${e.fluid ? `${fl(e.fluid)} · ` : ""}${e.carbs} g carb · ${e.sodium} mg sodium · sip it steadily until ${until}`;
         } else if (e.kind === "bottle") {
             const b = s.bottles[e.bottle - 1];
             meta = b
-                ? `${b.oz} oz · ${b.carbs} g carb · ${b.sodium} mg sodium${b.ozPerMile != null ? ` · sip ~${b.ozPerMile} oz each mile` : ` · sip ~${b.ozPer10Min} oz every 10 min`}`
+                ? `${fl(b.oz)} · ${b.carbs} g carb · ${b.sodium} mg sodium${b.ozPerMile != null ? ` · sip ~${fl(b.ozPerMile)} each mile` : ` · sip ~${fl(b.ozPer10Min)} every 10 min`}`
                 : "";
         }
         return `
@@ -85,11 +105,41 @@ function eventsHTML(s) {
                 <div class="fs-event-where"><strong>${where}</strong>${when ? `<span>${when}</span>` : ""}</div>
                 <div class="fs-event-mark"></div>
                 <div class="fs-event-body">
-                    <div class="fs-event-title">${title}${e.caffeine ? ` <span class="fs-tag">Caffeine</span>` : ""}</div>
+                    <div class="fs-event-title">${title}${caffeineTag(e)}</div>
                     ${meta ? `<div class="fs-event-meta">${meta}</div>` : ""}
+                    ${nextHTML(e)}
                 </div>
             </li>`;
     }).join("")}</ol>`;
+}
+
+// Where in the workout a checkpoint lands (with the workout's paces).
+function partWords(part) {
+    if (!part) return "";
+    const words = /^Rep /.test(part) ? `During ${part.toLowerCase()}`
+        : part === "Recovery" ? "On a recovery"
+        : `In the ${part.toLowerCase()}`;
+    return `${esc(words)} · `;
+}
+
+// How the mile markers were placed.
+function pacingHTML(s, controls) {
+    if (s.paced?.mismatch) {
+        return `<p class="fs-pacing">The workout's parts add up to ${+s.paced.partsMiles.toFixed(1)} mi, not ${+s.distanceMi.toFixed(1)} mi, so the mile markers use one even pace.</p>`;
+    }
+    if (!s.paced) return "";
+    const moved = (s.gels || []).filter(g => g.movedFrom).length;
+    return `<p class="fs-pacing">Mile markers follow the workout's own paces: faster on the reps, slower on the warm-up, jogs and cool-down.${moved ? ` ${moved === 1 ? "A gel that fell" : `${moved} gels that fell`} in the middle of a hard rep ${moved === 1 ? "moves" : "move"} to the nearest easy stretch.` : ""}${controls ? ` <button type="button" class="fuel-link-btn" data-even-pace>Use one even pace</button>` : ""}</p>`;
+}
+
+// "Next: Gel 2 in 36 min · 4.2 mi (8:21 AM)"
+function nextHTML(e) {
+    const n = e.next;
+    if (!n || e.kind === "finish") return "";
+    const what = `${n.kind === "gel" ? "Gel" : "Drink"} ${n.n}`;
+    const gap = n.inMin === 0 ? "right away" : `in ${n.inMin < 60 ? `${n.inMin} min` : formatClock(n.inMin)}`;
+    const far = n.inMi ? ` · ${mi(n.inMi)} mi` : "";
+    return `<div class="fs-event-next">${e.kind === "start" || (e.kind === "bottle" && e.bottle === 1) ? "First" : "Next"}: ${what} ${gap}${far}${n.tod ? ` (${n.tod})` : ""}</div>`;
 }
 
 function bottlesHTML(s) {
@@ -102,7 +152,7 @@ function bottlesHTML(s) {
             : `${s.bottles[0].sodium} mg sodium from ${esc(m.sodiumLabel.toLowerCase())} (see label)`)
         : "";
     return `
-        <h4 class="fs-heading">Bottles</h4>
+        <h3 class="fs-heading">Bottles</h3>
         <div class="fs-bottles">${s.bottles.map(b => `
             <div class="fs-bottle fs-band-${(b.n - 1) % 3}">
                 <div class="fs-bottle-top">
@@ -112,25 +162,34 @@ function bottlesHTML(s) {
                 <div class="fs-bottle-when">${formatClock(b.startMin)} – ${formatClock(b.endMin)}</div>
                 <div class="fs-bottle-sip">
                     ${b.ozPerMile != null
-                        ? `Sip <strong>~${b.ozPerMile} oz</strong> every mile <span class="fs-muted">(${b.gulpsPerMile} ${b.gulpsPerMile === 1 ? "gulp" : "gulps"})</span>`
-                        : `Sip <strong>~${b.ozPer10Min} oz</strong> every 10 min`}
+                        ? `Sip <strong>~${fl(b.ozPerMile)}</strong> every mile <span class="fs-muted">(${b.gulpsPerMile} ${b.gulpsPerMile === 1 ? "gulp" : "gulps"})</span>`
+                        : `Sip <strong>~${fl(b.ozPer10Min)}</strong> every 10 min`}
                 </div>
-                <div class="fs-bottle-macros">${b.oz} oz · ${b.carbs} g carb · ${b.sodium} mg sodium</div>
+                <div class="fs-bottle-macros">${fl(b.oz)} · ${b.carbs} g carb · ${b.sodium} mg sodium</div>
             </div>`).join("")}
         </div>
         ${m ? `
         <div class="fs-mix">
             <span class="fs-mix-label">Mix each bottle</span>
-            <span>${s.bottles[0].oz} oz water + ${carbAmount} + ${sodiumAmount}</span>
+            <span>${fl(s.bottles[0].oz)} water + ${m.recipe ? esc(recipeParts(m.recipe).join(" + ")) : [carbAmount, sodiumAmount].filter(Boolean).join(" + ")}</span>
             ${s.concentration != null ? `<span class="fs-muted">${s.concentration}% carb solution</span>` : ""}
         </div>` : ""}`;
+}
+
+function caffeineHTML(s) {
+    const t = s.totals;
+    if (!t.caffeineMg && !t.caffeineUnknown) return "";
+    const parts = [];
+    if (t.caffeineMg) parts.push(`<strong>${t.caffeineMg} mg</strong> in all`);
+    if (t.caffeineUnknown) parts.push(`${t.caffeineUnknown} caffeinated ${t.caffeineUnknown === 1 ? "serving" : "servings"} with no mg on file (add it in the Fueling Library)`);
+    return `<div class="fs-mix"><span class="fs-mix-label">Caffeine</span><span>${parts.join(" · ")}</span></div>`;
 }
 
 function hoursHTML(s) {
     if (!s.hours.length) return "";
     const statusLabel = { ok: "On target", low: "Under", high: "Over", none: "" };
     return `
-        <h4 class="fs-heading">Hour by hour</h4>
+        <h3 class="fs-heading">Hour by hour</h3>
         <div class="fs-hours">
             <div class="fs-hour fs-hour-head">
                 <span>Hour</span><span>Carbs</span><span>Sodium</span><span>Fluid</span><span></span>
@@ -140,32 +199,35 @@ function hoursHTML(s) {
                 <span><strong>${formatClock(h.fromMin)}–${formatClock(h.toMin)}</strong>${h.fromMile != null ? `<small>mi ${mi(h.fromMile)}–${mi(h.toMile)}</small>` : ""}</span>
                 <span>${h.carbs} g<small>of ${h.targetCarbs}</small></span>
                 <span>${h.sodium} mg<small>of ${h.targetSodium}</small></span>
-                <span>${h.fluid} oz<small>of ${h.targetFluid}</small></span>
+                <span>${fl(h.fluid)}<small>of ${fl(h.targetFluid)}</small></span>
                 <span>${statusLabel[h.status] ? `<span class="fs-pill fs-pill-${h.status}">${statusLabel[h.status]}</span>` : ""}</span>
             </div>`).join("")}
             <div class="fs-hour fs-hour-total">
                 <span><strong>Total</strong></span>
                 <span>${s.totals.carbs} g<small>of ${s.targetTotals.carbs}</small></span>
                 <span>${s.totals.sodium} mg<small>of ${s.targetTotals.sodium}</small></span>
-                <span>${s.totals.fluid} oz<small>of ${s.targetTotals.fluid}</small></span>
+                <span>${fl(s.totals.fluid)}<small>of ${fl(s.targetTotals.fluid)}</small></span>
                 <span></span>
             </div>
         </div>`;
 }
 
-export function scheduleHTML(s, { preWorkoutFood = "" } = {}) {
+export function scheduleHTML(s, { preWorkoutFood = "", unit = "oz", segmentControls = false } = {}) {
+    U = unit === "ml" ? "ml" : "oz";
     if (!s.durationMin) {
         return `<p class="fuel-empty-state">Add a duration or distance to build the schedule.</p>`;
     }
     return `
         <div class="fs">
             ${statsHTML(s)}
-            ${s.warnings.length ? `<ul class="fs-warnings">${s.warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
+            ${s.warnings.length ? `<ul class="fs-warnings">${s.warnings.map(w => `<li>${esc(fluidWords(w, U))}</li>`).join("")}</ul>` : ""}
             ${courseHTML(s)}
+            ${pacingHTML(s, segmentControls)}
             ${preWorkoutFood ? `<div class="fs-mix"><span class="fs-mix-label">Before the run</span><span>${esc(preWorkoutFood)}</span></div>` : ""}
-            <h4 class="fs-heading">Checkpoints</h4>
+            <h3 class="fs-heading">Checkpoints</h3>
             ${eventsHTML(s)}
             ${bottlesHTML(s)}
+            ${caffeineHTML(s)}
             ${hoursHTML(s)}
         </div>`;
 }

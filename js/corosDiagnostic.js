@@ -8,7 +8,7 @@ import {
 } from "./corosAuth.js";
 
 import { icon } from "./icons.js";
-import { corosToolsSummary, workoutToolDetails, healthTools, healthSummary } from "./corosTools.js";
+import { corosToolsSummary, workoutToolDetails, healthTools, healthSummary, strengthSupport } from "./corosTools.js";
 import { callTool } from "./corosClient.js";
 import { unwrapResult, findRecords, describeShape, normalizeActivity } from "./corosParse.js";
 import { replyText } from "./corosMetrics.js";
@@ -365,6 +365,8 @@ async function runCorosDiagnostic() {
             workoutTools = workoutToolDetails(tools);
             const summary = corosToolsSummary(tools);
             checks.push(row("What COROS lets Southbound do", summary.status, summary.text));
+            const strength = strengthSupport(tools);
+            checks.push(row("Can strength workouts go to the watch?", strength.status, strength.text));
             // Sleep / HRV / resting heart rate: how close a readiness score can get.
             healthDetails = healthTools(tools);
             const health = healthSummary(tools);

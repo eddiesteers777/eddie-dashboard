@@ -80,9 +80,13 @@ function renderStrength(week) {
         return 0;
     }
 
-    valueEl.textContent = volume ? volume.toLocaleString() : String(days.size);
+    // Shown in the Strength page's unit (strength-settings); history is stored in lb.
+    let unit = "lb";
+    try { unit = JSON.parse(localStorage.getItem("strength-settings") || "null")?.unit === "kg" ? "kg" : "lb"; } catch {}
+    const shown = unit === "kg" ? Math.round(volume / 2.20462262) : volume;
+    valueEl.textContent = volume ? shown.toLocaleString() : String(days.size);
     metaEl.textContent = volume
-        ? `lb lifted · ${days.size} session${days.size === 1 ? "" : "s"}, ${exercises} exercise${exercises === 1 ? "" : "s"}`
+        ? `${unit} lifted · ${days.size} session${days.size === 1 ? "" : "s"}, ${exercises} exercise${exercises === 1 ? "" : "s"}`
         : `session${days.size === 1 ? "" : "s"} this week`;
 
     return volume;

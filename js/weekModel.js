@@ -99,7 +99,9 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
                     actual: day.strengthResultId ? { rpe: day.strengthRpe ?? null, pain: Boolean(day.strengthPain) } : null,
                     coachPlanId: plan.coachPlanId || null,
                     planName: plan.name || "",
+                    planSource: plan.source || "",
                     fromCoach: plan.source === "coach",
+                    skipReason: (extra ? day.strengthSkipReason : day.skipReason) || "",
                     source: { type: extra ? "plan-strength" : "plan", programId: plan.id, date, strength: true }
                 });
                 if (lift && day.type === "strength") { items.push(liftItem(false)); continue; }
@@ -120,7 +122,10 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
                     actual: day.resultId ? { distance: day.actualDistance ?? null, durationSec: day.actualDuration ?? null, rpe: day.rpe ?? null, pain: Boolean(day.pain) } : null,
                     coachPlanId: plan.coachPlanId || null,
                     planName: plan.name || "",
+                    planSource: plan.source || "",
                     fromCoach: plan.source === "coach",
+                    skipReason: day.skipReason || "",
+                    adjusted: day.adjusted?.was || "",
                     source: { type: "plan", programId: plan.id, date }
                 });
                 if (lift) items.push(liftItem(true));
@@ -137,9 +142,12 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
                     detail: "",
                     miles: 0,
                     done: Boolean(entry.completed),
+                    skipped: Boolean(entry.skipped),
+                    skipReason: entry.skipReason || "",
                     planName: plan.name || "",
+                    planSource: plan.source || "",
                     fromCoach: plan.source === "coach",
-                    source: { type: "extra", programId: plan.id, date }
+                    source: { type: "extra", programId: plan.id, date, entryType: entry.type }
                 });
             }
         }
@@ -153,7 +161,10 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
             detail: s.time ? niceTime(s.time) : "",
             miles: 0,
             done: Boolean(s.completed),
+            skipped: Boolean(s.skipped) && !s.completed,
+            skipReason: s.skipReason || "",
             planName: s.racePlanName || s.trainingPlanName || "",
+            planSource: "strength-schedule",
             fromCoach: false,
             workoutId: s.workoutId || "",
             source: { type: "strength", itemId: s.id, date }

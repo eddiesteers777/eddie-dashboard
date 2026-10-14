@@ -17,10 +17,11 @@ import { getUpcomingPlannerEvents, categoryFor, formatTime } from "./plannerEven
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
 import { showsPersonalPlan } from "./role.js";
-import { getActiveProgramEntriesForDate } from "./activeProgramSources.js";
+import { getActiveProgramEntriesForDate, getActiveRunningPrograms } from "./activeProgramSources.js";
+import { nextRace, raceCountdownText } from "./raceCountdown.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
-import { habitStreak } from "./progressView.js";
+import { habitStreak, streakDetail } from "./progressView.js";
 
 // The built-in marathon block (js/marathonData.js) is the coach's own
 // race. Clients get their own plans and a "From your coach" card
@@ -142,6 +143,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
     }
 
+    // The last two weeks' run laps in the background (a few a visit), so
+    // every run's share card has its reps or splits ready.
+    import("./runCardData.js").then(m => m.prefetchRecentLaps()).catch(() => {});
+
     // ==========================================
     // Quick Stats
     // ==========================================
@@ -246,7 +251,8 @@ function renderPhaseStatus() {
                 if (item.programName && !names.includes(item.programName)) names.push(item.programName);
             }
         }
-        el.textContent = clientHeroLine(clientAccess || cachedNavAccess() || fallbackAccess(), names);
+        const race = nextRace(getActiveRunningPrograms(), localIso(today));
+        el.textContent = clientHeroLine(clientAccess || cachedNavAccess() || fallbackAccess(), names, raceCountdownText(race));
         return;
     }
 
@@ -627,7 +633,10 @@ function renderStreak() {
     try { entries = JSON.parse(localStorage.getItem("entries") || "{}"); } catch { entries = {}; }
     // Shared with My Progress (js/progressView.js): by local calendar day,
     // the same keys the Habits page writes.
-    valueEl.textContent = String(habitStreak(entries));
+    const streak = habitStreak(entries);
+    valueEl.textContent = String(streak);
+    const meta = document.getElementById("streakMeta");
+    if (meta) meta.textContent = streakDetail(streak);
 }
 
 /* ==========================================

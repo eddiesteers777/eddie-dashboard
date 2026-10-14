@@ -16,7 +16,9 @@
 ========================================== */
 
 import { calculateTargets, paceMinutesPerMile } from "./fuelTargets.js";
+import { fluidText } from "./fluidUnits.js";
 import { buildSchedule, formatClock, DEFAULT_FIRST_GEL_MIN } from "./fuelSchedule.js";
+import { workoutSegments } from "./paceSegments.js";
 
 // Plan day types -> the Fueling page's workout types.
 const TYPE_MAP = { easy: "easy", recovery: "recovery", long: "long", workout: "workout", tempo: "workout", race: "race" };
@@ -24,18 +26,27 @@ const TYPE_MAP = { easy: "easy", recovery: "recovery", long: "long", workout: "w
 // A gel for when their library has none.
 const GENERIC_GEL = { name: "Energy gel", carbs: 25, sodium: 50, fluid: 0, caffeine: false };
 
-// Inputs we reuse from their last saved fueling plan (the Fueling page's form).
+// Inputs we reuse from their fueling profile, else their last saved
+// fueling plan (the Fueling page's form).
 const PROFILE_KEYS = ["bodyWeight", "currentCarbIntake", "tolerance", "stomachSensitivity", "temperature",
     "humidity", "sweatRate", "sweatSodium", "typicalSodiumIntake", "caffeineWanted"];
 
-export function profileFromPlans(savedPlans) {
+export function profileFromPlans(savedPlans, fuelingProfile = null) {
     const latest = [...(savedPlans || [])]
         .filter(p => p?.session)
         .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0];
-    if (!latest) return {};
     const out = {};
-    for (const key of PROFILE_KEYS) if (latest.session[key] !== undefined) out[key] = latest.session[key];
-    if (latest.caffeine) out.caffeineWanted = true;
+    if (latest) {
+        for (const key of PROFILE_KEYS) if (latest.session[key] !== undefined) out[key] = latest.session[key];
+        if (latest.caffeine) out.caffeineWanted = true;
+    }
+    // The athlete's saved fueling profile (js/fuelProfile.js) wins: it's
+    // what they say about themselves now, not what an old plan used.
+    const fields = fuelingProfile?.fields || {};
+    for (const key of [...PROFILE_KEYS, "sweatRateMeasured", "sweatSodiumMeasured"]) {
+        const v = fields[key]?.v;
+        if (v != null && v !== "") out[key] = v;
+    }
     return out;
 }
 
@@ -56,7 +67,8 @@ const roundTo = (n, step) => Math.round(n / step) * step;
  *      schedule, before: [{ when, text }], during: [lines], after: [lines],
  *      coachNote, summary }
  */
-export function fuelForRun(run, { profile = {}, library = [] } = {}) {
+export function fuelForRun(run, { profile = {}, library = [], unit = "oz" } = {}) {
+    const fl = oz => fluidText(oz, unit);
     const type = TYPE_MAP[run?.type] || "easy";
     const miles = Math.max(0, Number(run?.miles) || 0);
     const durationMin = Number(run?.durationMin) > 0
@@ -86,7 +98,9 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
         if (caffeinated && count > 0) items.push({ ...caffeinated, qty: 1 });
         schedule = buildSchedule({
             durationMin, distanceMi: miles, items: items.filter(i => i.qty > 0), drink: null,
-            targets, firstGelMin: DEFAULT_FIRST_GEL_MIN
+            targets, firstGelMin: DEFAULT_FIRST_GEL_MIN,
+            // A structured workout: gels land at the mile its own paces reach.
+            segments: run?.workout ? workoutSegments(run.workout) : null
         });
         gels = schedule.gels.map(g => ({ ...g, clock: formatClock(g.min) }));
     }
@@ -94,7 +108,7 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
         ? ["No fuel needed. Water if it's hot."]
         : [
             `${targets.carbsPerHour} g carbs an hour${gels.length ? ` — ${gels.length} gel${gels.length === 1 ? "" : "s"}` : ""}`,
-            `${targets.fluidPerHour} oz fluid an hour`,
+            `${fl(targets.fluidPerHour)} fluid an hour`,
             `${targets.sodiumPerHour} mg sodium an hour`
         ];
 
@@ -115,13 +129,13 @@ export function fuelForRun(run, { profile = {}, library = [] } = {}) {
     if (level === "full" || hard) {
         const carbs = lbs ? `about ${roundTo(lbs * 0.45, 10)} g carbs` : "60-80 g carbs";
         after.push(`Within 30-60 min: ${carbs} + 20-30 g protein (e.g. chocolate milk and a bagel).`);
-        after.push("Drink 16-24 oz over the next hour — more if it was hot or you finished thirsty.");
+        after.push(`Drink ${unit === "ml" ? "about 500-700 ml" : "16-24 oz"} over the next hour — more if it was hot or you finished thirsty.`);
     } else {
         after.push("Your next normal meal, with some protein, within a couple of hours.");
     }
 
     const summary = level === "none" ? ""
-        : `${gels.length ? `${gels.length} gel${gels.length === 1 ? "" : "s"}, first at ${formatClock(gels[0].min)}` : `${targets.carbsPerHour} g carbs/hr`} · ${targets.fluidPerHour} oz/hr`;
+        : `${gels.length ? `${gels.length} gel${gels.length === 1 ? "" : "s"}, first at ${formatClock(gels[0].min)}` : `${targets.carbsPerHour} g carbs/hr`} · ${fl(targets.fluidPerHour)}/hr`;
 
     return { level, durationMin, miles, targets, gels, schedule, before, during, after, coachNote, summary };
 }

@@ -95,19 +95,22 @@ const changesFor = (clientUid = null) => listChangeRequestsForCoach(clientUid).c
 });
 
 export async function loadClientDirectory() {
-    const [links, checkins, requests, changes, packages] = await Promise.all([
+    const [links, checkins, requests, changes, packages, messages] = await Promise.all([
         listMyClients(),
         quiet(listCheckinsForMyClients()),
         quiet(listRequestsForMyClients()),
         changesFor(),
         // [] until the packages rules are published (or offline).
-        listPackagesForCoach().catch(() => [])
+        listPackagesForCoach().catch(() => []),
+        // Every message with every client at once; [] until the messages rules are published.
+        import("./messages.js").then(m => m.listCoachInbox()).catch(() => [])
     ]);
     const packagesBy = groupByClient(packages);
     const checkinsBy = groupByClient(checkins);
     const reviewed = healthReviewed();
     const requestsBy = groupByClient(requests);
     const changesBy = groupByClient(changes);
+    const messagesBy = groupByClient(messages);
 
     return Promise.all(links.map(async link => {
         const [profile, shared, record, coachingPlans, results] = await Promise.all([
@@ -128,7 +131,8 @@ export async function loadClientDirectory() {
             checkins: checkinsBy.get(link.clientUid) || [],
             requests: requestsBy.get(link.clientUid) || [],
             changes: changesBy.get(link.clientUid) || [],
-            packages: packagesBy.get(link.clientUid) || []
+            packages: packagesBy.get(link.clientUid) || [],
+            messages: messagesBy.get(link.clientUid) || []
         };
     }));
 }
@@ -157,6 +161,8 @@ export async function loadClientRecord(clientUid) {
             return [];
         }),
         changes: changesFor(clientUid),
+        // The message thread; [] until the messages rules are published.
+        messages: import("./messages.js").then(m => m.listThread("coach", clientUid)).catch(() => []),
         wearableShare: readWearableShare(link.coachUid, clientUid).catch(() => null),
         sharedWearableActivity: import("./coachAccess.js").then(m => m.readSharedWearableActivity(link.coachUid, clientUid)).catch(() => null),
         sharedWearablePerformance: import("./coachAccess.js").then(m => m.readSharedWearablePerformance(link.coachUid, clientUid)).catch(() => null),

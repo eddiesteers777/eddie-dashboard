@@ -28,6 +28,7 @@ import { isIntakeComplete, athleteDisplayName, healthYeses } from "./clientRecor
 import { mergeRuntimeByDate } from "./coachingPlanModel.js";
 import { awaitingView, noticeVersionOf } from "./planWindow.js";
 import { checkinFlags, reasonLabel } from "./feedbackModel.js";
+import { inboxByClient, messageAttention } from "./messageThread.js";
 import { staleSummary, openAsks, ageText } from "./profileChecks.js";
 import { answersDone } from "./intakeFlow.js";
 import { sessionList, sessionsToLog, noShowStreak } from "./sessionModel.js";
@@ -241,7 +242,7 @@ export function summarizeCheckins(checkins, today) {
 // dashboard shows "2 days ago"); nothing otherwise.
 const since = value => { const ms = toMillis(value); return ms && Number.isFinite(ms) ? { at: ms } : {}; };
 
-export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0, requests = [], packages = [] }) {
+export function needsAttention({ profile, plans, sessions, checkins, today, record, coachingPlans = [], results = [], changes = [], now = Date.now(), healthReviewedAt = 0, requests = [], packages = [], messages = [] }) {
     const items = [];
     // A "yes" on their health check the coach hasn't marked reviewed.
     const yeses = healthYeses(record);
@@ -266,6 +267,9 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
             ...since(c.createdAt)
         });
     }
+    // Messages they sent that you haven't read (js/messageThread.js).
+    const waiting = messageAttention(inboxByClient(messages).values().next().value);
+    if (waiting) items.push(waiting);
     for (const c of checkins.needsReview) {
         const flags = checkinFlags(c);
         items.push({ kind: "checkin", text: `Check-in for week of ${shortDate(c.weekOf)} needs your reply${flags.length ? ` — ${flags.join(", ").toLowerCase()}` : ""}`, tab: "checkins", ...since(c.submittedAt) });
@@ -570,11 +574,11 @@ export function clientStatusLines(c) {
     ].filter(Boolean);
 }
 
-export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [], healthReviewedAt = 0, packages = [] }, today) {
+export function summarizeClient({ profile, link, shared, checkins, requests, record, coachingPlans = [], results = [], changes = [], healthReviewedAt = 0, packages = [], messages = [] }, today) {
     const plans = summarizePlans(shared, today, coachingPlans, results);
     const sessions = summarizeSessions(requests, today);
     const checkinSummary = summarizeCheckins(checkins, today);
-    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes, healthReviewedAt, requests, packages });
+    const attention = needsAttention({ profile, plans, sessions, checkins: checkinSummary, today, record, coachingPlans, results, changes, healthReviewedAt, requests, packages, messages });
     const name = profile?.displayName || link?.clientName || "Client";
     const athlete = record?.whoTrains === "child" ? (record.athleteName || "") : "";
     const goesBy = athleteDisplayName(record, "");

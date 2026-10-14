@@ -8,8 +8,16 @@
    reads from.
 ========================================== */
 
+import { isBodyweight } from "./strengthUnits.js";
+
 const HISTORY_KEY = "strength-history";
-const MAX_ENTRIES_PER_EXERCISE = 20;
+// Enough for years of progress (Strength → Progress); an entry is ~100 bytes.
+const MAX_ENTRIES_PER_EXERCISE = 400;
+
+// The phone's own calendar day (toISOString is UTC, so an evening session was dated tomorrow).
+function localDay(d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 function loadHistory() {
     try {
@@ -23,6 +31,7 @@ function loadHistory() {
 
 function saveHistory(history) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    window.dispatchEvent(new CustomEvent("eddieos:strength-history-updated"));
 
     import("./cloudSync.js")
         .then(({ pushToCloud }) => pushToCloud())
@@ -44,7 +53,11 @@ function historyKeyFor(exercise) {
  * always one that was added but never actually logged.
  */
 export function logExercise(exercise) {
-    const meaningfulSets = (exercise.sets || []).filter(set =>
+    // Only the sets ticked off, when any were (a set left unticked wasn't done); otherwise every
+    // set with numbers in it, as before.
+    const all = exercise.sets || [];
+    const ticked = all.filter(set => set.done);
+    const meaningfulSets = (ticked.length ? ticked : all).filter(set =>
         exercise.mode === "time"
             ? Number(set.duration) > 0
             : Number(set.weight) > 0 || Number(set.reps) > 0
@@ -62,12 +75,15 @@ export function logExercise(exercise) {
     }
 
     history[key].unshift({
-        date: new Date().toISOString().slice(0, 10),
+        date: localDay(),
         mode: exercise.mode,
+        name: String(exercise.name || "").trim().slice(0, 80),
+        ...(exercise.mode !== "time" && isBodyweight(exercise) ? { bw: true } : {}),
         sets: meaningfulSets.map(set => ({
             weight: Number(set.weight) || 0,
             reps: Number(set.reps) || 0,
-            duration: Number(set.duration) || 0
+            duration: Number(set.duration) || 0,
+            ...(set.type && set.type !== "working" ? { type: set.type } : {})
         }))
     });
 
@@ -89,8 +105,62 @@ export function getPreviousPerformance(exercise) {
         return null;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDay();
     const previous = entries.find(entry => entry.date !== today) || null;
 
     return previous;
+}
+
+/* ==========================================
+   One finished session at a time (js/completedSessions.js)
+
+   Entries a stored session wrote carry its id (`sid`), so finishing the
+   same session again, editing it or deleting it replaces exactly its own
+   entries: Progress never counts a workout twice.
+========================================== */
+
+function insertByDate(list, entry) {
+    // Newest first, as every reader expects.
+    const i = list.findIndex(e => String(e.date || "") < entry.date);
+    if (i === -1) list.push(entry); else list.splice(i, 0, entry);
+}
+
+function dropSession(history, sid) {
+    let dropped = 0;
+    for (const key of Object.keys(history)) {
+        if (!Array.isArray(history[key])) continue;
+        const before = history[key].length;
+        history[key] = history[key].filter(e => e?.sid !== sid);
+        dropped += before - history[key].length;
+        if (!history[key].length) delete history[key];
+    }
+    return dropped;
+}
+
+/** Writes (or rewrites) a stored strength session's lifts into strength-history. */
+export function logSession(session) {
+    if (!session?.id || session.type !== "strength") return;
+    const history = loadHistory();
+    dropSession(history, session.id);
+    for (const ex of session.strength?.exercises || []) {
+        const key = String(ex.name || "").trim().toLowerCase();
+        if (!key || !ex.sets?.length) continue;
+        if (!Array.isArray(history[key])) history[key] = [];
+        insertByDate(history[key], {
+            date: session.date,
+            mode: ex.mode === "time" ? "time" : "reps",
+            name: String(ex.name).trim().slice(0, 80),
+            sid: session.id,
+            ...(ex.bw ? { bw: true } : {}),
+            sets: ex.sets.map(s => ({ weight: s.w || 0, reps: s.r || 0, duration: s.d || 0, ...(s.t ? { type: s.t } : {}) }))
+        });
+        history[key] = history[key].slice(0, MAX_ENTRIES_PER_EXERCISE);
+    }
+    saveHistory(history);
+}
+
+/** Takes a deleted session's lifts back out of strength-history. */
+export function removeSessionHistory(sid) {
+    const history = loadHistory();
+    if (dropSession(history, sid)) saveHistory(history);
 }

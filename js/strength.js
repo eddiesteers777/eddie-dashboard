@@ -12,10 +12,19 @@ import { searchExercises } from "./exerciseSearch.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
 import { toast } from "./ui.js";
+import { removeWorkout, restoreWorkout } from "./strengthWorkoutList.js";
+import {
+    DEFAULT_REST, REST_OPTIONS, SET_TYPES, SET_TYPE_BADGE, SET_TYPE_WORDS,
+    setType, nextSetType, restValue, restLabel, repsText, repsMaxValue,
+    estimateMinutes, moveInList, canMove, cleanWorkoutName, uniqueWorkoutName, exerciseFromQuery
+} from "./strengthBuilderModel.js";
+import {
+    SETTINGS_KEY, cleanSettings, toDisplay, fromDisplay, unitLabel, unitWord, stepFor,
+    isBodyweight, loadText, setShort, effortLabel, effortText, effortOptions, volumeText
+} from "./strengthUnits.js";
 
 const STORAGE_KEY = "strength-plan";
 const LIBRARY_KEY = "strength-exercise-library";
-const DEFAULT_REST = 90;
 
 let plan = { days: [], activeDay: null };
 let searchDebounceTimer = null;
@@ -211,15 +220,19 @@ function saveCustomExerciseFromForm() {
 
     closeCustomExerciseModal();
 
-    // Refresh any currently open search.
-    const query =
-        $("exerciseSearchInput")
-            ?.value ||
-        "";
-
-    searchExercisesForBuilder(
-        query
-    );
+    // Tick it in the picker and show it, so one more tap adds it.
+    const result = customExerciseToSearchResult(exercise);
+    pickerSelected.set(pickerKey(result), result);
+    const input = $("exerciseSearchInput");
+    if (input) input.value = exercise.name;
+    searchExercisesForBuilder(exercise.name)
+        .catch(() => [])
+        .then(results => {
+            const list = results.some(ex => pickerKey(ex) === pickerKey(result)) ? results : [result, ...results];
+            renderSearchResults(list);
+            renderPickerFooter();
+        });
+    toast(`“${exercise.name}” saved to My Library`);
 }
 
 
@@ -255,7 +268,9 @@ function normalizeSet(set = {}, mode = "reps") {
             set.rpe === undefined
                 ? ""
                 : Number(set.rpe) || "",
-        type: set.type || "working"
+        // Optional top of a rep range (8–10): reps stays the low end for every older reader.
+        ...(repsMaxValue(set.reps, set.repsMax) ? { repsMax: repsMaxValue(set.reps, set.repsMax) } : {}),
+        type: setType(set)
     };
 }
 
@@ -275,8 +290,9 @@ function normalizeExercise(ex = {}) {
             : [],
         image: ex.image || null,
         mode,
-        restSeconds:
-            Number(ex.restSeconds) || DEFAULT_REST,
+        restSeconds: restValue(ex.restSeconds),   // 0 = No rest
+        repRange: Boolean(ex.repRange),
+        ...(ex.load === "bw" || ex.load === "weighted" ? { load: ex.load } : {}),   // bodyweight: the weight box is load added
         notes: ex.notes || "",
         groupId: ex.groupId || null,
         groupType: normalizeGroupType(ex.groupType),
@@ -347,11 +363,42 @@ function loadPlan() {
     }
 }
 
+// Every change saves on the phone at once; the account copy follows (cloud sync).
+// The builder shows which of the two has happened (#strengthSaveStatus).
+let saveState = { state: "idle", at: 0 };
+
+function saveStatusText() {
+    if (saveState.state === "error") return "Couldn't save on this phone. Free up some space, then try again.";
+    if (saveState.state === "idle") return "Changes save as you go.";
+    if (saveState.state === "offline") return "Saved on this phone. It'll sync when you're back online.";
+    if (saveState.state === "syncing") return "Saved on this phone · syncing…";
+    if (saveState.state === "synced") return "Saved · synced to your account";
+    return "Saved on this phone";
+}
+
+function showSaveStatus(state) {
+    saveState = { state, at: Date.now() };
+    const el = $("strengthSaveStatus");
+    if (el) {
+        el.textContent = saveStatusText();
+        el.dataset.state = state;
+    }
+}
+
+let syncTimer = null;
+
 function savePlan() {
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(plan)
-    );
+    try {
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(plan)
+        );
+    } catch (error) {
+        console.error("Strength: could not save", error);
+        showSaveStatus("error");
+        toast("Couldn't save that change on this phone. It may be out of space.", { type: "error" });
+        return false;
+    }
 
     window.dispatchEvent(
         new CustomEvent(
@@ -359,9 +406,54 @@ function savePlan() {
         )
     );
 
-    import("./cloudSync.js")
-        .then(({ pushToCloud }) => pushToCloud())
-        .catch(() => {});
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        showSaveStatus("offline");
+    } else {
+        showSaveStatus("syncing");
+    }
+
+    // Typing in a box saves on every key; the account copy waits for a pause.
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+        import("./cloudSync.js")
+            .then(({ pushToCloud }) => pushToCloud())
+            .then(() => {
+                if (saveState.state === "syncing") showSaveStatus(navigator.onLine === false ? "offline" : "synced");
+            })
+            .catch(() => {
+                if (saveState.state === "syncing") showSaveStatus("saved");
+            });
+    }, 600);
+    return true;
+}
+
+// lb / kg and RPE / reps in reserve: one choice for the whole Strength page and workout mode
+// (strength-settings, cloud-synced). Weights stay stored in pounds (js/strengthUnits.js).
+function strengthSettings() {
+    try { return cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null")); }
+    catch { return cleanSettings(null); }
+}
+
+function saveStrengthSettings(next) {
+    const settings = cleanSettings({ ...strengthSettings(), ...next });
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+    window.dispatchEvent(new CustomEvent("sb:strength-settings", { detail: settings }));
+    import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});
+    return settings;
+}
+
+// One polite live region for things a screen reader should hear (moves, set kinds).
+function announce(text) {
+    let el = document.getElementById("strengthAnnounce");
+    if (!el) {
+        el = document.createElement("p");
+        el.id = "strengthAnnounce";
+        el.className = "sr-only";
+        el.setAttribute("aria-live", "polite");
+        document.body.appendChild(el);
+    }
+    el.textContent = "";
+    setTimeout(() => { el.textContent = text; }, 30);
 }
 
 /* ==========================================
@@ -409,7 +501,10 @@ function renderVolume() {
         });
     });
 
-    el.textContent = total.toLocaleString();
+    const { unit } = strengthSettings();
+    el.textContent = volumeText(total, unit).replace(/ (lb|kg)$/, "");
+    const word = document.querySelector(".strength-hero-unit");
+    if (word) word.textContent = `${unitLabel(unit)} this week`;
 }
 
 /* ==========================================
@@ -462,6 +557,7 @@ function renderDayTabs() {
    Set / exercise rendering
 ========================================== */
 
+// eslint-disable-next-line no-unused-vars -- kept for anything that still renders the old select
 function setTypeOptions(value) {
     return `
         <option value="working" ${
@@ -478,142 +574,76 @@ function setTypeOptions(value) {
     `;
 }
 
+// The last time this exercise was logged (strength-history, newest first), for the Previous column.
+function lastLogged(exercise) {
+    try {
+        const history = JSON.parse(localStorage.getItem("strength-history") || "{}") || {};
+        const entries = history[String(exercise.name || "").trim().toLowerCase()];
+        return Array.isArray(entries) && entries.length ? entries[0] : null;
+    } catch {
+        return null;
+    }
+}
+
+
+// Sets as rows that fit a phone (2026-10-11, after Strong / Hevy):
+// SET (tap to switch working / warm-up / drop) · PREVIOUS (tap to copy) · LB · REPS or SEC · RPE · remove.
 function renderSetTable(exercise) {
     const timeMode = exercise.mode === "time";
+    const last = lastLogged(exercise);
+    const { unit, effort } = strengthSettings();
+    const bw = isBodyweight(exercise);
+    let working = 0;
+
+    const rows = exercise.sets.map((set, index) => {
+        const type = setType(set);
+        const label = SET_TYPE_BADGE[type] || String(++working);
+        const prev = last?.sets?.[index] || null;
+        const prevText = prev ? setShort(prev, unit, { time: timeMode, bodyweight: bw }) : "–";
+        return `
+            <div class="strength-set-row is-${type}" data-set-id="${set.id}">
+                <button type="button" class="strength-set-badge" data-cycle-type="${set.id}" data-exercise-id="${exercise.id}"
+                    title="${SET_TYPE_WORDS[type]}: tap to change" aria-label="Set ${index + 1}, ${SET_TYPE_WORDS[type]}. Tap to change the kind of set.">${label}</button>
+                ${prev
+                    ? `<button type="button" class="strength-set-prev" data-use-prev="${index}" data-exercise-id="${exercise.id}" data-set-id="${set.id}" title="Use last time's numbers">${escapeHtml(prevText)}</button>`
+                    : `<span class="strength-set-prev is-empty">–</span>`}
+                <input type="number" inputmode="decimal" class="strength-set-input" aria-label="${bw ? "Added weight" : "Weight"} in ${unitWord(unit)}, set ${index + 1}"
+                    data-field="weight" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                    value="${Number(set.weight) ? toDisplay(set.weight, unit) : ""}" placeholder="${bw ? "BW" : "0"}" min="0" step="any">
+                ${timeMode
+                    ? `<input type="number" inputmode="numeric" class="strength-set-input" aria-label="Seconds, set ${index + 1}"
+                        data-field="duration" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                        value="${set.duration || 30}" min="1" step="5">`
+                    : exercise.repRange
+                    ? `<span class="strength-set-range">
+                        <input type="number" inputmode="numeric" class="strength-set-input" aria-label="Fewest reps, set ${index + 1}"
+                            data-field="reps" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                            value="${Number(set.reps) || ""}" placeholder="8" min="0" step="1"><span aria-hidden="true">–</span><input type="number" inputmode="numeric" class="strength-set-input" aria-label="Most reps, set ${index + 1}"
+                            data-field="repsMax" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                            value="${Number(set.repsMax) || ""}" placeholder="10" min="0" step="1">
+                      </span>`
+                    : `<input type="number" inputmode="numeric" class="strength-set-input" aria-label="Reps, set ${index + 1}"
+                        data-field="reps" data-exercise-id="${exercise.id}" data-set-id="${set.id}"
+                        value="${Number(set.reps) || ""}" placeholder="0" min="0" step="1">`}
+                <select class="strength-set-rpe" aria-label="${effort === "rir" ? "Reps in reserve" : "RPE"}, set ${index + 1}" data-field="rpe" data-exercise-id="${exercise.id}" data-set-id="${set.id}">
+                    <option value="">–</option>
+                    ${effortOptions(effort, set.rpe).map(o => `<option value="${o.value}" ${o.selected ? "selected" : ""}>${o.label}</option>`).join("")}
+                </select>
+                <button type="button" class="strength-set-remove" data-remove-set="${set.id}" data-exercise-id="${exercise.id}" aria-label="Remove set ${index + 1}">${icon("close")}</button>
+            </div>`;
+    }).join("");
 
     return `
-        <div class="strength-table-scroll">
-            <table class="strength-set-table">
-                <thead>
-                    <tr>
-                        <th>Set</th>
-                        <th>Type</th>
-                        <th>Weight</th>
-                        <th>${timeMode ? "Time" : "Reps"}</th>
-                        <th>RPE</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    ${exercise.sets.map((set, index) => `
-                        <tr data-set-id="${set.id}">
-                            <td class="strength-set-index">
-                                ${index + 1}
-                            </td>
-
-                            <td>
-                                <select
-                                    class="strength-set-type"
-                                    data-field="type"
-                                    data-exercise-id="${exercise.id}"
-                                    data-set-id="${set.id}"
-                                >
-                                    ${setTypeOptions(set.type)}
-                                </select>
-                            </td>
-
-                            <td>
-                                <input
-                                    type="number"
-                                    class="strength-set-input"
-                                    data-field="weight"
-                                    data-exercise-id="${exercise.id}"
-                                    data-set-id="${set.id}"
-                                    value="${set.weight}"
-                                    min="0"
-                                    step="5"
-                                >
-                                <span class="strength-set-unit">lb</span>
-                            </td>
-
-                            <td>
-                                ${
-                                    timeMode
-                                        ? `
-                                            <input
-                                                type="number"
-                                                class="strength-set-input"
-                                                data-field="duration"
-                                                data-exercise-id="${exercise.id}"
-                                                data-set-id="${set.id}"
-                                                value="${set.duration || 30}"
-                                                min="1"
-                                                step="5"
-                                            >
-                                            <span class="strength-set-unit">sec</span>
-                                        `
-                                        : `
-                                            <input
-                                                type="number"
-                                                class="strength-set-input"
-                                                data-field="reps"
-                                                data-exercise-id="${exercise.id}"
-                                                data-set-id="${set.id}"
-                                                value="${set.reps}"
-                                                min="0"
-                                                step="1"
-                                            >
-                                        `
-                                }
-                            </td>
-
-                            <td>
-                                <select
-                                    class="strength-set-rpe"
-                                    data-field="rpe"
-                                    data-exercise-id="${exercise.id}"
-                                    data-set-id="${set.id}"
-                                >
-                                    <option value="">—</option>
-                                    ${Array.from(
-                                        { length: 10 },
-                                        (_, i) => `
-                                            <option
-                                                value="${i + 1}"
-                                                ${
-                                                    Number(set.rpe) === i + 1
-                                                        ? "selected"
-                                                        : ""
-                                                }
-                                            >
-                                                ${i + 1}
-                                            </option>
-                                        `
-                                    ).join("")}
-                                </select>
-                            </td>
-
-                            <td>
-                                <button
-                                    type="button"
-                                    class="strength-set-done ${
-                                        set.done ? "checked" : ""
-                                    }"
-                                    data-toggle-set="${set.id}"
-                                    data-exercise-id="${exercise.id}"
-                                    title="Complete set"
-                                >
-                                    ${icon("check")}
-                                </button>
-                            </td>
-
-                            <td>
-                                <button
-                                    type="button"
-                                    class="strength-set-remove"
-                                    data-remove-set="${set.id}"
-                                    data-exercise-id="${exercise.id}"
-                                    title="Remove set"
-                                >
-                                    ${icon("close")}
-                                </button>
-                            </td>
-                        </tr>
-                    `).join("")}
-                </tbody>
-            </table>
+        <div class="strength-sets${exercise.repRange && !timeMode ? " has-range" : ""}" role="group" aria-label="Sets">
+            <div class="strength-set-head">
+                <span aria-hidden="true">Set</span><span aria-hidden="true">Previous</span><button type="button" class="strength-set-head-btn" data-toggle-unit
+                    title="Show weights in ${unit === "kg" ? "pounds" : "kilograms"}" aria-label="Weights in ${unitWord(unit)}. Switch to ${unit === "kg" ? "pounds" : "kilograms"}">${bw ? "+" : ""}${unitLabel(unit)}</button>${timeMode
+                    ? `<span aria-hidden="true">Sec</span>`
+                    : `<button type="button" class="strength-set-head-btn" data-toggle-range="${exercise.id}" aria-pressed="${exercise.repRange ? "true" : "false"}"
+                        title="${exercise.repRange ? "Back to a single number of reps" : "Use a rep range, like 8–10"}">${exercise.repRange ? "Rep range" : "Reps"} ${icon("chevronDown")}</button>`}<button type="button" class="strength-set-head-btn" data-toggle-effort
+                    title="${effort === "rir" ? "Show effort as RPE (1–10)" : "Show effort as reps in reserve"}" aria-label="Effort as ${effort === "rir" ? "reps in reserve" : "RPE"}. Switch to ${effort === "rir" ? "RPE" : "reps in reserve"}">${effortLabel(effort)}</button><span></span>
+            </div>
+            ${rows}
         </div>
     `;
 }
@@ -640,7 +670,7 @@ function formatExercisePrescription(exercise) {
     const values = sets.map(set =>
         isTime
             ? (Number(set.duration) || 0) + " sec"
-            : String(Number(set.reps) || 0)
+            : repsText(set)
     );
 
     const sameValue = values.every(value => value === values[0]);
@@ -649,7 +679,9 @@ function formatExercisePrescription(exercise) {
         ? count + " × " + values[0]
         : count + " sets";
 
+    const { unit, effort } = strengthSettings();
     if (!isTime) {
+        const bw = isBodyweight(exercise);
         const loads = sets
             .map(set => Number(set.weight) || 0)
             .filter(value => value > 0);
@@ -657,9 +689,11 @@ function formatExercisePrescription(exercise) {
         const uniqueLoads = [...new Set(loads)];
 
         if (uniqueLoads.length === 1) {
-            summary += " · " + uniqueLoads[0] + " lb";
+            summary += " · " + loadText(uniqueLoads[0], unit, bw);
         } else if (uniqueLoads.length > 1) {
             summary += " · Varying load";
+        } else if (bw) {
+            summary += " · BW";
         }
     }
 
@@ -667,16 +701,16 @@ function formatExercisePrescription(exercise) {
 
     if (
         rpes.every(Number.isFinite) &&
+        rpes[0] > 0 &&
         rpes.every(value => value === rpes[0])
     ) {
-        summary += " · RPE " + rpes[0];
+        summary += " · " + effortText(rpes[0], effort);
     }
 
-    const rest = Number(exercise.restSeconds) || 0;
+    summary += " · " + (Number(exercise.restSeconds) ? formatExerciseRest(exercise.restSeconds) + " rest" : "No rest");
 
-    if (rest) {
-        summary += " · " + formatExerciseRest(rest);
-    }
+    const special = sets.filter(set => setType(set) !== "working").map(set => SET_TYPE_BADGE[setType(set)]);
+    if (special.length) summary += " · " + [...new Set(special)].join("/") + " sets";
 
     return summary;
 }
@@ -705,49 +739,66 @@ function renderExercise(exercise) {
           '" alt="" loading="lazy">'
         : "";
 
-    const restOptions = [
-        30, 45, 60, 75, 90, 120, 150, 180, 240
-    ].map(value =>
-        '<option value="' +
-        value +
-        '"' +
-        (Number(exercise.restSeconds) === value ? " selected" : "") +
-        ">" +
-        value +
-        "s</option>"
+    const restNow = restValue(exercise.restSeconds);
+    const restOptions = [...new Set([...REST_OPTIONS, restNow])].sort((a, b) => a - b).map(value =>
+        '<option value="' + value + '"' + (restNow === value ? " selected" : "") + ">" +
+        escapeHtml(restLabel(value)) + "</option>"
     ).join("");
+    const day = activeDay();
+    const list = day?.exercises || [];
+    const position = list.findIndex(ex => ex.id === exercise.id);
 
     const detailHtml = detailsOpen
         ? [
             '<div class="strength-exercise-editor">',
-                '<div class="strength-exercise-editor-top">',
-                    '<div class="strength-exercise-toolbar">',
 
-                        '<button type="button" class="strength-mode-btn ' +
-                            (exercise.mode === "time" ? "active" : "") +
-                            '" data-toggle-mode="' + exercise.id + '">' +
-                            icon("timer") + " " +
-                            (exercise.mode === "time" ? "Timed" : "Reps") +
+                // Sets first: they're what you came to change.
+                renderSetTable(exercise),
+
+                '<button type="button" class="strength-add-set-btn" data-add-set="' +
+                    exercise.id + '">' + icon("plus") + " Add set</button>",
+
+                '<div class="strength-exercise-tools">',
+
+                    '<button type="button" class="strength-mode-btn ' +
+                        (exercise.mode === "time" ? "active" : "") +
+                        '" data-toggle-mode="' + exercise.id + '" title="Switch between reps and timed sets">' +
+                        icon("timer") + " " +
+                        (exercise.mode === "time" ? "Timed" : "Reps") +
+                    "</button>",
+
+                    (exercise.mode === "time" ? "" :
+                    '<button type="button" class="strength-mode-btn ' + (isBodyweight(exercise) ? "active" : "") +
+                        '" data-toggle-bw="' + exercise.id + '" aria-pressed="' + (isBodyweight(exercise) ? "true" : "false") +
+                        '" title="Bodyweight: the weight box is extra load (a vest, a plate, a belt)">' +
+                        icon("user") + " Bodyweight" +
+                    "</button>"),
+
+                    '<label class="strength-rest-field">',
+                        "<span>Rest</span>",
+                        '<select data-rest-select="' + exercise.id + '">',
+                            restOptions,
+                        "</select>",
+                    "</label>",
+
+                    '<button type="button" class="strength-group-btn" data-group-exercise="' +
+                        exercise.id + '">' +
+                        (exercise.groupId ? "Edit group" : "Superset / circuit") +
+                    "</button>",
+
+                    '<span class="strength-exercise-actions">',
+
+                        '<button type="button" class="strength-icon-btn" data-move-up="' + exercise.id + '" ' +
+                            (canMove(list, exercise.id, -1) ? "" : "disabled ") +
+                            'title="Move up" aria-label="Move ' + escapeHtml(exercise.name) + ' up (now ' + (position + 1) + " of " + list.length + ')">' +
+                            icon("chevronUp") +
                         "</button>",
 
-                        '<button type="button" class="strength-rest-btn" data-rest-exercise="' +
-                            exercise.id + '">' +
-                            "Rest " + exercise.restSeconds + "s" +
+                        '<button type="button" class="strength-icon-btn" data-move-down="' + exercise.id + '" ' +
+                            (canMove(list, exercise.id, 1) ? "" : "disabled ") +
+                            'title="Move down" aria-label="Move ' + escapeHtml(exercise.name) + ' down">' +
+                            icon("chevronDown") +
                         "</button>",
-
-                        '<button type="button" class="strength-group-btn" data-group-exercise="' +
-                            exercise.id + '">' +
-                            (exercise.groupId ? "Edit Group" : "+ Add to Group") +
-                        "</button>",
-
-                        '<button type="button" class="strength-note-btn" data-toggle-notes="' +
-                            exercise.id + '">' +
-                            (exercise.notes ? "Notes •" : "Notes") +
-                        "</button>",
-
-                    "</div>",
-
-                    '<div class="strength-exercise-actions">',
 
                         '<button type="button" class="strength-icon-btn" ' +
                             'data-duplicate-exercise="' + exercise.id + '" ' +
@@ -760,41 +811,19 @@ function renderExercise(exercise) {
                             'data-remove-exercise="' + exercise.id + '" ' +
                             'title="Remove exercise" ' +
                             'aria-label="Remove ' + escapeHtml(exercise.name) + '">' +
-                            icon("close") +
+                            icon("trash") +
                         "</button>",
 
-                    "</div>",
+                    "</span>",
                 "</div>",
 
-                '<div class="strength-exercise-details">',
-
-                    "<label>",
-                        "<span>Rest</span>",
-                        '<select data-rest-select="' + exercise.id + '">',
-                            restOptions,
-                        "</select>",
-                    "</label>",
-
-                    '<label class="strength-note-field">',
-                        "<span>Exercise note</span>",
-                        '<input type="text" ' +
-                            'data-exercise-note="' + exercise.id + '" ' +
-                            'value="' + escapeHtml(exercise.notes) + '" ' +
-                            'placeholder="e.g. Keep ribs down">',
-                    "</label>",
-
-                    '<p class="strength-mode-help">' +
-                        (exercise.mode === "time"
-                            ? "Timed mode is ideal for planks, carries, mobility, and other duration-based work."
-                            : "Rep mode tracks weight and reps. RPE is optional when you want to prescribe or record effort.") +
-                    "</p>",
-
-                "</div>",
-
-                renderSetTable(exercise),
-
-                '<button type="button" class="strength-add-set-btn" data-add-set="' +
-                    exercise.id + '">+ Add Set</button>',
+                '<label class="strength-note-field">',
+                    '<span class="sr-only">Exercise note</span>',
+                    '<input type="text" ' +
+                        'data-exercise-note="' + exercise.id + '" ' +
+                        'value="' + escapeHtml(exercise.notes) + '" ' +
+                        'placeholder="Add a note (e.g. keep ribs down)">',
+                "</label>",
 
             "</div>"
         ].join("")
@@ -986,70 +1015,60 @@ function renderDayContent() {
         day.groupRounds = {};
     }
 
+    const estimate = estimateMinutes(day);
+    const scrollBox = container.closest(".strength-editor-body");
+    const keepScroll = scrollBox ? scrollBox.scrollTop : 0;
+
     container.innerHTML = `
 
         <div class="strength-session-toolbar">
 
             <div class="strength-session-meta">
 
-                <div>
-                    <span class="strength-session-eyebrow">
-                        WORKOUT BUILDER
-                    </span>
+                <label class="strength-name-field">
+                    <span class="strength-session-eyebrow">Workout name</span>
+                    <input type="text" class="st-big-input" data-day-name value="${escapeHtml(day.name)}" maxlength="60"
+                        enterkeyhint="done" autocomplete="off" spellcheck="false" aria-label="Workout name">
+                </label>
 
-                    <h2>
-                        ${escapeHtml(day.name)}
-                    </h2>
+                <div class="strength-session-sub">
+                    <label class="strength-duration-control">
+                        <span>Target time</span>
+                        <input type="number" inputmode="numeric" min="5" max="240" step="5"
+                            value="${day.estimatedMinutes}" data-day-duration aria-label="Target time in minutes">
+                        <span>min</span>
+                    </label>
+                    ${estimate
+                        ? `<span class="strength-estimate">About ${estimate} min from your sets and rest${
+                            Math.abs(estimate - Number(day.estimatedMinutes)) >= 5
+                                ? ` <button type="button" class="strength-estimate-use" data-use-estimate="${estimate}">Use ${estimate}</button>`
+                                : ""}</span>`
+                        : ""}
                 </div>
 
-                <label class="strength-duration-control">
-                    <span>Target time</span>
-                    <input
-                        type="number"
-                        min="5"
-                        max="240"
-                        step="5"
-                        value="${day.estimatedMinutes}"
-                        data-day-duration
-                    >
-                    <span>min</span>
-                </label>
+                <p class="strength-save-status" id="strengthSaveStatus" role="status" aria-live="polite">${escapeHtml(saveStatusText())}</p>
 
             </div>
 
             <div class="strength-session-actions">
 
-                <button
-                    type="button"
-                    class="strength-builder-btn"
-                    data-open-group="superset"
-                >
-                    + Superset
+                <button type="button" class="strength-builder-btn strength-builder-btn-main" data-schedule-current
+                    ${day.exercises.length ? "" : "disabled"}>
+                    ${icon("calendar")} Schedule
                 </button>
 
-                <button
-                    type="button"
-                    class="strength-builder-btn"
-                    data-open-group="circuit"
-                >
-                    + Circuit
+                <button type="button" class="strength-builder-btn" data-duplicate-day>
+                    ${icon("copy")} Duplicate
                 </button>
 
-                <button
-                    type="button"
-                    class="strength-builder-btn"
-                    data-open-group="warmup"
-                >
-                    + Warmup
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-builder-btn"
-                    data-duplicate-day
-                >
-                    Duplicate Day
-                </button>
+                <details class="strength-more-actions">
+                    <summary class="strength-builder-btn">Group exercises</summary>
+                    <div class="strength-more-actions-list">
+                        <button type="button" class="strength-builder-btn" data-open-group="superset">+ Superset</button>
+                        <button type="button" class="strength-builder-btn" data-open-group="circuit">+ Circuit</button>
+                        <button type="button" class="strength-builder-btn" data-open-group="warmup">+ Warm-up block</button>
+                    </div>
+                </details>
 
             </div>
 
@@ -1071,24 +1090,17 @@ function renderDayContent() {
                 day.exercises.length
                     ? renderGrouped(day)
                     : `
-                        <div class="strength-empty-exercise-message">
-                            Add your first exercise to build this workout.
-                        </div>
+                        <button type="button" class="strength-empty-exercise-message" data-open-picker>
+                            <strong>Add your first exercises</strong>
+                            <span>Pick several at once, or start from a template in the Workout Library.</span>
+                        </button>
                     `
             }
         </div>
 
-        <button
-            type="button"
-            class="strength-add-exercise-fab"
-            id="addExerciseTrigger"
-            aria-label="Add an exercise to this workout"
-        >
-            <span aria-hidden="true">+</span>
-            <span>Add Exercise</span>
-        </button>
-
     `;
+
+    if (scrollBox) scrollBox.scrollTop = keepScroll;
 }
 
 function renderAll() {
@@ -1126,28 +1138,59 @@ function createDay(
     return day.id;
 }
 
-function removeDay(dayId) {
-    plan.days =
-        plan.days.filter(
-            day =>
-                day.id !== dayId
-        );
-
-    if (
-        plan.activeDay ===
-        dayId
-    ) {
-        plan.activeDay =
-            plan.days[0]?.id ||
-            null;
-    }
-
-    savePlan();
-    renderAll();
+function localDay(date = new Date()) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function duplicateDay() {
-    const source = activeDay();
+function readSchedule() {
+    try {
+        const value = JSON.parse(localStorage.getItem("strength-schedule") || "null");
+        if (value && Array.isArray(value.items)) return value;
+    } catch { /* unreadable */ }
+    return { version: 1, items: [] };
+}
+
+function writeSchedule(value) {
+    try { localStorage.setItem("strength-schedule", JSON.stringify(value)); } catch { /* full */ }
+}
+
+// Deletes a saved workout and its scheduled days from today on that aren't
+// done (past and done ones stay as history; completed sessions are never
+// touched), with Undo that puts both back exactly.
+function removeDay(dayId) {
+    if (!plan.days.some(day => day.id === dayId)) return;
+    if (document.getElementById("strengthEditorOverlay")?.classList.contains("open") && plan.activeDay === dayId) {
+        closeStrengthEditor();
+    }
+    const schedule = readSchedule();
+    const removed = removeWorkout(plan.days, schedule.items, dayId, localDay());
+    plan.days = removed.days;
+    if (plan.activeDay === dayId) plan.activeDay = plan.days[0]?.id || null;
+    writeSchedule({ ...schedule, items: removed.items });
+    savePlan();
+    renderAll();
+
+    const name = removed.day?.name || "Workout";
+    const n = removed.removedItems.length;
+    toast(`Deleted “${name}”${n ? ` and ${n === 1 ? "its scheduled day" : `its ${n} scheduled days`}` : ""}.`, {
+        type: "success",
+        action: {
+            label: "Undo",
+            onClick: () => {
+                const now = readSchedule();
+                const back = restoreWorkout(plan.days, now.items, removed);
+                plan.days = back.days;
+                writeSchedule({ ...now, items: back.items });
+                savePlan();
+                renderAll();
+                toast(`“${name}” is back.`);
+            }
+        }
+    });
+}
+
+function duplicateDay(dayId = null, { openCopy = true } = {}) {
+    const source = dayId ? plan.days.find(day => day.id === dayId) : activeDay();
     if (!source) return;
 
     const copy =
@@ -1156,8 +1199,9 @@ function duplicateDay() {
         );
 
     copy.id = uid();
-    copy.name =
-        `${source.name} Copy`;
+    // "Leg Day Copy" duplicated is "Leg Day Copy 2", not "Leg Day Copy Copy".
+    const baseName = source.name.replace(/ Copy( \d+)?$/, "");
+    copy.name = uniqueWorkoutName(cleanWorkoutName(`${baseName} Copy`), plan.days.map(day => day.name));
 
     const groupMap = {};
 
@@ -1217,11 +1261,14 @@ function duplicateDay() {
 
     copy.groupRounds = rounds;
 
-    plan.days.push(copy);
-    plan.activeDay = copy.id;
+    // The copy sits right after the workout it came from.
+    plan.days.splice(plan.days.indexOf(source) + 1, 0, copy);
+    if (openCopy) plan.activeDay = copy.id;
 
     savePlan();
     renderAll();
+    toast(openCopy ? `Duplicated as “${copy.name}”. You're editing the copy now.` : `Duplicated as “${copy.name}”.`);
+    return copy.id;
 }
 
 function parseTemplateWorkout(text) {
@@ -1302,7 +1349,7 @@ function seedFromTemplate(
    Exercise search
 ========================================== */
 
-function openCustomExerciseModal() {
+function openCustomExerciseModal(prefill = "") {
     $("customExerciseOverlay")
         ?.classList.add("open");
 
@@ -1310,7 +1357,7 @@ function openCustomExerciseModal() {
         $("customExerciseName");
 
     if (input) {
-        input.value = "";
+        input.value = prefill || "";
         input.focus();
     }
 
@@ -1333,6 +1380,65 @@ function closeCustomExerciseModal() {
         ?.classList.remove("open");
 }
 
+// The picker (2026-10-11 rework, after Hevy / Strong): tap rows to tick them,
+// then "Add N exercises" or "Add as superset" once. Recent exercises show
+// before anything is typed. Nothing is added behind the picker while it's open.
+let pickerSelected = new Map();   // name (lower case) -> search result
+
+function pickerKey(ex) {
+    return String(ex?.name || "").trim().toLowerCase();
+}
+
+/** Exercises already used in any workout (newest workouts first) + My Library, for an empty search. */
+function recentExercises() {
+    const seen = new Set();
+    const out = [];
+    const days = [...(plan.days || [])].reverse();
+    for (const day of days) {
+        for (const ex of day.exercises || []) {
+            const key = pickerKey(ex);
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            out.push({
+                id: ex.exerciseId || ex.id,
+                name: ex.name,
+                equipment: ex.equipment || "",
+                primaryMuscles: ex.primaryMuscles || [],
+                image: ex.image || null,
+                recent: true
+            });
+        }
+    }
+    for (const ex of searchCustomLibrary("")) {
+        const key = pickerKey(ex);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(ex);
+    }
+    return out.slice(0, 20);
+}
+
+function renderPickerFooter() {
+    const footer = $("exercisePickerFooter");
+    if (!footer) return;
+    const n = pickerSelected.size;
+    footer.hidden = n === 0;
+    const add = $("exercisePickerAdd");
+    const sup = $("exercisePickerSuperset");
+    if (add) add.textContent = n === 1 ? "Add 1 exercise" : `Add ${n} exercises`;
+    if (sup) sup.hidden = n < 2;
+    const count = $("exercisePickerCount");
+    if (count) count.textContent = n ? `${n} selected` : "";
+}
+
+function showRecentInPicker() {
+    const recent = recentExercises();
+    renderSearchResults(recent, {
+        heading: recent.length ? "Recent and My Library" : "",
+        empty: "Search 800+ exercises by name, muscle or equipment."
+    });
+}
+
 function openExerciseSearch() {
     const overlay =
         $("exerciseSearchOverlay");
@@ -1340,31 +1446,33 @@ function openExerciseSearch() {
     const input =
         $("exerciseSearchInput");
 
-    const results =
-        $("exerciseSearchResults");
-
+    pickerSelected = new Map();
     overlay?.classList.add("open");
+    document.documentElement.classList.add("strength-picker-open");
 
     if (input) {
         input.value = "";
-        input.focus();
-    }
-
-    if (results) {
-        results.innerHTML = "";
+        // Focusing at once on a phone pops the keyboard over the recents; only on computers.
+        if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) input.focus();
     }
 
     lastSearchResults = [];
+    showRecentInPicker();
+    renderPickerFooter();
 }
 
 function closeExerciseSearch() {
     $("exerciseSearchOverlay")
         ?.classList.remove("open");
+    document.documentElement.classList.remove("strength-picker-open");
+    pickerSelected = new Map();
 }
 
 function renderSearchResults(
-    results
+    results,
+    { heading = "", empty = "No matches. Try another word, or create it as your own exercise." } = {}
 ) {
+    const createName = heading ? null : exerciseFromQuery($("exerciseSearchInput")?.value);
     const container =
         $("exerciseSearchResults");
 
@@ -1373,89 +1481,68 @@ function renderSearchResults(
     lastSearchResults = results;
 
     const day = activeDay();
-    const existingIds = new Set(
+    const existing = new Set(
         (day?.exercises || [])
-            .map(ex => ex.exerciseId ? String(ex.exerciseId) : "")
+            .map(ex => pickerKey(ex))
             .filter(Boolean)
     );
-    const existingNames = new Set(
-        (day?.exercises || [])
-            .map(ex => String(ex.name || "").trim().toLowerCase())
-            .filter(Boolean)
-    );
-
-    results = results.map(ex => ({
-        ...ex,
-        isAdded:
-            existingIds.has(String(ex.id)) ||
-            existingNames.has(String(ex.name || "").trim().toLowerCase())
-    }));
 
     container.innerHTML =
-        results.length
+        (heading && results.length ? `<p class="strength-picker-heading">${escapeHtml(heading)}</p>` : "") +
+        (results.length
             ? results.map(
-                (ex, index) => `
-                    <div
-                        class="strength-result"
-                        data-result-index="${index}"
-                        class="${ex.isAdded ? "strength-result is-added" : "strength-result"}"
+                (ex, index) => {
+                    const key = pickerKey(ex);
+                    const picked = pickerSelected.has(key);
+                    const inWorkout = existing.has(key);
+                    const meta = [ex.equipment, (ex.primaryMuscles || []).join(", ")].filter(Boolean).join(" · ");
+                    return `
+                    <button
+                        type="button"
+                        class="strength-result${picked ? " is-picked" : ""}${inWorkout ? " is-added" : ""}"
+                        data-pick-result="${index}"
+                        aria-pressed="${picked}"
                     >
-
                         ${
                             ex.image
-                                ? `
-                                    <img
-                                        class="strength-result-image"
-                                        src="${escapeHtml(ex.image)}"
-                                        alt=""
-                                        loading="lazy"
-                                    >
-                                `
-                                : `<div class="strength-result-image"></div>`
+                                ? `<img class="strength-result-image" src="${escapeHtml(ex.image)}" alt="" loading="lazy">`
+                                : `<span class="strength-result-image strength-result-image-empty">${icon("dumbbell")}</span>`
                         }
-
-                        <div class="strength-result-info">
+                        <span class="strength-result-info">
                             <strong>
                                 ${escapeHtml(ex.name)}
-                                ${
-                                    ex.isCustom
-                                        ? `<span class="strength-custom-badge">My Library</span>`
-                                        : ""
-                                }
+                                ${ex.isCustom ? `<span class="strength-custom-badge">My Library</span>` : ""}
                             </strong>
-
-                            <span>
-                                ${escapeHtml(ex.equipment)}
-                                ${
-                                    ex.primaryMuscles.length
-                                        ? " · " +
-                                          escapeHtml(
-                                              ex.primaryMuscles.join(
-                                                  ", "
-                                              )
-                                          )
-                                        : ""
-                                }
-                            </span>
-                        </div>
-
-                        <button
-                            type="button"
-                            class="strength-result-add ${ex.isAdded ? "is-added" : ""}"
-                            data-add-result="${index}"
-                            ${ex.isAdded ? "disabled" : ""}
-                        >
-                            ${ex.isAdded ? icon("check") + " Added" : icon("plus") + " Add"}
-                        </button>
-
-                    </div>
-                `
+                            <span>${escapeHtml(meta)}${inWorkout ? `${meta ? " · " : ""}<em>in this workout</em>` : ""}</span>
+                        </span>
+                        <span class="strength-result-check" aria-hidden="true">${icon("check")}</span>
+                    </button>`;
+                }
             ).join("")
             : `
                 <div class="strength-search-empty">
-                    No matches. Try a different search.
+                    <p>${escapeHtml(empty)}</p>
+                    ${createName ? `<button type="button" class="strength-picker-btn" data-create-exercise="${escapeHtml(createName)}">Create “${escapeHtml(createName)}” as my exercise</button>` : ""}
                 </div>
-            `;
+            `) +
+        (createName && results.length && !results.some(ex => String(ex.name).trim().toLowerCase() === createName.toLowerCase())
+            ? `<button type="button" class="strength-create-row" data-create-exercise="${escapeHtml(createName)}">${icon("plus")} Create “${escapeHtml(createName)}” as my exercise</button>`
+            : "");
+}
+
+function togglePick(index) {
+    const ex = lastSearchResults[index];
+    if (!ex) return;
+    const key = pickerKey(ex);
+    if (pickerSelected.has(key)) pickerSelected.delete(key);
+    else pickerSelected.set(key, ex);
+    const row = document.querySelector(`[data-pick-result="${index}"]`);
+    if (row) {
+        const picked = pickerSelected.has(key);
+        row.classList.toggle("is-picked", picked);
+        row.setAttribute("aria-pressed", String(picked));
+    }
+    renderPickerFooter();
 }
 
 async function searchExercisesForBuilder(query = "") {
@@ -1497,13 +1584,15 @@ async function searchExercisesForBuilder(query = "") {
         .slice(0, 25);
 }
 
-function addExercise(
-    exercise
+function addExercises(
+    exercises,
+    { superset = false } = {}
 ) {
     const day = activeDay();
-    if (!day) return;
+    if (!day || !exercises.length) return;
 
-    const item =
+    const groupId = superset && exercises.length > 1 ? uid() : null;
+    const items = exercises.map(exercise =>
         normalizeExercise({
             id: uid(),
             exerciseId: exercise.id,
@@ -1514,27 +1603,61 @@ function addExercise(
             image: exercise.image,
             mode: "reps",
             restSeconds: DEFAULT_REST,
-            notes: ""
-        });
+            notes: "",
+            groupId,
+            groupType: groupId ? "superset" : null
+        })
+    );
 
-    day.exercises.push(item);
-
+    day.exercises.push(...items);
+    // The first one opens straight to its sets, ready to fill in.
+    expandedExercises.add(items[0].id);
 
     savePlan();
+    closeExerciseSearch();
     renderAll();
+    revealExercises(items.map(item => item.id));
 
-    const query =
-        $("exerciseSearchInput")?.value ||
-        "";
-
-    searchExercisesForBuilder(query)
-        .then(renderSearchResults)
-        .catch(() => {});
-
+    const ids = new Set(items.map(item => item.id));
     toast(
-        `${exercise.name} added to ${day.name}.`,
-        { type: "success" }
+        items.length === 1
+            ? `${items[0].name} added.`
+            : `${items.length} exercises added${groupId ? " as a superset" : ""}.`,
+        {
+            type: "success",
+            action: {
+                label: "Undo",
+                onClick: () => {
+                    const current = plan.days.find(d => d.id === day.id);
+                    if (!current) return;
+                    current.exercises = current.exercises.filter(ex => !ids.has(ex.id));
+                    cleanupGroups(current);
+                    savePlan();
+                    renderAll();
+                }
+            }
+        }
     );
+}
+
+// Kept for anything that adds one exercise directly.
+function addExercise(exercise) {
+    addExercises([exercise]);
+}
+
+/** Scroll the builder to the first of these exercises and flash them so it's clear where they went. */
+function revealExercises(ids) {
+    requestAnimationFrame(() => {
+        const cards = ids
+            .map(id => document.querySelector(`#strengthExerciseList .strength-exercise-block[data-exercise-id="${id}"]`))
+            .filter(Boolean);
+        if (!cards.length) return;
+        cards[0].scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        cards.forEach(card => {
+            card.classList.add("is-new");
+            setTimeout(() => card.classList.remove("is-new"), 1600);
+        });
+    });
 }
 
 /* ==========================================
@@ -1556,27 +1679,19 @@ function moveExercise(
 
     if (index < 0) return;
 
-    const next =
-        index + delta;
-
-    if (
-        next < 0 ||
-        next >= day.exercises.length
-    ) {
-        return;
-    }
-
-    [
-        day.exercises[index],
-        day.exercises[next]
-    ] = [
-        day.exercises[next],
-        day.exercises[index]
-    ];
+    const moved = moveInList(day.exercises, id, delta);
+    if (moved === day.exercises) return;
+    day.exercises = moved;
 
     cleanupGroups(day);
     savePlan();
     renderDayContent();
+    // Keep focus on the same button so it can be pressed again (keyboard / screen reader).
+    const again = document.querySelector(`[data-move-${delta < 0 ? "up" : "down"}="${id}"]`);
+    (again && !again.disabled ? again : document.querySelector(`[data-toggle-details="${id}"]`))?.focus();
+    const ex = day.exercises.find(item => item.id === id);
+    const at = day.exercises.findIndex(item => item.id === id) + 1;
+    announce(`${ex?.name || "Exercise"} moved to ${at} of ${day.exercises.length}.`);
 }
 
 function cleanupGroups(day) {
@@ -2176,7 +2291,7 @@ document.addEventListener(
     "click",
     event => {
         const target =
-            event.target;
+            event.target.closest("button") || event.target;  // a tap on the icon or label inside a button counts
 
         const tab =
             target.closest(
@@ -2319,24 +2434,139 @@ document.addEventListener(
             return;
         }
 
-        const resultAddBtn =
+        if (target.closest("[data-toggle-unit]")) {
+            const { unit } = saveStrengthSettings({ unit: strengthSettings().unit === "kg" ? "lb" : "kg" });
+            renderVolume();
+            renderDayContent();
+            document.querySelector("[data-toggle-unit]")?.focus();
+            announce(`Weights in ${unitWord(unit)}`);
+            toast(`Weights in ${unitWord(unit)}. Saved weights are the same, just shown in ${unitLabel(unit)}.`, { duration: 2600 });
+            return;
+        }
+
+        if (target.closest("[data-toggle-effort]")) {
+            const { effort } = saveStrengthSettings({ effort: strengthSettings().effort === "rir" ? "rpe" : "rir" });
+            renderDayContent();
+            document.querySelector("[data-toggle-effort]")?.focus();
+            const words = effort === "rir" ? "reps in reserve (0 = nothing left, 2 = two more reps in the tank)" : "RPE (10 = nothing left)";
+            announce(`Effort as ${effort === "rir" ? "reps in reserve" : "RPE"}`);
+            toast(`Effort shown as ${words}.`, { duration: 3000 });
+            return;
+        }
+
+        const bwBtn = target.closest("[data-toggle-bw]");
+        if (bwBtn) {
+            const exercise = activeDay()?.exercises.find(ex => ex.id === bwBtn.dataset.toggleBw);
+            if (exercise) {
+                exercise.load = isBodyweight(exercise) ? "weighted" : "bw";
+                savePlan();
+                renderDayContent();
+                document.querySelector(`[data-toggle-bw="${exercise.id}"]`)?.focus();
+                announce(isBodyweight(exercise) ? "Bodyweight: the weight is extra load" : "Weighted");
+            }
+            return;
+        }
+
+        const rangeBtn = target.closest("[data-toggle-range]");
+        if (rangeBtn) {
+            const exercise = activeDay()?.exercises.find(ex => ex.id === rangeBtn.dataset.toggleRange);
+            if (exercise) {
+                exercise.repRange = !exercise.repRange;
+                exercise.sets.forEach(set => {
+                    if (exercise.repRange) {
+                        // Start the range 2 above the reps (8 -> 8–10), the usual hypertrophy spread.
+                        if (!set.repsMax) set.repsMax = (Number(set.reps) || 8) + 2;
+                    } else {
+                        delete set.repsMax;
+                    }
+                });
+                savePlan();
+                renderDayContent();
+                document.querySelector(`[data-toggle-range="${exercise.id}"]`)?.focus();
+                announce(exercise.repRange ? "Rep ranges on" : "Single rep targets");
+            }
+            return;
+        }
+
+        const useEstimate = target.closest("[data-use-estimate]");
+        if (useEstimate) {
+            const day = activeDay();
+            if (day) {
+                day.estimatedMinutes = Math.max(5, Number(useEstimate.dataset.useEstimate) || 45);
+                savePlan();
+                renderDayContent();
+            }
+            return;
+        }
+
+        if (target.closest("[data-schedule-current]")) {
+            const day = activeDay();
+            if (day) {
+                window.dispatchEvent(new CustomEvent("eddieos:strength-schedule-workout", {
+                    detail: { workoutId: `plan-${day.id}` }
+                }));
+            }
+            return;
+        }
+
+        const createBtn = target.closest("[data-create-exercise]");
+        if (createBtn) {
+            openCustomExerciseModal(createBtn.dataset.createExercise);
+            return;
+        }
+
+        if (target.closest("[data-retry-search]")) {
+            const input = $("exerciseSearchInput");
+            input?.dispatchEvent(new Event("input", { bubbles: true }));
+            return;
+        }
+
+        const cycleBtn = target.closest("[data-cycle-type]");
+        if (cycleBtn) {
+            const exercise = activeDay()?.exercises.find(ex => ex.id === cycleBtn.dataset.exerciseId);
+            const set = exercise?.sets.find(item => item.id === cycleBtn.dataset.cycleType);
+            if (set) {
+                set.type = nextSetType(set.type);
+                savePlan();
+                renderDayContent();
+                document.querySelector(`[data-cycle-type="${set.id}"]`)?.focus();
+                announce(`Set ${exercise.sets.indexOf(set) + 1}: ${SET_TYPE_WORDS[set.type]}`);
+                toast(SET_TYPE_WORDS[set.type], { duration: 1200 });
+            }
+            return;
+        }
+
+        const prevBtn = target.closest("[data-use-prev]");
+        if (prevBtn) {
+            const exercise = activeDay()?.exercises.find(ex => ex.id === prevBtn.dataset.exerciseId);
+            const set = exercise?.sets.find(item => item.id === prevBtn.dataset.setId);
+            const prev = exercise && lastLogged(exercise)?.sets?.[Number(prevBtn.dataset.usePrev)];
+            if (set && prev) {
+                if (exercise.mode === "time") set.duration = Number(prev.duration) || set.duration;
+                else { set.weight = Number(prev.weight) || 0; set.reps = Number(prev.reps) || 0; }
+                savePlan();
+                renderAll();
+            }
+            return;
+        }
+
+        const pickBtn =
             target.closest(
-                "[data-add-result]"
+                "[data-pick-result]"
             );
 
-        if (resultAddBtn) {
-            const exercise =
-                lastSearchResults[
-                    Number(
-                        resultAddBtn.dataset
-                            .addResult
-                    )
-                ];
+        if (pickBtn) {
+            togglePick(Number(pickBtn.dataset.pickResult));
+            return;
+        }
 
-            if (exercise) {
-                addExercise(exercise);
-            }
+        if (target.closest("#exercisePickerAdd") || target.closest("#exercisePickerSuperset")) {
+            addExercises([...pickerSelected.values()], { superset: !!target.closest("#exercisePickerSuperset") });
+            return;
+        }
 
+        if (target.closest("[data-open-picker]")) {
+            openExerciseSearch();
             return;
         }
 
@@ -2349,6 +2579,8 @@ document.addEventListener(
             const day = activeDay();
 
             if (day) {
+                const before = JSON.parse(JSON.stringify(day.exercises));
+                const gone = day.exercises.find(ex => ex.id === removeExerciseBtn.dataset.removeExercise);
                 day.exercises =
                     day.exercises.filter(
                         ex =>
@@ -2360,6 +2592,18 @@ document.addEventListener(
                 cleanupGroups(day);
                 savePlan();
                 renderAll();
+                toast(`${gone?.name || "Exercise"} removed.`, {
+                    action: {
+                        label: "Undo",
+                        onClick: () => {
+                            const current = plan.days.find(d => d.id === day.id);
+                            if (!current) return;
+                            current.exercises = before.map(normalizeExercise);
+                            savePlan();
+                            renderAll();
+                        }
+                    }
+                });
             }
 
             return;
@@ -2734,7 +2978,8 @@ document.addEventListener(
                                 ? 0
                                 : last?.reps || 8,
                         duration:
-                            last?.duration || 30
+                            last?.duration || 30,
+                        rpe: last?.rpe || ""
                     })
                 );
 
@@ -2980,13 +3225,20 @@ document.addEventListener(
                 );
 
             if (set) {
-                set[
-                    target.dataset
-                        .field
-                ] =
-                    Number(
-                        target.value
-                    ) || 0;
+                if (target.dataset.field === "weight") {
+                    set.weight = fromDisplay(target.value, strengthSettings().unit);
+                } else if (target.dataset.field === "repsMax") {
+                    const top = repsMaxValue(set.reps, target.value);
+                    if (top) set.repsMax = top; else delete set.repsMax;
+                } else {
+                    set[
+                        target.dataset
+                            .field
+                    ] =
+                        Number(
+                            target.value
+                        ) || 0;
+                }
 
                 savePlan();
 
@@ -3017,7 +3269,7 @@ document.addEventListener(
                 $("exerciseSearchResults");
 
             if (!query.trim()) {
-                results.innerHTML = "";
+                showRecentInPicker();
                 return;
             }
 
@@ -3042,9 +3294,15 @@ document.addEventListener(
                                         error
                                     );
 
+                                    const offline = navigator.onLine === false;
+                                    const name = exerciseFromQuery(query);
                                     results.innerHTML = `
-                                        <div class="strength-search-empty">
-                                            Exercise database could not be loaded.
+                                        <div class="strength-search-empty" role="alert">
+                                            <p>${offline
+                                                ? "You're offline, so the exercise list can't load. Your own exercises still show."
+                                                : "The exercise list didn't load."}</p>
+                                            <button type="button" class="strength-picker-btn strength-picker-btn-secondary" data-retry-search>Try again</button>
+                                            ${name ? `<button type="button" class="strength-picker-btn" data-create-exercise="${escapeHtml(name)}">Create “${escapeHtml(name)}”</button>` : ""}
                                         </div>
                                     `;
                                 }
@@ -3052,6 +3310,16 @@ document.addEventListener(
                     300
                 );
 
+            return;
+        }
+
+        if (target.matches("[data-day-name]")) {
+            const day = activeDay();
+            if (day && target.value.trim()) {
+                day.name = cleanWorkoutName(target.value, day.name);
+                savePlan();
+                renderDayTabs();
+            }
             return;
         }
 
@@ -3105,6 +3373,13 @@ document.addEventListener(
     event => {
         const target =
             event.target;
+
+        if (target.matches("[data-day-name]")) {
+            // An emptied name goes back to what it was.
+            const day = activeDay();
+            if (day) target.value = day.name;
+            return;
+        }
 
         if (
             target.matches(
@@ -3163,11 +3438,7 @@ document.addEventListener(
                 );
 
             if (exercise) {
-                exercise.restSeconds =
-                    Number(
-                        target.value
-                    ) ||
-                    DEFAULT_REST;
+                exercise.restSeconds = restValue(target.value);   // "0" = No rest
 
                 savePlan();
                 renderDayContent();
@@ -3444,15 +3715,26 @@ function openStrengthEditor(dayId = null) {
         );
 
     overlay?.classList.add("open");
+    document.documentElement.classList.add("strength-editor-open");
 }
 
 function closeStrengthEditor() {
+    closeExerciseSearch();
     document
         .getElementById(
             "strengthEditorOverlay"
         )
         ?.classList.remove("open");
+    document.documentElement.classList.remove("strength-editor-open");
 }
+
+// Escape closes the top-most layer: the picker first, then the builder.
+document.addEventListener("keydown", event => {
+    if (event.key !== "Escape") return;
+    if ($("exerciseSearchOverlay")?.classList.contains("open")) { closeExerciseSearch(); return; }
+    if (document.querySelector(".strength-group-overlay.open, .strength-rename-overlay.open, .strength-schedule-overlay.open")) return;
+    if ($("strengthEditorOverlay")?.classList.contains("open")) closeStrengthEditor();
+});
 
 window.addEventListener(
     "eddieos:strength-open-editor",
@@ -3463,6 +3745,14 @@ window.addEventListener(
         );
     }
 );
+
+window.addEventListener("eddieos:strength-delete-workout", event => {
+    if (event.detail?.dayId) removeDay(event.detail.dayId);
+});
+
+window.addEventListener("eddieos:strength-duplicate-workout", event => {
+    if (event.detail?.dayId) duplicateDay(event.detail.dayId, { openCopy: false });
+});
 
 window.addEventListener(
     "eddieos:strength-close-editor",
@@ -3475,11 +3765,17 @@ window.addEventListener(
     "eddieos:strength-create-workout",
     () => {
         const newId = createDay(
-            "New Workout",
+            uniqueWorkoutName("New Workout", plan.days.map(day => day.name)),
             []
         );
 
         openStrengthEditor(newId);
+        // Name it first (selected, so typing replaces it), like Hevy / Strong.
+        const nameInput = document.querySelector("[data-day-name]");
+        if (nameInput) {
+            nameInput.focus({ preventScroll: true });
+            nameInput.select();
+        }
     }
 );
 
@@ -3487,7 +3783,7 @@ document.addEventListener(
     "click",
     event => {
         const target =
-            event.target;
+            event.target.closest("button") || event.target;  // a tap on the icon or label inside a button counts
 
         if (
             target.matches(

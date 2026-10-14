@@ -14,6 +14,8 @@
 import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
 import { icon } from "./icons.js";
 import { sbConfirm } from "./ui.js";
+import { workoutCards, dayWords } from "./strengthWorkoutList.js";
+import { storedSessions } from "./sessionStore.js";
 
 const SCHEDULE_KEY = "strength-schedule";
 const LIBRARY_KEY = "strength-workout-library";
@@ -886,6 +888,10 @@ function renderUpcoming() {
             .join("");
 }
 
+// My Workouts: one card per saved workout -- what's in it, when it was
+// last done and next scheduled, a big Start, and a ⋮ sheet with Edit /
+// Schedule / Duplicate / Delete (js/strengthWorkoutList.js says what each
+// card shows; js/strength.js does the delete with Undo).
 function renderMyWorkouts() {
     const container =
         $("strengthMyWorkoutsList");
@@ -895,93 +901,117 @@ function renderMyWorkouts() {
     const days =
         loadPlanDays();
 
+    const count = $("strengthMyWorkoutsCount");
+    if (count) count.textContent = days.length ? String(days.length) : "";
+
     if (!days.length) {
         container.innerHTML = `
-            <div class="strength-myworkouts-empty">
-                <strong>No custom workouts yet.</strong>
-                <span>
-                    Create a workout and it will appear here instead of taking
-                    over the main page.
-                </span>
+            <div class="st-mine-empty">
+                <span class="st-mine-empty-icon">${icon("dumbbell")}</span>
+                <strong>No workouts yet</strong>
+                <span>Build your own, or start from one of Southbound's in the Library.</span>
+                <div class="st-mine-empty-actions">
+                    <button type="button" class="sb-btn sb-btn-primary" data-new-my-workout>+ New Workout</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" data-strength-view="library">Browse the Library</button>
+                </div>
             </div>
         `;
 
         return;
     }
 
+    let sessions = [];
+    try { sessions = storedSessions(); } catch { sessions = []; }
+    const today = dateKey(new Date());
+    const cards = workoutCards(days, { sessions, schedule: loadSchedule().items, today });
+
     container.innerHTML =
-        days
-            .map(
-                day => `
-                    <article
-                        class="strength-myworkout-row"
-                        data-my-workout-id="${day.id}"
-                    >
-
-                        <div class="strength-myworkout-main">
-
-                            <div class="strength-myworkout-title">
-                                ${escapeHtml(
-                                    day.name
-                                )}
-                            </div>
-
-                            <div class="strength-myworkout-meta">
-                                <span>
-                                    ${
-                                        day.exercises?.length ||
-                                        0
-                                    } exercises
-                                </span>
-
-                                <span>
-                                    ${
-                                        Number(
-                                            day.estimatedMinutes
-                                        ) || 45
-                                    } min
-                                </span>
-                            </div>
-
-                        </div>
-
-                        <div class="strength-myworkout-actions">
-
-                            <button
-                                type="button"
-                                class="strength-row-btn"
-                                data-edit-my-workout="${day.id}"
-                            >
-                                Edit
-                            </button>
-
-                            <button
-                                type="button"
-                                class="strength-row-btn"
-                                data-start-my-workout="${day.id}"
-                            >
+        cards
+            .map(card => {
+                const meta = [
+                    card.exercises ? `${card.exercises} ${card.exercises === 1 ? "exercise" : "exercises"}` : "",
+                    card.sets ? `${card.sets} ${card.sets === 1 ? "set" : "sets"}` : "",
+                    card.minutes ? `~${card.minutes} min` : ""
+                ].filter(Boolean).join(" · ");
+                const when = [
+                    card.next ? `<span class="st-card-next">${icon("calendar")} Next: ${escapeHtml(dayWords(card.next, today))}</span>` : "",
+                    card.lastDone ? `<span>Last done ${escapeHtml(dayWords(card.lastDone, today))}${card.timesDone > 1 ? ` · ${card.timesDone} times` : ""}</span>` : ""
+                ].filter(Boolean).join("");
+                const preview = card.preview.length
+                    ? `${card.preview.map(escapeHtml).join(" · ")}${card.more ? ` <span class="st-card-more-count">+${card.more} more</span>` : ""}`
+                    : "No exercises yet";
+                return `
+                    <article class="st-card" data-my-workout-id="${escapeHtml(card.id)}">
+                        <button type="button" class="st-card-body" data-edit-my-workout="${escapeHtml(card.id)}" aria-label="Edit ${escapeHtml(card.name)}">
+                            <span class="st-card-name">${escapeHtml(card.name)}</span>
+                            <span class="st-card-preview">${preview}</span>
+                            <span class="st-card-meta">${escapeHtml(meta)}</span>
+                            ${when ? `<span class="st-card-when">${when}</span>` : ""}
+                        </button>
+                        <div class="st-card-actions">
+                            <button type="button" class="sb-btn sb-btn-primary st-card-start" data-start-my-workout="${escapeHtml(card.id)}"${card.exercises ? "" : " disabled"}>
                                 ${icon("play")} Start
                             </button>
-
-                            <button
-                                type="button"
-                                class="strength-row-btn primary"
-                                data-schedule-my-workout="${day.id}"
-                            >
-                                Schedule
+                            <button type="button" class="sb-btn sb-btn-icon st-card-menu" data-my-workout-menu="${escapeHtml(card.id)}" aria-label="More for ${escapeHtml(card.name)}: edit, schedule, duplicate, delete" aria-haspopup="dialog">
+                                ${icon("moreVertical")}
                             </button>
-
                         </div>
-
                     </article>
-                `
-            )
+                `;
+            })
             .join("");
 }
+
+// The ⋮ sheet: a bottom sheet on a phone, a small dialog on a computer.
+function openWorkoutMenu(dayId) {
+    const day = loadPlanDays().find(d => d.id === dayId);
+    if (!day) return;
+    document.querySelector(".st-sheet")?.remove();
+    const dialog = document.createElement("dialog");
+    dialog.className = "sb-dialog st-sheet";
+    dialog.setAttribute("aria-label", `${day.name || "Workout"} options`);
+    const row = (act, ic, label, extra = "") =>
+        `<button type="button" class="st-sheet-row${extra}" data-sheet="${act}">${icon(ic)}<span>${label}</span></button>`;
+    dialog.innerHTML = `
+        <div class="st-sheet-head">
+            <strong>${escapeHtml(day.name || "Workout")}</strong>
+            <button type="button" class="sb-btn sb-btn-icon" data-sheet="close" aria-label="Close">${icon("close")}</button>
+        </div>
+        <div class="st-sheet-list">
+            ${row("edit", "edit", "Edit workout")}
+            ${row("schedule", "calendar", "Schedule it")}
+            ${row("duplicate", "copy", "Duplicate")}
+            ${row("delete", "trash", "Delete workout", " is-danger")}
+        </div>
+    `;
+    document.body.appendChild(dialog);
+    const close = () => { dialog.close(); dialog.remove(); };
+    dialog.addEventListener("click", event => {
+        if (event.target === dialog) return close();
+        const btn = event.target.closest("[data-sheet]");
+        if (!btn) return;
+        const act = btn.dataset.sheet;
+        close();
+        if (act === "edit") window.dispatchEvent(new CustomEvent("eddieos:strength-open-editor", { detail: { dayId } }));
+        if (act === "schedule") openScheduleModal(`plan-${dayId}`, selectedDate);
+        if (act === "duplicate") window.dispatchEvent(new CustomEvent("eddieos:strength-duplicate-workout", { detail: { dayId } }));
+        if (act === "delete") window.dispatchEvent(new CustomEvent("eddieos:strength-delete-workout", { detail: { dayId } }));
+        if (act === "close") document.querySelector(`[data-my-workout-menu="${CSS.escape(dayId)}"]`)?.focus();
+    });
+    dialog.addEventListener("cancel", event => { event.preventDefault(); close(); });
+    dialog.showModal();
+    dialog.querySelector('[data-sheet="edit"]')?.focus();
+}
+
+const VIEW_KEY = "sb-strength-tab";
 
 function setActiveView(
     view
 ) {
+    try { localStorage.setItem(VIEW_KEY, view); } catch { /* storage unavailable */ }
+    document
+        .querySelectorAll("[data-strength-view][role=tab]")
+        .forEach(tab => tab.setAttribute("aria-selected", String(tab.dataset.strengthView === view)));
     document
         .querySelectorAll(
             "[data-strength-view]"
@@ -1021,10 +1051,19 @@ function renderAll() {
 function init() {
     renderAll();
 
+    // Open on the tab used last on this device (Workouts the first time).
+    let saved = null;
+    try { saved = localStorage.getItem(VIEW_KEY); } catch { saved = null; }
+    if (saved && saved !== "mine" && document.querySelector(`[data-strength-panel="${CSS.escape(saved)}"]`)) {
+        setActiveView(saved);
+    }
+
     document.addEventListener(
         "click",
         event => {
+            // A tap on the icon or label inside a button counts as the button.
             const target =
+                event.target.closest("button") ||
                 event.target;
 
             const viewTab =
@@ -1051,10 +1090,10 @@ function init() {
 
             if (
                 target.matches(
-                    "#strengthQuickNewWorkout"
+                    "#strengthMyWorkoutsNew"
                 ) ||
                 target.matches(
-                    "#strengthMyWorkoutsNew"
+                    "[data-new-my-workout]"
                 )
             ) {
                 setActiveView(
@@ -1245,6 +1284,13 @@ function init() {
                 return;
             }
 
+            const menuBtn = target.closest("[data-my-workout-menu]");
+
+            if (menuBtn) {
+                openWorkoutMenu(menuBtn.dataset.myWorkoutMenu);
+                return;
+            }
+
             const startMyWorkoutBtn =
                 target.closest(
                     "[data-start-my-workout]"
@@ -1326,6 +1372,10 @@ function init() {
             }
         }
     );
+
+    // "Last done" and the schedule follow a finished workout.
+    window.addEventListener("sb:sessions-changed", renderMyWorkouts);
+    window.addEventListener("eddieos:strength-schedule-updated", renderAll);
 
     // Refresh compact My Workouts after the builder changes a plan.
     window.addEventListener(

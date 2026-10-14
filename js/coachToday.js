@@ -15,7 +15,7 @@
 // the new-people kinds below; anything unknown lands in Follow up.
 export const TASK_GROUPS = [
     { id: "urgent", label: "Urgent", kinds: ["pain", "health"] },
-    { id: "reply", label: "Waiting on your reply", kinds: ["change", "checkin", "booking"] },
+    { id: "reply", label: "Waiting on your reply", kinds: ["message", "change", "checkin", "booking"] },
     { id: "new", label: "New people", kinds: ["pending", "application", "question"] },
     { id: "plans", label: "Plans and training", kinds: ["missed", "skipped", "plan-unseen", "race", "plan"] },
     { id: "business", label: "Packages and payments", kinds: ["package"] },

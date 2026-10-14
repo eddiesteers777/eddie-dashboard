@@ -2,16 +2,19 @@
    Southbound — Send to COROS for the coach's own marathon plan
 
    One "Send to COROS" button (Today and the Marathon page, coach only):
-   today's run, the next 7 days, or the rest of the plan go onto the
+   today's run, one day picked from the list, the next 7 days, or the
+   rest of the plan go onto the
    coach's own COROS schedule, which the watch syncs. Days come from
    js/marathonData.js (with his edits), are turned into structured COROS
    workouts by js/marathonCoros.js, and are sent / updated / remembered
    by js/corosSend.js exactly like a client's plan ("marathon|date" keys
    in "coros-sent"). COROS takes dates from today to 90 days out.
+   On the Marathon page each day's watch preview also has its own
+   "Send to watch" button, for one workout at a time.
 ========================================== */
 
 import { WEEKS, PACES, DAYS, weekStart, getAdjustedWeekDays } from "./marathonData.js";
-import { marathonCourse, marathonPreview } from "./marathonCoros.js";
+import { marathonCourse, marathonPreview, marathonTitle } from "./marathonCoros.js";
 import { sendToCoros, sendState, sendSummary, isCorosConnected, loadSent } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
 import { toast, sbChoose, sbAlert, friendlyError } from "./ui.js";
@@ -33,7 +36,7 @@ export function marathonEntries(from) {
             if (date < from || !sendableDate(date, from)) return;
             const key = `marathon|${date}`;
             const course = marathonCourse(day, PACES);
-            if (course || sent[key]) out.push({ key, date, course, day: DAYS[di] });
+            if (course || sent[key]) out.push({ key, date, course, day: DAYS[di], title: course ? marathonTitle(day.session, Number(day.miles) || 0) : "" });
         });
     });
     return out;
@@ -46,7 +49,7 @@ function statusLine(entries, today) {
     if (st === "changed") return "Today's run changed since you sent it. Send again to update it on COROS.";
     const sent = loadSent();
     const upcoming = entries.filter(e => e.course && sent[e.key]).length;
-    return upcoming ? `${upcoming} upcoming ${upcoming === 1 ? "run is" : "runs are"} on your COROS schedule.` : "Put your runs on your COROS watch: warm-up, reps at your plan's paces, cool-down.";
+    return upcoming ? `${upcoming} upcoming ${upcoming === 1 ? "run is" : "runs are"} on your COROS schedule.` : "Send your runs to your watch.";
 }
 
 export function mountMarathonCoros(el) {
@@ -78,11 +81,27 @@ async function send(btn, render) {
     if (runs(todays)) choices.push({ value: "today", label: "Today's run" });
     if (runs(week) > runs(todays)) choices.push({ value: "week", label: `Next 7 days (${runs(week)} runs)`, primary: true });
     if (runs(entries) > runs(week)) choices.push({ value: "plan", label: `Rest of the plan (${runs(entries)} runs)` });
+    if (runs(entries) > 1) choices.push({ value: "pick", label: "Pick a day…" });
     if (!choices.some(c => c.primary) && choices.length) choices[choices.length - 1].primary = true;
     const choice = await sbChoose("Your runs go onto your COROS training schedule as structured workouts (warm-up, reps at your plan's paces, cool-down). Your watch picks them up when it syncs. Runs you already sent are only sent again if you changed them.", { title: "Send to COROS", choices });
     if (!choice) return;
-    const pick = choice === "today" ? todays : choice === "week" ? week : entries;
+    let pick = choice === "today" ? todays : choice === "week" ? week : entries;
+    if (choice === "pick") {
+        const days = entries.filter(e => e.course).slice(0, 10);
+        const date = await sbChoose("Which run should go to your watch? Showing the next 10. Any other day: open it on the Marathon page and tap Send to watch under it.", {
+            title: "Pick a day",
+            choices: days.map(e => ({ value: e.date, label: `${dayWords(e.date)} · ${e.title}${sendState(e) === "sent" ? " ✓" : ""}` }))
+        });
+        if (!date) return;
+        pick = entries.filter(e => e.date === date);
+    }
+    await runSend(btn, pick, today, render);
+}
 
+const dayWords = date => new Date(`${date}T00:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+// Sends `pick` (send entries), with the button showing progress, then redraws.
+async function runSend(btn, pick, today, render = () => {}) {
     btn.disabled = true;
     const label = btn.innerHTML;
     const todo = pick.filter(e => e.course && sendState(e) !== "sent").length;
@@ -96,7 +115,7 @@ async function send(btn, render) {
         toast(friendlyError(error, "send that to COROS"), { type: "error" });
     } finally {
         btn.disabled = false;
-        btn.innerHTML = label;
+        if (btn.isConnected) btn.innerHTML = label;
         render();
         window.dispatchEvent(new CustomEvent("sb:coros-sent"));
     }
@@ -112,7 +131,10 @@ export function previewHtml(day, date, today) {
     const entry = { key: `marathon|${date}`, date, course: marathonCourse(day, PACES) };
     const st = date >= today ? sendState(entry) : "empty";
     const status = st === "sent" ? `<span class="mp-coros-status is-sent">${icon("checkCircle")} On COROS</span>`
-        : st === "changed" ? `<span class="mp-coros-status is-changed">Changed since sent: send again</span>` : "";
+        : st === "changed" ? `<span class="mp-coros-status is-changed">Changed since sent</span>` : "";
+    // One workout at a time: today through 90 days out, while it isn't on COROS as it stands.
+    const sendBtn = entry.course && sendableDate(date, today) && st !== "sent"
+        ? `<button type="button" class="mp-coros-send" data-coros-send="${date}">${icon("send")} ${st === "changed" ? "Send again" : "Send to watch"}</button>` : "";
     const warn = [
         ...p.unread.map(u => `Couldn't read “${esc(u)}”, so it's left out. Try e.g. “6x800 @ 2:55, 400m jog”.`),
         ...p.notes.map(esc)
@@ -121,6 +143,7 @@ export function previewHtml(day, date, today) {
         <span class="mp-coros-preview-icon" title="What your COROS watch gets">${icon("watch")}</span>
         <div class="mp-coros-preview-body">
             <div class="mp-coros-steps">${p.steps.map(esc).join(`<span class="mp-coros-arrow"> → </span>`)}${status}</div>
+            ${sendBtn}
             ${warn.map(w => `<div class="mp-coros-warn">${icon("alertTriangle")} ${w}</div>`).join("")}
         </div>
     </div>`;
@@ -144,6 +167,19 @@ export function watchMarathonPreviews(detail) {
         });
     };
     new MutationObserver(fill).observe(detail, { childList: true });
+    // "Send to watch" under one day: just that workout.
+    detail.addEventListener("click", async event => {
+        const btn = event.target.closest?.("[data-coros-send]");
+        if (!btn || btn.disabled) return;
+        if (!isCorosConnected()) {
+            await sbAlert("Connect your COROS account first: Progress → Analytics → Connect COROS (or Settings → Connections). Then come back and tap Send to watch.", { title: "Connect COROS" });
+            return;
+        }
+        const today = isoDate(new Date());
+        const pick = marathonEntries(today).filter(e => e.date === btn.dataset.corosSend);
+        if (!pick.length) return;
+        await runSend(btn, pick, today);
+    });
     // After a send, the "On COROS" marks change: draw the previews again.
     window.addEventListener("sb:coros-sent", () => {
         detail.querySelectorAll(".mp-coros-preview").forEach(el => el.remove());

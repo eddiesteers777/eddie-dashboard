@@ -6,10 +6,12 @@
    for every gel, which miles each bottle covers and how much to sip,
    and an hour-by-hour check against the targets.
 
-   Pure functions only (no DOM, no imports) so the same math runs in
+   Pure functions only (no DOM; the only import is the pure js/paceSegments.js) so the same math runs in
    the builder, the saved-plan view, and the unit tests
    (tests/fuelSchedule.test.mjs).
 ========================================== */
+
+import { segmentTimeline, segmentsVary } from "./paceSegments.js";
 
 // Homemade-drink ingredients. carbsPerGram / sodiumPerGram are per gram
 // of ingredient; gPerTsp converts grams to teaspoons for measuring.
@@ -31,6 +33,10 @@ export const DIY_SODIUM_SOURCES = {
     "other": { label: "Other", sodiumPerGram: 0 }
 };
 
+// Older names the page's menu used ("juice", "sports-powder") read as these.
+const CARB_ALIASES = { juice: "fruit-juice", "sports-powder": "sports-drink-powder" };
+export const carbSourceKey = key => (DIY_CARB_SOURCES[key] ? key : CARB_ALIASES[key] || "table-sugar");
+
 export const DEFAULT_FIRST_GEL_MIN = 30;
 // A gel taken in the last ~15 minutes can't be absorbed in time to help.
 export const FINAL_GEL_BUFFER_MIN = 15;
@@ -44,7 +50,7 @@ const round1 = value => Math.round(value * 10) / 10;
 // where the ingredient has a standard measure), or null grams when the
 // amount has to come from the product's own label.
 export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-sugar", sodiumSource = "table-salt" }) {
-    const carb = DIY_CARB_SOURCES[carbSource] || DIY_CARB_SOURCES["table-sugar"];
+    const carb = DIY_CARB_SOURCES[carbSourceKey(carbSource)];
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
     const carbGrams = round1(carbTarget / carb.carbsPerGram);
     const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumTarget / sodium.sodiumPerGram) * 100) / 100 : null;
@@ -56,6 +62,100 @@ export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-s
         sodiumGrams,
         sodiumTsp: sodium.gPerTsp && sodiumGrams != null ? sodiumGrams / sodium.gPerTsp : null
     };
+}
+
+/**
+ * The homemade drink, for the whole batch and for one bottle:
+ * up to two carb sources (carbShare2 = the part of the carbs from the
+ * second, 0-1), an optional electrolyte powder (mg sodium a scoop, scoops
+ * a bottle) and the chosen sodium source for whatever sodium is left.
+ * Targets are for the whole batch, as the page has always asked.
+ * -> { bottles, bottleOz, carbs: [{ key, label, carbs, grams, tsp,
+ *      bottle: { grams, tsp } }], electrolyte: { mgPerScoop, scoops, bottleScoops, mg } | null,
+ *      sodium: { key, label, mg, grams, tsp, bottle: { mg, grams, tsp }, fromLabel } | null,
+ *      over: mg of sodium past the target from the powder alone, totals: { carbs, sodium } }
+ */
+export function drinkRecipe({
+    carbTarget = 0, sodiumTarget = 0, bottleCount = 1, bottleSize = 0,
+    carbSource = "table-sugar", carbSource2 = "", carbShare2 = 0.5,
+    electroMg = 0, electroScoops = 0, sodiumSource = "table-salt"
+} = {}) {
+    const n = Math.max(1, Math.round(Number(bottleCount) || 1));
+    const carbsTotal = Math.max(0, Number(carbTarget) || 0);
+    const sodiumTotal = Math.max(0, Number(sodiumTarget) || 0);
+    const r2 = (v, step = 100) => Math.round(v * step) / step;
+    const second = carbSource2 && carbSourceKey(carbSource2) !== carbSourceKey(carbSource) ? carbSourceKey(carbSource2) : "";
+    const share2 = second ? Math.min(0.9, Math.max(0.1, Number(carbShare2) || 0.5)) : 0;
+    const part = (key, carbs) => {
+        const src = DIY_CARB_SOURCES[key];
+        const grams = round1(carbs / src.carbsPerGram);
+        const bottleGrams = round1(grams / n);
+        return {
+            key, label: src.label, carbs: round1(carbs), grams,
+            tsp: src.gPerTsp ? grams / src.gPerTsp : null,
+            bottle: { grams: bottleGrams, tsp: src.gPerTsp ? bottleGrams / src.gPerTsp : null }
+        };
+    };
+    const carbs = carbsTotal > 0
+        ? [part(carbSourceKey(carbSource), carbsTotal * (1 - share2)), ...(second ? [part(second, carbsTotal * share2)] : [])]
+        : [];
+    const perScoop = Math.max(0, Number(electroMg) || 0);
+    const bottleScoops = Math.max(0, Number(electroScoops) || 0);
+    const electroTotal = perScoop * bottleScoops * n;
+    const electrolyte = perScoop > 0 && bottleScoops > 0
+        ? { mgPerScoop: perScoop, bottleScoops, scoops: r2(bottleScoops * n, 10), mg: Math.round(electroTotal) }
+        : null;
+    const left = Math.max(0, sodiumTotal - (electrolyte ? electroTotal : 0));
+    const src = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
+    let sodium = null;
+    if (left > 0) {
+        const grams = src.sodiumPerGram ? r2(left / src.sodiumPerGram) : null;
+        const bottleGrams = grams != null ? r2(grams / n) : null;
+        sodium = {
+            key: DIY_SODIUM_SOURCES[sodiumSource] ? sodiumSource : "table-salt",
+            label: src.label, mg: Math.round(left), grams,
+            tsp: grams != null && src.gPerTsp ? grams / src.gPerTsp : null,
+            bottle: { mg: Math.round(left / n), grams: bottleGrams, tsp: bottleGrams != null && src.gPerTsp ? bottleGrams / src.gPerTsp : null }
+        };
+    }
+    return {
+        bottles: n,
+        bottleOz: Math.max(0, Number(bottleSize) || 0),
+        carbs, electrolyte, sodium,
+        over: electrolyte ? Math.max(0, Math.round(electroTotal - sodiumTotal)) : 0,
+        totals: { carbs: Math.round(carbsTotal), sodium: Math.round(Math.max(sodiumTotal, electroTotal)) }
+    };
+}
+
+// A teaspoon amount in words: "3 ⅝ tsp", "a pinch".
+export function tspWords(tsp) {
+    const t = formatTsp(tsp);
+    return !t ? "" : t === "a pinch" ? t : `${t} tsp`;
+}
+
+// One bottle's (or the batch's) ingredients in words: "30 g maltodextrin
+// (no tsp) · 15 g table sugar (3 ½ tsp) · 1 scoop electrolyte (300 mg) · 0.51 g salt".
+export function recipeParts(recipe, { batch = false } = {}) {
+    if (!recipe) return [];
+    const out = recipe.carbs.map(c => {
+        const g = batch ? c.grams : c.bottle.grams;
+        const tsp = batch ? c.tsp : c.bottle.tsp;
+        return `${g} g ${c.label.toLowerCase()}${tsp != null ? ` (${tspWords(tsp)})` : ""}`;
+    });
+    if (recipe.electrolyte) {
+        const e = recipe.electrolyte;
+        const scoops = batch ? e.scoops : e.bottleScoops;
+        out.push(`${scoops} scoop${scoops === 1 ? "" : "s"} electrolyte powder (${Math.round(e.mgPerScoop * scoops)} mg sodium)`);
+    }
+    if (recipe.sodium) {
+        const s = recipe.sodium;
+        const g = batch ? s.grams : s.bottle.grams;
+        const tsp = batch ? s.tsp : s.bottle.tsp;
+        out.push(g != null
+            ? `${g} g ${s.label.toLowerCase()}${tsp != null ? ` (${tspWords(tsp)})` : ""}`
+            : `${batch ? s.mg : s.bottle.mg} mg sodium from ${s.label.toLowerCase()} (see its label)`);
+    }
+    return out;
 }
 
 // 2.3 -> "2 ¼", 0.125 -> "⅛". Rounds to the nearest eighth.
@@ -73,13 +173,60 @@ export function formatClock(minutes) {
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
+// Start time: "07:00" / "7:00" / "7:00 PM" -> minutes after midnight, else null.
+export function parseStartTime(text) {
+    const m = String(text ?? "").trim().toLowerCase().match(/^(\d{1,2}):(\d{2})\s*(am|pm)?$/);
+    if (!m) return null;
+    let h = Number(m[1]);
+    const min = Number(m[2]);
+    if (min > 59 || h > 23 || (m[3] && (h < 1 || h > 12))) return null;
+    if (m[3] === "pm" && h < 12) h += 12;
+    if (m[3] === "am" && h === 12) h = 0;
+    return h * 60 + min;
+}
+
+// Minutes after midnight -> "7:45 AM" (past midnight wraps to the next day).
+export function timeOfDay(minutes) {
+    if (minutes == null || !isFinite(minutes)) return "";
+    const total = ((Math.round(minutes) % 1440) + 1440) % 1440;
+    const h = Math.floor(total / 60), m = total % 60;
+    return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+// The homemade drink counts (in the totals and the schedule alike) only
+// when it's switched on and has bottles to go in.
+export function drinkIncluded(include, diy = {}) {
+    return include !== false && (Number(diy.bottleCount) || 0) > 0 && (Number(diy.bottleSize) || 0) > 0;
+}
+
+// "First gel at": blank -> the default; 0 or less -> 5 (the earliest the
+// schedule places one); never silently 30 for a typed 0.
+export function firstGelValue(value) {
+    if (value === "" || value == null) return DEFAULT_FIRST_GEL_MIN;
+    const n = Number(value);
+    if (!isFinite(n)) return DEFAULT_FIRST_GEL_MIN;
+    return Math.min(240, Math.max(5, Math.round(n)));
+}
+
+// What a drink's sodium comes from, in words: "1.27 g salt (¼ tsp)", or
+// "500 mg sodium from Electrolyte Mix (see its label)".
+export function sodiumText({ sodiumSource = "table-salt", sodiumTarget = 0, saltGrams = null, saltTsp = null } = {}) {
+    const src = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
+    if (src.sodiumPerGram > 0) {
+        const g = saltGrams ?? Math.round((Number(sodiumTarget) || 0) / src.sodiumPerGram * 100) / 100;
+        const tsp = saltTsp != null ? formatTsp(saltTsp) : "";
+        return `${g} g salt${tsp ? ` (${tsp} tsp)` : ""}`;
+    }
+    return `${Math.round(Number(sodiumTarget) || 0)} mg sodium from ${src.label} (see its label)`;
+}
+
 // Reads what the schedule needs off a saved plan object (the shape
 // buildPlanObject() in js/fueling.js writes). Works for plans saved
 // before the schedule existed, too.
 export function scheduleInputFromPlan(plan) {
     const session = plan.session || {};
     const diy = plan.diyInputs || {};
-    const includeDrink = plan.includeHomemadeDrink !== false && (diy.bottleCount || 0) > 0 && (diy.bottleSize || 0) > 0;
+    const includeDrink = drinkIncluded(plan.includeHomemadeDrink, diy);
     return {
         durationMin: Number(plan.duration) || Number(session.duration) || 0,
         distanceMi: Number(session.distance) || Number(plan.marathonRef?.miles) || 0,
@@ -88,18 +235,39 @@ export function scheduleInputFromPlan(plan) {
             bottleCount: Math.max(1, Math.round(Number(diy.bottleCount) || 1)),
             bottleSize: Number(diy.bottleSize) || 0,
             carbs: Number(diy.carbTarget) || 0,
-            sodium: Number(diy.sodiumTarget) || 0,
+            // Electrolyte powder past the target still goes in the bottles.
+            sodium: Math.max(Number(diy.sodiumTarget) || 0,
+                (Number(diy.electroMg) || 0) * (Number(diy.electroScoops) || 0) * Math.max(1, Math.round(Number(diy.bottleCount) || 1))),
             carbSource: diy.carbSource || "table-sugar",
-            sodiumSource: diy.sodiumSource || "table-salt"
+            sodiumSource: diy.sodiumSource || "table-salt",
+            carbSource2: diy.carbSource2 || "",
+            carbShare2: Number(diy.carbShare2) || 0.5,
+            electroMg: Number(diy.electroMg) || 0,
+            electroScoops: Number(diy.electroScoops) || 0
         } : null,
         targets: {
             carbsPerHour: Number(plan.carbsPerHour) || 0,
             fluidPerHour: Number(plan.fluidPerHour) || 0,
             sodiumPerHour: Number(plan.sodiumPerHour) || 0
         },
-        firstGelMin: plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN
+        firstGelMin: firstGelValue(plan.firstGelMin),
+        startMin: parseStartTime(plan.startTime ?? session.startTime),
+        // The workout's own paces, when the plan was built from one.
+        segments: Array.isArray(session.segments) ? session.segments : null
     };
 }
+
+// Products you drink instead of eat: a drink mix, or anything with no
+// carbs (an electrolyte tablet in water). They're sipped across their own
+// stretch of the run, like a bottle, instead of taking a gel's moment.
+export function isSipped(item) {
+    if (!item) return false;
+    if (item.kind) return item.kind === "drink" || item.kind === "electrolyte";
+    return item.category === "drinkmix" || (Number(item.carbs) || 0) <= 0;
+}
+
+// Caffeine of one serving in mg (0 when not known or none).
+export const caffeineMg = item => Math.max(0, Math.round(Number(item?.caffeineMg) || 0));
 
 // Gel (and chew/bar) times, spread evenly between the first-gel time and
 // FINAL_GEL_BUFFER_MIN before the end. Caffeinated servings go last,
@@ -117,27 +285,70 @@ export function buildSchedule(input) {
     const durationMin = Math.max(0, Number(input.durationMin) || 0);
     const distanceMi = Math.max(0, Number(input.distanceMi) || 0);
     const minPerMile = durationMin > 0 && distanceMi > 0 ? durationMin / distanceMi : null;
-    const mileAt = min => (minPerMile ? round1(min / minPerMile) : null);
+    // A structured workout's own paces (js/paceSegments.js) put each minute
+    // at the mile it really falls at; otherwise one even pace.
+    const timeline = segmentsVary(input.segments) ? segmentTimeline(input.segments, durationMin, distanceMi) : null;
+    const paced = timeline && !timeline.mismatch ? timeline : null;
+    const mileAt = min => (!minPerMile ? null : round1(paced ? paced.mileAt(min) : min / minPerMile));
+    const partAt = min => (paced ? paced.partAt(min) : "");
     const targets = input.targets || {};
-    const firstGelMin = Number(input.firstGelMin) || DEFAULT_FIRST_GEL_MIN;
+    const firstGelMin = firstGelValue(input.firstGelMin);
 
-    // ---- Gels ----
+    // ---- Gels (and chews / bars) at a moment; drinks sipped over a stretch ----
     const servings = [];
+    const sipServings = [];
     (input.items || []).forEach(item => {
-        for (let i = 0; i < (Number(item.qty) || 0); i++) servings.push(item);
+        for (let i = 0; i < (Number(item.qty) || 0); i++) (isSipped(item) ? sipServings : servings).push(item);
     });
-    servings.sort((a, b) => Number(!!a.caffeine) - Number(!!b.caffeine));
+    const hasCaffeine = item => !!item.caffeine || caffeineMg(item) > 0;
+    servings.sort((a, b) => Number(hasCaffeine(a)) - Number(hasCaffeine(b)));
     const times = gelTimes(servings.length, durationMin, firstGelMin);
+    // A gel due in the middle of a hard rep moves to the nearest easy
+    // stretch (the jog after it, usually) within 10 minutes, as long as it
+    // stays 10+ minutes from the gels either side and out of the last 15.
+    const movedFrom = times.map(() => null);
+    if (paced) {
+        times.forEach((t, i) => {
+            if (!paced.hardAt(t)) return;
+            const at = paced.easyNear(t, 10);
+            if (at == null || at > durationMin - FINAL_GEL_BUFFER_MIN || at < 5) return;
+            if ((i > 0 && at - times[i - 1] < 10) || (i < times.length - 1 && times[i + 1] - at < 10)) return;
+            movedFrom[i] = { min: t, part: paced.partAt(t) };
+            times[i] = at;
+        });
+    }
     const gels = servings.map((item, i) => ({
         n: i + 1,
         name: item.name,
         carbs: Number(item.carbs) || 0,
         sodium: Number(item.sodium) || 0,
         fluid: Number(item.fluid) || 0,
-        caffeine: !!item.caffeine,
+        caffeine: hasCaffeine(item),
+        caffeineMg: caffeineMg(item),
         min: times[i],
-        mile: mileAt(times[i])
+        mile: mileAt(times[i]),
+        part: partAt(times[i]),
+        movedFrom: movedFrom[i]
     }));
+    const sips = sipServings.map((item, i) => {
+        const span = durationMin / sipServings.length;
+        const startMin = span * i, endMin = span * (i + 1);
+        return {
+            n: i + 1,
+            name: item.name,
+            carbs: Number(item.carbs) || 0,
+            sodium: Number(item.sodium) || 0,
+            fluid: Number(item.fluid) || 0,
+            caffeine: hasCaffeine(item),
+            caffeineMg: caffeineMg(item),
+            exactStart: startMin,
+            exactEnd: endMin,
+            startMin: round(startMin),
+            endMin: round(endMin),
+            startMile: mileAt(startMin),
+            endMile: mileAt(endMin)
+        };
+    });
 
     // ---- Bottles: evenly across the whole run ----
     const drink = input.drink;
@@ -146,7 +357,7 @@ export function buildSchedule(input) {
     if (drink && durationMin > 0) {
         const count = drink.bottleCount;
         const perBottleMin = durationMin / count;
-        const perBottleMi = distanceMi ? distanceMi / count : null;
+        const evenMi = distanceMi ? distanceMi / count : null;
         const carbsEach = drink.carbs / count;
         const sodiumEach = drink.sodium / count;
         mix = diyMix({
@@ -155,9 +366,16 @@ export function buildSchedule(input) {
             carbSource: drink.carbSource,
             sodiumSource: drink.sodiumSource
         });
+        // The whole recipe (two carbs, powder + salt for the rest), per bottle.
+        mix.recipe = drinkRecipe({
+            carbTarget: drink.carbs, sodiumTarget: drink.sodium, bottleCount: count, bottleSize: drink.bottleSize,
+            carbSource: drink.carbSource, carbSource2: drink.carbSource2, carbShare2: drink.carbShare2,
+            electroMg: drink.electroMg, electroScoops: drink.electroScoops, sodiumSource: drink.sodiumSource
+        });
         for (let i = 0; i < count; i++) {
             const startMin = perBottleMin * i;
             const endMin = perBottleMin * (i + 1);
+            const perBottleMi = !evenMi ? null : paced ? Math.max(0.1, paced.mileAt(endMin) - paced.mileAt(startMin)) : evenMi;
             bottles.push({
                 n: i + 1,
                 startMin: round(startMin),
@@ -190,7 +408,12 @@ export function buildSchedule(input) {
     for (const [from, to] of windows) {
         const span = to - from;
         const inWindow = gels.filter(g => g.min >= from && (g.min < to || (to === durationMin && g.min <= to)));
-        const carbs = Math.round(inWindow.reduce((s, g) => s + g.carbs, 0) + drinkRate.carbs * span);
+        // A sipped product adds its share of whatever part of it falls in this hour.
+        const sipShare = key => sips.reduce((sum, d) => {
+            const overlap = Math.max(0, Math.min(to, d.exactEnd) - Math.max(from, d.exactStart));
+            return sum + (d.exactEnd > d.exactStart ? d[key] * overlap / (d.exactEnd - d.exactStart) : 0);
+        }, 0);
+        const carbs = Math.round(inWindow.reduce((s, g) => s + g.carbs, 0) + drinkRate.carbs * span + sipShare("carbs"));
         const targetCarbs = Math.round((targets.carbsPerHour || 0) * span / 60);
         hours.push({
             n: hours.length + 1,
@@ -199,8 +422,8 @@ export function buildSchedule(input) {
             fromMile: mileAt(from),
             toMile: mileAt(to),
             carbs,
-            sodium: Math.round(inWindow.reduce((s, g) => s + g.sodium, 0) + drinkRate.sodium * span),
-            fluid: Math.round(inWindow.reduce((s, g) => s + g.fluid, 0) + drinkRate.fluid * span),
+            sodium: Math.round(inWindow.reduce((s, g) => s + g.sodium, 0) + drinkRate.sodium * span + sipShare("sodium")),
+            fluid: Math.round(inWindow.reduce((s, g) => s + g.fluid, 0) + drinkRate.fluid * span + sipShare("fluid")),
             targetCarbs,
             targetSodium: Math.round((targets.sodiumPerHour || 0) * span / 60),
             targetFluid: Math.round((targets.fluidPerHour || 0) * span / 60),
@@ -217,15 +440,39 @@ export function buildSchedule(input) {
     if (bottles.length) events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "bottle", bottle: 1, text: `Start Bottle 1` });
     else events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "start", text: "Start" });
     bottles.slice(1).forEach(b => events.push({ min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}` }));
-    gels.forEach(g => events.push({ min: g.min, mile: g.mile, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, carbs: g.carbs, sodium: g.sodium }));
+    sips.forEach(d => events.push({ min: d.startMin, mile: d.startMile, part: partAt(d.startMin), kind: "sip", sip: d.n, text: d.name, caffeine: d.caffeine, caffeineMg: d.caffeineMg, carbs: d.carbs, sodium: d.sodium, fluid: d.fluid, endMin: d.endMin, endMile: d.endMile }));
+    gels.forEach(g => events.push({ min: g.min, mile: g.mile, part: partAt(g.min), movedFrom: g.movedFrom, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium }));
     events.push({ min: durationMin, mile: distanceMi || null, kind: "finish", text: bottles.length ? `Finish · Bottle ${bottles.length} empty` : "Finish" });
-    events.sort((a, b) => a.min - b.min || (a.kind === "bottle" ? -1 : 1));
+    const order = { start: 0, bottle: 1, sip: 2, gel: 3, finish: 4 };
+    events.sort((a, b) => a.min - b.min || order[a.kind] - order[b.kind]);
+
+    // Clock times (with a start time) and, at every checkpoint, the next
+    // thing to take in: how long and how far until it.
+    const startMin = input.startMin != null && isFinite(input.startMin) ? Number(input.startMin) : null;
+    const tod = min => (startMin == null ? "" : timeOfDay(startMin + min));
+    const isFuel = e => e.kind === "gel" || e.kind === "sip";
+    events.forEach((e, i) => {
+        e.tod = tod(e.min);
+        const next = events.slice(i + 1).find(isFuel);
+        e.next = next ? {
+            kind: next.kind,
+            n: next.kind === "gel" ? next.gel : next.sip,
+            name: next.text,
+            inMin: Math.max(0, next.min - e.min),
+            inMi: next.mile != null && e.mile != null ? round1(next.mile - e.mile) : null,
+            tod: next.tod || tod(next.min)
+        } : null;
+    });
 
     const fluidFromDrink = drink ? drink.bottleSize * drink.bottleCount : 0;
+    const all = [...gels, ...sips];
     const totals = {
-        carbs: Math.round(gels.reduce((s, g) => s + g.carbs, 0) + (drink?.carbs || 0)),
-        sodium: Math.round(gels.reduce((s, g) => s + g.sodium, 0) + (drink?.sodium || 0)),
-        fluid: Math.round(gels.reduce((s, g) => s + g.fluid, 0) + fluidFromDrink)
+        carbs: Math.round(all.reduce((s, g) => s + g.carbs, 0) + (drink?.carbs || 0)),
+        sodium: Math.round(all.reduce((s, g) => s + g.sodium, 0) + (drink?.sodium || 0)),
+        fluid: Math.round(all.reduce((s, g) => s + g.fluid, 0) + fluidFromDrink),
+        caffeineMg: all.reduce((s, g) => s + g.caffeineMg, 0),
+        // Caffeinated servings with no mg on file: counted, not guessed.
+        caffeineUnknown: all.filter(g => g.caffeine && !g.caffeineMg).length
     };
     const hoursTotal = durationMin / 60;
     const concentration = drink && drink.bottleSize
@@ -242,8 +489,10 @@ export function buildSchedule(input) {
     if (concentration !== null && concentration > 10) {
         warnings.push(`Your drink is a ${concentration}% carb mix — stronger than the 6-8% most stomachs handle easily. Practice it in training first, or spread it over more water.`);
     }
-    if (drink && targetFluid && fluidFromDrink < targetFluid * 0.8) {
-        warnings.push(`Your bottles hold ${fluidFromDrink} oz of the ${targetFluid} oz fluid target. Plan on about ${targetFluid - fluidFromDrink} oz of water from aid stations.`);
+    const carried = fluidFromDrink + sips.reduce((s, d) => s + d.fluid, 0);
+    if ((drink || sips.length) && targetFluid && carried < targetFluid * 0.8) {
+        // Words with {fluid:n} markers so the view can show oz or ml.
+        warnings.push(`Your bottles hold {fluid:${carried}} of the {fluid:${targetFluid}} fluid target. Plan on about {fluid:${targetFluid - carried}} of water from aid stations.`);
     }
     if (!minPerMile && durationMin) {
         warnings.push("Add the run's distance to see mile markers, not just times.");
@@ -253,8 +502,17 @@ export function buildSchedule(input) {
         durationMin,
         distanceMi,
         minPerMile,
+        // How the mile markers were placed: the workout's paces, or why not.
+        paced: paced ? { parts: (input.segments || []).length, partsMiles: paced.partsMiles }
+            : timeline?.mismatch ? { mismatch: true, partsMiles: timeline.partsMiles } : null,
+        startMin,
+        // The mile reached halfway through the time (the course bar's middle).
+        midMile: mileAt(durationMin / 2),
+        startTod: tod(0),
+        finishTod: tod(durationMin),
         firstGelMin,
         gels,
+        sips,
         bottles,
         mix,
         concentration,

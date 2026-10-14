@@ -76,7 +76,7 @@ export const CAPABILITIES = Object.freeze([
     "habits",        // Habits
     "package",       // their package card
     "profile",       // My Profile (the guided profile)
-    "updates",       // From Your Coach, Connect with Coach
+    "updates",       // From Your Coach, Messages, Connect with Coach
     "coach"          // the Coach section and Eddie's own tools
 ]);
 

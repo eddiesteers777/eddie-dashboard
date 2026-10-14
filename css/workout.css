@@ -177,7 +177,7 @@ body.wo-mode-open{ overflow:hidden; }
 .st-ex-rx{ color:var(--text); font-size:15.5px; font-weight:700; }
 .st-ex-target{ color:var(--text-secondary); font-size:14px; }
 .st-ex-note{ margin:2px 0 0; color:var(--text-secondary); font-size:14px; font-style:italic; line-height:1.45; }
-.wo-demo{
+.wo-demo, .wo-howto{
     display:inline-flex;
     align-items:center;
     gap:5px;
@@ -190,7 +190,7 @@ body.wo-mode-open{ overflow:hidden; }
     font-weight:700;
     text-decoration:none;
 }
-.wo-demo .ui-icon{ width:12px; height:12px; }
+.wo-demo .ui-icon, .wo-howto .ui-icon{ width:12px; height:12px; }
 
 .st-log .st-log-list{ display:flex; flex-direction:column; gap:10px; max-height:46vh; overflow:auto; padding-right:4px; }
 .st-log-ex{ margin:0; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
@@ -217,6 +217,13 @@ body.wo-mode-open{ overflow:hidden; }
     font:800 30px var(--font-body) !important;
 }
 .st-mode .wo-mode-main h2{ font-size:clamp(30px, 8vw, 48px); line-height:1.05; }
+/* The boxes size to the column on any page (the Strength page has no form styles of its own here). */
+.st-mode-inputs label{ min-width:0; }
+.st-mode-inputs input{ width:100%; min-width:0; box-sizing:border-box; }
+.st-mode-inputs.is-one{ grid-template-columns:1fr; width:min(220px, 100%); }
+.st-mode-tool{ min-height:40px; }
+.st-mode-plates{ width:min(360px, 100%); }
+.st-mode-plates .strength-plate-result{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
 .st-mode .wo-mode-actions{ grid-template-columns:1fr 2fr; }
 .wo-change{ margin-top:6px; padding-left:0; color:var(--text-secondary); }
 
@@ -248,3 +255,10 @@ body.wo-mode-open{ overflow:hidden; }
 .wo-coros p{ margin:0; color:var(--text-secondary); font-size:14px; }
 .wo-coros.is-sent{ flex-direction:row; align-items:center; color:var(--text-secondary); font-size:14px; }
 .wo-coros.is-sent .ui-icon{ color:var(--green); flex-shrink:0; }
+
+/* What they lifted last time (their earlier logs), under each exercise and in the session. */
+.st-ex-last{ display:inline-flex; align-items:center; gap:6px; color:var(--text-secondary); font-size:13px; }
+.st-ex-last svg{ width:14px; height:14px; color:var(--orange); }
+.st-mode-last{ margin:4px 0 0; color:var(--text-secondary); font-size:14px; }
+
+.wo-howto{ background:transparent; cursor:pointer; font-family:inherit; }

@@ -1,7 +1,8 @@
 // Unit tests for what a client's progress shows (js/progressView.js).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { progressHighlights, progressSections, habitStreak } from "../js/progressView.js";
+import { readFileSync } from "node:fs";
+import { progressHighlights, progressSections, habitStreak, streakDetail } from "../js/progressView.js";
 import { accessFromProfile } from "../js/navAccess.js";
 import { summarizeProgress } from "../js/clientSummary.js";
 
@@ -54,4 +55,25 @@ test("habit streak counts local days and forgives an unchecked today", () => {
     assert.equal(habitStreak(entries, new Date(2026, 9, 3, 7)), 2, "today not checked yet: counts from yesterday");
     assert.equal(habitStreak({ ...entries, ...day("2026-10-03") }, new Date(2026, 9, 3, 23)), 3, "late evening still the same day");
     assert.equal(habitStreak({}, new Date(2026, 9, 3)), 0);
+});
+
+test("a habit streak after a break is an invitation, not a zero score", () => {
+    assert.equal(streakDetail(0), "Check a habit off today to start one");
+    assert.equal(streakDetail(undefined), "Check a habit off today to start one");
+    assert.equal(streakDetail(1), "day in a row");
+    assert.equal(streakDetail(12), "days in a row");
+    const items = progressHighlights({ progress, access: who(["running"]), streak: 0 });
+    const streak = items.find(m => m.key === "streak");
+    assert.equal(streak.value, "0", "the number is still honest");
+    assert.equal(streak.detail, "Check a habit off today to start one");
+    assert.equal(progressHighlights({ progress, access: who(["running"]), streak: 4 }).find(m => m.key === "streak").detail, "days in a row");
+});
+
+test("a workout that didn't happen is shown neutrally, not as a warning", () => {
+    const src = readFileSync(new URL("../js/weekView.js", import.meta.url), "utf8");
+    assert.ok(!/class="wk-missed">Missed</.test(src), "the pill no longer says Missed");
+    assert.ok(!/is-missed">\$\{icon\("alertTriangle"\)\}/.test(src), "and the day mark is no warning triangle");
+    assert.match(src, /class="wk-missed">Not done</);
+    const css = readFileSync(new URL("../css/week.css", import.meta.url), "utf8");
+    assert.ok(!/\.wk-status\.is-missed\{\s*color:var\(--warning\)/.test(css), "and not warning-coloured");
 });

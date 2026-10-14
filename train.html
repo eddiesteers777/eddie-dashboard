@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Train | Southbound Coaching</title>
+    <meta name="description" content="Your running, strength and cross-training in one place, with every workout you've finished.">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/train.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="container tr-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Train</div>
+                <h1>Train</h1>
+                <p class="eos-today-phase">Your running, strength and cross-training, and every workout you've finished.</p>
+            </div>
+        </section>
+
+        <!-- Running / Strength / Cross-Training (js/train.js), only the ones this account has. -->
+        <div class="tr-tabs" role="tablist" aria-label="Training type" id="trainTabs"></div>
+        <section class="eos-today-card tr-panel" id="trainPanel" role="tabpanel" aria-live="polite">
+            <div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:60%"></span></div>
+        </section>
+
+        <!-- Every completed session from all three, newest first. -->
+        <section class="eos-today-card tr-recent" aria-labelledby="trainRecentTitle">
+            <div class="eos-today-card-header">
+                <h2 id="trainRecentTitle">Recent Workouts</h2>
+            </div>
+            <div class="tr-filter" role="group" aria-label="Show" id="trainFilter"></div>
+            <ol class="tr-feed" id="trainFeed" aria-busy="true">
+                <li class="tr-feed-wait"><span class="sb-skeleton" style="width:90%"></span><span class="sb-skeleton" style="width:65%"></span></li>
+            </ol>
+            <button type="button" class="sb-btn sb-btn-secondary tr-more" id="trainMore" hidden>Show more</button>
+        </section>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/train.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

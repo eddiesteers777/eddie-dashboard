@@ -23,6 +23,10 @@
         rel="stylesheet"
         href="css/strengthLibrary.css">
 
+    <link
+        rel="stylesheet"
+        href="css/strength-progress.css">
+
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -72,45 +76,17 @@
 
         <section class="strength-workspace" id="strengthWorkspace">
 
-            <div class="strength-workspace-nav">
-
-                <button
-                    type="button"
-                    class="strength-workspace-tab active"
-                    data-strength-view="schedule">
-                    <span>Schedule</span>
-                    <small>Calendar & upcoming</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-workspace-tab"
-                    data-strength-view="library">
-                    <span>Workout Library</span>
-                    <small>Ready-to-use templates</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-workspace-tab"
-                    data-strength-view="mine">
-                    <span>My Workouts</span>
-                    <small>Build & organize</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="strength-workspace-create"
-                    id="strengthQuickNewWorkout">
-                    + New Workout
-                </button>
-
+            <div class="strength-workspace-nav" role="tablist" aria-label="Strength">
+                <button type="button" role="tab" class="strength-workspace-tab active" data-strength-view="mine" aria-selected="true">Workouts</button>
+                <button type="button" role="tab" class="strength-workspace-tab" data-strength-view="schedule" aria-selected="false">Schedule</button>
+                <button type="button" role="tab" class="strength-workspace-tab" data-strength-view="library" aria-selected="false">Library</button>
+                <button type="button" role="tab" class="strength-workspace-tab" data-strength-view="progress" aria-selected="false">Progress</button>
             </div>
 
             <!-- Schedule / Calendar -->
 
             <section
-                class="strength-workspace-panel active"
+                class="strength-workspace-panel"
                 data-strength-panel="schedule"
                 id="strengthSchedulePanel">
 
@@ -374,36 +350,20 @@
             <!-- My Workouts -->
 
             <section
-                class="strength-workspace-panel"
+                class="strength-workspace-panel active"
                 data-strength-panel="mine"
                 id="strengthMyWorkoutsPanel">
 
-                <div class="strength-myworkouts-panel">
+                <div class="strength-myworkouts-panel st-mine">
 
-                    <div class="strength-myworkouts-header">
-
-                        <div>
-                            <span class="strength-library-eyebrow">
-                                MY WORKOUTS
-                            </span>
-
-                            <h2>
-                                Your Saved Builds
-                            </h2>
-
-                            <p>
-                                Your workout designs stay here until you decide
-                                to edit, schedule, duplicate, or delete them.
-                            </p>
-                        </div>
-
+                    <div class="st-mine-head">
+                        <h2>My Workouts <span id="strengthMyWorkoutsCount" class="st-mine-count"></span></h2>
                         <button
                             type="button"
-                            class="strength-library-header-btn primary"
+                            class="sb-btn sb-btn-primary st-mine-new"
                             id="strengthMyWorkoutsNew">
                             + New Workout
                         </button>
-
                     </div>
 
                     <div
@@ -413,6 +373,15 @@
 
                 </div>
 
+            </section>
+
+            <!-- Progress: every lift you've logged, over time (js/strengthProgressView.js) -->
+
+            <section
+                class="strength-workspace-panel"
+                data-strength-panel="progress"
+                id="strengthProgressPanel">
+                <div class="strength-myworkouts-panel sp-panel" id="strengthProgress"></div>
             </section>
 
         </section>
@@ -437,13 +406,8 @@
                     </span>
 
                     <h2>
-                        Build Workout
+                        Edit Workout
                     </h2>
-
-                    <p>
-                        Arrange exercises, add supersets/circuits, set targets,
-                        then save or schedule the workout.
-                    </p>
                 </div>
 
                 <div class="strength-editor-header-actions">
@@ -458,8 +422,9 @@
                     <button
                         type="button"
                         class="strength-editor-close"
-                        id="strengthEditorClose">
-                        ×
+                        id="strengthEditorClose"
+                        aria-label="Close the builder">
+                        <span data-icon="close"></span>
                     </button>
 
                 </div>
@@ -475,6 +440,17 @@
                     ></div>
                 </div>
 
+            </div>
+
+            <div class="strength-editor-footer">
+                <button
+                    type="button"
+                    class="strength-editor-add"
+                    id="addExerciseTrigger"
+                    aria-label="Add exercises to this workout">
+                    <span data-icon="plus"></span>
+                    <span>Add exercises</span>
+                </button>
             </div>
 
         </div>
@@ -591,7 +567,7 @@
             <div class="strength-search-header">
 
                 <span class="strength-search-title">
-                    Add an Exercise
+                    Add exercises
                 </span>
 
                 <div class="strength-search-header-actions">
@@ -606,8 +582,9 @@
                     <button
                         type="button"
                         class="strength-search-close"
-                        id="exerciseSearchClose">
-                        ×
+                        id="exerciseSearchClose"
+                        aria-label="Close">
+                        <span data-icon="close"></span>
                     </button>
 
                 </div>
@@ -627,6 +604,12 @@
                     class="strength-search-results">
                 </div>
 
+            </div>
+
+            <div class="strength-picker-footer" id="exercisePickerFooter" hidden>
+                <span class="strength-picker-count" id="exercisePickerCount"></span>
+                <button type="button" class="strength-picker-btn strength-picker-btn-secondary" id="exercisePickerSuperset" hidden>Add as superset</button>
+                <button type="button" class="strength-picker-btn" id="exercisePickerAdd">Add 1 exercise</button>
             </div>
 
         </div>
@@ -971,91 +954,6 @@
 
     </div>
 
-    <!-- Workout Mode -->
-
-    <div
-        class="strength-workout-overlay"
-        id="strengthWorkoutOverlay">
-
-        <div class="strength-workout-modal">
-
-            <div class="strength-workout-header">
-
-                <div>
-                    <div
-                        id="workoutModeDayName"
-                        class="strength-workout-day-name">
-                        Workout
-                    </div>
-                    <div
-                        id="workoutModeTimer"
-                        class="strength-workout-timer">
-                        0:00
-                    </div>
-                </div>
-
-                <div class="strength-workout-header-actions">
-
-                    <button
-                        type="button"
-                        id="workoutModeFinish"
-                        class="strength-workout-finish-btn">
-                        Finish
-                    </button>
-
-                    <button
-                        type="button"
-                        id="workoutModeClose"
-                        class="strength-workout-close-btn"
-                        title="Close without finishing">
-                        <span data-icon="close"></span>
-                    </button>
-
-                </div>
-
-            </div>
-
-            <div class="strength-workout-progress-track">
-                <div
-                    id="workoutModeProgressFill"
-                    class="strength-workout-progress-fill"
-                    style="width:0%"></div>
-            </div>
-
-            <div
-                id="workoutModeBody"
-                class="strength-workout-body"></div>
-
-            <div
-                id="workoutRestBar"
-                class="strength-rest-bar">
-
-                <div class="strength-rest-track">
-                    <div id="workoutRestFill" class="strength-rest-fill"></div>
-                </div>
-
-                <div class="strength-rest-row">
-
-                    <div class="strength-rest-info">
-                        <span class="strength-rest-icon" data-icon="timer"></span>
-                        <span class="strength-rest-label">Rest</span>
-                        <span id="workoutRestTime" class="strength-rest-time">0:00</span>
-                    </div>
-
-                    <div class="strength-rest-actions">
-                        <button type="button" id="workoutRestMinus" class="strength-rest-adjust">−15s</button>
-                        <button type="button" id="workoutRestPlus" class="strength-rest-adjust">+15s</button>
-                        <button type="button" id="workoutRestSkip" class="strength-rest-skip">Skip</button>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
     <!-- Workout Summary (Strava-ready text) -->
 
     <div
@@ -1070,8 +968,19 @@
 
             <div id="strengthSummaryStats" class="strength-summary-stats"></div>
 
+            <div id="strengthSummaryRecords" class="st-records" role="status" hidden></div>
+
+            <div id="strengthSummaryMuscles" hidden></div>
+
+            <button
+                type="button"
+                id="strengthSummaryShare"
+                class="sb-btn sb-btn-primary strength-summary-share">
+                <span data-icon="upload"></span> Share workout
+            </button>
+
             <p class="strength-summary-hint">
-                Copy this into your Strava activity description.
+                Optional: share an image of this workout, or copy the words below into your Strava activity's description. It's saved under Train → Recent Workouts either way.
             </p>
 
             <textarea
@@ -1121,6 +1030,11 @@
     <script
         type="module"
         src="js/strengthWorkoutMode.js">
+    </script>
+
+    <script
+        type="module"
+        src="js/strengthProgressView.js">
     </script>
 
     <script src="js/registerSW.js"></script>

@@ -60,6 +60,9 @@ import { decodeShare } from "./athleteShare.js";
 import { sharedKeyWork, currentPlan } from "./clientModel.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { executionHtml, executionClass } from "./executionView.js";
+import { allProgress, historyFromResults, recordsOn } from "./strengthProgress.js";
+import { headline as liftHeadline, trendChip as liftTrend, liftBodyHtml, dateText as liftDate, EPLEY_NOTE } from "./strengthProgressHtml.js";
+import { SETTINGS_KEY as STRENGTH_SETTINGS, cleanSettings as cleanStrengthSettings } from "./strengthUnits.js";
 
 const $ = id => document.getElementById(id);
 const clientUid = new URLSearchParams(location.search).get("uid");
@@ -92,17 +95,34 @@ let planMounted = false;
 let profileMounted = false;
 let modelMounted = false;
 let planningMounted = false;
+let messagesMounted = false;
 let planningView = null;   // the Planning tab's handle (refreshes its planned weeks after a publish)
 let workspace = null;   // the plan workspace once the Plan tab has opened (a promise)
 let record = null;
 
+// Every tab, in the main row or under More (they keep their names: links and "go to" buttons use them).
+const HUB_TAB = ".hub-tabs-wrap .clients-tab[data-tab]";
+const moreMenu = () => document.getElementById("hubMoreMenu");
+
 function selectTab(name) {
-    const tab = document.querySelector(`.hub-tabs .clients-tab[data-tab="${name}"]`);
+    const tab = document.querySelector(`${HUB_TAB}[data-tab="${name}"]`);
     if (!tab) return;
-    document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.classList.toggle("active", t === tab));
-    // On phones the tab bar scrolls sideways; keep the chosen tab in view.
-    const bar = tab.parentElement;
-    if (tab.offsetLeft + tab.offsetWidth > bar.scrollLeft + bar.clientWidth || tab.offsetLeft < bar.scrollLeft) {
+    document.querySelectorAll(HUB_TAB).forEach(t => {
+        t.classList.toggle("active", t === tab);
+        if (t === tab) t.setAttribute("aria-current", "true"); else t.removeAttribute("aria-current");
+    });
+    // A tab under More shows its own name on the More button, so you can see where you are.
+    const inMore = Boolean(moreMenu()?.contains(tab));
+    const moreBtn = document.getElementById("hubMoreBtn");
+    if (moreBtn) {
+        moreBtn.classList.toggle("active", inMore);
+        const label = document.getElementById("hubMoreLabel");
+        if (label) label.textContent = inMore ? tab.firstChild.textContent.trim() : "More";
+    }
+    setMoreOpen(false);
+    // On a narrow phone the main row can scroll sideways; keep the chosen tab in view.
+    const bar = tab.closest(".hub-tabs");
+    if (bar && (tab.offsetLeft + tab.offsetWidth > bar.scrollLeft + bar.clientWidth || tab.offsetLeft < bar.scrollLeft)) {
         bar.scrollLeft = tab.offsetLeft - (bar.clientWidth - tab.offsetWidth) / 2;
     }
     document.querySelectorAll(".hub-page .clients-panel").forEach(p => { p.hidden = p.dataset.panel !== name; });
@@ -121,6 +141,22 @@ function selectTab(name) {
                 .then(n => { if (n) planningView?.refreshHistory?.(); })
                 .catch(error => console.warn("Southbound: the planned week couldn't note the publish.", error?.code || error))
         }));
+    }
+    if (name === "messages" && !messagesMounted && record) {
+        messagesMounted = true;
+        Promise.all([import("./messageView.js"), import("./emailNotify.js"), import("./auth.js")]).then(([{ mountThread }, { sendCoachMessageEmail }, { getCurrentUser }]) => {
+            const coachName = getCurrentUser()?.displayName || "Your coach";
+            mountThread($("hubMessages"), {
+                role: "coach",
+                otherUid: clientUid,
+                otherName: firstName(),
+                myName: coachName,
+                intro: `Only you and ${firstName()} see this thread. Private notes stay in the Notes tab.`,
+                email: text => sendCoachMessageEmail({ clientEmail: record.profile?.email || record.link?.clientEmail, clientName: firstName(), coachName, text }),
+                // Reading here clears "Waiting on your reply"; their new ones add to it.
+                onChange: messages => { record.messages = messages; summarize(); renderAttention(); renderMessageBadge(); }
+            });
+        });
     }
     if (name === "model" && !modelMounted && record) {
         modelMounted = true;
@@ -202,7 +238,53 @@ async function mountHubPlanning() {
     }
 }
 
-document.querySelectorAll(".hub-tabs .clients-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+document.querySelectorAll(HUB_TAB).forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+
+// ---- The More menu ----
+function setMoreOpen(open, { focus = false } = {}) {
+    const menu = moreMenu();
+    const btn = document.getElementById("hubMoreBtn");
+    if (!menu || !btn) return;
+    menu.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    if (open && focus) menu.querySelector(".clients-tab.active, .clients-tab")?.focus();
+    if (open) {
+        // On a phone the tab bar sits at the bottom: scroll just enough that the whole menu is in view above it.
+        const bar = document.querySelector(".eos-bottomnav");
+        const limit = (bar ? bar.getBoundingClientRect().top : window.innerHeight) - 12;
+        const over = menu.getBoundingClientRect().bottom - limit;
+        if (over > 0) window.scrollBy({ top: over, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }
+}
+// One dot on More with the waiting counts of the tabs inside it (Check-ins, Sessions).
+function updateMoreBadge() {
+    const badge = document.getElementById("hubMoreBadge");
+    const menu = moreMenu();
+    if (!badge || !menu) return;
+    const total = [...menu.querySelectorAll(".clients-tab-badge:not([hidden])")].reduce((n, b) => n + (Number(b.textContent) || 1), 0);
+    badge.hidden = total === 0;
+    badge.textContent = total > 99 ? "99+" : String(total);
+}
+document.getElementById("hubMoreBtn")?.addEventListener("click", () => setMoreOpen(moreMenu().hidden, { focus: false }));
+document.addEventListener("click", event => {
+    if (moreMenu() && !moreMenu().hidden && !event.target.closest(".hub-tabs-wrap")) setMoreOpen(false);
+});
+document.getElementById("hubMoreBtn")?.addEventListener("keydown", event => {
+    if (event.key === "ArrowDown") { event.preventDefault(); setMoreOpen(true, { focus: true }); }
+});
+moreMenu()?.addEventListener("keydown", event => {
+    const items = [...moreMenu().querySelectorAll(".clients-tab")];
+    const i = items.indexOf(document.activeElement);
+    if (event.key === "Escape") { event.preventDefault(); setMoreOpen(false); document.getElementById("hubMoreBtn")?.focus(); }
+    else if (event.key === "ArrowDown") { event.preventDefault(); items[(i + 1) % items.length]?.focus(); }
+    else if (event.key === "ArrowUp") { event.preventDefault(); items[(i - 1 + items.length) % items.length]?.focus(); }
+    else if (event.key === "Home") { event.preventDefault(); items[0]?.focus(); }
+    else if (event.key === "End") { event.preventDefault(); items[items.length - 1]?.focus(); }
+    else if (event.key === "Tab") setMoreOpen(false);
+});
+// The badges are filled in by each tab's own code: follow them.
+if (moreMenu()) new MutationObserver(updateMoreBadge).observe(moreMenu(), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["hidden"] });
+updateMoreBadge();
 document.addEventListener("change", event => {
     const select = event.target.closest("[data-package-payment]");
     if (select) {
@@ -656,6 +738,34 @@ function recoveryStatusText(value) {
     return text || "—";
 }
 
+// Their lifts over time, from the strength sessions they logged on your plan (workoutResults).
+// Same maths and drawing as your own Strength → Progress; shown in your Strength unit.
+function strengthProgressHtml() {
+    const lifts = allProgress(historyFromResults(record.results || []), isoDate(new Date()));
+    if (!lifts.length) return "";
+    let unit = "lb";
+    try { unit = cleanStrengthSettings(JSON.parse(localStorage.getItem(STRENGTH_SETTINGS) || "null")).unit; } catch {}
+    const name = firstName() || "They";
+    return '<section class="clients-card sp-hub" id="hubStrengthProgress">' +
+        '<div class="hub-progress-head"><div><span class="hub-section-kicker">Strength</span>' +
+        '<h2>' + esc(name) + "'s lifts</h2></div>" +
+        '<span class="hub-progress-pill">' + lifts.length + ' lift' + (lifts.length === 1 ? '' : 's') + '</span></div>' +
+        '<p class="clients-card-note">From the strength sessions ' + esc(name) + ' logged on your plan. Tap a lift to see it over time.</p>' +
+        '<div class="sp-list">' + lifts.map(p =>
+            '<details class="sp-lift" data-sp-lift="' + esc(p.key) + '">' +
+                '<summary class="sp-row">' +
+                    '<span class="sp-row-main"><strong>' + esc(p.name) + '</strong>' +
+                    '<span>Last ' + liftDate(p.last) + ' · ' + p.count + ' session' + (p.count === 1 ? '' : 's') +
+                    (p.prCount ? ' · ' + p.prCount + ' record' + (p.prCount === 1 ? '' : 's') : '') + '</span></span>' +
+                    '<span class="sp-row-side"><span class="sp-row-best">' + esc(liftHeadline(p, unit)) + '</span>' + liftTrend(p.trend) + '</span>' +
+                    '<span class="sp-row-go" aria-hidden="true">' + icon("chevronDown") + '</span>' +
+                '</summary>' +
+                '<div class="sp-lift-body">' + liftBodyHtml(p, unit, { showAll: true }) + '</div>' +
+            '</details>').join("") + '</div>' +
+        '<p class="sp-note">' + esc(EPLEY_NOTE) + '</p>' +
+    '</section>';
+}
+
 function renderProgress() {
     const progress = summarizeProgress({
         plans: record.summary.plans,
@@ -987,6 +1097,8 @@ function renderProgress() {
             '</section>' +
         '</div>' +
 
+        strengthProgressHtml() +
+
         '<p class="clients-card-note hub-progress-footer">Personal COROS/Strava history, habits, nutrition, and other private device data are not exposed here. The summary only uses information already shared with your coaching relationship.</p>';
 }
 
@@ -1235,6 +1347,7 @@ function renderApplication() {
 function renderActions() {
     const email = record.profile?.email || record.link?.clientEmail;
     $("hubActions").innerHTML = `
+        <button type="button" class="clients-btn-secondary" data-go-tab="messages">${icon("messageSquare")} Message ${esc(firstName())}</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="notes" data-focus="noteText">${icon("lock")} Private note</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="notes" data-focus="updateText">${icon("send")} Send update</button>
         <button type="button" class="clients-btn-secondary" data-go-tab="plan">${icon("edit")} Edit plan</button>
@@ -1889,6 +2002,15 @@ function plannedText(r, day) {
     return `${miles ? `${miles} mi ` : ""}${String(r.title || "run").toLowerCase()}`;
 }
 
+// Records that log set, against everything they logged on your plans before it.
+let hubLiftHistory = null, hubLiftFrom = null;
+function hubRecordsHtml(r) {
+    if (hubLiftFrom !== record.results) { hubLiftFrom = record.results; hubLiftHistory = historyFromResults(record.results || []); }
+    const recs = recordsOn(hubLiftHistory, r.date);
+    if (!recs.length) return "";
+    return `<div class="st-records"><strong>${icon("trophy")} ${recs.length === 1 ? "New record" : `${recs.length} new records`}</strong><ul>${recs.map(x => `<li><b>${esc(x.name)}</b> ${esc(x.line)}</li>`).join("")}</ul></div>`;
+}
+
 // A strength log: every exercise planned vs lifted.
 function strengthResultHtml(r, day) {
     const lift = day?.strength;
@@ -1909,6 +2031,7 @@ function strengthResultHtml(r, day) {
                 </div>
                 ${strengthTableHtml(cmp)}
                 ${cmp.highlights.length ? `<ul class="hub-wo-highlights">${cmp.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}` : ""}
+            ${r.status === "completed" ? hubRecordsHtml(r) : ""}
             ${r.status === "completed" && !cmp ? `<p class="hub-wo-planned"><span>Logged</span> ${esc((r.exercises || []).map(e => `${e.name} (${e.sets?.length || 0} sets)`).join(", "))}</p>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
             ${r.note ? `<p class="hub-quote">"${renderEmojiText(esc(r.note))}"</p>` : ""}
@@ -2021,13 +2144,22 @@ function summarize() {
     const checkins = summarizeCheckins(record.checkins, today);
     record.summary = {
         plans, sessions, checkins,
-        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0, requests: record.requests || [], packages: record.packages || [] }),
+        attention: needsAttention({ profile: record.profile, plans, sessions, checkins, today, record: record.record, coachingPlans: record.coachingPlans || [], results: record.results || [], changes: record.changes || [], healthReviewedAt: healthReviewed()[record.link.clientUid] || 0, requests: record.requests || [], packages: record.packages || [], messages: record.messages || [] }),
         timeline: buildTimeline({ ...record, today })
     };
 }
 
+// Unread messages from them on the Messages tab.
+function renderMessageBadge() {
+    const badge = $("hubMessageBadge");
+    const n = (record.messages || []).filter(m => m.from === "client" && !m.readAt).length;
+    badge.hidden = !n;
+    badge.textContent = n || "";
+}
+
 function renderAll() {
     renderHeader();
+    renderMessageBadge();
     renderGlance();
     renderAttention();
     renderPinned();

@@ -50,7 +50,7 @@ const BOTTOM_TABS = [
     // Someone who only books sessions (soccer, no plan) gets them as a tab
     // of their own; with a plan, they're in the Plan tab's week.
     { key: "sessions", label: "Sessions", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!plan", pages: ["schedule.html"] },
-    { key: "train", label: "Train", icon: "dumbbell", href: "running.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
+    { key: "train", label: "Train", icon: "dumbbell", href: "train.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
     { key: "health", label: "Health", icon: "heart", href: "nutrition.html", color: "var(--primary)", requires: "nutrition,fueling" },
     { key: "habits", label: "Habits", icon: "checkCircle", href: "habits.html", color: "var(--primary)", requires: "habits" },
     { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--primary)", requires: "coach" },
@@ -59,6 +59,7 @@ const BOTTOM_TABS = [
 
 const PAGE_TAB = {
     "index.html": "today",
+    "train.html": "train",
     "running.html": "train",
     "strength.html": "train",
     "cross-training.html": "train",
@@ -79,6 +80,7 @@ const PAGE_TAB = {
     "client.html": "coach",
     "profile.html": "more",
     "updates.html": "more",
+    "messages.html": "more",
     "plan.html": "plan",
     "workout.html": "plan",
     "progress.html": "more",
@@ -95,6 +97,7 @@ const PAGE_TAB = {
 // else), so they get none.
 const SUBNAV_GROUPS = {
     train: [
+        { href: "train.html", label: "Overview" },
         { href: "running.html", label: "Running" },
         { href: "strength.html", label: "Strength" },
         { href: "cross-training.html", label: "Cross-Training" }
@@ -118,6 +121,7 @@ const SUBNAV_GROUPS = {
 // nav, More's rows, here) instead of everything defaulting to blue.
 const SEARCH_DESTINATIONS = [
     { label: "Today", href: "index.html", icon: "home", color: "var(--primary)" },
+    { label: "Train", href: "train.html", icon: "dumbbell", color: "var(--primary)", requires: "running,strength,crossTraining", also: ["recent workouts", "share workout", "workouts"] },
     { label: "Running", href: "running.html", icon: "activity", color: "var(--primary-dark)", requires: "running" },
     { label: "Strength", href: "strength.html", icon: "dumbbell", color: "var(--orange)", requires: "strength" },
     { label: "Cross-Training", href: "cross-training.html", icon: "bike", color: "var(--cyan)", requires: "crossTraining" },
@@ -136,6 +140,7 @@ const SEARCH_DESTINATIONS = [
     { label: "My Progress", href: "progress.html", icon: "trendingUp", color: "var(--primary)", requires: "client+progress" },
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)", requires: "running,strength" },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)", requires: "running" },
+    { label: "Messages", href: "messages.html", icon: "messageSquare", color: "var(--primary)", requires: "client+updates", also: ["message coach", "chat", "text coach", "ask coach"] },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
     { label: "Sessions", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions", also: ["schedule", "book a session"] },
@@ -321,7 +326,7 @@ fetch("components/header.html")
             document.body.insertAdjacentHTML("beforeend", `
                 <nav class="eos-bottomnav" aria-label="Primary">
                     ${visibleTabs.map(tab => `
-                        <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}" style="--tab-color:${tab.color}">
+                        <a href="${tab.href}" class="eos-bottomnav-item ${tab.key === activeTab ? "active" : ""}"${tab.key === activeTab ? ` aria-current="page"` : ""} style="--tab-color:${tab.color}">
                             <span class="eos-bottomnav-icon">${icon(tab.icon)}</span>
                             <span>${tab.label}</span>
                         </a>

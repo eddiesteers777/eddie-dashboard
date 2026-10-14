@@ -106,12 +106,57 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
     .hub-glance{ grid-template-columns:1fr 1fr; }
 }
 
-.hub-tabs{ position:relative; margin-bottom:16px; max-width:100%; overflow-x:auto; scrollbar-width:none; }
+.hub-tabs-wrap{ position:relative; margin-bottom:16px; max-width:100%; }
+.hub-tabs{ position:relative; margin-bottom:0; max-width:100%; overflow-x:auto; scrollbar-width:none; }
 .hub-tabs::-webkit-scrollbar{ display:none; }
-.hub-tabs .clients-tab{ white-space:nowrap; flex-shrink:0; }
+.hub-tabs .clients-tab{ white-space:nowrap; flex-shrink:0; min-height:40px; }
 @media (max-width:520px){
-    .hub-tabs .clients-tab{ padding:9px 14px; }
+    /* Five tabs have to fit a phone without scrolling, even with two badges showing. */
+    .hub-tabs{ gap:2px; }
+    .hub-tabs .clients-tab{ padding:9px 6px; font-size:12px; }
+    .hub-tabs .clients-tab-badge{ min-width:16px; height:16px; margin-left:3px; padding:0 4px; font-size:10px; }
 }
+
+/* "More": the tabs you use less, in a menu that sits outside the scrolling row so it can't be clipped. */
+.hub-more-btn{ display:inline-flex; align-items:center; gap:2px; }
+.hub-more-btn .clients-tab-badge{ margin-left:4px; }
+.hub-more-caret{
+    width:0; height:0; margin-left:6px;
+    border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid currentColor;
+    transition:transform .15s ease;
+}
+.hub-more-btn[aria-expanded="true"] .hub-more-caret{ transform:rotate(180deg); }
+.hub-more-menu{
+    position:absolute;
+    z-index:60;
+    top:calc(100% + 6px);
+    right:0;
+    min-width:210px;
+    max-width:min(100%, 320px);
+    padding:6px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow, 0 12px 32px rgba(0,0,0,.45));
+}
+.hub-more-menu[hidden]{ display:none !important; }
+.hub-more-menu .clients-tab{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    min-height:44px !important;   /* the app's phone rule makes buttons 40px; menu rows are 44 */
+    padding:10px 14px;
+    border-radius:12px;
+    text-align:left;
+    font-size:14px;
+}
+.hub-more-menu .clients-tab:hover,
+.hub-more-menu .clients-tab:focus-visible{ background:var(--surface-light); color:var(--text); }
+.hub-more-menu .clients-tab.active{ background:var(--primary); color:var(--on-primary, #0f2019); }
 
 /* ---- Overview ---- */
 
@@ -186,7 +231,7 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
     padding-top:1px;
 }
 
-.hub-quote{ margin:6px 0 0; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+.hub-quote{ margin:6px 0 0; color:var(--text-secondary); font-size:14px; line-height:1.55; white-space:pre-line; }
 
 .hub-actions{
     display:flex;
@@ -1319,3 +1364,11 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
 
 /* One tap when the money arrives (Phase 9). */
 .hub-mark-paid{ margin-left:8px; padding:6px 14px; min-height:34px; font-size:13px; }
+
+/* "Last time" under an exercise in the plan's strength builder (what the client last logged). */
+.sb-ex-last{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin:2px 0 6px; padding:6px 10px; border-radius:var(--radius-sm); background:color-mix(in srgb, var(--orange) 10%, transparent); color:var(--muted); font-size:13px; }
+.sb-ex-last[hidden]{ display:none !important; }
+.sb-ex-last-text{ display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.sb-ex-last-text strong{ color:var(--text); }
+.sb-ex-last svg{ width:14px; height:14px; flex:0 0 auto; }
+.sb-ex-use{ min-height:32px; padding:4px 10px; font-size:13px; }

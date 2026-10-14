@@ -1,0 +1,11 @@
+{
+  "name": "southbound-tools",
+  "owner": { "name": "Eddie Steers" },
+  "plugins": [
+    {
+      "name": "auto-model",
+      "source": "./plugins/auto-model",
+      "description": "Claude Code only: picks the right Claude model for each prompt to save plan usage."
+    }
+  ]
+}

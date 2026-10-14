@@ -724,7 +724,7 @@
 .cr-item-head strong{ color:var(--text); font-size:15px; }
 .cr-status{ color:var(--muted); font-size:12.5px; font-weight:700; }
 .cr-item.is-open .cr-status{ color:var(--primary); }
-.cr-message{ margin:6px 0 0; color:var(--text-secondary); font-size:14.5px; line-height:1.5; font-style:italic; }
+.cr-message{ margin:6px 0 0; color:var(--text-secondary); font-size:14.5px; line-height:1.5; font-style:italic; white-space:pre-line; }
 .cr-reply{ margin:10px 0 0; }
 .cr-withdraw{ margin-top:6px; padding-left:0; }
 .wo-reply{ margin:0 0 12px; padding:12px 14px; background:rgba(201,173,132,.1); border-left:3px solid var(--primary); border-radius:0 12px 12px 0; }

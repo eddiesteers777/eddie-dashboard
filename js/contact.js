@@ -8,6 +8,7 @@
 
 import { INTEREST_OPTIONS, interestLabel, submitInquiry } from "./inquiries.js";
 import { sendInquiryEmail } from "./emailNotify.js";
+import { requestFor } from "./contactRequests.js";
 
 const form = document.getElementById("contactForm");
 const nameEl = document.getElementById("contactName");
@@ -27,8 +28,18 @@ const successText = document.getElementById("contactSuccessText");
 interestEl.innerHTML = INTEREST_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join("");
 
 // Links like contact.html?about=soccer_group preselect the topic.
-const about = new URLSearchParams(window.location.search).get("about");
+const query = new URLSearchParams(window.location.search);
+const about = query.get("about");
 if (INTEREST_OPTIONS.some(o => o.value === about)) interestEl.value = about;
+
+// Links like contact.html?request=delete-account also write the message
+// (fixed wording from js/contactRequests.js; the person can still change it).
+const asked = requestFor(query.get("request"));
+if (asked) {
+    if (INTEREST_OPTIONS.some(o => o.value === asked.about)) interestEl.value = asked.about;
+    const messageEl = document.getElementById("contactMessage");
+    if (messageEl && !messageEl.value.trim()) messageEl.value = asked.message;
+}
 
 const who = () => form.querySelector("input[name=contactWho]:checked")?.value || "self";
 

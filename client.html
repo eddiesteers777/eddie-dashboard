@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/client-model.css">
     <link rel="stylesheet" href="css/execution.css">
     <link rel="stylesheet" href="css/athlete-state.css">
+    <link rel="stylesheet" href="css/strength-progress.css">
     <link rel="stylesheet" href="css/planning.css">
 
     <link rel="manifest" href="manifest.json">
@@ -61,19 +62,26 @@
             <!-- At a glance -->
             <section class="hub-glance" id="hubGlance"></section>
 
-            <nav class="clients-tabs hub-tabs" role="tablist">
-                <button type="button" class="clients-tab active" data-tab="overview" role="tab">Overview</button>
-                <button type="button" class="clients-tab" data-tab="plan" role="tab">Plan</button>
-                <button type="button" class="clients-tab" data-tab="progress" role="tab">Progress</button>
-                <button type="button" class="clients-tab" data-tab="model" role="tab">Model</button>
-                <button type="button" class="clients-tab" data-tab="planning" role="tab">Planning</button>
-                <button type="button" class="clients-tab" data-tab="checkins" role="tab">Check-ins <span id="hubCheckinBadge" class="clients-tab-badge" hidden></span></button>
-                <button type="button" class="clients-tab" data-tab="sessions" role="tab">Sessions <span id="hubSessionBadge" class="clients-tab-badge" hidden></span></button>
-                <button type="button" class="clients-tab" data-tab="workouts" role="tab">Workouts <span id="hubWorkoutBadge" class="clients-tab-badge" hidden></span></button>
-                <button type="button" class="clients-tab" data-tab="notes" role="tab">Notes</button>
-                <button type="button" class="clients-tab" data-tab="profile" role="tab">Profile</button>
-                <button type="button" class="clients-tab" data-tab="history" role="tab">History</button>
-            </nav>
+            <!-- Four tabs you use most, and the rest under More. Every tab keeps its name (data-tab), so links like client.html?tab=checkins and every "go to" button keep working. -->
+<div class="hub-tabs-wrap">
+<nav class="clients-tabs hub-tabs" aria-label="Client sections">
+<button type="button" class="clients-tab active" data-tab="overview" aria-current="true">Overview</button>
+<button type="button" class="clients-tab" data-tab="messages">Messages <span id="hubMessageBadge" class="clients-tab-badge" hidden></span></button>
+<button type="button" class="clients-tab" data-tab="workouts">Workouts <span id="hubWorkoutBadge" class="clients-tab-badge" hidden></span></button>
+<button type="button" class="clients-tab" data-tab="plan">Plan</button>
+<button type="button" class="clients-tab hub-more-btn" id="hubMoreBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="hubMoreMenu"><span id="hubMoreLabel">More</span> <span id="hubMoreBadge" class="clients-tab-badge" hidden></span><span class="hub-more-caret" aria-hidden="true"></span></button>
+</nav>
+<div class="hub-more-menu" id="hubMoreMenu" role="menu" aria-label="More client sections" hidden>
+<button type="button" class="clients-tab" role="menuitem" data-tab="checkins">Check-ins <span id="hubCheckinBadge" class="clients-tab-badge" hidden></span></button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="sessions">Sessions <span id="hubSessionBadge" class="clients-tab-badge" hidden></span></button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="progress">Progress</button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="planning">Planning</button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="model">Model</button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="profile">Profile</button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="notes">Notes</button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="history">History</button>
+</div>
+</div>
 
             <section class="clients-panel" data-panel="overview">
                 <div id="hubAttention"></div>
@@ -96,6 +104,11 @@
                     <div id="hubApplicationBody"></div>
                 </div>
                 <div class="hub-actions" id="hubActions"></div>
+            </section>
+
+            <!-- The coach-client thread: js/messageView.js -->
+            <section class="clients-panel" data-panel="messages" hidden>
+                <div class="clients-card hub-messages" id="hubMessages"></div>
             </section>
 
             <section class="clients-panel" data-panel="plan" hidden>

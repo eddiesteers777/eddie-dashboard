@@ -43,6 +43,10 @@ rules_version = '2';
 //                              there is deliberately no client clause.
 //   clientUpdates/{id}         Updates a coach sends a client. The client
 //                              reads them and can only mark them read.
+//   messages/{id}              The coach-client message thread: either of
+//                              the two (linked) writes as themselves; the
+//                              other can only mark it read; the sender can
+//                              unsend it while it's still unread.
 //   coachingPlans/{planId}     A plan the coach publishes to a client
 //                              (header). Created at the first publish;
 //                              the client reads it and can only record
@@ -981,6 +985,40 @@ service cloud.firestore {
         && onlyChanges(["readAt"])
         && request.resource.data.readAt == request.time;
       allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // ---- Messages (the coach-client thread, js/messages.js) ----
+    // One doc per message. Only the two people in the thread read it.
+    // Each writes as themselves (from "coach" = the coachUid, "client" =
+    // the clientUid), only while linked; the other one can only stamp
+    // readAt with the server's clock; the sender can take back a message
+    // nobody has read yet. Text is never edited.
+    match /messages/{messageId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "from", "senderName", "text", "createdAt", "readAt"])
+        && request.resource.data.coachUid is string
+        && request.resource.data.clientUid is string
+        && ((request.resource.data.from == "coach" && request.resource.data.coachUid == request.auth.uid)
+            || (request.resource.data.from == "client" && request.resource.data.clientUid == request.auth.uid))
+        && linked(request.resource.data.coachUid, request.resource.data.clientUid)
+        && request.resource.data.senderName is string
+        && request.resource.data.senderName.size() <= 100
+        && validNoteText(request.resource.data.text, 2000)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.readAt == null;
+      allow update: if signedIn()
+        && resource.data.readAt == null
+        && ((resource.data.from == "coach" && resource.data.clientUid == request.auth.uid)
+            || (resource.data.from == "client" && resource.data.coachUid == request.auth.uid))
+        && onlyChanges(["readAt"])
+        && request.resource.data.readAt == request.time;
+      allow delete: if signedIn()
+        && resource.data.readAt == null
+        && ((resource.data.from == "coach" && resource.data.coachUid == request.auth.uid)
+            || (resource.data.from == "client" && resource.data.clientUid == request.auth.uid));
     }
 
     // ---- Client package entitlements ----

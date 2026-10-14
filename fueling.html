@@ -79,19 +79,25 @@
 
             <div
                 class="mode-toggle"
-                id="modeToggle">
+                id="modeToggle"
+                role="group"
+                aria-label="Fueling mode">
 
                 <button
+                    type="button"
                     class="mode-btn active"
-                    data-mode="training">
+                    data-mode="training"
+                    aria-pressed="true">
 
                     Training
 
                 </button>
 
                 <button
+                    type="button"
                     class="mode-btn"
-                    data-mode="race">
+                    data-mode="race"
+                    aria-pressed="false">
 
                     Race
 
@@ -107,6 +113,19 @@
                 small steps.
 
             </p>
+
+            <div class="fuel-unit-row">
+                <span>Fluid in</span>
+                <div class="fuel-unit-switch" role="group" aria-label="Fluid unit" id="fluidUnitSwitch">
+                    <button type="button" data-unit="oz" aria-pressed="true">oz</button>
+                    <button type="button" data-unit="ml" aria-pressed="false">ml</button>
+                </div>
+            </div>
+
+            <div class="fuel-save-row">
+                <p class="fuel-save-status" id="fuelSaveStatus" role="status" aria-live="polite"></p>
+                <a class="fuel-myplans-link" href="#myFuelingPlans" id="fuelMyPlansLink">My fueling plans</a>
+            </div>
 
             <div class="marathon-integration" id="marathonIntegration">
 
@@ -127,6 +146,9 @@
             </div>
 
         </section>
+
+        <!-- An unfinished plan to pick up (js/fuelingPlans.js). -->
+        <section class="fuel-draft-banner" id="fuelDraftBanner" hidden aria-labelledby="fuelDraftBannerTitle"></section>
 
         <!-- ============================================
              SELECT MARATHON WORKOUT (the coach's own race
@@ -201,7 +223,13 @@
 
             </div>
 
-            <div class="fuel-input-grid">
+            <!-- Once the athlete profile has the basics, Athlete / Sodium / Preferences fold under this line (js/fuelingPlans.js, js/fuelDetails.js). -->
+            <div class="fuel-details-bar" id="fuelDetailsBar" hidden>
+                <p class="fuel-details-text"><strong>Your details</strong> <span id="fuelDetailsSummary"></span></p>
+                <button type="button" class="fuel-btn secondary small" id="fuelDetailsToggle" aria-expanded="false" aria-controls="fuelAthleteCard fuelSodiumCard fuelPrefsCard">Edit my details</button>
+            </div>
+
+            <div class="fuel-input-grid" id="fuelInputGrid">
 
                 <!-- Workout -->
 
@@ -236,8 +264,9 @@
                                 type="number"
                                 id="duration"
                                 min="0"
-                                step="5"
-                                value="90">
+                                step="1"
+                                inputmode="numeric"
+                                placeholder="from distance + pace">
 
                         </label>
 
@@ -258,7 +287,7 @@
 
                     <label class="fuel-field">
 
-                        <span>Pace (per mile, optional)</span>
+                        <span>Pace (per mile, or /km)</span>
 
                         <input
                             type="text"
@@ -267,23 +296,44 @@
 
                     </label>
 
+                    <label class="fuel-field">
+
+                        <span>Start time (optional)</span>
+
+                        <input
+                            type="time"
+                            id="startTime">
+
+                    </label>
+
+                    <p class="fuel-note fuel-duration-status" id="durationStatus" aria-live="polite"></p>
+
                 </div>
 
                 <!-- Athlete -->
 
-                <div class="fuel-card" style="--fuel-color:var(--primary)">
+                <div class="fuel-card" id="fuelAthleteCard" data-details-card style="--fuel-color:var(--primary)">
 
                     <h3>Athlete</h3>
 
+                    <div class="fuel-weight-unit">
+                        <span>Weight in</span>
+                        <div class="fuel-unit-switch" role="group" aria-label="Weight unit" id="weightUnitSwitch">
+                            <button type="button" data-wunit="lb" aria-pressed="true">lb</button>
+                            <button type="button" data-wunit="kg" aria-pressed="false">kg</button>
+                        </div>
+                    </div>
+
                     <label class="fuel-field">
 
-                        <span>Body Weight (lb)</span>
+                        <span>Body Weight (<span data-weight-unit>lb</span>)</span>
 
                         <input
                             type="number"
                             id="bodyWeight"
                             min="0"
-                            step="1"
+                            step="0.1"
+                            inputmode="decimal"
                             value="165">
 
                     </label>
@@ -381,11 +431,30 @@
 
                     </label>
 
+                    <label class="fuel-field">
+
+                        <span>Measured Sweat Rate (<span data-fluid-unit>oz</span>/hr)</span>
+
+                        <input
+                            type="number"
+                            id="sweatRateMeasured"
+                            min="0"
+                            step="any"
+                            inputmode="decimal"
+                            placeholder="optional, from a sweat test">
+
+                    </label>
+
+                    <details class="fuel-howto">
+                        <summary>How to measure your sweat rate</summary>
+                        <p>Weigh yourself without clothes right before and right after an hour's run, without peeing in between. Every pound lost is about 16 oz (450 ml) of sweat; add what you drank during the run. Measure again in hot weather: it changes a lot.</p>
+                    </details>
+
                 </div>
 
                 <!-- Sodium -->
 
-                <div class="fuel-card" style="--fuel-color:var(--purple)">
+                <div class="fuel-card" id="fuelSodiumCard" data-details-card style="--fuel-color:var(--purple)">
 
                     <h3>Sodium</h3>
 
@@ -406,6 +475,20 @@
 
                     <label class="fuel-field">
 
+                        <span>Measured Sweat Sodium (mg/L)</span>
+
+                        <input
+                            type="number"
+                            id="sweatSodiumMeasured"
+                            min="0"
+                            step="10"
+                            inputmode="numeric"
+                            placeholder="optional, from a sweat test">
+
+                    </label>
+
+                    <label class="fuel-field">
+
                         <span>Typical Sodium Intake (mg/hr)</span>
 
                         <input
@@ -421,7 +504,7 @@
 
                 <!-- Fueling Preferences -->
 
-                <div class="fuel-card fuel-card-wide">
+                <div class="fuel-card fuel-card-wide" id="fuelPrefsCard" data-details-card>
 
                     <h3>Fueling Preferences</h3>
 
@@ -511,7 +594,7 @@
 
                 <div class="fuel-target-card" style="--fuel-color:var(--yellow)">
 
-                    <span class="fuel-target-label">Carbohydrates</span>
+                    <label class="fuel-target-label" for="carbsPerHour">Carbohydrates</label>
 
                     <div class="fuel-target-value">
 
@@ -535,7 +618,7 @@
 
                 <div class="fuel-target-card" style="--fuel-color:var(--cyan)">
 
-                    <span class="fuel-target-label">Fluids</span>
+                    <label class="fuel-target-label" for="fluidPerHour">Fluids</label>
 
                     <div class="fuel-target-value">
 
@@ -543,9 +626,10 @@
                             type="number"
                             id="fluidPerHour"
                             min="0"
-                            step="1">
+                            step="any"
+                            inputmode="decimal">
 
-                        <small>oz / hr</small>
+                        <small><span data-fluid-unit>oz</span> / hr</small>
 
                     </div>
 
@@ -559,7 +643,7 @@
 
                 <div class="fuel-target-card" style="--fuel-color:var(--purple)">
 
-                    <span class="fuel-target-label">Sodium</span>
+                    <label class="fuel-target-label" for="sodiumPerHour">Sodium</label>
 
                     <div class="fuel-target-value">
 
@@ -583,7 +667,7 @@
 
             </div>
 
-            <p class="fuel-note" id="calcNote"></p>
+            <div class="fuel-note" id="calcNote"></div>
 
         </section>
 
@@ -652,7 +736,7 @@
                         type="number"
                         id="firstGelMin"
                         min="5"
-                        max="90"
+                        max="240"
                         step="5"
                         value="30">
                     min
@@ -685,7 +769,7 @@
 
                 <h2>
 
-                    Homemade Drink — Sugar + Salt Calculator
+                    Homemade Drink
 
                 </h2>
 
@@ -708,13 +792,14 @@
 
                         <label class="fuel-field">
 
-                            <span>Bottle Size (oz)</span>
+                            <span>Bottle Size (<span data-fluid-unit>oz</span>)</span>
 
                             <input
                                 type="number"
                                 id="diyBottleSize"
                                 min="0"
-                                step="1"
+                                step="any"
+                                inputmode="decimal"
                                 value="20">
 
                         </label>
@@ -796,8 +881,8 @@
                                 <option value="table-sugar" selected>Table Sugar</option>
                                 <option value="maltodextrin">Maltodextrin</option>
                                 <option value="honey">Honey</option>
-                                <option value="juice">Fruit Juice</option>
-                                <option value="sports-powder">Sports Drink Powder</option>
+                                <option value="fruit-juice">Fruit Juice</option>
+                                <option value="sports-drink-powder">Sports Drink Powder</option>
                                 <option value="other">Other</option>
 
                             </select>
@@ -805,8 +890,44 @@
                         </label>
 
                         <label class="fuel-field">
+                            <span>Second carb source (optional)</span>
+                            <select id="diyCarbSource2">
+                                <option value="" selected>None</option>
+                                <option value="table-sugar">Table Sugar</option>
+                                <option value="maltodextrin">Maltodextrin</option>
+                                <option value="honey">Honey</option>
+                                <option value="fruit-juice">Fruit Juice</option>
+                                <option value="sports-drink-powder">Sports Drink Powder</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </label>
 
-                            <span>Sodium Source</span>
+                        <label class="fuel-field" id="diyCarbShareField" hidden>
+                            <span>Carbs from the second (%)</span>
+                            <input type="number" id="diyCarbShare2" min="10" max="90" step="5" value="50" inputmode="numeric">
+                        </label>
+
+                    </div>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+                            <span>Electrolyte powder: sodium per scoop (mg, optional)</span>
+                            <input type="number" id="diyElectroMg" min="0" max="2000" step="10" inputmode="numeric" placeholder="e.g. 300">
+                        </label>
+
+                        <label class="fuel-field">
+                            <span>Scoops per bottle</span>
+                            <input type="number" id="diyElectroScoops" min="0" max="10" step="0.5" inputmode="decimal" placeholder="e.g. 1">
+                        </label>
+
+                    </div>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Sodium for the rest</span>
 
                             <select id="diySodiumSource">
 
@@ -849,26 +970,7 @@
                 id="diyResults"
                 style="display:none;">
 
-                <div class="fuel-diy-stat">
-
-                    <span id="diyWaterAmount">0 oz</span>
-                    <small>water</small>
-
-                </div>
-
-                <div class="fuel-diy-stat">
-
-                    <span id="diySugarGrams">0 g</span>
-                    <small>table sugar (≈ <span id="diySugarTsp">0</span> tsp)</small>
-
-                </div>
-
-                <div class="fuel-diy-stat">
-
-                    <span id="diySaltGrams">0 g</span>
-                    <small>table salt (≈ <span id="diySaltTsp">0</span> tsp)</small>
-
-                </div>
+                <div class="fuel-diy-recipe" id="diyRecipeTable" aria-live="polite"></div>
 
                 <button
                     class="fuel-btn secondary"
@@ -911,13 +1013,23 @@
 
                 </h2>
 
-                <button
-                    class="fuel-btn secondary small"
-                    id="addLibraryItemBtn">
+                <div class="fuel-lib-head-actions">
+                    <button type="button"
+                        class="fuel-btn secondary small"
+                        id="popularSourcesBtn">
 
-                    + Add Item
+                        Popular products
 
-                </button>
+                    </button>
+
+                    <button
+                        class="fuel-btn secondary small"
+                        id="addLibraryItemBtn">
+
+                        + Add Item
+
+                    </button>
+                </div>
 
             </div>
 
@@ -926,6 +1038,7 @@
                 id="libraryTabs">
 
                 <button class="fuel-tab active" data-category="all">All</button>
+                <button class="fuel-tab" data-category="usual">Your usual</button>
                 <button class="fuel-tab" data-category="gels">Gels</button>
                 <button class="fuel-tab" data-category="drinkmix">Drink Mixes</button>
                 <button class="fuel-tab" data-category="chews">Chews</button>
@@ -972,8 +1085,8 @@
                     </label>
 
                     <label class="fuel-field">
-                        <span>Fluid (oz)</span>
-                        <input type="number" id="libFluid" min="0" step="1" value="0">
+                        <span>Fluid (<span data-fluid-unit>oz</span>)</span>
+                        <input type="number" id="libFluid" min="0" step="any" inputmode="decimal" value="0">
                     </label>
 
                 </div>
@@ -990,9 +1103,14 @@
                         <input type="text" id="libPrice" placeholder="e.g. $1.50">
                     </label>
 
+                    <label class="fuel-field">
+                        <span>Caffeine (mg, blank = none)</span>
+                        <input type="number" id="libCaffeineMg" min="0" max="500" step="5" inputmode="numeric" placeholder="e.g. 40">
+                    </label>
+
                     <label class="fuel-checkbox fuel-lib-caffeine">
                         <input type="checkbox" id="libCaffeine">
-                        <span>Contains Caffeine</span>
+                        <span>Contains caffeine (amount not known)</span>
                     </label>
 
                 </div>
@@ -1122,6 +1240,14 @@
 
                 </button>
 
+                <button type="button"
+                    class="fuel-btn secondary"
+                    id="downloadPdfBtn">
+
+                    Download PDF
+
+                </button>
+
                 <button
                     class="fuel-btn secondary"
                     id="duplicatePlanBtn">
@@ -1134,7 +1260,7 @@
                     class="fuel-btn secondary"
                     id="clearPlanBtn">
 
-                    Clear Plan
+                    Start a New Plan
 
                 </button>
 
@@ -1152,30 +1278,39 @@
         </section>
 
         <!-- ============================================
-             SAVED FUELING PLANS
+             MY FUELING PLANS: drafts, saved plans and the
+             athlete profile (js/fuelingPlans.js)
         ============================================= -->
 
-        <section class="fuel-panel">
+        <section class="fuel-panel" id="myFuelingPlans" aria-labelledby="myFuelingPlansTitle">
 
             <div class="fuel-panel-header">
 
-                <h2>
+                <h2 id="myFuelingPlansTitle">
 
-                    Saved Fueling Plans
+                    My Fueling Plans
 
                 </h2>
 
             </div>
 
-            <div id="savedPlansGrid">
-
-                <p class="fuel-empty-state">
-
-                    No saved plans yet.
-
-                </p>
-
+            <div class="fuel-myplans-tabs" role="tablist" aria-label="My fueling plans">
+                <button type="button" role="tab" id="fuelTabDrafts" aria-controls="fuelDraftsPane" aria-selected="true" data-fuel-tab="drafts">Drafts <span class="fuel-tab-count" id="fuelDraftCount"></span></button>
+                <button type="button" role="tab" id="fuelTabSaved" aria-controls="fuelSavedPane" aria-selected="false" tabindex="-1" data-fuel-tab="saved">Saved Plans <span class="fuel-tab-count" id="fuelSavedCount"></span></button>
+                <button type="button" role="tab" id="fuelTabProfile" aria-controls="fuelProfilePane" aria-selected="false" tabindex="-1" data-fuel-tab="profile">Athlete Profile</button>
             </div>
+
+            <div class="fuel-myplans-pane" id="fuelDraftsPane" role="tabpanel" aria-labelledby="fuelTabDrafts">
+                <div id="fuelDraftList"></div>
+            </div>
+
+            <div class="fuel-myplans-pane" id="fuelSavedPane" role="tabpanel" aria-labelledby="fuelTabSaved" hidden>
+                <div id="savedPlansGrid">
+                    <p class="fuel-empty-state">No saved plans yet.</p>
+                </div>
+            </div>
+
+            <div class="fuel-myplans-pane" id="fuelProfilePane" role="tabpanel" aria-labelledby="fuelTabProfile" hidden></div>
 
         </section>
 
@@ -1190,6 +1325,9 @@
         </p>
 
     </main>
+
+    <!-- Screen readers hear the targets when they change (js/fueling.js announce()). -->
+    <p class="sr-only" id="fuelAnnounce" aria-live="polite" aria-atomic="true"></p>
 
     <!-- Saved-plan sheet: the full race-day breakdown for one plan. -->
     <div class="fs-sheet" id="fuelPlanSheet" hidden>
@@ -1206,7 +1344,8 @@
             <div id="fuelSheetBody"></div>
             <div class="fs-sheet-actions">
                 <button type="button" class="fuel-btn secondary" id="fuelSheetEdit">Edit Plan</button>
-                <button type="button" class="fuel-btn primary" id="fuelSheetPrint">Print / Save PDF</button>
+                <button type="button" class="fuel-btn secondary" id="fuelSheetPrint">Print</button>
+                <button type="button" class="fuel-btn primary" id="fuelSheetPdf">Download PDF</button>
             </div>
         </div>
     </div>

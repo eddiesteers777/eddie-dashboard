@@ -40,9 +40,10 @@ import { toast, sbConfirm, sbPrompt, friendlyError } from "./ui.js";
 import { builderHtml, readBuilder, startingWorkout, blankSet, summaryHtml } from "./workoutBuilder.js";
 import { sanitizeWorkout, workoutSummary, plannedMiles } from "./runWorkout.js";
 import {
-    strengthBuilderHtml, readStrengthBuilder, startingStrength, blankExercise, fromTemplate,
+    strengthBuilderHtml, readStrengthBuilder, startingStrength, blankExercise, fromTemplate, updateLastLift,
     strengthSummaryHtml, rememberVideos, rememberedVideo
 } from "./strengthBuilder.js";
+import { historyFromResults, lastLifts } from "./strengthProgress.js";
 import { sanitizeStrength } from "./strengthWorkout.js";
 import {
     moveDay, copyDay, clearDay, nextWeekDate, copyWeek, clearWeek, dayEntry, weekEntry,
@@ -110,10 +111,28 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         return chips.join("");
     }
 
+    // ---------- Leaving the page with unsaved edits ----------
+
+    // The in-app "All plans" button already asks. A reload, the browser's back
+    // button or closing the tab would not, so while the editor holds changes
+    // that aren't saved the browser asks too. It is attached only then (and
+    // removed on Save, Publish and leaving the editor), so a page with nothing
+    // to lose keeps its back/forward cache.
+    function warnBeforeLeaving(event) {
+        event.preventDefault();
+        event.returnValue = "";
+    }
+    function syncLeaveGuard() {
+        const needed = Boolean(state.editing?.dirty && state.view === "editor");
+        window.removeEventListener("beforeunload", warnBeforeLeaving);
+        if (needed) window.addEventListener("beforeunload", warnBeforeLeaving);
+    }
+
     // ---------- List ----------
 
     function renderList() {
         state.view = "list";
+        syncLeaveGuard();
         const active = published().filter(h => h.status === "active");
         const archived = published().filter(h => h.status === "archived");
         const draftOnly = drafts().filter(d => !published().some(h => h.id === d.id));
@@ -245,6 +264,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
     function renderEditor({ keepScroll = false } = {}) {
         const scrollY = window.scrollY;
         state.view = "editor";
+        syncLeaveGuard();
         const e = state.editing;
         const marks = doneMarks(e.planId);
         const today = isoDate(new Date());
@@ -347,6 +367,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         state.editing.dirty = true;
         const dirty = container.querySelector('[data-el="dirty"]');
         if (dirty) dirty.hidden = false;
+        syncLeaveGuard();
     }
 
     // ---------- Workout details (structured runs) ----------
@@ -413,6 +434,14 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
 
     const strengthRaw = new Map();   // "week:day" -> raw form values while open
 
+    // What the client last lifted, from their strength logs on your plans (data.results).
+    let liftsCache = null;
+    let liftsFrom = null;
+    function clientLifts() {
+        if (liftsFrom !== data.results) { liftsFrom = data.results; liftsCache = lastLifts(historyFromResults(data.results || [])); }
+        return liftsCache;
+    }
+
     function strengthButton(ref, has) {
         const btn = ref.dayEl.querySelector('[data-act="strength"]');
         btn.classList.toggle("has-workout", has);
@@ -422,7 +451,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
 
     function renderStrength(ref, raw) {
         strengthRaw.set(ref.key, raw);
-        ref.dayEl.querySelector(".pw-strength-slot").innerHTML = strengthBuilderHtml(raw);
+        ref.dayEl.querySelector(".pw-strength-slot").innerHTML = strengthBuilderHtml(raw, { lifts: clientLifts() });
     }
 
     function openStrength(ref) {
@@ -487,6 +516,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 const video = target.closest(".sb-ex")?.querySelector('[data-sb$=".video"]');
                 const known = rememberedVideo(target.value);
                 if (video && !video.value && known) video.value = known;
+                updateLastLift(target.closest(".sb-ex"), clientLifts());
             }
             applyStrength(ref);
             // Pairing changes the numbering (3A / 3B).
@@ -635,6 +665,15 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                 renderStrength(ref, raw);
                 if (act !== "sb-add-ex") applyStrength(ref);
                 if (act === "sb-add-ex") ref.dayEl.querySelector(".sb-ex:last-of-type .sb-ex-name")?.focus();
+                return;
+            }
+            if (act === "sb-use-last") {
+                const weight = btn.closest(".sb-ex")?.querySelector('[data-sb$=".weight"]');
+                if (weight) {
+                    weight.value = btn.dataset.weight;
+                    weight.dispatchEvent(new Event("input", { bubbles: true }));
+                    weight.focus();
+                }
                 return;
             }
             if (act === "sb-clear") {

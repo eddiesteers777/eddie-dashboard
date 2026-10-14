@@ -100,49 +100,147 @@ async function swapDays(a, b) {
 
 // ---------- check-in ----------
 
-function scale(name, label, left, right, value) {
-    return `<fieldset class="rd-scale"><legend>${esc(label)}</legend>
-        <div class="rd-scale-row">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${name}" value="${n}" ${value === n ? "checked" : ""}><span>${n}</span></label>`).join("")}</div>
-        <div class="rd-scale-ends"><span>${esc(left)}</span><span>${esc(right)}</span></div></fieldset>`;
+// Each 1-5 answer in words, so a tap reads back as something (2026-10-10 redesign).
+const SCALES = [
+    { name: "energy", label: "Energy", words: ["Drained", "Low", "Okay", "Good", "Great"] },
+    { name: "soreness", label: "Soreness", words: ["None", "A little", "Some", "Sore", "Very sore"] },
+    { name: "mood", label: "Mood", words: ["Low", "Flat", "Okay", "Good", "Great"] }
+];
+// Yesterday's amounts, each a stepper with quick picks, kept in step with that day's Nutrition log.
+const AMOUNT_INPUTS = [
+    { id: "water", field: "waterOz", nutrition: "water", title: "Water yesterday", unit: "oz", step: 8, start: 64, presets: [64, 80, 100, 120], fallbackGoal: 100 },
+    { id: "protein", field: "proteinG", nutrition: "protein", title: "Protein yesterday", unit: "g", step: 10, start: 120, presets: [100, 140, 180, 220], fallbackGoal: 150 }
+];
+
+function scale({ name, label, words }, value) {
+    return `<fieldset class="rd-scale" data-scale="${name}"><legend>${esc(label)}<span class="rd-scale-word">${value ? esc(words[value - 1]) : ""}</span></legend>
+        <div class="rd-scale-row">${[1, 2, 3, 4, 5].map(n => `<label><input type="radio" name="${name}" value="${n}" ${value === n ? "checked" : ""}><span aria-label="${n}: ${esc(words[n - 1])}">${n}</span></label>`).join("")}</div>
+        <div class="rd-scale-ends"><span>${esc(words[0])}</span><span>${esc(words[4])}</span></div></fieldset>`;
 }
 
-export function openCheckin(date, onSaved) {
+const tagChips = (when, c) => TAGS.filter(t => t.when === when && (!t.retired || (c.tags || []).includes(t.id)))
+    .map(t => `<label class="rd-tag"><input type="checkbox" name="tags" value="${t.id}" ${(c.tags || []).includes(t.id) ? "checked" : ""}><span>${icon("check")}${esc(t.label)}</span></label>`).join("");
+
+function nutritionAmount(day, key) {
+    try { const n = JSON.parse(localStorage.getItem(`nutrition-${day}`) || "null"); return Number(n?.[key]) || null; } catch { return null; }
+}
+
+async function nutritionGoals() {
+    try {
+        const { resolveGoals } = await import("./nutritionGoals.js");
+        return resolveGoals(load("nutrition-goals", null), { isCoach: cachedRole() === "coach" }).goals || {};
+    } catch { return {}; }
+}
+
+// The check-in's amounts are yesterday's: they go into that day's Nutrition log too, so both agree.
+function saveNutritionAmount(day, key, value) {
+    let entry = null;
+    try { entry = JSON.parse(localStorage.getItem(`nutrition-${day}`) || "null"); } catch {}
+    if (!entry) {
+        entry = { breakfast: "", lunch: "", dinner: "", snacks: "", workoutTitle: "Rest Day", workoutDescription: "No workout scheduled.",
+            foodLog: { breakfast: [], lunch: [], dinner: [], snacks: [] }, calories: 0, protein: 0, carbs: 0, fat: 0, water: 0, sodium: 0 };
+    }
+    entry[key] = value;
+    localStorage.setItem(`nutrition-${day}`, JSON.stringify(entry));
+}
+
+export async function openCheckin(date, onSaved) {
     const c = loadCheckins()[date] || {};
+    const yesterday = (() => { const d = new Date(`${date}T12:00:00`); d.setDate(d.getDate() - 1); return isoDate(d); })();
+    const goals = await nutritionGoals();
+    const amounts = Object.fromEntries(AMOUNT_INPUTS.map(a => [a.id, c[a.field] ?? nutritionAmount(yesterday, a.nutrition)]));
+    const goalOf = a => Number(goals[a.nutrition]) || a.fallbackGoal;
+    const when = new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
     const dialog = document.createElement("dialog");
     dialog.className = "sb-dialog rd-dialog";
     dialog.innerHTML = `<form method="dialog" class="sb-dialog-form rd-form">
-        <h2 class="sb-dialog-title">Morning check-in</h2>
-        ${scale("soreness", "How sore are you?", "Not at all", "Very", c.soreness)}
-        ${scale("energy", "Energy", "Drained", "Great", c.energy)}
-        ${scale("mood", "Mood", "Low", "Great", c.mood)}
-        <label class="rd-check"><input type="checkbox" name="sick" ${c.sick ? "checked" : ""}> Feeling sick</label>
-        <label class="rd-field">Any pain? <input type="text" name="pain" maxlength="80" placeholder="e.g. left Achilles" value="${esc(c.pain || "")}"></label>
-        <fieldset class="rd-tags"><legend>Yesterday, did you…</legend>
-            ${TAGS.map(t => `<label class="rd-tag"><input type="checkbox" name="tags" value="${t.id}" ${(c.tags || []).includes(t.id) ? "checked" : ""}><span>${esc(t.label)}</span></label>`).join("")}
-        </fieldset>
-        <label class="rd-field">Note <textarea name="note" rows="2" maxlength="500">${esc(c.note || "")}</textarea></label>
-        <div class="sb-dialog-actions">
-            <button type="button" class="sb-btn sb-btn-tertiary" value="cancel">Cancel</button>
-            <button type="submit" class="sb-btn sb-btn-primary" value="save">Save check-in</button>
+        <header class="rd-form-head">
+            <div class="sb-eyebrow">${esc(when)}</div>
+            <h2 class="sb-dialog-title">Morning check-in</h2>
+            <button type="button" class="rd-x" value="cancel" aria-label="Close">${icon("close")}</button>
+        </header>
+        <div class="rd-form-body">
+            <section class="rd-sec"><h3>How you feel</h3>
+                ${SCALES.map(sc => scale(sc, c[sc.name])).join("")}
+                <div class="rd-flags">
+                    <label class="rd-tag rd-tag-warn"><input type="checkbox" name="sick" ${c.sick ? "checked" : ""}><span>${icon("check")}Feeling sick</span></label>
+                    <label class="rd-tag rd-tag-warn"><input type="checkbox" name="hurts" ${c.pain ? "checked" : ""}><span>${icon("check")}Something hurts</span></label>
+                </div>
+                <label class="rd-field rd-pain"${c.pain ? "" : " hidden"}>Where? <input type="text" name="pain" maxlength="80" placeholder="e.g. left Achilles" value="${esc(c.pain || "")}"></label>
+            </section>
+            <section class="rd-sec"><h3>Last night</h3>
+                <div class="rd-tags">${tagChips("night", c)}</div>
+            </section>
+            ${AMOUNT_INPUTS.map(a => `<section class="rd-sec rd-amount" data-amount="${a.id}"><h3>${a.title}</h3>
+                <div class="rd-water">
+                    <button type="button" class="rd-wbtn" data-w="-" aria-label="${a.step} ${a.unit} less">−</button>
+                    <div class="rd-wval"><strong data-wv>–</strong><span>${a.unit}</span></div>
+                    <button type="button" class="rd-wbtn" data-w="+" aria-label="${a.step} ${a.unit} more">+</button>
+                </div>
+                <div class="rd-wbar" aria-hidden="true"><i data-wbar></i></div>
+                <p class="rd-wgoal" data-wgoal></p>
+                <div class="rd-wpresets">${a.presets.map(v => `<button type="button" class="rd-wpreset" data-wset="${v}">${v}</button>`).join("")}<button type="button" class="rd-wpreset rd-wclear" data-wset="">Not sure</button></div>
+            </section>`).join("")}
+            <section class="rd-sec"><h3>Yesterday</h3>
+                <div class="rd-tags">${tagChips("day", c)}</div>
+            </section>
+            <section class="rd-sec"><label class="rd-field">Note <textarea name="note" rows="2" maxlength="500" placeholder="Anything else worth remembering">${esc(c.note || "")}</textarea></label></section>
         </div>
+        <footer class="rd-form-foot"><button type="submit" class="sb-btn sb-btn-primary" value="save">Save check-in</button></footer>
     </form>`;
     document.body.appendChild(dialog);
-    dialog.querySelector('[value="cancel"]').addEventListener("click", () => dialog.close());
-    dialog.querySelector("form").addEventListener("submit", event => {
+    const form = dialog.querySelector("form");
+    const drawAmount = a => {
+        const box = dialog.querySelector(`[data-amount="${a.id}"]`);
+        const v = amounts[a.id], goal = goalOf(a);
+        box.querySelector("[data-wv]").textContent = v ?? "–";
+        box.querySelector("[data-wbar]").style.width = `${Math.min(100, ((v || 0) / goal) * 100)}%`;
+        box.querySelector("[data-wgoal]").textContent = v == null ? `Your goal is ${goal} ${a.unit}. Tap + or a number.`
+            : v >= goal ? `Goal reached (${goal} ${a.unit}).` : `${goal - v} ${a.unit} short of your ${goal} ${a.unit} goal.`;
+        box.querySelectorAll("[data-wset]").forEach(b => b.classList.toggle("is-on", String(v ?? "") === b.dataset.wset));
+    };
+    AMOUNT_INPUTS.forEach(drawAmount);
+    dialog.addEventListener("click", event => {
+        const t = event.target.closest("button");
+        if (!t) return;
+        if (t.value === "cancel") dialog.close();
+        const a = AMOUNT_INPUTS.find(x => x.id === t.closest("[data-amount]")?.dataset.amount);
+        if (!a) return;
+        const v = amounts[a.id];
+        if (t.dataset.w) amounts[a.id] = Math.max(0, Math.min(a.unit === "oz" ? 400 : 600, (v ?? (t.dataset.w === "+" ? a.start - a.step : a.step)) + (t.dataset.w === "+" ? a.step : -a.step)));
+        if ("wset" in t.dataset) amounts[a.id] = t.dataset.wset === "" ? null : Number(t.dataset.wset);
+        drawAmount(a);
+    });
+    form.addEventListener("change", event => {
+        const fs = event.target.closest("[data-scale]");
+        if (fs) {
+            const sc = SCALES.find(x => x.name === fs.dataset.scale);
+            fs.querySelector(".rd-scale-word").textContent = sc.words[Number(event.target.value) - 1];
+        }
+        if (event.target.name === "hurts") {
+            const box = dialog.querySelector(".rd-pain");
+            box.hidden = !event.target.checked;
+            if (event.target.checked) box.querySelector("input").focus();
+        }
+    });
+    form.addEventListener("submit", event => {
         event.preventDefault();
-        const f = new FormData(event.target);
+        const f = new FormData(form);
         const n = k => (f.get(k) ? Number(f.get(k)) : null);
+        const pain = f.get("hurts") === "on" ? (String(f.get("pain") || "").trim() || "yes") : "";
         saveCheckin(date, {
             soreness: n("soreness"), energy: n("energy"), mood: n("mood"),
-            sick: f.get("sick") === "on", pain: String(f.get("pain") || "").trim(),
-            tags: f.getAll("tags"), note: String(f.get("note") || "").trim()
+            sick: f.get("sick") === "on", pain,
+            tags: f.getAll("tags"), ...Object.fromEntries(AMOUNT_INPUTS.map(a => [a.field, amounts[a.id]])), note: String(f.get("note") || "").trim()
         });
+        for (const a of AMOUNT_INPUTS) if (amounts[a.id] != null) saveNutritionAmount(yesterday, a.nutrition, amounts[a.id]);
         dialog.close();
         toast("Check-in saved.");
         onSaved?.();
     });
     dialog.addEventListener("close", () => dialog.remove());
     dialog.showModal();
+    import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
 }
 
 // ---------- the card ----------
@@ -169,6 +267,18 @@ function partsHtml(parts) {
     </li>`).join("");
 }
 
+// A small ring: its fill is the part's score (0-100), the colour green / yellow / red.
+function gauge({ cls, score, big, label, sub }) {
+    return `<div class="rd-gauge ${cls}">
+        <div class="rd-ring rd-mini ${colorOf(score ?? null)}" style="--pct:${score ?? 0}" role="img" aria-label="${esc(label)} ${score ?? "not available"}"><b>${big}</b></div>
+        <span class="rd-glabel">${esc(label)}</span>
+        ${sub ? `<small class="rd-gsub">${esc(sub)}</small>` : ""}
+    </div>`;
+}
+
+// "normal" / "above normal" / "low" from the HRV part's own note.
+const hrvWord = p => (/below/.test(p.note) ? "below normal" : /above/.test(p.note) ? "above normal" : "normal");
+
 function weekDots(today, history = load(READINESS_KEY, {})) {
     const cells = [];
     for (let i = 6; i >= 0; i--) {
@@ -186,7 +296,8 @@ function insightsHtml(today) {
     const body = list.length
         ? `<ul class="rd-insights-list">${list.map(o => `<li class="${o.effect}"><strong>${esc(o.label)}</strong> ${o.effect === "none" ? "no clear effect" : `readiness ${Math.abs(o.diff)} ${o.diff > 0 ? "higher" : "lower"} the next morning`} <small>(${o.times} ${o.times === 1 ? "time" : "times"})</small></li>`).join("")}</ul>`
         : `<p>${left ? `Check in for ${left} more ${left === 1 ? "morning" : "mornings"}, ticking what you did the day before, and this starts showing what helps and what hurts your readiness.` : "Keep ticking what you did the day before: each answer needs 4 mornings with it and 4 without before it shows here."}</p>`;
-    return `<details class="rd-insights"><summary>${icon("activity")} What's helping, what's hurting</summary>${body}</details>`;
+    const recap = cachedRole() === "coach" ? `<p><a class="rd-link" href="analytics.html#habitsPanel">Your monthly recap and every habit's numbers →</a></p>` : "";
+    return `<details class="rd-insights"><summary>${icon("activity")} What's helping, what's hurting</summary>${body}${recap}</details>`;
 }
 
 async function render() {
@@ -225,37 +336,50 @@ async function render() {
 
     el.hidden = false;
     el.className = `rd-card ${r.color}`;
+    // WHOOP-style: three rings (sleep · readiness · HRV), one line of advice,
+    // the check-in; everything else folds under Details (Eddie: "less busy").
+    const base = useV2 ? computeReadiness(today, data) : r;
+    const sleepP = base.parts.find(p => p.key === "sleep"), hrvP = base.parts.find(p => p.key === "hrv");
+    const flagLines = r.flags.filter(f => f.key !== "pain" && f.key !== "sick");
+    const detailsOpen = el.querySelector(".rd-more")?.open ? " open" : "";
     el.innerHTML = `
-        <div class="rd-head">
-            <div class="rd-ring" style="--pct:${r.score ?? 0}" role="img" aria-label="Readiness ${r.score ?? "not available"}">
-                <strong>${r.score ?? "–"}</strong><span>Readiness</span>
+        <div class="rd-rings">
+            ${gauge({ cls: "rd-side", score: sleepP?.score, big: sleepP ? `${sleepP.score}<small>%</small>` : "–", label: "Sleep", sub: sleepP?.value })}
+            <div class="rd-gauge rd-main">
+                <div class="rd-ring" style="--pct:${r.score ?? 0}" role="img" aria-label="Readiness ${r.score ?? "not available"}">
+                    <strong>${r.score ?? "–"}</strong>
+                </div>
+                <span class="rd-glabel">Readiness</span>
+                ${r.score != null ? `<small class="rd-gsub rd-tone">${COLOR_WORD[r.color]}</small>` : ""}
             </div>
-            <div class="rd-summary">
-                <div class="sb-eyebrow rd-eyebrow">Readiness${r.score != null ? ` · ${COLOR_WORD[r.color]}` : ""}</div>
-                <p class="rd-advice">${esc(adviceText)}</p>
-                ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
-                ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
-                ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
-                ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}
-                ${r.flags.filter(f => f.key !== "pain" && f.key !== "sick").map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
-            </div>
+            ${gauge({ cls: "rd-side", score: hrvP?.score, big: hrvP ? `${hrvP.value.replace(" ms", "")}<small>ms</small>` : "–", label: "HRV", sub: hrvP ? hrvWord(hrvP) : "" })}
         </div>
-        ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
-        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score from HRV, resting heart rate and sleep.</p>`}
-        ${weekDots(today, shownHistory)}
-        ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
+        <div class="rd-advice-box">
+            <p class="rd-advice">${esc(adviceText)}</p>
+            ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
+            ${flagLines.map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
+            ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
+            ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
+            ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}
+        </div>
+        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score.</p>`}
         <div class="rd-checkin-row">
             ${checkin
-                ? `<span class="rd-done">${icon("checkCircle")} Checked in${checkin.tags?.length ? ` · ${checkin.tags.length} from yesterday` : ""}</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
-                : `<button type="button" class="sb-btn sb-btn-primary" data-act="checkin">${icon("edit")} Morning check-in</button><small>10 seconds: soreness, energy, mood, and what you did yesterday.</small>`}
+                ? `<span class="rd-done">${icon("checkCircle")} Checked in</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
+                : `<button type="button" class="sb-btn sb-btn-primary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
         </div>
-        ${insightsHtml(today)}
-        ${role === "coach" ? `<div class="rd-version" role="group" aria-label="Which readiness score">
-            <span>Score:</span>
-            <button type="button" class="rd-ver${useV2 ? "" : " is-on"}" data-act="v1" aria-pressed="${!useV2}">Classic</button>
-            <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
-            <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
-        </div>` : ""}`;
+        <details class="rd-more"${detailsOpen}><summary>Details</summary>
+            ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
+            ${weekDots(today, shownHistory)}
+            ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
+            ${insightsHtml(today)}
+            ${role === "coach" ? `<div class="rd-version" role="group" aria-label="Which readiness score">
+                <span>Score:</span>
+                <button type="button" class="rd-ver${useV2 ? "" : " is-on"}" data-act="v1" aria-pressed="${!useV2}">Classic</button>
+                <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
+                <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
+            </div>` : ""}
+        </details>`;
     import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
 
     el.onclick = async event => {

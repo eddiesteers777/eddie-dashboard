@@ -147,8 +147,8 @@
     flex-shrink:0;
     padding:2px 8px;
     border-radius:999px;
-    background:var(--warning-bg);
-    color:var(--warning);
+    background:color-mix(in srgb, var(--muted) 18%, transparent);
+    color:var(--text-secondary);
     font-size:11px;
     font-weight:800;
     text-transform:uppercase;
@@ -156,7 +156,8 @@
 }
 .wk-status{ display:flex; flex-shrink:0; }
 .wk-status.is-done{ color:var(--success); }
-.wk-status.is-missed{ color:var(--warning); }
+/* A workout that didn't happen is neutral, not a warning: the Change button beside it is the way back. */
+.wk-status.is-missed{ color:var(--muted); }
 
 /* The Today strip: one line per day. */
 .wk-days.is-compact .wk-day{ display:flex; align-items:center; gap:12px; min-height:44px; padding:6px 8px; }
@@ -196,3 +197,118 @@
 .myplan-window{ display:flex; align-items:flex-start; gap:8px; margin:10px 0 0; }
 .myplan-window svg{ flex-shrink:0; width:16px; height:16px; margin-top:2px; color:var(--primary); }
 .wk-nav .sb-btn-icon:disabled{ opacity:.35; cursor:default; }
+
+/* ---- Changing your week (js/weekChangeDialogs.js) ---- */
+
+.wk-change{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:var(--control-height);
+    padding:0 16px;
+    background:transparent;
+    border:1px solid var(--border);
+    border-radius:var(--radius-pill);
+    color:var(--text-secondary);
+    font:700 14px/1 var(--font-body);
+    cursor:pointer;
+}
+.wk-change:hover{ border-color:var(--primary); color:var(--primary-light); }
+.wk-change .ui-icon{ width:18px; height:18px; }
+.wk-change.is-compact{ flex:0 0 auto; width:40px; min-height:40px; padding:0; }
+.wk-actions .wk-change{ flex:0 0 auto; }
+.wk-change-note{ color:var(--muted); font-size:13px; }
+.wk-detail .wk-change-note{ font-size:14px; }
+
+.wk-feel{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    width:100%;
+    margin-top:10px;
+    padding:10px 14px;
+    background:transparent;
+    border:1px dashed var(--border);
+    border-radius:14px;
+    color:var(--text);
+    font:700 14px/1.3 var(--font-body);
+    text-align:left;
+    cursor:pointer;
+}
+.wk-feel:hover{ border-color:var(--primary); }
+.wk-feel .ui-icon{ width:16px; height:16px; color:var(--pink); }
+.wk-feel span{ color:var(--muted); font-weight:600; }
+
+.wc-dialog{ width:min(480px, calc(100vw - 24px)); }
+.wc-dialog [hidden]{ display:none !important; }
+.wc-dialog .pw-label{ display:flex; flex-direction:column; gap:6px; color:var(--text); font-size:14px; font-weight:700; }
+.wc-dialog .cr-reasons, .cr-dialog .cr-reasons{ display:flex; flex-wrap:wrap; gap:8px; }
+.wc-dialog .cr-reasons input, .cr-dialog .cr-reasons input{ position:absolute; opacity:0; pointer-events:none; }
+.wc-dialog .cr-reasons span, .cr-dialog .cr-reasons span{
+    display:inline-flex; align-items:center; min-height:40px; padding:0 14px;
+    border:1px solid var(--border); border-radius:var(--radius-pill);
+    background:var(--surface-light); color:var(--text-secondary);
+    font-weight:700; font-size:14px; cursor:pointer;
+}
+.wc-dialog .cr-reasons input:checked + span, .cr-dialog .cr-reasons input:checked + span{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.wc-dialog .cr-reasons input:focus-visible + span, .cr-dialog .cr-reasons input:focus-visible + span{ box-shadow:var(--focus-ring); }
+.cr-dialog .pw-label{ display:flex; flex-direction:column; gap:6px; color:var(--text); font-size:14px; font-weight:700; }
+
+.wc-menu{ display:flex; flex-direction:column; gap:8px; }
+.wc-menu-row{
+    display:flex; align-items:center; gap:12px; width:100%;
+    min-height:56px; padding:10px 12px;
+    background:var(--surface-light); border:1px solid var(--border); border-radius:14px;
+    color:var(--text); text-align:left; cursor:pointer;
+}
+.wc-menu-row:hover{ border-color:var(--primary); }
+.wc-menu-row > .ui-icon{ color:var(--muted); width:16px; height:16px; flex-shrink:0; }
+.wc-menu-icon{ display:flex; color:var(--primary); flex-shrink:0; }
+.wc-menu-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.wc-menu-text strong{ font-size:15px; }
+.wc-menu-text small{ color:var(--text-secondary); font-size:13px; line-height:1.4; }
+
+.wc-days{ display:flex; flex-direction:column; gap:8px; }
+.wc-day{
+    position:relative; display:flex; align-items:flex-start; gap:10px;
+    padding:10px 12px; border:1px solid var(--border); border-radius:14px; cursor:pointer;
+}
+.wc-day input{ margin-top:3px; accent-color:var(--primary); width:18px; height:18px; flex-shrink:0; }
+.wc-day:has(input:checked){ border-color:var(--primary); background:rgba(201,173,132,.07); }
+.wc-day.is-blocked{ opacity:.55; cursor:not-allowed; }
+.wc-day-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.wc-day-text strong{ font-size:15px; }
+.wc-day-text small{ color:var(--text-secondary); font-size:13px; line-height:1.4; overflow-wrap:anywhere; }
+.wc-warn{ margin:0; padding:10px 12px; border-radius:12px; background:var(--warning-bg); color:var(--text); font-size:13.5px; line-height:1.45; }
+.wc-warn .ui-icon{ width:14px; height:14px; color:var(--warning); vertical-align:-2px; }
+
+.wc-modes{ display:flex; flex-direction:column; gap:8px; }
+.wc-mode{ position:relative; display:block; cursor:pointer; }
+.wc-mode input{ position:absolute; opacity:0; pointer-events:none; }
+.wc-mode > span{ display:flex; flex-direction:column; gap:2px; padding:10px 12px; border:1px solid var(--border); border-radius:14px; }
+.wc-mode strong{ font-size:14.5px; }
+.wc-mode small{ color:var(--text-secondary); font-size:13px; line-height:1.4; }
+.wc-mode input:checked + span{ border-color:var(--primary); background:rgba(201,173,132,.08); }
+.wc-mode input:focus-visible + span{ box-shadow:var(--focus-ring); }
+
+.wc-preview{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.wc-preview li{ display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:12px; background:var(--surface-light); }
+.wc-preview-day{ flex:0 0 38px; color:var(--muted); font-weight:800; font-size:12.5px; text-transform:uppercase; letter-spacing:.05em; padding-top:2px; }
+.wc-preview-text{ flex:1; min-width:0; font-size:14px; line-height:1.45; color:var(--text-secondary); overflow-wrap:anywhere; }
+.wc-preview-text .ui-icon{ width:12px; height:12px; vertical-align:-1px; }
+.wc-preview-text strong{ color:var(--text); }
+.wc-preview-text small{ display:block; color:var(--muted); font-size:12.5px; }
+.wc-preview li.is-keep strong{ color:var(--muted); font-weight:600; }
+.wc-empty{ margin:0; color:var(--text-secondary); font-size:14px; }
+
+/* A bottom sheet on phones. */
+@media (max-width:600px){
+    .wc-dialog, .cr-dialog{
+        width:100vw; max-width:100vw;
+        margin:auto 0 0; border-radius:20px 20px 0 0;
+        max-height:88dvh;
+    }
+    .wc-dialog .sb-dialog-form{ padding:18px 16px calc(18px + env(safe-area-inset-bottom)); }
+}

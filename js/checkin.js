@@ -14,6 +14,7 @@ import { loadCoachPlans } from "./coachPlanStore.js";
 import { isoDate } from "./coachingPlanModel.js";
 import { toMillis } from "./clientSummary.js";
 import { renderEmojiText } from "./emoji.js";
+import { draftKey, loadDraft, saveDraft, clearDraft, keepOrForget, sameValues } from "./formDraft.js";
 
 const signedOutEl = document.getElementById("checkinSignedOut");
 const signedInEl = document.getElementById("checkinSignedIn");
@@ -72,6 +73,79 @@ function readAnswers() {
         pain, painNote: $("checkinPainNote").value,
         wentWell: $("checkinWentWell").value, change: $("checkinChange").value
     };
+}
+
+// ---- Keep what's typed until it's sent (js/formDraft.js) ----
+
+let draftReady = false;     // false while the form is being filled in from the account
+let untouched = null;       // what the form shows with nothing typed (this week's saved check-in, or blank)
+let draftTimer = null;
+const draftId = () => draftKey("checkin", weekKeyFor());
+
+// Every answer on the form as one plain object.
+function formValues() {
+    const a = readAnswers();
+    return {
+        rating: currentRating || 0, notes: checkinNotesInput.value,
+        energy: a.energy, recovery: a.recovery, motivation: a.motivation,
+        pain: a.pain ? "yes" : "no", painNote: a.pain ? a.painNote : "",
+        wentWell: a.wentWell, change: a.change
+    };
+}
+function valuesOf(checkin) {
+    return {
+        rating: checkin?.rating || 0, notes: checkin?.notes || "",
+        energy: checkin?.energy ? String(checkin.energy) : null,
+        recovery: checkin?.recovery ? String(checkin.recovery) : null,
+        motivation: checkin?.motivation ? String(checkin.motivation) : null,
+        pain: checkin?.pain ? "yes" : "no", painNote: checkin?.pain ? checkin.painNote || "" : "",
+        wentWell: checkin?.wentWell || "", change: checkin?.change || ""
+    };
+}
+function showValues(v) {
+    currentRating = v.rating || 0;
+    checkinNotesInput.value = v.notes || "";
+    $("checkinWentWell").value = v.wentWell || "";
+    $("checkinChange").value = v.change || "";
+    setPain(v.pain === "yes", v.painNote || "");
+    renderScales({ energy: v.energy, recovery: v.recovery, motivation: v.motivation });
+    renderRatingStars();
+}
+function saveCheckinDraft() {
+    if (!draftReady || !untouched) return;
+    keepOrForget(draftId(), formValues(), untouched);
+}
+function scheduleDraftSave() {
+    if (!draftReady) return;
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveCheckinDraft, 400);
+}
+// Typing, tapping a number, the stars: all end up here.
+checkinFormWrap?.addEventListener("input", scheduleDraftSave);
+checkinFormWrap?.addEventListener("change", scheduleDraftSave);
+checkinFormWrap?.addEventListener("click", event => { if (event.target.closest(".checkin-star")) scheduleDraftSave(); });
+// A phone that locks or switches app may never come back: save now.
+addEventListener("pagehide", () => { clearTimeout(draftTimer); saveCheckinDraft(); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { clearTimeout(draftTimer); saveCheckinDraft(); } });
+
+function showDraftNote(on) {
+    let note = $("checkinDraftNote");
+    if (!on) { note?.remove(); return; }
+    if (note) return;
+    note = document.createElement("p");
+    note.id = "checkinDraftNote";
+    note.className = "clients-msg";
+    note.setAttribute("role", "status");
+    note.innerHTML = `We kept what you typed on this phone. <button type="button" class="sb-btn sb-btn-tertiary" data-draft-reset>Start over</button>`;
+    note.querySelector("[data-draft-reset]").addEventListener("click", () => {
+        clearTimeout(draftTimer);
+        clearDraft(draftId());
+        showDraftNote(false);
+        draftReady = false;
+        showValues(untouched);
+        draftReady = true;
+    });
+    checkinFormWrap.prepend(note);
 }
 
 // "Your week": worked out from their plan, logs and sessions.
@@ -176,13 +250,13 @@ async function refreshMine() {
     const checkins = await listMyCheckins();
     // This week's check-in, if they already sent one: edit it.
     const current = checkins.find(c => c.weekOf === weekKeyFor());
-    currentRating = current?.rating || 0;
-    checkinNotesInput.value = current?.notes || "";
-    $("checkinWentWell").value = current?.wentWell || "";
-    $("checkinChange").value = current?.change || "";
-    setPain(Boolean(current?.pain), current?.painNote || "");
-    renderScales(current || {});
-    renderRatingStars();
+    draftReady = false;
+    untouched = valuesOf(current);
+    const kept = loadDraft(draftId());
+    const restore = kept && !sameValues({ ...untouched, ...kept }, untouched);
+    showValues(restore ? { ...untouched, ...kept } : untouched);
+    showDraftNote(Boolean(restore));
+    draftReady = true;
     checkinSubmitBtn.dataset.label = current ? "Update Check-in" : "Submit Check-in";
     checkinSubmitBtn.textContent = checkinSubmitBtn.dataset.label;
     const plans = loadCoachPlans();
@@ -233,6 +307,8 @@ checkinSubmitBtn?.addEventListener("click", async () => {
             week: currentWeek
         });
 
+        clearTimeout(draftTimer);
+        clearDraft(draftId());
         toast(result.pendingSync ? QUEUED_NOTE : "Check-in sent. Your coach will reply here and by email.");
         checkinSubmitMsg.hidden = true;
 
