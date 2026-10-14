@@ -1027,3 +1027,27 @@ html body .eos-today-card-header h2{
     border-radius:0;
 }
 .sb-effort-title{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.14em; }
+
+/* ---- Today in two columns on a computer (redesign step 10, js/todayColumns.js) ----
+   Left: the day (today's workout, the week). Right: readiness, From Your
+   Coach, habits, numbers, food. Hero and tool tiles stay full width. */
+.today-cols{ display:block; }
+@media (min-width:1024px){
+    .today-cols{
+        display:grid;
+        grid-template-columns:minmax(0,1.65fr) minmax(320px,1fr);
+        gap:24px;
+        align-items:start;
+    }
+    .today-col{ min-width:0; display:flex; flex-direction:column; }
+    .today-col > section{ margin-top:0; }
+    .today-col > [hidden], .today-col > .sb-off{ display:none !important; }
+    /* Nothing on the right: the day takes the width. */
+    .today-cols:not(:has(.today-col-side > section:not([hidden]):not(.sb-off))){ grid-template-columns:minmax(0,1fr); }
+    .today-cols:not(:has(.today-col-side > section:not([hidden]):not(.sb-off))) .today-col-side{ display:none; }
+    /* Nothing on the left (also a pending account): the side takes the width. */
+    .today-cols:not(:has(.today-col-main > section:not([hidden]):not(.sb-off))){ grid-template-columns:minmax(0,1fr); }
+    .today-cols:not(:has(.today-col-main > section:not([hidden]):not(.sb-off))) .today-col-main{ display:none; }
+    /* The side column is narrow: numbers as many to a row as fit. */
+    .today-col-side .stats{ grid-template-columns:repeat(auto-fit,minmax(110px,1fr)) !important; }
+}

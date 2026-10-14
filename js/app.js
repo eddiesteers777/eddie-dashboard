@@ -21,6 +21,7 @@ import { getActiveProgramEntriesForDate, getActiveRunningPrograms } from "./acti
 import { nextRace, raceCountdownText } from "./raceCountdown.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
+import { watchTodayColumns, applyTodayColumns, unwrapTodayColumns } from "./todayColumns.js";
 import { habitStreak, streakDetail } from "./progressView.js";
 
 // The built-in marathon block (js/marathonData.js) is the coach's own
@@ -61,6 +62,9 @@ function escapeHtml(value) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+    // Two columns on a computer (js/todayColumns.js); a client's order is re-applied below.
+    watchTodayColumns();
 
     // ==========================================
     // Greeting
@@ -216,6 +220,7 @@ let clientAccess = null;
 
 function applyClientLayout(access) {
     clientAccess = access;
+    unwrapTodayColumns();
     let anchor = document.querySelector(".eos-today-hero");
     for (const { id, on } of clientTodaySections(access)) {
         const el = document.getElementById(id);
@@ -230,6 +235,7 @@ function applyClientLayout(access) {
         stats.style.setProperty("--stat-count", String(Math.max(1, n)));
         stats.classList.add("stats-client");
     }
+    applyTodayColumns();
     renderPhaseStatus();
 }
 

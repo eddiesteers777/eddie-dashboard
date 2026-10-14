@@ -281,6 +281,7 @@
     "js/syncMerge.js",
     "js/thisWeekCard.js",
     "js/todayClient.js",
+    "js/todayColumns.js",
     "js/todayGlance.js",
     "js/todayHabits.js",
     "js/todayLayout.js",
