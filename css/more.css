@@ -1,0 +1,86 @@
+/* ==========================================================
+   MORE, PREMIUM (redesign step 7, 2026-10-15). A calm list of places: the
+   account is a quiet row with the avatar and the sync line; each group is a
+   hairline section under a plain heading; each place is a hairline row with a
+   quiet icon. Scoped to .more-page (more.html); the links and what they open
+   are unchanged.
+========================================================== */
+
+.more-page .eos-today-eyebrow{ display:none; }
+.more-page .eos-today-hero::before{ display:none; }
+
+/* The account: a quiet row between two hairlines. */
+.more-page .eos-more-account{
+    background:none;
+    border:0;
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    border-radius:0;
+    padding:18px 0;
+    margin:0 0 26px;
+}
+.more-page .eos-more-account-avatar{
+    width:52px;
+    height:52px;
+    font:400 24px/1 var(--font-display);
+    letter-spacing:.02em;
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    color:var(--on-primary);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+}
+.more-page .eos-more-account-info strong{ font:650 17px/1.25 var(--font-body); color:var(--text); }
+.more-page .eos-more-account-info span{ font-size:14px; color:var(--text-secondary); }
+.more-page .eos-more-sync-btn{ min-height:44px; font-size:14px; color:var(--text-secondary); }
+.more-page .eos-more-account-btn{ min-height:44px; border-radius:14px; font:650 15px/1 var(--font-body); }
+.more-page #moreLoginBtn{
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 26px -12px rgba(214,185,142,.7);
+}
+.more-page #moreLogoutBtn{
+    background:linear-gradient(180deg,rgba(236,230,212,.1),rgba(236,230,212,.035));
+    border:1px solid rgba(236,230,212,.16);
+    color:var(--text);
+}
+
+/* Groups: hairline sections under plain headings (not small capitals). */
+.more-page .more-list{ gap:0; }
+.more-page .more-group{ gap:0; padding-top:20px; border-top:1px solid var(--border); margin-top:4px; }
+.more-page .more-group:first-child{ border-top:0; padding-top:0; }
+.more-page .more-group-title{
+    font:650 18px/1.25 var(--font-body);
+    letter-spacing:0;
+    text-transform:none;
+    color:var(--text);
+    margin:0 0 4px;
+}
+
+/* Places: hairline rows, a quiet circle for the icon. */
+.more-page .more-row{
+    background:none;
+    border:0;
+    border-bottom:1px solid var(--border);
+    border-radius:0;
+    padding:12px 0;
+    min-height:60px;
+}
+.more-page .more-row:last-child{ border-bottom:0; }
+.more-page .more-row:hover,
+.more-page .more-row:focus-visible{ background:none; border-bottom-color:var(--border); }
+.more-page .more-row:hover .more-row-name,
+.more-page .more-row:focus-visible .more-row-name{ color:var(--primary-light); }
+.more-page .more-row-icon{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    color:var(--text-secondary);
+    background:rgba(236,230,212,.05);
+    border:1px solid rgba(236,230,212,.12);
+}
+.more-page .more-row:hover .more-row-icon,
+.more-page .more-row:focus-visible .more-row-icon{
+    color:var(--primary-light);
+    background:rgba(214,185,142,.12);
+    border-color:rgba(214,185,142,.4);
+}
+.more-page .more-row-name{ font:600 16.5px/1.3 var(--font-body); color:var(--text); }
+.more-page .more-row-chevron{ color:var(--muted); }
