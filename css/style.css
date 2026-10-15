@@ -4087,6 +4087,7 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
 /* ---- The mark and the name, slightly bigger ---- */
 .brand-mark{ height:38px; }
 .eos-logo .brand-word{ font-size:1.32rem; }
+.eos-navbar .brand-mark{ height:38px; }
 
 /* ---- The bell ---- */
 .bell-btn{ position:relative; }
@@ -4156,9 +4157,9 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
     .eos-mobile-topbar{ grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); }
     .eos-mobile-quickadd{ grid-column:1; grid-row:1; justify-self:start; }
     .eos-mobile-topbar-logo{ grid-column:2; grid-row:1; }
-    .eos-mobile-actions{ grid-column:3; grid-row:1; justify-self:end; display:flex; align-items:center; gap:6px; }
+    .eos-mobile-actions{ grid-column:3; grid-row:1; justify-self:end; display:flex; align-items:center; gap:4px; }
     .eos-mobile-topbar-logo .brand-mark{ height:28px; }
-    .eos-mobile-topbar-logo .brand-word{ font-size:.94rem; }
+    .eos-mobile-topbar-logo .brand-word{ font-size:.88rem; letter-spacing:.04em; }
 
     /* The glossier toolbar: a lit top edge, a soft specular band, a deeper
        tone underneath, and stronger blur with a colour lift so what scrolls
