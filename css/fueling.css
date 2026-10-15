@@ -2958,3 +2958,83 @@ label.fuel-target-label{ display:block; cursor:pointer; }
 .fuel-details-text strong{ color:var(--text); margin-right:6px; }
 .fuel-details-bar .fuel-btn{ flex:0 0 auto; min-height:40px; }
 .fuel-input-grid.is-details-folded > [data-details-card]{ display:none !important; }
+
+/* ==========================================================
+   FUELING, PREMIUM (redesign step 6, 2026-10-15). The mode switch is a lit
+   segmented control; each part of the plan is a hairline section under a plain
+   heading (not a card in a card); the targets are a row of numbers with dividers,
+   as on Today. The primary button is the lit tan one. Scoped to .fueling-page;
+   the calculator and the saved plans are unchanged.
+   ========================================================== */
+
+.fueling-page .sb-eyebrow{ display:none; }
+
+/* Training / Race: a lit lens, as on Train and Nutrition. */
+.fueling-page .mode-toggle{ background:rgba(8,18,14,.5); border:1px solid var(--border); border-radius:18px; padding:4px; gap:4px; box-shadow:inset 0 1px 2px rgba(0,0,0,.25); }
+.fueling-page .mode-btn{ flex:1; min-height:44px; border-radius:14px; color:var(--text-secondary); font:650 15px/1 var(--font-body); padding:0 16px; }
+.fueling-page .mode-btn.active{
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    color:var(--on-primary);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 12px -6px rgba(214,185,142,.6);
+}
+.fueling-page .fuel-toolbar{
+    background:none;
+    border:0;
+    border-bottom:1px solid var(--border);
+    border-radius:0;
+    box-shadow:none;
+    padding:0 0 18px;
+    margin-bottom:8px;
+}
+.fueling-page .mode-caption{ font-size:15px; line-height:1.5; color:var(--text-secondary); }
+
+/* Each part of the plan: a hairline section with a plain heading. */
+.fueling-page .fuel-panel{
+    background:none;
+    border:0;
+    border-top:1px solid var(--border);
+    border-radius:0;
+    box-shadow:none;
+    padding:24px 0 0;
+    margin-bottom:34px;
+}
+.fueling-page .fuel-panel-header{ margin-bottom:16px; }
+.fueling-page .fuel-panel-header h2{ font:650 20px/1.25 var(--font-body); color:var(--text); }
+.fueling-page .fuel-panel-tag{ font:500 14px/1.4 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+
+/* Inputs: groups under a hairline, not boxes. */
+.fueling-page .fuel-card{ background:none; border:0; border-top:1px solid var(--border); border-radius:0; box-shadow:none; padding:16px 0 0; }
+.fueling-page .fuel-card h3{ font:650 16px/1.3 var(--font-body); color:var(--text); text-transform:none; letter-spacing:0; }
+
+/* The targets: a row of numbers with dividers, as on Today. */
+.fueling-page .fuel-target-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; border-top:1px solid var(--border); }
+.fueling-page .fuel-target-card{ background:none; border:0; border-radius:0; box-shadow:none; padding:16px 12px 6px 0; }
+.fueling-page .fuel-target-card + .fuel-target-card{ border-left:1px solid var(--border); padding-left:14px; }
+.fueling-page .fuel-target-label{ font:600 13px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); margin-bottom:6px; }
+.fueling-page .fuel-target-value{ margin-bottom:6px; }
+.fueling-page .fuel-target-value input{ font:400 clamp(34px,8vw,44px)/1 var(--font-display); letter-spacing:.01em; border-bottom:0; width:100%; min-width:0; }
+.fueling-page .fuel-target-value small{ font:500 13px/1.2 var(--font-body); color:var(--text-secondary); white-space:nowrap; }
+.fueling-page .fuel-target-sub{ font-size:13.5px; color:var(--text-secondary); }
+
+/* Buttons: the main one is lit tan; the rest are glass. */
+.fueling-page .fuel-btn.primary{
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 26px -12px rgba(214,185,142,.7);
+}
+.fueling-page .fuel-btn.primary:hover{ box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 26px -12px rgba(214,185,142,.7); }
+.fueling-page .fuel-btn.secondary{
+    background:linear-gradient(180deg,rgba(236,230,212,.1),rgba(236,230,212,.035));
+    border:1px solid rgba(236,230,212,.14);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.08);
+}
+.fueling-page .fuel-btn.secondary:hover{ background:linear-gradient(180deg,#E8CFA6,var(--primary)); color:var(--on-primary); }
+
+/* Phone tap targets (44px): the selects, the unit switch, the small buttons and the time and gel-minute fields. */
+.fueling-page select,
+.fueling-page input[type="time"],
+.fueling-page input[type="number"],
+.fueling-page input[type="text"],
+.fueling-page .fuel-unit-switch button,
+.fueling-page .fuel-btn,
+.fueling-page .fs-control input{ min-height:44px; }
+.fueling-page .fuel-myplans-link{ display:inline-flex; align-items:center; min-height:44px; }
