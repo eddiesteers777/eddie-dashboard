@@ -24,8 +24,7 @@ export const CLIENT_TODAY = Object.freeze([
     { id: "weekSection", requires: "plan,sessions" },         // this week, one line a day (busy days only without a plan)
     { id: "todayHabits", requires: "habits" },                // today's habits, one tap each (redesign step 3)
     { id: "clientPackageSection", requires: "package" },      // their package and credits
-    { id: "todayStats", requires: "running,sessions,habits" },// a few numbers (Progress, step 4)
-    { id: "nutritionSnap", requires: "nutrition" },           // today's food
+    { id: "todayTiles", requires: "nutrition" },              // Featured runs (coach) and today's food, two dark tiles (round two, F2)
     { id: "todayTools", requires: "" }                         // the tiles (each filtered by data-requires)
 ].map(Object.freeze));
 

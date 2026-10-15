@@ -272,43 +272,6 @@ function shareFeatured(item) {
     return registerRunShare(item.run, { id: item.id, ...meta }) || null;
 }
 
-function cardHtml(item) {
-    const run = item.run;
-    const actual = Number(run.distance) / MILE;
-    const paceSec = run.pace_seconds_per_mile ||
-        (run.duration && run.distance ? Number(run.duration) / actual : null);
-    const shareKey = shareFeatured(item);
-
-    const planNote = item.plannedMiles > 0
-        ? (item.matchedPlanDate === item.date
-            ? "Planned"
-            : "Completed " + dayWords(item.date))
-        : "";
-
-    const category = categoryLabel(item.category);
-    const metrics = [
-        fmtMiles(actual),
-        fmtTime(run.duration),
-        fmtPace(paceSec),
-        run.avgHr ? Math.round(Number(run.avgHr)) + " bpm" : ""
-    ].filter(Boolean).join(" · ");
-    const status = [
-        category,
-        planNote,
-        metrics
-    ].filter(Boolean).join(" · ");
-
-    return [
-        '<li class="tr-work ft-work">',
-        '<div class="tr-work-top">',
-        '<strong>', esc(item.title), '</strong>',
-        '<span>', esc(dayWords(item.date)), ' · ', esc(fmtMiles(actual)), '</span>',
-        '</div>',
-        '<small>', esc(status), '</small>',
-        shareKey ? '<div class="ft-actions"><button type="button" class="sb-btn sb-btn-secondary ft-share" data-ex-share="' + esc(shareKey) + '">Share</button></div>' : "",
-        '</li>'
-    ].join("");
-}
 
 function optionsHtml(selected) {
     return [
@@ -345,6 +308,20 @@ function managerHtml(items) {
     ].join("");
 }
 
+// Today's Featured Runs (round two F2, 2026-10-15): one dark tile. The latest featured run's distance is the
+// big number, its name and day under it, and the next featured run named on a line. The full cards (with
+// their share buttons) are no longer drawn on Today; Customize still picks which runs are featured.
+function featuredTileHtml(items) {
+    const [top, next] = items;
+    const miles = (Math.round((Number(top.run.distance) / MILE) * 10) / 10).toFixed(1);
+    return `<div class="ft-tile">
+        <span class="ft-big">${esc(miles)}<small> mi</small></span>
+        <strong class="ft-name">${esc(top.title)}</strong>
+        <span class="ft-note">${esc(categoryLabel(top.category))} · ${esc(dayWords(top.date))}</span>
+        ${next ? `<span class="ft-note">Also ${esc(next.title)}</span>` : ""}
+    </div>`;
+}
+
 export function mountFeaturedTraining(options) {
     const host = options?.host;
     const manageButton = options?.manageButton;
@@ -354,7 +331,7 @@ export function mountFeaturedTraining(options) {
     const render = function () {
         const items = featuredTrainingItems(today);
         host.innerHTML = items.length
-            ? '<ul class="tr-works ft-works">' + items.map(cardHtml).join("") + '</ul>'
+            ? featuredTileHtml(items)
             : '<p class="ft-empty">No featured runs yet. Complete a long run or quality session and it will appear here.</p>';
 
         if (manageButton && !manageButton.dataset.bound) {

@@ -14,7 +14,7 @@
 import { buildWeek, buildDay, nextWorkout, planContext } from "./weekModel.js";
 import { weekInputs, loadSessions, workoutLink } from "./weekData.js";
 import { workoutCardHtml, weekListHtml, summaryLine, bindWeekActions, canToggle } from "./weekView.js";
-import { weekTrailHtml } from "./weekTrail.js";
+import { weekTrailHtml, weekMiles } from "./weekTrail.js";
 import { mondayOf, isoDate, addDays } from "./coachingPlanModel.js";
 import { changeMode } from "./weekChanges.js";
 import { nextLine, quietDayTitle } from "./todayGlance.js";
@@ -111,9 +111,15 @@ export function renderClientToday() {
         section.hidden = !hasWeek;
         if (hasWeek) {
             $("weekSummary").textContent = summaryLine(week.summary);
-            // A plan's week is a trail of dated check nodes (js/weekTrail.js), tapped done like the Plan list;
-            // sessions only: just the busy days.
+            // A plan's week is seven bars, each as tall as its day's miles (js/weekTrail.js), tapped done like the
+            // Plan list; sessions only: just the busy days. The heading carries the week's miles.
             $("weekList").innerHTML = can("plan") ? weekTrailHtml(week, { canToggle }) : weekListHtml(week, { compact: true, busyOnly: true });
+            const milesEl = $("weekMiles");
+            if (milesEl) {
+                const m = weekMiles(week);
+                milesEl.hidden = !can("plan") || !m.planned;
+                milesEl.textContent = `${m.done} / ${m.planned} mi`;
+            }
             // Without a plan there's no My Plan page: their sessions are.
             const seeAll = $("weekSeeAll");
             if (seeAll) {

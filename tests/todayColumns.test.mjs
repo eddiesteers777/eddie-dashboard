@@ -18,6 +18,6 @@ test("every column id is a real Today section", async () => {
     const { readFileSync } = await import("node:fs");
     const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
     for (const id of [...MAIN_SECTIONS, ...FULL_SECTIONS, ...CLIENT_TODAY.map(s => s.id)]) {
-        assert.ok(html.includes(`<section id="${id}"`), `${id} is a section in index.html`);
+        assert.ok(html.includes(`<section id="${id}"`) || html.includes(`<div id="${id}"`), `${id} is a section (or the tiles' wrapper) in index.html`);
     }
 });

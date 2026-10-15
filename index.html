@@ -116,6 +116,7 @@
 
             <div class="eos-today-card-header">
                 <h2>This Week</h2>
+                <span class="wk-miles" id="weekMiles" hidden></span>
                 <a href="plan.html" class="wk-see-all" id="weekSeeAll">Full week <span data-icon="chevronRight"></span></a>
             </div>
             <p id="weekSummary" class="wk-summary"></p>
@@ -141,6 +142,9 @@
              Featured Runs (coach only -- js/featuredTraining.js)
              A compact spotlight of the most important recent completed runs.
         =========================================== -->
+        <!-- Featured Runs and Today's nutrition, side by side as two dark tiles (round two, F2, 2026-10-15).
+             One wrapper: js/todayLayout.js moves it as a whole for clients. -->
+        <div id="todayTiles" class="today-tiles">
         <section id="featuredTraining" class="panel tr-panel ft-card" hidden aria-label="Featured Runs">
             <div class="panel-header ft-header">
                 <div>
@@ -151,6 +155,22 @@
             </div>
             <div id="featuredTrainingBody"></div>
         </section>
+
+        <!-- ==========================================
+             Nutrition Snapshot
+        =========================================== -->
+
+        <section id="nutritionSnap" class="eos-nutrition-snap">
+
+            <div class="eos-nutrition-snap-header">
+                <span>Today's Nutrition</span>
+                <a href="nutrition.html" class="eos-snap-link">Log a meal →</a>
+            </div>
+
+            <div id="nutritionSnapBars" class="eos-nutrition-snap-bars"></div>
+
+        </section>
+        </div>
 
         <!-- "Still right?" -- one question that keeps the client's
              profile current (clients only -- js/profileCheckCard.js) -->
@@ -181,48 +201,6 @@
                 <h2>Your Package</h2>
             </div>
             <div id="clientPackageBody"></div>
-        </section>
-
-        <!-- ==========================================
-             Quick Stats
-        =========================================== -->
-
-        <section id="todayStats" class="stats">
-
-            <div class="stat-card" data-requires="running">
-                <span>Weekly Mileage</span>
-                <h2 id="weeklyMileage">--</h2>
-            </div>
-
-            <div class="stat-card" data-requires="sessions">
-                <span id="recoveryLabel">Recovery</span>
-                <h2 id="recoveryScore">--</h2>
-                <p id="recoveryMeta"></p>
-            </div>
-
-            <div class="stat-card" data-requires="habits">
-                <span>Habit Streak</span>
-                <h2 id="streakDays">--</h2>
-                <p id="streakMeta"></p>
-            </div>
-
-            <a href="progress.html" class="stats-more" data-requires="client+progress">See your progress <span data-icon="chevronRight"></span></a>
-
-        </section>
-
-        <!-- ==========================================
-             Nutrition Snapshot
-        =========================================== -->
-
-        <section id="nutritionSnap" class="eos-nutrition-snap">
-
-            <div class="eos-nutrition-snap-header">
-                <span>Today's Nutrition</span>
-                <a href="nutrition.html" class="eos-snap-link">Log a meal →</a>
-            </div>
-
-            <div id="nutritionSnapBars" class="eos-nutrition-snap-bars"></div>
-
         </section>
 
         <!-- ==========================================

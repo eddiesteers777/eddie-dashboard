@@ -7,7 +7,6 @@ import {
     DAYS,
     weekStart,
     getCurrentWeek,
-    getAdjustedWeekMileage,
     getAdjustedWeekDays,
     getTrainingPhase,
     loadProgress
@@ -19,10 +18,9 @@ import { icon } from "./icons.js";
 import { showsPersonalPlan } from "./role.js";
 import { getActiveProgramEntriesForDate, getActiveRunningPrograms } from "./activeProgramSources.js";
 import { nextRace, raceCountdownText } from "./raceCountdown.js";
-import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
+import { cachedNavAccess, profileAccess, fallbackAccess } from "./navAccess.js";
 import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
 import { watchTodayColumns, applyTodayColumns, unwrapTodayColumns } from "./todayColumns.js";
-import { habitStreak, streakDetail } from "./progressView.js";
 
 // The built-in marathon block (js/marathonData.js) is the coach's own
 // race. Clients get their own plans and a "From your coach" card
@@ -31,25 +29,6 @@ const PERSONAL_PLAN = showsPersonalPlan();
 
 function localIso(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-// Miles logged Monday-Sunday this week (Running page log).
-function loggedMilesThisWeek() {
-    let entries = [];
-    try {
-        entries = JSON.parse(localStorage.getItem("running-log") || "null")?.entries || [];
-    } catch {
-        entries = [];
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const monday = new Date(today.getTime() - ((today.getDay() + 6) % 7) * DAY_MS);
-    const from = localIso(monday);
-    const to = localIso(new Date(monday.getTime() + 6 * DAY_MS));
-    const miles = entries
-        .filter(e => e.date >= from && e.date <= to)
-        .reduce((sum, e) => sum + (Number(e.miles) || 0), 0);
-    return Math.round(miles * 10) / 10;
 }
 
 const DAY_MS = 86400000;
@@ -152,37 +131,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     import("./runCardData.js").then(m => m.prefetchRecentLaps()).catch(() => {});
 
     // ==========================================
-    // Quick Stats
-    // ==========================================
-
-    const weeklyMileageEl = document.getElementById("weeklyMileage");
-
-    if (weeklyMileageEl && !PERSONAL_PLAN) {
-        weeklyMileageEl.textContent = `${loggedMilesThisWeek()}`;
-    } else if (weeklyMileageEl) {
-        try {
-            weeklyMileageEl.textContent =
-                `${getAdjustedWeekMileage(getCurrentWeek())}`;
-        } catch {
-            weeklyMileageEl.textContent = "--";
-        }
-    }
-
-    // Recovery comes from COROS, which only the coach connects; a client
-    // sees their upcoming booked sessions there instead (filled in by
-    // the coach card below once it has loaded their requests).
-    if (PERSONAL_PLAN) {
-        renderRecovery();
-    } else {
-        const label = document.getElementById("recoveryLabel");
-        if (label) label.textContent = "Sessions Booked";
-    }
-    renderStreak();
-    // A habit ticked on Today's habit row (js/todayHabits.js).
-    window.addEventListener("sb:habits-changed", renderStreak);
-
-    // ==========================================
-    // Nutrition Snapshot
+    // Nutrition (the day's food, one dark tile beside Featured runs)
     // ==========================================
 
     renderNutritionSnapshot();
@@ -197,10 +146,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         coachSection.hidden = false;
         import("./coachCard.js")
             .then(({ renderCoachCard }) => renderCoachCard(document.getElementById("coachCardBody")))
-            .then(summary => {
-                const el = document.getElementById("recoveryScore");
-                if (el && summary) el.textContent = String(summary.upcomingSessions);
-            })
             .catch(error => {
                 console.warn("Southbound: couldn't load the coach card.", error);
                 coachSection.hidden = true;
@@ -227,13 +172,6 @@ function applyClientLayout(access) {
         if (!el) continue;
         el.classList.toggle("sb-off", !on);
         if (anchor) { anchor.after(el); anchor = el; }
-    }
-    // As many columns as stat boxes this client has (no empty gap).
-    const stats = document.getElementById("todayStats");
-    if (stats) {
-        const n = [...stats.querySelectorAll(".stat-card")].filter(c => c.dataset.requires ? meets(c.dataset.requires, access) : true).length;
-        stats.style.setProperty("--stat-count", String(Math.max(1, n)));
-        stats.classList.add("stats-client");
     }
     applyTodayColumns();
     renderPhaseStatus();
@@ -582,109 +520,18 @@ function renderToday() {
     }
 }
 
-/* ==========================================
-   Recovery (real COROS data, not a static number)
-========================================== */
-
-function findNumeric(data, keys) {
-    if (!data || typeof data !== "object") {
-        return null;
-    }
-
-    const lower = new Map();
-
-    const walk = (value, prefix = "") => {
-        if (!value || typeof value !== "object") return;
-
-        for (const [key, item] of Object.entries(value)) {
-            const normalized = `${prefix}${key}`.toLowerCase();
-            lower.set(normalized, item);
-
-            if (item && typeof item === "object" && !Array.isArray(item)) {
-                walk(item, `${normalized}.`);
-            }
-        }
-    };
-
-    walk(data);
-
-    for (const key of keys) {
-        for (const [candidate, value] of lower.entries()) {
-            if (candidate === key.toLowerCase() || candidate.endsWith(`.${key.toLowerCase()}`)) {
-                const n = Number(value);
-                if (Number.isFinite(n)) return n;
-            }
-        }
-    }
-
-    return null;
-}
-
-function renderRecovery() {
-    const valueEl = document.getElementById("recoveryScore");
-    const metaEl = document.getElementById("recoveryMeta");
-
-    if (!valueEl) {
-        return;
-    }
-
-    let snapshot = null;
-
-    try {
-        snapshot = JSON.parse(
-            localStorage.getItem("__eddieos_coros_data_snapshot_v2") || "null"
-        );
-    } catch {
-        snapshot = null;
-    }
-
-    const percent = snapshot ? findNumeric(snapshot.recovery, [
-        "recoveryPercentage", "recovery_percent", "recoveryScore", "recovery"
-    ]) : null;
-
-    if (percent === null) {
-        valueEl.textContent = "--";
-        if (metaEl) metaEl.textContent = "";
-        return;
-    }
-
-    valueEl.textContent = `${Math.round(percent)}%`;
-    metaEl.textContent = describeCorosFreshness(snapshot?.fetchedAt);
-}
 
 /* ==========================================
-   Streak (computed from real 75-Day entries,
-   not a static placeholder)
-========================================== */
-
-function renderStreak() {
-    const valueEl = document.getElementById("streakDays");
-    if (!valueEl) return;
-    let entries = {};
-    try { entries = JSON.parse(localStorage.getItem("entries") || "{}"); } catch { entries = {}; }
-    // Shared with My Progress (js/progressView.js): by local calendar day,
-    // the same keys the Habits page writes.
-    const streak = habitStreak(entries);
-    valueEl.textContent = String(streak);
-    const meta = document.getElementById("streakMeta");
-    if (meta) meta.textContent = streakDetail(streak);
-}
-
-/* ==========================================
-   Nutrition snapshot
+   Nutrition snapshot (round two F2, 2026-10-15): a ring against the coach's own goal for the
+   coach; a client sees the calories they've logged (no goal is set for a client).
 ========================================== */
 
 function renderNutritionSnapshot() {
     const container = document.getElementById("nutritionSnapBars");
-
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
     const key = "nutrition-" + new Date().toISOString().slice(0, 10);
-
     let day = null;
-
     try {
         const raw = localStorage.getItem(key);
         day = raw ? JSON.parse(raw) : null;
@@ -693,47 +540,21 @@ function renderNutritionSnapshot() {
     }
 
     if (!day) {
-        container.innerHTML = `
-            <div class="eos-nutrition-snap-empty">
-                Nothing logged yet today.
-            </div>
-        `;
+        container.innerHTML = `<div class="eos-nutrition-snap-empty">Nothing logged yet today.</div>`;
         return;
     }
 
-    const macros = [
-        { key: "calories", label: "Calories", goal: 3200, unit: "" },
-        { key: "protein", label: "Protein", goal: 180, unit: "g" },
-        { key: "carbs", label: "Carbs", goal: 450, unit: "g" },
-        { key: "fat", label: "Fat", goal: 70, unit: "g" }
-    ];
+    const kcal = Math.round(Number(day.calories) || 0);
+    if (!PERSONAL_PLAN) {
+        container.innerHTML = `<div class="eos-nutrition-num"><b>${kcal}</b><small>kcal logged</small></div>`;
+        return;
+    }
 
-    container.innerHTML = macros.map(m => {
-        const actual = Number(day[m.key]) || 0;
-        // The goals above are the coach's own numbers; clients just see
-        // what they've logged.
-        if (!PERSONAL_PLAN) {
-            return `
-            <div class="eos-nutrition-snap-bar">
-                <div class="eos-nutrition-snap-bar-label">
-                    <span>${m.label}</span>
-                    <span>${actual}${m.unit}</span>
-                </div>
-            </div>
-        `;
-        }
-        const pct = Math.min(100, Math.round((actual / m.goal) * 100));
-
-        return `
-            <div class="eos-nutrition-snap-bar">
-                <div class="eos-nutrition-snap-bar-label">
-                    <span>${m.label}</span>
-                    <span>${actual}${m.unit} / ${m.goal}${m.unit}</span>
-                </div>
-                <div class="eos-nutrition-snap-track">
-                    <div class="eos-nutrition-snap-fill" style="width:${pct}%"></div>
-                </div>
-            </div>
-        `;
-    }).join("");
+    const GOAL = 3200;
+    const pct = Math.min(100, Math.round((kcal / GOAL) * 100));
+    const circumference = 2 * Math.PI * 27;
+    container.innerHTML = `<div class="eos-nutrition-ring" role="img" aria-label="${pct}% of ${GOAL} calories">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27" class="track"></circle><circle cx="32" cy="32" r="27" class="fill" stroke-dasharray="${((pct / 100) * circumference).toFixed(1)} ${circumference.toFixed(1)}"></circle></svg>
+        <b>${pct}%</b></div>
+        <div class="eos-nutrition-num"><b>${kcal}</b><small>of ${GOAL} kcal</small></div>`;
 }

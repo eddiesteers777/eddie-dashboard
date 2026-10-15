@@ -10,7 +10,7 @@
 import { getCurrentWeek, weekStart, getAdjustedWeekDays, loadProgress, DAYS, PACES, WEEKS } from "./marathonData.js";
 import { planDayFromMarathon, marathonTitle } from "./marathonCoros.js";
 import { marathonWeekModel } from "./marathonWeek.js";
-import { weekTrailHtml } from "./weekTrail.js";
+import { weekTrailHtml, weekMiles } from "./weekTrail.js";
 import { summaryLine, coachRunCardHtml } from "./weekView.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -49,6 +49,12 @@ export function renderCoachWeek({ today }) {
         canToggle: item => item.source.type === "marathon",
         toggleAttrs: item => `data-complete-week="${esc(item.week)}" data-complete-day="${esc(item.dayKey)}"`
     });
+    const milesEl = document.getElementById("weekMiles");
+    if (milesEl) {
+        const m = weekMiles(model);
+        milesEl.hidden = !m.planned;
+        milesEl.textContent = `${m.done} / ${m.planned} mi`;
+    }
     const seeAll = document.getElementById("weekSeeAll");
     if (seeAll) { seeAll.href = "marathon.html"; if (seeAll.firstChild) seeAll.firstChild.textContent = "Full plan "; }
 }
