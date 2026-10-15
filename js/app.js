@@ -299,7 +299,7 @@ function renderPhaseStatus() {
 ========================================== */
 
 let clientTodayModule = null;
-// The coach's card and marathon week (js/coachToday.js): null until loaded, false if it failed (the plain rows stay).
+// The coach's card and marathon week (js/marathonToday.js): null until loaded, false if it failed (the plain rows stay).
 let coachTodayModule = null;
 
 // Mark Done / undo for the marathon run, from the card's button or a week-row node (both carry the week and the day).
@@ -371,9 +371,9 @@ function renderToday() {
         });
     }
 
-    // The coach's card and marathon week (js/coachToday.js): load it first, then draw.
+    // The coach's card and marathon week (js/marathonToday.js): load it first, then draw.
     if (coachTodayModule === null) {
-        import("./coachToday.js")
+        import("./marathonToday.js")
             .then(m => { coachTodayModule = m; renderToday(); })
             .catch(error => { console.error("Southbound: coach Today card failed to load.", error); coachTodayModule = false; renderToday(); });
         return;

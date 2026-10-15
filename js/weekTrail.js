@@ -31,7 +31,7 @@ function nodeOf(d, rest) {
 // (data-toggle, the same handler as the Plan list); rest days, days with two workouts and a run logged by the
 // watch or the workout page stay plain nodes.
 // `toggleAttrs(item)` is the attribute a tapped node carries (default: the client's data-toggle); the coach's
-// marathon week taps through its own progress record (js/coachToday.js).
+// marathon week taps through its own progress record (js/marathonToday.js).
 const clientToggle = item => `data-toggle="${esc(item.id)}"`;
 
 export function weekTrailHtml(week, { canToggle = () => false, toggleAttrs = clientToggle } = {}) {
