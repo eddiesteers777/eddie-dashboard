@@ -4200,3 +4200,13 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
 @container sbmtop (max-width:300px){
     .eos-mobile-topbar-logo .brand-mark{ height:28px; }
 }
+
+/* ==========================================================
+   TODAY: THE WORKOUT CONTOUR (premium shell, step 2, 2026-10-15)
+   A structured run is drawn as its effort profile under the title
+   (js/workoutContour.js). The buttons and the fuel line stay as they were.
+   ========================================================== */
+.wk-contour{ margin:12px 0 4px; }
+.wk-contour-svg{ display:block; width:100%; height:112px; overflow:visible; }
+@media (min-width:901px){ .wk-contour-svg{ height:140px; } }
+.wk-card.is-done .wk-contour-svg{ opacity:.7; }
