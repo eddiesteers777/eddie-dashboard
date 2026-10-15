@@ -83,6 +83,8 @@
             <div>
                 <div class="eos-today-eyebrow">Welcome Back</div>
                 <h1 id="welcomeHeading" class="sb-wait"></h1>
+                <!-- The date (js/todayClient.js, js/app.js): it sat in the Today card's header; the card has no header now. -->
+                <p id="todayDateLabel" class="eos-today-hero-date sb-wait"></p>
                 <p id="phaseStatus" class="eos-today-phase sb-wait"></p>
             </div>
 
@@ -92,12 +94,7 @@
              Today
         =========================================== -->
 
-        <section id="todayCard" class="eos-today-card">
-
-            <div class="eos-today-card-header">
-                <h2>Today</h2>
-                <span id="todayDateLabel" class="eos-today-date"></span>
-            </div>
+        <section id="todayCard" class="eos-today-card" aria-label="Today's workout">
 
             <div id="todayItems" class="eos-today-items">
                 <div class="eos-today-loading"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>

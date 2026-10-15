@@ -27,7 +27,10 @@ function nodeOf(d, rest) {
     return DOT;
 }
 
-export function weekTrailHtml(week) {
+// `canToggle(item)` (js/weekView.js): a day with exactly one workout she can tick off gets a node that is a button
+// (data-toggle, the same handler as the Plan list); rest days, days with two workouts and a run logged by the
+// watch or the workout page stay plain nodes.
+export function weekTrailHtml(week, { canToggle = () => false } = {}) {
     const facts = ridgeDays(week);
     const days = week.days.map((day, i) => {
         const d = facts[i];
@@ -35,7 +38,13 @@ export function weekTrailHtml(week) {
         const status = STATUS_WORDS[day.status] || "coming up";
         const what = rest ? "Rest day" : `${d.miles ? `${d.miles} mi ` : ""}${(d.title || d.kind).toLowerCase()}`;
         const cls = ["day", rest && "rest", d.done && "done", day.status === "missed" && "missed", d.today && "today"].filter(Boolean).join(" ");
-        return `<li class="${cls}"><span class="node" aria-hidden="true">${nodeOf(d, rest)}</span><b>${esc(d.label)}</b><span class="trail-date" aria-hidden="true">${d.date}</span><span class="sr-only">${esc(`${d.label} ${d.date}: ${what}, ${status}`)}</span></li>`;
+        const workouts = day.items.filter(item => item.kind !== "session" && item.source?.type !== "log");
+        const tick = workouts.length === 1 && canToggle(workouts[0]) ? workouts[0] : null;
+        const node = tick
+            ? `<button type="button" class="node" data-toggle="${esc(tick.id)}" aria-pressed="${Boolean(tick.done)}" aria-label="${esc(`Mark ${d.label} ${d.date}, ${what}, ${tick.done ? "not done" : "done"}`)}">${nodeOf(d, rest)}</button>`
+            : `<span class="node" aria-hidden="true">${nodeOf(d, rest)}</span>`;
+        const spoken = tick ? "" : `<span class="sr-only">${esc(`${d.label} ${d.date}: ${what}, ${status}`)}</span>`;
+        return `<li class="${cls}">${node}<b>${esc(d.label)}</b><span class="trail-date" aria-hidden="true">${d.date}</span>${spoken}</li>`;
     }).join("");
     return `<ol class="trail" role="list">${days}</ol>`;
 }

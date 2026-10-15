@@ -27,7 +27,8 @@ const KIND = {
 };
 
 // A logged coach-plan workout is done or skipped by its log (edit it on the workout page), not a tap.
-const canToggle = item => ["plan", "extra", "strength"].includes(item.source?.type) && !item.autoDone && !item.actual;
+// (Exported: Today's week row taps a day's one workout done by the same rule.)
+export const canToggle = item => ["plan", "extra", "strength"].includes(item.source?.type) && !item.autoDone && !item.actual;
 
 function doneButton(item, compact = false, secondary = false) {
     if (!canToggle(item)) return "";
@@ -86,17 +87,22 @@ export function workoutCardHtml(item) {
     const bigNumber = item.kind === "run" && item.miles ? `<span class="wk-big">${item.miles}<small> mi</small></span>` : "";
     const kicker = [KIND_WORD[item.kind] || "", item.kind === "session" ? "" : item.planName || (item.fromCoach ? "From your coach" : "")].filter(Boolean).join(" · ");
     const startFirst = !item.done && !item.skipped && ["Start", "Log it"].includes(link.label);
-    const linkBtn = `<a class="sb-btn ${startFirst ? "sb-btn-primary" : "sb-btn-secondary"}" href="${esc(link.href)}">${esc(link.label)} ${icon("chevronRight")}</a>`;
+    // "Start" gets the play mark and no arrow; the others ("Log it", "Open") keep the arrow.
+    const playing = link.label === "Start";
+    const linkBtn = `<a class="sb-btn ${startFirst ? "sb-btn-primary" : "sb-btn-secondary"}" href="${esc(link.href)}">${playing ? `${icon("play")} ` : ""}${esc(link.label)}${playing ? "" : ` ${icon("chevronRight")}`}</a>`;
+    // The demo's order: the picture and its labels first, then the name with the miles beside it.
+    // The picture already says "run", and the plan's name is in the greeting, so no kicker over it.
+    const picture = contourBlock(item);
     return `
-        <div class="wk-card is-${item.kind}${item.done ? " is-done" : ""}">
+        <div class="wk-card is-${item.kind}${item.done ? " is-done" : ""}${picture ? " has-contour" : ""}">
+            ${picture}
             <div class="wk-card-top">
                 <div class="wk-card-title">
-                    <span class="wk-kicker" style="--kind:${k.color}">${icon(k.icon)}${esc(kicker)}</span>
+                    ${picture ? "" : `<span class="wk-kicker" style="--kind:${k.color}">${icon(k.icon)}${esc(kicker)}</span>`}
                     <strong>${esc(item.title)}</strong>
                 </div>
                 ${bigNumber}
             </div>
-            ${contourBlock(item)}
             ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
             ${cueBlock(item)}
             ${changeNote(item) ? `<p class="wk-detail">${changeNote(item)}</p>` : ""}
@@ -104,10 +110,14 @@ export function workoutCardHtml(item) {
             ${item.kind === "strength" && item.actual && item.done ? `<p class="wk-logged">${icon("checkCircle")} Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.actual?.distance ? `<p class="wk-logged">${icon("checkCircle")} You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.logged ? `<p class="wk-logged">${icon("activity")} You logged ${item.logged} mi${item.autoDone ? " — counts as done" : ""}</p>` : ""}
-            <div class="wk-actions">
-                ${startFirst ? `${linkBtn}${doneButton(item, false, true)}` : `${doneButton(item)}${linkBtn}`}
+            ${startFirst
+                // One full-width button to begin; "Mark done" and the ⋮ sit quietly under it.
+                ? `<div class="wk-actions wk-actions-stack">${linkBtn}</div>
+            <div class="wk-actions-row">${doneButton(item, false, true)}${changeButton(item, true)}</div>`
+                : `<div class="wk-actions">
+                ${doneButton(item)}${linkBtn}
                 ${changeButton(item, true)}
-            </div>
+            </div>`}
         </div>`;
 }
 

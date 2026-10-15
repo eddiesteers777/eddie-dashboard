@@ -13,7 +13,7 @@
 
 import { buildWeek, buildDay, nextWorkout, planContext } from "./weekModel.js";
 import { weekInputs, loadSessions, workoutLink } from "./weekData.js";
-import { workoutCardHtml, weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
+import { workoutCardHtml, weekListHtml, summaryLine, bindWeekActions, canToggle } from "./weekView.js";
 import { weekTrailHtml } from "./weekTrail.js";
 import { mondayOf, isoDate, addDays } from "./coachingPlanModel.js";
 import { changeMode } from "./weekChanges.js";
@@ -111,8 +111,9 @@ export function renderClientToday() {
         section.hidden = !hasWeek;
         if (hasWeek) {
             $("weekSummary").textContent = summaryLine(week.summary);
-            // A plan's week is a trail of dated check nodes (js/weekTrail.js); sessions only: just the busy days.
-            $("weekList").innerHTML = can("plan") ? weekTrailHtml(week) : weekListHtml(week, { compact: true, busyOnly: true });
+            // A plan's week is a trail of dated check nodes (js/weekTrail.js), tapped done like the Plan list;
+            // sessions only: just the busy days.
+            $("weekList").innerHTML = can("plan") ? weekTrailHtml(week, { canToggle }) : weekListHtml(week, { compact: true, busyOnly: true });
             // Without a plan there's no My Plan page: their sessions are.
             const seeAll = $("weekSeeAll");
             if (seeAll) {
@@ -127,6 +128,9 @@ export function renderClientToday() {
         const onChange = () => renderClientToday();
         const getItem = id => items.get(id);
         const onChangeItem = item => import("./weekChangeDialogs.js").then(m => m.openChangeMenu(item, changeCtx()));
+        // The week row's nodes mark a workout done through the same handler as the card and the Plan list.
+        const weekList = $("weekList");
+        if (weekList) bindWeekActions(weekList, { getItem, onChange, onChangeItem });
         if (container) {
             bindWeekActions(container, { getItem, onChange, onChangeItem });
             container.addEventListener("click", event => {

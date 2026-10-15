@@ -43,6 +43,25 @@ test("today wears the ring and a missed day is marked, not hidden", () => {
     assert.ok(lis[1].cls.includes("missed"));
 });
 
+test("a day with one workout she can tick off is a button: the same data-toggle the Plan list uses", () => {
+    const withIds = {
+        days: week.days.map((d, i) => ({ ...d, items: d.items.map((it, j) => ({ ...it, id: `w${i}${j}`, done: d.status === "done" })) })),
+    };
+    const tickable = it => it.source?.type === "plan" && it.kind !== "cross";
+    const html = weekTrailHtml(withIds, { canToggle: tickable });
+    assert.match(html, /<button type="button" class="node" data-toggle="w00" aria-pressed="true" aria-label="Mark Mon 12, 4 mi easy run, not done">/);
+    assert.match(html, /<button type="button" class="node" data-toggle="w30" aria-pressed="false" aria-label="Mark Thu 15, 6 mi tempo run, done">6<\/button>/);
+    assert.ok(!/data-toggle="w60"/.test(html), "a workout she can't tick (cross-training here) stays a plain node");
+    assert.equal((html.match(/<button /g) || []).length, 5, "Mon, Tue, Wed, Thu, Sat: not the rest day, not the cross-training day");
+    assert.ok(!html.includes("Mon 12: 4 mi easy run, done"), "a button speaks through its own label, not a second line");
+});
+
+test("a day with two workouts, or none she can tick, stays a plain node", () => {
+    const two = { days: [day("2026-10-12", [{ id: "a", ...run(4) }, { id: "b", kind: "strength", title: "Lift", miles: 0, source: { type: "plan" } }], "upcoming")] };
+    assert.ok(!weekTrailHtml(two, { canToggle: () => true }).includes("<button"), "which one would the tap mean?");
+    assert.ok(!weekTrailHtml(week).includes("<button"), "no rule given: nothing is tappable");
+});
+
 test("each day is spoken in full for a screen reader, with its status", () => {
     const html = weekTrailHtml(week);
     assert.match(html, /<span class="sr-only">Mon 12: 4 mi easy run, done<\/span>/);
