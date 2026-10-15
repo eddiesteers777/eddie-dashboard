@@ -184,6 +184,8 @@
     "js/myPlan.js",
     "js/navAccess.js",
     "js/netStatus.js",
+    "js/notifications.js",
+    "js/notificationsModel.js",
     "js/nutrition.js",
     "js/nutritionGoals.js",
     "js/offlineWrite.js",
