@@ -6,10 +6,10 @@
 
     <div class="nav-left eos-nav-left">
 
-        <a href="index.html" class="logo eos-logo" aria-label="Southbound Coaching home">
-            <img src="brand/sb-mark.svg" alt="" class="brand-mark">
-            <span class="brand-word">Southbound</span>
-        </a>
+        <!-- No logo or wordmark in the bar (2026-10-15): search sits alone on the left; Dashboard is the first link. -->
+        <button class="search-btn" type="button" aria-label="Search">
+            <span data-icon="search"></span>
+        </button>
 
         <div class="nav-links eos-nav-links">
 
@@ -88,10 +88,6 @@
     </div>
 
     <div class="nav-right eos-nav-right">
-        <button class="search-btn" type="button" aria-label="Search">
-            <span data-icon="search"></span>
-        </button>
-
         <button class="bell-btn" data-bell type="button" aria-label="Notifications" aria-haspopup="dialog" data-requires="client+updates">
             <span data-icon="bell"></span><i class="bell-dot" hidden aria-hidden="true"></i>
         </button>
@@ -102,25 +98,21 @@
     </div>
 </nav>
 
-<!-- Mobile-only app-shell top bar: + quick add, centered logo,
-     search. Shown in place of the dropdown navbar above below the
-     app-shell breakpoint (see MOBILE APP SHELL in style.css). -->
+<!-- Mobile-only app-shell top bar: search alone on the left (no logo or
+     wordmark), the bell and the account on the right. Shown in place of the
+     dropdown navbar above below the app-shell breakpoint (see MOBILE APP
+     SHELL in style.css). -->
 <nav class="eos-mobile-topbar" id="eosMobileTopbar">
 
-    <a href="index.html" class="eos-mobile-topbar-logo" aria-label="Southbound Coaching home">
-        <img src="brand/sb-mark.svg" alt="" class="brand-mark">
-        <span class="brand-word">Southbound</span>
-    </a>
+    <button
+        type="button"
+        class="eos-mobile-icon-btn"
+        id="mobileSearchBtn"
+        aria-label="Search Southbound">
+        <span data-icon="search"></span>
+    </button>
 
     <div class="eos-mobile-actions">
-        <button
-            type="button"
-            class="eos-mobile-icon-btn"
-            id="mobileSearchBtn"
-            aria-label="Search Southbound">
-            <span data-icon="search"></span>
-        </button>
-
         <button
             type="button"
             class="eos-mobile-icon-btn bell-btn"

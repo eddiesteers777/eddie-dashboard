@@ -4539,16 +4539,16 @@ body.page-today .th-row.is-on .sb-habit-icon{
     box-shadow:inset 0 1px 0 rgba(255,255,255,.4), inset 0 -8px 12px -8px rgba(0,0,0,.3), 0 0 18px color-mix(in srgb, var(--sage) 30%, transparent), 0 8px 16px -10px rgba(0,0,0,.7);
 }
 
-/* Featured Runs and Today's nutrition as two dark tiles (js/todayLayout.js, round two F2, 2026-10-15). A tile
+/* Featured Runs and Today's nutrition as two lighter bubbles (js/todayLayout.js, F2; the lighter tone since round three). A tile
    on its own (a client has no Featured Runs) takes the whole row. */
 body.page-today .today-tiles{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:30px; }
 body.page-today .today-tiles:has(> #featuredTraining[hidden]) > #nutritionSnap{ grid-column:1 / -1; }
 body.page-today .today-tiles > .ft-card,
 body.page-today .today-tiles > .eos-nutrition-snap{
     margin:0; min-width:0; padding:16px; border-radius:22px; border-top:0;
-    background:linear-gradient(180deg, rgba(4,11,8,.62), rgba(7,17,12,.42));
-    border:1px solid rgba(236,230,212,.07);
-    box-shadow:inset 0 2px 8px rgba(0,0,0,.4), 0 1px 0 rgba(255,244,222,.06);
+    background:linear-gradient(180deg,var(--surface-light),var(--surface) 58%);
+    border:1px solid rgba(236,230,212,.09);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.07),0 2px 6px rgba(0,0,0,.26),0 18px 36px -22px rgba(0,0,0,.7);
 }
 body.page-today .ft-tile{ display:flex; flex-direction:column; gap:4px; margin-top:10px; min-width:0; }
 body.page-today .today-tiles h2{ font:650 17px/1.2 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
@@ -4561,6 +4561,7 @@ body.page-today .ft-name{ font:650 14px/1.25 var(--font-body); color:var(--text)
 body.page-today .ft-note{ font:500 12.5px/1.3 var(--font-body); color:var(--text-secondary); }
 body.page-today .ft-header{ flex-direction:column; align-items:flex-start; gap:6px; }
 body.page-today .ft-header .tr-sub{ display:none; }
+body.page-today .ft-header .ft-manage-btn{ display:inline-flex; align-items:center; min-height:44px; margin:-12px 0; padding:0; border:0; background:none; font:650 13px var(--font-body); color:var(--primary); }
 body.page-today .eos-nutrition-ring{ position:relative; width:64px; height:64px; margin:10px 0 4px; }
 body.page-today .eos-nutrition-ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
 body.page-today .eos-nutrition-ring circle{ fill:none; stroke-width:5; }
@@ -4570,6 +4571,26 @@ body.page-today .eos-nutrition-ring b{ position:absolute; inset:0; display:grid;
 body.page-today .eos-nutrition-num{ display:flex; flex-direction:column; margin-top:6px; }
 body.page-today .eos-nutrition-num b{ font:600 38px/1 var(--font-display); color:var(--text); }
 body.page-today .eos-nutrition-num small{ margin-top:4px; font:500 12.5px/1.3 var(--font-body); color:var(--text-secondary); }
+/* Round three (2026-10-15): the week and the habits are dark bubbles, the readiness keeps its own glass, and
+   Featured Runs and Today's nutrition are the lighter bubbles above. */
+body.page-today .eos-today-card.wk-week-card:not(#todayCard),
+body.page-today .eos-today-card.th-card:not(#todayCard){
+    margin:20px 0 0; padding:18px; border:1px solid rgba(236,230,212,.07); border-radius:28px;
+    background:linear-gradient(180deg, rgba(4,11,8,.62), rgba(7,17,12,.42));
+    box-shadow:inset 0 2px 8px rgba(0,0,0,.4), 0 1px 0 rgba(255,244,222,.06);
+}
+/* Details sits inside the readiness bubble: no spare strip of space under it. */
+.rd-body .rd-more{ margin-top:12px; }
+.rd-card{ margin-bottom:0; }
+
+/* Send to COROS: small, with no sentence beside it. The hit area stays 44px. */
+#todayCard .sb-coros-bar-btn{ position:relative; align-self:flex-start; min-height:34px; padding:0 12px; font-size:13px; gap:6px; }
+#todayCard .sb-coros-bar-btn::after{ content:""; position:absolute; inset:-5px -2px; }
+#todayCard .sb-coros-bar-btn svg, #todayCard .sb-coros-bar-btn .ui-icon{ width:14px; height:14px; }
+
+/* The header has no logo or wordmark (2026-10-15): search sits alone on the left. */
+.eos-navbar .eos-nav-left > .search-btn{ grid-column:1; grid-row:1; justify-self:start; }
+.eos-mobile-topbar > #mobileSearchBtn{ grid-column:1; grid-row:1; justify-self:start; }
 
 /* ==========================================================
    TODAY, THE DEMO'S CARD (after step 7, 2026-10-15): the picture and its labels

@@ -20,8 +20,8 @@ export const CLIENT_TODAY = Object.freeze([
     { id: "todayCard", requires: "plan,sessions" },           // today's workouts / sessions, then NEXT
     { id: "coachCardSection", requires: "updates,profile" },  // From Your Coach: check-in, updates, notes ("waiting for approval")
     { id: "profileCheck", requires: "profile" },              // one "still right?" question
-    { id: "readinessCard", requires: "readiness" },           // HRV, sleep, check-in (only with COROS: js/readinessCard.js)
     { id: "weekSection", requires: "plan,sessions" },         // this week, one line a day (busy days only without a plan)
+    { id: "readinessCard", requires: "readiness" },           // HRV, sleep, check-in (only with COROS: js/readinessCard.js)
     { id: "todayHabits", requires: "habits" },                // today's habits, one tap each (redesign step 3)
     { id: "clientPackageSection", requires: "package" },      // their package and credits
     { id: "todayTiles", requires: "nutrition" },              // Featured runs (coach) and today's food, two dark tiles (round two, F2)

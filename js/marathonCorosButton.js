@@ -49,7 +49,8 @@ function statusLine(entries, today) {
     if (st === "changed") return "Today's run changed since you sent it. Send again to update it on COROS.";
     const sent = loadSent();
     const upcoming = entries.filter(e => e.course && sent[e.key]).length;
-    return upcoming ? `${upcoming} upcoming ${upcoming === 1 ? "run is" : "runs are"} on your COROS schedule.` : "Send your runs to your watch.";
+    // With nothing sent yet there is no sentence at all: the button speaks for itself.
+    return upcoming ? `${upcoming} upcoming ${upcoming === 1 ? "run is" : "runs are"} on your COROS schedule.` : "";
 }
 
 export function mountMarathonCoros(el) {
@@ -59,8 +60,9 @@ export function mountMarathonCoros(el) {
         const entries = marathonEntries(today);
         if (!entries.some(e => e.course)) { el.hidden = true; return; }
         el.hidden = false;
+        const text = statusLine(entries, today);
         el.innerHTML = `
-            <p class="sb-coros-bar-text">${statusLine(entries, today)}</p>
+            ${text ? `<p class="sb-coros-bar-text">${text}</p>` : ""}
             <button type="button" class="sb-btn sb-btn-secondary sb-coros-bar-btn">${icon("send")} Send to COROS</button>`;
         el.querySelector("button").addEventListener("click", event => send(event.currentTarget, render));
     };

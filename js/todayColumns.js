@@ -13,7 +13,7 @@
                           reorders a client's sections, then applies again)
 ========================================== */
 
-export const MAIN_SECTIONS = Object.freeze(["todayCard", "weekSection", "thisWeekCard", "todayTiles"]);
+export const MAIN_SECTIONS = Object.freeze(["todayCard", "weekSection", "todayTiles"]);
 export const FULL_SECTIONS = Object.freeze(["todayTools"]);
 export const WIDE = "(min-width: 1024px)";
 

@@ -358,8 +358,6 @@ async function render() {
                         : `<button type="button" class="sb-btn sb-btn-secondary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
                 </div>
             </div>
-        </div>
-        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score.</p>`}
         <details class="rd-more"${detailsOpen}><summary>Details</summary>
             ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
             ${weekDots(today, shownHistory)}
@@ -371,7 +369,9 @@ async function render() {
                 <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
                 <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
             </div>` : ""}
-        </details>`;
+        </details>
+        </div>
+        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score.</p>`}`;
     import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
 
     el.onclick = async event => {

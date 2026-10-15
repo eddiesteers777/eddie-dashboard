@@ -7,7 +7,7 @@ import { CLIENT_TODAY } from "../js/todayLayout.js";
 test("the day goes left, what surrounds it right, the tiles full width", () => {
     assert.equal(todayColumn("todayCard"), "main");
     assert.equal(todayColumn("weekSection"), "main");
-    assert.equal(todayColumn("thisWeekCard"), "main");
+    assert.equal(todayColumn("todayTiles"), "main");
     assert.equal(todayColumn("coachCardSection"), "side");
     assert.equal(todayColumn("readinessCard"), "side");
     assert.equal(todayColumn("todayHabits"), "side");

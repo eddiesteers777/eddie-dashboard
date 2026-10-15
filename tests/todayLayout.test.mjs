@@ -9,7 +9,7 @@ const who = (services, status = "active", hasCoachPlan = false) => accessFromPro
 const shown = access => clientTodaySections(access).filter(s => s.on).map(s => s.id);
 
 test("running client: Today, then the coach, then the rest", () => {
-    assert.deepEqual(shown(who(["running"])), ["todayCard", "coachCardSection", "profileCheck", "readinessCard", "weekSection", "todayHabits", "clientPackageSection", "todayTiles", "todayTools"]);
+    assert.deepEqual(shown(who(["running"])), ["todayCard", "coachCardSection", "profileCheck", "weekSection", "readinessCard", "todayHabits", "clientPackageSection", "todayTiles", "todayTools"]);
 });
 
 test("soccer client: sessions first, no readiness, no nutrition", () => {
