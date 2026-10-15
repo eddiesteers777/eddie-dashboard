@@ -24,6 +24,7 @@ import { planWeekFor, shortDay, isoDate, planDateRange, mondayOf, addDays } from
 import { buildWeek } from "./weekModel.js";
 import { weekInputs, loadSessions } from "./weekData.js";
 import { weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
+import { weekRidgeHtml } from "./weekRidge.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
@@ -159,6 +160,7 @@ function renderPlan() {
             ${state.monday !== thisMonday ? `<button type="button" class="sb-btn sb-btn-tertiary wk-this-week" data-week="now">Back to this week</button>` : ""}
             ${atEdge ? `<p class="clients-card-note myplan-window">${icon("lock")} ${esc(plan?.coachName || "Your coach")} shares your plan two weeks at a time. The next week opens as this one goes by.</p>` : ""}
             ${week.summary.planned || week.summary.sessions ? `<p class="myplan-progress">${esc(summaryLine(week.summary))}</p>` : ""}
+            ${week.summary.planned || week.summary.sessions ? weekRidgeHtml(week, { id: "myplan-ridge" }) : ""}
             ${weekListHtml(week)}
             <div class="myplan-foot">
                 <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done, ${icon("moreVertical")} to move or skip it.</p>
