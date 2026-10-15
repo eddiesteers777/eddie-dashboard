@@ -3,7 +3,7 @@
 
    Shared by Today (js/todayClient.js) and My Plan (js/myPlan.js), so a
    workout looks and behaves the same everywhere:
-     workoutCardHtml(item)    today's workout, big, with Mark done + Start
+     workoutCardHtml(item)    today's workout: the ribbon, Mark done, no Start
      weekListHtml(week)       seven days, each with its workouts
      bindWeekActions(root, { getItem, onChange })
                               Mark done / undo (js/weekData.js toggleDone)
@@ -11,7 +11,7 @@
 ========================================== */
 
 import { icon } from "./icons.js";
-import { contourParts, contourSvg, contourLabelsHtml } from "./workoutContour.js";
+import { ribbonSegments, ribbonHtml } from "./workoutRibbon.js";
 import { toggleDone, workoutLink, fuelForItem } from "./weekData.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, friendlyError } from "./ui.js";
@@ -30,9 +30,9 @@ const KIND = {
 // (Exported: Today's week row taps a day's one workout done by the same rule.)
 export const canToggle = item => ["plan", "extra", "strength"].includes(item.source?.type) && !item.autoDone && !item.actual;
 
-function doneButton(item, compact = false, secondary = false) {
+function doneButton(item, compact = false, secondary = false, glass = false) {
     if (!canToggle(item)) return "";
-    return `<button type="button" class="wk-done${item.done ? " is-done" : ""}${compact ? " is-compact" : ""}${secondary ? " is-secondary" : ""}" data-toggle="${esc(item.id)}"
+    return `<button type="button" class="wk-done${item.done ? " is-done" : ""}${compact ? " is-compact" : ""}${secondary ? " is-secondary" : ""}${glass ? " is-glass" : ""}" data-toggle="${esc(item.id)}"
         aria-pressed="${item.done}" aria-label="${item.done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`}">
         ${icon(item.done ? "checkCircle" : "check")}${compact ? "" : `<span>${item.done ? "Done" : "Mark done"}</span>`}
     </button>`;
@@ -60,20 +60,10 @@ function fuelLine(item) {
     return `<p class="wk-fuel">${icon("fuel")} Fuel: ${esc(fuel.summary)}${fuel.coachNote ? ` · ${esc(fuel.coachNote)}` : ""}</p>`;
 }
 
-// Today's workout, front and center.
-// Direction A (2026-10-14): a mono kicker (kind · from your coach · plan)
-// over the name in the display face, the miles big in tan, a tan rule
-// instead of a box; Start / Log it is the main button until it's done.
+// Today's workout, front and center (the card chosen 2026-10-15): the title and the miles, the run as a
+// glass ribbon (js/workoutRibbon.js), the coach's cue, and one quiet glass Mark done with the ⋮ beside it.
+// There is no Start button: the title opens the workout page (workout mode, steps, fuel).
 const KIND_WORD = { run: "Run", strength: "Strength", cross: "Cross-training", session: "Session" };
-
-// The effort contour of a structured run (js/workoutContour.js), drawn from its steps under the title.
-function contourBlock(item) {
-    const parts = item.kind === "run" ? contourParts(item.workout) : [];
-    if (!parts.length) return "";
-    const id = `wc-${String(item.id).replace(/[^a-zA-Z0-9]/g, "-")}`;
-    const label = `Effort profile: ${parts.map(p => p.title).join(", ")}`;
-    return `<div class="wk-contour">${contourSvg(parts, { id, label })}${contourLabelsHtml(parts)}</div>`;
-}
 
 // The coach's one line for this workout, as a quote under the details (the workout page shows it too).
 function cueBlock(item) {
@@ -84,40 +74,29 @@ function cueBlock(item) {
 export function workoutCardHtml(item) {
     const k = KIND[item.kind] || KIND.run;
     const link = workoutLink(item);
+    const ribbon = ribbonHtml(item.kind === "run" ? ribbonSegments(item.workout) : []);
     const bigNumber = item.kind === "run" && item.miles ? `<span class="wk-big">${item.miles}<small> mi</small></span>` : "";
     const kicker = [KIND_WORD[item.kind] || "", item.kind === "session" ? "" : item.planName || (item.fromCoach ? "From your coach" : "")].filter(Boolean).join(" · ");
-    const startFirst = !item.done && !item.skipped && ["Start", "Log it"].includes(link.label);
-    // "Start" gets the play mark and no arrow; the others ("Log it", "Open") keep the arrow.
-    const playing = link.label === "Start";
-    const linkBtn = `<a class="sb-btn ${startFirst ? "sb-btn-primary" : "sb-btn-secondary"}" href="${esc(link.href)}">${playing ? `${icon("play")} ` : ""}${esc(link.label)}${playing ? "" : ` ${icon("chevronRight")}`}</a>`;
-    // The demo's order: the picture and its labels first, then the name with the miles beside it.
-    // The picture already says "run", and the plan's name is in the greeting, so no kicker over it.
-    const picture = contourBlock(item);
+    const name = `<strong>${esc(item.title)}</strong>`;
+    const title = link?.href ? `<a class="wk-card-open" href="${esc(link.href)}">${name}</a>` : name;
     return `
-        <div class="wk-card is-${item.kind}${item.done ? " is-done" : ""}${picture ? " has-contour" : ""}">
-            ${picture}
+        <div class="wk-card is-${item.kind}${item.done ? " is-done" : ""}${ribbon ? " has-ribbon" : ""}">
             <div class="wk-card-top">
                 <div class="wk-card-title">
-                    ${picture ? "" : `<span class="wk-kicker" style="--kind:${k.color}">${icon(k.icon)}${esc(kicker)}</span>`}
-                    <strong>${esc(item.title)}</strong>
+                    ${ribbon ? "" : `<span class="wk-kicker" style="--kind:${k.color}">${icon(k.icon)}${esc(kicker)}</span>`}
+                    ${title}
                 </div>
                 ${bigNumber}
             </div>
-            ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            ${ribbon}
+            ${!ribbon && item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
             ${cueBlock(item)}
             ${changeNote(item) ? `<p class="wk-detail">${changeNote(item)}</p>` : ""}
             ${fuelLine(item)}
             ${item.kind === "strength" && item.actual && item.done ? `<p class="wk-logged">${icon("checkCircle")} Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.actual?.distance ? `<p class="wk-logged">${icon("checkCircle")} You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.logged ? `<p class="wk-logged">${icon("activity")} You logged ${item.logged} mi${item.autoDone ? " — counts as done" : ""}</p>` : ""}
-            ${startFirst
-                // One full-width button to begin; "Mark done" and the ⋮ sit quietly under it.
-                ? `<div class="wk-actions wk-actions-stack">${linkBtn}</div>
-            <div class="wk-actions-row">${doneButton(item, false, true)}${changeButton(item, true)}</div>`
-                : `<div class="wk-actions">
-                ${doneButton(item)}${linkBtn}
-                ${changeButton(item, true)}
-            </div>`}
+            <div class="wk-actions-row">${doneButton(item, false, false, true)}${changeButton(item, true)}</div>
         </div>`;
 }
 
@@ -125,25 +104,25 @@ export function workoutCardHtml(item) {
 // labels first, the name with the miles, the details, one full-width button, and a quiet Mark done. The marathon
 // plan keeps its own done record, so the button carries the week and the day (js/app.js ticks it).
 export function coachRunCardHtml(item, { href = "marathon.html" } = {}) {
-    const picture = contourBlock(item);
+    const ribbon = ribbonHtml(ribbonSegments(item.workout));
     const done = Boolean(item.done);
     const bigNumber = item.miles ? `<span class="wk-big">${item.miles}<small> mi</small></span>` : "";
-    const mark = `<button type="button" class="wk-done is-secondary${done ? " is-done" : ""}" data-complete-week="${esc(item.week)}" data-complete-day="${esc(item.dayKey)}"
+    const mark = `<button type="button" class="wk-done is-glass${done ? " is-done" : ""}" data-complete-week="${esc(item.week)}" data-complete-day="${esc(item.dayKey)}"
         aria-pressed="${done}" aria-label="${done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`}">
         ${icon(done ? "checkCircle" : "check")}<span>${done ? "Done" : "Mark done"}</span>
     </button>`;
     return `
-        <div class="wk-card is-run${done ? " is-done" : ""}${picture ? " has-contour" : ""}">
-            ${picture}
+        <div class="wk-card is-run${done ? " is-done" : ""}${ribbon ? " has-ribbon" : ""}">
             <div class="wk-card-top">
                 <div class="wk-card-title">
-                    ${picture ? "" : `<span class="wk-kicker" style="--kind:${KIND.run.color}">${icon(KIND.run.icon)}Run · Marathon plan</span>`}
-                    <strong>${esc(item.title)}</strong>
+                    ${ribbon ? "" : `<span class="wk-kicker" style="--kind:${KIND.run.color}">${icon(KIND.run.icon)}Run · Marathon plan</span>`}
+                    <a class="wk-card-open" href="${esc(href)}"><strong>${esc(item.title)}</strong></a>
                 </div>
                 ${bigNumber}
             </div>
-            ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
-            <div class="wk-actions wk-actions-stack"><a class="sb-btn ${done ? "sb-btn-secondary" : "sb-btn-primary"}" href="${esc(href)}">Open run ${icon("chevronRight")}</a></div>
+            ${ribbon}
+            ${!ribbon && item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            ${cueBlock(item)}
             <div class="wk-actions-row">${mark}</div>
         </div>`;
 }
@@ -226,6 +205,11 @@ export function bindWeekActions(root, { getItem, onChange, onChangeItem }) {
             const done = await toggleDone(item);
             if (done === null) throw new Error("not-found");
             if (done) toast(`${item.title} done. Nice work.`);
+            // A run just marked done asks how hard it was (js/effortCard.js), as the coach's run does (js/app.js).
+            if (done && item.kind === "run" && item.source?.date) {
+                import("./effortCard.js").then(m => m.askRunEffort(item.source.date))
+                    .catch(error => console.error("Southbound: effort question failed to load.", error));
+            }
             onChange?.();
         } catch (error) {
             console.error("Marking done failed:", error);

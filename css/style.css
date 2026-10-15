@@ -4560,6 +4560,26 @@ body.page-today #todayCard{ padding:20px 20px 10px; }
 }
 .wk-actions-row .wk-change.is-compact{ margin-left:auto; width:44px; height:44px; }
 
+/* Today's workout card, the ribbon version (chosen 2026-10-15, "glass pills"): the title and the miles, the run as
+   three glass pills (js/workoutRibbon.js), one quiet glass Mark done and the ⋮. No Start: the title opens the workout. */
+.wk-card-open{ display:flex; align-items:center; min-width:0; min-height:44px; color:inherit; text-decoration:none; }
+.wk-card-open strong{ font:700 22px/1 var(--font-display); letter-spacing:.02em; text-transform:uppercase; color:var(--text); overflow-wrap:anywhere; }
+.wk-card.has-ribbon .wk-card-top{ align-items:center; margin-top:0; }
+.wk-card.has-ribbon .wk-big{ font:600 22px/1 var(--font-display); }
+.wk-card.has-ribbon .wk-big small{ font:600 12px/1 var(--font-body); letter-spacing:0; }
+.wk-ribbon{ margin-top:8px; }
+.wk-ribbon-bar, .wk-ribbon-names{ display:flex; gap:4px; }
+.wk-ribbon-bar{ height:10px; }
+.wk-ribbon-pill{ min-width:0; border-radius:999px; background:linear-gradient(180deg, color-mix(in srgb, var(--sage) 55%, transparent), color-mix(in srgb, var(--sage) 20%, transparent)); border:1px solid color-mix(in srgb, var(--sage) 35%, transparent); box-shadow:inset 0 1px 0 color-mix(in srgb, var(--text) 30%, transparent); }
+.wk-ribbon-pill.is-hard{ background:linear-gradient(180deg, color-mix(in srgb, var(--primary) 90%, var(--text)), color-mix(in srgb, var(--primary) 50%, transparent)); border-color:color-mix(in srgb, var(--primary) 60%, transparent); box-shadow:inset 0 1px 0 color-mix(in srgb, var(--text) 40%, transparent), 0 0 14px color-mix(in srgb, var(--primary) 30%, transparent); }
+.wk-ribbon-names{ margin-top:7px; font-size:12px; line-height:1.3; color:var(--text-secondary); }
+.wk-ribbon-name{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wk-ribbon-name.is-hard{ text-align:center; color:var(--text); font-weight:650; }
+.wk-card.has-ribbon .wk-actions-row{ margin-top:12px; }
+.wk-card.has-ribbon .wk-done.is-glass{ position:relative; isolation:isolate; overflow:hidden; flex:1 1 0; min-width:0; min-height:48px; padding:0 20px; border-radius:999px; font:650 15px/1 var(--font-body); color:var(--text); background:linear-gradient(180deg, color-mix(in srgb, var(--text) 12%, transparent), color-mix(in srgb, var(--text) 3%, transparent)); border:1px solid color-mix(in srgb, var(--text) 20%, transparent); box-shadow:inset 0 1px 0 color-mix(in srgb, var(--text) 18%, transparent), 0 8px 18px -12px rgba(0,0,0,.7); -webkit-backdrop-filter:blur(10px) saturate(1.2); backdrop-filter:blur(10px) saturate(1.2); transition:transform .2s var(--ease); }
+.wk-card.has-ribbon .wk-done.is-glass:active{ transform:scale(.98); }
+.wk-card.has-ribbon .wk-done.is-glass.is-done{ background:var(--success-bg); border-color:color-mix(in srgb, var(--green) 45%, transparent); color:var(--success); }
+
 /* A week-row node that ticks a run off: a button, the same size, the same look. */
 .trail button.node{ appearance:none; padding:0; font:650 14px/1 var(--font-body); cursor:pointer; }
 .trail button.node:hover{ border-color:rgba(236,230,212,.4); }
