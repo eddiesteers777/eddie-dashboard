@@ -4566,3 +4566,53 @@ body.page-today #todayCard{ padding:20px 20px 10px; }
 .trail .done button.node:hover{ border-color:var(--sage); }
 .trail button.node:focus-visible{ outline:2px solid var(--primary); outline-offset:3px; }
 .trail button.node:disabled{ opacity:.6; cursor:default; }
+
+/* ==========================================================
+   THE HEADER'S BUTTONS, IN GLASS (after step 7, 2026-10-15): search, the bell
+   and the account circle use the same glass as the bottom bar: a gradient from
+   a lit top to a deep bottom, a lit edge, blur and colour lift, and a soft
+   specular band across the top half. Phone and computer.
+   ========================================================== */
+.eos-navbar .search-btn,
+.eos-navbar .bell-btn,
+.eos-navbar .account-btn,
+.eos-mobile-topbar .eos-mobile-icon-btn,
+.eos-mobile-topbar .account-btn,
+.eos-navbar .search-btn:hover,
+.eos-navbar .bell-btn:hover,
+.eos-navbar .account-btn:hover,
+.eos-mobile-topbar .eos-mobile-icon-btn:hover,
+.eos-mobile-topbar .account-btn:hover{
+    background:linear-gradient(180deg,rgba(104,140,120,.34) 0%,rgba(30,58,45,.5) 46%,rgba(12,28,21,.66) 100%);
+    -webkit-backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
+    backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
+    border:1px solid rgba(255,246,226,.24);
+    box-shadow:inset 0 1px 0 rgba(255,250,238,.5),inset 0 -1px 0 rgba(0,0,0,.3),inset 0 0 14px rgba(255,244,222,.05),0 10px 22px -10px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.3);
+    color:#F6F0E2;
+}
+.eos-navbar .search-btn:hover,
+.eos-navbar .bell-btn:hover,
+.eos-navbar .account-btn:hover,
+.eos-mobile-topbar .eos-mobile-icon-btn:hover,
+.eos-mobile-topbar .account-btn:hover{ border-color:rgba(255,246,226,.42); }
+.eos-navbar .search-btn::before,
+.eos-navbar .bell-btn::before,
+.eos-navbar .account-btn::before,
+.eos-mobile-topbar .eos-mobile-icon-btn::before,
+.eos-mobile-topbar .account-btn::before{
+    content:"";
+    position:absolute;
+    left:14%;
+    right:14%;
+    top:2px;
+    height:46%;
+    border-radius:999px 999px 70% 70% / 999px 999px 100% 100%;
+    background:linear-gradient(180deg,rgba(255,250,238,.3),rgba(255,250,238,.05) 72%,transparent);
+    pointer-events:none;
+}
+/* The icon, the initials or the photo sit above the shine; the bell's count stays pinned to its corner. */
+.eos-navbar .search-btn > :not(.bell-dot),
+.eos-navbar .bell-btn > :not(.bell-dot),
+.eos-navbar .account-btn > :not(.bell-dot),
+.eos-mobile-topbar .eos-mobile-icon-btn > :not(.bell-dot),
+.eos-mobile-topbar .account-btn > :not(.bell-dot){ position:relative; z-index:1; }
