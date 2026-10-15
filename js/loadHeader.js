@@ -373,18 +373,11 @@ fetch("components/header.html")
         });
         if (!navAccess) navAccess = await freshAccess;
 
-        // ---- Mobile quick-add (+) menu ----
+        // ---- Quick add (Start a workout / Add a run), in the account sheet ----
 
-        const quickAddWrap = document.querySelector(".eos-mobile-quickadd");
-        const quickAddBtn = document.getElementById("quickAddBtn");
         const quickAddWorkoutLink = document.getElementById("quickAddWorkoutLink");
 
-        function closeQuickAdd() {
-            quickAddWrap?.classList.remove("open");
-            quickAddBtn?.setAttribute("aria-expanded", "false");
-        }
-
-        if (quickAddWrap && quickAddBtn) {
+        if (quickAddWorkoutLink) {
 
             // Point "Start a Workout" at today's actual scheduled
             // workout when there is one, same lookup the dashboard's
@@ -405,28 +398,12 @@ fetch("components/header.html")
                     ? todayItem.workoutId.slice(5)
                     : null;
 
-                if (dayId && planDayIds.has(dayId) && quickAddWorkoutLink) {
+                if (dayId && planDayIds.has(dayId)) {
                     quickAddWorkoutLink.href = `strength.html?startWorkout=${dayId}`;
                 }
             } catch {
                 // No schedule data -- link already defaults to strength.html.
             }
-
-            quickAddBtn.addEventListener("click", event => {
-                event.stopPropagation();
-                const isOpen = quickAddWrap.classList.toggle("open");
-                quickAddBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-            });
-
-            quickAddWrap.querySelectorAll(".eos-mobile-quickadd-link").forEach(link => {
-                link.addEventListener("click", closeQuickAdd);
-            });
-
-            document.addEventListener("click", event => {
-                if (!event.target.closest(".eos-mobile-quickadd")) {
-                    closeQuickAdd();
-                }
-            });
 
         }
 
@@ -488,9 +465,11 @@ fetch("components/header.html")
         // Its buttons carry data-requires="client+updates", so the coach never sees one.
         import("./notifications.js").then(m => m.initNotifications()).catch(() => {});
 
+        // The account circle: opens the account sheet (js/account.js). Its photo or initials are painted by the auth listener below.
+        import("./account.js").then(m => m.initAccount()).catch(() => {});
+
         document.addEventListener("keydown", event => {
             if (event.key !== "Escape") return;
-            closeQuickAdd();
             if (searchOverlay?.classList.contains("open")) closeSearch();
         });
 
@@ -710,6 +689,9 @@ fetch("components/header.html")
         if (userName && loginBtn && logoutBtn) {
 
             listenForAuth((user) => {
+
+                // The avatar (Google photo or initials) and the account sheet's guest / signed-in parts.
+                import("./account.js").then(m => m.paintAccount(user)).catch(() => {});
 
                 if (user) {
 

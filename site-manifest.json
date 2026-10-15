@@ -49,6 +49,8 @@
     "components/publicHeader.html"
   ],
   "scripts": [
+    "js/account.js",
+    "js/accountModel.js",
     "js/activeProgramSources.js",
     "js/analytics.js",
     "js/analyticsLayout.js",
@@ -308,6 +310,7 @@
     "js/weekChanges.js",
     "js/weekData.js",
     "js/weekModel.js",
+    "js/weekRidge.js",
     "js/weekStory.js",
     "js/weekView.js",
     "js/weekly-review.js",

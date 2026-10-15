@@ -57,11 +57,15 @@ export function contourParts(workout) {
     if (workout.cooldown) {
         parts.push({ phase: "cooldown", title: "Cool down", miles: milesOf(workout.cooldown), level: levelOf(workout.cooldown, "cooldown") });
     }
-    return parts.filter(p => p.miles > 0);
+    // Every step stays, one part each in the same order as executionSteps (js/runWorkout.js), so the
+    // workout mode can light "step 3 of 7" by its index; a step with no length still gets a sliver.
+    return parts.map(p => ({ ...p, miles: Math.max(p.miles, 0.05) }));
 }
 
 // The SVG for the parts. `id` keeps gradient ids unique when more than one card is on the page.
-export function contourSvg(parts, { id = "wc", label = "" } = {}) {
+// `active` (optional, a part's index): the workout mode lights the current part, shows the parts
+// already run in sage, and dims the ones still to come.
+export function contourSvg(parts, { id = "wc", label = "", active = null } = {}) {
     if (!parts.length) return "";
     const total = parts.reduce((t, p) => t + p.miles, 0);
     const yOf = level => BASE - (level / MAX_LEVEL) * (BASE - TOP);
@@ -81,7 +85,14 @@ export function contourSvg(parts, { id = "wc", label = "" } = {}) {
     top += ` L${W} ${segs[segs.length - 1].y.toFixed(1)}`;
     const area = `${top} L${W} ${BASE} L0 ${BASE} Z`;
     const fill = { warmup: "wc-easy", cooldown: "wc-easy", recovery: "wc-rest", work: "wc-work" };
-    const rects = segs.map(s => `<rect x="${s.x0.toFixed(1)}" y="0" width="${(s.x1 - s.x0 + 0.6).toFixed(1)}" height="${H}" fill="url(#${id}-${fill[s.phase]})"/>`).join("");
+    const isLive = Number.isInteger(active);
+    const rects = segs.map((s, i) => {
+        const g = !isLive ? fill[s.phase] : i < active ? "wc-done" : i === active ? "wc-lit" : fill[s.phase];
+        const dim = isLive && i > active ? ` opacity=".5"` : "";
+        return `<rect x="${s.x0.toFixed(1)}" y="0" width="${(s.x1 - s.x0 + 0.6).toFixed(1)}" height="${H}" fill="url(#${id}-${g})"${dim}/>`;
+    }).join("");
+    // "You are here": a bright bar along the baseline under the current part, so even a short recovery reads.
+    const here = isLive && segs[active] ? `<rect x="${segs[active].x0.toFixed(1)}" y="${BASE - 5}" width="${Math.max(8, segs[active].x1 - segs[active].x0).toFixed(1)}" height="5" fill="#F4E2C0"/>` : "";
     const ticks = segs.slice(1).map(s => `<line x1="${s.x0.toFixed(1)}" x2="${s.x0.toFixed(1)}" y1="${(s.y - 2).toFixed(1)}" y2="${BASE}" stroke="rgba(11,26,20,.55)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`).join("");
     const summary = segs.map(s => `${s.title}${s.miles ? ` ${round(s.miles)} mi` : ""}`).join(", ");
     return `<svg class="wk-contour-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${escAttr(label || summary)}">
@@ -89,11 +100,14 @@ export function contourSvg(parts, { id = "wc", label = "" } = {}) {
             <linearGradient id="${id}-wc-work" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(244,226,192,.5)"/><stop offset="1" stop-color="rgba(214,185,142,.05)"/></linearGradient>
             <linearGradient id="${id}-wc-easy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(176,204,170,.42)"/><stop offset="1" stop-color="rgba(160,187,156,.03)"/></linearGradient>
             <linearGradient id="${id}-wc-rest" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(236,230,212,.2)"/><stop offset="1" stop-color="rgba(236,230,212,.02)"/></linearGradient>
+            <linearGradient id="${id}-wc-done" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(176,204,170,.7)"/><stop offset="1" stop-color="rgba(160,187,156,.08)"/></linearGradient>
+            <linearGradient id="${id}-wc-lit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(244,226,192,.92)"/><stop offset="1" stop-color="rgba(214,185,142,.18)"/></linearGradient>
             <clipPath id="${id}-clip"><path d="${area}"/></clipPath>
         </defs>
         <line x1="0" x2="${W}" y1="${BASE}" y2="${BASE}" stroke="rgba(236,230,212,.16)" stroke-width="1" vector-effect="non-scaling-stroke"/>
         <g clip-path="url(#${id}-clip)">${rects}</g>
         ${ticks}
+        ${here}
         <path d="${top}" fill="none" stroke="#F2EDE1" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
     </svg>`;
 }

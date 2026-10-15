@@ -4292,3 +4292,179 @@ body.page-today .stats .stat-card{
 body.page-today .stats .stat-card::before{ display:none; }
 body.page-today .stats .stat-card + .stat-card{ border-left:1px solid var(--border); padding-left:16px; }
 body.page-today .stats .stat-card:hover{ transform:none; box-shadow:none; border-color:var(--border); }
+
+/* ==========================================================
+   HEADER, PREMIUM (after step 3, 2026-10-15): the logo on the left, then
+   three glass circles on the right: search, the bell, and the account (the
+   person's Google photo or their initials). The account circle opens a sheet
+   (#accountDialog) that holds the name, Profile, Settings, quick add, sync and
+   Sign in / Sign out, which used to sit in the bar as text. On the phone the
+   bar is an open row (no capsule), like the demo; on a computer the menus stay.
+   ========================================================== */
+
+/* The circles: one look for search, bell and account. */
+.eos-navbar .search-btn,
+.eos-navbar .bell-btn,
+.eos-navbar .account-btn,
+.eos-mobile-topbar .eos-mobile-icon-btn,
+.eos-mobile-topbar .account-btn{
+    position:relative;
+    flex:0 0 44px;
+    width:44px;
+    height:44px;
+    padding:0;
+    display:grid;
+    place-items:center;
+    border:1px solid rgba(236,230,212,.18);
+    border-radius:50%;
+    background:linear-gradient(180deg,var(--surface-light),var(--surface));
+    color:var(--text);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.08),0 6px 14px -8px rgba(0,0,0,.6);
+    cursor:pointer;
+    transition:color .2s ease,border-color .2s ease;
+}
+.eos-navbar .search-btn:hover,
+.eos-navbar .bell-btn:hover,
+.eos-navbar .account-btn:hover,
+.eos-mobile-topbar .eos-mobile-icon-btn:hover,
+.eos-mobile-topbar .account-btn:hover{
+    background:linear-gradient(180deg,var(--surface-light),var(--surface));
+    color:var(--text);
+    border-color:rgba(236,230,212,.34);
+}
+.eos-navbar .search-btn .ui-icon,
+.eos-navbar .bell-btn .ui-icon,
+.eos-mobile-topbar .eos-mobile-icon-btn .ui-icon{ width:21px; height:21px; }
+.eos-navbar .nav-right{ gap:10px; }
+
+/* The account circle's face: photo, initials, or the person icon for a guest. */
+.account-btn{ overflow:visible; }
+.account-avatar{
+    width:100%;
+    height:100%;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    overflow:hidden;
+    line-height:1;
+}
+.account-avatar .ui-icon{ width:21px; height:21px; color:var(--text-secondary); }
+.account-avatar .avatar-initials{ font:700 19px/1 var(--font-display); letter-spacing:.02em; text-transform:uppercase; color:var(--text); }
+.account-avatar .avatar-photo{ width:100%; height:100%; object-fit:cover; display:block; }
+.account-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:3px; }
+
+/* ---- Phone: an open row. Logo on the left, circles on the right. ---- */
+@media (max-width:900px){
+    .eos-mobile-topbar{
+        container:sbmtop / inline-size;
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        align-items:center;
+        gap:10px;
+        width:auto;
+        max-width:1240px;
+        min-height:0;
+        margin:0 auto 6px;
+        padding:max(14px,env(safe-area-inset-top)) 16px 0;
+        position:relative;
+        top:auto;
+        background:none;
+        border:0;
+        border-radius:0;
+        box-shadow:none;
+        backdrop-filter:none;
+        -webkit-backdrop-filter:none;
+    }
+    .eos-mobile-topbar-logo{ grid-column:1; grid-row:1; justify-self:start; gap:10px; min-height:44px; }
+    .eos-mobile-topbar-logo .brand-mark{ height:30px; }
+    .eos-mobile-topbar-logo .brand-word{ font-size:1.12rem; letter-spacing:.03em; }
+    .eos-mobile-actions{ grid-column:2; grid-row:1; justify-self:end; display:flex; align-items:center; gap:8px; }
+    .eos-mobile-topbar .eos-mobile-icon-btn{ width:44px !important; height:44px !important; }
+}
+/* The name steps aside only when the bar is really narrow (three circles are 148px). */
+@container sbmtop (max-width:344px){
+    .eos-mobile-topbar-logo .brand-word{ display:inline; }
+    .eos-mobile-topbar-logo .brand-mark{ height:28px; }
+}
+@container sbmtop (max-width:290px){
+    .eos-mobile-topbar-logo .brand-word{ display:none; }
+}
+@container sbmtop (max-width:240px){
+    .eos-mobile-topbar .eos-mobile-actions{ gap:6px; }
+}
+
+/* ---- The account sheet ---- */
+.sb-account{
+    width:min(380px,calc(100vw - 32px));
+    background:linear-gradient(180deg,rgba(26,52,41,.92),rgba(11,26,20,.95));
+    border:1px solid rgba(236,230,212,.13);
+    border-radius:28px;
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.1),0 2px 8px rgba(0,0,0,.3),0 40px 90px -24px rgba(0,0,0,.8);
+    -webkit-backdrop-filter:blur(28px) saturate(1.7);
+    backdrop-filter:blur(28px) saturate(1.7);
+}
+.sb-account::backdrop{ background:rgba(5,12,9,.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.sb-account [hidden]{ display:none !important; }
+.sb-account-body{ display:flex; flex-direction:column; gap:14px; padding:22px; }
+.sb-account-who{ display:flex; align-items:center; gap:14px; }
+.account-avatar-lg{
+    flex:0 0 60px;
+    width:60px;
+    height:60px;
+    border:1px solid rgba(236,230,212,.18);
+    background:linear-gradient(180deg,var(--surface-light),var(--surface));
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.08),0 6px 14px -8px rgba(0,0,0,.6);
+}
+.account-avatar-lg .avatar-initials{ font-size:26px; }
+.account-avatar-lg .ui-icon{ width:26px; height:26px; }
+.sb-account-name{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+/* The old bar styles on these ids are for the bar; inside the sheet they are plain text and buttons. */
+.sb-account #user-name{ display:block !important; max-width:none; color:var(--text); font:650 20px/1.2 var(--font-body); overflow-wrap:anywhere; }
+.sb-account-name span{ color:var(--text-secondary); font-size:14px; }
+.sb-account-links{ display:flex; flex-direction:column; border-top:1px solid var(--border); }
+.sb-account .sb-account-link{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-height:52px;
+    padding:6px 2px;
+    background:none;
+    border:0;
+    border-bottom:1px solid var(--border);
+    border-radius:0;
+    color:var(--text);
+    font:500 16px/1.2 var(--font-body);
+    text-align:left;
+    text-decoration:none;
+    cursor:pointer;
+}
+.sb-account .sb-account-link .ui-icon{ width:20px; height:20px; color:var(--text-secondary); flex:0 0 20px; }
+.sb-account .sb-account-link:hover,
+.sb-account .sb-account-link:focus-visible{ color:var(--primary-light); }
+.sb-account .sb-account-link[style*="display:none"]{ display:none !important; }
+.sb-account .sync-status-btn #syncStatusText{ display:inline !important; }
+.sb-account .sync-status-btn.sync-error{ color:var(--red); }
+.sb-account .sb-account-btn,
+.sb-account #loginBtn,
+.sb-account #logoutBtn{
+    min-height:48px;
+    padding:12px 18px;
+    border:0;
+    border-radius:14px;
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 26px -12px rgba(214,185,142,.7);
+    color:var(--on-primary);
+    font:650 16px/1 var(--font-body);
+    cursor:pointer;
+}
+.sb-account .sb-account-btn.is-quiet,
+.sb-account #logoutBtn.is-quiet{
+    background:linear-gradient(180deg,rgba(236,230,212,.1),rgba(236,230,212,.035));
+    border:1px solid rgba(236,230,212,.16);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.1);
+    color:var(--text);
+}
+.sb-account .sb-account-btn:hover,
+.sb-account #loginBtn:hover,
+.sb-account #logoutBtn:hover{ transform:none; }
+.sb-account .sb-account-btn[style*="display:none"]{ display:none !important; }
