@@ -117,6 +117,7 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
                     done: Boolean(day.completed),
                     skipped: Boolean(day.skipped),
                     structured: Boolean(day.workout && (day.workout.sets?.length || day.workout.warmup || day.workout.cooldown)),
+                    workout: day.workout || null, // the steps, for the effort contour on Today (js/workoutContour.js)
                     dayType: day.type,
                     fuelNote: day.workout?.fuel || "",
                     actual: day.resultId ? { distance: day.actualDistance ?? null, durationSec: day.actualDuration ?? null, rpe: day.rpe ?? null, pain: Boolean(day.pain) } : null,

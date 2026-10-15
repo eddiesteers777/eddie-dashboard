@@ -1,0 +1,9 @@
+Albert Sans
+Copyright 2020 The Albert Sans Project Authors (https://github.com/usted/Albert-Sans)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The license is available with a FAQ at: https://openfontlicense.org
+
+Files in this folder were downloaded from Google Fonts (fonts.gstatic.com) for the
+Southbound premium design lab on 2026-10-15: albert-sans-latin-var.woff2 (normal) and
+albert-sans-latin-italic-var.woff2 (italic), Latin subset, variable weight.

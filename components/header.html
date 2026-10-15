@@ -92,6 +92,10 @@
             <span data-icon="search"></span>
         </button>
 
+        <button class="bell-btn" data-bell type="button" aria-label="Notifications" aria-haspopup="dialog" data-requires="client+updates">
+            <span data-icon="bell"></span><i class="bell-dot" hidden aria-hidden="true"></i>
+        </button>
+
         <button id="syncStatusBtn" class="sync-status-btn" style="display:none;" title="Click to sync now">
             <span data-icon="cloud"></span> <span id="syncStatusText">—</span>
         </button>
@@ -145,13 +149,25 @@
         <span class="brand-word">Southbound</span>
     </a>
 
-    <button
-        type="button"
-        class="eos-mobile-icon-btn"
-        id="mobileSearchBtn"
-        aria-label="Search Southbound">
-        <span data-icon="search"></span>
-    </button>
+    <div class="eos-mobile-actions">
+        <button
+            type="button"
+            class="eos-mobile-icon-btn"
+            id="mobileSearchBtn"
+            aria-label="Search Southbound">
+            <span data-icon="search"></span>
+        </button>
+
+        <button
+            type="button"
+            class="eos-mobile-icon-btn bell-btn"
+            data-bell
+            aria-label="Notifications"
+            aria-haspopup="dialog"
+            data-requires="client+updates">
+            <span data-icon="bell"></span><i class="bell-dot" hidden aria-hidden="true"></i>
+        </button>
+    </div>
 
 </nav>
 

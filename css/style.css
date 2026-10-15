@@ -94,35 +94,35 @@ html{
 
 :root{
 
-    --bg:#0F2019;
+    --bg:#0B1A14;
 
-    --surface:#17291F;
+    --surface:#12261D;
 
-    --surface-light:#203528;
+    --surface-light:#183026;
 
     --border:rgba(255,255,255,.08);
 
-    --text:#F2EEE4;
+    --text:#F2EDE1;
 
-    --text-secondary:#C3C9BD;
+    --text-secondary:#C6CBBC;
 
-    --muted:#8E9A89;
+    --muted:#93A08F;
 
-    --primary:#C9AD84;
+    --primary:#D6B98E;
 
-    --primary-light:#DCC6A3;
+    --primary-light:#ECD6B0;
 
-    --primary-dark:#A68A62;
+    --primary-dark:#A9895F;
 
     /* Southbound brand palette (from the brand board). --primary is
        the tan; text sitting on a tan fill uses --on-primary. */
     --forest:#173226;
 
-    --sage:#8FA388;
+    --sage:#A0BB9C;
 
     --stone:#E3DDD0;
 
-    --cream:#F2EEE4;
+    --cream:#F2EDE1;
 
     --on-primary:#0F2019;
 
@@ -163,7 +163,7 @@ html{
 
     --shadow:0 18px 40px rgba(0,0,0,.22);
 
-    --font-body:'Instrument Sans','Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    --font-body:'Albert Sans','Instrument Sans','Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
 
     --font-display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
 
@@ -4064,3 +4064,231 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
     html body .sb-eyebrow{ font-size:11px !important; }
     .metric-display .label, .remaining, .stat-name, .stat-value, .meal-tab{ font-size:12.5px !important; }
 }
+
+
+/* ==========================================================
+   PREMIUM SHELL (redesign, step 1, 2026-10-15)
+   Eddie approved the lab direction (southbound-premium-lab) and asked for
+   three changes on the way in: a notification bell at the top right, the
+   Southbound mark and name slightly bigger, and a glossier floating
+   toolbar. This block also brings the new text face and refined colours
+   (the :root values above), in the same palette: forest, sand, cream, sage.
+   ========================================================== */
+
+/* Albert Sans: the new text face (variable weight, Latin subset, OFL). */
+@font-face{
+    font-family:'Albert Sans';
+    font-style:normal;
+    font-weight:100 900;
+    font-display:swap;
+    src:url('../fonts/albert-sans-latin-var.woff2') format('woff2');
+}
+
+/* ---- The mark and the name, slightly bigger ---- */
+.brand-mark{ height:38px; }
+.eos-logo .brand-word{ font-size:1.32rem; }
+.eos-navbar .brand-mark{ height:38px; }
+
+/* ---- The bell ---- */
+.bell-btn{ position:relative; }
+.bell-btn:not(.eos-mobile-icon-btn){
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:11px;
+    background:rgba(255,255,255,.05);
+    color:var(--cream);
+    cursor:pointer;
+    transition:.2s ease;
+}
+.bell-btn:not(.eos-mobile-icon-btn):hover{ background:var(--primary); color:var(--on-primary); }
+.bell-btn .ui-icon{ width:20px; height:20px; }
+.bell-dot{
+    position:absolute;
+    top:-5px;
+    right:-5px;
+    min-width:19px;
+    height:19px;
+    padding:0 5px;
+    display:grid;
+    place-items:center;
+    border-radius:999px;
+    background:var(--primary);
+    color:var(--on-primary);
+    border:2px solid var(--bg);
+    font:700 11px/1 var(--font-body);
+    font-style:normal;
+}
+.bell-dot[hidden]{ display:none; }
+
+/* The dialog the bell opens (built in js/notifications.js, on the shared .sb-dialog) */
+.sb-notes{ width:min(440px, calc(100vw - 32px)); }
+.sb-notes-list{ display:flex; flex-direction:column; border-top:1px solid var(--border); margin-top:4px; }
+.sb-note{
+    display:grid;
+    grid-template-columns:40px minmax(0,1fr) 20px;
+    gap:12px;
+    align-items:center;
+    min-height:64px;
+    padding:10px 2px;
+    border-bottom:1px solid var(--border);
+    color:var(--text);
+    text-decoration:none;
+}
+.sb-note-icon{
+    width:40px;
+    height:40px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:var(--surface-light);
+    color:var(--primary-light);
+}
+.sb-note-icon .ui-icon, .sb-note-chevron .ui-icon{ width:20px; height:20px; }
+.sb-note-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.sb-note-text strong{ font-size:15px; font-weight:650; }
+.sb-note-text span{ font-size:14px; color:var(--text-secondary); overflow-wrap:anywhere; }
+.sb-note-chevron{ color:var(--muted); display:grid; }
+.sb-note:hover strong, .sb-note:focus-visible strong{ color:var(--primary-light); }
+
+@media (max-width:900px){
+    /* The bar keeps the mark and name centred whatever sits on either side:
+       a + on the left, search and the bell on the right. */
+    .eos-mobile-topbar{ grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); }
+    .eos-mobile-quickadd{ grid-column:1; grid-row:1; justify-self:start; }
+    .eos-mobile-topbar-logo{ grid-column:2; grid-row:1; }
+    .eos-mobile-actions{ grid-column:3; grid-row:1; justify-self:end; display:flex; align-items:center; gap:4px; }
+    .eos-mobile-topbar-logo .brand-mark{ height:28px; }
+    .eos-mobile-topbar-logo .brand-word{ font-size:.88rem; letter-spacing:.04em; }
+
+    /* The glossier toolbar: a lit top edge, a soft specular band, a deeper
+       tone underneath, and stronger blur with a colour lift so what scrolls
+       beneath shows through. The open tab is a lit glass lens. */
+    .eos-bottomnav{
+        background:linear-gradient(180deg,rgba(104,140,120,.34) 0%,rgba(30,58,45,.5) 46%,rgba(12,28,21,.66) 100%);
+        backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
+        -webkit-backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
+        border:1px solid rgba(255,246,226,.24);
+        box-shadow:inset 0 1px 0 rgba(255,250,238,.5),inset 0 -1px 0 rgba(0,0,0,.3),inset 0 0 22px rgba(255,244,222,.05),0 20px 44px -16px rgba(0,0,0,.78),0 2px 8px rgba(0,0,0,.32);
+        overflow:hidden;
+    }
+    .eos-bottomnav::before{
+        content:"";
+        position:absolute;
+        left:5%;
+        right:5%;
+        top:1px;
+        height:48%;
+        border-radius:999px 999px 70% 70% / 999px 999px 100% 100%;
+        background:linear-gradient(180deg,rgba(255,250,238,.26),rgba(255,250,238,.05) 72%,transparent);
+        pointer-events:none;
+    }
+    .eos-bottomnav-item{ position:relative; z-index:1; color:rgba(238,232,216,.8); }
+    .eos-bottomnav-item.active{
+        color:#FFF3D6;
+        background:linear-gradient(180deg,rgba(255,240,208,.44),rgba(214,185,142,.22) 56%,rgba(214,185,142,.15));
+        box-shadow:inset 0 1px 0 rgba(255,250,238,.6),inset 0 0 0 1px rgba(236,214,176,.36),0 4px 10px -4px rgba(0,0,0,.5);
+    }
+    .eos-bottomnav-item.active .ui-icon{ color:#FFF3D6; }
+}
+
+/* The name steps away before it can touch the buttons (the bar now holds two on the right). */
+@container sbmtop (max-width:344px){
+    .eos-mobile-topbar-logo .brand-word{ display:none; }
+    .eos-mobile-topbar-logo .brand-mark{ height:30px; }
+}
+@container sbmtop (max-width:300px){
+    .eos-mobile-topbar-logo .brand-mark{ height:28px; }
+}
+
+/* ==========================================================
+   TODAY: THE WORKOUT CONTOUR (premium shell, step 2, 2026-10-15)
+   A structured run is drawn as its effort profile under the title
+   (js/workoutContour.js). The buttons and the fuel line stay as they were.
+   ========================================================== */
+.wk-contour{ margin:12px 0 4px; }
+.wk-contour-svg{ display:block; width:100%; height:112px; overflow:visible; }
+@media (min-width:901px){ .wk-contour-svg{ height:140px; } }
+.wk-card.is-done .wk-contour-svg{ opacity:.7; }
+
+/* ==========================================================
+   TODAY, PREMIUM (redesign step 2, 2026-10-15). Scoped to
+   body.page-today so the same classes on Coach, Progress and Train keep
+   their look until their own steps. The workout is the one raised surface
+   (a layered card with a lit edge); everything else is a quiet section
+   under a hairline. Headings are plain, not small capitals.
+   ========================================================== */
+
+/* The greeting stands alone: no "Welcome Back" label above it, no glow behind it. */
+body.page-today .eos-today-eyebrow{ display:none; }
+body.page-today .eos-today-hero::before{ display:none; }
+
+/* Plain section headings and dates (no mono capitals above content). */
+html body.page-today .eos-today-card-header h2{
+    font:650 18px/1.25 var(--font-body);
+    letter-spacing:0;
+    text-transform:none;
+    color:var(--text);
+}
+body.page-today .eos-today-date{
+    font:500 14px/1.3 var(--font-body);
+    letter-spacing:0;
+    text-transform:none;
+    color:var(--text-secondary);
+}
+body.page-today .wk-kicker{
+    font:600 13px/1.3 var(--font-body);
+    letter-spacing:0;
+    text-transform:none;
+    color:var(--text-secondary);
+}
+body.page-today .wk-card.is-done .wk-kicker{ color:var(--sage); }
+
+/* The workout: one raised, layered surface with a lit top edge. */
+body.page-today #todayCard{
+    background:linear-gradient(180deg,var(--surface-light),var(--surface) 58%);
+    border:1px solid rgba(236,230,212,.09);
+    border-radius:30px;
+    padding:20px 20px 22px;
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.07),0 2px 6px rgba(0,0,0,.26),0 28px 56px -28px rgba(0,0,0,.75);
+}
+body.page-today .wk-card,
+body.page-today .wk-card.is-done{ border-top:0; padding-top:6px; }
+
+/* Everything else on Today: a quiet section under a hairline. */
+body.page-today .eos-today-card:not(#todayCard),
+body.page-today .eos-nutrition-snap,
+body.page-today .rd-card,
+body.page-today .tw-card{
+    background:none;
+    border:0;
+    border-top:1px solid var(--border);
+    border-radius:0;
+    box-shadow:none;
+    padding:22px 0 0;
+    margin:30px 0 0;
+}
+body.page-today .today-col > section:first-child{ margin-top:0; border-top:0; padding-top:0; }
+
+/* This week: today's row is a soft tinted lens, not a coloured side line. */
+body.page-today .wk-day.is-today{
+    background:linear-gradient(180deg,rgba(214,185,142,.09),rgba(214,185,142,.02));
+    border-left:0;
+    border-radius:16px;
+    padding-left:12px;
+    padding-right:8px;
+}
+
+/* The three numbers: a row with dividers, not three boxes. */
+body.page-today .stats{ gap:0; margin-top:30px; border-top:1px solid var(--border); }
+body.page-today .stats .stat-card{
+    background:none;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    transform:none;
+    padding:16px 12px 6px 0;
+}
+body.page-today .stats .stat-card::before{ display:none; }
+body.page-today .stats .stat-card + .stat-card{ border-left:1px solid var(--border); padding-left:16px; }
+body.page-today .stats .stat-card:hover{ transform:none; box-shadow:none; border-color:var(--border); }

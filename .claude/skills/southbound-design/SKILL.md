@@ -16,7 +16,7 @@ Eddie's words: "More like A, but keep my original palette." A = trail-editorial,
 
 ## Type
 - **Headlines:** `var(--font-display)` = Big Shoulders Display, **always uppercase** (the font has lowercase; every rule using it sets `text-transform:uppercase`). Weight 800–900, line-height ~0.9–1. Use for page titles, the greeting, workout names, big numbers.
-- **Text:** `var(--font-body)` = Instrument Sans, 15–16px, 1.45–1.55 line height. Sentences in normal case.
+- **Text:** `var(--font-body)` = Albert Sans (Instrument Sans is the fallback), 15–16px, 1.45–1.55 line height. Sentences in normal case.
 - **Labels and data:** `var(--font-mono)` = IBM Plex Mono 500/600, 10.5–12px, uppercase, letter-spacing .1–.14em, for kickers ("TODAY · THU OCT 15"), paces, splits, dates, counts.
 - Never put long text in the display font; never more than one display headline per card.
 

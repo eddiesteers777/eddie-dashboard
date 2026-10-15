@@ -11,6 +11,7 @@
 ========================================== */
 
 import { icon } from "./icons.js";
+import { contourParts, contourSvg } from "./workoutContour.js";
 import { toggleDone, workoutLink, fuelForItem } from "./weekData.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, friendlyError } from "./ui.js";
@@ -64,6 +65,15 @@ function fuelLine(item) {
 // instead of a box; Start / Log it is the main button until it's done.
 const KIND_WORD = { run: "Run", strength: "Strength", cross: "Cross-training", session: "Session" };
 
+// The effort contour of a structured run (js/workoutContour.js), drawn from its steps under the title.
+function contourBlock(item) {
+    const parts = item.kind === "run" ? contourParts(item.workout) : [];
+    if (!parts.length) return "";
+    const id = `wc-${String(item.id).replace(/[^a-zA-Z0-9]/g, "-")}`;
+    const label = `Effort profile: ${parts.map(p => p.title).join(", ")}`;
+    return `<div class="wk-contour">${contourSvg(parts, { id, label })}</div>`;
+}
+
 export function workoutCardHtml(item) {
     const k = KIND[item.kind] || KIND.run;
     const link = workoutLink(item);
@@ -80,6 +90,7 @@ export function workoutCardHtml(item) {
                 </div>
                 ${bigNumber}
             </div>
+            ${contourBlock(item)}
             ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
             ${changeNote(item) ? `<p class="wk-detail">${changeNote(item)}</p>` : ""}
             ${fuelLine(item)}

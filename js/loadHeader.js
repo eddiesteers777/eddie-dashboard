@@ -484,6 +484,10 @@ fetch("components/header.html")
 
         }
 
+        // The bell: what needs attention from the coach and the plan (js/notifications.js).
+        // Its buttons carry data-requires="client+updates", so the coach never sees one.
+        import("./notifications.js").then(m => m.initNotifications()).catch(() => {});
+
         document.addEventListener("keydown", event => {
             if (event.key !== "Escape") return;
             closeQuickAdd();
