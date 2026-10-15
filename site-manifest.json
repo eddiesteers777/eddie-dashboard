@@ -179,6 +179,8 @@
     "js/marathonCoros.js",
     "js/marathonCorosButton.js",
     "js/marathonData.js",
+    "js/marathonToday.js",
+    "js/marathonWeek.js",
     "js/messageThread.js",
     "js/messageView.js",
     "js/messages.js",
