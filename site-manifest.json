@@ -49,6 +49,8 @@
     "components/publicHeader.html"
   ],
   "scripts": [
+    "js/account.js",
+    "js/accountModel.js",
     "js/activeProgramSources.js",
     "js/analytics.js",
     "js/analyticsLayout.js",
