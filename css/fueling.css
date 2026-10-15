@@ -3038,3 +3038,17 @@ label.fuel-target-label{ display:block; cursor:pointer; }
 .fueling-page .fuel-btn,
 .fueling-page .fs-control input{ min-height:44px; }
 .fueling-page .fuel-myplans-link{ display:inline-flex; align-items:center; min-height:44px; }
+
+/* ==========================================================
+   THE COURSE MAP (after step 7, 2026-10-15; js/fuelCourse.js): the run as a
+   profile, the gels on the line, each bottle a shaded zone. Shown in the live
+   schedule and in the saved-plan sheet.
+   ========================================================== */
+
+.fs-map{ margin:6px 0 18px; }
+.fs-map-plot{ position:relative; }
+.fs-map svg{ display:block; width:100%; height:auto; }
+.fs-gel-tag{ position:absolute; transform:translate(-50%,-100%); font:650 13px/1.2 var(--font-body); color:var(--text); white-space:nowrap; pointer-events:none; text-shadow:0 0 5px var(--bg),0 0 5px var(--bg),0 0 8px var(--bg); }
+.fs-zone-tag{ position:absolute; bottom:6px; padding-left:8px; font:500 12.5px/1.2 var(--font-body); color:var(--text-secondary); white-space:nowrap; pointer-events:none; }
+.fs-map-axis{ display:flex; justify-content:space-between; gap:8px; margin-top:6px; font-size:12.5px; color:var(--text-secondary); }
+.fs-map-note{ margin:6px 0 0; font-size:13px; color:var(--text-secondary); }

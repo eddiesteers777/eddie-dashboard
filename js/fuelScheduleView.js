@@ -8,6 +8,7 @@
 
 import { formatClock, formatTsp, recipeParts } from "./fuelSchedule.js";
 import { fluidText, fluidWords } from "./fluidUnits.js";
+import { courseHtml } from "./fuelCourse.js";
 
 // The fluid unit for this render ("oz" | "ml"); set by scheduleHTML.
 let U = "oz";
@@ -26,9 +27,6 @@ function paceLabel(minPerMile) {
     return `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, "0")}`;
 }
 
-// Where along the run something happens, as a % of the bar.
-const pct = (min, duration) => (duration ? Math.min(100, Math.max(0, (min / duration) * 100)) : 0);
-
 function statsHTML(s) {
     const hours = s.durationMin / 60;
     const avgCarbs = hours ? Math.round(s.totals.carbs / hours) : 0;
@@ -46,38 +44,6 @@ function statsHTML(s) {
     return `<div class="fs-stats">${stats.map(([label, value, unit]) => `
         <div class="fs-stat"><span>${label}</span><strong>${value}<small>${unit}</small></strong></div>
     `).join("")}</div>`;
-}
-
-function courseHTML(s) {
-    const d = s.durationMin;
-    const d0 = d;
-    const bands = s.bottles.map(b => `
-        <div class="fs-course-band fs-band-${(b.n - 1) % 3}" style="left:${pct(b.startMin, d)}%;width:${pct(b.endMin, d) - pct(b.startMin, d)}%">
-            <span>B${b.n}</span>
-        </div>`).join("");
-    const sips = (s.sips || []).map(d => `
-        <div class="fs-course-band fs-band-sip" style="left:${pct(d.startMin, d0)}%;width:${pct(d.endMin, d0) - pct(d.startMin, d0)}%">
-            <span>D${d.n}</span>
-        </div>`).join("");
-    const gels = s.gels.map(g => `
-        <div class="fs-course-gel${g.caffeine ? " is-caffeine" : ""}" style="left:${pct(g.min, d)}%" title="Gel ${g.n}${g.mile != null ? ` · mile ${mi(g.mile)}` : ""} · ${formatClock(g.min)}">
-            <span>${g.n}</span>
-        </div>`).join("");
-    return `
-        <div class="fs-course" aria-hidden="true">
-            <div class="fs-course-track">${bands}${sips}${gels}</div>
-            <div class="fs-course-labels">
-                <span>Start</span>
-                ${s.distanceMi ? `<span>Mile ${mi(s.midMile ?? s.distanceMi / 2)}</span>` : `<span>${formatClock(d / 2)}</span>`}
-                <span>${s.distanceMi ? `${mi(s.distanceMi)} mi` : "Finish"} · ${formatClock(d)}</span>
-            </div>
-            <div class="fs-legend">
-                ${s.gels.length ? `<span><i class="fs-dot fs-dot-gel"></i>Gel</span>` : ""}
-                ${s.gels.some(g => g.caffeine) ? `<span><i class="fs-dot fs-dot-caffeine"></i>Caffeinated</span>` : ""}
-                ${s.bottles.length ? `<span><i class="fs-dot fs-dot-bottle"></i>Bottle</span>` : ""}
-                ${s.sips?.length ? `<span><i class="fs-dot fs-dot-sip"></i>Drink mix</span>` : ""}
-            </div>
-        </div>`;
 }
 
 function eventsHTML(s) {
@@ -221,7 +187,7 @@ export function scheduleHTML(s, { preWorkoutFood = "", unit = "oz", segmentContr
         <div class="fs">
             ${statsHTML(s)}
             ${s.warnings.length ? `<ul class="fs-warnings">${s.warnings.map(w => `<li>${esc(fluidWords(w, U))}</li>`).join("")}</ul>` : ""}
-            ${courseHTML(s)}
+            ${courseHtml(s, { fluid: fl })}
             ${pacingHTML(s, segmentControls)}
             ${preWorkoutFood ? `<div class="fs-mix"><span class="fs-mix-label">Before the run</span><span>${esc(preWorkoutFood)}</span></div>` : ""}
             <h3 class="fs-heading">Checkpoints</h3>

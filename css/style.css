@@ -4468,3 +4468,61 @@ body.page-today .stats .stat-card:hover{ transform:none; box-shadow:none; border
 .sb-account #loginBtn:hover,
 .sb-account #logoutBtn:hover{ transform:none; }
 .sb-account .sb-account-btn[style*="display:none"]{ display:none !important; }
+
+/* ==========================================================
+   THE SMALL DETAILS FROM THE DEMO (after step 7, 2026-10-15):
+   what each stretch of the workout is, the coach's line as a quote, the week as
+   a trail of dated check nodes, and the habits as small chips.
+   ========================================================== */
+
+/* Under the workout picture: each stretch named, as wide as the stretch (js/workoutContour.js). */
+.wk-contour-labels{ display:grid; margin-top:8px; font:500 13px/1.3 var(--font-body); color:var(--text-secondary); }
+.wk-contour-labels span{ min-width:0; padding-right:6px; }
+.wk-contour-labels b{ display:block; color:var(--text); font-weight:650; }
+.wk-contour-labels .is-last{ padding:0 0 0 6px; text-align:right; }
+
+/* The coach's one line for the workout, as a quote. */
+.wk-cue{ margin:14px 0 4px; padding:0 0 0 14px; border-left:2px solid rgba(214,185,142,.5); color:var(--text); font:italic 400 15.5px/1.5 var(--font-body); }
+.wk-cue cite{ display:block; margin-top:4px; font:500 13px/1.3 var(--font-body); font-style:normal; color:var(--text-secondary); }
+
+/* This week as a trail (js/weekTrail.js): seven dated nodes on a line. */
+.trail{ position:relative; display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); list-style:none; margin:14px 0 0; padding:0; }
+.trail::before{ content:""; position:absolute; left:7%; right:7%; top:21px; height:2px; border-radius:2px; background:rgba(236,230,212,.18); }
+.trail .day{ position:relative; display:grid; justify-items:center; gap:2px; min-width:0; }
+.trail .node{
+    width:44px;
+    height:44px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    border:2px solid rgba(236,230,212,.18);
+    background:var(--bg);
+    color:var(--text-secondary);
+    font:650 14px/1 var(--font-body);
+}
+.trail .node .trail-ic{ width:18px; height:18px; }
+.trail .rest .node{ width:14px; height:14px; margin:15px 0; }
+.trail .missed .node{ border-style:dashed; }
+.trail .done .node{ background:color-mix(in srgb, var(--sage) 24%, var(--bg)); border-color:var(--sage); color:var(--text); }
+.trail .today .node{ border-color:var(--primary); color:var(--primary-light); outline:1px solid rgba(214,185,142,.35); outline-offset:4px; }
+.trail .today.done .node{ border-color:var(--sage); color:var(--text); outline-color:rgba(160,187,156,.4); }
+.trail .day b{ margin-top:6px; font:650 13px/1.2 var(--font-body); color:var(--text); }
+.trail .trail-date{ font:500 12.5px/1.2 var(--font-body); color:var(--text-secondary); }
+.trail .today b, .trail .today .trail-date{ color:var(--primary-light); }
+
+/* Today's habits: small chips, a tap each; a done one is sage. */
+body.page-today .th-list{ display:flex; flex-wrap:wrap; gap:8px; }
+body.page-today .th-row{
+    width:auto;
+    min-height:44px;
+    padding:0 16px 0 10px;
+    gap:8px;
+    border:1px solid rgba(236,230,212,.18);
+    border-radius:999px;
+    background:transparent;
+    font-size:14.5px;
+}
+body.page-today .th-row.is-on{ background:rgba(160,187,156,.16); border-color:rgba(160,187,156,.45); }
+body.page-today .th-row.is-on .th-name{ color:var(--text); text-decoration:none; }
+body.page-today .th-check{ flex:0 0 22px; width:22px; height:22px; border-width:1.5px; border-radius:50%; }
+body.page-today .th-row.is-on .th-check{ background:var(--sage); border-color:var(--sage); }

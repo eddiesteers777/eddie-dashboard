@@ -1,7 +1,7 @@
 // Unit tests for the workout contour (js/workoutContour.js).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contourParts, contourSvg } from "../js/workoutContour.js";
+import { contourParts, contourSvg, contourLabels, contourLabelsHtml } from "../js/workoutContour.js";
 import { executionSteps } from "../js/runWorkout.js";
 
 const tempo = {
@@ -56,6 +56,28 @@ test("workout mode: finished parts in sage, the current part lit, the rest dimme
     assert.match(svg, /height="5" fill="#F4E2C0"/, "a bar marks where she is, so a short recovery still reads");
     const plain = contourSvg(contourParts(tempo), { id: "m" });
     assert.ok(!plain.includes("wc-lit)") && !plain.includes("#F4E2C0"), "without `active` nothing is lit or marked");
+});
+
+test("the labels under the picture read warm up, the main set, cool down, in the workout's own sizes", () => {
+    const labels = contourLabels(contourParts(tempo));
+    assert.deepEqual(labels.map(l => `${l.name} ${l.detail}`), ["Warm up 1.25 mi", "Main set 3 × 1 mi", "Cool down 1.25 mi"]);
+    assert.ok(labels[1].miles > labels[0].miles, "the main set is the widest stretch");
+});
+
+test("uneven reps give the main set's total, a timed jog never turns into estimated miles", () => {
+    const uneven = { sets: [{ repeat: 1, amount: 1, unit: "mi" }, { repeat: 1, amount: 2, unit: "mi" }] };
+    assert.equal(contourLabels(contourParts(uneven))[0].detail, "3 mi");
+    const timed = { sets: [{ repeat: 4, amount: 3, unit: "min", recovery: { amount: 90, unit: "m" } }] };
+    assert.equal(contourLabels(contourParts(timed))[0].detail, "4 × 3 min");
+    assert.deepEqual(contourLabels([]), []);
+});
+
+test("the labels are one row as wide as the picture, each label as wide as its stretch", () => {
+    const html = contourLabelsHtml(contourParts(tempo));
+    assert.match(html, /<div class="wk-contour-labels" style="grid-template-columns:minmax\(max-content,1\.250fr\) minmax\(max-content,[\d.]+fr\) minmax\(max-content,1\.250fr\)">/);
+    assert.match(html, /<span>Warm up <b>1\.25 mi<\/b><\/span>/);
+    assert.match(html, /<span class="is-last">Cool down <b>1\.25 mi<\/b><\/span>/);
+    assert.equal(contourLabelsHtml([]), "");
 });
 
 test("the picture is labelled with its parts for screen readers, and its ids are unique per card", () => {

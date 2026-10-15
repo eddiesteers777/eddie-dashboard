@@ -35,6 +35,7 @@ export function ridgeDays(week) {
             label: new Date(`${day.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" }),
             date: new Date(`${day.date}T12:00:00`).getDate(),
             miles: Math.round(miles * 10) / 10,
+            title: main?.title || "",
             level,
             kind,
             done: status === "done",
@@ -60,11 +61,12 @@ function outlineOf(days) {
     return d;
 }
 
-// "Thu 15: 6 mi run" for a screen reader, "Wed 14: rest" for a rest day.
-const DESCRIBE = d => `${d.label} ${d.date}: ${d.kind === "rest" ? "rest" : `${d.miles ? `${d.miles} mi ` : ""}${WORD[d.kind].toLowerCase()}`}`;
+// "Thu 15: 6 mi run" for a screen reader, "Wed 14: rest" for a rest day ("nothing logged" for what she did).
+const describe = (d, actual) => `${d.label} ${d.date}: ${d.kind === "rest" ? (actual ? "nothing logged" : "rest") : `${d.miles ? `${d.miles} mi ` : ""}${WORD[d.kind].toLowerCase()}`}`;
 
 // The ridge with its day labels under it: "Mon 12 / 4 mi". Ids are unique per page (`id`).
-export function weekRidgeHtml(week, { id = "wr" } = {}) {
+// `actual`: the picture of what she did (Train), not the plan: an empty day reads "—", not "Rest".
+export function weekRidgeHtml(week, { id = "wr", actual = false } = {}) {
     const days = ridgeDays(week);
     const top = outlineOf(days);
     const status = d => (d.status === "done" ? "S" : d.status === "today" ? "T" : "U");
@@ -77,10 +79,10 @@ export function weekRidgeHtml(week, { id = "wr" } = {}) {
         return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
     }).join("");
     const labels = days.map(d => {
-        const sub = d.kind === "rest" ? "Rest" : d.miles ? `${d.miles} mi` : WORD[d.kind];
+        const sub = d.kind === "rest" ? (actual ? "—" : "Rest") : d.miles ? `${d.miles} mi` : WORD[d.kind];
         return `<span class="${d.today ? "now" : ""}"><b>${d.label} ${d.date}</b><em>${sub}</em></span>`;
     }).join("");
-    const label = `This week as a profile, one peak per day by planned miles. ${days.map(DESCRIBE).join(", ")}.`;
+    const label = `This week as a profile, one peak per day by ${actual ? "miles run" : "planned miles"}. ${days.map(d => describe(d, actual)).join(", ")}.`;
     return `<div class="ridge">
         <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${label.replace(/"/g, "&quot;")}">
             <defs>

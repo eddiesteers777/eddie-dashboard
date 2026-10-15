@@ -16,6 +16,8 @@ import { emptyHtml, toast } from "./ui.js";
 import { volumeText, cleanSettings, SETTINGS_KEY } from "./strengthUnits.js";
 import { icon } from "./icons.js";
 import { can } from "./navAccess.js";
+import { weekRidgeHtml } from "./weekRidge.js";
+import { sessionShape, miniShapeSvg, actualWeek } from "./trainShapes.js";
 
 const PAGE = 15;
 const TAB_KEY = "sb-train-tab";
@@ -33,7 +35,7 @@ const unit = () => { try { return cleanSettings(JSON.parse(localStorage.getItem(
 const volume = lb => volumeText(lb, unit());
 const dayWords = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
-const state = { tab: null, filter: "all", shown: PAGE, feed: [], results: null, byId: new Map(), kinds: new Map() };
+const state = { tab: null, filter: "all", shown: PAGE, feed: [], results: null, byId: new Map(), kinds: new Map(), laps: new Map() };
 const KIND_TAG = { reps: "Rep by rep", splits: "Splits" };
 
 function tabs() {
@@ -67,6 +69,7 @@ function drawPanel() {
         const w = week.run;
         body = `
             <div class="tr-tiles">${tile(w.meters ? (w.meters / MILE).toFixed(1) : "0", "Miles")}${tile(String(w.count), w.count === 1 ? "Run" : "Runs")}${tile(w.longest ? (w.longest / MILE).toFixed(1) : "—", "Longest (mi)")}</div>
+            ${weekRidgeHtml(actualWeek(state.feed, week.from, localDay()), { id: "tr-ridge", actual: true })}
             <div class="tr-actions">
                 <a class="sb-btn sb-btn-primary" href="running.html">${icon("activity")} Open Running</a>
                 <a class="sb-btn sb-btn-secondary" href="running.html?addRun=1">${icon("plus")} Log a run</a>
@@ -101,10 +104,11 @@ function itemHtml(s) {
     if (s.share?.count) tags.push(s.share.via === "save" ? "Image saved" : "Shared");
     const line = sessionLine(s, { volume }) || (s.type === "run" ? milesText(s.run?.meters) : "");
     const editable = s.source === "strength" || s.source === "cross";
-    const iconName = s.type === "run" ? "activity" : s.type === "strength" ? "dumbbell" : "bike";
+    // The workout's own shape (js/trainShapes.js): its laps, its sets, or one even step.
+    const shape = miniShapeSvg(sessionShape(s, state.laps.get(s.id)), s.type);
     return `
         <li class="tr-item is-${s.type}" data-id="${esc(s.id)}">
-            <span class="tr-item-icon" aria-hidden="true">${icon(iconName)}</span>
+            <span class="tr-item-icon" aria-hidden="true">${shape}</span>
             <div class="tr-item-main">
                 <div class="tr-item-top"><strong>${esc(s.title)}</strong><time datetime="${esc(s.date)}">${esc(dayWords(s.date))}</time></div>
                 ${line ? `<span class="tr-item-line">${esc(line)}</span>` : ""}
@@ -155,10 +159,12 @@ async function refresh({ account = false } = {}) {
     }
     // Which runs already have their laps (Rep by rep / Splits), for the tags.
     try {
-        const { cardKindFor } = await import("./runCardData.js");
+        const { cardKindFor, lapsOf } = await import("./runCardData.js");
         const runs = state.feed.filter(s => s.type === "run").slice(0, 60);
         const kinds = await Promise.all(runs.map(s => cardKindFor(s).catch(() => null)));
         state.kinds = new Map(runs.map((s, i) => [s.id, kinds[i]]));
+        // Saved laps (COROS), for each run's shape: nothing is fetched here.
+        state.laps = new Map(runs.filter(s => s.id?.startsWith("c:")).map(s => [s.id, lapsOf(s.id.slice(2))?.laps || null]));
     } catch { /* tags are a nicety */ }
     drawAll();
 }

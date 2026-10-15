@@ -27,6 +27,15 @@ function milesOf(step) {
     return 0;
 }
 
+const trim = n => String(Math.round(n * 100) / 100);
+
+// A step's own size as she reads it: "1.25 mi", "2 min", "400 m" (never an estimate in other units).
+function sizeOf(step) {
+    const n = Number(step?.amount);
+    if (!Number.isFinite(n) || !["mi", "km", "m", "min"].includes(step?.unit)) return "";
+    return `${trim(n)} ${step.unit}`;
+}
+
 // Effort height, 0..MAX_LEVEL. A pace makes it precise (faster is higher);
 // without one, the phase sets it: easy parts low, work parts high.
 function levelOf(step, phase) {
@@ -43,19 +52,19 @@ export function contourParts(workout) {
     if (!workout) return [];
     const parts = [];
     if (workout.warmup) {
-        parts.push({ phase: "warmup", title: "Warm up", miles: milesOf(workout.warmup), level: levelOf(workout.warmup, "warmup") });
+        parts.push({ phase: "warmup", title: "Warm up", size: sizeOf(workout.warmup), miles: milesOf(workout.warmup), level: levelOf(workout.warmup, "warmup") });
     }
     (workout.sets || []).forEach((set, si) => {
         const reps = Math.max(1, Math.min(50, Math.round(Number(set.repeat) || 1)));
         for (let rep = 1; rep <= reps; rep++) {
-            parts.push({ phase: "work", title: reps > 1 ? `Rep ${rep} of ${reps}` : "Main set", miles: milesOf(set), level: levelOf(set, "work"), set: si + 1 });
+            parts.push({ phase: "work", title: reps > 1 ? `Rep ${rep} of ${reps}` : "Main set", size: sizeOf(set), miles: milesOf(set), level: levelOf(set, "work"), set: si + 1 });
             if (set.recovery && rep < reps) {
-                parts.push({ phase: "recovery", title: "Recover", miles: milesOf(set.recovery), level: levelOf(set.recovery, "recovery") });
+                parts.push({ phase: "recovery", title: "Recover", size: sizeOf(set.recovery), miles: milesOf(set.recovery), level: levelOf(set.recovery, "recovery") });
             }
         }
     });
     if (workout.cooldown) {
-        parts.push({ phase: "cooldown", title: "Cool down", miles: milesOf(workout.cooldown), level: levelOf(workout.cooldown, "cooldown") });
+        parts.push({ phase: "cooldown", title: "Cool down", size: sizeOf(workout.cooldown), miles: milesOf(workout.cooldown), level: levelOf(workout.cooldown, "cooldown") });
     }
     // Every step stays, one part each in the same order as executionSteps (js/runWorkout.js), so the
     // workout mode can light "step 3 of 7" by its index; a step with no length still gets a sliver.
@@ -110,6 +119,38 @@ export function contourSvg(parts, { id = "wc", label = "", active = null } = {})
         ${here}
         <path d="${top}" fill="none" stroke="#F2EDE1" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
     </svg>`;
+}
+
+// The labels under the picture, one per stretch of the run, each as wide as its stretch:
+// "Warm up 1.25 mi", "Main set 3 × 1 mi", "Cool down 1.25 mi". -> [{ name, detail, miles }]
+export function contourLabels(parts) {
+    const total = parts.reduce((t, p) => t + p.miles, 0);
+    if (!parts.length || !(total > 0)) return [];
+    const groups = [];
+    for (const p of parts) {
+        const key = p.phase === "warmup" ? "warmup" : p.phase === "cooldown" ? "cooldown" : "main";
+        const last = groups[groups.length - 1];
+        if (last && last.key === key) last.parts.push(p);
+        else groups.push({ key, parts: [p] });
+    }
+    return groups.map(g => {
+        const miles = g.parts.reduce((t, p) => t + p.miles, 0);
+        const works = g.parts.filter(p => p.phase === "work");
+        const same = works.length > 1 && works.every(w => w.size && w.size === works[0].size);
+        const detail = g.key === "main"
+            ? (same ? `${works.length} × ${works[0].size}` : works.length === 1 ? works[0].size : `${trim(miles)} mi`)
+            : g.parts[0].size;
+        return { name: { warmup: "Warm up", cooldown: "Cool down", main: "Main set" }[g.key], detail: detail || "", miles };
+    });
+}
+
+export function contourLabelsHtml(parts) {
+    const labels = contourLabels(parts);
+    if (!labels.length) return "";
+    // As wide as the stretch, but never narrower than its own words ("Cool down 1.25 mi" on one line).
+    const cols = labels.map(l => `minmax(max-content,${Math.max(l.miles, 0.05).toFixed(3)}fr)`).join(" ");
+    const last = labels.length - 1;
+    return `<div class="wk-contour-labels" style="grid-template-columns:${cols}">${labels.map((l, i) => `<span${labels.length > 1 && i === last ? ` class="is-last"` : ""}>${escAttr(l.name)}${l.detail ? ` <b>${escAttr(l.detail)}</b>` : ""}</span>`).join("")}</div>`;
 }
 
 function round(n) { return Math.round(n * 10) / 10; }

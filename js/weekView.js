@@ -11,7 +11,7 @@
 ========================================== */
 
 import { icon } from "./icons.js";
-import { contourParts, contourSvg } from "./workoutContour.js";
+import { contourParts, contourSvg, contourLabelsHtml } from "./workoutContour.js";
 import { toggleDone, workoutLink, fuelForItem } from "./weekData.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, friendlyError } from "./ui.js";
@@ -71,7 +71,13 @@ function contourBlock(item) {
     if (!parts.length) return "";
     const id = `wc-${String(item.id).replace(/[^a-zA-Z0-9]/g, "-")}`;
     const label = `Effort profile: ${parts.map(p => p.title).join(", ")}`;
-    return `<div class="wk-contour">${contourSvg(parts, { id, label })}</div>`;
+    return `<div class="wk-contour">${contourSvg(parts, { id, label })}${contourLabelsHtml(parts)}</div>`;
+}
+
+// The coach's one line for this workout, as a quote under the details (the workout page shows it too).
+function cueBlock(item) {
+    const cue = String(item.workout?.cue || "").trim();
+    return cue ? `<blockquote class="wk-cue">“${esc(cue)}”<cite>${esc(item.fromCoach ? "Your coach" : "Coach cue")}</cite></blockquote>` : "";
 }
 
 export function workoutCardHtml(item) {
@@ -92,6 +98,7 @@ export function workoutCardHtml(item) {
             </div>
             ${contourBlock(item)}
             ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            ${cueBlock(item)}
             ${changeNote(item) ? `<p class="wk-detail">${changeNote(item)}</p>` : ""}
             ${fuelLine(item)}
             ${item.kind === "strength" && item.actual && item.done ? `<p class="wk-logged">${icon("checkCircle")} Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`

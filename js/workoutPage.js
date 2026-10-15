@@ -34,7 +34,7 @@ import { QUEUED_NOTE } from "./offlineWrite.js";
 import { toast, sbConfirm, sbAlert, friendlyError, emptyHtml } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
-import { contourParts, contourSvg } from "./workoutContour.js";
+import { contourParts, contourSvg, contourLabelsHtml } from "./workoutContour.js";
 import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
 import { renderEmojiText } from "./emoji.js";
@@ -77,7 +77,7 @@ const title = () => (/^Run\/walk/.test(state.day.session || "") ? "Run/walk" : R
 function contourHtml(workout) {
     const parts = contourParts(workout);
     if (!parts.length) return "";
-    return `<div class="wo-contour">${contourSvg(parts, { id: "wo-plan", label: `Effort profile: ${parts.map(p => p.title).join(", ")}` })}</div>`;
+    return `<div class="wo-contour">${contourSvg(parts, { id: "wo-plan", label: `Effort profile: ${parts.map(p => p.title).join(", ")}` })}${contourLabelsHtml(parts)}</div>`;
 }
 
 function stepsHtml(workout) {

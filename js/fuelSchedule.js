@@ -505,6 +505,13 @@ export function buildSchedule(input) {
         // How the mile markers were placed: the workout's paces, or why not.
         paced: paced ? { parts: (input.segments || []).length, partsMiles: paced.partsMiles }
             : timeline?.mismatch ? { mismatch: true, partsMiles: timeline.partsMiles } : null,
+        // The workout's own effort, stretch by stretch, for the course map (js/fuelCourse.js):
+        // [{ fromMin, toMin, label, hard, minPerMile }] (minPerMile null for a standing rest); null without segments.
+        profile: paced ? paced.points.slice(1).map((p, i) => {
+            const a = paced.points[i];
+            const dMi = p.mi - a.mi;
+            return { fromMin: a.min, toMin: p.min, label: p.label, hard: !!p.hard, minPerMile: dMi > 0.001 ? (p.min - a.min) / dMi : null };
+        }) : null,
         startMin,
         // The mile reached halfway through the time (the course bar's middle).
         midMile: mileAt(durationMin / 2),
