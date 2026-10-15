@@ -331,7 +331,8 @@
     "js/workoutExecution.js",
     "js/workoutFuel.js",
     "js/workoutPage.js",
-    "js/workoutResults.js"
+    "js/workoutResults.js",
+    "js/workoutRibbon.js"
   ],
   "styles": [
     "css/analytics.css",
