@@ -63,10 +63,10 @@ test("the same trail draws it: a node ticks through the plan's own attributes, n
         canToggle: item => item.source.type === "marathon",
         toggleAttrs: item => `data-complete-week="${item.week}" data-complete-day="${item.dayKey}"`
     });
-    assert.match(html, /<button type="button" class="node" data-complete-week="13" data-complete-day="Thu" aria-pressed="false" aria-label="Mark Thu 15, 10 mi 6mi @ marathon pace, done">10<\/button>/);
+    assert.match(html, /<button type="button" class="bar" style="height:\d+px" data-complete-week="13" data-complete-day="Thu" aria-pressed="false" aria-label="Mark Thu 15, 10 mi 6mi @ marathon pace, done">/);
     assert.match(html, /data-complete-week="13" data-complete-day="Mon" aria-pressed="true"/);
     assert.ok(!html.includes("data-toggle"), "no client tick attribute");
-    assert.equal((html.match(/<button /g) || []).length, 6, "six runs; the rest day is a plain node");
+    assert.equal((html.match(/<button /g) || []).length, 6, "six runs; the rest day is a plain bar");
 });
 
 test("dates are local days", () => {
