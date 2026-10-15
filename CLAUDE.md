@@ -81,6 +81,9 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 - **Drawn assets are generated:** reaction emojis (`scripts/build-emoji.mjs`, list in `js/emoji.js`) and habit icons (`scripts/build-habit-icons.mjs`, list in `js/habitIconSet.js`). Edit the script and re-run it, never the SVGs. Reactions are for feeling only, never in place of a working icon or words.
 - **Icons:** `<span data-icon="name">` (`js/icons.js`); content inserted later needs `import("./icons.js").then(m => m.hydrate())`.
 
+### Frontend Quality
+For UI work, apply the installed Frontend Design skill and Vercel Web Design Guidelines when relevant. Use Impeccable's design feedback to catch visual-quality issues, and use Playwright to verify meaningful changes in the actual browser. Preserve Southbound's existing brand identity unless I request a rebrand. Prefer the main agent over subagents for routine design tasks; do not launch extra agents unless the task genuinely benefits from parallel work.
+
 ### Copy and feedback
 - A dash in visible text is a real one (" — "), never " -- "; the product is "Southbound", never "EddieOS". A static test checks both.
 - **Never use the browser's `alert/confirm/prompt`** (a static test fails). Use `js/ui.js`: `toast()`, `sbAlert` / `sbConfirm` / `sbPrompt` / `sbChoose` / `sbScale` (async `<dialog>`s; destructive ones pass `danger: true`), `friendlyError(error, "save that")`, `loadingHtml()` / `emptyHtml(...)`. Inline page scripts use `window.SB`.
