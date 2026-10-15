@@ -310,6 +310,7 @@
     "js/weekChanges.js",
     "js/weekData.js",
     "js/weekModel.js",
+    "js/weekRidge.js",
     "js/weekStory.js",
     "js/weekView.js",
     "js/weekly-review.js",
