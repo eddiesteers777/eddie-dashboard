@@ -121,6 +121,33 @@ export function workoutCardHtml(item) {
         </div>`;
 }
 
+// The coach's own run for today (the marathon plan), in the same card as a client's: the picture and its
+// labels first, the name with the miles, the details, one full-width button, and a quiet Mark done. The marathon
+// plan keeps its own done record, so the button carries the week and the day (js/app.js ticks it).
+export function coachRunCardHtml(item, { href = "marathon.html" } = {}) {
+    const picture = contourBlock(item);
+    const done = Boolean(item.done);
+    const bigNumber = item.miles ? `<span class="wk-big">${item.miles}<small> mi</small></span>` : "";
+    const mark = `<button type="button" class="wk-done is-secondary${done ? " is-done" : ""}" data-complete-week="${esc(item.week)}" data-complete-day="${esc(item.dayKey)}"
+        aria-pressed="${done}" aria-label="${done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`}">
+        ${icon(done ? "checkCircle" : "check")}<span>${done ? "Done" : "Mark done"}</span>
+    </button>`;
+    return `
+        <div class="wk-card is-run${done ? " is-done" : ""}${picture ? " has-contour" : ""}">
+            ${picture}
+            <div class="wk-card-top">
+                <div class="wk-card-title">
+                    ${picture ? "" : `<span class="wk-kicker" style="--kind:${KIND.run.color}">${icon(KIND.run.icon)}Run · Marathon plan</span>`}
+                    <strong>${esc(item.title)}</strong>
+                </div>
+                ${bigNumber}
+            </div>
+            ${item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            <div class="wk-actions wk-actions-stack"><a class="sb-btn ${done ? "sb-btn-secondary" : "sb-btn-primary"}" href="${esc(href)}">Open run ${icon("chevronRight")}</a></div>
+            <div class="wk-actions-row">${mark}</div>
+        </div>`;
+}
+
 function itemLine(item) {
     const k = KIND[item.kind] || KIND.run;
     const miles = item.kind === "run" && item.miles && item.title !== "Logged run" ? `${item.miles} mi ` : "";

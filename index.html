@@ -108,6 +108,22 @@
         </section>
 
         <!-- ==========================================
+             This week: a client's (js/todayClient.js) or the coach's marathon week (js/coachToday.js).
+             Right under today's card, so it follows the day it belongs to.
+        =========================================== -->
+
+        <section id="weekSection" class="eos-today-card wk-week-card" hidden>
+
+            <div class="eos-today-card-header">
+                <h2>This Week</h2>
+                <a href="plan.html" class="wk-see-all" id="weekSeeAll">Full week <span data-icon="chevronRight"></span></a>
+            </div>
+            <p id="weekSummary" class="wk-summary"></p>
+            <div id="weekList"></div>
+
+        </section>
+
+        <!-- ==========================================
              Readiness (js/readinessCard.js): HRV, resting HR,
              sleep, recovery + the morning check-in
         =========================================== -->
@@ -134,21 +150,6 @@
                 <button type="button" class="ft-manage-btn" id="featuredTrainingManage">Customize</button>
             </div>
             <div id="featuredTrainingBody"></div>
-        </section>
-
-        <!-- ==========================================
-             This week (clients only -- js/todayClient.js)
-        =========================================== -->
-
-        <section id="weekSection" class="eos-today-card wk-week-card" hidden>
-
-            <div class="eos-today-card-header">
-                <h2>This Week</h2>
-                <a href="plan.html" class="wk-see-all" id="weekSeeAll">Full week <span data-icon="chevronRight"></span></a>
-            </div>
-            <p id="weekSummary" class="wk-summary"></p>
-            <div id="weekList"></div>
-
         </section>
 
         <!-- "Still right?" -- one question that keeps the client's

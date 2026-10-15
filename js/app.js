@@ -299,6 +299,38 @@ function renderPhaseStatus() {
 ========================================== */
 
 let clientTodayModule = null;
+// The coach's card and marathon week (js/coachToday.js): null until loaded, false if it failed (the plain rows stay).
+let coachTodayModule = null;
+
+// Mark Done / undo for the marathon run, from the card's button or a week-row node (both carry the week and the day).
+function onCompleteClick(event) {
+    const button = event.target.closest("[data-complete-week]");
+    if (!button) return;
+
+    event.preventDefault();
+    const w = button.dataset.completeWeek;
+    const dayKey = button.dataset.completeDay;
+
+    const progress = loadProgress();
+    if (!progress[w]) progress[w] = {};
+    progress[w][dayKey] = !progress[w][dayKey];
+
+    localStorage.setItem("training-progress", JSON.stringify(progress));
+    import("./cloudSync.js")
+        .then(({ pushToCloud }) => pushToCloud())
+        .catch((error) => console.warn("Cloud progress sync unavailable:", error));
+
+    renderToday();
+
+    // Just marked done: how hard was it? (1-10, the athlete model's effort,
+    // js/effortCard.js). Goes on today's watch run, or waits for it.
+    if (progress[w][dayKey]) {
+        const d = new Date();
+        const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        import("./effortCard.js").then(m => m.askRunEffort(date))
+            .catch(error => console.error("Southbound: effort question failed to load.", error));
+    }
+}
 
 function renderToday() {
     // Clients: today's workout + this week, from every source
@@ -337,6 +369,18 @@ function renderToday() {
             month: "long",
             day: "numeric"
         });
+    }
+
+    // The coach's card and marathon week (js/coachToday.js): load it first, then draw.
+    if (coachTodayModule === null) {
+        import("./coachToday.js")
+            .then(m => { coachTodayModule = m; renderToday(); })
+            .catch(error => { console.error("Southbound: coach Today card failed to load.", error); coachTodayModule = false; renderToday(); });
+        return;
+    }
+    if (coachTodayModule) {
+        try { coachTodayModule.renderCoachWeek({ today: localIso(today) }); }
+        catch (error) { console.error("Southbound: marathon week failed to draw.", error); }
     }
 
     const items = [];
@@ -391,6 +435,7 @@ function renderToday() {
             detail: `${dayData.miles} mi${dayData.pace ? ` @ ${dayData.pace}` : ""}${dayData.race ? " — RACE DAY" : ""}`,
             link: "marathon.html",
             isRun: true,
+            data: dayData,
             week,
             dayKey,
             done: !!(progress[week] && progress[week][dayKey])
@@ -499,7 +544,9 @@ function renderToday() {
         return;
     }
 
-    container.innerHTML = items.map(item => item.isRun ? `
+    // The run first (as a card, with its picture); the rest stay as rows under it.
+    items.sort((a, b) => Number(Boolean(b.isRun)) - Number(Boolean(a.isRun)));
+    container.innerHTML = items.map(item => item.isRun && coachTodayModule ? `<div class="wk-today-cards">${coachTodayModule.runCard(item)}</div>` : item.isRun ? `
         <div class="eos-today-item eos-today-item-run">
             <a href="${item.link}" class="eos-today-item-link">
                 <span class="eos-today-item-icon" style="color:${item.color}">${item.icon}</span>
@@ -526,36 +573,12 @@ function renderToday() {
         </a>
     `).join("");
 
-    if (!container.dataset.completeBound) {
-        container.dataset.completeBound = "true";
-        container.addEventListener("click", (event) => {
-            const button = event.target.closest("[data-complete-week]");
-            if (!button) return;
-
-            event.preventDefault();
-            const w = button.dataset.completeWeek;
-            const dayKey = button.dataset.completeDay;
-
-            const progress = loadProgress();
-            if (!progress[w]) progress[w] = {};
-            progress[w][dayKey] = !progress[w][dayKey];
-
-            localStorage.setItem("training-progress", JSON.stringify(progress));
-            import("./cloudSync.js")
-                .then(({ pushToCloud }) => pushToCloud())
-                .catch((error) => console.warn("Cloud progress sync unavailable:", error));
-
-            renderToday();
-
-            // Just marked done: how hard was it? (1-10, the athlete model's effort,
-            // js/effortCard.js). Goes on today's watch run, or waits for it.
-            if (progress[w][dayKey]) {
-                const d = new Date();
-                const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                import("./effortCard.js").then(m => m.askRunEffort(date))
-                    .catch(error => console.error("Southbound: effort question failed to load.", error));
-            }
-        });
+    // The card's button and the week row's nodes both tick the marathon run through one handler.
+    for (const el of [container, document.getElementById("weekList")]) {
+        if (el && !el.dataset.completeBound) {
+            el.dataset.completeBound = "true";
+            el.addEventListener("click", onCompleteClick);
+        }
     }
 }
 

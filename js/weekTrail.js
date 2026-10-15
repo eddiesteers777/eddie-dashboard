@@ -30,7 +30,11 @@ function nodeOf(d, rest) {
 // `canToggle(item)` (js/weekView.js): a day with exactly one workout she can tick off gets a node that is a button
 // (data-toggle, the same handler as the Plan list); rest days, days with two workouts and a run logged by the
 // watch or the workout page stay plain nodes.
-export function weekTrailHtml(week, { canToggle = () => false } = {}) {
+// `toggleAttrs(item)` is the attribute a tapped node carries (default: the client's data-toggle); the coach's
+// marathon week taps through its own progress record (js/coachToday.js).
+const clientToggle = item => `data-toggle="${esc(item.id)}"`;
+
+export function weekTrailHtml(week, { canToggle = () => false, toggleAttrs = clientToggle } = {}) {
     const facts = ridgeDays(week);
     const days = week.days.map((day, i) => {
         const d = facts[i];
@@ -41,7 +45,7 @@ export function weekTrailHtml(week, { canToggle = () => false } = {}) {
         const workouts = day.items.filter(item => item.kind !== "session" && item.source?.type !== "log");
         const tick = workouts.length === 1 && canToggle(workouts[0]) ? workouts[0] : null;
         const node = tick
-            ? `<button type="button" class="node" data-toggle="${esc(tick.id)}" aria-pressed="${Boolean(tick.done)}" aria-label="${esc(`Mark ${d.label} ${d.date}, ${what}, ${tick.done ? "not done" : "done"}`)}">${nodeOf(d, rest)}</button>`
+            ? `<button type="button" class="node" ${toggleAttrs(tick)} aria-pressed="${Boolean(tick.done)}" aria-label="${esc(`Mark ${d.label} ${d.date}, ${what}, ${tick.done ? "not done" : "done"}`)}">${nodeOf(d, rest)}</button>`
             : `<span class="node" aria-hidden="true">${nodeOf(d, rest)}</span>`;
         const spoken = tick ? "" : `<span class="sr-only">${esc(`${d.label} ${d.date}: ${what}, ${status}`)}</span>`;
         return `<li class="${cls}">${node}<b>${esc(d.label)}</b><span class="trail-date" aria-hidden="true">${d.date}</span>${spoken}</li>`;
