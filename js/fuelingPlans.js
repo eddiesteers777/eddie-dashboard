@@ -27,7 +27,7 @@ import {
     PROFILE_KEY, PROFILE_FIELDS, readProfile, setProfileFields, clearProfileField, profileValue, fieldStatus,
     sessionFromProfile, validateField, STATUS_WORDS, weightIn, weightFromDisplay, ASSUMED, FUEL_PREFERENCES
 } from "./fuelProfile.js";
-import { profileKnowsEssentials, detailsSummary, detailsBarText, startsFolded } from "./fuelDetails.js";
+import { profileKnowsEssentials, detailsSummary, detailsBarText, startsFolded, tuneSummaries } from "./fuelDetails.js";
 import {
     DRAFT_PREFIX, draftKey, newDraftId, createDraft, updateDraft, renameDraft, duplicateDraft, deletedMarker,
     parseDraft, listDrafts, draftSummary, draftTitle, STATUS_LABELS, agoText, isMeaningful, sameState
@@ -226,6 +226,7 @@ function refreshTags() {
         tag.title = t.title;
     }
     if (detailsShown) paintDetailsBar();
+    paintTuneRows();
 }
 
 /* ---------- your details (folded cards) ---------- */
@@ -237,18 +238,29 @@ function selectText(id) {
     const el = $(id);
     return el?.tagName === "SELECT" ? el.value : "";
 }
-// What the plan is using right now, as the words under "Your details".
-function detailsWords() {
+// What the plan is using right now (the page's own fields), in the shape js/fuelDetails.js reads.
+function detailsInput() {
     const prefs = [...document.querySelectorAll("#fuelPreferences input[type=checkbox]:checked")].map(c => c.parentElement?.textContent.trim().toLowerCase()).filter(Boolean);
-    return detailsSummary({
+    return {
         weight: $("bodyWeight")?.value, weightUnit: A?.weightUnit?.(),
         currentCarbIntake: $("currentCarbIntake")?.value,
         tolerance: selectText("tolerance"), stomach: selectText("stomachSensitivity"),
+        temperature: $("temperature")?.value, humidity: $("humidity")?.value,
         sweatRate: selectText("sweatRate"), sweatRateMeasured: $("sweatRateMeasured")?.value, fluidUnit: A?.fluidUnit?.(),
         sweatSodium: selectText("sweatSodium"), sweatSodiumMeasured: $("sweatSodiumMeasured")?.value,
         typicalSodiumIntake: $("typicalSodiumIntake")?.value,
         preferences: prefs, caffeine: Boolean($("caffeineWanted")?.checked)
-    });
+    };
+}
+// The words under "Your details".
+function detailsWords() { return detailsSummary(detailsInput()); }
+// The one line under each Tune it row (the answer-first page): what the plan is using right now.
+function paintTuneRows() {
+    const words = tuneSummaries(detailsInput());
+    for (const [id, text] of [["fuelSumYou", words.you], ["fuelSumConditions", words.conditions], ["fuelSumSodium", words.sodium], ["fuelSumCarry", words.carry]]) {
+        const el = $(id);
+        if (el) el.textContent = text;
+    }
 }
 function paintDetailsBar() {
     const bar = $("fuelDetailsBar");
@@ -658,6 +670,7 @@ function wire() {
         if (AUTO_PROFILE.includes(t.id)) onProfileInput(t.id);
         else if (t.closest("#fuelPreferences")) onProfileInput("fuelPreferences");
         else if (TAGGED.includes(t.id)) refreshTags();
+        if (t.closest("#fuelTunePanel")) paintTuneRows();
         noteUserEdit();
     };
     main.addEventListener("input", onEdit, true);
@@ -669,6 +682,7 @@ function wire() {
     });
 
     $("fuelDetailsToggle")?.addEventListener("click", toggleDetails);
+    paintTuneRows();
 
     // Draft and banner actions.
     document.addEventListener("click", async event => {

@@ -725,7 +725,7 @@ function renderTypedNote() {
         el = document.createElement("p");
         el.id = "fuelTypedNote";
         el.className = "fuel-note fuel-typed-note";
-        $("calcNote").after(el);
+        ($("calcNote").closest("details") || $("calcNote")).after(el);
     }
     const words = { carbsPerHour: ["carbs", v => `${v} g/hr`], fluidPerHour: ["fluid", v => `${fl(v)}/hr`], sodiumPerHour: ["sodium", v => `${v} mg/hr`] };
     const parts = Object.entries(typedTargets)

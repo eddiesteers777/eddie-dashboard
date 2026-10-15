@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { profileKnowsEssentials, detailsSummary, detailsBarText, startsFolded, ESSENTIAL_KEYS } from "../js/fuelDetails.js";
+import { profileKnowsEssentials, detailsSummary, detailsBarText, startsFolded, tuneSummaries, ESSENTIAL_KEYS } from "../js/fuelDetails.js";
 import { resetProfile, setProfileFields } from "../js/fuelProfile.js";
 
 const profile = values => setProfileFields(resetProfile(), values, 1000).profile;
@@ -62,4 +62,31 @@ test("folded only for someone whose profile knows them, who hasn't kept it open,
     assert.equal(startsFolded({ known: true, choice: "open" }), false, "their own choice wins");
     assert.equal(startsFolded({ known: true, choice: "folded" }), true);
     assert.equal(startsFolded({ known: true, hasProblem: true }), false, "a number to check is never hidden");
+});
+
+test("each Tune it row says in one line what the plan is using", () => {
+    const s = tuneSummaries({ weight: "165", weightUnit: "lb", tolerance: "moderate", stomach: "normal", currentCarbIntake: "40",
+        temperature: "75", humidity: "55", sweatRate: "moderate", sweatSodium: "average", typicalSodiumIntake: "300",
+        preferences: ["gels", "chews"], caffeine: true });
+    assert.equal(s.you, "165 lb · moderate fueling tolerance · normal stomach · 40 g/hr carbs now");
+    assert.equal(s.conditions, "75°F · 55% humidity · average sweater");
+    assert.equal(s.sodium, "average salty sweat · 300 mg/hr now");
+    assert.equal(s.carry, "gels, chews · caffeine on");
+});
+
+test("a measured sweat number beats the guess, in the athlete's own unit", () => {
+    const s = tuneSummaries({ sweatRate: "high", sweatRateMeasured: "28", fluidUnit: "oz", sweatSodium: "heavy", sweatSodiumMeasured: "1100" });
+    assert.equal(s.conditions, "sweats 28 oz/hr (measured)");
+    assert.equal(s.sodium, "sweat sodium 1100 mg/L (measured)");
+    assert.equal(tuneSummaries({ sweatRateMeasured: "800", fluidUnit: "ml" }).conditions, "sweats 800 ml/hr (measured)");
+});
+
+test("an empty row says so in words, never blank, and nothing is invented", () => {
+    const s = tuneSummaries({});
+    assert.equal(s.you, "Not filled in yet, so it is estimated");
+    assert.equal(s.conditions, "Not filled in yet, so it is estimated");
+    assert.equal(s.sodium, "Not sure about your sweat");
+    assert.equal(s.carry, "no preference · no caffeine");
+    assert.equal(tuneSummaries({ currentCarbIntake: "0", typicalSodiumIntake: "0" }).you, "Not filled in yet, so it is estimated", "zero is not an answer");
+    assert.equal(tuneSummaries().carry, "no preference · no caffeine");
 });

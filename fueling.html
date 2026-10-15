@@ -49,25 +49,11 @@
 
             <div class="sb-eyebrow">Health</div>
 
-            <h1>
+            <h1>Fueling calculator</h1>
 
-                Endurance Fueling
+            <p class="page-subtitle">Carbs, fluid and sodium for any run, and when to take them.</p>
 
-            </h1>
-
-            <p class="page-subtitle">
-
-                Build your fueling plan. Train your gut. Race with confidence.
-
-            </p>
-
-            <p class="page-blurb">
-
-                Enter a workout or race and this builds your carb, fluid and sodium
-                targets, a gel + homemade drink breakdown, and a mile-by-mile race-day
-                schedule you can adjust to fit what actually works for your gut.
-
-            </p>
+            <p class="page-blurb">Say what you are running and the plan builds itself. Then tune it to you: your body, the weather, what you carry. It works the same whether or not you have an account.</p>
 
         </section>
 
@@ -205,13 +191,13 @@
              SECTION 1 — SESSION INPUTS
         ============================================= -->
 
-        <section class="fuel-panel">
+        <section class="fuel-panel fx-run">
 
             <div class="fuel-panel-header">
 
                 <h2>
 
-                    Session Inputs
+                    Your run
 
                 </h2>
 
@@ -310,248 +296,9 @@
 
                 </div>
 
-                <!-- Athlete -->
 
-                <div class="fuel-card" id="fuelAthleteCard" data-details-card style="--fuel-color:var(--primary)">
 
-                    <h3>Athlete</h3>
 
-                    <div class="fuel-weight-unit">
-                        <span>Weight in</span>
-                        <div class="fuel-unit-switch" role="group" aria-label="Weight unit" id="weightUnitSwitch">
-                            <button type="button" data-wunit="lb" aria-pressed="true">lb</button>
-                            <button type="button" data-wunit="kg" aria-pressed="false">kg</button>
-                        </div>
-                    </div>
-
-                    <label class="fuel-field">
-
-                        <span>Body Weight (<span data-weight-unit>lb</span>)</span>
-
-                        <input
-                            type="number"
-                            id="bodyWeight"
-                            min="0"
-                            step="0.1"
-                            inputmode="decimal"
-                            value="165">
-
-                    </label>
-
-                    <label class="fuel-field">
-
-                        <span>Current Carb Intake (g/hr)</span>
-
-                        <input
-                            type="number"
-                            id="currentCarbIntake"
-                            min="0"
-                            step="5"
-                            placeholder="what you usually take in">
-
-                    </label>
-
-                    <label class="fuel-field">
-
-                        <span>Fueling Tolerance / Experience</span>
-
-                        <select id="tolerance">
-
-                            <option value="low">Low - new to fueling</option>
-                            <option value="moderate" selected>Moderate - some experience</option>
-                            <option value="high">High - well trained gut</option>
-
-                        </select>
-
-                    </label>
-
-                    <label class="fuel-field">
-
-                        <span>Stomach Sensitivity</span>
-
-                        <select id="stomachSensitivity">
-
-                            <option value="sensitive">Sensitive</option>
-                            <option value="normal" selected>Normal</option>
-                            <option value="iron">Iron Stomach</option>
-
-                        </select>
-
-                    </label>
-
-                </div>
-
-                <!-- Environment -->
-
-                <div class="fuel-card" style="--fuel-color:var(--cyan)">
-
-                    <h3>Environment</h3>
-
-                    <div class="fuel-field-row">
-
-                        <label class="fuel-field">
-
-                            <span>Temperature (°F)</span>
-
-                            <input
-                                type="number"
-                                id="temperature"
-                                step="1"
-                                value="75">
-
-                        </label>
-
-                        <label class="fuel-field">
-
-                            <span>Humidity (%)</span>
-
-                            <input
-                                type="number"
-                                id="humidity"
-                                min="0"
-                                max="100"
-                                step="1"
-                                value="55">
-
-                        </label>
-
-                    </div>
-
-                    <label class="fuel-field">
-
-                        <span>Sweat Rate</span>
-
-                        <select id="sweatRate">
-
-                            <option value="low">Low</option>
-                            <option value="moderate" selected>Moderate</option>
-                            <option value="high">High</option>
-
-                        </select>
-
-                    </label>
-
-                    <label class="fuel-field">
-
-                        <span>Measured Sweat Rate (<span data-fluid-unit>oz</span>/hr)</span>
-
-                        <input
-                            type="number"
-                            id="sweatRateMeasured"
-                            min="0"
-                            step="any"
-                            inputmode="decimal"
-                            placeholder="optional, from a sweat test">
-
-                    </label>
-
-                    <details class="fuel-howto">
-                        <summary>How to measure your sweat rate</summary>
-                        <p>Weigh yourself without clothes right before and right after an hour's run, without peeing in between. Every pound lost is about 16 oz (450 ml) of sweat; add what you drank during the run. Measure again in hot weather: it changes a lot.</p>
-                    </details>
-
-                </div>
-
-                <!-- Sodium -->
-
-                <div class="fuel-card" id="fuelSodiumCard" data-details-card style="--fuel-color:var(--purple)">
-
-                    <h3>Sodium</h3>
-
-                    <label class="fuel-field">
-
-                        <span>Sweat Sodium Concentration</span>
-
-                        <select id="sweatSodium">
-
-                            <option value="unknown" selected>Not sure</option>
-                            <option value="light">Light (light/no salt marks)</option>
-                            <option value="average">Average</option>
-                            <option value="heavy">Heavy (salty, salt-crusted skin)</option>
-
-                        </select>
-
-                    </label>
-
-                    <label class="fuel-field">
-
-                        <span>Measured Sweat Sodium (mg/L)</span>
-
-                        <input
-                            type="number"
-                            id="sweatSodiumMeasured"
-                            min="0"
-                            step="10"
-                            inputmode="numeric"
-                            placeholder="optional, from a sweat test">
-
-                    </label>
-
-                    <label class="fuel-field">
-
-                        <span>Typical Sodium Intake (mg/hr)</span>
-
-                        <input
-                            type="number"
-                            id="typicalSodiumIntake"
-                            min="0"
-                            step="50"
-                            placeholder="if known">
-
-                    </label>
-
-                </div>
-
-                <!-- Fueling Preferences -->
-
-                <div class="fuel-card fuel-card-wide" id="fuelPrefsCard" data-details-card>
-
-                    <h3>Fueling Preferences</h3>
-
-                    <div
-                        class="fuel-checkbox-grid"
-                        id="fuelPreferences">
-
-                        <label class="fuel-checkbox">
-                            <input type="checkbox" value="gels" checked>
-                            <span>Gels</span>
-                        </label>
-
-                        <label class="fuel-checkbox">
-                            <input type="checkbox" value="drinkmix">
-                            <span>Drink Mix</span>
-                        </label>
-
-                        <label class="fuel-checkbox">
-                            <input type="checkbox" value="chews">
-                            <span>Chews</span>
-                        </label>
-
-                        <label class="fuel-checkbox">
-                            <input type="checkbox" value="bars">
-                            <span>Bars</span>
-                        </label>
-
-                        <label class="fuel-checkbox">
-                            <input type="checkbox" value="homemade">
-                            <span>Homemade</span>
-                        </label>
-
-                        <label class="fuel-checkbox">
-                            <input type="checkbox" value="combination">
-                            <span>Combination</span>
-                        </label>
-
-                    </div>
-
-                    <label class="fuel-checkbox fuel-caffeine-toggle">
-
-                        <input type="checkbox" id="caffeineWanted">
-                        <span>Include caffeine in my plan</span>
-
-                    </label>
-
-                </div>
 
             </div>
 
@@ -559,7 +306,7 @@
                 class="fuel-btn primary fuel-calc-btn"
                 id="calculateBtn">
 
-                Calculate Fueling Plan
+                Build my plan
 
             </button>
 
@@ -578,7 +325,7 @@
 
                 <h2>
 
-                    Fueling Targets
+                    Your plan
 
                 </h2>
 
@@ -667,7 +414,7 @@
 
             </div>
 
-            <div class="fuel-note" id="calcNote"></div>
+            <details class="fx-how"><summary>How these were worked out</summary><div class="fuel-note" id="calcNote"></div></details>
 
         </section>
 
@@ -755,6 +502,274 @@
 
             <div id="fuelSchedule"></div>
 
+        </section>
+
+        <!-- ============================================
+             TUNE IT -- the details that make the plan yours (answer-first redesign, 2026-10-15).
+             Each row folds under one line saying what the plan uses right now (js/fuelingPlans.js paintTuneRows);
+             the fields inside are the same ones, with the same ids, tags and rules.
+        ============================================= -->
+
+        <section class="fuel-panel fx-tune" id="fuelTunePanel">
+            <div class="fuel-panel-header">
+                <h2>Tune it</h2>
+                <span class="fuel-panel-tag">Optional. Whatever you skip is estimated and listed.</span>
+            </div>
+            <details class="fx-row" id="fuelRowYou">
+                <summary><span class="fx-ico" data-icon="user"></span><span class="fx-rt"><b>You</b><small id="fuelSumYou"></small></span></summary>
+                <div class="fx-body">
+
+                <div class="fuel-card" id="fuelAthleteCard" data-details-card style="--fuel-color:var(--primary)">
+
+                    <h3>Athlete</h3>
+
+                    <div class="fuel-weight-unit">
+                        <span>Weight in</span>
+                        <div class="fuel-unit-switch" role="group" aria-label="Weight unit" id="weightUnitSwitch">
+                            <button type="button" data-wunit="lb" aria-pressed="true">lb</button>
+                            <button type="button" data-wunit="kg" aria-pressed="false">kg</button>
+                        </div>
+                    </div>
+
+                    <label class="fuel-field">
+
+                        <span>Body Weight (<span data-weight-unit>lb</span>)</span>
+
+                        <input
+                            type="number"
+                            id="bodyWeight"
+                            min="0"
+                            step="0.1"
+                            inputmode="decimal"
+                            value="165">
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Current Carb Intake (g/hr)</span>
+
+                        <input
+                            type="number"
+                            id="currentCarbIntake"
+                            min="0"
+                            step="5"
+                            placeholder="what you usually take in">
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Fueling Tolerance / Experience</span>
+
+                        <select id="tolerance">
+
+                            <option value="low">Low - new to fueling</option>
+                            <option value="moderate" selected>Moderate - some experience</option>
+                            <option value="high">High - well trained gut</option>
+
+                        </select>
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Stomach Sensitivity</span>
+
+                        <select id="stomachSensitivity">
+
+                            <option value="sensitive">Sensitive</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="iron">Iron Stomach</option>
+
+                        </select>
+
+                    </label>
+
+                </div>
+                </div>
+            </details>
+            <details class="fx-row" id="fuelRowConditions">
+                <summary><span class="fx-ico" data-icon="flame"></span><span class="fx-rt"><b>Conditions</b><small id="fuelSumConditions"></small></span></summary>
+                <div class="fx-body">
+
+                <div class="fuel-card" style="--fuel-color:var(--cyan)">
+
+                    <h3>Environment</h3>
+
+                    <div class="fuel-field-row">
+
+                        <label class="fuel-field">
+
+                            <span>Temperature (°F)</span>
+
+                            <input
+                                type="number"
+                                id="temperature"
+                                step="1"
+                                value="75">
+
+                        </label>
+
+                        <label class="fuel-field">
+
+                            <span>Humidity (%)</span>
+
+                            <input
+                                type="number"
+                                id="humidity"
+                                min="0"
+                                max="100"
+                                step="1"
+                                value="55">
+
+                        </label>
+
+                    </div>
+
+                    <label class="fuel-field">
+
+                        <span>Sweat Rate</span>
+
+                        <select id="sweatRate">
+
+                            <option value="low">Low</option>
+                            <option value="moderate" selected>Moderate</option>
+                            <option value="high">High</option>
+
+                        </select>
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Measured Sweat Rate (<span data-fluid-unit>oz</span>/hr)</span>
+
+                        <input
+                            type="number"
+                            id="sweatRateMeasured"
+                            min="0"
+                            step="any"
+                            inputmode="decimal"
+                            placeholder="optional, from a sweat test">
+
+                    </label>
+
+                    <details class="fuel-howto">
+                        <summary>How to measure your sweat rate</summary>
+                        <p>Weigh yourself without clothes right before and right after an hour's run, without peeing in between. Every pound lost is about 16 oz (450 ml) of sweat; add what you drank during the run. Measure again in hot weather: it changes a lot.</p>
+                    </details>
+
+                </div>
+                </div>
+            </details>
+            <details class="fx-row" id="fuelRowSodium">
+                <summary><span class="fx-ico" data-icon="droplet"></span><span class="fx-rt"><b>Sodium</b><small id="fuelSumSodium"></small></span></summary>
+                <div class="fx-body">
+
+                <div class="fuel-card" id="fuelSodiumCard" data-details-card style="--fuel-color:var(--purple)">
+
+                    <h3>Sodium</h3>
+
+                    <label class="fuel-field">
+
+                        <span>Sweat Sodium Concentration</span>
+
+                        <select id="sweatSodium">
+
+                            <option value="unknown" selected>Not sure</option>
+                            <option value="light">Light (light/no salt marks)</option>
+                            <option value="average">Average</option>
+                            <option value="heavy">Heavy (salty, salt-crusted skin)</option>
+
+                        </select>
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Measured Sweat Sodium (mg/L)</span>
+
+                        <input
+                            type="number"
+                            id="sweatSodiumMeasured"
+                            min="0"
+                            step="10"
+                            inputmode="numeric"
+                            placeholder="optional, from a sweat test">
+
+                    </label>
+
+                    <label class="fuel-field">
+
+                        <span>Typical Sodium Intake (mg/hr)</span>
+
+                        <input
+                            type="number"
+                            id="typicalSodiumIntake"
+                            min="0"
+                            step="50"
+                            placeholder="if known">
+
+                    </label>
+
+                </div>
+                </div>
+            </details>
+            <details class="fx-row" id="fuelRowCarry">
+                <summary><span class="fx-ico" data-icon="apple"></span><span class="fx-rt"><b>What you carry</b><small id="fuelSumCarry"></small></span></summary>
+                <div class="fx-body">
+
+                <div class="fuel-card fuel-card-wide" id="fuelPrefsCard" data-details-card>
+
+                    <h3>Fueling Preferences</h3>
+
+                    <div
+                        class="fuel-checkbox-grid"
+                        id="fuelPreferences">
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="gels" checked>
+                            <span>Gels</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="drinkmix">
+                            <span>Drink Mix</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="chews">
+                            <span>Chews</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="bars">
+                            <span>Bars</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="homemade">
+                            <span>Homemade</span>
+                        </label>
+
+                        <label class="fuel-checkbox">
+                            <input type="checkbox" value="combination">
+                            <span>Combination</span>
+                        </label>
+
+                    </div>
+
+                    <label class="fuel-checkbox fuel-caffeine-toggle">
+
+                        <input type="checkbox" id="caffeineWanted">
+                        <span>Include caffeine in my plan</span>
+
+                    </label>
+
+                </div>
+                </div>
+            </details>
         </section>
 
         <!-- ============================================
@@ -1193,13 +1208,13 @@
              COMPLETE WORKOUT PLAN SUMMARY + SAVE
         ============================================= -->
 
-        <section class="fuel-panel">
+        <section class="fuel-panel fx-keep">
 
             <div class="fuel-panel-header">
 
                 <h2>
 
-                    Complete Fueling Plan
+                    Keep this plan
 
                 </h2>
 

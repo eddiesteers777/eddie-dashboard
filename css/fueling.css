@@ -3052,3 +3052,108 @@ label.fuel-target-label{ display:block; cursor:pointer; }
 .fs-zone-tag{ position:absolute; bottom:6px; padding-left:8px; font:500 12.5px/1.2 var(--font-body); color:var(--text-secondary); white-space:nowrap; pointer-events:none; }
 .fs-map-axis{ display:flex; justify-content:space-between; gap:8px; margin-top:6px; font-size:12.5px; color:var(--text-secondary); }
 .fs-map-note{ margin:6px 0 0; font-size:13px; color:var(--text-secondary); }
+
+/* ==========================================================
+   ANSWER-FIRST FUELING (2026-10-15, mockup A): your run, then the plan, then Tune it.
+   Dark bubbles for what you fill in; lighter bubbles for the answer and what you keep.
+   The fields, ids and rules are the page's own; this is order and look.
+   ========================================================== */
+.fueling-page .fuel-panel{
+    margin:16px 0 0; padding:18px; border-radius:26px;
+    background:linear-gradient(180deg, rgba(4,11,8,.62), rgba(7,17,12,.42));
+    border:1px solid rgba(236,230,212,.07);
+    box-shadow:inset 0 2px 8px rgba(0,0,0,.4), 0 1px 0 rgba(255,244,222,.06);
+}
+.fueling-page .fuel-panel.fx-run,
+.fueling-page #targetsPanel,
+.fueling-page #compositionPanel,
+.fueling-page #timelinePanel,
+.fueling-page .fuel-panel.fx-keep{
+    border-radius:28px;
+    background:linear-gradient(180deg,var(--surface-light),var(--surface) 58%);
+    border:1px solid rgba(236,230,212,.09);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.07), 0 2px 6px rgba(0,0,0,.26), 0 28px 56px -28px rgba(0,0,0,.75);
+}
+.fueling-page .fuel-panel-header h2{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+.fueling-page .fuel-panel-tag{ font:500 12.5px/1.35 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+
+/* Fields: dark inset boxes. */
+.fueling-page .fuel-field input[type="number"],
+.fueling-page .fuel-field input[type="text"],
+.fueling-page .fuel-field input[type="time"],
+.fueling-page .fuel-field select,
+.fueling-page .fuel-field textarea{
+    min-height:48px; border-radius:16px; color:var(--text); font-size:16px;
+    background:rgba(4,11,8,.5); border:1px solid rgba(236,230,212,.12); box-shadow:inset 0 2px 6px rgba(0,0,0,.3);
+}
+.fueling-page .fuel-field textarea{ min-height:84px; }
+.fueling-page .fuel-input-grid{ display:block; }
+.fueling-page .fuel-card{ background:none; border:0; border-radius:0; box-shadow:none; padding:0; margin:0; }
+.fueling-page .fx-run .fuel-card > h3,
+.fueling-page .fx-row .fuel-card > h3{ position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.fueling-page .fuel-details-bar{ display:none !important; }   /* the Tune it rows say what the plan uses */
+
+/* Training / Race, and the fluid unit: glass. */
+.fueling-page .mode-toggle{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border-radius:999px; background:rgba(4,11,8,.55); border:1px solid var(--border); box-shadow:inset 0 2px 6px rgba(0,0,0,.35); }
+.fueling-page .mode-btn{ min-height:44px; border:1px solid transparent; border-radius:999px; background:none; box-shadow:none; color:var(--text-secondary); font:650 14.5px var(--font-body); }
+.fueling-page .mode-btn.active{ color:#FFF3D6; background:linear-gradient(180deg, rgba(240,220,184,.5), rgba(214,185,142,.24)); border-color:rgba(236,214,176,.45); box-shadow:inset 0 1px 0 rgba(255,244,222,.4); }
+
+/* Buttons: one glass sand pill for the main action, quiet glass for the rest. */
+.fueling-page .fuel-btn{ min-height:48px; border-radius:999px; font:650 14.5px var(--font-body); }
+.fueling-page .fuel-btn.primary{
+    color:#FFF3D6; border:1px solid rgba(236,214,176,.45);
+    background:linear-gradient(180deg, rgba(240,220,184,.52), rgba(214,185,142,.26) 60%, rgba(214,185,142,.34));
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.4), 0 10px 20px -12px rgba(0,0,0,.7);
+}
+.fueling-page .fuel-btn.secondary, .fueling-page .fuel-btn.small{
+    color:var(--text); border:1px solid rgba(236,230,212,.2);
+    background:linear-gradient(180deg, rgba(236,230,212,.12), rgba(236,230,212,.03));
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.18);
+}
+.fueling-page .fuel-calc-btn{ width:100%; min-height:54px; margin-top:16px; font-size:16px; }
+
+/* The three targets: one row of big numbers with hairlines, not three coloured boxes. */
+.fueling-page .fuel-target-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; margin-top:14px; }
+.fueling-page .fuel-target-card{ min-width:0; padding:0 12px; border:0; border-left:1px solid var(--border); border-radius:0; background:none; box-shadow:none; }
+.fueling-page .fuel-target-card:first-child{ padding-left:0; border-left:0; }
+.fueling-page .fuel-target-label{ font:500 12.5px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+.fueling-page .fuel-target-value input{ width:100%; min-height:0; padding:0; border:0; background:none; box-shadow:none; font:600 36px/1.1 var(--font-display); letter-spacing:.01em; color:var(--text); }
+.fueling-page .fuel-target-value small{ font:600 12px var(--font-body); color:var(--text-secondary); }
+.fueling-page .fuel-target-sub{ font:500 12.5px/1.3 var(--font-body); color:var(--text-secondary); }
+
+/* Tune it: rows that fold under one line saying what the plan is using. */
+.fueling-page .fx-tune{ padding-top:6px; padding-bottom:6px; }
+.fueling-page .fx-tune .fuel-panel-header{ padding:12px 0 8px; }
+.fx-row{ border-top:1px solid var(--border); }
+.fx-row > summary{ display:flex; align-items:center; gap:12px; min-height:60px; cursor:pointer; list-style:none; }
+.fx-row > summary::-webkit-details-marker{ display:none; }
+.fx-row > summary::after{ content:""; flex:none; width:8px; height:8px; margin-right:4px; border-right:1.5px solid var(--text-secondary); border-bottom:1.5px solid var(--text-secondary); transform:rotate(45deg) translateY(-2px); transition:transform .25s var(--ease, ease); }
+.fx-row[open] > summary::after{ transform:rotate(-135deg); }
+.fx-ico{ flex:none; display:grid; place-items:center; width:34px; height:34px; border-radius:50%; color:var(--text-secondary); background:rgba(236,230,212,.06); border:1px solid var(--border); }
+.fx-ico .ui-icon{ width:17px; height:17px; }
+.fx-rt{ min-width:0; flex:1; line-height:1.25; }
+.fx-rt b{ display:block; font:650 15px var(--font-body); color:var(--text); }
+.fx-rt small{ display:block; margin-top:2px; font:500 12.5px var(--font-body); color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fx-body{ padding:2px 0 16px; }
+.fx-row summary:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:12px; }
+
+/* Spacing between the cards inside a panel (Homemade Drink: bottles, targets, ingredients). */
+.fueling-page .fuel-card + .fuel-card{ margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
+/* "How these were worked out" folds the long explanation under the numbers. */
+.fx-how{ margin-top:14px; border-top:1px solid var(--border); }
+.fx-how > summary{ display:flex; align-items:center; min-height:44px; cursor:pointer; list-style:none; font:650 14px var(--font-body); color:var(--primary); }
+.fx-how > summary::-webkit-details-marker{ display:none; }
+.fx-how > summary::before{ content:""; width:7px; height:7px; margin-right:9px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(-45deg); transition:transform .25s var(--ease, ease); }
+.fx-how[open] > summary::before{ transform:rotate(45deg); }
+/* Keep this plan: the four actions two by two. My Fueling Plans: the tabs stay on one line. */
+.fueling-page .fuel-form-actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.fueling-page .fuel-form-actions .fuel-btn{ width:100%; margin:0; padding-left:10px; padding-right:10px; white-space:nowrap; }
+.fueling-page .fuel-myplans-tabs{ display:flex; flex-wrap:nowrap; gap:4px; overflow-x:auto; scrollbar-width:none; }
+.fueling-page .fuel-myplans-tabs::-webkit-scrollbar{ display:none; }
+.fueling-page .fuel-myplans-tabs button{ flex:0 0 auto; padding-left:10px; padding-right:10px; white-space:nowrap; }
+
+/* On a computer the calculator is a comfortable single column, not a 1,200px stretch of fields. */
+@media (min-width:900px){
+    /* !important: style.css sets every page's width through an :is(...) list that includes ID selectors. */
+html body main.fueling-page{ width:min(860px,94%) !important; max-width:none !important; margin-left:auto; margin-right:auto; }
+}
