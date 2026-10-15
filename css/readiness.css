@@ -422,3 +422,101 @@
 .rd-compact .rd-extras{ margin-top:12px; }
 .rd-compact .rd-checkin-row{ margin-top:12px; }
 .rd-compact .rd-more .rd-rings{ margin:12px auto 6px; }
+
+/* ==========================================================
+   READINESS, PREMIUM (2026-10-15): the card's top is a glass panel with a ring
+   in the day's tone, the advice, and the watch's sleep, HRV and resting HR each
+   with its week as a line (js/bodyView.js). Details fold underneath as before.
+   ========================================================== */
+.rd-card .eos-today-card-header{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.rd-source{ color:var(--text-secondary); font-size:14px; font-weight:500; }
+
+.rd-card .tone-green, .rd-body.tone-green{ --tone:#A0BB9C; --tone-hi:#CFE3C8; --tone-lo:#6E9A74; }
+.rd-card .tone-yellow, .rd-body.tone-yellow{ --tone:#D6B98E; --tone-hi:#F2DDB4; --tone-lo:#B98F57; }
+.rd-card .tone-red, .rd-body.tone-red{ --tone:#D98A74; --tone-hi:#F0B5A2; --tone-lo:#B5604C; }
+.rd-card .tone-none, .rd-body.tone-none{ --tone:#93A08F; --tone-hi:#C6CBBC; --tone-lo:#6B7A68; }
+
+.rd-body{
+    position:relative;
+    padding:20px 18px 14px;
+    border-radius:28px;
+    background:linear-gradient(180deg,rgba(236,230,212,.075),rgba(236,230,212,.02) 46%,rgba(236,230,212,.035));
+    border:1px solid rgba(236,230,212,.12);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.1),inset 0 0 40px rgba(255,244,222,.02),0 22px 44px -26px rgba(0,0,0,.7);
+    -webkit-backdrop-filter:blur(18px) saturate(1.5);
+    backdrop-filter:blur(18px) saturate(1.5);
+}
+.rd-body::before{ /* a soft glow of the day's tone behind the ring */
+    content:"";
+    position:absolute;
+    left:-10px;
+    top:-30px;
+    width:190px;
+    height:190px;
+    border-radius:50%;
+    pointer-events:none;
+    background:radial-gradient(circle,color-mix(in srgb,var(--tone) 22%,transparent),transparent 68%);
+}
+.rd-body-top{ position:relative; display:grid; grid-template-columns:124px minmax(0,1fr); gap:16px; align-items:center; }
+.rd-ring2{ position:relative; margin:0; width:124px; height:124px; }
+.rd-ring2 svg{ display:block; width:100%; height:100%; overflow:visible; }
+.rd-ring-glow{ filter:blur(5px); }
+.rd-ring2 figcaption{ position:absolute; inset:0; display:grid; place-items:center; padding-bottom:4px; }
+.rd-ring2 figcaption b{ font:700 54px/1 var(--font-display); letter-spacing:.01em; color:var(--text); }
+.rd-word{ margin:0; font:700 30px/1 var(--font-display); letter-spacing:.01em; text-transform:uppercase; color:var(--tone-hi); }
+.rd-line{ margin:8px 0 0; font-size:15.5px; line-height:1.45; color:var(--text-secondary); }
+.rd-line b{ color:var(--text); font-weight:650; }
+
+.rd-extras{ position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:14px; }
+
+.rd-measures{
+    position:relative;
+    list-style:none;
+    margin:18px 0 0;
+    padding:14px 0 0;
+    display:grid;
+    grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));
+    border-top:1px solid var(--border);
+}
+.rd-measure{ display:grid; align-content:start; gap:4px; padding:0 10px; min-width:0; }
+.rd-measure:first-child{ padding-left:0; }
+.rd-measure + .rd-measure{ border-left:1px solid var(--border); }
+.rd-m-k{ font-size:13px; font-weight:600; color:var(--text-secondary); }
+.rd-m-v{ font:600 30px/1 var(--font-display); letter-spacing:.01em; color:var(--text); }
+.rd-m-v small{ font:600 12.5px/1 var(--font-body); letter-spacing:0; color:var(--muted); }
+.rd-m-spark{ position:relative; height:34px; margin:4px 0 2px; }
+.rd-spark{ position:absolute; inset:0; width:100%; height:100%; display:block; overflow:visible; }
+.rd-spark-dot{
+    position:absolute;
+    width:9px;
+    height:9px;
+    margin:-4.5px 0 0 -4.5px;
+    border-radius:50%;
+    background:var(--tone-hi);
+    box-shadow:0 0 0 2.5px var(--bg),0 0 10px color-mix(in srgb,var(--tone) 70%,transparent);
+}
+.rd-m-n{ font-size:12.5px; line-height:1.35; color:var(--muted); }
+
+.rd-body-foot{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:14px;
+    padding-top:10px;
+    border-top:1px solid var(--border);
+    font-size:13.5px;
+    color:var(--muted);
+}
+.rd-recovery b{ color:var(--text-secondary); font-weight:650; }
+.rd-body-foot .rd-checkin-row{ margin:0; }
+.rd-body-foot .sb-btn{ min-height:44px; }
+.rd-card .rd-more{ margin-top:14px; }
+
+@media (max-width:400px){
+    .rd-body-top{ grid-template-columns:108px minmax(0,1fr); gap:12px; }
+    .rd-ring2{ width:108px; height:108px; }
+    .rd-ring2 figcaption b{ font-size:46px; }
+}

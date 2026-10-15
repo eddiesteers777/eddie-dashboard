@@ -17,7 +17,7 @@
    Clients stay on v1.
 ========================================== */
 
-import { computeReadiness, adviceFor, sleepCoach, insights, checkinsUntilInsights, kindOfDay, TAGS, hm, colorOf, missingReason } from "./readiness.js";
+import { computeReadiness, adviceFor, sleepCoach, insights, checkinsUntilInsights, kindOfDay, TAGS, hm, colorOf, missingReason, DEFAULT_SLEEP_NEED } from "./readiness.js";
 import { refreshHealth, healthRefreshing, lastHealthError, inputs, loadCheckins, saveCheckin, loadSettings, saveSettings, isoDate, load, recompute, pushCloud } from "./readinessData.js";
 import { READINESS_KEY } from "./readiness.js";
 import { isCorosConnected } from "./corosClient.js";
@@ -25,11 +25,15 @@ import { cachedRole } from "./role.js";
 import { icon } from "./icons.js";
 import { toast, sbPrompt } from "./ui.js";
 import { readinessV2 } from "./readinessV2.js";
+import { showHealthStats, bodyMeasures } from "./bodyModel.js";
+import { ringHtml, measuresHtml } from "./bodyView.js";
 import { athleteInputs, resetAthleteInputs } from "./readinessV2Data.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const COLOR_WORD = { green: "Green", yellow: "Yellow", red: "Red", none: "" };
+// "Go as planned: you're ready for Tempo run." -> the lead in bold.
+const adviceHtml = text => { const i = String(text).indexOf(": "); return i > 0 && i < 40 ? `<b>${esc(text.slice(0, i + 1))}</b> ${esc(text.slice(i + 2))}` : esc(text); };
 
 // ---------- today's workout ----------
 
@@ -267,18 +271,6 @@ function partsHtml(parts) {
     </li>`).join("");
 }
 
-// A small ring: its fill is the part's score (0-100), the colour green / yellow / red.
-function gauge({ cls, score, big, label, sub }) {
-    return `<div class="rd-gauge ${cls}">
-        <div class="rd-ring rd-mini ${colorOf(score ?? null)}" style="--pct:${score ?? 0}" role="img" aria-label="${esc(label)} ${score ?? "not available"}"><b>${big}</b></div>
-        <span class="rd-glabel">${esc(label)}</span>
-        ${sub ? `<small class="rd-gsub">${esc(sub)}</small>` : ""}
-    </div>`;
-}
-
-// "normal" / "above normal" / "low" from the HRV part's own note.
-const hrvWord = p => (/below/.test(p.note) ? "below normal" : /above/.test(p.note) ? "above normal" : "normal");
-
 function weekDots(today, history = load(READINESS_KEY, {})) {
     const cells = [];
     for (let i = 6; i >= 0; i--) {
@@ -312,12 +304,11 @@ async function render() {
     const r = useV2 ? readinessV2(today, v2data) : computeReadiness(today, data);
     const history = load(READINESS_KEY, {});
     const shownHistory = useV2 ? Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); const k = isoDate(d); const x = readinessV2(k, v2data); return [k, x.score == null ? null : { score: x.score, color: x.color }]; }).filter(([, v]) => v)) : history;
-    // A client sees it once there's something to show: COROS connected on
-    // this device, or scores / health data synced from another one. Without
-    // a watch it was a big card of dashes above their coach's news (Phase 8;
-    // COROS is connected in Settings). The coach always sees his. A class,
-    // not `hidden`: the page's data-requires pass unhides by capability.
-    if (role !== "coach" && !isCorosConnected() && !Object.keys(history).length && !Object.keys(data.health || {}).length) {
+    // Shown only with a watch behind it (COROS connected on this device, or scores / health data synced from another
+    // one) and only until the person turns it off in Settings (health stats on Today, on by default). The coach is no
+    // exception. A class, not `hidden`: the page's data-requires pass unhides by capability.
+    const hasData = Object.keys(history).length > 0 || Object.keys(data.health || {}).length > 0;
+    if (!showHealthStats({ settings: data.settings, connected: isCorosConnected(), hasData })) {
         el.classList.add("rd-none");
         el.innerHTML = "";
         return;
@@ -335,61 +326,41 @@ async function render() {
     const lastDay = d => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
     el.hidden = false;
-    // The coach's Today shows readiness as one strip under today's run
-    // (redesign step 2, Eddie 2026-10-14): a small score ring, the word,
-    // sleep + HRV in a line, the advice, the check-in; the three rings and
-    // everything else fold under Details. Clients keep the rings.
-    const compact = role === "coach";
-    el.className = `rd-card ${r.color}${compact ? " rd-compact" : ""}`;
-    // WHOOP-style: three rings (sleep · readiness · HRV), one line of advice,
-    // the check-in; everything else folds under Details (Eddie: "less busy").
-    const base = useV2 ? computeReadiness(today, data) : r;
-    const sleepP = base.parts.find(p => p.key === "sleep"), hrvP = base.parts.find(p => p.key === "hrv");
+    // The look (premium shell): a ring in the day's tone, the advice, the watch's sleep / HRV / resting HR each with its week
+    // as a line (js/bodyView.js, from js/bodyModel.js), COROS's own recovery number and the check-in. Everything else folds under Details.
+    el.className = `rd-card ${r.color}`;
     const flagLines = r.flags.filter(f => f.key !== "pain" && f.key !== "sick");
     const detailsOpen = el.querySelector(".rd-more")?.open ? " open" : "";
-    const rings = `
-        <div class="rd-rings">
-            ${gauge({ cls: "rd-side", score: sleepP?.score, big: sleepP ? `${sleepP.score}<small>%</small>` : "–", label: "Sleep", sub: sleepP?.value })}
-            <div class="rd-gauge rd-main">
-                <div class="rd-ring" style="--pct:${r.score ?? 0}" role="img" aria-label="Readiness ${r.score ?? "not available"}">
-                    <strong>${r.score ?? "–"}</strong>
-                </div>
-                <span class="rd-glabel">Readiness</span>
-                ${r.score != null ? `<small class="rd-gsub rd-tone">${COLOR_WORD[r.color]}</small>` : ""}
-            </div>
-            ${gauge({ cls: "rd-side", score: hrvP?.score, big: hrvP ? `${hrvP.value.replace(" ms", "")}<small>ms</small>` : "–", label: "HRV", sub: hrvP ? hrvWord(hrvP) : "" })}
-        </div>`;
     const extras = `
             ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
             ${flagLines.map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
             ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
             ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
             ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}`;
-    const facts = [sleepP && `Sleep ${sleepP.value}`, hrvP && `HRV ${hrvP.value}`].filter(Boolean).join(" · ");
-    const top = compact
-        ? `<div class="rd-strip">
-            <div class="rd-ring rd-strip-ring" style="--pct:${r.score ?? 0}" role="img" aria-label="Readiness ${r.score ?? "not available"}"><strong>${r.score ?? "–"}</strong></div>
-            <div class="rd-strip-body">
-                <p class="rd-strip-head"><span class="rd-glabel">Readiness</span>${r.score != null ? `<span class="rd-tone">${COLOR_WORD[r.color]}</span>` : ""}${facts ? `<span class="rd-strip-facts">${esc(facts)}</span>` : ""}</p>
-                <p class="rd-advice">${esc(adviceText)}</p>
+    const measures = bodyMeasures(data.health, today, { needMin: data.settings.sleepNeedMin || DEFAULT_SLEEP_NEED });
+    el.innerHTML = `
+        <div class="eos-today-card-header"><h2>Readiness</h2><span class="rd-source">${connected ? "From COROS" : "From your watch"}</span></div>
+        <div class="rd-body tone-${r.color}">
+            <div class="rd-body-top">
+                ${ringHtml(r.score, r.color)}
+                <div class="rd-say">
+                    <p class="rd-word">${COLOR_WORD[r.color] || "&nbsp;"}</p>
+                    <p class="rd-line">${adviceHtml(adviceText)}</p>
+                </div>
+            </div>
+            ${extras.trim() ? `<div class="rd-extras">${extras}</div>` : ""}
+            ${measuresHtml(measures)}
+            <div class="rd-body-foot">
+                ${r.coros ? `<span class="rd-recovery">COROS recovery <b>${r.coros.percent}%</b></span>` : "<span></span>"}
+                <div class="rd-checkin-row">
+                    ${checkin
+                        ? `<span class="rd-done">${icon("checkCircle")} Checked in</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
+                        : `<button type="button" class="sb-btn sb-btn-secondary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
+                </div>
             </div>
         </div>
-        ${extras.trim() ? `<div class="rd-advice-box rd-extras">${extras}</div>` : ""}`
-        : `${rings}
-        <div class="rd-advice-box">
-            <p class="rd-advice">${esc(adviceText)}</p>
-            ${extras}
-        </div>`;
-    el.innerHTML = `
-        ${top}
         ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score.</p>`}
-        <div class="rd-checkin-row">
-            ${checkin
-                ? `<span class="rd-done">${icon("checkCircle")} Checked in</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
-                : `<button type="button" class="sb-btn sb-btn-primary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
-        </div>
         <details class="rd-more"${detailsOpen}><summary>Details</summary>
-            ${compact ? rings : ""}
             ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
             ${weekDots(today, shownHistory)}
             ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}

@@ -119,6 +119,15 @@
                     <input type="checkbox" id="corosAutoToggle">
                 </label>
 
+                <!-- Today's readiness, sleep, HRV and resting heart rate (js/healthStatsSetting.js): on until turned off. -->
+                <label class="connection" id="healthStatsRow">
+                    <div>
+                        <strong>Health stats on Today</strong>
+                        <p>Readiness, sleep, HRV and resting heart rate from your watch. They show when a watch is connected, or its data is already on this device.</p>
+                    </div>
+                    <input type="checkbox" id="healthStatsToggle" checked>
+                </label>
+
 
             </div>
 
@@ -248,6 +257,7 @@
     <script type="module" src="js/icons.js"></script>
     <script type="module" src="js/settings.js"></script>
     <script type="module" src="js/corosSettings.js"></script>
+    <script type="module" src="js/healthStatsSetting.js"></script>
 
     <script src="js/registerSW.js"></script>
 
