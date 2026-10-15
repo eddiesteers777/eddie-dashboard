@@ -96,22 +96,8 @@
             <span data-icon="bell"></span><i class="bell-dot" hidden aria-hidden="true"></i>
         </button>
 
-        <button id="syncStatusBtn" class="sync-status-btn" style="display:none;" title="Click to sync now">
-            <span data-icon="cloud"></span> <span id="syncStatusText">—</span>
-        </button>
-
-        <span id="user-name">
-            Guest
-        </span>
-
-        <button id="loginBtn">
-            Sign In
-        </button>
-
-        <button
-            id="logoutBtn"
-            style="display:none;">
-            Sign Out
+        <button class="account-btn" data-account type="button" aria-label="Account: sign in" aria-haspopup="dialog" aria-expanded="false">
+            <span class="account-avatar" data-avatar><span data-icon="user"></span></span>
         </button>
     </div>
 </nav>
@@ -120,29 +106,6 @@
      search. Shown in place of the dropdown navbar above below the
      app-shell breakpoint (see MOBILE APP SHELL in style.css). -->
 <nav class="eos-mobile-topbar" id="eosMobileTopbar">
-
-    <div class="eos-mobile-quickadd" data-requires="running,strength">
-
-        <button
-            type="button"
-            class="eos-mobile-icon-btn"
-            id="quickAddBtn"
-            aria-label="Quick add"
-            aria-haspopup="true"
-            aria-expanded="false">
-            <span data-icon="plus"></span>
-        </button>
-
-        <div class="eos-mobile-quickadd-menu" id="quickAddMenu">
-            <a href="strength.html" class="eos-mobile-quickadd-link" id="quickAddWorkoutLink" data-requires="strength">
-                <span class="eos-mobile-quickadd-icon" style="color:var(--orange)" data-icon="dumbbell"></span> Start a Workout
-            </a>
-            <a href="running.html?addRun=1" class="eos-mobile-quickadd-link" data-requires="running">
-                <span class="eos-mobile-quickadd-icon" style="color:var(--primary)" data-icon="footprint"></span> Add a Run
-            </a>
-        </div>
-
-    </div>
 
     <a href="index.html" class="eos-mobile-topbar-logo" aria-label="Southbound Coaching home">
         <img src="brand/sb-mark.svg" alt="" class="brand-mark">
@@ -167,9 +130,47 @@
             data-requires="client+updates">
             <span data-icon="bell"></span><i class="bell-dot" hidden aria-hidden="true"></i>
         </button>
+
+        <button
+            type="button"
+            class="account-btn"
+            data-account
+            aria-label="Account: sign in"
+            aria-haspopup="dialog"
+            aria-expanded="false">
+            <span class="account-avatar" data-avatar><span data-icon="user"></span></span>
+        </button>
     </div>
 
 </nav>
+
+<!-- The account sheet the avatar opens (js/account.js). The name, Sign in, Sign out and sync
+     controls keep their ids: js/loadHeader.js wires them. Parts for a signed-in person carry
+     data-auth="in" and are hidden for a guest (own attribute, not data-requires + hidden). -->
+<dialog class="sb-dialog sb-account" id="accountDialog" aria-label="Your account">
+    <div class="sb-account-body">
+        <div class="sb-account-who">
+            <span class="account-avatar account-avatar-lg" data-avatar><span data-icon="user"></span></span>
+            <div class="sb-account-name">
+                <strong id="user-name">Guest</strong>
+                <span id="accountSub">Not signed in</span>
+            </div>
+        </div>
+
+        <div class="sb-account-links" data-auth="in" hidden>
+            <a href="profile.html" class="sb-account-link"><span data-icon="user"></span> Profile</a>
+            <a href="settings.html" class="sb-account-link"><span data-icon="gear"></span> Settings</a>
+            <a href="strength.html" class="sb-account-link" id="quickAddWorkoutLink" data-requires="strength"><span data-icon="dumbbell"></span> Start a workout</a>
+            <a href="running.html?addRun=1" class="sb-account-link" data-requires="running"><span data-icon="footprint"></span> Add a run</a>
+            <button id="syncStatusBtn" class="sb-account-link sync-status-btn" type="button" style="display:none;" title="Click to sync now">
+                <span data-icon="cloud"></span> <span id="syncStatusText">—</span>
+            </button>
+        </div>
+
+        <button id="loginBtn" class="sb-account-btn" type="button">Sign In</button>
+        <button id="logoutBtn" class="sb-account-btn is-quiet" type="button" style="display:none;">Sign Out</button>
+    </div>
+</dialog>
 
 <div class="eos-search-overlay" id="searchOverlay">
 
