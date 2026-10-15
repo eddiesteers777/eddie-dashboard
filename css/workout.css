@@ -275,3 +275,96 @@ body.wo-mode-open{ overflow:hidden; }
 .workout-page .wo-steps strong{ font:800 24px/1 var(--font-display); text-transform:uppercase; letter-spacing:.01em; }
 .workout-page .wo-meta{ color:var(--text-secondary); }
 .workout-page .wo-main-actions{ margin:4px 0 4px; }
+
+/* ==========================================================
+   WORKOUT, PREMIUM (redesign step 3, 2026-10-15): the page, workout mode
+   and the log sheet. The run is drawn as its effort contour; workout mode
+   lights the current part of it; the controls and the log sheet are glass
+   (the same lit edge and blur as the bottom bar). Nothing changes in what
+   the buttons do.
+   ========================================================== */
+
+/* The page: a plain "Thursday · Week 6 · Build" line, the title, the contour. */
+.workout-page .wo-eyebrow{ font:600 13.5px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+.workout-page .wo-step-label{ font:600 12.5px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+.workout-page .clients-card > h2{ color:var(--text); font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; }
+.wo-contour{ margin:2px 0 22px; }
+.wo-contour .wk-contour-svg{ display:block; width:100%; height:120px; overflow:visible; }
+@media (min-width:901px){ .wo-contour .wk-contour-svg{ height:150px; } }
+
+/* The coach's cue: a quiet glass note, not a tan-edged callout. */
+.wo-cue{
+    background:linear-gradient(180deg,rgba(236,230,212,.07),rgba(236,230,212,.025));
+    border:1px solid rgba(236,230,212,.09);
+    border-left:1px solid rgba(236,230,212,.09);
+    border-radius:20px;
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.06);
+}
+.workout-page .wo-cue span{ font:650 13px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+
+/* ---- Workout mode: the contour is the progress; the controls are glass ---- */
+.wo-mode{
+    background:radial-gradient(120% 70% at 50% -10%, rgba(40,72,56,.55), transparent 60%), var(--bg);
+}
+.wo-mode-close,
+.wo-mode-phase{
+    background:linear-gradient(180deg,rgba(236,230,212,.12),rgba(236,230,212,.04));
+    border:1px solid rgba(236,230,212,.14);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.14);
+    -webkit-backdrop-filter:blur(18px) saturate(1.6);
+    backdrop-filter:blur(18px) saturate(1.6);
+}
+.wo-mode-phase{ letter-spacing:.02em; text-transform:none; font-size:14px; font-weight:650; padding:6px 14px; color:var(--text); }
+.phase-work .wo-mode-phase{
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    border-color:rgba(255,244,222,.5);
+    color:var(--on-primary);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 18px -8px rgba(214,185,142,.6);
+}
+.wo-mode-where{ color:var(--primary); }
+.wo-mode-contour{ flex-shrink:0; margin:2px 0 0; }
+.wo-mode-contour .wk-contour-svg{ display:block; width:100%; height:92px; overflow:visible; }
+.wo-mode-actions .sb-btn.sb-btn-secondary{
+    background:linear-gradient(180deg,rgba(236,230,212,.12),rgba(236,230,212,.04));
+    border:1px solid rgba(236,230,212,.16);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.14);
+    -webkit-backdrop-filter:blur(18px) saturate(1.6);
+    backdrop-filter:blur(18px) saturate(1.6);
+    color:var(--text);
+}
+.wo-mode-actions .sb-btn.sb-btn-primary{
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 26px -12px rgba(214,185,142,.7);
+}
+.wo-mode-clock{ font-feature-settings:"tnum"; }
+
+/* ---- The log sheet: glass ---- */
+.wo-log{
+    background:linear-gradient(180deg,rgba(26,52,41,.9),rgba(11,26,20,.94));
+    border:1px solid rgba(236,230,212,.13);
+    border-radius:28px;
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.1),0 2px 8px rgba(0,0,0,.3),0 40px 90px -24px rgba(0,0,0,.8);
+    -webkit-backdrop-filter:blur(28px) saturate(1.7);
+    backdrop-filter:blur(28px) saturate(1.7);
+}
+.wo-log::backdrop{ background:rgba(5,12,9,.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.wo-log .sb-dialog-title{ font:650 22px/1.25 var(--font-body); letter-spacing:0; text-transform:none; }
+.wo-log .sb-dialog-input{
+    background:rgba(236,230,212,.05);
+    border:1px solid rgba(236,230,212,.12);
+    border-radius:14px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
+}
+.wo-seg label > span,
+.wo-rpe label > span{
+    background:linear-gradient(180deg,rgba(236,230,212,.1),rgba(236,230,212,.035));
+    border-color:rgba(236,230,212,.13);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.1);
+}
+.wo-rpe label > span{ border-radius:12px; }
+.wo-seg input:checked + span,
+.wo-rpe input:checked + span{
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));
+    border-color:rgba(255,244,222,.5);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+}

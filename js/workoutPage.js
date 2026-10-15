@@ -34,6 +34,7 @@ import { QUEUED_NOTE } from "./offlineWrite.js";
 import { toast, sbConfirm, sbAlert, friendlyError, emptyHtml } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
+import { contourParts, contourSvg } from "./workoutContour.js";
 import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
 import { renderEmojiText } from "./emoji.js";
@@ -71,6 +72,13 @@ const isCoachPlan = () => state.program?.source === "coach" && state.program.coa
 const title = () => (/^Run\/walk/.test(state.day.session || "") ? "Run/walk" : RUN_TITLES[state.day.type] || typeLabel(state.day.type));
 
 // ---------- Page ----------
+
+// The run drawn as its effort profile, under the title (js/workoutContour.js). Nothing for a plain run.
+function contourHtml(workout) {
+    const parts = contourParts(workout);
+    if (!parts.length) return "";
+    return `<div class="wo-contour">${contourSvg(parts, { id: "wo-plan", label: `Effort profile: ${parts.map(p => p.title).join(", ")}` })}</div>`;
+}
 
 function stepsHtml(workout) {
     const rows = [];
@@ -199,6 +207,8 @@ function render() {
             </div>
             <span class="wo-meta">${program.source === "coach" ? `From ${esc(program.coachName || "your coach")} · ` : ""}${esc(program.name || "")}</span>
         </section>
+
+        ${contourHtml(workout)}
 
         ${state.result ? resultHtml(state.result) : ""}
 
@@ -386,6 +396,9 @@ async function startWorkoutMode() {
     document.body.classList.add("wo-mode-open");
     try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { wakeLock = null; }
 
+    // The effort profile, one part per step: the current part is lit as she moves through the run.
+    const modeParts = contourParts(state.day.workout);
+
     const paint = () => {
         // A timed step that's over moves on by itself (run/walk intervals would
         // otherwise need a tap every minute); the last one waits for Finish.
@@ -405,11 +418,13 @@ async function startWorkoutMode() {
         const clock = remaining !== null ? (remaining > 0 ? formatDuration(remaining) || "0:00" : "Time!") : formatDuration(elapsed) || "0:00";
         overlay.innerHTML = `
             <div class="wo-mode-top">
-                <span>Step ${index + 1} of ${steps.length}</span>
+                <span>Step ${index + 1} of ${steps.length} · <span class="wo-mode-where">${esc({ warmup: "Warm up", work: "Main set", recovery: "Recovery", cooldown: "Cool down" }[step.phase])}</span></span>
                 <span>${formatDuration(Math.floor((Date.now() - started) / 1000)) || "0:00"} total</span>
                 <button type="button" class="wo-mode-close" data-mode="end" aria-label="End workout">${icon("close")}</button>
             </div>
-            <div class="wo-mode-progress"><span style="width:${Math.round((index / steps.length) * 100)}%"></span></div>
+            ${modeParts.length === steps.length
+                ? `<div class="wo-mode-contour">${contourSvg(modeParts, { id: "wo-live", label: `Step ${index + 1} of ${steps.length}`, active: index })}</div>`
+                : `<div class="wo-mode-progress"><span style="width:${Math.round((index / steps.length) * 100)}%"></span></div>`}
             <div class="wo-mode-main phase-${step.phase}">
                 <span class="wo-mode-phase">${esc({ warmup: "Warm up", work: "Main set", recovery: "Recovery", cooldown: "Cool down" }[step.phase])}</span>
                 <h2>${esc(step.title)}</h2>
