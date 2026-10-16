@@ -52,7 +52,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "habits",
     "entries",
     "user-settings",
-    "sb-guest-fueling-stash",   // a guest's fueling work waiting to join the account (js/guestFuel.js): cleared on sign-out
+    "sb-guest-fueling-stash",   // fueling work a guest left, waiting to join the account (js/guestFuel.js): cleared on sign-out
     "__eddieos_coros_data_snapshot_v2",
     "strength-plan",
     "strength-exercise-library",
