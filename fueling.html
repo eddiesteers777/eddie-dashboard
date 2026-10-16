@@ -196,6 +196,10 @@
 
         </section>
 
+        <!-- Two columns on a computer: the inputs on the left, the plan pinned on the right (css/fueling.css). One column on a phone. -->
+        <div class="fx-cols">
+        <div class="fx-col-inputs">
+
         <!-- ============================================
              SECTION 1 — SESSION INPUTS
         ============================================= -->
@@ -321,197 +325,6 @@
 
         </section>
 
-        <!-- ============================================
-             SECTION 2 — FUELING TARGETS
-        ============================================= -->
-
-        <section
-            class="fuel-panel"
-            id="targetsPanel"
-            style="display:none;">
-
-            <div class="fuel-panel-header">
-
-                <h2>
-
-                    Your plan
-
-                </h2>
-
-                <span class="fuel-panel-tag">
-
-                    Starting targets, not medical advice
-
-                </span>
-
-            </div>
-
-            <div class="fuel-target-grid">
-
-                <div class="fuel-target-card" style="--fuel-color:var(--yellow)">
-
-                    <label class="fuel-target-label" for="carbsPerHour">Carbohydrates</label>
-
-                    <div class="fuel-target-value">
-
-                        <input
-                            type="number"
-                            id="carbsPerHour"
-                            min="0"
-                            step="5">
-
-                        <small>g / hr</small>
-
-                    </div>
-
-                    <div class="fuel-target-sub">
-
-                        <span id="carbsTotal">0 g</span> total
-
-                    </div>
-
-                </div>
-
-                <div class="fuel-target-card" style="--fuel-color:var(--cyan)">
-
-                    <label class="fuel-target-label" for="fluidPerHour">Fluids</label>
-
-                    <div class="fuel-target-value">
-
-                        <input
-                            type="number"
-                            id="fluidPerHour"
-                            min="0"
-                            step="any"
-                            inputmode="decimal">
-
-                        <small><span data-fluid-unit>oz</span> / hr</small>
-
-                    </div>
-
-                    <div class="fuel-target-sub">
-
-                        <span id="fluidTotal">0 oz</span> total
-
-                    </div>
-
-                </div>
-
-                <div class="fuel-target-card" style="--fuel-color:var(--purple)">
-
-                    <label class="fuel-target-label" for="sodiumPerHour">Sodium</label>
-
-                    <div class="fuel-target-value">
-
-                        <input
-                            type="number"
-                            id="sodiumPerHour"
-                            min="0"
-                            step="25">
-
-                        <small>mg / hr</small>
-
-                    </div>
-
-                    <div class="fuel-target-sub">
-
-                        <span id="sodiumTotal">0 mg</span> total
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <details class="fx-how"><summary>How these were worked out</summary><div class="fuel-note" id="calcNote"></div></details>
-
-        </section>
-
-        <!-- ============================================
-             FUELING COMPOSITION (gels + drink vs target)
-        ============================================= -->
-
-        <section
-            class="fuel-panel"
-            id="compositionPanel"
-            style="display:none;">
-
-            <div class="fuel-panel-header">
-
-                <h2>
-
-                    Fueling Composition
-
-                </h2>
-
-                <span class="fuel-panel-tag">
-
-                    Gels + homemade drink vs your target
-
-                </span>
-
-            </div>
-
-            <div id="compositionBreakdown">
-
-            </div>
-
-            <p class="fuel-note">
-
-                Add gels, chews, or drink mixes from the Fueling Library below using
-                "Add to Plan" — they'll show up here. Anything not covered by a
-                product comes from your homemade drink.
-
-            </p>
-
-        </section>
-
-        <!-- ============================================
-             SECTION 3 — RACE-DAY SCHEDULE
-             Built live from the targets, products and
-             bottles (js/fuelSchedule.js + fuelScheduleView.js).
-        ============================================= -->
-
-        <section
-            class="fuel-panel"
-            id="timelinePanel"
-            style="display:none;">
-
-            <div class="fuel-panel-header">
-
-                <h2>
-
-                    Race-Day Schedule
-
-                </h2>
-
-                <label class="fs-control">
-
-                    First gel at
-                    <input
-                        type="number"
-                        id="firstGelMin"
-                        min="5"
-                        max="240"
-                        step="5"
-                        value="30">
-                    min
-
-                </label>
-
-            </div>
-
-            <p class="fuel-note fs-intro">
-
-                Every gel by mile and time, which miles each bottle covers and how much to sip,
-                and an hour-by-hour check against your targets. Gels are spaced evenly and stop
-                15 minutes before the finish, when they can no longer help. Caffeinated gels go last.
-
-            </p>
-
-            <div id="fuelSchedule"></div>
-
-        </section>
 
         <!-- ============================================
              TUNE IT -- the details that make the plan yours (answer-first redesign, 2026-10-15).
@@ -1315,6 +1128,208 @@
             <button type="button" class="fuel-btn primary fx-guest-signin" data-fuel-signin>Sign in with Google</button>
             <p class="fuel-note">Not now is fine: everything on this page works without an account. Want fueling built into your training? <a href="apply.html">Apply to train with me</a>.</p>
         </section>
+
+        </div>
+
+        <!-- The plan (answer-first, desktop): pinned on the right of the inputs; on a phone these panels sit right after Your run (css/fueling.css). -->
+        <div class="fx-col-plan">
+        <!-- ============================================
+             SECTION 2 — FUELING TARGETS
+        ============================================= -->
+
+        <section
+            class="fuel-panel"
+            id="targetsPanel"
+            style="display:none;">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Your plan
+
+                </h2>
+
+                <span class="fuel-panel-tag">
+
+                    Starting targets, not medical advice
+
+                </span>
+
+            </div>
+
+            <div class="fuel-target-grid">
+
+                <div class="fuel-target-card" style="--fuel-color:var(--yellow)">
+
+                    <label class="fuel-target-label" for="carbsPerHour">Carbohydrates</label>
+
+                    <div class="fuel-target-value">
+
+                        <input
+                            type="number"
+                            id="carbsPerHour"
+                            min="0"
+                            step="5">
+
+                        <small>g / hr</small>
+
+                    </div>
+
+                    <div class="fuel-target-sub">
+
+                        <span id="carbsTotal">0 g</span> total
+
+                    </div>
+
+                </div>
+
+                <div class="fuel-target-card" style="--fuel-color:var(--cyan)">
+
+                    <label class="fuel-target-label" for="fluidPerHour">Fluids</label>
+
+                    <div class="fuel-target-value">
+
+                        <input
+                            type="number"
+                            id="fluidPerHour"
+                            min="0"
+                            step="any"
+                            inputmode="decimal">
+
+                        <small><span data-fluid-unit>oz</span> / hr</small>
+
+                    </div>
+
+                    <div class="fuel-target-sub">
+
+                        <span id="fluidTotal">0 oz</span> total
+
+                    </div>
+
+                </div>
+
+                <div class="fuel-target-card" style="--fuel-color:var(--purple)">
+
+                    <label class="fuel-target-label" for="sodiumPerHour">Sodium</label>
+
+                    <div class="fuel-target-value">
+
+                        <input
+                            type="number"
+                            id="sodiumPerHour"
+                            min="0"
+                            step="25">
+
+                        <small>mg / hr</small>
+
+                    </div>
+
+                    <div class="fuel-target-sub">
+
+                        <span id="sodiumTotal">0 mg</span> total
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <details class="fx-how"><summary>How these were worked out</summary><div class="fuel-note" id="calcNote"></div></details>
+
+        </section>
+
+        <!-- ============================================
+             FUELING COMPOSITION (gels + drink vs target)
+        ============================================= -->
+
+        <section
+            class="fuel-panel"
+            id="compositionPanel"
+            style="display:none;">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Fueling Composition
+
+                </h2>
+
+                <span class="fuel-panel-tag">
+
+                    Gels + homemade drink vs your target
+
+                </span>
+
+            </div>
+
+            <div id="compositionBreakdown">
+
+            </div>
+
+            <p class="fuel-note">
+
+                Add gels, chews, or drink mixes from the Fueling Library below using
+                "Add to Plan" — they'll show up here. Anything not covered by a
+                product comes from your homemade drink.
+
+            </p>
+
+        </section>
+
+        <!-- ============================================
+             SECTION 3 — RACE-DAY SCHEDULE
+             Built live from the targets, products and
+             bottles (js/fuelSchedule.js + fuelScheduleView.js).
+        ============================================= -->
+
+        <section
+            class="fuel-panel"
+            id="timelinePanel"
+            style="display:none;">
+
+            <div class="fuel-panel-header">
+
+                <h2>
+
+                    Race-Day Schedule
+
+                </h2>
+
+                <label class="fs-control">
+
+                    First gel at
+                    <input
+                        type="number"
+                        id="firstGelMin"
+                        min="5"
+                        max="240"
+                        step="5"
+                        value="30">
+                    min
+
+                </label>
+
+            </div>
+
+            <p class="fuel-note fs-intro">
+
+                Every gel by mile and time, which miles each bottle covers and how much to sip,
+                and an hour-by-hour check against your targets. Gels are spaced evenly and stop
+                15 minutes before the finish, when they can no longer help. Caffeinated gels go last.
+
+            </p>
+
+            <div id="fuelSchedule"></div>
+
+        </section>
+
+            <p class="fx-plan-hint">Your plan appears here as soon as you say what you are running. It updates as you change anything.</p>
+
+        </div>
+        </div>
+
 
         <section class="fuel-panel" id="myFuelingPlans" aria-labelledby="myFuelingPlansTitle">
 
