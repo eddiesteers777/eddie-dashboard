@@ -157,6 +157,8 @@
     "js/fuelSchedule.js",
     "js/fuelScheduleView.js",
     "js/fuelSources.js",
+    "js/fuelSteps.js",
+    "js/fuelStepsModel.js",
     "js/fuelTargets.js",
     "js/fueling.js",
     "js/fuelingPlans.js",
