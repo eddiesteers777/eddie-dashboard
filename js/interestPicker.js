@@ -3,7 +3,7 @@
 
    A small card on the free calculators that appears only AFTER
    someone has their result (value first, never a gate). Its three
-   links (in pace.html and fuel.html) open the application with that
+   links (in pace.html) open the application with that
    service already chosen; which services exist stays js/services.js's
    business, and tests/interestPicker.test.mjs checks the links against
    it. This script only reveals the card. It stores nothing and sends

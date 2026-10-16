@@ -147,7 +147,7 @@ export const PAGE_REQUIRES = Object.freeze({
     "strength.html": "strength",
     "cross-training.html": "crossTraining",
     "nutrition.html": "nutrition",
-    "fueling.html": "fueling",
+    // fueling.html is not here: the Fueling calculator is open to everyone, signed in or not (2026-10-15).
     "habits.html": "habits",
     "plan.html": "plan",
     "progress.html": "progress",

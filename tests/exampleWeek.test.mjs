@@ -34,8 +34,8 @@ test("Tuesday's workout is the kind the app builds, and its parts add up to abou
 test("it shows a check-in and a coach reply, and links to the fueling calculator", () => {
     assert.match(text, /Sunday check-in/);
     assert.match(text, /Coach reply/);
-    assert.match(section, /href="fuel\.html"/);
-    assert.ok(existsFuel(), "fuel.html exists");
+    assert.match(section, /href="fueling\.html"/);
+    assert.ok(existsFuel(), "fueling.html exists");
 });
 
 test("the section is styled by its own stylesheet, which the page loads", () => {
@@ -44,5 +44,5 @@ test("the section is styled by its own stylesheet, which the page loads", () => 
 });
 
 function existsFuel() {
-    try { readFileSync(new URL("../fuel.html", import.meta.url)); return true; } catch { return false; }
+    try { readFileSync(new URL("../fueling.html", import.meta.url)); return true; } catch { return false; }
 }

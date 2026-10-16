@@ -14,7 +14,8 @@ const EXPECTED = { running: "running", strength: "strength", soccer: "soccer_1on
 test("each button opens the application with a real service chosen", () => {
     for (const [key, service] of Object.entries(EXPECTED)) {
         assert.ok(isService(service), `${service} is one of the application's services (js/services.js)`);
-        for (const page of ["pace.html", "fuel.html"]) {
+        // The free calculator that had its own picker (fuel.html) became the full Fueling calculator (2026-10-15).
+        for (const page of ["pace.html"]) {
             const html = read(page);
             assert.ok(html.includes(`href="apply.html?service=${service}" data-interest="${key}"`), `${page}: ${key} opens the application with ${service} chosen`);
         }
@@ -23,7 +24,7 @@ test("each button opens the application with a real service chosen", () => {
 });
 
 test("each page hides the picker until there's a result and loads its script", () => {
-    for (const page of ["pace.html", "fuel.html"]) {
+    for (const page of ["pace.html"]) {
         const html = read(page);
         assert.match(html, /id="interestPicker"[^>]*hidden/, `${page}: hidden until there's a result`);
         assert.match(html, /src="js\/interestPicker\.js"/, `${page} loads it`);
@@ -45,9 +46,6 @@ test("it watches the result of each calculator, and those elements exist", () =>
     const watch = pace.match(/id="interestPicker" data-watch="([^"]+)"/)[1].split(",").map(s => s.trim());
     for (const sel of watch) assert.ok(pace.includes(`id="${sel.slice(1)}"`), `pace.html has ${sel}`);
     assert.ok(watch.length === 3, "pace, race splits and training zones results");
-    const fuel = read("fuel.html");
-    assert.match(fuel, /id="interestPicker" data-watch="#pfResult"/);
-    assert.match(fuel, /id="pfResult"/);
 });
 
 test("it never stores or sends anything", () => {
@@ -56,7 +54,7 @@ test("it never stores or sends anything", () => {
 });
 
 test("the copy is plain: no pressure, no urgency", () => {
-    const html = read("fuel.html");
+    const html = read("pace.html");
     const card = html.slice(html.indexOf('id="interestPicker"'), html.indexOf("</section>", html.indexOf('id="interestPicker"')));
     const text = card.replace(/<[^>]+>/g, " ");
     assert.match(text, /What are you training for\?/);

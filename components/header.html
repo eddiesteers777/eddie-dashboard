@@ -7,6 +7,8 @@
     <div class="nav-left eos-nav-left">
 
         <!-- No logo or wordmark in the bar (2026-10-15): search sits alone on the left; Dashboard is the first link. -->
+        <!-- A guest on a page open to everyone (js/loadHeader.js GUEST_PAGES) gets Home instead of search and the menus. -->
+        <a class="sb-guest-home" href="home.html"><span data-icon="home"></span><span>Home</span></a>
         <button class="search-btn" type="button" aria-label="Search">
             <span data-icon="search"></span>
         </button>
@@ -103,6 +105,8 @@
      dropdown navbar above below the app-shell breakpoint (see MOBILE APP
      SHELL in style.css). -->
 <nav class="eos-mobile-topbar" id="eosMobileTopbar">
+
+    <a class="sb-guest-home" href="home.html"><span data-icon="home"></span><span>Home</span></a>
 
     <button
         type="button"

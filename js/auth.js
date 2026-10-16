@@ -52,6 +52,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "habits",
     "entries",
     "user-settings",
+    "sb-guest-fueling-stash",   // a guest's fueling work waiting to join the account (js/guestFuel.js): cleared on sign-out
     "__eddieos_coros_data_snapshot_v2",
     "strength-plan",
     "strength-exercise-library",
@@ -147,6 +148,24 @@ export function clearAccountSensitiveBrowserState() {
     }
 }
 
+// The Fueling calculator works without an account (js/guestFuel.js). A guest who used it and then
+// signs in would lose that work to the clear below, so their "fueling-" keys are set aside first,
+// tied to the account that signed in; the Fueling page offers to add them. Only from a device with
+// no account on it (no owner) that was used as a guest for fueling (the mark).
+const GUEST_FUEL_MARK = "sb-guest-fueling";
+const GUEST_FUEL_STASH = "sb-guest-fueling-stash";
+function takeGuestFueling() {
+    try {
+        if (localStorage.getItem(GUEST_FUEL_MARK) !== "1") return null;
+        const keys = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith("fueling-")) keys[key] = localStorage.getItem(key);
+        }
+        return Object.keys(keys).length ? keys : null;
+    } catch { return null; }
+}
+
 async function prepareAccountState(user) {
     const nextUid = user?.uid || null;
     const owner = getStorageOwner();
@@ -156,11 +175,19 @@ async function prepareAccountState(user) {
     const signedOutOwner = !nextUid && owner;
     const legacyAccountState = nextUid && !owner && hasLegacyAccountState();
     const changed = Boolean(uidChanged || ownerMismatch || signedOutOwner || legacyAccountState);
+    const guestFueling = nextUid && !owner ? takeGuestFueling() : null;
 
     if (changed) {
         clearAccountSensitiveBrowserState();
         setStorageOwner(null);
         await clearOfflineCopy();
+    }
+
+    if (nextUid) {
+        try {
+            localStorage.removeItem(GUEST_FUEL_MARK);
+            if (guestFueling) localStorage.setItem(GUEST_FUEL_STASH, JSON.stringify({ uid: nextUid, at: Date.now(), keys: guestFueling }));
+        } catch { /* storage unavailable: the guest's work is lost, as before */ }
     }
 
     setStorageOwner(nextUid);

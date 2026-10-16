@@ -34,6 +34,11 @@ import {
 } from "./fuelDrafts.js";
 import { icon } from "./icons.js";
 import { toast, sbConfirm, sbPrompt } from "./ui.js";
+import { adoptGuestFueling, stashFor, STASH_KEY, FUEL_PREFIX } from "./guestFuel.js";
+
+// A guest (signed out) on the calculator, which is open to everyone (js/loadHeader.js GUEST_PAGES):
+// their work stays in this browser, so the save line says so instead of "syncing".
+const isGuest = () => document.documentElement.classList.contains("sb-guest");
 
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -106,9 +111,17 @@ function setStatus(state, text) {
 }
 const clock = () => new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
+function setGuestStatus(kind) {
+    const el = $("fuelSaveStatus");
+    if (!el) return;
+    el.dataset.state = "guest";
+    el.innerHTML = `${kind} kept on this device. <button type="button" class="fuel-signin-link" data-fuel-signin>Sign in</button> to keep it everywhere.`;
+}
+
 function schedulePush(kind) {
     statusKind = kind;
     clearTimeout(pushTimer);
+    if (isGuest()) { setGuestStatus(kind); return; }
     if (navigator.onLine === false) {
         setStatus("offline", `Offline — ${kind.toLowerCase()} saved on this phone. It syncs when you're back online.`);
         waitingForSync = true;
@@ -122,6 +135,7 @@ function schedulePush(kind) {
             ok = await pushToCloud();
         } catch { ok = false; }
         if (ok) { waitingForSync = false; setStatus("synced", `${kind} saved · synced at ${clock()}`); }
+        else if (isGuest()) { waitingForSync = false; setGuestStatus(kind); }
         else if (navigator.onLine === false) { waitingForSync = true; setStatus("offline", `Offline — ${kind.toLowerCase()} saved on this phone. It syncs when you're back online.`); }
         else { waitingForSync = true; setStatus("error", `${kind} saved on this phone. Couldn't reach your account yet; it'll try again.`); }
     }, PUSH_DELAY);
@@ -655,12 +669,45 @@ export function initFuelingPlans(adapter, { linkQuery: query = "" } = {}) {
     return { restored };
 }
 
+/* ---------- a guest's work, after they sign in (js/guestFuel.js) ---------- */
+
+// js/auth.js set the guest's "fueling-" keys aside when they signed in (so the usual clear of a new
+// account's device didn't wipe them). Asked once: Yes merges them into what the account has (nothing
+// either side made is lost, the account's own settings win where there is nothing to merge); No drops them.
+async function offerGuestWork() {
+    if (isGuest()) return;
+    let raw = null;
+    try { raw = localStorage.getItem(STASH_KEY); } catch { return; }
+    if (!raw) return;
+    let user = null;
+    try { user = await (await import("./auth.js")).waitForUser(); } catch { return; }
+    if (!user) return;
+    const stash = stashFor(raw, user.uid);
+    if (!stash) { try { localStorage.removeItem(STASH_KEY); } catch { /* fine */ } return; }
+    const yes = await sbConfirm("Before you signed in, you worked on fueling on this device. Add those answers, drafts and saved plans to your account? Anything your account already has stays.", {
+        title: "Keep what you made?", confirmLabel: "Add to my account", cancelLabel: "No thanks"
+    });
+    try { localStorage.removeItem(STASH_KEY); } catch { /* fine */ }
+    if (!yes) { toast("Left out. Your account is as it was."); return; }
+    const current = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(FUEL_PREFIX)) current[key] = localStorage.getItem(key);
+    }
+    const { set, added, merged } = adoptGuestFueling(stash.keys, current);
+    for (const [key, value] of Object.entries(set)) { try { localStorage.setItem(key, value); } catch { /* fine */ } }
+    if (!added && !merged) { toast("Your account already had all of it."); return; }
+    try { const { pushToCloud } = await import("./cloudSync.js"); await pushToCloud(); } catch { /* it syncs on the next change */ }
+    toast("Added to your account.");
+    setTimeout(() => window.location.reload(), 700);
+}
+
 let wired = false;
 function wire() {
     if (wired) return;
     wired = true;
     const main = document.querySelector("main");
-    const outside = t => t.closest("#myFuelingPlans, #fuelDraftBanner, #fuelPlanSheet, #libraryForm, #fuelDetailsBar, .sb-dialog");
+    const outside = t => t.closest("#myFuelingPlans, #fuelDraftBanner, #fuelPlanSheet, #libraryForm, #fuelDetailsBar, .sb-dialog, [data-fuel-signin], .fx-guest-offer");
     // Input and change events only come from the person (the calculator sets
     // values without firing them), so any of them is a real edit.
     const onEdit = event => {
@@ -683,6 +730,14 @@ function wire() {
 
     $("fuelDetailsToggle")?.addEventListener("click", toggleDetails);
     paintTuneRows();
+
+    // "Sign in" on the save line and the guest offer: the header's own Google sign-in.
+    document.addEventListener("click", event => {
+        if (!(event.target instanceof Element) || !event.target.closest("[data-fuel-signin]")) return;
+        document.getElementById("loginBtn")?.click();
+    });
+    // Signed in after working as a guest: offer once to add that work to the account.
+    setTimeout(() => { offerGuestWork().catch(error => console.warn("Southbound: couldn't offer the guest's fueling work.", error)); }, 1200);
 
     // Draft and banner actions.
     document.addEventListener("click", async event => {

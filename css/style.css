@@ -4691,3 +4691,23 @@ body.page-today #todayCard{ padding:20px 20px 10px; }
 .eos-navbar .account-btn > :not(.bell-dot),
 .eos-mobile-topbar .eos-mobile-icon-btn > :not(.bell-dot),
 .eos-mobile-topbar .account-btn > :not(.bell-dot){ position:relative; z-index:1; }
+
+/* A guest on a page open to everyone (the Fueling calculator, js/loadHeader.js GUEST_PAGES, 2026-10-15):
+   no app tabs, menus, search or bell, which would only lead to sign-in; a Home link back to the site. */
+.sb-guest-home{ display:none; }
+html.sb-guest .sb-guest-home{
+    display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:0 16px; border-radius:999px;
+    font:650 14px var(--font-body); color:var(--text); text-decoration:none;
+    background:linear-gradient(180deg, rgba(236,230,212,.12), rgba(236,230,212,.03));
+    border:1px solid rgba(236,230,212,.2); box-shadow:inset 0 1px 0 rgba(255,244,222,.18);
+}
+html.sb-guest .sb-guest-home .ui-icon{ width:16px; height:16px; }
+html.sb-guest .eos-mobile-topbar > .sb-guest-home,
+html.sb-guest .eos-navbar .eos-nav-left > .sb-guest-home{ grid-column:1; grid-row:1; justify-self:start; }
+html.sb-guest .eos-bottomnav,
+html.sb-guest .eos-subnav,
+html.sb-guest .eos-nav-links,
+html.sb-guest .search-btn,
+html.sb-guest #mobileSearchBtn,
+html.sb-guest .bell-btn{ display:none !important; }
+html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }

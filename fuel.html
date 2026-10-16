@@ -3,6 +3,9 @@
 
 <head>
 
+    <!-- The free calculator that lived here is now the full Fueling calculator, open to everyone
+         (fueling.html, 2026-10-15). This address stays so old links and search results still land there. -->
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -13,157 +16,28 @@
     <meta property="og:site_name" content="Southbound Coaching">
     <meta property="og:title" content="Free Fueling Calculator | Southbound Coaching">
     <meta property="og:description" content="A free fueling calculator for runners: carbs, fluid and sodium an hour, plus when to take them, for a long run or race. No account needed.">
-    <meta property="og:url" content="https://southboundcoaching.com/fuel.html">
+    <meta property="og:url" content="https://southboundcoaching.com/fueling.html">
     <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Southbound Coaching">
     <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://southboundcoaching.com/fueling.html">
+    <meta http-equiv="refresh" content="0; url=fueling.html">
 
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/public.css">
-    <link rel="stylesheet" href="css/public-fuel.css">
-
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="icons/favicon-32.png">
 
 </head>
 
-<body class="pub-body">
+<body>
 
-    <div id="publicHeader"></div>
-
-    <main class="pub-page">
-
-        <section class="pub-hero pub-hero-compact">
-            <div class="pub-hero-kicker">Free tool</div>
-            <h1>Fueling calculator</h1>
-            <p>How many carbs, how much fluid and sodium an hour, and when to take them, for a run you have coming up. Starting points to practice with, not a prescription. Works right here, no account needed, and nothing you type is saved or sent anywhere.</p>
-        </section>
-
-        <section class="pub-section" style="border-top:none;padding-top:12px;">
-            <form id="pfForm" class="pf-card" novalidate>
-
-                <div class="pf-grid">
-                    <div>
-                        <label class="pub-field-label" for="pfType">What kind of run?</label>
-                        <select id="pfType" class="pub-input">
-                            <option value="long">Long run</option>
-                            <option value="easy">Easy run</option>
-                            <option value="workout">Workout (tempo or intervals)</option>
-                            <option value="race">Race</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="pub-field-label" for="pfDistance">Distance (miles)</label>
-                        <input type="text" id="pfDistance" class="pub-input" inputmode="decimal" autocomplete="off" placeholder="e.g. 12">
-                    </div>
-                    <div>
-                        <label class="pub-field-label" for="pfTime">Time (optional)</label>
-                        <input type="text" id="pfTime" class="pub-input" inputmode="text" autocomplete="off" placeholder="e.g. 1:45 or 105">
-                    </div>
-                    <div>
-                        <label class="pub-field-label" for="pfWeight">Your weight (optional)</label>
-                        <div class="pf-weight">
-                            <input type="text" id="pfWeight" class="pub-input" inputmode="decimal" autocomplete="off" placeholder="e.g. 165">
-                            <select id="pfWeightUnit" class="pub-input" aria-label="Weight unit"><option value="lb">lb</option><option value="kg">kg</option></select>
-                        </div>
-                    </div>
-                </div>
-                <p class="pub-field-hint">Give the distance, the time, or both. With only a distance I estimate the time at a typical pace.</p>
-
-                <details class="pf-more">
-                    <summary>A bit more about you (optional)</summary>
-                    <div class="pf-grid">
-                        <div>
-                            <label class="pub-field-label" for="pfTemperature">Temperature (&deg;F)</label>
-                            <input type="text" id="pfTemperature" class="pub-input" inputmode="decimal" autocomplete="off" placeholder="75">
-                        </div>
-                        <div>
-                            <label class="pub-field-label" for="pfHumidity">Humidity (%)</label>
-                            <input type="text" id="pfHumidity" class="pub-input" inputmode="decimal" autocomplete="off" placeholder="55">
-                        </div>
-                        <div>
-                            <label class="pub-field-label" for="pfTolerance">Eating while running</label>
-                            <select id="pfTolerance" class="pub-input">
-                                <option value="">Not sure</option>
-                                <option value="low">My stomach struggles with it</option>
-                                <option value="moderate">I manage fine</option>
-                                <option value="high">I handle plenty</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="pub-field-label" for="pfStomach">Your stomach</label>
-                            <select id="pfStomach" class="pub-input">
-                                <option value="">Not sure</option>
-                                <option value="sensitive">Sensitive</option>
-                                <option value="normal">Normal</option>
-                                <option value="iron">Iron</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="pub-field-label" for="pfSweat">How much do you sweat?</label>
-                            <select id="pfSweat" class="pub-input">
-                                <option value="">Not sure</option>
-                                <option value="low">Not much</option>
-                                <option value="moderate">About average</option>
-                                <option value="high">A lot</option>
-                            </select>
-                        </div>
-                        <div>
-                            <span class="pub-field-label">Fluid in</span>
-                            <div class="pub-choice-row" role="radiogroup" aria-label="Fluid in">
-                                <label class="pub-service-check"><input type="radio" name="pfUnit" value="oz" checked><span>oz</span></label>
-                                <label class="pub-service-check"><input type="radio" name="pfUnit" value="ml"><span>ml</span></label>
-                            </div>
-                        </div>
-                    </div>
-                    <label class="pf-check"><input type="checkbox" id="pfCaffeine"><span>Include caffeine (long and hard runs only)</span></label>
-                </details>
-
-                <p id="pfError" class="pub-apply-msg pub-apply-msg-error" role="alert" hidden></p>
-                <button type="submit" class="pub-btn-primary pf-submit">Calculate</button>
-            </form>
-
-            <div id="pfResult" class="pf-card pf-result" role="region" aria-label="Your fueling plan" aria-live="polite" hidden></div>
-        </section>
-
-        <section class="pub-section pub-interest" id="interestPicker" data-watch="#pfResult" aria-labelledby="interestTitle" hidden>
-            <h2 id="interestTitle">What are you training for?</h2>
-            <p>Pick one and I'll start your application with it chosen. It takes about a minute and needs no account.</p>
-            <div class="pub-interest-row">
-                <a class="pub-interest-btn" href="apply.html?service=running" data-interest="running"><span data-icon="activity"></span><span>Running</span></a>
-                <a class="pub-interest-btn" href="apply.html?service=strength" data-interest="strength"><span data-icon="dumbbell"></span><span>Strength</span></a>
-                <a class="pub-interest-btn" href="apply.html?service=soccer_1on1" data-interest="soccer"><span data-icon="footprint"></span><span>Soccer <small>1-on-1 or group</small></span></a>
-            </div>
-            <p class="pub-interest-skip">Just using the calculator? <button type="button" data-interest-dismiss>No thanks</button></p>
-        </section>
-
-        <section class="pub-section">
-            <div class="pub-cta-band">
-                <h2>Want this built into your training?</h2>
-                <p>In coaching, every planned run comes with its own fueling plan, and your coach adjusts it as you learn what your stomach likes.</p>
-                <div class="pub-cta-actions">
-                    <a href="apply.html?service=running" class="pub-btn-primary">Apply to Train With Me</a>
-                    <a href="contact.html?about=running_strength" class="pub-btn-secondary">Ask a Question</a>
-                </div>
-                <p class="pf-also">Also free: <a href="pace.html">the pace calculator</a>.</p>
-            </div>
-        </section>
-
+    <main class="container" style="padding:48px 0;">
+        <p>The fueling calculator is now the full one, still free and with no account needed: <a href="fueling.html">open it</a>.</p>
     </main>
 
-    <footer class="pub-footer">
-        <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span><span class="pub-footer-sub">Coaching</span></span></a>
-        <p>&copy; 2026 Southbound &middot; <a href="about.html">About</a> &middot; <a href="packages.html">Packages</a> &middot; <a href="contact.html">Contact</a> &middot; <a href="apply.html">Apply</a> &middot; <a href="privacy.html">Privacy</a></p>
-    </footer>
-
-    <script type="module" src="js/icons.js"></script>
-    <script type="module" src="js/loadPublicHeader.js"></script>
-    <script type="module" src="js/publicFuel.js"></script>
-    <script type="module" src="js/interestPicker.js"></script>
+    <script>window.location.replace("fueling.html");</script>
 
 </body>
 

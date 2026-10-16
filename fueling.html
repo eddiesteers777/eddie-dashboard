@@ -9,11 +9,20 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0">
 
-    <title>
+    <title>Fueling Calculator | Southbound Coaching</title>
 
-        Fueling | Southbound Coaching
-
-    </title>
+    <!-- Open to everyone (js/loadHeader.js GUEST_PAGES): this is also the public fueling calculator. -->
+    <meta name="description" content="A free fueling calculator for runners: carbs, fluid and sodium an hour, every gel by time and mile, and a race-day plan. No account needed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Fueling Calculator | Southbound Coaching">
+    <meta property="og:description" content="A free fueling calculator for runners: carbs, fluid and sodium an hour, every gel by time and mile, and a race-day plan. No account needed.">
+    <meta property="og:url" content="https://southboundcoaching.com/fueling.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
 
     <link
         rel="stylesheet"
@@ -1296,6 +1305,16 @@
              MY FUELING PLANS: drafts, saved plans and the
              athlete profile (js/fuelingPlans.js)
         ============================================= -->
+
+        <!-- A guest (js/loadHeader.js GUEST_PAGES): the one offer to sign in, never a gate. Shown by html.sb-guest. -->
+        <section class="fuel-panel fx-guest-offer" aria-labelledby="fuelGuestTitle">
+            <div class="fuel-panel-header">
+                <h2 id="fuelGuestTitle">Keep it everywhere</h2>
+            </div>
+            <p class="fuel-note">You're using the calculator without an account. Your answers, drafts and saved plans stay in this browser on this device, and nothing is sent anywhere. Sign in with Google to keep them in your own account, on every device.</p>
+            <button type="button" class="fuel-btn primary fx-guest-signin" data-fuel-signin>Sign in with Google</button>
+            <p class="fuel-note">Not now is fine: everything on this page works without an account. Want fueling built into your training? <a href="apply.html">Apply to train with me</a>.</p>
+        </section>
 
         <section class="fuel-panel" id="myFuelingPlans" aria-labelledby="myFuelingPlansTitle">
 

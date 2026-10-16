@@ -3157,3 +3157,11 @@ label.fuel-target-label{ display:block; cursor:pointer; }
     /* !important: style.css sets every page's width through an :is(...) list that includes ID selectors. */
 html body main.fueling-page{ width:min(860px,94%) !important; max-width:none !important; margin-left:auto; margin-right:auto; }
 }
+
+/* A guest (html.sb-guest, js/loadHeader.js GUEST_PAGES): the "Keep it everywhere" offer and the save line's
+   "Sign in". Nobody signed in ever sees them. */
+.fueling-page .fx-guest-offer{ display:none; }
+html.sb-guest .fueling-page .fx-guest-offer{ display:block; }
+.fueling-page .fx-guest-signin{ width:100%; min-height:52px; margin:14px 0 6px; }
+.fuel-signin-link{ position:relative; display:inline; padding:0; margin:0; border:0; background:none; font:inherit; font-weight:650; color:var(--primary); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.fuel-signin-link::after{ content:""; position:absolute; inset:-12px -4px; }

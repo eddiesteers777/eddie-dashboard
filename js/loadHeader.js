@@ -4,16 +4,28 @@
 // (offline, SDK blocked) this does nothing, so a signed-in user is
 // never bounced out of their own app by a network hiccup.
 // site-check.html is a diagnostics page that must work signed out.
+// GUEST_PAGES are app pages open to everyone: the Fueling calculator
+// (js/guestFuel.js). A guest stays, sees the page without the app's
+// tabs (html.sb-guest, css/style.css), and their work stays on the device.
 // Southbound dialogs/toasts (js/ui.js) for every app page, including
 // inline page scripts, which reach them as window.SB.
 import("./ui.js").catch(error => console.warn("Southbound: UI helpers unavailable.", error));
+
+const GUEST_PAGES = ["fueling.html"];
 
 (async () => {
     const page = window.location.pathname.split("/").pop() || "index.html";
     if (page === "site-check.html") return;
     try {
         const { waitForUser } = await import("./auth.js");
-        if (!(await waitForUser())) window.location.replace("home.html");
+        if (await waitForUser()) return;
+        if (GUEST_PAGES.includes(page)) {
+            document.documentElement.classList.add("sb-guest");
+            // So a guest's fueling work is set aside, not wiped, when they sign in (js/auth.js).
+            try { localStorage.setItem("sb-guest-fueling", "1"); } catch { /* storage unavailable */ }
+            return;
+        }
+        window.location.replace("home.html");
     } catch {
         // Fail open -- leave the page as-is.
     }
@@ -807,6 +819,8 @@ fetch("components/header.html")
 
         listenForAuth(user => {
             if (user) return;
+            // A page open to guests offers sign-in on the page itself, never as a pop-up.
+            if (GUEST_PAGES.includes(window.location.pathname.split("/").pop() || "index.html")) return;
 
             let alreadyShown = false;
 

@@ -28,7 +28,7 @@ Southbound Coaching (formerly "EddieOS") is Eddie Steers' coaching business plat
 
 | Who | What they see | How it's decided |
 |---|---|---|
-| **Guest** (signed out) | Public site only: Home, About, Packages, Contact, Get the App, Apply, the free Pace and Fuel calculators | `js/loadHeader.js` sends signed-out visitors on any app page to `home.html` |
+| **Guest** (signed out) | Public site: Home, About, Packages, Contact, Get the App, Apply, the free Pace calculator; plus the full **Fueling calculator** (`fueling.html`, the one app page open to guests) | `js/loadHeader.js` sends signed-out visitors on any app page to `home.html`, except `GUEST_PAGES` (`fueling.html`: `html.sb-guest`, no app tabs, work kept on the device) |
 | **Client** (approved, `status: "active"`) | The app, filtered to the services Eddie granted them | `services[]` on their profile → capabilities (`js/services.js`), applied by `js/navAccess.js` / `js/todayLayout.js` |
 | **Coach / admin** (`isCoachApproved: true`) | Everything, plus the Coach section | Eddie's own account. Approved coaches can approve anyone. |
 
@@ -38,7 +38,7 @@ A new sign-in starts as a **pending client** with no services: it sees only Toda
 
 ## Page map (one line each; details in `docs/APP_REFERENCE.md` → Page map)
 
-**Public site** (`components/publicHeader.html` + `js/loadPublicHeader.js` + `css/public.css`): `home.html` (guest dashboard), `about.html` (bio still placeholder), `packages.html` (prices still "Pricing on request"), `coaching.html` (incl. the labelled example week, `tests/exampleWeek.test.mjs`: illustration only, never a claim), `soccer.html`, `apply.html` (apply without an account, `js/apply.js` + `js/applicationForm.js`), `contact.html` (questions, no sign-in), `install.html` (Get the App), `pace.html` + `fuel.html` (free calculators; `pace.html` shares markup with `pace-calculator.html`, `tests/publicTools.test.mjs` fails if they drift), `privacy.html` (keep it true when data handling changes). Photos in `images/` (`images/README.md` lists filenames).
+**Public site** (`components/publicHeader.html` + `js/loadPublicHeader.js` + `css/public.css`): `home.html` (guest dashboard), `about.html` (bio still placeholder), `packages.html` (prices still "Pricing on request"), `coaching.html` (incl. the labelled example week, `tests/exampleWeek.test.mjs`: illustration only, never a claim), `soccer.html`, `apply.html` (apply without an account, `js/apply.js` + `js/applicationForm.js`), `contact.html` (questions, no sign-in), `install.html` (Get the App), `pace.html` (free pace calculator; shares markup with `pace-calculator.html`, `tests/publicTools.test.mjs` fails if they drift), `fuel.html` (forwards to `fueling.html`, the full calculator open to everyone), `privacy.html` (keep it true when data handling changes). Photos in `images/` (`images/README.md` lists filenames).
 
 **App, client pages** (`components/header.html` + `js/loadHeader.js`): `index.html` Today (client sections follow services, `js/todayLayout.js`), `train.html` + `running.html` / `strength.html` / `cross-training.html`, `nutrition.html`, `fueling.html`, `habits.html`, `plan.html` (My Plan, the week), `workout.html` (one workout: steps, workout mode, log, fuel; `&kind=strength` = coach strength session), `progress.html` (My Progress), `checkin.html`, `schedule.html` (Sessions), `messages.html`, `updates.html` (From Your Coach), `profile.html` (guided profile; `?edit=all` = one-page form), `clients.html?tab=share` (Connect with Your Coach), `programs.html`, `pace-calculator.html`, `settings.html`, `more.html`.
 
@@ -127,6 +127,7 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 - **Percentage padding is a share of the parent's width.** Size from the element (`calc(var(--sb-tile) * .17)`).
 - **The mobile top bar is a size container (`sbmtop`)**; its logo steps down with the bar's width.
 - **`pkill -f <pattern>` (and `pgrep -f`) match your own shell** when the pattern is in the command line. Stop test servers by PID.
+- **A guest's fueling work is set aside, not wiped, at sign-in.** The account guard in `js/auth.js` clears every account key on a device with no owner; `takeGuestFueling` first moves the `fueling-` keys of a device used as a guest (`sb-guest-fueling` mark) into `sb-guest-fueling-stash` for the account that signed in, and the Fueling page asks before merging them (`js/guestFuel.js`). A new guest-open page needs the same care for its keys.
 - **Cloud sync timestamps a key only when it's pushed.** A pull keeps local keys that differ from the last-synced snapshot and must not mark them synced (`markPulled`); otherwise offline changes are lost.
 
 ## Testing
