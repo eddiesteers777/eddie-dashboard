@@ -268,6 +268,8 @@ function detailsInput() {
 }
 // The words under "Your details".
 function detailsWords() { return detailsSummary(detailsInput()); }
+// What the phone's review reads (js/fuelSteps.js): the same fields the Tune it rows summarise.
+export function currentDetailsInput() { return detailsInput(); }
 // The one line under each Tune it row (the answer-first page): what the plan is using right now.
 function paintTuneRows() {
     const words = tuneSummaries(detailsInput());

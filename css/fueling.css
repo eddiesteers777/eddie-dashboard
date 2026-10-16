@@ -3194,3 +3194,116 @@ html.sb-guest .fueling-page .fx-guest-offer{ display:block; }
     }
     .fueling-page .fx-col-plan:has(#targetsPanel:not([style*="none"])) .fx-plan-hint{ display:none; }
 }
+
+/* ==========================================================
+   ONE STEP AT A TIME (a phone, 2026-10-15): js/fuelSteps.js sets data-step on the page below 1100px, and only
+   that part shows: 1 Your run, 2 About you, 3 What you carry, 4 Your plan (the review). Nothing here applies
+   without data-step, so a computer (and no script) is the one page it was.
+   ========================================================== */
+.fx-stepper, .fx-stepbar{ display:none; }
+.fx-stepper[hidden], .fx-stepbar[hidden]{ display:none !important; }
+
+/* The spacing system: 12px between bubbles, 18px inside them, 14px between fields, 6px from a label to its box. */
+.fueling-page .fx-run .fuel-card,
+.fueling-page .fx-row .fuel-card{ display:grid; gap:14px; }
+.fueling-page .fx-run .fuel-field,
+.fueling-page .fx-row .fuel-field{ margin:0; }
+.fueling-page .fx-run-row{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.fueling-page .fx-row .fuel-field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.fx-more > summary{ display:flex; align-items:center; min-height:44px; cursor:pointer; list-style:none; font:650 14px var(--font-body); color:var(--primary); }
+.fx-more > summary::-webkit-details-marker{ display:none; }
+.fx-more > summary::before{ content:"+"; width:18px; font-weight:700; }
+.fx-more[open] > summary::before{ content:"\2212"; }
+.fx-more .fuel-field{ margin:4px 0 0; }
+
+.fx-ans{ display:flex; align-items:center; gap:12px; min-height:62px; border-top:1px solid var(--border); }
+.fx-ans:first-child{ border-top:0; }
+.fx-ans-text{ min-width:0; flex:1; line-height:1.25; }
+.fx-ans-text b{ display:block; font:650 15px var(--font-body); color:var(--text); }
+.fx-ans-text small{ display:block; margin-top:2px; font:500 12.5px/1.35 var(--font-body); color:var(--text-secondary); }
+.fx-ans-edit{ position:relative; flex:none; min-height:36px; padding:0 14px; border-radius:999px; font:650 13px var(--font-body); color:var(--text); cursor:pointer; background:rgba(236,230,212,.06); border:1px solid rgba(236,230,212,.18); }
+.fx-ans-edit::after{ content:""; position:absolute; inset:-5px -3px; }
+.fueling-page .fx-answers{ display:none; }
+
+@media (max-width:599px){
+    /* 20px page margin, the page's own side padding off, so the bubbles start at the gutter (the Today pages' too). */
+    html body main.fueling-page{ width:calc(100% - 40px) !important; padding-left:0; padding-right:0; }
+}
+
+@media (max-width:1099px){
+    .fueling-page[data-step]{ padding-top:12px; padding-bottom:104px; }
+    /* The page title becomes the step header; the real heading stays for screen readers. */
+    .fueling-page[data-step] .page-title{ position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+    .fueling-page[data-step] .fx-stepper{ display:block; margin:14px 0 0; }
+    .fx-st-top{ display:flex; align-items:center; gap:12px; min-height:44px; }
+    .fx-st-back{ flex:none; display:grid; place-items:center; width:40px; height:40px; padding:0; border-radius:50%; color:var(--text); cursor:pointer; background:linear-gradient(180deg, rgba(236,230,212,.14), rgba(236,230,212,.04)); border:1px solid rgba(236,230,212,.2); box-shadow:inset 0 1px 0 rgba(255,244,222,.26), 0 8px 16px -10px rgba(0,0,0,.7); }
+    .fx-st-back[hidden]{ display:none; }
+    .fx-st-back .ui-icon{ width:18px; height:18px; }
+    .fx-st-mid{ min-width:0; line-height:1.25; }
+    .fx-st-mid b{ display:block; font:650 14px var(--font-body); color:var(--text-secondary); }
+    .fx-st-mid small{ display:block; font:500 12px var(--font-body); color:var(--text-secondary); }
+    .fx-st-dots{ display:flex; gap:6px; margin-top:10px; }
+    .fx-st-dots i{ flex:1; height:4px; border-radius:4px; background:rgba(236,230,212,.1); }
+    .fx-st-dots i.on{ background:linear-gradient(90deg, var(--primary), var(--primary-light)); }
+    .fx-st-title{ margin:18px 0 0; font:700 34px/.95 var(--font-display); letter-spacing:.01em; text-transform:uppercase; color:var(--text); outline:0; }
+    .fx-st-help{ margin:8px 0 0; font:500 14.5px/1.45 var(--font-body); color:var(--text-secondary); }
+    .fx-st-help[hidden]{ display:none; }
+
+    /* Which part shows. Hidden with !important, never forced shown, so the page's own show / hide still rules. */
+    .fueling-page[data-step="2"] .fuel-draft-banner, .fueling-page[data-step="3"] .fuel-draft-banner, .fueling-page[data-step="4"] .fuel-draft-banner,
+    .fueling-page[data-step="2"] #marathonPickerPanel, .fueling-page[data-step="3"] #marathonPickerPanel, .fueling-page[data-step="4"] #marathonPickerPanel{ display:none !important; }
+    .fueling-page[data-step="1"] .fx-col-inputs > .fuel-panel:not(.fx-run){ display:none !important; }
+    .fueling-page[data-step="2"] .fx-col-inputs > .fuel-panel:not(#fuelTunePanel){ display:none !important; }
+    .fueling-page[data-step="3"] :is(.fx-run, .fx-answers, .fx-keep, .fx-guest-offer){ display:none !important; }
+    .fueling-page[data-step="4"] :is(.fx-run, #fuelTunePanel, .fx-col-inputs > .fuel-panel[data-collapsible]){ display:none !important; }
+    .fueling-page[data-step="1"] :is(#targetsPanel, #compositionPanel, #timelinePanel, #myFuelingPlans, .fuel-disclaimer),
+    .fueling-page[data-step="2"] :is(#targetsPanel, #compositionPanel, #timelinePanel, #myFuelingPlans, .fuel-disclaimer),
+    .fueling-page[data-step="3"] :is(#targetsPanel, #compositionPanel, #timelinePanel, #myFuelingPlans, .fuel-disclaimer){ display:none !important; }
+    .fueling-page[data-step="2"] #fuelRowCarry{ display:none; }
+    .fueling-page[data-step="3"] :is(#fuelRowYou, #fuelRowConditions, #fuelRowSodium){ display:none; }
+    .fueling-page[data-step="4"] .fx-answers{ display:block; }
+
+    /* The toolbar, a piece per step: the mode switch on 1, the fluid unit on 3, the save line on 4. */
+    .fueling-page[data-step] .fuel-toolbar{ display:flex; flex-direction:column; gap:12px; margin:16px 0 0; padding:0; border:0; background:none; box-shadow:none; }
+    .fueling-page[data-step="1"] .fuel-toolbar > :is(.mode-caption, .fuel-unit-row, .fuel-save-row){ display:none; }
+    .fueling-page[data-step="2"] .fuel-toolbar{ display:none !important; }
+    .fueling-page[data-step="3"] .fuel-toolbar > :not(.fuel-unit-row){ display:none; }
+    .fueling-page[data-step="4"] .fuel-toolbar > :not(.fuel-save-row){ display:none; }
+    .fueling-page[data-step="3"] .fuel-toolbar, .fueling-page[data-step="4"] .fuel-toolbar{ order:4; }
+    .fueling-page[data-step="3"] .fuel-unit-row{ display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-radius:26px; background:linear-gradient(180deg, rgba(4,11,8,.62), rgba(7,17,12,.42)); border:1px solid rgba(236,230,212,.07); box-shadow:inset 0 2px 8px rgba(0,0,0,.4); }
+
+    /* One bubble per part; the part's own title is the row's heading, not a button. */
+    .fueling-page[data-step] .fuel-panel{ margin-top:12px; }
+    .fueling-page[data-step] .fx-run > .fuel-panel-header,
+    .fueling-page[data-step] #fuelTunePanel > .fuel-panel-header{ display:none; }
+    .fueling-page[data-step] .fx-run .fuel-calc-btn{ display:none; }
+    .fueling-page[data-step] #fuelTunePanel{ padding:0; margin:0; background:none; border:0; box-shadow:none; }
+    .fueling-page[data-step] .fx-row{ margin-top:12px; padding:18px; border:1px solid rgba(236,230,212,.07); border-radius:26px; background:linear-gradient(180deg, rgba(4,11,8,.62), rgba(7,17,12,.42)); box-shadow:inset 0 2px 8px rgba(0,0,0,.4), 0 1px 0 rgba(255,244,222,.06); }
+    .fueling-page[data-step] .fx-row > summary{ min-height:44px; }
+    .fueling-page[data-step] .fx-forced > summary{ min-height:0; margin-bottom:14px; pointer-events:none; }
+    .fueling-page[data-step] .fx-forced > summary::after,
+    .fueling-page[data-step] .fx-forced .fx-ico,
+    .fueling-page[data-step] .fx-forced .fx-rt small{ display:none; }
+    .fueling-page[data-step] .fx-forced .fx-rt b{ font:650 18px/1.25 var(--font-body); }
+    .fueling-page[data-step] .fx-body{ padding:0; }
+
+    /* The glass bar: your numbers as you answer, and Next. Above the app's tab bar. */
+    .fx-stepbar{
+        position:fixed; left:20px; right:20px; bottom:calc(88px + env(safe-area-inset-bottom)); z-index:900;
+        display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 8px 8px 18px; border-radius:999px;
+        background:linear-gradient(180deg, rgba(36,66,52,.92), rgba(18,38,29,.94)); border:1px solid rgba(236,230,212,.18);
+        box-shadow:inset 0 1px 0 rgba(255,244,222,.22), 0 14px 28px -12px rgba(0,0,0,.8);
+        -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    }
+    .fx-stepbar span{ display:block; font:500 12px/1.2 var(--font-body); color:var(--text-secondary); }
+    .fx-stepbar b{ display:block; font:600 20px/1.1 var(--font-display); letter-spacing:.01em; color:var(--text); }
+    .fx-bar-next{
+        flex:none; min-height:44px; padding:0 20px; border-radius:999px; cursor:pointer; white-space:nowrap;
+        font:700 15px var(--font-body); color:#FFF3D6; border:1px solid rgba(236,214,176,.45);
+        background:linear-gradient(180deg, rgba(240,220,184,.52), rgba(214,185,142,.26) 60%, rgba(214,185,142,.34));
+        box-shadow:inset 0 1px 0 rgba(255,244,222,.4);
+    }
+}
+@media (min-width:1100px){
+    .fx-stepper, .fx-stepbar{ display:none !important; }
+}

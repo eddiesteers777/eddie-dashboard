@@ -67,6 +67,20 @@
         </section>
 
         <!-- ============================================
+             STEPS (a phone only, js/fuelSteps.js): one part at a time, then your plan. Everything below stays one page
+             on a computer. Hidden until the script turns steps on.
+        ============================================= -->
+        <div class="fx-stepper" id="fuelStepper" hidden>
+            <div class="fx-st-top">
+                <button type="button" class="fx-st-back" id="fuelStepBack" aria-label="Back one step" hidden><span data-icon="chevronLeft"></span></button>
+                <div class="fx-st-mid"><b>Fueling calculator</b><small id="fuelStepCount" aria-live="polite">Step 1 of 4</small></div>
+            </div>
+            <div class="fx-st-dots" id="fuelStepDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <h2 class="fx-st-title" id="fuelStepTitle" tabindex="-1">Your run</h2>
+            <p class="fx-st-help" id="fuelStepHelp"></p>
+        </div>
+
+        <!-- ============================================
              MODE + QUICK MARATHON SHORTCUT
         ============================================= -->
 
@@ -253,57 +267,49 @@
 
                     </label>
 
-                    <div class="fuel-field-row">
+                    <div class="fuel-field-row fx-run-row">
 
                         <label class="fuel-field">
+                            <span>Distance (mi)</span>
+                            <input
+                                type="number"
+                                id="distance"
+                                min="0"
+                                step="0.1"
+                                inputmode="decimal"
+                                placeholder="miles">
+                        </label>
 
+                        <label class="fuel-field">
                             <span>Duration (min)</span>
-
                             <input
                                 type="number"
                                 id="duration"
                                 min="0"
                                 step="1"
                                 inputmode="numeric"
-                                placeholder="from distance + pace">
-
+                                placeholder="minutes">
                         </label>
 
                         <label class="fuel-field">
-
-                            <span>Distance (mi)</span>
-
+                            <span>Pace</span>
                             <input
-                                type="number"
-                                id="distance"
-                                min="0"
-                                step="0.1"
-                                placeholder="optional">
-
+                                type="text"
+                                id="pace"
+                                placeholder="8:15/mi">
                         </label>
 
                     </div>
 
-                    <label class="fuel-field">
-
-                        <span>Pace (per mile, or /km)</span>
-
-                        <input
-                            type="text"
-                            id="pace"
-                            placeholder="e.g. 8:15">
-
-                    </label>
-
-                    <label class="fuel-field">
-
-                        <span>Start time (optional)</span>
-
-                        <input
-                            type="time"
-                            id="startTime">
-
-                    </label>
+                    <details class="fx-more">
+                        <summary>Start time (optional)</summary>
+                        <label class="fuel-field">
+                            <span>Start time</span>
+                            <input
+                                type="time"
+                                id="startTime">
+                        </label>
+                    </details>
 
                     <p class="fuel-note fuel-duration-status" id="durationStatus" aria-live="polite"></p>
 
@@ -337,7 +343,7 @@
                 <h2>Tune it</h2>
                 <span class="fuel-panel-tag">Optional. Whatever you skip is estimated and listed.</span>
             </div>
-            <details class="fx-row" id="fuelRowYou">
+            <details class="fx-row fx-forced" id="fuelRowYou">
                 <summary><span class="fx-ico" data-icon="user"></span><span class="fx-rt"><b>You</b><small id="fuelSumYou"></small></span></summary>
                 <div class="fx-body">
 
@@ -411,7 +417,7 @@
                 </div>
                 </div>
             </details>
-            <details class="fx-row" id="fuelRowConditions">
+            <details class="fx-row fx-forced" id="fuelRowConditions">
                 <summary><span class="fx-ico" data-icon="flame"></span><span class="fx-rt"><b>Conditions</b><small id="fuelSumConditions"></small></span></summary>
                 <div class="fx-body">
 
@@ -538,7 +544,7 @@
                 </div>
                 </div>
             </details>
-            <details class="fx-row" id="fuelRowCarry">
+            <details class="fx-row fx-forced" id="fuelRowCarry">
                 <summary><span class="fx-ico" data-icon="apple"></span><span class="fx-rt"><b>What you carry</b><small id="fuelSumCarry"></small></span></summary>
                 <div class="fx-body">
 
@@ -600,7 +606,8 @@
 
         <section
             class="fuel-panel"
-            id="diyPanelAnchor">
+            id="diyPanelAnchor"
+            data-collapsible>
 
             <div class="fuel-panel-header">
 
@@ -1030,6 +1037,15 @@
              COMPLETE WORKOUT PLAN SUMMARY + SAVE
         ============================================= -->
 
+        <!-- The review: every answer with an Edit button back to its step (a phone, step 4; js/fuelSteps.js). -->
+        <section class="fuel-panel fx-answers" id="fuelAnswers" aria-labelledby="fuelAnswersTitle">
+            <div class="fuel-panel-header">
+                <h2 id="fuelAnswersTitle">Your answers</h2>
+                <span class="fuel-panel-tag">Change any part</span>
+            </div>
+            <div id="fuelAnswersList"></div>
+        </section>
+
         <section class="fuel-panel fx-keep">
 
             <div class="fuel-panel-header">
@@ -1375,6 +1391,12 @@
 
     </main>
 
+    <!-- The glass bar (a phone, steps 1 to 3): your numbers as you answer, and Next. -->
+    <div class="fx-stepbar" id="fuelStepBar" hidden>
+        <div><span>Right now</span><b id="fuelBarNums">Add a distance or time</b></div>
+        <button type="button" class="fx-bar-next" id="fuelStepNext">Next</button>
+    </div>
+
     <!-- Screen readers hear the targets when they change (js/fueling.js announce()). -->
     <p class="sr-only" id="fuelAnnounce" aria-live="polite" aria-atomic="true"></p>
 
@@ -1405,6 +1427,8 @@
         type="module"
         src="js/fueling.js">
     </script>
+
+    <script type="module" src="js/fuelSteps.js"></script>
 
     <script src="js/registerSW.js"></script>
 
