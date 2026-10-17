@@ -64,6 +64,14 @@ function parseServingGrams(servingSize) {
     return match ? Number(match[1]) : null;
 }
 
+// The newer search returns brands as a list, the product API as
+// "Brand A, Brand B". Calling .split on the list used to throw and empty
+// every search.
+function firstBrand(brands) {
+    const first = Array.isArray(brands) ? brands[0] : String(brands || "").split(",")[0];
+    return String(first || "").trim();
+}
+
 function normalizeOffProduct(product) {
     const n = product.nutriments || {};
 
@@ -94,9 +102,7 @@ function normalizeOffProduct(product) {
     return {
         id: `off-${product.code || product._id || name}`,
         name,
-        brand: product.brands
-            ? product.brands.split(",")[0].trim()
-            : "",
+        brand: firstBrand(product.brands),
         source: "Open Food Facts",
         per100g,
         servingGrams: parseServingGrams(product.serving_size),
