@@ -102,6 +102,7 @@ const PAGE_TAB = {
     "workout.html": "plan",
     "progress.html": "more",
     "coach.html": "coach",
+    "coach-messages.html": "coach",
     "schedule.html": "coach",
     "checkin.html": "coach",
     "install.html": "more",
@@ -127,6 +128,7 @@ const SUBNAV_GROUPS = {
         { href: "coach.html", label: "Dashboard" },
         { href: "clients.html", label: "My Clients" },
         { href: "checkin.html", label: "Check-ins" },
+        { href: "coach-messages.html", label: "Messages" },
         { href: "schedule.html", label: "Schedule" }
     ]
 };

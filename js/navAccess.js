@@ -162,6 +162,7 @@ export const PAGE_REQUIRES = Object.freeze({
     "clients.html": "coach,updates",
     // Eddie's own tools and the coach's pages.
     "coach.html": "coach",
+    "coach-messages.html": "coach",
     "client.html": "coach",
     "marathon.html": "coach",
     "75day.html": "coach",

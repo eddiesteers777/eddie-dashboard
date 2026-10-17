@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Messages | Southbound Coaching</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/messages.css">
+    <link rel="stylesheet" href="css/coachMessages.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page coach-messages-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coaching</div>
+                <h1>Messages</h1>
+                <p class="eos-today-phase" id="cmSummary">Who is waiting on you first, with their week beside the thread.</p>
+            </div>
+        </section>
+
+        <div id="cmSignedOut" class="clients-empty" hidden>
+            <span data-icon="user"></span>
+            <p>Sign in to see your messages.</p>
+        </div>
+
+        <div id="cmNotApproved" class="clients-empty" hidden>
+            <span data-icon="user"></span>
+            <p>This page is for approved coaches only.</p>
+        </div>
+
+        <div class="cm-shell" id="cmShell" hidden>
+
+            <section class="cm-list" id="cmListPane" aria-label="Conversations">
+                <div class="cm-search">
+                    <span data-icon="search" aria-hidden="true"></span>
+                    <label class="sr-only" for="cmSearch">Search clients</label>
+                    <input type="search" id="cmSearch" placeholder="Search clients" autocomplete="off">
+                </div>
+                <div id="cmList"></div>
+            </section>
+
+            <section class="cm-pane" id="cmThreadPane" aria-label="Conversation" hidden>
+                <header class="cm-head">
+                    <button type="button" class="sb-btn sb-btn-secondary sb-btn-icon cm-back" id="cmBack" aria-label="Back to all messages"><span data-icon="chevronLeft"></span></button>
+                    <div class="cm-head-who">
+                        <strong id="cmName"></strong>
+                        <span id="cmSub"></span>
+                    </div>
+                    <a class="sb-btn sb-btn-secondary cm-hub" id="cmHub" href="client.html">Open hub</a>
+                </header>
+                <aside class="cm-ctx" id="cmCtx" aria-label="About this client" hidden>
+                    <button type="button" class="cm-ctx-toggle" id="cmCtxToggle" aria-expanded="false">About this client <span data-icon="chevronDown" aria-hidden="true"></span></button>
+                    <div class="cm-ctx-body" id="cmCtxBody"></div>
+                </aside>
+                <div class="cm-thread" id="cmThread"></div>
+                <div class="cm-quick" id="cmQuick" aria-label="Quick replies"></div>
+            </section>
+
+
+            <div class="cm-empty" id="cmPick">
+                <span data-icon="messageSquare" aria-hidden="true"></span>
+                <strong>Pick a conversation</strong>
+                <span>Your clients' messages show up on the left, longest wait first.</span>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/coachMessages.js"></script>
+
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>
