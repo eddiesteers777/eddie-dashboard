@@ -3524,3 +3524,158 @@ button.strength-set-prev:hover{ color:var(--primary); }
     .strength-workspace .strength-workspace-tab{ font-size:12px; }
     .st-mine-new{ padding-inline:12px; }
 }
+
+/* ==========================================================
+   STRENGTH, PREMIUM (2026-10-17). The four views are an inset track with a
+   lit lens; My Workouts, the calendar, the agenda, Upcoming, the library and
+   Progress sit on the page as dark bubbles with plain headings (the tan
+   kickers go quiet); a workout's Start is the lens, its ⋮ is glass; the
+   library's six filters are two to a row and its cards are dark bubbles whose
+   small print is readable (12px and up). Scoped to .strength-page; the
+   scripts, the builder and workout mode are unchanged.
+========================================================== */
+html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
+.strength-page .strength-hero-number{ color:var(--primary-light, var(--primary)); }
+.strength-page .strength-hero-unit{ font-size:13px; color:var(--text-secondary); }
+
+/* The views: an inset track, the open one a lit lens. */
+.strength-page .strength-workspace-nav{
+    gap:4px;
+    padding:4px;
+    margin-bottom:18px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
+}
+.strength-page .strength-workspace-tab{
+    min-height:44px;
+    align-items:center;
+    justify-content:center;
+    padding:0 6px;
+    border:0;
+    border-radius:14px;
+    background:none;
+    font:650 14px/1 var(--font-body);
+    color:var(--text-secondary);
+    text-align:center;
+}
+.strength-page .strength-workspace-tab:hover{ color:var(--text); }
+.strength-page .strength-workspace-tab.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+
+/* Panels: dark bubbles. My Workouts has no box of its own: its cards are the bubbles. */
+.strength-page .strength-calendar-shell,
+.strength-page .strength-agenda-panel,
+.strength-page .strength-upcoming-strip,
+.strength-page .strength-library-panel{
+    padding:18px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.strength-page .strength-myworkouts-panel{ padding:0; background:none; border:0; box-shadow:none; }
+.strength-page .strength-myworkouts-panel.sp-panel{ padding:18px; border-radius:26px; background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); }
+.strength-page .strength-library-eyebrow{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+.strength-page .strength-calendar-header h2,
+.strength-page .strength-agenda-header h2,
+.strength-page .strength-upcoming-strip h2,
+.strength-page .strength-library-header h2{ font:650 19px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+
+/* A workout: a raised card with the name, a hairline, then Start (lens) and ⋮ (glass). */
+.strength-page .st-card{
+    padding:18px;
+    border-radius:24px;
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+.strength-page .st-card:hover{ border-color:rgba(214,185,142,.3); }
+.strength-page .st-card-name{ font:800 26px/1 var(--font-display); text-transform:uppercase; letter-spacing:.01em; }
+.strength-page .st-card-preview{ font-size:14.5px; color:var(--text-secondary); }
+.strength-page .st-card-meta{ font:600 11.5px/1.5 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.strength-page .st-card-actions{ padding-top:14px; border-top:1px solid var(--sb-hairline); }
+.strength-page .st-card-start{ min-height:48px; border-radius:999px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); }
+.strength-page .st-card-menu,
+.strength-page .st-mine-empty-actions .sb-btn-secondary{
+    min-height:48px;
+    min-width:48px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+}
+.strength-page .st-mine-new,
+.strength-page .st-mine-empty-actions .sb-btn-primary{ border-radius:999px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); }
+.strength-page .st-mine-empty{ border-radius:26px; border:1px dashed var(--sb-glass-border); background:var(--sb-bubble-dark-bg); }
+
+/* The calendar: quiet cells, today and the chosen day lit. */
+.strength-page .strength-calendar-day{ border-color:var(--sb-hairline); border-radius:12px; background:rgba(236,230,212,.025); }
+.strength-page .strength-calendar-day.outside{ border-color:transparent; background:none; }
+.strength-page .strength-calendar-day.selected{ border-color:rgba(214,185,142,.55); background:rgba(214,185,142,.08); }
+.strength-page .strength-calendar-day.today .strength-calendar-number{ background:var(--sb-lens-bg); color:var(--on-primary); }
+.strength-page .strength-calendar-btn,
+.strength-page .strength-agenda-add-btn,
+.strength-page .strength-library-header-btn{
+    min-height:44px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+    font:650 13.5px var(--font-body);
+}
+.strength-page .strength-calendar-btn{ min-width:44px; }
+
+/* The library: chips glass with a lit lens, filters two to a row, cards as dark bubbles. */
+.strength-page .strength-library-panel{ background:none; border:0; box-shadow:none; padding:0; }
+.strength-page .strength-library-filter-btn{
+    min-height:44px;
+    padding:0 16px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    color:var(--text-secondary);
+    font:650 13.5px var(--font-body);
+}
+.strength-page .strength-library-filter-btn.active{ background:var(--sb-lens-bg); border-color:transparent; color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.strength-page .strength-library-controls{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+.strength-page .strength-library-search{ grid-column:1 / -1; }
+.strength-page .strength-library-search,
+.strength-page .strength-library-select{
+    min-height:48px;
+    border-radius:16px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    font-size:16px;
+}
+.strength-page .strength-library-select{ font-size:15px; padding-right:28px; }
+.strength-page .strength-library-results-bar,
+.strength-page .strength-library-results-bar span{ font:600 12px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+.strength-page .strength-library-card{
+    padding:18px;
+    border-radius:24px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.strength-page .strength-library-card-title{ font:800 24px/1 var(--font-display); text-transform:uppercase; letter-spacing:.01em; }
+.strength-page .strength-library-card-description{ font-size:14.5px; line-height:1.5; color:var(--text-secondary); }
+.strength-page .strength-library-badge{ font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; }
+.strength-page .strength-library-meta,
+.strength-page .strength-library-meta span{ font-size:13px; color:var(--text-secondary); }
+.strength-page .strength-library-focus{ font-size:13px; color:var(--text); }
+.strength-page .strength-library-btn{
+    min-height:44px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+    font:650 13.5px var(--font-body);
+}
+.strength-page .strength-library-btn.primary{ background:var(--sb-lens-bg); border-color:transparent; color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.strength-page .strength-library-save-copy{ min-height:44px; font-size:13.5px; color:var(--primary); }
+.strength-page .strength-library-favorite{ min-width:44px; min-height:44px; border-radius:50%; }
