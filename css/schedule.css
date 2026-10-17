@@ -327,3 +327,60 @@
 .sched-session-words{ color:var(--text-secondary); font-size:13.5px; line-height:1.5; overflow-wrap:anywhere; }
 .sched-session-row.is-off strong{ color:var(--text-secondary); text-decoration:line-through; text-decoration-color:var(--muted); }
 #comingUpWrap, #myRequestsWrap, #availableSlotsWrap, #pastWrap{ margin-bottom:22px; }
+
+/* ==========================================================
+   SESSIONS / SCHEDULE, PREMIUM (2026-10-17). The shared pieces come from the
+   premium block at the end of css/clients.css. Here each list (Coming up,
+   Waiting, Book a session, Past, the coach's slots and requests) is one dark
+   bubble with hairline rows instead of a stack of boxes; the day is a mono
+   kicker; statuses are mono tags; Request / Approve are the lens; the coach's
+   form fields are dark insets. Scoped to .schedule-page; js/schedule.js unchanged.
+========================================================== */
+.schedule-page .sched-slot-list,
+.schedule-page .clients-list{
+    gap:0;
+    padding:2px 18px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.schedule-page .sched-slot-list:empty,
+.schedule-page .clients-list:empty{ display:none; }
+.schedule-page .sched-slot-card,
+.schedule-page .clients-row{
+    padding:16px 0;
+    background:none;
+    border:0;
+    border-top:1px solid var(--sb-hairline);
+    border-radius:0;
+}
+.schedule-page .sched-slot-card:first-child,
+.schedule-page .clients-row:first-child{ border-top:0; }
+.schedule-page .clients-row strong{ font:650 16px/1.35 var(--font-body); }
+.schedule-page .sched-request-detail{ font-size:14.5px; color:var(--text); }
+.schedule-page .sched-request-note,
+.schedule-page .sched-session-words{ font-size:13.5px; color:var(--text-secondary); }
+.schedule-page .sched-request-status{ padding:3px 9px; font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; }
+.schedule-page .clients-row-avatar{ background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); color:var(--on-primary); }
+
+.schedule-page .sched-slot-day{ width:44px; text-align:left; font:600 12px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--primary-light, var(--primary)); }
+.schedule-page .sched-slot-time{ font:650 16px/1.3 var(--font-body); }
+.schedule-page .sched-slot-meta{ font-size:13px; }
+.schedule-page .sched-slot-tag{ padding:2px 9px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); color:var(--text-secondary); font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; }
+.schedule-page .clients-btn-icon{
+    min-width:44px;
+    min-height:44px;
+    border-radius:50%;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+}
+.schedule-page .sched-slot-form select,
+.schedule-page .sched-slot-form input,
+.schedule-page .sched-blackout-form input{ min-height:48px; }
+.schedule-page .sched-field > span,
+.schedule-page .sched-field-label{ font:650 13.5px/1.3 var(--font-body); color:var(--text-secondary); }
+.schedule-page .sched-slot-form button{ border-radius:999px; }
+.schedule-page .sched-blackout-chip{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px 0 14px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); border-radius:999px; }
+.schedule-page .sched-session-log li{ border-left-color:var(--primary); }
