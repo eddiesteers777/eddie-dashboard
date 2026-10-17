@@ -9,6 +9,7 @@
 ========================================== */
 
 import { icon } from "./icons.js";
+import { cachedRole } from "./role.js";
 import { initialsOf, safePhotoUrl, accountLabel } from "./accountModel.js";
 
 function paintOne(el, user) {
@@ -42,6 +43,10 @@ export function paintAccount(user) {
     const sub = document.getElementById("accountSub");
     if (sub) sub.textContent = user ? "Signed in with Google" : "Not signed in";
     document.querySelector(".sb-account")?.classList.toggle("is-guest", !user);
+    // The name under the avatar in the computer sidebar.
+    document.querySelectorAll("[data-side-name]").forEach(el => { el.textContent = user ? (user.displayName || "Account") : "Sign in"; });
+    const role = user ? cachedRole() : null;
+    document.querySelectorAll("[data-side-role]").forEach(el => { el.textContent = role === "coach" ? "Coach" : role ? "Client" : ""; });
 }
 
 // Wires every [data-account] button to open the sheet.
