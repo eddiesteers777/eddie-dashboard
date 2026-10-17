@@ -64,6 +64,8 @@ export function exportAllData(){
 // the (large) stored snapshot.
 let syncedCache;
 let syncUserUid = null;
+// Set when the device changed during a push, so one more push follows it.
+let pushAgain = false;
 function lastSyncedData(){
   if(syncedCache!==undefined) return syncedCache;
   try{ const raw=localStorage.getItem(SNAPSHOT_KEY); syncedCache=raw===null?null:(JSON.parse(raw)||{}); }catch(e){ syncedCache=null; }
@@ -246,7 +248,9 @@ export async function pushToCloud({ force=false }={}){
     return false;
   }
   const uid=user.uid;
-  if(pushing && pushingUid===uid) return pushing;
+  // A push already running read the device before this change: send it
+  // once that one finishes.
+  if(pushing && pushingUid===uid){ pushAgain=true; return pushing; }
   if(syncUserUid!==uid){
     syncUserUid=uid;
     syncedCache=undefined;
@@ -305,7 +309,13 @@ export async function pushToCloud({ force=false }={}){
     for(const [key,value] of Object.entries(result.data)){
       const ct=Number(finalTimes[key]||0);
       const lt=Number(nowTimes[key]||0);
-      if(lt<=ct && localStorage.getItem(key)!==value) localStorage.setItem(key,value);
+      const local=localStorage.getItem(key);
+      // Changed here while this push was in flight (a second habit tapped
+      // before the first one's push finished): that copy is newer. Keep it
+      // for the next push; writing the cloud's copy over it un-ticked the
+      // earlier habit (2026-10-17).
+      if(local!==(localData[key]??null)){ pushAgain=true; continue; }
+      if(lt<=ct && local!==value) localStorage.setItem(key,value);
     }
     saveKeyTimes(finalTimes);
     markSynced(result.data);
@@ -330,12 +340,15 @@ export async function pushToCloud({ force=false }={}){
   })();
   pushingUid=uid;
   pushing=promise;
-  try{ return await promise; } finally {
+  let ok;
+  try{ ok=await promise; } finally {
     if(pushing===promise){
       pushing=null;
       pushingUid=null;
     }
   }
+  if(pushAgain && ok){ pushAgain=false; return pushToCloud(); }
+  return ok;
 }
 
 // Several pages call this besides js/loadHeader.js: one pull per page

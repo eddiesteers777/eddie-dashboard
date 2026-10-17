@@ -4521,7 +4521,11 @@ body.page-today .th-row{
     width:100%; min-height:44px; padding:0; gap:7px;
     flex-direction:column; align-items:center; justify-content:flex-start;
     border:0; background:none; color:var(--text-secondary); font:600 11.5px/1.2 var(--font-body); text-align:center; cursor:pointer;
+    -webkit-user-select:none; user-select:none;
 }
+/* The keyboard ring follows the round icon, not the whole (wider) button. */
+body.page-today .th-row:focus-visible{ outline:none; }
+body.page-today .th-row:focus-visible .sb-habit-icon{ outline:2px solid var(--primary); outline-offset:3px; }
 body.page-today .th-row .th-name{ display:block; min-width:0; }
 body.page-today .th-row .sb-habit-icon{
     flex:0 0 52px; width:52px; height:52px; padding:0; border-radius:50%; display:grid; place-items:center;

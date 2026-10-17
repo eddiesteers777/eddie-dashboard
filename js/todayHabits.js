@@ -49,11 +49,15 @@ function init() {
     el.addEventListener("click", event => {
         const btn = event.target.closest("[data-habit]");
         if (!btn) return;
+        // Only a keyboard user gets focus put back on the redrawn button. On a
+        // phone a tap doesn't focus it, and focusing it from script drew the
+        // keyboard ring (a box around the whole button) after every tap.
+        const keepFocus = btn.matches(":focus-visible");
         const next = toggleEntry(read("entries", {}), dayKey(), btn.dataset.habit);
         try { localStorage.setItem("entries", JSON.stringify(next)); } catch { return; }
         import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});
         render(el);
-        el.querySelector(`[data-habit="${CSS.escape(btn.dataset.habit)}"]`)?.focus();
+        if (keepFocus) el.querySelector(`[data-habit="${CSS.escape(btn.dataset.habit)}"]`)?.focus();
         window.dispatchEvent(new CustomEvent("sb:habits-changed"));
     });
     // Another device's check-offs arrive through cloud sync on the next load;
