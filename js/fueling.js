@@ -53,6 +53,10 @@ function setSegments(workout, paces = null) {
 // Distance / pace / duration the person typed, most recent first: the two
 // most recent work out the third (js/fuelTargets.js resolveRun).
 let runOrder = [];
+// A worked-out box the person just emptied, kept empty until they type in
+// it or change another of the three.
+let heldBlank = null;
+let runEdit = null;   // the box being edited and the three as they were
 let unit = "oz"; // fluid shown in "oz" | "ml"; stored in oz (js/fluidUnits.js)
 let weightUnit = "lb"; // body weight shown in "lb" | "kg"; stored in lb (js/fuelProfile.js)
 // Targets the person typed over the worked-out ones (kept in a draft and
@@ -521,6 +525,7 @@ function currentResolve() {
         distance: $("distance").value,
         pace: $("pace").value,
         order: runOrder,
+        hold: heldBlank,
         workoutType: $("workoutType").value
     });
 }
@@ -531,7 +536,7 @@ function renderDurationStatus(r = currentResolve()) {
     const el = $("durationStatus");
     // Fill in the worked-out field; it isn't "typed" any more.
     if (r.computed === "duration") $("duration").value = r.minutes;
-    if (r.computed === "pace") $("pace").value = formatPace(r.paceMin);
+    if (r.computed === "pace") $("pace").value = r.waiting ? "" : formatPace(r.paceMin);
     if (r.computed === "distance") $("distance").value = r.distance;
     if (r.computed) runOrder = runOrder.filter(f => f !== r.computed);
     Object.keys(FIELD_OF).forEach(f => {
@@ -541,7 +546,9 @@ function renderDurationStatus(r = currentResolve()) {
     if (!el) return r;
     const dist = r.distance;
     const parts = [];
-    if (r.computed === "duration") {
+    if (r.waiting && r.computed) {
+        // An unlikely worked-out value: only the problem line below.
+    } else if (r.computed === "duration") {
         parts.push(`Duration <strong>${formatDuration(r.minutes)}</strong> (${r.minutes} min), from ${dist} mi at ${formatPace(r.paceMin)}/mi.`);
     } else if (r.computed === "pace") {
         parts.push(`Pace <strong>${formatPace(r.paceMin)}/mi</strong>, from ${dist} mi in ${formatDuration(r.minutes)}.`);
@@ -549,10 +556,12 @@ function renderDurationStatus(r = currentResolve()) {
         parts.push(`Distance <strong>${dist} mi</strong>, from ${formatDuration(r.minutes)} at ${formatPace(r.paceMin)}/mi.`);
     } else if (r.source === "distance-typical") {
         parts.push(`About <strong>${formatDuration(r.minutes)}</strong>, from a typical ${formatPace(r.paceMin)}/mi for this kind of run. Add your pace or time for a closer number.`);
-    } else if (r.source === "none") {
+    } else if (r.held) {
+        parts.push(`Type the ${r.held} you want, or change another field and the ${r.held} follows.`);
+    } else if (r.source === "none" && !r.problems.length) {
         parts.push("Enter any two of distance, pace and duration (or just a duration) to build the plan.");
     }
-    if (r.computed) parts.push(`<span class="fuel-muted-line">Change any two and the third follows.</span>`);
+    if (r.computed && !r.waiting) parts.push(`<span class="fuel-muted-line">Change any two and the third follows.</span>`);
     r.problems.forEach(p => parts.push(`<span class="fuel-duration-problem">${escapeHTML(p)}</span>`));
     el.innerHTML = parts.join(" ");
     el.classList.toggle("is-conflict", r.problems.length > 0);
@@ -749,8 +758,23 @@ let liveTimer = null;
 function onSessionInput(e) {
     const f = e?.target?.id;
     if (FIELD_OF[f]) {
-        runOrder = runOrder.filter(x => x !== f);
-        if ($(f).value.trim() !== "") runOrder.unshift(f);
+        // One edit of a box: remember the three as they were, so the
+        // in-between values ("10" on the way to "100") can't cost the other
+        // boxes what was in them.
+        if (!runEdit || runEdit.field !== f) {
+            runEdit = { field: f, order: [...runOrder], values: {} };
+            Object.keys(FIELD_OF).forEach(x => { runEdit.values[x] = $(x).value; });
+        }
+        heldBlank = null;
+        runOrder = runEdit.order.filter(x => x !== f);
+        if ($(f).value.trim() === "") {
+            // Emptied to type something new: put the other two back as they
+            // were and keep this one empty (never filled straight back in).
+            Object.keys(FIELD_OF).filter(x => x !== f).forEach(x => { $(x).value = runEdit.values[x]; });
+            heldBlank = f;
+        } else {
+            runOrder.unshift(f);
+        }
     }
     const r = renderDurationStatus();
     if (!lastTargets && !lastSession) return;
@@ -759,6 +783,7 @@ function onSessionInput(e) {
     clearTimeout(liveTimer);
     liveTimer = setTimeout(runCalculation, 250);
 }
+Object.keys(FIELD_OF).forEach(id => $(id).addEventListener("change", () => { runEdit = null; }));
 ["workoutType", "duration", "distance", "pace", "bodyWeight", "currentCarbIntake", "tolerance", "stomachSensitivity",
     "temperature", "humidity", "sweatRate", "sweatRateMeasured", "sweatSodium", "sweatSodiumMeasured", "typicalSodiumIntake", "caffeineWanted"].forEach(id => {
     const el = $(id);
@@ -1904,6 +1929,8 @@ function resetPage() {
     lastTargets = null;
     lastSession = null;
     runOrder = [];
+    heldBlank = null;
+    runEdit = null;
     setSegments(null);
 
     $("planName").value = "";
