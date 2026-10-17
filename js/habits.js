@@ -12,6 +12,7 @@ import { storedIcon, habitIconId } from "./habitIconSet.js";
 import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
 import { COACH_HABITS, CLIENT_HABITS } from "./habitDefaults.js";
+import { celebrateHabit } from "./celebrate.js";
 
 // Habits saved before icons existed have the emoji baked into the
 // name itself (e.g. "🙏 Prayer") -- strip it so it isn't shown
@@ -467,9 +468,14 @@ document.addEventListener("click", e => {
     const habitRow = target.closest("[data-toggle-habit]");
 
     if (habitRow) {
-        toggleCheck(selectedDate, habitRow.dataset.toggleHabit);
+        const habitId = habitRow.dataset.toggleHabit;
+        toggleCheck(selectedDate, habitId);
         renderToday();
         renderHero();
+        if (isChecked(selectedDate, habitId)) {
+            const row = document.querySelector(`#habitsChecklist [data-toggle-habit="${CSS.escape(habitId)}"]`);
+            celebrateHabit(row?.querySelector(".habits-check"), { allDone: dayComplete(selectedDate) });
+        }
         return;
     }
 

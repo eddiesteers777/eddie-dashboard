@@ -12,6 +12,7 @@ import { habitList, dayKey, toggleEntry, doneOn } from "./habitDefaults.js";
 import { habitIconHtml } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
+import { celebrateHabit } from "./celebrate.js";
 
 const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -57,7 +58,13 @@ function init() {
         try { localStorage.setItem("entries", JSON.stringify(next)); } catch { return; }
         import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});
         render(el);
-        if (keepFocus) el.querySelector(`[data-habit="${CSS.escape(btn.dataset.habit)}"]`)?.focus();
+        const fresh = el.querySelector(`[data-habit="${CSS.escape(btn.dataset.habit)}"]`);
+        if (keepFocus) fresh?.focus();
+        // Just checked off (not undone): the circle pops; the day's last one sweeps the card (js/celebrate.js).
+        if (next?.[dayKey()]?.[btn.dataset.habit]) {
+            const habits = habitList(read("habits", null), showsPersonalPlan());
+            celebrateHabit(fresh?.querySelector(".sb-habit-icon"), { allDone: habits.length > 0 && doneOn(next, dayKey(), habits) === habits.length });
+        }
         window.dispatchEvent(new CustomEvent("sb:habits-changed"));
     });
     // Another device's check-offs arrive through cloud sync on the next load;
