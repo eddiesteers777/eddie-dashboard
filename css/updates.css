@@ -57,3 +57,56 @@ a.updates-item:hover{ border-color:var(--primary); }
     white-space:pre-line;
     overflow-wrap:anywhere;
 }
+
+/* ==========================================================
+   FROM YOUR COACH, PREMIUM (2026-10-17). The feed is one dark bubble with
+   hairline rows (not a stack of boxes); the coach's words are what you read,
+   in full cream; the kind is a quiet glass circle, the date a mono label; an
+   unread item gets a 2px sand rule and the lens "New" tag. The page heading
+   comes from the premium block in css/clients.css. js unchanged.
+========================================================== */
+.updates-page .updates-feed{
+    gap:0;
+    padding:2px 18px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.updates-page .updates-feed:empty{ display:none; }
+.updates-page .updates-item{
+    position:relative;
+    padding:18px 0;
+    background:none;
+    border:0;
+    border-top:1px solid var(--sb-hairline);
+    border-radius:0;
+}
+.updates-page .updates-item:first-child{ border-top:0; }
+.updates-page a.updates-item:hover strong{ color:var(--primary-light, var(--primary)); }
+.updates-page .updates-item.is-new::before{
+    content:"";
+    position:absolute;
+    left:-18px;
+    top:18px;
+    bottom:18px;
+    width:2px;
+    border-radius:2px;
+    background:var(--primary);
+}
+.updates-page .updates-icon{
+    width:40px;
+    height:40px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text-secondary);
+}
+.updates-page .kind-feedback .updates-icon,
+.updates-page .kind-session .updates-icon{ background:var(--sb-glass-bg); }
+.updates-page .kind-feedback .updates-icon{ color:var(--primary-light, var(--primary)); }
+.updates-page .kind-session .updates-icon{ color:var(--sage); }
+.updates-page .updates-head strong{ font:650 16px/1.3 var(--font-body); }
+.updates-page .updates-when{ font:500 11.5px/1.5 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+.updates-page .updates-new{ padding:2px 9px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; }
+.updates-page .updates-text{ color:var(--text); font-size:15.5px; line-height:1.55; }
