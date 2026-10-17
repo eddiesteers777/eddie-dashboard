@@ -1969,3 +1969,225 @@ html{
 .mp-coros-send:hover{ background:color-mix(in srgb, var(--primary) 12%, transparent); }
 .mp-coros-send:disabled{ opacity:.6; cursor:default; }
 .mp-coros-send svg{ width:14px; height:14px; }
+
+/* ==========================================================
+   MARATHON PLAN, PREMIUM (2026-10-17). The race header sits on the page
+   (mono kicker, display title) with the goal as the one raised bubble; the
+   four numbers are a hairline ledger; the chart and the open week are dark
+   bubbles; weeks are glass chips with the open one lit; a week's days are
+   hairline rows with dark-inset fields, the check and the expand arrow at
+   44px; the notes are a ledger, not a wall of boxes; Pace reference and the
+   resets are glass. Presentation only: the plan, the saved progress
+   (training-progress) and edits (training-overrides) are read and written
+   exactly as before. Scoped to #mp-root.
+========================================================== */
+#mp-root .mp-hero,
+#mp-root .mp-stat,
+#mp-root .mp-note-card,
+#mp-root .mp-detail,
+#mp-root .mp-chart-wrap{ animation:none; }
+#mp-root .mp-stat:hover,
+#mp-root .mp-note-card:hover{ animation:none; transform:none; box-shadow:none; }
+
+/* The header: on the page, not in a box. */
+#mp-root .mp-hero{ padding:6px 0 0; margin-bottom:24px; background:none; border:0; border-radius:0; box-shadow:none; backdrop-filter:none; overflow:visible; }
+#mp-root .mp-hero-top{ align-items:stretch; gap:20px 32px; }
+#mp-root .mp-hero-top > div:first-child{ flex:1 1 360px; min-width:0; }
+#mp-root .mp-eyebrow{ padding:0; margin-bottom:10px; background:none; border-radius:0; font:600 11.5px/1.4 var(--font-mono); letter-spacing:.12em; color:var(--primary-light, var(--primary)); }
+#mp-root .mp-title{ margin-bottom:10px; font:900 clamp(48px, 13vw, 76px)/.9 var(--font-display); letter-spacing:.01em; text-transform:uppercase; }
+#mp-root .mp-sub{ font-size:15px; line-height:1.5; color:var(--text-secondary); }
+
+/* The goal: the one raised bubble. */
+#mp-root .mp-goal-block{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-width:240px;
+    padding:20px 22px;
+    text-align:left;
+    border-radius:26px;
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+#mp-root .mp-goal-label{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
+#mp-root .mp-goal-time{ margin-top:6px; font:800 clamp(52px, 14vw, 64px)/.92 var(--font-display); letter-spacing:.01em; color:var(--primary-light, var(--primary)); }
+#mp-root .mp-countdown{ margin-top:10px; font:600 12.5px/1.3 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text); }
+
+/* The four numbers: a hairline ledger. */
+#mp-root .mp-stats-row{ gap:0; margin-top:22px; border-top:1px solid var(--border); border-bottom:1px solid var(--sb-hairline); }
+#mp-root .mp-stat{ padding:16px 16px 16px 0; background:none; border:0; border-radius:0; }
+#mp-root .mp-stat + .mp-stat{ padding-left:16px; border-left:1px solid var(--sb-hairline); }
+#mp-root .mp-stat-val{ margin-bottom:4px; font:800 clamp(34px, 9vw, 44px)/.95 var(--font-display); letter-spacing:.01em; color:var(--text); }
+#mp-root .mp-stat-label{ font:650 12px/1.3 var(--font-body); letter-spacing:.06em; color:var(--text-secondary); }
+#mp-root #marathonCoros{ margin-top:16px; }
+#mp-root .mp-coros-tips{ margin-top:12px; font-size:14px; color:var(--text-secondary); }
+#mp-root .mp-coros-tips summary{ display:inline-flex; align-items:center; min-height:44px; color:var(--primary); }
+#mp-root .mp-coros-tips code{ background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); font-size:13px; }
+
+/* The chart: a dark bubble with a mono title and legend. */
+#mp-root .mp-chart-wrap,
+#mp-root .mp-detail{
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+#mp-root .mp-chart-wrap{ padding:20px 22px; margin-bottom:18px; }
+#mp-root .mp-chart-title{ gap:10px 16px; margin-bottom:14px; font:600 11.5px/1.4 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
+#mp-root .mp-legend{ gap:6px 14px; font:600 11px/1.4 var(--font-mono); letter-spacing:.08em; color:var(--text-secondary); }
+#mp-root .mp-legend i{ border-radius:2px; }
+#mp-root .mp-bar-selected{ stroke:var(--primary-light, var(--primary)); stroke-width:2; }
+
+/* Weeks: glass chips, the open one the lens, done weeks with a sage dot. */
+#mp-root .mp-weeklist{ gap:8px; padding:2px 0 10px; margin-bottom:16px; }
+#mp-root .mp-wchip{
+    min-height:44px;
+    padding:0 16px;
+    gap:8px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text-secondary);
+    font:600 13px/1 var(--font-mono);
+    letter-spacing:.04em;
+}
+#mp-root .mp-wchip:hover{ transform:none; color:var(--text); border-color:rgba(214,185,142,.45); }
+#mp-root .mp-wchip.active{ background:var(--sb-lens-bg); border:1px solid transparent; color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+#mp-root .mp-dot{ width:7px; height:7px; background:rgba(236,230,212,.3); }
+#mp-root .mp-wchip.done .mp-dot{ background:var(--sage); }
+#mp-root .mp-wchip.active .mp-dot{ background:var(--on-primary); opacity:.55; }
+
+/* The open week: a dark bubble, the week in the display face, miles in sand. */
+#mp-root .mp-detail{ padding:22px; }
+#mp-root .mp-detail-head{ gap:16px; margin-bottom:18px; align-items:flex-end; }
+#mp-root .mp-phase-pill{ margin-bottom:10px; padding:3px 10px; font:600 11px/1.5 var(--font-mono); letter-spacing:.1em; }
+#mp-root .mp-week-title{ margin-bottom:6px; font:900 clamp(40px, 11vw, 56px)/.92 var(--font-display); letter-spacing:.01em; text-transform:uppercase; }
+#mp-root .mp-week-dates{ font:600 12.5px/1.3 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+#mp-root .mp-week-miles{ font:800 clamp(48px, 13vw, 60px)/.9 var(--font-display); color:var(--primary-light, var(--primary)); }
+#mp-root .mp-week-miles span{ font:600 13px var(--font-mono) !important; color:var(--text-secondary) !important; margin-left:2px; }
+#mp-root .mp-week-miles-label{ margin-top:6px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+
+#mp-root .mp-banner{ padding:14px 16px; border-radius:16px; font-size:14.5px; }
+#mp-root .mp-banner-race{ background:var(--sb-glass-bg); border:1px solid rgba(214,185,142,.35); color:var(--text); }
+
+/* Days: hairline rows, not a stack of boxes. */
+#mp-root .mp-days{ gap:0; border-top:1px solid var(--border); }
+#mp-root .mp-day-row{ margin:0; padding:14px 0; gap:14px; background:none; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; }
+#mp-root .mp-day-row:hover{ background:none; }
+#mp-root .mp-day-row:last-child{ border-bottom:1px solid var(--sb-hairline); }
+#mp-root .mp-day-done .mp-day-session-input{ color:var(--text-secondary); }
+#mp-root .mp-day-row.race .mp-day-abbr{ color:var(--primary-light, var(--primary)); }
+#mp-root .mp-day-abbr{ font:600 13px/1 var(--font-mono); letter-spacing:.1em; color:var(--text); }
+#mp-root .mp-day-timing{ font-size:13px; color:var(--text-secondary); }
+#mp-root .mp-pace-chip{ padding:3px 10px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); color:var(--text-secondary); font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; }
+
+/* The check: a 28px ring with a 44px tap area; done is sage. */
+#mp-root .mp-check{ position:relative; width:28px; height:28px; border-radius:50%; border:1.5px solid rgba(236,230,212,.32); font-size:14px; }
+#mp-root .mp-check::after{ content:""; position:absolute; inset:-8px; }
+#mp-root .mp-check.checked{ background:var(--sage); border-color:transparent; color:var(--on-primary); }
+
+/* Fields: dark insets, 16px so phones don't zoom. */
+#mp-root .mp-day-session-input,
+#mp-root .mp-day-miles-input,
+#mp-root .mp-extra-input,
+#mp-root .mp-extras-notes-input{
+    min-height:44px;
+    border-radius:14px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    color:var(--text);
+    font-size:16px;
+}
+#mp-root .mp-day-session-input{ padding:0 14px; }
+#mp-root .mp-day-miles-input{ width:64px; padding:0 10px; margin-right:6px; }
+#mp-root .mp-extras-notes-input{ padding:10px 14px; }
+#mp-root .mp-day-session-input:focus,
+#mp-root .mp-day-miles-input:focus,
+#mp-root .mp-extra-input:focus,
+#mp-root .mp-extras-notes-input:focus{ border-color:rgba(214,185,142,.6); background:var(--sb-inset-bg); }
+#mp-root .mp-day-race-tag{ color:var(--primary-light, var(--primary)); font-weight:650; }
+
+/* The expand arrow: a 44px glass circle. */
+#mp-root .mp-day-expand-toggle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text-secondary);
+}
+#mp-root .mp-day-expand-toggle.mp-has-notes{ border-color:color-mix(in srgb, var(--sage) 55%, transparent); color:var(--sage); }
+
+/* A day's extras: an inset under its row. */
+#mp-root .mp-day-extras{ margin:0 0 14px; padding:16px; border-radius:18px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); }
+#mp-root .mp-extras-label{ display:flex; align-items:center; gap:6px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+#mp-root .mp-extras-body,
+#mp-root .mp-extra-editable-item{ font-size:14px; }
+#mp-root .mp-extras-fuel-link{ display:inline-flex; align-items:center; min-height:44px; font-size:14px; color:var(--primary); }
+#mp-root .mp-extra-editable-item{ padding:4px 4px 4px 12px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); border-radius:14px; }
+#mp-root .mp-extra-remove{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; position:relative; }
+#mp-root .mp-extra-remove::after{ content:""; position:absolute; inset:-4px; }
+#mp-root .mp-extra-add{ min-height:44px; padding:0 16px; border-radius:999px; border:1px solid var(--sb-glass-border); background:var(--sb-glass-bg); box-shadow:var(--sb-glass-shadow); color:var(--text); font:650 13.5px var(--font-body); }
+#mp-root .mp-extra-add:hover{ border-color:rgba(214,185,142,.45); background:var(--sb-glass-bg); }
+#mp-root .mp-coros-preview{ margin:0 0 12px; padding:10px 14px; border-radius:14px; border-color:rgba(214,185,142,.25); font-size:13.5px; color:var(--text-secondary); }
+#mp-root .mp-coros-status,
+#mp-root .mp-coros-warn{ font-size:12.5px; }
+#mp-root .mp-coros-send{ min-height:44px; border-radius:999px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); box-shadow:var(--sb-glass-shadow); color:var(--text); font:650 13.5px var(--font-body); }
+
+/* The week's line: a tan rule, no box. */
+#mp-root .mp-mental{ margin:22px 0; padding:4px 0 4px 16px; border-left:2px solid var(--primary); border-radius:0; background:none; color:var(--text); font-size:16px; }
+
+/* The notes: a ledger. */
+#mp-root .mp-notes-grid{ gap:0; margin-top:0; border-top:1px solid var(--sb-hairline); }
+#mp-root .mp-note-card{ padding:16px 16px 16px 0; background:none; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; }
+#mp-root .mp-note-label{ margin-bottom:6px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--primary-light, var(--primary)); }
+#mp-root .mp-note-body{ font-size:14.5px; line-height:1.55; color:var(--text-secondary); }
+
+/* Pace reference and the resets: glass; Reset all progress in brick words. */
+#mp-root .mp-drawer-toggle,
+#mp-root .mp-reset-btn{
+    min-height:44px;
+    margin-top:18px;
+    margin-right:8px;
+    padding:0 18px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+    font:650 14px/1 var(--font-body);
+}
+#mp-root .mp-drawer-toggle:hover{ transform:none; border-color:rgba(214,185,142,.45); box-shadow:var(--sb-glass-shadow); }
+#mp-root .mp-reset-btn{ color:var(--red); }
+#mp-root .mp-reset-btn:hover{ background:color-mix(in srgb, var(--red) 14%, transparent); color:var(--red); }
+#mp-root .mp-drawer{ margin-top:16px; padding:6px 18px; border-radius:18px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); }
+#mp-root .mp-pace-table td{ padding:12px 0; border-bottom:1px solid var(--sb-hairline); font-size:14.5px; }
+#mp-root .mp-pace-table td:first-child{ color:var(--text); }
+#mp-root .mp-pace-table td:last-child{ font:600 14.5px var(--font-mono); color:var(--primary-light, var(--primary)); }
+
+@media (max-width:1100px){
+    #mp-root .mp-stat:nth-child(3){ padding-left:0; border-left:0; }
+    #mp-root .mp-stat:nth-child(-n+2){ border-bottom:1px solid var(--sb-hairline); }
+}
+@media (max-width:850px){
+    #mp-root{ width:calc(100% - 32px); padding-top:12px; }
+    #mp-root .mp-hero-top > div:first-child{ flex:0 0 auto; }
+    #mp-root .mp-goal-block{ min-width:0; }
+    #mp-root .mp-detail,
+    #mp-root .mp-chart-wrap{ padding:18px; }
+    #mp-root .mp-week-progress{ text-align:left; }
+}
+@media (max-width:600px){
+    /* Two numbers to a row on phones too: they're short. */
+    #mp-root .mp-stats-row{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    #mp-root .mp-drawer-toggle,
+    #mp-root .mp-reset-btn{ width:100%; margin-right:0; margin-top:10px; }
+    #mp-root .mp-drawer-toggle:first-of-type{ margin-top:18px; }
+}
+#mp-root .mp-extras-grid{ grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); }
