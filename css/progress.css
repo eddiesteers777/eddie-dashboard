@@ -76,3 +76,101 @@
 /* Six weeks fit flat on a phone (Analytics' charts tilt their many labels). */
 .pg-page .tr-bars{ height:130px; margin-bottom:6px; }
 .pg-page .tr-bar small{ transform:none; margin-top:0; }
+
+/* ==========================================================
+   MY PROGRESS, PREMIUM (2026-10-17). The numbers are one hairline ledger
+   (the first, the headline number, full width and larger), Six Weeks is the
+   one raised bubble, and the rest are dark bubbles with plain headings and
+   hairline rows. Scoped to .pg-page; js/clientProgress.js is unchanged.
+========================================================== */
+.pg-page .eos-today-eyebrow{ display:none; }
+.pg-page .eos-today-hero::before{ display:none; }
+
+/* The numbers: a ledger with hairlines, not a wall of boxes. */
+.pg-page .pg-metrics{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:0;
+    margin:0 0 8px;
+    border-top:1px solid var(--border);
+}
+.pg-page .pg-metric{
+    padding:16px 14px 16px 0;
+    background:none;
+    border:0;
+    border-bottom:1px solid var(--sb-hairline);
+    border-radius:0;
+    gap:6px;
+}
+.pg-page .pg-metric span{ font:650 12px/1.3 var(--font-body); letter-spacing:.06em; color:var(--text-secondary); }
+.pg-page .pg-metric strong{ font:800 clamp(36px, 9vw, 46px)/.95 var(--font-display); letter-spacing:.01em; }
+.pg-page .pg-metric small{ font-size:13.5px; line-height:1.4; color:var(--text-secondary); }
+/* The headline number leads: the whole row, the number in sand. */
+.pg-page .pg-metric:first-child{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    grid-template-areas:"label num" "detail num";
+    align-items:center;
+    column-gap:16px;
+    padding:20px 0;
+}
+.pg-page .pg-metric:first-child span{ grid-area:label; align-self:end; }
+.pg-page .pg-metric:first-child small{ grid-area:detail; align-self:start; }
+.pg-page .pg-metric:first-child strong{ grid-area:num; font-size:clamp(56px, 15vw, 72px); color:var(--primary-light, var(--primary)); }
+/* The rest shift one place, so the pairs after it get their hairline on the right side. */
+.pg-page .pg-metric:nth-child(even){ padding:16px 14px 16px 0; border-left:0; }
+.pg-page .pg-metric:nth-child(odd):not(:first-child){ padding:16px 0 16px 16px; border-left:1px solid var(--sb-hairline); }
+.pg-page .pg-metric:last-child:nth-child(even){ grid-column:1 / -1; }
+
+/* Cards: dark bubbles with plain headings. */
+.pg-page .pg-card{
+    margin:16px 0 0;
+    padding:18px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.pg-page .pg-card::before, .pg-page .pg-card::after{ display:none; }
+.pg-page .pg-card .eos-today-card-header{ margin:0 0 4px; padding:0; border:0; align-items:center; }
+.pg-page .pg-card .eos-today-card-header h2{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+.pg-page .pg-card .eos-today-date{ font:600 12px/1.3 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.pg-page .pg-note{ color:var(--text-secondary); font-size:14.5px; }
+
+/* Six weeks: the trend, the one raised bubble. */
+.pg-page #trendCard{
+    margin-top:20px;
+    background:var(--sb-bubble-raised-bg);
+    border-color:var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+.pg-page #trendCard .tr-bar-fill{ background:var(--sage); opacity:.55; border-radius:6px 6px 2px 2px; }
+.pg-page #trendCard .tr-bar.is-current .tr-bar-fill{ background:var(--primary); opacity:1; box-shadow:none; }
+.pg-page #trendCard .tr-bar small{ font:600 11px/1.2 var(--font-mono); letter-spacing:.04em; color:var(--text-secondary); }
+.pg-page #trendCard .tr-bar.is-current small{ color:var(--primary-light, var(--primary)); }
+
+/* The links in a card's corner: a 44px target, quiet until hovered. */
+.pg-page .pg-link{ position:relative; min-height:44px; margin:-11px 0; font:650 14px var(--font-body); color:var(--primary); }
+.pg-page .pg-link:hover{ color:var(--primary-light, var(--primary)); }
+
+/* The week's bar: a thin track. */
+.pg-page .pg-bar{ height:6px; border-radius:999px; background:rgba(236,230,212,.08); margin:14px 0 8px; }
+.pg-page .pg-bar span{ border-radius:999px; background:var(--sb-lens-bg); }
+
+/* Rows: hairlines, not filled boxes. */
+.pg-page .pg-rows{ gap:0; margin:8px 0 0; }
+.pg-page .pg-rows li{ padding:13px 0; background:none; border-radius:0; border-top:1px solid var(--sb-hairline); }
+.pg-page .pg-rows:first-child li:first-child, .pg-page .pg-note + .pg-rows li:first-child{ border-top:1px solid var(--sb-hairline); }
+.pg-page .pg-rows strong{ font:650 15.5px/1.35 var(--font-body); }
+.pg-page .pg-rows small{ font-size:13.5px; line-height:1.45; color:var(--text-secondary); }
+.pg-page .pg-rows .pg-tag{ font:600 11px/1.6 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.pg-page .pg-rows + .pg-rows{ margin-top:0; }
+
+@media (min-width:901px){
+    .pg-page #trendCard .tr-bar-plan, .pg-page #trendCard .tr-bar-fill{ left:26%; right:26%; }
+    .pg-page .pg-metrics{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+    .pg-page .pg-metric:first-child{ grid-column:1 / -1; }
+    .pg-page .pg-metric:not(:first-child){ padding:16px 16px 16px 0; border-left:0; }
+    .pg-page .pg-metric:not(:first-child) + .pg-metric{ padding-left:16px; border-left:1px solid var(--sb-hairline); }
+    .pg-page .pg-metric:last-child:nth-child(even){ grid-column:auto; }
+}

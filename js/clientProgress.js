@@ -65,7 +65,7 @@ function renderTrend(progress, runner) {
     const miles = runner && weeks.some(w => w.runSessions);
     $("trendBody").innerHTML = `
         ${barsHtml(weeks.map(w => ({ label: shortDate(w.start), value: miles ? w.runMiles : w.completedWorkouts, current: w.isCurrent })), { unit: miles ? "mi" : "workouts" })}
-        <p class="pg-note">${miles ? "Miles logged each week" : "Workouts done each week"}; this week is outlined.</p>`;
+        <p class="pg-note">${miles ? "Miles logged each week" : "Workouts done each week"}; this week is highlighted.</p>`;
 }
 
 function renderPlan(progress) {
