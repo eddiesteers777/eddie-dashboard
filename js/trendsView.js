@@ -12,10 +12,11 @@
 
 import { planVsActual, longRuns, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
 import { barsHtml, lineSvg } from "./svgCharts.js";
-import { planWeeks, allRuns, everyRun, stravaActs, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
+import { planWeeks, keyRaceTitle, allRuns, everyRun, stravaActs, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
 import { yearStats, otherCounts } from "./stravaHistory.js";
 import { syncStrava, STRAVA_EVENT } from "./stravaStore.js";
-import { loadSettings, loadCheckins, isoDate } from "./readinessData.js";
+import { loadSettings, loadCheckins, isoDate, inputs as readinessInputs } from "./readinessData.js";
+import { computeReadiness } from "./readiness.js";
 import { kindChip } from "./analyticsSummary.js";
 import { isCorosConnected } from "./corosClient.js";
 import { reconstructWorkout } from "./workoutExecution.js";
@@ -27,7 +28,12 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const day = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const weekday = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 const mi = n => (Math.round(n * 10) / 10).toString();
-const GOAL = 3 * 3600 + 5 * 60;   // 3:05:00
+// The plan's race goal ("Goal 3:05:00" in race day's title); 3:05 if the title has none.
+const GOAL = (() => {
+    const title = keyRaceTitle();
+    const m = String(title || "").match(/goal\s+(\d{1,2}):(\d{2}):(\d{2})/i);
+    return m ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) : 3 * 3600 + 5 * 60;
+})();
 
 function panel(id, title, sub, body, kind = "") {
     return `<section class="panel tr-panel" id="${id}"><div class="panel-header"><div><h2>${esc(title)} ${kindChip(kind)}</h2>${sub ? `<p class="tr-sub">${sub}</p>` : ""}</div></div>${body}</section>`;
@@ -42,14 +48,14 @@ function planPanel(today, runs) {
         r.last4?.pct != null ? `Last 4 weeks: <strong>${r.last4.pct}%</strong> of plan (${mi(r.last4.actual)} of ${mi(r.last4.planned)} mi)` : ""
     ].filter(Boolean).join(" · ");
     const bars = r.rows.map(w => ({ label: `W${w.week}`, value: w.isFuture ? 0 : w.actual, planned: w.planned, current: w.isCurrent, future: w.isFuture, title: `Week ${w.week} (${day(w.start)}): ${w.isFuture ? "planned" : `${mi(w.actual)} of`} ${mi(w.planned)} mi` }));
-    return panel("trendsPlan", "Plan vs actual", sub || "Your COROS miles against the plan, week by week.",
-        `${barsHtml(bars)}<p class="tr-legend"><span class="tr-key plan"></span> planned <span class="tr-key fill"></span> run <span class="tr-key met"></span> within 10% of plan</p>`, "measured");
+    return panel("trendsPlan", "Plan vs actual", sub || "Your watch miles (COROS and Strava) against the plan, week by week.",
+        `${barsHtml(bars)}<p class="tr-legend"><span class="tr-key plan"></span> planned <span class="tr-key fill"></span> run <span class="tr-key met"></span> 90% of plan or more</p>`, "measured");
 }
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 function workoutRow(w, saved) {
-    if (!w.run) return `<li class="tr-work"><div class="tr-work-top"><strong>${esc(w.title)}</strong><span>${weekday(w.date)}</span></div><small class="tr-miss">No COROS run that day.</small></li>`;
+    if (!w.run) return `<li class="tr-work"><div class="tr-work-top"><strong>${esc(w.title)}</strong><span>${weekday(w.date)}</span></div><small class="tr-miss">${w.date === isoDate(new Date()) ? "Not run yet today." : "No run that day."}</small></li>`;
     const lapData = saved[w.run.labelId]?.laps;
     // A structured workout with laps: rebuilt step by step (js/workoutExecution.js).
     const hasWork = w.workout?.sets?.some(s => s.pace || s.repTime || (s.effort && s.effort !== "easy" && s.effort !== "recovery") || s.parts);
@@ -108,8 +114,25 @@ function longPanel(runs) {
         `${lineSvg(lr.map(r => r.miles), { height: 70 })}<ul class="tr-list">${lr.slice(-6).reverse().map(r => `<li><span>${day(r.date)}</span><strong>${mi(r.miles)} mi</strong><span>${r.pace ? `${mmss(r.pace)}/mi` : "–"}</span><span>${r.hr ? `${r.hr} bpm` : ""}</span></li>`).join("")}</ul>`, "measured");
 }
 
+// Readiness's body part (HRV, resting HR, sleep) by day, the same number Habits below shows:
+// saved for recent weeks, worked out from the health numbers for older days.
+function bodyReadiness(today, days = 56) {
+    const saved = readiness();
+    let data = null;
+    const out = {};
+    for (const row of bodyTrend({}, {}, today, { days })) {
+        let score = saved[row.date]?.bodyScore;
+        if (score == null) {
+            data ||= readinessInputs();
+            if (data.health?.[row.date]) score = computeReadiness(row.date, data).bodyScore;
+        }
+        if (score != null) out[row.date] = { score };
+    }
+    return out;
+}
+
 function bodyPanel(today) {
-    const rows = bodyTrend(health(), readiness(), today);
+    const rows = bodyTrend(health(), bodyReadiness(today), today);
     const needH = loadSettings().sleepNeedMin / 60;
     const have = rows.some(r => r.hrv != null || r.sleep != null || r.rhr != null);
     if (!have) return panel("trendsBody", "Body", "", empty("Connect COROS to see your HRV, resting heart rate and sleep here."));
@@ -125,8 +148,8 @@ function bodyPanel(today) {
         ${mini("hrv", "HRV", "ms", { band: rows.map(r => (r.low != null && r.high != null ? { lo: r.low, hi: r.high } : null)) })}
         ${mini("rhr", "Resting HR", "bpm", { invert: true })}
         ${mini("sleep", "Sleep", "h", { goal: needH })}
-        ${mini("readiness", "Readiness", "", { min: 0, max: 100, whole: true })}
-    </div>${feelLine(today)}<p class="tr-note">HRV's shaded band is your normal range from COROS. Sleep's line is your ${needH} h need. Resting HR is drawn with lower as higher. Readiness is calculated from the others.</p>`, "measured");
+        ${mini("readiness", "Readiness (body)", "", { min: 0, max: 100, whole: true })}
+    </div>${feelLine(today)}<p class="tr-note">HRV's shaded band is your normal range from COROS. Sleep's line is your ${needH} h need. Resting HR is drawn with lower as higher. Readiness is the body part of your score, from those three (the same number as Habits below); the score on Today also counts your morning check-in.</p>`, "measured");
 }
 
 // The morning check-ins: the last 4 weeks against the 4 before (soreness: lower is better).
@@ -148,9 +171,9 @@ function predictionPanel() {
     if (!p.length) return panel("trendsRace", "COROS's prediction over time", "", empty("COROS's marathon prediction is saved here each day you open Analytics."), "prediction");
     const last = p.at(-1);
     const gap = last.marathon - GOAL;
-    const sub = `COROS predicts <strong>${clock(last.marathon)}</strong> · goal 3:05:00 (${gap <= 0 ? `${mmss(-gap)} under` : `${mmss(gap)} over`})${vo2 ? ` · VO₂ max ${vo2}` : ""}`;
+    const sub = `COROS predicts <strong>${clock(last.marathon)}</strong> · goal ${clock(GOAL)} (${gap <= 0 ? `${mmss(-gap)} under` : `${mmss(gap)} over`})${vo2 ? ` · VO₂ max ${vo2}` : ""}`;
     return panel("trendsRace", "COROS's prediction over time", sub, p.length > 1
-        ? `${lineSvg(p.map(x => x.marathon), { invert: true, goal: GOAL, height: 70 })}<div class="tr-axis"><span>${day(p[0].date)}</span><span>Dashed line: 3:05</span><span>${day(last.date)}</span></div>`
+        ? `${lineSvg(p.map(x => x.marathon), { invert: true, goal: GOAL, height: 70 })}<div class="tr-axis"><span>${day(p[0].date)}</span><span>Dashed line: your goal</span><span>${day(last.date)}</span></div>`
         : `<p class="tr-note">Builds into a trend line as COROS's prediction is saved day by day.</p>`, "prediction");
 }
 

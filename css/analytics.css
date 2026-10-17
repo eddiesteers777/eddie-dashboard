@@ -1096,3 +1096,265 @@ canvas{
   .hb-cell{min-height:46px}
   .hb-month h3{min-width:0;font-size:1.45rem}
 }
+
+/* ==========================================================
+   ANALYTICS, PREMIUM (2026-10-17). The shared recipe (css/style.css
+   PREMIUM SURFACES): the summary is the one raised bubble, every panel a
+   dark bubble with a plain heading, the boxes inside panels become
+   hairline rows and ledgers, chips are glass with the chosen one the lens,
+   the section menu an inset track that follows the page. Sage = on
+   target, tan = this week / the main action. Scoped to .analytics-page;
+   the cards' JS only gained small markup hooks.
+========================================================== */
+.analytics-page .eos-today-eyebrow{ display:none; }
+.analytics-page .eos-today-hero::before{ display:none; }
+
+/* Section menu: an inset track, the section you're in is the lens. */
+.analytics-page .an-nav{
+    gap:2px; padding:4px; margin:0 0 22px; top:8px;
+    border-radius:18px;
+    background:color-mix(in srgb, var(--bg) 86%, transparent);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+}
+.analytics-page .an-nav a{
+    display:inline-flex; align-items:center; min-height:44px; padding:0 16px;
+    border:0; border-radius:14px;
+    font:650 14px/1 var(--font-body); color:var(--text-secondary);
+}
+.analytics-page .an-nav a:hover{ color:var(--text); }
+.analytics-page .an-nav a[aria-current]{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.analytics-page .an-nav a:focus-visible{ outline:2px solid var(--primary); outline-offset:-2px; }
+
+/* Summary: the one raised bubble, a race-poster countdown, lines with a tone dot. */
+.analytics-page .an-summary{
+    padding:22px;
+    border-radius:26px;
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+.analytics-page .an-countdown{ display:grid; gap:4px; margin:0 0 16px; padding-bottom:16px; border-bottom:1px solid var(--sb-hairline); }
+.analytics-page .an-cd-kicker{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+.analytics-page .an-cd-days{ font:800 22px/1 var(--font-display); letter-spacing:.02em; text-transform:uppercase; color:var(--text); }
+.analytics-page .an-cd-days b{ font-weight:900; font-size:clamp(56px, 14vw, 76px); line-height:.9; color:var(--primary-light, var(--primary)); margin-right:6px; }
+.analytics-page .an-cd-race{ font-size:15px; color:var(--text-secondary); }
+.analytics-page .an-lines{ gap:0; }
+.analytics-page .an-line{
+    position:relative; padding:13px 0 13px 20px;
+    border:0; border-top:1px solid var(--sb-hairline); border-radius:0; background:none;
+    font-size:15.5px; line-height:1.45;
+}
+.analytics-page .an-line:first-child{ border-top:0; }
+.analytics-page .an-line::before{ content:""; position:absolute; left:2px; top:21px; width:8px; height:8px; border-radius:50%; background:var(--primary); }
+.analytics-page .an-line.is-warn::before{ background:var(--amber); }
+.analytics-page .an-line.is-good::before,
+.analytics-page .an-line.is-quiet::before{ background:var(--sage); }
+.analytics-page .an-line.is-quiet{ color:var(--text-secondary); }
+.analytics-page .an-line a{ display:block; }
+.analytics-page .an-line a::after{ content:" →"; color:var(--primary); }
+.analytics-page .an-legend{ margin-top:14px; padding-top:12px; border-top:1px solid var(--sb-hairline); font-size:13px; line-height:2; }
+.analytics-page .an-kind{ font:600 10.5px/1.5 var(--font-mono); letter-spacing:.1em; padding:1px 7px; border-radius:6px; }
+
+/* Section heads: a mono number and a display title, no circle. */
+.analytics-page .an-section{ margin-bottom:44px; scroll-margin-top:84px; }
+.analytics-page .an-head{ gap:12px; margin:0 0 16px; padding-top:18px; border-top:1px solid var(--border); }
+.analytics-page .an-num{
+    display:block; white-space:nowrap; width:auto; height:auto; margin-top:6px; border:0; border-radius:0; background:none;
+    font:600 13px/1 var(--font-mono); letter-spacing:.1em; color:var(--primary-light, var(--primary));
+}
+.analytics-page .an-num::before{ content:"0"; }
+.analytics-page .an-head h2{ font-weight:900; font-size:clamp(30px, 7vw, 40px); line-height:.95; }
+.analytics-page .an-head p{ margin-top:6px; font-size:15px; }
+
+/* Panels: dark bubbles with plain headings. */
+.analytics-page .panel{
+    padding:22px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.analytics-page .panel:hover{ border-color:var(--sb-bubble-dark-border); }
+.analytics-page .panel-header{ margin-bottom:14px; align-items:flex-start; }
+.analytics-page .panel-header h2{ font:650 19px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+.analytics-page .panel-header p,
+.analytics-page .tr-sub{ margin-top:6px; font-size:14.5px; line-height:1.5; color:var(--text-secondary); }
+.analytics-page .rc-sub-h{ margin:20px 0 8px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
+.analytics-page .rc-why{ font-size:14.5px; }
+.analytics-page .rc-details summary,
+.analytics-page .tr-more > summary,
+.analytics-page .tr-laps summary,
+.analytics-page .hb-more summary,
+.analytics-page .hb-how summary,
+.analytics-page .sv-how summary{ display:inline-flex; align-items:center; min-height:44px; color:var(--primary); font:650 14px var(--font-body); }
+
+/* Chips and buttons: glass, the chosen one / main action the lens. */
+.analytics-page .rc-chips{ gap:2px; padding:4px; width:max-content; max-width:100%; border-radius:18px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); }
+.analytics-page .rc-chip{ min-height:44px; padding:0 18px; border:0; border-radius:14px; background:none; font:650 14px/1 var(--font-body); color:var(--text-secondary); }
+.analytics-page .rc-chip.is-on{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.analytics-page .sb-btn,
+.analytics-page .primary-btn,
+.analytics-page .secondary-btn{ min-height:44px; border-radius:999px; }
+.analytics-page .sb-btn-primary,
+.analytics-page .primary-btn{ background:var(--sb-lens-bg); border:0; color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.analytics-page .sb-btn-secondary,
+.analytics-page .secondary-btn{ background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); color:var(--text); box-shadow:var(--sb-glass-shadow); }
+.analytics-page .hb-nav{ width:44px; height:44px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); box-shadow:var(--sb-glass-shadow); }
+.analytics-page .hb-chip{ min-height:44px; background:var(--sb-glass-bg); border-color:var(--sb-glass-border); }
+
+/* Race capability: the headline time in sand, the evidence as hairline rows. */
+.analytics-page .rc-head{ gap:6px 18px; margin:6px 0 10px; }
+.analytics-page .rc-time{ font-weight:900; font-size:clamp(60px, 15vw, 84px); line-height:.9; color:var(--primary-light, var(--primary)); }
+.analytics-page .rc-range{ font:500 13px/1.5 var(--font-mono); letter-spacing:.02em; }
+.analytics-page .rc-lenses{ gap:0; border-top:1px solid var(--sb-hairline); }
+.analytics-page .rc-lens{ padding:12px 0; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; }
+.analytics-page .rc-lens strong{ font:800 24px/1 var(--font-display); letter-spacing:.02em; }
+.analytics-page .rc-lens-sd{ font:500 12px var(--font-mono); }
+.analytics-page .rc-lock{ border-radius:16px; border-color:var(--sb-inset-border); background:var(--sb-inset-bg); }
+.analytics-page .rc-bar{ height:6px; border-radius:999px; background:rgba(236,230,212,.08); }
+.analytics-page .rc-bar span{ border-radius:999px; background:var(--sage); }
+
+/* Bests: a ledger, not five boxes. */
+.analytics-page .records-grid{ grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:0; border-top:1px solid var(--sb-hairline); }
+.analytics-page .record{ align-items:flex-start; padding:16px 14px 16px 0; background:none; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; text-align:left; }
+.analytics-page .record:hover{ transform:none; border-color:var(--sb-hairline); }
+.analytics-page .record span{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
+.analytics-page .record h3{ font:900 40px/1 var(--font-display); letter-spacing:.02em; text-transform:uppercase; color:var(--text); cursor:pointer; }
+.analytics-page .record-source{ font-size:13px; color:var(--text-secondary); }
+.analytics-page .record-link{ min-height:44px; padding:0; margin:0; font:650 13.5px var(--font-body); }
+.analytics-page .record-input{ min-height:48px; border-radius:16px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); color:var(--text); font-size:16px; padding:0 14px; }
+
+/* Your races and similar lists: hairline rows. */
+.analytics-page .ar-list{ gap:0; }
+.analytics-page .ar-row{ padding:14px 0; border:0; border-top:1px solid var(--sb-hairline); border-radius:0; background:none; }
+.analytics-page .ar-row:first-child{ border-top:0; }
+.analytics-page .ar-h{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
+.analytics-page .ar-edit select,
+.analytics-page .ar-edit input:not([type="checkbox"]),
+.analytics-page .dc-fields input{ min-height:48px; border-radius:16px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); font-size:16px; }
+
+/* Plan vs actual bars: sage = run, full sage = at plan, tan = this week. */
+.analytics-page .tr-bar-fill{ background:var(--sage); opacity:.45; border-radius:6px 6px 2px 2px; }
+.analytics-page .tr-bar-fill.is-met{ background:var(--sage); opacity:.9; }
+.analytics-page .tr-bar.is-current .tr-bar-fill{ background:var(--primary); opacity:1; box-shadow:none; }
+.analytics-page .tr-bar-plan{ border-radius:6px 6px 2px 2px; border-color:rgba(236,230,212,.28); }
+.analytics-page .tr-bar small{ font:600 11px/1.2 var(--font-mono); letter-spacing:.04em; color:var(--text-secondary); }
+.analytics-page .tr-bar.is-current small{ color:var(--primary-light, var(--primary)); }
+.analytics-page .tr-key.fill{ background:var(--sage); opacity:.45; }
+.analytics-page .tr-key.met{ background:var(--sage); opacity:.9; }
+.analytics-page .tr-key.plan{ border-color:rgba(236,230,212,.4); }
+.analytics-page .tr-legend,
+.analytics-page .tr-axis{ font:500 11.5px/1.5 var(--font-mono); letter-spacing:.04em; color:var(--text-secondary); }
+/* One or two years shouldn't stretch into a wall. */
+.analytics-page #trendsYears .tr-bars{ justify-content:center; }
+.analytics-page #trendsYears .tr-bar{ flex:0 1 72px; }
+
+/* Training load: the three numbers as a ledger. */
+.analytics-page .lc-stats{ gap:0; margin:4px 0 14px; border-top:1px solid var(--sb-hairline); border-bottom:1px solid var(--sb-hairline); }
+.analytics-page .lc-stat{ padding:14px 14px 14px 0; border:0; border-radius:0; background:none; }
+.analytics-page .lc-stat + .lc-stat{ padding-left:14px; border-left:1px solid var(--sb-hairline); }
+.analytics-page .lc-stat span{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+.analytics-page .lc-stat strong{ font-weight:900; font-size:clamp(32px, 8vw, 44px); line-height:1; }
+.analytics-page .lc-stat:first-child strong{ color:var(--primary-light, var(--primary)); }
+.analytics-page .lc-reading{ padding:14px 16px; border:1px solid var(--sb-glass-border); border-left:3px solid var(--sage); border-radius:16px; background:var(--sb-glass-bg); }
+.analytics-page .lc-h{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+.analytics-page .lc-big strong{ font-weight:900; font-size:40px; color:var(--primary-light, var(--primary)); }
+.analytics-page .lc-effort li{ padding:7px 0; border-top:1px solid var(--sb-hairline); }
+
+/* Tables: hairlines, mono headings. */
+.analytics-page .mc-table th,
+.analytics-page .mc-table td{ border-bottom-color:var(--sb-hairline); }
+.analytics-page .mc-table thead th{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+
+/* Key workouts: hairline rows with a status tick. */
+.analytics-page .tr-works{ gap:0; border-top:1px solid var(--sb-hairline); }
+.analytics-page .tr-work{ padding:14px 0 14px 14px; border:0; border-bottom:1px solid var(--sb-hairline); border-left:2px solid transparent; border-radius:0; background:none; }
+.analytics-page .tr-work.good{ border-left-color:var(--sage); }
+.analytics-page .tr-work.ok{ border-left-color:var(--primary); }
+.analytics-page .tr-work.off{ border-left-color:var(--bad, var(--red)); }
+.analytics-page .tr-work-top strong{ font:650 15.5px/1.35 var(--font-body); }
+.analytics-page .tr-work-top span{ font:500 12px/1.5 var(--font-mono); letter-spacing:.04em; color:var(--text-secondary); }
+.analytics-page .tr-work > small{ font-size:14px; color:var(--text-secondary); }
+
+/* Lists and records rows. */
+.analytics-page .tr-list li,
+.analytics-page .tr-recs li{ border-bottom-color:var(--sb-hairline); padding:11px 0; font-size:14.5px; }
+.analytics-page .tr-list li span:first-child{ font:500 12.5px var(--font-mono); letter-spacing:.04em; }
+.analytics-page .tr-recs li strong{ font:800 24px/1 var(--font-display); letter-spacing:.02em; text-transform:uppercase; }
+.analytics-page .tr-h3{ margin-top:18px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+
+/* Body: four cells of one ledger. */
+.analytics-page .tr-minis{ gap:0; border-top:1px solid var(--sb-hairline); }
+.analytics-page .tr-mini{ padding:14px 14px 14px 0; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; background:none; }
+.analytics-page .tr-mini-top span{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
+.analytics-page .tr-mini-top strong{ font:800 24px/1 var(--font-display); letter-spacing:.02em; }
+.analytics-page .tr-mini small{ font-size:12.5px; color:var(--text-secondary); }
+.analytics-page .tr-band{ fill:rgba(143,163,136,.16); }
+
+/* Habits: tiles as a ledger, units in plain lowercase. */
+.analytics-page .hb-tiles{ gap:0; border-top:1px solid var(--sb-hairline); }
+.analytics-page .hb-tile{ padding:14px 14px 14px 0; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; background:none; }
+.analytics-page .hb-tile span{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+.analytics-page .hb-tile strong{ font-weight:800; font-size:32px; }
+.analytics-page .hb-unit{ margin-left:3px; font:600 14px var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+.analytics-page .hb-h{ font:650 16px/1.35 var(--font-body); }
+.analytics-page .hb-eff{ padding:14px 0; border:0; border-top:1px solid var(--sb-hairline); border-radius:0; background:none; }
+.analytics-page .hb-cell{ border-radius:12px; background:rgba(4,11,8,.35); }
+
+/* Folds (Model check, Athlete State): dark bubbles that open. */
+.analytics-page .an-check > summary,
+.analytics-page .as-fold > summary{
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.analytics-page .an-check > summary{ padding:18px 20px; border-top:1px solid var(--sb-bubble-dark-border); }
+.analytics-page .an-check > summary::after{
+    display:inline-flex; align-items:center; min-height:44px; padding:0 18px; border-radius:999px;
+    background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); color:var(--text); font:650 14px var(--font-body);
+}
+
+/* Data connections: an intro as a mono kicker, every panel a dark bubble. */
+.analytics-page .data-connections{ margin-top:28px; padding-top:20px; border-top:1px solid var(--border); }
+.analytics-page .data-connections-intro span,
+.analytics-page .coros-eyebrow,
+.analytics-page .coros-data-eyebrow,
+.analytics-page .strava-eyebrow,
+.analytics-page .strava-data-eyebrow{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+.analytics-page .data-connections-intro h2,
+.analytics-page .coros-connection-copy h2,
+.analytics-page .sv-panel h2,
+.analytics-page .coros-data-panel h2,
+.analytics-page .strava-connection-copy h2,
+.analytics-page .strava-data-panel h2{ font:650 19px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+.analytics-page .coros-data-preview,
+.analytics-page .strava-data-preview{ border:0; border-top:1px solid var(--sb-hairline); border-radius:0; background:none; padding:10px 0; }
+.analytics-page .coros-data-grid,
+.analytics-page .strava-data-grid{ gap:0; border-top:1px solid var(--sb-hairline); }
+.analytics-page .coros-data-card,
+.analytics-page .strava-data-card{ padding:14px 14px 14px 0; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; background:none; box-shadow:none; }
+.analytics-page .coros-data-card strong,
+.analytics-page .strava-data-card strong{ font:800 28px/1.05 var(--font-display); letter-spacing:.02em; text-transform:uppercase; }
+.analytics-page .coros-activity-row,
+.analytics-page .strava-activity-row{ border:0; border-top:1px solid var(--sb-hairline); border-radius:0; background:none; }
+.analytics-page .sv-result{ border-radius:16px; background:var(--sb-glass-bg); }
+
+@media (max-width:600px){
+    .analytics-page .panel{ padding:18px; }
+    .analytics-page .an-summary{ padding:18px; }
+    .analytics-page .lc-stat{ padding:12px 8px 12px 0; }
+    .analytics-page .lc-stat + .lc-stat{ padding-left:10px; }
+    .analytics-page .tr-minis,
+    .analytics-page .hb-tiles{ grid-template-columns:1fr 1fr; }
+    .analytics-page .tr-mini:nth-child(even),
+    .analytics-page .hb-tile:nth-child(even){ padding-left:14px; border-left:1px solid var(--sb-hairline); }
+    .analytics-page .records-grid{ grid-template-columns:1fr 1fr; }
+    .analytics-page .record:nth-child(even){ padding-left:14px; border-left:1px solid var(--sb-hairline); }
+    .analytics-page .record h3{ font-size:34px; }
+    .analytics-page .tr-mini-top{ gap:6px; }
+    .analytics-page .tr-mini-top strong{ font-size:20px; white-space:nowrap; }
+    .analytics-page .rc-chips{ width:100%; }
+    .analytics-page .rc-chip{ flex:1 1 0; padding:0 8px; }
+}

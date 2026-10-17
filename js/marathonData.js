@@ -40,21 +40,15 @@ export function formatDate(date){
 
 export function weekStart(week){
 
+    // Calendar days, not 7 × 24 hours: the clocks change on Nov 1, and
+    // adding hours put race week's Monday at 11 pm the Sunday before.
     return new Date(
 
-        START_DATE.getTime()
+        START_DATE.getFullYear(),
 
-        +
+        START_DATE.getMonth(),
 
-        (week-1)
-
-        *
-
-        7
-
-        *
-
-        DAY_MS
+        START_DATE.getDate() + (week-1) * 7
 
     );
 
@@ -64,15 +58,7 @@ export function weekEnd(week){
 
     return new Date(
 
-        weekStart(week).getTime()
-
-        +
-
-        7
-
-        *
-
-        DAY_MS
+        weekStart(week + 1).getTime()
 
         -
 
@@ -465,10 +451,12 @@ export const CROSS_TRAINING = {
       strength: "Maintenance - one short activation session, minimal volume." },
 
     { phase: "taper",
-      days: [workout("Recovery jog", 3, "Recovery"), workout("Easy + strides", 4, "Easy"),
+      // Monday to Sunday like every week; the race is Saturday Nov 7 (RACE_DATE), so Sunday is rest.
+      days: [workout("Easy + strides", 4, "Easy"),
              workout("Easy shakeout", 3, "Easy"), workout("3x1mi @ Marathon Pace, then rest starts", 4, "MP"),
              workout("Easy + light strides, gear check", 2, "Easy"), workout("Shakeout jog, begin carb-load", 2, "Recovery"),
-             workout("RACE DAY: Indianapolis Monumental Marathon - Goal 3:05:00", 26.2, "Race", true)],
+             workout("RACE DAY: Indianapolis Monumental Marathon - Goal 3:05:00", 26.2, "Race", true),
+             workout("Rest: walk, eat, celebrate", 0, "Recovery")],
       mental: "You've earned this line. Not hoping for 3:05 - believing it, because you did the work to prove it.",
       purpose: "Arrive rested, confident, and fueled. Every hard mile that matters has already been run.",
       fueling: "Standard race-morning routine, exactly as rehearsed in Weeks 8, 12, and 14. Nothing new on race day.",

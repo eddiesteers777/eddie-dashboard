@@ -32,6 +32,15 @@ export function planWeeks() {
     return WEEKS.map((_, i) => ({ week: i + 1, start: isoDate(weekStart(i + 1)), planned: getAdjustedWeekMileage(i + 1) }));
 }
 
+/** The title of the plan's longest race day (the goal race), or "". */
+export function keyRaceTitle() {
+    let best = null;
+    WEEKS.forEach((_, wi) => getAdjustedWeekDays(wi + 1).forEach(day => {
+        if (day.race && (!best || Number(day.miles) > Number(best.miles))) best = day;
+    }));
+    return best?.session || "";
+}
+
 /** Every run: COROS's, plus the imported Strava runs COROS doesn't have (js/stravaHistory.js). */
 export function everyRun(today = isoDate(new Date())) {
     const coros = runsBetween(load(HISTORY_KEY, null) || emptyHistory(), "1970-01-01", today);
