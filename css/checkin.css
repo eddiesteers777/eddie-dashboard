@@ -203,3 +203,79 @@
 .checkin-week{ border-color:rgba(201,173,132,.35); }
 .ck-plan-updated{ display:inline-block; margin-top:10px; color:var(--primary); font-weight:700; text-decoration:none; }
 .ck-open-plan{ display:inline-block; margin:8px 0 4px; color:var(--primary); font-size:14px; font-weight:700; text-decoration:none; }
+
+/* ==========================================================
+   CHECK-IN, PREMIUM (2026-10-17). The shared pieces come from css/clients.css
+   (the premium block at its end). Here: the form is the one raised bubble;
+   the stars are sand; the 1–5 scales and No / Yes are glass with a lit lens
+   for the choice; Your week's chips are glass; each check-in in History is a
+   dark bubble whose scores are glass chips and whose coach feedback is a tan
+   rule, not a box in a box. Scoped to .checkin-page; js/checkin.js unchanged.
+========================================================== */
+.checkin-page .clients-card:has(#checkinSubmitBtn){
+    background:var(--sb-bubble-raised-bg);
+    border-color:var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+.checkin-page .checkin-week{ border-color:var(--sb-bubble-dark-border); }
+.checkin-page .ck-week li,
+.checkin-page .ck-score{
+    padding:6px 12px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    font-size:13.5px;
+    color:var(--text-secondary);
+}
+.checkin-page .ck-week li{ color:var(--text); }
+.checkin-page .ck-score.is-low{ border-color:color-mix(in srgb, var(--amber) 60%, transparent); background:var(--warning-bg); }
+
+.checkin-page .checkin-rating-label{ font:650 15px/1.35 var(--font-body); margin-bottom:10px; }
+.checkin-page .checkin-star{ font-size:34px; color:rgba(236,230,212,.16); }
+.checkin-page .checkin-star.active{ color:var(--primary-light, var(--primary)); }
+
+.checkin-page .checkin-scale-row{ gap:6px; }
+.checkin-page .checkin-scale-row span,
+.checkin-page .checkin-seg span{
+    min-height:48px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text-secondary);
+    font:650 15px/1 var(--font-body);
+}
+.checkin-page .checkin-scale-row input:checked + span,
+.checkin-page .checkin-seg input:checked + span{ background:var(--sb-lens-bg); border-color:transparent; color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.checkin-page .checkin-scale-ends{ font:600 11px/1.4 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.checkin-page .checkin-field textarea,
+.checkin-page #checkinPainNote,
+.checkin-page #checkinNotesInput,
+.checkin-page .checkin-review-form textarea{ padding:12px 14px; border-radius:16px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); font-size:16px; }
+
+/* History: a dark bubble per week. */
+.checkin-page .checkin-history-list{ gap:12px; }
+.checkin-page .checkin-row{
+    padding:18px;
+    border-radius:24px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.checkin-page .checkin-row-who strong{ font:650 16.5px/1.3 var(--font-body); }
+.checkin-page .checkin-row-who span{ font-size:13px; }
+.checkin-page .checkin-row-stars .checkin-star-filled{ color:var(--primary-light, var(--primary)); }
+.checkin-page .checkin-row-stars{ color:rgba(236,230,212,.16); }
+.checkin-page .checkin-status-badge{ padding:4px 10px; font:600 11px/1.4 var(--font-mono); letter-spacing:.08em; }
+.checkin-page .ck-said span{ font:600 11px/1.4 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+.checkin-page .checkin-row-feedback{
+    margin-top:12px;
+    padding:2px 0 2px 14px;
+    background:none;
+    border:0;
+    border-left:2px solid var(--primary);
+    border-radius:0;
+    font-size:15px;
+}
+.checkin-page .checkin-row-feedback strong{ font:600 11px/1.4 var(--font-mono); letter-spacing:.1em; color:var(--primary); }
+.checkin-page .ck-open-plan, .checkin-page .ck-plan-updated{ display:inline-flex; align-items:center; min-height:44px; margin:2px 0; }

@@ -731,3 +731,78 @@
 .wo-reply span{ display:flex; align-items:center; gap:6px; color:var(--primary); font-size:12.5px; font-weight:800; }
 .wo-reply p{ margin:4px 0 0; color:var(--text); font-size:15px; line-height:1.55; }
 .cr-dialog [hidden], .cr-list [hidden]{ display:none !important; }
+
+/* ==========================================================
+   PREMIUM, THE CLIENT-SIDE PAGES BUILT ON THIS FILE (2026-10-17): Check-in,
+   Sessions, Messages and From Your Coach share these pieces, so they share
+   the premium recipe (css/style.css → PREMIUM SURFACES): cards are dark
+   bubbles with plain headings, tabs an inset track with a lit lens, the main
+   button the lens, the others glass, fields dark insets. Each page joins the
+   list below in its own commit; Coach a Client (clients.html) isn't in it yet.
+========================================================== */
+:is(.checkin-page) .eos-today-eyebrow{ display:none; }
+:is(.checkin-page) .eos-today-hero::before{ display:none; }
+
+:is(.checkin-page) .clients-card{
+    padding:18px;
+    margin-bottom:16px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+:is(.checkin-page) .clients-card h2{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); margin:0 0 6px; }
+:is(.checkin-page) .clients-card-note{ font-size:14px; color:var(--text-secondary); }
+:is(.checkin-page) .clients-section-title{ margin:28px 0 12px; font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+:is(.checkin-page) .clients-empty{
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px dashed var(--sb-glass-border);
+    box-shadow:none;
+}
+
+:is(.checkin-page) .clients-tabs{
+    padding:4px;
+    gap:2px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
+}
+:is(.checkin-page) .clients-tab{ min-height:44px; padding:0 18px; border-radius:14px; font:650 14px/1 var(--font-body); }
+:is(.checkin-page) .clients-tab.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+
+:is(.checkin-page) .clients-btn-primary{
+    min-height:48px;
+    padding:0 22px;
+    border:0;
+    border-radius:999px;
+    background:var(--sb-lens-bg);
+    box-shadow:var(--sb-lens-shadow);
+    color:var(--on-primary);
+    font:700 15px/1 var(--font-body);
+}
+:is(.checkin-page) .clients-btn-secondary{
+    min-height:44px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+    font:650 14px/1 var(--font-body);
+}
+:is(.checkin-page) .clients-btn-secondary:hover{ border-color:rgba(214,185,142,.45); }
+
+:is(.checkin-page) textarea,
+:is(.checkin-page) select,
+:is(.checkin-page) input[type="text"],
+:is(.checkin-page) input[type="date"],
+:is(.checkin-page) input[type="time"],
+:is(.checkin-page) input[type="number"]{
+    border-radius:16px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    color:var(--text);
+    font-size:16px;
+}
