@@ -473,8 +473,8 @@ document.addEventListener("click", e => {
         renderToday();
         renderHero();
         if (isChecked(selectedDate, habitId)) {
-            const row = document.querySelector(`#habitsChecklist [data-toggle-habit="${CSS.escape(habitId)}"]`);
-            celebrateHabit(row?.querySelector(".habits-check"), { allDone: dayComplete(selectedDate) });
+            const habit = habits.find(h => String(h.id) === String(habitId));
+            if (habit) celebrateHabit(habit, { allDone: dayComplete(selectedDate), card: document.querySelector("[data-cel-card]") });
         }
         return;
     }

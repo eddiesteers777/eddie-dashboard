@@ -4744,74 +4744,125 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
 }
 
 /* ==========================================
-   COMPLETION MOMENTS (js/celebrate.js, 2026-10-17)
-   A run marked done: a tan ring draws round a check and short rays burst, over a soft forest scrim that never
-   takes taps. A habit checked off: the circle pops, a sage ring ripples, six sparks fly; the day's last habit
-   sweeps a tan shine across its card. Reduced motion: the run badge only fades; habits don't move.
+   COMPLETION MOMENTS (js/celebrate.js, 2026-10-17; Bloom + per-habit scenes)
+   A run: a glass sheet springs up with a tan check, a tan bloom behind it and running shoes falling from the top.
+   A habit: a full-page moment made for that habit (its icon, name, line and a scene for its family).
+   Nothing takes taps (pointer-events:none). Reduced motion: the run sheet only fades; habits show nothing.
 ========================================== */
-.sb-cel-run{
-    position:fixed; inset:0; z-index:4800; pointer-events:none;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:0 24px;
-    background:radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--bg) 78%, transparent) 0, color-mix(in srgb, var(--bg) 40%, transparent) 46%, transparent 72%);
-    animation:sb-cel-fade .22s ease-out both;
-}
-.sb-cel-run.is-out{ animation:sb-cel-fadeout .32s ease-in both; }
-.sb-cel-medal{ position:relative; width:112px; height:112px; display:grid; place-items:center; animation:sb-cel-medal .5s cubic-bezier(.2,1.4,.4,1) both; }
-.sb-cel-ringsvg{ width:112px; height:112px; overflow:visible; filter:drop-shadow(0 10px 22px rgba(0,0,0,.55)); }
-.sb-cel-track{ fill:color-mix(in srgb, var(--bg) 82%, transparent); stroke:var(--sb-hairline); stroke-width:3; }
-.sb-cel-arc{ fill:none; stroke:var(--primary); stroke-width:4; stroke-linecap:round; stroke-dasharray:100; stroke-dashoffset:100; transform:rotate(-90deg); transform-origin:48px 48px; animation:sb-cel-draw .6s .1s cubic-bezier(.6,0,.2,1) forwards; }
-.sb-cel-tick{ fill:none; stroke:var(--text); stroke-width:6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:100; stroke-dashoffset:100; animation:sb-cel-draw .32s .55s cubic-bezier(.3,0,.2,1) forwards; }
-.sb-cel-ray{
-    position:absolute; left:50%; top:50%; width:4px; height:16px; margin:-8px 0 0 -2px; border-radius:2px; background:var(--primary);
-    opacity:0; transform:rotate(var(--a)) translateY(-50px) scaleY(.4);
-    animation:sb-cel-ray .62s calc(.58s + var(--d)) cubic-bezier(.15,.8,.3,1) forwards;
-}
-.sb-cel-ray.is-sage{ background:var(--sage); height:12px; }
-.sb-cel-ray.is-cream{ background:var(--text); width:3px; height:9px; }
-.sb-cel-kicker{ margin:6px 0 0; font:600 12px/1.2 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--primary-light); animation:sb-cel-rise .4s .62s ease-out both; }
-.sb-cel-title{ margin:0; max-width:100%; font:900 34px/.95 var(--font-display); text-transform:uppercase; letter-spacing:.01em; color:var(--text); text-align:center; text-shadow:0 2px 14px rgba(0,0,0,.6); animation:sb-cel-rise .4s .7s ease-out both; }
-.sb-cel-run.is-still .sb-cel-medal, .sb-cel-run.is-still .sb-cel-kicker, .sb-cel-run.is-still .sb-cel-title{ animation:none; }
-.sb-cel-run.is-still .sb-cel-arc, .sb-cel-run.is-still .sb-cel-tick{ animation:none; stroke-dashoffset:0; }
+@property --hm-ang{ syntax:"<angle>"; inherits:false; initial-value:0deg; }
+.sb-cel-run, .sb-hm{ position:fixed; inset:0; z-index:4800; pointer-events:none; overflow:hidden; }
+.sb-cel-run.is-out, .sb-hm.is-out{ animation:sb-cel-fadeout .4s ease-in both; }
+@keyframes sb-cel-fadeout{ to{ opacity:0; } }
+@keyframes sb-cel-fade{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes sb-cel-draw{ to{ stroke-dashoffset:0; } }
+@keyframes sb-cel-rise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
 
-.sb-cel-pop{ position:relative; animation:sb-cel-pop .42s cubic-bezier(.3,1.6,.5,1); }
-.sb-cel-burst{ position:absolute; inset:0; border-radius:inherit; pointer-events:none; }
-.sb-cel-ripple{ position:absolute; inset:-2px; border-radius:inherit; border:2px solid var(--sage); animation:sb-cel-ripple .6s ease-out forwards; }
-.sb-cel-spark{
-    position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%; background:var(--primary-light);
-    opacity:0; transform:rotate(var(--a)) translateY(-24px);
-    animation:sb-cel-spark .55s .06s cubic-bezier(.15,.8,.3,1) forwards;
+/* ---- run: Bloom ---- */
+.sb-cel-run{ display:flex; flex-direction:column; justify-content:flex-end; align-items:center; background:linear-gradient(180deg, rgba(11,26,20,0), rgba(11,26,20,.72)); animation:sb-cel-fade .3s both; }
+.sb-cel-bloom{ position:absolute; left:50%; bottom:-120px; width:560px; height:560px; margin-left:-280px; border-radius:50%; background:radial-gradient(circle, rgba(214,185,142,.4), rgba(214,185,142,0) 62%); animation:sb-cel-bloom 1.5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes sb-cel-bloom{ from{ transform:scale(.2); opacity:0; } 40%{ opacity:1; } to{ transform:scale(1.15); opacity:.7; } }
+.sb-cel-sheet{
+    position:relative; width:calc(100% - 24px); max-width:520px; margin:0 12px calc(26px + env(safe-area-inset-bottom, 0px)); padding:22px 20px;
+    display:flex; gap:16px; align-items:center; border-radius:26px;
+    background:linear-gradient(180deg, rgba(24,48,38,.97), rgba(15,32,25,.97)); border:1px solid rgba(236,230,212,.14);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.12), 0 -20px 60px -20px rgba(214,185,142,.35), 0 30px 60px -20px rgba(0,0,0,.8);
+    animation:sb-cel-sheet .75s cubic-bezier(.2,1.15,.3,1) both;
 }
-.sb-cel-spark:nth-child(odd){ background:var(--sage); }
+.sb-cel-run.is-out .sb-cel-sheet{ animation:sb-cel-sheetout .4s cubic-bezier(.6,0,.8,.4) forwards; }
+@keyframes sb-cel-sheet{ from{ transform:translateY(125%); } }
+@keyframes sb-cel-sheetout{ to{ transform:translateY(130%); } }
+.sb-cel-lens{ flex:0 0 58px; height:58px; border-radius:50%; display:grid; place-items:center; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); animation:sb-cel-pulse 1.1s .5s ease-out both; }
+@keyframes sb-cel-pulse{ from{ box-shadow:var(--sb-lens-shadow), 0 0 0 0 rgba(214,185,142,.6); } to{ box-shadow:var(--sb-lens-shadow), 0 0 0 24px rgba(214,185,142,0); } }
+.sb-cel-lens svg{ width:30px; height:30px; }
+.sb-cel-lens path{ fill:none; stroke:var(--on-primary); stroke-width:6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:100; stroke-dashoffset:100; animation:sb-cel-draw .4s .45s ease-out forwards; }
+.sb-cel-txt{ min-width:0; }
+.sb-cel-txt small{ font:600 11px/1.2 var(--font-mono); letter-spacing:.16em; text-transform:uppercase; color:var(--primary-light); }
+.sb-cel-txt h4{ margin:3px 0 4px; font:900 30px/.95 var(--font-display); text-transform:uppercase; letter-spacing:.01em; color:var(--text); overflow-wrap:anywhere; }
+.sb-cel-txt p{ margin:0; font:500 12.5px/1.3 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.sb-cel-fall{ position:absolute; top:-60px; width:var(--s); height:var(--s); margin-left:calc(var(--s) / -2); object-fit:contain; opacity:0; filter:drop-shadow(0 6px 10px rgba(0,0,0,.45)); animation:sb-cel-fall 2.5s var(--d) cubic-bezier(.35,.1,.55,1) forwards; }
+@keyframes sb-cel-fall{
+    0%{ opacity:0; transform:translate(0,0) rotate(0deg); }
+    8%{ opacity:1; }
+    80%{ opacity:1; }
+    100%{ opacity:0; transform:translate(var(--x), 105vh) rotate(var(--r)); }
+}
+.sb-cel-run.is-still{ animation-duration:.2s; }
+.sb-cel-run.is-still .sb-cel-sheet, .sb-cel-run.is-still .sb-cel-lens, .sb-cel-run.is-still .sb-cel-lens path{ animation:none; stroke-dashoffset:0; }
+
+/* ---- habit: full page, one scene per family ---- */
+.sb-hm{ display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 46%, rgba(11,26,20,.94), rgba(11,26,20,.86) 60%, rgba(11,26,20,.8)); animation:sb-cel-fade .25s both; }
+.sb-hm-night{ background:radial-gradient(circle at 70% 18%, rgba(30,46,60,.96), rgba(8,16,22,.96) 70%); }
+.hm-scene{ position:absolute; inset:0; overflow:hidden; }
+.hm-scene i{ position:absolute; display:block; }
+.hm-core{ position:relative; display:flex; flex-direction:column; align-items:center; gap:10px; padding:0 28px; text-align:center; }
+.hm-lens{ position:relative; width:128px; height:128px; border-radius:50%; display:grid; place-items:center; background:linear-gradient(180deg, rgba(236,230,212,.16), rgba(236,230,212,.05)); border:1px solid rgba(236,230,212,.22); box-shadow:inset 0 1px 0 rgba(255,244,222,.3), 0 24px 50px -16px rgba(0,0,0,.85), 0 0 60px -10px rgba(214,185,142,.4); backdrop-filter:blur(10px); animation:hm-lens .7s cubic-bezier(.2,1.35,.35,1) both; }
+@keyframes hm-lens{ from{ transform:scale(.45); opacity:0; } }
+.hm-lens img{ width:64px; height:64px; position:relative; animation:hm-icon .6s .25s cubic-bezier(.2,1.5,.4,1) both; }
+@keyframes hm-icon{ from{ transform:scale(.4) rotate(-14deg); opacity:0; } }
+.hm-ring{ position:absolute; inset:-5px; width:calc(100% + 10px); height:calc(100% + 10px); transform:rotate(-90deg); }
+.hm-ring circle{ fill:none; stroke:var(--primary); stroke-width:2.5; stroke-linecap:round; stroke-dasharray:100; stroke-dashoffset:100; animation:sb-cel-draw .75s .15s cubic-bezier(.6,0,.2,1) forwards; }
+.hm-kicker{ margin:12px 0 0; font:600 12px/1.2 var(--font-mono); letter-spacing:.2em; text-transform:uppercase; color:var(--primary-light); animation:sb-cel-rise .45s .5s both; }
+.hm-title{ margin:0; max-width:340px; font:900 44px/.92 var(--font-display); text-transform:uppercase; letter-spacing:.01em; color:var(--text); text-shadow:0 2px 18px rgba(0,0,0,.6); overflow-wrap:anywhere; animation:sb-cel-rise .45s .6s both; }
+.hm-line{ margin:2px 0 0; font:500 13px/1.3 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); animation:sb-cel-rise .45s .72s both; }
+.sb-hm.is-day .hm-lens{ box-shadow:inset 0 1px 0 rgba(255,244,222,.3), 0 24px 50px -16px rgba(0,0,0,.85), 0 0 90px -4px rgba(214,185,142,.75); }
+.sb-hm.is-day .hm-kicker{ color:var(--primary); font-size:13px; }
+
+/* water: a wave rises, bubbles float up */
+.hm-wave{ left:-10%; width:120%; bottom:0; height:125%; transform:translateY(100%); border-radius:46% 54% 0 0 / 7% 7% 0 0; background:linear-gradient(180deg, color-mix(in srgb, var(--cyan) 42%, transparent), color-mix(in srgb, var(--cyan) 14%, transparent)); animation:hm-wave 1.5s .05s cubic-bezier(.3,.7,.2,1) forwards; }
+.hm-wave.is-2{ background:linear-gradient(180deg, color-mix(in srgb, var(--cyan) 26%, transparent), transparent); border-radius:54% 46% 0 0 / 7% 7% 0 0; animation-delay:.2s; animation-duration:1.7s; }
+@keyframes hm-wave{ to{ transform:translateY(8%); } }
+.hm-bubble{ bottom:-20px; width:var(--s); height:var(--s); border-radius:50%; border:1.5px solid color-mix(in srgb, var(--cyan) 70%, transparent); opacity:0; animation:hm-bubble 2s var(--d) ease-out forwards; }
+@keyframes hm-bubble{ 0%{ opacity:0; transform:translateY(0); } 20%{ opacity:.9; } 100%{ opacity:0; transform:translateY(-70vh); } }
+/* stride: speed streaks and footfalls */
+.hm-streak{ left:0; height:2px; width:var(--w); border-radius:2px; background:linear-gradient(90deg, transparent, var(--primary)); opacity:0; animation:hm-streak .9s var(--d) cubic-bezier(.3,0,.2,1) forwards; }
+@keyframes hm-streak{ 0%{ opacity:0; transform:translateX(-120%); } 20%{ opacity:.85; } 100%{ opacity:0; transform:translateX(calc(100vw + 100%)); } }
+.hm-step{ width:12px; height:12px; border-radius:50%; background:var(--primary-light); opacity:0; animation:hm-step 1.1s var(--d) ease-out forwards; }
+@keyframes hm-step{ 0%{ opacity:0; transform:scale(.3); } 20%{ opacity:.9; transform:scale(1); } 100%{ opacity:0; transform:scale(1.4); } }
+/* impact: shockwaves and shards */
+.hm-shock{ left:50%; top:46%; width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:50%; border:3px solid var(--primary); opacity:0; animation:hm-shock 1s var(--d) cubic-bezier(.15,.7,.3,1) forwards; }
+@keyframes hm-shock{ 0%{ opacity:.95; transform:scale(.4); } 100%{ opacity:0; transform:scale(3.4); } }
+.hm-shard{ left:50%; top:46%; width:4px; height:20px; margin:-10px 0 0 -2px; border-radius:2px; background:var(--primary-light); opacity:0; transform:rotate(var(--a)) translateY(-90px); animation:hm-shard .7s calc(.15s + var(--d)) cubic-bezier(.15,.8,.3,1) forwards; }
+@keyframes hm-shard{ 0%{ opacity:0; transform:rotate(var(--a)) translateY(-90px); } 25%{ opacity:1; } 100%{ opacity:0; transform:rotate(var(--a)) translateY(-210px); } }
+.sb-hm-impact .hm-lens{ animation:hm-lens .7s cubic-bezier(.2,1.35,.35,1) both, hm-thump .4s .45s ease-out; }
+@keyframes hm-thump{ 0%,100%{ transform:scale(1); } 40%{ transform:scale(.9); } 70%{ transform:scale(1.06); } }
+/* flow: slow breathing rings */
+.hm-breath{ left:50%; top:46%; width:220px; height:220px; margin:-110px 0 0 -110px; border-radius:50%; border:2px solid color-mix(in srgb, var(--sage) 70%, transparent); background:radial-gradient(circle, color-mix(in srgb, var(--sage) 22%, transparent), transparent 70%); opacity:0; animation:hm-breath 2.4s var(--d) ease-in-out forwards; }
+@keyframes hm-breath{ 0%{ opacity:0; transform:scale(.55); } 35%{ opacity:.85; transform:scale(1.15); } 100%{ opacity:0; transform:scale(1.7); } }
+/* night: moon glow and twinkling stars */
+.hm-moon{ right:-50px; top:-50px; width:190px; height:190px; border-radius:50%; background:radial-gradient(circle at 40% 40%, #f4ead2, #d9c9a0 40%, rgba(214,185,142,0) 70%); opacity:0; animation:hm-moon 1.6s .1s ease-out forwards; filter:blur(1px); }
+@keyframes hm-moon{ to{ opacity:.55; transform:translate(-26px, 26px); } }
+.hm-star{ width:var(--s); height:var(--s); border-radius:50%; background:#F2EDE1; opacity:0; animation:hm-star 1.4s var(--d) ease-in-out 2 alternate forwards; box-shadow:0 0 8px rgba(242,237,225,.8); }
+@keyframes hm-star{ 0%{ opacity:0; transform:scale(.4); } 100%{ opacity:.95; transform:scale(1); } }
+/* nourish: leaves burst out */
+.hm-leaf{ left:50%; top:46%; width:16px; height:26px; margin:-13px 0 0 -8px; border-radius:0 85% 0 85%; background:linear-gradient(135deg, var(--sage), color-mix(in srgb, var(--sage) 50%, #0F2019)); opacity:0; transform:rotate(var(--a)) translateY(-60px); animation:hm-leaf 1.3s var(--d) cubic-bezier(.15,.8,.3,1) forwards; }
+.hm-leaf.is-tan{ background:linear-gradient(135deg, var(--primary-light), var(--primary-dark)); }
+@keyframes hm-leaf{ 0%{ opacity:0; transform:rotate(var(--a)) translateY(-60px) scale(.5); } 25%{ opacity:1; } 100%{ opacity:0; transform:rotate(calc(var(--a) + 70deg)) translateY(calc(var(--r) * -1)) scale(1.1); } }
+/* light: beams from above, motes rising */
+.hm-beams{ left:50%; top:-20%; width:200%; height:140%; margin-left:-100%; background:conic-gradient(from 180deg at 50% 0%, transparent 0 8%, rgba(236,214,176,.3) 10% 12%, transparent 14% 20%, rgba(236,214,176,.22) 22% 25%, transparent 27% 33%, rgba(236,214,176,.3) 35% 37%, transparent 39% 61%, rgba(236,214,176,.3) 63% 65%, transparent 67% 73%, rgba(236,214,176,.22) 75% 78%, transparent 80% 86%, rgba(236,214,176,.3) 88% 90%, transparent 92%); -webkit-mask:linear-gradient(180deg, #000, transparent 75%); mask:linear-gradient(180deg, #000, transparent 75%); opacity:0; animation:hm-beams 2.2s ease-out forwards; }
+@keyframes hm-beams{ 0%{ opacity:0; transform:rotate(-6deg); } 35%{ opacity:1; } 100%{ opacity:.55; transform:rotate(5deg); } }
+.hm-mote{ bottom:-10px; width:var(--s); height:var(--s); border-radius:50%; background:#ECD6B0; filter:blur(.6px); opacity:0; animation:hm-mote 2.1s var(--d) ease-out forwards; }
+@keyframes hm-mote{ 0%{ opacity:0; transform:translateY(0); } 25%{ opacity:.9; } 100%{ opacity:0; transform:translateY(-60vh); } }
+/* heart: a double heartbeat and embers */
+.hm-beat{ left:50%; top:46%; width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:50%; background:radial-gradient(circle, color-mix(in srgb, var(--primary) 45%, transparent), transparent 68%); opacity:0; animation:hm-beat .9s calc(.15s + var(--d)) ease-out forwards; }
+@keyframes hm-beat{ 0%{ opacity:0; transform:scale(.6); } 30%{ opacity:1; transform:scale(1.5); } 100%{ opacity:0; transform:scale(2.6); } }
+.hm-ember{ bottom:-10px; width:var(--s); height:var(--s); border-radius:50%; background:var(--primary-light); opacity:0; animation:hm-mote 2.2s var(--d) ease-out forwards; }
+/* focus: ruled lines draw across, ticks pop */
+.hm-rule{ left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(214,185,142,.55) 30%, rgba(214,185,142,.55) 70%, transparent); transform:scaleX(0); transform-origin:left; animation:hm-rule .9s var(--d) cubic-bezier(.7,0,.2,1) forwards; }
+@keyframes hm-rule{ to{ transform:scaleX(1); } }
+.hm-tick{ width:5px; height:5px; background:var(--primary-light); transform:rotate(45deg) scale(0); opacity:0; animation:hm-tick .9s var(--d) ease-out forwards; }
+@keyframes hm-tick{ 0%{ opacity:0; transform:rotate(45deg) scale(0); } 30%{ opacity:1; transform:rotate(45deg) scale(1.3); } 100%{ opacity:0; transform:rotate(45deg) scale(.4); } }
+
+/* the day's last habit: a shine sweeps its card once the moment has gone */
 [data-cel-card]{ position:relative; }
 .sb-cel-all{ isolation:isolate; }
 [data-cel-card].sb-cel-all::before{
     content:""; display:block; position:absolute; inset:0; height:auto; z-index:-1; border-radius:inherit; pointer-events:none;
     background:linear-gradient(105deg, transparent 30%, color-mix(in srgb, var(--primary) 22%, transparent) 50%, transparent 70%) no-repeat;
-    background-size:220% 100%; animation:sb-cel-sweep 1.1s .15s ease-in-out both;
-}
-
-@keyframes sb-cel-fade{ from{ opacity:0; } to{ opacity:1; } }
-@keyframes sb-cel-fadeout{ from{ opacity:1; } to{ opacity:0; transform:translateY(-6px); } }
-@keyframes sb-cel-medal{ from{ transform:scale(.6); opacity:0; } to{ transform:scale(1); opacity:1; } }
-@keyframes sb-cel-draw{ to{ stroke-dashoffset:0; } }
-@keyframes sb-cel-ray{
-    0%{ opacity:0; transform:rotate(var(--a)) translateY(-50px) scaleY(.4); }
-    30%{ opacity:1; }
-    100%{ opacity:0; transform:rotate(var(--a)) translateY(-78px) scaleY(1); }
-}
-@keyframes sb-cel-rise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
-@keyframes sb-cel-pop{ 0%{ transform:scale(1); } 30%{ transform:scale(.84); } 70%{ transform:scale(1.1); } 100%{ transform:scale(1); } }
-@keyframes sb-cel-ripple{ from{ opacity:.9; transform:scale(1); } to{ opacity:0; transform:scale(1.65); } }
-@keyframes sb-cel-spark{
-    0%{ opacity:0; transform:rotate(var(--a)) translateY(-24px); }
-    25%{ opacity:1; }
-    100%{ opacity:0; transform:rotate(var(--a)) translateY(-46px) scale(.6); }
+    background-size:220% 100%; animation:sb-cel-sweep 1.1s .1s ease-in-out both;
 }
 @keyframes sb-cel-sweep{ from{ background-position:120% 0; opacity:1; } to{ background-position:-20% 0; opacity:.2; } }
-/* js/celebrate.js already skips habit moments under reduced motion; this is the backstop. */
 @media (prefers-reduced-motion:reduce){
-    .sb-cel-pop, .sb-cel-burst i, .sb-cel-all::before{ animation:none !important; opacity:0; }
-    .sb-cel-pop{ opacity:1; }
+    .sb-hm, .sb-cel-all::before{ display:none !important; }
 }
 
 
