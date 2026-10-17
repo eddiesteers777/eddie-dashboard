@@ -254,6 +254,7 @@
     "js/runningProgramCalendar.js",
     "js/runningPrograms.js",
     "js/schedule.js",
+    "js/scheduleWeek.js",
     "js/scheduling.js",
     "js/services.js",
     "js/sessionDialogs.js",
