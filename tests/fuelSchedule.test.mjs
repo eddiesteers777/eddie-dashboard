@@ -167,6 +167,20 @@ test("adaptable: the two typed most recently work out the third (test 1)", () =>
     assert.equal(estimateDurationMinutes({ distance: 18, pace: "8:30", workoutType: "long" }), 153);
 });
 
+test("an emptied worked-out box isn't filled straight back in; a silly worked-out pace isn't planned from", () => {
+    // Duration was worked out from distance + pace, then the person emptied it.
+    const held = resolveRun({ distance: 13.1, pace: "8:15", duration: "", order: ["pace", "distance"], hold: "duration" });
+    assert.equal(held.waiting, true);
+    assert.equal(held.held, "duration");
+    assert.equal(held.minutes, null);
+    // Only the emptied box is held: with a duration typed it works out as usual.
+    assert.equal(resolveRun({ distance: 13.1, pace: "8:15", duration: 100, order: ["duration", "pace"], hold: "duration" }).computed, "distance");
+    // Mid-typing "1" on the way to "13.1" with 100 minutes: 100:00 a mile.
+    const silly = resolveRun({ distance: 1, duration: 100, order: ["distance", "duration"] });
+    assert.equal(silly.waiting, true);
+    assert.ok(silly.problems.some(p => /a mile/.test(p)));
+});
+
 test("one field: a duration alone is enough, a distance uses a typical pace, nothing makes no plan (test 10)", () => {
     assert.equal(resolveRun({ duration: 75 }).minutes, 75);
     const d = resolveRun({ distance: 12, workoutType: "long" });

@@ -304,6 +304,14 @@ export function resolveRun(input = {}) {
     }
     if (typed.length >= 2) {
         const use = typed.slice(0, 2);
+        // The person just emptied the box that was worked out, to type
+        // their own: never fill it back in under them; wait.
+        const toCompute = ["duration", "pace", "distance"].find(f => !use.includes(f));
+        if (input.hold === toCompute && blank(input[toCompute])) {
+            out.waiting = true;
+            out.held = toCompute;
+            return out;
+        }
         out.source = "two";
         if (!use.includes("duration")) {
             out.computed = "duration";
@@ -313,7 +321,12 @@ export function resolveRun(input = {}) {
             out.minutes = Math.round(dur);
             out.paceMin = dur / dist;
             out.paceSource = "worked out";
-            if (out.paceMin < 3 || out.paceMin > 30) problems.push(`${Math.round(dur)} min for ${dist} mi is ${formatPace(out.paceMin)} a mile. Check the duration or the distance.`);
+            if (out.paceMin < 3 || out.paceMin > 30) {
+                // Not a running pace (often mid-typing, "1" on the way to
+                // "13.1"): say so, but don't write it in or plan from it.
+                problems.push(`${Math.round(dur)} min for ${dist} mi is ${formatPace(out.paceMin)} a mile. Check the duration or the distance.`);
+                out.waiting = true;
+            }
         } else {
             out.computed = "distance";
             out.minutes = Math.round(dur);
