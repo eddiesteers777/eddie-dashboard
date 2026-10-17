@@ -298,6 +298,7 @@ function renderWeekView() {
     }
 
     const cells = [];
+    const agendaItems = [];
 
     for (let i = 0; i < 7; i++) {
         const date = new Date(monday);
@@ -308,23 +309,82 @@ function renderWeekView() {
         const casual = getEntriesForDate(dateStr);
         const isToday = dateStr === todayStr;
         const isSelected = dateStr === selectedDate;
+        const done = day ? isCompleted(day.week, day.dayKey) : false;
+        const dotClass = done ? "done" : (casual.length ? "logged" : (day && day.miles ? "planned" : ""));
 
         cells.push(`
             <button
                 type="button"
-                class="running-week-cell ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}"
-                data-cal-date="${dateStr}">
+                class="running-pill ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}"
+                data-cal-date="${dateStr}"
+                aria-label="${escapeHtml(date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }))}"
+                aria-pressed="${isSelected ? "true" : "false"}">
 
-                <span class="running-week-cell-dayname">${DAYS[i]}</span>
-                <span class="running-week-cell-glyph">${cellGlyph(dateStr, day)}</span>
-                <span class="running-week-cell-label">${escapeHtml(cellLabel(day))}</span>
-                ${casual.length ? `<span class="running-week-cell-dot"></span>` : ""}
+                <span class="running-pill-dow">${DAYS[i]}</span>
+                <span class="running-pill-num">${date.getDate()}</span>
+                <span class="running-pill-dot ${dotClass}"></span>
 
             </button>
         `);
+
+        const planned = getActiveProgramEntriesForDate(dateStr)
+            .filter(item => Number(item.entry.miles) > 0)
+            .map(item => ({ miles: Number(item.entry.miles), type: item.entry.session || item.entry.type || "Run" }));
+
+        if (!isSelected && ((day && day.miles) || casual.length || planned.length)) {
+            agendaItems.push({ dateStr, date, day, casual, planned, isToday, done });
+        }
     }
 
-    container.innerHTML = `<div class="running-week-grid">${cells.join("")}</div>`;
+    container.innerHTML = `<div class="running-pill-strip">${cells.join("")}</div>`;
+
+    renderAgenda(agendaItems, todayStr);
+}
+
+function renderAgenda(items, todayStr) {
+    const el = document.getElementById("runningAgenda");
+
+    if (!el) {
+        return;
+    }
+
+    if (currentView !== "week" || !items.length) {
+        el.innerHTML = "";
+        return;
+    }
+
+    const groups = [
+        { title: "Today", rows: items.filter(i => i.dateStr === todayStr) },
+        { title: "Coming up", rows: items.filter(i => i.dateStr > todayStr) },
+        { title: "Earlier this week", rows: items.filter(i => i.dateStr < todayStr) }
+    ].filter(g => g.rows.length);
+
+    el.innerHTML = groups.map(g => `
+        <div class="running-tl-group">
+            <div class="running-tl-title">${g.title}</div>
+            <div class="running-tl">
+                ${g.rows.map(i => {
+                    const miles = i.day && i.day.miles ? i.day.miles
+                        : i.planned[0] ? i.planned[0].miles
+                        : i.casual.reduce((t, c) => t + (Number(c.miles) || 0), 0);
+                    const name = i.day && i.day.session ? i.day.session
+                        : i.planned[0] ? i.planned[0].type
+                        : (i.casual[0] ? (i.casual[0].type || "Run") : "Run");
+                    const kicker = i.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
+                        + (i.day && i.day.pace ? " · " + i.day.pace : "");
+                    return `
+                        <button type="button" class="running-tl-card ${i.done ? "done" : ""}" data-cal-date="${i.dateStr}">
+                            <span class="running-tl-dot"></span>
+                            <span class="running-tl-main">
+                                <span class="running-tl-kicker">${escapeHtml(kicker)}</span>
+                                <span class="running-tl-name">${escapeHtml(name)}</span>
+                            </span>
+                            <span class="running-tl-miles">${Number(miles).toFixed(miles % 1 ? 1 : 0)}<small>mi</small></span>
+                        </button>`;
+                }).join("")}
+            </div>
+        </div>
+    `).join("");
 }
 
 /* ==========================================
@@ -469,9 +529,9 @@ function renderDayDetail(dateStr) {
     const date = new Date(dateStr + "T00:00:00");
     const label = date.toLocaleDateString(undefined, {
         weekday: "long",
-        month: "long",
+        month: "short",
         day: "numeric"
-    });
+    }) + (dateStr === isoDate(new Date()) ? " · today" : "");
 
     const completed = day ? isCompleted(day.week, day.dayKey) : false;
     const range = day ? resolvePaceRange(day.pace) : null;
@@ -479,11 +539,12 @@ function renderDayDetail(dateStr) {
     const planBlock = day ? `
         <div class="running-detail-plan">
 
-            <div class="running-detail-plan-label">Marathon Plan</div>
+            <div class="running-detail-plan-label">Plan</div>
 
             <div class="running-detail-plan-main" id="runningDetailPlanView">
                 <div class="running-detail-plan-line">
-                    ${day.miles || 0} mi${day.session ? " @ " + escapeHtml(day.session) : ""}
+                    <span class="running-detail-session">${escapeHtml(day.session || "Run")}</span>
+                    <span class="running-detail-miles">${day.miles || 0}<small>mi</small></span>
                 </div>
                 ${range ? `
                     <div class="running-detail-plan-target">
@@ -497,7 +558,7 @@ function renderDayDetail(dateStr) {
                     Edit
                 </button>
                 <button type="button" class="running-row-btn ${completed ? "primary" : ""}" data-toggle-complete="${dateStr}">
-                    ${completed ? `${icon("check")} Completed` : "Mark Complete"}
+                    ${completed ? `${icon("check")} Completed` : "Mark done"}
                 </button>
             </div>
 
@@ -701,6 +762,11 @@ function setView(view) {
     target?.classList.add("active");
 
     renderAll();
+
+if (!selectedDate) {
+    renderDayDetail(isoDate(new Date()));
+    if (currentView === "week") renderWeekView();
+}
 }
 
 function renderAll() {
@@ -709,6 +775,8 @@ function renderAll() {
     if (currentView === "week") renderWeekView();
     if (currentView === "month") renderMonthView();
     if (currentView === "list") renderListView();
+
+    if (currentView !== "week") renderAgenda([], "");
 
     renderThisWeek();
     renderUpcoming();
@@ -770,6 +838,10 @@ document.addEventListener("click", event => {
 
     if (cell) {
         renderDayDetail(cell.dataset.calDate);
+
+        if (currentView === "week") renderWeekView();
+        if (currentView === "month") renderMonthView();
+        if (currentView === "list") renderListView();
         return;
     }
 
@@ -839,6 +911,11 @@ document.addEventListener("click", event => {
 window.addEventListener("eddieos:running-log-changed", () => {
     renderAll();
 
+if (!selectedDate) {
+    renderDayDetail(isoDate(new Date()));
+    if (currentView === "week") renderWeekView();
+}
+
     if (selectedDate) {
         renderDayDetail(selectedDate);
     }
@@ -849,3 +926,8 @@ window.addEventListener("eddieos:running-log-changed", () => {
 ========================================== */
 
 renderAll();
+
+if (!selectedDate) {
+    renderDayDetail(isoDate(new Date()));
+    if (currentView === "week") renderWeekView();
+}
