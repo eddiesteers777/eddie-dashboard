@@ -945,3 +945,23 @@ select.pub-input{appearance:auto;}
     letter-spacing:.08em;
     color:var(--primary);
 }
+
+/* ---- Computer sidebar (2026-10-17): the public site's menu runs down the left too,
+   matching the app (css/style.css "COMPUTER SIDEBAR"). Phones keep the top bar. ---- */
+@media(min-width:901px){
+    body{padding-left:256px;}
+    .pub-navbar{
+        position:fixed;inset:0 auto 0 0;z-index:1000;width:256px;max-width:none;height:100vh;margin:0;
+        padding:22px 16px 18px;overflow-y:auto;overscroll-behavior:contain;
+        flex-direction:column;align-items:stretch;gap:22px;
+        background:linear-gradient(180deg,rgba(22,38,29,.97),rgba(10,20,14,.97));
+        border-right:1px solid rgba(235,232,220,.10);
+    }
+    .pub-logo{padding:0 8px;}
+    .pub-nav-links{flex:0 0 auto;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:2px;}
+    .pub-nav-link{display:flex;align-items:center;min-height:44px;padding:0 12px;font-size:15px;border-radius:10px;}
+    .pub-nav-link.active{background:rgba(201,173,132,.16);box-shadow:inset 3px 0 0 var(--primary);}
+    .pub-nav-link.pub-nav-app{margin-top:10px;gap:10px;}
+    .pub-nav-link.pub-nav-cta{margin-top:8px;justify-content:center;}
+    .pub-signin-btn{margin-top:auto;width:100%;min-height:44px;border-radius:10px;}
+}
