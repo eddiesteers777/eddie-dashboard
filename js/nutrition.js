@@ -617,9 +617,94 @@ function updateDisplay(){
 
     ).textContent = nutrition.workoutDescription;
 
+    renderRings();
+
     updateSummary();
 
 }
+
+/* ==========================================
+   Ring summary (calories ring, protein / carbs / fat rings, water)
+========================================== */
+
+function ringSvg(fraction, color, radius, stroke){
+
+    const size = (radius + stroke) * 2;
+    const c = size / 2;
+    const circ = 2 * Math.PI * radius;
+    const dash = Math.max(0, Math.min(fraction, 1)) * circ;
+
+    return `<svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
+        <circle cx="${c}" cy="${c}" r="${radius}" fill="none" stroke="rgba(4,11,8,.55)" stroke-width="${stroke}"/>
+        <circle cx="${c}" cy="${c}" r="${radius}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"/>
+    </svg>`;
+
+}
+
+function renderRings(){
+
+    const host = document.getElementById("fuelSummary");
+
+    if(!host){
+        return;
+    }
+
+    const frac = key => macros[key].goal ? nutrition[key] / macros[key].goal : 0;
+    const left = Math.max(macros.calories.goal - nutrition.calories, 0);
+
+    const mini = (key, label, color) => `
+        <div class="fx-mini">
+            ${ringSvg(frac(key), color, 16, 5)}
+            <div>
+                <span class="fx-k">${label}</span>
+                <b>${nutrition[key]} <small>/ ${macros[key].goal} g</small></b>
+            </div>
+        </div>`;
+
+    const glasses = 8;
+    const filled = Math.min(glasses, Math.round(frac("water") * glasses));
+    const drops = Array.from({length: glasses}, (_, i) =>
+        `<i class="fx-drop${i < filled ? " on" : ""}"></i>`).join("");
+
+    host.innerHTML = `
+        <div class="fx-rings">
+            <div class="fx-ring">
+                ${ringSvg(frac("calories"), "var(--primary)", 64, 10)}
+                <div class="fx-ring-c">
+                    <b>${left.toLocaleString()}</b>
+                    <span class="fx-k">kcal left</span>
+                </div>
+            </div>
+            <div class="fx-minis">
+                ${mini("protein", "Protein", "var(--sage)")}
+                ${mini("carbs", "Carbs", "var(--primary)")}
+                ${mini("fat", "Fat", "var(--stone)")}
+            </div>
+        </div>
+        <hr class="fx-rule">
+        <div class="fx-water">
+            <div>
+                <span class="fx-k">Water</span>
+                <div class="fx-water-n">${nutrition.water} of ${macros.water.goal} oz</div>
+            </div>
+            <div class="fx-drops" aria-hidden="true">${drops}</div>
+            <button type="button" class="fx-water-add" data-water-add>+${macros.water.step} oz</button>
+        </div>`;
+
+}
+
+document.addEventListener("click", e => {
+
+    if(e.target.closest("[data-water-add]")){
+
+        document
+            .querySelector('.adjust-btn[data-macro="water"][data-action="plus"]')
+            ?.click();
+
+    }
+
+});
+
 /* ==========================================
    Summary & Score
 ========================================== */

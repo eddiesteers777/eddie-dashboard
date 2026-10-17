@@ -914,3 +914,105 @@
 .nutrition-page .summary-grid{ gap:0; margin-top:30px; }
 .nutrition-page .summary-card{ background:none; border:0; border-top:1px solid var(--border); border-radius:0; box-shadow:none; padding:22px 0 0; }
 .nutrition-page .score-card h3, .nutrition-page #remainingCard h3{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+
+/* ------------------------------------------
+   Premium look (Eddie picked demo B, 2026-10-17):
+   ring summary, glass cards, quieter type beside the rings
+------------------------------------------ */
+.fx-summary{
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+    border-radius:20px;
+    padding:18px;
+    margin-bottom:14px;
+}
+.fx-k{
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:10.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    display:block;
+}
+.fx-rings{ display:grid; grid-template-columns:140px minmax(0,1fr); gap:16px; align-items:center; }
+.fx-ring{ position:relative; width:140px; height:140px; }
+.fx-ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
+.fx-ring-c{ position:absolute; inset:0; display:grid; place-content:center; text-align:center; gap:3px; }
+.fx-ring-c b{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:34px;
+    line-height:.9;
+    color:var(--text);
+}
+.fx-mini{ display:grid; grid-template-columns:40px minmax(0,1fr); gap:10px; align-items:center; padding:5px 0; }
+.fx-mini svg{ width:40px; height:40px; transform:rotate(-90deg); }
+.fx-mini b{
+    display:block;
+    margin-top:1px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:15px;
+    line-height:1.2;
+    color:var(--text);
+}
+.fx-mini b small{ font-size:12px; font-weight:400; color:var(--text-secondary); }
+.fx-rule{ height:1px; border:0; background:var(--sb-hairline); margin:14px 0; }
+.fx-water{ display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px; align-items:center; }
+.fx-water-n{ font-weight:600; font-size:15px; margin-top:2px; }
+.fx-drops{ display:flex; gap:4px; }
+.fx-drop{ width:14px; height:30px; border-radius:4px; border:1px solid var(--sb-glass-border); background:var(--sb-inset-bg); position:relative; overflow:hidden; }
+.fx-drop.on::after{ content:""; position:absolute; inset:auto 0 0 0; height:78%; background:color-mix(in srgb, var(--cyan) 60%, transparent); }
+.fx-water-add{
+    min-height:44px; padding:0 14px; border-radius:var(--radius-pill);
+    background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border);
+    color:var(--primary); font-family:var(--font-body); font-weight:700; font-size:14px; cursor:pointer;
+}
+
+.fx-adjust{ margin-bottom:18px; }
+.fx-adjust > summary{
+    list-style:none; cursor:pointer; min-height:44px; display:flex; align-items:center; gap:8px;
+    font-family:var(--font-mono); font-weight:500; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--text-secondary);
+}
+.fx-adjust > summary::-webkit-details-marker{ display:none; }
+.fx-adjust > summary::after{ content:"+"; color:var(--primary); font-size:16px; }
+.fx-adjust[open] > summary::after{ content:"–"; }
+.fx-adjust .macro-grid{ margin-top:6px; }
+
+.workout-card, .meal-card, .summary-card, .macro-card{
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    border-radius:16px;
+}
+.workout-card{ border-left:3px solid var(--primary); }
+.macro-card{ border-top:1px solid var(--sb-glass-border); }
+.macro-card:hover{ transform:none; }
+.meal-section h2, .meal-card h3{
+    font-family:var(--font-display);
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+}
+.meal-section h2{ font-size:22px; }
+.meal-card h3{ font-size:20px; }
+.meal-tab.active{
+    background:var(--sb-lens-bg);
+    box-shadow:var(--sb-lens-shadow);
+    transform:none;
+}
+.meal-tabs{ background:var(--sb-inset-bg); border-color:var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); }
+.food-search-input{ background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); min-height:44px; font-size:16px; border-radius:12px; }
+.food-scan-btn{ width:44px; height:44px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); color:var(--on-primary); border:0; }
+.fx-summary [hidden]{ display:none!important; }
+
+@media(max-width:380px){
+    .fx-rings{ grid-template-columns:116px minmax(0,1fr); gap:12px; }
+    .fx-ring{ width:116px; height:116px; }
+    .fx-ring-c b{ font-size:28px; }
+    .fx-drops{ display:none; }
+    .fx-water{ grid-template-columns:minmax(0,1fr) auto; }
+}
