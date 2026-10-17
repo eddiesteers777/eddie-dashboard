@@ -515,6 +515,13 @@ fetch("components/header.html")
 
         const dropdowns = Array.from(document.querySelectorAll(".eos-dropdown"));
 
+        // On a computer the menu is a left sidebar (2026-10-17): sections stay
+        // open like an accordion, so a click elsewhere or a link doesn't close
+        // them, and the section you're in starts open.
+        const sidebarMode = () => window.matchMedia("(min-width:901px)").matches;
+        const activeSection = dropdowns.find(d => d.querySelector(".section-active"));
+        if (activeSection && sidebarMode()) activeSection.open = true;
+
         function closeAllDropdowns(except = null) {
             dropdowns.forEach(dropdown => {
                 if (dropdown !== except && dropdown.open) {
@@ -535,6 +542,7 @@ fetch("components/header.html")
                 // Close immediately on selection rather than leaving
                 // the menu open while the page navigates away.
                 link.addEventListener("click", () => {
+                    if (sidebarMode()) return;
                     dropdown.open = false;
                 });
             });
@@ -542,13 +550,13 @@ fetch("components/header.html")
         });
 
         document.addEventListener("click", event => {
-            if (!event.target.closest(".eos-dropdown")) {
+            if (!sidebarMode() && !event.target.closest(".eos-dropdown")) {
                 closeAllDropdowns();
             }
         });
 
         document.addEventListener("keydown", event => {
-            if (event.key === "Escape") {
+            if (event.key === "Escape" && !sidebarMode()) {
                 closeAllDropdowns();
             }
         });

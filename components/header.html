@@ -4,23 +4,26 @@
 
 <nav class="navbar eos-navbar">
 
+    <!-- Wordmark: shown only in the computer sidebar (css/style.css "COMPUTER SIDEBAR"). -->
+    <a class="sb-side-brand" href="index.html" aria-label="Southbound home">Southbound</a>
+
     <div class="nav-left eos-nav-left">
 
         <!-- No logo or wordmark in the bar (2026-10-15): search sits alone on the left; Dashboard is the first link. -->
         <!-- A guest on a page open to everyone (js/loadHeader.js GUEST_PAGES) gets Home instead of search and the menus. -->
         <a class="sb-guest-home" href="home.html"><span data-icon="home"></span><span>Home</span></a>
         <button class="search-btn" type="button" aria-label="Search">
-            <span data-icon="search"></span>
+            <span data-icon="search"></span><span class="sb-side-search">Search</span>
         </button>
 
         <div class="nav-links eos-nav-links">
 
             <a href="index.html" class="eos-nav-item">
-                Dashboard
+                <span class="sb-side-ic" data-icon="home" aria-hidden="true"></span>Dashboard
             </a>
             <details class="nav-dropdown eos-dropdown" data-requires="coach">
                 <summary class="eos-dropdown-trigger">
-                    <span>Coach</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="users" aria-hidden="true"></span><span>Coach</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="coach.html" class="eos-dropdown-link">Dashboard</a>
@@ -31,7 +34,7 @@
             </details>
             <details class="nav-dropdown eos-dropdown" data-requires="running,strength,crossTraining,habits">
                 <summary class="eos-dropdown-trigger">
-                    <span>Training</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="footprint" aria-hidden="true"></span><span>Training</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="train.html" class="eos-dropdown-link" data-requires="running,strength,crossTraining">Train Overview</a>
@@ -43,7 +46,7 @@
             </details>
             <details class="nav-dropdown eos-dropdown" data-requires="nutrition,fueling">
                 <summary class="eos-dropdown-trigger">
-                    <span>Fuel</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="fuel" aria-hidden="true"></span><span>Fuel</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="nutrition.html" class="eos-dropdown-link" data-requires="nutrition">Nutrition</a>
@@ -52,7 +55,7 @@
             </details>
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
-                    <span>Planning</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="calendar" aria-hidden="true"></span><span>Planning</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="planner.html" class="eos-dropdown-link" data-requires="coach">Planner</a>
@@ -62,7 +65,7 @@
             </details>
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
-                    <span>Progress</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="trendingUp" aria-hidden="true"></span><span>Progress</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="progress.html" class="eos-dropdown-link" data-requires="client+progress">My Progress</a>
@@ -74,7 +77,7 @@
             </details>
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
-                    <span>Tools</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="timer" aria-hidden="true"></span><span>Tools</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="pace-calculator.html" class="eos-dropdown-link" data-requires="running">Pace Calculator</a>
@@ -96,6 +99,7 @@
 
         <button class="account-btn" data-account type="button" aria-label="Account: sign in" aria-haspopup="dialog" aria-expanded="false">
             <span class="account-avatar" data-avatar><span data-icon="user"></span></span>
+            <span class="sb-side-who"><strong data-side-name>Account</strong><small data-side-role></small></span>
         </button>
     </div>
 </nav>
