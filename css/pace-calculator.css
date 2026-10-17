@@ -39,80 +39,6 @@ html{
 }
 
 /* ==========================================
-   Hero
-========================================== */
-
-.pc-hero{
-
-    background:
-
-        linear-gradient(
-            145deg,
-            rgba(30,48,37,.96),
-            rgba(17,30,23,.95)
-        );
-
-    border:1px solid var(--border);
-
-    border-radius:28px;
-
-    padding:36px 40px;
-
-    margin-bottom:28px;
-
-    box-shadow:var(--shadow);
-
-    backdrop-filter:blur(18px);
-
-}
-
-.pc-eyebrow{
-
-    display:inline-block;
-
-    padding:8px 16px;
-
-    border-radius:999px;
-
-    background:rgba(201,173,132,.15);
-
-    color:var(--primary-light);
-
-    font-size:.72rem;
-
-    font-weight:700;
-
-    letter-spacing:.18em;
-
-    text-transform:uppercase;
-
-    margin-bottom:16px;
-
-}
-
-.pc-title{
-
-    font-size:2.4rem;
-
-    font-weight:800;
-
-    line-height:1.1;
-
-    margin-bottom:10px;
-
-}
-
-.pc-sub{
-
-    color:var(--muted);
-
-    line-height:1.6;
-
-    font-size:1rem;
-
-}
-
-/* ==========================================
    Card
 ========================================== */
 
@@ -777,18 +703,6 @@ html{
 
     }
 
-    .pc-hero{
-
-        padding:26px;
-
-    }
-
-    .pc-title{
-
-        font-size:1.9rem;
-
-    }
-
     .pc-card,
     .pc-result-card{
 
@@ -1100,3 +1014,164 @@ html{
         line-height:1.2;
     }
 }
+
+/* ==========================================================
+   PACE CALCULATOR, PREMIUM (2026-10-17). The header sits on the page
+   (the shared eos-today-hero); the three tools are an inset track with a
+   lit lens; each form is one dark bubble whose fields are dark insets with
+   plain labels (no box inside the box); Solve for / Units are glass chips
+   with the chosen one lit; Calculate is the lens; the answer is the one
+   raised bubble, its number in the display face, the rest a hairline
+   ledger. Scoped to #pc-root, so the public page (pace.html) gets the same
+   calculator; js/pace-calculator.js is unchanged and stores nothing.
+========================================================== */
+#pc-root .eos-today-hero::before{ display:none; }
+
+/* The three tools: an inset track, the open one a lit lens. */
+#pc-root .pc-tool-tabs{
+    gap:4px;
+    padding:4px;
+    margin-bottom:18px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
+}
+#pc-root .pc-tool-tab{
+    min-height:44px;
+    padding:0 18px;
+    border-radius:14px;
+    font:650 14px/1.2 var(--font-body);
+    color:var(--text-secondary);
+}
+#pc-root .pc-tool-tab:hover{ color:var(--text); }
+#pc-root .pc-tool-tab.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+
+/* Each form: one dark bubble. The answers: the raised bubble. */
+#pc-root .pc-card{
+    padding:22px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+#pc-root .pc-result-card,
+#pc-root #rs-result-card,
+#pc-root #tz-result-card{
+    padding:22px;
+    border-radius:26px;
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+
+/* Solve for / Units / split style: a mono label, glass chips, the chosen one lit. */
+#pc-root .pc-solve-label{ min-width:72px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
+#pc-root .pc-solve-tabs,
+#pc-root .pc-unit-toggle{ gap:6px; }
+#pc-root .pc-solve-tab,
+#pc-root .pc-unit-btn{
+    min-height:44px;
+    padding:0 16px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text-secondary);
+    font:650 14px/1 var(--font-body);
+}
+#pc-root .pc-solve-tab:hover,
+#pc-root .pc-unit-btn:hover{ border-color:rgba(214,185,142,.45); color:var(--text); }
+#pc-root .pc-solve-tab.active,
+#pc-root .pc-unit-btn.active{ background:var(--sb-lens-bg); border-color:transparent; color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+
+/* Fields: plain labels over dark insets, no box around each. */
+#pc-root .pc-fields{ gap:18px; margin-top:4px; padding-top:18px; border-top:1px solid var(--sb-hairline); }
+#pc-root .pc-field{ padding:0; background:none; border:0; border-radius:0; }
+#pc-root .pc-field-label{ margin-bottom:8px; font:650 13.5px/1.3 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text-secondary); }
+#pc-root .pc-field-label span{ color:var(--muted); font-weight:500; }
+#pc-root .pc-input,
+#pc-root .pc-time-input,
+#pc-root .pc-select,
+#pc-root .pc-preset-select{
+    min-height:48px;
+    border-radius:16px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    color:var(--text);
+    font-size:16px;
+}
+#pc-root .pc-input:focus,
+#pc-root .pc-time-input:focus,
+#pc-root .pc-select:focus,
+#pc-root .pc-preset-select:focus{ border-color:rgba(214,185,142,.6); background:var(--sb-inset-bg); }
+#pc-root .pc-preset-select{ margin-top:10px; color:var(--text-secondary); }
+#pc-root .pc-time-input{ flex:1 1 0; min-width:0; width:auto; }
+#pc-root .pc-colon,
+#pc-root .pc-time-inputs > span{ color:var(--muted); font-family:var(--font-mono); }
+#pc-root .pc-unit-suffix{ font-size:13px; color:var(--text-secondary); }
+
+/* The main action: the lens. */
+#pc-root .pc-calculate-btn,
+#pc-root .pc-calc-btn{
+    min-height:52px;
+    padding:0 22px;
+    border-radius:999px;
+    background:var(--sb-lens-bg);
+    box-shadow:var(--sb-lens-shadow);
+    color:var(--on-primary);
+    font:700 15.5px/1 var(--font-body);
+}
+#pc-root .pc-calculate-btn:hover,
+#pc-root .pc-calc-btn:hover{ transform:none; background:var(--sb-lens-bg); filter:brightness(1.05); box-shadow:var(--sb-lens-shadow); }
+#pc-root .pc-calculate-btn{ margin-top:22px; }
+
+/* The answer: a mono label, the number in the display face, then a ledger. */
+#pc-root .pc-result-top{ gap:18px; padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid var(--sb-hairline); }
+#pc-root .pc-result-label{ margin-bottom:6px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+#pc-root .pc-result-value{ font:800 clamp(56px, 15vw, 72px)/.92 var(--font-display); letter-spacing:.01em; color:var(--primary-light, var(--primary)); }
+#pc-root .pc-result-sub{ gap:0; }
+#pc-root .pc-result-chip{ min-width:0; padding:2px 18px; background:none; border:0; border-left:1px solid var(--sb-hairline); border-radius:0; }
+#pc-root .pc-result-chip:first-child{ padding-left:0; border-left:0; }
+#pc-root .pc-result-chip-label{ margin-bottom:4px; font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+#pc-root .pc-result-chip-value{ font:600 15px/1.3 var(--font-mono); color:var(--text); }
+
+/* Section headings inside a bubble: plain, not tan kickers. */
+#pc-root .pc-splits-title{ margin-bottom:12px; font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+
+/* Finish times at this pace: a ledger of cells, not a wall of boxes. */
+#pc-root .pc-splits-grid{ gap:0; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); border-top:1px solid var(--sb-hairline); }
+#pc-root .pc-split-card{ padding:14px 0; text-align:left; background:none; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; }
+#pc-root .pc-split-card:hover{ transform:none; }
+#pc-root .pc-split-name{ margin-bottom:4px; font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+#pc-root .pc-split-time{ font:800 26px/1 var(--font-display); letter-spacing:.02em; color:var(--text); }
+
+/* Race splits and training zones: hairline rows, paces in mono. */
+#pc-root .pc-splits-table{ max-height:none; gap:0; }
+#pc-root .pc-splits-row{ padding:12px 0; border-bottom:1px solid var(--sb-hairline); font-size:14px; color:var(--text); }
+#pc-root .pc-splits-header{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+#pc-root .pc-zones-table{ gap:0; }
+#pc-root .pc-zones-row{ gap:12px; padding:14px 0; border-bottom:1px solid var(--sb-hairline); }
+#pc-root .pc-zones-name{ font:650 15px/1.3 var(--font-body); }
+#pc-root .pc-zones-range{ font:600 15px/1.3 var(--font-mono); color:var(--primary-light, var(--primary)); text-align:right; }
+#pc-root .pc-vdot-label{ display:inline-block; margin-left:8px; padding:2px 9px; border-radius:999px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); font:600 11.5px/1.5 var(--font-mono); letter-spacing:.08em; vertical-align:middle; }
+#pc-root .pc-zones-note{ font-size:13.5px; line-height:1.55; }
+
+@media (max-width:700px){
+    #pc-root{ width:calc(100% - 32px); padding-top:12px; }
+    #pc-root .pc-card,
+    #pc-root .pc-result-card,
+    #pc-root #rs-result-card,
+    #pc-root #tz-result-card{ padding:18px; }
+    #pc-root .pc-solve-row,
+    #pc-root .pc-unit-row{ gap:8px 12px; }
+    #pc-root .pc-result-chip{ padding:2px 12px; }
+}
+@media (max-width:600px){
+    #pc-root .pc-tool-tab{ padding:0 6px; font-size:13.5px; }
+}
+@media (max-width:600px){
+    /* The label above its chips on phones, so both rows line up. */
+    #pc-root .pc-solve-label{ flex:0 0 100%; }
+}
+#pc-root .pc-error:empty{ display:none; }
