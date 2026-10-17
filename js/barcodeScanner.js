@@ -17,10 +17,11 @@
 ========================================== */
 
 const FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "qr_code"];
-const POLYFILL = [
-    "https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/index.js",
-    "https://cdn.jsdelivr.net/npm/@undecaf/barcode-detector-polyfill@0.9.23/dist/index.js"
-];
+// The ES-module build. It imports its own zbar-wasm copy. (The old
+// classic-script build declares its global with `const`, which never
+// reaches `window`, so the scanner always said it couldn't load on any
+// phone without a built-in detector, i.e. every iPhone.)
+const POLYFILL = "https://cdn.jsdelivr.net/npm/@undecaf/barcode-detector-polyfill@0.9.23/dist/main.js";
 
 let active = null; // { stream, timer, video }
 
@@ -31,17 +32,6 @@ function getElements() {
         status: document.getElementById("foodScannerStatus"),
         closeBtn: document.getElementById("foodScannerClose")
     };
-}
-
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) return resolve();
-        const script = document.createElement("script");
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error(`Couldn't load ${src}`));
-        document.head.appendChild(script);
-    });
 }
 
 let detectorPromise = null;
@@ -55,8 +45,7 @@ function getDetector() {
                 if (formats.length) return new window.BarcodeDetector({ formats });
             } catch { /* fall through to the polyfill */ }
         }
-        for (const src of POLYFILL) await loadScript(src);
-        const Polyfill = window.barcodeDetectorPolyfill?.BarcodeDetectorPolyfill;
+        const Polyfill = (await import(POLYFILL))?.BarcodeDetectorPolyfill;
         if (!Polyfill) throw new Error("barcode-polyfill-missing");
         return new Polyfill({ formats: FORMATS });
     })();

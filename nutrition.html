@@ -45,21 +45,24 @@
             <button id="nextDay" class="day-btn">→</button>
         </section>
 
-        <!-- Workout Card -->
-        <section class="workout-card">
-            <div>
-                <span class="workout-label">TODAY'S TRAINING</span>
-                <h2 id="workoutTitle" class="sb-wait"></h2>
-                <p id="workoutDescription" class="sb-wait"></p>
-            </div>
-        </section>
+        <!-- Training-day summary -->
+        <section class="fx-day" id="fuelSummary" aria-label="Today's totals"></section>
 
-        <!-- Macro Cards -->
-        <section id="macroGrid" class="macro-grid"></section>
+        <!-- Macro Cards (quick adjust and goals) -->
+        <details class="fx-adjust">
+            <summary>Adjust totals and goals</summary>
+            <section id="macroGrid" class="macro-grid"></section>
+        </details>
 
         <!-- Meals -->
-        <section class="meal-section">
-            <h2>Meals</h2>
+        <div class="fx-sheet-wrap" id="addSheet" hidden>
+        <div class="fx-scrim" data-sheet-close></div>
+        <section class="meal-section fx-sheet" role="dialog" aria-modal="true" aria-labelledby="addSheetTitle">
+            <div class="fx-grab" aria-hidden="true"></div>
+            <div class="fx-sheet-head">
+                <div><span class="fx-k">Add to</span><h2 id="addSheetTitle">Food</h2></div>
+                <button type="button" class="fx-x" data-sheet-close aria-label="Close">×</button>
+            </div>
 
             <div class="meal-tabs" id="mealTabs">
                 <button type="button" class="meal-tab active" data-meal-tab="breakfast">Breakfast</button>
@@ -79,7 +82,7 @@
                                 type="text"
                                 class="food-search-input"
                                 data-meal="breakfast"
-                                placeholder="Search by name, or type/scan a barcode...">
+                                placeholder="Search food, drink or snack">
                             <button
                                 type="button"
                                 class="food-scan-btn"
@@ -103,7 +106,7 @@
                                 type="text"
                                 class="food-search-input"
                                 data-meal="lunch"
-                                placeholder="Search by name, or type/scan a barcode...">
+                                placeholder="Search food, drink or snack">
                             <button
                                 type="button"
                                 class="food-scan-btn"
@@ -127,7 +130,7 @@
                                 type="text"
                                 class="food-search-input"
                                 data-meal="dinner"
-                                placeholder="Search by name, or type/scan a barcode...">
+                                placeholder="Search food, drink or snack">
                             <button
                                 type="button"
                                 class="food-scan-btn"
@@ -151,7 +154,7 @@
                                 type="text"
                                 class="food-search-input"
                                 data-meal="snacks"
-                                placeholder="Search by name, or type/scan a barcode...">
+                                placeholder="Search food, drink or snack">
                             <button
                                 type="button"
                                 class="food-scan-btn"
@@ -168,6 +171,12 @@
 
             </div>
         </section>
+        </div>
+
+        <button type="button" class="fx-fab" id="logFoodBtn"><span data-icon="camera"></span>Log food</button>
+
+        <!-- What you've logged today -->
+        <section class="fx-log" id="fuelTimeline" aria-label="Logged today"></section>
 
         <!-- Summary -->
         <section class="summary-grid">

@@ -605,21 +605,260 @@ function updateDisplay(){
 
     ).value = nutrition.snacks;
 
-    document.getElementById(
+    
 
-        "workoutTitle"
+    
 
-    ).textContent = nutrition.workoutTitle;
-
-    document.getElementById(
-
-        "workoutDescription"
-
-    ).textContent = nutrition.workoutDescription;
+    renderRings();
 
     updateSummary();
 
 }
+
+/* ==========================================
+   Ring summary (calories ring, protein / carbs / fat rings, water)
+========================================== */
+
+const QUICK_FOODS = [
+    { id:"q-coffee", label:"Coffee", sub:"12 OZ", icon:"flame", grams:355,
+      food:{ name:"Coffee, black", per100g:{ calories:1, protein:0.1, carbs:0, fat:0, sodium:2 } } },
+    { id:"q-banana", label:"Banana", sub:"105 KCAL", icon:"apple", grams:118,
+      food:{ name:"Banana", per100g:{ calories:89, protein:1.1, carbs:22.8, fat:0.3, sodium:1 } } },
+    { id:"q-apple", label:"Apple", sub:"95 KCAL", icon:"apple", grams:182,
+      food:{ name:"Apple", per100g:{ calories:52, protein:0.3, carbs:13.8, fat:0.2, sodium:1 } } },
+    { id:"q-gel", label:"Gel", sub:"25 G CARBS", icon:"bolt", grams:40,
+      food:{ name:"Energy gel", per100g:{ calories:250, protein:0, carbs:62.5, fat:0, sodium:250 } } },
+    { id:"q-bar", label:"Bar", sub:"250 KCAL", icon:"utensils", grams:68,
+      food:{ name:"Energy bar", per100g:{ calories:368, protein:14.7, carbs:63, fat:7.4, sodium:220 } } }
+];
+
+function mealForNow(){
+
+    const h = new Date().getHours() + new Date().getMinutes() / 60;
+
+    return h < 10.5 ? "breakfast" : h < 15 ? "lunch" : h < 20 ? "dinner" : "snacks";
+
+}
+
+function renderRings(){
+
+    const host = document.getElementById("fuelSummary");
+
+    if(!host){
+        return;
+    }
+
+    const frac = key => macros[key].goal ? Math.min(nutrition[key] / macros[key].goal, 1) : 0;
+    const left = Math.max(macros.calories.goal - nutrition.calories, 0);
+
+    const pt = (a, r) => [170 + r * Math.cos(Math.PI * (1 - a)), 170 - r * Math.sin(Math.PI * (1 - a))];
+    const arc = (a0, a1, r) => {
+        const [x0, y0] = pt(a0, r);
+        const [x1, y1] = pt(a1, r);
+        return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    };
+
+    let ticks = "";
+
+    for(let i = 0; i <= 20; i++){
+        const major = i % 5 === 0;
+        const [x1, y1] = pt(i / 20, 128);
+        const [x2, y2] = pt(i / 20, major ? 142 : 138);
+        ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(236,230,212,${major ? .35 : .16})" stroke-width="${major ? 2 : 1}"/>`;
+    }
+
+    const f = frac("calories");
+
+    const bar = (key, label, color) => `
+        <div class="fx-hbar">
+            <span class="fx-k">${label}</span>
+            <div class="fx-track"><i style="width:${(frac(key) * 100).toFixed(0)}%;background:${color}"></i></div>
+            <b>${nutrition[key]} / ${macros[key].goal} ${macros[key].unit}</b>
+        </div>`;
+
+    const tile = (id, icon, label, sub, attr) => `
+        <button type="button" class="fx-tile" ${attr || `data-quick="${id}"`}>
+            <span data-icon="${icon}"></span>
+            <span><b>${label}</b><small>${sub}</small></span>
+        </button>`;
+
+    host.innerHTML = `
+        <div class="fx-gauge">
+            <svg viewBox="0 0 340 190" aria-hidden="true">
+                <path d="${arc(0, 1, 150)}" fill="none" stroke="rgba(4,11,8,.6)" stroke-width="16" stroke-linecap="round"/>
+                ${f > 0 ? `<path d="${arc(0, Math.max(f, .01), 150)}" fill="none" stroke="var(--primary)" stroke-width="16" stroke-linecap="round"/>` : ""}
+                ${ticks}
+            </svg>
+            <div class="fx-gauge-c">
+                <b>${left.toLocaleString()}</b>
+                <span class="fx-k">kcal left of ${macros.calories.goal.toLocaleString()}</span>
+            </div>
+        </div>
+        <div class="fx-bars">
+            ${bar("protein", "Protein", "var(--sage)")}
+            ${bar("carbs", "Carbs", "var(--primary)")}
+            ${bar("fat", "Fat", "var(--stone)")}
+            ${bar("water", "Water", "var(--cyan)")}
+        </div>
+        <div class="fx-k fx-tan">One tap</div>
+        <div class="fx-tiles">
+            ${tile("", "droplet", "Water", "+" + macros.water.step + " OZ", "data-water-add")}
+            ${QUICK_FOODS.map(q => tile(q.id, q.icon, q.label, q.sub)).join("")}
+        </div>
+        <a class="fx-link" href="fueling.html">Plan fuel for a run &rsaquo;</a>`;
+
+    import("./icons.js").then(m => m.hydrate());
+
+}
+
+/* ==========================================
+   Add-food sheet (opened by the floating Log food button)
+========================================== */
+
+function selectMeal(meal){
+
+    document.querySelectorAll(".meal-tab").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.mealTab === meal);
+    });
+
+    document.querySelectorAll(".meal-card").forEach(card => {
+        card.classList.toggle("active", card.dataset.mealPanel === meal);
+    });
+
+    const title = document.getElementById("addSheetTitle");
+
+    if(title){
+        title.textContent = meal[0].toUpperCase() + meal.slice(1);
+    }
+
+}
+
+function openAddSheet(meal){
+
+    const sheet = document.getElementById("addSheet");
+
+    if(!sheet){
+        return;
+    }
+
+    selectMeal(meal || mealForNow());
+    sheet.hidden = false;
+    document.body.classList.add("fx-sheet-open");
+
+    document
+        .querySelector(".meal-card.active .food-search-input")
+        ?.focus({ preventScroll: true });
+
+}
+
+function closeAddSheet(){
+
+    const sheet = document.getElementById("addSheet");
+
+    if(sheet){
+        sheet.hidden = true;
+    }
+
+    document.body.classList.remove("fx-sheet-open");
+
+}
+
+document.addEventListener("click", e => {
+
+    if(e.target.closest("#logFoodBtn")){
+        openAddSheet();
+    }
+    else if(e.target.closest("[data-sheet-close]")){
+        closeAddSheet();
+    }
+    else if(e.target.closest("[data-meal-tab]")){
+        selectMeal(e.target.closest("[data-meal-tab]").dataset.mealTab);
+    }
+
+});
+
+document.addEventListener("keydown", e => {
+
+    if(e.key === "Escape" && !document.getElementById("addSheet")?.hidden){
+        closeAddSheet();
+    }
+
+});
+
+const MEAL_NAMES = { breakfast:"Breakfast", lunch:"Lunch", dinner:"Dinner", snacks:"Snacks" };
+
+function renderTimeline(){
+
+    const host = document.getElementById("fuelTimeline");
+
+    if(!host){
+        return;
+    }
+
+    const rows = [];
+
+    MEALS.forEach((meal, mealIndex) => {
+        (nutrition.foodLog?.[meal] || []).forEach((entry, i) => rows.push({ meal, mealIndex, i, entry }));
+    });
+
+    rows.sort((a, b) =>
+        (a.entry.time || "") === (b.entry.time || "")
+            ? a.mealIndex - b.mealIndex || a.i - b.i
+            : (a.entry.time || "00:00") < (b.entry.time || "00:00") ? -1 : 1);
+
+    if(!rows.length){
+        host.innerHTML = `
+            <div class="fx-k fx-tan">Today so far</div>
+            <p class="fx-empty">Nothing logged yet. Search above, scan a barcode, or tap a quick add.</p>`;
+        return;
+    }
+
+    host.innerHTML = `
+        <div class="fx-k fx-tan">Today so far</div>
+        <div class="fx-tl">
+            ${rows.map(({ meal, entry }) => `
+                <div class="fx-ev">
+                    <time>${entry.time || MEAL_NAMES[meal].slice(0, 5)}</time>
+                    <i></i>
+                    <div>
+                        <strong>${escapeHtml(entry.name)}</strong>
+                        <span>${entry.brand ? escapeHtml(entry.brand) + " · " : ""}${entry.grams} g · ${entry.carbs} g carbs</span>
+                    </div>
+                    <span class="fx-kc">${entry.calories}<small>KCAL</small></span>
+                    <button type="button" class="food-log-remove" data-meal="${meal}" data-entry-id="${entry.id}" aria-label="Remove ${escapeHtml(entry.name)}">×</button>
+                </div>`).join("")}
+        </div>`;
+
+}
+
+document.addEventListener("click", e => {
+
+    const quick = e.target.closest("[data-quick]");
+
+    if(quick){
+
+        const q = QUICK_FOODS.find(item => item.id === quick.dataset.quick);
+
+        if(q){
+            addFoodToLog(mealForNow(), { ...q.food, brand:"", source:"Quick add" }, q.grams);
+        }
+
+    }
+
+});
+
+document.addEventListener("click", e => {
+
+    if(e.target.closest("[data-water-add]")){
+
+        document
+            .querySelector('.adjust-btn[data-macro="water"][data-action="plus"]')
+            ?.click();
+
+    }
+
+});
+
 /* ==========================================
    Summary & Score
 ========================================== */
@@ -825,6 +1064,8 @@ function renderAllFoodLogs(){
 
     MEALS.forEach(renderFoodLog);
 
+    renderTimeline();
+
 }
 
 function escapeHtml(value){
@@ -850,6 +1091,7 @@ function addFoodToLog(meal, food, grams){
             brand: food.brand,
             source: food.source,
             grams: Math.round(grams),
+            time: new Date().toTimeString().slice(0, 5),
             ...scaled
         };
 
@@ -869,7 +1111,11 @@ function addFoodToLog(meal, food, grams){
 
         renderFoodLog(meal);
 
+        renderTimeline();
+
         clearFoodSearch(meal);
+
+        closeAddSheet();
 
     });
 
@@ -903,6 +1149,8 @@ function removeFoodFromLog(meal, entryId){
     updateDisplay();
 
     renderFoodLog(meal);
+
+    renderTimeline();
 
 }
 
