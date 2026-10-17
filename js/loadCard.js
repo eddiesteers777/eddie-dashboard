@@ -184,7 +184,7 @@ function mixLine(weeks, v60) {
     if (!(all > 0)) return "";
     const pct = k => Math.round(t(k) / all * 100);
     // Where the lines fall in pace (js/sessionDose.js DOMAINS: easy under 80% of your 1-hour speed, hard over 100%).
-    const bounds = v60 ? ` <small>(easy is slower than ${paceMile(v60 * 0.8)}/mi, hard faster than ${paceMile(v60)}/mi)</small>` : "";
+    const bounds = v60 ? ` <small>(easy is slower than ${paceMile(v60 * 0.85)}/mi, hard faster than ${paceMile(v60)}/mi)</small>` : "";
     return `Last 4 weeks by load: <strong>${pct("easy")}% easy</strong> · ${pct("threshold")}% steady / threshold · ${pct("hard")}% hard${bounds}`;
 }
 
@@ -235,7 +235,7 @@ function renderLoad() {
         <p class="tr-legend"><span class="lc-key easy"></span> easy <span class="lc-key threshold"></span> steady / threshold <span class="lc-key hard"></span> hard <span class="lc-key line base"></span> training base <span class="lc-key line recent"></span> recent load</p>
         <ul class="rc-why">
             ${mixLine(weeks, anchor?.v60) ? `<li>${mixLine(weeks, anchor?.v60)}</li>` : ""}
-            <li>Long runs (${LONG_RUN.miles}+ mi or ${LONG_RUN.minutes}+ min) in the last 8 weeks: <strong>${state.longRuns.count}</strong>${state.longRuns.count ? `, longest ${state.longRuns.longest} mi` : ""}</li>
+            <li>Long runs (${LONG_RUN.miles}+ mi) in the last 8 weeks: <strong>${state.longRuns.count}</strong>${state.longRuns.count ? `, longest ${state.longRuns.longest} mi` : ""}</li>
             ${anchor?.v60 ? `<li>Your 1-hour race pace now: <strong>${paceMile(anchor.v60)}/mi</strong>, from ${esc(V60_WORDS[anchor.v60Source] || "your runs")}. 1 hour at that pace = 100 points.</li>` : `<li>No 1-hour pace yet (no races or fast efforts on record), so runs are scored by heart rate or effort.</li>`}
             <li>Runs in the last year, load measured ${esc(scored || "none")}. Measures there: ${esc(measures)}.</li>
             ${corosLine(result.coros)}

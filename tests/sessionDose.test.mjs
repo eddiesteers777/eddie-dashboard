@@ -12,8 +12,8 @@ test("pace load: one hour at 1-hour race pace is 100, at 80% speed 64; domains b
     assert.equal(Math.round(rawDose(sess(), anchor).pace), 100);
     const easy = rawDose(sess({ distance: 12000 }), anchor);
     assert.equal(Math.round(easy.pace), 64);
-    assert.equal(domainOf(0.79), "easy");
-    assert.equal(domainOf(0.8), "threshold");
+    assert.equal(domainOf(0.84), "easy");
+    assert.equal(domainOf(0.85), "threshold");
     assert.equal(domainOf(1.0), "hard");
     const easier = rawDose(sess({ distance: 11000 }), anchor);
     assert.ok(easier.domainsPace.easy > 0 && easier.domainsPace.threshold === 0);

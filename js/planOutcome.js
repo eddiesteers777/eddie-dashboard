@@ -104,7 +104,7 @@ export function planOutcome({
             if (!runs.length) { status = "missed"; why = skip.has(date) ? "logged as skipped" : "nothing run"; }
             else if (share >= 0.8) {
                 // A workout run easy (by pace, else by how hard it felt) is a different session.
-                const easyInstead = p.kind === "quality" && ((intensity != null && intensity < 0.80) || (intensity == null && effort && effort.rpe <= 3));
+                const easyInstead = p.kind === "quality" && ((intensity != null && intensity < 0.85) || (intensity == null && effort && effort.rpe <= 3));
                 status = easyInstead ? "modified" : "completed";
                 if (easyInstead) why = "ran easy instead of the workout";
             } else { status = "modified"; why = `${miles} of ${p.miles} mi`; }

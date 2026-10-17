@@ -10,6 +10,7 @@
    COROS brings more (laps, 8 weeks of sleep + HRV, new runs).
 ========================================== */
 
+import { LONG_RUN } from "./sessionDose.js";
 import { planVsActual, longRuns, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
 import { barsHtml, lineSvg } from "./svgCharts.js";
 import { planWeeks, keyRaceTitle, allRuns, everyRun, stravaActs, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
@@ -108,9 +109,9 @@ function workoutsPanel(today) {
 }
 
 function longPanel(runs) {
-    const lr = longRuns(runs).slice(-12);
-    if (!lr.length) return panel("trendsLong", "Long runs", "", empty("No runs of 10 miles or more yet."));
-    return panel("trendsLong", "Long runs", "Each week's longest run (10+ miles).",
+    const lr = longRuns(runs, { minMiles: LONG_RUN.miles }).slice(-12);
+    if (!lr.length) return panel("trendsLong", "Long runs", "", empty(`No runs of ${LONG_RUN.miles} miles or more yet.`));
+    return panel("trendsLong", "Long runs", `Each week's longest run (${LONG_RUN.miles}+ miles).`,
         `${lineSvg(lr.map(r => r.miles), { height: 70 })}<ul class="tr-list">${lr.slice(-6).reverse().map(r => `<li><span>${day(r.date)}</span><strong>${mi(r.miles)} mi</strong><span>${r.pace ? `${mmss(r.pace)}/mi` : "–"}</span><span>${r.hr ? `${r.hr} bpm` : ""}</span></li>`).join("")}</ul>`, "measured");
 }
 
