@@ -265,6 +265,10 @@
     padding:14px 16px;
     cursor:pointer;
     transition:.15s;
+    /* No grey tap box or text selection when a habit is ticked on a phone. */
+    -webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;
+    user-select:none;
 
 }
 

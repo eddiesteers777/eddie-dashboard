@@ -28,6 +28,7 @@ import { shortDay } from "./coachingPlanModel.js";
 import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effortScale.js";
 import { parseDuration, formatDuration } from "./runWorkout.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
+import { celebrateRun } from "./celebrate.js";
 import { toMillis } from "./clientSummary.js";
 import { runSets } from "./setRunner.js";
 import { hasHowTo } from "./exerciseMuscles.js";
@@ -370,6 +371,7 @@ function openLogForm({ actual = null, durationSec = null } = {}) {
             d.close();
             render();
             const newRecords = skipped ? 0 : document.querySelectorAll(".st-records li").length;
+            if (!skipped) celebrateRun({ kind: "strength", title: state.lift.title });
             toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : newRecords ? `${state.lift.title} logged. ${newRecords === 1 ? "A new record" : `${newRecords} new records`}!` : `${state.lift.title} logged. Nice work.`);
         } catch (error) {
             console.error("Saving the session failed:", error);
