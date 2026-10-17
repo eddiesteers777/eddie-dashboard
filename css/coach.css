@@ -461,3 +461,119 @@
 .coach-queue-when{ font:500 11px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
 .coach-queue-done{ border:0; border-radius:var(--radius-sm); min-width:44px; justify-content:center; }
 .coach-queue-done:hover{ background:color-mix(in srgb, var(--primary) 10%, transparent); }
+
+/* ==========================================================
+   COACH DASHBOARD LAYOUT (2026-10-17, "Command board"):
+   the counts lead as one ruled strip; "Needs you now" and the clients
+   sit beside the week and the inbox on a computer, and stack on a phone
+   in the order a coach works (queue, week, inbox, clients).
+========================================================== */
+.coach-stat-grid{
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:0;
+    margin:6px 0 28px;
+    border-top:2px solid var(--primary);
+}
+.coach-stat-card{
+    background:transparent;
+    border:0;
+    border-right:1px solid var(--border);
+    border-radius:0;
+    padding:14px 16px 12px;
+    transition:background-color .15s ease;
+}
+.coach-stat-card:last-child{ border-right:0; }
+.coach-stat-card:hover{ transform:none; border-color:var(--border); background:color-mix(in srgb, var(--primary) 6%, transparent); }
+.coach-stat-number{ font-size:44px; margin-bottom:8px; }
+.coach-stat-label{
+    font:600 11px/1.3 var(--font-mono);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+.coach-stat-card.coach-stat-neutral .coach-stat-number{ color:var(--text-secondary); }
+
+.coach-cols{ display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); gap:28px; align-items:start; }
+.coach-col{ display:flex; flex-direction:column; min-width:0; }
+.coach-col > section, .coach-col > div{ min-width:0; }
+
+/* The queue is one raised panel with lined rows. */
+.coach-queue{
+    padding:16px 18px 14px;
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+    border-radius:var(--radius);
+}
+.coach-queue-group + .coach-queue-group{ margin-top:18px; }
+.coach-queue-go{
+    flex:0 0 auto;
+    align-self:center;
+    display:inline-flex;
+    align-items:center;
+    min-height:32px;
+    padding:0 12px;
+    border-radius:var(--radius-sm);
+    background:var(--sb-lens-bg);
+    box-shadow:var(--sb-lens-shadow);
+    color:var(--on-primary);
+    font:700 13px var(--font-body);
+}
+.coach-queue-item > .ui-icon:last-child{ margin-left:0; align-self:center; margin-top:0; }
+.coach-queue-item{ align-items:center; }
+.coach-queue-icon{ margin-top:0; }
+.coach-queue-item.is-pain .coach-queue-icon{ color:var(--red); }
+.coach-queue-item.is-pain{ border-left-color:var(--red); }
+
+/* Sessions, applications and questions sit in the side column as panels. */
+.coach-week, .coach-clients, .coach-inquiries{ margin-bottom:24px; }
+.coach-col-side .coach-week,
+.coach-col-side .coach-inquiries{
+    padding:16px 18px 14px;
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+    border-radius:var(--radius);
+}
+.coach-col-side .coach-week-row,
+.coach-col-side .coach-inq-row{
+    background:transparent;
+    border:0;
+    border-top:1px solid var(--border);
+    border-radius:0;
+}
+.coach-col-side .coach-inq-row{ padding:14px 0; }
+.coach-col-side .coach-week-row{ padding:10px 0; }
+.coach-col-side .coach-inq-list{ gap:0; }
+.coach-col-side .coach-week-time{ font:600 12px var(--font-mono); color:var(--primary); flex-basis:76px; }
+.coach-col-side .coach-week-list{ gap:10px; }
+.coach-col-side .coach-inq-btn{ border-radius:var(--radius-sm); background:transparent; }
+.coach-col-side .coach-inq-empty{ background:transparent; border-radius:var(--radius-sm); }
+.coach-col-side .coach-queue-head .clients-section-title,
+.coach-col-side .coach-inq-head .clients-section-title{ margin:0; }
+.coach-col-side .coach-queue-head,
+.coach-col-side .coach-inq-head{ margin-bottom:6px; }
+
+.coach-client-row{ background:transparent; border:0; border-top:1px solid var(--border); border-radius:0; padding:12px 4px; }
+.coach-client-row:hover{ background:color-mix(in srgb, var(--primary) 5%, transparent); }
+.coach-client-list{ gap:0; }
+.coach-clients{ margin-top:8px; }
+
+@media (max-width:900px){
+    .coach-cols, .coach-col{ display:contents; }
+    .coach-queue{ order:1; margin-bottom:18px; }
+    .coach-week{ order:2; }
+    #applications{ order:3; }
+    #inquiries{ order:4; }
+    .coach-clients{ order:5; margin-top:0; }
+    .coach-setup{ order:6; }
+    .coach-cols{ display:flex; flex-direction:column; }
+    .coach-stat-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); margin-bottom:20px; }
+    .coach-stat-card{ padding:10px 8px 8px; border-bottom:1px solid var(--border); }
+    .coach-stat-card:nth-child(3n){ border-right:0; }
+    .coach-stat-card:nth-child(n+4){ border-bottom:0; }
+    .coach-stat-number{ font-size:32px; margin-bottom:6px; }
+    .coach-stat-label{ font-size:10px; letter-spacing:.06em; }
+    .coach-queue-go{ display:none; }
+    .coach-queue{ padding:12px 12px 10px; }
+}
