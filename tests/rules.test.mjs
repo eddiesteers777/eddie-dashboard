@@ -738,6 +738,41 @@ test("booking requests must start as requested and need a coach link", async () 
     await assertFails(setDoc(doc(as("client"), "bookingRequests/b5"), { ...fresh, status: "requested" }), "an archived account can't book");
 });
 
+test("a date the coach already gave away can't be asked for again (the soccer double-booking bug)", async () => {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await updateDoc(doc(db, "userProfiles/client"), { services: ["soccer_1on1"] });
+        await setDoc(doc(db, "coachAvailability/coach"), {
+            slots: [{ id: "s1", dayOfWeek: 2, startTime: "17:00", endTime: "18:00", capacity: 1, active: true }],
+            blackoutDates: []
+        });
+    });
+    const ask = (id, dates) => setDoc(doc(as("client"), `bookingRequests/${id}`), {
+        coachUid: "coach", clientUid: "client", slotId: "s1", status: "requested", coachNote: "", dates
+    });
+    // Before anything is approved, the slot is open.
+    await assertSucceeds(ask("r1", ["2026-10-20"]));
+
+    // The coach approves it in one go with the slot's taken dates, as js/scheduling.js approveRequest does.
+    const coachDb = as("coach");
+    const batch = writeBatch(coachDb);
+    batch.update(doc(coachDb, "bookingRequests/r1"), { status: "approved", coachNote: "", respondedAt: serverTimestamp() });
+    batch.update(doc(coachDb, "coachAvailability/coach"), { bookedCounts: { s1: { "2026-10-20": 1 } }, fullDates: { s1: ["2026-10-20"] } });
+    await assertSucceeds(batch.commit());
+
+    // Now that date is taken: alone, or inside a recurring request.
+    await assertFails(ask("r2", ["2026-10-20"]));
+    await assertFails(ask("r3", ["2026-10-13", "2026-10-20", "2026-10-27"]));
+    // Other weeks, and other slots, are still open.
+    await assertSucceeds(ask("r4", ["2026-10-27", "2026-11-03"]));
+    await assertSucceeds(setDoc(doc(as("client"), "bookingRequests/r5"), {
+        coachUid: "coach", clientUid: "client", slotId: "s2", status: "requested", coachNote: "", dates: ["2026-10-20"]
+    }));
+    // Only the coach can change what's taken.
+    await assertFails(updateDoc(doc(as("client"), "coachAvailability/coach"), { fullDates: {} }));
+});
+
 test("a coach can only give the five known services", async () => {
     const ref = doc(as("coach"), "userProfiles/client");
     await assertSucceeds(updateDoc(ref, { services: ["running", "soccer_group"] }));

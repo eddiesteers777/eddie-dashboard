@@ -729,6 +729,13 @@ service cloud.firestore {
         || (signedIn() && linked(coachUid, request.auth.uid));
     }
 
+    // Dates a slot has no spot left on (js/slotBookings.js). The coach's
+    // app keeps them on the availability doc; a client can't ask for one.
+    function slotFullDates(coachUid, slotId) {
+      let p = /databases/$(database)/documents/coachAvailability/$(coachUid);
+      return exists(p) ? get(p).data.get("fullDates", {}).get(slotId, []) : [];
+    }
+
     match /bookingRequests/{requestId} {
       allow read: if signedIn()
         && (request.auth.uid == resource.data.coachUid
@@ -742,7 +749,11 @@ service cloud.firestore {
         // In-person sessions are soccer for now (Eddie, 2026-10-03): only an
         // active client with a soccer service can ask for one.
         && get(profilePath(request.auth.uid)).data.get("status", "") == "active"
-        && get(profilePath(request.auth.uid)).data.get("services", []).hasAny(["soccer_1on1", "soccer_group"]);
+        && get(profilePath(request.auth.uid)).data.get("services", []).hasAny(["soccer_1on1", "soccer_group"])
+        // A date already taken (a 1:1 someone has, a full group) can't be asked for.
+        && request.resource.data.get("dates", []) is list
+        && !request.resource.data.get("dates", []).hasAny(
+             slotFullDates(request.resource.data.coachUid, request.resource.data.get("slotId", "")));
 
       allow update: if signedIn() && (
         // The coach approves, denies or cancels, with an optional note.

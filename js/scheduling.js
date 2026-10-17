@@ -18,9 +18,10 @@ import { waitForUser } from "./auth.js";
 import {
     doc, getDoc, setDoc,
     collection, query, where, getDocs, addDoc, updateDoc, deleteDoc,
-    serverTimestamp
+    serverTimestamp, runTransaction
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { attachLogs } from "./sessionModel.js";
+import { generateWeeklyDates, slotBookingFields, fullDatesBySlot } from "./slotBookings.js";
 
 // Session logs (js/sessionLogs.js) ride along with the requests: each
 // request gets `logs` and `allDates`, and cancelled dates leave `dates`.
@@ -58,9 +59,13 @@ function uid() {
 
 export async function getCoachAvailability(coachUid) {
     const snap = await getDoc(availabilityDoc(coachUid));
-    if (!snap.exists()) return { slots: [], blackoutDates: [], paymentNote: "" };
+    if (!snap.exists()) return { slots: [], blackoutDates: [], paymentNote: "", fullDates: {} };
     const data = snap.data();
-    return { slots: data.slots || [], blackoutDates: data.blackoutDates || [], paymentNote: String(data.paymentNote || "") };
+    return {
+        slots: data.slots || [], blackoutDates: data.blackoutDates || [], paymentNote: String(data.paymentNote || ""),
+        // Dates with no spot left, per slot (js/slotBookings.js).
+        fullDates: data.fullDates || {}
+    };
 }
 
 // How clients pay the coach (Venmo, Zelle, cash...), shown on a client's
@@ -123,26 +128,8 @@ export async function removeBlackoutDate(dateStr) {
     await saveCoachAvailability(current.slots, current.blackoutDates.filter(d => d !== dateStr));
 }
 
-// ---- Date math ----
-
-// Builds `count` date strings (YYYY-MM-DD), one per week, starting
-// from the first occurrence of `dayOfWeek` on or after `fromDate`.
-export function generateWeeklyDates(fromDate, dayOfWeek, count) {
-    const start = new Date(`${fromDate}T00:00:00`);
-    const offset = (dayOfWeek - start.getDay() + 7) % 7;
-    start.setDate(start.getDate() + offset);
-
-    const dates = [];
-    for (let i = 0; i < count; i++) {
-        const d = new Date(start);
-        d.setDate(d.getDate() + i * 7);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        dates.push(`${y}-${m}-${day}`);
-    }
-    return dates;
-}
+// Date math lives in js/slotBookings.js (pure, unit-tested).
+export { generateWeeklyDates };
 
 // ---- Booking requests ----
 
@@ -190,11 +177,73 @@ export async function listRequestsForMyClients() {
     return withLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })), "coach");
 }
 
+// Decline or cancel. Approving goes through approveRequest, which
+// checks the slot still has room.
 export async function respondToRequest(requestId, status, coachNote) {
+    if (status === "approved") return approveRequest(requestId, coachNote);
     await updateDoc(doc(db, "bookingRequests", requestId), {
         status,
         coachNote: coachNote || "",
         respondedAt: serverTimestamp()
+    });
+}
+
+const localToday = () => new Date().toLocaleDateString("en-CA");
+
+// Coach: rebuild the "what's taken" summary on the availability doc
+// from the approved bookings (cancelled sessions free their dates).
+// Runs whenever the coach's Schedule loads and before each approval, so
+// it also catches bookings from before the summary existed. Writes only
+// when something changed.
+export async function syncSlotBookings(requests) {
+    const user = await waitForUser();
+    if (!user) return null;
+    const list = requests || await listRequestsForMyClients();
+    const ref = availabilityDoc(user.uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    const fields = slotBookingFields(list, data.slots || [], localToday());
+    const same = JSON.stringify(fields.bookedCounts) === JSON.stringify(data.bookedCounts || {})
+        && JSON.stringify(fields.fullDates) === JSON.stringify(data.fullDates || {});
+    // updateDoc replaces each map whole (a merge would keep stale dates).
+    if (!same) await updateDoc(ref, fields);
+    return fields;
+}
+
+// Coach: approve a request, in one transaction with the slot's booked
+// counts, so a date that's already full (1:1 already taken, a group at
+// capacity) can't be approved twice, even from two devices at once.
+// Throws { code: "slot-full", dates } when a date has no spot left, and
+// { code: "not-waiting" } when the request was already answered.
+export async function approveRequest(requestId, coachNote) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const requestRef = doc(db, "bookingRequests", requestId);
+    const availRef = availabilityDoc(user.uid);
+    const today = localToday();
+    await runTransaction(db, async tx => {
+        const requestSnap = await tx.get(requestRef);
+        const availSnap = await tx.get(availRef);
+        const req = requestSnap.data() || {};
+        if (req.status !== "requested") throw Object.assign(new Error("not-waiting"), { code: "not-waiting" });
+
+        const avail = availSnap.exists() ? availSnap.data() : {};
+        const slots = avail.slots || [];
+        const slot = slots.find(s => s.id === req.slotId);
+        const cap = Math.max(1, Number(slot?.capacity ?? req.capacity) || 1);
+        const counts = { ...(avail.bookedCounts || {}) };
+        const slotCounts = { ...(counts[req.slotId] || {}) };
+        const dates = [...new Set(req.dates || [])].filter(d => d >= today);
+        const full = dates.filter(d => (slotCounts[d] || 0) >= cap);
+        if (full.length) throw Object.assign(new Error("slot-full"), { code: "slot-full", dates: full });
+
+        tx.update(requestRef, { status: "approved", coachNote: coachNote || "", respondedAt: serverTimestamp() });
+        if (availSnap.exists() && req.slotId && dates.length) {
+            for (const d of dates) slotCounts[d] = (slotCounts[d] || 0) + 1;
+            counts[req.slotId] = slotCounts;
+            tx.update(availRef, { bookedCounts: counts, fullDates: fullDatesBySlot(counts, slots) });
+        }
     });
 }
 
@@ -210,26 +259,4 @@ export async function setSessionNotes(requestId, coachNote) {
 
 export async function cancelBookingRequest(requestId) {
     await updateDoc(doc(db, "bookingRequests", requestId), { status: "cancelled", respondedAt: serverTimestamp() });
-}
-
-// Informational only (not a hard capacity lock) -- returns how many
-// spots in a group slot are already approved for a given date, so a
-// coach can make an informed call before approving another request
-// into the same slot. Safe to run at this scale (one coach, manual
-// approval) without a transaction; see js/scheduling.js module
-// comment in schedule.js for why a hard lock isn't worth the
-// complexity here.
-export async function getApprovedCountForSlotDate(coachUid, slotId, dateStr) {
-    const snap = await getDocs(query(
-        collection(db, "bookingRequests"),
-        where("coachUid", "==", coachUid),
-        where("slotId", "==", slotId),
-        where("status", "==", "approved")
-    ));
-    let count = 0;
-    for (const docSnap of snap.docs) {
-        const dates = docSnap.data().dates || [];
-        if (dates.includes(dateStr)) count++;
-    }
-    return count;
 }

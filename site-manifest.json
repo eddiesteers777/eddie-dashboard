@@ -265,6 +265,7 @@
     "js/setRunner.js",
     "js/settings.js",
     "js/signInErrors.js",
+    "js/slotBookings.js",
     "js/stravaArchive.js",
     "js/stravaAuth.js",
     "js/stravaConfig.js",

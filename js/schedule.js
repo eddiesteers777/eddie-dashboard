@@ -8,7 +8,7 @@
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
-import { sbConfirm, sbPrompt, toast } from "./ui.js";
+import { sbAlert, sbConfirm, sbPrompt, toast, friendlyError } from "./ui.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
 import {
@@ -16,8 +16,9 @@ import {
     getCoachAvailability, addAvailabilitySlot, removeAvailabilitySlot, toggleAvailabilitySlot,
     addBlackoutDate, removeBlackoutDate,
     generateWeeklyDates, requestBooking, listMyBookingRequests, listRequestsForMyClients,
-    respondToRequest, cancelBookingRequest, getApprovedCountForSlotDate
+    respondToRequest, cancelBookingRequest, syncSlotBookings
 } from "./scheduling.js";
+import { bookedCounts, takenDates, nextOpenDate } from "./slotBookings.js";
 import { clientSessions, statusLabel, CANCELLED } from "./sessionModel.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
 
@@ -214,8 +215,12 @@ blackoutForm.addEventListener("submit", async event => {
 
 async function refreshRequests() {
     if (!currentUser) return;
-    const requests = (await listRequestsForMyClients())
+    const all = await listRequestsForMyClients();
+    const requests = [...all]
         .sort((a, b) => (a.status === "requested" ? -1 : 1) - (b.status === "requested" ? -1 : 1));
+    // Keep the "what's taken" summary clients book against up to date.
+    syncSlotBookings(all).catch(error => console.warn("Southbound: couldn't update booked dates.", error));
+    const counts = bookedCounts(all, localToday());
 
     requestsList.innerHTML = "";
     requestsEmptyMsg.hidden = requests.length > 0;
@@ -228,7 +233,7 @@ async function refreshRequests() {
 
         let capacityNote = "";
         if (req.status === "requested") {
-            const already = await getApprovedCountForSlotDate(currentUser.uid, req.slotId, req.dates[0]);
+            const already = counts[req.slotId]?.[req.dates[0]] || 0;
             const cap = req.capacity || 1;
             if (cap > 1 || already > 0) {
                 capacityNote = `<div class="sched-request-note${already >= cap ? " is-full" : ""}">${already}/${cap} already booked for ${escapeHtml(formatDateShort(req.dates[0]))}${already >= cap ? " — full" : ""}</div>`;
@@ -265,24 +270,7 @@ async function refreshRequests() {
     }
 }
 
-// Group (and 1:1) slots hold a set number of people. Before approving,
-// check every date in the request so a slot is never overbooked by
-// accident -- the coach can still override on purpose.
-async function fullDates(req) {
-    const cap = req.capacity || 1;
-    const full = [];
-    for (const date of req.dates || []) {
-        const already = await getApprovedCountForSlotDate(currentUser.uid, req.slotId, date);
-        if (already >= cap) full.push(`${formatDateShort(date)} (${already}/${cap})`);
-    }
-    return full;
-}
-
 async function respond(req, status) {
-    if (status === "approved") {
-        const full = await fullDates(req);
-        if (full.length && !(await sbConfirm(`Already full on ${full.join(", ")}.`, { title: "This slot is full. Approve anyway?", confirmLabel: "Approve anyway" }))) return;
-    }
     const note = await sbPrompt("Optional. It goes in the email and shows on their booking.", {
         title: `${status === "approved" ? "Approve" : "Decline"} ${req.clientName}'s request`,
         placeholder: status === "approved" ? "See you there!" : "Can we try another time?",
@@ -291,7 +279,23 @@ async function respond(req, status) {
         confirmLabel: status === "approved" ? "Approve" : "Decline"
     });
     if (note === null) return;
-    await respondToRequest(req.id, status, note);
+    try {
+        // Approving checks, in one transaction, that every date still has
+        // a spot (js/scheduling.js approveRequest): a 1:1 time already
+        // given to someone else can't be given again.
+        if (status === "approved") await syncSlotBookings();
+        await respondToRequest(req.id, status, note);
+    } catch (error) {
+        if (error?.code === "slot-full") {
+            await sbAlert(`Someone is already booked on ${error.dates.map(formatDateShort).join(", ")}. Decline this request so ${req.clientName} can pick another time.`, { title: "That time is taken" });
+        } else if (error?.code === "not-waiting") {
+            toast("That request was already answered.");
+        } else {
+            toast(friendlyError(error, "answer that request"));
+        }
+        refreshRequests();
+        return;
+    }
     sendBookingResponseEmail({
         clientEmail: req.clientEmail,
         clientName: req.clientName,
@@ -352,17 +356,26 @@ async function refreshAvailableSlots() {
     const coach = myCoaches.find(c => c.coachUid === selectedCoachUid);
     coachOneLine.hidden = myCoaches.length !== 1;
     coachOneLine.textContent = `Open times with ${coach?.coachName || "your coach"}. Tap Request to ask for one.`;
-    const { slots } = await getCoachAvailability(selectedCoachUid);
+    const [{ slots, fullDates }, mine] = await Promise.all([
+        getCoachAvailability(selectedCoachUid),
+        listMyBookingRequests().catch(() => [])
+    ]);
     const openSlots = slots.filter(s => s.active !== false);
+    const today = localToday();
 
     availableSlotsList.innerHTML = "";
     availableSlotsEmptyMsg.hidden = openSlots.length > 0;
 
     for (const slot of openSlots) {
+        const ctx = { fullDates, mine: mine.filter(r => r.coachUid === selectedCoachUid) };
+        const next = nextOpenDate(slot, today, ctx.fullDates, ctx.mine);
+        const action = next
+            ? `<span class="sched-slot-next">Next open ${escapeHtml(formatDateShort(next))}</span><button type="button" class="clients-btn-primary" data-action="request">Request</button>`
+            : `<span class="sched-slot-next">Booked</span>`;
         const wrap = document.createElement("div");
-        wrap.innerHTML = slotCardHtml(slot, `<button type="button" class="clients-btn-primary" data-action="request">Request</button>`);
+        wrap.innerHTML = slotCardHtml(slot, action);
         const card = wrap.firstElementChild;
-        card.querySelector('[data-action="request"]').addEventListener("click", () => openBookOverlay(coach, slot));
+        card.querySelector('[data-action="request"]')?.addEventListener("click", () => openBookOverlay(coach, slot, { ...ctx, next }));
         availableSlotsList.appendChild(card);
     }
 
@@ -465,14 +478,14 @@ const bookCloseBtn = document.getElementById("bookCloseBtn");
 
 let bookState = null;
 
-function openBookOverlay(coach, slot) {
-    bookState = { coach, slot };
+function openBookOverlay(coach, slot, taken) {
+    bookState = { coach, slot, taken };
     bookSlotMeta.textContent = coach.coachName || "Coach";
     bookSlotTitle.textContent = `${DAY_NAMES[slot.dayOfWeek]}s, ${formatTime(slot.startTime)}–${formatTime(slot.endTime)}`;
 
     const today = new Date();
     const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    bookStartDate.value = generateWeeklyDates(todayIso, slot.dayOfWeek, 1)[0];
+    bookStartDate.value = taken.next || generateWeeklyDates(todayIso, slot.dayOfWeek, 1)[0];
     bookForm.bookMode.value = "single";
     bookWeeksField.hidden = true;
     bookWeeks.value = 6;
@@ -494,6 +507,11 @@ bookForm.addEventListener("submit", async event => {
 
     const weeks = bookForm.bookMode.value === "recurring" ? Math.max(2, Number(bookWeeks.value) || 2) : 1;
     const dates = generateWeeklyDates(bookStartDate.value, bookState.slot.dayOfWeek, weeks);
+    const taken = takenDates(bookState.slot, dates, bookState.taken.fullDates, bookState.taken.mine);
+    if (taken.length) {
+        showMsg(bookMsg, `Already taken: ${taken.map(formatDateShort).join(", ")}. Pick another start date${weeks > 1 ? " or fewer weeks" : ""}.`, true);
+        return;
+    }
 
     bookSubmitBtn.disabled = true;
     bookMsg.hidden = true;
@@ -523,10 +541,15 @@ bookForm.addEventListener("submit", async event => {
             bookOverlay.hidden = true;
             bookState = null;
             refreshMyRequests();
+            refreshAvailableSlots();
         }, 900);
     } catch (error) {
         console.error("Booking request failed:", error);
-        showMsg(bookMsg, "Couldn't send that request. Try again.", true);
+        // The rules refuse a date that filled up since this page loaded.
+        showMsg(bookMsg, error?.code === "permission-denied"
+            ? "Couldn't send that request. That time may have just been taken, so close this and pick another."
+            : "Couldn't send that request. Try again.", true);
+        if (error?.code === "permission-denied") refreshAvailableSlots();
     } finally {
         bookSubmitBtn.disabled = false;
     }
