@@ -28,7 +28,7 @@
         <section class="eos-today-hero">
             <div>
                 <div class="eos-today-eyebrow">Coaching</div>
-                <h1>Weekly Check-in</h1>
+                <h1 id="checkinTitle">Weekly Check-in</h1>
                 <p class="eos-today-phase" id="checkinIntro">
                     A short weekly note to your coach, and their reply — the rhythm that keeps your plan current.
                 </p>
@@ -121,15 +121,18 @@
 
             <!-- ===== Coach view: review check-ins from linked clients ===== -->
             <section class="clients-panel" data-panel="review" hidden>
-
-                <div class="clients-card">
-                    <h2>Client check-ins</h2>
-                    <p class="clients-card-note">Needs-review items come first. Reviewing writes your feedback back to the client and clears it from the queue.</p>
+                <div class="ck-split">
+                    <div class="ck-list-col">
+                        <div id="reviewFilters" class="clients-filters ck-filters" role="group" aria-label="Filter check-ins">
+                            <button type="button" class="clients-filter active" data-filter="needs">Needs reply <span class="clients-filter-count"></span></button>
+                            <button type="button" class="clients-filter" data-filter="missing">Not in yet <span class="clients-filter-count"></span></button>
+                            <button type="button" class="clients-filter" data-filter="replied">Replied <span class="clients-filter-count"></span></button>
+                        </div>
+                        <div id="reviewList" class="ck-list"></div>
+                        <p id="reviewEmpty" class="clients-card-note" hidden>No check-ins from your clients yet.</p>
+                    </div>
+                    <div id="reviewDetail" class="ck-detail" aria-live="polite"></div>
                 </div>
-
-                <div id="reviewList" class="checkin-history-list"></div>
-                <p id="reviewEmpty" class="clients-card-note" hidden>No check-ins from your clients yet.</p>
-
             </section>
 
         </div>

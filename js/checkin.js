@@ -1,6 +1,7 @@
 import { listenForAuth } from "./auth.js";
 import { toast } from "./ui.js";
-import { listMyCoaches } from "./coachAccess.js";
+import { listMyCoaches, listMyClients } from "./coachAccess.js";
+import { waitedText } from "./coachToday.js";
 import { isApprovedCoach } from "./userProfile.js";
 import { submitCheckin, listMyCheckins, listCheckinsForMyClients, reviewCheckin, weekKeyFor } from "./checkins.js";
 import { QUEUED_NOTE } from "./offlineWrite.js";
@@ -334,78 +335,169 @@ checkinSubmitBtn?.addEventListener("click", async () => {
     }
 });
 
-// ---- Coach: review queue ----
+// ---- Coach: review queue (a list and the open check-in) ----
+
+const reviewDetail = document.getElementById("reviewDetail");
+const reviewFilters = document.getElementById("reviewFilters");
+let reviewItems = [];        // every check-in from this coach's clients, newest first
+let missingClients = [];     // clients with no check-in for this week yet
+let reviewFilter = "needs";
+let selectedId = null;
+let firstReviewLoad = true;
+const wide = window.matchMedia("(min-width: 821px)");
+
+const FILTER_PICK = {
+    needs: () => reviewItems.filter(c => c.status !== "reviewed"),
+    replied: () => reviewItems.filter(c => c.status === "reviewed"),
+    missing: () => missingClients
+};
+const firstName = name => String(name || "Client").split(" ")[0];
+const sentText = c => { const at = toMillis(c.submittedAt); return at ? waitedText(at) : ""; };
+
+// The check-in's own words first, so the list says why it matters.
+function summaryOf(c) {
+    if (c.isMissing) return c.lastWeek ? `Last check-in ${formatWeekLabel(c.lastWeek).replace("Week of ", "")}` : "Hasn't checked in yet";
+    const flags = checkinFlags(c);
+    return flags.length ? flags.join(" · ") : (c.wentWell || c.notes || "No notes left.");
+}
+
+function listRowHtml(c, open) {
+    const flagged = !c.isMissing && c.status !== "reviewed" && checkinFlags(c).length > 0;
+    return `
+        <button type="button" class="ck-item${open ? " is-open" : ""}" data-id="${escapeHtml(c.id)}" aria-pressed="${open}">
+            <span class="clients-row-avatar">${escapeHtml((c.clientName || "?").slice(0, 1).toUpperCase())}</span>
+            <span class="ck-item-text">
+                <span class="ck-item-top"><strong>${escapeHtml(c.clientName || "Client")}</strong>${flagged ? `<span class="ck-dot" title="Worth a look"></span>` : ""}<span class="ck-item-when">${escapeHtml(c.isMissing ? "" : sentText(c))}</span></span>
+                <span class="ck-item-sum">${c.isMissing || !c.rating ? "" : `${c.rating}/5 · `}${escapeHtml(summaryOf(c))}</span>
+            </span>
+        </button>`;
+}
+
+function detailHtml(c) {
+    const hub = `client.html?uid=${encodeURIComponent(c.clientUid)}`;
+    const avatar = `<span class="clients-row-avatar">${escapeHtml((c.clientName || "?").slice(0, 1).toUpperCase())}</span>`;
+    if (c.isMissing) {
+        return `
+            <div class="ck-d-head">${avatar}<div><div class="ck-kicker">No check-in yet this week</div><h2>${escapeHtml(c.clientName)}</h2></div></div>
+            <p class="clients-card-note">${escapeHtml(summaryOf(c))}. A nudge from you is often all it takes.</p>
+            <div class="ck-actions"><a class="clients-btn-primary" href="${hub}&tab=messages">Message ${escapeHtml(firstName(c.clientName))}</a><a class="clients-btn-secondary" href="${hub}">Open Client Hub</a></div>`;
+    }
+    const replied = c.status === "reviewed";
+    const last = reviewItems.find(o => o.clientUid === c.clientUid && o.status === "reviewed" && o.coachFeedback && (o.weekOf || "") < (c.weekOf || ""));
+    const tiles = [["Week", c.rating ? `${c.rating}/5` : "—", false], ...WELLBEING.map(w => [w.label, Number(c[w.key]) ? c[w.key] : "—", Number(c[w.key]) && Number(c[w.key]) <= 2])];
+    return `
+        <div class="ck-d-head">${avatar}
+            <div style="flex:1;min-width:0"><div class="ck-kicker">${escapeHtml(formatWeekLabel(c.weekOf))}${sentText(c) ? ` · sent ${escapeHtml(sentText(c))}` : ""}</div><h2>${escapeHtml(c.clientName || "Client")}</h2></div>
+            <span class="checkin-status-badge status-${replied ? "reviewed" : "submitted"}">${replied ? "Replied" : "Needs reply"}</span></div>
+        <div class="ck-meter">${tiles.map(([l, v, low]) => `<div${low ? ' class="is-low"' : ""}><b>${escapeHtml(v)}</b><span>${escapeHtml(l)}</span></div>`).join("")}</div>
+        ${checkinDetailsHtml(c) || `<p class="checkin-row-notes"><em>No notes left.</em></p>`}
+        ${last ? `<p class="ck-last"><span>Your last reply</span>${escapeHtml(last.coachFeedback)}</p>` : ""}
+        <form class="checkin-review-form" data-id="${escapeHtml(c.id)}">
+            <textarea rows="3" data-emoji="quick" aria-label="Your reply to ${escapeHtml(firstName(c.clientName))}" placeholder="Write your reply to ${escapeHtml(firstName(c.clientName))}...">${escapeHtml(c.coachFeedback || "")}</textarea>
+            <div class="checkin-review-form-actions ck-actions">
+                <button type="submit" class="clients-btn-primary">${replied ? "Update reply" : "Send reply"}</button>
+                <a class="clients-btn-secondary" href="${hub}&tab=plan">Adjust ${escapeHtml(firstName(c.clientName))}'s plan</a>
+                <span class="clients-msg" hidden></span>
+            </div>
+        </form>`;
+}
+
+function renderReview() {
+    const picked = FILTER_PICK[reviewFilter]();
+    if (!picked.some(c => c.id === selectedId) && wide.matches) selectedId = picked[0]?.id || null;
+    if (!picked.some(c => c.id === selectedId)) selectedId = null;
+    reviewFilters.querySelectorAll("[data-filter]").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.filter === reviewFilter);
+        btn.querySelector(".clients-filter-count").textContent = FILTER_PICK[btn.dataset.filter]().length;
+    });
+    const emptyText = { needs: "Everyone has a reply. Nice work.", missing: "Every client has checked in this week.", replied: "No replies sent yet." }[reviewFilter];
+    const inline = !wide.matches;
+    reviewList.innerHTML = picked.length
+        ? picked.map(c => listRowHtml(c, c.id === selectedId) + (inline && c.id === selectedId ? `<div class="ck-sheet">${detailHtml(c)}</div>` : "")).join("")
+        : `<p class="clients-card-note ck-none">${emptyText}</p>`;
+    const current = picked.find(c => c.id === selectedId);
+    reviewDetail.hidden = inline;
+    reviewDetail.innerHTML = !inline && current ? detailHtml(current) : "";
+    reviewEmpty.hidden = reviewItems.length > 0 || missingClients.length > 0;
+    const needs = FILTER_PICK.needs().length, missing = FILTER_PICK.missing().length;
+    document.getElementById("checkinIntro").textContent = reviewItems.length || missing
+        ? `${needs} to reply to${missing ? `, ${missing} not in yet this week` : ""}. Read it, reply, move on.`
+        : "Your clients' weekly check-ins show up here.";
+}
 
 async function refreshReview() {
-    const items = await listCheckinsForMyClients();
-    const needsReview = items.filter(c => c.status !== "reviewed");
-    const reviewed = items.filter(c => c.status === "reviewed");
-    const ordered = [...needsReview, ...reviewed];
-
-    reviewCountEl.textContent = String(needsReview.length);
-    reviewCountEl.hidden = needsReview.length === 0;
-
-    reviewList.innerHTML = ordered.map(c => `
-        <div class="checkin-row" data-id="${escapeHtml(c.id)}">
-            <div class="checkin-row-head">
-                <div class="checkin-row-who">
-                    <strong>${escapeHtml(c.clientName || "Client")}</strong>
-                    <span>${escapeHtml(formatWeekLabel(c.weekOf))}</span>
-                </div>
-                <div class="checkin-row-stars">${starGlyphs(c.rating || 0)}</div>
-                <span class="checkin-status-badge status-${c.status === "reviewed" ? "reviewed" : "submitted"}">
-                    ${c.status === "reviewed" ? "Reviewed" : "Needs review"}
-                </span>
-            </div>
-            ${checkinDetailsHtml(c) || `<p class="checkin-row-notes"><em>No notes left.</em></p>`}
-            <a class="ck-open-plan" href="client.html?uid=${encodeURIComponent(c.clientUid)}&tab=plan">Adjust ${escapeHtml((c.clientName || "their").split(" ")[0])}'s plan →</a>
-            <form class="checkin-review-form">
-                <textarea rows="2" data-emoji="quick" placeholder="Write feedback for ${escapeHtml(c.clientName || "your client")}...">${escapeHtml(c.coachFeedback || "")}</textarea>
-                <div class="checkin-review-form-actions">
-                    <button type="submit" class="clients-btn-primary">${c.status === "reviewed" ? "Update Feedback" : "Mark Reviewed"}</button>
-                    <span class="clients-msg" hidden></span>
-                </div>
-            </form>
-        </div>
-    `).join("");
-    reviewEmpty.hidden = ordered.length > 0;
-
-    reviewList.querySelectorAll(".checkin-row").forEach(row => {
-        const id = row.dataset.id;
-        const source = ordered.find(c => c.id === id);
-        const form = row.querySelector(".checkin-review-form");
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const textarea = form.querySelector("textarea");
-            const btn = form.querySelector("button[type=submit]");
-            const msg = form.querySelector(".clients-msg");
-
-            btn.disabled = true;
-            try {
-                await reviewCheckin(id, textarea.value.trim());
-                toast("Reply sent. They get it in the app and by email.");
-                msg.hidden = true;
-
-                sendCheckinReviewedEmail({
-                    clientEmail: source?.clientEmail,
-                    clientName: source?.clientName,
-                    coachName: source?.coachName,
-                    weekOf: source?.weekOf,
-                    feedback: textarea.value.trim(),
-                    link: window.location.origin + window.location.pathname
-                });
-
-                await refreshReview();
-            } catch (error) {
-                msg.textContent = "Couldn't save that — try again.";
-                msg.className = "clients-msg clients-msg-error";
-                msg.hidden = false;
-                btn.disabled = false;
-                console.error(error);
-            }
-        });
-    });
+    const [items, clients] = await Promise.all([listCheckinsForMyClients(), listMyClients().catch(() => [])]);
+    reviewItems = items;
+    const thisWeek = weekKeyFor();
+    const inThisWeek = new Set(items.filter(c => c.weekOf === thisWeek).map(c => c.clientUid));
+    missingClients = clients.filter(l => !inThisWeek.has(l.clientUid)).map(l => ({
+        id: `missing:${l.clientUid}`, isMissing: true, clientUid: l.clientUid, clientName: l.clientName || "Client",
+        lastWeek: items.find(c => c.clientUid === l.clientUid)?.weekOf || ""
+    }));
+    const needs = items.filter(c => c.status !== "reviewed").length;
+    reviewCountEl.textContent = String(needs);
+    reviewCountEl.hidden = needs === 0;
+    // Nothing waiting on the first look: open on the replies, not an empty list.
+    if (firstReviewLoad) {
+        firstReviewLoad = false;
+        if (!needs && items.length) reviewFilter = "replied";
+    }
+    renderReview();
 }
+
+reviewFilters.addEventListener("click", event => {
+    const btn = event.target.closest("[data-filter]");
+    if (!btn) return;
+    reviewFilter = btn.dataset.filter;
+    selectedId = null;
+    renderReview();
+});
+reviewList.addEventListener("click", event => {
+    const item = event.target.closest(".ck-item");
+    if (!item) return;
+    // On a phone, tapping the open one folds it away again.
+    selectedId = !wide.matches && item.dataset.id === selectedId ? null : item.dataset.id;
+    renderReview();
+});
+wide.addEventListener("change", renderReview);
+
+document.addEventListener("submit", async event => {
+    const form = event.target.closest?.(".checkin-review-form");
+    if (!form || !form.dataset.id) return;
+    event.preventDefault();
+    const id = form.dataset.id;
+    const source = reviewItems.find(c => c.id === id);
+    const textarea = form.querySelector("textarea");
+    const btn = form.querySelector("button[type=submit]");
+    const msg = form.querySelector(".clients-msg");
+    btn.disabled = true;
+    try {
+        await reviewCheckin(id, textarea.value.trim());
+        toast("Reply sent. They get it in the app and by email.");
+        msg.hidden = true;
+        sendCheckinReviewedEmail({
+            clientEmail: source?.clientEmail,
+            clientName: source?.clientName,
+            coachName: source?.coachName,
+            weekOf: source?.weekOf,
+            feedback: textarea.value.trim(),
+            link: window.location.origin + window.location.pathname
+        });
+        // Move straight on to the next one waiting.
+        if (reviewFilter === "needs") {
+            const waiting = FILTER_PICK.needs();
+            const at = waiting.findIndex(c => c.id === id);
+            selectedId = (waiting[at + 1] || waiting[at - 1])?.id || null;
+        }
+        await refreshReview();
+    } catch (error) {
+        msg.textContent = "Couldn't save that — try again.";
+        msg.className = "clients-msg clients-msg-error";
+        msg.hidden = false;
+        btn.disabled = false;
+        console.error(error);
+    }
+});
 
 // ---- Auth ----
 
@@ -424,8 +516,7 @@ listenForAuth(user => {
         if (approved) {
             refreshReview();
             selectTab("review");
-            document.getElementById("checkinIntro").textContent =
-                "Read how each client's week went and send your feedback. They get it in the app and by email.";
+            document.getElementById("checkinTitle").textContent = "Check-ins";
         }
     });
 });
