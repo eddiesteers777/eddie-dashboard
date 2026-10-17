@@ -45,41 +45,6 @@
 
         <div id="coachDashboard" hidden>
 
-            <section class="coach-queue" aria-labelledby="coachQueueTitle">
-                <div class="coach-queue-head">
-                    <h2 class="clients-section-title" id="coachQueueTitle">Who needs you today</h2>
-                    <div class="coach-view" role="group" aria-label="Group the list">
-                        <button type="button" class="coach-view-btn" data-view="task" aria-pressed="true">By task</button>
-                        <button type="button" class="coach-view-btn" data-view="person" aria-pressed="false">By client</button>
-                    </div>
-                </div>
-                <div id="coachQueueList" class="coach-queue-list">
-                    <div class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:64%"></span></div></div>
-                </div>
-                <button type="button" class="coach-queue-hidden" id="coachQueueHidden" hidden></button>
-            </section>
-
-            <section class="coach-week" aria-labelledby="coachWeekTitle">
-                <div class="coach-queue-head">
-                    <h2 class="clients-section-title" id="coachWeekTitle">Sessions this week</h2>
-                    <div class="coach-week-nav">
-                        <button type="button" class="coach-view-btn" data-week-step="-1" aria-label="Previous week">‹</button>
-                        <span id="coachWeekLabel" class="coach-week-label"></span>
-                        <button type="button" class="coach-view-btn" data-week-step="1" aria-label="Next week">›</button>
-                    </div>
-                </div>
-                <div id="coachWeekList" class="coach-week-list"></div>
-            </section>
-
-            <section class="coach-clients" aria-labelledby="coachClientsTitle">
-                <div class="coach-queue-head">
-                    <h2 class="clients-section-title" id="coachClientsTitle">Your clients</h2>
-                    <a class="coach-clients-all" href="clients.html?tab=coach">Filters and more in My Clients →</a>
-                </div>
-                <input type="search" id="coachClientSearch" class="clients-search" placeholder="Search by name, nickname or email" autocomplete="off" aria-label="Search your clients">
-                <div id="coachClientList" class="coach-client-list"></div>
-            </section>
-
             <div class="coach-stat-grid">
 
                 <a href="#applications" class="coach-stat-card" id="statNewApplications">
@@ -114,10 +79,49 @@
 
             </div>
 
-            <div id="setupCard" class="coach-setup" hidden>
-                <h2 class="clients-section-title">Still to set up</h2>
-                <div id="setupList" class="coach-setup-list"></div>
-            </div>
+
+            <div class="coach-cols">
+                <div class="coach-col coach-col-main">
+            <section class="coach-queue" aria-labelledby="coachQueueTitle">
+                <div class="coach-queue-head">
+                    <h2 class="clients-section-title" id="coachQueueTitle">Who needs you today</h2>
+                    <div class="coach-view" role="group" aria-label="Group the list">
+                        <button type="button" class="coach-view-btn" data-view="task" aria-pressed="true">By task</button>
+                        <button type="button" class="coach-view-btn" data-view="person" aria-pressed="false">By client</button>
+                    </div>
+                </div>
+                <div id="coachQueueList" class="coach-queue-list">
+                    <div class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:64%"></span></div></div>
+                </div>
+                <button type="button" class="coach-queue-hidden" id="coachQueueLow" hidden></button>
+                <button type="button" class="coach-queue-hidden" id="coachQueueHidden" hidden></button>
+            </section>
+
+
+            <section class="coach-clients" aria-labelledby="coachClientsTitle">
+                <div class="coach-queue-head">
+                    <h2 class="clients-section-title" id="coachClientsTitle">Your clients</h2>
+                    <a class="coach-clients-all" href="clients.html?tab=coach">Filters and more in My Clients →</a>
+                </div>
+                <input type="search" id="coachClientSearch" class="clients-search" placeholder="Search by name, nickname or email" autocomplete="off" aria-label="Search your clients">
+                <div id="coachClientList" class="coach-client-list"></div>
+            </section>
+
+
+                </div>
+                <div class="coach-col coach-col-side">
+            <section class="coach-week" aria-labelledby="coachWeekTitle">
+                <div class="coach-queue-head">
+                    <h2 class="clients-section-title" id="coachWeekTitle">Sessions this week</h2>
+                    <div class="coach-week-nav">
+                        <button type="button" class="coach-view-btn" data-week-step="-1" aria-label="Previous week">‹</button>
+                        <span id="coachWeekLabel" class="coach-week-label"></span>
+                        <button type="button" class="coach-view-btn" data-week-step="1" aria-label="Next week">›</button>
+                    </div>
+                </div>
+                <div id="coachWeekList" class="coach-week-list"></div>
+            </section>
+
 
             <section id="applications" class="coach-inquiries">
                 <div class="coach-inq-head">
@@ -128,6 +132,7 @@
                 <div id="applicationList" class="coach-inq-list"></div>
             </section>
 
+
             <section id="inquiries" class="coach-inquiries">
                 <div class="coach-inq-head">
                     <h2 class="clients-section-title">Website Questions</h2>
@@ -136,45 +141,14 @@
                 <div id="inquiryList" class="coach-inq-list"></div>
             </section>
 
-            <h2 class="clients-section-title">Quick Links</h2>
-            <div class="coach-links-grid">
 
-                <a href="clients.html?tab=coach" class="coach-link-card">
-                    <div class="coach-link-icon" data-icon="users"></div>
-                    <div>
-                        <strong>Manage Clients</strong>
-                        <span>View and edit Training &amp; Race Plans</span>
-                    </div>
-                    <span class="coach-link-chevron" data-icon="chevronRight"></span>
-                </a>
+            <div id="setupCard" class="coach-setup" hidden>
+                <h2 class="clients-section-title">Still to set up</h2>
+                <div id="setupList" class="coach-setup-list"></div>
+            </div>
 
-                <a href="clients.html?tab=pending" class="coach-link-card">
-                    <div class="coach-link-icon" data-icon="checkCircle"></div>
-                    <div>
-                        <strong>Review Pending Accounts</strong>
-                        <span>Approve or deny new signups</span>
-                    </div>
-                    <span class="coach-link-chevron" data-icon="chevronRight"></span>
-                </a>
 
-                <a href="schedule.html?tab=availability" class="coach-link-card">
-                    <div class="coach-link-icon" data-icon="calendar"></div>
-                    <div>
-                        <strong>Availability &amp; Requests</strong>
-                        <span>Manage open times and respond to bookings</span>
-                    </div>
-                    <span class="coach-link-chevron" data-icon="chevronRight"></span>
-                </a>
-
-                <a href="checkin.html?tab=review" class="coach-link-card">
-                    <div class="coach-link-icon" data-icon="star"></div>
-                    <div>
-                        <strong>Weekly Check-ins</strong>
-                        <span>Review how each client's week went</span>
-                    </div>
-                    <span class="coach-link-chevron" data-icon="chevronRight"></span>
-                </a>
-
+                </div>
             </div>
 
         </div>

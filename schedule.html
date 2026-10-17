@@ -50,30 +50,55 @@
             <!-- ===== Coach view: manage slots + respond to requests ===== -->
             <section class="clients-panel" data-panel="availability">
 
-                <div class="clients-card">
-                    <h2>Add a weekly time slot</h2>
-                    <p class="clients-card-note">Clients you've linked can request to book this recurring time.</p>
-                    <form id="slotForm" class="sched-slot-form">
-                        <label class="sched-field"><span>Day</span><select id="slotDay" required></select></label>
-                        <label class="sched-field"><span>Type</span><select id="slotType" required></select></label>
-                        <label class="sched-field"><span>Starts</span><input type="time" id="slotStart" required></label>
-                        <label class="sched-field"><span>Ends</span><input type="time" id="slotEnd" required></label>
-                        <label class="sched-field sched-field-wide"><span>Label (optional)</span><input type="text" id="slotLabel" placeholder="e.g. U10 Group"></label>
-                        <label class="sched-field"><span>Spots</span><input type="number" id="slotCapacity" min="1" value="1"></label>
-                        <button type="submit" class="clients-btn-primary">Add Slot</button>
-                    </form>
-                    <p id="slotMsg" class="clients-msg" hidden></p>
-                </div>
+                <section id="waitingWrap" class="sched-waiting" hidden>
+                    <h2 class="clients-section-title">Waiting on you <span id="waitingCount" class="sched-count"></span></h2>
+                    <div id="waitingList" class="clients-list sched-waiting-list"></div>
+                </section>
+
+                <section class="sched-weekwrap" aria-labelledby="schedWeekTitle">
+                    <div class="sched-weekhead">
+                        <div>
+                            <h2 class="clients-section-title" id="schedWeekTitle">Your week</h2>
+                            <p class="sched-weeksum" id="schedWeekSum"></p>
+                        </div>
+                        <div class="sched-weeknav">
+                            <button type="button" class="clients-btn-secondary" data-week-step="-1" aria-label="Previous week">‹</button>
+                            <button type="button" class="clients-btn-secondary" id="schedWeekNow">This week</button>
+                            <button type="button" class="clients-btn-secondary" data-week-step="1" aria-label="Next week">›</button>
+                            <a class="clients-btn-primary" href="#addSlotBox" id="addSlotLink"><span data-icon="plus"></span> Open time</a>
+                        </div>
+                    </div>
+                    <div id="schedWeek" class="sched-week"></div>
+                    <p class="sched-key"><span class="sched-key-booked">Booked</span><span class="sched-key-asked">Asked</span><span class="sched-key-open">Open time</span></p>
+                </section>
+
+                <details class="clients-add" id="addSlotBox">
+                    <summary><span data-icon="plus"></span> Add a weekly time</summary>
+                    <div class="clients-card">
+                        <h2>Add a weekly time slot</h2>
+                        <p class="clients-card-note">Clients you've linked can request to book this recurring time.</p>
+                        <form id="slotForm" class="sched-slot-form">
+                            <label class="sched-field"><span>Day</span><select id="slotDay" required></select></label>
+                            <label class="sched-field"><span>Type</span><select id="slotType" required></select></label>
+                            <label class="sched-field"><span>Starts</span><input type="time" id="slotStart" required></label>
+                            <label class="sched-field"><span>Ends</span><input type="time" id="slotEnd" required></label>
+                            <label class="sched-field sched-field-wide"><span>Label (optional)</span><input type="text" id="slotLabel" placeholder="e.g. U10 Group"></label>
+                            <label class="sched-field"><span>Spots</span><input type="number" id="slotCapacity" min="1" value="1"></label>
+                            <button type="submit" class="clients-btn-primary">Add Slot</button>
+                        </form>
+                        <p id="slotMsg" class="clients-msg" hidden></p>
+                    </div>
+                </details>
 
                 <div id="slotsListWrap">
-                    <h2 class="clients-section-title">Your weekly slots</h2>
+                    <h2 class="clients-section-title">Your weekly open times</h2>
                     <div id="slotsList" class="sched-slot-list"></div>
-                    <p id="slotsEmptyMsg" class="clients-card-note" hidden>No open slots yet — add one above.</p>
+                    <p id="slotsEmptyMsg" class="clients-card-note" hidden>No open times yet. Use “Open time” above to add one.</p>
                 </div>
 
                 <div class="clients-card">
-                    <h2>Blackout dates</h2>
-                    <p class="clients-card-note">Dates you're unavailable regardless of your weekly slots — holidays, vacation, etc.</p>
+                    <h2>Days off</h2>
+                    <p class="clients-card-note">Dates you're unavailable regardless of your weekly times: holidays, vacation, etc.</p>
                     <form id="blackoutForm" class="sched-blackout-form">
                         <input type="date" id="blackoutInput" required>
                         <button type="submit" class="clients-btn-secondary">Add</button>
@@ -82,9 +107,9 @@
                 </div>
 
                 <div id="requestsListWrap">
-                    <h2 class="clients-section-title">Requests</h2>
+                    <h2 class="clients-section-title">Booked and past</h2>
                     <div id="requestsList" class="clients-list"></div>
-                    <p id="requestsEmptyMsg" class="clients-card-note" hidden>No booking requests yet.</p>
+                    <p id="requestsEmptyMsg" class="clients-card-note" hidden>No booked sessions yet.</p>
                 </div>
 
             </section>

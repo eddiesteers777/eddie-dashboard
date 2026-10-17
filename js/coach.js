@@ -36,10 +36,17 @@ const QUEUE_ICONS = {
     "session-log": "clipboard", "no-show": "alertTriangle", package: "flag",
     pending: "checkCircle", application: "mail", question: "messageSquare"
 };
+// What the button on each row says (the whole row opens the same page).
+const QUEUE_GO = {
+    pain: "Reply", health: "Open", change: "Reply", checkin: "Reply", message: "Reply",
+    booking: "Review", pending: "Approve", application: "Open", question: "Open", plan: "Build plan"
+};
+// Task groups tucked behind "lower priority" so real work comes first.
+const LOW_GROUPS = ["plans", "followup"];
 const DONE_KEY = "coach-queue-done";
 const VIEW_KEY = "sb-coach-queue-view";   // this device only
 
-const today = { clients: null, clientItems: [], failed: false, name: "", showHidden: false };
+const today = { clients: null, clientItems: [], failed: false, name: "", showHidden: false, showLow: false };
 
 function readJson(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
@@ -93,6 +100,7 @@ function queueRow(item, { withName, hidden = false }) {
             <a class="coach-queue-item is-${escapeHtml(item.kind)}" href="${escapeHtml(item.href)}">
                 <span class="coach-queue-icon">${icon(QUEUE_ICONS[item.kind] || "info")}</span>
                 <span class="coach-queue-text">${withName ? `<strong>${escapeHtml(item.name)}</strong> ` : ""}${escapeHtml(item.text)}${when ? `<span class="coach-queue-when">${escapeHtml(when)}</span>` : ""}</span>
+                ${QUEUE_GO[item.kind] ? `<span class="coach-queue-go">${QUEUE_GO[item.kind]}</span>` : ""}
                 ${icon("chevronRight")}
             </a>
             <button type="button" class="coach-queue-done" data-done="${escapeHtml(itemKey(item))}" data-undo="${hidden ? "1" : ""}"
@@ -115,6 +123,8 @@ function renderToday() {
     document.getElementById("coachSummary").textContent = today.clients ? [line.headline, line.detail].filter(Boolean).join(". ").replace(/\.\. /, ". ") : "Checking on your clients…";
 
     if (!today.clients) return;   // still loading: keep the shimmer
+    const lowBtn = document.getElementById("coachQueueLow");
+    lowBtn.hidden = true;
     hiddenBtn.hidden = !hidden.length;
     hiddenBtn.textContent = today.showHidden ? "Hide the ones marked done" : `${hidden.length} marked done for today · Show them`;
 
@@ -135,11 +145,21 @@ function renderToday() {
             <div class="coach-queue-name">${escapeHtml(p.name)}</div>
             ${p.items.map(item => queueRow(item, { withName: false })).join("")}`).join("");
     } else {
-        html += groupByTask(shown).map(g => `
+        const groups = groupByTask(shown);
+        const groupHtml = g => `
             <div class="coach-queue-group">
                 <h3 class="coach-queue-group-title">${escapeHtml(g.label)} <span>${g.items.length}</span></h3>
                 ${g.items.map(item => queueRow(item, { withName: true })).join("")}
-            </div>`).join("");
+            </div>`;
+        const main = groups.filter(g => !LOW_GROUPS.includes(g.id));
+        const low = groups.filter(g => LOW_GROUPS.includes(g.id));
+        const lowCount = low.reduce((n, g) => n + g.items.length, 0);
+        html += main.map(groupHtml).join("");
+        // Nothing urgent: show the lower-priority work instead of hiding all of it.
+        const openLow = today.showLow || !main.length;
+        if (lowCount && openLow) html += low.map(groupHtml).join("");
+        lowBtn.hidden = !lowCount || !main.length;
+        lowBtn.textContent = today.showLow ? "Hide lower-priority" : `${lowCount} lower-priority · plans and follow-ups · Show`;
     }
     if (today.showHidden && hidden.length) {
         html += `<div class="coach-queue-group"><h3 class="coach-queue-group-title">Done for today <span>${hidden.length}</span></h3>
@@ -163,6 +183,10 @@ document.getElementById("coachQueueList").addEventListener("click", event => {
             action: { label: "Undo", onClick: () => { const d = doneMarks(); delete d[key]; saveDone(d); renderToday(); } }
         });
     }
+});
+document.getElementById("coachQueueLow").addEventListener("click", () => {
+    today.showLow = !today.showLow;
+    renderToday();
 });
 document.getElementById("coachQueueHidden").addEventListener("click", () => {
     today.showHidden = !today.showHidden;

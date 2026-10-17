@@ -27,6 +27,7 @@ import { matchApplication, unmatchedApplications, applicationLines, recordFromAp
 import { getClientRecord, saveClientRecord } from "./clientRecords.js";
 import { filterAssignableClients, displayNameForAssignment, normalizeClientSearch } from "./clientAssignmentModel.js";
 import { hasSoccerService, serviceLabel } from "./services.js";
+import { waitedText } from "./coachToday.js";
 
 const signedOutEl = document.getElementById("clientsSignedOut");
 const signedInEl = document.getElementById("clientsSignedIn");
@@ -232,6 +233,15 @@ function showMsg(el, text, isError = false) {
 // js/clientDirectory.js, summaries from js/clientSummary.js.
 let clientRows = [];
 let clientFilter = "all";
+let addClientOpened = false;
+// "Add client" opens the form below the list and scrolls to it.
+document.getElementById("addClientLink").addEventListener("click", event => {
+    event.preventDefault();
+    const box = document.getElementById("addClient");
+    box.open = true;
+    box.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("assignSearchInput").focus({ preventScroll: true });
+});
 const clientSearch = document.getElementById("clientSearch");
 const clientFilters = document.getElementById("clientFilters");
 
@@ -251,24 +261,45 @@ function renderClientRows() {
         .filter(c => !q || c.searchText.includes(q));
 
     clientsEmptyMsg.hidden = clientRows.length > 0;
+    document.querySelector(".clients-thead").hidden = !shown.length;
+    if (!clientRows.length && !addClientOpened) { addClientOpened = true; document.getElementById("addClient").open = true; }
     clientsList.innerHTML = shown.length || !clientRows.length ? "" :
         `<p class="clients-card-note">No clients match.</p>`;
 
+    const day = isoDate(new Date());
     for (const c of shown) {
         const row = document.createElement("div");
         row.className = "clients-row clients-client-row";
-        const meta = clientStatusLines(c);
+        const plan = c.plans?.primary;
+        const trains = (c.services || []).some(v => v !== "soccer_1on1" && v !== "soccer_group");
+        const planHtml = !plan ? (trains ? `<span class="clients-tag is-warn">No plan yet</span>` : `<span class="clients-cell-quiet">Sessions only</span>`)
+            : plan.state === "upcoming" ? `${escapeHtml(plan.name)}<span class="clients-cell-sub">starts ${escapeHtml(shortDate(plan.startDate))}</span>`
+            : plan.state === "finished" ? `${escapeHtml(plan.name)}<span class="clients-cell-sub">finished</span>`
+            : `${escapeHtml(plan.name)}<span class="clients-cell-sub">Week ${plan.weekNumber} of ${plan.totalWeeks}</span>`;
+        const latest = c.checkins?.latest;
+        const checkinHtml = !latest ? `<span class="clients-cell-quiet">None yet</span>`
+            : latest.status === "submitted" ? `<span class="clients-tag is-bad">Needs reply</span>`
+            : `<span class="clients-cell-quiet">Replied · ${escapeHtml(shortDate(latest.weekOf))}</span>`;
+        const next = c.sessions?.upcoming?.[0];
+        const nextHtml = next ? escapeHtml(shortDate(next.date)) : `<span class="clients-cell-quiet">—</span>`;
+        const quietDays = c.lastSeen ? Math.floor((Date.now() - c.lastSeen) / 86400000) : null;
+        const seenHtml = !c.lastSeen ? `<span class="clients-cell-quiet">—</span>`
+            : quietDays >= 7 ? `<span class="clients-tag is-warn">${escapeHtml(waitedText(c.lastSeen))}</span>`
+            : escapeHtml(quietDays < 1 ? "Today" : waitedText(c.lastSeen));
         row.innerHTML = `
             <a class="clients-client-link" href="client.html?uid=${encodeURIComponent(c.uid)}">
                 <div class="clients-row-avatar">${escapeHtml((c.name || "?").slice(0, 1).toUpperCase())}</div>
-                <div class="clients-row-info">
+                <div class="clients-row-info clients-cell-who">
                     <strong>${escapeHtml(c.name)}${c.athlete ? ` <span class="clients-client-athlete">for ${escapeHtml(c.athlete)}</span>` : c.goesBy ? ` <span class="clients-client-athlete">(${escapeHtml(c.goesBy)})</span>` : ""}${c.attention.length ? ` <span class="clients-attn-badge" title="Needs attention">${c.attention.length}</span>` : ""}</strong>
                     <span>${escapeHtml(serviceLabels(c.services).join(" · ") || c.email)}</span>
-                    <span class="clients-client-meta">${meta.map(escapeHtml).join(" &middot; ")}</span>
                 </div>
+                <div class="clients-cell" data-label="Plan">${planHtml}</div>
+                <div class="clients-cell" data-label="Check-in">${checkinHtml}</div>
+                <div class="clients-cell" data-label="Next session">${nextHtml}</div>
+                <div class="clients-cell" data-label="Last seen">${seenHtml}</div>
                 <span class="clients-client-chevron" data-icon="chevronRight"></span>
             </a>
-            <button type="button" class="clients-btn-icon" data-action="remove" aria-label="Remove client">
+            <button type="button" class="clients-btn-icon" data-action="remove" aria-label="Remove ${escapeHtml(c.name)}">
                 <span data-icon="trash"></span>
             </button>
         `;
@@ -297,7 +328,7 @@ async function refreshClients() {
         return [];
     });
     clientRows = records
-        .map(r => ({ ...summarizeClient(r, today), linkId: r.link.id }))
+        .map(r => ({ ...summarizeClient(r, today), linkId: r.link.id, lastSeen: r.profile?.lastSeenAt?.toMillis?.() || 0 }))
         .sort((a, b) => (b.attention.length > 0) - (a.attention.length > 0) || a.name.localeCompare(b.name));
     renderClientRows();
 }
