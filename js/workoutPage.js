@@ -34,6 +34,7 @@ import { QUEUED_NOTE } from "./offlineWrite.js";
 import { toast, sbConfirm, sbAlert, friendlyError, emptyHtml } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
+import { celebrateRun } from "./celebrate.js";
 import { contourParts, contourSvg, contourLabelsHtml } from "./workoutContour.js";
 import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
@@ -263,7 +264,10 @@ $("woBody").addEventListener("click", async event => {
         if (!item) return;
         const nowDone = await toggleDone(item);
         refresh();
-        if (nowDone) toast(`${title()} done. Nice work.`);
+        if (nowDone) {
+            celebrateRun({ kind: "run", title: title(), miles: state.day.miles });
+            toast(`${title()} done. Nice work.`);
+        }
     }
 });
 
@@ -462,7 +466,10 @@ async function startWorkoutMode() {
                 const total = Math.floor((Date.now() - started) / 1000);
                 close();
                 if (isCoachPlan()) openLogForm({ durationSec: total });
-                else toast("Workout finished. Nice work.");
+                else {
+                    celebrateRun({ kind: "run", title: title(), miles: state.day.miles });
+                    toast("Workout finished. Nice work.");
+                }
                 return;
             }
             index++;
@@ -651,6 +658,7 @@ function openLogForm(prefill = {}) {
             forget();
             d.close();
             refresh();
+            if (!skipped) celebrateRun({ kind: "run", title: title(), miles: Number(fd.get("distance")) || state.day.miles });
             toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : `${title()} logged. Nice work.`);
         } catch (error) {
             console.error("Saving the run failed:", error);
