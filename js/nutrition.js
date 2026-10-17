@@ -605,17 +605,9 @@ function updateDisplay(){
 
     ).value = nutrition.snacks;
 
-    document.getElementById(
+    
 
-        "workoutTitle"
-
-    ).textContent = nutrition.workoutTitle;
-
-    document.getElementById(
-
-        "workoutDescription"
-
-    ).textContent = nutrition.workoutDescription;
+    
 
     renderRings();
 
@@ -627,20 +619,6 @@ function updateDisplay(){
    Ring summary (calories ring, protein / carbs / fat rings, water)
 ========================================== */
 
-function ringSvg(fraction, color, radius, stroke){
-
-    const size = (radius + stroke) * 2;
-    const c = size / 2;
-    const circ = 2 * Math.PI * radius;
-    const dash = Math.max(0, Math.min(fraction, 1)) * circ;
-
-    return `<svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
-        <circle cx="${c}" cy="${c}" r="${radius}" fill="none" stroke="rgba(4,11,8,.55)" stroke-width="${stroke}"/>
-        <circle cx="${c}" cy="${c}" r="${radius}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"/>
-    </svg>`;
-
-}
-
 function renderRings(){
 
     const host = document.getElementById("fuelSummary");
@@ -649,46 +627,40 @@ function renderRings(){
         return;
     }
 
-    const frac = key => macros[key].goal ? nutrition[key] / macros[key].goal : 0;
-    const left = Math.max(macros.calories.goal - nutrition.calories, 0);
+    const training = nutrition.workoutTitle && nutrition.workoutTitle !== "Rest Day";
+    const carbsLeft = Math.max(macros.carbs.goal - nutrition.carbs, 0);
+    const pct = Math.min(100, macros.carbs.goal ? nutrition.carbs / macros.carbs.goal * 100 : 0);
 
-    const mini = (key, label, color) => `
-        <div class="fx-mini">
-            ${ringSvg(frac(key), color, 16, 5)}
-            <div>
-                <span class="fx-k">${label}</span>
-                <b>${nutrition[key]} <small>/ ${macros[key].goal} g</small></b>
-            </div>
+    const cell = (label, value, goal, unit) => `
+        <div>
+            <span class="fx-k">${label}</span>
+            <b>${Number(value).toLocaleString()}</b>
+            <small>/ ${Number(goal).toLocaleString()} ${unit}</small>
         </div>`;
 
-    const glasses = 8;
-    const filled = Math.min(glasses, Math.round(frac("water") * glasses));
-    const drops = Array.from({length: glasses}, (_, i) =>
-        `<i class="fx-drop${i < filled ? " on" : ""}"></i>`).join("");
-
     host.innerHTML = `
-        <div class="fx-rings">
-            <div class="fx-ring">
-                ${ringSvg(frac("calories"), "var(--primary)", 64, 10)}
-                <div class="fx-ring-c">
-                    <b>${left.toLocaleString()}</b>
-                    <span class="fx-k">kcal left</span>
-                </div>
-            </div>
-            <div class="fx-minis">
-                ${mini("protein", "Protein", "var(--sage)")}
-                ${mini("carbs", "Carbs", "var(--primary)")}
-                ${mini("fat", "Fat", "var(--stone)")}
-            </div>
-        </div>
-        <hr class="fx-rule">
-        <div class="fx-water">
+        ${training ? `<span class="fx-tag">${escapeHtml(nutrition.workoutTitle)}</span>` : ""}
+        <h1 class="fx-title">${training ? "Fuel your training" : "Fuel your day"}</h1>
+        <p class="fx-sub">${training
+            ? escapeHtml(nutrition.workoutDescription || "")
+            : "Log what you eat and drink. Plan fuel for a run in the Fueling calculator."}</p>
+        <div class="fx-target">
             <div>
-                <span class="fx-k">Water</span>
-                <div class="fx-water-n">${nutrition.water} of ${macros.water.goal} oz</div>
+                <span class="fx-k">Carbs today</span>
+                <div class="fx-sub">${nutrition.carbs} of ${macros.carbs.goal} g</div>
             </div>
-            <div class="fx-drops" aria-hidden="true">${drops}</div>
-            <button type="button" class="fx-water-add" data-water-add>+${macros.water.step} oz</button>
+            <div class="fx-big">${carbsLeft}<span class="fx-unit">g left</span></div>
+        </div>
+        <div class="fx-bar"><i style="width:${pct}%"></i></div>
+        <div class="fx-strip">
+            ${cell("Kcal", nutrition.calories, macros.calories.goal, "")}
+            ${cell("Protein", nutrition.protein, macros.protein.goal, "g")}
+            ${cell("Fat", nutrition.fat, macros.fat.goal, "g")}
+            ${cell("Water", nutrition.water, macros.water.goal, "oz")}
+        </div>
+        <div class="fx-actions">
+            <button type="button" class="fx-water-add" data-water-add>+${macros.water.step} oz water</button>
+            <a class="fx-link" href="fueling.html">Plan your run fuel &rsaquo;</a>
         </div>`;
 
 }
