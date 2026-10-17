@@ -1379,3 +1379,193 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
    one is the display face, as on Today and the coach dashboard. */
 .hub-section-kicker{ font-family:var(--font-mono); font-weight:600; color:var(--primary); }
 .hub-section-kicker + h2{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:.01em; line-height:1; font-size:1.6rem; }
+
+/* ==========================================================
+   CLIENT HUB, PREMIUM (2026-10-17). The header is the person (avatar, name,
+   a quiet services line, glass contact buttons); the four glance numbers are
+   one dark bubble with hairlines; the tabs are an inset track with a lit lens;
+   every section is a dark bubble with a plain heading, rows are hairlines,
+   "Needs attention" is the one raised bubble. Private stays dashed sage and
+   shared keeps its tan edge: the two must never look alike. Scoped to
+   .hub-page; js/clientHub.js is unchanged.
+========================================================== */
+
+/* Header: avatar and name side by side, contact buttons under them on a phone. */
+.hub-page .hub-back{ min-height:44px; margin-bottom:6px; }
+.hub-page .hub-header{ display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center; gap:4px 16px; margin-bottom:20px; }
+.hub-page .hub-avatar{
+    width:72px; height:72px;
+    font:800 34px/1 var(--font-display);
+    background:var(--sb-lens-bg);
+    box-shadow:var(--sb-lens-shadow), 0 0 0 4px rgba(214,185,142,.1);
+}
+.hub-page .hub-identity{ min-width:0; }
+.hub-page .hub-identity h1{ font-weight:800; line-height:.95; font-size:clamp(34px, 9vw, 48px); }
+.hub-page .hub-services{ margin-top:8px; gap:2px 8px; font:600 11px/1.5 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+.hub-page .hub-since{ margin-top:6px; font-size:13.5px; color:var(--text-secondary); }
+.hub-page .hub-goal{ margin-top:6px; font-size:14px; color:var(--text); }
+.hub-page .hub-services-edit,
+.hub-page .clients-btn-secondary{
+    min-height:44px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+    font:650 14px var(--font-body);
+}
+.hub-page .hub-services-edit{ min-height:36px; position:relative; padding:0 14px; font-size:13px; }
+.hub-page .hub-services-edit::after{ content:""; position:absolute; inset:-4px 0; }
+.hub-page .clients-btn-secondary:hover,
+.hub-page .hub-services-edit:hover{ border-color:rgba(214,185,142,.45); color:var(--text); }
+.hub-page .clients-btn-primary{
+    min-height:44px;
+    border:0;
+    border-radius:999px;
+    background:var(--sb-lens-bg);
+    box-shadow:var(--sb-lens-shadow);
+    color:var(--on-primary);
+    font:700 14.5px var(--font-body);
+}
+@media (max-width:600px){
+    .hub-page .hub-header{ grid-template-columns:auto minmax(0, 1fr); align-items:start; }
+    .hub-page .hub-avatar{ width:60px; height:60px; font-size:28px; margin-top:4px; }
+    .hub-page .hub-contact{ grid-column:1 / -1; margin-top:12px; }
+    .hub-page .hub-contact .clients-btn-secondary{ flex:1 1 0; justify-content:center; }
+}
+
+/* At a glance: one dark bubble, four cells with hairlines. */
+.hub-page .hub-glance{
+    gap:0;
+    padding:4px 0;
+    border-radius:24px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+    overflow:hidden;
+}
+.hub-page .hub-glance-item{ padding:14px 16px; background:none; border:0; border-radius:0; gap:4px; }
+.hub-page .hub-glance-item + .hub-glance-item{ border-left:1px solid var(--sb-hairline); }
+.hub-page button.hub-glance-item:hover{ background:rgba(236,230,212,.03); }
+.hub-page .hub-glance-label{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+.hub-page .hub-glance-item strong{ font:650 16px/1.3 var(--font-body); }
+.hub-page .hub-glance-sub{ font-size:13px; }
+@media (max-width:760px){
+    .hub-page .hub-glance-item:nth-child(odd){ border-left:0; }
+    .hub-page .hub-glance-item:nth-child(n+3){ border-top:1px solid var(--sb-hairline); }
+}
+
+/* Tabs: an inset track, the open one a lit lens. */
+.hub-page .hub-tabs{
+    width:100%;
+    padding:4px;
+    gap:2px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
+}
+.hub-page .hub-tabs .clients-tab{ flex:1 0 auto; min-height:44px; border-radius:14px; font:650 13.5px/1 var(--font-body); color:var(--text-secondary); }
+.hub-page .hub-tabs .clients-tab.active,
+.hub-page .hub-more-menu .clients-tab.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.hub-page .hub-more-menu{
+    border-radius:20px;
+    background:linear-gradient(180deg, var(--surface-light), var(--surface));
+    border-color:var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+@media (max-width:520px){
+    .hub-page .hub-tabs{ gap:0; padding:3px; }
+    .hub-page .hub-tabs .clients-tab{ padding:0 6px; font-size:12.5px; border-radius:13px; }
+}
+
+/* Sections: dark bubbles with plain headings; the kicker over a title goes quiet. */
+.hub-page .clients-card{
+    padding:18px;
+    margin-bottom:16px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.hub-page .clients-card h2,
+.hub-page .hub-section-kicker + h2{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); margin:0 0 8px; }
+.hub-page .hub-section-kicker{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
+.hub-page .clients-card-note{ font-size:14px; color:var(--text-secondary); }
+.hub-page .hub-grid{ gap:16px; }
+.hub-page .hub-grid .clients-card{ margin-bottom:0; }
+/* Private stays dashed sage; shared keeps its tan edge. */
+.hub-page .clients-card.hub-private{ border:1px dashed color-mix(in srgb, var(--sage) 70%, transparent); background:linear-gradient(180deg, rgba(160,187,156,.07), rgba(160,187,156,.02)); box-shadow:none; }
+.hub-page .clients-card.hub-shared{ border-left:3px solid var(--primary); }
+
+/* Needs attention: the one raised bubble; its items are hairline rows. */
+.hub-page .clients-card.hub-attention{
+    background:var(--sb-bubble-raised-bg);
+    border-color:var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+.hub-page .hub-attention h2{ color:var(--amber); }
+.hub-page .hub-attention-item{
+    margin:0;
+    padding:12px 0;
+    min-height:48px;
+    background:none;
+    border:0;
+    border-top:1px solid var(--sb-hairline);
+    border-radius:0;
+    font:600 15px/1.35 var(--font-body);
+}
+.hub-page .hub-attention-item:hover{ color:var(--primary-light, var(--primary)); }
+
+/* Rows (What's next, check-ins) and the timeline: hairlines, not filled boxes. */
+.hub-page .hub-list{ gap:0; }
+.hub-page .hub-row{ padding:12px 0; background:none; border:0; border-top:1px solid var(--sb-hairline); border-radius:0; min-height:48px; }
+.hub-page .hub-list > .hub-row:first-child{ border-top:0; }
+.hub-page .hub-row:hover{ border-color:var(--sb-hairline); }
+.hub-page .hub-row:hover .hub-row-text strong{ color:var(--primary-light, var(--primary)); }
+.hub-page .hub-row-text strong{ font:650 15px/1.35 var(--font-body); }
+.hub-page .hub-row-text span{ font-size:13.5px; }
+.hub-page .hub-timeline-item{ padding:11px 0; border-bottom-color:var(--sb-hairline); font-size:14.5px; }
+.hub-page .hub-timeline-date{ flex-basis:56px; font:600 11.5px/1.6 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+.hub-page .hub-see-all{ position:relative; min-height:44px; margin-top:4px; font:650 14px var(--font-body); color:var(--primary); }
+
+/* The actions at the bottom of Overview: glass, two to a row on a phone. */
+.hub-page .hub-actions{ gap:8px; margin-top:20px; }
+.hub-page .hub-actions .clients-btn-secondary{ min-height:44px; padding:0 16px; }
+@media (max-width:600px){
+    .hub-page .hub-actions{ display:grid; grid-template-columns:1fr 1fr; }
+    .hub-page .hub-actions .clients-btn-secondary{ justify-content:center; }
+}
+
+/* A logged workout: the numbers as a hairline row in the display face. */
+.hub-page .hub-wo-head strong{ font:650 17px/1.25 var(--font-body); }
+.hub-page .hub-wo-planned span,
+.hub-page .hub-wo-stats span{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+.hub-page .hub-wo-stats{ grid-template-columns:repeat(auto-fit, minmax(68px, 1fr)); gap:0; margin:4px 0; border-top:1px solid var(--sb-hairline); border-bottom:1px solid var(--sb-hairline); }
+.hub-page .hub-wo-stats div{ padding:12px 10px 12px 0; background:none; border-radius:0; gap:4px; min-width:0; }
+.hub-page .hub-wo-stats div + div{ padding-left:12px; border-left:1px solid var(--sb-hairline); }
+.hub-page .hub-wo-stats strong{ font:800 clamp(24px, 6.4vw, 30px)/1 var(--font-display); text-transform:uppercase; letter-spacing:.01em; overflow-wrap:anywhere; }
+.hub-page .hub-wo-stats small{ font-size:12.5px; }
+@media (max-width:480px){
+    .hub-page .hub-wo-stats{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .hub-page .hub-wo-stats div:nth-child(odd){ padding-left:0; border-left:0; }
+    .hub-page .hub-wo-stats div:nth-child(n+3){ border-top:1px solid var(--sb-hairline); }
+}
+.hub-page .hub-link{ min-height:44px; display:inline-flex; align-items:center; }
+.hub-page .hub-link-btn{ min-height:44px; }
+.hub-page .hub-pill{ font:600 11px/1.6 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; background:var(--sb-glass-bg); border-color:var(--sb-glass-border); }
+.hub-page .clients-card.hub-wo.is-new{ border-color:rgba(214,185,142,.35); }
+.hub-page .clients-card.hub-wo.is-pain{ border-color:color-mix(in srgb, var(--amber) 55%, transparent); }
+
+/* Fields inside the hub: dark inset boxes. */
+.hub-page textarea,
+.hub-page input[type="text"],
+.hub-page input[type="search"],
+.hub-page input[type="number"],
+.hub-page input[type="date"],
+.hub-page select{
+    border-radius:16px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+}
