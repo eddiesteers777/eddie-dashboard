@@ -192,7 +192,7 @@ export function sessionClass(dose, session) {
         if (h == null) return dose.long ? "long" : "easy";
         return h >= 0.88 ? "threshold" : h >= 0.82 ? "tempo" : h >= 0.75 ? "steady" : "easy";
     }
-    return i >= 0.92 ? "threshold" : i >= 0.86 ? "tempo" : i >= 0.80 ? "steady" : "easy";
+    return i >= 0.92 ? "threshold" : i >= 0.86 ? "tempo" : i >= 0.85 ? "steady" : "easy";
 }
 
 /**

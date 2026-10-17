@@ -416,7 +416,7 @@ export function predictRace({ meters, asOf, sessions = [], health = {}, fitness 
             : `Your ${track.n} earlier ${word} ${track.n === 1 ? "race" : "races"} ran ${Math.round(Math.abs(track.avgMiss) * 1000) / 10}% ${track.avgMiss > 0 ? "slower" : "faster"} than this model said beforehand, so it's adjusted ${Math.round(Math.abs(track.value - 1) * 1000) / 10}% ${track.value > 1 ? "slower" : "faster"} (shrunk toward none while there are few).`);
         explanation.push(`The range uses your own record too: after that, your ${track.n === 1 ? "earlier race" : `${track.n} earlier races`} at this distance landed within ${(track.within * 100).toFixed(1)}% of the model (the model counts as 3 races until you have more).`);
     }
-    if (flags.length) explanation.push(`Range widened by: ${flags.join("; ").toLowerCase()}.`);
+    if (flags.length) explanation.push(`Gaps in the evidence: ${flags.join("; ").toLowerCase()}.`);
 
     return {
         version: RACE_MODEL_VERSION, asOf, meters, label: distanceLabel(meters),

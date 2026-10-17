@@ -37,16 +37,19 @@ function renderCountdown() {
     const el = $("anCountdown");
     if (!el) return;
     const race = inputs ? planRace(inputs.planDays) : null;
-    let text = "";
+    // Race-poster countdown: the week as a mono kicker, the days to go big, the race under it.
+    let html = "";
     try {
         const phase = getTrainingPhase();
         const until = race ? daysUntil(inputs.today, race.date) : null;
-        text = race && until >= 0
-            ? `${race.name} · ${day(race.date)} · ${until === 0 ? "today" : `in ${until} ${until === 1 ? "day" : "days"}`} · week ${getCurrentWeek()} of ${WEEKS.length}${phase ? ` · ${phase}` : ""}`
-            : "";
-    } catch { text = ""; }
-    el.textContent = text;
-    el.hidden = !text;
+        if (race && until >= 0) {
+            html = `<span class="an-cd-kicker">Week ${getCurrentWeek()} of ${WEEKS.length}${phase ? ` · ${esc(phase)}` : ""}</span>
+                <span class="an-cd-days">${until === 0 ? "<b>Race day</b>" : `<b>${until}</b> ${until === 1 ? "day" : "days"} to go`}</span>
+                <span class="an-cd-race">${esc(race.name)} · ${esc(day(race.date))}${race.goalSec ? ` · goal ${esc(clock(race.goalSec))}` : ""}</span>`;
+        }
+    } catch { html = ""; }
+    el.innerHTML = html;
+    el.hidden = !html;
 }
 
 function renderSummary() {
@@ -66,6 +69,7 @@ function renderPreparation() {
     const race = planRace(inputs.planDays);
     const head = `<div class="panel-header"><div><h2>Your next race ${kindChip("calculated")}</h2><p>This 12-week block against your own usual block before that kind of race, what your races say a thinner block costs you, and the key sessions done.</p></div></div>`;
     if (!race) { el.innerHTML = `${head}<p class="ar-empty">No race in your plan yet. Add one on the Marathon page and this fills in.</p>`; return; }
+    if (race.date < inputs.today) { el.innerHTML = `${head}<p class="ar-empty">${esc(race.name)} was on ${esc(day(race.date))}. Add your next race to the plan and this fills in.</p>`; return; }
     const cap = facts.capability && Math.abs(facts.capability.meters - race.meters) < 1 ? facts.capability : null;
     const predicted = cap?.sec || race.goalSec || (race.meters >= 40000 ? 3.5 * 3600 : 1.6 * 3600);
     const d = cap?.durability || durability(inputs.sessions, inputs.today, race.meters, predicted);
@@ -84,10 +88,12 @@ function renderPreparation() {
         : "";
     let sessions = "";
     try {
-        const work = facts.keyWorkouts || [];
+        // Today's session still to run isn't missed yet.
+        const work = (facts.keyWorkouts || []).filter(w => w.run || w.date < inputs.today);
         const done = work.filter(w => w.run);
-        const q = work.filter(w => w.kind === "quality"), l = work.filter(w => w.kind === "long");
-        if (work.length) sessions = `<li>Key sessions of the last 12 weeks: <strong>${done.length} of ${work.length}</strong> run (quality ${q.filter(w => w.run).length} of ${q.length}, long ${l.filter(w => w.run).length} of ${l.length}).</li>`;
+        const part = (kind, word) => { const k = work.filter(w => w.kind === kind); return k.length ? `${word} ${k.filter(w => w.run).length} of ${k.length}` : ""; };
+        const parts = [part("quality", "quality"), part("long", "long"), part("race", "races")].filter(Boolean).join(", ");
+        if (work.length) sessions = `<li>Key sessions of the last 12 weeks: <strong>${done.length} of ${work.length}</strong> run (${parts}).</li>`;
     } catch { sessions = ""; }
     el.innerHTML = `${head}${title}
         <div class="rc-dur">
@@ -148,6 +154,26 @@ function bindState() {
 }
 const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
+// ---------- the section menu follows the page ----------
+
+function bindNav() {
+    const nav = document.querySelector(".an-nav");
+    if (!nav || !("IntersectionObserver" in window)) return;
+    const links = [...nav.querySelectorAll('a[href^="#"]')];
+    const byId = new Map(links.map(a => [a.getAttribute("href").slice(1), a]));
+    const io = new IntersectionObserver(entries => {
+        for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const a = byId.get(e.target.id);
+            if (!a) continue;
+            links.forEach(x => x.removeAttribute("aria-current"));
+            a.setAttribute("aria-current", "location");
+            nav.scrollTo({ left: Math.max(0, a.offsetLeft - nav.clientWidth / 2 + a.offsetWidth / 2), behavior: "smooth" });
+        }
+    }, { rootMargin: "-25% 0px -65% 0px" });
+    byId.forEach((_, id) => { const s = document.getElementById(id); if (s) io.observe(s); });
+}
+
 // ---------- wiring ----------
 
 function redraw() {
@@ -172,6 +198,7 @@ function mount() {
     if (!$("anSummary")) return;
     bindCheck();
     bindState();
+    bindNav();
     window.addEventListener("sb:analytics-facts", e => {
         const detail = { ...(e.detail || {}) };
         // The summary and Preparation follow the plan's race distance, not whichever chip is showing.

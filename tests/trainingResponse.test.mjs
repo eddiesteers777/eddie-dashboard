@@ -77,8 +77,9 @@ test("sessionClass: race, long, intervals, threshold, tempo, steady, easy", () =
     assert.equal(sessionClass(d(0.9, { domains: { easy: 50, threshold: 20, hard: 30 } })), "intervals");
     assert.equal(sessionClass(d(0.95)), "threshold");
     assert.equal(sessionClass(d(0.88)), "tempo");
-    assert.equal(sessionClass(d(0.82)), "steady");
+    assert.equal(sessionClass(d(0.855)), "steady");
     assert.equal(sessionClass(d(0.7)), "easy");
+    assert.equal(sessionClass(d(0.82)), "easy", "8:00/mi for a 3:05 runner is easy");
     assert.equal(sessionClass(d(null, { hrr: 0.9 })), "threshold");
 });
 

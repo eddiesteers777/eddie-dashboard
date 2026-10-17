@@ -72,3 +72,27 @@ test("the same trail draws it: a node ticks through the plan's own attributes, n
 test("dates are local days", () => {
     assert.equal(isoOf(new Date(2026, 9, 5)), "2026-10-05");
 });
+
+// Analytics audit (2026-10-17): weeks are calendar weeks, so the Nov 1 clock change can't
+// start race week at 11 pm on Sunday, and race day in the plan is the real race date.
+test("every plan week starts on a Monday at midnight, and race day is RACE_DATE", async () => {
+    const md = await import("../js/marathonData.js");
+    for (let w = 1; w <= md.WEEKS.length; w++) {
+        const s = md.weekStart(w);
+        assert.equal(s.getDay(), 1, `week ${w} starts on a Monday`);
+        assert.equal(s.getHours(), 0, `week ${w} starts at midnight`);
+        assert.equal(md.weekEnd(w).getTime() + 1, md.weekStart(w + 1).getTime());
+    }
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const last = md.WEEKS.length;
+    const raceIndex = md.getAdjustedWeekDays(last).findIndex(d => d.race);
+    const raceDay = new Date(md.weekStart(last)); raceDay.setDate(raceDay.getDate() + raceIndex);
+    assert.equal(iso(raceDay), iso(md.RACE_DATE));
+    for (const tz of ["America/Indiana/Indianapolis", "UTC"]) {
+        const { execFileSync } = await import("node:child_process");
+        const out = execFileSync(process.execPath, ["--input-type=module", "-e",
+            `const m = await import(${JSON.stringify(new URL("../js/marathonData.js", import.meta.url).href)}); const s = m.weekStart(m.WEEKS.length); console.log(s.getDay(), s.getHours());`],
+            { env: { ...process.env, TZ: tz } }).toString().trim();
+        assert.equal(out, "1 0", `race week starts Monday midnight in ${tz}`);
+    }
+});

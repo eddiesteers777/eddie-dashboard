@@ -450,6 +450,13 @@ async function loadRecentData() {
     return snapshot;
 }
 
+// "Synced 3:15 PM" today; with the date on another day, so an old snapshot's "last 28 days" reads as old.
+const syncedText = ms => {
+    const d = new Date(ms);
+    const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return d.toDateString() === new Date().toDateString() ? `Synced ${time}` : `Synced ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
+};
+
 function renderSnapshot(snapshot) {
     if (!snapshot) return;
 
@@ -482,15 +489,7 @@ function renderSnapshot(snapshot) {
 
     setText(
         "corosDataLastSync",
-        `Synced ${new Date(
-            snapshot.fetchedAt
-        ).toLocaleTimeString(
-            [],
-            {
-                hour: "numeric",
-                minute: "2-digit"
-            }
-        )}`
+        syncedText(snapshot.fetchedAt)
     );
 
     renderMetrics(snapshot);

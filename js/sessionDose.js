@@ -26,8 +26,8 @@
                   can't also count as load.
      blend        the 0.2.0 weighted geometric mean of all three, kept for
                   display only.
-   Intensity domains: each lap's time goes to easy (IF < 0.80), threshold
-   (0.80–1.00, marathon pace included) or hard (> 1.00). Without laps the
+   Intensity domains: each lap's time goes to easy (IF < 0.85), threshold
+   (0.85–1.00, marathon pace included) or hard (> 1.00). Without laps the
    whole run's IF decides (flagged). Mechanical: miles, climb, long runs.
    Unit-tested in tests/sessionDose.test.mjs.
 ========================================== */
@@ -52,7 +52,7 @@ export const DOSE_ASSUMPTIONS = Object.freeze([
 
 // Intensity domains by IF (speed ÷ 1-hour race speed).
 export const DOMAINS = Object.freeze([
-    { key: "easy", label: "Easy", max: 0.80 },
+    { key: "easy", label: "Easy", max: 0.85 },
     { key: "threshold", label: "Steady / threshold", max: 1.00 },
     { key: "hard", label: "Hard", max: Infinity }
 ]);
@@ -71,7 +71,7 @@ const DEFAULT_RATIO = Object.freeze({ hr: 0.7, effort: 0.3 });
 const RATIO_SHRINK = 10;           // the default counts as 10 paired runs
 const RATIO_MIN_PAIRS = 3;
 const EASY_IF = 0.72;              // a miles-only run is assumed easy running at this IF
-export const LONG_RUN = Object.freeze({ miles: 10, minutes: 90 });
+export const LONG_RUN = Object.freeze({ miles: 10 });   // the one definition of a long run: 10 miles or more
 
 const num = v => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null);
 const median = a => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -317,7 +317,7 @@ export function chooseDose(session, raw, scale, anchor) {
         internal: { hr: values.hr != null ? r1(values.hr) : null, effort: values.effort != null ? r1(values.effort) : null },
         blend: blend != null ? r1(blend) : null, blendSource: used.length > 1 ? "blend" : used[0] || "none", parts,
         miles, minutes, climb: Number(session.climb) > 0 ? Number(session.climb) : 0,
-        long: miles >= LONG_RUN.miles || (minutes || 0) >= LONG_RUN.minutes,
+        long: miles >= LONG_RUN.miles,
         intensity: raw.intensity, hrr: raw.hrr, rpe: Number.isInteger(session.rpe) ? session.rpe : null, rpeLate: Boolean(session.rpeLate),
         raw: { pace: raw.pace, hr: raw.hr, effort: raw.effort },
         laps: raw.laps, flags

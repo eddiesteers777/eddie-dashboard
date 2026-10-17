@@ -114,8 +114,10 @@ function bind() {
         const f = new FormData(event.target);
         const next = {};
         for (const x of FIELDS) {
-            const v = Number(f.get(x.key));
-            next[x.key] = x.pct ? Math.max(0.3, Math.min(1, v / 100)) : Math.max(1, Math.min(7, Math.round(v)));
+            // An emptied field keeps the default (Number("") is 0, which read as the 30% floor).
+            const raw = String(f.get(x.key) ?? "").trim();
+            const v = raw === "" ? NaN : Number(raw);
+            next[x.key] = !Number.isFinite(v) ? DEFAULT_POLICY[x.key] : x.pct ? Math.max(0.3, Math.min(1, v / 100)) : Math.max(1, Math.min(7, Math.round(v)));
             if (!Number.isFinite(next[x.key])) next[x.key] = DEFAULT_POLICY[x.key];
         }
         savePolicy(next);

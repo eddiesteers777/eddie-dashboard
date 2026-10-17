@@ -60,8 +60,10 @@ function data() {
 const valueText = (key, v) => {
     if (v == null) return "–";
     if (key === "sleep") return hm(v);
-    if (key === "recovery") return `${Math.round(v)}%`;
-    return `${Math.round(v)}${key === "hrv" ? " ms" : key === "rhr" ? " bpm" : ""}`;
+    if (key === "recovery") return `${Math.round(v)}<small class="hb-unit">%</small>`;
+    // Units stay lowercase beside the display-font number ("61 ms", not "61 MS").
+    const unit = key === "hrv" ? "ms" : key === "rhr" ? "bpm" : "";
+    return `${Math.round(v)}${unit ? `<small class="hb-unit">${unit}</small>` : ""}`;
 };
 
 function tilesHtml(r) {

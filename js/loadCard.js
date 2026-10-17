@@ -110,9 +110,9 @@ function responseHtml(r, today, { heading = true } = {}) {
     const es = effort.signal;
     const effortLine = es.verdict === "few"
         ? `Answer "How hard was it?" after runs: ${effort.answered} of your ${effort.recentRuns} runs in the last 2 weeks have an effort. It needs 3 in the last 3 weeks.`
-        : es.verdict === "costlier" ? `Your last ${es.n} answered runs felt <strong>${es.mean} harder</strong> than usual for you on average (1.0 or more is worth noticing).`
-        : es.verdict === "easier" ? `Your last ${es.n} answered runs felt <strong>${Math.abs(es.mean)} easier</strong> than usual for you.`
-        : `Your last ${es.n} answered runs felt about as hard as usual (${signed(es.mean)}).`;
+        : es.verdict === "costlier" ? `Your last ${es.n} answered runs felt <strong>${es.mean} points harder</strong> on the 1–10 scale than usual for you (1 point or more is worth noticing).`
+        : es.verdict === "easier" ? `Your last ${es.n} answered runs felt <strong>${Math.abs(es.mean)} points easier</strong> on the 1–10 scale than usual for you.`
+        : `Your last ${es.n} answered runs felt about as hard as usual (${signed(es.mean)} points).`;
     const effortRows = effort.rows.slice(-5).reverse().map(x => `<li><span>${esc(day(x.date))}</span><span>${esc(CLASS_WORDS[x.cls])} · ${x.minutes} min</span><b>${x.rpe}</b><small>expected ${x.expected}${x.late ? " · rated late, counts half" : ""}</small></li>`).join("");
     const q = quality.signal;
     const qualityLine = q.verdict === "few" ? "" : `<li>Heart rate on quality reps: <strong>${signed(q.bpm)} bpm</strong> against your own reps at the same speed over the 8 weeks before (last ${q.n} sessions with laps).</li>`;
@@ -141,7 +141,7 @@ function responseHtml(r, today, { heading = true } = {}) {
 
 function corosLine(c) {
     if (!c) return "";
-    return `<li>COROS on ${esc(day(c.latest.date))}: Base Fitness <strong>${c.latest.coros.base ?? "—"}</strong>, Load Impact <strong>${c.latest.coros.impact ?? "—"}</strong>${c.latest.coros.ratio ? `, ratio ${c.latest.coros.ratio}` : ""}. Ours that day: base ${c.latest.ours.base}, recent ${c.latest.ours.recent}. ${esc(corosWords(c))} <small>Different scales and both smoothed, so the levels always look alike; it's the weekly changes that are compared.</small></li>`;
+    return `<li>COROS on ${esc(day(c.latest.date))}: Base Fitness <strong>${c.latest.coros.base != null ? Math.round(c.latest.coros.base) : "—"}</strong>, Load Impact <strong>${c.latest.coros.impact != null ? Math.round(c.latest.coros.impact) : "—"}</strong>${c.latest.coros.ratio ? `, ratio ${Number(c.latest.coros.ratio).toFixed(2)}` : ""}. Ours that day: base ${c.latest.ours.base}, recent ${c.latest.ours.recent}. ${esc(corosWords(c))} <small>Different scales and both smoothed, so the levels always look alike; it's the weekly changes that are compared.</small></li>`;
 }
 
 function monotonyWord(m) {
@@ -177,13 +177,15 @@ function totalsHtml(t) {
             </table></div></details>` : ""}`;
 }
 
-function mixLine(weeks) {
+function mixLine(weeks, v60) {
     const last4 = weeks.slice(-4);
     const t = k => last4.reduce((s, w) => s + w[k], 0);
     const all = t("easy") + t("threshold") + t("hard");
     if (!(all > 0)) return "";
     const pct = k => Math.round(t(k) / all * 100);
-    return `Last 4 weeks by load: <strong>${pct("easy")}% easy</strong> · ${pct("threshold")}% steady / threshold · ${pct("hard")}% hard`;
+    // Where the lines fall in pace (js/sessionDose.js DOMAINS: easy under 80% of your 1-hour speed, hard over 100%).
+    const bounds = v60 ? ` <small>(easy is slower than ${paceMile(v60 * 0.85)}/mi, hard faster than ${paceMile(v60)}/mi)</small>` : "";
+    return `Last 4 weeks by load: <strong>${pct("easy")}% easy</strong> · ${pct("threshold")}% steady / threshold · ${pct("hard")}% hard${bounds}`;
 }
 
 function renderLoad() {
@@ -232,8 +234,8 @@ function renderLoad() {
         </div>
         <p class="tr-legend"><span class="lc-key easy"></span> easy <span class="lc-key threshold"></span> steady / threshold <span class="lc-key hard"></span> hard <span class="lc-key line base"></span> training base <span class="lc-key line recent"></span> recent load</p>
         <ul class="rc-why">
-            ${mixLine(weeks) ? `<li>${mixLine(weeks)}</li>` : ""}
-            <li>Long runs (${LONG_RUN.miles}+ mi or ${LONG_RUN.minutes}+ min) in the last 8 weeks: <strong>${state.longRuns.count}</strong>${state.longRuns.count ? `, longest ${state.longRuns.longest} mi` : ""}</li>
+            ${mixLine(weeks, anchor?.v60) ? `<li>${mixLine(weeks, anchor?.v60)}</li>` : ""}
+            <li>Long runs (${LONG_RUN.miles}+ mi) in the last 8 weeks: <strong>${state.longRuns.count}</strong>${state.longRuns.count ? `, longest ${state.longRuns.longest} mi` : ""}</li>
             ${anchor?.v60 ? `<li>Your 1-hour race pace now: <strong>${paceMile(anchor.v60)}/mi</strong>, from ${esc(V60_WORDS[anchor.v60Source] || "your runs")}. 1 hour at that pace = 100 points.</li>` : `<li>No 1-hour pace yet (no races or fast efforts on record), so runs are scored by heart rate or effort.</li>`}
             <li>Runs in the last year, load measured ${esc(scored || "none")}. Measures there: ${esc(measures)}.</li>
             ${corosLine(result.coros)}
