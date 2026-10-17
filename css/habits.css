@@ -517,3 +517,134 @@
     .habits-cal-cell{ font-size:10px; }
 
 }
+
+/* ==========================================================
+   HABITS, PREMIUM (2026-10-17). The header sits on the page with the
+   streak and the 30-day number as a small ledger; the three views are an
+   inset track with a lit lens; the day's checklist is one dark bubble with
+   hairline rows and a round check (sage when done); the calendar and the
+   habit list are dark bubbles too; arrows, Today and remove are glass, Add
+   is the lens, the new-habit field a dark inset. Scoped to .habits-page;
+   js/habits.js, the saved 'habits' / 'entries' and the check-off animation
+   (js/celebrate.js: .sb-cel-pop on the check, [data-cel-card]::before on the
+   card) are unchanged, so nothing here sets overflow or ::before on them.
+========================================================== */
+.habits-page .sb-eyebrow{ display:none; }
+.habits-page .habits-hero{ align-items:flex-end; margin-bottom:22px; overflow:visible; }
+.habits-page .habits-hero h1{ font:900 clamp(48px, 13vw, 64px)/.9 var(--font-display); letter-spacing:.01em; margin-bottom:8px; }
+.habits-page .habits-hero-sub{ font-size:15px; }
+.habits-page .habits-hero .sb-brand-tile{ display:none; }
+
+/* Streak and last 30 days: a ledger, numbers in sand. */
+.habits-page .habits-hero-stats{ gap:0; }
+.habits-page .habits-hero-stat{ align-items:flex-start; padding:2px 18px; border-left:1px solid var(--sb-hairline); }
+.habits-page .habits-hero-stat:first-child{ border-left:0; }
+.habits-page .habits-hero-number{ font:800 clamp(40px, 11vw, 52px)/.95 var(--font-display); letter-spacing:.01em; color:var(--primary-light, var(--primary)); }
+.habits-page .habits-hero-unit{ margin-top:4px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
+
+/* The views: an inset track, the open one a lit lens. */
+.habits-page .habits-view-toggle{
+    gap:4px;
+    padding:4px;
+    margin-bottom:18px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
+}
+.habits-page .habits-view-btn{ min-height:44px; padding:0 22px; border-radius:14px; font:650 14px/1 var(--font-body); }
+.habits-page .habits-view-btn:hover{ color:var(--text); }
+.habits-page .habits-view-btn.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+
+/* Day and month steppers: glass circles around the date, Today a glass pill. */
+.habits-page .habits-day-nav,
+.habits-page .habits-cal-toolbar{ gap:8px; margin-bottom:14px; }
+.habits-page .habits-day-label{ flex:1 1 auto; min-width:0; font:650 15px/1.3 var(--font-body); color:var(--text); }
+.habits-page .habits-nav-btn,
+.habits-page .habits-row-btn:not(.primary),
+.habits-page .habits-del-btn{
+    flex-shrink:0;
+    min-height:44px;
+    min-width:44px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+}
+.habits-page .habits-nav-btn{ width:44px; height:44px; font-size:16px; }
+.habits-page .habits-row-btn:not(.primary){ padding:0 18px; font:650 14px/1 var(--font-body); }
+.habits-page .habits-nav-btn:hover,
+.habits-page .habits-row-btn:not(.primary):hover{ border-color:rgba(214,185,142,.45); color:var(--text); }
+
+/* The day's checklist: one dark bubble, hairline rows. */
+.habits-page .habits-checklist-card,
+.habits-page [data-habits-panel="calendar"].active,
+.habits-page .habits-manage-list{
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.habits-page .habits-checklist-card{ padding:18px 20px 6px; }
+.habits-page .habits-checklist-header{ align-items:center; margin-bottom:6px; font:650 18px/1.25 var(--font-body); }
+.habits-page .habits-checklist-count{ font:600 12px/1.3 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.habits-page .habits-checklist{ gap:0; }
+.habits-page .habits-row{
+    min-height:60px;
+    gap:14px;
+    padding:10px 0;
+    background:none;
+    border-top:1px solid var(--sb-hairline);
+    border-radius:0;
+}
+.habits-page .habits-row:hover{ background:none; }
+.habits-page .habits-row:hover .habits-check:not(.on){ border-color:rgba(214,185,142,.6); }
+.habits-page .habits-check{ width:30px; height:30px; border-radius:50%; border:1.5px solid rgba(236,230,212,.32); background:none; }
+.habits-page .habits-check.on{ background:var(--sage); border-color:transparent; color:var(--on-primary); }
+.habits-page .habits-check .ui-icon{ width:16px; height:16px; }
+.habits-page .habits-row-name{ font:550 16px/1.35 var(--font-body); }
+.habits-page .habits-row-name.done{ color:var(--text-secondary); text-decoration-color:var(--muted); }
+.habits-page .habits-empty-note{ font-size:14.5px; padding:14px 0; }
+
+/* The month: a dark bubble, quiet cells, today ringed in sand. */
+.habits-page [data-habits-panel="calendar"].active{ padding:16px 18px 18px; }
+.habits-page .habits-cal-grid-header span{ font:600 11px/1.3 var(--font-mono); letter-spacing:.08em; color:var(--text-secondary); }
+.habits-page .habits-cal-grid{ gap:5px; margin-bottom:16px; }
+.habits-page .habits-cal-cell{ border-radius:12px; border-color:var(--sb-hairline); background:rgba(236,230,212,.03); font-size:12.5px; color:var(--text-secondary); }
+.habits-page .habits-cal-cell.empty{ background:none; border-color:transparent; }
+.habits-page .habits-cal-cell.today{ border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); color:var(--text); }
+.habits-page .habits-cal-legend{ gap:8px 16px; padding-top:14px; border-top:1px solid var(--sb-hairline); font:600 11.5px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
+
+/* Your habits: one dark bubble with hairline rows, remove as a glass circle. */
+.habits-page .habits-manage-list{ gap:0; padding:2px 18px; margin-bottom:14px; }
+.habits-page .habits-manage-list:has(.habits-empty-note){ padding:4px 18px; }
+.habits-page .habits-manage-item{ min-height:60px; padding:8px 0; background:none; border:0; border-top:1px solid var(--sb-hairline); border-radius:0; }
+.habits-page .habits-manage-item:first-child{ border-top:0; }
+.habits-page .habits-manage-item > span{ font:550 16px/1.35 var(--font-body); min-width:0; }
+.habits-page .habits-del-btn{ display:inline-flex; align-items:center; justify-content:center; padding:0; color:var(--text-secondary); }
+.habits-page .habits-del-btn:hover{ color:var(--red); border-color:color-mix(in srgb, var(--red) 45%, transparent); background:var(--sb-glass-bg); }
+.habits-page .habits-add-row{ gap:8px; }
+.habits-page .habits-add-row input{
+    min-width:0;
+    min-height:48px;
+    border-radius:16px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    font-size:16px;
+}
+.habits-page .habits-add-row input:focus{ border-color:rgba(214,185,142,.6); }
+.habits-page .habits-row-btn.primary{ min-height:48px; padding:0 24px; border:0; border-radius:999px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); color:var(--on-primary); font:700 15px/1 var(--font-body); }
+
+@media (max-width:600px){
+    .habits-page{ padding:12px 16px 80px; }
+    .habits-page .habits-hero{ flex-direction:column; align-items:flex-start; gap:16px; }
+    .habits-page .habits-hero-stats{ width:100%; padding-top:12px; border-top:1px solid var(--border); }
+    .habits-page .habits-hero-stat:first-child{ padding-left:0; }
+    .habits-page .habits-view-toggle{ width:100%; }
+    .habits-page .habits-view-btn{ flex:1 1 0; padding:0 6px; }
+    .habits-page .habits-cal-cell{ font-size:12px; border-radius:10px; }
+    .habits-page .habits-checklist-card{ padding:16px 16px 4px; }
+    .habits-page [data-habits-panel="calendar"].active{ padding:14px 12px 16px; }
+}
