@@ -15,56 +15,31 @@
     <div id="header"></div>
 
     <main class="programs-page">
-        <section class="programs-hero">
+        <section class="eos-today-hero">
             <div>
-                <div class="programs-kicker">PLANNING</div>
+                <div class="eos-today-eyebrow">Planning</div>
                 <h1>Programs</h1>
-                <p>Your race plans and training blocks, all in one place.</p>
-            </div>
-            <div class="sb-brand-tile" aria-hidden="true"></div>
-        </section>
-
-        <nav class="programs-tabs" id="programsTabs" aria-label="Programs workspace" role="tablist">
-            <button type="button" class="programs-tab active" data-program-tab="race" role="tab" aria-selected="true">
-                Race Plans
-            </button>
-            <button type="button" class="programs-tab" data-program-tab="training" role="tab" aria-selected="false">
-                Training Plans
-            </button>
-        </nav>
-
-        <section class="programs-panel active" data-program-panel="race" role="tabpanel">
-            <div class="programs-panel-heading">
-                <div>
-                    <div class="programs-kicker">RACE PROGRAMS</div>
-                    <h2>Race Plans</h2>
-                    <p>A plan that builds toward a race day. Pick the distance and date, and it lays out every week for you.</p>
-                </div>
-                <a class="programs-primary-btn" href="running.html?section=race-plans">+ Create Race Plan</a>
-            </div>
-
-            <div class="programs-library-counts" id="raceProgramCounts"></div>
-            <div id="raceProgramLibrary" class="programs-library"></div>
-
-            <div class="programs-info-row">
-                <span class="programs-info-dot"></span>
-                <span>Turn a plan on and its runs show up on your Running calendar and Today screen.</span>
+                <p class="eos-today-phase">Every block of your season, and the weeks inside it.</p>
             </div>
         </section>
-
-        <section class="programs-panel" data-program-panel="training" role="tabpanel" hidden>
-            <div class="programs-panel-heading">
+        <div class="pg-bar">
+            <span class="pg-data" id="pgCounts"></span>
+            <button type="button" class="sb-btn sb-btn-primary" id="pgNew">+ New program</button>
+        </div>
+        <section class="pg-card pg-season-card" id="pgSeason" hidden aria-label="Your season"></section>
+        <div class="pg-layout">
+            <div class="pg-main" id="pgDetail"><div class="pg-card"><div class="sb-wait" style="height:120px"></div></div></div>
+            <aside class="pg-side pg-card" id="pgList" aria-label="All programs"></aside>
+        </div>
+        <section class="pg-card pg-builder" id="pgBuilder" hidden aria-label="New training block">
+            <div class="pg-card-head">
                 <div>
-                    <div class="programs-kicker">FLEXIBLE PROGRAM BUILDER</div>
-                    <h2>Training Plans</h2>
-                    <p>Build an off-season, maintenance, strength, speed, or athletic-development block without tying it to a race.</p>
+                    <div class="pg-kicker">New training block</div>
+                    <h2 class="pg-h2">Build a block</h2>
+                    <p class="pg-p">Off-season, maintenance, strength, speed or athletic development, with no race attached.</p>
                 </div>
-                <button type="button" class="programs-secondary-btn" id="trainingPlanReset">Reset</button>
+                <button type="button" class="sb-btn sb-btn-secondary" id="trainingPlanReset">Cancel</button>
             </div>
-
-            <div class="programs-library-counts" id="trainingDraftCounts"></div>
-            <div id="trainingDraftLibrary" class="programs-library"></div>
-
             <form id="trainingPlanBuilder" class="training-builder" novalidate>
                 <div class="training-stepper" aria-label="Training plan setup progress">
                     <div class="training-stepper-track"><span id="trainingProgressFill"></span></div>
@@ -77,28 +52,28 @@
                         <p>Choose the main adaptation. Southbound will use it to decide what the program should protect when training competes for space.</p>
                     </div>
                     <div class="training-goal-grid" id="trainingPrimaryGoals">
-                        <button type="button" class="training-goal-card" data-primary-goal="STRENGTH" style="--goal-color:var(--orange)">
+                        <button type="button" class="training-goal-card" data-primary-goal="STRENGTH">
                             <strong>Build Strength</strong><span>Get stronger and more resilient.</span>
                         </button>
-                        <button type="button" class="training-goal-card" data-primary-goal="RUN_MAINTENANCE" style="--goal-color:var(--cyan)">
+                        <button type="button" class="training-goal-card" data-primary-goal="RUN_MAINTENANCE">
                             <strong>Running Maintenance</strong><span>Maintain fitness without race prep.</span>
                         </button>
-                        <button type="button" class="training-goal-card" data-primary-goal="BASE_BUILD" style="--goal-color:var(--primary)">
+                        <button type="button" class="training-goal-card" data-primary-goal="BASE_BUILD">
                             <strong>Base Building</strong><span>Build aerobic capacity and consistency.</span>
                         </button>
-                        <button type="button" class="training-goal-card" data-primary-goal="SPEED" style="--goal-color:var(--yellow)">
+                        <button type="button" class="training-goal-card" data-primary-goal="SPEED">
                             <strong>Speed Development</strong><span>Improve speed, economy, and quality.</span>
                         </button>
-                        <button type="button" class="training-goal-card" data-primary-goal="RUN_STRENGTH" style="--goal-color:var(--teal)">
+                        <button type="button" class="training-goal-card" data-primary-goal="RUN_STRENGTH">
                             <strong>Running Strength</strong><span>Strength built specifically to support running.</span>
                         </button>
-                        <button type="button" class="training-goal-card" data-primary-goal="VERTICAL_POWER" style="--goal-color:var(--purple)">
+                        <button type="button" class="training-goal-card" data-primary-goal="VERTICAL_POWER">
                             <strong>Vertical / Power</strong><span>Explosive strength and jump performance.</span>
                         </button>
-                        <button type="button" class="training-goal-card" data-primary-goal="HYPERTROPHY" style="--goal-color:var(--pink)">
+                        <button type="button" class="training-goal-card" data-primary-goal="HYPERTROPHY">
                             <strong>Hypertrophy</strong><span>Build muscle with an intentional volume focus.</span>
                         </button>
-                        <button type="button" class="training-goal-card" data-primary-goal="ATHLETIC" style="--goal-color:var(--indigo)">
+                        <button type="button" class="training-goal-card" data-primary-goal="ATHLETIC">
                             <strong>Athletic Development</strong><span>Balance strength, speed, power, and conditioning.</span>
                         </button>
                     </div>
@@ -183,16 +158,16 @@
                 <section class="training-step" data-training-step="5">
                     <div class="training-step-heading">
                         <h3>Review the program you are about to build.</h3>
-                        <p>This first pass only captures your training architecture. The generation engine can use it next to build the actual weeks.</p>
+                        <p>Saving keeps this as a draft. Open it from the list to see its weeks before you activate it.</p>
                     </div>
                     <div id="trainingPlanReview" class="training-review"></div>
-                    <div class="training-review-note"><strong>Calendar protection</strong><span>This design screen does not add anything to Running, Strength, or Cross Training calendars yet.</span></div>
+                    <div class="training-review-note"><strong>Your calendars</strong><span>Nothing is added to Running, Strength or Cross Training until you tap Activate.</span></div>
                 </section>
 
                 <div class="training-actions">
-                    <button type="button" id="trainingBack" class="programs-secondary-btn" hidden>Back</button>
+                    <button type="button" id="trainingBack" class="sb-btn sb-btn-secondary" hidden>Back</button>
                     <div></div>
-                    <button type="button" id="trainingNext" class="programs-primary-btn">Continue</button>
+                    <button type="button" id="trainingNext" class="sb-btn sb-btn-primary">Continue</button>
                 </div>
             </form>
         </section>

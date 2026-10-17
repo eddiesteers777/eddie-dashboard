@@ -227,6 +227,7 @@
     "js/profileCheckCard.js",
     "js/profileChecks.js",
     "js/programs.js",
+    "js/programsView.js",
     "js/progressView.js",
     "js/raceBacktest.js",
     "js/raceCapability.js",
