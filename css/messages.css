@@ -191,3 +191,76 @@
     cursor:pointer;
 }
 .msg-coach-chip[aria-pressed="true"]{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+
+/* ==========================================================
+   MESSAGES, PREMIUM (2026-10-17). The thread (here and in the Client Hub's
+   Messages tab) sits in a dark inset well; the other person's bubbles are
+   raised glass, yours are the sand lens; the day is a mono pill and the time a
+   mono label; the box you type in is a dark inset and Send is a lens circle.
+   messages.html's own card comes from the premium block in css/clients.css.
+   js/messageView.js is unchanged.
+========================================================== */
+.msg-list{
+    padding:16px 12px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.msg-day span{
+    padding:4px 12px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    color:var(--text-secondary);
+    font:600 11px/1.4 var(--font-mono);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+}
+.msg-bubble{
+    padding:10px 14px 7px;
+    border-radius:20px;
+    background:var(--sb-bubble-raised-bg);
+    border-color:var(--sb-bubble-raised-border);
+    box-shadow:inset 0 1px 0 rgba(255,244,222,.07), 0 6px 14px -10px rgba(0,0,0,.6);
+}
+.msg-row.is-mine .msg-bubble{
+    background:var(--sb-lens-bg);
+    border-color:transparent;
+    box-shadow:var(--sb-lens-shadow);
+}
+.msg-row.is-theirs.is-first .msg-bubble{ border-top-left-radius:8px; }
+.msg-row.is-mine.is-first .msg-bubble{ border-top-right-radius:8px; }
+.msg-time{ font:500 11px/1.4 var(--font-mono); letter-spacing:.04em; opacity:.72; }
+.msg-seen{ font:500 11px/1.4 var(--font-mono); letter-spacing:.04em; color:var(--text-secondary); }
+.msg-unsend{ position:relative; min-height:28px; font-size:12.5px; }
+.msg-unsend::after{ content:""; position:absolute; inset:-8px -4px; }
+.msg-input{
+    min-height:48px;
+    border-radius:24px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+}
+.msg-send{
+    min-height:48px;
+    border:0;
+    border-radius:999px;
+    background:var(--sb-lens-bg);
+    box-shadow:var(--sb-lens-shadow);
+    color:var(--on-primary);
+}
+.msg-send:disabled{ opacity:.55; }
+@media (max-width:600px){
+    .msg-send{ width:48px; }
+}
+.msg-coach-chip{
+    min-height:44px;
+    background:var(--sb-glass-bg);
+    border-color:var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text-secondary);
+    font-family:var(--font-body);
+}
+.msg-coach-chip[aria-pressed="true"]{ background:var(--sb-lens-bg); border-color:transparent; color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+/* In the Client Hub the thread is the bubble: no card around it. */
+.hub-page .clients-card.hub-messages{ padding:0; background:none; border:0; box-shadow:none; }

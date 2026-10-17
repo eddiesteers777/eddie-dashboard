@@ -740,10 +740,10 @@
    button the lens, the others glass, fields dark insets. Each page joins the
    list below in its own commit; Coach a Client (clients.html) isn't in it yet.
 ========================================================== */
-:is(.checkin-page, .schedule-page) .eos-today-eyebrow{ display:none; }
-:is(.checkin-page, .schedule-page) .eos-today-hero::before{ display:none; }
+:is(.checkin-page, .schedule-page, .messages-page) .eos-today-eyebrow{ display:none; }
+:is(.checkin-page, .schedule-page, .messages-page) .eos-today-hero::before{ display:none; }
 
-:is(.checkin-page, .schedule-page) .clients-card{
+:is(.checkin-page, .schedule-page, .messages-page) .clients-card{
     padding:18px;
     margin-bottom:16px;
     border-radius:26px;
@@ -751,17 +751,17 @@
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);
 }
-:is(.checkin-page, .schedule-page) .clients-card h2{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); margin:0 0 6px; }
-:is(.checkin-page, .schedule-page) .clients-card-note{ font-size:14px; color:var(--text-secondary); }
-:is(.checkin-page, .schedule-page) .clients-section-title{ margin:28px 0 12px; font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
-:is(.checkin-page, .schedule-page) .clients-empty{
+:is(.checkin-page, .schedule-page, .messages-page) .clients-card h2{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); margin:0 0 6px; }
+:is(.checkin-page, .schedule-page, .messages-page) .clients-card-note{ font-size:14px; color:var(--text-secondary); }
+:is(.checkin-page, .schedule-page, .messages-page) .clients-section-title{ margin:28px 0 12px; font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
+:is(.checkin-page, .schedule-page, .messages-page) .clients-empty{
     border-radius:26px;
     background:var(--sb-bubble-dark-bg);
     border:1px dashed var(--sb-glass-border);
     box-shadow:none;
 }
 
-:is(.checkin-page, .schedule-page) .clients-tabs{
+:is(.checkin-page, .schedule-page, .messages-page) .clients-tabs{
     padding:4px;
     gap:2px;
     background:var(--sb-inset-bg);
@@ -769,10 +769,10 @@
     border-radius:18px;
     box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
 }
-:is(.checkin-page, .schedule-page) .clients-tab{ min-height:44px; padding:0 18px; border-radius:14px; font:650 14px/1 var(--font-body); }
-:is(.checkin-page, .schedule-page) .clients-tab.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+:is(.checkin-page, .schedule-page, .messages-page) .clients-tab{ min-height:44px; padding:0 18px; border-radius:14px; font:650 14px/1 var(--font-body); }
+:is(.checkin-page, .schedule-page, .messages-page) .clients-tab.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
 
-:is(.checkin-page, .schedule-page) .clients-btn-primary{
+:is(.checkin-page, .schedule-page, .messages-page) .clients-btn-primary{
     min-height:48px;
     padding:0 22px;
     border:0;
@@ -782,7 +782,7 @@
     color:var(--on-primary);
     font:700 15px/1 var(--font-body);
 }
-:is(.checkin-page, .schedule-page) .clients-btn-secondary{
+:is(.checkin-page, .schedule-page, .messages-page) .clients-btn-secondary{
     min-height:44px;
     border-radius:999px;
     background:var(--sb-glass-bg);
@@ -791,14 +791,14 @@
     color:var(--text);
     font:650 14px/1 var(--font-body);
 }
-:is(.checkin-page, .schedule-page) .clients-btn-secondary:hover{ border-color:rgba(214,185,142,.45); }
+:is(.checkin-page, .schedule-page, .messages-page) .clients-btn-secondary:hover{ border-color:rgba(214,185,142,.45); }
 
-:is(.checkin-page, .schedule-page) textarea,
-:is(.checkin-page, .schedule-page) select,
-:is(.checkin-page, .schedule-page) input[type="text"],
-:is(.checkin-page, .schedule-page) input[type="date"],
-:is(.checkin-page, .schedule-page) input[type="time"],
-:is(.checkin-page, .schedule-page) input[type="number"]{
+:is(.checkin-page, .schedule-page, .messages-page) textarea,
+:is(.checkin-page, .schedule-page, .messages-page) select,
+:is(.checkin-page, .schedule-page, .messages-page) input[type="text"],
+:is(.checkin-page, .schedule-page, .messages-page) input[type="date"],
+:is(.checkin-page, .schedule-page, .messages-page) input[type="time"],
+:is(.checkin-page, .schedule-page, .messages-page) input[type="number"]{
     border-radius:16px;
     background:var(--sb-inset-bg);
     border:1px solid var(--sb-inset-border);
