@@ -55,8 +55,14 @@
         </details>
 
         <!-- Meals -->
-        <section class="meal-section">
-            <h2>Add food</h2>
+        <div class="fx-sheet-wrap" id="addSheet" hidden>
+        <div class="fx-scrim" data-sheet-close></div>
+        <section class="meal-section fx-sheet" role="dialog" aria-modal="true" aria-labelledby="addSheetTitle">
+            <div class="fx-grab" aria-hidden="true"></div>
+            <div class="fx-sheet-head">
+                <div><span class="fx-k">Add to</span><h2 id="addSheetTitle">Food</h2></div>
+                <button type="button" class="fx-x" data-sheet-close aria-label="Close">×</button>
+            </div>
 
             <div class="meal-tabs" id="mealTabs">
                 <button type="button" class="meal-tab active" data-meal-tab="breakfast">Breakfast</button>
@@ -165,6 +171,9 @@
 
             </div>
         </section>
+        </div>
+
+        <button type="button" class="fx-fab" id="logFoodBtn"><span data-icon="camera"></span>Log food</button>
 
         <!-- What you've logged today -->
         <section class="fx-log" id="fuelTimeline" aria-label="Logged today"></section>

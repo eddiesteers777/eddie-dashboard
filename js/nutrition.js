@@ -711,6 +711,80 @@ function renderRings(){
 
 }
 
+/* ==========================================
+   Add-food sheet (opened by the floating Log food button)
+========================================== */
+
+function selectMeal(meal){
+
+    document.querySelectorAll(".meal-tab").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.mealTab === meal);
+    });
+
+    document.querySelectorAll(".meal-card").forEach(card => {
+        card.classList.toggle("active", card.dataset.mealPanel === meal);
+    });
+
+    const title = document.getElementById("addSheetTitle");
+
+    if(title){
+        title.textContent = meal[0].toUpperCase() + meal.slice(1);
+    }
+
+}
+
+function openAddSheet(meal){
+
+    const sheet = document.getElementById("addSheet");
+
+    if(!sheet){
+        return;
+    }
+
+    selectMeal(meal || mealForNow());
+    sheet.hidden = false;
+    document.body.classList.add("fx-sheet-open");
+
+    document
+        .querySelector(".meal-card.active .food-search-input")
+        ?.focus({ preventScroll: true });
+
+}
+
+function closeAddSheet(){
+
+    const sheet = document.getElementById("addSheet");
+
+    if(sheet){
+        sheet.hidden = true;
+    }
+
+    document.body.classList.remove("fx-sheet-open");
+
+}
+
+document.addEventListener("click", e => {
+
+    if(e.target.closest("#logFoodBtn")){
+        openAddSheet();
+    }
+    else if(e.target.closest("[data-sheet-close]")){
+        closeAddSheet();
+    }
+    else if(e.target.closest("[data-meal-tab]")){
+        selectMeal(e.target.closest("[data-meal-tab]").dataset.mealTab);
+    }
+
+});
+
+document.addEventListener("keydown", e => {
+
+    if(e.key === "Escape" && !document.getElementById("addSheet")?.hidden){
+        closeAddSheet();
+    }
+
+});
+
 const MEAL_NAMES = { breakfast:"Breakfast", lunch:"Lunch", dinner:"Dinner", snacks:"Snacks" };
 
 function renderTimeline(){
@@ -1040,6 +1114,8 @@ function addFoodToLog(meal, food, grams){
         renderTimeline();
 
         clearFoodSearch(meal);
+
+        closeAddSheet();
 
     });
 
