@@ -60,10 +60,11 @@ function init() {
         render(el);
         const fresh = el.querySelector(`[data-habit="${CSS.escape(btn.dataset.habit)}"]`);
         if (keepFocus) fresh?.focus();
-        // Just checked off (not undone): the circle pops; the day's last one sweeps the card (js/celebrate.js).
+        // Just checked off (not undone): a full-page moment for that habit; the day's last one says Day complete (js/celebrate.js).
         if (next?.[dayKey()]?.[btn.dataset.habit]) {
             const habits = habitList(read("habits", null), showsPersonalPlan());
-            celebrateHabit(fresh?.querySelector(".sb-habit-icon"), { allDone: habits.length > 0 && doneOn(next, dayKey(), habits) === habits.length });
+            const habit = habits.find(h => h.id === btn.dataset.habit);
+            if (habit) celebrateHabit(habit, { allDone: doneOn(next, dayKey(), habits) === habits.length, card: el });
         }
         window.dispatchEvent(new CustomEvent("sb:habits-changed"));
     });
