@@ -25,7 +25,6 @@
     <main class="running-page">
 
         <section class="running-hero">
-            <div class="sb-eyebrow">Train</div>
             <h1>Running</h1>
             <p id="runningPlanContext" class="running-plan-context sb-wait"></p>
         </section>
@@ -60,6 +59,10 @@
                     <button type="button" id="runningNext" class="running-nav-btn">→</button>
                     <button type="button" id="runningToday" class="running-row-btn">Today</button>
                 </div>
+
+                <button type="button" id="runningAddRunBtn" class="running-add-btn">
+                    + Run
+                </button>
             </div>
 
             <section class="running-calendar-wrap">
@@ -70,24 +73,23 @@
 
             <section id="runningDayDetail" class="running-day-detail"></section>
 
+            <section id="runningAgenda" class="running-agenda" aria-label="This week"></section>
+
             <section class="running-summary-grid">
-                <div class="running-summary-card">
-                    <h3>This Week</h3>
+                <details class="running-fold" open>
+                    <summary>This week</summary>
                     <div id="runningThisWeek"></div>
-                </div>
-                <div class="running-summary-card">
-                    <h3>Upcoming</h3>
+                </details>
+                <details class="running-fold">
+                    <summary>Upcoming</summary>
                     <div id="runningUpcoming"></div>
-                </div>
-                <div class="running-summary-card">
-                    <h3>Recent Runs</h3>
+                </details>
+                <details class="running-fold">
+                    <summary>Recent runs</summary>
                     <div id="runningRecentRuns"></div>
-                </div>
+                </details>
             </section>
 
-            <button type="button" id="runningAddRunBtn" class="running-fab">
-                + Add Run
-            </button>
         </section>
 
         <section id="runningRacePlansSection" class="running-section-view" data-running-panel="race-plans" hidden>
