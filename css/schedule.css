@@ -393,3 +393,66 @@
 .schedule-page .sched-slot-form button{ border-radius:999px; }
 .schedule-page .sched-blackout-chip{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px 0 14px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); border-radius:999px; }
 .schedule-page .sched-session-log li{ border-left-color:var(--primary); }
+
+/* ==========================================================
+   COACH SCHEDULE as a week (2026-10-17, "Week and roster"): what's
+   waiting on the coach first, then the week with bookings, asks and
+   open times, then the weekly times and days off.
+========================================================== */
+.sched-waiting{ margin-bottom:26px; }
+.sched-count{ display:inline-block; margin-left:6px; padding:1px 7px; border-radius:4px; background:var(--primary); color:var(--on-primary); font:600 11px var(--font-mono); vertical-align:2px; }
+.sched-waiting .sched-request-row{ border-left:2px solid var(--primary); }
+
+.sched-weekwrap{ margin-bottom:28px; }
+.sched-weekhead{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px 16px; flex-wrap:wrap; margin-bottom:12px; }
+.sched-weekhead .clients-section-title{ margin:0; }
+.sched-weeksum{ margin:4px 0 0; color:var(--muted); font:500 11.5px var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
+.sched-weeknav{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.sched-weeknav .clients-btn-secondary, .sched-weeknav .clients-btn-primary{ border-radius:var(--radius-sm); min-height:40px; padding:0 14px; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+.sched-weeknav .clients-btn-primary{ background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); }
+.sched-weeknav [disabled]{ opacity:.45; }
+
+.sched-week{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; }
+.sched-day{ min-width:0; padding:10px; border-radius:10px; background:rgba(4,11,8,.35); border:1px solid var(--border); min-height:150px; display:flex; flex-direction:column; gap:6px; }
+.sched-day.is-today{ background:var(--sb-bubble-raised-bg); border-color:var(--sb-bubble-raised-border); box-shadow:inset 0 2px 0 var(--primary), var(--sb-bubble-raised-shadow); }
+.sched-day.is-past{ opacity:.6; }
+.sched-day.is-off{ background:repeating-linear-gradient(135deg, transparent 0 6px, rgba(236,230,212,.045) 6px 12px); }
+.sched-day-head{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+.sched-day-head span{ font:600 10.5px var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.sched-day.is-today .sched-day-head span{ color:var(--primary); }
+.sched-day-head b{ font:900 26px/1 var(--font-display); }
+.sched-day-head em{ font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--amber); font-style:normal; }
+.sched-day-none{ margin:auto 0 0; color:var(--muted); font-size:12px; opacity:.6; }
+.sched-ev{ display:flex; flex-direction:column; gap:1px; padding:6px 8px; border-radius:6px; background:rgba(236,230,212,.08); color:var(--text); text-decoration:none; font-size:12.5px; line-height:1.3; min-width:0; }
+.sched-ev-time{ font:600 10.5px var(--font-mono); letter-spacing:.04em; color:var(--primary); }
+.sched-ev-who{ font-weight:700; overflow-wrap:anywhere; }
+.sched-ev-type{ color:var(--text-secondary); font-size:11.5px; }
+a.sched-ev:hover{ background:rgba(236,230,212,.14); }
+.sched-ev.is-asked{ background:transparent; border:1px dashed color-mix(in srgb, var(--primary) 65%, transparent); }
+.sched-ev.is-open{ background:transparent; border:1px solid var(--border); color:var(--muted); }
+.sched-ev.is-open .sched-ev-who{ font-weight:600; }
+.sched-ev.is-open .sched-ev-time{ color:var(--muted); }
+.sched-key{ display:flex; gap:16px; flex-wrap:wrap; margin:10px 0 0; font:500 10.5px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.sched-key span::before{ content:""; display:inline-block; width:12px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; background:rgba(236,230,212,.18); }
+.sched-key .sched-key-asked::before{ background:none; border:1px dashed var(--primary); }
+.sched-key .sched-key-open::before{ background:none; border:1px solid var(--muted); }
+
+/* Weekly open times as lined rows, and squared controls. */
+#slotsList{ background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); border-radius:var(--radius); gap:0; padding:4px 14px; }
+#slotsList .sched-slot-card{ background:transparent; border:0; border-top:1px solid var(--border); border-radius:0; padding-left:0; padding-right:0; }
+#slotsList .sched-slot-card:first-child{ border-top:0; }
+.sched-request-row .clients-btn-primary, .sched-request-row .clients-btn-secondary,
+#slotForm .clients-btn-primary, #slotsList .clients-btn-secondary{ border-radius:var(--radius-sm); }
+.sched-request-row .clients-btn-primary, #slotForm .clients-btn-primary{ background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); }
+#requestsListWrap{ margin-top:28px; }
+
+@media (max-width:820px){
+    .sched-week{ grid-template-columns:1fr; gap:0; border:1px solid var(--sb-bubble-raised-border); border-radius:var(--radius); background:var(--sb-bubble-raised-bg); overflow:hidden; }
+    .sched-day{ display:grid; grid-template-columns:64px minmax(0,1fr); gap:0 12px; align-items:start; min-height:0; border:0; border-top:1px solid var(--border); border-radius:0; background:transparent; box-shadow:none; padding:12px 14px; }
+    .sched-day:first-child{ border-top:0; }
+    .sched-day.is-today{ box-shadow:inset 3px 0 0 var(--primary); background:var(--sb-glass-bg); }
+    .sched-day-head{ grid-row:1 / span 8; flex-direction:column; gap:0; }
+    .sched-day > :not(.sched-day-head){ grid-column:2; margin-bottom:6px; }
+    .sched-day > :last-child{ margin-bottom:0; }
+    .sched-day-none{ margin:6px 0 0 !important; }
+}

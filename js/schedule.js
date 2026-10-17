@@ -20,6 +20,7 @@ import {
 } from "./scheduling.js";
 import { bookedCounts, takenDates, nextOpenDate } from "./slotBookings.js";
 import { clientSessions, statusLabel, CANCELLED } from "./sessionModel.js";
+import { weekDays, weekStartOf, addDays, weekCounts } from "./scheduleWeek.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
 
 let currentUser = null;
@@ -112,6 +113,7 @@ const slotsEmptyMsg = document.getElementById("slotsEmptyMsg");
 const blackoutForm = document.getElementById("blackoutForm");
 const blackoutList = document.getElementById("blackoutList");
 const requestsList = document.getElementById("requestsList");
+const waitingList = document.getElementById("waitingList");
 const requestsEmptyMsg = document.getElementById("requestsEmptyMsg");
 
 function slotCardHtml(slot, actionsHtml) {
@@ -131,9 +133,64 @@ function slotCardHtml(slot, actionsHtml) {
     `;
 }
 
+// ---- Coach: the week at a glance ----
+// What the coach has so far (open times, days off, requests); the grid
+// redraws whenever any of them loads (js/scheduleWeek.js).
+const coachWeek = { slots: [], blackoutDates: [], requests: [], start: "" };
+
+function renderCoachWeek() {
+    const el = document.getElementById("schedWeek");
+    if (!el) return;
+    const today = localToday();
+    if (!coachWeek.start) coachWeek.start = weekStartOf(today);
+    const days = weekDays({ weekStart: coachWeek.start, slots: coachWeek.slots, blackoutDates: coachWeek.blackoutDates, requests: coachWeek.requests });
+    const n = weekCounts(days);
+    const end = addDays(coachWeek.start, 6);
+    const range = `${formatDateShort(coachWeek.start).replace(/^\w+, /, "")} – ${formatDateShort(end).replace(/^\w+, /, "")}`;
+    document.getElementById("schedWeekSum").textContent = `${range} · ${n.booked} booked · ${n.asked} asked · ${n.open} open`;
+    document.getElementById("schedWeekNow").disabled = coachWeek.start === weekStartOf(today);
+    const label = { soccer: "Soccer", running: "Running", strength: "Strength", general: "Session" };
+    el.innerHTML = days.map(day => {
+        const dayName = new Date(`${day.date}T00:00:00`).toLocaleDateString(undefined, { weekday: "short" });
+        const num = Number(day.date.slice(8));
+        const items = day.items.map(it => {
+            const type = it.label || label[it.sessionType] || typeLabel(it.sessionType) || "";
+            const who = it.kind === "open" ? `Open${it.capacity > 1 ? ` · ${it.spotsLeft} of ${it.capacity} left` : ""}` : it.who;
+            const body = `<span class="sched-ev-time">${escapeHtml(formatTime(it.startTime))}</span><span class="sched-ev-who">${escapeHtml(who)}</span><span class="sched-ev-type">${escapeHtml(type)}</span>`;
+            return it.clientUid && it.kind !== "open"
+                ? `<a class="sched-ev is-${it.kind}" href="client.html?uid=${encodeURIComponent(it.clientUid)}&tab=sessions">${body}</a>`
+                : `<div class="sched-ev is-${it.kind}">${body}</div>`;
+        }).join("");
+        return `
+            <div class="sched-day${day.date === today ? " is-today" : ""}${day.dayOff ? " is-off" : ""}${day.date < today ? " is-past" : ""}">
+                <div class="sched-day-head"><span>${escapeHtml(dayName)}</span><b>${num}</b>${day.dayOff ? `<em>Day off</em>` : ""}</div>
+                ${items || (day.dayOff ? "" : `<p class="sched-day-none">Nothing</p>`)}
+            </div>`;
+    }).join("");
+}
+
+document.querySelectorAll("[data-week-step]").forEach(btn => btn.addEventListener("click", () => {
+    if (!coachWeek.start) coachWeek.start = weekStartOf(localToday());
+    coachWeek.start = addDays(coachWeek.start, 7 * Number(btn.dataset.weekStep));
+    renderCoachWeek();
+}));
+document.getElementById("schedWeekNow").addEventListener("click", () => {
+    coachWeek.start = weekStartOf(localToday());
+    renderCoachWeek();
+});
+document.getElementById("addSlotLink").addEventListener("click", event => {
+    event.preventDefault();
+    const box = document.getElementById("addSlotBox");
+    box.open = true;
+    box.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
 async function refreshAvailability() {
     if (!currentUser) return;
     const { slots, blackoutDates } = await getCoachAvailability(currentUser.uid);
+    coachWeek.slots = slots;
+    coachWeek.blackoutDates = blackoutDates;
+    renderCoachWeek();
 
     slotsList.innerHTML = "";
     slotsEmptyMsg.hidden = slots.length > 0;
@@ -216,16 +273,23 @@ blackoutForm.addEventListener("submit", async event => {
 async function refreshRequests() {
     if (!currentUser) return;
     const all = await listRequestsForMyClients();
-    const requests = [...all]
-        .sort((a, b) => (a.status === "requested" ? -1 : 1) - (b.status === "requested" ? -1 : 1));
+    coachWeek.requests = all;
+    renderCoachWeek();
+    const waiting = all.filter(r => r.status === "requested");
+    // Booked and past: newest first by their first date.
+    const requests = all.filter(r => r.status !== "requested")
+        .sort((a, b) => String((b.dates || [])[0] || "").localeCompare(String((a.dates || [])[0] || "")));
     // Keep the "what's taken" summary clients book against up to date.
     syncSlotBookings(all).catch(error => console.warn("Southbound: couldn't update booked dates.", error));
     const counts = bookedCounts(all, localToday());
 
     requestsList.innerHTML = "";
+    waitingList.innerHTML = "";
     requestsEmptyMsg.hidden = requests.length > 0;
+    document.getElementById("waitingWrap").hidden = waiting.length === 0;
+    document.getElementById("waitingCount").textContent = waiting.length || "";
 
-    for (const req of requests) {
+    for (const req of [...waiting, ...requests]) {
         const booked = req.allDates || req.dates || [];
         const datesLabel = booked.length > 1
             ? `${formatDateShort(booked[0])} (+${booked.length - 1} more, weekly)`
@@ -266,7 +330,7 @@ async function refreshRequests() {
         row.querySelector('[data-action="approve"]')?.addEventListener("click", () => respond(req, "approved"));
         row.querySelector('[data-action="deny"]')?.addEventListener("click", () => respond(req, "denied"));
 
-        requestsList.appendChild(row);
+        (req.status === "requested" ? waitingList : requestsList).appendChild(row);
     }
 }
 
