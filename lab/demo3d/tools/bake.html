@@ -1,0 +1,102 @@
+<!doctype html><html><body style="margin:0">
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.min.js"}}</script>
+<script type="module">
+// Bakes an exercise motion onto an athlete and exports one GLB with the clip
+// (driven by tools/bake.mjs). Also renders review frames.
+import * as THREE from "three";
+import { GLTFLoader } from "../vendor/three/addons/loaders/GLTFLoader.js";
+import { GLTFExporter } from "./three-exporter/exporters/GLTFExporter.js";
+import { Rig } from "./rig.js";
+import { MOTIONS } from "./motions/index.js";
+
+const q = new URLSearchParams(location.search);
+const gltf = await new GLTFLoader().loadAsync(q.get("model"));
+const model = gltf.scene;
+model.updateMatrixWorld(true);
+// Materials for the web: skin and kit opaque; hair, brows and lashes cut out
+// by their texture's alpha (MASK: no transparency sorting, cheap on phones).
+model.traverse(o => {
+    if (!o.isMesh) return;
+    for (const m of [].concat(o.material)) {
+        const cut = /eyebrow|eyelash|hair|ponytail|short0|bob|braid|afro|long0/i.test(m.name);
+        m.transparent = false; m.depthWrite = true;
+        m.alphaTest = cut ? 0.5 : 0;
+        if (!cut) m.opacity = 1;
+        if (/^sb-/.test(m.name)) m.side = THREE.DoubleSide; // the inside of a sleeve or neckline
+    }
+});
+const rig = new Rig(model);
+const motion = MOTIONS[q.get("motion") || "squat"];
+motion.setup(rig);
+const FPS = 30;
+const frames = Math.round(motion.seconds * FPS);
+
+// Sample every bone's local rotation (and the hips' position) per frame.
+const bones = Object.values(rig.b);
+function sample() {
+    const times = [], rotTracks = new Map(bones.map(b => [b, []])), hipPos = [];
+    for (let i = 0; i <= frames; i++) {
+        rig.reset();
+        motion.pose(rig, (i % frames) / frames); // the last frame = the first: a seamless loop
+        model.updateMatrixWorld(true);
+        times.push(i / FPS);
+        for (const b of bones) rotTracks.get(b).push(...b.quaternion.toArray());
+        hipPos.push(...rig.b.Hips.position.toArray());
+    }
+    rig.reset();
+    const tracks = [];
+    for (const b of bones) {
+        const vals = rotTracks.get(b);
+        const moving = vals.some((v, k) => Math.abs(v - vals[k % 4]) > 1e-5);
+        if (moving) tracks.push(new THREE.QuaternionKeyframeTrack(`${b.name}.quaternion`, times, vals));
+        else { b.quaternion.fromArray(vals.slice(0, 4)); } // a held pose (fingers) goes into the rest pose
+    }
+    tracks.push(new THREE.VectorKeyframeTrack(`${rig.b.Hips.name}.position`, times, hipPos));
+    return new THREE.AnimationClip(motion.id, motion.seconds, tracks);
+}
+
+window.bake = async () => {
+    const clip = sample();
+    const glb = await new GLTFExporter().parseAsync(model, { binary: true, animations: [clip], onlyVisible: true });
+    let s = ""; const u = new Uint8Array(glb);
+    for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000));
+    return btoa(s);
+};
+
+// Joint positions over the loop for the quality review (tools/qa.mjs).
+window.track = (fps = 30) => {
+    const n = Math.round(motion.seconds * fps);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+        rig.reset(); motion.pose(rig, i / n); model.updateMatrixWorld(true);
+        const p = {};
+        for (const k of ["Hips", "Spine2", "Head", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftToeBase", "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase", "LeftArm", "LeftHand", "RightHand"])
+            p[k] = rig.wp(k).toArray();
+        out.push(p);
+    }
+    rig.reset();
+    return { fps, frames: out };
+};
+
+// Review renders.
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(720, 720); renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color("#ECE8E0");
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b0a2, 1.4));
+const key = new THREE.DirectionalLight(0xfff4e6, 2.6); key.position.set(2.5, 5, 3.5); key.castShadow = true; scene.add(key);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.18 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+scene.add(model);
+const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
+window.shot = (t, yaw = 35, pitch = 8, dist = 4.6, ty = 0.85) => {
+    rig.reset(); motion.pose(rig, t); model.updateMatrixWorld(true);
+    const y = yaw * Math.PI / 180, p = pitch * Math.PI / 180;
+    cam.position.set(Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, Math.cos(y) * Math.cos(p) * dist);
+    cam.lookAt(0, ty, 0);
+    renderer.render(scene, cam);
+    return renderer.domElement.toDataURL("image/png");
+};
+window.READY = true;
+</script></body></html>

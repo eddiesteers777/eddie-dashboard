@@ -1,0 +1,81 @@
+/* ==========================================
+   Southbound 3D demos — the player (demo3d.js) and the lab page.
+   Tokens from css/style.css; the stage is the clips' cream backdrop,
+   controls sit under it (never over the athlete), taps are 44px+.
+========================================== */
+.d3-player{ display:flex; flex-direction:column; gap:12px; }
+.d3-player [hidden]{ display:none !important; }
+
+.d3-stage{
+    position:relative; width:100%; aspect-ratio:4 / 5; max-height:70dvh; overflow:hidden;
+    border-radius:var(--radius); background:#ECE8E0; touch-action:pan-y; user-select:none;
+}
+.d3-canvas{ display:block; width:100%; height:100%; }
+.d3-tap{
+    position:absolute; inset:0; z-index:1; display:flex; align-items:center; justify-content:center;
+    padding:0; border:0; background:transparent; cursor:grab;
+}
+.d3-tap:active{ cursor:grabbing; }
+.d3-tap:focus-visible{ box-shadow:inset 0 0 0 3px var(--primary); }
+.d3-play{
+    display:flex; align-items:center; justify-content:center; width:64px; height:64px; border-radius:50%;
+    background:rgba(15,32,25,.78); color:var(--text); opacity:0; transform:scale(.85);
+    transition:opacity .18s ease, transform .18s ease; padding-left:3px;
+}
+.d3-stage.is-paused .d3-play{ opacity:1; transform:none; }
+.d3-loading{
+    position:absolute; z-index:2; left:50%; top:50%; transform:translate(-50%, -50%);
+    display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:var(--radius-pill);
+    background:rgba(15,32,25,.82); color:var(--text); font:600 13px/1.2 var(--font-body); white-space:nowrap;
+}
+.d3-spinner{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(201,173,132,.35); border-top-color:var(--primary); animation:d3spin .8s linear infinite; }
+@keyframes d3spin{ to{ transform:rotate(360deg); } }
+.d3-badge{
+    position:absolute; z-index:2; top:12px; left:12px; padding:5px 9px; border-radius:var(--radius-sm);
+    background:rgba(15,32,25,.78); color:var(--primary);
+    font:600 11px/1 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; pointer-events:none;
+}
+.d3-bar{ position:absolute; z-index:2; left:0; right:0; bottom:0; height:4px; background:rgba(15,32,25,.14); pointer-events:none; }
+.d3-bar span{ display:block; height:100%; background:var(--primary); transform-origin:left; transform:scaleX(0); }
+
+.d3-controls{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.d3-group{ display:flex; gap:4px; padding:3px; border:1px solid var(--border); border-radius:calc(var(--radius-pill) + 3px); }
+.d3-pill{
+    min-height:44px; min-width:44px; padding:0 14px; border-radius:var(--radius-pill); border:0; cursor:pointer;
+    background:transparent; color:var(--text-secondary); font:700 13px/1 var(--font-body); letter-spacing:.02em;
+}
+.d3-controls > .d3-pill{ border:1px solid var(--border); }
+.d3-pill[aria-pressed="true"]{ background:var(--primary); color:var(--on-primary); }
+.d3-playbtn{ min-width:84px; }
+.d3-pill:focus-visible{ outline:none; box-shadow:var(--focus-ring); }
+.d3-hint{ margin:0; color:var(--muted); font-size:13px; }
+@media (prefers-reduced-motion: reduce){ .d3-spinner{ animation:none; } .d3-play{ transition:none; } }
+
+/* The lab page */
+.d3-lab{ width:min(1080px, 100%); margin:0 auto; padding:28px 16px 64px; }
+.d3-lab [hidden]{ display:none !important; }
+.d3-kicker{ margin:0 0 8px; color:var(--primary); font:600 11.5px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; }
+.d3-lab h1{ margin:0 0 10px; font:900 clamp(40px, 9vw, 72px)/.9 var(--font-display); text-transform:uppercase; letter-spacing:.01em; color:var(--text); }
+.d3-lab h2{ margin:0 0 12px; font:800 26px/1 var(--font-display); text-transform:uppercase; color:var(--text); }
+.d3-lede{ margin:0 0 24px; max-width:60ch; color:var(--text-secondary); font-size:16px; line-height:1.5; }
+.d3-layout{ display:grid; gap:28px; }
+@media (min-width:860px){ .d3-layout{ grid-template-columns:minmax(0, 1.05fr) minmax(0, 1fr); align-items:start; } }
+.d3-section{ padding-top:16px; border-top:1px solid var(--border); margin-bottom:24px; }
+.d3-steps{ margin:0; display:grid; gap:12px; }
+.d3-steps dt{ color:var(--primary); font:600 11px/1 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; }
+.d3-steps dd{ margin:4px 0 0; color:var(--text); font-size:15px; line-height:1.5; }
+.d3-checks{ width:100%; border-collapse:collapse; font-size:14px; }
+.d3-checks th, .d3-checks td{ padding:9px 6px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+.d3-checks th{ color:var(--muted); font:600 10.5px/1.2 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; }
+.d3-checks td{ color:var(--text-secondary); }
+.d3-checks .ok{ color:var(--green); font-weight:700; }
+.d3-checks .bad{ color:var(--red); font-weight:700; }
+.d3-note{ color:var(--text-secondary); font-size:14px; line-height:1.5; margin:0 0 10px; }
+.d3-fallback{ border-radius:var(--radius); overflow:hidden; background:#F7F4EE; }
+.d3-fallback svg{ display:block; width:100%; height:auto; }
+.d3-fallback-msg{ margin:0; padding:12px 14px; background:var(--surface); color:var(--text-secondary); font-size:14px; }
+.d3-linkbtn{
+    min-height:44px; padding:0 16px; border-radius:var(--radius-pill); border:1px solid var(--border); cursor:pointer;
+    background:transparent; color:var(--text); font:700 14px/1 var(--font-body);
+}
+.d3-linkbtn:focus-visible{ outline:none; box-shadow:var(--focus-ring); }

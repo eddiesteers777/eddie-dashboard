@@ -1,0 +1,57 @@
+{
+ "id": "bodyweight-squat",
+ "sex": "male",
+ "gradedAt": "2026-10-18",
+ "pass": true,
+ "checks": [
+  {
+   "id": "feet-planted",
+   "label": "Feet stay planted (no slide, heels down), metres",
+   "value": 0,
+   "limit": 0.015,
+   "pass": true
+  },
+  {
+   "id": "depth",
+   "label": "Thighs about parallel at the bottom, degrees from level",
+   "value": 11.622,
+   "limit": 22,
+   "pass": true
+  },
+  {
+   "id": "range",
+   "label": "Hips travel down, metres",
+   "value": 0.494,
+   "limit": 0.3,
+   "pass": true
+  },
+  {
+   "id": "knees-out",
+   "label": "Knees no narrower than the feet, metres",
+   "value": -0.065,
+   "limit": 0.02,
+   "pass": true
+  },
+  {
+   "id": "chest-up",
+   "label": "Torso lean at the bottom, degrees",
+   "value": 28.1,
+   "limit": 50,
+   "pass": true
+  },
+  {
+   "id": "balance",
+   "label": "Body mass over the feet, metres outside",
+   "value": 0,
+   "limit": 0,
+   "pass": true
+  },
+  {
+   "id": "smooth",
+   "label": "Fastest joint, metres per second",
+   "value": 1.042,
+   "limit": 1.5,
+   "pass": true
+  }
+ ]
+}
