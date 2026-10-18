@@ -20,235 +20,214 @@
 
 <body>
 
-    <!-- Header -->
-
     <div id="header"></div>
 
     <main class="settings-page">
 
-        <!-- Header -->
-
-        <section class="hero sb-hero-corner">
-            <div class="sb-brand-tile" aria-hidden="true"></div>
-
-            <div class="sb-eyebrow">Account</div>
+        <section class="eos-today-hero"><div>
+            <div class="eos-today-eyebrow">Account</div>
             <h1>Settings</h1>
+            <p class="eos-today-phase">Your account, your watch and your data.</p>
+        </div></section>
 
-            <p>
-                Your account and your data.
-            </p>
+        <div class="st-layout">
 
-        </section>
+            <!-- Who's signed in (js/settings.js fills it from the Google account) -->
+            <aside class="st-side">
 
-        <!-- Profile -->
-
-        <section class="profile-card">
-
-            <div class="profile-left">
-
-                <div class="avatar" id="settingsAvatar"></div>
-
-                <div>
-
-                    <h2 id="userName"></h2>
-
-                    <p id="userEmail" class="sb-wait"></p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-        <!-- Settings Grid -->
-
-        <section class="settings-grid">
-
-            <!-- Account -->
-
-            <div class="settings-card">
-
-                <h3><span data-icon="user"></span> Account</h3>
-
-                <div class="setting-row">
-                    <span>Name</span>
-                    <span id="displayName"></span>
-                </div>
-
-                <div class="setting-row">
-                    <span>Email</span>
-                    <span id="displayEmail" class="sb-wait"></span>
-                </div>
-
-                <button class="primary-btn" id="logoutBtn">
-                    Sign Out
-                </button>
-
-            </div>
-
-            <!-- Connections: COROS for anyone who trains (js/corosSettings.js) -->
-
-            <div class="settings-card" id="coros" data-requires="readiness">
-
-                <h3><span data-icon="link"></span> Connections</h3>
-
-                <div class="connection" data-requires="coach">
-                    <div>
-                        <strong>Your COROS data</strong>
-                        <p>Runs, training load and recovery on the Analytics page.</p>
+                <section class="st-id" aria-label="Your account">
+                    <div class="st-avatar" id="settingsAvatar" aria-hidden="true"></div>
+                    <div class="st-id-text">
+                        <div class="st-kicker">Signed in with Google</div>
+                        <h2 class="st-id-name" id="userName"></h2>
+                        <p class="st-id-email sb-wait" id="userEmail"></p>
                     </div>
-                    <a class="settings-btn" href="analytics.html#corosConnectionPanel">Open</a>
-                </div>
-
-                <div class="connection">
-                    <div>
-                        <strong>COROS</strong>
-                        <p>Send your planned runs to your COROS watch from My Plan or any workout. <span class="coros-connection-state" id="corosConnectionStatusText">Not connected</span></p>
+                    <div class="st-id-actions">
+                        <a class="st-btn" href="profile.html" data-requires="client"><span data-icon="user"></span> My profile</a>
+                        <button type="button" class="st-btn" id="settingsSignOutBtn">Sign out</button>
                     </div>
-                    <div class="connection-actions">
-                        <button type="button" class="settings-btn" id="connectCorosBtn">Connect COROS</button>
-                        <button type="button" class="settings-btn" id="disconnectCorosBtn" hidden>Disconnect</button>
+                </section>
+
+                <nav class="st-jump" aria-label="Settings sections">
+                    <a href="#coros" data-requires="readiness"><span data-icon="watch"></span> Watch &amp; health</a>
+                    <a href="#wearableSharingCard" data-requires="client+readiness"><span data-icon="users"></span> Share with your coach</a>
+                    <a href="#coachingSettings" data-requires="coach"><span data-icon="clipboard"></span> Coaching</a>
+                    <a href="#yourData"><span data-icon="save"></span> Your data</a>
+                    <a href="#aboutSouthbound"><span data-icon="info"></span> About</a>
+                </nav>
+
+            </aside>
+
+            <div class="st-main">
+
+                <!-- Connections: COROS for anyone who trains (js/corosSettings.js) -->
+                <section class="st-group" id="coros" data-requires="readiness">
+                    <header class="st-group-head">
+                        <span class="st-group-icon" data-icon="watch"></span>
+                        <div>
+                            <h2 class="st-group-title">Watch &amp; health</h2>
+                            <p class="st-group-sub">Your COROS watch and what Today shows from it.</p>
+                        </div>
+                    </header>
+                    <div class="st-panel">
+
+                        <div class="st-row" data-requires="coach">
+                            <div class="st-row-text">
+                                <strong>Your COROS data</strong>
+                                <p>Runs, training load and recovery on the Analytics page.</p>
+                            </div>
+                            <a class="st-btn" href="analytics.html#corosConnectionPanel">Open</a>
+                        </div>
+
+                        <div class="st-row">
+                            <div class="st-row-text">
+                                <strong>COROS <span class="st-state" id="corosConnectionStatusText">Not connected</span></strong>
+                                <p>Send your planned runs to your COROS watch from My Plan or any workout.</p>
+                            </div>
+                            <div class="st-row-actions">
+                                <button type="button" class="st-btn st-btn-main" id="connectCorosBtn">Connect COROS</button>
+                                <button type="button" class="st-btn" id="disconnectCorosBtn" hidden>Disconnect</button>
+                            </div>
+                        </div>
+
+                        <label class="st-row st-row-switch" id="corosAutoRow" data-requires="client+plan" hidden>
+                            <div class="st-row-text">
+                                <strong>Send my coach's workouts automatically</strong>
+                                <p>Each time you open Southbound, your coach's next 2 weeks go to your COROS watch, and anything your coach changes is updated there.</p>
+                            </div>
+                            <input type="checkbox" class="st-switch" id="corosAutoToggle">
+                        </label>
+
+                        <!-- Today's readiness, sleep, HRV and resting heart rate (js/healthStatsSetting.js): on until turned off. -->
+                        <label class="st-row st-row-switch" id="healthStatsRow">
+                            <div class="st-row-text">
+                                <strong>Health stats on Today</strong>
+                                <p>Readiness, sleep, HRV and resting heart rate from your watch. They show when a watch is connected, or its data is already on this device.</p>
+                            </div>
+                            <input type="checkbox" class="st-switch" id="healthStatsToggle" checked>
+                        </label>
+
                     </div>
-                </div>
+                </section>
 
-                <label class="connection coros-auto-row" id="corosAutoRow" data-requires="client+plan" hidden>
-                    <div>
-                        <strong>Send my coach's workouts automatically</strong>
-                        <p>Each time you open Southbound, your coach's next 2 weeks go to your COROS watch, and anything your coach changes is updated there.</p>
+                <!-- Client-controlled wearable sharing: consent metadata only. -->
+                <section class="st-group" id="wearableSharingCard" data-requires="client+readiness" hidden>
+                    <header class="st-group-head">
+                        <span class="st-group-icon" data-icon="users"></span>
+                        <div>
+                            <h2 class="st-group-title">Share with your coach</h2>
+                            <p class="st-group-sub">Choose what your coach can see from your watch. Your COROS sign-in stays private, and you can change or stop sharing at any time.</p>
+                        </div>
+                    </header>
+                    <div class="st-panel" id="wearableSharingList"></div>
+                </section>
+
+                <!-- The coach's own settings -->
+                <section class="st-group" id="coachingSettings" data-requires="coach">
+                    <header class="st-group-head">
+                        <span class="st-group-icon" data-icon="clipboard"></span>
+                        <div>
+                            <h2 class="st-group-title">Coaching</h2>
+                            <p class="st-group-sub">What clients see about paying you, and food search.</p>
+                        </div>
+                    </header>
+                    <div class="st-panel">
+
+                        <!-- How clients pay (Phase 9): shown on a client's package card while a payment is due. -->
+                        <div class="st-row st-row-stack" id="paymentNoteCard">
+                            <div class="st-row-text">
+                                <strong>How clients pay you</strong>
+                                <p>Clients see this on their package card while a payment is due. For example: “Venmo @your-name, or Zelle to your phone number. Cash at the session is fine too.”</p>
+                            </div>
+                            <textarea id="paymentNote" class="st-input" rows="3" maxlength="500" placeholder="Venmo, Zelle, cash…" aria-label="How clients pay you"></textarea>
+                            <button type="button" class="st-btn" id="savePaymentNoteBtn">Save</button>
+                        </div>
+
+                        <!-- The USDA key is a developer-style setting -->
+                        <div class="st-row st-row-stack">
+                            <div class="st-row-text">
+                                <strong>USDA food key <span class="st-state">Optional</span></strong>
+                                <p>Food search already works with no key via Open Food Facts. A free
+                                    <a href="https://fdc.nal.usda.gov/api-key-signup.html" target="_blank" rel="noopener">USDA FoodData Central key</a>
+                                    also fills in whole foods like “banana” or “chicken breast.”</p>
+                            </div>
+                            <input type="text" id="usdaApiKey" class="st-input" placeholder="Paste your key" autocomplete="off" aria-label="USDA API key">
+                        </div>
+
                     </div>
-                    <input type="checkbox" id="corosAutoToggle">
-                </label>
+                </section>
 
-                <!-- Today's readiness, sleep, HRV and resting heart rate (js/healthStatsSetting.js): on until turned off. -->
-                <label class="connection" id="healthStatsRow">
-                    <div>
-                        <strong>Health stats on Today</strong>
-                        <p>Readiness, sleep, HRV and resting heart rate from your watch. They show when a watch is connected, or its data is already on this device.</p>
+                <!-- Billing (clients with a Stripe customer). No data-requires: it hides itself,
+                     and the nav pass would unhide it (see CLAUDE.md gotchas). -->
+                <section class="st-group" id="billingCard" hidden>
+                    <header class="st-group-head">
+                        <span class="st-group-icon" data-icon="lock"></span>
+                        <div>
+                            <h2 class="st-group-title">Billing</h2>
+                            <p class="st-group-sub">Your payment method and receipts, through Stripe.</p>
+                        </div>
+                    </header>
+                    <div class="st-panel">
+                        <div class="st-row">
+                            <div class="st-row-text">
+                                <strong>Payment and subscriptions</strong>
+                                <p>Manage your payment method, subscriptions and billing details.</p>
+                                <p class="st-note" id="billingStatus" hidden></p>
+                            </div>
+                            <button type="button" class="st-btn" id="manageBillingBtn">Manage Billing</button>
+                        </div>
                     </div>
-                    <input type="checkbox" id="healthStatsToggle" checked>
-                </label>
+                </section>
 
+                <section class="st-group" id="yourData">
+                    <header class="st-group-head">
+                        <span class="st-group-icon" data-icon="save"></span>
+                        <div>
+                            <h2 class="st-group-title">Your data</h2>
+                            <p class="st-group-sub">A copy of everything, whenever you want it.</p>
+                        </div>
+                    </header>
+                    <div class="st-panel">
 
-            </div>
+                        <div class="st-row">
+                            <div class="st-row-text">
+                                <strong>Export all data</strong>
+                                <p>Training plans, logs, settings, all of it, as one file you can keep as a backup.</p>
+                            </div>
+                            <button type="button" id="exportDataBtn" class="st-btn"><span data-icon="download"></span> Export</button>
+                        </div>
 
-            <!-- Client-controlled wearable sharing: consent metadata only. -->
-            <div class="settings-card" id="wearableSharingCard" data-requires="client+readiness" hidden>
-                <h3><span data-icon="link"></span> Share with your coach</h3>
-                <p class="wearable-sharing-intro">
-                    Choose which wearable categories Southbound may make available to a linked coach.
-                    Your COROS sign-in stays private, and you can change or stop sharing at any time.
-                </p>
-                <div id="wearableSharingList"></div>
-            </div>
+                        <div class="st-row" data-requires="client" id="deleteAccountRow">
+                            <div class="st-row-text">
+                                <strong>Delete my account</strong>
+                                <p>Ask your coach and everything in it goes: your profile, plans, workout logs,
+                                    check-ins and messages. Nothing is deleted until you send the request, and
+                                    you'll hear back once it's done. Export your data first if you'd like a copy.
+                                    <a href="privacy.html#deleting">How deletion works</a></p>
+                            </div>
+                            <a class="st-btn st-btn-danger" id="deleteAccountLink" href="contact.html?about=other&amp;request=delete-account">Ask to delete my account</a>
+                        </div>
 
-            <!-- Nutrition (the USDA key is a developer-style setting; coach only) -->
+                    </div>
+                </section>
 
-            <div class="settings-card" data-requires="coach">
-
-                <h3><span data-icon="apple"></span> Nutrition</h3>
-
-                <div class="setting-row">
-
-                    <span>USDA API Key</span>
-
-                    <input
-                        type="text"
-                        id="usdaApiKey"
-                        placeholder="Optional">
-
-                </div>
-
-                <p style="font-size:13px;color:var(--text-secondary);margin-top:-4px;">
-                    Food search already works with no key via Open Food Facts.
-                    Adding a free
-                    <a href="https://fdc.nal.usda.gov/api-key-signup.html" target="_blank" rel="noopener" style="color:var(--primary);">
-                        USDA FoodData Central key
-                    </a>
-                    also fills in whole/generic foods like "banana" or "chicken breast."
-                </p>
-
-            </div>
-
-            <!-- How clients pay (the coach, Phase 9): shown on a client's package card while a payment is due. -->
-            <div class="settings-card" id="paymentNoteCard" data-requires="coach">
-                <h3><span data-icon="link"></span> How clients pay you</h3>
-                <p class="billing-intro">Clients see this on their package card while a payment is due. For example: “Venmo @your-name, or Zelle to your phone number. Cash at the session is fine too.”</p>
-                <textarea id="paymentNote" class="settings-textarea" rows="4" maxlength="500" placeholder="Venmo, Zelle, cash…"></textarea>
-                <button type="button" class="settings-btn" id="savePaymentNoteBtn">Save</button>
-            </div>
-
-            <!-- Billing (clients with a Stripe customer). No data-requires: it hides itself,
-                 and the nav pass would unhide it (see CLAUDE.md gotchas). -->
-            <div class="settings-card" id="billingCard" hidden>
-                <h3><span data-icon="link"></span> Billing</h3>
-                <p class="billing-intro">
-                    Manage your payment method, subscriptions, and billing details through Stripe.
-                </p>
-                <button type="button" class="settings-btn" id="manageBillingBtn">
-                    Manage Billing
-                </button>
-                <p class="billing-note" id="billingStatus" hidden></p>
-            </div>
-
-            <!-- About -->
-
-            <div class="settings-card">
-
-                <h3><span data-icon="save"></span> Your Data</h3>
-
-                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
-                    Download everything Southbound has stored for you — training plans, logs,
-                    settings, all of it — as one file you can keep as a backup.
-                </p>
-
-                <button
-                    type="button"
-                    id="exportDataBtn"
-                    class="settings-btn">
-                    Export All Data
-                </button>
-
-                <div data-requires="client" id="deleteAccountRow" style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border);">
-
-                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
-                        <strong style="color:var(--text);">Want your account deleted?</strong>
-                        Ask your coach and everything in it goes: your profile, plans, workout logs,
-                        check-ins and messages. Nothing is deleted until you send the request, and
-                        you'll hear back once it's done. Export your data first if you'd like a copy.
-                        <a href="privacy.html#deleting">How deletion works</a>
-                    </p>
-
-                    <a class="sb-btn sb-btn-secondary" id="deleteAccountLink" href="contact.html?about=other&amp;request=delete-account">
-                        Ask to delete my account
-                    </a>
-
-                </div>
+                <section class="st-group" id="aboutSouthbound">
+                    <header class="st-group-head">
+                        <span class="st-group-icon" data-icon="info"></span>
+                        <div>
+                            <h2 class="st-group-title">About Southbound</h2>
+                        </div>
+                    </header>
+                    <div class="st-panel">
+                        <div class="st-row st-row-pair"><span>Version</span><span class="st-value">1.0 Beta</span></div>
+                        <div class="st-row st-row-pair"><span>Built by</span><span class="st-value">Eddie Steers</span></div>
+                        <a class="st-row st-row-pair st-row-link" href="privacy.html"><span>Privacy</span><span class="st-value" data-icon="chevronRight"></span></a>
+                    </div>
+                </section>
 
             </div>
 
-            <div class="settings-card">
-
-                <h3><span data-icon="info"></span> About Southbound</h3>
-
-                <div class="setting-row">
-
-                    <span>Version</span>
-
-                    <span>1.0 Beta</span>
-
-                </div>
-
-                <div class="setting-row">
-
-                    <span>Developer</span>
-
-                    <span>Eddie Steers</span>
-
-                </div>
-
-            </div>
-
-        </section>
+        </div>
 
     </main>
 

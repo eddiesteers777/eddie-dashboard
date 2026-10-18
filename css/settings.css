@@ -1,555 +1,381 @@
 /* ==========================================
-   SETTINGS PAGE
+   SETTINGS (premium pass, 2026-10-18)
+   The shared premium surfaces (css/style.css "PREMIUM SURFACES"):
+   the account card is the raised bubble, each group of settings a dark
+   bubble with hairline rows, buttons glass, the main action the lens.
+   Computers: the account card and a section index stay on the left.
+   IDs are read by js/settings.js, js/corosSettings.js, js/corosAuth.js
+   and js/healthStatsSetting.js; keep them.
 ========================================== */
 
 .settings-page{
-    max-width:1400px;
-    margin:40px auto;
-    padding:0 32px;
+    width:min(1080px, calc(100% - 48px));
+    margin:0 auto;
+    padding:32px 0 96px;
 }
-
-/* ==========================================
-   HERO
-========================================== */
-
-.hero{
-    display:block;          /* not the global two-column .hero grid */
-    margin-bottom:30px;
-}
-
-.hero h1{
-    font-size:3rem;
-    color:#f2eee4;
-    margin-bottom:10px;
-}
-
-.hero p{
-    color:#8e9a89;
-    font-size:1.05rem;
-}
-
-/* ==========================================
-   PROFILE CARD
-========================================== */
-
-.profile-card{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    background:#17291f;
-
-    border-radius:20px;
-
-    padding:28px;
-
-    margin-bottom:30px;
-
-    box-shadow:0 12px 30px rgba(0,0,0,.25);
-
-}
-
-.profile-left{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:22px;
-
-}
-
-.avatar{
-
-    width:72px;
-
-    height:72px;
-
-    border-radius:50%;
-
-    background:linear-gradient(135deg,#b89a70,#a68a62);
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:1.5rem;
-
-    font-weight:700;
-
-    color:var(--on-primary);
-
-}
-
-.profile-left h2{
-
-    color:white;
-
-    margin-bottom:6px;
-
-    font-size:1.6rem;
-
-}
-
-.profile-left p{
-
-    color:#8e9a89;
-
-}
-
-/* ==========================================
-   SETTINGS GRID
-========================================== */
-
-.settings-grid{
-
-    display:grid;
-
-    grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
-
-    gap:24px;
-
-}
-
-.settings-card{
-
-    background:var(--surface);
-
-    border:1px solid var(--border);
-
-    border-radius:20px;
-
-    padding:26px;
-
-    box-shadow:var(--shadow);
-
-}
-
-.settings-card h3{
-
-    margin-bottom:24px;
-
-    color:var(--text);
-
-    font-size:1.3rem;
-
-}
-
-.settings-btn{
-
-    padding:11px 20px;
-
-    border:1px solid var(--border);
-
-    border-radius:var(--radius-pill);
-
-    background:var(--primary);
-
-    color:var(--on-primary);
-
-    font-size:.9rem;
-
-    font-weight:700;
-
-    font-family:inherit;
-
-    cursor:pointer;
-
-    transition:.2s;
-
-}
-
-.settings-btn:hover{
-
-    background:var(--primary-light);
-
-}
-
-/* ==========================================
-   SETTING ROW
-========================================== */
-
-.setting-row{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:14px 0;
-
-    border-bottom:1px solid var(--border);
-
-}
-
-.setting-row:last-child{
-
-    border-bottom:none;
-
-}
-
-.setting-row span:first-child{
-
-    color:var(--text);
-
-    font-weight:500;
-
-}
-
-.setting-row span:last-child{
-
-    color:var(--text-secondary);
-
-}
-
-/* ==========================================
-   INPUTS
-========================================== */
-
-select,
-input[type="text"],
-input[type="number"]{
-
-    padding:10px 14px;
-
-    border-radius:10px;
-
-    border:1px solid var(--border);
-
-    background:var(--surface-light);
-
-    color:var(--text);
-
-    min-width:140px;
-
-    font-size:.95rem;
-
-}
-
-select:focus,
-input:focus{
-
-    outline:none;
-
-    border-color:var(--primary);
-
-}
-
-/* ==========================================
-   CHECKBOXES
-========================================== */
-
-input[type="checkbox"]{
-
-    width:20px;
-
-    height:20px;
-
-    cursor:pointer;
-
-}
-
-/* ==========================================
-   CONNECTIONS
-========================================== */
-
-.connection{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:16px 0;
-
-    border-bottom:1px solid var(--border);
-
-}
-
-.connection:last-child{
-
-    border-bottom:none;
-
-}
-
-.connection strong{
-
-    color:var(--text);
-
-    display:block;
-
-    margin-bottom:4px;
-
-}
-
-.connection p{
-
-    color:var(--text-secondary);
-
-    font-size:.9rem;
-
-}
-
-.connection button{
-
-    padding:10px 18px;
-
-    border:none;
-
-    border-radius:10px;
-
-    background:var(--surface-light);
-
-    color:var(--muted);
-
-    cursor:not-allowed;
-
-    font-weight:600;
-
-}
-
-/* ==========================================
-   BUTTON
-========================================== */
-
-.primary-btn{
-
-    margin-top:24px;
-
-    width:100%;
-
-    padding:14px;
-
-    border:none;
-
-    border-radius:var(--radius-pill);
-
-    background:var(--primary);
-
-    color:var(--on-primary);
-
-    font-size:1rem;
-
-    font-weight:700;
-
-    cursor:pointer;
-
-    transition:.25s;
-
-}
-
-.primary-btn:hover{
-
-    background:var(--primary-light);
-
-}
-
-/* ==========================================
-   MOBILE
-========================================== */
-
-@media(max-width:900px){
-
-    .settings-grid{
-
-        grid-template-columns:1fr;
-
-    }
-
-}
-
-@media(max-width:650px){
-
-    .settings-page{
-
-        padding:20px;
-
-    }
-
-    .hero h1{
-
-        font-size:2.2rem;
-
-    }
-
-    .profile-card{
-
-        flex-direction:column;
-
-        align-items:flex-start;
-
-        gap:20px;
-
-    }
-
-    .setting-row{
-
-        flex-direction:column;
-
-        align-items:flex-start;
-
-        gap:10px;
-
-    }
-
-    .connection{
-
-        flex-direction:column;
-
-        align-items:flex-start;
-
-        gap:15px;
-
-    }
-
-    .connection button{
-
-        width:100%;
-
-    }
-
-}
-
-/* Cards gated by data-requires (js/navAccess.js): .settings-card sets
-   display, which would otherwise beat the native [hidden]. */
-.settings-card[hidden]{ display:none !important; }
-
-.connection .settings-btn{ text-decoration:none; flex-shrink:0; }
-
-/* COROS connect / disconnect (js/corosSettings.js) */
-.connection{ gap:14px; }
-.connection-actions{ display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; }
-.coros-connection-state{ display:block; margin-top:4px; color:var(--primary); font-weight:600; }
 .settings-page [hidden]{ display:none !important; }
+.settings-page section:not(.eos-today-hero){ margin:0; }   /* the global section margin */
 
-/* "Send my coach's workouts automatically" (js/corosSettings.js) */
-.coros-auto-row{
-    gap:16px;
-    cursor:pointer;
+.st-layout{
+    display:grid;
+    grid-template-columns:300px minmax(0, 1fr);
+    gap:28px;
+    align-items:start;
+}
+.st-side{
+    position:sticky;
+    top:24px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+.st-main{ display:flex; flex-direction:column; gap:30px; min-width:0; }
+
+/* ---------- kicker (mono label) ---------- */
+.st-kicker{
+    font:600 11px/1.3 var(--font-mono);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--primary);
 }
 
-.coros-auto-row input{
+/* ---------- account card ---------- */
+.st-id{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:16px;
+    padding:24px;
+    border-radius:26px;
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}
+.st-avatar{
+    width:72px;
+    height:72px;
+    flex:0 0 72px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:var(--sb-lens-bg) center / cover no-repeat;
+    box-shadow:0 0 0 3px var(--surface), 0 0 0 4px rgba(201,173,132,.55);
+    color:var(--on-primary);
+    font:800 28px/1 var(--font-display);
+    text-transform:uppercase;
+}
+.st-id-text{ min-width:0; width:100%; }
+.st-id-name{
+    margin:6px 0 4px;
+    font:800 30px/.95 var(--font-display);
+    text-transform:uppercase;
+    letter-spacing:.01em;
+    color:var(--text);
+    overflow-wrap:anywhere;
+}
+.st-id-email{
+    margin:0;
+    min-height:1.4em;
+    font:500 14px/1.4 var(--font-body);
+    color:var(--text-secondary);
+    overflow-wrap:anywhere;
+}
+.st-id-actions{ display:flex; flex-wrap:wrap; gap:8px; width:100%; }
+.st-id-actions .st-btn{ flex:1 1 0; }
+
+/* ---------- section index (computers) ---------- */
+.st-jump{
+    display:flex;
+    flex-direction:column;
+    padding:6px;
+    border-radius:20px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+.st-jump a{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-height:44px;
+    padding:0 14px;
+    border-radius:14px;
+    color:var(--text-secondary);
+    font:600 14px/1.2 var(--font-body);
+    text-decoration:none;
+    transition:background .18s ease, color .18s ease;
+}
+.st-jump a:hover,
+.st-jump a:focus-visible{ background:var(--sb-glass-bg); color:var(--text); }
+.st-jump a [data-icon]{ color:var(--primary); display:inline-flex; }
+
+/* ---------- a group of settings ---------- */
+.st-group{ scroll-margin-top:24px; animation:st-rise .45s cubic-bezier(.2,.8,.2,1) both; }
+.st-group:nth-child(2){ animation-delay:.05s; }
+.st-group:nth-child(3){ animation-delay:.1s; }
+.st-group:nth-child(4){ animation-delay:.15s; }
+.st-group:nth-child(n+5){ animation-delay:.2s; }
+@keyframes st-rise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+
+.st-group-head{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin:0 4px 12px;
+}
+.st-group-icon{
+    flex:0 0 40px;
+    width:40px;
+    height:40px;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    color:var(--primary);
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+}
+.st-group-title{
+    margin:0;
+    font:800 24px/1 var(--font-display);
+    text-transform:uppercase;
+    letter-spacing:.01em;
+    color:var(--text);
+}
+.st-group-sub{
+    margin:4px 0 0;
+    font:500 14px/1.45 var(--font-body);
+    color:var(--text-secondary);
+}
+
+.st-panel{
+    padding:4px 22px;
+    border-radius:26px;
+    background:var(--sb-bubble-dark-bg);
+    border:1px solid var(--sb-bubble-dark-border);
+    box-shadow:var(--sb-bubble-dark-shadow);
+}
+
+/* ---------- rows ---------- */
+.st-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    min-height:64px;
+    padding:16px 0;
+}
+/* A hairline above every row that has a shown row before it
+   (the first row may be hidden for this account). */
+.st-panel > .st-row:not([hidden]) ~ .st-row{ border-top:1px solid var(--sb-hairline); }
+.st-row-text{ min-width:0; flex:1 1 auto; }
+.st-row-text strong{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    font:650 16px/1.3 var(--font-body);
+    color:var(--text);
+}
+.st-row-text p{
+    margin:4px 0 0;
+    font:400 14px/1.5 var(--font-body);
+    color:var(--text-secondary);
+    max-width:62ch;
+}
+.st-row-text a{ color:var(--primary); }
+.st-row-actions{ display:flex; flex-wrap:wrap; gap:8px; flex-shrink:0; justify-content:flex-end; }
+.st-row > .st-btn{ flex-shrink:0; }
+.st-row-switch{ cursor:pointer; }
+.st-row-stack{ flex-direction:column; align-items:stretch; gap:12px; }
+.st-row-stack > .st-btn{ align-self:flex-start; }
+.st-row-pair{ min-height:52px; padding:12px 0; font:500 15px/1.3 var(--font-body); color:var(--text-secondary); }
+.st-value{ color:var(--text); font:500 13px/1.3 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; display:inline-flex; }
+.st-row-link{ text-decoration:none; transition:color .18s ease; }
+.st-row-link:hover .st-value,
+.st-row-link:hover{ color:var(--primary); }
+.st-note{ font-size:13px !important; color:var(--text-secondary); }
+
+/* small status chip next to a row title (js/corosAuth.js writes its text) */
+.st-state{
+    display:inline-flex;
+    align-items:center;
+    min-height:22px;
+    padding:0 9px;
+    border-radius:999px;
+    font:600 11px/1 var(--font-mono);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text-secondary);
+    border:1px solid var(--sb-glass-border);
+}
+
+/* ---------- buttons (glass; the lens for the main action) ---------- */
+.st-btn,
+.settings-page .settings-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:44px;
+    padding:0 18px;
+    border-radius:999px;
+    background:var(--sb-glass-bg);
+    border:1px solid var(--sb-glass-border);
+    box-shadow:var(--sb-glass-shadow);
+    color:var(--text);
+    font:650 14px/1 var(--font-body);
+    text-decoration:none;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:border-color .18s ease, transform .18s ease, color .18s ease;
+}
+.st-btn:hover,
+.settings-page .settings-btn:hover{ border-color:rgba(214,185,142,.45); }
+.st-btn:active,
+.settings-page .settings-btn:active{ transform:scale(.97); }
+.st-btn:disabled,
+.settings-page .settings-btn:disabled{ opacity:.55; cursor:default; }
+.st-btn [data-icon]{ display:inline-flex; color:var(--primary); }
+.st-btn-main{
+    background:var(--sb-lens-bg);
+    border-color:transparent;
+    box-shadow:var(--sb-lens-shadow);
+    color:var(--on-primary);
+}
+.st-btn-main:hover{ border-color:transparent; }
+.st-btn-danger,
+.settings-page .wearable-share-revoke{ color:var(--red); }
+.st-btn-danger:hover,
+.settings-page .wearable-share-revoke:hover{ border-color:color-mix(in srgb, var(--red) 50%, transparent); }
+
+/* ---------- inputs ---------- */
+.st-input{
+    width:100%;
+    min-height:48px;
+    padding:12px 16px;
+    border-radius:14px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    color:var(--text);
+    font:400 16px/1.45 var(--font-body);
+    resize:vertical;
+}
+.st-input::placeholder{ color:var(--muted); }
+.st-input:focus{ outline:none; border-color:rgba(201,173,132,.6); }
+
+/* ---------- switches (real checkboxes, so the scripts read .checked) ---------- */
+.st-switch,
+.settings-page .wearable-share-row input[type="checkbox"]{
+    appearance:none;
+    -webkit-appearance:none;
+    flex:0 0 52px;
+    width:52px;
+    height:30px;
+    margin:0;
+    position:relative;
+    border-radius:999px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    cursor:pointer;
+    transition:background .2s ease, border-color .2s ease;
+}
+.st-switch::after,
+.settings-page .wearable-share-row input[type="checkbox"]::after{
+    content:"";
+    position:absolute;
+    top:3px;
+    left:3px;
     width:22px;
     height:22px;
-    flex-shrink:0;
+    border-radius:50%;
+    background:var(--text-secondary);
+    box-shadow:0 1px 3px rgba(0,0,0,.4);
+    transition:transform .22s cubic-bezier(.2,.9,.3,1.2), background .2s ease;
 }
+.st-switch:checked,
+.settings-page .wearable-share-row input[type="checkbox"]:checked{
+    background:var(--sb-lens-bg);
+    border-color:transparent;
+}
+.st-switch:checked::after,
+.settings-page .wearable-share-row input[type="checkbox"]:checked::after{
+    transform:translateX(22px);
+    background:var(--on-primary);
+}
+.st-switch:focus-visible,
+.settings-page .wearable-share-row input[type="checkbox"]:focus-visible{ outline:2px solid var(--primary); outline-offset:3px; }
 
-@media (max-width:700px){
-    .settings-card .coros-auto-row{
-        flex-direction:row;
-        align-items:flex-start;
-    }
-}
-
-/* Coach/client wearable sharing permissions (consent metadata only). */
-.wearable-sharing-intro{
-    color:var(--text-secondary);
-    font-size:.9rem;
-    line-height:1.55;
-    margin:-8px 0 18px;
-}
+/* ---------- share with your coach (rows drawn by js/corosSettings.js) ---------- */
 .settings-sharing-empty{
-    padding:12px 14px;
-    border:1px dashed var(--border);
-    border-radius:12px;
-    color:var(--muted);
-    font-size:.88rem;
-    line-height:1.5;
+    padding:20px 0;
+    font:400 14px/1.5 var(--font-body);
+    color:var(--text-secondary);
 }
-.wearable-share-row{
-    padding:16px 0;
-    border-top:1px solid var(--border);
-}
+.wearable-share-row{ padding:8px 0 18px; }
+.wearable-share-row + .wearable-share-row{ border-top:1px solid var(--sb-hairline); }
 .wearable-share-head{
     display:flex;
+    align-items:center;
     justify-content:space-between;
-    gap:14px;
-    align-items:flex-start;
-    margin-bottom:10px;
+    gap:12px;
+    padding:12px 0 8px;
 }
-.wearable-share-head strong{ display:block; color:var(--text); }
-.wearable-share-head span:not(.wearable-share-status){
-    display:block;
-    margin-top:3px;
-    color:var(--muted);
-    font-size:.8rem;
-}
+.wearable-share-head strong{ display:block; font:650 16px/1.3 var(--font-body); color:var(--text); }
+.wearable-share-head span:not(.wearable-share-status){ display:block; margin-top:2px; font-size:13px; color:var(--text-secondary); }
 .wearable-share-status{
     flex-shrink:0;
-    padding:4px 8px;
-    border:1px solid var(--border);
+    padding:5px 10px;
     border-radius:999px;
+    font:600 11px/1 var(--font-mono);
+    letter-spacing:.1em;
+    text-transform:uppercase;
     color:var(--text-secondary);
-    font-size:.75rem;
-    font-weight:700;
+    border:1px solid var(--sb-glass-border);
 }
 .wearable-share-row label{
     display:flex;
-    justify-content:space-between;
     align-items:center;
-    gap:14px;
-    padding:11px 0;
-    border-top:1px solid rgba(243,239,230,.06);
+    justify-content:space-between;
+    gap:16px;
+    padding:14px 0;
+    border-top:1px solid var(--sb-hairline);
     cursor:pointer;
 }
 .wearable-share-row label span{ min-width:0; }
-.wearable-share-row label strong{
-    display:block;
-    color:var(--text);
-    font-size:.9rem;
+.wearable-share-row label strong{ display:block; font:600 15px/1.3 var(--font-body); color:var(--text); }
+.wearable-share-row label small{ display:block; margin-top:3px; font-size:13px; line-height:1.45; color:var(--text-secondary); }
+.wearable-share-actions{ display:flex; flex-wrap:wrap; gap:8px; padding-top:6px; }
+
+/* ==========================================
+   Phones and narrow windows: one column, the account card first,
+   no section index (the page is short enough to scroll).
+========================================== */
+@media (max-width:900px){
+    .st-layout{ grid-template-columns:minmax(0, 1fr); gap:30px; }
+    .st-side{ position:static; }
+    .st-jump{ display:none; }
+    .st-id{ display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; column-gap:16px; }
+    .st-id-actions{ grid-column:1 / -1; }
 }
-.wearable-share-row label small{
-    display:block;
-    margin-top:3px;
-    color:var(--muted);
-    font-size:.78rem;
-    line-height:1.4;
-}
-.wearable-share-row input{ flex-shrink:0; }
-.wearable-share-actions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    margin-top:12px;
-}
-.wearable-share-actions .settings-btn{ width:auto; }
-.wearable-share-revoke{
-    background:transparent;
-    color:var(--text-secondary);
+@media (max-width:600px){
+    .settings-page{ width:calc(100% - 32px); padding-top:20px; }
+    .st-id{ padding:20px; }
+    .st-avatar{ width:60px; height:60px; flex-basis:60px; font-size:24px; }
+    .st-id-name{ font-size:26px; }
+    .st-panel{ padding:2px 18px; border-radius:22px; }
+    .st-group-head{ margin-bottom:10px; }
+    .st-group-title{ font-size:22px; }
+    .st-row:not(.st-row-switch):not(.st-row-pair){ flex-direction:column; align-items:stretch; gap:12px; }
+    .st-row:not(.st-row-switch):not(.st-row-pair) > .st-btn,
+    .st-row-actions{ align-self:flex-start; justify-content:flex-start; }
+    .st-btn{ white-space:normal; text-align:center; }
 }
 
-/* Stripe billing (clients with an established Stripe customer). */
-.billing-intro{
-    color:var(--text-secondary);
-    font-size:.9rem;
-    line-height:1.55;
-    margin:-8px 0 18px;
-}
-.billing-note{
-    color:var(--muted);
-    font-size:.8rem;
-    line-height:1.45;
-    margin:10px 0 0;
-}
-
-/* How clients pay you (coach, Phase 9). */
-.settings-textarea{
-    width:100%;
-    min-height:96px;
-    margin:4px 0 12px;
-    padding:12px 14px;
-    background:var(--surface-light);
-    border:1px solid var(--border);
-    border-radius:12px;
-    color:var(--text);
-    font:inherit;
-    line-height:1.5;
-    resize:vertical;
+@media (prefers-reduced-motion:reduce){
+    .st-group{ animation:none; }
+    .st-switch::after,
+    .settings-page .wearable-share-row input[type="checkbox"]::after{ transition:none; }
 }

@@ -19,12 +19,9 @@ import { getUserSettings, saveUserSettings } from "./userSettings.js";
 const userName = document.getElementById("userName");
 const userEmail = document.getElementById("userEmail");
 
-const displayName = document.getElementById("displayName");
-const displayEmail = document.getElementById("displayEmail");
-
 const avatar = document.getElementById("settingsAvatar");
 
-const logoutBtn = document.getElementById("logoutBtn");
+const logoutBtn = document.getElementById("settingsSignOutBtn");
 const billingCard = document.getElementById("billingCard");
 const manageBillingBtn = document.getElementById("manageBillingBtn");
 
@@ -50,9 +47,7 @@ listenForAuth(async (user) => {
 
     userName.textContent = user.displayName || "Your account";
     userEmail.textContent = user.email || "";
-
-    displayName.textContent = user.displayName || "Your account";
-    displayEmail.textContent = user.email || "";
+    userEmail.classList.remove("sb-wait");
 
     const initials = (user.displayName || user.email || "?")
         .split(/[\s@.]+/).filter(Boolean).slice(0, 2)
