@@ -8,12 +8,12 @@ import { accessFromProfile, fallbackAccess } from "../js/navAccess.js";
 const who = (services, status = "active", hasCoachPlan = false) => accessFromProfile({ status, services }, { hasCoachPlan });
 const shown = access => clientTodaySections(access).filter(s => s.on).map(s => s.id);
 
-test("running client: Today, then the coach, then the rest", () => {
-    assert.deepEqual(shown(who(["running"])), ["todayCard", "coachCardSection", "profileCheck", "weekSection", "readinessCard", "todayHabits", "clientPackageSection", "todayTiles", "todayTools"]);
+test("running client: Today, the week, then the coach, then the rest", () => {
+    assert.deepEqual(shown(who(["running"])), ["todayCard", "weekSection", "coachCardSection", "profileCheck", "readinessCard", "todayHabits", "clientPackageSection", "todayTiles", "todayTools"]);
 });
 
 test("soccer client: sessions first, no readiness, no nutrition", () => {
-    assert.deepEqual(shown(who(["soccer_1on1"])), ["todayCard", "coachCardSection", "profileCheck", "weekSection", "todayHabits", "clientPackageSection", "todayTools"]);
+    assert.deepEqual(shown(who(["soccer_1on1"])), ["todayCard", "weekSection", "coachCardSection", "profileCheck", "todayHabits", "clientPackageSection", "todayTools"]);
     assert.deepEqual(shown(who(["soccer_group"], "active", true)), shown(who(["soccer_1on1"])), "a coach plan doesn't add nutrition or readiness");
 });
 

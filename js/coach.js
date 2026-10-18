@@ -9,9 +9,6 @@
 
 import { listenForAuth } from "./auth.js";
 import { isApprovedCoach, listPendingProfiles } from "./userProfile.js";
-import { listMyClients } from "./coachAccess.js";
-import { listRequestsForMyClients } from "./scheduling.js";
-import { listCheckinsForMyClients } from "./checkins.js";
 import { getEmailSetupStatus } from "./emailNotify.js";
 import { listInquiries, setInquiryHandled, interestLabel } from "./inquiries.js";
 import { listApplications, setApplicationHandled } from "./applications.js";
@@ -22,7 +19,7 @@ import { attentionQueue } from "./feedbackModel.js";
 import { icon } from "./icons.js";
 import { emptyHtml, toast } from "./ui.js";
 import { sessionList, weekAgenda } from "./sessionModel.js";
-import { newPeopleItems, splitDone, pruneDone, groupByTask, groupByPerson, greeting, summaryLine, waitedText, itemKey } from "./coachToday.js";
+import { newPeopleItems, splitDone, pruneDone, groupByTask, greeting, summaryLine, waitedText, itemKey, SEGMENTS, splitSegments, ringTone } from "./coachToday.js";
 
 // ---- Who needs you today (js/coachToday.js) ----
 // Every client's attention items plus new people (applications, website
@@ -41,12 +38,9 @@ const QUEUE_GO = {
     pain: "Reply", health: "Open", change: "Reply", checkin: "Reply", message: "Reply",
     booking: "Review", pending: "Approve", application: "Open", question: "Open", plan: "Build plan"
 };
-// Task groups tucked behind "lower priority" so real work comes first.
-const LOW_GROUPS = ["plans", "followup"];
 const DONE_KEY = "coach-queue-done";
-const VIEW_KEY = "sb-coach-queue-view";   // this device only
 
-const today = { clients: null, clientItems: [], failed: false, name: "", showHidden: false, showLow: false };
+const today = { clients: null, clientItems: [], failed: false, name: "", showHidden: false, seg: "" };
 
 function readJson(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
@@ -57,10 +51,6 @@ function doneMarks() {
 function saveDone(done) {
     try { localStorage.setItem(DONE_KEY, JSON.stringify(done)); } catch { /* private window: this visit only */ }
 }
-function queueView() {
-    try { return localStorage.getItem(VIEW_KEY) === "person" ? "person" : "task"; } catch { return "task"; }
-}
-
 async function loadQueue() {
     try {
         const day = isoDate(new Date());
@@ -80,6 +70,7 @@ async function loadQueue() {
     renderToday();
     renderWeek();
     renderClientList();
+    renderStrip();
 }
 
 function allItems() {
@@ -93,84 +84,105 @@ function allItems() {
     return [...today.clientItems, ...people];
 }
 
-function queueRow(item, { withName, hidden = false }) {
+const initials = name => String(name || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+
+function queueRow(item, { hidden = false } = {}) {
     const when = waitedText(item.at);
     return `
         <div class="coach-queue-row${hidden ? " is-done" : ""}">
-            <a class="coach-queue-item is-${escapeHtml(item.kind)}" href="${escapeHtml(item.href)}">
-                <span class="coach-queue-icon">${icon(QUEUE_ICONS[item.kind] || "info")}</span>
-                <span class="coach-queue-text">${withName ? `<strong>${escapeHtml(item.name)}</strong> ` : ""}${escapeHtml(item.text)}${when ? `<span class="coach-queue-when">${escapeHtml(when)}</span>` : ""}</span>
-                ${QUEUE_GO[item.kind] ? `<span class="coach-queue-go">${QUEUE_GO[item.kind]}</span>` : ""}
-                ${icon("chevronRight")}
-            </a>
-            <button type="button" class="coach-queue-done" data-done="${escapeHtml(itemKey(item))}" data-undo="${hidden ? "1" : ""}"
-                aria-label="${hidden ? "Show again today" : "Done for today"}: ${escapeHtml(item.name)}, ${escapeHtml(item.text)}">
-                ${hidden ? "Undo" : `${icon("check")}<span>Done</span>`}
-            </button>
+            <div class="coach-queue-reveal" aria-hidden="true">${icon("check")}<span>Done</span></div>
+            <div class="coach-queue-slide">
+                <a class="coach-queue-item is-${escapeHtml(item.kind)}" href="${escapeHtml(item.href)}">
+                    <span class="coach-queue-avatar">${escapeHtml(initials(item.name))}</span>
+                    <span class="coach-queue-text"><strong>${escapeHtml(item.name)}</strong>${item.kind === "pain" || item.kind === "health" ? `<span class="coach-queue-flag">${item.kind === "pain" ? "Pain" : "Health"}</span>` : ""}<span class="coach-queue-line">${escapeHtml(item.text)}</span>${when ? `<span class="coach-queue-when">${escapeHtml(when)}</span>` : ""}</span>
+                </a>
+                <button type="button" class="coach-queue-done" data-done="${escapeHtml(itemKey(item))}" data-undo="${hidden ? "1" : ""}"
+                    aria-label="${hidden ? "Show again today" : "Done for today"}: ${escapeHtml(item.name)}, ${escapeHtml(item.text)}">
+                    ${hidden ? "Undo" : icon("check")}
+                </button>
+            </div>
         </div>`;
 }
+
+// ---- The athletes strip: who needs you (ring) and their week (dots) ----
+
+const DOT_LABEL = { done: "done", missed: "missed", skipped: "skipped", today: "today", upcoming: "coming up", rest: "rest" };
+
+function renderStrip() {
+    const el = document.getElementById("coachStrip");
+    if (!today.clients || !today.clients.length) { el.hidden = true; return; }
+    const rank = { urgent: 0, waiting: 1, ok: 2 };
+    const rows = [...today.clients].sort((a, b) => rank[ringTone(a.attention)] - rank[ringTone(b.attention)] || String(a.name).localeCompare(String(b.name)));
+    el.hidden = false;
+    el.innerHTML = rows.map(c => {
+        const tone = ringTone(c.attention);
+        const days = c.plans?.week?.days || [];
+        const first = String(c.goesBy || c.name || "").split(/\s+/)[0];
+        const week = days.map(d => DOT_LABEL[d.state]).join(", ");
+        return `
+        <a class="coach-strip-item" href="client.html?uid=${encodeURIComponent(c.uid)}" aria-label="${escapeHtml(c.name)}${c.attention.length ? `, ${c.attention.length} waiting` : ""}${week ? `. This week: ${week}` : ""}">
+            <span class="coach-strip-ring is-${tone}"><span>${escapeHtml(initials(c.name))}</span></span>
+            <span class="coach-strip-name">${escapeHtml(first)}</span>
+            <span class="coach-strip-dots" aria-hidden="true">${days.map(d => `<i class="is-${d.state}"></i>`).join("")}</span>
+        </a>`;
+    }).join("");
+}
+
+// ---- Who needs you today: Reply / Approve / Book / Later ----
 
 function renderToday() {
     const list = document.getElementById("coachQueueList");
     const hiddenBtn = document.getElementById("coachQueueHidden");
-    const view = queueView();
-    document.querySelectorAll(".coach-view-btn").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
     document.getElementById("coachGreeting").textContent = greeting(new Date(), today.name);
 
     const { shown, hidden } = splitDone(allItems(), doneMarks(), isoDate(new Date()));
-    const groups = groupByTask(shown);
-    const line = summaryLine(groups, hidden.length);
+    const line = summaryLine(groupByTask(shown), hidden.length);
     document.getElementById("coachSummary").textContent = today.clients ? [line.headline, line.detail].filter(Boolean).join(". ").replace(/\.\. /, ". ") : "Checking on your clients…";
 
     if (!today.clients) return;   // still loading: keep the shimmer
-    const lowBtn = document.getElementById("coachQueueLow");
-    lowBtn.hidden = true;
+    const segs = splitSegments(shown);
+    // Open on the first switch that has something in it, unless the coach chose one.
+    if (!today.seg || (!today.chosen && !segs[today.seg].length)) today.seg = SEGMENTS.find(s => segs[s.id].length)?.id || "reply";
+    document.getElementById("coachSeg").innerHTML = SEGMENTS.map(s => `
+        <button type="button" role="tab" class="coach-seg-btn" data-seg="${s.id}" aria-selected="${s.id === today.seg}">${s.label}${segs[s.id].length ? `<em>${segs[s.id].length}</em>` : ""}</button>`).join("");
+
     hiddenBtn.hidden = !hidden.length;
     hiddenBtn.textContent = today.showHidden ? "Hide the ones marked done" : `${hidden.length} marked done for today · Show them`;
+
+    // On Approve, applications and website questions show as full cards
+    // (with Email / Text / Call) in the panel below, not twice.
+    const inPanel = k => k === "application" || k === "question";
+    const rows = segs[today.seg].filter(item => !(today.seg === "approve" && inPanel(item.kind)));
+    document.getElementById("coachApprovePanel").hidden = today.seg !== "approve";
+    document.getElementById("applications").hidden = !applications.length;
+    document.getElementById("inquiries").hidden = !inquiries.length;
 
     let html = "";
     if (today.failed) {
         html += `<div class="coach-inq-empty">Couldn't load your clients right now. Open <a href="clients.html">My Clients</a>.</div>`;
     }
-    if (!shown.length && !today.failed) {
-        html += `<div class="clients-card">${emptyHtml({
+    const approvePanelHasCards = today.seg === "approve" && segs.approve.some(item => inPanel(item.kind));
+    if (!rows.length && !approvePanelHasCards && !today.failed) {
+        const nothing = !shown.length;
+        html += `<div class="coach-queue-empty">${emptyHtml({
             iconName: "checkCircle",
-            title: hidden.length ? "That's everything for today" : today.clients.length ? "You're all caught up" : "No clients yet",
-            text: hidden.length ? "The rest are marked done. They come back tomorrow if they still need you."
+            title: nothing ? (hidden.length ? "That's everything for today" : today.clients.length ? "You're all caught up" : "No clients yet") : "Nothing here",
+            text: nothing ? (hidden.length ? "The rest are marked done. They come back tomorrow if they still need you."
                 : today.clients.length ? "No pain flags, replies, new people or plan work waiting on you."
-                : "When clients connect with you, anything that needs you shows up here."
+                : "When clients connect with you, anything that needs you shows up here.")
+                : "Nothing in this one right now."
         })}</div>`;
-    } else if (view === "person") {
-        html += groupByPerson(shown).map(p => `
-            <div class="coach-queue-name">${escapeHtml(p.name)}</div>
-            ${p.items.map(item => queueRow(item, { withName: false })).join("")}`).join("");
     } else {
-        const groups = groupByTask(shown);
-        const groupHtml = g => `
-            <div class="coach-queue-group">
-                <h3 class="coach-queue-group-title">${escapeHtml(g.label)} <span>${g.items.length}</span></h3>
-                ${g.items.map(item => queueRow(item, { withName: true })).join("")}
-            </div>`;
-        const main = groups.filter(g => !LOW_GROUPS.includes(g.id));
-        const low = groups.filter(g => LOW_GROUPS.includes(g.id));
-        const lowCount = low.reduce((n, g) => n + g.items.length, 0);
-        html += main.map(groupHtml).join("");
-        // Nothing urgent: show the lower-priority work instead of hiding all of it.
-        const openLow = today.showLow || !main.length;
-        if (lowCount && openLow) html += low.map(groupHtml).join("");
-        lowBtn.hidden = !lowCount || !main.length;
-        lowBtn.textContent = today.showLow ? "Hide lower-priority" : `${lowCount} lower-priority · plans and follow-ups · Show`;
+        html += `<div class="coach-queue-group">${rows.map(item => queueRow(item)).join("")}</div>`;
     }
     if (today.showHidden && hidden.length) {
         html += `<div class="coach-queue-group"><h3 class="coach-queue-group-title">Done for today <span>${hidden.length}</span></h3>
-            ${hidden.map(item => queueRow(item, { withName: true, hidden: true })).join("")}</div>`;
+            ${hidden.map(item => queueRow(item, { hidden: true })).join("")}</div>`;
     }
     list.innerHTML = html;
 }
 
-document.getElementById("coachQueueList").addEventListener("click", event => {
-    const btn = event.target.closest("[data-done]");
-    if (!btn) return;
+function markDone(btn) {
     const key = btn.dataset.done;
     const done = doneMarks();
     const undo = Boolean(btn.dataset.undo);
@@ -183,19 +195,67 @@ document.getElementById("coachQueueList").addEventListener("click", event => {
             action: { label: "Undo", onClick: () => { const d = doneMarks(); delete d[key]; saveDone(d); renderToday(); } }
         });
     }
+}
+
+const queueListEl = document.getElementById("coachQueueList");
+let swiped = false;
+queueListEl.addEventListener("click", event => {
+    if (swiped) { event.preventDefault(); swiped = false; return; }
+    const btn = event.target.closest("[data-done]");
+    if (btn) markDone(btn);
 });
-document.getElementById("coachQueueLow").addEventListener("click", () => {
-    today.showLow = !today.showLow;
+
+// Swipe a row left to mark it done, like Messages. The check button on the
+// row does the same for anyone not swiping.
+(() => {
+    let start = null;
+    queueListEl.addEventListener("touchstart", event => {
+        const slide = event.target.closest(".coach-queue-slide");
+        const row = slide?.closest(".coach-queue-row");
+        if (!slide || row.classList.contains("is-done") || event.touches.length !== 1) { start = null; return; }
+        start = { x: event.touches[0].clientX, y: event.touches[0].clientY, slide, row, dx: 0, lock: false };
+    }, { passive: true });
+    queueListEl.addEventListener("touchmove", event => {
+        if (!start) return;
+        const dx = event.touches[0].clientX - start.x;
+        const dy = event.touches[0].clientY - start.y;
+        if (!start.lock) {
+            if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { start = null; return; }   // scrolling
+            if (Math.abs(dx) < 10) return;
+            start.lock = true;
+        }
+        start.dx = Math.min(0, Math.max(dx, -140));
+        start.slide.style.transition = "none";
+        start.slide.style.transform = `translateX(${start.dx}px)`;
+        start.row.classList.toggle("is-armed", start.dx < -80);
+    }, { passive: true });
+    const end = () => {
+        if (!start) return;
+        const { slide, row, dx, lock } = start;
+        start = null;
+        slide.style.transition = "";
+        slide.style.transform = "";
+        row.classList.remove("is-armed");
+        if (!lock) return;
+        swiped = true;
+        setTimeout(() => { swiped = false; }, 400);
+        if (dx < -80) markDone(row.querySelector("[data-done]"));
+    };
+    queueListEl.addEventListener("touchend", end);
+    queueListEl.addEventListener("touchcancel", end);
+})();
+
+document.getElementById("coachSeg").addEventListener("click", event => {
+    const btn = event.target.closest("[data-seg]");
+    if (!btn) return;
+    today.seg = btn.dataset.seg;
+    today.chosen = true;
     renderToday();
 });
 document.getElementById("coachQueueHidden").addEventListener("click", () => {
     today.showHidden = !today.showHidden;
     renderToday();
 });
-document.querySelectorAll(".coach-view-btn").forEach(btn => btn.addEventListener("click", () => {
-    try { localStorage.setItem(VIEW_KEY, btn.dataset.view); } catch { /* this visit only */ }
-    renderToday();
-}));
 
 // ---- Sessions this week (js/sessionModel.js weekAgenda) ----
 
@@ -337,9 +397,6 @@ function renderInquiries() {
     const fresh = inquiries.filter(q => q.status !== "handled");
     const answered = inquiries.length - fresh.length;
 
-    statNewInquiriesNum.textContent = fresh.length;
-    statNewInquiries.classList.toggle("coach-stat-attention", fresh.length > 0);
-    statNewInquiries.classList.toggle("coach-stat-neutral", fresh.length === 0);
 
     inqToggleBtn.hidden = answered === 0;
     inqToggleBtn.textContent = showHandled ? "Hide answered" : `Show answered (${answered})`;
@@ -435,9 +492,6 @@ function renderApplications() {
     const fresh = applications.filter(a => a.status !== "handled");
     const handledCount = applications.length - fresh.length;
 
-    statNewApplicationsNum.textContent = fresh.length;
-    statNewApplications.classList.toggle("coach-stat-attention", fresh.length > 0);
-    statNewApplications.classList.toggle("coach-stat-neutral", fresh.length === 0);
 
     appToggleBtn.hidden = handledCount === 0;
     appToggleBtn.textContent = showHandledApps ? "Hide handled" : `Show handled (${handledCount})`;
@@ -518,42 +572,8 @@ const signedOutEl = document.getElementById("coachSignedOut");
 const notApprovedEl = document.getElementById("coachNotApproved");
 const dashboardEl = document.getElementById("coachDashboard");
 
-const statPendingAccounts = document.getElementById("statPendingAccounts");
-const statPendingAccountsNum = document.getElementById("statPendingAccountsNum");
-const statPendingRequests = document.getElementById("statPendingRequests");
-const statPendingRequestsNum = document.getElementById("statPendingRequestsNum");
-const statPendingCheckins = document.getElementById("statPendingCheckins");
-const statPendingCheckinsNum = document.getElementById("statPendingCheckinsNum");
-const statActiveClientsNum = document.getElementById("statActiveClientsNum");
-const statNewInquiries = document.getElementById("statNewInquiries");
-const statNewApplications = document.getElementById("statNewApplications");
-const statNewApplicationsNum = document.getElementById("statNewApplicationsNum");
-const statNewInquiriesNum = document.getElementById("statNewInquiriesNum");
-
 async function refreshDashboard() {
-    const [pending, clients, requests, checkins] = await Promise.all([
-        listPendingProfiles(),
-        listMyClients(),
-        listRequestsForMyClients(),
-        listCheckinsForMyClients()
-    ]);
-
-    const pendingRequestCount = requests.filter(r => r.status === "requested").length;
-    const pendingCheckinCount = checkins.filter(c => c.status !== "reviewed").length;
-
-    statPendingAccountsNum.textContent = pending.length;
-    statPendingAccounts.classList.toggle("coach-stat-attention", pending.length > 0);
-    statPendingAccounts.classList.toggle("coach-stat-neutral", pending.length === 0);
-
-    statPendingRequestsNum.textContent = pendingRequestCount;
-    statPendingRequests.classList.toggle("coach-stat-attention", pendingRequestCount > 0);
-    statPendingRequests.classList.toggle("coach-stat-neutral", pendingRequestCount === 0);
-
-    statPendingCheckinsNum.textContent = pendingCheckinCount;
-    statPendingCheckins.classList.toggle("coach-stat-attention", pendingCheckinCount > 0);
-    statPendingCheckins.classList.toggle("coach-stat-neutral", pendingCheckinCount === 0);
-
-    statActiveClientsNum.textContent = clients.length;
+    const pending = await listPendingProfiles();
 
     pendingProfiles = pending;
     if (applicationsLoaded) renderApplications();

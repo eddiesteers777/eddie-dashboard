@@ -180,7 +180,15 @@ export function summarizePlans(shared, today, published = [], results = []) {
         missed: dueSoFar.filter(d => !d.completed && !d.skipped && d.date < today).length,
         skipped: dueSoFar.filter(d => d.skipped).length,
         plannedMiles: round1(thisWeek.reduce((s, d) => s + (Number(d.miles) || 0), 0)),
-        completedMiles: round1(thisWeek.filter(d => d.completed).reduce((s, d) => s + (Number(d.miles) || 0), 0))
+        completedMiles: round1(thisWeek.filter(d => d.completed).reduce((s, d) => s + (Number(d.miles) || 0), 0)),
+        // Mon-Sun, one state per day for the coach's week dots: done, missed,
+        // skipped, today, upcoming, or rest (nothing planned).
+        days: Array.from({ length: 7 }, (_, i) => {
+            const date = addDays(monday, i);
+            const d = thisWeek.find(x => x.date === date);
+            const state = !d ? "rest" : d.completed ? "done" : d.skipped ? "skipped" : date === today ? "today" : date < today ? "missed" : "upcoming";
+            return { date, state };
+        })
     };
 
     return {
