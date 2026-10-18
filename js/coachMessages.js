@@ -14,6 +14,8 @@ import { summarizeClient, isoDate, shortDate, serviceLabels } from "./clientSumm
 import { inboxRows, inboxGroups, needsCount } from "./coachInbox.js";
 import { waitedText } from "./coachToday.js";
 import { mountThread } from "./messageView.js";
+import { markRead } from "./messages.js";
+import { togglePinned, unreadFor } from "./messageThread.js";
 import { sendCoachMessageEmail } from "./emailNotify.js";
 import { friendlyError, loadingHtml } from "./ui.js";
 
@@ -21,6 +23,10 @@ const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const firstName = name => String(name || "").split(" ")[0] || "them";
 const wide = () => window.matchMedia("(min-width: 901px)").matches;
+
+const PIN_KEY = "coach-pinned-chats";   // cloud-synced list of client uids
+const readPins = () => { try { const v = JSON.parse(localStorage.getItem(PIN_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } };
+const writePins = list => { try { localStorage.setItem(PIN_KEY, JSON.stringify(list)); } catch { /* storage unavailable */ } };
 
 const shell = $("cmShell");
 let clients = [];          // [{ uid, name, searchText, messages, summary, record }]
@@ -31,21 +37,33 @@ let mounted = null;
 
 function renderList() {
     const rows = inboxRows(clients.map(c => ({ uid: c.uid, name: c.name, searchText: c.searchText, messages: c.messages })));
-    const groups = inboxGroups(rows, { query: $("cmSearch").value });
+    const pins = readPins();
+    let groups = inboxGroups(rows, { query: $("cmSearch").value });
+    const pinned = pins.map(uid => groups.flatMap(g => g.rows).find(r => r.uid === uid)).filter(Boolean);
+    if (pinned.length) {
+        groups = [{ key: "pinned", label: "Pinned", rows: pinned }, ...groups.map(g => ({ ...g, rows: g.rows.filter(r => !pins.includes(r.uid)) })).filter(g => g.rows.length)];
+    }
     const waiting = needsCount(rows);
     $("cmSummary").textContent = waiting
         ? `${waiting} ${waiting === 1 ? "client is" : "clients are"} waiting on you.`
         : "You're caught up.";
+    const initials = name => String(name || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
     $("cmList").innerHTML = groups.length ? groups.map(g => `
         <div class="cm-group">${esc(g.label)} · ${g.rows.length}</div>
         ${g.rows.map(r => `
-            <button type="button" class="cm-item${r.uid === selected ? " is-selected" : ""}${r.unread ? " is-unread" : ""}" data-uid="${esc(r.uid)}">
-                <span class="cm-avatar" aria-hidden="true">${esc((r.name || "?").slice(0, 1).toUpperCase())}</span>
-                <span class="cm-item-main">
-                    <span class="cm-item-top"><strong>${esc(r.name)}</strong><span class="cm-when">${r.at ? esc(waitedText(r.at).replace(" ago", "")) : ""}</span></span>
-                    <span class="cm-item-bottom"><span class="cm-preview">${r.text ? `${r.mine ? "You: " : ""}${esc(r.text)}` : "Start a conversation"}</span>${r.unread ? `<span class="cm-count" aria-label="${r.unread} unread">${r.unread}</span>` : ""}</span>
-                </span>
-            </button>`).join("")}`).join("")
+            <div class="cm-swipe">
+                <div class="cm-actions">
+                    <button type="button" class="cm-act cm-act-pin" data-pin="${esc(r.uid)}">${pins.includes(r.uid) ? "Unpin" : "Pin"}</button>
+                    ${r.unread ? `<button type="button" class="cm-act cm-act-read" data-markread="${esc(r.uid)}">Read</button>` : ""}
+                </div>
+                <button type="button" class="cm-item${r.uid === selected ? " is-selected" : ""}${r.unread ? " is-unread" : ""}" data-uid="${esc(r.uid)}">
+                    <span class="cm-avatar" aria-hidden="true">${esc(initials(r.name))}</span>
+                    <span class="cm-item-main">
+                        <span class="cm-item-top"><strong>${esc(r.name)}</strong><span class="cm-when">${r.at ? esc(waitedText(r.at).replace(" ago", "")) : ""}</span></span>
+                        <span class="cm-item-bottom"><span class="cm-preview">${r.text ? `${r.mine ? "You: " : ""}${esc(r.text)}` : "Start a conversation"}</span>${r.unread ? `<span class="cm-count" aria-label="${r.unread} unread">${r.unread}</span>` : ""}</span>
+                    </span>
+                </button>
+            </div>`).join("")}`).join("")
         : `<p class="cm-none">${clients.length ? "No clients match." : "No clients yet. Add one from My Clients."}</p>`;
 }
 
@@ -122,7 +140,67 @@ function closeClient() {
     renderList();
 }
 
-$("cmList").addEventListener("click", event => {
+// Swipe a row left (or right-click it) for Pin / Read.
+let swipe = null;
+let swiped = false;
+const closeSwipes = except => $("cmList").querySelectorAll(".cm-swipe.is-open").forEach(el => { if (el !== except) el.classList.remove("is-open"); });
+$("cmList").addEventListener("pointerdown", event => {
+    const item = event.target.closest(".cm-item");
+    if (!item || event.pointerType === "mouse") return;
+    swipe = { item, row: item.closest(".cm-swipe"), x: event.clientX, y: event.clientY, dx: 0, live: false };
+    swiped = false;
+});
+$("cmList").addEventListener("pointermove", event => {
+    if (!swipe) return;
+    const dx = event.clientX - swipe.x;
+    const dy = event.clientY - swipe.y;
+    if (!swipe.live) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { swipe = null; return; }
+        if (Math.abs(dx) < 10) return;
+        swipe.live = true;
+        closeSwipes(swipe.row);
+        swipe.item.style.transition = "none";
+    }
+    const base = swipe.row.classList.contains("is-open") ? -150 : 0;
+    swipe.dx = Math.max(-150, Math.min(0, base + dx));
+    swipe.item.style.transform = `translateX(${swipe.dx}px)`;
+});
+const endSwipe = () => {
+    if (!swipe) return;
+    if (swipe.live) {
+        swiped = true;
+        swipe.item.style.transition = "";
+        swipe.item.style.transform = "";
+        swipe.row.classList.toggle("is-open", swipe.dx < -60);
+    }
+    swipe = null;
+};
+$("cmList").addEventListener("pointerup", endSwipe);
+$("cmList").addEventListener("pointercancel", endSwipe);
+$("cmList").addEventListener("contextmenu", event => {
+    const row = event.target.closest(".cm-swipe");
+    if (!row) return;
+    event.preventDefault();
+    closeSwipes(row);
+    row.classList.toggle("is-open");
+});
+$("cmList").addEventListener("click", async event => {
+    const pin = event.target.closest("[data-pin]");
+    if (pin) { writePins(togglePinned(readPins(), pin.dataset.pin)); renderList(); return; }
+    const read = event.target.closest("[data-markread]");
+    if (read) {
+        const c = clients.find(x => x.uid === read.dataset.markread);
+        if (c) {
+            const unread = unreadFor(c.messages, "coach");
+            c.messages = c.messages.map(m => unread.includes(m) ? { ...m, readAt: Date.now() } : m);
+            renderList();
+            markRead(unread);
+        }
+        return;
+    }
+    if (swiped) { swiped = false; return; }
+    const open = event.target.closest(".cm-swipe.is-open");
+    if (open) { open.classList.remove("is-open"); return; }
     const item = event.target.closest("[data-uid]");
     if (item) openClient(item.dataset.uid);
 });

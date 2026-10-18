@@ -46,7 +46,11 @@ rules_version = '2';
 //   messages/{id}              The coach-client message thread: either of
 //                              the two (linked) writes as themselves; the
 //                              other can only mark it read; the sender can
-//                              unsend it while it's still unread.
+//                              unsend it while it's still unread. Either can
+//                              set their own emoji reaction; a reply quotes
+//                              another message (replyTo).
+//   messageTyping/{pairId}     The "is typing" ping (coachUid_clientUid):
+//                              each side writes only their own timestamp.
 //   coachingPlans/{planId}     A plan the coach publishes to a client
 //                              (header). Created at the first publish;
 //                              the client reads it and can only record
@@ -1004,12 +1008,27 @@ service cloud.firestore {
     // the clientUid), only while linked; the other one can only stamp
     // readAt with the server's clock; the sender can take back a message
     // nobody has read yet. Text is never edited.
+    function validReplyTo(r) {
+      return r is map
+        && r.keys().hasOnly(["id", "from", "text"])
+        && r.id is string && r.id.size() > 0 && r.id.size() <= 40
+        && r.from in ["coach", "client"]
+        && r.text is string && r.text.size() <= 200;
+    }
+
+    // A reaction is an emoji id (letters, digits, underscore). Each side
+    // writes only their own key of the "reactions" map ("" clears it).
+    function validReaction(v) {
+      return v is string && v.size() <= 40 && (v == "" || v.matches('^[a-z0-9_]+$'));
+    }
+
     match /messages/{messageId} {
       allow read: if signedIn()
         && (resource.data.coachUid == request.auth.uid
             || resource.data.clientUid == request.auth.uid);
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "from", "senderName", "text", "createdAt", "readAt"])
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "from", "senderName", "text", "createdAt", "readAt", "replyTo"])
+        && (!("replyTo" in request.resource.data) || validReplyTo(request.resource.data.replyTo))
         && request.resource.data.coachUid is string
         && request.resource.data.clientUid is string
         && ((request.resource.data.from == "coach" && request.resource.data.coachUid == request.auth.uid)
@@ -1026,10 +1045,50 @@ service cloud.firestore {
             || (resource.data.from == "client" && resource.data.coachUid == request.auth.uid))
         && onlyChanges(["readAt"])
         && request.resource.data.readAt == request.time;
+      // Reacting: either person in the thread, only the reactions map, only their own key.
+      allow update: if signedIn()
+        && (resource.data.coachUid == request.auth.uid || resource.data.clientUid == request.auth.uid)
+        && onlyChanges(["reactions"])
+        && request.resource.data.reactions is map
+        && request.resource.data.reactions.keys().hasOnly(["coach", "client"])
+        && validReaction(request.resource.data.reactions.get("coach", ""))
+        && validReaction(request.resource.data.reactions.get("client", ""))
+        && (resource.data.coachUid == request.auth.uid
+            ? request.resource.data.reactions.get("client", "") == resource.data.get("reactions", {}).get("client", "")
+            : request.resource.data.reactions.get("coach", "") == resource.data.get("reactions", {}).get("coach", ""));
       allow delete: if signedIn()
         && resource.data.readAt == null
         && ((resource.data.from == "coach" && resource.data.coachUid == request.auth.uid)
             || (resource.data.from == "client" && resource.data.clientUid == request.auth.uid));
+    }
+
+    // ---- Typing indicator (the "..." in Messages, js/messages.js) ----
+    // One doc per coach + client pair (id coachUid_clientUid) holding the
+    // last time each side pinged "typing". Each side writes only their own
+    // field with the server's clock, only while linked; only the two read.
+    match /messageTyping/{pairId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.coachUid is string
+        && request.resource.data.clientUid is string
+        && pairId == request.resource.data.coachUid + '_' + request.resource.data.clientUid
+        && linked(request.resource.data.coachUid, request.resource.data.clientUid)
+        && ((request.resource.data.coachUid == request.auth.uid
+              && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "coachTypingAt"])
+              && request.resource.data.coachTypingAt == request.time)
+            || (request.resource.data.clientUid == request.auth.uid
+              && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "clientTypingAt"])
+              && request.resource.data.clientTypingAt == request.time));
+      allow update: if signedIn()
+        && linked(resource.data.coachUid, resource.data.clientUid)
+        && ((resource.data.coachUid == request.auth.uid
+              && onlyChanges(["coachTypingAt"])
+              && request.resource.data.coachTypingAt == request.time)
+            || (resource.data.clientUid == request.auth.uid
+              && onlyChanges(["clientTypingAt"])
+              && request.resource.data.clientTypingAt == request.time));
     }
 
     // ---- Client package entitlements ----

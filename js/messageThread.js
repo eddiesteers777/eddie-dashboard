@@ -77,6 +77,7 @@ export function timeLabel(ms) {
 export function threadDays(messages, { role = "client", today = dayKey(Date.now()), now = Date.now() } = {}) {
     const days = [];
     let prev = null;
+    let prevAt = 0;
     for (const m of sortThread(messages)) {
         const at = millis(m.createdAt) || millis(m.sentAt) || now;
         const key = dayKey(at);
@@ -89,8 +90,19 @@ export function threadDays(messages, { role = "client", today = dayKey(Date.now(
         // A new run starts when the side changes or 10+ minutes pass.
         const first = !prev || prev.from !== m.from || at - prev.at > 10 * 60000;
         const item = { ...m, at, mine: m.from === role, first, time: timeLabel(at) };
+        // iPhone-style time stamp: shown above a run that starts after a long pause.
+        item.stamp = !prevAt || at - prevAt >= 30 * 60000 ? timeLabel(at) : "";
+        prevAt = at;
         day.items.push(item);
         prev = item;
+    }
+    // Where each bubble sits in its run (joined corners, tail on the last).
+    for (const day of days) {
+        day.items.forEach((item, i) => {
+            const startsRun = item.first;
+            const endsRun = !day.items[i + 1] || day.items[i + 1].first;
+            item.pos = startsRun && endsRun ? "single" : startsRun ? "top" : endsRun ? "end" : "mid";
+        });
     }
     return days;
 }
@@ -138,10 +150,22 @@ export function shouldEmail(messages, role) {
     return !(messages || []).some(m => m && m.from === role && !m.readAt);
 }
 
-/** "Sam is typing" isn't a thing here; this is the line under the thread. */
+/** True while the other side's last "typing" ping is fresh (they ping every ~3s). */
+export function isTyping(at, now = Date.now()) {
+    const t = millis(at);
+    return t > 0 && now - t < 6000 && t - now < 60000;
+}
+
+/** The receipt line under my newest message ("Delivered" / "Read 6:41 PM"). */
 export function seenLine(messages, role) {
     const mine = sortThread(messages).filter(m => m.from === role);
     const last = mine[mine.length - 1];
     if (!last || !last.id) return "";
-    return last.readAt ? `Seen ${timeLabel(millis(last.readAt))}` : "Sent";
+    return last.readAt ? `Read ${timeLabel(millis(last.readAt))}` : "Delivered";
+}
+
+/** Pins: the coach's pinned chats are a list of client uids (js/pinnedChats usage). */
+export function togglePinned(list, uid) {
+    const have = Array.isArray(list) ? list.filter(x => typeof x === "string") : [];
+    return have.includes(uid) ? have.filter(x => x !== uid) : [uid, ...have];
 }

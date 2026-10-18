@@ -1,7 +1,7 @@
 // The coach-client message thread (js/messageThread.js).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sortThread, threadDays, unreadFor, inboxByClient, messageAttention, shouldEmail, preview, seenLine, dayLabel } from "../js/messageThread.js";
+import { sortThread, threadDays, unreadFor, inboxByClient, messageAttention, shouldEmail, preview, seenLine, dayLabel, isTyping, togglePinned } from "../js/messageThread.js";
 
 const at = (d, h, m = 0) => new Date(2026, 9, d, h, m).getTime();
 const msg = (id, from, when, extra = {}) => ({ id, coachUid: "coach", clientUid: "sam", from, text: `${from} ${id}`, createdAt: when, readAt: null, ...extra });
@@ -69,7 +69,28 @@ test("only the first unread message of a run sends an email", () => {
 test("preview and the Seen line", () => {
     assert.equal(preview("  a\n b  "), "a b");
     assert.equal(preview("x".repeat(100), 10), `${"x".repeat(9)}…`);
-    assert.equal(seenLine([msg("1", "coach", at(10, 9))], "coach"), "Sent");
-    assert.match(seenLine([msg("1", "coach", at(10, 9), { readAt: at(10, 14, 5) })], "coach"), /^Seen 2:05/);
+    assert.equal(seenLine([msg("1", "coach", at(10, 9))], "coach"), "Delivered");
+    assert.match(seenLine([msg("1", "coach", at(10, 9), { readAt: at(10, 14, 5) })], "coach"), /^Read 2:05/);
     assert.equal(seenLine([msg("1", "client", at(10, 9))], "coach"), "");
+});
+
+test("bubble positions, time stamps and the typing window", () => {
+    const days = threadDays([
+        msg("1", "coach", at(10, 9, 0)), msg("2", "coach", at(10, 9, 1)), msg("3", "coach", at(10, 9, 2)),
+        msg("4", "client", at(10, 9, 3)), msg("5", "client", at(10, 11, 0))
+    ], { role: "client", today: "2026-10-10" });
+    const it = days[0].items;
+    assert.deepEqual(it.map(m => m.pos), ["top", "mid", "end", "single", "single"]);
+    assert.deepEqual(it.map(m => Boolean(m.stamp)), [true, false, false, false, true]);
+    const now = 1_000_000;
+    assert.equal(isTyping(now - 2000, now), true);
+    assert.equal(isTyping(now - 9000, now), false);
+    assert.equal(isTyping(null, now), false);
+});
+
+test("pinning adds to the front and a second toggle removes", () => {
+    assert.deepEqual(togglePinned([], "a"), ["a"]);
+    assert.deepEqual(togglePinned(["a"], "b"), ["b", "a"]);
+    assert.deepEqual(togglePinned(["b", "a"], "b"), ["a"]);
+    assert.deepEqual(togglePinned("junk", "a"), ["a"]);
 });

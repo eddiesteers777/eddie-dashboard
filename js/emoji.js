@@ -17,6 +17,8 @@
 
 export const EMOJI_CATEGORIES = [
     { key: "training", label: "Training" },
+    { key: "trail", label: "Trail" },
+    { key: "fuel", label: "Fuel" },
     { key: "recovery", label: "Recovery" },
     { key: "coach", label: "Coach" },
     { key: "milestones", label: "Milestones" }
@@ -49,7 +51,19 @@ export const EMOJI = [
     { id: "sb_race_day", label: "Race Day", category: "milestones" },
     { id: "sb_finish", label: "Finish", category: "milestones" },
     { id: "sb_tired_proud", label: "Tired but Proud", category: "milestones" },
-    { id: "sb_survived", label: "Survived", category: "milestones" }
+    { id: "sb_survived", label: "Survived", category: "milestones" },
+    { id: "sb_forest_miles", label: "Forest Miles", category: "trail" },
+    { id: "sb_heading_south", label: "Heading South", category: "coach" },
+    { id: "sb_early_miles", label: "Early Miles", category: "trail" },
+    { id: "sb_hill_repeats", label: "Hill Repeats", category: "training" },
+    { id: "sb_rain_run", label: "Rain Run", category: "training" },
+    { id: "sb_foam_roll", label: "Foam Roll", category: "recovery" },
+    { id: "sb_coffee", label: "Coffee First", category: "fuel" },
+    { id: "sb_gel", label: "Gel Time", category: "fuel" },
+    { id: "sb_negative_split", label: "Negative Split", category: "milestones" },
+    { id: "sb_campfire", label: "Rest & Recharge", category: "recovery" },
+    { id: "sb_trail_blaze", label: "Trail Marker", category: "trail" },
+    { id: "sb_ice_bath", label: "Ice Bath", category: "recovery" }
 ];
 
 // The handful a coach reaches for most, shown as one-tap buttons.

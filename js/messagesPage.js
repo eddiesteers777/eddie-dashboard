@@ -36,6 +36,7 @@ function open(coach, user) {
         otherUid: coach.coachUid,
         otherName: name,
         myName: user.displayName || "",
+        header: { name, sub: "Your coach" },
         email: text => sendClientMessageEmail({ clientName: user.displayName || "A client", clientUid: user.uid, text })
     });
     import("./icons.js").then(m => m.hydrate());

@@ -73,6 +73,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coach-plan-prompts",
     "coach-health-reviewed",
     "coach-queue-done",
+    "coach-pinned-chats",
     "plan-coach-notes",
     "profile-checks",
     "workout-shares",

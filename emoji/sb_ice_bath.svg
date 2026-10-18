@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<path d="M6 30h52l-5 22q-1 5-6 5H17q-5 0-6-5z" fill="#F2EEE4" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<clipPath id="sb_ice_bath-tub"><path d="M6 30h52l-5 22q-1 5-6 5H17q-5 0-6-5z"/></clipPath>
+<path d="M4 38q7-4 14 0t14 0t14 0t14 0V60H4z" fill="#7FB2CF" clip-path="url(#sb_ice_bath-tub)"/>
+<rect x="16" y="33" width="9" height="9" rx="2" fill="#F2EEE4" stroke="#0F2019" stroke-width="2.4" transform="rotate(-12 20 37)"/>
+<rect x="38" y="34" width="9" height="9" rx="2" fill="#F2EEE4" stroke="#0F2019" stroke-width="2.4" transform="rotate(14 42 38)"/>
+<path d="M6 30h52l-5 22q-1 5-6 5H17q-5 0-6-5z" fill="none" stroke="#0F2019" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32 6v16M25 10l14 8M39 10l-14 8" stroke="#7FB2CF" stroke-width="3.4" stroke-linecap="round"/></svg>

@@ -22,6 +22,7 @@ import { settleWrite } from "./offlineWrite.js";
 import { sortThread, shouldEmail, MAX_MESSAGE } from "./messageThread.js";
 
 const COLLECTION = "messages";
+const TYPING = "messageTyping";
 
 async function me() {
     const user = await waitForUser();
@@ -79,7 +80,7 @@ export async function listMyMessages() {
  * rule); `email` is called with { first } when the other side should
  * hear about it. Returns { message, queued }.
  */
-export async function sendMessage({ role, otherUid, text, senderName, thread = [], email = null }) {
+export async function sendMessage({ role, otherUid, text, senderName, thread = [], email = null, replyTo = null }) {
     const user = await me();
     const clean = String(text || "").trim().slice(0, MAX_MESSAGE);
     if (!clean) throw new Error("empty-message");
@@ -91,7 +92,8 @@ export async function sendMessage({ role, otherUid, text, senderName, thread = [
         senderName: String(senderName || user.displayName || (role === "coach" ? "Your coach" : "Your client")).slice(0, 100),
         text: clean,
         createdAt: serverTimestamp(),
-        readAt: null
+        readAt: null,
+        ...(replyTo?.id ? { replyTo: { id: String(replyTo.id).slice(0, 40), from: replyTo.from === "coach" ? "coach" : "client", text: String(replyTo.text || "").slice(0, 200) } } : {})
     };
     const first = shouldEmail(thread, role);
     const { queued } = await settleWrite(setDoc(ref, message), "Your message", ref);
@@ -110,4 +112,46 @@ export async function markRead(messages) {
 /** Takes back a message the other side hasn't read yet. */
 export async function unsendMessage(id) {
     await deleteDoc(doc(db, COLLECTION, id));
+}
+
+/**
+ * Typing indicator: calls onChange(timestamp of the other side's last
+ * "typing" ping, or 0). Queried (not read by id) so a pair with no doc yet
+ * is just empty, not permission-denied.
+ */
+export function watchTyping(role, otherUid, onChange) {
+    let stop = () => {};
+    let cancelled = false;
+    me().then(user => {
+        if (cancelled) return;
+        const coachUid = role === "coach" ? user.uid : otherUid;
+        const clientUid = role === "coach" ? otherUid : user.uid;
+        const field = role === "coach" ? "clientTypingAt" : "coachTypingAt";
+        stop = onSnapshot(
+            query(collection(db, TYPING), where("coachUid", "==", coachUid), where("clientUid", "==", clientUid)),
+            snap => onChange(snap.docs[0]?.data({ serverTimestamps: "estimate" })?.[field] || 0),
+            () => onChange(0));
+    }).catch(() => {});
+    return () => { cancelled = true; stop(); };
+}
+
+/** "I'm typing" ping. Best effort: typing never blocks anything. */
+export async function pingTyping(role, otherUid) {
+    try {
+        const user = await me();
+        const coachUid = role === "coach" ? user.uid : otherUid;
+        const clientUid = role === "coach" ? otherUid : user.uid;
+        await setDoc(doc(db, TYPING, `${coachUid}_${clientUid}`),
+            { coachUid, clientUid, [role === "coach" ? "coachTypingAt" : "clientTypingAt"]: serverTimestamp() },
+            { merge: true });
+    } catch { /* offline or rules not published yet */ }
+}
+
+/**
+ * My emoji reaction on a message ("" takes it back). The other side's
+ * reaction is carried over unchanged, which is what the rules check.
+ */
+export async function reactToMessage(message, role, emojiId) {
+    const reactions = { ...(message.reactions || {}), [role]: emojiId || "" };
+    await updateDoc(doc(db, COLLECTION, message.id), { reactions });
 }
