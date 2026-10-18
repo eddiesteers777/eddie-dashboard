@@ -133,6 +133,11 @@ test("the flat muscle map: lit muscles, front and back, chips, a workout's muscl
     assert.ok(!/data-muscle="glutes"/.test(front), "glutes are on the back");
     assert.match(back, /data-muscle="glutes" data-level="primary"/);
     assert.match(back, /data-muscle="triceps" data-level="secondary"/);
+    const hips = levelsOf({ primary: ["abductors", "hamstrings", "quadriceps"] });
+    assert.match(muscleMapSvg(hips, { view: "front" }), /data-muscle="abductors"/, "outer hip in front (TFL)");
+    assert.match(muscleMapSvg(hips, { view: "back" }), /data-muscle="abductors"/, "and behind (glute medius)");
+    assert.equal((muscleMapSvg(hips, { view: "front" }).match(/data-muscle="quadriceps"/g) || []).length, 6, "three quad heads a leg");
+    assert.ok(!/data-muscle="hamstrings"/.test(muscleMapSvg(hips, { view: "front" })), "hamstrings only behind");
     const html = muscleMapHtml({ primary: ["chest"], secondary: ["triceps"] });
     assert.match(html, /mm-chip is-primary">Chest</);
     assert.match(html, /mm-chip is-secondary">Triceps</);
