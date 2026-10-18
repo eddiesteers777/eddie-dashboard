@@ -1262,41 +1262,6 @@ section{
         color:var(--tab-color, var(--primary));
         background:color-mix(in srgb, var(--tab-color, var(--primary)) 16%, transparent);
     }
-
-    .eos-subnav{
-        display:flex;
-        gap:8px;
-        width:min(1450px,94%);
-        margin:0 auto 22px;
-        padding:2px;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        scrollbar-width:none;
-    }
-
-    .eos-subnav::-webkit-scrollbar{
-        display:none;
-    }
-
-    .eos-subnav-link{
-        flex:0 0 auto;
-        padding:9px 16px;
-        border-radius:999px;
-        background:rgba(255,255,255,.05);
-        border:1px solid rgba(255,255,255,.08);
-        color:var(--text-secondary);
-        font-size:.84rem;
-        font-weight:650;
-        text-decoration:none;
-        white-space:nowrap;
-        transition:background-color .15s ease,border-color .15s ease,color .15s ease;
-    }
-
-    .eos-subnav-link.active{
-        background:var(--primary);
-        border-color:var(--primary);
-        color:var(--on-primary);
-    }
 }
 
 /* Below 900px the dropdown nav-links are hidden entirely (see the
@@ -4009,10 +3974,6 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
   .eos-bottomnav-item .ui-icon{width:18px;height:18px}
   .eos-bottomnav-item.active{color:var(--on-primary);background:var(--primary);box-shadow:0 4px 16px rgba(201,173,132,.16)}
   .eos-bottomnav-item.active .ui-icon{color:var(--on-primary)}
-  .eos-subnav{width:min(560px,calc(100% - 24px));margin:0 auto 18px;padding:3px 1px;gap:7px}
-  .eos-subnav-link{min-height:36px;display:inline-flex;align-items:center;padding:7px 13px;border-radius:999px;
-    background:rgba(255,255,255,.035);border-color:rgba(235,232,220,.10);font-size:.78rem}
-  .eos-subnav-link.active{border-color:rgba(201,173,132,.26);background:rgba(201,173,132,.13);color:var(--cream)}
 }
 @media (max-width:380px){
   .eos-bottomnav{left:8px;right:8px;padding:4px 5px}
@@ -4945,3 +4906,54 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
   html.sb-guest body .eos-navbar{ position:relative; inset:auto; width:min(1600px,96%); height:auto; margin:18px auto 30px; padding:0; flex-direction:row; background:none; border:0; overflow:visible; }
   html.sb-guest .sb-side-brand{ display:none !important; }
 }
+
+
+/* ==========================================================
+   SECTION TABS (option A, Eddie 2026-10-18): the pages of a section (Train,
+   Fuel, Coach) as one glass switch with a solid tan thumb on the current
+   page. It stays pinned under the phone's top edge while the page scrolls;
+   swiping the page sideways moves to the next tab (js/subnavSwipe.js).
+   Icons sit beside the labels when there's room and hide on narrow phones.
+   ========================================================== */
+@media (max-width:900px){
+  .eos-subnav{
+    display:flex;gap:2px;
+    position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:1150;
+    width:min(560px,calc(100% - 24px));margin:0 auto 16px;padding:4px;
+    border-radius:999px;background:rgba(8,18,14,.9);border:1px solid rgba(255,255,255,.09);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.35),0 10px 24px rgba(0,0,0,.25);
+    backdrop-filter:blur(18px) saturate(135%);-webkit-backdrop-filter:blur(18px) saturate(135%);
+    overflow:visible;
+  }
+  .eos-subnav-link{
+    flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:44px;padding:0 7px;
+    border:0;border-radius:999px;background:transparent;color:var(--text-secondary);
+    font-size:.78rem;font-weight:700;letter-spacing:0;text-decoration:none;white-space:nowrap;
+    transition:background-color .2s ease,color .2s ease,box-shadow .2s ease;
+  }
+  .eos-subnav-icon{display:inline-flex;flex:0 0 auto}
+  .eos-subnav-icon .ui-icon{width:15px;height:15px}
+  .eos-subnav-label{overflow:hidden;text-overflow:ellipsis}
+  .eos-subnav-link.active{
+    background:linear-gradient(180deg,#E8CFA6,var(--primary));color:var(--on-primary);
+    box-shadow:0 4px 14px rgba(214,185,142,.25);
+  }
+  /* The top bar scrolls away on these pages; the tabs take its place at the top. */
+  body:has(.eos-subnav) .eos-mobile-topbar{position:static}
+  /* Five tabs (Coach): icons only on the current one, so the labels fit. */
+  .eos-subnav[style*="--subnav-count:5"] .eos-subnav-link:not(.active) .eos-subnav-icon{display:none}
+  .eos-subnav[style*="--subnav-count:5"] .eos-subnav-link{font-size:.72rem;gap:4px}
+}
+@media (max-width:360px){
+  .eos-subnav-link:not(.active) .eos-subnav-icon{display:none}
+  .eos-subnav[style*="--subnav-count:5"] .eos-subnav-icon{display:none}
+  .eos-subnav[style*="--subnav-count:5"] .eos-subnav-link{font-size:.7rem;padding:0 5px}
+}
+
+/* The page you swiped to slides in from the side your finger came from. */
+@media (max-width:900px) and (prefers-reduced-motion:no-preference){
+  body[data-subnav-in] main{animation:sb-subnav-in .28s cubic-bezier(.22,.8,.3,1) both}
+  body[data-subnav-in="prev"] main{--sb-slide-from:-28px}
+  body[data-subnav-in="next"] main{--sb-slide-from:28px}
+}
+@keyframes sb-subnav-in{from{opacity:.0;transform:translateX(var(--sb-slide-from,24px))}to{opacity:1;transform:none}}

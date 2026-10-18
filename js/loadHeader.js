@@ -115,21 +115,21 @@ const PAGE_TAB = {
 // else), so they get none.
 const SUBNAV_GROUPS = {
     train: [
-        { href: "train.html", label: "Overview" },
-        { href: "running.html", label: "Running" },
-        { href: "strength.html", label: "Strength" },
-        { href: "cross-training.html", label: "Cross-Training" }
+        { href: "train.html", label: "Overview", short: "Overview", icon: "chart" },
+        { href: "running.html", label: "Running", short: "Running", icon: "activity" },
+        { href: "strength.html", label: "Strength", short: "Strength", icon: "dumbbell" },
+        { href: "cross-training.html", label: "Cross-Training", short: "Cross", icon: "bike" }
     ],
     health: [
-        { href: "nutrition.html", label: "Nutrition" },
-        { href: "fueling.html", label: "Fueling" }
+        { href: "nutrition.html", label: "Nutrition", short: "Nutrition", icon: "apple" },
+        { href: "fueling.html", label: "Fueling", short: "Fueling", icon: "fuel" }
     ],
     coach: [
-        { href: "coach.html", label: "Dashboard" },
-        { href: "clients.html", label: "My Clients" },
-        { href: "checkin.html", label: "Check-ins" },
-        { href: "coach-messages.html", label: "Messages" },
-        { href: "schedule.html", label: "Schedule" }
+        { href: "coach.html", label: "Dashboard", short: "Home", icon: "grid" },
+        { href: "clients.html", label: "My Clients", short: "Clients", icon: "users" },
+        { href: "checkin.html", label: "Check-ins", short: "Check-ins", icon: "clipboard" },
+        { href: "coach-messages.html", label: "Messages", short: "Inbox", icon: "messageSquare" },
+        { href: "schedule.html", label: "Schedule", short: "Schedule", icon: "calendar" }
     ]
 };
 
@@ -358,20 +358,16 @@ fetch("components/header.html")
             const subnavPages = SUBNAV_GROUPS[activeTab]?.filter(p => meets(PAGE_REQUIRES[p.href] || "", access));
 
             if (subnavPages?.length > 1) {
+                const currentHref = subnavPages.find(p => p.href === page || (page === "client.html" && p.href === "clients.html"))?.href;
                 document.getElementById("header").insertAdjacentHTML("afterend", `
-                    <nav class="eos-subnav" aria-label="Section pages">
+                    <nav class="eos-subnav" aria-label="Section pages" style="--subnav-count:${subnavPages.length}">
                         ${subnavPages.map(p => {
-                            const current = p.href === page || (page === "client.html" && p.href === "clients.html");
-                            return `<a href="${p.href}" class="eos-subnav-link ${current ? "active" : ""}"${current ? ` aria-current="page"` : ""}>${p.label}</a>`;
+                            const current = p.href === currentHref;
+                            return `<a href="${p.href}" class="eos-subnav-link ${current ? "active" : ""}"${current ? ` aria-current="page"` : ""} aria-label="${p.label}"><span class="eos-subnav-icon">${icon(p.icon)}</span><span class="eos-subnav-label">${p.short}</span></a>`;
                         }).join("")}
                     </nav>
                 `);
-                // On a phone the row scrolls sideways: keep the current page's chip in view.
-                const subnav = document.querySelector(".eos-subnav");
-                const current = subnav?.querySelector(".eos-subnav-link.active");
-                if (subnav && current && subnav.scrollWidth > subnav.clientWidth) {
-                    subnav.scrollLeft = current.offsetLeft - (subnav.clientWidth - current.offsetWidth) / 2;
-                }
+                wireSubnavSwipe(subnavPages.map(p => p.href), currentHref);
             }
         }
 
@@ -854,3 +850,40 @@ fetch("components/header.html")
         });
 
     });
+
+
+// Swipe the page sideways to move to the next or previous section tab on a
+// phone. The page that opens slides in from the side the finger came from.
+const SWIPE_DIR_KEY = "sb-subnav-swipe";
+function wireSubnavSwipe(pages, current) {
+    if (!current) return;
+    try {
+        const dir = sessionStorage.getItem(SWIPE_DIR_KEY);
+        sessionStorage.removeItem(SWIPE_DIR_KEY);
+        if (dir && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            document.body.setAttribute("data-subnav-in", dir === "1" ? "next" : "prev");
+            setTimeout(() => document.body.removeAttribute("data-subnav-in"), 400);
+        }
+    } catch { /* storage unavailable */ }
+    if (window.__sbSubnavSwipe) return;
+    window.__sbSubnavSwipe = true;
+    let start = null;
+    document.addEventListener("touchstart", e => {
+        start = null;
+        if (e.touches.length !== 1 || window.innerWidth > 900) return;
+        const t = e.touches[0];
+        start = { x: t.clientX, y: t.clientY, at: Date.now(), target: e.target };
+    }, { passive: true });
+    document.addEventListener("touchend", async e => {
+        const s = start; start = null;
+        if (!s) return;
+        const t = e.changedTouches[0];
+        const m = await import("./subnavSwipe.js");
+        if (m.ownsSwipe(s.target)) return;
+        const direction = m.swipeDirection({ dx: t.clientX - s.x, dy: t.clientY - s.y, ms: Date.now() - s.at });
+        const next = m.neighbourPage(pages, current, direction);
+        if (!next) return;
+        try { sessionStorage.setItem(SWIPE_DIR_KEY, String(direction)); } catch { /* storage unavailable */ }
+        window.location.href = next;
+    }, { passive: true });
+}

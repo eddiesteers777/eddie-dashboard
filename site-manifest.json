@@ -295,6 +295,7 @@
     "js/strengthWorkoutList.js",
     "js/strengthWorkoutMode.js",
     "js/stripeBilling.js",
+    "js/subnavSwipe.js",
     "js/svgCharts.js",
     "js/syncMerge.js",
     "js/thisWeekCard.js",
