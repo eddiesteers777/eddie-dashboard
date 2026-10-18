@@ -246,6 +246,7 @@
     "js/racePlanGenerator.js",
     "js/racePlanStrengthIntegration.js",
     "js/racePlans.js",
+    "js/raceStrip.js",
     "js/racesCard.js",
     "js/readiness.js",
     "js/readinessBacktest.js",

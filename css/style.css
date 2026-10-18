@@ -4977,3 +4977,27 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
   body[data-subnav-in="next"] main{--sb-slide-from:28px}
 }
 @keyframes sb-subnav-in{from{opacity:.0;transform:translateX(var(--sb-slide-from,24px))}to{opacity:1;transform:none}}
+
+/* ==========================================================
+   RACE COUNTDOWN STRIP (client Today, 2026-10-18): a big "36 days to go"
+   and the training block as one bar, a segment per week. Only with a race
+   ahead (js/raceStrip.js). Tan = this week, sage = done weeks.
+========================================================== */
+.race-strip{ margin-top:16px; max-width:560px; }
+.race-strip[hidden]{ display:none !important; }
+.race-strip-top{ display:flex; align-items:flex-end; gap:12px; }
+.race-strip-big{ font:900 clamp(76px, 24vw, 112px)/.8 var(--font-display); color:var(--primary); letter-spacing:-.01em; text-transform:uppercase; }
+.race-strip-unit{ font:900 clamp(24px, 7vw, 34px)/.95 var(--font-display); text-transform:uppercase; color:var(--text); padding-bottom:3px; }
+.race-strip-bar{ display:flex; gap:3px; margin-top:14px; align-items:center; height:10px; }
+.race-strip-bar i{ flex:1; height:6px; border-radius:3px; background:rgba(236,230,212,.12); }
+.race-strip-bar i.is-done{ background:var(--sage); }
+.race-strip-bar i.is-now{ height:10px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); }
+.race-strip-foot{ display:flex; justify-content:space-between; gap:10px; margin-top:8px; font:500 11.5px/1.3 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+
+/* Today's session is the one raised card; a tan rule marks it. */
+body.page-today #todayCard{
+    background:var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    border-top:2px solid var(--primary);
+    box-shadow:var(--sb-bubble-raised-shadow);
+}

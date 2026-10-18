@@ -18,7 +18,8 @@ import { weekTrailHtml, weekMiles } from "./weekTrail.js";
 import { mondayOf, isoDate, addDays } from "./coachingPlanModel.js";
 import { changeMode } from "./weekChanges.js";
 import { nextLine, quietDayTitle } from "./todayGlance.js";
-import { nextRace, raceCountdownText } from "./raceCountdown.js";
+import { nextRace } from "./raceCountdown.js";
+import { raceStripModel, raceStripHtml } from "./raceStrip.js";
 import { icon } from "./icons.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
@@ -64,8 +65,14 @@ export function renderClientToday() {
     const ctx = planContext(inputs.plans, today);
     const phase = $("phaseStatus");
     if (phase && ctx) {
-        const race = raceCountdownText(nextRace(inputs.plans, today));
-        phase.textContent = `Week ${ctx.weekNumber} of ${ctx.totalWeeks} · ${ctx.planName}${ctx.phase ? ` · ${ctx.phase}` : ""}${race ? ` · ${race}` : ""}`;
+        const race = nextRace(inputs.plans, today);
+        const strip = $("raceStrip");
+        const model = raceStripModel(race, ctx);
+        // With a race ahead the strip carries the countdown and the week; the line keeps the plan and phase.
+        if (strip) { strip.hidden = !model; strip.innerHTML = raceStripHtml(model); }
+        phase.textContent = model
+            ? [ctx.planName, ctx.phase].filter(Boolean).join(" · ")
+            : `Week ${ctx.weekNumber} of ${ctx.totalWeeks} · ${ctx.planName}${ctx.phase ? ` · ${ctx.phase}` : ""}`;
     }
 
     const dateLabel = $("todayDateLabel");

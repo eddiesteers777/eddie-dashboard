@@ -22,6 +22,31 @@ export const TASK_GROUPS = [
     { id: "followup", label: "Follow up", kinds: ["session-log", "no-show", "quiet", "no-checkin", "profile", "sessions", "intake"] }
 ];
 
+// The coach tab's switch: what kind of work an item is. Reply = answer a
+// person, Approve = new people, Book = session requests, Later = the rest.
+export const SEGMENTS = [
+    { id: "reply", label: "Reply", kinds: ["pain", "health", "message", "change", "checkin"] },
+    { id: "approve", label: "Approve", kinds: ["pending", "application", "question"] },
+    { id: "book", label: "Book", kinds: ["booking"] },
+    { id: "later", label: "Later", kinds: [] }   // everything else
+];
+export const segmentOf = kind => (SEGMENTS.find(s => s.kinds.includes(kind)) || SEGMENTS[SEGMENTS.length - 1]).id;
+
+// Items -> { reply: [...], approve: [...], book: [...], later: [...] }, each
+// in the order given (the queue already puts the most urgent first).
+export function splitSegments(items = []) {
+    const out = Object.fromEntries(SEGMENTS.map(s => [s.id, []]));
+    for (const item of items) out[segmentOf(item.kind)].push(item);
+    return out;
+}
+
+// Ring colour around a client's avatar: "urgent" (pain or health flag),
+// "waiting" (anything needs the coach) or "ok".
+export function ringTone(attention = []) {
+    if (attention.some(a => a.kind === "pain" || a.kind === "health")) return "urgent";
+    return attention.length ? "waiting" : "ok";
+}
+
 const groupOf = kind => TASK_GROUPS.find(g => g.kinds.includes(kind)) || TASK_GROUPS[TASK_GROUPS.length - 1];
 
 // What a group's line in the summary says: "2 check-ins to answer" style.

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
     TASK_GROUPS, itemKey, newPeopleItems, splitDone, pruneDone, groupByTask, groupByPerson,
-    greeting, summaryLine, waitedText
+    greeting, summaryLine, waitedText, splitSegments, segmentOf, ringTone
 } from "../js/coachToday.js";
 import { attentionQueue } from "../js/feedbackModel.js";
 import { needsAttention, summarizePlans, summarizeSessions, summarizeCheckins, clientStatusLines } from "../js/clientSummary.js";
@@ -125,4 +125,33 @@ test("a client's status lines (My Clients and the dashboard)", () => {
         sessions: { upcoming: [{ date: "2026-10-02" }] },
         checkins: { latest: { status: "submitted", weekOf: "2026-09-21" } }
     }), ["Fall Half · Week 3 of 12", "Next session Oct 2", "Check-in needs reply"]);
+});
+
+test("the coach switch sorts every kind into Reply, Approve, Book or Later", () => {
+    assert.equal(segmentOf("checkin"), "reply");
+    assert.equal(segmentOf("pain"), "reply");
+    assert.equal(segmentOf("application"), "approve");
+    assert.equal(segmentOf("pending"), "approve");
+    assert.equal(segmentOf("booking"), "book");
+    assert.equal(segmentOf("missed"), "later");
+    assert.equal(segmentOf("something-new"), "later", "unknown kinds are never lost");
+    const seg = splitSegments([{ kind: "checkin", uid: "a" }, { kind: "booking", uid: "b" }, { kind: "quiet", uid: "c" }, { kind: "question", uid: "d" }]);
+    assert.deepEqual(Object.fromEntries(Object.entries(seg).map(([k, v]) => [k, v.map(i => i.uid)])), { reply: ["a"], approve: ["d"], book: ["b"], later: ["c"] });
+});
+
+test("ring colour: urgent for a pain or health flag, waiting for anything else, ok when clear", () => {
+    assert.equal(ringTone([]), "ok");
+    assert.equal(ringTone([{ kind: "checkin" }]), "waiting");
+    assert.equal(ringTone([{ kind: "checkin" }, { kind: "pain" }]), "urgent");
+    assert.equal(ringTone([{ kind: "health" }]), "urgent");
+});
+
+test("the week's seven dots: done, missed, today, upcoming, rest", () => {
+    const today = "2026-09-29"; // Tuesday
+    const days = ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01"].map((date, i) => ({ date, type: "run", miles: 5, completed: i === 0 }));
+    const s = summarizePlans({}, today, [{ id: "p", status: "active", name: "P", startDate: "2026-09-28", generatedPlan: { weeks: [{ week: 1, startDate: "2026-09-28", days }] } }]);
+    assert.equal(s.week.days.length, 7);
+    assert.ok(["done", "rest"].includes(s.week.days[0].state));
+    assert.ok(s.week.days.every(d => ["done", "missed", "skipped", "today", "upcoming", "rest"].includes(d.state)));
+    assert.equal(summarizePlans({}, today).week.days.every(d => d.state === "rest"), true, "no plan: all rest");
 });

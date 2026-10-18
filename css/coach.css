@@ -563,8 +563,6 @@
     .coach-cols, .coach-col{ display:contents; }
     .coach-queue{ order:1; margin-bottom:18px; }
     .coach-week{ order:2; }
-    #applications{ order:3; }
-    #inquiries{ order:4; }
     .coach-clients{ order:5; margin-top:0; }
     .coach-setup{ order:6; }
     .coach-cols{ display:flex; flex-direction:column; }
@@ -577,3 +575,98 @@
     .coach-queue-go{ display:none; }
     .coach-queue{ padding:12px 12px 10px; }
 }
+
+
+/* ==========================================================
+   COACH TAB, PREMIUM (2026-10-18)
+   Athletes strip (ring = who needs you, dots = their week), a glass
+   Reply / Approve / Book / Later switch, and a lined inbox you can
+   swipe like Messages. Same data and rules as before.
+========================================================== */
+.coach-strip{
+    display:flex; gap:6px; margin:0 -4px 16px; padding:2px 4px 8px;
+    overflow-x:auto; scroll-snap-type:x proximity; scrollbar-width:none;
+}
+.coach-strip::-webkit-scrollbar{ display:none; }
+.coach-strip-item{
+    flex:0 0 auto; width:68px; display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:4px 0 2px; text-decoration:none; color:var(--text-secondary); scroll-snap-align:start; min-height:44px;
+}
+.coach-strip-ring{
+    --ring:var(--sage);
+    width:54px; height:54px; border-radius:50%; padding:3px; display:grid; place-items:center;
+    background:conic-gradient(var(--ring) 0 360deg);
+}
+.coach-strip-ring.is-waiting{ --ring:var(--primary); }
+.coach-strip-ring.is-urgent{ --ring:var(--red); }
+.coach-strip-ring.is-ok{ --ring:color-mix(in srgb, var(--sage) 55%, transparent); }
+.coach-strip-ring > span{
+    width:100%; height:100%; border-radius:50%; display:grid; place-items:center;
+    background:var(--sb-bubble-raised-bg); box-shadow:inset 0 0 0 2px var(--bg);
+    color:var(--text); font:800 15px var(--font-body);
+}
+.coach-strip-item:hover .coach-strip-name{ color:var(--primary); }
+.coach-strip-name{ font:600 12.5px/1.2 var(--font-body); max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.coach-strip-dots{ display:flex; gap:3px; }
+.coach-strip-dots i{ width:6px; height:6px; border-radius:50%; background:rgba(236,230,212,.14); }
+.coach-strip-dots i.is-done{ background:var(--sage); }
+.coach-strip-dots i.is-missed{ background:var(--red); }
+.coach-strip-dots i.is-skipped{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted); }
+.coach-strip-dots i.is-today{ background:var(--primary); transform:scale(1.35); }
+.coach-strip-dots i.is-upcoming{ background:transparent; box-shadow:inset 0 0 0 1.5px rgba(236,230,212,.3); }
+.coach-strip-dots i.is-rest{ background:rgba(236,230,212,.08); }
+
+.coach-seg{
+    display:flex; gap:4px; padding:4px; margin-bottom:12px; border-radius:999px;
+    background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow);
+}
+.coach-seg-btn{
+    flex:1; min-height:44px; border:0; border-radius:999px; background:transparent; color:var(--text-secondary);
+    font:600 14px var(--font-body); display:inline-flex; align-items:center; justify-content:center; gap:7px; cursor:pointer;
+}
+.coach-seg-btn em{ font:600 11px var(--font-mono); font-style:normal; opacity:.8; }
+.coach-seg-btn[aria-selected="true"]{ background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); color:var(--on-primary); }
+
+.coach-queue{ padding:14px 14px 12px; background:var(--sb-bubble-dark-bg); border-color:var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); border-radius:20px; }
+.coach-queue-row{ position:relative; display:block; overflow:hidden; border-top:1px solid var(--sb-hairline); }
+.coach-queue-group > .coach-queue-row:first-child{ border-top:0; }
+.coach-queue-group .coach-queue-row:last-child{ border-bottom:0; }
+.coach-queue-reveal{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:flex-end; gap:6px; padding:0 22px;
+    background:var(--sage); color:var(--on-primary); font:700 13px var(--font-body);
+}
+.coach-queue-row.is-armed .coach-queue-reveal{ background:var(--primary); }
+.coach-queue-slide{
+    position:relative; display:flex; align-items:center; gap:8px; background:#0B1A14; transition:transform .2s ease;
+    touch-action:pan-y; padding-left:5px;
+}
+.coach-queue-row.is-done .coach-queue-slide{ background:transparent; }
+.coach-queue-item{ flex:1; min-width:0; display:flex; align-items:center; gap:12px; padding:12px 0; }
+.coach-queue-avatar{
+    flex:0 0 42px; width:42px; height:42px; border-radius:50%; display:grid; place-items:center;
+    background:var(--surface-light); color:var(--text); font:800 14px var(--font-body);
+}
+.coach-queue-item.is-pain .coach-queue-avatar, .coach-queue-item.is-health .coach-queue-avatar{ box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--red); }
+.coach-queue-item.is-pain, .coach-queue-item.is-health{ border-left:0; padding-left:0; background:transparent; }
+.coach-queue-text strong{ font-size:15.5px; }
+.coach-queue-flag{
+    display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; vertical-align:1px;
+    background:color-mix(in srgb, var(--red) 18%, transparent); color:var(--red); font:600 11px var(--font-body);
+}
+.coach-queue-line{ display:block; color:var(--text-secondary); font-size:14px; line-height:1.4; margin-top:2px; }
+.coach-queue-done{
+    flex:0 0 44px; width:44px; height:44px; padding:0; justify-content:center; border-radius:50%;
+    border:1.5px solid var(--sb-glass-border); color:var(--muted); background:transparent;
+}
+.coach-queue-done:hover{ border-color:var(--sage); color:var(--sage); background:transparent; }
+.coach-queue-empty{ padding:6px 0; }
+#coachApprovePanel{ margin-top:6px; }
+#coachApprovePanel .coach-inquiries{ margin:14px 0 0; padding:0; background:transparent; border:0; box-shadow:none; }
+#coachApprovePanel .coach-inq-row{ background:transparent; border:0; border-top:1px solid var(--sb-hairline); border-radius:0; padding:14px 0; }
+#coachApprovePanel [hidden]{ display:none !important; }
+.coach-seg [hidden]{ display:none !important; }
+
+@media (min-width:901px){
+    .coach-strip{ flex-wrap:wrap; overflow:visible; }
+}
+@media (prefers-reduced-motion:reduce){ .coach-queue-slide{ transition:none; } }
