@@ -79,6 +79,12 @@
 
 }
 
+/* Quick taps never zoom the page: "manipulation" turns off double-tap
+   zoom but keeps scrolling and pinch zoom (pinch stays for people who
+   need bigger text). Elements that set their own touch-action
+   (swipe rows, the muscle map) still win: this has no specificity. */
+*{ touch-action:manipulation; }
+
 html{
 
     scroll-behavior:smooth;
@@ -2817,6 +2823,20 @@ section{
     textarea{
         font-size:16px !important;
     }
+}
+
+/* iOS zooms into any field under 16px when it's tapped. The rule above
+   only covers screens up to 900px, and a big iPhone on its side is
+   wider than that, so every touch screen gets it too. */
+@media (pointer:coarse){
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not(.record-input):not(.fuel-target-value input):not(.st-big-input),
+    select,
+    textarea{
+        font-size:16px !important;
+    }
+}
+
+@media (max-width:900px){
 
     /* Page stylesheets load after this file, so these need !important
        to win at equal specificity. */
