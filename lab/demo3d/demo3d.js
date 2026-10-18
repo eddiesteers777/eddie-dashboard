@@ -103,7 +103,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b0a2, 1.4));
     const key = new THREE.DirectionalLight(0xfff4e6, 2.6);
     key.position.set(2.5, 5, 3.5); key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
     Object.assign(key.shadow.camera, { left: -1.4, right: 1.4, top: 2.2, bottom: -0.4, near: 1, far: 12 });
     scene.add(key);
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: 0.18 }));

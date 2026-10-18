@@ -17,7 +17,7 @@ exercises.json           (metadata, status, review) ->  demo3d.js (player)  ->  
 
 - **Player (`demo3d.js`)**: loads Three.js only when a demo opens; plays the clip baked into the GLB with an `AnimationMixer`. Pixel ratio capped at 1.5; nothing draws while paused, off screen or in a hidden tab; everything is disposed on close. Reduce Motion starts it paused at the bottom of the rep. With no WebGL, a model that fails to load or a lost graphics context, it calls `onFallback(reason)` and the page shows the drawn figure (`js/demoFigure.js`), the app's existing fallback.
 - **Catalog (`catalog.js`, pure)**: finds a demo by name or alias, decides what's playable, picks the athlete and the view, and places the camera to fit the body on any screen shape.
-- **Athletes**: built once, reused for every exercise. Each bake adds only the motion.
+- **Athletes**: built once, reused for every exercise. Each bake adds only the motion. The kit (crew-neck tee with the Southbound mark on the chest, shorts for the male, leggings for the female, full coverage, no bare midriff) is generated from the body's own surface, so it moves exactly like the skin and its hems and neckline are clean cuts; the body underneath is hidden where the kit covers it.
 
 ## Quality review: when a demo is "ready"
 
@@ -46,6 +46,6 @@ Until then the status is `"review"`: the lab page shows it with an "In review" b
 
 ## Known limits of the prototype
 
-- About 3.2 MB (male) and 3.7 MB (female) per exercise, because each GLB carries the whole athlete. For a library, split them: one athlete file per sex (cached once) plus a small animation file per exercise (about 100–200 KB).
-- Hair is a cut-out card (no strands); skin is a single texture with no detail maps; small gaps can show at the hem of the male's shorts. Good on a phone, not film quality.
+- About 3.9 MB (male) and 4.6 MB (female) per exercise, because each GLB carries the whole athlete. For a library, split them: one athlete file per sex (cached once) plus a small animation file per exercise (about 100–200 KB).
+- Hair is a cut-out card (no strands); skin is a single texture with no detail maps. Good on a phone, not film quality.
 - Tested in headless Chromium with software graphics. Needs a pass on a real iPhone and an Android phone before it ships.

@@ -22,6 +22,7 @@ OUT = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else "/tmp/athletes
 os.makedirs(OUT, exist_ok=True)
 bpy.ops.preferences.addon_enable(module="bl_ext.user_default.mpfb")
 M = lambda p: importlib.import_module("bl_ext.user_default.mpfb." + p)
+DL = None
 HumanService = M("services.humanservice").HumanService
 TargetService = M("services.targetservice").TargetService
 LocationService = M("services.locationservice").LocationService
@@ -39,17 +40,18 @@ ATHLETES = {
                   "race": {"african": 0.15, "asian": 0.15, "caucasian": 0.7}},
         "skin": "skins/young_caucasian_male/young_caucasian_male.mhmat",
         "hair": "hair/short02/short02.mhclo",
-        "clothes": [("clothes/male_casualsuit06/male_casualsuit06.mhclo", "top"),        # tee (its jeans are cut off)
-                    ("clothes/female_sportsuit01/female_sportsuit01.mhclo", "shorts"),   # leggings cut to shorts
-                    ("clothes/shoes05/shoes05.mhclo", "shoe")],
+        "clothes": [("clothes/shoes05/shoes05.mhclo", "shoe")],
+        # Generated garments (see make_shell): a crew-neck tee with sleeves and shorts to mid-thigh.
+        "kit": {"top_hem": -0.05, "top_off": 0.010, "sleeve": 0.45, "bottom": "shorts", "bottom_off": 0.007, "logo_drop": 0.16}
     },
     "female": {
         "macro": {"gender": 0.0, "age": 0.5, "muscle": 0.7, "weight": 0.45, "proportions": 0.8, "height": 0.5, "cupsize": 0.45, "firmness": 0.6,
                   "race": {"african": 0.2, "asian": 0.15, "caucasian": 0.65}},
         "skin": "skins/young_caucasian_female/young_caucasian_female.mhmat",
         "hair": "hair/ponytail01/ponytail01.mhclo",
-        "clothes": [("clothes/female_sportsuit01/female_sportsuit01.mhclo", "suit"),     # crop top + leggings
-                    ("clothes/shoes05/shoes05.mhclo", "shoe")],
+        "clothes": [("clothes/shoes05/shoes05.mhclo", "shoe")],
+        # A fitted tee that covers the midriff, over full-length leggings.
+        "kit": {"top_hem": -0.01, "top_off": 0.009, "sleeve": 0.40, "bottom": "leggings", "bottom_off": 0.006, "logo_drop": 0.17}
     },
 }
 FACE = [("eyebrows/eyebrow001/eyebrow001.mhclo", "Eyebrows"), ("eyelashes/eyelashes01/eyelashes01.mhclo", "Eyelashes"),
@@ -95,7 +97,7 @@ def final_coords(obj):
     for m, on in saved: m.show_viewport = on
     return out
 
-def hide_covered(body, garments, reach=0.04, margin=0.02, side=0.012):
+def hide_covered(body, garments, reach=0.04, margin=0.02, side=0.012, keep=None):
     """Hide the body wherever a garment covers it, so skin can't poke through
     the kit when the joints bend. A body vertex is covered when the nearest
     point on a garment's surface is within reach, lies outward of the skin
@@ -114,6 +116,9 @@ def hide_covered(body, garments, reach=0.04, margin=0.02, side=0.012):
             if loc is None: continue
             off = loc - co; out = off.dot(nb)
             if out > -margin and (off - nb * out).length < side: hide.append(i); break
+    if keep:   # e.g. the neck opening: never hide skin there, a gap would show the background
+        cos = [c for c, _ in final_coords(body)]
+        hide = [i for i in hide if not keep(cos[i])]
     # Pull the hidden area's border one ring back under the garment: hiding
     # right up to a hem leaves a see-through gap just past it.
     bm = bmesh.new(); bm.from_mesh(body.data); bm.verts.ensure_lookup_table()
@@ -149,6 +154,154 @@ def delete_faces(obj, keep, hems=()):
             if abs(w.z - h) < 0.04: w.z = h; v.co = inv @ w; break
     bm.to_mesh(me); bm.free(); me.update()
 
+
+ARM_CHAIN = ("Arm", "ForeArm", "Hand")
+def short_name(vg_name, pre): return vg_name.replace(pre, "") if pre else vg_name
+
+def dominant(v, names):
+    """The bone name that moves this vertex most."""
+    best, w = "", 0.0
+    for gi, gw in v[DL].items():
+        n = names.get(gi, "")
+        if n in ("body", "Left", "Right", "Mid") or n.startswith(("helper", "joint", "Helper", "Joint")): continue
+        if gw > w: best, w = n, gw
+    return best
+
+def in_arm(name, side=None):
+    for s in ([side] if side else ["Left", "Right"]):
+        if name == s + "Arm" or name == s + "ForeArm" or name.startswith(s + "Hand"): return True
+    return False
+
+def make_shell(body, rig, pre, name, mat, *, zmin=None, zmax=None, arms="remove", sleeve=None, collar_z=None, offset=0.008, relax=0):
+    """A garment made from the body itself, offset outward: it deforms exactly
+    like the skin (same weights) so nothing pokes through when joints bend, and
+    its hems are straight cuts. arms: 'remove' (bottoms) or 'keep' (tee, with
+    sleeve = fraction of the upper arm to keep)."""
+    global DL
+    o = body.copy(); o.data = body.data.copy(); o.name = name; o.data.name = name
+    bpy.context.collection.objects.link(o)
+    for m in list(o.modifiers):
+        if m.type == "MASK": o.modifiers.remove(m)
+    bpy.ops.object.select_all(action="DESELECT")
+    bpy.context.view_layer.objects.active = o; o.select_set(True)
+    if o.data.shape_keys: bpy.ops.object.shape_key_remove(all=True, apply_mix=True)
+    if o.data.has_custom_normals: bpy.ops.mesh.customdata_custom_splitnormals_clear()   # stale after we cut the mesh
+    names = {g.index: short_name(g.name, pre) for g in o.vertex_groups}
+    bm = bmesh.new(); bm.from_mesh(o.data)
+    DL = bm.verts.layers.deform.verify()
+    body_gi = o.vertex_groups["body"].index
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if body_gi not in v[DL]], context="VERTS")
+    # Normals of the body as it was, before we cut it: the cut leaves slivers whose own normals are poor.
+    from mathutils.kdtree import KDTree
+    bm.normal_update()
+    kd = KDTree(len(bm.verts))
+    for i, v in enumerate(bm.verts): kd.insert(v.co, i)
+    kd.balance()
+    onorm = [v.normal.copy() for v in bm.verts]
+    def smooth_normal(co):
+        n = Vector()
+        for _, i, d in kd.find_n(co, 6): n += onorm[i] / (d + 0.004)
+        return n.normalized()
+    cut = lambda co, no, **k: bmesh.ops.bisect_plane(bm, geom=list(bm.verts) + list(bm.edges) + list(bm.faces), plane_co=co, plane_no=no, dist=1e-5, **k)
+    if collar_z is not None:   # finer faces around the neck so the neckline is smooth
+        near = [e for e in bm.edges if all(abs(v.co.x) < 0.30 and collar_z - 0.14 < v.co.z < collar_z + 0.22 for v in e.verts)]
+        bmesh.ops.subdivide_edges(bm, edges=near, cuts=3, use_grid_fill=True)
+        bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4])
+    if zmin is not None: cut((0, 0, zmin), (0, 0, 1), clear_inner=True)
+
+    if zmax is not None: cut((0, 0, zmax), (0, 0, 1), clear_outer=True)
+    if collar_z is not None: cut((0, 0, collar_z), (0, 0, 1))
+    if arms == "keep" and sleeve:
+        for side in ("Left", "Right"):
+            a = rig.matrix_world @ rig.data.bones[pre + side + "Arm"].head_local
+            f = rig.matrix_world @ rig.data.bones[pre + side + "ForeArm"].head_local
+            d = (f - a); L = d.length; d.normalize()
+            P = a + d * (L * sleeve)
+            # Cut only the arm's faces: a tilted plane through the torso would leave long slivers there.
+            fs = [f for f in bm.faces if abs(f.calc_center_median().x) > 0.19]
+            arm_geom = fs + list({e for f in fs for e in f.edges}) + list({v for f in fs for v in f.verts})
+            bmesh.ops.bisect_plane(bm, geom=arm_geom, plane_co=P, plane_no=d, dist=1e-5)
+            bad = [v for v in bm.verts if (v.co - P).dot(d) > 1e-4 and (in_arm(dominant(v, names), side) or abs(v.co.x) > 0.22)]
+            bmesh.ops.delete(bm, geom=bad, context="VERTS")
+    if arms == "remove":
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if in_arm(dominant(v, names)) or abs(v.co.x) > 0.3], context="VERTS")
+    if collar_z is not None:   # the neck and head come out of the tee, with a round neckline
+        # A round neckline: cut along the tangents of an ellipse (N straight cuts, so the edge is smooth
+        # and exact), then drop the faces inside it and everything above it (the neck and head).
+        import math
+        cx, cz, ra, rb, N = 0.0, collar_z + 0.045, 0.098, 0.082, 28
+        planes = []
+        for k in range(N):
+            th = 2 * math.pi * k / N
+            pt = Vector((cx + ra * math.cos(th), 0.0, cz + rb * math.sin(th)))
+            nm = Vector((math.cos(th) / ra, 0.0, math.sin(th) / rb)).normalized()
+            planes.append((pt, nm))
+        for pt, nm in planes:
+            near = {v for v in bm.verts if v.co.z > collar_z - 0.12 and abs(v.co.x) < 0.2}
+            fs = [f for f in bm.faces if any(v in near for v in f.verts)]   # whole faces, so none is left half-cut
+            es = list({e for f in fs for e in f.edges})
+            vs = list({v for f in fs for v in f.verts})
+            bmesh.ops.bisect_plane(bm, geom=vs + es + fs, plane_co=pt, plane_no=nm, dist=1e-6)
+        def inside(c): return all((c - pt).dot(nm) < 1e-6 for pt, nm in planes)
+        gone = [f for f in bm.faces if inside(f.calc_center_median()) or (f.calc_center_median().z > cz and abs(f.calc_center_median().x) < ra)]
+        bmesh.ops.delete(bm, geom=gone, context="FACES")
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    for f in bm.faces: f.smooth = True   # cuts create flat faces: shade them all smooth
+    for e in bm.edges: e.smooth = True
+    norms = {v.index: smooth_normal(v.co) for v in bm.verts}
+    for v in bm.verts:
+        extra = 0.0
+        if collar_z is not None:   # a little more room around the collarbones, where the skin curves sharply
+            t = min(1.0, max(0.0, (v.co.z - (collar_z - 0.14)) / 0.1))
+            extra = 0.007 * t * t * (3 - 2 * t)
+        v.co += norms[v.index] * (offset + extra)
+    # Loosen the cloth: relax the surface so it doesn't trace every muscle crease of the body under it.
+    fixed = {v.index for v in bm.verts if any(e.is_boundary for e in v.link_edges) or (zmin is not None and v.co.z < zmin + 0.004) or (zmax is not None and v.co.z > zmax - 0.004)}
+    for _ in range(relax):
+        new = {}
+        for v in bm.verts:
+            if v.index in fixed or not v.link_edges: continue
+            avg = sum((e.other_vert(v).co for e in v.link_edges), Vector()) / len(v.link_edges)
+            new[v.index] = v.co.lerp(avg, 0.5)
+        for v in bm.verts:
+            if v.index in new: v.co = new[v.index]
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    bm.to_mesh(o.data); bm.free(); o.data.update()
+    o.data.materials.clear(); o.data.materials.append(mat)
+    zs = [v.co.z for v in o.data.vertices]
+    print('SHELL', name, 'z', round(min(zs), 3), round(max(zs), 3), 'verts', len(zs))
+    return o
+
+def make_logo(shell, img_path, center_z, width=0.15, lift=0.0015):
+    """The Southbound mark: a patch of the tee's own chest faces, lifted a
+    millimetre and a half, UV-mapped to the logo's alpha."""
+    o = shell.copy(); o.data = shell.data.copy(); o.name = "sb-logo"; o.data.name = "sb-logo"
+    bpy.context.collection.objects.link(o)
+    h = width * 655 / 1024
+    bm = bmesh.new(); bm.from_mesh(o.data)
+    keep = []
+    for f in bm.faces:
+        c = f.calc_center_median()
+        if f.normal.y < -0.2 and abs(c.x) < width / 2 + 0.012 and abs(c.z - center_z) < h / 2 + 0.012: keep.append(f)
+    gone = [f for f in bm.faces if f not in set(keep)]
+    bmesh.ops.delete(bm, geom=gone, context="FACES")
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    for f in bm.faces: f.smooth = True
+    bm.normal_update()
+    for v in bm.verts: v.co += v.normal * lift
+    uv = bm.loops.layers.uv.verify()
+    for f in bm.faces:
+        for l in f.loops:
+            l[uv].uv = ((l.vert.co.x + width / 2) / width, (l.vert.co.z - center_z + h / 2) / h)
+    bm.to_mesh(o.data); bm.free(); o.data.update()
+    m = bpy.data.materials.new("sb-logo"); m.use_nodes = True
+    nt = m.node_tree; p = nt.nodes["Principled BSDF"]; p.inputs["Roughness"].default_value = 0.6
+    t = nt.nodes.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(img_path); t.extension = "CLIP"
+    nt.links.new(t.outputs["Color"], p.inputs["Base Color"]); nt.links.new(t.outputs["Alpha"], p.inputs["Alpha"])
+    m.blend_method = "HASHED"
+    o.data.materials.clear(); o.data.materials.append(m)
+    return o
+
 def bone_z(rig, name):
     return (rig.matrix_world @ rig.data.bones[name].head_local).z
 
@@ -164,30 +317,26 @@ for sex, spec in ATHLETES.items():
     for path, kind in FACE + [(spec["hair"], "Hair")]:
         obj = HumanService.add_mhclo_asset(os.path.join(DATA, path), body, asset_type=kind, subdiv_levels=0, material_type="MAKESKIN")
         simple_textured(obj, alpha=kind != "Eyes")
+    kit = spec["kit"]
     garments = []
+    neck_z = bone_z(rig, pre + "Neck")
+    # Bottoms first (the shoe trim below looks at garments[0]).
+    if kit["bottom"] == "shorts":
+        bottom = make_shell(body, rig, pre, "sb-shorts", flat("sb-bottom", KIT["bottom"], 0.75), zmin=knee_z + 0.17, zmax=hips_z + kit["top_hem"] + 0.03, offset=kit["bottom_off"])
+    else:
+        bottom = make_shell(body, rig, pre, "sb-leggings", flat("sb-bottom", KIT["bottom"], 0.75), zmin=bone_z(rig, pre + "LeftFoot") + 0.0, zmax=hips_z + kit["top_hem"] + 0.03, offset=kit["bottom_off"])
+    garments.append(bottom)
+    top = make_shell(body, rig, pre, "sb-tee", flat("sb-top", KIT["top"], 0.8), zmin=hips_z + kit["top_hem"], arms="keep", sleeve=kit["sleeve"], collar_z=neck_z - 0.025, offset=kit["top_off"] + 0.003, relax=0)
+    garments.append(top)
+    logo_z = neck_z - kit["logo_drop"]
+    logo = make_logo(top, os.path.join(os.path.dirname(os.path.abspath(__file__)), "art", "sb-logo.png"), logo_z)
     for path, part in spec["clothes"]:
         obj = HumanService.add_mhclo_asset(os.path.join(DATA, path), body, asset_type="Clothes", subdiv_levels=0, material_type="MAKESKIN")
         garments.append(obj)
-        if part == "top":
-            delete_faces(obj, lambda co: co.z > waist_z - 0.02, hems=[waist_z - 0.02])
-            obj.data.materials.clear(); obj.data.materials.append(flat("sb-top", KIT["top"], 0.8))
-        elif part == "shorts":
-            # Leggings, cut to mid-thigh shorts and below the waist (the tee covers the top).
-            delete_faces(obj, lambda co: knee_z + 0.17 < co.z < waist_z + 0.02, hems=[knee_z + 0.17])
-            obj.data.materials.clear(); obj.data.materials.append(flat("sb-bottom", KIT["bottom"], 0.75))
-        elif part == "suit":
-            # Crop top above the waist (forest), leggings below (charcoal): two material slots.
-            obj.data.materials.clear()
-            obj.data.materials.append(flat("sb-top", KIT["top"], 0.8)); obj.data.materials.append(flat("sb-bottom", KIT["bottom"], 0.75))
-            mw = obj.matrix_world
-            for poly in obj.data.polygons:
-                z = sum((mw @ obj.data.vertices[i].co).z for i in poly.vertices) / len(poly.vertices)
-                poly.material_index = 0 if z > hips_z + 0.08 else 1
-        elif part == "shoe":
-            if sex == "female":
-                # A low shoe: its collar would show through the leggings at the ankle.
-                leg_bottom = min(c.z for c, _ in final_coords(garments[0]))
-                delete_faces(obj, lambda co: co.z < leg_bottom + 0.01)
+        if part == "shoe":
+            if kit["bottom"] == "leggings":
+                # Leggings end at the ankle bone: trim the shoe's cuff so it can't show through them.
+                delete_faces(obj, lambda co: co.z < bone_z(rig, pre + "LeftFoot") + 0.03)
             obj.data.materials.clear()
             obj.data.materials.append(flat("sb-shoe", KIT["shoe"], 0.55)); obj.data.materials.append(flat("sb-sole", KIT["sole"], 0.6))
             mw = obj.matrix_world
@@ -195,8 +344,9 @@ for sex, spec in ATHLETES.items():
                 z = sum((mw @ obj.data.vertices[i].co).z for i in poly.vertices) / len(poly.vertices)
                 poly.material_index = 1 if z < 0.025 else 0
     # Hide the body under the kit, then lift the kit a few millimetres off it.
-    hide_covered(body, [g for g in garments])
-    for g in garments: inflate(g)
+    hide_covered(body, [bottom, top], keep=lambda co: co.z > neck_z - 0.025 - 0.09 and abs(co.x) < 0.16)
+    # (the shells are already offset from the skin; the shoes get a lift)
+    for g in garments[2:]: inflate(g)
     # Phone-sized textures: skin 1024, everything else 512.
     for img in bpy.data.images:
         if img.size[0] > 0:
