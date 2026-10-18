@@ -75,6 +75,7 @@ export const CAPABILITIES = Object.freeze([
     "progress",      // Progress
     "habits",        // Habits
     "package",       // their package card
+    "homework",      // soccer homework (homework.html, the hub's Homework tab)
     "profile",       // My Profile (the guided profile)
     "updates",       // From Your Coach, Messages, Connect with Coach
     "coach"          // the Coach section and Eddie's own tools
@@ -101,6 +102,7 @@ export function capabilitiesFor({ services = [], status = null, isCoachApproved 
     if (training) TRAINING_CAPS.forEach(c => caps.add(c));
     if (soccer) {
         caps.add("sessions");
+        caps.add("homework");
         if (hasCoachPlan) { caps.add("plan"); caps.add("checkins"); }
     }
     if (training || soccer) ACTIVE_CAPS.forEach(c => caps.add(c));

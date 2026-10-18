@@ -67,6 +67,8 @@ const BOTTOM_TABS = [
     // Coach · Train · Fuel · More. Habits stays a tab only for accounts
     // without Fuel (soccer); everyone else checks habits off on Today
     // and finds the page in More.
+    // Soccer homework (js/homeworkClient.js); only soccer accounts without Fuel, so the dock stays at five.
+    { key: "homework", label: "Homework", icon: "clipboard", href: "homework.html", color: "var(--primary)", requires: "client+homework+!nutrition+!fueling", pages: ["homework.html"] },
     { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--primary)", requires: "coach" },
     { key: "train", label: "Train", icon: "dumbbell", href: "train.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
     { key: "health", label: "Fuel", icon: "fuel", href: "nutrition.html", color: "var(--primary)", requires: "nutrition,fueling" },
@@ -81,6 +83,7 @@ const PAGE_TAB = {
     "strength.html": "train",
     "cross-training.html": "train",
     "habits.html": "habits",
+    "homework.html": "homework",
     "nutrition.html": "health",
     "fueling.html": "health",
     "analytics.html": "more",
@@ -163,6 +166,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
     { label: "Sessions", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions", also: ["schedule", "book a session"] },
+    { label: "Homework", href: "homework.html", icon: "clipboard", color: "var(--primary)", requires: "client+homework", also: ["practice", "drills", "skills"] },
     { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)", requires: "client+checkins" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },
     { label: "Settings", href: "settings.html", icon: "user", color: "var(--muted)" },

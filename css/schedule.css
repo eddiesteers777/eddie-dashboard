@@ -456,3 +456,27 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
     .sched-day > :last-child{ margin-bottom:0; }
     .sched-day-none{ margin:6px 0 0 !important; }
 }
+
+/* ---- the session report a coach writes (js/sessionReport.js) ---- */
+.sched-report{ padding:18px 4px 18px; border-top:1px solid var(--border); }
+.sched-report:first-child{ border-top:0; }
+.rep-kicker{ font:600 11px/1.2 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.rep-kicker.tan{ color:var(--primary); }
+.rep-focus{ font:900 34px/.92 var(--font-display); text-transform:uppercase; letter-spacing:.005em; margin:8px 0 6px; overflow-wrap:anywhere; }
+.rep-block{ margin-top:16px; }
+.rep-drills{ list-style:none; margin:6px 0 0; padding:0; }
+.rep-drills li{ display:flex; align-items:baseline; gap:12px; padding:10px 0; border-top:1px solid var(--border); }
+.rep-drills li:first-child{ border-top:0; }
+.rep-n{ font:600 12px var(--font-mono); color:var(--primary); width:22px; flex:0 0 22px; }
+.rep-name{ flex:1; font-weight:600; min-width:0; overflow-wrap:anywhere; }
+.rep-result{ font:600 11px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
+.rep-skills{ list-style:none; margin:6px 0 0; padding:0; }
+.rep-skills li{ display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--border); font-weight:600; }
+.rep-skills li:first-child{ border-top:0; }
+.rep-skills li > span:first-child{ flex:1; }
+.rep-dots{ display:inline-flex; gap:4px; }
+.rep-dots i{ width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.12); }
+.rep-dots i.on{ background:var(--primary); }
+.rep-change{ width:38px; text-align:right; font:600 11px var(--font-mono); color:var(--sage); }
+.rep-note{ margin-top:14px; padding-left:12px; border-left:2px solid var(--primary); line-height:1.5; overflow-wrap:anywhere; }
+.rep-note .rep-kicker{ display:block; margin-bottom:3px; }

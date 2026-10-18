@@ -338,6 +338,11 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
 .hub-log-words{ display:flex; flex-direction:column; gap:12px; }
 .hub-log-field{ display:flex; flex-direction:column; gap:5px; font-size:13.5px; font-weight:600; color:var(--text); }
 .hub-log-field em{ font-style:normal; font-weight:500; color:var(--muted); margin-left:4px; }
+.hub-log-field input{ width:100%; min-height:44px; padding:10px 12px; background:var(--surface-light); border:1px solid var(--border); border-radius:12px; color:var(--text); font:16px var(--font-body); }
+.hub-skill-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.hub-skill-chip{ min-height:44px; padding:0 12px; border-radius:6px; border:1px solid rgba(236,230,212,.16); background:none; color:var(--text-secondary); font:600 12px var(--font-mono); letter-spacing:.06em; text-transform:uppercase; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+.hub-skill-chip.on{ border-color:var(--primary); color:var(--text); }
+.hub-skill-chip b{ color:var(--primary); font-weight:400; letter-spacing:1px; font-size:9px; }
 .hub-log-field textarea{
     width:100%;
     padding:10px 12px;

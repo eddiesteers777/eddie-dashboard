@@ -10,7 +10,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import {
     doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch,
-    collection, getDocs, query, where, serverTimestamp, Timestamp, deleteField
+    collection, getDocs, query, where, serverTimestamp, Timestamp, deleteField, arrayUnion
 } from "firebase/firestore";
 
 let env;
@@ -1794,4 +1794,101 @@ test("planning cycles: the coach's own record of each planned week; the client n
     // The coach can delete their own.
     await assertSucceeds(deleteDoc(doc(as("coach"), "planningCycles/coach_client_2026-10-19")));
     await assertFails(deleteDoc(doc(as("client"), "planningCycles/coach_client_2026-10-12")));
+});
+
+// ---- Soccer homework ----
+const hw = (coachUid, clientUid, extra = {}) => ({
+    coachUid, clientUid, title: "Wall passes, left foot", skill: "Weak foot", note: "Count the clean ones.",
+    videoId: "dQw4w9WgXcQ", startSec: 70, endSec: 220, cadence: "weekly", timesPerWeek: 3, minutes: 10, goal: null,
+    dueDate: "2026-10-24", askClip: false, status: "active", logs: [], coachReply: "", reviewedAt: null,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
+});
+const practice = (n = 38) => ({ date: "2026-10-14", count: n, feel: "okay", note: "", at: 1760000000000 });
+
+test("homework: the linked coach assigns, the client reads and can only add a practice", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(setDoc(doc(as("coach"), "homework/h1"), hw("coach", "client")));
+    await assertSucceeds(getDocs(query(collection(as("client"), "homework"), where("clientUid", "==", "client"))));
+    await assertFails(getDoc(doc(as("stranger"), "homework/h1")));
+    // The client adds one practice...
+    await assertSucceeds(updateDoc(doc(as("client"), "homework/h1"), { logs: arrayUnion(practice()), updatedAt: serverTimestamp() }));
+    // ...but can't add two at once, rewrite the assignment, or delete it.
+    await assertFails(updateDoc(doc(as("client"), "homework/h1"), { logs: arrayUnion(practice(1), practice(2)), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "homework/h1"), { title: "Nothing to do", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "homework/h1"), { dueDate: "2027-01-01", logs: arrayUnion(practice()), updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("client"), "homework/h1")));
+    // A stranger can't add practices to someone else's homework.
+    await assertFails(updateDoc(doc(as("stranger"), "homework/h1"), { logs: arrayUnion(practice()), updatedAt: serverTimestamp() }));
+});
+
+test("homework: only a linked coach creates it, well-formed, with no practices yet", async () => {
+    await seedLinkAndBooking();
+    await assertFails(setDoc(doc(as("client"), "homework/h2"), hw("client", "client")));
+    await assertFails(setDoc(doc(as("stranger"), "homework/h3"), hw("stranger", "stranger")));
+    await assertFails(setDoc(doc(as("coach"), "homework/h4"), hw("coach", "stranger")));
+    await assertFails(setDoc(doc(as("coach"), "homework/h5"), hw("coach", "client", { title: "" })));
+    await assertFails(setDoc(doc(as("coach"), "homework/h6"), hw("coach", "client", { videoId: "not a video!" })));
+    await assertFails(setDoc(doc(as("coach"), "homework/h7"), hw("coach", "client", { cadence: "hourly" })));
+    await assertFails(setDoc(doc(as("coach"), "homework/h8"), hw("coach", "client", { logs: [practice()] })));
+    await assertFails(setDoc(doc(as("coach"), "homework/h9"), hw("coach", "client", { privateNote: "x" })));
+    await assertSucceeds(setDoc(doc(as("coach"), "homework/h10"), hw("coach", "client", { videoId: "", startSec: null, endSec: null })));
+});
+
+test("homework: the coach edits and reviews but can't touch the practices or re-point it", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(setDoc(doc(as("coach"), "homework/h1"), hw("coach", "client")));
+    await assertSucceeds(updateDoc(doc(as("client"), "homework/h1"), { logs: arrayUnion(practice()), updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "homework/h1"), { coachReply: "Nice work", reviewedAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "homework/h1"), { status: "archived", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), "homework/h1"), { logs: [], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), "homework/h1"), { clientUid: "stranger", updatedAt: serverTimestamp() }));
+    // An archived assignment takes no more practices.
+    await assertFails(updateDoc(doc(as("client"), "homework/h1"), { logs: arrayUnion(practice(5)), updatedAt: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(doc(as("coach"), "homework/h1")));
+});
+
+test("homework: a full assignment (200 practices, longest text) still saves", async () => {
+    await seedLinkAndBooking();
+    const logs = Array.from({ length: 199 }, (_, i) => ({ date: "2026-10-14", count: i, feel: "okay", note: "n".repeat(300), at: i }));
+    await env.withSecurityRulesDisabled(async ctx => {
+        await setDoc(doc(ctx.firestore(), "homework/hfull"), hw("coach", "client", { logs, createdAt: new Date(), updatedAt: new Date() }));
+    });
+    await assertSucceeds(updateDoc(doc(as("client"), "homework/hfull"), { logs: arrayUnion(practice(200)), updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "homework/hfull"), { title: "x".repeat(100), note: "y".repeat(1000), coachReply: "z".repeat(300), updatedAt: serverTimestamp() }));
+});
+
+test("session reports: a log can carry a headline, drills and skill levels, within limits", async () => {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(async ctx => {
+        await setDoc(doc(ctx.firestore(), "bookingRequests/b2"), {
+            coachUid: "coach", clientUid: "client", status: "approved", coachNote: "", sessionType: "soccer",
+            dates: ["2026-09-01", "2026-09-08", "2026-09-22"], startTime: "09:00", endTime: "10:00", slotId: "s1"
+        });
+    });
+    const log = (date, extra = {}) => ({
+        coachUid: "coach", clientUid: "client", bookingId: "b2", date, status: "completed",
+        workedOn: "First touch", nextTime: "Wall passes", createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra
+    });
+    const at = d => doc(as("coach"), `sessionLogs/b2_${d}`);
+    await assertSucceeds(setDoc(at("2026-09-01"), log("2026-09-01", {
+        focus: "Finishing under pressure",
+        drills: [{ name: "Rondo 4v1", result: "12 min" }],
+        skills: [{ skill: "Weak foot", level: 3 }]
+    })));
+    // The fullest report still saves (12 drills, 8 skills, longest headline).
+    await assertSucceeds(setDoc(at("2026-09-08"), log("2026-09-08", {
+        focus: "x".repeat(100),
+        drills: Array.from({ length: 12 }, (_, i) => ({ name: `Drill ${i}`.padEnd(60, "d"), result: "r".repeat(20) })),
+        skills: Array.from({ length: 8 }, (_, i) => ({ skill: `Skill ${i}`, level: 5 }))
+    })));
+    await assertFails(setDoc(at("2026-09-22"), log("2026-09-22", { focus: "x".repeat(101) })));
+    await assertFails(setDoc(at("2026-09-22"), log("2026-09-22", { drills: Array.from({ length: 13 }, () => ({ name: "d", result: "" })) })));
+    await assertFails(setDoc(at("2026-09-22"), log("2026-09-22", { skills: Array.from({ length: 9 }, () => ({ skill: "s", level: 1 })) })));
+    await assertFails(setDoc(at("2026-09-22"), log("2026-09-22", { focus: 5 })));
+    await assertFails(setDoc(at("2026-09-22"), log("2026-09-22", { notes: "private" })));
+    // Old logs with no report fields still save.
+    await assertSucceeds(setDoc(at("2026-09-22"), log("2026-09-22")));
+    // The client reads the report, and can't write one.
+    await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
+    await assertFails(updateDoc(doc(as("client"), "sessionLogs/b2_2026-09-01"), { focus: "I coach myself", updatedAt: serverTimestamp() }));
 });

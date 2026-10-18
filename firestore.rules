@@ -816,7 +816,7 @@ service cloud.firestore {
       let packageId = d.get("packageAssignmentId", null);
       let packageOk = packageId == null
         || (d.status == "completed" && b.sessionType == "soccer" && validSessionPackage(d));
-      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "packageAssignmentId", "createdAt", "updatedAt"])
+      return d.keys().hasOnly(["coachUid", "clientUid", "bookingId", "date", "status", "workedOn", "nextTime", "focus", "drills", "skills", "packageAssignmentId", "createdAt", "updatedAt"])
         && d.coachUid == request.auth.uid
         && logId == d.bookingId + "_" + d.date
         && b.coachUid == request.auth.uid
@@ -827,6 +827,9 @@ service cloud.firestore {
         && (sessionDateIsPastOrToday(d.date) || d.status == "cancelled" || d.status == "late-cancel")
         && d.workedOn is string && d.workedOn.size() <= 1000
         && d.nextTime is string && d.nextTime.size() <= 1000
+        && d.get("focus", "") is string && d.get("focus", "").size() <= 100
+        && d.get("drills", []) is list && d.get("drills", []).size() <= 12
+        && d.get("skills", []) is list && d.get("skills", []).size() <= 8
         && packageOk
         && d.updatedAt == request.time;
     }
@@ -999,6 +1002,61 @@ service cloud.firestore {
       allow update: if signedIn() && resource.data.clientUid == request.auth.uid
         && onlyChanges(["readAt"])
         && request.resource.data.readAt == request.time;
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // ---- Soccer homework (js/homework.js, js/homeworkModel.js) ----
+    // One doc per assignment: the (linked) coach writes everything except
+    // the practices; the client can only add one practice at a time to
+    // `logs`. Nothing private goes here (coachNotes is separate).
+    function nullOrInt(v, lo, hi) {
+      return v == null || (v is int && v >= lo && v <= hi);
+    }
+    function validHomework(d) {
+      return d.keys().hasOnly(["coachUid", "clientUid", "title", "skill", "note", "videoId", "startSec", "endSec",
+          "cadence", "timesPerWeek", "minutes", "goal", "dueDate", "askClip", "status", "logs",
+          "coachReply", "reviewedAt", "createdAt", "updatedAt"])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 100
+        && d.skill is string && d.skill.size() <= 40
+        && d.note is string && d.note.size() <= 1000
+        && d.videoId is string && (d.videoId == "" || d.videoId.matches('^[A-Za-z0-9_-]{11}$'))
+        && nullOrInt(d.startSec, 0, 86400) && nullOrInt(d.endSec, 1, 86400)
+        && d.cadence in ["once", "weekly", "daily", "goal"]
+        && nullOrInt(d.timesPerWeek, 1, 7) && nullOrInt(d.minutes, 1, 240) && nullOrInt(d.goal, 1, 100000)
+        && (d.dueDate == null || (d.dueDate is string && d.dueDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && d.askClip is bool
+        && d.status in ["active", "archived"]
+        && d.logs is list && d.logs.size() <= 200
+        && d.coachReply is string && d.coachReply.size() <= 300
+        && (d.reviewedAt == null || d.reviewedAt is timestamp)
+        && d.updatedAt == request.time;
+    }
+    match /homework/{homeworkId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.clientUid is string
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && validHomework(request.resource.data)
+        && request.resource.data.logs.size() == 0
+        && request.resource.data.status == "active"
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && (
+        (resource.data.coachUid == request.auth.uid
+          && validHomework(request.resource.data)
+          && request.resource.data.coachUid == resource.data.coachUid
+          && request.resource.data.clientUid == resource.data.clientUid
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.logs == resource.data.logs)
+        || (resource.data.clientUid == request.auth.uid
+          && onlyChanges(["logs", "updatedAt"])
+          && resource.data.status == "active"
+          && request.resource.data.logs is list
+          && request.resource.data.logs.size() == resource.data.logs.size() + 1
+          && request.resource.data.logs.size() <= 200
+          && request.resource.data.updatedAt == request.time));
       allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
     }
 

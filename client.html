@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/clients.css">
     <link rel="stylesheet" href="css/client-hub.css">
+    <link rel="stylesheet" href="css/homework.css">
     <link rel="stylesheet" href="css/client-profile.css">
     <link rel="stylesheet" href="css/client-model.css">
     <link rel="stylesheet" href="css/execution.css">
@@ -74,6 +75,7 @@
 <div class="hub-more-menu" id="hubMoreMenu" role="menu" aria-label="More client sections" hidden>
 <button type="button" class="clients-tab" role="menuitem" data-tab="checkins">Check-ins <span id="hubCheckinBadge" class="clients-tab-badge" hidden></span></button>
 <button type="button" class="clients-tab" role="menuitem" data-tab="sessions">Sessions <span id="hubSessionBadge" class="clients-tab-badge" hidden></span></button>
+<button type="button" class="clients-tab" role="menuitem" data-tab="homework" id="hubHomeworkTab" hidden>Homework</button>
 <button type="button" class="clients-tab" role="menuitem" data-tab="progress">Progress</button>
 <button type="button" class="clients-tab" role="menuitem" data-tab="planning">Planning</button>
 <button type="button" class="clients-tab" role="menuitem" data-tab="model">Model</button>
@@ -136,6 +138,11 @@
 
             <section class="clients-panel" data-panel="sessions" hidden>
                 <div id="hubSessions"></div>
+            </section>
+
+            <!-- Soccer homework: js/homeworkCoach.js -->
+            <section class="clients-panel" data-panel="homework" hidden>
+                <div id="hubHomework"></div>
             </section>
 
             <section class="clients-panel" data-panel="workouts" hidden>

@@ -20,6 +20,7 @@ import {
 } from "./scheduling.js";
 import { bookedCounts, takenDates, nextOpenDate } from "./slotBookings.js";
 import { clientSessions, statusLabel, CANCELLED } from "./sessionModel.js";
+import { hasReport, reportHtml } from "./sessionReport.js";
 import { weekDays, weekStartOf, addDays, weekCounts } from "./scheduleWeek.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
 
@@ -450,10 +451,19 @@ const localToday = () => new Date().toLocaleDateString("en-CA");
 
 // One session date: when, what, and (once your coach logs it) what you
 // worked on. `note` = an older booking's single note from the coach.
-function sessionRowHtml(s, note = "") {
+function sessionRowHtml(s, note = "", earlier = []) {
     const off = s.log && (CANCELLED.includes(s.log.status) || s.log.status === "no-show");
     const chip = s.log ? `<span class="sched-request-status ${s.log.status === "completed" ? "approved" : "cancelled"}">${escapeHtml(statusLabel(s.log.status))}</span>`
         : s.date === localToday() ? `<span class="sched-request-status requested">Today</span>` : "";
+    if (hasReport(s.log) && s.log.status === "completed") {
+        return `
+        <article class="sched-report">
+            <div class="rep-kicker tan">${escapeHtml(formatDateShort(s.date))} &middot; ${formatTime(s.startTime)}${s.endTime ? `&ndash;${formatTime(s.endTime)}` : ""}</div>
+            ${reportHtml(s.log, earlier)}
+            ${s.log.workedOn ? `<div class="rep-note"><span class="rep-kicker">Coach</span>${escapeHtml(s.log.workedOn)}</div>` : ""}
+            ${s.log.nextTime ? `<div class="rep-note"><span class="rep-kicker tan">Next time</span>${escapeHtml(s.log.nextTime)}</div>` : ""}
+        </article>`;
+    }
     return `
         <div class="clients-row sched-request-row sched-session-row${off ? " is-off" : ""}">
             <div class="sched-request-detail">
@@ -514,11 +524,11 @@ async function refreshMyRequests() {
     const noted = new Set();
     const byId = new Map(requests.map(r => [r.id, r]));
     pastWrap.hidden = !past.length;
-    pastList.innerHTML = past.map(s => {
+    pastList.innerHTML = past.map((s, i) => {
         const r = byId.get(s.bookingId);
         const old = r && !Object.keys(r.logs || {}).length && r.coachNote && !noted.has(r.id) ? r.coachNote : "";
         if (old) noted.add(r.id);
-        return sessionRowHtml(s, old);
+        return sessionRowHtml(s, old, past.slice(i + 1).map(x => x.log).filter(Boolean));
     }).join("");
     attendanceLine.hidden = !attendance.line;
     attendanceLine.textContent = attendance.line;

@@ -155,6 +155,7 @@ export const PAGE_REQUIRES = Object.freeze({
     "programs.html": "running,strength",
     "pace-calculator.html": "running",
     "schedule.html": "sessions",
+    "homework.html": "homework",
     "checkin.html": "checkins",
     "updates.html": "updates",
     "messages.html": "updates",

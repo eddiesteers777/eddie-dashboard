@@ -11,12 +11,12 @@ const mainRow = html.slice(html.indexOf('<nav class="clients-tabs hub-tabs"'), h
 const moreMenu = html.slice(html.indexOf('id="hubMoreMenu"'), html.indexOf("</div>", html.indexOf('id="hubMoreMenu"')));
 const idsIn = block => [...block.matchAll(/data-tab="([a-z]+)"/g)].map(m => m[1]);
 
-test("the hub has all twelve tabs, once each: four in the main row, eight under More", () => {
-    assert.equal(tabs.length, 12);
-    assert.equal(new Set(tabs).size, 12, "no tab appears twice");
+test("the hub has all thirteen tabs, once each: four in the main row, nine under More", () => {
+    assert.equal(tabs.length, 13);
+    assert.equal(new Set(tabs).size, 13, "no tab appears twice");
     assert.deepEqual(idsIn(mainRow), ["overview", "messages", "workouts", "plan"]);
-    assert.deepEqual(idsIn(moreMenu), ["checkins", "sessions", "progress", "planning", "model", "profile", "notes", "history"]);
-    assert.equal(html.match(/data-panel="[a-z]+"/g).filter(Boolean).length >= 12, true);
+    assert.deepEqual(idsIn(moreMenu), ["checkins", "sessions", "homework", "progress", "planning", "model", "profile", "notes", "history"]);
+    assert.equal(html.match(/data-panel="[a-z]+"/g).filter(Boolean).length >= 13, true);
     for (const id of tabs) assert.match(html, new RegExp(`data-panel="${id}"`), `${id} has a panel`);
 });
 
@@ -31,7 +31,7 @@ test("every badge the hub's code fills in still exists, in the right place", () 
 test("the More menu is a real menu: labelled, closed to start, items are menuitems", () => {
     assert.match(html, /id="hubMoreBtn"[^>]*aria-haspopup="menu"[^>]*aria-expanded="false"[^>]*aria-controls="hubMoreMenu"/);
     assert.match(html, /id="hubMoreMenu" role="menu"[^>]*hidden/);
-    assert.equal((moreMenu.match(/role="menuitem"/g) || []).length, 8);
+    assert.equal((moreMenu.match(/role="menuitem"/g) || []).length, 9);
     assert.ok(!/role="tablist"|role="tab"/.test(html.slice(html.indexOf('<div class="hub-tabs-wrap">'), html.indexOf("</div>", html.indexOf('id="hubMoreMenu"') + 600))), "the half-built tab roles are gone");
 });
 

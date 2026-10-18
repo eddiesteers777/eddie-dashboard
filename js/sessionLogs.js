@@ -14,6 +14,7 @@ import {
     doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { logId } from "./sessionModel.js";
+import { cleanDrills, cleanSkills } from "./sessionReport.js";
 
 const withId = snap => ({ id: snap.id, ...snap.data() });
 const clean = (text, max = 1000) => String(text || "").trim().slice(0, max);
@@ -28,7 +29,7 @@ export async function listSessionLogs(role = "coach") {
 }
 
 // Coach: save what happened at one session (creates or replaces it).
-export async function saveSessionLog({ bookingId, date, clientUid, status, workedOn = "", nextTime = "", packageAssignmentId = null }) {
+export async function saveSessionLog({ bookingId, date, clientUid, status, workedOn = "", nextTime = "", focus = "", drills = [], skills = [], packageAssignmentId = null }) {
     const user = await waitForUser();
     const id = logId(bookingId, date);
     const ref = doc(db, "sessionLogs", id);
@@ -36,6 +37,7 @@ export async function saveSessionLog({ bookingId, date, clientUid, status, worke
     const data = {
         coachUid: user.uid, clientUid, bookingId, date, status,
         workedOn: clean(workedOn), nextTime: clean(nextTime),
+        focus: clean(focus, 100), drills: cleanDrills(drills), skills: cleanSkills(skills),
         packageAssignmentId: packageAssignmentId ? clean(packageAssignmentId, 200) : null,
         createdAt: existing?.exists() ? existing.data().createdAt : serverTimestamp(),
         updatedAt: serverTimestamp()

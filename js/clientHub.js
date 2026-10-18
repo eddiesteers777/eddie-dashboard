@@ -56,6 +56,8 @@ import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statu
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
 import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES, isStripeManagedPackage } from "./clientPackageModel.js";
 import { hasTrainingService, hasSoccerService } from "./services.js";
+import { parseDrills, drillsText } from "./sessionReport.js";
+import { SKILLS } from "./homeworkModel.js";
 import { decodeShare } from "./athleteShare.js";
 import { sharedKeyWork, currentPlan } from "./clientModel.js";
 import { reconstructWorkout } from "./workoutExecution.js";
@@ -92,6 +94,7 @@ function workoutText(day) {
 // ---- Tabs ----
 
 let planMounted = false;
+let homeworkMounted = false;
 let profileMounted = false;
 let modelMounted = false;
 let planningMounted = false;
@@ -141,6 +144,10 @@ function selectTab(name) {
                 .then(n => { if (n) planningView?.refreshHistory?.(); })
                 .catch(error => console.warn("Southbound: the planned week couldn't note the publish.", error?.code || error))
         }));
+    }
+    if (name === "homework" && !homeworkMounted && record) {
+        homeworkMounted = true;
+        import("./homeworkCoach.js").then(({ mountHomework }) => mountHomework($("hubHomework"), { clientUid, firstName: firstName() }));
     }
     if (name === "messages" && !messagesMounted && record) {
         messagesMounted = true;
@@ -1502,7 +1509,8 @@ function sessionLogRow(s) {
     const [pill, tone] = STATE_PILL[s.state] || ["", ""];
     const past = s.state !== "upcoming";
     const legacy = !s.log && s.coachNote && legacyNoteAt.has(`${s.bookingId}|${s.date}`) ? `<span class="hub-quote">Your earlier note: "${esc(s.coachNote)}"</span>` : "";
-    const words = s.log ? [s.log.workedOn ? `<span><b>Worked on:</b> ${renderEmojiText(esc(s.log.workedOn))}</span>` : "",
+    const words = s.log ? [s.log.focus ? `<span><b>${esc(s.log.focus)}</b>${(s.log.drills || []).length ? ` · ${s.log.drills.length} drill${s.log.drills.length === 1 ? "" : "s"}` : ""}${(s.log.skills || []).length ? ` · ${esc(s.log.skills.map(k => k.skill).join(", "))}` : ""}</span>` : "",
+        s.log.workedOn ? `<span><b>Worked on:</b> ${renderEmojiText(esc(s.log.workedOn))}</span>` : "",
         s.log.nextTime ? `<span><b>For next time:</b> ${renderEmojiText(esc(s.log.nextTime))}</span>` : ""].join("") : "";
     const actions = s.state === "to-log" || s.state === "today"
         ? `<button type="button" class="clients-btn-primary" data-log="${esc(s.bookingId)}|${esc(s.date)}">Log it</button>
@@ -1632,6 +1640,12 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
             </div>
             ${packageFieldHtml}
             <div class="hub-log-words">
+                <label class="hub-log-field"><span>Headline <em>The title of the report. ${esc(firstName())} sees this</em></span>
+                    <input name="focus" maxlength="100" autocomplete="off" placeholder="Finishing under pressure" value="${esc(s.log?.focus || "")}"></label>
+                <label class="hub-log-field"><span>Drills <em>One per line. Add a result after a bar</em></span>
+                    <textarea name="drills" rows="3" placeholder="Rondo 4v1 | 12 min&#10;Cut inside and finish | 18 / 25">${esc(drillsText(s.log?.drills))}</textarea></label>
+                <div class="hub-log-field"><span>Skills trained <em>Tap to rate 1 to 5, tap again to raise, past 5 to clear</em></span>
+                    <div class="hub-skill-chips" data-skills>${SKILLS.map(k => { const lv = (s.log?.skills || []).find(x => x.skill === k)?.level || 0; return `<button type="button" class="hub-skill-chip${lv ? " on" : ""}" data-skill="${esc(k)}" data-level="${lv}">${esc(k)}<b>${lv ? "●".repeat(lv) : ""}</b></button>`; }).join("")}</div></div>
                 <label class="hub-log-field"><span>What did you work on? <em>${esc(firstName())} sees this</em></span>
                     <textarea name="workedOn" rows="3" maxlength="1000" data-emoji placeholder="First touch, weak-foot passing, 1v1 finishing">${esc(s.log?.workedOn || "")}</textarea></label>
                 <label class="hub-log-field"><span>For next time <em>${esc(firstName())} sees this</em></span>
@@ -1653,6 +1667,14 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
         d.querySelector(".hub-log-words").hidden = status !== "completed";
     };
     form.addEventListener("change", syncWords);
+    form.querySelector("[data-skills]")?.addEventListener("click", ev => {
+        const chip = ev.target.closest("[data-skill]");
+        if (!chip) return;
+        const level = (Number(chip.dataset.level) + 1) % 6;
+        chip.dataset.level = level;
+        chip.classList.toggle("on", level > 0);
+        chip.querySelector("b").textContent = "●".repeat(level);
+    });
     syncWords();
     d.addEventListener("close", () => d.remove());
     d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
@@ -1691,6 +1713,9 @@ async function logSessionDialog(s, { cancelOnly = false } = {}) {
                 status,
                 workedOn: words ? String(data.get("workedOn") || "") : "",
                 nextTime: words ? String(data.get("nextTime") || "") : "",
+                focus: words ? String(data.get("focus") || "") : "",
+                drills: words ? parseDrills(String(data.get("drills") || "")) : [],
+                skills: words ? [...form.querySelectorAll("[data-skill]")].map(c => ({ skill: c.dataset.skill, level: Number(c.dataset.level) })).filter(x => x.level > 0) : [],
                 packageAssignmentId
             });
             const priv = words ? String(data.get("private") || "").trim() : "";
@@ -2173,6 +2198,9 @@ function renderAll() {
     renderActions();
     renderCheckins();
     renderSessions();
+    // Soccer clients get a Homework tab (under More).
+    const hwTab = $("hubHomeworkTab");
+    if (hwTab) hwTab.hidden = !(hasSoccerService(record.profile?.services || []) || (record.requests || []).some(r => r.sessionType === "soccer"));
     renderWorkouts();
     renderChanges();
     renderNotes();

@@ -1,0 +1,114 @@
+/* ==========================================
+   Southbound — soccer homework (homework.html + the Client Hub tab)
+   Builds on css/clients.css. Lines over boxes; tan is the one action colour.
+========================================== */
+
+.hw-page [hidden], .hw-coach [hidden], .hw-dialog [hidden]{ display:none !important; }
+
+.hw-kicker{ font:600 11px/1.2 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.hw-kicker.tan{ color:var(--primary); }
+.hw-title{ font-family:var(--font-display); font-weight:800; text-transform:uppercase; line-height:.95; letter-spacing:.01em; }
+.hw-sub{ color:var(--text-secondary); font-size:14px; }
+.hw-section{ display:flex; justify-content:space-between; align-items:baseline; margin:24px 2px 10px; }
+.hw-section h2{ font-family:var(--font-display); font-weight:800; text-transform:uppercase; font-size:20px; letter-spacing:.01em; }
+
+/* ---- the summary strip: ring + streak ---- */
+.hw-summary{ display:flex; align-items:center; gap:18px; margin:4px 0 6px; }
+.hw-ring{ flex:0 0 92px; width:92px; height:92px; position:relative; }
+.hw-ring svg{ width:92px; height:92px; transform:rotate(-90deg); }
+.hw-ring-bg{ fill:none; stroke:rgba(255,255,255,.08); stroke-width:9; }
+.hw-ring-fg{ fill:none; stroke:var(--primary); stroke-width:9; stroke-linecap:round; transition:stroke-dasharray .5s ease; }
+.hw-ring b{ position:absolute; inset:0; display:grid; place-items:center; font:900 28px/1 var(--font-display); color:var(--text); }
+.hw-summary strong{ display:block; font-size:16px; }
+
+/* ---- a card with a video on top ---- */
+.hw-card{ display:block; padding:0; overflow:hidden; flex-shrink:0; background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--primary); border-radius:14px; color:var(--text); text-decoration:none; width:100%; text-align:left; font:inherit; cursor:pointer; }
+.hw-card-body{ padding:14px 16px 16px; }
+.hw-card-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.hw-card .hw-title{ font-size:24px; margin:6px 0 8px; }
+
+.hw-thumb{ position:relative; display:block; background:linear-gradient(135deg,#2d4a3a,#16291f 60%,#0f1d16); overflow:hidden; border-radius:8px; flex:0 0 auto; aspect-ratio:16/9; }
+.hw-thumb img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.hw-thumb.hw-nov{ display:grid; place-items:center; color:var(--primary); }
+.hw-thumb.hw-nov .sb-ic, .hw-thumb.hw-nov svg{ width:26px; height:26px; }
+.hw-card .hw-thumb{ border-radius:0; }
+.hw-play{ position:absolute; inset:0; display:grid; place-items:center; }
+.hw-play i{ width:44px; height:32px; border-radius:9px; background:rgba(10,10,10,.72); display:grid; place-items:center; }
+.hw-play i:after{ content:""; border-left:11px solid #fff; border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px; }
+.hw-thumb.small .hw-play i{ width:26px; height:19px; border-radius:6px; }
+.hw-thumb.small .hw-play i:after{ border-left-width:7px; border-top-width:4.5px; border-bottom-width:4.5px; margin-left:2px; }
+.hw-clip{ position:absolute; right:7px; bottom:7px; background:rgba(0,0,0,.75); font:600 10.5px var(--font-mono); padding:2px 6px; border-radius:3px; color:#fff; }
+
+/* ---- check marks for "3 times a week" ---- */
+.hw-ticks{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.hw-tick{ width:22px; height:22px; border-radius:50%; display:grid; place-items:center; border:1.5px dashed rgba(236,230,212,.28); }
+.hw-tick.done{ background:var(--sage); border:0; color:var(--on-primary); }
+.hw-tick svg{ width:12px; height:12px; }
+
+/* ---- list rows ---- */
+.hw-rows{ margin-top:6px; }
+.hw-row{ display:flex; align-items:center; gap:12px; padding:13px 2px; border-top:1px solid var(--border); background:none; border-left:0; border-right:0; border-bottom:0; width:100%; text-align:left; color:var(--text); font:inherit; cursor:pointer; text-decoration:none; min-height:64px; }
+.hw-row:first-child{ border-top:0; }
+.hw-row .hw-thumb{ width:76px; }
+.hw-row-main{ flex:1; min-width:0; }
+.hw-row-main b{ display:block; font-size:15px; line-height:1.25; }
+.hw-row-main span{ color:var(--muted); font-size:13px; }
+.hw-row-side{ text-align:right; flex:0 0 auto; }
+.hw-row-side b{ display:block; font:900 20px/1 var(--font-display); }
+
+.hw-pill{ display:inline-block; font:600 10.5px/1 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; padding:5px 8px; border-radius:4px; background:rgba(214,185,142,.14); color:var(--primary); }
+.hw-pill.sage{ background:rgba(160,187,156,.14); color:var(--sage); }
+.hw-pill.amber{ background:rgba(212,170,98,.14); color:var(--amber); }
+.hw-pill.red{ background:rgba(210,122,98,.14); color:var(--red); }
+
+/* ---- the practice screen ---- */
+.hw-back{ display:inline-flex; align-items:center; gap:6px; min-height:44px; background:none; border:0; color:var(--text-secondary); font:600 14px var(--font-body); cursor:pointer; padding:0; }
+.hw-player{ position:relative; aspect-ratio:16/9; border-radius:12px; overflow:hidden; background:#000; margin:6px 0 14px; }
+.hw-player iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+.hw-player .hw-thumb{ position:absolute; inset:0; border-radius:0; aspect-ratio:auto; width:100%; border:0; cursor:pointer; padding:0; }
+.hw-detail .hw-title{ font-size:36px; margin:6px 0 10px; }
+.hw-coachnote{ border-left:2px solid var(--primary); padding:2px 0 2px 12px; margin:12px 0; color:var(--text); font-size:15px; line-height:1.5; }
+.hw-coachnote small{ display:block; font:600 10.5px var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--primary); margin-bottom:3px; }
+.hw-log{ margin-top:16px; }
+.hw-log-row{ flex-wrap:wrap; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--border); }
+.hw-log-row:first-of-type{ border-top:0; }
+.hw-step{ display:inline-flex; align-items:center; border:1px solid rgba(236,230,212,.18); border-radius:8px; overflow:hidden; }
+.hw-step button{ width:44px; height:44px; background:none; border:0; color:var(--text-secondary); font:700 20px var(--font-body); cursor:pointer; }
+.hw-step input{ width:64px; height:44px; text-align:center; background:rgba(255,255,255,.04); border:0; color:var(--text); font:900 22px var(--font-display); -moz-appearance:textfield; }
+.hw-step input::-webkit-outer-spin-button, .hw-step input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.hw-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.hw-chip{ min-height:44px; padding:0 14px; border-radius:6px; border:1px solid rgba(236,230,212,.16); background:none; color:var(--text-secondary); font:600 12px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
+.hw-chip.on{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.hw-history{ margin-top:6px; }
+.hw-history div{ display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-top:1px solid var(--border); font-size:14px; color:var(--text-secondary); }
+.hw-history div:first-child{ border-top:0; }
+.hw-btn-row{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+.hw-done-note{ display:flex; align-items:center; gap:10px; padding:14px 0; color:var(--sage); font-weight:600; }
+
+/* ---- coach side ---- */
+.hw-coach .hw-stats{ display:flex; border-radius:12px; background:var(--sb-bubble-dark-bg, rgba(4,11,8,.5)); box-shadow:var(--sb-bubble-dark-shadow, none); border:1px solid rgba(236,230,212,.07); margin-bottom:6px; }
+.hw-stat{ flex:1; padding:12px 12px; }
+.hw-stat + .hw-stat{ border-left:1px solid var(--border); }
+.hw-stat b{ display:block; font:900 34px/.95 var(--font-display); margin-top:4px; }
+.hw-stat b.tan{ color:var(--primary); }
+.hw-coach .hw-row .hw-thumb{ width:72px; }
+.hw-coach-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.hw-reply{ margin:8px 0 0; padding-left:12px; border-left:2px solid var(--sage); color:var(--text-secondary); font-size:14px; }
+.hw-practice{ padding:10px 0; border-top:1px solid var(--border); font-size:14px; display:flex; justify-content:space-between; gap:10px; }
+.hw-practice:first-child{ border-top:0; }
+
+/* ---- assign dialog ---- */
+.hw-dialog{ width:min(460px, calc(100vw - 24px)); }
+.hw-dialog .sb-dialog-form{ gap:8px; max-height:calc(100dvh - 48px); overflow:auto; }
+.hw-dialog .hw-lbl{ display:block; font:600 10.5px var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:8px 0 5px; }
+.hw-dialog .sb-dialog-input{ margin:0; }
+.hw-dialog .hw-two{ display:flex; gap:8px; }
+.hw-dialog .hw-two > *{ flex:1; min-width:0; }
+.hw-found{ display:flex; gap:10px; padding:8px; border-radius:10px; background:rgba(4,11,8,.5); border:1px solid rgba(236,230,212,.07); }
+.hw-found .hw-thumb{ width:104px; }
+.hw-err{ color:var(--red); font-size:13px; }
+.hw-seg{ display:flex; gap:4px; padding:4px; border-radius:9px; background:rgba(4,11,8,.55); }
+.hw-seg button{ flex:1; min-height:40px; border:0; border-radius:6px; background:none; color:var(--text-secondary); font:600 13px var(--font-body); cursor:pointer; }
+.hw-seg button.on{ background:var(--surface-light); color:var(--text); box-shadow:0 1px 0 rgba(255,244,222,.08), 0 2px 6px rgba(0,0,0,.3); }
+
+@media (prefers-reduced-motion:reduce){ .hw-ring-fg{ transition:none; } }

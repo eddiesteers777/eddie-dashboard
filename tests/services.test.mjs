@@ -47,16 +47,16 @@ test("training clients: online, running and strength all get the same pages", ()
 
 test("soccer clients: sessions, habits, progress; plan + check-in only with a coach plan", () => {
     for (const s of SOCCER_SERVICES) {
-        assert.deepEqual(caps(active([s])), ["habits", "package", "profile", "progress", "sessions", "updates"], s);
+        assert.deepEqual(caps(active([s])), ["habits", "homework", "package", "profile", "progress", "sessions", "updates"], s);
         assert.deepEqual(caps({ ...active([s]), hasCoachPlan: true }),
-            ["checkins", "habits", "package", "plan", "profile", "progress", "sessions", "updates"], s);
+            ["checkins", "habits", "homework", "package", "plan", "profile", "progress", "sessions", "updates"], s);
     }
     const soccer = capabilitiesFor({ ...active(["soccer_1on1"]), hasCoachPlan: true });
     for (const no of ["nutrition", "fueling", "running", "strength", "crossTraining", "readiness"]) assert.ok(!soccer.has(no), no);
 });
 
 test("hybrid clients get both", () => {
-    assert.deepEqual(caps(active(["running", "soccer_group"])), [...TRAINING_ALL, "sessions"].sort());
+    assert.deepEqual(caps(active(["running", "soccer_group"])), [...TRAINING_ALL, "sessions", "homework"].sort());
 });
 
 test("pending, archived, no services, unknown services", () => {

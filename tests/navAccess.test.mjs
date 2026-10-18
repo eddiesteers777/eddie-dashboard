@@ -51,8 +51,8 @@ test("training clients: the training pages, no Schedule, no coach pages", () => 
 });
 
 test("soccer clients: Schedule and Habits; Plan + check-in only with a coach plan; no nutrition (the fueling calculator is for everyone)", () => {
-    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "messages.html", "profile.html", "progress.html", "schedule.html", "updates.html"]);
-    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "messages.html", "plan.html", "profile.html", "progress.html", "schedule.html", "updates.html", "workout.html"]);
+    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "homework.html", "messages.html", "profile.html", "progress.html", "schedule.html", "updates.html"]);
+    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "homework.html", "messages.html", "plan.html", "profile.html", "progress.html", "schedule.html", "updates.html", "workout.html"]);
     assert.ok(pageAllowed("fueling.html", people.soccerWithPlan) && !pageAllowed("nutrition.html", people.soccerWithPlan));
     assert.ok(pageAllowed("schedule.html", people.hybrid) && pageAllowed("running.html", people.hybrid));
 });
