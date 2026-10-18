@@ -10,7 +10,7 @@
 import { listenForAuth } from "./auth.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
-import { mountThread } from "./messageView.js";
+import { mountThread, enterFullScreen } from "./messageView.js";
 import { sendClientMessageEmail } from "./emailNotify.js";
 import { emptyHtml } from "./ui.js";
 
@@ -19,6 +19,8 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 
 let started = false;
 let view = null;
+let leaveFull = null;
+let onlyCoach = false;   // one coach: the thread fills a phone screen
 
 function setSubtitle(text) {
     const el = $("msgSubtitle");
@@ -36,8 +38,16 @@ function open(coach, user) {
         otherUid: coach.coachUid,
         otherName: name,
         myName: user.displayName || "",
-        header: { name, sub: "Your coach" },
+        header: { name, sub: "Your coach", back: document.referrer && new URL(document.referrer).origin === location.origin ? "" : "index.html" },
         email: text => sendClientMessageEmail({ clientName: user.displayName || "A client", clientUid: user.uid, text })
+    });
+    leaveFull?.();
+    leaveFull = null;
+    const host = $("msgThread");
+    host.classList.toggle("is-full", onlyCoach);
+    if (onlyCoach && window.matchMedia("(max-width: 600px)").matches) leaveFull = enterFullScreen(host);
+    host.querySelector(".msg-head-back")?.addEventListener("click", event => {
+        if (history.length > 1 && document.referrer) { event.preventDefault(); history.back(); }
     });
     import("./icons.js").then(m => m.hydrate());
 }
@@ -78,5 +88,6 @@ listenForAuth(async user => {
             if (coach) open(coach, user);
         });
     }
+    onlyCoach = coaches.length === 1;
     open(first, user);
 });

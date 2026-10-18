@@ -389,3 +389,24 @@
 .msg-press-react button:hover, .msg-press-react button:focus-visible{ transform:scale(1.15); outline:0; }
 .msg-press-react button.is-on{ background:rgba(214,185,142,.25); }
 .msg-press-lift.is-mine .msg-press-react{ align-self:flex-end; }
+
+/* Full screen on a phone, like iMessage: the page stops scrolling, the header
+   sits on top, the thread fills the middle and the box is pinned to the bottom. */
+html.msg-full, html.msg-full body{ overflow:hidden; overscroll-behavior:none; }
+.msg-head-back{ position:absolute; left:6px; top:6px; width:44px; height:44px; display:grid; place-items:center; color:var(--primary); text-decoration:none; }
+.msg-head{ position:relative; }
+@media (max-width:600px){
+    #msgThread.is-full{
+        position:fixed; left:0; right:0; top:var(--msg-top, 0px); z-index:4000;
+        height:var(--msg-vh, 100dvh);
+        display:flex; flex-direction:column;
+        background:radial-gradient(120% 50% at 50% 0%, #163126, var(--bg) 60%);
+    }
+    #msgThread.is-full .msg-thread{ flex:1; min-height:0; gap:0; padding-top:env(safe-area-inset-top); }
+    #msgThread.is-full .msg-head{ flex:0 0 auto; padding:6px 56px 8px; border-bottom:1px solid rgba(236,230,212,.08); background:rgba(15,32,25,.8); -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); }
+    #msgThread.is-full .msg-head-av{ width:40px; height:40px; font-size:16px; }
+    #msgThread.is-full .msg-head strong{ margin-top:2px; font-size:13px; }
+    #msgThread.is-full .msg-list{ flex:1; min-height:0; max-height:none; border:0; border-radius:0; background:none; box-shadow:none; padding:10px 12px 8px; }
+    #msgThread.is-full .msg-compose{ flex:0 0 auto; padding:8px 12px calc(8px + env(safe-area-inset-bottom)); background:rgba(15,32,25,.85); -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); border-top:1px solid rgba(236,230,212,.08); }
+    #msgThread.is-full .msg-error{ padding:0 14px 8px; }
+}

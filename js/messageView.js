@@ -44,6 +44,7 @@ function ensureStyles() {
 const linkify = html => html.replace(/\bhttps?:\/\/[^\s<]+[^\s<.,;:!?)"']/g, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
 
 const REPLY_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v3"></path></svg>';
+const BACK_ICON = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>';
 const SEND_ARROW = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>';
 
 function bubbleHtml(m, fresh, role, first) {
@@ -69,12 +70,37 @@ function reactionsHtml(m) {
 
 const plainText = row => row.querySelector(".msg-text")?.innerText || "";
 
+/**
+ * Full-screen mode (phones): the page behind stops scrolling and the box
+ * follows the visual viewport, so the on-screen keyboard pushes the thread up
+ * instead of covering the input. Returns a function that turns it off.
+ */
+export function enterFullScreen(el) {
+    const root = document.documentElement;
+    root.classList.add("msg-full");
+    const vv = window.visualViewport;
+    const fit = () => {
+        el.style.setProperty("--msg-vh", `${Math.round(vv?.height || window.innerHeight)}px`);
+        el.style.setProperty("--msg-top", `${Math.round(vv?.offsetTop || 0)}px`);
+    };
+    fit();
+    vv?.addEventListener("resize", fit);
+    vv?.addEventListener("scroll", fit);
+    return () => {
+        root.classList.remove("msg-full");
+        vv?.removeEventListener("resize", fit);
+        vv?.removeEventListener("scroll", fit);
+        el.style.removeProperty("--msg-vh");
+        el.style.removeProperty("--msg-top");
+    };
+}
+
 export function mountThread(el, { role, otherUid, otherName = "", myName = "", email = null, intro = "", onChange = null, header = null } = {}) {
     ensureStyles();
     const first = String(otherName || "").split(" ")[0] || (role === "coach" ? "them" : "your coach");
     el.innerHTML = `
         <div class="msg-thread">
-            ${header ? `<div class="msg-head"><span class="msg-head-av" aria-hidden="true">${esc(String(header.name || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase())}</span><strong>${esc(header.name || "")}</strong>${header.sub ? `<span>${esc(header.sub)}</span>` : ""}</div>` : ""}
+            ${header ? `<div class="msg-head">${header.back ? `<a class="msg-head-back" href="${esc(header.back)}" aria-label="Back">${BACK_ICON}</a>` : ""}<span class="msg-head-av" aria-hidden="true">${esc(String(header.name || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase())}</span><strong>${esc(header.name || "")}</strong>${header.sub ? `<span>${esc(header.sub)}</span>` : ""}</div>` : ""}
             ${intro ? `<p class="msg-intro">${esc(intro)}</p>` : ""}
             <div class="msg-list" role="log" aria-live="polite" aria-label="Messages with ${esc(otherName || first)}">
                 <div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:60%"></span><span class="sb-skeleton" style="width:44%;margin-left:auto"></span><span class="sb-skeleton" style="width:52%"></span></div>

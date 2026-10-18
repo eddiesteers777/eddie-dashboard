@@ -111,3 +111,30 @@
 .cm-act-read{ background:var(--sage); }
 .cm-actions:not(:has(.cm-act-read)) .cm-act-pin{ width:150px; }
 @media (prefers-reduced-motion: reduce){ .cm-swipe .cm-item{ transition:none; } }
+
+/* Phone: an open conversation takes the whole screen (iMessage style). */
+.cm-head-av{ display:none; }
+@media (max-width:900px){
+    .cm-shell.has-thread{ display:block; border:0; background:none; box-shadow:none; min-height:0; overflow:visible; }
+    .cm-shell.has-thread .cm-pane{
+        position:fixed; left:0; right:0; top:var(--msg-top, 0px); z-index:4000;
+        height:var(--msg-vh, 100dvh);
+        display:flex; flex-direction:column;
+        background:radial-gradient(120% 50% at 50% 0%, #163126, var(--bg) 60%);
+        padding-top:env(safe-area-inset-top);
+    }
+    .cm-pane .cm-head{ position:relative; flex:0 0 auto; flex-direction:column; justify-content:center; gap:2px; padding:6px 64px 8px; text-align:center; background:rgba(15,32,25,.8); -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); border-bottom:1px solid rgba(236,230,212,.08); }
+    .cm-pane .cm-back{ position:absolute; left:6px; top:8px; width:44px; height:44px; border:0; background:none; box-shadow:none; color:var(--primary); }
+    .cm-pane .cm-head-av{ display:grid; place-items:center; width:40px; height:40px; border-radius:50%; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); color:var(--primary); font:800 16px var(--font-display); }
+    .cm-pane .cm-head-who{ flex:0 0 auto; align-items:center; }
+    .cm-pane .cm-head-who strong{ font-size:13px; }
+    .cm-pane .cm-head-who span{ font-size:10px; }
+    .cm-pane .cm-ctx{ flex:0 0 auto; max-height:45vh; overflow-y:auto; }
+    .cm-pane .cm-ctx-toggle{ min-height:36px; padding:0 16px; font-size:10.5px; }
+    .cm-pane .cm-thread{ flex:1; min-height:0; display:flex; flex-direction:column; padding:0; }
+    .cm-pane .cm-thread .msg-thread{ flex:1; min-height:0; gap:0; }
+    .cm-pane .cm-thread .msg-list{ flex:1; min-height:0; max-height:none; border:0; border-radius:0; background:none; box-shadow:none; padding:10px 12px 8px; }
+    .cm-pane .cm-thread .msg-compose{ padding:8px 12px 8px; background:rgba(15,32,25,.85); -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); border-top:1px solid rgba(236,230,212,.08); }
+    .cm-pane .cm-quick{ flex:0 0 auto; flex-wrap:nowrap; overflow-x:auto; gap:6px; padding:6px 12px calc(8px + env(safe-area-inset-bottom)); background:rgba(15,32,25,.85); }
+    .cm-pane .cm-chip{ flex:0 0 auto; white-space:nowrap; border-radius:999px; }
+}

@@ -13,7 +13,7 @@ import { loadClientDirectory } from "./clientDirectory.js";
 import { summarizeClient, isoDate, shortDate, serviceLabels } from "./clientSummary.js";
 import { inboxRows, inboxGroups, needsCount } from "./coachInbox.js";
 import { waitedText } from "./coachToday.js";
-import { mountThread } from "./messageView.js";
+import { mountThread, enterFullScreen } from "./messageView.js";
 import { markRead } from "./messages.js";
 import { togglePinned, unreadFor } from "./messageThread.js";
 import { sendCoachMessageEmail } from "./emailNotify.js";
@@ -32,6 +32,8 @@ const shell = $("cmShell");
 let clients = [];          // [{ uid, name, searchText, messages, summary, record }]
 let selected = "";
 let mounted = null;
+let leaveFull = null;
+const phone = () => window.matchMedia("(max-width: 900px)").matches;
 
 // ---------- the list ----------
 
@@ -107,6 +109,7 @@ function openClient(uid, { push = true } = {}) {
     mounted?.destroy?.();
     const name = firstName(c.name);
     $("cmName").textContent = c.name;
+    $("cmAv").textContent = String(c.name || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
     $("cmSub").textContent = serviceLabels(c.summary.services).join(" · ") || c.summary.email || "";
     $("cmHub").href = `client.html?uid=${encodeURIComponent(uid)}`;
     $("cmCtxBody").innerHTML = contextHtml(c);
@@ -125,12 +128,15 @@ function openClient(uid, { push = true } = {}) {
     });
     if (push) history.replaceState(null, "", `?uid=${encodeURIComponent(uid)}`);
     renderList();
-    if (!wide()) $("cmThreadPane").scrollIntoView({ block: "start" });
+    leaveFull?.();
+    leaveFull = phone() ? enterFullScreen($("cmThreadPane")) : null;
 }
 
 function closeClient() {
     mounted?.destroy?.();
     mounted = null;
+    leaveFull?.();
+    leaveFull = null;
     selected = "";
     shell.classList.remove("has-thread");
     $("cmThreadPane").hidden = true;
