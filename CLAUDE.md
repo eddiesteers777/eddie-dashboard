@@ -113,7 +113,7 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 - **Honeypot fields must not look like real fields** (autofill filled one labelled "Company" and real questions were dropped). Keep `sbLeaveEmpty` ("Leave this empty", `autocomplete="off"`).
 - **`Promise.all` with a long positional list breaks silently.** Use `allNamed({ name: promise })` for more than three or four.
 - **Hand-uploaded files can drop rules.** If Eddie uploads a file, diff it against the previous version.
-- **Phone tap targets are 44px+** (block at the end of `css/style.css`; inline links get an invisible `::after` hit area). **Phone inputs must be 16px+** or iOS zooms on focus. Phone overrides in `css/style.css` need `!important` (page stylesheets load after it).
+- **Phone tap targets are 44px+** (block at the end of `css/style.css`; inline links get an invisible `::after` hit area). **Phone inputs must be 16px+** or iOS zooms on focus (`css/style.css` forces it up to 900px and on any touch screen). Double-tap zoom is off app-wide (`*{touch-action:manipulation}`); pinch zoom stays on for accessibility. Phone overrides in `css/style.css` need `!important` (page stylesheets load after it).
 - **Cloud sync never carries a deleted key.** A deletable synced item needs a marker (`{ deleted: true, updatedAt }`), and a list that grows on several devices needs one key per item (a prefix).
 - **Reading your own not-yet-created doc is permission-denied, not "missing".** It has broken first check-ins, `assignClient` and first wearable shares. Write without a pre-read; treat permission-denied on your own doc ID as "new"; test the real create path.
 - **Page CSS resets body padding on phones.** `loadHeader` adds `body.has-bottomnav`, padded with `!important`.
