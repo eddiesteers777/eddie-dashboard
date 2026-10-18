@@ -21,6 +21,8 @@ const markSvg = readFileSync(join(root, "brand/sb-mark.svg"), "utf8");
 const markInner = markSvg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
 
 // ---- The emojis ----
+const pine = (x, y, s, fill = SAGE) => `<path d="M${x} ${y}l${-9*s} ${13*s}h${4*s}l${-7*s} ${10*s}h${5*s}l${-7*s} ${10*s}h${28*s}l${-7*s} ${-10*s}h${5*s}l${-7*s} ${-10*s}h${4*s}z" fill="${fill}" ${line}/><path d="M${x} ${y+33*s}v${6*s}" stroke="${INK}" stroke-width="${W+1}" stroke-linecap="round"/>`;
+
 const EMOJI = {
     // Training
     sb_locked_in: face(`
@@ -205,7 +207,95 @@ const EMOJI = {
 
     sb_survived: face(`
         <path d="M18 29l8 4l-8 4M46 29l-8 4l8 4" ${ink()}/>
-        <path d="M22 48q2.5-4 5 0t5 0t5 0t5 0" ${ink()}/>`) + drop(9, 10, 0.85) + drop(55, 12, 0.85)
+        <path d="M22 48q2.5-4 5 0t5 0t5 0t5 0" ${ink()}/>`) + drop(9, 10, 0.85) + drop(55, 12, 0.85),
+    // Trail, fuel and recovery additions (2026-10-18)
+    sb_forest_miles: streaks(0, 40) + pine(40, 8, 1.15, SAGE) + pine(22, 20, .85, SAGE_D),
+
+    sb_heading_south: `
+    <circle cx="32" cy="32" r="26" fill="${CREAM}" ${line}/>
+    <circle cx="32" cy="32" r="20" fill="none" stroke="${STONE}" stroke-width="3"/>
+    <path d="M32 9v5M32 50v5M9 32h5M50 32h5" stroke="${INK}" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 54l-7.5-22h15z" fill="${FLAME}" ${line}/>
+    <path d="M32 12l-7.5 20h15z" fill="${TAN}" ${line}/>
+    <circle cx="32" cy="32" r="3.4" fill="${INK}"/>`,
+
+    sb_early_miles: `
+    <clipPath id="sky"><rect x="4" y="6" width="56" height="46" rx="10"/></clipPath>
+    <rect x="4" y="6" width="56" height="46" rx="10" fill="${FLAME_L}"/>
+    <g clip-path="url(#sky)"><circle cx="32" cy="40" r="13" fill="${CREAM}" ${line}/>
+    <path d="M2 44q14-9 26-2t36-4V60H2z" fill="${SAGE}" ${line}/>
+    <path d="M26 54q4-5 0-9" fill="none" stroke="${CREAM}" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 3"/></g>
+    <path d="M32 14v5M18 20l3 4M46 20l-3 4" stroke="${FOREST}" stroke-width="3" stroke-linecap="round"/>
+    <rect x="4" y="6" width="56" height="46" rx="10" ${ink()}/>`,
+
+    sb_hill_repeats: `
+    <path d="M4 56L38 14L60 56z" fill="${TAN}" ${line}/>
+    <clipPath id="h"><path d="M4 56L38 14L60 56z"/></clipPath>
+    <path d="M38 14L60 56H44z" fill="${TAN_D}" clip-path="url(#h)"/>
+    <path d="M4 56L38 14L60 56z" ${ink()}/>
+    <path d="M14 50l14-17M22 26l6 7l-8 1" fill="none" stroke="${INK}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M14 50l14-17M22 26l6 7l-8 1" fill="none" stroke="${CREAM}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M42 46h3M48 46h3" stroke="${CREAM}" stroke-width="3" stroke-linecap="round"/>`,
+
+    sb_rain_run: `
+    <path d="M17 38a11 11 0 0 1 2-22a14 14 0 0 1 26-1a10 10 0 0 1 2 23z" fill="${STONE}" ${line}/>
+    <path d="M19 30q4-3 9 0" fill="none" stroke="${CREAM}" stroke-width="3" stroke-linecap="round"/>
+    ${drop(22, 42, .8)}${drop(34, 46, .8)}${drop(46, 42, .8)}`,
+
+    sb_foam_roll: `
+    <path d="M6 54h52" stroke="${INK}" stroke-width="${W}" stroke-linecap="round"/>
+    <rect x="8" y="28" width="48" height="22" rx="11" fill="${SAGE}" ${line}/>
+    <path d="M20 29v20M30 29v20M40 29v20" stroke="${SAGE_D}" stroke-width="3"/>
+    <ellipse cx="46" cy="39" rx="6" ry="10" fill="${SAGE_D}" ${line}/>
+    <ellipse cx="46" cy="39" rx="2.4" ry="4.2" fill="${FOREST}"/>
+    <path d="M20 22q12-8 24 0" fill="none" stroke="${TAN}" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M40 17l4 5l-6 1.5" fill="none" stroke="${TAN}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+    sb_coffee: outlined([
+    `<path d="M12 24h34v18q0 14-14 14h-6q-14 0-14-14z" fill="${CREAM}"/>`,
+    `<path d="M46 29h4q7 0 7 7.5T50 44h-4" fill="none" stroke="${CREAM}" stroke-width="4.5"/>`]) + `
+    <path d="M12 30h34" ${ink()}/>
+    <path d="M14 24h30v4H14z" fill="${TAN_D}"/>
+    <path d="M22 18q-3-4 0-8M30 18q-3-4 0-8M38 18q-3-4 0-8" fill="none" stroke="${TAN}" stroke-width="3" stroke-linecap="round"/>
+    <path d="M22 42q7 5 14 0" ${ink()}/>`,
+
+    sb_gel: `<g transform="rotate(-14 32 32)">${outlined([
+    `<path d="M20 22h24v28q0 6-6 6H26q-6 0-6-6z" fill="${FLAME_L}"/>`,
+    `<path d="M24 8h16l4 14H20z" fill="${FLAME}"/>`])}
+    <path d="M20 22h24" ${ink()}/>
+    <path d="M27 31h10M27 37h10" stroke="${CREAM}" stroke-width="3" stroke-linecap="round"/>
+    <path d="M33 40l-6 9h5l-2 6l7-9h-5z" fill="${CREAM}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/></g>
+    ${drop(51, 8, .7)}`,
+
+    sb_negative_split: `
+    <rect x="27" y="4" width="10" height="7" rx="2" fill="${TAN}" ${line}/>
+    <circle cx="30" cy="36" r="22" fill="${CREAM}" ${line}/>
+    <path d="M30 36V20" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M30 36a16 16 0 0 0 0-16" fill="none" stroke="${SAGE}" stroke-width="5"/>
+    <circle cx="30" cy="36" r="3" fill="${INK}"/>
+    <path d="M52 30v24M45 47l7 8l7-8" fill="none" stroke="${INK}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M52 30v24M45 47l7 8l7-8" fill="none" stroke="${FLAME}" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+    sb_campfire: `
+    <path d="M32 8c5 8 15 13 15 26c0 9-7 15-15 15s-15-6-15-15c0-6 4-10 6-14c1 5 3 8 6 9c-2-7 0-14 3-21z" fill="${FLAME}" ${line}/>
+    <path d="M32 28c3 5 7 7 7 12c0 4-3 7-7 7s-7-3-7-7c0-4 3-6 7-12z" fill="${FLAME_L}"/>
+    <path d="M10 50l44 8M54 50l-44 8" stroke="${INK}" stroke-width="10" stroke-linecap="round"/>
+    <path d="M10 50l44 8M54 50l-44 8" stroke="${TAN_D}" stroke-width="5" stroke-linecap="round"/>`,
+
+    sb_trail_blaze: `
+    <rect x="18" y="4" width="28" height="58" rx="6" fill="${TAN_D}" ${line}/>
+    <path d="M26 12q2 8 0 16M38 34q-2 10 0 20" fill="none" stroke="${TAN}" stroke-width="2.6" stroke-linecap="round"/>
+    <rect x="25" y="26" width="14" height="20" rx="2" fill="${CREAM}" ${line}/>
+    <path d="M32 30v10M28 37l4 4l4-4" fill="none" stroke="${FOREST}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+    sb_ice_bath: `
+    <path d="M6 30h52l-5 22q-1 5-6 5H17q-5 0-6-5z" fill="${CREAM}" ${line}/>
+    <clipPath id="tub"><path d="M6 30h52l-5 22q-1 5-6 5H17q-5 0-6-5z"/></clipPath>
+    <path d="M4 38q7-4 14 0t14 0t14 0t14 0V60H4z" fill="${WATER}" clip-path="url(#tub)"/>
+    <rect x="16" y="33" width="9" height="9" rx="2" fill="${CREAM}" stroke="${INK}" stroke-width="2.4" transform="rotate(-12 20 37)"/>
+    <rect x="38" y="34" width="9" height="9" rx="2" fill="${CREAM}" stroke="${INK}" stroke-width="2.4" transform="rotate(14 42 38)"/>
+    <path d="M6 30h52l-5 22q-1 5-6 5H17q-5 0-6-5z" ${ink()}/>
+    <path d="M32 6v16M25 10l14 8M39 10l-14 8" stroke="${WATER}" stroke-width="3.4" stroke-linecap="round"/>`
 };
 
 mkdirSync(OUT_DIR, { recursive: true });

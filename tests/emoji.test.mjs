@@ -12,9 +12,9 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("the set: 24 emojis, each drawn, each in a known category", () => {
-    assert.equal(EMOJI.length, 24);
-    assert.equal(new Set(EMOJI.map(e => e.id)).size, 24, "IDs are unique");
+test("the set: 36 emojis, each drawn, each in a known category", () => {
+    assert.equal(EMOJI.length, 36);
+    assert.equal(new Set(EMOJI.map(e => e.id)).size, 36, "IDs are unique");
     const cats = new Set(EMOJI_CATEGORIES.map(c => c.key));
     for (const e of EMOJI) {
         assert.match(e.id, /^sb_[a-z_]+$/);
