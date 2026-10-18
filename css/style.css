@@ -4950,10 +4950,8 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
   .eos-subnav[style*="--subnav-count:5"] .eos-subnav-link{font-size:.7rem;padding:0 5px}
 }
 
-/* The page you swiped to slides in from the side your finger came from. */
+/* The page you swiped to fades in (no transform: it would trap fixed overlays). */
 @media (max-width:900px) and (prefers-reduced-motion:no-preference){
   body[data-subnav-in] main{animation:sb-subnav-in .28s cubic-bezier(.22,.8,.3,1) both}
-  body[data-subnav-in="prev"] main{--sb-slide-from:-28px}
-  body[data-subnav-in="next"] main{--sb-slide-from:28px}
 }
-@keyframes sb-subnav-in{from{opacity:.0;transform:translateX(var(--sb-slide-from,24px))}to{opacity:1;transform:none}}
+@keyframes sb-subnav-in{from{opacity:.55}to{opacity:1}}

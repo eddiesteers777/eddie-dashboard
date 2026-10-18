@@ -128,7 +128,7 @@ const SUBNAV_GROUPS = {
         { href: "coach.html", label: "Dashboard", short: "Home", icon: "grid" },
         { href: "clients.html", label: "My Clients", short: "Clients", icon: "users" },
         { href: "checkin.html", label: "Check-ins", short: "Check-ins", icon: "clipboard" },
-        { href: "coach-messages.html", label: "Messages", short: "Inbox", icon: "messageSquare" },
+        { href: "coach-messages.html", label: "Messages", short: "Messages", icon: "messageSquare" },
         { href: "schedule.html", label: "Schedule", short: "Schedule", icon: "calendar" }
     ]
 };
@@ -868,17 +868,19 @@ function wireSubnavSwipe(pages, current) {
     if (window.__sbSubnavSwipe) return;
     window.__sbSubnavSwipe = true;
     let start = null;
+    const swipe = import("./subnavSwipe.js");
     document.addEventListener("touchstart", e => {
         start = null;
         if (e.touches.length !== 1 || window.innerWidth > 900) return;
         const t = e.touches[0];
+        if (t.clientX < 28 || t.clientX > window.innerWidth - 28) return;
         start = { x: t.clientX, y: t.clientY, at: Date.now(), target: e.target };
     }, { passive: true });
     document.addEventListener("touchend", async e => {
         const s = start; start = null;
         if (!s) return;
         const t = e.changedTouches[0];
-        const m = await import("./subnavSwipe.js");
+        const m = await swipe;
         if (m.ownsSwipe(s.target)) return;
         const direction = m.swipeDirection({ dx: t.clientX - s.x, dy: t.clientY - s.y, ms: Date.now() - s.at });
         const next = m.neighbourPage(pages, current, direction);

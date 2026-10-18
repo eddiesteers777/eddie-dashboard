@@ -3,8 +3,8 @@
 // Pure decisions live here so they can be unit tested; js/loadHeader.js wires
 // them to touch events.
 
-export const SWIPE_MIN_DISTANCE = 64;   // px sideways
-export const SWIPE_MAX_SLOPE = 0.6;     // up/down may be at most 60% of sideways
+export const SWIPE_MIN_DISTANCE = 90;   // px sideways
+export const SWIPE_MAX_SLOPE = 0.4;     // up/down may be at most 40% of sideways
 export const SWIPE_MAX_MS = 700;
 
 // -1 = finger moved right (go to the previous tab), 1 = moved left (next tab), 0 = not a swipe.
@@ -21,6 +21,12 @@ export function neighbourPage(pages, current, direction) {
     const i = pages.indexOf(current);
     if (i < 0 || !direction) return null;
     return pages[i + direction] || null;
+}
+
+// The phone's own back / app-switch swipes start at the screen edge.
+export const SWIPE_EDGE = 28;
+export function startsAtEdge(x, width) {
+    return x < SWIPE_EDGE || x > width - SWIPE_EDGE;
 }
 
 // A swipe that starts on something that scrolls or drags sideways, or on a
