@@ -66,7 +66,7 @@
 .d3-steps dd{ margin:4px 0 0; color:var(--text); font-size:15px; line-height:1.5; }
 .d3-checks{ width:100%; border-collapse:collapse; font-size:14px; }
 .d3-checks th, .d3-checks td{ padding:9px 6px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
-.d3-checks th{ color:var(--muted); font:600 10.5px/1.2 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; }
+.d3-checks th{ color:var(--muted); font:600 11px/1.2 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; }
 .d3-checks td{ color:var(--text-secondary); }
 .d3-checks .ok{ color:var(--green); font-weight:700; }
 .d3-checks .bad{ color:var(--red); font-weight:700; }

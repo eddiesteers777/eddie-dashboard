@@ -14,6 +14,8 @@ A "How to" sheet opens from a strength exercise (`js/setRunner.js`, `js/strength
 | 3 | The drawn Southbound figure | `js/exerciseDemos.js` + `js/demoFigure.js` | Works offline. |
 | 4 | Nothing | | The sheet still opens with the steps (if any) and the coach's note, and says the demo isn't available. |
 
+**In the lab (not wired into the sheet yet): free 3D athletes** in `lab/demo3d/` (male + female, CC0 MakeHuman bodies, our own motions, Three.js player, drawn figure as fallback). Read `lab/demo3d/README.md` (pipeline, review gate, adding an exercise) and `lab/demo3d/LICENSES.md` before touching it. A 3D demo is shown to clients only when its movement checks pass and a person signed it off in `lab/demo3d/exercises.json`. If it moves into the app it slots in as source 2, ahead of the mannequin clips.
+
 `hasHowTo(name)` (`js/exerciseMuscles.js`) decides whether the button shows. With remote demos on, every named exercise gets the button, because the server is the one who knows.
 
 ## Before changing anything
