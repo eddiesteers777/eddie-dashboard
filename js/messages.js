@@ -22,6 +22,7 @@ import { settleWrite } from "./offlineWrite.js";
 import { sortThread, shouldEmail, MAX_MESSAGE } from "./messageThread.js";
 
 const COLLECTION = "messages";
+const TYPING = "messageTyping";
 
 async function me() {
     const user = await waitForUser();
@@ -110,4 +111,37 @@ export async function markRead(messages) {
 /** Takes back a message the other side hasn't read yet. */
 export async function unsendMessage(id) {
     await deleteDoc(doc(db, COLLECTION, id));
+}
+
+/**
+ * Typing indicator: calls onChange(timestamp of the other side's last
+ * "typing" ping, or 0). Queried (not read by id) so a pair with no doc yet
+ * is just empty, not permission-denied.
+ */
+export function watchTyping(role, otherUid, onChange) {
+    let stop = () => {};
+    let cancelled = false;
+    me().then(user => {
+        if (cancelled) return;
+        const coachUid = role === "coach" ? user.uid : otherUid;
+        const clientUid = role === "coach" ? otherUid : user.uid;
+        const field = role === "coach" ? "clientTypingAt" : "coachTypingAt";
+        stop = onSnapshot(
+            query(collection(db, TYPING), where("coachUid", "==", coachUid), where("clientUid", "==", clientUid)),
+            snap => onChange(snap.docs[0]?.data({ serverTimestamps: "estimate" })?.[field] || 0),
+            () => onChange(0));
+    }).catch(() => {});
+    return () => { cancelled = true; stop(); };
+}
+
+/** "I'm typing" ping. Best effort: typing never blocks anything. */
+export async function pingTyping(role, otherUid) {
+    try {
+        const user = await me();
+        const coachUid = role === "coach" ? user.uid : otherUid;
+        const clientUid = role === "coach" ? otherUid : user.uid;
+        await setDoc(doc(db, TYPING, `${coachUid}_${clientUid}`),
+            { coachUid, clientUid, [role === "coach" ? "coachTypingAt" : "clientTypingAt"]: serverTimestamp() },
+            { merge: true });
+    } catch { /* offline or rules not published yet */ }
 }

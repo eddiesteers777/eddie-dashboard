@@ -16,11 +16,16 @@
    sends; on a phone Enter is a new line and the Send button sends.
    Reactions: the composer is a <textarea data-emoji>, so the Southbound
    picker attaches itself (js/emojiPicker.js) and bubbles draw them.
+   iPhone-style (2026-10-18): bubbles join into runs with a tail on the
+   last one, a time stamp after a long pause, "Delivered" / "Read 6:41 PM"
+   under my newest message, the other side's typing dots (a ping in
+   messageTyping, js/messages.js), new bubbles slide in, and press-and-hold
+   (right-click on a computer) opens Copy / Show time / Unsend.
    Styles: css/messages.css (loaded here, so any page can mount it).
 ========================================== */
 
-import { watchThread, sendMessage, markRead, unsendMessage } from "./messages.js";
-import { threadDays, unreadFor, seenLine, MAX_MESSAGE } from "./messageThread.js";
+import { watchThread, sendMessage, markRead, unsendMessage, watchTyping, pingTyping } from "./messages.js";
+import { threadDays, unreadFor, seenLine, isTyping, MAX_MESSAGE } from "./messageThread.js";
 import { renderEmojiText, onlyEmoji } from "./emoji.js";
 import { icon } from "./icons.js";
 import { toast, friendlyError, sbConfirm } from "./ui.js";
@@ -38,38 +43,44 @@ function ensureStyles() {
 // Links typed into a message become tappable (after escaping).
 const linkify = html => html.replace(/\bhttps?:\/\/[^\s<]+[^\s<.,;:!?)"']/g, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
 
-function bubbleHtml(m, role) {
+const SEND_ARROW = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>';
+
+function bubbleHtml(m, fresh) {
     const big = onlyEmoji(m.text);
     const pending = !m.id || m.pending;
+    const tail = m.pos === "end" || m.pos === "single";
     return `
-        <div class="msg-row ${m.mine ? "is-mine" : "is-theirs"}${m.first ? " is-first" : ""}" data-msg="${esc(m.id || "")}">
-            <div class="msg-bubble${big ? " is-emoji" : ""}">
+        <div class="msg-row ${m.mine ? "is-mine" : "is-theirs"} pos-${m.pos}${m.first ? " is-first" : ""}${fresh ? " is-new" : ""}" data-msg="${esc(m.id || "")}">
+            <div class="msg-bubble${big ? " is-emoji" : ""}${tail && !big ? " has-tail" : ""}" tabindex="0">
                 <div class="msg-text">${linkify(renderEmojiText(esc(m.text), big ? { size: 44 } : {}))}</div>
-                <span class="msg-time">${esc(m.time)}${pending ? " · sending" : ""}</span>
             </div>
+            <span class="msg-time">${esc(m.time)}${pending ? " · sending" : ""}</span>
             ${m.mine && m.id && !m.readAt ? `<button type="button" class="msg-unsend" data-unsend="${esc(m.id)}" aria-label="Unsend this message">Unsend</button>` : ""}
         </div>`;
 }
 
-export function mountThread(el, { role, otherUid, otherName = "", myName = "", email = null, intro = "", onChange = null } = {}) {
+const plainText = row => row.querySelector(".msg-text")?.innerText || "";
+
+export function mountThread(el, { role, otherUid, otherName = "", myName = "", email = null, intro = "", onChange = null, header = null } = {}) {
     ensureStyles();
     const first = String(otherName || "").split(" ")[0] || (role === "coach" ? "them" : "your coach");
     el.innerHTML = `
         <div class="msg-thread">
+            ${header ? `<div class="msg-head"><span class="msg-head-av" aria-hidden="true">${esc(String(header.name || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase())}</span><strong>${esc(header.name || "")}</strong>${header.sub ? `<span>${esc(header.sub)}</span>` : ""}</div>` : ""}
             ${intro ? `<p class="msg-intro">${esc(intro)}</p>` : ""}
             <div class="msg-list" role="log" aria-live="polite" aria-label="Messages with ${esc(otherName || first)}">
                 <div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:60%"></span><span class="sb-skeleton" style="width:44%;margin-left:auto"></span><span class="sb-skeleton" style="width:52%"></span></div>
             </div>
-            <p class="msg-seen" aria-live="polite"></p>
             <form class="msg-compose" novalidate>
-                <label class="sr-only" for="msgInput-${esc(otherUid)}">Message ${esc(first)}</label>
-                <textarea id="msgInput-${esc(otherUid)}" class="msg-input" data-emoji rows="1" maxlength="${MAX_MESSAGE}" placeholder="Message ${esc(first)}…"></textarea>
-                <button type="submit" class="sb-btn sb-btn-primary msg-send" aria-label="Send" disabled>${icon("send")}<span class="msg-send-label">Send</span></button>
+                <div class="msg-field">
+                    <label class="sr-only" for="msgInput-${esc(otherUid)}">Message ${esc(first)}</label>
+                    <textarea id="msgInput-${esc(otherUid)}" class="msg-input" data-emoji rows="1" maxlength="${MAX_MESSAGE}" placeholder="Message ${esc(first)}"></textarea>
+                    <button type="submit" class="msg-send" aria-label="Send" disabled>${SEND_ARROW}</button>
+                </div>
             </form>
             <p class="msg-error" role="alert" hidden></p>
         </div>`;
     const list = el.querySelector(".msg-list");
-    const seen = el.querySelector(".msg-seen");
     const form = el.querySelector(".msg-compose");
     const input = el.querySelector(".msg-input");
     const sendBtn = el.querySelector(".msg-send");
@@ -77,6 +88,11 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
     let thread = [];
     let loaded = false;
     let sending = false;
+    let typingAt = 0;
+    let typingTimer = 0;
+    let lastPing = 0;
+    const shown = new Set();   // ids already drawn, so only new bubbles slide in
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const nearBottom = () => list.scrollHeight - list.scrollTop - list.clientHeight < 80;
     const toBottom = () => { list.scrollTop = list.scrollHeight; };
@@ -87,17 +103,40 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         if (unread.length) markRead(unread);
     };
 
+    function typingHtml() {
+        return `<div class="msg-typing" role="status" aria-label="${esc(first)} is typing"><i></i><i></i><i></i></div>`;
+    }
+
+    function syncTyping() {
+        clearTimeout(typingTimer);
+        const live = isTyping(typingAt);
+        const have = list.querySelector(".msg-typing");
+        if (live && !have && loaded) {
+            const stick = nearBottom();
+            list.insertAdjacentHTML("beforeend", typingHtml());
+            if (stick) toBottom();
+        } else if (!live && have) {
+            have.remove();
+        }
+        if (live) typingTimer = setTimeout(syncTyping, 1500);
+    }
+
     function draw() {
         const stick = !loaded || nearBottom();
         const days = threadDays(thread, { role });
+        const items = days.flatMap(d => d.items);
+        const lastItem = items[items.length - 1];
         list.innerHTML = days.length
-            ? days.map(d => `<div class="msg-day"><span>${esc(d.label)}</span></div>${d.items.map(m => bubbleHtml(m, role)).join("")}`).join("")
+            ? days.map(d => `<div class="msg-day"><span><b>${esc(d.label)}</b>${d.items[0].stamp ? ` ${esc(d.items[0].stamp)}` : ""}</span></div>${d.items.map((m, i) => `${i && m.stamp ? `<div class="msg-day"><span>${esc(m.stamp)}</span></div>` : ""}${bubbleHtml(m, loaded && m.id && !shown.has(m.id))}`).join("")}`).join("")
+              + (lastItem?.mine ? `<div class="msg-receipt" aria-live="polite">${lastItem.id ? esc(seenLine(thread, role)) : "Sending…"}</div>` : "")
             : `<div class="msg-empty">${icon("messageSquare")}<strong>No messages yet</strong><span>${role === "coach"
                 ? `Anything you send here, ${esc(first)} sees in the app${email ? " (and gets an email nudge)" : ""}.`
                 : `Questions about a workout, how you're feeling, a change in your week: send it here and ${esc(first)} sees it.`}</span></div>`;
-        seen.textContent = seenLine(thread, role);
+        items.forEach(m => { if (m.id) shown.add(m.id); });
+        if (isTyping(typingAt)) list.insertAdjacentHTML("beforeend", typingHtml());
         if (stick) toBottom();
         loaded = true;
+        syncTyping();
     }
 
     const stop = watchThread(role, otherUid, messages => {
@@ -113,6 +152,7 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         sendBtn.disabled = true;
     });
 
+    const stopTyping = watchTyping(role, otherUid, at => { typingAt = at; syncTyping(); });
     const onVisible = () => readSoon();
     document.addEventListener("visibilitychange", onVisible);
 
@@ -120,6 +160,7 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         input.style.height = "auto";
         input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
         sendBtn.disabled = sending || !input.value.trim();
+        if (input.value.trim() && Date.now() - lastPing > 3000) { lastPing = Date.now(); pingTyping(role, otherUid); }
     };
     input.addEventListener("input", grow);
     input.addEventListener("keydown", event => {
@@ -142,8 +183,10 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
                 email: email ? ({ text: t, senderName }) => email(t, senderName) : null
             });
             input.value = "";
+            lastPing = 0;
             grow();
             toBottom();
+            if (!reduceMotion.matches) sendBtn.animate([{ transform: "scale(.82)" }, { transform: "scale(1)" }], { duration: 220, easing: "cubic-bezier(.2,1.4,.4,1)" });
             if (queued) toast("Saved on this phone. It'll send when you're back online.", { type: "info" });
         } catch (error) {
             errorEl.textContent = friendlyError(error, "send that");
@@ -155,20 +198,96 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         }
     });
 
-    list.addEventListener("click", async event => {
-        const btn = event.target.closest("[data-unsend]");
-        if (!btn) return;
+    async function unsend(id) {
         if (!(await sbConfirm(`${first} hasn't read it yet, so it disappears for both of you.`, { title: "Unsend this message?", confirmLabel: "Unsend", cancelLabel: "Keep it", danger: true }))) return;
         try {
-            await unsendMessage(btn.dataset.unsend);
+            await unsendMessage(id);
             toast("Message unsent.");
         } catch (error) {
             toast(error?.code === "permission-denied" ? `${first} has already read it, so it stays.` : friendlyError(error, "unsend that"), { type: "error" });
         }
+    }
+
+    list.addEventListener("click", event => {
+        const btn = event.target.closest("[data-unsend]");
+        if (btn) unsend(btn.dataset.unsend);
+    });
+
+    // Press and hold a bubble (right-click on a computer): the chat blurs, the
+    // bubble lifts, and Copy / Show time / Unsend sit under it.
+    let pressTimer = 0;
+    let pressStart = null;
+    let press = null;
+    function closePress() {
+        press?.remove();
+        press = null;
+        document.removeEventListener("keydown", pressKey, true);
+    }
+    function pressKey(event) { if (event.key === "Escape") { event.stopPropagation(); closePress(); } }
+    function openPress(row) {
+        closePress();
+        const bubble = row.querySelector(".msg-bubble");
+        const id = row.dataset.msg;
+        const mineUnread = row.classList.contains("is-mine") && id && row.querySelector("[data-unsend]");
+        const r = bubble.getBoundingClientRect();
+        const mine = row.classList.contains("is-mine");
+        press = document.createElement("div");
+        press.className = "msg-press";
+        press.innerHTML = `
+            <div class="msg-press-lift ${mine ? "is-mine" : "is-theirs"}" style="top:${Math.round(r.top)}px;${mine ? `right:${Math.round(window.innerWidth - r.right)}px` : `left:${Math.round(r.left)}px`};width:${Math.round(r.width)}px">
+                <div class="msg-bubble${bubble.classList.contains("is-emoji") ? " is-emoji" : ""}">${bubble.innerHTML}</div>
+                <div class="msg-press-menu" role="menu">
+                    <button type="button" role="menuitem" data-act="copy"><span>Copy</span>${icon("copy")}</button>
+                    <button type="button" role="menuitem" data-act="time"><span>Show time</span><em>${esc(row.querySelector(".msg-time")?.textContent.replace(" · sending", "") || "")}</em></button>
+                    ${mineUnread ? `<button type="button" role="menuitem" class="is-danger" data-act="unsend"><span>Unsend</span></button>` : ""}
+                </div>
+            </div>`;
+        document.body.appendChild(press);
+        const lift = press.querySelector(".msg-press-lift");
+        const menu = press.querySelector(".msg-press-menu");
+        // Keep the whole lift on screen: slide up if the menu would run off the bottom.
+        const overflow = lift.getBoundingClientRect().bottom - (window.innerHeight - 16);
+        if (overflow > 0) lift.style.top = `${Math.max(16, Math.round(r.top - overflow))}px`;
+        menu.querySelector("button")?.focus({ preventScroll: true });
+        document.addEventListener("keydown", pressKey, true);
+        press.addEventListener("click", async event => {
+            const act = event.target.closest("[data-act]")?.dataset.act;
+            if (!act) { if (!event.target.closest(".msg-press-lift")) closePress(); return; }
+            closePress();
+            if (act === "copy") {
+                try { await navigator.clipboard.writeText(plainText(row)); toast("Copied."); } catch { toast("Couldn't copy that.", { type: "error" }); }
+            } else if (act === "time") {
+                row.classList.toggle("show-time");
+            } else if (act === "unsend") {
+                unsend(id);
+            }
+        });
+        navigator.vibrate?.(8);
+    }
+    list.addEventListener("pointerdown", event => {
+        const row = event.target.closest(".msg-row");
+        if (!row || event.target.closest("a, button") || event.button > 0 || event.pointerType === "mouse") return;
+        pressStart = { x: event.clientX, y: event.clientY };
+        pressTimer = setTimeout(() => openPress(row), 420);
+    });
+    const cancelPress = event => {
+        if (event?.type === "pointermove" && pressStart && Math.hypot(event.clientX - pressStart.x, event.clientY - pressStart.y) < 10) return;
+        clearTimeout(pressTimer);
+    };
+    list.addEventListener("pointermove", cancelPress);
+    list.addEventListener("pointerup", cancelPress);
+    list.addEventListener("pointercancel", cancelPress);
+    list.addEventListener("scroll", cancelPress, { passive: true });
+    list.addEventListener("contextmenu", event => {
+        const row = event.target.closest(".msg-row");
+        if (!row || event.target.closest("a")) return;
+        event.preventDefault();
+        clearTimeout(pressTimer);
+        openPress(row);
     });
 
     return {
-        destroy() { stop(); document.removeEventListener("visibilitychange", onVisible); },
+        destroy() { stop(); stopTyping(); clearTimeout(typingTimer); clearTimeout(pressTimer); closePress(); document.removeEventListener("visibilitychange", onVisible); },
         focus() { input.focus(); }
     };
 }

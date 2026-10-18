@@ -40,7 +40,7 @@ function renderList() {
         <div class="cm-group">${esc(g.label)} · ${g.rows.length}</div>
         ${g.rows.map(r => `
             <button type="button" class="cm-item${r.uid === selected ? " is-selected" : ""}${r.unread ? " is-unread" : ""}" data-uid="${esc(r.uid)}">
-                <span class="cm-avatar" aria-hidden="true">${esc((r.name || "?").slice(0, 1).toUpperCase())}</span>
+                <span class="cm-avatar" aria-hidden="true">${esc(String(r.name || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase())}</span>
                 <span class="cm-item-main">
                     <span class="cm-item-top"><strong>${esc(r.name)}</strong><span class="cm-when">${r.at ? esc(waitedText(r.at).replace(" ago", "")) : ""}</span></span>
                     <span class="cm-item-bottom"><span class="cm-preview">${r.text ? `${r.mine ? "You: " : ""}${esc(r.text)}` : "Start a conversation"}</span>${r.unread ? `<span class="cm-count" aria-label="${r.unread} unread">${r.unread}</span>` : ""}</span>

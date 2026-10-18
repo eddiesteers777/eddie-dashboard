@@ -1194,6 +1194,27 @@ test("messages: either side of a linked pair writes as themselves; the other onl
     await assertSucceeds(deleteDoc(doc(as("client"), "messages/m3")));
 });
 
+test("messageTyping: each side pings only their own field, only the pair reads, nothing once unlinked", async () => {
+    await seedLinkAndBooking();
+    const ref = who => doc(as(who), "messageTyping/coach_client");
+    const base = { coachUid: "coach", clientUid: "client" };
+    await assertSucceeds(setDoc(ref("coach"), { ...base, coachTypingAt: serverTimestamp() }, { merge: true }));
+    await assertSucceeds(setDoc(ref("client"), { ...base, clientTypingAt: serverTimestamp() }, { merge: true }));
+    await assertSucceeds(setDoc(ref("coach"), { ...base, coachTypingAt: serverTimestamp() }, { merge: true }));
+    // Not the other side's field, not an old clock, not extra fields.
+    await assertFails(setDoc(ref("coach"), { ...base, clientTypingAt: serverTimestamp() }, { merge: true }));
+    await assertFails(setDoc(ref("client"), { ...base, clientTypingAt: new Date(2020, 0, 1) }, { merge: true }));
+    await assertFails(setDoc(ref("client"), { ...base, clientTypingAt: serverTimestamp(), note: "x" }, { merge: true }));
+    await assertFails(setDoc(doc(as("stranger"), "messageTyping/coach_client"), { ...base, clientTypingAt: serverTimestamp() }, { merge: true }));
+    await assertFails(setDoc(doc(as("coach"), "messageTyping/wrong_id"), { ...base, coachTypingAt: serverTimestamp() }));
+    await assertFails(deleteDoc(ref("coach")));
+    // Reading: the pair by query, nobody else.
+    await assertSucceeds(getDocs(query(collection(as("client"), "messageTyping"), where("coachUid", "==", "coach"), where("clientUid", "==", "client"))));
+    await assertFails(getDocs(query(collection(as("stranger"), "messageTyping"), where("clientUid", "==", "client"))));
+    await env.withSecurityRulesDisabled(async ctx => { await deleteDoc(doc(ctx.firestore(), "coachLinks/coach_client")); });
+    await assertFails(setDoc(ref("coach"), { ...base, coachTypingAt: serverTimestamp() }, { merge: true }));
+});
+
 test("messages: nothing once the link is gone", async () => {
     await seedLinkAndBooking();
     await env.withSecurityRulesDisabled(async ctx => { await deleteDoc(doc(ctx.firestore(), "coachLinks/coach_client")); });

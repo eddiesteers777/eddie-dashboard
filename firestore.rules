@@ -47,6 +47,8 @@ rules_version = '2';
 //                              the two (linked) writes as themselves; the
 //                              other can only mark it read; the sender can
 //                              unsend it while it's still unread.
+//   messageTyping/{pairId}     The "is typing" ping (coachUid_clientUid):
+//                              each side writes only their own timestamp.
 //   coachingPlans/{planId}     A plan the coach publishes to a client
 //                              (header). Created at the first publish;
 //                              the client reads it and can only record
@@ -1030,6 +1032,35 @@ service cloud.firestore {
         && resource.data.readAt == null
         && ((resource.data.from == "coach" && resource.data.coachUid == request.auth.uid)
             || (resource.data.from == "client" && resource.data.clientUid == request.auth.uid));
+    }
+
+    // ---- Typing indicator (the "..." in Messages, js/messages.js) ----
+    // One doc per coach + client pair (id coachUid_clientUid) holding the
+    // last time each side pinged "typing". Each side writes only their own
+    // field with the server's clock, only while linked; only the two read.
+    match /messageTyping/{pairId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || resource.data.clientUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.coachUid is string
+        && request.resource.data.clientUid is string
+        && pairId == request.resource.data.coachUid + '_' + request.resource.data.clientUid
+        && linked(request.resource.data.coachUid, request.resource.data.clientUid)
+        && ((request.resource.data.coachUid == request.auth.uid
+              && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "coachTypingAt"])
+              && request.resource.data.coachTypingAt == request.time)
+            || (request.resource.data.clientUid == request.auth.uid
+              && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "clientTypingAt"])
+              && request.resource.data.clientTypingAt == request.time));
+      allow update: if signedIn()
+        && linked(resource.data.coachUid, resource.data.clientUid)
+        && ((resource.data.coachUid == request.auth.uid
+              && onlyChanges(["coachTypingAt"])
+              && request.resource.data.coachTypingAt == request.time)
+            || (resource.data.clientUid == request.auth.uid
+              && onlyChanges(["clientTypingAt"])
+              && request.resource.data.clientTypingAt == request.time));
     }
 
     // ---- Client package entitlements ----
