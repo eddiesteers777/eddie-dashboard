@@ -80,7 +80,7 @@ export async function listMyMessages() {
  * rule); `email` is called with { first } when the other side should
  * hear about it. Returns { message, queued }.
  */
-export async function sendMessage({ role, otherUid, text, senderName, thread = [], email = null }) {
+export async function sendMessage({ role, otherUid, text, senderName, thread = [], email = null, replyTo = null }) {
     const user = await me();
     const clean = String(text || "").trim().slice(0, MAX_MESSAGE);
     if (!clean) throw new Error("empty-message");
@@ -92,7 +92,8 @@ export async function sendMessage({ role, otherUid, text, senderName, thread = [
         senderName: String(senderName || user.displayName || (role === "coach" ? "Your coach" : "Your client")).slice(0, 100),
         text: clean,
         createdAt: serverTimestamp(),
-        readAt: null
+        readAt: null,
+        ...(replyTo?.id ? { replyTo: { id: String(replyTo.id).slice(0, 40), from: replyTo.from === "coach" ? "coach" : "client", text: String(replyTo.text || "").slice(0, 200) } } : {})
     };
     const first = shouldEmail(thread, role);
     const { queued } = await settleWrite(setDoc(ref, message), "Your message", ref);
@@ -144,4 +145,13 @@ export async function pingTyping(role, otherUid) {
             { coachUid, clientUid, [role === "coach" ? "coachTypingAt" : "clientTypingAt"]: serverTimestamp() },
             { merge: true });
     } catch { /* offline or rules not published yet */ }
+}
+
+/**
+ * My emoji reaction on a message ("" takes it back). The other side's
+ * reaction is carried over unchanged, which is what the rules check.
+ */
+export async function reactToMessage(message, role, emojiId) {
+    const reactions = { ...(message.reactions || {}), [role]: emojiId || "" };
+    await updateDoc(doc(db, COLLECTION, message.id), { reactions });
 }

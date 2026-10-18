@@ -99,3 +99,15 @@
 .cm-item-top strong{ font-size:16px; }
 .cm-preview{ white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3; }
 .cm-count{ align-self:center; }
+
+/* Swipe a row (or right-click it) for Pin / Read. */
+.cm-swipe{ position:relative; overflow:hidden; border-top:1px solid var(--border); }
+.cm-swipe .cm-item{ border-top:0; position:relative; z-index:1; background:var(--bg); transition:transform .22s cubic-bezier(.2,1,.3,1); touch-action:pan-y; }
+.cm-swipe .cm-item:hover, .cm-swipe .cm-item.is-selected{ background:color-mix(in srgb, var(--surface-light) 70%, var(--bg)); }
+.cm-swipe.is-open .cm-item{ transform:translateX(-150px); }
+.cm-actions{ position:absolute; top:0; right:0; bottom:0; display:flex; z-index:0; }
+.cm-act{ width:75px; border:0; font:700 13px var(--font-body); cursor:pointer; color:var(--on-primary); }
+.cm-act-pin{ background:var(--sb-lens-bg); }
+.cm-act-read{ background:var(--sage); }
+.cm-actions:not(:has(.cm-act-read)) .cm-act-pin{ width:150px; }
+@media (prefers-reduced-motion: reduce){ .cm-swipe .cm-item{ transition:none; } }

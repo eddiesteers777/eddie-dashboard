@@ -1215,6 +1215,29 @@ test("messageTyping: each side pings only their own field, only the pair reads, 
     await assertFails(setDoc(ref("coach"), { ...base, coachTypingAt: serverTimestamp() }, { merge: true }));
 });
 
+test("messages: replies and reactions (own key only, valid emoji ids, nothing else)", async () => {
+    await seedLinkAndBooking();
+    await assertSucceeds(setDoc(doc(as("coach"), "messages/r1"), message("coach")));
+    // A reply quotes another message; malformed quotes fail.
+    const quote = { id: "r1", from: "coach", text: "How did the long run feel?" };
+    await assertSucceeds(setDoc(doc(as("client"), "messages/r2"), message("client", { replyTo: quote })));
+    await assertFails(setDoc(doc(as("client"), "messages/r3"), message("client", { replyTo: { ...quote, extra: 1 } })));
+    await assertFails(setDoc(doc(as("client"), "messages/r4"), message("client", { replyTo: { ...quote, text: "x".repeat(201) } })));
+    await assertFails(setDoc(doc(as("client"), "messages/r5"), message("client", { replyTo: "r1" })));
+    // Each side reacts to either message, on their own key only.
+    await assertSucceeds(updateDoc(doc(as("client"), "messages/r1"), { reactions: { client: "sb_great_work" } }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "messages/r1"), { reactions: { client: "sb_great_work", coach: "sb_high_five" } }));
+    await assertFails(updateDoc(doc(as("coach"), "messages/r1"), { reactions: { client: "sb_coach_eye", coach: "sb_high_five" } }));
+    await assertFails(updateDoc(doc(as("client"), "messages/r1"), { reactions: { client: "sb_great_work", coach: "sb_check" } }));
+    await assertSucceeds(updateDoc(doc(as("client"), "messages/r1"), { reactions: { client: "", coach: "sb_high_five" } }));
+    // Valid ids only, no other fields, strangers out.
+    await assertFails(updateDoc(doc(as("client"), "messages/r1"), { reactions: { client: "<b>", coach: "sb_high_five" } }));
+    await assertFails(updateDoc(doc(as("client"), "messages/r1"), { reactions: { client: "x".repeat(41), coach: "sb_high_five" } }));
+    await assertFails(updateDoc(doc(as("client"), "messages/r1"), { reactions: { client: "sb_check", coach: "sb_high_five", admin: "x" } }));
+    await assertFails(updateDoc(doc(as("client"), "messages/r1"), { reactions: { client: "sb_check", coach: "sb_high_five" }, text: "edited" }));
+    await assertFails(updateDoc(doc(as("stranger"), "messages/r1"), { reactions: { client: "sb_check" } }));
+});
+
 test("messages: nothing once the link is gone", async () => {
     await seedLinkAndBooking();
     await env.withSecurityRulesDisabled(async ctx => { await deleteDoc(doc(ctx.firestore(), "coachLinks/coach_client")); });

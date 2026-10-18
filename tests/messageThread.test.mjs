@@ -1,7 +1,7 @@
 // The coach-client message thread (js/messageThread.js).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sortThread, threadDays, unreadFor, inboxByClient, messageAttention, shouldEmail, preview, seenLine, dayLabel, isTyping } from "../js/messageThread.js";
+import { sortThread, threadDays, unreadFor, inboxByClient, messageAttention, shouldEmail, preview, seenLine, dayLabel, isTyping, togglePinned } from "../js/messageThread.js";
 
 const at = (d, h, m = 0) => new Date(2026, 9, d, h, m).getTime();
 const msg = (id, from, when, extra = {}) => ({ id, coachUid: "coach", clientUid: "sam", from, text: `${from} ${id}`, createdAt: when, readAt: null, ...extra });
@@ -86,4 +86,11 @@ test("bubble positions, time stamps and the typing window", () => {
     assert.equal(isTyping(now - 2000, now), true);
     assert.equal(isTyping(now - 9000, now), false);
     assert.equal(isTyping(null, now), false);
+});
+
+test("pinning adds to the front and a second toggle removes", () => {
+    assert.deepEqual(togglePinned([], "a"), ["a"]);
+    assert.deepEqual(togglePinned(["a"], "b"), ["b", "a"]);
+    assert.deepEqual(togglePinned(["b", "a"], "b"), ["a"]);
+    assert.deepEqual(togglePinned("junk", "a"), ["a"]);
 });

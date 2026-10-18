@@ -163,3 +163,9 @@ export function seenLine(messages, role) {
     if (!last || !last.id) return "";
     return last.readAt ? `Read ${timeLabel(millis(last.readAt))}` : "Delivered";
 }
+
+/** Pins: the coach's pinned chats are a list of client uids (js/pinnedChats usage). */
+export function togglePinned(list, uid) {
+    const have = Array.isArray(list) ? list.filter(x => typeof x === "string") : [];
+    return have.includes(uid) ? have.filter(x => x !== uid) : [uid, ...have];
+}

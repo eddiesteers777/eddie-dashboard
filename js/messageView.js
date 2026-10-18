@@ -24,9 +24,9 @@
    Styles: css/messages.css (loaded here, so any page can mount it).
 ========================================== */
 
-import { watchThread, sendMessage, markRead, unsendMessage, watchTyping, pingTyping } from "./messages.js";
-import { threadDays, unreadFor, seenLine, isTyping, MAX_MESSAGE } from "./messageThread.js";
-import { renderEmojiText, onlyEmoji } from "./emoji.js";
+import { watchThread, sendMessage, markRead, unsendMessage, watchTyping, pingTyping, reactToMessage } from "./messages.js";
+import { threadDays, unreadFor, seenLine, isTyping, preview, MAX_MESSAGE } from "./messageThread.js";
+import { renderEmojiText, onlyEmoji, emojiImg, emojiById, QUICK_REACTIONS } from "./emoji.js";
 import { icon } from "./icons.js";
 import { toast, friendlyError, sbConfirm } from "./ui.js";
 
@@ -43,20 +43,28 @@ function ensureStyles() {
 // Links typed into a message become tappable (after escaping).
 const linkify = html => html.replace(/\bhttps?:\/\/[^\s<]+[^\s<.,;:!?)"']/g, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
 
+const REPLY_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v3"></path></svg>';
 const SEND_ARROW = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>';
 
-function bubbleHtml(m, fresh) {
+function bubbleHtml(m, fresh, role, first) {
     const big = onlyEmoji(m.text);
     const pending = !m.id || m.pending;
     const tail = m.pos === "end" || m.pos === "single";
     return `
         <div class="msg-row ${m.mine ? "is-mine" : "is-theirs"} pos-${m.pos}${m.first ? " is-first" : ""}${fresh ? " is-new" : ""}" data-msg="${esc(m.id || "")}">
             <div class="msg-bubble${big ? " is-emoji" : ""}${tail && !big ? " has-tail" : ""}" tabindex="0">
+                ${reactionsHtml(m)}
+                ${m.replyTo?.id ? `<button type="button" class="msg-quote" data-jump="${esc(m.replyTo.id)}"><b>${m.replyTo.from === role ? "You" : esc(first)}</b><span>${esc(preview(m.replyTo.text, 90))}</span></button>` : ""}
                 <div class="msg-text">${linkify(renderEmojiText(esc(m.text), big ? { size: 44 } : {}))}</div>
             </div>
             <span class="msg-time">${esc(m.time)}${pending ? " · sending" : ""}</span>
             ${m.mine && m.id && !m.readAt ? `<button type="button" class="msg-unsend" data-unsend="${esc(m.id)}" aria-label="Unsend this message">Unsend</button>` : ""}
         </div>`;
+}
+
+function reactionsHtml(m) {
+    const ids = [m.reactions?.coach, m.reactions?.client].filter(id => id && emojiById(id));
+    return ids.length ? `<span class="msg-react" aria-label="Reactions">${ids.map(id => emojiImg(id, { size: 18 })).join("")}</span>` : "";
 }
 
 const plainText = row => row.querySelector(".msg-text")?.innerText || "";
@@ -72,6 +80,7 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
                 <div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:60%"></span><span class="sb-skeleton" style="width:44%;margin-left:auto"></span><span class="sb-skeleton" style="width:52%"></span></div>
             </div>
             <form class="msg-compose" novalidate>
+                <div class="msg-replying" hidden><span class="msg-replying-text"></span><button type="button" class="msg-replying-x" aria-label="Cancel reply">×</button></div>
                 <div class="msg-field">
                     <label class="sr-only" for="msgInput-${esc(otherUid)}">Message ${esc(first)}</label>
                     <textarea id="msgInput-${esc(otherUid)}" class="msg-input" data-emoji rows="1" maxlength="${MAX_MESSAGE}" placeholder="Message ${esc(first)}"></textarea>
@@ -91,6 +100,8 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
     let typingAt = 0;
     let typingTimer = 0;
     let lastPing = 0;
+    let replyTo = null;
+    const replyBar = el.querySelector(".msg-replying");
     const shown = new Set();   // ids already drawn, so only new bubbles slide in
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -127,7 +138,7 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         const items = days.flatMap(d => d.items);
         const lastItem = items[items.length - 1];
         list.innerHTML = days.length
-            ? days.map(d => `<div class="msg-day"><span><b>${esc(d.label)}</b>${d.items[0].stamp ? ` ${esc(d.items[0].stamp)}` : ""}</span></div>${d.items.map((m, i) => `${i && m.stamp ? `<div class="msg-day"><span>${esc(m.stamp)}</span></div>` : ""}${bubbleHtml(m, loaded && m.id && !shown.has(m.id))}`).join("")}`).join("")
+            ? days.map(d => `<div class="msg-day"><span><b>${esc(d.label)}</b>${d.items[0].stamp ? ` ${esc(d.items[0].stamp)}` : ""}</span></div>${d.items.map((m, i) => `${i && m.stamp ? `<div class="msg-day"><span>${esc(m.stamp)}</span></div>` : ""}${bubbleHtml(m, loaded && m.id && !shown.has(m.id), role, first)}`).join("")}`).join("")
               + (lastItem?.mine ? `<div class="msg-receipt" aria-live="polite">${lastItem.id ? esc(seenLine(thread, role)) : "Sending…"}</div>` : "")
             : `<div class="msg-empty">${icon("messageSquare")}<strong>No messages yet</strong><span>${role === "coach"
                 ? `Anything you send here, ${esc(first)} sees in the app${email ? " (and gets an email nudge)" : ""}.`
@@ -179,10 +190,11 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         errorEl.hidden = true;
         try {
             const { queued } = await sendMessage({
-                role, otherUid, text, senderName: myName, thread,
+                role, otherUid, text, senderName: myName, thread, replyTo,
                 email: email ? ({ text: t, senderName }) => email(t, senderName) : null
             });
             input.value = "";
+            setReply(null);
             lastPing = 0;
             grow();
             toBottom();
@@ -198,6 +210,14 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         }
     });
 
+    function setReply(message) {
+        replyTo = message ? { id: message.id, from: message.from, text: message.text } : null;
+        replyBar.hidden = !replyTo;
+        replyBar.querySelector(".msg-replying-text").textContent = replyTo ? `Replying to ${replyTo.from === role ? "yourself" : first}: ${preview(replyTo.text, 60)}` : "";
+        if (replyTo) input.focus();
+    }
+    replyBar.querySelector(".msg-replying-x").addEventListener("click", () => setReply(null));
+
     async function unsend(id) {
         if (!(await sbConfirm(`${first} hasn't read it yet, so it disappears for both of you.`, { title: "Unsend this message?", confirmLabel: "Unsend", cancelLabel: "Keep it", danger: true }))) return;
         try {
@@ -210,7 +230,14 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
 
     list.addEventListener("click", event => {
         const btn = event.target.closest("[data-unsend]");
-        if (btn) unsend(btn.dataset.unsend);
+        if (btn) return unsend(btn.dataset.unsend);
+        const jump = event.target.closest("[data-jump]");
+        const target = jump && [...list.querySelectorAll("[data-msg]")].find(r => r.dataset.msg === jump.dataset.jump);
+        if (target) {
+            target.scrollIntoView({ block: "center", behavior: reduceMotion.matches ? "auto" : "smooth" });
+            target.classList.add("is-flash");
+            setTimeout(() => target.classList.remove("is-flash"), 1200);
+        }
     });
 
     // Press and hold a bubble (right-click on a computer): the chat blurs, the
@@ -228,15 +255,19 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         closePress();
         const bubble = row.querySelector(".msg-bubble");
         const id = row.dataset.msg;
+        const msg = thread.find(x => x.id === id);
+        const myReaction = msg?.reactions?.[role] || "";
         const mineUnread = row.classList.contains("is-mine") && id && row.querySelector("[data-unsend]");
         const r = bubble.getBoundingClientRect();
         const mine = row.classList.contains("is-mine");
         press = document.createElement("div");
         press.className = "msg-press";
         press.innerHTML = `
-            <div class="msg-press-lift ${mine ? "is-mine" : "is-theirs"}" style="top:${Math.round(r.top)}px;${mine ? `right:${Math.round(window.innerWidth - r.right)}px` : `left:${Math.round(r.left)}px`};width:${Math.round(r.width)}px">
-                <div class="msg-bubble${bubble.classList.contains("is-emoji") ? " is-emoji" : ""}">${bubble.innerHTML}</div>
+            <div class="msg-press-lift ${mine ? "is-mine" : "is-theirs"}" style="top:${Math.round(r.top)}px;${mine ? `right:${Math.round(window.innerWidth - r.right)}px` : `left:${Math.round(r.left)}px`};min-width:min(240px, 86vw)">
+                ${id && msg ? `<div class="msg-press-react" role="group" aria-label="React">${QUICK_REACTIONS.map(e => `<button type="button" data-react="${e}" class="${e === myReaction ? "is-on" : ""}" aria-label="${esc(emojiById(e)?.label || e)}" aria-pressed="${e === myReaction}">${emojiImg(e, { size: 32 })}</button>`).join("")}</div>` : ""}
+                <div class="msg-bubble${bubble.classList.contains("is-emoji") ? " is-emoji" : ""}" style="width:${Math.round(r.width)}px">${bubble.innerHTML}</div>
                 <div class="msg-press-menu" role="menu">
+                    ${id && msg ? `<button type="button" role="menuitem" data-act="reply"><span>Reply</span>${REPLY_ICON}</button>` : ""}
                     <button type="button" role="menuitem" data-act="copy"><span>Copy</span>${icon("copy")}</button>
                     <button type="button" role="menuitem" data-act="time"><span>Show time</span><em>${esc(row.querySelector(".msg-time")?.textContent.replace(" · sending", "") || "")}</em></button>
                     ${mineUnread ? `<button type="button" role="menuitem" class="is-danger" data-act="unsend"><span>Unsend</span></button>` : ""}
@@ -248,9 +279,15 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
         // Keep the whole lift on screen: slide up if the menu would run off the bottom.
         const overflow = lift.getBoundingClientRect().bottom - (window.innerHeight - 16);
         if (overflow > 0) lift.style.top = `${Math.max(16, Math.round(r.top - overflow))}px`;
-        menu.querySelector("button")?.focus({ preventScroll: true });
+        (press.querySelector(".msg-press-react button") || menu.querySelector("button"))?.focus({ preventScroll: true });
         document.addEventListener("keydown", pressKey, true);
         press.addEventListener("click", async event => {
+            const react = event.target.closest("[data-react]")?.dataset.react;
+            if (react && msg) {
+                closePress();
+                reactToMessage(msg, role, react === myReaction ? "" : react).catch(error => toast(friendlyError(error, "react to that"), { type: "error" }));
+                return;
+            }
             const act = event.target.closest("[data-act]")?.dataset.act;
             if (!act) { if (!event.target.closest(".msg-press-lift")) closePress(); return; }
             closePress();
@@ -258,6 +295,8 @@ export function mountThread(el, { role, otherUid, otherName = "", myName = "", e
                 try { await navigator.clipboard.writeText(plainText(row)); toast("Copied."); } catch { toast("Couldn't copy that.", { type: "error" }); }
             } else if (act === "time") {
                 row.classList.toggle("show-time");
+            } else if (act === "reply") {
+                setReply(msg);
             } else if (act === "unsend") {
                 unsend(id);
             }
