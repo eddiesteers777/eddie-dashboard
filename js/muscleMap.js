@@ -23,7 +23,7 @@ import { musclesFor, MUSCLE_LABELS } from "./exerciseMuscles.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const W = 200, H = 416;
+const W = 200, H = 420;
 const LOOKS = {
     // A: an anatomy plate. Every muscle drawn, the worked ones lit.
     plate: {
@@ -49,15 +49,23 @@ const LIT = {
 
 // The body's viewer-left half, closed along the middle (x = 100), mirrored
 // for the other half. Same outline front and back.
-const HALF = `M 100 8 C 88 8 81 18 81 32 C 81 44 85 53 90 58 L 90 65.4 C 84 70.3 72 72.7 62 75.2 C 51 78.6 46 87.4 45 98.8 C 43 111.1 41 125.1 40 137.4 C 39 146.1 38 152.3 37 158.4 C 34 174.2 31 191.7 30 209.2 C 29 217.1 27 224.6 27 232 C 27 241.4 32 247 37 245.1 C 42 243.3 42 233.9 41 224.6 C 42 217.1 43 212.7 44 209.2 C 47 193.5 51 177.7 53 161.9 C 54 154 55 146.1 56 137.4 C 57 126.8 60 117.2 63 110.2 C 64 128.6 66 146.1 68 165.4 C 66 177.7 62 190 60 204 C 58 227.4 60 255.4 64 277.9 C 66 287.3 67 295.2 66 305.6 C 63 322.4 64 341.2 70 362.1 C 73 372.6 75 378.9 75 385.2 C 70 391.4 66 399.8 71 404 L 91 404 C 93 396.7 91 389.4 89 383.1 C 90 364.2 93 343.3 94 324.5 C 95 311.9 94 301.5 93 293.1 C 95 270.4 97 244.2 98 219.9 L 100 218 Z`;
+// The foot, from the outer ankle round to the inner ankle. Front: a foot
+// turned out a little, with five toes. Back: the heel and the sides of the foot.
+const FOOT = {
+    front: "C 74.6 393 71 399 68 403.5 C 65.8 406 65.5 409 67.2 410.2 C 69 411.2 70.6 409.8 71 408 C 71.2 411.2 72.6 412.6 74.6 412.2 C 76 411.8 76.4 410.2 76.4 409 C 76.8 412.4 78.6 413.6 80.4 413 C 81.8 412.5 82 411 82 410 C 82.4 413.6 84.2 414.8 86 414 C 87.4 413.3 87.6 411.5 87.6 410.5 C 88.4 414.4 91.2 415 92.8 413 C 94 411 93 406.5 91.5 402 C 90.5 396 90 390 89 383.1",
+    back: "C 74 390.5 73 396 72.6 401 C 72.2 406.5 73 410.8 77.5 411.6 C 81 412.2 85.6 411.8 87.4 408.6 C 88.8 405 88.8 400 88.6 395 C 88.5 390 88.8 386 89 383.1"
+};
+const halfFor = view => `M 100 8 C 88 8 81 18 81 32 C 81 44 85 53 90 58 L 90 65.4 C 84 70.3 72 72.7 62 75.2 C 51 78.6 46 87.4 45 98.8 C 43 111.1 41 125.1 40 137.4 C 39 146.1 38 152.3 37 158.4 C 34 174.2 31 191.7 30 209.2 C 29 214 27 218 26 221 C 23.5 224 22 229 22.5 233.5 C 22.8 237 26 237.5 27.3 234.5 C 28 232 28.6 230 29 228.5 L 29.2 242 C 29.2 246.2 32.6 246.2 32.6 242 L 32.8 244.5 C 32.8 248.7 36.2 248.7 36.2 244.5 L 36.4 242.5 C 36.4 246.7 39.7 246.7 39.7 242.5 L 39.8 238.5 C 39.8 242 42.8 242 42.8 238.5 L 42.8 233 C 43.2 227 43 222 42.6 218 C 43.2 214 43.8 212 44 209.2 C 47 193.5 51 177.7 53 161.9 C 54 154 55 146.1 56 137.4 C 57 126.8 60 117.2 63 110.2 C 64 128.6 66 146.1 68 165.4 C 66 177.7 62 190 60 204 C 58 227.4 60 255.4 64 277.9 C 66 287.3 67 295.2 66 305.6 C 63 322.4 64 341.2 70 362.1 C 73 372.6 75 378.9 75 385.2 ${FOOT[view]} C 90 364.2 93 343.3 94 324.5 C 95 311.9 94 301.5 93 293.1 C 95 270.4 97 244.2 98 219.9 L 100 218 Z`;
 
 // Thin anatomical lines that aren't muscles (kneecap, collarbone, spine).
 const DETAIL = {
     front: [
+        `<path d="M32.7 241 L32.8 232 M36.3 242.5 L36.4 232 M39.8 238.5 L39.9 232"/>`,
         `<path d="M 66 77.8 C 76 76 86 76 96 77.8"/>`,
         `<path d="M 79 289.1 C 82 283.5 89 283.5 91 289.1 C 90 297.3 82 298.3 79 289.1 Z"/>`
     ],
     back: [
+        `<path d="M32.7 241 L32.8 232 M36.3 242.5 L36.4 232 M39.8 238.5 L39.9 232"/>`,
         `<path d="M 100 64.5 L 100 137.4"/>`,
         `<path d="M 70 289.1 C 78 293.1 86 293.1 92 289.1"/>`
     ]
@@ -109,10 +117,10 @@ const BACK = [
 const MIRROR = `transform="matrix(-1 0 0 1 ${W} 0)"`;
 const both = inner => `${inner}<g ${MIRROR}>${inner}</g>`;
 
-function bodySvg(look, id) {
+function bodySvg(look, id, view) {
     // The outline is the same shape drawn a little fatter underneath, so
     // the seam down the middle never shows.
-    const half = `<path d="${HALF}"/>`;
+    const half = `<path d="${halfFor(view)}"/>`;
     return `<g fill="${look.outline}" stroke="${look.outline}" stroke-width="${look.outlineW * 2}" stroke-linejoin="round">${both(half)}</g>
         <g fill="url(#${id}body)">${both(half)}</g>`;
 }
@@ -135,11 +143,11 @@ export function muscleMapSvg(levels = {}, { view = "front", id = "mm", label = "
     const grad = (key, [a, b, c]) => `<linearGradient id="${id}${key}" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".5" stop-color="${b}"/><stop offset="1" stop-color="${c}"/></linearGradient>`;
     return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label || `Muscles worked, ${view}`)}" xmlns="http://www.w3.org/2000/svg">
         <defs>
-            <linearGradient id="${id}body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${look.body[0]}"/><stop offset="1" stop-color="${look.body[1]}"/></linearGradient>
+            <linearGradient id="${id}body" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${H}"><stop offset="0" stop-color="${look.body[0]}"/><stop offset="1" stop-color="${look.body[1]}"/></linearGradient>
             ${grad("m", LIT.primary)}${grad("h", LIT.secondary)}
             <filter id="${id}glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.2"/></filter>
         </defs>
-        ${bodySvg(look, id)}
+        ${bodySvg(look, id, view === "back" ? "back" : "front")}
         ${glow}
         <g stroke-linejoin="round">${both(set.map(shape).join(""))}</g>
         <g fill="none" stroke="${look.detail}" stroke-width=".9" stroke-linecap="round">${both(DETAIL[view === "back" ? "back" : "front"].join(""))}</g>
