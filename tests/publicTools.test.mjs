@@ -28,6 +28,10 @@ test("the public page needs no account and loads no app code", () => {
     assert.match(html, /src="js\/pace-calculator\.js"/);
     const script = read("js/pace-calculator.js");
     assert.ok(!/localStorage|sessionStorage|fetch\(|XMLHttpRequest|firebase/.test(script), "the calculator stores and sends nothing");
+    for (const file of ["js/hrZonesTool.js", "js/hrZones.js"]) {
+        assert.ok(!/localStorage|sessionStorage|fetch\(|XMLHttpRequest|firebase/.test(read(file)), `${file} stores and sends nothing`);
+    }
+    assert.match(html, /src="js\/hrZonesTool\.js"/, "the Heart Rate tab is wired on the public page");
 });
 
 test("it is findable: titled, described, and linked from Home", () => {

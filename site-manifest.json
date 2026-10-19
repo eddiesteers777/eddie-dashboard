@@ -182,6 +182,8 @@
     "js/homeworkCoach.js",
     "js/homeworkModel.js",
     "js/homeworkView.js",
+    "js/hrZones.js",
+    "js/hrZonesTool.js",
     "js/icons.js",
     "js/inquiries.js",
     "js/install.js",
