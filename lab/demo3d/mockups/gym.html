@@ -1,0 +1,105 @@
+<!doctype html><html><body style="margin:0;background:#111">
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.min.js"}}</script>
+<script type="module">
+// Lab mock-up: the athlete doing a demo inside a gym. ?room=garage|studio|performance &demo=push-up|bodyweight-squat
+// &sex=male|female &t=0..1 &yaw= &w= &h=. Props are plain shapes (no outside assets).
+import * as THREE from "three";
+import { GLTFLoader } from "../vendor/three/addons/loaders/GLTFLoader.js";
+const q = new URLSearchParams(location.search);
+const room = q.get("room") || "garage", demo = q.get("demo") || "push-up", sex = q.get("sex") || "male";
+const W = +(q.get("w") || 960), H = +(q.get("h") || 720), T = +(q.get("t") || 0), yaw = +(q.get("yaw") || 52);
+const floorDemo = demo === "push-up";
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+
+const std = (c, r = 0.7, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+const box = (w, h, d, mat, x, y, z, parent = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
+const cyl = (r, h, mat, x, y, z, rot = [0, 0, 0], parent = scene, seg = 24) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat); m.position.set(x, y, z); m.rotation.set(...rot); m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
+const canvasTex = (w, h, draw, rep) => { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...rep); } return t; };
+const logo = await new Promise(r => new THREE.TextureLoader().load("../tools/art/sb-logo.png", t => { t.colorSpace = THREE.SRGBColorSpace; r(t); }, undefined, () => r(null)));
+
+// Room shell: floor plus two walls behind the athlete (the camera looks in from +x, +z).
+function shell({ floorTex, floorColor, wallColor, wall2Color, size = 9 }) {
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(size * 2, size * 2), new THREE.MeshStandardMaterial({ color: floorColor, map: floorTex || null, roughness: 0.85 }));
+    f.rotation.x = -Math.PI / 2; f.receiveShadow = true; scene.add(f);
+    const w1 = new THREE.Mesh(new THREE.PlaneGeometry(size * 2, 6), std(wallColor, 0.95)); w1.position.set(0, 3, -3.2); w1.receiveShadow = true; scene.add(w1);
+    const w2 = new THREE.Mesh(new THREE.PlaneGeometry(size * 2, 6), std(wall2Color || wallColor, 0.95)); w2.rotation.y = Math.PI / 2; w2.position.set(-3.2, 3, 0); w2.receiveShadow = true; scene.add(w2);
+}
+const plate = (x, y, z, r = 0.225, t = 0.03, col = 0x1d1f1e, ax = [0, 0, Math.PI / 2]) => cyl(r, t, std(col, 0.5, 0.3), x, y, z, ax);
+const dumbbellRack = (x, z, ry = 0) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
+    const fr = std(0x151716, 0.5, 0.4);
+    for (const dx of [-0.8, 0.8]) box(0.06, 0.8, 0.5, fr, dx, 0.4, 0, g);
+    for (const [y, dz] of [[0.35, 0.1], [0.62, -0.05]]) { box(1.7, 0.05, 0.12, fr, 0, y, dz, g);
+        for (let i = 0; i < 9; i++) { const s = 0.05 + i * 0.006, xx = -0.7 + i * 0.175; cyl(s, 0.08, std(0x2a2d2c, 0.4, 0.5), xx, y + s + 0.03, dz, [0, 0, Math.PI / 2], g); } } };
+const rack = (x, z) => { const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g); const m = std(0x1b1d1c, 0.45, 0.5), tan = std(0xc9ad84, 0.4, 0.5);
+    for (const dx of [-0.7, 0.7]) for (const dz of [-0.55, 0.55]) box(0.1, 2.3, 0.1, m, dx, 1.15, dz, g);
+    for (const dz of [-0.55, 0.55]) { box(1.5, 0.08, 0.08, m, 0, 2.25, dz, g); box(1.5, 0.06, 0.06, tan, 0, 1.35, dz, g); }
+    box(0.08, 0.08, 1.2, m, -0.7, 2.25, 0, g); box(0.08, 0.08, 1.2, m, 0.7, 2.25, 0, g);
+    cyl(0.017, 2.2, std(0xb8b8b8, 0.3, 0.9), 0, 1.45, 0.4, [0, 0, Math.PI / 2], g); for (const s of [-1, 1]) for (let i = 0; i < 2; i++) plate(s * (0.8 + i * 0.045), 1.45, 0.4, 0.225 - i * 0.03, 0.04, 0x1d1f1e).parent !== g && g.add(scene.children.pop()); };
+const sign = (x, y, z, ry, w = 1.6) => { if (!logo) return; const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * logo.image.height / logo.image.width), new THREE.MeshBasicMaterial({ map: logo, transparent: true })); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); };
+const mirror = (x, y, z, ry, w, h) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: canvasTex(64, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, "#c9d6d3"); g.addColorStop(0.45, "#9fb3ae"); g.addColorStop(0.5, "#dfe9e6"); g.addColorStop(1, "#7d928d"); c.fillStyle = g; c.fillRect(0, 0, w, h); }), toneMapped: false })); g.add(m); box(w + 0.06, h + 0.06, 0.03, std(0x15201a, 0.5, 0.4), 0, 0, -0.025, g); };
+const mat = (len = 2.4, wid = 1.2, col = 0x24372d) => { const m = box(wid, 0.025, len, std(col, 0.9), 0, 0.0125, -0.1); return m; };
+const bench = (x, z, ry) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); box(0.3, 0.1, 1.2, std(0x1a1a1a, 0.6), 0, 0.43, 0, g); box(0.05, 0.4, 0.05, std(0x2b2b2b, 0.4, 0.6), 0, 0.2, 0.3, g); box(0.05, 0.4, 0.05, std(0x2b2b2b, 0.4, 0.6), 0, 0.2, -0.3, g); };
+const kettle = (x, z, col = 0x1c1e1d) => { const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g); const s = new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 16), std(col, 0.4, 0.5)); s.position.y = 0.12; s.castShadow = true; g.add(s); const h = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.012, 8, 20, Math.PI), std(col, 0.4, 0.5)); h.position.y = 0.21; h.castShadow = true; g.add(h); };
+const plant = (x, z, s = 1) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s); scene.add(g); cyl(0.2, 0.35, std(0xc9ad84, 0.8), 0, 0.175, 0, [0, 0, 0], g); for (let i = 0; i < 9; i++) { const l = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.9, 6), std(0x3d6b4a, 0.8)); const a = i / 9 * Math.PI * 2; l.position.set(Math.cos(a) * 0.12, 0.75, Math.sin(a) * 0.12); l.rotation.set(Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35); l.castShadow = true; g.add(l); } };
+const box_ = (x, z, s, col = 0xc9ad84) => box(s, s, s, std(col, 0.6), x, s / 2, z);
+
+let sun, fill;
+if (room === "garage") {
+    scene.background = new THREE.Color(0x1a201d); scene.fog = new THREE.Fog(0x1a201d, 7, 15);
+    const tex = canvasTex(512, 512, (c, w, h) => { c.fillStyle = "#26292a"; c.fillRect(0, 0, w, h); for (let i = 0; i < 4000; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? 255 : 0},${Math.random() < .5 ? 255 : 0},${Math.random() < .5 ? 255 : 0},0.06)`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } c.strokeStyle = "#151718"; c.lineWidth = 3; c.strokeRect(0, 0, w, h); }, [8, 8]);
+    shell({ floorTex: tex, floorColor: 0xffffff, wallColor: 0x2f4a3c, wall2Color: 0x2a3d33 });
+    scene.add(new THREE.AmbientLight(0xffe9cf, 1.1)); sun = new THREE.DirectionalLight(0xffe0bd, 2.2); sun.position.set(2.5, 4.5, 3.5);
+    rack(-1.9, -2.2); dumbbellRack(1.6, -2.85); dumbbellRack(-2.85, 1.2, Math.PI / 2); bench(-1.4, 0.2, 0.2); sign(0.2, 2.1, -3.18, 0, 2.2); mirror(-3.17, 1.35, -0.6, Math.PI / 2, 2.6, 1.8);
+    for (let i = 0; i < 3; i++) { plate(1.2 + i * 0.05, 0.03 + i * 0.045, -2.3, 0.225, 0.04, 0x1d1f1e, [0, 0, 0]); } kettle(2.2, -1.6); kettle(2.45, -1.5, 0x3a2a1c);
+    for (const x of [-1.2, 0.6, 2.2]) { const l = new THREE.PointLight(0xffd7a0, 14, 7, 1.4); l.position.set(x, 2.6, -1.5); scene.add(l); box(0.7, 0.04, 0.12, new THREE.MeshBasicMaterial({ color: 0xfff1d6 }), x, 2.75, -1.5); }
+} else if (room === "studio") {
+    scene.background = new THREE.Color(0xe9e2d6); scene.fog = new THREE.Fog(0xe9e2d6, 9, 18);
+    const tex = canvasTex(1024, 1024, (c, w, h) => { for (let i = 0; i < 8; i++) { c.fillStyle = ["#c9a574", "#bf9a68", "#cdab7c", "#c2a070"][i % 4]; c.fillRect(0, i * h / 8, w, h / 8); for (let k = 0; k < 160; k++) { c.fillStyle = "rgba(90,60,30,0.05)"; c.fillRect(Math.random() * w, i * h / 8 + Math.random() * h / 8, 80 + Math.random() * 120, 1); } c.fillStyle = "rgba(60,40,20,0.35)"; c.fillRect(0, i * h / 8, w, 2); } }, [3, 3]);
+    shell({ floorTex: tex, floorColor: 0xffffff, wallColor: 0xf1ece2, wall2Color: 0xe6dfd1 });
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xd8c6a8, 1.1)); sun = new THREE.DirectionalLight(0xfff3df, 2.4); sun.position.set(3, 4, 2);
+    mirror(0, 1.25, -3.17, 0, 4.2, 2.1); mirror(-3.17, 1.25, 0, Math.PI / 2, 3.6, 2.1);
+    box(0.06, 0.04, 6, std(0x15201a, 0.4, 0.5), -3.1, 0.02, 0); // barre rail base
+    for (let i = 0; i < 3; i++) { const w = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.2), new THREE.MeshBasicMaterial({ color: 0xfffaf0 })); w.position.set(-3.15, 1.4, 1.6 + i * 1.15); w.rotation.y = Math.PI / 2; scene.add(w); }
+    plant(2.4, -2.4, 1.3); plant(-2.6, 2.2, 1); sign(1.9, 1.9, -3.15, 0, 1.2);
+    for (let i = 0; i < 4; i++) kettle(-2.2 + i * 0.3, -2.7, [0x1c1e1d, 0xc9ad84, 0x2d4a3a, 0x1c1e1d][i]); box_(1.9, -1.5, 0.45, 0xb89b6e); box_(2.4, -1.6, 0.3, 0xb89b6e);
+    for (let i = 0; i < 4; i++) cyl(0.04, 0.9, std([0xc9ad84, 0x2d4a3a][i % 2], 0.6), 0.9 + i * 0.1, 0.45, -2.9, [0.0, 0, 0.12]);
+} else {
+    scene.background = new THREE.Color(0x101614); scene.fog = new THREE.Fog(0x101614, 6, 14);
+    const tex = canvasTex(512, 512, (c, w, h) => { c.fillStyle = "#1d2120"; c.fillRect(0, 0, w, h); for (let i = 0; i < 3000; i++) { c.fillStyle = "rgba(255,255,255,0.05)"; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } c.strokeStyle = "#0e1110"; c.lineWidth = 4; c.strokeRect(0, 0, w, h); }, [8, 8]);
+    shell({ floorTex: tex, floorColor: 0xffffff, wallColor: 0x1b2a23, wall2Color: 0x16231d });
+    const turf = canvasTex(256, 256, (c, w, h) => { c.fillStyle = "#2f5a3b"; c.fillRect(0, 0, w, h); for (let i = 0; i < 9000; i++) { c.fillStyle = `rgba(${40 + Math.random() * 60},${110 + Math.random() * 70},${60 + Math.random() * 40},0.35)`; c.fillRect(Math.random() * w, Math.random() * h, 1, 3); } }, [3, 8]);
+    const t = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 7), new THREE.MeshStandardMaterial({ map: turf, roughness: 1 })); t.rotation.x = -Math.PI / 2; t.position.set(0.2, 0.004, 0.4); t.receiveShadow = true; scene.add(t);
+    scene.add(new THREE.AmbientLight(0xbfd6c8, 1.0)); sun = new THREE.DirectionalLight(0xe9f2ff, 2.2); sun.position.set(2.5, 5, 3.5);
+    // Pull-up rig along the back wall, boxes, rope, LED strip, big logo.
+    const rg = std(0x0c0f0e, 0.45, 0.5), gold = std(0xc9ad84, 0.35, 0.6);
+    for (const x of [-2.4, -0.6, 1.2, 3.0]) box(0.12, 3, 0.12, rg, x, 1.5, -2.8);
+    box(5.8, 0.1, 0.1, rg, 0.3, 2.9, -2.8); box(5.8, 0.06, 0.06, gold, 0.3, 2.45, -2.7);
+    for (const x of [-1.6, 0.1, 1.9]) cyl(0.015, 1.1, std(0xb8b8b8, 0.3, 0.9), x, 2.45, -2.5, [Math.PI / 2, 0, Math.PI / 2]);
+    box_(2.1, -1.6, 0.6, 0xc9ad84); box_(2.8, -1.4, 0.45, 0x2d4a3a); box_(2.4, -0.9, 0.3, 0xc9ad84);
+    box(5.5, 0.05, 0.05, new THREE.MeshBasicMaterial({ color: 0xc9ad84 }), 0.2, 3.3, -3.15); sign(0.2, 2.0, -3.17, 0, 2.6);
+    box(0.5, 0.16, 1.1, std(0x151817, 0.5, 0.4), -2.4, 0.1, 1.5); for (let i = 0; i < 2; i++) plate(-2.4, 0.3 + i * 0.045, 1.5, 0.225, 0.04, 0x2d4a3a, [0, 0, 0]);
+    for (const x of [-1.2, 1.4]) { const l = new THREE.PointLight(0xf2e3c4, 12, 7, 1.4); l.position.set(x, 2.8, -1.5); scene.add(l); }
+    mirror(-3.17, 1.4, -0.4, Math.PI / 2, 2.8, 1.9);
+}
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -3, near: 0.5, far: 16 }); scene.add(sun);
+const rim = new THREE.DirectionalLight(0xdfe9ff, room === "studio" ? 0.5 : 1.0); rim.position.set(-2, 3, 3.5); scene.add(rim);
+if (floorDemo) mat(2.8, 1.2, room === "studio" ? 0x2d4a3a : 0x24372d).position.set(0, 0.0125, -0.05);
+
+const loader = new GLTFLoader();
+const [ath, mo] = await Promise.all([loader.loadAsync(`../assets/athlete-${sex}.glb`), loader.loadAsync(`../assets/${demo}-${sex}.motion.glb`)]);
+const model = ath.scene; scene.add(model);
+model.traverse(o => { if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false; for (const m of [].concat(o.material)) { if (/low-poly/.test(m.name) && m.map) { m.emissive.set(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.12; m.color.setRGB(0.75, 0.85, 0.9); m.roughness = 0.12; } if (m.alphaTest > 0) { m.transparent = true; m.alphaTest = 0.04; } if (/^sb-/.test(m.name)) m.side = THREE.DoubleSide; } });
+const mixer = new THREE.AnimationMixer(model); const clip = mo.animations[0]; mixer.clipAction(clip).play(); mixer.setTime(T * clip.duration);
+model.updateMatrixWorld(true);
+
+const cam = new THREE.PerspectiveCamera(32, W / H, 0.05, 60);
+const y = yaw * Math.PI / 180, ty = floorDemo ? 0.55 : 1.0, tz = 0, dist = +(q.get("dist") || (floorDemo ? 4.7 : 5.4));
+cam.position.set(Math.sin(y) * dist, ty + 0.9, tz + Math.cos(y) * dist); cam.lookAt(0, ty, tz);
+renderer.render(scene, cam);
+window.READY = true;
+</script></body></html>
