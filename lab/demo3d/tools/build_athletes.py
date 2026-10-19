@@ -41,8 +41,8 @@ ATHLETES = {
         "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.78, "weight": 0.5, "proportions": 0.8, "height": 0.55, "cupsize": 0.5, "firmness": 0.5,
                   "race": {"african": 0.15, "asian": 0.15, "caucasian": 0.7}},
         "skin": "skins/young_caucasian_male/young_caucasian_male.mhmat",
-        "hair": "hair/short02/short02.mhclo",
-        "clothes": [("clothes/shoes05/shoes05.mhclo", "shoe")],
+        "hair": "hair/{0}/{0}.mhclo".format(os.environ.get("HAIR_M", "short02")),
+        "clothes": [("clothes/{0}/{0}.mhclo".format(os.environ.get("SHOE", "shoes03")), "shoe")],
         # Generated garments (see make_shell): a crew-neck tee with sleeves and shorts to mid-thigh.
         "kit": {"top_hem": -0.05, "top_off": 0.010, "sleeve": 0.45, "bottom": "shorts", "bottom_off": 0.007, "logo_drop": 0.16}
     },
@@ -50,8 +50,8 @@ ATHLETES = {
         "macro": {"gender": 0.0, "age": 0.5, "muscle": 0.7, "weight": 0.45, "proportions": 0.8, "height": 0.5, "cupsize": 0.45, "firmness": 0.6,
                   "race": {"african": 0.2, "asian": 0.15, "caucasian": 0.65}},
         "skin": "skins/young_caucasian_female/young_caucasian_female.mhmat",
-        "hair": "hair/ponytail01/ponytail01.mhclo",
-        "clothes": [("clothes/shoes05/shoes05.mhclo", "shoe")],
+        "hair": "hair/{0}/{0}.mhclo".format(os.environ.get("HAIR_F", "ponytail01")),
+        "clothes": [("clothes/{0}/{0}.mhclo".format(os.environ.get("SHOE", "shoes03")), "shoe")],
         # A fitted tee that covers the midriff, over full-length leggings.
         "kit": {"top_hem": -0.01, "top_off": 0.009, "sleeve": 0.40, "bottom": "leggings", "bottom_off": 0.006, "logo_drop": 0.17}
     },
@@ -384,12 +384,23 @@ for sex, spec in ATHLETES.items():
             if kit["bottom"] == "leggings":
                 # Leggings end at the ankle bone: trim the shoe's cuff so it can't show through them.
                 delete_faces(obj, lambda co: co.z < bone_z(rig, pre + "LeftFoot") + 0.03)
-            obj.data.materials.clear()
-            obj.data.materials.append(flat("sb-shoe", KIT["shoe"], 0.55)); obj.data.materials.append(flat("sb-sole", KIT["sole"], 0.6))
+            # One material, coloured per vertex (smooth blends, no stair-steps on the coarse mesh):
+            # white sole fading into a tan upper.
             mw = obj.matrix_world
-            for poly in obj.data.polygons:
-                z = sum((mw @ obj.data.vertices[i].co).z for i in poly.vertices) / len(poly.vertices)
-                poly.material_index = 1 if z < 0.025 else 0
+            ca = obj.data.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+            def lin(c): return list(c[:3]) + [1.0]
+            def mix(a_, b_, t): return [a_[i] + (b_[i] - a_[i]) * t for i in range(4)]
+            sm = lambda x: x * x * (3 - 2 * x)
+            for v in obj.data.vertices:
+                z = (mw @ v.co).z
+                col = lin(KIT["shoe"])
+                col = mix(col, lin(KIT["sole"]), 1 - sm(min(1, max(0, (z - 0.016) / 0.008))))
+                ca.data[v.index].color = col
+            m = bpy.data.materials.new("sb-shoe"); m.use_nodes = True
+            nt = m.node_tree; pb = nt.nodes["Principled BSDF"]; pb.inputs["Roughness"].default_value = 0.55
+            cn = nt.nodes.new("ShaderNodeVertexColor"); cn.layer_name = "Col"
+            nt.links.new(cn.outputs["Color"], pb.inputs["Base Color"])
+            obj.data.materials.clear(); obj.data.materials.append(m)
     # Hide the body under the kit, then lift the kit a few millimetres off it.
     hide_covered(body, [bottom, top], keep=lambda co: co.z > neck_z - 0.025 - 0.09 and abs(co.x) < 0.16)
     # (the shells are already offset from the skin; the shoes get a lift)
@@ -434,5 +445,5 @@ for sex, spec in ATHLETES.items():
     path = os.path.join(OUT, f"athlete-{sex}.glb")
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", use_selection=True, export_apply=True,
                               export_skins=True, export_animations=False, export_morph=False,
-                              export_image_format="JPEG", export_jpeg_quality=82, export_yup=True)
+                              export_vertex_color="ACTIVE", export_active_vertex_color_when_no_material=True, export_image_format="JPEG", export_jpeg_quality=82, export_yup=True)
     print("WROTE", path, os.path.getsize(path), "bones", len(rig.data.bones), "hips", round(hips_z, 3), "knee", round(knee_z, 3))

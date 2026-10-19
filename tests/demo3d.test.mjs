@@ -140,10 +140,13 @@ test("the shipped catalog: files exist, phone-sized, licensed, and nothing is 'r
         assert.ok(e.start && e.move && e.cue, `${e.id} steps`);
         const qa = {};
         for (const s of ["male", "female"]) {
-            const model = join(lab, e.models[s]);
+            const model = join(lab, e.models[s]), motion = join(lab, e.motions[s]);
             assert.ok(existsSync(model), `${e.models[s]} exists`);
             assert.ok(statSync(model).size < 5 * 1024 * 1024, `${e.models[s]} is under 5 MB`);
             assert.ok(licenses.includes(e.models[s]), `${e.models[s]} is listed in LICENSES.md`);
+            assert.ok(existsSync(motion), `${e.motions[s]} exists`);
+            assert.ok(statSync(motion).size < 400 * 1024, `${e.motions[s]} is a small motion file (under 400 KB)`);
+            assert.ok(licenses.includes(".motion.glb") || licenses.includes(e.motions[s]), `${e.motions[s]} is covered in LICENSES.md`);
             qa[s] = JSON.parse(readFileSync(join(lab, e.qa[s]), "utf8"));
         }
         if (e.status === "ready") assert.equal(readiness(e, qa).ready, true, `${e.id} is marked ready but ${readiness(e, qa).missing.join(", ")}`);

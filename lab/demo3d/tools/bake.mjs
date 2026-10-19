@@ -28,8 +28,9 @@ for (const sex of ["male", "female"]) {
     page.on("console", m => { if (m.type() === "error") console.error(sex, m.text()); });
     await page.goto(`http://localhost:${port}/tools/bake.html?model=/athletes/athlete-${sex}.glb&motion=${motion}`);
     await page.waitForFunction("window.READY", null, { timeout: 120000 });
-    const out = join(lab, "assets", `${ID}-${sex}.glb`);
-    writeFileSync(out, Buffer.from(await page.evaluate(() => window.bake()), "base64"));
+    const athlete = join(lab, "assets", `athlete-${sex}.glb`), out = join(lab, "assets", `${ID}-${sex}.motion.glb`);
+    writeFileSync(athlete, Buffer.from(await page.evaluate(() => window.bakeAthlete()), "base64"));
+    writeFileSync(out, Buffer.from(await page.evaluate(() => window.bakeMotion()), "base64"));
     writeFileSync(join(review, `${ID}-${sex}.track.json`), JSON.stringify(await page.evaluate(() => window.track(30))));
     const SHOTS = {
         squat: [["top", 0, 35], ["bottom", 0.26, 35], ["side-bottom", 0.26, 90], ["front-bottom", 0.26, 0], ["face", 0, 20, 4, 0.9, 1.55]],
@@ -39,7 +40,7 @@ for (const sex of ["male", "female"]) {
         const url = await page.evaluate(a => window.shot(...a), [t, yaw, ...rest]);
         writeFileSync(join(review, `${ID}-${sex}-${name}.png`), Buffer.from(url.split(",")[1], "base64"));
     }
-    console.log("baked", out, readFileSync(out).length);
+    console.log("baked", athlete, readFileSync(athlete).length, out, readFileSync(out).length);
     await page.close();
 }
 await browser.close(); server.close();
