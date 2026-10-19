@@ -53,3 +53,16 @@ Keep the Stripe account in test mode until checkout and webhook behavior has bee
 ## Webhook idempotency
 
 Stripe webhook deliveries are tracked in the server-only stripeWebhookEvents/{eventId} collection. A processed event is acknowledged without running its business logic again; a failed or stale in-progress event can be retried. Clients have no Firestore access to this collection.
+
+# Exercise videos (MuscleWiki)
+
+`getExerciseDemo` — authenticated callable function for the "How to" sheet. Active clients and approved coaches only (pending sign-ups can't spend the quota). It looks an exercise up on the MuscleWiki API with the server's key, caches the text in the server-only `exerciseDemoCache/{name}` collection (30 days; a "no match" for 7), and returns stream URLs carrying a 15-minute MuscleWiki media token. The key never reaches the app. Logic and tests: `exerciseDemoModel.js`, `tests/exerciseDemoModel.test.mjs`; the provider's rules we follow: `.claude/skills/exercise-demo-integration/SKILL.md`.
+
+Setup (needs the Blaze plan and a MuscleWiki API subscription, TESTING or higher):
+
+~~~bash
+firebase functions:secrets:set MUSCLEWIKI_API_KEY   # paste the mw_... key from the MuscleWiki dashboard
+firebase deploy --only functions:getExerciseDemo
+~~~
+
+Then set `REMOTE_DEMOS_ENABLED = true` in `js/exerciseDemoConfig.js` and publish the site. Until then the app uses its own 3D clips and drawn figures.

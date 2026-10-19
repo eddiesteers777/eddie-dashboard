@@ -86,3 +86,47 @@
 @media (prefers-reduced-motion: reduce){
     .dm-play{ transition:none; }
 }
+
+/* The licensed video (MuscleWiki): plays as delivered, so nothing sits on
+   top of it. Credit and close above, controls below. */
+.dm-video.is-remote{ max-height:none; overflow:visible; background:var(--surface); display:flex; flex-direction:column; }
+.dm-remote-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 10px 8px 16px; }
+.dm-remote-credit{ font-size:12.5px; font-weight:600; color:var(--text-secondary); }
+.dm-remote-credit a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
+.dm-close.dm-close-flat{ position:static; flex:0 0 auto; width:44px; height:44px; background:color-mix(in srgb, var(--text) 10%, transparent); color:var(--text); }
+.dm-remote-frame{ position:relative; width:100%; aspect-ratio:16 / 9; max-height:56dvh; background:var(--bg); }
+.dm-remote-video{ display:block; width:100%; height:100%; object-fit:contain; background:var(--bg); cursor:pointer; }
+.dm-remote-wait{ position:absolute; inset:0; border-radius:0; }
+.dm-remote-wait.sb-wait:empty::before{ height:100%; border-radius:0; }
+.dm-bar.dm-bar-flat{ position:static; height:4px; background:color-mix(in srgb, var(--text) 12%, transparent); }
+.dm-remote-controls{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 12px 4px; }
+.dm-remote-top .dm-remote-credit{ margin-right:auto; }
+.dm-remote-controls .dm-ctl{
+    min-width:44px; min-height:44px; padding:0 12px; border-radius:var(--radius-pill); border:0; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--text) 10%, transparent); color:var(--text); font-size:13px; font-weight:700;
+}
+.dm-remote-controls .dm-ctl .ui-icon{ width:18px; height:18px; }
+.dm-remote-controls .dm-speed[aria-pressed="true"]{ background:var(--primary); color:var(--on-primary); }
+.dm-seg{ display:inline-flex; padding:3px; gap:2px; border-radius:var(--radius-pill); background:color-mix(in srgb, var(--text) 8%, transparent); }
+.dm-seg button{
+    min-height:44px; padding:0 13px; border:0; border-radius:calc(var(--radius-pill) - 2px); cursor:pointer;
+    background:transparent; color:var(--text-secondary); font-size:13px; font-weight:700;
+}
+.dm-seg button[aria-pressed="true"]{ background:var(--primary); color:var(--on-primary); }
+.dm-seg button:focus-visible, .dm-remote-controls .dm-ctl:focus-visible, .dm-remote-credit a:focus-visible{ box-shadow:var(--focus-ring); outline:none; }
+.dm-remote-top .dm-speed{ margin-left:auto; }
+.dm-remote-top .dm-ctl{
+    min-width:44px; min-height:44px; padding:0 12px; border-radius:var(--radius-pill); border:0; cursor:pointer;
+    background:color-mix(in srgb, var(--text) 10%, transparent); color:var(--text); font-size:13px; font-weight:700;
+}
+.dm-remote-top .dm-speed[aria-pressed="true"]{ background:var(--primary); color:var(--on-primary); }
+
+/* MuscleWiki's numbered steps (no Start / Move / Cue headings). */
+.dm-steps-plain li{ min-height:28px; }
+.dm-steps-plain p{ padding-top:3px; }
+.dm-cue{ margin-top:12px; }
+
+/* No demo at all: a quiet panel instead of a video. */
+.dm-video.is-none{ display:flex; flex-direction:column; align-items:flex-end; background:var(--surface-light); padding:8px 10px 18px; }
+.dm-none{ align-self:stretch; margin:4px 8px 0; color:var(--text-secondary); font-size:15px; line-height:1.5; }
