@@ -34,6 +34,8 @@ def srgb(h):
     return [((x + 0.055) / 1.055) ** 2.4 if x > 0.04045 else x / 12.92 for x in c] + [1.0]
 KIT = {"top": srgb("#24473A"), "bottom": srgb("#2A2E2B"), "shoe": srgb("#C9AD84"), "sole": srgb("#EDE6D8")}
 
+BROW = {"male": (0.10, 0.065, 0.045), "female": (0.20, 0.09, 0.04)}   # linear, close to each athlete's hair
+
 ATHLETES = {
     "male": {
         "macro": {"gender": 1.0, "age": 0.5, "muscle": 0.78, "weight": 0.5, "proportions": 0.8, "height": 0.55, "cupsize": 0.5, "firmness": 0.5,
@@ -119,6 +121,20 @@ def hide_covered(body, garments, reach=0.04, margin=0.02, side=0.012, keep=None)
     if keep:   # e.g. the neck opening: never hide skin there, a gap would show the background
         cos = [c for c, _ in final_coords(body)]
         hide = [i for i in hide if not keep(cos[i])]
+    # Leave the skin visible near every hem: the kit is thick and sits clear of the body there, so nothing pokes
+    # through, and hiding right up to the rim leaves stair-stepped gaps once the arms lift the sleeve.
+    from mathutils.kdtree import KDTree
+    rim = []
+    for g in garments:
+        mw = g.matrix_world
+        bmg = bmesh.new(); bmg.from_mesh(g.data)
+        rim += [mw @ v.co for v in bmg.verts if any(e.is_boundary for e in v.link_edges)]
+        bmg.free()
+    kd = KDTree(max(1, len(rim)))
+    for i, c in enumerate(rim): kd.insert(c, i)
+    kd.balance()
+    cos_all = [c for c, _ in final_coords(body)]
+    hide = [i for i in hide if not rim or kd.find(cos_all[i])[2] > 0.03]
     # Pull the hidden area's border one ring back under the garment: hiding
     # right up to a hem leaves a see-through gap just past it.
     bm = bmesh.new(); bm.from_mesh(body.data); bm.verts.ensure_lookup_table()
@@ -229,23 +245,42 @@ def make_shell(body, rig, pre, name, mat, *, zmin=None, zmax=None, arms="remove"
         # A round neckline: cut along the tangents of an ellipse (N straight cuts, so the edge is smooth
         # and exact), then drop the faces inside it and everything above it (the neck and head).
         import math
-        cx, cz, ra, rb, N = 0.0, collar_z + 0.045, 0.098, 0.082, 28
-        planes = []
-        for k in range(N):
-            th = 2 * math.pi * k / N
-            pt = Vector((cx + ra * math.cos(th), 0.0, cz + rb * math.sin(th)))
-            nm = Vector((math.cos(th) / ra, 0.0, math.sin(th) / rb)).normalized()
-            planes.append((pt, nm))
-        for pt, nm in planes:
+        cx, N = 0.0, 28
+        cz, ra, rb = collar_z + 0.045, 0.098, 0.082          # the front scoop
+        czb, rab, rbb = collar_z + 0.085, 0.090, 0.050       # the back sits much higher (a crew neck, not a scoop)
+        def ellipse(cz_, ra_, rb_):
+            out = []
+            for k in range(N):
+                th = 2 * math.pi * k / N
+                out.append((Vector((cx + ra_ * math.cos(th), 0.0, cz_ + rb_ * math.sin(th))), Vector((math.cos(th) / ra_, 0.0, math.sin(th) / rb_)).normalized()))
+            return out
+        import math
+        front, back = ellipse(cz, ra, rb), ellipse(czb, rab, rbb)
+        for pt, nm, is_back in [(p_, n_, 0) for p_, n_ in front] + [(p_, n_, 1) for p_, n_ in back]:
             near = {v for v in bm.verts if v.co.z > collar_z - 0.12 and abs(v.co.x) < 0.2}
-            fs = [f for f in bm.faces if any(v in near for v in f.verts)]   # whole faces, so none is left half-cut
+            # each scoop only cuts its own side (front faces / back faces), so the other side gets no stray cut lines
+            fs = [f for f in bm.faces if any(v in near for v in f.verts) and ((f.calc_center_median().y > -0.015) if is_back else (f.calc_center_median().y < 0.015))]
             es = list({e for f in fs for e in f.edges})
             vs = list({v for f in fs for v in f.verts})
             bmesh.ops.bisect_plane(bm, geom=vs + es + fs, plane_co=pt, plane_no=nm, dist=1e-6)
-        def inside(c): return all((c - pt).dot(nm) < 1e-6 for pt, nm in planes)
-        gone = [f for f in bm.faces if inside(f.calc_center_median()) or (f.calc_center_median().z > cz and abs(f.calc_center_median().x) < ra)]
+        def inside(c, planes): return all((c - pt).dot(nm) < 1e-6 for pt, nm in planes)
+        def goes(f):
+            c = f.calc_center_median()
+            if c.y > 0: return inside(c, back) or (c.z > czb and abs(c.x) < rab)      # the back of the tee
+            return inside(c, front) or (c.z > cz and abs(c.x) < ra)
+        gone = [f for f in bm.faces if goes(f)]
         bmesh.ops.delete(bm, geom=gone, context="FACES")
         bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=0.0012)   # merge the slivers the cuts leave
+    bmesh.ops.dissolve_degenerate(bm, edges=list(bm.edges), dist=0.0006)
+    if collar_z is not None:   # smooth the raw neckline / sleeve edges (the cut leaves a faint saw-tooth)
+        for _ in range(6):
+            bnd = [v for v in bm.verts if any(e.is_boundary for e in v.link_edges) and v.co.z > collar_z - 0.14]
+            new = {}
+            for v in bnd:
+                nb = [e.other_vert(v) for e in v.link_edges if e.is_boundary]
+                if len(nb) == 2: new[v] = v.co.lerp((nb[0].co + nb[1].co) / 2, 0.5)
+            for v, co in new.items(): v.co = co
     for f in bm.faces: f.smooth = True   # cuts create flat faces: shade them all smooth
     for e in bm.edges: e.smooth = True
     norms = {v.index: smooth_normal(v.co) for v in bm.verts}
@@ -271,6 +306,18 @@ def make_shell(body, rig, pre, name, mat, *, zmin=None, zmax=None, arms="remove"
     zs = [v.co.z for v in o.data.vertices]
     print('SHELL', name, 'z', round(min(zs), 3), round(max(zs), 3), 'verts', len(zs))
     return o
+
+def thicken(o, inner, t=0.0035):
+    """Give a cloth shell real thickness (inward, so the outside stays put) with
+    a darker inside, so hems read as cut cloth, not a torn sheet."""
+    bpy.ops.object.select_all(action="DESELECT")
+    bpy.context.view_layer.objects.active = o; o.select_set(True)
+    o.data.materials.append(inner)
+    m = o.modifiers.new("Thick", "SOLIDIFY")
+    m.thickness = t; m.offset = -1; m.use_even_offset = False; m.use_rim = True; m.nonmanifold_thickness_mode = "FIXED"; m.nonmanifold_boundary_mode = "NONE"
+    m.material_offset = 1; m.material_offset_rim = 0
+    bpy.ops.object.modifier_move_to_index(modifier="Thick", index=0)
+    bpy.ops.object.modifier_apply(modifier="Thick")
 
 def make_logo(shell, img_path, center_z, width=0.15, lift=0.0015):
     """The Southbound mark: a patch of the tee's own chest faces, lifted a
@@ -347,6 +394,35 @@ for sex, spec in ATHLETES.items():
     hide_covered(body, [bottom, top], keep=lambda co: co.z > neck_z - 0.025 - 0.09 and abs(co.x) < 0.16)
     # (the shells are already offset from the skin; the shoes get a lift)
     for g in garments[2:]: inflate(g)
+    # Hems with thickness (after the logo patch was taken from the single sheet).
+    for g, base in ((bottom, KIT["bottom"]), (top, KIT["top"])):
+        thicken(g, flat("sb-inner-" + g.name, tuple(c * 0.8 for c in base[:3]) + (1.0,), 0.9))
+    # The skin is opaque: drop its alpha link so the exporter stores it as a JPEG (a quarter of the PNG's size).
+    for m in bpy.data.materials:
+        if m.use_nodes and m.name == "Human.body":
+            for l in list(m.node_tree.links):
+                if l.to_socket.name == "Alpha": m.node_tree.links.remove(l)
+            m.blend_method = "OPAQUE"
+            for n in m.node_tree.nodes:
+                if n.type == "TEX_IMAGE" and n.image: n.image.alpha_mode = "NONE"
+    # Soften the hair texture's alpha a little so the hairline feathers (the player draws it with alpha-to-coverage).
+    import numpy as np
+    for img in bpy.data.images:
+        if img.size[0] > 0 and any(k in img.name.lower() for k in ("short0", "ponytail", "bob", "braid")) and "diffuse" in img.name.lower():
+            w, h = img.size; px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+            a = px[:, :, 3]
+            for _ in range(3):
+                a = (a + np.roll(a, 1, 0) + np.roll(a, -1, 0) + np.roll(a, 1, 1) + np.roll(a, -1, 1)) / 5.0
+            px[:, :, 3] = a
+            img.pixels = px.ravel().tolist()
+    # The brow texture is solid black: tint it to the hair so the brows read as hair, not marker lines.
+    brow = BROW[sex]
+    for img in bpy.data.images:
+        if img.size[0] > 0 and "eyebrow" in img.name.lower():
+            w, h = img.size; px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+            px[:, :, 0], px[:, :, 1], px[:, :, 2] = brow
+            px[:, :, 3] = np.clip(px[:, :, 3] * 1.0, 0, 1)
+            img.pixels = px.ravel().tolist()
     # Phone-sized textures: skin 1024, everything else 512.
     for img in bpy.data.images:
         if img.size[0] > 0:

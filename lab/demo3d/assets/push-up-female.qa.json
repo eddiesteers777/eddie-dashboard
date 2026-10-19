@@ -1,0 +1,57 @@
+{
+ "id": "push-up",
+ "sex": "female",
+ "gradedAt": "2026-10-19",
+ "pass": true,
+ "checks": [
+  {
+   "id": "body-line",
+   "label": "Worst bend in the shoulder-hip-ankle line, degrees",
+   "value": 1.11,
+   "limit": 8,
+   "pass": true
+  },
+  {
+   "id": "planted",
+   "label": "Hands and toes stay planted, metres",
+   "value": 0,
+   "limit": 0.02,
+   "pass": true
+  },
+  {
+   "id": "depth",
+   "label": "Shoulders at the bottom, metres off the floor",
+   "value": 0.215,
+   "limit": 0.3,
+   "pass": true
+  },
+  {
+   "id": "range",
+   "label": "Chest travel, metres",
+   "value": 0.263,
+   "limit": 0.2,
+   "pass": true
+  },
+  {
+   "id": "elbow-bottom",
+   "label": "Elbow angle at the bottom, degrees",
+   "value": 50.201,
+   "limit": 100,
+   "pass": true
+  },
+  {
+   "id": "elbow-top",
+   "label": "Elbow angle at the top (arms long, not hyperextended), degrees",
+   "value": 158.173,
+   "limit": 150,
+   "pass": true
+  },
+  {
+   "id": "smooth",
+   "label": "Fastest joint, metres per second",
+   "value": 0.324,
+   "limit": 1.5,
+   "pass": true
+  }
+ ]
+}
