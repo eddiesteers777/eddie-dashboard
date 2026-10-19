@@ -24,6 +24,10 @@ const blurb = document.getElementById("tourBlurb");
 const tabs = [...document.querySelectorAll(".pub-tour-tab")];
 
 if (video && playBtn && tabs.length) {
+    // iPhones only autoplay a video that is muted and inline; set both as properties as well as attributes.
+    video.defaultMuted = true;
+    video.muted = true;
+    video.playsInline = true;
     const ids = tabs.map(t => t.dataset.clip);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let current = ids[0], visible = false, auto = !reduce, userPaused = false;
@@ -64,6 +68,12 @@ if (video && playBtn && tabs.length) {
     playBtn.addEventListener("click", () => { userPaused = false; video.play().then(setPlayUi).catch(setPlayUi); });
     video.addEventListener("click", () => { if (video.paused) { video.play().then(setPlayUi); } else { video.pause(); userPaused = true; setPlayUi(); playBtn.setAttribute("aria-label", "Play the video"); } });
     video.addEventListener("ended", () => { if (auto) select(ids[(ids.indexOf(current) + 1) % ids.length]); });
+    // A clip that finished loading after it scrolled into view starts then.
+    video.addEventListener("canplay", () => { if (auto && visible && video.paused && !userPaused) play(); });
+    // Low Power Mode and some browsers refuse autoplay until the visitor touches the page once; the first touch starts it.
+    const firstTouch = () => { if (auto && visible && video.paused && !userPaused) play(); };
+    document.addEventListener("touchend", firstTouch, { passive: true, once: true });
+    document.addEventListener("pointerup", firstTouch, { passive: true, once: true });
     video.addEventListener("play", setPlayUi);
     video.addEventListener("pause", setPlayUi);
 
