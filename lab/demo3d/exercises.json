@@ -71,9 +71,10 @@
       ],
       "defaultView": "side",
       "stage": {
-        "height": 0.9,
-        "span": 1.9,
-        "centerY": 0.28
+        "height": 0.75,
+        "span": 1.75,
+        "centerY": 0.27,
+        "aspect": "4 / 3"
       },
       "start": "Hands under your shoulders, body in one straight line from heels to head.",
       "move": "Lower your chest until it's about a fist from the floor, elbows angled back about 45 degrees. Press the floor away to straighten your arms.",

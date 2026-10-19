@@ -85,6 +85,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     host.innerHTML = playerHtml(entry, views, sexes, entry.status !== "ready");
     const $ = sel => host.querySelector(sel);
     const stage = $("[data-stage]"), tap = $("[data-tap]"), loading = $("[data-loading]"), bar = $("[data-progress]");
+    if (entry.stage?.aspect) stage.style.aspectRatio = entry.stage.aspect;   // floor exercises are long and low: a wider stage
 
     // Renderer, scene, light: the same set-up the review renders use.
     let renderer;
