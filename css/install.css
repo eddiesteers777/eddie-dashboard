@@ -642,3 +642,17 @@ body[data-device="android"] .install-qr-card{display:none;}
     .install-tab{padding:0 13px;font-size:13px;}
     .install-guide-step h2{font-size:16px;}
 }
+
+/* ==== Premium pass (2026-10-19): a bigger headline, squared tabs, a roomier page ==== */
+.install-topbar{ width:100%; max-width:none; margin:0; padding:12px clamp(16px,4vw,48px); border-bottom:1px solid var(--border); background:color-mix(in srgb,var(--bg) 88%,transparent); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); position:sticky; top:0; z-index:100; }
+.install-topbar-sub{ font-size:12px; letter-spacing:.3em; }
+.install-page{ width:min(680px,calc(100% - 32px)); padding:clamp(24px,5vw,56px) 0 clamp(48px,8vw,96px); }
+.install-hero{ margin-bottom:clamp(24px,4vw,40px); }
+.install-app-icon{ width:96px; height:96px; }
+.install-kicker{ font:600 12px/1 var(--font-mono); letter-spacing:.14em; }
+.install-hero h1{ font-weight:900; font-size:clamp(44px,8vw,84px); line-height:.9; margin-bottom:16px; }
+.install-hero p{ font-size:17px; max-width:30em; }
+.install-tabs{ border-radius:var(--radius-sm); }
+.install-tab{ border-radius:var(--radius-sm); min-height:44px; font-size:15px; }
+.install-guide{ border-radius:var(--radius); }
+body.install-body{ padding-left:0; }
