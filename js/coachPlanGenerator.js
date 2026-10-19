@@ -36,6 +36,9 @@ import { BUILT_IN_WORKOUTS } from "./strengthLibraryData.js";
 import { recalcPlannedMiles, diffPlans, addDays, mondayOf } from "./coachingPlanModel.js";
 
 export const CODES = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+// A / B / C: how much the race matters. A = the goal race (full taper), B = important (shorter taper),
+// C = a training race (no taper, the plan runs through it). Idea from OpenAthlete's race priority.
+export const RACE_PRIORITIES = [["A", "A race: the goal, full taper"], ["B", "B race: important, short taper"], ["C", "C race: a training race, no taper"]];
 export const RACES = [["5K", "5K"], ["10K", "10K"], ["HALF", "Half marathon"], ["MARATHON", "Marathon"], ["50K", "50K"], ["50_MILE", "50 mile"]];
 export const TRAINING_GOALS = [
     ["BASE_BUILD", "Build a running base"], ["SPEED", "Get faster"], ["RUN_STRENGTH", "Running strength (hills)"],
@@ -152,6 +155,7 @@ export function settingsFromProfile(record = {}, today) {
         runWalkGoal: "CONTINUOUS",
         raceDate,
         goalTime,
+        racePriority: "A",
         trainingGoal: sport === "strength" ? "STRENGTH" : sport === "soccer" ? "ATHLETIC" : /fast|speed|pr\b|pb\b/.test(goalText) ? "SPEED" : "BASE_BUILD",
         startDate: start,
         endDate: addDays(start, 12 * 7 - 1),

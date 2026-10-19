@@ -147,7 +147,7 @@ function athleteLines(firstName, r = {}, today) {
 function settingsLine(s) {
     if (!s) return "";
     const bits = [];
-    if (s.mode === "race") bits.push(`${s.raceType} race on ${shortDay(s.raceDate)}`);
+    if (s.mode === "race") bits.push(`${s.raceType} ${s.racePriority === "B" || s.racePriority === "C" ? s.racePriority + " " : ""}race on ${shortDay(s.raceDate)}`);
     else bits.push("general training");
     if (isRunWalk(s)) bits.push(`run/walk start ("${START_TEXT[s.start] || s.start}"), building to ${String(GOAL_TEXT[s.runWalkGoal] || "running non-stop").toLowerCase()}`);
     else {

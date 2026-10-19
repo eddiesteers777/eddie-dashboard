@@ -220,6 +220,7 @@
     "js/pace-calculator.js",
     "js/paceSegments.js",
     "js/packageCatalog.js",
+    "js/painLog.js",
     "js/personalRecords.js",
     "js/planGenerateDialogs.js",
     "js/planLaps.js",
@@ -265,6 +266,7 @@
     "js/role.js",
     "js/runCard.js",
     "js/runCardData.js",
+    "js/runConditions.js",
     "js/runWalk.js",
     "js/runWorkout.js",
     "js/runningCalendar.js",
@@ -355,6 +357,7 @@
     "js/workoutExecution.js",
     "js/workoutFuel.js",
     "js/workoutPage.js",
+    "js/workoutQuestions.js",
     "js/workoutResults.js",
     "js/workoutRibbon.js"
   ],

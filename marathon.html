@@ -19,7 +19,7 @@
 
 <div id="header"></div>
 
-<div id="mp-root">
+<div id="mp-root" role="main">
   <div class="mp-hero">
     <h1 class="mp-title mp-display sr-only">Race to 3:05</h1>
     <div class="mp-eyebrow">Indianapolis Monumental · Nov 8, 2026</div>
@@ -699,8 +699,8 @@
       const dateObj = new Date(weekStart(selectedWeek).getTime() + i * dayMs);
       const dateWords = dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).replace(",", "");
 
-      pills += `<button type="button" class="mp-pill ${isSel ? "on" : ""} ${checked ? "done" : ""} ${key === todayKey ? "is-today" : ""}" data-pill="${key}" aria-pressed="${isSel}" aria-label="${dateWords}, ${d.miles} miles${checked ? ", done" : ""}">
-        <span>${DOW_NAMES[i]}</span><b class="mp-mono">${d.miles}</b><i></i>
+      pills += `<button type="button" class="mp-pill ${isSel ? "on" : ""} ${checked ? "done" : ""} ${key === todayKey ? "is-today" : ""}" data-pill="${key}" aria-pressed="${isSel}">
+        <span>${DOW_NAMES[i]}</span> <b class="mp-mono">${d.miles}</b><span class="sr-only"> miles, ${dateWords}${checked ? ", done" : ""}</span><i></i>
       </button>`;
 
       groups += `<div class="mp-day-group ${isSel ? "is-sel" : ""}" data-day-group="${key}">
@@ -715,7 +715,7 @@
         </div>
         <div class="mp-day-actions">
           <button type="button" class="mp-check ${checked ? "checked" : ""}" data-toggle="${key}" aria-pressed="${checked}">${checked ? "Done &#10003;" : "Mark done"}</button>
-          <button type="button" class="mp-day-expand-toggle ${anyExtras ? "mp-has-notes" : ""} ${isOpen ? "mp-expand-open" : ""}" data-day-toggle="${key}" aria-expanded="${isOpen}"><span>Day details</span>${window.icon ? window.icon("chevronDown") : ""}</button>
+          <button type="button" class="mp-day-expand-toggle ${anyExtras ? "mp-has-notes" : ""} ${isOpen ? "mp-expand-open" : ""}" data-day-toggle="${key}" aria-label="Day details" aria-expanded="${isOpen}"><span>Day details</span>${window.icon ? window.icon("chevronDown") : ""}</button>
         </div>
         <div class="mp-day-extras ${isOpen ? "mp-extras-open" : ""}">
           ${isOpen ? renderDayExtras(d, selectedWeek, key) : ""}

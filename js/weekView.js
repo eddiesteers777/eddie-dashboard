@@ -34,7 +34,7 @@ export const canToggle = item => ["plan", "extra", "strength"].includes(item.sou
 function doneButton(item, compact = false, secondary = false, glass = false) {
     if (!canToggle(item)) return "";
     return `<button type="button" class="wk-done${item.done ? " is-done" : ""}${compact ? " is-compact" : ""}${secondary ? " is-secondary" : ""}${glass ? " is-glass" : ""}" data-toggle="${esc(item.id)}"
-        aria-pressed="${item.done}" aria-label="${item.done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`}">
+        aria-pressed="${item.done}" aria-label="${compact ? (item.done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`) : (item.done ? `Done: ${esc(item.title)}` : `Mark done: ${esc(item.title)}`)}">
         ${icon(item.done ? "checkCircle" : "check")}${compact ? "" : `<span>${item.done ? "Done" : "Mark done"}</span>`}
     </button>`;
 }
@@ -109,7 +109,7 @@ export function coachRunCardHtml(item, { href = "marathon.html" } = {}) {
     const done = Boolean(item.done);
     const bigNumber = item.miles ? `<span class="wk-big">${item.miles}<small> mi</small></span>` : "";
     const mark = `<button type="button" class="wk-done is-glass${done ? " is-done" : ""}" data-complete-week="${esc(item.week)}" data-complete-day="${esc(item.dayKey)}"
-        aria-pressed="${done}" aria-label="${done ? `Mark ${esc(item.title)} not done` : `Mark ${esc(item.title)} done`}">
+        aria-pressed="${done}" aria-label="${done ? `Done: ${esc(item.title)}` : `Mark done: ${esc(item.title)}`}">
         ${icon(done ? "checkCircle" : "check")}<span>${done ? "Done" : "Mark done"}</span>
     </button>`;
     return `
