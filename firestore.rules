@@ -1432,6 +1432,15 @@ service cloud.firestore {
         && d.pain is bool
         && d.painNote is string && d.painNote.size() <= 300
         && d.note is string && d.note.size() <= 1000
+        // Answers to the coach's questions for this run: up to two { q, a }.
+        && (!("answers" in d) || (d.answers is list && d.answers.size() <= 2
+            && (d.answers.size() < 1 || (d.answers[0] is map && d.answers[0].keys().hasOnly(["q", "a"])
+                && d.answers[0].q is string && d.answers[0].q.size() <= 120 && d.answers[0].a is string && d.answers[0].a.size() <= 500))
+            && (d.answers.size() < 2 || (d.answers[1] is map && d.answers[1].keys().hasOnly(["q", "a"])
+                && d.answers[1].q is string && d.answers[1].q.size() <= 120 && d.answers[1].a is string && d.answers[1].a.size() <= 500))))
+        // What the weather was like: up to three known tags.
+        && (!("conditions" in d) || (d.conditions is list && d.conditions.size() <= 3
+            && d.conditions.hasOnly(["hot", "humid", "cold", "windy", "rain", "snow"])))
         && d.title is string && d.title.size() <= 120
         && d.plannedMiles is number && d.plannedMiles >= 0 && d.plannedMiles <= 200
         && d.planVersion is int && d.planVersion >= 1
@@ -1451,7 +1460,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(["clientUid", "coachUid", "planId", "planVersion", "date", "title",
              "plannedMiles", "status", "distance", "durationSec", "rpe", "pain", "painNote", "note",
-             "createdAt", "updatedAt", "coachComment", "coachCommentAt", "kind", "exercises"])
+             "createdAt", "updatedAt", "coachComment", "coachCommentAt", "kind", "exercises", "answers", "conditions"])
         && request.resource.data.clientUid == request.auth.uid
         && resultId == request.auth.uid + "_" + request.resource.data.planId + "_" + request.resource.data.date
              + (request.resource.data.get("kind", "run") == "strength" ? "_strength" : "")
@@ -1468,7 +1477,7 @@ service cloud.firestore {
       allow update: if signedIn()
         && resource.data.clientUid == request.auth.uid
         && onlyChanges(["status", "distance", "durationSec", "rpe", "pain", "painNote", "note",
-             "title", "plannedMiles", "planVersion", "updatedAt", "exercises"])
+             "title", "plannedMiles", "planVersion", "updatedAt", "exercises", "answers", "conditions"])
         && validResult(request.resource.data)
         && request.resource.data.updatedAt == request.time;
 

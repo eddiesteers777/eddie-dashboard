@@ -38,6 +38,7 @@ import {
 import { toMillis } from "./clientSummary.js";
 import { toast, sbConfirm, sbPrompt, friendlyError } from "./ui.js";
 import { builderHtml, readBuilder, startingWorkout, blankSet, summaryHtml } from "./workoutBuilder.js";
+import { cleanQuestions } from "./workoutQuestions.js";
 import { sanitizeWorkout, workoutSummary, plannedMiles } from "./runWorkout.js";
 import {
     strengthBuilderHtml, readStrengthBuilder, startingStrength, blankExercise, fromTemplate, updateLastLift,
@@ -310,6 +311,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                                         <input type="number" step="0.1" min="0" max="100" data-field="miles" class="clients-day-miles" value="${Number(day.miles) || 0}" aria-label="${esc(shortDay(day.date))} miles">
                                         <input type="text" maxlength="300" data-field="session" class="clients-day-session" value="${esc(day.session || "")}" placeholder="Workout details" aria-label="${esc(shortDay(day.date))} workout">
                                         <span class="pw-day-btns"><button type="button" class="pw-details-btn${day.workout ? " has-workout" : ""}" data-act="details"${RUN_TYPES.includes(day.type) ? "" : " hidden"} aria-expanded="false">${day.workout ? `${icon("check")} Structured` : `${icon("plus")} Details`}</button>
+                                        <button type="button" class="pw-details-btn pw-ask-btn${day.questions?.length ? " has-workout" : ""}" data-act="ask"${RUN_TYPES.includes(day.type) ? "" : " hidden"} title="Questions ${esc(first)} answers when logging this run">${day.questions?.length ? `${icon("check")} Asks` : `${icon("plus")} Ask`}</button>
                                         <button type="button" class="pw-details-btn pw-strength-btn${day.strength ? " has-workout" : ""}" data-act="strength" aria-expanded="false">${day.strength ? `${icon("check")} Strength` : `${icon("plus")} Strength`}</button>
                                         <button type="button" class="sb-btn sb-btn-icon pw-menu-btn" data-act="day-menu" aria-label="${esc(shortDay(day.date))} options: move, copy, library">${icon("moreVertical")}</button></span>
                                     </div>
@@ -361,6 +363,20 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             console.warn("Southbound: version history unavailable.", error);
             el.innerHTML = "";
         }
+    }
+
+    // Up to two questions the client answers when they log this run (js/workoutQuestions.js).
+    async function askQuestions(ref, btn) {
+        const text = await sbPrompt(`Up to two questions, one per line. ${first} answers them when logging this run, and you see the answers with the log.`, {
+            title: "Ask after this run", defaultValue: (ref.day.questions || []).join("\n"), multiline: true, maxLength: 260,
+            placeholder: "How did the hills feel?"
+        });
+        if (text === null) return;
+        const questions = cleanQuestions(text);
+        if (questions.length) ref.day.questions = questions; else delete ref.day.questions;
+        btn.classList.toggle("has-workout", questions.length > 0);
+        btn.innerHTML = questions.length ? `${icon("check")} Asks` : `${icon("plus")} Ask`;
+        markDirty();
     }
 
     function markDirty() {
@@ -561,6 +577,11 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             const btn = dayEl.querySelector('[data-act="details"]');
             const isRun = RUN_TYPES.includes(day.type);
             btn.hidden = !isRun;
+            const askBtn = dayEl.querySelector('[data-act="ask"]');
+            if (askBtn) {
+                askBtn.hidden = !isRun;
+                if (!isRun && day.questions) { delete day.questions; askBtn.classList.remove("has-workout"); askBtn.innerHTML = `${icon("plus")} Ask`; }
+            }
             if (!isRun) {
                 delete day.workout;
                 const ref = dayRefs(target);
@@ -650,6 +671,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             }
             if (act === "day-menu") { const ref = dayRefs(btn); return dayMenu(ref.wi, ref.di); }
             if (act === "week-menu") return weekMenu(Number(btn.closest("[data-week]").dataset.week));
+            if (act === "ask") return askQuestions(dayRefs(btn), btn);
             if (act === "strength") {
                 const ref = dayRefs(btn);
                 return btn.getAttribute("aria-expanded") === "true" ? closeStrength(ref) : openStrength(ref);

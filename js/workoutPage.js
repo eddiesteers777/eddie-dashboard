@@ -40,6 +40,8 @@ import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from 
 import { sendableDate } from "./corosWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effortScale.js";
+import { CONDITIONS, cleanConditions, conditionsText } from "./runConditions.js";
+import { cleanQuestions, cleanAnswers, savedAnswers } from "./workoutQuestions.js";
 import { draftKey, loadDraft, keepOrForget, clearDraft, sameValues } from "./formDraft.js";
 // An earlier log on the first words opens on its CR-10 equivalent, so saving it again keeps its meaning.
 const formRpe = r => (r?.rpe ? toCr10(r.rpe, logScale(r.updatedAt || r.createdAt || (r.date ? `${r.date}T12:00:00Z` : null))) : null);
@@ -94,6 +96,12 @@ function stepsHtml(workout) {
         <li><span class="wo-step-label">${esc(label)}</span><strong>${esc(amount)}</strong><span>${esc(detail)}</span></li>`).join("")}</ol>`;
 }
 
+// What the client answered to the coach's questions for this run.
+function answersHtml(result) {
+    const list = savedAnswers(result);
+    return list.length ? `<dl class="wo-answers">${list.map(x => `<div><dt>${esc(x.q)}</dt><dd>${renderEmojiText(esc(x.a))}</dd></div>`).join("")}</dl>` : "";
+}
+
 function resultHtml(result) {
     const planned = { miles: state.day.miles, workout: state.day.workout };
     if (result.status === "skipped") {
@@ -118,6 +126,8 @@ function resultHtml(result) {
                 <div><span>Effort</span><strong>${result.rpe ? `${result.rpe}/10` : "—"}</strong>${result.rpe ? `<small>${esc(effortWords(result.rpe, savedScale(result)))}</small>` : ""}</div>
             </div>
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
+            ${conditionsText(result.conditions) ? `<p class="wo-cond">${icon("cloud")} ${esc(conditionsText(result.conditions))}</p>` : ""}
+            ${answersHtml(result)}
             ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
             ${coachReplyHtml(result)}
             <div class="wo-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="log">Edit</button><button type="button" class="sb-btn sb-btn-primary" data-act="share-result">${icon("upload")} Share workout</button></div>
@@ -517,12 +527,19 @@ function openLogForm(prefill = {}) {
                 </div>
                 <p class="wo-rpe-word" data-rpe-word>${formRpe(r) ? RPE_WORDS[formRpe(r)] : EFFORT_HINT}</p>
             </div>
+            <div class="wo-done-fields wo-cond-fields"${status === "skipped" ? " hidden" : ""}>
+                <span class="pw-label">Conditions <small>(optional)</small></span>
+                <div class="wo-chips" role="group" aria-label="Conditions">
+                    ${CONDITIONS.map(c => `<label><input type="checkbox" name="cond" value="${c.key}"${cleanConditions(r.conditions).includes(c.key) ? " checked" : ""}><span>${c.label}</span></label>`).join("")}
+                </div>
+            </div>
             <span class="pw-label">Any pain or discomfort?</span>
             <div class="wo-seg" role="radiogroup" aria-label="Any pain or discomfort?">
                 <label><input type="radio" name="pain" value="no"${!r.pain ? " checked" : ""}><span>No</span></label>
                 <label><input type="radio" name="pain" value="yes"${r.pain ? " checked" : ""}><span>Yes</span></label>
             </div>
             <label class="pw-label wo-pain-field"${r.pain ? "" : " hidden"}>Where, and how bad?<textarea class="sb-dialog-input" name="painNote" rows="2" maxlength="300" placeholder="Left Achilles, sore after the last rep">${esc(r.painNote || "")}</textarea></label>
+            ${cleanQuestions(state.day.questions).map((q, i) => `<label class="pw-label wo-ask">${esc(q)}<textarea class="sb-dialog-input" name="a${i}" rows="2" maxlength="500" placeholder="Your answer">${esc(savedAnswers(r).find(x => x.q === q)?.a || "")}</textarea></label>`).join("")}
             <label class="pw-label">Anything to tell your coach? (optional)<textarea class="sb-dialog-input" name="note" data-emoji rows="3" maxlength="1000" placeholder="Felt good until the last rep.">${esc(r.note || "")}</textarea></label>
             <p class="clients-msg clients-msg-error" data-error hidden></p>
             <div class="sb-dialog-actions">
@@ -555,7 +572,8 @@ function openLogForm(prefill = {}) {
         const fd = new FormData(form);
         return {
             status: fd.get("status") || "completed", distance: String(fd.get("distance") || ""), time: String(fd.get("time") || ""),
-            rpe: fd.get("rpe") || null, pain: fd.get("pain") || "no", painNote: String(fd.get("painNote") || ""), note: String(fd.get("note") || "")
+            rpe: fd.get("rpe") || null, pain: fd.get("pain") || "no", painNote: String(fd.get("painNote") || ""), note: String(fd.get("note") || ""),
+            a0: String(fd.get("a0") || ""), a1: String(fd.get("a1") || ""), cond: fd.getAll("cond").map(String)
         };
     };
     const untouched = readForm();
@@ -567,6 +585,10 @@ function openLogForm(prefill = {}) {
         if (rpe) rpe.checked = true;
         form.querySelector(`input[name="pain"][value="${v.pain}"]`).checked = true;
         form.painNote.value = v.painNote; form.note.value = v.note;
+        if (form.a0) form.a0.value = v.a0 || "";
+        if (form.a1) form.a1.value = v.a1 || "";
+        form.querySelectorAll('input[name="cond"]').forEach(c => { c.checked = (v.cond || []).includes(c.value); });
+        d.querySelector(".wo-cond-fields").hidden = v.status === "skipped";
         d.querySelector(".wo-done-fields").hidden = v.status === "skipped";
         d.querySelector(".wo-pain-field").hidden = v.pain !== "yes";
         d.querySelector("[data-rpe-word]").textContent = v.rpe ? RPE_WORDS[v.rpe] : EFFORT_HINT;
@@ -653,7 +675,9 @@ function openLogForm(prefill = {}) {
                 rpe: skipped ? null : fd.get("rpe"),
                 pain: fd.get("pain") === "yes",
                 painNote: fd.get("painNote"),
-                note: fd.get("note")
+                note: fd.get("note"),
+                conditions: skipped ? [] : cleanConditions(fd.getAll("cond")),
+                answers: cleanAnswers(state.day.questions, [fd.get("a0"), fd.get("a1")])
             }, state.result);
             forget();
             d.close();

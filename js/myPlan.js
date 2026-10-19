@@ -136,7 +136,7 @@ function renderPlan() {
                     <dl class="myplan-facts">
                         ${state.goal ? `<div><dt>Goal</dt><dd>${esc(state.goal)}</dd></div>` : ""}
                         <div><dt>Dates</dt><dd>${esc(shortDay(startDate))} – ${esc(shortDay(endDate))}</dd></div>
-                        ${raceDate ? `<div><dt>Race day</dt><dd>${esc(shortDay(raceDate))}</dd></div>` : ""}
+                        ${raceDate ? `<div><dt>Race day</dt><dd>${esc(shortDay(raceDate))}${["B", "C"].includes(plan.generatedPlan.generator?.settings?.racePriority) ? esc(` · ${plan.generatedPlan.generator.settings.racePriority} race`) : ""}</dd></div>` : ""}
                         ${updated ? `<div><dt>Updated</dt><dd>${esc(niceDate(updated))}</dd></div>` : ""}
                     </dl>
                 </details>

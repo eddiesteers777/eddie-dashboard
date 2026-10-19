@@ -1574,3 +1574,22 @@ body.has-bottomnav:has(.pw-editor) .sb-toast-host{ bottom:250px; }
     border:1px solid var(--sb-inset-border);
     box-shadow:var(--sb-inset-shadow);
 }
+
+/* Answers to the questions the coach attached to the run (js/workoutQuestions.js). */
+.wo-answers{ margin:0 0 12px; display:grid; gap:10px; }
+.wo-answers div{ padding:10px 12px; border-radius:10px; background:var(--sb-glass-bg, rgba(255,255,255,.05)); border:1px solid var(--sb-glass-border, rgba(255,255,255,.08)); }
+.wo-answers dt{ font:600 11px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+.wo-answers dd{ margin:4px 0 0; font-size:15px; line-height:1.5; color:var(--text); }
+
+/* Pain log in About (js/painLog.js): when they flagged pain, and whether it's easing. */
+.hub-painlog{ margin:14px 0; padding:12px 14px; border-radius:12px; background:var(--sb-glass-bg, rgba(255,255,255,.05)); border:1px solid var(--sb-glass-border, rgba(255,255,255,.08)); }
+.hub-painlog h3{ margin:0 0 4px; font:650 15px/1.3 var(--font-body); }
+.hub-painlog-trend{ margin:0 0 8px; font-size:13.5px; color:var(--text-secondary); }
+.hub-painlog-trend.is-more{ color:var(--orange); }
+.hub-painlog-trend.is-less, .hub-painlog-trend.is-quiet{ color:var(--green); }
+.hub-painlog ul{ margin:0; padding:0; list-style:none; display:grid; gap:6px; }
+.hub-painlog li{ font-size:14px; line-height:1.45; }
+.hub-painlog li span{ font:600 11.5px/1.4 var(--font-mono); letter-spacing:.06em; color:var(--text-secondary); margin-right:8px; }
+.hub-painlog li em{ font-style:normal; color:var(--text-secondary); }
+.hub-painlog-more{ margin:6px 0 0; font-size:12.5px; color:var(--text-secondary); }
+.hub-cond{ display:flex; align-items:center; gap:8px; margin:0 0 8px; font-size:13.5px; color:var(--text-secondary); }

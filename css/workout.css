@@ -368,3 +368,22 @@ body.wo-mode-open{ overflow:hidden; }
     border-color:rgba(255,244,222,.5);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
 }
+
+/* Answers to the questions the coach attached to the run (js/workoutQuestions.js). */
+.wo-answers{ margin:0 0 12px; display:grid; gap:10px; }
+.wo-answers div{ padding:10px 12px; border-radius:10px; background:var(--sb-glass-bg, rgba(255,255,255,.05)); border:1px solid var(--sb-glass-border, rgba(255,255,255,.08)); }
+.wo-answers dt{ font:600 11px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+.wo-answers dd{ margin:4px 0 0; font-size:15px; line-height:1.5; color:var(--text); }
+.wo-ask{ display:block; }
+
+/* Conditions chips on the log form, and the line on a saved run (js/runConditions.js). */
+.wo-chips{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 12px; }
+.wo-chips input{ position:absolute; opacity:0; pointer-events:none; }
+.wo-chips label > span{
+    display:flex; align-items:center; min-height:44px; padding:0 16px;
+    border:1px solid var(--border); border-radius:var(--radius-pill);
+    background:var(--surface-light); color:var(--text-secondary); font-weight:700; cursor:pointer;
+}
+.wo-chips input:checked + span{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.wo-chips input:focus-visible + span{ box-shadow:var(--focus-ring); }
+.wo-cond{ display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:14px; color:var(--text-secondary); }

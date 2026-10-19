@@ -52,6 +52,15 @@ import { answerChangeRequest } from "./changeRequests.js";
 import { reasonLabel } from "./feedbackModel.js";
 import { compareRun, formatDuration } from "./runWorkout.js";
 import { renderEmojiText } from "./emoji.js";
+import { savedAnswers } from "./workoutQuestions.js";
+import { conditionsText } from "./runConditions.js";
+import { painSummary, TREND_TEXT } from "./painLog.js";
+
+// What the client answered to the questions the coach attached to the run.
+function answersHtml(r) {
+    const list = savedAnswers(r);
+    return list.length ? `<dl class="wo-answers">${list.map(x => `<div><dt>${esc(x.q)}</dt><dd>${renderEmojiText(esc(x.a))}</dd></div>`).join("")}</dl>` : "";
+}
 import { sessionList, attachLogs, attendance, SESSION_STATUSES, CANCELLED, statusLabel } from "./sessionModel.js";
 import { createPackageForClient, updateClientPackage, packageCatalogOptions } from "./clientPackages.js";
 import { countCompletedPackageSessions, packageRemainingSessions, packageCanConsumeSession, PAYMENT_STATUSES, isStripeManagedPackage } from "./clientPackageModel.js";
@@ -400,6 +409,19 @@ function renderHeader() {
 
 // Key facts from their profile for the Overview (the full, editable
 // version is the Profile tab).
+// Every time they flagged pain, in one place (js/painLog.js). Nothing shows until they have.
+function painLogHtml() {
+    const s = painSummary(record.results || [], record.checkins || [], todayIso());
+    if (!s.entries.length) return "";
+    return `
+            <div class="hub-painlog">
+                <h3>Pain log</h3>
+                <p class="hub-painlog-trend is-${s.trend}">${esc(TREND_TEXT[s.trend])}</p>
+                <ul>${s.entries.slice(0, 5).map(e => `<li><span>${esc(shortDate(e.date))}</span><em>${e.source === "check-in" ? "Check-in" : esc(e.label)}</em>${e.where ? ` ${esc(e.where)}` : ""}</li>`).join("")}</ul>
+                ${s.entries.length > 5 ? `<p class="hub-painlog-more">${s.entries.length - 5} earlier</p>` : ""}
+            </div>`;
+}
+
 function renderAbout() {
     const rec = record.record;
     if (rec === undefined) { $("hubAbout").innerHTML = ""; return; }   // couldn't read it
@@ -408,6 +430,7 @@ function renderAbout() {
             <div class="clients-card hub-about">
                 <div class="hub-about-head"><h2>About ${esc(firstName())}</h2></div>
                 ${freshLine(rec)}
+                ${painLogHtml()}
             </div>`;
         return;
     }
@@ -453,6 +476,7 @@ function renderAbout() {
             </div>
             ${freshLine(rec)}
             ${health}
+            ${painLogHtml()}
             ${realAnswer(rec.injuries) ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Injuries / limits:</strong> ${esc(rec.injuries)}${where}</span></div>` : ""}
             ${rows.length ? `<dl class="hub-facts">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
         </div>`;
@@ -2059,6 +2083,8 @@ function strengthResultHtml(r, day) {
             ${r.status === "completed" ? hubRecordsHtml(r) : ""}
             ${r.status === "completed" && !cmp ? `<p class="hub-wo-planned"><span>Logged</span> ${esc((r.exercises || []).map(e => `${e.name} (${e.sets?.length || 0} sets)`).join(", "))}</p>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
+            ${conditionsText(r.conditions) ? `<p class="hub-cond">${icon("cloud")} ${esc(conditionsText(r.conditions))}</p>` : ""}
+            ${answersHtml(r)}
             ${r.note ? `<p class="hub-quote">"${renderEmojiText(esc(r.note))}"</p>` : ""}
             ${replyFormHtml(r)}
         </div>`;
@@ -2098,6 +2124,8 @@ function workoutResultHtml(r) {
                     <div><span>Effort</span><strong>${r.rpe ? `${r.rpe}/10` : "—"}</strong>${r.rpe ? `<small>${esc(rpeWords(r))}</small>` : ""}</div>
                 </div>` : ""}
             ${r.pain ? `<div class="hub-injury">${icon("alertTriangle")}<span><strong>Pain or discomfort:</strong> ${esc(r.painNote || "no details")}</span></div>` : ""}
+            ${conditionsText(r.conditions) ? `<p class="hub-cond">${icon("cloud")} ${esc(conditionsText(r.conditions))}</p>` : ""}
+            ${answersHtml(r)}
             ${r.note ? `<p class="hub-quote">"${renderEmojiText(esc(r.note))}"</p>` : ""}
             ${replyFormHtml(r)}
         </div>`;
