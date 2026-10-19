@@ -236,3 +236,10 @@ pm run manifest and the tests in a clean copy with LF line endings, which is wha
 - **Coach tab (`coach.html`, `js/coach.js`, `css/coach.css`):** an athletes strip (ring colour = who needs you: red pain/health, tan waiting, sage clear; seven dots = their week, from `week.days` in `js/clientSummary.js`), a glass Reply / Approve / Book / Later switch (`SEGMENTS`, `splitSegments`, `ringTone` in `js/coachToday.js`), and a lined inbox with swipe-left to mark done (same `coach-queue-done` marks as before; the check button does the same). The six count tiles and the By task / By client toggle are gone; applications and website questions show once, as full cards with Email / Text / Call, inside Approve. Rules and data unchanged (no Firestore change).
 - **Client Today (`index.html`, `js/todayClient.js`, `js/raceStrip.js`):** a race countdown strip in the hero (big days-to-go and the block as a bar, one segment per week) only when an active plan has a race ahead; today's card is the raised card with a tan rule; From Your Coach now sits right under This Week (`CLIENT_TODAY` order).
 - Tested: `npm run test:static` (new tests in `tests/coachToday.test.mjs`, `tests/raceStrip.test.mjs`); browser check at 390px and 1280px with mocked data (no overflow, no page errors).
+
+## 2026-10-19 — Charts you can read by tapping (ideas from Apache ECharts)
+
+- Eddie asked to take what helps from Apache ECharts. The library itself (about 1 MB, ~330 KB zipped; a trimmed build still ~130 KB zipped) would be precached on every phone for charts the app already draws in ~100 lines, so only its ideas came over.
+- **Tap / hover to read** (`js/chartTips.js`, `chartWrap` in `js/svgCharts.js`): Analytics' Long runs, Body minis (HRV with its normal range), COROS prediction, Load bars (per week: a day by intensity, base, recent) and easy-run efficiency; week bars on Analytics and My Progress. Keyboard: arrows, Home/End, Escape.
+- **Draw-in animation** once per visit, none with reduced motion.
+- Tested: `npm run test:static` (new test in `tests/trends.test.mjs`); browser check at 375px and 1280px (tap, hover, keys, no overflow, no page errors).

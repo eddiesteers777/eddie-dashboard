@@ -98,3 +98,15 @@ test("charts: bars with planned behind actual; a line with gaps, band and goal",
     const pace = lineSvg([540, 520], { invert: true, min: 500, max: 560 });
     assert.match(pace, /points="0,66.67 100,33.33"/);
 });
+
+test("charts: tips wrap a chart so it can be tapped and read", () => {
+    const html = lineSvg([10, null, 12], { tips: ["Oct 1 · 10 mi", "skip", "Oct 15 · 12 mi"], label: "Long runs" });
+    assert.match(html, /^<div class="sb-chart" tabindex="0" role="group" aria-label="Long runs\. Use the arrow keys/);
+    const tips = JSON.parse(html.match(/data-tips="([^"]*)"/)[1].replace(/&quot;/g, '"'));
+    assert.deepEqual(tips.map(t => t.t), ["Oct 1 · 10 mi", "Oct 15 · 12 mi"], "a gap has no tip");
+    assert.equal(tips[0].x, 0);
+    assert.equal(tips[1].x, 100);
+    assert.ok(tips[1].y < tips[0].y, "the higher value sits higher");
+    assert.doesNotMatch(lineSvg([1, 2]), /sb-chart/, "no tips, plain svg as before");
+    assert.match(barsHtml([{ label: "W1", value: 4 }]), /data-tip="W1: 4 mi"/);
+});
