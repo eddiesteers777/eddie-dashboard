@@ -9,7 +9,13 @@
      load. Tap it to pause, a progress bar, 0.5× speed, and camera angles
      for the figure. Under it: the name, Start / Move / Cue, the muscle
      map (js/muscleMap.js), the coach's note and video link.
-   hasHowTo(name)   is there a clip or a demo for it?
+   With REMOTE_DEMOS_ENABLED (js/exerciseDemoConfig.js) it first asks the
+   server for a licensed MuscleWiki video (real people, male and female,
+   front and side; js/exerciseDemoRemote.js). That video plays as
+   delivered: nothing is laid over it (their mark must stay visible), the
+   controls sit under it, and there's no download. If it can't load, the
+   clip or figure takes over; with nothing at all, the sheet says so.
+   hasHowTo(name)   is there (or may there be) a demo for it?
    Opened from the set-by-set screen (js/setRunner.js) and the coach's
    strength session (js/strengthSession.js). Loads css/demo.css itself.
    Respects Reduce Motion: it opens paused on the key position.
@@ -21,6 +27,7 @@ import { clipFor, clipSources } from "./exerciseClips.js";
 import { musclesFor, hasHowTo } from "./exerciseMuscles.js";
 import { muscleMapHtml, ensureMuscleMapStyles } from "./muscleMap.js";
 import { icon } from "./icons.js";
+import { REMOTE_DEMOS_ENABLED } from "./exerciseDemoConfig.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -168,57 +175,217 @@ function startPlayer(root, demo) {
     return { stop: () => { cancelAnimationFrame(raf); controls.unbind(); document.removeEventListener("visibilitychange", onVisibility); } };
 }
 
+// ---------- The licensed video (MuscleWiki) ----------
+const GENDER_LABEL = { male: "Male", female: "Female" }, ANGLE_LABEL = { front: "Front", side: "Side" };
+function remoteInner() {
+    return `
+        <div class="dm-remote-top">
+            <span class="dm-remote-credit" data-credit></span>
+            <button type="button" class="dm-speed dm-ctl" data-demo="slow" aria-pressed="false" aria-label="Slow motion" hidden>0.5×</button>
+            <button type="button" class="dm-close dm-close-flat" data-close aria-label="Close">${icon("close")}</button>
+        </div>
+        <div class="dm-remote-frame" data-frame><div class="dm-remote-wait sb-wait" aria-label="Loading the video"></div></div>
+        <div class="dm-bar dm-bar-flat"><span data-progress></span></div>
+        <div class="dm-remote-controls" data-remote-controls hidden></div>`;
+}
+function remoteControlsHtml(choices, current) {
+    const seg = (label, kind, values, names) => values.length > 1 ? `
+        <div class="dm-seg" role="group" aria-label="${label}">
+            ${values.map(v => `<button type="button" data-${kind}="${v}" aria-pressed="${v === current[kind]}">${names[v]}</button>`).join("")}
+        </div>` : "";
+    return `
+        <button type="button" class="dm-ctl" data-demo="play" aria-pressed="false" aria-label="Pause demo">${icon("pause")}</button>
+        ${seg("Who's demonstrating", "gender", choices.genders, GENDER_LABEL)}
+        ${seg("Camera angle", "angle", choices.angles, ANGLE_LABEL)}`;
+}
+
+/** Plays a remote demo in root. Calls onFail() if no video can play (after one token refresh). */
+function startRemote(root, demo, { name, remote, onFail }) {
+    const frame = root.querySelector("[data-frame]");
+    const controlsBox = root.querySelector("[data-remote-controls]");
+    const bar = root.querySelector("[data-progress]");
+    const credit = root.querySelector("[data-credit]");
+    credit.innerHTML = `<a href="${esc(demo.credit.url)}" target="_blank" rel="noopener noreferrer">${esc(demo.credit.text)}</a>`;
+    const choices = remote.videoChoices(demo.videos);
+    const current = { gender: remote.preferredGender(), angle: "front" };
+    let playing = !reduceMotion(), speed = 1, raf = 0, refreshed = false, stopped = false, el = null;
+
+    const sync = () => {
+        controlsBox.querySelectorAll("[data-gender]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.gender === current.gender)));
+        controlsBox.querySelectorAll("[data-angle]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.angle === current.angle)));
+        const play = controlsBox.querySelector('[data-demo="play"]');
+        play.innerHTML = icon(playing ? "pause" : "play");
+        play.setAttribute("aria-label", playing ? "Pause demo" : "Play demo");
+        play.setAttribute("aria-pressed", String(!playing));
+        import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
+    };
+    const load = () => {
+        const v = remote.pickVideo(demo.videos, current);
+        current.gender = v.gender; current.angle = v.angle;
+        // Plays as delivered: contain, no crop, nothing on top, no download.
+        frame.innerHTML = `<video class="dm-remote-video" data-clip muted loop playsinline preload="auto" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" ${v.poster ? `poster="${esc(v.poster)}"` : ""} aria-label="${esc(`${name}, ${GENDER_LABEL[v.gender].toLowerCase()} demonstrator, ${ANGLE_LABEL[v.angle].toLowerCase()} view`)}"></video>`;
+        el = frame.querySelector("video");
+        el.addEventListener("contextmenu", e => e.preventDefault());
+        el.addEventListener("click", () => toggle());
+        el.addEventListener("loadedmetadata", () => { if (el.videoWidth && el.videoHeight) frame.style.aspectRatio = `${el.videoWidth} / ${el.videoHeight}`; });
+        el.addEventListener("error", onError, { once: true });
+        el.playbackRate = speed;
+        el.src = v.src;
+        if (playing) el.play().catch(() => { playing = false; sync(); });
+        sync();
+    };
+    async function onError() {
+        if (stopped) return;
+        if (!refreshed) {
+            // Most likely the 15-minute token ran out: ask once for fresh links.
+            refreshed = true;
+            const again = await remote.fetchRemoteDemo(name, { refresh: true });
+            if (stopped) return;
+            if (again.status === "ok") { demo = again.demo; load(); return; }
+        }
+        stop(); onFail?.();
+    }
+    const toggle = () => {
+        playing = !playing;
+        if (playing) el?.play().catch(() => {}); else el?.pause();
+        sync();
+    };
+    const onClick = event => {
+        const g = event.target.closest("[data-gender]"), a = event.target.closest("[data-angle]");
+        if (g) { current.gender = g.dataset.gender; remote.setPreferredGender(current.gender); load(); return; }
+        if (a) { current.angle = a.dataset.angle; load(); return; }
+        if (event.target.closest('[data-demo="play"]')) { toggle(); return; }
+        const slow = event.target.closest('[data-demo="slow"]');
+        if (slow) {
+            speed = speed === 1 ? 0.5 : 1;
+            if (el) el.playbackRate = speed;
+            slow.setAttribute("aria-pressed", String(speed !== 1));
+            slow.setAttribute("aria-label", speed === 1 ? "Slow motion" : "Normal speed");
+        }
+    };
+    controlsBox.innerHTML = remoteControlsHtml(choices, current);
+    controlsBox.hidden = false;
+    const top = root.querySelector(".dm-remote-top");
+    top.querySelector('[data-demo="slow"]').hidden = false;
+    controlsBox.addEventListener("click", onClick);
+    top.addEventListener("click", onClick);
+    const tick = () => {
+        raf = requestAnimationFrame(tick);
+        if (el?.duration) bar.style.transform = `scaleX(${(el.currentTime / el.duration).toFixed(3)})`;
+    };
+    raf = requestAnimationFrame(tick);
+    load();
+    function stop() {
+        stopped = true;
+        cancelAnimationFrame(raf);
+        controlsBox.removeEventListener("click", onClick);
+        top.removeEventListener("click", onClick);
+        if (el) { el.pause(); el.removeAttribute("src"); el.load?.(); }
+    }
+    return { stop };
+}
+
+function stepsHtml(steps) {
+    return `<ol class="dm-steps dm-steps-plain">${steps.map(t => `<li><p>${esc(t)}</p></li>`).join("")}</ol>`;
+}
+function guideHtml(info) {
+    return info ? `
+                <ol class="dm-steps">
+                    <li><h3>Start</h3><p>${esc(info.start)}</p></li>
+                    <li><h3>Move</h3><p>${esc(info.move)}</p></li>
+                    <li><h3>Cue</h3><p>${esc(info.cue)}</p></li>
+                </ol>` : "";
+}
+
 /** Opens the How to sheet. Resolves when it closes. Nothing opens without a demo. */
-export function openExerciseDemo(name, { muscles: given = {}, note = "", video = "" } = {}) {
+export function openExerciseDemo(name, { muscles: given = {}, note = "", video = "", remote: useRemote = REMOTE_DEMOS_ENABLED } = {}) {
     const demo = demoFor(name);
     const clip = clipFor(name);
     const info = clip || demo;
-    if (!info) return Promise.resolve();
+    if (!info && !useRemote) return Promise.resolve();
     ensureStyles();
     ensureMuscleMapStyles();
     const muscles = musclesFor(name, given);
-    const size = clip ? { width: 1, height: 1 } : frameSize(demo);
     return new Promise(resolve => {
         const d = document.createElement("dialog");
         d.className = "sb-dialog dm-dialog";
         d.setAttribute("aria-label", `How to do ${name}`);
         d.innerHTML = `
-            <div class="dm-video${clip ? " is-clip" : ""}" data-video style="aspect-ratio:${size.width} / ${size.height}">${clip ? clipInner(clip) : figureInner(demo)}</div>
+            <div class="dm-video" data-video></div>
             <div class="dm-sheet">
                 <div>
                     <span class="dm-eyebrow">How to</span>
                     <h2 class="dm-title">${esc(name)}</h2>
                 </div>
-                <ol class="dm-steps">
-                    <li><h3>Start</h3><p>${esc(info.start)}</p></li>
-                    <li><h3>Move</h3><p>${esc(info.move)}</p></li>
-                    <li><h3>Cue</h3><p>${esc(info.cue)}</p></li>
-                </ol>
+                <div data-guide>${guideHtml(info)}</div>
                 ${muscleMapHtml(muscles, { id: "dmm" })}
                 ${note ? `<div class="dm-note"><h3>From your coach</h3><p>${esc(note)}</p></div>` : ""}
                 ${/^https:\/\//i.test(video) ? `<a class="sb-btn sb-btn-tertiary dm-link" href="${esc(video)}" target="_blank" rel="noopener noreferrer">${icon("play")} Watch your coach's video</a>` : ""}
             </div>`;
         document.body.appendChild(d);
-        let player;
-        if (clip) {
-            // No connection and never loaded: the drawn figure stands in, or the poster stays.
-            player = startClip(d, () => {
-                if (!demo) { d.querySelector("[data-video]").classList.add("is-offline"); return; }
-                const box = d.querySelector("[data-video]");
-                const fs = frameSize(demo);
-                box.classList.remove("is-clip");
-                box.style.aspectRatio = `${fs.width} / ${fs.height}`;
-                box.innerHTML = figureInner(demo);
-                player = startPlayer(d, demo);
-                import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
-            });
-        } else {
+        const box = d.querySelector("[data-video]");
+        let player, closed = false;
+
+        // Our own clip or drawn figure (or a plain "no demo" panel).
+        const mountLocal = () => {
+            box.className = "dm-video";
+            if (clip) {
+                box.classList.add("is-clip");
+                box.style.aspectRatio = "1 / 1";
+                box.innerHTML = clipInner(clip);
+                // No connection and never loaded: the drawn figure stands in, or the poster stays.
+                player = startClip(d, () => {
+                    if (!demo) { box.classList.add("is-offline"); return; }
+                    mountFigure();
+                });
+            } else if (demo) {
+                mountFigure();
+            } else {
+                box.classList.add("is-none");
+                box.style.aspectRatio = "";
+                box.innerHTML = `
+                    <button type="button" class="dm-close dm-close-flat dm-none-close" data-close aria-label="Close">${icon("close")}</button>
+                    <p class="dm-none">There's no video for this exercise yet.${note || /^https:\/\//i.test(video) ? " Your coach's notes are below." : ""}</p>`;
+                player = null;
+            }
+            import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
+        };
+        const mountFigure = () => {
+            const fs = frameSize(demo);
+            box.className = "dm-video";
+            box.style.aspectRatio = `${fs.width} / ${fs.height}`;
+            box.innerHTML = figureInner(demo);
             player = startPlayer(d, demo);
+            import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
+        };
+
+        if (useRemote) {
+            box.classList.add("is-remote");
+            box.innerHTML = remoteInner();
+            import("./exerciseDemoRemote.js").then(async remote => {
+                const got = await remote.fetchRemoteDemo(name);
+                if (closed) return;
+                if (got.status !== "ok") { mountLocal(); return; }
+                // MuscleWiki's steps match its video; our cue (if any) stays as a tip.
+                if (got.demo.steps.length) {
+                    d.querySelector("[data-guide]").innerHTML = stepsHtml(got.demo.steps) + (info ? `<div class="dm-note dm-cue"><h3>Cue</h3><p>${esc(info.cue)}</p></div>` : "");
+                }
+                player = startRemote(d, got.demo, {
+                    name, remote,
+                    onFail: () => {
+                        if (closed) return;
+                        d.querySelector("[data-guide]").innerHTML = guideHtml(info);
+                        mountLocal();
+                    }
+                });
+            }).catch(() => { if (!closed) mountLocal(); });
+        } else {
+            mountLocal();
         }
         d.addEventListener("click", event => {
             if (event.target === d || event.target.closest("[data-close]")) d.close();
         });
-        d.addEventListener("close", () => { player?.stop(); d.remove(); resolve(); });
+        d.addEventListener("close", () => { closed = true; player?.stop(); d.remove(); resolve(); });
         d.showModal();
         import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
     });
