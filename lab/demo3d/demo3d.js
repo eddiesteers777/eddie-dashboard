@@ -118,7 +118,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     const placeCamera = () => {
         const w = stage.clientWidth || 1, h = stage.clientHeight || 1;
         camera.aspect = w / h;
-        const { position, target } = cameraFor(state.view, { height: current?.height || 1.75, fovDeg: camera.fov, aspect: camera.aspect, yawOffset: state.yawOffset });
+        const { position, target } = cameraFor(state.view, { ...(entry.stage || { height: current?.height || 1.75 }), fovDeg: camera.fov, aspect: camera.aspect, yawOffset: state.yawOffset });
         camera.position.set(...position); camera.lookAt(...target); camera.updateProjectionMatrix();
     };
     const render = () => {

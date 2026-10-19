@@ -21,7 +21,7 @@ const server = createServer((req, res) => {
 const port = server.address().port;
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 mkdirSync(join(lab, "assets"), { recursive: true }); mkdirSync(review, { recursive: true });
-const ID = { squat: "bodyweight-squat" }[motion] || motion;
+const ID = { squat: "bodyweight-squat", pushup: "push-up" }[motion] || motion;
 for (const sex of ["male", "female"]) {
     const page = await browser.newPage();
     page.on("pageerror", e => console.error(sex, e.message));
@@ -31,7 +31,11 @@ for (const sex of ["male", "female"]) {
     const out = join(lab, "assets", `${ID}-${sex}.glb`);
     writeFileSync(out, Buffer.from(await page.evaluate(() => window.bake()), "base64"));
     writeFileSync(join(review, `${ID}-${sex}.track.json`), JSON.stringify(await page.evaluate(() => window.track(30))));
-    for (const [name, t, yaw, ...rest] of [["top", 0, 35], ["bottom", 0.26, 35], ["side-bottom", 0.26, 90], ["front-bottom", 0.26, 0], ["face", 0, 20, 4, 0.9, 1.55]]) {
+    const SHOTS = {
+        squat: [["top", 0, 35], ["bottom", 0.26, 35], ["side-bottom", 0.26, 90], ["front-bottom", 0.26, 0], ["face", 0, 20, 4, 0.9, 1.55]],
+        pushup: [["top", 0, 35, 8, 4.6, 0.3], ["bottom", 0.165, 35, 8, 4.6, 0.3], ["side-bottom", 0.165, 90, 6, 4.2, 0.3], ["side-top", 0, 90, 6, 4.2, 0.3], ["front-bottom", 0.165, 10, 10, 3.2, 0.3]]
+    }[motion];
+    for (const [name, t, yaw, ...rest] of SHOTS) {
         const url = await page.evaluate(a => window.shot(...a), [t, yaw, ...rest]);
         writeFileSync(join(review, `${ID}-${sex}-${name}.png`), Buffer.from(url.split(",")[1], "base64"));
     }

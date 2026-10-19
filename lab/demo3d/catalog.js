@@ -74,14 +74,14 @@ export function viewsFor(entry) {
  * y = 0) in a frame of `aspect` (width / height), seen from `view`.
  * Returns { position: [x, y, z], target: [x, y, z] }.
  */
-export function cameraFor(view, { height = 1.75, fovDeg = 30, aspect = 1, yawOffset = 0, margin = 1.18 } = {}) {
+export function cameraFor(view, { height = 1.75, span = height, centerY = height * 0.5, fovDeg = 30, aspect = 1, yawOffset = 0, margin = 1.18 } = {}) {
     const v = VIEWS[view] || VIEWS["three-quarter"];
     const half = (fovDeg * Math.PI / 180) / 2;
     // Fit the height, and on a narrow frame the width of arms reaching forward (about the height).
     const fitH = (height * margin) / 2 / Math.tan(half);
-    const fitW = (height * 1.0 * margin) / 2 / (Math.tan(half) * Math.max(0.2, aspect));
+    const fitW = (span * 1.0 * margin) / 2 / (Math.tan(half) * Math.max(0.2, aspect));
     const dist = Math.max(fitH, fitW);
-    const ty = height * 0.5;
+    const ty = centerY;
     const yaw = (v.yaw + yawOffset) * Math.PI / 180, pitch = v.pitch * Math.PI / 180;
     return {
         position: [Math.sin(yaw) * Math.cos(pitch) * dist, ty + Math.sin(pitch) * dist, Math.cos(yaw) * Math.cos(pitch) * dist],

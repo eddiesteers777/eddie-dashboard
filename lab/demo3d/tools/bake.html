@@ -70,7 +70,7 @@ window.track = (fps = 30) => {
     for (let i = 0; i < n; i++) {
         rig.reset(); motion.pose(rig, i / n); model.updateMatrixWorld(true);
         const p = {};
-        for (const k of ["Hips", "Spine2", "Head", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftToeBase", "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase", "LeftArm", "LeftHand", "RightHand"])
+        for (const k of ["Hips", "Spine2", "Head", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftToeBase", "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase", "LeftArm", "LeftForeArm", "LeftHand", "RightArm", "RightForeArm", "RightHand"])
             p[k] = rig.wp(k).toArray();
         out.push(p);
     }
