@@ -49,7 +49,7 @@
   {
    "id": "smooth",
    "label": "Fastest joint, metres per second",
-   "value": 0.688,
+   "value": 0.428,
    "limit": 1.5,
    "pass": true
   }

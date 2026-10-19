@@ -46,7 +46,7 @@ function solveAngle(rig, toeZ, f, goal, lo = 0, hi = 40) {
 }
 
 export const pushup = {
-    id: "push-up", seconds: 8.4, reps: 3,
+    id: "push-up", seconds: 13.5, reps: 3,
     setup(rig) {
         this.toeZ = -0.82;
         this.wristY = FLOOR + 0.04;
