@@ -19,7 +19,7 @@
 
 <div id="header"></div>
 
-<div id="mp-root">
+<div id="mp-root" role="main">
   <div class="mp-hero">
     <h1 class="mp-title mp-display sr-only">Race to 3:05</h1>
     <div class="mp-eyebrow">Indianapolis Monumental · Nov 8, 2026</div>
@@ -699,8 +699,8 @@
       const dateObj = new Date(weekStart(selectedWeek).getTime() + i * dayMs);
       const dateWords = dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).replace(",", "");
 
-      pills += `<button type="button" class="mp-pill ${isSel ? "on" : ""} ${checked ? "done" : ""} ${key === todayKey ? "is-today" : ""}" data-pill="${key}" aria-pressed="${isSel}" aria-label="${DOW_NAMES[i]} ${d.miles} miles, ${dateWords}${checked ? ", done" : ""}">
-        <span>${DOW_NAMES[i]}</span><b class="mp-mono">${d.miles}</b><i></i>
+      pills += `<button type="button" class="mp-pill ${isSel ? "on" : ""} ${checked ? "done" : ""} ${key === todayKey ? "is-today" : ""}" data-pill="${key}" aria-pressed="${isSel}">
+        <span>${DOW_NAMES[i]}</span> <b class="mp-mono">${d.miles}</b><span class="sr-only"> miles, ${dateWords}${checked ? ", done" : ""}</span><i></i>
       </button>`;
 
       groups += `<div class="mp-day-group ${isSel ? "is-sel" : ""}" data-day-group="${key}">
