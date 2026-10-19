@@ -433,7 +433,8 @@ function equipmentParts(ctx, sk, specs = []) {
             }
         } else if (e.type === "goblet") {
             const c = add(along(P.lHd, P.rHd, 0.5), app(F.spine, [0, 1, 3]));
-            parts.push(...dumbbell(ctx, c, app(F.spine, [0, 1, 0]), 1.05).map(p => p && { ...p, z: p.z + 6 }));
+            // Drawn just in front of the chest; depth: -6 puts it behind the head (overhead triceps).
+            parts.push(...dumbbell(ctx, c, app(F.spine, [0, 1, 0]), 1.05).map(p => p && { ...p, z: p.z + (e.depth ?? 6) }));
         } else if (e.type === "barbell") {
             const c = along(along(P.lWr, P.lHd, 0.45), along(P.rWr, P.rHd, 0.45), 0.5);
             parts.push(...barbell(ctx, c, sub(P.lHd, P.rHd)));

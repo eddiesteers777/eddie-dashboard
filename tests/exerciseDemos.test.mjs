@@ -73,6 +73,35 @@ test("every demo: complete, grounded, anchored, and draws from every angle", () 
     }
 });
 
+// Pose checks borrowed from OpenGym3D's joint QA (github.com/AssiamahS/opengym3d,
+// MIT): hinges bend only the way a body bends, and every loop closes.
+test("every demo: knees and elbows stay in a human range, and the loop closes", () => {
+    for (const d of DEMOS) {
+        for (const { pose } of d.keys) {
+            for (const s of ["l", "r"]) {
+                const knee = (pose[s + "Knee"] || [0, 0, 0])[0], elbow = (pose[s + "Elbow"] || [0, 0, 0])[0];
+                assert.ok(knee >= -5 && knee <= 160, `${d.id} ${s} knee ${knee}° bends the right way`);
+                assert.ok(elbow <= 5 && elbow >= -150, `${d.id} ${s} elbow ${elbow}° bends the right way`);
+            }
+        }
+        const first = skeleton(poseAt(d.keys, 0), { anchor: d.anchor, level: d.level });
+        const last = skeleton(poseAt(d.keys, 0.9999), { anchor: d.anchor, level: d.level });
+        for (const k of Object.keys(first.pts)) assert.ok(dist(first.pts[k], last.pts[k]) < 0.5, `${d.id} loops without a jump (${k})`);
+    }
+});
+
+test("the new upper-body demos answer to the library's names", () => {
+    for (const [name, id] of [["Dumbbell Curl", "dumbbell-curl"], ["Bicep Curl", "dumbbell-curl"], ["Hammer Curl", "hammer-curl"], ["Dumbbell Lateral Raise", "dumbbell-lateral-raise"], ["Dumbbell Shoulder Press", "dumbbell-shoulder-press"], ["Standing Dumbbell Press", "dumbbell-shoulder-press"], ["Overhead Triceps Extension", "overhead-triceps-extension"], ["Barbell Row", "barbell-row"], ["Walking Lunge", "forward-lunge"]]) {
+        assert.equal(demoFor(name)?.id, id, name);
+        assert.equal(hasHowTo(name), true, name);
+    }
+    // A curl raises the hands; a press lifts them overhead; a row brings the bar up.
+    const at = (name, t) => { const d = demoFor(name); return skeleton(poseAt(d.keys, t), { anchor: d.anchor, level: d.level }).pts; };
+    assert.ok(at("Dumbbell Curl", 0.44).lHd[1] - at("Dumbbell Curl", 0).lHd[1] > 30);
+    assert.ok(at("Dumbbell Shoulder Press", 0.42).lHd[1] > at("Dumbbell Shoulder Press", 0).headTop[1] + 15);
+    assert.ok(at("Barbell Row", 0.44).lHd[1] - at("Barbell Row", 0).lHd[1] > 15);
+});
+
 test("the moving parts actually move", () => {
     const squat = demoFor("Bodyweight Squat");
     const top = skeleton(poseAt(squat.keys, 0), { anchor: squat.anchor });

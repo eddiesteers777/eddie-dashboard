@@ -237,6 +237,12 @@ pm run manifest and the tests in a clean copy with LF line endings, which is wha
 - **Client Today (`index.html`, `js/todayClient.js`, `js/raceStrip.js`):** a race countdown strip in the hero (big days-to-go and the block as a bar, one segment per week) only when an active plan has a race ahead; today's card is the raised card with a tan rule; From Your Coach now sits right under This Week (`CLIENT_TODAY` order).
 - Tested: `npm run test:static` (new tests in `tests/coachToday.test.mjs`, `tests/raceStrip.test.mjs`); browser check at 390px and 1280px with mocked data (no overflow, no page errors).
 
+## 2026-10-19 — Ideas from OpenGym3D: seven new How to demos
+
+- Reviewed the open source OpenGym3D (github.com/AssiamahS/opengym3d; code MIT, its Mesh2Motion motion files CC0, its CMU clips not for resale, its Mixamo clips private). No code or files copied: its exercise list showed which free-weight moves Southbound's library still had no How to for, and its joint QA gave the idea for a pose check.
+- **New figure demos** (`js/exerciseDemos.js`, poses and words our own): Dumbbell Curl, Hammer Curl, Dumbbell Lateral Raise, Dumbbell Shoulder Press, Overhead Triceps Extension, Barbell Row, Forward Lunge (aliases cover the library's Standing Dumbbell Press and Walking Lunge). Library exercises with a How to: 15 of 56 → 23 of 56. `goblet` equipment takes `depth` so the overhead dumbbell draws behind the head.
+- **Pose check** (`tests/exerciseDemos.test.mjs`): every key pose keeps knees and elbows in a human range, every loop closes without a jump; plus a test that the new demos answer to the library's names and move the right way.
+- Tested: `npm run test:static`; every new demo looked at from each angle; the How to sheet opened for three of them at 390px and 1280px with no page errors.
 ## 2026-10-19 — Charts you can read by tapping (ideas from Apache ECharts)
 
 - Eddie asked to take what helps from Apache ECharts. The library itself (about 1 MB, ~330 KB zipped; a trimmed build still ~130 KB zipped) would be precached on every phone for charts the app already draws in ~100 lines, so only its ideas came over.

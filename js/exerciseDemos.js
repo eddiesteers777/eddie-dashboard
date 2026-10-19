@@ -117,6 +117,30 @@ const rowDown = {
 };
 const rowUp = { ...rowDown, rShoulder: [-8, 0, -6], rElbow: [-76, 0, 0] };
 
+// Arms by your sides, palms forward (a curl) or in (hammer); the elbows stay put.
+const curlDown = { ...STAND, ...both("Hip", { l: [0, 0, 4], r: [0, 0, -4] }), ...both("Shoulder", { l: [2, 0, 8], r: [2, 0, -8] }), ...both("Elbow", [-6, 0, 0]) };
+const curlUp = { ...curlDown, ...both("Shoulder", { l: [-8, 0, 8], r: [-8, 0, -8] }), ...both("Elbow", [-138, 0, 0]) };
+
+// Arms out to the sides to shoulder height, elbows soft.
+const raiseDown = { ...curlDown, ...both("Shoulder", { l: [-6, 0, 10], r: [-6, 0, -10] }), ...both("Elbow", [-14, 0, 0]) };
+const raiseUp = { ...raiseDown, ...both("Shoulder", { l: [-14, 0, 84], r: [-14, 0, -84] }), ...both("Elbow", [-16, 0, 0]) };
+
+// Dumbbells at ear height, elbows under the wrists; press to straight arms overhead.
+const pressDown = { ...curlDown, ...both("Shoulder", { l: [0, 90, 84], r: [0, -90, -84] }), ...both("Elbow", [-92, 0, 0]) };
+const pressUp = { ...curlDown, ...both("Shoulder", { l: [0, 90, 172], r: [0, -90, -172] }), ...both("Elbow", [-10, 0, 0]) };
+
+// One dumbbell in both hands overhead; the elbows point up while it lowers behind the head.
+const tricepsUp = { ...curlDown, ...both("Shoulder", { l: [-170, 30, 16], r: [-170, -30, -16] }), ...both("Elbow", [-10, 0, 0]) };
+const tricepsDown = { ...tricepsUp, ...both("Shoulder", { l: [-165, 30, 10], r: [-165, -30, -10] }), ...both("Elbow", [-132, 0, 0]) };
+
+// Hinged to about 45°, the bar hanging under the shoulders; pull it to the lower ribs.
+const barRowDown = {
+    root: [48, 0, 0], neck: [-14, 0, 0],
+    ...both("Hip", { l: [-62, 0, 5], r: [-62, 0, -5] }), ...both("Knee", [26, 0, 0]), ...both("Ankle", [-12, 0, 0]),
+    ...both("Shoulder", { l: [-48, 0, 9], r: [-48, 0, -9] }), ...both("Elbow", [0, 0, 0])
+};
+const barRowUp = { ...barRowDown, ...both("Shoulder", { l: [24, 0, 16], r: [24, 0, -16] }), ...both("Elbow", [-92, 0, 0]) };
+
 // ---------- Demos ----------
 
 export const DEMOS = [
@@ -246,6 +270,69 @@ export const DEMOS = [
         move: "Pull the dumbbell up toward your hip, elbow close to your side, then lower it until your arm is straight.",
         cue: "Lead with your elbow and keep your shoulders square; don't twist to lift it.",
         muscles: { primary: ["lats", "middle back"], secondary: ["biceps", "shoulders", "forearms"] }
+    },
+    {
+        id: "dumbbell-curl", name: "Dumbbell Curl", aliases: ["Dumbbell Curls", "Bicep Curl", "Biceps Curl", "Dumbbell Bicep Curl", "Dumbbell Biceps Curl", "Bicep Curls"],
+        seconds: 3, anchor: ["lAn", "rAn"], views: VIEWS.standing, equipment: [{ type: "dumbbell" }],
+        keys: [{ at: 0, pose: curlDown }, { at: 0.38, pose: curlUp }, { at: 0.5, pose: curlUp }, { at: 1, pose: curlDown }],
+        start: "Stand tall with a dumbbell in each hand, arms long, palms facing forward.",
+        move: "Bend your elbows and curl the weights up to your shoulders, then lower them slowly until your arms are straight again.",
+        cue: "Elbows stay pinned to your sides; no swinging from your back.",
+        muscles: { primary: ["biceps"], secondary: ["forearms"] }
+    },
+    {
+        id: "hammer-curl", name: "Hammer Curl", aliases: ["Hammer Curls", "Dumbbell Hammer Curl", "Dumbbell Hammer Curls"],
+        seconds: 3, anchor: ["lAn", "rAn"], views: VIEWS.standing, equipment: [{ type: "dumbbell", axis: "front" }],
+        keys: [{ at: 0, pose: curlDown }, { at: 0.38, pose: curlUp }, { at: 0.5, pose: curlUp }, { at: 1, pose: curlDown }],
+        start: "Stand tall with a dumbbell in each hand at your sides, palms facing in, like holding two hammers.",
+        move: "Curl the weights up toward your shoulders with your palms still facing in, then lower them slowly.",
+        cue: "Thumbs lead the way up; keep your wrists straight.",
+        muscles: { primary: ["biceps", "forearms"], secondary: [] }
+    },
+    {
+        id: "dumbbell-lateral-raise", name: "Dumbbell Lateral Raise", aliases: ["Lateral Raise", "Lateral Raises", "Side Raise", "Side Lateral Raise", "Dumbbell Lateral Raises"],
+        seconds: 3.2, anchor: ["lAn", "rAn"], views: [VIEWS.standing[2], VIEWS.standing[0], VIEWS.standing[1], VIEWS.standing[3]], equipment: [{ type: "dumbbell", axis: "front" }],
+        keys: [{ at: 0, pose: raiseDown }, { at: 0.4, pose: raiseUp }, { at: 0.52, pose: raiseUp }, { at: 1, pose: raiseDown }],
+        start: "Stand tall with light dumbbells at your sides, elbows slightly bent.",
+        move: "Raise your arms out to the sides until your hands reach shoulder height, pause, then lower slowly.",
+        cue: "Lead with your elbows and keep your shoulders down, away from your ears.",
+        muscles: { primary: ["shoulders"], secondary: ["traps"] }
+    },
+    {
+        id: "dumbbell-shoulder-press", name: "Dumbbell Shoulder Press", aliases: ["Standing Dumbbell Press", "Dumbbell Overhead Press", "DB Shoulder Press", "Seated Dumbbell Shoulder Press", "Dumbbell Shoulder Presses"],
+        seconds: 3, anchor: ["lAn", "rAn"], views: [VIEWS.standing[2], VIEWS.standing[0], VIEWS.standing[1], VIEWS.standing[3]], equipment: [{ type: "dumbbell", axis: "front" }],
+        keys: [{ at: 0, pose: pressDown }, { at: 0.36, pose: pressUp }, { at: 0.48, pose: pressUp }, { at: 1, pose: pressDown }],
+        start: "Hold a dumbbell in each hand at ear height, palms forward, elbows under your wrists.",
+        move: "Press the weights straight up until your arms are long overhead, then lower them back to your ears under control.",
+        cue: "Ribs down and glutes tight, so your lower back doesn't arch.",
+        muscles: { primary: ["shoulders"], secondary: ["triceps", "traps"] }
+    },
+    {
+        id: "overhead-triceps-extension", name: "Overhead Triceps Extension", aliases: ["Overhead Tricep Extension", "Dumbbell Overhead Triceps Extension", "Dumbbell Overhead Tricep Extension", "Overhead Triceps Extensions"],
+        seconds: 3.2, anchor: ["lAn", "rAn"], views: [{ label: "3/4", yaw: -55, pitch: 8 }, ...VIEWS.standing.slice(1)], equipment: [{ type: "goblet", depth: -6 }],
+        keys: [{ at: 0, pose: tricepsUp }, { at: 0.46, pose: tricepsDown }, { at: 0.56, pose: tricepsDown }, { at: 1, pose: tricepsUp }],
+        start: "Hold one dumbbell overhead with both hands under the top end, arms straight.",
+        move: "Keeping your upper arms still, bend your elbows to lower the weight behind your head, then straighten your arms to lift it back up.",
+        cue: "Elbows point at the ceiling and stay close to your head.",
+        muscles: { primary: ["triceps"], secondary: ["shoulders"] }
+    },
+    {
+        id: "barbell-row", name: "Barbell Row", aliases: ["Bent-Over Row", "Bent Over Row", "Barbell Bent-Over Row", "Bent-Over Barbell Row", "Barbell Rows"],
+        seconds: 3, anchor: ["lAn", "rAn"], views: VIEWS.standing, equipment: [{ type: "barbell" }],
+        keys: [{ at: 0, pose: barRowDown }, { at: 0.38, pose: barRowUp }, { at: 0.5, pose: barRowUp }, { at: 1, pose: barRowDown }],
+        start: "Hold the bar just outside your thighs, knees soft, and hinge forward until your chest is over the bar at about 45°.",
+        move: "Pull the bar up to your lower ribs, squeezing your shoulder blades together, then lower it until your arms are straight.",
+        cue: "Your back angle stays the same the whole set; only your arms move.",
+        muscles: { primary: ["middle back", "lats"], secondary: ["biceps", "shoulders", "lower back", "forearms"] }
+    },
+    {
+        id: "forward-lunge", name: "Forward Lunge", aliases: ["Lunge", "Lunges", "Walking Lunge", "Walking Lunges", "Forward Lunges", "Dumbbell Walking Lunge", "Bodyweight Lunge"],
+        seconds: 3.6, anchor: ["rToe"], views: [{ label: "3/4", yaw: -62, pitch: 8 }, ...VIEWS.standing.slice(1)],
+        keys: [{ at: 0, pose: lungeTop }, { at: 0.44, pose: lungeBottom }, { at: 0.56, pose: lungeBottom }, { at: 1, pose: lungeTop }],
+        start: "Stand tall, feet hip-width.",
+        move: "Take a long step forward and lower until your back knee nearly touches the floor, both knees bent about 90°. Push off your front foot to come back (on a walking lunge, bring the back foot through into the next step).",
+        cue: "Land heel first and keep your front knee over your foot, not caving in.",
+        muscles: { primary: ["quadriceps", "glutes"], secondary: ["hamstrings", "adductors", "calves"] }
     }
 ];
 
