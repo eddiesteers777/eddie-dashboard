@@ -367,7 +367,7 @@ fetch("components/header.html")
                     <nav class="eos-subnav" aria-label="Section pages" style="--subnav-count:${subnavPages.length}">
                         ${subnavPages.map(p => {
                             const current = p.href === currentHref;
-                            return `<a href="${p.href}" class="eos-subnav-link ${current ? "active" : ""}"${current ? ` aria-current="page"` : ""} aria-label="${p.label}"><span class="eos-subnav-icon">${icon(p.icon)}</span><span class="eos-subnav-label">${p.short}</span></a>`;
+                            return `<a href="${p.href}" class="eos-subnav-link ${current ? "active" : ""}"${current ? ` aria-current="page"` : ""} aria-label="${p.short === p.label ? p.label : p.short + ", " + p.label}"><span class="eos-subnav-icon">${icon(p.icon)}</span><span class="eos-subnav-label">${p.short}</span></a>`;
                         }).join("")}
                     </nav>
                 `);
