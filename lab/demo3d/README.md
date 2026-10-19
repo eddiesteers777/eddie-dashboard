@@ -48,6 +48,6 @@ Floor exercises set their own camera framing with `"stage": {"height", "span", "
 
 ## Known limits of the prototype
 
-- About 3.9 MB (male) and 4.6 MB (female) per exercise, because each GLB carries the whole athlete. For a library, split them: one athlete file per sex (cached once) plus a small animation file per exercise (about 100–200 KB).
+- About 3.4 MB (male) and 4.0 MB (female) per exercise, because each GLB carries the whole athlete. For a library, split them: one athlete file per sex (cached once) plus a small animation file per exercise (about 100–200 KB).
 - Hair is a cut-out card (no strands); skin is a single texture with no detail maps. Good on a phone, not film quality.
 - Tested in headless Chromium with software graphics. Needs a pass on a real iPhone and an Android phone before it ships.

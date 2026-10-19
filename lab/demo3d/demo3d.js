@@ -106,6 +106,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
     Object.assign(key.shadow.camera, { left: -1.4, right: 1.4, top: 2.2, bottom: -0.4, near: 1, far: 12 });
     scene.add(key);
+    const rim = new THREE.DirectionalLight(0xdfe9ff, 1.3); rim.position.set(-3, 3.5, -3.5); scene.add(rim);
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: 0.18 }));
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
     const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 40);
@@ -156,7 +157,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
                 const clip = gltf.animations.find(a => a.name === entry.clip) || gltf.animations[0];
                 if (!clip) throw new Error("no clip");
                 const root = gltf.scene;
-                root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+                root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; for (const m of [].concat(o.material)) if (m.alphaTest > 0) m.alphaToCoverage = true; } });
                 const mixer = new THREE.AnimationMixer(root);
                 const action = mixer.clipAction(clip);
                 action.setLoop(THREE.LoopRepeat, Infinity).play();
