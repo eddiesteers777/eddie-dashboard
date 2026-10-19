@@ -60,7 +60,7 @@ async function renderPersonalRecords() {
     container.innerHTML = list.map(pr => `
         <div class="record" data-field="${pr.id}">
             <span>${esc(pr.label)}</span>
-            <h3 class="record-value" role="button" tabindex="0" title="Type your own time">${esc(pr.text || "Not set")}</h3>
+            <div class="record-value" role="button" tabindex="0" title="Type your own time">${esc(pr.text || "Not set")}</div>
             <input type="text" class="record-input" placeholder="e.g. 3:05:00" aria-label="${esc(pr.label)} time" value="${esc(typed[pr.id] || "")}" hidden>
             <small class="record-source">${sourceText(pr)}</small>
             ${podiumHtml(pr)}

@@ -414,7 +414,7 @@ canvas{
 
 }
 
-.record h3{
+.record h3,.record .record-value{
 
     font-size:34px;
 
@@ -814,14 +814,14 @@ canvas{
 /* Where each record came from (js/personalRecords.js) */
 .record [hidden]{ display:none !important; }
 .record{ display:flex; flex-direction:column; align-items:center; gap:4px; }
-.record h3{ margin:0; }
+.record h3,.record .record-value{ margin:0; }
 .record-source{ color:var(--muted); font-size:.78rem; line-height:1.4; white-space:normal; }
 .record-link{ margin-top:4px; padding:4px 8px; border:0; background:none; color:var(--primary); font-size:.78rem; cursor:pointer; }
 .record-link:hover{ text-decoration:underline; }
 @media (max-width:600px){
     .records-grid{ grid-template-columns:1fr 1fr; gap:12px; }
     .record{ padding:16px 10px; border-radius:16px; }
-    .record h3{ font-size:26px; }
+    .record h3,.record .record-value{ font-size:26px; }
     .record:last-child:nth-child(odd){ grid-column:1 / -1; }
 }
 
@@ -1220,7 +1220,7 @@ canvas{
 .analytics-page .record{ align-items:flex-start; padding:16px 14px 16px 0; background:none; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; text-align:left; }
 .analytics-page .record:hover{ transform:none; border-color:var(--sb-hairline); }
 .analytics-page .record span{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
-.analytics-page .record h3{ font:900 40px/1 var(--font-display); letter-spacing:.02em; text-transform:uppercase; color:var(--text); cursor:pointer; }
+.analytics-page .record h3,.analytics-page .record .record-value{ font:900 40px/1 var(--font-display); letter-spacing:.02em; text-transform:uppercase; color:var(--text); cursor:pointer; }
 .analytics-page .record-source{ font-size:13px; color:var(--text-secondary); }
 .analytics-page .record-link{ min-height:44px; padding:0; margin:0; font:650 13.5px var(--font-body); }
 .analytics-page .record-input{ min-height:48px; border-radius:16px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); color:var(--text); font-size:16px; padding:0 14px; }
@@ -1352,7 +1352,7 @@ canvas{
     .analytics-page .hb-tile:nth-child(even){ padding-left:14px; border-left:1px solid var(--sb-hairline); }
     .analytics-page .records-grid{ grid-template-columns:1fr 1fr; }
     .analytics-page .record:nth-child(even){ padding-left:14px; border-left:1px solid var(--sb-hairline); }
-    .analytics-page .record h3{ font-size:34px; }
+    .analytics-page .record h3,.analytics-page .record .record-value{ font-size:34px; }
     .analytics-page .tr-mini-top{ gap:6px; }
     .analytics-page .tr-mini-top strong{ font-size:20px; white-space:nowrap; }
     .analytics-page .rc-chips{ width:100%; }

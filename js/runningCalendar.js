@@ -317,7 +317,7 @@ function renderWeekView() {
                 type="button"
                 class="running-pill ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}"
                 data-cal-date="${dateStr}"
-                aria-label="${escapeHtml(date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }))}"
+                aria-label="${DAYS[i]} ${date.getDate()}, ${escapeHtml(date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }))}"
                 aria-pressed="${isSelected ? "true" : "false"}">
 
                 <span class="running-pill-dow">${DAYS[i]}</span>
