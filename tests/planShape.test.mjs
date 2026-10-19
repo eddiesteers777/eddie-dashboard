@@ -178,3 +178,15 @@ test("300 random settings: every plan keeps the rules", () => {
     }
     assert.ok(made > 250, `made ${made}`);
 });
+
+test("race priority: A tapers fully, B one week less, C runs through with no taper", () => {
+    const taperWeeks = racePriority => planPhases({ ...BASE, racePriority, raceType: "MARATHON" }, 18).filter(p => p.phase === "Taper").length;
+    assert.equal(taperWeeks("A"), 3);
+    assert.equal(taperWeeks("B"), 2);
+    assert.equal(taperWeeks("C"), 0);
+    assert.equal(taperWeeks(undefined), 3, "unranked races keep the full taper");
+    assert.equal(planPhases({ ...BASE, racePriority: "B", raceType: "5K" }, 8).filter(p => p.phase === "Taper").length, 1, "never below one week for B");
+    const { plan } = make({ racePriority: "C", raceType: "HALF" });
+    assert.ok(plan.weeks.every(w => w.phase !== "Taper"));
+    assert.ok(allDays(plan).some(d => d.date === BASE.raceDate && d.type === "race"));
+});

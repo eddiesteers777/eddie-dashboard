@@ -13,7 +13,7 @@
 ========================================== */
 
 import {
-    CODES, RACES, TRAINING_GOALS, EXPERIENCE, EQUIPMENT, STRENGTH_LEVELS,
+    CODES, RACES, RACE_PRIORITIES, TRAINING_GOALS, EXPERIENCE, EQUIPMENT, STRENGTH_LEVELS,
     settingsFromProfile, checkSettings, generateCoachPlan, regeneratePlan, nextMonday, normalGoal, compactChange
 } from "./coachPlanGenerator.js";
 import { shortDay, isoDate, planDateRange, addDays } from "./coachingPlanModel.js";
@@ -65,6 +65,7 @@ function settingsHtml(s) {
         <div class="pw-gen-grid" data-show="race"${s.mode === "race" ? "" : " hidden"}>
             <label class="pw-label">Race<select class="sb-dialog-input" name="raceType">${options(RACES, s.raceType)}</select></label>
             <label class="pw-label">Race date<input class="sb-dialog-input" type="date" name="raceDate" value="${esc(s.raceDate)}"></label>
+            <label class="pw-label">How much it matters<select class="sb-dialog-input" name="racePriority">${options(RACE_PRIORITIES, s.racePriority || "A")}</select></label>
             <label class="pw-label" ${only("miles")}>Goal time (optional)<input class="sb-dialog-input" name="goalTime" value="${esc(s.goalTime)}" placeholder="1:45:00" inputmode="numeric"></label>
         </div>
         <div class="pw-gen-grid" data-show="training"${s.mode === "training" ? "" : " hidden"}>
@@ -112,6 +113,7 @@ function readSettings(form, base = {}) {
         ...base,
         mode, raceType,
         raceDate: String(f.get("raceDate") || ""),
+        racePriority: ["A", "B", "C"].includes(f.get("racePriority")) ? String(f.get("racePriority")) : "A",
         goalTime: normalGoal(String(f.get("goalTime") || ""), raceType) || "",
         trainingGoal: String(f.get("trainingGoal") || "BASE_BUILD"),
         endDate: String(f.get("endDate") || ""),

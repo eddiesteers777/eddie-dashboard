@@ -62,7 +62,10 @@ export function planPhases(s, count) {
     const out = [];
     if (s.mode === "race") {
         const info = RACE_INFO[s.raceType] || RACE_INFO.HALF;
-        const taper = clamp(Math.round(count / 6), 1, info.taper);
+        // A race: the full taper. B: one week less. C (a training race): none, the plan runs through it.
+        const priority = s.racePriority === "B" || s.racePriority === "C" ? s.racePriority : "A";
+        const full = clamp(Math.round(count / 6), 1, info.taper);
+        const taper = priority === "C" ? 0 : priority === "B" ? Math.max(1, full - 1) : full;
         const peak = count - taper >= 6 ? info.peakWeeks : count - taper >= 3 ? 1 : 0;
         const build = Math.max(0, count - taper - peak);
         const foundation = count >= 12 ? Math.max(1, Math.round(build * 0.2)) : 0;

@@ -6,7 +6,7 @@
    workoutResults/{clientUid}_{planId}_{date}_strength   a strength session
      { clientUid, coachUid, planId, planVersion, date, title, plannedMiles,
        status: "completed" | "skipped", distance (mi), durationSec, rpe 1-10,
-       pain, painNote, note, createdAt, updatedAt,
+       pain, painNote, note, answers: [{ q, a }] (answers to the coach's questions), conditions: ["hot", …], createdAt, updatedAt,
        kind: "strength", exercises: [{ name, sets: [{ weight, reps }] }]   <- strength only
        coachComment, coachCommentAt }         <- only the coach writes these
    Kept apart from the prescription (coachingPlans) on purpose: the plan
@@ -24,6 +24,8 @@ import { settleWrite } from "./offlineWrite.js";
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
 import { sendPainFlagEmail } from "./emailNotify.js";
 import { sanitizeActual } from "./strengthWorkout.js";
+import { cleanAnswers } from "./workoutQuestions.js";
+import { cleanConditions } from "./runConditions.js";
 
 const withId = snap => ({ id: snap.id, ...snap.data() });
 
@@ -36,7 +38,7 @@ async function me() {
 export const resultId = (clientUid, planId, date, kind = "run") => `${clientUid}_${planId}_${date}${kind === "strength" ? "_strength" : ""}`;
 export const isStrengthResult = r => r?.kind === "strength";
 
-const EDITABLE = ["status", "distance", "durationSec", "rpe", "pain", "painNote", "note", "title", "plannedMiles", "planVersion"];
+const EDITABLE = ["status", "distance", "durationSec", "rpe", "pain", "painNote", "note", "title", "plannedMiles", "planVersion", "answers", "conditions"];
 
 function clean(input, kind) {
     const numOrNull = (v, max) => (v === "" || v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.min(max, Number(v))));
@@ -51,6 +53,10 @@ function clean(input, kind) {
         pain: Boolean(input.pain),
         painNote: input.pain ? String(input.painNote || "").trim().slice(0, 300) : "",
         note: String(input.note || "").trim().slice(0, 1000),
+        // Answers to the coach's questions for this run: [{ q, a }] (js/workoutQuestions.js).
+        answers: kind === "strength" ? [] : cleanAnswers((input.answers || []).map(x => x.q), (input.answers || []).map(x => x.a)),
+        // What the weather was like (js/runConditions.js).
+        conditions: kind === "strength" ? [] : cleanConditions(input.conditions),
         title: String(input.title || "Workout").slice(0, 120),
         plannedMiles: Math.max(0, Math.min(200, Number(input.plannedMiles) || 0)),
         planVersion: Math.max(1, Number(input.planVersion) || 1),

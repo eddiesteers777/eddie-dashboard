@@ -1530,6 +1530,36 @@ test("workout results: only for a plan the coach published to them, with sane va
     await assertSucceeds(make("client_p1_2026-09-29", { status: "skipped", distance: null, durationSec: null, rpe: null }));
 });
 
+test("workout results: answers to the coach's questions are up to two short { q, a } pairs", async () => {
+    await seedPublishedPlan();
+    const id = "workoutResults/client_p1_2026-09-29";
+    const ok = [{ q: "How did the hills feel?", a: "Strong until the last climb." }, { q: "How is the calf?", a: "Fine." }];
+    await assertSucceeds(setDoc(doc(as("client"), id), result({ answers: ok })));
+    // The client can change their own answers later, never the coach.
+    await assertSucceeds(updateDoc(doc(as("client"), id), { answers: [ok[0]], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), id), { answers: [] }));
+    // Attacks: too many, too long, wrong shape, extra keys.
+    await assertFails(updateDoc(doc(as("client"), id), { answers: [...ok, ok[0]], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { answers: [{ q: "Q", a: "x".repeat(501) }], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { answers: [{ q: "x".repeat(121), a: "A" }], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { answers: ["just text"], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { answers: [{ q: "Q", a: "A", extra: 1 }], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { answers: "none", updatedAt: serverTimestamp() }));
+    // An older app that sends no answers still saves.
+    await assertSucceeds(updateDoc(doc(as("client"), id), { rpe: 5, updatedAt: serverTimestamp() }));
+});
+
+test("workout results: conditions are up to three known weather tags", async () => {
+    await seedPublishedPlan();
+    const id = "workoutResults/client_p1_2026-09-29";
+    await assertSucceeds(setDoc(doc(as("client"), id), result({ conditions: ["hot", "humid"] })));
+    await assertSucceeds(updateDoc(doc(as("client"), id), { conditions: [], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { conditions: ["hot", "humid", "windy", "rain"], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { conditions: ["raining lava"], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { conditions: "hot", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), id), { conditions: ["cold"] }));
+});
+
 test("strength logs: their own id next to the run's, with the sets lifted", async () => {
     await seedPublishedPlan();
     const lift = extra => result({
