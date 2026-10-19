@@ -40,6 +40,16 @@ function sourceText(pr) {
     return `${pr.inside ? `Fastest ${esc(pr.label)} inside ${run}` : run} · ${prDay(pr.date)}`;
 }
 
+const ORDINAL = { 2: "2nd", 3: "3rd" };
+// Silver and bronze under the record itself (the record is the gold).
+function podiumHtml(pr) {
+    const rest = (pr.podium || []).filter(p => p.rank > 1);
+    if (!rest.length) return "";
+    return `<ol class="record-podium" aria-label="Next fastest ${esc(pr.label)} times">${rest.map(p => `
+                <li><span class="record-medal record-medal-${p.rank}" aria-hidden="true"></span><b>${ORDINAL[p.rank]}</b> ${esc(p.text)}<small>${p.typed ? "typed in" : prDay(p.date)}</small></li>`).join("")}
+            </ol>`;
+}
+
 async function renderPersonalRecords() {
     const container = $("recordsGrid");
     if (!container) return;
@@ -53,6 +63,7 @@ async function renderPersonalRecords() {
             <h3 class="record-value" role="button" tabindex="0" title="Type your own time">${esc(pr.text || "Not set")}</h3>
             <input type="text" class="record-input" placeholder="e.g. 3:05:00" aria-label="${esc(pr.label)} time" value="${esc(typed[pr.id] || "")}" hidden>
             <small class="record-source">${sourceText(pr)}</small>
+            ${podiumHtml(pr)}
             ${pr.candidate ? `<button type="button" class="record-link" data-hide="${esc(pr.candidate)}">Not right? Hide it</button>` : ""}
             ${pr.hiddenCount ? `<button type="button" class="record-link" data-unhide>Show ${pr.hiddenCount} hidden</button>` : ""}
         </div>

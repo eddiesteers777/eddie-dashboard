@@ -25,6 +25,7 @@ import { buildWeek } from "./weekModel.js";
 import { weekInputs, loadSessions } from "./weekData.js";
 import { weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
 import { weekRidgeHtml } from "./weekRidge.js";
+import { monthGrid, shiftMonth, firstOfMonth, cellLabel, monthSummaryLine } from "./monthModel.js";
 import { getMyClientRecord } from "./clientRecords.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
@@ -40,7 +41,7 @@ const today = isoDate(new Date());
 const niceDate = ms => ms ? new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
 const millis = value => typeof value === "number" ? value : value?.toMillis?.() || 0;
 
-const state = { plans: [], headers: [], selected: null, monday: "", goal: "", sessions: [], items: new Map(), coaches: [], requests: [] };
+const state = { view: "week", month: firstOfMonth(today), plans: [], headers: [], selected: null, monday: "", goal: "", sessions: [], items: new Map(), coaches: [], requests: [] };
 
 // Who a change request goes to: this plan's coach, else their linked coach.
 function currentCoach() {
@@ -146,9 +147,25 @@ function renderPlan() {
     const title = ctx ? `Week ${ctx.weekNumber} of ${ctx.totalWeeks}${ctx.phase ? ` · ${ctx.phase}` : ""}` : state.monday === thisMonday ? "This week" : "Week";
     const edge = lastOpenMonday();
     const atEdge = Boolean(edge && state.monday >= edge);
+    const toggle = `
+            <div class="myplan-view" role="group" aria-label="Show">
+                <button type="button" class="myplan-view-btn${state.view === "week" ? " active" : ""}" data-view="week" aria-pressed="${state.view === "week"}">Week</button>
+                <button type="button" class="myplan-view-btn${state.view === "month" ? " active" : ""}" data-view="month" aria-pressed="${state.view === "month"}">Month</button>
+            </div>`;
+    if (state.view === "month") {
+        $("planBody").innerHTML = `
+        ${overview}
+        <section class="clients-card myplan-week myplan-monthcard">
+            ${toggle}
+            ${monthHtml(inputs)}
+        </section>
+        ${changeRequestsHtml(state.requests, currentCoach()?.coachName || "Your coach")}`;
+        return;
+    }
     $("planBody").innerHTML = `
         ${overview}
         <section class="clients-card myplan-week">
+            ${toggle}
             <div class="wk-nav">
                 <button type="button" class="sb-btn sb-btn-icon" data-week="-1" aria-label="Previous week">${icon("chevronLeft")}</button>
                 <div class="wk-nav-title">
@@ -177,6 +194,56 @@ function renderPlan() {
         </section>
         ${changeRequestsHtml(state.requests, currentCoach()?.coachName || "Your coach")}`;
 }
+
+// ---------- The month (js/monthModel.js) ----------
+
+function monthHtml(inputs) {
+    const g = monthGrid(state.month, inputs, today);
+    const thisMonth = firstOfMonth(today);
+    const line = monthSummaryLine(g.summary);
+    const cell = c => `<button type="button" class="mp-day is-${c.status}${c.inMonth ? "" : " is-out"}${c.today ? " is-today" : ""}" data-day="${c.date}" aria-label="${esc(cellLabel(c))}"><span class="mp-num">${c.day}</span><span class="mp-mark" aria-hidden="true"></span></button>`;
+    return `
+            <div class="wk-nav">
+                <button type="button" class="sb-btn sb-btn-icon" data-month="-1" aria-label="Previous month">${icon("chevronLeft")}</button>
+                <div class="wk-nav-title"><strong>${esc(g.label)}</strong></div>
+                <button type="button" class="sb-btn sb-btn-icon" data-month="1" aria-label="Next month">${icon("chevronRight")}</button>
+            </div>
+            ${state.month !== thisMonth ? `<button type="button" class="sb-btn sb-btn-tertiary wk-this-week" data-month="now">Back to this month</button>` : ""}
+            ${line ? `<p class="myplan-progress">${esc(line)}</p>` : ""}
+            <div class="mp-month">
+                <div class="mp-head" aria-hidden="true">${["M", "T", "W", "T", "F", "S", "S"].map(d => `<span>${d}</span>`).join("")}</div>
+                ${g.weeks.map(w => `<div class="mp-week">${w.map(cell).join("")}</div>`).join("")}
+            </div>
+            <ul class="mp-legend" aria-label="What the marks mean">
+                <li><span class="mp-mark is-done"></span>Done</li>
+                <li><span class="mp-mark is-missed"></span>Not done</li>
+                <li><span class="mp-mark is-skipped"></span>Skipped</li>
+                <li><span class="mp-mark is-upcoming"></span>Planned</li>
+            </ul>
+            <p class="clients-card-note myplan-hint">Tap a day to open its week. ${esc(currentCoach()?.coachName || "Your coach")} shares your plan two weeks at a time, so later weeks fill in as they open.</p>`;
+}
+
+$("planBody").addEventListener("click", event => {
+    const view = event.target.closest("[data-view]");
+    if (view) {
+        state.view = view.dataset.view;
+        if (state.view === "month") state.month = firstOfMonth(state.monday);
+        renderPlan();
+        return;
+    }
+    const month = event.target.closest("[data-month]");
+    if (month) {
+        state.month = month.dataset.month === "now" ? firstOfMonth(today) : shiftMonth(state.month, Number(month.dataset.month));
+        renderPlan();
+        return;
+    }
+    const day = event.target.closest("[data-day]");
+    if (day) {
+        state.monday = mondayOf(day.dataset.day);
+        state.view = "week";
+        renderPlan();
+    }
+});
 
 $("planBody").addEventListener("click", async event => {
     const corosBtn = event.target.closest('[data-act="coros-week"]');

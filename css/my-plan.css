@@ -172,3 +172,25 @@
 .myplan-page .cr-list > h2{ font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); margin:0 0 8px; }
 .myplan-page .cr-item{ padding:12px 0; border-bottom:1px solid var(--border); }
 .myplan-page .cr-item:last-child{ border-bottom:0; }
+
+/* Week / Month switch and the month grid (js/monthModel.js). Marks use the earthy status
+   tokens: sage done, clay not done, stone ring skipped, tan planned. */
+.myplan-page .myplan-view{ display:flex; gap:4px; width:fit-content; max-width:100%; margin:0 0 14px; padding:4px; background:var(--sb-inset-bg); border:1px solid var(--border); border-radius:18px; }
+.myplan-page .myplan-view-btn{ min-height:44px; min-width:84px; padding:0 18px; border:0; border-radius:14px; background:transparent; color:var(--text-secondary); font:650 14px/1.2 var(--font-body); cursor:pointer; }
+.myplan-page .myplan-view-btn.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.myplan-page .mp-month{ margin:14px 0 6px; display:grid; gap:4px; }
+.myplan-page .mp-head, .myplan-page .mp-week{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px; }
+.myplan-page .mp-head span{ text-align:center; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); padding-bottom:4px; }
+.myplan-page .mp-day{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-height:52px; padding:6px 0; border:1px solid var(--sb-hairline); border-radius:14px; background:var(--sb-inset-bg); color:var(--text); font:650 15px/1 var(--font-body); cursor:pointer; }
+.myplan-page .mp-day.is-out{ opacity:.38; }
+.myplan-page .mp-day.is-today{ border-color:var(--primary); box-shadow:0 0 0 1px var(--primary) inset; }
+.myplan-page .mp-day.is-rest .mp-mark{ visibility:hidden; }
+.myplan-page .mp-mark{ display:inline-block; width:9px; height:9px; border-radius:50%; flex:0 0 9px; background:var(--primary); }
+.myplan-page .mp-mark.is-done, .myplan-page .is-done .mp-mark{ background:var(--sage); }
+.myplan-page .mp-mark.is-missed, .myplan-page .is-missed .mp-mark{ background:var(--orange); }
+.myplan-page .mp-mark.is-skipped, .myplan-page .is-skipped .mp-mark{ background:transparent; box-shadow:0 0 0 1.5px var(--stone) inset; }
+.myplan-page .mp-mark.is-upcoming, .myplan-page .is-upcoming .mp-mark, .myplan-page .is-today .mp-mark{ background:var(--primary); }
+.myplan-page .mp-day.is-today.is-done .mp-mark{ background:var(--sage); }
+.myplan-page .mp-legend{ list-style:none; margin:10px 0 4px; padding:0; display:flex; flex-wrap:wrap; gap:6px 16px; font:500 13px/1.3 var(--font-body); color:var(--text-secondary); }
+.myplan-page .mp-legend li{ display:inline-flex; align-items:center; gap:6px; }
+@media (max-width:420px){ .myplan-page .mp-month, .myplan-page .mp-head, .myplan-page .mp-week{ gap:3px; } .myplan-page .mp-day{ border-radius:12px; } }

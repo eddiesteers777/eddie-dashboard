@@ -35,6 +35,24 @@ export const formatTime = s => {
 };
 
 /**
+ * The three fastest times at a distance, one per day (a run found twice, as a watch-file
+ * effort and as a whole run, counts once). A typed time with no run behind it
+ * joins only when it isn't the same time as one already there.
+ * -> [{ rank 1-3, sec, text, date, name, inside, typed }]
+ */
+export function podiumOf(found = [], typedSec = null) {
+    const byDay = new Map();
+    for (const c of [...found].sort((a, b) => a.sec - b.sec)) {
+        const day = c.date || `${c.source}:${c.candidate}`;
+        if (!byDay.has(day)) byDay.set(day, c);
+    }
+    const list = [...byDay.values()];
+    if (typedSec && !list.some(c => Math.abs(c.sec - typedSec) <= 1)) list.push({ sec: typedSec, date: null, name: "", inside: false, typed: true });
+    return list.sort((a, b) => a.sec - b.sec).slice(0, 3)
+        .map((c, i) => ({ rank: i + 1, sec: c.sec, text: formatTime(c.sec), date: c.date || null, name: c.name || "", inside: !!c.inside, typed: !!c.typed }));
+}
+
+/**
  * runs: every run [{ date, distance m, duration s, name, labelId | key }] (COROS + Strava, once each)
  * acts: Strava history activities (for the watch-file efforts)
  * typed: the saved "personal-records" object
@@ -59,7 +77,7 @@ export function personalRecords(runs, acts, typed = {}) {
         const typedSec = parseTime(typed?.[f.id]);
         const options = [...shown, ...(typedSec ? [{ source: "typed", sec: typedSec, date: null, name: "", inside: false, candidate: null }] : [])];
         const best = options.sort((a, b) => a.sec - b.sec)[0] || null;
-        const base = { id: f.id, label: f.label, hiddenCount: (hidden[f.id] || []).length };
+        const base = { id: f.id, label: f.label, hiddenCount: (hidden[f.id] || []).length, podium: podiumOf(shown, typedSec) };
         if (best) return { ...base, ...best, text: formatTime(best.sec) };
         // Something typed that isn't a time (kept as written) or nothing at all.
         const raw = String(typed?.[f.id] || "").trim();
