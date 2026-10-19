@@ -173,6 +173,8 @@
     "js/habitsCard.js",
     "js/healthReviewed.js",
     "js/healthStatsSetting.js",
+    "js/heartZones.js",
+    "js/heartZonesTool.js",
     "js/icons.js",
     "js/inquiries.js",
     "js/install.js",

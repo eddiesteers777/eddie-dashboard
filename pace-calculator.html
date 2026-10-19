@@ -32,6 +32,7 @@
     <button type="button" class="pc-tool-tab active" data-pc-tool="calculator">Pace Calculator</button>
     <button type="button" class="pc-tool-tab" data-pc-tool="splits">Race Splits</button>
     <button type="button" class="pc-tool-tab" data-pc-tool="zones">Training Zones</button>
+    <button type="button" class="pc-tool-tab" data-pc-tool="heart">Heart Rate</button>
   </div>
 
   <div class="pc-tool-panel active" data-pc-panel="calculator">
@@ -250,9 +251,56 @@
 
   </div>
 
+  <!-- Heart Rate Zones -->
+
+  <div class="pc-tool-panel" data-pc-panel="heart">
+
+    <div class="pc-card">
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label" for="hr-max">Max Heart Rate</label>
+          <input type="number" id="hr-max" inputmode="numeric" min="120" max="230" placeholder="e.g. 188" class="pc-input">
+        </div>
+
+        <div class="pc-field">
+          <label class="pc-field-label" for="hr-rest">Resting Heart Rate <span class="pc-optional">(optional)</span></label>
+          <input type="number" id="hr-rest" inputmode="numeric" min="30" max="110" placeholder="e.g. 52" class="pc-input">
+        </div>
+
+      </div>
+
+      <div class="pc-field pc-hr-age">
+        <label class="pc-field-label" for="hr-age">Don't know your max? Enter your age to estimate it</label>
+        <input type="number" id="hr-age" inputmode="numeric" min="10" max="100" placeholder="Age" class="pc-input">
+      </div>
+
+      <button type="button" id="hr-calc-btn" class="pc-calc-btn">Calculate Heart Rate Zones</button>
+
+      <div id="hr-error" class="pc-error" style="display:none;"></div>
+
+    </div>
+
+    <div class="pc-card" id="hr-result-card" style="display:none;">
+
+      <div class="pc-splits-title">
+        Your Heart Rate Zones
+        <span id="hr-method-label" class="pc-vdot-label"></span>
+      </div>
+
+      <div class="pc-zones-table" id="hr-zones-table"></div>
+
+      <p class="pc-zones-note" id="hr-note"></p>
+
+    </div>
+
+  </div>
+
 </div>
 
 <script src="js/pace-calculator.js"></script>
+<script type="module" src="js/heartZonesTool.js"></script>
 
 <script src="js/loadHeader.js"></script>
 

@@ -8,11 +8,11 @@
 
     <title>Free Pace Calculator | Southbound Coaching</title>
 
-    <meta name="description" content="A free pace calculator for runners: convert pace, time and distance, plan race-day splits and get training paces from a real result. No account needed.">
+    <meta name="description" content="Free pace calculator for runners: pace, time and distance, race splits, training paces from a real result and heart rate zones.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Southbound Coaching">
     <meta property="og:title" content="Free Pace Calculator | Southbound Coaching">
-    <meta property="og:description" content="A free pace calculator for runners: convert pace, time and distance, plan race-day splits and get training paces from a real result. No account needed.">
+    <meta property="og:description" content="Free pace calculator for runners: pace, time and distance, race splits, training paces from a real result and heart rate zones.">
     <meta property="og:url" content="https://southboundcoaching.com/pace.html">
     <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -40,7 +40,7 @@
         <section class="pub-hero">
             <div class="pub-hero-kicker">Free tool</div>
             <h1>Pace calculator</h1>
-            <p>Convert pace, time and distance, plan race-day splits, and get training paces from a real result. Works right here, no account needed, and nothing you type is saved or sent anywhere.</p>
+            <p>Convert pace, time and distance, plan race-day splits, get training paces from a real result and find your heart rate zones. Works right here, no account needed, and nothing you type is saved or sent anywhere.</p>
         </section>
 
         <!-- The same calculator as the app's Pace Calculator (pace-calculator.html): tests/publicTools.test.mjs keeps the two in step. -->
@@ -50,6 +50,7 @@
     <button type="button" class="pc-tool-tab active" data-pc-tool="calculator">Pace Calculator</button>
     <button type="button" class="pc-tool-tab" data-pc-tool="splits">Race Splits</button>
     <button type="button" class="pc-tool-tab" data-pc-tool="zones">Training Zones</button>
+    <button type="button" class="pc-tool-tab" data-pc-tool="heart">Heart Rate</button>
   </div>
 
   <div class="pc-tool-panel active" data-pc-panel="calculator">
@@ -268,9 +269,55 @@
 
   </div>
 
+  <!-- Heart Rate Zones -->
+
+  <div class="pc-tool-panel" data-pc-panel="heart">
+
+    <div class="pc-card">
+
+      <div class="pc-field-row">
+
+        <div class="pc-field">
+          <label class="pc-field-label" for="hr-max">Max Heart Rate</label>
+          <input type="number" id="hr-max" inputmode="numeric" min="120" max="230" placeholder="e.g. 188" class="pc-input">
         </div>
 
-        <section class="pub-section pub-interest" id="interestPicker" data-watch="#pc-result-card, #rs-result-card, #tz-result-card" aria-labelledby="interestTitle" hidden>
+        <div class="pc-field">
+          <label class="pc-field-label" for="hr-rest">Resting Heart Rate <span class="pc-optional">(optional)</span></label>
+          <input type="number" id="hr-rest" inputmode="numeric" min="30" max="110" placeholder="e.g. 52" class="pc-input">
+        </div>
+
+      </div>
+
+      <div class="pc-field pc-hr-age">
+        <label class="pc-field-label" for="hr-age">Don't know your max? Enter your age to estimate it</label>
+        <input type="number" id="hr-age" inputmode="numeric" min="10" max="100" placeholder="Age" class="pc-input">
+      </div>
+
+      <button type="button" id="hr-calc-btn" class="pc-calc-btn">Calculate Heart Rate Zones</button>
+
+      <div id="hr-error" class="pc-error" style="display:none;"></div>
+
+    </div>
+
+    <div class="pc-card" id="hr-result-card" style="display:none;">
+
+      <div class="pc-splits-title">
+        Your Heart Rate Zones
+        <span id="hr-method-label" class="pc-vdot-label"></span>
+      </div>
+
+      <div class="pc-zones-table" id="hr-zones-table"></div>
+
+      <p class="pc-zones-note" id="hr-note"></p>
+
+    </div>
+
+  </div>
+
+        </div>
+
+        <section class="pub-section pub-interest" id="interestPicker" data-watch="#pc-result-card, #rs-result-card, #tz-result-card, #hr-result-card" aria-labelledby="interestTitle" hidden>
             <h2 id="interestTitle">What are you training for?</h2>
             <p>Pick one and I'll start your application with it chosen. It takes about a minute and needs no account.</p>
             <div class="pub-interest-row">
@@ -301,6 +348,7 @@
     </footer>
 
     <script src="js/pace-calculator.js"></script>
+    <script type="module" src="js/heartZonesTool.js"></script>
     <script type="module" src="js/icons.js"></script>
     <script type="module" src="js/loadPublicHeader.js"></script>
     <script type="module" src="js/interestPicker.js"></script>

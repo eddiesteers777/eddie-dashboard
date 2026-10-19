@@ -45,7 +45,7 @@ test("it watches the result of each calculator, and those elements exist", () =>
     const pace = read("pace.html");
     const watch = pace.match(/id="interestPicker" data-watch="([^"]+)"/)[1].split(",").map(s => s.trim());
     for (const sel of watch) assert.ok(pace.includes(`id="${sel.slice(1)}"`), `pace.html has ${sel}`);
-    assert.ok(watch.length === 3, "pace, race splits and training zones results");
+    assert.ok(watch.length === 4, "pace, race splits, training zones and heart rate results");
 });
 
 test("it never stores or sends anything", () => {

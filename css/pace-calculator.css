@@ -1157,12 +1157,21 @@ html{
 #pc-root .pc-vdot-label{ display:inline-block; margin-left:8px; padding:2px 9px; border-radius:999px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); font:600 11.5px/1.5 var(--font-mono); letter-spacing:.08em; vertical-align:middle; }
 #pc-root .pc-zones-note{ font-size:13.5px; line-height:1.55; }
 
+/* Heart Rate tab (js/heartZonesTool.js): the same ledger, with how each zone feels. */
+#pc-root .pc-hr-age{ margin:14px 0 18px; }
+#pc-root [data-pc-panel="heart"] .pc-input{ width:100%; max-width:200px; }
+#pc-root .pc-optional{ font-weight:500; color:var(--text-secondary); text-transform:none; letter-spacing:0; }
+#pc-root .pc-hr-feel{ display:block; margin-top:3px; font:400 13px/1.45 var(--font-body); color:var(--text-secondary); }
+#pc-root [data-pc-panel="heart"] .pc-zones-row{ align-items:flex-start; }
+#pc-root [data-pc-panel="heart"] .pc-zones-range{ white-space:nowrap; }
+
 @media (max-width:700px){
     #pc-root{ width:calc(100% - 32px); padding-top:12px; }
     #pc-root .pc-card,
     #pc-root .pc-result-card,
     #pc-root #rs-result-card,
-    #pc-root #tz-result-card{ padding:18px; }
+    #pc-root #tz-result-card,
+    #pc-root #hr-result-card{ padding:18px; }
     #pc-root .pc-solve-row,
     #pc-root .pc-unit-row{ gap:8px 12px; }
     #pc-root .pc-result-chip{ padding:2px 12px; }
