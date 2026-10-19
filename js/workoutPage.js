@@ -38,6 +38,7 @@ import { celebrateRun } from "./celebrate.js";
 import { contourParts, contourSvg, contourLabelsHtml } from "./workoutContour.js";
 import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
+import { garminWorkout, workoutSteps, fitFilename } from "./fitWorkout.js";
 import { renderEmojiText } from "./emoji.js";
 import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effortScale.js";
 import { draftKey, loadDraft, keepOrForget, clearDraft, sameValues } from "./formDraft.js";
@@ -235,7 +236,7 @@ function render() {
         ${fuelHtml()}
         ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}
         ${item && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="calendar">${icon("calendar")} Add to calendar</button>` : ""}
-        ${state.result ? "" : corosHtml()}`;
+        ${state.result ? "" : corosHtml() || garminHtml()}`;
     if (repsOpen) $("woExecution")?.querySelector(".ex-detail")?.setAttribute("open", "");
 }
 
@@ -252,6 +253,7 @@ $("woBody").addEventListener("click", async event => {
         return openChangeRequestDialog({ coach: { coachUid: state.program.coachUid, coachName: state.program.coachName }, planId: state.program.coachPlanId, date, dates: [date] });
     }
     if (act === "coros") return sendThisToCoros(btn);
+    if (act === "garmin") return saveForGarmin();
     if (act === "calendar") {
         const day = buildDay(date, weekInputs(), isoDate(new Date()));
         const items = day.items.filter(i => i.source?.programId === programId && i.kind === "run");
@@ -270,6 +272,30 @@ $("woBody").addEventListener("click", async event => {
         }
     }
 });
+
+// ---------- Save for Garmin (js/fitWorkout.js) ----------
+// A COROS athlete gets "Send to COROS" instead; everyone else can put the
+// run on a Garmin (or Wahoo) watch as a workout file.
+
+function garminHtml() {
+    if (isCorosConnected() || date < isoDate(new Date()) || !workoutSteps(state.day).length) return "";
+    return `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="garmin">${icon("download")} Save for a Garmin watch</button>`;
+}
+
+async function saveForGarmin() {
+    const g = garminWorkout(state.day, { title: title() });
+    if (!g) return;
+    const filename = fitFilename(date, title());
+    const url = URL.createObjectURL(new Blob([g.bytes], { type: "application/vnd.ant.fit" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    await sbAlert(`Saved as ${filename}. To put it on your watch:\n\n1. Plug your Garmin into a computer with its charging cable.\n2. Open the GARMIN drive, then the NewFiles folder.\n3. Copy the file in, then unplug the watch.\n\nIt shows on the watch under Training › Workouts. Steps with a pace alert you when you're off it.`, { title: "Garmin workout saved" });
+}
 
 // ---------- Send to COROS (js/corosSend.js) ----------
 

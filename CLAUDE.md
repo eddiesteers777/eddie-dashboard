@@ -66,6 +66,7 @@ Deep links: `?tab=pending`, `?tab=availability`, `?tab=review`, `?tab=coach`, re
 - **The coach's side must never open a client's private sync doc.** Client data reaches the coach only through explicitly shared projections (`sharedWearable*`, `sharedAthleteModel`) with the client's consent.
 - **Eddie's personal plan** (`js/marathonData.js`, Indianapolis, 3:05) shows for the coach only. Pages that render before the profile loads call `showsPersonalPlan()` (`js/role.js`); unknown role = client.
 - **Never commit a real FIT/GPX/Strava file:** they hold GPS routes (home).
+- **Garmin's FIT SDK (`@garmin/fitsdk`) is a dev-only test dependency.** Its license forbids publishing it: never copy it into the repo or load it on a page. Southbound reads and writes FIT with its own code (`js/fitParse.js`, `js/fitWorkout.js`).
 
 ### Services, navigation, access
 - **`js/services.js` is the one service list** (`online_coaching`, `running`, `strength`, `soccer_1on1`, `soccer_group`) and `capabilitiesFor(...)` decides what each account gets. A test fails if another file keeps its own list or the rules' lists drift.
