@@ -246,6 +246,7 @@
     "js/programs.js",
     "js/programsView.js",
     "js/progressView.js",
+    "js/publicTour.js",
     "js/raceBacktest.js",
     "js/raceCapability.js",
     "js/raceCapabilityCard.js",

@@ -225,22 +225,30 @@
             </div>
         </section>
 
-        <section class="pub-section">
-            <div class="pub-feature-split pub-feature-reverse">
+        <section class="pub-section" id="tour">
+            <div class="pub-feature-split pub-feature-reverse pub-tour">
                 <div class="pub-feature-text">
                     <div class="pub-hero-kicker">Everything In One App</div>
                     <h2>Your plan, in your pocket.</h2>
-                    <p>Every client gets the Southbound app — install it straight to your phone's home screen, no app store needed.</p>
-                    <ul class="pub-feature-list">
-                        <li><span data-icon="calendar"></span><span><strong>Your plan, day by day.</strong> See exactly what's on for today and the week ahead.</span></li>
-                        <li><span data-icon="star"></span><span><strong>Weekly check-ins.</strong> Tell me how the week went; get feedback and plan updates back.</span></li>
-                        <li><span data-icon="clock"></span><span><strong>Book sessions.</strong> Request 1-on-1 or group times straight from my availability.</span></li>
-                        <li><span data-icon="trendingUp"></span><span><strong>Track progress.</strong> Runs, lifts, and nutrition logged in one place.</span></li>
-                    </ul>
+                    <p>Every client gets the Southbound app. Install it straight to your phone's home screen, no app store needed. Pick a moment and watch it play.</p>
+                    <div class="pub-tour-tabs" role="tablist" aria-label="App tour">
+                        <button type="button" role="tab" class="pub-tour-tab" data-clip="checkin" aria-selected="true">Morning check-in</button>
+                        <button type="button" role="tab" class="pub-tour-tab" data-clip="wins" aria-selected="false">Wins and habits</button>
+                        <button type="button" role="tab" class="pub-tour-tab" data-clip="plans" aria-selected="false">Plans</button>
+                        <button type="button" role="tab" class="pub-tour-tab" data-clip="live" aria-selected="false">Live workouts</button>
+                        <button type="button" role="tab" class="pub-tour-tab" data-clip="soccer" aria-selected="false">Soccer</button>
+                        <button type="button" role="tab" class="pub-tour-tab" data-clip="fuel" aria-selected="false">Fueling</button>
+                        <button type="button" role="tab" class="pub-tour-tab" data-clip="pace" aria-selected="false">Pace</button>
+                    </div>
+                    <p class="pub-tour-blurb" id="tourBlurb" aria-live="polite">Thirty seconds on how you feel becomes a readiness score, and your coach sees it too.</p>
                     <a href="install.html" class="pub-btn-primary"><span data-icon="download"></span>Get the App</a>
                 </div>
-                <div class="pub-photo pub-app-mock">
-                    <img src="brand/sb-tile.svg" alt="Southbound app icon">
+                <div class="pub-tour-stage">
+                    <div class="pub-tour-phone">
+                        <video id="tourVideo" muted playsinline preload="none" width="440" height="928" poster="videos/tour/checkin.webp" src="videos/tour/checkin.mp4" aria-label="A short video of the Southbound app"></video>
+                        <button type="button" class="pub-tour-play" id="tourPlay" aria-label="Play the video"><span data-icon="play"></span></button>
+                    </div>
+                    <p class="pub-tour-note">Example screens and data</p>
                 </div>
             </div>
         </section>
@@ -300,6 +308,7 @@
 
     <script type="module" src="js/icons.js"></script>
     <script type="module" src="js/loadPublicHeader.js"></script>
+    <script type="module" src="js/publicTour.js"></script>
 
 </body>
 
