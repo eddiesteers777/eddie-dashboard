@@ -304,8 +304,29 @@ def make_shell(body, rig, pre, name, mat, *, zmin=None, zmax=None, arms="remove"
     bm.to_mesh(o.data); bm.free(); o.data.update()
     o.data.materials.clear(); o.data.materials.append(mat)
     zs = [v.co.z for v in o.data.vertices]
-    print('SHELL', name, 'z', round(min(zs), 3), round(max(zs), 3), 'verts', len(zs))
     return o
+
+def feather_edge(obj, width):
+    """Fade a mesh's alpha to zero over `width` metres in from its open edge (vertex colour alpha), so a hairline
+    melts into the skin instead of ending on a hard line. Distance is measured along the surface."""
+    import heapq
+    me = obj.data
+    bm = bmesh.new(); bm.from_mesh(me); bm.verts.ensure_lookup_table()
+    mw = obj.matrix_world
+    dist = [1e9] * len(bm.verts); heap = []
+    for v in bm.verts:
+        if any(e.is_boundary for e in v.link_edges): dist[v.index] = 0.0; heap.append((0.0, v.index))
+    heapq.heapify(heap)
+    while heap:
+        d, i = heapq.heappop(heap)
+        if d > dist[i] or d > width: continue
+        for e in bm.verts[i].link_edges:
+            o = e.other_vert(bm.verts[i]); nd = d + (mw @ o.co - mw @ bm.verts[i].co).length
+            if nd < dist[o.index]: dist[o.index] = nd; heapq.heappush(heap, (nd, o.index))
+    bm.free()
+    ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    for v in me.vertices:
+        t = min(1.0, dist[v.index] / width); ca.data[v.index].color = (1.0, 1.0, 1.0, t * t * (3 - 2 * t))
 
 def thicken(o, inner, t=0.0035):
     """Give a cloth shell real thickness (inward, so the outside stays put) with
@@ -364,6 +385,8 @@ for sex, spec in ATHLETES.items():
     for path, kind in FACE + [(spec["hair"], "Hair")]:
         obj = HumanService.add_mhclo_asset(os.path.join(DATA, path), body, asset_type=kind, subdiv_levels=0, material_type="MAKESKIN")
         simple_textured(obj, alpha=kind != "Eyes")
+        if kind == "Hair": hair_obj = obj
+    feather_edge(hair_obj, 0.014)
     kit = spec["kit"]
     garments = []
     neck_z = bone_z(rig, pre + "Neck")

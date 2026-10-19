@@ -90,9 +90,10 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     // Renderer, scene, light: the same set-up the review renders use.
     let renderer;
     try {
-        renderer = new THREE.WebGLRenderer({ antialias: (window.devicePixelRatio || 1) < 2, powerPreference: "low-power" });
+        renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "low-power" });
     } catch { return fail("no-webgl"); }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    // Smoothing comes from drawing larger than shown (multisampling left dark specks on the skin edges): the page scales it down.
+    renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio || 1, 1) * 1.6, 2.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.shadowMap.enabled = true;
@@ -163,7 +164,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
                 const clip = src.animations.find(a => a.name === entry.clip) || src.animations[0];
                 if (!clip) throw new Error("no clip");
                 const root = gltf.scene;
-                root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; for (const m of [].concat(o.material)) if (m.alphaTest > 0) m.alphaToCoverage = true; } });
+                root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; for (const m of [].concat(o.material)) if (m.alphaTest > 0) { m.transparent = true; m.alphaTest = 0.04; } } });
                 const mixer = new THREE.AnimationMixer(root);
                 const action = mixer.clipAction(clip);
                 action.setLoop(THREE.LoopRepeat, Infinity).play();
