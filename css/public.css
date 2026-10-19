@@ -1224,3 +1224,88 @@ body.pub-body{ padding-left:0; }
 .pub-bio{ padding-top:0; }
 .pub-bio-text{ font-size:18px; max-width:36em; }
 .pub-hero + .pub-section{ padding-top:clamp(24px,3vw,40px); }
+
+/* ==========================================================
+   FORMS (2026-10-19, "Full-screen question"): one huge question over a dimmed
+   photo, big answer tiles, and a Back/Next bar fixed to the bottom.
+   Apply (js/apply.js + css/intake.css) and Contact. Scoped, so the client's
+   guided profile, which shares intake.css, is unchanged.
+   ========================================================== */
+.pub-stage-form{ position:relative; min-height:calc(100svh - 69px); display:flex; flex-direction:column; align-items:center; padding:clamp(24px,4vw,48px) var(--pub-gutter) 140px; overflow:hidden; isolation:isolate; }
+.pub-stage-form-bg{ position:absolute; inset:0; z-index:-2; }
+.pub-stage-form-bg img{ width:100%; height:100%; object-fit:cover; object-position:60% 35%; opacity:.3; filter:saturate(.8); }
+.pub-stage-form::before{ content:""; position:absolute; inset:0; z-index:-1; background:radial-gradient(ellipse at 50% 30%,color-mix(in srgb,var(--bg) 40%,transparent),var(--bg) 78%); }
+.pub-stage-form-inner{ width:100%; max-width:920px; }
+.pub-stage-form-head{ text-align:center; margin:clamp(8px,3vw,32px) 0 clamp(24px,4vw,40px); }
+.pub-stage-form-head h1{ font-family:var(--font-display); font-weight:900; text-transform:uppercase; line-height:.9; font-size:clamp(48px,7vw,104px); margin:0; text-wrap:balance; }
+.pub-stage-form-head p{ color:var(--text-secondary); font-size:18px; line-height:1.5; max-width:30em; margin:16px auto 0; }
+.pub-stage-form .pub-apply-foot,.pub-stage-form .pub-contact-alt{ text-align:center; margin-top:36px; }
+
+/* Apply: the guided card */
+.pub-apply-guide{ max-width:none; margin:0; }
+.pub-apply-guide .ig-card{ background:none; border:0; padding:0; border-radius:0; text-align:center; }
+.pub-apply-guide .ig-progress{ display:flex; flex-direction:column; width:min(560px,100%); margin:0 auto clamp(32px,6vw,56px); }
+.pub-apply-guide .ig-progress-text{ order:2; margin:16px 0 0; font:600 12px/1 var(--font-mono); letter-spacing:.12em; color:var(--primary); }
+.pub-apply-guide .ig-bar{
+    order:1; height:4px; border-radius:0; background:rgba(242,237,225,.16);
+    -webkit-mask:repeating-linear-gradient(90deg,#000 0 calc(100%/9 - 6px),transparent 0 calc(100%/9)); mask:repeating-linear-gradient(90deg,#000 0 calc(100%/9 - 6px),transparent 0 calc(100%/9));
+}
+.pub-apply-guide .ig-bar span{ border-radius:0; min-width:0; }
+.pub-apply-guide .ig-title{ font-weight:900; font-size:clamp(44px,7vw,100px); line-height:.9; letter-spacing:-.01em; text-wrap:balance; max-width:12em; margin:0 auto; }
+.pub-apply-guide .ig-sub{ font-size:18px; margin:16px auto 0; max-width:30em; }
+.pub-apply-guide .ig-body{ margin:clamp(24px,4vw,40px) auto 0; gap:14px; max-width:620px; text-align:left; }
+.pub-apply-guide .ig-body:has(.ig-grid){ max-width:900px; }
+.pub-apply-guide .ig-q{ font-size:15px; margin-top:10px; }
+.pub-apply-guide .ig-input{
+    background:color-mix(in srgb,var(--surface) 70%,transparent); border:1px solid rgba(242,237,225,.22); border-radius:var(--radius-md);
+    padding:12px 16px; font-size:20px; min-height:56px;
+}
+.pub-apply-guide .ig-input:focus{ border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); }
+.pub-apply-guide textarea.ig-input{ min-height:140px; }
+.pub-apply-guide .ig-chips{ gap:10px; justify-content:center; }
+.pub-apply-guide .ig-chip{ border-radius:var(--radius-sm); min-height:52px; padding:0 20px; font-size:17px; background:color-mix(in srgb,var(--surface) 70%,transparent); border:1px solid rgba(242,237,225,.22); }
+.pub-apply-guide .ig-chip.is-on{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); font-weight:700; }
+.pub-apply-guide .ig-chip.is-on .ui-icon{ color:var(--on-primary); }
+.pub-apply-guide .ig-grid{ grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+.pub-apply-guide .ig-chip.is-big{
+    position:relative; flex-direction:column; align-items:flex-start; justify-content:flex-end; min-height:120px; padding:20px 22px;
+    border:1px solid rgba(242,237,225,.22); border-radius:var(--radius); background:color-mix(in srgb,var(--surface) 72%,transparent);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); text-align:left;
+}
+.pub-apply-guide .ig-chip.is-big span{ font-family:var(--font-display); text-transform:uppercase; font-weight:800; font-size:clamp(26px,2.6vw,32px); line-height:1; }
+.pub-apply-guide .ig-chip.is-big::after{ content:""; position:absolute; top:16px; right:16px; width:24px; height:24px; border:1.5px solid rgba(242,237,225,.35); border-radius:6px; }
+.pub-apply-guide .ig-chip.is-big.is-on{ background:rgba(214,185,142,.16); color:var(--primary); border:1px solid var(--primary); box-shadow:inset 0 0 0 1px var(--primary); font-weight:600; }
+.pub-apply-guide .ig-chip.is-big.is-on::after{ background:var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F2019' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/16px no-repeat; border-color:var(--primary); }
+/* Back / Next bar, fixed to the bottom */
+.pub-apply-guide .ig-foot{
+    position:fixed; left:0; right:0; bottom:0; z-index:900; margin:0; padding:14px var(--pub-gutter); border-top:1px solid var(--border);
+    background:color-mix(in srgb,var(--bg) 92%,transparent); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+}
+.pub-apply-guide .ig-foot .sb-btn-primary{ min-width:180px; min-height:52px; }
+.pub-apply-guide .ig-status{ text-align:center; }
+.pub-apply-guide .ig-review-section h3{ font-family:var(--font-mono); }
+.pub-apply-guide .ig-review{ text-align:left; max-width:700px; margin:0 auto; }
+
+/* Contact: the same stage, one narrow form */
+.pub-stage-form-narrow{ max-width:640px; }
+.pub-stage-form-narrow .pub-apply-card{ background:none; border:0; padding:0; max-width:none; margin:0; }
+.pub-stage-form .pub-input,
+.pub-stage-form .pub-apply-card textarea{
+    background:color-mix(in srgb,var(--surface) 70%,transparent); border:1px solid rgba(242,237,225,.22); border-radius:var(--radius-md); padding:12px 16px; font-size:18px; min-height:56px;
+}
+.pub-stage-form .pub-input:focus,
+.pub-stage-form .pub-apply-card textarea:focus{ border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); outline:none; }
+.pub-stage-form .pub-apply-card textarea{ min-height:140px; }
+.pub-stage-form .pub-field-label{ font:600 12px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-top:22px; }
+.pub-stage-form .pub-service-check{ border-radius:var(--radius-sm); min-height:52px; padding:0 20px; font-size:17px; }
+.pub-stage-form .pub-service-check:has(input:checked){ background:var(--primary); color:var(--on-primary); font-weight:700; }
+.pub-stage-form #contactSubmitBtn{ margin-top:28px; }
+
+@media(max-width:700px){
+    .pub-stage-form{ padding-bottom:120px; }
+    .pub-apply-guide .ig-chip.is-big{ min-height:64px; flex-direction:row; align-items:center; justify-content:flex-start; padding:0 56px 0 18px; }
+    .pub-apply-guide .ig-chip.is-big::after{ top:50%; transform:translateY(-50%); }
+    .pub-apply-guide .ig-grid{ grid-template-columns:1fr; gap:10px; }
+    .pub-apply-guide .ig-foot .sb-btn-primary{ flex:1; }
+    .pub-stage-form-head h1{ font-size:clamp(44px,13vw,64px); }
+}
