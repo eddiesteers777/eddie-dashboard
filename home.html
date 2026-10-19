@@ -134,28 +134,58 @@
     <!-- Photos live in images/ -- see images/README.md for the exact
          filenames. A missing photo shows a branded placeholder. -->
 
-    <main class="pub-page">
+    <main class="pub-page" id="main">
 
-        <!-- Direction A (2026-10-14): the golden-hour photo fills the hero, the words sit over its dark side. -->
-        <section class="pub-hero pub-hero-poster">
-            <div class="pub-hero-poster-photo" aria-hidden="true">
-                <img src="images/eddie-hero.jpg" srcset="images/eddie-hero-560.webp 560w, images/eddie-hero-840.webp 840w, images/eddie-hero-1120.webp 1120w" sizes="(max-width: 900px) 100vw, 1120px" width="1120" height="1400" fetchpriority="high" decoding="async" alt="" onerror="this.remove()">
-            </div>
-            <div class="pub-hero-poster-text">
+        <!-- Direction B "Your Week" (2026-10-19): words, then the product itself (an example screen, labelled). -->
+        <section class="pub-hero pub-stage">
+            <div class="pub-stage-copy">
                 <div class="pub-hero-kicker pub-tagline">Faster <i></i> Stronger <i></i> Smarter</div>
                 <h1>Training built around you.</h1>
-                <p>Online coaching, running and strength programming, and 1-on-1 or group soccer training — all through one coach, one plan, one app.</p>
+                <p>A coach who writes your week, reads how it went, and changes it by hand. Running, strength and soccer, all in one app.</p>
                 <div class="pub-hero-actions">
-                    <a href="apply.html" class="pub-btn-primary">Apply to Train With Me</a>
-                    <a href="packages.html" class="pub-btn-secondary">See Packages</a>
+                    <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+                    <a href="packages.html" class="pub-btn-secondary">See packages</a>
                 </div>
+            </div>
+            <div class="pub-stage-media">
+                <div class="pub-stage-photo" aria-hidden="true">
+                    <img src="images/eddie-hero.jpg" srcset="images/eddie-hero-560.webp 560w, images/eddie-hero-840.webp 840w, images/eddie-hero-1120.webp 1120w" sizes="(max-width: 900px) 100vw, 50vw" width="1120" height="1400" fetchpriority="high" decoding="async" alt="" onerror="this.remove()">
+                </div>
+                <div class="pub-device" role="img" aria-label="Example app screen: today's workout, 8 by 400 metres, with a note from the coach">
+                    <div class="pub-device-kicker">Today &middot; Tue</div>
+                    <div class="pub-device-title">8 &times; 400 m</div>
+                    <div class="pub-device-sub">@ 5K pace &middot; 90 s jog</div>
+                    <div class="pub-device-rule"></div>
+                    <div class="pub-device-step"><span>Warm-up</span><span>15 min easy</span></div>
+                    <div class="pub-device-step"><span>8 &times; 400 m</span><span>5K pace</span></div>
+                    <div class="pub-device-step"><span>Cool-down</span><span>10 min</span></div>
+                    <div class="pub-device-note"><b>FROM YOUR COACH</b>Sunday looked strong. Keep the jog recoveries truly easy today.</div>
+                    <div class="pub-device-go">Start workout</div>
+                </div>
+                <span class="pub-stage-label">Example screen</span>
             </div>
         </section>
 
+        <div class="pub-week-wrap">
+            <div class="pub-week-head">
+                <h2>A week with Southbound.</h2>
+                <p>Every session, check-in and booking lives in one plan, and your coach adjusts it as you go. An example week:</p>
+            </div>
+            <ol class="pub-week" aria-label="An example week of training">
+                <li class="pub-day"><div class="pub-day-name">Mon</div><h3>Strength</h3><p>Lower body</p></li>
+                <li class="pub-day is-today"><div class="pub-day-name">Tue</div><h3>Intervals</h3><p>8 &times; 400 m</p></li>
+                <li class="pub-day"><div class="pub-day-name">Wed</div><h3>Easy run</h3><p>Conversational pace</p></li>
+                <li class="pub-day"><div class="pub-day-name">Thu</div><h3>1-on-1 soccer</h3><p>Booked in the app</p></li>
+                <li class="pub-day is-rest"><div class="pub-day-name">Fri</div><h3>Rest</h3><p>Mobility</p></li>
+                <li class="pub-day"><div class="pub-day-name">Sat</div><h3>Long run</h3><p>Built for your race</p></li>
+                <li class="pub-day"><div class="pub-day-name">Sun</div><h3>Check-in</h3><p>Tell me how it went</p></li>
+            </ol>
+        </div>
+
         <section class="pub-section">
             <div class="pub-section-head">
-                <h2>What I Offer</h2>
-                <p>Pick what fits — everything runs through the same account once you're a client.</p>
+                <h2>Four ways to train.</h2>
+                <p>Pick what fits. Everything runs through the same account once you're a client.</p>
             </div>
             <div class="pub-offer-grid">
 
@@ -211,7 +241,7 @@
         </section>
 
         <section class="pub-section">
-            <div class="pub-feature-split">
+            <div class="pub-feature-split pub-coach">
                 <div class="pub-photo">
                     <img src="images/eddie-portrait.jpg" loading="lazy" decoding="async" alt="Eddie" onerror="this.remove()">
                     <span class="pub-photo-fallback" data-icon="user"></span>
@@ -239,8 +269,19 @@
                     </ul>
                     <a href="install.html" class="pub-btn-primary"><span data-icon="download"></span>Get the App</a>
                 </div>
-                <div class="pub-photo pub-app-mock">
-                    <img src="brand/sb-tile.svg" alt="Southbound app icon">
+                <div class="pub-app-device">
+                    <div class="pub-device pub-device-plain" role="img" aria-label="Example app screen: this week's plan with a check-in due Sunday">
+                        <div class="pub-device-kicker">This week &middot; 3 of 6 done</div>
+                        <div class="pub-device-title">Week 6</div>
+                        <div class="pub-device-sub">Build phase</div>
+                        <div class="pub-device-rule"></div>
+                        <div class="pub-device-step"><span>Mon &middot; Strength</span><span>Done</span></div>
+                        <div class="pub-device-step"><span>Tue &middot; Intervals</span><span>Done</span></div>
+                        <div class="pub-device-step"><span>Thu &middot; Soccer 1-on-1</span><span>6:00 pm</span></div>
+                        <div class="pub-device-step"><span>Sat &middot; Long run</span><span>16 km</span></div>
+                        <div class="pub-device-go">Sunday check-in</div>
+                    </div>
+                    <span class="pub-stage-label">Example screen</span>
                 </div>
             </div>
         </section>
@@ -259,25 +300,13 @@
 
         <section class="pub-section">
             <div class="pub-section-head">
-                <h2>How It Works</h2>
+                <h2>How it works.</h2>
             </div>
-            <div class="pub-grid">
-                <div class="pub-card">
-                    <div class="pub-card-icon" data-icon="edit"></div>
-                    <h3>1. Apply</h3>
-                    <p>Tell me what you're looking for and a little about your goals.</p>
-                </div>
-                <div class="pub-card">
-                    <div class="pub-card-icon" data-icon="checkCircle"></div>
-                    <h3>2. Get Approved</h3>
-                    <p>I review every application myself and follow up with next steps.</p>
-                </div>
-                <div class="pub-card">
-                    <div class="pub-card-icon" data-icon="trendingUp"></div>
-                    <h3>3. Train</h3>
-                    <p>Your account unlocks the plan, calendar, and tools for your services.</p>
-                </div>
-            </div>
+            <ol class="pub-flow">
+                <li><h3>1. Apply</h3><p>Tell me what you're looking for and a little about your goals.</p></li>
+                <li><h3>2. Get approved</h3><p>I review every application myself and follow up with next steps.</p></li>
+                <li><h3>3. Train</h3><p>Your account unlocks the plan, calendar, and tools for your services.</p></li>
+            </ol>
         </section>
 
         <section class="pub-section">

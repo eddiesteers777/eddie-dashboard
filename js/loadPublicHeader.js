@@ -16,12 +16,23 @@ fetch("components/publicHeader.html")
         mount.innerHTML = html;
 
         const page = window.location.pathname.split("/").pop() || "home.html";
-        document.querySelectorAll(".pub-nav-link").forEach(link => {
+        document.querySelectorAll(".pub-nav-link, .pub-nav-cta").forEach(link => {
             if (link.dataset.page === page) link.classList.add("active");
         });
 
         // The partial lands after icons.js's own load-time pass.
         import("./icons.js").then(m => m.hydrate()).catch(() => {});
+
+        // Phone menu: the links fold into a sheet under the bar.
+        const menuBtn = document.getElementById("pubMenuBtn");
+        const nav = document.querySelector(".pub-navbar");
+        const setMenu = open => {
+            nav.classList.toggle("pub-nav-open", open);
+            menuBtn.setAttribute("aria-expanded", String(open));
+        };
+        menuBtn.addEventListener("click", () => setMenu(!nav.classList.contains("pub-nav-open")));
+        document.addEventListener("keydown", e => { if (e.key === "Escape") setMenu(false); });
+        document.getElementById("pubNavLinks").addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
 
         const signInBtn = document.getElementById("pubSignInBtn");
         if (!signInBtn) return;
