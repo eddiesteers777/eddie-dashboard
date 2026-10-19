@@ -90,9 +90,10 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     // Renderer, scene, light: the same set-up the review renders use.
     let renderer;
     try {
-        renderer = new THREE.WebGLRenderer({ antialias: (window.devicePixelRatio || 1) < 2, powerPreference: "low-power" });
+        renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "low-power" });
     } catch { return fail("no-webgl"); }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    // Smoothing comes from drawing larger than shown (multisampling left dark specks on the skin edges): the page scales it down.
+    renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio || 1, 1) * 1.6, 2.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.shadowMap.enabled = true;
@@ -104,7 +105,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b0a2, 1.4));
     const key = new THREE.DirectionalLight(0xfff4e6, 2.6);
     key.position.set(2.5, 5, 3.5); key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+    key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.045;
     Object.assign(key.shadow.camera, { left: -1.4, right: 1.4, top: 2.2, bottom: -0.4, near: 1, far: 12 });
     scene.add(key);
     const rim = new THREE.DirectionalLight(0xdfe9ff, 1.3); rim.position.set(-3, 3.5, -3.5); scene.add(rim);
@@ -151,27 +152,32 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
 
     function load(s) {
         const url = modelUrl(entry, s, new URL(base, location.href));
-        if (!loaded.has(url)) {
-            loaded.set(url, loader.loadAsync(url, e => {
-                if (e.total) $("[data-loading-text]").textContent = `Loading the athlete · ${Math.round(e.loaded / e.total * 100)}%`;
-            }).then(gltf => {
-                const clip = gltf.animations.find(a => a.name === entry.clip) || gltf.animations[0];
+        const motionUrl = entry.motions?.[s] ? new URL(entry.motions[s], new URL(base, location.href)).href : null;
+        const key = url + "|" + motionUrl;
+        if (!loaded.has(key)) {
+            // The athlete (shared by every exercise, cached by the browser) and this exercise's small motion file.
+            loaded.set(key, Promise.all([
+                loader.loadAsync(url, e => { if (e.total) $("[data-loading-text]").textContent = `Loading the athlete · ${Math.round(e.loaded / e.total * 100)}%`; }),
+                motionUrl ? loader.loadAsync(motionUrl) : null
+            ]).then(([gltf, motion]) => {
+                const src = motion || gltf;
+                const clip = src.animations.find(a => a.name === entry.clip) || src.animations[0];
                 if (!clip) throw new Error("no clip");
                 const root = gltf.scene;
-                root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; for (const m of [].concat(o.material)) if (m.alphaTest > 0) m.alphaToCoverage = true; } });
+                root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; for (const m of [].concat(o.material)) if (m.alphaTest > 0) { m.transparent = true; m.alphaTest = 0.04; } } });
                 const mixer = new THREE.AnimationMixer(root);
                 const action = mixer.clipAction(clip);
                 action.setLoop(THREE.LoopRepeat, Infinity).play();
                 mixer.update(0);
-                // Height from the head bone (a skinned mesh's box ignores the rig's scale).
+                // Height from the head bone at rest (a skinned mesh's box ignores the rig's scale).
                 let head = null;
                 root.traverse(o => { if (o.isBone && /Head$/.test(o.name)) head = o; });
                 const height = head ? head.getWorldPosition(new THREE.Vector3()).y + 0.13 : 1.75;
                 return { scene: root, mixer, action, height: Math.min(2.2, Math.max(1.4, height)) };
             }));
-            loaded.get(url).catch(() => loaded.delete(url));
+            loaded.get(key).catch(() => loaded.delete(key));
         }
-        return loaded.get(url);
+        return loaded.get(key);
     }
 
     async function show(s) {

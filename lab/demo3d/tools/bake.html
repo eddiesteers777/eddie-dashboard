@@ -51,19 +51,24 @@ function sample() {
     for (const b of bones) {
         const vals = rotTracks.get(b);
         const moving = vals.some((v, k) => Math.abs(v - vals[k % 4]) > 1e-5);
+        // A held pose (curled fingers) is two keys, so the athlete file stays in the true rest pose.
         if (moving) tracks.push(new THREE.QuaternionKeyframeTrack(`${b.name}.quaternion`, times, vals));
-        else { b.quaternion.fromArray(vals.slice(0, 4)); } // a held pose (fingers) goes into the rest pose
+        else tracks.push(new THREE.QuaternionKeyframeTrack(`${b.name}.quaternion`, [0, motion.seconds], [...vals.slice(0, 4), ...vals.slice(0, 4)]));
     }
     tracks.push(new THREE.VectorKeyframeTrack(`${rig.b.Hips.name}.position`, times, hipPos));
     return new THREE.AnimationClip(motion.id, motion.seconds, tracks);
 }
 
-window.bake = async () => {
+const b64 = glb => { let s = ""; const u = new Uint8Array(glb); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); };
+// The athlete once per sex (rest pose, no motion) ...
+window.bakeAthlete = async () => { rig.reset(); return b64(await new GLTFExporter().parseAsync(model, { binary: true, onlyVisible: true })); };
+// ... and a small file per exercise: just the skeleton's names and the clip (bones are matched by name).
+window.bakeMotion = async () => {
     const clip = sample();
-    const glb = await new GLTFExporter().parseAsync(model, { binary: true, animations: [clip], onlyVisible: true });
-    let s = ""; const u = new Uint8Array(glb);
-    for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000));
-    return btoa(s);
+    const copy = model.clone(true);
+    const meshes = []; copy.traverse(o => { if (o.isMesh || o.isSkinnedMesh) meshes.push(o); });
+    for (const m of meshes) m.parent.remove(m);
+    return b64(await new GLTFExporter().parseAsync(copy, { binary: true, animations: [clip], onlyVisible: true }));
 };
 
 // Joint positions over the loop for the quality review (tools/qa.mjs).
@@ -94,11 +99,11 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMa
 model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
 scene.add(model);
 const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
-window.shot = (t, yaw = 35, pitch = 8, dist = 4.6, ty = 0.85) => {
+window.shot = (t, yaw = 35, pitch = 8, dist = 4.6, ty = 0.85, tz = 0) => {
     rig.reset(); motion.pose(rig, t); model.updateMatrixWorld(true);
     const y = yaw * Math.PI / 180, p = pitch * Math.PI / 180;
-    cam.position.set(Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, Math.cos(y) * Math.cos(p) * dist);
-    cam.lookAt(0, ty, 0);
+    cam.position.set(Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, tz + Math.cos(y) * Math.cos(p) * dist);
+    cam.lookAt(0, ty, tz);
     renderer.render(scene, cam);
     return renderer.domElement.toDataURL("image/png");
 };

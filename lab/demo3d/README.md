@@ -9,7 +9,8 @@ Free, branded 3D demonstrations: a male and a female athlete in Southbound kit d
 ```
 tools/build_athletes.py  (Blender + MPFB, once)   ->  athlete-male.glb, athlete-female.glb   (bodies, kit, rig; no motion)
 tools/motions/<name>.js  (our own motion)          \
-tools/bake.mjs + bake.html (headless Chromium)      ->  assets/<exercise>-<sex>.glb            (athlete + looping clip)
+tools/bake.mjs + bake.html (headless Chromium)      ->  assets/athlete-<sex>.glb               (the athlete, once, shared)
+                                                     ->  assets/<exercise>-<sex>.motion.glb     (the looping clip, about 100–150 KB)
                                                      ->  /tmp/demo3d-review/*.png, *.track.json (review frames, joint paths)
 tools/qa.mjs + qa.js     (movement checks)          ->  assets/<exercise>-<sex>.qa.json
 exercises.json           (metadata, status, review) ->  demo3d.js (player)  ->  index.html (lab page)
@@ -48,6 +49,6 @@ Floor exercises set their own camera framing with `"stage": {"height", "span", "
 
 ## Known limits of the prototype
 
-- About 3.4 MB (male) and 4.0 MB (female) per exercise, because each GLB carries the whole athlete. For a library, split them: one athlete file per sex (cached once) plus a small animation file per exercise (about 100–200 KB).
+- The athlete files are 3.4 MB (male) and 4.0 MB (female), downloaded once and cached; each exercise adds only a 100–150 KB motion file.
 - Hair is a cut-out card (no strands); skin is a single texture with no detail maps. Good on a phone, not film quality.
 - Tested in headless Chromium with software graphics. Needs a pass on a real iPhone and an Android phone before it ships.

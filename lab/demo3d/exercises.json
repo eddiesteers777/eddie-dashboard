@@ -11,8 +11,8 @@
         "Squats"
       ],
       "models": {
-        "male": "assets/bodyweight-squat-male.glb",
-        "female": "assets/bodyweight-squat-female.glb"
+        "male": "assets/athlete-male.glb",
+        "female": "assets/athlete-female.glb"
       },
       "clip": "bodyweight-squat",
       "seconds": 6.4,
@@ -47,6 +47,10 @@
         "approvedBy": null,
         "approvedOn": null,
         "notes": ""
+      },
+      "motions": {
+        "male": "assets/bodyweight-squat-male.motion.glb",
+        "female": "assets/bodyweight-squat-female.motion.glb"
       }
     },
     {
@@ -59,8 +63,8 @@
         "Pushups"
       ],
       "models": {
-        "male": "assets/push-up-male.glb",
-        "female": "assets/push-up-female.glb"
+        "male": "assets/athlete-male.glb",
+        "female": "assets/athlete-female.glb"
       },
       "clip": "push-up",
       "seconds": 13.5,
@@ -100,6 +104,10 @@
         "approvedBy": null,
         "approvedOn": null,
         "notes": ""
+      },
+      "motions": {
+        "male": "assets/push-up-male.motion.glb",
+        "female": "assets/push-up-female.motion.glb"
       }
     }
   ]
