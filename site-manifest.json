@@ -206,6 +206,7 @@
     "js/messageView.js",
     "js/messages.js",
     "js/messagesPage.js",
+    "js/monthModel.js",
     "js/muscleMap.js",
     "js/myPlan.js",
     "js/navAccess.js",

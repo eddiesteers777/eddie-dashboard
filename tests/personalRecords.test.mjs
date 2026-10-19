@@ -1,7 +1,7 @@
 // Unit tests for personal records from your runs (js/personalRecords.js). Run: npm run test:static
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { personalRecords, parseTime, formatTime } from "../js/personalRecords.js";
+import { personalRecords, podiumOf, parseTime, formatTime } from "../js/personalRecords.js";
 
 const M = 1609.344;
 const acts = {
@@ -42,4 +42,30 @@ test("hiding a found time shows the next fastest; untyped text stays as written"
     const none = Object.fromEntries(personalRecords([], {}, { "5k": "under 20" }).map(p => [p.id, p]));
     assert.deepEqual([none["5k"].text, none["5k"].source], ["under 20", "typed"]);
     assert.deepEqual([none.mile.text, none.mile.source], [null, null]);
+});
+
+test("the podium: top three, one per day, the same run found twice counts once", () => {
+    const found = [
+        { sec: 1150, date: "2026-09-13", name: "Parkrun", source: "run", candidate: "r:c1" },
+        { sec: 1152, date: "2026-09-13", name: "Parkrun", source: "effort", candidate: "e:x" },   // same day, slower reading
+        { sec: 1180, date: "2025-04-02", name: "Spring 5K", source: "run", candidate: "r:c2" },
+        { sec: 1210, date: "2024-10-12", name: "Fall 5K", source: "run", candidate: "r:c3" },
+        { sec: 1300, date: "2023-05-01", name: "Slow 5K", source: "run", candidate: "r:c4" }
+    ];
+    const podium = podiumOf(found);
+    assert.deepEqual(podium.map(p => [p.rank, p.text, p.date]), [[1, "19:10", "2026-09-13"], [2, "19:40", "2025-04-02"], [3, "20:10", "2024-10-12"]]);
+});
+
+test("the podium: a typed time joins only when no run backs it up", () => {
+    const found = [{ sec: 1150, date: "2026-09-13", name: "Parkrun", source: "run", candidate: "r:c1" }];
+    assert.equal(podiumOf(found, 1150).length, 1, "the same time typed in is not a second medal");
+    const withTyped = podiumOf(found, 1100);
+    assert.deepEqual(withTyped.map(p => [p.rank, p.text, p.typed]), [[1, "18:20", true], [2, "19:10", false]]);
+    assert.deepEqual(podiumOf([], null), []);
+});
+
+test("personalRecords hands each distance its podium, hidden times left out", () => {
+    const pr = Object.fromEntries(personalRecords(runs, acts, { mile: "", _hidden: { mile: ["e:f2"] } }).map(p => [p.id, p]));
+    assert.ok(pr.mile.podium.every(p => p.text !== "5:22"), "the hidden mile is not on the podium");
+    assert.deepEqual(pr["5k"].podium.map(p => p.rank), pr["5k"].podium.map((_, i) => i + 1));
 });
