@@ -28,11 +28,11 @@ function straightBody(rig, a, toeZ) {
             const L = (rig.len.thigh + rig.len.shin) * 0.997;
             const ankle = hip.clone().add(rot(R, V(sx * -0.012, -L, 0)));
             rig.limb(side, "leg", ankle, ankle.clone().add(rot(R, V(0, 0.4, 1))));
-            rig.aimAt(side + "Foot", rot(R, V(0, -0.1, 1)).normalize(), V(1, 0, 0));
-            rig.aimAt(side + "ToeBase", V(0, -0.05, 1).normalize(), V(1, 0, 0));
+            rig.aimAt(side + "Foot", V(0, -1, 0.45).normalize(), V(1, 0, 0));
+            rig.aimAt(side + "ToeBase", V(0, -0.3, 1).normalize(), V(1, 0, 0));
         }
         const toe = rig.wp("LeftToeBase");
-        pos = pos.clone().add(V(0, FLOOR + 0.022 - toe.y, toeZ - toe.z));
+        pos = pos.clone().add(V(0, FLOOR + 0.052 - toe.y, toeZ - toe.z));
     }
 }
 const shoulderY = rig => (rig.wp("LeftArm").y + rig.wp("RightArm").y) / 2;

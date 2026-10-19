@@ -99,11 +99,11 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMa
 model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
 scene.add(model);
 const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
-window.shot = (t, yaw = 35, pitch = 8, dist = 4.6, ty = 0.85) => {
+window.shot = (t, yaw = 35, pitch = 8, dist = 4.6, ty = 0.85, tz = 0) => {
     rig.reset(); motion.pose(rig, t); model.updateMatrixWorld(true);
     const y = yaw * Math.PI / 180, p = pitch * Math.PI / 180;
-    cam.position.set(Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, Math.cos(y) * Math.cos(p) * dist);
-    cam.lookAt(0, ty, 0);
+    cam.position.set(Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, tz + Math.cos(y) * Math.cos(p) * dist);
+    cam.lookAt(0, ty, tz);
     renderer.render(scene, cam);
     return renderer.domElement.toDataURL("image/png");
 };

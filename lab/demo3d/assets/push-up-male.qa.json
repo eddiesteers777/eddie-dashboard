@@ -35,7 +35,7 @@
   {
    "id": "elbow-bottom",
    "label": "Elbow angle at the bottom, degrees",
-   "value": 41.94,
+   "value": 38.824,
    "limit": 100,
    "pass": true
   },
@@ -49,7 +49,7 @@
   {
    "id": "smooth",
    "label": "Fastest joint, metres per second",
-   "value": 0.428,
+   "value": 0.418,
    "limit": 1.5,
    "pass": true
   }
