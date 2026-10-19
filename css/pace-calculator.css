@@ -1175,3 +1175,12 @@ html{
     #pc-root .pc-solve-label{ flex:0 0 100%; }
 }
 #pc-root .pc-error:empty{ display:none; }
+
+/* Heart Rate tab (js/hrZonesTool.js): the method chips reuse the Units chips;
+   a field hidden for another method stays hidden whatever sets its display. */
+#pc-root [hidden]{ display:none !important; }
+#pc-root .pc-hr-fields{ margin-top:16px; }
+#pc-root .pc-hr-help{ margin:14px 0 4px; }
+@media (max-width:600px){
+    #pc-root #hr-method{ flex-wrap:wrap; }
+}

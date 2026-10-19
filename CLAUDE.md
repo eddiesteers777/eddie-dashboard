@@ -138,6 +138,7 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 - Mock data must match the real shape (list functions return `{ id, ...data }`).
 - Screenshot at desktop (1280px) **and** phone (375–390px) widths, and look at them. Use first-screen crops and measured checks (overflow, tap sizes) rather than reading every full-page image.
 - `node --check file.js` for quick syntax checks.
+- **Property tests** (`tests/properties.test.mjs`, fast-check, dev-only): for pure logic with a rule that holds for every input (round trips, dates, limits), add a property there instead of only hand-picked examples.
 
 ---
 

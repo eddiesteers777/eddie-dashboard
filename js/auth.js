@@ -18,6 +18,7 @@ const provider = new GoogleAuthProvider();
 const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "sb-nav-access",
     "sb-account-role",
+    "sb-demo-gender",
     "__cloudSyncVersion",
     "__cloudSyncFullPullAt",
     "__cloudSyncMeta",

@@ -5001,3 +5001,28 @@ body.page-today #todayCard{
     border-top:2px solid var(--primary);
     box-shadow:var(--sb-bubble-raised-shadow);
 }
+
+/* ==========================================================
+   READABLE CHARTS (js/chartTips.js + js/svgCharts.js)
+   Tap, hover or arrow through a chart to read a point: a thin
+   crosshair, a dot and one mono line of text (Apache ECharts'
+   axis-tooltip idea, no library). Charts draw in once per visit.
+========================================================== */
+.sb-chart{ position:relative; outline:none; touch-action:pan-y; -webkit-tap-highlight-color:transparent; cursor:crosshair; }
+.sb-chart:focus-visible{ box-shadow:0 0 0 2px var(--primary); border-radius:var(--radius-sm); }
+.sb-chart [hidden]{ display:none !important; }
+.sb-cross, .sb-dot, .sb-tip{ position:absolute; pointer-events:none; opacity:0; transition:opacity .15s ease; z-index:2; }
+.sb-chart.is-reading > .sb-cross, .sb-chart.is-reading > .sb-dot, .sb-chart.is-reading > .sb-tip{ opacity:1; }
+.sb-cross{ width:0; border-left:1px dashed color-mix(in srgb, var(--text) 45%, transparent); transform:translateX(-.5px); }
+.sb-dot{ width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:var(--primary); box-shadow:0 0 0 3px var(--bg), 0 0 0 4px color-mix(in srgb, var(--primary) 50%, transparent); }
+.sb-tip{ width:max-content; max-width:min(100%, 300px); padding:5px 8px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-light); color:var(--text); font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:.04em; line-height:1.3; box-shadow:var(--shadow); }
+.tr-bars.sb-chart .tr-bar.is-picked .tr-bar-fill{ opacity:1; box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 55%, transparent); }
+.tr-bars.sb-chart .tr-bar.is-picked small{ color:var(--text); }
+html:not(.sb-charts-drawn) .sb-chart > svg{ animation:sbChartDraw .9s cubic-bezier(.2,.7,.2,1) backwards; }
+html:not(.sb-charts-drawn) .tr-bars.sb-chart .tr-bar-fill, html:not(.sb-charts-drawn) .tr-bars.sb-chart .tr-bar-plan{ transform-origin:bottom; animation:sbChartGrow .7s cubic-bezier(.2,.7,.2,1) backwards; }
+@keyframes sbChartDraw{ from{ clip-path:inset(-20% 100% -20% -5%); } to{ clip-path:inset(-20% -5% -20% -5%); } }
+@keyframes sbChartGrow{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+@media (prefers-reduced-motion:reduce){
+    html .sb-chart > svg, html .tr-bars.sb-chart .tr-bar-fill, html .tr-bars.sb-chart .tr-bar-plan{ animation:none !important; }
+    .sb-cross, .sb-dot, .sb-tip{ transition:none; }
+}

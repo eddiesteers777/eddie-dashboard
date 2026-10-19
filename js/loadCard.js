@@ -28,6 +28,7 @@ import { efficiency, effortResponse, qualityHr, executionSummary, decoupling, re
 import { keyWorkouts, allRuns } from "./trendsData.js";
 import { aerobicTrend } from "./trends.js";
 import { lineSvg } from "./svgCharts.js";
+import "./chartTips.js";
 import { readinessCheck } from "./readinessBacktest.js";
 import { READINESS_V2_VERSION } from "./readinessV2.js";
 import { inputs as readinessInputs } from "./readinessData.js";
@@ -105,7 +106,7 @@ function responseHtml(r, today, { heading = true } = {}) {
             ? `No clear change: your easy runs are within ${Math.max(2, Math.abs(sig.bpm))} bpm of the 8 weeks before at the same pace (${signed(sig.bpm)} bpm, ± ${sig.se}).`
             : `Your easy runs are <strong>${Math.abs(sig.bpm)} bpm ${sig.verdict} at the same pace</strong> than over the 8 weeks before (${esc(day(sig.from))} – ${esc(day(sig.to))}), worth about ${Math.abs(sig.paceSec)} s/mi ${sig.paceSec > 0 ? "faster" : "slower"} at the same heart rate.`;
     const weeks = eff.weeks.filter(w => w.pace);
-    const effChart = weeks.length >= 2 ? `${lineSvg(eff.weeks.map(w => w.pace), { invert: true, height: 60 })}<div class="tr-axis"><span>${esc(day(eff.weeks[0].week))}</span><span>Faster is higher</span><span>This week</span></div>` : "";
+    const effChart = weeks.length >= 2 ? `${lineSvg(eff.weeks.map(w => w.pace), { invert: true, height: 60, label: "Easy pace at the same heart rate", tips: eff.weeks.map(w => (w.pace ? `Week of ${day(w.week)} · ${Math.floor(w.pace / 60)}:${String(w.pace % 60).padStart(2, "0")}/mi · ${w.n} runs` : null)) })}<div class="tr-axis"><span>${esc(day(eff.weeks[0].week))}</span><span>Faster is higher</span><span>This week</span></div>` : "";
     const last = weeks.at(-1);
     const es = effort.signal;
     const effortLine = es.verdict === "few"
@@ -188,6 +189,18 @@ function mixLine(weeks, v60) {
     return `Last 4 weeks by load: <strong>${pct("easy")}% easy</strong> · ${pct("threshold")}% steady / threshold · ${pct("hard")}% hard${bounds}`;
 }
 
+// One line per week for the chart's tap-to-read: the week's load a day by
+// intensity (the bars) and where the two lines ended that week.
+function weekTips(weeks, days) {
+    return weeks.map((w, i) => {
+        const n = Math.max(1, w.daysIn ?? 7);
+        const a = k => Math.round((w[k] || 0) / n);
+        const end = days[Math.min(days.length - 1, i * 7 + n - 1)] || {};
+        const lines = end.base != null ? ` · base ${Math.round(end.base)} · recent ${Math.round(end.recent)}` : "";
+        return `${w.current ? "This week" : `Week of ${day(w.start)}`} · ${a("easy") + a("threshold") + a("hard")} a day (easy ${a("easy")}, steady ${a("threshold")}, hard ${a("hard")})${lines}`;
+    });
+}
+
 function renderLoad() {
     const el = $("loadPanel");
     if (!el || !result) return;
@@ -229,7 +242,7 @@ function renderLoad() {
         </div>
         ${words ? `<p class="lc-line">Recent load is <strong>${esc(words)}</strong> (${ordinal(t.percentile)} percentile; your year ran ${t.yearLow}–${t.yearHigh}).</p>` : `<p class="lc-line">Where this sits against your year shows once there are 4 weeks of runs.</p>`}
         <div class="lc-figure">
-            ${loadChartSvg(weeks, [...lead, ...days], { height: 100 })}
+            ${loadChartSvg(weeks, [...lead, ...days], { height: 100, label: "Weekly load", tips: weekTips(weeks, [...lead, ...days]) })}
             <div class="tr-axis"><span>${esc(day(ticks[0].start))}</span><span>${esc(day(ticks[1].start))}</span><span>This week</span></div>
         </div>
         <p class="tr-legend"><span class="lc-key easy"></span> easy <span class="lc-key threshold"></span> steady / threshold <span class="lc-key hard"></span> hard <span class="lc-key line base"></span> training base <span class="lc-key line recent"></span> recent load</p>

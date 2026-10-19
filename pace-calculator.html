@@ -24,7 +24,7 @@
   <section class="eos-today-hero">
     <div>
       <h1>Pace Calculator</h1>
-      <p class="eos-today-phase">Pace conversions, race-day splits, and training paces from a real result.</p>
+      <p class="eos-today-phase">Pace conversions, race-day splits, training paces from a real result, and heart-rate zones.</p>
     </div>
   </section>
 
@@ -32,6 +32,7 @@
     <button type="button" class="pc-tool-tab active" data-pc-tool="calculator">Pace Calculator</button>
     <button type="button" class="pc-tool-tab" data-pc-tool="splits">Race Splits</button>
     <button type="button" class="pc-tool-tab" data-pc-tool="zones">Training Zones</button>
+    <button type="button" class="pc-tool-tab" data-pc-tool="heart">Heart Rate</button>
   </div>
 
   <div class="pc-tool-panel active" data-pc-panel="calculator">
@@ -250,9 +251,76 @@
 
   </div>
 
+  <!-- Heart Rate Zones (js/hrZonesTool.js; the math is js/hrZones.js) -->
+
+  <div class="pc-tool-panel" data-pc-panel="heart">
+
+    <div class="pc-card">
+
+      <div class="pc-unit-row">
+        <span class="pc-solve-label">Based on</span>
+        <div class="pc-unit-toggle" id="hr-method">
+          <button type="button" class="pc-unit-btn active" data-hr-method="threshold" aria-pressed="true">Threshold HR</button>
+          <button type="button" class="pc-unit-btn" data-hr-method="max" aria-pressed="false">Max HR</button>
+          <button type="button" class="pc-unit-btn" data-hr-method="reserve" aria-pressed="false">Max + resting</button>
+        </div>
+      </div>
+
+      <div class="pc-field-row pc-hr-fields">
+
+        <div class="pc-field" data-hr-for="threshold">
+          <label class="pc-field-label" for="hr-lthr">Threshold heart rate</label>
+          <div class="pc-input-row">
+            <input type="number" inputmode="numeric" min="100" max="220" class="pc-input" id="hr-lthr" placeholder="e.g. 168">
+            <span class="pc-unit-suffix">bpm</span>
+          </div>
+        </div>
+
+        <div class="pc-field" data-hr-for="max reserve" hidden>
+          <label class="pc-field-label" for="hr-max">Maximum heart rate</label>
+          <div class="pc-input-row">
+            <input type="number" inputmode="numeric" min="120" max="230" class="pc-input" id="hr-max" placeholder="e.g. 190">
+            <span class="pc-unit-suffix">bpm</span>
+          </div>
+        </div>
+
+        <div class="pc-field" data-hr-for="reserve" hidden>
+          <label class="pc-field-label" for="hr-rest">Resting heart rate</label>
+          <div class="pc-input-row">
+            <input type="number" inputmode="numeric" min="30" max="110" class="pc-input" id="hr-rest" placeholder="e.g. 52">
+            <span class="pc-unit-suffix">bpm</span>
+          </div>
+        </div>
+
+      </div>
+
+      <p class="pc-zones-note pc-hr-help" id="hr-help">Don't know it? After a warm-up, run 30 minutes hard on your own. Your average heart rate over the last 20 minutes is close to your threshold.</p>
+
+      <button type="button" id="hr-calc-btn" class="pc-calc-btn">Calculate Heart Rate Zones</button>
+
+      <div id="hr-error" class="pc-error" role="alert"></div>
+
+    </div>
+
+    <div class="pc-card" id="hr-result-card" hidden>
+
+      <div class="pc-splits-title">
+        Your Heart Rate Zones
+        <span id="hr-method-label" class="pc-vdot-label"></span>
+      </div>
+
+      <div class="pc-zones-table" id="hr-zones-table"></div>
+
+      <p class="pc-zones-note" id="hr-note"></p>
+
+    </div>
+
+  </div>
+
 </div>
 
 <script src="js/pace-calculator.js"></script>
+<script type="module" src="js/hrZonesTool.js"></script>
 
 <script src="js/loadHeader.js"></script>
 
