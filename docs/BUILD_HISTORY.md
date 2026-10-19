@@ -281,3 +281,10 @@ pm run manifest and the tests in a clean copy with LF line endings, which is wha
 - Second pass: calendar day buttons and the Marathon day pills now start their spoken name with the visible words; the Marathon "Day details" toggle has a name at phone width; the PR cards use a `div` (was `role=button` on an `h3`); the "Mark done" buttons say "Done: …" / "Mark done: …".
 - Third pass: Marathon, 75-Day, Cross Training and Pace Calculator pages now have a main landmark (75-Day also a hidden heading); the Marathon day pills carry their spoken text inside the button. The last full-site run before this pass had 2 issue types left (both these pills); the pages touched here now pass.
 - Not a real gap: the Client Hub's `<h1>` is empty in the fake-data run because the client's name comes from Firestore.
+
+## 2026-10-19 — Search and screen-reader fixes from the site audit (items 3–5)
+- Eddie asked to fix three audit items (`/mnt/project-files/audit/southbound-audit-2026-10-19.md`), no rules change, no visual change.
+- **`robots.txt` + `sitemap.xml`** at the site root, and a `<link rel="canonical">` on every public page (same address as its `og:url`). The sitemap lists Home, Coaching, Soccer, Packages, About, Apply, Contact, Pace, Fueling and Get the App; Privacy, `fuel.html` (forwards to Fueling), `site-check.html`, `lab/` and `audit2/` stay out.
+- **Structured data (JSON-LD)** on Home (the business as an `Organization` with its five services) and Packages (the three packages as `Service`s). `Organization`, not `LocalBusiness`: the site has no address or service area, and Google expects one for a local business. No prices, address, phone or reviews until they're real.
+- **Pace calculator labels:** every field on `pace.html` and `pace-calculator.html` now has a spoken name (labels tied to their field; hours/minutes/seconds boxes named and grouped under their label; the ":" separators hidden from screen readers).
+- Tested: `npm run test:static` (999 pass, 3 new: canonical/sitemap/robots, structured data, pace labels); browser check that the calculator is pixel-identical at 390px and 1280px and still calculates when filled in by its labels.

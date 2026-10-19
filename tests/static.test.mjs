@@ -231,6 +231,64 @@ test("public pages have a search description and share preview", () => {
     }
 });
 
+test("public pages name their one address, and search engines get a sitemap", () => {
+    const SITE = "https://southboundcoaching.com/";
+    for (const page of PUBLIC_PAGES) {
+        const html = read(page);
+        const canonical = html.match(/<link rel="canonical" href="([^"]+)">/);
+        assert.ok(canonical, `${page} needs a canonical link`);
+        assert.ok(canonical[1].startsWith(SITE), `${page}'s canonical link uses the domain`);
+        const og = html.match(/<meta property="og:url" content="([^"]+)">/);
+        assert.equal(canonical[1], og && og[1], `${page}: canonical link and og:url agree`);
+    }
+    const robots = read("robots.txt");
+    assert.match(robots, /^Sitemap: https:\/\/southboundcoaching\.com\/sitemap\.xml$/m);
+    assert.ok(!/^Disallow: \/\s*$/m.test(robots), "robots.txt must not block the whole site");
+    const urls = [...read("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+    assert.ok(urls.length >= 8, "sitemap lists the public pages");
+    for (const url of urls) {
+        assert.ok(url.startsWith(SITE), `${url} uses the domain`);
+        const page = url.slice(SITE.length);
+        assert.ok(PUBLIC_PAGES.includes(page), `${page} in the sitemap is a public page`);
+        assert.match(read(page), new RegExp(`<link rel="canonical" href="${url.replace(/\./g, "\\.")}">`), `${page} is its own canonical page`);
+    }
+    for (const left of ["privacy.html", "fuel.html", "site-check.html"]) {
+        assert.ok(!urls.includes(SITE + left), `${left} stays out of the sitemap`);
+    }
+});
+
+test("structured data on Home and Packages parses and claims no price, address or rating", () => {
+    for (const page of ["home.html", "packages.html"]) {
+        const blocks = [...read(page).matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+        assert.ok(blocks.length === 1, `${page} has one structured data block`);
+        const data = JSON.parse(blocks[0][1]);
+        assert.equal(data["@context"], "https://schema.org");
+        const text = JSON.stringify(data);
+        assert.ok(!/"(price|priceRange|address|aggregateRating|review|telephone|email)"/.test(text), `${page}: only facts already on the site`);
+        assert.match(text, /"Service"/, `${page} lists the services`);
+    }
+});
+
+test("every Pace calculator field has a name a screen reader can read", () => {
+    for (const page of ["pace.html", "pace-calculator.html"]) {
+        const html = read(page);
+        const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]));
+        const labelled = new Set([...html.matchAll(/<label[^>]*\sfor="([^"]+)"/g)].map(m => m[1]));
+        const controls = [...html.matchAll(/<(input|select|textarea)\b[^>]*>/g)].map(m => m[0]);
+        assert.ok(controls.length >= 15, `${page} has its calculator fields`);
+        for (const tag of controls) {
+            if (/type="hidden"/.test(tag)) continue;
+            const id = (tag.match(/\sid="([^"]+)"/) || [])[1];
+            const named = /aria-label="[^"]+"/.test(tag) || (id && labelled.has(id)) ||
+                ((tag.match(/aria-labelledby="([^"]+)"/) || [])[1] || "").split(" ").some(x => ids.has(x));
+            assert.ok(named, `${page}: ${tag.slice(0, 80)} has no label`);
+        }
+        for (const [, ref] of html.matchAll(/aria-labelledby="([^"]+)"/g)) {
+            assert.ok(ids.has(ref), `${page}: aria-labelledby points at #${ref}`);
+        }
+    }
+});
+
 test("public pages show no leftover placeholder text", () => {
     for (const page of PUBLIC_PAGES) {
         // Visible text only: drop comments, scripts and tags first.

@@ -1,0 +1,10 @@
+# Southbound Coaching: the public site is open to search engines.
+# The app pages send signed-out visitors to home.html, so only the
+# public pages are listed in the sitemap.
+User-agent: *
+Allow: /
+Disallow: /lab/
+Disallow: /audit2/
+Disallow: /site-check.html
+
+Sitemap: https://southboundcoaching.com/sitemap.xml

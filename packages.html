@@ -14,6 +14,7 @@
     <meta property="og:title" content="Packages | Southbound Coaching">
     <meta property="og:description" content="Coaching packages: online coaching, 1-on-1 soccer sessions and small-group soccer training. Apply and get options that fit your goals.">
     <meta property="og:url" content="https://southboundcoaching.com/packages.html">
+    <link rel="canonical" href="https://southboundcoaching.com/packages.html">
     <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -27,6 +28,55 @@
     <meta name="theme-color" content="#0F2019">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+    <!-- Structured data for search engines: only facts already on the site
+         (no prices, address or reviews until they're real). -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Service",
+                "name": "Online Coaching",
+                "serviceType": "Online coaching",
+                "description": "Running, strength, or hybrid training, fully coached, wherever you train. Custom plan, weekly check-ins with written feedback, and full access to the Southbound app.",
+                "url": "https://southboundcoaching.com/packages.html",
+                "provider": {
+                    "@type": "Organization",
+                    "@id": "https://southboundcoaching.com/#organization",
+                    "name": "Southbound Coaching",
+                    "url": "https://southboundcoaching.com/home.html"
+                }
+            },
+            {
+                "@type": "Service",
+                "name": "1-on-1 Soccer",
+                "serviceType": "Soccer training",
+                "description": "Individual sessions focused entirely on your game: technique, speed, and match fitness. Single sessions, or 5- and 10-session packs.",
+                "url": "https://southboundcoaching.com/packages.html",
+                "provider": {
+                    "@type": "Organization",
+                    "@id": "https://southboundcoaching.com/#organization",
+                    "name": "Southbound Coaching",
+                    "url": "https://southboundcoaching.com/home.html"
+                }
+            },
+            {
+                "@type": "Service",
+                "name": "Group Soccer",
+                "serviceType": "Soccer training",
+                "description": "Small-group training with real competition and reps. Drop in per session, or join monthly.",
+                "url": "https://southboundcoaching.com/packages.html",
+                "provider": {
+                    "@type": "Organization",
+                    "@id": "https://southboundcoaching.com/#organization",
+                    "name": "Southbound Coaching",
+                    "url": "https://southboundcoaching.com/home.html"
+                }
+            }
+        ]
+    }
+    </script>
 
 </head>
 
