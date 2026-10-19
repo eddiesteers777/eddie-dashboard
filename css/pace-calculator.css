@@ -1066,7 +1066,7 @@ html{
 }
 
 /* Solve for / Units / split style: a mono label, glass chips, the chosen one lit. */
-#pc-root .pc-solve-label{ min-width:72px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
+#pc-root .pc-solve-label{ min-width:72px; font:600 12px/1.3 var(--font-mono); letter-spacing:.12em; color:var(--text-secondary); }
 #pc-root .pc-solve-tabs,
 #pc-root .pc-unit-toggle{ gap:6px; }
 #pc-root .pc-solve-tab,
@@ -1128,12 +1128,12 @@ html{
 
 /* The answer: a mono label, the number in the display face, then a ledger. */
 #pc-root .pc-result-top{ gap:18px; padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid var(--sb-hairline); }
-#pc-root .pc-result-label{ margin-bottom:6px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+#pc-root .pc-result-label{ margin-bottom:6px; font:600 12px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
 #pc-root .pc-result-value{ font:800 clamp(56px, 15vw, 72px)/.92 var(--font-display); letter-spacing:.01em; color:var(--primary-light, var(--primary)); }
 #pc-root .pc-result-sub{ gap:0; }
 #pc-root .pc-result-chip{ min-width:0; padding:2px 18px; background:none; border:0; border-left:1px solid var(--sb-hairline); border-radius:0; }
 #pc-root .pc-result-chip:first-child{ padding-left:0; border-left:0; }
-#pc-root .pc-result-chip-label{ margin-bottom:4px; font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+#pc-root .pc-result-chip-label{ margin-bottom:4px; font:600 12px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
 #pc-root .pc-result-chip-value{ font:600 15px/1.3 var(--font-mono); color:var(--text); }
 
 /* Section headings inside a bubble: plain, not tan kickers. */
@@ -1143,18 +1143,18 @@ html{
 #pc-root .pc-splits-grid{ gap:0; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); border-top:1px solid var(--sb-hairline); }
 #pc-root .pc-split-card{ padding:14px 0; text-align:left; background:none; border:0; border-bottom:1px solid var(--sb-hairline); border-radius:0; }
 #pc-root .pc-split-card:hover{ transform:none; }
-#pc-root .pc-split-name{ margin-bottom:4px; font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+#pc-root .pc-split-name{ margin-bottom:4px; font:600 12px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
 #pc-root .pc-split-time{ font:800 26px/1 var(--font-display); letter-spacing:.02em; color:var(--text); }
 
 /* Race splits and training zones: hairline rows, paces in mono. */
 #pc-root .pc-splits-table{ max-height:none; gap:0; }
 #pc-root .pc-splits-row{ padding:12px 0; border-bottom:1px solid var(--sb-hairline); font-size:14px; color:var(--text); }
-#pc-root .pc-splits-header{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
+#pc-root .pc-splits-header{ font:600 12px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
 #pc-root .pc-zones-table{ gap:0; }
 #pc-root .pc-zones-row{ gap:12px; padding:14px 0; border-bottom:1px solid var(--sb-hairline); }
 #pc-root .pc-zones-name{ font:650 15px/1.3 var(--font-body); }
 #pc-root .pc-zones-range{ font:600 15px/1.3 var(--font-mono); color:var(--primary-light, var(--primary)); text-align:right; }
-#pc-root .pc-vdot-label{ display:inline-block; margin-left:8px; padding:2px 9px; border-radius:999px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); font:600 11.5px/1.5 var(--font-mono); letter-spacing:.08em; vertical-align:middle; }
+#pc-root .pc-vdot-label{ display:inline-block; margin-left:8px; padding:2px 9px; border-radius:999px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); font:600 12px/1.5 var(--font-mono); letter-spacing:.08em; vertical-align:middle; }
 #pc-root .pc-zones-note{ font-size:13.5px; line-height:1.55; }
 
 @media (max-width:700px){

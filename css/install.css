@@ -656,3 +656,6 @@ body[data-device="android"] .install-qr-card{display:none;}
 .install-tab{ border-radius:var(--radius-sm); min-height:44px; font-size:15px; }
 .install-guide{ border-radius:var(--radius); }
 body.install-body{ padding-left:0; }
+.install-topbar-brand{ min-height:44px; }
+.install-recap-label{ font-size:12px; }
+@media(max-width:380px){ .install-tab{ padding:0 10px; font-size:14px; } }

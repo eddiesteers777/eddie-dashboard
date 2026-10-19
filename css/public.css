@@ -1326,3 +1326,7 @@ body.pub-body{ padding-left:0; }
 .pub-footer .pub-btn-primary{ color:var(--on-primary); }
 .pub-footer .pub-btn-primary:hover{ color:var(--on-primary); }
 .pub-footer-lead .pub-btn-primary{ margin-top:6px; }
+.pub-apply-done .pub-card-icon{ display:flex; justify-content:center; color:var(--sage); margin-bottom:16px; }
+.pub-apply-done .pub-card-icon .ui-icon,.pub-apply-done .pub-card-icon svg{ width:56px; height:56px; }
+.pub-apply-done .ig-title{ margin-top:0; }
+.pub-logo,.pub-footer-brand{ min-height:44px; }
