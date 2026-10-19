@@ -14,6 +14,7 @@
 
 import { demoFor, normalizeName } from "./exerciseDemos.js";
 import { clipFor } from "./exerciseClips.js";
+import { REMOTE_DEMOS_ENABLED } from "./exerciseDemoConfig.js";
 
 export const MUSCLES = ["abdominals", "abductors", "adductors", "biceps", "calves", "chest", "forearms", "glutes", "hamstrings", "lats", "lower back", "middle back", "neck", "quadriceps", "shoulders", "traps", "triceps"];
 
@@ -94,7 +95,9 @@ export function musclesFor(name, given = {}) {
 }
 
 /** Is there a How to for this exercise: a 3D clip (js/exerciseClips.js) or the drawn figure? */
-export function hasHowTo(name) {
+export function hasHowTo(name, { remote = REMOTE_DEMOS_ENABLED } = {}) {
+    // With the licensed videos on, any named exercise may have one: the sheet asks.
+    if (remote && String(name ?? "").trim()) return true;
     return Boolean(clipFor(name) || demoFor(name));
 }
 

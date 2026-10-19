@@ -1,9 +1,10 @@
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
-import { defineJsonSecret, defineString } from 'firebase-functions/params';
+import { defineJsonSecret, defineSecret, defineString } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import Stripe from 'stripe';
 import { checkoutModeForPackage, priceIdForPackage, stripeMetadata, STRIPE_PACKAGE_IDS, lifecycleUpdateForSubscriptionEvent, checkoutBlockedReason, stripeWebhookEventDecision } from './billingModel.js';
+import { DemoError, createDemoService } from './exerciseDemoModel.js';
 
 initializeApp();
 const db = getFirestore();
@@ -296,6 +297,42 @@ export const stripeWebhook = onRequest(
             }
             console.error('Southbound Stripe webhook processing failed.', error);
             res.status(500).send('Webhook processing failed');
+        }
+    }
+);
+
+// ---------- Exercise demos (MuscleWiki) ----------
+// The API key stays here (Secret Manager); the app gets stream URLs with a
+// short-lived media token. Rules: .claude/skills/exercise-demo-integration/SKILL.md.
+const musclewikiKey = defineSecret('MUSCLEWIKI_API_KEY');
+const demoTokenStore = {}; // one media token per function instance, reused until it nearly expires
+const demoCache = {
+    get: async key => { const snap = await db.collection('exerciseDemoCache').doc(key).get(); return snap.exists ? snap.data() : null; },
+    set: (key, entry) => db.collection('exerciseDemoCache').doc(key).set(entry)
+};
+
+export const getExerciseDemo = onCall(
+    { region: 'us-central1', secrets: [musclewikiKey], timeoutSeconds: 20, memory: '256MiB' },
+    async request => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Sign in to watch exercise videos.');
+        const name = typeof request.data?.name === 'string' ? request.data.name.trim().slice(0, 120) : '';
+        if (!name) throw new HttpsError('invalid-argument', 'Which exercise?');
+        // Only active clients and approved coaches spend the video quota.
+        const profile = (await db.collection('userProfiles').doc(uid).get()).data() || {};
+        if (profile.isCoachApproved !== true && profile.status !== 'active') {
+            throw new HttpsError('permission-denied', 'Exercise videos open once your coach approves your account.');
+        }
+        const service = createDemoService({ fetch, apiKey: musclewikiKey.value(), cache: demoCache, tokenStore: demoTokenStore });
+        try {
+            return await service.lookup(name);
+        } catch (error) {
+            if (error instanceof DemoError) {
+                console.warn('getExerciseDemo', error.code, error.status || '');
+                throw new HttpsError(error.code, error.message);
+            }
+            console.error('getExerciseDemo failed', error?.message || error);
+            throw new HttpsError('unavailable', "Exercise videos aren't available right now.");
         }
     }
 );

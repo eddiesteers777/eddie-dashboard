@@ -13,6 +13,7 @@
 import { LONG_RUN } from "./sessionDose.js";
 import { planVsActual, longRuns, checkWorkout, bodyTrend, bodySummary, predictionTrend, mmss, clock } from "./trends.js";
 import { barsHtml, lineSvg } from "./svgCharts.js";
+import "./chartTips.js";
 import { planWeeks, keyRaceTitle, allRuns, everyRun, stravaActs, keyWorkouts, fetchLaps, lapState, backfillHealth, health, readiness, fitness, laps } from "./trendsData.js";
 import { yearStats, otherCounts } from "./stravaHistory.js";
 import { syncStrava, STRAVA_EVENT } from "./stravaStore.js";
@@ -112,7 +113,7 @@ function longPanel(runs) {
     const lr = longRuns(runs, { minMiles: LONG_RUN.miles }).slice(-12);
     if (!lr.length) return panel("trendsLong", "Long runs", "", empty(`No runs of ${LONG_RUN.miles} miles or more yet.`));
     return panel("trendsLong", "Long runs", `Each week's longest run (${LONG_RUN.miles}+ miles).`,
-        `${lineSvg(lr.map(r => r.miles), { height: 70 })}<ul class="tr-list">${lr.slice(-6).reverse().map(r => `<li><span>${day(r.date)}</span><strong>${mi(r.miles)} mi</strong><span>${r.pace ? `${mmss(r.pace)}/mi` : "–"}</span><span>${r.hr ? `${r.hr} bpm` : ""}</span></li>`).join("")}</ul>`, "measured");
+        `${lineSvg(lr.map(r => r.miles), { height: 70, label: "Long runs", tips: lr.map(r => `${day(r.date)} · ${mi(r.miles)} mi${r.pace ? ` · ${mmss(r.pace)}/mi` : ""}`) })}<ul class="tr-list">${lr.slice(-6).reverse().map(r => `<li><span>${day(r.date)}</span><strong>${mi(r.miles)} mi</strong><span>${r.pace ? `${mmss(r.pace)}/mi` : "–"}</span><span>${r.hr ? `${r.hr} bpm` : ""}</span></li>`).join("")}</ul>`, "measured");
 }
 
 // Readiness's body part (HRV, resting HR, sleep) by day, the same number Habits below shows:
@@ -142,7 +143,7 @@ function bodyPanel(today) {
         if (opts.whole) for (const k of ["recent", "before"]) if (s[k] != null) s[k] = Math.round(s[k]);
         const delta = s.recent != null && s.before != null ? Math.round((s.recent - s.before) * 10) / 10 : null;
         return `<div class="tr-mini"><div class="tr-mini-top"><span>${title}</span><strong>${s.recent ?? "–"}${s.recent != null ? ` ${unit}` : ""}</strong></div>
-            ${lineSvg(rows.map(r => r[key]), { height: 50, ...opts })}
+            ${lineSvg(rows.map(r => r[key]), { height: 50, label: title, tips: rows.map(r => (r[key] == null ? null : `${day(r.date)} · ${opts.whole ? Math.round(r[key]) : r[key]}${unit ? ` ${unit}` : ""}${key === "hrv" && r.low != null && r.high != null ? ` · normal ${r.low}–${r.high}` : ""}`)), ...opts })}
             <small>${delta == null ? "7-day average" : `7-day avg, ${delta > 0 ? "+" : ""}${delta} vs the 4 weeks before`}</small></div>`;
     };
     return panel("trendsBody", "Body", "The last 8 weeks, by wake-up day.", `<div class="tr-minis">
@@ -174,7 +175,7 @@ function predictionPanel() {
     const gap = last.marathon - GOAL;
     const sub = `COROS predicts <strong>${clock(last.marathon)}</strong> · goal ${clock(GOAL)} (${gap <= 0 ? `${mmss(-gap)} under` : `${mmss(gap)} over`})${vo2 ? ` · VO₂ max ${vo2}` : ""}`;
     return panel("trendsRace", "COROS's prediction over time", sub, p.length > 1
-        ? `${lineSvg(p.map(x => x.marathon), { invert: true, goal: GOAL, height: 70 })}<div class="tr-axis"><span>${day(p[0].date)}</span><span>Dashed line: your goal</span><span>${day(last.date)}</span></div>`
+        ? `${lineSvg(p.map(x => x.marathon), { invert: true, goal: GOAL, height: 70, label: "COROS marathon prediction", tips: p.map(x => `${day(x.date)} · ${clock(x.marathon)}`) })}<div class="tr-axis"><span>${day(p[0].date)}</span><span>Dashed line: your goal</span><span>${day(last.date)}</span></div>`
         : `<p class="tr-note">Builds into a trend line as COROS's prediction is saved day by day.</p>`, "prediction");
 }
 

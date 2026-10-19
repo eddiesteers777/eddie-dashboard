@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="description" content="Southbound lab: the 3D exercise demo prototype (bodyweight squat, male and female athletes).">
+<title>Southbound — 3D demo lab</title>
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="demo3d.css">
+</head>
+<body>
+<main class="d3-lab">
+    <p class="d3-kicker">Lab · 3D demo prototype · not in the app yet</p>
+    <h1>Bodyweight Squat</h1>
+    <p class="d3-lede">Our own athletes in Southbound kit, moving on our own motion. Everything plays from this site: no paid service, nothing fetched from anyone else.</p>
+
+    <div class="d3-layout">
+        <div>
+            <div id="player" aria-label="Bodyweight squat demo"></div>
+            <div id="fallback" hidden>
+                <div class="d3-fallback" id="fallbackFigure"></div>
+                <p class="d3-fallback-msg" id="fallbackMsg">This device can't show the 3D demo, so here's the drawn figure.</p>
+            </div>
+        </div>
+
+        <div>
+            <section class="d3-section">
+                <h2>How to</h2>
+                <dl class="d3-steps" id="steps"></dl>
+            </section>
+            <section class="d3-section">
+                <h2>Movement check</h2>
+                <p class="d3-note">Automatic checks run on every bake. A demo reaches clients only after these pass and a person has watched it and signed it off.</p>
+                <table class="d3-checks" id="checks"><thead><tr><th>Check</th><th>Male</th><th>Female</th></tr></thead><tbody></tbody></table>
+                <p class="d3-note" id="review" style="margin-top:12px"></p>
+            </section>
+            <section class="d3-section">
+                <h2>If 3D can't play</h2>
+                <p class="d3-note">No WebGL, a model that won't load, or a lost graphics context: the drawn figure takes over.</p>
+                <button type="button" class="d3-linkbtn" id="tryFallback">Show the fallback</button>
+            </section>
+        </div>
+    </div>
+</main>
+<script type="module">
+import { loadCatalog } from "./demo3d.js";
+import { findDemo, readiness } from "./catalog.js";
+import { demoFor } from "../../js/exerciseDemos.js";
+import { skeleton, poseAt, frameSvg, fitBox } from "../../js/demoFigure.js";
+
+const NAME = "Bodyweight Squat";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const player = document.getElementById("player");
+let ctl = null;
+
+// The drawn figure at the bottom of the rep, side view: the app's existing fallback.
+function showFallback(reason) {
+    document.getElementById("fallback").hidden = false;
+    player.hidden = true;
+    const demo = demoFor(NAME);
+    if (!demo) { document.getElementById("fallbackFigure").hidden = true; document.getElementById("fallbackMsg").textContent = "There's no demo for this exercise yet."; return; }
+    const opts = { anchor: demo.anchor, level: demo.level };
+    const peak = demo.keys.find(k => k.at > 0 && k.at < 1)?.at ?? 0.5;
+    const view = demo.views.find(v => /side/i.test(v.label)) || demo.views[0];
+    const sample = Array.from({ length: 16 }, (_, i) => skeleton(poseAt(demo.keys, i / 16), opts));
+    const box = fitBox(sample, view, { aspect: 480 / 300, pad: 28, bottom: 26 });
+    document.getElementById("fallbackFigure").innerHTML = frameSvg(skeleton(poseAt(demo.keys, peak), opts), view, box, { width: 480, height: 300, id: "fb", label: `${demo.name}, side view` });
+    document.body.dataset.fallback = reason;
+}
+
+async function start() {
+    const { mountDemo3D } = await import("./demo3d.js");
+    ctl = await mountDemo3D(player, { name: NAME, includeReview: true, onFallback: showFallback });
+    window.demo3d = ctl; // for the browser check
+}
+
+document.getElementById("tryFallback").addEventListener("click", e => {
+    if (player.hidden) { document.getElementById("fallback").hidden = true; player.hidden = false; e.target.textContent = "Show the fallback"; start(); return; }
+    ctl?.dispose(); ctl = null; player.innerHTML = "";
+    showFallback("asked");
+    e.target.textContent = "Back to 3D";
+});
+
+// Steps and checks from the catalog.
+const { catalog, base } = await loadCatalog();
+const entry = findDemo(catalog, NAME);
+document.getElementById("steps").innerHTML = ["start", "move", "cue"].map(k => entry[k] ? `<div><dt>${k}</dt><dd>${esc(entry[k])}</dd></div>` : "").join("");
+const qa = {};
+for (const s of ["male", "female"]) {
+    try { qa[s] = await (await fetch(new URL(entry.qa[s], new URL(base, location.href)))).json(); } catch { qa[s] = null; }
+}
+const rows = (qa.male || qa.female)?.checks.map(c => c.id) || [];
+const cell = (s, id) => { const c = qa[s]?.checks.find(x => x.id === id); return c ? `<td class="${c.pass ? "ok" : "bad"}">${c.pass ? "Pass" : "Fail"} <span>· ${c.value}</span></td>` : "<td>—</td>"; };
+document.querySelector("#checks tbody").innerHTML = rows.map(id => {
+    const c = (qa.male || qa.female).checks.find(x => x.id === id);
+    return `<tr><td>${esc(c.label)} <span style="color:var(--muted)">(limit ${c.limit})</span></td>${cell("male", id)}${cell("female", id)}</tr>`;
+}).join("");
+const r = readiness(entry, qa);
+document.getElementById("review").textContent = r.ready ? `Ready: signed off by ${entry.review.approvedBy} on ${entry.review.approvedOn}.`
+    : `Not ready for clients yet. Still needed: ${r.missing.join(", ")}.`;
+
+start();
+</script>
+</body>
+</html>

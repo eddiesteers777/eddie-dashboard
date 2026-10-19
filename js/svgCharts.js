@@ -9,6 +9,10 @@
                 stretches to its box, strokes keep their width
      loadChartSvg  weekly load bars stacked by intensity, with the
                 training base and recent load lines over them
+   Pass `tips` (one line of text per point / week) and the chart comes
+   wrapped in a .sb-chart that js/chartTips.js makes tappable: a crosshair,
+   a dot and the value under your finger (the idea borrowed from Apache
+   ECharts' axis tooltip, without the library).
    Unit-tested in tests/trends.test.mjs.
 ========================================== */
 
@@ -21,9 +25,9 @@ const r2 = n => Math.round(n * 100) / 100;
  */
 export function barsHtml(bars, { unit = "mi" } = {}) {
     const max = Math.max(1, ...bars.map(b => Math.max(Number(b.value) || 0, Number(b.planned) || 0)));
-    return `<div class="tr-bars" role="img" aria-label="${esc(bars.map(b => `${b.label}: ${b.value}${b.planned != null ? ` of ${b.planned}` : ""} ${unit}`).join(", "))}">${bars.map(b => {
+    return `<div class="tr-bars sb-chart" tabindex="0" role="group" aria-label="${esc(bars.map(b => `${b.label}: ${b.value}${b.planned != null ? ` of ${b.planned}` : ""} ${unit}`).join(", "))}">${bars.map(b => {
         const h = v => `${r2((Number(v) || 0) / max * 100)}%`;
-        return `<div class="tr-bar${b.current ? " is-current" : ""}${b.future ? " is-future" : ""}" title="${esc(b.title || `${b.label}: ${b.value} ${unit}`)}">
+        return `<div class="tr-bar${b.current ? " is-current" : ""}${b.future ? " is-future" : ""}" data-tip="${esc(b.title || `${b.label}: ${b.value}${b.planned != null ? ` of ${b.planned}` : ""} ${unit}`)}">
             <div class="tr-bar-track">${b.planned != null ? `<span class="tr-bar-plan" style="height:${h(b.planned)}"></span>` : ""}<span class="tr-bar-fill${b.planned != null && Number(b.value) >= Number(b.planned) * 0.9 ? " is-met" : ""}" style="height:${h(b.value)}"></span></div>
             <small>${esc(b.label)}</small>
         </div>`;
@@ -37,7 +41,7 @@ export function barsHtml(bars, { unit = "mi" } = {}) {
  *   band      [{ lo, hi }|null] per point (e.g. normal HRV range), or one { lo, hi }
  *   goal      a horizontal line (e.g. 3:05 in seconds)
  */
-export function lineSvg(values, { min, max, invert = false, band = null, goal = null, height = 100, cls = "" } = {}) {
+export function lineSvg(values, { min, max, invert = false, band = null, goal = null, height = 100, cls = "", tips = null, label = "" } = {}) {
     const nums = values.filter(v => v != null);
     const bandVals = Array.isArray(band) ? band.filter(Boolean).flatMap(b => [b.lo, b.hi]) : band ? [band.lo, band.hi] : [];
     const all = [...nums, ...bandVals, ...(goal != null ? [goal] : [])];
@@ -65,7 +69,18 @@ export function lineSvg(values, { min, max, invert = false, band = null, goal = 
     const lines = segments.map(s => s.length === 1
         ? `<line class="tr-path" x1="${Math.max(0, parseFloat(s[0]) - 0.8)}" x2="${Math.min(100, parseFloat(s[0]) + 0.8)}" y1="${s[0].split(",")[1]}" y2="${s[0].split(",")[1]}" vector-effect="non-scaling-stroke"/>`
         : `<polyline class="tr-path" points="${s.join(" ")}" vector-effect="non-scaling-stroke"/>`).join("");
-    return `<svg class="tr-line ${cls}" viewBox="0 0 100 ${height}" preserveAspectRatio="none" aria-hidden="true">${bandSvg}${goalSvg}${lines}</svg>`;
+    const svg = `<svg class="tr-line ${cls}" viewBox="0 0 100 ${height}" preserveAspectRatio="none" aria-hidden="true">${bandSvg}${goalSvg}${lines}</svg>`;
+    return tips ? chartWrap(svg, values.map((v, i) => (v == null || !tips[i] ? null : { x: x(i), y: r2(y(v) / height), t: tips[i] })), label) : svg;
+}
+
+/**
+ * Wraps a chart for js/chartTips.js. points: [{ x (0–100, % across), y (0–1 from the top) | null, t (text) } | null].
+ * The tips live in data-tips; nothing is drawn until someone hovers, taps or arrows through it.
+ */
+export function chartWrap(chart, points, label = "") {
+    const pts = points.filter(Boolean);
+    if (!pts.length) return chart;
+    return `<div class="sb-chart" tabindex="0" role="group" aria-label="${esc(label ? `${label}. Use the arrow keys to read each point.` : "Chart. Use the arrow keys to read each point.")}" data-tips="${esc(JSON.stringify(pts))}">${chart}</div>`;
 }
 
 /**
@@ -75,7 +90,7 @@ export function lineSvg(values, { min, max, invert = false, band = null, goal = 
  * weeks: [{ start, easy, threshold, hard, daysIn }]   (oldest first)
  * days:  [{ base, recent }]  one per day across those weeks (may end early: the current week)
  */
-export function loadChartSvg(weeks, days, { height = 100 } = {}) {
+export function loadChartSvg(weeks, days, { height = 100, tips = null, label = "" } = {}) {
     const n = weeks.length * 7;
     const perDay = w => ({ easy: w.easy / Math.max(1, w.daysIn ?? 7), threshold: w.threshold / Math.max(1, w.daysIn ?? 7), hard: w.hard / Math.max(1, w.daysIn ?? 7) });
     const tops = weeks.map(w => { const p = perDay(w); return p.easy + p.threshold + p.hard; });
@@ -95,5 +110,6 @@ export function loadChartSvg(weeks, days, { height = 100 } = {}) {
         const pts = days.map((d, i) => (d[key] == null ? null : `${r2(i + 0.5)},${y(d[key])}`)).filter(Boolean);
         return pts.length > 1 ? `<polyline class="${cls}" points="${pts.join(" ")}" vector-effect="non-scaling-stroke"/>` : "";
     };
-    return `<svg class="lc-chart" viewBox="0 0 ${n} ${height}" preserveAspectRatio="none" aria-hidden="true">${bars}${line("base", "lc-base")}${line("recent", "lc-recent")}</svg>`;
+    const svg = `<svg class="lc-chart" viewBox="0 0 ${n} ${height}" preserveAspectRatio="none" aria-hidden="true">${bars}${line("base", "lc-base")}${line("recent", "lc-recent")}</svg>`;
+    return tips ? chartWrap(svg, weeks.map((w, i) => (tips[i] ? { x: r2((i * 7 + 3.5) / n * 100), y: r2(y(tops[i]) / height), t: tips[i] } : null)), label) : svg;
 }

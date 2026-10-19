@@ -21,6 +21,7 @@ import { summarizePlans, summarizeProgress, isoDate, shortDate } from "./clientS
 import { profileAccess } from "./navAccess.js";
 import { progressHighlights, progressSections, habitStreak } from "./progressView.js";
 import { barsHtml } from "./svgCharts.js";
+import "./chartTips.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
