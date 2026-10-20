@@ -5,7 +5,8 @@
    athlete. The motion decides where the hands go; the dumbbell is a child of
    each hand bone, so it follows. It is lined up from the pose at time 0: the
    handle runs front to back (world z) in the first frame, so a motion that
-   uses dumbbells starts with a neutral grip (palms facing each other).
+   uses dumbbells starts with a neutral grip (palms facing each other); with
+   grip "pronated" it runs side to side (world x) and the palms face forward.
    Returns { dispose }.
 ========================================== */
 
@@ -37,11 +38,14 @@ export function attachProps(THREE, root, items = []) {
             const sx = side === "Left" ? 1 : -1;
             const db = buildDumbbell(THREE, item);
             // The fist: most of the way from the wrist to the first knuckle, a little toward the palm (inward at time 0).
-            const centre = hand.getWorldPosition(new THREE.Vector3()).lerp(mid.getWorldPosition(new THREE.Vector3()), 0.85).add(new THREE.Vector3(-sx * 0.018, 0, 0));
+            const pronated = item.grip === "pronated";
+            const toPalm = pronated ? new THREE.Vector3(0, 0, 0.018) : new THREE.Vector3(-sx * 0.018, 0, 0);
+            const centre = hand.getWorldPosition(new THREE.Vector3()).lerp(mid.getWorldPosition(new THREE.Vector3()), 0.85).add(toPalm);
             const q = hand.getWorldQuaternion(new THREE.Quaternion()), sc = hand.getWorldScale(new THREE.Vector3());
             hand.add(db);
             db.scale.set(1 / sc.x, 1 / sc.y, 1 / sc.z);
-            db.quaternion.copy(q.invert());
+            const want = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), pronated ? Math.PI / 2 : 0);   // handle z -> x for a pronated grip
+            db.quaternion.copy(q.invert().multiply(want));
             db.position.copy(hand.worldToLocal(centre));
             made.push(db);
         }

@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { gradeSquat, gradeLunge, gradeRow, GRADERS, fromHorizontal, fromVertical, bottomFrame, MAX_JOINT_SPEED } from "../lab/demo3d/qa.js";
+import { gradeSquat, gradeLunge, gradeRow, gradePress, GRADERS, fromHorizontal, fromVertical, bottomFrame, MAX_JOINT_SPEED } from "../lab/demo3d/qa.js";
 import { validateEntry, findDemo, readiness, playable, pickSex, viewsFor, cameraFor, isReviewed, VIEWS } from "../lab/demo3d/catalog.js";
 
 const lab = join(dirname(fileURLToPath(import.meta.url)), "..", "lab", "demo3d");
@@ -319,4 +319,36 @@ test("props: a dumbbell is built from plain shapes and attaches to each hand", a
     assert.equal(p.count, 2);
     let leftover = 0; root.traverse(o => { if (o.isMesh) leftover++; });
     assert.equal(leftover, 0, "disposing removes them");
+});
+
+// ---- Dumbbell press ----
+
+function pressTrack({ n = 150, fps = 30, reps = 1, lift = 0.5, tweak = () => {} } = {}) {
+    const frames = [];
+    for (let i = 0; i < n; i++) {
+        const s = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / n), f = {};
+        f.Hips = [0, 0.95, 0]; f.Spine2 = [0, 1.3, 0]; f.Head = [0, 1.62, 0.02];
+        for (const [name, side] of [["Left", 1], ["Right", -1]]) {
+            f[name + "UpLeg"] = [side * 0.1, 0.92, 0]; f[name + "Leg"] = [side * 0.12, 0.5, 0.02]; f[name + "Foot"] = [side * 0.12, 0.08, 0]; f[name + "ToeBase"] = [side * 0.13, 0.03, 0.15];
+            f[name + "Arm"] = [side * 0.2, 1.4, 0];
+            f[name + "Hand"] = [side * 0.22, 1.45 + lift * s, 0.1 - 0.08 * s];
+            f[name + "ForeArm"] = [side * 0.3 - side * 0.08 * s, 1.15 + 0.35 * s, 0.05 * (1 - s)];
+        }
+        tweak(f, s, i); frames.push(f);
+    }
+    return { fps, frames, reps };
+}
+
+test("the press grader is registered and a plain press passes the arm and body checks", () => {
+    assert.equal(GRADERS["dumbbell-press"], gradePress);
+    const r = gradePress(pressTrack());
+    for (const id of ["feet-planted", "upright", "hips-still", "range", "start-at-shoulders", "overhead", "elbow-top", "elbow-rack", "symmetry", "phase-order", "tempo-press", "tempo-lower", "smooth"]) assert.ok(byId(r, id), `has ${id}`);
+    for (const id of ["upright", "hips-still", "range", "overhead", "symmetry", "phase-order"]) assert.equal(byId(r, id).pass, true, id);
+});
+
+test("a press that leans back, stops short, or goes up unevenly fails", () => {
+    assert.equal(byId(gradePress(pressTrack({ tweak: (f, s) => { f.Spine2[2] -= 0.5 * s; } })), "upright").pass, false);
+    assert.equal(byId(gradePress(pressTrack({ lift: 0.1 })), "range").pass, false);
+    assert.equal(byId(gradePress(pressTrack({ tweak: (f, s) => { f.RightHand[1] -= 0.1 * s; } })), "symmetry").pass, false);
+    assert.equal(byId(gradePress(pressTrack({ n: 40 })), "tempo-press").pass, false);
 });

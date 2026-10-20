@@ -4,4 +4,5 @@ import { squat } from "./squat.js";
 import { pushup } from "./pushup.js";
 import { lunge } from "./lunge.js";
 import { row } from "./row.js";
-export const MOTIONS = { squat, pushup, lunge, row };
+import { press } from "./press.js";
+export const MOTIONS = { squat, pushup, lunge, row, press };

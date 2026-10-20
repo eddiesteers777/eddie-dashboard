@@ -346,6 +346,101 @@
           "to": 1
         }
       ]
+    },
+    {
+      "id": "dumbbell-press",
+      "name": "Dumbbell Overhead Press",
+      "aliases": [
+        "Dumbbell Shoulder Press",
+        "Standing Dumbbell Press",
+        "Dumbbell Press",
+        "Overhead Press",
+        "DB Shoulder Press",
+        "Standing Dumbbell Shoulder Press"
+      ],
+      "category": "push",
+      "equipment": [
+        "dumbbells"
+      ],
+      "props": [
+        {
+          "type": "dumbbell",
+          "grip": "pronated"
+        }
+      ],
+      "models": {
+        "male": "assets/athlete-male.glb",
+        "female": "assets/athlete-female.glb"
+      },
+      "clip": "dumbbell-press",
+      "seconds": 10,
+      "reps": 2,
+      "views": [
+        "front",
+        "three-quarter",
+        "side"
+      ],
+      "defaultView": "three-quarter",
+      "start": "Feet hip-width, a dumbbell in each hand resting at your shoulders, palms forward, ribs down.",
+      "move": "Press both dumbbells straight up until your arms are long and the weights are over your shoulders. Lower them slowly back to your shoulders.",
+      "cue": "Squeeze your glutes and keep your ribs down so your lower back doesn't arch.",
+      "muscles": {
+        "primary": [
+          "shoulders",
+          "triceps"
+        ],
+        "secondary": [
+          "traps",
+          "chest",
+          "abdominals"
+        ]
+      },
+      "qa": {
+        "male": "assets/dumbbell-press-male.qa.json",
+        "female": "assets/dumbbell-press-female.qa.json"
+      },
+      "status": "review",
+      "review": {
+        "approvedBy": null,
+        "approvedOn": null,
+        "notes": ""
+      },
+      "motions": {
+        "male": "assets/dumbbell-press-male.motion.glb",
+        "female": "assets/dumbbell-press-female.motion.glb"
+      },
+      "phases": [
+        {
+          "label": "Rack",
+          "from": 0,
+          "to": 0.08
+        },
+        {
+          "label": "Press",
+          "from": 0.08,
+          "to": 0.4
+        },
+        {
+          "label": "Lockout",
+          "from": 0.4,
+          "to": 0.5
+        },
+        {
+          "label": "Lower",
+          "from": 0.5,
+          "to": 0.92
+        },
+        {
+          "label": "Rack",
+          "from": 0.92,
+          "to": 1
+        }
+      ],
+      "stage": {
+        "height": 2.4,
+        "span": 1.3,
+        "centerY": 1.15
+      }
     }
   ]
 }

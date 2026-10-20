@@ -1,0 +1,113 @@
+{
+ "id": "dumbbell-press",
+ "sex": "female",
+ "gradedAt": "2026-10-20",
+ "pass": true,
+ "checks": [
+  {
+   "id": "feet-planted",
+   "label": "Feet stay planted, metres",
+   "value": 0,
+   "limit": 0.015,
+   "pass": true
+  },
+  {
+   "id": "upright",
+   "label": "Torso stays upright (largest lean from vertical), degrees",
+   "value": 1.766,
+   "limit": 12,
+   "pass": true
+  },
+  {
+   "id": "hips-still",
+   "label": "Hips hold still, metres",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "range",
+   "label": "Hands travel up, metres",
+   "value": 0.404,
+   "limit": 0.35,
+   "pass": true
+  },
+  {
+   "id": "start-at-shoulders",
+   "label": "Hands start near shoulder height, metres above the shoulders",
+   "value": 0.07,
+   "limit": 0.2,
+   "pass": true
+  },
+  {
+   "id": "overhead",
+   "label": "Hands finish above the head, metres",
+   "value": 0.325,
+   "limit": 0.1,
+   "pass": true
+  },
+  {
+   "id": "elbow-top",
+   "label": "Arms long at the top (smaller elbow angle), degrees",
+   "value": 162.398,
+   "limit": 160,
+   "pass": true
+  },
+  {
+   "id": "elbow-rack",
+   "label": "Elbows bent at the shoulders, degrees",
+   "value": 34.828,
+   "limit": 90,
+   "pass": true
+  },
+  {
+   "id": "symmetry",
+   "label": "Both hands reach the same height, metres",
+   "value": 0.002,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "phase-order",
+   "label": "Press up, then lower (hands never go the wrong way), metres",
+   "value": 0,
+   "limit": 0.005,
+   "pass": true
+  },
+  {
+   "id": "tempo-press",
+   "label": "The press takes at least a second, seconds",
+   "value": 1.367,
+   "limit": 1,
+   "pass": true
+  },
+  {
+   "id": "tempo-lower",
+   "label": "Lowering takes at least a second and a half, seconds",
+   "value": 2.267,
+   "limit": 1.5,
+   "pass": true
+  },
+  {
+   "id": "smooth",
+   "label": "Fastest joint, metres per second",
+   "value": 0.408,
+   "limit": 1.5,
+   "pass": true
+  },
+  {
+   "id": "limb-length",
+   "label": "Limbs keep their length (largest change, share of the bone)",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "loop-closes",
+   "label": "The loop closes: last frame to first, in steps",
+   "value": 0,
+   "limit": 1.5,
+   "pass": true
+  }
+ ]
+}

@@ -94,16 +94,16 @@ for (const [width, label] of [[1280, "desktop"], [390, "phone"]]) {
     await ctx.close();
 }
 
-{   // Dumbbell row: a dumbbell in each hand, for both athletes, no errors.
-    const { ctx, page, errors } = await open(1280, { query: "?demo=dumbbell-row" });
+for (const [demo, label] of [["dumbbell-row", "Dumbbell row"], ["dumbbell-press", "Dumbbell press"]]) {   // A dumbbell in each hand, for both athletes, no errors.
+    const { ctx, page, errors } = await open(1280, { query: `?demo=${demo}` });
     await ready(page);
-    check(await page.evaluate(() => window.demo3d.state.props) === 2, "Dumbbell row: a dumbbell in each hand (male)");
+    check(await page.evaluate(() => window.demo3d.state.props) === 2, `${label}: a dumbbell in each hand (male)`);
     await page.click('[data-sex="female"]');
     await page.waitForFunction(() => window.demo3d.state.sex === "female" && document.querySelector("[data-loading]").hidden, null, { timeout: 120000 });
-    check(await page.evaluate(() => window.demo3d.state.props) === 2, "Dumbbell row: a dumbbell in each hand (female)");
+    check(await page.evaluate(() => window.demo3d.state.props) === 2, `${label}: a dumbbell in each hand (female)`);
     await page.evaluate(() => window.demo3d.seek(0.3)); await wait(300);
-    await page.screenshot({ path: join(shots, "desktop-row-female.png") });
-    check(errors.length === 0, `Dumbbell row: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
+    await page.screenshot({ path: join(shots, `desktop-${demo}-female.png`) });
+    check(errors.length === 0, `${label}: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
     await ctx.close();
 }
 {   // Reduce Motion: starts paused at the bottom of the rep.

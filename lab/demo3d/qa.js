@@ -214,6 +214,50 @@ export function gradeRow(track) {
     return { pass: checks.every(c => c.pass), checks };
 }
 
+/** Standing dumbbell press: feet planted, upright body that holds still, hands start at the shoulders, end overhead with long arms, controlled up and down. */
+export function gradePress(track) {
+    const { fps = 30, frames, reps = 1 } = Array.isArray(track) ? { frames: track } : track;
+    if (!Array.isArray(frames) || frames.length < 8) return { pass: false, checks: [{ id: "frames", label: "Enough frames to judge", pass: false, value: frames?.length || 0, limit: 8 }] };
+    const checks = [];
+    const add = (id, label, value, limit, ok) => checks.push({ id, label, value: Math.round(value * 1000) / 1000, limit, pass: Boolean(ok) });
+    const first = frames[0];
+    let slide = 0;
+    for (const j of ["LeftFoot", "RightFoot", "LeftToeBase", "RightToeBase"]) slide = Math.max(slide, maxOf(frames, f => dist(f[j], first[j])));
+    add("feet-planted", "Feet stay planted, metres", slide, 0.015, slide <= 0.015);
+    const lean = maxOf(frames, f => fromVertical(f.Hips, f.Spine2));
+    add("upright", "Torso stays upright (largest lean from vertical), degrees", lean, 12, lean <= 12);
+    const hipMove = maxOf(frames, f => dist(f.Hips, first.Hips));
+    add("hips-still", "Hips hold still, metres", hipMove, 0.03, hipMove <= 0.03);
+    const handY = f => (f.LeftHand[1] + f.RightHand[1]) / 2;
+    const ys = frames.map(handY), travel = Math.max(...ys) - Math.min(...ys);
+    add("range", "Hands travel up, metres", travel, 0.35, travel >= 0.35);
+    const shoulderY = (first.LeftArm[1] + first.RightArm[1]) / 2, rack = handY(first) - shoulderY;
+    add("start-at-shoulders", "Hands start near shoulder height, metres above the shoulders", rack, 0.2, rack >= -0.05 && rack <= 0.2);
+    const topFrame = frames[ys.indexOf(Math.max(...ys))];
+    const over = handY(topFrame) - topFrame.Head[1];
+    add("overhead", "Hands finish above the head, metres", over, 0.1, over >= 0.1);
+    const eTop = Math.min(angleBetween(topFrame.LeftArm, topFrame.LeftForeArm, topFrame.LeftHand), angleBetween(topFrame.RightArm, topFrame.RightForeArm, topFrame.RightHand));
+    const eRack = Math.max(angleBetween(first.LeftArm, first.LeftForeArm, first.LeftHand), angleBetween(first.RightArm, first.RightForeArm, first.RightHand));
+    add("elbow-top", "Arms long at the top (smaller elbow angle), degrees", eTop, 160, eTop >= 160);
+    add("elbow-rack", "Elbows bent at the shoulders, degrees", eRack, 90, eRack <= 90);
+    const sym = Math.abs(topFrame.LeftHand[1] - topFrame.RightHand[1]);
+    add("symmetry", "Both hands reach the same height, metres", sym, 0.03, sym <= 0.03);
+    const n = Math.round(frames.length / (reps || 1)), one = ys.slice(0, n), peak = one.indexOf(Math.max(...one)), rangeY = Math.max(...one) - Math.min(...one);
+    let back = 0;
+    for (let i = 1; i < one.length; i++) { const d = one[i] - one[i - 1]; back = Math.max(back, i <= peak ? -d : d); }
+    add("phase-order", "Press up, then lower (hands never go the wrong way), metres", back, 0.005, back <= 0.005);
+    const start = one.findIndex(v => v - Math.min(...one) > rangeY * 0.05), end = one.length - 1 - [...one].reverse().findIndex(v => v - Math.min(...one) > rangeY * 0.05);
+    const up = (peak - start) / fps, down = (end - peak) / fps;
+    add("tempo-press", "The press takes at least a second, seconds", up, 1, up >= 1);
+    add("tempo-lower", "Lowering takes at least a second and a half, seconds", down, 1.5, down >= 1.5);
+    const loopGap = maxOf(Object.keys(first), j => dist(first[j], frames[frames.length - 1][j]));
+    const stepMax = Math.max(...frames.slice(1).map((f, i) => maxOf(Object.keys(f), j => dist(f[j], frames[i][j]))));
+    const speed = Math.max(stepMax, loopGap) * fps;
+    add("smooth", "Fastest joint, metres per second", speed, MAX_JOINT_SPEED, speed <= MAX_JOINT_SPEED);
+    commonChecks(frames, add);
+    return { pass: checks.every(c => c.pass), checks };
+}
+
 const angleBetween = (a, b, c) => { const u = sub(a, b), v = sub(c, b); return deg(Math.acos(Math.max(-1, Math.min(1, (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (len(u) * len(v) || 1))))); };
 
-export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup, "reverse-lunge": gradeLunge, "dumbbell-row": gradeRow };
+export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup, "reverse-lunge": gradeLunge, "dumbbell-row": gradeRow, "dumbbell-press": gradePress };

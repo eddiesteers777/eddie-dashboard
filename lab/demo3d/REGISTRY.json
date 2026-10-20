@@ -29,8 +29,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 6858,
-      "sha256": "af6aaa5b4eca490eec4154c454fa558742e9db9874c19d3284e3803c3ae544d3",
+      "bytes": 6946,
+      "sha256": "eaa922204d14ff38eb8ff5beb7043691e6c99f7d24d637815166239fd7ab9a35",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -124,6 +124,66 @@
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-press-female.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 128588,
+      "sha256": "1f24501bc4708c145c8cf30c8c91bb98c41e1f787f4b35e16e23ff229183c3d7",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-press-female.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2228,
+      "sha256": "620b8c4b5daa25bb41a712aa9fa5cd1f30aba1711a182615c7eb0500a8121946",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-press-male.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 128492,
+      "sha256": "53872b5e036c84d21588b9bf7e6d8d1775af93d85f67b41be1f570ce52d34dd2",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-press-male.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2221,
+      "sha256": "33f7101532ee1b76f96a39f8f088932ed7e517443f86ddce3aa4d3303619c57c",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
         "date": "2026-10-20"
       }
     },
@@ -374,8 +434,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 8391,
-      "sha256": "65fc0c966542a445390ed8e674d70f70d6736b16a1c1963d18750ee434cb7229",
+      "bytes": 10731,
+      "sha256": "6e0e96d6402a6c0abdb39f59322b7e5a549427b569dac289a811dc3c2ac274dc",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -434,8 +494,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 2986,
-      "sha256": "8bc5bb150d9f5b65e24dc23ed551c0c037e23f1e715bb249c83f8e15040ed291",
+      "bytes": 3379,
+      "sha256": "4f9beec3e588aff35e27a7a4f88bddf688ba77b1de873ecd5515ba6195123126",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -449,8 +509,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 16609,
-      "sha256": "3588b008dd7a97a220193cdb160ba0e7f155a7692ade711d0c3fc7102d50197b",
+      "bytes": 20511,
+      "sha256": "b34307c0c7eb6484f2444787991412aa0d8bd4cd991dac51c93489e9b4775e56",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
