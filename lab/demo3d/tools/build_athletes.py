@@ -370,14 +370,68 @@ def make_logo(shell, img_path, center_z, width=0.15, lift=0.0015):
     o.data.materials.clear(); o.data.materials.append(m)
     return o
 
+def bake_muscle_detail(body, spec, size=2048):
+    """Muscle definition without changing the body: bake the surface of a leaner, more muscular copy of the same
+    character (same mesh, same UVs) onto the shipped body as a tangent-space normal map. The shape stays ours; the
+    shading picks up the contours (delts, chest, abs, quads, calves)."""
+    macro = dict(spec["macro"]); macro["muscle"] = min(1.0, macro["muscle"] + float(os.environ.get("DEF_MUSCLE", "0.5")))
+    macro["weight"] = max(0.25, macro["weight"] - float(os.environ.get("DEF_LEAN", "0.25")))
+    hi = HumanService.create_human(macro_detail_dict=macro)
+    dg = bpy.context.evaluated_depsgraph_get()
+    def frozen(o, name):
+        me = bpy.data.meshes.new_from_object(o.evaluated_get(dg)); c = bpy.data.objects.new(name, me)
+        c.matrix_world = o.matrix_world.copy(); bpy.context.scene.collection.objects.link(c); return c
+    lo, hc = frozen(body, "bake-lo"), frozen(hi, "bake-hi")
+    for o in (lo, hc):
+        for poly in o.data.polygons: poly.use_smooth = True
+    sub = hc.modifiers.new("sub", "SUBSURF"); sub.levels = sub.render_levels = 2
+    img = bpy.data.images.new("sb-muscle-normal", size, size, alpha=False, float_buffer=False)
+    img.colorspace_settings.name = "Non-Color"
+    m = bpy.data.materials.new("bake"); m.use_nodes = True
+    t = m.node_tree.nodes.new("ShaderNodeTexImage"); t.image = img; m.node_tree.nodes.active = t
+    lo.data.materials.clear(); lo.data.materials.append(m)
+    hc.data.materials.clear()
+    sc = bpy.context.scene; sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.samples = 1
+    bpy.ops.object.select_all(action="DESELECT")
+    hc.select_set(True); lo.select_set(True); bpy.context.view_layer.objects.active = lo
+    bpy.ops.object.bake(type="NORMAL", use_selected_to_active=True, cage_extrusion=0.03, max_ray_distance=0.08, normal_space="TANGENT", margin=16)
+    # Clean up: the copies and the second human (its mesh and anything MPFB parented to it).
+    for o in [lo, hc, hi] + list(hi.children): bpy.data.objects.remove(o, do_unlink=True)
+    if size > 1024: img.scale(1024, 1024)
+    # Keep the face, hands and the mouth's inside flat: the two characters differ there in ways that aren't muscle
+    # (and the bake turns them into noise). UV regions of the MakeHuman skin layout, measured from the top-left.
+    import numpy as np
+    w, h = img.size; px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+    yy, xx = np.mgrid[0:h, 0:w]; u = xx / w; v = 1 - yy / h          # v from the top of the image
+    keep = np.ones((h, w), np.float32)
+    keep[(u > 0.62) & (v < 0.86)] = 0                                # the face
+    keep[v > 0.79] = 0                                               # hands and feet
+    keep[(u < 0.17) & (v > 0.33) & (v < 0.48)] = 0                   # inside of the mouth
+    from functools import reduce
+    for _ in range(12):                                              # feather the edges of the masks
+        keep = (keep + np.roll(keep, 1, 0) + np.roll(keep, -1, 0) + np.roll(keep, 1, 1) + np.roll(keep, -1, 1)) / 5
+    flatn = np.array([0.5, 0.5, 1.0], np.float32)
+    px[:, :, :3] = px[:, :, :3] * keep[..., None] + flatn * (1 - keep[..., None])
+    img.pixels = px.ravel().tolist()
+    # Into the skin: image -> normal map -> Principled normal.
+    for mat in bpy.data.materials:
+        if mat.use_nodes and mat.name == "Human.body":
+            nt = mat.node_tree; p = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+            ti = nt.nodes.new("ShaderNodeTexImage"); ti.image = img
+            nm = nt.nodes.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = float(os.environ.get("DEF_STRENGTH", "2.0"))
+            nt.links.new(ti.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], p.inputs["Normal"])
+    return img
+
 def bone_z(rig, name):
     return (rig.matrix_world @ rig.data.bones[name].head_local).z
 
 for sex, spec in ATHLETES.items():
+    if os.environ.get("ONLY_SEX") not in (None, "", sex): continue
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.preferences.addon_enable(module="bl_ext.user_default.mpfb")
     body = HumanService.create_human(macro_detail_dict=spec["macro"])
     HumanService.set_character_skin(os.path.join(DATA, spec["skin"]), body, skin_type="GAMEENGINE")
+    muscle_map = bake_muscle_detail(body, spec) if os.environ.get("DEFINITION", "1") != "0" else None
     rig = HumanService.add_builtin_rig(body, "mixamo")
     pre = "mixamorig:" if "mixamorig:Hips" in rig.data.bones else ""
     hips_z = bone_z(rig, pre + "Hips"); knee_z = bone_z(rig, pre + "LeftLeg")
@@ -444,6 +498,14 @@ for sex, spec in ATHLETES.items():
     # Hems with thickness (after the logo patch was taken from the single sheet).
     for g, base in ((bottom, KIT["bottom"]), (top, KIT["top"])):
         thicken(g, flat("sb-inner-" + g.name, tuple(c * 0.8 for c in base[:3]) + (1.0,), 0.9))
+    # The kit is cut from the body (same UVs), so the same detail shows the form under a fitted shirt and shorts.
+    if muscle_map:
+        for mat in bpy.data.materials:
+            if mat.name in ("sb-top", "sb-bottom") and mat.use_nodes:
+                nt = mat.node_tree; p = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+                ti = nt.nodes.new("ShaderNodeTexImage"); ti.image = muscle_map
+                nm = nt.nodes.new("ShaderNodeNormalMap"); nm.inputs["Strength"].default_value = float(os.environ.get("DEF_KIT", "1.2" if sex == "male" else "0.8"))
+                nt.links.new(ti.outputs["Color"], nm.inputs["Color"]); nt.links.new(nm.outputs["Normal"], p.inputs["Normal"])
     # The skin is opaque: drop its alpha link so the exporter stores it as a JPEG (a quarter of the PNG's size).
     for m in bpy.data.materials:
         if m.use_nodes and m.name == "Human.body":
@@ -473,7 +535,7 @@ for sex, spec in ATHLETES.items():
     # Phone-sized textures: skin 1024, everything else 512.
     for img in bpy.data.images:
         if img.size[0] > 0:
-            cap = 1024 if "skin" in img.name.lower() or "male" in img.name.lower() else 512
+            cap = 1024 if any(k in img.name.lower() for k in ("skin", "male", "muscle")) else 512
             if max(img.size) > cap:
                 k = cap / max(img.size); img.scale(int(img.size[0] * k), int(img.size[1] * k))
     # Export: skinned meshes + rig, no animation, Y-up, textures as JPEG.

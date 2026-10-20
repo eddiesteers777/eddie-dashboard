@@ -34,3 +34,6 @@ Checked 2026-10-18. Everything that ships (the files under `lab/demo3d/` except 
 
 ## The gym (`gym.js`, `assets/sb-logo.png`)
 The garage gym around the athlete is plain shapes drawn in code (no outside models or textures; the floor and glass are generated on a canvas). `assets/sb-logo.png` is the Southbound mark, our own artwork (a copy of `tools/art/sb-logo.png`).
+
+## Muscle definition map (inside `athlete-*.glb`, image `sb-muscle-normal`)
+Our own bake (`bake_muscle_detail` in `tools/build_athletes.py`): the surface of a leaner, more muscular MakeHuman copy of each athlete (CC0 base mesh and targets) baked as a normal map onto the shipped body and kit. No outside textures. Z-Anatomy was not used for any file.

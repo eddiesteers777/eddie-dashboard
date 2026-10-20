@@ -1,0 +1,34 @@
+{
+ "id": "bodyweight-squat-male.motion",
+ "duration": 6.4,
+ "samples": 97,
+ "summary": {
+  "pass": true,
+  "fails": 1,
+  "critical_fails": 0
+ },
+ "thresholds": {
+  "bone_length_pct": 2.0,
+  "hinge_hyper_deg": 8.0,
+  "hinge_wrong_way": 0.3,
+  "hinge_min_deg": 25.0,
+  "spike_m": 0.06,
+  "twist_deg": 35.0,
+  "twist_flip_deg": 90.0,
+  "foot_slide_m": 0.03,
+  "prop_contact_m": 0.06,
+  "loop_m": 0.08,
+  "samples_per_sec": 15
+ },
+ "results": [
+  {
+   "check": "skeleton",
+   "joint": "rig",
+   "status": "FAIL",
+   "critical": false,
+   "detail": "bones missing from GLB: ['upperarm01.L', 'upperarm02.L', 'lowerarm01.L', 'lowerarm02.L', 'wrist.L', 'upperarm01.R', 'upperarm02.R', 'lowerarm01.R', 'lowerarm02.R', 'wrist.R', 'upperleg01.L', 'upperleg02.L', 'lowerleg01.L', 'lowerleg02.L', 'foot.L', 'upperleg01.R', 'upperleg02.R', 'lowerleg01.R', 'lowerleg02.R', 'foot.R']",
+   "value": null,
+   "t": null
+  }
+ ]
+}
