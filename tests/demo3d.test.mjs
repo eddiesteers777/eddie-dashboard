@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { gradeSquat, gradeLunge, GRADERS, fromHorizontal, fromVertical, bottomFrame, MAX_JOINT_SPEED } from "../lab/demo3d/qa.js";
+import { gradeSquat, gradeLunge, gradeRow, GRADERS, fromHorizontal, fromVertical, bottomFrame, MAX_JOINT_SPEED } from "../lab/demo3d/qa.js";
 import { validateEntry, findDemo, readiness, playable, pickSex, viewsFor, cameraFor, isReviewed, VIEWS } from "../lab/demo3d/catalog.js";
 
 const lab = join(dirname(fileURLToPath(import.meta.url)), "..", "lab", "demo3d");
@@ -265,4 +265,58 @@ test("exercise schema: missing or wrong fields are named", async () => {
     assert.match(problems({ status: "ready" }), /sign-off/);
     assert.match(problems({ cue: "" }), /cue/);
     assert.ok(validateEntry(null).length > 0);
+});
+
+// ---- Dumbbell row ----
+
+function rowTrack({ n = 150, fps = 30, reps = 1, lift = 0.35, hinge = 0.7, tweak = () => {} } = {}) {
+    const frames = [];
+    for (let i = 0; i < n; i++) {
+        const s = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / n), f = {};
+        const hips = [0, 0.8, -0.2], spine = [0, 0.8 + 0.4 * (1 - hinge) + 0.1, -0.2 + 0.5 * hinge];
+        const sh = side => [side * 0.18, spine[1], spine[2] + 0.05];
+        f.Hips = hips; f.Spine2 = spine; f.Head = [0, spine[1], spine[2] + 0.3];
+        for (const [name, side] of [["Left", 1], ["Right", -1]]) {
+            f[name + "UpLeg"] = [side * 0.1, 0.78, -0.2]; f[name + "Leg"] = [side * 0.12, 0.45, 0.0]; f[name + "Foot"] = [side * 0.12, 0.08, 0.05]; f[name + "ToeBase"] = [side * 0.13, 0.03, 0.2];
+            const a = sh(side), hand = [a[0], a[1] - 0.6 + lift * s, a[2] + 0.02 - 0.15 * s];
+            f[name + "Arm"] = a; f[name + "Hand"] = hand;
+            f[name + "ForeArm"] = s < 0.5 ? [a[0], a[1] - 0.3 + lift * s * 0.2, a[2] - 0.01] : [a[0], a[1] - 0.25 + lift * s * 0.2, a[2] - 0.3 * s];
+        }
+        tweak(f, s, i); frames.push(f);
+    }
+    return { fps, frames, reps };
+}
+
+test("the row grader is registered and judges the torso, the arms and the tempo", () => {
+    assert.equal(GRADERS["dumbbell-row"], gradeRow);
+    const r = gradeRow(rowTrack());
+    for (const id of ["hinge", "back-still", "hips-still", "range", "symmetry", "phase-order", "tempo-pull", "tempo-lower", "smooth", "limb-length", "loop-closes"]) assert.ok(byId(r, id), `has ${id}`);
+    assert.equal(byId(r, "hinge").pass, true);
+    assert.equal(byId(r, "back-still").pass, true);
+    assert.equal(byId(r, "range").pass, true);
+});
+
+test("a row that stands too upright, swings the torso, or barely lifts fails", () => {
+    assert.equal(byId(gradeRow(rowTrack({ hinge: 0.2 })), "hinge").pass, false);
+    assert.equal(byId(gradeRow(rowTrack({ tweak: (f, s) => { f.Spine2[2] -= 0.25 * s; } })), "back-still").pass, false);
+    assert.equal(byId(gradeRow(rowTrack({ tweak: (f, s) => { f.Hips[2] -= 0.1 * s; } })), "hips-still").pass, false);
+    assert.equal(byId(gradeRow(rowTrack({ lift: 0.1 })), "range").pass, false);
+    assert.equal(byId(gradeRow(rowTrack({ tweak: (f, s) => { f.LeftHand[1] += 0.1 * s; } })), "symmetry").pass, false);
+    assert.equal(byId(gradeRow(rowTrack({ n: 40 })), "tempo-pull").pass, false);
+});
+
+test("props: a dumbbell is built from plain shapes and attaches to each hand", async () => {
+    const THREE = await import("../lab/demo3d/vendor/three/three.module.min.js");
+    const { buildDumbbell, attachProps } = await import("../lab/demo3d/props.js");
+    const d = buildDumbbell(THREE);
+    assert.equal(d.children.length, 3, "a handle and two heads");
+    const root = new THREE.Group(), mk = (name, parent, x, y) => { const b = new THREE.Bone(); b.name = name; b.position.set(x, y, 0); parent.add(b); return b; };
+    const hips = mk("mixamorigHips", root, 0, 1);
+    for (const [side, sx] of [["Left", 1], ["Right", -1]]) { const h = mk(`mixamorig${side}Hand`, hips, sx * 0.5, 0); mk(`mixamorig${side}HandMiddle1`, h, 0, -0.08); }
+    const p = attachProps(THREE, root, [{ type: "dumbbell" }, { type: "kettlebell" }]);
+    assert.equal(p.count, 2, "one per hand; unknown types are ignored");
+    p.dispose();
+    assert.equal(p.count, 2);
+    let leftover = 0; root.traverse(o => { if (o.isMesh) leftover++; });
+    assert.equal(leftover, 0, "disposing removes them");
 });

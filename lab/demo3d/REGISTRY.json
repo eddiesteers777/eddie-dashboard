@@ -29,8 +29,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 6552,
-      "sha256": "835d56dab59712fb5e92bac4767da101bb257225859447873604019530029b11",
+      "bytes": 6858,
+      "sha256": "af6aaa5b4eca490eec4154c454fa558742e9db9874c19d3284e3803c3ae544d3",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -124,6 +124,66 @@
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-row-female.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 86620,
+      "sha256": "face13b3dd8c8d97f46ef367efdde08eef2cdddfd80b4b967076698e20d5833f",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-row-female.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2087,
+      "sha256": "a2860d759abb56226af7377585ad54cd599223849925f4f022e23365ab0e275b",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-row-male.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 86548,
+      "sha256": "acab4ac19dcc0d0d2f3d1c4347dad45b4a7a7801354cdd4535659b1a40e3985c",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/dumbbell-row-male.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2084,
+      "sha256": "d7e26bcae0daa80453ec6cc89dbf3e314dfbd2fe49e1b9ece7f1834233b76807",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
         "date": "2026-10-20"
       }
     },
@@ -299,8 +359,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 18689,
-      "sha256": "1ded8877ad63141eb77d8fe3b3632cdf04c54b7fc3b8cef9eb8f5d695cd2cd1f",
+      "bytes": 19153,
+      "sha256": "f8886bd5e2537ea25f3ed1203e653425567ed5739183f740e117197ce669f5db",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -314,8 +374,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 6191,
-      "sha256": "233687706b02edff3b1c8e58836e8dc4ca4ccba59ae7e76892b3f023afe25dfb",
+      "bytes": 8391,
+      "sha256": "65fc0c966542a445390ed8e674d70f70d6736b16a1c1963d18750ee434cb7229",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -368,14 +428,29 @@
       }
     },
     {
+      "path": "props.js",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2986,
+      "sha256": "8bc5bb150d9f5b65e24dc23ed551c0c037e23f1e715bb249c83f8e15040ed291",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
       "path": "qa.js",
       "kind": "code",
       "source": "Written for Southbound",
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 12689,
-      "sha256": "367d7eb61e015520dc4ef0d5199860b2eb58ef7099e69b1896ecec6bc552e676",
+      "bytes": 16609,
+      "sha256": "3588b008dd7a97a220193cdb160ba0e7f155a7692ade711d0c3fc7102d50197b",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",

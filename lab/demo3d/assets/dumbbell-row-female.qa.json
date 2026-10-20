@@ -1,0 +1,106 @@
+{
+ "id": "dumbbell-row",
+ "sex": "female",
+ "gradedAt": "2026-10-20",
+ "pass": true,
+ "checks": [
+  {
+   "id": "feet-planted",
+   "label": "Feet stay planted, metres",
+   "value": 0,
+   "limit": 0.015,
+   "pass": true
+  },
+  {
+   "id": "hinge",
+   "label": "Torso leans well forward (smallest lean from upright), degrees",
+   "value": 56.983,
+   "limit": 35,
+   "pass": true
+  },
+  {
+   "id": "back-still",
+   "label": "Torso holds still while the arms row (change in lean), degrees",
+   "value": 0,
+   "limit": 6,
+   "pass": true
+  },
+  {
+   "id": "hips-still",
+   "label": "Hips hold still, metres",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "range",
+   "label": "Hands travel up toward the ribs, metres",
+   "value": 0.317,
+   "limit": 0.3,
+   "pass": true
+  },
+  {
+   "id": "elbow-top",
+   "label": "Elbows bend at the top of the pull, degrees",
+   "value": 65.286,
+   "limit": 100,
+   "pass": true
+  },
+  {
+   "id": "elbow-hang",
+   "label": "Arms hang long at the bottom, degrees",
+   "value": 152.809,
+   "limit": 150,
+   "pass": true
+  },
+  {
+   "id": "symmetry",
+   "label": "Both hands reach the same height, metres",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "phase-order",
+   "label": "Pull up, then lower (hands never go the wrong way), metres",
+   "value": 0,
+   "limit": 0.005,
+   "pass": true
+  },
+  {
+   "id": "tempo-pull",
+   "label": "The pull takes at least a second, seconds",
+   "value": 1.267,
+   "limit": 1,
+   "pass": true
+  },
+  {
+   "id": "tempo-lower",
+   "label": "Lowering takes at least a second and a half, seconds",
+   "value": 2.267,
+   "limit": 1.5,
+   "pass": true
+  },
+  {
+   "id": "smooth",
+   "label": "Fastest joint, metres per second",
+   "value": 0.408,
+   "limit": 1.5,
+   "pass": true
+  },
+  {
+   "id": "limb-length",
+   "label": "Limbs keep their length (largest change, share of the bone)",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "loop-closes",
+   "label": "The loop closes: last frame to first, in steps",
+   "value": 0,
+   "limit": 1.5,
+   "pass": true
+  }
+ ]
+}

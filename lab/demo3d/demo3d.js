@@ -15,6 +15,7 @@
 ========================================== */
 import { VIEWS, SPEEDS, findDemo, playable, pickSex, viewsFor, cameraFor, modelUrl } from "./catalog.js";
 import { buildGym } from "./gym.js";
+import { attachProps } from "./props.js";
 const BACKDROP = "#ECE8E0"; // the clips' backdrop: the athlete sits edge to edge on the cream stage
 const SEX_LABEL = { male: "Male", female: "Female" };
 
@@ -190,7 +191,8 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
                 let head = null;
                 root.traverse(o => { if (o.isBone && /Head$/.test(o.name)) head = o; });
                 const height = head ? head.getWorldPosition(new THREE.Vector3()).y + 0.13 : 1.75;
-                return { scene: root, mixer, action, height: Math.min(2.2, Math.max(1.4, height)) };
+                const props = attachProps(THREE, root, entry.props);   // dumbbells etc., lined up from the pose at time 0
+                return { scene: root, mixer, action, props, height: Math.min(2.2, Math.max(1.4, height)) };
             }));
             loaded.get(key).catch(() => loaded.delete(key));
         }
@@ -228,12 +230,14 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     const controller = {
         play() { state.playing = true; sync(); kick(); },
         pause() { state.playing = false; cancelAnimationFrame(raf); raf = 0; sync(); render(); },
+        /** Jump to a point in a rep (0 to 1) and hold there: for screenshots and tests. */
+        seek(u) { if (current) { current.action.time = u / (entry.reps || 1) * entry.seconds; current.mixer.update(0); } state.playing = false; sync(); render(); },
         replay() { if (current) { current.action.time = 0; current.mixer.update(0); } state.playing = true; sync(); render(); kick(); },
         toggle() { state.playing ? controller.pause() : controller.play(); },
         setSex(s) { return entry.models?.[s] && s !== state.sex ? show(s) : Promise.resolve(controller); },
         setView(v) { if (VIEWS[v] && views.includes(v)) { state.view = v; state.yawOffset = 0; sync(); placeCamera(); render(); } },
         setSpeed(x) { if (SPEEDS.includes(x)) { state.speed = x; if (current) current.mixer.timeScale = x; sync(); } },
-        get state() { return { ...state, time: current?.action.time ?? 0 }; },
+        get state() { return { ...state, time: current?.action.time ?? 0, props: current?.props?.count ?? 0 }; },
         dispose
     };
 

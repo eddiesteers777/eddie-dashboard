@@ -172,4 +172,48 @@ export function gradeLunge(track) {
     return { pass: checks.every(c => c.pass), checks };
 }
 
-export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup, "reverse-lunge": gradeLunge };
+/** Dumbbell row: feet planted, hinged flat back that holds still, elbows bend and drive back, a controlled pull and lower. */
+export function gradeRow(track) {
+    const { fps = 30, frames, reps = 1 } = Array.isArray(track) ? { frames: track } : track;
+    if (!Array.isArray(frames) || frames.length < 8) return { pass: false, checks: [{ id: "frames", label: "Enough frames to judge", pass: false, value: frames?.length || 0, limit: 8 }] };
+    const checks = [];
+    const add = (id, label, value, limit, ok) => checks.push({ id, label, value: Math.round(value * 1000) / 1000, limit, pass: Boolean(ok) });
+    const first = frames[0];
+    let slide = 0;
+    for (const j of ["LeftFoot", "RightFoot", "LeftToeBase", "RightToeBase"]) slide = Math.max(slide, maxOf(frames, f => dist(f[j], first[j])));
+    add("feet-planted", "Feet stay planted, metres", slide, 0.015, slide <= 0.015);
+    const leans = frames.map(f => fromVertical(f.Hips, f.Spine2));
+    const lo = Math.min(...leans), hi = Math.max(...leans);
+    add("hinge", "Torso leans well forward (smallest lean from upright), degrees", lo, 35, lo >= 35 && hi <= 75);
+    add("back-still", "Torso holds still while the arms row (change in lean), degrees", hi - lo, 6, hi - lo <= 6);
+    const hipMove = maxOf(frames, f => dist(f.Hips, first.Hips));
+    add("hips-still", "Hips hold still, metres", hipMove, 0.03, hipMove <= 0.03);
+    const wristY = f => (f.LeftHand[1] + f.RightHand[1]) / 2;
+    const ys = frames.map(wristY), travel = Math.max(...ys) - Math.min(...ys);
+    add("range", "Hands travel up toward the ribs, metres", travel, 0.3, travel >= 0.3);
+    const top = frames[ys.indexOf(Math.max(...ys))], eTop = Math.max(angleBetween(top.LeftArm, top.LeftForeArm, top.LeftHand), angleBetween(top.RightArm, top.RightForeArm, top.RightHand));
+    const eHang = Math.min(angleBetween(first.LeftArm, first.LeftForeArm, first.LeftHand), angleBetween(first.RightArm, first.RightForeArm, first.RightHand));
+    add("elbow-top", "Elbows bend at the top of the pull, degrees", eTop, 100, eTop <= 100);
+    add("elbow-hang", "Arms hang long at the bottom, degrees", eHang, 150, eHang >= 150);
+    const sym = Math.abs(top.LeftHand[1] - top.RightHand[1]);
+    add("symmetry", "Both hands reach the same height, metres", sym, 0.03, sym <= 0.03);
+    // Pull then lower, never the wrong way, and neither slower than a second nor a jerk.
+    const n = Math.round(frames.length / (reps || 1)), one = ys.slice(0, n), peak = one.indexOf(Math.max(...one)), rangeY = Math.max(...one) - Math.min(...one);
+    let back = 0;
+    for (let i = 1; i < one.length; i++) { const d = one[i] - one[i - 1]; back = Math.max(back, i <= peak ? -d : d); }
+    add("phase-order", "Pull up, then lower (hands never go the wrong way), metres", back, 0.005, back <= 0.005);
+    const start = one.findIndex(v => v - Math.min(...one) > rangeY * 0.05), end = one.length - 1 - [...one].reverse().findIndex(v => v - Math.min(...one) > rangeY * 0.05);
+    const pull = (peak - start) / fps, lower = (end - peak) / fps;
+    add("tempo-pull", "The pull takes at least a second, seconds", pull, 1, pull >= 1);
+    add("tempo-lower", "Lowering takes at least a second and a half, seconds", lower, 1.5, lower >= 1.5);
+    const loopGap = maxOf(Object.keys(first), j => dist(first[j], frames[frames.length - 1][j]));
+    const stepMax = Math.max(...frames.slice(1).map((f, i) => maxOf(Object.keys(f), j => dist(f[j], frames[i][j]))));
+    const speed = Math.max(stepMax, loopGap) * fps;
+    add("smooth", "Fastest joint, metres per second", speed, MAX_JOINT_SPEED, speed <= MAX_JOINT_SPEED);
+    commonChecks(frames, add);
+    return { pass: checks.every(c => c.pass), checks };
+}
+
+const angleBetween = (a, b, c) => { const u = sub(a, b), v = sub(c, b); return deg(Math.acos(Math.max(-1, Math.min(1, (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (len(u) * len(v) || 1))))); };
+
+export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup, "reverse-lunge": gradeLunge, "dumbbell-row": gradeRow };

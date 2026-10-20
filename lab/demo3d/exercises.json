@@ -256,6 +256,96 @@
           "to": 1
         }
       ]
+    },
+    {
+      "id": "dumbbell-row",
+      "name": "Dumbbell Row",
+      "aliases": [
+        "Dumbbell Rows",
+        "Bent-Over Dumbbell Row",
+        "Bent Over Dumbbell Row",
+        "DB Row",
+        "Two-Arm Dumbbell Row"
+      ],
+      "category": "pull",
+      "equipment": [
+        "dumbbells"
+      ],
+      "props": [
+        {
+          "type": "dumbbell"
+        }
+      ],
+      "models": {
+        "male": "assets/athlete-male.glb",
+        "female": "assets/athlete-female.glb"
+      },
+      "clip": "dumbbell-row",
+      "seconds": 10,
+      "reps": 2,
+      "views": [
+        "side",
+        "three-quarter",
+        "front"
+      ],
+      "defaultView": "side",
+      "start": "Feet hip-width, knees soft, hips pushed back until your back is about 45 degrees to the floor and flat. Dumbbells hang under your shoulders.",
+      "move": "Pull both elbows back past your ribs until the dumbbells reach your lower ribs, pause, then lower slowly until your arms are long.",
+      "cue": "Keep your back flat and your hips still; the arms do the moving.",
+      "muscles": {
+        "primary": [
+          "lats",
+          "middle back"
+        ],
+        "secondary": [
+          "biceps",
+          "traps",
+          "forearms",
+          "lower back",
+          "shoulders"
+        ]
+      },
+      "qa": {
+        "male": "assets/dumbbell-row-male.qa.json",
+        "female": "assets/dumbbell-row-female.qa.json"
+      },
+      "status": "review",
+      "review": {
+        "approvedBy": null,
+        "approvedOn": null,
+        "notes": ""
+      },
+      "motions": {
+        "male": "assets/dumbbell-row-male.motion.glb",
+        "female": "assets/dumbbell-row-female.motion.glb"
+      },
+      "phases": [
+        {
+          "label": "Hang",
+          "from": 0,
+          "to": 0.1
+        },
+        {
+          "label": "Pull",
+          "from": 0.1,
+          "to": 0.4
+        },
+        {
+          "label": "Squeeze",
+          "from": 0.4,
+          "to": 0.5
+        },
+        {
+          "label": "Lower",
+          "from": 0.5,
+          "to": 0.92
+        },
+        {
+          "label": "Hang",
+          "from": 0.92,
+          "to": 1
+        }
+      ]
     }
   ]
 }

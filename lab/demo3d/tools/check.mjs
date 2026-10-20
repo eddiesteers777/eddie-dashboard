@@ -27,7 +27,7 @@ const ready = page => page.waitForFunction(() => window.demo3d && document.query
 const time = page => page.evaluate(() => window.demo3d.state.time);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
-async function open(width, { reduced = false, noWebgl = false } = {}) {
+async function open(width, { reduced = false, noWebgl = false, query = "" } = {}) {
     const ctx = await browser.newContext({ viewport: { width, height: width > 600 ? 900 : 844 }, serviceWorkers: "block", reducedMotion: reduced ? "reduce" : "no-preference", deviceScaleFactor: width > 600 ? 1 : 2 });
     if (noWebgl) await ctx.addInitScript(() => {
         const get = HTMLCanvasElement.prototype.getContext;
@@ -37,7 +37,7 @@ async function open(width, { reduced = false, noWebgl = false } = {}) {
     const errors = [];
     page.on("pageerror", e => errors.push(e.message));
     page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
-    await page.goto(url);
+    await page.goto(url + query);
     return { ctx, page, errors };
 }
 
@@ -94,6 +94,18 @@ for (const [width, label] of [[1280, "desktop"], [390, "phone"]]) {
     await ctx.close();
 }
 
+{   // Dumbbell row: a dumbbell in each hand, for both athletes, no errors.
+    const { ctx, page, errors } = await open(1280, { query: "?demo=dumbbell-row" });
+    await ready(page);
+    check(await page.evaluate(() => window.demo3d.state.props) === 2, "Dumbbell row: a dumbbell in each hand (male)");
+    await page.click('[data-sex="female"]');
+    await page.waitForFunction(() => window.demo3d.state.sex === "female" && document.querySelector("[data-loading]").hidden, null, { timeout: 120000 });
+    check(await page.evaluate(() => window.demo3d.state.props) === 2, "Dumbbell row: a dumbbell in each hand (female)");
+    await page.evaluate(() => window.demo3d.seek(0.3)); await wait(300);
+    await page.screenshot({ path: join(shots, "desktop-row-female.png") });
+    check(errors.length === 0, `Dumbbell row: no page errors${errors.length ? ": " + errors.join(" | ") : ""}`);
+    await ctx.close();
+}
 {   // Reduce Motion: starts paused at the bottom of the rep.
     const { ctx, page } = await open(390, { reduced: true });
     await ready(page);

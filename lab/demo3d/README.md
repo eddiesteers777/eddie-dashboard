@@ -2,7 +2,7 @@
 
 Free, branded 3D demonstrations: a male and a female athlete in Southbound kit doing the exercise in a smooth loop, with play/pause, Male/Female, 3/4 · Side · Front, half speed and drag-to-turn. Everything plays from our own site: no paid service, no account, nothing fetched from anyone else. Licences: `LICENSES.md`.
 
-**Status:** a prototype in `lab/` with three exercises (bodyweight squat, push-up, reverse lunge; `?demo=push-up` on the lab page). It is not linked from the app, not in the service worker's precache, and doesn't change any production page. Open `/lab/demo3d/` on the site (or a local server) to see it.
+**Status:** a prototype in `lab/` with four exercises (bodyweight squat, push-up, reverse lunge, dumbbell row; `?demo=push-up` on the lab page). It is not linked from the app, not in the service worker's precache, and doesn't change any production page. Open `/lab/demo3d/` on the site (or a local server) to see it.
 
 ## How it fits together
 
@@ -41,7 +41,7 @@ Until then the status is `"review"`: the lab page shows it with an "In review" b
 ## Adding an exercise
 
 1. Write `tools/motions/<name>.js` (`setup(rig)`, `pose(rig, t)` with t from 0 to 1 over the loop): world-space targets for the hips, chest, hands and feet, solved by `tools/rig.js`. Register it in `tools/motions/index.js` and in the `ID` map of `tools/bake.mjs`.
-2. Equipment (bar, dumbbells, bench, pull-up bar) is a simple prop added in `bake.html` and attached to the hand bones, so it's baked into the same GLB.
+2. Equipment is a prop the player adds (`props.js`, plain shapes, no assets): list `"props": [{"type": "dumbbell"}]` in the entry and a dumbbell is attached to each hand bone. It is lined up from the first frame, so the motion starts with a neutral grip (palms facing each other, handle front to back). Props are not in the baked motion files or the review renders; check them in the player (`window.demo3d.seek(0.4)` jumps to a point in a rep).
 3. Add a grader to `qa.js` with that exercise's rules (for a push-up: straight body line, chest near the floor, elbows under 60° from the body; for a pull-up: chin over the bar, full hang).
 4. Bake, check, add the entry to `exercises.json` with `"status": "review"`, then the person's review. `validateEntry()` in `catalog.js` (run by `tests/demo3d.test.mjs`) lists every missing or wrong field of an entry: id, category, equipment, models/motions/qa for both sexes, views and default, phases 0 to 1, start/move/cue, muscles from the app's list, status and review. The reverse lunge was added this way: one motion file, one grader, one JSON entry, no player changes.
 

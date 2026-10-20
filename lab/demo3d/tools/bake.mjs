@@ -21,7 +21,7 @@ const server = createServer((req, res) => {
 const port = server.address().port;
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 mkdirSync(join(lab, "assets"), { recursive: true }); mkdirSync(review, { recursive: true });
-const ID = { squat: "bodyweight-squat", pushup: "push-up", lunge: "reverse-lunge" }[motion] || motion;
+const ID = { squat: "bodyweight-squat", pushup: "push-up", lunge: "reverse-lunge", row: "dumbbell-row" }[motion] || motion;
 for (const sex of ["male", "female"]) {
     const page = await browser.newPage();
     page.on("pageerror", e => console.error(sex, e.message));
@@ -35,6 +35,7 @@ for (const sex of ["male", "female"]) {
     const SHOTS = {
         squat: [["top", 0, 35], ["bottom", 0.26, 35], ["side-bottom", 0.26, 90], ["front-bottom", 0.26, 0], ["face", 0, 20, 4, 0.9, 1.55]],
         lunge: [["top", 0, 35], ["bottom", 0.27, 35], ["side-bottom", 0.27, 90], ["side-step", 0.15, 90], ["front-bottom", 0.27, 0]],
+        row: [["top", 0, 35], ["pulled", 0.2, 35], ["side-pulled", 0.2, 90], ["side-hang", 0, 90], ["front-pulled", 0.2, 0]],
         pushup: [["top", 0, 35, 8, 4.6, 0.3], ["bottom", 0.165, 35, 8, 4.6, 0.3], ["side-bottom", 0.165, 90, 6, 4.2, 0.3], ["side-top", 0, 90, 6, 4.2, 0.3], ["front-bottom", 0.165, 10, 10, 3.2, 0.3]]
     }[motion];
     for (const [name, t, yaw, ...rest] of SHOTS) {

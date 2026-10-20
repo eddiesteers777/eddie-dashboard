@@ -23,7 +23,7 @@ export const RULES = [
     { match: /^assets\/[a-z-]+-(male|female)\.qa\.json$/, kind: "report", source: "Output of tools/qa.mjs on the baked motion", licence: "own", author: "Southbound", changes: "" },
     { match: /^assets\/sb-logo\.png$/, kind: "image", source: "Southbound mark (copy of tools/art/sb-logo.png, rendered from brand/sb-mark.svg)", licence: "own", author: "Southbound", changes: "" },
     { match: /^vendor\/three\//, kind: "code", source: THREE, licence: "MIT", author: "mrdoob and the Three.js authors", changes: "GLTFLoader and BufferGeometryUtils import the minified build by relative path; nothing else." },
-    { match: /^(demo3d\.js|catalog\.js|qa\.js|gym\.js|demo3d\.css|index\.html|mockups\/gym\.html)$/, kind: "code", source: "Written for Southbound", licence: "own", author: "Southbound", changes: "" },
+    { match: /^(demo3d\.js|catalog\.js|qa\.js|gym\.js|props\.js|demo3d\.css|index\.html|mockups\/gym\.html)$/, kind: "code", source: "Written for Southbound", licence: "own", author: "Southbound", changes: "" },
     { match: /^exercises\.json$/, kind: "data", source: "Written for Southbound (steps copied from js/exerciseDemos.js)", licence: "own", author: "Southbound", changes: "" },
     { match: /^(LICENSES|README)\.md$|^REGISTRY\.json$/, kind: "doc", source: "Written for Southbound", licence: "own", author: "Southbound", changes: "" }
 ];
