@@ -407,6 +407,19 @@ for sex, spec in ATHLETES.items():
             if kit["bottom"] == "leggings":
                 # Leggings end at the ankle bone: trim the shoe's cuff so it can't show through them.
                 delete_faces(obj, lambda co: co.z < bone_z(rig, pre + "LeftFoot") + 0.03)
+            # The sole and heel follow the foot only: weights borrowed from the body also pull the heel with the
+            # shin, which dragged the shoes a few centimetres into the floor as the knees bent.
+            mw_ = obj.matrix_world
+            keep = [g for g in obj.vertex_groups if g.name.split(":")[-1] in ("LeftFoot", "RightFoot", "LeftToeBase", "RightToeBase", "LeftToe_End", "RightToe_End")]
+            side = {"L": [g for g in keep if "Left" in g.name], "R": [g for g in keep if "Right" in g.name]}
+            for v in obj.data.vertices:
+                if (mw_ @ v.co).z > 0.085: continue
+                gs = side["L" if (mw_ @ v.co).x > 0 else "R"]
+                if not gs: continue
+                tot = sum(next((x.weight for x in v.groups if x.group == g.index), 0.0) for g in gs)
+                for x in list(v.groups):
+                    if x.group not in [g.index for g in gs]: obj.vertex_groups[x.group].remove([v.index])
+                if tot <= 0: gs[0].add([v.index], 1.0, "REPLACE")
             # One material, coloured per vertex (smooth blends, no stair-steps on the coarse mesh):
             # white sole fading into a tan upper.
             mw = obj.matrix_world

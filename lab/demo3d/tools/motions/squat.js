@@ -17,7 +17,7 @@ export function repCurve(u, [a, b, c, d] = [0.08, 0.48, 0.56, 0.94]) {
 const rot = (q, v) => v.clone().applyQuaternion(q);
 
 export const squat = {
-    id: "bodyweight-squat", seconds: 6.4, reps: 2,
+    id: "bodyweight-squat", seconds: 6.4, reps: 2, plantFeet: true,
     setup(rig) {
         const r = n => rig.rest[n].wp.clone();
         this.hipY = r("Hips").y;

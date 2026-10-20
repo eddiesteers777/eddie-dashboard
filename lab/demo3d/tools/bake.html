@@ -32,6 +32,23 @@ const rig = new Rig(model);
 const motion = MOTIONS[q.get("motion") || "squat"];
 motion.setup(rig);
 const FPS = 30;
+// Feet on the floor: a motion that asks for it (plantFeet) gets the whole body lifted or lowered each frame so the
+// lowest point of the shoes is exactly on the floor (the shoe mesh's sole sits a few centimetres from the ankle bone).
+const shoes = []; model.traverse(o => { if (o.isSkinnedMesh && /shoes/i.test(o.name)) shoes.push(o); });
+const lowestShoe = () => { model.updateMatrixWorld(true); let m = 9; const v = new THREE.Vector3(); for (const o of shoes) { o.skeleton.update(); const n = o.geometry.attributes.position.count; for (let i = 0; i < n; i++) { o.getVertexPosition(i, v); v.applyMatrix4(o.matrixWorld); if (v.y < m) m = v.y; } } return m; };
+let lift = null;
+function liftTable() {
+    const n = Math.round(motion.seconds * FPS), raw = [];
+    for (let k = 0; k < n; k++) { rig.reset(); motion.pose(rig, k / n); raw.push(-lowestShoe()); }
+    rig.reset();
+    return raw.map((_, k) => { let a = 0; for (let d = -1; d <= 1; d++) a += raw[(k + d + n) % n]; return a / 3; }); // smooth, cyclic
+}
+function place(t) {
+    if (motion.plantFeet && shoes.length) lift ||= liftTable();
+    rig.reset(); motion.pose(rig, t);
+    if (lift) { const k = Math.round(((t % 1) + 1) % 1 * lift.length) % lift.length; rig.b.Hips.position.y += lift[k]; }
+    model.updateMatrixWorld(true);
+}
 const frames = Math.round(motion.seconds * FPS);
 
 // Sample every bone's local rotation (and the hips' position) per frame.
@@ -39,9 +56,7 @@ const bones = Object.values(rig.b);
 function sample() {
     const times = [], rotTracks = new Map(bones.map(b => [b, []])), hipPos = [];
     for (let i = 0; i <= frames; i++) {
-        rig.reset();
-        motion.pose(rig, (i % frames) / frames); // the last frame = the first: a seamless loop
-        model.updateMatrixWorld(true);
+        place((i % frames) / frames); // the last frame = the first: a seamless loop
         times.push(i / FPS);
         for (const b of bones) rotTracks.get(b).push(...b.quaternion.toArray());
         hipPos.push(...rig.b.Hips.position.toArray());
@@ -76,7 +91,7 @@ window.track = (fps = 30) => {
     const n = Math.round(motion.seconds * fps);
     const out = [];
     for (let i = 0; i < n; i++) {
-        rig.reset(); motion.pose(rig, i / n); model.updateMatrixWorld(true);
+        place(i / n);
         const p = {};
         for (const k of ["Hips", "Spine2", "Head", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftToeBase", "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase", "LeftArm", "LeftForeArm", "LeftHand", "RightArm", "RightForeArm", "RightHand"])
             p[k] = rig.wp(k).toArray();
@@ -100,7 +115,7 @@ model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = fal
 scene.add(model);
 const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
 window.shot = (t, yaw = 35, pitch = 8, dist = 4.6, ty = 0.85, tz = 0) => {
-    rig.reset(); motion.pose(rig, t); model.updateMatrixWorld(true);
+    place(t);
     const y = yaw * Math.PI / 180, p = pitch * Math.PI / 180;
     cam.position.set(Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, tz + Math.cos(y) * Math.cos(p) * dist);
     cam.lookAt(0, ty, tz);
