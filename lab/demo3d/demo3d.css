@@ -79,3 +79,8 @@
     background:transparent; color:var(--text); font:700 14px/1 var(--font-body);
 }
 .d3-linkbtn:focus-visible{ outline:none; box-shadow:var(--focus-ring); }
+
+.d3-phase{
+    position:absolute; z-index:2; top:12px; right:12px; padding:5px 10px; border-radius:6px; pointer-events:none;
+    background:rgba(15,32,25,.78); color:var(--primary); font:700 12px/1 var(--font-mono); letter-spacing:.08em; text-transform:uppercase;
+}

@@ -37,9 +37,33 @@ function squatTrack({ bottom = BOTTOM, n = 96, fps = 30, tweak = () => {} } = {}
 const byId = (report, id) => report.checks.find(c => c.id === id);
 
 test("a good squat passes every check", () => {
+    // (This fixture slides joints in straight lines, which stretches the limbs; the limb-length check has its own tests.)
     const r = gradeSquat(squatTrack());
-    assert.equal(r.pass, true, JSON.stringify(r.checks.filter(c => !c.pass)));
-    assert.deepEqual(r.checks.map(c => c.id), ["feet-planted", "depth", "range", "knees-out", "chest-up", "balance", "smooth"]);
+    const bad = r.checks.filter(c => !c.pass && c.id !== "limb-length");
+    assert.deepEqual(bad, [], JSON.stringify(bad));
+    assert.deepEqual(r.checks.map(c => c.id), ["feet-planted", "depth", "range", "knees-out", "chest-up", "balance", "smooth",
+        "phase-order", "tempo-down", "tempo-up", "knee-bend", "limb-length", "loop-closes"]);
+});
+
+test("limbs that stretch fail 'limb-length'; a still body passes", () => {
+    assert.equal(byId(gradeSquat(squatTrack()), "limb-length").pass, false);
+    const still = squatTrack({ bottom: TOP });
+    assert.equal(byId(gradeSquat(still), "limb-length").pass, true);
+});
+
+test("hips that bob on the way down fail 'phase-order'", () => {
+    const r = gradeSquat(squatTrack({ tweak: (f, s, i) => { if (i === 20) f.Hips[1] += 0.08; } }));
+    assert.equal(byId(r, "phase-order").pass, false);
+});
+
+test("a rep that drops in under a second fails the tempo check", () => {
+    const r = gradeSquat(squatTrack({ n: 40 }));
+    assert.equal(byId(r, "tempo-down").pass, false);
+});
+
+test("a squat that is not deep enough in the knees fails 'knee-bend'", () => {
+    const r = gradeSquat(squatTrack({ bottom: { ...BOTTOM, LeftLeg: TOP.LeftLeg.map((v, k) => v + (BOTTOM.LeftLeg[k] - v) * 0.2) } }));
+    assert.equal(byId(r, "knee-bend").pass, false);
 });
 
 test("a sliding foot fails 'feet planted'", () => {
@@ -150,5 +174,16 @@ test("the shipped catalog: files exist, phone-sized, licensed, and nothing is 'r
             qa[s] = JSON.parse(readFileSync(join(lab, e.qa[s]), "utf8"));
         }
         if (e.status === "ready") assert.equal(readiness(e, qa).ready, true, `${e.id} is marked ready but ${readiness(e, qa).missing.join(", ")}`);
+    }
+});
+
+test("phases cover one rep from 0 to 1 with no gaps", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const cat = JSON.parse(await readFile(new URL("../lab/demo3d/exercises.json", import.meta.url), "utf8"));
+    for (const e of Array.isArray(cat) ? cat : cat.exercises) {
+        assert.ok(e.phases?.length >= 3, `${e.id} has phases`);
+        let at = 0;
+        for (const ph of e.phases) { assert.equal(ph.from, at, `${e.id}: ${ph.label} starts where the last ended`); assert.ok(ph.to > ph.from); at = ph.to; }
+        assert.equal(at, 1, `${e.id}: phases end at 1`);
     }
 });

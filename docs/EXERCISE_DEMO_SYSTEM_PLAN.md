@@ -58,3 +58,7 @@ Stage A audit + the plan for stages B–E. Built on what already works in `lab/d
 ## 5. Smallest next step
 
 The muscle-definition normal bake on both athletes, judged with before/after close-ups. It is the biggest visible gap and touches only the build script. Next: compare the squat against CMU squat data.
+
+## 6. Squat versus real motion capture (2026-10-20)
+CMU trial 13_29 (a person doing repeated bodyweight squats, 120 fps): knee bend at the bottom 121–124°, hip bend about 100–105°, lower back about 23–27° (upper back about 9–10°), ankle within about ±10°, each rep 1.7–2.4 s, down and up about equal (0.8 s each, no pause: an athletic rhythm).
+Ours (both athletes): knee bend 119–121°, torso lean 28° (male) and 37° (female) from vertical, rep 3.2 s with about 1.3 s down, a short pause and about 1.2 s up. The depth and knee bend match real squats; the tempo is deliberately slower so the movement is readable. Checks added to `qa.js`: phase order, a lowering and a standing phase of at least a second, knee bend 100–135° (real squats 121–124), limb length drift (3% of the bone) and loop closure. Phases (Stand / Down / Bottom / Up) are in `exercises.json` and shown on the player, which also has Replay.

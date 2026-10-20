@@ -52,6 +52,20 @@
    "value": 0.316,
    "limit": 1.5,
    "pass": true
+  },
+  {
+   "id": "limb-length",
+   "label": "Limbs keep their length (largest change, share of the bone)",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "loop-closes",
+   "label": "The loop closes: last frame to first, in steps",
+   "value": 0,
+   "limit": 1.5,
+   "pass": true
   }
  ]
 }

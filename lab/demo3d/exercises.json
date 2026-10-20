@@ -51,7 +51,34 @@
       "motions": {
         "male": "assets/bodyweight-squat-male.motion.glb",
         "female": "assets/bodyweight-squat-female.motion.glb"
-      }
+      },
+      "phases": [
+        {
+          "label": "Stand",
+          "from": 0,
+          "to": 0.08
+        },
+        {
+          "label": "Down",
+          "from": 0.08,
+          "to": 0.48
+        },
+        {
+          "label": "Bottom",
+          "from": 0.48,
+          "to": 0.56
+        },
+        {
+          "label": "Up",
+          "from": 0.56,
+          "to": 0.94
+        },
+        {
+          "label": "Stand",
+          "from": 0.94,
+          "to": 1
+        }
+      ]
     },
     {
       "id": "push-up",
@@ -109,7 +136,34 @@
         "male": "assets/push-up-male.motion.glb",
         "female": "assets/push-up-female.motion.glb"
       },
-      "floorMat": true
+      "floorMat": true,
+      "phases": [
+        {
+          "label": "Top",
+          "from": 0,
+          "to": 0.08
+        },
+        {
+          "label": "Lower",
+          "from": 0.08,
+          "to": 0.5
+        },
+        {
+          "label": "Bottom",
+          "from": 0.5,
+          "to": 0.57
+        },
+        {
+          "label": "Press",
+          "from": 0.57,
+          "to": 0.9
+        },
+        {
+          "label": "Top",
+          "from": 0.9,
+          "to": 1
+        }
+      ]
     }
   ]
 }

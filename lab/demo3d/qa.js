@@ -27,9 +27,43 @@ export const fromVertical = (a, b) => 90 - fromHorizontal(a, b);
 /** Joint speed above this (m/s) means a pop, not a controlled rep. */
 export const MAX_JOINT_SPEED = 1.5;
 
+
+/** Checks every exercise shares (ported in spirit from OpenGym3D's joint QA): the limbs keep their length, the loop closes. */
+const LIMBS = [["LeftUpLeg", "LeftLeg"], ["LeftLeg", "LeftFoot"], ["RightUpLeg", "RightLeg"], ["RightLeg", "RightFoot"],
+    ["LeftArm", "LeftForeArm"], ["LeftForeArm", "LeftHand"], ["RightArm", "RightForeArm"], ["RightForeArm", "RightHand"]];
+export function commonChecks(frames, add) {
+    let drift = 0;
+    for (const [a, b] of LIMBS) {
+        if (!frames[0][a] || !frames[0][b]) continue;
+        const ls = frames.map(f => dist(f[a], f[b])), mean = ls.reduce((x, y) => x + y, 0) / ls.length;
+        drift = Math.max(drift, ...ls.map(l => Math.abs(l - mean) / mean));
+    }
+    add("limb-length", "Limbs keep their length (largest change, share of the bone)", drift, 0.03, drift <= 0.03);
+    const keys = Object.keys(frames[0]);
+    const gap = maxOf(keys, j => dist(frames[0][j], frames[frames.length - 1][j]));
+    const step = Math.max(...frames.slice(1).map((f, i) => maxOf(keys, j => dist(f[j], frames[i][j]))), 1e-6);
+    add("loop-closes", "The loop closes: last frame to first, in steps", gap / step, 1.5, gap / step <= 1.5);
+}
+
+/** Squat phases (down, bottom, up) in order, a knee bend like real squats, and a teachable tempo. */
+export function squatPhaseChecks(frames, fps, reps, add) {
+    const n = Math.round(frames.length / (reps || 1)), one = frames.slice(0, n);
+    const y = one.map(f => f.Hips[1]), bot = y.indexOf(Math.min(...y)), top = Math.max(...y), range = top - Math.min(...y);
+    let back = 0; // how much the hips move the wrong way (up while going down, down while coming up)
+    for (let i = 1; i < y.length; i++) { const d = y[i] - y[i - 1]; back = Math.max(back, i <= bot ? d : -d); }
+    add("phase-order", "Down, then bottom, then up (hips never go the wrong way), metres", back, 0.005, back <= 0.005);
+    const first = one.findIndex(v => top - v.Hips[1] > range * 0.05), last = one.length - 1 - [...one].reverse().findIndex(v => top - v.Hips[1] > range * 0.05);
+    const down = (bot - first) / fps, up = (last - bot) / fps;
+    add("tempo-down", "Lowering takes at least a second (real squats in motion capture: 0.8 s; a demo is slower to be readable), seconds", down, 1, down >= 1);
+    add("tempo-up", "Standing back up takes at least a second, seconds", up, 1, up >= 1);
+    const b = frames[bot], v = (p, q) => sub(q, p), ang = (a, c) => deg(Math.acos((a[0] * c[0] + a[1] * c[1] + a[2] * c[2]) / len(a) / len(c)));
+    const knee = 180 - ang(v(b.LeftLeg, b.LeftUpLeg), v(b.LeftLeg, b.LeftFoot));
+    add("knee-bend", "Knee bend at the bottom, degrees (real squats in motion capture: 121 to 124)", knee, 100, knee >= 100 && knee <= 135);
+}
+
 /** track: { fps, frames } from tools/bake.html window.track. */
 export function gradeSquat(track) {
-    const { fps = 30, frames } = Array.isArray(track) ? { frames: track } : track;
+    const { fps = 30, frames, reps = 1 } = Array.isArray(track) ? { frames: track } : track;
     if (!Array.isArray(frames) || frames.length < 8) return { pass: false, checks: [{ id: "frames", label: "Enough frames to judge", pass: false, value: frames?.length || 0, limit: 8 }] };
     const checks = [];
     const add = (id, label, value, limit, ok) => checks.push({ id, label, value: Math.round(value * 1000) / 1000, limit, pass: Boolean(ok) });
@@ -63,6 +97,8 @@ export function gradeSquat(track) {
     const step = Math.max(...frames.slice(1).map((f, i) => maxOf(Object.keys(f), j => dist(f[j], frames[i][j]))));
     const speed = Math.max(step, loopGap) * fps; // a pop or IK flip shows as a joint moving far faster than a controlled rep
     add("smooth", "Fastest joint, metres per second", speed, MAX_JOINT_SPEED, speed <= MAX_JOINT_SPEED);
+    squatPhaseChecks(frames, fps, reps, add);
+    commonChecks(frames, add);
     return { pass: checks.every(c => c.pass), checks };
 }
 
@@ -99,6 +135,7 @@ export function gradePushup(track) {
     const step = Math.max(...frames.slice(1).map((f, i) => maxOf(Object.keys(f), j => dist(f[j], frames[i][j]))));
     const speed = Math.max(step, loopGap) * fps;
     add("smooth", "Fastest joint, metres per second", speed, MAX_JOINT_SPEED, speed <= MAX_JOINT_SPEED);
+    commonChecks(frames, add);
     return { pass: checks.every(c => c.pass), checks };
 }
 

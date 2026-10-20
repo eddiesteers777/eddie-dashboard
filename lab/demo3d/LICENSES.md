@@ -37,3 +37,6 @@ The garage gym around the athlete is plain shapes drawn in code (no outside mode
 
 ## Muscle definition map (inside `athlete-*.glb`, image `sb-muscle-normal`)
 Our own bake (`bake_muscle_detail` in `tools/build_athletes.py`): the surface of a leaner, more muscular MakeHuman copy of each athlete (CC0 base mesh and targets) baked as a normal map onto the shipped body and kit. No outside textures. Z-Anatomy was not used for any file.
+
+## Reference data (not shipped)
+CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu, trial 13_29, NSF EIA-0196217): read only, to compare our squat's joint angles and timing. Free for all uses, including in commercial products; it may not be resold directly. None of its data is in this repository. "The data used in this project was obtained from mocap.cmu.edu."

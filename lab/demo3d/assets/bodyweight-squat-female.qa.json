@@ -52,6 +52,48 @@
    "value": 0.886,
    "limit": 1.5,
    "pass": true
+  },
+  {
+   "id": "phase-order",
+   "label": "Down, then bottom, then up (hips never go the wrong way), metres",
+   "value": 0,
+   "limit": 0.005,
+   "pass": true
+  },
+  {
+   "id": "tempo-down",
+   "label": "Lowering takes at least a second (real squats in motion capture: 0.8 s; a demo is slower to be readable), seconds",
+   "value": 1.3,
+   "limit": 1,
+   "pass": true
+  },
+  {
+   "id": "tempo-up",
+   "label": "Standing back up takes at least a second, seconds",
+   "value": 1.067,
+   "limit": 1,
+   "pass": true
+  },
+  {
+   "id": "knee-bend",
+   "label": "Knee bend at the bottom, degrees (real squats in motion capture: 121 to 124)",
+   "value": 119.483,
+   "limit": 100,
+   "pass": true
+  },
+  {
+   "id": "limb-length",
+   "label": "Limbs keep their length (largest change, share of the bone)",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "loop-closes",
+   "label": "The loop closes: last frame to first, in steps",
+   "value": 0,
+   "limit": 1.5,
+   "pass": true
   }
  ]
 }

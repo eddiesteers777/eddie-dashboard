@@ -50,10 +50,12 @@ function playerHtml(entry, views, sexes, inReview) {
         </button>
         <div class="d3-loading" data-loading role="status"><span class="d3-spinner" aria-hidden="true"></span><span data-loading-text>Loading the athlete</span></div>
         ${inReview ? `<span class="d3-badge">In review</span>` : ""}
+        ${entry.phases?.length ? `<span class="d3-phase" data-phase aria-live="off"></span>` : ""}
         <div class="d3-bar" aria-hidden="true"><span data-progress></span></div>
     </div>
     <div class="d3-controls">
         <button type="button" class="d3-pill d3-playbtn" data-toggle aria-pressed="true">Pause</button>
+        <button type="button" class="d3-pill" data-replay aria-label="Replay from the start">Replay</button>
         ${sexes.length > 1 ? pills("sex", sexes.map(s => [s, SEX_LABEL[s]]), "Athlete") : ""}
         ${views.length > 1 ? pills("view", views.map(v => [v, VIEWS[v].label]), "Angle") : ""}
         <button type="button" class="d3-pill" data-speed aria-pressed="false" aria-label="Half speed">0.5×</button>
@@ -133,11 +135,14 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
         const { position, target } = cameraFor(state.view, { ...(entry.stage || { height: current?.height || 1.75 }), fovDeg: camera.fov, aspect: camera.aspect, yawOffset: state.yawOffset, margin: gym ? 1.5 : 1.18 });
         camera.position.set(...position); camera.lookAt(...target); camera.updateProjectionMatrix();
     };
+    const phaseEl = $("[data-phase]");
     const render = () => {
         if (state.disposed) return;
         if (current) {
             const d = current.action.getClip().duration;
-            bar.style.transform = `scaleX(${((current.action.time % d) / d).toFixed(3)})`;
+            const u = (current.action.time % d) / d;
+            bar.style.transform = `scaleX(${u.toFixed(3)})`;
+            if (phaseEl) { const r = (u * (entry.reps || 1)) % 1, ph = entry.phases.find(p => r >= p.from && r < p.to) || entry.phases[0]; if (phaseEl.textContent !== ph.label) phaseEl.textContent = ph.label; }
         }
         renderer.render(scene, camera);
     };
@@ -221,6 +226,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     const controller = {
         play() { state.playing = true; sync(); kick(); },
         pause() { state.playing = false; cancelAnimationFrame(raf); raf = 0; sync(); render(); },
+        replay() { if (current) { current.action.time = 0; current.mixer.update(0); } state.playing = true; sync(); render(); kick(); },
         toggle() { state.playing ? controller.pause() : controller.play(); },
         setSex(s) { return entry.models?.[s] && s !== state.sex ? show(s) : Promise.resolve(controller); },
         setView(v) { if (VIEWS[v] && views.includes(v)) { state.view = v; state.yawOffset = 0; sync(); placeCamera(); render(); } },
@@ -231,6 +237,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
 
     // Controls.
     $("[data-toggle]").addEventListener("click", () => controller.toggle());
+    $("[data-replay]").addEventListener("click", () => controller.replay());
     $("[data-speed]").addEventListener("click", () => controller.setSpeed(state.speed === 1 ? 0.5 : 1));
     host.querySelectorAll("[data-sex]").forEach(b => b.addEventListener("click", () => controller.setSex(b.dataset.sex)));
     host.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => controller.setView(b.dataset.view)));

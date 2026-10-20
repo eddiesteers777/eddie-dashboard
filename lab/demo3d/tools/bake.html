@@ -98,7 +98,7 @@ window.track = (fps = 30) => {
         out.push(p);
     }
     rig.reset();
-    return { fps, frames: out };
+    return { fps, reps: motion.reps || 1, frames: out };
 };
 
 // Review renders.
