@@ -52,3 +52,6 @@ Floor exercises set their own camera framing with `"stage": {"height", "span", "
 - The athlete files are 3.4 MB (male) and 4.0 MB (female), downloaded once and cached; each exercise adds only a 100–150 KB motion file.
 - Hair is a cut-out card (no strands); skin is a single texture with no detail maps. Good on a phone, not film quality.
 - Tested in headless Chromium with software graphics. Needs a pass on a real iPhone and an Android phone before it ships.
+
+## The gym
+`gym.js` builds the garage gym (rubber floor, forest walls, rack, dumbbells, bench, mirror, Southbound mark) around every demo; `"room": "none"` in `exercises.json` turns it off for one exercise, `"floorMat": true` lays a mat (push-ups). Mock-up and GIF renders: `mockups/gym.html?room=garage|studio|performance&demo=...&sex=...&t=...`.

@@ -101,5 +101,6 @@ const cam = new THREE.PerspectiveCamera(32, W / H, 0.05, 60);
 const y = yaw * Math.PI / 180, ty = floorDemo ? 0.55 : 1.0, tz = 0, dist = +(q.get("dist") || (floorDemo ? 4.7 : 5.4));
 cam.position.set(Math.sin(y) * dist, ty + 0.9, tz + Math.cos(y) * dist); cam.lookAt(0, ty, tz);
 renderer.render(scene, cam);
+window.setT = t => { mixer.setTime(t * clip.duration); model.updateMatrixWorld(true); renderer.render(scene, cam); };
 window.READY = true;
 </script></body></html>

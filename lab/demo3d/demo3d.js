@@ -14,7 +14,7 @@
    Controls sit under the stage, never over the athlete.
 ========================================== */
 import { VIEWS, SPEEDS, findDemo, playable, pickSex, viewsFor, cameraFor, modelUrl } from "./catalog.js";
-
+import { buildGym } from "./gym.js";
 const BACKDROP = "#ECE8E0"; // the clips' backdrop: the athlete sits edge to edge on the cream stage
 const SEX_LABEL = { male: "Male", female: "Female" };
 
@@ -102,7 +102,8 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     stage.prepend(renderer.domElement);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(BACKDROP);
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xb9b0a2, 1.4));
+    const fill = new THREE.HemisphereLight(0xffffff, 0xb9b0a2, 1.4);
+    scene.add(fill);
     const key = new THREE.DirectionalLight(0xfff4e6, 2.6);
     key.position.set(2.5, 5, 3.5); key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.045;
@@ -111,6 +112,14 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     const rim = new THREE.DirectionalLight(0xdfe9ff, 1.3); rim.position.set(-3, 3.5, -3.5); scene.add(rim);
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: 0.18 }));
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+    // The garage gym (turn it off per exercise with "room": "none"): its own floor takes the shadows.
+    const gym = entry.room === "none" ? null : buildGym(THREE, scene, { floorMat: !!entry.floorMat, logoUrl: new URL("assets/sb-logo.png", new URL(base, location.href)).href });
+    if (gym) {
+        scene.background = new THREE.Color(gym.background); scene.fog = new THREE.Fog(gym.background, gym.fogNear, gym.fogFar);
+        scene.remove(fill); scene.add(new THREE.AmbientLight(...gym.ambient));
+        key.color.set(gym.key[0]); key.intensity = gym.key[1]; floor.visible = false;
+        stage.style.background = "#" + gym.background.toString(16).padStart(6, "0");
+    }
     const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 40);
 
     const state = { sex: pickSex(entry, sex), view: start, speed: 1, playing: !reduceMotion(), yawOffset: 0, disposed: false };
@@ -121,7 +130,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     const placeCamera = () => {
         const w = stage.clientWidth || 1, h = stage.clientHeight || 1;
         camera.aspect = w / h;
-        const { position, target } = cameraFor(state.view, { ...(entry.stage || { height: current?.height || 1.75 }), fovDeg: camera.fov, aspect: camera.aspect, yawOffset: state.yawOffset });
+        const { position, target } = cameraFor(state.view, { ...(entry.stage || { height: current?.height || 1.75 }), fovDeg: camera.fov, aspect: camera.aspect, yawOffset: state.yawOffset, margin: gym ? 1.5 : 1.18 });
         camera.position.set(...position); camera.lookAt(...target); camera.updateProjectionMatrix();
     };
     const render = () => {
@@ -132,6 +141,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
         }
         renderer.render(scene, camera);
     };
+    scene.userData.redraw = () => { if (!state.disposed && !state.playing) render(); };
     const loop = now => {
         raf = 0;
         if (state.disposed || !state.playing || !visible || document.hidden || !current) return;
@@ -232,7 +242,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
         if (!drag) return;
         const dx = e.clientX - drag.x;
         if (Math.abs(dx) > 6) drag.moved = true;
-        if (drag.moved) { state.yawOffset = drag.start - dx * 0.5; placeCamera(); if (!state.playing) render(); }
+        if (drag.moved) { state.yawOffset = Math.max(-75, Math.min(75, drag.start - dx * 0.5)); placeCamera(); if (!state.playing) render(); }
     });
     const endDrag = () => { if (drag?.moved) { tap.dataset.dragged = "1"; sync(); } drag = null; };
     tap.addEventListener("pointerup", endDrag);
@@ -265,7 +275,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
                 }
             });
         }).catch(() => {});
-        floor.geometry.dispose(); floor.material.dispose();
+        floor.geometry.dispose(); floor.material.dispose(); gym?.dispose();
         renderer.dispose();
         renderer.forceContextLoss?.();
         renderer.domElement.remove();

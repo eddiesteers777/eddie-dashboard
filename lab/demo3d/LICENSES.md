@@ -31,3 +31,6 @@ Checked 2026-10-18. Everything that ships (the files under `lab/demo3d/` except 
 | Mesh2Motion clips | CC0 and good, but no squat (or other gym exercise) yet. Worth checking again for future exercises. |
 | Ready Player Me avatars | The body is cut away under the outfit, so we couldn't re-dress it in Southbound kit; their terms also tie use to their service. |
 | MuscleWiki videos | Real people and very good, but a paid API (see `.claude/skills/exercise-demo-integration/SKILL.md`). |
+
+## The gym (`gym.js`, `assets/sb-logo.png`)
+The garage gym around the athlete is plain shapes drawn in code (no outside models or textures; the floor and glass are generated on a canvas). `assets/sb-logo.png` is the Southbound mark, our own artwork (a copy of `tools/art/sb-logo.png`).
