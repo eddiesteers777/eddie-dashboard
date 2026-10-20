@@ -59,7 +59,9 @@ function playerHtml(entry, views, sexes, inReview) {
         ${sexes.length > 1 ? pills("sex", sexes.map(s => [s, SEX_LABEL[s]]), "Athlete") : ""}
         ${views.length > 1 ? pills("view", views.map(v => [v, VIEWS[v].label]), "Angle") : ""}
         <button type="button" class="d3-pill" data-speed aria-pressed="false" aria-label="Half speed">0.5×</button>
+        ${entry.muscles?.primary?.length ? `<button type="button" class="d3-pill" data-muscles aria-pressed="false" aria-expanded="false">Muscles</button>` : ""}
     </div>
+    ${entry.muscles?.primary?.length ? `<div class="d3-muscles" data-muscles-panel hidden></div>` : ""}
     <p class="d3-hint">Drag the athlete to turn them.</p>`;
 }
 
@@ -241,6 +243,26 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
     $("[data-speed]").addEventListener("click", () => controller.setSpeed(state.speed === 1 ? 0.5 : 1));
     host.querySelectorAll("[data-sex]").forEach(b => b.addEventListener("click", () => controller.setSex(b.dataset.sex)));
     host.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => controller.setView(b.dataset.view)));
+
+    // "Muscles": the main and helping muscles for this exercise, drawn with the app's own muscle map. Reference only, not measured activity.
+    const mBtn = $("[data-muscles]"), mPanel = $("[data-muscles-panel]");
+    mBtn?.addEventListener("click", async () => {
+        const open = mPanel.hidden;
+        if (open && !mPanel.dataset.ready) {
+            try {
+                const { muscleMapHtml } = await import("../../js/muscleMap.js");
+                if (!document.querySelector('link[data-d3-mm]')) {
+                    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: new URL("../../css/muscle-map.css", import.meta.url).href });
+                    link.dataset.d3Mm = "1"; document.head.appendChild(link);
+                }
+                mPanel.innerHTML = muscleMapHtml(entry.muscles, { id: "d3mm", title: "Muscles worked" })
+                    + `<p class="d3-note">The main muscles (tan) and the ones helping (green) for this exercise. A guide, not a measurement of how hard each one works.</p>`;
+                mPanel.dataset.ready = "1";
+            } catch { mPanel.innerHTML = `<p class="d3-note">Main muscles: ${esc(entry.muscles.primary.join(", "))}. Helping: ${esc((entry.muscles.secondary || []).join(", ") || "none listed")}.</p>`; mPanel.dataset.ready = "1"; }
+        }
+        mPanel.hidden = !open;
+        mBtn.setAttribute("aria-pressed", String(open)); mBtn.setAttribute("aria-expanded", String(open));
+    });
 
     // Tap the stage to pause or play; drag sideways to turn the athlete.
     let drag = null;

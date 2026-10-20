@@ -76,6 +76,13 @@ for (const [width, label] of [[1280, "desktop"], [390, "phone"]]) {
     await page.click('[data-view="front"]');
     await page.click("[data-speed]");
     check(await page.evaluate(() => window.demo3d.state.speed) === 0.5, `${label}: half speed`);
+    // Muscles panel: opens with the app's muscle map and its chips, closes again.
+    await page.click("[data-muscles]");
+    await page.waitForSelector("[data-muscles-panel] .mm-chip", { timeout: 10000 });
+    check(await page.getAttribute("[data-muscles]", "aria-expanded") === "true" && (await page.locator("[data-muscles-panel] .mm-chip.is-primary").count()) > 0 && (await page.locator("[data-muscles-panel] svg").count()) === 2, `${label}: Muscles opens the muscle map with main muscles`);
+    await page.screenshot({ path: join(shots, `${label}-muscles.png`), fullPage: true });
+    await page.click("[data-muscles]");
+    check(await page.locator("[data-muscles-panel]").isHidden(), `${label}: Muscles closes again`);
     // Drag turns the athlete; a view button resets it.
     const box = await page.locator("[data-tap]").boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
