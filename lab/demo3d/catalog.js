@@ -91,3 +91,51 @@ export function cameraFor(view, { height = 1.75, span = height, centerY = height
 
 /** Resolve a model path in the catalog against the catalog's own URL. */
 export const modelUrl = (entry, sex, base) => new URL(entry.models[sex], base).href;
+
+export const CATEGORIES = ["legs", "push", "pull", "core", "full body"];
+export const STATUSES = ["draft", "review", "ready"];
+
+/**
+ * The shape every exercises.json entry must have, so adding an exercise is data
+ * plus a motion file. Returns a list of plain-language problems (empty = fine).
+ * muscles: the allowed muscle names (js/exerciseMuscles.js MUSCLES); left out, names are not checked.
+ */
+export function validateEntry(entry, { muscles = null } = {}) {
+    const bad = [];
+    const need = (ok, msg) => { if (!ok) bad.push(msg); };
+    const text = v => typeof v === "string" && v.trim().length > 0;
+    need(entry && typeof entry === "object", "entry is not an object");
+    if (!entry || typeof entry !== "object") return bad;
+    need(/^[a-z0-9]+(-[a-z0-9]+)*$/.test(entry.id || ""), "id must be lower-case words joined by dashes");
+    need(text(entry.name), "name is missing");
+    need(CATEGORIES.includes(entry.category), `category must be one of ${CATEGORIES.join(", ")}`);
+    need(Array.isArray(entry.equipment) && entry.equipment.length > 0 && entry.equipment.every(text), "equipment must be a list (use [\"bodyweight\"] for none)");
+    for (const s of SEXES) {
+        need(text(entry.models?.[s]), `${s} model is missing`);
+        need(text(entry.motions?.[s]), `${s} motion is missing`);
+        need(text(entry.qa?.[s]), `${s} movement-check file is missing`);
+    }
+    need(entry.clip === entry.id, "clip must equal the id");
+    need(Number.isFinite(entry.seconds) && entry.seconds > 0, "seconds must be above 0");
+    need(Number.isInteger(entry.reps) && entry.reps >= 1, "reps must be a whole number, 1 or more");
+    const views = entry.views;
+    need(Array.isArray(views) && views.length > 0 && views.every(v => VIEWS[v]), `views must be a list of: ${Object.keys(VIEWS).join(", ")}`);
+    need(Array.isArray(views) && views.includes(entry.defaultView), "defaultView must be one of the views");
+    for (const k of ["start", "move", "cue"]) need(text(entry[k]), `${k} text is missing`);
+    const m = entry.muscles;
+    need(Array.isArray(m?.primary) && m.primary.length > 0, "muscles.primary needs at least one muscle");
+    need(Array.isArray(m?.secondary), "muscles.secondary must be a list (may be empty)");
+    const all = [...(m?.primary || []), ...(m?.secondary || [])];
+    need(new Set(all).size === all.length, "a muscle is listed twice");
+    if (muscles) for (const x of all) need(muscles.includes(x), `unknown muscle "${x}"`);
+    const ph = entry.phases;
+    need(Array.isArray(ph) && ph.length >= 3 && ph.every(p => text(p.label)), "phases need at least three, each with a label");
+    if (Array.isArray(ph) && ph.length) {
+        need(ph[0].from === 0 && ph[ph.length - 1].to === 1, "phases must run from 0 to 1");
+        need(ph.every((p, i) => p.to > p.from && (i === 0 || p.from === ph[i - 1].to)), "phases must follow each other with no gap");
+    }
+    need(STATUSES.includes(entry.status), `status must be one of ${STATUSES.join(", ")}`);
+    need(entry.review && typeof entry.review === "object" && "approvedBy" in entry.review && "approvedOn" in entry.review, "review needs approvedBy and approvedOn");
+    if (entry.status === "ready") need(isReviewed(entry), "a ready demo needs a person's sign-off");
+    return bad;
+}

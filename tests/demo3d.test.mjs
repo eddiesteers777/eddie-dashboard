@@ -5,8 +5,8 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { gradeSquat, GRADERS, fromHorizontal, fromVertical, bottomFrame, MAX_JOINT_SPEED } from "../lab/demo3d/qa.js";
-import { findDemo, readiness, playable, pickSex, viewsFor, cameraFor, isReviewed, VIEWS } from "../lab/demo3d/catalog.js";
+import { gradeSquat, gradeLunge, GRADERS, fromHorizontal, fromVertical, bottomFrame, MAX_JOINT_SPEED } from "../lab/demo3d/qa.js";
+import { validateEntry, findDemo, readiness, playable, pickSex, viewsFor, cameraFor, isReviewed, VIEWS } from "../lab/demo3d/catalog.js";
 
 const lab = join(dirname(fileURLToPath(import.meta.url)), "..", "lab", "demo3d");
 
@@ -204,4 +204,65 @@ test("the asset register covers every shipped file, with a licence on the allowe
         }
     }
     build(reg); // every file matches a rule
+});
+
+// ---- Reverse lunge and the exercise schema ----
+
+const LUNGE_TOP = { ...TOP, RightLeg: [-0.12, 0.5, 0.02] };
+const LUNGE_BOTTOM = {
+    Hips: [0, 0.55, -0.4], Spine2: [0, 0.95, -0.38], Head: [0, 1.25, -0.35],
+    LeftUpLeg: [0.1, 0.55, -0.4], LeftLeg: [0.12, 0.5, 0.0], LeftFoot: [0.12, 0.08, 0], LeftToeBase: [0.14, 0.02, 0.14],
+    RightUpLeg: [-0.1, 0.55, -0.4], RightLeg: [-0.12, 0.1, -0.5], RightFoot: [-0.12, 0.17, -0.8], RightToeBase: [-0.14, 0.02, -0.7],
+    LeftArm: [0.18, 1.1, -0.4], LeftHand: [0.1, 1.0, -0.2], RightHand: [-0.1, 1.0, -0.2]
+};
+function lungeTrack({ bottom = LUNGE_BOTTOM, n = 135, fps = 30, tweak = () => {} } = {}) {
+    const frames = [];
+    for (let i = 0; i < n; i++) {
+        const s = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / n), f = {};
+        for (const j of Object.keys(LUNGE_TOP)) f[j] = LUNGE_TOP[j].map((v, k) => v + (bottom[j][k] - v) * s);
+        tweak(f, s, i);
+        frames.push(f);
+    }
+    return { fps, frames };
+}
+
+test("a good reverse lunge passes the lunge checks, and the grader is registered", () => {
+    assert.equal(GRADERS["reverse-lunge"], gradeLunge);
+    const r = gradeLunge(lungeTrack());
+    const bad = r.checks.filter(c => !c.pass && !["limb-length", "knee-bend"].includes(c.id)); // fixture slides joints in straight lines
+    assert.deepEqual(bad, [], JSON.stringify(bad));
+});
+
+test("a front foot that slides, a back foot that never steps back and a shallow lunge fail", () => {
+    assert.equal(byId(gradeLunge(lungeTrack({ tweak: (f, s) => { f.LeftFoot[2] += 0.06 * s; } })), "front-planted").pass, false);
+    assert.equal(byId(gradeLunge(lungeTrack({ bottom: { ...LUNGE_BOTTOM, RightFoot: [-0.12, 0.17, -0.2] } })), "step-back").pass, false);
+    assert.equal(byId(gradeLunge(lungeTrack({ bottom: { ...LUNGE_BOTTOM, RightLeg: [-0.12, 0.4, -0.5] } })), "back-knee-low").pass, false);
+    assert.equal(byId(gradeLunge(lungeTrack({ bottom: { ...LUNGE_BOTTOM, RightToeBase: [-0.14, 0.2, -0.7] } })), "back-toe-down").pass, false);
+});
+
+test("exercise schema: every shipped entry is complete and uses known muscles", async () => {
+    const { MUSCLES } = await import("../js/exerciseMuscles.js");
+    const catalog = JSON.parse(readFileSync(join(lab, "exercises.json"), "utf8"));
+    for (const e of catalog.exercises) assert.deepEqual(validateEntry(e, { muscles: MUSCLES }), [], `${e.id} is a valid entry`);
+    assert.ok(catalog.exercises.some(e => e.id === "reverse-lunge"), "the lunge is in the catalog");
+    assert.equal(new Set(catalog.exercises.map(e => e.id)).size, catalog.exercises.length, "ids are unique");
+    assert.ok(catalog.exercises.every(e => GRADERS[e.id]), "every exercise has a movement grader");
+});
+
+test("exercise schema: missing or wrong fields are named", async () => {
+    const { MUSCLES } = await import("../js/exerciseMuscles.js");
+    const good = JSON.parse(readFileSync(join(lab, "exercises.json"), "utf8")).exercises[0];
+    const problems = patch => validateEntry({ ...structuredClone(good), ...patch }, { muscles: MUSCLES }).join(" | ");
+    assert.match(problems({ id: "Bad Id" }), /id must be/);
+    assert.match(problems({ category: "cardio" }), /category/);
+    assert.match(problems({ equipment: [] }), /equipment/);
+    assert.match(problems({ motions: { male: "x.glb" } }), /female motion/);
+    assert.match(problems({ views: ["side", "above"] }), /views/);
+    assert.match(problems({ defaultView: "front", views: ["side"] }), /defaultView/);
+    assert.match(problems({ muscles: { primary: ["quadriceps"], secondary: ["quadriceps"] } }), /twice/);
+    assert.match(problems({ muscles: { primary: ["wings"], secondary: [] } }), /unknown muscle/);
+    assert.match(problems({ phases: [{ label: "A", from: 0, to: 0.4 }, { label: "B", from: 0.5, to: 1 }, { label: "C", from: 1, to: 1.2 }] }), /gap|0 to 1/);
+    assert.match(problems({ status: "ready" }), /sign-off/);
+    assert.match(problems({ cue: "" }), /cue/);
+    assert.ok(validateEntry(null).length > 0);
 });

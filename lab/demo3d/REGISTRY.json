@@ -29,8 +29,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 6161,
-      "sha256": "75026828f4f089ac54ffc6ad33729c6edb208c03075fc647b9496043e8b1759b",
+      "bytes": 6552,
+      "sha256": "835d56dab59712fb5e92bac4767da101bb257225859447873604019530029b11",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -188,6 +188,66 @@
       }
     },
     {
+      "path": "assets/reverse-lunge-female.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 152696,
+      "sha256": "32182932b70a72bb66d5e4f4aa4fa70c8b93dc9faf3cce38cbc144ea8cb2c81a",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/reverse-lunge-female.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2390,
+      "sha256": "c4e3044a50b8e30531752e6e07434a36bbd6749e00b5b786f98f416d97fd638a",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/reverse-lunge-male.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 152596,
+      "sha256": "290b24f19e9ef90ae1ed94d9575ebbfcdd4b3b113b9364af4e5d214a96e3b723",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/reverse-lunge-male.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2394,
+      "sha256": "f295f58dc04cf3aa98ae37fea79057ac11e0f5dcdb9f29925bd6e701f6301c4e",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
       "path": "assets/sb-logo.png",
       "kind": "image",
       "source": "Southbound mark (copy of tools/art/sb-logo.png, rendered from brand/sb-mark.svg)",
@@ -209,8 +269,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 4178,
-      "sha256": "65d649a5ccc873d2ff2f6eb87a095969e55affbc4f6428b83f38b9a635fa0ab3",
+      "bytes": 7463,
+      "sha256": "1a00b8b0e04162c552b8d655d6201bb669e9c93d21d0ec0d3498b0a2635468bd",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -254,8 +314,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 3974,
-      "sha256": "73d1517ab230955a611ab31865b35bdf72e9dc00fe6c7744e09ced30f40124af",
+      "bytes": 6191,
+      "sha256": "233687706b02edff3b1c8e58836e8dc4ca4ccba59ae7e76892b3f023afe25dfb",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -314,8 +374,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 10076,
-      "sha256": "0d1997cc7fa74f949b23b121f492265869b14195443d5cc1b961bfdc106d3dd5",
+      "bytes": 12689,
+      "sha256": "367d7eb61e015520dc4ef0d5199860b2eb58ef7099e69b1896ecec6bc552e676",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",

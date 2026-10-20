@@ -46,7 +46,7 @@ export function commonChecks(frames, add) {
 }
 
 /** Squat phases (down, bottom, up) in order, a knee bend like real squats, and a teachable tempo. */
-export function squatPhaseChecks(frames, fps, reps, add) {
+export function squatPhaseChecks(frames, fps, reps, add, kneeRange = [100, 135]) {
     const n = Math.round(frames.length / (reps || 1)), one = frames.slice(0, n);
     const y = one.map(f => f.Hips[1]), bot = y.indexOf(Math.min(...y)), top = Math.max(...y), range = top - Math.min(...y);
     let back = 0; // how much the hips move the wrong way (up while going down, down while coming up)
@@ -58,7 +58,7 @@ export function squatPhaseChecks(frames, fps, reps, add) {
     add("tempo-up", "Standing back up takes at least a second, seconds", up, 1, up >= 1);
     const b = frames[bot], v = (p, q) => sub(q, p), ang = (a, c) => deg(Math.acos((a[0] * c[0] + a[1] * c[1] + a[2] * c[2]) / len(a) / len(c)));
     const knee = 180 - ang(v(b.LeftLeg, b.LeftUpLeg), v(b.LeftLeg, b.LeftFoot));
-    add("knee-bend", "Knee bend at the bottom, degrees (real squats in motion capture: 121 to 124)", knee, 100, knee >= 100 && knee <= 135);
+    add("knee-bend", "Knee bend at the bottom, degrees (real squats in motion capture: 121 to 124)", knee, kneeRange[0], knee >= kneeRange[0] && knee <= kneeRange[1]);
 }
 
 /** track: { fps, frames } from tools/bake.html window.track. */
@@ -139,4 +139,37 @@ export function gradePushup(track) {
     return { pass: checks.every(c => c.pass), checks };
 }
 
-export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup };
+/** Reverse lunge: the front foot stays put, the back foot steps back and rests on its toes, the front thigh gets about level, the back knee comes close to the floor, torso upright. */
+export function gradeLunge(track) {
+    const { fps = 30, frames, reps = 1 } = Array.isArray(track) ? { frames: track } : track;
+    if (!Array.isArray(frames) || frames.length < 8) return { pass: false, checks: [{ id: "frames", label: "Enough frames to judge", pass: false, value: frames?.length || 0, limit: 8 }] };
+    const checks = [];
+    const add = (id, label, value, limit, ok) => checks.push({ id, label, value: Math.round(value * 1000) / 1000, limit, pass: Boolean(ok) });
+    const first = frames[0], bot = bottomFrame(frames);
+    let slide = 0;
+    for (const j of ["LeftFoot", "LeftToeBase"]) slide = Math.max(slide, maxOf(frames, f => dist(f[j], first[j])));
+    add("front-planted", "Front foot stays planted, metres", slide, 0.015, slide <= 0.015);
+    const step = first.RightFoot[2] - bot.RightFoot[2];
+    add("step-back", "Back foot steps back, metres", step, 0.4, step >= 0.4);
+    const toe = bot.RightToeBase[1] - first.RightToeBase[1];
+    add("back-toe-down", "Back toes rest on the floor at the bottom (height change of the toe joint), metres", toe, 0.02, toe <= 0.02);
+    const thigh = fromHorizontal(bot.LeftUpLeg, bot.LeftLeg);
+    add("front-thigh", "Front thigh about level at the bottom, degrees from level", thigh, 20, thigh <= 20);
+    const knee = bot.RightLeg[1];
+    add("back-knee-low", "Back knee close to the floor at the bottom, metres", knee, 0.16, knee <= 0.16);
+    const ahead = bot.LeftLeg[2] - bot.LeftFoot[2];
+    add("front-knee", "Front knee stays over the foot (not far past the ankle), metres", ahead, 0.12, ahead <= 0.12);
+    const lean = fromVertical(bot.Hips, bot.Spine2);
+    add("chest-up", "Torso lean at the bottom, degrees", lean, 25, lean <= 25);
+    const drop = first.Hips[1] - bot.Hips[1];
+    add("range", "Hips travel down, metres", drop, 0.3, drop >= 0.3);
+    const loopGap = maxOf(Object.keys(first), j => dist(first[j], frames[frames.length - 1][j]));
+    const stepMax = Math.max(...frames.slice(1).map((f, i) => maxOf(Object.keys(f), j => dist(f[j], frames[i][j]))));
+    const speed = Math.max(stepMax, loopGap) * fps;
+    add("smooth", "Fastest joint, metres per second", speed, MAX_JOINT_SPEED, speed <= MAX_JOINT_SPEED);
+    squatPhaseChecks(frames, fps, reps, add, [80, 120]);
+    commonChecks(frames, add);
+    return { pass: checks.every(c => c.pass), checks };
+}
+
+export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup, "reverse-lunge": gradeLunge };

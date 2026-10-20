@@ -78,6 +78,10 @@
           "from": 0.94,
           "to": 1
         }
+      ],
+      "category": "legs",
+      "equipment": [
+        "bodyweight"
       ]
     },
     {
@@ -117,9 +121,8 @@
           "shoulders"
         ],
         "secondary": [
-          "core",
-          "glutes",
-          "serratus"
+          "abdominals",
+          "glutes"
         ]
       },
       "qa": {
@@ -161,6 +164,95 @@
         {
           "label": "Top",
           "from": 0.9,
+          "to": 1
+        }
+      ],
+      "category": "push",
+      "equipment": [
+        "bodyweight"
+      ]
+    },
+    {
+      "id": "reverse-lunge",
+      "name": "Reverse Lunge",
+      "aliases": [
+        "Reverse Lunges",
+        "Bodyweight Reverse Lunge"
+      ],
+      "category": "legs",
+      "equipment": [
+        "bodyweight"
+      ],
+      "models": {
+        "male": "assets/athlete-male.glb",
+        "female": "assets/athlete-female.glb"
+      },
+      "clip": "reverse-lunge",
+      "seconds": 9,
+      "reps": 2,
+      "views": [
+        "side",
+        "three-quarter",
+        "front"
+      ],
+      "defaultView": "side",
+      "start": "Stand tall, feet hip-width, hands together at your chest.",
+      "move": "Step one foot back and lower until your back knee nearly touches the floor and your front thigh is level. Push through your front foot to stand and bring the back foot in.",
+      "cue": "Front shin stays nearly vertical; most of your weight on the front heel.",
+      "muscles": {
+        "primary": [
+          "quadriceps",
+          "glutes"
+        ],
+        "secondary": [
+          "hamstrings",
+          "adductors",
+          "calves"
+        ]
+      },
+      "qa": {
+        "male": "assets/reverse-lunge-male.qa.json",
+        "female": "assets/reverse-lunge-female.qa.json"
+      },
+      "status": "review",
+      "review": {
+        "approvedBy": null,
+        "approvedOn": null,
+        "notes": ""
+      },
+      "motions": {
+        "male": "assets/reverse-lunge-male.motion.glb",
+        "female": "assets/reverse-lunge-female.motion.glb"
+      },
+      "phases": [
+        {
+          "label": "Stand",
+          "from": 0,
+          "to": 0.05
+        },
+        {
+          "label": "Step back",
+          "from": 0.05,
+          "to": 0.27
+        },
+        {
+          "label": "Lower",
+          "from": 0.27,
+          "to": 0.5
+        },
+        {
+          "label": "Bottom",
+          "from": 0.5,
+          "to": 0.58
+        },
+        {
+          "label": "Up",
+          "from": 0.58,
+          "to": 0.95
+        },
+        {
+          "label": "Stand",
+          "from": 0.95,
           "to": 1
         }
       ]

@@ -2,7 +2,7 @@
 
 Free, branded 3D demonstrations: a male and a female athlete in Southbound kit doing the exercise in a smooth loop, with play/pause, Male/Female, 3/4 · Side · Front, half speed and drag-to-turn. Everything plays from our own site: no paid service, no account, nothing fetched from anyone else. Licences: `LICENSES.md`.
 
-**Status:** a prototype in `lab/` with two exercises (bodyweight squat, push-up; `?demo=push-up` on the lab page). It is not linked from the app, not in the service worker's precache, and doesn't change any production page. Open `/lab/demo3d/` on the site (or a local server) to see it.
+**Status:** a prototype in `lab/` with three exercises (bodyweight squat, push-up, reverse lunge; `?demo=push-up` on the lab page). It is not linked from the app, not in the service worker's precache, and doesn't change any production page. Open `/lab/demo3d/` on the site (or a local server) to see it.
 
 ## How it fits together
 
@@ -43,7 +43,7 @@ Until then the status is `"review"`: the lab page shows it with an "In review" b
 1. Write `tools/motions/<name>.js` (`setup(rig)`, `pose(rig, t)` with t from 0 to 1 over the loop): world-space targets for the hips, chest, hands and feet, solved by `tools/rig.js`. Register it in `tools/motions/index.js` and in the `ID` map of `tools/bake.mjs`.
 2. Equipment (bar, dumbbells, bench, pull-up bar) is a simple prop added in `bake.html` and attached to the hand bones, so it's baked into the same GLB.
 3. Add a grader to `qa.js` with that exercise's rules (for a push-up: straight body line, chest near the floor, elbows under 60° from the body; for a pull-up: chin over the bar, full hang).
-4. Bake, check, add the entry to `exercises.json` with `"status": "review"`, then the person's review.
+4. Bake, check, add the entry to `exercises.json` with `"status": "review"`, then the person's review. `validateEntry()` in `catalog.js` (run by `tests/demo3d.test.mjs`) lists every missing or wrong field of an entry: id, category, equipment, models/motions/qa for both sexes, views and default, phases 0 to 1, start/move/cue, muscles from the app's list, status and review. The reverse lunge was added this way: one motion file, one grader, one JSON entry, no player changes.
 
 Floor exercises set their own camera framing with `"stage": {"height", "span", "centerY"}` in `exercises.json` (the standing default measures the head bone). The push-up grader (`gradePushup`) checks a straight shoulder-hip-ankle line, planted hands and toes, chest to about a fist off the floor, elbows bent at the bottom and nearly straight at the top, and no pops.
 
