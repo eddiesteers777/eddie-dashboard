@@ -17,7 +17,7 @@ const FLOOR = 0;
 
 // The body laid out at angle a (degrees above the floor), straight from heels
 // to head, toes tucked, with the toe joints on the floor at toeZ.
-function straightBody(rig, a, toeZ) {
+export function straightBody(rig, a, toeZ) {
     const R = qEuler(90 - a), chest = qEuler(90 - a);
     let pos = V(0, 0.5, 0);
     for (let pass = 0; pass < 2; pass++) {
@@ -35,8 +35,8 @@ function straightBody(rig, a, toeZ) {
         pos = pos.clone().add(V(0, FLOOR + 0.052 - toe.y, toeZ - toe.z));
     }
 }
-const shoulderY = rig => (rig.wp("LeftArm").y + rig.wp("RightArm").y) / 2;
-function solveAngle(rig, toeZ, f, goal, lo = 0, hi = 40) {
+export const shoulderY = rig => (rig.wp("LeftArm").y + rig.wp("RightArm").y) / 2;
+export function solveAngle(rig, toeZ, f, goal, lo = 0, hi = 40) {
     for (let i = 0; i < 26; i++) {
         const mid = (lo + hi) / 2;
         rig.reset(); straightBody(rig, mid, toeZ);

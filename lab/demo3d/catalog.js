@@ -129,7 +129,7 @@ export function validateEntry(entry, { muscles = null } = {}) {
     need(new Set(all).size === all.length, "a muscle is listed twice");
     if (muscles) for (const x of all) need(muscles.includes(x), `unknown muscle "${x}"`);
     const ph = entry.phases;
-    need(Array.isArray(ph) && ph.length >= 3 && ph.every(p => text(p.label)), "phases need at least three, each with a label");
+    need(Array.isArray(ph) && ph.length >= 1 && ph.every(p => text(p.label)), "phases need at least one (a held exercise has just \"Hold\"), each with a label");
     if (Array.isArray(ph) && ph.length) {
         need(ph[0].from === 0 && ph[ph.length - 1].to === 1, "phases must run from 0 to 1");
         need(ph.every((p, i) => p.to > p.from && (i === 0 || p.from === ph[i - 1].to)), "phases must follow each other with no gap");

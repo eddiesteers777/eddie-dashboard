@@ -2,7 +2,7 @@
 
 Free, branded 3D demonstrations: a male and a female athlete in Southbound kit doing the exercise in a smooth loop, with play/pause, Male/Female, 3/4 · Side · Front, half speed and drag-to-turn. Everything plays from our own site: no paid service, no account, nothing fetched from anyone else. Licences: `LICENSES.md`.
 
-**Status:** a prototype in `lab/` with five exercises (bodyweight squat, push-up, reverse lunge, dumbbell row, dumbbell press; `?demo=push-up` on the lab page). It is not linked from the app, not in the service worker's precache, and doesn't change any production page. Open `/lab/demo3d/` on the site (or a local server) to see it.
+**Status:** a prototype in `lab/` with six exercises (bodyweight squat, push-up, reverse lunge, dumbbell row, dumbbell press, forearm plank; `?demo=push-up` on the lab page). It is not linked from the app, not in the service worker's precache, and doesn't change any production page. Open `/lab/demo3d/` on the site (or a local server) to see it.
 
 ## How it fits together
 

@@ -258,6 +258,38 @@ export function gradePress(track) {
     return { pass: checks.every(c => c.pass), checks };
 }
 
+/** Forearm plank: a held straight line on forearms and toes, shoulders over the elbows, steady, nothing sagging or piked. */
+export function gradePlank(track) {
+    const { fps = 30, frames } = Array.isArray(track) ? { frames: track } : track;
+    if (!Array.isArray(frames) || frames.length < 8) return { pass: false, checks: [{ id: "frames", label: "Enough frames to judge", pass: false, value: frames?.length || 0, limit: 8 }] };
+    const checks = [];
+    const add = (id, label, value, limit, ok) => checks.push({ id, label, value: Math.round(value * 1000) / 1000, limit, pass: Boolean(ok) });
+    const first = frames[0];
+    const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    const shoulder = f => mid(f.LeftArm, f.RightArm), ankle = f => mid(f.LeftFoot, f.RightFoot);
+    const bend = maxOf(frames, f => 180 - angleBetween(shoulder(f), f.Hips, ankle(f)));
+    add("body-line", "Worst bend in the shoulder-hip-ankle line (sag or pike), degrees", bend, 8, bend <= 8);
+    let slide = 0;
+    for (const j of ["LeftForeArm", "RightForeArm", "LeftToeBase", "RightToeBase"]) slide = Math.max(slide, maxOf(frames, f => dist(f[j], first[j])));
+    add("planted", "Elbows and toes stay planted, metres", slide, 0.015, slide <= 0.015);
+    const elbowY = Math.max(first.LeftForeArm[1], first.RightForeArm[1]);
+    add("on-forearms", "Elbows rest on the floor, metres off the floor", elbowY, 0.12, elbowY <= 0.12);
+    const over = Math.max(Math.abs(first.LeftArm[2] - first.LeftForeArm[2]), Math.abs(first.RightArm[2] - first.RightForeArm[2]));
+    add("elbows-under", "Elbows under the shoulders, metres out", over, 0.08, over <= 0.08);
+    const rise = shoulder(first)[1] - 0;
+    add("height", "Shoulders held well off the floor, metres", rise, 0.2, rise >= 0.2 && rise <= 0.5);
+    const headBend = maxOf(frames, f => { const l = [ankle(f), f.Hips, shoulder(f)], a = sub(l[2], l[0]), b = sub(f.Head, l[2]); return deg(Math.acos(Math.max(-1, Math.min(1, (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) / (len(a) * len(b)))))); });
+    add("neck-long", "Head stays in line with the body (angle off the body line), degrees", headBend, 35, headBend <= 35);
+    const hipMove = maxOf(frames, f => dist(f.Hips, first.Hips));
+    add("steady", "Hips hold still (only a breath), metres", hipMove, 0.02, hipMove <= 0.02);
+    const loopGap = maxOf(Object.keys(first), j => dist(first[j], frames[frames.length - 1][j]));
+    const stepMax = Math.max(...frames.slice(1).map((f, i) => maxOf(Object.keys(f), j => dist(f[j], frames[i][j]))));
+    const speed = Math.max(stepMax, loopGap) * fps;
+    add("smooth", "Fastest joint, metres per second", speed, MAX_JOINT_SPEED, speed <= MAX_JOINT_SPEED);
+    commonChecks(frames, add);
+    return { pass: checks.every(c => c.pass), checks };
+}
+
 const angleBetween = (a, b, c) => { const u = sub(a, b), v = sub(c, b); return deg(Math.acos(Math.max(-1, Math.min(1, (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (len(u) * len(v) || 1))))); };
 
-export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup, "reverse-lunge": gradeLunge, "dumbbell-row": gradeRow, "dumbbell-press": gradePress };
+export const GRADERS = { "bodyweight-squat": gradeSquat, "push-up": gradePushup, "reverse-lunge": gradeLunge, "dumbbell-row": gradeRow, "dumbbell-press": gradePress, "forearm-plank": gradePlank };

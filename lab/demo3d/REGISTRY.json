@@ -29,8 +29,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 6946,
-      "sha256": "eaa922204d14ff38eb8ff5beb7043691e6c99f7d24d637815166239fd7ab9a35",
+      "bytes": 6960,
+      "sha256": "e6ef7773518625f3cc1cf11392af5cc55ab1994ded85b47616a9b97e23d1e67a",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -248,6 +248,66 @@
       }
     },
     {
+      "path": "assets/forearm-plank-female.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 92908,
+      "sha256": "69293e8bdc755584fb5ed097b253ec53a5ea2f6a876a5c9d765f3ceb660aa3aa",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/forearm-plank-female.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 1552,
+      "sha256": "1bca41d2397967ab236d60a66f98c424c1b7e40412d62e06f19732f7fb43a624",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/forearm-plank-male.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 92816,
+      "sha256": "760890403a705ed08e024af847cda3a9bf9c133fe8fae3f55fc7fe88ea7ff082",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/forearm-plank-male.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 1550,
+      "sha256": "ba7a9609bcbb18e0fbd930a7802d323541605c06a917e6e1ac1dfbaf46e5cf86",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
       "path": "assets/push-up-female.motion.glb",
       "kind": "motion",
       "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
@@ -389,8 +449,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 7463,
-      "sha256": "1a00b8b0e04162c552b8d655d6201bb669e9c93d21d0ec0d3498b0a2635468bd",
+      "bytes": 7497,
+      "sha256": "d9765bf7126860241d505d4786cc5062e3ee8d676777c7aac1f8d8af25c4c0d4",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -434,8 +494,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 10731,
-      "sha256": "6e0e96d6402a6c0abdb39f59322b7e5a549427b569dac289a811dc3c2ac274dc",
+      "bytes": 12505,
+      "sha256": "e0d6c979bb11d657d9f476843a51148b578f7be551f3d7f7fb83253fefcd676b",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -509,8 +569,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 20511,
-      "sha256": "b34307c0c7eb6484f2444787991412aa0d8bd4cd991dac51c93489e9b4775e56",
+      "bytes": 23347,
+      "sha256": "732bf40bbdade28990b00017b0be4da4c62f6d40e0ae3f5874b89cfa0deaf210",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",

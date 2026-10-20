@@ -1,0 +1,78 @@
+{
+ "id": "forearm-plank",
+ "sex": "male",
+ "gradedAt": "2026-10-20",
+ "pass": true,
+ "checks": [
+  {
+   "id": "body-line",
+   "label": "Worst bend in the shoulder-hip-ankle line (sag or pike), degrees",
+   "value": 0.401,
+   "limit": 8,
+   "pass": true
+  },
+  {
+   "id": "planted",
+   "label": "Elbows and toes stay planted, metres",
+   "value": 0.006,
+   "limit": 0.015,
+   "pass": true
+  },
+  {
+   "id": "on-forearms",
+   "label": "Elbows rest on the floor, metres off the floor",
+   "value": 0.048,
+   "limit": 0.12,
+   "pass": true
+  },
+  {
+   "id": "elbows-under",
+   "label": "Elbows under the shoulders, metres out",
+   "value": 0.007,
+   "limit": 0.08,
+   "pass": true
+  },
+  {
+   "id": "height",
+   "label": "Shoulders held well off the floor, metres",
+   "value": 0.304,
+   "limit": 0.2,
+   "pass": true
+  },
+  {
+   "id": "neck-long",
+   "label": "Head stays in line with the body (angle off the body line), degrees",
+   "value": 1.224,
+   "limit": 35,
+   "pass": true
+  },
+  {
+   "id": "steady",
+   "label": "Hips hold still (only a breath), metres",
+   "value": 0.004,
+   "limit": 0.02,
+   "pass": true
+  },
+  {
+   "id": "smooth",
+   "label": "Fastest joint, metres per second",
+   "value": 0.01,
+   "limit": 1.5,
+   "pass": true
+  },
+  {
+   "id": "limb-length",
+   "label": "Limbs keep their length (largest change, share of the bone)",
+   "value": 0,
+   "limit": 0.03,
+   "pass": true
+  },
+  {
+   "id": "loop-closes",
+   "label": "The loop closes: last frame to first, in steps",
+   "value": 1,
+   "limit": 1.5,
+   "pass": true
+  }
+ ]
+}

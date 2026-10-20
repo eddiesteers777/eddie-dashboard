@@ -441,6 +441,74 @@
         "span": 1.3,
         "centerY": 1.15
       }
+    },
+    {
+      "id": "forearm-plank",
+      "name": "Forearm Plank",
+      "aliases": [
+        "Plank",
+        "Front Plank",
+        "Elbow Plank",
+        "Forearm Planks"
+      ],
+      "category": "core",
+      "equipment": [
+        "bodyweight"
+      ],
+      "floorMat": true,
+      "models": {
+        "male": "assets/athlete-male.glb",
+        "female": "assets/athlete-female.glb"
+      },
+      "clip": "forearm-plank",
+      "seconds": 8,
+      "reps": 1,
+      "views": [
+        "side",
+        "three-quarter"
+      ],
+      "defaultView": "side",
+      "stage": {
+        "height": 0.75,
+        "span": 1.75,
+        "centerY": 0.4,
+        "aspect": "4 / 3"
+      },
+      "start": "Forearms flat on the floor, elbows right under your shoulders, toes tucked.",
+      "move": "Lift your hips so your body is one straight line from heels to head. Hold, breathing slowly, without letting your hips sag or pike.",
+      "cue": "Squeeze your glutes and brace your abs; keep your neck long and look at the floor between your hands.",
+      "muscles": {
+        "primary": [
+          "abdominals"
+        ],
+        "secondary": [
+          "shoulders",
+          "glutes",
+          "lower back",
+          "quadriceps"
+        ]
+      },
+      "qa": {
+        "male": "assets/forearm-plank-male.qa.json",
+        "female": "assets/forearm-plank-female.qa.json"
+      },
+      "status": "review",
+      "review": {
+        "approvedBy": null,
+        "approvedOn": null,
+        "notes": ""
+      },
+      "motions": {
+        "male": "assets/forearm-plank-male.motion.glb",
+        "female": "assets/forearm-plank-female.motion.glb"
+      },
+      "phases": [
+        {
+          "label": "Hold",
+          "from": 0,
+          "to": 1
+        }
+      ]
     }
   ]
 }
