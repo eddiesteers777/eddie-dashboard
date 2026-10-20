@@ -27,7 +27,7 @@ Checked 2026-10-18. Everything that ships (the files under `lab/demo3d/` except 
 |---|---|
 | OpenGym3D's own squat motion | Extracted from a video that is licensed for non-commercial use only. |
 | Mixamo animations (Adobe) | Free, but the licence ties use to Adobe's terms and an Adobe account, and doesn't allow redistributing the raw files. We want no account dependency. |
-| CMU motion-capture database | Free to use, but it may not be resold as motion data, and it has no clean bodyweight squat; adapting it was more work than writing the motion. |
+| CMU motion-capture database as a motion source | Free to use, but it may not be resold as motion data, and it has no clean bodyweight squat. Used only as a reference for checking our squat (see below). |
 | Mesh2Motion clips | CC0 and good, but no squat (or other gym exercise) yet. Worth checking again for future exercises. |
 | Ready Player Me avatars | The body is cut away under the outfit, so we couldn't re-dress it in Southbound kit; their terms also tie use to their service. |
 | MuscleWiki videos | Real people and very good, but a paid API (see `.claude/skills/exercise-demo-integration/SKILL.md`). |
@@ -40,3 +40,5 @@ Our own bake (`bake_muscle_detail` in `tools/build_athletes.py`): the surface of
 
 ## Reference data (not shipped)
 CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu, trial 13_29, NSF EIA-0196217): read only, to compare our squat's joint angles and timing. Free for all uses, including in commercial products; it may not be resold directly. None of its data is in this repository. "The data used in this project was obtained from mocap.cmu.edu."
+
+The machine-readable register of every shipped file (source, licence, changes, hash, approval) is `REGISTRY.json`, rewritten by `tools/registry.mjs` and checked by `tests/demo3d.test.mjs`.

@@ -1,0 +1,386 @@
+{
+  "format": "southbound-demo-registry/1",
+  "updated": "2026-10-20",
+  "allowedLicences": [
+    "own",
+    "CC0-1.0",
+    "MIT"
+  ],
+  "files": [
+    {
+      "path": "LICENSES.md",
+      "kind": "doc",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 5428,
+      "sha256": "af806a3973970fefdde90e305314c8d9e92aedad9fdd73f86fd23efd5641d47a",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "README.md",
+      "kind": "doc",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 6161,
+      "sha256": "75026828f4f089ac54ffc6ad33729c6edb208c03075fc647b9496043e8b1759b",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/athlete-female.glb",
+      "kind": "character",
+      "source": "MakeHuman base mesh and system assets via MPFB 2.0.16 (Blender 4.5 LTS): body, skin, hair, brows, lashes, eyes, shoes03; rig = MPFB's built-in Mixamo-compatible rig",
+      "licence": "CC0-1.0",
+      "author": "MakeHuman community (assets); Southbound (kit, build)",
+      "changes": "Southbound kit generated from the body surface (tools/build_athletes.py); body hidden under the kit; shoe weights and colours; hair edge feathered; muscle-definition normal map baked from a more muscular copy of the same character; logo patch (own mark).",
+      "bytes": 4024708,
+      "sha256": "3807be50b87c02b7298edca69fe71afe56c746709f69b22ee8d7b84548f19ad7",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/athlete-male.glb",
+      "kind": "character",
+      "source": "MakeHuman base mesh and system assets via MPFB 2.0.16 (Blender 4.5 LTS): body, skin, hair, brows, lashes, eyes, shoes03; rig = MPFB's built-in Mixamo-compatible rig",
+      "licence": "CC0-1.0",
+      "author": "MakeHuman community (assets); Southbound (kit, build)",
+      "changes": "Southbound kit generated from the body surface (tools/build_athletes.py); body hidden under the kit; shoe weights and colours; hair edge feathered; muscle-definition normal map baked from a more muscular copy of the same character; logo patch (own mark).",
+      "bytes": 3453428,
+      "sha256": "62c21bfd70425900631de25cd191f98df50e6a67e5862670cc8dc23192b2bb25",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/bodyweight-squat-female.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 103472,
+      "sha256": "270dfdcf376ed1fde6d4ed28d8e29dfeb4ad89aae7ce6a93a42d72bccb17975a",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/bodyweight-squat-female.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2043,
+      "sha256": "c843451856ea81dfde7a48404622900818e845fa6a924e165f531e1cc084bbcf",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/bodyweight-squat-male.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 103424,
+      "sha256": "0d4c899ed84b2643260e16410dcce62451c242f10868cdb949ed2d37e68cf09b",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/bodyweight-squat-male.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 2043,
+      "sha256": "db5150d20a5f3baac64969c598984bd1aa202089d10ebe16493de184281d3342",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/push-up-female.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 125444,
+      "sha256": "dccdbdee541f280b91432c6bfcb58600eae0616f01caf96403d43d7a93cceef3",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/push-up-female.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 1354,
+      "sha256": "ef2bb06ca7fcb1cf1b7f5b15b318439b7cff326f73f80bcfaa05849922bdb72a",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/push-up-male.motion.glb",
+      "kind": "motion",
+      "source": "Written for Southbound: inverse-kinematics motion in tools/motions/*.js, baked by tools/bake.mjs",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
+      "bytes": 125360,
+      "sha256": "757b9bf1ff570b06eb1ccca455931fdba4fb27426d56637912aa6dbb41b8933e",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/push-up-male.qa.json",
+      "kind": "report",
+      "source": "Output of tools/qa.mjs on the baked motion",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 1353,
+      "sha256": "41be8bb25bf5903049eaba57827a2388aedc4f1082cdcc2ea2fc7d0ec39c690e",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "assets/sb-logo.png",
+      "kind": "image",
+      "source": "Southbound mark (copy of tools/art/sb-logo.png, rendered from brand/sb-mark.svg)",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 40204,
+      "sha256": "12eff7e88add07ff97e95d53be31891897b88d17c6898bf520848db4b44c201f",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "catalog.js",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 4178,
+      "sha256": "65d649a5ccc873d2ff2f6eb87a095969e55affbc4f6428b83f38b9a635fa0ab3",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "demo3d.css",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 5701,
+      "sha256": "f9d9b3765531e57000f73b2eb552356e0573317785e5e47a26ee45a06d34a2b6",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "demo3d.js",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 16935,
+      "sha256": "1c19bb0c6eff1070db1ac3986cb825a1c5111a1a4255b278fda94e96bcad30f5",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "exercises.json",
+      "kind": "data",
+      "source": "Written for Southbound (steps copied from js/exerciseDemos.js)",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 3974,
+      "sha256": "73d1517ab230955a611ab31865b35bdf72e9dc00fe6c7744e09ced30f40124af",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "gym.js",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 6622,
+      "sha256": "d4edcc9e12cc5b4cd83970bab150e368fe8aaf0c21184a0cf73e4f09129ba07f",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "index.html",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 5898,
+      "sha256": "c3ce5a66b4302bfc8a61691419fd040e29316456c87c7be3bcb4350c4d258b71",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "mockups/gym.html",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 13601,
+      "sha256": "9c3c820fed0872cdb8500f10bee8c6060f83f14ddba05e195e16790b8c880b6e",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "qa.js",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 10076,
+      "sha256": "0d1997cc7fa74f949b23b121f492265869b14195443d5cc1b961bfdc106d3dd5",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "vendor/three/LICENSE",
+      "kind": "code",
+      "source": "Three.js r160, github.com/mrdoob/three.js",
+      "licence": "MIT",
+      "author": "mrdoob and the Three.js authors",
+      "changes": "GLTFLoader and BufferGeometryUtils import the minified build by relative path; nothing else.",
+      "bytes": 1081,
+      "sha256": "852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "vendor/three/addons/loaders/GLTFLoader.js",
+      "kind": "code",
+      "source": "Three.js r160, github.com/mrdoob/three.js",
+      "licence": "MIT",
+      "author": "mrdoob and the Three.js authors",
+      "changes": "GLTFLoader and BufferGeometryUtils import the minified build by relative path; nothing else.",
+      "bytes": 108542,
+      "sha256": "b8dcfc9d3c3caeeb614bfd1dd1e74d145ab50286e93feee80c2a94874b4e1b17",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "vendor/three/addons/utils/BufferGeometryUtils.js",
+      "kind": "code",
+      "source": "Three.js r160, github.com/mrdoob/three.js",
+      "licence": "MIT",
+      "author": "mrdoob and the Three.js authors",
+      "changes": "GLTFLoader and BufferGeometryUtils import the minified build by relative path; nothing else.",
+      "bytes": 31926,
+      "sha256": "628cdaaf259abf0b7f4ec6ab98954f98100b732a9e68f34df99170eece7bf1b9",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "path": "vendor/three/three.module.min.js",
+      "kind": "code",
+      "source": "Three.js r160, github.com/mrdoob/three.js",
+      "licence": "MIT",
+      "author": "mrdoob and the Three.js authors",
+      "changes": "GLTFLoader and BufferGeometryUtils import the minified build by relative path; nothing else.",
+      "bytes": 670681,
+      "sha256": "3e690ac7d180b0aadf0891bea39eec643e29e2d3e75c99b18689518665f69ba6",
+      "approval": {
+        "status": "approved",
+        "by": "Eddie Steers (direction), checked by Claude against the licence file",
+        "date": "2026-10-20"
+      }
+    }
+  ]
+}

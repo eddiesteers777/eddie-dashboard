@@ -187,3 +187,21 @@ test("phases cover one rep from 0 to 1 with no gaps", async () => {
         assert.equal(at, 1, `${e.id}: phases end at 1`);
     }
 });
+
+test("the asset register covers every shipped file, with a licence on the allowed list and current hashes", async () => {
+    const { build, shippedFiles, ALLOWED } = await import("../lab/demo3d/tools/registry.mjs");
+    const { createHash } = await import("node:crypto");
+    const reg = JSON.parse(readFileSync(join(lab, "REGISTRY.json"), "utf8"));
+    const listed = reg.files.map(f => f.path).sort();
+    assert.deepEqual(listed, shippedFiles().filter(p => p !== "REGISTRY.json"), "every shipped file has a row and every row has a file (run: node lab/demo3d/tools/registry.mjs)");
+    for (const f of reg.files) {
+        assert.ok(ALLOWED.includes(f.licence), `${f.path}: licence ${f.licence} is allowed`);
+        assert.ok(f.source && f.author && f.approval?.status, `${f.path}: source, author and approval are filled in`);
+        assert.ok(["licence-checked", "approved"].includes(f.approval.status), `${f.path}: approval status`);
+        if (/^(assets|vendor)\//.test(f.path)) {
+            const sha = createHash("sha256").update(readFileSync(join(lab, f.path))).digest("hex");
+            assert.equal(sha, f.sha256, `${f.path} changed since it was registered (re-run tools/registry.mjs after checking it)`);
+        }
+    }
+    build(reg); // every file matches a rule
+});
