@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Free Soccer Team Attendance, Make-up Runs and Duty Rotation | Southbound Playbook</title>
+
+    <meta name="description" content="Free soccer team manager: take attendance, track who owes a make-up run, and rotate who carries equipment at practices and games. Works on phone and tablet.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Free Soccer Team Attendance, Make-up Runs and Duty Rotation | Southbound Playbook">
+    <meta property="og:description" content="Free soccer team manager: take attendance, track who owes a make-up run, and rotate who carries equipment at practices and games. Works on phone and tablet.">
+    <meta property="og:url" content="https://southboundcoaching.com/playbook-team.html">
+    <link rel="canonical" href="https://southboundcoaching.com/playbook-team.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/playbook.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body pb-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page pb-page" id="main">
+  <div class="pb-shell" id="app">
+  <header class="pb-head">
+    <div class="pb-head-text">
+      <div class="pub-hero-kicker">Free tool &middot; Southbound Playbook</div>
+      <h1>Team</h1>
+      <span class="pb-sub" id="summary"></span>
+    </div>
+    <div class="pb-actions">
+      <button class="pb-btn" id="print">Print today</button>
+      <button class="pb-btn" id="settings">Settings</button>
+    </div>
+  </header>
+  <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-roster.html" class="pb-tab">Roster</a><a href="playbook-team.html" class="pb-tab" aria-current="page">Team</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+
+  <div id="noRoster" class="tm-empty" hidden>
+    <p>Add your players on the Roster tab first. Then take attendance here.</p>
+    <a class="pb-btn pb-primary" href="playbook-roster.html">Go to Roster</a>
+  </div>
+
+  <div id="body">
+    <section class="tm-day" aria-label="Which day">
+      <label>Day <input type="date" id="date"></label>
+      <label>Type <select id="kind"></select></label>
+      <label>Note <input id="label" maxlength="40" placeholder="e.g. vs Pelham, 5:30"></label>
+      <label>Earlier days <select id="past"></select></label>
+    </section>
+    <p class="tm-print-title" id="printTitle"></p>
+
+    <section class="tm-sec" aria-labelledby="hAtt">
+      <div class="tm-sec-head"><h2 id="hAtt">Attendance</h2>
+        <div class="tm-sec-btns"><button class="pb-btn" id="allHere">Everyone here</button><button class="pb-btn" id="toLineup">Use for lineup</button></div></div>
+      <p class="tm-counts" id="counts"></p>
+      <ul class="tm-list" id="att"></ul>
+    </section>
+
+    <section class="tm-sec" aria-labelledby="hRuns">
+      <div class="tm-sec-head"><h2 id="hRuns">Runs owed</h2></div>
+      <p class="pb-hint" id="runsHint"></p>
+      <ul class="tm-list" id="runs"></ul>
+    </section>
+
+    <section class="tm-sec" aria-labelledby="hDuty">
+      <div class="tm-sec-head"><h2 id="hDuty">Duty</h2>
+        <div class="tm-sec-btns"><button class="pb-btn pb-primary" id="suggest">Pick who is next</button></div></div>
+      <p class="pb-hint">Rotates fairly through the players who came, so nobody repeats until everyone has had a turn.</p>
+      <ul class="tm-list" id="duty"></ul>
+    </section>
+
+    <section class="tm-sec tm-season" aria-labelledby="hSeason">
+      <div class="tm-sec-head"><h2 id="hSeason">Season so far</h2></div>
+      <ul class="tm-list" id="season"></ul>
+    </section>
+  </div>
+
+  <dialog id="pickDlg" class="pb-dlg dr-dlg">
+    <h2 id="pickTitle">Who is on duty?</h2>
+    <div id="pickList" class="tm-pick"></div>
+    <div class="pb-dlg-foot"><button class="pb-btn" id="pickClear">Nobody</button><button class="pb-btn pb-primary" id="pickDone">Done</button></div>
+  </dialog>
+
+  <dialog id="setDlg" class="pb-dlg dr-dlg">
+    <h2>Team settings</h2>
+    <label>Make-up run for a missed practice <input id="penalty" maxlength="40" placeholder="2 laps"></label>
+    <h3 class="pb-sub-h">Duty jobs</h3>
+    <ul class="tm-jobs" id="jobs"></ul>
+    <div class="dr-two"><label>New job <input id="newJob" maxlength="40" placeholder="e.g. Bring the pump"></label>
+    <label>How many players <input id="newCount" type="number" min="1" max="6" value="1" inputmode="numeric"></label></div>
+    <button class="pb-btn" id="addJob">Add job</button>
+    <div class="pb-dlg-foot"><button class="pb-btn" id="backup">Back up</button><label class="pb-btn pb-file">Restore<input type="file" id="restore" accept="application/json,.json" hidden></label><button class="pb-btn pb-primary" id="setClose">Done</button></div>
+  </dialog>
+
+  <div id="toast" class="pb-toast" role="status" aria-live="polite"></div>
+  <p class="pb-printfoot">Made with Southbound Playbook &middot; southboundcoaching.com/playbook.html</p>
+  </div>
+    </main>
+
+<footer class="pub-footer">
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="pace.html">Pace calculator</a><a href="playbook.html">Soccer Playbook</a><a href="fueling.html">Fueling calculator</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/loadPublicHeader.js"></script>
+    <script type="module" src="js/playbook/team.js"></script>
+
+</body>
+
+</html>

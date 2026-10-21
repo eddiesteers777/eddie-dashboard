@@ -8,9 +8,10 @@ import * as L from "./boardLibrary.js";
 import * as DR from "./drillModel.js";
 import * as PM from "./practiceModel.js";
 import * as RO from "./rosterModel.js";
+import * as TM from "./teamModel.js";
 import { parseBoard, serialize } from "./boardModel.js";
 
-export const SYNC_KEYS = Object.freeze([KEYS.board, KEYS.boardId, KEYS.library, KEYS.drills, KEYS.practice, KEYS.practiceId, KEYS.practices, KEYS.roster]);
+export const SYNC_KEYS = Object.freeze([KEYS.board, KEYS.boardId, KEYS.library, KEYS.drills, KEYS.practice, KEYS.practiceId, KEYS.practices, KEYS.roster, KEYS.team]);
 export const MAX_VALUE_BYTES = 200 * 1024; // one key; the whole document stays well under Firestore's 1 MB
 export const MAX_DOC_BYTES = 900 * 1024;
 
@@ -116,6 +117,39 @@ export function mergeStates(local, remote) {
         practices.push({ ...e, id, practice: remapPractice(e.practice) });
     }
     if (practices.length) out[KEYS.practices] = PM.serializePracticeList(practices.slice(0, 100));
+
+    // Team days (attendance, runs, duty): the same day and kind is the same day; this device's marks win.
+    if (norm(local[KEYS.team]) || norm(remote[KEYS.team])) {
+        const rt = TM.loadTeam(norm(remote[KEYS.team]));
+        let team = norm(local[KEYS.team]) ? TM.loadTeam(local[KEYS.team]) : { ...rt, jobs: [], sessions: [], runs: [] };
+        const localSessionIds = new Set(team.sessions.map(x => x.id));
+        const jobMap = new Map(), sessionMap = new Map();
+        const rid = r => rosterMap.get(r) || r;
+        for (const j of rt.jobs) {
+            const same = team.jobs.find(x => x.name.toLowerCase() === j.name.toLowerCase());
+            if (same) { jobMap.set(j.id, same.id); continue; }
+            const id = team.jobs.some(x => x.id === j.id) ? freshId("j", new Set(team.jobs.map(x => x.id))) : j.id;
+            jobMap.set(j.id, id);
+            team = { ...team, jobs: [...team.jobs, { ...j, id }] };
+        }
+        for (const s of rt.sessions) {
+            const same = TM.findSession(team, s.date, s.kind);
+            if (same) { sessionMap.set(s.id, same.id); continue; }
+            const id = team.sessions.some(x => x.id === s.id) ? freshId("s", new Set(team.sessions.map(x => x.id))) : s.id;
+            sessionMap.set(s.id, id);
+            const marks = {}, duty = {};
+            for (const [p, m] of Object.entries(s.marks)) marks[rid(p)] = m;
+            for (const [jid, rids] of Object.entries(s.duty)) duty[jobMap.get(jid) || jid] = rids.map(rid);
+            team = { ...team, sessions: [...team.sessions, { ...s, id, marks, duty }] };
+        }
+        // Runs come along only for days that were added from the other side.
+        for (const r of rt.runs) {
+            const sid = sessionMap.get(r.sid);
+            if (!sid || localSessionIds.has(sid)) continue;
+            team = { ...team, runs: [...team.runs, { ...r, id: freshId("x", new Set(team.runs.map(x => x.id))), sid, rid: rid(r.rid) }] };
+        }
+        out[KEYS.team] = TM.serializeTeam(team);
+    }
 
     // What was open: this device's wins; otherwise the account's, pointed at the merged ids.
     if (norm(local[KEYS.board])) { out[KEYS.board] = local[KEYS.board]; if (norm(local[KEYS.boardId])) out[KEYS.boardId] = local[KEYS.boardId]; }

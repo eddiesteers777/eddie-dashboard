@@ -252,3 +252,47 @@
 .pb-refresh{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:5200;display:flex;align-items:center;gap:6px;max-width:calc(100vw - 32px);padding:6px 6px 6px 14px;background:var(--pb-card);color:var(--pb-text);border:1px solid var(--pb-act);border-radius:8px;box-shadow:var(--pb-shadow);font:500 14px var(--font-body)}
 .pb-refresh .pb-tab{color:var(--pb-act);border-bottom:0}
 @media print{.pb-syncstat,.pb-refresh{display:none!important}}
+
+/* ---- team: attendance, runs, duty ---- */
+.tm-day{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:0 0 16px}
+.tm-day label,.tm-jobrow input,.tm-day input,.tm-day select{font-size:16px}
+.tm-day label{min-width:0;display:grid;gap:4px;font:600 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--pb-quiet)}
+.tm-day input,.tm-day select,.tm-jobrow input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:0 10px;border:1px solid var(--pb-line);border-radius:8px;background:var(--pb-field);color:var(--pb-text);font-family:var(--font-body);text-transform:none;letter-spacing:0}
+.tm-print-title{display:none}
+.tm-empty{padding:24px;border:1px dashed var(--pb-line);border-radius:12px;display:grid;gap:12px;justify-items:start}
+.tm-empty[hidden],#body[hidden]{display:none!important}
+.tm-sec{margin:0 0 28px}
+.tm-sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.tm-sec h2{margin:0;font:800 26px/1 var(--font-display);text-transform:uppercase}
+.tm-sec-btns{display:flex;gap:8px;flex-wrap:wrap}
+.tm-counts{margin:0 0 10px;color:var(--pb-muted);font:500 13px var(--font-mono)}
+.tm-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.tm-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--pb-card);border:1px solid var(--pb-line);border-radius:12px;padding:8px 10px}
+.tm-who{flex:1 1 120px;min-width:0;display:grid}
+.tm-who b{font-size:16px}
+.tm-who small{color:var(--pb-quiet);font:500 12px var(--font-mono)}
+.tm-seg{display:flex;gap:4px;flex:0 0 100%}
+.tm-m{flex:1;min-height:44px;padding:0 4px;border:1px solid var(--pb-line);border-radius:8px;background:transparent;color:var(--pb-muted);font:700 13px var(--font-body);cursor:pointer;touch-action:manipulation}
+.tm-m[aria-pressed="true"]{background:var(--pb-sel-bg);color:var(--pb-sel-fg);border-color:var(--pb-sel-bg)}
+.tm-m.tm-absent[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--on-primary)}
+.tm-m.tm-excused[aria-pressed="true"]{background:var(--stone,var(--pb-card2));border-color:var(--pb-line);color:var(--on-primary)}
+.tm-m:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
+.tm-row .pb-btn{min-height:44px;padding:0 14px}
+.tm-srow{flex-wrap:nowrap}
+.tm-pct{font:700 18px var(--font-mono);color:var(--pb-text)}
+.tm-pickrow{display:flex;align-items:center;gap:12px;min-height:44px;font-size:16px}
+.tm-pickrow input{width:22px;height:22px;accent-color:var(--pb-act)}
+.tm-pick{display:grid;margin-bottom:8px;max-height:50vh;overflow:auto}
+.tm-jobs{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
+.tm-jobrow{display:grid;grid-template-columns:1fr 64px auto;gap:8px;align-items:center}
+.tm-jobrow .pb-btn{margin-top:0!important;width:auto!important;min-height:44px}
+@media (min-width:700px){.tm-seg{flex:0 0 auto}.tm-row{flex-wrap:nowrap}.tm-list{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}}
+@media print{
+  .pb-tabs,.pb-actions,.tm-day,.tm-sec-btns,.tm-season,.tm-row .pb-btn,.pb-hint{display:none!important}
+  .tm-print-title{display:block;font:700 16px var(--font-body);margin:0 0 10px}
+  .tm-list{grid-template-columns:1fr 1fr}
+  .tm-row{break-inside:avoid;border-color:#bbb;background:#fff;padding:4px 8px}
+  .tm-m{display:none}
+  .tm-m[aria-pressed="true"]{display:block;background:none!important;color:#000!important;border:0;font-weight:700}
+  .tm-sec h2{font-size:18px}
+}

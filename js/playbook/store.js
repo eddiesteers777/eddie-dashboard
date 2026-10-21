@@ -9,6 +9,7 @@ export const KEYS = Object.freeze({
     practiceId: "sb-playbook-practice-id",
     practices: "sb-playbook-practices",
     roster: "sb-playbook-roster",
+    team: "sb-playbook-team",
     theme: "sb-playbook-theme"
 });
 

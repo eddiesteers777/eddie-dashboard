@@ -326,3 +326,8 @@ Coach-only "Southbound Playbook" entry in the Tools menu (`components/header.htm
 - `shell.js` is imported first by each tool page and awaits the first pull (2.5 s cap). Status in the tab row ("Sign in" for guests), sign-in button and honest copy on the hub, privacy page updated. "Clear everything" also clears the account's copy.
 - No Firestore rules change (the owner-only `users/{uid}/sync/{docId}` rule already covers it); `tests/rules.test.mjs` gained a test for the `playbook` doc. Tests: `tests/playbookSync.test.mjs` (pure) plus a two-device Playwright run (push, pull, edit on B then banner on A, clear, guest, first-link combine) with Firebase mocked; all passed.
 
+### Playbook Team tab: attendance, make-up runs, duty (2026-10-21)
+- `playbook-team.html` + `js/playbook/team.js` + pure `js/playbook/teamModel.js` (key `sb-playbook-team`, synced like the rest). Attendance per day (Here / Late / Absent / Excused, a day is saved only once something is marked); Absent owes the make-up run set in Settings (copied onto the run when created; "Ran it" closes it; changing the mark takes back an unrun one); duty jobs with a fair rotation (fewest turns on that job, then any job, then longest ago; absent/excused skipped; no double jobs when avoidable); season percentages (excused doesn't count, late counts as attended); "Use for lineup" sets the roster's here flags; print sheet for the day; backup/restore.
+- `syncModel.mergeStates` combines team days (same date + kind = same day, this device wins) and re-links players, jobs and runs.
+- Tests: `tests/playbookTeam.test.mjs`, a merge test in `tests/playbookSync.test.mjs`, and a Playwright run at 390 and 1280 px.
+

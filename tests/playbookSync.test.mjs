@@ -84,3 +84,25 @@ test("sign-out and account switches clear Playbook work that is linked to an acc
     assert.match(src, /clearLinkedPlaybook\(\);/);
     assert.match(src, /key !== "sb-playbook-theme"/);
 });
+
+import * as TM from "../js/playbook/teamModel.js";
+test("combining team days keeps both days and re-links players and runs", () => {
+    const dev = { [R]: RO.serializeRoster([{ id: "r1", name: "Ana", num: 7, pos: "MID", here: true }]) };
+    const acct = { [R]: RO.serializeRoster([{ id: "r1", name: "Ben", num: 9, pos: "FWD", here: true }, { id: "r2", name: "Ana", num: 7, pos: "MID", here: true }]) };
+    let a = TM.openSession(TM.emptyTeam(), "2026-10-01"); let ta = TM.setMark(a.team, a.id, "r1", "here");
+    dev[KEYS.team] = TM.serializeTeam(ta);
+    let b = TM.openSession(TM.emptyTeam(), "2026-10-02"); let tb = TM.setMark(b.team, b.id, "r1", "absent"); tb = TM.setMark(tb, b.id, "r2", "late");
+    acct[KEYS.team] = TM.serializeTeam(tb);
+    const out = mergeStates(dev, acct);
+    const roster = RO.parseRoster(out[R]);
+    const ben = roster.find(p => p.name === "Ben").id, ana = roster.find(p => p.name === "Ana").id;
+    const t = TM.parseTeam(out[KEYS.team]);
+    assert.equal(t.sessions.length, 2);
+    const day2 = t.sessions.find(s => s.date === "2026-10-02");
+    assert.equal(day2.marks[ben], "absent");
+    assert.equal(day2.marks[ana], "late");
+    assert.equal(t.runs.length, 1);
+    assert.equal(t.runs[0].rid, ben);
+    assert.equal(t.runs[0].sid, day2.id);
+    assert.equal(t.sessions.find(s => s.date === "2026-10-01").marks[ana], "here");
+});
