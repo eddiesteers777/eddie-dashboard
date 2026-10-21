@@ -670,3 +670,19 @@
     .coach-strip{ flex-wrap:wrap; overflow:visible; }
 }
 @media (prefers-reduced-motion:reduce){ .coach-queue-slide{ transition:none; } }
+
+/* ---- Soccer team card (Southbound Playbook shortcuts) ---- */
+.coach-pb{ margin-bottom:22px; }
+.coach-pb-glance{ margin:0 0 12px; color:var(--text-secondary); font-size:14px; line-height:1.5; }
+.coach-pb-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.coach-pb-link{
+    display:flex; align-items:center; gap:10px; min-height:56px; padding:8px 12px; color:var(--text); text-decoration:none;
+    font:700 14px var(--font-body); border-radius:var(--radius);
+    background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow);
+    transition:transform .18s ease, border-color .18s ease;
+}
+.coach-pb-link:hover{ transform:translateY(-2px); border-color:var(--primary); }
+.coach-pb-link:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+.coach-pb-ic{ flex:0 0 34px; height:34px; border-radius:50%; display:grid; place-items:center; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); color:var(--on-primary); }
+.coach-pb-ic .ui-icon{ width:18px; height:18px; }
+@media (prefers-reduced-motion:reduce){ .coach-pb-link{ transition:none; } .coach-pb-link:hover{ transform:none; } }

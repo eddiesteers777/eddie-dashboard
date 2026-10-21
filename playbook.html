@@ -27,6 +27,7 @@
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("pb-app")}catch(e){}</script>
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="icons/favicon-32.png">
 
@@ -38,39 +39,45 @@
 
     <main class="pub-page pb-page" id="main">
 
-        <section class="pub-hero">
-            <div class="pub-hero-kicker">Free tool</div>
-            <h1>Southbound Playbook</h1>
-            <p>Draw the play, plan the practice, keep the roster, take attendance. A free set of tools for soccer coaches, built for 11v11 youth and school teams. No account needed. Sign in only if you want it on every device.</p>
-            <div class="pub-hero-actions">
+        <section class="pub-hero pb-hero">
+            <div class="pub-hero-kicker" data-app-text="Coach tools">Free tool</div>
+            <h1 data-app-text="Playbook">Southbound Playbook</h1>
+            <p class="pb-pitch">Draw the play, plan the practice, keep the roster, take attendance. A free set of tools for soccer coaches, built for 11v11 youth and school teams. No account needed. Sign in only if you want it on every device.</p>
+            <div class="pub-hero-actions pb-pitch">
                 <a href="playbook-board.html" class="pub-btn-primary">Open the tactical board</a>
                 <a href="playbook-practice.html" class="pub-btn-secondary">Plan a practice</a>
             </div>
         </section>
 
         <section class="pub-section pb-hub">
+            <div class="pb-glance" id="glance" aria-label="Your team at a glance" hidden></div>
             <div class="pb-cards">
                 <a class="pb-card" href="playbook-board.html">
+                    <span class="pb-card-ic" data-icon="target" aria-hidden="true"></span>
                     <span class="pb-card-kicker">01 &middot; Board</span>
                     <h2>Tactical board</h2>
                     <p>Drag players, draw passes, runs and zones, switch formations, then save, print or export an image. Works with a mouse, a finger or a pen.</p>
                 </a>
                 <a class="pb-card" href="playbook-drills.html">
+                    <span class="pb-card-ic" data-icon="bookOpen" aria-hidden="true"></span>
                     <span class="pb-card-kicker">02 &middot; Drills</span>
                     <h2>Drill library</h2>
                     <p>60+ starter drills with setup, rotations, coaching points, a harder and an easier version. Add your own and attach a board diagram.</p>
                 </a>
                 <a class="pb-card" href="playbook-practice.html">
+                    <span class="pb-card-ic" data-icon="clock" aria-hidden="true"></span>
                     <span class="pb-card-kicker">03 &middot; Practice</span>
                     <h2>Practice planner</h2>
                     <p>Tell it your players, time, equipment and focus. Get a timed plan you can edit, then print it on one page.</p>
                 </a>
                 <a class="pb-card" href="playbook-roster.html">
+                    <span class="pb-card-ic" data-icon="users" aria-hidden="true"></span>
                     <span class="pb-card-kicker">04 &middot; Roster</span>
                     <h2>Roster and lineup</h2>
                     <p>Keep first names and numbers, mark who is here today, and fill your formation by position in one tap.</p>
                 </a>
                 <a class="pb-card" href="playbook-team.html">
+                    <span class="pb-card-ic" data-icon="checkCircle" aria-hidden="true"></span>
                     <span class="pb-card-kicker">05 &middot; Team</span>
                     <h2>Attendance and duty</h2>
                     <p>Take attendance, see who owes a make-up run, and rotate who carries the equipment at practices and games.</p>
@@ -114,8 +121,8 @@
     </footer>
 
     <script type="module" src="js/icons.js"></script>
-    <script type="module" src="js/loadPublicHeader.js"></script>
-    <script type="module" src="js/playbook/shell.js"></script>
+    <script type="module" src="js/playbook/boot.js"></script>
+    <script type="module" src="js/playbook/hub.js"></script>
     
 </body>
 

@@ -34,20 +34,32 @@ export const setHere = (list, id, here) => list.map(p => (p.id === id ? { ...p, 
 export const available = list => list.filter(p => p.here);
 
 // "Marcus 10 MID" lines -> players. Number and position are optional, in any order after the name.
+// Several players can share a line when separated by commas or semicolons ("Marcus, Eli 7, Sam GK").
+// A spreadsheet paste works too (tabs count as spaces).
 export function parseBulk(text) {
     const out = [];
-    for (const line of String(text || "").split("\n")) {
-        const tokens = line.trim().split(/[\s,]+/).filter(Boolean);
-        if (!tokens.length) continue;
-        let num = null, pos = "Any";
-        const name = [];
-        for (const t of tokens) {
-            const up = t.toUpperCase().replace(/^#/, "");
-            if (/^\d{1,2}$/.test(up) && name.length) num = Number(up);
-            else if (name.length && ["GK", "DEF", "MID", "FWD"].includes(up)) pos = up;
-            else name.push(t);
+    for (const raw of String(text || "").split("\n")) {
+        // A piece that is only a number or position ("4", "def") belongs to the name before it.
+        const chunks = [];
+        for (const c of raw.split(/[;,]/)) {
+            const t = c.trim();
+            if (!t) continue;
+            const detail = t.split(/\s+/).every(w => /^#?\d{1,2}$/.test(w) || ["GK", "DEF", "MID", "FWD"].includes(w.toUpperCase()));
+            if (detail && chunks.length) chunks[chunks.length - 1] += " " + t; else chunks.push(t);
         }
-        if (name.length) out.push({ name: name.join(" "), num, pos });
+        for (const chunk of chunks) {
+            const tokens = chunk.trim().split(/\s+/).filter(Boolean);
+            if (!tokens.length) continue;
+            let num = null, pos = "Any";
+            const name = [];
+            for (const t of tokens) {
+                const up = t.toUpperCase().replace(/^#/, "");
+                if (/^\d{1,2}$/.test(up) && name.length) num = Number(up);
+                else if (name.length && ["GK", "DEF", "MID", "FWD"].includes(up)) pos = up;
+                else name.push(t);
+            }
+            if (name.length) out.push({ name: name.join(" "), num, pos });
+        }
     }
     return out;
 }

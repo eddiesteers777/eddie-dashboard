@@ -339,3 +339,13 @@ Coach-only "Southbound Playbook" entry in the Tools menu (`components/header.htm
 ### Playbook: fuller starter drill set (2026-10-21)
 - Added `js/playbook/drillSeedMore.js` (42 drills, original wording) to the 26 existing ones: 68 total. New topics: Conditioning (including a make-up-run drill) and Cool-down (not offered as a practice focus). Warm-ups now 6, plus more passing, receiving, dribbling, finishing, keeper, defending, rondos, transitions, set pieces and small-sided games. Heading drill is light-reps with a safety note.
 - New visitors get everything; someone who already has saved drills taps More, Add starter drills (merges by name, nothing overwritten).
+
+### Playbook inside the app, premium look, roster quick add (2026-10-21)
+- `js/playbook/boot.js` + an inline head script pick the header: signed in (account sentinel, confirmed by Firebase) = the app's sidebar / bottom tabs via `js/loadHeader.js` (kicker reads "Coach tools", marketing blocks hidden, sidebar Tools item and More tab highlight); guest = public header, as before. Coach dashboard has a "Soccer team" card (`js/coachPlaybook.js`, numbers from `js/playbook/glance.js`); the Playbook home shows the same numbers as tiles.
+- Premium pass in `css/playbook.css` (end of file): raised cards, glass tab bar with the active tool in tan, lens icon badges, big tan numbers, rise-in motion that respects reduced-motion, blurred dialog backdrop, light-theme variants.
+- Roster quick add: type a name and press Enter (the box stays ready), several at once with commas or semicolons, or paste a whole team or a spreadsheet column (box opens by itself on an empty roster). `parseBulk` handles all of it.
+- Tests: glance and quick-add parsing in the unit tests; Playwright runs for signed-in and guest shells, quick add and the coach card at 390 and 1280.
+
+### Playbook reference (for APP_REFERENCE)
+Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary`, `drillModel`, `drillSeed` + `drillSeedMore`, `practiceModel`, `rosterModel`, `teamModel`, `syncModel`, `glance`), controllers (`board`, `drills`, `practice`, `roster`, `team`, `hub`), `shell` (theme, sync status, clear), `cloud` (sync), `boot` (header choice), `store` (keys). Keys `sb-playbook-*`; synced: all except theme and contacts. Cloud doc `users/{uid}/sync/playbook`.
+

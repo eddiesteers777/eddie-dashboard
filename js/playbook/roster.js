@@ -16,6 +16,7 @@ function render() {
     const here = R.available(roster).length;
     $("count").textContent = roster.length ? `${here} here of ${roster.length}` : "";
     $("empty").hidden = roster.length > 0;
+    if (!roster.length && !render.pasted) { render.pasted = true; $("paste").open = true; }
     const list = $("list"); list.replaceChildren();
     for (const p of roster) {
         const li = h("li", "ro-row" + (p.here ? "" : " away"));
@@ -41,7 +42,27 @@ function openEditor(id) {
     $("editor").showModal();
 }
 
+function addFrom(text) {
+    const r = R.addBulk(roster, text);
+    if (!r.added) return 0;
+    write(r.list);
+    toast(r.added === 1 ? `Added ${R.parseBulk(text)[0].name} (${roster.length} on the team)` : `Added ${r.added} players (${roster.length} on the team)`);
+    return r.added;
+}
+
 function wire() {
+    $("quick").onsubmit = e => {
+        e.preventDefault();
+        const box = $("qName");
+        if (addFrom(box.value)) box.value = "";
+        box.focus();
+    };
+    const pasteCount = () => { const n = R.parseBulk($("pasteText").value).length; $("pasteCount").textContent = n ? `${n} player${n === 1 ? "" : "s"} ready` : ""; };
+    $("pasteText").oninput = pasteCount;
+    $("pasteAdd").onclick = () => {
+        if (!addFrom($("pasteText").value)) return toast("Nothing to add yet");
+        $("pasteText").value = ""; pasteCount(); $("paste").open = false;
+    };
     $("add").onclick = () => openEditor(null);
     $("edCancel").onclick = () => $("editor").close();
     $("edDelete").onclick = e => {

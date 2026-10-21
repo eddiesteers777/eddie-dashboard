@@ -143,3 +143,21 @@ test("parent contacts: saved per player, cleaned, and links only for real number
     assert.deepEqual(T.setContact(m, "a", "", ""), {});
     assert.deepEqual(T.parseContacts("junk"), {});
 });
+
+import { glance } from "../js/playbook/glance.js";
+import * as RO2 from "../js/playbook/rosterModel.js";
+import { KEYS } from "../js/playbook/store.js";
+test("glance reads the team numbers from storage and ignores players who left the roster", () => {
+    const store = {};
+    assert.deepEqual(glance(k => store[k] ?? null), { players: 0, lastDay: null, owed: 0, flagged: 0 });
+    store[KEYS.roster] = RO2.serializeRoster([{ id: "r1", name: "A", num: 1, pos: "Any", here: true, note: "" }, { id: "r2", name: "B", num: 2, pos: "Any", here: true, note: "" }]);
+    let { team, id } = T.openSession(T.emptyTeam(), "2026-10-20");
+    team = T.markAll(team, id, ["r1", "r2"], "here");
+    team = T.setMark(team, id, "r2", "absent");
+    team = T.setMark(team, id, "gone", "absent");
+    store[KEYS.team] = T.serializeTeam(team);
+    const g = glance(k => store[k] ?? null);
+    assert.equal(g.players, 2);
+    assert.deepEqual(g.lastDay, { date: "2026-10-20", kind: "practice", came: 1, marked: 3 });
+    assert.equal(g.owed, 1);
+});

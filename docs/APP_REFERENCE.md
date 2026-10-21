@@ -285,3 +285,9 @@ Ideas only (AGPL-3.0), all original code.
 ## Search engines (2026-10-19)
 - `robots.txt` and `sitemap.xml` live at the site root. Add a new public page to `sitemap.xml` and to `PUBLIC_PAGES` in `tests/static.test.mjs`; every public page needs `<link rel="canonical">` equal to its `og:url` (a test checks both).
 - Structured data: one `<script type="application/ld+json">` in `home.html` (`Organization` + its services + `WebSite`) and `packages.html` (the packages as `Service`s). Only facts already on the page: when prices or a service area are published, add them there too (a test currently rejects price/address/rating fields, so loosen it then).
+
+## Southbound Playbook (2026-10-21)
+- Free public soccer tools: Board, Drills (68 starters), Practice planner, Roster, Team (attendance, make-up runs, duty rotation, captain, season flags, parent contacts). Pages `playbook*.html`, code in `js/playbook/`, styles `css/playbook.css`. Pure models each have tests (`tests/playbook*.test.mjs`).
+- Storage: `sb-playbook-*` localStorage keys (list in `js/playbook/store.js`). Signed-in people sync everything except the theme and parent contacts to `users/{uid}/sync/playbook` (`cloud.js`, rules in `syncModel.js`; no Firestore rules change). First link of a device that already has work offers Combine / account's copy / this device's copy.
+- Shell: guests see the public header; signed in, the same pages wear the app's navigation (`boot.js`). Entry points are coach-only: Tools menu, More, search, and the coach dashboard "Soccer team" card.
+- Details of each step: `docs/BUILD_HISTORY.md` (Playbook entries).

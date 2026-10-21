@@ -370,3 +370,10 @@ test("a file with missing or repeated ids still gets unique ids", () => {
     const got = DR.parseDrills(JSON.stringify(f));
     assert.equal(new Set(got.map(d => d.id)).size, got.length);
 });
+
+test("roster quick add: commas, semicolons, lines and spreadsheet pastes", () => {
+    assert.deepEqual(RO.parseBulk("Marcus, Eli 7, Sam GK").map(p => [p.name, p.num, p.pos]), [["Marcus", null, "Any"], ["Eli", 7, "Any"], ["Sam", null, "GK"]]);
+    assert.deepEqual(RO.parseBulk("Marcus 10 MID\nEli 7 FWD;Jordan L").map(p => p.name), ["Marcus", "Eli", "Jordan L"]);
+    assert.deepEqual(RO.parseBulk("Dee\t4\tMID").map(p => [p.name, p.num, p.pos]), [["Dee", 4, "MID"]]);
+    assert.deepEqual(RO.parseBulk(" ,; \n\n"), []);
+});

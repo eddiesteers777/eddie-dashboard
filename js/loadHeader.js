@@ -94,6 +94,7 @@ const PAGE_TAB = {
     "programs.html": "more",
     "pace-calculator.html": "more",
     "settings.html": "more",
+    "playbook.html": "more", "playbook-board.html": "more", "playbook-drills.html": "more", "playbook-practice.html": "more", "playbook-roster.html": "more", "playbook-team.html": "more",
     "clients.html": "coach",
     "client.html": "coach",
     "profile.html": "more",
@@ -493,7 +494,7 @@ fetch("components/header.html")
             // the visible one should light up its section.
             if (link.hidden) return;
 
-            if (link.getAttribute("href") === page) {
+            if (link.getAttribute("href") === (page.startsWith("playbook") ? "playbook.html" : page)) {
                 link.classList.add("active");
 
                 // Also give the parent dropdown's own trigger a

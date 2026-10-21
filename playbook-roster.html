@@ -27,6 +27,7 @@
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("pb-app")}catch(e){}</script>
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="icons/favicon-32.png">
 
@@ -50,9 +51,20 @@
     </div>
   </header>
   <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-roster.html" class="pb-tab" aria-current="page">Roster</a><a href="playbook-team.html" class="pb-tab">Team</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
-  <p class="pb-hint ro-privacy">Use first names (and a last initial if two share one). Without an account the roster stays in this browser on this device and is never sent anywhere. Signed in, it is also saved to your own private account so it follows you to other devices. You can still back it up from More.</p>
+  <p class="pb-hint ro-privacy">First names only (add a last initial if two share one). Saved on this device; signed in, it also follows you to your other devices.</p>
+  <form class="ro-quick" id="quick" autocomplete="off">
+    <label class="ro-quick-field"><span class="sr-only">Add players</span>
+      <input id="qName" maxlength="400" placeholder="Type a name and press Enter. Add a number or position too: Marcus 10 MID" enterkeyhint="done" autocapitalize="words" autocorrect="off" spellcheck="false"></label>
+    <button type="submit" class="pb-btn pb-primary">Add</button>
+  </form>
+  <p class="pb-hint ro-quick-hint">Several at once works too: <b>Marcus, Eli 7, Sam GK</b>. Each add keeps the box ready for the next name.</p>
+  <details class="ro-paste" id="paste">
+    <summary>Paste a whole team</summary>
+    <textarea id="pasteText" rows="6" placeholder="One player per line, or copy a column from a spreadsheet&#10;Marcus 10 MID&#10;Eli 7 FWD&#10;Sam 1 GK"></textarea>
+    <div class="ro-paste-foot"><span class="pb-hint" id="pasteCount"></span><button type="button" class="pb-btn pb-primary" id="pasteAdd">Add these players</button></div>
+  </details>
   <ul class="ro-list" id="list"></ul>
-  <p class="pb-hint" id="empty">No players yet. Tap Add player, or paste a whole team at once from More.</p>
+  <p class="pb-hint" id="empty">No players yet. Type a name above, or paste your whole team.</p>
 
   <dialog id="editor" class="pb-dlg dr-dlg">
     <form id="form" method="dialog">
@@ -109,7 +121,7 @@
     </footer>
 
     <script type="module" src="js/icons.js"></script>
-    <script type="module" src="js/loadPublicHeader.js"></script>
+    <script type="module" src="js/playbook/boot.js"></script>
     <script type="module" src="js/playbook/roster.js"></script>
 
 </body>
