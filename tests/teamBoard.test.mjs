@@ -196,3 +196,65 @@ test("drills: seeds never overwrite edits; file round trip; import skips same na
     assert.equal(DR.importDrills(list, back).length, list.length);
     assert.equal(DR.importDrills([], back).length, list.length);
 });
+
+import * as PM from "../team/practiceModel.js";
+
+const ALL_EQ = new Set(PM.EQUIPMENT.map(e => e[0]));
+const seeds = DR.mergeSeeds([], SEED_DRILLS);
+
+test("practice: equipment needs are read from drill equipment", () => {
+    const need = n => PM.equipmentNeeds(seeds.find(d => d.name === n));
+    assert.deepEqual([...need("Finishing circuit")].sort(), ["balls", "cones", "goals"]);
+    assert.ok(need("1v1 to goal").has("smallGoals") && !need("1v1 to goal").has("goals"));
+    assert.ok(need("Passing squares").has("pinnies"));
+});
+
+test("practice: a suggested plan adds up, starts with a warm-up and respects limits", () => {
+    for (const total of [45, 60, 75, 90, 120]) {
+        const p = PM.suggestPlan({ drills: seeds, total, players: 20, equipment: ALL_EQ });
+        assert.equal(PM.planTotal(p.items), total, "total " + total);
+        const first = seeds.find(d => d.id === p.items[0].drillId);
+        assert.equal(first.topic, "Warm-up");
+        assert.equal(new Set(p.items.map(i => i.drillId)).size, p.items.length);
+    }
+    const small = PM.suggestPlan({ drills: seeds, total: 60, players: 6, equipment: ALL_EQ });
+    assert.ok(small.items.every(i => seeds.find(d => d.id === i.drillId).minPlayers <= 6));
+    const noGoals = PM.suggestPlan({ drills: seeds, total: 60, players: 20, equipment: new Set(["cones", "balls", "pinnies"]), focus: ["Finishing"] });
+    assert.ok(noGoals.items.every(i => !PM.equipmentNeeds(seeds.find(d => d.id === i.drillId)).has("goals")));
+    assert.ok(noGoals.notes.length > 0);
+});
+
+test("practice: a game tomorrow means no high-intensity drills; variants change the drills", () => {
+    const p = PM.suggestPlan({ drills: seeds, total: 75, players: 20, equipment: ALL_EQ, gameInDays: 1, focus: ["Defending", "Pressing", "Finishing"] });
+    assert.ok(p.items.every(i => seeds.find(d => d.id === i.drillId).intensity !== "High"));
+    assert.ok(p.notes.some(n => /Game tomorrow/.test(n)));
+    const a = PM.suggestPlan({ drills: seeds, total: 75, players: 20, equipment: ALL_EQ, focus: ["Passing"], variant: 0 });
+    const b = PM.suggestPlan({ drills: seeds, total: 75, players: 20, equipment: ALL_EQ, focus: ["Passing"], variant: 1 });
+    assert.notDeepEqual(a.items.map(i => i.drillId), b.items.map(i => i.drillId));
+});
+
+test("practice: fit shrinks and grows fairly, edits and times work", () => {
+    const items = [{ drillId: "a", minutes: 10 }, { drillId: "b", minutes: 20 }, { drillId: "c", minutes: 20 }];
+    assert.equal(PM.planTotal(PM.fitMinutes(items, 30)), 30);
+    assert.equal(PM.planTotal(PM.fitMinutes(items, 80)), 80);
+    assert.ok(PM.fitMinutes(items, 12).length < 3);
+    assert.deepEqual(PM.moveItem(items, 0, 1).map(i => i.drillId), ["b", "a", "c"]);
+    assert.equal(PM.moveItem(items, 0, -1), items);
+    assert.equal(PM.setMinutes(items, 1, 999)[1].minutes, 60);
+    assert.deepEqual(PM.startTimes(items, "15:30"), ["3:30 PM", "3:40 PM", "4:00 PM"]);
+    assert.deepEqual(PM.startTimes(items, ""), ["", "", ""]);
+    assert.deepEqual(PM.startTimes([{ minutes: 30 }, { minutes: 5 }], "11:45"), ["11:45 AM", "12:15 PM"]);
+});
+
+test("practice: save list, round trip and bad input", () => {
+    let pr = PM.newPractice(); pr.title = "Tuesday"; pr.items = [{ drillId: "d1", minutes: 12 }];
+    let r = PM.savePractice([], pr, null, 5);
+    r = PM.savePractice(r.list, { ...pr, title: "Tuesday v2" }, r.id, 9);
+    assert.equal(r.list.length, 1); assert.equal(r.list[0].name, "Tuesday v2");
+    const back = PM.parsePracticeList(PM.serializePracticeList(r.list));
+    assert.deepEqual(back[0].practice, r.list[0].practice);
+    assert.equal(PM.parsePractice({ v: 1, items: [], total: 9999, players: -4, equipment: ["x"] }).total, 180);
+    assert.equal(PM.parsePractice({ v: 2 }), null);
+    assert.deepEqual(PM.parsePracticeList("junk"), []);
+    assert.equal(PM.deletePractice(r.list, r.id).length, 0);
+});

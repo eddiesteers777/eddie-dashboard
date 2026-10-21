@@ -104,3 +104,8 @@ a.tb-btn{text-decoration:none}
   .tb-title-input{font:700 15px "Albert Sans",sans-serif;color:var(--ink);min-height:36px}
   .tb-mark{display:none}
 }
+
+.tb-links .tb-row{margin-top:0}
+@media(min-width:700px){.tb-links{display:none}}
+@media(max-width:699px){.tb-hide-sm{display:none}}
+@media print{.tb-links{display:none!important}}
