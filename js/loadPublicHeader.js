@@ -37,25 +37,11 @@ fetch("components/publicHeader.html")
         const signInBtn = document.getElementById("pubSignInBtn");
         if (!signInBtn) return;
 
-        // "My soccer": a signed-in client with soccer sees a direct tab to
-        // their sessions (reschedule, book) and homework. Never shown to guests.
-        const mySoccer = document.getElementById("pubMySoccer");
-        async function showMySoccer(signedIn) {
-            if (!mySoccer) return;
-            if (!signedIn) { mySoccer.hidden = true; return; }
-            try {
-                const { getNavAccess } = await import("./navAccess.js");
-                const access = await getNavAccess();
-                mySoccer.hidden = !(access && !access.isCoach && access.caps?.includes("sessions"));
-            } catch { mySoccer.hidden = true; }
-        }
-
         try {
             const { login, listenForAuth } = await import("./auth.js");
 
             listenForAuth(user => {
                 signInBtn.textContent = user ? "Dashboard" : "Sign In";
-                showMySoccer(Boolean(user));
             });
 
             signInBtn.addEventListener("click", async () => {
