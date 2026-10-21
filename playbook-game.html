@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Free Soccer Game Day Lineup and Subs Planner | Southbound Playbook</title>
+
+    <meta name="description" content="Free soccer game day planner: fair lineups for every half or quarter, subs, minutes for each player and a printable card.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Free Soccer Game Day Lineup and Subs Planner | Southbound Playbook">
+    <meta property="og:description" content="Free soccer game day planner: fair lineups for every half or quarter, subs, minutes for each player and a printable card.">
+    <meta property="og:url" content="https://southboundcoaching.com/playbook-game.html">
+    <link rel="canonical" href="https://southboundcoaching.com/playbook-game.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/playbook.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("pb-app")}catch(e){}</script>
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body pb-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page pb-page" id="main">
+  <div class="pb-shell" id="app">
+  <header class="pb-head">
+    <div class="pb-head-text">
+      <div class="pub-hero-kicker">Free tool &middot; Southbound Playbook</div>
+      <h1>Game day</h1>
+      <span class="pb-sub" id="sub"></span>
+    </div>
+    <div class="pb-actions">
+      <button class="pb-btn" id="print">Print lineup card</button>
+      <button class="pb-btn pb-primary" id="auto">Fair lineup</button>
+    </div>
+  </header>
+  <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-roster.html" class="pb-tab">Roster</a><a href="playbook-team.html" class="pb-tab">Team</a><a href="playbook-game.html" class="pb-tab" aria-current="page">Game</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+
+  <div id="noRoster" class="tm-empty" hidden>
+    <p>Add your players on the Roster tab first. Then plan the game here.</p>
+    <a class="pb-btn pb-primary" href="playbook-roster.html">Go to Roster</a>
+    <button type="button" class="pb-btn" id="sampleLoad">Or try a sample team</button>
+  </div>
+
+  <div id="body">
+    <section class="gm-setup" aria-label="Game settings">
+      <label>Game day <input type="date" id="date"></label>
+      <label>Against <input id="opp" maxlength="40" placeholder="Opponent" autocomplete="off"></label>
+      <label>Formation <select id="formation"></select></label>
+      <label>Format <select id="periods"><option value="2">2 halves</option><option value="4">4 quarters</option></select></label>
+      <label>Minutes each <input id="mins" type="number" min="5" max="60" inputmode="numeric"></label>
+    </section>
+
+    <section class="gm-sec" aria-label="Who is playing">
+      <h2>Who's playing <small id="squadCount"></small></h2>
+      <p class="pb-hint">Tap to add or take off today's squad. Anyone marked absent on the Team tab starts off.</p>
+      <div class="gm-squad" id="squad"></div>
+    </section>
+
+    <section class="gm-sec" aria-label="Lineup">
+      <div class="gm-periods" id="periodTabs" role="tablist"></div>
+      <div class="gm-grid">
+        <div class="gm-pitch" id="pitch" aria-label="Lineup on the field"></div>
+        <div>
+          <ul class="gm-slots" id="slots"></ul>
+          <p class="pb-hint" id="benchLine"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="gm-sec" aria-label="Substitutions">
+      <h2>Changes</h2>
+      <ul class="gm-changes" id="changes"></ul>
+    </section>
+
+    <section class="gm-sec" aria-label="Minutes">
+      <h2>Minutes played <small id="spread"></small></h2>
+      <ul class="gm-mins" id="mins2"></ul>
+    </section>
+
+    <section class="gm-card" id="card" aria-label="Lineup card"></section>
+  </div>
+
+  <div id="toast" class="pb-toast" role="status" aria-live="polite"></div>
+  <p class="pb-printfoot">Made with Southbound Playbook &middot; southboundcoaching.com/playbook.html</p>
+  </div>
+    </main>
+<footer class="pub-footer">
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="pace.html">Pace calculator</a><a href="playbook.html">Soccer Playbook</a><a href="fueling.html">Fueling calculator</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/playbook/boot.js"></script>
+    <script type="module" src="js/playbook/game.js"></script>
+
+</body>
+
+</html>

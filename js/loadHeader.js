@@ -94,7 +94,7 @@ const PAGE_TAB = {
     "programs.html": "more",
     "pace-calculator.html": "more",
     "settings.html": "more",
-    "playbook.html": "more", "playbook-board.html": "more", "playbook-drills.html": "more", "playbook-practice.html": "more", "playbook-roster.html": "more", "playbook-team.html": "more",
+    "playbook.html": "more", "playbook-board.html": "more", "playbook-drills.html": "more", "playbook-practice.html": "more", "playbook-roster.html": "more", "playbook-team.html": "more", "playbook-game.html": "more",
     "clients.html": "coach",
     "client.html": "coach",
     "profile.html": "more",

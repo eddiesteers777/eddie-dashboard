@@ -1,6 +1,8 @@
 // Playbook team: attendance, make-up runs and duty rotation. Pure model (no DOM).
 // Players are referenced by roster id (rosterModel.js). First names only live in the roster.
 
+import { parseGame } from "./gameModel.js";
+
 export const MARKS = Object.freeze(["here", "late", "absent", "excused"]);
 export const MARK_LABELS = Object.freeze({ here: "Here", late: "Late", absent: "Absent", excused: "Excused" });
 export const KINDS = Object.freeze(["practice", "game", "other"]);
@@ -103,6 +105,7 @@ export function needsAttention(team, roster) {
 }
 
 // ---- captain of the day ----
+export const setGame = (team, sid, game) => mapSession(team, sid, s => ({ ...s, game }));
 export const setCaptain = (team, sid, rid) => mapSession(team, sid, s => ({ ...s, captain: rid || "" }));
 export function suggestCaptain(team, sid, roster) {
     const s = team.sessions.find(x => x.id === sid);
@@ -222,7 +225,10 @@ export function parseTeam(text) {
         for (const [rid, m] of Object.entries(s.marks && typeof s.marks === "object" ? s.marks : {})) if (MARKS.includes(m)) marks[String(rid).slice(0, 20)] = m;
         const duty = {};
         for (const [jid, rids] of Object.entries(s.duty && typeof s.duty === "object" ? s.duty : {})) if (Array.isArray(rids)) duty[jid] = uniq(rids.filter(r => typeof r === "string")).slice(0, 6);
-        sessions.push({ id, date: s.date, kind: s.kind, label: str(s.label, 40), marks, duty, captain: typeof s.captain === "string" ? s.captain.slice(0, 20) : "" });
+        const row = { id, date: s.date, kind: s.kind, label: str(s.label, 40), marks, duty, captain: typeof s.captain === "string" ? s.captain.slice(0, 20) : "" };
+        const game = s.kind === "game" ? parseGame(s.game) : null;
+        if (game) row.game = game;
+        sessions.push(row);
     }
     const ids = new Set(sessions.map(s => s.id));
     const runs = [], rseen = new Set();
