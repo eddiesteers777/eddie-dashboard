@@ -20,6 +20,7 @@
     <div class="tb-actions">
       <a class="tb-btn tb-hide-sm" href="drills.html">Drills</a>
       <a class="tb-btn tb-hide-sm" href="practice.html">Practice</a>
+      <a class="tb-btn tb-hide-sm" href="roster.html">Roster</a>
       <button class="tb-btn" id="boards">Boards</button>
       <button class="tb-btn tb-icon" id="undo" aria-label="Undo" title="Undo">&#8630;</button>
       <button class="tb-btn tb-icon" id="redo" aria-label="Redo" title="Redo">&#8631;</button>
@@ -34,6 +35,7 @@
     <section class="tb-side tb-left" aria-label="Formation">
       <h2>Your team</h2>
       <div class="tb-chips" id="homeChips" role="group" aria-label="Your formation"></div>
+      <button class="tb-btn tb-lineup" id="lineupBtn">Lineup from roster</button>
       <h2>Opponent</h2>
       <label class="tb-check"><input type="checkbox" id="showAway" checked> Show opponent</label>
       <div class="tb-chips" id="awayChips" role="group" aria-label="Opponent formation"></div>
@@ -43,7 +45,7 @@
       <svg id="pitch" viewBox="0 0 68 105" role="application" aria-label="Tactical board. Drag players to move them."></svg>
     </section>
 
-    <nav class="tb-side tb-links" aria-label="Coaching tools"><h2>More tools</h2><div class="tb-row"><a class="tb-btn" href="drills.html">Drills</a><a class="tb-btn" href="practice.html">Practice planner</a></div></nav>
+    <nav class="tb-side tb-links" aria-label="Coaching tools"><h2>More tools</h2><div class="tb-row"><a class="tb-btn" href="drills.html">Drills</a><a class="tb-btn" href="practice.html">Practice planner</a><a class="tb-btn" href="roster.html">Roster</a></div></nav>
 
     <section class="tb-side tb-right" aria-label="Selected player">
       <h2>Selected</h2>
@@ -55,6 +57,7 @@
       <div id="selForm" hidden>
         <label>Number <input id="selNum" type="number" min="0" max="99" inputmode="numeric"></label>
         <label>Name <input id="selName" type="text" maxlength="24" autocomplete="off" placeholder="First name"></label>
+        <label id="selRosterWrap">From roster <select id="selRoster"></select></label>
       </div>
       <h2>Scenario</h2>
       <select id="scenario" aria-label="Scenario">
@@ -78,6 +81,22 @@
     <label class="tb-btn tb-file">Open a board file<input type="file" id="impJson" accept="application/json,.json" hidden></label>
     <button class="tb-btn" id="expClose">Close</button>
   </dialog>
+  <dialog id="lineupDlg" class="tb-dlg tb-dlg-wide">
+    <h2>Lineup</h2>
+    <p class="tb-hint" id="luHint"></p>
+    <div class="tb-dlg-foot">
+      <button class="tb-btn tb-primary" id="luAuto">Fill from roster</button>
+      <button class="tb-btn" id="luClear">Clear names</button>
+    </div>
+    <ul class="tb-list" id="luList"></ul>
+    <h2 class="tb-sub">Bench</h2>
+    <p class="tb-hint" id="luBench"></p>
+    <div class="tb-dlg-foot">
+      <a class="tb-btn" href="roster.html">Edit roster</a>
+      <button class="tb-btn" id="luClose">Close</button>
+    </div>
+  </dialog>
+
   <dialog id="boardsDlg" class="tb-dlg tb-dlg-wide">
     <h2>My boards</h2>
     <button class="tb-btn tb-primary" id="bdSave">Save this board</button>

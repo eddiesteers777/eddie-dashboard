@@ -109,3 +109,10 @@ a.tb-btn{text-decoration:none}
 @media(min-width:700px){.tb-links{display:none}}
 @media(max-width:699px){.tb-hide-sm{display:none}}
 @media print{.tb-links{display:none!important}}
+
+.tb-lineup{width:100%;margin-top:12px}
+.tb-sub{margin-top:14px!important;font-size:18px!important}
+.lu-slot{display:flex;gap:10px;align-items:center;font-size:14px}
+.lu-slot b{min-width:34px;font:600 12px "IBM Plex Mono",monospace;color:var(--gray)}
+.lu-slot span:last-child{color:var(--gray)}
+@media(max-width:899px){.tb-lineup{width:auto;margin:0 0 6px}}

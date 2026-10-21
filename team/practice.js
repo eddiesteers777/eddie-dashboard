@@ -1,6 +1,7 @@
 import * as D from "./drillModel.js";
 import * as P from "./practiceModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
+import * as R from "./rosterModel.js";
 
 const DRILL_KEY = "calera-board-drills", CUR_KEY = "calera-board-practice-current", LIST_KEY = "calera-board-practices", ID_KEY = "calera-board-practice-id";
 const $ = id => document.getElementById(id);
@@ -28,7 +29,17 @@ function setCurrentId(id) { currentId = id; try { id ? localStorage.setItem(ID_K
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2200); }
 const update = patch => { pr = { ...pr, ...patch }; persist(); renderSheet(); };
 
+function renderRosterHint() {
+    let n = 0;
+    try { n = R.available(R.parseRoster(localStorage.getItem("calera-board-roster") || "") || []).length; } catch {}
+    const b = $("useRoster");
+    b.hidden = !n || n === pr.players;
+    b.textContent = `Use my roster: ${n} here today`;
+    b.onclick = () => { update({ players: Math.min(30, n) }); renderSetup(); };
+}
+
 function renderSetup() {
+    renderRosterHint();
     $("title").value = pr.title; $("date").value = pr.date; $("start").value = pr.start;
     $("total").value = pr.total; $("players").value = pr.players;
     const g = $("game"); if (!g.options.length) P.GAME_OPTIONS.forEach(([v, l]) => g.add(new Option(l, v)));

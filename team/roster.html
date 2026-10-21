@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0B2A5B">
+<title>Calera Roster</title>
+<link rel="stylesheet" href="board.css">
+<link rel="stylesheet" href="drills.css">
+<link rel="stylesheet" href="roster.css">
+</head>
+<body>
+<main class="tb" id="app" hidden>
+  <header class="tb-top">
+    <a class="tb-back" href="board.html" aria-label="Back to the board">&larr;</a>
+    <div class="tb-mark" aria-hidden="true">C</div>
+    <div class="tb-titles"><h1>Roster</h1><span class="tb-title-input" id="count"></span></div>
+    <div class="tb-actions">
+      <button class="tb-btn" id="more">More</button>
+      <button class="tb-btn tb-primary" id="add">Add player</button>
+    </div>
+  </header>
+  <p class="tb-hint ro-privacy">Use first names (and a last initial if two share one). The roster stays on this device and is never sent anywhere. Back it up from More; signing out clears it.</p>
+  <ul class="ro-list" id="list"></ul>
+  <p class="tb-hint" id="empty">No players yet. Tap Add player, or paste a whole team at once from More.</p>
+
+  <dialog id="editor" class="tb-dlg dr-dlg">
+    <form id="form" method="dialog">
+      <h2 id="edTitle">Player</h2>
+      <label>First name <input name="name" required maxlength="24" autocomplete="off"></label>
+      <div class="dr-two">
+        <label>Number <input name="num" type="number" min="0" max="99" inputmode="numeric"></label>
+        <label>Position <select name="pos"></select></label>
+      </div>
+      <label>Note (optional) <input name="note" maxlength="60" placeholder="e.g. left foot, new this week"></label>
+      <div class="tb-dlg-foot">
+        <button type="button" class="tb-btn" id="edDelete">Delete</button>
+        <button type="button" class="tb-btn" id="edCancel">Cancel</button>
+        <button type="submit" class="tb-btn tb-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="moreDlg" class="tb-dlg dr-dlg">
+    <h2>Roster tools</h2>
+    <label>Add several players, one per line
+      <textarea id="bulk" rows="6" placeholder="Marcus 10 MID&#10;Eli 7 FWD&#10;Sam 1 GK&#10;Jordan L"></textarea></label>
+    <p class="tb-hint">Name, then an optional number and position (GK, DEF, MID, FWD).</p>
+    <button class="tb-btn tb-primary" id="bulkAdd">Add these players</button>
+    <div class="tb-dlg-foot">
+      <button class="tb-btn" id="allHere">Everyone here</button>
+      <button class="tb-btn" id="noneHere">Nobody here</button>
+    </div>
+    <div class="tb-dlg-foot">
+      <button class="tb-btn" id="backup">Back up roster</button>
+      <label class="tb-btn tb-file">Restore a backup<input type="file" id="restore" accept="application/json,.json" hidden></label>
+      <button class="tb-btn" id="mClose">Close</button>
+    </div>
+  </dialog>
+  <div id="toast" class="tb-toast" role="status" aria-live="polite"></div>
+</main>
+<p id="gate" class="tb-gate">Checking your account…</p>
+<script type="module" src="roster.js"></script>
+</body>
+</html>

@@ -258,3 +258,78 @@ test("practice: save list, round trip and bad input", () => {
     assert.deepEqual(PM.parsePracticeList("junk"), []);
     assert.equal(PM.deletePractice(r.list, r.id).length, 0);
 });
+
+import * as RO from "../team/rosterModel.js";
+
+test("roster: normalize, save, edit, delete, here toggle", () => {
+    assert.equal(RO.normalizePlayer({ name: " " }), null);
+    const p = RO.normalizePlayer({ name: "Marcus J", num: "7", pos: "WING", here: false, note: "x".repeat(200) }, "r5");
+    assert.equal(p.num, 7); assert.equal(p.pos, "Any"); assert.equal(p.here, false); assert.equal(p.note.length, 60);
+    assert.equal(RO.normalizePlayer({ name: "Eli", num: "" }, "r1").num, null);
+    let list = [];
+    let r = RO.savePlayer(list, { name: "Eli", num: 9, pos: "FWD" }); list = r.list;
+    r = RO.savePlayer(list, { name: "Sam", pos: "GK" }); list = r.list;
+    assert.deepEqual(list.map(x => x.id), ["r1", "r2"]);
+    list = RO.savePlayer(list, { ...list[0], name: "Eli R" }).list;
+    assert.equal(list[0].name, "Eli R"); assert.equal(list.length, 2);
+    list = RO.setHere(list, "r2", false);
+    assert.deepEqual(RO.available(list).map(x => x.id), ["r1"]);
+    list = RO.deletePlayer(list, "r1");
+    assert.equal(RO.savePlayer(list, { name: "Ty" }).id, "r3"); // ids never repeat
+});
+
+test("roster: bulk add and file round trip", () => {
+    const t = RO.parseBulk("Marcus 10 MID\n#7 Eli\nJordan Lee, 4, def\n\nSam GK 1");
+    assert.deepEqual(t.map(x => [x.name, x.num, x.pos]), [["Marcus", 10, "MID"], ["#7 Eli", null, "Any"], ["Jordan Lee", 4, "DEF"], ["Sam", 1, "GK"]]);
+    const r = RO.addBulk([], "A 1\nB 2 FWD");
+    assert.equal(r.added, 2);
+    assert.deepEqual(RO.parseRoster(RO.serializeRoster(r.list)), r.list);
+    assert.equal(RO.parseRoster("{}"), null);
+    assert.equal(RO.parseRoster("junk"), null);
+});
+
+test("roster: slot roles follow the formation", () => {
+    assert.deepEqual(RO.slotRoles("4-4-2"), ["GK", "DEF", "DEF", "DEF", "DEF", "MID", "MID", "MID", "MID", "FWD", "FWD"]);
+    assert.deepEqual(RO.slotRoles("4-2-3-1").filter(r => r === "MID").length, 5);
+    assert.equal(RO.slotRoles("3-5-2").length, 11);
+});
+
+test("roster: auto lineup uses positions, skips absent players, fills gaps", () => {
+    const mk = (name, pos, here = true) => ({ name, pos, here });
+    const list = [mk("Gus", "GK"), mk("D1", "DEF"), mk("D2", "DEF"), mk("M1", "MID"), mk("F1", "FWD"), mk("Out", "FWD", false), mk("Any1", "Any")].map((p, i) => ({ id: "r" + (i + 1), num: null, note: "", ...p }));
+    const l = RO.autoLineup(list, "4-4-2");
+    assert.equal(l.length, 11);
+    assert.equal(l[0].name, "Gus");
+    assert.deepEqual([l[1].name, l[2].name], ["D1", "D2"]);
+    assert.ok(!l.some(p => p && p.name === "Out"));
+    assert.equal(new Set(l.filter(Boolean).map(p => p.id)).size, l.filter(Boolean).length);
+    assert.equal(l.filter(Boolean).length, 6);
+    // a keeper is never used outfield while a spot can stay empty
+    const gks = RO.autoLineup([mk("G1", "GK"), mk("G2", "GK")].map((p, i) => ({ id: "r" + i, num: null, note: "", ...p })), "4-4-2");
+    assert.equal(gks.filter(Boolean).length, 1);
+});
+
+test("board lineup: assign, unlink on rename, formation switch keeps link, auto lineup, no duplicate numbers", () => {
+    let b = M.newBoard();
+    b = M.assignPlayer(b, "h10", { id: "r3", name: "Marcus", num: 9 });
+    let p = M.findPlayer(b, "h10");
+    assert.deepEqual([p.rid, p.name, p.num], ["r3", "Marcus", 9]);
+    // number already used by another slot: fall back to the slot number
+    b = M.assignPlayer(b, "h11", { id: "r4", name: "Eli", num: 9 });
+    assert.equal(M.findPlayer(b, "h11").num, 11); // 9 is taken by Marcus
+    b = M.setFormation(b, "home", "4-3-3");
+    assert.equal(M.findPlayer(b, "h10").rid, "r3");
+    b = M.editPlayer(b, "h10", { name: "Marc" });
+    assert.equal(M.findPlayer(b, "h10").rid, "");
+    b = M.editPlayer(b, "h10", { num: 14 });
+    assert.equal(M.findPlayer(b, "h10").num, 14);
+    b = M.assignPlayer(b, "h10", null);
+    assert.equal(M.findPlayer(b, "h10").name, "");
+    const roster = Array.from({ length: 13 }, (_, i) => ({ id: "r" + (i + 1), name: "P" + (i + 1), num: i % 3 === 0 ? 5 : i + 1, pos: "Any", here: true, note: "" }));
+    const lineup = RO.autoLineup(roster, "4-4-2").map(x => x);
+    const full = M.applyLineup(M.newBoard(), lineup);
+    assert.equal(new Set(full.home.map(h => h.num)).size, 11);
+    assert.ok(full.home.every(h => h.rid && h.name));
+    assert.equal(M.clearLineup(full).home.every(h => !h.rid && !h.name), true);
+    assert.deepEqual(M.parseBoard(M.serialize(full)), full);
+});

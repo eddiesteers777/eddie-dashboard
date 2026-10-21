@@ -39,3 +39,4 @@
   .pr-item li{margin:0;break-inside:avoid}
   .pr-list{gap:6px}
 }
+.pr-roster{width:100%;margin:-2px 0 12px;min-height:40px;font-size:13px}

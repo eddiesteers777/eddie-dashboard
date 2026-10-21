@@ -1,9 +1,12 @@
 import * as M from "./boardModel.js";
 import * as L from "./boardLibrary.js";
+import * as R from "./rosterModel.js";
 
 const KEY = "calera-board-current";
 const LIB_KEY = "calera-board-library";
 const ID_KEY = "calera-board-current-id";
+const ROSTER_KEY = "calera-board-roster";
+const readRoster = () => { try { return R.parseRoster(localStorage.getItem(ROSTER_KEY) || "") || []; } catch { return []; } };
 const $ = id => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
 
@@ -133,6 +136,9 @@ function render() {
     renderTools();
     chips("viewChips", b.view, "view");
     if (sel) {
+        const isHome = b.home.some(p => p.id === sel.id);
+        $("selRosterWrap").hidden = !isHome;
+        if (isHome) fillRosterSelect(b, sel);
         if (document.activeElement !== $("selNum")) $("selNum").value = sel.num;
         if (document.activeElement !== $("selName")) $("selName").value = sel.name;
     }
@@ -176,6 +182,32 @@ function markNode(m, svg) {
     }
     if (m.type === "zone") el("rect", { x: Math.min(m.pts[0].x, m.pts[1].x) * W, y: Math.min(m.pts[0].y, m.pts[1].y) * H, width: Math.abs(m.pts[0].x - m.pts[1].x) * W, height: Math.abs(m.pts[0].y - m.pts[1].y) * H, fill: "transparent" }, g);
     return g;
+}
+
+function fillRosterSelect(b, sel) {
+    const box = $("selRoster"), roster = readRoster();
+    const placed = new Set(b.home.filter(p => p.rid && p.id !== sel.id).map(p => p.rid));
+    box.replaceChildren(new Option(roster.length ? "Not from roster" : "Roster is empty", ""));
+    for (const p of roster) if (p.id === sel.rid || (p.here && !placed.has(p.id))) box.add(new Option(p.name + (p.num != null ? ` #${p.num}` : "") + (p.here ? "" : " (away)"), p.id));
+    box.value = sel.rid || "";
+}
+
+function renderLineup() {
+    const b = hist.present, roster = readRoster();
+    const here = R.available(roster);
+    $("luHint").textContent = roster.length ? `${here.length} of ${roster.length} players are here today. Fill puts them in your ${b.homeFormation} by position.` : "Your roster is empty. Add players first, then fill the lineup.";
+    $("luAuto").disabled = !here.length;
+    const roles = R.slotRoles(b.homeFormation), list = $("luList"); list.replaceChildren();
+    b.home.forEach((p, i) => {
+        const li = document.createElement("li"); li.className = "lu-slot";
+        const r = document.createElement("b"); r.textContent = roles[i];
+        const n = document.createElement("span"); n.textContent = `#${p.num}`;
+        const nm = document.createElement("span"); nm.textContent = p.name || "empty";
+        li.append(r, n, nm); list.append(li);
+    });
+    const placed = new Set(b.home.map(p => p.rid).filter(Boolean));
+    const bench = here.filter(p => !placed.has(p.id)).map(p => p.name);
+    $("luBench").textContent = bench.length ? bench.join(", ") : roster.length ? "Everyone who is here is in the lineup." : "";
 }
 
 function chips(id, current, side) {
@@ -403,6 +435,14 @@ function wire() {
     $("title").onchange = e => apply(M.setMeta(hist.present, { title: e.target.value.trim() || "Untitled board" }));
     const edit = () => selected && apply(M.editPlayer(hist.present, selected, { num: $("selNum").value === "" ? undefined : $("selNum").value, name: $("selName").value }));
     $("selNum").onchange = edit; $("selName").onchange = edit;
+    $("selRoster").onchange = e => {
+        if (!selected) return;
+        apply(M.assignPlayer(hist.present, selected, e.target.value ? readRoster().find(p => p.id === e.target.value) : null));
+    };
+    $("lineupBtn").onclick = () => { renderLineup(); $("lineupDlg").showModal(); };
+    $("luClose").onclick = () => $("lineupDlg").close();
+    $("luAuto").onclick = () => { apply(M.applyLineup(hist.present, R.autoLineup(readRoster(), hist.present.homeFormation))); renderLineup(); toast("Lineup filled. Undo brings back the old one."); };
+    $("luClear").onclick = () => { apply(M.clearLineup(hist.present)); renderLineup(); };
     $("selName").oninput = () => selected && apply(M.editPlayer(hist.present, selected, { name: $("selName").value }));
     $("markText").oninput = () => selectedMark && apply(M.updateMark(hist.present, selectedMark, { text: $("markText").value || " " }));
     $("markDel").onclick = () => { if (selectedMark) { const id = selectedMark; selectedMark = null; apply(M.removeMark(hist.present, id)); } };

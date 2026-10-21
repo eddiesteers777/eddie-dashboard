@@ -29,6 +29,7 @@ function team(side, formation, old = []) {
         id: side + (i + 1),
         num: old[i]?.num ?? i + 1,
         name: old[i]?.name ?? "",
+        rid: old[i]?.rid ?? "",
         x: side === "a" ? round(1 - s.x) : s.x,
         y: side === "a" ? round(1 - s.y) : s.y
     }));
@@ -77,14 +78,45 @@ export function editPlayer(board, id, { num, name }) {
     const ed = list => list.map(p => {
         if (p.id !== id) return p;
         const n = num === undefined ? p.num : Math.round(Number(num));
+        const nm = name === undefined ? p.name : String(name).slice(0, 24);
         return {
             ...p,
             num: Number.isFinite(n) ? clamp(n, 0, 99) : p.num,
-            name: name === undefined ? p.name : String(name).slice(0, 24)
+            name: nm,
+            rid: nm === p.name ? p.rid || "" : "" // typing a different name unlinks the roster player
         };
     });
     return { ...board, home: ed(board.home), away: ed(board.away) };
 }
+
+// ---- roster lineup (home team only). A roster player is { id, name, num }. ----
+function freeNumber(want, slot, used) {
+    for (const n of [want, slot + 1]) if (Number.isFinite(n) && n !== null && !used.has(n)) return n;
+    for (let n = 1; n < 100; n++) if (!used.has(n)) return n;
+    return slot + 1;
+}
+export function assignPlayer(board, id, rp) {
+    const used = new Set(board.home.filter(p => p.id !== id && p.rid).map(p => p.num)); // placeholder numbers don't count
+    return {
+        ...board,
+        home: board.home.map((p, i) => (p.id !== id ? p : rp
+            ? { ...p, rid: rp.id, name: String(rp.name).slice(0, 24), num: rp.num == null ? p.num : freeNumber(rp.num, i, used) }
+            : { ...p, rid: "", name: "" }))
+    };
+}
+// lineup: 11 roster players (or null), in home slot order.
+export function applyLineup(board, lineup) {
+    const used = new Set();
+    const home = board.home.map((p, i) => {
+        const rp = lineup[i];
+        if (!rp) return { ...p, rid: "", name: "" };
+        const num = freeNumber(rp.num, i, used);
+        used.add(num);
+        return { ...p, rid: rp.id, name: String(rp.name).slice(0, 24), num };
+    });
+    return { ...board, home };
+}
+export const clearLineup = board => ({ ...board, home: board.home.map(p => ({ ...p, rid: "", name: "" })) });
 
 export function setShowAway(board, show) { return { ...board, showAway: Boolean(show) }; }
 export function setMeta(board, patch) {
@@ -195,6 +227,7 @@ export function parseBoard(text) {
     const fix = (list, side) => list.map((p, i) => ({
         id: side + (i + 1), num: Number.isFinite(p.num) ? clamp(Math.round(p.num), 0, 99) : i + 1,
         name: typeof p.name === "string" ? p.name.slice(0, 24) : "",
+        rid: typeof p.rid === "string" ? p.rid.slice(0, 20) : "",
         x: clamp(p.x, 0.03, 0.97), y: clamp(p.y, 0.03, 0.97)
     }));
     return {
