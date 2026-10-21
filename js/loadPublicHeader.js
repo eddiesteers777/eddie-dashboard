@@ -33,6 +33,19 @@ fetch("components/publicHeader.html")
         menuBtn.addEventListener("click", () => setMenu(!nav.classList.contains("pub-nav-open")));
         document.addEventListener("keydown", e => { if (e.key === "Escape") setMenu(false); });
         document.getElementById("pubNavLinks").addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
+        // Phone menu's first row is Sign In: on narrow screens the bar's own
+        // button is hidden, so this one stands in for it (same label, same click).
+        const menuSignIn = document.getElementById("pubMenuSignIn");
+        const barSignIn = document.getElementById("pubSignInBtn");
+        if (menuSignIn && barSignIn) {
+            const label = menuSignIn.querySelector(".pub-signin-label");
+            const mirror = () => {
+                label.textContent = barSignIn.textContent;
+                menuSignIn.disabled = barSignIn.disabled;
+            };
+            new MutationObserver(mirror).observe(barSignIn, { childList: true, characterData: true, subtree: true, attributes: true });
+            menuSignIn.addEventListener("click", () => barSignIn.click());
+        }
 
         const signInBtn = document.getElementById("pubSignInBtn");
         if (!signInBtn) return;

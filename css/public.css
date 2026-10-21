@@ -1001,6 +1001,8 @@ html{scroll-behavior:smooth;}
 .pub-nav-cta:hover{ background:var(--primary-light); }
 .pub-nav-cta.active{ box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--primary); }
 .pub-menu-btn{ display:none; }
+/* Sign In inside the phone menu; the bar has its own button on wide screens. */
+.pub-menu-signin{ display:none; }
 
 @media(max-width:1020px){
     .pub-nav-links{
@@ -1023,6 +1025,13 @@ html{scroll-behavior:smooth;}
     .pub-nav-open .pub-menu-btn span:first-child{ transform:translateY(4px) rotate(45deg); }
     .pub-nav-open .pub-menu-btn span:last-child{ transform:translateY(-4px) rotate(-45deg); }
     .pub-signin-btn{ display:none; }
+    .pub-menu-signin{
+        display:inline-flex; gap:10px; width:100%; background:transparent; border:0;
+        border-bottom:1px solid var(--border); color:var(--primary); font:600 18px/1 var(--font-body);
+        text-align:left; cursor:pointer;
+    }
+    .pub-menu-signin .ui-icon{ width:18px; height:18px; }
+    .pub-menu-signin:disabled{ opacity:.6; cursor:default; }
 }
 @media(max-width:720px){
     .pub-navbar{ flex-wrap:nowrap; gap:12px; padding:10px var(--pub-gutter); }
