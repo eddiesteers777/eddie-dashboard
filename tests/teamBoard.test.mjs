@@ -105,3 +105,39 @@ test("markPath makes a path; dribbles wiggle", () => {
     const wavy = M.markPath({ type: "dribble", pts: [{ x: 0, y: .5 }, { x: 1, y: .5 }] }, 68, 105);
     assert.ok(wavy.split("L").length > 20);
 });
+
+import * as L from "../team/boardLibrary.js";
+
+test("library: save, update, duplicate, delete, sort", () => {
+    let lib = L.emptyLibrary();
+    const a = M.setMeta(M.newBoard(), { title: "Corner A", scenario: "Set piece" });
+    let r = L.saveBoard(lib, a, null, 100); lib = r.lib;
+    assert.equal(r.id, "b1");
+    r = L.saveBoard(lib, M.setFormation(a, "home", "4-3-3"), r.id, 200); lib = r.lib;
+    assert.equal(lib.boards.length, 1);
+    assert.equal(lib.boards[0].board.homeFormation, "4-3-3");
+    const d = L.duplicateBoard(lib, "b1", 300); lib = d.lib;
+    assert.equal(lib.boards[0].name, "Corner A copy");
+    assert.equal(d.id, "b2");
+    assert.deepEqual(L.sortedBoards(lib).map(b => b.id), ["b2", "b1"]);
+    lib = L.deleteBoard(lib, "b1");
+    assert.deepEqual(lib.boards.map(b => b.id), ["b2"]);
+    assert.equal(L.duplicateBoard(lib, "zzz").lib, lib);
+    // ids never repeat after a delete
+    assert.equal(L.saveBoard(lib, a, null, 400).id, "b3");
+});
+
+test("library file round trip, bad boards skipped, merge keeps existing", () => {
+    let lib = L.saveBoard(L.emptyLibrary(), M.setMeta(M.newBoard(), { title: "One" }), null, 10).lib;
+    lib = L.saveBoard(lib, M.setMeta(M.newBoard(), { title: "Two" }), null, 20).lib;
+    const back = L.parseLibrary(L.serializeLibrary(lib));
+    assert.equal(back.boards.length, 2);
+    assert.deepEqual(back.boards.map(b => b.name).sort(), ["One", "Two"]);
+    const o = JSON.parse(L.serializeLibrary(lib)); o.boards.push({ name: "bad", board: { v: 1 } });
+    assert.equal(L.parseLibrary(JSON.stringify(o)).boards.length, 2);
+    assert.equal(L.parseLibrary("{}"), null);
+    const merged = L.mergeLibrary(lib, back);
+    assert.equal(merged.boards.length, 4);
+    assert.equal(new Set(merged.boards.map(b => b.id)).size, 4);
+    assert.equal(L.loadLibrary("garbage").boards.length, 0);
+});

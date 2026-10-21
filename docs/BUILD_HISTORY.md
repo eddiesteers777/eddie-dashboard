@@ -301,3 +301,6 @@ Coach-only, device-only tactical board for Eddie's middle-school team. Plain JS 
 
 ### Calera board, phase 2 (2026-10-21): drawing tools
 Pass (solid), Run and Dribble (freehand, dashed / wavy), Arrow, Zone and Note tools; select to move or delete a drawing; Attack-half / Defend-half / Full pitch views; Clear drawings. Marks are saved in the board (`marks`, `view`), validated on load. Mouse and touch drawing tested in Playwright (phone, tablet, desktop).
+
+### Calera board, phase 3 (2026-10-21): saved boards and print
+`team/boardLibrary.js` (pure, tested): named saved boards in `localStorage` (`calera-board-library`, `calera-board-current-id`), Save/Update, Open, Copy, Delete (two taps), backup/restore of all boards as one file (merge, never overwrite). Print / save as PDF from the Export dialog (print CSS shows only title line + pitch). Phone header shows the board name instead of the page title.

@@ -1,6 +1,9 @@
 import * as M from "./boardModel.js";
+import * as L from "./boardLibrary.js";
 
 const KEY = "calera-board-current";
+const LIB_KEY = "calera-board-library";
+const ID_KEY = "calera-board-current-id";
 const $ = id => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
 
@@ -37,6 +40,10 @@ function load() {
     try { const b = M.parseBoard(localStorage.getItem(KEY) || ""); if (b) return b; } catch {}
     return M.newBoard();
 }
+function readLib() { try { return L.loadLibrary(localStorage.getItem(LIB_KEY)); } catch { return L.emptyLibrary(); } }
+function writeLib(lib) { try { localStorage.setItem(LIB_KEY, L.serializeLibrary(lib)); return true; } catch { toast("Couldn't save on this device"); return false; } }
+let currentId = null;
+function setCurrentId(id) { currentId = id; try { id ? localStorage.setItem(ID_KEY, id) : localStorage.removeItem(ID_KEY); } catch {} }
 function save() { try { localStorage.setItem(KEY, M.serialize(hist.present)); } catch {} }
 function apply(next) { hist = M.commit(hist, next); save(); render(); }
 
@@ -104,6 +111,8 @@ function render() {
     el("circle", { r: .8, fill: "#0B1F3F" }, ball);
 
     b.marks.filter(m => m.type === "text").forEach(m => markNode(m, svg)); // notes sit above players
+    $("phTitle").textContent = b.title;
+    $("phMeta").textContent = `${b.scenario} · ${b.homeFormation}${b.showAway ? " vs " + b.awayFormation : ""} · ${new Date().toLocaleDateString()}`;
     $("undo").disabled = !hist.past.length;
     $("redo").disabled = !hist.future.length;
     if (document.activeElement !== $("title")) $("title").value = b.title;
@@ -329,6 +338,58 @@ async function exportPng() {
     download(slug(hist.present.title) + ".png", blob);
 }
 
+const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : new Date(t).toLocaleDateString(); };
+
+function renderBoards() {
+    const lib = readLib();
+    const list = $("bdList");
+    list.replaceChildren();
+    const items = L.sortedBoards(lib);
+    $("bdEmpty").hidden = items.length > 0;
+    const cur = lib.boards.find(b => b.id === currentId);
+    $("bdSave").textContent = cur ? `Update "${cur.name}"` : "Save this board";
+    for (const it of items) {
+        const li = document.createElement("li");
+        li.className = "tb-item" + (it.id === currentId ? " cur" : "");
+        const b = it.board;
+        li.innerHTML = `<b></b><small></small><div class="tb-row"></div>`;
+        li.querySelector("b").textContent = it.name;
+        li.querySelector("small").textContent = `${b.scenario} · ${b.homeFormation} · ${ago(it.updatedAt)}`;
+        const row = li.querySelector(".tb-row");
+        const btn = (label, fn) => { const x = document.createElement("button"); x.type = "button"; x.className = "tb-btn"; x.textContent = label; x.onclick = () => fn(x); row.appendChild(x); return x; };
+        btn("Open", () => { selected = null; selectedMark = null; tool = "select"; setCurrentId(it.id); apply(it.board); $("boardsDlg").close(); toast("Opened " + it.name); });
+        btn("Copy", () => { const r = L.duplicateBoard(readLib(), it.id); if (writeLib(r.lib)) { renderBoards(); toast("Copy saved"); } });
+        btn("Delete", x => {
+            if (x.dataset.arm !== "1") { x.dataset.arm = "1"; x.textContent = "Tap to confirm"; setTimeout(() => { x.dataset.arm = ""; x.textContent = "Delete"; }, 3000); return; }
+            if (writeLib(L.deleteBoard(readLib(), it.id))) { if (currentId === it.id) setCurrentId(null); renderBoards(); toast("Deleted"); }
+        });
+        list.appendChild(li);
+    }
+}
+
+function wireBoards() {
+    const dlg = $("boardsDlg");
+    $("boards").onclick = () => { renderBoards(); dlg.showModal(); };
+    $("bdClose").onclick = () => dlg.close();
+    $("bdSave").onclick = () => {
+        const r = L.saveBoard(readLib(), hist.present, currentId);
+        if (writeLib(r.lib)) { setCurrentId(r.id); renderBoards(); toast("Saved"); }
+    };
+    $("bdBackup").onclick = () => {
+        const lib = readLib();
+        if (!lib.boards.length) return toast("Nothing saved yet");
+        download("calera-boards-backup.json", new Blob([L.serializeLibrary(lib)], { type: "application/json" }));
+        toast("Backup saved");
+    };
+    $("bdRestore").onchange = async e => {
+        const f = e.target.files[0]; e.target.value = "";
+        if (!f) return;
+        const inc = L.parseLibrary(await f.text());
+        if (!inc || !inc.boards.length) return toast("That isn't a boards backup");
+        if (writeLib(L.mergeLibrary(readLib(), inc))) { renderBoards(); toast(`Added ${inc.boards.length} board${inc.boards.length > 1 ? "s" : ""}`); }
+    };
+}
+
 function wire() {
     $("undo").onclick = () => { hist = M.undo(hist); save(); render(); };
     $("redo").onclick = () => { hist = M.redo(hist); save(); render(); };
@@ -350,7 +411,9 @@ function wire() {
         if (e.key === "Escape" && tool !== "select") { tool = "select"; render(); }
         if ((e.key === "Delete" || e.key === "Backspace") && selectedMark && !e.target.matches("input,select,textarea")) { e.preventDefault(); $("markDel").click(); }
     });
-    $("reset").onclick = () => { selected = null; selectedMark = null; tool = "select"; apply(M.newBoard()); toast("Board reset. Undo brings it back."); };
+    $("reset").onclick = () => { selected = null; selectedMark = null; tool = "select"; setCurrentId(null); apply(M.newBoard()); toast("Board reset. Undo brings it back."); };
+    $("expPrint").onclick = () => { $("exportDlg").close(); setTimeout(() => window.print(), 50); };
+    wireBoards();
     const dlg = $("exportDlg");
     $("export").onclick = () => dlg.showModal();
     $("expClose").onclick = () => dlg.close();
@@ -362,13 +425,14 @@ function wire() {
         const b = M.parseBoard(await f.text());
         dlg.close();
         if (!b) return toast("That file isn't a board");
-        selected = null; selectedMark = null; apply(b); toast("Board opened");
+        selected = null; selectedMark = null; setCurrentId(null); apply(b); toast("Board opened");
     };
 }
 
 (async () => {
     if (!(await allowed())) { location.replace("../index.html"); return; }
     hist = M.createHistory(load());
+    try { const id = localStorage.getItem(ID_KEY); if (id && readLib().boards.some(b => b.id === id)) currentId = id; } catch {}
     $("gate").hidden = true; $("app").hidden = false;
     wire(); setupDrag(); render();
 })();

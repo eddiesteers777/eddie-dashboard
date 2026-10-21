@@ -74,3 +74,32 @@ body{background:var(--paper);color:var(--ink);font:500 15px/1.4 "Albert Sans",sy
   #pitch{max-height:calc(100svh - 110px)}
 }
 @media(prefers-reduced-motion:reduce){.tb-toast{transition:none}}
+
+.tb-dlg-wide{width:min(520px,calc(100vw - 32px));max-height:calc(100svh - 32px)}
+.tb-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px;max-height:46svh;overflow:auto}
+.tb-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
+.tb-item b{font-weight:700;word-break:break-word}
+.tb-item small{color:var(--gray);font:500 12px "IBM Plex Mono",monospace}
+.tb-item .tb-row{margin:0;gap:6px}
+.tb-item .tb-btn{min-height:44px;padding:0 12px;flex:1}
+.tb-item.cur{border-color:var(--royal);box-shadow:0 0 0 1px var(--royal)}
+.tb-dlg-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tb-dlg-foot .tb-btn{flex:1;margin-top:0!important;width:auto!important}
+.tb-printhead{display:none}
+@media print{
+  @page{margin:12mm}
+  body{background:#fff}
+  .tb{padding:0;max-width:none}
+  .tb-top,.tb-tools,.tb-side,.tb-toast,dialog{display:none!important}
+  .tb-layout{display:block}
+  .tb-printhead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--navy);padding-bottom:6px;margin-bottom:8px;font:600 14px "Albert Sans",sans-serif;color:var(--navy)}
+  .tb-printhead strong{font:800 22px "Big Shoulders Display",sans-serif;text-transform:uppercase;letter-spacing:.05em}
+  .tb-stage{display:block}
+  #pitch{box-shadow:none;border-radius:0;max-height:235mm;max-width:100%;margin:0 auto;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:520px){
+  .tb-top{gap:6px}
+  .tb h1{display:none}
+  .tb-title-input{font:700 15px "Albert Sans",sans-serif;color:var(--ink);min-height:36px}
+  .tb-mark{display:none}
+}

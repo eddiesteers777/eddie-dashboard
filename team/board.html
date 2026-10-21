@@ -18,12 +18,14 @@
       <input id="title" class="tb-title-input" aria-label="Board name" maxlength="60">
     </div>
     <div class="tb-actions">
+      <button class="tb-btn" id="boards">Boards</button>
       <button class="tb-btn tb-icon" id="undo" aria-label="Undo" title="Undo">&#8630;</button>
       <button class="tb-btn tb-icon" id="redo" aria-label="Redo" title="Redo">&#8631;</button>
       <button class="tb-btn tb-primary" id="export">Export</button>
     </div>
   </header>
 
+  <div class="tb-printhead" aria-hidden="true"><strong id="phTitle"></strong><span id="phMeta"></span></div>
   <div class="tb-tools" id="tools" role="toolbar" aria-label="Drawing tools"></div>
 
   <div class="tb-layout">
@@ -67,9 +69,21 @@
   <dialog id="exportDlg" class="tb-dlg">
     <h2>Export</h2>
     <button class="tb-btn tb-primary" id="expPng">Save as image (PNG)</button>
+    <button class="tb-btn" id="expPrint">Print / save as PDF</button>
     <button class="tb-btn" id="expJson">Save board file (.json)</button>
     <label class="tb-btn tb-file">Open a board file<input type="file" id="impJson" accept="application/json,.json" hidden></label>
     <button class="tb-btn" id="expClose">Close</button>
+  </dialog>
+  <dialog id="boardsDlg" class="tb-dlg tb-dlg-wide">
+    <h2>My boards</h2>
+    <button class="tb-btn tb-primary" id="bdSave">Save this board</button>
+    <ul class="tb-list" id="bdList"></ul>
+    <p class="tb-hint" id="bdEmpty">No saved boards yet. Saved boards stay on this device.</p>
+    <div class="tb-dlg-foot">
+      <button class="tb-btn" id="bdBackup">Back up all boards</button>
+      <label class="tb-btn tb-file">Restore a backup<input type="file" id="bdRestore" accept="application/json,.json" hidden></label>
+      <button class="tb-btn" id="bdClose">Close</button>
+    </div>
   </dialog>
   <div id="toast" class="tb-toast" role="status" aria-live="polite"></div>
 </main>
