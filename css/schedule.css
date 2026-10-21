@@ -553,3 +553,6 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
     .schedule-page .sb-strip{ flex-wrap:wrap; margin:14px 0 0; padding:0; }
     .schedule-page .sb-day{ flex:1 0 calc(100% / 7 - 8px); }
 }
+
+.schedule-page .sb-resched{ display:inline-flex; align-items:center; min-height:44px; margin:10px 0 0; padding:0 14px; border-radius:var(--radius-pill); border:1px solid rgba(214,185,142,.45); background:none; color:var(--primary); font:inherit; font-weight:600; cursor:pointer; }
+.schedule-page .sb-resched-note{ margin:0 0 12px; padding:10px 12px; border-radius:10px; background:rgba(214,185,142,.1); border:1px solid rgba(214,185,142,.35); color:var(--text); font-size:14px; }
