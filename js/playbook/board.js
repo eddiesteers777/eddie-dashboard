@@ -5,6 +5,8 @@ import * as R from "./rosterModel.js";
 import { KEYS, migrateOldKeys, applyTheme, toggleTheme, clearAll } from "./store.js";
 import { C, HEADS, MARK_STYLE as STYLE } from "./theme.js";
 import * as Art from "./pitchArt.js";
+import { encodePayload, boardPayload } from "./shareModel.js";
+import { shareLink } from "./shareUi.js";
 
 const KEY = KEYS.board;
 const LIB_KEY = KEYS.library;
@@ -331,9 +333,15 @@ async function exportPng() {
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
     const c = document.createElement("canvas");
     const vb = $("pitch").viewBox.baseVal;
-    c.width = vb.width * scale; c.height = vb.height * scale;
+    const bar = 3.2 * scale; // a brand strip under the pitch
+    c.width = vb.width * scale; c.height = vb.height * scale + bar;
     const ctx = c.getContext("2d");
-    ctx.drawImage(img, 0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, vb.height * scale);
+    ctx.fillStyle = C.forest; ctx.fillRect(0, vb.height * scale, c.width, bar);
+    ctx.fillStyle = C.tanLight; ctx.textBaseline = "middle"; ctx.font = `700 ${1.5 * scale}px Albert Sans, Arial, sans-serif`;
+    ctx.fillText("SOUTHBOUND PLAYBOOK", 1.6 * scale, vb.height * scale + bar / 2);
+    ctx.textAlign = "right"; ctx.fillStyle = "#F2EDE1"; ctx.font = `500 ${1.4 * scale}px Albert Sans, Arial, sans-serif`;
+    ctx.fillText("southboundcoaching.com/playbook", c.width - 1.6 * scale, vb.height * scale + bar / 2);
     URL.revokeObjectURL(url);
     const blob = await new Promise(r => c.toBlob(r, "image/png"));
     download(slug(hist.present.title) + ".png", blob);
@@ -426,6 +434,7 @@ function wire() {
     const dlg = $("exportDlg");
     $("export").onclick = () => dlg.showModal();
     $("expClose").onclick = () => dlg.close();
+    $("share").onclick = async () => shareLink(await encodePayload(boardPayload(hist.present)), { title: hist.present.title, text: "A play from Southbound Playbook" }, toast);
     $("expPng").onclick = async () => { try { await exportPng(); dlg.close(); toast("Image saved"); } catch { toast("Couldn't make the image"); } };
     $("expJson").onclick = () => { download(slug(hist.present.title) + ".json", new Blob([M.serialize(hist.present)], { type: "application/json" })); dlg.close(); toast("Board file saved"); };
     $("impJson").onchange = async e => {

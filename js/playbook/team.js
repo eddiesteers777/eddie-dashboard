@@ -1,6 +1,7 @@
 import "./shell.js";
 import * as T from "./teamModel.js";
 import * as R from "./rosterModel.js";
+import * as S from "./sampleModel.js";
 import { KEYS } from "./store.js";
 
 const $ = id => document.getElementById(id);
@@ -32,6 +33,7 @@ function ensure() {
 }
 
 function render() {
+    $("sampleBar").hidden = !S.hasSample(roster, team);
     const has = roster.length > 0;
     $("noRoster").hidden = has; $("body").hidden = !has;
     $("print").hidden = $("settings").hidden = !has;
@@ -159,6 +161,17 @@ function openSettings() {
 }
 
 function wire() {
+    $("sampleLoad").onclick = () => {
+        const r = S.loadSample(roster, team);
+        if (!r) return;
+        try { localStorage.setItem(KEYS.roster, R.serializeRoster(r.roster)); roster = r.roster; } catch {}
+        save(r.team); toast("Sample team added. Remove it any time.");
+    };
+    $("sampleRemove").onclick = () => {
+        const r = S.removeSample(roster, team);
+        try { localStorage.setItem(KEYS.roster, R.serializeRoster(r.roster)); roster = r.roster; } catch {}
+        save(r.team); toast("Sample team removed");
+    };
     for (const k of T.KINDS) $("kind").add(new Option(T.KIND_LABELS[k], k));
     $("date").onchange = e => { if (e.target.value) { day.date = e.target.value; render(); } };
     $("kind").onchange = e => { day.kind = e.target.value; render(); };

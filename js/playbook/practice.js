@@ -4,6 +4,8 @@ import * as P from "./practiceModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
 import * as R from "./rosterModel.js";
 import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
+import { encodePayload, practicePayload } from "./shareModel.js";
+import { shareLink } from "./shareUi.js";
 
 const DRILL_KEY = KEYS.drills, CUR_KEY = KEYS.practice, LIST_KEY = KEYS.practices, ID_KEY = KEYS.practiceId;
 const $ = id => document.getElementById(id);
@@ -132,6 +134,10 @@ function wire() {
     $("again").onclick = () => build(true);
     $("addBtn").onclick = () => { const d = byId.get($("addSel").value); if (d) { update({ items: P.addItem(pr.items, d) }); $("addSel").value = ""; } };
     $("print").onclick = () => window.print();
+    $("share").onclick = async () => {
+        if (!pr.items.length) return toast("Build a practice first");
+        shareLink(await encodePayload(practicePayload(pr, drills)), { title: pr.title || "Practice plan", text: "A practice plan from Southbound Playbook" }, toast);
+    };
     $("mine").onclick = () => { renderMine(); $("mineDlg").showModal(); };
     $("mineClose").onclick = () => $("mineDlg").close();
     $("saveBtn").onclick = () => { const r = P.savePractice(readList(), pr, currentId); if (writeList(r.list)) { setCurrentId(r.id); renderMine(); toast("Saved"); } };

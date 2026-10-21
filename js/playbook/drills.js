@@ -84,7 +84,7 @@ function showDetail(id) {
     dlg.append(cols);
     const act = h("div", "dr-detail-actions");
     const btn = (label, cls, fn) => { const b = h("button", "pb-btn " + cls, label); b.type = "button"; b.onclick = () => fn(b); act.append(b); return b; };
-    if (board) { const a = h("a", "pb-btn", "Open diagram on board"); a.href = "board.html?board=" + encodeURIComponent(board.id); act.append(a); }
+    if (board) { const a = h("a", "pb-btn", "Open diagram on board"); a.href = "playbook-board.html?board=" + encodeURIComponent(board.id); act.append(a); }
     btn("Print", "", () => window.print());
     btn("Edit", "", () => { dlg.close(); openEditor(id); });
     btn("Copy", "", () => { const r = D.duplicateDrill(drills, id); write(r.list); dlg.close(); toast("Copy added"); });

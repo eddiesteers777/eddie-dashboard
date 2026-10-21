@@ -291,3 +291,6 @@ Ideas only (AGPL-3.0), all original code.
 - Storage: `sb-playbook-*` localStorage keys (list in `js/playbook/store.js`). Signed-in people sync everything except the theme and parent contacts to `users/{uid}/sync/playbook` (`cloud.js`, rules in `syncModel.js`; no Firestore rules change). First link of a device that already has work offers Combine / account's copy / this device's copy.
 - Shell: guests see the public header; signed in, the same pages wear the app's navigation (`boot.js`). Entry points are coach-only: Tools menu, More, search, and the coach dashboard "Soccer team" card.
 - Details of each step: `docs/BUILD_HISTORY.md` (Playbook entries).
+
+### Playbook sharing and sample team (2026-10-21)
+Share links: `js/playbook/shareModel.js` (encode/decode/validate, `importPractice`), `shareUi.js` (native share, then clipboard, then a dialog), viewer `playbook-view.html` + `view.js` (no sync, no `shell.js`). Everything arriving in a link is re-validated through the normal parsers. Sample team: `sampleModel.js` (`loadSample`, `removeSample`, `hasSample`), marked by note/label "Sample".

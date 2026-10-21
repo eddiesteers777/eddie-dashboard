@@ -1,5 +1,7 @@
 import "./shell.js";
 import * as R from "./rosterModel.js";
+import * as T from "./teamModel.js";
+import * as S from "./sampleModel.js";
 import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
 
 const KEY = KEYS.roster;
@@ -12,7 +14,10 @@ function read() { try { return R.parseRoster(localStorage.getItem(KEY) || "") ||
 function write(list) { roster = list; try { localStorage.setItem(KEY, R.serializeRoster(list)); } catch { toast("Couldn't save on this device"); } render(); }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2200); }
 
+const readTeam = () => { try { return T.loadTeam(localStorage.getItem(KEYS.team)); } catch { return T.emptyTeam(); } };
 function render() {
+    const sampled = S.hasSample(roster, readTeam());
+    $("sampleBar").hidden = !sampled; $("sampleTry").hidden = roster.length > 0;
     const here = R.available(roster).length;
     $("count").textContent = roster.length ? `${here} here of ${roster.length}` : "";
     $("empty").hidden = roster.length > 0;
@@ -51,6 +56,17 @@ function addFrom(text) {
 }
 
 function wire() {
+    $("sampleLoad").onclick = () => {
+        const r = S.loadSample(roster, readTeam());
+        if (!r) return;
+        try { localStorage.setItem(KEYS.team, T.serializeTeam(r.team)); } catch {}
+        write(r.roster); toast("Sample team added. Look around, then remove it when you're ready.");
+    };
+    $("sampleRemove").onclick = () => {
+        const r = S.removeSample(roster, readTeam());
+        try { localStorage.setItem(KEYS.team, T.serializeTeam(r.team)); } catch {}
+        write(r.roster); toast("Sample team removed");
+    };
     $("quick").onsubmit = e => {
         e.preventDefault();
         const box = $("qName");

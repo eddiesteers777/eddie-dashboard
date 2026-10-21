@@ -352,3 +352,8 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 
 ### Playbook field graphics (2026-10-21)
 - `js/playbook/pitchArt.js` draws the pitch, players and ball for the board and the small drill diagrams: mown stripes with a soft sheen and edge vignette, crisp lines, goal nets, corner arcs; smaller player markers (radius 2.7, was 3.6) with a drop shadow, lit disc, trim ring and a 2.5 px number (bigger invisible hit area for touch); a real soccer ball (shaded white, black centre panel, seams, edge panels, shadow). Gradients and a clip path only, so the PNG export keeps them (checked).
+
+## 2026-10-21 — Playbook: share links + sample team
+- **Share:** Share button on the board and practice pages. The plan is packed into the link's `#hash` (deflate + base64url, `js/playbook/shareModel.js`), never sent to a server; board links carry no player names. Read-only page `playbook-view.html` (`js/playbook/view.js`, noindex, not in the sitemap) with Print and "Copy to my Playbook" (a practice import reuses same-name drills, no duplicates). Board PNG export now has a "Southbound Playbook" footer strip. Privacy page updated. Fixed a broken drill link (`board.html` → `playbook-board.html`).
+- **Sample team:** "Try a sample team" on Roster and Team when empty (`js/playbook/sampleModel.js`): 14 first-name players (note "Sample") and 3 days labelled "Sample" with absences, runs owed, duty and captain. A banner offers "Remove sample team", which only removes sample rows. Loads only onto an empty roster.
+- **Tested:** `tests/playbookShare.test.mjs`, `tests/playbookSample.test.mjs`; Playwright at 390px and 1280px (share → fresh guest browser → copy; no overflow, no page errors).
