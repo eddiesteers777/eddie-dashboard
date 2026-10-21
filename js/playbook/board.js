@@ -4,6 +4,7 @@ import * as L from "./boardLibrary.js";
 import * as R from "./rosterModel.js";
 import { KEYS, migrateOldKeys, applyTheme, toggleTheme, clearAll } from "./store.js";
 import { C, HEADS, MARK_STYLE as STYLE } from "./theme.js";
+import * as Art from "./pitchArt.js";
 
 const KEY = KEYS.board;
 const LIB_KEY = KEYS.library;
@@ -45,33 +46,15 @@ function el(name, attrs = {}, parent) {
 
 const W = 68, H = 105;
 
-function drawPitch(svg) {
-    for (let i = 0; i < 10; i++) el("rect", { x: 0, y: i * 10.5, width: W, height: 10.5, fill: i % 2 ? C.pitchB : C.pitchA }, svg);
-    const L = { fill: "none", stroke: C.line, "stroke-width": ".45" };
-    el("rect", { x: 2, y: 2, width: 64, height: 101, ...L }, svg);
-    el("line", { x1: 2, y1: 52.5, x2: 66, y2: 52.5, ...L }, svg);
-    el("circle", { cx: 34, cy: 52.5, r: 9.15, ...L }, svg);
-    el("circle", { cx: 34, cy: 52.5, r: .6, fill: "#fff" }, svg);
-    for (const top of [true, false]) {
-        const y0 = top ? 2 : 103;
-        const d = top ? 1 : -1;
-        el("rect", { x: 13.85, y: top ? y0 : y0 - 16.5, width: 40.3, height: 16.5, ...L }, svg);
-        el("rect", { x: 24.85, y: top ? y0 : y0 - 5.5, width: 18.3, height: 5.5, ...L }, svg);
-        el("circle", { cx: 34, cy: y0 + d * 11, r: .5, fill: "#fff" }, svg);
-        el("path", { d: `M ${27.4} ${y0 + d * 16.5} A 9.15 9.15 0 0 ${top ? 0 : 1} ${40.6} ${y0 + d * 16.5}`, ...L }, svg);
-    }
-}
+function drawPitch(svg) { Art.drawPitch(el, svg); }
 
 function playerNode(p, side, svg) {
     const g = el("g", { class: "pl", "data-id": p.id, tabindex: 0, role: "button", "aria-label": `${side === "h" ? "Your" : "Opponent"} player ${p.num}${p.name ? " " + p.name : ""}` }, svg);
     g.setAttribute("transform", `translate(${p.x * W} ${p.y * H})`);
-    const home = side === "h";
-    if (p.id === selected) el("circle", { r: 4.9, fill: "none", stroke: C.tan, "stroke-width": 1, opacity: .95 }, g);
-    el("circle", { class: "ring", r: 3.6, fill: home ? C.home : C.away, stroke: home ? C.homeRing : C.awayRing, "stroke-width": .7 }, g);
-    const t = el("text", { y: 1.25, "text-anchor": "middle", fill: home ? C.homeText : C.awayText }, g);
-    t.textContent = p.num;
+    el("circle", { class: "hit", r: 4.6, fill: "transparent" }, g); // a bigger target than the drawn marker
+    Art.drawPlayer(el, g, { home: side === "h", num: p.num, selected: p.id === selected });
     if (p.name) {
-        const n = el("text", { class: "nm", y: 7, "text-anchor": "middle" }, g);
+        const n = el("text", { class: "nm", y: Art.PLAYER_R + 3, "text-anchor": "middle" }, g);
         n.textContent = p.name;
     }
     return g;
@@ -85,7 +68,7 @@ function render() {
     svg.setAttribute("viewBox", vb.join(" "));
     svg.style.aspectRatio = `${vb[2]} / ${vb[3]}`;
     svg.classList.toggle("drawing", tool !== "select");
-    const defs = el("defs", {}, svg);
+    const defs = Art.addDefs(el, svg);
     for (const k in HEADS) {
         const m = el("marker", { id: "ah-" + k, viewBox: "0 0 10 10", refX: 6, refY: 5, markerWidth: 3.4, markerHeight: 3.4, orient: "auto", markerUnits: "userSpaceOnUse" }, defs);
         el("path", { d: "M0 0L10 5L0 10z", fill: HEADS[k] }, m);
@@ -96,8 +79,8 @@ function render() {
     b.home.forEach(p => playerNode(p, "h", svg));
     const ball = el("g", { class: "pl", "data-ball": 1, tabindex: 0, role: "button", "aria-label": "Ball" }, svg);
     ball.setAttribute("transform", `translate(${b.ball.x * W} ${b.ball.y * H})`);
-    el("circle", { r: 2.1, fill: C.ball, stroke: C.ballInk, "stroke-width": .5 }, ball);
-    el("circle", { r: .8, fill: C.ballInk }, ball);
+    el("circle", { class: "hit", r: 3.6, fill: "transparent" }, ball);
+    Art.drawBall(el, ball);
 
     b.marks.filter(m => m.type === "text").forEach(m => markNode(m, svg)); // notes sit above players
     $("phTitle").textContent = b.title;
@@ -337,8 +320,8 @@ async function exportPng() {
     const svg = $("pitch").cloneNode(true);
     svg.setAttribute("xmlns", NS);
     svg.querySelectorAll("text").forEach(t => t.setAttribute("font-family", "Albert Sans, Arial, sans-serif"));
-    svg.querySelectorAll(".nm").forEach(t => { t.setAttribute("style", "font-size:2.4px;font-weight:600"); t.setAttribute("fill", "#fff"); t.setAttribute("stroke", "rgba(0,0,0,.55)"); t.setAttribute("stroke-width", ".6"); t.setAttribute("paint-order", "stroke"); });
-    svg.querySelectorAll("text:not(.nm)").forEach(t => t.setAttribute("style", "font-size:3.4px;font-weight:700"));
+    svg.querySelectorAll(".nm").forEach(t => { t.setAttribute("style", "font-size:2.1px;font-weight:600"); t.setAttribute("fill", "#fff"); t.setAttribute("stroke", "rgba(0,0,0,.55)"); t.setAttribute("stroke-width", ".6"); t.setAttribute("paint-order", "stroke"); });
+    svg.querySelectorAll("text:not(.nm)").forEach(t => t.setAttribute("style", "font-size:2.5px;font-weight:700"));
     svg.removeAttribute("style");
     svg.querySelectorAll(".hit").forEach(n => n.remove());
     svg.querySelectorAll(".mk text").forEach(t => { t.setAttribute("fill", "#fff"); t.setAttribute("stroke", "rgba(0,0,0,.5)"); t.setAttribute("stroke-width", ".7"); t.setAttribute("paint-order", "stroke"); t.setAttribute("style", "font-size:3px;font-weight:700"); });

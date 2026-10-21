@@ -82,8 +82,8 @@
 #pitch{width:100%;max-width:560px;max-height:calc(100svh - 150px);aspect-ratio:68/105;border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none;background:#3C7A55;box-shadow:var(--pb-shadow)}
 #pitch.drawing{cursor:crosshair}
 .pl{cursor:grab}.pl:active{cursor:grabbing}
-.pl text{font:700 3.4px var(--font-body);pointer-events:none}
-.pl .nm{font:600 2.4px var(--font-body);paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:.6px;fill:#fff}
+.pl text{font:700 2.5px var(--font-body);pointer-events:none}
+.pl .nm{font:600 2.1px var(--font-body);paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:.6px;fill:#fff}
 .pl:focus{outline:none}
 .pl:focus-visible .ring{stroke:#fff;stroke-width:1}
 .mk{cursor:pointer}

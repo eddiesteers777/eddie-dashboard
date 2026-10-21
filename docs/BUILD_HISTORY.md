@@ -349,3 +349,6 @@ Coach-only "Southbound Playbook" entry in the Tools menu (`components/header.htm
 ### Playbook reference (for APP_REFERENCE)
 Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary`, `drillModel`, `drillSeed` + `drillSeedMore`, `practiceModel`, `rosterModel`, `teamModel`, `syncModel`, `glance`), controllers (`board`, `drills`, `practice`, `roster`, `team`, `hub`), `shell` (theme, sync status, clear), `cloud` (sync), `boot` (header choice), `store` (keys). Keys `sb-playbook-*`; synced: all except theme and contacts. Cloud doc `users/{uid}/sync/playbook`.
 
+
+### Playbook field graphics (2026-10-21)
+- `js/playbook/pitchArt.js` draws the pitch, players and ball for the board and the small drill diagrams: mown stripes with a soft sheen and edge vignette, crisp lines, goal nets, corner arcs; smaller player markers (radius 2.7, was 3.6) with a drop shadow, lit disc, trim ring and a 2.5 px number (bigger invisible hit area for touch); a real soccer ball (shaded white, black centre panel, seams, edge panels, shadow). Gradients and a clip path only, so the PNG export keeps them (checked).
