@@ -116,3 +116,10 @@ export function importPractice(myDrills, myPractices, shared, now = Date.now()) 
     const saved = P.savePractice(myPractices, practice, null, now);
     return { drills, practices: saved.list, practiceId: saved.id, practice };
 }
+
+// In already-escaped update text, a Playbook link on our own host becomes an "Open it" link (anything else stays text).
+export function linkifyPlaybook(escaped, host) {
+    const h = String(host || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!h) return escaped;
+    return escaped.replace(new RegExp(`https://${h}/playbook-view\\.html#[A-Za-z0-9_-]+`, "g"), url => `<a class="updates-open" href="${url}">Open it \u2192</a>`);
+}

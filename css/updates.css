@@ -110,3 +110,5 @@ a.updates-item:hover{ border-color:var(--primary); }
 .updates-page .updates-when{ font:500 11.5px/1.5 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
 .updates-page .updates-new{ padding:2px 9px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; }
 .updates-page .updates-text{ color:var(--text); font-size:15.5px; line-height:1.55; }
+
+.updates-open{ display:inline-flex; align-items:center; min-height:44px; margin-top:6px; padding:0 14px; border-radius:6px; background:var(--primary); color:var(--on-primary); font-weight:600; text-decoration:none; }

@@ -6,7 +6,8 @@ import { KEYS, migrateOldKeys, applyTheme, toggleTheme, clearAll } from "./store
 import { C, HEADS, MARK_STYLE as STYLE } from "./theme.js";
 import * as Art from "./pitchArt.js";
 import { encodePayload, boardPayload } from "./shareModel.js";
-import { shareLink } from "./shareUi.js";
+import { shareLink, sendToClient } from "./shareUi.js";
+import { isSignedIn } from "./cloud.js";
 
 const KEY = KEYS.board;
 const LIB_KEY = KEYS.library;
@@ -434,6 +435,8 @@ function wire() {
     const dlg = $("exportDlg");
     $("export").onclick = () => dlg.showModal();
     $("expClose").onclick = () => dlg.close();
+    if (isSignedIn()) $("sendClient").hidden = false;
+    $("sendClient").onclick = async () => sendToClient(await encodePayload(boardPayload(hist.present)), { title: hist.present.title }, toast);
     $("share").onclick = async () => shareLink(await encodePayload(boardPayload(hist.present)), { title: hist.present.title, text: "A play from Southbound Playbook" }, toast);
     $("expPng").onclick = async () => { try { await exportPng(); dlg.close(); toast("Image saved"); } catch { toast("Couldn't make the image"); } };
     $("expJson").onclick = () => { download(slug(hist.present.title) + ".json", new Blob([M.serialize(hist.present)], { type: "application/json" })); dlg.close(); toast("Board file saved"); };

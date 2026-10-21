@@ -79,3 +79,11 @@ test("team link: first names, lineup and duty only; nothing about absences or co
     assert.ok(back.game.duty.length > 0 && back.game.captain);
     assert.equal(S.parsePayload({ v: 1, k: "game", formation: "bad", lineups: "x", duty: 5 }).game.formation, "4-4-2");
 });
+
+test("update text: our own Playbook link becomes a button, other links stay text", () => {
+    const text = "Try this\nPassing night\nhttps://southboundcoaching.com/playbook-view.html#zAbc-_1\nhttps://evil.example/playbook-view.html#zAbc";
+    const out = S.linkifyPlaybook(text, "southboundcoaching.com");
+    assert.match(out, /<a class="updates-open" href="https:\/\/southboundcoaching\.com\/playbook-view\.html#zAbc-_1">Open it/);
+    assert.ok(!/href="https:\/\/evil/.test(out));
+    assert.equal(S.linkifyPlaybook("plain", ""), "plain");
+});

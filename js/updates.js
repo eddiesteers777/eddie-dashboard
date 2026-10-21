@@ -11,6 +11,7 @@
    that clients can't read at all, so they can never show here.
 ========================================== */
 
+import { linkifyPlaybook } from "./playbook/shareModel.js";
 import { listenForAuth } from "./auth.js";
 import { listMyUpdates, markUpdatesRead } from "./clientNotes.js";
 import { listMyResults } from "./workoutResults.js";
@@ -49,7 +50,7 @@ function itemHtml(item) {
                     ${item.unread ? `<span class="updates-new">New</span>` : ""}
                     <span class="updates-when">${esc(when(item.at))}${item.detail ? ` · ${esc(item.detail)}` : ""}</span>
                 </span>
-                <span class="updates-text">${renderEmojiText(esc(item.text))}</span>
+                <span class="updates-text">${renderEmojiText(item.link ? esc(item.text) : linkify(esc(item.text)))}</span>
             </span>
         </${tag.split(" ")[0]}>`;
 }
