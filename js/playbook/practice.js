@@ -1,3 +1,4 @@
+import "./shell.js";
 import * as D from "./drillModel.js";
 import * as P from "./practiceModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";

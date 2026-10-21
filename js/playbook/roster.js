@@ -1,3 +1,4 @@
+import "./shell.js";
 import * as R from "./rosterModel.js";
 import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
 

@@ -1922,3 +1922,16 @@ test("session reports: a log can carry a headline, drills and skill levels, with
     await assertSucceeds(getDoc(doc(as("client"), "sessionLogs/b2_2026-09-01")));
     await assertFails(updateDoc(doc(as("client"), "sessionLogs/b2_2026-09-01"), { focus: "I coach myself", updatedAt: serverTimestamp() }));
 });
+
+test("Southbound Playbook sync doc: only its owner can read or write it", async () => {
+    const ref = db => doc(db, "users/client/sync/playbook");
+    const mine = env.authenticatedContext("client").firestore();
+    await assertSucceeds(setDoc(ref(mine), { keys: { "sb-playbook-roster": { v: "{}", at: 1 } }, updatedAt: 1 }, { merge: true }));
+    await assertSucceeds(getDoc(ref(mine)));
+    for (const other of ["stranger", "coach"]) {
+        const db = env.authenticatedContext(other).firestore();
+        await assertFails(getDoc(ref(db)));
+        await assertFails(setDoc(ref(db), { keys: {}, updatedAt: 2 }, { merge: true }));
+    }
+    await assertFails(getDoc(ref(env.unauthenticatedContext().firestore())));
+});

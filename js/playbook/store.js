@@ -1,4 +1,5 @@
-// Southbound Playbook: where everything is kept (this browser only, never sent anywhere).
+// Southbound Playbook: where everything is kept (this browser; also the account's private
+// sync doc when signed in, see cloud.js).
 export const KEYS = Object.freeze({
     board: "sb-playbook-board",
     boardId: "sb-playbook-board-id",

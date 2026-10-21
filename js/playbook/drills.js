@@ -1,3 +1,4 @@
+import "./shell.js";
 import * as D from "./drillModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
 import { loadLibrary } from "./boardLibrary.js";

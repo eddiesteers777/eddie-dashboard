@@ -1,3 +1,4 @@
+import "./shell.js";
 import * as M from "./boardModel.js";
 import * as L from "./boardLibrary.js";
 import * as R from "./rosterModel.js";

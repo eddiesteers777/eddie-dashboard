@@ -148,6 +148,20 @@ export function clearAccountSensitiveBrowserState() {
     for (const key of ACCOUNT_SESSION_STORAGE_KEYS) {
         try { sessionStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
+    clearLinkedPlaybook();
+}
+
+// Southbound Playbook work (js/playbook/cloud.js) belongs to the device until it is linked to an
+// account (sb-playbook-owner). A guest's work survives sign-in and is offered to the account;
+// work already linked leaves with the account on sign-out or an account switch.
+function clearLinkedPlaybook() {
+    try {
+        if (!localStorage.getItem("sb-playbook-owner")) return;
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key?.startsWith("sb-playbook-") && key !== "sb-playbook-theme") localStorage.removeItem(key);
+        }
+    } catch { /* storage unavailable */ }
 }
 
 // The Fueling calculator works without an account (js/guestFuel.js). A guest who used it and then

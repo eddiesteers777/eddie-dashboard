@@ -241,3 +241,14 @@
   #detail::backdrop{display:none}
   .dr-detail-actions{display:none!important}
 }
+
+/* ---- cloud sync ---- */
+.pb-syncstat{margin-left:auto;font-size:11px;letter-spacing:.06em}
+.pb-syncstat[hidden],.pb-syncnote[hidden]{display:none!important}
+.pb-syncstat[data-state="synced"],.pb-syncstat[data-state="syncing"]{color:var(--pb-muted);cursor:default}
+.pb-syncstat[data-state="offline"],.pb-syncstat[data-state="toobig"],.pb-syncstat[data-state="paused"]{color:var(--pb-act)}
+.pb-syncstat[data-state="guest"]{color:var(--pb-act)}
+.pb-syncnote{color:var(--pb-muted);margin:8px 0}
+.pb-refresh{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:5200;display:flex;align-items:center;gap:6px;max-width:calc(100vw - 32px);padding:6px 6px 6px 14px;background:var(--pb-card);color:var(--pb-text);border:1px solid var(--pb-act);border-radius:8px;box-shadow:var(--pb-shadow);font:500 14px var(--font-body)}
+.pb-refresh .pb-tab{color:var(--pb-act);border-bottom:0}
+@media print{.pb-syncstat,.pb-refresh{display:none!important}}

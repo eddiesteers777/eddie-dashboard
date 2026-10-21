@@ -319,3 +319,10 @@ The coach-only Calera board (phases 1-6 above) became **Southbound Playbook**, o
 
 ### Playbook menu link (2026-10-21)
 Coach-only "Southbound Playbook" entry in the Tools menu (`components/header.html`), the More page Tools group and the search destinations (`js/loadHeader.js`), all `data-requires="coach"`; `tests/playbook.test.mjs` keeps them coach-only. Clients see no link (the public pages stay open to anyone by address).
+
+### Playbook cloud sync (2026-10-21)
+- Fixed a live bug first: saved boards, drills and practices were re-numbered by position on every reload, so a practice's drills or a drill's diagram could point at the wrong item after adding one. Ids are now written and kept (unique ones preserved, new ones only for missing or repeated). Regression tests in `tests/playbook.test.mjs`.
+- Sync: `js/playbook/syncModel.js` (pure: per-key plan, newer edit wins, removals sync, size caps, `mergeStates` combines two sets of work by name and re-links roster, board, drill and practice references), `js/playbook/cloud.js` (browser side: `users/{uid}/sync/playbook`, bookkeeping keys `sb-playbook-owner|synced|times`, push every 20 s, on hide/online, pull on show, "Refresh" banner when newer work arrives after the page loaded, first-link dialog when both sides hold work). Guests never load Firebase from the Playbook.
+- `shell.js` is imported first by each tool page and awaits the first pull (2.5 s cap). Status in the tab row ("Sign in" for guests), sign-in button and honest copy on the hub, privacy page updated. "Clear everything" also clears the account's copy.
+- No Firestore rules change (the owner-only `users/{uid}/sync/{docId}` rule already covers it); `tests/rules.test.mjs` gained a test for the `playbook` doc. Tests: `tests/playbookSync.test.mjs` (pure) plus a two-device Playwright run (push, pull, edit on B then banner on A, clear, guest, first-link combine) with Firebase mocked; all passed.
+
