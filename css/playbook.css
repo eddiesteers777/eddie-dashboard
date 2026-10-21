@@ -500,3 +500,11 @@ html.pb-app #publicHeader,html.pb-app .pub-footer{display:none}
 .vw-h{font-family:var(--font-display);text-transform:uppercase;font-size:1.25rem;margin:22px 0 8px}
 .vw-duty{margin:0;padding-left:18px;display:grid;gap:6px}
 .vw-line{margin:12px 0 0}
+
+/* Assign drill as homework */
+#assign label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;margin:10px 0}
+#assign input:not([type=checkbox]),#assign select,#assign textarea{font-size:16px;min-height:44px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);width:100%;box-sizing:border-box;font-family:inherit}
+#assign .gm-tick{flex-direction:row;align-items:center;gap:8px;font-size:.95rem}
+#assign .gm-tick input{width:22px;height:22px;min-height:0}
+#assign .gm-pic{max-width:260px;margin-bottom:8px}
+#assign [hidden]{display:none!important}

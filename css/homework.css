@@ -112,3 +112,6 @@
 .hw-seg button.on{ background:var(--surface-light); color:var(--text); box-shadow:0 1px 0 rgba(255,244,222,.08), 0 2px 6px rgba(0,0,0,.3); }
 
 @media (prefers-reduced-motion:reduce){ .hw-ring-fg{ transition:none; } }
+
+.hw-diagram{ max-width:340px; margin:12px 0; display:grid; gap:6px; }
+.hw-diagram[hidden]{ display:none !important; }

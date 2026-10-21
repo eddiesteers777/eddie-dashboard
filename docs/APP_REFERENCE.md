@@ -297,3 +297,6 @@ Share links (board and practice carry no names; the Game-tab team link carries f
 
 ### Playbook game day (2026-10-21)
 `js/playbook/gameModel.js` (lineups are one array of 11 roster ids per period, formation slot order, GK first; `autoPlan`, `setSlot`, `minutes`, `changes`, `parseGame`). Stored as `session.game` on a `kind: "game"` team session (`teamModel.setGame`); other kinds drop it on load. UI `playbook-game.html` + `game.js`.
+
+### Drill → homework (2026-10-21)
+`homework/{id}` has an optional `diagram` (string ≤ 4000, link-safe token of a name-free board; see `js/playbook/drillHomework.js` `diagramToken` / `diagramBoard`). Coach UI: `openAssign` in `js/playbook/drills.js`. Client UI: `showDiagram` in `js/homeworkClient.js`. `firestore.rules` `validHomework` allows the key (`"diagram" in d`).

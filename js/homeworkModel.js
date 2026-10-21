@@ -168,7 +168,9 @@ export function cleanAssignment(input = {}) {
         minutes: int(input.minutes, 1, 240),
         goal: cadence === "goal" ? int(input.goal, 1, 100000) : null,
         dueDate: /^\d{4}-\d{2}-\d{2}$/.test(input.dueDate || "") ? input.dueDate : null,
-        askClip: input.askClip === true
+        askClip: input.askClip === true,
+        // A drill diagram from the Playbook: a link-safe token (see js/playbook/drillHomework.js). "" = none.
+        diagram: typeof input.diagram === "string" && input.diagram.length <= 4000 && /^[A-Za-z0-9_-]*$/.test(input.diagram) ? input.diagram : ""
     };
 }
 

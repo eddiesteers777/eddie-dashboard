@@ -111,6 +111,7 @@ function renderDetail(id) {
         <h1 class="hw-title">${esc(hw.title)}</h1>
         ${ticksHtml(hw, t) || `<p class="hw-sub">${esc(p.label)}</p>`}
         ${hw.note ? `<div class="hw-coachnote"><small>From your coach</small>${esc(hw.note)}${clipText(hw) ? `<br><span class="hw-sub">Watch ${esc(clipText(hw))}.</span>` : ""}</div>` : ""}
+        ${hw.diagram ? `<div class="hw-diagram" id="hwDiagram" hidden><span class="hw-kicker">Diagram</span></div>` : ""}
         ${hw.coachReply ? `<div class="hw-coachnote"><small>Coach replied</small>${esc(hw.coachReply)}</div>` : ""}
         ${hw.status === "archived" ? `<p class="hw-sub">Your coach closed this one.</p>` : `
         <div class="clients-card hw-log">
@@ -123,6 +124,7 @@ function renderDetail(id) {
         <div class="hw-btn-row"><button type="button" class="sb-btn sb-btn-primary" id="hwDone">${p.today ? "Log another practice" : "Mark done for today"}</button>
         ${hw.videoId ? `<a class="sb-btn sb-btn-secondary" href="${esc(watchUrl(hw.videoId))}" target="_blank" rel="noopener">Open on YouTube</a>` : ""}</div>`}
         ${logs.length ? `<div class="hw-section"><h2>Your practices</h2><span class="hw-kicker">${logs.length}</span></div><div class="hw-history">${logs.slice(0, 12).map(l => `<div><span>${esc(dueText(l.date))}${l.feel ? ` · ${esc(l.feel)}` : ""}</span><span>${l.count != null ? esc(l.count) : ""}</span></div>`).join("")}</div>` : ""}`;
+    if (hw.diagram) showDiagram(hw.diagram);
     window.scrollTo(0, 0);
 }
 
@@ -178,3 +180,12 @@ listenForAuth(async user => {
     const wanted = location.hash.slice(1);
     if (wanted && items.some(h => h.id === wanted)) renderDetail(wanted); else renderList();
 });
+
+// The coach's drill picture (a name-free Playbook board kept as a short token on the homework).
+async function showDiagram(token) {
+    try {
+        const [{ diagramBoard }, { boardThumb }] = await Promise.all([import("./playbook/drillHomework.js"), import("./playbook/boardThumb.js")]);
+        const board = await diagramBoard(token), box = document.getElementById("hwDiagram");
+        if (board && box) { box.append(boardThumb(board)); box.hidden = false; }
+    } catch { /* no picture: the note still has the steps */ }
+}

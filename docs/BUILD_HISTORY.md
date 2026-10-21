@@ -364,3 +364,9 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 
 ## 2026-10-21 — Playbook: team link for parents and players
 - "Share with team" on the Game tab (`shareModel.gamePayload`, kind `game`; viewer branch in `view.js`): read-only lineup per period, bench, captain and duty, first names only. Never attendance, runs or contacts. The coach confirms (`sbConfirm`) that names are included before the link is made. Board and practice links still carry no names. Tested in `tests/playbookShare.test.mjs` and Playwright (390/1280).
+
+## 2026-10-21 — Playbook: drill → homework (with diagram)
+- **Coach:** "Assign as homework" in a drill's detail (signed in): pick a linked client, title, how often, due date, note prefilled from the drill (equipment, setup, how, focus; `js/playbook/drillHomework.js`), and a tick box to send the drill's diagram. Warns when the drill needs a group.
+- **Client:** the homework screen shows the diagram under the video/title (`#hwDiagram` in `js/homeworkClient.js`).
+- **Data / rules (rules change, Eddie must paste):** optional `diagram` field on `homework/{id}`: a link-safe token (name-free Playbook board via `shareModel`), max 4000 chars, `^[A-Za-z0-9_-]*$`. `assignHomework` sends the field only when there is one, so homework without a diagram works with the old rules too. The client still can only add practices. Rules test: "a Playbook diagram saves, stays link-safe and small, and only the coach changes it" (78 rules tests pass).
+- Tested: `tests/playbookDrillHomework.test.mjs`; Playwright with mocks at 390px (assign dialog, sent payload, client view).

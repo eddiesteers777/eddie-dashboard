@@ -3,6 +3,9 @@ import * as D from "./drillModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
 import { loadLibrary } from "./boardLibrary.js";
 import { boardThumb } from "./boardThumb.js";
+import { isSignedIn } from "./cloud.js";
+import * as HW from "./drillHomework.js";
+import { addDays } from "../homeworkModel.js";
 import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
 
 const KEY = KEYS.drills, LIB_KEY = KEYS.library;
@@ -85,6 +88,7 @@ function showDetail(id) {
     const act = h("div", "dr-detail-actions");
     const btn = (label, cls, fn) => { const b = h("button", "pb-btn " + cls, label); b.type = "button"; b.onclick = () => fn(b); act.append(b); return b; };
     if (board) { const a = h("a", "pb-btn", "Open diagram on board"); a.href = "playbook-board.html?board=" + encodeURIComponent(board.id); act.append(a); }
+    if (isSignedIn()) btn("Assign as homework", "pb-primary", () => openAssign(d, board));
     btn("Print", "", () => window.print());
     btn("Edit", "", () => { dlg.close(); openEditor(id); });
     btn("Copy", "", () => { const r = D.duplicateDrill(drills, id); write(r.list); dlg.close(); toast("Copy added"); });
@@ -96,6 +100,66 @@ function showDetail(id) {
     dlg.append(act);
     dlg.showModal();
 }
+
+// Assign this drill to a linked client as homework, with its diagram if there is one.
+async function openAssign(d, board) {
+    let links = [], mod = null;
+    try {
+        const [ca, hw] = await Promise.all([import("../coachAccess.js"), import("../homework.js")]);
+        mod = hw; links = await ca.listMyClients();
+    } catch { return toast("Couldn't reach your clients. Check your connection."); }
+    if (!links.length) { const { sbAlert } = await import("../ui.js"); return sbAlert("Link a client first (My Clients), then you can send them drills.", { title: "No clients yet" }); }
+    const dlg = $("assign"); dlg.replaceChildren();
+    let pick = links[0].clientUid;
+    const e = (tag, cls, text) => h(tag, cls, text);
+    const field = (label, el) => { const l = e("label"); l.append(label, el); return l; };
+    dlg.append(e("h2", "", "Assign as homework"));
+    const who = e("div", "gm-squad");
+    const chips = links.map(l => { const b = e("button", "gm-chip", (l.clientName || "Client").split(" ")[0]); b.type = "button"; b.onclick = () => { pick = l.clientUid; sync(); }; who.append(b); return [b, l.clientUid]; });
+    const sync = () => chips.forEach(([b, u]) => { b.classList.toggle("on", u === pick); b.setAttribute("aria-pressed", String(u === pick)); });
+    sync();
+    const lbl = e("p", "pb-hint", "Who is it for"); dlg.append(lbl, who);
+    const title = e("input"); title.maxLength = 100; title.value = d.name;
+    const cad = e("select"); [["weekly", "Weekly"], ["daily", "Daily"], ["once", "Once"]].forEach(([v, t]) => cad.add(new Option(t, v)));
+    const per = e("input"); per.type = "number"; per.min = 1; per.max = 7; per.value = 3; per.inputMode = "numeric";
+    const perL = field("Times a week", per);
+    cad.onchange = () => { perL.hidden = cad.value !== "weekly"; };
+    const due = e("input"); due.type = "date"; due.value = addDays(todayIso(), 7);
+    const note = e("textarea"); note.rows = 5; note.maxLength = 1000; note.value = HW.noteFor(d);
+    const row = e("div", "dr-two"); row.append(field("How often", cad), perL);
+    dlg.append(field("Title", title), row, field("Due", due));
+    let withPic = false, token = "";
+    if (board) {
+        token = await HW.diagramToken(board.board);
+        if (token) {
+            withPic = true;
+            const cb = e("input"); cb.type = "checkbox"; cb.checked = true; cb.onchange = () => { withPic = cb.checked; pic.hidden = !cb.checked; };
+            const l = e("label", "gm-tick"); l.append(cb, " Send the diagram too");
+            const pic = e("div", "gm-pic"); pic.append(boardThumb(board.board));
+            dlg.append(l, pic);
+        }
+    }
+    if (!HW.soloFriendly(d)) dlg.append(e("p", "pb-hint", `Heads up: this drill is set up for ${d.minPlayers}+ players. Add a line to the note if it needs a partner.`));
+    dlg.append(field("Note for them (from the drill, edit freely)", note));
+    const foot = e("div", "pb-dlg-foot");
+    const cancel = e("button", "pb-btn", "Cancel"); cancel.type = "button"; cancel.onclick = () => dlg.close();
+    const go = e("button", "pb-btn pb-primary", "Assign"); go.type = "button";
+    go.onclick = async () => {
+        go.disabled = true;
+        try {
+            await mod.assignHomework(pick, { ...HW.assignmentFor(d, { diagram: withPic ? token : "", due: due.value, cadence: cad.value, timesPerWeek: Number(per.value) }), title: title.value, note: note.value });
+            const name = links.find(l => l.clientUid === pick)?.clientName?.split(" ")[0] || "them";
+            dlg.close(); toast(`Assigned to ${name}`);
+        } catch (err) {
+            go.disabled = false;
+            const { friendlyError, toast: t2 } = await import("../ui.js");
+            t2(friendlyError(err, "assign that"));
+        }
+    };
+    foot.append(cancel, go); dlg.append(foot);
+    $("detail").close(); dlg.showModal();
+}
+const todayIso = () => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`; };
 
 function openEditor(id) {
     editingId = id || null;

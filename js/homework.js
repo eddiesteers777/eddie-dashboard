@@ -60,6 +60,8 @@ export async function assignHomework(clientUid, input) {
         status: "active", logs: [], coachReply: "", reviewedAt: null,
         createdAt: serverTimestamp(), updatedAt: serverTimestamp()
     };
+    // Sent only when there is one, so homework without a diagram never depends on the newer rules.
+    if (a.diagram) data.diagram = a.diagram;
     const ref = await addDoc(collection(db, "homework"), data);
     return { id: ref.id, ...data, createdAt: Date.now(), createdMs: Date.now(), updatedAt: Date.now() };
 }
@@ -72,6 +74,7 @@ export async function updateHomework(id, input) {
         cadence: a.cadence, timesPerWeek: a.timesPerWeek, minutes: a.minutes, goal: a.goal,
         dueDate: a.dueDate, askClip: a.askClip, updatedAt: serverTimestamp()
     };
+    if (input.diagram !== undefined) fields.diagram = a.diagram;
     await updateDoc(doc(db, "homework", id), fields);
     return fields;
 }

@@ -1,0 +1,23 @@
+body.lab{background:var(--bg);color:var(--text);font-family:var(--font-body);margin:0;padding:16px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:20px}
+@media(min-width:900px){.wrap.two{grid-template-columns:1fr 1fr;align-items:start}}
+.tag{font:600 11px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--primary)}
+.panel{border:1px solid rgba(236,230,212,.16);border-radius:12px;background:var(--surface);padding:18px;display:grid;gap:12px}
+.panel h2{font-family:var(--font-display);text-transform:uppercase;font-size:26px;margin:0}
+.panel h3{font:600 12px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);margin:6px 0 0}
+.panel p,.panel li{margin:0;line-height:1.45}
+.panel ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.note{font-size:13px;color:var(--text-secondary)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid rgba(236,230,212,.2);font:600 11px var(--font-mono);text-transform:uppercase}
+.who{display:flex;gap:8px;flex-wrap:wrap}
+.who button{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid rgba(236,230,212,.2);background:none;color:var(--text);font:600 14px var(--font-body)}
+.who button.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.preview{border:1px dashed rgba(236,230,212,.3);border-radius:8px;padding:12px;font-size:14px;white-space:pre-line;color:var(--text-secondary)}
+.diagram{aspect-ratio:68/60;border-radius:10px;background:linear-gradient(#2f6a4a,#245a3d);position:relative;overflow:hidden;max-width:300px}
+.diagram i{position:absolute;width:20px;height:20px;border-radius:50%;background:#f4efe3;border:2px solid #222}
+.diagram i.a{background:var(--primary)}
+.diagram b{position:absolute;left:22%;top:30%;width:50%;height:2px;background:#fff;transform:rotate(22deg);transform-origin:left}
+.row{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid rgba(236,230,212,.1)}
+.row input{width:22px;height:22px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.cap{grid-column:1/-1}

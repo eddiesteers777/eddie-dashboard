@@ -1935,3 +1935,20 @@ test("Southbound Playbook sync doc: only its owner can read or write it", async 
     }
     await assertFails(getDoc(ref(env.unauthenticatedContext().firestore())));
 });
+
+test("homework: a Playbook diagram saves, stays link-safe and small, and only the coach changes it", async () => {
+    await seedLinkAndBooking();
+    const tok = "z" + "A".repeat(600);
+    await assertSucceeds(setDoc(doc(as("coach"), "homework/d1"), hw("coach", "client", { diagram: tok })));
+    await assertSucceeds(setDoc(doc(as("coach"), "homework/d2"), hw("coach", "client", { diagram: "A".repeat(4000) })));
+    await assertFails(setDoc(doc(as("coach"), "homework/d3"), hw("coach", "client", { diagram: "A".repeat(4001) })));
+    await assertFails(setDoc(doc(as("coach"), "homework/d4"), hw("coach", "client", { diagram: "<script>alert(1)</script>" })));
+    await assertFails(setDoc(doc(as("coach"), "homework/d5"), hw("coach", "client", { diagram: 5 })));
+    await assertSucceeds(updateDoc(doc(as("client"), "homework/d1"), { logs: arrayUnion(practice()), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), "homework/d1"), { diagram: "z", logs: arrayUnion(practice(2)), updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "homework/d1"), { diagram: "zB", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("stranger"), "homework/d1"), { diagram: "zC", updatedAt: serverTimestamp() }));
+    // Old homework without the field keeps working.
+    await assertSucceeds(setDoc(doc(as("coach"), "homework/d6"), hw("coach", "client")));
+    await assertSucceeds(updateDoc(doc(as("coach"), "homework/d6"), { coachReply: "ok", updatedAt: serverTimestamp() }));
+});
