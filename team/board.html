@@ -24,6 +24,8 @@
     </div>
   </header>
 
+  <div class="tb-tools" id="tools" role="toolbar" aria-label="Drawing tools"></div>
+
   <div class="tb-layout">
     <section class="tb-side tb-left" aria-label="Formation">
       <h2>Your team</h2>
@@ -39,7 +41,11 @@
 
     <section class="tb-side tb-right" aria-label="Selected player">
       <h2>Selected</h2>
-      <div id="selEmpty" class="tb-hint">Tap a player to edit the name and number. Drag players and the ball anywhere.</div>
+      <div id="selEmpty" class="tb-hint">Tap a player, line or note to edit it. Drag players and the ball anywhere.</div>
+      <div id="selMark" hidden>
+        <label id="markTextWrap">Note text <input id="markText" type="text" maxlength="40" autocomplete="off"></label>
+        <button class="tb-btn" id="markDel">Delete this</button>
+      </div>
       <div id="selForm" hidden>
         <label>Number <input id="selNum" type="number" min="0" max="99" inputmode="numeric"></label>
         <label>Name <input id="selName" type="text" maxlength="24" autocomplete="off" placeholder="First name"></label>
@@ -49,7 +55,10 @@
         <option>Build-up</option><option>Attacking</option><option>Defending</option>
         <option>Transition</option><option>Pressing</option><option>Set piece</option>
       </select>
+      <h2>Pitch view</h2>
+      <div class="tb-chips" id="viewChips" role="group" aria-label="Pitch view"></div>
       <div class="tb-row">
+        <button class="tb-btn" id="clearMarks">Clear drawings</button>
         <button class="tb-btn" id="reset">Reset board</button>
       </div>
     </section>

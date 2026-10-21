@@ -14,7 +14,24 @@ async function allowed() {
     } catch { return false; }
 }
 
-let hist, selected = null;
+let hist, selected = null, selectedMark = null, tool = "select";
+const VBOX = { full: [0, 0, 68, 105], top: [0, 0, 68, 54], bottom: [0, 51, 68, 54] };
+const TOOLS = [
+    ["select", "Select", '<path d="M4 2l0 12 3-3 2 4 2-1-2-4 4 0z" fill="currentColor"/>'],
+    ["pass", "Pass", '<path d="M2 11L18 4" stroke="currentColor" stroke-width="2" fill="none"/><path d="M20 3l-5 0 2 4z" fill="currentColor"/>'],
+    ["run", "Run", '<path d="M2 11L18 4" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2.4" fill="none"/><path d="M20 3l-5 0 2 4z" fill="currentColor"/>'],
+    ["dribble", "Dribble", '<path d="M2 9q2-5 4 0t4 0t4 0t4 0" stroke="currentColor" stroke-width="2" fill="none"/>'],
+    ["arrow", "Arrow", '<path d="M2 7h15" stroke="currentColor" stroke-width="3" fill="none"/><path d="M22 7l-6-5v10z" fill="currentColor"/>'],
+    ["zone", "Zone", '<rect x="3" y="2" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 2" fill="none"/>'],
+    ["text", "Note", '<path d="M4 3h14M11 3v10" stroke="currentColor" stroke-width="2.4" fill="none"/>']
+];
+const STYLE = {
+    pass: { stroke: "#fff", w: .6, head: "white" },
+    run: { stroke: "#fff", w: .6, dash: "1.6 1.1", head: "white" },
+    dribble: { stroke: "#BFE3FF", w: .6, head: "sky" },
+    arrow: { stroke: "#0B2A5B", w: .9, head: "navy" }
+};
+const HEADS = { white: "#fff", sky: "#BFE3FF", navy: "#0B2A5B" };
 
 function load() {
     try { const b = M.parseBoard(localStorage.getItem(KEY) || ""); if (b) return b; } catch {}
@@ -68,7 +85,17 @@ function render() {
     const b = hist.present;
     const svg = $("pitch");
     svg.replaceChildren();
+    const vb = VBOX[b.view] || VBOX.full;
+    svg.setAttribute("viewBox", vb.join(" "));
+    svg.style.aspectRatio = `${vb[2]} / ${vb[3]}`;
+    svg.classList.toggle("drawing", tool !== "select");
+    const defs = el("defs", {}, svg);
+    for (const k in HEADS) {
+        const m = el("marker", { id: "ah-" + k, viewBox: "0 0 10 10", refX: 6, refY: 5, markerWidth: 3.4, markerHeight: 3.4, orient: "auto", markerUnits: "userSpaceOnUse" }, defs);
+        el("path", { d: "M0 0L10 5L0 10z", fill: HEADS[k] }, m);
+    }
     drawPitch(svg);
+    b.marks.filter(m => m.type !== "text").forEach(m => markNode(m, svg));
     if (b.showAway) b.away.forEach(p => playerNode(p, "a", svg));
     b.home.forEach(p => playerNode(p, "h", svg));
     const ball = el("g", { class: "pl", "data-ball": 1, tabindex: 0, role: "button", "aria-label": "Ball" }, svg);
@@ -76,6 +103,7 @@ function render() {
     el("circle", { r: 2.1, fill: "#fff", stroke: "#0B1F3F", "stroke-width": .5 }, ball);
     el("circle", { r: .8, fill: "#0B1F3F" }, ball);
 
+    b.marks.filter(m => m.type === "text").forEach(m => markNode(m, svg)); // notes sit above players
     $("undo").disabled = !hist.past.length;
     $("redo").disabled = !hist.future.length;
     if (document.activeElement !== $("title")) $("title").value = b.title;
@@ -85,17 +113,75 @@ function render() {
     chips("awayChips", b.awayFormation, "away");
     $("awayChips").hidden = !b.showAway;
     const sel = selected && M.findPlayer(b, selected);
+    const mk = selectedMark && b.marks.find(m => m.id === selectedMark);
+    if (selectedMark && !mk) selectedMark = null;
     $("selForm").hidden = !sel;
-    $("selEmpty").hidden = Boolean(sel);
+    $("selMark").hidden = !mk;
+    $("markTextWrap").hidden = !(mk && mk.type === "text");
+    if (mk && mk.type === "text" && document.activeElement !== $("markText")) $("markText").value = mk.text;
+    $("selEmpty").hidden = Boolean(sel || mk);
+    $("clearMarks").disabled = !b.marks.length;
+    renderTools();
+    chips("viewChips", b.view, "view");
     if (sel) {
         if (document.activeElement !== $("selNum")) $("selNum").value = sel.num;
         if (document.activeElement !== $("selName")) $("selName").value = sel.name;
     }
 }
 
+const VIEW_LABELS = { full: "Full pitch", top: "Attack half", bottom: "Defend half" };
+function renderTools() {
+    const box = $("tools");
+    if (box.childElementCount === TOOLS.length) {
+        [...box.children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tool === tool)));
+        return;
+    }
+    for (const [id, label, icon] of TOOLS) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "tb-tool"; b.dataset.tool = id;
+        b.innerHTML = `<svg viewBox="0 0 24 14" aria-hidden="true">${icon}</svg>${label}`;
+        b.onclick = () => { tool = id; if (id !== "select") { selected = null; selectedMark = null; } render(); };
+        box.appendChild(b);
+    }
+    renderTools();
+}
+
+function markNode(m, svg) {
+    const g = el("g", { class: "mk", "data-mark": m.id, tabindex: 0, role: "button", "aria-label": `${m.type === "text" ? "Note: " + m.text : m.type}` }, svg);
+    const sel = m.id === selectedMark;
+    if (m.type === "zone") {
+        const [a, b] = m.pts;
+        const r = { x: Math.min(a.x, b.x) * W, y: Math.min(a.y, b.y) * H, width: Math.abs(a.x - b.x) * W, height: Math.abs(a.y - b.y) * H, rx: 1 };
+        el("rect", { ...r, fill: "rgba(124,196,255,.24)", stroke: "#7CC4FF", "stroke-width": sel ? 1 : .5, "stroke-dasharray": "1.6 1" }, g);
+    } else if (m.type === "text") {
+        const t = el("text", { x: m.pts[0].x * W, y: m.pts[0].y * H, "text-anchor": "middle" }, g);
+        t.textContent = m.text;
+        if (sel) { const bb = { x: m.pts[0].x * W - 8, y: m.pts[0].y * H - 4, width: 16, height: 6 }; el("rect", { ...bb, fill: "none", stroke: "#7CC4FF", "stroke-width": .5, rx: 1 }, g); }
+    } else {
+        const d = M.markPath(m, W, H), st = STYLE[m.type];
+        if (sel) el("path", { d, fill: "none", stroke: "#7CC4FF", "stroke-width": st.w + 1.6, opacity: .55, "stroke-linecap": "round" }, g);
+        const a = { d, fill: "none", stroke: st.stroke, "stroke-width": st.w, "stroke-linecap": "round", "stroke-linejoin": "round", "marker-end": `url(#ah-${st.head})` };
+        if (st.dash) a["stroke-dasharray"] = st.dash;
+        el("path", a, g);
+        el("path", { d, class: "hit" }, g);
+    }
+    if (m.type === "zone") el("rect", { x: Math.min(m.pts[0].x, m.pts[1].x) * W, y: Math.min(m.pts[0].y, m.pts[1].y) * H, width: Math.abs(m.pts[0].x - m.pts[1].x) * W, height: Math.abs(m.pts[0].y - m.pts[1].y) * H, fill: "transparent" }, g);
+    return g;
+}
+
 function chips(id, current, side) {
     const box = $(id);
     box.replaceChildren();
+    if (side === "view") {
+        for (const v of M.VIEWS) {
+            const b = document.createElement("button");
+            b.className = "tb-chip"; b.type = "button"; b.textContent = VIEW_LABELS[v];
+            b.setAttribute("aria-pressed", String(v === current));
+            b.onclick = () => apply(M.setView(hist.present, v));
+            box.appendChild(b);
+        }
+        return;
+    }
     for (const f of M.FORMATIONS) {
         const b = document.createElement("button");
         b.className = "tb-chip"; b.type = "button"; b.textContent = f;
@@ -113,21 +199,68 @@ function toBoard(svg, e) {
 }
 function setupDrag() {
     const svg = $("pitch");
-    let drag = null;
+    let drag = null, draw = null;
+    const finishDraw = () => {
+        const d = draw; draw = null;
+        svg.querySelector(".preview")?.remove();
+        if (!d) return;
+        const mark = M.makeMark(tool, d.pts, M.nextMarkId(hist.present));
+        if (!mark) { render(); return; }
+        selectedMark = mark.id;
+        const wasText = mark.type === "text";
+        if (wasText) tool = "select";
+        apply(M.addMark(hist.present, mark));
+        if (wasText) { $("markText").focus(); $("markText").select(); }
+    };
     svg.addEventListener("pointerdown", e => {
+        if (tool !== "select") {
+            e.preventDefault();
+            svg.setPointerCapture(e.pointerId);
+            draw = { pts: [toBoard(svg, e)] };
+            return;
+        }
         const g = e.target.closest(".pl");
-        if (!g) { selected = null; render(); return; }
+        const mk = !g && e.target.closest(".mk");
+        if (!g && !mk) { selected = null; selectedMark = null; render(); return; }
         e.preventDefault();
         svg.setPointerCapture(e.pointerId);
-        const id = g.dataset.id || null;
         const start = toBoard(svg, e);
+        if (mk) {
+            const id = mk.dataset.mark;
+            selected = null; selectedMark = id;
+            render();
+            drag = { mark: id, g: svg.querySelector(`[data-mark="${id}"]`), start, moved: false, base: hist.present, pending: hist.present };
+            return;
+        }
+        selectedMark = null;
+        const id = g.dataset.id || null;
         const cur = id ? M.findPlayer(hist.present, id) : hist.present.ball;
         drag = { id, g, dx: cur.x - start.x, dy: cur.y - start.y, moved: false, base: hist.present, pending: hist.present };
         if (id && selected !== id) { selected = id; render(); drag.g = svg.querySelector(`[data-id="${id}"]`); }
     });
     svg.addEventListener("pointermove", e => {
+        if (draw) {
+            const p = toBoard(svg, e);
+            const l = draw.pts[draw.pts.length - 1];
+            if (Math.hypot(p.x - l.x, p.y - l.y) < 0.004) return;
+            draw.pts.push(p);
+            svg.querySelector(".preview")?.remove();
+            const m = tool === "text" ? null : M.makeMark(tool, draw.pts, "pv");
+            if (m) {
+                const n = markNode(m, svg); n.classList.add("preview"); n.style.pointerEvents = "none"; n.style.opacity = ".8";
+            }
+            return;
+        }
         if (!drag) return;
         const p = toBoard(svg, e);
+        if (drag.mark) {
+            drag.pending = M.moveMark(drag.base, drag.mark, p.x - drag.start.x, p.y - drag.start.y);
+            drag.moved = true;
+            const m = drag.pending.marks.find(x => x.id === drag.mark);
+            const old = drag.base.marks.find(x => x.id === drag.mark);
+            drag.g.setAttribute("transform", `translate(${(m.pts[0].x - old.pts[0].x) * W} ${(m.pts[0].y - old.pts[0].y) * H})`);
+            return;
+        }
         const x = p.x + drag.dx, y = p.y + drag.dy;
         drag.pending = drag.id ? M.movePlayer(drag.base, drag.id, x, y) : M.moveBall(drag.base, x, y);
         drag.moved = true;
@@ -135,22 +268,25 @@ function setupDrag() {
         drag.g.setAttribute("transform", `translate(${now.x * W} ${now.y * H})`);
     });
     const end = () => {
+        if (draw) return finishDraw();
         if (!drag) return;
         const d = drag; drag = null;
         if (d.moved) apply(d.pending); else render();
     };
     svg.addEventListener("pointerup", end);
-    svg.addEventListener("pointercancel", end);
+    svg.addEventListener("pointercancel", () => { if (draw) { draw = null; render(); } else end(); });
     // keyboard: arrows nudge the focused player or ball
     svg.addEventListener("keydown", e => {
         const g = e.target.closest?.(".pl");
+        const mk = e.target.closest?.(".mk");
+        if (mk && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); selected = null; selectedMark = mk.dataset.mark; render(); return; }
         const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
         if (!g || !step) return;
         e.preventDefault();
         const id = g.dataset.id || null;
         const cur = id ? M.findPlayer(hist.present, id) : hist.present.ball;
         const x = cur.x + step[0] * 0.02, y = cur.y + step[1] * 0.02;
-        if (id) selected = id;
+        if (id) { selected = id; selectedMark = null; }
         apply(id ? M.movePlayer(hist.present, id, x, y) : M.moveBall(hist.present, x, y));
         svg.querySelector(id ? `[data-id="${id}"]` : "[data-ball]")?.focus();
     });
@@ -177,12 +313,15 @@ async function exportPng() {
     svg.querySelectorAll(".nm").forEach(t => { t.setAttribute("style", "font-size:2.4px;font-weight:600"); t.setAttribute("fill", "#fff"); t.setAttribute("stroke", "rgba(0,0,0,.55)"); t.setAttribute("stroke-width", ".6"); t.setAttribute("paint-order", "stroke"); });
     svg.querySelectorAll("text:not(.nm)").forEach(t => t.setAttribute("style", "font-size:3.4px;font-weight:700"));
     svg.removeAttribute("style");
+    svg.querySelectorAll(".hit").forEach(n => n.remove());
+    svg.querySelectorAll(".mk text").forEach(t => { t.setAttribute("fill", "#fff"); t.setAttribute("stroke", "rgba(0,0,0,.5)"); t.setAttribute("stroke-width", ".7"); t.setAttribute("paint-order", "stroke"); t.setAttribute("style", "font-size:3px;font-weight:700"); });
     const scale = 10;
     const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
     const c = document.createElement("canvas");
-    c.width = W * scale; c.height = H * scale;
+    const vb = $("pitch").viewBox.baseVal;
+    c.width = vb.width * scale; c.height = vb.height * scale;
     const ctx = c.getContext("2d");
     ctx.drawImage(img, 0, 0, c.width, c.height);
     URL.revokeObjectURL(url);
@@ -204,7 +343,14 @@ function wire() {
     const edit = () => selected && apply(M.editPlayer(hist.present, selected, { num: $("selNum").value === "" ? undefined : $("selNum").value, name: $("selName").value }));
     $("selNum").onchange = edit; $("selName").onchange = edit;
     $("selName").oninput = () => selected && apply(M.editPlayer(hist.present, selected, { name: $("selName").value }));
-    $("reset").onclick = () => { selected = null; apply(M.newBoard()); toast("Board reset. Undo brings it back."); };
+    $("markText").oninput = () => selectedMark && apply(M.updateMark(hist.present, selectedMark, { text: $("markText").value || " " }));
+    $("markDel").onclick = () => { if (selectedMark) { const id = selectedMark; selectedMark = null; apply(M.removeMark(hist.present, id)); } };
+    $("clearMarks").onclick = () => { selectedMark = null; apply(M.clearMarks(hist.present)); toast("Drawings cleared. Undo brings them back."); };
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && tool !== "select") { tool = "select"; render(); }
+        if ((e.key === "Delete" || e.key === "Backspace") && selectedMark && !e.target.matches("input,select,textarea")) { e.preventDefault(); $("markDel").click(); }
+    });
+    $("reset").onclick = () => { selected = null; selectedMark = null; tool = "select"; apply(M.newBoard()); toast("Board reset. Undo brings it back."); };
     const dlg = $("exportDlg");
     $("export").onclick = () => dlg.showModal();
     $("expClose").onclick = () => dlg.close();
@@ -216,7 +362,7 @@ function wire() {
         const b = M.parseBoard(await f.text());
         dlg.close();
         if (!b) return toast("That file isn't a board");
-        selected = null; apply(b); toast("Board opened");
+        selected = null; selectedMark = null; apply(b); toast("Board opened");
     };
 }
 

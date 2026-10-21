@@ -59,3 +59,49 @@ test("save and load round trip; bad files are rejected", () => {
     const ok = M.parseBoard(JSON.stringify(evil));
     assert.equal(ok.home[0].x, 0.97); assert.equal(ok.home[1].name.length, 24);
 });
+
+test("drawings: taps are ignored, lines and zones are made, freehand is thinned", () => {
+    assert.equal(M.makeMark("pass", [{ x: .5, y: .5 }, { x: .501, y: .5 }], "m1"), null);
+    assert.equal(M.makeMark("nope", [{ x: .5, y: .5 }], "m1"), null);
+    const pass = M.makeMark("pass", [{ x: .1, y: .1 }, { x: .2, y: .15 }, { x: .5, y: .5 }], "m1");
+    assert.equal(pass.pts.length, 2);
+    const many = Array.from({ length: 200 }, (_, i) => ({ x: i / 400, y: .5 }));
+    const run = M.makeMark("run", many, "m2");
+    assert.ok(run.pts.length > 2 && run.pts.length <= 40);
+    assert.deepEqual(run.pts[run.pts.length - 1], { x: 0.498, y: .5 });
+    assert.equal(M.makeMark("text", [{ x: .4, y: .4 }], "m3").text, "Note");
+    assert.equal(M.makeMark("zone", [{ x: .1, y: .1 }, { x: .4, y: .3 }], "m4").pts.length, 2);
+});
+
+test("marks can be added, edited, moved without leaving the pitch, removed, cleared", () => {
+    let b = M.newBoard();
+    const id = M.nextMarkId(b);
+    b = M.addMark(b, M.makeMark("arrow", [{ x: .1, y: .1 }, { x: .3, y: .2 }], id));
+    assert.equal(M.nextMarkId(b), "m2");
+    b = M.moveMark(b, id, 5, 5);
+    const pts = b.marks[0].pts;
+    assert.ok(pts.every(p => p.x <= 1 && p.y <= 1));
+    assert.equal(Math.round((pts[1].x - pts[0].x) * 1000), 200);
+    b = M.addMark(b, M.makeMark("text", [{ x: .5, y: .5 }], "m2"));
+    b = M.updateMark(b, "m2", { text: "Press here".repeat(10) });
+    assert.equal(b.marks[1].text.length, 40);
+    assert.equal(M.removeMark(b, id).marks.length, 1);
+    assert.equal(M.clearMarks(b).marks.length, 0);
+});
+
+test("views and drawings survive save and load; broken marks are dropped", () => {
+    let b = M.setView(M.newBoard(), "top");
+    b = M.addMark(b, M.makeMark("dribble", [{ x: .2, y: .6 }, { x: .4, y: .4 }], "m1"));
+    assert.deepEqual(M.parseBoard(M.serialize(b)), b);
+    assert.equal(M.setView(b, "sideways").view, "top");
+    const o = JSON.parse(M.serialize(b));
+    o.marks.push({ type: "pass", pts: [{ x: "a" }] }, { type: "bad", pts: [{ x: 0, y: 0 }] });
+    assert.equal(M.parseBoard(JSON.stringify(o)).marks.length, 1);
+});
+
+test("markPath makes a path; dribbles wiggle", () => {
+    const line = M.markPath({ type: "pass", pts: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }, 68, 105);
+    assert.match(line, /^M0 0L68 105$/);
+    const wavy = M.markPath({ type: "dribble", pts: [{ x: 0, y: .5 }, { x: 1, y: .5 }] }, 68, 105);
+    assert.ok(wavy.split("L").length > 20);
+});

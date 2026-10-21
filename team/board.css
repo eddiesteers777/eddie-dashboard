@@ -22,6 +22,12 @@ body{background:var(--paper);color:var(--ink);font:500 15px/1.4 "Albert Sans",sy
 .tb-btn:focus-visible,.tb-chip:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--royal);outline-offset:2px}
 .tb-primary{background:var(--royal);border-color:var(--royal);color:#fff}
 .tb-icon{min-width:44px;padding:0;font-size:20px}
+.tb-tools{display:flex;gap:6px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none}
+.tb-tool{flex:none;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--navy);font:600 13px "Albert Sans",sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:8px;touch-action:manipulation}
+.tb-tool svg{width:22px;height:14px;flex:none}
+.tb-tool[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.tb-tool:focus-visible{outline:2px solid var(--royal);outline-offset:2px}
+.tb-row{display:flex;gap:8px;flex-wrap:wrap}
 .tb-layout{display:grid;gap:14px;grid-template-columns:1fr}
 .tb-layout>*{min-width:0}
 .tb-side{overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
@@ -36,6 +42,11 @@ body{background:var(--paper);color:var(--ink);font:500 15px/1.4 "Albert Sans",sy
 .tb-side label{display:block;font-size:13px;color:var(--gray);margin-bottom:10px}
 .tb-side input[type=text],.tb-side input[type=number],.tb-side select{display:block;width:100%;min-height:44px;margin-top:4px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:500 16px "Albert Sans",sans-serif;color:var(--ink);background:#fff}
 .tb-row{margin-top:16px}
+#selMark .tb-btn{width:100%}
+#pitch.drawing{cursor:crosshair}
+.mk{cursor:pointer}
+.mk .hit{fill:none;stroke:transparent;stroke-width:4;pointer-events:stroke}
+.mk text{font:700 3px "Albert Sans",sans-serif;pointer-events:none;paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:.7px;fill:#fff}
 .tb-stage{display:flex;justify-content:center;min-width:0}
 #pitch{width:100%;max-width:560px;max-height:calc(100svh - 150px);aspect-ratio:68/105;border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none;background:#3F8F5E;box-shadow:0 1px 0 var(--line),0 8px 24px rgba(11,42,91,.12)}
 .pl{cursor:grab}

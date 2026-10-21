@@ -298,3 +298,6 @@ Eddie picked option A with C's "Your usual" from the lab mock-ups (`lab/soccer-b
 
 ## 2026-10-21: Calera tactical board, phase 1 (`team/`)
 Coach-only, device-only tactical board for Eddie's middle-school team. Plain JS + SVG (no React: the site has no build step). `team/boardModel.js` is pure and tested (`tests/teamBoard.test.mjs`); `team/board.html|css|js` is the page. Saves to `localStorage` key `calera-board-current` (prefix `calera-board` is in the sign-out list in `js/auth.js`), exports PNG / JSON. No Firestore, no rules change. Not linked from the app menus yet. Tested in Playwright: coach gate, mouse + touch drag, formation switch keeps names/numbers, undo/redo, reload, PNG/JSON export + import, phone/tablet/desktop with no overflow. Next: drawing tools, saved boards, drill library, practice planner.
+
+### Calera board, phase 2 (2026-10-21): drawing tools
+Pass (solid), Run and Dribble (freehand, dashed / wavy), Arrow, Zone and Note tools; select to move or delete a drawing; Attack-half / Defend-half / Full pitch views; Clear drawings. Marks are saved in the board (`marks`, `view`), validated on load. Mouse and touch drawing tested in Playwright (phone, tablet, desktop).

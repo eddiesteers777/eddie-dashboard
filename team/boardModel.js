@@ -44,7 +44,9 @@ export function newBoard() {
         showAway: true,
         home: team("h", "4-4-2"),
         away: team("a", "4-4-2"),
-        ball: { x: 0.5, y: 0.5 }
+        ball: { x: 0.5, y: 0.5 },
+        marks: [],
+        view: "full"
     };
 }
 
@@ -92,6 +94,85 @@ export function setMeta(board, patch) {
     return out;
 }
 
+// ---- drawings: pass, run, dribble, arrow (lines), zone (box), text (note) ----
+export const MARK_TYPES = Object.freeze(["pass", "run", "dribble", "arrow", "zone", "text"]);
+export const VIEWS = Object.freeze(["full", "top", "bottom"]);
+const FREEHAND = new Set(["run", "dribble"]);
+const pt = p => ({ x: round(clamp(p.x, 0, 1)), y: round(clamp(p.y, 0, 1)) });
+
+// Build a mark from the points the finger or mouse passed through.
+// Lines keep a light freehand path for run/dribble and a straight line otherwise.
+export function makeMark(type, rawPts, id) {
+    if (!MARK_TYPES.includes(type) || !rawPts.length) return null;
+    let pts = rawPts.map(pt);
+    if (type === "text") return { id, type, pts: [pts[0]], text: "Note" };
+    const a = pts[0], b = pts[pts.length - 1];
+    if (Math.hypot(b.x - a.x, (b.y - a.y) * 1.54) < 0.025) return null; // a tap, not a drawing
+    if (type === "zone") return { id, type, pts: [a, b] };
+    if (!FREEHAND.has(type)) return { id, type, pts: [a, b] };
+    const kept = [a];
+    for (const p of pts.slice(1, -1)) {
+        const l = kept[kept.length - 1];
+        if (Math.hypot(p.x - l.x, (p.y - l.y) * 1.54) >= 0.03) kept.push(p);
+    }
+    kept.push(b);
+    return { id, type, pts: kept.slice(0, 40) };
+}
+export function nextMarkId(board) {
+    return "m" + (1 + Math.max(0, ...board.marks.map(m => Number(m.id.slice(1)) || 0)));
+}
+export function addMark(board, mark) { return { ...board, marks: [...board.marks, mark] }; }
+export function removeMark(board, id) { return { ...board, marks: board.marks.filter(m => m.id !== id) }; }
+export function clearMarks(board) { return { ...board, marks: [] }; }
+export function updateMark(board, id, patch) {
+    return { ...board, marks: board.marks.map(m => (m.id === id && typeof patch.text === "string" ? { ...m, text: patch.text.slice(0, 40) } : m)) };
+}
+export function moveMark(board, id, dx, dy) {
+    return {
+        ...board,
+        marks: board.marks.map(m => {
+            if (m.id !== id) return m;
+            // keep the shape intact: limit the shift so no point leaves the pitch
+            const xs = m.pts.map(p => p.x), ys = m.pts.map(p => p.y);
+            const sx = clamp(dx, -Math.min(...xs), 1 - Math.max(...xs));
+            const sy = clamp(dy, -Math.min(...ys), 1 - Math.max(...ys));
+            return { ...m, pts: m.pts.map(p => ({ x: round(p.x + sx), y: round(p.y + sy) })) };
+        })
+    };
+}
+export function setView(board, view) { return VIEWS.includes(view) ? { ...board, view } : board; }
+
+// SVG path (in pitch units) for a line mark. Dribbles wiggle; others are smooth or straight.
+export function markPath(mark, W, H) {
+    const P = mark.pts.map(p => [p.x * W, p.y * H]);
+    if (P.length < 2) return "";
+    if (mark.type !== "dribble") {
+        if (P.length === 2) return `M${f(P[0])}L${f(P[1])}`;
+        let d = `M${f(P[0])}`;
+        for (let i = 1; i < P.length - 1; i++) {
+            const mid = [(P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2];
+            d += `Q${f(P[i])} ${f(i === P.length - 2 ? P[i + 1] : mid)}`;
+        }
+        return d;
+    }
+    const pts = [];
+    let travelled = 0;
+    for (let i = 0; i < P.length - 1; i++) {
+        const [x0, y0] = P[i], [x1, y1] = P[i + 1];
+        const len = Math.hypot(x1 - x0, y1 - y0) || 1e-6;
+        const nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+        for (let t = 0; t < len; t += 0.6) {
+            const w = Math.sin(((travelled + t) / 3.4) * Math.PI * 2) * 0.85;
+            pts.push([x0 + ((x1 - x0) * t) / len + nx * w, y0 + ((y1 - y0) * t) / len + ny * w]);
+        }
+        travelled += len;
+    }
+    const last = P[P.length - 1];
+    pts.push(last);
+    return "M" + pts.map(f).join("L");
+}
+const f = p => `${Math.round(p[0] * 100) / 100} ${Math.round(p[1] * 100) / 100}`;
+
 // ---- undo / redo: whole-board snapshots (a board is tiny) ----
 export function createHistory(initial) { return { past: [], present: initial, future: [] }; }
 export function commit(h, next) {
@@ -124,6 +205,21 @@ export function parseBoard(text) {
         awayFormation: FORMATIONS.includes(o.awayFormation) ? o.awayFormation : base.awayFormation,
         showAway: o.showAway !== false,
         home: fix(o.home, "h"), away: fix(o.away, "a"),
-        ball: { x: clamp(o.ball.x, 0.02, 0.98), y: clamp(Number(o.ball.y) || 0.5, 0.02, 0.98) }
+        ball: { x: clamp(o.ball.x, 0.02, 0.98), y: clamp(Number(o.ball.y) || 0.5, 0.02, 0.98) },
+        marks: parseMarks(o.marks),
+        view: VIEWS.includes(o.view) ? o.view : "full"
     };
+}
+
+function parseMarks(list) {
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    for (const m of list.slice(0, 200)) {
+        if (!m || !MARK_TYPES.includes(m.type) || !Array.isArray(m.pts) || !m.pts.length || m.pts.length > 40) continue;
+        if (!m.pts.every(p => p && Number.isFinite(p.x) && Number.isFinite(p.y))) continue;
+        const mk = { id: "m" + (out.length + 1), type: m.type, pts: m.pts.map(pt) };
+        if (m.type === "text") mk.text = typeof m.text === "string" ? m.text.slice(0, 40) : "Note";
+        out.push(mk);
+    }
+    return out;
 }
