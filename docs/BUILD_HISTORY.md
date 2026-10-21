@@ -304,3 +304,6 @@ Pass (solid), Run and Dribble (freehand, dashed / wavy), Arrow, Zone and Note to
 
 ### Calera board, phase 3 (2026-10-21): saved boards and print
 `team/boardLibrary.js` (pure, tested): named saved boards in `localStorage` (`calera-board-library`, `calera-board-current-id`), Save/Update, Open, Copy, Delete (two taps), backup/restore of all boards as one file (merge, never overwrite). Print / save as PDF from the Export dialog (print CSS shows only title line + pitch). Phone header shows the board name instead of the page title.
+
+### Calera board, phase 4 (2026-10-21): drill library (`team/drills.html`)
+`team/drillModel.js` (pure, tested) + `team/drillSeed.js` (26 original starter drills covering every topic) + `team/boardThumb.js` (read-only board picture). Drills live in `localStorage` (`calera-board-drills`): search, skill / intensity / length filters, add / edit / copy / delete, print one drill, link a saved board as its diagram (`board.html?board=<id>` opens it), backup / import file, add back starter drills (never overwrites edits). Coach-only gate like the board; no Firestore.

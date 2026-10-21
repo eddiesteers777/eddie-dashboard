@@ -435,4 +435,8 @@ function wire() {
     try { const id = localStorage.getItem(ID_KEY); if (id && readLib().boards.some(b => b.id === id)) currentId = id; } catch {}
     $("gate").hidden = true; $("app").hidden = false;
     wire(); setupDrag(); render();
+    // drills.html links here with ?board=<saved board id>
+    const want = new URLSearchParams(location.search).get("board");
+    const found = want && readLib().boards.find(b => b.id === want);
+    if (found) { setCurrentId(found.id); apply(found.board); toast("Opened " + found.name); history.replaceState(null, "", location.pathname); }
 })();

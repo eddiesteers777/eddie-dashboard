@@ -141,3 +141,58 @@ test("library file round trip, bad boards skipped, merge keeps existing", () => 
     assert.equal(new Set(merged.boards.map(b => b.id)).size, 4);
     assert.equal(L.loadLibrary("garbage").boards.length, 0);
 });
+
+import * as DR from "../team/drillModel.js";
+import { SEED_DRILLS } from "../team/drillSeed.js";
+
+test("starter drills are complete and use known topics", () => {
+    assert.ok(SEED_DRILLS.length >= 24);
+    for (const t of DR.TOPICS) assert.ok(SEED_DRILLS.some(d => d.topic === t), "no starter drill for " + t);
+    const names = new Set();
+    for (const d of SEED_DRILLS) {
+        const c = DR.normalizeDrill(d, "d1");
+        assert.ok(c, d.name);
+        assert.ok(c.setup && c.how && c.points.length >= 3 && c.progressions.length && c.easier.length, d.name + " is incomplete");
+        assert.ok(c.minutes >= 8 && c.minutes <= 25, d.name);
+        assert.ok(!names.has(d.name), "duplicate " + d.name); names.add(d.name);
+        assert.ok(!/ -- /.test(JSON.stringify(d)), "use a real dash in " + d.name);
+    }
+});
+
+test("drills: normalize, save, edit keeps id, copy, delete, filter", () => {
+    assert.equal(DR.normalizeDrill({ name: "  " }), null);
+    const messy = DR.normalizeDrill({ name: "X", topic: "Bogus", minutes: 999, intensity: "Wild", equipment: "a\n\n b ", points: ["p"] }, "d9");
+    assert.equal(messy.topic, "Small-sided"); assert.equal(messy.minutes, 60); assert.equal(messy.intensity, "Medium");
+    assert.deepEqual(messy.equipment, ["a", "b"]);
+    let list = DR.mergeSeeds([], SEED_DRILLS);
+    assert.equal(list.length, SEED_DRILLS.length);
+    assert.ok(list.every(d => d.seed));
+    assert.equal(new Set(list.map(d => d.id)).size, list.length);
+    const r = DR.saveDrill(list, { name: "My drill", topic: "Passing", minutes: 8 }); list = r.list;
+    assert.equal(list[0].name, "My drill"); assert.equal(list[0].seed, false);
+    const e = DR.saveDrill(list, { ...list[0], name: "My drill v2" });
+    assert.equal(e.id, r.id); assert.equal(e.list.length, list.length);
+    const first = list.find(d => d.seed);
+    assert.equal(DR.saveDrill(list, { ...first, name: "Edited seed" }).list.find(d => d.id === first.id).seed, true);
+    const c = DR.duplicateDrill(list, r.id); assert.equal(c.list[0].name, "My drill copy"); assert.notEqual(c.id, r.id);
+    assert.equal(DR.deleteDrill(list, r.id).length, list.length - 1);
+    assert.ok(DR.filterDrills(list, { topic: "Finishing" }).every(d => d.topic === "Finishing"));
+    assert.ok(DR.filterDrills(list, { maxMinutes: 10 }).every(d => d.minutes <= 10));
+    assert.ok(DR.filterDrills(list, { q: "RONDO" }).length >= 1);
+    assert.ok(DR.filterDrills(list, { intensity: "High" }).every(d => d.intensity === "High"));
+});
+
+test("drills: seeds never overwrite edits; file round trip; import skips same names", () => {
+    let list = DR.mergeSeeds([], SEED_DRILLS);
+    const id = list[0].id;
+    list = DR.saveDrill(list, { ...list[0], name: "Renamed" }).list;
+    list = DR.deleteDrill(list, list[1].id);
+    const again = DR.mergeSeeds(list, SEED_DRILLS);
+    assert.ok(again.some(d => d.name === "Renamed" && d.id === id));
+    assert.equal(again.length, list.length + 2); // the renamed one and the deleted one come back as starters
+    const back = DR.parseDrills(DR.serializeDrills(list));
+    assert.equal(back.length, list.length);
+    assert.equal(DR.parseDrills("{}"), null);
+    assert.equal(DR.importDrills(list, back).length, list.length);
+    assert.equal(DR.importDrills([], back).length, list.length);
+});

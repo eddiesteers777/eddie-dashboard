@@ -1,0 +1,33 @@
+.dr-filters{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px}
+.dr-filters input,.dr-filters select,.dr-dlg input,.dr-dlg select,.dr-dlg textarea{width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:500 16px "Albert Sans",sans-serif;color:var(--ink);background:#fff}
+.dr-dlg textarea{resize:vertical;line-height:1.4}
+.dr-dlg label{display:block;font-size:13px;color:var(--gray);margin-top:10px}
+.dr-dlg label input,.dr-dlg label select,.dr-dlg label textarea{margin-top:4px}
+.dr-two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media(min-width:700px){.dr-filters{grid-template-columns:1fr 200px 200px}}
+.dr-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));margin-bottom:24px}
+.dr-card{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;display:grid;gap:6px;font:inherit;color:var(--ink);touch-action:manipulation}
+.dr-card:hover{border-color:var(--royal)}
+.dr-card:focus-visible{outline:2px solid var(--royal);outline-offset:2px}
+.dr-card b{font-size:16px}
+.dr-tag{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--royal)}
+.dr-meta{font:500 12px "IBM Plex Mono",monospace;color:var(--gray)}
+.dr-int{display:inline-block;padding:1px 8px;border-radius:99px;border:1px solid var(--line);margin-left:6px}
+.dr-int.High{background:var(--navy);color:#fff;border-color:var(--navy)}
+.dr-int.Medium{background:#E3EEFF;color:var(--navy);border-color:#C9DBF7}
+.dr-dlg{width:min(720px,calc(100vw - 24px));max-height:calc(100svh - 24px);overflow:auto}
+.dr-dlg h2{font-size:26px;margin-bottom:4px}
+.dr-sec{margin-top:14px}
+.dr-sec h3{margin:0 0 4px;font:600 11px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
+.dr-sec p,.dr-sec ul{margin:0;padding-left:0;list-style-position:inside}
+.dr-sec li{margin:2px 0}
+.dr-cols{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:620px){.dr-cols.has-pic{grid-template-columns:1fr 220px}}
+.dr-detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.dr-detail-actions .tb-btn{flex:1 1 auto;margin-top:0!important;width:auto!important}
+@media print{
+  .tb>*:not(dialog){display:none!important}
+  #detail[open]{margin:0;position:static;display:block!important;box-shadow:none;width:100%;max-height:none;overflow:visible;padding:0}
+  #detail::backdrop{display:none}
+  .dr-detail-actions,.no-print{display:none!important}
+}

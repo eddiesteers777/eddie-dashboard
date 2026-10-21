@@ -18,6 +18,7 @@ body{background:var(--paper);color:var(--ink);font:500 15px/1.4 "Albert Sans",sy
 .tb-title-input:focus{outline:2px solid var(--royal);outline-offset:2px;color:var(--ink)}
 .tb-actions{display:flex;gap:6px;align-items:center}
 .tb-btn{min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--navy);font:600 14px "Albert Sans",sans-serif;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation}
+a.tb-btn{text-decoration:none}
 .tb-btn:disabled{opacity:.4;cursor:default}
 .tb-btn:focus-visible,.tb-chip:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--royal);outline-offset:2px}
 .tb-primary{background:var(--royal);border-color:var(--royal);color:#fff}
@@ -55,7 +56,7 @@ body{background:var(--paper);color:var(--ink);font:500 15px/1.4 "Albert Sans",sy
 .pl .nm{font:600 2.4px "Albert Sans",sans-serif;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:.6px;fill:#fff}
 .pl:focus{outline:none}
 .pl:focus-visible .ring{stroke:var(--sky);stroke-width:.9}
-.tb-dlg{border:0;border-radius:14px;padding:20px;width:min(360px,calc(100vw - 32px))}
+.tb-dlg{font:500 15px/1.4 "Albert Sans",system-ui,sans-serif;color:var(--ink);border:0;border-radius:14px;padding:20px;width:min(360px,calc(100vw - 32px))}
 .tb-dlg::backdrop{background:rgba(11,31,63,.5)}
 .tb-dlg h2{margin:0 0 12px;font:800 20px "Big Shoulders Display",sans-serif;text-transform:uppercase;letter-spacing:.05em}
 .tb-dlg .tb-btn{display:flex;width:100%;margin-top:8px}
