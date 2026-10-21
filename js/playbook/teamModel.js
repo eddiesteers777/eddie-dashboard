@@ -28,7 +28,7 @@ export function openSession(team, date, kind = "practice") {
     const have = findSession(team, date, kind);
     if (have) return { team, id: have.id };
     const id = nextId("s", team.sessions);
-    const sessions = [...team.sessions, { id, date, kind, label: "", marks: {}, duty: {} }].slice(-400);
+    const sessions = [...team.sessions, { id, date, kind, label: "", marks: {}, duty: {}, captain: "" }].slice(-400);
     return { team: { ...team, sessions }, id };
 }
 export const sortedSessions = team => [...team.sessions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id.localeCompare(a.id)));
@@ -89,8 +89,52 @@ export function attendance(team, rid) {
         if (m === "here") here++; else if (m === "late") late++; else if (m === "absent") absent++; else if (m === "excused") excused++;
     }
     const counted = here + late + absent;
-    return { here, late, absent, excused, counted, pct: counted ? Math.round(((here + late) / counted) * 100) : null };
+    // Misses in a row, newest first; excused and unmarked days don't break or add to it.
+    let streak = 0;
+    for (const s of [...team.sessions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))) {
+        const m = s.marks[rid];
+        if (m === "absent") streak++; else if (m === "here" || m === "late") break;
+    }
+    return { here, late, absent, excused, counted, streak, pct: counted ? Math.round(((here + late) / counted) * 100) : null };
 }
+// Who is worth a word: two misses in a row, or under 75% after at least four counted days.
+export function needsAttention(team, roster) {
+    return roster.map(p => ({ p, a: attendance(team, p.id) })).filter(({ a }) => a.streak >= 2 || (a.counted >= 4 && a.pct < 75));
+}
+
+// ---- captain of the day ----
+export const setCaptain = (team, sid, rid) => mapSession(team, sid, s => ({ ...s, captain: rid || "" }));
+export function suggestCaptain(team, sid, roster) {
+    const s = team.sessions.find(x => x.id === sid);
+    if (!s) return team;
+    const marked = Object.keys(s.marks).length > 0;
+    const pool = roster.filter(p => (marked ? s.marks[p.id] === "here" || s.marks[p.id] === "late" : p.here));
+    const n = new Map(), last = new Map();
+    for (const o of team.sessions) if (o.id !== sid && o.captain) { n.set(o.captain, (n.get(o.captain) || 0) + 1); if (o.date > (last.get(o.captain) || "")) last.set(o.captain, o.date); }
+    const pick = [...pool].sort((a, b) => (n.get(a.id) || 0) - (n.get(b.id) || 0) || (last.get(a.id) || "").localeCompare(last.get(b.id) || "") || pool.indexOf(a) - pool.indexOf(b))[0];
+    return pick ? setCaptain(team, sid, pick.id) : team;
+}
+export const captainCount = (team, rid) => team.sessions.filter(s => s.captain === rid).length;
+
+// ---- parent contacts: kept on this device only (never synced) ----
+export function setContact(map, rid, parent, phone) {
+    const next = { ...map };
+    const p = str(parent, 40), ph = str(phone, 24);
+    if (!p && !ph) delete next[rid]; else next[rid] = { parent: p, phone: ph };
+    return next;
+}
+export const serializeContacts = map => JSON.stringify({ app: "playbook-contacts", v: 1, contacts: map });
+export function parseContacts(text) {
+    try {
+        const o = JSON.parse(text);
+        if (!o || o.app !== "playbook-contacts" || !o.contacts || typeof o.contacts !== "object") return {};
+        const out = {};
+        for (const [rid, c] of Object.entries(o.contacts)) if (c && (str(c.parent, 40) || str(c.phone, 24))) out[String(rid).slice(0, 20)] = { parent: str(c.parent, 40), phone: str(c.phone, 24) };
+        return out;
+    } catch { return {}; }
+}
+// A phone number as a tel:/sms: link; null when it doesn't look like one.
+export const phoneHref = (scheme, phone) => { const d = String(phone || "").replace(/[^\d+]/g, ""); return d.replace(/\D/g, "").length >= 7 ? `${scheme}:${d}` : null; };
 
 // ---- duty ----
 export function addJob(team, name, count = 1) {
@@ -178,7 +222,7 @@ export function parseTeam(text) {
         for (const [rid, m] of Object.entries(s.marks && typeof s.marks === "object" ? s.marks : {})) if (MARKS.includes(m)) marks[String(rid).slice(0, 20)] = m;
         const duty = {};
         for (const [jid, rids] of Object.entries(s.duty && typeof s.duty === "object" ? s.duty : {})) if (Array.isArray(rids)) duty[jid] = uniq(rids.filter(r => typeof r === "string")).slice(0, 6);
-        sessions.push({ id, date: s.date, kind: s.kind, label: str(s.label, 40), marks, duty });
+        sessions.push({ id, date: s.date, kind: s.kind, label: str(s.label, 40), marks, duty, captain: typeof s.captain === "string" ? s.captain.slice(0, 20) : "" });
     }
     const ids = new Set(sessions.map(s => s.id));
     const runs = [], rseen = new Set();

@@ -10,6 +10,7 @@ export const KEYS = Object.freeze({
     practices: "sb-playbook-practices",
     roster: "sb-playbook-roster",
     team: "sb-playbook-team",
+    contacts: "sb-playbook-contacts", // device only: not in SYNC_KEYS
     theme: "sb-playbook-theme"
 });
 

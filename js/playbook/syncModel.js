@@ -140,7 +140,7 @@ export function mergeStates(local, remote) {
             const marks = {}, duty = {};
             for (const [p, m] of Object.entries(s.marks)) marks[rid(p)] = m;
             for (const [jid, rids] of Object.entries(s.duty)) duty[jobMap.get(jid) || jid] = rids.map(rid);
-            team = { ...team, sessions: [...team.sessions, { ...s, id, marks, duty }] };
+            team = { ...team, sessions: [...team.sessions, { ...s, id, marks, duty, captain: s.captain ? rid(s.captain) : "" }] };
         }
         // Runs come along only for days that were added from the other side.
         for (const r of rt.runs) {

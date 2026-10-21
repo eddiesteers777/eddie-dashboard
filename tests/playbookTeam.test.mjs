@@ -50,7 +50,7 @@ test("season numbers ignore excused days and count late as attended", () => {
     for (const [d, m] of [["2026-10-01", "here"], ["2026-10-02", "late"], ["2026-10-03", "absent"], ["2026-10-04", "excused"]]) {
         const r = open(t, d); t = T.setMark(r.team, r.id, "a", m);
     }
-    assert.deepEqual(T.attendance(t, "a"), { here: 1, late: 1, absent: 1, excused: 1, counted: 3, pct: 67 });
+    assert.deepEqual(T.attendance(t, "a"), { here: 1, late: 1, absent: 1, excused: 1, counted: 3, streak: 1, pct: 67 });
     assert.equal(T.attendance(t, "zzz").pct, null);
 });
 
@@ -104,4 +104,42 @@ test("deleting a session removes its runs; removing a job clears it from session
     team = T.setDuty(team, id, "j1", ["a"]);
     assert.equal(T.removeJob(team, "j1").sessions[0].duty.j1, undefined);
     assert.equal(T.deleteSession(team, id).runs.length, 0);
+});
+
+test("captain rotates through the players who came, and saves", () => {
+    let { team, id } = open(T.emptyTeam(), "2026-10-01");
+    team = T.markAll(team, id, ["a", "b", "c"], "here");
+    team = T.suggestCaptain(team, id, roster);
+    const first = team.sessions[0].captain;
+    const seen = new Set([first]);
+    for (const d of ["2026-10-02", "2026-10-03"]) {
+        const r = open(team, d); team = T.markAll(r.team, r.id, ["a", "b", "c"], "here");
+        team = T.suggestCaptain(team, r.id, roster);
+        seen.add(team.sessions.find(s => s.id === r.id).captain);
+    }
+    assert.equal(seen.size, 3);
+    assert.ok(!seen.has("d"));
+    assert.equal(T.parseTeam(T.serializeTeam(team)).sessions[0].captain, first);
+    assert.equal(T.captainCount(team, first), 1);
+});
+
+test("players who keep missing are flagged; excused days don't break a streak", () => {
+    let t = T.emptyTeam();
+    for (const [d, m] of [["2026-10-01", "here"], ["2026-10-02", "absent"], ["2026-10-03", "excused"], ["2026-10-04", "absent"]]) {
+        const r = open(t, d); t = T.setMark(r.team, r.id, "a", m);
+    }
+    assert.equal(T.attendance(t, "a").streak, 2);
+    assert.deepEqual(T.needsAttention(t, roster).map(x => x.p.id), ["a"]);
+    const r = open(t, "2026-10-05"); t = T.setMark(r.team, r.id, "a", "late");
+    assert.equal(T.attendance(t, "a").streak, 0);
+});
+
+test("parent contacts: saved per player, cleaned, and links only for real numbers", () => {
+    let m = T.setContact({}, "a", "  Dana  ", "(205) 555-0142");
+    assert.equal(m.a.parent, "Dana");
+    assert.equal(T.phoneHref("tel", m.a.phone), "tel:2055550142");
+    assert.equal(T.phoneHref("sms", "123"), null);
+    assert.deepEqual(T.parseContacts(T.serializeContacts(m)), m);
+    assert.deepEqual(T.setContact(m, "a", "", ""), {});
+    assert.deepEqual(T.parseContacts("junk"), {});
 });

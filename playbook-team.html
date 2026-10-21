@@ -86,8 +86,11 @@
     </section>
 
     <section class="tm-sec tm-season" aria-labelledby="hSeason">
-      <div class="tm-sec-head"><h2 id="hSeason">Season so far</h2></div>
+      <div class="tm-sec-head"><h2 id="hSeason">Season so far</h2>
+        <div class="tm-sec-btns"><button class="pb-btn" id="printSeason">Print season</button></div></div>
+      <div class="tm-flag" id="flags" hidden></div>
       <ul class="tm-list" id="season"></ul>
+      <p class="pb-hint">Parent names and phone numbers stay on this device only. They are never uploaded or synced.</p>
     </section>
   </div>
 
@@ -95,6 +98,15 @@
     <h2 id="pickTitle">Who is on duty?</h2>
     <div id="pickList" class="tm-pick"></div>
     <div class="pb-dlg-foot"><button class="pb-btn" id="pickClear">Nobody</button><button class="pb-btn pb-primary" id="pickDone">Done</button></div>
+  </dialog>
+
+  <dialog id="conDlg" class="pb-dlg dr-dlg">
+    <h2 id="conTitle">Parent contact</h2>
+    <label>Parent or guardian <input id="conParent" maxlength="40" autocomplete="off"></label>
+    <label>Phone <input id="conPhone" type="tel" maxlength="24" inputmode="tel" autocomplete="off"></label>
+    <div class="dr-two"><a class="pb-btn" id="conCall" href="#">Call</a><a class="pb-btn" id="conText" href="#">Text</a></div>
+    <p class="pb-hint">Stays on this device only. Not uploaded or synced.</p>
+    <div class="pb-dlg-foot"><button class="pb-btn" id="conCancel">Cancel</button><button class="pb-btn pb-primary" id="conSave">Save</button></div>
   </dialog>
 
   <dialog id="setDlg" class="pb-dlg dr-dlg">

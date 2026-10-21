@@ -278,7 +278,7 @@
 .tm-m.tm-excused[aria-pressed="true"]{background:var(--stone,var(--pb-card2));border-color:var(--pb-line);color:var(--on-primary)}
 .tm-m:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
 .tm-row .pb-btn{min-height:44px;padding:0 14px}
-.tm-srow{flex-wrap:nowrap}
+
 .tm-pct{font:700 18px var(--font-mono);color:var(--pb-text)}
 .tm-pickrow{display:flex;align-items:center;gap:12px;min-height:44px;font-size:16px}
 .tm-pickrow input{width:22px;height:22px;accent-color:var(--pb-act)}
@@ -295,4 +295,17 @@
   .tm-m{display:none}
   .tm-m[aria-pressed="true"]{display:block;background:none!important;color:#000!important;border:0;font-weight:700}
   .tm-sec h2{font-size:18px}
+}
+
+/* team: flags, contacts, season print */
+.tm-flag{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin:0 0 10px;padding:10px 12px;border:1px solid var(--pb-act);border-radius:12px;font-size:14px}
+.tm-flag[hidden]{display:none!important}
+.tm-flag b{font:700 11px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--pb-act)}
+#conDlg .pb-btn[aria-disabled]{opacity:.4;pointer-events:none}
+#conDlg label{display:grid;gap:4px;margin-bottom:10px}
+.tm-srow{flex-wrap:wrap}
+@media print{
+  .tm-print-season .tm-sec:not(.tm-season),.tm-print-season .tm-print-title{display:none!important}
+  .tm-print-season .tm-season{display:block!important}
+  .tm-print-season .tm-season .tm-sec-btns{display:none!important}
 }

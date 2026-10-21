@@ -331,3 +331,7 @@ Coach-only "Southbound Playbook" entry in the Tools menu (`components/header.htm
 - `syncModel.mergeStates` combines team days (same date + kind = same day, this device wins) and re-links players, jobs and runs.
 - Tests: `tests/playbookTeam.test.mjs`, a merge test in `tests/playbookSync.test.mjs`, and a Playwright run at 390 and 1280 px.
 
+### Playbook Team: captain, season flags, parent contacts (2026-10-21)
+- Captain of the day (fair rotation, same rule as duty, picked by "Pick who is next" or by hand), "Worth a word" flags (two misses in a row, or under 75% after four counted days; excused days skip), season print sheet.
+- Parent contacts (`sb-playbook-contacts`, `teamModel` contacts functions): name and phone per player with Call/Text links. **Device only: deliberately not in `SYNC_KEYS`** (phone numbers of kids' families); the sign-out clear in `js/auth.js` still removes it for a linked account. Tests in `tests/playbookTeam.test.mjs` and `tests/playbookSync.test.mjs`.
+

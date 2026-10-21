@@ -106,3 +106,8 @@ test("combining team days keeps both days and re-links players and runs", () => 
     assert.equal(t.runs[0].sid, day2.id);
     assert.equal(t.sessions.find(s => s.date === "2026-10-01").marks[ana], "here");
 });
+
+test("parent contacts never sync", () => {
+    assert.ok(!SYNC_KEYS.includes(KEYS.contacts));
+    assert.ok(Object.keys(mergeStates({ [KEYS.contacts]: "x" }, { [KEYS.contacts]: "y" })).every(k => k !== KEYS.contacts));
+});

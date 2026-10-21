@@ -10,7 +10,8 @@ const readRoster = () => { try { return R.parseRoster(localStorage.getItem(KEYS.
 
 let team = readTeam(), roster = readRoster();
 let day = { date: T.todayKey(), kind: "practice" };
-let pickJob = null;
+let pickJob = null, contacts = {}, conRid = null;
+try { contacts = T.parseContacts(localStorage.getItem(KEYS.contacts) || ""); } catch {}
 
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), 2200); }
 function save(next) {
@@ -73,6 +74,13 @@ function render() {
     }
 
     const duty = $("duty"); duty.replaceChildren();
+    {
+        const cap = s?.captain && nameOf(s.captain) ? s.captain : "";
+        const li = h("li", "tm-row");
+        const who = h("div", "tm-who"); who.append(h("b", "", "Captain of the day"), h("small", "", cap ? nameOf(cap) : "Nobody yet"));
+        const b = h("button", "pb-btn", "Change"); b.type = "button"; b.onclick = () => openPick("captain");
+        li.append(who, b); duty.append(li);
+    }
     for (const job of team.jobs) {
         const rids = (s?.duty[job.id] || []).filter(nameOf);
         const li = h("li", "tm-row");
@@ -83,6 +91,12 @@ function render() {
     $("suggest").dataset.arm = "";
     $("suggest").textContent = "Pick who is next";
 
+    const flagged = T.needsAttention(team, roster);
+    const fl = $("flags"); fl.hidden = !flagged.length; fl.replaceChildren();
+    if (flagged.length) {
+        fl.append(h("b", "", "Worth a word"));
+        for (const { p, a } of flagged) fl.append(h("span", "", `${p.name}: ${a.streak >= 2 ? a.streak + " misses in a row" : a.pct + "% attendance"}`));
+    }
     const season = $("season"); season.replaceChildren();
     const pending = T.runsByPlayer(team);
     for (const p of roster) {
@@ -90,25 +104,43 @@ function render() {
         const li = h("li", "tm-row tm-srow");
         const who = h("div", "tm-who"); who.append(h("b", "", p.name), h("small", "", a.counted ? `${a.here + a.late} of ${a.counted} ${a.counted === 1 ? "day" : "days"}${a.excused ? " · " + a.excused + " excused" : ""}${pending.get(p.id) ? " · owes " + pending.get(p.id).length : ""}` : "No days yet"));
         const pct = h("span", "tm-pct", a.pct == null ? "–" : a.pct + "%");
-        li.append(who, pct); season.append(li);
+        const cb = h("button", "pb-btn", contacts[p.id] ? "Contact" : "Add contact"); cb.type = "button"; cb.onclick = () => openContact(p.id);
+        li.append(who, pct, cb); season.append(li);
     }
 }
 
 function openPick(jid) {
     pickJob = jid;
-    const job = team.jobs.find(j => j.id === jid), s = current();
+    const job = jid === "captain" ? { name: "Captain of the day" } : team.jobs.find(j => j.id === jid), s = current();
     $("pickTitle").textContent = job.name;
     const box = $("pickList"); box.replaceChildren();
-    const have = new Set(s?.duty[jid] || []);
+    const have = new Set(jid === "captain" ? [s?.captain].filter(Boolean) : s?.duty[jid] || []);
     for (const p of roster) {
         const lab = h("label", "tm-pickrow"); const c = h("input"); c.type = "checkbox"; c.value = p.id; c.checked = have.has(p.id);
         const m = s?.marks[p.id];
+        if (jid === "captain") c.onchange = () => { if (c.checked) box.querySelectorAll("input").forEach(o => { if (o !== c) o.checked = false; }); };
         lab.append(c, h("span", "", p.name + (m === "absent" || m === "excused" ? " (out)" : "")));
         box.append(lab);
     }
     $("pickDlg").showModal();
 }
 function pickedIds() { return [...$("pickList").querySelectorAll("input:checked")].map(i => i.value); }
+
+function openContact(rid) {
+    conRid = rid;
+    const c = contacts[rid] || { parent: "", phone: "" };
+    $("conTitle").textContent = `${nameOf(rid)}'s family`;
+    $("conParent").value = c.parent; $("conPhone").value = c.phone;
+    showLinks();
+    $("conDlg").showModal();
+}
+function showLinks() {
+    for (const [id, scheme] of [["conCall", "tel"], ["conText", "sms"]]) {
+        const href = T.phoneHref(scheme, $("conPhone").value);
+        $(id).toggleAttribute("aria-disabled", !href);
+        if (href) $(id).setAttribute("href", href); else $(id).removeAttribute("href");
+    }
+}
 
 function openSettings() {
     $("penalty").value = team.penalty;
@@ -142,15 +174,30 @@ function wire() {
     };
     $("suggest").onclick = () => {
         const sid = ensure(), s = T.findSession(team, day.date, day.kind); // ensure() first: it may add the day to team
-        const filled = team.jobs.every(j => (s.duty[j.id] || []).length);
+        const filled = team.jobs.every(j => (s.duty[j.id] || []).length) && Boolean(s.captain);
         const b = $("suggest");
         if (filled && b.dataset.arm !== "1") { b.dataset.arm = "1"; b.textContent = "Tap again to re-pick all"; setTimeout(() => { b.dataset.arm = ""; b.textContent = "Pick who is next"; }, 3500); return; }
         if (!roster.length) return;
-        save(T.suggestDuty(team, sid, roster, { keep: !filled }));
+        let next = T.suggestDuty(team, sid, roster, { keep: !filled });
+        if (filled || !s.captain) next = T.suggestCaptain(next, sid, roster);
+        save(next);
     };
-    $("pickDone").onclick = () => { const sid = ensure(); save(T.setDuty(team, sid, pickJob, pickedIds())); $("pickDlg").close(); };
-    $("pickClear").onclick = () => { const sid = ensure(); save(T.setDuty(team, sid, pickJob, [])); $("pickDlg").close(); };
+    const setPicked = ids => { const sid = ensure(); save(pickJob === "captain" ? T.setCaptain(team, sid, ids[0] || "") : T.setDuty(team, sid, pickJob, ids)); $("pickDlg").close(); };
+    $("pickDone").onclick = () => setPicked(pickedIds());
+    $("pickClear").onclick = () => setPicked([]);
     $("settings").onclick = openSettings;
+    $("conPhone").oninput = showLinks;
+    $("conCancel").onclick = () => $("conDlg").close();
+    $("conSave").onclick = () => {
+        contacts = T.setContact(contacts, conRid, $("conParent").value, $("conPhone").value);
+        try { localStorage.setItem(KEYS.contacts, T.serializeContacts(contacts)); } catch { toast("Couldn't save on this device"); }
+        $("conDlg").close(); render(); toast("Saved on this device");
+    };
+    $("printSeason").onclick = () => {
+        document.body.classList.add("tm-print-season");
+        window.addEventListener("afterprint", () => document.body.classList.remove("tm-print-season"), { once: true });
+        window.print();
+    };
     $("setClose").onclick = () => { save(T.setPenalty(team, $("penalty").value)); $("setDlg").close(); };
     $("addJob").onclick = () => {
         const next = T.addJob(team, $("newJob").value, $("newCount").value);
