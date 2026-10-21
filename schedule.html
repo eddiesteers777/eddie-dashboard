@@ -120,8 +120,11 @@
 
                 <p id="noCoachesMsg" class="clients-card clients-card-note" hidden>You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> first, then their open times show up here.</p>
 
+                <!-- Soccer client: next session + its homework, then booking, then homework. -->
+                <section id="soccerNext" class="sb-next" hidden></section>
+
                 <div id="comingUpWrap">
-                    <h2 class="clients-section-title">Coming up</h2>
+                    <h2 class="clients-section-title" id="comingUpTitle">Coming up</h2>
                     <div id="comingUpList" class="clients-list"></div>
                     <p id="comingUpEmptyMsg" class="clients-card-note" hidden>Nothing booked yet. Pick an open time below.</p>
                 </div>
@@ -132,16 +135,26 @@
                 </div>
 
                 <div id="availableSlotsWrap">
-                    <h2 class="clients-section-title">Book a session</h2>
-                    <!-- Only when they have more than one coach. -->
-                    <div id="coachPickWrap" class="sched-coach-pick" hidden>
-                        <label for="coachSelect">Coach</label>
-                        <select id="coachSelect" class="sched-coach-select"></select>
-                    </div>
-                    <p id="coachOneLine" class="sched-with" hidden></p>
-                    <div id="availableSlotsList" class="sched-slot-list"></div>
-                    <p id="availableSlotsEmptyMsg" class="clients-card-note" hidden>Your coach hasn't published any open times yet.</p>
+                    <section class="sb-book" aria-labelledby="bookTitle">
+                        <div class="sb-sec-row"><h2 class="clients-section-title" id="bookTitle">Book a session</h2><span class="sb-kick" id="bookCount"></span></div>
+                        <!-- Only when they have more than one coach. -->
+                        <div id="coachPickWrap" class="sched-coach-pick" hidden>
+                            <label for="coachSelect">Coach</label>
+                            <select id="coachSelect" class="sched-coach-select"></select>
+                        </div>
+                        <p id="coachOneLine" class="sched-with" hidden></p>
+                        <button type="button" id="usualCard" class="sb-usual" hidden></button>
+                        <div id="bookKinds" class="sb-seg" role="group" aria-label="Kind of session"></div>
+                        <div id="dayStrip" class="sb-strip" role="group" aria-label="Pick a day"></div>
+                        <div id="dayTimes" aria-live="polite"></div>
+                        <p id="availableSlotsEmptyMsg" class="clients-card-note" hidden>Your coach hasn't published any open times yet.</p>
+                    </section>
                 </div>
+
+                <section id="hwWrap" hidden>
+                    <div class="sb-sec-row"><h2 class="clients-section-title">Homework</h2><a class="sb-kick sb-link" href="homework.html" id="hwAll">See all</a></div>
+                    <div id="hwRows" class="sb-hw"></div>
+                </section>
 
                 <div id="pastWrap" hidden>
                     <h2 class="clients-section-title">Past sessions</h2>

@@ -61,14 +61,12 @@ const BOTTOM_TABS = [
     { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client+plan" },
     // Someone who only books sessions (soccer, no plan) gets them as a tab
     // of their own; with a plan, they're in the Plan tab's week.
-    { key: "sessions", label: "Sessions", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!plan", pages: ["schedule.html"] },
+    { key: "sessions", label: "Soccer", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!nutrition+!fueling", pages: ["schedule.html", "homework.html"] },
     // Five tabs at most (redesign step 3, Eddie 2026-10-14): training
     // clients get Today · Plan · Train · Fuel · More, the coach Today ·
     // Coach · Train · Fuel · More. Habits stays a tab only for accounts
     // without Fuel (soccer); everyone else checks habits off on Today
     // and finds the page in More.
-    // Soccer homework (js/homeworkClient.js); only soccer accounts without Fuel, so the dock stays at five.
-    { key: "homework", label: "Homework", icon: "clipboard", href: "homework.html", color: "var(--primary)", requires: "client+homework+!nutrition+!fueling", pages: ["homework.html"] },
     { key: "coach", label: "Coach", icon: "users", href: "coach.html", color: "var(--primary)", requires: "coach" },
     { key: "train", label: "Train", icon: "dumbbell", href: "train.html", color: "var(--primary)", requires: "running,strength,crossTraining" },
     { key: "health", label: "Fuel", icon: "fuel", href: "nutrition.html", color: "var(--primary)", requires: "nutrition,fueling" },
@@ -165,7 +163,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Messages", href: "messages.html", icon: "messageSquare", color: "var(--primary)", requires: "client+updates", also: ["message coach", "chat", "text coach", "ask coach"] },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
-    { label: "Sessions", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions", also: ["schedule", "book a session"] },
+    { label: "Soccer", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions", also: ["schedule", "sessions", "book a session"] },
     { label: "Homework", href: "homework.html", icon: "clipboard", color: "var(--primary)", requires: "client+homework", also: ["practice", "drills", "skills"] },
     { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)", requires: "client+checkins" },
     { label: "Get the App", href: "install.html", icon: "download", color: "var(--green)" },

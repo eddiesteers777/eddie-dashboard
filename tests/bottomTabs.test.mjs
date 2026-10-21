@@ -28,8 +28,8 @@ test("each account's tab bar", () => {
     assert.deepEqual(tabsFor("running"), ["Today", "Plan", "Train", "Fuel", "More"]);
     assert.deepEqual(tabsFor("online"), ["Today", "Plan", "Train", "Fuel", "More"]);
     assert.deepEqual(tabsFor("hybrid"), ["Today", "Plan", "Train", "Fuel", "More"]);
-    assert.deepEqual(tabsFor("soccer"), ["Today", "Sessions", "Homework", "Habits", "More"]);
-    assert.deepEqual(tabsFor("soccerWithPlan"), ["Today", "Plan", "Homework", "Habits", "More"]);
+    assert.deepEqual(tabsFor("soccer"), ["Today", "Soccer", "Habits", "More"]);
+    assert.deepEqual(tabsFor("soccerWithPlan"), ["Today", "Plan", "Soccer", "Habits", "More"]);
     assert.deepEqual(tabsFor("pending"), ["Today", "More"]);
     for (const who of Object.keys(people)) assert.ok(tabsFor(who).length <= 5, `${who}: five tabs at most`);
 });

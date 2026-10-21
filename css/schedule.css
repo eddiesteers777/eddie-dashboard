@@ -480,3 +480,76 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 .rep-change{ width:38px; text-align:right; font:600 11px var(--font-mono); color:var(--sage); }
 .rep-note{ margin-top:14px; padding-left:12px; border-left:2px solid var(--primary); line-height:1.5; overflow-wrap:anywhere; }
 .rep-note .rep-kicker{ display:block; margin-bottom:3px; }
+
+/* ==========================================================
+   SOCCER CLIENT (2026-10-21): next session + its homework, "Your usual",
+   a two-week day strip with one day's times, and the homework list.
+   Mock-up: lab/soccer-booking/ (option A + C's usual). Scoped to .schedule-page.
+========================================================== */
+.schedule-page .sb-kick{ font:600 11px/1.2 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.schedule-page .sb-kick.tan{ color:var(--primary); }
+.schedule-page .sb-sec-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin:0 2px 12px; }
+.schedule-page .sb-sec-row .clients-section-title{ margin:0; }
+.schedule-page .sb-link{ text-decoration:none; color:var(--primary); }
+
+.schedule-page .sb-next{ padding:18px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); border-top:2px solid var(--primary); background:var(--sb-bubble-raised-bg); border-left:1px solid var(--sb-bubble-raised-border); border-right:1px solid var(--sb-bubble-raised-border); border-bottom:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.schedule-page .sb-next-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.schedule-page .sb-chip{ font:600 10.5px/1 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; padding:5px 8px; border-radius:4px; background:rgba(160,187,156,.16); color:var(--sage); }
+.schedule-page .sb-next-when{ margin:10px 0 4px; }
+.schedule-page .sb-next-when b{ display:block; font:800 44px/.9 var(--font-display); text-transform:uppercase; }
+.schedule-page .sb-next-when span{ color:var(--text-secondary); font-size:14px; }
+.schedule-page .sb-next-hw{ margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+.schedule-page .sb-next-hw .sb-sec-row{ margin-bottom:8px; }
+.schedule-page .sb-bar-row{ display:grid; grid-template-columns:minmax(0, 1fr) 70px 32px; align-items:center; gap:10px; min-height:44px; color:var(--text); text-decoration:none; font-size:14px; }
+.schedule-page .sb-bar-row > span:first-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.schedule-page .sb-bar-row b{ font:800 15px var(--font-display); text-align:right; }
+.schedule-page .sb-bar{ height:6px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
+.schedule-page .sb-bar i{ display:block; height:100%; background:var(--sage); border-radius:3px; }
+.schedule-page .sb-next-btn{ display:flex; align-items:center; justify-content:center; min-height:48px; margin-top:12px; border-radius:var(--radius-pill); background:var(--sb-lens-bg); color:var(--on-primary); font-weight:700; text-decoration:none; }
+
+.schedule-page .sb-book{ padding:16px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.schedule-page .sb-usual{ display:flex; align-items:center; gap:12px; width:100%; min-height:64px; margin:0 0 14px; padding:12px 14px; border-radius:14px; background:rgba(214,185,142,.08); border:1px solid rgba(214,185,142,.35); color:var(--text); font:inherit; text-align:left; cursor:pointer; }
+.schedule-page .sb-usual-ic{ width:40px; height:40px; flex:0 0 40px; border-radius:50%; display:grid; place-items:center; background:var(--forest); color:var(--primary); }
+.schedule-page .sb-usual-text{ flex:1; min-width:0; display:grid; gap:2px; }
+.schedule-page .sb-usual-text b{ font:800 19px/1.05 var(--font-display); text-transform:uppercase; }
+.schedule-page .sb-usual-text small{ color:var(--text-secondary); font-size:12.5px; }
+.schedule-page .sb-usual-go{ display:inline-flex; align-items:center; min-height:40px; padding:0 16px; border-radius:var(--radius-pill); background:var(--sb-lens-bg); color:var(--on-primary); font-weight:700; }
+.schedule-page .sb-seg{ display:flex; padding:3px; border-radius:10px; background:var(--sb-bubble-dark-bg); box-shadow:var(--sb-bubble-dark-shadow); }
+.schedule-page .sb-seg button{ flex:1; min-height:44px; border:0; border-radius:8px; background:none; color:var(--text-secondary); font:inherit; font-size:14px; cursor:pointer; }
+.schedule-page .sb-seg button.on{ background:var(--sb-glass-bg); box-shadow:var(--sb-glass-shadow), 0 0 0 1px var(--sb-glass-border); color:var(--text); font-weight:600; }
+.schedule-page .sb-strip{ display:flex; gap:8px; overflow-x:auto; margin:14px -16px 0; padding:2px 16px 6px; scrollbar-width:none; }
+.schedule-page .sb-strip::-webkit-scrollbar{ display:none; }
+.schedule-page .sb-day{ position:relative; flex:0 0 62px; display:grid; justify-items:center; gap:2px; min-height:64px; padding:9px 0 8px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.02); color:var(--text); font:inherit; cursor:pointer; }
+.schedule-page .sb-day span{ font:600 10.5px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.schedule-page .sb-day b{ font:800 24px/1 var(--font-display); }
+.schedule-page .sb-day small{ font-size:11px; color:var(--sage); }
+.schedule-page .sb-day.none{ opacity:.5; }
+.schedule-page .sb-day.none small{ color:var(--muted); }
+.schedule-page .sb-day.on{ background:var(--sb-lens-bg); border-color:transparent; color:var(--on-primary); }
+.schedule-page .sb-day.on span, .schedule-page .sb-day.on small{ color:var(--on-primary); }
+.schedule-page .sb-dot{ position:absolute; top:6px; right:7px; width:6px; height:6px; border-radius:50%; background:var(--sage); }
+.schedule-page .sb-day-title{ font:800 18px var(--font-display); text-transform:uppercase; margin:14px 2px 4px; }
+.schedule-page .sb-tg{ margin-top:12px; }
+.schedule-page .sb-tg-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; margin-top:7px; }
+.schedule-page .sb-slot{ display:grid; gap:3px; min-height:58px; padding:10px; text-align:left; border-radius:10px; border:1px solid rgba(214,185,142,.32); background:rgba(214,185,142,.05); color:var(--text); font:inherit; cursor:pointer; }
+.schedule-page .sb-slot b{ font-size:15px; font-weight:700; white-space:nowrap; }
+.schedule-page .sb-slot span{ font-size:11.5px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.schedule-page .sb-slot.grp{ border-color:rgba(160,187,156,.4); background:rgba(160,187,156,.07); }
+.schedule-page .sb-slot.grp span{ color:var(--sage); }
+.schedule-page .sb-slot.is-full{ border-style:dashed; border-color:var(--border); background:none; opacity:.5; cursor:default; }
+.schedule-page .sb-slot.is-full b{ text-decoration:line-through; text-decoration-color:var(--muted); }
+.schedule-page .sb-slot.is-mine{ border-color:rgba(160,187,156,.5); cursor:default; }
+.schedule-page .sb-slot.is-mine span{ color:var(--sage); }
+
+.schedule-page .sb-hw{ padding:4px 14px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); }
+.schedule-page .sb-hw-row{ display:flex; align-items:center; gap:12px; min-height:64px; padding:12px 0; border-top:1px solid var(--border); color:var(--text); text-decoration:none; }
+.schedule-page .sb-hw-row:first-child{ border-top:0; }
+.schedule-page .sb-hw-main{ flex:1; min-width:0; display:grid; }
+.schedule-page .sb-hw-main b{ font-size:15px; line-height:1.25; }
+.schedule-page .sb-hw-main small{ color:var(--muted); font-size:13px; }
+.schedule-page .sb-hw-count{ font:800 20px var(--font-display); color:var(--primary); }
+@media (min-width:900px){
+    .schedule-page .sb-tg-grid{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+    .schedule-page .sb-strip{ flex-wrap:wrap; margin:14px 0 0; padding:0; }
+    .schedule-page .sb-day{ flex:1 0 calc(100% / 7 - 8px); }
+}

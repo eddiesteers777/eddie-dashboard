@@ -19,6 +19,10 @@ import {
     respondToRequest, cancelBookingRequest, syncSlotBookings
 } from "./scheduling.js";
 import { bookedCounts, takenDates, nextOpenDate } from "./slotBookings.js";
+import { datedTimes, daySummaries, groupByPart, firstDayWithOpen, matchesKind, usualSlot, isGroup, KINDS } from "./soccerBooking.js";
+import { listMyHomework } from "./homework.js";
+import { sortForClient, progress as hwProgress } from "./homeworkModel.js";
+import { can } from "./navAccess.js";
 import { clientSessions, statusLabel, CANCELLED } from "./sessionModel.js";
 import { hasReport, reportHtml } from "./sessionReport.js";
 import { weekDays, weekStartOf, addDays, weekCounts } from "./scheduleWeek.js";
@@ -90,11 +94,11 @@ function setScheduleView(isCoach) {
     // requests, a client books. So no tab bar for either.
     document.querySelector(".clients-tabs").hidden = true;
     // A client's tab and menus call it Sessions (Phase 8).
-    document.getElementById("scheduleTitle").textContent = isCoach ? "Schedule" : "Sessions";
-    document.title = `${isCoach ? "Schedule" : "Sessions"} | Southbound Coaching`;
+    document.getElementById("scheduleTitle").textContent = isCoach ? "Schedule" : "Soccer";
+    document.title = `${isCoach ? "Schedule" : "Soccer"} | Southbound Coaching`;
     introEl.textContent = isCoach
         ? "Set your open times, block off dates, and answer booking requests."
-        : "What's booked with your coach, and asking for another session.";
+        : "Your next session, the homework before it, and booking another.";
     selectTab(isCoach ? "availability" : "book");
 }
 setScheduleView(cachedRole() === "coach");
@@ -386,7 +390,6 @@ const coachSelect = document.getElementById("coachSelect");
 const coachPickWrap = document.getElementById("coachPickWrap");
 const coachOneLine = document.getElementById("coachOneLine");
 const noCoachesMsg = document.getElementById("noCoachesMsg");
-const availableSlotsList = document.getElementById("availableSlotsList");
 const availableSlotsEmptyMsg = document.getElementById("availableSlotsEmptyMsg");
 const comingUpList = document.getElementById("comingUpList");
 const comingUpEmptyMsg = document.getElementById("comingUpEmptyMsg");
@@ -416,35 +419,147 @@ coachSelect.addEventListener("change", () => {
     refreshAvailableSlots();
 });
 
+// ---- Booking: usual time, day strip, one day's times ----
+const bookUi = { kind: "all", day: "", coach: null, avail: null, mine: [] };
+const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const dayEl = id => document.getElementById(id);
+
 async function refreshAvailableSlots() {
     if (!selectedCoachUid) return;
     const coach = myCoaches.find(c => c.coachUid === selectedCoachUid);
     coachOneLine.hidden = myCoaches.length !== 1;
-    coachOneLine.textContent = `Open times with ${coach?.coachName || "your coach"}. Tap Request to ask for one.`;
-    const [{ slots, fullDates }, mine] = await Promise.all([
+    coachOneLine.textContent = `Open times with ${coach?.coachName || "your coach"}.`;
+    const [avail, mine] = await Promise.all([
         getCoachAvailability(selectedCoachUid),
         listMyBookingRequests().catch(() => [])
     ]);
-    const openSlots = slots.filter(s => s.active !== false);
+    bookUi.coach = coach;
+    bookUi.avail = avail;
+    bookUi.mine = mine.filter(r => r.coachUid === selectedCoachUid);
+    bookUi.day = "";
+    renderBook();
+}
+
+function bookTimes() {
+    const now = new Date();
+    return datedTimes({
+        slots: bookUi.avail.slots, fullDates: bookUi.avail.fullDates, bookedCounts: bookUi.avail.bookedCounts,
+        mine: bookUi.mine, today: localToday(), nowHHMM: `${now.getHours()}:${now.getMinutes()}`
+    });
+}
+
+function openFor(time) {
+    const ctx = { fullDates: bookUi.avail.fullDates, mine: bookUi.mine, next: time.date };
+    openBookOverlay(bookUi.coach, time.slot, ctx);
+}
+
+function renderBook() {
+    const { avail } = bookUi;
+    const slots = avail.slots.filter(s => s.active !== false);
+    availableSlotsEmptyMsg.hidden = slots.length > 0;
+    for (const id of ["usualCard", "bookKinds", "dayStrip", "dayTimes"]) dayEl(id).hidden = slots.length === 0;
+    dayEl("bookCount").textContent = "";
+    if (!slots.length) { dayEl("usualCard").hidden = true; return; }
+
     const today = localToday();
+    const times = bookTimes();
+    const days = daySummaries(times, { today, kind: bookUi.kind });
+    if (!bookUi.day || !days.some(d => d.date === bookUi.day)) bookUi.day = firstDayWithOpen(days);
+    const openCount = times.filter(t => t.state === "open" && matchesKind(t, bookUi.kind)).length;
+    dayEl("bookCount").textContent = `${openCount} open \u00b7 next 2 weeks`;
 
-    availableSlotsList.innerHTML = "";
-    availableSlotsEmptyMsg.hidden = openSlots.length > 0;
-
-    for (const slot of openSlots) {
-        const ctx = { fullDates, mine: mine.filter(r => r.coachUid === selectedCoachUid) };
-        const next = nextOpenDate(slot, today, ctx.fullDates, ctx.mine);
-        const action = next
-            ? `<span class="sched-slot-next">Next open ${escapeHtml(formatDateShort(next))}</span><button type="button" class="clients-btn-primary" data-action="request">Request</button>`
-            : `<span class="sched-slot-next">Booked</span>`;
-        const wrap = document.createElement("div");
-        wrap.innerHTML = slotCardHtml(slot, action);
-        const card = wrap.firstElementChild;
-        card.querySelector('[data-action="request"]')?.addEventListener("click", () => openBookOverlay(coach, slot, { ...ctx, next }));
-        availableSlotsList.appendChild(card);
+    // Your usual: the weekly time booked most, one tap.
+    const usual = usualSlot(bookUi.mine, slots);
+    const usualNext = usual && times.find(t => t.slot.id === usual.slot.id && t.state === "open");
+    const card = dayEl("usualCard");
+    card.hidden = !usualNext;
+    if (usualNext) {
+        card.innerHTML = `<span class="sb-usual-ic" data-icon="refresh"></span><span class="sb-usual-text"><span class="sb-kick tan">Your usual</span><b>${DAY_NAMES[usual.slot.dayOfWeek]}s \u00b7 ${formatTime(usual.slot.startTime)}</b><small>Next open ${escapeHtml(formatDateShort(usualNext.date))}. You've booked it ${usual.count} times.</small></span><span class="sb-usual-go">Book</span>`;
+        card.onclick = () => openFor(usualNext);
     }
 
-    await hydrateIcons();
+    dayEl("bookKinds").innerHTML = KINDS.map(k => `<button type="button" data-kind="${k.value}" class="${k.value === bookUi.kind ? "on" : ""}" aria-pressed="${k.value === bookUi.kind}">${k.label}</button>`).join("");
+
+    dayEl("dayStrip").innerHTML = days.map((d, i) => {
+        const dt = new Date(`${d.date}T00:00:00`);
+        const note = d.mine ? "Yours" : d.open ? `${d.open} open` : "None";
+        return `<button type="button" class="sb-day${d.date === bookUi.day ? " on" : ""}${!d.open && !d.mine ? " none" : ""}" data-day="${d.date}" aria-pressed="${d.date === bookUi.day}"><span>${i === 0 ? "Today" : WEEKDAY[dt.getDay()]}</span><b>${dt.getDate()}</b><small>${note}</small>${d.mine ? `<i class="sb-dot"></i>` : ""}</button>`;
+    }).join("");
+
+    const list = times.filter(t => t.date === bookUi.day && matchesKind(t, bookUi.kind));
+    const title = new Date(`${bookUi.day}T00:00:00`).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+    dayEl("dayTimes").innerHTML = `<div class="sb-day-title">${escapeHtml(title)}</div>` + (list.length
+        ? groupByPart(list).map(g => `<div class="sb-tg"><span class="sb-kick">${g.part}</span><div class="sb-tg-grid">${g.times.map(t => {
+            const sub = t.state === "full" ? "Full" : t.state === "mine" ? "Yours" : isGroup(t.slot) ? `Group \u00b7 ${t.left} left` : (t.slot.label ? escapeHtml(t.slot.label) : "1-on-1");
+            return `<button type="button" class="sb-slot${isGroup(t.slot) ? " grp" : ""}${t.state !== "open" ? ` is-${t.state}` : ""}" data-key="${escapeHtml(t.key)}"${t.state !== "open" ? " disabled" : ""}><b>${formatTime(t.slot.startTime)}</b><span>${sub}</span></button>`;
+        }).join("")}</div></div>`).join("")
+        : `<p class="clients-card-note">Nothing on this day. Try another.</p>`);
+    hydrateIcons();
+}
+
+dayEl("bookKinds").addEventListener("click", event => {
+    const btn = event.target.closest("[data-kind]");
+    if (!btn) return;
+    bookUi.kind = btn.dataset.kind;
+    renderBook();
+});
+dayEl("dayStrip").addEventListener("click", event => {
+    const btn = event.target.closest("[data-day]");
+    if (!btn) return;
+    bookUi.day = btn.dataset.day;
+    renderBook();
+});
+dayEl("dayTimes").addEventListener("click", event => {
+    const btn = event.target.closest("[data-key]");
+    if (!btn || btn.disabled) return;
+    const time = bookTimes().find(t => t.key === btn.dataset.key);
+    if (time) openFor(time);
+});
+
+// ---- Next session with its homework, and the homework list ----
+let hwItems = [];
+let nextSession = null;
+
+function hwOpenItems() {
+    const t = localToday();
+    return sortForClient(hwItems, t).filter(h => !hwProgress(h, t).complete);
+}
+
+function renderNextCard() {
+    const box = dayEl("soccerNext");
+    const s = nextSession;
+    box.hidden = !s;
+    if (!s) return;
+    const t = localToday();
+    const rel = s.date === t ? "Today" : formatDateShort(s.date);
+    const weekly = hwOpenItems().filter(h => hwProgress(h, t).kind !== "goal").slice(0, 3);
+    const left = weekly.reduce((n, h) => { const p = hwProgress(h, t); return n + Math.max(0, p.target - p.done); }, 0);
+    box.innerHTML = `
+        <div class="sb-next-top"><span class="sb-kick tan">Next session \u00b7 ${escapeHtml(rel)}</span><span class="sb-chip">Booked</span></div>
+        <div class="sb-next-when"><b>${escapeHtml(formatTime(s.startTime))}</b><span>${escapeHtml(formatDateShort(s.date))} \u00b7 ${escapeHtml(typeLabel(s.sessionType))}${s.label ? ` \u00b7 ${escapeHtml(s.label)}` : ""}</span></div>
+        ${weekly.length ? `<div class="sb-next-hw"><div class="sb-sec-row"><span class="sb-kick">Before this session</span><span class="sb-kick tan">${left} practice${left === 1 ? "" : "s"} left</span></div>
+            ${weekly.map(h => { const p = hwProgress(h, t); return `<a class="sb-bar-row" href="homework.html#${escapeHtml(h.id)}"><span>${escapeHtml(h.title)}</span><span class="sb-bar"><i style="width:${Math.min(100, p.done / p.target * 100)}%"></i></span><b>${p.done}/${p.target}</b></a>`; }).join("")}
+            <a class="sb-next-btn" href="homework.html">Practice now</a></div>` : ""}`;
+}
+
+function renderHomeworkRows() {
+    const wrap = dayEl("hwWrap");
+    const t = localToday();
+    const open = hwOpenItems();
+    wrap.hidden = !open.length;
+    if (!open.length) return;
+    dayEl("hwRows").innerHTML = open.map(h => {
+        const p = hwProgress(h, t);
+        const due = h.dueDate && h.dueDate >= t ? ` \u00b7 due ${escapeHtml(formatDateShort(h.dueDate))}` : "";
+        return `<a class="sb-hw-row" href="homework.html#${escapeHtml(h.id)}"><span class="sb-hw-main"><b>${escapeHtml(h.title)}</b><small>${escapeHtml(p.label)}${due}</small></span><span class="sb-hw-count">${p.kind === "goal" ? p.done : `${p.done}/${p.target}`}</span></a>`;
+    }).join("");
+}
+
+async function loadHomework() {
+    if (!can("homework")) return;
+    try { hwItems = await listMyHomework(); } catch (error) { console.warn("Southbound: couldn't load homework.", error); return; }
+    renderNextCard();
+    renderHomeworkRows();
 }
 
 const localToday = () => new Date().toLocaleDateString("en-CA");
@@ -505,8 +620,13 @@ async function refreshMyRequests() {
     const today = localToday();
     const { upcoming, past, waiting, declined, attendance } = clientSessions(requests, today);
 
-    comingUpList.innerHTML = upcoming.slice(0, 6).map(s => sessionRowHtml(s)).join("");
+    // The next session gets its own card (with its homework); the rest are rows.
+    nextSession = upcoming[0] || null;
+    renderNextCard();
+    comingUpList.innerHTML = upcoming.slice(1, 6).map(s => sessionRowHtml(s)).join("");
     comingUpEmptyMsg.hidden = upcoming.length > 0;
+    dayEl("comingUpWrap").hidden = upcoming.length === 1;
+    dayEl("comingUpTitle").textContent = upcoming.length > 1 ? "Also coming up" : "Coming up";
 
     const asked = [...waiting, ...declined];
     myRequestsWrap.hidden = !asked.length;
@@ -643,6 +763,7 @@ listenForAuth(user => {
         refreshRequests();
         refreshCoachSelect();
         refreshMyRequests();
+        loadHomework();
 
         // js/coach.html deep-links here with ?tab=availability instead
         // of duplicating this page's UI.

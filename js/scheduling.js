@@ -59,12 +59,14 @@ function uid() {
 
 export async function getCoachAvailability(coachUid) {
     const snap = await getDoc(availabilityDoc(coachUid));
-    if (!snap.exists()) return { slots: [], blackoutDates: [], paymentNote: "", fullDates: {} };
+    if (!snap.exists()) return { slots: [], blackoutDates: [], paymentNote: "", fullDates: {}, bookedCounts: {} };
     const data = snap.data();
     return {
         slots: data.slots || [], blackoutDates: data.blackoutDates || [], paymentNote: String(data.paymentNote || ""),
         // Dates with no spot left, per slot (js/slotBookings.js).
-        fullDates: data.fullDates || {}
+        fullDates: data.fullDates || {},
+        // Approved bookings per slot and date, for "3 spots left" on a group.
+        bookedCounts: data.bookedCounts || {}
     };
 }
 
