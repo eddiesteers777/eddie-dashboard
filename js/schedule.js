@@ -466,6 +466,8 @@ function renderBook() {
     const days = daySummaries(times, { today, kind: bookUi.kind });
     if (!bookUi.day || !days.some(d => d.date === bookUi.day)) bookUi.day = firstDayWithOpen(days);
     const openCount = times.filter(t => t.state === "open" && matchesKind(t, bookUi.kind)).length;
+    dayEl("reschedNote").hidden = !rescheduling;
+    dayEl("reschedNote").textContent = rescheduling ? `Moving your ${rescheduling} session. Pick a new time.` : "";
     dayEl("bookCount").textContent = `${openCount} open \u00b7 next 2 weeks`;
 
     // Your usual: the weekly time booked most, one tap.
@@ -519,6 +521,8 @@ dayEl("dayTimes").addEventListener("click", event => {
 // ---- Next session with its homework, and the homework list ----
 let hwItems = [];
 let nextSession = null;
+let myRequestsAll = [];
+let rescheduling = null; // "Thu, Oct 22 · 5:00 PM" while the client is picking a replacement
 
 function hwOpenItems() {
     const t = localToday();
@@ -537,9 +541,36 @@ function renderNextCard() {
     box.innerHTML = `
         <div class="sb-next-top"><span class="sb-kick tan">Next session \u00b7 ${escapeHtml(rel)}</span><span class="sb-chip">Booked</span></div>
         <div class="sb-next-when"><b>${escapeHtml(formatTime(s.startTime))}</b><span>${escapeHtml(formatDateShort(s.date))} \u00b7 ${escapeHtml(typeLabel(s.sessionType))}${s.label ? ` \u00b7 ${escapeHtml(s.label)}` : ""}</span></div>
+        <button type="button" class="sb-resched" id="reschedBtn">Reschedule</button>
         ${weekly.length ? `<div class="sb-next-hw"><div class="sb-sec-row"><span class="sb-kick">Before this session</span><span class="sb-kick tan">${left} practice${left === 1 ? "" : "s"} left</span></div>
             ${weekly.map(h => { const p = hwProgress(h, t); return `<a class="sb-bar-row" href="homework.html#${escapeHtml(h.id)}"><span>${escapeHtml(h.title)}</span><span class="sb-bar"><i style="width:${Math.min(100, p.done / p.target * 100)}%"></i></span><b>${p.done}/${p.target}</b></a>`; }).join("")}
             <a class="sb-next-btn" href="homework.html">Practice now</a></div>` : ""}`;
+    dayEl("reschedBtn").onclick = () => rescheduleSession(s);
+}
+
+// Reschedule one session. A single booking is cancelled and the client
+// picks a new time (a new request, noted as a reschedule). A weekly series
+// can't be moved one week from here (a client may only cancel a whole
+// request), so that one goes to the coach by message.
+async function rescheduleSession(s) {
+    const req = myRequestsAll.find(r => r.id === s.bookingId);
+    const label = `${formatDateShort(s.date)} \u00b7 ${formatTime(s.startTime)}`;
+    if (!req) return;
+    if ((req.allDates || req.dates || []).length > 1) {
+        if (await sbConfirm(`${label} is part of a weekly series. Message your coach and they'll move that week.`, { title: "Move one week?", confirmLabel: "Message coach", cancelLabel: "Not now" })) window.location.href = "messages.html";
+        return;
+    }
+    if (!(await sbConfirm(`${label} will be cancelled and your coach told. Next, pick the new time below.`, { title: "Reschedule this session?", confirmLabel: "Cancel it and pick a time", cancelLabel: "Keep it", danger: true }))) return;
+    try {
+        await cancelBookingRequest(req.id);
+    } catch (error) {
+        toast(friendlyError(error, "cancel that session"), "error");
+        return;
+    }
+    rescheduling = label;
+    await refreshMyRequests();
+    renderBook();
+    dayEl("availableSlotsWrap").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderHomeworkRows() {
@@ -617,6 +648,7 @@ function requestRowHtml(req) {
 // book another, and what happened (js/sessionModel.js clientSessions).
 async function refreshMyRequests() {
     const requests = await listMyBookingRequests();
+    myRequestsAll = requests;
     const today = localToday();
     const { upcoming, past, waiting, declined, attendance } = clientSessions(requests, today);
 
@@ -716,7 +748,7 @@ bookForm.addEventListener("submit", async event => {
             slot: bookState.slot,
             dates,
             weeks,
-            clientNote: bookNote.value
+            clientNote: rescheduling ? `Reschedule of ${rescheduling}. ${bookNote.value}`.trim() : bookNote.value
         });
         sendBookingRequestEmail({
             coachEmail: bookState.coach.coachEmail,
@@ -731,6 +763,7 @@ bookForm.addEventListener("submit", async event => {
             link: window.location.origin + window.location.pathname
         }).catch(() => {});
         toast("Request sent. You'll get an email when your coach answers.");
+        rescheduling = null;
         setTimeout(() => {
             bookOverlay.hidden = true;
             bookState = null;
