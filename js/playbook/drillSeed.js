@@ -1,8 +1,9 @@
+import { MORE_DRILLS } from "./drillSeedMore.js";
 // Starter drills for youth and school 11v11 teams. Plain, original coaching content: edit freely.
 const D = (name, topic, minutes, minPlayers, space, intensity, equipment, setup, how, points, progressions, easier) =>
     ({ name, topic, minutes, minPlayers, space, intensity, equipment, setup, how, points, progressions, easier });
 
-export const SEED_DRILLS = [
+const BASE_DRILLS = [
     D("Dynamic ball warm-up", "Warm-up", 10, 6, "Half field", "Low", ["Balls (1 each)", "Cones"],
         "Players spread in a 30x30 yard box, one ball each.",
         "Coach calls moves: dribble with inside/outside, sole rolls, toe taps, turns, jog and pass to a partner. Add stretches between sets.",
@@ -134,3 +135,5 @@ export const SEED_DRILLS = [
         ["Theme first, score second", "Freeze and show the picture when it's right", "Praise good decisions, not just goals"],
         ["Add a second condition", "Bonus goal for the theme"], ["Remove the condition", "Bigger goals"])
 ];
+
+export const SEED_DRILLS = [...BASE_DRILLS, ...MORE_DRILLS];

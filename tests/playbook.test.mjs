@@ -153,7 +153,7 @@ test("starter drills are complete and use known topics", () => {
         const c = DR.normalizeDrill(d, "d1");
         assert.ok(c, d.name);
         assert.ok(c.setup && c.how && c.points.length >= 3 && c.progressions.length && c.easier.length, d.name + " is incomplete");
-        assert.ok(c.minutes >= 8 && c.minutes <= 25, d.name);
+        assert.ok(c.minutes >= 5 && c.minutes <= 25, d.name);
         assert.ok(!names.has(d.name), "duplicate " + d.name); names.add(d.name);
         assert.ok(!/ -- /.test(JSON.stringify(d)), "use a real dash in " + d.name);
     }

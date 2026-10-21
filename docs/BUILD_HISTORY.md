@@ -335,3 +335,7 @@ Coach-only "Southbound Playbook" entry in the Tools menu (`components/header.htm
 - Captain of the day (fair rotation, same rule as duty, picked by "Pick who is next" or by hand), "Worth a word" flags (two misses in a row, or under 75% after four counted days; excused days skip), season print sheet.
 - Parent contacts (`sb-playbook-contacts`, `teamModel` contacts functions): name and phone per player with Call/Text links. **Device only: deliberately not in `SYNC_KEYS`** (phone numbers of kids' families); the sign-out clear in `js/auth.js` still removes it for a linked account. Tests in `tests/playbookTeam.test.mjs` and `tests/playbookSync.test.mjs`.
 
+
+### Playbook: fuller starter drill set (2026-10-21)
+- Added `js/playbook/drillSeedMore.js` (42 drills, original wording) to the 26 existing ones: 68 total. New topics: Conditioning (including a make-up-run drill) and Cool-down (not offered as a practice focus). Warm-ups now 6, plus more passing, receiving, dribbling, finishing, keeper, defending, rondos, transitions, set pieces and small-sided games. Heading drill is light-reps with a safety note.
+- New visitors get everything; someone who already has saved drills taps More, Add starter drills (merges by name, nothing overwritten).

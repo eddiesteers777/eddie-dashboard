@@ -1,6 +1,6 @@
 // Playbook drills: pure model (no DOM). A drill is plain data a coach can edit.
 
-export const TOPICS = Object.freeze(["Warm-up", "Passing", "Receiving", "Dribbling", "Finishing", "Goalkeeping", "Defending", "Possession", "Transitions", "Tactical shape", "Pressing", "Set pieces", "Small-sided"]);
+export const TOPICS = Object.freeze(["Warm-up", "Passing", "Receiving", "Dribbling", "Finishing", "Goalkeeping", "Defending", "Possession", "Transitions", "Tactical shape", "Pressing", "Set pieces", "Small-sided", "Conditioning", "Cool-down"]);
 export const INTENSITY = Object.freeze(["Low", "Medium", "High"]);
 
 const str = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");

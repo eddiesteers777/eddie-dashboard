@@ -5,7 +5,7 @@ export const EQUIPMENT = Object.freeze([
     ["goals", "Full-size goals"], ["smallGoals", "Small goals"], ["cones", "Cones"], ["pinnies", "Pinnies"], ["balls", "Enough balls"]
 ]);
 export const GAME_OPTIONS = Object.freeze([["", "No game soon"], ["1", "Game tomorrow"], ["2", "Game in 2 days"], ["3", "Game in 3+ days"]]);
-export const FOCUS_TOPICS = Object.freeze(TOPICS.filter(t => t !== "Warm-up" && t !== "Small-sided"));
+export const FOCUS_TOPICS = Object.freeze(TOPICS.filter(t => t !== "Warm-up" && t !== "Small-sided" && t !== "Cool-down"));
 const MIN_ITEM = 5, MAX_ITEM = 30;
 
 // Which equipment keys a drill needs, read from its equipment list.
