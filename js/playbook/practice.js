@@ -2,19 +2,12 @@ import * as D from "./drillModel.js";
 import * as P from "./practiceModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
 import * as R from "./rosterModel.js";
+import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
 
-const DRILL_KEY = "calera-board-drills", CUR_KEY = "calera-board-practice-current", LIST_KEY = "calera-board-practices", ID_KEY = "calera-board-practice-id";
+const DRILL_KEY = KEYS.drills, CUR_KEY = KEYS.practice, LIST_KEY = KEYS.practices, ID_KEY = KEYS.practiceId;
 const $ = id => document.getElementById(id);
 const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
-async function allowed() {
-    try {
-        const { waitForUser } = await import("../js/auth.js");
-        const { isApprovedCoach } = await import("../js/userProfile.js");
-        const user = await waitForUser();
-        return Boolean(user) && (await isApprovedCoach());
-    } catch { return false; }
-}
 
 let drills = [], byId = new Map(), pr = P.newPractice(), currentId = null, notes = [];
 
@@ -31,7 +24,7 @@ const update = patch => { pr = { ...pr, ...patch }; persist(); renderSheet(); };
 
 function renderRosterHint() {
     let n = 0;
-    try { n = R.available(R.parseRoster(localStorage.getItem("calera-board-roster") || "") || []).length; } catch {}
+    try { n = R.available(R.parseRoster(localStorage.getItem(KEYS.roster) || "") || []).length; } catch {}
     const b = $("useRoster");
     b.hidden = !n || n === pr.players;
     b.textContent = `Use my roster: ${n} here today`;
@@ -52,7 +45,7 @@ function renderSetup() {
     }
     const f = $("focus"); f.replaceChildren();
     for (const t of P.FOCUS_TOPICS) {
-        const b = h("button", "tb-chip", t); b.type = "button"; b.setAttribute("aria-pressed", String(pr.focus.includes(t)));
+        const b = h("button", "pb-chip", t); b.type = "button"; b.setAttribute("aria-pressed", String(pr.focus.includes(t)));
         b.onclick = () => {
             if (!pr.focus.includes(t) && pr.focus.length >= 4) return toast("Pick up to 4");
             update({ focus: pr.focus.includes(t) ? pr.focus.filter(x => x !== t) : [...pr.focus, t] }); renderSetup();
@@ -65,7 +58,7 @@ function renderSetup() {
 
 function renderSheet() {
     const items = pr.items.filter(i => byId.has(i.drillId));
-    $("sub").textContent = `${items.length} drills · ${P.planTotal(items)} min`;
+    $("sub").textContent = items.length ? `${items.length} drills · ${P.planTotal(items)} min` : "";
     $("shTitle").textContent = pr.title || "Practice";
     const date = pr.date ? new Date(pr.date + "T12:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }) : "";
     $("shMeta").textContent = [date, `${pr.players} players`, `${pr.total} min`, P.GAME_OPTIONS.find(o => o[0] === (pr.gameInDays ? String(pr.gameInDays) : ""))[1]].filter(Boolean).join(" · ");
@@ -86,7 +79,7 @@ function renderSheet() {
         if (d.points.length) { const ul = h("ul"); d.points.slice(0, 3).forEach(x => ul.append(h("li", "", x))); li.append(ul); }
         if (d.easier.length) li.append(h("p", "dr-meta", "Easier: " + d.easier[0]));
         const ctl = h("div", "pr-ctl");
-        const b = (label, aria, fn, dis) => { const x = h("button", "tb-btn", label); x.type = "button"; x.setAttribute("aria-label", aria); x.disabled = Boolean(dis); x.onclick = fn; ctl.append(x); };
+        const b = (label, aria, fn, dis) => { const x = h("button", "pb-btn", label); x.type = "button"; x.setAttribute("aria-label", aria); x.disabled = Boolean(dis); x.onclick = fn; ctl.append(x); };
         b("−5", "5 minutes less", () => update({ items: P.setMinutes(pr.items, i, it.minutes - 5) }), it.minutes <= 5);
         b("+5", "5 minutes more", () => update({ items: P.setMinutes(pr.items, i, it.minutes + 5) }));
         b("↑", "Move up", () => update({ items: P.moveItem(pr.items, i, -1) }), i === 0);
@@ -113,10 +106,10 @@ function renderMine() {
     $("mineEmpty").hidden = list.length > 0;
     $("saveBtn").textContent = currentId && list.some(p => p.id === currentId) ? `Update "${list.find(p => p.id === currentId).name}"` : "Save this practice";
     for (const it of [...list].sort((a, b) => b.updatedAt - a.updatedAt)) {
-        const li = h("li", "tb-item" + (it.id === currentId ? " cur" : ""));
+        const li = h("li", "pb-item" + (it.id === currentId ? " cur" : ""));
         li.append(h("b", "", it.name), h("small", "", `${it.practice.items.length} drills · ${it.practice.total} min${it.practice.date ? " · " + it.practice.date : ""}`));
-        const row = h("div", "tb-row");
-        const b = (label, fn) => { const x = h("button", "tb-btn", label); x.type = "button"; x.onclick = () => fn(x); row.append(x); };
+        const row = h("div", "pb-row");
+        const b = (label, fn) => { const x = h("button", "pb-btn", label); x.type = "button"; x.onclick = () => fn(x); row.append(x); };
         b("Open", () => { pr = it.practice; notes = []; setCurrentId(it.id); persist(); renderSetup(); renderSheet(); $("mineDlg").close(); toast("Opened " + it.name); });
         b("Copy", () => { const r = P.savePractice(readList(), { ...it.practice, title: (it.name + " copy").slice(0, 60) }, null); if (writeList(r.list)) { renderMine(); toast("Copy saved"); } });
         b("Delete", x => {
@@ -143,10 +136,9 @@ function wire() {
     $("saveBtn").onclick = () => { const r = P.savePractice(readList(), pr, currentId); if (writeList(r.list)) { setCurrentId(r.id); renderMine(); toast("Saved"); } };
 }
 
-(async () => {
-    if (!(await allowed())) { location.replace("../index.html"); return; }
+(() => {
+    migrateOldKeys(); applyTheme();
     drills = loadDrills(); byId = new Map(drills.map(d => [d.id, d]));
     try { const c = P.parsePractice(JSON.parse(localStorage.getItem(CUR_KEY) || "null")); if (c) pr = c; const id = localStorage.getItem(ID_KEY); if (id && readList().some(p => p.id === id)) currentId = id; } catch {}
-    $("gate").hidden = true; $("app").hidden = false;
     wire(); renderSetup(); renderSheet();
 })();

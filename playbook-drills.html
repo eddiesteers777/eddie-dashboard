@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Free Soccer Drill Library | Southbound Playbook</title>
+
+    <meta name="description" content="Free soccer drill library with 26 starter drills: setup, rotations, coaching points, progressions and easier versions. Make your own. No account needed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Free Soccer Drill Library | Southbound Playbook">
+    <meta property="og:description" content="Free soccer drill library with 26 starter drills: setup, rotations, coaching points, progressions and easier versions. Make your own. No account needed.">
+    <meta property="og:url" content="https://southboundcoaching.com/playbook-drills.html">
+    <link rel="canonical" href="https://southboundcoaching.com/playbook-drills.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/playbook.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body pb-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page pb-page" id="main">
+  <div class="pb-shell" id="app">
+  <header class="pb-head">
+    <div class="pb-head-text">
+      <div class="pub-hero-kicker">Free tool &middot; Southbound Playbook</div>
+      <h1>Drills</h1>
+      <span class="pb-sub" id="count"></span>
+    </div>
+    <div class="pb-actions">
+      <button class="pb-btn" id="more">More</button>
+      <button class="pb-btn pb-primary" id="newDrill">New drill</button>
+    </div>
+  </header>
+  <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab" aria-current="page">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-roster.html" class="pb-tab">Roster</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+
+  <div class="dr-filters">
+    <input id="q" type="search" placeholder="Search drills" aria-label="Search drills" autocomplete="off">
+    <select id="fInt" aria-label="Intensity"><option value="">Any intensity</option><option>Low</option><option>Medium</option><option>High</option></select>
+    <select id="fMin" aria-label="Time"><option value="0">Any length</option><option value="10">10 min or less</option><option value="15">15 min or less</option><option value="20">20 min or less</option></select>
+  </div>
+  <div class="pb-tools" id="topics" role="group" aria-label="Skill"></div>
+  <div class="dr-grid" id="grid"></div>
+  <p class="pb-hint" id="none" hidden>No drills match. Clear a filter or add your own.</p>
+
+  <dialog id="detail" class="pb-dlg dr-dlg"></dialog>
+
+  <dialog id="editor" class="pb-dlg dr-dlg">
+    <form id="form" method="dialog">
+      <h2 id="edTitle">Drill</h2>
+      <label>Name <input name="name" required maxlength="80"></label>
+      <div class="dr-two">
+        <label>Skill <select name="topic" id="edTopic"></select></label>
+        <label>Intensity <select name="intensity"><option>Low</option><option selected>Medium</option><option>High</option></select></label>
+        <label>Minutes <input name="minutes" type="number" min="1" max="60" inputmode="numeric" value="10"></label>
+        <label>Min. players <input name="minPlayers" type="number" min="1" max="30" inputmode="numeric" value="6"></label>
+      </div>
+      <label>Space <input name="space" maxlength="60" placeholder="e.g. 20x20 yd grid"></label>
+      <label>Equipment (one per line) <textarea name="equipment" rows="3"></textarea></label>
+      <label>Setup <textarea name="setup" rows="3" maxlength="600"></textarea></label>
+      <label>How it runs and rotations <textarea name="how" rows="3" maxlength="800"></textarea></label>
+      <label>Coaching points (one per line) <textarea name="points" rows="3"></textarea></label>
+      <label>Progressions (one per line) <textarea name="progressions" rows="2"></textarea></label>
+      <label>Easier versions (one per line) <textarea name="easier" rows="2"></textarea></label>
+      <label>Diagram from a saved board <select name="boardId" id="edBoard"></select></label>
+      <div class="pb-dlg-foot">
+        <button type="button" class="pb-btn" id="edCancel">Cancel</button>
+        <button type="submit" class="pb-btn pb-primary" id="edSave">Save drill</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="moreDlg" class="pb-dlg">
+    <h2>Drill library</h2>
+    <button class="pb-btn" id="mBackup">Back up my drills</button>
+    <label class="pb-btn pb-file">Import a drills file<input type="file" id="mImport" accept="application/json,.json" hidden></label>
+    <button class="pb-btn" id="mSeeds">Add back the starter drills</button>
+    <button class="pb-btn" id="mClose">Close</button>
+  </dialog>
+  <div id="toast" class="pb-toast" role="status" aria-live="polite"></div>
+  <p class="pb-printfoot">Made with Southbound Playbook &middot; southboundcoaching.com/playbook.html</p>
+  </div>
+    </main>
+
+<footer class="pub-footer">
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="pace.html">Pace calculator</a><a href="playbook.html">Soccer Playbook</a><a href="fueling.html">Fueling calculator</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/loadPublicHeader.js"></script>
+    <script type="module" src="js/playbook/shell.js"></script>
+    <script type="module" src="js/playbook/drills.js"></script>
+
+</body>
+
+</html>

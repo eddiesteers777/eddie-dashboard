@@ -1,24 +1,16 @@
 import * as M from "./boardModel.js";
 import * as L from "./boardLibrary.js";
 import * as R from "./rosterModel.js";
+import { KEYS, migrateOldKeys, applyTheme, toggleTheme, clearAll } from "./store.js";
+import { C, HEADS, MARK_STYLE as STYLE } from "./theme.js";
 
-const KEY = "calera-board-current";
-const LIB_KEY = "calera-board-library";
-const ID_KEY = "calera-board-current-id";
-const ROSTER_KEY = "calera-board-roster";
+const KEY = KEYS.board;
+const LIB_KEY = KEYS.library;
+const ID_KEY = KEYS.boardId;
+const ROSTER_KEY = KEYS.roster;
 const readRoster = () => { try { return R.parseRoster(localStorage.getItem(ROSTER_KEY) || "") || []; } catch { return []; } };
 const $ = id => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
-
-// ---- coach-only gate (nav hiding is UX; the board holds nothing in the cloud) ----
-async function allowed() {
-    try {
-        const { waitForUser } = await import("../js/auth.js");
-        const { isApprovedCoach } = await import("../js/userProfile.js");
-        const user = await waitForUser();
-        return Boolean(user) && (await isApprovedCoach());
-    } catch { return false; }
-}
 
 let hist, selected = null, selectedMark = null, tool = "select";
 const VBOX = { full: [0, 0, 68, 105], top: [0, 0, 68, 54], bottom: [0, 51, 68, 54] };
@@ -31,13 +23,6 @@ const TOOLS = [
     ["zone", "Zone", '<rect x="3" y="2" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 2" fill="none"/>'],
     ["text", "Note", '<path d="M4 3h14M11 3v10" stroke="currentColor" stroke-width="2.4" fill="none"/>']
 ];
-const STYLE = {
-    pass: { stroke: "#fff", w: .6, head: "white" },
-    run: { stroke: "#fff", w: .6, dash: "1.6 1.1", head: "white" },
-    dribble: { stroke: "#BFE3FF", w: .6, head: "sky" },
-    arrow: { stroke: "#0B2A5B", w: .9, head: "navy" }
-};
-const HEADS = { white: "#fff", sky: "#BFE3FF", navy: "#0B2A5B" };
 
 function load() {
     try { const b = M.parseBoard(localStorage.getItem(KEY) || ""); if (b) return b; } catch {}
@@ -60,8 +45,8 @@ function el(name, attrs = {}, parent) {
 const W = 68, H = 105;
 
 function drawPitch(svg) {
-    for (let i = 0; i < 10; i++) el("rect", { x: 0, y: i * 10.5, width: W, height: 10.5, fill: i % 2 ? "#3A8556" : "#3F8F5E" }, svg);
-    const L = { fill: "none", stroke: "rgba(255,255,255,.9)", "stroke-width": ".45" };
+    for (let i = 0; i < 10; i++) el("rect", { x: 0, y: i * 10.5, width: W, height: 10.5, fill: i % 2 ? C.pitchB : C.pitchA }, svg);
+    const L = { fill: "none", stroke: C.line, "stroke-width": ".45" };
     el("rect", { x: 2, y: 2, width: 64, height: 101, ...L }, svg);
     el("line", { x1: 2, y1: 52.5, x2: 66, y2: 52.5, ...L }, svg);
     el("circle", { cx: 34, cy: 52.5, r: 9.15, ...L }, svg);
@@ -80,9 +65,9 @@ function playerNode(p, side, svg) {
     const g = el("g", { class: "pl", "data-id": p.id, tabindex: 0, role: "button", "aria-label": `${side === "h" ? "Your" : "Opponent"} player ${p.num}${p.name ? " " + p.name : ""}` }, svg);
     g.setAttribute("transform", `translate(${p.x * W} ${p.y * H})`);
     const home = side === "h";
-    if (p.id === selected) el("circle", { r: 4.9, fill: "none", stroke: "#7CC4FF", "stroke-width": 1, opacity: .95 }, g);
-    el("circle", { class: "ring", r: 3.6, fill: home ? "#0B2A5B" : "#9AA5B4", stroke: "#fff", "stroke-width": .6 }, g);
-    const t = el("text", { y: 1.25, "text-anchor": "middle", fill: "#fff" }, g);
+    if (p.id === selected) el("circle", { r: 4.9, fill: "none", stroke: C.tan, "stroke-width": 1, opacity: .95 }, g);
+    el("circle", { class: "ring", r: 3.6, fill: home ? C.home : C.away, stroke: home ? C.homeRing : C.awayRing, "stroke-width": .7 }, g);
+    const t = el("text", { y: 1.25, "text-anchor": "middle", fill: home ? C.homeText : C.awayText }, g);
     t.textContent = p.num;
     if (p.name) {
         const n = el("text", { class: "nm", y: 7, "text-anchor": "middle" }, g);
@@ -110,8 +95,8 @@ function render() {
     b.home.forEach(p => playerNode(p, "h", svg));
     const ball = el("g", { class: "pl", "data-ball": 1, tabindex: 0, role: "button", "aria-label": "Ball" }, svg);
     ball.setAttribute("transform", `translate(${b.ball.x * W} ${b.ball.y * H})`);
-    el("circle", { r: 2.1, fill: "#fff", stroke: "#0B1F3F", "stroke-width": .5 }, ball);
-    el("circle", { r: .8, fill: "#0B1F3F" }, ball);
+    el("circle", { r: 2.1, fill: C.ball, stroke: C.ballInk, "stroke-width": .5 }, ball);
+    el("circle", { r: .8, fill: C.ballInk }, ball);
 
     b.marks.filter(m => m.type === "text").forEach(m => markNode(m, svg)); // notes sit above players
     $("phTitle").textContent = b.title;
@@ -153,7 +138,7 @@ function renderTools() {
     }
     for (const [id, label, icon] of TOOLS) {
         const b = document.createElement("button");
-        b.type = "button"; b.className = "tb-tool"; b.dataset.tool = id;
+        b.type = "button"; b.className = "pb-tool"; b.dataset.tool = id;
         b.innerHTML = `<svg viewBox="0 0 24 14" aria-hidden="true">${icon}</svg>${label}`;
         b.onclick = () => { tool = id; if (id !== "select") { selected = null; selectedMark = null; } render(); };
         box.appendChild(b);
@@ -167,14 +152,14 @@ function markNode(m, svg) {
     if (m.type === "zone") {
         const [a, b] = m.pts;
         const r = { x: Math.min(a.x, b.x) * W, y: Math.min(a.y, b.y) * H, width: Math.abs(a.x - b.x) * W, height: Math.abs(a.y - b.y) * H, rx: 1 };
-        el("rect", { ...r, fill: "rgba(124,196,255,.24)", stroke: "#7CC4FF", "stroke-width": sel ? 1 : .5, "stroke-dasharray": "1.6 1" }, g);
+        el("rect", { ...r, fill: C.zoneFill, stroke: C.tan, "stroke-width": sel ? 1 : .5, "stroke-dasharray": "1.6 1" }, g);
     } else if (m.type === "text") {
         const t = el("text", { x: m.pts[0].x * W, y: m.pts[0].y * H, "text-anchor": "middle" }, g);
         t.textContent = m.text;
-        if (sel) { const bb = { x: m.pts[0].x * W - 8, y: m.pts[0].y * H - 4, width: 16, height: 6 }; el("rect", { ...bb, fill: "none", stroke: "#7CC4FF", "stroke-width": .5, rx: 1 }, g); }
+        if (sel) { const bb = { x: m.pts[0].x * W - 8, y: m.pts[0].y * H - 4, width: 16, height: 6 }; el("rect", { ...bb, fill: "none", stroke: C.tan, "stroke-width": .5, rx: 1 }, g); }
     } else {
         const d = M.markPath(m, W, H), st = STYLE[m.type];
-        if (sel) el("path", { d, fill: "none", stroke: "#7CC4FF", "stroke-width": st.w + 1.6, opacity: .55, "stroke-linecap": "round" }, g);
+        if (sel) el("path", { d, fill: "none", stroke: C.tan, "stroke-width": st.w + 1.6, opacity: .55, "stroke-linecap": "round" }, g);
         const a = { d, fill: "none", stroke: st.stroke, "stroke-width": st.w, "stroke-linecap": "round", "stroke-linejoin": "round", "marker-end": `url(#ah-${st.head})` };
         if (st.dash) a["stroke-dasharray"] = st.dash;
         el("path", a, g);
@@ -216,7 +201,7 @@ function chips(id, current, side) {
     if (side === "view") {
         for (const v of M.VIEWS) {
             const b = document.createElement("button");
-            b.className = "tb-chip"; b.type = "button"; b.textContent = VIEW_LABELS[v];
+            b.className = "pb-chip"; b.type = "button"; b.textContent = VIEW_LABELS[v];
             b.setAttribute("aria-pressed", String(v === current));
             b.onclick = () => apply(M.setView(hist.present, v));
             box.appendChild(b);
@@ -225,7 +210,7 @@ function chips(id, current, side) {
     }
     for (const f of M.FORMATIONS) {
         const b = document.createElement("button");
-        b.className = "tb-chip"; b.type = "button"; b.textContent = f;
+        b.className = "pb-chip"; b.type = "button"; b.textContent = f;
         b.setAttribute("aria-pressed", String(f === current));
         b.onclick = () => apply(M.setFormation(hist.present, side, f));
         box.appendChild(b);
@@ -382,13 +367,13 @@ function renderBoards() {
     $("bdSave").textContent = cur ? `Update "${cur.name}"` : "Save this board";
     for (const it of items) {
         const li = document.createElement("li");
-        li.className = "tb-item" + (it.id === currentId ? " cur" : "");
+        li.className = "pb-item" + (it.id === currentId ? " cur" : "");
         const b = it.board;
-        li.innerHTML = `<b></b><small></small><div class="tb-row"></div>`;
+        li.innerHTML = `<b></b><small></small><div class="pb-row"></div>`;
         li.querySelector("b").textContent = it.name;
         li.querySelector("small").textContent = `${b.scenario} · ${b.homeFormation} · ${ago(it.updatedAt)}`;
-        const row = li.querySelector(".tb-row");
-        const btn = (label, fn) => { const x = document.createElement("button"); x.type = "button"; x.className = "tb-btn"; x.textContent = label; x.onclick = () => fn(x); row.appendChild(x); return x; };
+        const row = li.querySelector(".pb-row");
+        const btn = (label, fn) => { const x = document.createElement("button"); x.type = "button"; x.className = "pb-btn"; x.textContent = label; x.onclick = () => fn(x); row.appendChild(x); return x; };
         btn("Open", () => { selected = null; selectedMark = null; tool = "select"; setCurrentId(it.id); apply(it.board); $("boardsDlg").close(); toast("Opened " + it.name); });
         btn("Copy", () => { const r = L.duplicateBoard(readLib(), it.id); if (writeLib(r.lib)) { renderBoards(); toast("Copy saved"); } });
         btn("Delete", x => {
@@ -410,7 +395,7 @@ function wireBoards() {
     $("bdBackup").onclick = () => {
         const lib = readLib();
         if (!lib.boards.length) return toast("Nothing saved yet");
-        download("calera-boards-backup.json", new Blob([L.serializeLibrary(lib)], { type: "application/json" }));
+        download("southbound-playbook-boards.json", new Blob([L.serializeLibrary(lib)], { type: "application/json" }));
         toast("Backup saved");
     };
     $("bdRestore").onchange = async e => {
@@ -469,11 +454,11 @@ function wire() {
     };
 }
 
-(async () => {
-    if (!(await allowed())) { location.replace("../index.html"); return; }
+(() => {
+    migrateOldKeys();
+    applyTheme();
     hist = M.createHistory(load());
     try { const id = localStorage.getItem(ID_KEY); if (id && readLib().boards.some(b => b.id === id)) currentId = id; } catch {}
-    $("gate").hidden = true; $("app").hidden = false;
     wire(); setupDrag(); render();
     // drills.html links here with ?board=<saved board id>
     const want = new URLSearchParams(location.search).get("board");

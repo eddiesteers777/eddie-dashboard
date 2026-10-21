@@ -1,4 +1,4 @@
-// Calera tactical board: pure model (no DOM). Coordinates are 0..1 across the pitch,
+// Playbook tactical board: pure model (no DOM). Coordinates are 0..1 across the pitch,
 // x left to right, y top to bottom. "Home" defends the bottom goal and attacks up.
 
 export const FORMATIONS = Object.freeze(["4-4-2", "4-3-3", "4-5-1", "4-2-3-1", "3-5-2", "3-4-3", "5-3-2"]);
@@ -215,7 +215,7 @@ export function undo(h) { return h.past.length ? { past: h.past.slice(0, -1), pr
 export function redo(h) { return h.future.length ? { past: [...h.past, h.present], present: h.future[0], future: h.future.slice(1) } : h; }
 
 // ---- save format: validated on load so a bad file can't break the page ----
-export function serialize(board) { return JSON.stringify({ app: "calera-board", ...board }); }
+export function serialize(board) { return JSON.stringify({ app: "playbook-board", ...board }); }
 
 export function parseBoard(text) {
     let o;

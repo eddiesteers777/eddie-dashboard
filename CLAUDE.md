@@ -28,7 +28,7 @@ Southbound Coaching (formerly "EddieOS") is Eddie Steers' coaching business plat
 
 | Who | What they see | How it's decided |
 |---|---|---|
-| **Guest** (signed out) | Public site: Home, About, Packages, Contact, Get the App, Apply, the free Pace calculator; plus the full **Fueling calculator** (`fueling.html`, the one app page open to guests) | `js/loadHeader.js` sends signed-out visitors on any app page to `home.html`, except `GUEST_PAGES` (`fueling.html`: `html.sb-guest`, no app tabs, work kept on the device) |
+| **Guest** (signed out) | Public site: Home, About, Packages, Contact, Get the App, Apply, the free Pace calculator, the free **Southbound Playbook** (`playbook*.html`); plus the full **Fueling calculator** (`fueling.html`, the one app page open to guests) | `js/loadHeader.js` sends signed-out visitors on any app page to `home.html`, except `GUEST_PAGES` (`fueling.html`: `html.sb-guest`, no app tabs, work kept on the device) |
 | **Client** (approved, `status: "active"`) | The app, filtered to the services Eddie granted them | `services[]` on their profile → capabilities (`js/services.js`), applied by `js/navAccess.js` / `js/todayLayout.js` |
 | **Coach / admin** (`isCoachApproved: true`) | Everything, plus the Coach section | Eddie's own account. Approved coaches can approve anyone. |
 
@@ -115,6 +115,7 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 - **`Promise.all` with a long positional list breaks silently.** Use `allNamed({ name: promise })` for more than three or four.
 - **Hand-uploaded files can drop rules.** If Eddie uploads a file, diff it against the previous version.
 - **Phone tap targets are 44px+** (block at the end of `css/style.css`; inline links get an invisible `::after` hit area). **Phone inputs must be 16px+** or iOS zooms on focus (`css/style.css` forces it up to 900px and on any touch screen). Double-tap zoom is off app-wide (`*{touch-action:manipulation}`); pinch zoom stays on for accessibility. Phone overrides in `css/style.css` need `!important` (page stylesheets load after it).
+- **Southbound Playbook (`playbook*.html`, `js/playbook/`, `css/playbook.css`) is a free public tool: no sign-in, no Firestore, data in `sb-playbook-*` localStorage keys (list in `js/playbook/store.js`).** Those keys are deliberately NOT in the sign-out lists in `js/auth.js` (a guest's work must survive signing in, and it is not account data) until cloud sync is added; when it is, add them to those lists and the stash/adopt flow like `js/guestFuel.js`. Roster = first names only, never uploaded. `team/*.html` are redirect stubs for the first (coach-only) version.
 - **Cloud sync never carries a deleted key.** A deletable synced item needs a marker (`{ deleted: true, updatedAt }`), and a list that grows on several devices needs one key per item (a prefix).
 - **Reading your own not-yet-created doc is permission-denied, not "missing".** It has broken first check-ins, `assignClient` and first wearable shares. Write without a pre-read; treat permission-denied on your own doc ID as "new"; test the real create path.
 - **Page CSS resets body padding on phones.** `loadHeader` adds `body.has-bottomnav`, padded with `!important`.

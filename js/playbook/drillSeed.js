@@ -1,4 +1,4 @@
-// Starter drills for a middle-school 11v11 program. Plain, original coaching content: edit freely.
+// Starter drills for youth and school 11v11 teams. Plain, original coaching content: edit freely.
 const D = (name, topic, minutes, minPlayers, space, intensity, equipment, setup, how, points, progressions, easier) =>
     ({ name, topic, minutes, minPlayers, space, intensity, equipment, setup, how, points, progressions, easier });
 

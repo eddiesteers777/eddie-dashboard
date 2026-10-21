@@ -1,4 +1,4 @@
-// Calera drills: pure model (no DOM). A drill is plain data a coach can edit.
+// Playbook drills: pure model (no DOM). A drill is plain data a coach can edit.
 
 export const TOPICS = Object.freeze(["Warm-up", "Passing", "Receiving", "Dribbling", "Finishing", "Goalkeeping", "Defending", "Possession", "Transitions", "Tactical shape", "Pressing", "Set pieces", "Small-sided"]);
 export const INTENSITY = Object.freeze(["Low", "Medium", "High"]);
@@ -73,12 +73,12 @@ export function filterDrills(list, { topic = "", q = "", intensity = "", maxMinu
         (!needle || [d.name, d.topic, d.setup, d.how, ...d.equipment, ...d.points].join(" ").toLowerCase().includes(needle)));
 }
 
-export function serializeDrills(list) { return JSON.stringify({ app: "calera-drills", v: 1, drills: list }); }
+export function serializeDrills(list) { return JSON.stringify({ app: "playbook-drills", v: 1, drills: list }); }
 
 export function parseDrills(text) {
     let o;
     try { o = JSON.parse(text); } catch { return null; }
-    if (!o || o.app !== "calera-drills" || !Array.isArray(o.drills)) return null;
+    if (!o || !["playbook-drills", "calera-drills"].includes(o.app) || !Array.isArray(o.drills)) return null;
     const out = [];
     for (const d of o.drills.slice(0, 500)) {
         const c = normalizeDrill(d, "d" + (out.length + 1));

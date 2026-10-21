@@ -1,17 +1,10 @@
 import * as R from "./rosterModel.js";
+import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
 
-const KEY = "calera-board-roster";
+const KEY = KEYS.roster;
 const $ = id => document.getElementById(id);
 const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
-async function allowed() {
-    try {
-        const { waitForUser } = await import("../js/auth.js");
-        const { isApprovedCoach } = await import("../js/userProfile.js");
-        const user = await waitForUser();
-        return Boolean(user) && (await isApprovedCoach());
-    } catch { return false; }
-}
 
 let roster = [], editing = null;
 function read() { try { return R.parseRoster(localStorage.getItem(KEY) || "") || []; } catch { return []; } }
@@ -31,7 +24,7 @@ function render() {
         lab.append(c);
         const main = h("div", "ro-main");
         main.append(h("b", "", p.name), h("small", "", [R.POSITION_LABELS[p.pos], p.note].filter(Boolean).join(" · ")));
-        const edit = h("button", "tb-btn", "Edit"); edit.type = "button"; edit.onclick = () => openEditor(p.id);
+        const edit = h("button", "pb-btn", "Edit"); edit.type = "button"; edit.onclick = () => openEditor(p.id);
         li.append(lab, h("span", "ro-num", p.num == null ? "–" : "#" + p.num), main, edit);
         list.append(li);
     }
@@ -70,7 +63,7 @@ function wire() {
     $("backup").onclick = () => {
         if (!roster.length) return toast("Nothing to back up");
         const a = document.createElement("a");
-        a.href = URL.createObjectURL(new Blob([R.serializeRoster(roster)], { type: "application/json" })); a.download = "calera-roster.json";
+        a.href = URL.createObjectURL(new Blob([R.serializeRoster(roster)], { type: "application/json" })); a.download = "southbound-playbook-roster.json";
         document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
         $("moreDlg").close(); toast("Backup saved");
     };
@@ -84,9 +77,8 @@ function wire() {
     };
 }
 
-(async () => {
-    if (!(await allowed())) { location.replace("../index.html"); return; }
+(() => {
+    migrateOldKeys(); applyTheme();
     roster = read();
-    $("gate").hidden = true; $("app").hidden = false;
     wire(); render();
 })();

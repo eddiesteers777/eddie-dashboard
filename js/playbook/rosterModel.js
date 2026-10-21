@@ -1,4 +1,4 @@
-// Calera roster: pure model (no DOM). First names and numbers only, kept on this device.
+// Playbook roster: pure model (no DOM). First names and numbers only, kept on this device.
 
 export const POSITIONS = Object.freeze(["GK", "DEF", "MID", "FWD", "Any"]);
 export const POSITION_LABELS = Object.freeze({ GK: "Goalkeeper", DEF: "Defender", MID: "Midfielder", FWD: "Forward", Any: "Any position" });
@@ -60,11 +60,11 @@ export function addBulk(list, text) {
     return { list: out, added };
 }
 
-export const serializeRoster = list => JSON.stringify({ app: "calera-roster", v: 1, players: list });
+export const serializeRoster = list => JSON.stringify({ app: "playbook-roster", v: 1, players: list });
 export function parseRoster(text) {
     try {
         const o = JSON.parse(text);
-        if (!o || o.app !== "calera-roster" || !Array.isArray(o.players)) return null;
+        if (!o || !["playbook-roster", "calera-roster"].includes(o.app) || !Array.isArray(o.players)) return null;
         const out = [];
         const seen = new Set();
         for (const p of o.players.slice(0, 60)) {

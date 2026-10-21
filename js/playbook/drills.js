@@ -2,18 +2,11 @@ import * as D from "./drillModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
 import { loadLibrary } from "./boardLibrary.js";
 import { boardThumb } from "./boardThumb.js";
+import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
 
-const KEY = "calera-board-drills", LIB_KEY = "calera-board-library";
+const KEY = KEYS.drills, LIB_KEY = KEYS.library;
 const $ = id => document.getElementById(id);
 
-async function allowed() {
-    try {
-        const { waitForUser } = await import("../js/auth.js");
-        const { isApprovedCoach } = await import("../js/userProfile.js");
-        const user = await waitForUser();
-        return Boolean(user) && (await isApprovedCoach());
-    } catch { return false; }
-}
 
 let drills = [], topic = "", editingId = null, openId = null;
 
@@ -43,7 +36,7 @@ function render() {
     const tbox = $("topics");
     if (!tbox.childElementCount) {
         for (const t of ["", ...D.TOPICS]) {
-            const b = h("button", "tb-tool", t || "All"); b.type = "button"; b.dataset.t = t;
+            const b = h("button", "pb-tool", t || "All"); b.type = "button"; b.dataset.t = t;
             b.onclick = () => { topic = t; render(); };
             tbox.appendChild(b);
         }
@@ -89,8 +82,8 @@ function showDetail(id) {
     if (board) { const pic = h("div", "dr-sec"); pic.append(h("h3", "", "Diagram"), boardThumb(board.board)); cols.append(pic); }
     dlg.append(cols);
     const act = h("div", "dr-detail-actions");
-    const btn = (label, cls, fn) => { const b = h("button", "tb-btn " + cls, label); b.type = "button"; b.onclick = () => fn(b); act.append(b); return b; };
-    if (board) { const a = h("a", "tb-btn", "Open diagram on board"); a.href = "board.html?board=" + encodeURIComponent(board.id); act.append(a); }
+    const btn = (label, cls, fn) => { const b = h("button", "pb-btn " + cls, label); b.type = "button"; b.onclick = () => fn(b); act.append(b); return b; };
+    if (board) { const a = h("a", "pb-btn", "Open diagram on board"); a.href = "board.html?board=" + encodeURIComponent(board.id); act.append(a); }
     btn("Print", "", () => window.print());
     btn("Edit", "", () => { dlg.close(); openEditor(id); });
     btn("Copy", "", () => { const r = D.duplicateDrill(drills, id); write(r.list); dlg.close(); toast("Copy added"); });
@@ -133,7 +126,7 @@ function wire() {
     $("mClose").onclick = () => $("moreDlg").close();
     $("mBackup").onclick = () => {
         const a = document.createElement("a");
-        a.href = URL.createObjectURL(new Blob([D.serializeDrills(drills)], { type: "application/json" })); a.download = "calera-drills.json";
+        a.href = URL.createObjectURL(new Blob([D.serializeDrills(drills)], { type: "application/json" })); a.download = "southbound-playbook-drills.json";
         document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
         $("moreDlg").close(); toast("Backup saved");
     };
@@ -148,9 +141,8 @@ function wire() {
     $("mSeeds").onclick = () => { const before = drills.length; write(D.mergeSeeds(drills, SEED_DRILLS)); $("moreDlg").close(); toast(drills.length > before ? `Added ${drills.length - before} starter drills` : "All starter drills are already here"); };
 }
 
-(async () => {
-    if (!(await allowed())) { location.replace("../index.html"); return; }
+(() => {
+    migrateOldKeys(); applyTheme();
     drills = read();
-    $("gate").hidden = true; $("app").hidden = false;
     wire(); render();
 })();

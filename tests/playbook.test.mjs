@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import * as M from "../team/boardModel.js";
+import * as M from "../js/playbook/boardModel.js";
 
 test("every formation has 11 home slots with a keeper, all on the pitch", () => {
     for (const f of M.FORMATIONS) {
@@ -106,7 +106,7 @@ test("markPath makes a path; dribbles wiggle", () => {
     assert.ok(wavy.split("L").length > 20);
 });
 
-import * as L from "../team/boardLibrary.js";
+import * as L from "../js/playbook/boardLibrary.js";
 
 test("library: save, update, duplicate, delete, sort", () => {
     let lib = L.emptyLibrary();
@@ -142,8 +142,8 @@ test("library file round trip, bad boards skipped, merge keeps existing", () => 
     assert.equal(L.loadLibrary("garbage").boards.length, 0);
 });
 
-import * as DR from "../team/drillModel.js";
-import { SEED_DRILLS } from "../team/drillSeed.js";
+import * as DR from "../js/playbook/drillModel.js";
+import { SEED_DRILLS } from "../js/playbook/drillSeed.js";
 
 test("starter drills are complete and use known topics", () => {
     assert.ok(SEED_DRILLS.length >= 24);
@@ -197,7 +197,7 @@ test("drills: seeds never overwrite edits; file round trip; import skips same na
     assert.equal(DR.importDrills([], back).length, list.length);
 });
 
-import * as PM from "../team/practiceModel.js";
+import * as PM from "../js/playbook/practiceModel.js";
 
 const ALL_EQ = new Set(PM.EQUIPMENT.map(e => e[0]));
 const seeds = DR.mergeSeeds([], SEED_DRILLS);
@@ -259,7 +259,7 @@ test("practice: save list, round trip and bad input", () => {
     assert.equal(PM.deletePractice(r.list, r.id).length, 0);
 });
 
-import * as RO from "../team/rosterModel.js";
+import * as RO from "../js/playbook/rosterModel.js";
 
 test("roster: normalize, save, edit, delete, here toggle", () => {
     assert.equal(RO.normalizePlayer({ name: " " }), null);

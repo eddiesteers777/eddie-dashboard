@@ -1,4 +1,4 @@
-// Calera practice planner: pure model (no DOM). Turns drills + today's limits into a timed plan.
+// Playbook practice planner: pure model (no DOM). Turns drills + today's limits into a timed plan.
 import { TOPICS } from "./drillModel.js";
 
 export const EQUIPMENT = Object.freeze([
@@ -153,4 +153,4 @@ export function parsePracticeList(text) {
         return o.practices.map((e, i) => ({ id: "p" + (i + 1), name: String(e.name || "Practice").slice(0, 60), updatedAt: Number(e.updatedAt) || 0, practice: parsePractice(e.practice) })).filter(e => e.practice);
     } catch { return []; }
 }
-export const serializePracticeList = list => JSON.stringify({ app: "calera-practices", practices: list.map(({ name, updatedAt, practice }) => ({ name, updatedAt, practice })) });
+export const serializePracticeList = list => JSON.stringify({ app: "playbook-practices", practices: list.map(({ name, updatedAt, practice }) => ({ name, updatedAt, practice })) });
