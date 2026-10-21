@@ -156,7 +156,7 @@ function selectTab(name) {
     }
     if (name === "homework" && !homeworkMounted && record) {
         homeworkMounted = true;
-        import("./homeworkCoach.js").then(({ mountHomework }) => mountHomework($("hubHomework"), { clientUid, firstName: firstName() }));
+        import("./homeworkCoach.js").then(({ mountHomework }) => mountHomework($("hubHomework"), { clientUid, firstName: firstName(), sessions: sessionList(record.requests || [], isoDate(new Date())) }));
     }
     if (name === "messages" && !messagesMounted && record) {
         messagesMounted = true;

@@ -249,6 +249,7 @@
     "js/planningData.js",
     "js/planningPage.js",
     "js/planningView.js",
+    "js/prepModel.js",
     "js/profile.js",
     "js/profileCheckCard.js",
     "js/profileChecks.js",

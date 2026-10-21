@@ -13,12 +13,22 @@ import { toast, friendlyError, sbConfirm } from "./ui.js";
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 // Saved Playbook practices and drills (pull the account copy first, but never wait long).
-async function playbook() {
+export async function loadPlaybook() {
     try { const cloud = await import("./playbook/cloud.js"); await Promise.race([cloud.startSync({ timeoutMs: 2500 }), new Promise(r => setTimeout(r, 3000))]); } catch { /* signed out or offline: use this device */ }
     const [{ KEYS }, P, D, { SEED_DRILLS }] = await Promise.all([import("./playbook/store.js"), import("./playbook/practiceModel.js"), import("./playbook/drillModel.js"), import("./playbook/drillSeed.js")]);
     const get = k => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
-    const drills = D.parseDrills(get(KEYS.drills)) || D.mergeSeeds([], SEED_DRILLS);
-    return { practices: P.parsePracticeList(get(KEYS.practices)).sort((a, b) => b.updatedAt - a.updatedAt), drills: new Map(drills.map(d => [d.id, d])), P };
+    const mine = D.parseDrills(get(KEYS.drills));
+    // Include starter drills the library doesn't have yet (for suggestions); nothing is saved.
+    const drills = D.mergeSeeds(mine || [], SEED_DRILLS);
+    // A name-free diagram token for a drill's saved board (or "" when none / too big).
+    const diagram = async boardId => {
+        try {
+            const [{ loadLibrary }, { diagramToken }] = await Promise.all([import("./playbook/boardLibrary.js"), import("./playbook/drillHomework.js")]);
+            const found = loadLibrary(get(KEYS.library)).boards.find(b => b.id === boardId);
+            return found ? await diagramToken(found.board) : "";
+        } catch { return ""; }
+    };
+    return { practices: P.parsePracticeList(get(KEYS.practices)).sort((a, b) => b.updatedAt - a.updatedAt), drills: new Map(drills.map(d => [d.id, d])), P, diagram };
 }
 
 /**
@@ -26,7 +36,7 @@ async function playbook() {
  * Resolves to "saved", "removed" or "".
  */
 export async function openPlanDialog({ session, existing = null }) {
-    const pb = await playbook();
+    const pb = await loadPlaybook();
     return new Promise(resolve => {
         const dialog = document.createElement("dialog");
         dialog.className = "sb-dialog sp-dialog";

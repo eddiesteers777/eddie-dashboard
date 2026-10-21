@@ -14,11 +14,13 @@ import {
 } from "./homeworkModel.js";
 import { esc, thumbHtml, ticksHtml, metaLine, standingPill, dueText } from "./homeworkView.js";
 import { icon } from "./icons.js";
+import { prepSummary, suggestDrills } from "./prepModel.js";
 import { toast, sbConfirm, sbPrompt, friendlyError, emptyHtml } from "./ui.js";
 
 const today = () => isoOf(new Date());
 
-export async function mountHomework(root, { clientUid, firstName = "them" } = {}) {
+export async function mountHomework(root, { clientUid, firstName = "them", sessions = [] } = {}) {
+    let prep = null; // { summary, drills } once the Playbook is read
     let items = [];
     let failed = false;
     root.classList.add("hw-coach");
@@ -41,7 +43,7 @@ export async function mountHomework(root, { clientUid, firstName = "them" } = {}
         const target = weekly.reduce((n, h) => n + progress(h, t).target, 0);
         const run = streak(items, t);
         const nextDue = active.filter(h => !progress(h, t).complete && h.dueDate).map(h => h.dueDate).sort()[0];
-        root.innerHTML = `
+        root.innerHTML = `${prepHtml()}
             <div class="hw-stats">
                 <div class="hw-stat"><span class="hw-kicker">This week</span><b>${target ? `${done}<span class="hw-sub" style="font-size:20px">/${target}</span>` : "—"}</b></div>
                 <div class="hw-stat"><span class="hw-kicker">Streak</span><b class="tan">${run ? `${run}d` : "—"}</b></div>
@@ -51,6 +53,25 @@ export async function mountHomework(root, { clientUid, firstName = "them" } = {}
             ${active.length ? `<div class="hw-rows">${sortForClient(active, t).map(rowHtml).join("")}</div>` : `<div class="clients-card">${emptyHtml({ iconName: "target", title: `Nothing assigned to ${firstName} yet`, text: "Paste a YouTube link or write the drill, set how often and by when. They practice in their app and you see every one." })}</div>`}
             ${archived.length ? `<div class="hw-section"><h2>Closed</h2><span class="hw-kicker">${archived.length}</span></div><div class="hw-rows">${archived.map(rowHtml).join("")}</div>` : ""}`;
         import("./icons.js").then(m => m.hydrate());
+    }
+
+    // Session prep: next and last session, how homework is going, drills worth assigning next.
+    function prepHtml() {
+        const t = today();
+        const sum = prepSummary({ sessions, homework: items, today: t, standing: h => standing(h, t) });
+        const fmt = iso => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+        const time = v => { const [hh, mi] = String(v || "").split(":").map(Number); return v ? `${((hh + 11) % 12) + 1}:${String(mi).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}` : ""; };
+        const next = sum.next ? `${fmt(sum.next.date)} \u00b7 ${time(sum.next.startTime)}` : "Nothing booked";
+        const last = sum.last ? `${fmt(sum.last.date)}${sum.last.status === "completed" ? "" : " (not logged)"}` : "No sessions yet";
+        const suggestions = prep ? suggestDrills(prep.drills, sum.skills, items.map(h => h.title), 4) : [];
+        return `<div class="hw-prep">
+            <div class="hw-section"><h2>Session prep</h2><span class="hw-kicker">${esc(next)}</span></div>
+            <div class="hw-prep-grid">
+                <div><span class="hw-kicker">Last time \u00b7 ${esc(last)}</span><p>${sum.last?.words ? esc(sum.last.words).replace(/\n/g, "<br>") : `<span class="hw-sub">No notes from the last session.</span>`}</p></div>
+                <div><span class="hw-kicker">Homework</span><p>${sum.behind.length ? `${sum.behind.length} behind: ${esc(sum.behind.slice(0, 3).join(", "))}` : items.some(h => h.status !== "archived") ? "On track" : `<span class="hw-sub">Nothing assigned.</span>`}</p>${sum.skills.length ? `<span class="hw-sub">Working on ${esc(sum.skills.join(", "))}</span>` : ""}</div>
+            </div>
+            ${suggestions.length ? `<span class="hw-kicker">Worth assigning next</span><div class="hw-prep-drills">${suggestions.map(d => `<div class="hw-prep-drill"><span><b>${esc(d.name)}</b><small>${esc(d.topic)} \u00b7 ${d.minutes} min</small></span><button type="button" class="sb-btn sb-btn-secondary" data-prep="${esc(d.id)}">Assign</button></div>`).join("")}</div>` : ""}
+        </div>`;
     }
 
     function rowHtml(hw) {
@@ -82,6 +103,22 @@ export async function mountHomework(root, { clientUid, firstName = "them" } = {}
         const get = key => items.find(h => h.id === event.target.closest(`[data-${key}]`)?.dataset[key]);
         if (event.target.closest("[data-new]")) {
             const input = await openSheet({ firstName });
+            if (!input) return;
+            try {
+                const created = await assignHomework(clientUid, input);
+                items = [created, ...items];
+                render();
+                toast(`Assigned to ${firstName}`);
+            } catch (error) { console.error(error); toast(friendlyError(error, "assign that"), { type: "error" }); }
+            return;
+        }
+        const pick = event.target.closest("[data-prep]");
+        if (pick && prep) {
+            const d = prep.drills.find(x => x.id === pick.dataset.prep);
+            if (!d) return;
+            const { assignmentFor } = await import("./playbook/drillHomework.js");
+            const diagram = d.boardId && prep.diagrams ? await prep.diagrams(d.boardId) : "";
+            const input = await openSheet({ firstName, prefill: assignmentFor(d, { diagram, due: addDays(today(), 7) }) });
             if (!input) return;
             try {
                 const created = await assignHomework(clientUid, input);
@@ -126,22 +163,28 @@ export async function mountHomework(root, { clientUid, firstName = "them" } = {}
     });
 
     render();
+    // The Playbook's drills fill the suggestions in after the first paint (this device, plus the account copy).
+    import("./sessionPlanCoach.js").then(m => m.loadPlaybook()).then(pb => {
+        prep = { drills: [...pb.drills.values()], diagrams: pb.diagram };
+        if (!failed) render();
+    }).catch(() => {});
     return { reload: async () => { items = await listHomeworkForClient(clientUid); render(); } };
 }
 
 // ---- the assign / edit sheet ----
 // Resolves to the form's values, or null when closed.
-function openSheet({ firstName, hw = null }) {
+function openSheet({ firstName, hw = null, prefill = null }) {
+    const seed = hw || prefill;
     return new Promise(resolve => {
         const dialog = document.createElement("dialog");
         dialog.className = "sb-dialog hw-dialog";
         const st = {
-            cadence: hw?.cadence || "weekly",
-            skill: hw?.skill || "",
-            videoId: hw?.videoId || ""
+            cadence: seed?.cadence || "weekly",
+            skill: seed?.skill || "",
+            videoId: seed?.videoId || ""
         };
-        const due = hw ? (hw.dueDate || "") : addDays(today(), 7);
-        const link = hw?.videoId ? `https://www.youtube.com/watch?v=${hw.videoId}` : "";
+        const due = hw ? (hw.dueDate || "") : (seed?.dueDate || addDays(today(), 7));
+        const link = seed?.videoId ? `https://www.youtube.com/watch?v=${seed.videoId}` : "";
         dialog.innerHTML = `
             <form class="sb-dialog-form" method="dialog" novalidate>
                 <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 class="sb-dialog-title hw-title" style="font-size:24px">${hw ? "Edit homework" : "New homework"}</h2><span class="hw-kicker">For ${esc(firstName)}</span></div>
@@ -149,24 +192,24 @@ function openSheet({ firstName, hw = null }) {
                 <input class="sb-dialog-input" id="hwLink" type="url" inputmode="url" autocomplete="off" placeholder="youtube.com/watch?v=…" value="${esc(link)}">
                 <div id="hwFound" hidden></div>
                 <div class="hw-two" id="hwClip" hidden>
-                    <div><label class="hw-lbl" for="hwStart">Start at</label><input class="sb-dialog-input" id="hwStart" inputmode="numeric" placeholder="1:10" value="${hw?.startSec != null ? esc(clockText(hw.startSec)) : ""}"></div>
-                    <div><label class="hw-lbl" for="hwEnd">Stop at</label><input class="sb-dialog-input" id="hwEnd" inputmode="numeric" placeholder="3:40" value="${hw?.endSec != null ? esc(clockText(hw.endSec)) : ""}"></div>
+                    <div><label class="hw-lbl" for="hwStart">Start at</label><input class="sb-dialog-input" id="hwStart" inputmode="numeric" placeholder="1:10" value="${seed?.startSec != null ? esc(clockText(seed.startSec)) : ""}"></div>
+                    <div><label class="hw-lbl" for="hwEnd">Stop at</label><input class="sb-dialog-input" id="hwEnd" inputmode="numeric" placeholder="3:40" value="${seed?.endSec != null ? esc(clockText(seed.endSec)) : ""}"></div>
                 </div>
                 <label class="hw-lbl" for="hwTitle">Title</label>
-                <input class="sb-dialog-input" id="hwTitle" maxlength="100" placeholder="Wall passes, left foot" value="${esc(hw?.title || "")}">
+                <input class="sb-dialog-input" id="hwTitle" maxlength="100" placeholder="Wall passes, left foot" value="${esc(seed?.title || "")}">
                 <span class="hw-lbl">Skill</span>
                 <div class="hw-chips" id="hwSkills" role="group" aria-label="Skill">${SKILLS.map(s => `<button type="button" class="hw-chip" data-skill="${esc(s)}" aria-pressed="false">${esc(s)}</button>`).join("")}</div>
                 <span class="hw-lbl">How often</span>
                 <div class="hw-seg" id="hwCadence" role="group" aria-label="How often">${CADENCES.map(c => `<button type="button" data-cadence="${c.value}">${esc(c.label)}</button>`).join("")}</div>
                 <div class="hw-two">
-                    <div id="hwPerWeekBox"><label class="hw-lbl" for="hwPerWeek">Times a week</label><input class="sb-dialog-input" id="hwPerWeek" type="number" inputmode="numeric" min="1" max="7" value="${hw?.timesPerWeek || 3}"></div>
-                    <div id="hwGoalBox"><label class="hw-lbl" for="hwGoal">Goal (a number)</label><input class="sb-dialog-input" id="hwGoal" type="number" inputmode="numeric" min="1" placeholder="50" value="${hw?.goal || ""}"></div>
-                    <div><label class="hw-lbl" for="hwMin">Minutes</label><input class="sb-dialog-input" id="hwMin" type="number" inputmode="numeric" min="1" max="240" placeholder="10" value="${hw?.minutes || ""}"></div>
+                    <div id="hwPerWeekBox"><label class="hw-lbl" for="hwPerWeek">Times a week</label><input class="sb-dialog-input" id="hwPerWeek" type="number" inputmode="numeric" min="1" max="7" value="${seed?.timesPerWeek || 3}"></div>
+                    <div id="hwGoalBox"><label class="hw-lbl" for="hwGoal">Goal (a number)</label><input class="sb-dialog-input" id="hwGoal" type="number" inputmode="numeric" min="1" placeholder="50" value="${seed?.goal || ""}"></div>
+                    <div><label class="hw-lbl" for="hwMin">Minutes</label><input class="sb-dialog-input" id="hwMin" type="number" inputmode="numeric" min="1" max="240" placeholder="10" value="${seed?.minutes || ""}"></div>
                 </div>
                 <label class="hw-lbl" for="hwDue">Due</label>
                 <input class="sb-dialog-input" id="hwDue" type="date" value="${esc(due)}">
                 <label class="hw-lbl" for="hwNote">Note for ${esc(firstName)}</label>
-                <textarea class="sb-dialog-input" id="hwNote" rows="2" maxlength="1000" placeholder="Left foot only. Count the clean ones.">${esc(hw?.note || "")}</textarea>
+                <textarea class="sb-dialog-input" id="hwNote" rows="2" maxlength="1000" placeholder="Left foot only. Count the clean ones.">${esc(seed?.note || "")}</textarea>
                 <p class="hw-err" id="hwErr" role="alert" hidden></p>
                 <div class="sb-dialog-actions">
                     <button type="button" class="sb-btn sb-btn-tertiary" data-cancel>Cancel</button>
@@ -226,6 +269,7 @@ function openSheet({ firstName, hw = null }) {
                 cadence: st.cadence, timesPerWeek: Number($("hwPerWeek").value), minutes: $("hwMin").value ? Number($("hwMin").value) : null,
                 goal: $("hwGoal").value ? Number($("hwGoal").value) : null, dueDate: $("hwDue").value || null
             };
+            if (!hw && prefill?.diagram) values.diagram = prefill.diagram;
             const problem = validAssignment(cleanAssignment(values));
             if (problem) return fail(problem);
             dialog.close("ok");

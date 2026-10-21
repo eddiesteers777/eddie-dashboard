@@ -378,3 +378,8 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 - **Data / rules (rules change, Eddie must paste):** new `sessionPlans/{coachUid}_{key}_{date}` (key = the open time's slotId, or the booking id). Only an approved coach writes (id must match, 12 lines max, text limits); the coach and the clients in `clientUids` read. The Schedule page re-syncs `clientUids` when someone books after the plan was attached. Players see drill names, times, bring list and focus only. Rules tests: 2 new (80 pass).
 - Model `js/sessionPlanModel.js` (`tests/sessionPlanModel.test.mjs`); IO `js/sessionPlans.js`. `sessionList` rows now carry `slotId`.
 - Tested with mocks: coach attach → saved doc (2 clients, 4 lines) → client card → coach card.
+
+## 2026-10-21 — Session prep for 1-on-1s (Homework tab) + individual drills
+- **Prep card** at the top of a soccer client's Homework tab in the Client Hub (`prepHtml` in `js/homeworkCoach.js`, pure `js/prepModel.js`): next session, last session's "worked on / for next time", homework behind, skills in focus, and four suggested drills with an **Assign** button that opens the normal assign sheet pre-filled from the drill (note, minutes, skill, the drill's diagram if it has one). No new tab, no rules change (the diagram rides on the existing `homework.diagram` field).
+- **12 individual/partner drills** (`js/playbook/drillSeedSolo.js`: wall passes, target passing, juggling ladder, cone weave, wall shooting, ladders...). The team practice planner skips drills for 1–2 players when there are 4+ players; suggestions use the starter list even if the coach's library predates it (nothing is saved).
+- Tested: `tests/prepModel.test.mjs`; Playwright at 390/1280 (card, pre-filled sheet, assign).

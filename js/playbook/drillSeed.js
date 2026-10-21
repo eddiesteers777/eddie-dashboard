@@ -1,4 +1,5 @@
 import { MORE_DRILLS } from "./drillSeedMore.js";
+import { SOLO_DRILLS } from "./drillSeedSolo.js";
 // Starter drills for youth and school 11v11 teams. Plain, original coaching content: edit freely.
 const D = (name, topic, minutes, minPlayers, space, intensity, equipment, setup, how, points, progressions, easier) =>
     ({ name, topic, minutes, minPlayers, space, intensity, equipment, setup, how, points, progressions, easier });
@@ -136,4 +137,4 @@ const BASE_DRILLS = [
         ["Add a second condition", "Bonus goal for the theme"], ["Remove the condition", "Bigger goals"])
 ];
 
-export const SEED_DRILLS = [...BASE_DRILLS, ...MORE_DRILLS];
+export const SEED_DRILLS = [...BASE_DRILLS, ...MORE_DRILLS, ...SOLO_DRILLS];

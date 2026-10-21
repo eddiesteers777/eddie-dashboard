@@ -115,3 +115,13 @@
 
 .hw-diagram{ max-width:340px; margin:12px 0; display:grid; gap:6px; }
 .hw-diagram[hidden]{ display:none !important; }
+
+/* Session prep at the top of the coach's Homework tab */
+.hw-prep{ margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid rgba(236,230,212,.12); }
+.hw-prep-grid{ display:grid; gap:12px; grid-template-columns:1fr; margin:6px 0 12px; }
+@media(min-width:700px){ .hw-prep-grid{ grid-template-columns:1fr 1fr; } }
+.hw-prep-grid p{ margin:4px 0 0; font-size:15px; line-height:1.45; }
+.hw-prep-drills{ display:grid; gap:8px; margin-top:6px; }
+.hw-prep-drill{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid rgba(236,230,212,.08); }
+.hw-prep-drill span{ display:grid; gap:2px; min-width:0; }
+.hw-prep-drill small{ color:var(--text-secondary); font-size:12px; }
