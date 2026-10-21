@@ -43,6 +43,8 @@ rules_version = '2';
 //                              there is deliberately no client clause.
 //   clientUpdates/{id}         Updates a coach sends a client. The client
 //                              reads them and can only mark them read.
+//   sessionPlans/{coach_key_date}  A practice plan the coach attaches to one
+//                              session; booked clients read it, only the coach writes.
 //   messages/{id}              The coach-client message thread: either of
 //                              the two (linked) writes as themselves; the
 //                              other can only mark it read; the sender can
@@ -772,6 +774,36 @@ service cloud.firestore {
       );
 
       allow delete: if false;
+    }
+
+    // A practice plan the coach attaches to one session (one open time on one
+    // date), js/sessionPlans.js. Every client booked on that date reads it
+    // (clientUids), so it holds only what players may see: drill names,
+    // times, a bring list, a focus line. Only an approved coach writes it, and the
+    // doc id is coachUid_key_date so nobody can write another coach's plan.
+    function validSessionPlan(d, planId) {
+      return d.keys().hasOnly(["coachUid", "key", "date", "startTime", "title", "mode", "focus", "lines", "bring", "clientUids", "updatedAt"])
+        && d.coachUid == request.auth.uid
+        && d.key is string && d.key.size() > 0 && d.key.size() <= 60
+        && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && planId == d.coachUid + "_" + d.key + "_" + d.date
+        && d.startTime is string && d.startTime.size() <= 5
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 80
+        && d.mode in ["plan", "focus"]
+        && d.focus is string && d.focus.size() <= 200
+        && d.lines is list && d.lines.size() <= 12
+        && (d.lines.size() <= 0 || (d.lines[0] is string && d.lines[0].size() <= 110)) && (d.lines.size() <= 1 || (d.lines[1] is string && d.lines[1].size() <= 110)) && (d.lines.size() <= 2 || (d.lines[2] is string && d.lines[2].size() <= 110)) && (d.lines.size() <= 3 || (d.lines[3] is string && d.lines[3].size() <= 110)) && (d.lines.size() <= 4 || (d.lines[4] is string && d.lines[4].size() <= 110)) && (d.lines.size() <= 5 || (d.lines[5] is string && d.lines[5].size() <= 110)) && (d.lines.size() <= 6 || (d.lines[6] is string && d.lines[6].size() <= 110)) && (d.lines.size() <= 7 || (d.lines[7] is string && d.lines[7].size() <= 110)) && (d.lines.size() <= 8 || (d.lines[8] is string && d.lines[8].size() <= 110)) && (d.lines.size() <= 9 || (d.lines[9] is string && d.lines[9].size() <= 110)) && (d.lines.size() <= 10 || (d.lines[10] is string && d.lines[10].size() <= 110)) && (d.lines.size() <= 11 || (d.lines[11] is string && d.lines[11].size() <= 110))
+        && d.bring is string && d.bring.size() <= 200
+        && d.clientUids is list && d.clientUids.size() <= 40
+        && d.updatedAt == request.time;
+    }
+    match /sessionPlans/{planId} {
+      allow read: if signedIn()
+        && (resource.data.coachUid == request.auth.uid
+            || request.auth.uid in resource.data.clientUids);
+      allow create, update: if signedIn() && isApprovedCoach() && validSessionPlan(request.resource.data, planId)
+        && (request.method == "create" || resource.data.coachUid == request.auth.uid);
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
     }
 
     // What happened at one session of a booking (Client Hub Phase 6,

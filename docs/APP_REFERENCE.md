@@ -300,3 +300,6 @@ Share links (board and practice carry no names; the Game-tab team link carries f
 
 ### Drill → homework (2026-10-21)
 `homework/{id}` has an optional `diagram` (string ≤ 4000, link-safe token of a name-free board; see `js/playbook/drillHomework.js` `diagramToken` / `diagramBoard`). Coach UI: `openAssign` in `js/playbook/drills.js`. Client UI: `showDiagram` in `js/homeworkClient.js`. `firestore.rules` `validHomework` allows the key (`"diagram" in d`).
+
+### Session plans (2026-10-21)
+`sessionPlans/{coachUid}_{key}_{date}`: `{ coachUid, key (slotId or booking id), date, startTime, title, mode: plan|focus, focus, lines: ["6:00 PM|Drill|8 min"], bring, clientUids[], updatedAt }`. Rules `validSessionPlan` (approved coach writes, coach + `clientUids` read). Pure model `js/sessionPlanModel.js`; IO `js/sessionPlans.js`; coach dialog `js/sessionPlanCoach.js` (opened from the Schedule week grid in `js/schedule.js`); client card `planCardHtml` (`js/schedule.js`); coach dashboard card `loadPlans` (`js/coach.js`). Private notes never go in a plan.

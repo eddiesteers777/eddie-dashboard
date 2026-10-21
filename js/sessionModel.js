@@ -72,7 +72,7 @@ export function sessionList(requests = [], today = "") {
                 : date === today ? "today"
                 : date >= addDays(today, -LOG_WINDOW_DAYS) ? "to-log" : "not-logged";
             out.push({
-                bookingId: r.id, date, startTime: r.startTime || "", endTime: r.endTime || "",
+                bookingId: r.id, slotId: r.slotId || "", date, startTime: r.startTime || "", endTime: r.endTime || "",
                 sessionType: r.sessionType || "", label: r.label || "", clientUid: r.clientUid,
                 clientName: r.clientName || "", coachNote: r.coachNote || "", log, state
             });

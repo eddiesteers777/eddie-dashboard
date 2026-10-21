@@ -867,3 +867,18 @@
     .clients-table .clients-cell:nth-of-type(even){ grid-column:3; }
     .clients-cell::before{ content:attr(data-label); font:600 10px/1.2 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
 }
+
+/* Session plans: the coach's Schedule button and the attach dialog */
+.sched-plan{ display:block; width:100%; margin-top:6px; min-height:36px; padding:0 8px; border-radius:6px; border:1px dashed rgba(236,230,212,.3); background:none; color:var(--primary); font:600 11px var(--font-mono); letter-spacing:.06em; text-transform:uppercase; cursor:pointer; text-align:left; }
+.sched-plan.has{ border-style:solid; border-color:var(--primary); }
+.sp-dialog{ width:min(480px, calc(100vw - 24px)); }
+.sp-lbl{ font:600 11px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
+.sp-sub,.sp-hint{ font-size:13px; color:var(--text-secondary); margin:0; }
+.sp-seg{ display:flex; gap:6px; }
+.sp-seg button{ flex:1; min-height:44px; border-radius:6px; border:1px solid rgba(236,230,212,.16); background:none; color:var(--text); font:600 13px var(--font-body); cursor:pointer; }
+.sp-seg button.on{ background:var(--primary); color:var(--on-primary); border-color:var(--primary); }
+.sp-lines{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:4px; }
+.sp-lines li{ display:grid; grid-template-columns:72px 1fr auto; gap:8px; font-size:14px; padding:6px 0; border-top:1px solid rgba(236,230,212,.1); }
+.sp-lines li span{ color:var(--text-secondary); font-size:12px; }
+.sp-err{ color:var(--red); font-size:14px; margin:0; }
+.sp-dialog [hidden]{ display:none !important; }

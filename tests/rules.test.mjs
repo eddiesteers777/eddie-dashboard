@@ -1952,3 +1952,40 @@ test("homework: a Playbook diagram saves, stays link-safe and small, and only th
     await assertSucceeds(setDoc(doc(as("coach"), "homework/d6"), hw("coach", "client")));
     await assertSucceeds(updateDoc(doc(as("coach"), "homework/d6"), { coachReply: "ok", updatedAt: serverTimestamp() }));
 });
+
+// ---- Session plans ----
+const sp = (coachUid, over = {}) => ({
+    coachUid, key: "s1", date: "2026-10-22", startTime: "18:00", title: "U12 passing", mode: "plan", focus: "Passing under pressure",
+    lines: ["6:00 PM|Warm-up|8 min", "6:08 PM|Rondo 4v1|12 min"], bring: "Ball, water", clientUids: ["client", "other"],
+    updatedAt: serverTimestamp(), ...over
+});
+test("session plans: the coach writes their own, booked clients read, strangers don't", async () => {
+    await assertSucceeds(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach")));
+    await assertSucceeds(getDoc(doc(as("client"), "sessionPlans/coach_s1_2026-10-22")));
+    await assertSucceeds(getDocs(query(collection(as("client"), "sessionPlans"), where("clientUids", "array-contains", "client"))));
+    await assertFails(getDoc(doc(as("stranger"), "sessionPlans/coach_s1_2026-10-22")));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "sessionPlans"), where("coachUid", "==", "coach"))));
+    // Clients and strangers can't write, change or delete.
+    await assertFails(setDoc(doc(as("client"), "sessionPlans/client_s1_2026-10-22"), sp("client")));
+    await assertFails(updateDoc(doc(as("client"), "sessionPlans/coach_s1_2026-10-22"), { title: "Hacked", updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("client"), "sessionPlans/coach_s1_2026-10-22")));
+    await assertFails(deleteDoc(doc(as("stranger"), "sessionPlans/coach_s1_2026-10-22")));
+    // Updating (a new client booked) and deleting work for the coach.
+    await assertSucceeds(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach", { clientUids: ["client", "other", "third"] })));
+    await assertSucceeds(deleteDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22")));
+});
+test("session plans: well-formed only, the id must be the coach's, a coach can't take over another's plan", async () => {
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/other_s1_2026-10-22"), sp("coach")));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/coach_s2_2026-10-22"), sp("coach")));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach", { title: "" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach", { mode: "secret" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach", { lines: Array(13).fill("a|b|1 min") })));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach", { lines: ["x".repeat(111)] })));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach", { privateNote: "x" })));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-22"), sp("coach", { clientUids: Array(41).fill("u") })));
+    await env.withSecurityRulesDisabled(async ctx => { await setDoc(doc(ctx.firestore(), "sessionPlans/other_s1_2026-10-22"), sp("other")); });
+    await assertFails(setDoc(doc(as("coach"), "sessionPlans/other_s1_2026-10-22"), sp("other")));
+    // The fullest plan still saves (12 lines, longest text, 40 clients).
+    const full = sp("coach", { title: "t".repeat(80), focus: "f".repeat(200), bring: "b".repeat(200), lines: Array(12).fill("6:00 PM|" + "n".repeat(60) + "|120 min"), clientUids: Array.from({ length: 40 }, (_, i) => "u".repeat(28) + String(i).padStart(2, "0")) });
+    await assertSucceeds(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-23".replace("10-23", "10-22")), full));
+});

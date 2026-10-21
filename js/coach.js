@@ -19,6 +19,8 @@ import { attentionQueue } from "./feedbackModel.js";
 import { icon } from "./icons.js";
 import { emptyHtml, toast } from "./ui.js";
 import { sessionList, weekAgenda } from "./sessionModel.js";
+import { listMyPlans } from "./sessionPlans.js";
+import { upcoming as upcomingPlans, parseLine, totalMinutes, clientsOf } from "./sessionPlanModel.js";
 import { newPeopleItems, splitDone, pruneDone, groupByTask, greeting, summaryLine, waitedText, itemKey, SEGMENTS, splitSegments, ringTone } from "./coachToday.js";
 
 // ---- Who needs you today (js/coachToday.js) ----
@@ -71,7 +73,45 @@ async function loadQueue() {
     renderWeek();
     renderClientList();
     renderStrip();
+    loadPlans();
 }
+
+// ---- Session plans: what you attached to the next sessions (private prep view) ----
+async function loadPlans() {
+    const wrap = document.getElementById("coachPlansWrap"), list = document.getElementById("coachPlansList");
+    let plans = [];
+    try { plans = await listMyPlans("coach"); } catch (error) { console.warn("Southbound: couldn't load session plans.", error); return; }
+    const day = isoDate(new Date());
+    const [y, m, d] = day.split("-").map(Number);
+    const horizon = isoDate(new Date(y, m - 1, d + 8));
+    const next = upcomingPlans(plans, day).filter(p => p.date < horizon);
+    wrap.hidden = !next.length;
+    const fmt = iso => { const [yy, mm, dd] = iso.split("-").map(Number); return new Date(yy, mm - 1, dd).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
+    const time = t => { const [hh, mi] = String(t || "").split(":").map(Number); return t ? `${((hh + 11) % 12) + 1}:${String(mi).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}` : ""; };
+    list.innerHTML = next.map(p => {
+        const lines = (p.lines || []).map(parseLine), mins = totalMinutes(p.lines || []);
+        const booked = (p.clientUids || []).length;
+        const names = (today.sessions || []).filter(s => s.date === p.date && p.clientUids.includes(s.clientUid)).map(s => s.clientName.split(" ")[0]);
+        return `<article class="coach-plan${p.date === day ? " is-today" : ""}">
+            <div class="coach-plan-top"><span class="coach-plan-when">${escapeHtml(p.date === day ? "Today" : fmt(p.date))} \u00b7 ${escapeHtml(time(p.startTime))}</span><span class="coach-plan-count">${booked} booked</span></div>
+            <h3>${escapeHtml(p.title)}${mins ? ` <small>${mins} min</small>` : ""}</h3>
+            ${names.length ? `<p class="coach-plan-who">${escapeHtml([...new Set(names)].join(", "))}</p>` : ""}
+            ${p.focus ? `<p class="coach-plan-who">Focus: ${escapeHtml(p.focus)}</p>` : ""}
+            ${lines.length ? `<ol class="coach-plan-lines">${lines.map(l => `<li><span>${escapeHtml(l.time)}</span><b>${escapeHtml(l.name)}</b><span>${escapeHtml(l.mins)}</span></li>`).join("")}</ol>` : ""}
+            ${p.bring ? `<p class="coach-plan-who">Bring: ${escapeHtml(p.bring)}</p>` : ""}
+            <div class="coach-plan-btns"><a class="sb-btn sb-btn-secondary" href="schedule.html">Edit on Schedule</a><button type="button" class="sb-btn sb-btn-secondary" data-print-plan>Print</button></div>
+        </article>`;
+    }).join("");
+}
+document.getElementById("coachPlansList").addEventListener("click", event => {
+    const btn = event.target.closest("[data-print-plan]");
+    if (!btn) return;
+    const card = btn.closest(".coach-plan");
+    card.classList.add("print-me");
+    document.body.classList.add("print-one-plan");
+    window.addEventListener("afterprint", () => { card.classList.remove("print-me"); document.body.classList.remove("print-one-plan"); }, { once: true });
+    window.print();
+});
 
 function allItems() {
     const people = newPeopleItems({

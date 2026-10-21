@@ -370,3 +370,11 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 - **Client:** the homework screen shows the diagram under the video/title (`#hwDiagram` in `js/homeworkClient.js`).
 - **Data / rules (rules change, Eddie must paste):** optional `diagram` field on `homework/{id}`: a link-safe token (name-free Playbook board via `shareModel`), max 4000 chars, `^[A-Za-z0-9_-]*$`. `assignHomework` sends the field only when there is one, so homework without a diagram works with the old rules too. The client still can only add practices. Rules test: "a Playbook diagram saves, stays link-safe and small, and only the coach changes it" (78 rules tests pass).
 - Tested: `tests/playbookDrillHomework.test.mjs`; Playwright with mocks at 390px (assign dialog, sent payload, client view).
+
+## 2026-10-21 — Session plans (attach a practice plan to a session)
+- **Coach (Schedule week grid):** an "Attach plan" button per booked session (a group is one session). Dialog (`js/sessionPlanCoach.js`): pick a saved Playbook practice (account copy pulled first), choose "Plan and times" or "Just the focus", edit the name, focus and bring list. Drill times start from the session's own start time.
+- **Client (Soccer tab):** the next-session card shows "Today's plan" (name, focus, timed drill list, what to bring) above the homework (`planCardHtml` in `js/schedule.js`).
+- **Coach dashboard:** a "Session plans" card for the next 8 days with who's booked, the plan, Edit on Schedule and Print (`loadPlans` in `js/coach.js`).
+- **Data / rules (rules change, Eddie must paste):** new `sessionPlans/{coachUid}_{key}_{date}` (key = the open time's slotId, or the booking id). Only an approved coach writes (id must match, 12 lines max, text limits); the coach and the clients in `clientUids` read. The Schedule page re-syncs `clientUids` when someone books after the plan was attached. Players see drill names, times, bring list and focus only. Rules tests: 2 new (80 pass).
+- Model `js/sessionPlanModel.js` (`tests/sessionPlanModel.test.mjs`); IO `js/sessionPlans.js`. `sessionList` rows now carry `slotId`.
+- Tested with mocks: coach attach → saved doc (2 clients, 4 lines) → client card → coach card.

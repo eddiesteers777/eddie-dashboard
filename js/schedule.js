@@ -26,6 +26,8 @@ import { can } from "./navAccess.js";
 import { clientSessions, statusLabel, CANCELLED } from "./sessionModel.js";
 import { hasReport, reportHtml } from "./sessionReport.js";
 import { weekDays, weekStartOf, addDays, weekCounts } from "./scheduleWeek.js";
+import { listMyPlans, savePlan } from "./sessionPlans.js";
+import { planKey, planMatches, clientsOf, parseLine, totalMinutes } from "./sessionPlanModel.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
 
 let currentUser = null;
@@ -141,7 +143,21 @@ function slotCardHtml(slot, actionsHtml) {
 // ---- Coach: the week at a glance ----
 // What the coach has so far (open times, days off, requests); the grid
 // redraws whenever any of them loads (js/scheduleWeek.js).
-const coachWeek = { slots: [], blackoutDates: [], requests: [], start: "" };
+const coachWeek = { slots: [], blackoutDates: [], requests: [], plans: [], start: "" };
+
+// Booked sessions of one day, one per open time (a group is one session).
+function planGroups(day) {
+    const groups = new Map();
+    for (const it of day.items) {
+        if (it.kind !== "booked") continue;
+        const key = planKey({ slotId: it.slotId, bookingId: it.requestId });
+        const id = `${key}|${it.startTime}`;
+        const g = groups.get(id) || { key, date: day.date, startTime: it.startTime, endTime: it.endTime, label: it.label || "", clientUids: [] };
+        if (it.clientUid && !g.clientUids.includes(it.clientUid)) g.clientUids.push(it.clientUid);
+        groups.set(id, g);
+    }
+    return [...groups.values()];
+}
 
 function renderCoachWeek() {
     const el = document.getElementById("schedWeek");
@@ -166,12 +182,44 @@ function renderCoachWeek() {
                 ? `<a class="sched-ev is-${it.kind}" href="client.html?uid=${encodeURIComponent(it.clientUid)}&tab=sessions">${body}</a>`
                 : `<div class="sched-ev is-${it.kind}">${body}</div>`;
         }).join("");
+        const plans = day.date < today ? "" : planGroups(day).map(g => {
+            const has = coachWeek.plans.some(p => planMatches(p, { slotId: g.key, date: g.date }));
+            return `<button type="button" class="sched-plan${has ? " has" : ""}" data-plan-key="${escapeHtml(g.key)}" data-plan-date="${escapeHtml(g.date)}" data-plan-time="${escapeHtml(g.startTime || "")}">${has ? "Plan attached" : "Attach plan"} · ${escapeHtml(formatTime(g.startTime))}</button>`;
+        }).join("");
         return `
             <div class="sched-day${day.date === today ? " is-today" : ""}${day.dayOff ? " is-off" : ""}${day.date < today ? " is-past" : ""}">
                 <div class="sched-day-head"><span>${escapeHtml(dayName)}</span><b>${num}</b>${day.dayOff ? `<em>Day off</em>` : ""}</div>
                 ${items || (day.dayOff ? "" : `<p class="sched-day-none">Nothing</p>`)}
+                ${plans}
             </div>`;
     }).join("");
+}
+
+document.getElementById("schedWeek").addEventListener("click", async event => {
+    const btn = event.target.closest("[data-plan-key]");
+    if (!btn) return;
+    const day = weekDays({ weekStart: coachWeek.start, slots: coachWeek.slots, blackoutDates: coachWeek.blackoutDates, requests: coachWeek.requests }).find(d => d.date === btn.dataset.planDate);
+    const g = day && planGroups(day).find(x => x.key === btn.dataset.planKey && (x.startTime || "") === btn.dataset.planTime);
+    if (!g) return;
+    const existing = coachWeek.plans.find(p => planMatches(p, { slotId: g.key, date: g.date })) || null;
+    const { openPlanDialog } = await import("./sessionPlanCoach.js");
+    const result = await openPlanDialog({ session: { ...g, timeText: `${formatTime(g.startTime)}${g.endTime ? "–" + formatTime(g.endTime) : ""}` }, existing });
+    if (result) refreshPlans();
+});
+
+async function refreshPlans() {
+    if (!currentUser) return;
+    try { coachWeek.plans = await listMyPlans("coach"); } catch (error) { console.warn("Southbound: couldn't load session plans.", error); return; }
+    renderCoachWeek();
+    // Someone booked after the plan was attached? Keep who can see it current.
+    const today = localToday();
+    for (const p of coachWeek.plans.filter(x => x.date >= today)) {
+        const now = clientsOf(coachWeek.requests, p.key, p.date);
+        const had = [...(p.clientUids || [])].sort().join(",");
+        if (coachWeek.requests.length && now.length && now.slice().sort().join(",") !== had) {
+            savePlan({ ...p, clientUids: now }).catch(error => console.warn("Southbound: couldn't update a session plan's guest list.", error));
+        }
+    }
 }
 
 document.querySelectorAll("[data-week-step]").forEach(btn => btn.addEventListener("click", () => {
@@ -280,6 +328,7 @@ async function refreshRequests() {
     const all = await listRequestsForMyClients();
     coachWeek.requests = all;
     renderCoachWeek();
+    refreshPlans();
     const waiting = all.filter(r => r.status === "requested");
     // Booked and past: newest first by their first date.
     const requests = all.filter(r => r.status !== "requested")
@@ -521,12 +570,24 @@ dayEl("dayTimes").addEventListener("click", event => {
 // ---- Next session with its homework, and the homework list ----
 let hwItems = [];
 let nextSession = null;
+let myPlans = [];
 let myRequestsAll = [];
 let rescheduling = null; // "Thu, Oct 22 · 5:00 PM" while the client is picking a replacement
 
 function hwOpenItems() {
     const t = localToday();
     return sortForClient(hwItems, t).filter(h => !hwProgress(h, t).complete);
+}
+
+// What the coach attached to this session: the plan with times, or just the focus.
+function planCardHtml(plan) {
+    const lines = (plan.lines || []).map(parseLine);
+    const total = totalMinutes(plan.lines || []);
+    return `<div class="sb-next-plan"><div class="sb-sec-row"><span class="sb-kick">Today's plan${total ? ` \u00b7 ${total} min` : ""}</span></div>
+        <b class="sb-plan-title">${escapeHtml(plan.title)}</b>
+        ${plan.focus ? `<p class="sb-plan-focus">Focus: ${escapeHtml(plan.focus)}</p>` : ""}
+        ${lines.length ? `<ol class="sb-plan-lines">${lines.map(l => `<li><span>${escapeHtml(l.time)}</span><b>${escapeHtml(l.name)}</b><span>${escapeHtml(l.mins)}</span></li>`).join("")}</ol>` : ""}
+        ${plan.bring ? `<p class="sb-plan-bring"><span class="sb-kick">Bring</span> ${escapeHtml(plan.bring)}</p>` : ""}</div>`;
 }
 
 function renderNextCard() {
@@ -536,12 +597,14 @@ function renderNextCard() {
     if (!s) return;
     const t = localToday();
     const rel = s.date === t ? "Today" : formatDateShort(s.date);
+    const plan = myPlans.find(p => planMatches(p, s)) || null;
     const weekly = hwOpenItems().filter(h => hwProgress(h, t).kind !== "goal").slice(0, 3);
     const left = weekly.reduce((n, h) => { const p = hwProgress(h, t); return n + Math.max(0, p.target - p.done); }, 0);
     box.innerHTML = `
         <div class="sb-next-top"><span class="sb-kick tan">Next session \u00b7 ${escapeHtml(rel)}</span><span class="sb-chip">Booked</span></div>
         <div class="sb-next-when"><b>${escapeHtml(formatTime(s.startTime))}</b><span>${escapeHtml(formatDateShort(s.date))} \u00b7 ${escapeHtml(typeLabel(s.sessionType))}${s.label ? ` \u00b7 ${escapeHtml(s.label)}` : ""}</span></div>
         <button type="button" class="sb-resched" id="reschedBtn">Reschedule</button>
+        ${plan ? planCardHtml(plan) : ""}
         ${weekly.length ? `<div class="sb-next-hw"><div class="sb-sec-row"><span class="sb-kick">Before this session</span><span class="sb-kick tan">${left} practice${left === 1 ? "" : "s"} left</span></div>
             ${weekly.map(h => { const p = hwProgress(h, t); return `<a class="sb-bar-row" href="homework.html#${escapeHtml(h.id)}"><span>${escapeHtml(h.title)}</span><span class="sb-bar"><i style="width:${Math.min(100, p.done / p.target * 100)}%"></i></span><b>${p.done}/${p.target}</b></a>`; }).join("")}
             <a class="sb-next-btn" href="homework.html">Practice now</a></div>` : ""}`;
@@ -648,6 +711,8 @@ function requestRowHtml(req) {
 // book another, and what happened (js/sessionModel.js clientSessions).
 async function refreshMyRequests() {
     const requests = await listMyBookingRequests();
+    // The coach's plan for the next session (best effort: the card works without it).
+    try { myPlans = await listMyPlans("client"); } catch (error) { console.warn("Southbound: couldn't load session plans.", error); }
     myRequestsAll = requests;
     const today = localToday();
     const { upcoming, past, waiting, declined, attendance } = clientSessions(requests, today);
