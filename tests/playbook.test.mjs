@@ -333,3 +333,11 @@ test("board lineup: assign, unlink on rename, formation switch keeps link, auto 
     assert.equal(M.clearLineup(full).home.every(h => !h.rid && !h.name), true);
     assert.deepEqual(M.parseBoard(M.serialize(full)), full);
 });
+
+import { readFileSync } from "node:fs";
+test("the Playbook link in the app menus is coach-only everywhere", () => {
+    for (const f of ["components/header.html", "more.html"]) {
+        assert.match(readFileSync(new URL("../" + f, import.meta.url), "utf8"), /<a href="playbook\.html"[^>]*data-requires="coach"/, f);
+    }
+    assert.match(readFileSync(new URL("../js/loadHeader.js", import.meta.url), "utf8"), /href: "playbook\.html"[^}]*requires: "coach"/);
+});

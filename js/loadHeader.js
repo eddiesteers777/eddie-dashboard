@@ -160,6 +160,7 @@ const SEARCH_DESTINATIONS = [
     { label: "My Progress", href: "progress.html", icon: "trendingUp", color: "var(--primary)", requires: "client+progress" },
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)", requires: "running,strength" },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)", requires: "running" },
+    { label: "Southbound Playbook", href: "playbook.html", icon: "clipboard", color: "var(--sage)", requires: "coach", also: ["tactical board", "drills", "practice plan", "roster", "lineup", "soccer"] },
     { label: "Messages", href: "messages.html", icon: "messageSquare", color: "var(--primary)", requires: "client+updates", also: ["message coach", "chat", "text coach", "ask coach"] },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
     { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
