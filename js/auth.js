@@ -87,7 +87,6 @@ const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
     "fueling-",
     "cross-training-",
     "workout-session-",
-    "calera-board",   // team/ tactical board: device-only (coach)
     "sb-draft:"   // unsent check-in / workout-log words (js/formDraft.js): device-only
 ];
 
