@@ -60,3 +60,22 @@ test("bad, huge or tampered links are refused, never thrown", async () => {
 test("the link points at the read-only page", () => {
     assert.equal(S.shareUrl("https://southboundcoaching.com", "zabc"), "https://southboundcoaching.com/playbook-view.html#zabc");
 });
+
+import * as GM from "../js/playbook/gameModel.js";
+import * as TM from "../js/playbook/teamModel.js";
+import * as SP from "../js/playbook/sampleModel.js";
+
+test("team link: first names, lineup and duty only; nothing about absences or contacts", async () => {
+    const s = SP.loadSample([], TM.emptyTeam(), new Date(2026, 9, 21));
+    const game = GM.autoPlan(GM.setSquad(GM.newGame(), s.roster.map(p => p.id)), s.roster);
+    const session = s.team.sessions[2];
+    const payload = S.gamePayload("2026-10-24", { ...game, opp: "Pelham" }, s.roster, s.team, session);
+    const text = JSON.stringify(payload);
+    assert.ok(!/absent|excused|owed|phone|parent|"r\d+"/i.test(text));
+    const back = S.parsePayload(await S.decodePayload(await S.encodePayload(payload)));
+    assert.equal(back.kind, "game");
+    assert.equal(back.game.lineups[0][0], "Maya");
+    assert.equal(back.game.opp, "Pelham");
+    assert.ok(back.game.duty.length > 0 && back.game.captain);
+    assert.equal(S.parsePayload({ v: 1, k: "game", formation: "bad", lineups: "x", duty: 5 }).game.formation, "4-4-2");
+});

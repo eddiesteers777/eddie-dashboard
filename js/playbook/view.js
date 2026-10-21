@@ -1,5 +1,6 @@
 // Read-only page for a shared board or practice plan (the plan lives in the link, never on a server).
 import { applyTheme, KEYS, migrateOldKeys } from "./store.js";
+import { slotPositions } from "./gameModel.js";
 import { decodePayload, parsePayload, importPractice } from "./shareModel.js";
 import { boardThumb } from "./boardThumb.js";
 import * as L from "./boardLibrary.js";
@@ -64,11 +65,36 @@ function showPractice(shared) {
     };
 }
 
+const POS = slotPositions;
+function showGame(g) {
+    const when = g.date ? new Date(g.date + "T12:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) : "";
+    document.title = `Game day | Southbound Playbook`;
+    $("vTitle").textContent = g.opp ? `Game day vs ${g.opp}` : "Game day";
+    $("vMeta").textContent = [when, g.formation, `${g.periods === 4 ? "4 quarters" : "2 halves"} of ${g.minutes} min`].filter(Boolean).join(" · ");
+    $("vCopy").hidden = true;
+    const body = $("vBody");
+    const pos = POS(g.formation);
+    const t = h("table", "vw-table"), head = h("tr");
+    head.append(h("th", "", "Pos"));
+    for (let i = 0; i < g.periods; i++) head.append(h("th", "", g.periods === 4 ? "Q" + (i + 1) : i === 0 ? "1st half" : "2nd half"));
+    t.append(head);
+    pos.forEach((ps, s) => { const tr = h("tr"); tr.append(h("td", "", ps)); for (let p = 0; p < g.periods; p++) tr.append(h("td", "", g.lineups[p][s])); t.append(tr); });
+    const bt = h("tr"); bt.append(h("td", "", "Bench")); for (let p = 0; p < g.periods; p++) bt.append(h("td", "", g.bench[p].join(", "))); t.append(bt);
+    const wrap = h("div", "vw-scroll"); wrap.append(t); body.append(wrap);
+    if (g.captain) body.append(h("p", "vw-line", "Captain: " + g.captain));
+    if (g.duty.length) {
+        body.append(h("h2", "vw-h", "Duty today"));
+        const ul = h("ul", "vw-duty");
+        for (const d of g.duty) { const li = h("li"); li.append(h("b", "", d.job + ": "), document.createTextNode(d.names.join(", "))); ul.append(li); }
+        body.append(ul);
+    }
+}
+
 (async () => {
     const token = location.hash.replace(/^#/, "");
     const shared = token ? parsePayload(await decodePayload(token)) : null;
     if (!shared) { $("vBad").hidden = false; $("vTitle").textContent = "Link not found"; return; }
     $("vActions").hidden = false;
     $("vPrint").onclick = () => window.print();
-    shared.kind === "board" ? showBoard(shared.board) : showPractice(shared);
+    shared.kind === "board" ? showBoard(shared.board) : shared.kind === "game" ? showGame(shared.game) : showPractice(shared);
 })();

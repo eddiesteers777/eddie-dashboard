@@ -491,3 +491,12 @@ html.pb-app #publicHeader,html.pb-app .pub-footer{display:none}
   .gm-card table{width:100%;border-collapse:collapse;font-size:12px}
   .gm-card th,.gm-card td{border:1px solid #888;padding:5px 6px;text-align:left}
 }
+
+/* Shared team page */
+.vw-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.vw-table{width:100%;border-collapse:collapse;font-size:.95rem}
+.vw-table th,.vw-table td{border:1px solid var(--border);padding:8px 10px;text-align:left}
+.vw-table th{font:600 .75rem var(--font-mono);text-transform:uppercase}
+.vw-h{font-family:var(--font-display);text-transform:uppercase;font-size:1.25rem;margin:22px 0 8px}
+.vw-duty{margin:0;padding-left:18px;display:grid;gap:6px}
+.vw-line{margin:12px 0 0}

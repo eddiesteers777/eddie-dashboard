@@ -1,7 +1,7 @@
 // Share button behaviour shared by the board and the practice planner.
 import { shareUrl } from "./shareModel.js";
 
-export async function shareLink(token, { title, text }, toast) {
+export async function shareLink(token, { title, text, copied = "Link copied. Player names are left off." }, toast) {
     const url = shareUrl(location.origin, token);
     if (navigator.share) {
         try { await navigator.share({ title, text, url }); return; }
@@ -9,7 +9,7 @@ export async function shareLink(token, { title, text }, toast) {
     }
     try {
         await navigator.clipboard.writeText(url);
-        toast("Link copied. Player names are left off.");
+        toast(copied);
     } catch {
         const { sbAlert } = await import("../ui.js");
         await sbAlert(url, { title: "Copy this link" });

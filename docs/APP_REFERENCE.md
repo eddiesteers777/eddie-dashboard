@@ -293,7 +293,7 @@ Ideas only (AGPL-3.0), all original code.
 - Details of each step: `docs/BUILD_HISTORY.md` (Playbook entries).
 
 ### Playbook sharing and sample team (2026-10-21)
-Share links: `js/playbook/shareModel.js` (encode/decode/validate, `importPractice`), `shareUi.js` (native share, then clipboard, then a dialog), viewer `playbook-view.html` + `view.js` (no sync, no `shell.js`). Everything arriving in a link is re-validated through the normal parsers. Sample team: `sampleModel.js` (`loadSample`, `removeSample`, `hasSample`), marked by note/label "Sample".
+Share links (board and practice carry no names; the Game-tab team link carries first names after a coach confirm): `js/playbook/shareModel.js` (encode/decode/validate, `importPractice`), `shareUi.js` (native share, then clipboard, then a dialog), viewer `playbook-view.html` + `view.js` (no sync, no `shell.js`). Everything arriving in a link is re-validated through the normal parsers. Sample team: `sampleModel.js` (`loadSample`, `removeSample`, `hasSample`), marked by note/label "Sample".
 
 ### Playbook game day (2026-10-21)
 `js/playbook/gameModel.js` (lineups are one array of 11 roster ids per period, formation slot order, GK first; `autoPlan`, `setSlot`, `minutes`, `changes`, `parseGame`). Stored as `session.game` on a `kind: "game"` team session (`teamModel.setGame`); other kinds drop it on load. UI `playbook-game.html` + `game.js`.

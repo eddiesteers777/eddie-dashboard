@@ -361,3 +361,6 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 ## 2026-10-21 — Playbook: Game day
 - New **Game** tab (`playbook-game.html`, `js/playbook/game.js`, pure `gameModel.js`): pick the squad (from attendance marks or "here today"), formation, 2 halves or 4 quarters and minutes each; "Fair lineup" fills every period (fewest minutes play first, stayers keep their slot, newcomers take the best position match, one goalkeeper all game). Pitch picture per period, per-slot selects (swap on pick), changes between periods, minutes bars, printable lineup card. The plan is stored on the game session in the Team data (`session.game`, cleaned in `parseTeam`, synced with the team key; no rules change). Hub card 06 added.
 - Tested: `tests/playbookGame.test.mjs` (8); Playwright at 390 and 1280, persistence on reload, print view.
+
+## 2026-10-21 — Playbook: team link for parents and players
+- "Share with team" on the Game tab (`shareModel.gamePayload`, kind `game`; viewer branch in `view.js`): read-only lineup per period, bench, captain and duty, first names only. Never attendance, runs or contacts. The coach confirms (`sbConfirm`) that names are included before the link is made. Board and practice links still carry no names. Tested in `tests/playbookShare.test.mjs` and Playwright (390/1280).

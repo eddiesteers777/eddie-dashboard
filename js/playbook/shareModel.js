@@ -1,9 +1,10 @@
 // Southbound Playbook: share links. A board or a practice plan is packed into the part of the web
 // address after "#", so it never goes to a server. The page that opens it (playbook-view.html) is read-only.
-// Player names never go into a link: shared boards show numbers only.
+// Player names never go into a board link (numbers only). The team link (kind "game") carries first names and asks the coach first.
 import { parseBoard } from "./boardModel.js";
 import * as D from "./drillModel.js";
 import * as P from "./practiceModel.js";
+import { parseGame, slotCount, slotPositions } from "./gameModel.js";
 
 export const MAX_TOKEN = 60000;      // longest link text we will open
 const MAX_JSON = 200000;
@@ -56,6 +57,18 @@ export function practicePayload(practice, drills) {
     return { v: 1, k: "practice", practice, drills: used };
 }
 
+// Team link for parents and players: first names only, no attendance, runs or contacts. The coach confirms before sharing.
+export function gamePayload(date, game, roster, team, session) {
+    const name = rid => roster.find(p => p.id === rid)?.name || "";
+    const bench = p => game.squad.filter(r => !(game.lineups[p] || []).includes(r)).map(name).filter(Boolean);
+    const duty = [];
+    for (const j of team?.jobs || []) { const names = ((session?.duty || {})[j.id] || []).map(name).filter(Boolean); if (names.length) duty.push({ job: j.name, names }); }
+    return {
+        v: 1, k: "game", date, opp: game.opp, formation: game.formation, periods: game.periods, minutes: game.minutes,
+        lineups: game.lineups.map(row => row.map(name)), bench: game.lineups.map((_, p) => bench(p)), duty, captain: name(session?.captain || "")
+    };
+}
+
 // Anything that arrives in a link is cleaned the same way as a file: unknown fields drop, numbers clamp.
 export function parsePayload(o) {
     if (!o || o.v !== 1) return null;
@@ -72,6 +85,16 @@ export function parsePayload(o) {
             if (c) drills.push({ ...c, boardId: "" });
         }
         return { kind: "practice", practice, drills };
+    }
+    if (o.k === "game") {
+        const g = parseGame({ formation: o.formation, periods: o.periods, minutes: o.minutes, opp: o.opp });
+        const n = slotCount(g.formation);
+        const nm = v => (typeof v === "string" ? v.trim().slice(0, 24) : "");
+        const lineups = Array.from({ length: g.periods }, (_, p) => Array.from({ length: n }, (_, i) => nm(o.lineups?.[p]?.[i])));
+        const bench = Array.from({ length: g.periods }, (_, p) => (Array.isArray(o.bench?.[p]) ? o.bench[p] : []).slice(0, 40).map(nm).filter(Boolean));
+        const duty = (Array.isArray(o.duty) ? o.duty : []).slice(0, 12).map(d => ({ job: nm(d?.job) || "", names: (Array.isArray(d?.names) ? d.names : []).slice(0, 6).map(nm).filter(Boolean) })).filter(d => d.job && d.names.length);
+        const date = typeof o.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.date) ? o.date : "";
+        return { kind: "game", game: { ...g, lineups, bench, duty, date, captain: nm(o.captain) } };
     }
     return null;
 }

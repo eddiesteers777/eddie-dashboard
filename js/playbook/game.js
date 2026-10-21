@@ -5,6 +5,9 @@ import * as R from "./rosterModel.js";
 import * as S from "./sampleModel.js";
 import * as Art from "./pitchArt.js";
 import { formationSlots, FORMATIONS } from "./boardModel.js";
+import { gamePayload, encodePayload } from "./shareModel.js";
+import { shareLink } from "./shareUi.js";
+import { sbConfirm } from "../ui.js";
 import { KEYS } from "./store.js";
 
 const $ = id => document.getElementById(id);
@@ -56,7 +59,7 @@ function pitch(g) {
 function render() {
     const has = roster.length > 0;
     $("noRoster").hidden = has; $("body").hidden = !has;
-    $("print").hidden = $("auto").hidden = !has;
+    $("print").hidden = $("auto").hidden = $("share").hidden = !has;
     if (!has) { $("sub").textContent = ""; return; }
     const g = game();
     if (period >= g.periods) period = 0;
@@ -147,6 +150,14 @@ function wire() {
         save(G.autoPlan(g, roster)); toast("Lineup filled. Everyone gets a fair share of minutes.");
     };
     $("print").onclick = () => window.print();
+    $("share").onclick = async () => {
+        const g = game();
+        if (!g.lineups.flat().some(Boolean)) return toast("Fill the lineup first");
+        const ok = await sbConfirm("This link shows your players' first names and today's lineup. It has no attendance, make-up runs or contact info. Anyone with the link can see it, so send it only to your team's parents and players.", { title: "Share with your team?", confirmLabel: "Get link" });
+        if (!ok) return;
+        const s = session();
+        await shareLink(await encodePayload(gamePayload(date, g, roster, team, s)), { title: g.opp ? `Game day vs ${g.opp}` : "Game day", text: "Lineup and duty for our next game", copied: "Link copied. Send it to your team." }, toast);
+    };
     $("sampleLoad").onclick = () => {
         const r = S.loadSample(roster, team);
         if (!r) return;
