@@ -80,9 +80,16 @@ export function parseDrills(text) {
     try { o = JSON.parse(text); } catch { return null; }
     if (!o || !["playbook-drills", "calera-drills"].includes(o.app) || !Array.isArray(o.drills)) return null;
     const out = [];
+    const seen = new Set();
+    let next = 1 + Math.max(0, ...o.drills.map(d => (d && typeof d.id === "string" && /^d\d+$/.test(d.id) ? Number(d.id.slice(1)) : 0)));
     for (const d of o.drills.slice(0, 500)) {
-        const c = normalizeDrill(d, "d" + (out.length + 1));
-        if (c) out.push(c);
+        const keep = d && typeof d.id === "string" && /^d\d+$/.test(d.id) && !seen.has(d.id);
+        const id = keep ? d.id : "d" + next++;
+        const c = normalizeDrill(d, id);
+        if (!c) continue;
+        c.id = id;
+        seen.add(id);
+        out.push(c);
     }
     return out;
 }

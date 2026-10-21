@@ -29,7 +29,7 @@ export const deleteBoard = (lib, id) => ({ boards: lib.boards.filter(b => b.id !
 export const sortedBoards = lib => [...lib.boards].sort((a, b) => b.updatedAt - a.updatedAt);
 
 export function serializeLibrary(lib) {
-    return JSON.stringify({ app: "playbook-library", v: 1, boards: lib.boards.map(b => ({ name: b.name, updatedAt: b.updatedAt, board: JSON.parse(serialize(b.board)) })) });
+    return JSON.stringify({ app: "playbook-library", v: 1, boards: lib.boards.map(b => ({ id: b.id, name: b.name, updatedAt: b.updatedAt, board: JSON.parse(serialize(b.board)) })) });
 }
 
 // Accepts the whole library file; broken boards are skipped, never the whole file.
@@ -38,10 +38,17 @@ export function parseLibrary(text) {
     try { o = JSON.parse(text); } catch { return null; }
     if (!o || !["playbook-library", "calera-library"].includes(o.app) || !Array.isArray(o.boards)) return null;
     const boards = [];
+    const used = new Set(o.boards.map(e => e && e.id).filter(i => typeof i === "string" && /^b\d+$/.test(i)));
+    const seen = new Set();
+    let next = 1 + Math.max(0, ...[...used].map(i => Number(i.slice(1))));
     for (const e of o.boards.slice(0, MAX_BOARDS)) {
         const board = e && parseBoard(JSON.stringify(e.board));
         if (!board) continue;
-        boards.push({ id: "b" + (boards.length + 1), name: String(e.name || board.title).slice(0, 60), updatedAt: Number.isFinite(e.updatedAt) ? e.updatedAt : 0, board });
+        // Keep a valid, unique id so links to a saved board stay put; give the rest a new one.
+        const keep = typeof e.id === "string" && /^b\d+$/.test(e.id) && !seen.has(e.id);
+        const id = keep ? e.id : "b" + next++;
+        seen.add(id);
+        boards.push({ id, name: String(e.name || board.title).slice(0, 60), updatedAt: Number.isFinite(e.updatedAt) ? e.updatedAt : 0, board });
     }
     return { boards };
 }

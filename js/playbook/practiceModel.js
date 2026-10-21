@@ -150,7 +150,14 @@ export function parsePracticeList(text) {
     try {
         const o = JSON.parse(text);
         if (!o || !Array.isArray(o.practices)) return [];
-        return o.practices.map((e, i) => ({ id: "p" + (i + 1), name: String(e.name || "Practice").slice(0, 60), updatedAt: Number(e.updatedAt) || 0, practice: parsePractice(e.practice) })).filter(e => e.practice);
+        const seen = new Set();
+        let next = 1 + Math.max(0, ...o.practices.map(e => (e && typeof e.id === "string" && /^p\d+$/.test(e.id) ? Number(e.id.slice(1)) : 0)));
+        return o.practices.map(e => ({ id: pickId(e, seen, () => "p" + next++), name: String(e.name || "Practice").slice(0, 60), updatedAt: Number(e.updatedAt) || 0, practice: parsePractice(e.practice) })).filter(e => e.practice);
     } catch { return []; }
 }
-export const serializePracticeList = list => JSON.stringify({ app: "playbook-practices", practices: list.map(({ name, updatedAt, practice }) => ({ name, updatedAt, practice })) });
+function pickId(e, seen, fresh) {
+    const id = e && typeof e.id === "string" && /^p\d+$/.test(e.id) && !seen.has(e.id) ? e.id : fresh();
+    seen.add(id);
+    return id;
+}
+export const serializePracticeList = list => JSON.stringify({ app: "playbook-practices", practices: list.map(({ id, name, updatedAt, practice }) => ({ id, name, updatedAt, practice })) });

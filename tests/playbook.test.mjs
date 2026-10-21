@@ -341,3 +341,32 @@ test("the Playbook link in the app menus is coach-only everywhere", () => {
     }
     assert.match(readFileSync(new URL("../js/loadHeader.js", import.meta.url), "utf8"), /href: "playbook\.html"[^}]*requires: "coach"/);
 });
+
+test("saved ids stay put across save, add and reload", () => {
+    // boards
+    let lib = L.emptyLibrary();
+    const a = L.saveBoard(lib, M.newBoard(), null, 1); lib = a.lib;
+    const b = L.saveBoard(lib, M.newBoard(), null, 2); lib = b.lib;
+    const back = L.parseLibrary(L.serializeLibrary(lib));
+    assert.deepEqual(back.boards.map(x => x.id), lib.boards.map(x => x.id));
+    assert.equal(L.parseLibrary(L.serializeLibrary(back)).boards.length, 2);
+    // drills
+    let ds = DR.parseDrills(DR.serializeDrills(SEED_DRILLS.slice(0, 3).map((d, i) => ({ ...DR.normalizeDrill(d, "d" + (i + 1)) }))));
+    ds = DR.saveDrill(ds, { ...ds[0], name: "Brand new", id: "" }).list;
+    const ids = ds.map(d => d.id);
+    assert.equal(new Set(ids).size, ids.length);
+    assert.deepEqual(DR.parseDrills(DR.serializeDrills(ds)).map(d => d.id), ids);
+    // practices
+    let ps = [];
+    ps = PM.savePractice(ps, PM.newPractice(), null, 1).list;
+    ps = PM.savePractice(ps, PM.newPractice(), null, 2).list;
+    const pids = ps.map(p => p.id);
+    assert.deepEqual(PM.parsePracticeList(PM.serializePracticeList(ps)).map(p => p.id), pids);
+});
+
+test("a file with missing or repeated ids still gets unique ids", () => {
+    const f = JSON.parse(DR.serializeDrills([DR.normalizeDrill(SEED_DRILLS[0], "d1"), DR.normalizeDrill(SEED_DRILLS[1], "d1")]));
+    f.drills[1].id = "d1"; f.drills.push({ ...f.drills[0], id: undefined, name: "Third" });
+    const got = DR.parseDrills(JSON.stringify(f));
+    assert.equal(new Set(got.map(d => d.id)).size, got.length);
+});
