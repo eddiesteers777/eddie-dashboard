@@ -131,7 +131,7 @@ function bottlesHTML(s) {
                         ? `Sip <strong>~${fl(b.ozPerMile)}</strong> every mile <span class="fs-muted">(${b.gulpsPerMile} ${b.gulpsPerMile === 1 ? "gulp" : "gulps"})</span>`
                         : `Sip <strong>~${fl(b.ozPer10Min)}</strong> every 10 min`}
                 </div>
-                <div class="fs-bottle-macros">${fl(b.oz)} · ${b.carbs} g carb · ${b.sodium} mg sodium</div>
+                <div class="fs-bottle-macros">${fl(b.oz)} · ${b.carbs} g carb · ${b.sodium} mg sodium${b.caffeineMg ? ` · ${b.caffeineMg} mg caffeine` : ""}</div>
             </div>`).join("")}
         </div>
         ${m ? `
@@ -139,6 +139,7 @@ function bottlesHTML(s) {
             <span class="fs-mix-label">Mix each bottle</span>
             <span>${fl(s.bottles[0].oz)} water + ${m.recipe ? esc(recipeParts(m.recipe).join(" + ")) : [carbAmount, sodiumAmount].filter(Boolean).join(" + ")}</span>
             ${s.concentration != null ? `<span class="fs-muted">${s.concentration}% carb solution</span>` : ""}
+            ${m.recipe?.caffeine ? `<span>Plus ${m.recipe.caffeine.perBottleMg} mg caffeine in bottle${m.recipe.caffeine.bottles.length > 1 ? "s" : ""} ${m.recipe.caffeine.bottles.join(", ")}</span>` : ""}
         </div>` : ""}`;
 }
 

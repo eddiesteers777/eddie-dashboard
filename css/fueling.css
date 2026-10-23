@@ -2188,6 +2188,10 @@
     font:700 14px/1 var(--font-body);
     text-align:center;
 }
+.fs-controls{display:flex;flex-wrap:wrap;gap:10px 16px;}
+.fuel-drink-help{margin:0 0 14px;}
+#diyMaltoYieldField[hidden]{display:none !important;}
+.fuel-field > small{display:block;margin:2px 0 8px;color:var(--muted);font-size:13px;line-height:1.4;}
 .fs-intro{margin:-6px 0 20px;}
 
 .fs{display:flex;flex-direction:column;gap:18px;}

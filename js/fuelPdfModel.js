@@ -117,7 +117,7 @@ export function pdfModel(plan, schedule, { unit = "oz", today = new Date(), sour
             bottles: r.bottles,
             perBottle: `${fl(r.bottleOz)} water + ${recipeParts(r).join(" + ") || "nothing added"}`,
             batch: r.bottles > 1 ? `For all ${r.bottles}: ${fl(r.bottleOz * r.bottles)} water + ${recipeParts(r, { batch: true }).join(" + ")}` : "",
-            totals: `${Math.round(r.totals.carbs)} g carbs · ${Math.round(r.totals.sodium)} mg sodium in all`,
+            totals: `${Math.round(r.totals.carbs)} g carbs · ${Math.round(r.totals.sodium)} mg sodium in all${r.caffeine ? ` · ${r.caffeine.perBottleMg} mg caffeine in bottle${r.caffeine.bottles.length > 1 ? "s" : ""} ${r.caffeine.bottles.join(", ")}` : ""}`,
             notes: diy.notes || ""
         };
     }
@@ -134,7 +134,7 @@ export function pdfModel(plan, schedule, { unit = "oz", today = new Date(), sour
             detail = [partWords(e.part), e.fluid ? fl(e.fluid) : "", `${e.carbs} g carbs · ${e.sodium} mg sodium`, `sip steadily until ${until}`].filter(Boolean).join(" · ");
         } else if (e.kind === "bottle") {
             const b = s.bottles?.[e.bottle - 1];
-            if (b) detail = `${fl(b.oz)} · ${b.carbs} g carbs · ${b.sodium} mg sodium · ${b.ozPerMile != null ? `about ${fl(b.ozPerMile)} each mile` : `about ${fl(b.ozPer10Min)} every 10 min`}`;
+            if (b) detail = `${fl(b.oz)} · ${b.carbs} g carbs · ${b.sodium} mg sodium · ${b.caffeineMg ? `${b.caffeineMg} mg caffeine · ` : ""}${b.ozPerMile != null ? `about ${fl(b.ozPerMile)} each mile` : `about ${fl(b.ozPer10Min)} every 10 min`}`;
         }
         return { time: formatClock(e.min), clock: e.tod || "", mile: e.mile != null ? mi(e.mile) : "", what, detail, kind: e.kind, caffeine: Boolean(e.caffeine) };
     });

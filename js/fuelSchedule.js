@@ -38,6 +38,32 @@ const CARB_ALIASES = { juice: "fruit-juice", "sports-powder": "sports-drink-powd
 export const carbSourceKey = key => (DIY_CARB_SOURCES[key] ? key : CARB_ALIASES[key] || "table-sugar");
 
 export const DEFAULT_FIRST_GEL_MIN = 30;
+// Maltodextrin is about 95% carbohydrate; brands differ (0.90-0.99 on the
+// label), so the drink can use the label's own figure instead.
+export const MALTO_CARBS_PER_GRAM = DIY_CARB_SOURCES.maltodextrin.carbsPerGram;
+export function maltoYield(value) {
+    const n = Number(value);
+    return value === "" || value == null || !isFinite(n) || n <= 0 ? MALTO_CARBS_PER_GRAM : Math.min(1, Math.max(0.5, n));
+}
+const carbsPerGram = (key, malto) => (key === "maltodextrin" ? maltoYield(malto) : DIY_CARB_SOURCES[key].carbsPerGram);
+
+// "Gel every N min": blank -> null (gels spread evenly, the default);
+// otherwise 10-120 minutes.
+export function gelIntervalValue(value) {
+    if (value === "" || value == null) return null;
+    const n = Number(value);
+    if (!isFinite(n) || n <= 0) return null;
+    return Math.min(120, Math.max(10, Math.round(n)));
+}
+
+// Bottle numbers typed as "2,3", "2 3" or [2, 3] -> [2, 3]: whole numbers
+// from 1 to bottleCount, no repeats, in order.
+export function parseBottleNumbers(value, bottleCount) {
+    const count = Math.max(0, Math.floor(Number(bottleCount) || 0));
+    const values = Array.isArray(value) ? value : String(value ?? "").split(/[\s,;]+/);
+    return [...new Set(values.filter(v => String(v).trim() !== "").map(Number)
+        .filter(n => Number.isInteger(n) && n >= 1 && n <= count))].sort((a, b) => a - b);
+}
 // A gel taken in the last ~15 minutes can't be absorbed in time to help.
 export const FINAL_GEL_BUFFER_MIN = 15;
 const OZ_TO_ML = 29.5735;
@@ -49,10 +75,11 @@ const round1 = value => Math.round(value * 10) / 10;
 // How much of an ingredient a drink needs. Returns grams (and teaspoons
 // where the ingredient has a standard measure), or null grams when the
 // amount has to come from the product's own label.
-export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-sugar", sodiumSource = "table-salt" }) {
-    const carb = DIY_CARB_SOURCES[carbSourceKey(carbSource)];
+export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-sugar", sodiumSource = "table-salt", maltoCarbsPerGram = null }) {
+    const key = carbSourceKey(carbSource);
+    const carb = DIY_CARB_SOURCES[key];
     const sodium = DIY_SODIUM_SOURCES[sodiumSource] || DIY_SODIUM_SOURCES["table-salt"];
-    const carbGrams = round1(carbTarget / carb.carbsPerGram);
+    const carbGrams = round1(carbTarget / carbsPerGram(key, maltoCarbsPerGram));
     const sodiumGrams = sodium.sodiumPerGram ? Math.round((sodiumTarget / sodium.sodiumPerGram) * 100) / 100 : null;
     return {
         carbLabel: carb.label,
@@ -73,12 +100,16 @@ export function diyMix({ carbTarget = 0, sodiumTarget = 0, carbSource = "table-s
  * -> { bottles, bottleOz, carbs: [{ key, label, carbs, grams, tsp,
  *      bottle: { grams, tsp } }], electrolyte: { mgPerScoop, scoops, bottleScoops, mg } | null,
  *      sodium: { key, label, mg, grams, tsp, bottle: { mg, grams, tsp }, fromLabel } | null,
+ *      caffeine: { perBottleMg, bottles: [n], mg } | null,
  *      over: mg of sodium past the target from the powder alone, totals: { carbs, sodium } }
+ * maltoCarbsPerGram: the maltodextrin label's carbs per gram (blank = 0.95).
+ * caffeinePerBottleMg + caffeineBottles ("2,3"): caffeine in chosen bottles.
  */
 export function drinkRecipe({
     carbTarget = 0, sodiumTarget = 0, bottleCount = 1, bottleSize = 0,
     carbSource = "table-sugar", carbSource2 = "", carbShare2 = 0.5,
-    electroMg = 0, electroScoops = 0, sodiumSource = "table-salt"
+    electroMg = 0, electroScoops = 0, sodiumSource = "table-salt",
+    maltoCarbsPerGram = null, caffeinePerBottleMg = 0, caffeineBottles = ""
 } = {}) {
     const n = Math.max(1, Math.round(Number(bottleCount) || 1));
     const carbsTotal = Math.max(0, Number(carbTarget) || 0);
@@ -88,7 +119,7 @@ export function drinkRecipe({
     const share2 = second ? Math.min(0.9, Math.max(0.1, Number(carbShare2) || 0.5)) : 0;
     const part = (key, carbs) => {
         const src = DIY_CARB_SOURCES[key];
-        const grams = round1(carbs / src.carbsPerGram);
+        const grams = round1(carbs / carbsPerGram(key, maltoCarbsPerGram));
         const bottleGrams = round1(grams / n);
         return {
             key, label: src.label, carbs: round1(carbs), grams,
@@ -118,10 +149,13 @@ export function drinkRecipe({
             bottle: { mg: Math.round(left / n), grams: bottleGrams, tsp: bottleGrams != null && src.gPerTsp ? bottleGrams / src.gPerTsp : null }
         };
     }
+    const perBottleMg = Math.max(0, Math.round(Number(caffeinePerBottleMg) || 0));
+    const caffeineIn = perBottleMg > 0 ? parseBottleNumbers(caffeineBottles, n) : [];
+    const caffeine = caffeineIn.length ? { perBottleMg, bottles: caffeineIn, mg: perBottleMg * caffeineIn.length } : null;
     return {
         bottles: n,
         bottleOz: Math.max(0, Number(bottleSize) || 0),
-        carbs, electrolyte, sodium,
+        carbs, electrolyte, sodium, caffeine,
         over: electrolyte ? Math.max(0, Math.round(electroTotal - sodiumTotal)) : 0,
         totals: { carbs: Math.round(carbsTotal), sodium: Math.round(Math.max(sodiumTotal, electroTotal)) }
     };
@@ -158,9 +192,13 @@ export function recipeParts(recipe, { batch = false } = {}) {
     return out;
 }
 
-// 2.3 -> "2 ¼", 0.125 -> "⅛". Rounds to the nearest eighth.
+// 2.3 -> "2 ¼", 0.3 -> "¼". Rounds to the nearest eighth from ¼ tsp up.
+// Below ¼ tsp an eighth is too coarse (0.07 tsp of salt would read "⅛",
+// nearly double), so small amounts stay as decimals: 0.15 -> "0.15".
 export function formatTsp(tsp) {
     if (tsp == null || !isFinite(tsp)) return "";
+    if (tsp < 0.05) return "a pinch";
+    if (tsp < 0.25) return String(Math.round(tsp * 100) / 100);
     const eighths = Math.round(tsp * 8);
     if (eighths === 0) return "a pinch";
     const whole = Math.floor(eighths / 8);
@@ -243,7 +281,10 @@ export function scheduleInputFromPlan(plan) {
             carbSource2: diy.carbSource2 || "",
             carbShare2: Number(diy.carbShare2) || 0.5,
             electroMg: Number(diy.electroMg) || 0,
-            electroScoops: Number(diy.electroScoops) || 0
+            electroScoops: Number(diy.electroScoops) || 0,
+            maltoCarbsPerGram: diy.maltoCarbsPerGram ?? null,
+            caffeinePerBottleMg: Number(diy.caffeinePerBottleMg) || 0,
+            caffeineBottles: diy.caffeineBottles ?? ""
         } : null,
         targets: {
             carbsPerHour: Number(plan.carbsPerHour) || 0,
@@ -251,6 +292,7 @@ export function scheduleInputFromPlan(plan) {
             sodiumPerHour: Number(plan.sodiumPerHour) || 0
         },
         firstGelMin: firstGelValue(plan.firstGelMin),
+        gelIntervalMin: gelIntervalValue(plan.gelIntervalMin),
         startMin: parseStartTime(plan.startTime ?? session.startTime),
         // The workout's own paces, when the plan was built from one.
         segments: Array.isArray(session.segments) ? session.segments : null
@@ -270,12 +312,16 @@ export function isSipped(item) {
 export const caffeineMg = item => Math.max(0, Math.round(Number(item?.caffeineMg) || 0));
 
 // Gel (and chew/bar) times, spread evenly between the first-gel time and
-// FINAL_GEL_BUFFER_MIN before the end. Caffeinated servings go last,
-// where the lift matters most.
-function gelTimes(count, durationMin, firstGelMin) {
+// FINAL_GEL_BUFFER_MIN before the end, or every gelIntervalMin minutes
+// from the first gel when the athlete chose a spacing and it fits.
+// Caffeinated servings go last, where the lift matters most.
+function gelTimes(count, durationMin, firstGelMin, gelIntervalMin = null) {
     if (count === 0) return [];
     const start = Math.min(Math.max(firstGelMin, 5), durationMin);
     const end = Math.max(start, durationMin - FINAL_GEL_BUFFER_MIN);
+    if (gelIntervalMin && start + gelIntervalMin * (count - 1) <= end) {
+        return Array.from({ length: count }, (_, i) => round(start + gelIntervalMin * i));
+    }
     if (count === 1) return [round((start + end) / 2)];
     const gap = (end - start) / (count - 1);
     return Array.from({ length: count }, (_, i) => round(start + gap * i));
@@ -302,7 +348,10 @@ export function buildSchedule(input) {
     });
     const hasCaffeine = item => !!item.caffeine || caffeineMg(item) > 0;
     servings.sort((a, b) => Number(hasCaffeine(a)) - Number(hasCaffeine(b)));
-    const times = gelTimes(servings.length, durationMin, firstGelMin);
+    const gelIntervalMin = gelIntervalValue(input.gelIntervalMin);
+    const times = gelTimes(servings.length, durationMin, firstGelMin, gelIntervalMin);
+    const intervalFits = !gelIntervalMin || servings.length < 2
+        || Math.min(Math.max(firstGelMin, 5), durationMin) + gelIntervalMin * (servings.length - 1) <= Math.max(0, durationMin - FINAL_GEL_BUFFER_MIN);
     // A gel due in the middle of a hard rep moves to the nearest easy
     // stretch (the jog after it, usually) within 10 minutes, as long as it
     // stays 10+ minutes from the gels either side and out of the last 15.
@@ -364,14 +413,18 @@ export function buildSchedule(input) {
             carbTarget: carbsEach,
             sodiumTarget: sodiumEach,
             carbSource: drink.carbSource,
-            sodiumSource: drink.sodiumSource
+            sodiumSource: drink.sodiumSource,
+            maltoCarbsPerGram: drink.maltoCarbsPerGram
         });
         // The whole recipe (two carbs, powder + salt for the rest), per bottle.
         mix.recipe = drinkRecipe({
             carbTarget: drink.carbs, sodiumTarget: drink.sodium, bottleCount: count, bottleSize: drink.bottleSize,
             carbSource: drink.carbSource, carbSource2: drink.carbSource2, carbShare2: drink.carbShare2,
-            electroMg: drink.electroMg, electroScoops: drink.electroScoops, sodiumSource: drink.sodiumSource
+            electroMg: drink.electroMg, electroScoops: drink.electroScoops, sodiumSource: drink.sodiumSource,
+            maltoCarbsPerGram: drink.maltoCarbsPerGram,
+            caffeinePerBottleMg: drink.caffeinePerBottleMg, caffeineBottles: drink.caffeineBottles
         });
+        const bottleCaffeine = n => (mix.recipe.caffeine?.bottles.includes(n) ? mix.recipe.caffeine.perBottleMg : 0);
         for (let i = 0; i < count; i++) {
             const startMin = perBottleMin * i;
             const endMin = perBottleMin * (i + 1);
@@ -385,6 +438,7 @@ export function buildSchedule(input) {
                 oz: drink.bottleSize,
                 carbs: Math.round(carbsEach),
                 sodium: Math.round(sodiumEach),
+                caffeineMg: bottleCaffeine(i + 1),
                 ozPerMile: perBottleMi ? round1(drink.bottleSize / perBottleMi) : null,
                 ozPer10Min: round1(drink.bottleSize / (perBottleMin / 10)),
                 gulpsPerMile: perBottleMi ? Math.max(1, Math.round(drink.bottleSize / perBottleMi / OZ_PER_GULP)) : null
@@ -437,9 +491,9 @@ export function buildSchedule(input) {
 
     // ---- One chronological checklist ----
     const events = [];
-    if (bottles.length) events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "bottle", bottle: 1, text: `Start Bottle 1` });
+    if (bottles.length) events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "bottle", bottle: 1, text: `Start Bottle 1`, caffeine: bottles[0].caffeineMg > 0, caffeineMg: bottles[0].caffeineMg });
     else events.push({ min: 0, mile: distanceMi ? 0 : null, kind: "start", text: "Start" });
-    bottles.slice(1).forEach(b => events.push({ min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}` }));
+    bottles.slice(1).forEach(b => events.push({ min: b.startMin, mile: b.startMile, kind: "bottle", bottle: b.n, text: `Finish Bottle ${b.n - 1} · start Bottle ${b.n}`, caffeine: b.caffeineMg > 0, caffeineMg: b.caffeineMg }));
     sips.forEach(d => events.push({ min: d.startMin, mile: d.startMile, part: partAt(d.startMin), kind: "sip", sip: d.n, text: d.name, caffeine: d.caffeine, caffeineMg: d.caffeineMg, carbs: d.carbs, sodium: d.sodium, fluid: d.fluid, endMin: d.endMin, endMile: d.endMile }));
     gels.forEach(g => events.push({ min: g.min, mile: g.mile, part: partAt(g.min), movedFrom: g.movedFrom, kind: "gel", gel: g.n, text: g.name, caffeine: g.caffeine, caffeineMg: g.caffeineMg, carbs: g.carbs, sodium: g.sodium }));
     events.push({ min: durationMin, mile: distanceMi || null, kind: "finish", text: bottles.length ? `Finish · Bottle ${bottles.length} empty` : "Finish" });
@@ -470,7 +524,7 @@ export function buildSchedule(input) {
         carbs: Math.round(all.reduce((s, g) => s + g.carbs, 0) + (drink?.carbs || 0)),
         sodium: Math.round(all.reduce((s, g) => s + g.sodium, 0) + (drink?.sodium || 0)),
         fluid: Math.round(all.reduce((s, g) => s + g.fluid, 0) + fluidFromDrink),
-        caffeineMg: all.reduce((s, g) => s + g.caffeineMg, 0),
+        caffeineMg: all.reduce((s, g) => s + g.caffeineMg, 0) + bottles.reduce((s, b) => s + b.caffeineMg, 0),
         // Caffeinated servings with no mg on file: counted, not guessed.
         caffeineUnknown: all.filter(g => g.caffeine && !g.caffeineMg).length
     };
@@ -482,6 +536,9 @@ export function buildSchedule(input) {
 
     // Plain-language flags for anything worth a second look.
     const warnings = [];
+    if (!intervalFits) {
+        warnings.push(`${gels.length} gels every ${gelIntervalMin} min don't fit before the last ${FINAL_GEL_BUFFER_MIN} min, so they're spread evenly instead. Take fewer gels or start them earlier to keep your spacing.`);
+    }
     const gelGap = gels.length > 1 ? gels[1].min - gels[0].min : null;
     if (gelGap !== null && gelGap < 15) {
         warnings.push(`Gels are only ${gelGap} min apart. That's a lot to absorb — consider fewer gels and a stronger drink, or an earlier first gel.`);
@@ -518,6 +575,9 @@ export function buildSchedule(input) {
         startTod: tod(0),
         finishTod: tod(durationMin),
         firstGelMin,
+        gelIntervalMin,
+        // false when the chosen spacing didn't fit and the gels were spread evenly instead.
+        intervalFits,
         gels,
         sips,
         bottles,
