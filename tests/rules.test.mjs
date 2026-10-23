@@ -1775,7 +1775,8 @@ test("session logs: the coach logs a session of an approved booking; the client 
     await assertFails(bad("b2_2026-10-22", { date: "2026-10-22", rating: 5 }));
     await assertFails(bad("b2_2026-10-22", { date: "2026-10-22", workedOn: "x".repeat(1001) }));
     await assertFails(bad("b2_2026-10-22", { date: "2026-10-22", createdAt: new Date("2020-01-01") }));
-    await assertFails(bad("b2_2026-10-22", { date: "2026-10-22" }));
+    // A future outcome (a fixed far-future date, so this never expires as the calendar moves).
+    await assertFails(bad("b2_2099-01-15", { date: "2099-01-15" }));
     // Undo: the coach deletes it.
     await assertSucceeds(deleteDoc(ref));
 });
