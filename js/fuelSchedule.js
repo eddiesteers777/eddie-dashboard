@@ -198,7 +198,10 @@ export function recipeParts(recipe, { batch = false } = {}) {
 export function formatTsp(tsp) {
     if (tsp == null || !isFinite(tsp)) return "";
     if (tsp < 0.05) return "a pinch";
-    if (tsp < 0.25) return String(Math.round(tsp * 100) / 100);
+    if (tsp < 0.25) {
+        const r = Math.round(tsp * 100) / 100;
+        return r >= 0.25 ? "¼" : String(r);
+    }
     const eighths = Math.round(tsp * 8);
     if (eighths === 0) return "a pinch";
     const whole = Math.floor(eighths / 8);
