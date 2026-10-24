@@ -350,6 +350,8 @@
     "js/userProfile.js",
     "js/userSettings.js",
     "js/vdot.js",
+    "js/viewportFix.js",
+    "js/viewportFixModel.js",
     "js/wearableActivity.js",
     "js/wearablePerformance.js",
     "js/wearableRecovery.js",

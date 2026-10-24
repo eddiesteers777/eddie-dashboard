@@ -5026,3 +5026,10 @@ html:not(.sb-charts-drawn) .tr-bars.sb-chart .tr-bar-fill, html:not(.sb-charts-d
     html .sb-chart > svg, html .tr-bars.sb-chart .tr-bar-fill, html .tr-bars.sb-chart .tr-bar-plan{ animation:none !important; }
     .sb-cross, .sb-dot, .sb-tip{ transition:none; }
 }
+
+/* Bottom bars on a phone (js/viewportFix.js): hidden while a field has the keyboard or a picker open,
+   and moved back down when iOS 26 leaves them drawn up the page after the keyboard closes. */
+@media (max-width:900px){
+    html .eos-bottomnav{ translate:0 var(--sb-vv-fix, 0px); }
+    html.sb-typing .eos-bottomnav{ display:none !important; }
+}

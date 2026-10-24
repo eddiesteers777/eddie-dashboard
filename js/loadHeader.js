@@ -10,6 +10,8 @@
 // Southbound dialogs/toasts (js/ui.js) for every app page, including
 // inline page scripts, which reach them as window.SB.
 import("./ui.js").catch(error => console.warn("Southbound: UI helpers unavailable.", error));
+// The tab dock and other bottom bars stay off the form on a phone (js/viewportFix.js).
+import("./viewportFix.js").catch(() => {});
 
 const GUEST_PAGES = ["fueling.html"];
 

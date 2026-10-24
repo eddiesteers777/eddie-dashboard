@@ -130,6 +130,7 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 - **The mobile top bar is a size container (`sbmtop`)**; its logo steps down with the bar's width.
 - **`pkill -f <pattern>` (and `pgrep -f`) match your own shell** when the pattern is in the command line. Stop test servers by PID.
 - **A guest's fueling work is set aside, not wiped, at sign-in.** The account guard in `js/auth.js` clears every account key on a device with no owner; `takeGuestFueling` first moves the `fueling-` keys of a device used as a guest (`sb-guest-fueling` mark) into `sb-guest-fueling-stash` for the account that signed in, and the Fueling page asks before merging them (`js/guestFuel.js`). A new guest-open page needs the same care for its keys.
+- **iOS 26 can leave fixed bottom bars drawn up the page after the keyboard closes.** `js/viewportFix.js` handles it: a new fixed bottom bar gets `translate:0 var(--sb-vv-fix, 0px)` and hides under `html.sb-typing`.
 - **Cloud sync timestamps a key only when it's pushed.** A pull keeps local keys that differ from the last-synced snapshot and must not mark them synced (`markPulled`); otherwise offline changes are lost.
 
 ## Testing
