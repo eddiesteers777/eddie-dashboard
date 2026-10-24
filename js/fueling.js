@@ -380,12 +380,13 @@ function renderMarathonCalendar(data, currentWeek) {
         cell.dataset.week = week;
         cell.dataset.index = index;
 
+        // A phone drops the month and the pace (css/fueling.css) so the seven days fit without "…".
         const compactLabel = isRest
             ? "Rest"
-            : `${day.miles} ${escapeHTML(day.pace || "mi")}`;
+            : `${day.miles}<span class="cd-extra"> ${escapeHTML(day.pace || "mi")}</span>`;
 
         cell.innerHTML = `
-            <span class="calendar-day-date">${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+            <span class="calendar-day-date"><span class="cd-extra">${date.toLocaleDateString("en-US", { month: "short" })} </span>${date.getDate()}</span>
             <span class="workout-day-abbr">${dayKey}</span>
             <span class="workout-day-compact">${compactLabel}</span>
             ${hasPlan ? `<span class="workout-day-check">${icon("fuel")}</span>` : ""}

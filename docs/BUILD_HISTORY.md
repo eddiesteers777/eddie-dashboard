@@ -391,3 +391,8 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 ## 2026-10-23 — Fueling: four pieces from PR #52
 - Ported onto main (PR #52's branch no longer shares history with main): maltodextrin carbs per gram from the label, a chosen gel interval (blank keeps even spacing), caffeine in chosen bottles, and decimal teaspoons below ¼ tsp. Details in `docs/APP_REFERENCE.md` (Fueling). No rules change. PR #52 closes once this merges.
 - Tested: `tests/fuelSchedule.test.mjs` (4 new tests, 1 updated), full `npm run test:static`; Playwright guest flow at 360/390/1280 (malto field shows only for maltodextrin, 0.9 → 22.2 g for 20 g carbs, gels at 30/70/110/150 with "every 40", bottles 2 and 3 tagged 60 mg, Caffeine total 120 mg, no horizontal overflow).
+
+## 2026-10-24 — Fueling on iPhone: bars over the form
+- Eddie's iPhone screenshot: the Fueling bar and the tab dock sat on the run form, about 280px above the bottom of the screen. Cause (inferred, matches the reports): the iOS 26 Safari stuck-viewport bug after the keyboard or a picker closes (WebKit 297779). Fix: `js/viewportFix.js` hides the bars while typing and moves them back down when the viewport is stuck. Also the marathon day chips no longer end in "…" on a phone.
+- Tested: `tests/viewportFix.test.mjs`, full `npm run test:static`; Playwright (Chromium) at 390 signed in: empty, filled and typing states; a faked stuck viewport (height 560 of 844) gives a 284px correction, and 0 while typing; desktop chips unchanged. Not testable here: real iOS Safari (needs Eddie's phone).
+
