@@ -387,3 +387,7 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 ## 2026-10-21 — Send a board or practice plan to a client
 - **Send to client** button on the Board and Practice pages (signed in only; `sendToClient` in `js/playbook/shareUi.js`): pick a linked client, add a line, and it posts the share link to their "From your coach" feed through the existing `sendClientUpdate` (no rules change; the text is under the 2000-character limit). The Updates page turns our own `playbook-view.html#…` link into an "Open it" button (`linkifyPlaybook` in `js/playbook/shareModel.js`, our host only). Board and practice links carry no player names. Game-day team link is not sent this way (it has first names).
 - Tested: `tests/playbookShare.test.mjs` (linkify), Playwright at 390 (send payload, guest has no button).
+
+## 2026-10-23 — Fueling: four pieces from PR #52
+- Ported onto main (PR #52's branch no longer shares history with main): maltodextrin carbs per gram from the label, a chosen gel interval (blank keeps even spacing), caffeine in chosen bottles, and decimal teaspoons below ¼ tsp. Details in `docs/APP_REFERENCE.md` (Fueling). No rules change. PR #52 closes once this merges.
+- Tested: `tests/fuelSchedule.test.mjs` (4 new tests, 1 updated), full `npm run test:static`; Playwright guest flow at 360/390/1280 (malto field shows only for maltodextrin, 0.9 → 22.2 g for 20 g carbs, gels at 30/70/110/150 with "every 40", bottles 2 and 3 tagged 60 mg, Caffeine total 120 mg, no horizontal overflow).

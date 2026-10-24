@@ -175,10 +175,12 @@ test("formatClock is h:mm of whole minutes", () => {
     }), RUNS);
 });
 
-test("teaspoons always read as a whole number and an eighth, or a pinch", () => {
+test("teaspoons read as a whole number and an eighth, a short decimal under ¼, or a pinch", () => {
     fc.assert(fc.property(fc.double({ min: 0, max: 20, noNaN: true }), tsp => {
         const text = formatTsp(tsp);
-        assert.match(text, /^(a pinch|\d+|\d+ [⅛¼⅜½⅝¾⅞]|[⅛¼⅜½⅝¾⅞])$/, `${tsp} -> ${text}`);
+        assert.match(text, /^(a pinch|0\.\d{1,2}|\d+|\d+ [⅛¼⅜½⅝¾⅞]|[⅛¼⅜½⅝¾⅞])$/, `${tsp} -> ${text}`);
+        if (tsp < 0.25) assert.ok(text === "a pinch" || Number(text) < 0.25, `${tsp} -> ${text}`);
+        else assert.ok(!/^0\./.test(text), `${tsp} -> ${text}`);
     }), RUNS);
 });
 

@@ -6,7 +6,7 @@ import { icon } from "./icons.js";
 import {
     buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock,
     DIY_SODIUM_SOURCES, DIY_CARB_SOURCES, DEFAULT_FIRST_GEL_MIN, drinkIncluded, firstGelValue, sodiumText,
-    isSipped, caffeineMg, drinkRecipe, recipeParts, carbSourceKey, tspWords
+    isSipped, caffeineMg, drinkRecipe, recipeParts, carbSourceKey, tspWords, gelIntervalValue
 } from "./fuelSchedule.js";
 import { fluidUnit, toFluid, ML_PER_OZ, fromFluid, fluidText, fluidWords } from "./fluidUnits.js";
 import { scheduleHTML } from "./fuelScheduleView.js";
@@ -745,6 +745,7 @@ function renderTypedNote() {
 }
 
 $("firstGelMin").addEventListener("input", renderSchedule);
+$("gelIntervalMin").addEventListener("input", renderSchedule);
 // Clock times only: the targets don't change.
 $("startTime").addEventListener("input", () => {
     if (lastSession) lastSession.startTime = $("startTime").value || "";
@@ -1041,7 +1042,7 @@ function planChecksHtml(c) {
     const d = drinkInputs();
     const fluidOz = planItems.reduce((s, p) => s + (Number(p.fluid) || 0) * (Number(p.qty) || 0), 0)
         + (c.includeDrink ? (Number(d.bottleSize) || 0) * (Number(d.bottleCount) || 0) : 0);
-    const caffeine = planItems.reduce((s, p) => s + caffeineMg(p) * (Number(p.qty) || 0), 0);
+    const caffeine = planItems.reduce((s, p) => s + caffeineMg(p) * (Number(p.qty) || 0), 0) + (c.includeDrink ? drinkCaffeineMg() : 0);
     const session = readSession();
     const checks = intakeChecks({
         durationMin: c.duration,
@@ -1070,6 +1071,10 @@ function drinkInputs() {
         electroMg: Math.max(0, Number($("diyElectroMg").value) || 0),
         electroScoops: Math.max(0, Number($("diyElectroScoops").value) || 0),
         sodiumSource: $("diySodiumSource").value,
+        // Blank = 0.95 (js/fuelSchedule.js maltoYield); kept as typed.
+        maltoCarbsPerGram: $("diyMaltoYield").value === "" ? null : Number($("diyMaltoYield").value),
+        caffeinePerBottleMg: Math.max(0, Number($("diyCaffeineMg").value) || 0),
+        caffeineBottles: $("diyCaffeineBottles").value.trim(),
         notes: $("diyNotes").value
     };
 }
@@ -1087,7 +1092,8 @@ function currentDiyMix() {
         sugarGrams: first ? first.grams : 0,
         saltGrams: recipe.sodium?.grams ?? null,
         sugarTsp: first?.tsp != null ? Math.round(first.tsp * 4) / 4 : null,
-        saltTsp: recipe.sodium?.tsp != null ? Math.round(recipe.sodium.tsp * 8) / 8 : null
+        // Unrounded: formatTsp rounds (to eighths from ¼ tsp up, decimals below).
+        saltTsp: recipe.sodium?.tsp != null ? Math.round(recipe.sodium.tsp * 100) / 100 : null
     };
 }
 
@@ -1116,7 +1122,9 @@ function showDiyResults(mix) {
             `${r.electrolyte.scoops} scoop${r.electrolyte.scoops === 1 ? "" : "s"}`]] : []),
         ...(r.sodium ? [[`${escapeHTML(r.sodium.label)}${r.electrolyte ? " <small>for the sodium the powder doesn't cover</small>" : ""}`,
             r.sodium.bottle.grams != null ? `${r.sodium.bottle.grams} g${tsp(r.sodium.bottle.tsp)}` : `${r.sodium.bottle.mg} mg sodium <small>see the label</small>`,
-            r.sodium.grams != null ? `${r.sodium.grams} g${tsp(r.sodium.tsp)}` : `${r.sodium.mg} mg sodium <small>see the label</small>`]] : [])
+            r.sodium.grams != null ? `${r.sodium.grams} g${tsp(r.sodium.tsp)}` : `${r.sodium.mg} mg sodium <small>see the label</small>`]] : []),
+        ...(r.caffeine ? [[`Caffeine <small>bottle${r.caffeine.bottles.length > 1 ? "s" : ""} ${r.caffeine.bottles.join(", ")} only</small>`,
+            `${r.caffeine.perBottleMg} mg`, `${r.caffeine.mg} mg`]] : [])
     ];
     const perBottleCarbs = n ? r.totals.carbs / n : 0;
     const pct = r.bottleOz > 0 ? Math.round(perBottleCarbs / (r.bottleOz * ML_PER_OZ) * 1000) / 10 : null;
@@ -1162,15 +1170,21 @@ $("diySodiumTarget").addEventListener("input", () => {
     renderPlanSummary();
 }));
 
-["diyCarbShare2", "diyElectroMg", "diyElectroScoops"].forEach(id => $(id).addEventListener("input", () => {
+["diyCarbShare2", "diyElectroMg", "diyElectroScoops", "diyMaltoYield", "diyCaffeineMg", "diyCaffeineBottles"].forEach(id => $(id).addEventListener("input", () => {
     refreshDiySnapshot();
     renderComposition();
     renderPlanSummary();
 }));
 
+// The label's carbs-per-gram only matters when maltodextrin is in the drink.
+function showMaltoYield() {
+    $("diyMaltoYieldField").hidden = ![$("diyCarbSource").value, $("diyCarbSource2").value].includes("maltodextrin");
+}
+
 $("diyCarbSource2").addEventListener("change", () => {
     $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
 });
+["diyCarbSource", "diyCarbSource2"].forEach(id => $(id).addEventListener("change", showMaltoYield));
 
 ["diyCarbSource", "diyCarbSource2", "diySodiumSource"].forEach(id => $(id).addEventListener("change", () => {
     refreshDiySnapshot();
@@ -1367,6 +1381,10 @@ function useRecipe(id, { quiet = false } = {}) {
     $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
     $("diyElectroMg").value = r.electroMg || "";
     $("diyElectroScoops").value = r.electroScoops || "";
+    $("diyMaltoYield").value = r.maltoCarbsPerGram ?? "";
+    $("diyCaffeineMg").value = r.caffeinePerBottleMg || "";
+    $("diyCaffeineBottles").value = r.caffeineBottles || "";
+    showMaltoYield();
     $("diySodiumSource").value = r.sodiumSource || "table-salt";
     $("diyNotes").value = r.notes || "";
     $("includeHomemadeDrink").checked = true;
@@ -1687,9 +1705,16 @@ $("preWorkoutFood").addEventListener("input", () => {
    Complete Fueling Plan — Summary + Save
 ========================================== */
 
-// The plan's caffeine: mg from the products added, said plainly.
+// Caffeine the homemade drink adds (mg in the chosen bottles), when it's in the plan.
+function drinkCaffeineMg() {
+    const d = drinkInputs();
+    if (!drinkIncluded($("includeHomemadeDrink").checked, d)) return 0;
+    return drinkRecipe(d).caffeine?.mg || 0;
+}
+
+// The plan's caffeine: mg from the products added and the drink, said plainly.
 function caffeineLine() {
-    const mg = planItems.reduce((sum, p) => sum + caffeineMg(p) * (Number(p.qty) || 0), 0);
+    const mg = planItems.reduce((sum, p) => sum + caffeineMg(p) * (Number(p.qty) || 0), 0) + drinkCaffeineMg();
     const unknown = planItems.filter(p => p.caffeine && !caffeineMg(p)).reduce((n, p) => n + (Number(p.qty) || 0), 0);
     if (!mg && !unknown) return "None";
     return [mg ? `${mg} mg` : "", unknown ? `${unknown} caffeinated ${unknown === 1 ? "serving" : "servings"} with no mg on file` : ""].filter(Boolean).join(" + ");
@@ -1835,6 +1860,7 @@ function buildPlanObject() {
         diyInputs: drinkInputs(),
         preWorkoutFood,
         firstGelMin: firstGelValue($("firstGelMin").value),
+        gelIntervalMin: gelIntervalValue($("gelIntervalMin").value),
         startTime: $("startTime").value || "",
         session: lastSession
 
@@ -1920,7 +1946,7 @@ function resetPage() {
     // A new plan: the workout and its drink amounts start empty (the
     // athlete's own details stay; js/fuelingPlans.js refills them from the
     // profile).
-    ["duration", "distance", "pace", "diyCarbTarget", "diySodiumTarget"].forEach(id => { $(id).value = ""; });
+    ["duration", "distance", "pace", "diyCarbTarget", "diySodiumTarget", "gelIntervalMin", "diyCaffeineMg", "diyCaffeineBottles"].forEach(id => { $(id).value = ""; });
 
     currentPlanId = null;
     marathonRef = null;
@@ -2340,6 +2366,7 @@ function openPlan(id) {
     planItems = (plan.items || []).map(i => ({ ...i }));
 
     $("firstGelMin").value = plan.firstGelMin ?? DEFAULT_FIRST_GEL_MIN;
+    $("gelIntervalMin").value = plan.gelIntervalMin ?? "";
 
     preWorkoutFood = plan.preWorkoutFood || "";
     $("preWorkoutFood").value = preWorkoutFood;
@@ -2419,6 +2446,10 @@ if (plan.diyInputs) {
     $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
     $("diyElectroMg").value = d.electroMg || "";
     $("diyElectroScoops").value = d.electroScoops || "";
+    $("diyMaltoYield").value = d.maltoCarbsPerGram ?? "";
+    $("diyCaffeineMg").value = d.caffeinePerBottleMg || "";
+    $("diyCaffeineBottles").value = d.caffeineBottles || "";
+    showMaltoYield();
     $("diySodiumSource").value = d.sodiumSource || "table-salt";
     $("diyNotes").value = d.notes || "";
 }
@@ -2456,7 +2487,8 @@ if (plan.diySnapshot || plan.diyInputs) {
 const DRAFT_FIELDS = ["workoutType", "duration", "distance", "pace", "startTime", "currentCarbIntake", "tolerance",
     "stomachSensitivity", "temperature", "humidity", "sweatRate", "sweatSodium", "sweatSodiumMeasured", "typicalSodiumIntake",
     "firstGelMin", "planName", "preWorkoutFood", "diyBottleCount", "diyCarbTarget", "diySodiumTarget", "diyCarbSource",
-    "diyCarbSource2", "diyCarbShare2", "diyElectroMg", "diyElectroScoops", "diySodiumSource", "diyNotes"];
+    "diyCarbSource2", "diyCarbShare2", "diyElectroMg", "diyElectroScoops", "diySodiumSource", "diyNotes",
+    "gelIntervalMin", "diyMaltoYield", "diyCaffeineMg", "diyCaffeineBottles"];
 const DRAFT_CHECKS = ["caffeineWanted", "includeHomemadeDrink"];
 // Inputs shown in the athlete's unit: kept in lb / oz so a unit switch isn't a change.
 const DRAFT_CANON = {
@@ -2500,6 +2532,7 @@ function applyState(state) {
         document.querySelectorAll("#fuelPreferences input").forEach(el => { el.checked = state.fuelPreferences.includes(el.value); });
     }
     $("diyCarbShareField").hidden = !$("diyCarbSource2").value;
+    showMaltoYield();
     preWorkoutFood = f.preWorkoutFood || "";
     runOrder = Array.isArray(state.order) ? state.order.filter(x => FIELD_OF[x]) : [];
     planItems = Array.isArray(state.items) ? state.items.map(i => ({ ...i })) : [];

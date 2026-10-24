@@ -3,7 +3,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-    buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock, FINAL_GEL_BUFFER_MIN
+    buildSchedule, scheduleInputFromPlan, diyMix, formatTsp, formatClock, FINAL_GEL_BUFFER_MIN,
+    parseBottleNumbers, gelIntervalValue, maltoYield
 } from "../js/fuelSchedule.js";
 
 const marathon = {
@@ -124,7 +125,9 @@ test("drink is left out when unchecked or bottles are missing", () => {
 
 test("formatting helpers", () => {
     assert.equal(formatTsp(2.3), "2 ¼");
-    assert.equal(formatTsp(0.13), "⅛");
+    assert.equal(formatTsp(0.13), "0.13", "under ¼ tsp stays a decimal");
+    assert.equal(formatTsp(0.07), "0.07", "not rounded up to ⅛ (nearly double)");
+    assert.equal(formatTsp(0.3), "¼");
     assert.equal(formatTsp(0.02), "a pinch");
     assert.equal(formatTsp(3), "3");
     assert.equal(formatClock(185), "3:05");
@@ -563,4 +566,77 @@ test("a gel due during a hard rep moves to the nearest jog, preferring the one a
     // Older saved stretches without `hard` still work: reps count as hard.
     const old = segs.map(({ hard, ...rest }) => rest);
     assert.ok(segmentTimeline(old, 153, 18).hardAt(30));
+});
+
+// ---- Ported from PR #52 (Oct 2026): label yield, gel interval, bottle caffeine, small teaspoons ----
+
+test("maltodextrin uses the label's carbs per gram when given", () => {
+    assert.equal(maltoYield(""), 0.95);
+    assert.equal(maltoYield(null), 0.95);
+    assert.equal(maltoYield(0.9), 0.9);
+    assert.equal(maltoYield(2), 1, "capped at 1");
+    assert.equal(maltoYield(0.2), 0.5, "floored at 0.5");
+    const def = drinkRecipe({ carbTarget: 60, bottleCount: 2, bottleSize: 20, carbSource: "maltodextrin" });
+    assert.equal(def.carbs[0].grams, 63.2, "60 / 0.95");
+    const label = drinkRecipe({ carbTarget: 60, bottleCount: 2, bottleSize: 20, carbSource: "maltodextrin", maltoCarbsPerGram: 0.9 });
+    assert.equal(label.carbs[0].grams, 66.7, "60 / 0.90");
+    assert.equal(label.carbs[0].bottle.grams, 33.4);
+    // Only maltodextrin changes; table sugar in a blend stays 1 g per g.
+    const blend = drinkRecipe({ carbTarget: 60, bottleCount: 1, bottleSize: 20, carbSource: "maltodextrin", carbSource2: "table-sugar", carbShare2: 0.5, maltoCarbsPerGram: 0.9 });
+    assert.deepEqual(blend.carbs.map(c => c.grams), [33.3, 30]);
+    assert.equal(diyMix({ carbTarget: 45, carbSource: "maltodextrin", maltoCarbsPerGram: 0.9 }).carbGrams, 50);
+    // It reaches the schedule from a saved plan.
+    const plan = { duration: 120, diyInputs: { bottleSize: 20, bottleCount: 2, carbTarget: 60, carbSource: "maltodextrin", maltoCarbsPerGram: 0.9 } };
+    assert.equal(buildSchedule(scheduleInputFromPlan(plan)).mix.recipe.carbs[0].grams, 66.7);
+});
+
+test("teaspoons in a blend count only the sugar (maltodextrin has no spoon measure)", () => {
+    const r = drinkRecipe({ carbTarget: 60, sodiumTarget: 200, bottleCount: 1, bottleSize: 20, carbSource: "maltodextrin", carbSource2: "table-sugar", carbShare2: 0.5 });
+    assert.equal(r.carbs[0].tsp, null);
+    assert.ok(Math.abs(r.carbs[1].tsp - 30 / 4.2) < 1e-9);
+    const words = recipeParts(r).join(" + ");
+    assert.match(words, /31\.6 g maltodextrin \+ 30 g table sugar \(7 ⅛ tsp\)/);
+    // 200 mg sodium = 0.51 g salt = 0.09 tsp: a decimal, not "⅛".
+    assert.match(words, /0\.51 g table salt \(0\.09 tsp\)/);
+});
+
+test("gel interval: used when it fits, even spacing (with a warning) when it doesn't", () => {
+    assert.equal(gelIntervalValue(""), null);
+    assert.equal(gelIntervalValue("0"), null);
+    assert.equal(gelIntervalValue(5), 10);
+    assert.equal(gelIntervalValue(200), 120);
+    const run = { durationMin: 180, distanceMi: 24, items: [{ name: "Gel", carbs: 25, qty: 4 }], targets: { carbsPerHour: 40 }, firstGelMin: 30 };
+    const fixed = buildSchedule({ ...run, gelIntervalMin: 30 });
+    assert.deepEqual(fixed.gels.map(g => g.min), [30, 60, 90, 120]);
+    assert.equal(fixed.intervalFits, true);
+    assert.ok(!fixed.warnings.some(w => /spread evenly instead/.test(w)));
+    // Blank = the old even spacing, unchanged.
+    assert.deepEqual(buildSchedule(run).gels.map(g => g.min), [30, 75, 120, 165]);
+    // 4 gels every 50 min from 30 would end at 180: past the last 15 min.
+    const tooWide = buildSchedule({ ...run, gelIntervalMin: 50 });
+    assert.deepEqual(tooWide.gels.map(g => g.min), [30, 75, 120, 165]);
+    assert.equal(tooWide.intervalFits, false);
+    assert.ok(tooWide.warnings.some(w => /spread evenly instead/.test(w)));
+    // From a saved plan.
+    assert.equal(scheduleInputFromPlan({ duration: 60, gelIntervalMin: 40 }).gelIntervalMin, 40);
+    assert.equal(scheduleInputFromPlan({ duration: 60 }).gelIntervalMin, null);
+});
+
+test("caffeine in chosen bottles", () => {
+    assert.deepEqual(parseBottleNumbers("2,3", 3), [2, 3]);
+    assert.deepEqual(parseBottleNumbers("3 2 2", 3), [2, 3]);
+    assert.deepEqual(parseBottleNumbers("0, 4, x, 1", 3), [1]);
+    assert.deepEqual(parseBottleNumbers("", 3), []);
+    assert.deepEqual(parseBottleNumbers([1, 2], 1), [1]);
+    const r = drinkRecipe({ carbTarget: 90, bottleCount: 3, bottleSize: 20, caffeinePerBottleMg: 60, caffeineBottles: "2, 3" });
+    assert.deepEqual(r.caffeine, { perBottleMg: 60, bottles: [2, 3], mg: 120 });
+    assert.equal(drinkRecipe({ carbTarget: 90, bottleCount: 3, bottleSize: 20, caffeinePerBottleMg: 60 }).caffeine, null, "no bottles chosen: none");
+    assert.equal(drinkRecipe({ carbTarget: 90, bottleCount: 3, bottleSize: 20, caffeineBottles: "2" }).caffeine, null, "no mg: none");
+    const s = buildSchedule({ ...marathon, drink: { ...marathon.drink, caffeinePerBottleMg: 60, caffeineBottles: "2,3" } });
+    assert.deepEqual(s.bottles.map(b => b.caffeineMg), [0, 60, 60]);
+    assert.equal(s.totals.caffeineMg, 120, "gels here have no mg on file; the drink's 120 counts");
+    const ev = s.events.filter(e => e.kind === "bottle");
+    assert.deepEqual(ev.map(e => e.caffeine), [false, true, true]);
+    const plan = { duration: 185, diyInputs: { bottleSize: 20, bottleCount: 3, carbTarget: 90, caffeinePerBottleMg: 60, caffeineBottles: "3" } };
+    assert.equal(buildSchedule(scheduleInputFromPlan(plan)).totals.caffeineMg, 60);
 });
