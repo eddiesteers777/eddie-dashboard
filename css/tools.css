@@ -1,32 +1,39 @@
-/* Free tools (tools.html): E, "Chapters". A photo band and a raised panel for each tool.
+/* Free tools (tools.html): G, "Tabs under the hero". One photo hero, a tab bar on its edge, one tool at a time.
    Public by default; html.tl-app / body.tl-in-app is the same page inside the app. */
 .tl-page{ padding-bottom:20px; }
 .tl-wrap{ max-width:1180px; margin:0 auto; padding:0 var(--pub-gutter,20px); }
 .tl-in-app .tl-wrap{ padding:0; }
-
-.tl-head{ padding:clamp(34px,6vw,84px) 0 clamp(20px,3vw,40px); }
-.tl-head h1{ font-family:var(--font-display); text-transform:uppercase; font-weight:900; font-size:clamp(58px,11vw,150px); line-height:.86; margin:8px 0 14px; color:var(--text); }
-.tl-head p{ color:var(--text-secondary); font-size:clamp(16px,2vw,19px); max-width:30em; margin:0; }
-
-/* The chips stick under the top bar and say which tool is on screen. */
-.tl-jump{ position:sticky; top:0; z-index:30; background:var(--bg); border-bottom:1px solid var(--border); }
-.tl-jump .tl-wrap{ display:flex; gap:8px; padding-top:10px; padding-bottom:10px; overflow-x:auto; scrollbar-width:none; }
-.tl-chip{ flex:0 0 auto; min-height:44px; padding:0 18px; display:inline-flex; align-items:center; border:1px solid var(--border); border-radius:6px; color:var(--text-secondary); font:600 15px var(--font-body); text-decoration:none; }
-.tl-chip.on{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
-
-.tl-sec{ scroll-margin-top:68px; }
-.tl-band{ position:relative; min-height:clamp(240px,34vw,420px); overflow:hidden; display:flex; align-items:flex-end; margin-top:clamp(18px,3vw,40px); }
-.tl-band img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-.tl-band::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(15,32,25,.85),rgba(15,32,25,.15) 72%),linear-gradient(0deg,var(--bg),transparent 42%); }
-#fueling .tl-band img{ object-position:50% 58%; }
-.tl-band .tl-wrap{ position:relative; z-index:2; width:100%; padding-bottom:64px; }
-.tl-band h2{ font-family:var(--font-display); text-transform:uppercase; font-weight:900; font-size:clamp(46px,8vw,96px); line-height:.86; margin:6px 0 0; color:var(--text); }
 .tl-kicker{ font:600 11.5px var(--font-mono); letter-spacing:.16em; text-transform:uppercase; color:var(--primary); }
-.tl-num{ position:absolute; z-index:2; top:6px; right:var(--pub-gutter,20px); font:900 clamp(84px,15vw,200px)/.8 var(--font-display); color:rgba(236,230,212,.13); }
 
-.tl-panel{ position:relative; z-index:3; margin:-40px 0 clamp(36px,6vw,72px); padding:clamp(18px,3vw,36px); border-radius:16px; border:1px solid rgba(236,230,212,.09);
+/* Hero: the photo changes with the tab. */
+.tl-hero{ position:relative; min-height:clamp(230px,30vw,340px); display:flex; align-items:flex-end; overflow:hidden; }
+.tl-photos{ position:absolute; inset:0; }
+.tl-photos img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .35s ease; }
+.tl-photos img.on{ opacity:1; }
+.tl-photos img[data-photo="pace"]{ object-position:50% 40%; }
+.tl-photos img[data-photo="fueling"]{ object-position:50% 58%; }
+.tl-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(15,32,25,.88),rgba(15,32,25,.15) 75%),linear-gradient(0deg,var(--bg),transparent 45%); }
+.tl-hero .tl-wrap{ position:relative; z-index:2; width:100%; padding-bottom:72px; }
+.tl-hero h1{ font-family:var(--font-display); text-transform:uppercase; font-weight:900; font-size:clamp(54px,9vw,110px); line-height:.86; margin:6px 0 0; color:var(--text); }
+
+/* The tab bar sits on the hero's edge. */
+.tl-tabs{ position:relative; z-index:4; display:flex; gap:6px; padding:6px; margin:-34px auto 0; width:max-content; max-width:calc(100% - 32px);
+    border-radius:14px; background:rgba(8,18,14,.88); border:1px solid rgba(236,230,212,.16); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 20px 40px -20px rgba(0,0,0,.8); }
+.tl-tab{ min-height:48px; padding:0 clamp(16px,3vw,34px); display:flex; align-items:center; gap:8px; border-radius:10px; color:var(--text-secondary); font:700 15px var(--font-body); text-decoration:none; white-space:nowrap; }
+.tl-tab small{ font:500 10.5px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; opacity:.7; }
+.tl-tab.on{ background:linear-gradient(180deg,#E8CFA6,var(--primary)); color:var(--on-primary); box-shadow:inset 0 1px 0 rgba(255,255,255,.45); }
+.tl-tab:focus-visible{ outline:2px solid var(--text); outline-offset:2px; }
+
+.tl-body{ padding-top:clamp(20px,3vw,40px); padding-bottom:clamp(30px,5vw,60px); }
+.tl-sec{ scroll-margin-top:12px; }
+.tl-sec:focus{ outline:none; }
+.tl-panel{ padding:clamp(18px,3vw,36px); border-radius:16px; border:1px solid rgba(236,230,212,.09);
     background:linear-gradient(180deg,var(--surface-light),var(--surface) 60%);
     box-shadow:inset 0 1px 0 rgba(255,244,222,.07),0 2px 6px rgba(0,0,0,.26),0 36px 70px -34px rgba(0,0,0,.8); }
+.tl-panel h2{ font-family:var(--font-display); text-transform:uppercase; font-weight:900; font-size:clamp(34px,5vw,56px); line-height:.92; margin:6px 0 10px; color:var(--text); }
+.tl-sec[hidden]{ display:none !important; }
+.tl-lead{ color:var(--text-secondary); font-size:17px; margin:0 0 18px; max-width:34em; }
 .tl-loading{ color:var(--text-secondary); margin:0; min-height:120px; }
 .tl-fail{ color:var(--text-secondary); margin:0; }
 .tl-fail a{ color:var(--primary); }
@@ -39,7 +46,7 @@ html body .tl-page main.fueling-page{ width:100% !important; max-width:none !imp
 
 /* Playbook */
 .tl-pb{ display:grid; grid-template-columns:1.1fr 1fr; gap:clamp(20px,4vw,56px); align-items:center; }
-.tl-lead{ color:var(--text-secondary); font-size:17px; margin:0 0 14px; max-width:32em; }
+.tl-pb .tl-lead{ margin-bottom:14px; }
 .tl-list{ list-style:none; margin:0 0 20px; padding:0; }
 .tl-list li{ display:flex; justify-content:space-between; gap:12px; padding:13px 0; border-bottom:1px solid var(--border); color:var(--text); }
 .tl-list li span:last-child{ font:500 12px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); text-align:right; }
@@ -48,17 +55,23 @@ html body .tl-page main.fueling-page{ width:100% !important; max-width:none !imp
 
 .tl-cta .pub-cta-band{ margin-bottom:clamp(30px,5vw,60px); }
 
-/* Fueling's phone step bar only shows while the Fueling section is on screen. */
-html:not(.tl-fuel-view) .tl-body .fx-stepbar{ display:none !important; }
+/* Fueling's phone step bar shows only on the Fueling tab. */
+html:not(.tl-fuel-view) .tl-body .fx-stepbar, html:not(.tl-fuel-view) body.tl-body .fx-stepbar{ display:none !important; }
 
-/* Inside the app: shorter bands, the app's own padding and tab dock. */
-.tl-in-app .tl-head{ padding:22px 0 12px; }
-.tl-in-app .tl-head h1{ font-size:clamp(52px,12vw,84px); }
-.tl-in-app .tl-band{ min-height:210px; margin-top:8px; }
+/* Inside the app: a shorter hero, the app's own padding and tab dock. */
+.tl-in-app .tl-hero{ min-height:190px; }
+.tl-in-app .tl-hero .tl-wrap{ padding:0 16px 56px; }
+.tl-in-app .tl-hero h1{ font-size:clamp(50px,12vw,84px); }
+.tl-in-app .tl-tabs{ max-width:100%; }
 
 @media (max-width:760px){
+    .tl-tabs{ width:calc(100% - 32px); }
+    .tl-tab{ flex:1; justify-content:center; padding:0 6px; font-size:14px; }
+    .tl-tab small{ display:none; }
+    .tl-hero .tl-wrap{ padding-bottom:58px; }
     .tl-pb{ grid-template-columns:1fr; }
-    .tl-panel{ margin-left:calc(var(--pub-gutter,20px) * -.4); margin-right:calc(var(--pub-gutter,20px) * -.4); padding:16px; }
-    .tl-band{ min-height:230px; }
+    .tl-panel{ padding:16px; }
 }
-@media (prefers-reduced-motion:no-preference){ html{ scroll-behavior:smooth; } }
+@media (prefers-reduced-motion:reduce){ .tl-photos img{ transition:none; } }
+/* On a phone the step header already names the calculator. */
+@media (max-width:1099px){ #tool-fueling .tl-kicker, #tool-fueling h2, #tool-fueling .tl-lead{ display:none; } }
