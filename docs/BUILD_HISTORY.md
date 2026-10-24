@@ -409,3 +409,10 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 - Eddie, after the one-long-page version: "each tool on its own tab". `tools.html` is now one photo hero (the photo follows the tab) with a Pace / Fueling / Playbook tab bar on its edge; one tool shows at a time. The link picks the tab (`#pace`, `#fueling`, `#playbook`); the sections are named `tool-*` so the browser doesn't jump down the page. Arrow keys move between tabs.
 - A calculator is fetched and started the first time its tab opens (`js/tools.js`), so Pace doesn't pay for Fueling. Work in Fueling is kept when you switch tabs and back. The phone's fueling step bar shows only on the Fueling tab; on a phone the panel's own title is hidden because the step header names the calculator.
 - Tested: `tests/freeTools.test.mjs`, full `npm run test:static`; Playwright at 390 and 1280 signed out, and signed in at 390 (stubbed sign-in): tab clicks, deep links, keyboard, pace result, fueling steps and Next, no overflow, no page errors.
+
+## 2026-10-24 — Playbook phone overlaps (iPhone)
+- iOS Safari drew date/time inputs at their native width, so Team's Day field ran over Type and Practice's Date/Start time ran off the card. `css/playbook.css` drops the native look on Playbook date/time inputs (`appearance:none`, `width:100%`, `min-width:0`, left-aligned value) and makes `.dr-two` columns `minmax(0,1fr)`.
+- Team attendance-summary cards (`.tm-list`, 340px minimum) and roster cards spilled past a 360px screen; minimums now `min(…,100%)`.
+- The Playbook toast sat on the app's bottom tab bar; it now lifts above it when signed in.
+- Team note placeholder shortened to "e.g. vs Pelham" so it isn't clipped.
+- Tested in Chromium at 360 and 390px, signed-in shell, all six tabs, sample and empty states: no page overflow, no field wider than its label. Not testable here: real iOS Safari date rendering (Eddie to check on his phone).
