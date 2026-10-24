@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Free Running and Soccer Tools | Southbound Coaching</title>
+    <meta name="description" content="Free tools from a coach: a pace calculator, a fueling calculator for long runs and races, and the Southbound Playbook for soccer. No account needed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Free Running and Soccer Tools | Southbound Coaching">
+    <meta property="og:description" content="Free tools from a coach: a pace calculator, a fueling calculator for long runs and races, and the Southbound Playbook for soccer. No account needed.">
+    <meta property="og:url" content="https://southboundcoaching.com/tools.html">
+    <link rel="canonical" href="https://southboundcoaching.com/tools.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/pace-calculator.css">
+    <link rel="stylesheet" href="css/fueling.css">
+    <link rel="stylesheet" href="css/tools.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("tl-app")}catch(e){}</script>
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+<body class="pub-body tl-body">
+
+    <div id="publicHeader"></div>
+
+    <!-- Free tools: one page for the pace calculator, the fueling calculator and the Playbook. Public when signed out,
+         inside the app's own navigation when signed in (js/tools.js). The two calculators are not copied here: the
+         script loads them from pace.html and fueling.html, so each has one source. -->
+    <div class="tl-page" id="main">
+
+        <section class="tl-head">
+            <div class="tl-wrap">
+                <div class="pub-hero-kicker" data-app-text="Free for everyone">Free &middot; no account needed</div>
+                <h1>Free tools</h1>
+                <p>Three tools I use with my own athletes. They work right here, and nothing you type is sent anywhere.</p>
+            </div>
+        </section>
+
+        <nav class="tl-jump" id="tlJump" aria-label="Jump to a tool">
+            <div class="tl-wrap">
+                <a href="#pace" class="tl-chip" data-tool="pace">Pace</a>
+                <a href="#fueling" class="tl-chip" data-tool="fueling">Fueling</a>
+                <a href="#playbook" class="tl-chip" data-tool="playbook">Playbook</a>
+            </div>
+        </nav>
+
+        <section class="tl-sec" id="pace" aria-labelledby="tlPaceTitle">
+            <div class="tl-band">
+                <img src="images/offer-online-coaching-800.webp" srcset="images/offer-online-coaching-480.webp 480w, images/offer-online-coaching-800.webp 800w, images/offer-online-coaching-1280.webp 1280w" sizes="100vw" alt="" width="1280" height="853" loading="lazy" decoding="async">
+                <span class="tl-num" aria-hidden="true">01</span>
+                <div class="tl-wrap"><div class="tl-kicker">Running</div><h2 id="tlPaceTitle">Pace</h2></div>
+            </div>
+            <div class="tl-wrap"><div class="tl-panel" id="paceMount" aria-live="polite"><p class="tl-loading sb-wait">Opening the pace calculator</p></div></div>
+        </section>
+
+        <section class="tl-sec" id="fueling" aria-labelledby="tlFuelTitle">
+            <div class="tl-band">
+                <img src="images/eddie-hero-840.webp" srcset="images/eddie-hero-560.webp 560w, images/eddie-hero-840.webp 840w, images/eddie-hero-1120.webp 1120w" sizes="100vw" alt="" width="1120" height="1400" loading="lazy" decoding="async">
+                <span class="tl-num" aria-hidden="true">02</span>
+                <div class="tl-wrap"><div class="tl-kicker">Long runs and races</div><h2 id="tlFuelTitle">Fueling</h2></div>
+            </div>
+            <div class="tl-wrap"><div class="tl-panel" id="fuelMount" aria-live="polite"><p class="tl-loading sb-wait">Opening the fueling calculator</p></div></div>
+        </section>
+
+        <section class="tl-sec" id="playbook" aria-labelledby="tlPbTitle">
+            <div class="tl-band">
+                <img src="images/offer-soccer-group-800.webp" srcset="images/offer-soccer-group-480.webp 480w, images/offer-soccer-group-800.webp 800w, images/offer-soccer-group-1280.webp 1280w" sizes="100vw" alt="" width="1280" height="853" loading="lazy" decoding="async">
+                <span class="tl-num" aria-hidden="true">03</span>
+                <div class="tl-wrap"><div class="tl-kicker">Soccer</div><h2 id="tlPbTitle">Playbook</h2></div>
+            </div>
+            <div class="tl-wrap">
+                <div class="tl-panel tl-pb">
+                    <div>
+                        <p class="tl-lead">A tactics board, 80 drills, a practice planner and a fair-minutes lineup for game day. Built for youth and school soccer coaches.</p>
+                        <ul class="tl-list">
+                            <li><span>Tactics board</span><span>Draw a play</span></li>
+                            <li><span>Drills</span><span>With diagrams</span></li>
+                            <li><span>Practice planner</span><span>Print or share</span></li>
+                            <li><span>Game day lineup</span><span>Fair minutes</span></li>
+                        </ul>
+                        <a href="playbook.html" class="pub-btn-primary tl-open">Open the Playbook</a>
+                        <p class="tl-note">It opens on its own screen: the board needs the room to draw on.</p>
+                    </div>
+                    <svg class="tl-pitch" viewBox="0 0 300 200" role="img" aria-label="A sketch of a tactics board: a pass drawn across the middle of a pitch">
+                        <g fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1.5"><rect x="10" y="10" width="280" height="180"/><line x1="150" y1="10" x2="150" y2="190"/><circle cx="150" cy="100" r="26"/><rect x="10" y="60" width="40" height="80"/><rect x="250" y="60" width="40" height="80"/></g>
+                        <g fill="var(--primary)"><circle cx="70" cy="60" r="7"/><circle cx="70" cy="140" r="7"/><circle cx="110" cy="100" r="7"/><circle cx="130" cy="50" r="7"/><circle cx="130" cy="150" r="7"/></g>
+                        <g fill="var(--sage)"><circle cx="200" cy="80" r="7"/><circle cx="200" cy="125" r="7"/><circle cx="230" cy="100" r="7"/></g>
+                        <path d="M112 100 Q 150 70 190 80" stroke="var(--primary)" stroke-width="2" fill="none" stroke-dasharray="5 4"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <section class="tl-sec tl-cta" data-public-only>
+            <div class="tl-wrap">
+                <div class="pub-cta-band">
+                    <h2>Want training built around these?</h2>
+                    <p>I write each athlete's week by hand and change it as it goes. Tell me what you're working toward.</p>
+                    <div class="pub-cta-actions">
+                        <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+                        <a href="contact.html" class="pub-btn-secondary">Ask a question</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="pub-footer" data-public-only>
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="tools.html#pace">Pace calculator</a><a href="tools.html#fueling">Fueling calculator</a><a href="tools.html#playbook">Soccer Playbook</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/tools.js"></script>
+
+</body>
+</html>
