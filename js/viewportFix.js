@@ -42,3 +42,11 @@ vv?.addEventListener("scroll", soon);
 window.addEventListener("resize", soon);
 phone.addEventListener?.("change", soon);
 update();
+
+// ?screencheck turns on a readout of the screen numbers for this tab (js/screenCheck.js); ?screencheck=off ends it.
+try {
+    const ask = new URLSearchParams(location.search).get("screencheck");
+    if (ask === "off") sessionStorage.removeItem("sb-screencheck");
+    else if (ask !== null) sessionStorage.setItem("sb-screencheck", "1");
+    if (sessionStorage.getItem("sb-screencheck") === "1") import("./screenCheck.js").catch(() => {});
+} catch { /* storage unavailable: no readout */ }
