@@ -336,9 +336,9 @@ test("board lineup: assign, unlink on rename, formation switch keeps link, auto 
 
 import { readFileSync } from "node:fs";
 test("the Playbook link in the app menus is coach-only everywhere", () => {
-    for (const f of ["components/header.html", "more.html"]) {
-        assert.match(readFileSync(new URL("../" + f, import.meta.url), "utf8"), /<a href="playbook\.html"[^>]*data-requires="coach"/, f);
-    }
+    assert.match(readFileSync(new URL("../components/header.html", import.meta.url), "utf8"), /<a href="playbook\.html"[^>]*data-requires="coach"/);
+    // More lists the three free tools for every account (tools.html), so its Playbook row is not coach-only.
+    assert.match(readFileSync(new URL("../more.html", import.meta.url), "utf8"), /<a href="tools\.html#playbook" class="more-row">/);
     assert.match(readFileSync(new URL("../js/loadHeader.js", import.meta.url), "utf8"), /href: "playbook\.html"[^}]*requires: "coach"/);
 });
 

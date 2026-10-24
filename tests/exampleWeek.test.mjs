@@ -34,7 +34,7 @@ test("Tuesday's workout is the kind the app builds, and its parts add up to abou
 test("it shows a check-in and a coach reply, and links to the fueling calculator", () => {
     assert.match(text, /Sunday check-in/);
     assert.match(text, /Coach reply/);
-    assert.match(section, /href="fueling\.html"/);
+    assert.match(section, /href="tools\.html#fueling"/);
     assert.ok(existsFuel(), "fueling.html exists");
 });
 

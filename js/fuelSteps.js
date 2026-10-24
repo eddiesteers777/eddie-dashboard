@@ -66,7 +66,12 @@ function paintStep(scroll) {
     document.querySelectorAll(".fx-forced").forEach(row => { row.open = true; });
     paintBar();
     if (step === STEPS.length) paintAnswers();
-    if (scroll) window.scrollTo({ top: 0, behavior: "instant" });
+    if (scroll) {
+        // On the Free tools page the calculator is one section of a longer page: go to its top, not the page's.
+        const top = $("fuelScrollTop") || main.closest(".tl-sec");
+        if (top) top.scrollIntoView({ block: "start", behavior: "instant" });
+        else window.scrollTo({ top: 0, behavior: "instant" });
+    }
     $("fuelStepTitle").focus({ preventScroll: true });
 }
 

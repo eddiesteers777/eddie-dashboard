@@ -22,6 +22,8 @@ const GUEST_PAGES = ["fueling.html"];
         const { waitForUser } = await import("./auth.js");
         if (await waitForUser()) return;
         if (GUEST_PAGES.includes(page)) {
+            // A visitor with no plan link lands on the Free tools page, where the calculator now lives beside the others.
+            if (page === "fueling.html" && !window.location.search) { window.location.replace("tools.html#fueling"); return; }
             document.documentElement.classList.add("sb-guest");
             // So a guest's fueling work is set aside, not wiped, when they sign in (js/auth.js).
             try { localStorage.setItem("sb-guest-fueling", "1"); } catch { /* storage unavailable */ }
@@ -95,6 +97,7 @@ const PAGE_TAB = {
     "planner.html": "more",
     "programs.html": "more",
     "pace-calculator.html": "more",
+    "tools.html": "more",
     "settings.html": "more",
     "playbook.html": "more", "playbook-board.html": "more", "playbook-drills.html": "more", "playbook-practice.html": "more", "playbook-roster.html": "more", "playbook-team.html": "more", "playbook-game.html": "more",
     "clients.html": "coach",
@@ -162,6 +165,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Planner", href: "planner.html", icon: "calendar", color: "var(--cyan-light)", requires: "coach" },
     { label: "My Progress", href: "progress.html", icon: "trendingUp", color: "var(--primary)", requires: "client+progress" },
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)", requires: "running,strength" },
+    { label: "Free Tools", href: "tools.html", icon: "timer", color: "var(--primary)", also: ["pace calculator", "fueling calculator", "playbook", "heart rate zones", "race splits", "training paces", "gel", "drills", "tactics board"] },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)", requires: "running" },
     { label: "Southbound Playbook", href: "playbook.html", icon: "clipboard", color: "var(--sage)", requires: "coach", also: ["tactical board", "drills", "practice plan", "roster", "lineup", "soccer"] },
     { label: "Messages", href: "messages.html", icon: "messageSquare", color: "var(--primary)", requires: "client+updates", also: ["message coach", "chat", "text coach", "ask coach"] },
