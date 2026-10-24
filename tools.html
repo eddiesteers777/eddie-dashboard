@@ -36,48 +36,49 @@
          script loads them from pace.html and fueling.html, so each has one source. -->
     <div class="tl-page" id="main">
 
-        <section class="tl-head">
+        <section class="tl-hero" aria-labelledby="tlTitle">
+            <div class="tl-photos" aria-hidden="true">
+                <img data-photo="pace" src="images/offer-online-coaching-800.webp" srcset="images/offer-online-coaching-480.webp 480w, images/offer-online-coaching-800.webp 800w, images/offer-online-coaching-1280.webp 1280w" sizes="100vw" alt="" width="1280" height="853" decoding="async">
+                <img data-photo="fueling" src="images/eddie-hero-840.webp" srcset="images/eddie-hero-560.webp 560w, images/eddie-hero-840.webp 840w, images/eddie-hero-1120.webp 1120w" sizes="100vw" alt="" width="1120" height="1400" loading="lazy" decoding="async">
+                <img data-photo="playbook" src="images/offer-soccer-group-800.webp" srcset="images/offer-soccer-group-480.webp 480w, images/offer-soccer-group-800.webp 800w, images/offer-soccer-group-1280.webp 1280w" sizes="100vw" alt="" width="1280" height="853" loading="lazy" decoding="async">
+            </div>
             <div class="tl-wrap">
-                <div class="pub-hero-kicker" data-app-text="Free for everyone">Free &middot; no account needed</div>
-                <h1>Free tools</h1>
-                <p>Three tools I use with my own athletes. They work right here, and nothing you type is sent anywhere.</p>
+                <div class="tl-kicker" data-app-text="Free for everyone">Free &middot; no account needed</div>
+                <h1 id="tlTitle">Free tools</h1>
             </div>
         </section>
 
-        <nav class="tl-jump" id="tlJump" aria-label="Jump to a tool">
-            <div class="tl-wrap">
-                <a href="#pace" class="tl-chip" data-tool="pace">Pace</a>
-                <a href="#fueling" class="tl-chip" data-tool="fueling">Fueling</a>
-                <a href="#playbook" class="tl-chip" data-tool="playbook">Playbook</a>
-            </div>
-        </nav>
+        <div class="tl-tabs" id="tlTabs" role="tablist" aria-label="Free tools">
+            <a href="#pace" id="tab-pace" class="tl-tab" role="tab" aria-controls="tool-pace" data-tool="pace"><span>Pace</span><small>Running</small></a>
+            <a href="#fueling" id="tab-fueling" class="tl-tab" role="tab" aria-controls="tool-fueling" data-tool="fueling"><span>Fueling</span><small>Long runs</small></a>
+            <a href="#playbook" id="tab-playbook" class="tl-tab" role="tab" aria-controls="tool-playbook" data-tool="playbook"><span>Playbook</span><small>Soccer</small></a>
+        </div>
 
-        <section class="tl-sec" id="pace" aria-labelledby="tlPaceTitle">
-            <div class="tl-band">
-                <img src="images/offer-online-coaching-800.webp" srcset="images/offer-online-coaching-480.webp 480w, images/offer-online-coaching-800.webp 800w, images/offer-online-coaching-1280.webp 1280w" sizes="100vw" alt="" width="1280" height="853" loading="lazy" decoding="async">
-                <span class="tl-num" aria-hidden="true">01</span>
-                <div class="tl-wrap"><div class="tl-kicker">Running</div><h2 id="tlPaceTitle">Pace</h2></div>
-            </div>
-            <div class="tl-wrap"><div class="tl-panel" id="paceMount" aria-live="polite"><p class="tl-loading sb-wait">Opening the pace calculator</p></div></div>
-        </section>
+        <div class="tl-wrap tl-body">
 
-        <section class="tl-sec" id="fueling" aria-labelledby="tlFuelTitle">
-            <div class="tl-band">
-                <img src="images/eddie-hero-840.webp" srcset="images/eddie-hero-560.webp 560w, images/eddie-hero-840.webp 840w, images/eddie-hero-1120.webp 1120w" sizes="100vw" alt="" width="1120" height="1400" loading="lazy" decoding="async">
-                <span class="tl-num" aria-hidden="true">02</span>
-                <div class="tl-wrap"><div class="tl-kicker">Long runs and races</div><h2 id="tlFuelTitle">Fueling</h2></div>
-            </div>
-            <div class="tl-wrap"><div class="tl-panel" id="fuelMount" aria-live="polite"><p class="tl-loading sb-wait">Opening the fueling calculator</p></div></div>
-        </section>
+            <section class="tl-sec" id="tool-pace" role="tabpanel" aria-labelledby="tab-pace" tabindex="-1">
+                <div class="tl-panel">
+                    <div class="tl-kicker">Running</div>
+                    <h2>Pace calculator</h2>
+                    <p class="tl-lead">Pace, time and distance. Race splits, training paces and heart-rate zones from a real result.</p>
+                    <div id="paceMount" aria-live="polite"><p class="tl-loading sb-wait">Opening the pace calculator</p></div>
+                </div>
+            </section>
 
-        <section class="tl-sec" id="playbook" aria-labelledby="tlPbTitle">
-            <div class="tl-band">
-                <img src="images/offer-soccer-group-800.webp" srcset="images/offer-soccer-group-480.webp 480w, images/offer-soccer-group-800.webp 800w, images/offer-soccer-group-1280.webp 1280w" sizes="100vw" alt="" width="1280" height="853" loading="lazy" decoding="async">
-                <span class="tl-num" aria-hidden="true">03</span>
-                <div class="tl-wrap"><div class="tl-kicker">Soccer</div><h2 id="tlPbTitle">Playbook</h2></div>
-            </div>
-            <div class="tl-wrap">
-                <div class="tl-panel tl-pb">
+            <section class="tl-sec" id="tool-fueling" role="tabpanel" aria-labelledby="tab-fueling" tabindex="-1" hidden>
+                <div class="tl-panel">
+                    <div class="tl-kicker">Long runs and races</div>
+                    <h2>Fueling calculator</h2>
+                    <p class="tl-lead">Carbs, fluid and sodium an hour, and when to take them. Save the plan as a PDF.</p>
+                    <div id="fuelMount" aria-live="polite"><p class="tl-loading sb-wait">Opening the fueling calculator</p></div>
+                </div>
+            </section>
+
+            <section class="tl-sec" id="tool-playbook" role="tabpanel" aria-labelledby="tab-playbook" tabindex="-1" hidden>
+                <div class="tl-panel">
+                    <div class="tl-kicker">Soccer</div>
+                    <h2>Southbound Playbook</h2>
+                    <div class="tl-pb">
                     <div>
                         <p class="tl-lead">A tactics board, 80 drills, a practice planner and a fair-minutes lineup for game day. Built for youth and school soccer coaches.</p>
                         <ul class="tl-list">
@@ -96,8 +97,10 @@
                         <path d="M112 100 Q 150 70 190 80" stroke="var(--primary)" stroke-width="2" fill="none" stroke-dasharray="5 4"/>
                     </svg>
                 </div>
-            </div>
-        </section>
+                </div>
+            </section>
+
+        </div>
 
         <section class="tl-sec tl-cta" data-public-only>
             <div class="tl-wrap">

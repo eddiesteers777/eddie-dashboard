@@ -90,34 +90,46 @@ async function loadFueling() {
     } catch { failed(mount, "fueling calculator", "fueling.html"); }
 }
 
-// The chips follow the tool on screen; the phone's fueling step bar shows only while the Fueling section is in view.
-function watchSections() {
-    const chips = [...document.querySelectorAll(".tl-chip")];
-    const mark = name => chips.forEach(c => {
-        const on = c.dataset.tool === name;
-        c.classList.toggle("on", on);
-        if (on) c.setAttribute("aria-current", "true"); else c.removeAttribute("aria-current");
+const TOOLS = ["pace", "fueling", "playbook"];
+const loaders = { pace: loadPace, fueling: loadFueling };
+const started = {};
+
+// One tool shows at a time. The link (#pace, #fueling, #playbook) picks it, so every tool keeps its own address.
+// The sections are named tool-pace and so on, so the browser has nothing to jump to and the hero and tabs stay in view.
+// A calculator is fetched and started the first time its tab opens, so the page only pays for what is used.
+function show(name, { scroll = false } = {}) {
+    if (!TOOLS.includes(name)) name = "pace";
+    document.querySelectorAll(".tl-tab").forEach(tab => {
+        const on = tab.dataset.tool === name;
+        tab.classList.toggle("on", on);
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+        tab.tabIndex = on ? 0 : -1;
     });
-    if (!("IntersectionObserver" in window)) return;
-    const seen = new Map();
-    const io = new IntersectionObserver(entries => {
-        entries.forEach(e => seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
-        const best = [...seen.entries()].sort((a, b) => b[1] - a[1])[0];
-        if (best && best[1] > 0) mark(best[0]);
-        html.classList.toggle("tl-fuel-view", (seen.get("fueling") || 0) > 0);
-    }, { rootMargin: "-120px 0px -35% 0px", threshold: [0, .1, .3, .6] });
-    document.querySelectorAll(".tl-sec[id]").forEach(s => io.observe(s));
+    TOOLS.forEach(t => { const sec = $("tool-" + t); if (sec) sec.hidden = t !== name; });
+    document.querySelectorAll(".tl-photos img").forEach(img => img.classList.toggle("on", img.dataset.photo === name));
+    // The phone's fueling step bar belongs to the Fueling tab only.
+    html.classList.toggle("tl-fuel-view", name === "fueling");
+    if (loaders[name] && !started[name]) { started[name] = true; loaders[name](); }
+    if (scroll) $("tlTabs")?.scrollIntoView({ block: "start" });
 }
 
-function scrollToHash() {
-    const id = decodeURIComponent(location.hash.slice(1));
-    const el = id && $(id);
-    if (el && el.classList.contains("tl-sec")) el.scrollIntoView({ block: "start" });
+function fromHash() {
+    return decodeURIComponent(location.hash.slice(1));
+}
+
+function wireTabs() {
+    const tabs = [...document.querySelectorAll(".tl-tab")];
+    tabs.forEach((tab, i) => tab.addEventListener("keydown", e => {
+        const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        e.preventDefault();
+        const next = tabs[(i + step + tabs.length) % tabs.length];
+        next.focus();
+        location.hash = next.dataset.tool;
+    }));
+    window.addEventListener("hashchange", () => show(fromHash()));
 }
 
 await chooseShell();
-watchSections();
-// Both calculators load at once; the page scrolls to the one in the link once they have their height.
-await Promise.all([loadPace(), loadFueling()]);
-scrollToHash();
-window.addEventListener("hashchange", scrollToHash);
+wireTabs();
+show(fromHash());
