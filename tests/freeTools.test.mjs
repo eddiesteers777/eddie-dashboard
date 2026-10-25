@@ -8,17 +8,17 @@ const tools = read("tools.html");
 
 test("tools.html has a tab and a panel for each tool, one tool shows at a time, and each has its own link", () => {
     assert.match(tools, /role="tablist"/);
-    for (const id of ["pace", "fueling", "playbook"]) {
+    for (const id of ["pace", "fueling", "playbook", "challenge"]) {
         assert.match(tools, new RegExp(`<a href="#${id}" id="tab-${id}" class="tl-tab" role="tab" aria-controls="tool-${id}" data-tool="${id}"`), id);
         assert.match(tools, new RegExp(`<section class="tl-sec" id="tool-${id}" role="tabpanel" aria-labelledby="tab-${id}"`), id);
         assert.match(tools, new RegExp(`data-photo="${id}"`), `${id} has a hero photo`);
     }
     // Only the first tool is open in the markup; the script opens the one in the link.
-    assert.equal((tools.match(/class="tl-sec" id="tool-[a-z]+"[^>]* hidden>/g) || []).length, 2);
+    assert.equal((tools.match(/class="tl-sec" id="tool-[a-z]+"[^>]* hidden>/g) || []).length, 3);
     assert.match(tools, /id="paceMount"/);
     assert.match(tools, /id="fuelMount"/);
     const js = read("js/tools.js");
-    assert.match(js, /const TOOLS = \["pace", "fueling", "playbook"\]/);
+    assert.match(js, /const TOOLS = \["pace", "fueling", "playbook", "challenge"\]/);
     assert.match(js, /if \(loaders\[name\] && !started\[name\]\)/, "a calculator loads the first time its tab opens");
     assert.match(js, /\$\("tool-" \+ t\)/, "sections are named tool-*, so the browser does not jump to a #pace link");
 });

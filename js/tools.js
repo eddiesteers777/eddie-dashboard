@@ -90,7 +90,7 @@ async function loadFueling() {
     } catch { failed(mount, "fueling calculator", "fueling.html"); }
 }
 
-const TOOLS = ["pace", "fueling", "playbook"];
+const TOOLS = ["pace", "fueling", "playbook", "challenge"];
 const loaders = { pace: loadPace, fueling: loadFueling };
 const started = {};
 

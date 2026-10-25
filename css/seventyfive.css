@@ -1,0 +1,94 @@
+/* 75-day challenge tracker (75.html). Direction A on the Southbound palette: display type for the number,
+   mono for labels, tan is the one action colour, sage is "done". Public by default; html.sf-app /
+   body.sf-in-app is the same page inside the app. */
+.sf-body{ padding-bottom:clamp(30px,5vw,60px); }
+.sf-page{ padding-top:clamp(16px,3vw,36px); }
+.sf-wrap{ max-width:1120px; margin:0 auto; padding:0 var(--pub-gutter,20px); }
+.sf-in-app .sf-wrap{ padding:0; }
+.sf-loading{ min-height:200px; color:var(--text-secondary); }
+.sf-kick{ font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 8px; }
+.sf-kick b{ color:var(--primary); font-weight:600; }
+.sf-h{ font-family:var(--font-display); text-transform:uppercase; font-weight:900; line-height:.92; margin:0; font-size:clamp(44px,8vw,76px); }
+.sf-lead{ color:var(--text-secondary); font-size:16px; line-height:1.5; margin:10px 0 0; max-width:46ch; }
+.sf-note{ font-size:13px; color:var(--muted); line-height:1.45; margin:12px 0 0; }
+.sf-note button{ background:none; border:0; padding:0; font:inherit; color:var(--primary); text-decoration:underline; cursor:pointer; min-height:44px; }
+.sf-two{ display:grid; gap:24px; align-items:center; }
+@media (min-width:900px){ .sf-two{ grid-template-columns:1fr 1fr; gap:44px; } }
+
+.sf-panel{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; }
+.sf-btn{ display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 20px; border-radius:var(--radius-pill); font:700 16px var(--font-body);
+    border:1px solid var(--border); color:var(--text); background:none; cursor:pointer; text-decoration:none; }
+.sf-btn.p{ background:var(--primary); color:var(--on-primary); border-color:var(--primary); }
+.sf-btn.w{ width:100%; }
+.sf-btn:focus-visible, .sf-pill:focus-visible, .sf-opt:focus-visible, .sf-chip:focus-visible{ outline:2px solid var(--text); outline-offset:2px; }
+.sf-btn[disabled]{ opacity:.5; cursor:default; }
+
+/* Setup */
+.sf-opt{ display:block; width:100%; text-align:left; border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin:0 0 10px; background:none; color:var(--text); font-family:var(--font-body); cursor:pointer; }
+.sf-opt[aria-checked="true"]{ border-color:var(--primary); border-left-width:3px; }
+.sf-opt b{ display:block; font-size:16px; }
+.sf-opt span{ display:block; margin-top:4px; color:var(--muted); font-size:14px; line-height:1.45; }
+.sf-seg{ display:flex; gap:8px; margin:14px 0; }
+.sf-chip{ flex:1; min-height:48px; border-radius:var(--radius-sm); border:1px solid var(--border); background:none; color:var(--text); font:600 15px var(--font-body); cursor:pointer; }
+.sf-chip[aria-pressed="true"]{ border-color:var(--primary); color:var(--primary); background:color-mix(in srgb,var(--primary) 10%,transparent); }
+.sf-custom{ margin:0 0 12px; display:grid; gap:8px; }
+.sf-custom label{ display:flex; gap:8px; }
+.sf-custom input{ flex:1; min-height:48px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg); color:var(--text); padding:0 12px; font:16px var(--font-body); }
+.sf-custom button{ min-width:48px; min-height:48px; border-radius:var(--radius-sm); border:1px solid var(--border); background:none; color:var(--text-secondary); font-size:20px; cursor:pointer; }
+.sf-ghostdial{ opacity:.9; margin-top:6px; }
+
+/* The dial */
+.sf-dial{ width:100%; max-width:440px; margin:0 auto; display:block; overflow:visible; }
+.sf-dial .c{ font-family:var(--font-display); font-weight:900; text-transform:uppercase; }
+.sf-dial .lab{ font-family:var(--font-mono); letter-spacing:.25em; fill:var(--muted); }
+.sf-tk{ transition:stroke .3s; }
+.sf-tk.wave{ animation:sfwave .7s ease-out both; animation-delay:calc(var(--i)*22ms); }
+@keyframes sfwave{ 0%{ stroke:var(--sage); } 40%{ stroke:var(--primary); stroke-width:6; } 100%{ stroke:var(--sage); stroke-width:3.2; } }
+.sf-arc{ fill:none; stroke-width:9; stroke-linecap:round; }
+.sf-arc.bg{ stroke:color-mix(in srgb,var(--text) 22%,transparent); }
+.sf-arc.fg{ stroke:var(--sage); stroke-dasharray:100; stroke-dashoffset:100; transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1); }
+.sf-arc.fg.on{ stroke-dashoffset:0; }
+.sf-arc.fg.flash{ animation:sfflash .9s ease-out; }
+@keyframes sfflash{ 0%{ stroke:var(--primary); stroke-width:15; } 100%{ stroke:var(--sage); stroke-width:9; } }
+.sf-pop{ animation:sfpop .6s cubic-bezier(.2,1.4,.4,1); transform-box:fill-box; transform-origin:center; }
+@keyframes sfpop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.12); } 100%{ transform:scale(1); } }
+
+/* Today's list */
+.sf-pills{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+.sf-pill{ min-height:56px; border-radius:var(--radius-md); border:1px solid var(--border); display:flex; align-items:center; gap:10px; padding:6px 12px; font:15px var(--font-body); text-align:left;
+    background:none; color:var(--text); cursor:pointer; }
+.sf-pill i{ flex:0 0 14px; height:14px; border-radius:50%; border:1.5px solid color-mix(in srgb,var(--text) 40%,transparent); transition:all .25s; }
+.sf-pill[aria-pressed="true"]{ border-color:color-mix(in srgb,var(--sage) 50%,transparent); background:color-mix(in srgb,var(--sage) 12%,transparent); }
+.sf-pill[aria-pressed="true"] i{ background:var(--sage); border-color:var(--sage); transform:scale(1.2); }
+.sf-pill small{ display:block; color:var(--muted); font-size:12px; margin-top:1px; }
+.sf-status{ color:var(--text-secondary); margin:0 0 4px; font-size:16px; }
+.sf-actions{ display:flex; gap:8px; margin-top:14px; }
+.sf-actions .sf-btn{ flex:1; }
+.sf-stats{ display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-top:16px; }
+.sf-stats>div{ padding:12px 0; }
+.sf-stats>div+div{ border-left:1px solid var(--border); padding-left:14px; }
+.sf-stats .n{ font-family:var(--font-display); font-weight:800; font-size:30px; line-height:1; }
+.sf-stats .l{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+.sf-tools{ display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:14px; }
+.sf-tools button, .sf-tools .sf-sync{ background:none; border:0; padding:0; min-height:44px; font:13px var(--font-body); color:var(--text-secondary); cursor:pointer; text-decoration:underline; }
+.sf-tools .sf-sync{ text-decoration:none; color:var(--muted); cursor:default; }
+
+/* Missed a day */
+.sf-alert{ border:1px solid color-mix(in srgb,var(--amber) 45%,transparent); background:color-mix(in srgb,var(--amber) 9%,transparent); border-radius:12px; padding:14px 16px; margin-bottom:18px; }
+.sf-alert b{ display:block; margin-bottom:4px; }
+.sf-alert p{ margin:0 0 12px; color:var(--text-secondary); font-size:15px; line-height:1.45; }
+.sf-alert .row{ display:flex; gap:8px; flex-wrap:wrap; }
+.sf-alert .sf-btn{ min-height:48px; font-size:15px; }
+
+/* Below the tool (public only) */
+.sf-how{ display:grid; gap:18px; margin-top:40px; border-top:1px solid var(--border); padding-top:22px; }
+.sf-how h2{ font-family:var(--font-display); text-transform:uppercase; font-size:24px; font-weight:800; margin:0 0 6px; }
+.sf-how p{ margin:0; color:var(--text-secondary); line-height:1.5; font-size:15px; }
+@media (min-width:900px){ .sf-how{ grid-template-columns:repeat(3,1fr); } }
+.sf-cta{ margin-top:clamp(30px,5vw,56px); }
+
+@media (max-width:420px){ .sf-pills{ grid-template-columns:1fr; } }
+@media (prefers-reduced-motion:reduce){
+    .sf-arc.fg{ transition:none; }
+    .sf-arc.fg.flash, .sf-tk.wave, .sf-pop{ animation:none; }
+}

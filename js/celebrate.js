@@ -66,15 +66,15 @@ export function sceneFor(iconId) {
 }
 
 // What a habit's moment says. Pure.
-export function habitMoment(habit, { allDone = false } = {}) {
+export function habitMoment(habit, { allDone = false, noun = "Habit" } = {}) {
     const iconId = habitIconId(habit);
     const name = String(habit?.name ?? "").replace(/^\s*\p{Extended_Pictographic}️?\s*/u, "").replace(/\s+/g, " ").trim();
     return {
         iconId,
         scene: sceneFor(iconId),
-        kicker: allDone ? "Day complete" : "Habit done",
+        kicker: allDone ? "Day complete" : `${noun} done`,
         title: (name || habitIconById(iconId)?.label || "Habit").slice(0, 28),
-        line: allDone ? "Every habit, done." : (HABIT_LINES[iconId] || "Done.")
+        line: allDone ? `Every ${noun.toLowerCase()}, done.` : (HABIT_LINES[iconId] || "Done.")
     };
 }
 
@@ -142,9 +142,9 @@ function sceneHtml(scene) {
     }
 }
 
-export function celebrateHabit(habit, { allDone = false, card = null } = {}) {
+export function celebrateHabit(habit, { allDone = false, card = null, noun = "Habit" } = {}) {
     if (typeof document === "undefined" || reducedMotion()) return Promise.resolve();
-    const m = habitMoment(habit, { allDone });
+    const m = habitMoment(habit, { allDone, noun });
     const el = document.createElement("div");
     el.className = `sb-hm sb-hm-${m.scene}${allDone ? " is-day" : ""}`;
     el.setAttribute("aria-hidden", "true");
