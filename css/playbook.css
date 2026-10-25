@@ -518,3 +518,65 @@ body.has-bottomnav .pb-toast{bottom:calc(96px + env(safe-area-inset-bottom))}
 #assign .gm-tick input{width:22px;height:22px;min-height:0}
 #assign .gm-pic{max-width:260px;margin-bottom:8px}
 #assign [hidden]{display:none!important}
+
+/* ---- Printed pages: the Southbound "clean sheet" (option B, Eddie 2026-10-25). White page, thin forest
+   rule, tan slash, display titles, mono labels, one footer. Light on ink on purpose. ---- */
+.pb-printmast{display:none}
+@media print{
+  @page{margin:12mm}
+  html,body.pb-body,body.pb-body *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.pb-body{color:#15211A!important;font-family:var(--font-body)}
+  .pb-printhead,.pr-head,.tm-print-title,.gm-card h2{display:none!important}
+  .pb-printmast{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:3px solid #0E251B;padding-bottom:10px;margin:0 0 4px;position:relative}
+  .pb-printmast:after{content:"";position:absolute;left:0;bottom:-3px;width:28mm;height:3px;background:#B89B6E}
+  .pm-kick{font:500 9px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:#96784C;margin-bottom:6px}
+  .pm-title{font:800 40px/.95 var(--font-display);text-transform:uppercase;color:#0E251B}
+  .pm-side{text-align:right}.pm-side img{height:34px;display:inline-block}
+  .pm-sub{font:500 9px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:#686F67;margin-top:6px}
+  .pb-printmast + *{margin-top:16px}
+  .pb-printfoot{display:block;margin:14px 0 0;padding-top:6px;border-top:1px solid #DDD4C2;font:500 8px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:#686F67;text-align:center}
+  /* practice plan */
+  .pr-sheet .pr-item{border:0!important;border-bottom:1px solid #DDD4C2!important;padding:7px 0}
+  .pr-sheet .pr-top{display:grid;grid-template-columns:20mm 1fr auto;gap:10px;align-items:baseline}
+  .pr-sheet .pr-time{font:500 11px var(--font-mono);color:#96784C!important}
+  .pr-sheet .pr-top b{font:800 17px var(--font-display);text-transform:uppercase;color:#0E251B!important}
+  .pr-sheet .pr-mins{font:800 17px var(--font-display);color:#0E251B!important}
+  .pr-sheet .dr-tag{font:500 9px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:#686F67!important}
+  .pr-sheet p,.pr-sheet li{color:#15211A!important}
+  /* lineup card */
+  .gm-card .gm-card-sub{font:500 9px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:#686F67!important}
+  .gm-card table{border-collapse:collapse}
+  .gm-card th{font:500 9px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:#686F67!important;border:0;border-bottom:2px solid #0E251B;padding:5px 6px}
+  .gm-card td{border:0;border-bottom:1px solid #DDD4C2;font-size:12px;padding:6px}
+  .gm-card tr td:first-child{font:800 15px var(--font-display);color:#0E251B!important}
+  /* the screen's glass and shadows stay on screen */
+  .pr-sheet .pr-item,.tm-row,.tm-sec,.pb-card,.dr-card{box-shadow:none!important;backdrop-filter:none!important;background:none!important;animation:none!important}
+  .pr-sheet .pr-top b{text-align:left}
+  .pr-sheet .pr-mins{text-align:right}
+  #empty:not([hidden]){display:block!important;padding:24mm 0;text-align:center;border:1px dashed #B89B6E;margin-top:8mm}
+  #empty:not([hidden]) *{color:#686F67!important}
+  .pb-sample,.tm-counts{display:none!important}
+  /* team */
+  .tm-row,.tm-row *{color:#15211A!important}
+  .tm-row{border:0!important;border-bottom:1px solid #DDD4C2!important;border-radius:0!important;padding:5px 2px}
+  .tm-sec h2{font:800 17px var(--font-display);text-transform:uppercase;color:#0E251B}
+}
+@media print{
+  .pm-side{flex:0 1 auto;max-width:45%;min-width:0}
+  .pm-sub{white-space:normal;overflow-wrap:anywhere}
+  #pitch{max-height:200mm!important}
+}
+@media print{
+  html,html.pb-app,body.pb-body{background:#fff!important;min-height:0!important;height:auto!important}
+  #pitch{max-height:185mm!important}
+}
+@media print{
+  @page{margin:10mm}
+  .pb-printfoot{margin-top:8px}
+  .pr-sheet .pr-item{padding:5px 0}
+  .pr-list{gap:0!important}
+  .pb-printmast + *{margin-top:10px}
+  .pm-title{font-size:36px}
+  .tm-sec{margin-bottom:6px}
+  .tm-row{padding:3px 2px!important}
+}

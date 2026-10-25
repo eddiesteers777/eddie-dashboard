@@ -416,3 +416,8 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 - The Playbook toast sat on the app's bottom tab bar; it now lifts above it when signed in.
 - Team note placeholder shortened to "e.g. vs Pelham" so it isn't clipped.
 - Tested in Chromium at 360 and 390px, signed-in shell, all six tabs, sample and empty states: no page overflow, no field wider than its label. Not testable here: real iOS Safari date rendering (Eddie to check on his phone).
+
+## 2026-10-25 — Playbook prints wear Southbound (option B "clean sheet")
+- Every Playbook Print button (board, drills, practice plan, lineup card, team, roster) now prints with a shared masthead (`.pb-printmast`, built in `js/playbook/shell.js` on `beforeprint`): kicker, display title, logo mark, date or details, tan slash, one "Southbound Coaching · southboundcoaching.com/playbook" footer. Styles are the last print blocks of `css/playbook.css`. Light on ink: white page, forest rule, no dark fills (the screen's glass cards are reset for print).
+- Tested by printing each page to PDF in Chromium (Letter): practice, team, lineup card, board and empty practice/team/lineup all fit one page. Samples in /mnt/project-files/playbook-print/built/. Real iPhone print dialog not tested. A downloadable PDF like Fueling's was not built (restyle only).
+- No Firestore rules change.
