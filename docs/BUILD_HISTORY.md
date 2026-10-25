@@ -425,3 +425,9 @@ Press and hold a day on the marathon day strip (touch, about 0.35 s) or drag it 
 - Browser checks in Chromium at 390 and 1280: setup (empty), custom list, start, tapping all six tasks (scenes play, arc fills, "Day complete"), share picture (real PNG made by the page), missed-day prompt then restart (day 1, attempt 2), Free tools tab opens. No page errors, no horizontal overflow, no tap target under 44px.
 - Not tested here: real Google sign-in and the cloud sync (the Firebase network was blocked in the test browser; sync logic is covered by `resolveSync` tests only), a real phone's share sheet and calendar import of the `.ics` file.
 - No `firestore.rules` change.
+
+
+## 2026-10-25: Sign-in shows Southbound
+- `authDomain` moved to `auth.southboundcoaching.com` (one line in `js/firebase.js`). Needs Eddie's console setup first (Firebase Hosting custom domain + DNS, authorized domain, OAuth redirect URI); steps in /mnt/project-files/google-signin-branding/STEPS.md.
+- Checked: static tests. Not testable here: a real Google sign-in through the new domain (Eddie checks after setup, before merge).
+- No `firestore.rules` change.

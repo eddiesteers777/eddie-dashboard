@@ -110,6 +110,7 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 - **Guest redirect** only fires when Firebase definitively says "signed out", never on an auth-load error (offline users stay).
 - **Overlays** need `z-index` above the navbar (1000) and search overlay (4500). The plan editor uses 5000.
 - **Cards with `overflow:hidden` inside a scrolling flex column shrink to slivers.** Give them `flex-shrink:0`.
+- **Sign-in runs on `auth.southboundcoaching.com`** (`authDomain`, a Firebase Hosting custom domain). Don't remove that domain from Firebase Hosting, Authorized domains or the OAuth redirect URIs, or new sign-ins fail.
 - **Browser storage is per origin.** The domain move lost local data (cloud sync restores it). Google sign-in only works on domains in Firebase → Authentication → Authorized domains.
 - **Honeypot fields must not look like real fields** (autofill filled one labelled "Company" and real questions were dropped). Keep `sbLeaveEmpty` ("Leave this empty", `autocomplete="off"`).
 - **`Promise.all` with a long positional list breaks silently.** Use `allNamed({ name: promise })` for more than three or four.
