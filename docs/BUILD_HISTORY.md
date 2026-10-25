@@ -412,3 +412,9 @@ Pages `playbook*.html`; code `js/playbook/`: models (`boardModel`, `boardLibrary
 
 ## 2026-10-25 — Marathon: move a workout to another day (option B)
 Press and hold a day on the marathon day strip (touch, about 0.35 s) or drag it (mouse), drop it on another day of the same week, and the two days swap. Alt + Left/Right does the same from the keyboard. The whole workout moves (session, miles, pace, notes, strength / mobility / recovery / cross-training lists) and a fueling plan tied to either day is re-pointed (`marathonRef.dayKey` and its `w<week>-<day>` id). "Done" marks stay with the date. Race day can't be moved. An Undo toast restores both. Pure logic `js/marathonSwap.js` (`tests/marathonSwap.test.mjs`); the page merges `pace` and `race` overrides now, as `getAdjustedWeekDays` already did. Same-week only; no firestore.rules change. A run already sent to the COROS watch needs sending again. Mock-ups and built screenshots: `/mnt/project-files/move-day/`.
+## 2026-10-24 — Playbook phone overlaps (iPhone)
+- iOS Safari drew date/time inputs at their native width, so Team's Day field ran over Type and Practice's Date/Start time ran off the card. `css/playbook.css` drops the native look on Playbook date/time inputs (`appearance:none`, `width:100%`, `min-width:0`, left-aligned value) and makes `.dr-two` columns `minmax(0,1fr)`.
+- Team attendance-summary cards (`.tm-list`, 340px minimum) and roster cards spilled past a 360px screen; minimums now `min(…,100%)`.
+- The Playbook toast sat on the app's bottom tab bar; it now lifts above it when signed in.
+- Team note placeholder shortened to "e.g. vs Pelham" so it isn't clipped.
+- Tested in Chromium at 360 and 390px, signed-in shell, all six tabs, sample and empty states: no page overflow, no field wider than its label. Not testable here: real iOS Safari date rendering (Eddie to check on his phone).

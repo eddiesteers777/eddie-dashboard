@@ -74,7 +74,7 @@
 .pb-hint{color:var(--pb-muted);font-size:14px;line-height:1.45}
 .pb-side label,.dr-dlg label,.pr-setup label{display:block;font-size:13px;color:var(--pb-muted);margin-bottom:10px}
 .pb-shell input[type=text],.pb-shell input[type=number],.pb-shell input[type=search],.pb-shell input[type=date],.pb-shell input[type=time],.pb-shell select,.pb-shell textarea,.pb-name{font-family:var(--font-body)}
-.pb-side input[type=text],.pb-side input[type=number],.pb-side select,.dr-filters input,.dr-filters select,.dr-dlg input,.dr-dlg select,.dr-dlg textarea,.pr-setup input,.pr-setup select,.pr-add select{display:block;width:100%;min-height:44px;margin-top:4px;border:1px solid var(--pb-line);border-radius:var(--radius-md,8px);padding:8px 10px;font:500 16px var(--font-body);color:var(--pb-text);background:var(--pb-field);color-scheme:dark}
+.pb-side input[type=text],.pb-side input[type=number],.pb-side select,.dr-filters input,.dr-filters select,.dr-dlg input,.dr-dlg select,.dr-dlg textarea,.pr-setup input,.pr-setup select,.pr-add select{display:block;width:100%;min-width:0;box-sizing:border-box;min-height:44px;margin-top:4px;border:1px solid var(--pb-line);border-radius:var(--radius-md,8px);padding:8px 10px;font:500 16px var(--font-body);color:var(--pb-text);background:var(--pb-field);color-scheme:dark}
 :root.pb-light .pb-shell input,:root.pb-light .pb-shell select,:root.pb-light .pb-shell textarea{color-scheme:light}
 .pb-shell option{background:var(--pb-card2);color:var(--pb-text)}
 .pb-row{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
@@ -130,7 +130,8 @@
 /* drills */
 .dr-filters{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px}
 .dr-dlg textarea{resize:vertical;line-height:1.4}
-.dr-two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.dr-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px}
+.dr-two>label,.pr-setup label,.gm-setup label{min-width:0}
 @media(min-width:700px){.dr-filters{grid-template-columns:1fr 200px 200px}}
 .dr-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));margin-bottom:24px}
 .dr-card{text-align:left;background:var(--pb-card);border:1px solid var(--pb-line);border-radius:12px;padding:14px;cursor:pointer;display:grid;gap:6px;font:inherit;color:var(--pb-text);touch-action:manipulation}
@@ -185,7 +186,7 @@
 
 /* roster */
 .ro-privacy{margin:0 0 12px}
-.ro-list{list-style:none;margin:0 0 24px;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.ro-list{list-style:none;margin:0 0 24px;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))}
 .ro-row{background:var(--pb-card);border:1px solid var(--pb-line);border-radius:12px;padding:6px 8px 6px 4px;display:flex;align-items:center;gap:6px}
 .ro-row.away{opacity:.6}
 .ro-here{display:grid;place-items:center;min-width:44px;min-height:44px;cursor:pointer}
@@ -254,7 +255,7 @@
 @media print{.pb-syncstat,.pb-refresh{display:none!important}}
 
 /* ---- team: attendance, runs, duty ---- */
-.tm-day{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:0 0 16px}
+.tm-day{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));margin:0 0 16px}
 .tm-day label,.tm-jobrow input,.tm-day input,.tm-day select{font-size:16px}
 .tm-day label{min-width:0;display:grid;gap:4px;font:600 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--pb-quiet)}
 .tm-day input,.tm-day select,.tm-jobrow input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:0 10px;border:1px solid var(--pb-line);border-radius:8px;background:var(--pb-field);color:var(--pb-text);font-family:var(--font-body);text-transform:none;letter-spacing:0}
@@ -266,7 +267,7 @@
 .tm-sec h2{margin:0;font:800 26px/1 var(--font-display);text-transform:uppercase}
 .tm-sec-btns{display:flex;gap:8px;flex-wrap:wrap}
 .tm-counts{margin:0 0 10px;color:var(--pb-muted);font:500 13px var(--font-mono)}
-.tm-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.tm-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))}
 .tm-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--pb-card);border:1px solid var(--pb-line);border-radius:12px;padding:8px 10px}
 .tm-who{flex:1 1 120px;min-width:0;display:grid}
 .tm-who b{font-size:16px}
@@ -310,9 +311,18 @@
   .tm-print-season .tm-season .tm-sec-btns{display:none!important}
 }
 
+/* iOS Safari draws date and time inputs at their own native width, so they spill past
+   their grid column (over the next field, or off the card) and ignore width:100%.
+   Dropping the native look lets them size like every other field. */
+.pb-shell input[type=date],.pb-shell input[type=time]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;min-height:44px;text-align:left}
+.pb-shell input[type=date]::-webkit-date-and-time-value,.pb-shell input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.4em;margin:0}
+.pb-shell input[type=date]::-webkit-datetime-edit,.pb-shell input[type=time]::-webkit-datetime-edit{padding:0}
+
 /* ---- inside the app (signed in): the app's own navigation wraps the same pages ---- */
 html.pb-app #publicHeader,html.pb-app .pub-footer{display:none}
 .pb-in-app [hidden]{display:none!important}
+/* the app's bottom tab bar sits where the toast would: lift it clear (same height as the app toasts) */
+body.has-bottomnav .pb-toast{bottom:calc(96px + env(safe-area-inset-bottom))}
 .pb-in-app .pb-shell{padding-top:8px}
 
 /* ==========================================================
@@ -459,7 +469,7 @@ html.pb-app #publicHeader,html.pb-app .pub-footer{display:none}
 .tm-empty .pb-btn+.pb-btn{margin-left:8px}
 
 /* Game day */
-.gm-setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0 6px}
+.gm-setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:12px;margin:14px 0 6px}
 .gm-setup label,.gm-slot select{font-size:.8rem;color:var(--text-dim,var(--text));display:flex;flex-direction:column;gap:4px}
 .gm-setup input,.gm-setup select,.gm-slot select{font-size:16px;min-height:44px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm,8px);background:var(--surface);color:var(--text);width:100%;min-width:0;box-sizing:border-box}
 .gm-sec{margin:22px 0}
