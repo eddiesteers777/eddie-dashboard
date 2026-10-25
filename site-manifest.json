@@ -1,5 +1,6 @@
 {
   "pages": [
+    "75.html",
     "75day.html",
     "about.html",
     "analytics.html",
@@ -303,6 +304,9 @@
     "js/sessionStore.js",
     "js/setRunner.js",
     "js/settings.js",
+    "js/seventyFive.js",
+    "js/seventyFiveCloud.js",
+    "js/seventyFivePage.js",
     "js/signInErrors.js",
     "js/slotBookings.js",
     "js/soccerBooking.js",
@@ -423,6 +427,7 @@
     "css/running.css",
     "css/schedule.css",
     "css/settings.css",
+    "css/seventyfive.css",
     "css/share.css",
     "css/stravaIntegration.css",
     "css/strength-progress.css",

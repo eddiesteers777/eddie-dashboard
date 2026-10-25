@@ -418,3 +418,10 @@ Press and hold a day on the marathon day strip (touch, about 0.35 s) or drag it 
 - The Playbook toast sat on the app's bottom tab bar; it now lifts above it when signed in.
 - Team note placeholder shortened to "e.g. vs Pelham" so it isn't clipped.
 - Tested in Chromium at 360 and 390px, signed-in shell, all six tabs, sample and empty states: no page overflow, no field wider than its label. Not testable here: real iOS Safari date rendering (Eddie to check on his phone).
+
+## 75-day tracker (2026-10-25)
+- Built `75.html`, the free 75 Hard / 75 Soft / custom tracker in the dial look Eddie chose from the mock-ups. Free tools got a fourth tab, More a row, sitemap and privacy page a line.
+- Unit tests (`tests/seventyFive.test.mjs`, 15) caught a real bug while writing them: `Math.min` on date strings returned NaN, so the restart prompt never fired. Fixed with a string compare.
+- Browser checks in Chromium at 390 and 1280: setup (empty), custom list, start, tapping all six tasks (scenes play, arc fills, "Day complete"), share picture (real PNG made by the page), missed-day prompt then restart (day 1, attempt 2), Free tools tab opens. No page errors, no horizontal overflow, no tap target under 44px.
+- Not tested here: real Google sign-in and the cloud sync (the Firebase network was blocked in the test browser; sync logic is covered by `resolveSync` tests only), a real phone's share sheet and calendar import of the `.ics` file.
+- No `firestore.rules` change.

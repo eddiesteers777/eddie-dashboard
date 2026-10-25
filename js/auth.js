@@ -149,6 +149,7 @@ export function clearAccountSensitiveBrowserState() {
         try { sessionStorage.removeItem(key); } catch { /* storage unavailable */ }
     }
     clearLinkedPlaybook();
+    clearLinked75();
 }
 
 // Southbound Playbook work (js/playbook/cloud.js) belongs to the device until it is linked to an
@@ -161,6 +162,16 @@ function clearLinkedPlaybook() {
             const key = localStorage.key(i);
             if (key?.startsWith("sb-playbook-") && key !== "sb-playbook-theme") localStorage.removeItem(key);
         }
+    } catch { /* storage unavailable */ }
+}
+
+// The 75-day challenge (js/seventyFiveCloud.js) works the same way: it stays on a device used as a
+// guest, and leaves with the account once linked (sb-75-owner).
+function clearLinked75() {
+    try {
+        if (!localStorage.getItem("sb-75-owner")) return;
+        localStorage.removeItem("sb-75-state");
+        localStorage.removeItem("sb-75-owner");
     } catch { /* storage unavailable */ }
 }
 

@@ -46,3 +46,10 @@ test("without a page it does nothing and still resolves", async () => {
     await celebrateRun({ kind: "run" });
     await celebrateHabit({ name: "Water" });
 });
+
+test("a different noun changes the kicker and the all-done line (the 75-day tracker says Task)", () => {
+    const m = habitMoment({ name: "Read 10 pages", icon: "hb:read" }, { noun: "Task" });
+    assert.equal(m.kicker, "Task done");
+    assert.equal(habitMoment({ name: "x", icon: "hb:read" }, { allDone: true, noun: "Task" }).line, "Every task, done.");
+    assert.equal(habitMoment({ name: "x", icon: "hb:read" }, { allDone: true }).line, "Every habit, done.");
+});
