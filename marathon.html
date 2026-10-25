@@ -477,8 +477,8 @@
       const merged = {
         session: o.session !== undefined ? o.session : d.session,
         miles: o.miles !== undefined ? o.miles : d.miles,
-        pace: d.pace,
-        race: d.race,
+        pace: o.pace !== undefined ? o.pace : d.pace,
+        race: o.race !== undefined ? Boolean(o.race) : d.race,
         edited: o.session !== undefined || o.miles !== undefined,
       };
       EXTRA_FIELDS.forEach(f => {
@@ -739,6 +739,7 @@
       </div>
       ${raceBanner}${checkBanner}
       <div class="mp-pills" role="group" aria-label="Days of the week">${pills}</div>
+      <p class="mp-swap-hint">Press and hold a day, then drop it on another day to swap them. Keyboard: Alt + arrow keys.</p>
       <div class="mp-days">${groups}</div>
       <div class="mp-fold-list mp-week-folds">
         <details class="mp-fold">
@@ -781,9 +782,18 @@
 
     el.querySelectorAll("[data-pill]").forEach((pill) => {
       pill.addEventListener("click", () => {
+        if (performance.now() < suppressClickUntil) return;
         selectedDay = pill.getAttribute("data-pill");
         renderDetail();
       });
+      pill.addEventListener("keydown", (e) => {
+        if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+        e.preventDefault();
+        const from = pill.getAttribute("data-pill");
+        const to = days7[days7.indexOf(from) + (e.key === "ArrowLeft" ? -1 : 1)];
+        if (to) swapDays(from, to, true);
+      });
+      attachPillDrag(pill);
     });
 
     el.querySelectorAll("[data-week-step]").forEach((btn) => {
@@ -950,6 +960,111 @@
     for (let n = 1; n <= 16; n++) totalMiles += weekTotal(n);
     document.getElementById("mp-stat-total").textContent = Math.round(totalMiles);
     document.getElementById("mp-stat-pct").textContent = Math.round((totalDone() / 112) * 100) + "%";
+  }
+
+
+  /* ==========================================
+     Move a workout to another day (swap two days of the week)
+     Press and hold a day, drop it on another. Fueling plans tied to
+     either day go with their run (js/marathonSwap.js). "Done" marks
+     stay with the date. Undo restores both.
+  ========================================== */
+  let suppressClickUntil = 0;
+  let swapModule = null;
+  import('./js/marathonSwap.js').then(m => { swapModule = m; }).catch(() => {});
+
+  function say(message, opts) {
+    if (window.SB) window.SB.toast(message, opts || { type: "info" });
+  }
+
+  async function swapDays(a, b, focusAfter) {
+    const mod = swapModule || await import('./js/marathonSwap.js');
+    swapModule = mod;
+    const days = getWeekDays(selectedWeek);
+    const blocker = mod.swapBlocker(days, days7, a, b);
+    if (blocker === "same") return;
+    if (blocker === "race") { say("Race day stays where it is."); return; }
+    const week = selectedWeek;
+    const before = { overrides: localStorage.getItem('training-overrides'), plans: localStorage.getItem('fueling-plans') };
+    const plans = loadFuelingPlans();
+    const moved = mod.fuelPlansOn(plans, week, a).length + mod.fuelPlansOn(plans, week, b).length;
+    overrides = mod.swapOverrides(overrides, days, days7, week, a, b);
+    saveOverrides();
+    if (moved) {
+      localStorage.setItem('fueling-plans', JSON.stringify(mod.swapFuelPlans(plans, week, a, b)));
+    }
+    selectedDay = b;
+    refreshAfterMove();
+    if (focusAfter) { const el = document.querySelector('[data-pill="' + b + '"]'); if (el) el.focus(); }
+    say("Swapped " + a + " and " + b + "." + (moved ? " Fueling moved too." : ""), {
+      type: "success",
+      action: { label: "Undo", onClick: () => {
+        if (before.overrides === null) localStorage.removeItem('training-overrides'); else localStorage.setItem('training-overrides', before.overrides);
+        if (before.plans === null) localStorage.removeItem('fueling-plans'); else localStorage.setItem('fueling-plans', before.plans);
+        loadOverrides();
+        import('./js/cloudSync.js').then(({pushToCloud})=>pushToCloud()).catch(()=>{});
+        refreshAfterMove();
+      } }
+    });
+  }
+
+  function refreshAfterMove() {
+    renderDetail();
+    renderWeekList();
+    renderChart();
+    updateStats();
+  }
+
+  // Touch: hold ~0.35 s to lift. Mouse: drag a few pixels. Then drop on another day.
+  function attachPillDrag(pill) {
+    const HOLD_MS = 350, MOVE_PX = 8;
+    let timer = null, lifted = false, startX = 0, startY = 0, pointerId = null, target = null;
+
+    const clearTarget = () => { if (target) target.classList.remove("mp-drop"); target = null; };
+    const end = (drop) => {
+      clearTimeout(timer);
+      const to = target && target.getAttribute("data-pill");
+      const from = pill.getAttribute("data-pill");
+      clearTarget();
+      pill.classList.remove("mp-lift");
+      if (pointerId !== null) { try { pill.releasePointerCapture(pointerId); } catch (e) {} }
+      pointerId = null;
+      if (lifted) {
+        suppressClickUntil = performance.now() + 400;
+        if (drop && to && to !== from) swapDays(from, to);
+      }
+      lifted = false;
+    };
+    const lift = () => {
+      lifted = true;
+      pill.classList.add("mp-lift");
+      if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
+    };
+
+    pill.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      startX = e.clientX; startY = e.clientY; pointerId = e.pointerId; lifted = false;
+      if (e.pointerType !== "mouse") timer = setTimeout(lift, HOLD_MS);
+    });
+    pill.addEventListener("pointermove", (e) => {
+      if (pointerId === null) return;
+      const moved = Math.hypot(e.clientX - startX, e.clientY - startY);
+      if (!lifted) {
+        if (e.pointerType === "mouse" && moved > MOVE_PX) { lift(); try { pill.setPointerCapture(pointerId); } catch (err) {} }
+        else if (moved > MOVE_PX) { clearTimeout(timer); pointerId = null; }   // a scroll or swipe, not a lift
+        return;
+      }
+      e.preventDefault();
+      pill.style.setProperty("--mp-dx", (e.clientX - startX) + "px");
+      pill.style.setProperty("--mp-dy", Math.max(-30, Math.min(30, e.clientY - startY)) + "px");
+      const hit = document.elementsFromPoint(e.clientX, e.clientY).find(n => n !== pill && n.classList && n.classList.contains("mp-pill"));
+      if (hit !== target) { clearTarget(); target = hit || null; if (target) target.classList.add("mp-drop"); }
+    });
+    pill.addEventListener("pointerup", () => end(true));
+    pill.addEventListener("pointercancel", () => end(false));
+    // Once lifted, stop the page from scrolling under the finger.
+    pill.addEventListener("touchmove", (e) => { if (lifted && e.cancelable) e.preventDefault(); }, { passive: false });
+    pill.addEventListener("contextmenu", (e) => { if (lifted || timer) e.preventDefault(); });
   }
 
   function selectWeek(n) {

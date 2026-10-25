@@ -211,6 +211,7 @@
     "js/marathonCoros.js",
     "js/marathonCorosButton.js",
     "js/marathonData.js",
+    "js/marathonSwap.js",
     "js/marathonToday.js",
     "js/marathonWeek.js",
     "js/messageThread.js",
