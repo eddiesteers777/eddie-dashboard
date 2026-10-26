@@ -65,3 +65,30 @@ test("the sideways track only moves inside its travel", () => {
     assert.equal(sidewaysProgress(-900, 600), 1);
     assert.equal(sidewaysProgress(-50, 0), 0);
 });
+
+import { phoneFeed, phoneFade, PHONE_SCREENS } from "../js/homeSkyModel.js";
+
+test("the phone holds on the screen for each story step", () => {
+    assert.equal(phoneFeed(0), 0);
+    assert.equal(phoneFeed(0.35), 2);
+    assert.equal(phoneFeed(0.6), 4);
+    assert.equal(phoneFeed(1), 5);
+    assert.ok(PHONE_SCREENS - 1 === phoneFeed(1));
+});
+
+test("between steps the feed moves smoothly and never goes backwards", () => {
+    let last = -1;
+    for (let p = 0; p <= 1.0001; p += 0.01) { const f = phoneFeed(p); assert.ok(f >= last - 1e-9, String(p)); last = f; }
+});
+
+test("bad story progress gives a valid feed position", () => {
+    for (const p of [NaN, -3, 9, undefined]) { const f = phoneFeed(p); assert.ok(f >= 0 && f <= 5, String(p)); }
+});
+
+test("the phone is hidden at the top, shown in the story, gone after it", () => {
+    const pg = { vh: 800, storyTop: 1500, storyH: 3400 };
+    assert.deepEqual(phoneFade({ ...pg, scrollY: 0 }), { inn: 0, out: 0 });
+    const mid = phoneFade({ ...pg, scrollY: 3000 });
+    assert.equal(mid.inn, 1); assert.equal(mid.out, 0);
+    assert.equal(phoneFade({ ...pg, scrollY: 6000 }).out, 1);
+});

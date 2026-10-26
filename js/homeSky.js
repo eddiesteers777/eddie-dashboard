@@ -7,7 +7,7 @@
    opacity and transform change per frame, nothing repaints.
 ========================================== */
 
-import { skyState, runProgress, chapterIndex, sidewaysProgress, CHAPTERS, RACE_MILES } from "./homeSkyModel.js";
+import { skyState, runProgress, chapterIndex, sidewaysProgress, phoneFeed, phoneFade, CHAPTERS, RACE_MILES } from "./homeSkyModel.js";
 
 const mq = (q) => window.matchMedia(q).matches;
 if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !== true) {
@@ -136,6 +136,21 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         fin.innerHTML = "<i></i><span>Finish · 13.1 mi · Race day</span>";
         close.prepend(fin);
 
+        // A phone beside the story: the app scrolls through its screens as the week story moves on (wide screens only).
+        const ride = document.createElement("div");
+        ride.className = "sbh-ride"; ride.setAttribute("aria-hidden", "true");
+        ride.innerHTML = '<div class="sbh-phone"><div class="sbh-screen"><div class="sbh-feed">' + `<div class="sbh-fs"><div class="sbh-fh"><b>Apply</b><span>Example</span></div><div class="sbh-ans"><div><span>Goal</span><b>Half marathon</b></div><div><span>Days free</span><b>Mon Tue Thu Sat</b></div><div><span>Longest run</span><b>8 miles</b></div></div><div class="sbh-go2">Send application</div></div>
+<div class="sbh-fs"><span class="sbh-mini">Today · Example</span><div class="sbh-hi">Good morning,<br>Maya</div><div class="sbh-r2"><div class="sbh-ring">7</div><div class="sbh-box" style="flex:1"><b>Readiness</b>Good to train. Sleep 7 h.</div></div><div class="sbh-box"><b>Planned · Threshold</b>4 × 1 mi at 10K pace</div><div class="sbh-go2">Start check-in</div></div>
+<div class="sbh-fs"><div class="sbh-fh"><b>Your week</b><span>Example</span></div><div><div class="sbh-dy"><span class="sbh-dd">MON</span><span>Easy 5 mi</span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">TUE</span><span>Strength A · 40 min</span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">THU</span><span>Tempo 6 mi</span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">SAT</span><span>Long run 9 mi</span><span class="sbh-dt"></span></div></div><div class="sbh-box"><b>This week</b>19 miles · one strength day</div></div>
+<div class="sbh-fs"><div class="sbh-fh"><b>Workout</b><span>Thu</span></div><div class="sbh-hi">Tempo 6 mi</div><div><div class="sbh-st"><b>10 MIN</b><span>Easy warm-up</span></div><div class="sbh-st"><b>4 × 1 MI</b><span>10K pace, 2 min jog</span></div><div class="sbh-st"><b>10 MIN</b><span>Easy cool-down</span></div></div><div class="sbh-go2">Start workout</div></div>
+<div class="sbh-fs"><div class="sbh-fh"><b>Check-in</b><span>Sun</span></div><span class="sbh-mini">How do your legs feel</span><div class="sbh-feel"><i class="f"></i><i class="f"></i><i class="f"></i><i class="h"></i><i></i><i></i></div><div class="sbh-dy is-done"><span class="sbh-dd">MON</span><span>Easy 5 mi</span><span class="sbh-dt"></span></div><div class="sbh-dy is-done"><span class="sbh-dd">TUE</span><span>Strength A</span><span class="sbh-dt"></span></div><div class="sbh-box"><b>Your check-in</b>Legs heavy after Tuesday. Slept about 6 hours.</div><div class="sbh-go2">Send to Eddie</div></div>
+<div class="sbh-fs"><div class="sbh-fh"><b>Eddie</b><span>Example</span></div><div class="sbh-msg me">Legs heavy after Tuesday. Slept about 6 hours.</div><div class="sbh-msg">Moved the tempo to next week. Easy Thursday, keep Saturday.</div><div class="sbh-dy"><span class="sbh-dd">THU</span><span><span class="sbh-was">Tempo 6 mi</span><span class="sbh-chg">Easy 4 mi</span></span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">SAT</span><span>Long run 9 mi</span><span class="sbh-dt"></span></div><span class="sbh-tag">Example screens and data</span></div>` + '</div></div></div>';
+        document.body.append(ride);
+        const phone = ride.firstElementChild, feed = ride.querySelector(".sbh-feed");
+        const wide = window.matchMedia("(min-width: 761px)");
+        const setRide = () => root.classList.toggle("sbh-ride-on", wide.matches);
+        setRide(); wide.addEventListener?.("change", () => { setRide(); remeasure(); });
+
         let tops = { storyTop: 0, storyBottom: 0, closeTop: 0, heroH: 1 };
         const measure = () => {
             const y = window.scrollY;
@@ -167,6 +182,21 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             sun.style.opacity = (1 - s.set * 0.9 + s.rise * 0.8).toFixed(3);
             if (video && y < tops.heroH * 1.2) video.style.transform = `scale(${(1 + s.hero * 0.12).toFixed(4)})`;
             if (headline && y < tops.heroH * 1.2) headline.style.transform = `translate3d(0,${(s.hero * -60).toFixed(1)}px,0)`;
+            if (root.classList.contains("sbh-ride-on")) {
+                const top = parseFloat(getComputedStyle(root).getPropertyValue("--sbh-bar")) || barH();
+                const availH = vh - top - 90 - 24;
+                const pw = Math.max(150, Math.min(300, availH / 2));
+                if (Math.abs((phone._pw || 0) - pw) > 0.5) {
+                    phone._pw = pw; phone.style.setProperty("--pw", pw.toFixed(1) + "px");
+                    phone.style.setProperty("--sh", Math.round(pw * 1.946) + "px");
+                }
+                const sp = Math.min(1, Math.max(0, (y - tops.storyTop) / Math.max(1, tops.storyBottom - tops.storyTop - vh)));
+                const f = phoneFeed(sp), fade = phoneFade({ scrollY: y, vh, storyTop: tops.storyTop, storyH: tops.storyBottom - tops.storyTop });
+                feed.style.transform = `translate3d(0,${(-f * pw * 1.946).toFixed(1)}px,0)`;
+                ride.style.opacity = (fade.inn * (1 - fade.out)).toFixed(3);
+                ride.style.transform = `translate3d(${((1 - fade.inn) * 90 + fade.out * 90).toFixed(1)}px,0,0)`;
+                phone.style.transform = `rotate(${(3 - f * 0.9).toFixed(2)}deg)`;
+            }
             const step = parseInt(stick?.dataset.s, 10) || 1;
             if (numeral && numeral.textContent !== String(step)) numeral.textContent = step;
             if (hz && cards) cards.style.transform = `translate3d(${(-sidewaysProgress(hz.getBoundingClientRect().top - barH(), hzMax) * hzMax).toFixed(1)}px,0,0)`;

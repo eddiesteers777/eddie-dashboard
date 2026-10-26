@@ -63,3 +63,34 @@ export function chapterIndex({ scrollY, vh, heroH, storyTop, storyBottom, closeT
 export function sidewaysProgress(top, travel) {
     return travel > 0 ? clamp(-num(top) / travel) : 0;
 }
+
+/* ---- The phone that rides beside the story ---- */
+
+export const PHONE_SCREENS = 6; // apply, today, week, workout, check-in, note from Eddie
+
+/* Which part of the app feed the phone shows, 0..5, for how far through the story the visitor is (0..1).
+   It holds on the screen that matches each of the four steps and scrolls between them. */
+const KEYS = [0.16, 0.28, 0.43, 0.55, 0.68, 0.8];
+const VALS = [0, 2, 2, 4, 4, 5];
+export function phoneFeed(sp) {
+    const p = clamp(num(sp));
+    if (p <= KEYS[0]) return VALS[0];
+    if (p >= KEYS[5]) return VALS[5];
+    for (let i = 0; i < 5; i++) {
+        if (p <= KEYS[i + 1]) {
+            const t = (p - KEYS[i]) / (KEYS[i + 1] - KEYS[i]);
+            return VALS[i] + (VALS[i + 1] - VALS[i]) * t * t * (3 - 2 * t);
+        }
+    }
+    return VALS[5];
+}
+
+/* How visible the phone is: arrives just before the story, leaves when the story is done. */
+export function phoneFade({ scrollY, vh, storyTop, storyH }) {
+    const y = num(scrollY), v = Math.max(1, num(vh));
+    const end = num(storyTop) + num(storyH) - v;
+    return {
+        inn: ramp(y, num(storyTop) - v * 0.55, num(storyTop) - v * 0.1),
+        out: ramp(y, end, end + v * 0.6),
+    };
+}
