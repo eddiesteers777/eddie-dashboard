@@ -431,3 +431,7 @@ Press and hold a day on the marathon day strip (touch, about 0.35 s) or drag it 
 - `authDomain` moved to `auth.southboundcoaching.com` (one line in `js/firebase.js`). Needs Eddie's console setup first (Firebase Hosting custom domain + DNS, authorized domain, OAuth redirect URI); steps in /mnt/project-files/google-signin-branding/STEPS.md.
 - Checked: static tests. Not testable here: a real Google sign-in through the new domain (Eddie checks after setup, before merge).
 - No `firestore.rules` change.
+
+## 2026-10-26: Home page round 2 (video hero + week story)
+`home.html` now opens with a looping silent hero video ("Built around you"), an intro row, a full-width sticky "How a week gets made" story (`js/homeHero.js`, pure steps in `js/homeStoryModel.js`, `tests/homeStory.test.mjs`, styles in `css/home.css`), Running / Strength / Soccer cards and a cream close. The app tour and free tools band stay. Reduced motion or data-saver: still frame, story stacked. No images/video: contour lines and stacked steps. Card and step texts are placeholders Eddie hasn't confirmed.
+**Video licence:** `videos/hero/soccer-freestyle.mp4` is Pexels video 38806936, "Silhouette Football Freestyle at Sunset" (uploader manoj), free Pexels licence, no credit required. 720p, audio stripped. Poster still `soccer-freestyle.webp` is its first frame. Not in the service worker precache (cached as viewed).
