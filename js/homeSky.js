@@ -7,7 +7,7 @@
    opacity and transform change per frame, nothing repaints.
 ========================================== */
 
-import { skyState, runProgress, chapterIndex, sidewaysProgress, phoneFeed, phoneFade, CHAPTERS, RACE_MILES } from "./homeSkyModel.js";
+import { skyState, runProgress, chapterIndex, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CLIP_ORDER, CHAPTERS, RACE_MILES } from "./homeSkyModel.js";
 
 const mq = (q) => window.matchMedia(q).matches;
 if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !== true) {
@@ -26,9 +26,10 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const sky = document.createElement("div");
         sky.className = "sbh-sky";
         sky.setAttribute("aria-hidden", "true");
-        sky.innerHTML = '<i class="sbh-sky-dusk"></i><i class="sbh-sky-night"></i><i class="sbh-sky-dawn"></i><div class="sbh-sun"></div>';
+        sky.innerHTML = '<i class="sbh-sky-dusk"></i><i class="sbh-sky-night"></i><i class="sbh-sky-dawn"></i><div class="sbh-sun"></div><i class="sbh-glow sbh-glow-amber"></i><i class="sbh-glow sbh-glow-teal"></i><i class="sbh-glow sbh-glow-clay"></i><i class="sbh-glow sbh-glow-sage"></i>';
         document.body.prepend(sky);
         const [dusk, night, dawn] = sky.querySelectorAll("i");
+        const glows = sky.querySelectorAll(".sbh-glow");
         const sun = sky.querySelector(".sbh-sun");
         root.classList.add("sbh-sky-on");
 
@@ -136,29 +137,64 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         fin.innerHTML = "<i></i><span>Finish · 13.1 mi · Race day</span>";
         close.prepend(fin);
 
-        // A phone beside the story: the app scrolls through its screens as the week story moves on (wide screens only).
+        // A phone beside the story and the "More in the app" section, showing the real recordings of the app.
+        // The scroll drives the recording (forwards and backwards at the visitor's pace); it never plays on its own.
+        // Chips under it let a visitor pick any of the seven; it then follows the scroll for a screen or so.
+        const feat = document.getElementById("sbhFeat");
+        if (feat) feat.hidden = false;
         const ride = document.createElement("div");
-        ride.className = "sbh-ride"; ride.setAttribute("aria-hidden", "true");
-        ride.innerHTML = '<div class="sbh-phone"><div class="sbh-screen"><div class="sbh-feed">' + `<div class="sbh-fs"><div class="sbh-fh"><b>Apply</b><span>Example</span></div><div class="sbh-ans"><div><span>Goal</span><b>Half marathon</b></div><div><span>Days free</span><b>Mon Tue Thu Sat</b></div><div><span>Longest run</span><b>8 miles</b></div></div><div class="sbh-go2">Send application</div></div>
-<div class="sbh-fs"><span class="sbh-mini">Today · Example</span><div class="sbh-hi">Good morning,<br>Maya</div><div class="sbh-r2"><div class="sbh-ring">7</div><div class="sbh-box" style="flex:1"><b>Readiness</b>Good to train. Sleep 7 h.</div></div><div class="sbh-box"><b>Planned · Threshold</b>4 × 1 mi at 10K pace</div><div class="sbh-go2">Start check-in</div></div>
-<div class="sbh-fs"><div class="sbh-fh"><b>Your week</b><span>Example</span></div><div><div class="sbh-dy"><span class="sbh-dd">MON</span><span>Easy 5 mi</span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">TUE</span><span>Strength A · 40 min</span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">THU</span><span>Tempo 6 mi</span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">SAT</span><span>Long run 9 mi</span><span class="sbh-dt"></span></div></div><div class="sbh-box"><b>This week</b>19 miles · one strength day</div></div>
-<div class="sbh-fs"><div class="sbh-fh"><b>Workout</b><span>Thu</span></div><div class="sbh-hi">Tempo 6 mi</div><div><div class="sbh-st"><b>10 MIN</b><span>Easy warm-up</span></div><div class="sbh-st"><b>4 × 1 MI</b><span>10K pace, 2 min jog</span></div><div class="sbh-st"><b>10 MIN</b><span>Easy cool-down</span></div></div><div class="sbh-go2">Start workout</div></div>
-<div class="sbh-fs"><div class="sbh-fh"><b>Check-in</b><span>Sun</span></div><span class="sbh-mini">How do your legs feel</span><div class="sbh-feel"><i class="f"></i><i class="f"></i><i class="f"></i><i class="h"></i><i></i><i></i></div><div class="sbh-dy is-done"><span class="sbh-dd">MON</span><span>Easy 5 mi</span><span class="sbh-dt"></span></div><div class="sbh-dy is-done"><span class="sbh-dd">TUE</span><span>Strength A</span><span class="sbh-dt"></span></div><div class="sbh-box"><b>Your check-in</b>Legs heavy after Tuesday. Slept about 6 hours.</div><div class="sbh-go2">Send to Eddie</div></div>
-<div class="sbh-fs"><div class="sbh-fh"><b>Eddie</b><span>Example</span></div><div class="sbh-msg me">Legs heavy after Tuesday. Slept about 6 hours.</div><div class="sbh-msg">Moved the tempo to next week. Easy Thursday, keep Saturday.</div><div class="sbh-dy"><span class="sbh-dd">THU</span><span><span class="sbh-was">Tempo 6 mi</span><span class="sbh-chg">Easy 4 mi</span></span><span class="sbh-dt"></span></div><div class="sbh-dy"><span class="sbh-dd">SAT</span><span>Long run 9 mi</span><span class="sbh-dt"></span></div><span class="sbh-tag">Example screens and data</span></div>` + '</div></div></div>';
+        ride.className = "sbh-ride";
+        ride.innerHTML = '<div class="sbh-phone"><video class="sbh-pv" muted playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="videos/tour/checkin.webp" src="videos/tour/scrub/checkin.mp4"></video><span class="sbh-pex" aria-hidden="true">Example screens and data</span></div><div class="sbh-chips" role="group" aria-label="Pick a feature of the app"></div>';
         document.body.append(ride);
-        const phone = ride.firstElementChild, feed = ride.querySelector(".sbh-feed");
-        const wide = window.matchMedia("(min-width: 761px)");
-        const setRide = () => root.classList.toggle("sbh-ride-on", wide.matches);
-        setRide(); wide.addEventListener?.("change", () => { setRide(); remeasure(); });
+        ride.style.visibility = "hidden";
+        const phone = ride.firstElementChild, pv = phone.querySelector("video"), chipsEl = ride.querySelector(".sbh-chips");
+        pv.defaultMuted = true; pv.muted = true; pv.playsInline = true; pv.pause();
+        root.classList.add("sbh-ride-on");
+        let shown = "checkin", manual = null, manualAt = 0, want = 0, at = 0, scrubRaf = 0, snapNext = true;
+        // Walk the video's time toward the wanted time; one seek at a time so it keeps up on a phone.
+        const scrub = () => {
+            scrubRaf = 0;
+            const d = pv.duration;
+            if (!(d > 0) || !Number.isFinite(d)) return;
+            const target = want * d;
+            at = snapNext ? target : at + (target - at) * 0.35;
+            if (Math.abs(target - at) < 0.012) at = target;
+            snapNext = false;
+            if (!pv.seeking && Math.abs(pv.currentTime - at) > 0.02) { try { pv.currentTime = at; } catch (e) { /* not ready yet */ } }
+            if (Math.abs(target - at) > 0.004 || pv.seeking) scrubRaf = requestAnimationFrame(scrub);
+        };
+        const kick = () => { if (!scrubRaf) scrubRaf = requestAnimationFrame(scrub); };
+        pv.addEventListener("loadedmetadata", () => { snapNext = true; kick(); });
+        pv.addEventListener("seeked", kick);
+        const showClip = (id) => {
+            if (id === shown) return;
+            shown = id; snapNext = true;
+            chipsEl.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
+            pv.classList.remove("is-swap"); void pv.offsetWidth; pv.classList.add("is-swap");
+            pv.poster = `videos/tour/${id}.webp`; pv.src = `videos/tour/scrub/${id}.mp4`; pv.load();
+        };
+        CLIP_ORDER.forEach((id) => {
+            const b = document.createElement("button");
+            b.type = "button"; b.dataset.id = id; b.textContent = CLIPS[id][0];
+            b.setAttribute("aria-pressed", String(id === shown));
+            b.addEventListener("click", () => { manual = id; manualAt = window.scrollY; showClip(id); want = 0; kick(); });
+            chipsEl.append(b);
+        });
+        const featTitle = document.getElementById("sbhFeatTitle"), featText = document.getElementById("sbhFeatP"), featBox = feat?.querySelector(".sbh-ftxt");
+        const featSegs = feat ? [...feat.querySelectorAll(".sbh-fsegs i")] : [];
+        let lastFeat = -1;
 
         let tops = { storyTop: 0, storyBottom: 0, closeTop: 0, heroH: 1 };
         const measure = () => {
             const y = window.scrollY;
             tops = {
                 heroH: hero.offsetHeight,
+                hzTop: hz ? hz.getBoundingClientRect().top + y : 0,
                 storyTop: story.getBoundingClientRect().top + y,
                 storyBottom: story.getBoundingClientRect().bottom + y,
                 closeTop: close.getBoundingClientRect().top + y,
+                featTop: feat ? feat.getBoundingClientRect().top + y : 0,
+                featBottom: feat ? feat.getBoundingClientRect().bottom + y : 0,
             };
             if (hz && cards) {
                 const hh = Math.max(320, window.innerHeight - barH());
@@ -177,25 +213,56 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             dusk.style.opacity = s.dusk;
             night.style.opacity = s.night;
             dawn.style.opacity = s.dawn;
+            {
+                const mid = y + vh * 0.5, { storyTop: st, featTop: ft, hzTop: zt } = tops;
+                const r = (v, a, b) => (b > a ? Math.min(1, Math.max(0, (v - a) / (b - a))) : 0);
+                const p = y / Math.max(1, root.scrollHeight - vh);
+                const a = [
+                    1 - r(mid, st - vh * 0.4, st + vh * 0.4),
+                    r(mid, st - vh * 0.2, st + vh * 0.6) * (1 - r(mid, ft - vh * 0.2, ft + vh * 0.6)),
+                    r(mid, ft - vh * 0.2, ft + vh * 0.6) * (1 - r(mid, zt - vh * 0.2, zt + vh * 0.5)),
+                    r(mid, zt - vh * 0.2, zt + vh * 0.8),
+                ];
+                glows.forEach((g, i) => {
+                    g.style.opacity = a[i].toFixed(3);
+                    if (a[i] > 0.005) g.style.transform = `translate3d(${(Math.sin(p * 7 + i * 1.7) * 22 + (i % 2 ? 30 : -30)).toFixed(1)}vw,${(((p * 60 + i * 18) % 90) - 20).toFixed(1)}vh,0)`;
+                });
+            }
             const sunY = (0.22 + s.set * 1.0 - s.rise * 0.75) * vh;
             sun.style.transform = `translate3d(${(vh * 0.12 * (1 - s.set)).toFixed(1)}px,${sunY.toFixed(1)}px,0)`;
             sun.style.opacity = (1 - s.set * 0.9 + s.rise * 0.8).toFixed(3);
             if (video && y < tops.heroH * 1.2) video.style.transform = `scale(${(1 + s.hero * 0.12).toFixed(4)})`;
             if (headline && y < tops.heroH * 1.2) headline.style.transform = `translate3d(0,${(s.hero * -60).toFixed(1)}px,0)`;
-            if (root.classList.contains("sbh-ride-on")) {
-                const top = parseFloat(getComputedStyle(root).getPropertyValue("--sbh-bar")) || barH();
-                const availH = vh - top - 90 - 24;
-                const pw = Math.max(150, Math.min(300, availH / 2));
-                if (Math.abs((phone._pw || 0) - pw) > 0.5) {
-                    phone._pw = pw; phone.style.setProperty("--pw", pw.toFixed(1) + "px");
-                    phone.style.setProperty("--sh", Math.round(pw * 1.946) + "px");
-                }
+            {
+                const small = window.innerWidth <= 760, top = barH();
+                const chipsH = 44, featH = tops.featBottom - tops.featTop;
+                const availH = small ? vh - top - 252 - 84 - chipsH - 10 : vh - top - 90 - 14 - chipsH - 12;
+                const pw = Math.max(110, Math.min(small ? 230 : 300, (availH * 440) / 928));
+                if (Math.abs((phone._pw || 0) - pw) > 0.5) { phone._pw = pw; phone.style.setProperty("--pw", pw.toFixed(1) + "px"); }
+                const fade = phoneFade({ scrollY: y, vh, storyTop: tops.storyTop, featTop: tops.featTop, featH });
+                const vis = fade.inn * (1 - fade.out);
+                ride.style.opacity = vis.toFixed(3);
+                ride.style.visibility = vis > 0.01 ? "visible" : "hidden";
+                ride.style.transform = small
+                    ? `translate3d(0,${((1 - fade.inn) * 60 + fade.out * 60).toFixed(1)}px,0)`
+                    : `translate3d(${((1 - fade.inn) * 90 + fade.out * 90).toFixed(1)}px,0,0)`;
+                phone.style.transform = `rotate(${(2.5 - ((y - tops.storyTop) / Math.max(1, tops.featBottom - tops.storyTop)) * 5).toFixed(2)}deg)`;
+                const fp = Math.min(1, Math.max(0, (y - tops.featTop) / Math.max(1, featH - vh)));
+                const fs = featureStep(fp), inFeat = y + vh * 0.5 >= tops.featTop;
+                if (manual && !manualActive(y - manualAt, vh)) manual = null;
                 const sp = Math.min(1, Math.max(0, (y - tops.storyTop) / Math.max(1, tops.storyBottom - tops.storyTop - vh)));
-                const f = phoneFeed(sp), fade = phoneFade({ scrollY: y, vh, storyTop: tops.storyTop, storyH: tops.storyBottom - tops.storyTop });
-                feed.style.transform = `translate3d(0,${(-f * pw * 1.946).toFixed(1)}px,0)`;
-                ride.style.opacity = (fade.inn * (1 - fade.out)).toFixed(3);
-                ride.style.transform = `translate3d(${((1 - fade.inn) * 90 + fade.out * 90).toFixed(1)}px,0,0)`;
-                phone.style.transform = `rotate(${(3 - f * 0.9).toFixed(2)}deg)`;
+                const c = inFeat ? featureClipAt(fp) : storyClipAt(sp);
+                if (manual) { showClip(manual); want = manualFrac(y - manualAt, vh); }
+                else { showClip(c.id); want = c.frac; }
+                kick();
+                if (feat && featTitle) {
+                    featSegs.forEach((sg, i) => { sg.style.width = (i < fs ? 100 : i === fs ? Math.max(6, (fp * 4 - fs) * 100) : 0) + "%"; });
+                    if (fs !== lastFeat) {
+                        lastFeat = fs; const cl = CLIPS[featureClipAt(fp).id];
+                        featTitle.textContent = cl[1]; featText.textContent = cl[2];
+                        featBox.classList.remove("is-swap"); void featBox.offsetWidth; featBox.classList.add("is-swap");
+                    }
+                }
             }
             const step = parseInt(stick?.dataset.s, 10) || 1;
             if (numeral && numeral.textContent !== String(step)) numeral.textContent = step;

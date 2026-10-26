@@ -40,7 +40,7 @@ export const RACE_MILES = 13.1;
 export const CHAPTERS = [
     "Start line", "Warm-up",
     "01 · You apply", "02 · I write your week", "03 · You train and check in", "04 · I change it by hand",
-    "Your three ways in", "Finish",
+    "More in the app", "Your three ways in", "Finish",
 ];
 
 /* How far down the run the visitor is, 0..1: from the middle of the hero to the cream close. */
@@ -50,13 +50,14 @@ export function runProgress({ scrollY, vh, heroH, closeTop }) {
 }
 
 /* Which chapter label to show. step is the story's step, 1..4. */
-export function chapterIndex({ scrollY, vh, heroH, storyTop, storyBottom, closeTop, step }) {
+export function chapterIndex({ scrollY, vh, heroH, storyTop, storyBottom, featBottom, closeTop, step }) {
     const y = num(scrollY), v = Math.max(1, num(vh)), mid = y + v * 0.5;
     if (y < num(heroH) * 0.6) return 0;
     if (mid < num(storyTop)) return 1;
     if (mid < num(storyBottom)) return 1 + Math.min(4, Math.max(1, Math.round(num(step)) || 1));
-    if (mid < num(closeTop) - v * 0.2) return 6;
-    return 7;
+    if (mid < num(featBottom)) return 6;
+    if (mid < num(closeTop) - v * 0.2) return 7;
+    return 8;
 }
 
 /* A pinned sideways track: top is the wrapper's distance from the pin line, travel how far the cards slide. */
@@ -64,31 +65,54 @@ export function sidewaysProgress(top, travel) {
     return travel > 0 ? clamp(-num(top) / travel) : 0;
 }
 
-/* ---- The phone that rides beside the story ---- */
+/* ---- The phone that rides beside the story: real recordings of the app ---- */
 
-export const PHONE_SCREENS = 6; // apply, today, week, workout, check-in, note from Eddie
+/* The seven recordings on the site (videos/tour/<id>.mp4), in tour order, with the words shown for each. */
+export const CLIPS = {
+    checkin: ["Check-in", "Morning check-in", "Thirty seconds on how you feel becomes a readiness score, and your coach sees it too."],
+    wins: ["Wins", "Wins and habits", "Finish a workout or tick off a habit and the app marks the moment."],
+    plans: ["Plans", "Plans", "Strength, running and race plans, built by your coach and always up to date."],
+    live: ["Live", "Live workouts", "Log sets, run the rest timer and watch a demo of every exercise as you train."],
+    soccer: ["Soccer", "Soccer", "Book a session, read the report afterwards, then practice with the video your coach picked."],
+    fuel: ["Fueling", "Fueling", "A fueling plan for your run: carbs, fluid and sodium, and when to take them. Free for everyone."],
+    pace: ["Pace", "Pace", "Pace, race splits and training zones from one real result. Free for everyone."],
+};
+export const CLIP_ORDER = ["checkin", "wins", "plans", "live", "soccer", "fuel", "pace"];
+const FEATURE_CLIPS = ["wins", "soccer", "fuel", "pace"]; // "More in the app", in order
 
-/* Which part of the app feed the phone shows, 0..5, for how far through the story the visitor is (0..1).
-   It holds on the screen that matches each of the four steps and scrolls between them. */
-const KEYS = [0.16, 0.28, 0.43, 0.55, 0.68, 0.8];
-const VALS = [0, 2, 2, 4, 4, 5];
-export function phoneFeed(sp) {
-    const p = clamp(num(sp));
-    if (p <= KEYS[0]) return VALS[0];
-    if (p >= KEYS[5]) return VALS[5];
-    for (let i = 0; i < 5; i++) {
-        if (p <= KEYS[i + 1]) {
-            const t = (p - KEYS[i]) / (KEYS[i + 1] - KEYS[i]);
-            return VALS[i] + (VALS[i + 1] - VALS[i]) * t * t * (3 - 2 * t);
-        }
-    }
-    return VALS[5];
+/* Which recording the phone shows, and how far through it (0..1), for a point in the story.
+   progress is 0..1 through the pinned story (four equal steps). Steps 1 and 4 share the check-in
+   recording: step 1 plays its first half, step 4 the second half. */
+export function storyClipAt(progress) {
+    const p = clamp(num(progress)) * 4, step = Math.min(3, Math.floor(p)), local = clamp(p - step);
+    if (step === 0) return { id: "checkin", frac: local * 0.5 };
+    if (step === 1) return { id: "plans", frac: local };
+    if (step === 2) return { id: "live", frac: local };
+    return { id: "checkin", frac: 0.5 + local * 0.5 };
 }
 
-/* How visible the phone is: arrives just before the story, leaves when the story is done. */
-export function phoneFade({ scrollY, vh, storyTop, storyH }) {
+/* The feature section: four recordings, each played start to end while its quarter scrolls past. */
+export function featureStep(progress) {
+    return Math.min(FEATURE_CLIPS.length - 1, Math.floor(clamp(num(progress)) * FEATURE_CLIPS.length));
+}
+export function featureClipAt(progress) {
+    const p = clamp(num(progress)) * FEATURE_CLIPS.length, step = featureStep(progress);
+    return { id: FEATURE_CLIPS[step], frac: clamp(p - step) };
+}
+
+/* A tapped chip: the chosen recording follows the scroll for a screen or so from where the visitor was,
+   then the page takes over again. dy is how far the page has scrolled since the tap. */
+export const MANUAL_SPAN = 1.2; // screens of scrolling to play a tapped recording start to end
+export function manualFrac(dy, vh) { return clamp(num(dy) / (Math.max(1, num(vh)) * MANUAL_SPAN)); }
+export function manualActive(dy, vh) {
+    const v = Math.max(1, num(vh)), d = num(dy);
+    return d > -v * 0.4 && d < v * MANUAL_SPAN;
+}
+
+/* How visible the phone is: arrives just before the story, leaves when the feature section is done. */
+export function phoneFade({ scrollY, vh, storyTop, featTop, featH }) {
     const y = num(scrollY), v = Math.max(1, num(vh));
-    const end = num(storyTop) + num(storyH) - v;
+    const end = num(featTop) + num(featH) - v;
     return {
         inn: ramp(y, num(storyTop) - v * 0.55, num(storyTop) - v * 0.1),
         out: ramp(y, end, end + v * 0.6),

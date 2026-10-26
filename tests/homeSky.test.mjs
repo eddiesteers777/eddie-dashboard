@@ -43,18 +43,19 @@ test("the run starts at 0 miles and finishes at the close", () => {
 });
 
 test("chapters follow the page: start, warm-up, four steps, services, finish", () => {
-    const base = { vh: 800, heroH: 740, storyTop: 1500, storyBottom: 5000, closeTop: 7000, step: 1 };
+    const base = { vh: 800, heroH: 740, storyTop: 1500, storyBottom: 5000, featBottom: 6500, closeTop: 8500, step: 1 };
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 0 })], "Start line");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 800 })], "Warm-up");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 2500, step: 1 })], "01 · You apply");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 4000, step: 4 })], "04 · I change it by hand");
-    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 5600 })], "Your three ways in");
-    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 6800 })], "Finish");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 5600 })], "More in the app");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 6700 })], "Your three ways in");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 8300 })], "Finish");
 });
 
 test("a bad step still gives a valid chapter", () => {
     for (const step of [0, 9, NaN, undefined]) {
-        const i = chapterIndex({ vh: 800, heroH: 740, storyTop: 1500, storyBottom: 5000, closeTop: 7000, scrollY: 3000, step });
+        const i = chapterIndex({ vh: 800, heroH: 740, storyTop: 1500, storyBottom: 5000, featBottom: 6500, closeTop: 8500, scrollY: 3000, step });
         assert.ok(i >= 2 && i <= 5, String(step));
     }
 });
@@ -66,29 +67,56 @@ test("the sideways track only moves inside its travel", () => {
     assert.equal(sidewaysProgress(-50, 0), 0);
 });
 
-import { phoneFeed, phoneFade, PHONE_SCREENS } from "../js/homeSkyModel.js";
+import { CLIPS, CLIP_ORDER, storyClipAt, featureClipAt, featureStep, manualFrac, manualActive, phoneFade } from "../js/homeSkyModel.js";
 
-test("the phone holds on the screen for each story step", () => {
-    assert.equal(phoneFeed(0), 0);
-    assert.equal(phoneFeed(0.35), 2);
-    assert.equal(phoneFeed(0.6), 4);
-    assert.equal(phoneFeed(1), 5);
-    assert.ok(PHONE_SCREENS - 1 === phoneFeed(1));
+test("every recording has a chip label, a title and a sentence", () => {
+    assert.equal(CLIP_ORDER.length, 7);
+    for (const id of CLIP_ORDER) { assert.equal(CLIPS[id].length, 3, id); for (const w of CLIPS[id]) assert.ok(w.length > 2, id); }
 });
 
-test("between steps the feed moves smoothly and never goes backwards", () => {
-    let last = -1;
-    for (let p = 0; p <= 1.0001; p += 0.01) { const f = phoneFeed(p); assert.ok(f >= last - 1e-9, String(p)); last = f; }
+test("the story plays check-in, plans, live, then the rest of check-in, forwards with the scroll", () => {
+    assert.deepEqual(storyClipAt(0), { id: "checkin", frac: 0 });
+    assert.deepEqual(storyClipAt(0.125), { id: "checkin", frac: 0.25 });
+    assert.deepEqual(storyClipAt(0.25), { id: "plans", frac: 0 });
+    assert.equal(storyClipAt(0.5).id, "live");
+    assert.deepEqual(storyClipAt(0.75), { id: "checkin", frac: 0.5 });
+    assert.deepEqual(storyClipAt(1), { id: "checkin", frac: 1 });
 });
 
-test("bad story progress gives a valid feed position", () => {
-    for (const p of [NaN, -3, 9, undefined]) { const f = phoneFeed(p); assert.ok(f >= 0 && f <= 5, String(p)); }
+test("scrolling back moves the recording back: the position only depends on where you are", () => {
+    const ps = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+    const fwd = ps.map(storyClipAt), back = [...ps].reverse().map(storyClipAt).reverse();
+    assert.deepEqual(fwd, back);
+    for (let i = 1; i < fwd.length; i++) if (fwd[i].id === fwd[i - 1].id) assert.ok(fwd[i].frac >= fwd[i - 1].frac);
 });
 
-test("the phone is hidden at the top, shown in the story, gone after it", () => {
-    const pg = { vh: 800, storyTop: 1500, storyH: 3400 };
+test("bad progress gives a valid recording and position", () => {
+    for (const p of [NaN, -3, 9, undefined]) { const c = storyClipAt(p), f = featureClipAt(p); assert.ok(CLIP_ORDER.includes(c.id) && c.frac >= 0 && c.frac <= 1); assert.ok(CLIP_ORDER.includes(f.id) && f.frac >= 0 && f.frac <= 1); }
+});
+
+test("the feature section plays four recordings the story did not use, each start to end", () => {
+    assert.deepEqual(featureClipAt(0), { id: "wins", frac: 0 });
+    assert.equal(featureClipAt(0.3).id, "soccer");
+    assert.equal(featureClipAt(0.55).id, "fuel");
+    assert.deepEqual(featureClipAt(1), { id: "pace", frac: 1 });
+    assert.equal(featureStep(1), 3); assert.equal(featureStep(-4), 0); assert.equal(featureStep(NaN), 0);
+});
+
+test("a tapped chip follows the scroll for about a screen and a bit, then lets go", () => {
+    assert.equal(manualFrac(0, 800), 0);
+    assert.equal(manualFrac(-300, 800), 0);
+    assert.equal(manualFrac(480, 800), 0.5);
+    assert.equal(manualFrac(5000, 800), 1);
+    assert.equal(manualActive(0, 800), true);
+    assert.equal(manualActive(-100, 800), true);
+    assert.equal(manualActive(-400, 800), false);
+    assert.equal(manualActive(2000, 800), false);
+});
+
+test("the phone is hidden at the top, shown from the story, gone after the feature section", () => {
+    const pg = { vh: 800, storyTop: 1500, featTop: 4900, featH: 3200 };
     assert.deepEqual(phoneFade({ ...pg, scrollY: 0 }), { inn: 0, out: 0 });
     const mid = phoneFade({ ...pg, scrollY: 3000 });
     assert.equal(mid.inn, 1); assert.equal(mid.out, 0);
-    assert.equal(phoneFade({ ...pg, scrollY: 6000 }).out, 1);
+    assert.equal(phoneFade({ ...pg, scrollY: 8000 }).out, 1);
 });
