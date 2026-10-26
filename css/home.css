@@ -321,3 +321,51 @@ html.sbh-sky-on .sbh-page { position: relative; }
 .sbh-route-tip .sbh-route-halo { fill: color-mix(in srgb, var(--primary) 24%, transparent); }
 .sbh-route-tip text { font: 500 11px var(--font-mono); letter-spacing: .08em; fill: var(--primary-light); }
 @media (max-width: 760px) { .sbh-route-tip text { display: none; } }
+
+/* ---- The Run (Eddie picked option D, 2026-10-26) ---- */
+/* Headline letters rise in on load */
+.sbh-ch { display: inline-block; animation: sbh-ch-rise .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i) * 28ms + 120ms); }
+@keyframes sbh-ch-rise { from { transform: translateY(.7em); opacity: 0; } to { transform: none; opacity: 1; } }
+/* Intro words light up as you reach them */
+.sbh-w { opacity: .2; }
+.sbh-big b .sbh-w { opacity: .2; }
+/* Big outlined step number behind the story */
+.sbh-numeral {
+    position: absolute; left: var(--side, var(--pub-gutter)); top: 50%; transform: translateY(-50%);
+    font: 900 min(52vw, 520px)/.8 var(--font-display); color: transparent;
+    -webkit-text-stroke: 1.5px color-mix(in srgb, var(--primary) 16%, transparent);
+    pointer-events: none; z-index: 0;
+}
+.sbh-story .sbh-steps, .sbh-story .sbh-week { z-index: 1; }
+/* The run readout */
+.sbh-hud {
+    position: fixed; z-index: 40; right: var(--pub-gutter); top: calc(var(--sbh-bar, 64px) + 12px);
+    min-width: 190px; padding: 10px 14px; border-radius: 8px;
+    background: color-mix(in srgb, var(--bg) 74%, transparent); border: 1px solid var(--border);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    opacity: 0; transform: translateY(-6px); transition: opacity .3s, transform .3s; pointer-events: none;
+}
+.sbh-hud.is-on { opacity: 1; transform: none; }
+.sbh-hud-mi b { font: 800 30px/1 var(--font-display); letter-spacing: .02em; color: var(--text); }
+.sbh-hud-mi small { margin-left: 6px; font: 500 11px var(--font-mono); letter-spacing: .1em; color: var(--text-secondary); }
+.sbh-hud-ch { display: block; margin-top: 4px; font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--primary); }
+.sbh-hud-bar { margin-top: 8px; height: 3px; background: var(--border); }
+.sbh-hud-bar i { display: block; height: 100%; width: 0; background: var(--primary); }
+/* Services slide sideways while pinned */
+.sbh-svc.is-hz {
+    position: sticky; top: var(--sbh-bar, 64px); max-width: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; justify-content: center; gap: 24px; overflow: hidden;
+}
+.sbh-svc.is-hz .sbh-svc-head { margin: 0; padding-inline: max(var(--pub-gutter), calc((100vw - var(--pub-max)) / 2 + var(--pub-gutter))); }
+.sbh-svc.is-hz .sbh-cards { display: flex; width: max-content; gap: 16px; padding-inline: max(var(--pub-gutter), calc((100vw - var(--pub-max)) / 2 + var(--pub-gutter))); will-change: transform; }
+.sbh-svc.is-hz .sbh-card { width: min(80vw, 440px); min-height: 0; height: min(56vh, 420px); }
+/* Finish line */
+.sbh-finish { display: flex; align-items: center; gap: 14px; padding: 0 var(--pub-gutter); height: 30px; background: var(--cream); border-bottom: 1px solid color-mix(in srgb, var(--on-primary) 18%, transparent); }
+.sbh-finish i { flex: none; width: 100px; height: 16px; background: repeating-conic-gradient(var(--on-primary) 0 25%, var(--cream) 0 50%) 0 0 / 16px 16px; border: 1.5px solid var(--on-primary); }
+.sbh-finish span { font: 500 11px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--forest); }
+@media (max-width: 760px) {
+    .sbh-hud { min-width: 0; padding: 8px 10px; top: calc(var(--sbh-bar, 64px) + 8px); }
+    .sbh-hud-mi b { font-size: 24px; }
+    .sbh-hud-ch { font-size: 10px; }
+    .sbh-numeral { font-size: 92vw; left: -4vw; top: 34%; }
+}

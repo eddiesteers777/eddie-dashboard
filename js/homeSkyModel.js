@@ -33,3 +33,33 @@ export function skyState({ scrollY, vh, heroH, storyTop, storyBottom, closeTop }
         hero: clamp(y / hero),
     };
 }
+
+/* ---- "The Run": the page is a 13.1 mile run ---- */
+
+export const RACE_MILES = 13.1;
+export const CHAPTERS = [
+    "Start line", "Warm-up",
+    "01 · You apply", "02 · I write your week", "03 · You train and check in", "04 · I change it by hand",
+    "Your three ways in", "Finish",
+];
+
+/* How far down the run the visitor is, 0..1: from the middle of the hero to the cream close. */
+export function runProgress({ scrollY, vh, heroH, closeTop }) {
+    const start = num(heroH) * 0.6;
+    return clamp((num(scrollY) + Math.max(1, num(vh)) * 0.6 - start) / Math.max(1, num(closeTop) - start));
+}
+
+/* Which chapter label to show. step is the story's step, 1..4. */
+export function chapterIndex({ scrollY, vh, heroH, storyTop, storyBottom, closeTop, step }) {
+    const y = num(scrollY), v = Math.max(1, num(vh)), mid = y + v * 0.5;
+    if (y < num(heroH) * 0.6) return 0;
+    if (mid < num(storyTop)) return 1;
+    if (mid < num(storyBottom)) return 1 + Math.min(4, Math.max(1, Math.round(num(step)) || 1));
+    if (mid < num(closeTop) - v * 0.2) return 6;
+    return 7;
+}
+
+/* A pinned sideways track: top is the wrapper's distance from the pin line, travel how far the cards slide. */
+export function sidewaysProgress(top, travel) {
+    return travel > 0 ? clamp(-num(top) / travel) : 0;
+}

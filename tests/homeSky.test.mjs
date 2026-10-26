@@ -33,3 +33,35 @@ test("missing measurements do not throw", () => {
     const s = skyState({ scrollY: 100, vh: 0 });
     for (const v of Object.values(s)) assert.ok(Number.isFinite(v));
 });
+
+import { runProgress, chapterIndex, sidewaysProgress, CHAPTERS, RACE_MILES } from "../js/homeSkyModel.js";
+
+test("the run starts at 0 miles and finishes at the close", () => {
+    assert.ok(runProgress({ scrollY: 0, vh: 800, heroH: 740, closeTop: 7000 }) < 0.1);
+    assert.equal(runProgress({ scrollY: 9000, vh: 800, heroH: 740, closeTop: 7000 }), 1);
+    assert.ok(Math.abs(RACE_MILES - 13.1) < 1e-9);
+});
+
+test("chapters follow the page: start, warm-up, four steps, services, finish", () => {
+    const base = { vh: 800, heroH: 740, storyTop: 1500, storyBottom: 5000, closeTop: 7000, step: 1 };
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 0 })], "Start line");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 800 })], "Warm-up");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 2500, step: 1 })], "01 · You apply");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 4000, step: 4 })], "04 · I change it by hand");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 5600 })], "Your three ways in");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 6800 })], "Finish");
+});
+
+test("a bad step still gives a valid chapter", () => {
+    for (const step of [0, 9, NaN, undefined]) {
+        const i = chapterIndex({ vh: 800, heroH: 740, storyTop: 1500, storyBottom: 5000, closeTop: 7000, scrollY: 3000, step });
+        assert.ok(i >= 2 && i <= 5, String(step));
+    }
+});
+
+test("the sideways track only moves inside its travel", () => {
+    assert.equal(sidewaysProgress(100, 600), 0);
+    assert.equal(sidewaysProgress(-300, 600), 0.5);
+    assert.equal(sidewaysProgress(-900, 600), 1);
+    assert.equal(sidewaysProgress(-50, 0), 0);
+});
