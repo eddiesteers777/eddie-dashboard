@@ -11,10 +11,8 @@ import {
 
 const firebaseConfig = {
   apiKey: "AIzaSyBCQcvxYpAofdrvMkjqyfp7FxY4XlYSwCs",
-  // Sign-in runs on our own subdomain so Google shows Southbound, not the
-  // Firebase project. auth.southboundcoaching.com must stay connected in
-  // Firebase Hosting, or sign-in breaks. Rollback: "eddie-s-dashboard.firebaseapp.com".
-  authDomain: "auth.southboundcoaching.com",
+  // Rolled back 2026-10-26: auth.southboundcoaching.com broke Google sign-in.
+  authDomain: "eddie-s-dashboard.firebaseapp.com",
   projectId: "eddie-s-dashboard",
   storageBucket: "eddie-s-dashboard.firebasestorage.app",
   messagingSenderId: "262522365804",
