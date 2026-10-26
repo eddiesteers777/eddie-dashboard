@@ -9,6 +9,7 @@
    a guest should never see internal-app chrome.
 ========================================== */
 
+html{ background:var(--bg); }
 body.pub-body{
     background:var(--bg);
 }
@@ -1198,6 +1199,7 @@ html{scroll-behavior:smooth;}
 /* ---- Footer ---- */
 .pub-footer{ border-top:1px solid var(--border); padding:40px var(--pub-gutter) 56px; }
 .pub-footer p a{ display:inline-block; padding:10px 6px; }
+html{ background:var(--bg); }
 body.pub-body{ padding-left:0; }
 
 .pub-cta-band .pub-cta-actions{ justify-content:flex-start; }

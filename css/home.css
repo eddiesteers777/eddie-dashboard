@@ -291,3 +291,33 @@
 @media (prefers-reduced-motion: reduce) {
     .sbh-step.is-on { animation: none; }
 }
+
+/* ---- Scrolling backdrop (js/homeSky.js; only added when motion is allowed) ----
+   Sunset behind the hero, dusk, night behind the story, sage dawn before the cream close. */
+.sbh-sky { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; background: linear-gradient(180deg, #22281C, #4A3F2C 85%); }
+.sbh-sky i { position: absolute; inset: 0; opacity: 0; will-change: opacity; }
+.sbh-sky-dusk { background: linear-gradient(180deg, #14251C, #2A3A2B); }
+.sbh-sky-night { background: linear-gradient(180deg, var(--bg), var(--surface)); }
+.sbh-sky-dawn { background: linear-gradient(180deg, var(--surface-light), color-mix(in srgb, var(--sage) 38%, var(--forest)) 90%); }
+.sbh-sun {
+    position: absolute; left: 50%; top: 0; width: 90vmax; height: 90vmax; margin: -45vmax 0 0 -45vmax;
+    border-radius: 50%; will-change: transform, opacity;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--primary) 50%, transparent), color-mix(in srgb, var(--primary) 14%, transparent) 45%, transparent 72%);
+}
+html.sbh-sky-on body.pub-body { background: transparent; }
+html.sbh-sky-on .sbh-story { background: none; }
+html.sbh-sky-on [data-rise] {
+    transform: translateY(calc((1 - var(--t, 1)) * 36px));
+    opacity: calc(.25 + var(--t, 1) * .75);
+}
+html.sbh-sky-on .sbh-video, html.sbh-sky-on .sbh-headline { will-change: transform; }
+
+/* The route: sits above the backdrop, under the content */
+html.sbh-sky-on .sbh-page { position: relative; }
+.sbh-route { position: absolute; left: 0; width: 100%; z-index: -1; pointer-events: none; overflow: visible; }
+.sbh-route-base { fill: none; stroke: color-mix(in srgb, var(--primary) 22%, transparent); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+.sbh-route-draw { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; }
+.sbh-route-tip circle { fill: var(--primary); }
+.sbh-route-tip .sbh-route-halo { fill: color-mix(in srgb, var(--primary) 24%, transparent); }
+.sbh-route-tip text { font: 500 11px var(--font-mono); letter-spacing: .08em; fill: var(--primary-light); }
+@media (max-width: 760px) { .sbh-route-tip text { display: none; } }

@@ -193,6 +193,8 @@
     "js/healthReviewed.js",
     "js/healthStatsSetting.js",
     "js/homeHero.js",
+    "js/homeSky.js",
+    "js/homeSkyModel.js",
     "js/homeStoryModel.js",
     "js/homework.js",
     "js/homeworkClient.js",
