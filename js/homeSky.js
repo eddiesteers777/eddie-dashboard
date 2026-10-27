@@ -33,15 +33,15 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const sun = sky.querySelector(".sbh-sun");
         root.classList.add("sbh-sky-on");
 
-        // The route: a sand line down the left edge, from the hero to the close, drawn as the visitor scrolls.
+        // The route: a sand line that switches back across the page from the hero to the close, drawn as the visitor scrolls.
         const main = document.getElementById("main");
         const NS = "http://www.w3.org/2000/svg";
         const route = document.createElementNS(NS, "svg");
         route.setAttribute("class", "sbh-route");
         route.setAttribute("aria-hidden", "true");
-        route.innerHTML = '<path class="sbh-route-base"/><path class="sbh-route-draw"/><g class="sbh-route-tip"><circle class="sbh-route-halo" r="13"/><circle r="5.5"/><text x="18" y="4"></text></g>';
+        route.innerHTML = '<path class="sbh-route-base"/><path class="sbh-route-under"/><path class="sbh-route-draw"/><g class="sbh-route-tip"><circle class="sbh-route-halo" r="13"/><circle r="5.5"/><text x="18" y="4"></text></g>';
         main.prepend(route);
-        const [rBase, rDraw] = route.querySelectorAll("path");
+        const rBase = route.querySelector(".sbh-route-base"), rUnder = route.querySelector(".sbh-route-under"), rDraw = route.querySelector(".sbh-route-draw");
         const tip = route.querySelector(".sbh-route-tip");
         const tipText = tip.querySelector("text");
         let rLen = 0, rTop = 0;
@@ -51,19 +51,20 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             const bottom = close.getBoundingClientRect().top + y - (mr.top + y);
             const H = Math.max(200, bottom - rTop), W = mr.width;
             const phone = W <= 760;
-            const x0 = phone ? 8 : 30, wob = phone ? 5 : 16;
+            const xl = W * (phone ? 0.1 : 0.08), xr = W * (phone ? 0.9 : 0.92);
             route.setAttribute("width", W); route.setAttribute("height", H);
             route.setAttribute("viewBox", `0 0 ${W} ${H}`);
             route.style.top = rTop + "px";
-            const n = Math.max(3, Math.round(H / 520));
-            let d = `M${x0} 0`;
+            // One turn about every 700px (900px on a phone), each leaving and arriving straight down.
+            const n = Math.max(3, Math.round(H / (phone ? 900 : 700)));
+            let d = `M${xl} 0`, xp = xl;
             for (let i = 1; i <= n; i++) {
-                const x = x0 + (i % 2 ? wob : -wob), y1 = (H * i) / n, y0 = (H * (i - 1)) / n, m = (y1 - y0) / 2;
-                d += ` C${i % 2 ? x0 - wob : x0 + wob} ${y0 + m} ${x} ${y1 - m} ${x} ${y1}`;
+                const x = i % 2 ? xr : xl, y1 = (H * i) / n, y0 = (H * (i - 1)) / n, m = (y0 + y1) / 2;
+                d += ` C${xp} ${m} ${x} ${m} ${x} ${y1}`; xp = x;
             }
-            rBase.setAttribute("d", d); rDraw.setAttribute("d", d);
+            rBase.setAttribute("d", d); rUnder.setAttribute("d", d); rDraw.setAttribute("d", d);
             rLen = rDraw.getTotalLength();
-            rDraw.style.strokeDasharray = rLen;
+            rDraw.style.strokeDasharray = rLen; rUnder.style.strokeDasharray = rLen;
         };
 
         // The headline arrives a letter at a time; the intro words light up as you reach them.
@@ -287,7 +288,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             if (rLen && Math.abs(run - lastRun) > 0.0015) {
                 lastRun = run;
                 const done = run;
-                rDraw.style.strokeDashoffset = rLen * (1 - done);
+                rDraw.style.strokeDashoffset = rLen * (1 - done); rUnder.style.strokeDashoffset = rLen * (1 - done);
                 const pt = rDraw.getPointAtLength(rLen * done);
                 tip.setAttribute("transform", `translate(${pt.x} ${pt.y})`);
                 tip.style.opacity = done > 0.005 ? 1 : 0;

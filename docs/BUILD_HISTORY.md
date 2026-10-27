@@ -458,3 +458,9 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - "More in the app" scroll length cut from 244vh to about 208vh. The proof line is Eddie's own facts (given in the thread).
 - **Not done:** folding "More in the app" into the story so the phone appears once (it is tied to `js/homeSky.js` and `js/homeSkyModel.js`; a separate step). The page is still a little longer than before because of the new week section.
 - Tested: `npm run test:static` (1095 pass), phone 390 and desktop 1280, motion and reduced motion, no horizontal overflow. No rules change, no JS change.
+
+## 2026-10-27 — Home page: the route switches back across the page (Eddie picked option A)
+- The sand route line used to hug the left edge. It now switches back across the page (about one turn every 700px, 900px on phones), from the hero to the cream close, drawn as you scroll. The mile readout still follows its tip.
+- It runs over the section backgrounds (so cream and sand sections no longer hide it) but behind the words, the phone and the cards (`z-index` 0 on `.sbh-route`, 1 on the content wrappers). A dark underline (`.sbh-route-under`) keeps it readable on cream.
+- JS only changes the shape of the path in `layoutRoute()` (`js/homeSky.js`). Ridgelines and topo contours (mock-ups B and C) were not built.
+- Tested: static tests, phone 390 and desktop 1280 at eight scroll stops, no horizontal overflow, no script errors. No rules change.

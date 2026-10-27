@@ -316,8 +316,9 @@ html.sbh-sky-on .sbh-video, html.sbh-sky-on .sbh-headline { will-change: transfo
 
 /* The route: sits above the backdrop, under the content */
 html.sbh-sky-on .sbh-page { position: relative; }
-.sbh-route { position: absolute; left: 0; width: 100%; z-index: -1; pointer-events: none; overflow: visible; }
+.sbh-route { position: absolute; left: 0; width: 100%; z-index: 0; pointer-events: none; overflow: visible; }
 .sbh-route-base { fill: none; stroke: color-mix(in srgb, var(--primary) 22%, transparent); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+.sbh-route-under { fill: none; stroke: color-mix(in srgb, var(--bg) 55%, transparent); stroke-width: 5; stroke-linecap: round; }
 .sbh-route-draw { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; }
 .sbh-route-tip circle { fill: var(--primary); }
 .sbh-route-tip .sbh-route-halo { fill: color-mix(in srgb, var(--primary) 24%, transparent); }
@@ -482,3 +483,7 @@ html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--si
 .sbh-svc .sbh-svc-head h2 { color: var(--forest); }
 .sbh-svc .sbh-svc-head .sbh-meta { color: color-mix(in srgb, var(--forest) 70%, var(--cream)); }
 .sbh-svc .sbh-svc-head .sbh-meta::before { color: var(--primary-dark); }
+
+/* The route runs over the section backgrounds but behind the words and the phone. */
+.sbh-page .sbh-intro-grid, .sbh-page .sbh-hand-inner, .sbh-page .sbh-close-inner,
+.sbh-page .pub-feature-split, .sbh-page .pub-cta-band { position: relative; z-index: 1; }
