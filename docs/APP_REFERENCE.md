@@ -315,3 +315,6 @@ Free public tool at `75.html` (Free tools has a "75-Day" tab that opens it, like
 - **Data:** localStorage `sb-75-state` (one JSON object). A guest's challenge is not cleared at sign-in. Signed in it syncs to `users/{uid}/sync/seventyfive` (`js/seventyFiveCloud.js`; existing owner-only sync rule, **no rules change**), last write wins; a device and an account that both have a challenge at the first link ask which to keep. `sb-75-owner` marks a linked device; `clearLinked75()` in `js/auth.js` removes both on sign-out or an account switch.
 - **Eddie's old `75day.html`** (coach page, `habits` / `entries` keys, Jul 24 to Oct 6) is untouched. The new tool uses its own key, so the two never mix.
 - `js/celebrate.js`: `habitMoment` / `celebrateHabit` take an optional `noun` (default "Habit").
+
+### Public site: glass look and footer rail (2026-10-27)
+Glass tokens (`--glass-fill`, `--glass-fill-deep`, `--glass-line`, `--glass-hi`, `--glass-shadow`, `--glass-blur`) live in `css/public.css`; the home page applies them in the last block of `css/home.css`. The photo rail in every public footer comes from `js/footerRail.js` (`RAIL_CARDS`, skip list for apply / Playbook / 75 / pace). Keep blur to small panels: large blurred areas lagged phones before.

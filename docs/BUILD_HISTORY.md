@@ -477,3 +477,13 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - Seven chips became one row of five tabs (`CHIP_ORDER` in `js/homeSkyModel.js`: Plans, Check-in, Soccer, Fueling, Pace). Wins and Live still play inside the story.
 - "Example screens and data" moved under the device as a caption. The step bar no longer sits under the phone: half width on a computer, above the step text on a phone.
 - Mock-ups in `/mnt/project-files/phone-scroll/`. Tested: static tests, 360, 390 and 1280 widths, no overflow. No rules change.
+
+## 2026-10-27: glass look, three photo cards, footer photo rail (branch claude/project-thread-fku9fy)
+- Eddie asked for soccer and strength photos at the very bottom of the public site, then a glassy look for them, then the same look across the home page. Mock-ups: `/mnt/project-files/footer-images/`.
+- **Glass recipe** (`--glass-*` tokens in `css/public.css`, used by the rail and the home page): translucent forest fill, cream hairline, top highlight, soft shadow. Blur only on small panels (the 10-27 lag fix removed blur, so big areas stay plain translucent). Opaque fallback without `backdrop-filter` and under `prefers-reduced-transparency`.
+- **Home page** (end of `css/home.css`): mile readout, tab row, coach note, story and example-week notes, the phone (glass edge instead of dark metal), service cards (photo + glass label panel), free-tools box, intro runner photo.
+- **"What I coach" cards** now all have photos: Running (`eddie-hero`), Strength (`offer-running-strength`), Soccer (`offer-soccer-1on1`). The drawn textures are gone from the markup.
+- **Footer rail** (`js/footerRail.js`, loaded by `js/loadPublicHeader.js`): six swipeable glass cards (soccer x3, strength x2, running) at the top of the public footer on every public page except apply, the Playbook tools, 75 and pace. The footer is pasted into each page, so one module adds it. Cards are listed by filename in `RAIL_CARDS`; replace a photo and run `scripts/build-images.py`. `tests/footerRail.test.mjs`.
+- **Photo licences:** `images/footer-lift.jpg` is Pexels 841130 and `images/footer-barbell.jpg` is Pexels 1552252 (free Pexels licence, no credit needed). Placeholders until Eddie's own strength photos arrive.
+- Tested: `npm run test:static` 1095 pass. Browser (Playwright) at 1280 and 390 px on home and soccer, populated and with every photo blocked: no sideways overflow, no console errors beyond the blocked images.
+- No Firestore rules change.
