@@ -129,7 +129,7 @@
 .sbh-week, .sbh-bar { display: none; }
 
 /* Live: one sticky panel, one step at a time, the week fills in */
-.sbh-story.is-live { height: 420vh; }
+.sbh-story.is-live { height: 260vh; }
 .sbh-story.is-live .sbh-stick {
     position: sticky; top: var(--sbh-bar, 64px);
     height: calc(100svh - var(--sbh-bar, 64px));
@@ -306,6 +306,8 @@
 }
 html.sbh-sky-on body.pub-body { background: transparent; }
 html.sbh-sky-on .sbh-story { background: none; }
+/* The side phone already shows the app, so the separate app tour is only for visitors without the scroll experience. */
+html.sbh-sky-on #tour { display: none; }
 html.sbh-sky-on [data-rise] {
     transform: translateY(calc((1 - var(--t, 1)) * 36px));
     opacity: calc(.25 + var(--t, 1) * .75);
@@ -341,8 +343,7 @@ html.sbh-sky-on .sbh-page { position: relative; }
 .sbh-hud {
     position: fixed; z-index: 40; right: var(--pub-gutter); top: calc(var(--sbh-bar, 64px) + 12px);
     min-width: 190px; padding: 10px 14px; border-radius: 8px;
-    background: color-mix(in srgb, var(--bg) 74%, transparent); border: 1px solid var(--border);
-    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--bg) 88%, transparent); border: 1px solid var(--border);
     opacity: 0; transform: translateY(-6px); transition: opacity .3s, transform .3s; pointer-events: none;
 }
 .sbh-hud.is-on { opacity: 1; transform: none; }
@@ -370,13 +371,13 @@ html.sbh-sky-on .sbh-page { position: relative; }
 
 /* ---- Warm light: soft colour glows that change by section (Eddie picked backdrop 1) ---- */
 .sbh-sky .sbh-glow {
-    position: absolute; left: 50%; top: 50%; width: 85vmax; height: 85vmax; margin: -42vmax 0 0 -42vmax;
-    border-radius: 50%; filter: blur(70px); opacity: 0; will-change: transform, opacity;
+    position: absolute; left: 50%; top: 50%; width: 80vmax; height: 80vmax; margin: -40vmax 0 0 -40vmax;
+    border-radius: 50%; opacity: 0; will-change: transform, opacity;
 }
-.sbh-glow-amber { background: radial-gradient(closest-side, rgba(226, 170, 110, .5), transparent 70%); }
-.sbh-glow-teal { background: radial-gradient(closest-side, rgba(46, 128, 128, .45), transparent 70%); }
-.sbh-glow-clay { background: radial-gradient(closest-side, rgba(196, 120, 86, .42), transparent 70%); }
-.sbh-glow-sage { background: radial-gradient(closest-side, rgba(150, 190, 150, .42), transparent 70%); }
+.sbh-glow-amber { background: radial-gradient(closest-side, rgba(226, 170, 110, .5), rgba(226, 170, 110, .12) 55%, transparent 100%); }
+.sbh-glow-teal { background: radial-gradient(closest-side, rgba(46, 128, 128, .45), rgba(46, 128, 128, .1) 55%, transparent 100%); }
+.sbh-glow-clay { background: radial-gradient(closest-side, rgba(196, 120, 86, .42), rgba(196, 120, 86, .1) 55%, transparent 100%); }
+.sbh-glow-sage { background: radial-gradient(closest-side, rgba(150, 190, 150, .42), rgba(150, 190, 150, .1) 55%, transparent 100%); }
 
 /* ---- The phone: real recordings of the app, beside the story and "More in the app" ---- */
 .sbh-ride {
@@ -389,7 +390,7 @@ html.sbh-ride-on .sbh-story.is-live .sbh-week { visibility: hidden; }
 html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--side); text-align: left; }
 .sbh-phone {
     --pw: 300px; position: relative; width: var(--pw); aspect-ratio: 440 / 928; border-radius: 14% / 6.6%; overflow: hidden; background: #06100b;
-    box-shadow: 0 0 0 3px #050d0a, 0 0 0 4px color-mix(in srgb, var(--cream) 20%, transparent), 0 40px 80px -30px #000, 0 0 90px -30px color-mix(in srgb, var(--primary) 35%, transparent);
+    box-shadow: 0 0 0 3px #050d0a, 0 0 0 4px color-mix(in srgb, var(--cream) 20%, transparent);
     will-change: transform;
 }
 .sbh-pv { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -399,14 +400,14 @@ html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--si
 .sbh-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 340px; pointer-events: auto; }
 .sbh-chips button {
     min-height: 44px; padding: 0 14px; border-radius: 22px; cursor: pointer;
-    border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 70%, transparent); color: var(--text-secondary);
-    font: 600 12px var(--font-body); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-secondary);
+    font: 600 12px var(--font-body);
 }
 .sbh-chips button:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
 .sbh-chips button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 
 /* ---- More in the app: a pinned section, four features one at a time ---- */
-.sbh-feat { position: relative; height: calc(4 * 75vh + 100vh); }
+.sbh-feat { position: relative; height: calc(3 * 48vh + 100vh); }
 .sbh-fpin {
     position: sticky; top: var(--sbh-bar, 64px); height: calc(100svh - var(--sbh-bar, 64px));
     display: flex; align-items: center; max-width: var(--pub-max); margin: 0 auto; padding: 0 var(--pub-gutter);
@@ -417,7 +418,7 @@ html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--si
 .sbh-ftxt p { margin: 14px 0 0; color: var(--text-secondary); font-size: 17px; line-height: 1.55; max-width: 38ch; }
 .sbh-ftxt .sbh-chip { margin-top: 18px; }
 .sbh-ftxt.is-swap { animation: sbh-rise .5s ease both; }
-.sbh-fsegs { position: absolute; left: var(--pub-gutter); right: var(--pub-gutter); bottom: 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sbh-fsegs { position: absolute; left: var(--pub-gutter); right: var(--pub-gutter); bottom: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .sbh-fsegs div { position: relative; height: 3px; background: color-mix(in srgb, var(--text) 16%, transparent); }
 .sbh-fsegs i { position: absolute; inset: 0; width: 0; background: var(--primary); }
 @media (max-width: 760px) {

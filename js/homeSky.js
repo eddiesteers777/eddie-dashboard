@@ -156,12 +156,14 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             scrubRaf = 0;
             const d = pv.duration;
             if (!(d > 0) || !Number.isFinite(d)) return;
-            const target = want * d;
-            at = snapNext ? target : at + (target - at) * 0.35;
-            if (Math.abs(target - at) < 0.012) at = target;
+            // Land on the recording's own frames (15 a second) so a seek is always a cheap jump to a key frame.
+            const target = Math.min(d - 0.001, Math.round(want * d * 15) / 15);
+            at = snapNext ? target : at + (target - at) * 0.4;
+            if (Math.abs(target - at) < 0.04) at = target;
             snapNext = false;
-            if (!pv.seeking && Math.abs(pv.currentTime - at) > 0.02) { try { pv.currentTime = at; } catch (e) { /* not ready yet */ } }
-            if (Math.abs(target - at) > 0.004 || pv.seeking) scrubRaf = requestAnimationFrame(scrub);
+            const q = Math.round(at * 15) / 15;
+            if (!pv.seeking && Math.abs(pv.currentTime - q) > 0.03) { try { pv.currentTime = q; } catch (e) { /* not ready yet */ } }
+            if (Math.abs(target - at) > 0.01 || pv.seeking) scrubRaf = requestAnimationFrame(scrub);
         };
         const kick = () => { if (!scrubRaf) scrubRaf = requestAnimationFrame(scrub); };
         pv.addEventListener("loadedmetadata", () => { snapNext = true; kick(); });
@@ -182,8 +184,9 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         });
         const featTitle = document.getElementById("sbhFeatTitle"), featText = document.getElementById("sbhFeatP"), featBox = feat?.querySelector(".sbh-ftxt");
         const featSegs = feat ? [...feat.querySelectorAll(".sbh-fsegs i")] : [];
-        let lastFeat = -1;
+        let lastFeat = -1, lastWordsT = -1, lastRun = -1;
 
+        let riseTops = [], bigTop = 0, bigH = 0;
         let tops = { storyTop: 0, storyBottom: 0, closeTop: 0, heroH: 1 };
         const measure = () => {
             const y = window.scrollY;
@@ -196,6 +199,9 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 featTop: feat ? feat.getBoundingClientRect().top + y : 0,
                 featBottom: feat ? feat.getBoundingClientRect().bottom + y : 0,
             };
+            // Positions of the reveal elements, read once here so the scroll loop never touches layout.
+            riseTops = rises.map((el) => el.getBoundingClientRect().top + y);
+            if (bigEl) { const r = bigEl.getBoundingClientRect(); bigTop = r.top + y; bigH = r.height; }
             if (hz && cards) {
                 const hh = Math.max(320, window.innerHeight - barH());
                 hzMax = Math.max(0, cards.scrollWidth + 2 * parseFloat(getComputedStyle(cards).paddingLeft || 0) - window.innerWidth);
@@ -246,7 +252,6 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 ride.style.transform = small
                     ? `translate3d(0,${((1 - fade.inn) * 60 + fade.out * 60).toFixed(1)}px,0)`
                     : `translate3d(${((1 - fade.inn) * 90 + fade.out * 90).toFixed(1)}px,0,0)`;
-                phone.style.transform = `rotate(${(2.5 - ((y - tops.storyTop) / Math.max(1, tops.featBottom - tops.storyTop)) * 5).toFixed(2)}deg)`;
                 const fp = Math.min(1, Math.max(0, (y - tops.featTop) / Math.max(1, featH - vh)));
                 const fs = featureStep(fp), inFeat = y + vh * 0.5 >= tops.featTop;
                 if (manual && !manualActive(y - manualAt, vh)) manual = null;
@@ -256,7 +261,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 else { showClip(c.id); want = c.frac; }
                 kick();
                 if (feat && featTitle) {
-                    featSegs.forEach((sg, i) => { sg.style.width = (i < fs ? 100 : i === fs ? Math.max(6, (fp * 4 - fs) * 100) : 0) + "%"; });
+                    featSegs.forEach((sg, i) => { sg.style.width = (i < fs ? 100 : i === fs ? Math.max(6, (fp * 3 - fs) * 100) : 0) + "%"; });
                     if (fs !== lastFeat) {
                         lastFeat = fs; const cl = CLIPS[featureClipAt(fp).id];
                         featTitle.textContent = cl[1]; featText.textContent = cl[2];
@@ -266,17 +271,21 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             }
             const step = parseInt(stick?.dataset.s, 10) || 1;
             if (numeral && numeral.textContent !== String(step)) numeral.textContent = step;
-            if (hz && cards) cards.style.transform = `translate3d(${(-sidewaysProgress(hz.getBoundingClientRect().top - barH(), hzMax) * hzMax).toFixed(1)}px,0,0)`;
+            if (hz && cards) cards.style.transform = `translate3d(${(-sidewaysProgress(tops.hzTop - y - barH(), hzMax) * hzMax).toFixed(1)}px,0,0)`;
             if (words.length && bigEl) {
-                const r = bigEl.getBoundingClientRect(), t = Math.min(1, Math.max(0, (vh * 0.82 - r.top) / (vh * 0.5 + r.height)));
-                words.forEach((w, i) => { w.style.opacity = (0.2 + 0.8 * Math.min(1, Math.max(0, t * (words.length + 3) - i))).toFixed(2); });
+                const t = Math.min(1, Math.max(0, (vh * 0.82 - (bigTop - y)) / (vh * 0.5 + bigH)));
+                if (t > 0 && t < 1 || t !== lastWordsT) {
+                    lastWordsT = t;
+                    words.forEach((w, i) => { w.style.opacity = (0.2 + 0.8 * Math.min(1, Math.max(0, t * (words.length + 3) - i))).toFixed(2); });
+                }
             }
             const run = runProgress({ scrollY: y, vh, heroH: tops.heroH, closeTop: tops.closeTop });
             hudMi.textContent = (run * RACE_MILES).toFixed(1);
             hudBar.style.width = (run * 100).toFixed(1) + "%";
             hudCh.textContent = CHAPTERS[chapterIndex({ scrollY: y, vh, ...tops, step })];
             hud.classList.toggle("is-on", y > tops.heroH * 0.35 && tops.closeTop - y > vh * 0.5);
-            if (rLen) {
+            if (rLen && Math.abs(run - lastRun) > 0.0015) {
+                lastRun = run;
                 const done = run;
                 rDraw.style.strokeDashoffset = rLen * (1 - done);
                 const pt = rDraw.getPointAtLength(rLen * done);
@@ -284,11 +293,11 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 tip.style.opacity = done > 0.005 ? 1 : 0;
                 tipText.textContent = (done * 13.1).toFixed(1) + " MI";
             }
-            for (const el of rises) {
-                const t = Math.min(1, Math.max(0, (vh - el.getBoundingClientRect().top) / (vh * 0.55)));
-                const e = t * t * (3 - 2 * t);
-                el.style.setProperty("--t", e.toFixed(3));
-            }
+            rises.forEach((el, i) => {
+                const t = Math.min(1, Math.max(0, (vh - (riseTops[i] - y)) / (vh * 0.55)));
+                const e = (t * t * (3 - 2 * t)).toFixed(2);
+                if (el._t !== e) { el._t = e; el.style.setProperty("--t", e); }
+            });
         };
         const queue = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
         const remeasure = () => { measure(); layoutRoute(); queue(); };

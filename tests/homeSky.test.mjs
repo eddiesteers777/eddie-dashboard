@@ -76,11 +76,11 @@ test("every recording has a chip label, a title and a sentence", () => {
 
 test("the story plays check-in, plans, live, then the rest of check-in, forwards with the scroll", () => {
     assert.deepEqual(storyClipAt(0), { id: "checkin", frac: 0 });
-    assert.deepEqual(storyClipAt(0.125), { id: "checkin", frac: 0.25 });
+    assert.deepEqual(storyClipAt(0.125), { id: "checkin", frac: 0.5 });
     assert.deepEqual(storyClipAt(0.25), { id: "plans", frac: 0 });
     assert.equal(storyClipAt(0.5).id, "live");
-    assert.deepEqual(storyClipAt(0.75), { id: "checkin", frac: 0.5 });
-    assert.deepEqual(storyClipAt(1), { id: "checkin", frac: 1 });
+    assert.deepEqual(storyClipAt(0.75), { id: "wins", frac: 0 });
+    assert.deepEqual(storyClipAt(1), { id: "wins", frac: 1 });
 });
 
 test("scrolling back moves the recording back: the position only depends on where you are", () => {
@@ -95,11 +95,11 @@ test("bad progress gives a valid recording and position", () => {
 });
 
 test("the feature section plays four recordings the story did not use, each start to end", () => {
-    assert.deepEqual(featureClipAt(0), { id: "wins", frac: 0 });
-    assert.equal(featureClipAt(0.3).id, "soccer");
-    assert.equal(featureClipAt(0.55).id, "fuel");
+    assert.deepEqual(featureClipAt(0), { id: "soccer", frac: 0 });
+    assert.equal(featureClipAt(0.4).id, "fuel");
+    assert.equal(featureClipAt(0.7).id, "pace");
     assert.deepEqual(featureClipAt(1), { id: "pace", frac: 1 });
-    assert.equal(featureStep(1), 3); assert.equal(featureStep(-4), 0); assert.equal(featureStep(NaN), 0);
+    assert.equal(featureStep(1), 2); assert.equal(featureStep(-4), 0); assert.equal(featureStep(NaN), 0);
 });
 
 test("a tapped chip follows the scroll for about a screen and a bit, then lets go", () => {

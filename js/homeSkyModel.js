@@ -78,20 +78,16 @@ export const CLIPS = {
     pace: ["Pace", "Pace", "Pace, race splits and training zones from one real result. Free for everyone."],
 };
 export const CLIP_ORDER = ["checkin", "wins", "plans", "live", "soccer", "fuel", "pace"];
-const FEATURE_CLIPS = ["wins", "soccer", "fuel", "pace"]; // "More in the app", in order
+const FEATURE_CLIPS = ["soccer", "fuel", "pace"]; // "More in the app", in order
 
 /* Which recording the phone shows, and how far through it (0..1), for a point in the story.
-   progress is 0..1 through the pinned story (four equal steps). Steps 1 and 4 share the check-in
-   recording: step 1 plays its first half, step 4 the second half. */
+   progress is 0..1 through the pinned story (four equal steps), one recording per step. */
 export function storyClipAt(progress) {
     const p = clamp(num(progress)) * 4, step = Math.min(3, Math.floor(p)), local = clamp(p - step);
-    if (step === 0) return { id: "checkin", frac: local * 0.5 };
-    if (step === 1) return { id: "plans", frac: local };
-    if (step === 2) return { id: "live", frac: local };
-    return { id: "checkin", frac: 0.5 + local * 0.5 };
+    return { id: ["checkin", "plans", "live", "wins"][step], frac: local };
 }
 
-/* The feature section: four recordings, each played start to end while its quarter scrolls past. */
+/* The feature section: three recordings, each played start to end while its quarter scrolls past. */
 export function featureStep(progress) {
     return Math.min(FEATURE_CLIPS.length - 1, Math.floor(clamp(num(progress)) * FEATURE_CLIPS.length));
 }
