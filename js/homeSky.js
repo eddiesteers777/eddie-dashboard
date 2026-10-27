@@ -7,7 +7,7 @@
    opacity and transform change per frame, nothing repaints.
 ========================================== */
 
-import { skyState, runProgress, chapterIndex, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CHIP_ORDER, CHAPTERS, RACE_MILES } from "./homeSkyModel.js";
+import { skyState, runProgress, chapterIndex, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CHIP_ORDER, CHAPTERS, PASS_COUNT, passAt, PLAYERS, PASS_SEQ, playerPos } from "./homeSkyModel.js";
 
 const mq = (q) => window.matchMedia(q).matches;
 if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !== true) {
@@ -33,39 +33,49 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const sun = sky.querySelector(".sbh-sun");
         root.classList.add("sbh-sky-on");
 
-        // The route: a sand line that switches back across the page from the hero to the close, drawn as the visitor scrolls.
-        const main = document.getElementById("main");
+        // The pitch: fixed behind the page, with a ball passed from player to player as the visitor scrolls.
+        // Lines and mown stripes only; the ball and the passes already made are the only things that move.
         const NS = "http://www.w3.org/2000/svg";
-        const route = document.createElementNS(NS, "svg");
-        route.setAttribute("class", "sbh-route");
-        route.setAttribute("aria-hidden", "true");
-        route.innerHTML = '<path class="sbh-route-base"/><path class="sbh-route-under"/><path class="sbh-route-draw"/><g class="sbh-route-tip"><circle class="sbh-route-halo" r="13"/><circle r="5.5"/><text x="18" y="4"></text></g>';
-        main.prepend(route);
-        const rBase = route.querySelector(".sbh-route-base"), rUnder = route.querySelector(".sbh-route-under"), rDraw = route.querySelector(".sbh-route-draw");
-        const tip = route.querySelector(".sbh-route-tip");
-        const tipText = tip.querySelector("text");
-        let rLen = 0, rTop = 0;
-        const layoutRoute = () => {
-            const mr = main.getBoundingClientRect(), y = window.scrollY;
-            rTop = hero.getBoundingClientRect().bottom + y - (mr.top + y);
-            const bottom = close.getBoundingClientRect().top + y - (mr.top + y);
-            const H = Math.max(200, bottom - rTop), W = mr.width;
-            const phone = W <= 760;
-            const xl = W * (phone ? 0.1 : 0.08), xr = W * (phone ? 0.9 : 0.92);
-            route.setAttribute("width", W); route.setAttribute("height", H);
-            route.setAttribute("viewBox", `0 0 ${W} ${H}`);
-            route.style.top = rTop + "px";
-            // One turn about every 700px (900px on a phone), each leaving and arriving straight down.
-            const n = Math.max(3, Math.round(H / (phone ? 900 : 700)));
-            let d = `M${xl} 0`, xp = xl;
-            for (let i = 1; i <= n; i++) {
-                const x = i % 2 ? xr : xl, y1 = (H * i) / n, y0 = (H * (i - 1)) / n, m = (y0 + y1) / 2;
-                d += ` C${xp} ${m} ${x} ${m} ${x} ${y1}`; xp = x;
+        const pitch = document.createElementNS(NS, "svg");
+        pitch.setAttribute("class", "sbh-pitch");
+        pitch.setAttribute("aria-hidden", "true");
+        pitch.setAttribute("preserveAspectRatio", "none");
+        sky.append(pitch);
+        let pLayout = "", passEls = [], dotEls = {}, liveEl = null, ballEl = null, haloEl = null, passXY = null, lastPass = -1;
+        const layoutPitch = () => {
+            const W = sky.clientWidth || window.innerWidth, H = sky.clientHeight || window.innerHeight, portrait = H > W;
+            if (pLayout === (portrait ? "p" : "l") + W) return;
+            pLayout = (portrait ? "p" : "l") + W;
+            const m = portrait ? 14 : 26, L = (portrait ? H : W) - 2 * m, Wd = (portrait ? W : H) - 2 * m;
+            const P = ([u, v]) => (portrait ? [m + v * Wd, m + u * L] : [m + u * L, m + v * Wd]);
+            const f = (n) => n.toFixed(1);
+            const pt = (uv) => P(uv).map(f).join(" ");
+            const rect = (u0, v0, u1, v1) => `M${pt([u0, v0])}L${pt([u1, v0])}L${pt([u1, v1])}L${pt([u0, v1])}Z`;
+            const pbU = 16.5 / 105, pbV = 40.3 / 68, gbU = 5.5 / 105, gbV = 18.3 / 68, r = (9.15 / 105) * L;
+            const [cx, cy] = P([0.5, 0.5]);
+            const lines = rect(0, 0, 1, 1) + `M${pt([0.5, 0])}L${pt([0.5, 1])}` + `M${f(cx - r)} ${f(cy)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0`
+                + rect(0, 0.5 - pbV / 2, pbU, 0.5 + pbV / 2) + rect(1 - pbU, 0.5 - pbV / 2, 1, 0.5 + pbV / 2)
+                + rect(0, 0.5 - gbV / 2, gbU, 0.5 + gbV / 2) + rect(1 - gbU, 0.5 - gbV / 2, 1, 0.5 + gbV / 2);
+            let stripes = "";
+            for (let i = 0; i < 10; i += 2) stripes += rect(i / 10, 0, (i + 1) / 10, 1);
+            const xy = (k) => P(playerPos(k));
+            passXY = [];
+            for (let i = 0; i < PASS_COUNT; i++) {
+                const [x0, y0] = xy(PASS_SEQ[i]), [x1, y1] = xy(PASS_SEQ[i + 1]), dx = x1 - x0, dy = y1 - y0;
+                passXY.push([x0, y0, (x0 + x1) / 2 - dy * 0.12, (y0 + y1) / 2 + dx * 0.12, x1, y1]);
             }
-            rBase.setAttribute("d", d); rUnder.setAttribute("d", d); rDraw.setAttribute("d", d);
-            rLen = rDraw.getTotalLength();
-            rDraw.style.strokeDasharray = rLen; rUnder.style.strokeDasharray = rLen;
+            pitch.setAttribute("viewBox", `0 0 ${f(W)} ${f(H)}`);
+            pitch.innerHTML = `<path class="sbh-pitch-stripes" d="${stripes}"/><path class="sbh-pitch-lines" d="${lines}"/>`
+                + passXY.map((q) => `<path class="sbh-pass" d="M${f(q[0])} ${f(q[1])}Q${f(q[2])} ${f(q[3])} ${f(q[4])} ${f(q[5])}"/>`).join("")
+                + `<path class="sbh-pass-live" pathLength="1"/>`
+                + Object.keys(PLAYERS).map((k) => { const [x, y] = xy(k); return `<circle class="sbh-player" data-k="${k}" cx="${f(x)}" cy="${f(y)}" r="${portrait ? 5 : 6}"/>`; }).join("")
+                + `<circle class="sbh-ball-halo" r="16"/><circle class="sbh-ball" r="6"/>`;
+            passEls = [...pitch.querySelectorAll(".sbh-pass")];
+            liveEl = pitch.querySelector(".sbh-pass-live"); ballEl = pitch.querySelector(".sbh-ball"); haloEl = pitch.querySelector(".sbh-ball-halo");
+            dotEls = {}; pitch.querySelectorAll(".sbh-player").forEach((c) => { dotEls[c.dataset.k] = c; });
+            lastPass = -1; lastRun = -1;
         };
+        const layoutRoute = layoutPitch;
 
         // The headline arrives a letter at a time; the intro words light up as you reach them.
         const splitLetters = (el) => {
@@ -112,7 +122,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         // The run readout: miles, chapter, a thin bar.
         const hud = document.createElement("div");
         hud.className = "sbh-hud"; hud.setAttribute("aria-hidden", "true");
-        hud.innerHTML = '<div class="sbh-hud-mi"><b>0.0</b><small>/ 13.1 MI</small></div><span class="sbh-hud-ch">Start line</span><div class="sbh-hud-bar"><i></i></div>';
+        hud.innerHTML = `<div class="sbh-hud-mi"><b>01</b><small>/ ${PASS_COUNT} PASSES</small></div><span class="sbh-hud-ch">Kick-off</span><div class="sbh-hud-bar"><i></i></div>`;
         document.body.append(hud);
         const hudMi = hud.querySelector("b"), hudCh = hud.querySelector(".sbh-hud-ch"), hudBar = hud.querySelector("i");
 
@@ -135,7 +145,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         // The finish line at the top of the cream close.
         const fin = document.createElement("div");
         fin.className = "sbh-finish"; fin.setAttribute("aria-hidden", "true");
-        fin.innerHTML = "<i></i><span>Finish · 13.1 mi · Race day</span>";
+        fin.innerHTML = "<i></i><span>Goal · Apply to start</span>";
         close.prepend(fin);
 
         // A phone beside the story and the "More in the app" section, showing the real recordings of the app.
@@ -285,18 +295,24 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 }
             }
             const run = runProgress({ scrollY: y, vh, heroH: tops.heroH, closeTop: tops.closeTop });
-            hudMi.textContent = (run * RACE_MILES).toFixed(1);
+            hudMi.textContent = String(passAt(run).index + 1).padStart(2, "0");
             hudBar.style.width = (run * 100).toFixed(1) + "%";
             hudCh.textContent = CHAPTERS[chapterIndex({ scrollY: y, vh, ...tops, step })];
             hud.classList.toggle("is-on", y > tops.heroH * 0.35 && tops.closeTop - y > vh * 0.5);
-            if (rLen && Math.abs(run - lastRun) > 0.0015) {
+            if (passXY && Math.abs(run - lastRun) > 0.0008) {
                 lastRun = run;
-                const done = run;
-                rDraw.style.strokeDashoffset = rLen * (1 - done); rUnder.style.strokeDashoffset = rLen * (1 - done);
-                const pt = rDraw.getPointAtLength(rLen * done);
-                tip.setAttribute("transform", `translate(${pt.x} ${pt.y})`);
-                tip.style.opacity = done > 0.005 ? 1 : 0;
-                tipText.textContent = (done * 13.1).toFixed(1) + " MI";
+                const ps = passAt(run), q = passXY[ps.index], e = 1 - (1 - ps.t) * (1 - ps.t), a = 1 - e;
+                if (ps.index !== lastPass) {
+                    lastPass = ps.index;
+                    passEls.forEach((el, i) => el.classList.toggle("is-done", i < ps.index));
+                    Object.values(dotEls).forEach((c) => c.classList.remove("is-on"));
+                    [ps.from, ps.to].forEach((k) => dotEls[k]?.classList.add("is-on"));
+                    liveEl.setAttribute("d", `M${q[0].toFixed(1)} ${q[1].toFixed(1)}Q${q[2].toFixed(1)} ${q[3].toFixed(1)} ${q[4].toFixed(1)} ${q[5].toFixed(1)}`);
+                }
+                liveEl.style.strokeDashoffset = (1 - e).toFixed(3);
+                const bx = a * a * q[0] + 2 * a * e * q[2] + e * e * q[4], by = a * a * q[1] + 2 * a * e * q[3] + e * e * q[5];
+                ballEl.setAttribute("cx", bx.toFixed(1)); ballEl.setAttribute("cy", by.toFixed(1));
+                haloEl.setAttribute("cx", bx.toFixed(1)); haloEl.setAttribute("cy", by.toFixed(1));
             }
             rises.forEach((el, i) => {
                 const t = Math.min(1, Math.max(0, (vh - (riseTops[i] - y)) / (vh * 0.55)));

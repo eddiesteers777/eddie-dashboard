@@ -477,3 +477,10 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - Seven chips became one row of five tabs (`CHIP_ORDER` in `js/homeSkyModel.js`: Plans, Check-in, Soccer, Fueling, Pace). Wins and Live still play inside the story.
 - "Example screens and data" moved under the device as a caption. The step bar no longer sits under the phone: half width on a computer, above the step text on a phone.
 - Mock-ups in `/mnt/project-files/phone-scroll/`. Tested: static tests, 360, 390 and 1280 widths, no overflow. No rules change.
+
+## 2026-10-27 — Home page: the pitch is the background and a ball is passed instead of the route line (Eddie picked D2)
+- The route line is gone. `js/homeSky.js` draws a fixed pitch behind the page (mown stripes plus white lines, 4-3-3) inside `.sbh-sky`: top to bottom on a phone, left to right on a computer. A ball is passed from player to player as the visitor scrolls, ending with a pass into the goal; passes already made stay as a faint dotted line. The pitch is stretched to the screen shape.
+- The move itself (`PLAYERS`, `PASS_SEQ`, `passAt`) is pure and tested in `js/homeSkyModel.js` / `tests/homeSky.test.mjs`. Per frame only the ball and one dash offset change, and DOM work happens once per pass.
+- The readout is "04 / 11 passes", chapters start at "Kick-off" and end at "Goal", and the cream close says "Goal · Apply to start". `RACE_MILES` is removed.
+- Reduced motion and data-saver visitors still get the plain forest page. The blueprint options (A, B, C) were not built.
+- Tested: static tests, 360, 390 and 1280 wide, no overflow. No rules change.

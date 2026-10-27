@@ -36,12 +36,30 @@ export function skyState({ scrollY, vh, heroH, storyTop, storyBottom, closeTop }
 
 /* ---- "The Run": the page is a 13.1 mile run ---- */
 
-export const RACE_MILES = 13.1;
 export const CHAPTERS = [
-    "Start line", "Warm-up",
+    "Kick-off", "Warm-up",
     "01 · You apply", "02 · I write your week", "03 · You train and check in", "04 · I change it by hand",
-    "More in the app", "Your three ways in", "Finish",
+    "More in the app", "Your three ways in", "Goal",
 ];
+
+/* ---- The pitch behind the page: a ball is passed from player to player as the visitor scrolls ---- */
+
+/* Positions on the pitch as [u, v]: u runs from our goal (0) to theirs (1), v across the width. A 4-3-3. */
+export const PLAYERS = {
+    GK: [0.04, 0.5], LB: [0.2, 0.12], LC: [0.2, 0.38], RC: [0.2, 0.62], RB: [0.2, 0.88],
+    DM: [0.38, 0.5], LM: [0.52, 0.25], RM: [0.52, 0.75], LW: [0.72, 0.1], ST: [0.82, 0.5], RW: [0.72, 0.9],
+};
+export const GOAL = [1, 0.5];
+/* The move, in order. The last entry is the goal. */
+export const PASS_SEQ = ["GK", "LC", "LB", "DM", "RC", "RM", "RW", "ST", "LM", "LW", "ST", "GOAL"];
+export const PASS_COUNT = PASS_SEQ.length - 1;
+
+/* Where the ball is for a point in the page, 0..1: which pass (index), how far along it (t, 0..1), and the two ends. */
+export function passAt(progress) {
+    const f = clamp(num(progress)) * PASS_COUNT, i = Math.min(PASS_COUNT - 1, Math.floor(f));
+    return { index: i, t: clamp(f - i), from: PASS_SEQ[i], to: PASS_SEQ[i + 1] };
+}
+export const playerPos = (k) => (k === "GOAL" ? GOAL : PLAYERS[k]);
 
 /* How far down the run the visitor is, 0..1: from the middle of the hero to the cream close. */
 export function runProgress({ scrollY, vh, heroH, closeTop }) {

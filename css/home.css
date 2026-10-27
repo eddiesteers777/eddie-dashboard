@@ -304,14 +304,18 @@ html.sbh-sky-on .sbh-video, html.sbh-sky-on .sbh-headline { will-change: transfo
 
 /* The route: sits above the backdrop, under the content */
 html.sbh-sky-on .sbh-page { position: relative; }
-.sbh-route { position: absolute; left: 0; width: 100%; z-index: 0; pointer-events: none; overflow: visible; }
-.sbh-route-base { fill: none; stroke: color-mix(in srgb, var(--primary) 22%, transparent); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
-.sbh-route-under { fill: none; stroke: color-mix(in srgb, var(--bg) 55%, transparent); stroke-width: 5; stroke-linecap: round; }
-.sbh-route-draw { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; }
-.sbh-route-tip circle { fill: var(--primary); }
-.sbh-route-tip .sbh-route-halo { fill: color-mix(in srgb, var(--primary) 24%, transparent); }
-.sbh-route-tip text { font: 500 11px var(--font-mono); letter-spacing: .08em; fill: var(--primary-light); }
-@media (max-width: 760px) { .sbh-route-tip text { display: none; } }
+/* The pitch behind the page (js/homeSky.js): mown stripes and white lines, a ball passed from player to player. */
+.sbh-pitch { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sbh-pitch * { fill: none; vector-effect: non-scaling-stroke; }
+.sbh-pitch .sbh-pitch-stripes { fill: color-mix(in srgb, var(--cream) 3.5%, transparent); }
+.sbh-pitch .sbh-pitch-lines { stroke: color-mix(in srgb, var(--sage) 28%, transparent); stroke-width: 1.4; }
+.sbh-pass { stroke: color-mix(in srgb, var(--primary) 45%, transparent); stroke-width: 2; stroke-dasharray: 3 7; stroke-linecap: round; opacity: 0; transition: opacity .4s ease; }
+.sbh-pass.is-done { opacity: 1; }
+.sbh-pass-live { stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.sbh-pitch .sbh-player { fill: color-mix(in srgb, var(--sage) 30%, transparent); transition: fill .3s ease; }
+.sbh-pitch .sbh-player.is-on { fill: var(--primary); }
+.sbh-pitch .sbh-ball-halo { fill: color-mix(in srgb, var(--primary) 22%, transparent); }
+.sbh-pitch .sbh-ball { fill: var(--cream); }
 
 /* ---- The Run (Eddie picked option D, 2026-10-26) ---- */
 /* Headline letters rise in on load */

@@ -34,23 +34,22 @@ test("missing measurements do not throw", () => {
     for (const v of Object.values(s)) assert.ok(Number.isFinite(v));
 });
 
-import { runProgress, chapterIndex, sidewaysProgress, CHAPTERS, RACE_MILES } from "../js/homeSkyModel.js";
+import { runProgress, chapterIndex, sidewaysProgress, CHAPTERS, PASS_SEQ, PASS_COUNT, PLAYERS, passAt, playerPos } from "../js/homeSkyModel.js";
 
-test("the run starts at 0 miles and finishes at the close", () => {
+test("the move starts at kick-off and finishes at the close", () => {
     assert.ok(runProgress({ scrollY: 0, vh: 800, heroH: 740, closeTop: 7000 }) < 0.1);
     assert.equal(runProgress({ scrollY: 9000, vh: 800, heroH: 740, closeTop: 7000 }), 1);
-    assert.ok(Math.abs(RACE_MILES - 13.1) < 1e-9);
 });
 
 test("chapters follow the page: start, warm-up, four steps, services, finish", () => {
     const base = { vh: 800, heroH: 740, storyTop: 1500, storyBottom: 5000, featBottom: 6500, closeTop: 8500, step: 1 };
-    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 0 })], "Start line");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 0 })], "Kick-off");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 800 })], "Warm-up");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 2500, step: 1 })], "01 · You apply");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 4000, step: 4 })], "04 · I change it by hand");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 5600 })], "More in the app");
     assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 6700 })], "Your three ways in");
-    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 8300 })], "Finish");
+    assert.equal(CHAPTERS[chapterIndex({ ...base, scrollY: 8300 })], "Goal");
 });
 
 test("a bad step still gives a valid chapter", () => {
@@ -121,4 +120,22 @@ test("the phone is hidden at the top, shown from the story, gone after the featu
     const mid = phoneFade({ ...pg, scrollY: 3000 });
     assert.equal(mid.inn, 1); assert.equal(mid.out, 0);
     assert.equal(phoneFade({ ...pg, scrollY: 8000 }).out, 1);
+});
+
+test("the ball is passed from player to player and ends in the goal", () => {
+    assert.equal(PASS_SEQ[0], "GK");
+    assert.equal(PASS_SEQ.at(-1), "GOAL");
+    assert.equal(PASS_COUNT, PASS_SEQ.length - 1);
+    for (const k of PASS_SEQ) assert.ok(k === "GOAL" || PLAYERS[k], k);
+    for (let i = 0; i < PASS_COUNT; i++) assert.notEqual(PASS_SEQ[i], PASS_SEQ[i + 1], "a player never passes to himself");
+    for (const [u, v] of [...Object.values(PLAYERS), playerPos("GOAL")]) { assert.ok(u >= 0 && u <= 1 && v >= 0 && v <= 1); }
+});
+
+test("passAt walks the whole move, in order, for any input", () => {
+    assert.deepEqual([passAt(0).index, passAt(0).t], [0, 0]);
+    const end = passAt(1);
+    assert.equal(end.index, PASS_COUNT - 1); assert.equal(end.t, 1); assert.equal(end.to, "GOAL");
+    let last = 0;
+    for (let p = 0; p <= 1; p += 0.01) { const a = passAt(p); assert.ok(a.index >= last && a.t >= 0 && a.t <= 1); last = a.index; assert.equal(a.from, PASS_SEQ[a.index]); assert.equal(a.to, PASS_SEQ[a.index + 1]); }
+    for (const p of [NaN, -4, 9, undefined]) { const a = passAt(p); assert.ok(a.index >= 0 && a.index < PASS_COUNT && a.t >= 0 && a.t <= 1); }
 });
