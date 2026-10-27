@@ -333,18 +333,6 @@ html.sbh-sky-on .sbh-page { position: relative; }
 }
 .sbh-story .sbh-steps, .sbh-story .sbh-week { z-index: 1; }
 /* The run readout */
-.sbh-hud {
-    position: fixed; z-index: 40; right: var(--pub-gutter); top: calc(var(--sbh-bar, 64px) + 12px);
-    min-width: 190px; padding: 10px 14px; border-radius: 8px;
-    background: color-mix(in srgb, var(--bg) 88%, transparent); border: 1px solid var(--border);
-    opacity: 0; transform: translateY(-6px); transition: opacity .3s, transform .3s; pointer-events: none;
-}
-.sbh-hud.is-on { opacity: 1; transform: none; }
-.sbh-hud-mi b { font: 800 30px/1 var(--font-display); letter-spacing: .02em; color: var(--text); }
-.sbh-hud-mi small { margin-left: 6px; font: 500 11px var(--font-mono); letter-spacing: .1em; color: var(--text-secondary); }
-.sbh-hud-ch { display: block; margin-top: 4px; font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--primary); }
-.sbh-hud-bar { margin-top: 8px; height: 3px; background: var(--border); }
-.sbh-hud-bar i { display: block; height: 100%; width: 0; background: var(--primary); }
 /* Services slide sideways while pinned */
 .sbh-svc.is-hz {
     position: sticky; top: var(--sbh-bar, 64px); max-width: none; margin: 0; padding: 0;
@@ -444,13 +432,9 @@ html.sbh-ride-on .sbh-story.is-live .sbh-bar { right: auto; width: min(460px, 46
     .sbh-ride { top: calc(var(--sbh-bar, 64px) + 252px); height: calc(100svh - var(--sbh-bar, 64px) - 252px - 16px); left: 0; right: 0; }
     .sbh-chips { max-width: calc(100vw - 24px); }
     .sbh-chips button { flex: 1 1 auto; padding: 0 10px; font-size: 12.5px; }
-    html.sbh-ride-on .sbh-story.is-live .sbh-steps { top: 84px; bottom: auto; }
-    html.sbh-ride-on .sbh-story.is-live .sbh-bar { top: 50px; bottom: auto; left: 20px; right: 20px; width: auto; }
+    html.sbh-ride-on .sbh-story.is-live .sbh-steps { top: 56px; bottom: auto; }
+    html.sbh-ride-on .sbh-story.is-live .sbh-bar { top: 20px; bottom: auto; left: 20px; right: 20px; width: auto; }
     html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-    .sbh-hud { left: 0; right: 0; top: var(--sbh-bar, 64px); min-width: 0; padding: 6px var(--pub-gutter); border-radius: 0; border-width: 0 0 1px; display: flex; align-items: baseline; gap: 12px; }
-    .sbh-hud-mi b { font-size: 20px; }
-    .sbh-hud-ch { margin-top: 0; }
-    .sbh-hud-bar { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; height: 2px; }
     .sbh-fpin { align-items: flex-start; padding-top: 24px; }
     .sbh-ftxt h2 { font-size: clamp(40px, 12vw, 56px); }
     .sbh-ftxt p { font-size: 16px; }
@@ -476,6 +460,8 @@ html.sbh-ride-on .sbh-story.is-live .sbh-bar { right: auto; width: min(460px, 46
 
 /* The example week */
 .sbh-hand { background: var(--bg); }
+/* With the pitch behind the page, this dark section is see-through so the pitch and the passes stay in view. */
+html.sbh-sky-on .sbh-hand { background: transparent; }
 .sbh-hand-inner {
     max-width: var(--pub-max); margin: 0 auto; padding: 96px var(--pub-gutter);
     display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 72px; align-items: start;
@@ -510,13 +496,11 @@ html.sbh-ride-on .sbh-story.is-live .sbh-bar { right: auto; width: min(460px, 46
 
 /* ---- Glass pass (2026-10-27): the same recipe as the footer rail (css/public.css) ----
    Floating pieces get the blur; big areas get a plain translucent fill. */
-.sbh-hud, .sbh-chips, .sbh-push {
+.sbh-chips, .sbh-push {
     background: var(--glass-fill); border: 1px solid var(--glass-line); border-radius: 14px;
     box-shadow: var(--glass-hi), var(--glass-shadow);
     -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
 }
-.sbh-hud { background: var(--glass-fill-deep); } /* over the cream sections a lighter fill goes muddy */
-.sbh-hud-bar { border-radius: 2px; overflow: hidden; }
 .sbh-push { color: var(--cream); background: var(--glass-fill-deep); }
 .sbh-push b { background: var(--primary); color: var(--on-primary); }
 .sbh-chips button { border-radius: 10px; }

@@ -494,3 +494,9 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - **Photo licences:** `images/footer-lift.jpg` is Pexels 841130 and `images/footer-barbell.jpg` is Pexels 1552252 (free Pexels licence, no credit needed). Placeholders until Eddie's own strength photos arrive.
 - Tested: `npm run test:static` 1095 pass. Browser (Playwright) at 1280 and 390 px on home and soccer, populated and with every photo blocked: no sideways overflow, no console errors beyond the blocked images.
 - No Firestore rules change.
+
+## 2026-10-27 — Home page: see-through "Changed by hand" section, no pass counter (Eddie)
+- The pass counter box ("04 / 11 passes", chapter label, bar) is removed from the website and the phone, with its code and CSS. `chapterIndex` / `CHAPTERS` stay in `js/homeSkyModel.js` (tested) but nothing on the page uses them now.
+- The dark "Checked every week. Changed by hand." section (`.sbh-hand`, around pass 8) is transparent while the scroll experience is on, so the pitch and the passes stay in view behind it. Visitors without the pitch (reduced motion, data saver) keep the solid forest fill.
+- On a phone the story step bar and text moved up to use the space the counter took.
+- The sand "What I coach" and the cream sections are unchanged. Tested: static tests, 390 and 1280 wide, no overflow. No rules change.

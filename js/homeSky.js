@@ -7,7 +7,7 @@
    opacity and transform change per frame, nothing repaints.
 ========================================== */
 
-import { skyState, runProgress, chapterIndex, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CHIP_ORDER, CHAPTERS, PASS_COUNT, passAt, PLAYERS, PASS_SEQ, playerPos } from "./homeSkyModel.js";
+import { skyState, runProgress, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CHIP_ORDER, PASS_COUNT, passAt, PLAYERS, PASS_SEQ, playerPos } from "./homeSkyModel.js";
 
 const mq = (q) => window.matchMedia(q).matches;
 if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !== true) {
@@ -118,13 +118,6 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         // A big outlined step number behind the story.
         let numeral = null;
         if (stick) { numeral = document.createElement("span"); numeral.className = "sbh-numeral"; numeral.setAttribute("aria-hidden", "true"); numeral.textContent = "1"; stick.prepend(numeral); }
-
-        // The run readout: miles, chapter, a thin bar.
-        const hud = document.createElement("div");
-        hud.className = "sbh-hud"; hud.setAttribute("aria-hidden", "true");
-        hud.innerHTML = `<div class="sbh-hud-mi"><b>01</b><small>/ ${PASS_COUNT} PASSES</small></div><span class="sbh-hud-ch">Kick-off</span><div class="sbh-hud-bar"><i></i></div>`;
-        document.body.append(hud);
-        const hudMi = hud.querySelector("b"), hudCh = hud.querySelector(".sbh-hud-ch"), hudBar = hud.querySelector("i");
 
         // The three services slide sideways while the section stays pinned.
         let hz = null, hzMax = 0;
@@ -295,10 +288,6 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 }
             }
             const run = runProgress({ scrollY: y, vh, heroH: tops.heroH, closeTop: tops.closeTop });
-            hudMi.textContent = String(passAt(run).index + 1).padStart(2, "0");
-            hudBar.style.width = (run * 100).toFixed(1) + "%";
-            hudCh.textContent = CHAPTERS[chapterIndex({ scrollY: y, vh, ...tops, step })];
-            hud.classList.toggle("is-on", y > tops.heroH * 0.35 && tops.closeTop - y > vh * 0.5);
             if (passXY && Math.abs(run - lastRun) > 0.0008) {
                 lastRun = run;
                 const ps = passAt(run), q = passXY[ps.index], e = 1 - (1 - ps.t) * (1 - ps.t), a = 1 - e;
