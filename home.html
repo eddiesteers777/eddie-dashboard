@@ -142,10 +142,8 @@
              Without the video or photos the contour lines and empty frames show instead. -->
         <section class="sbh-hero" aria-labelledby="sbhHeadline">
             <svg class="sbh-contour" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width=".6"><path d="M-20 300 C 80 260 140 320 220 280 S 360 240 420 270"/><path d="M-20 320 C 80 280 140 340 220 300 S 360 260 420 290"/><path d="M-20 340 C 80 300 140 360 220 320 S 360 280 420 310"/><path d="M-20 120 C 60 90 150 150 230 110 S 350 70 420 100"/><path d="M-20 140 C 60 110 150 170 230 130 S 350 90 420 120"/><path d="M-20 160 C 60 130 150 190 230 150 S 350 110 420 140"/></g></svg>
-            <!-- Pexels video 38806936 "Silhouette Football Freestyle at Sunset" (uploader manoj), free Pexels licence. js/homeHero.js starts it; reduced motion keeps the still. -->
-            <video class="sbh-video" id="sbhVideo" muted loop playsinline preload="none" poster="videos/hero/soccer-freestyle.webp" width="1280" height="720" aria-hidden="true" tabindex="-1">
-                <source src="videos/hero/soccer-freestyle.mp4" type="video/mp4">
-            </video>
+            <!-- Pexels photo 27307529 "Aerial View of Soccer Players Warming Up on the Field" (free Pexels licence). -->
+            <img class="sbh-video" id="sbhPhoto" src="images/hero-field.jpg" srcset="images/hero-field-1024.webp 1024w, images/hero-field-1600.webp 1600w" sizes="(max-width: 760px) 400vw, 100vw" width="1600" height="900" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
             <div class="sbh-tint" aria-hidden="true"></div>
             <div class="sbh-hero-inner">
                 <h1 class="sbh-headline" id="sbhHeadline">Built<br>around you</h1>
@@ -154,10 +152,7 @@
                         <p class="sbh-cta-line">I've run seven marathons and a 50-mile ultra. I played college soccer at Auburn Montgomery. Now I coach runners, lifters and soccer players.</p>
                         <a href="apply.html" class="pub-btn-primary sbh-btn">Apply for coaching <svg class="sbh-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
                     </div>
-                    <div class="sbh-hero-side">
-                                                <button type="button" class="sbh-motion" id="sbhMotion" aria-label="Pause the background video" hidden><span data-icon="pause"></span></button>
-                    </div>
-                </div>
+                                    </div>
             </div>
         </section>
 

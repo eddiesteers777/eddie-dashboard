@@ -464,3 +464,9 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - It runs over the section backgrounds (so cream and sand sections no longer hide it) but behind the words, the phone and the cards (`z-index` 0 on `.sbh-route`, 1 on the content wrappers). A dark underline (`.sbh-route-under`) keeps it readable on cream.
 - JS only changes the shape of the path in `layoutRoute()` (`js/homeSky.js`). Ridgelines and topo contours (mock-ups B and C) were not built.
 - Tested: static tests, phone 390 and desktop 1280 at eight scroll stops, no horizontal overflow, no script errors. No rules change.
+
+## 2026-10-27 — Home page: the hero is a wide photo of a real game (Eddie picked F3)
+- The juggling video is replaced by a still, zoomed-out photo of a game on a floodlit pitch (Pexels photo 27307529, free Pexels licence, noted in `home.html`). `images/hero-field.jpg` + 1024 and 1600 px WebP copies (`scripts/build-images.py`), 160 and 380 KB, instead of a 3 MB video. `sizes="(max-width: 760px) 400vw, 100vw"` because the photo is cropped by height on a phone.
+- The image keeps the id `sbhPhoto` and class `sbh-video`, so the scroll zoom in `js/homeSky.js` still works. The pause button, the video code in `js/homeHero.js` and its CSS are removed (there is no motion to pause).
+- `videos/hero/soccer-freestyle.*` stays in the repo, unused on the home page, in case it is wanted further down.
+- Tested: static tests, phone 390 and desktop 1280, motion and reduced motion, no overflow, no failed requests. No rules change.

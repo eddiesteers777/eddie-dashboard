@@ -22,6 +22,7 @@ SIZES = {
     "offer-soccer-1on1.jpg": [480, 800, 1280],
     "offer-soccer-group.jpg": [480, 800, 1280],
     "gallery-1.jpg": [500, 1000],
+    "hero-field.jpg": [1024, 1600],
 }
 
 def main():

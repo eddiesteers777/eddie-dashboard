@@ -35,7 +35,7 @@
 .sbh-contour { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--sage); opacity: .22; z-index: -3; }
 .sbh-video {
     position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; object-position: 58% 40%;
+    object-fit: cover; object-position: 55% 50%;
     z-index: -2;
 }
 .sbh-tint {
@@ -67,17 +67,6 @@
 }
 .sbh-cta-line { margin: 0 0 16px; font-size: 20px; line-height: 1.3; font-weight: 600; color: var(--text); text-wrap: balance; }
 .sbh-btn { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
-.sbh-hero-side { display: flex; align-items: flex-end; gap: 16px; text-align: right; }
-.sbh-motion {
-    display: inline-grid; place-items: center; flex: none;
-    width: 44px; height: 44px; padding: 0;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--sb-glass-border);
-    background: color-mix(in srgb, var(--bg) 55%, transparent);
-    color: var(--text); cursor: pointer;
-}
-.sbh-motion:hover { border-color: var(--primary); color: var(--primary); }
-.sbh-motion .ui-icon { width: 16px; height: 16px; }
 
 /* ---- 2 Intro row ---- */
 .sbh-intro-grid {
@@ -251,8 +240,7 @@
 @media (max-width: 760px) {
     .sbh-hero-inner { padding-bottom: 16px; gap: 20px; }
     .sbh-headline { font-size: clamp(56px, 17vw, 84px); }
-    .sbh-video { object-position: 42% 40%; }
-    .sbh-hero-side .sbh-meta { display: none; }
+    .sbh-video { object-position: 55% 50%; }
     .sbh-hero-row { align-items: flex-end; gap: 12px; }
     .sbh-cta { padding: 16px; }
     .sbh-cta-line { font-size: 18px; margin-bottom: 14px; }

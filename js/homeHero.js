@@ -1,9 +1,8 @@
 /* ==========================================
-   Southbound — home page hero video and week story
+   Southbound — home page week story
 
-   The hero video starts only for visitors who haven't asked for less
-   motion or reduced data, and pauses while it's off screen. A button
-   pauses it for good. The story steps sit stacked in the page; with
+   The hero is a still photo (the old soccer clip is still in videos/hero).
+   The story steps sit stacked in the page; with
    motion allowed they become one full-width sticky panel whose example
    week fills in as the visitor scrolls (js/homeStoryModel.js).
 ========================================== */
@@ -26,35 +25,6 @@ window.addEventListener("resize", measureBar);
 if ("MutationObserver" in window) {
     const host = document.getElementById("publicHeader");
     if (host) new MutationObserver(measureBar).observe(host, { childList: true });
-}
-
-// ---- Hero video ----
-const video = document.getElementById("sbhVideo");
-const motionBtn = document.getElementById("sbhMotion");
-if (video && !reduce && !saveData) {
-    video.defaultMuted = true;
-    video.muted = true;
-    video.playsInline = true;
-    let userPaused = false, onScreen = true;
-    const setBtn = () => {
-        if (!motionBtn) return;
-        motionBtn.hidden = false;
-        motionBtn.setAttribute("aria-label", userPaused ? "Play the background video" : "Pause the background video");
-        motionBtn.innerHTML = `<span data-icon="${userPaused ? "play" : "pause"}"></span>`;
-        import("./icons.js").then(m => m.hydrate());
-    };
-    const sync = () => {
-        if (userPaused || !onScreen) video.pause();
-        else video.play().catch(() => {});
-    };
-    video.preload = "auto";
-    video.addEventListener("playing", setBtn, { once: true });
-    motionBtn?.addEventListener("click", () => { userPaused = !userPaused; setBtn(); sync(); });
-    if ("IntersectionObserver" in window) {
-        new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; sync(); }).observe(video);
-    } else {
-        sync();
-    }
 }
 
 // ---- "How a week gets made" ----
