@@ -470,3 +470,8 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The image keeps the id `sbhPhoto` and class `sbh-video`, so the scroll zoom in `js/homeSky.js` still works. The pause button, the video code in `js/homeHero.js` and its CSS are removed (there is no motion to pause).
 - `videos/hero/soccer-freestyle.*` stays in the repo, unused on the home page, in case it is wanted further down.
 - Tested: static tests, phone 390 and desktop 1280, motion and reduced motion, no overflow, no failed requests. No rules change.
+
+## 2026-10-27 — Home page: "More in the app" folded into the story (shorter scroll)
+- The side phone was already one phone across the story and "More in the app". What changed is the scroll: the two pinned sections now run back to back with less scrolling. The story went from 260vh to 235vh, "More in the app" from 208vh to 166vh (`.sbh-story.is-live`, `.sbh-feat` in `css/home.css`). The Soccer, Fueling and Pace steps and the chips work as before. No JS change.
+- Page height on a phone: 9,942 px before, 9,376 px now (it was 9,408 px before the 2026-10-27 calm and contrast pass). Desktop: 8,806 px before, 8,270 px now (8,262 px originally).
+- Tested: static tests, phone 390 and desktop 1280, every story step and every feature step switches at its scroll position, no overflow, no script errors. No rules change.

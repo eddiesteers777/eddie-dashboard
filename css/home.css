@@ -118,7 +118,7 @@
 .sbh-week, .sbh-bar { display: none; }
 
 /* Live: one sticky panel, one step at a time, the week fills in */
-.sbh-story.is-live { height: 260vh; }
+.sbh-story.is-live { height: 235vh; }
 .sbh-story.is-live .sbh-stick {
     position: sticky; top: var(--sbh-bar, 64px);
     height: calc(100svh - var(--sbh-bar, 64px));
@@ -396,7 +396,7 @@ html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--si
 .sbh-chips button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 
 /* ---- More in the app: a pinned section, four features one at a time ---- */
-.sbh-feat { position: relative; height: calc(3 * 36vh + 100vh); }
+.sbh-feat { position: relative; height: calc(3 * 22vh + 100vh); }
 .sbh-fpin {
     position: sticky; top: var(--sbh-bar, 64px); height: calc(100svh - var(--sbh-bar, 64px));
     display: flex; align-items: center; max-width: var(--pub-max); margin: 0 auto; padding: 0 var(--pub-gutter);
