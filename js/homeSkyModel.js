@@ -78,6 +78,8 @@ export const CLIPS = {
     pace: ["Pace", "Pace", "Pace, race splits and training zones from one real result. Free for everyone."],
 };
 export const CLIP_ORDER = ["checkin", "wins", "plans", "live", "soccer", "fuel", "pace"];
+/* The tabs under the phone: one row, five picks. Wins and Live still play inside the story. */
+export const CHIP_ORDER = ["plans", "checkin", "soccer", "fuel", "pace"];
 const FEATURE_CLIPS = ["soccer", "fuel", "pace"]; // "More in the app", in order
 
 /* Which recording the phone shows, and how far through it (0..1), for a point in the story.

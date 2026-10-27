@@ -372,28 +372,54 @@ html.sbh-sky-on .sbh-page { position: relative; }
 .sbh-ride {
     position: fixed; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
     pointer-events: none; will-change: transform, opacity; opacity: 0;
-    top: calc(var(--sbh-bar, 64px) + 90px); height: calc(100svh - var(--sbh-bar, 64px) - 90px - 14px);
+    top: calc(var(--sbh-bar, 64px) + 116px); height: calc(100svh - var(--sbh-bar, 64px) - 116px - 14px);
     right: max(var(--pub-gutter), calc((100vw - var(--pub-max)) / 2 + var(--pub-gutter)));
 }
 html.sbh-ride-on .sbh-story.is-live .sbh-week { visibility: hidden; }
 html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--side); text-align: left; }
-.sbh-phone {
-    --pw: 300px; position: relative; width: var(--pw); aspect-ratio: 440 / 928; border-radius: 14% / 6.6%; overflow: hidden; background: #06100b;
-    box-shadow: 0 0 0 3px #050d0a, 0 0 0 4px color-mix(in srgb, var(--cream) 20%, transparent);
-    will-change: transform;
+.sbh-dev { --pw: 300px; position: relative; width: var(--pw); aspect-ratio: 440 / 928; }
+/* The device edge: a dark metal band with a cream catch-light, and a soft shadow so it sits on the page. */
+.sbh-dev::before {
+    content: ""; position: absolute; inset: calc(var(--pw) * -.03); border-radius: 15.5% / 7.4%;
+    background: linear-gradient(135deg, #3a4a40 0%, #152019 18%, #0a120e 50%, #1d2a22 82%, #4a5a4c 100%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cream) 22%, transparent), inset 0 0 0 2.5px #050b08, 0 40px 70px -20px rgba(0, 0, 0, .65), 0 18px 30px -12px rgba(0, 0, 0, .5);
 }
+.sbh-key { position: absolute; left: calc(var(--pw) * -.04); width: 3px; border-radius: 2px; background: linear-gradient(90deg, #2a362e, #5a6a5c); }
+.sbh-key-1 { top: 20%; height: 6%; } .sbh-key-2 { top: 29%; height: 10%; }
+.sbh-key-3 { left: auto; right: calc(var(--pw) * -.04); top: 25%; height: 13%; }
+.sbh-phone {
+    position: relative; width: 100%; height: 100%; border-radius: 14% / 6.6%; overflow: hidden; background: #06100b;
+}
+.sbh-glare { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--cream) 10%, transparent) 42%, transparent 54%); }
+/* A note from the coach that slides onto the screen during "I change it by hand". */
+.sbh-push {
+    position: absolute; left: 5%; right: 5%; top: 6.5%; display: flex; gap: .6em; align-items: flex-start;
+    padding: .75em .85em; border-radius: 1.1em; background: color-mix(in srgb, var(--cream) 95%, transparent); color: var(--on-primary);
+    font: 400 calc(var(--pw) * .04)/1.35 var(--font-body); box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .6);
+    opacity: 0; transform: translateY(-130%); transition: transform .5s cubic-bezier(.2, .8, .2, 1), opacity .3s ease;
+}
+.sbh-push.is-on { opacity: 1; transform: none; }
+.sbh-push b { flex: none; width: 2.3em; height: 2.3em; border-radius: .6em; display: grid; place-items: center; background: var(--on-primary); color: var(--primary); font: 800 1.05em var(--font-display); }
+.sbh-push strong { display: flex; justify-content: space-between; font-weight: 700; }
+.sbh-push em { font-style: normal; font-weight: 500; opacity: .6; }
 .sbh-pv { display: block; width: 100%; height: 100%; object-fit: cover; }
 .sbh-pv.is-swap { animation: sbh-swap .45s ease both; }
 @keyframes sbh-swap { from { opacity: .15; transform: scale(1.03); } to { opacity: 1; transform: none; } }
-.sbh-pex { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font: 500 8px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--cream) 60%, transparent); pointer-events: none; }
-.sbh-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 340px; pointer-events: auto; }
-.sbh-chips button {
-    min-height: 44px; padding: 0 14px; border-radius: 22px; cursor: pointer;
-    border: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-secondary);
-    font: 600 12px var(--font-body);
+.sbh-pex { margin-top: 8px; text-align: center; font: 500 9px var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: color-mix(in srgb, var(--cream) 55%, transparent); pointer-events: none; }
+/* The tabs: one row of five, in a squared tray. */
+.sbh-chips {
+    display: flex; gap: 4px; padding: 4px; border-radius: 8px; pointer-events: auto;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); border: 1px solid color-mix(in srgb, var(--cream) 10%, transparent);
 }
-.sbh-chips button:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
-.sbh-chips button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.sbh-chips button {
+    flex: none; min-height: 44px; padding: 0 14px; border: 0; border-radius: 6px; cursor: pointer;
+    background: none; color: var(--text-secondary); font: 600 13px var(--font-body);
+}
+.sbh-chips button:hover { color: var(--text); }
+.sbh-chips button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.sbh-chips button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+/* Keep the step bar clear of the phone. */
+html.sbh-ride-on .sbh-story.is-live .sbh-bar { right: auto; width: min(460px, 46%); }
 
 /* ---- More in the app: a pinned section, four features one at a time ---- */
 .sbh-feat { position: relative; height: calc(3 * 36vh + 100vh); }
@@ -412,9 +438,10 @@ html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--si
 .sbh-fsegs i { position: absolute; inset: 0; width: 0; background: var(--primary); }
 @media (max-width: 760px) {
     .sbh-ride { top: calc(var(--sbh-bar, 64px) + 252px); height: calc(100svh - var(--sbh-bar, 64px) - 252px - 16px); left: 0; right: 0; }
-    .sbh-chips { max-width: min(94vw, 380px); flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; }
-    .sbh-chips button { flex: none; }
-    html.sbh-ride-on .sbh-story.is-live .sbh-steps { top: 76px; bottom: auto; }
+    .sbh-chips { max-width: calc(100vw - 24px); }
+    .sbh-chips button { flex: 1 1 auto; padding: 0 10px; font-size: 12.5px; }
+    html.sbh-ride-on .sbh-story.is-live .sbh-steps { top: 84px; bottom: auto; }
+    html.sbh-ride-on .sbh-story.is-live .sbh-bar { top: 50px; bottom: auto; left: 20px; right: 20px; width: auto; }
     html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .sbh-hud { left: 0; right: 0; top: var(--sbh-bar, 64px); min-width: 0; padding: 6px var(--pub-gutter); border-radius: 0; border-width: 0 0 1px; display: flex; align-items: baseline; gap: 12px; }
     .sbh-hud-mi b { font-size: 20px; }

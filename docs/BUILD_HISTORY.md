@@ -470,3 +470,10 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The image keeps the id `sbhPhoto` and class `sbh-video`, so the scroll zoom in `js/homeSky.js` still works. The pause button, the video code in `js/homeHero.js` and its CSS are removed (there is no motion to pause).
 - `videos/hero/soccer-freestyle.*` stays in the repo, unused on the home page, in case it is wanted further down.
 - Tested: static tests, phone 390 and desktop 1280, motion and reduced motion, no overflow, no failed requests. No rules change.
+
+## 2026-10-27 — Home page: the side phone looks like a real device (Eddie picked option A + the coach note)
+- `.sbh-dev` wraps the phone: a dark metal edge with a cream catch-light, side keys, a soft glare and a drop shadow. Static paint only; per-frame work is still transform and opacity.
+- A note from Coach Eddie ("Thursday's tempo is now an easy 4 miles") slides onto the screen during story step 4, "I change it by hand", matching the changed-by-hand week further down.
+- Seven chips became one row of five tabs (`CHIP_ORDER` in `js/homeSkyModel.js`: Plans, Check-in, Soccer, Fueling, Pace). Wins and Live still play inside the story.
+- "Example screens and data" moved under the device as a caption. The step bar no longer sits under the phone: half width on a computer, above the step text on a phone.
+- Mock-ups in `/mnt/project-files/phone-scroll/`. Tested: static tests, 360, 390 and 1280 widths, no overflow. No rules change.

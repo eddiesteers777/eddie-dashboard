@@ -67,10 +67,12 @@ test("the sideways track only moves inside its travel", () => {
     assert.equal(sidewaysProgress(-50, 0), 0);
 });
 
-import { CLIPS, CLIP_ORDER, storyClipAt, featureClipAt, featureStep, manualFrac, manualActive, phoneFade } from "../js/homeSkyModel.js";
+import { CLIPS, CLIP_ORDER, CHIP_ORDER, storyClipAt, featureClipAt, featureStep, manualFrac, manualActive, phoneFade } from "../js/homeSkyModel.js";
 
 test("every recording has a chip label, a title and a sentence", () => {
     assert.equal(CLIP_ORDER.length, 7);
+    assert.equal(CHIP_ORDER.length, 5);
+    for (const id of CHIP_ORDER) assert.ok(CLIP_ORDER.includes(id), id);
     for (const id of CLIP_ORDER) { assert.equal(CLIPS[id].length, 3, id); for (const w of CLIPS[id]) assert.ok(w.length > 2, id); }
 });
 

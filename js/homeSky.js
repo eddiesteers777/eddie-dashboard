@@ -7,7 +7,7 @@
    opacity and transform change per frame, nothing repaints.
 ========================================== */
 
-import { skyState, runProgress, chapterIndex, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CLIP_ORDER, CHAPTERS, RACE_MILES } from "./homeSkyModel.js";
+import { skyState, runProgress, chapterIndex, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CHIP_ORDER, CHAPTERS, RACE_MILES } from "./homeSkyModel.js";
 
 const mq = (q) => window.matchMedia(q).matches;
 if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !== true) {
@@ -145,10 +145,10 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         if (feat) feat.hidden = false;
         const ride = document.createElement("div");
         ride.className = "sbh-ride";
-        ride.innerHTML = '<div class="sbh-phone"><video class="sbh-pv" muted playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="videos/tour/checkin.webp" src="videos/tour/scrub/checkin.mp4"></video><span class="sbh-pex" aria-hidden="true">Example screens and data</span></div><div class="sbh-chips" role="group" aria-label="Pick a feature of the app"></div>';
+        ride.innerHTML = '<div class="sbh-dev"><i class="sbh-key sbh-key-1"></i><i class="sbh-key sbh-key-2"></i><i class="sbh-key sbh-key-3"></i><div class="sbh-phone"><video class="sbh-pv" muted playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="videos/tour/checkin.webp" src="videos/tour/scrub/checkin.mp4"></video><div class="sbh-push" aria-hidden="true"><b>E</b><span><strong>Coach Eddie <em>now</em></strong>Thursday\'s tempo is now an easy 4 miles. Your legs need it.</span></div><i class="sbh-glare"></i></div></div><span class="sbh-pex" aria-hidden="true">Example screens and data</span><div class="sbh-chips" role="group" aria-label="Pick a feature of the app"></div>';
         document.body.append(ride);
         ride.style.visibility = "hidden";
-        const phone = ride.firstElementChild, pv = phone.querySelector("video"), chipsEl = ride.querySelector(".sbh-chips");
+        const phone = ride.firstElementChild, pv = phone.querySelector("video"), chipsEl = ride.querySelector(".sbh-chips"), push = phone.querySelector(".sbh-push");
         pv.defaultMuted = true; pv.muted = true; pv.playsInline = true; pv.pause();
         root.classList.add("sbh-ride-on");
         let shown = "checkin", manual = null, manualAt = 0, want = 0, at = 0, scrubRaf = 0, snapNext = true;
@@ -176,7 +176,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             pv.classList.remove("is-swap"); void pv.offsetWidth; pv.classList.add("is-swap");
             pv.poster = `videos/tour/${id}.webp`; pv.src = `videos/tour/scrub/${id}.mp4`; pv.load();
         };
-        CLIP_ORDER.forEach((id) => {
+        CHIP_ORDER.forEach((id) => {
             const b = document.createElement("button");
             b.type = "button"; b.dataset.id = id; b.textContent = CLIPS[id][0];
             b.setAttribute("aria-pressed", String(id === shown));
@@ -243,7 +243,8 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             {
                 const small = window.innerWidth <= 760, top = barH();
                 const chipsH = 44, featH = tops.featBottom - tops.featTop;
-                const availH = small ? vh - top - 252 - 84 - chipsH - 10 : vh - top - 90 - 14 - chipsH - 12;
+                // Room left for the phone once the caption, the tabs and the device edge are counted.
+                const availH = small ? vh - top - 252 - 84 - chipsH - 40 : vh - top - 116 - 14 - chipsH - 44;
                 const pw = Math.max(110, Math.min(small ? 230 : 300, (availH * 440) / 928));
                 if (Math.abs((phone._pw || 0) - pw) > 0.5) { phone._pw = pw; phone.style.setProperty("--pw", pw.toFixed(1) + "px"); }
                 const fade = phoneFade({ scrollY: y, vh, storyTop: tops.storyTop, featTop: tops.featTop, featH });
@@ -258,6 +259,9 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 if (manual && !manualActive(y - manualAt, vh)) manual = null;
                 const sp = Math.min(1, Math.max(0, (y - tops.storyTop) / Math.max(1, tops.storyBottom - tops.storyTop - vh)));
                 const c = inFeat ? featureClipAt(fp) : storyClipAt(sp);
+                // The coach's note slides onto the screen during "I change it by hand".
+                const pushOn = !inFeat && !manual && (parseInt(stick?.dataset.s, 10) || 1) === 4;
+                if (push._on !== pushOn) { push._on = pushOn; push.classList.toggle("is-on", pushOn); }
                 if (manual) { showClip(manual); want = manualFrac(y - manualAt, vh); }
                 else { showClip(c.id); want = c.frac; }
                 kick();
