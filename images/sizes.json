@@ -52,5 +52,19 @@
       1024,
       1600
     ]
+  },
+  "footer-lift.jpg": {
+    "sha256": "c536620257eb55f7",
+    "widths": [
+      480,
+      800
+    ]
+  },
+  "footer-barbell.jpg": {
+    "sha256": "4ce94d5fb8748f22",
+    "widths": [
+      480,
+      800
+    ]
   }
 }

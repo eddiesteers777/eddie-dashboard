@@ -8,6 +8,8 @@
    "Sign In" can actually sign someone in.
 ========================================== */
 
+import("./footerRail.js").catch(() => {});
+
 fetch("components/publicHeader.html")
     .then(response => response.text())
     .then(async html => {
