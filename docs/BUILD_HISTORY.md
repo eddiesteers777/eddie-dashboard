@@ -450,3 +450,11 @@ Backdrop: the sunset/dusk/night/dawn layers are recoloured (amber, deep teal, sa
 
 ## 2026-10-27 — Home scroll experience: lighter and shorter
 Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More in the app" 3 features: Soccer, Fueling, Pace; the separate app tour is hidden when the side phone runs, "Get the App" moved to the free tools band). Phone clips are the best ~8 s of each recording at 360 wide (3 MB total, was 12 MB; `scripts/build-scrub-clips.sh`). Lag fixes: no blur filters on glows, no backdrop blur on HUD/chips, layout positions cached in `measure()` instead of read each frame, route updated only on real change, seeks snap to the clip's 15 fps frames, phone no longer rotates. Static tests pass; no rules change.
+
+## 2026-10-27 — Home page: calm and contrast (Eddie picked it from the brainstorm lab)
+- **Hero:** the glass card and the side text are gone. Headline, one proof line ("I've run seven marathons and a 50-mile ultra. I played college soccer at Auburn Montgomery. Now I coach runners, lifters and soccer players."), one button, the pause button.
+- **Cream intro** (`.sbh-cream`) and a **sand "What I coach"** (`.sbh-svc`): the dark chapters now alternate with light ones. The intro no longer repeats "Plans that adapt. Built around you. Checked every week." (the cream close keeps its half).
+- **New "Checked every week. Changed by hand." section** (`.sbh-hand`, static markup, labelled "Example week. Not a real client."): Thursday's tempo struck through and rewritten, the check-in and Eddie's reply under it.
+- "More in the app" scroll length cut from 244vh to about 208vh. The proof line is Eddie's own facts (given in the thread).
+- **Not done:** folding "More in the app" into the story so the phone appears once (it is tied to `js/homeSky.js` and `js/homeSkyModel.js`; a separate step). The page is still a little longer than before because of the new week section.
+- Tested: `npm run test:static` (1095 pass), phone 390 and desktop 1280, motion and reduced motion, no horizontal overflow. No rules change, no JS change.

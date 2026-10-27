@@ -407,7 +407,7 @@ html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--si
 .sbh-chips button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 
 /* ---- More in the app: a pinned section, four features one at a time ---- */
-.sbh-feat { position: relative; height: calc(3 * 48vh + 100vh); }
+.sbh-feat { position: relative; height: calc(3 * 36vh + 100vh); }
 .sbh-fpin {
     position: sticky; top: var(--sbh-bar, 64px); height: calc(100svh - var(--sbh-bar, 64px));
     display: flex; align-items: center; max-width: var(--pub-max); margin: 0 auto; padding: 0 var(--pub-gutter);
@@ -435,3 +435,50 @@ html.sbh-ride-on .sbh-story.is-live .sbh-story-lab { right: auto; left: var(--si
     .sbh-ftxt h2 { font-size: clamp(40px, 12vw, 56px); }
     .sbh-ftxt p { font-size: 16px; }
 }
+
+/* ==========================================
+   Calm and contrast (Eddie, 2026-10-27)
+   Quieter hero, cream and sand chapters between the dark ones,
+   and the "changed by hand" example week. Tokens only.
+========================================== */
+.sbh-cta { width: min(520px, 100%); padding: 0; background: none; border: 0; border-radius: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.sbh-cta-line { font-size: 17px; font-weight: 400; line-height: 1.5; color: var(--cream); text-wrap: pretty; max-width: 46ch; }
+.sbh-hero-row { align-items: flex-end; }
+
+/* Cream intro */
+.sbh-cream { background: var(--cream); color: var(--on-primary); }
+.sbh-cream .sbh-big, .sbh-cream .sbh-big .sbh-w { color: var(--forest); }
+.sbh-cream .sbh-big b, .sbh-cream .sbh-big b .sbh-w { color: var(--primary-dark); }
+.sbh-cream .sbh-meta { color: color-mix(in srgb, var(--forest) 70%, var(--cream)); }
+.sbh-cream .sbh-meta::before { color: var(--primary-dark); }
+.sbh-cream .sbh-link { color: var(--forest); }
+.sbh-cream :focus-visible { outline-color: var(--forest); }
+
+/* The example week */
+.sbh-hand { background: var(--bg); }
+.sbh-hand-inner {
+    max-width: var(--pub-max); margin: 0 auto; padding: 96px var(--pub-gutter);
+    display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 72px; align-items: start;
+}
+.sbh-hand-lead { display: grid; gap: 20px; }
+.sbh-hand h2 { margin: 0; font-family: var(--font-display); font-weight: 900; text-transform: uppercase; font-size: clamp(44px, 6.4vw, 96px); line-height: .9; color: var(--text); text-wrap: balance; }
+.sbh-hand-week { border-top: 1px solid var(--border); }
+.sbh-hand-day { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.sbh-hand-day span { font: 500 12px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--sage); }
+.sbh-hand-day b { font: 800 clamp(26px, 5.6vw, 42px)/1.05 var(--font-display); text-transform: uppercase; color: var(--text); }
+.sbh-hand-day small { display: block; margin-top: 4px; font: 400 13px var(--font-body); text-transform: none; color: var(--text-secondary); }
+.sbh-hand-day s { display: block; opacity: .5; text-decoration-thickness: 3px; text-decoration-color: var(--primary); }
+.sbh-hand-day em { display: block; font-style: normal; color: var(--primary); }
+.sbh-hand-note { margin: 16px 0 0; padding: 14px 16px; border-left: 2px solid var(--sage); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 16px; line-height: 1.45; color: var(--text); }
+.sbh-hand-note b { display: block; margin-bottom: 6px; font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--sage); }
+.sbh-hand-co { border-left-color: var(--primary); }
+.sbh-hand-co b { color: var(--primary); }
+.sbh-hand-ex { margin-top: 20px; }
+.sbh-hand-ex::before { content: none; }
+@media (max-width: 860px) { .sbh-hand-inner { grid-template-columns: 1fr; gap: 32px; padding-block: 56px; } }
+
+/* Sand "What I coach": the dark cards stand out on it */
+.sbh-svc { background: color-mix(in srgb, var(--cream) 80%, var(--primary)); }
+.sbh-svc .sbh-svc-head h2 { color: var(--forest); }
+.sbh-svc .sbh-svc-head .sbh-meta { color: color-mix(in srgb, var(--forest) 70%, var(--cream)); }
+.sbh-svc .sbh-svc-head .sbh-meta::before { color: var(--primary-dark); }
