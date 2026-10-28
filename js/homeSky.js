@@ -166,9 +166,9 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const splash = (r) => {
             if (!r.width || !r.height) return;
             const vh = window.innerHeight, rnd = (a, b) => a + Math.random() * (b - a);
-            for (let i = 0; i < 9; i++) {
+            for (let i = 0; i < 16; i++) {
                 const d = document.createElement("i");
-                const w = rnd(4, 8), x0 = r.left + rnd(0.1, 0.9) * r.width, y0 = r.top + rnd(0.35, 1) * r.height, fall = Math.max(40, vh - y0 - 2), dx = rnd(-46, 46);
+                const w = rnd(4, 10), x0 = r.left + rnd(0.1, 0.9) * r.width, y0 = r.top + rnd(0.35, 1) * r.height, fall = Math.max(40, vh - y0 - 2), dx = rnd(-46, 46);
                 const dur = 520 + Math.sqrt(fall) * 26 + rnd(0, 160);
                 d.className = "sbh-drop"; d.style.cssText = `left:${x0.toFixed(0)}px;top:${y0.toFixed(0)}px;width:${w.toFixed(1)}px;height:${(w * 1.35).toFixed(1)}px`;
                 document.body.append(d);
@@ -177,7 +177,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 fallAnim.onfinish = () => {
                     const px = x0 + dx; d.remove();
                     const pd = document.createElement("i");
-                    pd.className = "sbh-puddle"; pd.style.cssText = `left:${(px - w * 2).toFixed(0)}px;width:${(w * 4).toFixed(0)}px`;
+                    pd.className = "sbh-puddle"; pd.style.cssText = `left:${(px - w * 3).toFixed(0)}px;width:${(w * 6).toFixed(0)}px`;
                     document.body.append(pd);
                     pd.animate({ transform: ["scaleX(.3)", "scaleX(1.6)"], opacity: [0.9, 0] }, { duration: 3200, easing: "ease-out" }).onfinish = () => pd.remove();
                 };

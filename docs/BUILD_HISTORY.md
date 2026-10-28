@@ -540,5 +540,5 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 
 ## 2026-10-28 — Home page: matte bubbles that pop into falling water (Eddie)
 - The chat bubbles are less glossy (lower shine, rim and fill) and no longer swell before they go: they fade out in about a quarter of a second.
-- A pop throws 9 water drops from the bubble. They fall under gravity to the bottom of the screen and settle there as small puddles that spread and fade over about three seconds (`splash()` in `js/homeSky.js`, `.sbh-drop` / `.sbh-puddle` in `css/home.css`). Hidden for reduced motion.
+- A pop throws 16 water drops (more water, bigger puddles, same day) from the bubble. They fall under gravity to the bottom of the screen and settle there as small puddles that spread and fade over about three seconds (`splash()` in `js/homeSky.js`, `.sbh-drop` / `.sbh-puddle` in `css/home.css`). Hidden for reduced motion.
 - Tested at phone and desktop widths, no page errors. No Firestore rules change.

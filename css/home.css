@@ -635,5 +635,5 @@ html.sbh-sky-on .sbh-cream :focus-visible { outline-color: var(--primary); }
 
 /* Water from a popped bubble: drops fall to the bottom of the screen, then settle as puddles. */
 .sbh-drop { position: fixed; z-index: 7; pointer-events: none; border-radius: 50% 50% 55% 55%; background: radial-gradient(circle at 35% 30%, rgba(255,246,225,.7), rgba(214,180,130,.5) 60%); }
-.sbh-puddle { position: fixed; z-index: 7; bottom: 0; height: 8px; pointer-events: none; border-radius: 50%; background: radial-gradient(closest-side, rgba(226,196,150,.8), rgba(214,180,130,.25) 70%, transparent); transform-origin: 50% 100%; }
+.sbh-puddle { position: fixed; z-index: 7; bottom: 0; height: 12px; pointer-events: none; border-radius: 50%; background: radial-gradient(closest-side, rgba(226,196,150,.8), rgba(214,180,130,.25) 70%, transparent); transform-origin: 50% 100%; }
 @media (prefers-reduced-motion: reduce) { .sbh-drop, .sbh-puddle { display: none; } }
