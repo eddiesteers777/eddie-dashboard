@@ -166,7 +166,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const splash = (r) => {
             if (!r.width || !r.height) return;
             const vh = window.innerHeight, rnd = (a, b) => a + Math.random() * (b - a);
-            for (let i = 0; i < 16; i++) {
+            for (let i = 0, n = window.innerWidth < 761 ? 8 : 16; i < n; i++) {
                 const d = document.createElement("i");
                 const w = rnd(4, 10), x0 = r.left + rnd(0.1, 0.9) * r.width, y0 = r.top + rnd(0.35, 1) * r.height, fall = Math.max(40, vh - y0 - 2), dx = rnd(-46, 46);
                 const dur = 520 + Math.sqrt(fall) * 26 + rnd(0, 160);
@@ -306,8 +306,14 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 if (Math.abs((phone._pw || 0) - pw) > 0.5) { phone._pw = pw; phone.style.setProperty("--pw", pw.toFixed(1) + "px"); }
                 const fade = phoneFade({ scrollY: y, vh, storyTop: tops.storyTop, featTop: tops.featTop, featH });
                 const vis = fade.inn * (1 - fade.out);
-                ride.style.opacity = vis.toFixed(3);
-                ride.style.visibility = vis > 0.01 ? "visible" : "hidden";
+                // On a phone, step the phone aside while the next section's heading scrolls up under it.
+                let clear = 1;
+                if (small && tops.featTop) {
+                    const d = tops.featTop - y, rideTop = barH() + 252;
+                    if (d > rideTop - 140 && d < vh) clear = d >= rideTop - 60 ? Math.min(1, Math.max(0, (d - (vh - 80)) / 80)) : Math.min(1, Math.max(0, (rideTop - 60 - d) / 80));
+                }
+                ride.style.opacity = (vis * clear).toFixed(3);
+                ride.style.visibility = vis * clear > 0.01 ? "visible" : "hidden";
                 ride.style.transform = small
                     ? `translate3d(0,${((1 - fade.inn) * 60 + fade.out * 60).toFixed(1)}px,0)`
                     : `translate3d(${((1 - fade.inn) * 90 + fade.out * 90).toFixed(1)}px,0,0)`;

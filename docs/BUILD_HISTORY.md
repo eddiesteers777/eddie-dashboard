@@ -550,3 +550,9 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - New `css/publicLook.css` + `js/publicLook.js`, loaded on About, Coaching, Soccer, Packages, Apply, Contact, Get the App and Free tools (not Home, which has its own in `js/homeSky.js`). The script adds `html.pl-on`, a fixed background layer (page colour, grain, dark corners) and a drawing per page: prints (About), training-block line (Coaching), pitch and pass (Soccer), ledger (Packages), lamp glow (Apply), postmark (Contact), drops (Get the App), graph paper and pace dial (Tools).
 - Photos under `images/` get a glass sheen and light edge (`.pl-glass`). The flat green cards, call-to-action blocks and footer become deep glass with a gold hairline.
 - Calculators and forms keep their own panels. Tested at phone and desktop widths: no page errors, no sideways scroll. Mock-ups were in /mnt/project-files/phone-scroll/round11 and round12. No Firestore rules change.
+
+## 2026-10-28 — Audit fixes: overlaps and background glitches (Eddie)
+- Home, phone: the chat bubbles sit either side of the phone instead of over its screen; the phone steps aside while the "More in the app" heading scrolls up under it (it covered the heading); the feature step bar that sat under the tabs and lingered into the next section is hidden; a pop throws 8 drops on a phone (16 on a computer).
+- Public pages: the background layer is sized to the full screen height (`100lvh`), so no bare strip shows while a phone's address bar slides away. Drawings are quieter on phones where they sit behind text.
+- Coaching "What a week looks like": deep glass cards with a gold hairline, ruled rows instead of boxes, mono gold day labels, display-type check-in numbers.
+- Tested: home scrolled top to bottom at phone width, all eight public pages at phone and desktop with no page errors and no sideways scroll; static suite. No Firestore rules change.
