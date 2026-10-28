@@ -542,3 +542,6 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The chat bubbles are less glossy (lower shine, rim and fill) and no longer swell before they go: they fade out in about a quarter of a second.
 - A pop throws 16 water drops (more water, bigger puddles, same day) from the bubble. They fall under gravity to the bottom of the screen and settle there as small puddles that spread and fade over about three seconds (`splash()` in `js/homeSky.js`, `.sbh-drop` / `.sbh-puddle` in `css/home.css`). Hidden for reduced motion.
 - Tested at phone and desktop widths, no page errors. No Firestore rules change.
+
+## 2026-10-28 — Home page: bubbles shaped like water drops
+- The chat bubbles are now rounded drops: clear body, light gathering along the bottom edge, one small bright spot, and a gently wobbling outline (CSS only, end of `css/home.css`). No rules change.

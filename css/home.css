@@ -637,3 +637,11 @@ html.sbh-sky-on .sbh-cream :focus-visible { outline-color: var(--primary); }
 .sbh-drop { position: fixed; z-index: 7; pointer-events: none; border-radius: 50% 50% 55% 55%; background: radial-gradient(circle at 35% 30%, rgba(255,246,225,.7), rgba(214,180,130,.5) 60%); }
 .sbh-puddle { position: fixed; z-index: 7; bottom: 0; height: 12px; pointer-events: none; border-radius: 50%; background: radial-gradient(closest-side, rgba(226,196,150,.8), rgba(214,180,130,.25) 70%, transparent); transform-origin: 50% 100%; }
 @media (prefers-reduced-motion: reduce) { .sbh-drop, .sbh-puddle { display: none; } }
+
+/* Water-drop look: round blob, clear body, light gathering at the bottom edge, one small bright spot. */
+.sbh-msg { padding: 15px 22px 17px; border-radius: 46% 46% 50% 50% / 58% 58% 42% 42%; border-color: rgba(242,226,196,.26);
+    background: radial-gradient(120% 90% at 50% 0%, rgba(24,18,11,.22), rgba(24,18,11,.34) 70%), rgba(24,18,11,.2);
+    box-shadow: inset 0 -9px 12px -6px rgba(255,232,190,.32), inset 0 8px 14px -8px rgba(0,0,0,.35), 0 16px 26px -14px rgba(0,0,0,.7); }
+.sbh-msg::before { left: 16%; top: 11%; width: 11px; height: 7px; border-radius: 50%; background: rgba(255,248,232,.7); filter: blur(.6px); }
+.sbh-msg.me { background: radial-gradient(120% 90% at 50% 0%, rgba(226,200,160,.85), rgba(196,166,122,.8) 70%); box-shadow: inset 0 -9px 12px -6px rgba(255,240,205,.4), 0 16px 26px -14px rgba(0,0,0,.7); }
+@keyframes sbh-wob { 0%,100% { border-radius: 46% 46% 50% 50% / 58% 58% 42% 42%; translate: 0 0; } 33% { border-radius: 44% 48% 48% 52% / 56% 60% 40% 44%; translate: 0 -3px; } 66% { border-radius: 48% 44% 52% 48% / 60% 56% 44% 40%; translate: 0 -1px; } }
