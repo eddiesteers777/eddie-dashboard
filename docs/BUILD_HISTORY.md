@@ -517,3 +517,8 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The opening starts with the photo already visible under a half-strength veil and a lighter grain, so the picture can be seen from the first frame (it was near-black and too grainy).
 - The toolbar is more see-through (fill about a third of before, a brighter edge and a stronger blur); past the top photo it is a little darker, not solid.
 - The toolbar now hides only after about 600px of steady scrolling down (it was a few pixels) and comes back on any scroll up. Tested: bar stays for the first 600px, hides after, returns on scroll up; 390 and 1280 wide. No rules change.
+
+## 2026-10-28 — Home page: old-print sepia background (Eddie picked B1)
+- The fixed sky layers (base, dusk, night, dawn, glows) move from forest green to brown-black with amber glow, so the page matches the old-print hero photo. Pitch lines and stripes are warm cream.
+- Two overlay layers on `.sbh-sky`: dark corners and a light grain. CSS only; no script or rules change.
+- Tested: static suite passes (1095), checked at phone and desktop widths. No Firestore rules change.
