@@ -342,9 +342,6 @@ html.sbh-sky-on .sbh-page { position: relative; }
 .sbh-svc.is-hz .sbh-cards { display: flex; width: max-content; gap: 16px; padding-inline: max(var(--pub-gutter), calc((100vw - var(--pub-max)) / 2 + var(--pub-gutter))); will-change: transform; }
 .sbh-svc.is-hz .sbh-card { width: min(80vw, 440px); min-height: 0; height: min(56vh, 420px); }
 /* Finish line */
-.sbh-finish { display: flex; align-items: center; gap: 14px; padding: 0 var(--pub-gutter); height: 30px; background: var(--cream); border-bottom: 1px solid color-mix(in srgb, var(--on-primary) 18%, transparent); }
-.sbh-finish i { flex: none; width: 100px; height: 16px; background: repeating-conic-gradient(var(--on-primary) 0 25%, var(--cream) 0 50%) 0 0 / 16px 16px; border: 1.5px solid var(--on-primary); }
-.sbh-finish span { font: 500 11px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--forest); }
 @media (max-width: 760px) {
     .sbh-numeral { font-size: 92vw; left: -4vw; top: 34%; }
 }
@@ -640,3 +637,6 @@ html.sbh-sky-on .sbh-cream :focus-visible { outline-color: var(--primary); }
 /* A quiet "¡Gooooool!" in the pitch background when the ball reaches the goal. */
 .sbh-gol { font: 800 clamp(20px, 4vw, 44px) var(--font-display); letter-spacing: .06em; text-transform: uppercase; fill: rgba(242,226,196,.17); opacity: 0; transition: opacity .8s ease; pointer-events: none; }
 .sbh-gol.is-on { opacity: 1; }
+
+/* The closing section is slightly see-through so the pitch shows faintly behind it. */
+.sbh-close { background: color-mix(in srgb, var(--cream) 88%, transparent); }

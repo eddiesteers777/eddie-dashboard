@@ -149,12 +149,6 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         }
         const barH = () => document.querySelector(".pub-navbar")?.offsetHeight || 64;
 
-        // The finish line at the top of the cream close.
-        const fin = document.createElement("div");
-        fin.className = "sbh-finish"; fin.setAttribute("aria-hidden", "true");
-        fin.innerHTML = "<i></i><span>Goal · Apply to start</span>";
-        close.prepend(fin);
-
         // A phone beside the story and the "More in the app" section, showing the real recordings of the app.
         // The scroll drives the recording (forwards and backwards at the visitor's pace); it never plays on its own.
         // Chips under it let a visitor pick any of the seven; it then follows the scroll for a screen or so.

@@ -532,3 +532,8 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The side phone now floats a few pixels and tilts up to 4 degrees as you scroll (transform only, `js/homeSky.js`). It was in the mock-up (P2) but had not been built.
 - When the ball reaches the goal, a faint "¡Gooooool!" fades in beside the goal in the pitch background (`.sbh-gol`, SVG text, 17% cream). On a phone the pitch end is mostly under the cream close, so it is small there.
 - Tested: no page errors, phone transform changes with scroll, static suite. No Firestore rules change.
+
+## 2026-10-28 — Home page: finish line removed, closing section slightly see-through
+- The checkered finish line and its "Goal · Apply to start" label above the cream close are gone (JS and CSS removed).
+- The cream closing section is 88% opaque so the pitch shows faintly behind it. Text stays readable.
+- Tested at phone and desktop widths, no page errors. No Firestore rules change.
