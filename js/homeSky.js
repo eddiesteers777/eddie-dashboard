@@ -54,7 +54,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         pitch.setAttribute("aria-hidden", "true");
         pitch.setAttribute("preserveAspectRatio", "none");
         sky.append(pitch);
-        let pLayout = "", passEls = [], dotEls = {}, liveEl = null, ballEl = null, haloEl = null, passXY = null, lastPass = -1;
+        let pLayout = "", passEls = [], dotEls = {}, liveEl = null, ballEl = null, haloEl = null, golEl = null, passXY = null, lastPass = -1;
         const layoutPitch = () => {
             const W = sky.clientWidth || window.innerWidth, H = sky.clientHeight || window.innerHeight, portrait = H > W;
             if (pLayout === (portrait ? "p" : "l") + W) return;
@@ -82,9 +82,10 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 + passXY.map((q) => `<path class="sbh-pass" d="M${f(q[0])} ${f(q[1])}Q${f(q[2])} ${f(q[3])} ${f(q[4])} ${f(q[5])}"/>`).join("")
                 + `<path class="sbh-pass-live" pathLength="1"/>`
                 + Object.keys(PLAYERS).map((k) => { const [x, y] = xy(k); return `<circle class="sbh-player" data-k="${k}" cx="${f(x)}" cy="${f(y)}" r="${portrait ? 5 : 6}"/>`; }).join("")
+                + (() => { const [gx, gy] = P([portrait ? 0.985 : 0.93, 0.5]); return `<text class="sbh-gol" x="${f(gx)}" y="${f(gy + (portrait ? 0 : 52))}" text-anchor="${portrait ? "middle" : "end"}" aria-hidden="true">¡Gooooool!</text>`; })()
                 + `<circle class="sbh-ball-halo" r="16"/><circle class="sbh-ball" r="6"/>`;
             passEls = [...pitch.querySelectorAll(".sbh-pass")];
-            liveEl = pitch.querySelector(".sbh-pass-live"); ballEl = pitch.querySelector(".sbh-ball"); haloEl = pitch.querySelector(".sbh-ball-halo");
+            liveEl = pitch.querySelector(".sbh-pass-live"); ballEl = pitch.querySelector(".sbh-ball"); haloEl = pitch.querySelector(".sbh-ball-halo"); golEl = pitch.querySelector(".sbh-gol");
             dotEls = {}; pitch.querySelectorAll(".sbh-player").forEach((c) => { dotEls[c.dataset.k] = c; });
             lastPass = -1; lastRun = -1;
         };
@@ -295,6 +296,8 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 ride.style.transform = small
                     ? `translate3d(0,${((1 - fade.inn) * 60 + fade.out * 60).toFixed(1)}px,0)`
                     : `translate3d(${((1 - fade.inn) * 90 + fade.out * 90).toFixed(1)}px,0,0)`;
+                // The phone floats and tilts a little as you scroll, like something held in the hand.
+                if (vis > 0.01) phone.style.transform = `perspective(1300px) rotateY(${(Math.sin(y / 600) * 4).toFixed(2)}deg) translateY(${(Math.sin(y / 180) * 5).toFixed(1)}px)`;
                 const fp = Math.min(1, Math.max(0, (y - tops.featTop) / Math.max(1, featH - vh)));
                 const fs = featureStep(fp), inFeat = y + vh * 0.5 >= tops.featTop;
                 if (manual && !manualActive(y - manualAt, vh)) manual = null;
@@ -361,6 +364,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                     [ps.from, ps.to].forEach((k) => dotEls[k]?.classList.add("is-on"));
                     liveEl.setAttribute("d", `M${q[0].toFixed(1)} ${q[1].toFixed(1)}Q${q[2].toFixed(1)} ${q[3].toFixed(1)} ${q[4].toFixed(1)} ${q[5].toFixed(1)}`);
                 }
+                golEl?.classList.toggle("is-on", run * PASS_COUNT >= PASS_COUNT - 0.2);
                 liveEl.style.strokeDashoffset = (1 - e).toFixed(3);
                 const bx = a * a * q[0] + 2 * a * e * q[2] + e * e * q[4], by = a * a * q[1] + 2 * a * e * q[3] + e * e * q[5];
                 ballEl.setAttribute("cx", bx.toFixed(1)); ballEl.setAttribute("cy", by.toFixed(1));

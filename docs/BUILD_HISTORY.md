@@ -527,3 +527,8 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - Two short chat bubbles (Eddie and the athlete) sit beside the side phone for every recording. They grow in like a bubble, wobble like water, and pop into droplets with a drip falling when you scroll past. Text lives in `CHAT` / `bubbleOn()` in `js/homeSkyModel.js` (tested); drawn by `js/homeSky.js`, styled at the end of `css/home.css`. Hidden for reduced motion; decorative only (`aria-hidden`).
 - The coach note on the phone is dark sepia glass, more see-through.
 - Tested: static suite, screenshots at phone and desktop widths, no page errors. No Firestore rules change.
+
+## 2026-10-28 — Home page: phone floats and tilts, quiet "¡Gooooool!" at the goal
+- The side phone now floats a few pixels and tilts up to 4 degrees as you scroll (transform only, `js/homeSky.js`). It was in the mock-up (P2) but had not been built.
+- When the ball reaches the goal, a faint "¡Gooooool!" fades in beside the goal in the pitch background (`.sbh-gol`, SVG text, 17% cream). On a phone the pitch end is mostly under the cream close, so it is small there.
+- Tested: no page errors, phone transform changes with scroll, static suite. No Firestore rules change.
