@@ -522,3 +522,8 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The fixed sky layers (base, dusk, night, dawn, glows) move from forest green to brown-black with amber glow, so the page matches the old-print hero photo. Pitch lines and stripes are warm cream.
 - Two overlay layers on `.sbh-sky`: dark corners and a light grain. CSS only; no script or rules change.
 - Tested: static suite passes (1095), checked at phone and desktop widths. No Firestore rules change.
+
+## 2026-10-28 — Home page: liquid chat bubbles beside the phone, darker coach note (Eddie picked L2)
+- Two short chat bubbles (Eddie and the athlete) sit beside the side phone for every recording. They grow in like a bubble, wobble like water, and pop into droplets with a drip falling when you scroll past. Text lives in `CHAT` / `bubbleOn()` in `js/homeSkyModel.js` (tested); drawn by `js/homeSky.js`, styled at the end of `css/home.css`. Hidden for reduced motion; decorative only (`aria-hidden`).
+- The coach note on the phone is dark sepia glass, more see-through.
+- Tested: static suite, screenshots at phone and desktop widths, no page errors. No Firestore rules change.

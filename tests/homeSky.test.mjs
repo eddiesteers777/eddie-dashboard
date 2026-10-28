@@ -139,3 +139,10 @@ test("passAt walks the whole move, in order, for any input", () => {
     for (let p = 0; p <= 1; p += 0.01) { const a = passAt(p); assert.ok(a.index >= last && a.t >= 0 && a.t <= 1); last = a.index; assert.equal(a.from, PASS_SEQ[a.index]); assert.equal(a.to, PASS_SEQ[a.index + 1]); }
     for (const p of [NaN, -4, 9, undefined]) { const a = passAt(p); assert.ok(a.index >= 0 && a.index < PASS_COUNT && a.t >= 0 && a.t <= 1); }
 });
+
+import { CHAT, bubbleOn } from "../js/homeSkyModel.js";
+test("every recording has two chat messages, and the bubbles grow in then pop out", () => {
+    for (const id of CLIP_ORDER) assert.equal(CHAT[id]?.length, 2, id);
+    assert.equal(bubbleOn(0, 0.02), false); assert.equal(bubbleOn(0, 0.5), true); assert.equal(bubbleOn(0, 0.95), false);
+    assert.equal(bubbleOn(1, 0.3), false); assert.equal(bubbleOn(1, 0.6), true); assert.equal(bubbleOn(1, 0.95), false);
+});

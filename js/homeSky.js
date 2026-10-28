@@ -7,7 +7,7 @@
    opacity and transform change per frame, nothing repaints.
 ========================================== */
 
-import { skyState, runProgress, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CHIP_ORDER, PASS_COUNT, passAt, PLAYERS, PASS_SEQ, playerPos } from "./homeSkyModel.js";
+import { skyState, runProgress, sidewaysProgress, storyClipAt, featureStep, featureClipAt, manualFrac, manualActive, phoneFade, CLIPS, CHIP_ORDER, CHAT, bubbleOn, PASS_COUNT, passAt, PLAYERS, PASS_SEQ, playerPos } from "./homeSkyModel.js";
 
 const mq = (q) => window.matchMedia(q).matches;
 if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !== true) {
@@ -161,10 +161,10 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         if (feat) feat.hidden = false;
         const ride = document.createElement("div");
         ride.className = "sbh-ride";
-        ride.innerHTML = '<div class="sbh-dev"><i class="sbh-key sbh-key-1"></i><i class="sbh-key sbh-key-2"></i><i class="sbh-key sbh-key-3"></i><div class="sbh-phone"><video class="sbh-pv" muted playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="videos/tour/checkin.webp" src="videos/tour/scrub/checkin.mp4"></video><div class="sbh-push" aria-hidden="true"><b>E</b><span><strong>Coach Eddie <em>now</em></strong>Thursday\'s tempo is now an easy 4 miles. Your legs need it.</span></div><i class="sbh-glare"></i></div></div><span class="sbh-pex" aria-hidden="true">Example screens and data</span><div class="sbh-chips" role="group" aria-label="Pick a feature of the app"></div>';
+        ride.innerHTML = '<div class="sbh-dev"><i class="sbh-key sbh-key-1"></i><i class="sbh-key sbh-key-2"></i><i class="sbh-key sbh-key-3"></i><div class="sbh-phone"><video class="sbh-pv" muted playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="videos/tour/checkin.webp" src="videos/tour/scrub/checkin.mp4"></video><div class="sbh-push" aria-hidden="true"><b>E</b><span><strong>Coach Eddie <em>now</em></strong>Thursday\'s tempo is now an easy 4 miles. Your legs need it.</span></div><i class="sbh-glare"></i></div><div class="sbh-chat" aria-hidden="true"></div></div><span class="sbh-pex" aria-hidden="true">Example screens and data</span><div class="sbh-chips" role="group" aria-label="Pick a feature of the app"></div>';
         document.body.append(ride);
         ride.style.visibility = "hidden";
-        const phone = ride.firstElementChild, pv = phone.querySelector("video"), chipsEl = ride.querySelector(".sbh-chips"), push = phone.querySelector(".sbh-push");
+        const phone = ride.firstElementChild, pv = phone.querySelector("video"), chipsEl = ride.querySelector(".sbh-chips"), push = phone.querySelector(".sbh-push"), chat = ride.querySelector(".sbh-chat"), pops = [null, null];
         pv.defaultMuted = true; pv.muted = true; pv.playsInline = true; pv.pause();
         root.classList.add("sbh-ride-on");
         let shown = "checkin", manual = null, manualAt = 0, want = 0, at = 0, scrubRaf = 0, snapNext = true;
@@ -305,6 +305,20 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 if (push._on !== pushOn) { push._on = pushOn; push.classList.toggle("is-on", pushOn); }
                 if (manual) { showClip(manual); want = manualFrac(y - manualAt, vh); }
                 else { showClip(c.id); want = c.frac; }
+                {
+                    const cid = manual || c.id, cf = manual ? want : c.frac;
+                    if (chat._id !== cid) {
+                        chat._id = cid;
+                        chat.innerHTML = CHAT[cid].map(([who, name, text]) => `<div class="sbh-msg ${who}"><small>${name}</small>${text}<u></u><u></u><u></u><u></u><u></u><u></u></div>`).join("");
+                    }
+                    [0, 1].forEach((i) => {
+                        const el = chat.children[i], on = bubbleOn(i, cf);
+                        if (!el || el._on === on) return;
+                        el._on = on;
+                        if (on) { el.classList.remove("pop"); el.classList.add("in"); }
+                        else if (el.classList.contains("in")) { el.classList.remove("in"); el.classList.add("pop"); setTimeout(() => el.classList.remove("pop"), 520); }
+                    });
+                }
                 kick();
                 if (feat && featTitle) {
                     featSegs.forEach((sg, i) => { sg.style.width = (i < fs ? 100 : i === fs ? Math.max(6, (fp * 3 - fs) * 100) : 0) + "%"; });

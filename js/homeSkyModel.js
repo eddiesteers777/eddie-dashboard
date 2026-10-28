@@ -134,3 +134,19 @@ export function phoneFade({ scrollY, vh, storyTop, featTop, featH }) {
         out: ramp(y, end, end + v * 0.6),
     };
 }
+
+/* The chat bubbles beside the phone: two short messages per recording (Eddie and the athlete). */
+export const CHAT = {
+    checkin: [["me", "You", "Slept 6 hours. Legs feel heavy."], ["coach", "Eddie", "Got it. Thursday tempo is now an easy 4."]],
+    plans: [["coach", "Eddie", "Week is set. Saturday is the long one."], ["me", "You", "Works for me."]],
+    live: [["me", "You", "Squats felt good. Set 2 at RPE 7."], ["coach", "Eddie", "Add 5 lb next week."]],
+    wins: [["coach", "Eddie", "Strength done. Four of four."], ["me", "You", "On to Thursday."]],
+    soccer: [["coach", "Eddie", "Report is up. Left foot is catching up."], ["me", "You", "Wall work again tonight."]],
+    fuel: [["coach", "Eddie", "60 g of carbs an hour. Start at 40 minutes."], ["me", "You", "Got it."]],
+    pace: [["coach", "Eddie", "A 3:05 needs 7:03 a mile."], ["me", "You", "Locked in."]],
+};
+/* Is bubble 0 or 1 showing at this point (0 to 1) of its recording? Each grows in, then pops near the end. */
+export function bubbleOn(index, frac) {
+    const f = clamp(num(frac));
+    return index === 0 ? f > 0.08 && f < 0.9 : f > 0.4 && f < 0.92;
+}
