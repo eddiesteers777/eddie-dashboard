@@ -604,30 +604,22 @@ html.sbh-sky-on .sbh-cream :focus-visible { outline-color: var(--primary); }
    They grow in, wobble like water, then pop into droplets. Decorative only. */
 .sbh-chat { position: absolute; z-index: 6; pointer-events: none; display: flex; flex-direction: column; gap: 16px; width: max-content; top: 50%; translate: 0 -50%; right: calc(100% + 22px); }
 .sbh-msg { position: relative; max-width: 230px; padding: 12px 17px; border-radius: 30px 26px 32px 24px; font: 500 13.5px/1.35 var(--font-body); color: #F2EDE1; opacity: 0; scale: .2; transform-origin: 100% 60%;
-    background: linear-gradient(180deg, rgba(24,18,11,.3) 0 52%, rgba(190,140,80,.3) 100%), rgba(24,18,11,.3); border: 1px solid rgba(242,226,196,.34);
+    background: linear-gradient(180deg, rgba(24,18,11,.34) 0 60%, rgba(150,110,65,.26) 100%), rgba(24,18,11,.3); border: 1px solid rgba(242,226,196,.22);
     -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-    box-shadow: inset 0 2px 0 rgba(255,240,210,.5), inset 0 -10px 14px -6px rgba(214,160,90,.35), 0 14px 28px -12px rgba(0,0,0,.65); }
+    box-shadow: inset 0 1px 0 rgba(255,240,210,.18), 0 14px 28px -12px rgba(0,0,0,.65); }
 .sbh-msg small { display: block; margin-bottom: 3px; font: 500 9.5px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
-.sbh-msg.me { background: rgba(214,185,142,.88); color: #1a1209; border-color: rgba(255,236,200,.7); }
-.sbh-msg::before { content: ""; position: absolute; left: 14px; top: 6px; width: 34%; height: 7px; border-radius: 50%; background: linear-gradient(90deg, rgba(255,248,230,.75), transparent); }
-.sbh-msg::after { content: ""; position: absolute; left: 30px; bottom: -9px; width: 9px; height: 12px; border-radius: 50% 50% 55% 55%; background: rgba(214,170,100,.55); box-shadow: inset 1px 2px 0 rgba(255,240,210,.6); }
+.sbh-msg.me { background: rgba(204,176,134,.82); color: #1a1209; border-color: rgba(255,236,200,.3); }
+.sbh-msg::before { content: ""; position: absolute; left: 14px; top: 6px; width: 34%; height: 7px; border-radius: 50%; background: linear-gradient(90deg, rgba(255,248,230,.22), transparent); }
+.sbh-msg::after { content: ""; position: absolute; left: 30px; bottom: -9px; width: 9px; height: 12px; border-radius: 50% 50% 55% 55%; background: rgba(200,160,100,.4); }
 .sbh-msg.me::after { background: rgba(214,185,142,.9); }
-.sbh-msg u { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3px; border-radius: 50%; background: rgba(242,226,196,.85); opacity: 0; }
+.sbh-msg u { display: none; }
 .sbh-msg.in { animation: sbh-grow .6s cubic-bezier(.2,.9,.25,1.25) forwards, sbh-wob 5s ease-in-out .6s infinite; }
-.sbh-msg.pop { animation: sbh-pop .45s ease-out forwards; }
+.sbh-msg.pop { animation: sbh-pop .24s ease-out forwards; }
 .sbh-msg.pop::after { animation: sbh-fall .5s ease-in forwards; }
-.sbh-msg.pop u { animation: sbh-drop .5s ease-out forwards; }
-.sbh-msg.pop u:nth-child(1){--dx:-46px;--dy:-40px}
-.sbh-msg.pop u:nth-child(2){--dx:40px;--dy:-46px}
-.sbh-msg.pop u:nth-child(3){--dx:58px;--dy:10px}
-.sbh-msg.pop u:nth-child(4){--dx:-58px;--dy:18px}
-.sbh-msg.pop u:nth-child(5){--dx:8px;--dy:52px}
-.sbh-msg.pop u:nth-child(6){--dx:-14px;--dy:-56px}
 @keyframes sbh-grow { 0% { opacity: 0; scale: .2; } 55% { opacity: 1; scale: 1.09; } 100% { opacity: 1; scale: 1; } }
 @keyframes sbh-wob { 0%,100% { border-radius: 30px 26px 32px 24px; translate: 0 0; } 33% { border-radius: 26px 32px 24px 30px; translate: 0 -3px; } 66% { border-radius: 32px 24px 28px 30px; translate: 0 -1px; } }
-@keyframes sbh-pop { 0% { opacity: 1; scale: 1; } 35% { opacity: .9; scale: 1.16; } 100% { opacity: 0; scale: 1.4; filter: blur(3px); } }
+@keyframes sbh-pop { 0% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .94; } }
 @keyframes sbh-fall { 0% { opacity: 1; translate: 0 0; } 100% { opacity: 0; translate: 0 34px; } }
-@keyframes sbh-drop { 0% { opacity: .95; transform: translate(0,0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3); } }
 @media (max-width: 760px) { .sbh-chat { right: auto; left: -24%; top: 60%; translate: none; gap: 12px; } .sbh-msg { font-size: 12px; padding: 9px 13px; max-width: 170px; } }
 @media (prefers-reduced-motion: reduce) { .sbh-chat { display: none; } }
 
@@ -640,3 +632,8 @@ html.sbh-sky-on .sbh-cream :focus-visible { outline-color: var(--primary); }
 
 /* The closing section is slightly see-through so the pitch shows faintly behind it. */
 .sbh-close { background: color-mix(in srgb, var(--cream) 88%, transparent); }
+
+/* Water from a popped bubble: drops fall to the bottom of the screen, then settle as puddles. */
+.sbh-drop { position: fixed; z-index: 7; pointer-events: none; border-radius: 50% 50% 55% 55%; background: radial-gradient(circle at 35% 30%, rgba(255,246,225,.7), rgba(214,180,130,.5) 60%); }
+.sbh-puddle { position: fixed; z-index: 7; bottom: 0; height: 8px; pointer-events: none; border-radius: 50%; background: radial-gradient(closest-side, rgba(226,196,150,.8), rgba(214,180,130,.25) 70%, transparent); transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) { .sbh-drop, .sbh-puddle { display: none; } }

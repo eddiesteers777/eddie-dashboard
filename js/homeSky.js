@@ -162,6 +162,27 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const phone = ride.firstElementChild, pv = phone.querySelector("video"), chipsEl = ride.querySelector(".sbh-chips"), push = phone.querySelector(".sbh-push"), chat = ride.querySelector(".sbh-chat"), pops = [null, null];
         pv.defaultMuted = true; pv.muted = true; pv.playsInline = true; pv.pause();
         root.classList.add("sbh-ride-on");
+        // A popped bubble throws water: drops fall to the bottom of the screen and settle there as small puddles.
+        const splash = (r) => {
+            if (!r.width || !r.height) return;
+            const vh = window.innerHeight, rnd = (a, b) => a + Math.random() * (b - a);
+            for (let i = 0; i < 9; i++) {
+                const d = document.createElement("i");
+                const w = rnd(4, 8), x0 = r.left + rnd(0.1, 0.9) * r.width, y0 = r.top + rnd(0.35, 1) * r.height, fall = Math.max(40, vh - y0 - 2), dx = rnd(-46, 46);
+                const dur = 520 + Math.sqrt(fall) * 26 + rnd(0, 160);
+                d.className = "sbh-drop"; d.style.cssText = `left:${x0.toFixed(0)}px;top:${y0.toFixed(0)}px;width:${w.toFixed(1)}px;height:${(w * 1.35).toFixed(1)}px`;
+                document.body.append(d);
+                d.animate({ translate: ["0 0", `${dx.toFixed(0)}px 0`] }, { duration: dur, easing: "linear", fill: "forwards" });
+                const fallAnim = d.animate({ transform: ["translateY(0) scaleY(.8)", `translateY(${fall.toFixed(0)}px) scaleY(1.5)`] }, { duration: dur, easing: "cubic-bezier(.45,0,.9,.55)", fill: "forwards" });
+                fallAnim.onfinish = () => {
+                    const px = x0 + dx; d.remove();
+                    const pd = document.createElement("i");
+                    pd.className = "sbh-puddle"; pd.style.cssText = `left:${(px - w * 2).toFixed(0)}px;width:${(w * 4).toFixed(0)}px`;
+                    document.body.append(pd);
+                    pd.animate({ transform: ["scaleX(.3)", "scaleX(1.6)"], opacity: [0.9, 0] }, { duration: 3200, easing: "ease-out" }).onfinish = () => pd.remove();
+                };
+            }
+        };
         let shown = "checkin", manual = null, manualAt = 0, want = 0, at = 0, scrubRaf = 0, snapNext = true;
         // Walk the video's time toward the wanted time; one seek at a time so it keeps up on a phone.
         const scrub = () => {
@@ -313,7 +334,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                         if (!el || el._on === on) return;
                         el._on = on;
                         if (on) { el.classList.remove("pop"); el.classList.add("in"); }
-                        else if (el.classList.contains("in")) { el.classList.remove("in"); el.classList.add("pop"); setTimeout(() => el.classList.remove("pop"), 520); }
+                        else if (el.classList.contains("in")) { el.classList.remove("in"); el.classList.add("pop"); splash(el.getBoundingClientRect()); setTimeout(() => el.classList.remove("pop"), 300); }
                     });
                 }
                 kick();
