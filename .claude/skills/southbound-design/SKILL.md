@@ -14,6 +14,9 @@ Eddie's words: "More like A, but keep my original palette." A = trail-editorial,
 - Sage `--sage` / `--green` = done / on target. Status tones (`--amber`, `--red`…) only for real status, never decoration.
 - The app is photo-free (speed, offline). Photography belongs on the public website.
 
+## Public website look (Eddie, 2026-10-28): old-print sepia
+The app stays forest/tan/cream. The public pages (home, About, Coaching, Soccer, Packages, Apply, Contact, Get the App, Free tools) wear an old-print sepia night: brown-black ground with amber glow, light grain, dark corners (`css/publicLook.css`, `js/publicLook.js`; home in `js/homeSky.js`). Panels are see-through glass with a 1px gold hairline on top; photos get a glass sheen; each page has its own drawing behind it (prints, route, pitch, ledger, lamp, postmark, drops, graph paper). Chat bubbles beside the home phone are water drops that pop into falling water. Keep new public work in this look; do not turn public pages back to flat forest panels.
+
 ## Type
 - **Headlines:** `var(--font-display)` = Big Shoulders Display, **always uppercase** (the font has lowercase; every rule using it sets `text-transform:uppercase`). Weight 800–900, line-height ~0.9–1. Use for page titles, the greeting, workout names, big numbers.
 - **Text:** `var(--font-body)` = Albert Sans (Instrument Sans is the fallback), 15–16px, 1.45–1.55 line height. Sentences in normal case.
