@@ -545,3 +545,8 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 
 ## 2026-10-28 — Home page: bubbles shaped like water drops
 - The chat bubbles are now rounded drops: clear body, light gathering along the bottom edge, one small bright spot, and a gently wobbling outline (CSS only, end of `css/home.css`). No rules change.
+
+## 2026-10-28 — Public pages: old-print sepia look, a drawing per page (Eddie: "push and change details as we go")
+- New `css/publicLook.css` + `js/publicLook.js`, loaded on About, Coaching, Soccer, Packages, Apply, Contact, Get the App and Free tools (not Home, which has its own in `js/homeSky.js`). The script adds `html.pl-on`, a fixed background layer (page colour, grain, dark corners) and a drawing per page: prints (About), training-block line (Coaching), pitch and pass (Soccer), ledger (Packages), lamp glow (Apply), postmark (Contact), drops (Get the App), graph paper and pace dial (Tools).
+- Photos under `images/` get a glass sheen and light edge (`.pl-glass`). The flat green cards, call-to-action blocks and footer become deep glass with a gold hairline.
+- Calculators and forms keep their own panels. Tested at phone and desktop widths: no page errors, no sideways scroll. Mock-ups were in /mnt/project-files/phone-scroll/round11 and round12. No Firestore rules change.
