@@ -500,3 +500,9 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The dark "Checked every week. Changed by hand." section (`.sbh-hand`, around pass 8) is transparent while the scroll experience is on, so the pitch and the passes stay in view behind it. Visitors without the pitch (reduced motion, data saver) keep the solid forest fill.
 - On a phone the story step bar and text moved up to use the space the counter took.
 - The sand "What I coach" and the cream sections are unchanged. Tested: static tests, 390 and 1280 wide, no overflow. No rules change.
+
+## 2026-10-28 — Home page: old-print photo, glass toolbar that hides on scroll, see-through sand and cream (Eddie picked I3, N1 phone / N2 computer)
+- The top photo is the old-print look (I3): sepia, grain, a warm light leak, dark corners. It is baked into `images/hero-field.jpg` by `scripts/build-hero-film.py` from the untouched `images/originals/hero-field-original.jpg`, then `scripts/build-images.py` makes the WebP sizes. No filters at runtime.
+- The home page toolbar is sharp glass: a full-width strip on a phone, a floating rounded bar on a computer (`css/home.css`, only with `html.sbh-sky-on`). `js/homeSky.js` slides it away on the way down and brings it back on the way up; it stays while the menu is open or has focus, and gets a darker tint past the top photo. Reduced-motion visitors keep the plain sticky bar. Other public pages are unchanged.
+- The cream intro and the sand "What I coach" are see-through with cream text, so the pitch and passes show behind them. The closing section stays cream.
+- Tested: static tests, 390 and 1280 wide, no overflow, bar hides and returns. No rules change.

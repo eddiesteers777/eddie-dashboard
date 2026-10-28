@@ -215,6 +215,8 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             }
         };
 
+        let navBar = null; // the header partial arrives after this script, so it is looked up on first use
+        let lastY = window.scrollY, navAway = false, navPast = false;
         let queued = false;
         const update = () => {
             queued = false;
@@ -286,6 +288,16 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                     lastWordsT = t;
                     words.forEach((w, i) => { w.style.opacity = (0.2 + 0.8 * Math.min(1, Math.max(0, t * (words.length + 3) - i))).toFixed(2); });
                 }
+            }
+            // The toolbar slides away on the way down and comes back on the way up. It stays while the menu is open or focused.
+            navBar = navBar || document.querySelector(".pub-navbar");
+            if (navBar) {
+                const dy = y - lastY; lastY = y;
+                const keep = navBar.classList.contains("pub-nav-open") || navBar.matches(":focus-within");
+                if (y < 80 || dy < -4 || keep) { if (navAway) { navAway = false; navBar.classList.remove("is-away"); } }
+                else if (dy > 6 && !navAway) { navAway = true; navBar.classList.add("is-away"); }
+                const past = y > tops.heroH * 0.9;
+                if (past !== navPast) { navPast = past; navBar.classList.toggle("is-past", past); }
             }
             const run = runProgress({ scrollY: y, vh, heroH: tops.heroH, closeTop: tops.closeTop });
             if (passXY && Math.abs(run - lastRun) > 0.0008) {

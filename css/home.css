@@ -545,3 +545,36 @@ html.sbh-sky-on .sbh-hand { background: transparent; }
 @media (prefers-reduced-transparency: reduce) {
     .sbh-dev::before, .sbh-card-foot, .sbh-page .pub-cta-band { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* ---- Sharp glass toolbar that slides away as you scroll down (Eddie, 2026-10-28) ----
+   Only with the scroll experience on; reduced motion keeps the plain sticky bar.
+   A strip on a phone, a floating bar on a computer. js/homeSky.js toggles .is-away and .is-past. */
+html.sbh-sky-on .pub-navbar {
+    position: fixed; left: 0; right: 0; width: 100%;
+    background: rgba(14, 32, 24, .38);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6) brightness(1.05); backdrop-filter: blur(18px) saturate(1.6) brightness(1.05);
+    border-bottom: 1px solid rgba(242, 237, 225, .38);
+    box-shadow: inset 0 1px 0 rgba(242, 237, 225, .45), 0 10px 30px -14px rgba(0, 0, 0, .6);
+    transition: transform .35s cubic-bezier(.2, .8, .2, 1), background-color .3s ease;
+}
+html.sbh-sky-on .pub-navbar.is-past { background: rgba(14, 32, 24, .62); }
+html.sbh-sky-on .pub-navbar.is-away { transform: translateY(-105%); }
+html.sbh-sky-on .sbh-hero { height: 100svh; }
+@media (min-width: 761px) {
+    html.sbh-sky-on .pub-navbar {
+        left: 12px; right: 12px; width: auto; margin: 10px 0; border: 1px solid rgba(242, 237, 225, .42); border-radius: 16px;
+        -webkit-backdrop-filter: blur(20px) saturate(1.7); backdrop-filter: blur(20px) saturate(1.7);
+        box-shadow: inset 0 1px 0 rgba(242, 237, 225, .5), inset 0 -1px 0 rgba(0, 0, 0, .25), 0 18px 40px -14px rgba(0, 0, 0, .65);
+    }
+    html.sbh-sky-on .pub-navbar.is-away { transform: translateY(calc(-100% - 20px)); }
+}
+
+/* ---- See-through sand and cream sections: the pitch and the passes stay in view (Eddie, 2026-10-28).
+   The closing section stays cream. Text flips to cream; the accent stays sand. ---- */
+html.sbh-sky-on .sbh-svc, html.sbh-sky-on .sbh-cream { background: transparent; color: var(--cream); }
+html.sbh-sky-on .sbh-cream .sbh-big, html.sbh-sky-on .sbh-cream .sbh-big .sbh-w, html.sbh-sky-on .sbh-svc .sbh-svc-head h2 { color: var(--text); }
+html.sbh-sky-on .sbh-cream .sbh-big b, html.sbh-sky-on .sbh-cream .sbh-big b .sbh-w { color: var(--primary); }
+html.sbh-sky-on .sbh-cream .sbh-meta, html.sbh-sky-on .sbh-svc .sbh-svc-head .sbh-meta { color: var(--sage); }
+html.sbh-sky-on .sbh-cream .sbh-meta::before, html.sbh-sky-on .sbh-svc .sbh-svc-head .sbh-meta::before { color: var(--primary); }
+html.sbh-sky-on .sbh-cream .sbh-link { color: var(--text); }
+html.sbh-sky-on .sbh-cream :focus-visible { outline-color: var(--primary); }
