@@ -512,3 +512,8 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - After the opening the hero scrolls away as before. The pitch, the ball and the sky timing start after the opening (the hero zone now includes it).
 - Reduced-motion visitors get today's hero with no opening. Data-saver visitors have the black layers removed. If the script fails, the black layer and film hide themselves after 4 seconds.
 - The page is about 90% of a screen longer at the top. Tested: static tests, 390 and 1280 wide, no overflow, reduced motion. No rules change.
+
+## 2026-10-28 — Home page: lighter opening grain, glassier toolbar that stays longer (Eddie, after seeing it live)
+- The opening starts with the photo already visible under a half-strength veil and a lighter grain, so the picture can be seen from the first frame (it was near-black and too grainy).
+- The toolbar is more see-through (fill about a third of before, a brighter edge and a stronger blur); past the top photo it is a little darker, not solid.
+- The toolbar now hides only after about 600px of steady scrolling down (it was a few pixels) and comes back on any scroll up. Tested: bar stays for the first 600px, hides after, returns on scroll up; 390 and 1280 wide. No rules change.

@@ -231,7 +231,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         };
 
         let navBar = null; // the header partial arrives after this script, so it is looked up on first use
-        let lastY = window.scrollY, navAway = false, navPast = false, openWas = 0;
+        let lastY = window.scrollY, navAway = false, navPast = false, openWas = 0, shownAt = 0;
         let queued = false;
         const update = () => {
             queued = false;
@@ -266,8 +266,8 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
                 if (open && (p < 1 || openWas < 1)) {
                     openWas = p;
                     const flick = p < 0.6 ? 0.1 * Math.abs(Math.sin(p * 95)) : 0;
-                    leader.style.opacity = Math.min(1, Math.max(0, 1 - ez(cl01(p, 0, 0.5)) + flick)).toFixed(3);
-                    film.style.opacity = (0.5 - 0.22 * ez(p)).toFixed(3);
+                    leader.style.opacity = Math.min(1, Math.max(0, 0.5 * (1 - ez(cl01(p, 0, 0.5))) + flick)).toFixed(3);
+                    film.style.opacity = (0.2 - 0.1 * ez(p)).toFixed(3);
                     if (cue) cue.style.opacity = (1 - cl01(p, 0, 0.12)).toFixed(2);
                     const W = window.innerWidth, fade = 1 - cl01(p, 0.3, 0.7);
                     scratches.forEach((el, k) => {
@@ -330,8 +330,9 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             if (navBar) {
                 const dy = y - lastY; lastY = y;
                 const keep = navBar.classList.contains("pub-nav-open") || navBar.matches(":focus-within");
-                if (y < 80 || dy < -4 || keep) { if (navAway) { navAway = false; navBar.classList.remove("is-away"); } }
-                else if (dy > 6 && !navAway) { navAway = true; navBar.classList.add("is-away"); }
+                // It goes only after about 600px of steady scrolling down, and comes back on any scroll up.
+                if (y < 80 || dy < -4 || keep) { shownAt = y; if (navAway) { navAway = false; navBar.classList.remove("is-away"); } }
+                else if (dy > 0 && !navAway && y - shownAt > 600) { navAway = true; navBar.classList.add("is-away"); }
                 const past = y > tops.heroH * 0.9;
                 if (past !== navPast) { navPast = past; navBar.classList.toggle("is-past", past); }
             }
