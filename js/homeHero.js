@@ -11,6 +11,8 @@ import { storyState, storyProgress } from "./homeStoryModel.js";
 
 const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const saveData = navigator.connection?.saveData === true;
+// Visitors who skip the scroll experience see the photo straight away, with no black opening.
+if (saveData) document.querySelectorAll(".sbh-leader, .sbh-film").forEach((el) => el.remove());
 
 // The hero and the sticky story sit under the public top bar, which loads after this script.
 let barH = 0;

@@ -506,3 +506,9 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - The home page toolbar is sharp glass: a full-width strip on a phone, a floating rounded bar on a computer (`css/home.css`, only with `html.sbh-sky-on`). `js/homeSky.js` slides it away on the way down and brings it back on the way up; it stays while the menu is open or has focus, and gets a darker tint past the top photo. Reduced-motion visitors keep the plain sticky bar. Other public pages are unchanged.
 - The cream intro and the sand "What I coach" are see-through with cream text, so the pitch and passes show behind them. The closing section stays cream.
 - Tested: static tests, 390 and 1280 wide, no overflow, bar hides and returns. No rules change.
+
+## 2026-10-28 — Home page: opens like an old film (Eddie picked M3, without the growing circle)
+- The hero now stays pinned for about 90% of a screen of extra scrolling (`.sbh-open` wrapper made by `js/homeSky.js`). The picture comes up from black with a flicker, light vertical scratches and grain (`.sbh-leader`, `.sbh-film` in `home.html`), a small "Scroll" cue shows at the start, and the headline fades in at the end. Only opacity and transform change per frame; the grain is a static texture.
+- After the opening the hero scrolls away as before. The pitch, the ball and the sky timing start after the opening (the hero zone now includes it).
+- Reduced-motion visitors get today's hero with no opening. Data-saver visitors have the black layers removed. If the script fails, the black layer and film hide themselves after 4 seconds.
+- The page is about 90% of a screen longer at the top. Tested: static tests, 390 and 1280 wide, no overflow, reduced motion. No rules change.

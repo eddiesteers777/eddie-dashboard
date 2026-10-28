@@ -33,6 +33,19 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const sun = sky.querySelector(".sbh-sun");
         root.classList.add("sbh-sky-on");
 
+        // The opening: the hero stays pinned for about one more screen while the picture comes up from black,
+        // like the start of an old film (flicker, scratches, grain), then the headline arrives.
+        const leader = hero.querySelector(".sbh-leader"), film = hero.querySelector(".sbh-film"), heroInner = hero.querySelector(".sbh-hero-inner");
+        let open = null, scratches = [], cue = null;
+        if (leader && film && heroInner) {
+            open = document.createElement("div");
+            open.className = "sbh-open";
+            hero.before(open); open.append(hero);
+            scratches = [...film.querySelectorAll("i")];
+            cue = film.querySelector(".sbh-cue");
+            root.classList.add("sbh-open-live");
+        }
+
         // The pitch: fixed behind the page, with a ball passed from player to player as the visitor scrolls.
         // Lines and mown stripes only; the ball and the passes already made are the only things that move.
         const NS = "http://www.w3.org/2000/svg";
@@ -191,11 +204,13 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         let lastFeat = -1, lastWordsT = -1, lastRun = -1;
 
         let riseTops = [], bigTop = 0, bigH = 0;
-        let tops = { storyTop: 0, storyBottom: 0, closeTop: 0, heroH: 1 };
+        let tops = { storyTop: 0, storyBottom: 0, closeTop: 0, heroH: 1, openH: 0, heroOnly: 1 };
         const measure = () => {
             const y = window.scrollY;
             tops = {
-                heroH: hero.offsetHeight,
+                heroH: open ? open.offsetHeight : hero.offsetHeight,
+                openH: open ? open.offsetHeight - hero.offsetHeight : 0,
+                heroOnly: hero.offsetHeight,
                 hzTop: hz ? hz.getBoundingClientRect().top + y : 0,
                 storyTop: story.getBoundingClientRect().top + y,
                 storyBottom: story.getBoundingClientRect().bottom + y,
@@ -216,7 +231,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         };
 
         let navBar = null; // the header partial arrives after this script, so it is looked up on first use
-        let lastY = window.scrollY, navAway = false, navPast = false;
+        let lastY = window.scrollY, navAway = false, navPast = false, openWas = 0;
         let queued = false;
         const update = () => {
             queued = false;
@@ -243,8 +258,29 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
             const sunY = (0.22 + s.set * 1.0 - s.rise * 0.75) * vh;
             sun.style.transform = `translate3d(${(vh * 0.12 * (1 - s.set)).toFixed(1)}px,${sunY.toFixed(1)}px,0)`;
             sun.style.opacity = (1 - s.set * 0.9 + s.rise * 0.8).toFixed(3);
-            if (video && y < tops.heroH * 1.2) video.style.transform = `scale(${(1 + s.hero * 0.12).toFixed(4)})`;
-            if (headline && y < tops.heroH * 1.2) headline.style.transform = `translate3d(0,${(s.hero * -60).toFixed(1)}px,0)`;
+            {
+                // The opening (p, 0..1 over the pinned screen), then the hero scrolls away (hp, 0..1).
+                const ez = (t) => t * t * (3 - 2 * t), cl01 = (v, a, b) => Math.min(1, Math.max(0, (v - a) / (b - a)));
+                const p = tops.openH > 0 ? cl01(y, 0, tops.openH) : 1;
+                const hp = cl01(y - tops.openH, 0, tops.heroOnly);
+                if (open && (p < 1 || openWas < 1)) {
+                    openWas = p;
+                    const flick = p < 0.6 ? 0.1 * Math.abs(Math.sin(p * 95)) : 0;
+                    leader.style.opacity = Math.min(1, Math.max(0, 1 - ez(cl01(p, 0, 0.5)) + flick)).toFixed(3);
+                    film.style.opacity = (0.5 - 0.22 * ez(p)).toFixed(3);
+                    if (cue) cue.style.opacity = (1 - cl01(p, 0, 0.12)).toFixed(2);
+                    const W = window.innerWidth, fade = 1 - cl01(p, 0.3, 0.7);
+                    scratches.forEach((el, k) => {
+                        el.style.transform = `translate3d(${(((Math.sin(p * 40 + k * 7.1) + 1) / 2) * W).toFixed(0)}px,0,0)`;
+                        el.style.opacity = (fade * (k % 2 ? 0.45 : 0.85)).toFixed(2);
+                    });
+                    const a = ez(cl01(p, 0.55, 0.9));
+                    heroInner.style.opacity = a.toFixed(3);
+                    heroInner.style.transform = `translate3d(0,${((1 - a) * 24).toFixed(1)}px,0)`;
+                }
+                if (video && y < tops.openH + tops.heroOnly * 1.2) video.style.transform = `scale(${(1 + (p < 1 ? 0.08 * (1 - ez(p)) : hp * 0.12)).toFixed(4)})`;
+                if (headline && y < tops.openH + tops.heroOnly * 1.2) headline.style.transform = `translate3d(0,${(hp * -60).toFixed(1)}px,0)`;
+            }
             {
                 const small = window.innerWidth <= 760, top = barH();
                 const chipsH = 44, featH = tops.featBottom - tops.featTop;
