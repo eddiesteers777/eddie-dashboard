@@ -556,3 +556,6 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 - Public pages: the background layer is sized to the full screen height (`100lvh`), so no bare strip shows while a phone's address bar slides away. Drawings are quieter on phones where they sit behind text.
 - Coaching "What a week looks like": deep glass cards with a gold hairline, ruled rows instead of boxes, mono gold day labels, display-type check-in numbers.
 - Tested: home scrolled top to bottom at phone width, all eight public pages at phone and desktop with no page errors and no sideways scroll; static suite. No Firestore rules change.
+
+## 2026-10-28: App wears the old-print night with forest glass
+Eddie picked S3 (sepia night with motion) and asked to keep forest green in a premium way. `css/appLook.css` + `js/appLook.js`; details in `docs/APP_REFERENCE.md`. Checked in the browser on the client and coach personas at 390 and 1280 px (Today, Plan, Train, Nutrition, More, Messages, coach dashboard, clients). Static tests: the two failures are dev packages missing in the sandbox (`@garmin/fitsdk`, `fast-check`). No rules change.

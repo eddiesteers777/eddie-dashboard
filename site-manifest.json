@@ -68,6 +68,7 @@
     "js/analyticsLayout.js",
     "js/analyticsSummary.js",
     "js/app.js",
+    "js/appLook.js",
     "js/applicationForm.js",
     "js/applications.js",
     "js/apply.js",
@@ -394,6 +395,7 @@
   ],
   "styles": [
     "css/analytics.css",
+    "css/appLook.css",
     "css/athlete-state.css",
     "css/checkin.css",
     "css/client-hub.css",

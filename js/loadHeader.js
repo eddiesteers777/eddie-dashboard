@@ -12,6 +12,8 @@
 import("./ui.js").catch(error => console.warn("Southbound: UI helpers unavailable.", error));
 // The tab dock and other bottom bars stay off the form on a phone (js/viewportFix.js).
 import("./viewportFix.js").catch(() => {});
+// The old-print night with forest glass (js/appLook.js); the Playbook keeps its own look.
+if (!document.documentElement.classList.contains("pb-app")) import("./appLook.js").then(m => m.applyAppLook()).catch(() => {});
 
 const GUEST_PAGES = ["fueling.html"];
 
