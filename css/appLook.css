@@ -99,3 +99,9 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-brim path{fill:url(#al-brg)}
 .al-bg .al-bwater{transform:translateZ(19px)}
 .al-bg .al-bglass{transform:translateZ(22px)}
+/* Habits: three thick rings */
+.al-bg .al-cmp.al-rg{--s:min(300px,64vw);opacity:.88}
+@media (max-width:600px){.al-bg .al-cmp.al-rg{right:0;top:110px}}
+.al-bg .al-rg .al-cmp-sh{border-radius:50%}
+.al-bg .al-rg .al-cmp-b{transform:rotateX(34deg) rotateY(-10deg) rotateZ(-8deg)}
+.al-bg .al-rg .al-cmp-b>svg{position:absolute;inset:0;right:auto;width:100%;height:100%;overflow:visible;border-radius:0}

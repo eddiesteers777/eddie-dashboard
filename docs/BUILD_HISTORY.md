@@ -590,3 +590,6 @@ Second page after Today and Train in the one-page-at-a-time rollout. Plan keeps 
 
 ## 2026-10-29: Fabric and solid bottle on Fuel
 Third page in the rollout. The Fuel water animation now lives inside an extruded 3D bottle over the fabric. Checked on the real Nutrition page at 390 and 1280 px, no page errors.
+
+## 2026-10-29: Fabric and thick rings on Habits
+Fourth page in the rollout. The Habits rings are now three thick extruded rings over the fabric. Checked on the real Habits page at 390 and 1280 px, no page errors.
