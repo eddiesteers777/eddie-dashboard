@@ -587,3 +587,6 @@ Eddie: the compass belongs to Home only; every other page keeps its own instrume
 
 ## 2026-10-29: Fabric and solid calendar on Plan
 Second page after Today and Train in the one-page-at-a-time rollout. Plan keeps its calendar instrument as a thick desk calendar over the fabric. Checked on the real Plan page at 390 and 1280 px, no page errors.
+
+## 2026-10-29: Fabric and solid bottle on Fuel
+Third page in the rollout. The Fuel water animation now lives inside an extruded 3D bottle over the fabric. Checked on the real Nutrition page at 390 and 1280 px, no page errors.

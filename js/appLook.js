@@ -43,16 +43,35 @@ const calendarHtml = () => {
     const rings = [22, 50, 78].map(x => `<div class="al-bring" style="left:${x}%"></div>`).join("");
     return `<div class="al-cmp al-cal"><div class="al-cmp-sh"></div><div class="al-cmp-b">${rims}<div class="al-face"><div class="al-days">${days}</div><div class="al-grid">${cells}</div></div>${rings}<div class="al-glass"></div></div></div>`;
 };
+const bottleHtml = () => {
+    // The bottle is extruded: 12 copies of its outline stacked in depth, then the water (the Fuel drawing: waves, crest,
+    // bubbles, level from scroll) and a glass highlight in front. Two layers of waves move; the surface tilts with scroll speed.
+    const vb = 'viewBox="26 2 48 70" preserveAspectRatio="xMidYMid meet"';
+    const rims = Array.from({ length: 12 }, (_, i) => `<svg class="al-brim" ${vb} style="transform:translateZ(${(i * 1.6).toFixed(1)}px)"><path d="${BOTTLE}"/></svg>`).join("");
+    return `<div class="al-cmp al-bt"><div class="al-cmp-sh"></div><div class="al-cmp-b">${rims}<svg class="al-bwater" ${vb}><defs><linearGradient id="al-brg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a8399"/><stop offset=".55" stop-color="#2a3b4c"/><stop offset="1" stop-color="#121b24"/></linearGradient></defs>${ART.nutrition}</svg><svg class="al-bglass" ${vb}><path d="${BOTTLE}" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1" vector-effect="non-scaling-stroke"/><path d="M34 32 V60" stroke="rgba(255,255,255,.4)" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg></div></div>`;
+};
 // Pages that wear the fabric: the solid object, how fast its hand turns per px scrolled, and whether the folds slope the other way.
-const FABRIC = { index: { obj: compassHtml, spin: 0.15, flip: false }, train: { obj: stopwatchHtml, spin: 0.5, flip: true }, plan: { obj: calendarHtml, spin: 0, flip: false } };
+const FABRIC = { index: { obj: compassHtml, spin: 0.15, flip: false }, train: { obj: stopwatchHtml, spin: 0.5, flip: true }, plan: { obj: calendarHtml, spin: 0, flip: false }, nutrition: { obj: bottleHtml, spin: 0, flip: true } };
 
 function startFabric(bg, spin, page) {
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const folds = [...bg.querySelectorAll(".al-fold")], body = bg.querySelector(".al-cmp-b"), nd = bg.querySelector(".al-nd");
-    let queued = false;
+    let queued = false, lastY = scrollY, sl = { angle: 0, vel: 0 }, settling = false;
+    const water = () => {
+        if (page !== "nutrition") return;
+        const max = document.documentElement.scrollHeight - innerHeight;
+        bg._tilt = sl.angle;
+        applyState(bg, instrumentState("nutrition", still ? 0 : scrollY, max));
+    };
+    const settle = () => {   // a short ease-out after scrolling stops, not a loop
+        sl = sloshStep(sl.angle, sl.vel, 0); water();
+        if (Math.abs(sl.angle) > 0.02 || Math.abs(sl.vel) > 0.02) requestAnimationFrame(settle); else { settling = false; sl = { angle: 0, vel: 0 }; water(); }
+    };
     const draw = () => {
         queued = false;
         if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
+        if (page === "nutrition" && !still) { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); if (!settling) { settling = true; requestAnimationFrame(settle); } }
+        lastY = scrollY; water();
         const f = fabricState(still ? 0 : scrollY, spin);
         folds.forEach((g, i) => { g.style.transform = `translate3d(0,${f.folds[i].toFixed(1)}px,0)`; });
         body.style.transform = `rotateX(${f.rx.toFixed(2)}deg) rotateY(${f.ry.toFixed(2)}deg) rotateZ(-6deg)`;
