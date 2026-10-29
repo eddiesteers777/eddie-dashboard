@@ -602,3 +602,6 @@ Messages wears the fabric with a thick 3D chat bubble (`messagesHtml`, `FABRIC.m
 
 ## 2026-10-29: Fabric and tactics board on Coach and Clients
 Coach dashboard and Clients wear the fabric with a thick 3D tactics board (`boardHtml`, `FABRIC.coach` / `FABRIC.clients`); the gold ball moves along the pass with scroll (existing `instrumentState` case). Tested: static suite, smoke, no page errors at 390 and 1280. No rules change.
+
+## 2026-10-29: Fabric and course slab on Fueling
+Fueling wears the fabric with a thick 3D course slab (`courseHtml`, `FABRIC.fueling`); the gold runner follows the course with scroll (existing `instrumentState` case). Tested: static suite, no page errors at 390 and 1280. No rules change.
