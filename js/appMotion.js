@@ -19,6 +19,8 @@ export function instrumentState(page, y, max) {
         }
         case "plan": return { cell: Math.floor(p * 20.99) };
         case "nutrition": return { fillY: 68 - p * 56, waveX: (yy * 0.1) % 22, waveX2: -((yy * 0.17) % 22), bub: [0, 1, 2, 3, 4].map(i => ((yy * (0.04 + i * 0.012) + i * 17) % 50) / 50) };
+        case "fueling": return { run: p };
+        case "more": return { sq: [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => 0.4 + 0.6 * clamp(p * 1.6 - i * 0.075, 0, 1)) };
         case "habits": return { rings: [0, 1, 2].map(i => clamp(p * 1.1 - i * 0.12, 0, 1) * 0.9) };
         case "progress": return { ecgX: -((yy * 0.12) % 100) };
         case "messages": return { lines: [0, 1, 2].map(i => clamp(p * 3 - i * 0.9, 0.15, 1)) };

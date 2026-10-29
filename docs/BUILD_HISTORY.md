@@ -571,3 +571,6 @@ Eddie picked option A. `js/appMotion.js` (pure, 7 tests) + `js/appLook.js` + tic
 
 ## 2026-10-29: Fuel water looks like water
 Eddie asked for a more realistic water animation on Nutrition. Gradient water, two waves at different speeds, crest line, bubbles, glass highlight, slosh on scroll speed (`sloshStep`, tested). Only `js/appLook.js`, `js/appMotion.js`.
+
+## 2026-10-29: Scroll drawings for Fueling and More
+Eddie asked for the same scroll motion on the Fueling and More pages. `js/appMotion.js` cases `fueling` and `more`, art in `js/appLook.js`, tests added. Fueling is a guest page: guests keep no look (unchanged).

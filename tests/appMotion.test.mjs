@@ -56,3 +56,17 @@ test("slosh: tilts with scroll speed, stays bounded, settles level", async () =>
     assert.ok(Math.abs(s.angle) < 0.02);
     assert.deepEqual(sloshStep(NaN, NaN, NaN), { angle: 0, vel: 0 });
 });
+
+test("fueling: the runner starts at 0 and finishes at 1", async () => {
+    const { instrumentState } = await import("../js/appMotion.js");
+    assert.equal(instrumentState("fueling", 0, 1000).run, 0);
+    assert.equal(instrumentState("fueling", 1000, 1000).run, 1);
+});
+
+test("more: tiles grow in order and stay between 0.4 and 1", async () => {
+    const { instrumentState } = await import("../js/appMotion.js");
+    const top = instrumentState("more", 0, 1000).sq, end = instrumentState("more", 1000, 1000).sq;
+    assert.ok(top.every(k => k === 0.4) && end.every(k => k === 1));
+    const mid = instrumentState("more", 300, 1000).sq;
+    assert.ok(mid[0] >= mid[8] && mid.every(k => k >= 0.4 && k <= 1));
+});
