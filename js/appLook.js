@@ -12,11 +12,19 @@ const ART = {
     nutrition: `<defs><clipPath id="al-bc"><path d="${BOTTLE}"/></clipPath><linearGradient id="al-wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(214,228,240)" stop-opacity=".5"/><stop offset="1" stop-color="rgb(150,185,215)" stop-opacity=".2"/></linearGradient></defs><g clip-path="url(#al-bc)"><g data-m="water"><path data-m="w2" d="M-20 0 q5.5 -1.6 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="rgba(214,228,240,.2)"/><path data-m="w1" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="url(#al-wg)"/><path data-m="crest" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 " fill="none" stroke="rgba(240,247,252,.75)" stroke-width=".5" vector-effect="non-scaling-stroke"/><g fill="none" stroke="rgba(235,244,250,.6)" stroke-width=".5" vector-effect="non-scaling-stroke">${[0, 1, 2, 3, 4].map(i => `<circle class="bb" data-i="${i}" cx="${[44, 52, 60, 47, 56][i]}" cy="80" r="${[.7, .5, .9, .5, .6][i]}"/>`).join("")}</g></g></g><g ${L(.4)}><path d="${BOTTLE}"/><path d="M33 38 V66" stroke="rgba(240,247,252,.35)" stroke-width="1.2"/></g><g ${L(.2, ".4")}><path d="M66 30 H70 M66 42 H70 M66 54 H70"/></g>`,
 };
 
-// Today: four folds of blue fabric behind one solid, tilted compass (Eddie, 2026-10-29). Each fold is its own
-// layer (an svg with one shaded band) so scrolling only moves composited layers; the compass is real CSS 3D:
+// Today: four still folds of blue fabric behind one solid, tilted compass (Eddie, 2026-10-29). Each fold is its own
+// svg layer; the compass is real CSS 3D:
 // a stack of rim discs, a face, a needle and a glass highlight.
-const FOLDS = [[50, 36, 66, 46, 60], [62, 52, 78, 60, 50], [72, 66, 86, 72, 40], [84, 78, 94, 84, 30]];
-const foldSvg = ([a, b, c, d, t], i, flip) => `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="al-fg${i}" x1="0" y1="0" x2=".15" y2="1"><stop offset="0" stop-color="#5a7690" stop-opacity=".75"/><stop offset=".18" stop-color="#3a5166"/><stop offset=".6" stop-color="#26374a"/><stop offset="1" stop-color="#18232e"/></linearGradient><filter id="al-fs${i}" x="-10%" y="-20%" width="120%" height="140%"><feDropShadow dx="0" dy="-1.2" stdDeviation="1.4" flood-color="#000" flood-opacity=".45"/></filter></defs><path ${flip ? 'transform="translate(100 0) scale(-1 1)" ' : ""}filter="url(#al-fs${i})" fill="url(#al-fg${i})" d="M-20 ${a} C 25 ${b}, 75 ${c}, 120 ${d} L120 ${d + t} C 75 ${c + t * 1.3}, 25 ${b + t * 0.7}, -20 ${a + t} Z"/></svg>`;
+// Four still layers of draped fabric, back to front. Each is a closed shape with real curves (a sweep, a ripple, a curl),
+// a soft shadow on its top edge and a thin light along that edge: mist on most, the selected-tab cream on one, a little gold on one.
+const FOLDS = [
+    { d: "M-12 -12 H58 C52 4 40 6 30 14 C18 24 12 40 -12 46 Z M-12 58 C10 40 30 30 50 40 C66 48 74 30 92 26 C104 23 110 30 114 34 V114 H-12 Z", edge: "M-12 58 C10 40 30 30 50 40 C66 48 74 30 92 26 C104 23 110 30 114 34", c: ["#6d8aa6", "#3f5870", "#2a3e52", "#1a2734"], rim: "mist" },
+    { d: "M-12 70 C8 58 24 76 42 66 C58 57 62 44 78 48 C92 52 96 64 114 60 V114 H-12 Z", edge: "M-12 70 C8 58 24 76 42 66 C58 57 62 44 78 48 C92 52 96 64 114 60", c: ["#7593ae", "#48627b", "#2e4459", "#1b2835"], rim: "cream" },
+    { d: "M-12 84 C12 74 28 92 48 82 C62 75 60 64 70 62 C80 60 84 70 78 76 C74 80 80 86 92 82 C102 79 108 76 114 78 V114 H-12 Z", edge: "M-12 84 C12 74 28 92 48 82 C62 75 60 64 70 62 C80 60 84 70 78 76 C74 80 80 86 92 82 C102 79 108 76 114 78", c: ["#6a87a2", "#415a72", "#2b3f53", "#18242f"], rim: "gold" },
+    { d: "M-12 96 C20 88 40 100 62 94 C80 89 96 90 114 94 V114 H-12 Z", edge: "M-12 96 C20 88 40 100 62 94 C80 89 96 90 114 94", c: ["#617d98", "#3a5168", "#26384a", "#141e28"], rim: "mist" },
+];
+const RIM = { mist: ["rgba(214,228,240,.55)", "rgba(214,228,240,.2)"], cream: ["#E6CB8E", "#C7D6E4"], gold: ["rgba(210,173,98,.75)", "rgba(210,173,98,.15)"] };
+const foldSvg = (f, i, flip) => `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="al-fg${i}" x1="0" y1="0" x2=".25" y2="1"><stop offset="0" stop-color="${f.c[0]}" stop-opacity=".8"/><stop offset=".2" stop-color="${f.c[1]}"/><stop offset=".6" stop-color="${f.c[2]}"/><stop offset="1" stop-color="${f.c[3]}"/></linearGradient><linearGradient id="al-fr${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${RIM[f.rim][1]}"/><stop offset=".5" stop-color="${RIM[f.rim][0]}"/><stop offset="1" stop-color="${RIM[f.rim][1]}"/></linearGradient><filter id="al-fs${i}" x="-10%" y="-20%" width="120%" height="140%"><feDropShadow dx="0" dy="-1.4" stdDeviation="1.8" flood-color="#000" flood-opacity=".5"/></filter></defs><g${flip ? ' transform="translate(100 0) scale(-1 1)"' : ""}><path filter="url(#al-fs${i})" fill="url(#al-fg${i})" d="${f.d}"/><path d="${f.edge}" fill="none" stroke="url(#al-fr${i})" stroke-width="${f.rim === "mist" ? 1 : 1.4}" stroke-linecap="round" vector-effect="non-scaling-stroke"/></g></svg>`;
 const compassHtml = () => {
     let tk = ""; for (let i = 0; i < 60; i++) { const a = i / 60 * 2 * Math.PI, r2 = i % 5 ? 42 : 38; tk += `M${(50 + Math.sin(a) * 46).toFixed(2)} ${(50 - Math.cos(a) * 46).toFixed(2)} L${(50 + Math.sin(a) * r2).toFixed(2)} ${(50 - Math.cos(a) * r2).toFixed(2)} `; }
     const rims = Array.from({ length: 16 }, (_, i) => `<div class="al-rim" style="transform:translateZ(${(i * 1.4).toFixed(1)}px)"></div>`).join("");
@@ -82,7 +90,7 @@ const FABRIC = { index: { obj: compassHtml, spin: 0.15, flip: false }, train: { 
 
 function startFabric(bg, spin, page) {
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const folds = [...bg.querySelectorAll(".al-fold")], body = bg.querySelector(".al-cmp-b"), nd = bg.querySelector(".al-nd");
+    const nd = bg.querySelector(".al-nd");
     let queued = false, lastY = scrollY, sl = { angle: 0, vel: 0 }, settling = false;
     const water = () => {
         if (page !== "nutrition") return;
@@ -94,17 +102,14 @@ function startFabric(bg, spin, page) {
         sl = sloshStep(sl.angle, sl.vel, 0); water();
         if (Math.abs(sl.angle) > 0.02 || Math.abs(sl.vel) > 0.02) requestAnimationFrame(settle); else { settling = false; sl = { angle: 0, vel: 0 }; water(); }
     };
-    // On a phone the background stays still (a fixed, mid-page pose): redrawing it on every scroll frame made scrolling choppy.
-    const coarse = matchMedia("(hover: none) and (pointer: coarse)").matches;
-    const Y = () => still ? 0 : coarse ? 0.55 * Math.max(0, document.documentElement.scrollHeight - innerHeight) : scrollY;
+    // The fabric and the object never move (moving them made phones choppy); only the instrument's parts follow the scroll.
+    const Y = () => still ? 0 : scrollY;
     const draw = () => {
         queued = false;
         if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
-        if (page === "nutrition" && !still && !coarse) { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); if (!settling) { settling = true; requestAnimationFrame(settle); } }
+        if (page === "nutrition" && !still) { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); if (!settling) { settling = true; requestAnimationFrame(settle); } }
         lastY = scrollY; water();
-        const f = fabricState(Y(), spin);
-        folds.forEach((g, i) => { g.style.transform = `translate3d(0,${f.folds[i].toFixed(1)}px,0)`; });
-        body.style.transform = `rotateX(${f.rx.toFixed(2)}deg) rotateY(${f.ry.toFixed(2)}deg) rotateZ(-6deg)`;
+        const f = fabricState(Y(), spin);   // the fabric and the object stay still; only the moving parts follow the scroll
         if (nd) nd.style.transform = `rotate(${f.needle.toFixed(1)}deg)`;
         if (page === "progress") applyState(bg, instrumentState("progress", Y(), 1));
         if (page === "coach" || page === "clients") applyState(bg, instrumentState(page, Y(), document.documentElement.scrollHeight - innerHeight));
@@ -121,8 +126,7 @@ function startFabric(bg, spin, page) {
         }
     };
     draw();
-    if (coarse) setTimeout(draw, 1500);   // once the page has its final height
-    if (!still && !coarse) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
+    if (!still) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
 }
 
 // Move the drawing to where the scroll position says it should be.

@@ -614,3 +614,6 @@ Eddie saw the fabric backgrounds glitch on his phone. On touch screens (`hover:n
 
 ## 2026-10-29: Still background on phones
 The lighter effects did not stop the choppy scrolling on Eddie's phone, so on touch screens the fabric and 3D object are drawn once in a fixed mid-page pose with no scroll listener (the water, rings, ball and so on show a middle state). Computers keep the scroll motion. `startFabric` in `js/appLook.js` (`coarse`).
+
+## 2026-10-29: Curved, still fabric
+Eddie: keep the blue, add subtle gold and selected-tab accents, more curve and character, background still while the functions move. `FOLDS` became four hand-drawn curved shapes with edge lights (mist, cream, gold); the folds and the object no longer move on scroll on any device; instrument parts still follow the scroll (phones included). Tested: static suite, touch-phone and desktop frames, no page errors.
