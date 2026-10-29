@@ -562,3 +562,6 @@ Eddie picked S3 (sepia night with motion) and asked to keep forest green in a pr
 
 ## 2026-10-29: App switched to foggy blue with gold accents
 Eddie liked the instrument drawings and the blue, and asked for gold as an accent for specific features. `css/appLook.css` and `js/appLook.js` rewritten; details in `docs/APP_REFERENCE.md`. Checked in the browser (client and coach personas, 390 and 1280 px: Today, Plan, Train, Fuel, Habits, Progress, Messages, More, coach dashboard, Clients, launch splash). Static tests: the same two dev-package failures as before (`@garmin/fitsdk`, `fast-check` not installed in the sandbox). No rules change.
+
+## 2026-10-29: Public site recoloured to foggy blue with gold
+Eddie asked for the app's colour scheme on the public site. `css/publicFog.css` (see `docs/APP_REFERENCE.md`). Checked in the browser at 390 and 1280 px on Home (four scroll stops), About, Coaching, Soccer, Packages, Apply, Contact, Get the App and Free tools. Static tests: the same two dev-package failures (`@garmin/fitsdk`, `fast-check` not installed in the sandbox). No rules change.

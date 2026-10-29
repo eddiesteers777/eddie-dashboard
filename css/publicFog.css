@@ -1,0 +1,51 @@
+/* Public site in foggy blue with gold (Eddie, 2026-10-29), laid over the old-print look in css/publicLook.css
+   and css/home.css. Loaded after them. Same layout, drawings and motion; only the colours change.
+   Gold (#D2AD62) stays on the main buttons and the small labels. */
+html.pl-on,html.sbh-sky-on{
+  --primary:#D2AD62;--primary-light:#E6CB8E;--primary-dark:#A8883F;--on-primary:#1b1608;
+  --bg:#17212B;--surface:#1D2A36;--surface-light:#27394A;--forest:#213242;
+  background:#1c2834!important}
+
+/* ground and glow, per page */
+html.pl-on{--pl-a:#1e2b37;--pl-b:#33475a;--pl-c:rgba(200,216,230,.34);--pl-d:rgba(80,108,136,.4)}
+html.pl-on[data-pl="about"]{--pl-a:#22303d;--pl-b:#3a4f63;--pl-c:rgba(206,220,232,.32);--pl-d:rgba(92,118,144,.36)}
+html.pl-on[data-pl="coaching"]{--pl-a:#1e2b37;--pl-b:#33475a;--pl-c:rgba(200,216,230,.36);--pl-d:rgba(80,108,136,.4)}
+html.pl-on[data-pl="soccer"]{--pl-a:#1a2a30;--pl-b:#2f4a52;--pl-c:rgba(170,206,214,.32);--pl-d:rgba(76,116,124,.4)}
+html.pl-on[data-pl="packages"]{--pl-a:#202b38;--pl-b:#38485c;--pl-c:rgba(196,212,230,.3);--pl-d:rgba(86,104,138,.4)}
+html.pl-on[data-pl="apply"]{--pl-a:#18232e;--pl-b:#2b3d4e;--pl-c:rgba(208,222,236,.4);--pl-d:rgba(76,104,132,.34)}
+html.pl-on[data-pl="contact"]{--pl-a:#1c2733;--pl-b:#31435a;--pl-c:rgba(190,206,228,.3);--pl-d:rgba(96,114,148,.36)}
+html.pl-on[data-pl="install"]{--pl-a:#1a2430;--pl-b:#2e3f56;--pl-c:rgba(190,208,232,.32);--pl-d:rgba(92,112,150,.36)}
+html.pl-on[data-pl="tools"]{--pl-a:#182830;--pl-b:#2a4450;--pl-c:rgba(170,210,220,.3);--pl-d:rgba(78,120,132,.38)}
+.pl-bg::after{opacity:.14}
+
+/* glass */
+html.pl-on .pub-navbar,html.sbh-sky-on .pub-navbar{background:rgba(20,32,44,.35)!important}
+html.sbh-sky-on .pub-navbar.is-past{background:rgba(20,32,44,.5)!important}
+html.pl-on .pub-card,html.pl-on .pub-package,html.pl-on .pub-field,html.pl-on .pub-bio-text{background:linear-gradient(160deg,rgba(40,58,78,.55),rgba(22,34,46,.5))!important;border-color:rgba(214,228,240,.22)!important;border-top-color:rgba(214,228,240,.4)!important}
+html.pl-on .pub-card-icon{background:rgba(210,173,98,.16)!important;border-color:rgba(210,173,98,.4)!important}
+html.pl-on .pub-cta-band{background:linear-gradient(135deg,rgba(44,64,86,.78),rgba(20,30,42,.74))!important;border-color:rgba(214,228,240,.34)!important}
+html.pl-on .pub-cta-band::before{background:linear-gradient(90deg,transparent,#D2AD62,transparent)}
+html.pl-on .pub-cta-band::after{background:radial-gradient(closest-side,rgba(190,208,230,.3),transparent)}
+html.pl-on .pub-footer{background:linear-gradient(180deg,rgba(20,30,42,.82),rgba(14,22,32,.92))!important;border-top-color:rgba(214,228,240,.3)!important}
+html.pl-on .install-panel,html.pl-on .install-share{background:linear-gradient(160deg,rgba(40,58,78,.5),rgba(22,34,46,.5))!important;border-color:rgba(214,228,240,.22)!important;border-top-color:rgba(214,228,240,.4)!important}
+html.pl-on .lamp{background:radial-gradient(closest-side,rgba(206,220,236,.38),transparent)}
+html.pl-on .pr{background:linear-gradient(160deg,rgba(40,56,74,.9),rgba(22,32,44,.9));border-color:rgba(226,234,242,.8)}
+html.pl-on .drop{background:radial-gradient(circle at 32% 26%,rgba(240,248,255,.35),transparent 30%),linear-gradient(180deg,rgba(24,34,46,.3),rgba(120,150,184,.3))}
+html.pl-on .ex-day.is-key{background:linear-gradient(90deg,rgba(210,173,98,.14),transparent 70%);box-shadow:inset 2px 0 0 #D2AD62}
+html.pl-on .ex-reply{background:rgba(210,173,98,.08);border-left-color:#D2AD62}
+
+/* home: the sky, its glows, the chat bubbles and the coach note */
+.sbh-sky{background:linear-gradient(180deg,#1e2b37,#33475a)}
+.sbh-sky-dusk{background:linear-gradient(180deg,#22303d,#3c5268)}
+.sbh-sky-night{background:linear-gradient(180deg,#131c25,#24364a)}
+.sbh-sky-dawn{background:linear-gradient(180deg,#2c3d4f,#8fa6bc)}
+.sbh-sky::before{background:radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(4,8,12,.5) 100%)}
+.sbh-glow-amber{background:radial-gradient(closest-side,rgba(200,216,230,.5),rgba(200,216,230,.12) 55%,transparent 100%)}
+.sbh-glow-teal{background:radial-gradient(closest-side,rgba(110,140,172,.4),rgba(110,140,172,.1) 55%,transparent 100%)}
+.sbh-glow-clay{background:radial-gradient(closest-side,rgba(120,146,182,.34),rgba(120,146,182,.1) 55%,transparent 100%)}
+.sbh-glow-sage{background:radial-gradient(closest-side,rgba(140,176,190,.34),rgba(140,176,190,.08) 55%,transparent 100%)}
+.sbh-msg{border-color:rgba(214,228,240,.26);background:radial-gradient(120% 90% at 50% 0%,rgba(20,32,44,.22),rgba(20,32,44,.34) 70%),rgba(20,32,44,.2);
+  box-shadow:inset 0 -9px 12px -6px rgba(200,220,240,.3),inset 0 8px 14px -8px rgba(0,0,0,.35),0 16px 26px -14px rgba(0,0,0,.7)}
+.sbh-msg.me{background:radial-gradient(120% 90% at 50% 0%,rgba(230,203,142,.88),rgba(210,173,98,.82) 70%);color:#1b1608;box-shadow:inset 0 -9px 12px -6px rgba(255,240,205,.4),0 16px 26px -14px rgba(0,0,0,.7)}
+/* The Home hero photo is cooled to match (it was warm olive) */
+html.sbh-sky-on #sbhPhoto{filter:hue-rotate(175deg) saturate(.6) brightness(.95)}
