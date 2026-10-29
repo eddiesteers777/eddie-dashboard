@@ -136,3 +136,11 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-brd .al-face{overflow:hidden;background:linear-gradient(160deg,#233a46,#1a2c36);box-shadow:inset 0 0 0 calc(var(--s)*.016) #3c5266,inset 0 0 0 calc(var(--s)*.022) #6f879c,inset 0 6px 14px rgba(0,0,0,.5)}
 .al-bg .al-brd .al-face svg{position:absolute;inset:4%;width:92%;height:92%;display:block}
 .al-bg .al-brd .al-glass{border-radius:12px}
+
+/* More: nine thick tiles scattered over the screen */
+.al-bg .al-cmp.al-tls{--u:clamp(3.6px,.75vw + 1.6px,8px);inset:0;width:auto;height:auto;opacity:.8}
+.al-bg .al-tls .al-cmp-b{inset:0}
+.al-bg .al-tls .al-cmp-b>.al-tile{inset:auto;border-radius:0;aspect-ratio:1;position:absolute;transform-style:preserve-3d;box-shadow:none}
+.al-bg .al-tile i,.al-bg .al-tile b{position:absolute;inset:0;border-radius:18%;display:block}
+.al-bg .al-tile i{background:linear-gradient(160deg,#6a8399,#2a3b4c 55%,#121b24)}
+.al-bg .al-tile b{transform:translateZ(6.4px);background:linear-gradient(160deg,#46607a,#26384a 60%,#1a2733);box-shadow:inset 0 0 0 2px #3c5266,inset 0 0 0 3px #6f879c,0 8px 14px rgba(0,0,0,.35)}
