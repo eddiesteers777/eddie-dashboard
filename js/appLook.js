@@ -88,41 +88,41 @@ function startFabric(bg, spin, page) {
         if (page !== "nutrition") return;
         const max = document.documentElement.scrollHeight - innerHeight;
         bg._tilt = sl.angle;
-        applyState(bg, instrumentState("nutrition", still ? 0 : scrollY, max));
+        applyState(bg, instrumentState("nutrition", Y(), max));
     };
     const settle = () => {   // a short ease-out after scrolling stops, not a loop
         sl = sloshStep(sl.angle, sl.vel, 0); water();
         if (Math.abs(sl.angle) > 0.02 || Math.abs(sl.vel) > 0.02) requestAnimationFrame(settle); else { settling = false; sl = { angle: 0, vel: 0 }; water(); }
     };
-    let drawnY = -1e9;
+    // On a phone the background stays still (a fixed, mid-page pose): redrawing it on every scroll frame made scrolling choppy.
     const coarse = matchMedia("(hover: none) and (pointer: coarse)").matches;
+    const Y = () => still ? 0 : coarse ? 0.55 * Math.max(0, document.documentElement.scrollHeight - innerHeight) : scrollY;
     const draw = () => {
         queued = false;
         if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
-        if (coarse && page !== "nutrition" && Math.abs(scrollY - drawnY) < 3) return;   // on a phone, skip tiny moves
-        drawnY = scrollY;
-        if (page === "nutrition" && !still) { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); if (!settling) { settling = true; requestAnimationFrame(settle); } }
+        if (page === "nutrition" && !still && !coarse) { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); if (!settling) { settling = true; requestAnimationFrame(settle); } }
         lastY = scrollY; water();
-        const f = fabricState(still ? 0 : scrollY, spin);
+        const f = fabricState(Y(), spin);
         folds.forEach((g, i) => { g.style.transform = `translate3d(0,${f.folds[i].toFixed(1)}px,0)`; });
         body.style.transform = `rotateX(${f.rx.toFixed(2)}deg) rotateY(${f.ry.toFixed(2)}deg) rotateZ(-6deg)`;
         if (nd) nd.style.transform = `rotate(${f.needle.toFixed(1)}deg)`;
-        if (page === "progress") applyState(bg, instrumentState("progress", still ? 0 : scrollY, 1));
-        if (page === "coach" || page === "clients") applyState(bg, instrumentState(page, still ? 0 : scrollY, document.documentElement.scrollHeight - innerHeight));
-        if (page === "fueling") applyState(bg, instrumentState("fueling", still ? 0 : scrollY, document.documentElement.scrollHeight - innerHeight));
+        if (page === "progress") applyState(bg, instrumentState("progress", Y(), 1));
+        if (page === "coach" || page === "clients") applyState(bg, instrumentState(page, Y(), document.documentElement.scrollHeight - innerHeight));
+        if (page === "fueling") applyState(bg, instrumentState("fueling", Y(), document.documentElement.scrollHeight - innerHeight));
         if (page === "more") {   // tiles grow in one after another
-            const sq = instrumentState("more", still ? 0 : scrollY, document.documentElement.scrollHeight - innerHeight).sq;
+            const sq = instrumentState("more", Y(), document.documentElement.scrollHeight - innerHeight).sq;
             bg.querySelectorAll(".al-tile").forEach((t, i) => { t.style.transform = `translate(-50%,-50%) rotate(${t.dataset.r}deg) scale(${sq[i].toFixed(3)})`; });
         }
-        if (page === "messages") applyState(bg, instrumentState("messages", still ? 0 : scrollY, document.documentElement.scrollHeight - innerHeight));
-        if (page === "habits") applyState(bg, instrumentState("habits", still ? 0 : scrollY, document.documentElement.scrollHeight - innerHeight));
+        if (page === "messages") applyState(bg, instrumentState("messages", Y(), document.documentElement.scrollHeight - innerHeight));
+        if (page === "habits") applyState(bg, instrumentState("habits", Y(), document.documentElement.scrollHeight - innerHeight));
         if (page === "plan") {   // the gold marker steps through the 21 days as you scroll
-            const cell = instrumentState("plan", still ? 0 : scrollY, document.documentElement.scrollHeight - innerHeight).cell;
+            const cell = instrumentState("plan", Y(), document.documentElement.scrollHeight - innerHeight).cell;
             bg.querySelectorAll(".al-cell").forEach((c, i) => { c.className = "al-cell" + (i === cell ? " on" : i < cell ? " done" : ""); });
         }
     };
     draw();
-    if (!still) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
+    if (coarse) setTimeout(draw, 1500);   // once the page has its final height
+    if (!still && !coarse) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
 }
 
 // Move the drawing to where the scroll position says it should be.

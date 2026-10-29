@@ -611,3 +611,6 @@ More wears the fabric with nine thick 3D tiles scattered over the screen (`tiles
 
 ## 2026-10-29: Smoother backgrounds on phones
 Eddie saw the fabric backgrounds glitch on his phone. On touch screens (`hover:none` + `pointer:coarse`) the cards lose their backdrop blur (more opaque fill instead), the grain overlay, the blurred shadow and drop-shadow filters are off, and the scroll draw skips moves under 3px. Same look, lighter to paint. Not measured on a real phone: Eddie to confirm.
+
+## 2026-10-29: Still background on phones
+The lighter effects did not stop the choppy scrolling on Eddie's phone, so on touch screens the fabric and 3D object are drawn once in a fixed mid-page pose with no scroll listener (the water, rings, ball and so on show a middle state). Computers keep the scroll motion. `startFabric` in `js/appLook.js` (`coarse`).
