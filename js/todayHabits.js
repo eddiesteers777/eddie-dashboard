@@ -13,6 +13,7 @@ import { habitIconHtml } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
 import { celebrateHabit } from "./celebrate.js";
+import { streakAtRisk } from "./todayCues.js";
 
 const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -23,6 +24,8 @@ function render(el) {
     const entries = read("entries", {});
     const day = dayKey();
     const done = doneOn(entries, day, habits);
+    // A streak (days with every habit done) that today hasn't kept yet. No streak, no line.
+    const atRisk = streakAtRisk(entries, habits, day);
     const rows = habits.map(h => {
         const on = Boolean(entries?.[day]?.[h.id]);
         return `<li><button type="button" class="th-row${on ? " is-on" : ""}" data-habit="${esc(h.id)}" aria-pressed="${on}">
@@ -36,6 +39,7 @@ function render(el) {
             <h2>Today's habits</h2>
             <span class="th-count">${habits.length ? `${done} of ${habits.length}` : ""}</span>
         </div>
+        ${atRisk ? `<p class="th-streak">${icon("flame")}<span><strong>${atRisk}-day streak.</strong> Finish today's habits to keep it.</span></p>` : ""}
         ${habits.length
             ? `<ul class="th-list">${rows}</ul>`
             : `<p class="th-empty">No habits yet.</p>`}

@@ -45,7 +45,12 @@ export function paintAccount(user) {
     document.querySelector(".sb-account")?.classList.toggle("is-guest", !user);
     // The name under the avatar in the computer sidebar.
     document.querySelectorAll("[data-side-name]").forEach(el => { el.textContent = user ? (user.displayName || "Account") : "Sign in"; });
-    const role = user ? cachedRole() : null;
+    paintRole(user ? cachedRole() : null);
+}
+
+// The role under the name. Painted again once the profile has answered (js/loadHeader.js), so a device
+// that didn't know the role yet doesn't leave it blank.
+export function paintRole(role) {
     document.querySelectorAll("[data-side-role]").forEach(el => { el.textContent = role === "coach" ? "Coach" : role ? "Client" : ""; });
 }
 

@@ -28,6 +28,7 @@ import { EFFORT_WORDS, EFFORT_HINT, sessionEndMs, toCr10, scaleOf, LATE_MIN } fr
 import { loadLedger, saveEffort, loadRpe } from "./athleteData.js";
 import { isoDate, addDays } from "./corosHistory.js";
 import { toast, sbScale } from "./ui.js";
+import { pickTodayRun } from "./todayCues.js";
 
 // CR-10 (js/effortScale.js, audit B5). RPE_WORDS stays exported for older callers.
 export const RPE_WORDS = EFFORT_WORDS;
@@ -66,7 +67,7 @@ async function ledgerFor(client, today) {
  * Mounts the card into `el` (Today: the last 3 days; Weekly Review asks
  * about the whole week). client: true for a client's Today.
  */
-export function mountEffortCard(el, { client = false, days = 3, max = 4 } = {}) {
+export function mountEffortCard(el, { client = false, days = 3, max = 4, skipToday = false } = {}) {
     if (!el || mounted.has(el)) return;
     mounted.add(el);
     if (client) clientSharing = true;
@@ -101,7 +102,8 @@ export function mountEffortCard(el, { client = false, days = 3, max = 4 } = {}) 
                 const today = isoDate(new Date());
                 const sessions = await ledgerFor(client, today);
                 const now = Date.now();
-                items = sessions ? effortPrompts(sessions, today, { days, max, now }) : [];
+                // skipToday: Today's check-in strip (mountCheckinStrip) asks about today's run.
+                items = sessions ? effortPrompts(sessions, today, { days, max: max + 1, now }).filter(s => !skipToday || s.date !== today).slice(0, max) : [];
                 render();
                 // A run that just ended is asked about 15 minutes later (audit B5): come back then.
                 clearTimeout(waitTimer);
@@ -165,4 +167,51 @@ export async function askRunEffort(date, { title = "How hard was today's run?" }
         action: { label: "Undo", onClick: () => saveEffort(target, null) }
     });
     return value;
+}
+
+/**
+ * Today's post-run check-in strip (Eddie, 2026-10-29): one line, one action,
+ * in the page header. Only while today's watch run (COROS / Strava, 15 minutes
+ * after it ended) has no effort answer, under the same rules as the card above
+ * (clients only while they share the athlete model). No run, no strip.
+ */
+export function mountCheckinStrip(el, { client = false } = {}) {
+    if (!el || mounted.has(el)) return;
+    mounted.add(el);
+    if (client) clientSharing = true;
+    let run = null;
+    const render = () => {
+        if (!run) { el.hidden = true; el.innerHTML = ""; return; }
+        const what = [milesText(run.distance), run.movingSec ? clockText(run.movingSec) : ""].filter(Boolean).join(" · ");
+        el.innerHTML = `
+            <span class="ci-strip-text"><span class="ci-strip-label">Today's run</span> <strong>${esc(what)}</strong> <span class="ci-strip-ask">How did it feel?</span></span>
+            <button type="button" class="sb-btn sb-btn-primary ci-strip-btn" data-checkin>Check in</button>`;
+        el.hidden = false;
+    };
+    const refresh = async () => {
+        try {
+            const today = isoDate(new Date());
+            const sessions = await ledgerFor(client, today);
+            run = sessions ? pickTodayRun(effortPrompts(sessions, today, { days: 1, max: 4, now: Date.now() }), today) : null;
+            render();
+        } catch (error) {
+            console.error("Southbound: check-in strip couldn't load.", error);
+        }
+    };
+    el.addEventListener("click", async event => {
+        if (!event.target.closest("[data-checkin]") || !run) return;
+        const session = run;
+        const message = `${milesText(session.distance)}${session.movingSec ? ` · ${clockText(session.movingSec)}` : ""}. Tap a number.`;
+        const value = await sbScale(message, { title: "How hard was today's run?", words: RPE_WORDS, hint: HINT, skipLabel: "Skip" });
+        if (value === null) return;   // closed: ask again later
+        saveEffort(session, effortRecord(value === "skip" ? null : value, Date.now(), { endMs: sessionEndMs(session) }));
+        shareSoon();
+        toast(value === "skip" ? "Skipped" : `Effort ${value}: ${RPE_WORDS[value].toLowerCase()}`, {
+            action: { label: "Undo", onClick: () => { saveEffort(session, null); shareSoon(); } }
+        });
+    });
+    let timer = null;
+    const soon = () => { clearTimeout(timer); timer = setTimeout(refresh, 150); };
+    for (const name of ["sb:athlete-answers", "eddieos:coros-history-updated", "sb:athlete-share"]) window.addEventListener(name, soon);
+    refresh();
 }

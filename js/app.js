@@ -22,6 +22,7 @@ import { nextRace, raceCountdownText } from "./raceCountdown.js";
 import { cachedNavAccess, profileAccess, fallbackAccess } from "./navAccess.js";
 import { clientTodaySections, clientHeroLine } from "./todayLayout.js";
 import { watchTodayColumns, applyTodayColumns, unwrapTodayColumns } from "./todayColumns.js";
+import { restTextOf } from "./todayCues.js";
 
 // The built-in marathon block (js/marathonData.js) is the coach's own
 // race. Clients get their own plans and a "From your coach" card
@@ -64,16 +65,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     // The signed-in user's own name, not the hardcoded profile in
     // dashboardData.js -- that was always "Eddie" for literally
     // anyone who opened this dashboard, signed in or not.
+    // Today is only ever shown signed in (js/loadHeader.js sends a guest to
+    // the public site), so it never says "Guest": until sign-in answers it is
+    // just the greeting, then the first name.
     if (welcomeHeading) {
-        welcomeHeading.innerHTML = `${greeting}, <br>Guest`;
+        welcomeHeading.textContent = greeting;
 
         import("./auth.js").then(({ listenForAuth }) => {
             listenForAuth(user => {
-                const name = user
-                    ? (user.displayName ? user.displayName.split(" ")[0] : "Runner")
-                    : "Guest";
-
-                welcomeHeading.innerHTML = `${greeting}, <br>${escapeHtml(name)}`;
+                if (!user) return;
+                const name = user.displayName ? user.displayName.split(" ")[0] : "";
+                welcomeHeading.innerHTML = name ? `${greeting}, <br>${escapeHtml(name)}` : greeting;
             });
         }).catch(() => {});
     }
@@ -143,17 +145,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const coachSection = document.getElementById("coachCardSection");
 
+    // Only once the profile says this is a client. It used to follow the
+    // device's remembered role alone, so a coach whose device had lost it got
+    // this card too, waiting on reads that were never meant for a coach. A
+    // client this device already knows sees it at once (its loading state).
     if (coachSection && !PERSONAL_PLAN) {
-        coachSection.hidden = false;
-        import("./coachCard.js")
-            .then(({ renderCoachCard }) => renderCoachCard(document.getElementById("coachCardBody")))
-            .catch(error => {
-                console.warn("Southbound: couldn't load the coach card.", error);
-                coachSection.hidden = true;
-            });
-        import("./clientPackageCard.js")
-            .then(({ renderClientPackageCard }) => renderClientPackageCard())
-            .catch(error => console.warn("Southbound: client package card failed to load.", error));
+        const known = cachedNavAccess();
+        if (known && !known.isCoach) coachSection.hidden = false;
+        profileAccess().then(access => {
+            if (access?.isCoach) { coachSection.hidden = true; return; }
+            coachSection.hidden = false;
+            import("./coachCard.js")
+                .then(({ renderCoachCard }) => renderCoachCard(document.getElementById("coachCardBody")))
+                .catch(error => {
+                    console.warn("Southbound: couldn't load the coach card.", error);
+                    coachSection.hidden = true;
+                });
+            import("./clientPackageCard.js")
+                .then(({ renderClientPackageCard }) => renderClientPackageCard())
+                .catch(error => console.warn("Southbound: client package card failed to load.", error));
+        }).catch(() => {});
     }
 
 });
@@ -280,7 +291,10 @@ function renderToday() {
             .catch(error => console.error("Southbound: client Today failed to load.", error));
         // "How hard was it?" after their watch runs, while they share the
         // athlete model with a coach (js/effortCard.js; mounts once).
-        import("./effortCard.js").then(m => m.mountEffortCard(document.getElementById("effortCheck"), { client: true }))
+        import("./effortCard.js").then(m => {
+            m.mountCheckinStrip(document.getElementById("checkinStrip"), { client: true });
+            m.mountEffortCard(document.getElementById("effortCheck"), { client: true, skipToday: true });
+        })
             .catch(error => console.error("Southbound: effort card failed to load.", error));
         return;
     }
@@ -292,7 +306,11 @@ function renderToday() {
     import("./marathonCorosButton.js").then(m => m.mountMarathonCoros(document.getElementById("marathonCoros")))
         .catch(error => console.error("Southbound: Send to COROS failed to load.", error));
     // "How hard was it?" for his recent watch runs (the athlete model's effort numbers).
-    import("./effortCard.js").then(m => m.mountEffortCard(document.getElementById("effortCheck")))
+    // Today's run gets the one-line check-in strip in the header instead (js/effortCard.js mountCheckinStrip).
+    import("./effortCard.js").then(m => {
+        m.mountCheckinStrip(document.getElementById("checkinStrip"));
+        m.mountEffortCard(document.getElementById("effortCheck"), { skipToday: true });
+    })
         .catch(error => console.error("Southbound: effort card failed to load.", error));
 
     if (!container) {
@@ -469,12 +487,19 @@ function renderToday() {
     }
 
     if (!items.length) {
-        container.innerHTML = PERSONAL_PLAN ? `
+        // A rest day the plan wrote something for ("Rest: walk, eat, celebrate"): that, not a generic line.
+        const restText = restTextOf(dayData);
+        container.innerHTML = PERSONAL_PLAN ? (restText ? `
+            <div class="eos-today-rest">
+                <strong>${escapeHtml(restText)}</strong>
+                <span>Rest day on your plan.</span>
+            </div>
+        ` : `
             <div class="eos-today-rest">
                 Nothing scheduled today. Good day to rest, or check in on your
                 <a href="strength.html">Strength plan</a>.
             </div>
-        ` : `
+        `) : `
             <div class="eos-today-rest">
                 Nothing on your plan today. Log a run on <a href="running.html">Running</a>,
                 or start a workout from <a href="strength.html">Strength</a>.

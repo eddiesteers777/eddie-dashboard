@@ -62,21 +62,33 @@ function row({ iconName, color, title, detail, note, link }) {
         </a>`;
 }
 
+// A read that hasn't answered in this long counts as failed, so the card
+// never sits on its loading state for good.
+const READ_LIMIT_MS = 12000;
+function within(promise, ms = READ_LIMIT_MS) {
+    let timer;
+    return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("timed out")), ms); })])
+        .finally(() => clearTimeout(timer));
+}
+
 // Returns { upcomingSessions } so Today can show it in its stat row.
 export async function renderCoachCard(container) {
     if (!container) return null;
 
+    // Whether the coach link could be read at all: without it the card can't
+    // say "not connected" truthfully.
+    let coachesRead = true;
     const [coaches, requests, checkins, profile, record, updates, plans, messages] = await Promise.all([
-        listMyCoaches().catch(() => []),
-        listMyBookingRequests().catch(() => []),
-        listMyCheckins().catch(() => []),
-        getMyProfile().catch(() => null),
+        within(listMyCoaches()).catch(() => { coachesRead = false; return []; }),
+        within(listMyBookingRequests()).catch(() => []),
+        within(listMyCheckins()).catch(() => []),
+        within(getMyProfile()).catch(() => null),
         // undefined = couldn't read (don't nag), null = not filled in yet
-        getMyClientRecord().catch(() => undefined),
-        listMyUpdates().catch(() => []),
-        listMyPlans().catch(() => []),
+        within(getMyClientRecord()).catch(() => undefined),
+        within(listMyUpdates()).catch(() => []),
+        within(listMyPlans()).catch(() => []),
         // [] until the messages rules are published.
-        listMyMessages().catch(() => [])
+        within(listMyMessages()).catch(() => [])
     ]);
 
     const coach = coaches[0];
@@ -193,6 +205,19 @@ export async function renderCoachCard(container) {
     }
 
     rows.push(...checkinLater);
+
+    if (!rows.length && !coachesRead) {
+        container.innerHTML = `
+            <div class="eos-coach-empty">
+                Couldn't reach your coach's updates just now.
+                <button type="button" class="sb-btn sb-btn-tertiary eos-coach-retry">Try again</button>
+            </div>`;
+        container.querySelector(".eos-coach-retry")?.addEventListener("click", () => {
+            container.innerHTML = `<div class="eos-today-loading"><div class="sb-loading" role="status"><span class="sr-only">Loading</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span></div></div>`;
+            renderCoachCard(container);
+        }, { once: true });
+        return { upcomingSessions: upcoming.length };
+    }
 
     if (!rows.length) {
         const pending = profile?.status === "pending";

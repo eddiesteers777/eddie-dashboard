@@ -12,7 +12,7 @@ const ART = {
     nutrition: `<defs><clipPath id="al-bc"><path d="${BOTTLE}"/></clipPath><linearGradient id="al-wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(214,228,240)" stop-opacity=".5"/><stop offset="1" stop-color="rgb(150,185,215)" stop-opacity=".2"/></linearGradient></defs><g clip-path="url(#al-bc)"><g data-m="water"><path data-m="w2" d="M-20 0 q5.5 -1.6 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="rgba(214,228,240,.2)"/><path data-m="w1" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="url(#al-wg)"/><path data-m="crest" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 " fill="none" stroke="rgba(240,247,252,.75)" stroke-width=".5" vector-effect="non-scaling-stroke"/><g fill="none" stroke="rgba(235,244,250,.6)" stroke-width=".5" vector-effect="non-scaling-stroke">${[0, 1, 2, 3, 4].map(i => `<circle class="bb" data-i="${i}" cx="${[44, 52, 60, 47, 56][i]}" cy="80" r="${[.7, .5, .9, .5, .6][i]}"/>`).join("")}</g></g></g><g ${L(.4)}><path d="${BOTTLE}"/><path d="M33 38 V66" stroke="rgba(240,247,252,.35)" stroke-width="1.2"/></g><g ${L(.2, ".4")}><path d="M66 30 H70 M66 42 H70 M66 54 H70"/></g>`,
 };
 
-// Today: four still folds of blue fabric behind one solid, tilted compass (Eddie, 2026-10-29). Each fold is its own
+// Today: four still folds of blue fabric and one solid, tilted compass (Eddie, 2026-10-29), which sits still in the page header (2026-10-29 fix). Each fold is its own
 // svg layer; the compass is real CSS 3D:
 // a stack of rim discs, a face, a needle and a glass highlight.
 // Four still layers of fabric, back to front: three big arcs sweeping in from the right (like the curve of a track)
@@ -87,7 +87,7 @@ const tilesHtml = () => {
     return `<div class="al-cmp al-tls"><div class="al-cmp-b">${TILES.map(tile).join("")}</div></div>`;
 };
 // Pages that wear the fabric: the solid object, how fast its hand turns per px scrolled, and whether the folds slope the other way.
-const FABRIC = { index: { obj: compassHtml, spin: 0.15, flip: false }, train: { obj: stopwatchHtml, spin: 0.5, flip: true }, plan: { obj: calendarHtml, spin: 0, flip: false }, nutrition: { obj: bottleHtml, spin: 0, flip: true }, habits: { obj: ringsHtml, spin: 0, flip: false }, progress: { obj: monitorHtml, spin: 0, flip: true }, messages: { obj: messagesHtml, spin: 0, flip: false }, coach: { obj: boardHtml, spin: 0, flip: true }, clients: { obj: boardHtml, spin: 0, flip: true }, fueling: { obj: courseHtml, spin: 0, flip: false }, more: { obj: tilesHtml, spin: 0, flip: false } };
+const FABRIC = { index: { obj: compassHtml, spin: 0, flip: false, inHero: true }, train: { obj: stopwatchHtml, spin: 0.5, flip: true }, plan: { obj: calendarHtml, spin: 0, flip: false }, nutrition: { obj: bottleHtml, spin: 0, flip: true }, habits: { obj: ringsHtml, spin: 0, flip: false }, progress: { obj: monitorHtml, spin: 0, flip: true }, messages: { obj: messagesHtml, spin: 0, flip: false }, coach: { obj: boardHtml, spin: 0, flip: true }, clients: { obj: boardHtml, spin: 0, flip: true }, fueling: { obj: courseHtml, spin: 0, flip: false }, more: { obj: tilesHtml, spin: 0, flip: false } };
 
 function startFabric(bg, spin, page) {
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -192,8 +192,19 @@ export function applyAppLook() {
     bg.className = "al-bg";
     bg.setAttribute("aria-hidden", "true");
     if (FABRIC[page]) {
-        const { obj, spin, flip } = FABRIC[page];
-        bg.innerHTML = FOLDS.map((f, i) => `<div class="al-fold">${foldSvg(f, i, flip)}</div>`).join("") + obj();
+        const { obj, spin, flip, inHero } = FABRIC[page];
+        // Today: the compass stands still in the page header, beside the greeting, in place of the brand tile.
+        // Behind the page it showed through the glass cards on the right (From Your Coach on a computer).
+        const hero = inHero && document.querySelector(".eos-today-hero");
+        bg.innerHTML = FOLDS.map((f, i) => `<div class="al-fold">${foldSvg(f, i, flip)}</div>`).join("") + (hero ? "" : obj());
+        if (hero) {
+            const art = document.createElement("div");
+            art.className = "al-bg al-hero-art";
+            art.setAttribute("aria-hidden", "true");
+            art.innerHTML = obj();
+            hero.append(art);
+            hero.classList.add("al-has-art");
+        }
         document.body.prepend(bg);
         document.documentElement.classList.add("al-on");
         startFabric(bg, spin, page);

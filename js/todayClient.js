@@ -18,6 +18,7 @@ import { weekTrailHtml, weekMiles } from "./weekTrail.js";
 import { mondayOf, isoDate, addDays } from "./coachingPlanModel.js";
 import { changeMode } from "./weekChanges.js";
 import { nextLine, quietDayTitle } from "./todayGlance.js";
+import { restDayAction } from "./todayCues.js";
 import { nextRace } from "./raceCountdown.js";
 import { raceStripModel, raceStripHtml } from "./raceStrip.js";
 import { icon } from "./icons.js";
@@ -97,12 +98,15 @@ export function renderClientToday() {
             container.innerHTML = `<div class="wk-today-cards">${workouts.map(workoutCardHtml).join("")}</div>${nextHtml}${feelHtml}`;
         } else {
             const plan = can("plan");
+            // What the plan says to do on its rest day, in its own words; nothing written, nothing added.
+            const action = restDayAction(inputs.plans, today);
             container.innerHTML = `
                 <div class="wk-rest-day">
                     <span class="wk-icon">${icon(plan ? "moon" : "calendar")}</span>
                     <div>
-                        <strong>${quietDayTitle({ plan })}</strong>
-                        ${next ? ""
+                        <strong>${action ? esc(action) : quietDayTitle({ plan })}</strong>
+                        ${action ? `<span>Rest day on your plan.</span>`
+                            : next ? ""
                             : inputs.plans.length ? `<span>Nothing else scheduled yet.</span>`
                             : `<span>${noPlanText()}</span>`}
                     </div>

@@ -21,7 +21,7 @@ html.al-on body{background:transparent!important}
 .al-bg svg{position:absolute;right:0;top:0;width:min(100%,640px);height:min(75vh,640px)}
 
 /* Cards: blue glass with a mist hairline */
-html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card{
+html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card,html.al-on .ci-strip{
   background:linear-gradient(180deg,rgba(42,62,82,.62),rgba(24,36,48,.5))!important;
   border:1px solid rgba(214,228,240,.2)!important;
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
@@ -66,6 +66,13 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-fold svg{position:absolute;inset:0;right:auto;width:100%;height:100%}
 .al-bg .al-cmp{--s:min(300px,62vw);position:absolute;top:84px;right:5%;width:var(--s);height:var(--s);perspective:900px;opacity:.82}
 @media (max-width:600px){.al-bg .al-cmp{right:-14%;top:70px}}
+/* Today: the compass stands still in the page header beside the greeting (js/appLook.js), in place of the brand
+   tile, so it never sits behind a card. Sized to the header, smaller on a phone. */
+html.al-on .eos-today-hero.al-has-art::after{display:none}
+html.al-on .al-bg.al-hero-art{--hs:150px;position:relative;inset:auto;z-index:0;flex:0 0 var(--hs);width:var(--hs);height:var(--hs);align-self:center;background:none}
+html.al-on .al-bg.al-hero-art::before,html.al-on .al-bg.al-hero-art::after{display:none}
+html.al-on .al-bg.al-hero-art .al-cmp{--s:calc(var(--hs)*.82);top:6%;right:9%;opacity:.9}
+@media (max-width:600px){html.al-on .al-bg.al-hero-art{--hs:76px;align-self:flex-start;margin-top:4px}}
 .al-bg .al-cmp-sh{position:absolute;left:8%;top:22%;width:90%;height:90%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent);filter:blur(14px);transform:translate(10%,8%)}
 .al-bg .al-cmp-b{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(26deg) rotateY(-16deg) rotateZ(-6deg)}
 .al-bg .al-cmp-b>div{position:absolute;inset:0;border-radius:50%}

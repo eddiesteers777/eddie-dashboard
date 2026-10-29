@@ -267,6 +267,7 @@ fetch("components/header.html")
                 const { getNavAccess, applyNavAccess, pageAllowed } = await import("./navAccess.js");
                 const access = await getNavAccess();
                 applyNavAccess(document, access);
+                if (access.source !== "fallback") import("./account.js").then(m => m.paintRole(access.isCoach ? "coach" : "client")).catch(() => {});
                 // Coaches: open each client's next week of their plan when it's due
                 // (clients see this week and next; js/planRelease.js, once a day).
                 if (access.isCoach) {
@@ -288,12 +289,20 @@ fetch("components/header.html")
                 }
                 if (leaveIfNotEntitled(access, pageAllowed)) return access;
                 // This page rendered before the account's role was known on
-                // this device (first visit, or the role changed): reload once
-                // so the coach's personal plan shows or hides correctly
-                // (js/role.js). Guarded so it can never loop.
-                if (showsPersonalPlan() !== showedPersonalPlan && !sessionStorage.getItem("sb-role-reloaded")) {
-                    sessionStorage.setItem("sb-role-reloaded", "1");
-                    window.location.reload();
+                // this device (first visit, the role changed, or the device's
+                // copy was cleared): reload so the coach's personal plan shows
+                // or hides correctly (js/role.js). At most once per role per
+                // browser session, so it can never loop. (It used to be once per
+                // session in total: a second clear left a coach on the client's
+                // Today, with "From Your Coach", until the browser was closed.)
+                const nowRole = showsPersonalPlan() ? "coach" : "client";
+                let reloadedFor = null;
+                try { reloadedFor = sessionStorage.getItem("sb-role-reloaded") || ""; } catch { /* storage unavailable: never reload, it couldn't be guarded */ }
+                if (reloadedFor !== null && showsPersonalPlan() !== showedPersonalPlan && !reloadedFor.split(",").includes(nowRole)) {
+                    try {
+                        sessionStorage.setItem("sb-role-reloaded", [reloadedFor, nowRole].filter(Boolean).join(","));
+                        window.location.reload();
+                    } catch { /* storage unavailable */ }
                 }
                 return access;
             } catch (error) {
