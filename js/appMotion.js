@@ -37,16 +37,10 @@ export function sloshStep(angle, vel, dy) {
     return { angle: clamp(a + nv, -5, 5), vel: nv };
 }
 
-// Today's layered dial: five layers, far to near. Each moves up and turns at its own speed
-// (the near ones faster), and the near ones grow a little, so the stack reads as depth.
-export const DEPTH_LAYERS = [
-    { k: 0.02, rot: 0.02, zoom: 0 },
-    { k: 0.04, rot: -0.03, zoom: 0.00002 },
-    { k: 0.07, rot: 0.05, zoom: 0.00004 },
-    { k: 0.1, rot: -0.08, zoom: 0.00007 },
-    { k: 0.14, rot: 0.12, zoom: 0.0001 },
-];
-export function depthState(y) {
-    const yy = Number.isFinite(y) ? Math.max(0, y) : 0;
-    return DEPTH_LAYERS.map(l => ({ ty: -yy * l.k * 2.2, rot: yy * l.rot, scale: 1 + Math.min(yy, 4000) * l.zoom }));
+// Today: folded fabric behind a solid compass. The four folds drift up at their own (slow) speeds, the compass
+// turns toward you a little as the page scrolls, and the needle swings. All scroll-driven, never idle.
+export const FOLD_SPEEDS = [0.004, 0.007, 0.01, 0.013];
+export function fabricState(y) {
+    const yy = Number.isFinite(y) ? Math.max(0, y) : 0, t = Math.min(yy, 1500);
+    return { folds: FOLD_SPEEDS.map(k => -yy * k), rx: 26 - t * 0.006, ry: -16 + t * 0.012, needle: yy * 0.15 };
 }

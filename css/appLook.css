@@ -63,7 +63,17 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 /* More page: the tiles are scattered over the whole screen */
 .al-bg svg.al-full{left:0;right:auto;top:0;width:100%;height:100%}
 
-/* Today: five layered dials (js/appLook.js), far to near, each moving at its own speed */
-.al-bg .al-layer{position:absolute;inset:0;will-change:transform;pointer-events:none}
-.al-bg .al-layer svg{position:absolute;inset:0;right:auto;width:100%;height:100%;overflow:visible}
-.al-bg .al-layer svg *{vector-effect:non-scaling-stroke}
+/* Today: folded fabric behind a solid, tilted compass (js/appLook.js) */
+.al-bg .al-fold{position:absolute;inset:0;will-change:transform}
+.al-bg .al-fold svg{position:absolute;inset:0;right:auto;width:100%;height:100%}
+.al-bg .al-cmp{--s:min(300px,62vw);position:absolute;top:84px;right:5%;width:var(--s);height:var(--s);perspective:900px;opacity:.82}
+@media (max-width:600px){.al-bg .al-cmp{right:-14%;top:70px}}
+.al-bg .al-cmp-sh{position:absolute;left:8%;top:22%;width:90%;height:90%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent);filter:blur(14px);transform:translate(10%,8%)}
+.al-bg .al-cmp-b{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(26deg) rotateY(-16deg) rotateZ(-6deg);will-change:transform}
+.al-bg .al-cmp-b>div{position:absolute;inset:0;border-radius:50%}
+.al-bg .al-rim{background:linear-gradient(160deg,#6a8399,#2a3b4c 55%,#121b24);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.al-bg .al-face{transform:translateZ(23px);background:radial-gradient(circle at 36% 30%,#46607a,#26384a 58%,#1a2733);box-shadow:inset 0 0 0 calc(var(--s)*.035) #3c5266,inset 0 0 0 calc(var(--s)*.045) #6f879c,inset 0 6px 14px rgba(0,0,0,.5)}
+.al-bg .al-face svg,.al-bg .al-ndl svg{position:static;width:100%;height:100%;display:block}
+.al-bg .al-ndl{transform:translateZ(27px);filter:drop-shadow(2px 5px 3px rgba(0,0,0,.45))}
+.al-bg .al-nd{transform-origin:50px 50px;transform-box:view-box}
+.al-bg .al-glass{transform:translateZ(31px);background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.22),rgba(255,255,255,.04) 38%,transparent 60%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}

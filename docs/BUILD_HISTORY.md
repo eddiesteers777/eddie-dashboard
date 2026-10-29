@@ -578,5 +578,5 @@ Eddie asked for the same scroll motion on the Fueling and More pages. `js/appMot
 ## 2026-10-29: More tiles scattered
 Eddie asked for the More tiles to be spread around the screen. Full-screen svg (`.al-full`), nine tiles at different sizes and tilts.
 
-## 2026-10-29: Today background is a layered 3D compass
-Eddie picked option A (stacked dials) and asked for layers that feel 3D. Five full-screen dial layers with emboss lines, blur and shadows by depth, parallax by scroll (`depthState`, tested). Checked on the real Today page at 390 and 1280 px, no page errors. Blur and shadow filters on large layers: worth a real-phone smoothness check.
+## 2026-10-29: Today background is folded fabric with a solid 3D compass
+Eddie found the five stacked rings read as overlapping lines and asked for a textured, fabric-like background with a thick compass like the Home page phone. Mock-ups A/B/C; he picked B (folds settled low). Built: four fabric fold layers plus a CSS 3D compass, scroll-driven (`fabricState`, tested). Checked on the real Today page at 390 and 1280 px, no page errors. Worth a real-phone smoothness check (3D and shadows).

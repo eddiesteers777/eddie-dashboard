@@ -70,12 +70,14 @@ test("more: tiles grow in order and stay between 0.4 and 1", async () => {
     assert.ok(mid[0] >= mid[8] && mid.every(k => k >= 0.4 && k <= 1));
 });
 
-test("depth: rests at the top, near layers move more than far ones", async () => {
-    const { depthState } = await import("../js/appMotion.js");
-    assert.ok(depthState(0).every(l => l.ty === 0 && l.rot === 0 && l.scale === 1));
-    assert.ok(depthState(NaN).every(l => Number.isFinite(l.ty) && Number.isFinite(l.rot) && l.scale === 1));
-    const d = depthState(1000);
-    assert.equal(d.length, 5);
-    for (let i = 1; i < d.length; i++) { assert.ok(Math.abs(d[i].ty) > Math.abs(d[i - 1].ty)); assert.ok(d[i].scale >= d[i - 1].scale); }
-    assert.ok(depthState(1e9).every(l => l.scale < 2));
+test("fabric: rests at the top, folds drift at different speeds, the tilt stays bounded", async () => {
+    const { fabricState } = await import("../js/appMotion.js");
+    const top = fabricState(0);
+    assert.deepEqual(top.folds, [-0, -0, -0, -0]);
+    assert.equal(top.rx, 26); assert.equal(top.ry, -16); assert.equal(top.needle, 0);
+    const d = fabricState(1000);
+    for (let i = 1; i < d.folds.length; i++) assert.ok(Math.abs(d.folds[i]) > Math.abs(d.folds[i - 1]));
+    const far = fabricState(1e9);
+    assert.ok(far.rx > 15 && far.rx < 26 && far.ry > -16 && far.ry < 4);
+    assert.ok(Object.values(fabricState(NaN)).flat().every(Number.isFinite));
 });

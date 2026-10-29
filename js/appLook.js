@@ -1,9 +1,9 @@
 // The app's foggy blue look (Eddie, 2026-10-29): fog-blue ground, blue glass, an instrument drawing per page,
 // gold only as an accent. Adds css/appLook.css, a fixed background layer and one drawing per page.
 // The drawing is a working instrument tied to the scroll position (js/appMotion.js does the maths): a compass
-// for Today (five layered dials, see below), a stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
+// for Today (folded fabric and a solid compass, see below), a stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
 // and stays still for people who ask for reduced motion. No layout change.
-import { instrumentState, sloshStep, depthState } from "./appMotion.js";
+import { instrumentState, sloshStep, fabricState } from "./appMotion.js";
 
 const L = (a, w = ".6") => `fill="none" stroke="rgba(214,228,240,${a})" stroke-width="${w}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
 const GOLD = "#D2AD62";
@@ -25,25 +25,28 @@ const ART = {
 };
 ART.clients = ART.coach;
 
-// Today: a stack of five dials, far to near. Each layer is drawn twice, a dark offset line under a light one,
-// so the rings look raised; the far ones are soft, the near ones crisp with a drop shadow.
-const dTicks = (r, n, len, every) => { let d = ""; for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI, l = every && i % every === 0 ? len * 2.2 : len; d += `M${(50 + Math.sin(a) * r).toFixed(2)} ${(50 - Math.cos(a) * r).toFixed(2)} L${(50 + Math.sin(a) * (r - l)).toFixed(2)} ${(50 - Math.cos(a) * (r - l)).toFixed(2)} `; } return d; };
-const emboss = (paths, a, w) => `<g transform="translate(.5 .7)" ${L(.28, w)} stroke="rgba(0,0,0,${a})">${paths}</g><g ${L(a + .06, w)}>${paths}</g>`;
-const DEPTH = [
-    { blur: 4, shadow: "", svg: emboss(`<circle cx="50" cy="50" r="74"/><circle cx="50" cy="50" r="64"/><path d="${dTicks(74, 120, 1.6, 10)}"/>`, .26, "1.4") },
-    { blur: 2.5, shadow: "", svg: emboss(`<circle cx="50" cy="50" r="56"/><circle cx="50" cy="50" r="50"/><path d="${dTicks(56, 96, 1.5, 8)}"/>`, .3, "1.2") },
-    { blur: 1.2, shadow: "drop-shadow(0 8px 10px rgba(0,0,0,.35))", svg: emboss(`<circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="36"/><path d="${dTicks(42, 72, 1.4, 6)}"/><path d="M50 4 V12 M50 88 V96 M4 50 H12 M88 50 H96"/>`, .36, "1.1") },
-    { blur: 0.5, shadow: "drop-shadow(0 5px 6px rgba(0,0,0,.4))", svg: emboss(`<circle cx="50" cy="50" r="26"/><path d="${dTicks(26, 48, 1.2, 4)}"/>`, .4, "1") },
-    { blur: 0, shadow: "drop-shadow(0 3px 4px rgba(0,0,0,.45))", svg: `${emboss(`<circle cx="50" cy="50" r="11"/><path d="M50 39 L52 50 L50 61 L48 50 Z"/>`, .5, ".9")}<path d="M50 39 L52 50 L48 50 Z" fill="${GOLD}" fill-opacity=".5"/>` },
-];
+// Today: four folds of blue fabric behind one solid, tilted compass (Eddie, 2026-10-29). Each fold is its own
+// layer (an svg with one shaded band) so scrolling only moves composited layers; the compass is real CSS 3D:
+// a stack of rim discs, a face, a needle and a glass highlight.
+const FOLDS = [[50, 36, 66, 46, 60], [62, 52, 78, 60, 50], [72, 66, 86, 72, 40], [84, 78, 94, 84, 30]];
+const foldSvg = ([a, b, c, d, t], i) => `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="al-fg${i}" x1="0" y1="0" x2=".15" y2="1"><stop offset="0" stop-color="#5a7690" stop-opacity=".75"/><stop offset=".18" stop-color="#3a5166"/><stop offset=".6" stop-color="#26374a"/><stop offset="1" stop-color="#18232e"/></linearGradient><filter id="al-fs${i}" x="-10%" y="-20%" width="120%" height="140%"><feDropShadow dx="0" dy="-1.2" stdDeviation="1.4" flood-color="#000" flood-opacity=".45"/></filter></defs><path filter="url(#al-fs${i})" fill="url(#al-fg${i})" d="M-20 ${a} C 25 ${b}, 75 ${c}, 120 ${d} L120 ${d + t} C 75 ${c + t * 1.3}, 25 ${b + t * 0.7}, -20 ${a + t} Z"/></svg>`;
+const compassHtml = () => {
+    let tk = ""; for (let i = 0; i < 60; i++) { const a = i / 60 * 2 * Math.PI, r2 = i % 5 ? 42 : 38; tk += `M${(50 + Math.sin(a) * 46).toFixed(2)} ${(50 - Math.cos(a) * 46).toFixed(2)} L${(50 + Math.sin(a) * r2).toFixed(2)} ${(50 - Math.cos(a) * r2).toFixed(2)} `; }
+    const rims = Array.from({ length: 16 }, (_, i) => `<div class="al-rim" style="transform:translateZ(${(i * 1.4).toFixed(1)}px)"></div>`).join("");
+    return `<div class="al-cmp"><div class="al-cmp-sh"></div><div class="al-cmp-b">${rims}<div class="al-face"><svg viewBox="0 0 100 100"><path d="${tk}" stroke="rgba(226,236,245,.55)" stroke-width="1.1" fill="none"/><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(226,236,245,.18)" stroke-width=".8"/><text x="50" y="25" text-anchor="middle" font-size="7" font-family="var(--font-mono),monospace" fill="rgba(226,236,245,.7)">N</text></svg></div><div class="al-ndl"><svg viewBox="0 0 100 100"><g class="al-nd"><path d="M50 14 L56 50 L50 50 Z" fill="${GOLD}"/><path d="M50 14 L44 50 L50 50 Z" fill="#a8843f"/><path d="M50 86 L56 50 L50 50 Z" fill="#9fb3c6"/><path d="M50 86 L44 50 L50 50 Z" fill="#6f8599"/></g><circle cx="50" cy="50" r="4" fill="#cfd9e2"/><circle cx="50" cy="50" r="1.6" fill="#55687a"/></svg></div><div class="al-glass"></div></div></div>`;
+};
 
-function startDepth(layers) {
+function startFabric(bg) {
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const folds = [...bg.querySelectorAll(".al-fold")], body = bg.querySelector(".al-cmp-b"), nd = bg.querySelector(".al-nd");
     let queued = false;
     const draw = () => {
         queued = false;
         if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
-        depthState(still ? 0 : scrollY).forEach((d, i) => { layers[i].style.transform = `translate3d(0,${d.ty.toFixed(1)}px,0) rotate(${d.rot.toFixed(2)}deg) scale(${d.scale.toFixed(4)})`; });
+        const f = fabricState(still ? 0 : scrollY);
+        folds.forEach((g, i) => { g.style.transform = `translate3d(0,${f.folds[i].toFixed(1)}px,0)`; });
+        body.style.transform = `rotateX(${f.rx.toFixed(2)}deg) rotateY(${f.ry.toFixed(2)}deg) rotateZ(-6deg)`;
+        nd.style.transform = `rotate(${f.needle.toFixed(1)}deg)`;
     };
     draw();
     if (!still) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
@@ -113,10 +116,10 @@ export function applyAppLook() {
     bg.className = "al-bg";
     bg.setAttribute("aria-hidden", "true");
     if (page === "index") {
-        const layers = DEPTH.map(d => { const el = document.createElement("div"); el.className = "al-layer"; el.style.filter = [d.blur ? `blur(${d.blur}px)` : "", d.shadow].filter(Boolean).join(" ") || "none"; el.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${d.svg}</svg>`; bg.append(el); return el; });
+        bg.innerHTML = FOLDS.map((f, i) => `<div class="al-fold">${foldSvg(f, i)}</div>`).join("") + compassHtml();
         document.body.prepend(bg);
         document.documentElement.classList.add("al-on");
-        startDepth(layers);
+        startFabric(bg);
         return;
     }
     if (ART[page]) bg.innerHTML = page === "more" ? `<svg class="al-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${ART[page]}</svg>` : `<svg viewBox="0 0 100 80" preserveAspectRatio="xMaxYMin meet">${ART[page]}</svg>`;
