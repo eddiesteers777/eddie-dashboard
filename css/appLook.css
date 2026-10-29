@@ -144,3 +144,16 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-tile i,.al-bg .al-tile b{position:absolute;inset:0;border-radius:18%;display:block}
 .al-bg .al-tile i{background:linear-gradient(160deg,#6a8399,#2a3b4c 55%,#121b24)}
 .al-bg .al-tile b{transform:translateZ(6.4px);background:linear-gradient(160deg,#46607a,#26384a 60%,#1a2733);box-shadow:inset 0 0 0 2px #3c5266,inset 0 0 0 3px #6f879c,0 8px 14px rgba(0,0,0,.35)}
+
+/* Touch devices: the same look with the expensive effects off, so scrolling stays smooth.
+   Blur behind cards, the blend-mode grain, blurred shadows and drop-shadow filters all repaint every frame while the background moves. */
+@media (hover:none) and (pointer:coarse){
+  html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    background:linear-gradient(180deg,rgba(40,59,78,.86),rgba(24,36,48,.8))!important;
+    box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 6px 14px rgba(0,0,0,.28)!important}
+  .al-bg::after{display:none}
+  .al-bg .al-cmp-sh{filter:none;opacity:.7}
+  .al-bg .al-ndl,.al-bg .al-mon .al-face svg{filter:none}
+  .al-bg .al-cmp-b{will-change:auto}
+}

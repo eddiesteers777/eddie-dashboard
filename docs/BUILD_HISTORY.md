@@ -608,3 +608,6 @@ Fueling wears the fabric with a thick 3D course slab (`courseHtml`, `FABRIC.fuel
 
 ## 2026-10-29: Fabric and thick tiles on More
 More wears the fabric with nine thick 3D tiles scattered over the screen (`tilesHtml`, `FABRIC.more`), growing in with scroll. The fabric rollout is now on every page with a drawing. Tested: static suite, full smoke, no page errors at 390 and 1280. No rules change.
+
+## 2026-10-29: Smoother backgrounds on phones
+Eddie saw the fabric backgrounds glitch on his phone. On touch screens (`hover:none` + `pointer:coarse`) the cards lose their backdrop blur (more opaque fill instead), the grain overlay, the blurred shadow and drop-shadow filters are off, and the scroll draw skips moves under 3px. Same look, lighter to paint. Not measured on a real phone: Eddie to confirm.

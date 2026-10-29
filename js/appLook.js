@@ -94,9 +94,13 @@ function startFabric(bg, spin, page) {
         sl = sloshStep(sl.angle, sl.vel, 0); water();
         if (Math.abs(sl.angle) > 0.02 || Math.abs(sl.vel) > 0.02) requestAnimationFrame(settle); else { settling = false; sl = { angle: 0, vel: 0 }; water(); }
     };
+    let drawnY = -1e9;
+    const coarse = matchMedia("(hover: none) and (pointer: coarse)").matches;
     const draw = () => {
         queued = false;
         if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
+        if (coarse && page !== "nutrition" && Math.abs(scrollY - drawnY) < 3) return;   // on a phone, skip tiny moves
+        drawnY = scrollY;
         if (page === "nutrition" && !still) { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); if (!settling) { settling = true; requestAnimationFrame(settle); } }
         lastY = scrollY; water();
         const f = fabricState(still ? 0 : scrollY, spin);
