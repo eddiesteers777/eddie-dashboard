@@ -46,3 +46,13 @@ test("messages lines never disappear and the ball ends at the far mark", () => {
 test("a page without an instrument gets nothing", () => {
     assert.equal(instrumentState("settings", 100, 1000), null);
 });
+
+test("slosh: tilts with scroll speed, stays bounded, settles level", async () => {
+    const { sloshStep } = await import("../js/appMotion.js");
+    let s = { angle: 0, vel: 0 };
+    for (let i = 0; i < 5; i++) s = sloshStep(s.angle, s.vel, 60);
+    assert.ok(Math.abs(s.angle) > 0.5 && Math.abs(s.angle) <= 5);
+    for (let i = 0; i < 300; i++) s = sloshStep(s.angle, s.vel, 0);
+    assert.ok(Math.abs(s.angle) < 0.02);
+    assert.deepEqual(sloshStep(NaN, NaN, NaN), { angle: 0, vel: 0 });
+});

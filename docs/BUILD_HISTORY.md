@@ -568,3 +568,6 @@ Eddie asked for the app's colour scheme on the public site. `css/publicFog.css` 
 
 ## 2026-10-29: App background instruments move with scroll
 Eddie picked option A. `js/appMotion.js` (pure, 7 tests) + `js/appLook.js` + tick CSS in `css/appLook.css`; details in `docs/APP_REFERENCE.md` (App: foggy blue look). Checked in the browser on the real pages at 390 and 1280 px (Today, Train, Plan, Fuel, Habits, Progress, Messages, Coach): no page errors, drawings change between top and bottom. No rules change.
+
+## 2026-10-29: Fuel water looks like water
+Eddie asked for a more realistic water animation on Nutrition. Gradient water, two waves at different speeds, crest line, bubbles, glass highlight, slosh on scroll speed (`sloshStep`, tested). Only `js/appLook.js`, `js/appMotion.js`.

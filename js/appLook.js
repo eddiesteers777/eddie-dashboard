@@ -3,7 +3,7 @@
 // The drawing is a working instrument tied to the scroll position (js/appMotion.js does the maths): a compass
 // for Today, a stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
 // and stays still for people who ask for reduced motion. No layout change.
-import { instrumentState } from "./appMotion.js";
+import { instrumentState, sloshStep } from "./appMotion.js";
 
 const L = (a, w = ".6") => `fill="none" stroke="rgba(214,228,240,${a})" stroke-width="${w}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
 const GOLD = "#D2AD62";
@@ -16,7 +16,7 @@ const ART = {
     index: `<g ${L(.34)}><circle cx="62" cy="38" r="24"/><g data-m="dial">${ticks(62, 38, 24, 36, 2.2)}</g><g data-m="needle"><path d="M62 18 L66 38 L62 58 L58 38 Z" ${L(.5)}/><path d="M62 18 L66 38 L58 38 Z" fill="${GOLD}" stroke="none"/></g><circle cx="62" cy="38" r="1.6"/></g>`,
     train: `<g ${L(.34)}><circle cx="55" cy="42" r="26"/>${ticks(55, 42, 26, 60, 2)}<path d="M50 10 h10 M55 10 v6"/><g data-m="hand"><path d="M55 42 L55 20" ${L(.6, 1)} stroke="${GOLD}"/><circle cx="55" cy="42" r="1.8" fill="${GOLD}" stroke="none"/></g></g>`,
     plan: `<g ${L(.32)}><rect x="12" y="12" width="76" height="58" rx="3"/><path d="M12 26 H88"/>${[1, 2, 3, 4, 5, 6].map(i => `<line x1="${12 + i * 10.86}" y1="26" x2="${12 + i * 10.86}" y2="70"/>`).join("")}<path d="M12 40.7 H88 M12 55.3 H88"/>${Array.from({ length: 21 }, (_, i) => `<rect class="cell" data-i="${i}" x="${12 + (i % 7) * 10.86}" y="${26 + Math.floor(i / 7) * 14.67}" width="10.86" height="14.67" fill="none" stroke="none"/>`).join("")}</g>`,
-    nutrition: `<defs><clipPath id="al-bc"><path d="${BOTTLE}"/></clipPath></defs><g ${L(.34)}><path d="${BOTTLE}"/></g><g clip-path="url(#al-bc)"><rect data-m="fill" x="28" y="68" width="44" height="64" fill="rgba(214,228,240,.42)"/><path data-m="wave" d="M28 0 q5 -2.5 11 0 t11 0 t11 0 t11 0 V6 H28 Z" fill="rgba(214,228,240,.4)"/></g><g ${L(.2, ".4")}><path d="M30 30 H40 M30 42 H40 M30 54 H40"/></g>`,
+    nutrition: `<defs><clipPath id="al-bc"><path d="${BOTTLE}"/></clipPath><linearGradient id="al-wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(214,228,240)" stop-opacity=".5"/><stop offset="1" stop-color="rgb(150,185,215)" stop-opacity=".2"/></linearGradient></defs><g clip-path="url(#al-bc)"><g data-m="water"><path data-m="w2" d="M-20 0 q5.5 -1.6 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="rgba(214,228,240,.2)"/><path data-m="w1" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="url(#al-wg)"/><path data-m="crest" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 " fill="none" stroke="rgba(240,247,252,.75)" stroke-width=".5" vector-effect="non-scaling-stroke"/><g fill="none" stroke="rgba(235,244,250,.6)" stroke-width=".5" vector-effect="non-scaling-stroke">${[0, 1, 2, 3, 4].map(i => `<circle class="bb" data-i="${i}" cx="${[44, 52, 60, 47, 56][i]}" cy="80" r="${[.7, .5, .9, .5, .6][i]}"/>`).join("")}</g></g></g><g ${L(.4)}><path d="${BOTTLE}"/><path d="M33 38 V66" stroke="rgba(240,247,252,.35)" stroke-width="1.2"/></g><g ${L(.2, ".4")}><path d="M66 30 H70 M66 42 H70 M66 54 H70"/></g>`,
     habits: `<g ${L(.28, ".9")}><circle cx="58" cy="38" r="26"/><circle cx="58" cy="38" r="18"/><circle cx="58" cy="38" r="10"/></g><g fill="none" stroke-linecap="round" stroke-width="1.4" vector-effect="non-scaling-stroke"><circle class="rg" data-r="26" cx="58" cy="38" r="26" stroke="${GOLD}" transform="rotate(-90 58 38)"/><circle class="rg" data-r="18" cx="58" cy="38" r="18" stroke="rgba(214,228,240,.7)" transform="rotate(-90 58 38)"/><circle class="rg" data-r="10" cx="58" cy="38" r="10" stroke="rgba(214,228,240,.5)" transform="rotate(-90 58 38)"/></g>`,
     progress: `<g ${L(.2, ".4")}><path d="M0 16H100M0 66H100"/></g><g data-m="ecg"><path d="M-100 40 H-78 L-72 40 L-67 20 L-60 60 L-54 30 L-50 40 H-34 L-28 40 L-23 26 L-18 52 L-14 40 H0 H22 L28 40 L33 20 L40 60 L46 30 L50 40 H66 L72 40 L77 26 L82 52 L86 40 H100 H122 L128 40 L133 20 L140 60 L146 30 L150 40 H166 L172 40 L177 26 L182 52 L186 40 H200" ${L(.5)}/></g>`,
     messages: `<g ${L(.34)}><path d="M12 12 H88 V50 H52 L36 66 V50 H12 Z"/></g><g ${L(.45)}><path class="ln" d="M24 24 H76"/><path class="ln" d="M24 34 H62"/><path class="ln" d="M24 44 H48"/></g>`,
@@ -31,7 +31,14 @@ function applyState(svg, state) {
     if ("needle" in state) { q('[data-m="needle"]').setAttribute("transform", `rotate(${state.needle} 62 38)`); q('[data-m="dial"]').setAttribute("transform", `rotate(${state.dial} 62 38)`); }
     if ("hand" in state) { q('[data-m="hand"]').setAttribute("transform", `rotate(${state.hand} 55 42)`); qa(".tk").forEach(t => t.classList.toggle("on", +t.dataset.i === state.tick)); }
     if ("cell" in state) qa(".cell").forEach(c => { const i = +c.dataset.i; c.setAttribute("fill", i === state.cell ? "rgba(210,173,98,.45)" : i < state.cell ? "rgba(214,228,240,.12)" : "none"); });
-    if ("fillY" in state) { q('[data-m="fill"]').setAttribute("y", state.fillY); q('[data-m="wave"]').setAttribute("transform", `translate(${state.waveX} ${state.fillY})`); }
+    if ("fillY" in state) {
+        const y = state.fillY, tilt = svg._tilt || 0;
+        q('[data-m="water"]').setAttribute("transform", `translate(0 ${y}) rotate(${tilt} 50 0)`);
+        q('[data-m="w1"]').setAttribute("transform", `translate(${state.waveX} 0)`);
+        q('[data-m="crest"]').setAttribute("transform", `translate(${state.waveX} 0)`);
+        q('[data-m="w2"]').setAttribute("transform", `translate(${state.waveX2} 0)`);
+        qa(".bb").forEach((c, i) => c.setAttribute("cy", (74 - y) - state.bub[i] * (72 - y)));
+    }
     if ("rings" in state) qa(".rg").forEach((c, i) => { const C = 2 * Math.PI * +c.dataset.r; c.setAttribute("stroke-dasharray", C); c.setAttribute("stroke-dashoffset", C * (1 - state.rings[i])); });
     if ("ecgX" in state) q('[data-m="ecg"]').setAttribute("transform", `translate(${state.ecgX} 0)`);
     if ("lines" in state) qa(".ln").forEach((l, i) => { l.style.opacity = state.lines[i]; });
@@ -40,14 +47,24 @@ function applyState(svg, state) {
 
 function startMotion(svg, page) {
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let queued = false;
-    const update = () => {
-        queued = false;
-        if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
+    let queued = false, lastY = scrollY, sl = { angle: 0, vel: 0 }, settling = false;
+    const draw = () => {
         const max = document.documentElement.scrollHeight - innerHeight;
         applyState(svg, instrumentState(page, still ? 0 : scrollY, max));
     };
-    update();
+    // Water only: tilt with the scroll speed, then settle level (a short ease-out, not a loop).
+    const settle = () => {
+        sl = sloshStep(sl.angle, sl.vel, 0); svg._tilt = sl.angle; draw();
+        if (Math.abs(sl.angle) > 0.02 || Math.abs(sl.vel) > 0.02) requestAnimationFrame(settle); else { settling = false; svg._tilt = 0; draw(); }
+    };
+    const update = () => {
+        queued = false;
+        if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
+        if (page === "nutrition") { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); svg._tilt = sl.angle; if (!settling) { settling = true; requestAnimationFrame(settle); } }
+        lastY = scrollY;
+        draw();
+    };
+    draw();
     if (still) return;
     addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
 }
