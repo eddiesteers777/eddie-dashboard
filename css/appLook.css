@@ -75,3 +75,5 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-nd{transform-origin:50px 50px;transform-box:view-box}
 .al-bg .al-glass{transform:translateZ(31px);background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.22),rgba(255,255,255,.04) 38%,transparent 60%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
 .al-bg .al-cmp-b>.al-crown{inset:auto;left:41%;top:-10%;width:18%;height:13%;border-radius:5px 5px 2px 2px;transform:translateZ(9px);background:linear-gradient(90deg,#2a3b4c,#8aa2b8 45%,#2a3b4c);box-shadow:0 2px 3px rgba(0,0,0,.4)}
+.al-bg .al-cmp-b>.al-pusher{inset:auto;left:80%;top:2%;width:13%;height:10%;border-radius:4px;transform:translateZ(9px) rotate(45deg);background:linear-gradient(90deg,#2a3b4c,#8aa2b8 45%,#2a3b4c);box-shadow:0 2px 3px rgba(0,0,0,.4)}
+@media (max-width:600px){.al-bg .al-cmp.al-sw{top:128px}}
