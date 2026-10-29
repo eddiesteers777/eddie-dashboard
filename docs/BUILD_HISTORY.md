@@ -559,3 +559,6 @@ Eddie found it laggy and too long. Page is about 30% shorter (story 260vh, "More
 
 ## 2026-10-28: App wears the old-print night with forest glass
 Eddie picked S3 (sepia night with motion) and asked to keep forest green in a premium way. `css/appLook.css` + `js/appLook.js`; details in `docs/APP_REFERENCE.md`. Checked in the browser on the client and coach personas at 390 and 1280 px (Today, Plan, Train, Nutrition, More, Messages, coach dashboard, clients). Static tests: the two failures are dev packages missing in the sandbox (`@garmin/fitsdk`, `fast-check`). No rules change.
+
+## 2026-10-29: App switched to foggy blue with gold accents
+Eddie liked the instrument drawings and the blue, and asked for gold as an accent for specific features. `css/appLook.css` and `js/appLook.js` rewritten; details in `docs/APP_REFERENCE.md`. Checked in the browser (client and coach personas, 390 and 1280 px: Today, Plan, Train, Fuel, Habits, Progress, Messages, More, coach dashboard, Clients, launch splash). Static tests: the same two dev-package failures as before (`@garmin/fitsdk`, `fast-check` not installed in the sandbox). No rules change.

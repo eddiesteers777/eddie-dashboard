@@ -1,39 +1,55 @@
-/* The app wears the public site's old-print night (Eddie, 2026-10-28) with forest green kept as deep glass.
-   js/appLook.js adds html.al-on and the .al-bg layer. Layout, sizes and flows are untouched. */
-html.al-on{background:#1b140d!important}
+/* The app's foggy blue look (Eddie, 2026-10-29), replacing the forest-glass version of 2026-10-28.
+   Fog-blue ground, blue glass, one instrument drawing per page. Gold is an accent for a short list of features
+   (see "GOLD" below); everything else uses mist. js/appLook.js adds html.al-on and the .al-bg layer.
+   Layout, sizes and flows are untouched. */
+html.al-on{
+  /* mist replaces the old tan as the general accent; gold is kept for the features listed under GOLD */
+  --primary:#C7D6E4;--primary-light:#E0E9F1;--primary-dark:#8FA6BC;--on-primary:#13202B;
+  --gold:#D2AD62;--gold-light:#E6CB8E;--gold-dark:#A8883F;
+  --bg:#17212B;--surface:#1D2A36;--surface-light:#27394A;--forest:#213242;
+  --border:rgba(214,228,240,.1);
+  background:#1c2834!important}
 html.al-on body{background:transparent!important}
-.al-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,#1b140d 0%,#2e2011 46%,#14231a 100%)}
+.al-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%)}
 .al-bg::before{content:"";position:absolute;inset:0;background:
-  radial-gradient(60% 38% at 72% 12%,rgba(214,190,150,.32),transparent),
-  radial-gradient(70% 46% at 8% 96%,rgba(23,50,38,.95),transparent),
-  radial-gradient(50% 36% at 96% 70%,rgba(23,50,38,.55),transparent),
-  radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(10,6,2,.55) 100%)}
-.al-bg::after{content:"";position:absolute;inset:0;opacity:.2;mix-blend-mode:overlay;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.6'/></svg>")}
-.al-bg svg{position:absolute;inset:0;width:100%;height:100%}
+  radial-gradient(60% 38% at 72% 12%,rgba(200,216,230,.4),transparent),
+  radial-gradient(70% 46% at 8% 96%,rgba(60,86,112,.8),transparent),
+  radial-gradient(50% 36% at 96% 70%,rgba(80,108,136,.4),transparent),
+  radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(4,8,12,.55) 100%)}
+.al-bg::after{content:"";position:absolute;inset:0;opacity:.16;mix-blend-mode:overlay;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.6'/></svg>")}
+.al-bg svg{position:absolute;right:0;top:0;width:min(100%,640px);height:min(75vh,640px)}
 
-/* Cards: deep forest glass with a sand hairline */
+/* Cards: blue glass with a mist hairline */
 html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card{
-  background:linear-gradient(180deg,rgba(26,56,43,.66),rgba(15,32,25,.52))!important;
-  border:1px solid rgba(214,185,142,.24)!important;
+  background:linear-gradient(180deg,rgba(42,62,82,.62),rgba(24,36,48,.5))!important;
+  border:1px solid rgba(214,228,240,.2)!important;
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
-  box-shadow:inset 0 1px 0 rgba(214,185,142,.2),0 12px 30px rgba(0,0,0,.34)!important}
-/* The one thing to do today gets a sand edge along the top */
-html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none):first-of-type{border-top-color:rgba(214,185,142,.6)!important}
+  box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36)!important}
 html.al-on .eos-bottomnav,html.al-on .eos-mobile-icon-btn,html.al-on .eos-navbar{
-  background:rgba(20,38,28,.58)!important;border-color:rgba(214,185,142,.24)!important;
+  background:rgba(24,36,48,.6)!important;border-color:rgba(214,228,240,.2)!important;
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 @media (prefers-reduced-transparency:reduce){
-  html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card,html.al-on .card,html.al-on .eos-bottomnav{-webkit-backdrop-filter:none;backdrop-filter:none}}
+  html.al-on .eos-today-card,html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card,html.al-on .card,html.al-on .eos-bottomnav{-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+/* GOLD: the accent. Kept for the place you are (active tab and menu item), what the coach says to you
+   (the coach card), the next big date (race strip), the first card's top edge, and the brand line on the launch splash. */
+html.al-on .eos-bottomnav-item.active{background:var(--gold)!important;color:#1b1608!important;box-shadow:0 4px 16px rgba(210,173,98,.24)!important}
+html.al-on .eos-bottomnav-item.active .ui-icon{color:#1b1608!important}
+html.al-on .eos-nav-item.active,html.al-on .eos-dropdown-link.active{box-shadow:inset 3px 0 0 var(--gold)}
+html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none):first-of-type{border-top-color:rgba(210,173,98,.7)!important}
+html.al-on .eos-coach-card h2,html.al-on .eos-coach-card .eos-today-card-header h2{color:var(--gold-light)}
+html.al-on .race-strip{border-color:rgba(210,173,98,.4)}
+html.al-on .race-strip :is(strong,b,.race-days){color:var(--gold-light)}
 
 /* Cards rise in */
 @keyframes al-up{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
 html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:al-up .6s cubic-bezier(.2,.7,.2,1) both}
 
-/* Launch splash: the old-film opening (same 2.5 s, same once-per-session rule) */
-.eos-splash{background:#120c07!important}
-.eos-splash::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%,transparent 40%,rgba(0,0,0,.7)),url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.5'/></svg>");opacity:.55;animation:al-flicker .18s steps(2) infinite}
-.eos-splash-glow{background:radial-gradient(closest-side,rgba(214,190,150,.38),rgba(23,50,38,.5) 60%,transparent)!important}
-.eos-splash-wordmark::after{content:"";display:block;height:2px;margin:10px auto 0;background:var(--primary);width:60%;transform-origin:left;animation:al-line 1.6s .3s cubic-bezier(.2,.7,.2,1) both}
+/* Launch splash: the old-film opening (same 2.5 s, same once-per-session rule), now in fog blue */
+.eos-splash{background:#141d26!important}
+.eos-splash::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%,transparent 40%,rgba(0,0,0,.7)),url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.5'/></svg>");opacity:.5;animation:al-flicker .18s steps(2) infinite}
+.eos-splash-glow{background:radial-gradient(closest-side,rgba(200,216,230,.4),rgba(60,86,112,.5) 60%,transparent)!important}
+.eos-splash-wordmark::after{content:"";display:block;height:2px;margin:10px auto 0;background:#D2AD62;width:60%;transform-origin:left;animation:al-line 1.6s .3s cubic-bezier(.2,.7,.2,1) both}
 @keyframes al-flicker{50%{opacity:.4}}
 @keyframes al-line{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @media (prefers-reduced-motion:reduce){
