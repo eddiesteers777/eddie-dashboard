@@ -12,10 +12,6 @@ export function instrumentState(page, y, max) {
     const yy = Number.isFinite(y) ? Math.max(0, y) : 0;
     const p = scrollProgress(yy, max);
     switch (page) {
-        case "train": {
-            const deg = yy * 0.7;
-            return { hand: deg, tick: Math.floor((((deg % 360) + 360) % 360) / 6) };
-        }
         case "plan": return { cell: Math.floor(p * 20.99) };
         case "nutrition": return { fillY: 68 - p * 56, waveX: (yy * 0.1) % 22, waveX2: -((yy * 0.17) % 22), bub: [0, 1, 2, 3, 4].map(i => ((yy * (0.04 + i * 0.012) + i * 17) % 50) / 50) };
         case "fueling": return { run: p };
@@ -40,7 +36,7 @@ export function sloshStep(angle, vel, dy) {
 // Today: folded fabric behind a solid compass. The four folds drift up at their own (slow) speeds, the compass
 // turns toward you a little as the page scrolls, and the needle swings. All scroll-driven, never idle.
 export const FOLD_SPEEDS = [0.004, 0.007, 0.01, 0.013];
-export function fabricState(y) {
+export function fabricState(y, spin = 0.15) {
     const yy = Number.isFinite(y) ? Math.max(0, y) : 0, t = Math.min(yy, 1500);
-    return { folds: FOLD_SPEEDS.map(k => -yy * k), rx: 26 - t * 0.006, ry: -16 + t * 0.012, needle: yy * 0.15 };
+    return { folds: FOLD_SPEEDS.map(k => -yy * k), rx: 26 - t * 0.006, ry: -16 + t * 0.012, needle: yy * spin };
 }

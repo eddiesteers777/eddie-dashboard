@@ -56,9 +56,6 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
   html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:none}
   .eos-splash::before,.eos-splash-wordmark::after{animation:none}}
 
-/* Stopwatch ticks: the one under the hand lights up in gold */
-.al-bg .tk{stroke:rgba(214,228,240,.34);stroke-width:.6;vector-effect:non-scaling-stroke}
-.al-bg .tk.on{stroke:var(--gold,#D2AD62);stroke-width:1.2}
 
 /* More page: the tiles are scattered over the whole screen */
 .al-bg svg.al-full{left:0;right:auto;top:0;width:100%;height:100%}
@@ -77,3 +74,4 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-ndl{transform:translateZ(27px);filter:drop-shadow(2px 5px 3px rgba(0,0,0,.45))}
 .al-bg .al-nd{transform-origin:50px 50px;transform-box:view-box}
 .al-bg .al-glass{transform:translateZ(31px);background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.22),rgba(255,255,255,.04) 38%,transparent 60%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.al-bg .al-cmp-b>.al-crown{inset:auto;left:41%;top:-10%;width:18%;height:13%;border-radius:5px 5px 2px 2px;transform:translateZ(9px);background:linear-gradient(90deg,#2a3b4c,#8aa2b8 45%,#2a3b4c);box-shadow:0 2px 3px rgba(0,0,0,.4)}

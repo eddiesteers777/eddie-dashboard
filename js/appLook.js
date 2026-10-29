@@ -1,19 +1,14 @@
 // The app's foggy blue look (Eddie, 2026-10-29): fog-blue ground, blue glass, an instrument drawing per page,
 // gold only as an accent. Adds css/appLook.css, a fixed background layer and one drawing per page.
 // The drawing is a working instrument tied to the scroll position (js/appMotion.js does the maths): a compass
-// for Today (folded fabric and a solid compass, see below), a stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
+// for Today (folded fabric and a solid compass, see below), the same fabric with a solid stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
 // and stays still for people who ask for reduced motion. No layout change.
 import { instrumentState, sloshStep, fabricState } from "./appMotion.js";
 
 const L = (a, w = ".6") => `fill="none" stroke="rgba(214,228,240,${a})" stroke-width="${w}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
 const GOLD = "#D2AD62";
-const ticks = (cx, cy, r, n, len) => Array.from({ length: n }, (_, i) => {
-    const a = i / n * 2 * Math.PI;
-    return `<line class="tk" data-i="${i}" x1="${cx + r * Math.sin(a)}" y1="${cy - r * Math.cos(a)}" x2="${cx + (r - len) * Math.sin(a)}" y2="${cy - (r - len) * Math.cos(a)}"/>`;
-}).join("");
 const BOTTLE = "M42 6 h16 v10 c 8 4 12 8 12 18 v34 H30 V34 c0 -10 4 -14 12 -18 Z";
 const ART = {
-    train: `<g ${L(.34)}><circle cx="55" cy="42" r="26"/>${ticks(55, 42, 26, 60, 2)}<path d="M50 10 h10 M55 10 v6"/><g data-m="hand"><path d="M55 42 L55 20" ${L(.6, 1)} stroke="${GOLD}"/><circle cx="55" cy="42" r="1.8" fill="${GOLD}" stroke="none"/></g></g>`,
     plan: `<g ${L(.32)}><rect x="12" y="12" width="76" height="58" rx="3"/><path d="M12 26 H88"/>${[1, 2, 3, 4, 5, 6].map(i => `<line x1="${12 + i * 10.86}" y1="26" x2="${12 + i * 10.86}" y2="70"/>`).join("")}<path d="M12 40.7 H88 M12 55.3 H88"/>${Array.from({ length: 21 }, (_, i) => `<rect class="cell" data-i="${i}" x="${12 + (i % 7) * 10.86}" y="${26 + Math.floor(i / 7) * 14.67}" width="10.86" height="14.67" fill="none" stroke="none"/>`).join("")}</g>`,
     nutrition: `<defs><clipPath id="al-bc"><path d="${BOTTLE}"/></clipPath><linearGradient id="al-wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(214,228,240)" stop-opacity=".5"/><stop offset="1" stop-color="rgb(150,185,215)" stop-opacity=".2"/></linearGradient></defs><g clip-path="url(#al-bc)"><g data-m="water"><path data-m="w2" d="M-20 0 q5.5 -1.6 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="rgba(214,228,240,.2)"/><path data-m="w1" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="url(#al-wg)"/><path data-m="crest" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 " fill="none" stroke="rgba(240,247,252,.75)" stroke-width=".5" vector-effect="non-scaling-stroke"/><g fill="none" stroke="rgba(235,244,250,.6)" stroke-width=".5" vector-effect="non-scaling-stroke">${[0, 1, 2, 3, 4].map(i => `<circle class="bb" data-i="${i}" cx="${[44, 52, 60, 47, 56][i]}" cy="80" r="${[.7, .5, .9, .5, .6][i]}"/>`).join("")}</g></g></g><g ${L(.4)}><path d="${BOTTLE}"/><path d="M33 38 V66" stroke="rgba(240,247,252,.35)" stroke-width="1.2"/></g><g ${L(.2, ".4")}><path d="M66 30 H70 M66 42 H70 M66 54 H70"/></g>`,
     fueling: `<g ${L(.34, ".9")}><path data-m="course" d="M6 60 C 22 18, 38 72, 54 42 S 82 14, 94 26"/></g><g ${L(.2, ".5")}><path d="M6 66 H94" stroke-dasharray="1 3"/></g>${[.14, .3, .46, .62, .78, .94].map(f => `<circle class="st" data-f="${f}" r="1.5" fill="none" stroke="rgba(214,228,240,.55)" stroke-width=".7" vector-effect="non-scaling-stroke"/>`).join("")}<circle data-m="runner" r="1.7" fill="${GOLD}"/>`,
@@ -29,21 +24,29 @@ ART.clients = ART.coach;
 // layer (an svg with one shaded band) so scrolling only moves composited layers; the compass is real CSS 3D:
 // a stack of rim discs, a face, a needle and a glass highlight.
 const FOLDS = [[50, 36, 66, 46, 60], [62, 52, 78, 60, 50], [72, 66, 86, 72, 40], [84, 78, 94, 84, 30]];
-const foldSvg = ([a, b, c, d, t], i) => `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="al-fg${i}" x1="0" y1="0" x2=".15" y2="1"><stop offset="0" stop-color="#5a7690" stop-opacity=".75"/><stop offset=".18" stop-color="#3a5166"/><stop offset=".6" stop-color="#26374a"/><stop offset="1" stop-color="#18232e"/></linearGradient><filter id="al-fs${i}" x="-10%" y="-20%" width="120%" height="140%"><feDropShadow dx="0" dy="-1.2" stdDeviation="1.4" flood-color="#000" flood-opacity=".45"/></filter></defs><path filter="url(#al-fs${i})" fill="url(#al-fg${i})" d="M-20 ${a} C 25 ${b}, 75 ${c}, 120 ${d} L120 ${d + t} C 75 ${c + t * 1.3}, 25 ${b + t * 0.7}, -20 ${a + t} Z"/></svg>`;
+const foldSvg = ([a, b, c, d, t], i, flip) => `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="al-fg${i}" x1="0" y1="0" x2=".15" y2="1"><stop offset="0" stop-color="#5a7690" stop-opacity=".75"/><stop offset=".18" stop-color="#3a5166"/><stop offset=".6" stop-color="#26374a"/><stop offset="1" stop-color="#18232e"/></linearGradient><filter id="al-fs${i}" x="-10%" y="-20%" width="120%" height="140%"><feDropShadow dx="0" dy="-1.2" stdDeviation="1.4" flood-color="#000" flood-opacity=".45"/></filter></defs><path ${flip ? 'transform="translate(100 0) scale(-1 1)" ' : ""}filter="url(#al-fs${i})" fill="url(#al-fg${i})" d="M-20 ${a} C 25 ${b}, 75 ${c}, 120 ${d} L120 ${d + t} C 75 ${c + t * 1.3}, 25 ${b + t * 0.7}, -20 ${a + t} Z"/></svg>`;
 const compassHtml = () => {
     let tk = ""; for (let i = 0; i < 60; i++) { const a = i / 60 * 2 * Math.PI, r2 = i % 5 ? 42 : 38; tk += `M${(50 + Math.sin(a) * 46).toFixed(2)} ${(50 - Math.cos(a) * 46).toFixed(2)} L${(50 + Math.sin(a) * r2).toFixed(2)} ${(50 - Math.cos(a) * r2).toFixed(2)} `; }
     const rims = Array.from({ length: 16 }, (_, i) => `<div class="al-rim" style="transform:translateZ(${(i * 1.4).toFixed(1)}px)"></div>`).join("");
     return `<div class="al-cmp"><div class="al-cmp-sh"></div><div class="al-cmp-b">${rims}<div class="al-face"><svg viewBox="0 0 100 100"><path d="${tk}" stroke="rgba(226,236,245,.55)" stroke-width="1.1" fill="none"/><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(226,236,245,.18)" stroke-width=".8"/><text x="50" y="25" text-anchor="middle" font-size="7" font-family="var(--font-mono),monospace" fill="rgba(226,236,245,.7)">N</text></svg></div><div class="al-ndl"><svg viewBox="0 0 100 100"><g class="al-nd"><path d="M50 14 L56 50 L50 50 Z" fill="${GOLD}"/><path d="M50 14 L44 50 L50 50 Z" fill="#a8843f"/><path d="M50 86 L56 50 L50 50 Z" fill="#9fb3c6"/><path d="M50 86 L44 50 L50 50 Z" fill="#6f8599"/></g><circle cx="50" cy="50" r="4" fill="#cfd9e2"/><circle cx="50" cy="50" r="1.6" fill="#55687a"/></svg></div><div class="al-glass"></div></div></div>`;
 };
 
-function startFabric(bg) {
+const stopwatchHtml = () => {
+    let tk = ""; for (let i = 0; i < 60; i++) { const a = i / 60 * 2 * Math.PI, r2 = i % 5 ? 42 : 38; tk += `M${(50 + Math.sin(a) * 46).toFixed(2)} ${(50 - Math.cos(a) * 46).toFixed(2)} L${(50 + Math.sin(a) * r2).toFixed(2)} ${(50 - Math.cos(a) * r2).toFixed(2)} `; }
+    const rims = Array.from({ length: 16 }, (_, i) => `<div class="al-rim" style="transform:translateZ(${(i * 1.4).toFixed(1)}px)"></div>`).join("");
+    return `<div class="al-cmp"><div class="al-cmp-sh"></div><div class="al-cmp-b"><div class="al-crown"></div>${rims}<div class="al-face"><svg viewBox="0 0 100 100"><path d="${tk}" stroke="rgba(226,236,245,.55)" stroke-width="1.1" fill="none"/><circle cx="50" cy="50" r="30" fill="none" stroke="rgba(226,236,245,.18)" stroke-width=".8"/><path d="M50 62 V72 M44 67 H56" stroke="rgba(226,236,245,.3)" stroke-width=".8"/></svg></div><div class="al-ndl"><svg viewBox="0 0 100 100"><g class="al-nd"><path d="M49 56 L49 16 L51 16 L51 56 Z" fill="${GOLD}"/><path d="M50 12 L53 18 L47 18 Z" fill="${GOLD}"/></g><circle cx="50" cy="50" r="4.5" fill="#cfd9e2"/><circle cx="50" cy="50" r="1.8" fill="#55687a"/></svg></div><div class="al-glass"></div></div></div>`;
+};
+// Pages that wear the fabric: the solid object, how fast its hand turns per px scrolled, and whether the folds slope the other way.
+const FABRIC = { index: { obj: compassHtml, spin: 0.15, flip: false }, train: { obj: stopwatchHtml, spin: 0.5, flip: true } };
+
+function startFabric(bg, spin) {
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const folds = [...bg.querySelectorAll(".al-fold")], body = bg.querySelector(".al-cmp-b"), nd = bg.querySelector(".al-nd");
     let queued = false;
     const draw = () => {
         queued = false;
         if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
-        const f = fabricState(still ? 0 : scrollY);
+        const f = fabricState(still ? 0 : scrollY, spin);
         folds.forEach((g, i) => { g.style.transform = `translate3d(0,${f.folds[i].toFixed(1)}px,0)`; });
         body.style.transform = `rotateX(${f.rx.toFixed(2)}deg) rotateY(${f.ry.toFixed(2)}deg) rotateZ(-6deg)`;
         nd.style.transform = `rotate(${f.needle.toFixed(1)}deg)`;
@@ -57,7 +60,6 @@ function applyState(svg, state) {
     if (!state) return;
     const q = s => svg.querySelector(s), qa = s => [...svg.querySelectorAll(s)];
     if ("needle" in state) { q('[data-m="needle"]').setAttribute("transform", `rotate(${state.needle} 62 38)`); q('[data-m="dial"]').setAttribute("transform", `rotate(${state.dial} 62 38)`); }
-    if ("hand" in state) { q('[data-m="hand"]').setAttribute("transform", `rotate(${state.hand} 55 42)`); qa(".tk").forEach(t => t.classList.toggle("on", +t.dataset.i === state.tick)); }
     if ("cell" in state) qa(".cell").forEach(c => { const i = +c.dataset.i; c.setAttribute("fill", i === state.cell ? "rgba(210,173,98,.45)" : i < state.cell ? "rgba(214,228,240,.12)" : "none"); });
     if ("fillY" in state) {
         const y = state.fillY, tilt = svg._tilt || 0;
@@ -115,11 +117,12 @@ export function applyAppLook() {
     const bg = document.createElement("div");
     bg.className = "al-bg";
     bg.setAttribute("aria-hidden", "true");
-    if (page === "index") {
-        bg.innerHTML = FOLDS.map((f, i) => `<div class="al-fold">${foldSvg(f, i)}</div>`).join("") + compassHtml();
+    if (FABRIC[page]) {
+        const { obj, spin, flip } = FABRIC[page];
+        bg.innerHTML = FOLDS.map((f, i) => `<div class="al-fold">${foldSvg(f, i, flip)}</div>`).join("") + obj();
         document.body.prepend(bg);
         document.documentElement.classList.add("al-on");
-        startFabric(bg);
+        startFabric(bg, spin);
         return;
     }
     if (ART[page]) bg.innerHTML = page === "more" ? `<svg class="al-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${ART[page]}</svg>` : `<svg viewBox="0 0 100 80" preserveAspectRatio="xMaxYMin meet">${ART[page]}</svg>`;

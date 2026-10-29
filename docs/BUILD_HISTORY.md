@@ -580,3 +580,6 @@ Eddie asked for the More tiles to be spread around the screen. Full-screen svg (
 
 ## 2026-10-29: Today background is folded fabric with a solid 3D compass
 Eddie found the five stacked rings read as overlapping lines and asked for a textured, fabric-like background with a thick compass like the Home page phone. Mock-ups A/B/C; he picked B (folds settled low). Built: four fabric fold layers plus a CSS 3D compass, scroll-driven (`fabricState`, tested). Checked on the real Today page at 390 and 1280 px, no page errors. Worth a real-phone smoothness check (3D and shadows).
+
+## 2026-10-29: Fabric and solid object on Train
+Eddie asked to bring the Today concept to the other app pages one at a time. Train now has the folded fabric (mirrored) and a solid 3D stopwatch with a crown and a gold hand. Pages are added through `FABRIC` in `js/appLook.js`; `fabricState(y, spin)` is shared. Checked on the real Train page at 390 and 1280 px, no page errors.

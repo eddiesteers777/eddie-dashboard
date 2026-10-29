@@ -11,17 +11,9 @@ test("progress is 0 on a page that cannot scroll and never leaves 0..1", () => {
 });
 
 test("each instrument starts at rest at the top of the page", () => {
-    assert.equal(instrumentState("train", 0, 1000).tick, 0);
     assert.equal(instrumentState("plan", 0, 1000).cell, 0);
     assert.equal(instrumentState("nutrition", 0, 1000).fillY, 68);
     assert.deepEqual(instrumentState("habits", 0, 1000).rings, [0, 0, 0]);
-});
-
-test("the stopwatch tick stays on its 60 marks, even far down a long page", () => {
-    for (const y of [0, 5, 99, 513, 4000, 123456]) {
-        const t = instrumentState("train", y, 5000).tick;
-        assert.ok(Number.isInteger(t) && t >= 0 && t < 60, `tick ${t} at ${y}`);
-    }
 });
 
 test("the calendar marker walks the 21 days and stops on the last one", () => {
@@ -80,4 +72,10 @@ test("fabric: rests at the top, folds drift at different speeds, the tilt stays 
     const far = fabricState(1e9);
     assert.ok(far.rx > 15 && far.rx < 26 && far.ry > -16 && far.ry < 4);
     assert.ok(Object.values(fabricState(NaN)).flat().every(Number.isFinite));
+});
+
+test("fabric: the spin speed is a parameter (stopwatch hand)", async () => {
+    const { fabricState } = await import("../js/appMotion.js");
+    assert.equal(fabricState(100).needle, 15);
+    assert.equal(fabricState(100, 0.5).needle, 50);
 });
