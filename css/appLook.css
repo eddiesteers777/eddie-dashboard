@@ -59,3 +59,6 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 /* Stopwatch ticks: the one under the hand lights up in gold */
 .al-bg .tk{stroke:rgba(214,228,240,.34);stroke-width:.6;vector-effect:non-scaling-stroke}
 .al-bg .tk.on{stroke:var(--gold,#D2AD62);stroke-width:1.2}
+
+/* More page: the tiles are scattered over the whole screen */
+.al-bg svg.al-full{left:0;right:auto;top:0;width:100%;height:100%}

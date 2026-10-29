@@ -574,3 +574,6 @@ Eddie asked for a more realistic water animation on Nutrition. Gradient water, t
 
 ## 2026-10-29: Scroll drawings for Fueling and More
 Eddie asked for the same scroll motion on the Fueling and More pages. `js/appMotion.js` cases `fueling` and `more`, art in `js/appLook.js`, tests added. Fueling is a guest page: guests keep no look (unchanged).
+
+## 2026-10-29: More tiles scattered
+Eddie asked for the More tiles to be spread around the screen. Full-screen svg (`.al-full`), nine tiles at different sizes and tilts.
