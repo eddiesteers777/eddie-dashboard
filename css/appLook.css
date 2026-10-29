@@ -13,6 +13,7 @@ html.al-on body{background:transparent!important}
 .al-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%)}
 .al-bg::before{content:"";position:absolute;inset:0;background:
   radial-gradient(60% 38% at 72% 12%,rgba(200,216,230,.4),transparent),
+  radial-gradient(46% 30% at 14% 92%,rgba(220,200,150,.16),transparent),
   radial-gradient(70% 46% at 8% 96%,rgba(60,86,112,.8),transparent),
   radial-gradient(50% 36% at 96% 70%,rgba(80,108,136,.4),transparent),
   radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(4,8,12,.55) 100%)}

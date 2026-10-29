@@ -15,13 +15,14 @@ const ART = {
 // Today: four still folds of blue fabric behind one solid, tilted compass (Eddie, 2026-10-29). Each fold is its own
 // svg layer; the compass is real CSS 3D:
 // a stack of rim discs, a face, a needle and a glass highlight.
-// Four still layers of draped fabric, back to front. Each is a closed shape with real curves (a sweep, a ripple, a curl),
-// a soft shadow on its top edge and a thin light along that edge: mist on most, the selected-tab cream on one, a little gold on one.
+// Four still layers of fabric, back to front: three big arcs sweeping in from the right (like the curve of a track)
+// and a low wave at the bottom. Each has a soft shadow on its top edge and a thin edge light: gold, mist, the selected-tab cream, mist.
+const BLUE = ["#6d8aa6", "#3f5870", "#2a3e52", "#1a2734"];
 const FOLDS = [
-    { d: "M-12 -12 H58 C52 4 40 6 30 14 C18 24 12 40 -12 46 Z M-12 58 C10 40 30 30 50 40 C66 48 74 30 92 26 C104 23 110 30 114 34 V114 H-12 Z", edge: "M-12 58 C10 40 30 30 50 40 C66 48 74 30 92 26 C104 23 110 30 114 34", c: ["#6d8aa6", "#3f5870", "#2a3e52", "#1a2734"], rim: "mist" },
-    { d: "M-12 70 C8 58 24 76 42 66 C58 57 62 44 78 48 C92 52 96 64 114 60 V114 H-12 Z", edge: "M-12 70 C8 58 24 76 42 66 C58 57 62 44 78 48 C92 52 96 64 114 60", c: ["#7593ae", "#48627b", "#2e4459", "#1b2835"], rim: "cream" },
-    { d: "M-12 84 C12 74 28 92 48 82 C62 75 60 64 70 62 C80 60 84 70 78 76 C74 80 80 86 92 82 C102 79 108 76 114 78 V114 H-12 Z", edge: "M-12 84 C12 74 28 92 48 82 C62 75 60 64 70 62 C80 60 84 70 78 76 C74 80 80 86 92 82 C102 79 108 76 114 78", c: ["#6a87a2", "#415a72", "#2b3f53", "#18242f"], rim: "gold" },
-    { d: "M-12 96 C20 88 40 100 62 94 C80 89 96 90 114 94 V114 H-12 Z", edge: "M-12 96 C20 88 40 100 62 94 C80 89 96 90 114 94", c: ["#617d98", "#3a5168", "#26384a", "#141e28"], rim: "mist" },
+    { d: "M114 -12 C 80 8, 52 40, 40 114 H114 Z", edge: "M114 -12 C 80 8, 52 40, 40 114", c: BLUE, rim: "gold" },
+    { d: "M114 14 C 86 34, 62 62, 56 114 H114 Z", edge: "M114 14 C 86 34, 62 62, 56 114", c: BLUE, rim: "mist" },
+    { d: "M114 42 C 94 58, 76 80, 72 114 H114 Z", edge: "M114 42 C 94 58, 76 80, 72 114", c: BLUE, rim: "cream" },
+    { d: "M-12 80 C 20 70, 40 84, 60 100 C 66 106, 70 110, 74 114 H-12 Z", edge: "M-12 80 C 20 70, 40 84, 60 100 C 66 106, 70 110, 74 114", c: BLUE, rim: "mist" },
 ];
 const RIM = { mist: ["rgba(214,228,240,.55)", "rgba(214,228,240,.2)"], cream: ["#E6CB8E", "#C7D6E4"], gold: ["rgba(210,173,98,.75)", "rgba(210,173,98,.15)"] };
 const foldSvg = (f, i, flip) => `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="al-fg${i}" x1="0" y1="0" x2=".25" y2="1"><stop offset="0" stop-color="${f.c[0]}" stop-opacity=".8"/><stop offset=".2" stop-color="${f.c[1]}"/><stop offset=".6" stop-color="${f.c[2]}"/><stop offset="1" stop-color="${f.c[3]}"/></linearGradient><linearGradient id="al-fr${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${RIM[f.rim][1]}"/><stop offset=".5" stop-color="${RIM[f.rim][0]}"/><stop offset="1" stop-color="${RIM[f.rim][1]}"/></linearGradient><filter id="al-fs${i}" x="-10%" y="-20%" width="120%" height="140%"><feDropShadow dx="0" dy="-1.4" stdDeviation="1.8" flood-color="#000" flood-opacity=".5"/></filter></defs><g${flip ? ' transform="translate(100 0) scale(-1 1)"' : ""}><path filter="url(#al-fs${i})" fill="url(#al-fg${i})" d="${f.d}"/><path d="${f.edge}" fill="none" stroke="url(#al-fr${i})" stroke-width="${f.rim === "mist" ? 1 : 1.4}" stroke-linecap="round" vector-effect="non-scaling-stroke"/></g></svg>`;

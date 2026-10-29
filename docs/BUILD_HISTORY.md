@@ -617,3 +617,6 @@ The lighter effects did not stop the choppy scrolling on Eddie's phone, so on to
 
 ## 2026-10-29: Curved, still fabric
 Eddie: keep the blue, add subtle gold and selected-tab accents, more curve and character, background still while the functions move. `FOLDS` became four hand-drawn curved shapes with edge lights (mist, cream, gold); the folds and the object no longer move on scroll on any device; instrument parts still follow the scroll (phones included). Tested: static suite, touch-phone and desktop frames, no page errors.
+
+## 2026-10-29: Sweeping arcs fabric (option G)
+Eddie picked G from four mock-ups (D ribbons, E dunes, F drapes, G arcs; mock-ups in /mnt/project-files/app-depth3/). `FOLDS` is now three arcs from the right plus a low wave; same blue, edge lights gold/mist/cream/mist, faint warm glow bottom-left. Still on every device. Tested: static suite, phone and desktop frames, no page errors.
