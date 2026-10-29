@@ -1,9 +1,9 @@
 // The app's foggy blue look (Eddie, 2026-10-29): fog-blue ground, blue glass, an instrument drawing per page,
 // gold only as an accent. Adds css/appLook.css, a fixed background layer and one drawing per page.
 // The drawing is a working instrument tied to the scroll position (js/appMotion.js does the maths): a compass
-// for Today, a stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
+// for Today (five layered dials, see below), a stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
 // and stays still for people who ask for reduced motion. No layout change.
-import { instrumentState, sloshStep } from "./appMotion.js";
+import { instrumentState, sloshStep, depthState } from "./appMotion.js";
 
 const L = (a, w = ".6") => `fill="none" stroke="rgba(214,228,240,${a})" stroke-width="${w}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
 const GOLD = "#D2AD62";
@@ -13,7 +13,6 @@ const ticks = (cx, cy, r, n, len) => Array.from({ length: n }, (_, i) => {
 }).join("");
 const BOTTLE = "M42 6 h16 v10 c 8 4 12 8 12 18 v34 H30 V34 c0 -10 4 -14 12 -18 Z";
 const ART = {
-    index: `<g ${L(.34)}><circle cx="62" cy="38" r="24"/><g data-m="dial">${ticks(62, 38, 24, 36, 2.2)}</g><g data-m="needle"><path d="M62 18 L66 38 L62 58 L58 38 Z" ${L(.5)}/><path d="M62 18 L66 38 L58 38 Z" fill="${GOLD}" stroke="none"/></g><circle cx="62" cy="38" r="1.6"/></g>`,
     train: `<g ${L(.34)}><circle cx="55" cy="42" r="26"/>${ticks(55, 42, 26, 60, 2)}<path d="M50 10 h10 M55 10 v6"/><g data-m="hand"><path d="M55 42 L55 20" ${L(.6, 1)} stroke="${GOLD}"/><circle cx="55" cy="42" r="1.8" fill="${GOLD}" stroke="none"/></g></g>`,
     plan: `<g ${L(.32)}><rect x="12" y="12" width="76" height="58" rx="3"/><path d="M12 26 H88"/>${[1, 2, 3, 4, 5, 6].map(i => `<line x1="${12 + i * 10.86}" y1="26" x2="${12 + i * 10.86}" y2="70"/>`).join("")}<path d="M12 40.7 H88 M12 55.3 H88"/>${Array.from({ length: 21 }, (_, i) => `<rect class="cell" data-i="${i}" x="${12 + (i % 7) * 10.86}" y="${26 + Math.floor(i / 7) * 14.67}" width="10.86" height="14.67" fill="none" stroke="none"/>`).join("")}</g>`,
     nutrition: `<defs><clipPath id="al-bc"><path d="${BOTTLE}"/></clipPath><linearGradient id="al-wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(214,228,240)" stop-opacity=".5"/><stop offset="1" stop-color="rgb(150,185,215)" stop-opacity=".2"/></linearGradient></defs><g clip-path="url(#al-bc)"><g data-m="water"><path data-m="w2" d="M-20 0 q5.5 -1.6 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="rgba(214,228,240,.2)"/><path data-m="w1" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 V90 H-20 Z" fill="url(#al-wg)"/><path data-m="crest" d="M-20 0 q5.5 -1.1 11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 t11 0 " fill="none" stroke="rgba(240,247,252,.75)" stroke-width=".5" vector-effect="non-scaling-stroke"/><g fill="none" stroke="rgba(235,244,250,.6)" stroke-width=".5" vector-effect="non-scaling-stroke">${[0, 1, 2, 3, 4].map(i => `<circle class="bb" data-i="${i}" cx="${[44, 52, 60, 47, 56][i]}" cy="80" r="${[.7, .5, .9, .5, .6][i]}"/>`).join("")}</g></g></g><g ${L(.4)}><path d="${BOTTLE}"/><path d="M33 38 V66" stroke="rgba(240,247,252,.35)" stroke-width="1.2"/></g><g ${L(.2, ".4")}><path d="M66 30 H70 M66 42 H70 M66 54 H70"/></g>`,
@@ -25,6 +24,30 @@ const ART = {
     coach: `<g ${L(.34)}><rect x="8" y="10" width="84" height="58" rx="3"/><line x1="50" y1="10" x2="50" y2="68"/><circle cx="50" cy="39" r="9"/><circle cx="68" cy="26" r="3"/><circle cx="30" cy="52" r="3"/><path d="M30 52 L68 26" stroke-dasharray="1 1.6"/></g><circle data-m="ball" r="2.2" cx="30" cy="52" fill="${GOLD}"/>`
 };
 ART.clients = ART.coach;
+
+// Today: a stack of five dials, far to near. Each layer is drawn twice, a dark offset line under a light one,
+// so the rings look raised; the far ones are soft, the near ones crisp with a drop shadow.
+const dTicks = (r, n, len, every) => { let d = ""; for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI, l = every && i % every === 0 ? len * 2.2 : len; d += `M${(50 + Math.sin(a) * r).toFixed(2)} ${(50 - Math.cos(a) * r).toFixed(2)} L${(50 + Math.sin(a) * (r - l)).toFixed(2)} ${(50 - Math.cos(a) * (r - l)).toFixed(2)} `; } return d; };
+const emboss = (paths, a, w) => `<g transform="translate(.5 .7)" ${L(.28, w)} stroke="rgba(0,0,0,${a})">${paths}</g><g ${L(a + .06, w)}>${paths}</g>`;
+const DEPTH = [
+    { blur: 4, shadow: "", svg: emboss(`<circle cx="50" cy="50" r="74"/><circle cx="50" cy="50" r="64"/><path d="${dTicks(74, 120, 1.6, 10)}"/>`, .26, "1.4") },
+    { blur: 2.5, shadow: "", svg: emboss(`<circle cx="50" cy="50" r="56"/><circle cx="50" cy="50" r="50"/><path d="${dTicks(56, 96, 1.5, 8)}"/>`, .3, "1.2") },
+    { blur: 1.2, shadow: "drop-shadow(0 8px 10px rgba(0,0,0,.35))", svg: emboss(`<circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="36"/><path d="${dTicks(42, 72, 1.4, 6)}"/><path d="M50 4 V12 M50 88 V96 M4 50 H12 M88 50 H96"/>`, .36, "1.1") },
+    { blur: 0.5, shadow: "drop-shadow(0 5px 6px rgba(0,0,0,.4))", svg: emboss(`<circle cx="50" cy="50" r="26"/><path d="${dTicks(26, 48, 1.2, 4)}"/>`, .4, "1") },
+    { blur: 0, shadow: "drop-shadow(0 3px 4px rgba(0,0,0,.45))", svg: `${emboss(`<circle cx="50" cy="50" r="11"/><path d="M50 39 L52 50 L50 61 L48 50 Z"/>`, .5, ".9")}<path d="M50 39 L52 50 L48 50 Z" fill="${GOLD}" fill-opacity=".5"/>` },
+];
+
+function startDepth(layers) {
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let queued = false;
+    const draw = () => {
+        queued = false;
+        if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
+        depthState(still ? 0 : scrollY).forEach((d, i) => { layers[i].style.transform = `translate3d(0,${d.ty.toFixed(1)}px,0) rotate(${d.rot.toFixed(2)}deg) scale(${d.scale.toFixed(4)})`; });
+    };
+    draw();
+    if (!still) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
+}
 
 // Move the drawing to where the scroll position says it should be.
 function applyState(svg, state) {
@@ -89,6 +112,13 @@ export function applyAppLook() {
     const bg = document.createElement("div");
     bg.className = "al-bg";
     bg.setAttribute("aria-hidden", "true");
+    if (page === "index") {
+        const layers = DEPTH.map(d => { const el = document.createElement("div"); el.className = "al-layer"; el.style.filter = [d.blur ? `blur(${d.blur}px)` : "", d.shadow].filter(Boolean).join(" ") || "none"; el.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${d.svg}</svg>`; bg.append(el); return el; });
+        document.body.prepend(bg);
+        document.documentElement.classList.add("al-on");
+        startDepth(layers);
+        return;
+    }
     if (ART[page]) bg.innerHTML = page === "more" ? `<svg class="al-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${ART[page]}</svg>` : `<svg viewBox="0 0 100 80" preserveAspectRatio="xMaxYMin meet">${ART[page]}</svg>`;
     document.body.prepend(bg);
     document.documentElement.classList.add("al-on");

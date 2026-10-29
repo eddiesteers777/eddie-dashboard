@@ -11,7 +11,6 @@ test("progress is 0 on a page that cannot scroll and never leaves 0..1", () => {
 });
 
 test("each instrument starts at rest at the top of the page", () => {
-    assert.deepEqual(instrumentState("index", 0, 1000), { needle: 0, dial: -0 });
     assert.equal(instrumentState("train", 0, 1000).tick, 0);
     assert.equal(instrumentState("plan", 0, 1000).cell, 0);
     assert.equal(instrumentState("nutrition", 0, 1000).fillY, 68);
@@ -69,4 +68,14 @@ test("more: tiles grow in order and stay between 0.4 and 1", async () => {
     assert.ok(top.every(k => k === 0.4) && end.every(k => k === 1));
     const mid = instrumentState("more", 300, 1000).sq;
     assert.ok(mid[0] >= mid[8] && mid.every(k => k >= 0.4 && k <= 1));
+});
+
+test("depth: rests at the top, near layers move more than far ones", async () => {
+    const { depthState } = await import("../js/appMotion.js");
+    assert.ok(depthState(0).every(l => l.ty === 0 && l.rot === 0 && l.scale === 1));
+    assert.ok(depthState(NaN).every(l => Number.isFinite(l.ty) && Number.isFinite(l.rot) && l.scale === 1));
+    const d = depthState(1000);
+    assert.equal(d.length, 5);
+    for (let i = 1; i < d.length; i++) { assert.ok(Math.abs(d[i].ty) > Math.abs(d[i - 1].ty)); assert.ok(d[i].scale >= d[i - 1].scale); }
+    assert.ok(depthState(1e9).every(l => l.scale < 2));
 });

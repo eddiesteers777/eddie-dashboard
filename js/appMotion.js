@@ -12,7 +12,6 @@ export function instrumentState(page, y, max) {
     const yy = Number.isFinite(y) ? Math.max(0, y) : 0;
     const p = scrollProgress(yy, max);
     switch (page) {
-        case "index": return { needle: yy * 0.3, dial: -yy * 0.08 };
         case "train": {
             const deg = yy * 0.7;
             return { hand: deg, tick: Math.floor((((deg % 360) + 360) % 360) / 6) };
@@ -36,4 +35,18 @@ export function sloshStep(angle, vel, dy) {
     const a = Number.isFinite(angle) ? angle : 0, v = Number.isFinite(vel) ? vel : 0, d = Number.isFinite(dy) ? dy : 0;
     const nv = (v + -0.12 * a + clamp(d, -80, 80) * 0.03) * 0.9;
     return { angle: clamp(a + nv, -5, 5), vel: nv };
+}
+
+// Today's layered dial: five layers, far to near. Each moves up and turns at its own speed
+// (the near ones faster), and the near ones grow a little, so the stack reads as depth.
+export const DEPTH_LAYERS = [
+    { k: 0.02, rot: 0.02, zoom: 0 },
+    { k: 0.04, rot: -0.03, zoom: 0.00002 },
+    { k: 0.07, rot: 0.05, zoom: 0.00004 },
+    { k: 0.1, rot: -0.08, zoom: 0.00007 },
+    { k: 0.14, rot: 0.12, zoom: 0.0001 },
+];
+export function depthState(y) {
+    const yy = Number.isFinite(y) ? Math.max(0, y) : 0;
+    return DEPTH_LAYERS.map(l => ({ ty: -yy * l.k * 2.2, rot: yy * l.rot, scale: 1 + Math.min(yy, 4000) * l.zoom }));
 }
