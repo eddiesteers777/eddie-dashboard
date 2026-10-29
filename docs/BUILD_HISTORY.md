@@ -584,3 +584,6 @@ Eddie found the five stacked rings read as overlapping lines and asked for a tex
 ## 2026-10-29: Fabric and solid object on Train
 Eddie asked to bring the Today concept to the other app pages one at a time. Train now has the folded fabric (mirrored) and a solid 3D stopwatch with a crown and a gold hand. Pages are added through `FABRIC` in `js/appLook.js`; `fabricState(y, spin)` is shared. Checked on the real Train page at 390 and 1280 px, no page errors.
 Eddie: the compass belongs to Home only; every other page keeps its own instrument inside the fabric look. The stopwatch got a crown, pusher and sub-dial to stay distinct.
+
+## 2026-10-29: Fabric and solid calendar on Plan
+Second page after Today and Train in the one-page-at-a-time rollout. Plan keeps its calendar instrument as a thick desk calendar over the fabric. Checked on the real Plan page at 390 and 1280 px, no page errors.

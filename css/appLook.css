@@ -77,3 +77,16 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-cmp-b>.al-crown{inset:auto;left:41%;top:-10%;width:18%;height:13%;border-radius:5px 5px 2px 2px;transform:translateZ(9px);background:linear-gradient(90deg,#2a3b4c,#8aa2b8 45%,#2a3b4c);box-shadow:0 2px 3px rgba(0,0,0,.4)}
 .al-bg .al-cmp-b>.al-pusher{inset:auto;left:80%;top:2%;width:13%;height:10%;border-radius:4px;transform:translateZ(9px) rotate(45deg);background:linear-gradient(90deg,#2a3b4c,#8aa2b8 45%,#2a3b4c);box-shadow:0 2px 3px rgba(0,0,0,.4)}
 @media (max-width:600px){.al-bg .al-cmp.al-sw{top:128px}}
+/* Plan: a thick desk calendar */
+.al-bg .al-cmp.al-cal{--s:min(340px,72vw);height:calc(var(--s)*.78)}
+@media (max-width:600px){.al-bg .al-cmp.al-cal{right:2%;top:96px;--s:min(330px,68vw)}}
+.al-bg .al-cal .al-cmp-b>div{border-radius:10px}
+.al-bg .al-cal .al-cmp-sh{border-radius:14px;background:radial-gradient(closest-side,rgba(0,0,0,.5),transparent)}
+.al-bg .al-cal .al-face{display:flex;flex-direction:column;gap:5%;padding:11% 6% 6%;box-shadow:inset 0 0 0 calc(var(--s)*.014) #3c5266,inset 0 0 0 calc(var(--s)*.02) #6f879c,inset 0 6px 14px rgba(0,0,0,.45);background:linear-gradient(160deg,#46607a,#26384a 60%,#1a2733)}
+.al-bg .al-days{display:grid;grid-template-columns:repeat(7,1fr);font:600 calc(var(--s)*.034)/1 var(--font-mono),monospace;color:rgba(226,236,245,.6);text-align:center;letter-spacing:.06em}
+.al-bg .al-grid{flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(3,1fr);gap:calc(var(--s)*.018)}
+.al-bg .al-cell{border-radius:calc(var(--s)*.02);background:rgba(10,18,26,.28);box-shadow:inset 0 0 0 1px rgba(226,236,245,.16)}
+.al-bg .al-cell.done{background:rgba(226,236,245,.1)}
+.al-bg .al-cell.on{background:rgba(210,173,98,.55);box-shadow:inset 0 0 0 1px rgba(210,173,98,.9),0 3px 8px rgba(0,0,0,.4)}
+.al-bg .al-cal .al-cmp-b>.al-bring{inset:auto;top:-3.5%;width:4%;height:9%;margin-left:-2%;border-radius:999px;transform:translateZ(14px);background:linear-gradient(90deg,#2a3b4c,#9bb2c6 45%,#2a3b4c);box-shadow:0 2px 3px rgba(0,0,0,.45)}
+.al-bg .al-cal .al-glass{border-radius:10px;transform:translateZ(18px)}
