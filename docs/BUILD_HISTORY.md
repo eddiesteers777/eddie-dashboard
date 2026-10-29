@@ -596,3 +596,6 @@ Fourth page in the rollout. The Habits rings are now three thick extruded rings 
 
 ## 2026-10-29: Fabric and heart monitor on Progress
 Fifth page in the rollout. Progress keeps its heartbeat line, now on a thick 3D monitor over the fabric. Checked on the real Progress page at 390 and 1280 px, no page errors.
+
+## 2026-10-29: Fabric and chat bubble on Messages
+Messages wears the fabric with a thick 3D chat bubble (`messagesHtml`, `FABRIC.messages`); its three lines write in with scroll (existing `instrumentState` case). Tested: static suite, smoke on messages.html, no page errors at 390 and 1280. No rules change.

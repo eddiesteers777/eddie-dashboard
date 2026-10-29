@@ -115,3 +115,15 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-led{position:absolute;right:5.5%;bottom:7%;width:2.6%;aspect-ratio:1;border-radius:50%;background:var(--gold,#D2AD62);box-shadow:0 0 6px rgba(210,173,98,.8)}
 .al-bg .al-bpm{position:absolute;left:7%;bottom:6%;font:600 calc(var(--s)*.03)/1 var(--font-mono),monospace;letter-spacing:.14em;color:rgba(226,236,245,.45)}
 .al-bg .al-mon .al-glass{border-radius:16px}
+
+/* Messages: a thick chat bubble */
+.al-bg .al-cmp.al-msg{--s:min(340px,72vw);height:calc(var(--s)*.7);opacity:.78}
+@media (max-width:600px){.al-bg .al-cmp.al-msg{right:-2%;top:100px}}
+.al-bg .al-msg .al-cmp-sh{border-radius:22px}
+.al-bg .al-msg .al-cmp-b>div{border-radius:22px}
+.al-bg .al-msg .al-cmp-b>.al-tl{inset:auto;left:12%;top:96%;width:18%;height:22%;border-radius:0;clip-path:polygon(0 0,100% 0,0 100%)}
+.al-bg .al-msg .al-cmp-b>.al-tlf{background:#26384a}
+.al-bg .al-msg .al-face{display:flex;flex-direction:column;justify-content:center;gap:11%;padding:0 12%;box-shadow:inset 0 0 0 calc(var(--s)*.016) #3c5266,inset 0 0 0 calc(var(--s)*.022) #6f879c,inset 0 6px 14px rgba(0,0,0,.45);background:linear-gradient(160deg,#46607a,#26384a 60%,#1a2733)}
+.al-bg .al-msg .al-face .ln{display:block;height:calc(var(--s)*.035);border-radius:99px;background:rgba(226,236,245,.85);width:100%}
+.al-bg .al-msg .al-face .ln:nth-child(2){width:78%}.al-bg .al-msg .al-face .ln:nth-child(3){width:50%}
+.al-bg .al-msg .al-glass{border-radius:22px}
