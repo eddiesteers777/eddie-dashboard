@@ -44,8 +44,14 @@ html.pl-on .ex-reply{background:rgba(210,173,98,.08);border-left-color:#D2AD62}
 .sbh-glow-teal{background:radial-gradient(closest-side,rgba(110,140,172,.4),rgba(110,140,172,.1) 55%,transparent 100%)}
 .sbh-glow-clay{background:radial-gradient(closest-side,rgba(120,146,182,.34),rgba(120,146,182,.1) 55%,transparent 100%)}
 .sbh-glow-sage{background:radial-gradient(closest-side,rgba(140,176,190,.34),rgba(140,176,190,.08) 55%,transparent 100%)}
-.sbh-msg{border-color:rgba(214,228,240,.26);background:radial-gradient(120% 90% at 50% 0%,rgba(20,32,44,.22),rgba(20,32,44,.34) 70%),rgba(20,32,44,.2);
-  box-shadow:inset 0 -9px 12px -6px rgba(200,220,240,.3),inset 0 8px 14px -8px rgba(0,0,0,.35),0 16px 26px -14px rgba(0,0,0,.7)}
-.sbh-msg.me{background:radial-gradient(120% 90% at 50% 0%,rgba(230,203,142,.88),rgba(210,173,98,.82) 70%);color:#1b1608;box-shadow:inset 0 -9px 12px -6px rgba(255,240,205,.4),0 16px 26px -14px rgba(0,0,0,.7)}
+.sbh-msg{border:1px solid rgba(214,228,240,.28);border-radius:20px 20px 20px 6px;padding:11px 16px 12px;align-self:flex-start;
+  background:linear-gradient(180deg,rgba(40,58,78,.78),rgba(24,36,50,.72));color:#F2EEE6;
+  box-shadow:inset 0 1px 0 rgba(214,228,240,.2),0 14px 26px -12px rgba(0,0,0,.65)}
+.sbh-msg::before,.sbh-msg::after{display:none}
+.sbh-msg.me{align-self:flex-end;border-radius:20px 20px 6px 20px;background:linear-gradient(180deg,rgba(226,190,112,.95),rgba(210,173,98,.9));border-color:rgba(255,236,190,.4);color:#1b1608;
+  box-shadow:inset 0 1px 0 rgba(255,244,214,.4),0 14px 26px -12px rgba(0,0,0,.65)}
+/* the bubbles only slide and settle (the old blob wobble changed their shape) */
+@keyframes sbh-wob{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@media (max-width:760px){.sbh-msg{border-radius:16px 16px 16px 5px;padding:9px 13px 10px}.sbh-msg.me{border-radius:16px 16px 5px 16px}}
 /* The Home hero photo is cooled to match (it was warm olive) */
 html.sbh-sky-on #sbhPhoto{filter:hue-rotate(175deg) saturate(.6) brightness(.95)}
