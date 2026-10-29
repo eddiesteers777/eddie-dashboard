@@ -9,10 +9,26 @@
   },
   "extraKnownMarketplaces": {
     "southbound-tools": {
-      "source": { "source": "github", "repo": "eddiesteers777/eddie-dashboard" }
+      "source": {
+        "source": "github",
+        "repo": "eddiesteers777/eddie-dashboard"
+      }
     }
   },
   "enabledPlugins": {
     "auto-model@southbound-tools": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ]
   }
 }
