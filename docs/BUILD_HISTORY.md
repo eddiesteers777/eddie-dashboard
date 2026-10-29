@@ -593,3 +593,6 @@ Third page in the rollout. The Fuel water animation now lives inside an extruded
 
 ## 2026-10-29: Fabric and thick rings on Habits
 Fourth page in the rollout. The Habits rings are now three thick extruded rings over the fabric. Checked on the real Habits page at 390 and 1280 px, no page errors.
+
+## 2026-10-29: Fabric and heart monitor on Progress
+Fifth page in the rollout. Progress keeps its heartbeat line, now on a thick 3D monitor over the fabric. Checked on the real Progress page at 390 and 1280 px, no page errors.

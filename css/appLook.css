@@ -105,3 +105,13 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 .al-bg .al-rg .al-cmp-sh{border-radius:50%}
 .al-bg .al-rg .al-cmp-b{transform:rotateX(34deg) rotateY(-10deg) rotateZ(-8deg)}
 .al-bg .al-rg .al-cmp-b>svg{position:absolute;inset:0;right:auto;width:100%;height:100%;overflow:visible;border-radius:0}
+/* Progress: a thick heart monitor */
+.al-bg .al-cmp.al-mon{--s:min(360px,76vw);height:calc(var(--s)*.62);opacity:.74}
+@media (max-width:600px){.al-bg .al-cmp.al-mon{right:-4%;top:100px}}
+.al-bg .al-mon .al-cmp-sh{border-radius:18px}
+.al-bg .al-mon .al-cmp-b>div{border-radius:16px}
+.al-bg .al-mon .al-face{overflow:hidden;background:linear-gradient(160deg,#0f1a24,#16222d);box-shadow:inset 0 0 0 calc(var(--s)*.02) #3c5266,inset 0 0 0 calc(var(--s)*.028) #6f879c,inset 0 6px 16px rgba(0,0,0,.6)}
+.al-bg .al-mon .al-face svg{position:absolute;inset:9% 7%;width:86%;height:82%;display:block;filter:drop-shadow(0 0 4px rgba(214,228,240,.5))}
+.al-bg .al-led{position:absolute;right:5.5%;bottom:7%;width:2.6%;aspect-ratio:1;border-radius:50%;background:var(--gold,#D2AD62);box-shadow:0 0 6px rgba(210,173,98,.8)}
+.al-bg .al-bpm{position:absolute;left:7%;bottom:6%;font:600 calc(var(--s)*.03)/1 var(--font-mono),monospace;letter-spacing:.14em;color:rgba(226,236,245,.45)}
+.al-bg .al-mon .al-glass{border-radius:16px}
