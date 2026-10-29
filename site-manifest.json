@@ -69,6 +69,7 @@
     "js/analyticsSummary.js",
     "js/app.js",
     "js/appLook.js",
+    "js/appMotion.js",
     "js/applicationForm.js",
     "js/applications.js",
     "js/apply.js",

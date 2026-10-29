@@ -55,3 +55,7 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 @media (prefers-reduced-motion:reduce){
   html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:none}
   .eos-splash::before,.eos-splash-wordmark::after{animation:none}}
+
+/* Stopwatch ticks: the one under the hand lights up in gold */
+.al-bg .tk{stroke:rgba(214,228,240,.34);stroke-width:.6;vector-effect:non-scaling-stroke}
+.al-bg .tk.on{stroke:var(--gold,#D2AD62);stroke-width:1.2}

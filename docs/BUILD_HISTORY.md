@@ -565,3 +565,6 @@ Eddie liked the instrument drawings and the blue, and asked for gold as an accen
 
 ## 2026-10-29: Public site recoloured to foggy blue with gold
 Eddie asked for the app's colour scheme on the public site. `css/publicFog.css` (see `docs/APP_REFERENCE.md`). Checked in the browser at 390 and 1280 px on Home (four scroll stops), About, Coaching, Soccer, Packages, Apply, Contact, Get the App and Free tools. Static tests: the same two dev-package failures (`@garmin/fitsdk`, `fast-check` not installed in the sandbox). No rules change.
+
+## 2026-10-29: App background instruments move with scroll
+Eddie picked option A. `js/appMotion.js` (pure, 7 tests) + `js/appLook.js` + tick CSS in `css/appLook.css`; details in `docs/APP_REFERENCE.md` (App: foggy blue look). Checked in the browser on the real pages at 390 and 1280 px (Today, Train, Plan, Fuel, Habits, Progress, Messages, Coach): no page errors, drawings change between top and bottom. No rules change.
