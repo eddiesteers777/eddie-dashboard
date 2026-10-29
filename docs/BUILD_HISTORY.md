@@ -599,3 +599,6 @@ Fifth page in the rollout. Progress keeps its heartbeat line, now on a thick 3D 
 
 ## 2026-10-29: Fabric and chat bubble on Messages
 Messages wears the fabric with a thick 3D chat bubble (`messagesHtml`, `FABRIC.messages`); its three lines write in with scroll (existing `instrumentState` case). Tested: static suite, smoke on messages.html, no page errors at 390 and 1280. No rules change.
+
+## 2026-10-29: Fabric and tactics board on Coach and Clients
+Coach dashboard and Clients wear the fabric with a thick 3D tactics board (`boardHtml`, `FABRIC.coach` / `FABRIC.clients`); the gold ball moves along the pass with scroll (existing `instrumentState` case). Tested: static suite, smoke, no page errors at 390 and 1280. No rules change.
