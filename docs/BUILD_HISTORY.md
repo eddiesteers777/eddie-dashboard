@@ -620,3 +620,6 @@ Eddie: keep the blue, add subtle gold and selected-tab accents, more curve and c
 
 ## 2026-10-29: Sweeping arcs fabric (option G)
 Eddie picked G from four mock-ups (D ribbons, E dunes, F drapes, G arcs; mock-ups in /mnt/project-files/app-depth3/). `FOLDS` is now three arcs from the right plus a low wave; same blue, edge lights gold/mist/cream/mist, faint warm glow bottom-left. Still on every device. Tested: static suite, phone and desktop frames, no page errors.
+
+## 2026-10-29: Fuel Clock strip on the Fueling page
+Eddie (BUILD): a live strip above the plan on `fueling.html` from the plan's real gel and drink amounts, a "No plan yet" state, the marathon-picker gap said out loud, and the route-line drawing kept off the toolbar. Built `js/fuelClockModel.js` (8 tests), `js/fuelClock.js`, hooks in `js/fueling.js`; details in APP_REFERENCE "Fuel Clock strip". Checked in the browser as coach and client at 360, 390 and 1280 px: populated (saved plan for today, opened, started and one gel logged), empty, a week with no workouts, a plan that fails to load; reduced motion turns both transitions off; no sideways scroll; every strip button 44px+; contrast 7.2:1 or better. `npm run test:static` 1114 pass, rules 80 pass, smoke 68 page views clean. No rules change.

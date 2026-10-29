@@ -79,7 +79,8 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "profile-checks",
     "workout-shares",
     "sb-email-outbox",
-    "sb-plan-release-day"
+    "sb-plan-release-day",
+    "sb-fuel-clock"   // Fuel Clock done marks and start time for today (js/fuelClock.js): device-only
 ];
 
 const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
