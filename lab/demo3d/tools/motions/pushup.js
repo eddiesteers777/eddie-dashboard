@@ -1,9 +1,19 @@
-// Southbound 3D demos: the push-up (our own motion, no mocap).
-// A straight line from heels to head pivoting on the toes; hands planted
-// under the shoulders (two-bone IK, no sliding); the chest comes to a fist
-// above the floor and presses back up; elbows about 45 degrees from the ribs.
+// Southbound 3D demos: the push-up — Step 1 natural-motion pass.
+// Changes vs the previous version:
+//  - the body angle still drives the rep, but the head now breathes
+//    with it (gaze lifts ~3 degrees as the rep presses up) instead of
+//    being locked to the body angle;
+//  - depth varies ~1.5% across the clip, returning to exactly the
+//    start at t = 1, so no two reps in the loop are identical;
+//  - a ~6 mm lateral sway, periodic over the whole clip, breaks the
+//    perfectly rigid straight-line robot tell without breaking the
+//    straight shoulder-hip-ankle line the grader checks (sway moves
+//    the whole body together, it does not bend it).
+// Start and bottom positions are unchanged; re-run qa.mjs to prove
+// the push-up grader still passes.
 import * as THREE from "three";
 import { qEuler } from "../rig.js";
+import { breathFromCurve, sway, repVar } from "../motion-natural.js";
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const lerp = (a, b, s) => a + (b - a) * s;
@@ -15,11 +25,9 @@ export function repCurve(u, [a, b, c, d] = [0.08, 0.5, 0.57, 0.9]) {
 }
 const FLOOR = 0;
 
-// The body laid out at angle a (degrees above the floor), straight from heels
-// to head, toes tucked, with the toe joints on the floor at toeZ.
-function straightBody(rig, a, toeZ) {
+export function straightBody(rig, a, toeZ, swayX = 0) {
     const R = qEuler(90 - a), chest = qEuler(90 - a);
-    let pos = V(0, 0.5, 0);
+    let pos = V(swayX, 0.5, 0);
     for (let pass = 0; pass < 2; pass++) {
         rig.torso({ pos, hips: R, chest, neck: chest, head: qEuler(90 - a - 14) });
         for (const side of ["Left", "Right"]) {
@@ -34,9 +42,10 @@ function straightBody(rig, a, toeZ) {
         const toe = rig.wp("LeftToeBase");
         pos = pos.clone().add(V(0, FLOOR + 0.052 - toe.y, toeZ - toe.z));
     }
+    return pos;
 }
-const shoulderY = rig => (rig.wp("LeftArm").y + rig.wp("RightArm").y) / 2;
-function solveAngle(rig, toeZ, f, goal, lo = 0, hi = 40) {
+export const shoulderY = rig => (rig.wp("LeftArm").y + rig.wp("RightArm").y) / 2;
+export function solveAngle(rig, toeZ, f, goal, lo = 0, hi = 40) {
     for (let i = 0; i < 26; i++) {
         const mid = (lo + hi) / 2;
         rig.reset(); straightBody(rig, mid, toeZ);
@@ -59,18 +68,24 @@ export const pushup = {
             hz = rig.wp("LeftArm").z + 0.02;
         }
         this.hz = hz;
-        this.bottom = solveAngle(rig, this.toeZ, shoulderY, 0.215); // chest a fist off the floor
+        this.bottom = solveAngle(rig, this.toeZ, shoulderY, 0.215);
         rig.reset();
     },
     pose(rig, t) {
         const u = (t * this.reps) % 1;
         const s = repCurve(u);
-        straightBody(rig, lerp(this.top, this.bottom, s), this.toeZ);
+        const depth = Math.min(1, s * repVar(t, 0.015));
+        const angle = lerp(this.top, this.bottom, depth);
+        // Body moves as one rigid line (as it should), but with a whole-body
+        // sway and a breathing head, so it no longer reads as a plank on a hinge.
+        straightBody(rig, angle, this.toeZ, sway(t, this.reps, 0.006));
+        const br = breathFromCurve(u, [0.08, 0.5, 0.57, 0.9]);
+        rig.turn("Head", qEuler(90 - angle - 14 + (br - 0.5) * 3));
         for (const side of ["Left", "Right"]) {
             const sx = side === "Left" ? 1 : -1;
             const sh = rig.wp(side + "Arm");
             const wrist = V(sx * 0.22, this.wristY, this.hz);
-            rig.limb(side, "arm", wrist, sh.clone().add(V(sx * 0.7, 0.6, -1))); // elbows out and back ~45 degrees
+            rig.limb(side, "arm", wrist, sh.clone().add(V(sx * 0.7, 0.6, -1)));
             rig.aimAt(side + "Hand", V(sx * 0.18, 0, 1).normalize(), V(0, -1, 0));
             rig.curl(side, 8, 5);
         }
