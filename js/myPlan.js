@@ -34,6 +34,7 @@ import { icon } from "./icons.js";
 import { listMyChangeRequests } from "./changeRequests.js";
 import { awaitingAck, awaitingView, noticeVersionOf } from "./planWindow.js";
 import { openChangeRequestDialog, changeRequestsHtml, bindChangeRequestActions } from "./changeRequestDialog.js";
+import { within, planView, READ_LIMIT_MS } from "./planLoadState.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -381,53 +382,131 @@ function mondayFor(plan) {
 }
 
 // ---------- Load ----------
+// Three states, never mixed up (js/planLoadState.js): still loading (the
+// skeleton, no motion), failed (says so, Try again), loaded (the plan or a
+// plain empty state, revealed once).
 
 let started = false;
+let settled = false;
+window.sbPlanStarted = true;   // plan.html's fallback stands down
+
+function setLoading(on, label = "Loading your plan") {
+    $("planLoading").hidden = !on;
+    const sr = $("planLoading").querySelector(".sr-only");
+    if (sr) sr.textContent = label;
+    $("planLoadingText").textContent = on && label !== "Loading your plan" ? label : "";
+    $("planLoadingText").hidden = !$("planLoadingText").textContent;
+}
+
+// One calm reveal of the loaded panels. Only ever on loaded content.
+function reveal() {
+    for (const box of [$("planNotice"), $("planBody")]) {
+        box.classList.add("myplan-reveal");
+        setTimeout(() => box.classList.remove("myplan-reveal"), 900);
+    }
+}
+
+function showFailed(retry) {
+    settled = true;
+    setLoading(false);
+    $("planNotice").innerHTML = "";
+    $("planBody").innerHTML = `
+        <div class="clients-card myplan-failed" role="alert">
+            <span class="myplan-failed-icon">${icon("alertTriangle")}</span>
+            <div>
+                <strong>Couldn't load your plan</strong>
+                <p>Check your connection and try again. This doesn't mean your plan is empty.</p>
+                <button type="button" class="sb-btn sb-btn-secondary" data-retry>${icon("refresh")} Try again</button>
+            </div>
+        </div>`;
+    $("planBody").querySelector("[data-retry]").addEventListener("click", () => {
+        $("planBody").innerHTML = "";
+        setLoading(true);
+        retry();
+    }, { once: true });
+}
+
+function showEmpty(view) {
+    const text = view === "empty-coach"
+        ? emptyHtml({ iconName: "calendar", title: "No plan yet", text: "Your coach hasn't published a plan for you yet. When they do, your weeks show up here and you'll get an email.", actionHref: "updates.html", actionLabel: "From Your Coach" })
+        : emptyHtml({ iconName: "link", title: "Not connected to a coach yet", text: "Connect with your coach. The plan they build for you shows up here.", actionHref: "clients.html?tab=share", actionLabel: "Connect with Coach" });
+    $("planBody").innerHTML = `<div class="clients-card myplan-empty">${text}</div>`;
+    reveal();
+}
+
+// The reads came back with nothing usable and the device has no plan, but
+// the coach did publish one: it's downloading. Stay on Loading, and say it
+// failed if it hasn't landed in time.
+function showArriving() {
+    setLoading(true, "Getting your plan from your coach");
+    setTimeout(() => showFailed(() => location.reload()), READ_LIMIT_MS);
+}
+
+async function load() {
+    settled = false;
+    // If sign-in or a read hangs past the limit, say it failed.
+    const watchdog = setTimeout(() => { if (!settled) showFailed(load); }, READ_LIMIT_MS + 3000);
+    try {
+        state.plans = activePlans();
+        const [headers, record, coaches, requests] = await Promise.all([
+            within(listMyPlans()).catch(error => { console.warn("Southbound: plan updates unavailable.", error?.code || error?.message || error); return null; }),
+            within(getMyClientRecord()).catch(() => null),
+            within(listMyCoaches()).catch(error => { console.warn("Southbound: coach link unavailable.", error?.code || error?.message || error); return null; }),
+            within(listMyChangeRequests()).catch(() => [])
+        ]);
+        if (settled) return;   // the watchdog already showed the failure
+        settled = true;
+        clearTimeout(watchdog);
+        state.headers = headers || [];
+        state.coaches = coaches || [];
+        state.requests = requests;
+        state.goal = [record?.primaryGoal, realAnswer(record?.targetEvent)].filter(Boolean).join(" · ");
+
+        // Nothing to show at all: no coach plan, no plan of their own, nothing scheduled.
+        const hasContent = Boolean(state.plans.length || weekInputs().plans.length || weekInputs().strength.length);
+        const view = planView({ hasContent, headers, coaches });
+        if (view === "failed") { showFailed(load); return; }
+        if (view === "arriving") { showArriving(); return; }
+        setLoading(false);
+        if (view !== "plan") { showEmpty(view); return; }
+
+        renderNotice();
+        // Opening the page counts as seeing the newest version.
+        for (const h of state.headers) {
+            if (awaitingView(h)) {
+                markPlanViewed(h).then(() => { h.viewedVersion = h.version; }).catch(() => {});
+            }
+        }
+
+        const params = new URLSearchParams(location.search);
+        state.selected = state.plans.find(p => p.coachPlanId === params.get("plan")) || state.plans[0] || null;
+        state.monday = mondayFor(state.selected);
+        renderPlan();
+        if (!headers) $("planNotice").insertAdjacentHTML("afterbegin", `<p class="clients-card-note myplan-offline">${icon("info")} Couldn't check for updates from your coach. This is the copy saved on this device.</p>`);
+        reveal();
+        state.sessions = await loadSessions();
+        if (state.sessions.length) { $("planBody").classList.remove("myplan-reveal"); renderPlan(); }
+    } catch (error) {
+        console.error("Southbound: My Plan failed to load.", error);
+        clearTimeout(watchdog);
+        showFailed(load);
+    }
+}
+
+// Sign-in hasn't answered at all: say so rather than load forever.
+const authWatchdog = setTimeout(() => { if (!started) showFailed(() => location.reload()); }, READ_LIMIT_MS + 3000);
 
 listenForAuth(async user => {
     if (!user || started) return;
     started = true;
+    clearTimeout(authWatchdog);
 
     if (cachedRole() === "coach") {
-        $("planLoading").hidden = true;
+        settled = true;
+        setLoading(false);
         $("planBody").innerHTML = `<div class="clients-card">${emptyHtml({ iconName: "calendar", title: "This is your clients' view", text: "Clients see the plan you publish here. Build and publish plans from a client's page in My Clients (Plan tab).", actionHref: "clients.html", actionLabel: "My Clients" })}</div>`;
+        reveal();
         return;
     }
-
-    state.plans = activePlans();
-    const [headers, record, coaches, requests] = await Promise.all([
-        listMyPlans().catch(error => { console.warn("Southbound: plan updates unavailable.", error?.code || error); return []; }),
-        getMyClientRecord().catch(() => null),
-        listMyCoaches().catch(() => []),
-        listMyChangeRequests().catch(() => [])
-    ]);
-    state.headers = headers;
-    state.coaches = coaches;
-    state.requests = requests;
-    state.goal = [record?.primaryGoal, realAnswer(record?.targetEvent)].filter(Boolean).join(" · ");
-    $("planLoading").hidden = true;
-
-    renderNotice();
-    // Opening the page counts as seeing the newest version.
-    for (const h of headers) {
-        if (awaitingView(h)) {
-            markPlanViewed(h).then(() => { h.viewedVersion = h.version; }).catch(() => {});
-        }
-    }
-
-    const params = new URLSearchParams(location.search);
-    state.selected = state.plans.find(p => p.coachPlanId === params.get("plan")) || state.plans[0] || null;
-    state.monday = mondayFor(state.selected);
-
-    // Nothing to show at all: no coach plan, no plan of their own, nothing scheduled.
-    const anything = state.plans.length || weekInputs().plans.length || weekInputs().strength.length;
-    if (!anything) {
-        $("planBody").innerHTML = `<div class="clients-card">${coaches.length
-            ? emptyHtml({ iconName: "calendar", title: "No plan from your coach yet", text: "When your coach publishes your plan it shows up here, and you'll get an email.", actionHref: "updates.html", actionLabel: "From Your Coach" })
-            : emptyHtml({ iconName: "link", title: "Not connected to a coach yet", text: "Connect with your coach and the plan they build for you shows up here.", actionHref: "clients.html?tab=share", actionLabel: "Connect with Coach" })}</div>`;
-        return;
-    }
-    renderPlan();
-    state.sessions = await loadSessions();
-    if (state.sessions.length) renderPlan();
+    load();
 });

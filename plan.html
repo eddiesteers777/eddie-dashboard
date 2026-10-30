@@ -34,7 +34,7 @@
             </div>
         </section>
 
-        <div id="planLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="planLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading your plan</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div><p id="planLoadingText" class="clients-card-note" hidden></p></div>
         <div id="planNotice"></div>
         <div id="planBody"></div>
 
@@ -44,6 +44,15 @@
 
     <script type="module" src="js/icons.js"></script>
     <script type="module" src="js/myPlan.js"></script>
+    <script>
+        // If the page's code never loaded (no connection on first visit), don't sit on Loading.
+        setTimeout(function () {
+            var loading = document.getElementById("planLoading");
+            if (!loading || loading.hidden || window.sbPlanStarted) return;
+            loading.hidden = true;
+            document.getElementById("planBody").innerHTML = '<div class="clients-card myplan-failed" role="alert"><div><strong>Couldn\'t load your plan</strong><p>Check your connection and try again. This doesn\'t mean your plan is empty.</p><button type="button" class="sb-btn sb-btn-secondary" onclick="location.reload()">Try again</button></div></div>';
+        }, 20000);
+    </script>
 
     <script src="js/registerSW.js"></script>
 

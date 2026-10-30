@@ -194,3 +194,46 @@
 .myplan-page .mp-legend{ list-style:none; margin:10px 0 4px; padding:0; display:flex; flex-wrap:wrap; gap:6px 16px; font:500 13px/1.3 var(--font-body); color:var(--text-secondary); }
 .myplan-page .mp-legend li{ display:inline-flex; align-items:center; gap:6px; }
 @media (max-width:420px){ .myplan-page .mp-month, .myplan-page .mp-head, .myplan-page .mp-week{ gap:3px; } .myplan-page .mp-day{ border-radius:12px; } }
+
+/* ---- Load states (js/planLoadState.js): loading, failed, loaded ---- */
+
+#planLoadingText{ margin:10px 0 0; }
+
+.myplan-failed{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    border-left:3px solid var(--danger);
+}
+.myplan-failed-icon{
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:var(--danger-bg);
+    color:var(--danger);
+}
+.myplan-failed strong{ display:block; font-size:16px; color:var(--text); }
+.myplan-failed p{ margin:4px 0 12px; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+.myplan-failed .sb-btn{ min-height:44px; }
+.myplan-empty .sb-btn{ min-height:44px; }
+.myplan-offline{ display:flex; align-items:flex-start; gap:8px; margin:0 0 12px; }
+
+/* No motion while loading: the app's card rise (css/appLook.css) and the
+   skeleton shimmer are off on this page. The loaded panels get one calm
+   reveal instead (js/myPlan.js adds .myplan-reveal once). */
+html.al-on .myplan-page .clients-card{ animation:none; }
+.myplan-page #planLoading .sb-skeleton{ animation:none; }
+@media (prefers-reduced-motion:no-preference){
+    .myplan-page #planBody.myplan-reveal > *,
+    .myplan-page #planNotice.myplan-reveal > *{ animation:myplan-in 320ms ease-out both; }
+    .myplan-page #planBody.myplan-reveal > *:nth-child(2){ animation-delay:60ms; }
+    .myplan-page #planBody.myplan-reveal > *:nth-child(n+3){ animation-delay:120ms; }
+}
+@keyframes myplan-in{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:none; }
+}

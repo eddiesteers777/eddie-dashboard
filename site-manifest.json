@@ -247,6 +247,7 @@
     "js/personalRecords.js",
     "js/planGenerateDialogs.js",
     "js/planLaps.js",
+    "js/planLoadState.js",
     "js/planOps.js",
     "js/planOutcome.js",
     "js/planPrompt.js",
