@@ -93,7 +93,9 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
         renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "low-power" });
     } catch { return fail("no-webgl"); }
     // Smoothing comes from drawing larger than shown (multisampling left dark specks on the skin edges): the page scales it down.
-    renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio || 1, 1) * 1.6, 2.5));
+    // Step 1 fix: header documents pixel ratio at most 1.5; the old code
+    // rendered up to 2.5x on phones (~2.8x the documented pixels).
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.shadowMap.enabled = true;
