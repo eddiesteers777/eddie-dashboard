@@ -168,3 +168,7 @@ html.al-on .al-bg.al-hero-art .al-cmp{--s:calc(var(--hs)*.82);top:6%;right:9%;op
   .al-bg .al-ndl,.al-bg .al-mon .al-face svg{filter:none}
   .al-bg .al-cmp-b{will-change:auto}
 }
+
+/* Habits: the page rings ease to the real progress (js/habits.js sets it). Reduced motion: they just jump. */
+.al-rg .rg{ transition:stroke-dashoffset .3s ease-out; }
+@media (prefers-reduced-motion:reduce){ .al-rg .rg{ transition:none; } }

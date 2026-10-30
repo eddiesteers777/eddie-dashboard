@@ -21,19 +21,32 @@
 ========================================== */
 
 import { icon } from "./icons.js";
+import { habitLineSvg } from "./habitLineIcons.js";
 import { HABIT_ICONS, HABIT_ICON_CATEGORIES, suggestIcons, searchIcons, habitIconId, habitIconSrc, habitIconById, DEFAULT_HABIT_ICON } from "./habitIconSet.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// The line icon (js/habitLineIcons.js), drawn like the rest of the app's icons.
+export function iconLine(id, size = 24) {
+    return habitLineSvg(id, size);
+}
+
+// A page opts in once (the Habits page does); Today and 75-Day keep the drawn tiles.
+let lineMode = false;
+export function useLineIcons(on = true) { lineMode = !!on; }
+const art = (id, size) => (lineMode ? iconLine(id, size) : iconImg(id, size));
 
 export function iconImg(id, size = 24) {
     return `<img class="sb-habit-img" src="${habitIconSrc(id)}" width="${size}" height="${size}" alt="" decoding="async">`;
 }
 
 // The tile a habit row shows. With edit: true it's a button that changes it.
-export function habitIconHtml(habit, { edit = false, size = 28 } = {}) {
+// With useLineIcons() (the Habits page) the tile holds a line icon; otherwise the drawn one (Today, 75-Day).
+export function habitIconHtml(habit, { edit = false, size = 28, line = lineMode } = {}) {
     const id = habitIconId(habit);
-    if (!edit) return `<span class="sb-habit-icon" title="${esc(habitIconById(id)?.label)}">${iconImg(id, size)}</span>`;
-    return `<button type="button" class="sb-habit-icon is-edit" data-change-icon="${esc(habit.id)}" aria-label="Change the icon for ${esc(habit.name)}" title="Change icon">${iconImg(id, size)}<span class="sb-habit-icon-pen" aria-hidden="true">${icon("edit")}</span></button>`;
+    const glyph = line ? iconLine(id, Math.round(size * 0.82)) : iconImg(id, size);
+    if (!edit) return `<span class="sb-habit-icon${line ? " is-line" : ""}" title="${esc(habitIconById(id)?.label)}">${glyph}</span>`;
+    return `<button type="button" class="sb-habit-icon${line ? " is-line" : ""} is-edit" data-change-icon="${esc(habit.id)}" aria-label="Change the icon for ${esc(habit.name)}" title="Change icon">${glyph}<span class="sb-habit-icon-pen" aria-hidden="true">${icon("edit")}</span></button>`;
 }
 
 /* ---------- the picker ---------- */
@@ -45,7 +58,7 @@ function grid(ids) {
     return `<div class="sb-hip-grid">${ids.map(id => {
         const icon = habitIconById(id);
         return `<button type="button" class="sb-hip-choice" data-hip-id="${id}" title="${esc(icon.label)}">
-            ${iconImg(id, 34)}<span>${esc(icon.label)}</span></button>`;
+            ${art(id, 30)}<span>${esc(icon.label)}</span></button>`;
     }).join("")}</div>`;
 }
 
@@ -151,7 +164,7 @@ export function attachIconSuggestions(input, { anchor = input.parentElement } = 
         row.hidden = false;
         row.innerHTML = shown.length
             ? `<span class="sb-habit-suggest-label">Icon</span>
-               ${shown.map(id => `<button type="button" class="sb-habit-chip${id === current ? " is-on" : ""}" data-suggest-id="${id}" aria-pressed="${id === current}" title="${esc(habitIconById(id).label)}">${iconImg(id, 28)}</button>`).join("")}
+               ${shown.map(id => `<button type="button" class="sb-habit-chip${id === current ? " is-on" : ""}" data-suggest-id="${id}" aria-pressed="${id === current}" title="${esc(habitIconById(id).label)}" aria-label="${esc(habitIconById(id).label)}">${art(id, 26)}</button>`).join("")}
                <button type="button" class="sb-habit-more" data-suggest-more>More…</button>`
             : `<span class="sb-habit-suggest-label">No icon fits “${esc(name)}” yet.</span>
                <button type="button" class="sb-habit-more is-strong" data-suggest-more>Pick an icon</button>`;

@@ -3,7 +3,7 @@
 // The drawing is a working instrument tied to the scroll position (js/appMotion.js does the maths): a compass
 // for Today (folded fabric and a solid compass, see below), the same fabric with a solid stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
 // and stays still for people who ask for reduced motion. No layout change.
-import { instrumentState, sloshStep, fabricState } from "./appMotion.js";
+import { instrumentState, sloshStep, fabricState, habitRingsState } from "./appMotion.js";
 
 const L = (a, w = ".6") => `fill="none" stroke="rgba(214,228,240,${a})" stroke-width="${w}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
 const GOLD = "#D2AD62";
@@ -120,12 +120,16 @@ function startFabric(bg, spin, page) {
             bg.querySelectorAll(".al-tile").forEach((t, i) => { t.style.transform = `translate(-50%,-50%) rotate(${t.dataset.r}deg) scale(${sq[i].toFixed(3)})`; });
         }
         if (page === "messages") applyState(bg, instrumentState("messages", Y(), document.documentElement.scrollHeight - innerHeight));
-        if (page === "habits") applyState(bg, instrumentState("habits", Y(), document.documentElement.scrollHeight - innerHeight));
         if (page === "plan") {   // the gold marker steps through the 21 days as you scroll
             const cell = instrumentState("plan", Y(), document.documentElement.scrollHeight - innerHeight).cell;
             bg.querySelectorAll(".al-cell").forEach((c, i) => { c.className = "al-cell" + (i === cell ? " on" : i < cell ? " done" : ""); });
         }
     };
+    if (page === "habits") {   // the rings show real progress, set by js/habits.js, and ease to it
+        const rings = () => applyState(bg, habitRingsState(document.documentElement.dataset.sbHabitRings));
+        rings();
+        addEventListener("sb-habit-rings", rings);
+    }
     draw();
     if (!still) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
 }

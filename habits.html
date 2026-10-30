@@ -51,6 +51,19 @@
             <div class="sb-brand-tile" aria-hidden="true"></div>
         </section>
 
+        <section class="habits-week" aria-labelledby="habitsWeekTitle">
+
+            <div class="habits-week-head">
+                <h2 id="habitsWeekTitle">This week</h2>
+                <span id="habitsWeekCount" class="habits-week-count"></span>
+            </div>
+
+            <div id="habitsWeekBar" class="habits-week-bar" role="group" aria-label="Habits, day by day this week"></div>
+
+            <p id="habitsWeekCue" class="habits-week-cue" role="status" hidden></p>
+
+        </section>
+
         <div class="habits-view-toggle" id="habitsViewToggle">
 
             <button type="button" class="habits-view-btn active" data-habits-view="today">
@@ -89,6 +102,8 @@
                     <span>Checklist</span>
                     <span id="habitsChecklistCount" class="habits-checklist-count"></span>
                 </div>
+
+                <div id="habitsProgress" class="habits-progress" role="progressbar" aria-label="Habits done" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
 
                 <div id="habitsChecklist" class="habits-checklist"></div>
 

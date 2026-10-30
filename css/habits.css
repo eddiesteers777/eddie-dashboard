@@ -648,3 +648,112 @@
     .habits-page .habits-checklist-card{ padding:16px 16px 4px; }
     .habits-page [data-habits-panel="calendar"].active{ padding:14px 12px 16px; }
 }
+
+/* ==========================================================
+   HABITS, WEEK BAR + CHECK ANIMATION + LINE ICONS (2026-10-30)
+   The week (Monday to Sunday) from the same check-offs, a bar for the
+   day's progress, line icons like the rest of the app. Motion is small:
+   the tick (a check drawn in, a fill rising on that habit), the bar, the
+   week day and the page rings easing to their new value. Nothing loops,
+   nothing moves on its own, and reduced motion turns all of it off.
+========================================================== */
+.habits-page [hidden]{ display:none !important; }
+
+.habits-week{ margin:0 0 20px; }
+.habits-week-head{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-bottom:8px; }
+.habits-week-head h2{ font:650 18px/1.25 var(--font-body); color:var(--text); margin:0; }
+.habits-week-count{ font:600 12px/1.3 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.habits-week-bar{ max-width:440px; display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:3px; }
+.habits-week-day{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-width:0;
+    min-height:64px;
+    padding:4px 0;
+    border:0;
+    border-radius:12px;
+    background:none;
+    color:var(--text-secondary);
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+}
+.habits-week-day:disabled{ cursor:default; opacity:.5; }
+.habits-week-day:focus-visible{ outline:2px solid var(--primary); outline-offset:1px; }
+.habits-week-letter{ font:600 11.5px/1 var(--font-mono); letter-spacing:.06em; }
+.habits-week-day.is-today .habits-week-letter,
+.habits-week-day.is-selected .habits-week-letter{ color:var(--text); }
+.habits-week-tank{
+    position:relative;
+    display:block;
+    width:min(100%, 34px);
+    height:34px;
+    overflow:hidden;
+    border-radius:10px;
+    background:rgba(236,230,212,.07);
+    border:1px solid var(--sb-hairline);
+}
+.habits-week-day.is-today .habits-week-tank{ border:1.5px solid var(--primary); }
+.habits-week-day.is-selected:not(.is-today) .habits-week-tank{ box-shadow:0 0 0 1px var(--text-secondary); }
+.habits-week-fill{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    display:block;
+    background:var(--sage);
+    opacity:.55;
+    transform-origin:bottom;
+}
+.habits-week-day.is-complete .habits-week-fill{ opacity:1; }
+.habits-week-check{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--on-primary); }
+.habits-week-check .ui-icon{ width:16px; height:16px; }
+.habits-week-cue{
+    margin:12px 0 0;
+    padding-left:10px;
+    border-left:2px solid var(--amber);
+    font:550 14.5px/1.4 var(--font-body);
+    color:var(--text);
+}
+
+/* The day's progress bar. */
+.habits-progress{ height:6px; margin:2px 0 8px; border-radius:3px; background:rgba(236,230,212,.1); overflow:hidden; }
+.habits-progress i{ display:block; width:0; height:100%; border-radius:3px; background:var(--sage); }
+.habits-progress.is-live i{ transition:width .25s ease-out; }
+
+/* Line icons in the habit tiles, the picker and the chips. */
+.sb-habit-line{ display:block; }
+.sb-habit-icon.is-line{ color:var(--primary-light, var(--primary)); }
+.sb-hip-choice .sb-habit-line,
+.sb-habit-chip .sb-habit-line{ color:var(--primary-light, var(--primary)); }
+
+/* A habit row is a button-like checkbox. */
+.habits-page .habits-row{ position:relative; }
+.habits-page .habits-row:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+.habits-page .habits-row.just-on::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:var(--sage);
+    opacity:0;
+    pointer-events:none;
+    transform-origin:bottom;
+    animation:hb-fill .36s ease-out;
+}
+.habits-page .habits-row.just-on .habits-check{ animation:hb-pop .18s ease-out; }
+.habits-page .habits-row.just-on .habits-check polyline{ stroke-dasharray:24; animation:hb-draw .2s ease-out; }
+.habits-week-fill.is-rising{ animation:hb-rise .2s ease-out; }
+@keyframes hb-fill{ 0%{ transform:scaleY(0); opacity:.16; } 55%{ transform:scaleY(1); opacity:.16; } 100%{ transform:scaleY(1); opacity:0; } }
+@keyframes hb-pop{ 0%{ transform:scale(.8); } 100%{ transform:scale(1); } }
+@keyframes hb-draw{ from{ stroke-dashoffset:24; } to{ stroke-dashoffset:0; } }
+@keyframes hb-rise{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+
+@media (prefers-reduced-motion:reduce){
+    .habits-page .habits-row.just-on::before,
+    .habits-page .habits-row.just-on .habits-check,
+    .habits-page .habits-row.just-on .habits-check polyline,
+    .habits-week-fill.is-rising{ animation:none; }
+    .habits-progress.is-live i{ transition:none; }
+}

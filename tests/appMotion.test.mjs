@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { scrollProgress, instrumentState } from "../js/appMotion.js";
+import { scrollProgress, instrumentState, habitRingsState } from "../js/appMotion.js";
 
 test("progress is 0 on a page that cannot scroll and never leaves 0..1", () => {
     assert.equal(scrollProgress(500, 0), 0);
@@ -13,7 +13,7 @@ test("progress is 0 on a page that cannot scroll and never leaves 0..1", () => {
 test("each instrument starts at rest at the top of the page", () => {
     assert.equal(instrumentState("plan", 0, 1000).cell, 0);
     assert.equal(instrumentState("nutrition", 0, 1000).fillY, 68);
-    assert.deepEqual(instrumentState("habits", 0, 1000).rings, [0, 0, 0]);
+    assert.equal(instrumentState("habits", 0, 1000), null, "habit rings ignore the scroll");
 });
 
 test("the calendar marker walks the 21 days and stops on the last one", () => {
@@ -21,11 +21,15 @@ test("the calendar marker walks the 21 days and stops on the last one", () => {
     assert.equal(instrumentState("plan", 500, 1000).cell, 10);
 });
 
-test("the bottle fills as you scroll and the rings fill one after another", () => {
+test("the bottle fills as you scroll", () => {
     assert.equal(instrumentState("nutrition", 1000, 1000).fillY, 12);
-    const r = instrumentState("habits", 1000, 1000).rings;
-    assert.ok(r[0] > r[1] && r[1] > r[2]);
-    assert.ok(r.every(x => x >= 0 && x <= 0.9));
+});
+
+test("the habit rings show the real numbers, clamped, and rest at zero", () => {
+    assert.deepEqual(habitRingsState("0.5,0.143,0.05").rings, [0.5, 0.143, 0.05]);
+    assert.deepEqual(habitRingsState(undefined).rings, [0, 0, 0]);
+    assert.deepEqual(habitRingsState("2,-1,x").rings, [1, 0, 0]);
+    assert.deepEqual(habitRingsState("0.3").rings, [0.3, 0, 0]);
 });
 
 test("messages lines never disappear and the ball ends at the far mark", () => {

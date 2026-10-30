@@ -16,13 +16,20 @@ export function instrumentState(page, y, max) {
         case "nutrition": return { fillY: 68 - p * 56, waveX: (yy * 0.1) % 22, waveX2: -((yy * 0.17) % 22), bub: [0, 1, 2, 3, 4].map(i => ((yy * (0.04 + i * 0.012) + i * 17) % 50) / 50) };
         case "fueling": return { run: p };
         case "more": return { sq: [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => 0.4 + 0.6 * clamp(p * 1.6 - i * 0.075, 0, 1)) };
-        case "habits": return { rings: [0, 1, 2].map(i => clamp(p * 1.1 - i * 0.12, 0, 1) * 0.9) };
+        case "habits": return null;   // the rings follow real progress, not the scroll (habitRingsState)
         case "progress": return { ecgX: -((yy * 0.12) % 100) };
         case "messages": return { lines: [0, 1, 2].map(i => clamp(p * 3 - i * 0.9, 0.15, 1)) };
         case "coach":
         case "clients": return { ball: { x: 30 + 38 * p, y: 52 - 26 * p } };
         default: return null;
     }
+}
+
+// Habits: the three rings are today, this week and the last 30 days ("0.5,0.143,0.05", each 0-1), set by js/habits.js.
+export function habitRingsState(text) {
+    const v = String(text ?? "").split(",").slice(0, 3).map(x => clamp(Number.isFinite(parseFloat(x)) ? parseFloat(x) : 0, 0, 1));
+    while (v.length < 3) v.push(0);
+    return { rings: v };
 }
 
 // Water sloshing in the bottle: a spring pulled by how fast the page just scrolled.

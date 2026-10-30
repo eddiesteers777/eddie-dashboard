@@ -9,10 +9,13 @@
 
 import { icon } from "./icons.js";
 import { storedIcon, habitIconId } from "./habitIconSet.js";
-import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon } from "./habitIconPicker.js";
+import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon, useLineIcons } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
 import { COACH_HABITS, CLIENT_HABITS } from "./habitDefaults.js";
-import { celebrateHabit } from "./celebrate.js";
+import { habitStreak, streakAtRisk, weekBar, recentCompletionPct as completionPct, ringValues } from "./habitProgress.js";
+
+// The Habits page draws line icons, like the rest of the app (Today and 75-Day keep the drawn tiles).
+useLineIcons(true);
 
 // Habits saved before icons existed have the emoji baked into the
 // name itself (e.g. "🙏 Prayer") -- strip it so it isn't shown
@@ -174,46 +177,11 @@ function dayPct(date) {
 ========================================== */
 
 function currentStreak() {
-    let date = todayStr();
-
-    // If today isn't complete yet, that's fine -- don't let an
-    // in-progress day zero out yesterday's real streak.
-    if (!dayComplete(date)) {
-        date = addDays(date, -1);
-    }
-
-    let streak = 0;
-
-    while (dayComplete(date)) {
-        streak++;
-        date = addDays(date, -1);
-    }
-
-    return streak;
+    return habitStreak(entries, habits, todayStr());
 }
 
 function recentCompletionPct(days = 30) {
-    if (habits.length === 0) {
-        return null;
-    }
-
-    let total = 0;
-    let completed = 0;
-    let date = todayStr();
-
-    for (let i = 0; i < days; i++) {
-        habits.forEach(h => {
-            total++;
-
-            if (isChecked(date, h.id)) {
-                completed++;
-            }
-        });
-
-        date = addDays(date, -1);
-    }
-
-    return total ? Math.round((completed / total) * 100) : null;
+    return completionPct(entries, habits, todayStr(), days);
 }
 
 /* ==========================================
@@ -232,13 +200,79 @@ function renderHero() {
         const pct = recentCompletionPct(30);
         completionEl.textContent = pct === null ? "--" : `${pct}%`;
     }
+
+    renderWeek();
+    publishRings();
+}
+
+/* ==========================================
+   This week: Monday to Sunday, from the same
+   check-offs. The streak is the page's own
+   (js/todayCues.js); a cue shows only when a
+   real streak is at risk.
+========================================== */
+
+function renderWeek(riseKey = null) {
+    const bar = document.getElementById("habitsWeekBar");
+    const count = document.getElementById("habitsWeekCount");
+    const cue = document.getElementById("habitsWeekCue");
+
+    if (!bar) {
+        return;
+    }
+
+    const today = todayStr();
+    const week = weekBar(entries, habits, today);
+
+    if (count) {
+        count.textContent = `${week.completeDays} of 7 days complete`;
+    }
+
+    bar.innerHTML = week.days.map(d => {
+        const label = d.state === "future"
+            ? `${fmtNice(d.key)}, upcoming`
+            : `${fmtNice(d.key)}, ${d.done} of ${d.total} done`;
+        const fill = d.state === "future" ? 0 : d.pct;
+
+        return `
+            <button
+                type="button"
+                class="habits-week-day is-${d.state}${d.isToday ? " is-today" : ""}${d.key === selectedDate ? " is-selected" : ""}"
+                ${d.state === "future" ? "disabled" : `data-jump-to-date="${d.key}"`}
+                aria-label="${escapeHtml(label)}"
+                ${d.isToday ? 'aria-current="date"' : ""}>
+                <span class="habits-week-letter" aria-hidden="true">${d.letter}</span>
+                <span class="habits-week-tank" aria-hidden="true">
+                    <i class="habits-week-fill${d.key === riseKey ? " is-rising" : ""}" style="height:${fill}%"></i>
+                    ${d.state === "complete" ? `<span class="habits-week-check">${icon("check")}</span>` : ""}
+                </span>
+            </button>
+        `;
+    }).join("");
+
+    if (cue) {
+        const atRisk = streakAtRisk(entries, habits, today);
+
+        cue.hidden = !atRisk;
+        cue.textContent = atRisk
+            ? `${atRisk} day streak. Finish today's habits to keep it.`
+            : "";
+    }
+}
+
+// The page drawing's three rings follow real progress: today, this week, last 30 days.
+function publishRings() {
+    const values = ringValues(entries, habits, todayStr());
+
+    document.documentElement.dataset.sbHabitRings = values.map(v => v.toFixed(3)).join(",");
+    window.dispatchEvent(new CustomEvent("sb-habit-rings"));
 }
 
 /* ==========================================
    Today panel
 ========================================== */
 
-function renderToday() {
+function renderToday(justOn = null) {
     const label = document.getElementById("habitsDayLabel");
     const countEl = document.getElementById("habitsChecklistCount");
     const list = document.getElementById("habitsChecklist");
@@ -260,6 +294,16 @@ function renderToday() {
         countEl.textContent = `${doneCount}/${habits.length} done`;
     }
 
+    const bar = document.getElementById("habitsProgress");
+
+    if (bar) {
+        const pct = habits.length ? Math.round(doneCount / habits.length * 100) : 0;
+
+        bar.setAttribute("aria-valuenow", String(pct));
+        bar.setAttribute("aria-valuetext", `${doneCount} of ${habits.length} done`);
+        bar.firstElementChild.style.width = `${pct}%`;
+    }
+
     if (!habits.length) {
         list.innerHTML = `
             <div class="habits-empty-note">
@@ -273,10 +317,10 @@ function renderToday() {
         const checked = isChecked(selectedDate, h.id);
 
         return `
-            <div class="habits-row" data-toggle-habit="${h.id}">
+            <div class="habits-row${h.id === justOn ? " just-on" : ""}" data-toggle-habit="${h.id}" role="checkbox" aria-checked="${checked}" tabindex="0">
                 <div class="habits-check ${checked ? "on" : ""}">${checked ? icon("check") : ""}</div>
                 <div class="habits-row-name ${checked ? "done" : ""}">
-                    ${habitIcon(h)} ${escapeHtml(habitLabel(h))}
+                    ${habitIcon(h)} <span>${escapeHtml(habitLabel(h))}</span>
                 </div>
             </div>
         `;
@@ -431,18 +475,21 @@ document.addEventListener("click", e => {
     if (target.matches("#habitsPrevDay")) {
         selectedDate = addDays(selectedDate, -1);
         renderToday();
+        renderWeek();
         return;
     }
 
     if (target.matches("#habitsNextDay")) {
         selectedDate = addDays(selectedDate, 1);
         renderToday();
+        renderWeek();
         return;
     }
 
     if (target.matches("#habitsTodayBtn")) {
         selectedDate = todayStr();
         renderToday();
+        renderWeek();
         return;
     }
 
@@ -470,12 +517,13 @@ document.addEventListener("click", e => {
     if (habitRow) {
         const habitId = habitRow.dataset.toggleHabit;
         toggleCheck(selectedDate, habitId);
-        renderToday();
+
+        // Only a tick animates: the check, a small fill on that habit, the bar, the week and the rings.
+        const on = isChecked(selectedDate, habitId);
+        renderToday(on ? habitId : null);
         renderHero();
-        if (isChecked(selectedDate, habitId)) {
-            const habit = habits.find(h => String(h.id) === String(habitId));
-            if (habit) celebrateHabit(habit, { allDone: dayComplete(selectedDate), card: document.querySelector("[data-cel-card]") });
-        }
+        if (on) renderWeek(selectedDate);
+        document.querySelector(`[data-toggle-habit="${CSS.escape(habitId)}"]`)?.focus({ preventScroll: true });
         return;
     }
 
@@ -513,6 +561,12 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => {
     if (e.key === "Enter" && e.target.id === "newHabitInput") {
         addNewHabit();
+    }
+
+    // A habit row is a checkbox: Space or Enter ticks it.
+    if ((e.key === " " || e.key === "Enter") && e.target.matches?.("[data-toggle-habit]")) {
+        e.preventDefault();
+        e.target.click();
     }
 });
 
@@ -580,6 +634,9 @@ async function changeIcon(habitId) {
 
 loadData();
 renderAll();
+
+// The bar eases on a tick, not when the page first draws it.
+requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById("habitsProgress")?.classList.add("is-live")));
 
 {
     const input = document.getElementById("newHabitInput");

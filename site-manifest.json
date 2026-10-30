@@ -193,6 +193,8 @@
     "js/habitIconPicker.js",
     "js/habitIconSet.js",
     "js/habitImpact.js",
+    "js/habitLineIcons.js",
+    "js/habitProgress.js",
     "js/habits.js",
     "js/habitsCard.js",
     "js/healthReviewed.js",
