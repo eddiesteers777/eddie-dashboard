@@ -171,6 +171,8 @@
     "js/foodSearch.js",
     "js/footerRail.js",
     "js/formDraft.js",
+    "js/fuelClock.js",
+    "js/fuelClockModel.js",
     "js/fuelCourse.js",
     "js/fuelDetails.js",
     "js/fuelDrafts.js",

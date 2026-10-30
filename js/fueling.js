@@ -19,6 +19,8 @@ import { showsPersonalPlan } from "./role.js";
 import { toast, sbConfirm, sbPrompt } from "./ui.js";
 import { weightIn, weightFromDisplay } from "./fuelProfile.js";
 import { initFuelingPlans, currentProfile, updateProfile } from "./fuelingPlans.js";
+import { initFuelClock, updateFuelClock } from "./fuelClock.js";
+import { marathonDayFor, weekHasWorkouts } from "./fuelClockModel.js";
 
 const $ = (id) => document.getElementById(id);
 const DIY_CARB_LABEL = source => DIY_CARB_SOURCES[carbSourceKey(source)].label;
@@ -35,6 +37,7 @@ const DIY_CARB_LABEL = source => DIY_CARB_SOURCES[carbSourceKey(source)].label;
 let mode = "training";
 
 let lastTargets = null;   // { carbsPerHour, fluidPerHour, sodiumPerHour }
+let todaysMarathonDay = null;   // { week, dayKey } of today in the coach's marathon plan (the Fuel Clock's saved-plan source)
 let lastSession = null;   // the session inputs used for the last calculation
 let planItems = [];       // library items added to the current plan build
 let currentPlanId = null; // set when editing a saved plan
@@ -226,7 +229,11 @@ async function initWeekSelector() {
 
         const currentWeek = data.getCurrentWeek();
 
+        todaysMarathonDay = marathonDayFor(new Date(), { weeks: data.WEEKS.length, weekStart: data.weekStart, days: data.DAYS });
+
         renderMarathonCalendar(data, currentWeek);
+
+        renderFuelClock();
 
         await maybeOpenFromQuery(data, currentWeek);
 
@@ -235,7 +242,7 @@ async function initWeekSelector() {
         const calendar = $("marathonCalendar");
 
         if (calendar) {
-            calendar.innerHTML = `<p class="fuel-empty-state">Couldn't load Marathon data (js/marathonData.js).</p>`;
+            calendar.innerHTML = `<p class="fuel-empty-state marathon-gap">Couldn't load your Marathon plan, so no workouts are listed. Enter your run below.</p>`;
         }
 
         console.error("Marathon data load error:", err);
@@ -359,6 +366,20 @@ function renderMarathonCalendar(data, currentWeek) {
         <span>${escapeHTML(range)}</span>
     `;
     calendar.appendChild(header);
+
+    // No running days in this week (or none at all): say so, and keep the legend for when there is something to read.
+    const legend = $("marathonLegend");
+    if (!weekHasWorkouts(days)) {
+        if (legend) legend.hidden = true;
+        const gap = document.createElement("p");
+        gap.className = "fuel-empty-state marathon-gap";
+        gap.textContent = days.length
+            ? `No marathon workouts in week ${week}. Pick another week above, or enter your run below.`
+            : `Week ${week} has no workouts in your Marathon plan yet. Add them on the Marathon page, or enter your run below.`;
+        calendar.appendChild(gap);
+        return;
+    }
+    if (legend) legend.hidden = false;
 
     const row = document.createElement("div");
     row.className = "marathon-calendar-week-grid";
@@ -1245,6 +1266,8 @@ function renderSchedule() {
 
         container.innerHTML = "";
 
+        renderFuelClock();
+
         return;
 
     }
@@ -1252,6 +1275,41 @@ function renderSchedule() {
     const schedule = buildSchedule(scheduleInputFromPlan(buildPlanObject()));
 
     container.innerHTML = scheduleHTML(schedule, { preWorkoutFood, unit, segmentControls: true });
+
+    renderFuelClock(schedule);
+
+}
+
+/* ==========================================
+   Fuel Clock (js/fuelClock.js): the plan on this page when there is one,
+   else the plan saved for today's marathon workout, else nothing (the
+   plan column's "No plan yet" card says what happens next).
+========================================== */
+
+function renderFuelClock(liveSchedule = null) {
+
+    let source = null;
+
+    if (lastTargets) {
+        const plan = buildPlanObject();
+        source = {
+            plan,
+            schedule: liveSchedule || buildSchedule(scheduleInputFromPlan(plan)),
+            from: "live",
+            key: String(plan.marathonRef ? plan.id : (currentPlanId ?? "draft"))
+        };
+    } else if (todaysMarathonDay) {
+        const plan = findPlanForWorkout(todaysMarathonDay.week, todaysMarathonDay.dayKey);
+        if (plan) source = {
+            plan,
+            schedule: buildSchedule(scheduleInputFromPlan(plan)),
+            from: "saved",
+            key: String(plan.id),
+            onOpen: () => { openPlan(plan.id); $("fuelClock")?.scrollIntoView({ behavior: scrollMotion(), block: "start" }); }
+        };
+    }
+
+    updateFuelClock(source, { unit });
 
 }
 
@@ -2664,6 +2722,9 @@ function renderFuelingPage() {
 
     initCollapsiblePanels();
 
+    initFuelClock();
+    renderFuelClock();
+
     renderDurationStatus();
 
     // Drafts and the athlete profile (js/fuelingPlans.js): picks up the
@@ -2676,6 +2737,7 @@ function renderFuelingPage() {
     // Picking a workout from the marathon block only makes sense for the
     // coach's own plan; everyone else enters their session directly.
     if (showsPersonalPlan()) {
+        document.querySelectorAll(".fx-coach-only").forEach(el => { el.hidden = false; });
         initWeekSelector();
     } else {
         $("marathonPickerPanel").style.display = "none";

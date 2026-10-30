@@ -3325,3 +3325,100 @@ html.sb-guest .fueling-page .fx-guest-offer{ display:block; }
 @media (min-width:1100px){
     .fx-stepper, .fx-stepbar{ display:none !important; }
 }
+/* ==========================================================
+   FUEL CLOCK (2026-10-29, js/fuelClock.js): one strip above the plan. The next gel or drink, a countdown once
+   started, and what is left to drink; "Plan" opens done / next / later with a fill that rises as you log.
+   Blue-frame tokens only (css/appLook.css remaps --primary / --surface). Signed-in app only.
+   ========================================================== */
+.fc[hidden], html.sb-guest .fc{ display:none !important; }
+.fueling-page .fc{
+    margin:16px 0 0; padding:14px; border-radius:26px; color:var(--text);
+    background:linear-gradient(180deg,var(--surface-light),var(--surface) 70%);
+    border:1px solid var(--border);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 2px 6px rgba(0,0,0,.26), 0 24px 48px -28px rgba(0,0,0,.75);
+}
+.fc [hidden]{ display:none !important; }
+.fc-bar{ display:grid; grid-template-columns:12px minmax(0,1fr); grid-template-areas:"g main" "g act"; gap:12px 14px; align-items:center; }
+.fc-bar:not(:has(.fc-gauge)){ grid-template-columns:minmax(0,1fr); grid-template-areas:"main"; }
+.fc-gauge{ grid-area:g; align-self:stretch; position:relative; min-height:64px; border-radius:6px; overflow:hidden; background:rgba(0,0,0,.3); border:1px solid var(--border); }
+.fc-gauge i{ position:absolute; inset:0; transform-origin:50% 100%; transform:scaleY(var(--fc-fill,0)); background:linear-gradient(0deg,var(--primary-dark),var(--primary)); transition:transform 200ms cubic-bezier(.2,.7,.2,1); }
+.fc-main{ grid-area:main; min-width:0; }
+.fc-kicker{ margin:0; font:700 13px/1 var(--font-display); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.fc-line{ margin:6px 0 0; min-width:0; }
+.fc-next{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font:650 16px/1.3 var(--font-body); color:var(--text); overflow-wrap:anywhere; }
+.fc-meta{ display:flex; flex-wrap:wrap; gap:2px 14px; margin:4px 0 0; font:500 14px/1.35 var(--font-mono); font-variant-numeric:tabular-nums; }
+.fc-due{ color:var(--text); }
+.fc-left{ color:var(--text-secondary); }
+.fc-src{ margin:6px 0 0; font:500 13px/1.4 var(--font-body); color:var(--text-secondary); }
+.fc-actions{ grid-area:act; display:flex; gap:8px; }
+.fc-actions .sb-btn{ min-height:44px; flex:1 1 0; white-space:nowrap; }
+@media (min-width:480px){
+    .fc-bar{ grid-template-columns:12px minmax(0,1fr) auto; grid-template-areas:"g main act"; }
+    .fc-actions .sb-btn{ flex:none; }
+}
+
+/* The day's plan: opens over 300ms (grid rows), closed it is inert. */
+.fc-plan{ display:grid; grid-template-rows:0fr; transition:grid-template-rows 300ms cubic-bezier(.2,.7,.2,1); }
+.fc-plan.is-open{ grid-template-rows:1fr; }
+.fc-plan-in{ min-height:0; overflow:hidden; }
+.fc-plan.is-open .fc-plan-in{ padding-top:14px; margin-top:14px; border-top:1px solid var(--border); }
+.fc-sum{ margin:8px 0 0; font:500 14px/1.45 var(--font-body); color:var(--text-secondary); }
+.fc-sum b{ color:var(--text); font-weight:650; }
+.fc-list{ list-style:none; margin:10px 0 0; padding:0; }
+.fc-row{ display:grid; grid-template-columns:56px minmax(0,1fr) auto; align-items:center; gap:10px; min-height:56px; padding:6px 0 6px 10px; border-top:1px solid var(--border); position:relative; }
+.fc-row:first-child{ border-top:0; }
+.fc-row.is-next::before{ content:""; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:3px; background:var(--primary); }
+.fc-when{ font:500 13px/1.3 var(--font-mono); font-variant-numeric:tabular-nums; color:var(--text-secondary); }
+.fc-when b{ display:block; font-weight:600; color:var(--text); }
+.fc-when small{ display:block; font-size:12px; }
+.fc-what{ min-width:0; }
+.fc-what b{ display:block; font:650 15px/1.3 var(--font-body); color:var(--text); overflow-wrap:anywhere; }
+.fc-what small{ display:block; margin-top:2px; font:500 12.5px/1.35 var(--font-body); color:var(--text-secondary); }
+.fc-row.is-done .fc-what b{ color:var(--text-secondary); }
+.fc-mark{
+    min-height:44px; min-width:72px; padding:0 14px; border-radius:var(--radius-pill); cursor:pointer;
+    font:650 14px var(--font-body); color:var(--text); background:transparent; border:1px solid var(--border);
+    transition:background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.fc-row.is-next .fc-mark{ border-color:var(--primary); }
+.fc-mark[aria-pressed="true"]{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.fc-mark:focus-visible, .fc-link:focus-visible, .fc .sb-btn:focus-visible{ outline:none; box-shadow:var(--focus-ring); }
+.fc-foot{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 12px; margin-top:10px; }
+.fc-foot .sb-btn{ min-height:44px; }
+.fc-note{ margin:0; font:500 12.5px/1.4 var(--font-body); color:var(--text-secondary); }
+.fc-link{ position:relative; padding:0; border:0; background:none; cursor:pointer; font:650 13px var(--font-body); color:var(--primary); text-decoration:underline; text-underline-offset:3px; }
+.fc-link::after{ content:""; position:absolute; inset:-14px -8px; }
+@media (prefers-reduced-motion:reduce){
+    .fc-gauge i, .fc-plan, .fc-mark{ transition:none !important; }
+}
+
+/* No plan yet: what happens next (desktop: the plan column; a phone: under Your run on step 1). */
+.fueling-page .fx-col-plan:has(.fc:not([hidden])) .fx-plan-hint{ display:none !important; }
+.fueling-page .fx-plan-hint h2{ margin:0; font:650 17px/1.3 var(--font-body); color:var(--text); }
+.fueling-page .fx-plan-hint ol{ margin:10px 0 0; padding-left:20px; display:grid; gap:6px; }
+.fueling-page .fx-plan-hint li, .fueling-page .fx-plan-hint p{ font:500 14.5px/1.5 var(--font-body); color:var(--text-secondary); }
+.fueling-page .fx-plan-hint p{ margin:10px 0 0; }
+.fueling-page .fx-plan-hint a{ color:var(--primary); text-underline-offset:3px; }
+@media (max-width:1099px){
+    .fueling-page[data-step="1"] .fx-plan-hint{
+        display:block; order:1; margin:12px 0 0; padding:18px; border-radius:26px;
+        background:linear-gradient(180deg, rgba(4,11,8,.62), rgba(7,17,12,.42)); border:1px dashed rgba(236,230,212,.18);
+    }
+    .fueling-page[data-step="1"]:has(#targetsPanel:not([style*="none"])) .fx-plan-hint{ display:none; }
+    /* The strip shows with Your run and with the plan, not on the About you / What you carry steps. */
+    .fueling-page[data-step="2"] .fc, .fueling-page[data-step="3"] .fc{ display:none !important; }
+}
+
+/* The marathon picker: a week with nothing to list says so; the legend waits for workouts. */
+.marathon-calendar-legend[hidden]{ display:none !important; }
+.marathon-gap{ margin:12px 0 0; }
+.marathon-wait{ height:58px; margin:12px 0 0; border-radius:12px; }
+
+/* The top toolbar sits on glass, so the page drawing behind it never crowds the controls (Oct 29 audit). */
+@media (min-width:1100px){
+    .fueling-page .fuel-toolbar{
+        padding:16px 18px; border:1px solid var(--border); border-radius:26px;
+        background:linear-gradient(180deg, rgba(4,11,8,.62), rgba(7,17,12,.42));
+        box-shadow:inset 0 2px 8px rgba(0,0,0,.4);
+    }
+}

@@ -144,6 +144,9 @@ html.al-on .al-bg.al-hero-art .al-cmp{--s:calc(var(--hs)*.82);top:6%;right:9%;op
 .al-bg .al-brd .al-face{overflow:hidden;background:linear-gradient(160deg,#233a46,#1a2c36);box-shadow:inset 0 0 0 calc(var(--s)*.016) #3c5266,inset 0 0 0 calc(var(--s)*.022) #6f879c,inset 0 6px 14px rgba(0,0,0,.5)}
 .al-bg .al-brd .al-face svg{position:absolute;inset:4%;width:92%;height:92%;display:block}
 .al-bg .al-brd .al-glass{border-radius:12px}
+/* Fueling: the race-course slab, smaller and up by the title so it no longer crowds Use Today's Workout and the fluid unit (Oct 29 audit). */
+.al-bg .al-cmp.al-crs{--s:min(270px,52vw);top:56px;right:3%;opacity:.6}
+@media (max-width:600px){.al-bg .al-cmp.al-crs{--s:min(210px,50vw);right:-10%;top:48px;opacity:.42}}
 
 /* More: nine thick tiles scattered over the screen */
 .al-bg .al-cmp.al-tls{--u:clamp(3.6px,.75vw + 1.6px,8px);inset:0;width:auto;height:auto;opacity:.8}
