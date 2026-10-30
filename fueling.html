@@ -185,7 +185,7 @@
 
             <div class="marathon-calendar-shell">
 
-                <div class="marathon-calendar-legend">
+                <div class="marathon-calendar-legend" id="marathonLegend" hidden>
                     <span><i class="legend-dot"></i> Marathon workout</span>
                     <span><i class="legend-dot legend-fueling"></i> Fueling plan assigned</span>
                     <span><i class="legend-dot legend-today"></i> Current week</span>
@@ -199,6 +199,7 @@
                 <div
                     class="marathon-calendar"
                     id="marathonCalendar">
+                    <p class="marathon-wait sb-wait" aria-hidden="true"></p>
                 </div>
 
             </div>
@@ -1175,6 +1176,10 @@
 
         <!-- The plan (answer-first, desktop): pinned on the right of the inputs; on a phone these panels sit right after Your run (css/fueling.css). -->
         <div class="fx-col-plan">
+
+        <!-- Fuel Clock (js/fuelClock.js): next gel or drink, a countdown once started, and what is left to drink.
+             Signed-in app only; hidden when there is no plan today. -->
+        <section class="fc" id="fuelClock" aria-labelledby="fuelClockTitle" hidden></section>
         <!-- ============================================
              SECTION 2 — FUELING TARGETS
         ============================================= -->
@@ -1387,7 +1392,15 @@
 
         </section>
 
-            <p class="fx-plan-hint">Your plan appears here as soon as you say what you are running. It updates as you change anything.</p>
+            <div class="fx-plan-hint" id="fuelNoPlan">
+                <h2>No plan yet — here is what happens next</h2>
+                <ol>
+                    <li>Say what you are running: distance, time or pace<span class="fx-coach-only" hidden>, or pick today's marathon workout</span>.</li>
+                    <li>Add the gels and drink you carry, or keep the plan's homemade drink.</li>
+                    <li>Your plan shows here, with the Fuel Clock on top: the next gel or drink, when it is due, and how much is left to drink.</li>
+                </ol>
+                <p>Have a saved plan? Open it from <a href="#myFuelingPlans">My fueling plans</a>.</p>
+            </div>
 
         </div>
         </div>
