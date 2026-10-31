@@ -177,3 +177,73 @@ test("v2: one session or nothing holds", () => {
     assert.equal(proposePaceV2([T(P - 15)], P).proposal, "hold");
     assert.equal(proposePaceV2([], P).status, "MONITORING");
 });
+
+// ---- Heat v2 ----
+import { proposeHeatAdjustment, heatBaseSeconds, heatDurationFactor, heatAdjustmentStale } from "../js/planRules.js";
+const hot = (feelsLikeF, extra = {}) => ({ feelsLikeF, source: "forecast", ...extra });
+const tempo60 = { kind: "tempo", minutes: 45, paceSec: 403 };
+
+test("heat v2: nothing at or below 68F feels-like", () => {
+    assert.equal(proposeHeatAdjustment(tempo60, hot(68)).proposal, "none");
+    assert.equal(proposeHeatAdjustment(tempo60, hot(50)).proposal, "none");
+    assert.equal(proposeHeatAdjustment(tempo60, { feelsLikeF: NaN }).proposal, "none");
+});
+test("heat v2: graduated, no cliff at 79 to 80 or 89 to 90", () => {
+    assert.ok(heatBaseSeconds(72) > 0 && heatBaseSeconds(72) < heatBaseSeconds(75));
+    assert.ok(Math.abs(heatBaseSeconds(80) - heatBaseSeconds(79)) <= 1.5);
+    assert.ok(Math.abs(heatBaseSeconds(90) - heatBaseSeconds(89)) <= 1.5);
+    assert.equal(heatBaseSeconds(120), heatBaseSeconds(105));
+});
+test("heat v2: a short tempo and a long run at the same heat differ", () => {
+    const tempo = proposeHeatAdjustment({ kind: "tempo", minutes: 30, paceSec: 403 }, hot(85));
+    const long = proposeHeatAdjustment({ kind: "long", minutes: 150, paceSec: 453 }, hot(85));
+    assert.ok(long.adjustmentSec > tempo.adjustmentSec);
+    assert.equal(heatDurationFactor(30), 1);
+    assert.equal(heatDurationFactor(90), 1.25);
+    assert.equal(heatDurationFactor(200), 1.5);
+});
+test("heat v2: intervals scale less than a tempo of the same length", () => {
+    const i = proposeHeatAdjustment({ kind: "interval", minutes: 50, paceSec: 388 }, hot(85));
+    const t = proposeHeatAdjustment({ kind: "tempo", minutes: 50, paceSec: 403 }, hot(85));
+    assert.ok(i.adjustmentSec < t.adjustmentSec);
+    assert.ok(i.notes.some(n => /longer rests/.test(n)));
+});
+test("heat v2: easy runs go by effort, long runs get a fluid plan", () => {
+    assert.match(proposeHeatAdjustment({ kind: "easy", minutes: 40, paceSec: 468 }, hot(80)).notes[0], /by effort/);
+    const long = proposeHeatAdjustment({ kind: "long", minutes: 100, paceSec: 453 }, hot(80));
+    assert.ok(long.options.includes("shift_time"));
+    assert.ok(long.notes.some(n => /sodium/.test(n)));
+});
+test("heat v2: RPE is always an option; 95F+ offers move, shorten, skip first", () => {
+    const warm = proposeHeatAdjustment(tempo60, hot(80));
+    assert.ok(warm.options.includes("rpe"));
+    assert.ok(!warm.options.includes("skip"));
+    const extreme = proposeHeatAdjustment(tempo60, hot(98));
+    assert.equal(extreme.proposal, "options_first");
+    for (const o of ["rpe", "move", "shorten", "skip"]) assert.ok(extreme.options.includes(o));
+});
+test("heat v2: acclimation reduces only when the coach confirms and 14+ days", () => {
+    const full = proposeHeatAdjustment(tempo60, hot(90), { heatDays: 20 });
+    const unconfirmed = proposeHeatAdjustment(tempo60, hot(90), { heatDays: 20, coachConfirmedAcclimated: false });
+    const reduced = proposeHeatAdjustment(tempo60, hot(90), { heatDays: 20, coachConfirmedAcclimated: true });
+    const early = proposeHeatAdjustment(tempo60, hot(90), { heatDays: 5, coachConfirmedAcclimated: true });
+    assert.equal(full.adjustmentSec, unconfirmed.adjustmentSec);
+    assert.ok(reduced.adjustmentSec < full.adjustmentSec);
+    assert.equal(early.adjustmentSec, full.adjustmentSec);
+});
+test("heat v2: forecast labelled, unapproved, hands heat context to pace, no same-benefit claim", () => {
+    const r = proposeHeatAdjustment(tempo60, hot(88, { at: "6 am" }));
+    assert.equal(r.approved, false);
+    assert.match(r.basis, /forecast, not a body measurement/i);
+    assert.deepEqual(r.paceContext, { heat: true });
+    assert.doesNotMatch(JSON.stringify(r), /same (training )?benefit/i);
+    assert.equal(r.paceTo, 403 + r.adjustmentSec);
+});
+test("heat v2: stale when forecast moves 5F, the session moves or settings change", () => {
+    const acc = { feelsLikeF: 85, sessionAt: "2026-11-03T06:00", settingsKey: "a" };
+    assert.equal(heatAdjustmentStale(acc, { ...acc, feelsLikeF: 88 }), false);
+    assert.equal(heatAdjustmentStale(acc, { ...acc, feelsLikeF: 90 }), true);
+    assert.equal(heatAdjustmentStale(acc, { ...acc, sessionAt: "2026-11-03T17:00" }), true);
+    assert.equal(heatAdjustmentStale(acc, { ...acc, settingsKey: "b" }), true);
+    assert.equal(heatAdjustmentStale(null, acc), false);
+});

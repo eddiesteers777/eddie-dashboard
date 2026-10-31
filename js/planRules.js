@@ -269,3 +269,86 @@ export function proposePaceV2(sessions, plannedSec, { weeksToRace = null, consec
         ? `${counted.length} clean sessions beat the pace by 10 s or more. Tempo and interval targets only; easy pace stays by effort.`
         : `${counted.length} clean sessions missed the pace by 10 s or more, with nothing explaining it. Tempo and interval targets only; easy pace stays by effort.`);
 }
+
+/* ==========================================
+   Heat v2 (Eddie approved building it, 2026-10-31)
+
+   A suggestion for a hot day, from a FORECAST feels-like temperature, how
+   long the session is, what kind it is and how used to heat the athlete
+   is. Southbound's own graduated numbers, all stated assumptions that need
+   real heat-week data before anyone trusts them. Heat and humidity only:
+   no cold, rain or wind. It makes no claim that a slower pace gives the
+   same training benefit; heart-rate drift, dehydration and core
+   temperature are not in a forecast. Every proposal is approved: false.
+========================================== */
+
+export const HEAT_START_F = 68;
+export const HEAT_OPTIONS_F = 95;        // from here: move, shorten or skip are offered first
+// Seconds per mile for a sustained hour, between these feels-like points (straight lines between them, so no cliffs).
+export const HEAT_CURVE = [[68, 0], [75, 5], [80, 10], [85, 15], [90, 20], [95, 30], [105, 45]];
+export const HEAT_STALE_F = 5;
+export const HEAT_FULL_DAYS = 14;        // days of heat training before the adjustment is reduced
+export const HEAT_ACCLIMATED_FACTOR = 0.6;
+
+const lerp = (x, [x0, y0], [x1, y1]) => y0 + ((x - x0) * (y1 - y0)) / (x1 - x0);
+export function heatBaseSeconds(feelsLikeF) {
+    if (!Number.isFinite(feelsLikeF) || feelsLikeF <= HEAT_START_F) return 0;
+    const last = HEAT_CURVE[HEAT_CURVE.length - 1];
+    if (feelsLikeF >= last[0]) return last[1];
+    for (let i = 1; i < HEAT_CURVE.length; i++) {
+        if (feelsLikeF <= HEAT_CURVE[i][0]) return lerp(feelsLikeF, HEAT_CURVE[i - 1], HEAT_CURVE[i]);
+    }
+    return 0;
+}
+/** <60 min x1.0, 60-120 x1.25, over 120 x1.5 (the cap). Intervals with rests carry less (x0.75). */
+export function heatDurationFactor(minutes, kind) {
+    const f = !(minutes > 0) || minutes < 60 ? 1 : minutes <= 120 ? 1.25 : 1.5;
+    return kind === "interval" ? f * 0.75 : f;
+}
+
+/**
+ * session: { kind: easy|tempo|interval|long, minutes, paceSec }
+ * forecast: { feelsLikeF, source, at }   (a forecast, never a measurement)
+ * athlete: { heatDays, coachConfirmedAcclimated }
+ * Returns a proposal, or { proposal: "none" } below the threshold.
+ */
+export function proposeHeatAdjustment(session, forecast, athlete = {}) {
+    const feels = forecast?.feelsLikeF;
+    const basis = `Forecast feels-like ${Number.isFinite(feels) ? Math.round(feels) : "?"}°F${forecast?.source ? ` (${forecast.source}${forecast.at ? `, ${forecast.at}` : ""})` : ""}. A forecast, not a body measurement.`;
+    if (!Number.isFinite(feels) || feels <= HEAT_START_F) {
+        return { proposal: "none", approved: false, basis, reason: "At or below 68°F feels-like: no heat adjustment." };
+    }
+    const acclimated = Boolean(athlete.coachConfirmedAcclimated) && (athlete.heatDays || 0) >= HEAT_FULL_DAYS;
+    const secs = Math.round(heatBaseSeconds(feels) * heatDurationFactor(session?.minutes, session?.kind) * (acclimated ? HEAT_ACCLIMATED_FACTOR : 1));
+    const kind = session?.kind;
+    const options = ["rpe"];
+    const notes = [];
+    if (kind === "easy") notes.push("Run easy runs by effort first. Pace second.");
+    if (kind === "interval") notes.push("Adjust the work reps and offer longer rests.");
+    if (kind === "long") { notes.push("Add a fluid and sodium plan. Consider a cooler time of day."); options.push("shift_time"); }
+    if (kind === "tempo") notes.push("Hold the effort, not the number.");
+    const extreme = feels >= HEAT_OPTIONS_F;
+    if (extreme) {
+        options.push("move", "shorten", "skip");
+        notes.push("At this heat a slower pace may not be the right answer: offer moving, shortening or skipping before a pace.");
+    }
+    return {
+        proposal: extreme ? "options_first" : "slow",
+        adjustmentSec: secs,
+        paceFrom: session?.paceSec ?? null,
+        paceTo: Number.isFinite(session?.paceSec) ? session.paceSec + secs : null,
+        options, notes, basis, approved: false,
+        acclimated, acclimationNote: acclimated ? "Reduced for a coach-confirmed heat-acclimated athlete." : (athlete.heatDays || 0) >= HEAT_FULL_DAYS ? "Heat-trained 2+ weeks: the coach can confirm acclimation to reduce this." : "Full adjustment: first 10 to 14 days in heat.",
+        // Hand to Pace v2 so a slow hot session is context, not evidence.
+        paceContext: { heat: true },
+        reason: `Graduated from 68°F, scaled for ${session?.minutes ? `${session.minutes} min` : "session length"} and session type. These numbers are assumptions, not validated.`
+    };
+}
+
+/** True when an accepted adjustment needs re-doing: forecast moved 5°F+, the session moved, or plan settings changed. */
+export function heatAdjustmentStale(accepted, now) {
+    if (!accepted || !now) return false;
+    return Math.abs((now.feelsLikeF ?? accepted.feelsLikeF) - accepted.feelsLikeF) >= HEAT_STALE_F
+        || (now.sessionAt ?? accepted.sessionAt) !== accepted.sessionAt
+        || (now.settingsKey ?? accepted.settingsKey) !== accepted.settingsKey;
+}
