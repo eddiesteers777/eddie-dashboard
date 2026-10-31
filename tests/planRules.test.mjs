@@ -110,3 +110,70 @@ test("only a coach can approve; the proposal is not mutated", () => {
     assert.equal(a.approved, true);
     assert.equal(p.approved, false);
 });
+
+// ---- Pace v2 ----
+import { proposePaceV2, sessionExclusion, PACE_V2_STEP_SEC } from "../js/planRules.js";
+const T = (avgSec, extra = {}) => ({ kind: "tempo", avgSec, ...extra });
+const P = 403;
+
+test("v2: clean repeated beat tightens by 3 s, unapproved, easy untouched", () => {
+    const r = proposePaceV2([T(388), T(385)], P);
+    assert.equal(r.proposal, "tighten");
+    assert.equal(r.to, P - PACE_V2_STEP_SEC);
+    assert.equal(r.approved, false);
+    assert.equal(r.easyPace, "unchanged");
+});
+test("v2: earlier beats, latest on target = monitoring, trend shown", () => {
+    const r = proposePaceV2([T(388), T(385), T(403)], P);
+    assert.equal(r.proposal, "hold");
+    assert.equal(r.status, "MONITORING");
+    assert.match(r.reason, /2 of 3 counted sessions beat the pace/);
+});
+test("v2: gradual drift holds but is surfaced", () => {
+    const r = proposePaceV2([T(P - 8), T(P - 11), T(P - 14)], P);
+    assert.equal(r.proposal, "hold");
+    assert.equal(r.trend.drift, "faster");
+    assert.match(r.reason, /Drifting faster/);
+});
+test("v2: wild reps are excluded, not averaged in", () => {
+    const wild = T(P - 15, { repsSec: [P - 75, P + 45, P - 20] });
+    assert.match(sessionExclusion(wild, P), /Reps varied/);
+    assert.equal(proposePaceV2([wild, T(P - 15)], P).proposal, "hold");
+});
+test("v2: a slow session in heat does not count toward easing; a beat in heat does", () => {
+    const slowHot = T(P + 15, { context: { heat: true } });
+    assert.equal(proposePaceV2([slowHot, slowHot], P).proposal, "hold");
+    assert.equal(proposePaceV2([T(P + 15), T(P + 14)], P).proposal, "ease");
+    const r = proposePaceV2([T(P - 12, { context: { heat: true } }), T(P - 13)], P);
+    assert.equal(r.proposal, "tighten");
+    assert.match(r.notes[0], /despite heat/);
+});
+test("v2: ineligible sessions are excluded (GPS, unplanned, incomplete, easy run)", () => {
+    for (const bad of [T(P - 15, { gpsOk: false }), T(P - 15, { inPlan: false }), T(P - 15, { complete: false }), { kind: "easy", avgSec: P - 15 }]) {
+        assert.ok(sessionExclusion(bad, P));
+        assert.equal(proposePaceV2([bad, T(P - 15)], P).proposal, "hold");
+    }
+});
+test("v2: outlier beyond 30 s is ignored", () => {
+    assert.equal(proposePaceV2([T(P - 15), T(P - 18), T(P - 90)], P).proposal, "tighten");
+});
+test("v2: two changes in a row stops for the coach", () => {
+    const r = proposePaceV2([T(P - 15), T(P - 15)], P, { consecutiveChanges: 2 });
+    assert.equal(r.proposal, "hold");
+    assert.equal(r.status, "COACH_REEVALUATE");
+    assert.equal(proposePaceV2([T(P - 15), T(P - 15)], P, { consecutiveChanges: 1 }).proposal, "tighten");
+});
+test("v2: no tightening in a taper, easing still allowed", () => {
+    const r = proposePaceV2([T(P - 15), T(P - 15)], P, { weeksToRace: 1.1 });
+    assert.equal(r.status, "TAPER_HOLD");
+    assert.equal(proposePaceV2([T(P + 15), T(P + 15)], P, { weeksToRace: 1.1 }).proposal, "ease");
+});
+test("v2: one time trial asks for a coach look and changes nothing", () => {
+    const r = proposePaceV2([{ kind: "time_trial", avgSec: P - 20 }], P);
+    assert.equal(r.proposal, "coach_review");
+    assert.equal(r.to, P);
+});
+test("v2: one session or nothing holds", () => {
+    assert.equal(proposePaceV2([T(P - 15)], P).proposal, "hold");
+    assert.equal(proposePaceV2([], P).status, "MONITORING");
+});

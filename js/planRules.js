@@ -176,3 +176,96 @@ export function approve(proposal, { isCoach = false } = {}) {
     if (!isCoach) throw new Error("Only a coach can approve a plan change.");
     return { ...proposal, approved: true };
 }
+
+/* ==========================================
+   Pace v2 (Eddie approved building it, 2026-10-31)
+
+   Same job as evaluatePaceHistory, with more care about what counts as
+   evidence. Every threshold below is a stated assumption, not a validated
+   number; none of it is any other app's formula. It needs a real week of
+   rep data, a taper week and a heat week before anyone trusts it.
+
+   A session is { kind: "tempo"|"interval"|"time_trial", avgSec, repsSec?,
+   inPlan?, complete?, gpsOk?, context?: { heat, hills, poorSleep, poorFuel } }.
+   Missing flags count as fine (not known to be bad).
+========================================== */
+
+export const PACE_V2_STEP_SEC = 3;               // seconds per mile; sandbox v1 used 5
+export const PACE_V2_MAX_CHANGES = 2;            // in a row, then the coach re-evaluates
+export const PACE_V2_RANGE_SEC = { tempo: 20, interval: 15, time_trial: 20 };
+const SPEED_KINDS = ["tempo", "interval", "time_trial"];
+const CONTEXT_KEYS = ["heat", "hills", "poorSleep", "poorFuel"];
+const contextOf = s => CONTEXT_KEYS.filter(k => s?.context?.[k]);
+
+/** Why a session can't be counted, or null when it can. */
+export function sessionExclusion(s, plannedSec) {
+    if (!s || !SPEED_KINDS.includes(s.kind)) return "Not a speed session. Easy pace follows effort, not speed work.";
+    if (!Number.isFinite(s.avgSec)) return "No pace recorded.";
+    if (s.inPlan === false) return "Not a planned workout.";
+    if (s.complete === false) return "Not every rep was completed.";
+    if (s.gpsOk === false) return "GPS was unstable.";
+    const reps = (s.repsSec || []).filter(Number.isFinite);
+    const limit = PACE_V2_RANGE_SEC[s.kind];
+    if (reps.length >= 2 && Math.max(...reps) - Math.min(...reps) > limit) {
+        return `Reps varied by more than ${limit} s (inconsistent pacing).`;
+    }
+    if (Math.abs(s.avgSec - plannedSec) > PACE_OUTLIER_SEC) return "More than 30 s off plan (outlier).";
+    return null;
+}
+
+/**
+ * Pace v2 proposal for one session type. sessions: most recent last
+ * (the last five are looked at).
+ * opts: { weeksToRace, consecutiveChanges }.
+ * Returns { proposal: tighten|ease|hold|coach_review, from, to, approved:false,
+ *           status, reason, counted, excluded:[{index,why}], notes, trend,
+ *           easyPace: "unchanged" }.
+ */
+export function proposePaceV2(sessions, plannedSec, { weeksToRace = null, consecutiveChanges = 0 } = {}) {
+    const recent = (sessions || []).slice(-5);
+    const excluded = [], notes = [], counted = [];
+    recent.forEach((s, index) => {
+        const why = sessionExclusion(s, plannedSec);
+        if (why) return excluded.push({ index, why });
+        const ctx = contextOf(s);
+        const diff = s.avgSec - plannedSec;
+        if (diff >= PACE_MIN_GAP_SEC && ctx.length) {
+            // A slow session in heat, hills, bad sleep or poor fuelling is explained, not evidence.
+            return excluded.push({ index, why: `Slow, but explained by ${ctx.join(", ")}.` });
+        }
+        if (diff <= -PACE_MIN_GAP_SEC && ctx.length) notes.push(`Session ${index + 1} beat the pace despite ${ctx.join(", ")}, which counts for more.`);
+        counted.push({ index, diff, kind: s.kind });
+    });
+
+    const diffs = counted.map(c => c.diff);
+    const beaten = diffs.filter(d => d <= -PACE_MIN_GAP_SEC).length;
+    const missed = diffs.filter(d => d >= PACE_MIN_GAP_SEC).length;
+    const drift = diffs.length >= 3 && diffs.slice(-3).every((d, i, a) => i === 0 || (d < a[i - 1])) && diffs.slice(-3).every(d => d < 0) ? "faster"
+        : diffs.length >= 3 && diffs.slice(-3).every((d, i, a) => i === 0 || (d > a[i - 1])) && diffs.slice(-3).every(d => d > 0) ? "slower" : null;
+    const trend = { counted: counted.length, beaten, missed, drift };
+    const out = (proposal, to, status, reason) => ({ proposal, from: plannedSec, to, approved: false, status, reason,
+        counted: counted.length, excluded, notes, trend, easyPace: "unchanged" });
+
+    const sameSide = counted.length >= 2 && (beaten === counted.length || missed === counted.length);
+    const dir = beaten === counted.length ? "tighten" : "ease";
+
+    if (!sameSide) {
+        // A single time trial is strong evidence, but one result: ask the coach, change nothing.
+        if (counted.length === 1 && counted[0].kind === "time_trial" && Math.abs(counted[0].diff) >= PACE_MIN_GAP_SEC) {
+            return out("coach_review", plannedSec, "COACH_REVIEW", "One time trial is off plan by 10 s or more. A coach should look; nothing changes on one result.");
+        }
+        const watch = drift ? ` Drifting ${drift} over the last 3 counted sessions: watch the next one.` : "";
+        const count = counted.length ? ` ${beaten} of ${counted.length} counted sessions beat the pace, ${missed} missed it.` : " No session counted yet.";
+        return out("hold", plannedSec, "MONITORING", `Monitoring, not changing.${count}${watch}`);
+    }
+    if (consecutiveChanges >= PACE_V2_MAX_CHANGES) {
+        return out("hold", plannedSec, "COACH_REEVALUATE", `Pace has changed ${consecutiveChanges} times in a row. The coach re-evaluates before another change.`);
+    }
+    if (dir === "tighten" && isTaper(weeksToRace)) {
+        return out("hold", plannedSec, "TAPER_HOLD", "Under 3 weeks to race: no pace is tightened. Only a coach race call changes this.");
+    }
+    const to = dir === "tighten" ? plannedSec - PACE_V2_STEP_SEC : plannedSec + PACE_V2_STEP_SEC;
+    return out(dir, to, "PROPOSED", dir === "tighten"
+        ? `${counted.length} clean sessions beat the pace by 10 s or more. Tempo and interval targets only; easy pace stays by effort.`
+        : `${counted.length} clean sessions missed the pace by 10 s or more, with nothing explaining it. Tempo and interval targets only; easy pace stays by effort.`);
+}
