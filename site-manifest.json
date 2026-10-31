@@ -200,6 +200,7 @@
     "js/habitsCard.js",
     "js/healthReviewed.js",
     "js/healthStatsSetting.js",
+    "js/heatCard.js",
     "js/homeHero.js",
     "js/homeSky.js",
     "js/homeSkyModel.js",

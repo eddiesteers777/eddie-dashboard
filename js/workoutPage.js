@@ -43,6 +43,7 @@ import { renderEmojiText } from "./emoji.js";
 import { toCr10, logScale, effortWords, EFFORT_WORDS, EFFORT_HINT } from "./effortScale.js";
 import { CONDITIONS, cleanConditions, conditionsText } from "./runConditions.js";
 import { cleanQuestions, cleanAnswers, savedAnswers } from "./workoutQuestions.js";
+import { heatCardModel } from "./heatCard.js";
 import { draftKey, loadDraft, keepOrForget, clearDraft, sameValues } from "./formDraft.js";
 // An earlier log on the first words opens on its CR-10 equivalent, so saving it again keeps its meaning.
 const formRpe = r => (r?.rpe ? toCr10(r.rpe, logScale(r.updatedAt || r.createdAt || (r.date ? `${r.date}T12:00:00Z` : null))) : null);
@@ -244,11 +245,49 @@ function render() {
         ${isCoachPlan() && !state.result ? `<p class="clients-card-note wo-hint">Logging tells your coach how it went, including anything that hurt.</p>` : ""}
         ${/* Fuel after the actions (redesign step 7): Start / Log are one scroll from the steps. */ ""}
         ${fuelHtml()}
+        ${heatHtml()}
         ${isCoachPlan() && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="change">${icon("messageSquare")} Can't do this one? Ask for a change</button>` : ""}
         ${item && !state.result && date >= isoDate(new Date()) ? `<button type="button" class="sb-btn sb-btn-tertiary wo-change" data-act="calendar">${icon("calendar")} Add to calendar</button>` : ""}
         ${state.result ? "" : corosHtml() || garminHtml()}`;
     if (repsOpen) $("woExecution")?.querySelector(".ex-detail")?.setAttribute("open", "");
 }
+
+// ---------- Hot out? (js/heatCard.js; a typed feels-like, advice only, the coach decides) ----------
+
+function heatModel() {
+    return heatCardModel({ day: state.day, feelsLikeF: state.heatF ?? "", minutes: state.fuel?.durationMin || 0, dateText: shortDay(date).split(",")[0] });
+}
+
+function heatOutHtml() {
+    const m = heatModel();
+    if (m.empty) return "";
+    if (!m.show) return `<p class="clients-card-note">${esc(m.lines?.[0] || "")}</p>`;
+    return `<div class="wo-heat-big${m.extreme ? " is-extreme" : ""}">${esc(m.headline)}</div>
+        ${m.options.length ? `<ul class="wo-heat-options">${m.options.map(o => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
+        ${m.lines.map(l => `<p class="clients-card-note">${esc(l)}</p>`).join("")}
+        <p class="wo-heat-tag">Forecast you typed, not a measurement</p>
+        <div class="wo-actions"><button type="button" class="sb-btn sb-btn-primary" data-act="heat-ask">Ask my coach to approve</button></div>
+        <p class="clients-card-note">Nothing changes until your coach approves. If the forecast moves 5°F or the run moves, check again.</p>`;
+}
+
+function heatHtml() {
+    if (!isCoachPlan() || state.result || date < isoDate(new Date()) || !state.day?.type || state.day.type === "rest") return "";
+    return `<section class="clients-card wo-heat" aria-labelledby="woHeatTitle">
+        <h2 id="woHeatTitle">Hot out?</h2>
+        <p class="clients-card-note">Type today's feels-like to see what your coach might change. Nothing changes on its own.</p>
+        <label class="wo-heat-label" for="woHeatInput">Feels-like (°F)</label>
+        <input id="woHeatInput" class="wo-heat-input" data-heat-input type="number" inputmode="numeric" min="0" max="130" placeholder="e.g. 88" value="${esc(state.heatF ?? "")}" autocomplete="off">
+        <div id="woHeatOut" aria-live="polite">${heatOutHtml()}</div>
+    </section>`;
+}
+
+$("woBody").addEventListener("input", event => {
+    const input = event.target.closest("[data-heat-input]");
+    if (!input) return;
+    state.heatF = input.value;
+    const out = $("woHeatOut");
+    if (out) out.innerHTML = heatOutHtml();
+});
 
 $("woBody").addEventListener("click", async event => {
     if (strengthMode) return;
@@ -261,6 +300,12 @@ $("woBody").addEventListener("click", async event => {
     if (act === "change") {
         const { openChangeRequestDialog } = await import("./changeRequestDialog.js");
         return openChangeRequestDialog({ coach: { coachUid: state.program.coachUid, coachName: state.program.coachName }, planId: state.program.coachPlanId, date, dates: [date] });
+    }
+    if (act === "heat-ask") {
+        const m = heatModel();
+        if (!m.show) return;
+        const { openChangeRequestDialog } = await import("./changeRequestDialog.js");
+        return openChangeRequestDialog({ coach: { coachUid: state.program.coachUid, coachName: state.program.coachName }, planId: state.program.coachPlanId, date, dates: [date], reason: "other", message: m.message, title: "Ask about the heat" });
     }
     if (act === "coros") return sendThisToCoros(btn);
     if (act === "garmin") return saveForGarmin();

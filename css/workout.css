@@ -387,3 +387,13 @@ body.wo-mode-open{ overflow:hidden; }
 .wo-chips input:checked + span{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
 .wo-chips input:focus-visible + span{ box-shadow:var(--focus-ring); }
 .wo-cond{ display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:14px; color:var(--text-secondary); }
+
+/* Hot out? (js/heatCard.js) */
+.wo-heat-label{ display:block; margin:10px 0 4px; font-size:14px; color:var(--text-secondary, var(--muted)); }
+.wo-heat-input{ width:130px; min-height:44px; padding:0 12px; font-size:16px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); }
+.wo-heat-big{ margin:12px 0 8px; padding:12px; background:var(--bg); border-radius:var(--radius-md); font:600 20px var(--font-mono); }
+.wo-heat-big.is-extreme{ font-size:17px; color:var(--orange); }
+.wo-heat-options{ margin:0 0 8px; padding-left:20px; }
+.wo-heat-options li{ margin:4px 0; }
+.wo-heat-tag{ margin:8px 0; font:600 12px var(--font-mono); text-transform:uppercase; letter-spacing:.06em; color:var(--orange); }
+.wo-heat [hidden]{ display:none !important; }
