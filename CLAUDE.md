@@ -20,7 +20,9 @@ Southbound Coaching (formerly "EddieOS") is Eddie Steers' coaching business plat
 4. **Challenge ideas when there's a better way.** Eddie explicitly asked for pushback, not agreement.
 5. **Firestore rules are NOT auto-deployed.** Whenever `firestore.rules` changes, tell Eddie to paste the **whole file** into Firebase Console → Firestore Database → **Rules** → Publish. A new collection without its rules fails with permission-denied.
 6. **Never put Eddie's email or other personal info in the code.** He chose to keep it out of the public repo.
-7. **When you finish a feature,** add its details to `docs/APP_REFERENCE.md` (how it's built) and `docs/BUILD_HISTORY.md` (what was done and tested). Add a line here only if it's a new rule or gotcha every future change must know.
+7. **Merge reports:** if a merge includes a Firestore rules change, the first line says "Rules paste needed" and the QUEUE.md rules ledger gets its line the same turn.
+8. **A thread can attach at most 24 files.** Count before posting; when full, give the file path in the text instead (or put frames on one Artifact page).
+9. **When you finish a feature,** add its details to `docs/APP_REFERENCE.md` (how it's built) and `docs/BUILD_HISTORY.md` (what was done and tested). Add a line here only if it's a new rule or gotcha every future change must know.
 
 ---
 
@@ -146,6 +148,7 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 - `scripts/plan-states.mjs` screenshots every My Plan state (plan, empty, failed, loading) with optional axe and tap-size checks; copy it for other pages.
 - Browser tests: Playwright is installed globally (`/opt/node22/lib/node_modules/playwright`, browsers at `/opt/pw-browsers`). Serve the repo (`python3 -m http.server 8934`) and either mock `js/auth.js`, `js/firebase.js`, `js/userProfile.js`, `js/cloudSync.js` via `page.route()`, or swap only `js/firebase.js` for one that connects to the Auth + Firestore emulators and signs in a test user (real modules, real rules). **Create contexts with `serviceWorkers: "block"`** or the worker serves the real modules.
 - Mock data must match the real shape (list functions return `{ id, ...data }`).
+- **A test's planned value comes from its own data, not a made-up constant** (a fixed 380 s/mi failed on real sets averaging 411).
 - Screenshot at desktop (1280px) **and** phone (375–390px) widths, and look at them. Use first-screen crops and measured checks (overflow, tap sizes) rather than reading every full-page image.
 - `node --check file.js` for quick syntax checks.
 - **Property tests** (`tests/properties.test.mjs`, fast-check, dev-only): for pure logic with a rule that holds for every input (round trips, dates, limits), add a property there instead of only hand-picked examples.
