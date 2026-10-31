@@ -27,13 +27,23 @@
             <div>
                 <div class="eos-today-eyebrow">Running</div>
                 <h1>Build a Route</h1>
-                <p class="eos-today-phase">Tap the map to drop points. The route snaps to sidewalks and trails, and the fuel plan follows the distance.</p>
+                <p class="eos-today-phase">Tap the map to drop points, drag to reshape. The route snaps to sidewalks and trails, and the fuel plan follows the distance.</p>
             </div>
         </section>
 
         <div class="rb-layout">
 
             <section class="rb-mapcol" aria-label="Map">
+
+                <form class="rb-search" id="rbSearch" role="search">
+                    <label class="sr-only" for="rbSearchInput">Search for a place</label>
+                    <input id="rbSearchInput" type="search" placeholder="Search a place or address" autocomplete="off" enterkeyhint="search">
+                    <button type="submit" class="sb-btn sb-btn-secondary">Search</button>
+                </form>
+                <ul class="rb-results" id="rbResults" hidden></ul>
+
+                <button type="button" class="sb-btn sb-btn-secondary rb-prefs-open" id="rbPrefsOpen" aria-controls="rbPrefs" aria-expanded="false">Route options: <span id="rbPrefsWords">sidewalk-first · any surface · hills as they come</span></button>
+
 
                 <div class="rb-mode" role="group" aria-label="Route type">
                     <button type="button" class="rb-mode-btn is-on" id="rbModeP2P" aria-pressed="true">Point to point</button>
@@ -49,18 +59,42 @@
                 </div>
 
                 <div class="rb-mapwrap">
-                    <div id="rbMap" role="application" aria-label="Route map. Tap to add a point, drag a point to move it, tap a point to remove it."></div>
+                    <div id="rbMap" role="application" aria-label="Route map. Tap to add a point, drag a point or the route line to reshape it, tap a point to remove it."></div>
+                    <div id="rbGlobe" class="rb-globe" hidden aria-label="Globe view"></div>
+                    <button type="button" class="rb-globe-back" id="rbGlobeBack" hidden>Back to map</button>
                     <div class="rb-hint" id="rbHint">Tap the map to drop your start.</div>
-                    <div class="rb-busy sb-wait" id="rbBusy" hidden></div>
+                    <div class="rb-busy" id="rbBusy" hidden></div>
+                    <section class="rb-prefs" id="rbPrefs" aria-label="Route options">
+                        <div class="rb-prefs-head">
+                            <h2>Route options</h2>
+                            <button type="button" class="sb-btn sb-btn-tertiary rb-prefs-close" id="rbPrefsClose">Done</button>
+                        </div>
+                        <div class="rb-pref"><span class="rb-pref-label">Sport</span><div class="rb-choice"><button type="button" class="is-on" aria-pressed="true" disabled>Running</button></div></div>
+                        <div class="rb-pref"><span class="rb-pref-label">Route style</span><div class="rb-choice" data-pref="style">
+                            <button type="button" data-v="sidewalk">Sidewalk-first</button><button type="button" data-v="direct">Direct</button></div></div>
+                        <div class="rb-pref"><span class="rb-pref-label">Surface</span><div class="rb-choice" data-pref="surface">
+                            <button type="button" data-v="any">Any</button><button type="button" data-v="trail">Trails</button><button type="button" data-v="paved">Paved</button></div></div>
+                        <div class="rb-pref"><span class="rb-pref-label">Hills</span><div class="rb-choice" data-pref="elevation">
+                            <button type="button" data-v="any">As they come</button><button type="button" data-v="flat">Avoid hills</button></div></div>
+                        <p class="rb-small">Preferences steer the routing and the sidewalk-first button, using Southbound's own path and sidewalk scoring. There is no "seek hills" option: the routing service can avoid hills but not look for them.</p>
+                    </section>
                 </div>
 
                 <div class="rb-tools">
                     <button type="button" class="sb-btn sb-btn-secondary" id="rbCentre">Add at centre</button>
-                    <button type="button" class="sb-btn sb-btn-secondary" id="rbUndo" disabled>Undo point</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbUndo" disabled>Undo</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbReverse" disabled>Reverse</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbOutBack" disabled>Out and back</button>
                     <button type="button" class="sb-btn sb-btn-secondary" id="rbClear" disabled>Clear</button>
                     <button type="button" class="sb-btn sb-btn-secondary" id="rbLocate">Find me</button>
                     <button type="button" class="sb-btn sb-btn-secondary" id="rbDots" aria-pressed="true">Paths: on</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbGlobeBtn">Globe</button>
                 </div>
+
+                <figure class="rb-profile" id="rbProfileWrap">
+                    <figcaption><span>Elevation and fuel</span><span class="rb-small" id="rbProfileNote">Appears once the route has heights.</span></figcaption>
+                    <div class="rb-profile-plot" id="rbProfile"></div>
+                </figure>
 
             </section>
 
@@ -68,9 +102,11 @@
 
                 <div class="rb-stats" id="rbStats" aria-live="polite">
                     <div class="rb-stat"><span class="rb-stat-label">Distance</span><strong id="rbDist">—</strong></div>
-                    <div class="rb-stat"><span class="rb-stat-label">Time at your pace</span><strong id="rbTime">—</strong></div>
-                    <div class="rb-stat"><span class="rb-stat-label">Climb</span><strong id="rbClimb">—</strong></div>
+                    <div class="rb-stat"><span class="rb-stat-label">Moving time</span><strong id="rbTime">—</strong></div>
+                    <div class="rb-stat"><span class="rb-stat-label">Gain</span><strong id="rbClimb">—</strong></div>
+                    <div class="rb-stat"><span class="rb-stat-label">Loss</span><strong id="rbLoss">—</strong></div>
                     <div class="rb-stat"><span class="rb-stat-label">Path + sidewalk</span><strong id="rbAB">—</strong></div>
+                    <div class="rb-stat"><span class="rb-stat-label">Major road</span><strong id="rbX">—</strong></div>
                 </div>
                 <p class="rb-note" id="rbNote" hidden></p>
 
@@ -108,6 +144,7 @@
                     <summary>Save and export</summary>
                     <div class="rb-card-body">
                         <label class="rb-field"><span>Route name</span><input id="rbName" type="text" maxlength="60" placeholder="Sunday long run" autocomplete="off"></label>
+                        <p class="rb-small">Visibility: private. Only you can see your routes.</p>
                         <div class="rb-row">
                             <button type="button" class="sb-btn sb-btn-primary" id="rbSave" disabled>Save route</button>
                             <button type="button" class="sb-btn sb-btn-secondary" id="rbGpx" disabled>Export GPX</button>
@@ -126,14 +163,14 @@
                 </details>
 
                 <details class="rb-card" open>
-                    <summary>Saved routes</summary>
+                    <summary>My Routes</summary>
                     <div class="rb-card-body">
                         <ul class="rb-saved" id="rbSaved"></ul>
                         <p class="rb-empty" id="rbSavedEmpty">No saved routes yet. Build one and tap Save route.</p>
                     </div>
                 </details>
 
-                <p class="rb-small rb-credit">Map © OpenStreetMap contributors. Routing by Valhalla (FOSSGIS). Path and road data from Overpass. Points you place are sent to these free services; nothing else leaves your device.</p>
+                <p class="rb-small rb-credit">Map © OpenStreetMap contributors. Routing by Valhalla (FOSSGIS). Path and road data from Overpass. Search by Nominatim. Globe by MapLibre. Points you place are sent to these free services; nothing else leaves your device.</p>
 
             </section>
         </div>

@@ -80,3 +80,53 @@ export function boundsOf(points, pad = 0.01) {
 export function boxContains(outer, inner) {
     return !!outer && outer.s <= inner.s && outer.w <= inner.w && outer.n >= inner.n && outer.e >= inner.e;
 }
+
+/** Where a new point p goes in the waypoint list: the gap it adds least distance to. */
+export function bestInsertIndex(waypoints, p, closed = false) {
+    const n = waypoints.length;
+    if (n < 2) return n;
+    let best = n, bestCost = Infinity;
+    const gaps = closed ? n : n - 1;
+    for (let g = 0; g < gaps; g++) {
+        const a = waypoints[g], b = waypoints[(g + 1) % n];
+        const cost = haversine(a, p) + haversine(p, b) - haversine(a, b);
+        if (cost < bestCost) { bestCost = cost; best = g + 1; }
+    }
+    return best;
+}
+
+/** A point at every whole `unit` (miles) along the line: [{ n, at: [lat, lon] }]. */
+export function distanceMarkers(coords, unit = 1) {
+    const out = [];
+    if (coords.length < 2) return out;
+    let acc = 0, next = unit;
+    for (let i = 1; i < coords.length; i++) {
+        const d = haversine(coords[i - 1], coords[i]);
+        while (d > 0 && acc + d >= next) {
+            const t = (next - acc) / d;
+            out.push({ n: Math.round(next / unit), at: [coords[i - 1][0] + t * (coords[i][0] - coords[i - 1][0]), coords[i - 1][1] + t * (coords[i][1] - coords[i - 1][1])] });
+            next += unit;
+        }
+        acc += d;
+    }
+    return out;
+}
+
+/** Index of the line point nearest to p. */
+export function nearestIndex(coords, p) {
+    let best = 0, bd = Infinity;
+    coords.forEach((c, i) => { const d = (c[0] - p[0]) ** 2 + (c[1] - p[1]) ** 2; if (d < bd) { bd = d; best = i; } });
+    return best;
+}
+
+/** Waypoints the other way round. A closed loop keeps its start. */
+export function reversePoints(waypoints, closed = false) {
+    if (!closed) return waypoints.slice().reverse();
+    return [waypoints[0], ...waypoints.slice(1).reverse()];
+}
+
+/** Out and back: to the last point, then back through the same points to the start. */
+export function outAndBack(waypoints) {
+    if (waypoints.length < 2) return waypoints.slice();
+    return [...waypoints, ...waypoints.slice(0, -1).reverse()];
+}

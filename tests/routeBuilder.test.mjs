@@ -273,3 +273,69 @@ test("saved routes: a fuel plan is stored as a plan to review", () => {
     const rec = makeRecord({ name: "x", waypoints: [[1, 1]], coords: [[1, 1], [1, 2]], miles: 10, fuel });
     assert.equal(rec.fuel.status, "review");
 });
+
+// ---------- Follow-up (2026-10-31): preferences, line insert, markers, reverse, gain/loss, profile ----------
+import { bestInsertIndex, distanceMarkers, nearestIndex, reversePoints, outAndBack, cumulativeMiles } from "../js/routeGeo.js";
+import { costingFor, shiftTargets, readPrefs, prefsWords, DEFAULT_PREFS } from "../js/routePrefs.js";
+import { profileSeries } from "../js/routeElevation.js";
+
+test("prefs: Valhalla settings from the panel, no seeking hills", () => {
+    assert.deepEqual(readPrefs({ style: "nope", elevation: "max" }), { ...DEFAULT_PREFS });
+    assert.equal(costingFor({ elevation: "flat" }).use_hills, 0);
+    assert.equal(costingFor({}).use_hills, 0.5);
+    assert.ok(costingFor({ style: "sidewalk" }).walkway_factor < costingFor({ style: "direct" }).walkway_factor);
+    assert.equal(costingFor({ surface: "trail" }).use_tracks, 1);
+    assert.equal(costingFor({ surface: "paved" }).use_tracks, 0);
+    assert.deepEqual(shiftTargets({ surface: "trail" }), ["A"]);
+    assert.deepEqual(shiftTargets({ surface: "paved" }), ["B"]);
+    assert.deepEqual(shiftTargets({}), ["A", "B"]);
+    assert.match(prefsWords({ elevation: "flat" }), /avoid hills/);
+});
+
+test("line drag: the new point goes in the gap it fits", () => {
+    const w = [[35, -85.30], [35, -85.28], [35, -85.26]];
+    assert.equal(bestInsertIndex(w, [35.001, -85.29]), 1);
+    assert.equal(bestInsertIndex(w, [35.001, -85.27]), 2);
+    assert.equal(bestInsertIndex([[35, -85]], [35, -85.1]), 1);
+    // a loop also has the closing gap back to the start
+    const loop = [[35, -85.30], [35.02, -85.30], [35.02, -85.28], [35, -85.28]];
+    assert.equal(bestInsertIndex(loop, [35.0, -85.29], true), 4);
+});
+
+test("mile markers fall every mile along the line", () => {
+    const line = Array.from({ length: 200 }, (_, i) => [35, -85.3 + i * 0.001]); // ~11.3 mi
+    const m = distanceMarkers(line, 1);
+    assert.equal(m.length, Math.floor(lineMiles(line)));
+    assert.deepEqual(m.slice(0, 3).map(x => x.n), [1, 2, 3]);
+    const cum = cumulativeMiles(line);
+    assert.ok(Math.abs(cum[nearestIndex(line, m[0].at)] - 1) < 0.06);
+    assert.equal(distanceMarkers(line.slice(0, 5)).length, 0);
+});
+
+test("reverse and out-and-back", () => {
+    const w = [[1, 1], [2, 2], [3, 3]];
+    assert.deepEqual(reversePoints(w), [[3, 3], [2, 2], [1, 1]]);
+    assert.deepEqual(reversePoints(w, true), [[1, 1], [3, 3], [2, 2]], "a loop keeps its start");
+    assert.deepEqual(outAndBack(w), [[1, 1], [2, 2], [3, 3], [2, 2], [1, 1]]);
+});
+
+test("climb and descent are both ranges; the profile is thinned and smoothed", () => {
+    const up = Array.from({ length: 100 }, (_, i) => 100 + i * 0.3); // 30 m up
+    const updown = [...up, ...up.slice().reverse()];
+    const r = climbRange(updown);
+    assert.ok(r.highFt >= 80 && r.downHighFt >= 80, JSON.stringify(r));
+    assert.match(r.downText, /^about \d+(–\d+)? ft$/);
+    const cum = updown.map((_, i) => i * 0.01);
+    const s = profileSeries(cum, updown, 50);
+    assert.ok(s.length <= 51 && s.length >= 40);
+    assert.equal(s[s.length - 1].i, updown.length - 1, "the profile reaches the end");
+    assert.deepEqual(profileSeries(cum, updown.slice(1)), [], "heights for another line give no profile");
+});
+
+test("optimiser: shifts only toward the preferred class", () => {
+    const sidewalk = makeWay("B", eastLine(35.0004));
+    const trail = makeWay("A", eastLine(35.0008));
+    const wps = [[35.0000, -85.299]];
+    assert.ok(Math.abs(shiftWaypoints(wps, [sidewalk, trail], ["A"])[0][0] - 35.0008) < 1e-9);
+    assert.ok(Math.abs(shiftWaypoints(wps, [sidewalk, trail], ["B"])[0][0] - 35.0004) < 1e-9);
+});

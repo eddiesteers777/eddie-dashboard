@@ -17,11 +17,11 @@ export const SHIFT_MAX_MI = 0.10;
 export const MIN_AB_GAIN = 5;
 export const MAX_GROWTH = 1.25;
 
-export function shiftWaypoints(waypoints, ways) {
+export function shiftWaypoints(waypoints, ways, targets = ["A", "B"]) {
     return waypoints.map(wp => {
         let bestPt = null, bestD = SHIFT_MAX_MI;
         for (const way of ways) {
-            if (way.cat !== "A" && way.cat !== "B") continue;
+            if (!targets.includes(way.cat)) continue;
             for (const c of way.coords) {
                 const d = haversine(wp, c);
                 if (d < bestD) { bestD = d; bestPt = c; }
@@ -41,11 +41,11 @@ export function keepShifted(before, after) {
  * -> { status: "none" | "kept" | "rejected", before, after?, waypoints?, result? }
  * before/after: { miles, ab, x, summary }.
  */
-export async function optimise({ waypoints, coords, miles, ways, route }) {
+export async function optimise({ waypoints, coords, miles, ways, route, targets = ["A", "B"] }) {
     const origScore = scoreLine(coords, ways);
     if (!origScore) return { status: "none", why: "no-score" };
     const before = { miles, ab: origScore.ab, x: origScore.pcts.X, summary: origScore.summary };
-    const shifted = shiftWaypoints(waypoints, ways);
+    const shifted = shiftWaypoints(waypoints, ways, targets);
     if (!shifted.some((p, i) => haversine(p, waypoints[i]) > 0.01)) return { status: "none", why: "no-path-nearby", before };
     const loop = isLoop(coords);
     const result = await route(loop ? [...shifted, shifted[0]] : shifted);

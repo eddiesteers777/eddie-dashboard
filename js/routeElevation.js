@@ -38,7 +38,26 @@ export function climbRange(heightsM) {
     const strong = smoothedGainFt(ft, 3, 10);
     const lowFt = round10(Math.min(light, strong)), highFt = round10(Math.max(light, strong));
     const text = lowFt === highFt ? `about ${lowFt} ft` : `about ${lowFt}–${highFt} ft`;
-    return { lowFt, highFt, text };
+    const down = ft.map(v => -v);
+    const dl = smoothedGainFt(down, 1, 2), ds = smoothedGainFt(down, 3, 10);
+    const downLowFt = round10(Math.min(dl, ds)), downHighFt = round10(Math.max(dl, ds));
+    const downText = downLowFt === downHighFt ? `about ${downLowFt} ft` : `about ${downLowFt}–${downHighFt} ft`;
+    return { lowFt, highFt, text, downLowFt, downHighFt, downText };
 }
 
 export const CLIMB_NOTE = "A range from Valhalla elevation data. Your watch will read a different number; none of them is exact.";
+
+/**
+ * The profile to draw: at most `max` points of { mi, ft }, lightly smoothed
+ * (3-point average) so GPS-style wobble does not look like hills.
+ */
+export function profileSeries(cumMiles, heightsM, max = 400) {
+    if (!heightsM || heightsM.length < 2 || cumMiles.length !== heightsM.length) return [];
+    const ft = heightsM.map(m => m * FT_PER_M);
+    const sm = ft.map((_, i) => { const s = ft.slice(Math.max(0, i - 1), i + 2); return s.reduce((a, b) => a + b, 0) / s.length; });
+    const step = Math.max(1, Math.ceil(ft.length / max));
+    const out = [];
+    for (let i = 0; i < ft.length; i += step) out.push({ i, mi: cumMiles[i], ft: sm[i] });
+    if (out[out.length - 1].i !== ft.length - 1) out.push({ i: ft.length - 1, mi: cumMiles[ft.length - 1], ft: sm[ft.length - 1] });
+    return out;
+}

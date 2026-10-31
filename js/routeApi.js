@@ -24,10 +24,12 @@ async function timedFetch(url, init, ms) {
 }
 
 /** Pedestrian route through the points -> { coords, miles, snapped: true }. Throws on any failure. */
-export async function fetchRoute(locs) {
+export async function fetchRoute(locs, costing = null) {
+    const body = { locations: locs.map(p => ({ lat: p[0], lon: p[1] })), costing: "pedestrian", directions_options: { units: "miles" } };
+    if (costing) body.costing_options = { pedestrian: costing };
     const res = await timedFetch(VALHALLA + "/route", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locations: locs.map(p => ({ lat: p[0], lon: p[1] })), costing: "pedestrian", directions_options: { units: "miles" } })
+        body: JSON.stringify(body)
     }, 20000);
     if (!res.ok) throw new Error("Routing answered " + res.status);
     const data = await res.json();
@@ -72,4 +74,18 @@ export async function fetchWays(box) {
     if (!res.ok) throw new Error("Map data answered " + res.status);
     const data = await res.json();
     return waysFromOverpass(data.elements || []);
+}
+
+/**
+ * Place search with OpenStreetMap's Nominatim: only when the person presses Search
+ * (its usage policy allows no search-as-you-type). -> [{ name, at: [lat, lon] }]
+ */
+export async function searchPlaces(q, near = null) {
+    const params = new URLSearchParams({ q, format: "jsonv2", limit: "5", addressdetails: "0" });
+    if (near) params.set("viewbox", `${near[1] - 1},${near[0] + 1},${near[1] + 1},${near[0] - 1}`);
+    const res = await timedFetch("https://nominatim.openstreetmap.org/search?" + params, { headers: { "Accept-Language": "en" } }, 15000);
+    if (!res.ok) throw new Error("Search answered " + res.status);
+    const rows = await res.json();
+    return (Array.isArray(rows) ? rows : []).map(r => ({ name: r.display_name, at: [Number(r.lat), Number(r.lon)] }))
+        .filter(r => Number.isFinite(r.at[0]) && Number.isFinite(r.at[1]));
 }

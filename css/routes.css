@@ -13,8 +13,9 @@
    mode, loop, map, stats, note, tools, surfaces, cards. (The two columns dissolve.) */
 .rb-layout{ display:flex; flex-direction:column; gap:12px; }
 .rb-mapcol, .rb-sidecol{ display:contents; }
-.rb-mode{ order:1; } .rb-loopbar{ order:2; } .rb-mapwrap{ order:3; } .rb-stats{ order:4; } .rb-note{ order:5; }
-.rb-tools{ order:6; } .rb-surface{ order:7; } .rb-card{ order:8; } .rb-credit{ order:9; }
+.rb-search{ order:1; } .rb-results{ order:2; } .rb-prefs-open, .rb-prefs{ order:3; } .rb-mode{ order:4; } .rb-loopbar{ order:5; }
+.rb-mapwrap{ order:6; } .rb-stats{ order:7; } .rb-note{ order:8; } .rb-tools{ order:9; } .rb-profile{ order:10; }
+.rb-surface{ order:11; } .rb-card{ order:12; } .rb-credit{ order:13; }
 
 /* ---------- mode ---------- */
 .rb-mode{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
@@ -56,11 +57,74 @@
 .rb-pin-end{ background:#ecd6b0; }
 
 /* ---------- tools ---------- */
-.rb-tools{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.rb-tools .sb-btn{ min-height:44px; }
+.rb-tools{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+.rb-tools .sb-btn{ min-height:44px; padding:0 6px; font-size:14px; }
+
+/* ---------- search ---------- */
+.rb-search{ display:flex; gap:8px; }
+.rb-search input{ flex:1; min-width:0; min-height:44px; padding:0 12px; font-size:16px; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:8px; }
+.rb-search input:focus-visible{ outline:2px solid var(--primary); outline-offset:1px; }
+.rb-search .sb-btn{ min-height:44px; flex:0 0 auto; }
+.rb-results{ list-style:none; margin:0; padding:8px; display:flex; flex-direction:column; gap:8px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
+.rb-result{ display:flex; flex-direction:column; gap:8px; padding:8px; border-radius:8px; background:var(--bg); font-size:14px; color:var(--text-secondary); }
+.rb-result-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.rb-result-actions .sb-btn{ flex:1 1 90px; min-height:44px; font-size:14px; }
+
+/* ---------- route options: a sheet on phones, a panel on the left on computers ---------- */
+.rb-prefs-open{ display:block; width:100%; min-width:0; min-height:44px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; font-size:14px; }
+.rb-prefs-open span{ color:var(--text); opacity:.85; font-weight:500; margin-left:4px; }
+.rb-prefs{
+    position:fixed; left:0; right:0; bottom:0; margin:0; z-index:4400; max-height:85svh; overflow:auto;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:12px;
+    background:var(--surface); border-top:1px solid var(--border); border-radius:16px 16px 0 0; box-shadow:0 -12px 40px rgba(0,0,0,.45);
+    transform:translateY(105%); visibility:hidden; transition:transform .25s ease, visibility 0s linear .25s;
+}
+html.rb-sheet-open .eos-bottomnav{ display:none !important; } /* the sheet takes the bottom of the screen */
+.rb-prefs.is-open{ transform:none; visibility:visible; transition:transform .25s ease; }
+.rb-prefs-head{ display:flex; align-items:center; justify-content:space-between; }
+.rb-prefs-head h2{ margin:0; font:600 16px var(--font-body, inherit); letter-spacing:.02em; text-transform:none; }
+.rb-prefs-close{ min-height:44px; }
+.rb-pref{ display:flex; flex-direction:column; gap:6px; }
+.rb-pref-label{ font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+.rb-choice{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:4px; padding:4px; border:1px solid var(--border); border-radius:10px; background:var(--bg); }
+.rb-choice button{ min-width:0; min-height:44px; padding:0 4px; border:0; border-radius:7px; background:transparent; color:var(--text-secondary); font:600 14px var(--font-body, inherit); cursor:pointer; }
+.rb-choice button.is-on{ background:var(--primary); color:var(--on-primary); }
+.rb-choice button:disabled{ cursor:default; opacity:1; }
+.rb-choice button:focus-visible{ outline:2px solid var(--primary-light); outline-offset:1px; }
+
+/* ---------- globe ---------- */
+.rb-mapwrap .rb-globe{ position:absolute; inset:0; z-index:1001; background:#0b1a14; opacity:0; transition:opacity .25s ease; }
+.rb-mapwrap .rb-globe.is-on{ opacity:1; }
+.rb-globe-back{ position:absolute; right:10px; top:10px; z-index:1002; min-height:44px; padding:0 14px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(15,32,25,.9); color:var(--cream); font:600 14px var(--font-body, inherit); cursor:pointer; }
+.rb-globe .maplibregl-ctrl-group button{ width:44px; height:44px; }
+
+/* ---------- mile markers + the line-drag point ---------- */
+.rb-mile-wrap{ background:none; border:0; }
+.rb-mile{ display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#fff; color:#1b4d36; border:2px solid #1b4d36; font:700 11px/1 var(--font-mono, monospace); }
+.rb-pin-new{ background:#fff; color:#1b4d36; font-size:18px; }
+.rb-hitline{ cursor:grab; }
+
+/* ---------- elevation profile ---------- */
+.rb-profile{ margin:0; padding:12px 12px 8px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); position:relative; }
+.rb-profile figcaption{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; font:600 14px var(--font-body, inherit); color:var(--text); margin-bottom:6px; }
+.rb-profile-plot{ position:relative; touch-action:pan-y; }
+.rb-profile-plot.is-empty{ min-height:0; }
+.rb-profile-plot svg{ display:block; width:100%; height:auto; }
+.rbp-area{ fill:var(--primary); opacity:.16; }
+.rbp-line{ fill:none; stroke:var(--primary); stroke-width:2; stroke-linejoin:round; }
+.rbp-grid{ stroke:var(--border); stroke-dasharray:3 4; }
+.rbp-axis{ stroke:var(--muted); stroke-opacity:.5; }
+.rbp-tick{ fill:var(--muted); font:500 11px var(--font-mono, monospace); }
+.rbp-band{ fill:var(--gold, var(--amber)); opacity:.24; }
+.rbp-band.is-alt{ opacity:.12; }
+.rbp-band-label{ fill:var(--text-secondary); font:600 11px var(--font-body, inherit); }
+.rbp-crossline{ stroke:var(--text-secondary); stroke-width:1; }
+.rbp-dot{ fill:var(--primary); stroke:var(--surface); stroke-width:2; }
+.rbp-tip{ position:absolute; top:-4px; transform:translateX(-50%); padding:4px 8px; border-radius:6px; background:var(--bg); border:1px solid var(--border); color:var(--text); font:500 12px var(--font-body, inherit); white-space:nowrap; pointer-events:none; }
 
 /* ---------- stats ---------- */
 .rb-stats{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+@media (max-width:640px){ .rb-stats{ grid-template-columns:repeat(3, 1fr); } .rb-stat{ padding:8px 10px; } .rb-stat strong{ font-size:15px; } .rb-stat-label{ font-size:11px; } }
 .rb-stat{ padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); min-width:0; }
 .rb-stat-label{ display:block; font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
 .rb-stat strong{ display:block; margin-top:2px; font:600 19px/1.15 var(--font-mono, monospace); color:var(--text); overflow-wrap:anywhere; }
@@ -124,8 +188,11 @@
     .rb-layout{ display:grid; grid-template-columns:minmax(0,1.4fr) minmax(320px,1fr); gap:24px; align-items:start; }
     .rb-mapcol, .rb-sidecol{ display:flex; flex-direction:column; gap:12px; min-width:0; }
     .rb-stat{ padding:12px 14px; } .rb-stat strong{ font-size:22px; margin-top:4px; }
-    .rb-mapcol{ position:sticky; top:84px; }
     #rbMap{ height:clamp(460px, calc(100svh - 330px), 760px); }
-    .rb-tools{ grid-template-columns:repeat(5, 1fr); }
+    .rb-tools{ grid-template-columns:repeat(4, 1fr); }
+    /* Route options: a panel over the left side of the map, opened from the same button. */
+    .rb-prefs{ position:absolute; left:10px; top:10px; bottom:10px; right:auto; width:min(320px, calc(100% - 20px)); z-index:1003;
+        border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; transform:translateX(-110%); }
+    .rb-prefs.is-open{ transform:none; }
 }
-@media (prefers-reduced-motion:reduce){ .rb-mode-btn, .rb-card > summary{ transition:none; } }
+@media (prefers-reduced-motion:reduce){ .rb-mode-btn, .rb-card > summary, .rb-prefs, .rb-globe{ transition:none; } }

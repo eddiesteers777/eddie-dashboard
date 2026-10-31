@@ -9,16 +9,19 @@
 ========================================== */
 
 import { toast, sbConfirm, friendlyError } from "./ui.js";
-import { boundsOf, boxContains, isLoop, lineMiles } from "./routeGeo.js";
+import { boundsOf, boxContains, isLoop, lineMiles, cumulativeMiles, bestInsertIndex, distanceMarkers, nearestIndex, reversePoints, outAndBack } from "./routeGeo.js";
 import { scoreLine, scoreQuarters, xStretches, CLASS_WORDS } from "./routeScore.js";
-import { fetchRoute, straightRoute, fetchHeights, fetchWays } from "./routeApi.js";
-import { climbRange, CLIMB_NOTE } from "./routeElevation.js";
+import { fetchRoute, straightRoute, fetchHeights, fetchWays, searchPlaces } from "./routeApi.js";
+import { climbRange, CLIMB_NOTE, profileSeries } from "./routeElevation.js";
+import { readPrefs, costingFor, shiftTargets, prefsWords } from "./routePrefs.js";
+import { drawProfile } from "./routeProfile.js";
 import { fuelPlan, fuelLines, DEFAULT_PACE, DEFAULT_GEL_G } from "./routeFuel.js";
 import { explain } from "./routeExplain.js";
 import { generateLoop, LOOP_MAX_ATTEMPTS } from "./routeLoop.js";
 import { optimise } from "./routeOptimise.js";
 import { buildGpx, gpxFileName } from "./routeGpx.js";
 import { makeRecord, listRoutes, saveRoute, deleteRoute, VIEW_KEY, SETTINGS_KEY } from "./routeStore.js";
+import { ENTER_AT } from "./routeGlobe.js";
 import { calculateTargets, parsePace, formatPace } from "./fuelTargets.js";
 import { readProfile, sessionFromProfile, PROFILE_KEY } from "./fuelProfile.js";
 
@@ -39,6 +42,8 @@ const S = {
     heights: null, heightsFor: null, climb: null, heightsFailed: false,
     pace: DEFAULT_PACE, gelG: DEFAULT_GEL_G,
     fuel: null, editingId: null, createdAt: null,
+    prefs: readPrefs(null), history: [],
+    globeOpen: false,
     revert: null, token: 0, settleTimer: null, surfaceError: "", routeError: "", loopNote: ""
 };
 
@@ -46,17 +51,20 @@ const S = {
 const saved = read(SETTINGS_KEY);
 if (saved && parsePace(String(saved.pace))) S.pace = parsePace(String(saved.pace));
 if (saved && saved.gelG >= 10 && saved.gelG <= 50) S.gelG = saved.gelG;
+S.prefs = readPrefs(saved && saved.prefs);
 $("rbPace").value = formatPace(S.pace);
 $("rbGel").value = S.gelG;
 
 /* ---------- map ---------- */
 const view = read(VIEW_KEY);
-const map = L.map("rbMap", { zoomControl: true, attributionControl: true, zoomSnap: 0.5 })
+const map = L.map("rbMap", { zoomControl: true, attributionControl: true, zoomSnap: 0.5, minZoom: 2, worldCopyJump: true })
     .setView(view && Array.isArray(view.c) ? view.c : CALERA, view && view.z ? view.z : 13);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
 const overlay = L.layerGroup().addTo(map);
 const gapLayer = L.layerGroup().addTo(map);
 const lineLayer = L.layerGroup().addTo(map);
+const mileLayer = L.layerGroup().addTo(map);
+const hoverLayer = L.layerGroup().addTo(map);
 const markerLayer = L.layerGroup().addTo(map);
 const canvas = L.canvas({ padding: 0.3 });
 let markers = [];
@@ -73,8 +81,10 @@ function drawMarkers() {
     markerLayer.clearLayers();
     markers = S.waypoints.map((p, i) => {
         const m = L.marker(p, { draggable: true, icon: pinIcon(i, S.waypoints.length), keyboard: true, title: `Point ${i + 1}. Drag to move, tap to remove.` });
+        m.on("dragstart", () => remember());
         m.on("dragend", () => { const ll = m.getLatLng(); S.waypoints[i] = [ll.lat, ll.lng]; edited(); });
         m.on("click", () => removePoint(markers.indexOf(m)));
+        m.on("contextmenu", e => { L.DomEvent.preventDefault(e.originalEvent); removePoint(markers.indexOf(m)); });
         m.addTo(markerLayer);
         return m;
     });
@@ -88,6 +98,14 @@ function drawLine() {
         L.polyline(S.coords, { color: "#1b4d36", weight: 5, opacity: 1, interactive: false }).addTo(lineLayer);
     } else {
         L.polyline(S.coords, { color: "#d4aa62", weight: 5, dashArray: "8 8", interactive: false }).addTo(lineLayer);
+    }
+    // A wide, invisible copy of the line takes the press that drags a new point out of it.
+    const hit = L.polyline(S.coords, { color: "#000", opacity: 0, weight: 26, interactive: true, bubblingMouseEvents: false, className: "rb-hitline" }).addTo(lineLayer);
+    const hitEl = hit.getElement();
+    if (hitEl) hitEl.addEventListener("pointerdown", startLineDrag);
+    mileLayer.clearLayers();
+    for (const m of distanceMarkers(S.coords, 1)) {
+        L.marker(m.at, { interactive: false, keyboard: false, icon: L.divIcon({ className: "rb-mile-wrap", html: `<span class="rb-mile">${m.n}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(mileLayer);
     }
     gapLayer.clearLayers();
     for (const st of S.stretches) {
@@ -106,11 +124,38 @@ function drawOverlay() {
     }
 }
 
+/* ---------- drag the line to add a point ---------- */
+let ghost = null;
+function startLineDrag(e) {
+    if (S.waypoints.length < 2 || (e.pointerType === "mouse" && e.button !== 0)) return;
+    e.stopPropagation(); e.preventDefault();
+    const start = map.mouseEventToLatLng(e);
+    map.dragging.disable();
+    ghost = L.marker(start, { interactive: false, icon: L.divIcon({ className: "rb-pin-wrap", html: '<span class="rb-pin rb-pin-new">+</span>', iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(markerLayer);
+    let last = start;
+    const move = ev => { last = map.mouseEventToLatLng(ev); ghost.setLatLng(last); };
+    const up = () => {
+        document.removeEventListener("pointermove", move);
+        document.removeEventListener("pointerup", up);
+        document.removeEventListener("pointercancel", up);
+        map.dragging.enable();
+        quietUntil = Date.now() + 400;
+        if (ghost) { markerLayer.removeLayer(ghost); ghost = null; }
+        const p = [last.lat, last.lng];
+        remember();
+        S.waypoints.splice(bestInsertIndex(S.waypoints, p, S.closed), 0, p);
+        edited();
+    };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", up);
+    document.addEventListener("pointercancel", up);
+}
+
 /* ---------- busy / hint / notes ---------- */
 function busy(text) { const el = $("rbBusy"); el.hidden = !text; el.textContent = text || ""; }
 function hint() {
     const n = S.waypoints.length;
-    $("rbHint").hidden = n >= 2;
+    $("rbHint").hidden = n >= 2 || S.globeOpen;
     $("rbHint").textContent = n === 0 ? "Tap the map to drop your start." : "Tap again to add the next point.";
 }
 /* One note under the stats: a routing failure first, then a surface-data failure (with Try again), then the loop remark. */
@@ -130,6 +175,12 @@ function clearDerived() {
     S.revert = null; $("rbRevert").hidden = true; $("rbOptimiseOut").textContent = "";
 }
 
+/* Undo: every change to the points pushes the state before it. */
+function remember() {
+    S.history.push({ waypoints: S.waypoints.map(p => p.slice()), closed: S.closed });
+    if (S.history.length > 50) S.history.shift();
+}
+
 function edited() {
     clearDerived();
     drawMarkers(); hint(); buttons();
@@ -137,22 +188,42 @@ function edited() {
 }
 
 function addPoint(latlng) {
+    remember();
     S.waypoints.push([latlng.lat, latlng.lng]);
     edited();
 }
 
 function removePoint(i) {
     if (i < 0) return;
-    const removed = S.waypoints.splice(i, 1)[0];
+    remember();
+    S.waypoints.splice(i, 1);
     edited();
-    toast("Point removed.", { type: "info", action: { label: "Undo", onClick: () => { S.waypoints.splice(i, 0, removed); edited(); } } });
+    toast("Point removed.", { type: "info", action: { label: "Undo", onClick: undo } });
 }
 
-map.on("click", e => addPoint(e.latlng));
+let quietUntil = 0; // the click that ends a line drag must not also add a point
+map.on("click", e => { if (Date.now() < quietUntil) return; addPoint(e.latlng); });
 
-$("rbUndo").onclick = () => { if (S.waypoints.length) { S.waypoints.pop(); edited(); } };
+function undo() {
+    const prev = S.history.pop();
+    if (!prev) return;
+    S.waypoints = prev.waypoints; setModeUi(prev.closed);
+    edited();
+}
+$("rbUndo").onclick = undo;
+$("rbReverse").onclick = () => {
+    if (S.waypoints.length < 2) return;
+    remember(); S.waypoints = reversePoints(S.waypoints, S.closed); edited();
+    toast("Route reversed.", { type: "info" });
+};
+$("rbOutBack").onclick = () => {
+    if (S.waypoints.length < 2 || S.closed) return;
+    remember(); S.waypoints = outAndBack(S.waypoints); edited();
+    toast("Out and back: same way home.", { type: "info", action: { label: "Undo", onClick: undo } });
+};
 $("rbClear").onclick = async () => {
     if (S.waypoints.length > 2 && !(await sbConfirm("Clear every point on this route?", { confirmLabel: "Clear", danger: true }))) return;
+    remember();
     S.waypoints = []; S.editingId = null; S.createdAt = null; $("rbName").value = "";
     edited();
 };
@@ -173,6 +244,7 @@ $("rbLocate").onclick = () => {
 $("rbCentre").onclick = () => addPoint(map.getCenter());
 
 function setMode(loop) {
+    if (loop !== S.closed) remember();
     setModeUi(loop);
     if (S.waypoints.length >= 2) edited(); else drawMarkers();
 }
@@ -181,7 +253,9 @@ $("rbModeLoop").onclick = () => setMode(true);
 
 function buttons() {
     const n = S.waypoints.length, has = S.coords.length >= 2;
-    $("rbUndo").disabled = n === 0;
+    $("rbUndo").disabled = S.history.length === 0;
+    $("rbReverse").disabled = n < 2;
+    $("rbOutBack").disabled = n < 2 || S.closed;
     $("rbClear").disabled = n === 0;
     $("rbSave").disabled = !has;
     $("rbGpx").disabled = !has;
@@ -194,14 +268,14 @@ async function reroute() {
     clearTimeout(S.settleTimer);
     if (S.waypoints.length < 2) {
         S.coords = []; S.miles = 0; S.snapped = true;
-        drawLine(); gapLayer.clearLayers(); render(); busy(""); updateNote();
+        drawLine(); gapLayer.clearLayers(); mileLayer.clearLayers(); render(); busy(""); updateNote();
         return;
     }
     const locs = S.closed ? [...S.waypoints, S.waypoints[0]] : S.waypoints.slice();
     busy("Snapping the route to paths…");
     let result;
     try {
-        result = await fetchRoute(locs);
+        result = await fetchRoute(locs, costingFor(S.prefs));
         S.routeError = "";
     } catch (err) {
         console.warn("Route builder: routing failed", err);
@@ -268,9 +342,10 @@ $("rbMakeLoop").onclick = async () => {
     $("rbMakeLoop").disabled = true;
     try {
         const out = await generateLoop({
-            start, targetMiles: target, route: fetchRoute,
+            start, targetMiles: target, route: locs => fetchRoute(locs, costingFor(S.prefs)),
             onAttempt: (a, n) => busy(`Trying a loop: ${n} of ${LOOP_MAX_ATTEMPTS} (${a.miles.toFixed(1)} mi)…`)
         });
+        remember();
         clearDerived();
         S.token++;
         S.waypoints = [start, ...out.best.points]; S.closed = true;
@@ -303,17 +378,18 @@ $("rbOptimise").onclick = async () => {
     $("rbOptimise").disabled = true; busy("Looking for sidewalks and trails nearby…");
     const my = S.token;
     try {
-        const out = await optimise({ waypoints: S.waypoints, coords: S.coords, miles: S.miles, ways: S.ways, route: fetchRoute });
+        const out = await optimise({ waypoints: S.waypoints, coords: S.coords, miles: S.miles, ways: S.ways, route: locs => fetchRoute(locs, costingFor(S.prefs)), targets: shiftTargets(S.prefs) });
         if (my !== S.token) return;
         const el = $("rbOptimiseOut");
         if (out.status === "none") {
-            el.textContent = out.why === "no-path-nearby" ? "No path or sidewalk within 0.1 mi of your points, so nothing to shift. Your route stays as it is." : "Couldn't score this route yet.";
+            el.textContent = out.why === "no-path-nearby" ? "No path or sidewalk of the kind you prefer within 0.1 mi of your points, so nothing to shift. Your route stays as it is." : "Couldn't score this route yet.";
         } else {
             const b = out.before, a = out.after;
             const grew = b.miles ? Math.round(100 * (a.miles - b.miles) / b.miles) : 0;
             const nums = `Path + sidewalk ${pct(b.ab)} → ${pct(a.ab)}, major road ${pct(b.x)} → ${pct(a.x)}, distance ${b.miles.toFixed(2)} → ${a.miles.toFixed(2)} mi (${grew >= 0 ? "+" : ""}${grew}%).`;
             if (out.status === "kept") {
                 S.revert = { waypoints: S.waypoints.map(p => p.slice()), coords: S.coords, miles: S.miles };
+                remember();
                 S.waypoints = out.waypoints; S.coords = out.result.coords; S.miles = out.result.miles;
                 S.score = null; S.quarters = []; S.stretches = []; S.heights = null; S.heightsFor = null; S.climb = null;
                 drawMarkers(); drawLine(); render();
@@ -354,7 +430,7 @@ function readFuelInputs() {
     const gel = Number($("rbGel").value);
     if (pace && pace >= 4 && pace <= 20) S.pace = pace;
     if (gel >= 10 && gel <= 50) S.gelG = gel;
-    write(SETTINGS_KEY, { pace: formatPace(S.pace), gelG: S.gelG });
+    write(SETTINGS_KEY, { pace: formatPace(S.pace), gelG: S.gelG, prefs: S.prefs });
 }
 $("rbPace").addEventListener("change", () => { readFuelInputs(); $("rbPace").value = formatPace(S.pace); render(); });
 $("rbGel").addEventListener("change", () => { readFuelInputs(); render(); });
@@ -368,6 +444,8 @@ function render() {
     $("rbTime").textContent = has ? clock(S.miles * S.pace) : "—";
     $("rbClimb").textContent = !has ? "—" : S.climb ? S.climb.text.replace("about ", "") : (S.heightsFailed ? "n/a" : "…");
     $("rbClimb").title = S.climb ? CLIMB_NOTE : "";
+    $("rbLoss").textContent = !has ? "—" : S.climb ? S.climb.downText.replace("about ", "") : (S.heightsFailed ? "n/a" : "…");
+    $("rbX").textContent = S.score ? `${S.score.pcts.X}%` : (has && S.surfaceError ? "n/a" : (has ? "…" : "—"));
     $("rbAB").textContent = S.score ? `${S.score.ab}%` : (has && S.surfaceError ? "n/a" : (has ? "…" : "—"));
 
     // surface bar
@@ -393,14 +471,130 @@ function render() {
     // fuel
     S.fuel = null;
     const fl = $("rbFuel"), warn = $("rbFuelWarn");
-    if (!has) { fl.innerHTML = '<li class="rb-empty">Fuel shows up once the route has a distance.</li>'; warn.hidden = true; return; }
+    if (!has) { fl.innerHTML = '<li class="rb-empty">Fuel shows up once the route has a distance.</li>'; warn.hidden = true; renderProfile(); return; }
     const duration = S.miles * S.pace;
     const plan = fuelPlan({ miles: S.miles, pace: S.pace, gelG: S.gelG, calculator: calculatorFor(Math.round(duration)) });
     S.fuel = plan;
     fl.innerHTML = fuelLines(plan).map((l, i, all) => `<li${i === all.length - 1 ? ' class="rb-small"' : ""}>${esc(l)}</li>`).join("");
     warn.hidden = !plan.coachCheck;
     warn.textContent = plan.coachCheck ? "Over 150 minutes. Have your coach check this fuel plan before you use it." : "";
+    renderProfile();
 }
+
+/* ---------- elevation profile with the gel windows on it ---------- */
+const hoverDot = L.circleMarker([0, 0], { radius: 7, color: "#fff", weight: 2, fillColor: "#1b4d36", fillOpacity: 1, interactive: false });
+function renderProfile() {
+    const el = $("rbProfile"), noteEl = $("rbProfileNote");
+    const ok = S.coords.length >= 2 && S.heights && S.heightsFor === S.coords && S.heights.length === S.coords.length;
+    const series = ok ? profileSeries(cumulativeMiles(S.coords), S.heights) : [];
+    noteEl.textContent = series.length ? (S.fuel && S.fuel.windows.length ? "Shaded: gel windows at your pace." : (S.fuel && S.fuel.band.id === "water" ? "Under an hour: water only, no gels." : "")) :
+        (S.coords.length < 2 ? "Appears once the route has heights." : S.heightsFailed ? "Heights unavailable right now." : (S.snapped ? "Loading heights…" : "Needs a snapped route."));
+    drawProfile(el, series, S.fuel ? S.fuel.windows : [], {
+        onHover: pt => {
+            if (!pt) { hoverLayer.clearLayers(); return; }
+            hoverDot.setLatLng(S.coords[pt.i]);
+            if (!hoverLayer.hasLayer(hoverDot)) hoverDot.addTo(hoverLayer);
+        }
+    });
+}
+let resizeTimer = null;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderProfile, 150); });
+
+/* ---------- route options ---------- */
+function paintPrefs() {
+    document.querySelectorAll("#rbPrefs [data-pref]").forEach(group => {
+        const v = S.prefs[group.dataset.pref];
+        group.querySelectorAll("button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", String(on)); });
+    });
+    $("rbPrefsWords").textContent = prefsWords(S.prefs);
+}
+document.querySelectorAll("#rbPrefs [data-pref]").forEach(group => group.addEventListener("click", e => {
+    const b = e.target.closest("button[data-v]");
+    if (!b || S.prefs[group.dataset.pref] === b.dataset.v) return;
+    S.prefs = readPrefs({ ...S.prefs, [group.dataset.pref]: b.dataset.v });
+    write(SETTINGS_KEY, { pace: formatPace(S.pace), gelG: S.gelG, prefs: S.prefs });
+    paintPrefs();
+    if (S.waypoints.length >= 2) edited();
+}));
+/* On a phone the options are a sheet over everything (so it lives on <body>, above the tab bar);
+   on a computer they are a panel over the left of the map. */
+const phoneSheet = window.matchMedia("(max-width: 899px)");
+function placePrefs() {
+    const el = $("rbPrefs"), home = document.querySelector(".rb-mapwrap");
+    const target = phoneSheet.matches ? document.body : home;
+    if (el.parentElement !== target) target.appendChild(el);
+}
+placePrefs();
+phoneSheet.addEventListener("change", placePrefs);
+const setSheet = open => { $("rbPrefs").classList.toggle("is-open", open); document.documentElement.classList.toggle("rb-sheet-open", open && phoneSheet.matches); $("rbPrefsOpen").setAttribute("aria-expanded", String(open)); if (open) $("rbPrefs").querySelector("button:not([disabled])")?.focus(); };
+$("rbPrefsOpen").onclick = () => setSheet(true);
+$("rbPrefsClose").onclick = () => { setSheet(false); $("rbPrefsOpen").focus(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("rbPrefs").classList.contains("is-open")) setSheet(false); });
+
+/* ---------- search ---------- */
+$("rbSearch").addEventListener("submit", async e => {
+    e.preventDefault();
+    const q = $("rbSearchInput").value.trim();
+    const list = $("rbResults");
+    if (q.length < 2) return;
+    list.hidden = false;
+    list.innerHTML = '<li class="rb-empty">Searching…</li>';
+    try {
+        const c = map.getCenter();
+        const rows = await searchPlaces(q, [c.lat, c.lng]);
+        if (!rows.length) { list.innerHTML = '<li class="rb-empty">No places found. Try a street and town.</li>'; return; }
+        list.innerHTML = rows.map((r, i) => `<li class="rb-result" data-i="${i}"><span>${esc(r.name)}</span>
+            <div class="rb-result-actions"><button type="button" class="sb-btn sb-btn-secondary" data-act="go">Go</button>
+            <button type="button" class="sb-btn sb-btn-secondary" data-act="start">Start here</button>
+            <button type="button" class="sb-btn sb-btn-secondary" data-act="add">Add point</button></div></li>`).join("");
+        list.onclick = ev => {
+            const btn = ev.target.closest("button[data-act]");
+            if (!btn) return;
+            const r = rows[Number(btn.closest("[data-i]").dataset.i)];
+            if (S.globeOpen) leaveGlobe(r.at, 16); else map.setView(r.at, 16);
+            if (btn.dataset.act === "start") { remember(); S.waypoints = [r.at.slice(), ...S.waypoints.slice(1)]; if (!S.waypoints.length) S.waypoints = [r.at.slice()]; edited(); }
+            if (btn.dataset.act === "add") { remember(); S.waypoints.push(r.at.slice()); edited(); }
+            list.hidden = true; list.innerHTML = "";
+        };
+    } catch (err) {
+        console.warn("Route builder: search failed", err);
+        list.innerHTML = '<li class="rb-empty">Search isn\'t reachable right now. Pan the map instead.</li>';
+    }
+});
+
+/* ---------- globe ---------- */
+let globeMod = null;
+async function enterGlobe() {
+    if (S.globeOpen) return;
+    S.globeOpen = true;
+    const c = map.getCenter();
+    const g = $("rbGlobe");
+    g.hidden = false; $("rbGlobeBack").hidden = false; $("rbHint").hidden = true;
+    busy("Opening the globe…");
+    try {
+        globeMod = globeMod || await import("./routeGlobe.js");
+        const opened = await globeMod.openGlobe(g, { center: [c.lat, c.lng], zoom: Math.min(map.getZoom(), ENTER_AT), line: S.coords, points: S.waypoints, onLeave: (center, z) => leaveGlobe(center, z) });
+        S.globeMap = opened.map; // read by the browser checks
+        g.classList.add("is-on");
+    } catch (err) {
+        console.warn("Route builder: globe failed", err);
+        toast("The globe couldn't open on this device. The flat map still works.", { type: "info" });
+        leaveGlobe([c.lat, c.lng], ENTER_AT + 1);
+    } finally { busy(""); }
+}
+function leaveGlobe(center, zoom) {
+    if (!S.globeOpen) return;
+    S.globeOpen = false;
+    const g = $("rbGlobe");
+    g.classList.remove("is-on");
+    $("rbGlobeBack").hidden = true;
+    map.setView(center, zoom, { animate: false });
+    setTimeout(() => { if (!S.globeOpen) { g.hidden = true; globeMod && globeMod.closeGlobe(); } }, 250);
+    hint();
+}
+map.on("zoomend", () => { if (!S.globeOpen && map.getZoom() <= ENTER_AT - 0.5) enterGlobe(); });
+$("rbGlobeBtn").onclick = () => enterGlobe();
+$("rbGlobeBack").onclick = () => { const c = map.getCenter(); leaveGlobe([c.lat, c.lng], Math.max(map.getZoom(), 13)); };
 
 /* ---------- save, open, export ---------- */
 function refreshSaved() {
@@ -422,7 +616,7 @@ $("rbSave").onclick = () => {
     const name = $("rbName").value.trim();
     const rec = makeRecord({
         id: S.editingId, createdAt: S.createdAt, name, waypoints: S.waypoints, coords: S.coords, miles: S.miles,
-        loop: S.closed, snapped: S.snapped, pace: S.pace, gelG: S.gelG, fuel: S.fuel,
+        loop: S.closed, snapped: S.snapped, pace: S.pace, gelG: S.gelG, fuel: S.fuel, prefs: S.prefs,
         surface: S.score ? { summary: S.score.summary, ab: S.score.ab, x: S.score.pcts.X } : null,
         climb: S.climb ? { lowFt: S.climb.lowFt, highFt: S.climb.highFt } : null
     });
@@ -444,7 +638,8 @@ $("rbSaved").addEventListener("click", async e => {
         clearDerived(); S.token++;
         S.waypoints = rec.waypoints.map(p => p.slice()); S.closed = !!rec.loop;
         S.coords = rec.line.map(p => p.slice()); S.miles = rec.miles; S.snapped = rec.snapped !== false;
-        S.editingId = rec.id; S.createdAt = rec.createdAt;
+        S.editingId = rec.id; S.createdAt = rec.createdAt; S.history = [];
+        if (rec.prefs) { S.prefs = readPrefs(rec.prefs); paintPrefs(); }
         if (rec.pace) { S.pace = rec.pace; $("rbPace").value = formatPace(rec.pace); }
         if (rec.gelG) { S.gelG = rec.gelG; $("rbGel").value = rec.gelG; }
         $("rbName").value = rec.name;
@@ -486,5 +681,5 @@ $("rbGpx").onclick = async () => {
 };
 
 /* ---------- start ---------- */
-refreshSaved(); hint(); render(); buttons();
+refreshSaved(); paintPrefs(); hint(); render(); buttons();
 window.__routeBuilder = S; S.map = map; // read by the browser checks
