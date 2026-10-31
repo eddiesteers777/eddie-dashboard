@@ -24,16 +24,18 @@
 export const ease = u => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, u)));
 
 /**
- * Stagger a rep curve: shift its phase input by `delay` (in rep units,
- * 0.06 ≈ 6% of a rep). Endpoints are preserved: staggered(0) = curve(0)
- * and staggered(1) = curve(1), so start and bottom positions are unchanged.
- * Use small delays only (0.04–0.12); larger delays look like a limp.
+ * Stagger a rep curve: a joint runs up to `delay` (in rep units, 0.06 ≈ 6% of
+ * a rep) behind the hips. The lag is a smooth time warp, u - delay*sin(pi*u),
+ * so it is zero at u = 0 and u = 1: staggered(0) = curve(0), staggered(1) =
+ * curve(1), start and bottom positions and the loop are unchanged, and the
+ * joint is never dragged back at the end of a rep (an earlier blend-to-
+ * unshifted version did that and made the hands move at ~1.9 m/s).
+ * Peak speed rises by at most delay*pi (about 1.4x at delay 0.12), and only
+ * where the cosine ease is slow. Use small delays (0.04-0.12).
  */
 export function staggerCurve(u, delay, curve) {
-    const shifted = Math.min(1, Math.max(0, u - delay));
-    // Blend back to the unshifted curve near the ends so the loop stays seamless.
-    const blend = u < 0.1 ? u / 0.1 : u > 0.9 ? (1 - u) / 0.1 : 1;
-    return curve(u) * (1 - blend) + curve(shifted) * blend;
+    const uu = Math.min(1, Math.max(0, u));
+    return curve(uu - delay * Math.sin(Math.PI * uu));
 }
 
 /**

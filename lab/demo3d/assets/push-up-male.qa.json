@@ -1,7 +1,7 @@
 {
  "id": "push-up",
  "sex": "male",
- "gradedAt": "2026-10-19",
+ "gradedAt": "2026-10-31",
  "pass": true,
  "checks": [
   {
@@ -14,7 +14,7 @@
   {
    "id": "planted",
    "label": "Hands and toes stay planted, metres",
-   "value": 0,
+   "value": 0.006,
    "limit": 0.02,
    "pass": true
   },
@@ -35,7 +35,7 @@
   {
    "id": "elbow-bottom",
    "label": "Elbow angle at the bottom, degrees",
-   "value": 38.824,
+   "value": 38.811,
    "limit": 100,
    "pass": true
   },
@@ -49,7 +49,7 @@
   {
    "id": "smooth",
    "label": "Fastest joint, metres per second",
-   "value": 0.418,
+   "value": 0.424,
    "limit": 1.5,
    "pass": true
   }

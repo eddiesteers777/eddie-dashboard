@@ -1,7 +1,7 @@
 {
  "id": "bodyweight-squat",
  "sex": "female",
- "gradedAt": "2026-10-19",
+ "gradedAt": "2026-10-31",
  "pass": true,
  "checks": [
   {
@@ -14,7 +14,7 @@
   {
    "id": "depth",
    "label": "Thighs about parallel at the bottom, degrees from level",
-   "value": 6.808,
+   "value": 7.335,
    "limit": 22,
    "pass": true
   },
@@ -28,14 +28,14 @@
   {
    "id": "knees-out",
    "label": "Knees no narrower than the feet, metres",
-   "value": -0.043,
+   "value": -0.045,
    "limit": 0.02,
    "pass": true
   },
   {
    "id": "chest-up",
    "label": "Torso lean at the bottom, degrees",
-   "value": 37.204,
+   "value": 35.775,
    "limit": 50,
    "pass": true
   },
@@ -49,7 +49,7 @@
   {
    "id": "smooth",
    "label": "Fastest joint, metres per second",
-   "value": 0.886,
+   "value": 1.149,
    "limit": 1.5,
    "pass": true
   }
