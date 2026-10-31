@@ -81,6 +81,31 @@ export function boxContains(outer, inner) {
     return !!outer && outer.s <= inner.s && outer.w <= inner.w && outer.n >= inner.n && outer.e >= inner.e;
 }
 
+/**
+ * The route cut into pieces of about `miles` each, one box per piece (padded by `pad` degrees).
+ * A long loop's map data is fetched piece by piece: small corridor boxes instead of one big box
+ * that holds the whole loop and everything inside it.
+ */
+export function corridorBoxes(coords, { miles = 1.5, pad = 0.004 } = {}) {
+    if (!coords || coords.length < 2) return [];
+    const cum = cumulativeMiles(coords);
+    const out = [];
+    let start = 0;
+    for (let i = 1; i < coords.length; i++) {
+        if (cum[i] - cum[start] >= miles || i === coords.length - 1) {
+            out.push(boundsOf(coords.slice(start, i + 1), pad));
+            start = i;
+        }
+    }
+    return out;
+}
+
+/** The boxes in `needed` that no box in `have` fully covers. */
+export const boxesMissing = (needed, have = []) => needed.filter(b => !have.some(h => boxContains(h, b)));
+
+/** A box grown by d degrees on every side. */
+export const growBox = (b, d) => ({ s: b.s - d, w: b.w - d, n: b.n + d, e: b.e + d });
+
 /** Where a new point p goes in the waypoint list: the gap it adds least distance to. */
 export function bestInsertIndex(waypoints, p, closed = false) {
     const n = waypoints.length;

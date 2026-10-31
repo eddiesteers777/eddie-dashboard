@@ -71,15 +71,78 @@ export async function fetchHeights(coords) {
  * Map data near a box { s, w, n, e }: the scored ways for the surface split, and the
  * roads, paths and crossing points for the safety rating. Throws on failure.
  */
-export async function fetchMapData(box) {
+/** Overpass answers 200 with a "remark" when the query ran out of time or memory: that is a failure, not "no data". */
+export function overpassElements(data) {
+    if (!data || typeof data !== "object") throw new Error("Map data answer was empty");
+    if (typeof data.remark === "string" && /error|timed out|out of memory/i.test(data.remark)) throw new Error("Map data: " + data.remark);
+    return Array.isArray(data.elements) ? data.elements : [];
+}
+
+/** Several answers in one list, each element once (pieces overlap where they meet). */
+export function mergeElements(lists) {
+    const seen = new Set(), out = [];
+    for (const list of lists) for (const e of list || []) {
+        const k = e && e.id != null ? e.type + e.id : null;
+        if (k) { if (seen.has(k)) continue; seen.add(k); }
+        out.push(e);
+    }
+    return out;
+}
+
+export const mapDataFrom = elements => ({ ways: waysFromOverpass(elements), safety: safetyDataFromOverpass(elements) });
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+export const MAP_ATTEMPTS = 3;
+const RETRY_WAIT_MS = [2000, 5000]; // before the 2nd and 3rd try
+
+/** Raw Overpass elements for one box. Up to MAP_ATTEMPTS tries, waiting longer each time; onRetry(nextAttempt, attempts) before each retry. */
+export async function fetchMapElements(box, { attempts = MAP_ATTEMPTS, onRetry = null, waits = RETRY_WAIT_MS } = {}) {
     const bbox = `${box.s},${box.w},${box.n},${box.e}`;
     const q = "[out:json][timeout:25];(" + SAFETY_HIGHWAY_KINDS.map(k => `way["highway"="${k}"](${bbox});`).join("") +
         `node["highway"="crossing"](${bbox});node["highway"="traffic_signals"](${bbox}););out geom;`;
-    const res = await timedFetch(OVERPASS, { method: "POST", body: "data=" + encodeURIComponent(q) }, 30000);
-    if (!res.ok) throw new Error("Map data answered " + res.status);
-    const data = await res.json();
-    const elements = data.elements || [];
-    return { ways: waysFromOverpass(elements), safety: safetyDataFromOverpass(elements) };
+    let last = null;
+    for (let a = 1; a <= attempts; a++) {
+        try {
+            const res = await timedFetch(OVERPASS, { method: "POST", body: "data=" + encodeURIComponent(q) }, 30000);
+            if (!res.ok) throw new Error("Map data answered " + res.status);
+            return { elements: overpassElements(await res.json()), tries: a };
+        } catch (err) {
+            last = err;
+            if (a < attempts) { if (onRetry) onRetry(a + 1, attempts); await wait(waits[Math.min(a - 1, waits.length - 1)]); }
+        }
+    }
+    throw last;
+}
+
+/**
+ * Map data for several boxes (the route's pieces), two at a time so the free service isn't flooded.
+ * Pieces that load are kept even when another fails, so "Try again" fetches only what is missing.
+ * -> { elements, boxes (loaded), failed (boxes), tries (total requests) }
+ */
+export async function fetchMapPieces(boxes, { onRetry = null, onProgress = null, attempts = MAP_ATTEMPTS, waits } = {}) {
+    const lists = [], loaded = [], failed = [];
+    let next = 0, done = 0, tries = 0;
+    const worker = async () => {
+        while (next < boxes.length) {
+            const i = next++;
+            try {
+                const r = await fetchMapElements(boxes[i], { attempts, waits, onRetry: onRetry ? (a, n) => onRetry(a, n, i, boxes.length) : null });
+                lists.push(r.elements); loaded.push(boxes[i]); tries += r.tries;
+            } catch (err) {
+                console.warn("Route builder: map data piece failed", err);
+                failed.push(boxes[i]); tries += attempts;
+            }
+            done++;
+            if (onProgress) onProgress(done, boxes.length);
+        }
+    };
+    await Promise.all([worker(), worker()]);
+    return { elements: mergeElements(lists), boxes: loaded, failed, tries };
+}
+
+/** One box -> { ways, safety } (with retries). */
+export async function fetchMapData(box) {
+    return mapDataFrom((await fetchMapElements(box)).elements);
 }
 
 /**

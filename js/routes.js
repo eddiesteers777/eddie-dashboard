@@ -9,9 +9,9 @@
 ========================================== */
 
 import { toast, sbConfirm, friendlyError } from "./ui.js";
-import { boundsOf, boxContains, isLoop, lineMiles, cumulativeMiles, bestInsertIndex, distanceMarkers, nearestIndex, reversePoints, outAndBack } from "./routeGeo.js";
+import { corridorBoxes, boxesMissing, growBox, isLoop, lineMiles, cumulativeMiles, bestInsertIndex, distanceMarkers, nearestIndex, reversePoints, outAndBack } from "./routeGeo.js";
 import { scoreLine, scoreQuarters, xStretches, CLASS_WORDS } from "./routeScore.js";
-import { fetchRoute, straightRoute, fetchHeights, fetchMapData, searchPlaces } from "./routeApi.js";
+import { fetchRoute, straightRoute, fetchHeights, fetchMapPieces, mergeElements, mapDataFrom, MAP_ATTEMPTS, searchPlaces } from "./routeApi.js";
 import { routeFacts, scoreRoute, withGeometry, saferTime, safetyCosting, avoidBoxes, costText, crossingLines, headlineText, worstText, riskText, whyText, bandFor, BANDS, UNKNOWN, SAFETY_NOTE, RUSH_NOTE, UNKNOWN_NOTE } from "./routeSafety.js";
 import { drawSafetyStrip, legendHtml, darkBand } from "./routeSafetyStrip.js";
 import { sunTimes, lightAt, clockText } from "./routeSun.js";
@@ -41,7 +41,7 @@ const CLASS_COLORS = { A: "#3f8f5a", B: "#8fb36a", C: "#9aa39a", D: "#c9ad84", X
 const S = {
     waypoints: [], closed: false,
     coords: [], miles: 0, snapped: true,
-    ways: [], waysBox: null,
+    ways: [], mapEls: [], mapBoxes: [], mapState: "", mapLog: null,
     score: null, quarters: [], stretches: [],
     heights: null, heightsFor: null, climb: null, heightsFailed: false,
     pace: DEFAULT_PACE, gelG: DEFAULT_GEL_G,
@@ -185,8 +185,10 @@ function updateNote() {
     const retry = !S.routeError && !!S.surfaceError;
     el.innerHTML = esc(text || "") + (retry ? ' <button type="button" class="rb-retry" id="rbRetry">Try again</button>' : "");
     const b = $("rbRetry");
-    if (b) b.onclick = () => { S.surfaceError = ""; updateNote(); settle(true); };
+    if (b) b.onclick = retryMapData;
 }
+
+function retryMapData() { S.surfaceError = ""; S.facts = null; updateNote(); renderSafety(); render(); settle(false); }
 
 /* ---------- editing ---------- */
 function clearDerived() {
@@ -194,7 +196,9 @@ function clearDerived() {
     S.revert = null; $("rbRevert").hidden = true; $("rbOptimiseOut").textContent = "";
     S.facts = null; S.safe = null; S.safer = null; S.sel = -1; S.compare = null; S.home = null; S.avoidNote = "";
     if (!S.safeBefore) S.costLine = "";
+    S.mapState = "";
     selLayer.clearLayers(); extraLayer.clearLayers();
+    renderSafety(); // the old route's score goes the moment the route changes, never shown for a new one
 }
 
 /* Undo: every change to the points pushes the state before it. */
@@ -321,23 +325,10 @@ async function settle(force) {
     if (S.coords.length < 2) return;
     const my = S.token;
     const coords = S.coords;
-    const needed = boundsOf(coords, 0.004);
     const surfaces = (async () => {
         if (!S.snapped) return;
-        if (force || !boxContains(S.waysBox, needed)) {
-            busy("Checking surfaces…");
-            try {
-                const box = boundsOf(coords, 0.01);
-                const data = await fetchMapData(box);
-                if (my !== S.token) return;
-                S.ways = data.ways; S.safetyData = data.safety; S.waysBox = box; S.surfaceError = "";
-                drawOverlay();
-            } catch (err) {
-                console.warn("Route builder: map data failed", err);
-                if (my === S.token) S.surfaceError = "Couldn't load path and sidewalk data (the free map service may be busy).";
-                return;
-            }
-        }
+        const ok = await loadMapData([coords], my, force);
+        if (!ok) return;
         if (my !== S.token) return;
         S.score = scoreLine(coords, S.ways);
         S.quarters = scoreQuarters(coords, S.ways);
@@ -359,7 +350,7 @@ async function settle(force) {
     await Promise.all([surfaces, heights]);
     if (my !== S.token) return;
     busy("");
-    render(); buttons(); updateNote();
+    render(); buttons(); updateNote(); renderSafety();
 }
 
 /* ---------- loop ---------- */
@@ -473,8 +464,10 @@ function render() {
     $("rbClimb").textContent = !has ? "—" : S.climb ? S.climb.text.replace("about ", "") : (S.heightsFailed ? "n/a" : "…");
     $("rbClimb").title = S.climb ? CLIMB_NOTE : "";
     $("rbLoss").textContent = !has ? "—" : S.climb ? S.climb.downText.replace("about ", "") : (S.heightsFailed ? "n/a" : "…");
-    $("rbX").textContent = S.score ? `${S.score.pcts.X}%` : (has && S.surfaceError ? "n/a" : (has ? "…" : "—"));
-    $("rbAB").textContent = S.score ? `${S.score.ab}%` : (has && S.surfaceError ? "n/a" : (has ? "…" : "—"));
+    const surfWait = !has ? "—" : (S.surfaceError || !S.snapped) ? "n/a" : S.mapState === "retry" ? "retrying…" : "calculating…";
+    $("rbX").textContent = S.score ? `${S.score.pcts.X}%` : surfWait;
+    $("rbAB").textContent = S.score ? `${S.score.ab}%` : surfWait;
+    for (const id of ["rbX", "rbAB"]) $(id).classList.toggle("is-wait", !S.score && has && /…$/.test(surfWait));
 
     // surface bar
     const sf = $("rbSurface");
@@ -594,17 +587,39 @@ function autoSafetyPass() {
     }
 }
 
-/* Data for lines that may reach past the box we have (compare, ways home). */
+/* Map data for lines, piece by piece along each line (only the pieces not loaded yet), with retries.
+   Used for the route itself and for lines that may reach past it (compare, ways home). -> true when all loaded. */
+async function loadMapData(lines, my = S.token, force = false, report = true) {
+    const needed = lines.flatMap(l => corridorBoxes(l));
+    if (force) { S.mapEls = []; S.mapBoxes = []; }
+    const missing = boxesMissing(needed, S.mapBoxes);
+    if (!missing.length) return true;
+    if (S.mapEls.length > 80000) { S.mapEls = []; S.mapBoxes = []; return loadMapData(lines, my, false, report); } // a long session: start fresh
+    const total = missing.length;
+    if (report) { S.mapState = "loading"; render(); }
+    busy(total > 1 ? `Checking surfaces: ${total} parts…` : "Checking surfaces…");
+    const got = await fetchMapPieces(missing.map(b => growBox(b, 0.002)), {
+        onRetry: (a, n) => { if (my !== S.token || !report) return; S.mapState = "retry"; busy(`The free map service is busy. Retrying (try ${a} of ${n})…`); render(); renderSafety(); },
+        onProgress: (done, n) => { if (my === S.token && n > 1 && done < n) busy(`Checking surfaces: ${done} of ${n} parts…`); }
+    });
+    // keep every piece that loaded, even for an older edit: it is still true map data
+    S.mapEls = mergeElements([S.mapEls, got.elements]);
+    S.mapBoxes = S.mapBoxes.concat(got.boxes);
+    if (got.boxes.length) { const d = mapDataFrom(S.mapEls); S.ways = d.ways; S.safetyData = d.safety; drawOverlay(); }
+    S.mapLog = { parts: total, loaded: got.boxes.length, failed: got.failed.length, requests: got.tries };
+    if (my !== S.token) return false;
+    if (!report) return !got.failed.length;
+    S.mapState = "";
+    if (got.failed.length) {
+        S.surfaceError = `Couldn't load path and sidewalk data for ${got.failed.length === total ? "this route" : `${got.failed.length} of ${total} parts of this route`} after ${MAP_ATTEMPTS} tries (the free map service may be busy). The route, distance, fuel and GPX still work.`;
+        return false;
+    }
+    S.surfaceError = "";
+    return true;
+}
 async function ensureData(lines) {
-    const pts = lines.flat().concat(S.coords);
-    if (!pts.length) return;
-    const needed = boundsOf(pts, 0.004);
-    if (boxContains(S.waysBox, needed)) return;
-    const box = boundsOf(pts, 0.01);
-    const data = await fetchMapData(box);
-    S.ways = data.ways; S.safetyData = data.safety; S.waysBox = box;
-    drawOverlay();
-    computeSafety();
+    if (await loadMapData([...lines, S.coords], S.token, false, false)) computeSafety();
+    else throw new Error("map data not loaded");
 }
 
 const keyOf = s => s.unknown.length ? "?" : s.band.id;
@@ -680,7 +695,8 @@ function renderSafety() {
     const has = !!S.safe;
     const route = S.coords.length >= 2;
     $("rbSafeMap").disabled = !has;
-    $("rbSafeBar").hidden = !has;
+    $("rbSafeBar").hidden = !has && !route;
+    $("rbSafeBar").classList.toggle("is-waiting", !has);
     $("rbStripWrap").hidden = !has;
     $("rbCompare").disabled = !has;
     $("rbHome").disabled = !has || S.miles < 1;
@@ -694,6 +710,15 @@ function renderSafety() {
         return;
     }
     if (!has) {
+        // No score for THIS route yet: say so plainly. No number, no colour, no worst stretch from an older route.
+        const failed = route && S.snapped && (!!S.surfaceError || (S.facts && !S.facts.length));
+        const badge = $("rbSafeBadge");
+        badge.textContent = "?"; badge.style.background = ""; badge.classList.remove("is-dark");
+        $("rbSafeHead").textContent = !S.snapped ? "Safety: needs a snapped route" : failed ? "Safety: unavailable for this route" : S.mapState === "retry" ? "Safety: retrying the map data…" : "Scoring safety…";
+        $("rbSafeRisk").textContent = "";
+        $("rbSafeWorst").innerHTML = failed ? 'The map data didn\'t load, so this route has no safety score. <button type="button" class="rb-retry" id="rbSafeRetry">Try again</button>' : "";
+        const r = $("rbSafeRetry"); if (r) r.onclick = retryMapData;
+        $("rbSafeUnknown").hidden = true; $("rbSafeUnknown").textContent = "";
         $("rbCrossings").innerHTML = `<li class="rb-empty">${route ? (S.surfaceError ? "Needs the map data (not loaded)." : (S.snapped ? "Checking…" : "Needs a snapped route.")) : "Shows once the route is checked."}</li>`;
         $("rbRushNote").hidden = true; $("rbSaferTime").hidden = true;
         $("rbWhy").hidden = true;

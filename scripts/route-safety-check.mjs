@@ -24,7 +24,7 @@ async function build(page, pts) {
     await page.click("#rbCentre");
     await page.waitForTimeout(200);
   }
-  await page.waitForFunction(() => !document.getElementById("rbSafeBar").hidden, null, { timeout: 60000 });
+  await page.waitForFunction(() => window.__routeBuilder.safe, null, { timeout: 60000 });
   await page.evaluate(() => { const S = window.__routeBuilder; S.map.fitBounds(window.L.latLngBounds(S.coords), { padding: [20, 20], animate: false }); });
 }
 async function setWhen(page, date, clock) {
@@ -49,7 +49,7 @@ const bar = page => page.evaluate(() => ({
 const b = await chromium.launch();
 for (const w of widths) {
   const phone = w < 700;
-  const ctx = await newContext(b, w, "client", phone ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {});
+  const ctx = await newContext(b, w, "client", { timezoneId: "America/New_York", ...(phone ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {}) }); // clock times are Chattanooga time
   let lastCosting = null, lastAvoid = 0;
   await ctx.route(/valhalla1\.openstreetmap\.de\/route/, async r => {
     try { const body = JSON.parse(r.request().postData() || "{}"); lastCosting = body.costing_options || null; lastAvoid = (body.exclude_polygons || []).length; } catch {}

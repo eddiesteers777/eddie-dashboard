@@ -137,6 +137,8 @@ html.rb-sheet-open .eos-bottomnav{ display:none !important; } /* the sheet takes
 .rb-safe-head{ display:flex; align-items:center; gap:12px; }
 .rb-safe-badge{ flex:0 0 auto; display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:10px; font:800 17px/1 var(--font-body, inherit); color:#10161b; border:2px solid rgba(255,255,255,.7); }
 .rb-safe-badge.is-dark{ color:#fff; }
+.rb-safebar.is-waiting .rb-safe-badge{ background:transparent; border:2px dashed var(--border); color:var(--text-secondary); }
+.rb-safebar.is-waiting .rb-safe-nums strong{ font:600 17px/1.2 var(--font-body, inherit); color:var(--text-secondary); }
 .rb-safe-nums{ display:flex; flex-direction:column; gap:2px; min-width:0; }
 .rb-safe-nums strong{ font:600 20px/1.15 var(--font-mono, monospace); color:var(--text); }
 .rb-safe-nums span{ font-size:14px; color:var(--text-secondary); }
@@ -262,3 +264,4 @@ html.rb-sheet-open .eos-bottomnav{ display:none !important; } /* the sheet takes
     .rb-prefs.is-open{ transform:none; }
 }
 @media (prefers-reduced-motion:reduce){ .rb-mode-btn, .rb-card > summary, .rb-prefs, .rb-globe, .rb-switch i, .rb-switch i::after{ transition:none; } }
+.rb-stat strong.is-wait{ font:500 14px/1.3 var(--font-body, inherit); color:var(--text-secondary); word-break:normal; overflow-wrap:normal; }

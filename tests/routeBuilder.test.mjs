@@ -339,3 +339,62 @@ test("optimiser: shifts only toward the preferred class", () => {
     assert.ok(Math.abs(shiftWaypoints(wps, [sidewalk, trail], ["A"])[0][0] - 35.0008) < 1e-9);
     assert.ok(Math.abs(shiftWaypoints(wps, [sidewalk, trail], ["B"])[0][0] - 35.0004) < 1e-9);
 });
+
+/* ---------- long routes: map data in pieces, with retries (live test 2026-10-31) ---------- */
+import { corridorBoxes, boxesMissing, growBox } from "../js/routeGeo.js";
+import { mergeElements, overpassElements, fetchMapElements, fetchMapPieces } from "../js/routeApi.js";
+
+const longLine = (miles, n) => Array.from({ length: n }, (_, i) => [33.1 + (i / (n - 1)) * (miles / 69), -86.75]);
+
+test("corridorBoxes: a 9.3 mi line becomes small pieces that cover every point", () => {
+    const line = longLine(9.31, 666);
+    const boxes = corridorBoxes(line);
+    assert.ok(boxes.length >= 6 && boxes.length <= 8, `pieces ${boxes.length}`);
+    for (const p of line) assert.ok(boxes.some(b => p[0] >= b.s && p[0] <= b.n && p[1] >= b.w && p[1] <= b.e), "every point inside a piece");
+    for (const b of boxes) assert.ok((b.n - b.s) < 0.035, "each piece is small (about 1.5 mi plus padding)");
+    assert.deepEqual(corridorBoxes([[33, -86]]), []);
+    assert.equal(corridorBoxes(longLine(0.5, 40)).length, 1);
+});
+
+test("boxesMissing: only the pieces not already loaded are fetched again", () => {
+    const boxes = corridorBoxes(longLine(6, 300));
+    const have = boxes.slice(0, 2).map(b => growBox(b, 0.002));
+    assert.deepEqual(boxesMissing(boxes, have), boxes.slice(2));
+    assert.deepEqual(boxesMissing(boxes, []), boxes);
+});
+
+test("mergeElements: overlapping pieces keep each way and node once", () => {
+    const a = [{ type: "way", id: 1 }, { type: "node", id: 1 }], b = [{ type: "way", id: 1 }, { type: "way", id: 2 }];
+    assert.deepEqual(mergeElements([a, b]).map(e => e.type + e.id), ["way1", "node1", "way2"]);
+});
+
+test("overpassElements: a timed-out answer (200 with an error remark) is a failure, not 'no data'", () => {
+    assert.throws(() => overpassElements({ remark: "runtime error: Query timed out in \"query\" at line 1 after 26 seconds.", elements: [] }));
+    assert.deepEqual(overpassElements({ elements: [{ type: "way", id: 3 }] }), [{ type: "way", id: 3 }]);
+});
+
+test("fetchMapElements: retries a busy service (3 tries) and says so before each retry", async () => {
+    const real = globalThis.fetch;
+    let calls = 0; const retries = [];
+    globalThis.fetch = async () => (++calls < 3 ? { ok: false, status: 504 } : { ok: true, json: async () => ({ elements: [{ type: "way", id: 9 }] }) });
+    try {
+        const r = await fetchMapElements({ s: 0, w: 0, n: 1, e: 1 }, { waits: [0, 0], onRetry: (a, n) => retries.push(`${a}/${n}`) });
+        assert.equal(r.tries, 3); assert.equal(r.elements.length, 1);
+        assert.deepEqual(retries, ["2/3", "3/3"]);
+        calls = -10; // always fails
+        await assert.rejects(fetchMapElements({ s: 0, w: 0, n: 1, e: 1 }, { waits: [0, 0] }));
+    } finally { globalThis.fetch = real; }
+});
+
+test("fetchMapPieces: keeps the pieces that loaded when one fails", async () => {
+    const real = globalThis.fetch;
+    globalThis.fetch = async (url, init) => decodeURIComponent(init.body).includes("(2,") ? { ok: false, status: 502 }
+        : { ok: true, json: async () => ({ elements: [{ type: "way", id: 7 }, { type: "way", id: Math.random() }] }) };
+    try {
+        const boxes = [0, 1, 2, 3].map(i => ({ s: i, w: 0, n: i + 0.5, e: 1 }));
+        const r = await fetchMapPieces(boxes, { waits: [0, 0] });
+        assert.equal(r.boxes.length, 3); assert.equal(r.failed.length, 1); assert.equal(r.failed[0].s, 2);
+        assert.equal(r.elements.filter(e => e.id === 7).length, 1, "shared way once");
+        assert.equal(r.tries, 3 + 3);
+    } finally { globalThis.fetch = real; }
+});

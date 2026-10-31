@@ -38,7 +38,7 @@ for (const w of widths) {
     await page.evaluate(([lat, lon]) => window.__routeBuilder.map.setView([lat, lon], 16, { animate: false }), p);
     await page.click("#rbCentre"); await page.waitForTimeout(200);
   }
-  await page.waitForFunction(() => !document.getElementById("rbSafeBar").hidden && !/…/.test(document.getElementById("rbClimb").textContent), null, { timeout: 60000 });
+  await page.waitForFunction(() => window.__routeBuilder.safe && !/…/.test(document.getElementById("rbClimb").textContent), null, { timeout: 60000 });
   await page.evaluate(() => { const S = window.__routeBuilder; S.map.fitBounds(window.L.latLngBounds(S.coords), { padding: [20, 20], animate: false }); });
 
   // defaults: the full builder
