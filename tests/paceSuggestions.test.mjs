@@ -43,6 +43,12 @@ test("a slow tempo the client tagged hot does not count toward easing", () => {
     assert.deepEqual(run([key("2026-10-20", 420), key("2026-10-27", 421)], { results }), []);
     assert.equal(run([key("2026-10-20", 420), key("2026-10-27", 421)])[0].proposal, "ease");
 });
+test("a typed air temperature of 80 F or more counts as heat; below it doesn't", () => {
+    const hot = [{ date: "2026-10-20", tempF: 88 }, { date: "2026-10-27", tempF: 80 }];
+    assert.deepEqual(run([key("2026-10-20", 420), key("2026-10-27", 421)], { results: hot }), []);
+    const mild = [{ date: "2026-10-20", tempF: 79 }, { date: "2026-10-27", tempF: null }];
+    assert.equal(run([key("2026-10-20", 420), key("2026-10-27", 421)], { results: mild })[0].proposal, "ease");
+});
 test("in a taper a tighten becomes a hold", () => {
     const out = run([key("2026-10-20", 388), key("2026-10-27", 386)], { weeksToRace: 1.1 });
     assert.equal(out[0].status, "TAPER_HOLD");

@@ -128,7 +128,7 @@ function resultHtml(result) {
                 <div><span>Effort</span><strong>${result.rpe ? `${result.rpe}/10` : "—"}</strong>${result.rpe ? `<small>${esc(effortWords(result.rpe, savedScale(result)))}</small>` : ""}</div>
             </div>
             ${result.pain ? `<p class="wo-pain">${icon("alertTriangle")} Pain or discomfort${result.painNote ? `: ${esc(result.painNote)}` : ""}</p>` : ""}
-            ${conditionsText(result.conditions) ? `<p class="wo-cond">${icon("cloud")} ${esc(conditionsText(result.conditions))}</p>` : ""}
+            ${conditionsText(result.conditions) || Number.isFinite(result.tempF) ? `<p class="wo-cond">${icon("cloud")} ${esc([conditionsText(result.conditions), Number.isFinite(result.tempF) ? `${result.tempF}°F` : ""].filter(Boolean).join(" · "))}</p>` : ""}
             ${answersHtml(result)}
             ${result.note ? `<p class="wo-note">"${renderEmojiText(esc(result.note))}"</p>` : ""}
             ${coachReplyHtml(result)}
@@ -603,6 +603,7 @@ function openLogForm(prefill = {}) {
                 <div class="wo-chips" role="group" aria-label="Conditions">
                     ${CONDITIONS.map(c => `<label><input type="checkbox" name="cond" value="${c.key}"${cleanConditions(r.conditions).includes(c.key) ? " checked" : ""}><span>${c.label}</span></label>`).join("")}
                 </div>
+                <label class="pw-label wo-temp-field">Air temperature, °F <small>(optional)</small><input class="sb-dialog-input" name="tempF" type="number" inputmode="numeric" min="-20" max="130" step="1" placeholder="88" value="${Number.isFinite(r.tempF) ? r.tempF : ""}"></label>
             </div>
             <span class="pw-label">Any pain or discomfort?</span>
             <div class="wo-seg" role="radiogroup" aria-label="Any pain or discomfort?">
@@ -748,6 +749,7 @@ function openLogForm(prefill = {}) {
                 painNote: fd.get("painNote"),
                 note: fd.get("note"),
                 conditions: skipped ? [] : cleanConditions(fd.getAll("cond")),
+                tempF: skipped ? null : fd.get("tempF"),
                 answers: cleanAnswers(state.day.questions, [fd.get("a0"), fd.get("a1")])
             }, state.result);
             forget();

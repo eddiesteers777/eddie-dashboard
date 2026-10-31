@@ -1549,6 +1549,21 @@ test("workout results: answers to the coach's questions are up to two short { q,
     await assertSucceeds(updateDoc(doc(as("client"), id), { rpe: 5, updatedAt: serverTimestamp() }));
 });
 
+test("workout results: air temperature is an optional whole number of degrees F", async () => {
+    await seedPublishedPlan();
+    const id = "workoutResults/client_p1_2026-09-29";
+    await assertSucceeds(setDoc(doc(as("client"), id), result({ tempF: 88 })));
+    await assertSucceeds(updateDoc(doc(as("client"), id), { tempF: 91, updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as("client"), id), { tempF: null, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { tempF: 200, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { tempF: -40, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { tempF: 88.5, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("client"), id), { tempF: "hot", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("coach"), id), { tempF: 70 }));
+    // Without it, a log still saves (older app).
+    await assertSucceeds(updateDoc(doc(as("client"), id), { rpe: 5, updatedAt: serverTimestamp() }));
+});
+
 test("workout results: conditions are up to three known weather tags", async () => {
     await seedPublishedPlan();
     const id = "workoutResults/client_p1_2026-09-29";

@@ -112,7 +112,7 @@ test("only a coach can approve; the proposal is not mutated", () => {
 });
 
 // ---- Pace v2 ----
-import { proposePaceV2, sessionExclusion, PACE_V2_STEP_SEC } from "../js/planRules.js";
+import { proposePaceV2, sessionExclusion, fadeSeconds, PACE_V2_STEP_SEC } from "../js/planRules.js";
 const T = (avgSec, extra = {}) => ({ kind: "tempo", avgSec, ...extra });
 const P = 403;
 
@@ -139,6 +139,20 @@ test("v2: wild reps are excluded, not averaged in", () => {
     const wild = T(P - 15, { repsSec: [P - 75, P + 45, P - 20] });
     assert.match(sessionExclusion(wild, P), /Reps varied/);
     assert.equal(proposePaceV2([wild, T(P - 15)], P).proposal, "hold");
+});
+test("v2: Eddie's real sets (spreads 14-20 s/mi) count as intervals; 30 s/mi still doesn't", () => {
+    const set = (reps, kind = "interval") => ({ kind, avgSec: Math.round(reps.reduce((t, x) => t + x, 0) / reps.length), repsSec: reps });
+    for (const reps of [[399, 418, 415, 413], [375, 387, 391, 395, 385, 387, 383, 384, 377], [371, 370, 378, 375, 383, 380, 388]]) {
+        assert.equal(sessionExclusion(set(reps), set(reps).avgSec), null);
+    }
+    assert.match(sessionExclusion(set([360, 392, 380]), 380), /Reps varied by more than 25/);
+});
+test("v2: a set that faded says so (Sep 29: +11 s/mi), a flat one doesn't", () => {
+    assert.equal(fadeSeconds([371, 370, 378, 375, 383, 380, 388]), 11);
+    assert.equal(fadeSeconds([399, 418]), null);
+    const r = proposePaceV2([{ kind: "interval", avgSec: 380, repsSec: [371, 370, 378, 375, 383, 380, 388] }, { kind: "interval", avgSec: 380, repsSec: [379, 380, 381, 380] }], 380);
+    assert.ok(r.notes.some(n => /faded 11 s\/mi/.test(n)));
+    assert.equal(r.notes.length, 1);
 });
 test("v2: a slow session in heat does not count toward easing; a beat in heat does", () => {
     const slowHot = T(P + 15, { context: { heat: true } });

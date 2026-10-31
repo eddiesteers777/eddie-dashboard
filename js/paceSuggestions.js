@@ -24,16 +24,19 @@ import { proposePaceV2 } from "./planRules.js";
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 const mean = a => a.reduce((t, x) => t + x, 0) / a.length;
 
-export function contextFrom(conditions = []) {
+// Air temperature the client typed at or above this counts as a hot run (our assumption: Heat v2's curve starts adding time at 80 F).
+export const HEAT_TEMP_F = 80;
+
+export function contextFrom(conditions = [], tempF = null) {
     const c = new Set(conditions);
     return {
-        heat: c.has("hot") || c.has("humid"),
+        heat: c.has("hot") || c.has("humid") || (Number.isFinite(tempF) && tempF >= HEAT_TEMP_F),
         weather: c.has("windy") || c.has("rain") || c.has("snow") || c.has("cold")
     };
 }
 
 /** One speed session for Pace v2 from a rebuilt workout, or null when it has no judged reps. */
-export function speedSessionFrom(x, { date = "", conditions = [] } = {}) {
+export function speedSessionFrom(x, { date = "", conditions = [], tempF = null } = {}) {
     const work = (x?.steps || []).filter(s => s.kind === "work" && s.target && Number.isFinite(s.target.lo) && Number.isFinite(s.target.hi));
     if (!work.length) return null;
     const done = work.filter(s => s.status === "done" && Number.isFinite(s.actual?.paceSec));
@@ -47,15 +50,15 @@ export function speedSessionFrom(x, { date = "", conditions = [] } = {}) {
         inPlan: true,
         complete: x.completion ? x.completion.done === x.completion.planned : false,
         gpsOk: ["exact", "approximate"].includes(x.matchConfidence),
-        context: contextFrom(conditions)
+        context: contextFrom(conditions, tempF)
     };
 }
 
 export function paceSuggestions({ keyWork = [], laps = {}, results = [], weeksToRace = null, monday = "" } = {}) {
-    const byDate = new Map((results || []).filter(r => r?.kind !== "strength").map(r => [r.date, r.conditions || []]));
+    const byDate = new Map((results || []).filter(r => r?.kind !== "strength").map(r => [r.date, { conditions: r.conditions || [], tempF: Number.isFinite(r.tempF) ? r.tempF : null }]));
     const sessions = keyWork.map(w => {
         const x = reconstructWorkout(w.workout, laps[w.run.labelId], { plannedWorkoutId: w.id, activityId: `c:${w.run.labelId}` });
-        return speedSessionFrom(x, { date: w.date, conditions: byDate.get(w.date) });
+        return speedSessionFrom(x, { date: w.date, ...(byDate.get(w.date) || {}) });
     }).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date));
 
     // One pace target per kind and 5 s band: a 10K-pace rep and a tempo don't share a trend.

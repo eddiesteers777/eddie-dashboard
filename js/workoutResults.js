@@ -39,6 +39,7 @@ export const resultId = (clientUid, planId, date, kind = "run") => `${clientUid}
 export const isStrengthResult = r => r?.kind === "strength";
 
 const EDITABLE = ["status", "distance", "durationSec", "rpe", "pain", "painNote", "note", "title", "plannedMiles", "planVersion", "answers", "conditions"];
+const cleanTempF = v => (v === "" || v == null || !Number.isFinite(Number(v)) ? null : Math.max(-20, Math.min(130, Math.round(Number(v)))));
 
 function clean(input, kind) {
     const numOrNull = (v, max) => (v === "" || v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.min(max, Number(v))));
@@ -57,6 +58,7 @@ function clean(input, kind) {
         answers: kind === "strength" ? [] : cleanAnswers((input.answers || []).map(x => x.q), (input.answers || []).map(x => x.a)),
         // What the weather was like (js/runConditions.js).
         conditions: kind === "strength" ? [] : cleanConditions(input.conditions),
+        tempF: kind === "strength" ? null : cleanTempF(input.tempF),
         title: String(input.title || "Workout").slice(0, 120),
         plannedMiles: Math.max(0, Math.min(200, Number(input.plannedMiles) || 0)),
         planVersion: Math.max(1, Number(input.planVersion) || 1),
@@ -84,18 +86,26 @@ export async function saveMyResult({ planId, coachUid, date, clientName, kind = 
     const values = clean(fields, kind);
     // Offline, the log is kept on this device and sent when the connection
     // comes back (js/offlineWrite.js); the fixed doc ID means it's one record.
-    let write;
+    // tempF is written only when there is one to write (or one to clear), so a
+    // log without it never depends on the newer rules.
+    const { tempF, ...base } = values;
+    const sendTemp = tempF !== null || (existing && existing.tempF != null);
     const ref = doc(db, "workoutResults", id);
-    if (existing) {
-        const patch = Object.fromEntries([...EDITABLE, ...(kind === "strength" ? ["exercises"] : [])].map(k => [k, values[k]]));
-        write = updateDoc(ref, { ...patch, updatedAt: serverTimestamp() });
-    } else {
-        write = setDoc(ref, {
-            clientUid: user.uid, coachUid, planId, date, ...(kind === "strength" ? { kind } : {}), ...values,
+    const build = withTemp => {
+        const extra = withTemp && sendTemp ? { tempF } : {};
+        if (existing) {
+            const patch = Object.fromEntries([...EDITABLE, ...(kind === "strength" ? ["exercises"] : [])].map(k => [k, base[k]]));
+            return updateDoc(ref, { ...patch, ...extra, updatedAt: serverTimestamp() });
+        }
+        return setDoc(ref, {
+            clientUid: user.uid, coachUid, planId, date, ...(kind === "strength" ? { kind } : {}), ...base, ...extra,
             createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
             coachComment: "", coachCommentAt: null
         });
-    }
+    };
+    // Until the newer rules are published the temperature is refused: save the log without it.
+    let write = build(true);
+    if (sendTemp) write = write.catch(error => { if (error?.code === "permission-denied") return build(false); throw error; });
     const { queued } = await settleWrite(write, values.title || "Your workout", ref);
     const done = values.status === "completed";
     await markLocal(planId, date, kind === "strength"
@@ -106,7 +116,7 @@ export async function saveMyResult({ planId, coachUid, date, clientName, kind = 
     if (values.pain && (!existing?.pain || existing.painNote !== values.painNote)) {
         sendPainFlagEmail({ clientName: clientName || user.displayName, date, title: values.title, painNote: values.painNote });
     }
-    return { ...(existing || { id, clientUid: user.uid, coachUid, planId, date, coachComment: "", coachCommentAt: null, ...(kind === "strength" ? { kind } : {}) }), ...values, id, updatedAt: Date.now(), pendingSync: queued };
+    return { ...(existing || { id, clientUid: user.uid, coachUid, planId, date, coachComment: "", coachCommentAt: null, ...(kind === "strength" ? { kind } : {}) }), ...base, ...(sendTemp ? { tempF } : {}), id, updatedAt: Date.now(), pendingSync: queued };
 }
 
 export async function deleteMyResult(result) {

@@ -192,10 +192,21 @@ export function approve(proposal, { isCoach = false } = {}) {
 
 export const PACE_V2_STEP_SEC = 3;               // seconds per mile; sandbox v1 used 5
 export const PACE_V2_MAX_CHANGES = 2;            // in a row, then the coach re-evaluates
-export const PACE_V2_RANGE_SEC = { tempo: 20, interval: 15, time_trial: 20 };
+// Interval 25 (was 15): Eddie's real sets spread 14-20 s/mi (2026-10-31 check, docs/BUILD_HISTORY.md).
+export const PACE_V2_RANGE_SEC = { tempo: 20, interval: 25, time_trial: 20 };
+export const PACE_V2_FADE_SEC = 10;
 const SPEED_KINDS = ["tempo", "interval", "time_trial"];
 const CONTEXT_KEYS = ["heat", "hills", "weather", "poorSleep", "poorFuel"];
 const contextOf = s => CONTEXT_KEYS.filter(k => s?.context?.[k]);
+
+/** Seconds per mile the back half of a set ran slower than the front half (negative = got faster). Null under 3 reps. */
+export function fadeSeconds(repsSec) {
+    const reps = (repsSec || []).filter(Number.isFinite);
+    if (reps.length < 3) return null;
+    const half = Math.floor(reps.length / 2);
+    const avg = a => a.reduce((t, x) => t + x, 0) / a.length;
+    return Math.round(avg(reps.slice(-half)) - avg(reps.slice(0, half)));
+}
 
 /** Why a session can't be counted, or null when it can. */
 export function sessionExclusion(s, plannedSec) {
@@ -234,6 +245,10 @@ export function proposePaceV2(sessions, plannedSec, { weeksToRace = null, consec
             return excluded.push({ index, why: `Slow, but explained by ${ctx.join(", ")}.` });
         }
         if (diff <= -PACE_MIN_GAP_SEC && ctx.length) notes.push(`Session ${index + 1} beat the pace despite ${ctx.join(", ")}, which counts for more.`);
+        const fade = fadeSeconds(s.repsSec);
+        if (fade != null && Math.abs(fade) >= PACE_V2_FADE_SEC) {
+            notes.push(fade > 0 ? `Session ${index + 1} faded ${fade} s/mi from the first reps to the last (went out too fast, or tired).` : `Session ${index + 1} got ${-fade} s/mi faster across the set.`);
+        }
         counted.push({ index, diff, kind: s.kind });
     });
 
