@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Build a Route | Southbound Coaching</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="css/routes.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body>
+    <div id="header"></div>
+
+    <main class="container rb-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Running</div>
+                <h1>Build a Route</h1>
+                <p class="eos-today-phase">Tap the map to drop points. The route snaps to sidewalks and trails, and the fuel plan follows the distance.</p>
+            </div>
+        </section>
+
+        <div class="rb-layout">
+
+            <section class="rb-mapcol" aria-label="Map">
+
+                <div class="rb-mode" role="group" aria-label="Route type">
+                    <button type="button" class="rb-mode-btn is-on" id="rbModeP2P" aria-pressed="true">Point to point</button>
+                    <button type="button" class="rb-mode-btn" id="rbModeLoop" aria-pressed="false">Loop</button>
+                </div>
+
+                <div class="rb-loopbar" id="rbLoopBar" hidden>
+                    <label class="rb-field">
+                        <span>Loop length (mi)</span>
+                        <input id="rbLoopMiles" type="number" inputmode="decimal" min="0.5" max="20" step="0.5" value="3">
+                    </label>
+                    <button type="button" class="sb-btn sb-btn-primary" id="rbMakeLoop">Make a loop</button>
+                </div>
+
+                <div class="rb-mapwrap">
+                    <div id="rbMap" role="application" aria-label="Route map. Tap to add a point, drag a point to move it, tap a point to remove it."></div>
+                    <div class="rb-hint" id="rbHint">Tap the map to drop your start.</div>
+                    <div class="rb-busy sb-wait" id="rbBusy" hidden></div>
+                </div>
+
+                <div class="rb-tools">
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbCentre">Add at centre</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbUndo" disabled>Undo point</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbClear" disabled>Clear</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbLocate">Find me</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="rbDots" aria-pressed="true">Paths: on</button>
+                </div>
+
+            </section>
+
+            <section class="rb-sidecol" aria-label="Route details">
+
+                <div class="rb-stats" id="rbStats" aria-live="polite">
+                    <div class="rb-stat"><span class="rb-stat-label">Distance</span><strong id="rbDist">—</strong></div>
+                    <div class="rb-stat"><span class="rb-stat-label">Time at your pace</span><strong id="rbTime">—</strong></div>
+                    <div class="rb-stat"><span class="rb-stat-label">Climb</span><strong id="rbClimb">—</strong></div>
+                    <div class="rb-stat"><span class="rb-stat-label">Path + sidewalk</span><strong id="rbAB">—</strong></div>
+                </div>
+                <p class="rb-note" id="rbNote" hidden></p>
+
+                <div class="rb-surface" id="rbSurface" hidden>
+                    <div class="rb-bar" id="rbBar" role="img" aria-label="Surface split"></div>
+                    <ul class="rb-legend" id="rbLegend"></ul>
+                </div>
+
+                <details class="rb-card" open>
+                    <summary>About this route</summary>
+                    <div class="rb-card-body">
+                        <ul class="rb-lines" id="rbExplain"><li class="rb-empty">Drop two points to see the route explained.</li></ul>
+                        <div class="rb-row">
+                            <button type="button" class="sb-btn sb-btn-secondary" id="rbOptimise" disabled>Sidewalk-first</button>
+                            <button type="button" class="sb-btn sb-btn-tertiary" id="rbRevert" hidden>Revert</button>
+                        </div>
+                        <p class="rb-small" id="rbOptimiseOut" aria-live="polite"></p>
+                    </div>
+                </details>
+
+                <details class="rb-card" open>
+                    <summary>Fuel for this route</summary>
+                    <div class="rb-card-body">
+                        <div class="rb-fields">
+                            <label class="rb-field"><span>Your pace (min/mi)</span><input id="rbPace" type="text" inputmode="decimal" value="9:00" autocomplete="off"></label>
+                            <label class="rb-field"><span>Gel size (g)</span><input id="rbGel" type="number" inputmode="numeric" min="10" max="50" step="1" value="25"></label>
+                        </div>
+                        <ul class="rb-lines" id="rbFuel"><li class="rb-empty">Fuel shows up once the route has a distance.</li></ul>
+                        <p class="rb-warn" id="rbFuelWarn" hidden></p>
+                        <a class="rb-link" href="fueling.html">Open the Fueling calculator</a>
+                    </div>
+                </details>
+
+                <details class="rb-card" open>
+                    <summary>Save and export</summary>
+                    <div class="rb-card-body">
+                        <label class="rb-field"><span>Route name</span><input id="rbName" type="text" maxlength="60" placeholder="Sunday long run" autocomplete="off"></label>
+                        <div class="rb-row">
+                            <button type="button" class="sb-btn sb-btn-primary" id="rbSave" disabled>Save route</button>
+                            <button type="button" class="sb-btn sb-btn-secondary" id="rbGpx" disabled>Export GPX</button>
+                        </div>
+                        <p class="rb-small" id="rbGpxOut" aria-live="polite"></p>
+                        <details class="rb-sub">
+                            <summary>Send it to a COROS watch</summary>
+                            <ol class="rb-steps">
+                                <li>Export the GPX and open it in the COROS app (Route Library).</li>
+                                <li>Tap Save in COROS and check the route is in the Route Library.</li>
+                                <li>Sync your watch.</li>
+                                <li>On the watch, look for it under Navigation.</li>
+                            </ol>
+                        </details>
+                    </div>
+                </details>
+
+                <details class="rb-card" open>
+                    <summary>Saved routes</summary>
+                    <div class="rb-card-body">
+                        <ul class="rb-saved" id="rbSaved"></ul>
+                        <p class="rb-empty" id="rbSavedEmpty">No saved routes yet. Build one and tap Save route.</p>
+                    </div>
+                </details>
+
+                <p class="rb-small rb-credit">Map © OpenStreetMap contributors. Routing by Valhalla (FOSSGIS). Path and road data from Overpass. Points you place are sent to these free services; nothing else leaves your device.</p>
+
+            </section>
+        </div>
+    </main>
+
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/routes.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+</html>

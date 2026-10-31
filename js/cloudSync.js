@@ -16,7 +16,7 @@ import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://ww
 import { mergeSyncedValue } from "./syncMerge.js";
 
 const EXACT_KEYS = ["training-progress","training-overrides","featured-training-categories","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","strength-settings","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks","coach-health-reviewed","coach-queue-done","coach-pinned-chats","session-rpe","race-results","athlete-model","coach-athlete-model","workout-shares"];
-const KEY_PREFIXES = ["nutrition-","fueling-","cross-training-","workout-session-"];
+const KEY_PREFIXES = ["nutrition-","fueling-","cross-training-","workout-session-","route-"];
 // Plans the coach can see through sharedPlans (js/coachAccess.js).
 const MIRRORED_KEYS = ["training-programs","running-programs","coach-plans"];
 const META_KEY = "__cloudSyncMeta";

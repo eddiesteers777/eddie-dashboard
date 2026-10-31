@@ -42,7 +42,10 @@ export function precacheFiles() {
         ...list("brand", ".svg"),
         ...list("icons", /\.(png|svg)$/).filter(f => f !== "icons/og-image.png"),
         ...list("emoji", ".svg"),
-        ...list("habit-icons", ".svg")
+        ...list("habit-icons", ".svg"),
+        // Leaflet, the map library for Build a Route (BSD-2, vendor/leaflet/LICENSE.txt).
+        ...list("vendor/leaflet", /\.(js|css)$/),
+        ...list("vendor/leaflet/images", ".png")
     ].sort();
 }
 
