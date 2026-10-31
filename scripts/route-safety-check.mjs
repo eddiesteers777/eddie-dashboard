@@ -77,7 +77,7 @@ for (const w of widths) {
   check(`${tag} trio shown: headline, worst stretch, % at Orange or worse`, /^Safety \d+ — /.test(noon.head) && /^Worst \d+\.\d mi: /.test(noon.worst) && /^\d+% at Orange or worse$/.test(noon.risk), JSON.stringify([noon.head, noon.worst, noon.risk]));
   check(`${tag} planning-estimate note on the safety bar`, noon.note === "Planning estimate from map data — check the road yourself before you run.");
   check(`${tag} busy-road crossings listed with their type`, /Mile \d\.\d: crosses .+ (signal crossing|marked crossing|unmarked crossing|crossing type not mapped)/.test(noon.crossings), noon.crossings.split("\n")[0]);
-  check(`${tag} noon: no rush note, Prefer lit hidden`, !noon.rush && !noon.lit);
+  check(`${tag} noon: no rush note`, !noon.rush);
   const strip = await page.evaluate(() => ({ segs: document.querySelectorAll("#rbStrip .rbs-seg").length, letters: [...document.querySelectorAll("#rbStrip .rbs-letter")].map(t => t.textContent), cross: document.querySelectorAll("#rbStrip .rbs-cross").length, legend: document.querySelectorAll("#rbSafeLegend li").length }));
   check(`${tag} safety strip: stretches, letters, crossings, 7-entry legend`, strip.segs > 5 && strip.letters.length > 0 && strip.cross > 0 && strip.legend === 7, JSON.stringify(strip));
 
@@ -107,7 +107,7 @@ for (const w of widths) {
   await setWhen(page, "2026-10-29", "21:00");
   const night = await bar(page);
   check(`${tag} 9 pm: re-scored lower, missing lighting shown as unknown`, night.avg < noon.avg && night.pctUnknown > noon.pctUnknown && /missing map data/.test(night.unknown), JSON.stringify({ noon: noon.avg, night: night.avg, unk: night.pctUnknown }));
-  check(`${tag} 9 pm: Prefer lit at night appears`, night.lit);
+  check(`${tag} 9 pm: the run is after dark, so Prefer lit will steer the route`, await page.evaluate(() => window.__routeBuilder.safe.segments.some(s => s.light !== "day")));
   check(`${tag} 9 pm: a safer time is suggested`, /^Same route scores \d+ at .+, \d+ at 9:00 pm\./.test(night.safer), night.safer);
   await page.locator("#rbSafetyCard").scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${OUT}/safe-night-${tag}.png` });
@@ -118,20 +118,20 @@ for (const w of widths) {
   await setWhen(page, "2026-10-29", "21:00");
 
   // ----- prefer lit -----
-  await page.click("#rbPreferLit");
+  await page.evaluate(() => document.querySelector("#rbPreferLit").click()); // in Settings
   await page.waitForFunction(() => /Preferring lit|Lighting/.test(document.getElementById("rbSafeCost").textContent), null, { timeout: 60000 }).catch(() => {});
   const lit = await bar(page);
   check(`${tag} Prefer lit: re-routed with use_lit, cost shown`, lastCosting && lastCosting.pedestrian.use_lit === 1 && /^Preferring lit streets: .*(longer|shorter|same distance).*(safer|less safe|no change)/.test(lit.cost), lit.cost);
-  await page.click("#rbPreferLit");
+  await page.evaluate(() => document.querySelector("#rbPreferLit").click()); // in Settings
   await page.waitForFunction(() => /no longer/.test(document.getElementById("rbSafeCost").textContent), null, { timeout: 60000 }).catch(() => {});
   await setWhen(page, "2026-10-29", "12:00");
 
   // ----- avoid busy roads -----
-  await page.click("#rbAvoidBusy");
+  await page.evaluate(() => document.querySelector("#rbAvoidBusy").click()); // in Settings
   await page.waitForFunction(() => /^(Avoiding busy roads|No busy stretches)/.test(document.getElementById("rbSafeCost").textContent), null, { timeout: 60000 }).catch(() => {});
   const avoid = await bar(page);
   check(`${tag} Avoid busy roads: re-routed around busy stretches, cost shown`, (lastAvoid > 0 || /No busy/.test(avoid.cost)) && /(longer|shorter|same distance).*(safer|less safe|no change)/.test(avoid.cost), `${lastAvoid} boxes; ${avoid.cost} ${avoid.head}`);
-  await page.click("#rbAvoidBusy");
+  await page.evaluate(() => document.querySelector("#rbAvoidBusy").click()); // in Settings
   await page.waitForFunction(() => /allowed again/.test(document.getElementById("rbSafeCost").textContent), null, { timeout: 60000 }).catch(() => {});
 
   // ----- shortest vs safest -----

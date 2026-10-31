@@ -42,7 +42,7 @@
                 </form>
                 <ul class="rb-results" id="rbResults" hidden></ul>
 
-                <button type="button" class="sb-btn sb-btn-secondary rb-prefs-open" id="rbPrefsOpen" aria-controls="rbPrefs" aria-expanded="false">Route options: <span id="rbPrefsWords">sidewalk-first · any surface · hills as they come</span></button>
+                <button type="button" class="sb-btn sb-btn-secondary rb-prefs-open" id="rbPrefsOpen" aria-controls="rbPrefs" aria-expanded="false">Settings: <span id="rbPrefsWords">sidewalk-first · any surface · hills as they come</span></button>
 
 
                 <div class="rb-mode" role="group" aria-label="Route type">
@@ -65,19 +65,36 @@
                     <button type="button" class="rb-safemap-btn" id="rbSafeMap" aria-pressed="false" disabled>Safe Map</button>
                     <div class="rb-hint" id="rbHint">Tap the map to drop your start.</div>
                     <div class="rb-busy" id="rbBusy" hidden></div>
-                    <section class="rb-prefs" id="rbPrefs" aria-label="Route options">
+                    <section class="rb-prefs" id="rbPrefs" aria-label="Builder settings">
                         <div class="rb-prefs-head">
-                            <h2>Route options</h2>
+                            <h2>Builder settings</h2>
                             <button type="button" class="sb-btn sb-btn-tertiary rb-prefs-close" id="rbPrefsClose">Done</button>
                         </div>
                         <div class="rb-pref"><span class="rb-pref-label">Sport</span><div class="rb-choice"><button type="button" class="is-on" aria-pressed="true" disabled>Running</button></div></div>
-                        <div class="rb-pref"><span class="rb-pref-label">Route style</span><div class="rb-choice" data-pref="style">
-                            <button type="button" data-v="sidewalk">Sidewalk-first</button><button type="button" data-v="direct">Direct</button></div></div>
                         <div class="rb-pref"><span class="rb-pref-label">Surface</span><div class="rb-choice" data-pref="surface">
                             <button type="button" data-v="any">Any</button><button type="button" data-v="trail">Trails</button><button type="button" data-v="paved">Paved</button></div></div>
                         <div class="rb-pref"><span class="rb-pref-label">Hills</span><div class="rb-choice" data-pref="elevation">
                             <button type="button" data-v="any">As they come</button><button type="button" data-v="flat">Avoid hills</button></div></div>
-                        <p class="rb-small">Preferences steer the routing and the sidewalk-first button, using Southbound's own path and sidewalk scoring. There is no "seek hills" option: the routing service can avoid hills but not look for them.</p>
+                        <div class="rb-pref"><span class="rb-pref-label">Routing</span>
+                            <div class="rb-switches">
+                                <button type="button" class="rb-switch" id="rbSidewalkFirst" aria-pressed="true"><span>Sidewalk-first</span><i aria-hidden="true"></i></button>
+                                <button type="button" class="rb-switch" id="rbAvoidBusy" aria-pressed="false"><span>Avoid busy roads</span><i aria-hidden="true"></i></button>
+                                <button type="button" class="rb-switch" id="rbPreferLit" aria-pressed="false" aria-describedby="rbLitHint"><span>Prefer lit at night</span><i aria-hidden="true"></i></button>
+                            </div>
+                            <p class="rb-small" id="rbLitHint">Prefer lit only changes the route when your planned run is after dark.</p>
+                            <p class="rb-small" id="rbSafeCost" aria-live="polite"></p>
+                        </div>
+                        <div class="rb-pref"><span class="rb-pref-label">Show on the builder</span>
+                            <div class="rb-switches" id="rbLayers">
+                                <button type="button" class="rb-switch" data-layer="safe" aria-pressed="true"><span>Safe Map and safety rating</span><i aria-hidden="true"></i></button>
+                                <button type="button" class="rb-switch" data-layer="fuel" aria-pressed="true"><span>Fuel plan</span><i aria-hidden="true"></i></button>
+                                <button type="button" class="rb-switch" data-layer="profile" aria-pressed="true"><span>Elevation profile</span><i aria-hidden="true"></i></button>
+                                <button type="button" class="rb-switch" data-layer="markers" aria-pressed="true"><span>Distance markers</span><i aria-hidden="true"></i></button>
+                                <button type="button" class="rb-switch" data-layer="surface" aria-pressed="true"><span>Surface split and explainer</span><i aria-hidden="true"></i></button>
+                                <button type="button" class="rb-switch" data-layer="globe" aria-pressed="true"><span>Globe view</span><i aria-hidden="true"></i></button>
+                            </div>
+                        </div>
+                        <p class="rb-small">Saved to your account, so they follow you to your next route and your other devices. Signing out clears them from this device. The routing service can avoid hills but can't look for them, so there's no "seek hills".</p>
                     </section>
                 </div>
 
@@ -152,11 +169,7 @@
                         </div>
                         <p class="rb-small rb-rush" id="rbRushNote" hidden></p>
                         <p class="rb-tip" id="rbSaferTime" hidden></p>
-                        <div class="rb-switches">
-                            <button type="button" class="rb-switch" id="rbAvoidBusy" aria-pressed="false" disabled><span>Avoid busy roads</span><i aria-hidden="true"></i></button>
-                            <button type="button" class="rb-switch" id="rbPreferLit" aria-pressed="false" hidden><span>Prefer lit at night</span><i aria-hidden="true"></i></button>
-                        </div>
-                        <p class="rb-small" id="rbSafeCost" aria-live="polite"></p>
+                        <p class="rb-small" id="rbSafeOpts"></p>
                         <div class="rb-row">
                             <button type="button" class="sb-btn sb-btn-secondary" id="rbCompare" disabled>Shortest vs safest</button>
                             <button type="button" class="sb-btn sb-btn-secondary" id="rbHome" disabled>Ways home</button>
@@ -173,7 +186,7 @@
                     </div>
                 </details>
 
-                <details class="rb-card" open>
+                <details class="rb-card" id="rbAboutCard" open>
                     <summary>About this route</summary>
                     <div class="rb-card-body">
                         <ul class="rb-lines" id="rbExplain"><li class="rb-empty">Drop two points to see the route explained.</li></ul>
@@ -185,7 +198,7 @@
                     </div>
                 </details>
 
-                <details class="rb-card" open>
+                <details class="rb-card" id="rbFuelCard" open>
                     <summary>Fuel for this route</summary>
                     <div class="rb-card-body">
                         <div class="rb-fields">

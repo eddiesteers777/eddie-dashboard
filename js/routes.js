@@ -25,6 +25,7 @@ import { optimise } from "./routeOptimise.js";
 import { buildGpx, gpxFileName } from "./routeGpx.js";
 import { makeRecord, listRoutes, saveRoute, deleteRoute, VIEW_KEY, SETTINGS_KEY } from "./routeStore.js";
 import { ENTER_AT } from "./routeGlobe.js";
+import { readSettings, settingsRecord, sidewalkFirst, LAYER_KEYS } from "./routeSettings.js";
 import { calculateTargets, parsePace, formatPace } from "./fuelTargets.js";
 import { readProfile, sessionFromProfile, PROFILE_KEY } from "./fuelProfile.js";
 
@@ -55,10 +56,16 @@ const S = {
 };
 
 /* ---------- saved settings ---------- */
-const saved = read(SETTINGS_KEY);
-if (saved && parsePace(String(saved.pace))) S.pace = parsePace(String(saved.pace));
-if (saved && saved.gelG >= 10 && saved.gelG <= 50) S.gelG = saved.gelG;
-S.prefs = readPrefs(saved && saved.prefs);
+/* One record per account ("route-settings": synced, cleared on sign-out). js/routeSettings.js */
+const saved = readSettings(read(SETTINGS_KEY));
+if (saved.pace && parsePace(saved.pace)) S.pace = parsePace(saved.pace);
+if (saved.gelG) S.gelG = saved.gelG;
+S.prefs = saved.prefs;
+S.layers = saved.layers;
+S.opts = { ...saved.opts, shortest: false };
+function saveSettings() {
+    write(SETTINGS_KEY, settingsRecord({ pace: formatPace(S.pace), gelG: S.gelG, prefs: S.prefs, layers: S.layers, opts: S.opts }));
+}
 $("rbPace").value = formatPace(S.pace);
 $("rbGel").value = S.gelG;
 
@@ -114,11 +121,11 @@ function drawLine() {
     const hitEl = hit.getElement();
     if (hitEl) hitEl.addEventListener("pointerdown", startLineDrag);
     mileLayer.clearLayers();
-    for (const m of distanceMarkers(S.coords, 1)) {
+    for (const m of S.layers.markers ? distanceMarkers(S.coords, 1) : []) {
         L.marker(m.at, { interactive: false, keyboard: false, icon: L.divIcon({ className: "rb-mile-wrap", html: `<span class="rb-mile">${m.n}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(mileLayer);
     }
     gapLayer.clearLayers();
-    for (const st of S.safeOn ? [] : S.stretches) {
+    for (const st of S.safeOn || !S.layers.surface ? [] : S.stretches) {
         L.polyline(st.coords, { color: CLASS_COLORS.X, weight: 7, opacity: 0.95, interactive: true })
             .bindTooltip(st.name ? `Major road: ${st.name}` : "Major road", { sticky: true }).addTo(gapLayer);
     }
@@ -126,7 +133,7 @@ function drawLine() {
 
 function drawOverlay() {
     overlay.clearLayers();
-    if (!dotsOn || S.safeOn) return; // the Safe Map reads best without the path dots
+    if (!dotsOn || S.safeOn || !S.layers.surface) return; // the Safe Map reads best without the path dots
     const style = { A: { weight: 3, dashArray: "2 6" }, B: { weight: 3, dashArray: "8 4" }, C: { weight: 2 }, D: { weight: 2 }, X: { weight: 3 } };
     for (const w of S.ways) {
         if (w.cat === "C" || w.cat === "D") continue; // the map stays readable: only the paths and the hazards
@@ -451,7 +458,7 @@ function readFuelInputs() {
     const gel = Number($("rbGel").value);
     if (pace && pace >= 4 && pace <= 20) S.pace = pace;
     if (gel >= 10 && gel <= 50) S.gelG = gel;
-    write(SETTINGS_KEY, { pace: formatPace(S.pace), gelG: S.gelG, prefs: S.prefs });
+    saveSettings();
 }
 $("rbPace").addEventListener("change", () => { readFuelInputs(); $("rbPace").value = formatPace(S.pace); render(); });
 $("rbGel").addEventListener("change", () => { readFuelInputs(); render(); });
@@ -471,7 +478,7 @@ function render() {
 
     // surface bar
     const sf = $("rbSurface");
-    sf.hidden = !S.score;
+    sf.hidden = !S.score || !S.layers.surface;
     if (S.score) {
         const p = S.score.pcts;
         $("rbBar").innerHTML = ["A", "B", "C", "D", "X"].filter(k => p[k]).map(k => `<span class="rb-seg rb-seg-${k}" style="width:${p[k]}%"></span>`).join("");
@@ -486,7 +493,8 @@ function render() {
         const out = explain({ miles: S.miles, loop: S.closed || isLoop(S.coords), points: S.coords.length, climb: S.climb, overall: S.score, quarters: S.quarters });
         const lines = out.lines.slice();
         if (!S.snapped) lines.unshift("Not snapped: straight lines between your points.");
-        if (S.safe) lines.push(...crossingLines(S.safe.crossings).map(l => "Busy-road crossing, " + l.charAt(0).toLowerCase() + l.slice(1)));
+        if (!sidewalkFirst(S.prefs)) lines.unshift("Direct routing: sidewalk-first is off in Settings, so the route isn't steered to sidewalks and paths.");
+        if (S.safe && S.layers.safe) lines.push(...crossingLines(S.safe.crossings).map(l => "Busy-road crossing, " + l.charAt(0).toLowerCase() + l.slice(1)));
         ex.innerHTML = lines.map(l => `<li>${esc(l)}</li>`).join("");
     }
 
@@ -509,9 +517,10 @@ function renderProfile() {
     const el = $("rbProfile"), noteEl = $("rbProfileNote");
     const ok = S.coords.length >= 2 && S.heights && S.heightsFor === S.coords && S.heights.length === S.coords.length;
     const series = ok ? profileSeries(cumulativeMiles(S.coords), S.heights) : [];
-    noteEl.textContent = series.length ? (S.fuel && S.fuel.windows.length ? "Shaded: gel windows at your pace." : (S.fuel && S.fuel.band.id === "water" ? "Under an hour: water only, no gels." : "")) :
+    const fuel = S.layers.fuel ? S.fuel : null; // fuel off in Settings: no gel windows on the profile either
+    noteEl.textContent = series.length ? (fuel && fuel.windows.length ? "Shaded: gel windows at your pace." : (fuel && fuel.band.id === "water" ? "Under an hour: water only, no gels." : "")) :
         (S.coords.length < 2 ? "Appears once the route has heights." : S.heightsFailed ? "Heights unavailable right now." : (S.snapped ? "Loading heights…" : "Needs a snapped route."));
-    drawProfile(el, series, S.fuel ? S.fuel.windows : [], {
+    drawProfile(el, series, fuel ? fuel.windows : [], {
         onHover: pt => {
             if (!pt) { hoverLayer.clearLayers(); return; }
             hoverDot.setLatLng(S.coords[pt.i]);
@@ -524,7 +533,18 @@ window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer
 
 /* ---------- safety rating ---------- */
 /* Traffic + infrastructure + light, from OSM tags (js/routeSafety.js). A planning estimate, never a guarantee. */
-const routeCosting = () => safetyCosting(costingFor(S.prefs), S.opts);
+/* Prefer lit only steers the route when the planned run is after dark (any part of it). */
+function runIsDark() {
+    if (S.safe) return S.safe.segments.some(s => s.light !== "day");
+    const p = startOf(S.coords), sun = sunTimes(S.runAt, p[0], p[1]);
+    return lightAt(S.runAt, sun) !== "day" || lightAt(S.runAt + S.miles * S.pace * 60000, sun) !== "day";
+}
+function routeCosting() {
+    const dark = S.forceDark != null ? S.forceDark : runIsDark();
+    S.forceDark = null;
+    S.litRouted = S.opts.preferLit && dark;
+    return safetyCosting(costingFor(S.prefs), { ...S.opts, preferLit: S.litRouted });
+}
 /* The no-go boxes for "Avoid busy roads", minus any that hold a point you placed (the router can't start inside one). */
 function avoidFor(locs) {
     if (!S.opts.avoidBusy || !S.avoid.length) return null;
@@ -550,6 +570,28 @@ function rescore() {
     }
     if (S.sel >= S.safe.segments.length) S.sel = -1;
     renderSafety();
+    autoSafetyPass();
+}
+/* The routing toggles are settings, so they apply to every route, not only the one they were switched on for:
+   once a route is scored, "Avoid busy roads" re-routes around its busy stretches (once per set of points),
+   and "Prefer lit" re-routes when the planned time crosses into or out of the dark. */
+function autoSafetyPass() {
+    if (!S.safe || S.coords.length < 2 || !S.snapped) return;
+    const key = JSON.stringify([S.waypoints, S.closed]);
+    if (S.opts.avoidBusy && S.avoidKey !== key) {
+        S.avoidKey = key;
+        const boxes = avoidBoxes(S.safe.segments, S.waypoints);
+        if (boxes.length) {
+            S.avoid = boxes.concat(S.avoid).slice(0, 30);
+            setTimeout(() => rerouteForSafety("Avoiding busy roads"), 0);
+            return;
+        }
+    }
+    const dark = runIsDark();
+    if (S.opts.preferLit && !!S.litRouted !== dark && S.litKey !== key + dark) {
+        S.litKey = key + dark; S.forceDark = dark;
+        setTimeout(() => rerouteForSafety(dark ? "Preferring lit streets (your run is after dark)" : "Daylight run: lighting no longer steers the route"), 0);
+    }
 }
 
 /* Data for lines that may reach past the box we have (compare, ways home). */
@@ -640,15 +682,20 @@ function renderSafety() {
     $("rbSafeMap").disabled = !has;
     $("rbSafeBar").hidden = !has;
     $("rbStripWrap").hidden = !has;
-    $("rbAvoidBusy").disabled = !route;
     $("rbCompare").disabled = !has;
     $("rbHome").disabled = !has || S.miles < 1;
     paintSwitches();
     renderWhen();
     $("rbSafeCost").textContent = [S.costLine, S.avoidNote].filter(Boolean).join(" ");
+    $("rbSafeOpts").textContent = `Routing: sidewalk-first ${sidewalkFirst(S.prefs) ? "on" : "off"}, avoid busy roads ${S.opts.avoidBusy ? "on" : "off"}, prefer lit at night ${S.opts.preferLit ? "on" : "off"}. Change these in Settings.${S.costLine ? " " + S.costLine : ""}`;
+    if (!S.layers.safe) { // switched off in Settings: nothing of it shows (the scores still steer "Avoid busy roads")
+        $("rbSafeMap").disabled = true; $("rbSafeBar").hidden = true; $("rbStripWrap").hidden = true;
+        safetyLayer.clearLayers(); selLayer.clearLayers(); extraLayer.clearLayers();
+        return;
+    }
     if (!has) {
         $("rbCrossings").innerHTML = `<li class="rb-empty">${route ? (S.surfaceError ? "Needs the map data (not loaded)." : (S.snapped ? "Checking…" : "Needs a snapped route.")) : "Shows once the route is checked."}</li>`;
-        $("rbRushNote").hidden = true; $("rbSaferTime").hidden = true; $("rbPreferLit").hidden = !S.opts.preferLit;
+        $("rbRushNote").hidden = true; $("rbSaferTime").hidden = true;
         $("rbWhy").hidden = true;
         drawSafeMap();
         return;
@@ -668,7 +715,6 @@ function renderSafety() {
     $("rbRushNote").textContent = rush ? `${RUSH_NOTE} Busy roads are scored one step lower on weekdays 7–9 am and 4–6 pm.` : "";
     $("rbSaferTime").hidden = !(S.safer && S.safer.text);
     $("rbSaferTime").textContent = S.safer ? S.safer.text : "";
-    $("rbPreferLit").hidden = !(S.opts.preferLit || S.safe.segments.some(s => s.light !== "day"));
     const lines = crossingLines(S.safe.crossings);
     $("rbCrossings").innerHTML = lines.length ? lines.map(l => `<li>${esc(l)}</li>`).join("") : '<li class="rb-empty">No crossings of a busy road on this route.</li>';
     strip = drawSafetyStrip($("rbStrip"), S.safe.segments, S.safe.crossings, { selected: S.sel, onPick: i => selectSeg(i) });
@@ -719,6 +765,8 @@ $("rbSafeMap").onclick = () => {
 function paintSwitches() {
     $("rbAvoidBusy").setAttribute("aria-pressed", String(S.opts.avoidBusy));
     $("rbPreferLit").setAttribute("aria-pressed", String(S.opts.preferLit));
+    $("rbSidewalkFirst").setAttribute("aria-pressed", String(sidewalkFirst(S.prefs)));
+    document.querySelectorAll("#rbLayers [data-layer]").forEach(b => b.setAttribute("aria-pressed", String(!!S.layers[b.dataset.layer])));
 }
 function rerouteForSafety(label) {
     if (S.coords.length < 2) { paintSwitches(); return; }
@@ -729,12 +777,46 @@ $("rbAvoidBusy").onclick = () => {
     S.opts.avoidBusy = !S.opts.avoidBusy;
     S.opts.shortest = false;
     S.avoid = S.opts.avoidBusy && S.safe ? avoidBoxes(S.safe.segments, S.waypoints) : [];
+    S.avoidKey = JSON.stringify([S.waypoints, S.closed]);
+    saveSettings();
     rerouteForSafety(S.opts.avoidBusy ? (S.avoid.length ? "Avoiding busy roads" : "No busy stretches to avoid; sidewalks and paths weighted up") : "Busy roads allowed again");
 };
 $("rbPreferLit").onclick = () => {
     S.opts.preferLit = !S.opts.preferLit;
+    saveSettings();
+    if (!runIsDark()) { paintSwitches(); renderSafety(); toast(S.opts.preferLit ? "Prefer lit is on. It steers the route when your planned run is after dark." : "Prefer lit is off.", { type: "info" }); return; }
     rerouteForSafety(S.opts.preferLit ? "Preferring lit streets" : "Lighting no longer preferred");
 };
+
+$("rbSidewalkFirst").onclick = () => {
+    S.prefs = readPrefs({ ...S.prefs, style: sidewalkFirst(S.prefs) ? "direct" : "sidewalk" });
+    saveSettings(); paintPrefs(); paintSwitches(); applyLayers();
+    if (S.waypoints.length >= 2) edited();
+};
+document.querySelectorAll("#rbLayers [data-layer]").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.layer;
+    S.layers = { ...S.layers, [k]: !S.layers[k] };
+    saveSettings(); paintSwitches(); applyLayers();
+}));
+/* A layer switched off in Settings is gone (hidden, not greyed) from the map, the panels and My Routes.
+   The route itself, distance, save and GPX never depend on it. */
+function applyLayers() {
+    const on = S.layers;
+    if (!on.safe && S.safeOn) { S.safeOn = false; $("rbSafeMap").setAttribute("aria-pressed", "false"); }
+    $("rbSafeMap").hidden = !on.safe;
+    $("rbSafetyCard").hidden = !on.safe;
+    $("rbFuelCard").hidden = !on.fuel;
+    $("rbProfileWrap").hidden = !on.profile;
+    $("rbGlobeBtn").hidden = !on.globe;
+    if (!on.globe && S.globeOpen) { const c = map.getCenter(); leaveGlobe([c.lat, c.lng], 13); }
+    $("rbAboutCard").hidden = !on.surface;
+    $("rbAB").parentElement.hidden = !on.surface;
+    $("rbX").parentElement.hidden = !on.surface;
+    $("rbDots").hidden = !on.surface;
+    $("rbOptimise").hidden = !sidewalkFirst(S.prefs);
+    if (!sidewalkFirst(S.prefs)) $("rbRevert").hidden = true;
+    drawLine(); drawOverlay(); render(); renderSafety(); refreshSaved();
+}
 
 /* ---------- shortest vs safest ---------- */
 function summary(r, coords) {
@@ -794,6 +876,8 @@ function useCompared(which) {
     remember();
     S.opts = which === "shortest" ? { avoidBusy: false, preferLit: false, shortest: true } : { avoidBusy: true, preferLit: !!c.safe.preferLit, shortest: false };
     S.avoid = which === "shortest" ? [] : c.safe.boxes;
+    S.avoidKey = JSON.stringify([S.waypoints, S.closed]);
+    saveSettings();
     clearDerived(); S.token++;
     S.coords = r.coords; S.miles = r.miles; S.snapped = true;
     drawLine(); render(); buttons(); renderSafety();
@@ -859,13 +943,13 @@ function paintPrefs() {
         const v = S.prefs[group.dataset.pref];
         group.querySelectorAll("button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", String(on)); });
     });
-    $("rbPrefsWords").textContent = prefsWords(S.prefs);
+    $("rbPrefsWords").textContent = prefsWords(S.prefs).replace(/^direct/, "direct routing (sidewalk-first off)");
 }
 document.querySelectorAll("#rbPrefs [data-pref]").forEach(group => group.addEventListener("click", e => {
     const b = e.target.closest("button[data-v]");
     if (!b || S.prefs[group.dataset.pref] === b.dataset.v) return;
     S.prefs = readPrefs({ ...S.prefs, [group.dataset.pref]: b.dataset.v });
-    write(SETTINGS_KEY, { pace: formatPace(S.pace), gelG: S.gelG, prefs: S.prefs });
+    saveSettings();
     paintPrefs();
     if (S.waypoints.length >= 2) edited();
 }));
@@ -945,7 +1029,7 @@ function leaveGlobe(center, zoom) {
     setTimeout(() => { if (!S.globeOpen) { g.hidden = true; globeMod && globeMod.closeGlobe(); } }, 250);
     hint();
 }
-map.on("zoomend", () => { if (!S.globeOpen && map.getZoom() <= ENTER_AT - 0.5) enterGlobe(); });
+map.on("zoomend", () => { if (S.layers.globe && !S.globeOpen && map.getZoom() <= ENTER_AT - 0.5) enterGlobe(); });
 $("rbGlobeBtn").onclick = () => enterGlobe();
 $("rbGlobeBack").onclick = () => { const c = map.getCenter(); leaveGlobe([c.lat, c.lng], Math.max(map.getZoom(), 13)); };
 
@@ -956,7 +1040,7 @@ function refreshSaved() {
     $("rbSaved").innerHTML = rows.map(r => `
         <li class="rb-saved-row" data-id="${esc(r.id)}">
             <div class="rb-saved-main"><strong>${esc(r.name)}</strong>
-            <span>${r.miles.toFixed(2)} mi · ${r.loop ? "loop" : "point to point"}${r.surface ? ` · ${r.surface.ab}% path + sidewalk` : ""}${r.safety ? ` · safety ${r.safety.avg} ${esc(r.safety.band)}` : ""}</span></div>
+            <span>${r.miles.toFixed(2)} mi · ${r.loop ? "loop" : "point to point"}${r.surface && S.layers.surface ? ` · ${r.surface.ab}% path + sidewalk` : ""}${r.safety && S.layers.safe ? ` · safety ${r.safety.avg} ${esc(r.safety.band)}` : ""}</span></div>
             <div class="rb-saved-actions">
                 <button type="button" class="sb-btn sb-btn-secondary" data-open>Open</button>
                 <button type="button" class="sb-btn sb-btn-tertiary" data-del aria-label="Delete ${esc(r.name)}">Delete</button>
@@ -969,10 +1053,10 @@ $("rbSave").onclick = () => {
     const name = $("rbName").value.trim();
     const rec = makeRecord({
         id: S.editingId, createdAt: S.createdAt, name, waypoints: S.waypoints, coords: S.coords, miles: S.miles,
-        loop: S.closed, snapped: S.snapped, pace: S.pace, gelG: S.gelG, fuel: S.fuel, prefs: S.prefs,
+        loop: S.closed, snapped: S.snapped, pace: S.pace, gelG: S.gelG, fuel: S.layers.fuel ? S.fuel : null, prefs: S.prefs,
         surface: S.score ? { summary: S.score.summary, ab: S.score.ab, x: S.score.pcts.X } : null,
         climb: S.climb ? { lowFt: S.climb.lowFt, highFt: S.climb.highFt } : null,
-        safety: S.safe ? { avg: S.safe.overall.avg, band: S.safe.overall.band.id, pctRisk: S.safe.overall.pctRisk, pctUnknown: S.safe.overall.pctUnknown, at: S.runAt } : null
+        safety: S.safe && S.layers.safe ? { avg: S.safe.overall.avg, band: S.safe.overall.band.id, pctRisk: S.safe.overall.pctRisk, pctUnknown: S.safe.overall.pctUnknown, at: S.runAt } : null
     });
     try {
         saveRoute(store, rec);
@@ -993,7 +1077,7 @@ $("rbSaved").addEventListener("click", async e => {
         S.waypoints = rec.waypoints.map(p => p.slice()); S.closed = !!rec.loop;
         S.coords = rec.line.map(p => p.slice()); S.miles = rec.miles; S.snapped = rec.snapped !== false;
         S.editingId = rec.id; S.createdAt = rec.createdAt; S.history = [];
-        if (rec.prefs) { S.prefs = readPrefs(rec.prefs); paintPrefs(); }
+        if (rec.prefs) { S.prefs = readPrefs({ ...rec.prefs, style: S.prefs.style }); paintPrefs(); } // sidewalk-first stays as set in Settings
         if (rec.pace) { S.pace = rec.pace; $("rbPace").value = formatPace(rec.pace); }
         if (rec.gelG) { S.gelG = rec.gelG; $("rbGel").value = rec.gelG; }
         $("rbName").value = rec.name;
@@ -1038,5 +1122,6 @@ $("rbGpx").onclick = async () => {
 document.querySelectorAll("[data-safety-note]").forEach(el => { el.textContent = SAFETY_NOTE; });
 $("rbSafeLegend").innerHTML = legendHtml();
 initWhen();
-refreshSaved(); paintPrefs(); hint(); render(); buttons(); renderSafety();
+paintSwitches();
+refreshSaved(); paintPrefs(); hint(); render(); buttons(); renderSafety(); applyLayers();
 window.__routeBuilder = S; S.map = map; // read by the browser checks

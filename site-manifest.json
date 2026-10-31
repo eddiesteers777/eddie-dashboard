@@ -306,6 +306,7 @@
     "js/routeSafety.js",
     "js/routeSafetyStrip.js",
     "js/routeScore.js",
+    "js/routeSettings.js",
     "js/routeStore.js",
     "js/routeSun.js",
     "js/routes.js",
