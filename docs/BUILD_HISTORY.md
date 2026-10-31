@@ -675,3 +675,6 @@ Eddie said yes to all three. (1) Interval rep-spread limit 15 -> 25 s/mi (his re
 
 ## 2026-10-31: Plan suggestions on the coach dashboard (option A, branch, no rules change)
 Eddie picked A. `needsAttention` (js/clientSummary.js) now asks `buildSuggestions` for the client's week: 3+ missed sessions gives a "Suggestion" row, a miss in the taper gives a "Taper" row (new kind `held`, same "Plans and training" group), each with a chip; it replaces the plain "workouts not marked done" row, which still shows for 2 missed. Pace suggestions stay on the Client Hub card (they need the client's shared laps). Nothing changes a plan. Test in tests/clientSummary.test.mjs. Screenshots /mnt/project-files/plan-rules/dashboard-line/built/ (simulated clients).
+
+## 2026-10-31: Improvement loop changes (branch claude/improvement-route-builder, not merged)
+Eddie approved 4 proposals from the route builder thread: CLAUDE.md gains the stale-version retest rule and the time-zone rule; the builder check answers place search with a fixed result; a "Waiting to push" line ends every report (project rule). No app code changed.
