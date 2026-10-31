@@ -113,6 +113,8 @@ for (const w of widths) {
   await page.locator("#rbUndo").click(); await page.waitForTimeout(300);
   check(`${tag} Undo takes back the last change`, (await page.evaluate(() => window.__routeBuilder.waypoints.length)) === 3);
   if (!phone) {
+    await page.evaluate(() => window.scrollTo(0, 0)); // clicking Undo scrolled the page; the pin must be on screen
+    await page.waitForTimeout(200);
     const pin = await page.locator(".rb-pin").nth(1).boundingBox();
     await page.mouse.click(pin.x + pin.width / 2, pin.y + pin.height / 2, { button: "right" }); await page.waitForTimeout(300);
     check(`${tag} right-click on a point deletes it`, (await page.evaluate(() => window.__routeBuilder.waypoints.length)) === 2);

@@ -11,7 +11,10 @@
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 import { boundsOf, boxContains, isLoop, lineMiles, cumulativeMiles, bestInsertIndex, distanceMarkers, nearestIndex, reversePoints, outAndBack } from "./routeGeo.js";
 import { scoreLine, scoreQuarters, xStretches, CLASS_WORDS } from "./routeScore.js";
-import { fetchRoute, straightRoute, fetchHeights, fetchWays, searchPlaces } from "./routeApi.js";
+import { fetchRoute, straightRoute, fetchHeights, fetchMapData, searchPlaces } from "./routeApi.js";
+import { routeFacts, scoreRoute, withGeometry, saferTime, safetyCosting, avoidBoxes, costText, crossingLines, headlineText, worstText, riskText, whyText, bandFor, BANDS, UNKNOWN, SAFETY_NOTE, RUSH_NOTE, UNKNOWN_NOTE } from "./routeSafety.js";
+import { drawSafetyStrip, legendHtml, darkBand } from "./routeSafetyStrip.js";
+import { sunTimes, lightAt, clockText } from "./routeSun.js";
 import { climbRange, CLIMB_NOTE, profileSeries } from "./routeElevation.js";
 import { readPrefs, costingFor, shiftTargets, prefsWords } from "./routePrefs.js";
 import { drawProfile } from "./routeProfile.js";
@@ -44,6 +47,10 @@ const S = {
     fuel: null, editingId: null, createdAt: null,
     prefs: readPrefs(null), history: [],
     globeOpen: false,
+    // safety rating
+    safetyData: null, facts: null, safe: null, safer: null, sel: -1, safeOn: false,
+    runAt: 0, opts: { avoidBusy: false, preferLit: false, shortest: false }, avoid: [],
+    safeBefore: null, costLine: "", avoidNote: "", compare: null, home: null,
     revert: null, token: 0, settleTimer: null, surfaceError: "", routeError: "", loopNote: ""
 };
 
@@ -63,6 +70,9 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, att
 const overlay = L.layerGroup().addTo(map);
 const gapLayer = L.layerGroup().addTo(map);
 const lineLayer = L.layerGroup().addTo(map);
+const safetyLayer = L.layerGroup().addTo(map);
+const selLayer = L.layerGroup().addTo(map);
+const extraLayer = L.layerGroup().addTo(map); // shortest vs safest, ways home
 const mileLayer = L.layerGroup().addTo(map);
 const hoverLayer = L.layerGroup().addTo(map);
 const markerLayer = L.layerGroup().addTo(map);
@@ -108,7 +118,7 @@ function drawLine() {
         L.marker(m.at, { interactive: false, keyboard: false, icon: L.divIcon({ className: "rb-mile-wrap", html: `<span class="rb-mile">${m.n}</span>`, iconSize: [22, 22], iconAnchor: [11, 11] }) }).addTo(mileLayer);
     }
     gapLayer.clearLayers();
-    for (const st of S.stretches) {
+    for (const st of S.safeOn ? [] : S.stretches) {
         L.polyline(st.coords, { color: CLASS_COLORS.X, weight: 7, opacity: 0.95, interactive: true })
             .bindTooltip(st.name ? `Major road: ${st.name}` : "Major road", { sticky: true }).addTo(gapLayer);
     }
@@ -116,7 +126,7 @@ function drawLine() {
 
 function drawOverlay() {
     overlay.clearLayers();
-    if (!dotsOn) return;
+    if (!dotsOn || S.safeOn) return; // the Safe Map reads best without the path dots
     const style = { A: { weight: 3, dashArray: "2 6" }, B: { weight: 3, dashArray: "8 4" }, C: { weight: 2 }, D: { weight: 2 }, X: { weight: 3 } };
     for (const w of S.ways) {
         if (w.cat === "C" || w.cat === "D") continue; // the map stays readable: only the paths and the hazards
@@ -132,8 +142,9 @@ function startLineDrag(e) {
     const start = map.mouseEventToLatLng(e);
     map.dragging.disable();
     ghost = L.marker(start, { interactive: false, icon: L.divIcon({ className: "rb-pin-wrap", html: '<span class="rb-pin rb-pin-new">+</span>', iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(markerLayer);
-    let last = start;
-    const move = ev => { last = map.mouseEventToLatLng(ev); ghost.setLatLng(last); };
+    let last = start, moved = false;
+    const x0 = e.clientX, y0 = e.clientY;
+    const move = ev => { last = map.mouseEventToLatLng(ev); ghost.setLatLng(last); if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 6) moved = true; };
     const up = () => {
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerup", up);
@@ -142,6 +153,7 @@ function startLineDrag(e) {
         quietUntil = Date.now() + 400;
         if (ghost) { markerLayer.removeLayer(ghost); ghost = null; }
         const p = [last.lat, last.lng];
+        if (!moved && S.safeOn && S.safe) { selectSeg(segAt(p), { fromMap: true }); return; } // a tap on the Safe Map explains
         remember();
         S.waypoints.splice(bestInsertIndex(S.waypoints, p, S.closed), 0, p);
         edited();
@@ -173,6 +185,9 @@ function updateNote() {
 function clearDerived() {
     S.score = null; S.quarters = []; S.stretches = []; S.heights = null; S.heightsFor = null; S.climb = null; S.heightsFailed = false; S.surfaceError = ""; S.routeError = ""; S.loopNote = "";
     S.revert = null; $("rbRevert").hidden = true; $("rbOptimiseOut").textContent = "";
+    S.facts = null; S.safe = null; S.safer = null; S.sel = -1; S.compare = null; S.home = null; S.avoidNote = "";
+    if (!S.safeBefore) S.costLine = "";
+    selLayer.clearLayers(); extraLayer.clearLayers();
 }
 
 /* Undo: every change to the points pushes the state before it. */
@@ -275,7 +290,12 @@ async function reroute() {
     busy("Snapping the route to paths…");
     let result;
     try {
-        result = await fetchRoute(locs, costingFor(S.prefs));
+        try { result = await fetchRoute(locs, routeCosting(), avoidFor(locs)); }
+        catch (err) {
+            if (!avoidFor(locs)) throw err;
+            result = await fetchRoute(locs, routeCosting()); // no way around: keep the route, and say so
+            S.avoidNote = "No way around the busy roads between your points, so the route still uses them.";
+        }
         S.routeError = "";
     } catch (err) {
         console.warn("Route builder: routing failed", err);
@@ -301,9 +321,9 @@ async function settle(force) {
             busy("Checking surfaces…");
             try {
                 const box = boundsOf(coords, 0.01);
-                const ways = await fetchWays(box);
+                const data = await fetchMapData(box);
                 if (my !== S.token) return;
-                S.ways = ways; S.waysBox = box; S.surfaceError = "";
+                S.ways = data.ways; S.safetyData = data.safety; S.waysBox = box; S.surfaceError = "";
                 drawOverlay();
             } catch (err) {
                 console.warn("Route builder: map data failed", err);
@@ -315,6 +335,7 @@ async function settle(force) {
         S.score = scoreLine(coords, S.ways);
         S.quarters = scoreQuarters(coords, S.ways);
         S.stretches = S.score ? xStretches(coords, S.ways) : [];
+        computeSafety();
         drawLine();
     })();
     const heights = (async () => {
@@ -342,7 +363,7 @@ $("rbMakeLoop").onclick = async () => {
     $("rbMakeLoop").disabled = true;
     try {
         const out = await generateLoop({
-            start, targetMiles: target, route: locs => fetchRoute(locs, costingFor(S.prefs)),
+            start, targetMiles: target, route: locs => fetchRoute(locs, routeCosting()),
             onAttempt: (a, n) => busy(`Trying a loop: ${n} of ${LOOP_MAX_ATTEMPTS} (${a.miles.toFixed(1)} mi)…`)
         });
         remember();
@@ -378,7 +399,7 @@ $("rbOptimise").onclick = async () => {
     $("rbOptimise").disabled = true; busy("Looking for sidewalks and trails nearby…");
     const my = S.token;
     try {
-        const out = await optimise({ waypoints: S.waypoints, coords: S.coords, miles: S.miles, ways: S.ways, route: locs => fetchRoute(locs, costingFor(S.prefs)), targets: shiftTargets(S.prefs) });
+        const out = await optimise({ waypoints: S.waypoints, coords: S.coords, miles: S.miles, ways: S.ways, route: locs => fetchRoute(locs, routeCosting(), avoidFor(locs)), targets: shiftTargets(S.prefs) });
         if (my !== S.token) return;
         const el = $("rbOptimiseOut");
         if (out.status === "none") {
@@ -465,6 +486,7 @@ function render() {
         const out = explain({ miles: S.miles, loop: S.closed || isLoop(S.coords), points: S.coords.length, climb: S.climb, overall: S.score, quarters: S.quarters });
         const lines = out.lines.slice();
         if (!S.snapped) lines.unshift("Not snapped: straight lines between your points.");
+        if (S.safe) lines.push(...crossingLines(S.safe.crossings).map(l => "Busy-road crossing, " + l.charAt(0).toLowerCase() + l.slice(1)));
         ex.innerHTML = lines.map(l => `<li>${esc(l)}</li>`).join("");
     }
 
@@ -499,6 +521,337 @@ function renderProfile() {
 }
 let resizeTimer = null;
 window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderProfile, 150); });
+
+/* ---------- safety rating ---------- */
+/* Traffic + infrastructure + light, from OSM tags (js/routeSafety.js). A planning estimate, never a guarantee. */
+const routeCosting = () => safetyCosting(costingFor(S.prefs), S.opts);
+/* The no-go boxes for "Avoid busy roads", minus any that hold a point you placed (the router can't start inside one). */
+function avoidFor(locs) {
+    if (!S.opts.avoidBusy || !S.avoid.length) return null;
+    const pad = 0.0008;
+    const boxes = S.avoid.filter(poly => !locs.some(p => p[1] > poly[0][0] - pad && p[1] < poly[1][0] + pad && p[0] > poly[0][1] - pad && p[0] < poly[2][1] + pad));
+    return boxes.length ? boxes : null;
+}
+const startOf = coords => coords && coords.length ? coords[0] : (c => [c.lat, c.lng])(map.getCenter());
+const at = coords => ({ startMs: S.runAt, pace: S.pace, lat: startOf(coords)[0], lon: startOf(coords)[1] });
+
+function computeSafety() {
+    S.facts = S.safetyData && S.snapped && S.coords.length >= 2 ? routeFacts(S.coords, S.safetyData) : null;
+    rescore();
+}
+function rescore() {
+    if (!S.facts || !S.facts.length) { S.safe = null; S.safer = null; renderSafety(); return; }
+    const sc = scoreRoute(S.facts, at(S.coords));
+    S.safe = { ...sc, segments: withGeometry(sc.segments, S.coords) };
+    S.safer = saferTime(S.facts, at(S.coords));
+    if (S.safeBefore) {
+        S.costLine = `${S.safeBefore.label}: ${costText(S.safeBefore, { miles: S.miles, avg: S.safe.overall.avg })}.`;
+        S.safeBefore = null;
+    }
+    if (S.sel >= S.safe.segments.length) S.sel = -1;
+    renderSafety();
+}
+
+/* Data for lines that may reach past the box we have (compare, ways home). */
+async function ensureData(lines) {
+    const pts = lines.flat().concat(S.coords);
+    if (!pts.length) return;
+    const needed = boundsOf(pts, 0.004);
+    if (boxContains(S.waysBox, needed)) return;
+    const box = boundsOf(pts, 0.01);
+    const data = await fetchMapData(box);
+    S.ways = data.ways; S.safetyData = data.safety; S.waysBox = box;
+    drawOverlay();
+    computeSafety();
+}
+
+const keyOf = s => s.unknown.length ? "?" : s.band.id;
+const colorOf = k => k === "?" ? UNKNOWN.color : BANDS.find(b => b.id === k).color;
+const keyHtml = k => `<span class="rb-key${k === "?" ? " is-unknown" : darkBand(k) ? " is-dark" : ""}"${k === "?" ? "" : ` style="background:${colorOf(k)}"`}>${k}</span>`;
+const LIGHT_WORDS = { day: "daylight", dusk: "low light", night: "dark" };
+
+/* Safe Map: each stretch in its colour, its own dash pattern on a dark casing, a letter on the longer
+   stretches, and a grey hatch where the map data is missing. */
+let hatchReady = false;
+function ensureHatch(path) {
+    if (hatchReady) return;
+    const svg = path && path._path && path._path.ownerSVGElement;
+    if (!svg) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const defs = document.createElementNS(ns, "defs");
+    defs.innerHTML = '<pattern id="rbm-U" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)"><rect width="10" height="10" fill="#ffffff"/><rect width="5" height="10" fill="#6d7378"/></pattern>';
+    svg.insertBefore(defs, svg.firstChild);
+    hatchReady = true;
+}
+function drawSafeMap() {
+    safetyLayer.clearLayers();
+    if (!S.safeOn || !S.safe) return;
+    const runs = [];
+    for (const s of S.safe.segments) {
+        const k = keyOf(s), last = runs[runs.length - 1];
+        if (last && last.k === k) { last.coords = last.coords.concat(s.coords.slice(1)); last.to = s.endMi; last.n++; }
+        else runs.push({ k, coords: s.coords.slice(), from: s.startMi, to: s.endMi, n: 1 });
+    }
+    for (const r of runs) {
+        L.polyline(r.coords, { color: "#16202a", weight: 12, opacity: 0.9, interactive: false, lineCap: "butt" }).addTo(safetyLayer); // dark casing: the dashes and the yellow read on light tiles
+        const band = BANDS.find(b => b.id === r.k);
+        const line = L.polyline(r.coords, r.k === "?" ? { color: "url(#rbm-U)", weight: 8, opacity: 1, interactive: false, lineCap: "butt" }
+            : { color: band.color, weight: 8, opacity: 1, dashArray: band.dash, lineCap: "butt", interactive: false }).addTo(safetyLayer);
+        ensureHatch(line);
+    }
+    const total = S.miles || 1;
+    const minRun = runs.length <= 12 ? 0.05 : Math.max(0.15, total / 40);
+    runs.filter(r => r.to - r.from >= minRun).slice(0, 40).forEach(r => {
+        const mid = r.coords[Math.floor(r.coords.length / 2)];
+        L.marker(mid, { interactive: false, keyboard: false, icon: L.divIcon({ className: "rb-safe-letter-wrap", html: `<span class="rb-safe-letter" style="border-color:${colorOf(r.k)}">${r.k}</span>`, iconSize: [30, 20], iconAnchor: [15, 10] }) }).addTo(safetyLayer);
+    });
+}
+
+function segAt(p) {
+    const idx = nearestIndex(S.coords, p);
+    return Math.max(0, S.safe.segments.findIndex(s => idx >= s.i0 && idx <= s.i1));
+}
+let strip = { select() {} };
+function selectSeg(i, { fromMap = false } = {}) {
+    if (!S.safe || i < 0) return;
+    S.sel = i;
+    const s = S.safe.segments[i];
+    selLayer.clearLayers();
+    L.polyline(s.coords, { color: "#ffffff", weight: 16, opacity: 1, interactive: false }).addTo(selLayer);
+    L.polyline(s.coords, { color: s.unknown.length ? UNKNOWN.color : s.band.color, weight: 10, opacity: 1, interactive: false }).addTo(selLayer);
+    strip.select(i);
+    renderWhy();
+    if (fromMap) $("rbWhy").scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+function renderWhy() {
+    const el = $("rbWhy");
+    const s = S.safe && S.sel >= 0 ? S.safe.segments[S.sel] : null;
+    el.hidden = !s;
+    if (!s) return;
+    const reach = S.runAt + ((s.startMi + s.endMi) / 2) * S.pace * 60000;
+    el.innerHTML = `<b>${keyHtml(keyOf(s))}Mile ${s.startMi.toFixed(1)}–${s.endMi.toFixed(1)}</b>
+        <div>${esc(whyText(s))}.</div>
+        <p class="rb-small">You reach it about ${esc(clockText(reach))} (${LIGHT_WORDS[s.light]}${s.rush ? ", rush hour" : ""}).${s.unknown.length ? " " + esc(UNKNOWN_NOTE) : ""}</p>`;
+}
+
+function renderSafety() {
+    const has = !!S.safe;
+    const route = S.coords.length >= 2;
+    $("rbSafeMap").disabled = !has;
+    $("rbSafeBar").hidden = !has;
+    $("rbStripWrap").hidden = !has;
+    $("rbAvoidBusy").disabled = !route;
+    $("rbCompare").disabled = !has;
+    $("rbHome").disabled = !has || S.miles < 1;
+    paintSwitches();
+    renderWhen();
+    $("rbSafeCost").textContent = [S.costLine, S.avoidNote].filter(Boolean).join(" ");
+    if (!has) {
+        $("rbCrossings").innerHTML = `<li class="rb-empty">${route ? (S.surfaceError ? "Needs the map data (not loaded)." : (S.snapped ? "Checking…" : "Needs a snapped route.")) : "Shows once the route is checked."}</li>`;
+        $("rbRushNote").hidden = true; $("rbSaferTime").hidden = true; $("rbPreferLit").hidden = !S.opts.preferLit;
+        $("rbWhy").hidden = true;
+        drawSafeMap();
+        return;
+    }
+    const o = S.safe.overall;
+    const badge = $("rbSafeBadge");
+    badge.textContent = o.band.id;
+    badge.style.background = o.band.color;
+    badge.classList.toggle("is-dark", darkBand(o.band.id));
+    $("rbSafeHead").textContent = `Safety ${headlineText(o)}`;
+    $("rbSafeRisk").textContent = riskText(o);
+    $("rbSafeWorst").textContent = worstText(o);
+    $("rbSafeUnknown").hidden = !o.pctUnknown;
+    $("rbSafeUnknown").textContent = o.pctUnknown ? `${o.pctUnknown}% of the route has missing map data (hatched, scored as the worse case). ${UNKNOWN_NOTE}` : "";
+    const rush = S.safe.segments.some(s => s.rush && s.busy);
+    $("rbRushNote").hidden = !rush;
+    $("rbRushNote").textContent = rush ? `${RUSH_NOTE} Busy roads are scored one step lower on weekdays 7–9 am and 4–6 pm.` : "";
+    $("rbSaferTime").hidden = !(S.safer && S.safer.text);
+    $("rbSaferTime").textContent = S.safer ? S.safer.text : "";
+    $("rbPreferLit").hidden = !(S.opts.preferLit || S.safe.segments.some(s => s.light !== "day"));
+    const lines = crossingLines(S.safe.crossings);
+    $("rbCrossings").innerHTML = lines.length ? lines.map(l => `<li>${esc(l)}</li>`).join("") : '<li class="rb-empty">No crossings of a busy road on this route.</li>';
+    strip = drawSafetyStrip($("rbStrip"), S.safe.segments, S.safe.crossings, { selected: S.sel, onPick: i => selectSeg(i) });
+    drawSafeMap();
+    if (S.sel >= 0) selectSeg(S.sel); else { selLayer.clearLayers(); renderWhy(); }
+    renderCompare(); renderHome();
+}
+
+/* ---------- when will you run this? ---------- */
+const pad2 = n => String(n).padStart(2, "0");
+function initWhen() {
+    const now = new Date(Date.now() + 30 * 60000);
+    now.setMinutes(now.getMinutes() < 30 ? 0 : 30, 0, 0);
+    $("rbRunDate").value = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+    setSlot(now.getHours() * 2 + now.getMinutes() / 30);
+}
+function setSlot(slot) {
+    $("rbRunTime").value = String(slot);
+    $("rbRunClock").value = `${pad2(Math.floor(slot / 2))}:${slot % 2 ? "30" : "00"}`;
+    readWhen();
+}
+function readWhen() {
+    const [y, m, d] = ($("rbRunDate").value || "").split("-").map(Number);
+    const [hh, mm] = ($("rbRunClock").value || "06:00").split(":").map(Number);
+    const t = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0).getTime();
+    S.runAt = Number.isFinite(t) ? t : Date.now();
+}
+function renderWhen() {
+    const p = startOf(S.coords);
+    const light = lightAt(S.runAt, sunTimes(S.runAt, p[0], p[1]));
+    const day = new Date(S.runAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const finish = S.coords.length >= 2 ? ` · finish about ${clockText(S.runAt + S.miles * S.pace * 60000)}` : "";
+    $("rbRunWhen").textContent = `${day}, ${clockText(S.runAt)} start (${LIGHT_WORDS[light]})${finish}`;
+    $("rbRunTime").setAttribute("aria-valuetext", `${clockText(S.runAt)}, ${LIGHT_WORDS[light]}`);
+}
+let whenFrame = 0;
+const whenChanged = () => { cancelAnimationFrame(whenFrame); whenFrame = requestAnimationFrame(() => { if (S.facts) rescore(); else renderWhen(); }); };
+$("rbRunTime").addEventListener("input", () => { const v = Number($("rbRunTime").value); $("rbRunClock").value = `${pad2(Math.floor(v / 2))}:${v % 2 ? "30" : "00"}`; readWhen(); whenChanged(); });
+$("rbRunClock").addEventListener("change", () => { readWhen(); const d = new Date(S.runAt); $("rbRunTime").value = String(d.getHours() * 2 + (d.getMinutes() >= 30 ? 1 : 0)); whenChanged(); });
+$("rbRunDate").addEventListener("change", () => { readWhen(); whenChanged(); });
+
+/* ---------- Safe Map toggle, avoid busy roads, prefer lit ---------- */
+$("rbSafeMap").onclick = () => {
+    S.safeOn = !S.safeOn;
+    $("rbSafeMap").setAttribute("aria-pressed", String(S.safeOn));
+    drawLine(); drawOverlay(); drawSafeMap();
+};
+function paintSwitches() {
+    $("rbAvoidBusy").setAttribute("aria-pressed", String(S.opts.avoidBusy));
+    $("rbPreferLit").setAttribute("aria-pressed", String(S.opts.preferLit));
+}
+function rerouteForSafety(label) {
+    if (S.coords.length < 2) { paintSwitches(); return; }
+    S.safeBefore = S.safe ? { label, miles: S.miles, avg: S.safe.overall.avg } : null;
+    clearDerived(); renderSafety(); reroute();
+}
+$("rbAvoidBusy").onclick = () => {
+    S.opts.avoidBusy = !S.opts.avoidBusy;
+    S.opts.shortest = false;
+    S.avoid = S.opts.avoidBusy && S.safe ? avoidBoxes(S.safe.segments, S.waypoints) : [];
+    rerouteForSafety(S.opts.avoidBusy ? (S.avoid.length ? "Avoiding busy roads" : "No busy stretches to avoid; sidewalks and paths weighted up") : "Busy roads allowed again");
+};
+$("rbPreferLit").onclick = () => {
+    S.opts.preferLit = !S.opts.preferLit;
+    rerouteForSafety(S.opts.preferLit ? "Preferring lit streets" : "Lighting no longer preferred");
+};
+
+/* ---------- shortest vs safest ---------- */
+function summary(r, coords) {
+    const facts = routeFacts(coords, S.safetyData);
+    const sc = scoreRoute(facts, at(coords));
+    return { ...r, overall: sc.overall, segments: withGeometry(sc.segments, coords), dark: sc.segments.some(s => s.light !== "day") };
+}
+$("rbCompare").onclick = async () => {
+    if (!S.safe) return;
+    const my = S.token;
+    const locs = S.closed ? [...S.waypoints, S.waypoints[0]] : S.waypoints.slice();
+    $("rbCompare").disabled = true;
+    busy("Building the shortest and the safest route…");
+    try {
+        const base = costingFor(S.prefs);
+        const short0 = await fetchRoute(locs, safetyCosting(base, { shortest: true }));
+        await ensureData([short0.coords]);
+        const short = summary(short0, short0.coords);
+        const boxes = avoidBoxes(short.segments, S.waypoints).concat(avoidBoxes(S.safe.segments, S.waypoints)).slice(0, 30);
+        const safeCost = safetyCosting(base, { avoidBusy: true, preferLit: short.dark });
+        let safe0;
+        try { safe0 = await fetchRoute(locs, safeCost, boxes.length ? boxes : null); }
+        catch { safe0 = await fetchRoute(locs, safeCost); }
+        await ensureData([short0.coords, safe0.coords]);
+        if (my !== S.token) return;
+        S.compare = { short: summary(short0, short0.coords), safe: { ...summary(safe0, safe0.coords), boxes, preferLit: short.dark } };
+        renderCompare();
+    } catch (err) {
+        console.warn("Route builder: compare failed", err);
+        $("rbCompareOut").hidden = false;
+        $("rbCompareOut").innerHTML = '<p class="rb-small rb-compare-note">Couldn\'t reach the routing service. Nothing changed.</p>';
+    } finally { busy(""); $("rbCompare").disabled = !S.safe; }
+};
+function renderCompare() {
+    const out = $("rbCompareOut");
+    const c = S.compare;
+    extraLayer.eachLayer(l => { if (l.options && l.options.rbCompare) extraLayer.removeLayer(l); });
+    out.hidden = !c;
+    if (!c) return;
+    const col = (key, title, r) => `<div class="rb-compare-col"><h3>${title}</h3>
+        <span>${r.miles.toFixed(2)} mi</span>
+        <strong>${keyHtml(r.overall.band.id)}${esc(headlineText(r.overall))}</strong>
+        <span>${esc(worstText(r.overall))}</span>
+        <span>${esc(riskText(r.overall))}${r.overall.pctUnknown ? ` · ${r.overall.pctUnknown}% unknown` : ""}</span>
+        <button type="button" class="sb-btn sb-btn-secondary" data-use="${key}">Use ${key}</button></div>`;
+    const same = Math.abs(c.short.miles - c.safe.miles) < 0.02 && c.short.overall.avg === c.safe.overall.avg;
+    out.innerHTML = col("shortest", "Shortest", c.short) + col("safest", "Safest", c.safe) +
+        `<p class="rb-small rb-compare-note">${same ? "The shortest route is already the safest one the map data allows." : `Safest vs shortest: ${esc(costText(c.short, { miles: c.safe.miles, avg: c.safe.overall.avg }))}.`} Dashed on the map: grey shortest, gold safest. ${esc(SAFETY_NOTE)}</p>`;
+    L.polyline(c.short.coords, { color: "#5b6670", weight: 5, dashArray: "2 8", opacity: 0.95, interactive: false, rbCompare: true }).addTo(extraLayer);
+    L.polyline(c.safe.coords, { color: "#d2ad62", weight: 5, dashArray: "10 8", opacity: 0.95, interactive: false, rbCompare: true }).addTo(extraLayer);
+    out.querySelectorAll("[data-use]").forEach(b => b.onclick = () => useCompared(b.dataset.use));
+}
+function useCompared(which) {
+    const c = S.compare;
+    if (!c) return;
+    const r = which === "shortest" ? c.short : c.safe;
+    remember();
+    S.opts = which === "shortest" ? { avoidBusy: false, preferLit: false, shortest: true } : { avoidBusy: true, preferLit: !!c.safe.preferLit, shortest: false };
+    S.avoid = which === "shortest" ? [] : c.safe.boxes;
+    clearDerived(); S.token++;
+    S.coords = r.coords; S.miles = r.miles; S.snapped = true;
+    drawLine(); render(); buttons(); renderSafety();
+    toast(which === "shortest" ? "Using the shortest route." : "Using the safest route. Avoid busy roads is on.", { type: "info", action: { label: "Undo", onClick: undo } });
+    S.settleTimer = setTimeout(() => settle(false), 200);
+}
+
+/* ---------- ways home from each mile marker ---------- */
+$("rbHome").onclick = async () => {
+    if (!S.safe) return;
+    const my = S.token;
+    const marks = distanceMarkers(S.coords, 1).slice(0, 26);
+    const start = S.coords[0];
+    const dark = S.safe.segments.some(s => s.light !== "day");
+    const cost = safetyCosting(costingFor(S.prefs), { avoidBusy: true, preferLit: dark });
+    $("rbHome").disabled = true;
+    const rows = [];
+    try {
+        for (const m of marks) {
+            busy(`Finding the way home from mile ${m.n} of ${marks.length}…`);
+            let r = null;
+            try { r = await fetchRoute([m.at, start], cost, avoidFor([m.at, start])); }
+            catch { try { r = await fetchRoute([m.at, start], cost); } catch { r = null; } }
+            if (my !== S.token) return;
+            rows.push({ n: m.n, at: m.at, r });
+        }
+        await ensureData(rows.filter(x => x.r).map(x => x.r.coords));
+        if (my !== S.token) return;
+        S.home = rows.map(x => {
+            if (!x.r) return { n: x.n, failed: true };
+            const facts = routeFacts(x.r.coords, S.safetyData);
+            const sc = scoreRoute(facts, { startMs: S.runAt + x.n * S.pace * 60000, pace: S.pace, lat: x.at[0], lon: x.at[1] });
+            return { n: x.n, coords: x.r.coords, miles: x.r.miles, overall: sc.overall };
+        });
+        S.homeSel = -1;
+        renderHome();
+    } finally { busy(""); $("rbHome").disabled = !S.safe || S.miles < 1; }
+};
+function renderHome() {
+    const box = $("rbHomeOut");
+    extraLayer.eachLayer(l => { if (l.options && l.options.rbHome) extraLayer.removeLayer(l); });
+    box.hidden = !S.home;
+    if (!S.home) return;
+    $("rbHomeList").innerHTML = S.home.length ? S.home.map((h, i) => h.failed
+        ? `<li><button type="button" disabled>Mile ${h.n}: no route found</button></li>`
+        : `<li><button type="button" data-i="${i}" aria-pressed="${i === S.homeSel}">${keyHtml(h.overall.band.id)}Mile ${h.n} → start: ${h.miles.toFixed(1)} mi · safety ${h.overall.avg}${h.overall.pctUnknown ? ` · ${h.overall.pctUnknown}% unknown` : ""}</button></li>`).join("")
+        : '<li class="rb-empty">The route is under a mile, so there are no mile markers yet.</li>';
+    $("rbHomeList").querySelectorAll("button[data-i]").forEach(b => b.onclick = () => {
+        S.homeSel = Number(b.dataset.i); renderHome();
+        const h = S.home[S.homeSel];
+        map.fitBounds(L.latLngBounds(h.coords.concat(S.coords)), { padding: [30, 30] });
+    });
+    const h = S.home[S.homeSel];
+    if (h && h.coords) {
+        L.polyline(h.coords, { color: "#ffffff", weight: 9, opacity: 0.9, interactive: false, rbHome: true }).addTo(extraLayer);
+        L.polyline(h.coords, { color: h.overall.band.color, weight: 5, dashArray: "6 6", opacity: 1, interactive: false, rbHome: true }).addTo(extraLayer);
+    }
+}
 
 /* ---------- route options ---------- */
 function paintPrefs() {
@@ -603,7 +956,7 @@ function refreshSaved() {
     $("rbSaved").innerHTML = rows.map(r => `
         <li class="rb-saved-row" data-id="${esc(r.id)}">
             <div class="rb-saved-main"><strong>${esc(r.name)}</strong>
-            <span>${r.miles.toFixed(2)} mi · ${r.loop ? "loop" : "point to point"}${r.surface ? ` · ${r.surface.ab}% path + sidewalk` : ""}</span></div>
+            <span>${r.miles.toFixed(2)} mi · ${r.loop ? "loop" : "point to point"}${r.surface ? ` · ${r.surface.ab}% path + sidewalk` : ""}${r.safety ? ` · safety ${r.safety.avg} ${esc(r.safety.band)}` : ""}</span></div>
             <div class="rb-saved-actions">
                 <button type="button" class="sb-btn sb-btn-secondary" data-open>Open</button>
                 <button type="button" class="sb-btn sb-btn-tertiary" data-del aria-label="Delete ${esc(r.name)}">Delete</button>
@@ -618,7 +971,8 @@ $("rbSave").onclick = () => {
         id: S.editingId, createdAt: S.createdAt, name, waypoints: S.waypoints, coords: S.coords, miles: S.miles,
         loop: S.closed, snapped: S.snapped, pace: S.pace, gelG: S.gelG, fuel: S.fuel, prefs: S.prefs,
         surface: S.score ? { summary: S.score.summary, ab: S.score.ab, x: S.score.pcts.X } : null,
-        climb: S.climb ? { lowFt: S.climb.lowFt, highFt: S.climb.highFt } : null
+        climb: S.climb ? { lowFt: S.climb.lowFt, highFt: S.climb.highFt } : null,
+        safety: S.safe ? { avg: S.safe.overall.avg, band: S.safe.overall.band.id, pctRisk: S.safe.overall.pctRisk, pctUnknown: S.safe.overall.pctUnknown, at: S.runAt } : null
     });
     try {
         saveRoute(store, rec);
@@ -681,5 +1035,8 @@ $("rbGpx").onclick = async () => {
 };
 
 /* ---------- start ---------- */
-refreshSaved(); paintPrefs(); hint(); render(); buttons();
+document.querySelectorAll("[data-safety-note]").forEach(el => { el.textContent = SAFETY_NOTE; });
+$("rbSafeLegend").innerHTML = legendHtml();
+initWhen();
+refreshSaved(); paintPrefs(); hint(); render(); buttons(); renderSafety();
 window.__routeBuilder = S; S.map = map; // read by the browser checks

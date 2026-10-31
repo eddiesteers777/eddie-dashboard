@@ -12,6 +12,7 @@
 
 import { decodePolyline, haversine } from "./routeGeo.js";
 import { waysFromOverpass } from "./routeScore.js";
+import { safetyDataFromOverpass, SAFETY_HIGHWAY_KINDS } from "./routeSafety.js";
 
 const VALHALLA = "https://valhalla1.openstreetmap.de";
 const OVERPASS = "https://overpass-api.de/api/interpreter";
@@ -24,9 +25,10 @@ async function timedFetch(url, init, ms) {
 }
 
 /** Pedestrian route through the points -> { coords, miles, snapped: true }. Throws on any failure. */
-export async function fetchRoute(locs, costing = null) {
+export async function fetchRoute(locs, costing = null, avoid = null) {
     const body = { locations: locs.map(p => ({ lat: p[0], lon: p[1] })), costing: "pedestrian", directions_options: { units: "miles" } };
     if (costing) body.costing_options = { pedestrian: costing };
+    if (avoid && avoid.length) body.exclude_polygons = avoid; // [[lon, lat], ...] boxes the route must stay out of
     const res = await timedFetch(VALHALLA + "/route", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -65,15 +67,19 @@ export async function fetchHeights(coords) {
     return out;
 }
 
-/** Ways near a box { s, w, n, e } -> scored ways. Throws on failure. */
-export async function fetchWays(box) {
+/**
+ * Map data near a box { s, w, n, e }: the scored ways for the surface split, and the
+ * roads, paths and crossing points for the safety rating. Throws on failure.
+ */
+export async function fetchMapData(box) {
     const bbox = `${box.s},${box.w},${box.n},${box.e}`;
-    const kinds = ["footway", "path", "cycleway", "pedestrian", "residential", "unclassified", "tertiary", "living_street", "primary", "secondary", "trunk", "motorway"];
-    const q = "[out:json][timeout:25];(" + kinds.map(k => `way["highway"="${k}"](${bbox});`).join("") + ");out geom;";
+    const q = "[out:json][timeout:25];(" + SAFETY_HIGHWAY_KINDS.map(k => `way["highway"="${k}"](${bbox});`).join("") +
+        `node["highway"="crossing"](${bbox});node["highway"="traffic_signals"](${bbox}););out geom;`;
     const res = await timedFetch(OVERPASS, { method: "POST", body: "data=" + encodeURIComponent(q) }, 30000);
     if (!res.ok) throw new Error("Map data answered " + res.status);
     const data = await res.json();
-    return waysFromOverpass(data.elements || []);
+    const elements = data.elements || [];
+    return { ways: waysFromOverpass(elements), safety: safetyDataFromOverpass(elements) };
 }
 
 /**

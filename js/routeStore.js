@@ -20,7 +20,7 @@ export function newRouteId(now = Date.now()) {
     return now.toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-export function makeRecord({ id, name, waypoints, coords, miles, loop, snapped, pace, gelG, prefs = null, fuel = null, surface = null, climb = null, now = Date.now(), createdAt = null }) {
+export function makeRecord({ id, name, waypoints, coords, miles, loop, snapped, pace, gelG, prefs = null, fuel = null, surface = null, climb = null, safety = null, now = Date.now(), createdAt = null }) {
     return {
         v: 1,
         id: id || newRouteId(now),
@@ -38,7 +38,8 @@ export function makeRecord({ id, name, waypoints, coords, miles, loop, snapped, 
         visibility: "private", // Southbound has no route sharing: always private
         fuel, // a "plan to review" snapshot: never an approved prescription
         surface, // { summary, ab, x } when it was checked
-        climb // { lowFt, highFt } when fetched
+        climb, // { lowFt, highFt } when fetched
+        safety // { avg, band, pctRisk, pctUnknown, at }: the planning estimate when it was saved
     };
 }
 

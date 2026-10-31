@@ -62,6 +62,7 @@
                     <div id="rbMap" role="application" aria-label="Route map. Tap to add a point, drag a point or the route line to reshape it, tap a point to remove it."></div>
                     <div id="rbGlobe" class="rb-globe" hidden aria-label="Globe view"></div>
                     <button type="button" class="rb-globe-back" id="rbGlobeBack" hidden>Back to map</button>
+                    <button type="button" class="rb-safemap-btn" id="rbSafeMap" aria-pressed="false" disabled>Safe Map</button>
                     <div class="rb-hint" id="rbHint">Tap the map to drop your start.</div>
                     <div class="rb-busy" id="rbBusy" hidden></div>
                     <section class="rb-prefs" id="rbPrefs" aria-label="Route options">
@@ -91,9 +92,29 @@
                     <button type="button" class="sb-btn sb-btn-secondary" id="rbGlobeBtn">Globe</button>
                 </div>
 
+                <section class="rb-safebar" id="rbSafeBar" aria-label="Safety rating" hidden>
+                    <div class="rb-safe-head">
+                        <span class="rb-safe-badge" id="rbSafeBadge"></span>
+                        <div class="rb-safe-nums">
+                            <strong id="rbSafeHead"></strong>
+                            <span id="rbSafeRisk"></span>
+                        </div>
+                    </div>
+                    <p class="rb-safe-worst" id="rbSafeWorst"></p>
+                    <p class="rb-small rb-safe-unknown" id="rbSafeUnknown" hidden></p>
+                    <div class="rb-why" id="rbWhy" aria-live="polite" hidden></div>
+                    <p class="rb-small rb-safe-note" data-safety-note></p>
+                </section>
+
                 <figure class="rb-profile" id="rbProfileWrap">
                     <figcaption><span>Elevation and fuel</span><span class="rb-small" id="rbProfileNote">Appears once the route has heights.</span></figcaption>
                     <div class="rb-profile-plot" id="rbProfile"></div>
+                </figure>
+
+                <figure class="rb-strip" id="rbStripWrap" hidden>
+                    <figcaption><span>Safety along the route</span><span class="rb-small" id="rbStripNote">Tap a stretch to see why.</span></figcaption>
+                    <div class="rb-strip-plot" id="rbStrip"></div>
+                    <ul class="rb-safe-legend" id="rbSafeLegend" aria-label="Safety colours"></ul>
                 </figure>
 
             </section>
@@ -114,6 +135,43 @@
                     <div class="rb-bar" id="rbBar" role="img" aria-label="Surface split"></div>
                     <ul class="rb-legend" id="rbLegend"></ul>
                 </div>
+
+                <details class="rb-card rb-safety-card" id="rbSafetyCard" open>
+                    <summary>Safety</summary>
+                    <div class="rb-card-body">
+                        <p class="rb-small rb-safe-note" data-safety-note></p>
+                        <p class="rb-small">Traffic, sidewalks, crossings and lighting from OpenStreetMap, re-scored for the time you run. No crime data, no live traffic.</p>
+                        <div class="rb-when">
+                            <span class="rb-pref-label" id="rbWhenLabel">When will you run this?</span>
+                            <div class="rb-fields">
+                                <label class="rb-field"><span>Day</span><input id="rbRunDate" type="date"></label>
+                                <label class="rb-field"><span>Start time</span><input id="rbRunClock" type="time" step="1800"></label>
+                            </div>
+                            <input id="rbRunTime" class="rb-range" type="range" min="0" max="47" step="1" aria-labelledby="rbWhenLabel" aria-describedby="rbRunWhen">
+                            <p class="rb-when-out" id="rbRunWhen"></p>
+                        </div>
+                        <p class="rb-small rb-rush" id="rbRushNote" hidden></p>
+                        <p class="rb-tip" id="rbSaferTime" hidden></p>
+                        <div class="rb-switches">
+                            <button type="button" class="rb-switch" id="rbAvoidBusy" aria-pressed="false" disabled><span>Avoid busy roads</span><i aria-hidden="true"></i></button>
+                            <button type="button" class="rb-switch" id="rbPreferLit" aria-pressed="false" hidden><span>Prefer lit at night</span><i aria-hidden="true"></i></button>
+                        </div>
+                        <p class="rb-small" id="rbSafeCost" aria-live="polite"></p>
+                        <div class="rb-row">
+                            <button type="button" class="sb-btn sb-btn-secondary" id="rbCompare" disabled>Shortest vs safest</button>
+                            <button type="button" class="sb-btn sb-btn-secondary" id="rbHome" disabled>Ways home</button>
+                        </div>
+                        <div class="rb-compare" id="rbCompareOut" aria-live="polite" hidden></div>
+                        <div id="rbHomeOut" aria-live="polite" hidden>
+                            <p class="rb-pref-label">Shortest safe way back to the start</p>
+                            <ul class="rb-home" id="rbHomeList"></ul>
+                        </div>
+                        <div>
+                            <p class="rb-pref-label">Busy-road crossings</p>
+                            <ul class="rb-lines" id="rbCrossings"><li class="rb-empty">Shows once the route is checked.</li></ul>
+                        </div>
+                    </div>
+                </details>
 
                 <details class="rb-card" open>
                     <summary>About this route</summary>
