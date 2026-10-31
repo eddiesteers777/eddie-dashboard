@@ -47,3 +47,12 @@ test("dismissed, finished and planless weeks show nothing", () => {
     assert.equal(buildSuggestions({ ...base, primary: null }).length, 0);
     assert.equal(buildSuggestions({}).length, 0);
 });
+
+test("pace items ride along, can be dismissed, and show even with nothing missed", () => {
+    const item = { id: "pace:tempo:405:2026-11-02", kind: "pace", tone: "call", title: "Tighten tempo pace by 3 s" };
+    const base = { week: wk(["done", "done", "upcoming"]), primary: primary("2026-12-07"), today: "2026-11-05", paceItems: [item] };
+    assert.equal(buildSuggestions(base).length, 1);
+    assert.equal(buildSuggestions({ ...base, dismissed: [item.id] }).length, 0);
+    const both = buildSuggestions({ ...base, week: wk(["missed", "missed", "missed"]) });
+    assert.deepEqual(both.map(s => s.kind), ["missed", "pace"]);
+});

@@ -69,6 +69,8 @@ import { parseDrills, drillsText } from "./sessionReport.js";
 import { SKILLS } from "./homeworkModel.js";
 import { decodeShare } from "./athleteShare.js";
 import { sharedKeyWork, currentPlan } from "./clientModel.js";
+import { paceSuggestions } from "./paceSuggestions.js";
+import { weeksTo } from "./planSuggestions.js";
 import { reconstructWorkout } from "./workoutExecution.js";
 import { executionHtml, executionClass } from "./executionView.js";
 import { allProgress, historyFromResults, recordsOn } from "./strengthProgress.js";
@@ -1452,9 +1454,20 @@ function renderSuggestions() {
     const host = $("hubSuggestions");
     if (!host || !record?.summary) return;
     const { plans } = record.summary;
+    const today = isoDate(new Date());
+    // Pace v2 reads the laps the client shares (athlete model sharing); none shared, none shown.
+    let paceItems = [];
+    try {
+        if (record.sharedAthleteModel) {
+            const header = currentPlan(record.coachingPlans || [], today);
+            const { keyWork, laps } = sharedKeyWork(header?.plan, decodeShare(record.sharedAthleteModel).laps, today, { planId: header?.id || "plan" });
+            const monday = plans.week?.days?.[0]?.date || today;
+            paceItems = paceSuggestions({ keyWork, laps, results: record.results || [], monday, weeksToRace: plans.primary?.raceDate ? weeksTo(today, plans.primary.raceDate) : null });
+        }
+    } catch (error) { console.warn("Southbound: pace suggestions couldn't be worked out.", error); }
     import("./planSuggestionsView.js").then(({ renderPlanSuggestions }) => renderPlanSuggestions(host, {
         clientUid,
-        data: { week: plans.week, primary: plans.primary, results: record.results || [], today: isoDate(new Date()) },
+        data: { week: plans.week, primary: plans.primary, results: record.results || [], today, paceItems },
         onOpenEditor: () => $("hubPlan")?.scrollIntoView({ behavior: "smooth", block: "start" })
     })).catch(error => console.warn("Southbound: the suggestions couldn't load.", error?.code || error));
 }

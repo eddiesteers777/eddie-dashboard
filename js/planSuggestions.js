@@ -7,12 +7,12 @@
    and never writes a plan: a suggestion is advice, the coach changes the
    plan in the editor below it and publishes a new version.
 
-   Not shown yet, on purpose: pace suggestions. They need rep paces, and a
-   client's laps live in their private sync doc, which the coach side never
-   opens. They wait on a consented shared projection of lap paces.
+   Pace suggestions (js/paceSuggestions.js) come in as `paceItems`, built
+   from the laps the client shares with their athlete model; without that
+   sharing there are none.
 
-   buildSuggestions({ week, primary, results, today, dismissed })
-     -> [{ id, kind: "missed"|"held", tone, chip, title, text, detail,
+   buildSuggestions({ week, primary, results, today, dismissed, paceItems })
+     -> [{ id, kind: "missed"|"held"|"pace", tone, chip, title, text, detail,
            weeksToRace, recommendation }]
    Unit-tested in tests/planSuggestions.test.mjs.
 ========================================== */
@@ -38,13 +38,13 @@ export function reasonFrom(results, from, to) {
 
 const weeksText = w => (w == null ? "" : w < 1 ? `${Math.max(1, Math.round(w * 7))} days to race` : `${Math.round(w * 10) / 10} weeks to race`);
 
-export function buildSuggestions({ week, primary, results = [], today, dismissed = [] } = {}) {
+export function buildSuggestions({ week, primary, results = [], today, dismissed = [], paceItems = [] } = {}) {
     if (!week || !primary || primary.state === "finished") return [];
     const days = (week.days || []).filter(d => d.state !== "rest");
-    if (!days.length) return [];
     const sessions = days.map(d => ({ day: d.date, kind: "easy", status: STATE_STATUS[d.state] || "planned" }));
     const n = missedCount({ sessions });
-    if (!n) return [];
+    const extra = paceItems.filter(i => !dismissed.includes(i.id));
+    if (!days.length || !n) return extra;
     const monday = week.days[0].date, sunday = week.days[6].date;
     const weeksToRace = weeksTo(today, primary.raceDate);
     const reason = reasonFrom(results, monday, sunday);
@@ -65,5 +65,5 @@ export function buildSuggestions({ week, primary, results = [], today, dismissed
             text: [weeksToRace == null ? "No race date on the plan." : weeksText(weeksToRace) + ".", "No make-up session is suggested."].join(" "),
             detail: r.detail, weeksToRace, recommendation: r.recommendation, race: weeksText(weeksToRace) });
     }
-    return out.filter(s => !dismissed.includes(s.id));
+    return [...out.filter(s => !dismissed.includes(s.id)), ...extra];
 }

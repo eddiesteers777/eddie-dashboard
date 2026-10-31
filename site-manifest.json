@@ -243,6 +243,7 @@
     "js/offlineWrite.js",
     "js/pace-calculator.js",
     "js/paceSegments.js",
+    "js/paceSuggestions.js",
     "js/packageCatalog.js",
     "js/painLog.js",
     "js/personalRecords.js",

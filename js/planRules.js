@@ -194,7 +194,7 @@ export const PACE_V2_STEP_SEC = 3;               // seconds per mile; sandbox v1
 export const PACE_V2_MAX_CHANGES = 2;            // in a row, then the coach re-evaluates
 export const PACE_V2_RANGE_SEC = { tempo: 20, interval: 15, time_trial: 20 };
 const SPEED_KINDS = ["tempo", "interval", "time_trial"];
-const CONTEXT_KEYS = ["heat", "hills", "poorSleep", "poorFuel"];
+const CONTEXT_KEYS = ["heat", "hills", "weather", "poorSleep", "poorFuel"];
 const contextOf = s => CONTEXT_KEYS.filter(k => s?.context?.[k]);
 
 /** Why a session can't be counted, or null when it can. */

@@ -23,7 +23,7 @@ export function renderPlanSuggestions(host, { clientUid, data, onOpenEditor }) {
     if (!items.length) {
         host.innerHTML = `<section class="clients-card ps-card" aria-labelledby="psTitle">
             <div class="ps-head"><h2 id="psTitle">Suggestions</h2></div>
-            <div class="ps-empty"><strong>Nothing to suggest</strong>The week is on track. Suggestions show up here when sessions are missed.</div></section>`;
+            <div class="ps-empty"><strong>Nothing to suggest</strong>The week is on track. Suggestions show up here when sessions are missed or a pace pattern repeats.</div></section>`;
         return;
     }
     if (!items.some(i => i.id === openId)) openId = items[0].id;
@@ -41,10 +41,10 @@ export function renderPlanSuggestions(host, { clientUid, data, onOpenEditor }) {
                     <p>${esc(i.text)}</p>
                     <p>${esc(i.detail)}</p>
                     <div class="ps-actions">
-                        ${i.kind === "held" ? "" : `<button type="button" class="sb-btn sb-btn-primary" data-ps-edit>Open plan editor</button>`}
-                        <button type="button" class="sb-btn sb-btn-secondary" data-ps-dismiss="${esc(i.id)}">${i.kind === "held" ? "Got it" : "Dismiss"}</button>
+                        ${i.tone === "hold" ? "" : `<button type="button" class="sb-btn sb-btn-primary" data-ps-edit>Open plan editor</button>`}
+                        <button type="button" class="sb-btn sb-btn-secondary" data-ps-dismiss="${esc(i.id)}">${i.tone === "hold" ? "Got it" : "Dismiss"}</button>
                     </div>
-                    <p class="ps-note">${i.kind === "held" ? "Held: nothing is added or rebuilt." : "Advice only. Nothing changes until you edit the plan and publish."}</p>
+                    <p class="ps-note">${i.tone === "hold" ? "Held: nothing is added or rebuilt." : "Advice only. Nothing changes until you edit the plan and publish."}</p>
                 </div></div>`;
         }).join("")}</div></section>`;
     host.querySelectorAll("[data-ps]").forEach(b => b.addEventListener("click", () => {
