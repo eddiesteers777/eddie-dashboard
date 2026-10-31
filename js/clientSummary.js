@@ -28,6 +28,7 @@ import { isIntakeComplete, athleteDisplayName, healthYeses } from "./clientRecor
 import { mergeRuntimeByDate } from "./coachingPlanModel.js";
 import { awaitingView, noticeVersionOf } from "./planWindow.js";
 import { checkinFlags, reasonLabel } from "./feedbackModel.js";
+import { buildSuggestions } from "./planSuggestions.js";
 import { inboxByClient, messageAttention } from "./messageThread.js";
 import { staleSummary, openAsks, ageText } from "./profileChecks.js";
 import { answersDone } from "./intakeFlow.js";
@@ -363,7 +364,12 @@ export function needsAttention({ profile, plans, sessions, checkins, today, reco
     if (skippedThisWeek >= 2) {
         items.push({ kind: "skipped", text: `Skipped ${skippedThisWeek} workouts this week`, tab: "workouts" });
     }
-    if (plans.week.missed >= 2) {
+    // Plan rules (js/planRules.js): 3+ missed this week, or a taper hold. Advice only; nothing is changed.
+    // Pace suggestions need the client's shared laps, so they show on the Client Hub card, not here.
+    const suggestion = buildSuggestions({ week: plans.week, primary: plans.primary, results, today })[0];
+    if (suggestion && (suggestion.kind === "missed" || suggestion.kind === "held")) {
+        items.push({ kind: suggestion.kind, text: `${suggestion.title}. ${suggestion.text}`, tab: "plan", chip: suggestion.kind === "held" ? "Taper" : "Suggestion" });
+    } else if (plans.week.missed >= 2) {
         items.push({ kind: "missed", text: `${plans.week.missed} workouts not marked done this week`, tab: "plan" });
     }
     if (soccer && !sessions.upcoming.length && !sessions.waiting.length) {

@@ -134,7 +134,7 @@ function queueRow(item, { hidden = false } = {}) {
             <div class="coach-queue-slide">
                 <a class="coach-queue-item is-${escapeHtml(item.kind)}" href="${escapeHtml(item.href)}">
                     <span class="coach-queue-avatar">${escapeHtml(initials(item.name))}</span>
-                    <span class="coach-queue-text"><strong>${escapeHtml(item.name)}</strong>${item.kind === "pain" || item.kind === "health" ? `<span class="coach-queue-flag">${item.kind === "pain" ? "Pain" : "Health"}</span>` : ""}<span class="coach-queue-line">${escapeHtml(item.text)}</span>${when ? `<span class="coach-queue-when">${escapeHtml(when)}</span>` : ""}</span>
+                    <span class="coach-queue-text"><strong>${escapeHtml(item.name)}</strong>${item.kind === "pain" || item.kind === "health" ? `<span class="coach-queue-flag">${item.kind === "pain" ? "Pain" : "Health"}</span>` : ""}${item.chip ? `<span class="coach-queue-chip">${escapeHtml(item.chip)}</span>` : ""}<span class="coach-queue-line">${escapeHtml(item.text)}</span>${when ? `<span class="coach-queue-when">${escapeHtml(when)}</span>` : ""}</span>
                 </a>
                 <button type="button" class="coach-queue-done" data-done="${escapeHtml(itemKey(item))}" data-undo="${hidden ? "1" : ""}"
                     aria-label="${hidden ? "Show again today" : "Done for today"}: ${escapeHtml(item.name)}, ${escapeHtml(item.text)}">

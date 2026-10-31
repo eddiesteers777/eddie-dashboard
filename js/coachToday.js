@@ -17,7 +17,7 @@ export const TASK_GROUPS = [
     { id: "urgent", label: "Urgent", kinds: ["pain", "health"] },
     { id: "reply", label: "Waiting on your reply", kinds: ["message", "change", "checkin", "booking"] },
     { id: "new", label: "New people", kinds: ["pending", "application", "question"] },
-    { id: "plans", label: "Plans and training", kinds: ["missed", "skipped", "plan-unseen", "race", "plan"] },
+    { id: "plans", label: "Plans and training", kinds: ["missed", "held", "skipped", "plan-unseen", "race", "plan"] },
     { id: "business", label: "Packages and payments", kinds: ["package"] },
     { id: "followup", label: "Follow up", kinds: ["session-log", "no-show", "quiet", "no-checkin", "profile", "sessions", "intake"] }
 ];

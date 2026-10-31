@@ -653,6 +653,11 @@
     display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; vertical-align:1px;
     background:color-mix(in srgb, var(--red) 18%, transparent); color:var(--red); font:600 11px var(--font-body);
 }
+.coach-queue-chip{
+    display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; vertical-align:1px;
+    background:color-mix(in srgb, var(--gold, var(--primary)) 18%, transparent); color:var(--gold, var(--primary)); font:600 11px var(--font-body);
+}
+.coach-queue-item.is-held .coach-queue-chip{ background:color-mix(in srgb, var(--sage) 20%, transparent); color:var(--sage); }
 .coach-queue-line{ display:block; color:var(--text-secondary); font-size:14px; line-height:1.4; margin-top:2px; }
 .coach-queue-done{
     flex:0 0 44px; width:44px; height:44px; padding:0; justify-content:center; border-radius:50%;

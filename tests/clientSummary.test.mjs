@@ -115,6 +115,19 @@ test("needs attention: plan ending soon, missed workouts", () => {
     assert.ok(!items.some(i => i.kind === "missed"), "only 1 missed so far (Tue)");
 });
 
+test("needs attention: 3 missed sessions give a plan suggestion; a taper gives a hold", () => {
+    const days = ["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31", "2026-11-01"]
+        .map((date, i) => ({ date, state: i < 3 ? "missed" : i === 3 ? "today" : i === 6 ? "rest" : "upcoming" }));
+    const base = { sessions: summarizeSessions([], "2026-10-29"), checkins: summarizeCheckins([], "2026-10-29"), today: "2026-10-29", profile: { services: ["running"] } };
+    const plans = raceDate => ({ ...summarizePlans({}, "2026-10-29"), week: { days, missed: 3, skipped: 0, planned: 5, dueSoFar: 3, completed: 0 }, primary: { state: "active", raceDate } });
+    const far = needsAttention({ ...base, plans: plans("2027-03-01") }).find(i => i.kind === "missed");
+    assert.equal(far.chip, "Suggestion");
+    assert.match(far.text, /3 sessions missed/);
+    const taper = needsAttention({ ...base, plans: plans("2026-11-08") });
+    assert.equal(taper.find(i => i.kind === "held").chip, "Taper");
+    assert.ok(!taper.some(i => i.kind === "missed"));
+});
+
 test("timeline: newest first, from profile, link, check-ins and bookings", () => {
     const t = buildTimeline({
         profile: { applicationSubmittedAt: { seconds: Date.parse("2026-09-10T12:00:00Z") / 1000 }, approvedAt: Date.parse("2026-09-12T12:00:00Z") },
