@@ -235,8 +235,9 @@ for (const w of widths) {
   check(`${tag} routing down -> straight lines, labelled NOT snapped`, !fb.snapped && /NOT a snapped route/.test(fb.note) && /Not snapped/.test(fb.ex), fb.note.slice(0, 60));
   await page.screenshot({ path: `${OUT}/fallback-${tag}.png` });
 
-  // ----- search (real Nominatim) -----
+  // ----- search (Nominatim answers a fixed result: it blocks the sandbox at random; the real search is a manual live check) -----
   valhallaDown = false;
+  await ctx.route(/nominatim\.openstreetmap\.org\/search/, r => r.fulfill({ contentType: "application/json", body: JSON.stringify([{ display_name: "Calera, Shelby County, Alabama, United States", lat: "33.1029", lon: "-86.7536" }]) }));
   await page.goto(BASE, { waitUntil: "networkidle" });
   await page.fill("#rbSearchInput", "Calera, Alabama");
   await page.locator("#rbSearch button[type=submit]").click();
