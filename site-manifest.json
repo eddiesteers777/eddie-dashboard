@@ -254,6 +254,7 @@
     "js/planPrompt.js",
     "js/planPromptDialogs.js",
     "js/planRelease.js",
+    "js/planRules.js",
     "js/planShape.js",
     "js/planWindow.js",
     "js/planWorkspace.js",
