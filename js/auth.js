@@ -89,7 +89,8 @@ const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
     "cross-training-",
     "workout-session-",
     "route-",     // saved routes + last map view + pace (js/routeStore.js): synced, cleared on sign-out
-    "sb-draft:"   // unsent check-in / workout-log words (js/formDraft.js): device-only
+    "sb-draft:",  // unsent check-in / workout-log words (js/formDraft.js): device-only
+    "sb-plan-dismissed:"   // plan suggestions the coach dismissed (js/planSuggestionsView.js): device-only
 ];
 
 const ACCOUNT_SESSION_STORAGE_KEYS = [

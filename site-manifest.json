@@ -256,6 +256,8 @@
     "js/planRelease.js",
     "js/planRules.js",
     "js/planShape.js",
+    "js/planSuggestions.js",
+    "js/planSuggestionsView.js",
     "js/planWindow.js",
     "js/planWorkspace.js",
     "js/plannerEvents.js",

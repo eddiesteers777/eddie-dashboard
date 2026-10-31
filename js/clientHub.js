@@ -1446,6 +1446,19 @@ function renderCheckins() {
     }));
 }
 
+// ---- Plan suggestions (top of the Plan tab; advice only, js/planSuggestionsView.js) ----
+
+function renderSuggestions() {
+    const host = $("hubSuggestions");
+    if (!host || !record?.summary) return;
+    const { plans } = record.summary;
+    import("./planSuggestionsView.js").then(({ renderPlanSuggestions }) => renderPlanSuggestions(host, {
+        clientUid,
+        data: { week: plans.week, primary: plans.primary, results: record.results || [], today: isoDate(new Date()) },
+        onOpenEditor: () => $("hubPlan")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    })).catch(error => console.warn("Southbound: the suggestions couldn't load.", error?.code || error));
+}
+
 // ---- Change requests (top of the Plan tab, next to where you change it) ----
 
 function renderChanges() {
@@ -2231,6 +2244,7 @@ function renderAll() {
     if (hwTab) hwTab.hidden = !(hasSoccerService(record.profile?.services || []) || (record.requests || []).some(r => r.sessionType === "soccer"));
     renderWorkouts();
     renderChanges();
+    renderSuggestions();
     renderNotes();
     renderProfileFresh();
     import("./icons.js").then(m => m.hydrate());
