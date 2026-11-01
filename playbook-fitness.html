@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Day 1 Baseline | Southbound Playbook</title>
+
+    <meta name="description" content="Day 1 fitness baseline for a soccer team: a 1 mile run and a beep test with its own beeps. Results stay on your device. Free, no account needed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Day 1 Baseline | Southbound Playbook">
+    <meta property="og:description" content="Day 1 fitness baseline for a soccer team: a 1 mile run and a beep test with its own beeps. Results stay on your device. Free, no account needed.">
+    <meta property="og:url" content="https://southboundcoaching.com/playbook-fitness.html">
+    <link rel="canonical" href="https://southboundcoaching.com/playbook-fitness.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/playbook.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("pb-app")}catch(e){}</script>
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body pb-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page pb-page" id="main">
+  <div class="pb-shell ft-shell" id="app">
+  <header class="pb-head">
+    <div class="pb-head-text">
+      <div class="pub-hero-kicker">Day 1 baseline</div>
+      <h1>Fitness check</h1>
+      <span class="pb-sub">Each player's own result. No ranking, no pass or fail. Saved on this device only.</span>
+    </div>
+  </header>
+  <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-season.html" class="pb-tab">Season</a><a href="playbook-roster.html" class="pb-tab">Roster</a><a href="playbook-team.html" class="pb-tab">Team</a><a href="playbook-game.html" class="pb-tab">Game</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+
+  <section class="ft-card" aria-labelledby="ftDateH">
+    <h2 id="ftDateH">Test day</h2>
+    <label class="ft-field"><span>Date</span><input id="ftDate" type="date"></label>
+  </section>
+
+  <section class="ft-card" aria-labelledby="ftMileH">
+    <h2 id="ftMileH">1 mile, without stopping</h2>
+    <p class="pb-hint">Record each player's time, and whether they ran it without stopping.</p>
+    <label class="ft-field"><span>Player (first name)</span><input id="ftMileName" type="text" list="ftNames" maxlength="40" autocomplete="off"></label>
+    <label class="ft-field"><span>Time (m:ss)</span><input id="ftMileTime" type="text" inputmode="numeric" placeholder="8:30" maxlength="5" autocomplete="off"></label>
+    <label class="ft-check"><input id="ftMileNonstop" type="checkbox" checked><span>Ran it without stopping</span></label>
+    <button class="pb-btn pb-primary ft-wide" id="ftMileSave" type="button">Save mile</button>
+  </section>
+
+  <section class="ft-card" aria-labelledby="ftBeepH">
+    <h2 id="ftBeepH">Beep test</h2>
+    <p class="pb-hint">Run 20 m lines. Start at 8.5 km/h, a little faster every level. Keep the phone's sound up. When a player misses the line twice, tap their name.</p>
+    <div class="ft-beep" id="ftBeep" role="timer" aria-live="off">
+      <div class="ft-level" id="ftLevel">Ready</div>
+      <div class="ft-meta" id="ftMeta">Level 1 starts at 8.5 km/h</div>
+    </div>
+    <div class="ft-btns"><button class="pb-btn pb-primary" id="ftStart" type="button">Start beep test</button><button class="pb-btn" id="ftStop" type="button" hidden>Stop</button></div>
+    <div class="ft-out" id="ftOut" aria-label="Players still running"></div>
+    <label class="ft-field"><span>Someone not on your roster</span><span class="ft-row"><input id="ftOutName" type="text" maxlength="40" placeholder="First name" autocomplete="off"><button class="pb-btn" id="ftOutAdd" type="button">Out</button></span></label>
+  </section>
+
+  <section class="ft-card" aria-labelledby="ftResH">
+    <h2 id="ftResH">Results for this day</h2>
+    <ul class="ft-list" id="ftList"></ul>
+    <p class="pb-hint" id="ftEmpty">Nothing saved for this day yet.</p>
+  </section>
+  <datalist id="ftNames"></datalist>
+  <div id="toast" class="pb-toast" role="status" aria-live="polite"></div>
+  </div>
+    </main>
+
+<footer class="pub-footer">
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="tools.html#pace">Pace calculator</a><a href="tools.html#playbook">Soccer Playbook</a><a href="tools.html#fueling">Fueling calculator</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/playbook/boot.js"></script>
+    <script type="module" src="js/playbook/fitness.js"></script>
+
+</body>
+
+</html>

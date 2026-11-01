@@ -707,3 +707,6 @@ Eddie asked for the route builder to match the current look and to sit on the pu
 
 ## 2026-11-01: Soccer homework quality flags (Phase E)
 Coach-side flags on the Client Hub Homework tab with "Looks good". No rules change, no client-facing change. Tested: 7 unit tests, phone browser run with seeded homework (2 of 3 rows flagged, Looks good cleared one, no overflow or errors). Not tested: a real Firestore write of `reviewedAt`, real iPhone.
+
+## 2026-11-01: Day 1 fitness check (soccer Phase F, step 1)
+Eddie's picks: AD says no group skill work in Nov–Dec (so version B, conditioning only), conditioning starts Jan 5, baseline = 1 mile without stopping + beep test. Built the fitness page (own beeps, per-player results on the device). Tested: 7 unit tests (protocol totals 247 shuttles), static suite, phone browser run (beeps scheduled, level counted, drop-out saved, no overflow, no small taps). Not tested: sound on a real iPhone (silent switch, Bluetooth speaker), a full real test.
