@@ -30,7 +30,7 @@ export const opponent = s => s.opp || s.game?.opp || "";
 export function practiceDaysBefore(team, game) {
     const first = team.sessions.filter(s => s.kind === "game" && (s.opp || s.time || s.game?.opp)).sort((a, b) => a.date.localeCompare(b.date))[0];
     if (!first || first.id !== game.id) return null;
-    const n = new Set(team.sessions.filter(s => s.kind === "practice" && s.date < game.date).map(s => s.date)).size;
+    const n = new Set(team.sessions.filter(s => s.kind === "practice" && !s.cancelled && s.date < game.date).map(s => s.date)).size;
     return { have: n, need: REQUIRED_PRACTICE_DAYS };
 }
 
@@ -67,3 +67,15 @@ export function repeatPractices(team, from, to, weekdays, extra = {}) {
     }
     return { team: t, added };
 }
+
+// AHSAA middle school soccer 2027 (ahsaa.com/Sports/Spring/Soccer): first practice Jan 18, season ends Apr 17. Editable.
+export const DEFAULT_WINDOW = Object.freeze({ start: "2027-01-18", end: "2027-04-17" });
+export const seasonWindow = team => team.season || { ...DEFAULT_WINDOW };
+export function setWindow(team, start, end) {
+    if (!isDate(start) || !isDate(end) || end < start) return team;
+    return { ...team, season: { start, end } };
+}
+export function setCancelled(team, sid, on) {
+    return { ...team, sessions: team.sessions.map(s => { if (s.id !== sid || s.kind !== "practice") return s; const { cancelled: _, ...r } = s; return on ? { ...r, cancelled: true } : r; }) };
+}
+export const handle = (team, id) => ({ ...team, handled: [...new Set([...(team.handled || []), String(id).slice(0, 60)])].slice(-300) });

@@ -697,3 +697,5 @@ Eddie picked B4 from the mock-ups (/mnt/project-files/bottom-bar/): the open tab
 
 ## 2026-11-01: Clearer sections on More and card headings (no rules change)
 Eddie said More's sections didn't stand apart. Mock-ups A/B/C in /mnt/project-files/more-sections/; he picked B (display headings with a gold bar, dark rows on a coloured rail per group) and the same heading style for app card headings. CSS only, end of css/appLook.css. Checked at 360 and 390 on More (client and coach), Today and Train: no sideways scroll, no page errors. Not run: real iPhone, rules emulator.
+## 2026-11-01: Playbook season suggestions (soccer Phase C)
+Game-aware suggestions on the Season tab (light day before a game, recovery after, two-game week, 13-practice-day count, season-window flag), all coach-approved, plus cancel/restore practice and editable season dates. No rules change. Tested: 11 unit tests, full static suite (1293 pass), phone browser run (approve, skip, cancel, no overflow, no small taps). Not tested: real iPhone, smoke, a11y.

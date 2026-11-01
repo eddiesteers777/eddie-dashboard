@@ -620,3 +620,11 @@ html.sb-typing .rn-dock{display:none}
 .ss-seg[hidden],.ss-f[hidden]{display:none}
 .ss-shell [hidden]{display:none!important}
 @media print{.ss-strip,.ss-weekbar,.ss-btns{display:none}}
+
+/* ---- Season: suggested, not applied (Phase C) ---- */
+.ss-heads{display:grid;gap:8px;margin-bottom:12px}
+.ss-sug{border:1px dashed var(--pb-act);border-radius:10px;padding:10px 12px;margin:-2px 0 10px;background:transparent}
+.ss-sug p{margin:4px 0 8px;font-size:14px;color:var(--pb-text)}
+.ss-sug .ss-btns .pb-btn{min-height:44px}
+.ss-tile.sug::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--pb-act);margin-top:2px}
+.ss-tile.sel.sug::after{background:var(--pb-sel-fg)}

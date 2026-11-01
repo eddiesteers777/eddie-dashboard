@@ -20,10 +20,11 @@ export function equipmentNeeds(drill) {
     return need;
 }
 
-export function drillFits(drill, { players, equipment, gameInDays }) {
+export function drillFits(drill, { players, equipment, gameInDays, recovery }) {
     if (players && drill.minPlayers > players) return false;
     for (const n of equipmentNeeds(drill)) if (!equipment.has(n)) return false;
     if (gameInDays === 1 && drill.intensity === "High") return false;
+    if (recovery && drill.intensity !== "Low") return false; // the day after a game: easy drills only
     return true;
 }
 
@@ -51,9 +52,9 @@ export function fitMinutes(items, total) {
 }
 
 // Build a suggested plan. `variant` picks different drills each time it goes up by one.
-export function suggestPlan({ drills, total = 75, players = 18, equipment, focus = [], gameInDays = 0, variant = 0 }) {
+export function suggestPlan({ drills, total = 75, players = 18, equipment, focus = [], gameInDays = 0, variant = 0, recovery = false }) {
     const eq = equipment instanceof Set ? equipment : new Set(equipment || []);
-    const ctx = { players, equipment: eq, gameInDays };
+    const ctx = { players, equipment: eq, gameInDays, recovery };
     // Individual and partner drills (1 or 2 players) are for 1-on-1 work and homework, not a team session.
     const ok = drills.filter(d => drillFits(d, ctx) && !(d.minPlayers <= 2 && players >= 4));
     const notes = [];
