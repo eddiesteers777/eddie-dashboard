@@ -7,7 +7,7 @@
     {
       "name": "auto-model",
       "source": "./plugins/auto-model",
-      "description": "Claude Code only: picks the right Claude model for each prompt to save plan usage."
+      "description": "Claude Code only: smallest model and thinking level per prompt and per helper agent, cache-aware, self-tuning. Saves plan usage."
     },
     {
       "name": "prompt-coach",
