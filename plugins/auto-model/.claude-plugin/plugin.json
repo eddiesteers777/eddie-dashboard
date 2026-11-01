@@ -1,6 +1,8 @@
 {
   "name": "auto-model",
-  "version": "0.1.0",
-  "description": "Reads each prompt and runs the turn on the smallest Claude model that fits it: Haiku for quick questions, Sonnet for everyday work, your chosen model for the big jobs.",
-  "author": { "name": "Eddie Steers" }
+  "version": "0.2.0",
+  "description": "Cuts plan usage: runs each prompt and each helper agent on the smallest Claude model and thinking level that fits, keeps long chats on one model to protect the cache, and steps a tier up by itself when its answers keep getting corrected.",
+  "author": {
+    "name": "Eddie Steers"
+  }
 }

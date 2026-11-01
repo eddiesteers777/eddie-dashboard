@@ -11,6 +11,9 @@ html.al-on{
   background:#1c2834!important}
 html.al-on body{background:transparent!important}
 .al-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%)}
+/* Still background (2026-11-01). Sized to the tallest the screen gets (100lvh), so it doesn't stretch when a phone
+   browser's toolbar slides away on scroll, and painted once on its own layer so scrolling only moves the page. */
+body>.al-bg{inset:0 0 auto 0;height:100vh;height:100lvh;transform:translateZ(0);contain:strict}
 .al-bg::before{content:"";position:absolute;inset:0;background:
   radial-gradient(60% 38% at 72% 12%,rgba(200,216,230,.4),transparent),
   radial-gradient(46% 30% at 14% 92%,rgba(220,200,150,.16),transparent),
@@ -29,6 +32,12 @@ html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr
 html.al-on .eos-bottomnav,html.al-on .eos-mobile-icon-btn,html.al-on .eos-navbar{
   background:rgba(24,36,48,.6)!important;border-color:rgba(214,228,240,.2)!important;
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+/* Phones: no blur behind the cards. Every card re-blurred the background on every scroll frame, which made phones
+   lag. A slightly thicker fill keeps the same glass colour. The bars keep their blur (one strip, standard on iOS). */
+@media (hover:none) and (pointer:coarse){
+  html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card,html.al-on .ci-strip{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    background:linear-gradient(180deg,rgba(40,59,78,.8),rgba(24,36,48,.72))!important}}
 @media (prefers-reduced-transparency:reduce){
   html.al-on .eos-today-card,html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card,html.al-on .card,html.al-on .eos-bottomnav{-webkit-backdrop-filter:none;backdrop-filter:none}}
 

@@ -1,9 +1,9 @@
 // The app's foggy blue look (Eddie, 2026-10-29): fog-blue ground, blue glass, an instrument drawing per page,
 // gold only as an accent. Adds css/appLook.css, a fixed background layer and one drawing per page.
-// The drawing is a working instrument tied to the scroll position (js/appMotion.js does the maths): a compass
-// for Today (folded fabric and a solid compass, see below), the same fabric with a solid stopwatch for Train, a calendar for Plan, ... Motion follows scrolling only, never runs by itself,
-// and stays still for people who ask for reduced motion. No layout change.
-import { instrumentState, sloshStep, fabricState, habitRingsState } from "./appMotion.js";
+// The drawing is an instrument (js/appMotion.js gives its starting state): a compass for Today (folded fabric and
+// a solid compass, see below), the same fabric with a solid stopwatch for Train, a calendar for Plan, ...
+// Since 2026-11-01 the whole background is still: nothing follows the scroll. No layout change.
+import { instrumentState, fabricState, habitRingsState } from "./appMotion.js";
 
 const L = (a, w = ".6") => `fill="none" stroke="rgba(214,228,240,${a})" stroke-width="${w}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
 const GOLD = "#D2AD62";
@@ -86,55 +86,30 @@ const tilesHtml = () => {
     const tile = ([x, y, r, w]) => `<div class="al-tile" data-r="${r}" style="left:${x}%;top:${y}%;width:calc(var(--u)*${w});transform:translate(-50%,-50%) rotate(${r}deg) scale(.4)">${[0, 1, 2, 3].map(i => `<i style="transform:translateZ(${i * 1.6}px)"></i>`).join("")}<b></b></div>`;
     return `<div class="al-cmp al-tls"><div class="al-cmp-b">${TILES.map(tile).join("")}</div></div>`;
 };
-// Pages that wear the fabric: the solid object, how fast its hand turns per px scrolled, and whether the folds slope the other way.
+// Pages that wear the fabric: the solid object, its hand setting (js/appMotion.js fabricState), and whether the folds slope the other way.
 const FABRIC = { index: { obj: compassHtml, spin: 0, flip: false, inHero: true }, train: { obj: stopwatchHtml, spin: 0.5, flip: true }, plan: { obj: calendarHtml, spin: 0, flip: false }, nutrition: { obj: bottleHtml, spin: 0, flip: true }, habits: { obj: ringsHtml, spin: 0, flip: false }, progress: { obj: monitorHtml, spin: 0, flip: true }, messages: { obj: messagesHtml, spin: 0, flip: false }, coach: { obj: boardHtml, spin: 0, flip: true }, clients: { obj: boardHtml, spin: 0, flip: true }, fueling: { obj: courseHtml, spin: 0, flip: false }, more: { obj: tilesHtml, spin: 0, flip: false } };
 
-function startFabric(bg, spin, page) {
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// The background is drawn once and never redrawn on scroll (Eddie, 2026-11-01: he wants it still; the
+// scroll-driven parts made phones lag). Each drawing rests at its starting pose, the one reduced motion always had.
+const rest = page => instrumentState(page, 0, 1);
+function drawFabric(bg, spin, page) {
     const nd = bg.querySelector(".al-nd");
-    let queued = false, lastY = scrollY, sl = { angle: 0, vel: 0 }, settling = false;
-    const water = () => {
-        if (page !== "nutrition") return;
-        const max = document.documentElement.scrollHeight - innerHeight;
-        bg._tilt = sl.angle;
-        applyState(bg, instrumentState("nutrition", Y(), max));
-    };
-    const settle = () => {   // a short ease-out after scrolling stops, not a loop
-        sl = sloshStep(sl.angle, sl.vel, 0); water();
-        if (Math.abs(sl.angle) > 0.02 || Math.abs(sl.vel) > 0.02) requestAnimationFrame(settle); else { settling = false; sl = { angle: 0, vel: 0 }; water(); }
-    };
-    // The fabric and the object never move (moving them made phones choppy); only the instrument's parts follow the scroll.
-    const Y = () => still ? 0 : scrollY;
-    const draw = () => {
-        queued = false;
-        if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
-        if (page === "nutrition" && !still) { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); if (!settling) { settling = true; requestAnimationFrame(settle); } }
-        lastY = scrollY; water();
-        const f = fabricState(Y(), spin);   // the fabric and the object stay still; only the moving parts follow the scroll
-        if (nd) nd.style.transform = `rotate(${f.needle.toFixed(1)}deg)`;
-        if (page === "progress") applyState(bg, instrumentState("progress", Y(), 1));
-        if (page === "coach" || page === "clients") applyState(bg, instrumentState(page, Y(), document.documentElement.scrollHeight - innerHeight));
-        if (page === "fueling") applyState(bg, instrumentState("fueling", Y(), document.documentElement.scrollHeight - innerHeight));
-        if (page === "more") {   // tiles grow in one after another
-            const sq = instrumentState("more", Y(), document.documentElement.scrollHeight - innerHeight).sq;
-            bg.querySelectorAll(".al-tile").forEach((t, i) => { t.style.transform = `translate(-50%,-50%) rotate(${t.dataset.r}deg) scale(${sq[i].toFixed(3)})`; });
-        }
-        if (page === "messages") applyState(bg, instrumentState("messages", Y(), document.documentElement.scrollHeight - innerHeight));
-        if (page === "plan") {   // the gold marker steps through the 21 days as you scroll
-            const cell = instrumentState("plan", Y(), document.documentElement.scrollHeight - innerHeight).cell;
-            bg.querySelectorAll(".al-cell").forEach((c, i) => { c.className = "al-cell" + (i === cell ? " on" : i < cell ? " done" : ""); });
-        }
-    };
-    if (page === "habits") {   // the rings show real progress, set by js/habits.js, and ease to it
+    if (nd) nd.style.transform = `rotate(${fabricState(0, spin).needle.toFixed(1)}deg)`;
+    if (page === "more") {
+        const sq = rest("more").sq;
+        bg.querySelectorAll(".al-tile").forEach((t, i) => { t.style.transform = `translate(-50%,-50%) rotate(${t.dataset.r}deg) scale(${sq[i].toFixed(3)})`; });
+    } else if (page === "plan") {
+        const cell = rest("plan").cell;
+        bg.querySelectorAll(".al-cell").forEach((c, i) => { c.className = "al-cell" + (i === cell ? " on" : i < cell ? " done" : ""); });
+    } else if (page !== "habits") applyState(bg, rest(page));
+    if (page === "habits") {   // the rings show real progress, set by js/habits.js (data, not scroll)
         const rings = () => applyState(bg, habitRingsState(document.documentElement.dataset.sbHabitRings));
         rings();
         addEventListener("sb-habit-rings", rings);
     }
-    draw();
-    if (!still) addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(draw); } }, { passive: true });
 }
 
-// Move the drawing to where the scroll position says it should be.
+// Put the drawing in the pose a state describes.
 function applyState(svg, state) {
     if (!state) return;
     const q = s => svg.querySelector(s), qa = s => [...svg.querySelectorAll(s)];
@@ -157,30 +132,6 @@ function applyState(svg, state) {
     if ("ecgX" in state) q('[data-m="ecg"]').setAttribute("transform", `translate(${state.ecgX} 0)`);
     if ("lines" in state) qa(".ln").forEach((l, i) => { l.style.opacity = state.lines[i]; });
     if ("ball" in state) { const b = q('[data-m="ball"]'); b.setAttribute("cx", state.ball.x); b.setAttribute("cy", state.ball.y); }
-}
-
-function startMotion(svg, page) {
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let queued = false, lastY = scrollY, sl = { angle: 0, vel: 0 }, settling = false;
-    const draw = () => {
-        const max = document.documentElement.scrollHeight - innerHeight;
-        applyState(svg, instrumentState(page, still ? 0 : scrollY, max));
-    };
-    // Water only: tilt with the scroll speed, then settle level (a short ease-out, not a loop).
-    const settle = () => {
-        sl = sloshStep(sl.angle, sl.vel, 0); svg._tilt = sl.angle; draw();
-        if (Math.abs(sl.angle) > 0.02 || Math.abs(sl.vel) > 0.02) requestAnimationFrame(settle); else { settling = false; svg._tilt = 0; draw(); }
-    };
-    const update = () => {
-        queued = false;
-        if (document.documentElement.classList.contains("sb-typing")) return;   // keep still while a keyboard is open
-        if (page === "nutrition") { sl = sloshStep(sl.angle, sl.vel, scrollY - lastY); svg._tilt = sl.angle; if (!settling) { settling = true; requestAnimationFrame(settle); } }
-        lastY = scrollY;
-        draw();
-    };
-    draw();
-    if (still) return;
-    addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
 }
 
 export function applyAppLook() {
@@ -211,12 +162,12 @@ export function applyAppLook() {
         }
         document.body.prepend(bg);
         document.documentElement.classList.add("al-on");
-        startFabric(bg, spin, page);
+        drawFabric(bg, spin, page);
         return;
     }
     if (ART[page]) bg.innerHTML = page === "more" ? `<svg class="al-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${ART[page]}</svg>` : `<svg viewBox="0 0 100 80" preserveAspectRatio="xMaxYMin meet">${ART[page]}</svg>`;
     document.body.prepend(bg);
     document.documentElement.classList.add("al-on");
     const svg = bg.querySelector("svg");
-    if (svg) startMotion(svg, page);
+    if (svg) applyState(svg, rest(page));
 }
