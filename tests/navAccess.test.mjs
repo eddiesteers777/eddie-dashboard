@@ -45,9 +45,13 @@ test("the Sessions tab: soccer clients without a plan, nobody else", () => {
 test("training clients: the training pages, no Schedule, no coach pages", () => {
     for (const who of ["running", "strength", "online"]) {
         assert.deepEqual(allowed(who), ["checkin.html", "clients.html", "cross-training.html", "habits.html",
-            "messages.html", "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "routes.html", "running.html",
+            "messages.html", "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "running.html",
             "strength.html", "train.html", "updates.html", "workout.html"], who);
     }
+});
+
+test("Build a Route is a free tool: any signed-in account can open it", () => {
+    for (const who of Object.keys(people)) assert.ok(pageAllowed("routes.html", people[who]), who);
 });
 
 test("soccer clients: Schedule and Habits; Plan + check-in only with a coach plan; no nutrition (the fueling calculator is for everyone)", () => {

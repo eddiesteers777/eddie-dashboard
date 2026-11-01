@@ -13,6 +13,9 @@ const BASE = "http://localhost:8934/routes.html";
 const results = [];
 const check = (name, ok, detail = "") => { results.push({ name, ok: !!ok, detail }); console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? "  -> " + detail : ""}`); };
 
+// The builder shows one panel at a time (Route / Safety / Fuel / Save): open the tab an element lives in first.
+const TAB_OF = { rbPace: "fuel", rbGel: "fuel", rbFuel: "fuel", rbFuelWarn: "fuel", rbName: "save", rbSave: "save", rbGpx: "save", rbSaved: "save", rbSavedEmpty: "save", rbProfileWrap: "route", rbProfile: "route", rbOptimise: "route", rbOptimiseOut: "route" };
+const inTab = async (page, id) => { if (TAB_OF[id]) await page.locator(`#rbTab-${TAB_OF[id]}`).click(); };
 const b = await chromium.launch();
 for (const w of widths) {
   const phone = w < 700;
@@ -152,6 +155,7 @@ for (const w of widths) {
 
   // ----- sidewalk-first -----
   await page.waitForFunction(() => !document.getElementById("rbOptimise").disabled, null, { timeout: 30000 }).catch(() => {});
+  await inTab(page, "rbOptimise");
   await page.locator("#rbOptimise").click();
   await page.waitForFunction(() => document.getElementById("rbOptimiseOut").textContent.length > 0, null, { timeout: 30000 }).catch(() => {});
   const opt = await page.locator("#rbOptimiseOut").innerText();
@@ -159,23 +163,31 @@ for (const w of widths) {
   await page.waitForFunction(() => document.getElementById("rbBusy").hidden, null, { timeout: 30000 });
 
   // ----- fuel -----
+  await inTab(page, "rbPace");
   await page.fill("#rbPace", "8:30"); await page.locator("#rbPace").blur();
+  await inTab(page, "rbGel");
   await page.fill("#rbGel", "30"); await page.locator("#rbGel").blur();
   const fuel2 = await page.evaluate(() => ({ pace: window.__routeBuilder.pace, gel: window.__routeBuilder.gelG, time: document.getElementById("rbTime").textContent }));
   check(`${tag} pace and gel size change the plan`, fuel2.pace === 8.5 && fuel2.gel === 30, JSON.stringify(fuel2));
+  await inTab(page, "rbFuel");
   await page.locator("#rbFuel").scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${OUT}/fuel-${tag}.png` });
 
   // ----- save, reload, open, delete -----
+  await inTab(page, "rbName");
   await page.fill("#rbName", "Test loop downtown");
+  await inTab(page, "rbSave");
   await page.locator("#rbSave").click();
   await page.waitForTimeout(300);
+  await inTab(page, "rbSaved");
   check(`${tag} saved route appears in the list`, /Test loop downtown/.test(await page.locator("#rbSaved").innerText()));
   const keys = await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith("route-")));
   check(`${tag} stored as route-<id> (+ view/settings), no other key touched`, keys.some(k => !["route-view", "route-settings"].includes(k)), keys.join(","));
   await page.screenshot({ path: `${OUT}/saved-${tag}.png`, fullPage: true });
   await page.reload({ waitUntil: "networkidle" });
+  await inTab(page, "rbSaved");
   check(`${tag} saved route survives a reload`, /Test loop downtown/.test(await page.locator("#rbSaved").innerText()));
+  await inTab(page, "rbSaved");
   await page.locator("[data-open]").first().click();
   await page.waitForTimeout(800);
   const opened = await page.evaluate(() => ({ n: window.__routeBuilder.waypoints.length, dist: document.getElementById("rbDist").textContent, name: document.getElementById("rbName").value }));
@@ -183,6 +195,7 @@ for (const w of widths) {
   await page.waitForFunction(() => !/…/.test(document.getElementById("rbClimb").textContent), null, { timeout: 40000 }).catch(() => {});
 
   // ----- GPX -----
+  await inTab(page, "rbGpx");
   const [dl] = await Promise.all([page.waitForEvent("download", { timeout: 40000 }), page.locator("#rbGpx").click()]);
   const gpxPath = `${OUT}/export-${tag}.gpx`; await dl.saveAs(gpxPath);
   const gpx = fs.readFileSync(gpxPath, "utf8");
@@ -191,9 +204,11 @@ for (const w of widths) {
   check(`${tag} GPX description carries the climb as a range, not exact`, /climb \d+(–\d+)? ft, not exact/.test(gpx), (gpx.match(/<desc>[^<]*/) || [""])[0]);
 
   // ----- delete -----
+  await inTab(page, "rbSaved");
   await page.locator("[data-del]").first().click();
   await page.locator("dialog button.is-danger, dialog .sb-btn-danger").first().click().catch(async () => { await page.getByRole("button", { name: "Delete" }).last().click(); });
   await page.waitForTimeout(400);
+  await inTab(page, "rbSavedEmpty");
   check(`${tag} Delete removes it (empty state returns)`, !(await page.locator("#rbSavedEmpty").isHidden()));
 
   // ----- loop (fresh page) -----
@@ -208,21 +223,25 @@ for (const w of widths) {
   await page.screenshot({ path: `${OUT}/loop-${tag}.png` });
 
   // ----- a long run: over 150 min asks for a coach check -----
+  await inTab(page, "rbPace");
   await page.fill("#rbPace", "11:00"); await page.locator("#rbPace").blur();
   await page.fill("#rbLoopMiles", "15"); await page.locator("#rbMakeLoop").click();
   await page.waitForFunction(() => window.__routeBuilder.miles > 12, null, { timeout: 120000 }).catch(() => {});
   const lng = await page.evaluate(() => ({ miles: window.__routeBuilder.miles, warn: document.getElementById("rbFuelWarn").hidden, fuel: document.getElementById("rbFuel").innerText }));
   check(`${tag} over 150 min: coach-check warning and the 60-90 g band`, !lng.warn && /60–90 g/.test(lng.fuel), `${lng.miles.toFixed(1)} mi`);
+  await inTab(page, "rbFuel");
   await page.locator("#rbFuel").scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${OUT}/fuel-long-${tag}.png` });
   await page.waitForFunction(() => document.querySelectorAll("#rbProfile .rbp-band").length > 0, null, { timeout: 60000 }).catch(() => {});
   const bands = await page.evaluate(() => document.querySelectorAll("#rbProfile .rbp-band").length);
   check(`${tag} gel windows are plotted on the elevation profile`, bands >= 2, `${bands} windows`);
+  await inTab(page, "rbProfileWrap");
   await page.locator("#rbProfileWrap").scrollIntoViewIfNeeded();
   const pb = await page.locator("#rbProfile svg").boundingBox();
   if (pb) await page.mouse.move(pb.x + pb.width * 0.4, pb.y + pb.height * 0.5);
   await page.waitForTimeout(200);
   check(`${tag} hovering the profile shows mile and height`, /Mile \d/.test(await page.locator(".rbp-tip").innerText().catch(() => "")));
+  await inTab(page, "rbProfileWrap");
   await page.locator("#rbProfileWrap").screenshot({ path: `${OUT}/profile-${tag}.png` });
 
   // ----- routing down: straight lines, labelled (fresh page) -----

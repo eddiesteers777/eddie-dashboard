@@ -9,13 +9,10 @@
 .rb-page{ padding-bottom:48px; }
 .rb-page [hidden]{ display:none !important; }
 
-/* Phone: one column, in this order, so the numbers sit right under the map:
-   mode, loop, map, stats, note, tools, surfaces, cards. (The two columns dissolve.) */
+/* Phone: one column. The map first (search, route type and the three main numbers sit on it), then its tools,
+   then the tabs and the one panel they show. The two columns dissolve; from 900px they sit side by side. */
 .rb-layout{ display:flex; flex-direction:column; gap:12px; }
 .rb-mapcol, .rb-sidecol{ display:contents; }
-.rb-search{ order:1; } .rb-results{ order:2; } .rb-prefs-open, .rb-prefs{ order:3; } .rb-mode{ order:4; } .rb-loopbar{ order:5; }
-.rb-mapwrap{ order:6; } .rb-safebar{ order:7; } .rb-stats{ order:8; } .rb-note{ order:9; } .rb-tools{ order:10; } .rb-profile{ order:11; }
-.rb-strip{ order:12; } .rb-surface{ order:13; } .rb-card{ order:14; } .rb-credit{ order:15; }
 
 /* ---------- mode ---------- */
 .rb-mode{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
@@ -57,8 +54,9 @@
 .rb-pin-end{ background:#ecd6b0; }
 
 /* ---------- tools ---------- */
-.rb-tools{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
-.rb-tools .sb-btn{ min-height:44px; padding:0 6px; font-size:14px; }
+.rb-tools{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+.rb-tools::-webkit-scrollbar{ display:none; }
+.rb-tools .sb-btn{ flex:0 0 auto; min-height:44px; padding:0 16px; font-size:14px; }
 
 /* ---------- search ---------- */
 .rb-search{ display:flex; gap:8px; }
@@ -249,15 +247,15 @@ html.rb-sheet-open .eos-bottomnav{ display:none !important; } /* the sheet takes
 @media (max-width:640px){
     .rb-page .eos-today-phase{ display:none; }
     .rb-page .eos-today-hero{ margin-bottom:12px; }
+    .rb-hero p{ display:none; }
 }
 
 /* ---------- desktop ---------- */
 @media (min-width:900px){
     .rb-layout{ display:grid; grid-template-columns:minmax(0,1.4fr) minmax(320px,1fr); gap:24px; align-items:start; }
     .rb-mapcol, .rb-sidecol{ display:flex; flex-direction:column; gap:12px; min-width:0; }
-    .rb-stat{ padding:12px 14px; } .rb-stat strong{ font-size:22px; margin-top:4px; }
-    #rbMap{ height:clamp(460px, calc(100svh - 330px), 760px); }
-    .rb-tools{ grid-template-columns:repeat(4, 1fr); }
+    .rb-mapcol{ position:sticky; top:84px; }
+    #rbMap{ height:clamp(520px, calc(100svh - 230px), 820px); }
     /* Route options: a panel over the left side of the map, opened from the same button. */
     .rb-prefs{ position:absolute; left:10px; top:10px; bottom:10px; right:auto; width:min(320px, calc(100% - 20px)); z-index:1003;
         border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; transform:translateX(-110%); }
@@ -265,3 +263,91 @@ html.rb-sheet-open .eos-bottomnav{ display:none !important; } /* the sheet takes
 }
 @media (prefers-reduced-motion:reduce){ .rb-mode-btn, .rb-card > summary, .rb-prefs, .rb-globe, .rb-switch i, .rb-switch i::after{ transition:none; } }
 .rb-stat strong.is-wait{ font:500 14px/1.3 var(--font-body, inherit); color:var(--text-secondary); word-break:normal; overflow-wrap:normal; }
+
+
+/* ==========================================================================
+   LOOK (Eddie, 2026-11-01): the app's foggy blue with the lens, glass and bubble tokens (css/style.css), gold as
+   the accent only. B: a tall map with the search, route type and main numbers laid on it. C: Route / Safety /
+   Fuel / Save tabs under it, one panel at a time. The same page is the public free tool (html:not(.rb-app)).
+   ========================================================================== */
+.rb-mode, .rb-choice{ border-radius:18px; padding:4px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); }
+.rb-mode-btn, .rb-choice button{ border-radius:14px; }
+.rb-mode-btn.is-on, .rb-choice button.is-on{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.rb-search input{ border-radius:14px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); }
+.rb-search .sb-btn, .rb-prefs-open{ border-radius:14px; }
+.rb-prefs-open{ background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); }
+.rb-tools .sb-btn{ border-radius:14px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); box-shadow:var(--sb-glass-shadow); color:var(--text); }
+.rb-card, .rb-profile, .rb-strip, .rb-safebar{ border-radius:22px; background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.rb-card > summary{ min-height:54px; padding:0 20px; font:650 17px var(--font-body, inherit); }
+.rb-card-body{ padding:0 20px 20px; }
+.rb-card > summary::after{ color:var(--gold, var(--primary)); }
+.rb-field input{ border-radius:12px; }
+#rbSave{ border-radius:14px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); color:var(--on-primary); border:0; }
+#rbGpx{ border-radius:14px; }
+
+/* the map: tall, muted, with glass controls */
+.rb-mapwrap{ border-radius:22px; border:1px solid var(--sb-glass-border); box-shadow:0 30px 60px -30px rgba(0,0,0,.85); }
+#rbMap{ height:clamp(440px, 68svh, 720px); background:#1b2733; }
+.leaflet-tile-pane{ filter:invert(1) hue-rotate(185deg) saturate(.35) brightness(1.05) contrast(.88); }
+.rb-mapwrap .leaflet-bar{ border:1px solid rgba(236,230,212,.16) !important; border-radius:14px; overflow:hidden; box-shadow:0 8px 20px -8px rgba(0,0,0,.6); }
+.rb-mapwrap .leaflet-bar a{ background:rgba(14,22,30,.78) !important; color:var(--text) !important; border-bottom-color:rgba(236,230,212,.12) !important; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+.rb-mapwrap .leaflet-control-attribution{ background:rgba(14,22,30,.6) !important; color:rgba(236,230,212,.7) !important; border-radius:8px 0 0 0; }
+.rb-mapwrap .leaflet-control-attribution a{ color:rgba(236,230,212,.85) !important; }
+.rb-mapwrap .leaflet-top{ top:118px; }
+.rb-mapwrap .leaflet-bottom{ bottom:96px; }
+.leaflet-overlay-pane path[stroke="#1b4d36"]{ stroke:var(--gold-light, #E6CB8E); }
+.leaflet-overlay-pane path[stroke="#ffffff"]{ stroke:#0d151c; }
+.rb-pin-wrap .rb-pin-end{ color:#1b1608; }
+
+.rb-top{ position:absolute; z-index:800; left:10px; right:10px; top:10px; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.rb-top > *{ pointer-events:auto; }
+.rb-top .rb-search input, .rb-top .rb-mode{ background:rgba(14,22,30,.72); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-color:rgba(236,230,212,.16); }
+.rb-top .rb-search .sb-btn{ background:rgba(29,42,54,.9); border:1px solid rgba(236,230,212,.16); color:var(--text); }
+.rb-top .rb-mode{ align-self:flex-start; width:min(300px, 100%); }
+.rb-top .rb-mode-btn{ min-height:44px; font-size:14px; }
+.rb-top .rb-results{ position:absolute; left:0; right:0; top:52px; max-height:46svh; overflow:auto; z-index:5; background:rgba(14,22,30,.94); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border:1px solid rgba(236,230,212,.16); }
+.rb-top .rb-loopbar{ padding:10px; border-radius:16px; background:rgba(14,22,30,.82); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border:1px solid rgba(236,230,212,.16); }
+.rb-mapwrap .rb-safemap-btn{ top:auto !important; bottom:104px; border-radius:14px !important; background:rgba(14,22,30,.78) !important; border:1px solid rgba(236,230,212,.16) !important; color:var(--text) !important; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+.rb-hint{ bottom:96px !important; }
+
+/* the three main numbers, on the map */
+.rb-statwrap{ position:absolute; z-index:800; left:10px; right:10px; bottom:10px; }
+.rb-stats{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0; padding:4px 0; border-radius:20px; background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); overflow:hidden; }
+.rb-statwrap .rb-stats{ background:rgba(14,22,30,.8); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-color:rgba(236,230,212,.14); }
+.rb-stat{ border:0; border-radius:0; background:none; padding:6px 12px; }
+.rb-stat-label{ font:600 10.5px/1.3 var(--font-mono, monospace); letter-spacing:.12em; color:var(--muted); }
+.rb-stat strong{ font-family:var(--font-display, inherit); font-weight:800; text-transform:uppercase; font-size:20px; letter-spacing:.01em; }
+.rb-stat strong.is-wait{ font:500 13px/1.3 var(--font-body, inherit); text-transform:none; }
+.rb-stats-more .rb-stat{ padding:10px 12px; }
+@media (min-width:900px){ .rb-stat strong{ font-size:24px; } .rb-statwrap .rb-stat{ padding:8px 16px; } }
+
+/* tabs: a lens on the chosen one */
+.rb-tabs{ display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; padding:4px; border-radius:18px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); }
+.rb-tabs button{ min-height:44px; border:0; border-radius:14px; background:transparent; color:var(--text-secondary); font:650 14px var(--font-body, inherit); cursor:pointer; }
+.rb-tabs button.is-on{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
+.rb-tabs button:focus-visible{ outline:2px solid var(--primary-light); outline-offset:2px; }
+.rb-panel{ display:flex; flex-direction:column; gap:12px; min-width:0; }
+.rb-card[open] > summary, .rb-card > summary{ pointer-events:none; }
+.rb-card > summary::after{ content:none !important; }
+
+/* guests: saving needs an account */
+.rb-guest{ display:flex; flex-direction:column; gap:10px; padding:16px; border-radius:22px; background:rgba(210,173,98,.08); border:1px solid rgba(210,173,98,.32); }
+.rb-guest p{ margin:0; font-size:15px; line-height:1.45; color:var(--text); }
+.rb-guest .rb-small{ font-size:13px; color:var(--text-secondary); }
+.rb-guest .sb-btn{ align-self:flex-start; min-height:44px; display:inline-flex; align-items:center; text-decoration:none; }
+html.rb-app .rb-guest{ display:none; }
+html:not(.rb-app) #rbSave, html:not(.rb-app) #rbSavedCard, html:not(.rb-app) [data-save-only], html:not(.rb-app) [data-app-only]{ display:none !important; }
+
+/* public page */
+html:not(.rb-app) .rb-page{ width:min(1200px, 100% - 32px); margin:0 auto; padding:clamp(20px,4vw,48px) 0 40px; }
+.rb-hero{ margin-bottom:20px; }
+.rb-kicker{ font:600 11.5px/1.3 var(--font-mono, monospace); letter-spacing:.2em; text-transform:uppercase; color:var(--gold-light, #E6CB8E); }
+.rb-hero h1{ font-family:var(--font-display, inherit); font-weight:900; text-transform:uppercase; font-size:clamp(46px,8vw,84px); line-height:.9; margin:8px 0 10px; color:var(--text); }
+.rb-hero p{ max-width:58ch; margin:0; color:var(--text-secondary); font-size:16px; line-height:1.5; }
+html:not(.rb-app) .rb-card, html:not(.rb-app) .rb-profile, html:not(.rb-app) .rb-strip, html:not(.rb-app) .rb-safebar{ background:rgba(29,42,54,.55); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-top-color:rgba(214,185,142,.42); }
+html:not(.rb-app) .rb-mode-btn.is-on, html:not(.rb-app) .rb-choice button.is-on, html:not(.rb-app) .rb-tabs button.is-on{ background:linear-gradient(180deg,#E6CB8E,#D2AD62); color:#1b1608; }
+html:not(.rb-app) .rb-tabs{ background:rgba(10,16,22,.7); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+.rb-cta-wrap{ width:min(1200px, 100% - 32px); margin:0 auto 48px; }
+html.rb-app [data-public-only]{ display:none; }
+/* the hint sits left of Safe Map, not over it */
+.rb-hint{ left:12px !important; transform:none !important; max-width:calc(100% - 150px); text-align:left; border-radius:16px; }

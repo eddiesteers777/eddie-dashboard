@@ -316,6 +316,8 @@
     "js/routeStore.js",
     "js/routeSun.js",
     "js/routes.js",
+    "js/routesShell.js",
+    "js/routesTabs.js",
     "js/runCard.js",
     "js/runCardData.js",
     "js/runConditions.js",

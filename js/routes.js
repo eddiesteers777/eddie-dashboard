@@ -671,6 +671,7 @@ function segAt(p) {
 let strip = { select() {} };
 function selectSeg(i, { fromMap = false } = {}) {
     if (!S.safe || i < 0) return;
+    if (fromMap) document.dispatchEvent(new CustomEvent("rb:show-tab", { detail: "safety" }));
     S.sel = i;
     const s = S.safe.segments[i];
     selLayer.clearLayers();

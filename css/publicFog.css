@@ -14,6 +14,7 @@ html.pl-on[data-pl="soccer"]{--pl-a:#1a2a30;--pl-b:#2f4a52;--pl-c:rgba(170,206,2
 html.pl-on[data-pl="packages"]{--pl-a:#202b38;--pl-b:#38485c;--pl-c:rgba(196,212,230,.3);--pl-d:rgba(86,104,138,.4)}
 html.pl-on[data-pl="apply"]{--pl-a:#18232e;--pl-b:#2b3d4e;--pl-c:rgba(208,222,236,.4);--pl-d:rgba(76,104,132,.34)}
 html.pl-on[data-pl="contact"]{--pl-a:#1c2733;--pl-b:#31435a;--pl-c:rgba(190,206,228,.3);--pl-d:rgba(96,114,148,.36)}
+html.pl-on[data-pl="routes"]{--pl-a:#1a2632;--pl-b:#2e4254;--pl-c:rgba(196,214,230,.3);--pl-d:rgba(84,112,140,.38)}
 html.pl-on[data-pl="install"]{--pl-a:#1a2430;--pl-b:#2e3f56;--pl-c:rgba(190,208,232,.32);--pl-d:rgba(92,112,150,.36)}
 html.pl-on[data-pl="tools"]{--pl-a:#182830;--pl-b:#2a4450;--pl-c:rgba(170,210,220,.3);--pl-d:rgba(78,120,132,.38)}
 .pl-bg::after{opacity:.14}

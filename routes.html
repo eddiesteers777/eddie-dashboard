@@ -3,46 +3,72 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-    <title>Build a Route | Southbound Coaching</title>
+    <title>Free Running Route Builder | Southbound Coaching</title>
+    <meta name="description" content="Free running route builder from a coach: tap a map, snap to sidewalks and trails, see climb, safety and a fuel plan, export GPX for your watch. No account.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Free Running Route Builder | Southbound Coaching">
+    <meta property="og:description" content="Free running route builder from a coach: tap a map, snap to sidewalks and trails, see climb, safety and a fuel plan, export GPX for your watch. No account.">
+    <meta property="og:url" content="https://southboundcoaching.com/routes.html">
+    <link rel="canonical" href="https://southboundcoaching.com/routes.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
 
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/publicLook.css">
+    <link rel="stylesheet" href="css/publicFog.css">
     <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
     <link rel="stylesheet" href="css/routes.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("rb-app")}catch(e){}</script>
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="icons/favicon-32.png">
 
 </head>
 
-<body>
-    <div id="header"></div>
+<body class="pub-body">
+    <!-- Build a Route is a free tool: public (public header and footer, no sign-in) when signed out, inside the app's
+         own navigation when signed in (js/routesShell.js, the same switch Free tools and the 75-day tracker use).
+         Saving routes needs an account, so a guest sees a sign-in card in its place. -->
+    <div id="publicHeader"></div>
 
-    <main class="container rb-page">
+    <main class="rb-page" id="main">
 
-        <section class="eos-today-hero">
+        <section class="eos-today-hero" data-app-only>
             <div>
                 <div class="eos-today-eyebrow">Running</div>
                 <h1>Build a Route</h1>
                 <p class="eos-today-phase">Tap the map to drop points, drag to reshape. The route snaps to sidewalks and trails, and the fuel plan follows the distance.</p>
             </div>
         </section>
+        <section class="rb-hero" data-public-only>
+            <div class="rb-kicker">Free &middot; no account needed</div>
+            <h1>Build a route</h1>
+            <p>Tap the map to drop points. The route keeps to sidewalks and trails, and the fuel plan follows the distance.</p>
+        </section>
 
         <div class="rb-layout">
 
             <section class="rb-mapcol" aria-label="Map">
 
+                <button type="button" class="sb-btn sb-btn-secondary rb-prefs-open" id="rbPrefsOpen" aria-controls="rbPrefs" aria-expanded="false">Settings: <span id="rbPrefsWords">sidewalk-first · any surface · hills as they come</span></button>
+
+                <div class="rb-mapwrap">
+                    <div class="rb-top">
                 <form class="rb-search" id="rbSearch" role="search">
                     <label class="sr-only" for="rbSearchInput">Search for a place</label>
                     <input id="rbSearchInput" type="search" placeholder="Search a place or address" autocomplete="off" enterkeyhint="search">
                     <button type="submit" class="sb-btn sb-btn-secondary">Search</button>
                 </form>
                 <ul class="rb-results" id="rbResults" hidden></ul>
-
-                <button type="button" class="sb-btn sb-btn-secondary rb-prefs-open" id="rbPrefsOpen" aria-controls="rbPrefs" aria-expanded="false">Settings: <span id="rbPrefsWords">sidewalk-first · any surface · hills as they come</span></button>
 
 
                 <div class="rb-mode" role="group" aria-label="Route type">
@@ -57,8 +83,7 @@
                     </label>
                     <button type="button" class="sb-btn sb-btn-primary" id="rbMakeLoop">Make a loop</button>
                 </div>
-
-                <div class="rb-mapwrap">
+                    </div>
                     <div id="rbMap" role="application" aria-label="Route map. Tap to add a point, drag a point or the route line to reshape it, tap a point to remove it."></div>
                     <div id="rbGlobe" class="rb-globe" hidden aria-label="Globe view"></div>
                     <button type="button" class="rb-globe-back" id="rbGlobeBack" hidden>Back to map</button>
@@ -94,8 +119,16 @@
                                 <button type="button" class="rb-switch" data-layer="globe" aria-pressed="true"><span>Globe view</span><i aria-hidden="true"></i></button>
                             </div>
                         </div>
-                        <p class="rb-small">Saved to your account, so they follow you to your next route and your other devices. Signing out clears them from this device. The routing service can avoid hills but can't look for them, so there's no "seek hills".</p>
+                        <p class="rb-small" data-app-only>Saved to your account, so they follow you to your next route and your other devices. Signing out clears them from this device. The routing service can avoid hills but can't look for them, so there's no "seek hills".</p>
+                        <p class="rb-small" data-guest-only>Kept on this device. Sign in to keep them on every device. The routing service can avoid hills but can't look for them, so there's no "seek hills".</p>
                     </section>
+                    <div class="rb-statwrap">
+                        <div class="rb-stats" id="rbStats" aria-live="polite">
+                            <div class="rb-stat"><span class="rb-stat-label">Distance</span><strong id="rbDist">—</strong></div>
+                            <div class="rb-stat"><span class="rb-stat-label">Moving time</span><strong id="rbTime">—</strong></div>
+                            <div class="rb-stat"><span class="rb-stat-label">Gain</span><strong id="rbClimb">—</strong></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="rb-tools">
@@ -109,6 +142,47 @@
                     <button type="button" class="sb-btn sb-btn-secondary" id="rbGlobeBtn">Globe</button>
                 </div>
 
+                <p class="rb-note" id="rbNote" hidden></p>
+
+            </section>
+
+            <section class="rb-sidecol" aria-label="Route details">
+
+                <div class="rb-tabs" id="rbTabs" role="tablist" aria-label="Route details">
+                    <button type="button" role="tab" id="rbTab-route" aria-controls="rbPanel-route" aria-selected="true" data-tab="route">Route</button>
+                    <button type="button" role="tab" id="rbTab-safety" aria-controls="rbPanel-safety" aria-selected="false" data-tab="safety" tabindex="-1">Safety</button>
+                    <button type="button" role="tab" id="rbTab-fuel" aria-controls="rbPanel-fuel" aria-selected="false" data-tab="fuel" tabindex="-1">Fuel</button>
+                    <button type="button" role="tab" id="rbTab-save" aria-controls="rbPanel-save" aria-selected="false" data-tab="save" tabindex="-1">Save</button>
+                </div>
+
+                <div class="rb-panel" id="rbPanel-route" role="tabpanel" aria-labelledby="rbTab-route" data-panel="route">
+                    <div class="rb-stats rb-stats-more">
+                        <div class="rb-stat"><span class="rb-stat-label">Loss</span><strong id="rbLoss">—</strong></div>
+                        <div class="rb-stat"><span class="rb-stat-label">Path + sidewalk</span><strong id="rbAB">—</strong></div>
+                        <div class="rb-stat"><span class="rb-stat-label">Major road</span><strong id="rbX">—</strong></div>
+                    </div>
+                <figure class="rb-profile" id="rbProfileWrap">
+                    <figcaption><span>Elevation and fuel</span><span class="rb-small" id="rbProfileNote">Appears once the route has heights.</span></figcaption>
+                    <div class="rb-profile-plot" id="rbProfile"></div>
+                </figure>
+                <div class="rb-surface" id="rbSurface" hidden>
+                    <div class="rb-bar" id="rbBar" role="img" aria-label="Surface split"></div>
+                    <ul class="rb-legend" id="rbLegend"></ul>
+                </div>
+                <details class="rb-card" id="rbAboutCard" open>
+                    <summary>About this route</summary>
+                    <div class="rb-card-body">
+                        <ul class="rb-lines" id="rbExplain"><li class="rb-empty">Drop two points to see the route explained.</li></ul>
+                        <div class="rb-row">
+                            <button type="button" class="sb-btn sb-btn-secondary" id="rbOptimise" disabled>Sidewalk-first</button>
+                            <button type="button" class="sb-btn sb-btn-tertiary" id="rbRevert" hidden>Revert</button>
+                        </div>
+                        <p class="rb-small" id="rbOptimiseOut" aria-live="polite"></p>
+                    </div>
+                </details>
+                </div>
+
+                <div class="rb-panel" id="rbPanel-safety" role="tabpanel" aria-labelledby="rbTab-safety" data-panel="safety" hidden>
                 <section class="rb-safebar" id="rbSafeBar" aria-label="Safety rating" hidden>
                     <div class="rb-safe-head">
                         <span class="rb-safe-badge" id="rbSafeBadge"></span>
@@ -122,37 +196,11 @@
                     <div class="rb-why" id="rbWhy" aria-live="polite" hidden></div>
                     <p class="rb-small rb-safe-note" data-safety-note></p>
                 </section>
-
-                <figure class="rb-profile" id="rbProfileWrap">
-                    <figcaption><span>Elevation and fuel</span><span class="rb-small" id="rbProfileNote">Appears once the route has heights.</span></figcaption>
-                    <div class="rb-profile-plot" id="rbProfile"></div>
-                </figure>
-
                 <figure class="rb-strip" id="rbStripWrap" hidden>
                     <figcaption><span>Safety along the route</span><span class="rb-small" id="rbStripNote">Tap a stretch to see why.</span></figcaption>
                     <div class="rb-strip-plot" id="rbStrip"></div>
                     <ul class="rb-safe-legend" id="rbSafeLegend" aria-label="Safety colours"></ul>
                 </figure>
-
-            </section>
-
-            <section class="rb-sidecol" aria-label="Route details">
-
-                <div class="rb-stats" id="rbStats" aria-live="polite">
-                    <div class="rb-stat"><span class="rb-stat-label">Distance</span><strong id="rbDist">—</strong></div>
-                    <div class="rb-stat"><span class="rb-stat-label">Moving time</span><strong id="rbTime">—</strong></div>
-                    <div class="rb-stat"><span class="rb-stat-label">Gain</span><strong id="rbClimb">—</strong></div>
-                    <div class="rb-stat"><span class="rb-stat-label">Loss</span><strong id="rbLoss">—</strong></div>
-                    <div class="rb-stat"><span class="rb-stat-label">Path + sidewalk</span><strong id="rbAB">—</strong></div>
-                    <div class="rb-stat"><span class="rb-stat-label">Major road</span><strong id="rbX">—</strong></div>
-                </div>
-                <p class="rb-note" id="rbNote" hidden></p>
-
-                <div class="rb-surface" id="rbSurface" hidden>
-                    <div class="rb-bar" id="rbBar" role="img" aria-label="Surface split"></div>
-                    <ul class="rb-legend" id="rbLegend"></ul>
-                </div>
-
                 <details class="rb-card rb-safety-card" id="rbSafetyCard" open>
                     <summary>Safety</summary>
                     <div class="rb-card-body">
@@ -185,19 +233,9 @@
                         </div>
                     </div>
                 </details>
+                </div>
 
-                <details class="rb-card" id="rbAboutCard" open>
-                    <summary>About this route</summary>
-                    <div class="rb-card-body">
-                        <ul class="rb-lines" id="rbExplain"><li class="rb-empty">Drop two points to see the route explained.</li></ul>
-                        <div class="rb-row">
-                            <button type="button" class="sb-btn sb-btn-secondary" id="rbOptimise" disabled>Sidewalk-first</button>
-                            <button type="button" class="sb-btn sb-btn-tertiary" id="rbRevert" hidden>Revert</button>
-                        </div>
-                        <p class="rb-small" id="rbOptimiseOut" aria-live="polite"></p>
-                    </div>
-                </details>
-
+                <div class="rb-panel" id="rbPanel-fuel" role="tabpanel" aria-labelledby="rbTab-fuel" data-panel="fuel" hidden>
                 <details class="rb-card" id="rbFuelCard" open>
                     <summary>Fuel for this route</summary>
                     <div class="rb-card-body">
@@ -210,12 +248,14 @@
                         <a class="rb-link" href="fueling.html">Open the Fueling calculator</a>
                     </div>
                 </details>
+                </div>
 
+                <div class="rb-panel" id="rbPanel-save" role="tabpanel" aria-labelledby="rbTab-save" data-panel="save" hidden>
                 <details class="rb-card" open>
                     <summary>Save and export</summary>
                     <div class="rb-card-body">
-                        <label class="rb-field"><span>Route name</span><input id="rbName" type="text" maxlength="60" placeholder="Sunday long run" autocomplete="off"></label>
-                        <p class="rb-small">Visibility: private. Only you can see your routes.</p>
+                        <label class="rb-field" data-save-only><span>Route name</span><input id="rbName" type="text" maxlength="60" placeholder="Sunday long run" autocomplete="off"></label>
+                        <p class="rb-small" data-app-only>Visibility: private. Only you can see your routes.</p>
                         <div class="rb-row">
                             <button type="button" class="sb-btn sb-btn-primary" id="rbSave" disabled>Save route</button>
                             <button type="button" class="sb-btn sb-btn-secondary" id="rbGpx" disabled>Export GPX</button>
@@ -233,13 +273,19 @@
                     </div>
                 </details>
 
-                <details class="rb-card" open>
+                    <div class="rb-guest" data-guest-only>
+                        <p>Export GPX works without an account. Sign in to save routes and open them on any device.</p>
+                        <button type="button" class="sb-btn sb-btn-primary" id="rbSignIn">Sign in to save</button>
+                        <p class="rb-small">Free. Your saved routes stay private.</p>
+                    </div>
+                <details class="rb-card" id="rbSavedCard" open>
                     <summary>My Routes</summary>
                     <div class="rb-card-body">
                         <ul class="rb-saved" id="rbSaved"></ul>
                         <p class="rb-empty" id="rbSavedEmpty">No saved routes yet. Build one and tap Save route.</p>
                     </div>
                 </details>
+                </div>
 
                 <p class="rb-small rb-credit">Map © OpenStreetMap contributors. Routing by Valhalla (FOSSGIS). Path and road data from Overpass. Search by Nominatim. Globe by MapLibre. Points you place are sent to these free services; nothing else leaves your device.</p>
 
@@ -247,10 +293,39 @@
         </div>
     </main>
 
-    <script src="vendor/leaflet/leaflet.js"></script>
-    <script src="js/loadHeader.js"></script>
-    <script type="module" src="js/routes.js"></script>
-    <script src="js/registerSW.js"></script>
+    <section class="rb-cta" data-public-only>
+        <div class="rb-cta-wrap">
+            <div class="pub-cta-band">
+                <h2>Want training built around these?</h2>
+                <p>I write each athlete's week by hand and change it as it goes. Tell me what you're working toward.</p>
+                <div class="pub-cta-actions">
+                    <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+                    <a href="contact.html" class="pub-btn-secondary">Ask a question</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
+    <footer class="pub-footer" data-public-only>
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="tools.html#pace">Pace calculator</a><a href="tools.html#fueling">Fueling calculator</a><a href="routes.html">Route builder</a><a href="tools.html#playbook">Soccer Playbook</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script type="module" src="js/routesShell.js"></script>
+    <script type="module" src="js/routes.js"></script>
+    <script type="module" src="js/routesTabs.js"></script>
+    <script type="module" src="js/icons.js"></script>
 </body>
 </html>

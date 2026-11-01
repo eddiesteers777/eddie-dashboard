@@ -154,7 +154,7 @@ export const PAGE_REQUIRES = Object.freeze({
     "workout.html": "plan",
     "programs.html": "running,strength",
     "pace-calculator.html": "running",
-    "routes.html": "running",
+    // routes.html is not here: Build a Route is a free tool, open to everyone, signed in or not (2026-11-01).
     "schedule.html": "sessions",
     "homework.html": "homework",
     "checkin.html": "checkins",
