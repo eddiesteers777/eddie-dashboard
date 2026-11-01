@@ -1,4 +1,5 @@
 // Southbound Playbook: cloud sync for signed-in people. Guests never touch Firebase here.
+import { cachedRole } from "../role.js";
 // The work follows the account to other devices through users/{uid}/sync/playbook, the
 // owner-only sync area the app already uses (firestore.rules: match /users/{uid}/sync/{docId}).
 // Rules are in js/playbook/syncModel.js; this file is the browser side (storage, Firestore, status).
@@ -145,6 +146,9 @@ export async function afterClear() {
 }
 
 export const isSignedIn = () => Boolean(uid);
+// Coach-only tools (send to a client, assign homework). Clients and guests never see them; the
+// rules are the real gate, this only keeps buttons that would fail out of their way.
+export const isCoachUser = () => Boolean(uid) && cachedRole() === "coach";
 
 export async function startSync({ timeoutMs = 2500 } = {}) {
     show();

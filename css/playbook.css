@@ -657,3 +657,6 @@ html.sb-typing .rn-dock{display:none}
 .cd-row>.pb-btn{grid-column:1/-1;min-height:44px}
 .cd-phase{font:700 28px/1 var(--font-display);text-transform:uppercase;letter-spacing:.04em}
 .cd-phase[data-kind="rest"]{color:var(--sage,#A0BB9C)}
+.dr-new{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;margin:0 0 10px;border-radius:12px;border:1px dashed rgba(214,185,142,.5);background:rgba(214,185,142,.07)}
+.dr-new span{flex:1 1 180px}
+.dr-new .pb-btn{min-height:44px}

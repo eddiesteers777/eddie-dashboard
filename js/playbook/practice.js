@@ -6,7 +6,7 @@ import * as R from "./rosterModel.js";
 import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
 import { encodePayload, practicePayload } from "./shareModel.js";
 import { shareLink, sendToClient } from "./shareUi.js";
-import { isSignedIn } from "./cloud.js";
+import { isSignedIn, isCoachUser } from "./cloud.js";
 
 const DRILL_KEY = KEYS.drills, CUR_KEY = KEYS.practice, LIST_KEY = KEYS.practices, ID_KEY = KEYS.practiceId;
 const $ = id => document.getElementById(id);
@@ -139,7 +139,7 @@ function wire() {
         if (!pr.items.length) return toast("Build a practice first");
         shareLink(await encodePayload(practicePayload(pr, drills)), { title: pr.title || "Practice plan", text: "A practice plan from Southbound Playbook" }, toast);
     };
-    if (isSignedIn()) $("sendClient").hidden = false;
+    if (isCoachUser()) $("sendClient").hidden = false;
     $("sendClient").onclick = async () => {
         if (!pr.items.length) return toast("Build a practice first");
         sendToClient(await encodePayload(practicePayload(pr, drills)), { title: pr.title || "Practice plan" }, toast);

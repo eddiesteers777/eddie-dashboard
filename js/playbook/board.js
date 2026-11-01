@@ -7,7 +7,7 @@ import { C, HEADS, MARK_STYLE as STYLE } from "./theme.js";
 import * as Art from "./pitchArt.js";
 import { encodePayload, boardPayload } from "./shareModel.js";
 import { shareLink, sendToClient } from "./shareUi.js";
-import { isSignedIn } from "./cloud.js";
+import { isSignedIn, isCoachUser } from "./cloud.js";
 
 const KEY = KEYS.board;
 const LIB_KEY = KEYS.library;
@@ -435,7 +435,7 @@ function wire() {
     const dlg = $("exportDlg");
     $("export").onclick = () => dlg.showModal();
     $("expClose").onclick = () => dlg.close();
-    if (isSignedIn()) $("sendClient").hidden = false;
+    if (isCoachUser()) $("sendClient").hidden = false;
     $("sendClient").onclick = async () => sendToClient(await encodePayload(boardPayload(hist.present)), { title: hist.present.title }, toast);
     $("share").onclick = async () => shareLink(await encodePayload(boardPayload(hist.present)), { title: hist.present.title, text: "A play from Southbound Playbook" }, toast);
     $("expPng").onclick = async () => { try { await exportPng(); dlg.close(); toast("Image saved"); } catch { toast("Couldn't make the image"); } };

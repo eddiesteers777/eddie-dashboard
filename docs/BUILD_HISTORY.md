@@ -713,3 +713,6 @@ Eddie's picks: AD says no group skill work in Nov–Dec (so version B, condition
 
 ## 2026-11-01: Conditioning block and Day 1 checklist (soccer Phase F, step 2)
 Coach-set conditioning timer (own beeps, pause, saved on the device) and a one-tap Day 1 checklist that opens Run practice. Tested: 6 unit tests, full static suite, phone browser run (block saved after reload, timer counted down, pause held, Day 1 list opened with 8 items, no overflow or errors). Not tested: sound and vibration on a real iPhone.
+
+## 2026-11-01: Playbook fixes (coach-only buttons, new starter drills for returning devices)
+Tested: phone browser run (a client device hides "Send to client", a coach sees it; a returning device sees the banner once, Add works, it does not come back; a fresh device gets no banner). Static suite passes. Not done: the phone tab row already scrolls to the current tab (Phase B); the board name field size was not rechecked.

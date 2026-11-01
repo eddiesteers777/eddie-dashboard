@@ -3,7 +3,7 @@ import * as D from "./drillModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
 import { loadLibrary } from "./boardLibrary.js";
 import { boardThumb } from "./boardThumb.js";
-import { isSignedIn } from "./cloud.js";
+import { isSignedIn, isCoachUser } from "./cloud.js";
 import * as HW from "./drillHomework.js";
 import { addDays } from "../homeworkModel.js";
 import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
@@ -88,7 +88,7 @@ function showDetail(id) {
     const act = h("div", "dr-detail-actions");
     const btn = (label, cls, fn) => { const b = h("button", "pb-btn " + cls, label); b.type = "button"; b.onclick = () => fn(b); act.append(b); return b; };
     if (board) { const a = h("a", "pb-btn", "Open diagram on board"); a.href = "playbook-board.html?board=" + encodeURIComponent(board.id); act.append(a); }
-    if (isSignedIn()) btn("Assign as homework", "pb-primary", () => openAssign(d, board));
+    if (isCoachUser()) btn("Assign as homework", "pb-primary", () => openAssign(d, board));
     btn("Print", "", () => window.print());
     btn("Edit", "", () => { dlg.close(); openEditor(id); });
     btn("Copy", "", () => { const r = D.duplicateDrill(drills, id); write(r.list); dlg.close(); toast("Copy added"); });
@@ -206,8 +206,27 @@ function wire() {
     $("mSeeds").onclick = () => { const before = drills.length; write(D.mergeSeeds(drills, SEED_DRILLS)); $("moreDlg").close(); toast(drills.length > before ? `Added ${drills.length - before} starter drills` : "All starter drills are already here"); };
 }
 
+// A device that already has drills is offered starter drills added since it last looked, once,
+// without bringing back any it deleted: it compares counts, not names.
+function offerNewSeeds() {
+    try {
+        const total = SEED_DRILLS.length, seen = Number(localStorage.getItem(KEYS.seedsOffered));
+        const returning = Boolean(localStorage.getItem(KEY));
+        if (!returning || !seen) { localStorage.setItem(KEYS.seedsOffered, String(total)); return; }
+        if (seen >= total) return;
+        const box = h("div", "dr-new"); box.setAttribute("role", "status");
+        const add = h("button", "pb-btn pb-primary", "Add them"); add.type = "button";
+        const skip = h("button", "pb-btn", "Not now"); skip.type = "button";
+        const done = () => { try { localStorage.setItem(KEYS.seedsOffered, String(total)); } catch {} box.remove(); };
+        add.onclick = () => { const before = drills.length; write(D.mergeSeeds(drills, SEED_DRILLS)); done(); toast(`Added ${drills.length - before} starter drills`); };
+        skip.onclick = done;
+        box.append(h("span", "", `${total - seen} new starter drill${total - seen === 1 ? "" : "s"} since you last looked.`), add, skip);
+        $("topics").before(box);
+    } catch { /* storage unavailable: no banner */ }
+}
+
 (() => {
     migrateOldKeys(); applyTheme();
     drills = read();
-    wire(); render();
+    wire(); render(); offerNewSeeds();
 })();
