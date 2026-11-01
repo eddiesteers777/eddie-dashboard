@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Season Schedule | Southbound Playbook</title>
+
+    <meta name="description" content="Free soccer season schedule: games and practices on one week view, with kickoff, arrive time and your practice plans. No account needed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Season Schedule | Southbound Playbook">
+    <meta property="og:description" content="Free soccer season schedule: games and practices on one week view, with kickoff, arrive time and your practice plans. No account needed.">
+    <meta property="og:url" content="https://southboundcoaching.com/playbook-season.html">
+    <link rel="canonical" href="https://southboundcoaching.com/playbook-season.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/playbook.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("pb-app")}catch(e){}</script>
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body pb-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page pb-page" id="main">
+  <div class="pb-shell ss-shell" id="app">
+  <header class="pb-head">
+    <div class="pb-head-text">
+      <div class="pub-hero-kicker">Free tool &middot; Southbound Playbook</div>
+      <h1>Season</h1>
+      <span class="pb-sub" id="ssSub"></span>
+    </div>
+    <div class="pb-actions">
+      <button class="pb-btn pb-primary" id="ssAddGame" type="button">+ Game</button>
+      <button class="pb-btn" id="ssAddPrac" type="button">+ Practice</button>
+      <button class="pb-btn" id="ssRepeat" type="button">Repeat practices</button>
+    </div>
+  </header>
+  <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-season.html" class="pb-tab" aria-current="page">Season</a><a href="playbook-roster.html" class="pb-tab">Roster</a><a href="playbook-team.html" class="pb-tab">Team</a><a href="playbook-game.html" class="pb-tab">Game</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+  <section class="ss-empty" id="ssEmpty" hidden>
+    <h2>No season yet</h2>
+    <p>Add your first game or practice. Games drive the plan, so add those first.</p>
+    <div class="ss-empty-btns"><button class="pb-btn pb-primary" id="ssE1" type="button">Add a game</button><button class="pb-btn" id="ssE2" type="button">Add a practice</button><button class="pb-btn" id="ssE3" type="button">Repeat practices</button></div>
+  </section>
+  <section class="ss-body" id="ssBody" hidden>
+    <div class="ss-next" id="ssNext" hidden></div>
+    <div class="ss-weekbar"><button class="pb-btn" id="ssPrev" type="button" aria-label="Previous week">&lsaquo;</button><b id="ssRange"></b><button class="pb-btn" id="ssNextW" type="button" aria-label="Next week">&rsaquo;</button><button class="pb-btn" id="ssToday" type="button">Today</button></div>
+    <div class="ss-strip" id="ssStrip" role="tablist" aria-label="Days of the week"></div>
+    <div class="ss-day" id="ssDay"></div>
+  </section>
+
+  <dialog id="ssDlg" class="pb-dlg pb-dlg-wide">
+    <h2 id="ssDlgTitle">Add</h2>
+    <div class="ss-seg" id="ssKind" role="group" aria-label="Type"><button type="button" data-k="game" aria-pressed="true">Game</button><button type="button" data-k="practice" aria-pressed="false">Practice</button></div>
+    <label class="ss-f" id="fOpp">Opponent <input id="inOpp" maxlength="40" autocomplete="off"></label>
+    <label class="ss-f">Date <input id="inDate" type="date"></label>
+    <div class="ss-seg" id="ssSite" role="group" aria-label="Home or away"><button type="button" data-s="home" aria-pressed="false">Home</button><button type="button" data-s="away" aria-pressed="false">Away</button><button type="button" data-s="neutral" aria-pressed="false">Neutral</button></div>
+    <label class="ss-f"><span id="lblTime">Kickoff</span> <input id="inTime" type="time"></label>
+    <label class="ss-f" id="fArrive">Arrive <input id="inArrive" type="time"></label>
+    <label class="ss-f">Field or place <input id="inPlace" maxlength="40" autocomplete="off"></label>
+    <p class="pb-hint" id="ssErr" role="alert" hidden></p>
+    <div class="pb-dlg-foot"><button class="pb-btn pb-primary" id="ssSave" type="button">Save</button><button class="pb-btn" id="ssCancel" type="button">Cancel</button><button class="pb-btn" id="ssDelete" type="button" hidden>Delete</button></div>
+  </dialog>
+
+  <dialog id="ssRepDlg" class="pb-dlg pb-dlg-wide">
+    <h2>Repeat practices</h2>
+    <p class="pb-hint">Adds a practice on each chosen day. Days that already have one are skipped.</p>
+    <div class="ss-two"><label class="ss-f">From <input id="rpFrom" type="date"></label><label class="ss-f">To <input id="rpTo" type="date"></label></div>
+    <div class="ss-seg" id="rpDays" role="group" aria-label="Days"></div>
+    <label class="ss-f">Start time (optional) <input id="rpTime" type="time"></label>
+    <label class="ss-f">Place (optional) <input id="rpPlace" maxlength="40" autocomplete="off"></label>
+    <p class="pb-hint" id="rpErr" role="alert" hidden></p>
+    <div class="pb-dlg-foot"><button class="pb-btn pb-primary" id="rpGo" type="button">Add practices</button><button class="pb-btn" id="rpCancel" type="button">Cancel</button></div>
+  </dialog>
+
+  <dialog id="ssPlanDlg" class="pb-dlg pb-dlg-wide">
+    <h2>Pick a practice plan</h2>
+    <ul class="pb-list" id="ssPlanList"></ul>
+    <p class="pb-hint" id="ssPlanEmpty">No saved practices yet. Build one in the Practice planner and tap Save.</p>
+    <div class="pb-dlg-foot"><a class="pb-btn" href="playbook-practice.html">Open planner</a><button class="pb-btn" id="ssPlanClose" type="button">Close</button></div>
+  </dialog>
+  <div id="toast" class="pb-toast" role="status" aria-live="polite"></div>
+  </div>
+    </main>
+
+<footer class="pub-footer">
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="tools.html#pace">Pace calculator</a><a href="tools.html#playbook">Soccer Playbook</a><a href="tools.html#fueling">Fueling calculator</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/playbook/boot.js"></script>
+    <script type="module" src="js/playbook/season.js"></script>
+
+</body>
+
+</html>

@@ -17,6 +17,7 @@ const readRoster = () => { try { return R.parseRoster(localStorage.getItem(KEYS.
 
 let team = readTeam(), roster = readRoster();
 let date = T.todayKey(), period = 0;
+{ const d = new URLSearchParams(location.search).get("date"); if (/^\d{4}-\d{2}-\d{2}$/.test(d || "")) date = d; }
 const nameOf = rid => roster.find(p => p.id === rid)?.name || "";
 const numOf = rid => roster.find(p => p.id === rid)?.num;
 
@@ -29,7 +30,8 @@ function game() {
     if (s?.game) return s.game;
     const marks = s?.marks || {};
     const squad = roster.filter(p => (Object.keys(marks).length ? marks[p.id] === "here" || marks[p.id] === "late" : p.here)).map(p => p.id);
-    return G.setSquad(G.newGame(), squad);
+    const base = G.setSquad(G.newGame(), squad);
+    return s?.opp ? G.setOpponent(base, s.opp) : base;
 }
 function save(next) {
     const o = T.openSession(team, date, "game");

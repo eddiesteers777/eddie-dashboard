@@ -201,6 +201,21 @@ export function suggestDuty(team, sid, roster, { keep = false } = {}) {
 }
 
 // ---- save / load ----
+
+// ---- season schedule details (optional on any session; see seasonModel.js) ----
+export const SITES = Object.freeze(["home", "away", "neutral"]);
+const isTime = t => typeof t === "string" && /^([01]?\d|2[0-3]):[0-5]\d$/.test(t);
+export function cleanSchedule(s) {
+    const out = {};
+    if (isTime(s?.time)) out.time = s.time;
+    if (isTime(s?.arrive)) out.arrive = s.arrive;
+    if (SITES.includes(s?.site)) out.site = s.site;
+    const place = str(s?.place, 40); if (place) out.place = place;
+    if (s?.kind === "game") { const opp = str(s?.opp, 40); if (opp) out.opp = opp; }
+    if (typeof s?.planId === "string" && s.planId) out.planId = s.planId.slice(0, 40);
+    return out;
+}
+
 export const serializeTeam = team => JSON.stringify({ app: "playbook-team", v: 1, ...team });
 
 export function parseTeam(text) {
@@ -228,6 +243,7 @@ export function parseTeam(text) {
         const row = { id, date: s.date, kind: s.kind, label: str(s.label, 40), marks, duty, captain: typeof s.captain === "string" ? s.captain.slice(0, 20) : "" };
         const game = s.kind === "game" ? parseGame(s.game) : null;
         if (game) row.game = game;
+        Object.assign(row, cleanSchedule(s));
         sessions.push(row);
     }
     const ids = new Set(sessions.map(s => s.id));

@@ -118,8 +118,19 @@ function openMine() {
 }
 
 function init() {
+    // Coming from the Season page: run that saved practice from the start.
+    const want = new URLSearchParams(location.search).get("plan");
+    if (want) {
+        try {
+            const hit = P.parsePracticeList(localStorage.getItem(KEYS.practices) || "").find(p => p.id === want);
+            const r = hit ? planFrom(hit.practice, loadDrills()) : null;
+            if (r && r.items.length) { run = r; save(); } else toast("That plan has no drills");
+        } catch {}
+        try { history.replaceState(null, "", "playbook-run.html"); } catch {}
+    }
     let saved = null; try { saved = R.parseRun(localStorage.getItem(KEYS.run) || ""); } catch {}
-    if (saved) run = saved;
+    if (run) { /* started from the Season page */ }
+    else if (saved) run = saved;
     else {
         let pr = null; try { pr = P.parsePractice(JSON.parse(localStorage.getItem(KEYS.practice) || "null")); } catch {}
         const r = pr ? planFrom(pr, loadDrills()) : null;
