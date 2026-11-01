@@ -190,3 +190,21 @@ html.al-on .al-bg.al-hero-art .al-cmp{--s:calc(var(--hs)*.82);top:6%;right:9%;op
 /* Habits: the page rings ease to the real progress (js/habits.js sets it). Reduced motion: they just jump. */
 .al-rg .rg{ transition:stroke-dashoffset .3s ease-out; }
 @media (prefers-reduced-motion:reduce){ .al-rg .rg{ transition:none; } }
+
+/* Section headings and the More page groups (Eddie, 2026-11-01, "B"): so sections stand apart.
+   Headings use the display font with a short gold bar; More groups sit on a darker panel with a coloured rail
+   (gold, mist, sage, clay, repeating). Rows are separate chips so a hidden row never breaks the corners. */
+html.al-on .eos-today-card-header h2{font:400 26px/1 var(--font-display);letter-spacing:.03em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+html.al-on .eos-today-card-header h2::before{content:"";flex:0 0 4px;height:22px;border-radius:2px;background:var(--gold)}
+html.al-on .more-page .more-list{gap:26px}
+html.al-on .more-page .more-group{border-top:0;padding:0;margin:0;gap:2px;--rail:var(--gold)}
+html.al-on .more-page .more-group:nth-child(4n+2){--rail:#9fc0dc}
+html.al-on .more-page .more-group:nth-child(4n+3){--rail:var(--sage)}
+html.al-on .more-page .more-group:nth-child(4n+4){--rail:#d19a7a}
+html.al-on .more-page .more-group-title{font:400 28px/1 var(--font-display);letter-spacing:.03em;text-transform:uppercase;color:var(--text);margin:0 0 10px;display:flex;align-items:center;gap:10px}
+html.al-on .more-page .more-group-title::before{content:"";flex:0 0 4px;height:24px;border-radius:2px;background:var(--rail)}
+html.al-on .more-page .more-row{background:rgba(10,18,26,.5);border:0;border-left:3px solid var(--rail);border-radius:6px;padding:12px 14px;min-height:60px}
+html.al-on .more-page .more-row:last-child{border-bottom:0}
+html.al-on .more-page .more-row:hover,html.al-on .more-page .more-row:focus-visible{background:rgba(24,38,52,.7)}
+html.al-on .more-page .more-row-icon{background:rgba(214,228,240,.08);border:0}
+html.al-on .more-page .eos-more-account{background:rgba(10,18,26,.5);border:0;border-left:3px solid var(--gold);border-radius:6px;padding:16px;margin-bottom:26px}
