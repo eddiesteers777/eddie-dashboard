@@ -776,6 +776,37 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Waitlist for a full session date (Phase D, js/scheduling.js). A client
+    // asks to be told when a spot opens; it books nothing. The id pins the
+    // coach, client, time and date so nobody can write for someone else, and
+    // each person can hold only one entry per date.
+    match /bookingWaitlist/{waitId} {
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.coachUid
+            || request.auth.uid == resource.data.clientUid);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["coachUid", "clientUid", "clientName", "slotId", "date", "startTime", "label", "createdAt"])
+        && request.resource.data.clientUid == request.auth.uid
+        && request.resource.data.coachUid is string
+        && request.resource.data.slotId is string && request.resource.data.slotId.size() > 0 && request.resource.data.slotId.size() <= 60
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && waitId == request.resource.data.coachUid + "_" + request.auth.uid + "_" + request.resource.data.slotId + "_" + request.resource.data.date
+        && request.resource.data.clientName is string && request.resource.data.clientName.size() <= 80
+        && request.resource.data.startTime is string && request.resource.data.startTime.size() <= 5
+        && request.resource.data.label is string && request.resource.data.label.size() <= 80
+        && request.resource.data.createdAt == request.time
+        && linked(request.resource.data.coachUid, request.auth.uid)
+        && get(profilePath(request.auth.uid)).data.get("status", "") == "active"
+        && get(profilePath(request.auth.uid)).data.get("services", []).hasAny(["soccer_1on1", "soccer_group"]);
+
+      allow update: if false;
+      // The client leaves the list; the coach clears it once a spot is handled.
+      allow delete: if signedIn()
+        && (request.auth.uid == resource.data.clientUid
+            || request.auth.uid == resource.data.coachUid);
+    }
+
     // A practice plan the coach attaches to one session (one open time on one
     // date), js/sessionPlans.js. Every client booked on that date reads it
     // (clientUids), so it holds only what players may see: drill names,

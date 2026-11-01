@@ -143,6 +143,23 @@
                             <button type="button" class="st-btn" id="savePaymentNoteBtn">Save</button>
                         </div>
 
+                        <!-- Cancel notice and booking link (soccer Phase D) -->
+                        <div class="st-row st-row-stack" id="cancelNoticeCard">
+                            <div class="st-row-text">
+                                <strong>Cancel notice</strong>
+                                <p>How many hours before a session a client should cancel. Clients see it when they book and get a warning if they cancel inside it. It never blocks them. Leave it at 0 for no rule.</p>
+                            </div>
+                            <input type="number" id="cancelNotice" class="st-input" min="0" max="168" step="1" inputmode="numeric" placeholder="0" aria-label="Cancel notice in hours">
+                            <button type="button" class="st-btn" id="saveCancelNoticeBtn">Save</button>
+                        </div>
+                        <div class="st-row st-row-stack" id="bookingLinkCard">
+                            <div class="st-row-text">
+                                <strong>Link for new players and parents</strong>
+                                <p>Sends them to the Apply page, where they ask to start. You approve every one.</p>
+                            </div>
+                            <button type="button" class="st-btn" id="copyBookingLinkBtn">Copy link</button>
+                        </div>
+
                         <!-- The USDA key is a developer-style setting -->
                         <div class="st-row st-row-stack">
                             <div class="st-row-text">

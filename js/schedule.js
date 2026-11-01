@@ -16,10 +16,11 @@ import {
     getCoachAvailability, addAvailabilitySlot, removeAvailabilitySlot, toggleAvailabilitySlot,
     addBlackoutDate, removeBlackoutDate,
     generateWeeklyDates, requestBooking, listMyBookingRequests, listRequestsForMyClients,
-    respondToRequest, cancelBookingRequest, syncSlotBookings
+    respondToRequest, cancelBookingRequest, syncSlotBookings,
+    joinWaitlist, leaveWaitlist, listMyWaitlist, listWaitlistForCoach
 } from "./scheduling.js";
 import { bookedCounts, takenDates, nextOpenDate } from "./slotBookings.js";
-import { datedTimes, daySummaries, groupByPart, firstDayWithOpen, matchesKind, usualSlot, isGroup, KINDS } from "./soccerBooking.js";
+import { datedTimes, daySummaries, groupByPart, firstDayWithOpen, matchesKind, usualSlot, isGroup, isLateCancel, KINDS } from "./soccerBooking.js";
 import { listMyHomework } from "./homework.js";
 import { sortForClient, progress as hwProgress } from "./homeworkModel.js";
 import { can } from "./navAccess.js";
@@ -323,8 +324,28 @@ blackoutForm.addEventListener("submit", async event => {
 
 // ---- Coach: requests inbox ----
 
+async function refreshWaitlist() {
+    const wrap = document.getElementById("waitlistWrap");
+    const list = document.getElementById("waitlistList");
+    if (!wrap || !list) return;
+    let items = [];
+    try { items = await listWaitlistForCoach(); } catch (error) { console.warn("Southbound: couldn't load the waitlist.", error); }
+    const today = localToday();
+    items = items.filter(w => w.date >= today);
+    wrap.hidden = !items.length;
+    document.getElementById("waitlistCount").textContent = items.length ? `(${items.length})` : "";
+    list.innerHTML = items.map(w => `<div class="sched-wait" data-id="${escapeHtml(w.id)}"><div class="sched-wait-text"><strong>${escapeHtml(w.clientName || "Client")}</strong><span>${escapeHtml(formatDateShort(w.date))} \u00b7 ${escapeHtml(formatTime(w.startTime))}${w.label ? ` \u00b7 ${escapeHtml(w.label)}` : ""}</span></div><button type="button" class="sb-btn sb-btn-secondary" data-action="clear-wait">Clear</button></div>`).join("");
+    list.querySelectorAll('[data-action="clear-wait"]').forEach(btn => btn.addEventListener("click", async () => {
+        const id = btn.closest("[data-id]")?.dataset.id;
+        if (!id) return;
+        try { await leaveWaitlist(id); } catch (error) { toast(friendlyError(error, "clear that"), "error"); return; }
+        refreshWaitlist();
+    }));
+}
+
 async function refreshRequests() {
     if (!currentUser) return;
+    refreshWaitlist();
     const all = await listRequestsForMyClients();
     coachWeek.requests = all;
     renderCoachWeek();
@@ -469,7 +490,7 @@ coachSelect.addEventListener("change", () => {
 });
 
 // ---- Booking: usual time, day strip, one day's times ----
-const bookUi = { kind: "all", day: "", coach: null, avail: null, mine: [] };
+const bookUi = { kind: "all", day: "", coach: null, avail: null, mine: [], wait: [] };
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const dayEl = id => document.getElementById(id);
 
@@ -478,10 +499,12 @@ async function refreshAvailableSlots() {
     const coach = myCoaches.find(c => c.coachUid === selectedCoachUid);
     coachOneLine.hidden = myCoaches.length !== 1;
     coachOneLine.textContent = `Open times with ${coach?.coachName || "your coach"}.`;
-    const [avail, mine] = await Promise.all([
+    const [avail, mine, wait] = await Promise.all([
         getCoachAvailability(selectedCoachUid),
-        listMyBookingRequests().catch(() => [])
+        listMyBookingRequests().catch(() => []),
+        listMyWaitlist().catch(() => [])
     ]);
+    bookUi.wait = wait.filter(w => w.coachUid === selectedCoachUid);
     bookUi.coach = coach;
     bookUi.avail = avail;
     bookUi.mine = mine.filter(r => r.coachUid === selectedCoachUid);
@@ -493,8 +516,37 @@ function bookTimes() {
     const now = new Date();
     return datedTimes({
         slots: bookUi.avail.slots, fullDates: bookUi.avail.fullDates, bookedCounts: bookUi.avail.bookedCounts,
-        mine: bookUi.mine, today: localToday(), nowHHMM: `${now.getHours()}:${now.getMinutes()}`
+        mine: bookUi.mine, waiting: bookUi.wait, today: localToday(), nowHHMM: `${now.getHours()}:${now.getMinutes()}`
     });
+}
+
+// A full date: the client can ask to be told if a spot opens. It books
+// nothing; the coach sees the list and approves a fresh request.
+async function askWaitlist(time) {
+    const label = `${formatDateShort(time.date)} \u00b7 ${formatTime(time.slot.startTime)}`;
+    if (!(await sbConfirm(`${label} is full. Your coach will see you're waiting. If a spot opens, they'll let you know and you can book it. Nothing is booked for you.`, { title: "Join the waitlist?", confirmLabel: "Join waitlist", cancelLabel: "Not now" }))) return;
+    try {
+        await joinWaitlist({ coachUid: bookUi.coach.coachUid, slot: time.slot, date: time.date });
+        bookUi.wait = (await listMyWaitlist()).filter(w => w.coachUid === bookUi.coach.coachUid);
+        toast("You're on the waitlist.");
+    } catch (error) {
+        toast(friendlyError(error, "join the waitlist"), "error");
+    }
+    renderBook();
+}
+
+async function dropWaitlist(time) {
+    const entry = bookUi.wait.find(w => w.slotId === time.slot.id && w.date === time.date);
+    if (!entry) return;
+    if (!(await sbConfirm("Your coach won't be told about this time any more.", { title: "Leave the waitlist?", confirmLabel: "Leave", cancelLabel: "Stay on it", danger: true }))) return;
+    try {
+        await leaveWaitlist(entry.id);
+        bookUi.wait = bookUi.wait.filter(w => w.id !== entry.id);
+        toast("Removed from the waitlist.");
+    } catch (error) {
+        toast(friendlyError(error, "leave the waitlist"), "error");
+    }
+    renderBook();
 }
 
 function openFor(time) {
@@ -518,6 +570,9 @@ function renderBook() {
     dayEl("reschedNote").hidden = !rescheduling;
     dayEl("reschedNote").textContent = rescheduling ? `Moving your ${rescheduling} session. Pick a new time.` : "";
     dayEl("bookCount").textContent = `${openCount} open \u00b7 next 2 weeks`;
+    const hrs = avail.cancelNoticeHours || 0;
+    dayEl("noticeNote").hidden = !hrs;
+    dayEl("noticeNote").textContent = hrs ? `Please cancel at least ${hrs} hour${hrs === 1 ? "" : "s"} before a session.` : "";
 
     // Your usual: the weekly time booked most, one tap.
     const usual = usualSlot(bookUi.mine, slots);
@@ -533,16 +588,16 @@ function renderBook() {
 
     dayEl("dayStrip").innerHTML = days.map((d, i) => {
         const dt = new Date(`${d.date}T00:00:00`);
-        const note = d.mine ? "Yours" : d.open ? `${d.open} open` : "None";
-        return `<button type="button" class="sb-day${d.date === bookUi.day ? " on" : ""}${!d.open && !d.mine ? " none" : ""}" data-day="${d.date}" aria-pressed="${d.date === bookUi.day}"><span>${i === 0 ? "Today" : WEEKDAY[dt.getDay()]}</span><b>${dt.getDate()}</b><small>${note}</small>${d.mine ? `<i class="sb-dot"></i>` : ""}</button>`;
+        const note = d.mine ? "Yours" : d.open ? `${d.open} open` : d.full ? "Full" : "None";
+        return `<button type="button" class="sb-day${d.date === bookUi.day ? " on" : ""}${!d.open && !d.mine && !d.full ? " none" : ""}" data-day="${d.date}" aria-pressed="${d.date === bookUi.day}"><span>${i === 0 ? "Today" : WEEKDAY[dt.getDay()]}</span><b>${dt.getDate()}</b><small>${note}</small>${d.mine ? `<i class="sb-dot"></i>` : ""}</button>`;
     }).join("");
 
     const list = times.filter(t => t.date === bookUi.day && matchesKind(t, bookUi.kind));
     const title = new Date(`${bookUi.day}T00:00:00`).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
     dayEl("dayTimes").innerHTML = `<div class="sb-day-title">${escapeHtml(title)}</div>` + (list.length
         ? groupByPart(list).map(g => `<div class="sb-tg"><span class="sb-kick">${g.part}</span><div class="sb-tg-grid">${g.times.map(t => {
-            const sub = t.state === "full" ? "Full" : t.state === "mine" ? "Yours" : isGroup(t.slot) ? `Group \u00b7 ${t.left} left` : (t.slot.label ? escapeHtml(t.slot.label) : "1-on-1");
-            return `<button type="button" class="sb-slot${isGroup(t.slot) ? " grp" : ""}${t.state !== "open" ? ` is-${t.state}` : ""}" data-key="${escapeHtml(t.key)}"${t.state !== "open" ? " disabled" : ""}><b>${formatTime(t.slot.startTime)}</b><span>${sub}</span></button>`;
+            const sub = t.state === "full" ? "Full \u00b7 join waitlist" : t.state === "waiting" ? "On waitlist" : t.state === "mine" ? "Yours" : isGroup(t.slot) ? `Group \u00b7 ${t.left} left` : (t.slot.label ? escapeHtml(t.slot.label) : "1-on-1");
+            return `<button type="button" class="sb-slot${isGroup(t.slot) ? " grp" : ""}${t.state !== "open" ? ` is-${t.state}` : ""}" data-key="${escapeHtml(t.key)}"${t.state === "mine" ? " disabled" : ""}><b>${formatTime(t.slot.startTime)}</b><span>${sub}</span></button>`;
         }).join("")}</div></div>`).join("")
         : `<p class="clients-card-note">Nothing on this day. Try another.</p>`);
     hydrateIcons();
@@ -564,7 +619,10 @@ dayEl("dayTimes").addEventListener("click", event => {
     const btn = event.target.closest("[data-key]");
     if (!btn || btn.disabled) return;
     const time = bookTimes().find(t => t.key === btn.dataset.key);
-    if (time) openFor(time);
+    if (!time) return;
+    if (time.state === "full") return askWaitlist(time);
+    if (time.state === "waiting") return dropWaitlist(time);
+    openFor(time);
 });
 
 // ---- Next session with its homework, and the homework list ----
@@ -623,7 +681,9 @@ async function rescheduleSession(s) {
         if (await sbConfirm(`${label} is part of a weekly series. Message your coach and they'll move that week.`, { title: "Move one week?", confirmLabel: "Message coach", cancelLabel: "Not now" })) window.location.href = "messages.html";
         return;
     }
-    if (!(await sbConfirm(`${label} will be cancelled and your coach told. Next, pick the new time below.`, { title: "Reschedule this session?", confirmLabel: "Cancel it and pick a time", cancelLabel: "Keep it", danger: true }))) return;
+    const late = isLateCancel(s.date, s.startTime, bookUi.avail?.cancelNoticeHours);
+    const lateNote = late ? ` This is inside your coach's ${bookUi.avail.cancelNoticeHours}-hour notice, so they may count it as a late cancel.` : "";
+    if (!(await sbConfirm(`${label} will be cancelled and your coach told.${lateNote} Next, pick the new time below.`, { title: "Reschedule this session?", confirmLabel: "Cancel it and pick a time", cancelLabel: "Keep it", danger: true }))) return;
     try {
         await cancelBookingRequest(req.id);
     } catch (error) {
