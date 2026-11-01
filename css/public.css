@@ -1251,6 +1251,15 @@ body.pub-body{ padding-left:0; }
 .pub-stage-form-head h1{ font-family:var(--font-display); font-weight:900; text-transform:uppercase; line-height:.9; font-size:clamp(48px,7vw,104px); margin:0; text-wrap:balance; }
 .pub-stage-form-head p{ color:var(--text-secondary); font-size:18px; line-height:1.5; max-width:30em; margin:16px auto 0; }
 .pub-stage-form .pub-apply-foot,.pub-stage-form .pub-contact-alt{ text-align:center; margin-top:36px; }
+/* Contact page: phone and email above the form */
+.pub-contact-direct{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 0 14px; }
+.pub-contact-direct-link{ display:flex; flex-direction:column; gap:4px; min-height:44px; padding:14px 16px; border:1px solid color-mix(in srgb, var(--primary) 40%, transparent); border-radius:var(--radius-pill); background:color-mix(in srgb, var(--surface) 70%, transparent); color:var(--text); text-decoration:none; text-align:center; transition:border-color .2s, background .2s; }
+.pub-contact-direct-link:hover,.pub-contact-direct-link:focus-visible{ border-color:var(--primary); background:color-mix(in srgb, var(--surface-light) 80%, transparent); }
+.pub-contact-direct-link:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+.pub-contact-direct-label{ font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--primary); }
+.pub-contact-direct-value{ font-size:17px; font-weight:600; overflow-wrap:anywhere; }
+.pub-contact-direct-or{ text-align:center; color:var(--text-secondary); font-size:14px; margin:0 0 22px; }
+@media(max-width:600px){ .pub-contact-direct{ grid-template-columns:1fr; } }
 
 /* Apply: the guided card */
 .pub-apply-guide{ max-width:none; margin:0; }
