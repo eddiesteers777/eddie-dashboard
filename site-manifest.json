@@ -211,6 +211,7 @@
     "js/homeworkClient.js",
     "js/homeworkCoach.js",
     "js/homeworkModel.js",
+    "js/homeworkQuality.js",
     "js/homeworkView.js",
     "js/hrZones.js",
     "js/hrZonesTool.js",
