@@ -3,6 +3,9 @@ import "./shell.js";
 import * as T from "./teamModel.js";
 import * as S from "./seasonModel.js";
 import * as P from "./practiceModel.js";
+import * as D from "./drillModel.js";
+import { SEED_DRILLS } from "./drillSeed.js";
+import * as Rules from "./seasonRules.js";
 import { KEYS } from "./store.js";
 
 const $ = id => document.getElementById(id);
@@ -22,6 +25,33 @@ function save(next) {
     render();
 }
 const scheduled = () => team.sessions.some(s => s.date >= today && s.kind !== "other") || team.sessions.some(s => s.opp || s.time || s.planId);
+
+const sugs = () => Rules.suggestions(team, today);
+function loadDrills() {
+    try { const l = D.parseDrills(localStorage.getItem(KEYS.drills) || ""); if (l) return l; } catch {}
+    return D.mergeSeeds([], SEED_DRILLS);
+}
+function sugRow(sg) {
+    const r = h("div", "ss-sug"), t = h("div", "ss-sug-t");
+    t.append(h("span", "ss-k", sg.action ? "Suggested, not applied" : "Heads up"), h("p", "", sg.text));
+    const b = h("div", "ss-btns");
+    const add = (label, fn, cls = "") => { const x = h("button", "pb-btn " + cls, label); x.type = "button"; x.onclick = fn; b.append(x); };
+    if (sg.action) { add("Approve", () => approve(sg), "pb-primary"); add("Edit", () => { const s = team.sessions.find(x => x.id === sg.sid); if (s) openPlans(s); }); add("Skip", () => save(S.handle(team, sg.id))); }
+    else add("Got it", () => save(S.handle(team, sg.id)));
+    t.append(b); r.append(t); return r;
+}
+// Approve builds a NEW saved practice (the original plan is never changed) and attaches it.
+function approve(sg) {
+    const s = team.sessions.find(x => x.id === sg.sid); if (!s) return;
+    const list = plans(), base = (s.planId && list.find(p => p.id === s.planId)?.practice) || P.newPractice();
+    const light = sg.action === "light";
+    const r = P.suggestPlan({ drills: loadDrills(), total: base.total, players: base.players, equipment: base.equipment, focus: base.focus, gameInDays: light ? 1 : 0, recovery: !light, variant: base.variant });
+    if (!r.items.length) { toast("No drills fit for that. The plan was left as it is."); return; }
+    const practice = { ...base, title: `${base.title || "Practice"} (${light ? "light" : "recovery"})`.slice(0, 60), date: s.date, items: r.items, gameInDays: light ? 1 : 0 };
+    const saved = P.savePractice(list, practice, null);
+    try { localStorage.setItem(KEYS.practices, P.serializePracticeList(saved.list)); } catch { toast("Couldn't save on this device"); return; }
+    save(S.handle(S.setPlan(team, s.id, saved.id), sg.id)); toast("Plan built. Your original plan is unchanged.");
+}
 
 function renderNext() {
     const box = $("ssNext"), n = S.nextGame(team, today);
@@ -44,8 +74,9 @@ function renderStrip(monday) {
     for (const d of S.weekDays(team, monday)) {
         const b = h("button", "ss-tile" + (d.date === selected ? " sel" : "") + (d.date === today ? " today" : "") + (d.items.some(S.isGame) ? " game" : "")); b.type = "button";
         b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(d.date === selected));
-        const game = d.items.some(S.isGame), prac = d.items.some(i => i.kind === "practice");
+        const game = d.items.some(S.isGame), prac = d.items.some(i => i.kind === "practice" && !i.cancelled);
         b.setAttribute("aria-label", `${fmtDate(d.date, { weekday: "long", month: "long", day: "numeric" })}${game ? ", game" : ""}${prac ? ", practice" : ""}`);
+        if (Rules.forDay(sugs(), d.date).length) b.classList.add("sug");
         b.append(h("small", "", fmtDate(d.date, { weekday: "narrow" })), h("b", "", String(Number(d.date.slice(8)))), h("em", "", game ? "GAME" : prac ? "•" : ""));
         b.onclick = () => { selected = d.date; render(); };
         strip.append(b);
@@ -57,6 +88,7 @@ function itemCard(s) {
     card.append(h("div", "ss-k", `${isG ? "Game" : "Practice"} · ${fmtDate(s.date, { weekday: "short", month: "short", day: "numeric" })}`));
     card.append(h("h3", "", isG ? (S.opponent(s) ? "vs " + S.opponent(s) : "Game") : "Practice"));
     const dl = h("dl"); const row = (k, v) => { if (v) { dl.append(h("dt", "", k), h("dd", "", v)); } };
+    if (s.cancelled) row("Status", "Cancelled. It is not made up later.");
     row(isG ? "Kickoff" : "Start", fmtTime(s.time)); row("Where", [SITE[s.site], s.place].filter(Boolean).join(" · ")); row("Arrive", fmtTime(s.arrive));
     const cnt = isG ? S.practiceDaysBefore(team, s) : null; if (cnt) row("Before it", `${cnt.have} of ${cnt.need} scheduled practice days`);
     const plan = s.planId ? plans().find(p => p.id === s.planId) : null;
@@ -64,10 +96,12 @@ function itemCard(s) {
     if (isG) row("Lineup", s.game && s.game.lineups.some(r => r.some(Boolean)) ? "Set" : "Not set");
     card.append(dl);
     const btns = h("div", "ss-btns"); const b = (label, fn, cls = "") => { const x = h(fn.href ? "a" : "button", "pb-btn " + cls, label); if (fn.href) x.href = fn.href; else { x.type = "button"; x.onclick = fn; } btns.append(x); };
+    if (!isG && s.cancelled) { b("Restore practice", () => save(S.setCancelled(team, s.id, false)), "pb-primary"); b("Edit", () => openEdit(s)); card.append(btns); return card; }
     if (isG) b("Set lineup", Object.assign(() => {}, { href: `playbook-game.html?date=${s.date}` }), "pb-primary");
     else if (plan) { b("Run it", Object.assign(() => {}, { href: `playbook-run.html?plan=${encodeURIComponent(plan.id)}` }), "pb-primary"); b("Change plan", () => openPlans(s)); }
     else b("Pick a plan", () => openPlans(s), "pb-primary");
     b("Edit", () => openEdit(s));
+    if (!isG) b("Cancel practice", () => save(S.setCancelled(team, s.id, true)));
     card.append(btns);
     return card;
 }
@@ -80,7 +114,7 @@ function renderDay() {
         const r = h("div", "ss-btns");
         for (const [label, k] of [["Add game", "game"], ["Add practice", "practice"]]) { const x = h("button", "pb-btn", label); x.type = "button"; x.onclick = () => openEdit(null, k); r.append(x); }
         e.append(r); box.append(e);
-    } else day.items.forEach(s => box.append(itemCard(s)));
+    } else day.items.forEach(s => { box.append(itemCard(s)); Rules.forDay(sugs(), selected).filter(g => g.sid === s.id).forEach(g => box.append(sugRow(g))); });
     const rest = S.weekDays(team, S.weekStart(selected)).filter(d => d.date !== selected && d.items.length);
     if (rest.length) {
         box.append(h("div", "ss-wk", "Rest of this week"));
@@ -103,6 +137,7 @@ function render() {
     if (!has) return;
     const mon = S.weekStart(selected);
     $("ssRange").textContent = `${fmtDate(mon, { month: "short", day: "numeric" })} – ${fmtDate(S.addDays(mon, 6), { month: "short", day: "numeric" })}`;
+    const heads = $("ssHeads"); heads.replaceChildren(); Rules.general(sugs()).forEach(g => heads.append(sugRow(g)));
     renderNext(); renderStrip(mon); renderDay();
 }
 
@@ -145,6 +180,12 @@ function openRepeat() {
     ["M", "T", "W", "T", "F", "S", "S"].forEach((l, i) => { const b = h("button", "", l); b.type = "button"; b.dataset.d = String(i + 1); b.setAttribute("aria-label", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][i]); b.setAttribute("aria-pressed", String(i < 5)); b.onclick = () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); box.append(b); });
     $("rpFrom").value = selected; $("rpTo").value = S.addDays(selected, 27); $("rpErr").hidden = true; $("ssRepDlg").showModal();
 }
+function openWin() { const w = S.seasonWindow(team); $("wnStart").value = w.start; $("wnEnd").value = w.end; $("wnErr").hidden = true; $("ssWinDlg").showModal(); }
+function saveWin() {
+    const a = $("wnStart").value, z = $("wnEnd").value, next = S.setWindow(team, a, z);
+    if (next === team) { $("wnErr").textContent = "Pick a first practice date, and an end date that is not before it."; $("wnErr").hidden = false; return; }
+    $("ssWinDlg").close(); save(next);
+}
 function doRepeat() {
     const days = [...$("rpDays").querySelectorAll("[aria-pressed=true]")].map(b => Number(b.dataset.d));
     const r = S.repeatPractices(team, $("rpFrom").value, $("rpTo").value, days, { time: $("rpTime").value, place: $("rpPlace").value });
@@ -164,6 +205,7 @@ function wire() {
         if (b.dataset.arm !== "1") { b.dataset.arm = "1"; b.textContent = "Tap again to delete"; setTimeout(() => { b.dataset.arm = ""; b.textContent = "Delete"; }, 3000); return; }
         b.dataset.arm = ""; $("ssDlg").close(); save(S.removeItem(team, editing)); toast("Deleted");
     };
+    $("ssWin").onclick = openWin; $("wnSave").onclick = saveWin; $("wnCancel").onclick = () => $("ssWinDlg").close();
     $("rpGo").onclick = doRepeat; $("rpCancel").onclick = () => $("ssRepDlg").close(); $("ssPlanClose").onclick = () => $("ssPlanDlg").close();
     $("ssPrev").onclick = () => { selected = S.addDays(selected, -7); render(); };
     $("ssNextW").onclick = () => { selected = S.addDays(selected, 7); render(); };

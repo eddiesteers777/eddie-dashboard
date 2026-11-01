@@ -213,6 +213,7 @@ export function cleanSchedule(s) {
     const place = str(s?.place, 40); if (place) out.place = place;
     if (s?.kind === "game") { const opp = str(s?.opp, 40); if (opp) out.opp = opp; }
     if (typeof s?.planId === "string" && s.planId) out.planId = s.planId.slice(0, 40);
+    if (s?.cancelled === true && s?.kind === "practice") out.cancelled = true;
     return out;
 }
 
@@ -254,6 +255,11 @@ export function parseTeam(text) {
         rseen.add(id);
         runs.push({ id, rid: r.rid.slice(0, 20), sid: r.sid, owed: str(r.owed, 40) || "2 laps", done: r.done === true, doneAt: Number(r.doneAt) || 0 });
     }
-    return { penalty: str(o.penalty, 40) || base.penalty, jobs: jobs.length ? jobs : (Array.isArray(o.jobs) ? [] : base.jobs), sessions, runs };
+    const out = { penalty: str(o.penalty, 40) || base.penalty, jobs: jobs.length ? jobs : (Array.isArray(o.jobs) ? [] : base.jobs), sessions, runs };
+    const win = o.season && isDate(o.season.start) && isDate(o.season.end) && o.season.start <= o.season.end ? { start: o.season.start, end: o.season.end } : null;
+    if (win) out.season = win;
+    const handled = (Array.isArray(o.handled) ? o.handled : []).filter(x => typeof x === "string" && x.length <= 60).slice(-300);
+    if (handled.length) out.handled = [...new Set(handled)];
+    return out;
 }
 export const loadTeam = text => (text ? parseTeam(text) : null) || emptyTeam();
