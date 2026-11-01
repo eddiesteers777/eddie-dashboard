@@ -1,6 +1,6 @@
 {
   "format": "southbound-demo-registry/1",
-  "updated": "2026-10-20",
+  "updated": "2026-11-01",
   "allowedLicences": [
     "own",
     "CC0-1.0",
@@ -74,8 +74,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
-      "bytes": 103472,
-      "sha256": "270dfdcf376ed1fde6d4ed28d8e29dfeb4ad89aae7ce6a93a42d72bccb17975a",
+      "bytes": 120568,
+      "sha256": "4fe1d803b86e50bcd8cb5943d327f8d8b61686f0bb06c0caa7b784f7e620f2d2",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -89,8 +89,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 2043,
-      "sha256": "c843451856ea81dfde7a48404622900818e845fa6a924e165f531e1cc084bbcf",
+      "bytes": 2046,
+      "sha256": "b0e771ba5ba2e4b1e54cb3cbbf0fb009c6d5a0abede3c0c9226c9e3cb56c446a",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -104,8 +104,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
-      "bytes": 103424,
-      "sha256": "0d4c899ed84b2643260e16410dcce62451c242f10868cdb949ed2d37e68cf09b",
+      "bytes": 120508,
+      "sha256": "1189a9bc6777b6db32436d6c9c9ee8da104dabf259d0c62a850992035a9fe1f9",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -119,8 +119,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 2043,
-      "sha256": "db5150d20a5f3baac64969c598984bd1aa202089d10ebe16493de184281d3342",
+      "bytes": 2047,
+      "sha256": "8ff381375b1aa8de6f460b894d511a9b8315002e739e8aebd6b2e6555ff7adf9",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -150,7 +150,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 2228,
-      "sha256": "620b8c4b5daa25bb41a712aa9fa5cd1f30aba1711a182615c7eb0500a8121946",
+      "sha256": "2757840dcc80272bbc5c13f34dcbbcc1c6fb525678d3fabb58f0b910a66d4bad",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -180,7 +180,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 2221,
-      "sha256": "33f7101532ee1b76f96a39f8f088932ed7e517443f86ddce3aa4d3303619c57c",
+      "sha256": "8e7a51806bbb5e6f7fec9243dc9db677387aa0fa6d5107a2abd889c406eaad27",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -210,7 +210,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 2087,
-      "sha256": "a2860d759abb56226af7377585ad54cd599223849925f4f022e23365ab0e275b",
+      "sha256": "c3cc3ea8038b8e1b50b835ae9c8ded0ff2686ff8e64da0b3e5e83b8bd7eecdb2",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -240,7 +240,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 2084,
-      "sha256": "d7e26bcae0daa80453ec6cc89dbf3e314dfbd2fe49e1b9ece7f1834233b76807",
+      "sha256": "84d1a00a5caf4bc29626e079dd3372cd875a171664f3963f3e166a40d6f96d94",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -270,7 +270,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 1552,
-      "sha256": "1bca41d2397967ab236d60a66f98c424c1b7e40412d62e06f19732f7fb43a624",
+      "sha256": "24d24e1b99b9b9bd198dfb7495773f6c4160e0fe042826adf06e14b934076ad3",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -300,7 +300,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 1550,
-      "sha256": "ba7a9609bcbb18e0fbd930a7802d323541605c06a917e6e1ac1dfbaf46e5cf86",
+      "sha256": "dce4c5d705a7a4025136b802cc81f1abea407bf5511bc48b8ed9e9a848446b05",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -314,8 +314,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
-      "bytes": 125444,
-      "sha256": "dccdbdee541f280b91432c6bfcb58600eae0616f01caf96403d43d7a93cceef3",
+      "bytes": 133576,
+      "sha256": "212311adf170f06fe7c65fc0d45a353967e8e759ae330204ced9e6847cfc5217",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -329,8 +329,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 1354,
-      "sha256": "ef2bb06ca7fcb1cf1b7f5b15b318439b7cff326f73f80bcfaa05849922bdb72a",
+      "bytes": 1361,
+      "sha256": "84b536bcac9f2b64401a640bfd95a8458e4f9969694b8c0cb775fe9d7634fbbd",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -344,8 +344,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "Compared with CMU motion capture for joint angles and timing (reference only, no data used).",
-      "bytes": 125360,
-      "sha256": "757b9bf1ff570b06eb1ccca455931fdba4fb27426d56637912aa6dbb41b8933e",
+      "bytes": 133524,
+      "sha256": "7de9390c8342d62ec153295cb8fb5b96dfacd325435d393ef1e725fdca412a8a",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -359,8 +359,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 1353,
-      "sha256": "41be8bb25bf5903049eaba57827a2388aedc4f1082cdcc2ea2fc7d0ec39c690e",
+      "bytes": 1360,
+      "sha256": "d6bcfed8c0c89853b59724bf834468f7fdabe034caae81983a7463551e865a74",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -390,7 +390,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 2390,
-      "sha256": "c4e3044a50b8e30531752e6e07434a36bbd6749e00b5b786f98f416d97fd638a",
+      "sha256": "6d13a73efde70ddfc4e4f72ee3f3a1e5f128459a3bd56c329ed9de8c7d4df663",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -420,7 +420,7 @@
       "author": "Southbound",
       "changes": "",
       "bytes": 2394,
-      "sha256": "f295f58dc04cf3aa98ae37fea79057ac11e0f5dcdb9f29925bd6e701f6301c4e",
+      "sha256": "3d5a300a5480ffbe596237c30a2c6687134144a5e4b36c39d96440f3bf5a090b",
       "approval": {
         "status": "licence-checked",
         "by": "Claude, against the licence file named in LICENSES.md",
@@ -479,8 +479,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 19153,
-      "sha256": "f8886bd5e2537ea25f3ed1203e653425567ed5739183f740e117197ce669f5db",
+      "bytes": 19199,
+      "sha256": "4f70ce1a73271ad9e29b2c01f87f7f0c56505804f6e3edb876514529553565bd",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",
@@ -494,8 +494,8 @@
       "licence": "own",
       "author": "Southbound",
       "changes": "",
-      "bytes": 12505,
-      "sha256": "e0d6c979bb11d657d9f476843a51148b578f7be551f3d7f7fb83253fefcd676b",
+      "bytes": 12503,
+      "sha256": "72ed6223b858c09049a8e4af26552735e7e5b9ce53e5db067803c2f1f71e0857",
       "approval": {
         "status": "approved",
         "by": "Eddie Steers (direction), checked by Claude against the licence file",

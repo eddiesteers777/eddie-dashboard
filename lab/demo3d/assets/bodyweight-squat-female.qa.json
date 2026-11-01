@@ -1,7 +1,7 @@
 {
  "id": "bodyweight-squat",
  "sex": "female",
- "gradedAt": "2026-10-20",
+ "gradedAt": "2026-11-01",
  "pass": true,
  "checks": [
   {
@@ -14,7 +14,7 @@
   {
    "id": "depth",
    "label": "Thighs about parallel at the bottom, degrees from level",
-   "value": 6.808,
+   "value": 1.835,
    "limit": 22,
    "pass": true
   },
@@ -28,14 +28,14 @@
   {
    "id": "knees-out",
    "label": "Knees no narrower than the feet, metres",
-   "value": -0.043,
+   "value": -0.024,
    "limit": 0.02,
    "pass": true
   },
   {
    "id": "chest-up",
    "label": "Torso lean at the bottom, degrees",
-   "value": 37.204,
+   "value": 36.47,
    "limit": 50,
    "pass": true
   },
@@ -49,7 +49,7 @@
   {
    "id": "smooth",
    "label": "Fastest joint, metres per second",
-   "value": 0.886,
+   "value": 1.093,
    "limit": 1.5,
    "pass": true
   },
@@ -63,21 +63,21 @@
   {
    "id": "tempo-down",
    "label": "Lowering takes at least a second (real squats in motion capture: 0.8 s; a demo is slower to be readable), seconds",
-   "value": 1.3,
+   "value": 1.2,
    "limit": 1,
    "pass": true
   },
   {
    "id": "tempo-up",
    "label": "Standing back up takes at least a second, seconds",
-   "value": 1.067,
+   "value": 1.433,
    "limit": 1,
    "pass": true
   },
   {
    "id": "knee-bend",
    "label": "Knee bend at the bottom, degrees (real squats in motion capture: 121 to 124)",
-   "value": 119.483,
+   "value": 112.717,
    "limit": 100,
    "pass": true
   },
@@ -91,7 +91,7 @@
   {
    "id": "loop-closes",
    "label": "The loop closes: last frame to first, in steps",
-   "value": 0,
+   "value": 0.195,
    "limit": 1.5,
    "pass": true
   }

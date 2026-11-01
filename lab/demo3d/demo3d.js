@@ -98,7 +98,7 @@ export async function mountDemo3D(host, { name, catalogUrl, sex = "male", includ
         renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "low-power" });
     } catch { return fail("no-webgl"); }
     // Smoothing comes from drawing larger than shown (multisampling left dark specks on the skin edges): the page scales it down.
-    renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio || 1, 1) * 1.6, 2.5));
+    renderer.setPixelRatio(1.5);   // a fixed 1.5x: smooth edges without the heat and stutter of 2.5x on phones (Eddie: no specks at 1.5)
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.shadowMap.enabled = true;

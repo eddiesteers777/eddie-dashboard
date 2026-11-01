@@ -5,6 +5,7 @@
 // toes, arms rising forward for balance. Scales to any body from its rest pose.
 import * as THREE from "three";
 import { qEuler } from "../rig.js";
+import { staggerCurve, breathFromCurve, sway, repVar, repWarp } from "../motion-natural.js";
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const lerp = (a, b, s) => a + (b - a) * s;
@@ -17,7 +18,7 @@ export function repCurve(u, [a, b, c, d] = [0.08, 0.48, 0.56, 0.94]) {
 const rot = (q, v) => v.clone().applyQuaternion(q);
 
 export const squat = {
-    id: "bodyweight-squat", seconds: 6.4, reps: 2, plantFeet: true,
+    id: "bodyweight-squat", seconds: 7, reps: 2, plantFeet: true,
     setup(rig) {
         const r = n => rig.rest[n].wp.clone();
         this.hipY = r("Hips").y;
@@ -34,13 +35,21 @@ export const squat = {
         this.bottomY = r("LeftFoot").y + rig.len.shin * 0.93 + 0.02;
     },
     pose(rig, t) {
-        const u = (t * this.reps) % 1;
-        const s = repCurve(u);
-        const lean = lerp(4, 40, s);
+        // Natural motion (Step 1): hips lead, the chest follows a little behind, the arms behind that; a breath on the lift;
+        // a few millimetres of sway; no two reps alike (a different depth and pace for each).
+        const u = repWarp(t, this.reps, 0.012);
+        const sHip = repCurve(u);
+        const sChest = staggerCurve(u, 0.06, repCurve);
+        const sArm = staggerCurve(u, 0.12, repCurve);
+        const sHead = staggerCurve(u, 0.03, repCurve);
+        const s = Math.min(1, sHip * repVar(t, 0.04));
+        const br = breathFromCurve(u);
+        const lean = lerp(4, 40, sChest) + (br - 0.5) * 2;
         const hips = qEuler(lerp(2, 38, s)), chest = qEuler(lean);
-        const neck = qEuler(lean * 0.5), head = qEuler(lean * 0.15 - 6 * s); // eyes forward, not down
-        const midfoot = this.ank.Left.z + 0.06;
-        let pos = V(0, lerp(this.hipY - 0.005, this.bottomY, s), this.hipZ);
+        // The neck and head follow the chest in small steps (a big jump between them stretches the skin of the neck).
+        const neck = qEuler(lean * 0.8), head = qEuler(lean * 0.5 - 8 * sHead);
+        const midfoot = this.ank.Left.z - 0.05;   // weight toward the heel keeps the knees from travelling past the toes
+        let pos = V(sway(t, this.reps, 0.006), lerp(this.hipY - 0.005, this.bottomY, s), this.hipZ);
         // Shift the hips back until the upper body's mass sits over mid-foot.
         for (let pass = 0; pass < 3; pass++) {
             rig.torso({ pos, hips, chest, neck, head });
@@ -63,7 +72,7 @@ export const squat = {
             const sx = side === "Left" ? 1 : -1;
             const sh = rig.wp(side + "Arm");
             const down = V(sx * 0.12, -1, 0.12).normalize(), fwd = V(sx * 0.05, -0.02, 1).normalize();
-            const dir = down.clone().lerp(fwd, s).normalize(); // follows the hips: no fast swing
+            const dir = down.clone().lerp(fwd, sArm).normalize(); // follows the hips, a little behind: no fast swing
             const wrist = sh.clone().add(dir.multiplyScalar(reach));
             rig.limb(side, "arm", wrist, sh.clone().add(V(sx * 0.6, -1, -0.3)));
             rig.aimAt(side + "Hand", dir.clone().normalize(), V(0, -1, 0).lerp(V(-sx, 0, 0), 0.5).normalize());

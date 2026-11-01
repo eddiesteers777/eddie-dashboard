@@ -4,6 +4,7 @@
 // above the floor and presses back up; elbows about 45 degrees from the ribs.
 import * as THREE from "three";
 import { qEuler } from "../rig.js";
+import { breathFromCurve, sway, repVar, repWarp } from "../motion-natural.js";
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const lerp = (a, b, s) => a + (b - a) * s;
@@ -14,12 +15,13 @@ export function repCurve(u, [a, b, c, d] = [0.08, 0.5, 0.57, 0.9]) {
     if (u < c) return 1; if (u < d) return 1 - ease((u - c) / (d - c)); return 0;
 }
 const FLOOR = 0;
+const HAND_TILT = -0.2, WRIST_Y = 0.03;   // fingers rest on the floor: the hand tips down a little from the wrist
 
 // The body laid out at angle a (degrees above the floor), straight from heels
 // to head, toes tucked, with the toe joints on the floor at toeZ.
-export function straightBody(rig, a, toeZ) {
+export function straightBody(rig, a, toeZ, swayX = 0) {
     const R = qEuler(90 - a), chest = qEuler(90 - a);
-    let pos = V(0, 0.5, 0);
+    let pos = V(swayX, 0.5, 0);
     for (let pass = 0; pass < 2; pass++) {
         rig.torso({ pos, hips: R, chest, neck: chest, head: qEuler(90 - a - 14) });
         for (const side of ["Left", "Right"]) {
@@ -49,7 +51,7 @@ export const pushup = {
     id: "push-up", seconds: 13.5, reps: 3,
     setup(rig) {
         this.toeZ = -0.82;
-        this.wristY = FLOOR + 0.04;
+        this.wristY = FLOOR + WRIST_Y;
         const reach = (rig.len.upper + rig.len.fore) * 0.985;
         let hz = 0.5;
         for (let k = 0; k < 4; k++) {
@@ -63,16 +65,21 @@ export const pushup = {
         rig.reset();
     },
     pose(rig, t) {
-        const u = (t * this.reps) % 1;
-        const s = repCurve(u);
-        straightBody(rig, lerp(this.top, this.bottom, s), this.toeZ);
+        // Natural motion (Step 1): the body stays one straight line, but each rep differs in depth and pace,
+        // the whole body sways a few millimetres, and the head breathes with the rep.
+        const u = repWarp(t, this.reps, 0.015);
+        const s = Math.min(1, repCurve(u) * repVar(t, 0.05));
+        const angle = lerp(this.top, this.bottom, s);
+        straightBody(rig, angle, this.toeZ, sway(t, this.reps, 0.006));
+        const br = breathFromCurve(u, [0.08, 0.5, 0.57, 0.9]);
+        rig.turn("Head", qEuler(90 - angle - 14 + (br - 0.5) * 3));
         for (const side of ["Left", "Right"]) {
             const sx = side === "Left" ? 1 : -1;
             const sh = rig.wp(side + "Arm");
             const wrist = V(sx * 0.22, this.wristY, this.hz);
             rig.limb(side, "arm", wrist, sh.clone().add(V(sx * 0.7, 0.6, -1))); // elbows out and back ~45 degrees
-            rig.aimAt(side + "Hand", V(sx * 0.18, 0, 1).normalize(), V(0, -1, 0));
-            rig.curl(side, 8, 5);
+            rig.aimAt(side + "Hand", V(sx * 0.18, HAND_TILT, 1).normalize(), V(0, -1, 0));
+            rig.curl(side, 0, 0);
         }
     }
 };

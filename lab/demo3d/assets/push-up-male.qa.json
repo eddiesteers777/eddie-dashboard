@@ -1,7 +1,7 @@
 {
  "id": "push-up",
  "sex": "male",
- "gradedAt": "2026-10-20",
+ "gradedAt": "2026-11-01",
  "pass": true,
  "checks": [
   {
@@ -14,7 +14,7 @@
   {
    "id": "planted",
    "label": "Hands and toes stay planted, metres",
-   "value": 0,
+   "value": 0.006,
    "limit": 0.02,
    "pass": true
   },
@@ -28,14 +28,14 @@
   {
    "id": "range",
    "label": "Chest travel, metres",
-   "value": 0.352,
+   "value": 0.342,
    "limit": 0.2,
    "pass": true
   },
   {
    "id": "elbow-bottom",
    "label": "Elbow angle at the bottom, degrees",
-   "value": 38.824,
+   "value": 40.939,
    "limit": 100,
    "pass": true
   },
@@ -49,7 +49,7 @@
   {
    "id": "smooth",
    "label": "Fastest joint, metres per second",
-   "value": 0.418,
+   "value": 0.427,
    "limit": 1.5,
    "pass": true
   },
@@ -63,7 +63,7 @@
   {
    "id": "loop-closes",
    "label": "The loop closes: last frame to first, in steps",
-   "value": 0,
+   "value": 0.02,
    "limit": 1.5,
    "pass": true
   }
