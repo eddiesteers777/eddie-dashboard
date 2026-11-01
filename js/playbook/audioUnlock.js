@@ -32,4 +32,10 @@ export function releaseAudio(ctx) {
     try { ctx && ctx.close(); } catch {}
     try { keeper && keeper.pause(); } catch {}
 }
+// One plain line about the audio setup, shown after Test sound so a phone problem can be read off the screen.
+export function audioReport(u) {
+    const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+    let session = "n/a"; try { if (navigator.audioSession) session = navigator.audioSession.type; } catch {}
+    return `Sound check (audio-v2) · context: ${u.ctx ? u.ctx.state : "none"} · session: ${session} · home-screen app: ${standalone ? "yes" : "no"} · silent switch can't be read by web pages`;
+}
 export const SOUND_HINT = "No sound? On iPhone, turn the silent switch off (orange showing means muted) and turn the volume up.";

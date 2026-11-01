@@ -3,7 +3,7 @@ import "./shell.js";
 import * as F from "./fitnessModel.js";
 import * as R from "./rosterModel.js";
 import * as RUN from "./runModel.js";
-import { unlockAudio, releaseAudio, SOUND_HINT } from "./audioUnlock.js";
+import { unlockAudio, releaseAudio, SOUND_HINT, audioReport } from "./audioUnlock.js";
 import { DAY_ONE_ITEMS } from "./conditioningModel.js";
 import { KEYS } from "./store.js";
 
@@ -146,6 +146,7 @@ $("ftSound").onclick = async () => {
     const o = u.ctx.createOscillator(), g = u.ctx.createGain(), at = u.ctx.currentTime + 0.05;
     o.frequency.value = 880; g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.6, at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.4);
     o.connect(g).connect(u.ctx.destination); o.start(at); o.stop(at + 0.45);
+    $("ftDiag").textContent = audioReport(u); $("ftDiag").hidden = false;
     toast(u.running ? "Did you hear it? " + SOUND_HINT : SOUND_HINT);
     setTimeout(() => releaseAudio(u.ctx), 1200);
 };
