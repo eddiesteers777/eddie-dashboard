@@ -21,6 +21,7 @@ import {
     serverTimestamp, runTransaction
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { attachLogs } from "./sessionModel.js";
+import { waitId, cleanNotice } from "./soccerBooking.js";
 import { generateWeeklyDates, slotBookingFields, fullDatesBySlot } from "./slotBookings.js";
 
 // Session logs (js/sessionLogs.js) ride along with the requests: each
@@ -59,10 +60,10 @@ function uid() {
 
 export async function getCoachAvailability(coachUid) {
     const snap = await getDoc(availabilityDoc(coachUid));
-    if (!snap.exists()) return { slots: [], blackoutDates: [], paymentNote: "", fullDates: {}, bookedCounts: {} };
+    if (!snap.exists()) return { slots: [], blackoutDates: [], paymentNote: "", cancelNoticeHours: 0, fullDates: {}, bookedCounts: {} };
     const data = snap.data();
     return {
-        slots: data.slots || [], blackoutDates: data.blackoutDates || [], paymentNote: String(data.paymentNote || ""),
+        slots: data.slots || [], blackoutDates: data.blackoutDates || [], paymentNote: String(data.paymentNote || ""), cancelNoticeHours: cleanNotice(data.cancelNoticeHours),
         // Dates with no spot left, per slot (js/slotBookings.js).
         fullDates: data.fullDates || {},
         // Approved bookings per slot and date, for "3 spots left" on a group.
@@ -261,4 +262,45 @@ export async function setSessionNotes(requestId, coachNote) {
 
 export async function cancelBookingRequest(requestId) {
     await updateDoc(doc(db, "bookingRequests", requestId), { status: "cancelled", respondedAt: serverTimestamp() });
+}
+
+// How many hours before a session a client should cancel (0 = no rule).
+// Kept on the availability doc like the payment note: no rules change.
+export async function saveCancelNotice(hours) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const cancelNoticeHours = cleanNotice(hours);
+    await setDoc(availabilityDoc(user.uid), { cancelNoticeHours, updatedAt: serverTimestamp() }, { merge: true });
+    return cancelNoticeHours;
+}
+
+// ---- Waitlist (bookingWaitlist, Phase D) ----
+export async function joinWaitlist({ coachUid, slot, date }) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const id = waitId(coachUid, user.uid, slot.id, date);
+    await setDoc(doc(db, "bookingWaitlist", id), {
+        coachUid, clientUid: user.uid, clientName: user.displayName || "Client",
+        slotId: slot.id, date, startTime: slot.startTime, label: slot.label || "",
+        createdAt: serverTimestamp()
+    });
+    return id;
+}
+
+export async function leaveWaitlist(id) {
+    await deleteDoc(doc(db, "bookingWaitlist", id));
+}
+
+export async function listMyWaitlist() {
+    const user = await waitForUser();
+    if (!user) return [];
+    const snap = await getDocs(query(collection(db, "bookingWaitlist"), where("clientUid", "==", user.uid)));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function listWaitlistForCoach() {
+    const user = await waitForUser();
+    if (!user) return [];
+    const snap = await getDocs(query(collection(db, "bookingWaitlist"), where("coachUid", "==", user.uid)));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.date.localeCompare(b.date));
 }

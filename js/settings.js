@@ -5,7 +5,7 @@
 import { toast, friendlyError } from "./ui.js";
 import { listMyPackages } from "./clientPackages.js";
 import { ONLINE_PAYMENTS } from "./clientPackageModel.js";
-import { getCoachAvailability, savePaymentNote } from "./scheduling.js";
+import { getCoachAvailability, savePaymentNote, saveCancelNotice } from "./scheduling.js";
 import { cachedRole } from "./role.js";
 
 import { logout, listenForAuth } from "./auth.js";
@@ -132,7 +132,12 @@ const savePaymentNoteBtn = document.getElementById("savePaymentNoteBtn");
 
 listenForAuth(async user => {
     if (!user || !paymentNoteEl || cachedRole() !== "coach") return;
-    try { paymentNoteEl.value = (await getCoachAvailability(user.uid)).paymentNote; } catch {}
+    try {
+        const av = await getCoachAvailability(user.uid);
+        paymentNoteEl.value = av.paymentNote;
+        const n = document.getElementById("cancelNotice");
+        if (n) n.value = av.cancelNoticeHours || "";
+    } catch {}
 });
 
 savePaymentNoteBtn?.addEventListener("click", async () => {
@@ -221,4 +226,25 @@ document.getElementById("exportDataBtn")?.addEventListener("click", async () => 
 
     }
 
+});
+
+document.getElementById("saveCancelNoticeBtn")?.addEventListener("click", async event => {
+    const btn = event.currentTarget;
+    const input = document.getElementById("cancelNotice");
+    btn.disabled = true;
+    try {
+        const hours = await saveCancelNotice(input.value);
+        input.value = hours || "";
+        toast(hours ? `Saved. Clients are asked to cancel ${hours} hours ahead.` : "Removed. Clients see no cancel rule.");
+    } catch (error) {
+        toast(friendlyError(error, "save that"), { type: "error" });
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+document.getElementById("copyBookingLinkBtn")?.addEventListener("click", async () => {
+    const url = new URL("apply.html", window.location.href).href;
+    try { await navigator.clipboard.writeText(url); toast("Link copied."); }
+    catch { toast(url); }
 });

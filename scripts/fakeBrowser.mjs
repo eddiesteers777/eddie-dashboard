@@ -34,8 +34,9 @@ export class GoogleAuthProvider { setCustomParameters() {} }
 export const onAuthStateChanged = (a, cb) => { setTimeout(() => cb(user), 0); return () => {}; };
 export const signInWithPopup = async () => ({ user });
 export const signOut = async () => {};`;
-const fakeFirestore = (docs) => `
+const fakeFirestore = (docs, lists = {}) => `
 const DOCS = ${JSON.stringify(docs)};
+const LISTS = ${JSON.stringify(lists)};
 const ref = (path) => ({ path, id: path.split("/").pop() });
 const join = (base, segs) => [base?.path, ...segs].filter(Boolean).join("/");
 const snap = (path) => ({ id: path.split("/").pop(), ref: ref(path), exists: () => path in DOCS, data: () => DOCS[path] ? { ...DOCS[path] } : undefined, get: (k) => DOCS[path]?.[k] });
@@ -51,7 +52,7 @@ export const collection = (base, ...segs) => ref(join(base?.path ? base : null, 
 export const query = (c) => c;
 export const where = () => ({}); export const orderBy = () => ({}); export const limit = () => ({});
 export const getDoc = async (r) => snap(r.path);
-export const getDocs = async () => empty;
+export const getDocs = async (q) => { const rows = LISTS[q?.path]; return rows ? { docs: rows.map(r => ({ id: r.id, ref: ref(q.path + "/" + r.id), data: () => ({ ...r.data }) })), empty: !rows.length, size: rows.length, forEach(f) { this.docs.forEach(f); }, docChanges: () => [] } : empty; };
 export const onSnapshot = (r, next) => { const cb = typeof next === "function" ? next : next?.next; setTimeout(() => cb?.(r.path.split("/").length % 2 === 0 ? snap(r.path) : empty), 0); return () => {}; };
 export const setDoc = async () => {}; export const updateDoc = async () => {}; export const deleteDoc = async () => {};
 export const addDoc = async (c) => ref(c.path + "/new");
@@ -64,12 +65,14 @@ const fakeFunctions = `export const getFunctions = () => ({});
 export const httpsCallable = () => async () => { throw Object.assign(new Error("offline"), { code: "functions/unavailable" }); };`;
 
 export async function newContext(browser, width, persona, extra = {}) {
-    const ctx = await browser.newContext({ viewport: { width, height: 900 }, serviceWorkers: "block", ...extra });
+    // `seed` (optional): { docs: {path: data}, lists: {collectionPath: [{id, data}]} } for pages that need data.
+    const { seed = {}, ...ctxOpts } = extra;
+    const ctx = await browser.newContext({ viewport: { width, height: 900 }, serviceWorkers: "block", ...ctxOpts });
     await ctx.route(/^https:\/\/(apis\.google|www\.googletagmanager|cdn\.emailjs)\./, r => r.abort());
     if (persona) {
         const user = { uid: persona + "1", displayName: PROFILES[persona].displayName, email: "test@example.com", photoURL: null };
-        const docs = { [`userProfiles/${user.uid}`]: { uid: user.uid, ...PROFILES[persona] } };
-        const body = { app: fakeApp, auth: fakeAuth(user), firestore: fakeFirestore(docs), functions: fakeFunctions };
+        const docs = { [`userProfiles/${user.uid}`]: { uid: user.uid, ...PROFILES[persona] }, ...(seed.docs || {}) };
+        const body = { app: fakeApp, auth: fakeAuth(user), firestore: fakeFirestore(docs, seed.lists), functions: fakeFunctions };
         await ctx.route(/gstatic\.com\/firebasejs\/[\d.]+\/firebase-(\w+)\.js/, (r) => {
             const which = r.request().url().match(/firebase-(\w+)\.js/)[1];
             r.fulfill({ contentType: "text/javascript", body: body[which] || "export {};" });
