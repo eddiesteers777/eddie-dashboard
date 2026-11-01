@@ -16,7 +16,8 @@
     }
   },
   "enabledPlugins": {
-    "auto-model@southbound-tools": true
+    "auto-model@southbound-tools": true,
+    "prompt-coach@southbound-tools": true
   },
   "hooks": {
     "SessionStart": [

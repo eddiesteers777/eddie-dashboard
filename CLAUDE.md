@@ -186,4 +186,4 @@ For UI work, apply the installed Frontend Design skill and Vercel Web Design Gui
 | `docs/WEEKLY_PLANNING_AUDIT.md` | Weekly planning P1–P6. |
 | `docs/SOUTHBOUND_PERFORMANCE_VISUAL_BLUEPRINT.md`, `docs/SOUTHBOUND_PERFORMANCE_STEP2_VALIDATION.md` | The app redesign. |
 | `docs/APP_POLISH_PLAN.md`, `docs/EMAIL_NOTIFICATIONS_PLAN.md`, `docs/STRIPE_SETUP.md`, `docs/STRIPE_TEST_SETUP.md` | Polish, email move, payments. |
-| `plugins/auto-model/` + `.claude-plugin/marketplace.json` | A Claude Code plugin (not part of the website): `/plugin install auto-model --marketplace eddiesteers777/eddie-dashboard`. |
+| `plugins/auto-model/`, `plugins/prompt-coach/` + `.claude-plugin/marketplace.json` | Claude Code plugins (not part of the website). Both are on in sessions on this repo (`.claude/settings.json`); elsewhere `/plugin install <name> --marketplace eddiesteers777/eddie-dashboard`. prompt-coach adds the mode/rules checklist beside each prompt. |

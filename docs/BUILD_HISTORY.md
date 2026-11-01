@@ -678,3 +678,6 @@ Eddie picked A. `needsAttention` (js/clientSummary.js) now asks `buildSuggestion
 
 ## 2026-10-31: Improvement loop changes (branch claude/improvement-route-builder, not merged)
 Eddie approved 4 proposals from the route builder thread: CLAUDE.md gains the stale-version retest rule and the time-zone rule; the builder check answers place search with a fixed result; a "Waiting to push" line ends every report (project rule). No app code changed.
+
+## 2026-11-01: Prompt coach plugin (branch claude/project-thread-mfvcls, no rules change)
+Eddie picked option 1 (a check that runs on submit, not a rewrite). `plugins/prompt-coach/` is a Claude Code plugin, not part of the website. A `prompt.submit` hook attaches a short note beside each prompt (never changes the words): the mode word Eddie named or "infer one and say which", "say what done looks like", the key project rules, and the "Waiting to push" ending. Skips slash commands and background notices; `/prompt-coach off|on|status`. Turned on for sessions on this repo in `.claude/settings.json` and listed in `.claude-plugin/marketplace.json`. Tested: `claude plugin validate`, `claude plugin test` (5 pass, incl. words unchanged and the off switch), tsc clean, `npm run test:static` 1258 pass. Not tested: a live session loading it from GitHub (the marketplace reads `main`, so it takes effect only after merge).

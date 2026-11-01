@@ -1,0 +1,6 @@
+{
+  "name": "prompt-coach",
+  "version": "0.1.0",
+  "description": "Adds a short checklist the model reads with each prompt (mode word, project rules, what done looks like). Your words are never changed.",
+  "author": { "name": "Eddie Steers" }
+}
