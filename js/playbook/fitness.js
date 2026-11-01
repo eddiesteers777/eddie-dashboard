@@ -2,6 +2,8 @@
 import "./shell.js";
 import * as F from "./fitnessModel.js";
 import * as R from "./rosterModel.js";
+import * as RUN from "./runModel.js";
+import { DAY_ONE_ITEMS } from "./conditioningModel.js";
 import { KEYS } from "./store.js";
 
 const $ = id => document.getElementById(id);
@@ -126,3 +128,9 @@ $("ftDate").value = todayIso();
 $("ftDate").onchange = renderList;
 $("ftNames").replaceChildren(...names.map(n => { const o = document.createElement("option"); o.value = n; return o; }));
 renderOut(); renderList();
+
+// Day 1 checklist: start a fresh Run practice from the fixed list, then open it.
+$("ftPack").onclick = () => {
+    try { localStorage.setItem(KEYS.run, RUN.serializeRun(RUN.newRun(DAY_ONE_ITEMS, "Day 1", Date.now()))); } catch { return toast("Couldn't start on this device"); }
+    window.location.href = "playbook-run.html";
+};

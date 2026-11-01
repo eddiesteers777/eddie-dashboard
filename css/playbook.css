@@ -649,3 +649,11 @@ html.sb-typing .rn-dock{display:none}
 .ft-item{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--pb-line,rgba(236,230,212,.12))}
 .ft-item span{grid-column:1;color:var(--pb-muted,var(--muted));font-size:14px}
 .ft-item .pb-btn{grid-column:2;grid-row:1 / span 2;min-height:44px}
+.cd-rows{display:grid;gap:12px}
+.cd-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;border-radius:12px;border:1px solid var(--pb-line,rgba(236,230,212,.12))}
+.cd-row .cd-f:first-child{grid-column:1/-1}
+.cd-f{display:grid;gap:4px;font-size:13px}
+.cd-f input{min-height:48px;padding:0 10px;border-radius:10px;border:1px solid var(--pb-line,rgba(236,230,212,.2));background:rgba(0,0,0,.18);color:inherit;font:inherit;font-size:16px;min-width:0}
+.cd-row>.pb-btn{grid-column:1/-1;min-height:44px}
+.cd-phase{font:700 28px/1 var(--font-display);text-transform:uppercase;letter-spacing:.04em}
+.cd-phase[data-kind="rest"]{color:var(--sage,#A0BB9C)}

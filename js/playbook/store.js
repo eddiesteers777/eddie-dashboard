@@ -12,6 +12,7 @@ export const KEYS = Object.freeze({
     team: "sb-playbook-team",
     contacts: "sb-playbook-contacts", // device only: not in SYNC_KEYS
     baseline: "sb-playbook-baseline", // device only: Day 1 fitness results (first names), not in SYNC_KEYS
+    conditioning: "sb-playbook-conditioning", // device only: the coach's conditioning block
     run: "sb-playbook-run", // device only: a practice being run right now
     theme: "sb-playbook-theme"
 });

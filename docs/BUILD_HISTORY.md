@@ -710,3 +710,6 @@ Coach-side flags on the Client Hub Homework tab with "Looks good". No rules chan
 
 ## 2026-11-01: Day 1 fitness check (soccer Phase F, step 1)
 Eddie's picks: AD says no group skill work in Nov–Dec (so version B, conditioning only), conditioning starts Jan 5, baseline = 1 mile without stopping + beep test. Built the fitness page (own beeps, per-player results on the device). Tested: 7 unit tests (protocol totals 247 shuttles), static suite, phone browser run (beeps scheduled, level counted, drop-out saved, no overflow, no small taps). Not tested: sound on a real iPhone (silent switch, Bluetooth speaker), a full real test.
+
+## 2026-11-01: Conditioning block and Day 1 checklist (soccer Phase F, step 2)
+Coach-set conditioning timer (own beeps, pause, saved on the device) and a one-tap Day 1 checklist that opens Run practice. Tested: 6 unit tests, full static suite, phone browser run (block saved after reload, timer counted down, pause held, Day 1 list opened with 8 items, no overflow or errors). Not tested: sound and vibration on a real iPhone.

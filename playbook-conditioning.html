@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Conditioning | Southbound Playbook</title>
+
+    <meta name="description" content="A timed conditioning block for a soccer team: you set the work and rest, it runs the timer and beeps. Free, no account needed.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Conditioning | Southbound Playbook">
+    <meta property="og:description" content="A timed conditioning block for a soccer team: you set the work and rest, it runs the timer and beeps. Free, no account needed.">
+    <meta property="og:url" content="https://southboundcoaching.com/playbook-conditioning.html">
+    <link rel="canonical" href="https://southboundcoaching.com/playbook-conditioning.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/playbook.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2019">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("pb-app")}catch(e){}</script>
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body pb-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page pb-page" id="main">
+  <div class="pb-shell ft-shell" id="app">
+  <header class="pb-head">
+    <div class="pb-head-text">
+      <div class="pub-hero-kicker">Conditioning</div>
+      <h1>Conditioning block</h1>
+      <span class="pb-sub">You set every number. Timed work and rest only, no soccer skill drills. Conditioning starts Jan 5.</span>
+    </div>
+  </header>
+  <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-season.html" class="pb-tab">Season</a><a href="playbook-roster.html" class="pb-tab">Roster</a><a href="playbook-team.html" class="pb-tab">Team</a><a href="playbook-game.html" class="pb-tab">Game</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+
+  <section class="ft-card" id="cdEdit" aria-labelledby="cdH">
+    <h2 id="cdH">Your block</h2>
+    <p class="pb-hint">Each exercise: a name, how many rounds, seconds of work and seconds of rest. Rows with no name or no work time are left out.</p>
+    <div id="cdRows" class="cd-rows"></div>
+    <button class="pb-btn" id="cdAdd" type="button">Add exercise</button>
+    <p class="pb-hint" id="cdTotal"></p>
+    <button class="pb-btn pb-primary ft-wide" id="cdStart" type="button" disabled>Start block</button>
+  </section>
+
+  <section class="ft-card" id="cdRun" hidden aria-label="Timer">
+    <div class="ft-beep" role="timer" aria-live="off">
+      <div class="cd-phase" id="cdPhase"></div>
+      <div class="ft-level" id="cdClock">0:00</div>
+      <div class="ft-meta" id="cdMeta"></div>
+      <div class="ft-meta" id="cdNext"></div>
+    </div>
+    <div class="ft-btns"><button class="pb-btn" id="cdPause" type="button">Pause</button><button class="pb-btn" id="cdStop" type="button">Stop</button></div>
+  </section>
+  <div id="toast" class="pb-toast" role="status" aria-live="polite"></div>
+  </div>
+    </main>
+
+<footer class="pub-footer">
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="apply.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="tools.html#pace">Pace calculator</a><a href="tools.html#playbook">Soccer Playbook</a><a href="tools.html#fueling">Fueling calculator</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching &middot; Faster. Stronger. Smarter.</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/playbook/boot.js"></script>
+    <script type="module" src="js/playbook/conditioning.js"></script>
+
+</body>
+
+</html>
