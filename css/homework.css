@@ -125,3 +125,9 @@
 .hw-prep-drill{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid rgba(236,230,212,.08); }
 .hw-prep-drill span{ display:grid; gap:2px; min-width:0; }
 .hw-prep-drill small{ color:var(--text-secondary); font-size:12px; }
+
+/* Quality flags (coach side, soccer Phase E) */
+.hw-flags{ margin:8px 0; padding:12px 14px; border-radius:12px; border:1px dashed rgba(212,170,98,.5); background:rgba(212,170,98,.06); }
+.hw-flags b{ display:block; margin-bottom:4px; font:600 11px/1 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--amber); }
+.hw-flags p{ margin:4px 0; font-size:14px; }
+.hw-flags .sb-btn{ margin-top:8px; min-height:44px; }

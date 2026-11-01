@@ -7,7 +7,8 @@
    when the tab first opens. Model: js/homeworkModel.js.
 ========================================== */
 
-import { listHomeworkForClient, assignHomework, updateHomework, archiveHomework, replyToHomework, deleteHomework } from "./homework.js";
+import { qualityFlags } from "./homeworkQuality.js";
+import { listHomeworkForClient, assignHomework, updateHomework, archiveHomework, replyToHomework, deleteHomework, markReviewed } from "./homework.js";
 import {
     parseYouTube, parseClock, clockText, thumbUrl, CADENCES, SKILLS, progress, standing, streak, isoOf, addDays,
     cleanAssignment, validAssignment, sortForClient
@@ -79,14 +80,16 @@ export async function mountHomework(root, { clientUid, firstName = "them", sessi
         const p = progress(hw, t);
         const logs = [...hw.logs].sort((a, b) => (b.at || 0) - (a.at || 0));
         const last = logs[0];
+        const flags = qualityFlags(hw);
         return `<details class="hw-row-wrap" data-id="${esc(hw.id)}" style="border-top:1px solid var(--border)">
             <summary class="hw-row" style="border-top:0;list-style:none">
                 ${thumbHtml(hw, { small: true })}
                 <span class="hw-row-main"><b>${esc(hw.title)}</b><span>${esc(metaLine(hw))}${hw.dueDate ? ` · due ${esc(dueText(hw.dueDate))}` : ""}</span></span>
-                <span class="hw-row-side">${p.kind === "goal" ? `<b>${p.done}</b>` : `<b>${p.done}/${p.target}</b>`}${standingPill(hw, t)}</span>
+                <span class="hw-row-side">${p.kind === "goal" ? `<b>${p.done}</b>` : `<b>${p.done}/${p.target}</b>`}${standingPill(hw, t)}${flags.length ? `<span class="hw-pill amber">Check</span>` : ""}</span>
             </summary>
             <div style="padding:2px 2px 14px">
                 ${ticksHtml(hw, t)}
+                ${flags.length ? `<div class="hw-flags" role="note"><b>Worth a look</b>${flags.map(f => `<p>${esc(f.text)}</p>`).join("")}<p class="hw-sub">They still count. Nothing is changed for ${esc(firstName)}.</p><button type="button" class="sb-btn sb-btn-secondary" data-reviewed="${esc(hw.id)}">Looks good</button></div>` : ""}
                 ${hw.note ? `<p class="hw-sub" style="margin:8px 0">Note: ${esc(hw.note)}</p>` : ""}
                 ${logs.length ? `<div class="hw-history" style="margin-top:8px">${logs.slice(0, 6).map(l => `<div class="hw-practice"><span>${esc(dueText(l.date))}${l.feel ? ` · felt ${esc(l.feel)}` : ""}</span><span>${l.count != null ? esc(l.count) : ""}</span></div>`).join("")}</div>` : `<p class="hw-sub" style="margin:8px 0">No practices logged yet.</p>`}
                 ${hw.coachReply ? `<p class="hw-reply">You replied: ${esc(hw.coachReply)}</p>` : ""}
@@ -140,11 +143,17 @@ export async function mountHomework(root, { clientUid, firstName = "them", sessi
             } catch (error) { console.error(error); toast(friendlyError(error, "save that"), { type: "error" }); }
             return;
         }
+        const reviewed = get("reviewed");
+        if (reviewed) {
+            try { reviewed.reviewedMs = await markReviewed(reviewed.id); render(); toast("Marked as seen"); }
+            catch (error) { console.error(error); toast(friendlyError(error, "save that"), { type: "error" }); }
+            return;
+        }
         const reply = get("reply");
         if (reply) {
             const text = await sbPrompt(`A line ${firstName} sees on this homework.`, { title: "Reply", defaultValue: reply.coachReply || "", multiline: true, maxLength: 300, confirmLabel: "Send" });
             if (text == null) return;
-            try { reply.coachReply = await replyToHomework(reply.id, text); render(); toast("Reply saved"); }
+            try { reply.coachReply = await replyToHomework(reply.id, text); reply.reviewedMs = Date.now(); render(); toast("Reply saved"); }
             catch (error) { console.error(error); toast(friendlyError(error, "save that"), { type: "error" }); }
             return;
         }

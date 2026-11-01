@@ -702,3 +702,6 @@ Game-aware suggestions on the Season tab (light day before a game, recovery afte
 
 ## 2026-11-01: Soccer booking Phase D (waitlist, cancel notice, booking link)
 RULES CHANGED (new `bookingWaitlist` collection). Rules tests: join/leave, forged id, wrong person, stranger read, extra fields, online-only client refused. Unit tests for waiting state, wait ids, cancel notice. Phone browser check: client waitlist dialog, coach Waitlist list, Settings notice field; no overflow or errors. Not tested: a real Firestore write from the app, real iPhone.
+
+## 2026-11-01: Soccer homework quality flags (Phase E)
+Coach-side flags on the Client Hub Homework tab with "Looks good". No rules change, no client-facing change. Tested: 7 unit tests, phone browser run with seeded homework (2 of 3 rows flagged, Looks good cleared one, no overflow or errors). Not tested: a real Firestore write of `reviewedAt`, real iPhone.

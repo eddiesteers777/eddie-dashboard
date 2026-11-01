@@ -16,7 +16,7 @@ import { cleanAssignment, cleanLog } from "./homeworkModel.js";
 import { settleWrite } from "./offlineWrite.js";
 
 const millis = v => !v ? 0 : typeof v === "number" ? v : typeof v.toMillis === "function" ? v.toMillis() : typeof v.seconds === "number" ? v.seconds * 1000 : 0;
-const shape = snap => { const d = snap.data(); return { id: snap.id, ...d, logs: d.logs || [], createdMs: millis(d.createdAt) }; };
+const shape = snap => { const d = snap.data(); return { id: snap.id, ...d, logs: d.logs || [], createdMs: millis(d.createdAt), reviewedMs: millis(d.reviewedAt) }; };
 const newestFirst = (a, b) => b.createdMs - a.createdMs;
 
 async function me() {
@@ -87,6 +87,13 @@ export async function replyToHomework(id, text) {
     const coachReply = String(text || "").trim().slice(0, 300);
     await updateDoc(doc(db, "homework", id), { coachReply, reviewedAt: serverTimestamp(), updatedAt: serverTimestamp() });
     return coachReply;
+}
+
+// "Looks good": the coach has seen the practices so far. Uses the existing
+// reviewedAt field, so no rules change.
+export async function markReviewed(id) {
+    await updateDoc(doc(db, "homework", id), { reviewedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    return Date.now();
 }
 
 export async function deleteHomework(id) {
