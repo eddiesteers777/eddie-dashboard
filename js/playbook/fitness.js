@@ -3,6 +3,7 @@ import "./shell.js";
 import * as F from "./fitnessModel.js";
 import * as R from "./rosterModel.js";
 import * as RUN from "./runModel.js";
+import { unlockAudio, releaseAudio, SOUND_HINT } from "./audioUnlock.js";
 import { DAY_ONE_ITEMS } from "./conditioningModel.js";
 import { KEYS } from "./store.js";
 
@@ -101,10 +102,13 @@ async function keepAwake(on) {
         if (!on && lock) { await lock.release(); lock = null; }
     } catch { /* the test still runs */ }
 }
-function start() {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return toast("This browser can't play the beeps");
-    ctx = new AC(); ctx.resume && ctx.resume();
+async function start() {
+    $("ftStart").disabled = true;
+    const u = await unlockAudio();
+    $("ftStart").disabled = false;
+    if (!u.ctx) return toast("This browser can't play the beeps");
+    ctx = u.ctx;
+    if (!u.running) toast(SOUND_HINT);
     t0 = ctx.currentTime + 4; nextIdx = 0; out.clear(); running = true;
     for (let i = 1; i <= 3; i++) beep(ctx.currentTime + i, 660, 0.15);
     beep(t0, 1000, 0.3);
@@ -114,7 +118,7 @@ function start() {
 }
 function stop() {
     running = false; clearInterval(timer); cancelAnimationFrame(raf);
-    try { ctx && ctx.close(); } catch {}
+    releaseAudio(ctx);
     $("ftStart").hidden = false; $("ftStop").hidden = true;
     $("ftStart").textContent = "Start again"; $("ftMeta").textContent = "Stopped. Saved results are below.";
     keepAwake(false); renderOut();
@@ -133,4 +137,15 @@ renderOut(); renderList();
 $("ftPack").onclick = () => {
     try { localStorage.setItem(KEYS.run, RUN.serializeRun(RUN.newRun(DAY_ONE_ITEMS, "Day 1", Date.now()))); } catch { return toast("Couldn't start on this device"); }
     window.location.href = "playbook-run.html";
+};
+
+// A quick sound check, so a phone problem shows before the test starts.
+$("ftSound").onclick = async () => {
+    const u = await unlockAudio();
+    if (!u.ctx) return toast("This browser can't play the beeps");
+    const o = u.ctx.createOscillator(), g = u.ctx.createGain(), at = u.ctx.currentTime + 0.05;
+    o.frequency.value = 880; g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.6, at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.4);
+    o.connect(g).connect(u.ctx.destination); o.start(at); o.stop(at + 0.45);
+    toast(u.running ? "Did you hear it? " + SOUND_HINT : SOUND_HINT);
+    setTimeout(() => releaseAudio(u.ctx), 1200);
 };

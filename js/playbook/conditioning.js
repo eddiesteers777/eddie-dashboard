@@ -3,6 +3,7 @@
 import "./shell.js";
 import * as C from "./conditioningModel.js";
 import { KEYS } from "./store.js";
+import { unlockAudio, releaseAudio, SOUND_HINT } from "./audioUnlock.js";
 
 const $ = id => document.getElementById(id);
 const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
@@ -72,15 +73,18 @@ function frame() {
     $("cdNext").textContent = nx ? `Next: ${nx.kind === "rest" ? "Rest " + nx.seconds + "s" : nx.label + " " + nx.seconds + "s"}` : "Last one";
     raf = requestAnimationFrame(frame);
 }
-function begin() {
+async function begin() {
     ph = C.phases(rows); if (!ph.length) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    try { ctx = AC ? new AC() : null; ctx && ctx.resume && ctx.resume(); } catch { ctx = null; }
+    $("cdStart").disabled = true;
+    const u = await unlockAudio();
+    $("cdStart").disabled = false;
+    ctx = u.ctx;
+    if (!u.running) toast(SOUND_HINT);
     startedAt = performance.now(); pausedAt = 0; offset = 0; lastIndex = -1; lastTick = -1;
     $("cdEdit").hidden = true; $("cdRun").hidden = false; $("cdPause").textContent = "Pause";
     keepAwake(true); frame();
 }
-function end() { cancelAnimationFrame(raf); try { ctx && ctx.close(); } catch {} ctx = null; keepAwake(false); $("cdRun").hidden = true; $("cdEdit").hidden = false; }
+function end() { cancelAnimationFrame(raf); releaseAudio(ctx); ctx = null; keepAwake(false); $("cdRun").hidden = true; $("cdEdit").hidden = false; }
 function finish() { beep(1320, 0.4); buzz([300, 100, 300]); end(); toast("Block done"); }
 $("cdStart").onclick = begin;
 $("cdStop").onclick = end;
@@ -91,3 +95,13 @@ $("cdPause").onclick = () => {
 document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("cdRun").hidden && !pausedAt) keepAwake(true); });
 
 renderRows(); summary();
+
+$("cdSound").onclick = async () => {
+    const u = await unlockAudio();
+    if (!u.ctx) return toast("This browser can't play the beeps");
+    const o = u.ctx.createOscillator(), g = u.ctx.createGain(), at = u.ctx.currentTime + 0.05;
+    o.frequency.value = 880; g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.6, at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.4);
+    o.connect(g).connect(u.ctx.destination); o.start(at); o.stop(at + 0.45);
+    toast(u.running ? "Did you hear it? " + SOUND_HINT : SOUND_HINT);
+    setTimeout(() => releaseAudio(u.ctx), 1200);
+};
