@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { datedTimes, daySummaries, groupByPart, partOfDay, usualSlot, firstDayWithOpen, matchesKind } from "../js/soccerBooking.js";
+import { datedTimes, daySummaries, groupByPart, partOfDay, usualSlot, firstDayWithOpen, matchesKind, waitId, hoursUntil, isLateCancel, cleanNotice } from "../js/soccerBooking.js";
 
 // Wed 2026-10-21. 34 weekly times, like the lab mock-up.
 const slots = [];
@@ -54,4 +54,33 @@ test("your usual needs two bookings and a slot still offered", () => {
     assert.equal(usualSlot([req("gone", 9)], slots), null);
     assert.equal(usualSlot([req("s1", 5, "denied")], slots), null);
     assert.equal(usualSlot([req("s1", 5)], [{ id: "s1", active: false }]), null);
+});
+
+test("a full time the client waits on shows as waiting, others stay full", () => {
+    const fullDates = { s15: [today], s16: [today] };
+    const t = datedTimes({ slots, today, fullDates, waiting: [{ slotId: "s15", date: today }] });
+    assert.equal(t.find(x => x.key === `s15|${today}`)?.state, "waiting");
+    assert.equal(t.find(x => x.key === `s16|${today}`)?.state, "full");
+    assert.equal(t.find(x => x.key === `s17|${today}`)?.state, "open");
+});
+
+test("waitlist id pins coach, client, slot and date", () => {
+    assert.equal(waitId("c", "u", "s", "2026-12-01"), "c_u_s_2026-12-01");
+});
+
+test("cancel notice: late only inside the window, never when unset", () => {
+    const now = new Date("2026-12-01T12:00:00");
+    assert.equal(Math.round(hoursUntil("2026-12-02", "12:00", now)), 24);
+    assert.equal(isLateCancel("2026-12-02", "12:00", 24, new Date("2026-12-01T13:00:00")), true);
+    assert.equal(isLateCancel("2026-12-02", "12:00", 24, new Date("2026-12-01T11:00:00")), false);
+    assert.equal(isLateCancel("2026-12-02", "12:00", 0, now), false);
+    assert.equal(isLateCancel("2026-12-02", "12:00", undefined, now), false);
+});
+
+test("cleanNotice keeps whole hours between 0 and a week", () => {
+    assert.equal(cleanNotice("24"), 24);
+    assert.equal(cleanNotice(-5), 0);
+    assert.equal(cleanNotice("abc"), 0);
+    assert.equal(cleanNotice(9999), 168);
+    assert.equal(cleanNotice(1.6), 2);
 });

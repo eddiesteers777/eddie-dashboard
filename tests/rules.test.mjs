@@ -785,6 +785,37 @@ test("a coach can only give the five known services", async () => {
     await assertFails(updateDoc(doc(as("client"), "userProfiles/client"), { services: ["running"] }));
 });
 
+// ---- Booking waitlist (Phase D) ----
+
+test("waitlist: a soccer client joins and leaves; nobody forges or edits one", async () => {
+    await seedLinkAndBooking();
+    await env.withSecurityRulesDisabled(ctx => updateDoc(doc(ctx.firestore(), "userProfiles/client"), { services: ["soccer_group"] }));
+    const entry = { coachUid: "coach", clientUid: "client", clientName: "Cam", slotId: "s1", date: "2026-12-01", startTime: "17:00", label: "", createdAt: serverTimestamp() };
+    const id = "coach_client_s1_2026-12-01";
+    await assertSucceeds(setDoc(doc(as("client"), `bookingWaitlist/${id}`), entry));
+    // Wrong id, someone else's name, extra fields and a stranger are all refused.
+    await assertFails(setDoc(doc(as("client"), "bookingWaitlist/anything"), entry));
+    await assertFails(setDoc(doc(as("client"), `bookingWaitlist/${id}x`), entry));
+    await assertFails(setDoc(doc(as("stranger"), `bookingWaitlist/${id}`), { ...entry, clientUid: "stranger" }));
+    await assertFails(setDoc(doc(as("stranger"), "bookingWaitlist/coach_stranger_s1_2026-12-01"), { ...entry, clientUid: "stranger" }));
+    await assertFails(setDoc(doc(as("client"), "bookingWaitlist/coach_client_s1_2026-12-02"), { ...entry, date: "2026-12-02", extra: 1 }));
+    // Read: only the coach and the client. No edits.
+    await assertSucceeds(getDoc(doc(as("client"), `bookingWaitlist/${id}`)));
+    await assertSucceeds(getDoc(doc(as("coach"), `bookingWaitlist/${id}`)));
+    await assertFails(getDoc(doc(as("stranger"), `bookingWaitlist/${id}`)));
+    await assertFails(updateDoc(doc(as("client"), `bookingWaitlist/${id}`), { date: "2026-12-09" }));
+    await assertFails(deleteDoc(doc(as("stranger"), `bookingWaitlist/${id}`)));
+    await assertSucceeds(deleteDoc(doc(as("client"), `bookingWaitlist/${id}`)));
+    await assertSucceeds(setDoc(doc(as("client"), `bookingWaitlist/${id}`), entry));
+    await assertSucceeds(deleteDoc(doc(as("coach"), `bookingWaitlist/${id}`)));
+});
+
+test("waitlist: an online-only client cannot join", async () => {
+    await seedLinkAndBooking();
+    const entry = { coachUid: "coach", clientUid: "client", clientName: "Cam", slotId: "s1", date: "2026-12-01", startTime: "17:00", label: "", createdAt: serverTimestamp() };
+    await assertFails(setDoc(doc(as("client"), "bookingWaitlist/coach_client_s1_2026-12-01"), entry));
+});
+
 // ---- Weekly check-ins ----
 
 test("check-ins: the client can't self-review and the coach can't edit the client's answers", async () => {

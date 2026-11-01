@@ -31,13 +31,14 @@ export function partOfDay(startTime) {
 // Every dated time in the next `days` days, soonest first. `nowHHMM` hides
 // today's times that have already started. `bookedCounts` (optional, from
 // the availability doc) gives a group's spots left.
-export function datedTimes({ slots = [], fullDates = {}, mine = [], bookedCounts = {}, today, nowHHMM = "00:00", days = WINDOW_DAYS } = {}) {
+export function datedTimes({ slots = [], fullDates = {}, mine = [], waiting = [], bookedCounts = {}, today, nowHHMM = "00:00", days = WINDOW_DAYS } = {}) {
     const active = slots.filter(s => s && s.active !== false);
     const mineKeys = new Set();
     for (const r of mine) {
         if (r.status !== "requested" && r.status !== "approved") continue;
         for (const d of r.dates || []) mineKeys.add(`${r.slotId}|${d}`);
     }
+    const waitKeys = new Set((waiting || []).map(w => `${w.slotId}|${w.date}`));
     const out = [];
     for (let i = 0; i < days; i++) {
         const date = addDays(today, i);
@@ -47,7 +48,8 @@ export function datedTimes({ slots = [], fullDates = {}, mine = [], bookedCounts
             const cap = Math.max(1, Number(slot.capacity) || 1);
             const taken = Number(bookedCounts?.[slot.id]?.[date]) || 0;
             const isFull = (fullDates?.[slot.id] || []).includes(date) || taken >= cap;
-            const state = mineKeys.has(`${slot.id}|${date}`) ? "mine" : isFull ? "full" : "open";
+            const k = `${slot.id}|${date}`;
+            const state = mineKeys.has(k) ? "mine" : isFull ? (waitKeys.has(k) ? "waiting" : "full") : "open";
             out.push({ key: `${slot.id}|${date}`, slot, date, state, left: cap > 1 ? Math.max(0, cap - taken) : null });
         }
     }
@@ -61,7 +63,7 @@ export function daySummaries(times, { today, days = WINDOW_DAYS, kind = "all" } 
     return Array.from({ length: days }, (_, i) => {
         const date = addDays(today, i);
         const list = times.filter(t => t.date === date && matchesKind(t, kind));
-        return { date, open: list.filter(t => t.state === "open").length, mine: list.some(t => t.state === "mine") };
+        return { date, open: list.filter(t => t.state === "open").length, mine: list.some(t => t.state === "mine"), full: list.filter(t => t.state === "full" || t.state === "waiting").length };
     });
 }
 
@@ -93,4 +95,30 @@ export function usualSlot(requests = [], slots = []) {
         if (!best || n > best.count) best = { slot, count: n };
     }
     return best;
+}
+
+// ---- Waitlist and cancel notice (Phase D) ----
+// A client can ask to be told when a spot opens on a full date. Nothing is
+// booked for them: the coach sees the list and approves a new request.
+export const waitId = (coachUid, clientUid, slotId, date) => `${coachUid}_${clientUid}_${slotId}_${date}`;
+
+// Whole hours from `now` until a session starts (negative once it has).
+export function hoursUntil(date, startTime, now = new Date()) {
+    const [h, m] = String(startTime || "0:0").split(":").map(Number);
+    const start = new Date(`${date}T00:00:00`);
+    start.setHours(h || 0, m || 0, 0, 0);
+    return (start.getTime() - now.getTime()) / 36e5;
+}
+
+export const NOTICE_MAX = 168;
+export function cleanNotice(value) {
+    const n = Math.round(Number(value));
+    return Number.isFinite(n) && n > 0 ? Math.min(n, NOTICE_MAX) : 0;
+}
+
+// Cancelling inside the coach's notice window is a late cancel. It is
+// allowed and only warned about: the coach decides what it means.
+export function isLateCancel(date, startTime, noticeHours, now = new Date()) {
+    const n = cleanNotice(noticeHours);
+    return n > 0 && hoursUntil(date, startTime, now) < n;
 }

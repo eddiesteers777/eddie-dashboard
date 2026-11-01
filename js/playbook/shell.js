@@ -21,6 +21,9 @@ if (tabs && !tabs.querySelector("[data-pb-sync]")) {
     tabs.insertBefore(s, tabs.querySelector("[data-pb-theme]"));
 }
 
+// The tab row scrolls on a phone: bring the current tab into view.
+try { tabs?.querySelector("[aria-current]")?.scrollIntoView({ inline: "center", block: "nearest" }); } catch {}
+
 const clear = document.getElementById("pbClear");
 const clearText = () => (isSignedIn() ? "Clear everything (device and account)" : "Clear everything on this device");
 if (clear) clear.addEventListener("click", async () => {

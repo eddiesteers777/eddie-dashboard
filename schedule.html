@@ -55,6 +55,12 @@
                     <div id="waitingList" class="clients-list sched-waiting-list"></div>
                 </section>
 
+                <section id="waitlistWrap" class="sched-waiting" hidden>
+                    <h2 class="clients-section-title">Waitlist <span id="waitlistCount" class="sched-count"></span></h2>
+                    <p class="clients-card-note">Players waiting on a full time. Nothing is booked for them. If a spot opens, message them and approve their new request.</p>
+                    <div id="waitlistList" class="clients-list sched-waiting-list"></div>
+                </section>
+
                 <section class="sched-weekwrap" aria-labelledby="schedWeekTitle">
                     <div class="sched-weekhead">
                         <div>
@@ -142,6 +148,7 @@
                             <label for="coachSelect">Coach</label>
                             <select id="coachSelect" class="sched-coach-select"></select>
                         </div>
+                        <p id="noticeNote" class="clients-card-note" hidden></p>
                         <p id="reschedNote" class="sb-resched-note" hidden></p>
                         <p id="coachOneLine" class="sched-with" hidden></p>
                         <button type="button" id="usualCard" class="sb-usual" hidden></button>
