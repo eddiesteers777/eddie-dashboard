@@ -552,3 +552,34 @@ html.sb-typing .rn-dock{display:none}
 .rn-btns .rn-wide{flex:1 1 100%}
 @media(min-width:900px){.rn-run{flex-direction:row;align-items:flex-start;max-width:none}.rn-list{flex:1}.rn-dock{flex:0 0 400px;position:sticky;top:90px;bottom:auto}}
 @media print{.rn-dock{display:none}}
+
+/* ==========================================================
+   FOGGY BLUE (Eddie, 2026-11-01): the Playbook wears the app's blue, white and gold.
+   Same tokens as css/appLook.css: fog-blue ground, blue glass panels, the cream-to-mist "lens" on
+   whatever is selected or is the main action, gold only as a small accent. Dark mode only;
+   the light cream mode is unchanged.
+========================================================== */
+:root:not(.pb-light){
+    --bg:#17212B;--surface:#1D2A36;--surface-light:#27394A;--forest:#213242;--border:rgba(214,228,240,.1);
+    --pb-line:rgba(214,228,240,.16);--pb-field:rgba(214,228,240,.07);
+    --pb-act:#D2AD62;--pb-on-act:#1b1608;
+    --pb-sel-bg:#DCE5EE;--pb-sel-fg:#13202B;
+    --pb-lens:linear-gradient(180deg,#F1E6D0,#C7D6E4);
+    --pb-shadow:0 10px 30px rgba(4,10,16,.4);
+    --pb-raise-bg:linear-gradient(180deg,rgba(42,62,82,.62),rgba(24,36,48,.5));
+    --pb-raise-border:rgba(214,228,240,.16);
+    --pb-raise-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 2px 6px rgba(0,0,0,.26),0 28px 56px -28px rgba(0,0,0,.7);
+    --pb-glass-bg:rgba(214,228,240,.07);--pb-glass-border:rgba(214,228,240,.16);
+}
+:root:not(.pb-light) body.pb-body{background:linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%) fixed;color:var(--text)}
+:root:not(.pb-light) .pb-tab[aria-current="page"],:root:not(.pb-light) .pb-btn.pb-primary,:root:not(.pb-light) .pb-primary,
+:root:not(.pb-light) .pb-chip[aria-pressed="true"],:root:not(.pb-light) .pb-tool[aria-pressed="true"],:root:not(.pb-light) .tm-m[aria-pressed="true"]{
+    background:var(--pb-lens);color:var(--pb-sel-fg);border-color:rgba(255,255,255,.35);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px -6px rgba(199,214,228,.55)}
+:root:not(.pb-light) .pb-tabs{background:rgba(8,16,24,.45)}
+:root:not(.pb-light) .pb-page .pub-hero-kicker{color:#D2AD62}
+:root:not(.pb-light) .pub-footer{background:linear-gradient(180deg,rgba(20,30,42,.82),rgba(14,22,32,.92));border-top-color:rgba(214,228,240,.3)}
+:root:not(.pb-light) .rn-item.now{background:linear-gradient(180deg,rgba(55,80,104,.7),rgba(30,46,62,.6));box-shadow:inset 3px 0 0 #D2AD62}
+:root:not(.pb-light) .rn-item.done .rn-ck{background:var(--pb-lens);border-color:rgba(255,255,255,.4);color:#13202B}
+:root:not(.pb-light) .rn-ck{border-color:rgba(214,228,240,.45)}
+:root:not(.pb-light) .rn-dock{background:linear-gradient(180deg,#2a3f54,#1d2a36);border-color:rgba(214,228,240,.2)}
