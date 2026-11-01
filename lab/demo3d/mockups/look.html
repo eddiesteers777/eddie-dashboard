@@ -1,0 +1,85 @@
+<!doctype html><html><body style="margin:0;background:#111">
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.min.js"}}</script>
+<script type="module">
+// Lab mock-up: the athlete's look, now vs. with real-time quick wins (no new assets). ?look=now|better &sex= &t= &shot=body|face|hands &w= &h=
+import * as THREE from "three";
+import { GLTFLoader } from "../vendor/three/addons/loaders/GLTFLoader.js";
+const q = new URLSearchParams(location.search);
+const look = q.get("look") || "now", sex = q.get("sex") || "male", T = +(q.get("t") || 0), shot = q.get("shot") || "body";
+const W = +(q.get("w") || 720), H = +(q.get("h") || 900), demo = q.get("demo") || "bodyweight-squat";
+const sculpt = look === "sculpt", better = look === "better" || sculpt;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = better ? 0.95 : 1;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = better ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a201d);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshStandardMaterial({ color: 0x2b2826, roughness: 0.9 }));
+floor.material.envMapIntensity = 0.25; floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+const key = new THREE.DirectionalLight(0xffe6c8, better ? 2.2 : 2.6); key.position.set(2.5, 5, 3.5); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.045; key.shadow.radius = 4;
+Object.assign(key.shadow.camera, { left: -1.4, right: 1.4, top: 2.2, bottom: -0.4, near: 1, far: 12 }); scene.add(key);
+if (!better) { scene.add(new THREE.AmbientLight(0xfff0dc, 1.9)); const rim = new THREE.DirectionalLight(0xdfe9ff, 1.3); rim.position.set(-3, 3.5, -3.5); scene.add(rim); }
+else {
+    // Image-based light from a small procedural studio (softbox overhead, warm bounce, cool rim): no downloaded HDRI.
+    const env = new THREE.Scene(); env.background = new THREE.Color(0x222222);
+    const box = (w, h, d, c, i, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(i) })); m.position.set(x, y, z); env.add(m); };
+    const room = new THREE.Mesh(new THREE.BoxGeometry(12, 8, 12), new THREE.MeshBasicMaterial({ color: 0x3a3a36, side: THREE.BackSide })); room.position.y = 3; env.add(room);
+    box(4, 0.1, 3, 0xfff4e6, 6, 0, 6.5, 1.5);      // overhead softbox
+    box(0.1, 3, 4, 0xffe0c0, 2.2, 5.5, 2.5, 2);     // warm side panel
+    box(3, 3, 0.1, 0xcfe0ff, 2.5, -2, 2.5, -5.5);   // cool rim panel behind
+    box(12, 0.1, 12, 0x5a4a3e, 1, 0, -0.9, 0);      // warm floor bounce
+    const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(env, 0.04).texture;
+    const rim = new THREE.DirectionalLight(0xdfe9ff, 1.6); rim.position.set(-3, 3.5, -3.5); scene.add(rim);
+    scene.add(new THREE.HemisphereLight(0xfff0dc, 0x2a2420, 0.35));
+}
+
+const loader = new GLTFLoader();
+const [ath, mo] = await Promise.all([loader.loadAsync(`../assets/athlete-${sex}.glb`), loader.loadAsync(`../assets/${demo}-${sex}.motion.glb`)]);
+const model = ath.scene;
+model.traverse(o => {
+    if (!o.isMesh) return; o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+    const m = o.material; if (m.alphaTest > 0) { m.transparent = true; m.alphaTest = 0.04; }
+    if (!better) return;
+    const name = m.name || "";
+    const phys = new THREE.MeshPhysicalMaterial();
+    THREE.MeshStandardMaterial.prototype.copy.call(phys, m);
+    phys.envMapIntensity = 0.9;
+    if (name === "Human.body") {
+        // Skin: softer specular, a faint warm sheen (peach fuzz) and a little warmth coming through in the shadows.
+        Object.assign(phys, { roughness: 0.52, specularIntensity: 0.55, ior: 1.4, sheen: 0.35, sheenRoughness: 0.55 });
+        phys.sheenColor = new THREE.Color(1.0, 0.82, 0.72);
+        phys.emissiveMap = m.map; phys.emissive = new THREE.Color(0.11, 0.035, 0.025);
+        phys.normalScale = new THREE.Vector2(1.6, 1.6);
+    } else if (/low-poly/.test(name)) {
+        // Eyes: no self-glow, a wet clear coat on top.
+        Object.assign(phys, { emissiveIntensity: 0.12, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.03 });
+        phys.color = new THREE.Color(0.95, 0.95, 0.95);
+    } else if (/^sb-(top|bottom|inner)/.test(name)) {
+        // Fabric: a soft sheen at grazing angles, which is what makes cloth read as cloth.
+        Object.assign(phys, { sheen: 0.6, sheenRoughness: 0.7, roughness: 0.85, envMapIntensity: 0.5 });
+        phys.sheenColor = new THREE.Color(m.color).multiplyScalar(3);
+    } else if (/short|hair|eyebrow|eyelash/.test(name)) {
+        Object.assign(phys, { roughness: 0.42, sheen: 0.6, sheenRoughness: 0.35, specularIntensity: 0.7 });
+        phys.sheenColor = new THREE.Color(0.6, 0.5, 0.4);
+    } else if (name === "sb-shoe") Object.assign(phys, { roughness: 0.6, sheen: 0.4, sheenRoughness: 0.7 });
+    if (sculpt) {
+        // Stylised "premium sculpt": one smooth skin tone, no painted detail, simple eyes, no brows/lashes. Avoids the uncanny valley instead of chasing photo-realism.
+        if (name === "Human.body") { phys.map = null; phys.emissiveMap = null; phys.emissive = new THREE.Color(0.06, 0.03, 0.02); phys.color = new THREE.Color(sex === "male" ? 0xc79a7e : 0xd2a48a); phys.normalScale = new THREE.Vector2(0.6, 0.6); Object.assign(phys, { roughness: 0.55, sheen: 0.5 }); }
+        else if (/low-poly/.test(name)) { phys.map = null; phys.emissiveIntensity = 0; phys.color = new THREE.Color(0x2a221d); }
+        else if (/eyebrow|eyelash/.test(name)) o.visible = false;
+        else if (/short|hair/.test(name)) { phys.map = null; phys.color = new THREE.Color(0x3a2c22); phys.alphaTest = 0.5; phys.transparent = false; }
+    }
+    o.material = phys;
+});
+scene.add(model);
+const mixer = new THREE.AnimationMixer(model); const clip = mo.animations[0]; mixer.clipAction(clip).play(); mixer.setTime(T * clip.duration);
+model.updateMatrixWorld(true);
+const cam = new THREE.PerspectiveCamera(30, W / H, 0.05, 40);
+const SHOTS = { body: [[2.3, 1.45, 3.4], [0, 0.95, 0]], face: [[0.25, 1.62, 0.75], [0, 1.58, 0]], hands: [[0.9, 1.0, 0.8], [0.25, 0.85, 0]] };
+if (sex === "female") { SHOTS.face = [[0.24, 1.53, 0.72], [0, 1.49, 0]]; }
+const [p, tg] = SHOTS[shot]; cam.position.set(...p); cam.lookAt(...tg);
+renderer.render(scene, cam);
+window.READY = true;
+</script></body></html>

@@ -548,6 +548,21 @@
       }
     },
     {
+      "path": "mockups/look.html",
+      "kind": "code",
+      "source": "Written for Southbound",
+      "licence": "own",
+      "author": "Southbound",
+      "changes": "",
+      "bytes": 6740,
+      "sha256": "d4ef030b6870e11e9f29ae93397ac54dd8fb07ddb6a8c05cf01e28988ce8986c",
+      "approval": {
+        "status": "licence-checked",
+        "by": "Claude, against the licence file named in LICENSES.md",
+        "date": "2026-10-20"
+      }
+    },
+    {
       "path": "props.js",
       "kind": "code",
       "source": "Written for Southbound",
