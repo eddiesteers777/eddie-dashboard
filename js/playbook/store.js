@@ -11,6 +11,7 @@ export const KEYS = Object.freeze({
     roster: "sb-playbook-roster",
     team: "sb-playbook-team",
     contacts: "sb-playbook-contacts", // device only: not in SYNC_KEYS
+    run: "sb-playbook-run", // device only: a practice being run right now
     theme: "sb-playbook-theme"
 });
 

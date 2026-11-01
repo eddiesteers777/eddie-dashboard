@@ -309,6 +309,9 @@ Ideas only (AGPL-3.0), all original code.
 - Shell: guests see the public header; signed in, the same pages wear the app's navigation (`boot.js`). Entry points are coach-only: Tools menu, More, search, and the coach dashboard "Soccer team" card.
 - Details of each step: `docs/BUILD_HISTORY.md` (Playbook entries).
 
+### Playbook: Run practice (2026-11-01)
+`playbook-run.html` + `js/playbook/run.js` (UI) + `runModel.js` (pure, `tests/playbookRun.test.mjs`). The current Practice-planner plan (or a saved one) is copied into a run: a checklist with one pinned timer (option B, Eddie's pick). The timer is a deadline (`endAt`), so reloads and locked screens lose no time; state is kept on the device in `sb-playbook-run` (`KEYS.run`, not in `SYNC_KEYS`, removed with other `sb-playbook-` keys at a linked sign-out). Controls: Start, Pause/Resume, +1 min, Done (checks off and starts the next), Back/Next, tap a row to jump, tap a checked box to undo. Skip never stacks a missed activity later. Screen wake lock while running; vibration at zero. Entry: the planner's "Run practice" button. Mock-ups: `/mnt/project-files/run-practice/`. No rules change.
+
 ### Playbook sharing and sample team (2026-10-21)
 Share links (board and practice carry no names; the Game-tab team link carries first names after a coach confirm): `js/playbook/shareModel.js` (encode/decode/validate, `importPractice`), `shareUi.js` (native share, then clipboard, then a dialog), viewer `playbook-view.html` + `view.js` (no sync, no `shell.js`). Everything arriving in a link is re-validated through the normal parsers. Sample team: `sampleModel.js` (`loadSample`, `removeSample`, `hasSample`), marked by note/label "Sample".
 
