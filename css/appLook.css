@@ -43,8 +43,17 @@ html.al-on .eos-bottomnav,html.al-on .eos-mobile-icon-btn,html.al-on .eos-navbar
 
 /* GOLD: the accent. Kept for the place you are (active tab and menu item), what the coach says to you
    (the coach card), the next big date (race strip), the first card's top edge, and the brand line on the launch splash. */
-html.al-on .eos-bottomnav-item.active{background:var(--gold)!important;color:#1b1608!important;box-shadow:0 4px 16px rgba(210,173,98,.24)!important}
-html.al-on .eos-bottomnav-item.active .ui-icon{color:#1b1608!important}
+/* Bottom tab bar (Eddie, 2026-11-01, "B4"): clear fog glass with a lit top edge; the open tab is a wider white-blue
+   glass lens and only its icon and label are gold (no solid gold fill). */
+html.al-on .eos-bottomnav{background:linear-gradient(180deg,rgba(150,178,204,.34),rgba(22,34,46,.72))!important;border:1px solid rgba(226,238,248,.26)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(1.7) brightness(1.15);backdrop-filter:blur(30px) saturate(1.7) brightness(1.15);
+  box-shadow:inset 0 1px 0 rgba(240,248,255,.45),0 18px 40px -14px rgba(0,0,0,.7)!important}
+html.al-on .eos-bottomnav::before{background:linear-gradient(180deg,rgba(235,244,252,.22),transparent 70%)!important}
+html.al-on .eos-bottomnav-item{color:rgba(214,228,240,.7)!important}
+html.al-on .eos-bottomnav-item.active{color:var(--gold-light)!important;flex-grow:1.35!important;
+  background:linear-gradient(180deg,rgba(235,244,252,.3),rgba(190,212,232,.1))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(226,238,248,.34),0 0 20px rgba(210,173,98,.2)!important}
+html.al-on .eos-bottomnav-item.active .ui-icon{color:var(--gold-light)!important}
 html.al-on .eos-nav-item.active,html.al-on .eos-dropdown-link.active{box-shadow:inset 3px 0 0 var(--gold)}
 html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none):first-of-type{border-top-color:rgba(210,173,98,.7)!important}
 html.al-on .eos-coach-card h2,html.al-on .eos-coach-card .eos-today-card-header h2{color:var(--gold-light)}
