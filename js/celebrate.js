@@ -4,7 +4,7 @@
    celebrateRun({ kind, title, miles, durationSec, week, offline, next })
        a workout just marked done or logged: a full-screen blue moment
        (2026-11-02). The check draws, Southbound emojis in the app's blue
-       burst out and fall (emoji/blue/), then it settles to a summary: miles,
+       burst out and fall (emoji/celebrate/), then it settles to a summary: miles,
        time, pace, "Run 3 of 4" for the week, one next step. Tap anywhere to
        skip the animation; the saved log never waits on it. Resolves
        "next" or "close" when it has gone, so the effort question
@@ -62,7 +62,7 @@ const RUN_EMOJI = {
     strength: ["strong", "big_effort", "pr", "great_work", "high_five", "strong", "big_effort", "pr", "great_work", "high_five"],
     session: ["great_work", "high_five", "strong", "pr", "great_work", "high_five", "strong", "pr"]
 };
-export const blueEmojiSrc = id => `emoji/blue/sb_${id}.svg`;
+export const celebrateEmojiSrc = id => `emoji/celebrate/sb_${id}.svg`;
 
 const clock = sec => {
     const t = Math.round(Number(sec));
@@ -111,30 +111,40 @@ export function runSummaryFor(info = {}) {
     };
 }
 
-const CHECK_BIG = '<svg viewBox="0 0 132 132"><circle class="cr-disc" cx="66" cy="66" r="62"/><circle class="cr-ring" cx="66" cy="66" r="62" pathLength="100"/><polyline class="cr-tick" points="42 68 59 85 90 49" pathLength="40"/></svg>';
+// "6.2" -> { kind: "dec", a: 6, b: 2 }; "52:14" -> { kind: "clk", a: 52, b: 14 }; "5" -> { kind: "int", a: 5, b: 0 }.
+// Anything else (4:00:05, 5/5, 96%) just shows as written. Pure.
+export function countParts(value) {
+    const v = String(value ?? "").trim();
+    let m;
+    if ((m = /^(\d{1,3})\.(\d)$/.exec(v))) return { kind: "dec", a: +m[1], b: +m[2] };
+    if ((m = /^(\d{1,3}):(\d{2})$/.exec(v))) return { kind: "clk", a: +m[1], b: +m[2] };
+    if ((m = /^(\d{1,3})$/.exec(v))) return { kind: "int", a: +m[1], b: 0 };
+    return null;
+}
 
-// Decoration only: emojis burst from the check, some fall behind, blue slivers and sparkles. Seeded by Math.random each time.
+const CHECK_SVG = '<svg viewBox="0 0 70 70"><polyline points="18 36 30 48 52 22" pathLength="40"/></svg>';
+const BITS = 5;
+
+// Decoration only: emojis burst from the check, squash where they land, then fall away; navy and blue slivers.
 function fxHtml(ids, narrow) {
     const n = ids.length;
-    const spread = narrow ? 1 : 1.7, reach = narrow ? 105 : 210, extra = narrow ? 120 : 200;
-    const src = i => esc(blueEmojiSrc(ids[i % n]));
+    const reach = narrow ? 110 : 220, extra = narrow ? 120 : 200;
     const burst = many(n, i => {
-        const a = (i / n) * Math.PI * 2 + rnd(0, .4), d = reach + rnd(0, extra), s = Math.round(rnd(44, 72));
-        return `<img class="cr-burst" src="${src(i)}" alt="" width="${s}" height="${s}" style="--s:${s}px;--dx:${Math.round(Math.cos(a) * d * (narrow ? 1.25 : spread))}px;--dy:${Math.round(Math.sin(a) * d * .9)}px;--r:${Math.round(rnd(-40, 40))}deg;--d:${rnd(.55, .73).toFixed(2)}s">`;
+        const a = (i / n) * Math.PI * 2 + rnd(0, .4), d = reach + rnd(0, extra), s = Math.round(rnd(60, 96));
+        return `<img class="cr-burst" src="${esc(celebrateEmojiSrc(ids[i % n]))}" alt="" width="${s}" height="${s}" style="--z:${s}px;--dx:${Math.round(Math.cos(a) * d * (narrow ? 1.25 : 1.7))}px;--dy:${Math.round(Math.sin(a) * d * .9)}px;--r:${Math.round(rnd(-40, 40))}deg;--d:${rnd(.9, 1.05).toFixed(2)}s">`;
     });
-    const rain = many(14, i => {
-        const far = i % 3 === 0, s = Math.round(far ? rnd(26, 40) : rnd(36, 58));
-        return `<img class="cr-rain" src="${src(i * 5)}" alt="" width="${s}" height="${s}" style="--x:${rnd(4, 92).toFixed(0)}%;--s:${s}px;--sw:${Math.round(rnd(-40, 40))}px;--r:${Math.round(rnd(-180, 180))}deg;--t:${(far ? 3.2 : rnd(2.3, 3.3)).toFixed(2)}s;--d:${rnd(.9, 2.4).toFixed(2)}s;--b:${far ? 2 : 0}px;--o:${far ? .45 : 1}">`;
+    const bits = many(26, i => {
+        const a = rnd(0, Math.PI * 2), d = (narrow ? 90 : 170) + rnd(0, narrow ? 220 : 380);
+        return `<i class="cr-bit cr-b${i % BITS}" style="--w:${rnd(3, 6).toFixed(1)}px;--dx:${Math.round(Math.cos(a) * d * 1.2)}px;--dy:${Math.round(Math.sin(a) * d * .9 + 90)}px;--r:${Math.round(rnd(-360, 360))}deg;--d:${rnd(.9, 1.2).toFixed(2)}s"></i>`;
     });
-    const bits = many(22, i => {
-        const a = rnd(0, Math.PI * 2), d = (narrow ? 90 : 170) + rnd(0, narrow ? 210 : 360);
-        return `<i class="cr-bit cr-b${i % 5}" style="--w:${rnd(3, 6).toFixed(1)}px;--dx:${Math.round(Math.cos(a) * d * 1.2)}px;--dy:${Math.round(Math.sin(a) * d * .9 + 90)}px;--r:${Math.round(rnd(-360, 360))}deg;--d:${rnd(.6, .85).toFixed(2)}s"></i>`;
-    });
-    const sparks = many(10, () => {
-        const a = rnd(0, Math.PI * 2), d = 70 + rnd(0, narrow ? 170 : 300);
-        return `<i class="cr-spark" style="--s:${Math.round(rnd(12, 28))}px;--dx:${Math.round(Math.cos(a) * d * 1.2)}px;--dy:${Math.round(Math.sin(a) * d)}px;--d:${rnd(.7, 2.1).toFixed(2)}s"></i>`;
-    });
-    return burst + rain + bits + sparks;
+    return burst + bits;
+}
+
+// One stat. Where the number can count up (CSS counters, so skip and reduced motion jump to the end), the real text
+// stays in the page for screen readers and the counter draws over it.
+function statHtml(x, canCount) {
+    const c = canCount ? countParts(x.value) : null;
+    return `<div><b${c ? ` class="cr-cu cr-cu-${c.kind}" style="--a:${c.a};--b:${c.b}"` : ""}><span class="cr-txt">${esc(x.value)}</span></b><span>${esc(x.label)}</span></div>`;
 }
 
 // The day's last habit: the same full-screen moment, its own words. Pure.
@@ -154,26 +164,30 @@ function openCelebration(m, ids) {
     if (typeof document === "undefined") return Promise.resolve("close");
     const still = reducedMotion();
     const narrow = (window.innerWidth || 390) < 700;
+    const canCount = !still && typeof CSS !== "undefined" && typeof CSS.registerProperty === "function";
     const el = document.createElement("div");
-    el.className = `sb-cr${still ? " is-still" : ""}`;
+    el.className = `sb-cr${still ? " is-still" : ""}${canCount ? " can-count" : ""}`;
     el.setAttribute("role", "dialog");
     el.setAttribute("aria-modal", "true");
     el.setAttribute("aria-label", `${m.kicker}${m.title ? `: ${m.title}` : ""}`);
+    const cy = narrow ? 31 : 36;
+    el.style.setProperty("--cy", `${cy}%`);
+    const letters = [...(m.title || "")].map((c, i) => c === " " ? `<span class="cr-sp" style="--k:${i}"></span>` : `<span style="--k:${i}">${esc(c)}</span>`).join("");
     const weekHtml = m.week ? `<div class="cr-week"><small>This week</small>
             <div class="cr-strip" style="--n:${m.week.segments.length}">${m.week.segments.map(s => `<i class="${s ? `is-${s}` : ""}"></i>`).join("")}</div>
             <div class="cr-sl"><b>${esc(m.week.left)}</b><span>${esc(m.week.right)}</span></div>
             <p class="cr-line">${esc(m.week.line)}</p></div>` : "";
-    el.innerHTML = `<div class="cr-wash" aria-hidden="true"></div>
-        <div class="cr-fx" aria-hidden="true" style="--cy:${narrow ? 31 : 36}%">${still ? "" : fxHtml(ids, narrow)}</div>
+    el.innerHTML = `<div class="cr-wash" aria-hidden="true"></div><span class="cr-edge" aria-hidden="true"></span>
+        <div class="cr-fx" aria-hidden="true">${still ? "" : fxHtml(ids, narrow)}</div>
         <div class="cr-core">
-            <div class="cr-lens" aria-hidden="true">${still ? "" : `<span class="cr-pulse" style="--d:.7s"></span><span class="cr-pulse" style="--d:1s"></span><span class="cr-pulse" style="--d:1.3s"></span>`}${CHECK_BIG}</div>
+            <div class="cr-lens" aria-hidden="true">${still ? "" : `<span class="cr-ring" style="--d:.8s"></span><span class="cr-ring" style="--d:1.1s"></span><span class="cr-ring" style="--d:1.4s"></span>`}<i></i>${CHECK_SVG}</div>
             <p class="cr-kick">${esc(m.kicker)}</p>
-            ${m.title ? `<h2 class="cr-title">${esc(m.title)}</h2>` : ""}
-            ${m.stats.length ? `<div class="cr-stats" style="--n:${m.stats.length}">${m.stats.map(x => `<div><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join("")}</div>` : ""}
+            ${m.title ? `<h2 class="cr-title" aria-label="${esc(m.title)}"><span class="cr-letters" aria-hidden="true">${letters}</span></h2>` : ""}
+            ${m.stats.length ? `<div class="cr-stats" style="--n:${m.stats.length}">${m.stats.map(x => statHtml(x, canCount)).join("")}</div>` : ""}
             ${weekHtml}
             ${m.note ? `<p class="cr-offline">${esc(m.note)}</p>` : ""}
             <div class="cr-actions">
-                <button type="button" class="sb-btn sb-btn-primary cr-go" data-cr="next">${esc(m.next || "Done")}</button>
+                <button type="button" class="cr-go" data-cr="next">${esc(m.next || "Done")}</button>
                 ${m.next ? `<button type="button" class="cr-close" data-cr="close">Close</button>` : ""}
             </div>
         </div>

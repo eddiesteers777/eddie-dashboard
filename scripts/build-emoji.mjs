@@ -306,16 +306,16 @@ for (const [id, body] of Object.entries(EMOJI)) {
 }
 console.log(`Wrote ${Object.keys(EMOJI).length} emojis to emoji/`);
 
-// ---- Blue set for the full-screen completion moments (js/celebrate.js) ----
-// The same drawings, recoloured to the app's foggy blue (css/appLook.css): emoji/blue/<id>.svg.
+// ---- Light-blue set for the full-screen completion moments (js/celebrate.js) ----
+// The same drawings, recoloured to the app's blue for a light screen: emoji/celebrate/<id>.svg.
 // Only the ones the celebrations use. Add an id here to give a moment another one.
-const BLUE_IDS = ["sb_finish", "sb_pr", "sb_great_work", "sb_high_five", "sb_long_run", "sb_strong", "sb_hydrate", "sb_sleep", "sb_big_effort"];
-const BLUE_MAP = { "#C9AD84": "#C7D6E4", "#AE9068": "#8FA6BC", "#D8A444": "#A9C7E2", "#E3DDD0": "#E0E9F1", "#F2EEE4": "#F4F8FB", "#E07A3F": "#6F9CC4", "#F2B35E": "#E6F1FA", "#7FB2CF": "#9CC3E6", "#0F2019": "#0E1B27", "#173226": "#213242" };
-const BLUE_DIR = join(OUT_DIR, "blue");
-mkdirSync(BLUE_DIR, { recursive: true });
-for (const id of BLUE_IDS) {
+const CEL_IDS = ["sb_finish", "sb_pr", "sb_great_work", "sb_high_five", "sb_long_run", "sb_strong", "sb_hydrate", "sb_sleep", "sb_big_effort"];
+const CEL_MAP = { "#C9AD84": "#4F86B8", "#AE9068": "#2F5B86", "#D8A444": "#6FA3D2", "#E3DDD0": "#CFE3F5", "#F2EEE4": "#F4F8FB", "#E07A3F": "#2F6FA8", "#F2B35E": "#BBD8F0", "#7FB2CF": "#5C97CB", "#0F2019": "#0E1B27", "#173226": "#213242" };
+const CEL_DIR = join(OUT_DIR, "celebrate");
+mkdirSync(CEL_DIR, { recursive: true });
+for (const id of CEL_IDS) {
     let svg = readFileSync(join(OUT_DIR, `${id}.svg`), "utf8");
-    for (const [from, to] of Object.entries(BLUE_MAP)) svg = svg.replace(new RegExp(from, "gi"), to);
-    writeFileSync(join(BLUE_DIR, `${id}.svg`), svg);
+    for (const [from, to] of Object.entries(CEL_MAP)) svg = svg.replace(new RegExp(from, "gi"), to);
+    writeFileSync(join(CEL_DIR, `${id}.svg`), svg);
 }
-console.log(`Wrote ${BLUE_IDS.length} blue emojis to emoji/blue/`);
+console.log(`Wrote ${CEL_IDS.length} light-blue emojis to emoji/celebrate/`);

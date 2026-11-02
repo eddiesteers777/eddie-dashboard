@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { celebrationFor, runSummaryFor, weekRunProgress, daySummaryFor, blueEmojiSrc, celebrateRun, celebrateHabit } from "../js/celebrate.js";
+import { celebrationFor, runSummaryFor, weekRunProgress, daySummaryFor, countParts, celebrateEmojiSrc, celebrateRun, celebrateHabit } from "../js/celebrate.js";
 
 test("a run shows its miles; other workouts say what they were", () => {
     assert.deepEqual(celebrationFor({ kind: "run", title: "Easy run", miles: 5 }), { kicker: "Run complete", title: "Easy run", detail: "5 mi" });
@@ -75,9 +75,17 @@ test("the day's last habit says Day complete with its count and streak", () => {
     assert.equal(daySummaryFor().title, "All done");
 });
 
-test("every emoji the moments use exists in the blue set", () => {
+test("only numbers that read as miles, a clock or a whole count can count up", () => {
+    assert.deepEqual(countParts("6.2"), { kind: "dec", a: 6, b: 2 });
+    assert.deepEqual(countParts("52:14"), { kind: "clk", a: 52, b: 14 });
+    assert.deepEqual(countParts("8:05"), { kind: "clk", a: 8, b: 5 });
+    assert.deepEqual(countParts("12"), { kind: "int", a: 12, b: 0 });
+    for (const v of ["4:00:05", "5/5", "96%", "", "x", null]) assert.equal(countParts(v), null, `"${v}" shows as written`);
+});
+
+test("every emoji the moments use exists in the light-blue set", () => {
     for (const id of ["finish", "pr", "great_work", "high_five", "long_run", "strong", "hydrate", "sleep", "big_effort"]) {
-        assert.ok(existsSync(new URL(`../${blueEmojiSrc(id)}`, import.meta.url)), `${blueEmojiSrc(id)} is missing (run node scripts/build-emoji.mjs)`);
+        assert.ok(existsSync(new URL(`../${celebrateEmojiSrc(id)}`, import.meta.url)), `${celebrateEmojiSrc(id)} is missing (run node scripts/build-emoji.mjs)`);
     }
 });
 
