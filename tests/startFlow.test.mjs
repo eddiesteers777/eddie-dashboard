@@ -55,3 +55,13 @@ test("non-event goals go to primaryGoal; nothing to save returns null", () => {
     const m = mergedRecord(full, { phone: "555", primaryGoal: "Keep" });
     assert.equal(m.phone, "555"); assert.equal(m.primaryGoal, "Keep"); assert.equal(m.eventType, "half");
 });
+
+test("leave summary names what would be lost", async () => {
+    const { leaveSummary } = await import("../js/startFlow.js");
+    const s = leaveSummary(full);
+    assert.equal(s.name, "Sam");
+    assert.deepEqual(s.items.map(i => i.tag), ["Goal", "4 days", "Example", "Profile"]);
+    assert.equal(s.items[1].label, "Tue, Thu, Sat, Sun");
+    assert.equal(leaveSummary({}).any, false);
+    assert.deepEqual(leaveSummary({ sport: "strength" }).items, [{ label: "Strength", tag: "Sport" }]);
+});

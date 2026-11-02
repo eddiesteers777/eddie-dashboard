@@ -94,3 +94,18 @@
 }
 @media (max-width:899px){.st-side{display:none}}
 @media (min-width:900px){.st-inline{display:none}}
+/* "Before you go": what leaving would lose (js/start.js). Green = keep it, red = let it go. */
+.st-leave{border:0;padding:0;background:transparent;max-width:none;width:100%;max-height:none;margin:0;color:var(--st-text);position:fixed;inset:0;height:100%;display:none;align-items:flex-end;justify-content:center}
+.st-leave[open]{display:flex}
+.st-leave::backdrop{background:rgba(10,16,22,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.st-leave-card{width:100%;max-width:440px;padding:22px 18px calc(18px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0;display:flex;flex-direction:column;gap:14px;box-sizing:border-box;animation:st-up .3s both}
+@media (min-width:900px){.st-leave{align-items:center}.st-leave-card{border-radius:20px;padding:26px}}
+@media (prefers-reduced-motion:reduce){.st-leave-card{animation:none}}
+.st-leave h2{margin:0;font:800 34px/.98 var(--font-display);text-transform:uppercase}
+.st-leave p{margin:0;color:var(--st-muted);font-size:15px}
+.st-leave ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.st-leave li{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:10px;background:rgba(199,214,228,.08);border:1px solid rgba(214,228,240,.1);font:600 15px var(--font-body);min-height:44px;align-items:center;box-sizing:border-box}
+.st-leave li span{font:500 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--st-muted);white-space:nowrap}
+.st-cta-keep{background:linear-gradient(160deg,#B4D2BC,#7FA68A);box-shadow:0 10px 26px -8px rgba(127,166,138,.5),inset 0 1px 0 rgba(255,255,255,.45)}
+.st-lose{background:none;border:0;min-height:44px;color:#E59A86;font:600 15px var(--font-body);text-decoration:underline;cursor:pointer}
+.st-lose:focus-visible{outline:2px solid #E59A86;outline-offset:2px}
