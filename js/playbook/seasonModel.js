@@ -79,3 +79,16 @@ export function setCancelled(team, sid, on) {
     return { ...team, sessions: team.sessions.map(s => { if (s.id !== sid || s.kind !== "practice") return s; const { cancelled: _, ...r } = s; return on ? { ...r, cancelled: true } : r; }) };
 }
 export const handle = (team, id) => ({ ...team, handled: [...new Set([...(team.handled || []), String(id).slice(0, 60)])].slice(-300) });
+
+// ---- month view ----
+// The first day of the month `n` months from the month that holds `d`.
+export function addMonths(d, n) { const x = toDate(d.slice(0, 7) + "-01"); x.setMonth(x.getMonth() + n); return key(x); }
+// Weeks (Monday first) that cover the month holding `d`. Each day: { date, items, inMonth }.
+export function monthWeeks(team, d) {
+    const first = d.slice(0, 7) + "-01", last = addDays(addMonths(first, 1), -1);
+    const weeks = [];
+    for (let mon = weekStart(first); mon <= last; mon = addDays(mon, 7)) {
+        weeks.push(weekDays(team, mon).map(x => ({ ...x, inMonth: x.date.slice(0, 7) === first.slice(0, 7) })));
+    }
+    return weeks;
+}

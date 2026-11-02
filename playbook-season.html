@@ -46,35 +46,38 @@
       <span class="pb-sub" id="ssSub"></span>
     </div>
     <div class="pb-actions">
-      <button class="pb-btn pb-primary" id="ssAddGame" type="button">+ Game</button>
-      <button class="pb-btn" id="ssAddPrac" type="button">+ Practice</button>
-      <button class="pb-btn" id="ssRepeat" type="button">Repeat practices</button>
-      <button class="pb-btn" id="ssWin" type="button">Season dates</button>
+      <button class="pb-btn pb-primary ss-add" id="ssAdd" type="button">+ Add</button>
     </div>
   </header>
   <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-season.html" class="pb-tab" aria-current="page">Season</a><a href="playbook-roster.html" class="pb-tab">Roster</a><a href="playbook-team.html" class="pb-tab">Team</a><a href="playbook-game.html" class="pb-tab">Game</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
   <section class="ss-empty" id="ssEmpty" hidden>
     <h2>No season yet</h2>
     <p>Add your first game or practice. Games drive the plan, so add those first.</p>
-    <div class="ss-empty-btns"><button class="pb-btn pb-primary" id="ssE1" type="button">Add a game</button><button class="pb-btn" id="ssE2" type="button">Add a practice</button><button class="pb-btn" id="ssE3" type="button">Repeat practices</button></div>
+    <div class="ss-empty-btns"><button class="pb-btn pb-primary" id="ssE1" type="button">+ Add</button><button class="pb-btn" id="ssE3" type="button">Repeat practices</button></div>
   </section>
   <section class="ss-body" id="ssBody" hidden>
     <div class="ss-next" id="ssNext" hidden></div>
     <div class="ss-heads" id="ssHeads"></div>
-    <div class="ss-weekbar"><button class="pb-btn" id="ssPrev" type="button" aria-label="Previous week">&lsaquo;</button><b id="ssRange"></b><button class="pb-btn" id="ssNextW" type="button" aria-label="Next week">&rsaquo;</button><button class="pb-btn" id="ssToday" type="button">Today</button></div>
+    <div class="ss-viewbar"><div class="ss-seg ss-view" id="ssView" role="group" aria-label="View"><button type="button" data-v="week" aria-pressed="true">Week</button><button type="button" data-v="month" aria-pressed="false">Month</button></div><button class="pb-btn" id="ssToday" type="button">Today</button></div>
+    <div class="ss-month" id="ssMonth" hidden>
+      <div class="ss-weekbar"><button class="pb-btn" id="ssMPrev" type="button" aria-label="Previous month">&lsaquo;</button><b id="ssMName"></b><button class="pb-btn" id="ssMNext" type="button" aria-label="Next month">&rsaquo;</button></div>
+      <div class="ss-grid" id="ssGrid" role="grid" aria-label="Month"></div>
+      <p class="ss-legend"><span class="ss-dot g"></span> Game <span class="ss-dot"></span> Practice &middot; dashed is away</p>
+    </div>
+    <div class="ss-weekbar" id="ssWeekBar"><button class="pb-btn" id="ssPrev" type="button" aria-label="Previous week">&lsaquo;</button><b id="ssRange"></b><button class="pb-btn" id="ssNextW" type="button" aria-label="Next week">&rsaquo;</button></div>
     <div class="ss-strip" id="ssStrip" role="tablist" aria-label="Days of the week"></div>
     <div class="ss-day" id="ssDay"></div>
   </section>
 
   <dialog id="ssDlg" class="pb-dlg pb-dlg-wide">
     <h2 id="ssDlgTitle">Add</h2>
-    <div class="ss-seg" id="ssKind" role="group" aria-label="Type"><button type="button" data-k="game" aria-pressed="true">Game</button><button type="button" data-k="practice" aria-pressed="false">Practice</button></div>
+    <div class="ss-seg" id="ssKind" role="group" aria-label="Type"><button type="button" data-k="game" aria-pressed="true">Game</button><button type="button" data-k="practice" aria-pressed="false">Practice</button><button type="button" data-k="repeat" aria-pressed="false">Repeat</button><button type="button" data-k="dates" aria-pressed="false">Season dates</button></div>
     <label class="ss-f" id="fOpp">Opponent <input id="inOpp" maxlength="40" autocomplete="off"></label>
-    <label class="ss-f">Date <input id="inDate" type="date"></label>
+    <div class="ss-f ss-pick" id="pkDay">Day<div class="ss-chips2" id="chDay"></div></div>
+    <div class="ss-f ss-pick" id="pkTime"><span id="lblTime2">Kickoff</span><div class="ss-chips2" id="chTime"></div></div>
     <div class="ss-seg" id="ssSite" role="group" aria-label="Home or away"><button type="button" data-s="home" aria-pressed="false">Home</button><button type="button" data-s="away" aria-pressed="false">Away</button><button type="button" data-s="neutral" aria-pressed="false">Neutral</button></div>
-    <label class="ss-f"><span id="lblTime">Kickoff</span> <input id="inTime" type="time"></label>
-    <label class="ss-f" id="fArrive">Arrive <input id="inArrive" type="time"></label>
-    <label class="ss-f">Field or place <input id="inPlace" maxlength="40" autocomplete="off"></label>
+    <div class="ss-two ss-other"><label class="ss-f">Other date <input id="inDate" type="date"></label><label class="ss-f"><span id="lblTime">Other time</span> <input id="inTime" type="time"></label></div>
+    <div class="ss-two"><label class="ss-f" id="fArrive">Arrive <input id="inArrive" type="time"></label><label class="ss-f">Field or place <input id="inPlace" maxlength="40" autocomplete="off"></label></div>
     <p class="pb-hint" id="ssErr" role="alert" hidden></p>
     <div class="pb-dlg-foot"><button class="pb-btn pb-primary" id="ssSave" type="button">Save</button><button class="pb-btn" id="ssCancel" type="button">Cancel</button><button class="pb-btn" id="ssDelete" type="button" hidden>Delete</button></div>
   </dialog>

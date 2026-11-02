@@ -17,7 +17,7 @@ const fmtDate = (d, o) => new Date(d + "T12:00:00").toLocaleDateString(undefined
 const fmtTime = t => { if (!t) return ""; const [hh, mm] = t.split(":").map(Number); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`; };
 const SITE = { home: "Home", away: "Away", neutral: "Neutral" };
 
-let team = readTeam(), today = T.todayKey(), selected = today, editing = null, kind = "game", site = "", planFor = null;
+let team = readTeam(), today = T.todayKey(), selected = today, editing = null, kind = "game", site = "", planFor = null, view = "week";
 
 function save(next) {
     team = next;
@@ -51,6 +51,39 @@ function approve(sg) {
     const saved = P.savePractice(list, practice, null);
     try { localStorage.setItem(KEYS.practices, P.serializePracticeList(saved.list)); } catch { toast("Couldn't save on this device"); return; }
     save(S.handle(S.setPlan(team, s.id, saved.id), sg.id)); toast("Plan built. Your original plan is unchanged.");
+}
+
+// Heads-up notes fold into one line, so the schedule stays on top. Tap it to read them.
+let headsOpen = false;
+function renderHeads() {
+    const heads = $("ssHeads"), list = Rules.general(sugs()); heads.replaceChildren();
+    if (!list.length) { headsOpen = false; return; }
+    const b = h("button", "ss-headline"); b.type = "button"; b.setAttribute("aria-expanded", String(headsOpen));
+    const k = h("span", "ss-k", "Heads up"), t = h("span", "", `${list.length} ${list.length === 1 ? "thing" : "things"} to check`), go = h("i", "", headsOpen ? "\u2303" : "\u203A"); go.setAttribute("aria-hidden", "true");
+    b.append(k, t, go); b.onclick = () => { headsOpen = !headsOpen; renderHeads(); };
+    heads.append(b);
+    if (headsOpen) list.forEach(g => heads.append(sugRow(g)));
+}
+
+function renderMonth() {
+    $("ssMName").textContent = fmtDate(selected.slice(0, 7) + "-01", { month: "long", year: "numeric" });
+    const grid = $("ssGrid"); grid.replaceChildren();
+    for (const d of ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) grid.append(h("div", "ss-dow", d));
+    for (const week of S.monthWeeks(team, selected)) for (const d of week) {
+        const c = h("button", "ss-cell" + (d.inMonth ? "" : " out") + (d.date === selected ? " sel" : "") + (d.date === today ? " today" : "")); c.type = "button";
+        const items = d.items.filter(i => !i.cancelled), game = items.some(S.isGame), prac = items.some(i => i.kind === "practice");
+        c.setAttribute("aria-label", `${fmtDate(d.date, { weekday: "long", month: "long", day: "numeric" })}${game ? ", game" : ""}${prac ? ", practice" : ""}`);
+        c.append(h("span", "ss-n", String(Number(d.date.slice(8)))));
+        const lines = h("span", "ss-lines"), dots = h("span", "ss-dots");
+        for (const s of items) {
+            const isG = S.isGame(s), away = s.site === "away";
+            lines.append(h("span", "ss-ev " + (isG ? "g" : "p") + (isG && away ? " away" : ""), isG ? `${s.time ? fmtTime(s.time).replace(":00", "").replace(" ", "").toLowerCase() + " " : ""}${away ? "@ " : ""}${S.opponent(s) || "Game"}` : `${s.time ? fmtTime(s.time).replace(":00", "").replace(" ", "").toLowerCase() + " " : ""}Practice`));
+            dots.append(h("span", "ss-dot" + (isG ? " g" : "")));
+        }
+        c.append(lines, dots);
+        c.onclick = () => { selected = d.date; render(); };
+        grid.append(c);
+    }
 }
 
 function renderNext() {
@@ -116,7 +149,7 @@ function renderDay() {
         e.append(r); box.append(e);
     } else day.items.forEach(s => { box.append(itemCard(s)); Rules.forDay(sugs(), selected).filter(g => g.sid === s.id).forEach(g => box.append(sugRow(g))); });
     const rest = S.weekDays(team, S.weekStart(selected)).filter(d => d.date !== selected && d.items.length);
-    if (rest.length) {
+    if (rest.length && view === "week") {
         box.append(h("div", "ss-wk", "Rest of this week"));
         for (const d of rest) for (const s of d.items) {
             const r = h("button", "ss-row" + (s.kind === "game" ? " game" : "")); r.type = "button";
@@ -137,16 +170,35 @@ function render() {
     if (!has) return;
     const mon = S.weekStart(selected);
     $("ssRange").textContent = `${fmtDate(mon, { month: "short", day: "numeric" })} – ${fmtDate(S.addDays(mon, 6), { month: "short", day: "numeric" })}`;
-    const heads = $("ssHeads"); heads.replaceChildren(); Rules.general(sugs()).forEach(g => heads.append(sugRow(g)));
-    renderNext(); renderStrip(mon); renderDay();
+    renderHeads();
+    $("ssMonth").hidden = view !== "month"; $("ssWeekBar").hidden = view === "month"; $("ssStrip").hidden = view === "month";
+    $("ssView").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === view)));
+    renderNext(); if (view === "month") renderMonth(); else renderStrip(mon); renderDay();
 }
 
 // ---- add / edit ----
 function setKind(k) {
+    if (k === "repeat" || k === "dates") { $("ssDlg").close(); (k === "repeat" ? openRepeat : openWin)(); return; }
     kind = k;
     $("ssKind").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k)));
     $("fOpp").hidden = k !== "game"; $("fArrive").hidden = k !== "game"; $("ssSite").hidden = k !== "game";
-    $("lblTime").textContent = k === "game" ? "Kickoff" : "Start time";
+    $("lblTime").textContent = "Other time"; $("lblTime2").textContent = k === "game" ? "Kickoff" : "Start";
+    chipsReflect();
+}
+// Tap chips for the day and the time. The date and time boxes under them stay for anything else.
+const TIMES = ["15:30", "16:00", "16:30", "17:00"];
+function buildChips() {
+    const day = $("chDay"), time = $("chTime"); day.replaceChildren(); time.replaceChildren();
+    const first = selected < today ? today : selected;
+    for (let i = 0; i < 6; i++) {
+        const d = S.addDays(first, i), b = h("button", "ss-chip2", i === 0 && d === today ? "Today" : fmtDate(d, { weekday: "short", day: "numeric" })); b.type = "button"; b.dataset.v = d;
+        b.onclick = () => { $("inDate").value = d; chipsReflect(); }; day.append(b);
+    }
+    for (const t of TIMES) { const b = h("button", "ss-chip2", fmtTime(t).replace(":00", "").replace(" ", " ")); b.type = "button"; b.dataset.v = t; b.onclick = () => { $("inTime").value = $("inTime").value === t ? "" : t; chipsReflect(); }; time.append(b); }
+}
+function chipsReflect() {
+    document.querySelectorAll("#chDay .ss-chip2").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === $("inDate").value)));
+    document.querySelectorAll("#chTime .ss-chip2").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === $("inTime").value)));
 }
 function setSite(v) { site = v; $("ssSite").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === v))); }
 function openEdit(s, k = "game") {
@@ -155,6 +207,7 @@ function openEdit(s, k = "game") {
     $("ssKind").hidden = Boolean(s); setKind(s ? s.kind : k);
     $("inOpp").value = s?.opp || s?.game?.opp || ""; $("inDate").value = s ? s.date : selected;
     $("inTime").value = s?.time || ""; $("inArrive").value = s?.arrive || ""; $("inPlace").value = s?.place || ""; setSite(s?.site || "");
+    buildChips(); chipsReflect();
     $("ssErr").hidden = true; $("ssDelete").hidden = !s; $("ssDelete").textContent = "Delete";
     $("ssDlg").showModal();
 }
@@ -194,9 +247,12 @@ function doRepeat() {
 }
 
 function wire() {
-    $("ssAddGame").onclick = $("ssE1").onclick = () => openEdit(null, "game");
-    $("ssAddPrac").onclick = $("ssE2").onclick = () => openEdit(null, "practice");
-    $("ssRepeat").onclick = $("ssE3").onclick = openRepeat;
+    $("ssAdd").onclick = $("ssE1").onclick = () => openEdit(null, "game");
+    $("ssE3").onclick = openRepeat;
+    $("inDate").addEventListener("input", chipsReflect); $("inTime").addEventListener("input", chipsReflect);
+    $("ssView").querySelectorAll("button").forEach(b => { b.onclick = () => { view = b.dataset.v; render(); }; });
+    $("ssMPrev").onclick = () => { selected = S.addMonths(selected, -1); render(); };
+    $("ssMNext").onclick = () => { selected = S.addMonths(selected, 1); render(); };
     $("ssKind").querySelectorAll("button").forEach(b => { b.onclick = () => setKind(b.dataset.k); });
     $("ssSite").querySelectorAll("button").forEach(b => { b.onclick = () => setSite(site === b.dataset.s ? "" : b.dataset.s); });
     $("ssSave").onclick = saveEdit; $("ssCancel").onclick = () => $("ssDlg").close();
@@ -205,7 +261,7 @@ function wire() {
         if (b.dataset.arm !== "1") { b.dataset.arm = "1"; b.textContent = "Tap again to delete"; setTimeout(() => { b.dataset.arm = ""; b.textContent = "Delete"; }, 3000); return; }
         b.dataset.arm = ""; $("ssDlg").close(); save(S.removeItem(team, editing)); toast("Deleted");
     };
-    $("ssWin").onclick = openWin; $("wnSave").onclick = saveWin; $("wnCancel").onclick = () => $("ssWinDlg").close();
+    $("wnSave").onclick = saveWin; $("wnCancel").onclick = () => $("ssWinDlg").close();
     $("rpGo").onclick = doRepeat; $("rpCancel").onclick = () => $("ssRepDlg").close(); $("ssPlanClose").onclick = () => $("ssPlanDlg").close();
     $("ssPrev").onclick = () => { selected = S.addDays(selected, -7); render(); };
     $("ssNextW").onclick = () => { selected = S.addDays(selected, 7); render(); };
