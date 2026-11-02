@@ -9,7 +9,7 @@
 ========================================== */
 import {
     START_KEY, SPORTS, GOALS, NOW, MARKS, DAY_LABELS,
-    cleanStart, stepsFor, exampleWeek
+    cleanStart, stepsFor, exampleWeek, leaveSummary, hasAnswers
 } from "./startFlow.js";
 
 const root = document.getElementById("startRoot");
@@ -144,7 +144,7 @@ async function signIn() {
     try {
         const { login } = await import("./auth.js");
         const ok = await login();
-        if (ok) { location.href = "index.html"; return; }
+        if (ok) { leaving = true; location.href = "index.html"; return; }
     } catch (error) { console.warn("Southbound: start sign-in failed.", error); }
     busy = false; render({ focus: false });
 }
@@ -165,6 +165,65 @@ root.addEventListener("click", event => {
     }
 });
 
+// ---- Before you go: leaving without saving shows what would be lost (loss aversion, shown honestly) ----
+let leaving = false;
+let pendingLeave = null;
+let leaveDialog = null;
+
+function openLeave(after) {
+    const sum = leaveSummary(answers);
+    if (leaving || !sum.any || busy) return false;
+    pendingLeave = after;
+    if (!leaveDialog) {
+        leaveDialog = document.createElement("dialog");
+        leaveDialog.className = "st-leave";
+        leaveDialog.addEventListener("click", e => { if (e.target === leaveDialog) leaveDialog.close(); });
+        leaveDialog.addEventListener("click", e => {
+            const act = e.target.closest("[data-leave]")?.dataset.leave;
+            if (act === "save") { leaveDialog.close(); signIn(); }
+            if (act === "lose") {
+                leaving = true;
+                try { localStorage.removeItem(START_KEY); } catch { /* fine */ }
+                leaveDialog.close();
+                if (pendingLeave) pendingLeave();
+            }
+        });
+        document.body.append(leaveDialog);
+    }
+    leaveDialog.innerHTML = `<div class="st-leave-card st-glass" aria-labelledby="stLeaveH">
+        <div class="st-kicker">Before you go</div>
+        <h2 id="stLeaveH">${sum.name ? `${esc(sum.name)}, your` : "Your"} week isn't saved yet</h2>
+        <p>Leave now and these are gone from this phone.</p>
+        <ul>${sum.items.map(i => `<li>${esc(i.label)}<span>${esc(i.tag)}</span></li>`).join("")}</ul>
+        <button type="button" class="st-cta st-cta-keep" data-leave="save"><span class="st-g" aria-hidden="true">G</span>Save my week with Google</button>
+        <button type="button" class="st-lose" data-leave="lose">I'll lose it</button>
+    </div>`;
+    leaveDialog.showModal();
+    return true;
+}
+
+// Links that leave the page (the no-account application, Privacy).
+root.addEventListener("click", event => {
+    const a = event.target.closest("a[href]");
+    if (!a || a.target === "_blank") return;
+    if (openLeave(() => { location.href = a.href; })) event.preventDefault();
+}, true);
+
+// The phone's back gesture: keep one extra history entry so back lands here first.
+try { history.pushState({ stGuard: true }, ""); } catch { /* fine */ }
+window.addEventListener("popstate", () => {
+    if (leaving) return;
+    try { history.pushState({ stGuard: true }, ""); } catch { /* fine */ }
+    openLeave(() => history.go(-2));
+});
+
+// Closing the tab: a browser can only show its own plain box here.
+window.addEventListener("beforeunload", event => {
+    if (leaving || busy || !hasAnswers(answers)) return;
+    event.preventDefault();
+    event.returnValue = "";
+});
+
 root.addEventListener("input", event => {
     if (event.target.id !== "stName") return;
     answers = { ...answers, name: event.target.value.slice(0, 40) };
@@ -176,6 +235,6 @@ root.addEventListener("keydown", event => {
 });
 
 // Someone who is already signed in has no use for this page.
-import("./auth.js").then(({ listenForAuth }) => listenForAuth(user => { if (user && !busy) location.replace("index.html"); })).catch(() => {});
+import("./auth.js").then(({ listenForAuth }) => listenForAuth(user => { if (user && !busy) { leaving = true; location.replace("index.html"); } })).catch(() => {});
 
 render({ focus: false });

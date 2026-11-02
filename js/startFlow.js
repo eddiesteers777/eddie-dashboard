@@ -162,3 +162,19 @@ export function mergedRecord(a, existing = null) {
     if (!Object.keys(add).length) return null;
     return sanitizeClientRecord({ ...(existing || {}), ...add });
 }
+
+// What someone would lose by leaving now, by name (the "before you go" sheet). Empty when there is nothing yet.
+export function leaveSummary(a) {
+    const c = cleanStart(a);
+    const items = [];
+    const sport = SPORTS.find(s => s.value === c.sport);
+    const goal = c.sport && GOALS[c.sport]?.find(g => g.value === c.goal);
+    if (sport) items.push({ label: goal ? `${sport.label}, ${goal.label}` : sport.label, tag: goal ? "Goal" : "Sport" });
+    if (c.days.length) {
+        const names = DAY_LABELS.filter(([id]) => c.days.includes(id)).map(([, n]) => n);
+        items.push({ label: names.join(", "), tag: `${names.length} day${names.length === 1 ? "" : "s"}` });
+        items.push({ label: `Your week, ${exampleWeek(c).minutes} min`, tag: "Example" });
+    }
+    if (c.name || c.mark) items.push({ label: c.name && c.mark ? "Your name and mark" : c.name ? "Your name" : "Your mark", tag: "Profile" });
+    return { name: c.name, items, any: items.length > 0 };
+}
