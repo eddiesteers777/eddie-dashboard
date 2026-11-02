@@ -13,16 +13,20 @@ function silentWavUrl() {
 }
 
 let keeper = null;
+// A tap that never comes back (iOS can leave play() or resume() pending) must not leave a button dead:
+// give the unlock a short time, then carry on with whatever state the audio is in.
+const within = (promise, ms) => Promise.race([promise, new Promise(res => setTimeout(res, ms))]);
+
 export async function unlockAudio() {
     try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
     try {
         if (!keeper) { keeper = new Audio(silentWavUrl()); keeper.loop = true; keeper.setAttribute("playsinline", ""); }
-        await keeper.play();
+        await within(keeper.play(), 1200);
     } catch { /* blocked: the context may still run */ }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return { ctx: null, running: false };
     const ctx = new AC();
-    try { await ctx.resume(); } catch {}
+    try { await within(ctx.resume(), 1200); } catch {}
     try { // a one-sample buffer in the tap wakes iOS' audio output
         const src = ctx.createBufferSource(); src.buffer = ctx.createBuffer(1, 1, 22050); src.connect(ctx.destination); src.start(0);
     } catch {}

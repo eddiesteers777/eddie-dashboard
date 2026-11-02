@@ -200,6 +200,8 @@ function renderMile() {
         box.append(row);
     }
     $("mlStart").hidden = live; $("mlEnd").hidden = !live;
+    const none = mileNames().length === 0;
+    $("mlNone").hidden = !none;
 }
 function mileTick() {
     if (!mile) return;
