@@ -1442,3 +1442,13 @@ body.pub-body{ padding-left:0; }
 @media (max-width:760px){.pub-rail-card{flex-basis:72vw;}.pub-rail-nav{display:none;}}
 @media (prefers-reduced-motion:reduce){.pub-rail-card img{transition:none;}.pub-rail-card:hover img{transform:none;}}
 .pub-footer .pub-rail-card,.pub-footer .pub-rail-card:hover{color:var(--cream);}
+
+/* Apply buttons open the Get started flow (start.html) and wear its ice blue, not gold. */
+html body a[href="start.html"].pub-btn-primary,
+html body a[href="start.html"].pub-nav-cta{
+    background:linear-gradient(160deg,#E0E9F1,#B9CBDB); color:#13202B; border-color:transparent;
+    box-shadow:0 10px 26px -10px rgba(143,166,188,.55),inset 0 1px 0 rgba(255,255,255,.5);
+}
+html body a[href="start.html"].pub-btn-primary:hover,
+html body a[href="start.html"].pub-nav-cta:hover{ background:linear-gradient(160deg,#EEF3F7,#C7D6E4); color:#13202B; opacity:1; }
+html body a[href="start.html"].pub-nav-cta.active{ box-shadow:0 0 0 2px var(--bg),0 0 0 4px #C7D6E4; }

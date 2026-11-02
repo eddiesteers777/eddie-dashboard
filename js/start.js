@@ -121,7 +121,8 @@ function render({ focus = true } = {}) {
             ${b.google
                 ? `<button type="button" class="st-cta" data-act="google" ${busy ? "disabled" : ""}><span class="st-g" aria-hidden="true">G</span>${busy ? "Signing in…" : "Continue with Google"}</button>
                    <p class="st-note">Your answers go into your profile. Nothing is shared until you continue. <a href="privacy.html">Privacy</a></p>
-                   <p class="st-note">Already have an account? <button type="button" class="st-link" data-act="google">Sign in</button></p>`
+                   <p class="st-note">Already have an account? <button type="button" class="st-link" data-act="google">Sign in</button></p>
+                   <p class="st-note">Not ready to sign in? <a href="apply.html">Send an application without an account</a></p>`
                 : `<button type="button" class="st-cta" data-act="next" ${b.ok ? "" : "disabled"}>${b.cta}</button>
                    <p class="st-note">${index === 0 ? "No account yet. Your taps stay on this phone." : "&nbsp;"}</p>`}
         </div>
