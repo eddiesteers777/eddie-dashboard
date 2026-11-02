@@ -65,7 +65,7 @@
 @keyframes sc-lap-ob{0%{opacity:1;transform:rotate(0)}95%{opacity:1}100%{opacity:0;transform:rotate(360deg)}}
 /* ---- plates ---- */
 .sb-cr .sc-plates .sc_pl{position:absolute;left:50%;top:50%;height:12px;margin-left:calc(var(--w)/-2);width:var(--w);margin-top:var(--y);border-radius:4px;background:var(--c);z-index:3;opacity:0}
-.sb-cr .sc-plates .sc_pl{animation:sc-plates-plf .5s calc(.3s + var(--i)*.28s) cubic-bezier(.5,0,.9,.5) both,sc-plates-plo .3s 1.5s forwards}
+.sb-cr .sc-plates .sc_pl{animation:sc-plates-plf .5s calc(.3s + var(--i)*.28s) cubic-bezier(.5,0,.9,.5) forwards,sc-plates-plo .3s 1.5s forwards}
 .sb-cr .sc-plates .sc_pole{animation:sc-plates-plo .3s 1.5s forwards}
 .sb-cr .sc-plates .sc_pole{position:absolute;left:50%;top:50%;width:6px;height:78px;margin:-39px 0 0 -3px;border-radius:3px;background:#dbe8f3;z-index:2}
 @keyframes sc-plates-plf{0%{opacity:1;transform:translateY(-120px)}70%{opacity:1;transform:translateY(0)}85%{transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}

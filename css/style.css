@@ -4771,12 +4771,12 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
 .cr-fx{ position:fixed; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
 .cr-core{ position:relative; z-index:2; width:100%; max-width:460px; margin:auto; display:flex; flex-direction:column; align-items:center; text-align:center; }
 .cr-lens{ position:relative; width:132px; height:132px; margin-bottom:22px; flex:0 0 auto; display:grid; place-items:center; }
-.cr-lens i{ position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 35% 30%, #3F78AD, var(--cr-navy) 70%); box-shadow:0 18px 40px -10px rgba(19,32,43,.55), inset 0 2px 0 rgba(255,255,255,.35); animation:cr-pop .55s .35s cubic-bezier(.3,1.6,.4,1) both; }
+.cr-lens > i{ position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 35% 30%, #3F78AD, var(--cr-navy) 70%); box-shadow:0 18px 40px -10px rgba(19,32,43,.55), inset 0 2px 0 rgba(255,255,255,.35); animation:cr-pop .55s .35s cubic-bezier(.3,1.6,.4,1) both; }
 .cr-lens::before{ content:""; position:absolute; inset:-70px; border-radius:50%; background:radial-gradient(circle, rgba(79,134,184,.45), transparent 65%); animation:cr-glow 1.6s .5s ease-out both; }
 @keyframes cr-pop{ from{ transform:scale(0); } }
 @keyframes cr-glow{ 0%{ opacity:0; transform:scale(.4); } 40%{ opacity:1; } 100%{ opacity:.5; transform:scale(1); } }
-.cr-lens svg{ position:relative; width:70px; height:70px; overflow:visible; }
-.cr-lens polyline{ fill:none; stroke:#fff; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:40; stroke-dashoffset:40; animation:sb-cel-draw .4s .75s cubic-bezier(.2,.8,.2,1) forwards; }
+.cr-lens > svg{ position:relative; width:70px; height:70px; overflow:visible; }
+.cr-lens > svg polyline{ fill:none; stroke:#fff; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:40; stroke-dashoffset:40; animation:sb-cel-draw .4s .75s cubic-bezier(.2,.8,.2,1) forwards; }
 .cr-ring{ position:absolute; left:50%; top:50%; width:132px; height:132px; margin:-66px; border-radius:50%; border:2px solid var(--cr-blue); opacity:0; animation:cr-ring 1.5s var(--d) ease-out both; }
 @keyframes cr-ring{ 0%{ opacity:.8; transform:scale(.8); } 100%{ opacity:0; transform:scale(5.5); } }
 .cr-kick{ margin:0; font:600 12px/1.3 var(--font-mono); letter-spacing:.18em; text-transform:uppercase; color:var(--cr-deep); animation:sb-cel-rise .5s .9s both; }
@@ -4823,7 +4823,7 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
 .sb-cr.is-quick .cr-lens{ width:104px; height:104px; margin-bottom:26px; }
 .sb-cr.is-quick .cr-ring{ width:104px; height:104px; margin:-52px; animation-duration:1s; }
 .sb-cr.is-quick .cr-wash{ animation-duration:.4s; } .sb-cr.is-quick .cr-edge{ animation-duration:.4s; }
-.sb-cr.is-quick .cr-lens i{ animation-delay:.15s; } .sb-cr.is-quick .cr-lens polyline{ animation-delay:.4s; }
+.sb-cr.is-quick .cr-lens > i{ animation-delay:.15s; } .sb-cr.is-quick .cr-lens > svg polyline{ animation-delay:.4s; }
 .sb-cr.is-quick .cr-kick{ animation-delay:.45s; }
 .sb-cr.is-quick .cr-title{ font-size:clamp(34px, 11vw, 48px); }
 .sb-cr.is-quick .cr-letters span{ animation-delay:calc(.5s + var(--k) * .035s); }
