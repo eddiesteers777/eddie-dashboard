@@ -1,50 +1,98 @@
-/* The water sheet (js/waterSheet.js): a bottom sheet on phones, a centred window on a computer. */
-.wt-sheet{margin:auto auto 0;width:100%;max-width:560px;max-height:94dvh;padding:10px 16px calc(22px + env(safe-area-inset-bottom));border:1px solid rgba(214,228,240,.22);border-bottom:0;border-radius:18px 18px 0 0;
-  background:linear-gradient(180deg,var(--surface-light),var(--surface));color:var(--text);box-shadow:inset 0 1px 0 rgba(214,228,240,.2),0 -20px 50px rgba(0,0,0,.5);overflow:auto;overscroll-behavior:contain}
-.wt-sheet::backdrop{background:rgba(6,10,14,.6)}
-.wt-sheet[open]{animation:wt-in .24s cubic-bezier(.32,.72,0,1)}
-@keyframes wt-in{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
-.wt-sheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:rgba(214,228,240,.3);margin:0 auto 10px}
-.wt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.wt-head h2{font-family:var(--font-display);text-transform:uppercase;font-weight:900;font-size:34px;line-height:.9;margin:4px 0 0}
-.wt-kick{margin:0;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.wt-x{width:44px;height:44px;flex:0 0 44px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text-secondary);font-size:20px;display:grid;place-items:center;cursor:pointer}
-.wt-body{display:grid;grid-template-columns:1fr;gap:12px;margin-top:6px}
-.wt-stage{display:flex;justify-content:center;height:250px}
-.wt-jug{height:100%;width:auto;overflow:visible}
-.wt-level{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
-.wt-wave{animation:wt-wave 3.2s linear infinite}
-.wt-wave-b{animation-duration:4.6s;opacity:.55}
-@keyframes wt-wave{to{transform:translateX(-120px)}}
-.wt-tick{stroke:rgba(214,228,240,.45);stroke-width:1.5}
-.wt-tl{fill:rgba(214,228,240,.7);font-family:var(--font-mono);font-size:11px;letter-spacing:.06em}
-.wt-pin{fill:var(--cream)}
-.wt-dot{fill:var(--cream)}
-.wt-lead{stroke:rgba(242,237,225,.5)}
-.wt-goal{stroke:var(--gold,#D2AD62);stroke-width:1.5;stroke-dasharray:4 4}
-.wt-gl{fill:var(--gold-light,#E6CB8E);font-family:var(--font-mono);font-size:11px;letter-spacing:.08em}
-.wt-dim{opacity:.7}
-.wt-zone{fill:rgba(160,187,156,.24)}
-.wt-pace{stroke:var(--sage);stroke-width:2;stroke-dasharray:5 4}
-.wt-count{font-family:var(--font-display);font-weight:900;text-transform:uppercase;font-size:56px;line-height:.85}
-.wt-count small{font-size:22px;color:var(--text-secondary);font-weight:800}
-.wt-sub{color:var(--text-secondary);font-size:15px;line-height:1.4;margin:8px 0 0}
-.wt-sub b{color:var(--text);font-weight:600}
-.wt-ok{color:var(--sage)}
-.wt-next{display:flex;gap:10px;align-items:center;border:1px solid rgba(160,187,156,.4);background:rgba(160,187,156,.1);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:15px}
-.wt-next b{color:var(--sage)}
+/* The water screen (js/waterSheet.js): a full-screen rising tide on phones, a tall window on a computer.
+   Light, to match the completion moments (css/style.css "COMPLETION MOMENTS"). Sizes that depend on the
+   screen's height (--gy goal line, --ct count top, --cs count size, --by buoy centre, --bd buoy size,
+   --tt title top, --tf title size, --py pace line) are set by the script. */
+.wt-sheet{--ink:#0E1B27;--navy:#13202B;--deep:#2F5B86;--blue:#4F86B8;--sub:#3C5368;
+  position:fixed;inset:0;margin:0;padding:0;width:100%;max-width:none;height:100dvh;max-height:none;border:0;overflow:hidden;isolation:isolate;color:var(--ink);
+  background:radial-gradient(120% 70% at 50% 0%,#fff,#eef5fb 55%,#dbe9f5);font-family:var(--font-body)}
+.wt-sheet:not([open]){display:none}
+.wt-sheet[open]{animation:wt-in .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes wt-in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.wt-sheet::backdrop{background:rgba(14,27,39,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.wt-sheet [hidden]{display:none!important}
+.wt-sea{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.wt-ui{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(16px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));z-index:2;pointer-events:none}
+.wt-ui button{pointer-events:auto}
+.wt-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.wt-kick{margin:0;font:600 11px/1.3 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--deep)}
+.wt-sheet h1{font-family:var(--font-display);font-weight:900;font-size:40px;line-height:.9;text-transform:uppercase;margin:4px 0 0;letter-spacing:.01em;color:var(--ink)}
+.wt-btns{display:flex;gap:8px}
+.wt-x{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--sub);font-size:17px;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px -6px rgba(19,32,43,.35)}
+.wt-x:focus-visible,.wt-chip:focus-visible,.wt-link:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+/* the goal line and the even-pace marker */
+.wt-goal{position:absolute;left:0;right:0;top:var(--gy);height:0;border-top:1.5px dashed rgba(19,32,43,.28);z-index:1;pointer-events:none;transition:opacity .5s}
+.wt-goal span{position:absolute;right:14px;top:-11px;font:600 10px/1 var(--font-mono);letter-spacing:.12em;color:var(--deep);background:rgba(255,255,255,.85);border:1px solid rgba(47,91,134,.25);padding:5px 8px;border-radius:999px}
+.wt-pace{position:absolute;left:0;right:0;top:var(--py);height:0;z-index:1;pointer-events:none;transition:top 1s cubic-bezier(.2,.8,.2,1),opacity .5s}
+.wt-pace span{position:absolute;left:14px;top:-10px;font:600 10px/1 var(--font-mono);letter-spacing:.1em;color:var(--sub);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.wt-pace span::before{content:"";width:18px;border-top:1.5px dashed currentColor}
+/* the count */
+.wt-count{position:absolute;left:0;right:0;top:var(--ct);text-align:center;z-index:3;pointer-events:none}
+.wt-count b{display:block;font-family:var(--font-display);font-weight:900;font-size:var(--cs);line-height:.82;letter-spacing:-.01em;font-variant-numeric:tabular-nums;transition:color .5s}
+.wt-count small{display:block;font:600 12px/1.3 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--sub);margin-top:10px;transition:color .5s}
+.wt-count.is-under b{color:#fff;text-shadow:0 2px 18px rgba(19,32,43,.25)}.wt-count.is-under small{color:rgba(255,255,255,.88)}
+.wt-count.is-bump b{animation:wt-bump .35s cubic-bezier(.3,1.6,.4,1)}
+@keyframes wt-bump{40%{transform:scale(1.06)}}
+.wt-fx{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+.wt-plus{position:absolute;left:50%;top:calc(var(--ct) - 38px);font-family:var(--font-display);font-weight:900;font-size:30px;color:var(--deep);opacity:0;animation:wt-plus 1.1s cubic-bezier(.2,.8,.2,1) forwards}
+.wt-plus.is-light{color:#fff}
+@keyframes wt-plus{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-60px)}}
+/* the controls */
+.wt-lower{position:relative;margin-top:auto;display:flex;flex-direction:column}
+.wt-msg{margin:0;text-align:center;font-size:15px;line-height:1.4;color:var(--sub);min-height:42px;transition:color .5s}
+.wt-msg b{color:var(--ink);transition:color .5s}
+.wt-sheet.is-under-msg .wt-msg{color:rgba(255,255,255,.9)}.wt-sheet.is-under-msg .wt-msg b{color:#fff}
+.wt-next{align-self:center;margin:6px 0 0;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.65);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-size:14px;color:var(--ink)}
+.wt-next b{font-weight:700}
 .wt-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
-.wt-chip{min-height:52px;border-radius:6px;border:1px solid rgba(199,214,228,.32);background:rgba(199,214,228,.08);color:var(--text);font-family:var(--font-body);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;cursor:pointer;padding:4px}
-.wt-chip b{font-size:16px}
-.wt-chip small{font-size:11px;color:var(--muted);margin-top:3px}
-.wt-chip.is-main{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
-.wt-chip.is-main small{color:var(--on-primary);opacity:.75}
-.wt-tools{display:flex;justify-content:space-between;margin-top:6px}
-.wt-link{background:none;border:0;color:var(--primary);text-decoration:underline;text-underline-offset:3px;font:inherit;font-size:15px;min-height:44px;padding:0;cursor:pointer}
+.wt-chip{min-height:58px;border-radius:14px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);color:var(--navy);font-family:var(--font-body);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:4px;box-shadow:0 8px 20px -10px rgba(19,32,43,.4),inset 0 1px 0 rgba(255,255,255,.8);transition:transform .12s}
+.wt-chip b{font-family:var(--font-display);font-weight:800;font-size:20px;letter-spacing:.01em;line-height:1}
+.wt-chip small{font:600 10px/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-top:3px;text-align:center}
+.wt-chip.is-main{background:linear-gradient(180deg,#2c4358,var(--navy));color:#fff;border-color:rgba(19,32,43,.9)}.wt-chip.is-main small{color:rgba(255,255,255,.75)}
+.wt-chip:active{transform:scale(.94)}
+.wt-tools{display:flex;justify-content:space-between;margin-top:2px}
+.wt-link{background:none;border:0;color:var(--deep);font:600 15px var(--font-body);min-height:44px;padding:0 4px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.wt-sheet.is-under-tools .wt-link{color:#fff}
+/* the finale: the water floods, a check rises like a buoy, "Fully hydrated" drops in */
+.wt-buoy{position:absolute;left:50%;top:var(--by);width:var(--bd);height:var(--bd);margin:calc(var(--bd) / -2) 0 0 calc(var(--bd) / -2);border-radius:50%;background:radial-gradient(circle at 34% 28%,#4a84ba,var(--navy) 70%);box-shadow:0 24px 44px -12px rgba(19,32,43,.6),inset 0 2px 0 rgba(255,255,255,.35);z-index:5;opacity:0;pointer-events:none}
+.wt-buoy svg{position:absolute;inset:0}
+.wt-buoy polyline{fill:none;stroke:#fff;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60}
+.wt-sheet.is-done .wt-buoy{animation:wt-buoy 1.1s .55s cubic-bezier(.2,1.2,.3,1) both,wt-bob 3.6s 1.7s ease-in-out infinite}
+@keyframes wt-buoy{0%{opacity:0;transform:translateY(420px) scale(.7)}60%{opacity:1;transform:translateY(-14px) scale(1.04)}100%{opacity:1;transform:none}}
+@keyframes wt-bob{50%{transform:translateY(-6px) rotate(-2deg)}}
+.wt-sheet.is-done .wt-buoy polyline{animation:wt-draw .45s 1.45s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes wt-draw{to{stroke-dashoffset:0}}
+.wt-halo{position:absolute;left:50%;top:var(--by);width:var(--bd);height:var(--bd);margin:calc(var(--bd) / -2) 0 0 calc(var(--bd) / -2);border-radius:50%;border:2px solid rgba(255,255,255,.85);opacity:0;z-index:4;pointer-events:none}
+.wt-sheet.is-done .wt-halo{animation:wt-halo 1.6s calc(1.2s + var(--d)) ease-out both}
+@keyframes wt-halo{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(3.4)}}
+.wt-title{position:absolute;left:0;right:0;top:var(--tt);text-align:center;z-index:5;pointer-events:none;opacity:0}
+.wt-sheet.is-done .wt-title{opacity:1}
+.wt-title h2{margin:0;font-family:var(--font-display);font-weight:900;font-size:var(--tf);line-height:.9;text-transform:uppercase;color:#fff;letter-spacing:.012em;text-shadow:0 3px 20px rgba(19,32,43,.3);display:flex;justify-content:center;white-space:nowrap}
+.wt-title h2 span{display:inline-block;opacity:0}.wt-title h2 .s{width:.26em}
+.wt-sheet.is-done .wt-title h2 span{animation:wt-letter .55s calc(1.5s + var(--k) * .04s) cubic-bezier(.3,1.6,.4,1) both}
+@keyframes wt-letter{from{opacity:0;transform:translateY(-.8em) scale(.8) rotate(-6deg)}to{opacity:1}}
+.wt-title p{margin:12px 0 0;font:600 12px/1.3 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.92);opacity:0}
+.wt-sheet.is-done .wt-title p{animation:wt-fade .6s 2.1s both}
+@keyframes wt-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.wt-sheet.is-done .wt-count{animation:wt-sink .6s .3s cubic-bezier(.5,0,.75,0) forwards}
+@keyframes wt-sink{to{opacity:0;transform:translateY(40px) scale(.9)}}
+.wt-sheet.is-done .wt-goal,.wt-sheet.is-done .wt-pace{opacity:0}
+.wt-em{position:absolute;left:50%;top:var(--by);width:var(--z);height:var(--z);margin:calc(var(--z) / -2);opacity:0;filter:drop-shadow(0 8px 10px rgba(19,32,43,.3))}
+.wt-sheet.is-done .wt-em{animation:wt-eb 2s var(--dl) cubic-bezier(.2,.8,.3,1) both}
+@keyframes wt-eb{0%{opacity:0;transform:translate(0,0) scale(.2) rotate(0)}18%{opacity:1;transform:translate(var(--x),var(--y)) scale(1.2,.85) rotate(var(--r))}30%{transform:translate(var(--x),var(--y)) scale(.92,1.08) rotate(var(--r))}70%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 110px)) rotate(var(--r))}}
+.wt-spark{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);background:#fff;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;filter:drop-shadow(0 0 6px rgba(255,255,255,.9))}
+.wt-sheet.is-done .wt-spark{animation:wt-tw 1.6s calc(1.3s + var(--i) * .11s) ease-in-out both}
+@keyframes wt-tw{0%{opacity:0;transform:scale(0) rotate(0)}40%{opacity:1;transform:scale(1.3) rotate(45deg)}100%{opacity:0;transform:scale(.4) rotate(90deg)}}
+/* opened already past the goal: show the finished state without replaying it */
+.wt-sheet.is-settled .wt-buoy{animation:wt-bob 3.6s ease-in-out infinite;opacity:1}
+.wt-sheet.is-settled .wt-buoy polyline{animation:none;stroke-dashoffset:0}
+.wt-sheet.is-settled .wt-title h2 span,.wt-sheet.is-settled .wt-title p{animation:none;opacity:1}
+.wt-sheet.is-settled .wt-count{animation:none;opacity:0}
+.wt-sheet.is-settled .wt-halo{display:none}
+/* a computer: a tall window instead of the whole screen */
 @media (min-width:700px){
-  .wt-sheet{margin:auto;border-bottom:1px solid rgba(214,228,240,.22);border-radius:16px;max-width:760px;padding:22px 26px 26px}
-  .wt-sheet::before{display:none}
-  .wt-body{grid-template-columns:300px 1fr;gap:28px;align-items:center}
-  .wt-stage{height:360px}
+  .wt-sheet{inset:0;margin:auto;width:460px;height:min(100dvh - 48px,820px);border-radius:28px;box-shadow:0 40px 90px -20px rgba(0,0,0,.6)}
 }
-@media (prefers-reduced-motion:reduce){.wt-wave,.wt-sheet[open]{animation:none}.wt-level{transition:none}}
+@media (prefers-reduced-motion:reduce){
+  .wt-sheet[open]{animation:none}
+  .wt-sheet *{animation-duration:.01s!important;animation-delay:0s!important;transition:none!important}
+}

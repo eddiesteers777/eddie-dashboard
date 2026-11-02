@@ -1,16 +1,22 @@
 /* ==========================================
-   Southbound — the water sheet (2026-11-02)
+   Southbound — the water screen: the rising tide (2026-11-02)
 
-   Tapping the Water goal opens this instead of ticking it. Add what you
-   drank and a jug fills; the goal ticks itself when you reach it. The
-   jug shows an even-pace zone (7 am to 9 pm) and pins each drink where
-   it landed. Numbers live in js/waterModel.js; the total is the same
-   `water` the Nutrition page logs ("nutrition-YYYY-MM-DD"). Mock-ups:
-   project files water-bottle/ (C2 + C3).
+   Tapping the Water goal opens this instead of ticking it. A full screen
+   of water rises as you add what you drank; the goal ticks itself when
+   you reach it, and the finale plays right here (the water floods, a
+   check rises like a buoy, "Fully hydrated"). The amount stays editable
+   (chips, Other amount, Undo), sound is on unless muted. Numbers live in
+   js/waterModel.js (the total is the `water` the Nutrition page logs,
+   "nutrition-YYYY-MM-DD") and js/waterTide.js; the sea is js/waterSea.js,
+   sound js/waterSound.js. Mock-ups: project files completion-moments/water/.
 ========================================== */
 
-import { PRESETS, readWater, addWater, undoLast, pins, paceOz, nextTip, timeText, nutritionKey, minutesOf, clock, DAY_START, DAY_END } from "./waterModel.js";
+import { PRESETS, readWater, addWater, undoLast, paceOz, nextTip, nutritionKey, minutesOf, clock, DAY_START, DAY_END } from "./waterModel.js";
 import { habitList, dayKey, doneOn } from "./habitDefaults.js";
+import { habitStreak } from "./todayCues.js";
+import { tideY, layoutFor, countCaption, paceMessage, finaleSummary, paceTag } from "./waterTide.js";
+import { createSea } from "./waterSea.js";
+import { soundOn, setSoundOn, primeSound, playPour, playChime } from "./waterSound.js";
 import { showsPersonalPlan } from "./role.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -37,45 +43,14 @@ export async function waterGoal() {
     } catch { return 100; }
 }
 
-const BODY = "M40 120 Q40 96 66 90 L92 84 L92 54 L132 54 L132 84 L150 90 Q168 98 168 122 L168 330 Q168 346 152 346 L56 346 Q40 346 40 330 Z";
-const TOP = 96, BOT = 346, H = BOT - TOP;
-const WAVE = "q30 -9 60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 V900 H0Z";
-
-function jugSvg(goal, total, log, pace, showPace) {
-    const frac = Math.min(1, total / goal);
-    const y = f => BOT - Math.min(1, Math.max(0, f)) * H;
-    const hourMarks = [["9 AM", 9], ["NOON", 12], ["3 PM", 15], ["6 PM", 18]].map(([t, hr]) => {
-        const ty = y((hr * 60 - DAY_START) / (DAY_END - DAY_START));
-        return `<line class="wt-tick" x1="30" x2="40" y1="${ty}" y2="${ty}"/><text class="wt-tl" x="26" y="${ty + 4}" text-anchor="end">${t}</text>`;
-    }).join("");
-    // Each drink is a dot at the level it reached. Labels are nudged apart so close drinks stay readable.
-    let lastY = -99;
-    const dots = pins(log).slice(-6).map(p => {
-        const py = y(p.level / goal);
-        const ly = Math.max(py, lastY + 15); lastY = ly;
-        const tm = p.t ? timeText(p.t).replace(" am", "a").replace(" pm", "p") : "earlier";
-        return `<circle cx="168" cy="${py}" r="4" class="wt-dot"/><line x1="172" x2="184" y1="${py}" y2="${ly}" class="wt-lead"/><text class="wt-tl wt-pin" x="188" y="${ly + 4}">${esc(tm)} +${p.oz}</text>`;
-    }).join("");
-    const lo = y(Math.min(1, (pace + goal * .08) / goal)), hi = y(Math.max(0, (pace - goal * .08) / goal));
-    const zone = showPace ? `<rect x="40" y="${lo}" width="128" height="${hi - lo}" class="wt-zone"/><line x1="40" x2="168" y1="${y(pace / goal)}" y2="${y(pace / goal)}" class="wt-pace"/>` : "";
-    return `<svg class="wt-jug" viewBox="-30 0 330 360" aria-hidden="true">
-        <defs><linearGradient id="wtw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FC4DC"/><stop offset="1" stop-color="#3E6F94"/></linearGradient>
-        <linearGradient id="wtg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(214,228,240,.16)"/><stop offset=".25" stop-color="rgba(214,228,240,.05)"/><stop offset=".8" stop-color="rgba(214,228,240,.03)"/><stop offset="1" stop-color="rgba(214,228,240,.14)"/></linearGradient>
-        <clipPath id="wtc"><path d="${BODY}"/></clipPath></defs>
-        <rect x="88" y="36" width="48" height="20" rx="4" fill="rgba(210,173,98,.85)"/>
-        <path d="${BODY}" fill="url(#wtg)"/>
-        <g clip-path="url(#wtc)"><g class="wt-level" style="transform:translateY(${y(frac)}px)">
-            <path class="wt-wave" d="M0 0 ${WAVE}" fill="url(#wtw)"/><path class="wt-wave wt-wave-b" d="M-30 3 ${WAVE}" fill="rgba(199,226,240,.35)"/></g>${zone}</g>
-        <path d="${BODY}" fill="none" stroke="rgba(214,228,240,.55)" stroke-width="2"/>
-        ${hourMarks}
-        <line class="wt-goal" x1="40" x2="168" y1="${TOP}" y2="${TOP}"/>
-        <text class="wt-gl" x="84" y="66" text-anchor="end">GOAL ${goal} OZ</text><text class="wt-gl wt-dim" x="84" y="80" text-anchor="end">BY 9 PM</text>
-        ${dots}
-    </svg>`;
-}
+const reduced = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
+const buzz = p => { try { if (!reduced()) navigator.vibrate?.(p); } catch { /* not every phone buzzes */ } };
+const SPEAKER = on => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/>${on ? '<path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+const SPARKS = [[8, 14, 16], [86, 10, 20], [18, 46, 14], [84, 42, 18], [10, 74, 12], [90, 70, 16], [50, 6, 14], [30, 60, 10], [70, 58, 12]];
+const EMOJIS = [[-130, -80, 58, -14, .9], [130, -70, 52, 12, 1], [-140, 60, 50, 8, 1.1], [135, 80, 48, -10, 1.05]];
 
 /**
- * Open the sheet for a day (a Date; today by default). Resolves when it closes.
+ * Open the screen for a day (a Date; today by default). Resolves when it closes.
  * `habit` is the water habit to tick; `onChange` runs after each saved change.
  */
 export async function openWaterSheet({ date = new Date(), habit = null, onChange = null } = {}) {
@@ -84,17 +59,40 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
     const key = nutritionKey(isToday ? new Date() : new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12));
     const dkey = dayKey(date);
     const opener = document.activeElement;
+    const celebrate = import("./celebrate.js").catch(() => null);
+    const still = reduced();
     const dlg = document.createElement("dialog");
     dlg.className = "wt-sheet";
     dlg.setAttribute("aria-label", "Water");
+    dlg.innerHTML = `<canvas class="wt-sea" aria-hidden="true"></canvas>
+        <div class="wt-goal" aria-hidden="true"><span>GOAL · ${goal} OZ</span></div>
+        <div class="wt-pace" aria-hidden="true"><span></span></div>
+        <div class="wt-count" aria-live="polite"><b></b><small></small></div>
+        <i class="wt-halo" style="--d:0s"></i><i class="wt-halo" style="--d:.35s"></i>
+        <div class="wt-buoy" aria-hidden="true"><svg viewBox="0 0 100 100"><polyline points="27 53 44 70 75 33"/></svg></div>
+        <div class="wt-title" aria-live="polite"><h2></h2><p></p></div>
+        <div class="wt-fx" aria-hidden="true"></div>
+        <div class="wt-ui">
+            <div class="wt-top"><div><p class="wt-kick">${esc(date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }))}</p><h1>Water</h1></div>
+                <div class="wt-btns"><button type="button" class="wt-x" data-sound aria-label="Sound"></button><button type="button" class="wt-x" data-close aria-label="Close">&#10005;</button></div></div>
+            <div class="wt-lower"><p class="wt-msg"></p><p class="wt-next"></p>
+                <div class="wt-chips">${PRESETS.map(p => `<button type="button" class="wt-chip${p.main ? " is-main" : ""}" data-add="${p.oz}"><b>+${p.oz}</b><small>${esc(p.label)}</small></button>`).join("")}</div>
+                <div class="wt-tools"><button type="button" class="wt-link" data-other>Other amount</button><button type="button" class="wt-link" data-undo>Undo last</button></div></div>
+        </div>`;
     document.body.appendChild(dlg);
+    const $ = sel => dlg.querySelector(sel);
+    const countEl = $(".wt-count"), numEl = $(".wt-count b"), capEl = $(".wt-count small"), msgEl = $(".wt-msg"), nextEl = $(".wt-next");
+    const goalEl = $(".wt-goal"), paceEl = $(".wt-pace"), fxEl = $(".wt-fx"), titleH = $(".wt-title h2"), titleP = $(".wt-title p"), lower = $(".wt-lower");
+    const sea = createSea($(".wt-sea"), { still });
 
     const dayRecord = () => read(key, null) || {};
+    const entriesNow = () => read("entries", {}) || {};
+    const streakNow = () => (habit ? habitStreak(entriesNow(), [habit], dkey) : 0);
     const save = next => {
         try { localStorage.setItem(key, JSON.stringify(next)); } catch { return false; }
         // The water habit ticks at the goal and unticks below it.
         if (habit) {
-            const entries = read("entries", {}) || {};
+            const entries = entriesNow();
             const dayEntries = { ...(entries[dkey] || {}) };
             const reached = readWater(next).total >= goal;
             if (reached) dayEntries[habit.id] = true; else delete dayEntries[habit.id];
@@ -105,32 +103,95 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         return true;
     };
 
-    function draw(prevTotal = null) {
-        const { total, log } = readWater(dayRecord());
-        const now = minutesOf(new Date());
-        const pace = isToday ? paceOz(goal, now) : goal;
-        const tip = isToday ? nextTip(total, goal, now) : null;
+    // ---- layout: sizes in px from the screen's own size
+    let L = null, underCount = false, underMsg = false, underTools = false, nowMin = minutesOf(new Date());
+    const paceNow = () => (isToday ? paceOz(goal, nowMin) : goal);
+    function layout() {
+        const w = dlg.clientWidth, h = dlg.clientHeight;
+        if (!w || !h) return;
+        L = layoutFor(w, h, lower.offsetTop);
+        const st = dlg.style;
+        st.setProperty("--gy", L.goalY + "px"); st.setProperty("--ct", L.countTop + "px"); st.setProperty("--cs", L.countSize + "px");
+        st.setProperty("--bd", L.buoy + "px"); st.setProperty("--by", L.buoyY + "px"); st.setProperty("--tt", L.titleTop + "px"); st.setProperty("--tf", L.titleSize + "px");
+        st.setProperty("--py", tideY(paceNow(), goal, L.goalY, L.floorY) + "px");
+        sea.resize(w, h);
+        sea.setTarget(tideY(readWater(dayRecord()).total, goal, L.goalY, L.floorY), true);
+        msgTop = lower.offsetTop + msgEl.offsetTop; toolsTop = lower.offsetTop + $(".wt-tools").offsetTop;
+    }
+    let msgTop = 0, toolsTop = 0;
+    // White text where the water has risen past it.
+    sea.onFrame(y => {
+        if (!L) return;
+        const uc = L.countMid > y, um = msgTop > y;
+        if (uc !== underCount) { underCount = uc; countEl.classList.toggle("is-under", uc); }
+        if (um !== underMsg) { underMsg = um; dlg.classList.toggle("is-under-msg", um); }
+        const ut = toolsTop > y;
+        if (ut !== underTools) { underTools = ut; dlg.classList.toggle("is-under-tools", ut); }
+    });
+
+    // ---- state
+    let shown = 0, countRaf = 0, crossedAllDone = null, finaleOn = false;
+    function countTo(a, b) {
+        cancelAnimationFrame(countRaf);
+        if (still || a === b) { numEl.textContent = b; return; }
+        const t0 = performance.now();
+        (function step(now) {
+            const k = Math.min(1, (now - t0) / 650), e = 1 - Math.pow(1 - k, 3);
+            numEl.textContent = Math.round(a + (b - a) * e);
+            if (k < 1) countRaf = requestAnimationFrame(step);
+        })(t0);
+        countEl.classList.remove("is-bump"); void countEl.offsetWidth; countEl.classList.add("is-bump");
+    }
+    function plusFloat(v) {
+        const p = document.createElement("div");
+        p.className = "wt-plus" + (underCount || finaleOn ? " is-light" : "");
+        p.textContent = "+" + v + " oz";
+        fxEl.appendChild(p);
+        setTimeout(() => p.remove(), 1200);
+    }
+    const titleHtml = text => [...text].map((c, i) => c === " " ? `<span class="s" style="--k:${i}"></span>` : `<span style="--k:${i}">${c}</span>`).join("");
+    async function startFinale(settled) {
+        finaleOn = true;
+        const mod = await celebrate;
+        const src = mod?.celebrateEmojiSrc ? mod.celebrateEmojiSrc("hydrate") : "emoji/celebrate/sb_hydrate.svg";
+        titleH.innerHTML = titleHtml("Fully hydrated");
+        titleH.setAttribute("aria-label", "Fully hydrated");
+        dlg.classList.toggle("is-settled", !!settled);
+        dlg.classList.remove("is-done"); void dlg.offsetWidth; dlg.classList.add("is-done");
+        sea.flood(true, settled || still);
+        if (!settled) { sea.splash(40); buzz([20, 60, 30]); playChime(); }
+        fxEl.innerHTML = settled || still ? "" :
+            EMOJIS.map(([x, y, z, r, dl]) => `<img class="wt-em" src="${src}" alt="" style="--x:${x}px;--y:${y}px;--z:${z}px;--r:${r}deg;--dl:${dl}s">`).join("") +
+            SPARKS.map(([x, y, s], i) => `<i class="wt-spark" style="--x:${x}%;--y:${y}%;--s:${s}px;--i:${i}"></i>`).join("");
+    }
+    function endFinale() {
+        finaleOn = false;
+        dlg.classList.remove("is-done", "is-settled");
+        sea.flood(false);
+        fxEl.innerHTML = "";
+    }
+    function render(prev) {
+        const { total } = readWater(dayRecord());
         const done = total >= goal;
-        const diff = total - pace;
-        const line = done ? `<span class="wt-ok">Goal reached.</span> ${total > goal ? `${total - goal} oz over. ` : ""}${habit ? "Your water goal is ticked." : ""}`
-            : !isToday ? `<b>${goal - total} oz</b> short of the goal that day.`
-            : total === 0 ? "Nothing yet. The green zone is where an even day puts you."
-            : `<b>${Math.abs(diff)} oz ${diff >= 0 ? "ahead" : "behind"}</b> of an even pace.`;
-        dlg.innerHTML = `<div class="wt-head"><div><p class="wt-kick">${esc(date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }))}</p><h2>Water</h2></div>
-            <button type="button" class="wt-x" data-close aria-label="Close">${"✕"}</button></div>
-            <div class="wt-body"><div class="wt-stage">${jugSvg(goal, total, log, pace, isToday)}</div>
-            <div class="wt-side"><div class="wt-count" aria-live="polite">${total} <small>/ ${goal} oz</small></div>
-            <p class="wt-sub">${line}</p>
-            ${tip ? `<p class="wt-next"><span>Next</span><span><b>+${tip.oz} oz</b> by ${esc(tip.byText)} keeps you on pace</span></p>` : ""}
-            <div class="wt-chips">${PRESETS.map(p => `<button type="button" class="wt-chip${p.main ? " is-main" : ""}" data-add="${p.oz}"><b>+${p.oz}</b><small>${esc(p.label)}</small></button>`).join("")}</div>
-            <div class="wt-tools"><button type="button" class="wt-link" data-other>Other amount</button>${log.length ? `<button type="button" class="wt-link" data-undo>Undo last</button>` : ""}</div></div></div>`;
-        if (prevTotal !== null) {
-            // Start the water at the old level, then let it rise to the new one.
-            const lvl = dlg.querySelector(".wt-level"), f = Math.min(1, prevTotal / goal);
-            const to = lvl.style.transform;
-            lvl.style.transition = "none"; lvl.style.transform = `translateY(${BOT - f * H}px)`; lvl.getBoundingClientRect();
-            lvl.style.transition = ""; lvl.style.transform = to;
-        }
+        const y = L ? tideY(total, goal, L.goalY, L.floorY) : 0;
+        sea.setTarget(y);
+        if (prev != null) countTo(prev, total); else numEl.textContent = total;
+        shown = total;
+        capEl.textContent = countCaption(total, goal);
+        const m = paceMessage({ total, pace: paceNow(), isToday, goal });
+        msgEl.innerHTML = done ? "" : `${m.lead ? `<b>${esc(m.lead)}</b>` : ""}${esc(m.rest)}`;
+        const tip = isToday && !done ? nextTip(total, goal, nowMin) : null;
+        nextEl.hidden = !tip;
+        nextEl.innerHTML = tip ? `Next: <b>+${tip.oz} oz</b> by ${esc(tip.byText)} keeps you on pace` : "";
+        const showPace = isToday && !done && paceNow() > 0;
+        paceEl.hidden = !showPace;
+        if (showPace) { paceEl.querySelector("span").textContent = paceTag(paceNow(), Math.min(DAY_END, Math.max(DAY_START, nowMin))).toUpperCase(); }
+        dlg.querySelector("[data-undo]").hidden = !readWater(dayRecord()).log.length;
+        titleP.textContent = finaleSummary(total, goal, streakNow());
+        const was = finaleOn;
+        if (done && !was) startFinale(prev == null);
+        else if (!done && was) endFinale();
+        capEl.parentElement.setAttribute("aria-label", `${total} of ${goal} ounces`);
     }
 
     async function add(oz) {
@@ -138,23 +199,32 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         const next = addWater(dayRecord(), oz, isToday ? clock(new Date()) : "");
         if (!next) { const { toast } = await import("./ui.js"); toast("That amount does not fit. Try 1 to 200 oz.", { type: "error" }); return; }
         if (!save(next)) return;
-        draw(before);
+        nowMin = minutesOf(new Date());
+        sea.surge(12); sea.splash(10); plusFloat(oz); buzz(8); playPour(oz);
+        const crossing = before < goal && next.water >= goal;
+        render(before);
         onChange?.();
-        if (before < goal && next.water >= goal && habit) {
-            const { celebrateHabit } = await import("./celebrate.js");
+        if (crossing && habit) {
+            // The finale is the celebration here. A finished day gets its Day complete card when this screen closes.
             const habits = habitList(read("habits", null), showsPersonalPlan());
-            celebrateHabit(habit, { allDone: doneOn(read("entries", {}), dkey, habits) === habits.length });
+            crossedAllDone = doneOn(entriesNow(), dkey, habits) === habits.length ? { count: habits.length } : null;
         }
     }
 
+    const soundBtn = $("[data-sound]");
+    const drawSound = () => { const on = soundOn(); soundBtn.innerHTML = SPEAKER(on); soundBtn.setAttribute("aria-pressed", String(on)); soundBtn.setAttribute("aria-label", on ? "Sound on. Tap to mute" : "Sound off. Tap to turn on"); };
+    drawSound();
+
     dlg.addEventListener("click", async event => {
         if (event.target === dlg || event.target.closest("[data-close]")) { dlg.close(); return; }
+        primeSound();
+        if (event.target.closest("[data-sound]")) { setSoundOn(!soundOn()); drawSound(); if (soundOn()) playPour(12); return; }
         const addBtn = event.target.closest("[data-add]");
         if (addBtn) { add(Number(addBtn.dataset.add)); return; }
         if (event.target.closest("[data-undo]")) {
             const before = readWater(dayRecord()).total;
             const next = undoLast(dayRecord());
-            if (next && save(next)) { draw(before); onChange?.(); }
+            if (next && save(next)) { sea.surge(7); render(before); onChange?.(); }
             return;
         }
         if (event.target.closest("[data-other]")) {
@@ -164,10 +234,21 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
             if (value != null && String(value).trim() !== "") add(oz);
         }
     });
-    dlg.addEventListener("close", () => { dlg.remove(); opener?.focus?.(); });
+    let ro = null;
+    dlg.addEventListener("close", async () => {
+        ro?.disconnect(); sea.stop(); cancelAnimationFrame(countRaf);
+        dlg.remove(); opener?.focus?.();
+        if (crossedAllDone && habit && readWater(read(key, null) || {}).total >= goal) {
+            const mod = await celebrate;
+            mod?.celebrateHabit?.(habit, { allDone: true, count: crossedAllDone.count, streak: habitStreak(entriesNow(), habitList(read("habits", null), showsPersonalPlan()), dkey) });
+        }
+    });
 
-    draw();
     dlg.showModal();
-    dlg.querySelector(".wt-chip.is-main")?.focus({ preventScroll: true });
+    layout();
+    render();
+    sea.start();
+    if (typeof ResizeObserver !== "undefined") { ro = new ResizeObserver(() => { layout(); }); ro.observe(dlg); }
+    $(".wt-chip.is-main")?.focus({ preventScroll: true });
     return new Promise(resolve => dlg.addEventListener("close", resolve, { once: true }));
 }
