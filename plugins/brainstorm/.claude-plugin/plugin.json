@@ -1,0 +1,6 @@
+{
+  "name": "brainstorm",
+  "version": "0.1.0",
+  "description": "/brainstorm turns the session into a back-and-forth idea session with steering recaps, an optional coach/athlete/skeptic panel, and a wrap step that saves picks to QUEUE.md.",
+  "author": { "name": "Eddie Steers" }
+}

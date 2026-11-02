@@ -716,3 +716,5 @@ Coach-set conditioning timer (own beeps, pause, saved on the device) and a one-t
 
 ## 2026-11-01: Playbook fixes (coach-only buttons, new starter drills for returning devices)
 Tested: phone browser run (a client device hides "Send to client", a coach sees it; a returning device sees the banner once, Add works, it does not come back; a fresh device gets no banner). Static suite passes. Not done: the phone tab row already scrolls to the current tab (Phase B); the board name field size was not rechecked.
+
+- 2026-11-02: **brainstorm plugin** (`plugins/brainstorm`, `/brainstorm`): option B (back-and-forth rounds, steering every 3rd round, optional coach/athlete/skeptic panel on "panel", "wrap" saves picks to QUEUE.md). Command file only, no code. Static tests pass (1322).

@@ -13,6 +13,11 @@
       "name": "prompt-coach",
       "source": "./plugins/prompt-coach",
       "description": "Claude Code only: adds a short checklist (mode word, project rules, what done looks like) beside each prompt. Never changes your words."
+    },
+    {
+      "name": "brainstorm",
+      "source": "./plugins/brainstorm",
+      "description": "Claude Code only: /brainstorm starts a back-and-forth idea session with steering recaps, an optional panel of three viewpoints, and a wrap step that saves picks to QUEUE.md."
     }
   ]
 }
