@@ -516,6 +516,16 @@ document.addEventListener("click", e => {
 
     if (habitRow) {
         const habitId = habitRow.dataset.toggleHabit;
+        // The Water goal opens the water sheet for the selected day (it ticks itself at the goal).
+        const waterHabit = habits.find(h => h.id === habitId);
+        if (waterHabit && (waterHabit.icon === "hb:water" || /water/i.test(String(waterHabit.name || "")))) {
+            const [yy, mm, dd] = selectedDate.split("-").map(Number);
+            import("./waterSheet.js").then(m => m.openWaterSheet({
+                date: new Date(yy, mm - 1, dd, 12), habit: waterHabit,
+                onChange: () => { loadData(); renderToday(); renderHero(); renderWeek(selectedDate); }
+            })).then(() => { loadData(); renderToday(); renderHero(); renderWeek(selectedDate); });
+            return;
+        }
         toggleCheck(selectedDate, habitId);
 
         // Only a tick animates: the check, a small fill on that habit, the bar, the week and the rings.

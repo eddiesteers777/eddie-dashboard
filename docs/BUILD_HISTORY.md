@@ -726,3 +726,6 @@ Eddie's picks from the mile follow-ups: yes to "Didn't finish", no to lap counts
 
 ## 2026-11-02: Slim Playbook home page
 Eddie picked option A (grouped list: Plan, Run the day, Team). Hero shortened, nine slim rows, team numbers as one thin line, privacy and coach pitch folded into one footer line. Hooks kept (glance, pbClear, data-pb-sync, data-pb-signin). Tested: static suite, phone and desktop, with and without a team saved. No rules change.
+
+## 2026-11-02: Water sheet (branch claude/project-thread-5odntf)
+Eddie picked C2 + C3 from the mock-ups (project files water-bottle/). Built js/waterModel.js, js/waterSheet.js, css/waterSheet.css; wired into Today and Habits. Tested: 8 unit tests, `npm run test:static` (1327 pass), browser run at 390px and 1280px (add, undo, goal tick/untick, existing day, empty day, no sheet overflow, tap targets 44px+). Not run: full smoke, a11y, rules emulator (no rules change).

@@ -1,0 +1,50 @@
+/* The water sheet (js/waterSheet.js): a bottom sheet on phones, a centred window on a computer. */
+.wt-sheet{margin:auto auto 0;width:100%;max-width:560px;max-height:94dvh;padding:10px 16px calc(22px + env(safe-area-inset-bottom));border:1px solid rgba(214,228,240,.22);border-bottom:0;border-radius:18px 18px 0 0;
+  background:linear-gradient(180deg,var(--surface-light),var(--surface));color:var(--text);box-shadow:inset 0 1px 0 rgba(214,228,240,.2),0 -20px 50px rgba(0,0,0,.5);overflow:auto;overscroll-behavior:contain}
+.wt-sheet::backdrop{background:rgba(6,10,14,.6)}
+.wt-sheet[open]{animation:wt-in .24s cubic-bezier(.32,.72,0,1)}
+@keyframes wt-in{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.wt-sheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:rgba(214,228,240,.3);margin:0 auto 10px}
+.wt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.wt-head h2{font-family:var(--font-display);text-transform:uppercase;font-weight:900;font-size:34px;line-height:.9;margin:4px 0 0}
+.wt-kick{margin:0;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.wt-x{width:44px;height:44px;flex:0 0 44px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text-secondary);font-size:20px;display:grid;place-items:center;cursor:pointer}
+.wt-body{display:grid;grid-template-columns:1fr;gap:12px;margin-top:6px}
+.wt-stage{display:flex;justify-content:center;height:250px}
+.wt-jug{height:100%;width:auto;overflow:visible}
+.wt-level{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.wt-wave{animation:wt-wave 3.2s linear infinite}
+.wt-wave-b{animation-duration:4.6s;opacity:.55}
+@keyframes wt-wave{to{transform:translateX(-120px)}}
+.wt-tick{stroke:rgba(214,228,240,.45);stroke-width:1.5}
+.wt-tl{fill:rgba(214,228,240,.7);font-family:var(--font-mono);font-size:11px;letter-spacing:.06em}
+.wt-pin{fill:var(--cream)}
+.wt-dot{fill:var(--cream)}
+.wt-lead{stroke:rgba(242,237,225,.5)}
+.wt-goal{stroke:var(--gold,#D2AD62);stroke-width:1.5;stroke-dasharray:4 4}
+.wt-gl{fill:var(--gold-light,#E6CB8E);font-family:var(--font-mono);font-size:11px;letter-spacing:.08em}
+.wt-dim{opacity:.7}
+.wt-zone{fill:rgba(160,187,156,.24)}
+.wt-pace{stroke:var(--sage);stroke-width:2;stroke-dasharray:5 4}
+.wt-count{font-family:var(--font-display);font-weight:900;text-transform:uppercase;font-size:56px;line-height:.85}
+.wt-count small{font-size:22px;color:var(--text-secondary);font-weight:800}
+.wt-sub{color:var(--text-secondary);font-size:15px;line-height:1.4;margin:8px 0 0}
+.wt-sub b{color:var(--text);font-weight:600}
+.wt-ok{color:var(--sage)}
+.wt-next{display:flex;gap:10px;align-items:center;border:1px solid rgba(160,187,156,.4);background:rgba(160,187,156,.1);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:15px}
+.wt-next b{color:var(--sage)}
+.wt-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.wt-chip{min-height:52px;border-radius:6px;border:1px solid rgba(199,214,228,.32);background:rgba(199,214,228,.08);color:var(--text);font-family:var(--font-body);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;cursor:pointer;padding:4px}
+.wt-chip b{font-size:16px}
+.wt-chip small{font-size:11px;color:var(--muted);margin-top:3px}
+.wt-chip.is-main{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.wt-chip.is-main small{color:var(--on-primary);opacity:.75}
+.wt-tools{display:flex;justify-content:space-between;margin-top:6px}
+.wt-link{background:none;border:0;color:var(--primary);text-decoration:underline;text-underline-offset:3px;font:inherit;font-size:15px;min-height:44px;padding:0;cursor:pointer}
+@media (min-width:700px){
+  .wt-sheet{margin:auto;border-bottom:1px solid rgba(214,228,240,.22);border-radius:16px;max-width:760px;padding:22px 26px 26px}
+  .wt-sheet::before{display:none}
+  .wt-body{grid-template-columns:300px 1fr;gap:28px;align-items:center}
+  .wt-stage{height:360px}
+}
+@media (prefers-reduced-motion:reduce){.wt-wave,.wt-sheet[open]{animation:none}.wt-level{transition:none}}

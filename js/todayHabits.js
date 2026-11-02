@@ -14,6 +14,7 @@ import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
 import { celebrateHabit } from "./celebrate.js";
 import { streakAtRisk } from "./todayCues.js";
+import { findWaterHabit } from "./waterSheet.js";
 
 const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -58,6 +59,15 @@ function init() {
         // phone a tap doesn't focus it, and focusing it from script drew the
         // keyboard ring (a box around the whole button) after every tap.
         const keepFocus = btn.matches(":focus-visible");
+        // The Water goal opens the water sheet; it ticks itself when the goal is reached.
+        const waterHabit = findWaterHabit(habitList(read("habits", null), showsPersonalPlan()));
+        if (waterHabit && waterHabit.id === btn.dataset.habit) {
+            import("./waterSheet.js").then(m => m.openWaterSheet({
+                habit: waterHabit,
+                onChange: () => { render(el); window.dispatchEvent(new CustomEvent("sb:habits-changed")); }
+            }));
+            return;
+        }
         const next = toggleEntry(read("entries", {}), dayKey(), btn.dataset.habit);
         try { localStorage.setItem("entries", JSON.stringify(next)); } catch { return; }
         import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});

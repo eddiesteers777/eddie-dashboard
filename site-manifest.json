@@ -406,6 +406,8 @@
     "js/vdot.js",
     "js/viewportFix.js",
     "js/viewportFixModel.js",
+    "js/waterModel.js",
+    "js/waterSheet.js",
     "js/wearableActivity.js",
     "js/wearablePerformance.js",
     "js/wearableRecovery.js",
@@ -489,6 +491,7 @@
     "css/train.css",
     "css/trends.css",
     "css/updates.css",
+    "css/waterSheet.css",
     "css/week.css",
     "css/weekly-review.css",
     "css/workout.css"
