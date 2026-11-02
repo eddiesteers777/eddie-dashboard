@@ -717,12 +717,9 @@ Coach-set conditioning timer (own beeps, pause, saved on the device) and a one-t
 ## 2026-11-01: Playbook fixes (coach-only buttons, new starter drills for returning devices)
 Tested: phone browser run (a client device hides "Send to client", a coach sees it; a returning device sees the banner once, Add works, it does not come back; a fresh device gets no banner). Static suite passes. Not done: the phone tab row already scrolls to the current tab (Phase B); the board name field size was not rechecked.
 
-<<<<<<< HEAD
 - 2026-11-02: **brainstorm plugin** (`plugins/brainstorm`, `/brainstorm`): option B (back-and-forth rounds, steering every 3rd round, optional coach/athlete/skeptic panel on "panel", "wrap" saves picks to QUEUE.md). Command file only, no code. Static tests pass (1322).
-=======
 ## 2026-11-02: Mile run mode on the Fitness check
 Shared stopwatch, tap a name to finish, Walked toggle, Undo, saved across reloads. Tested: 11 unit tests, phone browser run (finish saved a result, Walked toggled on and off and rewrote the saved result, reload kept the run, Undo cleared it, no overflow or small taps). Not tested: a real field run with many players tapping.
 
 ## 2026-11-02: Didn't finish, results page, copy summary
 Eddie's picks from the mile follow-ups: yes to "Didn't finish", no to lap counts, yes to a results-over-time view on its own page, yes to a copyable summary. Tested: 12 unit tests, full static suite, phone browser run (finish, walked, didn't-finish saved; results page grouped by player with change wording; copy worked; no overflow or small taps).
->>>>>>> claude/project-thread-eobngo
