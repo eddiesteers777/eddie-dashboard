@@ -14,6 +14,7 @@ export const KEYS = Object.freeze({
     baseline: "sb-playbook-baseline", // device only: Day 1 fitness results (first names), not in SYNC_KEYS
     conditioning: "sb-playbook-conditioning", // device only: the coach's conditioning block
     seedsOffered: "sb-playbook-seeds-offered", // device only: how many starter drills this device has been offered
+    mileRun: "sb-playbook-mile-run", // device only: a mile test being run right now
     run: "sb-playbook-run", // device only: a practice being run right now
     theme: "sb-playbook-theme"
 });

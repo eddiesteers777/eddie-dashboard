@@ -3,7 +3,7 @@ import "./shell.js";
 import * as F from "./fitnessModel.js";
 import * as R from "./rosterModel.js";
 import * as RUN from "./runModel.js";
-import { unlockAudio, releaseAudio, SOUND_HINT } from "./audioUnlock.js";
+import { unlockAudio, releaseAudio, SOUND_HINT, audioReport } from "./audioUnlock.js";
 import { DAY_ONE_ITEMS } from "./conditioningModel.js";
 import { KEYS } from "./store.js";
 
@@ -26,8 +26,8 @@ function renderList() {
     for (const r of rows) {
         const li = h("li", "ft-item");
         const bits = [];
-        if (r.mile) bits.push(`Mile ${r.mile.seconds ? F.clockText(r.mile.seconds) : "no time"}${r.mile.nonstop ? ", no stops" : ", stopped"}`);
-        if (r.beep) bits.push(r.beep.level ? `Beep ${F.scoreText(r.beep.level, r.beep.shuttle)}` : "Beep: out in level 1");
+        if (r.mile) bits.push(`Mile ${F.mileText(r.mile)}`);
+        if (r.beep) bits.push(`Beep ${F.beepText(r.beep)}`);
         const del = h("button", "pb-btn", "Remove"); del.type = "button";
         del.setAttribute("aria-label", `Remove ${r.name}'s results`);
         del.onclick = () => { results = F.removeResult(results, r.name, r.date); save(); renderList(); };
@@ -146,6 +146,82 @@ $("ftSound").onclick = async () => {
     const o = u.ctx.createOscillator(), g = u.ctx.createGain(), at = u.ctx.currentTime + 0.05;
     o.frequency.value = 880; g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.6, at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.4);
     o.connect(g).connect(u.ctx.destination); o.start(at); o.stop(at + 0.45);
+    $("ftDiag").textContent = audioReport(u); $("ftDiag").hidden = false;
     toast(u.running ? "Did you hear it? " + SOUND_HINT : SOUND_HINT);
     setTimeout(() => releaseAudio(u.ctx), 1200);
 };
+
+// ---- 1 mile run mode ----
+let mile = null, mileRaf = 0;
+try { mile = F.parseMile(localStorage.getItem(KEYS.mileRun) || ""); } catch {}
+const saveMile = () => { try { mile ? localStorage.setItem(KEYS.mileRun, F.serializeMile(mile)) : localStorage.removeItem(KEYS.mileRun); } catch {} };
+const extraIdle = [];
+const mileNames = () => {
+    const all = [...names, ...extraIdle, ...(mile ? mile.names : []), ...(mile ? Object.keys(mile.finished) : [])];
+    const seen = new Set();
+    return all.filter(n => { const k = n.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+};
+// Writes (or rewrites) this player's mile result from the run state.
+function writeMile(name) {
+    const k = Object.keys(mile.finished).find(x => x.toLowerCase() === name.toLowerCase());
+    if (F.hasDnf(mile, name)) { results = F.setResult(results, { name, date: mile.date, test: "mile", value: { dnf: true } }); return; }
+    if (!k) { results = F.clearTest(results, name, mile.date, "mile"); return; }
+    results = F.setResult(results, { name: k, date: mile.date, test: "mile", value: { seconds: mile.finished[k], nonstop: !F.hasWalked(mile, k) } });
+}
+function renderMile() {
+    const box = $("mlRows"); box.replaceChildren();
+    const live = !!mile;
+    for (const n of mileNames()) {
+        const fin = live && Object.keys(mile.finished).find(x => x.toLowerCase() === n.toLowerCase());
+        const walked = live && F.hasWalked(mile, n);
+        const dnf = live && F.hasDnf(mile, n);
+        const row = h("div", "ml-row" + (fin || dnf ? " is-done" : ""));
+        const main = h("button", "pb-btn ml-name", fin ? `${n} · ${F.clockText(mile.finished[fin])}` : dnf ? `${n} · didn't finish` : n); main.type = "button";
+        main.disabled = !live || !!fin || dnf;
+        main.setAttribute("aria-label", fin ? `${n} finished in ${F.clockText(mile.finished[fin])}` : `${n} finished`);
+        main.onclick = () => { mile = F.finishMile(mile, n, Date.now()); saveMile(); writeMile(n); save(); renderMile(); renderList(); toast(`${n}: ${F.clockText(F.elapsedSec(mile, Date.now()))}`); };
+        const wk = h("button", "pb-btn ml-walk" + (walked ? " on" : ""), walked ? "Walked ✓" : "Walked"); wk.type = "button";
+        wk.disabled = !live; wk.setAttribute("aria-pressed", String(!!walked)); wk.setAttribute("aria-label", `${n} walked`);
+        wk.onclick = () => { mile = F.toggleWalked(mile, n); saveMile(); if (fin) { writeMile(n); save(); renderList(); } renderMile(); };
+        row.append(main, wk);
+        const sub = h("div", "ml-sub");
+        if (fin) {
+            const un = h("button", "pb-btn ml-undo", "Undo"); un.type = "button"; un.setAttribute("aria-label", `Undo ${n}'s finish`);
+            un.onclick = () => { mile = F.undoFinish(mile, n); saveMile(); writeMile(n); save(); renderMile(); renderList(); };
+            sub.append(un);
+        }
+        if (live && !fin) {
+            const dn = h("button", "pb-btn ml-undo" + (dnf ? " on" : ""), dnf ? "Didn't finish ✓ (tap to undo)" : "Didn't finish"); dn.type = "button";
+            dn.setAttribute("aria-pressed", String(dnf)); dn.setAttribute("aria-label", `${n} didn't finish`);
+            dn.onclick = () => { mile = F.toggleDnf(mile, n); saveMile(); writeMile(n); save(); renderMile(); renderList(); };
+            sub.append(dn);
+        }
+        if (sub.childNodes.length) row.append(sub);
+        box.append(row);
+    }
+    $("mlStart").hidden = live; $("mlEnd").hidden = !live;
+}
+function mileTick() {
+    if (!mile) return;
+    $("mlClock").textContent = F.clockText(F.elapsedSec(mile, Date.now()));
+    const done = Object.keys(mile.finished).length + (mile.dnf || []).length, total = mileNames().length;
+    $("mlMeta").textContent = `${done} of ${total} done`;
+    mileRaf = requestAnimationFrame(mileTick);
+}
+$("mlStart").onclick = () => {
+    mile = F.newMile(Date.now(), $("ftDate").value);
+    saveMile(); keepAwake(true); renderMile(); mileTick();
+};
+$("mlEnd").onclick = () => {
+    cancelAnimationFrame(mileRaf); keepAwake(false);
+    const done = Object.keys(mile.finished).length;
+    mile = null; saveMile(); renderMile();
+    $("mlClock").textContent = "0:00"; $("mlMeta").textContent = done ? `Saved ${done} result${done === 1 ? "" : "s"} below` : "Nothing saved";
+};
+$("mlAdd").onclick = () => {
+    const n = $("mlAddName").value.trim(); if (!n) return;
+    if (mile) { mile = F.addName(mile, n); saveMile(); } else { extraIdle.push(n); }
+    $("mlAddName").value = ""; renderMile();
+};
+if (mile) { $("ftDate").value = mile.date; keepAwake(true); mileTick(); }
+renderMile();
