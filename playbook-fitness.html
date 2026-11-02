@@ -61,11 +61,20 @@
 
   <section class="ft-card" aria-labelledby="ftMileH">
     <h2 id="ftMileH">1 mile, without stopping</h2>
-    <p class="pb-hint">Record each player's time, and whether they ran it without stopping.</p>
-    <label class="ft-field"><span>Player (first name)</span><input id="ftMileName" type="text" list="ftNames" maxlength="40" autocomplete="off"></label>
-    <label class="ft-field"><span>Time (m:ss)</span><input id="ftMileTime" type="text" inputmode="numeric" placeholder="8:30" maxlength="5" autocomplete="off"></label>
-    <label class="ft-check"><input id="ftMileNonstop" type="checkbox" checked><span>Ran it without stopping</span></label>
-    <button class="pb-btn pb-primary ft-wide" id="ftMileSave" type="button">Save mile</button>
+    <p class="pb-hint">Start the clock, then tap a name the moment that player finishes. Tap "Walked" on anyone who walked, and tap it again to undo.</p>
+    <div class="ft-beep" role="timer" aria-live="off">
+      <div class="ft-level" id="mlClock">0:00</div>
+      <div class="ft-meta" id="mlMeta">Ready</div>
+    </div>
+    <div class="ft-btns"><button class="pb-btn pb-primary" id="mlStart" type="button">Start the mile</button><button class="pb-btn" id="mlEnd" type="button" hidden>End the mile</button></div>
+    <div class="ml-rows" id="mlRows"></div>
+    <label class="ft-field"><span>Add someone not on your roster</span><span class="ft-row"><input id="mlAddName" type="text" maxlength="40" placeholder="First name" autocomplete="off"><button class="pb-btn" id="mlAdd" type="button">Add</button></span></label>
+    <details class="ft-more"><summary>Type a time instead</summary>
+      <label class="ft-field"><span>Player (first name)</span><input id="ftMileName" type="text" list="ftNames" maxlength="40" autocomplete="off"></label>
+      <label class="ft-field"><span>Time (m:ss)</span><input id="ftMileTime" type="text" inputmode="numeric" placeholder="8:30" maxlength="5" autocomplete="off"></label>
+      <label class="ft-check"><input id="ftMileNonstop" type="checkbox" checked><span>Ran it without stopping</span></label>
+      <button class="pb-btn pb-primary ft-wide" id="ftMileSave" type="button">Save mile</button>
+    </details>
   </section>
 
   <section class="ft-card" aria-labelledby="ftBeepH">

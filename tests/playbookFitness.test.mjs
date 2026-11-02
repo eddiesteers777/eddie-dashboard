@@ -61,3 +61,38 @@ test("results: one per player and day, either test, round trip, bad input ignore
     assert.deepEqual(F.parse("nope"), []);
     assert.equal(F.removeResult(l, "SAM", "2027-01-05").length, 0);
 });
+
+test("mile run: finish by name, walked toggles on and off, undo", () => {
+    let m = F.newMile(1000, "2027-01-05");
+    m = F.finishMile(m, "Sam", 1000 + 485000);
+    assert.equal(m.finished.Sam, 485);
+    assert.equal(F.finishMile(m, "sam", 1000 + 600000).finished.Sam, 485, "a second tap does not overwrite");
+    assert.equal(F.hasWalked(m, "Alex"), false);
+    m = F.toggleWalked(m, "Alex");
+    assert.equal(F.hasWalked(m, "alex"), true);
+    m = F.toggleWalked(m, "ALEX");
+    assert.equal(F.hasWalked(m, "Alex"), false);
+    m = F.undoFinish(m, "SAM");
+    assert.deepEqual(m.finished, {});
+    assert.equal(F.finishMile(m, "", 5000), m);
+});
+
+test("mile run state survives save and load; junk is null", () => {
+    let m = F.finishMile(F.newMile(1000, "2027-01-05"), "Sam", 301000);
+    m = F.toggleWalked(m, "Sam");
+    assert.deepEqual(F.parseMile(F.serializeMile(m)), m);
+    assert.equal(F.parseMile("nope"), null);
+    assert.equal(F.parseMile(JSON.stringify({ app: "playbook-mile", startedAt: "x", date: "bad" })), null);
+    assert.equal(F.elapsedSec(F.newMile(5000, "2027-01-05"), 4000), 0);
+});
+
+test("extra names are kept once; clearing one test keeps the other", () => {
+    let m = F.addName(F.addName(F.newMile(1, "2027-01-05"), "Jo"), "jo");
+    assert.deepEqual(m.names, ["Jo"]);
+    assert.deepEqual(F.parseMile(F.serializeMile(m)).names, ["Jo"]);
+    let l = F.setResult([], { name: "Sam", date: "2027-01-05", test: "mile", value: { seconds: 480, nonstop: true } });
+    l = F.setResult(l, { name: "Sam", date: "2027-01-05", test: "beep", value: { level: 5, shuttle: 2 } });
+    const c = F.clearTest(l, "SAM", "2027-01-05", "mile");
+    assert.equal(c.length, 1); assert.equal(c[0].mile, undefined); assert.deepEqual(c[0].beep, { level: 5, shuttle: 2 });
+    assert.equal(F.clearTest(c, "Sam", "2027-01-05", "beep").length, 0);
+});

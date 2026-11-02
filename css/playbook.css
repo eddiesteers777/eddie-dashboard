@@ -660,3 +660,11 @@ html.sb-typing .rn-dock{display:none}
 .dr-new{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;margin:0 0 10px;border-radius:12px;border:1px dashed rgba(214,185,142,.5);background:rgba(214,185,142,.07)}
 .dr-new span{flex:1 1 180px}
 .dr-new .pb-btn{min-height:44px}
+.ml-rows{display:grid;gap:8px}
+.ml-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.ml-row.is-done .ml-name{opacity:.9;border-color:var(--sage,#A0BB9C)}
+.ml-name{min-height:56px;font-size:18px;text-align:left;justify-content:flex-start}
+.ml-walk{min-height:56px;min-width:96px}
+.ml-walk.on{background:var(--pb-act,#D2AD62);color:var(--on-primary,#13202B)}
+.ml-undo{grid-column:1/-1;min-height:44px}
+.ft-more summary{min-height:44px;display:flex;align-items:center;cursor:pointer}

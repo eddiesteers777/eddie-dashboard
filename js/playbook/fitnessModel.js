@@ -80,3 +80,48 @@ export function parse(text) {
         return o.results.filter(r => r && cleanName(r.name) && /^\d{4}-\d{2}-\d{2}$/.test(r.date || "")).slice(-400);
     } catch { return []; }
 }
+
+// ---- 1 mile run mode: one shared stopwatch, tap a name when they finish, tap "walked" to mark/unmark ----
+// State: { startedAt (ms), date, finished: { name: seconds }, walked: [names] }. Kept so a reload
+// mid-run loses nothing.
+export const newMile = (now, date) => ({ startedAt: now, date, finished: {}, walked: [], names: [] });
+const sameName = (a, b) => a.toLowerCase() === b.toLowerCase();
+const findKey = (obj, name) => Object.keys(obj).find(k => sameName(k, name));
+export const elapsedSec = (m, now) => Math.max(0, Math.round((now - m.startedAt) / 1000));
+export function finishMile(m, name, now) {
+    const n = cleanName(name);
+    if (!m || !n || findKey(m.finished, n)) return m;
+    return { ...m, finished: { ...m.finished, [n]: elapsedSec(m, now) } };
+}
+export function undoFinish(m, name) {
+    const k = findKey(m.finished, name);
+    if (!k) return m;
+    const { [k]: _gone, ...rest } = m.finished;
+    return { ...m, finished: rest };
+}
+export function toggleWalked(m, name) {
+    const n = cleanName(name);
+    if (!n) return m;
+    const has = m.walked.some(w => sameName(w, n));
+    return { ...m, walked: has ? m.walked.filter(w => !sameName(w, n)) : [...m.walked, n] };
+}
+export const hasWalked = (m, name) => m.walked.some(w => sameName(w, name));
+export const serializeMile = m => JSON.stringify({ app: "playbook-mile", v: 1, ...m });
+export function parseMile(text) {
+    try {
+        const o = JSON.parse(text);
+        if (!o || o.app !== "playbook-mile" || !Number.isFinite(o.startedAt) || !/^\d{4}-\d{2}-\d{2}$/.test(o.date || "")) return null;
+        const finished = {};
+        for (const [k, v] of Object.entries(o.finished || {})) if (cleanName(k) && Number.isFinite(v) && v > 0 && v <= 3600) finished[cleanName(k)] = Math.round(v);
+        return { startedAt: o.startedAt, date: o.date, finished, walked: (Array.isArray(o.walked) ? o.walked : []).map(cleanName).filter(Boolean).slice(0, 80), names: (Array.isArray(o.names) ? o.names : []).map(cleanName).filter(Boolean).slice(0, 80) };
+    } catch { return null; }
+}
+export function addName(m, name) {
+    const n = cleanName(name);
+    return n && !m.names.some(x => sameName(x, n)) ? { ...m, names: [...m.names, n] } : m;
+}
+// Remove one test from a player's day without touching the other test.
+export function clearTest(list, name, date, test) {
+    return list.map(x => (x.name.toLowerCase() === String(name).toLowerCase() && x.date === date ? (({ [test]: _gone, ...rest }) => rest)(x) : x))
+        .filter(x => x.mile || x.beep);
+}
