@@ -727,10 +727,8 @@ Eddie's picks from the mile follow-ups: yes to "Didn't finish", no to lap counts
 ## 2026-11-02: Slim Playbook home page
 Eddie picked option A (grouped list: Plan, Run the day, Team). Hero shortened, nine slim rows, team numbers as one thin line, privacy and coach pitch folded into one footer line. Hooks kept (glance, pbClear, data-pb-sync, data-pb-signin). Tested: static suite, phone and desktop, with and without a team saved. No rules change.
 
-<<<<<<< HEAD
 ## 2026-11-02: Water sheet (branch claude/project-thread-5odntf)
 Eddie picked C2 + C3 from the mock-ups (project files water-bottle/). Built js/waterModel.js, js/waterSheet.js, css/waterSheet.css; wired into Today and Habits. Tested: 8 unit tests, `npm run test:static` (1327 pass), browser run at 390px and 1280px (add, undo, goal tick/untick, existing day, empty day, no sheet overflow, tap targets 44px+). Not run: full smoke, a11y, rules emulator (no rules change).
-=======
+
 ## 2026-11-02: Season page: one + Add, folded heads-ups, month view
 Eddie picked A + C from the Season mock-ups. Header has one gold + Add that opens the add sheet (Game / Practice / Repeat / Season dates, tap chips for the day and kickoff, native date and time boxes kept as "Other"). General heads-up notes fold into one tappable line. A Week / Month switch shows the whole month (Monday first) with arrows to move months; phones show dots, desktop shows names and times; tapping a day opens it below. Pure helpers monthWeeks and addMonths in seasonModel.js with tests. Tested: static suite (1,329 pass), phone and desktop browser run with a seeded team and a fixed clock (month nav, adding a game by chips, Repeat from the sheet, empty state). Tournaments are not in the data model. No rules change.
->>>>>>> origin/main
