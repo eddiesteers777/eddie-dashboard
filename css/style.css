@@ -4830,6 +4830,16 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
 .sb-cr.is-quick .cr-stats{ margin-top:16px; animation-delay:.8s; }
 .sb-cr.is-quick .can-count .cr-cu, .sb-cr.is-quick.can-count .cr-cu{ animation-delay:.8s; animation-duration:.6s; }
 .sb-cr.is-quick .cr-burst{ animation-duration:2s; } .sb-cr.is-quick .cr-bit{ animation-duration:1.8s; }
+/* a habit's own scene (css/habitScenes.css): a bigger disc, the check waits until the scene is over (--ckd) */
+.sb-cr.is-quick.has-scene .cr-lens{ width:132px; height:132px; margin-bottom:24px; }
+.sb-cr.has-scene .cr-lens{ --blue:var(--cr-blue); --ice:var(--cr-ice); --navy:var(--cr-navy); --deep:var(--cr-deep); --sub:var(--cr-sub); }
+.sb-cr .cr-lens .sc{ position:absolute; inset:0; z-index:2; pointer-events:none; }
+.sb-cr.has-scene .cr-lens .sc{ animation:cr-scout .35s calc(var(--ckd) - .3s) both; }
+@keyframes cr-scout{ from{ opacity:1; } to{ opacity:0; } }
+.sb-cr.has-scene .cr-lens > svg{ z-index:6; opacity:0; animation:cr-ckin .3s var(--ckd) both; }
+.sb-cr.is-quick.has-scene .cr-lens > svg polyline{ stroke-width:8; animation-delay:var(--ckd); animation-duration:.35s; filter:drop-shadow(0 2px 3px rgba(19,32,43,.5)); }
+@keyframes cr-ckin{ from{ opacity:0; transform:scale(.6); } to{ opacity:1; transform:none; } }
+.sb-cr.is-skip.has-scene .cr-lens > svg{ opacity:1; animation:none; }
 /* skip: jump to the finished summary */
 .sb-cr.is-skip .cr-fx, .sb-cr.is-skip .cr-ring, .sb-cr.is-skip .cr-tap, .sb-cr.is-skip .cr-edge{ display:none; }
 .sb-cr.is-skip *, .sb-cr.is-still *{ animation-duration:.01s !important; animation-delay:0s !important; }

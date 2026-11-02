@@ -1,0 +1,132 @@
+/* Habit scenes: the picture inside the check disc for the quick habit pop (js/habitScenes.js).
+   Hand-made from the mock-ups Eddie picked on 2026-11-02. Each scene is scoped under .sc-<name>;
+   keyframes are prefixed sc-<name>-. Animations start when the pop opens. */
+/* ---- water ---- */
+.sb-cr .sc-water .sc_fill{position:absolute;inset:0;border-radius:50%;overflow:hidden;z-index:2}
+.sb-cr .sc-water .sc_fill .sc_w{position:absolute;left:-50%;width:200%;height:140%;top:100%;background:linear-gradient(#8FC3EE,#4F86B8);border-radius:45% 45% 0 0/12% 12% 0 0;opacity:.95}
+.sb-cr .sc-water .sc_fill .sc_w{animation:sc-water-rise2 1s .45s cubic-bezier(.3,.7,.3,1) forwards,sc-water-slosh 1.6s ease-in-out infinite alternate}
+.sb-cr .sc-water .sc_fill .sc_w2{background:linear-gradient(#bfe0f8,#6FA3D2);opacity:.6;border-radius:45% 45% 0 0/9% 9% 0 0}
+.sb-cr .sc-water .sc_fill .sc_w2{animation:sc-water-rise2 1.1s .5s cubic-bezier(.3,.7,.3,1) forwards,sc-water-slosh 2.1s ease-in-out infinite alternate-reverse}
+.sb-cr .sc-water .sc_drop{position:absolute;left:var(--x);top:-20px;width:9px;height:14px;border-radius:50% 50% 50% 50%/62% 62% 40% 40%;background:#6FA3D2;opacity:0}
+.sb-cr .sc-water .sc_drop{animation:sc-water-fall .75s calc(.1s + var(--i)*.09s) cubic-bezier(.5,0,.9,.6) both}
+@keyframes sc-water-fall{0%{opacity:0;transform:translateY(0)}10%{opacity:1}100%{opacity:0;transform:translateY(var(--h))}}
+@keyframes sc-water-rise2{to{top:12%}}
+@keyframes sc-water-slosh{from{transform:translateX(-10%)}to{transform:translateX(10%)}}
+/* ---- candle ---- */
+.sb-cr .sc-candle .sc_halo{position:absolute;inset:-60px;border-radius:50%;background:radial-gradient(circle,rgba(255,226,150,.75),rgba(255,226,150,0) 65%);opacity:0}
+.sb-cr .sc-candle .sc_halo{animation:sc-candle-halo 1.6s .4s ease-out both}
+.sb-cr .sc-candle .sc_ember{position:absolute;left:var(--x);top:70%;width:6px;height:6px;border-radius:50%;background:#FFD98A;box-shadow:0 0 8px #FFD98A;opacity:0}
+.sb-cr .sc-candle .sc_ember{animation:sc-candle-emb 1.8s calc(.6s + var(--i)*.2s) ease-out both}
+.sb-cr .sc-candle .sc_flame{position:absolute;left:50%;top:50%;width:34px;height:56px;margin:-38px 0 0 -17px;z-index:2;transform-origin:50% 100%;opacity:0}
+.sb-cr .sc-candle .sc_flame{animation:sc-candle-fl .6s .35s ease-out both,sc-candle-flick 1.2s .95s ease-in-out infinite alternate}
+.sb-cr .sc-candle .sc_flame path{fill:#FFD98A}
+.sb-cr .sc-candle .sc_flame .sc_in{fill:#fff}
+.sb-cr .sc-candle .sc_wick{position:absolute;left:50%;top:50%;width:10px;height:34px;margin:14px 0 0 -5px;background:#e9eef3;border-radius:3px;z-index:2;opacity:0}
+.sb-cr .sc-candle .sc_wick{animation:sc-candle-rise .3s .2s both}
+@keyframes sc-candle-emb{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-130px)}}
+@keyframes sc-candle-fl{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+@keyframes sc-candle-flick{from{transform:scale(1,1) skewX(0)}to{transform:scale(.94,1.06) skewX(3deg)}}
+@keyframes sc-candle-halo{0%{opacity:0;transform:scale(.4)}50%{opacity:1}100%{opacity:.6;transform:scale(1)}}
+@keyframes sc-candle-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ---- ribbon ---- */
+.sb-cr .sc-ribbon .sc_mini{position:absolute;right:-6px;bottom:-6px;width:40px;height:40px;border-radius:50%;background:var(--ice);border:3px solid var(--navy);z-index:4;opacity:0;display:grid;place-items:center}
+.sb-cr .sc-ribbon .sc_mini svg{width:22px;height:22px}
+.sb-cr .sc-ribbon .sc_mini polyline{fill:none;stroke:var(--navy);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.sb-cr .sc-ribbon .sc_mini{opacity:1;animation:sc-ribbon-pop .4s 1.5s cubic-bezier(.3,1.6,.4,1) backwards}
+.sb-cr .sc-ribbon .sc_bk{position:absolute;left:50%;top:50%;width:92px;height:64px;margin:-30px 0 0 -46px;z-index:3;perspective:300px}
+.sb-cr .sc-ribbon .sc_pg{position:absolute;top:0;width:44px;height:60px;background:#f4f9fd;border-radius:3px;opacity:0}
+.sb-cr .sc-ribbon .sc_pg.sc_l{left:0;transform-origin:100% 50%;border-radius:4px 2px 2px 4px}
+.sb-cr .sc-ribbon .sc_pg.sc_r{right:0;transform-origin:0 50%;border-radius:2px 4px 4px 2px}
+.sb-cr .sc-ribbon .sc_pg i{position:absolute;left:7px;right:7px;height:3px;border-radius:2px;background:#9db9d2}
+.sb-cr .sc-ribbon .sc_pg i:nth-child(1){top:12px}
+.sb-cr .sc-ribbon .sc_pg i:nth-child(2){top:21px}
+.sb-cr .sc-ribbon .sc_pg i:nth-child(3){top:30px}
+.sb-cr .sc-ribbon .sc_pg i:nth-child(4){top:39px;right:16px}
+.sb-cr .sc-ribbon .sc_pg.sc_l{animation:sc-ribbon-ol .7s .35s cubic-bezier(.3,1.3,.4,1) both}
+.sb-cr .sc-ribbon .sc_pg.sc_r{animation:sc-ribbon-or .7s .35s cubic-bezier(.3,1.3,.4,1) both}
+.sb-cr .sc-ribbon .sc_bk .sc_sp{position:absolute;left:50%;top:0;width:2px;height:60px;margin-left:-1px;background:#6f9cc4;z-index:2}
+.sb-cr .sc-ribbon .sc_rib{position:absolute;left:50%;top:50%;width:14px;height:0;margin:-34px 0 0 8px;background:#6f9cc4;z-index:4;clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)}
+.sb-cr .sc-ribbon .sc_rib{animation:sc-ribbon-rb .55s 1s cubic-bezier(.3,1.5,.4,1) forwards}
+.sb-cr .sc-ribbon .sc_pg i{transform-origin:0 50%;transform:scaleX(0)}
+.sb-cr .sc-ribbon .sc_pg i{animation:sc-ribbon-wr .4s calc(.5s + var(--i)*.18s) ease-out forwards}
+@keyframes sc-ribbon-ol{0%{opacity:1;transform:rotateY(80deg)}100%{opacity:1;transform:rotateY(0)}}
+@keyframes sc-ribbon-or{0%{opacity:1;transform:rotateY(-80deg)}100%{opacity:1;transform:rotateY(0)}}
+@keyframes sc-ribbon-pop{from{transform:scale(0)}}
+@keyframes sc-ribbon-rb{to{height:52px}}
+@keyframes sc-ribbon-wr{to{transform:none}}
+/* ---- lap ---- */
+.sb-cr .sc-lap .sc_lap{position:absolute;inset:-14px;width:160px;height:160px;transform:rotate(-90deg);z-index:1;overflow:visible}
+.sb-cr .sc-lap .sc_lap circle{fill:none;stroke:#4F86B8;stroke-width:5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.sb-cr .sc-lap .sc_lap circle{animation:sc-lap-lp 1.3s .35s cubic-bezier(.5,.1,.3,1) forwards}
+.sb-cr .sc-lap .sc_orb2{position:absolute;inset:-14px;z-index:2;opacity:0}
+.sb-cr .sc-lap .sc_orb2 i{position:absolute;left:50%;top:0;width:14px;height:14px;margin:-4px 0 0 -7px;border-radius:50%;background:#13202B;border:2px solid #fff}
+.sb-cr .sc-lap .sc_orb2{animation:sc-lap-ob 1.3s .35s cubic-bezier(.5,.1,.3,1) both}
+@keyframes sc-lap-lp{to{stroke-dashoffset:0}}
+@keyframes sc-lap-ob{0%{opacity:1;transform:rotate(0)}95%{opacity:1}100%{opacity:0;transform:rotate(360deg)}}
+/* ---- plates ---- */
+.sb-cr .sc-plates .sc_pl{position:absolute;left:50%;top:50%;height:12px;margin-left:calc(var(--w)/-2);width:var(--w);margin-top:var(--y);border-radius:4px;background:var(--c);z-index:3;opacity:0}
+.sb-cr .sc-plates .sc_pl{animation:sc-plates-plf .5s calc(.3s + var(--i)*.28s) cubic-bezier(.5,0,.9,.5) both,sc-plates-plo .3s 1.5s forwards}
+.sb-cr .sc-plates .sc_pole{animation:sc-plates-plo .3s 1.5s forwards}
+.sb-cr .sc-plates .sc_pole{position:absolute;left:50%;top:50%;width:6px;height:78px;margin:-39px 0 0 -3px;border-radius:3px;background:#dbe8f3;z-index:2}
+@keyframes sc-plates-plf{0%{opacity:1;transform:translateY(-120px)}70%{opacity:1;transform:translateY(0)}85%{transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes sc-plates-plo{to{opacity:0}}
+/* ---- flower ---- */
+.sb-cr .sc-flower .sc_fl{position:absolute;inset:0;z-index:3}
+.sb-cr .sc-flower .sc_pt{position:absolute;left:50%;top:50%;width:18px;height:46px;margin:-46px 0 0 -9px;border-radius:50% 50% 50% 50%/80% 80% 20% 20%;background:linear-gradient(#e9f3fb,#9ec3e3);transform-origin:50% 100%;transform:rotate(var(--a)) scale(.2);opacity:0}
+.sb-cr .sc-flower .sc_pt{animation:sc-flower-op 1s calc(.4s + var(--i)*.08s) cubic-bezier(.3,1.4,.4,1) forwards}
+.sb-cr .sc-flower .sc_fl{animation:sc-flower-flo .4s 1.7s forwards}
+.sb-cr .sc-flower .sc_cen{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border-radius:50%;background:#fff;z-index:4;opacity:0}
+.sb-cr .sc-flower .sc_cen{animation:sc-flower-rise .3s .3s forwards,sc-flower-flo .3s 1.7s forwards}
+@keyframes sc-flower-flo{to{opacity:0;transform:scale(1.15)}}
+@keyframes sc-flower-op{0%{opacity:1;transform:rotate(0) scale(.35,.9)}100%{opacity:1;transform:rotate(var(--a)) scale(1)}}
+@keyframes sc-flower-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ---- gauge ---- */
+.sb-cr .sc-gauge .sc_gaug{position:absolute;left:50%;top:50%;width:100px;height:62px;margin:-36px 0 0 -50px;z-index:3;opacity:0}
+.sb-cr .sc-gauge .sc_gaug svg{width:100%;height:100%;overflow:visible}
+.sb-cr .sc-gauge .sc_gaug .sc_arc{fill:none;stroke:#9ec3e3;stroke-width:7;stroke-linecap:round}
+.sb-cr .sc-gauge .sc_gaug .sc_tick{stroke:#fff;stroke-width:2}
+.sb-cr .sc-gauge .sc_gaug .sc_nd{stroke:#fff;stroke-width:4;stroke-linecap:round;transform-origin:50px 52px;transform:rotate(-90deg)}
+.sb-cr .sc-gauge .sc_gaug{animation:sc-gauge-pin .4s .25s ease-out forwards,sc-gauge-pout .3s 2s forwards}
+.sb-cr .sc-gauge .sc_gaug .sc_nd{animation:sc-gauge-nd 1.3s .6s cubic-bezier(.3,1.6,.4,1) forwards}
+@keyframes sc-gauge-nd{from{transform:rotate(-90deg)}to{transform:rotate(80deg)}}
+@keyframes sc-gauge-pin{from{opacity:0;transform:scale(.4) rotate(-40deg)}to{opacity:1;transform:none}}
+@keyframes sc-gauge-pout{to{opacity:0}}
+/* ---- moon ---- */
+.sb-cr .sc-moon .sc_moon{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;z-index:3;opacity:0}
+.sb-cr .sc-moon .sc_moon::before{content:"";position:absolute;inset:0;border-radius:50%;background:#EAF3FB;box-shadow:0 0 18px rgba(207,230,248,.8)}
+.sb-cr .sc-moon .sc_moon::after{content:"";position:absolute;left:14px;top:-4px;width:52px;height:52px;border-radius:50%;background:#1d3a57;transition:none}
+.sb-cr .sc-moon .sc_moon{animation:sc-moon-mr 1s .3s cubic-bezier(.3,1.2,.4,1) forwards,sc-moon-mo .3s 1.9s forwards}
+.sb-cr .sc-moon .sc_moon::after{animation:sc-moon-wane 1s .5s ease-in-out forwards}
+.sb-cr .sc-moon .sc_stars i{position:absolute;width:6px;height:6px;background:#fff;border-radius:50%;opacity:0;z-index:3;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.sb-cr .sc-moon .sc_stars i{width:12px;height:12px}
+.sb-cr .sc-moon .sc_stars i{animation:sc-moon-tw 1.3s calc(.6s + var(--i)*.18s) ease-in-out both}
+.sb-cr .sc-moon .sc_sh{position:absolute;left:20px;top:22px;width:50px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#fff);z-index:3;opacity:0;transform:rotate(30deg)}
+.sb-cr .sc-moon .sc_sh{animation:sc-moon-shoot .7s 1.1s ease-in forwards}
+@keyframes sc-moon-mo{to{opacity:0}}
+@keyframes sc-moon-mr{from{opacity:0;transform:translateY(50px) scale(.5) rotate(-30deg)}to{opacity:1;transform:rotate(-15deg)}}
+@keyframes sc-moon-shoot{0%{opacity:0;transform:translate(0,0) rotate(30deg)}20%{opacity:1}100%{opacity:0;transform:translate(60px,36px) rotate(30deg)}}
+@keyframes sc-moon-tw{0%{opacity:0;transform:scale(0) rotate(0)}40%{opacity:1;transform:scale(1.3) rotate(45deg)}100%{opacity:0;transform:scale(.5) rotate(90deg)}}
+@keyframes sc-moon-wane{from{left:0;top:0;opacity:1}to{left:14px;top:-4px}}
+/* ---- pages ---- */
+.sb-cr .sc-pages .sc_flip{position:absolute;left:50%;top:50%;width:84px;height:62px;margin:-31px 0 0 -42px;z-index:3;perspective:400px}
+.sb-cr .sc-pages .sc_flip .sc_base{position:absolute;left:0;top:0;width:42px;height:62px;background:#dbe8f3;border-radius:3px 0 0 3px}
+.sb-cr .sc-pages .sc_flip .sc_base.sc_r{left:42px;border-radius:0 3px 3px 0;background:#f4f9fd}
+.sb-cr .sc-pages .sc_flip .sc_pgf{position:absolute;left:42px;top:0;width:42px;height:62px;background:#f4f9fd;border-radius:0 3px 3px 0;transform-origin:0 50%;backface-visibility:hidden;opacity:0;border-left:1px solid #9ec3e3}
+.sb-cr .sc-pages .sc_pgf::after{content:"";position:absolute;left:7px;right:7px;top:14px;height:3px;border-radius:2px;background:#9ec3e3;box-shadow:0 9px #9ec3e3,0 18px #9ec3e3,0 27px #9ec3e3}
+.sb-cr .sc-pages .sc_pgf{animation:sc-pages-fl .38s calc(.35s + var(--i)*.17s) ease-in-out both}
+.sb-cr .sc-pages .sc_flip{animation:sc-pages-pout .3s 1.85s forwards}
+@keyframes sc-pages-fl{0%{opacity:1;transform:rotateY(0)}99%{opacity:1;transform:rotateY(-178deg)}100%{opacity:0;transform:rotateY(-180deg)}}
+@keyframes sc-pages-pout{to{opacity:0}}
+/* ---- hearts ---- */
+.sb-cr .sc-hearts .sc_ht{position:absolute;width:var(--w);height:var(--w);left:50%;top:50%;margin:calc(var(--w)/-2) 0 0 calc(var(--w)/-2);z-index:3;opacity:0}
+.sb-cr .sc-hearts .sc_ht svg{width:100%;height:100%;fill:var(--c);overflow:visible}
+.sb-cr .sc-hearts .sc_h1{animation:sc-hearts-hl 1.1s .3s cubic-bezier(.4,.1,.3,1) forwards}
+.sb-cr .sc-hearts .sc_h2{animation:sc-hearts-hr 1.1s .3s cubic-bezier(.4,.1,.3,1) forwards}
+.sb-cr .sc-hearts .sc_hbig{animation:sc-hearts-hb 1s 1.35s cubic-bezier(.3,1.6,.4,1) forwards}
+.sb-cr .sc-hearts .sc_h1,.sb-cr .sc-hearts .sc_h2{animation-name:sc-hearts-hl,sc-hearts-pout;animation-duration:1.1s,.2s;animation-delay:.3s,1.3s;animation-fill-mode:forwards}
+.sb-cr .sc-hearts .sc_h2{animation-name:sc-hearts-hr,sc-hearts-pout}
+.sb-cr .sc-hearts .sc_hbig{animation:sc-hearts-hb 1s 1.35s cubic-bezier(.3,1.6,.4,1) forwards,sc-hearts-pout .3s 2.1s forwards}
+@keyframes sc-hearts-hb{0%{opacity:0;transform:scale(.3)}40%{opacity:1;transform:scale(1.25)}60%{transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
+@keyframes sc-hearts-hl{0%{opacity:0;transform:translate(-80px,20px) rotate(-20deg)}30%{opacity:1}100%{opacity:1;transform:translate(-10px,0) rotate(-8deg)}}
+@keyframes sc-hearts-hr{0%{opacity:0;transform:translate(80px,20px) rotate(20deg)}30%{opacity:1}100%{opacity:1;transform:translate(10px,0) rotate(8deg)}}
+@keyframes sc-hearts-pout{to{opacity:0}}

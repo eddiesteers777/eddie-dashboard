@@ -22,6 +22,9 @@
    is a dialog with real buttons. Pure parts: tests/celebrate.test.mjs.
 ========================================== */
 
+import { sceneForIcon } from "./habitScenes.js";
+import { habitIconId } from "./habitIconSet.js";
+
 const KICKERS = { run: "Run complete", strength: "Strength complete", session: "Session complete" };
 
 // What the run sheet says. Pure, so it's unit-tested.
@@ -174,16 +177,26 @@ export function celebrateRun(info = {}) {
     return openCelebration(runSummaryFor(info), RUN_EMOJI[info.kind] || RUN_EMOJI.run);
 }
 
-function openCelebration(m, ids, quick = false) {
+function ensureSceneStyles() {
+    if (document.querySelector("link[data-habit-scenes]")) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = new URL("../css/habitScenes.css", import.meta.url).href;
+    link.dataset.habitScenes = "1";
+    document.head.appendChild(link);
+}
+
+function openCelebration(m, ids, quick = false, scene = null) {
     if (typeof document === "undefined") return Promise.resolve("close");
     const still = reducedMotion();
     const narrow = (window.innerWidth || 390) < 700;
     const canCount = !still && typeof CSS !== "undefined" && typeof CSS.registerProperty === "function";
     const el = document.createElement("div");
-    el.className = `sb-cr${quick ? " is-quick" : ""}${still ? " is-still" : ""}${canCount ? " can-count" : ""}`;
+    el.className = `sb-cr${quick ? " is-quick" : ""}${scene ? " has-scene" : ""}${still ? " is-still" : ""}${canCount ? " can-count" : ""}`;
     el.setAttribute("role", "dialog");
     el.setAttribute("aria-modal", "true");
     el.setAttribute("aria-label", `${m.kicker}${m.title ? `: ${m.title}` : ""}`);
+    if (scene) { ensureSceneStyles(); el.style.setProperty("--ckd", `${scene.ckAt}s`); }
     const cy = narrow ? 31 : 36;
     el.style.setProperty("--cy", `${cy}%`);
     const letters = [...(m.title || "")].map((c, i) => c === " " ? `<span class="cr-sp" style="--k:${i}"></span>` : `<span style="--k:${i}">${esc(c)}</span>`).join("");
@@ -192,9 +205,9 @@ function openCelebration(m, ids, quick = false) {
             <div class="cr-sl"><b>${esc(m.week.left)}</b><span>${esc(m.week.right)}</span></div>
             <p class="cr-line">${esc(m.week.line)}</p></div>` : "";
     el.innerHTML = `<div class="cr-wash" aria-hidden="true"></div><span class="cr-edge" aria-hidden="true"></span>
-        <div class="cr-fx" aria-hidden="true">${still ? "" : fxHtml(quick ? ids.slice(0, 4) : ids, narrow, quick)}</div>
+        <div class="cr-fx" aria-hidden="true">${still || scene ? "" : fxHtml(quick ? ids.slice(0, 4) : ids, narrow, quick)}</div>
         <div class="cr-core">
-            <div class="cr-lens" aria-hidden="true">${still ? "" : `<span class="cr-ring" style="--d:.8s"></span><span class="cr-ring" style="--d:1.1s"></span><span class="cr-ring" style="--d:1.4s"></span>`}<i></i>${CHECK_SVG}</div>
+            <div class="cr-lens" aria-hidden="true">${still || scene ? "" : `<span class="cr-ring" style="--d:.8s"></span><span class="cr-ring" style="--d:1.1s"></span><span class="cr-ring" style="--d:1.4s"></span>`}<i></i>${scene ? `<div class="sc sc-${scene.name}">${scene.html}</div>` : ""}${CHECK_SVG}</div>
             <p class="cr-kick">${esc(m.kicker)}</p>
             ${m.title ? `<h2 class="cr-title" aria-label="${esc(m.title)}"><span class="cr-letters" aria-hidden="true">${letters}</span></h2>` : ""}
             ${m.stats.length ? `<div class="cr-stats" style="--n:${m.stats.length}">${m.stats.map(x => statHtml(x, canCount)).join("")}</div>` : ""}
@@ -229,7 +242,7 @@ function openCelebration(m, ids, quick = false) {
             else if (quick) finish("close");   // a quick pop: any tap puts you straight back to ticking
             else el.classList.add("is-skip");   // a tap on the screen skips the animation, nothing else
         });
-        const auto = setTimeout(() => finish("close"), quick ? (still ? 1800 : 2500) : 25000);
+        const auto = setTimeout(() => finish("close"), quick ? (still ? 1800 : scene ? Math.round((scene.ckAt + 1.4) * 1000) : 2500) : 25000);
         if (quick) { el.tabIndex = -1; el.focus({ preventScroll: true }); } else el.querySelector(".cr-go")?.focus({ preventScroll: true });
     });
 }
@@ -241,7 +254,12 @@ export function celebrateHabit(habit, { allDone = false, noun = "Habit", count =
     if (typeof document === "undefined") return Promise.resolve("close");
     if (!allDone) {
         if (!habit?.name) { tickBuzz(); return Promise.resolve("close"); }
-        return openCelebration(tickSummaryFor({ name: habit.name, done, count, noun }), TICK_EMOJI[Math.floor(Math.random() * TICK_EMOJI.length)], true);
+        // Its own scene when the habit's drawn icon has one (js/habitScenes.js); not with reduced motion.
+        let scene = null;
+        try { scene = reducedMotion() ? null : sceneForIcon(habitIconId(habit)); } catch { /* plain pop */ }
+        const m = tickSummaryFor({ name: habit.name, done, count, noun });
+        if (scene) m.kicker = scene.kicker;
+        return openCelebration(m, TICK_EMOJI[Math.floor(Math.random() * TICK_EMOJI.length)], true, scene);
     }
     return openCelebration(daySummaryFor({ noun, count, streak }), DAY_EMOJI);
 }
