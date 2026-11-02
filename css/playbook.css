@@ -752,3 +752,8 @@ body.pb-in-app .pb-page .pb-hero{padding-top:8px;padding-bottom:0}
 .ss-shell .pb-btn.pb-primary,.ss-shell .ss-seg button[aria-pressed="true"],.ss-shell .ss-tile.sel{background-image:none;box-shadow:none}
 .ss-shell .ss-tile.sel{background-color:var(--gold,#D6B98E);color:var(--on-primary);border-color:transparent}
 :root:not(.pb-light) .ss-shell .pb-btn.pb-primary,:root:not(.pb-light) .ss-shell .ss-seg button[aria-pressed="true"],:root:not(.pb-light) .ss-shell .ss-chip2[aria-pressed="true"]{background:var(--gold,#D6B98E);color:var(--on-primary);border-color:transparent;box-shadow:none}
+/* phone: the tool tabs wrap onto two or three rows so none is cut off at the edge */
+@media (max-width:700px){
+  .pb-tabs{flex-wrap:wrap;overflow:visible;gap:2px}
+  .pb-tab{flex:1 1 auto;justify-content:center;padding:0 8px}
+}
