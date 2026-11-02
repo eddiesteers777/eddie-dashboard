@@ -26,8 +26,8 @@ function renderList() {
     for (const r of rows) {
         const li = h("li", "ft-item");
         const bits = [];
-        if (r.mile) bits.push(`Mile ${r.mile.seconds ? F.clockText(r.mile.seconds) : "no time"}${r.mile.nonstop ? ", ran it all" : ", walked"}`);
-        if (r.beep) bits.push(r.beep.level ? `Beep ${F.scoreText(r.beep.level, r.beep.shuttle)}` : "Beep: out in level 1");
+        if (r.mile) bits.push(`Mile ${F.mileText(r.mile)}`);
+        if (r.beep) bits.push(`Beep ${F.beepText(r.beep)}`);
         const del = h("button", "pb-btn", "Remove"); del.type = "button";
         del.setAttribute("aria-label", `Remove ${r.name}'s results`);
         del.onclick = () => { results = F.removeResult(results, r.name, r.date); save(); renderList(); };
@@ -164,6 +164,7 @@ const mileNames = () => {
 // Writes (or rewrites) this player's mile result from the run state.
 function writeMile(name) {
     const k = Object.keys(mile.finished).find(x => x.toLowerCase() === name.toLowerCase());
+    if (F.hasDnf(mile, name)) { results = F.setResult(results, { name, date: mile.date, test: "mile", value: { dnf: true } }); return; }
     if (!k) { results = F.clearTest(results, name, mile.date, "mile"); return; }
     results = F.setResult(results, { name: k, date: mile.date, test: "mile", value: { seconds: mile.finished[k], nonstop: !F.hasWalked(mile, k) } });
 }
@@ -173,20 +174,29 @@ function renderMile() {
     for (const n of mileNames()) {
         const fin = live && Object.keys(mile.finished).find(x => x.toLowerCase() === n.toLowerCase());
         const walked = live && F.hasWalked(mile, n);
-        const row = h("div", "ml-row" + (fin ? " is-done" : ""));
-        const main = h("button", "pb-btn ml-name", fin ? `${n} · ${F.clockText(mile.finished[fin])}` : n); main.type = "button";
-        main.disabled = !live || !!fin;
+        const dnf = live && F.hasDnf(mile, n);
+        const row = h("div", "ml-row" + (fin || dnf ? " is-done" : ""));
+        const main = h("button", "pb-btn ml-name", fin ? `${n} · ${F.clockText(mile.finished[fin])}` : dnf ? `${n} · didn't finish` : n); main.type = "button";
+        main.disabled = !live || !!fin || dnf;
         main.setAttribute("aria-label", fin ? `${n} finished in ${F.clockText(mile.finished[fin])}` : `${n} finished`);
         main.onclick = () => { mile = F.finishMile(mile, n, Date.now()); saveMile(); writeMile(n); save(); renderMile(); renderList(); toast(`${n}: ${F.clockText(F.elapsedSec(mile, Date.now()))}`); };
         const wk = h("button", "pb-btn ml-walk" + (walked ? " on" : ""), walked ? "Walked ✓" : "Walked"); wk.type = "button";
         wk.disabled = !live; wk.setAttribute("aria-pressed", String(!!walked)); wk.setAttribute("aria-label", `${n} walked`);
         wk.onclick = () => { mile = F.toggleWalked(mile, n); saveMile(); if (fin) { writeMile(n); save(); renderList(); } renderMile(); };
         row.append(main, wk);
+        const sub = h("div", "ml-sub");
         if (fin) {
             const un = h("button", "pb-btn ml-undo", "Undo"); un.type = "button"; un.setAttribute("aria-label", `Undo ${n}'s finish`);
             un.onclick = () => { mile = F.undoFinish(mile, n); saveMile(); writeMile(n); save(); renderMile(); renderList(); };
-            row.append(un);
+            sub.append(un);
         }
+        if (live && !fin) {
+            const dn = h("button", "pb-btn ml-undo" + (dnf ? " on" : ""), dnf ? "Didn't finish ✓ (tap to undo)" : "Didn't finish"); dn.type = "button";
+            dn.setAttribute("aria-pressed", String(dnf)); dn.setAttribute("aria-label", `${n} didn't finish`);
+            dn.onclick = () => { mile = F.toggleDnf(mile, n); saveMile(); writeMile(n); save(); renderMile(); renderList(); };
+            sub.append(dn);
+        }
+        if (sub.childNodes.length) row.append(sub);
         box.append(row);
     }
     $("mlStart").hidden = live; $("mlEnd").hidden = !live;
@@ -194,8 +204,8 @@ function renderMile() {
 function mileTick() {
     if (!mile) return;
     $("mlClock").textContent = F.clockText(F.elapsedSec(mile, Date.now()));
-    const done = Object.keys(mile.finished).length, total = mileNames().length;
-    $("mlMeta").textContent = `${done} of ${total} finished`;
+    const done = Object.keys(mile.finished).length + (mile.dnf || []).length, total = mileNames().length;
+    $("mlMeta").textContent = `${done} of ${total} done`;
     mileRaf = requestAnimationFrame(mileTick);
 }
 $("mlStart").onclick = () => {

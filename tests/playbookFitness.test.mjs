@@ -96,3 +96,38 @@ test("extra names are kept once; clearing one test keeps the other", () => {
     assert.equal(c.length, 1); assert.equal(c[0].mile, undefined); assert.deepEqual(c[0].beep, { level: 5, shuttle: 2 });
     assert.equal(F.clearTest(c, "Sam", "2027-01-05", "beep").length, 0);
 });
+
+test("didn't finish toggles, replaces a finish, and a finish replaces it", () => {
+    let m = F.newMile(0, "2027-01-05");
+    m = F.finishMile(m, "Sam", 400000);
+    m = F.toggleDnf(m, "sam");
+    assert.equal(F.hasDnf(m, "Sam"), true);
+    assert.deepEqual(m.finished, {});
+    m = F.toggleDnf(m, "SAM");
+    assert.equal(F.hasDnf(m, "Sam"), false);
+    m = F.toggleDnf(m, "Al");
+    m = F.finishMile(m, "Al", 500000);
+    assert.equal(F.hasDnf(m, "Al"), false);
+    assert.deepEqual(F.parseMile(F.serializeMile(F.toggleDnf(F.newMile(1, "2027-01-05"), "Jo"))).dnf, ["Jo"]);
+    const l = F.setResult([], { name: "Jo", date: "2027-01-05", test: "mile", value: { dnf: true, seconds: 400, nonstop: true } });
+    assert.deepEqual(l[0].mile, { seconds: null, nonstop: false, dnf: true });
+    assert.equal(F.mileText(l[0].mile), "didn't finish");
+});
+
+test("results by player: newest first, own earlier test only, no ranking", () => {
+    let l = [];
+    l = F.setResult(l, { name: "Sam", date: "2027-01-05", test: "mile", value: { seconds: 540, nonstop: true } });
+    l = F.setResult(l, { name: "Sam", date: "2027-03-01", test: "mile", value: { seconds: 495, nonstop: true } });
+    l = F.setResult(l, { name: "Sam", date: "2027-01-05", test: "beep", value: { level: 5, shuttle: 2 } });
+    l = F.setResult(l, { name: "Sam", date: "2027-03-01", test: "beep", value: { level: 7, shuttle: 4 } });
+    l = F.setResult(l, { name: "Alex", date: "2027-01-05", test: "mile", value: { seconds: 700, nonstop: false } });
+    const p = F.byPlayer(l);
+    assert.deepEqual(p.map(x => x.name), ["Alex", "Sam"]);
+    assert.equal(p[1].days[0].date, "2027-03-01");
+    assert.equal(p[1].change.mile, "Mile: 0:45 faster than the first test");
+    assert.equal(p[1].change.beep, "Beep: 7.4 now, 5.2 the first time");
+    assert.deepEqual(p[0].change, {});
+    assert.equal(F.mileText(p[0].days[0].mile), "11:40, walked");
+    const t = F.summaryText(l);
+    assert.match(t, /Sam/); assert.match(t, /mile 8:15/); assert.ok(!/rank|best|worst|pass|fail/i.test(t));
+});

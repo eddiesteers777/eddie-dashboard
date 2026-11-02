@@ -719,3 +719,6 @@ Tested: phone browser run (a client device hides "Send to client", a coach sees 
 
 ## 2026-11-02: Mile run mode on the Fitness check
 Shared stopwatch, tap a name to finish, Walked toggle, Undo, saved across reloads. Tested: 11 unit tests, phone browser run (finish saved a result, Walked toggled on and off and rewrote the saved result, reload kept the run, Undo cleared it, no overflow or small taps). Not tested: a real field run with many players tapping.
+
+## 2026-11-02: Didn't finish, results page, copy summary
+Eddie's picks from the mile follow-ups: yes to "Didn't finish", no to lap counts, yes to a results-over-time view on its own page, yes to a copyable summary. Tested: 12 unit tests, full static suite, phone browser run (finish, walked, didn't-finish saved; results page grouped by player with change wording; copy worked; no overflow or small taps).
