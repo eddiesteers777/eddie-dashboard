@@ -9,9 +9,10 @@
    a guest should never see internal-app chrome.
 ========================================== */
 
-html{ background:var(--bg); }
+/* Fog blue from the first paint (2026-11-02), so the old forest green never shows before the look loads. */
+html{ background:#1c2834; }
 body.pub-body{
-    background:var(--bg);
+    background:linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%);
 }
 
 /* Every element here that sets its own display needs this --

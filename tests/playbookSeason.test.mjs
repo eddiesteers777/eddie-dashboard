@@ -76,3 +76,23 @@ test("bad input never throws", () => {
     assert.equal(S.saveItem(T.emptyTeam(), { date: "2027-02-01", kind: "other" }).error, "bad");
     assert.equal(S.saveItem(T.emptyTeam(), { id: "zzz", date: "2027-02-01" }).error, "missing");
 });
+
+test("month view: weeks cover the month, Monday first, items on their day", () => {
+    let team = T.emptyTeam();
+    team = S.saveItem(team, { date: "2027-02-04", kind: "game", opp: "Chelsea", time: "16:00" }).team;
+    team = S.saveItem(team, { date: "2027-02-01", kind: "practice" }).team;
+    const weeks = S.monthWeeks(team, "2027-02-17");
+    assert.equal(weeks.length, 4); // Feb 2027 runs Mon Feb 1 to Sun Feb 28
+    assert.ok(weeks.every(w => w.length === 7));
+    assert.equal(weeks[0][0].date, "2027-02-01");
+    assert.equal(weeks[0][3].items[0].opp, "Chelsea");
+    assert.equal(weeks[0][0].items[0].kind, "practice");
+    const jan = S.monthWeeks(team, "2027-01-10");
+    assert.equal(jan[0][0].inMonth, false); // Mon Dec 28 is outside January
+    assert.equal(jan.at(-1)[6].date, "2027-01-31");
+});
+test("addMonths lands on the first of the month, across a year end", () => {
+    assert.equal(S.addMonths("2026-12-31", 1), "2027-01-01");
+    assert.equal(S.addMonths("2027-01-15", -1), "2026-12-01");
+    assert.equal(S.addMonths("2027-03-31", -1), "2027-02-01");
+});

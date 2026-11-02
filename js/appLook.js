@@ -146,28 +146,7 @@ export function applyAppLook() {
     const bg = document.createElement("div");
     bg.className = "al-bg";
     bg.setAttribute("aria-hidden", "true");
-    if (FABRIC[page]) {
-        const { obj, spin, flip, inHero } = FABRIC[page];
-        // Today: the compass stands still in the page header, beside the greeting, in place of the brand tile.
-        // Behind the page it showed through the glass cards on the right (From Your Coach on a computer).
-        const hero = inHero && document.querySelector(".eos-today-hero");
-        bg.innerHTML = FOLDS.map((f, i) => `<div class="al-fold">${foldSvg(f, i, flip)}</div>`).join("") + (hero ? "" : obj());
-        if (hero) {
-            const art = document.createElement("div");
-            art.className = "al-bg al-hero-art";
-            art.setAttribute("aria-hidden", "true");
-            art.innerHTML = obj();
-            hero.append(art);
-            hero.classList.add("al-has-art");
-        }
-        document.body.prepend(bg);
-        document.documentElement.classList.add("al-on");
-        drawFabric(bg, spin, page);
-        return;
-    }
-    if (ART[page]) bg.innerHTML = page === "more" ? `<svg class="al-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${ART[page]}</svg>` : `<svg viewBox="0 0 100 80" preserveAspectRatio="xMaxYMin meet">${ART[page]}</svg>`;
+    // Plain fog-blue ground on every app page (Eddie, 2026-11-02): no drawing behind the page.
     document.body.prepend(bg);
     document.documentElement.classList.add("al-on");
-    const svg = bg.querySelector("svg");
-    if (svg) applyState(svg, rest(page));
 }
