@@ -93,6 +93,7 @@
     "js/calendarButton.js",
     "js/calendarExport.js",
     "js/celebrate.js",
+    "js/celebrateWeek.js",
     "js/changeRequestDialog.js",
     "js/changeRequests.js",
     "js/chartTips.js",

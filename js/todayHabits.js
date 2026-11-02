@@ -13,14 +13,14 @@ import { habitIconHtml } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
 import { celebrateHabit } from "./celebrate.js";
-import { streakAtRisk } from "./todayCues.js";
+import { streakAtRisk, habitStreak } from "./todayCues.js";
 import { findWaterHabit } from "./waterSheet.js";
 
 const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const read = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
 
-function render(el) {
+function render(el, justOn = null) {
     const habits = habitList(read("habits", null), showsPersonalPlan());
     const entries = read("entries", {});
     const day = dayKey();
@@ -29,7 +29,7 @@ function render(el) {
     const atRisk = streakAtRisk(entries, habits, day);
     const rows = habits.map(h => {
         const on = Boolean(entries?.[day]?.[h.id]);
-        return `<li><button type="button" class="th-row${on ? " is-on" : ""}" data-habit="${esc(h.id)}" aria-pressed="${on}">
+        return `<li><button type="button" class="th-row${on ? " is-on" : ""}${on && h.id === justOn ? " just-on" : ""}" data-habit="${esc(h.id)}" aria-pressed="${on}">
             <span class="th-check" aria-hidden="true">${on ? icon("check") : ""}</span>
             ${habitIconHtml(h)}
             <span class="th-name">${esc(String(h.name || "").replace(EMOJI_PREFIX, "").trim())}</span>
@@ -38,7 +38,7 @@ function render(el) {
     el.innerHTML = `
         <div class="eos-today-card-header">
             <h2>Today's habits</h2>
-            <span class="th-count">${habits.length ? `${done} of ${habits.length}` : ""}</span>
+            <span class="th-count${justOn ? " is-bump" : ""}">${habits.length ? `${done} of ${habits.length}` : ""}</span>
         </div>
         ${atRisk ? `<p class="th-streak">${icon("flame")}<span><strong>${atRisk}-day streak.</strong> Finish today's habits to keep it.</span></p>` : ""}
         ${habits.length
@@ -71,14 +71,19 @@ function init() {
         const next = toggleEntry(read("entries", {}), dayKey(), btn.dataset.habit);
         try { localStorage.setItem("entries", JSON.stringify(next)); } catch { return; }
         import("./cloudSync.js").then(({ pushToCloud }) => pushToCloud()).catch(() => {});
-        render(el);
+        const ticked = Boolean(next?.[dayKey()]?.[btn.dataset.habit]);
+        render(el, ticked ? btn.dataset.habit : null);
         const fresh = el.querySelector(`[data-habit="${CSS.escape(btn.dataset.habit)}"]`);
         if (keepFocus) fresh?.focus();
-        // Just checked off (not undone): a full-page moment for that habit; the day's last one says Day complete (js/celebrate.js).
-        if (next?.[dayKey()]?.[btn.dataset.habit]) {
+        // Just checked off (not undone): the tick is the reward (css .just-on, a tiny buzz). Only the day's last habit
+        // opens the full-screen Day complete moment (js/celebrate.js).
+        if (ticked) {
             const habits = habitList(read("habits", null), showsPersonalPlan());
             const habit = habits.find(h => h.id === btn.dataset.habit);
-            if (habit) celebrateHabit(habit, { allDone: doneOn(next, dayKey(), habits) === habits.length, card: el });
+            if (habit) {
+                const allDone = doneOn(next, dayKey(), habits) === habits.length;
+                celebrateHabit(habit, { allDone, count: habits.length, streak: allDone ? habitStreak(next, habits, dayKey()) : 0 });
+            }
         }
         window.dispatchEvent(new CustomEvent("sb:habits-changed"));
     });

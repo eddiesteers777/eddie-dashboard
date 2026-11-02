@@ -16,6 +16,7 @@ import { toggleDone, workoutLink, fuelForItem } from "./weekData.js";
 import { shortDay } from "./coachingPlanModel.js";
 import { toast, friendlyError } from "./ui.js";
 import { celebrateRun } from "./celebrate.js";
+import { weekProgressNow } from "./celebrateWeek.js";
 import { itemActions } from "./weekChanges.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -205,12 +206,13 @@ export function bindWeekActions(root, { getItem, onChange, onChangeItem }) {
         try {
             const done = await toggleDone(item);
             if (done === null) throw new Error("not-found");
-            const moment = done ? celebrateRun({ kind: item.kind, title: item.title, miles: item.miles }) : null;
+            const asksEffort = done && item.kind === "run" && item.source?.date;
+            const moment = done ? celebrateRun({ kind: item.kind, title: item.title, miles: item.miles, week: item.kind === "run" ? weekProgressNow() : null, next: asksEffort ? "How did it feel?" : "" }) : null;
             if (done) toast(`${item.title} done. Nice work.`);
             // A run just marked done asks how hard it was (js/effortCard.js), as the coach's run does (js/app.js),
             // once the completion moment (js/celebrate.js) has gone.
             if (done && item.kind === "run" && item.source?.date) {
-                moment.then(() => import("./effortCard.js")).then(m => m.askRunEffort(item.source.date))
+                moment.then(result => result === "close" ? null : import("./effortCard.js").then(m => m.askRunEffort(item.source.date)))
                     .catch(error => console.error("Southbound: effort question failed to load.", error));
             }
             onChange?.();
