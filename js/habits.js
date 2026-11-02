@@ -11,6 +11,7 @@ import { icon } from "./icons.js";
 import { storedIcon, habitIconId } from "./habitIconSet.js";
 import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon, useLineIcons } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
+import { celebrateHabit } from "./celebrate.js";
 import { COACH_HABITS, CLIENT_HABITS } from "./habitDefaults.js";
 import { habitStreak, streakAtRisk, weekBar, recentCompletionPct as completionPct, ringValues } from "./habitProgress.js";
 
@@ -292,6 +293,9 @@ function renderToday(justOn = null) {
 
     if (countEl) {
         countEl.textContent = `${doneCount}/${habits.length} done`;
+        // The count nudges when a habit was just ticked (css .is-bump); nothing on a plain redraw.
+        countEl.classList.remove("is-bump");
+        if (justOn) { void countEl.offsetWidth; countEl.classList.add("is-bump"); }
     }
 
     const bar = document.getElementById("habitsProgress");
@@ -533,6 +537,11 @@ document.addEventListener("click", e => {
         renderToday(on ? habitId : null);
         renderHero();
         if (on) renderWeek(selectedDate);
+        // The tick is the reward (a tiny buzz); only finishing today's last habit opens the full-screen moment.
+        if (on) {
+            const allDone = selectedDate === todayStr() && habits.length > 0 && habits.every(h => isChecked(selectedDate, h.id));
+            celebrateHabit(habits.find(h => h.id === habitId), { allDone, count: habits.length, streak: allDone ? habitStreak(entries, habits, selectedDate) : 0 });
+        }
         document.querySelector(`[data-toggle-habit="${CSS.escape(habitId)}"]`)?.focus({ preventScroll: true });
         return;
     }

@@ -16,6 +16,7 @@ import { getUpcomingPlannerEvents, categoryFor, formatTime } from "./plannerEven
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
 import { celebrateRun } from "./celebrate.js";
+import { weekProgressNow } from "./celebrateWeek.js";
 import { showsPersonalPlan } from "./role.js";
 import { getActiveProgramEntriesForDate, getActiveRunningPrograms } from "./activeProgramSources.js";
 import { nextRace, raceCountdownText } from "./raceCountdown.js";
@@ -277,7 +278,7 @@ function onCompleteClick(event) {
     if (progress[w][dayKey]) {
         const d = new Date();
         const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        celebrateRun({ kind: "run" }).then(() => import("./effortCard.js")).then(m => m.askRunEffort(date))
+        celebrateRun({ kind: "run", week: weekProgressNow(), next: "How did it feel?" }).then(result => result === "close" ? null : import("./effortCard.js").then(m => m.askRunEffort(date)))
             .catch(error => console.error("Southbound: effort question failed to load.", error));
     }
 }

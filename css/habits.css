@@ -526,8 +526,8 @@
    habit list are dark bubbles too; arrows, Today and remove are glass, Add
    is the lens, the new-habit field a dark inset. Scoped to .habits-page;
    js/habits.js, the saved 'habits' / 'entries' and the check-off animation
-   (js/celebrate.js: .sb-cel-pop on the check, [data-cel-card]::before on the
-   card) are unchanged, so nothing here sets overflow or ::before on them.
+   (js/celebrate.js: the tick animates in css, only the day's last habit opens a
+   full-screen moment) are unchanged, so nothing here sets overflow or ::before on them.
 ========================================================== */
 .habits-page .sb-eyebrow{ display:none; }
 .habits-page .habits-hero{ align-items:flex-end; margin-bottom:22px; overflow:visible; }
@@ -745,6 +745,9 @@
 .habits-page .habits-row.just-on .habits-check{ animation:hb-pop .18s ease-out; }
 .habits-page .habits-row.just-on .habits-check polyline{ stroke-dasharray:24; animation:hb-draw .2s ease-out; }
 .habits-week-fill.is-rising{ animation:hb-rise .2s ease-out; }
+/* the count nudges as the number moves (a quarter second) */
+.habits-page .habits-checklist-count.is-bump{ display:inline-block; animation:hb-bump .28s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes hb-bump{ from{ transform:translateY(-45%); opacity:.3; } to{ transform:none; opacity:1; } }
 @keyframes hb-fill{ 0%{ transform:scaleY(0); opacity:.16; } 55%{ transform:scaleY(1); opacity:.16; } 100%{ transform:scaleY(1); opacity:0; } }
 @keyframes hb-pop{ 0%{ transform:scale(.8); } 100%{ transform:scale(1); } }
 @keyframes hb-draw{ from{ stroke-dashoffset:24; } to{ stroke-dashoffset:0; } }
@@ -754,6 +757,6 @@
     .habits-page .habits-row.just-on::before,
     .habits-page .habits-row.just-on .habits-check,
     .habits-page .habits-row.just-on .habits-check polyline,
-    .habits-week-fill.is-rising{ animation:none; }
+    .habits-week-fill.is-rising, .habits-page .habits-checklist-count.is-bump{ animation:none; }
     .habits-progress.is-live i{ transition:none; }
 }

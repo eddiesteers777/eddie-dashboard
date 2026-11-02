@@ -1,29 +1,27 @@
 /* ==========================================
    Southbound — completion moments (2026-10-17)
 
-   celebrateRun({ kind, title, miles })   a workout just marked done or
-       logged: a glass sheet springs up from the bottom with a tan check,
-       a soft tan bloom lights behind it and thin slivers drift down.
-       Resolves when it has gone, so the effort question
+   celebrateRun({ kind, title, miles, durationSec, week, offline, next })
+       a workout just marked done or logged: a full-screen blue moment
+       (2026-11-02). The check draws, Southbound emojis in the app's blue
+       burst out and fall (emoji/blue/), then it settles to a summary: miles,
+       time, pace, "Run 3 of 4" for the week, one next step. Tap anywhere to
+       skip the animation; the saved log never waits on it. Resolves
+       "next" or "close" when it has gone, so the effort question
        (js/effortCard.js) opens after it, not over it.
-   celebrateHabit(habit, { allDone, card })   a habit just checked off: a
-       full-page moment made for that habit. Its own drawn icon, its own
-       name and line ("Hydrated."), and a scene for its family: water
-       rises for Water, streaks run past for Run, shockwaves for
-       Strength, stars for Sleep, light for Prayer, and so on. The day's
-       last habit says "Day complete" and sweeps a shine over its card.
+   celebrateHabit(habit, { allDone, noun, count, streak })   a habit just
+       checked off: small on purpose. The tick (css) is the reward and a tiny
+       buzz goes with it; nothing covers the screen. Only the day's last
+       habit opens the full-screen "Day complete" moment (same blue look as
+       the run, its own emojis: water, sleep, strength).
 
    Light on purpose: CSS keyframes (css/style.css "COMPLETION MOMENTS"),
-   no library, never blocks a tap. Reduced motion: the run sheet only
-   fades; habits show nothing extra (the filled circle already says
-   done). The toast stays the spoken message; everything here is
-   aria-hidden. The pure parts are unit-tested (tests/celebrate.test.mjs).
+   no library. Reduced motion: the run summary shows with no motion;
+   habits show nothing extra (the filled circle already says done).
+   The toast stays the spoken message. The effects are aria-hidden; the summary
+   is a dialog with real buttons. Pure parts: tests/celebrate.test.mjs.
 ========================================== */
 
-import { habitIconId, habitIconSrc, habitIconById } from "./habitIconSet.js";
-
-// What falls from the top when a workout completes: the drawn running shoe for a run.
-const FALLERS = { run: "habit-icons/run.svg", strength: "habit-icons/strength.svg", session: "habit-icons/workout.svg" };
 const KICKERS = { run: "Run complete", strength: "Strength complete", session: "Session complete" };
 
 // What the run sheet says. Pure, so it's unit-tested.
@@ -32,50 +30,6 @@ export function celebrationFor({ kind = "run", title = "", miles = 0 } = {}) {
     const mi = Number(miles);
     const detail = kind === "run" && mi > 0 ? `${Number.isInteger(mi) ? mi : mi.toFixed(1)} mi` : "";
     return { kicker: KICKERS[kind] || "Workout complete", title: name.length > 26 ? `${name.slice(0, 25)}…` : name, detail };
-}
-
-// Each habit icon gets its own line; the scene is shared by its family.
-export const HABIT_LINES = Object.freeze({
-    pray: "Time given.", bible: "In the Word.", read: "Pages turned.", journal: "Thoughts captured.", meditate: "Stillness found.",
-    gratitude: "Thankful.", study: "Learning stacks up.",
-    run: "Miles banked.", workout: "Sweat logged.", strength: "Stronger today.", stretch: "Loosened up.", steps: "Steps counted.",
-    bike: "Wheels turned.", swim: "Laps done.", core: "Core strong.", ball: "Touches in.",
-    protein: "Fuel in.", water: "Hydrated.", veggies: "Greens in.", fruit: "Fruit in.", meals: "Fueled well.", mealprep: "Prepped for the week.",
-    nosugar: "Sugar skipped.", noalcohol: "Clear head.", coffee: "Cup done.", vitamins: "Covered.", fasting: "Fast held.",
-    sleep: "Rested well.", cold: "Cold conquered.", sauna: "Heat done.", sun: "Light caught.", screens: "Screens down.", breathe: "Breath steady.",
-    love: "Time well spent.", family: "Family first.", friends: "Connected.", tidy: "Space cleared.", money: "Money minded.", work: "Deep work done.",
-    music: "Practice in.", nature: "Fresh air.", dog: "Good dog.", weigh: "Weighed in.", teeth: "Smile ready.", goal: "Goal moved.",
-    star: "Gold star.", check: "Checked off."
-});
-
-const SCENES = {
-    water: ["water", "cold", "swim"],
-    stride: ["run", "steps", "bike", "ball"],
-    impact: ["strength", "workout", "core"],
-    flow: ["stretch", "breathe", "meditate", "sauna"],
-    night: ["sleep"],
-    nourish: ["protein", "meals", "mealprep", "fruit", "veggies", "vitamins", "coffee", "fasting", "nosugar", "noalcohol"],
-    light: ["pray", "bible", "gratitude", "sun", "nature"],
-    heart: ["love", "family", "friends", "dog"]
-    // everything else (read, journal, study, work, money, goal…) gets "focus"
-};
-const SCENE_OF = Object.fromEntries(Object.entries(SCENES).flatMap(([scene, ids]) => ids.map(id => [id, scene])));
-
-export function sceneFor(iconId) {
-    return SCENE_OF[iconId] || "focus";
-}
-
-// What a habit's moment says. Pure.
-export function habitMoment(habit, { allDone = false, noun = "Habit" } = {}) {
-    const iconId = habitIconId(habit);
-    const name = String(habit?.name ?? "").replace(/^\s*\p{Extended_Pictographic}️?\s*/u, "").replace(/\s+/g, " ").trim();
-    return {
-        iconId,
-        scene: sceneFor(iconId),
-        kicker: allDone ? "Day complete" : `${noun} done`,
-        title: (name || habitIconById(iconId)?.label || "Habit").slice(0, 28),
-        line: allDone ? `Every ${noun.toLowerCase()}, done.` : (HABIT_LINES[iconId] || "Done.")
-    };
 }
 
 export function reducedMotion() {
@@ -102,66 +56,164 @@ function mount(el, life) {
     });
 }
 
-export function celebrateRun(info = {}) {
-    if (typeof document === "undefined") return Promise.resolve();
-    const { kicker, title, detail } = celebrationFor(info);
-    const still = reducedMotion();
-    const el = document.createElement("div");
-    el.className = `sb-cel-run${still ? " is-still" : ""}`;
-    el.setAttribute("aria-hidden", "true");
-    el.innerHTML = `${still ? "" : `<div class="sb-cel-bloom"></div>${many(18, i => `<img class="sb-cel-fall" src="${esc(FALLERS[info.kind] || FALLERS.run)}" alt="" width="40" height="40" style="left:${3 + i * 5.4}%;--s:${Math.round(rnd(26, 46))}px;--d:${rnd(.25, 1.3).toFixed(2)}s;--r:${Math.round(rnd(-45, 45))}deg;--x:${Math.round(rnd(-30, 30))}px">`)}`}
-        <div class="sb-cel-sheet">
-            <div class="sb-cel-lens">${CHECK}</div>
-            <div class="sb-cel-txt"><small>${esc(kicker)}</small>${title ? `<h4>${esc(title)}</h4>` : ""}${detail ? `<p>${esc(detail)}</p>` : ""}</div>
-        </div>`;
-    if (!still) buzz([14, 50, 24]);
-    return mount(el, still ? 1100 : 2500);
+const DAY_EMOJI = ["hydrate", "sleep", "strong", "great_work", "high_five", "big_effort", "hydrate", "great_work", "sleep", "strong"];
+const RUN_EMOJI = {
+    run: ["finish", "pr", "great_work", "high_five", "long_run", "strong", "great_work", "finish", "pr", "high_five", "long_run", "strong"],
+    strength: ["strong", "big_effort", "pr", "great_work", "high_five", "strong", "big_effort", "pr", "great_work", "high_five"],
+    session: ["great_work", "high_five", "strong", "pr", "great_work", "high_five", "strong", "pr"]
+};
+export const blueEmojiSrc = id => `emoji/blue/sb_${id}.svg`;
+
+const clock = sec => {
+    const t = Math.round(Number(sec));
+    if (!Number.isFinite(t) || t <= 0) return "";
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), r = t % 60;
+    return h ? `${h}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}` : `${m}:${String(r).padStart(2, "0")}`;
+};
+
+// The week from js/weekModel.js buildWeek(): how many runs are done of those planned. Pure.
+export function weekRunProgress(week) {
+    const runs = (week?.days || []).flatMap(d => d.items || []).filter(i => i.kind === "run" && i.source?.type !== "log");
+    if (!runs.length) return null;
+    const mi = list => Math.round(list.reduce((a, i) => a + (Number(i.miles) || 0), 0) * 10) / 10;
+    const done = runs.filter(i => i.done);
+    return { runsDone: done.length, runsPlanned: runs.length, milesDone: mi(done), milesPlanned: mi(runs) };
 }
 
-function sceneHtml(scene) {
-    switch (scene) {
-        case "water":
-            return `<div class="hm-wave"></div><div class="hm-wave is-2"></div>${many(14, () => `<i class="hm-bubble" style="left:${rnd(6, 94).toFixed(0)}%;--s:${rnd(6, 16).toFixed(0)}px;--d:${rnd(.2, 1.1).toFixed(2)}s"></i>`)}`;
-        case "stride":
-            return many(10, i => `<i class="hm-streak" style="top:${8 + i * 9}%;--w:${Math.round(rnd(90, 240))}px;--d:${rnd(0, .7).toFixed(2)}s"></i>`) +
-                many(7, i => `<i class="hm-step" style="left:${10 + i * 13}%;top:${72 - i * 6}%;--d:${(.15 + i * .13).toFixed(2)}s"></i>`);
-        case "impact":
-            return many(3, i => `<i class="hm-shock" style="--d:${(i * .16).toFixed(2)}s"></i>`) + many(14, i => `<i class="hm-shard" style="--a:${i * (360 / 14)}deg;--d:${(i % 3) * 40}ms"></i>`);
-        case "flow":
-            return many(3, i => `<i class="hm-breath" style="--d:${(i * .45).toFixed(2)}s"></i>`);
-        case "night":
-            return `<div class="hm-moon"></div>${many(26, () => `<i class="hm-star" style="left:${rnd(4, 96).toFixed(0)}%;top:${rnd(4, 90).toFixed(0)}%;--s:${rnd(2, 4.5).toFixed(1)}px;--d:${rnd(0, 1.2).toFixed(2)}s"></i>`)}`;
-        case "nourish":
-            return many(16, i => `<i class="hm-leaf${i % 3 === 0 ? " is-tan" : ""}" style="--a:${i * (360 / 16)}deg;--r:${Math.round(rnd(150, 300))}px;--d:${rnd(0, .35).toFixed(2)}s"></i>`);
-        case "light":
-            return `<div class="hm-beams"></div>${many(14, () => `<i class="hm-mote" style="left:${rnd(8, 92).toFixed(0)}%;--d:${rnd(.1, 1.2).toFixed(2)}s;--s:${rnd(3, 6).toFixed(0)}px"></i>`)}`;
-        case "heart":
-            return many(2, i => `<i class="hm-beat" style="--d:${(i * .42).toFixed(2)}s"></i>`) + many(12, () => `<i class="hm-ember" style="left:${rnd(10, 90).toFixed(0)}%;--d:${rnd(.2, 1.3).toFixed(2)}s;--s:${rnd(4, 8).toFixed(0)}px"></i>`);
-        default:
-            return many(6, i => `<i class="hm-rule" style="top:${14 + i * 14}%;--d:${(i * .09).toFixed(2)}s"></i>`) + many(10, () => `<i class="hm-tick" style="left:${rnd(8, 92).toFixed(0)}%;top:${rnd(10, 88).toFixed(0)}%;--d:${rnd(.3, 1.3).toFixed(2)}s"></i>`);
+// What the full-screen summary shows. Pure, so it's unit-tested.
+export function runSummaryFor(info = {}) {
+    const base = celebrationFor(info);
+    const mi = Number(info.miles) || 0;
+    const secs = Number(info.durationSec) || 0;
+    const stats = [];
+    if (info.kind === "run" && mi > 0) stats.push({ value: Number.isInteger(mi) ? String(mi) : mi.toFixed(1), label: "miles" });
+    if (clock(secs)) stats.push({ value: clock(secs), label: "time" });
+    if (info.kind === "run" && mi > 0 && secs > 0) stats.push({ value: clock(secs / mi), label: "per mile" });
+    const w = info.week;
+    let week = null;
+    if (w && w.runsPlanned > 0 && info.kind === "run") {
+        const planned = Math.min(w.runsPlanned, 7);
+        const done = Math.max(1, Math.min(w.runsDone, planned));
+        week = {
+            segments: Array.from({ length: planned }, (_, i) => (i < done - 1 ? "on" : i === done - 1 ? "now" : "")),
+            left: `Run ${done} of ${w.runsPlanned}`,
+            right: w.milesPlanned > 0 ? `${w.milesDone} of ${w.milesPlanned} mi` : "",
+            line: done >= w.runsPlanned ? "That's every run this week." : `${w.runsPlanned - done} to go this week.`
+        };
     }
+    return {
+        kicker: base.kicker,
+        title: base.title,
+        stats: stats.length ? stats : base.detail ? [{ value: base.detail.replace(/ mi$/, ""), label: "miles" }] : [],
+        week,
+        note: info.offline ? "Saved on this phone. It sends to your coach when you're back online." : "",
+        next: info.next || ""
+    };
 }
 
-export function celebrateHabit(habit, { allDone = false, card = null, noun = "Habit" } = {}) {
-    if (typeof document === "undefined" || reducedMotion()) return Promise.resolve();
-    const m = habitMoment(habit, { allDone, noun });
-    const el = document.createElement("div");
-    el.className = `sb-hm sb-hm-${m.scene}${allDone ? " is-day" : ""}`;
-    el.setAttribute("aria-hidden", "true");
-    el.innerHTML = `<div class="hm-scene">${sceneHtml(m.scene)}</div>
-        <div class="hm-core">
-            <div class="hm-lens"><svg viewBox="0 0 96 96" class="hm-ring"><circle cx="48" cy="48" r="45" pathLength="100"/></svg><img src="${esc(habitIconSrc(m.iconId))}" alt="" width="56" height="56"></div>
-            <p class="hm-kicker">${esc(m.kicker)}</p>
-            <p class="hm-title">${esc(m.title)}</p>
-            <p class="hm-line">${esc(m.line)}</p>
-        </div>`;
-    buzz(allDone ? [10, 40, 18, 40, 24] : [12, 40, 12]);
-    const done = mount(el, allDone ? 2900 : 2300);
-    if (allDone && card) done.then(() => {
-        card.classList.remove("sb-cel-all");
-        void card.offsetWidth;
-        card.classList.add("sb-cel-all");
-        setTimeout(() => card.classList.remove("sb-cel-all"), 1300);
+const CHECK_BIG = '<svg viewBox="0 0 132 132"><circle class="cr-disc" cx="66" cy="66" r="62"/><circle class="cr-ring" cx="66" cy="66" r="62" pathLength="100"/><polyline class="cr-tick" points="42 68 59 85 90 49" pathLength="40"/></svg>';
+
+// Decoration only: emojis burst from the check, some fall behind, blue slivers and sparkles. Seeded by Math.random each time.
+function fxHtml(ids, narrow) {
+    const n = ids.length;
+    const spread = narrow ? 1 : 1.7, reach = narrow ? 105 : 210, extra = narrow ? 120 : 200;
+    const src = i => esc(blueEmojiSrc(ids[i % n]));
+    const burst = many(n, i => {
+        const a = (i / n) * Math.PI * 2 + rnd(0, .4), d = reach + rnd(0, extra), s = Math.round(rnd(44, 72));
+        return `<img class="cr-burst" src="${src(i)}" alt="" width="${s}" height="${s}" style="--s:${s}px;--dx:${Math.round(Math.cos(a) * d * (narrow ? 1.25 : spread))}px;--dy:${Math.round(Math.sin(a) * d * .9)}px;--r:${Math.round(rnd(-40, 40))}deg;--d:${rnd(.55, .73).toFixed(2)}s">`;
     });
-    return done;
+    const rain = many(14, i => {
+        const far = i % 3 === 0, s = Math.round(far ? rnd(26, 40) : rnd(36, 58));
+        return `<img class="cr-rain" src="${src(i * 5)}" alt="" width="${s}" height="${s}" style="--x:${rnd(4, 92).toFixed(0)}%;--s:${s}px;--sw:${Math.round(rnd(-40, 40))}px;--r:${Math.round(rnd(-180, 180))}deg;--t:${(far ? 3.2 : rnd(2.3, 3.3)).toFixed(2)}s;--d:${rnd(.9, 2.4).toFixed(2)}s;--b:${far ? 2 : 0}px;--o:${far ? .45 : 1}">`;
+    });
+    const bits = many(22, i => {
+        const a = rnd(0, Math.PI * 2), d = (narrow ? 90 : 170) + rnd(0, narrow ? 210 : 360);
+        return `<i class="cr-bit cr-b${i % 5}" style="--w:${rnd(3, 6).toFixed(1)}px;--dx:${Math.round(Math.cos(a) * d * 1.2)}px;--dy:${Math.round(Math.sin(a) * d * .9 + 90)}px;--r:${Math.round(rnd(-360, 360))}deg;--d:${rnd(.6, .85).toFixed(2)}s"></i>`;
+    });
+    const sparks = many(10, () => {
+        const a = rnd(0, Math.PI * 2), d = 70 + rnd(0, narrow ? 170 : 300);
+        return `<i class="cr-spark" style="--s:${Math.round(rnd(12, 28))}px;--dx:${Math.round(Math.cos(a) * d * 1.2)}px;--dy:${Math.round(Math.sin(a) * d)}px;--d:${rnd(.7, 2.1).toFixed(2)}s"></i>`;
+    });
+    return burst + rain + bits + sparks;
+}
+
+// The day's last habit: the same full-screen moment, its own words. Pure.
+export function daySummaryFor({ noun = "Habit", count = 0, streak = 0 } = {}) {
+    const n = Math.max(0, Math.floor(Number(count) || 0));
+    const stats = [];
+    if (n > 0) stats.push({ value: `${n}/${n}`, label: `${noun.toLowerCase()}s` });
+    if (streak > 1) stats.push({ value: String(streak), label: "day streak" });
+    return { kicker: "Day complete", title: n > 0 ? `All ${n} done` : "All done", stats, week: null, note: "", next: "" };
+}
+
+export function celebrateRun(info = {}) {
+    return openCelebration(runSummaryFor(info), RUN_EMOJI[info.kind] || RUN_EMOJI.run);
+}
+
+function openCelebration(m, ids) {
+    if (typeof document === "undefined") return Promise.resolve("close");
+    const still = reducedMotion();
+    const narrow = (window.innerWidth || 390) < 700;
+    const el = document.createElement("div");
+    el.className = `sb-cr${still ? " is-still" : ""}`;
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-label", `${m.kicker}${m.title ? `: ${m.title}` : ""}`);
+    const weekHtml = m.week ? `<div class="cr-week"><small>This week</small>
+            <div class="cr-strip" style="--n:${m.week.segments.length}">${m.week.segments.map(s => `<i class="${s ? `is-${s}` : ""}"></i>`).join("")}</div>
+            <div class="cr-sl"><b>${esc(m.week.left)}</b><span>${esc(m.week.right)}</span></div>
+            <p class="cr-line">${esc(m.week.line)}</p></div>` : "";
+    el.innerHTML = `<div class="cr-wash" aria-hidden="true"></div>
+        <div class="cr-fx" aria-hidden="true" style="--cy:${narrow ? 31 : 36}%">${still ? "" : fxHtml(ids, narrow)}</div>
+        <div class="cr-core">
+            <div class="cr-lens" aria-hidden="true">${still ? "" : `<span class="cr-pulse" style="--d:.7s"></span><span class="cr-pulse" style="--d:1s"></span><span class="cr-pulse" style="--d:1.3s"></span>`}${CHECK_BIG}</div>
+            <p class="cr-kick">${esc(m.kicker)}</p>
+            ${m.title ? `<h2 class="cr-title">${esc(m.title)}</h2>` : ""}
+            ${m.stats.length ? `<div class="cr-stats" style="--n:${m.stats.length}">${m.stats.map(x => `<div><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join("")}</div>` : ""}
+            ${weekHtml}
+            ${m.note ? `<p class="cr-offline">${esc(m.note)}</p>` : ""}
+            <div class="cr-actions">
+                <button type="button" class="sb-btn sb-btn-primary cr-go" data-cr="next">${esc(m.next || "Done")}</button>
+                ${m.next ? `<button type="button" class="cr-close" data-cr="close">Close</button>` : ""}
+            </div>
+        </div>
+        ${still ? "" : `<p class="cr-tap" aria-hidden="true">Tap anywhere to skip</p>`}`;
+    if (!still) buzz([14, 50, 24]);
+    return new Promise(resolve => {
+        const returnTo = document.activeElement;
+        current?.remove();
+        document.body.appendChild(el);
+        current = el;
+        let over = false;
+        const finish = result => {
+            if (over) return;
+            over = true;
+            document.removeEventListener("keydown", onKey, true);
+            clearTimeout(auto);
+            el.classList.add("is-out");
+            setTimeout(() => { el.remove(); if (current === el) current = null; try { returnTo?.focus?.({ preventScroll: true }); } catch { /* gone */ } resolve(result); }, still ? 120 : 380);
+        };
+        const onKey = e => { if (e.key === "Escape") { e.preventDefault(); finish("close"); } };
+        document.addEventListener("keydown", onKey, true);
+        el.addEventListener("click", e => {
+            const b = e.target.closest("[data-cr]");
+            if (b) finish(b.dataset.cr === "close" ? "close" : "next");
+            else el.classList.add("is-skip");   // a tap on the screen skips the animation, nothing else
+        });
+        const auto = setTimeout(() => finish("close"), 25000);
+        el.querySelector(".cr-go")?.focus({ preventScroll: true });
+    });
+}
+
+// A habit ticked: small on purpose. The tick itself is the reward (css: the check draws, the fill rises, the count
+// moves) plus a tiny buzz; no overlay, so day 30 feels the same as day 1. Only the day's LAST habit opens the
+// full-screen "Day complete" moment. Resolves when that has gone (immediately for an ordinary tick).
+export function celebrateHabit(habit, { allDone = false, noun = "Habit", count = 0, streak = 0 } = {}) {
+    if (typeof document === "undefined") return Promise.resolve("close");
+    if (!allDone) { tickBuzz(); return Promise.resolve("close"); }
+    return openCelebration(daySummaryFor({ noun, count, streak }), DAY_EMOJI);
+}
+
+export function tickBuzz() {
+    if (!reducedMotion()) buzz(8);
 }

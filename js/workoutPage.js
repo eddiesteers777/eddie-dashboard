@@ -35,6 +35,7 @@ import { toast, sbConfirm, sbAlert, friendlyError, emptyHtml } from "./ui.js";
 import { toMillis } from "./clientSummary.js";
 import { icon } from "./icons.js";
 import { celebrateRun } from "./celebrate.js";
+import { weekProgressNow } from "./celebrateWeek.js";
 import { contourParts, contourSvg, contourLabelsHtml } from "./workoutContour.js";
 import { isCorosConnected, entryFor, sendState, sendToCoros, sendSummary } from "./corosSend.js";
 import { sendableDate } from "./corosWorkout.js";
@@ -322,7 +323,7 @@ $("woBody").addEventListener("click", async event => {
         const nowDone = await toggleDone(item);
         refresh();
         if (nowDone) {
-            celebrateRun({ kind: "run", title: title(), miles: state.day.miles });
+            celebrateRun({ kind: "run", title: title(), miles: state.day.miles, week: weekProgressNow() });
             toast(`${title()} done. Nice work.`);
         }
     }
@@ -548,7 +549,7 @@ async function startWorkoutMode() {
                 close();
                 if (isCoachPlan()) openLogForm({ durationSec: total });
                 else {
-                    celebrateRun({ kind: "run", title: title(), miles: state.day.miles });
+                    celebrateRun({ kind: "run", title: title(), miles: state.day.miles, durationSec: total, week: weekProgressNow() });
                     toast("Workout finished. Nice work.");
                 }
                 return;
@@ -755,7 +756,7 @@ function openLogForm(prefill = {}) {
             forget();
             d.close();
             refresh();
-            if (!skipped) celebrateRun({ kind: "run", title: title(), miles: Number(fd.get("distance")) || state.day.miles });
+            if (!skipped) celebrateRun({ kind: "run", title: title(), miles: Number(fd.get("distance")) || state.day.miles, durationSec, week: weekProgressNow(), offline: Boolean(state.result?.pendingSync) });
             toast(state.result.pendingSync ? QUEUED_NOTE : skipped ? "Saved. Your coach will see you skipped it." : `${title()} logged. Nice work.`);
         } catch (error) {
             console.error("Saving the run failed:", error);
