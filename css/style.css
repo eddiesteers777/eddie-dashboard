@@ -94,7 +94,7 @@ html{
        html element's background is -- without this it's the browser
        default white, flashing behind every page at the top/bottom
        edge of a scroll. Match body's base color here too. */
-    background:#0F2019;
+    background:#1c2834;
 
 }
 
@@ -200,7 +200,7 @@ body{
     font-family:var(--font-body);
 
     background:
-        radial-gradient(circle at top,#1F3A2C 0%,#0F2019 45%,#07100C 100%);
+        linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%);
 
     color:var(--text);
 

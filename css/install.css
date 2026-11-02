@@ -5,8 +5,7 @@
 body.install-body{
     background:
         radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201,173,132,.09), transparent 70%),
-        var(--bg);
-    min-height:100vh;
+        linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%);
 }
 /* Several elements on this page set their own display property
    (flex/none-toggling panels, etc.), and any author rule that sets
