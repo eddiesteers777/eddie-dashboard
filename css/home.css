@@ -654,3 +654,6 @@ html.sbh-sky-on .sbh-cream :focus-visible { outline-color: var(--primary); }
     .sbh-msg.me { align-self: flex-end; }
     .sbh-fsegs { display: none; }
 }
+
+/* "Set up your week first" under the main hero button (links to start.html) */
+.sbh-btn-start { margin-top: 10px; }

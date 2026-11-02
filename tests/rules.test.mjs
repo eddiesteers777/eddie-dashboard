@@ -990,6 +990,24 @@ function profile(clientUid, by, extra = {}) {
     };
 }
 
+test("client profiles: a brand-new account can save the taps from the Get started page", async () => {
+    const { mergedRecord } = await import("../js/startFlow.js");
+    const { nextConfirmedAt } = await import("../js/profileChecks.js");
+    const taps = { sport: "running", goal: "half", now: "run20", days: ["tue", "thu", "sat", "sun"], name: "Sam", mark: "ball" };
+    const fields = mergedRecord(taps, null);
+    // The same payload js/clientRecords.js saveClientRecord() sends for a first save.
+    const payload = {
+        ...fields, clientUid: "client", intakeComplete: false,
+        confirmedAt: nextConfirmedAt(undefined, null, fields, [], Date.now()),
+        updatedAt: serverTimestamp(), updatedBy: "client"
+    };
+    const mine = doc(as("client"), "clientRecords/client");
+    await assertSucceeds(setDoc(mine, payload, { merge: true }));
+    // Someone else's taps can never land on this account's record.
+    await assertFails(setDoc(doc(as("stranger"), "clientRecords/client"), { ...payload, updatedBy: "stranger" }, { merge: true }));
+    await assertFails(setDoc(doc(as("client"), "clientRecords/stranger"), { ...payload, clientUid: "stranger" }, { merge: true }));
+});
+
 test("client profiles: the client fills theirs in and their linked coach can read and edit it", async () => {
     await seedLinkAndBooking();
     const mine = doc(as("client"), "clientRecords/client");

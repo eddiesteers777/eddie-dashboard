@@ -53,6 +53,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "habits",
     "entries",
     "user-settings",
+    "sb-start-pending",         // "Get started" taps waiting to join the account (js/startCarry.js): cleared on sign-out
     "sb-guest-fueling-stash",   // fueling work a guest left, waiting to join the account (js/guestFuel.js): cleared on sign-out
     "__eddieos_coros_data_snapshot_v2",
     "strength-plan",
@@ -196,6 +197,15 @@ function takeGuestFueling() {
     } catch { return null; }
 }
 
+// The "Get started" page (start.html) keeps a guest's taps in sb-start-answers. At first sign-in from a
+// device with no account on it they are set aside for that account (js/startCarry.js writes them in).
+function takeStartAnswers() {
+    try {
+        const raw = localStorage.getItem("sb-start-answers");
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+
 async function prepareAccountState(user) {
     const nextUid = user?.uid || null;
     const owner = getStorageOwner();
@@ -206,6 +216,7 @@ async function prepareAccountState(user) {
     const legacyAccountState = nextUid && !owner && hasLegacyAccountState();
     const changed = Boolean(uidChanged || ownerMismatch || signedOutOwner || legacyAccountState);
     const guestFueling = nextUid && !owner ? takeGuestFueling() : null;
+    const startAnswers = nextUid && !owner ? takeStartAnswers() : null;
 
     if (changed) {
         clearAccountSensitiveBrowserState();
@@ -216,6 +227,10 @@ async function prepareAccountState(user) {
     if (nextUid) {
         try {
             localStorage.removeItem(GUEST_FUEL_MARK);
+            if (startAnswers) {
+                localStorage.setItem("sb-start-pending", JSON.stringify({ uid: nextUid, at: Date.now(), answers: startAnswers }));
+            }
+            localStorage.removeItem("sb-start-answers");
             if (guestFueling) localStorage.setItem(GUEST_FUEL_STASH, JSON.stringify({ uid: nextUid, at: Date.now(), keys: guestFueling }));
         } catch { /* storage unavailable: the guest's work is lost, as before */ }
     }
@@ -251,6 +266,9 @@ onAuthStateChanged(auth, (user) => {
             try {
                 const { ensureProfile } = await import("./userProfile.js");
                 await ensureProfile();
+                // Taps from the "Get started" page join the new account's profile.
+                const { carryStartAnswers } = await import("./startCarry.js");
+                await carryStartAnswers(user).catch(error => console.warn("Southbound: start answers not saved yet.", error));
             } catch (error) {
                 // A temporary Firestore failure must not make sign-in fail.
                 // The normal page bootstrap will retry on the next load.

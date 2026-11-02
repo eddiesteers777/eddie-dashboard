@@ -452,3 +452,11 @@ Tapping the Water goal habit (the habit with the drawn water icon, else "water" 
 - Goal: same resolution as the Nutrition page (`nutrition-goals`, coach 100, clients from body weight).
 - Gotcha: Nutrition keys its day by the UTC date (`toISOString`), habits by the local date. The sheet follows Nutrition's key so both pages agree; after about 7 pm US Central "today" in Nutrition is already tomorrow's key. Not fixed here.
 - Not built yet: a saved "my bottle" size (the +24 button is fixed), 75 tracker's water task opening the sheet.
+
+
+## Get started (start.html): taps before sign-in
+- **What it is:** a public page (`start.html`, `js/start.js`, `css/start.css`, pure logic in `js/startFlow.js`, `tests/startFlow.test.mjs`). Five tap screens: what you train, name + mark ("Make it yours"), goal, where you are now (skipped for General fitness), days. A sample week ("Example", never a promise) fills in as they tap. The last screen is "Continue with Google". Foggy blue only, no gold: one ice-blue gradient is used for the progress bar, button and every selection.
+- **Saving:** every tap goes to `localStorage["sb-start-answers"]` (device only, not synced). At first sign-in `prepareAccountState` in `js/auth.js` sets them aside as `sb-start-pending` (tied to the new uid, only from a device with no account on it, same idea as guest fueling). `js/startCarry.js` then writes them into the account's own `clientRecords` doc through `saveClientRecord`, only into fields that are still empty (`primarySport`, `preferredName`, `eventType` or `primaryGoal`, `runStart` / `strengthExperience` / `soccerLevel`, `availabilityDays`), and the chosen mark into `user-settings.mark`. Failure never blocks sign-in; the stash stays and the next page load retries.
+- **Rules:** no change. A new account may already create its own `clientRecords` doc; `tests/rules.test.mjs` has the exact first-save payload.
+- **Not built yet:** a color choice (the app has only the Fog look), and nothing shows the saved mark yet.
+- **Entry point:** "Set up your week first" under the hero button on `home.html`.
