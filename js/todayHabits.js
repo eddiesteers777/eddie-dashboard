@@ -82,7 +82,7 @@ function init() {
             const habit = habits.find(h => h.id === btn.dataset.habit);
             if (habit) {
                 const allDone = doneOn(next, dayKey(), habits) === habits.length;
-                celebrateHabit(habit, { allDone, count: habits.length, streak: allDone ? habitStreak(next, habits, dayKey()) : 0 });
+                celebrateHabit(habit, { allDone, count: habits.length, done: doneOn(next, dayKey(), habits), streak: allDone ? habitStreak(next, habits, dayKey()) : 0 });
             }
         }
         window.dispatchEvent(new CustomEvent("sb:habits-changed"));

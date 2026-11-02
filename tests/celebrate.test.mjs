@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { celebrationFor, runSummaryFor, weekRunProgress, daySummaryFor, countParts, celebrateEmojiSrc, celebrateRun, celebrateHabit } from "../js/celebrate.js";
+import { celebrationFor, runSummaryFor, weekRunProgress, daySummaryFor, tickSummaryFor, countParts, celebrateEmojiSrc, celebrateRun, celebrateHabit } from "../js/celebrate.js";
 
 test("a run shows its miles; other workouts say what they were", () => {
     assert.deepEqual(celebrationFor({ kind: "run", title: "Easy run", miles: 5 }), { kicker: "Run complete", title: "Easy run", detail: "5 mi" });
@@ -93,4 +93,13 @@ test("without a page it does nothing and still resolves; an ordinary habit tick 
     await celebrateRun({ kind: "run" });
     await celebrateHabit({ name: "Water" });
     await celebrateHabit({ name: "Water" }, { allDone: true });
+});
+
+test("tickSummaryFor: the habit's name and how many are done today", () => {
+    const m = tickSummaryFor({ name: "Walk 20 min", done: 3, count: 5 });
+    assert.equal(m.kicker, "Habit done");
+    assert.equal(m.title, "Walk 20 min");
+    assert.deepEqual(m.stats, [{ value: "3/5", label: "done today" }]);
+    assert.equal(tickSummaryFor({ name: "x".repeat(40) }).title.length, 22);
+    assert.deepEqual(tickSummaryFor({ name: "A", done: 0, count: 0 }).stats, []);
 });

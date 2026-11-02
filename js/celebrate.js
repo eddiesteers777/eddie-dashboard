@@ -56,6 +56,7 @@ function mount(el, life) {
     });
 }
 
+const TICK_EMOJI = [["strong", "great_work", "high_five", "big_effort"], ["hydrate", "high_five", "great_work", "strong"], ["high_five", "big_effort", "strong", "great_work"]];
 const DAY_EMOJI = ["hydrate", "sleep", "strong", "great_work", "high_five", "big_effort", "hydrate", "great_work", "sleep", "strong"];
 const RUN_EMOJI = {
     run: ["finish", "pr", "great_work", "high_five", "long_run", "strong", "great_work", "finish", "pr", "high_five", "long_run", "strong"],
@@ -126,14 +127,14 @@ const CHECK_SVG = '<svg viewBox="0 0 70 70"><polyline points="18 36 30 48 52 22"
 const BITS = 5;
 
 // Decoration only: emojis burst from the check, squash where they land, then fall away; navy and blue slivers.
-function fxHtml(ids, narrow) {
+function fxHtml(ids, narrow, quick = false) {
     const n = ids.length;
     const reach = narrow ? 110 : 220, extra = narrow ? 120 : 200;
     const burst = many(n, i => {
         const a = (i / n) * Math.PI * 2 + rnd(0, .4), d = reach + rnd(0, extra), s = Math.round(rnd(60, 96));
         return `<img class="cr-burst" src="${esc(celebrateEmojiSrc(ids[i % n]))}" alt="" width="${s}" height="${s}" style="--z:${s}px;--dx:${Math.round(Math.cos(a) * d * (narrow ? 1.25 : 1.7))}px;--dy:${Math.round(Math.sin(a) * d * .9)}px;--r:${Math.round(rnd(-40, 40))}deg;--d:${rnd(.9, 1.05).toFixed(2)}s">`;
     });
-    const bits = many(26, i => {
+    const bits = many(quick ? 14 : 26, i => {
         const a = rnd(0, Math.PI * 2), d = (narrow ? 90 : 170) + rnd(0, narrow ? 220 : 380);
         return `<i class="cr-bit cr-b${i % BITS}" style="--w:${rnd(3, 6).toFixed(1)}px;--dx:${Math.round(Math.cos(a) * d * 1.2)}px;--dy:${Math.round(Math.sin(a) * d * .9 + 90)}px;--r:${Math.round(rnd(-360, 360))}deg;--d:${rnd(.9, 1.2).toFixed(2)}s"></i>`;
     });
@@ -156,17 +157,30 @@ export function daySummaryFor({ noun = "Habit", count = 0, streak = 0 } = {}) {
     return { kicker: "Day complete", title: n > 0 ? `All ${n} done` : "All done", stats, week: null, note: "", next: "" };
 }
 
+// An ordinary tick (Eddie, 2026-11-02: wants every one to pop like a run). The same screen, shorter: the habit's
+// name, how many are done today, gone in about two seconds or on any tap. Pure.
+export function tickSummaryFor({ name = "", done = 0, count = 0, noun = "Habit" } = {}) {
+    const n = Math.max(0, Math.floor(Number(count) || 0)), d = Math.max(0, Math.floor(Number(done) || 0));
+    const t = String(name || "").trim();
+    return {
+        kicker: `${noun} done`,
+        title: t.length > 22 ? `${t.slice(0, 21).trimEnd()}…` : t,
+        stats: n > 0 && d > 0 ? [{ value: `${Math.min(d, n)}/${n}`, label: "done today" }] : [],
+        week: null, note: "", next: ""
+    };
+}
+
 export function celebrateRun(info = {}) {
     return openCelebration(runSummaryFor(info), RUN_EMOJI[info.kind] || RUN_EMOJI.run);
 }
 
-function openCelebration(m, ids) {
+function openCelebration(m, ids, quick = false) {
     if (typeof document === "undefined") return Promise.resolve("close");
     const still = reducedMotion();
     const narrow = (window.innerWidth || 390) < 700;
     const canCount = !still && typeof CSS !== "undefined" && typeof CSS.registerProperty === "function";
     const el = document.createElement("div");
-    el.className = `sb-cr${still ? " is-still" : ""}${canCount ? " can-count" : ""}`;
+    el.className = `sb-cr${quick ? " is-quick" : ""}${still ? " is-still" : ""}${canCount ? " can-count" : ""}`;
     el.setAttribute("role", "dialog");
     el.setAttribute("aria-modal", "true");
     el.setAttribute("aria-label", `${m.kicker}${m.title ? `: ${m.title}` : ""}`);
@@ -178,7 +192,7 @@ function openCelebration(m, ids) {
             <div class="cr-sl"><b>${esc(m.week.left)}</b><span>${esc(m.week.right)}</span></div>
             <p class="cr-line">${esc(m.week.line)}</p></div>` : "";
     el.innerHTML = `<div class="cr-wash" aria-hidden="true"></div><span class="cr-edge" aria-hidden="true"></span>
-        <div class="cr-fx" aria-hidden="true">${still ? "" : fxHtml(ids, narrow)}</div>
+        <div class="cr-fx" aria-hidden="true">${still ? "" : fxHtml(quick ? ids.slice(0, 4) : ids, narrow, quick)}</div>
         <div class="cr-core">
             <div class="cr-lens" aria-hidden="true">${still ? "" : `<span class="cr-ring" style="--d:.8s"></span><span class="cr-ring" style="--d:1.1s"></span><span class="cr-ring" style="--d:1.4s"></span>`}<i></i>${CHECK_SVG}</div>
             <p class="cr-kick">${esc(m.kicker)}</p>
@@ -186,12 +200,12 @@ function openCelebration(m, ids) {
             ${m.stats.length ? `<div class="cr-stats" style="--n:${m.stats.length}">${m.stats.map(x => statHtml(x, canCount)).join("")}</div>` : ""}
             ${weekHtml}
             ${m.note ? `<p class="cr-offline">${esc(m.note)}</p>` : ""}
-            <div class="cr-actions">
+            ${quick ? "" : `<div class="cr-actions">
                 <button type="button" class="cr-go" data-cr="next">${esc(m.next || "Done")}</button>
                 ${m.next ? `<button type="button" class="cr-close" data-cr="close">Close</button>` : ""}
-            </div>
+            </div>`}
         </div>
-        ${still ? "" : `<p class="cr-tap" aria-hidden="true">Tap anywhere to skip</p>`}`;
+        ${still || quick ? "" : `<p class="cr-tap" aria-hidden="true">Tap anywhere to skip</p>`}`;
     if (!still) buzz([14, 50, 24]);
     return new Promise(resolve => {
         const returnTo = document.activeElement;
@@ -212,19 +226,23 @@ function openCelebration(m, ids) {
         el.addEventListener("click", e => {
             const b = e.target.closest("[data-cr]");
             if (b) finish(b.dataset.cr === "close" ? "close" : "next");
+            else if (quick) finish("close");   // a quick pop: any tap puts you straight back to ticking
             else el.classList.add("is-skip");   // a tap on the screen skips the animation, nothing else
         });
-        const auto = setTimeout(() => finish("close"), 25000);
-        el.querySelector(".cr-go")?.focus({ preventScroll: true });
+        const auto = setTimeout(() => finish("close"), quick ? (still ? 1800 : 2500) : 25000);
+        if (quick) { el.tabIndex = -1; el.focus({ preventScroll: true }); } else el.querySelector(".cr-go")?.focus({ preventScroll: true });
     });
 }
 
 // A habit ticked: small on purpose. The tick itself is the reward (css: the check draws, the fill rises, the count
 // moves) plus a tiny buzz; no overlay, so day 30 feels the same as day 1. Only the day's LAST habit opens the
 // full-screen "Day complete" moment. Resolves when that has gone (immediately for an ordinary tick).
-export function celebrateHabit(habit, { allDone = false, noun = "Habit", count = 0, streak = 0 } = {}) {
+export function celebrateHabit(habit, { allDone = false, noun = "Habit", count = 0, streak = 0, done = 0 } = {}) {
     if (typeof document === "undefined") return Promise.resolve("close");
-    if (!allDone) { tickBuzz(); return Promise.resolve("close"); }
+    if (!allDone) {
+        if (!habit?.name) { tickBuzz(); return Promise.resolve("close"); }
+        return openCelebration(tickSummaryFor({ name: habit.name, done, count, noun }), TICK_EMOJI[Math.floor(Math.random() * TICK_EMOJI.length)], true);
+    }
     return openCelebration(daySummaryFor({ noun, count, streak }), DAY_EMOJI);
 }
 

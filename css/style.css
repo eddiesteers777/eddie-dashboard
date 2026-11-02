@@ -4819,6 +4819,17 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
 .cr-bit{ width:var(--w); height:calc(var(--w) * 2.4); margin-left:-3px; border-radius:2px; opacity:0; animation:cr-bit 2.8s var(--d) cubic-bezier(.2,.7,.3,1) both; }
 .cr-b0{ background:var(--cr-navy); } .cr-b1{ background:var(--cr-deep); } .cr-b2{ background:var(--cr-blue); } .cr-b3{ background:#6FA3D2; } .cr-b4{ background:#fff; }
 @keyframes cr-bit{ 0%{ opacity:0; transform:translate(0,0) rotate(0); } 8%{ opacity:1; } 100%{ opacity:0; transform:translate(var(--dx), var(--dy)) rotate(var(--r)); } }
+/* quick pop for an ordinary habit tick: same look, about two seconds, any tap closes it */
+.sb-cr.is-quick .cr-lens{ width:104px; height:104px; margin-bottom:26px; }
+.sb-cr.is-quick .cr-ring{ width:104px; height:104px; margin:-52px; animation-duration:1s; }
+.sb-cr.is-quick .cr-wash{ animation-duration:.4s; } .sb-cr.is-quick .cr-edge{ animation-duration:.4s; }
+.sb-cr.is-quick .cr-lens i{ animation-delay:.15s; } .sb-cr.is-quick .cr-lens polyline{ animation-delay:.4s; }
+.sb-cr.is-quick .cr-kick{ animation-delay:.45s; }
+.sb-cr.is-quick .cr-title{ font-size:clamp(34px, 11vw, 48px); }
+.sb-cr.is-quick .cr-letters span{ animation-delay:calc(.5s + var(--k) * .035s); }
+.sb-cr.is-quick .cr-stats{ margin-top:16px; animation-delay:.8s; }
+.sb-cr.is-quick .can-count .cr-cu, .sb-cr.is-quick.can-count .cr-cu{ animation-delay:.8s; animation-duration:.6s; }
+.sb-cr.is-quick .cr-burst{ animation-duration:2s; } .sb-cr.is-quick .cr-bit{ animation-duration:1.8s; }
 /* skip: jump to the finished summary */
 .sb-cr.is-skip .cr-fx, .sb-cr.is-skip .cr-ring, .sb-cr.is-skip .cr-tap, .sb-cr.is-skip .cr-edge{ display:none; }
 .sb-cr.is-skip *, .sb-cr.is-still *{ animation-duration:.01s !important; animation-delay:0s !important; }

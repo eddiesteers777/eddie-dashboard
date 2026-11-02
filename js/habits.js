@@ -540,7 +540,7 @@ document.addEventListener("click", e => {
         // The tick is the reward (a tiny buzz); only finishing today's last habit opens the full-screen moment.
         if (on) {
             const allDone = selectedDate === todayStr() && habits.length > 0 && habits.every(h => isChecked(selectedDate, h.id));
-            celebrateHabit(habits.find(h => h.id === habitId), { allDone, count: habits.length, streak: allDone ? habitStreak(entries, habits, selectedDate) : 0 });
+            celebrateHabit(habits.find(h => h.id === habitId), { allDone, count: habits.length, done: habits.filter(h => isChecked(selectedDate, h.id)).length, streak: allDone ? habitStreak(entries, habits, selectedDate) : 0 });
         }
         document.querySelector(`[data-toggle-habit="${CSS.escape(habitId)}"]`)?.focus({ preventScroll: true });
         return;
