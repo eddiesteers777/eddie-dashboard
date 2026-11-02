@@ -723,3 +723,6 @@ Shared stopwatch, tap a name to finish, Walked toggle, Undo, saved across reload
 
 ## 2026-11-02: Didn't finish, results page, copy summary
 Eddie's picks from the mile follow-ups: yes to "Didn't finish", no to lap counts, yes to a results-over-time view on its own page, yes to a copyable summary. Tested: 12 unit tests, full static suite, phone browser run (finish, walked, didn't-finish saved; results page grouped by player with change wording; copy worked; no overflow or small taps).
+
+## 2026-11-02: Slim Playbook home page
+Eddie picked option A (grouped list: Plan, Run the day, Team). Hero shortened, nine slim rows, team numbers as one thin line, privacy and coach pitch folded into one footer line. Hooks kept (glance, pbClear, data-pb-sync, data-pb-signin). Tested: static suite, phone and desktop, with and without a team saved. No rules change.
