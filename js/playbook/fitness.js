@@ -176,7 +176,7 @@ function renderMile() {
         const walked = live && F.hasWalked(mile, n);
         const dnf = live && F.hasDnf(mile, n);
         const row = h("div", "ml-row" + (fin || dnf ? " is-done" : ""));
-        const main = h("button", "pb-btn ml-name", fin ? `${n} · ${F.clockText(mile.finished[fin])}` : dnf ? `${n} · didn't finish` : n); main.type = "button";
+        const main = h("button", "pb-btn ml-name", fin ? `${n} · ${F.clockText(mile.finished[fin])}` : dnf ? `${n} · DNF` : n); main.type = "button";
         main.disabled = !live || !!fin || dnf;
         main.setAttribute("aria-label", fin ? `${n} finished in ${F.clockText(mile.finished[fin])}` : `${n} finished`);
         main.onclick = () => { mile = F.finishMile(mile, n, Date.now()); saveMile(); writeMile(n); save(); renderMile(); renderList(); toast(`${n}: ${F.clockText(F.elapsedSec(mile, Date.now()))}`); };
@@ -191,8 +191,8 @@ function renderMile() {
             sub.append(un);
         }
         if (live && !fin) {
-            const dn = h("button", "pb-btn ml-undo" + (dnf ? " on" : ""), dnf ? "Didn't finish ✓ (tap to undo)" : "Didn't finish"); dn.type = "button";
-            dn.setAttribute("aria-pressed", String(dnf)); dn.setAttribute("aria-label", `${n} didn't finish`);
+            const dn = h("button", "pb-btn ml-undo" + (dnf ? " on" : ""), dnf ? "DNF ✓" : "DNF"); dn.type = "button";
+            dn.setAttribute("aria-pressed", String(dnf)); dn.setAttribute("aria-label", `${n} didn't finish`); dn.title = "Didn't finish";
             dn.onclick = () => { mile = F.toggleDnf(mile, n); saveMile(); writeMile(n); save(); renderMile(); renderList(); };
             sub.append(dn);
         }
