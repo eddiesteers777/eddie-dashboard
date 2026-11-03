@@ -1342,6 +1342,9 @@ body.pub-body{ padding-left:0; }
 .pub-footer-cols a{ display:flex; align-items:center; min-height:44px; color:var(--text-secondary); text-decoration:none; font-size:16px; }
 .pub-footer-cols a:hover{ color:var(--primary); }
 .pub-footer-legal{ max-width:var(--pub-max); margin:clamp(32px,5vw,64px) auto 0; padding-top:20px; border-top:1px solid var(--border); font-size:13px; color:var(--muted); }
+.pub-footer-legal p{ margin:0; }
+.pub-footer-legal .pub-footer-signin{ margin-bottom:8px; color:var(--text-secondary); }
+.pub-footer-signin a{ color:var(--primary); text-decoration:underline; text-underline-offset:2px; }
 @media(max-width:820px){ .pub-footer-top{ grid-template-columns:1fr; } }
 @media(max-width:480px){ .pub-footer-cols{ grid-template-columns:1fr 1fr; } }
 .pub-footer .pub-btn-primary{ color:var(--on-primary); }
