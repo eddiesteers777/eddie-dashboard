@@ -410,7 +410,7 @@ export const CROSS_TRAINING = {
              workout("RACE: Half Marathon Tune-Up (Sun Oct 11) + warm-up/cooldown", 15, "Race", true)],
       mental: "The half marathon is a checkpoint, not the goal - run it hard, then let the data speak.",
       purpose: "The single most valuable fitness checkpoint of the cycle - race it at genuine effort.",
-      fueling: "Full race-day simulation: gear, breakfast, warm-up, in-race fueling exactly as planned for Nov 8.",
+      fueling: "Full race-day simulation: gear, breakfast, warm-up, in-race fueling exactly as planned for Nov 7.",
       heat: "Early October should be comfortable - a good early sign for marathon-day conditions.",
       strength: "Race-week reduction - light activation only.",
       race: { name: "Half Marathon Tune-Up", date: "Sun, Oct 11, 2026" },
@@ -434,7 +434,7 @@ export const CROSS_TRAINING = {
              workout("Recovery jog", 5, "Recovery")],
       mental: "Peak week - trust the work. Everything from here is about arriving healthy, not doing more.",
       purpose: "The single biggest week of the cycle. 10-12 miles at marathon pace inside a 20-miler is the exact stimulus that turns a 3:09 predictor into a 3:05 finisher.",
-      fueling: "Final full rehearsal - whatever works here is exactly what you do Nov 8.",
+      fueling: "Final full rehearsal - whatever works here is exactly what you do Nov 7.",
       heat: "Conditions should be excellent - no heat adjustments needed most days.",
       strength: "Maintenance phase begins - minimal volume, nothing new introduced.",
       checkpoint: "Checkpoint #4: How did the marathon-pace segment feel in the final third of the 20-miler? This sets your final race-pace confidence." },
@@ -462,7 +462,7 @@ export const CROSS_TRAINING = {
       fueling: "Standard race-morning routine, exactly as rehearsed in Weeks 8, 12, and 14. Nothing new on race day.",
       heat: "Early-November race morning should run cool - dress in layers you can shed.",
       strength: "None this week - full rest for the legs.",
-      race: { name: "Indianapolis Monumental Marathon", date: "Sun, Nov 8, 2026" } },
+      race: { name: "Indianapolis Monumental Marathon", date: "Sat, Nov 7, 2026" } },
   ];
 /* ==========================================
    Pace Reference

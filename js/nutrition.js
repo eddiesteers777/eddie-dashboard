@@ -2,7 +2,7 @@
    Southbound Nutrition
 ========================================== */
 
-const RACE_DAY = new Date("2026-11-08");
+const RACE_DAY = new Date("2026-11-07T00:00:00");
 
 let currentDate = new Date();
 
@@ -98,7 +98,8 @@ let nutrition = {};
 
 function getKey(date){
 
-    return date.toISOString().split("T")[0];
+    // The local calendar day (the UTC date moved evening entries onto tomorrow).
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 }
 

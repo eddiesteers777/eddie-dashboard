@@ -20,7 +20,8 @@ export const MAX_TOTAL = 600;
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
 /** The nutrition key the Nutrition page uses for a moment (it keys by the UTC date). */
-export function nutritionKey(date = new Date()) { return "nutrition-" + date.toISOString().split("T")[0]; }
+/** The nutrition key for a moment: the local calendar day (it once used the UTC date, so evening drinks landed on tomorrow). */
+export function nutritionKey(date = new Date()) { return "nutrition-" + `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 
 export function minutesOf(date = new Date()) { return date.getHours() * 60 + date.getMinutes(); }
 export function clock(date = new Date()) { return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`; }

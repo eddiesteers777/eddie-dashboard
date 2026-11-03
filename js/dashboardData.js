@@ -28,7 +28,7 @@ export const dashboardData = {
 
         race: "Indianapolis Monumental Marathon",
 
-        raceDate: "2026-11-08",
+        raceDate: "2026-11-07",
 
         goalTime: "3:05:00",
 

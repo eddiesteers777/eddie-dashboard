@@ -124,7 +124,7 @@ function renderCrossTraining(weekNumber) {
 ========================================== */
 
 function nutritionKeyFor(date) {
-    return "nutrition-" + date.toISOString().split("T")[0];
+    return "nutrition-" + `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 // Your calorie goal from Nutrition ("nutrition-goals"), else its default for you.

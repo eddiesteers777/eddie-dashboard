@@ -1060,7 +1060,7 @@ html body .eos-today-card-header h2{
 ========================================== */
 body.page-today .eos-today-hero{flex-wrap:wrap;row-gap:14px}
 body.page-today .eos-today-hero > div:first-child{flex:1 1 0}
-.ci-strip{order:3;flex:0 0 100%;box-sizing:border-box;display:flex;align-items:center;gap:12px;max-width:560px;padding:8px 8px 8px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);animation:ci-in .3s cubic-bezier(.2,.7,.2,1) both}
+.ci-strip, .eos-today-hero > .ci-strip{order:3;flex:0 0 100%;box-sizing:border-box;display:flex;align-items:center;gap:12px;max-width:560px;padding:8px 8px 8px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);animation:ci-in .3s cubic-bezier(.2,.7,.2,1) both}
 .ci-strip[hidden]{display:none!important}
 .ci-strip-text strong{white-space:nowrap}
 .ci-strip-text{flex:1 1 auto;min-width:0;font:500 14.5px/1.35 var(--font-body);color:var(--text)}

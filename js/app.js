@@ -557,7 +557,8 @@ function renderNutritionSnapshot() {
     const container = document.getElementById("nutritionSnapBars");
     if (!container) return;
 
-    const key = "nutrition-" + new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const key = `nutrition-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     let day = null;
     try {
         const raw = localStorage.getItem(key);

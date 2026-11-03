@@ -754,3 +754,10 @@ Eddie asked to merge the water sheet with the white celebration look: editable a
 ## 2026-11-02/03: Completion moments audit pass (branch claude/project-thread-5wkc0r)
 Eddie asked for a frame-by-frame premium audit of every completion animation (artifact "Completion Moments Audit"), then said to build all nine upgrades, plus two things from his iPhone: the water sea stopped halfway up the screen, and long habit names broke mid-word ("Stretch / Mobili-ty"). Found and fixed a live bug: Strength and Wife scenes vanished after half a second (`.cr-lens i` rules hit the scene parts). Tested: static (1355 pass), smoke (0 issues), frozen-frame checks at 390 and 1280 px for run, Day complete, six habit pops and the water screen; video recorded. Not verified: the iPhone sea fix on a real iPhone (no WebKit here), sound on a real phone.
 
+## 2026-11-03: Fixes from Eddie's iPhone (branch claude/project-thread-5wkc0r)
+- Water started the morning with last night's drinks: Nutrition days were UTC dates. Now local calendar days everywhere (water, Nutrition page, Weekly Review, Today).
+- Water drawn squashed into the top third on iPhone: the canvas now gets its size in px from the script.
+- Today: the run check-in strip sat beside the greeting and squeezed the date line to one word per row (`.eos-today-hero > div` beat `.ci-strip`'s full-width rule). Fixed with a stronger selector.
+- Marathon plan page (marathon.html keeps its own copy of the plan) still had the race on Sunday Nov 8 and counted to the end of week 16 (6 days on Nov 3). Now Saturday Nov 7, Sunday rest, counts calendar days to the race day (4 on Nov 3, same as Today). Also fixed Nov 8 in js/marathonData.js text, js/dashboardData.js and the Nutrition countdown.
+Tested: static (1355 pass), smoke (0 issues), browser at 390 px with a Chicago clock. Not verified on a real iPhone.
+

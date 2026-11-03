@@ -15,6 +15,8 @@ export function createSea(canvas, { still = false } = {}) {
     function resize(w, h) {
         W = w; H = h; dpr = Math.min(2, window.devicePixelRatio || 1);
         canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+        // Pin the drawn size in px too: iPhone Safari showed the canvas squashed into the top third of the screen.
+        canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
         cx.setTransform(dpr, 0, 0, dpr, 0, 0);
         bubbles = still ? [] : Array.from({ length: 26 }, () => ({ x: Math.random() * W, y: H * Math.random(), r: 1 + Math.random() * 3, v: 0.2 + Math.random() * 0.5 }));
         if (still) draw();

@@ -63,4 +63,5 @@ test("time text and the nutrition key", () => {
     assert.equal(timeText("00:10"), "12:10 am");
     assert.equal(timeText(null), "");
     assert.equal(nutritionKey(new Date("2026-11-02T20:00:00Z")), "nutrition-2026-11-02");
+    assert.equal(nutritionKey(new Date(2026, 10, 2, 22, 30)), "nutrition-2026-11-02", "a late-evening drink stays on its own day");
 });
