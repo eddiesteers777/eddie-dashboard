@@ -46,6 +46,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "coros-sent",
     "readiness-checkins",
     "readiness-settings",
+    "water-presets",
     "readiness-history",
     "training-progress",
     "training-overrides",

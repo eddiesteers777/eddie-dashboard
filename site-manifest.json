@@ -413,6 +413,7 @@
     "js/viewportFix.js",
     "js/viewportFixModel.js",
     "js/waterModel.js",
+    "js/waterPresets.js",
     "js/waterSea.js",
     "js/waterSheet.js",
     "js/waterSound.js",

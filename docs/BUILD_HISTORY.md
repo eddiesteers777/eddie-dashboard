@@ -767,3 +767,10 @@ Browser-tested at 390px: each sport sets its own accent, only the tapped card ge
 
 ### 2026-11-03: Logo refreshed to the fog-blue look (option A, "Refined SB")
 Same monogram; letters ice blue, slash in the four sport tints (sky, periwinkle, seafoam, sand), fog-navy glass tile. New `scripts/recolor-logo.py` (idempotent) runs after `trace-logo.py`; `scripts/build-icons.mjs` now builds dark fog icons, favicon, Apple icon, profile pictures (files still named -cream / -green) and the link-preview image. Google sign-in branding was NOT changed: a new logo there starts a new Google verification. Header "COACHING" label is still gold from CSS.
+
+## 2026-11-03: Water screen, third try at the iPhone squash + premium buttons + custom buttons (branch claude/project-thread-5wkc0r)
+- Eddie's screenshot showed the water still squashed into the top third on iPhone. The sea no longer uses a full-screen canvas: the water body is a plain CSS div (`.wt-body`, gradient + bubbles) moved by transform, with a 220px wave canvas strip (`.wt-strip`) riding on its top edge (`js/waterSea.js`, `createSea(strip, body)`). Can't be reproduced here (no WebKit); unverified on a real iPhone.
+- The pace tag ("EVEN PACE · 1 OZ BY 7:05 AM") hid behind or over the buttons; it now hides when its line falls within 36px of the buttons or the water is under 8% / over 92% of the goal.
+- Premium buttons: glass chips with a fill bar showing the size, big number with a small "oz", label under; tools row is three glass pills (New button / Other amount / Undo last).
+- Custom amount buttons: New button asks for ounces then an optional name (14 letters); up to 4; hold one for 0.6 s to remove it (asks first). Stored in `water-presets` (synced, in the sign-out list). Pure logic in `js/waterPresets.js` with `tests/waterPresets.test.mjs`. No rules change (the synced localStorage doc).
+Tested: static (1359 pass), browser at 390 and 1280 at 0 / 28 / 72 oz, make and remove a custom button.

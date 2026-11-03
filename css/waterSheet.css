@@ -10,7 +10,12 @@
 @keyframes wt-in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 .wt-sheet::backdrop{background:rgba(14,27,39,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .wt-sheet [hidden]{display:none!important}
-.wt-sea{position:absolute;left:0;top:0;width:100%;height:100%;max-width:none;max-height:none;z-index:0;display:block}
+/* the water: a body that fills from the surface to the bottom, and a small canvas strip drawing the moving surface on top of it */
+.wt-water{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.wt-strip{position:absolute;left:0;top:0;display:block;max-width:none;max-height:none;will-change:transform}
+.wt-body{overflow:hidden;position:absolute;left:0;top:0;width:100%;will-change:transform;background:linear-gradient(180deg,#78aad8 0,#5d92c4 45%,#3d6f9c 100%);background-size:100% 70vh;background-repeat:no-repeat;background-color:#3d6f9c}
+.wt-bub{position:absolute;bottom:-12px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;border:1px solid rgba(255,255,255,.55);animation:wt-bub var(--t) linear var(--dl) infinite}
+@keyframes wt-bub{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--dx),-130vh,0)}}
 .wt-ui{position:absolute;inset:0;display:flex;flex-direction:column;padding:calc(16px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));z-index:2;pointer-events:none}
 .wt-ui button{pointer-events:auto}
 .wt-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -18,7 +23,7 @@
 .wt-sheet h1{font-family:var(--font-display);font-weight:900;font-size:40px;line-height:.9;text-transform:uppercase;margin:4px 0 0;letter-spacing:.01em;color:var(--ink)}
 .wt-btns{display:flex;gap:8px}
 .wt-x{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--sub);font-size:17px;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px -6px rgba(19,32,43,.35)}
-.wt-x:focus-visible,.wt-chip:focus-visible,.wt-link:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+.wt-x:focus-visible,.wt-chip:focus-visible,.wt-tool:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
 /* the goal line and the even-pace marker */
 .wt-goal{position:absolute;left:0;right:0;top:var(--gy);height:0;border-top:1.5px dashed rgba(19,32,43,.28);z-index:1;pointer-events:none;transition:opacity .5s}
 .wt-goal span{position:absolute;right:14px;top:-11px;font:600 10px/1 var(--font-mono);letter-spacing:.12em;color:var(--deep);background:rgba(255,255,255,.85);border:1px solid rgba(47,91,134,.25);padding:5px 8px;border-radius:999px}
@@ -44,14 +49,21 @@
 .wt-next{align-self:center;margin:6px 0 0;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.65);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font-size:14px;color:var(--ink)}
 .wt-next b{font-weight:700}
 .wt-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
-.wt-chip{min-height:58px;border-radius:14px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);color:var(--navy);font-family:var(--font-body);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:4px;box-shadow:0 8px 20px -10px rgba(19,32,43,.4),inset 0 1px 0 rgba(255,255,255,.8);transition:transform .12s}
-.wt-chip b{font-family:var(--font-display);font-weight:800;font-size:20px;letter-spacing:.01em;line-height:1}
-.wt-chip small{font:600 10px/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-top:3px;text-align:center}
-.wt-chip.is-main{background:linear-gradient(180deg,#2c4358,var(--navy));color:#fff;border-color:rgba(19,32,43,.9)}.wt-chip.is-main small{color:rgba(255,255,255,.75)}
-.wt-chip:active{transform:scale(.94)}
-.wt-tools{display:flex;justify-content:space-between;margin-top:2px}
-.wt-link{background:none;border:0;color:var(--deep);font:600 15px var(--font-body);min-height:44px;padding:0 4px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
-.wt-sheet.is-under-tools .wt-link{color:#fff}
+.wt-chip{position:relative;overflow:hidden;min-height:66px;border-radius:16px;border:1px solid rgba(255,255,255,.75);background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.32));-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);color:var(--navy);font-family:var(--font-body);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:6px 4px 8px;box-shadow:0 10px 22px -12px rgba(19,32,43,.5),inset 0 1px 0 rgba(255,255,255,.9);transition:transform .12s}
+.wt-cf{position:absolute;left:0;right:0;bottom:0;height:calc(var(--f) * 100%);background:linear-gradient(180deg,rgba(120,170,216,.05),rgba(93,146,196,.28));pointer-events:none}
+.wt-cn{position:relative;display:flex;align-items:baseline;gap:2px}
+.wt-chip b{font-family:var(--font-display);font-weight:800;font-size:24px;letter-spacing:.01em;line-height:1}
+.wt-chip em{font:600 10px/1 var(--font-mono);font-style:normal;letter-spacing:.06em;color:var(--sub);text-transform:uppercase}
+.wt-chip small{position:relative;font:600 9px/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-top:4px;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-chip.is-custom{border-color:rgba(93,146,196,.8)}
+.wt-chip.is-main{background:linear-gradient(180deg,#2c4358,var(--navy));color:#fff;border-color:rgba(19,32,43,.9)}.wt-chip.is-main small,.wt-chip.is-main em{color:rgba(255,255,255,.75)}.wt-chip.is-main .wt-cf{background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.14))}
+.wt-chip:active{transform:scale(.95)}
+.wt-tools{display:flex;gap:8px;margin-top:10px}
+.wt-tool{flex:1 1 0;min-width:0;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 8px;border-radius:999px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.34);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--navy);font:600 13px var(--font-body);cursor:pointer;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);transition:transform .12s}
+.wt-tool span{overflow:hidden;text-overflow:ellipsis}
+.wt-tool:active{transform:scale(.96)}
+.wt-tool[hidden]{display:none}
+.wt-sheet.is-under-tools .wt-tool{color:var(--navy)}
 /* the finale: the water floods, a check rises like a buoy, "Fully hydrated" drops in */
 .wt-buoy{position:absolute;left:50%;top:var(--by);width:var(--bd);height:var(--bd);margin:calc(var(--bd) / -2) 0 0 calc(var(--bd) / -2);border-radius:50%;background:radial-gradient(circle at 34% 28%,#4a84ba,var(--navy) 70%);box-shadow:0 24px 44px -12px rgba(19,32,43,.6),inset 0 2px 0 rgba(255,255,255,.35);z-index:5;opacity:0;pointer-events:none}
 .wt-buoy svg{position:absolute;inset:0}
@@ -91,7 +103,7 @@
 .wt-sheet.is-settled .wt-count{animation:none;opacity:1;transform:translateY(var(--cb)) scale(.5)}
 .wt-sheet.is-settled .wt-halo{display:none}
 /* closing: the words fade, the water drains, then the screen goes */
-.wt-sheet.is-closing > :not(.wt-sea){opacity:0!important;transition:opacity .22s ease-out}
+.wt-sheet.is-closing > :not(.wt-water){opacity:0!important;transition:opacity .22s ease-out}
 .wt-sheet.is-closing{animation:wt-out .42s ease-in forwards}
 @keyframes wt-out{60%{opacity:1}to{opacity:0}}
 /* a computer: a tall window instead of the whole screen */

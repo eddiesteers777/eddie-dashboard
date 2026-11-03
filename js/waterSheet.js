@@ -11,11 +11,12 @@
    sound js/waterSound.js. Mock-ups: project files completion-moments/water/.
 ========================================== */
 
-import { PRESETS, readWater, addWater, undoLast, paceOz, nextTip, nutritionKey, minutesOf, clock, DAY_START, DAY_END } from "./waterModel.js";
+import { readWater, addWater, undoLast, paceOz, nextTip, nutritionKey, minutesOf, clock, DAY_START, DAY_END } from "./waterModel.js";
 import { habitList, dayKey, doneOn } from "./habitDefaults.js";
 import { habitStreak, dayComplete } from "./todayCues.js";
 import { tideY, layoutFor, countCaption, paceMessage, finaleSummary, paceTag } from "./waterTide.js";
 import { createSea } from "./waterSea.js";
+import { PRESETS_KEY, allPresets, addCustom, removeCustom } from "./waterPresets.js";
 import { soundOn, setSoundOn, primeSound, playPour, playChime } from "./waterSound.js";
 import { showsPersonalPlan } from "./role.js";
 
@@ -46,6 +47,10 @@ export async function waterGoal() {
 const reduced = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 const buzz = p => { try { if (!reduced()) navigator.vibrate?.(p); } catch { /* not every phone buzzes */ } };
 const SPEAKER = on => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/>${on ? '<path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+// A few bubbles rising through the water (plain CSS, so they cost nothing to draw).
+const PLUS = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
+const UNDO = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>`;
+const BUBBLES = Array.from({ length: 16 }, (_, i) => `<i class="wt-bub" style="--x:${(i * 6.4 + (i % 3) * 2).toFixed(1)}%;--s:${2 + (i * 7) % 5}px;--t:${(9 + (i * 5) % 8)}s;--dl:-${(i * 3) % 11}s;--dx:${((i % 5) - 2) * 8}px"></i>`).join("");
 const SPARKS = [[8, 14, 16], [86, 10, 20], [18, 46, 14], [84, 42, 18], [10, 74, 12], [90, 70, 16], [50, 6, 14], [30, 60, 10], [70, 58, 12]];
 const EMOJIS = [[-130, -80, 58, -14, .9], [130, -70, 52, 12, 1], [-140, 60, 50, 8, 1.1], [135, 80, 48, -10, 1.05]];
 
@@ -64,7 +69,7 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
     const dlg = document.createElement("dialog");
     dlg.className = "wt-sheet";
     dlg.setAttribute("aria-label", "Water");
-    dlg.innerHTML = `<canvas class="wt-sea" aria-hidden="true"></canvas>
+    dlg.innerHTML = `<div class="wt-water" aria-hidden="true"><div class="wt-body">${BUBBLES}</div><canvas class="wt-strip"></canvas></div>
         <div class="wt-goal" aria-hidden="true"><span>GOAL · ${goal} OZ</span></div>
         <div class="wt-pace" aria-hidden="true"><span></span></div>
         <div class="wt-count" aria-live="polite"><b></b><small></small></div>
@@ -76,15 +81,24 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
             <div class="wt-top"><div><p class="wt-kick">${esc(date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }))}</p><h1>Water</h1></div>
                 <div class="wt-btns"><button type="button" class="wt-x" data-sound aria-label="Sound"></button><button type="button" class="wt-x" data-close aria-label="Close">&#10005;</button></div></div>
             <div class="wt-lower"><p class="wt-msg"></p><p class="wt-next"></p>
-                <div class="wt-chips">${PRESETS.map(p => `<button type="button" class="wt-chip${p.main ? " is-main" : ""}" data-add="${p.oz}"><b>+${p.oz}</b><small>${esc(p.label)}</small></button>`).join("")}</div>
-                <div class="wt-tools"><button type="button" class="wt-link" data-other>Other amount</button><button type="button" class="wt-link" data-undo>Undo last</button></div></div>
+                <div class="wt-chips"></div>
+                <div class="wt-tools">
+                    <button type="button" class="wt-tool" data-new>${PLUS}<span>New button</span></button>
+                    <button type="button" class="wt-tool" data-other><span>Other amount</span></button>
+                    <button type="button" class="wt-tool" data-undo>${UNDO}<span>Undo last</span></button>
+                </div></div>
         </div>`;
     document.body.appendChild(dlg);
     const $ = sel => dlg.querySelector(sel);
     const countEl = $(".wt-count"), numEl = $(".wt-count b"), capEl = $(".wt-count small"), msgEl = $(".wt-msg"), nextEl = $(".wt-next");
     const goalEl = $(".wt-goal"), paceEl = $(".wt-pace"), fxEl = $(".wt-fx"), titleH = $(".wt-title h2"), titleP = $(".wt-title p"), lower = $(".wt-lower");
-    const sea = createSea($(".wt-sea"), { still });
+    const sea = createSea($(".wt-strip"), $(".wt-body"), { still });
 
+    const customList = () => read(PRESETS_KEY, []);
+    function renderChips() {
+        $(".wt-chips").innerHTML = allPresets(customList()).map(p => `<button type="button" class="wt-chip${p.main ? " is-main" : ""}${p.custom ? " is-custom" : ""}" data-add="${p.oz}"${p.custom ? " data-custom" : ""} aria-label="Add ${p.oz} ounces${p.label ? ", " + esc(p.label) : ""}"><i class="wt-cf" style="--f:${Math.min(1, p.oz / 32).toFixed(2)}"></i><span class="wt-cn"><b>+${p.oz}</b><em>oz</em></span><small>${esc(p.label || "")}</small></button>`).join("");
+    }
+    renderChips();
     const dayRecord = () => read(key, null) || {};
     const entriesNow = () => read("entries", {}) || {};
     const streakNow = () => (habit ? habitStreak(entriesNow(), [habit], dkey) : 0);
@@ -122,10 +136,10 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         st.setProperty("--py", tideY(paceNow(), goal, L.goalY, L.floorY) + "px");
         sea.resize(w, h);
         sea.setTarget(tideY(readWater(dayRecord()).total, goal, L.goalY, L.floorY), true);
-        msgTop = lower.offsetTop + msgEl.offsetTop;
+        msgTop = lower.offsetTop + msgEl.offsetTop; lowerTopPx = lower.offsetTop;
         layoutCountBack(); toolsTop = lower.offsetTop + $(".wt-tools").offsetTop;
     }
-    let msgTop = 0, toolsTop = 0;
+    let msgTop = 0, toolsTop = 0, lowerTopPx = 1e9;
     // White text where the water has risen past it.
     sea.onFrame(y => {
         // iPhone can change the screen's height without a resize event (the keyboard from Other amount,
@@ -193,7 +207,8 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         const tip = isToday && !done ? nextTip(total, goal, nowMin) : null;
         nextEl.hidden = !tip;
         nextEl.innerHTML = tip ? `Next: <b>+${tip.oz} oz</b> by ${esc(tip.byText)} keeps you on pace` : "";
-        const showPace = isToday && !done && paceNow() > 0;
+        const pf = paceNow() / goal, py = L ? tideY(paceNow(), goal, L.goalY, L.floorY) : 0;
+        const showPace = isToday && !done && pf >= 0.08 && pf <= 0.92 && L && py < lowerTopPx - 36;
         paceEl.hidden = !showPace;
         if (showPace) { paceEl.querySelector("span").textContent = paceTag(paceNow(), Math.min(DAY_END, Math.max(DAY_START, nowMin))).toUpperCase(); }
         dlg.querySelector("[data-undo]").hidden = !readWater(dayRecord()).log.length;
@@ -230,7 +245,8 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         primeSound();
         if (event.target.closest("[data-sound]")) { setSoundOn(!soundOn()); drawSound(); if (soundOn()) playPour(12); return; }
         const addBtn = event.target.closest("[data-add]");
-        if (addBtn) { add(Number(addBtn.dataset.add)); return; }
+        if (addBtn) { if (Date.now() - heldAt < 500) return; add(Number(addBtn.dataset.add)); return; }
+        if (event.target.closest("[data-new]")) { newButton(); return; }
         if (event.target.closest("[data-undo]")) {
             const before = readWater(dayRecord()).total;
             const next = undoLast(dayRecord());
@@ -244,6 +260,37 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
             if (value != null && String(value).trim() !== "") add(oz);
         }
     });
+    let heldAt = 0, holdTimer = null;
+    async function newButton() {
+        const { sbPrompt, toast } = await import("./ui.js");
+        const v = await sbPrompt("How many ounces should it add?", { title: "New button", placeholder: "oz", maxLength: 3 });
+        if (v == null || String(v).trim() === "") return;
+        const oz = Number(String(v).trim());
+        const probe = addCustom(customList(), oz, "");
+        if (probe.error) { toast(probe.error, { type: "error" }); return; }
+        const name = await sbPrompt("Name it, like Gym bottle (optional)", { title: "Name it", placeholder: "Name", maxLength: 14 });
+        if (name == null) return;
+        const res = addCustom(customList(), oz, name);
+        if (res.error) { toast(res.error, { type: "error" }); return; }
+        try { localStorage.setItem(PRESETS_KEY, JSON.stringify(res.list)); } catch {}
+        sync(); renderChips(); layout(); toast("Added. Hold it to remove it.");
+    }
+    dlg.addEventListener("pointerdown", event => {
+        const chip = event.target.closest("[data-custom]");
+        if (!chip) return;
+        clearTimeout(holdTimer);
+        holdTimer = setTimeout(async () => {
+            heldAt = Date.now(); buzz(12);
+            const oz = Number(chip.dataset.add);
+            const { sbConfirm, toast } = await import("./ui.js");
+            const ok = await sbConfirm(`Remove your +${oz} oz button?`, { title: "Remove button", confirmLabel: "Remove", danger: true });
+            if (!ok) return;
+            try { localStorage.setItem(PRESETS_KEY, JSON.stringify(removeCustom(customList(), oz))); } catch {}
+            sync(); renderChips(); layout(); toast("Button removed.");
+        }, 600);
+    });
+    for (const t of ["pointerup", "pointerleave", "pointercancel"]) dlg.addEventListener(t, () => clearTimeout(holdTimer));
+    dlg.addEventListener("contextmenu", event => { if (event.target.closest("[data-custom]")) event.preventDefault(); });
     let ro = null, closing = false;
     // Close with the water draining away, then the dialog goes (instantly with reduced motion).
     function closeNicely() {
