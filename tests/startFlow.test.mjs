@@ -65,3 +65,11 @@ test("leave summary names what would be lost", async () => {
     assert.equal(leaveSummary({}).any, false);
     assert.deepEqual(leaveSummary({ sport: "strength" }).items, [{ label: "Strength", tag: "Sport" }]);
 });
+
+test("each sport has its own muted tint and ice blue is the default", async () => {
+    const { accentFor, ACCENTS } = await import("../js/startFlow.js");
+    assert.equal(accentFor({}).ac, "#C7D6E4");
+    assert.notEqual(accentFor({ sport: "soccer" }).ac, accentFor({ sport: "running" }).ac);
+    for (const s of SPORTS) assert.ok(ACCENTS[s.value], s.value);
+    assert.equal(accentFor({ sport: "nope" }).ac, "#C7D6E4");
+});

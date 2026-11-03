@@ -754,3 +754,6 @@ Eddie asked to merge the water sheet with the white celebration look: editable a
 ## 2026-11-02/03: Completion moments audit pass (branch claude/project-thread-5wkc0r)
 Eddie asked for a frame-by-frame premium audit of every completion animation (artifact "Completion Moments Audit"), then said to build all nine upgrades, plus two things from his iPhone: the water sea stopped halfway up the screen, and long habit names broke mid-word ("Stretch / Mobili-ty"). Found and fixed a live bug: Strength and Wife scenes vanished after half a second (`.cr-lens i` rules hit the scene parts). Tested: static (1355 pass), smoke (0 issues), frozen-frame checks at 390 and 1280 px for run, Day complete, six habit pops and the water screen; video recorded. Not verified: the iPhone sea fix on a real iPhone (no WebKit here), sound on a real phone.
 
+
+### 2026-11-03: Get started sport tint and picking animations (option A)
+Browser-tested at 390px: each sport sets its own accent, only the tapped card gets the pop class, the new progress segment fills, before-you-go sheet and walk-through still pass. Not run: real Google sign-in, full a11y, smoke, rules (no change), real-phone feel of the animation.
