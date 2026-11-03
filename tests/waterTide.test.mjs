@@ -53,4 +53,6 @@ test("the finale summary adds the over amount and a streak of two or more days",
     assert.equal(finaleSummary(100, 100, 1), "100 oz");
     assert.equal(finaleSummary(116, 100, 6), "116 oz · 16 over · day 6 in a row");
     assert.equal(paceTag(52, 13 * 60), "Even pace · 52 oz by 1 PM");
+    assert.equal(finaleSummary(116, 100, 6, { withTotal: false }), "16 over · day 6 in a row");
+    assert.equal(finaleSummary(100, 100, 0, { withTotal: false }), "right on the goal");
 });

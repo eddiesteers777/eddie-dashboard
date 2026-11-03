@@ -11,7 +11,8 @@ import { icon } from "./icons.js";
 import { storedIcon, habitIconId } from "./habitIconSet.js";
 import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon, useLineIcons } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
-import { celebrateHabit } from "./celebrate.js";
+import { celebrateHabit, weekDots } from "./celebrate.js";
+import { dayComplete as dayCompleteOn } from "./todayCues.js";
 import { COACH_HABITS, CLIENT_HABITS } from "./habitDefaults.js";
 import { habitStreak, streakAtRisk, weekBar, recentCompletionPct as completionPct, ringValues } from "./habitProgress.js";
 
@@ -540,7 +541,7 @@ document.addEventListener("click", e => {
         // The tick is the reward (a tiny buzz); only finishing today's last habit opens the full-screen moment.
         if (on) {
             const allDone = selectedDate === todayStr() && habits.length > 0 && habits.every(h => isChecked(selectedDate, h.id));
-            celebrateHabit(habits.find(h => h.id === habitId), { allDone, count: habits.length, done: habits.filter(h => isChecked(selectedDate, h.id)).length, streak: allDone ? habitStreak(entries, habits, selectedDate) : 0 });
+            celebrateHabit(habits.find(h => h.id === habitId), { allDone, count: habits.length, done: habits.filter(h => isChecked(selectedDate, h.id)).length, streak: allDone ? habitStreak(entries, habits, selectedDate) : 0, days: allDone ? weekDots(selectedDate, k => dayCompleteOn(entries, k, habits)) : null });
         }
         document.querySelector(`[data-toggle-habit="${CSS.escape(habitId)}"]`)?.focus({ preventScroll: true });
         return;

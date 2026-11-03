@@ -12,8 +12,8 @@ import { habitList, dayKey, toggleEntry, doneOn } from "./habitDefaults.js";
 import { habitIconHtml } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
-import { celebrateHabit } from "./celebrate.js";
-import { streakAtRisk, habitStreak } from "./todayCues.js";
+import { celebrateHabit, weekDots } from "./celebrate.js";
+import { streakAtRisk, habitStreak, dayComplete } from "./todayCues.js";
 import { findWaterHabit } from "./waterSheet.js";
 
 const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
@@ -82,7 +82,7 @@ function init() {
             const habit = habits.find(h => h.id === btn.dataset.habit);
             if (habit) {
                 const allDone = doneOn(next, dayKey(), habits) === habits.length;
-                celebrateHabit(habit, { allDone, count: habits.length, done: doneOn(next, dayKey(), habits), streak: allDone ? habitStreak(next, habits, dayKey()) : 0 });
+                celebrateHabit(habit, { allDone, count: habits.length, done: doneOn(next, dayKey(), habits), streak: allDone ? habitStreak(next, habits, dayKey()) : 0, days: allDone ? weekDots(dayKey(), k => dayComplete(next, k, habits)) : null });
             }
         }
         window.dispatchEvent(new CustomEvent("sb:habits-changed"));

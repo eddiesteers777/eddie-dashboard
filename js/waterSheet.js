@@ -13,7 +13,7 @@
 
 import { PRESETS, readWater, addWater, undoLast, paceOz, nextTip, nutritionKey, minutesOf, clock, DAY_START, DAY_END } from "./waterModel.js";
 import { habitList, dayKey, doneOn } from "./habitDefaults.js";
-import { habitStreak } from "./todayCues.js";
+import { habitStreak, dayComplete } from "./todayCues.js";
 import { tideY, layoutFor, countCaption, paceMessage, finaleSummary, paceTag } from "./waterTide.js";
 import { createSea } from "./waterSea.js";
 import { soundOn, setSoundOn, primeSound, playPour, playChime } from "./waterSound.js";
@@ -106,9 +106,15 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
     // ---- layout: sizes in px from the screen's own size
     let L = null, underCount = false, underMsg = false, underTools = false, nowMin = minutesOf(new Date());
     const paceNow = () => (isToday ? paceOz(goal, nowMin) : goal);
+    let lastW = 0, lastH = 0;
+    function layoutCountBack() {
+        // After the finale the total comes back, smaller, under "Fully hydrated" so later drinks still count up.
+        if (L) dlg.style.setProperty("--cb", `${L.titleTop + L.titleSize + 46 - L.countTop}px`);
+    }
     function layout() {
         const w = dlg.clientWidth, h = dlg.clientHeight;
         if (!w || !h) return;
+        lastW = w; lastH = h;
         L = layoutFor(w, h, lower.offsetTop);
         const st = dlg.style;
         st.setProperty("--gy", L.goalY + "px"); st.setProperty("--ct", L.countTop + "px"); st.setProperty("--cs", L.countSize + "px");
@@ -116,11 +122,15 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         st.setProperty("--py", tideY(paceNow(), goal, L.goalY, L.floorY) + "px");
         sea.resize(w, h);
         sea.setTarget(tideY(readWater(dayRecord()).total, goal, L.goalY, L.floorY), true);
-        msgTop = lower.offsetTop + msgEl.offsetTop; toolsTop = lower.offsetTop + $(".wt-tools").offsetTop;
+        msgTop = lower.offsetTop + msgEl.offsetTop;
+        layoutCountBack(); toolsTop = lower.offsetTop + $(".wt-tools").offsetTop;
     }
     let msgTop = 0, toolsTop = 0;
     // White text where the water has risen past it.
     sea.onFrame(y => {
+        // iPhone can change the screen's height without a resize event (the keyboard from Other amount,
+        // the toolbar). Redraw the sea at the real size so it always reaches the bottom.
+        if (dlg.clientHeight !== lastH || dlg.clientWidth !== lastW) { layout(); return; }
         if (!L) return;
         const uc = L.countMid > y, um = msgTop > y;
         if (uc !== underCount) { underCount = uc; countEl.classList.toggle("is-under", uc); }
@@ -177,7 +187,7 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         sea.setTarget(y);
         if (prev != null) countTo(prev, total); else numEl.textContent = total;
         shown = total;
-        capEl.textContent = countCaption(total, goal);
+        capEl.textContent = done ? "oz today" : countCaption(total, goal);
         const m = paceMessage({ total, pace: paceNow(), isToday, goal });
         msgEl.innerHTML = done ? "" : `${m.lead ? `<b>${esc(m.lead)}</b>` : ""}${esc(m.rest)}`;
         const tip = isToday && !done ? nextTip(total, goal, nowMin) : null;
@@ -187,7 +197,7 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
         paceEl.hidden = !showPace;
         if (showPace) { paceEl.querySelector("span").textContent = paceTag(paceNow(), Math.min(DAY_END, Math.max(DAY_START, nowMin))).toUpperCase(); }
         dlg.querySelector("[data-undo]").hidden = !readWater(dayRecord()).log.length;
-        titleP.textContent = finaleSummary(total, goal, streakNow());
+        titleP.textContent = finaleSummary(total, goal, streakNow(), { withTotal: false });
         const was = finaleOn;
         if (done && !was) startFinale(prev == null);
         else if (!done && was) endFinale();
@@ -216,7 +226,7 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
     drawSound();
 
     dlg.addEventListener("click", async event => {
-        if (event.target === dlg || event.target.closest("[data-close]")) { dlg.close(); return; }
+        if (event.target === dlg || event.target.closest("[data-close]")) { closeNicely(); return; }
         primeSound();
         if (event.target.closest("[data-sound]")) { setSoundOn(!soundOn()); drawSound(); if (soundOn()) playPour(12); return; }
         const addBtn = event.target.closest("[data-add]");
@@ -234,13 +244,23 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
             if (value != null && String(value).trim() !== "") add(oz);
         }
     });
-    let ro = null;
+    let ro = null, closing = false;
+    // Close with the water draining away, then the dialog goes (instantly with reduced motion).
+    function closeNicely() {
+        if (closing) return;
+        closing = true;
+        if (still || !L) { dlg.close(); return; }
+        dlg.classList.add("is-closing");
+        sea.flood(false); sea.setTarget(dlg.clientHeight + 40);
+        setTimeout(() => dlg.close(), 420);
+    }
+    dlg.addEventListener("cancel", event => { event.preventDefault(); closeNicely(); });
     dlg.addEventListener("close", async () => {
         ro?.disconnect(); sea.stop(); cancelAnimationFrame(countRaf);
         dlg.remove(); opener?.focus?.();
         if (crossedAllDone && habit && readWater(read(key, null) || {}).total >= goal) {
             const mod = await celebrate;
-            mod?.celebrateHabit?.(habit, { allDone: true, count: crossedAllDone.count, streak: habitStreak(entriesNow(), habitList(read("habits", null), showsPersonalPlan()), dkey) });
+            mod?.celebrateHabit?.(habit, { allDone: true, count: crossedAllDone.count, streak: habitStreak(entriesNow(), habitList(read("habits", null), showsPersonalPlan()), dkey), days: mod.weekDots(dkey, k => dayComplete(entriesNow(), k, habitList(read("habits", null), showsPersonalPlan()))) });
         }
     });
 
@@ -249,6 +269,10 @@ export async function openWaterSheet({ date = new Date(), habit = null, onChange
     render();
     sea.start();
     if (typeof ResizeObserver !== "undefined") { ro = new ResizeObserver(() => { layout(); }); ro.observe(dlg); }
+    const relayout = () => requestAnimationFrame(layout);
+    window.visualViewport?.addEventListener("resize", relayout);
+    window.addEventListener("resize", relayout);
+    dlg.addEventListener("close", () => { window.visualViewport?.removeEventListener("resize", relayout); window.removeEventListener("resize", relayout); }, { once: true });
     $(".wt-chip.is-main")?.focus({ preventScroll: true });
     return new Promise(resolve => dlg.addEventListener("close", resolve, { once: true }));
 }

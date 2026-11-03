@@ -60,9 +60,10 @@ export function paceMessage({ total, pace, isToday, goal }) {
     return { lead: `${Math.abs(d)} oz ${d >= 0 ? "ahead of" : "behind"}`, rest: " an even pace." };
 }
 
-/** The finale's summary line: "116 oz · 16 over · day 6 in a row". */
-export function finaleSummary(total, goal, streak = 0) {
-    const parts = [`${total} oz`];
+/** The finale's summary line: "116 oz · 16 over · day 6 in a row" (without the total when the big number shows it). */
+export function finaleSummary(total, goal, streak = 0, { withTotal = true } = {}) {
+    const parts = withTotal ? [`${total} oz`] : [];
+    if (!withTotal && total === goal) parts.push("right on the goal");
     if (total > goal) parts.push(`${total - goal} over`);
     if (streak >= 2) parts.push(`day ${streak} in a row`);
     return parts.join(" · ");

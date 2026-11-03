@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { celebrationFor, runSummaryFor, weekRunProgress, daySummaryFor, tickSummaryFor, countParts, celebrateEmojiSrc, celebrateRun, celebrateHabit } from "../js/celebrate.js";
+import { celebrationFor, runSummaryFor, weekRunProgress, daySummaryFor, tickSummaryFor, countParts, celebrateEmojiSrc, celebrateRun, celebrateHabit, titleWords, weekDots } from "../js/celebrate.js";
 
 test("a run shows its miles; other workouts say what they were", () => {
     assert.deepEqual(celebrationFor({ kind: "run", title: "Easy run", miles: 5 }), { kicker: "Run complete", title: "Easy run", detail: "5 mi" });
@@ -100,6 +100,27 @@ test("tickSummaryFor: the habit's name and how many are done today", () => {
     assert.equal(m.kicker, "Habit done");
     assert.equal(m.title, "Walk 20 min");
     assert.deepEqual(m.stats, [{ value: "3/5", label: "done today" }]);
-    assert.equal(tickSummaryFor({ name: "x".repeat(40) }).title.length, 22);
+    assert.equal(tickSummaryFor({ name: "x".repeat(40) }).title.length, 30, "one long word is cut");
+    assert.equal(tickSummaryFor({ name: "Call grandma every Sunday night after dinner" }).title, "Call grandma every Sunday…", "ends at a word");
     assert.deepEqual(tickSummaryFor({ name: "A", done: 0, count: 0 }).stats, []);
+});
+
+test("titleWords keeps words whole and drops emojis from custom habit names", () => {
+    assert.deepEqual(titleWords("🧘 Stretch / Mobility").map(w => w.join("")), ["Stretch", "/", "Mobility"]);
+    assert.deepEqual(titleWords("Training Complete").map(w => w.length), [8, 8]);
+    assert.deepEqual(titleWords("👨‍👩‍👧 Family time ❤️").map(w => w.join("")), ["Family", "time"]);
+    assert.deepEqual(titleWords("  "), []);
+    assert.deepEqual(titleWords("Café"), [["C", "a", "f", "é"]]);
+});
+
+test("weekDots: the last seven days, oldest first, today last and done", () => {
+    const done = new Set(["2026-11-01", "2026-10-31", "2026-10-28"]);
+    const d = weekDots("2026-11-02", k => done.has(k));
+    assert.equal(d.length, 7);
+    assert.equal(d[0].key, "2026-10-27");
+    assert.equal(d[6].key, "2026-11-02");
+    assert.ok(d[6].today && d[6].done);
+    assert.deepEqual(d.map(x => x.done), [false, true, false, false, true, true, true]);
+    assert.equal(d[6].letter, "M", "Nov 2 2026 is a Monday");
+    assert.deepEqual(weekDots("2026-03-01", () => true).map(x => x.key).slice(0, 2), ["2026-02-23", "2026-02-24"], "crosses a month");
 });

@@ -29,10 +29,6 @@
 @keyframes sc-candle-halo{0%{opacity:0;transform:scale(.4)}50%{opacity:1}100%{opacity:.6;transform:scale(1)}}
 @keyframes sc-candle-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 /* ---- ribbon ---- */
-.sb-cr .sc-ribbon .sc_mini{position:absolute;right:-6px;bottom:-6px;width:40px;height:40px;border-radius:50%;background:var(--ice);border:3px solid var(--navy);z-index:4;opacity:0;display:grid;place-items:center}
-.sb-cr .sc-ribbon .sc_mini svg{width:22px;height:22px}
-.sb-cr .sc-ribbon .sc_mini polyline{fill:none;stroke:var(--navy);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
-.sb-cr .sc-ribbon .sc_mini{opacity:1;animation:sc-ribbon-pop .4s 1.5s cubic-bezier(.3,1.6,.4,1) backwards}
 .sb-cr .sc-ribbon .sc_bk{position:absolute;left:50%;top:50%;width:92px;height:64px;margin:-30px 0 0 -46px;z-index:3;perspective:300px}
 .sb-cr .sc-ribbon .sc_pg{position:absolute;top:0;width:44px;height:60px;background:#f4f9fd;border-radius:3px;opacity:0}
 .sb-cr .sc-ribbon .sc_pg.sc_l{left:0;transform-origin:100% 50%;border-radius:4px 2px 2px 4px}
@@ -51,22 +47,22 @@
 .sb-cr .sc-ribbon .sc_pg i{animation:sc-ribbon-wr .4s calc(.5s + var(--i)*.18s) ease-out forwards}
 @keyframes sc-ribbon-ol{0%{opacity:1;transform:rotateY(80deg)}100%{opacity:1;transform:rotateY(0)}}
 @keyframes sc-ribbon-or{0%{opacity:1;transform:rotateY(-80deg)}100%{opacity:1;transform:rotateY(0)}}
-@keyframes sc-ribbon-pop{from{transform:scale(0)}}
 @keyframes sc-ribbon-rb{to{height:52px}}
 @keyframes sc-ribbon-wr{to{transform:none}}
 /* ---- lap ---- */
 .sb-cr .sc-lap .sc_lap{position:absolute;inset:-14px;width:160px;height:160px;transform:rotate(-90deg);z-index:1;overflow:visible}
 .sb-cr .sc-lap .sc_lap circle{fill:none;stroke:#4F86B8;stroke-width:5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
-.sb-cr .sc-lap .sc_lap circle{animation:sc-lap-lp 1.3s .35s cubic-bezier(.5,.1,.3,1) forwards}
+.sb-cr .sc-lap .sc_lap circle{animation:sc-lap-lp 1.3s .5s cubic-bezier(.5,.1,.3,1) forwards}
 .sb-cr .sc-lap .sc_orb2{position:absolute;inset:-14px;z-index:2;opacity:0}
-.sb-cr .sc-lap .sc_orb2 i{position:absolute;left:50%;top:0;width:14px;height:14px;margin:-4px 0 0 -7px;border-radius:50%;background:#13202B;border:2px solid #fff}
-.sb-cr .sc-lap .sc_orb2{animation:sc-lap-ob 1.3s .35s cubic-bezier(.5,.1,.3,1) both}
+.sb-cr .sc-lap .sc_orb2 i{position:absolute;left:50%;top:0;width:14px;height:14px;margin:-4px 0 0 -7px;border-radius:50%;background:#fff;border:0;box-shadow:0 0 0 3px rgba(79,134,184,.35),0 0 12px 3px rgba(255,255,255,.9)}
+.sb-cr .sc-lap .sc_orb2{animation:sc-lap-ob 1.3s .5s cubic-bezier(.5,.1,.3,1) forwards}
 @keyframes sc-lap-lp{to{stroke-dashoffset:0}}
 @keyframes sc-lap-ob{0%{opacity:1;transform:rotate(0)}95%{opacity:1}100%{opacity:0;transform:rotate(360deg)}}
 /* ---- plates ---- */
 .sb-cr .sc-plates .sc_pl{position:absolute;left:50%;top:50%;height:12px;margin-left:calc(var(--w)/-2);width:var(--w);margin-top:var(--y);border-radius:4px;background:var(--c);z-index:3;opacity:0}
 .sb-cr .sc-plates .sc_pl{animation:sc-plates-plf .5s calc(.3s + var(--i)*.28s) cubic-bezier(.5,0,.9,.5) forwards,sc-plates-plo .3s 1.5s forwards}
-.sb-cr .sc-plates .sc_pole{animation:sc-plates-plo .3s 1.5s forwards}
+.sb-cr .sc-plates .sc_pole{animation:sc-plates-pin .25s .3s backwards,sc-plates-plo .3s 1.5s forwards}
+@keyframes sc-plates-pin{from{opacity:0;transform:scaleY(.2)}}
 .sb-cr .sc-plates .sc_pole{position:absolute;left:50%;top:50%;width:6px;height:78px;margin:-39px 0 0 -3px;border-radius:3px;background:#dbe8f3;z-index:2}
 @keyframes sc-plates-plf{0%{opacity:1;transform:translateY(-120px)}70%{opacity:1;transform:translateY(0)}85%{transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes sc-plates-plo{to{opacity:0}}
@@ -108,14 +104,14 @@
 @keyframes sc-moon-tw{0%{opacity:0;transform:scale(0) rotate(0)}40%{opacity:1;transform:scale(1.3) rotate(45deg)}100%{opacity:0;transform:scale(.5) rotate(90deg)}}
 @keyframes sc-moon-wane{from{left:0;top:0;opacity:1}to{left:14px;top:-4px}}
 /* ---- pages ---- */
-.sb-cr .sc-pages .sc_flip{position:absolute;left:50%;top:50%;width:84px;height:62px;margin:-31px 0 0 -42px;z-index:3;perspective:400px}
+.sb-cr .sc-pages .sc_flip{position:absolute;left:50%;top:50%;width:84px;height:62px;margin:-31px 0 0 -42px;z-index:3;perspective:220px}
 .sb-cr .sc-pages .sc_flip .sc_base{position:absolute;left:0;top:0;width:42px;height:62px;background:#dbe8f3;border-radius:3px 0 0 3px}
 .sb-cr .sc-pages .sc_flip .sc_base.sc_r{left:42px;border-radius:0 3px 3px 0;background:#f4f9fd}
-.sb-cr .sc-pages .sc_flip .sc_pgf{position:absolute;left:42px;top:0;width:42px;height:62px;background:#f4f9fd;border-radius:0 3px 3px 0;transform-origin:0 50%;backface-visibility:hidden;opacity:0;border-left:1px solid #9ec3e3}
+.sb-cr .sc-pages .sc_flip .sc_pgf{position:absolute;left:42px;top:0;width:42px;height:62px;background:#f4f9fd;border-radius:0 3px 3px 0;transform-origin:0 50%;opacity:0;transform-style:preserve-3d;border-left:1px solid #9ec3e3}
 .sb-cr .sc-pages .sc_pgf::after{content:"";position:absolute;left:7px;right:7px;top:14px;height:3px;border-radius:2px;background:#9ec3e3;box-shadow:0 9px #9ec3e3,0 18px #9ec3e3,0 27px #9ec3e3}
 .sb-cr .sc-pages .sc_pgf{animation:sc-pages-fl .38s calc(.35s + var(--i)*.17s) ease-in-out both}
 .sb-cr .sc-pages .sc_flip{animation:sc-pages-pout .3s 1.85s forwards}
-@keyframes sc-pages-fl{0%{opacity:1;transform:rotateY(0)}99%{opacity:1;transform:rotateY(-178deg)}100%{opacity:0;transform:rotateY(-180deg)}}
+@keyframes sc-pages-fl{0%{opacity:1;transform:rotateY(0);background:#f4f9fd;box-shadow:0 0 0 rgba(19,32,43,0)}45%{background:#ffffff;box-shadow:-10px 0 14px rgba(19,32,43,.35)}55%{background:#c9dcee;box-shadow:10px 0 14px rgba(19,32,43,.35)}99%{opacity:1;transform:rotateY(-178deg);background:#dbe8f3;box-shadow:0 0 0 rgba(19,32,43,0)}100%{opacity:0;transform:rotateY(-180deg)}}
 @keyframes sc-pages-pout{to{opacity:0}}
 /* ---- hearts ---- */
 .sb-cr .sc-hearts .sc_ht{position:absolute;width:var(--w);height:var(--w);left:50%;top:50%;margin:calc(var(--w)/-2) 0 0 calc(var(--w)/-2);z-index:3;opacity:0}
