@@ -761,3 +761,9 @@ Eddie asked for a frame-by-frame premium audit of every completion animation (ar
 - Marathon plan page (marathon.html keeps its own copy of the plan) still had the race on Sunday Nov 8 and counted to the end of week 16 (6 days on Nov 3). Now Saturday Nov 7, Sunday rest, counts calendar days to the race day (4 on Nov 3, same as Today). Also fixed Nov 8 in js/marathonData.js text, js/dashboardData.js and the Nutrition countdown.
 Tested: static (1355 pass), smoke (0 issues), browser at 390 px with a Chicago clock. Not verified on a real iPhone.
 
+
+### 2026-11-03: Get started sport tint and picking animations (option A)
+Browser-tested at 390px: each sport sets its own accent, only the tapped card gets the pop class, the new progress segment fills, before-you-go sheet and walk-through still pass. Not run: real Google sign-in, full a11y, smoke, rules (no change), real-phone feel of the animation.
+
+### 2026-11-03: Logo refreshed to the fog-blue look (option A, "Refined SB")
+Same monogram; letters ice blue, slash in the four sport tints (sky, periwinkle, seafoam, sand), fog-navy glass tile. New `scripts/recolor-logo.py` (idempotent) runs after `trace-logo.py`; `scripts/build-icons.mjs` now builds dark fog icons, favicon, Apple icon, profile pictures (files still named -cream / -green) and the link-preview image. Google sign-in branding was NOT changed: a new logo there starts a new Google verification. Header "COACHING" label is still gold from CSS.

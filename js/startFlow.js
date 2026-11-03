@@ -178,3 +178,13 @@ export function leaveSummary(a) {
     if (c.name || c.mark) items.push({ label: c.name && c.mark ? "Your name and mark" : c.name ? "Your name" : "Your mark", tag: "Profile" });
     return { name: c.name, items, any: items.length > 0 };
 }
+
+// The tint the flow takes once a sport is picked (subtle, muted; ice blue until then).
+export const ACCENTS = {
+    "": { ac: "#C7D6E4", glow: "#2B4256" },
+    running: { ac: "#8FC3EE", glow: "#27445F" },
+    strength: { ac: "#A9A7E3", glow: "#35335A" },
+    soccer: { ac: "#8FD0B2", glow: "#244A44" },
+    general: { ac: "#E3C3A0", glow: "#4A3F36" }
+};
+export const accentFor = a => ACCENTS[cleanStart(a).sport] || ACCENTS[""];

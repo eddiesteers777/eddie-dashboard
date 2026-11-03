@@ -9,7 +9,7 @@
 ========================================== */
 import {
     START_KEY, SPORTS, GOALS, NOW, MARKS, DAY_LABELS,
-    cleanStart, stepsFor, exampleWeek, leaveSummary, hasAnswers
+    cleanStart, stepsFor, exampleWeek, leaveSummary, hasAnswers, accentFor
 } from "./startFlow.js";
 
 const root = document.getElementById("startRoot");
@@ -18,6 +18,8 @@ const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 let answers = readSaved();
 let index = 0;
 let busy = false;
+let picked = null;      // the card just tapped, so only it animates
+let stepMoved = false;  // true right after Continue/Back, so the progress segment fills
 
 function readSaved() {
     try { return cleanStart(JSON.parse(localStorage.getItem(START_KEY) || "{}")); } catch { return cleanStart({}); }
@@ -39,7 +41,7 @@ const labelOf = (list, value) => list.find(o => o.value === value)?.label || "";
 
 function progress() {
     const total = steps().length - 1;
-    return `<div class="st-steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i <= index && index < total ? "on" : index >= total ? "on" : ""}"></i>`).join("")}</div>`;
+    return `<div class="st-steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i <= index ? "on" : ""} ${stepMoved && i === index ? "fill" : ""}"></i>`).join("")}</div>`;
 }
 
 function weekCard() {
@@ -108,7 +110,14 @@ function greeting() {
     el.innerHTML = `<div class="st-tile"><svg viewBox="0 0 24 24" aria-hidden="true">${mark.path}</svg></div><div><small>Good morning</small><b>${esc(answers.name || "You")}</b></div>`;
 }
 
+function tint() {
+    const { ac, glow } = accentFor(answers);
+    document.body.style.setProperty("--ac", ac);
+    document.body.style.setProperty("--st-glow", glow);
+}
+
 function render({ focus = true } = {}) {
+    tint();
     const step = stepName();
     const b = body(step);
     const last = step === "ready";
@@ -128,6 +137,12 @@ function render({ focus = true } = {}) {
         </div>
         <aside class="st-side" aria-label="Your sample week">${weekCard()}</aside>`;
     greeting();
+    if (picked) {
+        const el = [...root.querySelectorAll("[data-act]")].find(e => e.dataset.act === picked.act && e.dataset.v === picked.v);
+        if (el) el.classList.add("st-pop");
+        picked = null;
+    }
+    stepMoved = false;
     if (focus) root.querySelector("h1")?.setAttribute("tabindex", "-1"), root.querySelector("h1")?.focus({ preventScroll: true });
 }
 
@@ -153,14 +168,18 @@ root.addEventListener("click", event => {
     const el = event.target.closest("[data-act]");
     if (!el) return;
     const v = el.dataset.v;
+    if (v !== undefined && !["next", "back", "google"].includes(el.dataset.act)) {
+        picked = { act: el.dataset.act, v };
+        try { navigator.vibrate?.(8); } catch { /* not every phone */ }
+    }
     switch (el.dataset.act) {
         case "sport": answers = { ...answers, sport: v, goal: answers.sport === v ? answers.goal : "", now: answers.sport === v ? answers.now : "" }; update(); break;
         case "goal": answers = { ...answers, goal: v }; update(); break;
         case "now": answers = { ...answers, now: v }; update(); break;
         case "mark": answers = { ...answers, mark: v }; update(); break;
         case "day": answers = { ...answers, days: answers.days.includes(v) ? answers.days.filter(d => d !== v) : [...answers.days, v] }; update(); break;
-        case "next": if (index < steps().length - 1) { index++; render(); window.scrollTo(0, 0); } break;
-        case "back": if (index > 0) { index--; render(); window.scrollTo(0, 0); } break;
+        case "next": if (index < steps().length - 1) { index++; stepMoved = true; render(); window.scrollTo(0, 0); } break;
+        case "back": if (index > 0) { index--; stepMoved = true; render(); window.scrollTo(0, 0); } break;
         case "google": signIn(); break;
     }
 });
