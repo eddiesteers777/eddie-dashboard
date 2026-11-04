@@ -1462,3 +1462,11 @@ html body a[href="start.html"].pub-nav-cta{
 html body a[href="start.html"].pub-btn-primary:hover,
 html body a[href="start.html"].pub-nav-cta:hover{ background:linear-gradient(160deg,#EEF3F7,#C7D6E4); color:#13202B; opacity:1; }
 html body a[href="start.html"].pub-nav-cta.active{ box-shadow:0 0 0 2px var(--bg),0 0 0 4px #C7D6E4; }
+
+/* Location lines (Birmingham copy) */
+.pub-footer-place{ max-width:var(--pub-max); margin:clamp(24px,4vw,40px) auto 0; font-size:13px; color:var(--text-secondary); }
+.pub-footer-legal .pub-footer-place{ margin:0 0 8px; }
+.pub-footer-place + .pub-footer-legal{ margin-top:8px; }
+.pub-contact-where{ text-align:center; color:var(--text-secondary); font-size:15px; line-height:1.5; margin:0 auto 20px; max-width:46ch; }
+.pub-contact-where strong{ color:var(--text); font-weight:600; }
+.sbh-svc-where{ margin:0 0 18px; padding:0 16px; max-width:56ch; color:var(--text-secondary); font-size:15px; line-height:1.5; }

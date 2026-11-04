@@ -673,3 +673,6 @@ html body a[href="start.html"].pub-nav-cta{
 html body a[href="start.html"].pub-btn-primary:hover,
 html body a[href="start.html"].pub-nav-cta:hover{ background:linear-gradient(160deg,#EEF3F7,#C7D6E4); color:#13202B; opacity:1; }
 html body a[href="start.html"].pub-nav-cta.active{ box-shadow:0 0 0 2px var(--bg),0 0 0 4px #C7D6E4; }
+
+/* Location line under the headline */
+.sbh-cta-line .sbh-where{ font-weight:600; color:var(--text); }

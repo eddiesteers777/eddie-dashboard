@@ -257,14 +257,16 @@ test("public pages name their one address, and search engines get a sitemap", ()
     }
 });
 
-test("structured data on Home and Packages parses and claims no price, address or rating", () => {
+test("structured data on Home and Packages parses and claims no price, street address or rating", () => {
     for (const page of ["home.html", "packages.html"]) {
         const blocks = [...read(page).matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
         assert.ok(blocks.length === 1, `${page} has one structured data block`);
         const data = JSON.parse(blocks[0][1]);
         assert.equal(data["@context"], "https://schema.org");
         const text = JSON.stringify(data);
-        assert.ok(!/"(price|priceRange|address|aggregateRating|review|telephone|email)"/.test(text), `${page}: only facts already on the site`);
+        assert.ok(!/"(price|priceRange|address|aggregateRating|review)"/.test(text), `${page}: only facts already on the site`);
+        // Phone and email are already public on the Contact page; Home may carry them, never a postal code.
+        assert.ok(!/postalCode|streetAddress/.test(text), `${page}: no street address or postal code`);
         assert.match(text, /"Service"/, `${page} lists the services`);
     }
 });
