@@ -9,6 +9,17 @@
           content="width=device-width, initial-scale=1.0">
 
     <title>Southbound Coaching</title>
+    <meta name="description" content="Personal training and coaching with Eddie: online coaching, running and strength programming, and 1-on-1 or group soccer training, all in one app.">
+    <link rel="canonical" href="https://southboundcoaching.com/home.html">
+    <noscript><meta http-equiv="refresh" content="0; url=home.html"></noscript>
+    <script>
+        // A device that has never held a signed-in account goes to the public home before anything paints.
+        // js/auth.js sets this key on sign-in and clears it on sign-out, so returning clients keep the dashboard.
+        // Storage blocked: do nothing. js/loadHeader.js still sends guests once auth resolves.
+        (function () {
+            try { if (!localStorage.getItem("sb-account-storage-owner")) location.replace("home.html"); } catch (e) { /* storage blocked */ }
+        })();
+    </script>
 
     <link rel="stylesheet"
           href="css/style.css">
