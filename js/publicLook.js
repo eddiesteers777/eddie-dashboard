@@ -20,7 +20,9 @@ if (MOTIF[page]) {
     document.body.prepend(bg);
     // A glass sheen over photos in the page content (not the logo, nav or footer).
     const glaze = () => document.querySelectorAll("main img, .pub-hero img").forEach((img) => {
-        if (img.closest(".pub-footer, .pub-navbar") || img.classList.contains("brand-mark") || !/\/?images\//.test(img.getAttribute("src") || "")) return;
+        // Not the full-screen photo behind the Apply and Contact forms: the sheen's position:relative pulled it
+        // into the page and pushed the form down after load (most of Apply's layout shift, 2026-11-04).
+        if (img.closest(".pub-footer, .pub-navbar, .pub-stage-form-bg") || img.classList.contains("brand-mark") || !/\/?images\//.test(img.getAttribute("src") || "")) return;
         img.parentElement?.classList.add("pl-glass");
     });
     glaze(); addEventListener("load", glaze);

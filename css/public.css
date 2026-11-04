@@ -971,6 +971,13 @@ html{scroll-behavior:smooth;}
 .pub-skip:focus{ top:12px; }
 
 /* ---- Top bar ---- */
+/* The bar is fetched by js/loadPublicHeader.js. Hold its height until it lands, so the page
+   doesn't jump down by it after the first paint (Tools' layout shift, 2026-11-04).
+   The home page's bar floats over the hero (html.sbh-sky-on), so it holds nothing there. */
+#publicHeader:empty{ display:block; min-height:69px; }
+@media(max-width:720px){ #publicHeader:empty{ min-height:65px; } }
+html.tl-app #publicHeader:empty{ min-height:0; }
+@media(prefers-reduced-motion:no-preference){ #publicHeader[data-overlay]:empty{ min-height:0; } }
 .pub-navbar{
     position:sticky; top:0; z-index:1000;
     display:flex; align-items:center; gap:24px;

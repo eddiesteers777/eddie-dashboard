@@ -379,10 +379,11 @@ test("fonts are self-hosted (no Google Fonts) and every font file exists", () =>
 test("photo size copies match their photos (run `python3 scripts/build-images.py` if this fails)", async () => {
     const { createHash } = await import("node:crypto");
     const sizes = JSON.parse(read("images/sizes.json"));
-    for (const [name, { sha256, widths }] of Object.entries(sizes)) {
+    for (const [name, { sha256, widths, crops = [] }] of Object.entries(sizes)) {
         const hash = createHash("sha256").update(readFileSync(join(root, "images", name))).digest("hex").slice(0, 16);
         assert.equal(hash, sha256, `images/${name} changed: rebuild its sizes`);
         for (const w of widths) assert.ok(existsSync(join(root, "images", name.replace(/\.jpe?g$/i, `-${w}.webp`))), `missing ${name} ${w}w`);
+        for (const c of crops) assert.ok(existsSync(join(root, "images", name.replace(/\.jpe?g$/i, `-${c}.webp`))), `missing ${name} crop ${c}`);
     }
 });
 

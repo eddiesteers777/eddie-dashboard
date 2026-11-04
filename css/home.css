@@ -566,6 +566,15 @@ html.sbh-sky-on .sbh-hero { height: 100svh; }
     html.sbh-sky-on .pub-navbar.is-away { transform: translateY(calc(-100% - 20px)); }
 }
 
+/* The same float from the first paint, before js/homeSky.js adds html.sbh-sky-on, so the bar's
+   own font swap can't push the page (the bar is fetched early since 2026-11-04). */
+@media (prefers-reduced-motion: no-preference) {
+    #publicHeader[data-overlay] .pub-navbar { position: fixed; left: 0; right: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 761px) {
+    #publicHeader[data-overlay] .pub-navbar { left: 12px; right: 12px; width: auto; margin: 10px 0; border-radius: 16px; }
+}
+
 /* ---- See-through sand and cream sections: the pitch and the passes stay in view (Eddie, 2026-10-28).
    The closing section stays cream. Text flips to cream; the accent stays sand. ---- */
 html.sbh-sky-on .sbh-svc, html.sbh-sky-on .sbh-cream { background: transparent; color: var(--cream); }

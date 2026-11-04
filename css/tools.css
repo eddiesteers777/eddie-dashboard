@@ -35,6 +35,9 @@
 .tl-sec[hidden]{ display:none !important; }
 .tl-lead{ color:var(--text-secondary); font-size:17px; margin:0 0 18px; max-width:34em; }
 .tl-loading{ color:var(--text-secondary); margin:0; min-height:120px; }
+/* Hold about the calculator's height while it loads, so the page below doesn't jump (2026-11-04). */
+#paceMount:has(> .tl-loading){ min-height:460px; }
+#fuelMount:has(> .tl-loading){ min-height:1000px; }
 .tl-fail{ color:var(--text-secondary); margin:0; }
 .tl-fail a{ color:var(--primary); }
 

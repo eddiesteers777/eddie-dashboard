@@ -774,3 +774,14 @@ Same monogram; letters ice blue, slash in the four sport tints (sky, periwinkle,
 - Premium buttons: glass chips with a fill bar showing the size, big number with a small "oz", label under; tools row is three glass pills (New button / Other amount / Undo last).
 - Custom amount buttons: New button asks for ounces then an optional name (14 letters); up to 4; hold one for 0.6 s to remove it (asks first). Stored in `water-presets` (synced, in the sign-out list). Pure logic in `js/waterPresets.js` with `tests/waterPresets.test.mjs`. No rules change (the synced localStorage doc).
 Tested: static (1359 pass), browser at 390 and 1280 at 0 / 28 / 72 oz, make and remove a custom button.
+
+## 2026-11-04: Mobile speed fix (branch claude/project-thread-5hyano, no rules change)
+From Eddie's Nov 4 PageSpeed plan. No copy, design, Apply question or GA4 change.
+- Cache: GitHub Pages sends `cache-control: max-age=600` on every file (checked live) and has no setting to change it, so no header fix is possible on this host. Renamed (versioned) files would not change that either. Decision: shrink what has to be downloaded instead.
+- Apply / Contact layout shift: `js/publicLook.js` gave the full-screen form photo its glass sheen, and `.pl-glass{position:relative}` pulled it into the page, pushing the form down after load (on a computer the question ended up below the fold). The form photo is now skipped, so it stays behind the form as designed on 2026-10-19.
+- Tools layout shift: the public top bar is fetched by `js/loadPublicHeader.js` and pushed the page down 65–69px when it landed. `#publicHeader:empty` now holds that height (`css/public.css`; not on the home page, whose bar floats, `data-overlay`). The calculator mounts hold about their height while loading (`css/tools.css`). `css/fueling.css` (90 KB) loads only when the Fueling tab first opens (`loadCss` in `js/tools.js`).
+- Home phone LCP (the logo text): Home, Apply and Tools preload the top bar partial and the three first-screen fonts. Home's bar is `position:fixed` from the first paint (`css/home.css`), so its font swap can't move the page.
+- Images: a phone held upright gets `images/hero-field-phone-800.webp` (235 KB instead of 470 KB), a slice cut so the view is the same (`CROPS` in `scripts/build-images.py`; pixel diff vs before: mean 1.4/255).
+- Local Lighthouse 12.8 (mobile / desktop, served gzip + max-age=600 like Pages), before → after: Home 75→82 / 98→98 (mobile LCP 6.2→4.6 s), Apply 71→94 / 76→100 (CLS 0.705→0.038 / 0.888→0.010), Tools 72→88 / 80→96 (CLS 0.164→0 / 0.316→0). A11y, Best Practices, SEO unchanged.
+Tested: static (1358 pass; the one failure, terms.html in the sitemap, is already on main), smoke 70/70, Pace 10K in 50:00 = 8:03/mi on Tools, Fueling builds a plan on Tools, stubbed Apply submission reaches "Application sent" with no layout shift. Not run: rules emulator (no rules change), live PageSpeed (only after merge), real phone.
+

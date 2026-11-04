@@ -55,6 +55,18 @@ function loadScript(src, type) {
     });
 }
 
+// A stylesheet added when its tool first opens (fueling.css is 90 KB and only the Fueling tab needs it).
+function loadCss(href) {
+    if (document.querySelector(`link[href="${href}"]`)) return Promise.resolve();
+    return new Promise(resolve => {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        link.onload = link.onerror = () => resolve();
+        document.head.append(link);
+    });
+}
+
 function failed(mount, name, href) {
     mount.innerHTML = `<p class="tl-fail">The ${name} didn't load. <a href="${href}">Open it on its own page</a>.</p>`;
 }
@@ -75,7 +87,7 @@ async function loadPace() {
 async function loadFueling() {
     const mount = $("fuelMount");
     try {
-        const doc = await sourceDoc("fueling.html");
+        const [doc] = await Promise.all([sourceDoc("fueling.html"), loadCss("css/fueling.css")]);
         const main = doc.querySelector("main.fueling-page");
         if (!main) throw new Error("no fueling markup");
         mount.replaceChildren(document.importNode(main, true));

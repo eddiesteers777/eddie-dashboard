@@ -26,6 +26,29 @@ SIZES = {
     "footer-lift.jpg": [480, 800],
     "footer-barbell.jpg": [480, 800],
 }
+# Phone crops: a narrow slice of a wide photo for a phone held upright, so the phone doesn't download the
+# whole 1600px picture to show a third of it. Box = (left, top, right, bottom) on the photo scaled to 1600 wide.
+# hero-field: home.html shows it with object-fit:cover at object-position 55%; a slice 800 wide from x=440
+# (= 880 - 0.55 * 800) keeps exactly the same window for any screen up to about 8:9 (2026-11-04).
+CROPS = {
+    "hero-field.jpg": {"phone-800": (440, 0, 1240, 900)},
+}
+
+def build_crops(record=None):
+    for name, crops in CROPS.items():
+        src = os.path.join(ROOT, "images", name)
+        if not os.path.exists(src):
+            continue
+        im = Image.open(src).convert("RGB")
+        k = im.width / 1600
+        base = os.path.splitext(src)[0]
+        for tag, (l, t, r, b) in crops.items():
+            box = tuple(round(v * k) for v in (l, t, r, b))
+            out = f"{base}-{tag}.webp"
+            im.crop(box).resize((r - l, b - t), Image.LANCZOS).save(out, "WEBP", quality=80, method=6)
+            print(os.path.relpath(out, ROOT), os.path.getsize(out) // 1024, "KB")
+        if record is not None and name in record:
+            record[name]["crops"] = list(crops)
 
 def main():
     record = {}
@@ -41,6 +64,7 @@ def main():
             out = f"{base}-{w}.webp"
             im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(out, "WEBP", quality=80, method=6)
             print(os.path.relpath(out, ROOT), os.path.getsize(out) // 1024, "KB")
+    build_crops(record)
     with open(os.path.join(ROOT, "images", "sizes.json"), "w") as f:
         json.dump(record, f, indent=2)
         f.write("\n")

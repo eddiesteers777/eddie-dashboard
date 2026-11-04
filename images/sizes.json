@@ -51,6 +51,9 @@
     "widths": [
       1024,
       1600
+    ],
+    "crops": [
+      "phone-800"
     ]
   },
   "footer-lift.jpg": {
