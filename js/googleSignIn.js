@@ -15,7 +15,7 @@
    js/auth.js falls back to the old pop-up.
    ========================================================== */
 
-export const GOOGLE_CLIENT_ID = "";
+export const GOOGLE_CLIENT_ID = "262522365804-52e1nj13d38fk2sm9d2ktviu9k7etai6.apps.googleusercontent.com";
 const SCRIPT_URL = "https://accounts.google.com/gsi/client";
 const SCOPES = "openid email profile";
 
