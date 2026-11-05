@@ -14,6 +14,7 @@ import { db } from "./firebase.js";
 import { waitForUser, getCurrentUser } from "./auth.js";
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { mergeSyncedValue } from "./syncMerge.js";
+import { hasPulled, NOT_PULLED_ERROR, UNREACHABLE_ERROR } from "./syncGuard.js";
 
 const EXACT_KEYS = ["training-progress","training-overrides","featured-training-categories","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","strength-settings","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks","coach-health-reviewed","coach-queue-done","coach-pinned-chats","session-rpe","race-results","athlete-model","coach-athlete-model","workout-shares","water-presets"];
 const KEY_PREFIXES = ["nutrition-","fueling-","cross-training-","workout-session-","route-"];
@@ -26,6 +27,12 @@ const TIMES_KEY = "__cloudSyncKeyTimes";
 // last read. Device-only: never synced.
 const VERSION_KEY = "__cloudSyncVersion";
 const FULL_PULL_KEY = "__cloudSyncFullPullAt";
+// Which account this device has read the cloud copy of. Until it matches, nothing is pushed.
+const PULLED_UID_KEY = "__cloudSyncPulledUid";
+function markPulledUid(uid){ try{ localStorage.setItem(PULLED_UID_KEY,uid); }catch(e){} }
+function devicePulled(uid){
+  try{ return hasPulled({ pulledUid:localStorage.getItem(PULLED_UID_KEY), uid, ownerUid:localStorage.getItem("sb-account-storage-owner"), lastSyncedAt:getSyncStatus().lastSyncedAt }); }catch(e){ return false; }
+}
 // Read the whole doc at least this often even when the version matches
 // (a device still on an older app version pushes without a version).
 const FULL_PULL_EVERY = 6 * 3600 * 1000;
@@ -167,20 +174,22 @@ export async function pullFromCloud({ force=false }={}){
     try{
       const metaSnap=await getDoc(refs.meta);
       if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
-      if(metaSnap.metadata?.fromCache){ emit("offline"); return {ok:false,applied:0,offline:true}; }
+      if(metaSnap.metadata?.fromCache){ if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
       cloudVersion=metaSnap.exists()?(metaSnap.data().v||null):null;
     }catch(e){ cloudVersion=null; }
     const fullAt=Number(localStorage.getItem(FULL_PULL_KEY)||0);
     if(!force && cloudVersion && cloudVersion===localStorage.getItem(VERSION_KEY) && Date.now()-fullAt<FULL_PULL_EVERY){
+      markPulledUid(uid);
       saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
       emit(hasLocalChanges()?"pending":"synced");
       return {ok:true,applied:0,skipped:true};
     }
     const snap=await getDoc(refs.data);
     if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
-    if(snap.metadata?.fromCache){ emit("offline"); return {ok:false,applied:0,offline:true}; }
+    if(snap.metadata?.fromCache){ if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
     if(!snap.exists()){
       markPulled({});
+      markPulledUid(uid);
       saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
       emit(hasLocalChanges()?"pending":"synced");
       return {ok:false,applied:0};
@@ -227,6 +236,7 @@ export async function pullFromCloud({ force=false }={}){
       if(cloudVersion) localStorage.setItem(VERSION_KEY,cloudVersion);
       localStorage.setItem(FULL_PULL_KEY,String(Date.now()));
     }catch(e){}
+    markPulledUid(uid);
     saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
     emit(hasLocalChanges()?"pending":"synced");
     if(applied) console.log(`☁️ Pulled ${applied} item(s) from the cloud.`);
@@ -248,6 +258,16 @@ export async function pushToCloud({ force=false }={}){
     return false;
   }
   const uid=user.uid;
+  // Never send this device's keys before it has read the cloud copy: it would count as newest and overwrite it.
+  if(!devicePulled(uid)){
+    if(isOffline()){ emit("offline"); return false; }
+    await pullFromCloud();
+    if(!devicePulled(uid)){
+      saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:NOT_PULLED_ERROR});
+      emit("error");
+      return false;
+    }
+  }
   // A push already running read the device before this change: send it
   // once that one finishes.
   if(pushing && pushingUid===uid){ pushAgain=true; return pushing; }

@@ -395,13 +395,10 @@
             const { getSyncStatus } = await import("./js/cloudSync.js");
             const status = getSyncStatus();
 
-            const hasError = status.lastError && status.lastError !== "not-signed-in";
-            statusEl.classList.toggle("sync-error", Boolean(hasError));
-            statusEl.textContent = hasError
-                ? "Sync error — tap to retry"
-                : status.lastSyncedAt
-                    ? "Synced " + formatRelativeTime(status.lastSyncedAt)
-                    : "Not synced on this device yet";
+            const { syncStatusLine } = await import("./js/syncGuard.js");
+            const line = syncStatusLine(status, navigator.onLine === false ? false : true, formatRelativeTime);
+            statusEl.classList.toggle("sync-error", line.error);
+            statusEl.textContent = line.text;
         }
 
         // Makes the account's role visible -- otherwise a pending or

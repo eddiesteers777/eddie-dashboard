@@ -642,25 +642,13 @@ fetch("components/header.html")
 
             const status = getSyncStatus();
 
-            if (navigator.onLine === false) {
-
-                syncBtn.classList.remove("sync-error");
-                syncText.textContent = "Offline \u2014 last synced " + formatRelativeTime(status.lastSyncedAt);
-                syncBtn.title = "Changes save on this device and sync when you're back online";
-
-            } else if (status.lastError && status.lastError !== "not-signed-in") {
-
-                syncBtn.classList.add("sync-error");
-                syncText.textContent = "Sync error \u2014 tap to retry";
-                syncBtn.title = "Last sync error: " + status.lastError;
-
-            } else {
-
-                syncBtn.classList.remove("sync-error");
-                syncText.textContent = "Synced " + formatRelativeTime(status.lastSyncedAt);
-                syncBtn.title = "Click to sync now";
-
-            }
+            const { syncStatusLine } = await import("./syncGuard.js");
+            const line = syncStatusLine(status, navigator.onLine === false ? false : true, formatRelativeTime);
+            syncBtn.classList.toggle("sync-error", line.error);
+            syncText.textContent = line.text;
+            syncBtn.title = navigator.onLine === false ? "Changes save on this device and sync when you're back online"
+                : status.lastError && status.lastError !== "not-signed-in" ? "Last sync error: " + status.lastError
+                : line.error ? "Tap to load your saved data from the cloud" : "Click to sync now";
 
         }
 

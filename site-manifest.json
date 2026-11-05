@@ -389,6 +389,7 @@
     "js/stripeBilling.js",
     "js/subnavSwipe.js",
     "js/svgCharts.js",
+    "js/syncGuard.js",
     "js/syncMerge.js",
     "js/thisWeekCard.js",
     "js/todayClient.js",

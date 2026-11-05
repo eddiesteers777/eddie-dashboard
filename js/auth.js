@@ -27,6 +27,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "sb-demo-gender",
     "__cloudSyncVersion",
     "__cloudSyncFullPullAt",
+    "__cloudSyncPulledUid",
     "__cloudSyncMeta",
     "__cloudSyncSnapshot",
     "__cloudSyncKeyTimes",
