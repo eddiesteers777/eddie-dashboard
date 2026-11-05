@@ -7,11 +7,17 @@ import { auth, clearOfflineCopy } from "./firebase.js";
 import {
     GoogleAuthProvider,
     signInWithPopup,
+    signInWithCredential,
     signOut,
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+import { prewarmGoogleSignIn, googleSignInReady, requestGoogleAccessToken } from "./googleSignIn.js";
+
 const provider = new GoogleAuthProvider();
+
+// Load Google's sign-in script now, so the tap can open its window right away.
+prewarmGoogleSignIn();
 
 // Account-sensitive browser state must not survive an account switch.
 // Device-only UI preferences are deliberately not in this list.
@@ -292,7 +298,13 @@ export async function login() {
 
     try {
 
-        await signInWithPopup(auth, provider);
+        if (googleSignInReady()) {
+            // Google's own window: no firebaseapp.com page, which iPhone Safari can't finish.
+            const accessToken = await requestGoogleAccessToken();
+            await signInWithCredential(auth, GoogleAuthProvider.credential(null, accessToken));
+        } else {
+            await signInWithPopup(auth, provider);
+        }
         await waitForAccountIsolation();
 
         return true;

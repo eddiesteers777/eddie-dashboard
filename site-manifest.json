@@ -197,6 +197,7 @@
     "js/fueling.js",
     "js/fuelingPlans.js",
     "js/gear.js",
+    "js/googleSignIn.js",
     "js/guestFuel.js",
     "js/habitDefaults.js",
     "js/habitIconPicker.js",
