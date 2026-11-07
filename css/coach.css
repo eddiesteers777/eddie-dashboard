@@ -726,3 +726,35 @@
 .coach-invite .sb-btn-primary{ background:var(--gold,var(--primary)); color:var(--on-primary); }
 .coach-invite .coach-pb-glance:last-child{ margin:0; font-size:13px; }
 @media (prefers-reduced-motion:reduce){ .ci-sport{ transition:none; } }
+
+
+/* ---- Coach dashboard, one thing at a time (Eddie picked option B, 2026-11-07) ----
+   The first item that needs you gets one card. Everything else waits below it, and the
+   rarely used tools (invite link, soccer team) sit in a closed drop-down. */
+.coach-focus{ margin-bottom:18px; padding:20px 18px; border-radius:var(--radius); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.coach-focus[hidden]{ display:none !important; }
+.coach-focus-tag{ display:block; font:500 11px var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--gold,var(--primary)); }
+.coach-focus.is-pain .coach-focus-tag, .coach-focus.is-health .coach-focus-tag{ color:var(--red); }
+.coach-focus-title{ margin:8px 0 6px; font:800 30px/1.05 var(--font-display); text-transform:uppercase; letter-spacing:.01em; }
+.coach-focus-text{ margin:0; color:var(--text-secondary); font-size:15px; line-height:1.5; }
+.coach-focus-text span{ color:var(--muted); font-size:13px; white-space:nowrap; }
+.coach-focus-btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+.coach-focus-btns .sb-btn{ flex:1 1 140px; }
+.coach-focus-more{ margin:12px 0 0; color:var(--muted); font-size:13px; }
+
+.coach-tools{ margin-bottom:22px; border-radius:var(--radius); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); }
+.coach-tools > summary{ display:flex; align-items:center; gap:10px; min-height:56px; padding:0 18px; cursor:pointer; list-style:none; font:600 15px var(--font-body); }
+.coach-tools > summary::-webkit-details-marker{ display:none; }
+.coach-tools > summary small{ color:var(--text-secondary); font-weight:400; font-size:13px; }
+.coach-tools > summary::after{ content:""; margin-left:auto; width:8px; height:8px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:rotate(45deg) translateY(-2px); transition:transform .18s ease; }
+.coach-tools[open] > summary::after{ transform:rotate(-135deg); }
+.coach-tools > summary:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:var(--radius); }
+.coach-tools > section{ margin:0; padding:4px 18px 18px; background:none; border:0; box-shadow:none; border-top:1px solid var(--border); }
+.coach-tools > section + section{ padding-top:18px; }
+.coach-tools .coach-invite{ border-radius:0; }
+@media (prefers-reduced-motion:reduce){ .coach-tools > summary::after{ transition:none; } }
+@media (max-width:900px){
+    .coach-focus{ order:0; }
+    .coach-plans{ order:3; margin:0 0 18px; }
+    .coach-tools{ order:7; }
+}

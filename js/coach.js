@@ -175,6 +175,33 @@ function renderStrip() {
 
 // ---- Who needs you today: Reply / Approve / Book / Later ----
 
+const FOCUS_TAG = {
+    pain: "Pain flag", health: "Health", change: "Change request", checkin: "Check-in", message: "Message", missed: "Missed",
+    skipped: "Skipped", booking: "Booking", pending: "Approval", plan: "Plan", quiet: "Gone quiet", "no-show": "No-show"
+};
+function renderFocus(item, more) {
+    const el = document.getElementById("coachFocus");
+    if (!item) { el.hidden = true; el.innerHTML = ""; return; }
+    const first = String(item.name || "").split(/\s+/)[0] || "them";
+    const when = waitedText(item.at);
+    const verb = QUEUE_GO[item.kind] || "Open";
+    el.hidden = false;
+    el.className = `coach-focus is-${item.kind}`;
+    el.innerHTML = `
+        <span class="coach-focus-tag">First \u00b7 ${escapeHtml(FOCUS_TAG[item.kind] || "Needs you")}</span>
+        <h2 class="coach-focus-title">${escapeHtml(item.name)}</h2>
+        <p class="coach-focus-text">${escapeHtml(item.text)}${when ? ` <span>${escapeHtml(when)}</span>` : ""}</p>
+        <div class="coach-focus-btns">
+            <a class="sb-btn sb-btn-primary" href="${escapeHtml(item.href)}">${escapeHtml(verb === "Reply" ? `Reply to ${first}` : verb)}</a>
+            <button type="button" class="sb-btn sb-btn-secondary" data-done="${escapeHtml(itemKey(item))}">Done for today</button>
+        </div>
+        ${more > 0 ? `<p class="coach-focus-more">Then ${more} more below.</p>` : ""}`;
+}
+document.getElementById("coachFocus").addEventListener("click", event => {
+    const btn = event.target.closest("[data-done]");
+    if (btn) markDone(btn);
+});
+
 function renderToday() {
     const list = document.getElementById("coachQueueList");
     const hiddenBtn = document.getElementById("coachQueueHidden");
@@ -185,7 +212,11 @@ function renderToday() {
     document.getElementById("coachSummary").textContent = today.clients ? [line.headline, line.detail].filter(Boolean).join(". ").replace(/\.\. /, ". ") : "Checking on your clients…";
 
     if (!today.clients) return;   // still loading: keep the shimmer
-    const segs = splitSegments(shown);
+    // The first thing that needs a person gets its own card; the switch below lists the rest.
+    const panelKind = k => k === "application" || k === "question";
+    const focus = shown.find(item => !panelKind(item.kind)) || null;
+    renderFocus(focus, shown.length - (focus ? 1 : 0));
+    const segs = splitSegments(focus ? shown.filter(item => item !== focus) : shown);
     // Open on the first switch that has something in it, unless the coach chose one.
     if (!today.seg || (!today.chosen && !segs[today.seg].length)) today.seg = SEGMENTS.find(s => segs[s.id].length)?.id || "reply";
     document.getElementById("coachSeg").innerHTML = SEGMENTS.map(s => `
