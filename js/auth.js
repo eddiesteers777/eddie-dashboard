@@ -13,6 +13,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import { prewarmGoogleSignIn, googleSignInReady, requestGoogleAccessToken } from "./googleSignIn.js";
+import { trail } from "./signInTrail.js";
+
+// ?signincheck shows the sign-in steps on screen (js/signInCheck.js).
+try {
+    const ask = new URLSearchParams(location.search).get("signincheck");
+    if (ask === "off") sessionStorage.removeItem("sb-signincheck");
+    else if (ask !== null) sessionStorage.setItem("sb-signincheck", "1");
+    if (sessionStorage.getItem("sb-signincheck") === "1") import("./signInCheck.js").catch(() => {});
+} catch { /* storage unavailable */ }
 
 const provider = new GoogleAuthProvider();
 
@@ -266,6 +275,8 @@ function queueAccountPreparation(user) {
 // cannot immediately inherit the prior account's browser/Firestore state.
 onAuthStateChanged(auth, (user) => {
     queueAccountPreparation(user).then(async result => {
+        trail("auth-state", user ? "signed in" : "signed out");
+        trail("account-ready", result.changed ? "cleared+reload" : "kept");
         // Seed/repair the account profile and its minimal client directory
         // before an account-transition reload. This removes the race where
         // the old auth flow could reload before page bootstrap repaired an
@@ -299,20 +310,25 @@ export async function login() {
 
     try {
 
-        if (googleSignInReady()) {
+        const viaGoogle = googleSignInReady();
+        trail("login-start", viaGoogle ? "google window" : "popup");
+        if (viaGoogle) {
             // Google's own window: no firebaseapp.com page, which iPhone Safari can't finish.
             const accessToken = await requestGoogleAccessToken();
+            trail("google-token", "received");
             await signInWithCredential(auth, GoogleAuthProvider.credential(null, accessToken));
         } else {
             await signInWithPopup(auth, provider);
         }
         await waitForAccountIsolation();
+        trail("login-ok", getCurrentUser() ? "user set" : "NO USER");
 
         return true;
 
     } catch (error) {
 
         console.error("Login Error:", error);
+        trail("login-fail", error?.code || error?.message || "error");
 
         // Say why, unless the person just closed the Google window themselves.
         // Imported when needed so sign-in code carries no UI on its own.

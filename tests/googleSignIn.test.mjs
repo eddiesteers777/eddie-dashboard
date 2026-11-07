@@ -19,3 +19,7 @@ test("not ready until the script is loaded", () => {
     assert.equal(googleSignInReady(), false);
     assert.equal(typeof GOOGLE_CLIENT_ID, "string");
 });
+
+test("a Google window that never answers gets its own message", () => {
+    assert.match(signInFailureMessage({ code: "auth/timeout" }), /Safari/);
+});

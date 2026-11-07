@@ -31,6 +31,13 @@ const GUEST_PAGES = ["fueling.html"];
             try { localStorage.setItem("sb-guest-fueling", "1"); } catch { /* storage unavailable */ }
             return;
         }
+        // Signed out. If a sign-in just "worked" and we are back here again, say so instead of looping.
+        const { trail, readTrail, recentBounces } = await import("./signInTrail.js");
+        trail("bounce", page);
+        if (recentBounces(readTrail(), Date.now()) >= 3) {
+            const { sbAlert } = await import("./ui.js");
+            await sbAlert("Sign-in didn't stick on this device. If this is the Home Screen app, open southboundcoaching.com in Safari and sign in there. Your data is safe in your account.", { title: "Still signed out" });
+        }
         window.location.replace("home.html");
     } catch {
         // Fail open -- leave the page as-is.

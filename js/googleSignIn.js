@@ -73,11 +73,23 @@ export function googleSignInReady() {
     return Boolean(GOOGLE_CLIENT_ID && tokenClient);
 }
 
+/** How long to wait for Google's window to answer before saying so (the Home Screen app can lose its reply). */
+export const GOOGLE_WAIT_MS = 45000;
+
 /** Opens Google's sign-in window. Call it straight from a tap. Resolves to an access token. */
 export function requestGoogleAccessToken() {
     return new Promise((resolve, reject) => {
-        pending = { resolve, reject };
+        // A second tap replaces the first request instead of leaving it hanging.
+        if (pending) pending.reject(Object.assign(new Error("replaced"), { code: "auth/cancelled-popup-request" }));
+        const timer = setTimeout(() => {
+            if (pending && pending.timer === timer) {
+                pending = null;
+                reject(Object.assign(new Error("Google did not answer"), { code: "auth/timeout" }));
+            }
+        }, GOOGLE_WAIT_MS);
+        const settle = fn => value => { clearTimeout(timer); fn(value); };
+        pending = { resolve: settle(resolve), reject: settle(reject), timer };
         try { tokenClient.requestAccessToken({ prompt: "select_account" }); }
-        catch (error) { pending = null; reject(Object.assign(error, { code: "auth/popup-blocked" })); }
+        catch (error) { clearTimeout(timer); pending = null; reject(Object.assign(error, { code: "auth/popup-blocked" })); }
     });
 }

@@ -17,7 +17,18 @@
         // js/auth.js sets this key on sign-in and clears it on sign-out, so returning clients keep the dashboard.
         // Storage blocked: do nothing. js/loadHeader.js still sends guests once auth resolves.
         (function () {
-            try { if (!localStorage.getItem("sb-account-storage-owner")) location.replace("home.html"); } catch (e) { /* storage blocked */ }
+            try {
+                if (!localStorage.getItem("sb-account-storage-owner")) {
+                    if (/[?&]signincheck/.test(location.search)) { try { sessionStorage.setItem("sb-signincheck", "1"); } catch (e) { /* storage blocked */ } }
+                    // Leave a step in the sign-in trail (js/signInTrail.js) so a loop can be read off the phone.
+                    try {
+                        var k = "sb-signin-trail", a = JSON.parse(localStorage.getItem(k) || "[]");
+                        a.push([Date.now(), "index.html", "bounce", "no owner mark"]);
+                        localStorage.setItem(k, JSON.stringify(a.slice(-40)));
+                    } catch (e) { /* the log is a courtesy */ }
+                    location.replace("home.html");
+                }
+            } catch (e) { /* storage blocked */ }
         })();
     </script>
 

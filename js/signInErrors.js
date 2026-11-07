@@ -26,6 +26,9 @@ export function signInFailureMessage(error) {
     if (code === "auth/unauthorized-domain") {
         return "Sign-in isn't set up for this web address yet. Open Southbound from southboundcoaching.com and try again.";
     }
+    if (code === "auth/timeout") {
+        return "Google didn't answer. In the Home Screen app, open southboundcoaching.com in Safari and sign in there.";
+    }
     if (code === "auth/too-many-requests") {
         return "Too many sign-in attempts. Wait a minute, then try again.";
     }
