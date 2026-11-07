@@ -72,7 +72,7 @@ function renderList() {
     document.querySelector(".hw-page .eos-today-hero").hidden = false;
     renderSummary(active);
     if (!active.length) {
-        $("hwList").innerHTML = `<div class="clients-card">${emptyHtml({ iconName: "target", title: "No homework yet", text: "When your coach gives you something to practice, it shows up here with the video." })}</div>`;
+        $("hwList").innerHTML = `<div class="clients-card">${emptyHtml({ iconName: "target", title: "No homework yet", actionHref: "schedule.html", actionLabel: "Book a session", text: "When your coach gives you something to practice, it shows up here with the video." })}</div>`;
         return;
     }
     const [first, ...rest] = open;

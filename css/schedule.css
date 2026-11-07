@@ -573,3 +573,4 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 .schedule-page .sched-wait-text{ display:grid; gap:2px; min-width:0; }
 .schedule-page .sched-wait-text span{ color:var(--muted); font-size:14px; }
 .schedule-page .sched-wait .sb-btn{ flex:0 0 auto; min-height:44px; }
+.sb-empty[hidden]{ display:none !important; }
