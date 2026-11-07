@@ -276,7 +276,7 @@ function queueAccountPreparation(user) {
 onAuthStateChanged(auth, (user) => {
     queueAccountPreparation(user).then(async result => {
         trail("auth-state", user ? "signed in" : "signed out");
-        trail("account-ready", result.changed ? "cleared+reload" : "kept");
+        if (result.changed) trail("account-ready", "cleared+reload");
         // Seed/repair the account profile and its minimal client directory
         // before an account-transition reload. This removes the race where
         // the old auth flow could reload before page bootstrap repaired an
@@ -322,6 +322,8 @@ export async function login() {
         }
         await waitForAccountIsolation();
         trail("login-ok", getCurrentUser() ? "user set" : "NO USER");
+        // A fresh sign-in always reads the whole cloud copy on the next page, never "nothing changed".
+        try { localStorage.removeItem("__cloudSyncVersion"); localStorage.removeItem("__cloudSyncFullPullAt"); } catch { /* storage unavailable */ }
 
         return true;
 
