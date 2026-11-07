@@ -7,6 +7,7 @@ import { isSignedIn, isCoachUser } from "./cloud.js";
 import * as HW from "./drillHomework.js";
 import { addDays } from "../homeworkModel.js";
 import { KEYS, migrateOldKeys, applyTheme } from "./store.js";
+import * as P from "./practiceModel.js";
 
 const KEY = KEYS.drills, LIB_KEY = KEYS.library;
 const $ = id => document.getElementById(id);
@@ -48,15 +49,55 @@ function render() {
     [...tbox.children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === topic)));
     const grid = $("grid"); grid.replaceChildren();
     $("none").hidden = list.length > 0;
-    for (const d of list) {
-        const c = h("button", "dr-card"); c.type = "button";
-        c.append(h("span", "dr-tag", d.topic), h("b", "", d.name));
-        const meta = h("span", "dr-meta", `${d.minutes} min · ${d.minPlayers}+ players`);
-        meta.append(h("span", "dr-int " + d.intensity, d.intensity));
-        c.append(meta);
-        c.onclick = () => showDetail(d.id);
-        grid.appendChild(c);
+    const nFilt = (D_int() ? 1 : 0) + (Number($("fMin").value) ? 1 : 0);
+    const fn = $("filtN"); fn.hidden = !nFilt; fn.textContent = nFilt;
+    const bs = boards(), byTopic = new Map();
+    for (const d of list) { if (!byTopic.has(d.topic)) byTopic.set(d.topic, []); byTopic.get(d.topic).push(d); }
+    for (const [name, items] of byTopic) {
+        const head = h("div", "dr-sec-h"); head.append(h("span", "", name), h("span", "", String(items.length)));
+        grid.append(head);
+        for (const d of items) {
+            const row = h("div", "dr-row");
+            const board = d.boardId && bs.find(x => x.id === d.boardId);
+            if (board) { const t = h("span", "dr-thumb"); try { t.append(boardThumb(board.board)); row.append(t); } catch {} }
+            const c = h("button", "dr-card"); c.type = "button";
+            c.append(h("b", "", d.name));
+            const meta = h("span", "dr-meta", `${d.minutes} min · ${d.minPlayers}+ players`);
+            meta.append(h("span", "dr-int " + d.intensity, d.intensity));
+            c.append(meta);
+            c.onclick = () => showDetail(d.id);
+            const on = picked.has(d.id);
+            const pick = h("button", "dr-pick", on ? "\u2713" : "+"); pick.type = "button";
+            pick.setAttribute("aria-pressed", String(on));
+            pick.setAttribute("aria-label", (on ? "Remove " : "Add ") + d.name + (on ? " from" : " to") + " practice");
+            pick.onclick = () => { if (picked.has(d.id)) picked.delete(d.id); else picked.add(d.id); render(); };
+            row.append(c, pick);
+            grid.append(row);
+        }
     }
+    renderTray();
+}
+const D_int = () => $("fInt").value;
+
+// Picked drills collect in a tray; "Open practice" adds them to the current practice and opens the planner.
+const picked = new Set();
+function renderTray() {
+    const chosen = drills.filter(d => picked.has(d.id));
+    $("tray").hidden = !chosen.length;
+    if (!chosen.length) return;
+    $("trayN").textContent = `${chosen.length} drill${chosen.length === 1 ? "" : "s"} picked`;
+    $("trayM").textContent = `${chosen.reduce((a, d) => a + d.minutes, 0)} min`;
+}
+function openPractice() {
+    const chosen = drills.filter(d => picked.has(d.id));
+    if (!chosen.length) return;
+    let pr = null;
+    try { pr = P.parsePractice(JSON.parse(localStorage.getItem(KEYS.practice) || "null")); } catch {}
+    pr = pr || P.newPractice();
+    let items = pr.items;
+    for (const d of chosen) if (items.length < 20 && !items.some(i => i.drillId === d.id)) items = P.addItem(items, d);
+    try { localStorage.setItem(KEYS.practice, JSON.stringify({ ...pr, items })); } catch { return toast("Couldn't save on this device"); }
+    location.href = "playbook-practice.html";
 }
 
 function section(title, body) {
@@ -178,6 +219,8 @@ function openEditor(id) {
 function wire() {
     ["q", "fInt", "fMin"].forEach(id => $(id).addEventListener("input", render));
     $("newDrill").onclick = () => openEditor(null);
+    $("trayGo").onclick = openPractice;
+    $("clearF").onclick = () => { $("q").value = ""; $("fInt").value = ""; $("fMin").value = "0"; topic = ""; render(); };
     $("edCancel").onclick = () => $("editor").close();
     $("form").onsubmit = e => {
         e.preventDefault();

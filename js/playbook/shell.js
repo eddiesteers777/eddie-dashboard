@@ -2,6 +2,7 @@
 // Each tool page imports this first, so signed-in work is pulled before the tool reads it.
 import { migrateOldKeys, applyTheme, toggleTheme, clearAll } from "./store.js";
 import { startSync, afterClear, isSignedIn } from "./cloud.js";
+import { buildNav } from "./nav.js";
 
 migrateOldKeys();
 applyTheme();
@@ -21,8 +22,8 @@ if (tabs && !tabs.querySelector("[data-pb-sync]")) {
     tabs.insertBefore(s, tabs.querySelector("[data-pb-theme]"));
 }
 
-// The tab row scrolls on a phone: bring the current tab into view.
-try { tabs?.querySelector("[aria-current]")?.scrollIntoView({ inline: "center", block: "nearest" }); } catch {}
+// The tool links become a group switch and one short row (no wrapping, no sideways scroll).
+try { buildNav(tabs); } catch (e) { console.warn("Southbound: Playbook nav fallback.", e); }
 
 const clear = document.getElementById("pbClear");
 const clearText = () => (isSignedIn() ? "Clear everything (device and account)" : "Clear everything on this device");

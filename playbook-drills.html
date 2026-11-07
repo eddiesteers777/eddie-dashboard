@@ -52,14 +52,19 @@
   </header>
   <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-board.html" class="pb-tab">Board</a><a href="playbook-drills.html" class="pb-tab" aria-current="page">Drills</a><a href="playbook-practice.html" class="pb-tab">Practice</a><a href="playbook-season.html" class="pb-tab">Season</a><a href="playbook-roster.html" class="pb-tab">Roster</a><a href="playbook-team.html" class="pb-tab">Team</a><a href="playbook-game.html" class="pb-tab">Game</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
 
-  <div class="dr-filters">
+  <div class="dr-search">
     <input id="q" type="search" placeholder="Search drills" aria-label="Search drills" autocomplete="off">
-    <select id="fInt" aria-label="Intensity"><option value="">Any intensity</option><option>Low</option><option>Medium</option><option>High</option></select>
-    <select id="fMin" aria-label="Time"><option value="0">Any length</option><option value="10">10 min or less</option><option value="15">15 min or less</option><option value="20">20 min or less</option></select>
   </div>
+  <details class="dr-filt" id="filt"><summary>Filters <i id="filtN" hidden></i></summary>
+    <div class="dr-filters2">
+      <select id="fInt" aria-label="Intensity"><option value="">Any intensity</option><option>Low</option><option>Medium</option><option>High</option></select>
+      <select id="fMin" aria-label="Time"><option value="0">Any length</option><option value="10">10 min or less</option><option value="15">15 min or less</option><option value="20">20 min or less</option></select>
+    </div>
+  </details>
   <div class="pb-tools" id="topics" role="group" aria-label="Skill"></div>
   <div class="dr-grid" id="grid"></div>
-  <p class="pb-hint" id="none" hidden>No drills match. Clear a filter or add your own.</p>
+  <div class="pb-hint" id="none" hidden><p>No drills match. Clear a filter or add your own.</p><button type="button" class="pb-btn pb-primary" id="clearF">Clear filters</button></div>
+  <div class="dr-tray" id="tray" hidden><span><b id="trayN"></b><small id="trayM"></small></span><button type="button" class="pb-btn pb-primary" id="trayGo">Open practice</button></div>
 
   <dialog id="detail" class="pb-dlg dr-dlg"></dialog>
   <dialog id="assign" class="pb-dlg dr-dlg"></dialog>
