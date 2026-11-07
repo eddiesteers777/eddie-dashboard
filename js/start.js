@@ -9,13 +9,23 @@
 ========================================== */
 import {
     START_KEY, SPORTS, GOALS, NOW, MARKS, DAY_LABELS,
-    cleanStart, stepsFor, exampleWeek, leaveSummary, hasAnswers, accentFor
+    cleanStart, stepsFor, exampleWeek, leaveSummary, hasAnswers, accentFor,
+    parseInvite, inviteSteps, INVITE_WORDS
 } from "./startFlow.js";
 
 const root = document.getElementById("startRoot");
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 let answers = readSaved();
+// A personal invite link (?for=Jake&sport=soccer) sets the sport and name and adds a welcome screen.
+const found = parseInvite(location.search);
+let invite = found && !found.bad ? found : null;
+const badInvite = Boolean(found?.bad);
+if (invite) {
+    const same = answers.sport === invite.sport;
+    answers = cleanStart({ ...answers, sport: invite.sport, name: invite.name || answers.name, goal: same ? answers.goal : "", now: same ? answers.now : "" });
+    try { localStorage.setItem(START_KEY, JSON.stringify(answers)); } catch { /* fine */ }
+}
 let index = 0;
 let busy = false;
 let picked = null;      // the card just tapped, so only it animates
@@ -35,13 +45,14 @@ const ICONS = {
     general: '<path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/>'
 };
 const svg = path => `<svg class="st-ic" viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;
-const steps = () => [...stepsFor(answers), "ready"];
+const steps = () => [...(invite ? inviteSteps(answers) : stepsFor(answers)), "ready"];
+const offset = () => (invite ? 1 : 0);
 const stepName = () => steps()[Math.min(index, steps().length - 1)];
 const labelOf = (list, value) => list.find(o => o.value === value)?.label || "";
 
 function progress() {
-    const total = steps().length - 1;
-    return `<div class="st-steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i <= index ? "on" : ""} ${stepMoved && i === index ? "fill" : ""}"></i>`).join("")}</div>`;
+    const total = steps().length - 1 - offset(), at = index - offset();
+    return `<div class="st-steps" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i <= at ? "on" : ""} ${stepMoved && i === at ? "fill" : ""}"></i>`).join("")}</div>`;
 }
 
 function weekCard() {
@@ -62,10 +73,21 @@ const optCard = (action, value, label, sub, on, icon) =>
     `<button type="button" class="st-opt st-glass ${on ? "on" : ""}" data-act="${action}" data-v="${esc(value)}" aria-pressed="${on}">${icon ? svg(icon) : ""}<span>${esc(label)}</span>${sub ? `<small>${esc(sub)}</small>` : ""}</button>`;
 
 function body(step) {
-    const n = index + 1, total = steps().length - 1;
+    const n = index + 1 - offset(), total = steps().length - 1 - offset();
+    const note = badInvite && index === 0 ? `<div class="st-warn" role="status">That invite link didn't open the way it should. No problem. Pick what you train and we'll set it up.</div>` : "";
     const kicker = `<div class="st-kicker">Step ${n} of ${total}</div>`;
+    if (step === "welcome") {
+        const word = INVITE_WORDS[answers.sport];
+        return {
+            html: `<div class="st-kicker">Set up for you</div><div class="st-tile st-tile-lg">${svg(ICONS[answers.sport])}</div>
+                <h1 class="st-h1">${answers.name ? `${esc(answers.name)}, let's` : "Let's"} build your ${word} week</h1>
+                <p class="st-sub">Eddie set this up for you. ${steps().length - 2} quick taps, then sign in to save it. No form, no password.</p>`,
+            ok: true, cta: "Start",
+            after: `<p class="st-note">${answers.name ? `Not ${esc(answers.name)}?` : "Not for you?"} <button type="button" class="st-link" data-act="restart">Start from the beginning</button></p>`
+        };
+    }
     if (step === "train") return {
-        html: `${kicker}<h1 class="st-h1">What do you train?</h1><p class="st-sub">Pick the main one. You can add more later.</p>
+        html: `${note}${kicker}<h1 class="st-h1">What do you train?</h1><p class="st-sub">Pick the main one. You can add more later.</p>
             <div class="st-opts">${SPORTS.map(s => optCard("sport", s.value, s.label, s.sub, answers.sport === s.value, ICONS[s.value])).join("")}</div>`,
         ok: Boolean(answers.sport), cta: "Continue"
     };
@@ -133,7 +155,7 @@ function render({ focus = true } = {}) {
                    <p class="st-note">Already have an account? <button type="button" class="st-link" data-act="google">Sign in</button></p>
                    <p class="st-note">Not ready to sign in? <a href="apply.html">Send an application without an account</a></p>`
                 : `<button type="button" class="st-cta" data-act="next" ${b.ok ? "" : "disabled"}>${b.cta}</button>
-                   <p class="st-note">${index === 0 ? "No account yet. Your taps stay on this phone." : "&nbsp;"}</p>`}
+                   ${b.after || `<p class="st-note">${index === offset() ? "No account yet. Your taps stay on this phone." : "&nbsp;"}</p>`}`}
         </div>
         <aside class="st-side" aria-label="Your sample week">${weekCard()}</aside>`;
     greeting();
@@ -181,6 +203,10 @@ root.addEventListener("click", event => {
         case "next": if (index < steps().length - 1) { index++; stepMoved = true; render(); window.scrollTo(0, 0); } break;
         case "back": if (index > 0) { index--; stepMoved = true; render(); window.scrollTo(0, 0); } break;
         case "google": signIn(); break;
+        case "restart":
+            invite = null; answers = cleanStart({}); index = 0; save();
+            try { history.replaceState(null, "", "start.html"); } catch { /* fine */ }
+            render(); window.scrollTo(0, 0); break;
     }
 });
 

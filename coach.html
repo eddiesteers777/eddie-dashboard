@@ -88,6 +88,23 @@
 
                 </div>
                 <div class="coach-col coach-col-side">
+            <section class="coach-invite" aria-labelledby="coachInviteTitle">
+                <div class="coach-queue-head">
+                    <h2 class="clients-section-title" id="coachInviteTitle">Invite link</h2>
+                </div>
+                <p class="coach-pb-glance">One link for one person. It opens already set to their sport, with their name on it.</p>
+                <label class="ci-lab" for="ciName">First name</label>
+                <input type="text" id="ciName" class="clients-search" maxlength="40" autocomplete="off" placeholder="e.g. Jake">
+                <div class="ci-lab" id="ciSportLab">What they want</div>
+                <div class="ci-sports" id="ciSports" role="group" aria-labelledby="ciSportLab"></div>
+                <div class="ci-out" id="ciLink" aria-live="polite"></div>
+                <div class="ci-row">
+                    <button type="button" class="sb-btn sb-btn-primary" id="ciCopyLink" disabled>Copy link</button>
+                    <button type="button" class="sb-btn sb-btn-secondary" id="ciCopyText" disabled>Copy text message</button>
+                </div>
+                <p class="coach-pb-glance">Nothing is saved. The link only holds a first name and a sport.</p>
+            </section>
+
             <section class="coach-pb" aria-labelledby="coachPbTitle">
                 <div class="coach-queue-head">
                     <h2 class="clients-section-title" id="coachPbTitle">Soccer team</h2>
@@ -138,6 +155,7 @@
     <script type="module" src="js/icons.js"></script>
     <script type="module" src="js/coach.js"></script>
     <script type="module" src="js/coachPlaybook.js"></script>
+    <script type="module" src="js/coachInvite.js"></script>
 
     <script src="js/registerSW.js"></script>
 

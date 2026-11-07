@@ -188,3 +188,49 @@ export const ACCENTS = {
     general: { ac: "#E3C3A0", glow: "#4A3F36" }
 };
 export const accentFor = a => ACCENTS[cleanStart(a).sport] || ACCENTS[""];
+
+// ---- Personal invite links: start.html?for=Jake&sport=soccer ----
+// The link carries a first name and a sport, nothing else. Nothing is stored on the server.
+const INVITE_SPORTS = {
+    soccer: "soccer", running: "running", run: "running", strength: "strength", lifting: "strength", lift: "strength",
+    general: "general", fitness: "general"
+};
+// What each sport is called in a sentence ("your lifting week").
+export const INVITE_WORDS = { running: "running", strength: "lifting", soccer: "soccer", general: "fitness" };
+// The four buttons on the coach's link maker.
+export const INVITE_CHOICES = [
+    { value: "soccer", label: "Soccer" }, { value: "running", label: "Running" },
+    { value: "strength", label: "Lifting" }, { value: "general", label: "General fitness" }
+];
+
+export function cleanInviteName(input) {
+    return String(input ?? "").replace(/[^\p{L}\p{M}' -]/gu, "").replace(/\s+/g, " ").trim().slice(0, 40);
+}
+
+// null = not an invite. { bad: true } = it tried to be one and the sport didn't read. Otherwise { sport, name }.
+export function parseInvite(search) {
+    let p;
+    try { p = new URLSearchParams(search || ""); } catch { return null; }
+    if (!p.has("sport") && !p.has("for")) return null;
+    const sport = INVITE_SPORTS[String(p.get("sport") || "").toLowerCase().trim()] || "";
+    if (!sport) return { bad: true };
+    return { sport, name: cleanInviteName(p.get("for")) };
+}
+
+export function inviteLink(name, sport, origin = "https://southboundcoaching.com") {
+    const clean = cleanInviteName(name);
+    if (!INVITE_WORDS[sport]) return "";
+    const q = new URLSearchParams();
+    if (clean) q.set("for", clean);
+    q.set("sport", sport);
+    return `${origin}/start.html?${q.toString().replace(/\+/g, "%20")}`;
+}
+
+// The text message Eddie can paste, in his voice.
+export function inviteMessage(name, sport, origin) {
+    const clean = cleanInviteName(name);
+    return `${clean ? `Hey ${clean}, it's` : "Hey, it's"} Eddie. I set up a ${INVITE_WORDS[sport] || "training"} page for you. It takes about a minute: ${inviteLink(clean, sport, origin)}`;
+}
+
+// Steps for an invite: a welcome, then the usual ones minus "train" and "you".
+export const inviteSteps = a => ["welcome", ...stepsFor(a).filter(s => s !== "train" && s !== "you")];

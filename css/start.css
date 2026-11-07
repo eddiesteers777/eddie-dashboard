@@ -121,3 +121,8 @@
 .st-pop.on::before{animation:st-tick .3s .08s both}
 @keyframes st-tick{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.st-pop,.st-pop.on::before,.st-steps i.fill{animation:none}.st-body{transition:none}}
+
+/* Personal invite link: welcome screen and the note for a link that didn't read */
+.st-tile-lg{width:64px;height:64px;border-radius:16px}
+.st-tile-lg svg{width:34px;height:34px;stroke:var(--ac)}
+.st-warn{padding:14px 16px;border-radius:12px;border:1px solid rgba(229,154,134,.4);background:rgba(229,154,134,.08);font-size:14px;color:var(--st-text)}

@@ -123,6 +123,7 @@
     "js/coachAccess.js",
     "js/coachCard.js",
     "js/coachInbox.js",
+    "js/coachInvite.js",
     "js/coachLibrary.js",
     "js/coachMessages.js",
     "js/coachNotesLocal.js",

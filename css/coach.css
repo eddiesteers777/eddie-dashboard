@@ -707,3 +707,15 @@
 .coach-plan-btns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
 .coach-plans [hidden]{ display:none !important; }
 @media print{ body.print-one-plan *{ visibility:hidden; } body.print-one-plan .coach-plan.print-me, body.print-one-plan .coach-plan.print-me *{ visibility:visible; color:#000; } body.print-one-plan .coach-plan.print-me{ position:absolute; left:0; top:0; width:100%; background:#fff; border:0; } .coach-plan-btns{ display:none !important; } }
+
+/* Invite link maker (js/coachInvite.js) */
+.coach-invite{ margin-bottom:22px; }
+.coach-invite [hidden]{ display:none!important; }
+.ci-lab{ display:block; margin:12px 0 6px; font-size:14px; color:var(--text-secondary); }
+.ci-sports{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.ci-sport{ min-height:48px; border-radius:var(--radius-pill); border:1px solid var(--border,rgba(255,255,255,.14)); background:transparent; color:var(--text); font:600 15px var(--font-body); cursor:pointer; }
+.ci-sport.on{ border-color:var(--gold,var(--primary)); box-shadow:0 0 0 1px var(--gold,var(--primary)); }
+.ci-out{ margin:12px 0; padding:12px 14px; border-radius:10px; border:1px solid var(--border,rgba(255,255,255,.14)); font:500 13px/1.5 var(--font-mono); word-break:break-all; }
+.ci-out.ci-empty{ color:var(--text-secondary); font-family:var(--font-body); }
+.ci-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.ci-row .sb-btn{ flex:1 1 140px; }

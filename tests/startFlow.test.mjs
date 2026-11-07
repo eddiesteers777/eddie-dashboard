@@ -73,3 +73,23 @@ test("each sport has its own muted tint and ice blue is the default", async () =
     for (const s of SPORTS) assert.ok(ACCENTS[s.value], s.value);
     assert.equal(accentFor({ sport: "nope" }).ac, "#C7D6E4");
 });
+
+test("invite links: read, clean and build", async () => {
+    const { parseInvite, inviteLink, inviteMessage, inviteSteps, cleanInviteName } = await import("../js/startFlow.js");
+    assert.equal(parseInvite(""), null);
+    assert.equal(parseInvite("?x=1"), null);
+    assert.deepEqual(parseInvite("?for=Jake&sport=soccer"), { sport: "soccer", name: "Jake" });
+    assert.deepEqual(parseInvite("?sport=Lifting"), { sport: "strength", name: "" });
+    assert.deepEqual(parseInvite("?for=Jake&sport=golf"), { bad: true });
+    assert.deepEqual(parseInvite("?for=Jake"), { bad: true });
+    assert.equal(cleanInviteName("<b>Mary-Ann</b> O'Neil 123"), "bMary-Annb O'Neil");
+    assert.ok(!/[<>0-9]/.test(cleanInviteName("<script>1</script>")));
+    assert.equal(cleanInviteName("x".repeat(100)).length, 40);
+    // round trip
+    const url = new URL(inviteLink("José María", "running"));
+    assert.deepEqual(parseInvite(url.search), { sport: "running", name: "José María" });
+    assert.equal(inviteLink("Jake", "golf"), "");
+    assert.match(inviteMessage("Jake", "strength"), /^Hey Jake, it's Eddie\. I set up a lifting page/);
+    assert.deepEqual(inviteSteps({ sport: "soccer" }), ["welcome", "goal", "now", "days"]);
+    assert.deepEqual(inviteSteps({ sport: "general" }), ["welcome", "goal", "days"]);
+});
