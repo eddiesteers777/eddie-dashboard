@@ -574,3 +574,14 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 .schedule-page .sched-wait-text span{ color:var(--muted); font-size:14px; }
 .schedule-page .sched-wait .sb-btn{ flex:0 0 auto; min-height:44px; }
 .sb-empty[hidden]{ display:none !important; }
+
+/* Request sheet: the two modes are a segmented control, and Send is a full-width button (premium spec rule 7) */
+#bookForm{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+#bookForm > *:not(.sched-radio-row){ grid-column:1 / -1; }
+#bookForm .sched-radio-row{ margin:0; padding:0; position:relative; display:block; }
+#bookForm .sched-radio-row input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer; }
+#bookForm .sched-radio-row span{ display:grid; place-items:center; min-height:48px; padding:0 8px; text-align:center; border:1px solid rgba(214,228,240,.2); border-radius:12px; background:rgba(214,228,240,.06); font:600 14px var(--font-body); color:var(--text); }
+#bookForm .sched-radio-row input:checked + span{ background:var(--cream); color:var(--on-primary); border-color:transparent; }
+#bookForm .sched-radio-row input:focus-visible + span{ outline:2px solid var(--primary); outline-offset:2px; }
+#bookForm .clients-editor-actions{ display:grid; gap:8px; }
+#bookForm .clients-editor-actions .clients-btn-primary{ width:100%; min-height:48px; }
