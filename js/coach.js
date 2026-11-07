@@ -8,6 +8,8 @@
 ========================================== */
 
 import { listenForAuth } from "./auth.js";
+import { cachedRole } from "./role.js";
+import { withTimeout } from "./syncTimeout.js";
 import { isApprovedCoach, listPendingProfiles } from "./userProfile.js";
 import { getEmailSetupStatus } from "./emailNotify.js";
 import { listInquiries, setInquiryHandled, interestLabel } from "./inquiries.js";
@@ -41,6 +43,9 @@ const QUEUE_GO = {
     booking: "Review", pending: "Approve", application: "Open", question: "Open", plan: "Build plan"
 };
 const DONE_KEY = "coach-queue-done";
+// A hung connection used to leave the page on its skeleton for good.
+const DIRECTORY_LIMIT_MS = 20000;
+const PROFILE_LIMIT_MS = 12000;
 
 const today = { clients: null, clientItems: [], failed: false, name: "", showHidden: false, seg: "" };
 
@@ -56,7 +61,7 @@ function saveDone(done) {
 async function loadQueue() {
     try {
         const day = isoDate(new Date());
-        const directory = await loadClientDirectory();
+        const directory = await withTimeout(loadClientDirectory(), DIRECTORY_LIMIT_MS, "directory-timeout");
         today.clients = directory.map(c => summarizeClient(c, day));
         today.clientItems = attentionQueue(today.clients);
         // Every booked session across clients, for Sessions this week.
@@ -199,7 +204,7 @@ function renderToday() {
 
     let html = "";
     if (today.failed) {
-        html += `<div class="coach-inq-empty">Couldn't load your clients right now. Open <a href="clients.html">My Clients</a>.</div>`;
+        html += `<div class="coach-inq-empty">Couldn't load your clients right now. <button type="button" class="sb-btn sb-btn-secondary" data-coach-retry>Try again</button></div>`;
     }
     const approvePanelHasCards = today.seg === "approve" && segs.approve.some(item => inPanel(item.kind));
     if (!rows.length && !approvePanelHasCards && !today.failed) {
@@ -620,26 +625,57 @@ async function refreshDashboard() {
     else renderToday();
 }
 
-listenForAuth(async user => {
-    signedOutEl.hidden = Boolean(user);
-    dashboardEl.hidden = true;
-    notApprovedEl.hidden = true;
-
-    if (!user) return;
-
-    const approved = await isApprovedCoach();
-    if (!approved) {
-        notApprovedEl.hidden = false;
-        return;
-    }
-
+function startDashboard(user) {
+    if (started) return;
+    started = true;
     dashboardEl.hidden = false;
     today.name = user.displayName || "";
     renderSetupChecklist();
     loadQueue();
-    refreshDashboard();
+    refreshDashboard().catch(() => {});
     loadApplications();
     loadInquiries();
+}
+let started = false;
+
+document.addEventListener("click", event => {
+    if (!event.target.closest("[data-coach-retry]")) return;
+    const list = document.getElementById("coachQueueList");
+    if (list) list.innerHTML = '<div class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:64%"></span></div></div>';
+    today.clients = null;
+    loadQueue();
+});
+
+listenForAuth(async user => {
+    signedOutEl.hidden = Boolean(user);
+    dashboardEl.hidden = true;
+    notApprovedEl.hidden = true;
+    started = false;
+
+    if (!user) return;
+
+    // This device already knows the coach: draw the page now and confirm after.
+    const knownCoach = cachedRole() === "coach";
+    if (knownCoach) startDashboard(user);
+
+    let approved;
+    try {
+        approved = await withTimeout(isApprovedCoach(), PROFILE_LIMIT_MS, "profile-timeout");
+    } catch (error) {
+        console.warn("Southbound: couldn't confirm the coach profile.", error?.code || error);
+        if (!knownCoach) {
+            notApprovedEl.querySelector("p").innerHTML = 'Couldn\'t check your account. <button type="button" class="sb-btn sb-btn-secondary" id="coachProfileRetry">Try again</button>';
+            notApprovedEl.hidden = false;
+            document.getElementById("coachProfileRetry")?.addEventListener("click", () => location.reload());
+        }
+        return;
+    }
+    if (!approved) {
+        dashboardEl.hidden = true;
+        notApprovedEl.hidden = false;
+        return;
+    }
+    startDashboard(user);
 });
 
 // An installed app can sit in the background for hours; reload the
