@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signing in | Southbound Coaching</title>
+    <meta name="description" content="Finishing your Southbound sign-in.">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0F2019">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+    <style>
+        html, body { margin: 0; min-height: 100%; background: #0F2019; color: #F2EBDD; font-family: var(--font-body, "Albert Sans", system-ui, sans-serif); }
+        main { min-height: 100vh; display: grid; place-content: center; gap: 16px; padding: 24px 16px; text-align: center; }
+        p { margin: 0; font-size: 1.05rem; }
+        a { color: #C9AD84; font-size: 1rem; padding: 12px 0; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+    <main>
+        <p id="returnNote" role="status">Signing you in…</p>
+        <a id="returnHome" href="home.html" hidden>Back to Southbound</a>
+    </main>
+    <script type="module" src="js/authReturn.js"></script>
+</body>
+</html>

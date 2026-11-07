@@ -12,9 +12,10 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-import { prewarmGoogleSignIn, googleSignInReady, requestGoogleAccessToken } from "./googleSignIn.js";
+import { prewarmGoogleSignIn, googleSignInReady, requestGoogleAccessToken, GOOGLE_CLIENT_ID } from "./googleSignIn.js";
 import { trail } from "./signInTrail.js";
 import { retryOnNetworkError } from "./signInRetry.js";
+import { buildAuthUrl, newState, useRedirectSignIn } from "./googleRedirect.js";
 
 // ?signincheck shows the sign-in steps on screen (js/signInCheck.js).
 try {
@@ -317,6 +318,14 @@ export async function login() {
 
     try {
 
+        // Home Screen app: the pop-up's answer is lost when that page reloads, so go out and come back by full page.
+        if (useRedirectSignIn({ standalone: matchMedia("(display-mode: standalone)").matches || navigator.standalone === true, origin: location.origin })) {
+            const state = newState();
+            try { localStorage.setItem("sb-oauth-state", JSON.stringify({ state, at: Date.now(), back: "index.html" })); } catch { /* storage unavailable */ }
+            trail("login-start", "full page");
+            location.href = buildAuthUrl({ clientId: GOOGLE_CLIENT_ID, state });
+            return new Promise(() => {});   // the page is leaving; nothing after this should run
+        }
         const viaGoogle = googleSignInReady();
         trail("login-start", viaGoogle ? "google window" : "popup");
         if (viaGoogle) {
