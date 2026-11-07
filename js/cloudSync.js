@@ -160,12 +160,28 @@ export function currentSyncState(){ return currentState; }
 
 // The sync doc read over plain HTTPS (Firestore REST) with the signed-in user's token, shaped like
 // the snapshot the pull below expects. Only used when the SDK's own read hangs.
-async function restSnap(user,uid){
+// This device remembers (a day) that the SDK's connection hung, so later page loads go straight to
+// the HTTPS read instead of waiting out the limit first. Device-only; never synced.
+const SDK_HUNG_KEY="__cloudSyncSdkHungAt";
+const SDK_HUNG_FOR=24*3600*1000;
+function sdkHungRecently(){ try{ return Date.now()-Number(localStorage.getItem(SDK_HUNG_KEY)||0)<SDK_HUNG_FOR; }catch(e){ return false; } }
+function rememberSdkHung(){ try{ localStorage.setItem(SDK_HUNG_KEY,String(Date.now())); }catch(e){} }
+async function restDoc(user,uid,docId){
   const token=await user.getIdToken();
-  const response=await withTimeout(fetch(`${firestoreRestBase}/users/${uid}/sync/localStorage`,{headers:{Authorization:`Bearer ${token}`}}),READ_LIMIT_MS,"pull-timeout");
-  if(response.status===404) return {exists:()=>false,data:()=>undefined,metadata:{fromCache:false}};
+  const response=await withTimeout(fetch(`${firestoreRestBase}/users/${uid}/sync/${docId}`,{headers:{Authorization:`Bearer ${token}`}}),READ_LIMIT_MS,"pull-timeout");
+  if(response.status===404) return null;
   if(!response.ok){ throw Object.assign(new Error("rest-"+response.status),{code:"rest-"+response.status}); }
-  const parsed=parseSyncDocRest(await response.json());
+  return response.json();
+}
+async function restMetaSnap(user,uid){
+  const doc=await restDoc(user,uid,"meta");
+  const v=doc?.fields?.v?.stringValue||null;
+  return {exists:()=>Boolean(doc),metadata:{fromCache:false},data:()=>({v})};
+}
+async function restSnap(user,uid){
+  const doc=await restDoc(user,uid,"localStorage");
+  if(!doc) return {exists:()=>false,data:()=>undefined,metadata:{fromCache:false}};
+  const parsed=parseSyncDocRest(doc);
   return {
     exists:()=>parsed.exists,
     metadata:{fromCache:false},
@@ -189,13 +205,14 @@ export async function pullFromCloud({ force=false }={}){
     emit("syncing");
     // Nothing new in the cloud since this device last read it: skip the big read.
     let cloudVersion=null;
-    let sdkHung=false;
+    let sdkHung=sdkHungRecently();
+    if(sdkHung) trail("pull-fast","this phone's connection hangs: reading over HTTPS");
     try{
-      const metaSnap=await withTimeout(getDoc(refs.meta),READ_LIMIT_MS,"pull-timeout");
+      const metaSnap=sdkHung?await restMetaSnap(refs.user,uid):await withTimeout(getDoc(refs.meta),READ_LIMIT_MS,"pull-timeout");
       if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
       if(metaSnap.metadata?.fromCache){ trail("pull-unreachable","answered from device copy"); if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
       cloudVersion=metaSnap.exists()?(metaSnap.data().v||null):null;
-    }catch(e){ cloudVersion=null; if(e?.code==="pull-timeout"||e?.code==="unavailable") sdkHung=true; }
+    }catch(e){ cloudVersion=null; if(e?.code==="pull-timeout"||e?.code==="unavailable"){ sdkHung=true; rememberSdkHung(); } }
     const fullAt=Number(localStorage.getItem(FULL_PULL_KEY)||0);
     // A device with no synced copy of its own (just wiped) always reads the whole doc.
     if(!force && cloudVersion && lastSyncedData()!==null && cloudVersion===localStorage.getItem(VERSION_KEY) && Date.now()-fullAt<FULL_PULL_EVERY){
@@ -258,7 +275,7 @@ export async function pullFromCloud({ force=false }={}){
     markPulled(stored);
     // Accounts from before the version doc get one now, so the next page
     // load can skip the big read.
-    if(!cloudVersion){
+    if(!cloudVersion && !sdkHung){
       cloudVersion=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
       try{ await withTimeout(setDoc(refs.meta,{v:cloudVersion,updatedAt:serverTimestamp()}),READ_LIMIT_MS,"pull-timeout"); }catch(e){ cloudVersion=null; }
     }
