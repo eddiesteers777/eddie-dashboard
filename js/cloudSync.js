@@ -14,6 +14,7 @@ import { db } from "./firebase.js";
 import { waitForUser, getCurrentUser } from "./auth.js";
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { mergeSyncedValue } from "./syncMerge.js";
+import { trail } from "./signInTrail.js";
 import { hasPulled, NOT_PULLED_ERROR, UNREACHABLE_ERROR } from "./syncGuard.js";
 
 const EXACT_KEYS = ["training-progress","training-overrides","featured-training-categories","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","strength-settings","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks","coach-health-reviewed","coach-queue-done","coach-pinned-chats","session-rpe","race-results","athlete-model","coach-athlete-model","workout-shares","water-presets"];
@@ -167,18 +168,21 @@ export async function pullFromCloud({ force=false }={}){
     const refs=await syncDocs();
     if(!refs){ saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:"not-signed-in"}); return {ok:false,applied:0}; }
     uid=refs.uid;
-    if(isOffline()){ emit("offline"); return {ok:false,applied:0,offline:true}; }
+    trail("pull-start",force?"forced":"page load");
+    if(isOffline()){ trail("pull-offline","no network"); emit("offline"); return {ok:false,applied:0,offline:true}; }
     emit("syncing");
     // Nothing new in the cloud since this device last read it: skip the big read.
     let cloudVersion=null;
     try{
       const metaSnap=await getDoc(refs.meta);
       if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
-      if(metaSnap.metadata?.fromCache){ if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
+      if(metaSnap.metadata?.fromCache){ trail("pull-unreachable","answered from device copy"); if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
       cloudVersion=metaSnap.exists()?(metaSnap.data().v||null):null;
     }catch(e){ cloudVersion=null; }
     const fullAt=Number(localStorage.getItem(FULL_PULL_KEY)||0);
-    if(!force && cloudVersion && cloudVersion===localStorage.getItem(VERSION_KEY) && Date.now()-fullAt<FULL_PULL_EVERY){
+    // A device with no synced copy of its own (just wiped) always reads the whole doc.
+    if(!force && cloudVersion && lastSyncedData()!==null && cloudVersion===localStorage.getItem(VERSION_KEY) && Date.now()-fullAt<FULL_PULL_EVERY){
+      trail("pull-skipped","cloud unchanged");
       markPulledUid(uid);
       saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
       emit(hasLocalChanges()?"pending":"synced");
@@ -186,8 +190,9 @@ export async function pullFromCloud({ force=false }={}){
     }
     const snap=await getDoc(refs.data);
     if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
-    if(snap.metadata?.fromCache){ if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
+    if(snap.metadata?.fromCache){ trail("pull-unreachable","answered from device copy"); if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
     if(!snap.exists()){
+      trail("pull-nodoc","no cloud copy yet");
       markPulled({});
       markPulledUid(uid);
       saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
@@ -239,12 +244,14 @@ export async function pullFromCloud({ force=false }={}){
     markPulledUid(uid);
     saveSyncMeta({lastSyncedAt:Date.now(),lastError:null});
     emit(hasLocalChanges()?"pending":"synced");
+    trail("pull-done","applied "+applied);
     if(applied) console.log(`☁️ Pulled ${applied} item(s) from the cloud.`);
     return {ok:true,applied};
   }catch(error){
     if(uid && !currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:error.code||error.message||"pull-failed"});
     emit(isOffline()?"offline":"error");
+    trail("pull-error",error.code||error.message||"error");
     console.error("Cloud sync (pull) error:",error); return {ok:false,applied:0};
   }
 }
