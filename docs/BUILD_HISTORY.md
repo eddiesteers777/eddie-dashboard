@@ -803,3 +803,5 @@ Eddie's `?signincheck` box showed "pull-start" on every page and never a result:
 
 ## 2026-11-07: remember a hanging connection (branch claude/project-thread-ujgtzu-fast, not merged)
 After the sync read gained its HTTPS fallback, each page load still waited out the 12 s limit first. A device that hits the hang now records `__cloudSyncSdkHungAt` (device-only, one day) and later pulls read the version and the doc over HTTPS straight away (trail: "pull-fast"). Sandbox, SDK blocked: second load restored the data in about 0.5 s. No rules change.
+## 2026-11-07: soccer page, option B pick-your-path
+soccer.html rebuilt from the audit (mock-ups in project files soccer-audit/): 1-on-1 / Group switch, steps, labelled example times, FAQ drop-downs, Playbook door. Towns, in-person/remote, ages and prices stay hidden until Eddie supplies them. No rules change. Checked at 390 and 1280 px, both panels, no sideways scroll, no page errors. Not run: rules emulator, a11y, smoke.
