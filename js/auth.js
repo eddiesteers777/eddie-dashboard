@@ -21,6 +21,12 @@ try {
     if (ask === "off") sessionStorage.removeItem("sb-signincheck");
     else if (ask !== null) sessionStorage.setItem("sb-signincheck", "1");
     if (sessionStorage.getItem("sb-signincheck") === "1") import("./signInCheck.js").catch(() => {});
+    // The Home Screen app has no address bar to type ?signincheck into: show the readout there on its own
+    // once a sign-in has been tried on this device.
+    else if ((matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)
+        && JSON.parse(localStorage.getItem("sb-signin-trail") || "[]").some(e => e[2] === "login-start" || e[2] === "bounce")) {
+        import("./signInCheck.js").catch(() => {});
+    }
 } catch { /* storage unavailable */ }
 
 const provider = new GoogleAuthProvider();
