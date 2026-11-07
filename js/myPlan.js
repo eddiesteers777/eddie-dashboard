@@ -23,7 +23,7 @@ import { listMyPlans, markPlanViewed, acknowledgePlan } from "./coachingPlans.js
 import { planWeekFor, shortDay, isoDate, planDateRange, mondayOf, addDays } from "./coachingPlanModel.js";
 import { buildWeek } from "./weekModel.js";
 import { weekInputs, loadSessions } from "./weekData.js";
-import { weekListHtml, summaryLine, bindWeekActions } from "./weekView.js";
+import { weekListHtml, workoutCardHtml, summaryLine, bindWeekActions } from "./weekView.js";
 import { weekRidgeHtml } from "./weekRidge.js";
 import { monthGrid, shiftMonth, firstOfMonth, cellLabel, monthSummaryLine } from "./monthModel.js";
 import { getMyClientRecord } from "./clientRecords.js";
@@ -163,8 +163,11 @@ function renderPlan() {
         ${changeRequestsHtml(state.requests, currentCoach()?.coachName || "Your coach")}`;
         return;
     }
+    const todayDay = week.days.find(d => d.isToday && d.items.length);
+    const todayHtml = todayDay ? `<section class="myplan-today" aria-label="Today"><p class="myplan-today-label">Today · ${esc(shortDay(todayDay.date))}</p><div class="wk-today-cards">${todayDay.items.map(workoutCardHtml).join("")}</div></section>` : "";
     $("planBody").innerHTML = `
         ${overview}
+        ${todayHtml}
         <section class="clients-card myplan-week">
             ${toggle}
             <div class="wk-nav">
@@ -179,7 +182,7 @@ function renderPlan() {
             ${atEdge ? `<p class="clients-card-note myplan-window">${icon("lock")} ${esc(plan?.coachName || "Your coach")} shares your plan two weeks at a time. The next week opens as this one goes by.</p>` : ""}
             ${week.summary.planned || week.summary.sessions ? `<p class="myplan-progress">${esc(summaryLine(week.summary))}</p>` : ""}
             ${week.summary.planned || week.summary.sessions ? weekRidgeHtml(week, { id: "myplan-ridge" }) : ""}
-            ${weekListHtml(week)}
+            ${weekListHtml(week, { skipToday: !!todayDay })}
             <div class="myplan-foot">
                 <p class="clients-card-note myplan-hint">Tap ${icon("check")} to mark a workout done, ${icon("moreVertical")} to move or skip it.</p>
                 <div class="myplan-foot-actions">
