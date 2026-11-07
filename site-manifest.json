@@ -360,6 +360,7 @@
     "js/seventyFivePage.js",
     "js/signInCheck.js",
     "js/signInErrors.js",
+    "js/signInRetry.js",
     "js/signInTrail.js",
     "js/slotBookings.js",
     "js/soccerBooking.js",

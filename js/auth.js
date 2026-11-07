@@ -14,6 +14,7 @@ import {
 
 import { prewarmGoogleSignIn, googleSignInReady, requestGoogleAccessToken } from "./googleSignIn.js";
 import { trail } from "./signInTrail.js";
+import { retryOnNetworkError } from "./signInRetry.js";
 
 // ?signincheck shows the sign-in steps on screen (js/signInCheck.js).
 try {
@@ -322,7 +323,11 @@ export async function login() {
             // Google's own window: no firebaseapp.com page, which iPhone Safari can't finish.
             const accessToken = await requestGoogleAccessToken();
             trail("google-token", "received");
-            await signInWithCredential(auth, GoogleAuthProvider.credential(null, accessToken));
+            // The first request after Google's window closes can be dropped on iPhone: try again before giving up.
+            await retryOnNetworkError(
+                () => signInWithCredential(auth, GoogleAuthProvider.credential(null, accessToken)),
+                { onRetry: n => trail("login-retry", "network, try " + (n + 1)) }
+            );
         } else {
             await signInWithPopup(auth, provider);
         }

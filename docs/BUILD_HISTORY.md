@@ -815,3 +815,6 @@ Premium spec rule 2: the soccer screens' own panel classes (`.hw-card`, `.hw-pre
 
 ## 2026-11-07: request sheet polish (branch claude/project-thread-e71w2z, not merged)
 The client Sessions page already had the day strip, kind switch, time grid with "N left", waitlist and request sheet, so most of the round 2 booking mock-up existed. Only the request sheet changed: the two modes are a segmented control and Send Request is full width (css/schedule.css, markup untouched, so the JS is unchanged). Checked at 390 px with a seeded coach and three slots. Not run: recurring flow click-through, desktop, rules emulator, a11y, smoke.
+
+## 2026-11-07: retry the sign-in call after a dropped request (branch claude/project-thread-ujgtzu-retry, not merged)
+Home Screen app readout: Google's token arrived, then `signInWithCredential` failed with `auth/network-request-failed` the same second, so sign-in never held. Cause of the drop is not proven (iOS can drop the first request after the app returns from Google's window). `js/signInRetry.js` (`tests/signInRetry.test.mjs`) retries that one call after 0.9 s and 1.8 s; trail step "login-retry". No rules change.
