@@ -1,0 +1,41 @@
+/* Soccer page: pick-your-path switch, steps, example times, questions. Tones follow the foggy blue public look:
+   mist for the options, a deeper blue for booking, gold only on small labels. Tokens only. */
+.sp-pick,.sp-faq,.sp-playbook{padding-top:clamp(32px,5vw,64px);padding-bottom:clamp(32px,5vw,64px)}
+.sp-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;max-width:420px;margin:0 0 28px;border:1px solid var(--border);border-radius:14px;background:rgba(24,36,48,.5)}
+.sp-seg-btn{min-height:48px;border:0;border-radius:10px;background:none;color:var(--text);font:600 15px var(--font-body);cursor:pointer}
+.sp-seg-btn[aria-pressed="true"]{background:var(--cream);color:var(--on-primary)}
+.sp-seg-btn:focus-visible,.sp-acc summary:focus-visible{outline:2px solid var(--gold,var(--primary));outline-offset:2px}
+.sp-panel[hidden]{display:none}
+.sp-cols{display:grid;gap:28px}
+@media(min-width:860px){.sp-cols{grid-template-columns:1.1fr .9fr;gap:56px;align-items:start}}
+.sp-panel h2{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:clamp(30px,4.6vw,46px);line-height:1.05;margin:0 0 12px}
+.sp-lead{color:var(--text-secondary);font-size:17px;max-width:34em;margin:0 0 16px}
+.sp-chips{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px;padding:0}
+.sp-chips li{border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:14px}
+.sp-steps{list-style:none;margin:0;padding:0;counter-reset:sp}
+.sp-steps li{position:relative;padding:0 0 22px 54px;counter-increment:sp}
+.sp-steps li::before{content:counter(sp);position:absolute;left:0;top:0;width:36px;height:36px;border:1px solid var(--primary);border-radius:50%;display:grid;place-items:center;font:600 14px var(--font-mono);color:var(--primary)}
+.sp-steps li::after{content:"";position:absolute;left:17px;top:42px;bottom:6px;width:1px;background:var(--border)}
+.sp-steps li:last-child::after{display:none}
+.sp-steps b{display:block;font:600 18px var(--font-body);margin-bottom:2px}
+.sp-steps span{color:var(--text-secondary);font-size:15px}
+.sp-times{border:1px solid rgba(199,214,228,.3);border-radius:16px;padding:20px;background:linear-gradient(180deg,rgba(70,100,130,.45),rgba(30,45,60,.4))}
+.sp-times h3{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:24px;margin:8px 0 4px}
+.sp-ex{display:inline-block;font:600 11px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text-secondary)}
+.sp-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border);font-size:16px}
+.sp-row small{display:block;color:var(--text-secondary);font-size:13px}
+.sp-pill{border:1px solid var(--border);border-radius:6px;padding:8px 14px;font:600 14px var(--font-body);color:var(--text-secondary)}
+.sp-note{margin:10px 0 0;color:var(--text-secondary);font-size:14px}
+.sp-faq{border-top:1px solid rgba(210,173,98,.25);background:linear-gradient(180deg,rgba(210,173,98,.06),transparent)}
+.sp-acc{border-top:1px solid var(--border);max-width:46em}
+.sp-acc details{border-bottom:1px solid var(--border)}
+.sp-acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:56px;padding:12px 0;font:600 18px var(--font-body)}
+.sp-acc summary::-webkit-details-marker{display:none}
+.sp-acc summary::after{content:"+";font:400 26px var(--font-mono);color:var(--gold,var(--primary));transition:transform .2s}
+.sp-acc details[open] summary::after{transform:rotate(45deg)}
+.sp-acc details p{margin:0 0 18px;color:var(--text-secondary);font-size:16px;max-width:40em}
+.sp-more{margin:18px 0 0;color:var(--text-secondary)}
+.sp-pb-card{border:1px solid rgba(210,173,98,.4);border-radius:16px;padding:22px;background:rgba(10,16,22,.35);max-width:560px}
+.sp-pb-card h2{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:28px;margin:0 0 8px}
+.sp-pb-card p{color:var(--text-secondary);margin:0 0 16px}
+@media(prefers-reduced-motion:reduce){.sp-acc summary::after{transition:none}}

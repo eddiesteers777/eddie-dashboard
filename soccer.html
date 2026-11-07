@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="css/public.css">
     <link rel="stylesheet" href="css/publicLook.css">
     <link rel="stylesheet" href="css/publicFog.css">
+    <link rel="stylesheet" href="css/soccerPage.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c2834">
@@ -41,8 +42,8 @@
 
         <section class="pub-hero">
             <div class="pub-hero-kicker">Soccer Training</div>
-            <h1>1-on-1 or group soccer training.</h1>
-            <p>Book a time that works, train, and see your upcoming sessions right in your app.</p>
+            <h1>Pick how you want to train.</h1>
+            <p>1-on-1 or small group. Book a time, train, and see your sessions and homework in your app.</p>
             <div class="pub-hero-actions">
                 <div class="pub-cta-actions">
                     <a href="start.html" class="pub-btn-primary">Apply Now</a>
@@ -55,43 +56,87 @@
             <img src="images/offer-soccer-1on1-1280.webp" srcset="images/offer-soccer-1on1-800.webp 800w, images/offer-soccer-1on1-1280.webp 1280w" sizes="100vw" width="1280" height="800" fetchpriority="high" decoding="async" alt="" onerror="this.parentNode.remove()">
         </div>
 
-        <section class="pub-section">
-            <h2 class="sr-only">Soccer options</h2>
-            <div class="pub-grid">
-                <div class="pub-card">
-                    <div class="pub-card-icon" data-icon="footprint"></div>
-                    <h3>1-on-1 Soccer</h3>
-                    <p>Focused individual training built around your skill level and goals.</p>
-                    <ul>
-                        <li>Personalized session focus</li>
-                        <li>Flexible scheduling around your availability</li>
-                        <li>Session notes after every training</li>
-                    </ul>
+        <section class="pub-section sp-pick" id="options">
+            <div class="sp-seg" role="group" aria-label="Choose a soccer option">
+                <button type="button" class="sp-seg-btn" data-panel="solo" aria-pressed="true">1-on-1</button>
+                <button type="button" class="sp-seg-btn" data-panel="group" aria-pressed="false">Group</button>
+            </div>
+
+            <div class="sp-panel" id="sp-solo">
+                <div class="sp-cols">
+                    <div>
+                        <h2>Individual, built around you</h2>
+                        <p class="sp-lead">One player, one focus per session. Technique, speed and match fitness, with a short note after every training.</p>
+                        <ul class="sp-chips" aria-label="Typical focus">
+                            <li>First touch</li><li>Finishing</li><li>Speed</li><li>Decisions</li>
+                        </ul>
+                        <ol class="sp-steps">
+                            <li><b>Apply</b><span>A few taps, then sign in with Google.</span></li>
+                            <li><b>I review it</b><span>You hear back from me.</span></li>
+                            <li><b>Pick a time</b><span>Open times show in the app. I confirm each request.</span></li>
+                            <li><b>Train, then read the note</b><span>Homework drills show up in the app.</span></li>
+                        </ol>
+                    </div>
+                    <aside class="sp-times" aria-label="Example of open times">
+                        <span class="sp-ex">Example times</span>
+                        <h3>Open times</h3>
+                        <div class="sp-row"><span>Tue 5:30 PM<small>1-on-1</small></span><span class="sp-pill">Request</span></div>
+                        <div class="sp-row"><span>Thu 6:00 PM<small>1-on-1</small></span><span class="sp-pill">Request</span></div>
+                        <p class="sp-note">Approved players see my real open times in the app.</p>
+                    </aside>
                 </div>
-                <div class="pub-card">
-                    <div class="pub-card-icon" data-icon="users"></div>
-                    <h3>Group Soccer</h3>
-                    <p>Small-group sessions for players who want competition and community alongside coaching.</p>
-                    <ul>
-                        <li>Limited spots per session</li>
-                        <li>Skills, small-sided games, and conditioning</li>
-                        <li>Book directly into open group times</li>
-                    </ul>
+            </div>
+
+            <div class="sp-panel" id="sp-group" hidden>
+                <div class="sp-cols">
+                    <div>
+                        <h2>Small groups, real games</h2>
+                        <p class="sp-lead">Limited spots per session. Skills, small-sided games and conditioning, with players who push each other.</p>
+                        <ul class="sp-chips" aria-label="What a group covers">
+                            <li>Competition</li><li>Small-sided games</li><li>Fitness</li>
+                        </ul>
+                        <ol class="sp-steps">
+                            <li><b>Apply</b><span>Tell me the player's level.</span></li>
+                            <li><b>Pick an open group time</b><span>A full time has a waitlist.</span></li>
+                            <li><b>Train</b><span>A short note after each session.</span></li>
+                        </ol>
+                    </div>
+                    <aside class="sp-times" aria-label="Example of open times">
+                        <span class="sp-ex">Example times</span>
+                        <h3>Open times</h3>
+                        <div class="sp-row"><span>Thu 6:00 PM<small>Group, spots open</small></span><span class="sp-pill">Request</span></div>
+                        <div class="sp-row"><span>Sat 9:00 AM<small>Group, full</small></span><span class="sp-pill">Waitlist</span></div>
+                        <p class="sp-note">Approved players see my real open times in the app.</p>
+                    </aside>
                 </div>
             </div>
         </section>
 
-        <section class="pub-section">
-            <div class="pub-section-head">
-                <h2>Booking</h2>
-                <p>Once you're approved, you'll be able to see open times and request a session — single sessions or a recurring weekly spot.</p>
+        <section class="pub-section sp-faq">
+            <p class="pub-hero-kicker">Questions</p>
+            <div class="sp-acc">
+                <details><summary>Who is it for?</summary><p>Players who want more touches and better habits. Tell me their level when you apply: rec, school, club or travel.</p></details>
+                <details><summary>How does booking work?</summary><p>Once you are approved you see open times in the app. You request a single session or a weekly spot, and I confirm each one.</p></details>
+                <details><summary>Do I get feedback after a session?</summary><p>Yes. Every session ends with a short note, and homework drills show up in the app.</p></details>
+                <details><summary>Where do sessions happen?</summary><p>I'm based in Pelham, Alabama, and coach players across the Birmingham metro area. Ask me about a specific location.</p></details>
+                <!-- [CONFIRM: SERVICE AREA TOWNS], [CONFIRM: IN-PERSON / REMOTE], ages and prices stay out until Eddie supplies them. -->
+            </div>
+            <p class="sp-more">Something else? <a href="contact.html?about=soccer_1on1">Ask me here</a>.</p>
+        </section>
+
+        <section class="pub-section sp-playbook">
+            <div class="sp-pb-card">
+                <p class="pub-hero-kicker">Free for coaches</p>
+                <h2>The Southbound Playbook</h2>
+                <p>Tactical board, drills, practice planner and team tools. No account needed.</p>
+                <a href="playbook.html" class="pub-btn-secondary">Open the Playbook</a>
             </div>
         </section>
 
         <section class="pub-section">
             <div class="pub-cta-band">
                 <h2>Ready to train?</h2>
-                <p>Apply below and let me know which soccer option you're interested in.</p>
+                <p>Apply and tell me which soccer option you want.</p>
                 <a href="start.html" class="pub-btn-primary">Apply Now</a>
             </div>
         </section>
@@ -119,6 +164,7 @@
     <script type="module" src="js/loadPublicHeader.js"></script>
 
     <script type="module" src="js/publicLook.js"></script>
+    <script type="module" src="js/soccerPage.js"></script>
 </body>
 
 </html>
