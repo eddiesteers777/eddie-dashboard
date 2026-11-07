@@ -805,3 +805,14 @@ html.sb-typing .dr-tray{display:none}
 :root:not(.pb-light) .pb-subtab[aria-current="page"]{border-color:#D2AD62;color:#D2AD62}
 :root:not(.pb-light) .dr-pick[aria-pressed="true"]{background:var(--pb-sel-bg);border-color:transparent}
 .dr-row .dr-card{animation:none}
+
+/* Hub "Continue" card: glass, one tap back to the practice in progress (hidden when there isn't one) */
+.pb-continue{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;margin:0 0 18px;padding:14px 16px;border:1px solid var(--pb-line);border-radius:18px;background:var(--pb-raise-bg,var(--pb-card));box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36);color:var(--pb-text);text-decoration:none;min-height:44px}
+.pb-continue[hidden]{display:none}
+.pb-continue-k{grid-column:1;font:600 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-act)}
+.pb-continue b{grid-column:1;font:700 20px var(--font-display);text-transform:uppercase;letter-spacing:.01em}
+.pb-continue small{grid-column:1;color:var(--pb-muted);font-size:13px}
+.pb-continue .ph-row-go{grid-column:2;grid-row:1 / span 3;font-size:24px;color:var(--pb-muted)}
+:root:not(.pb-light) .pb-continue{background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72));border-color:rgba(210,173,98,.5)}
+.pb-continue:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
+@media print{.pb-continue{display:none!important}}

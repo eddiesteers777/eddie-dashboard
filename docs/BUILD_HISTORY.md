@@ -818,3 +818,6 @@ The client Sessions page already had the day strip, kind switch, time grid with 
 
 ## 2026-11-07: retry the sign-in call after a dropped request (branch claude/project-thread-ujgtzu-retry, not merged)
 Home Screen app readout: Google's token arrived, then `signInWithCredential` failed with `auth/network-request-failed` the same second, so sign-in never held. Cause of the drop is not proven (iOS can drop the first request after the app returns from Google's window). `js/signInRetry.js` (`tests/signInRetry.test.mjs`) retries that one call after 0.9 s and 1.8 s; trail step "login-retry". No rules change.
+
+## 2026-11-07: Playbook hub "Continue" card (branch claude/project-thread-e71w2z, not merged)
+playbook.html shows a glass Continue card (title, minutes, drill count, date) when the current practice (sb-playbook-practice) has drills in it; one tap opens the planner. Hidden otherwise, so a new device sees the hub exactly as before. Pure js/playbook/continueModel.js + tests/playbookContinue.test.mjs. No new storage key, no rules change. Checked at 390 and 1280 px with and without a practice, tap goes to the planner. Not run: rules emulator, a11y, smoke.

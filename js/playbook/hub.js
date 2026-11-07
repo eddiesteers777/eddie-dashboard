@@ -1,6 +1,20 @@
 import "./shell.js";
 import { glance, dayLabel } from "./glance.js";
 import { KIND_LABELS } from "./teamModel.js";
+import { continueCard } from "./continueModel.js";
+import { KEYS } from "./store.js";
+
+// A practice you started and have not cleared: one tap back to it.
+try {
+    const c = continueCard(localStorage.getItem(KEYS.practice));
+    const el = document.getElementById("continue");
+    if (c && el) {
+        el.href = c.href;
+        document.getElementById("contTitle").textContent = c.title;
+        document.getElementById("contMeta").textContent = c.meta;
+        el.hidden = false;
+    }
+} catch { /* storage unavailable: no card */ }
 
 const g = glance();
 const box = document.getElementById("glance");
