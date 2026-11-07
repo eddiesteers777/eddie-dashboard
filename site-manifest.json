@@ -394,6 +394,7 @@
     "js/svgCharts.js",
     "js/syncGuard.js",
     "js/syncMerge.js",
+    "js/syncTimeout.js",
     "js/thisWeekCard.js",
     "js/todayClient.js",
     "js/todayColumns.js",

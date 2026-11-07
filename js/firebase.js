@@ -41,7 +41,10 @@ const auth = getAuth(app);
 let db;
 try {
   db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
+    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }),
+    // Some phones and networks stall Firestore's streaming connection with no error (2026-11-07,
+    // iPhone Safari: the sync read never answered). This lets it fall back to plain requests.
+    experimentalAutoDetectLongPolling: true
   });
 } catch (error) {
   console.warn("Southbound: offline copy unavailable, using memory only.", error);
@@ -66,5 +69,8 @@ async function clearOfflineCopy() {
   }
 }
 
+// Plain HTTPS address for the one read js/cloudSync.js falls back to when the SDK's connection hangs.
+const firestoreRestBase = "https://firestore.googleapis.com/v1/projects/eddie-s-dashboard/databases/(default)/documents";
+
 // Export for use in other files
-export { app, auth, db, clearOfflineCopy };
+export { app, auth, db, clearOfflineCopy, firestoreRestBase };

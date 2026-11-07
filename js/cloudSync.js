@@ -10,11 +10,12 @@
 // connection comes back); nothing is sent or read while offline.
 // Status for the page (the offline/sync indicator, the header's sync
 // button) goes out as a "sb:sync-status" event: { state, pending, lastSyncedAt }.
-import { db } from "./firebase.js";
+import { db, firestoreRestBase } from "./firebase.js";
 import { waitForUser, getCurrentUser } from "./auth.js";
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { mergeSyncedValue } from "./syncMerge.js";
 import { trail } from "./signInTrail.js";
+import { withTimeout, parseSyncDocRest, READ_LIMIT_MS, WRITE_LIMIT_MS } from "./syncTimeout.js";
 import { hasPulled, NOT_PULLED_ERROR, UNREACHABLE_ERROR } from "./syncGuard.js";
 
 const EXACT_KEYS = ["training-progress","training-overrides","featured-training-categories","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","strength-settings","gear-shoes","strength-history","running-log","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks","coach-health-reviewed","coach-queue-done","coach-pinned-chats","session-rpe","race-results","athlete-model","coach-athlete-model","workout-shares","water-presets"];
@@ -157,6 +158,21 @@ function emit(state){
 }
 export function currentSyncState(){ return currentState; }
 
+// The sync doc read over plain HTTPS (Firestore REST) with the signed-in user's token, shaped like
+// the snapshot the pull below expects. Only used when the SDK's own read hangs.
+async function restSnap(user,uid){
+  const token=await user.getIdToken();
+  const response=await withTimeout(fetch(`${firestoreRestBase}/users/${uid}/sync/localStorage`,{headers:{Authorization:`Bearer ${token}`}}),READ_LIMIT_MS,"pull-timeout");
+  if(response.status===404) return {exists:()=>false,data:()=>undefined,metadata:{fromCache:false}};
+  if(!response.ok){ throw Object.assign(new Error("rest-"+response.status),{code:"rest-"+response.status}); }
+  const parsed=parseSyncDocRest(await response.json());
+  return {
+    exists:()=>parsed.exists,
+    metadata:{fromCache:false},
+    data:()=>({data:parsed.data,keyUpdatedAt:parsed.keyUpdatedAt,updatedAt:{toMillis:()=>parsed.updatedAtMs}})
+  };
+}
+
 // Returns {ok, applied} rather than a bare boolean so a caller can
 // tell whether the pull actually changed anything locally (applied >
 // 0) versus this device already being current -- used to decide
@@ -173,12 +189,13 @@ export async function pullFromCloud({ force=false }={}){
     emit("syncing");
     // Nothing new in the cloud since this device last read it: skip the big read.
     let cloudVersion=null;
+    let sdkHung=false;
     try{
-      const metaSnap=await getDoc(refs.meta);
+      const metaSnap=await withTimeout(getDoc(refs.meta),READ_LIMIT_MS,"pull-timeout");
       if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
       if(metaSnap.metadata?.fromCache){ trail("pull-unreachable","answered from device copy"); if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
       cloudVersion=metaSnap.exists()?(metaSnap.data().v||null):null;
-    }catch(e){ cloudVersion=null; }
+    }catch(e){ cloudVersion=null; if(e?.code==="pull-timeout"||e?.code==="unavailable") sdkHung=true; }
     const fullAt=Number(localStorage.getItem(FULL_PULL_KEY)||0);
     // A device with no synced copy of its own (just wiped) always reads the whole doc.
     if(!force && cloudVersion && lastSyncedData()!==null && cloudVersion===localStorage.getItem(VERSION_KEY) && Date.now()-fullAt<FULL_PULL_EVERY){
@@ -188,7 +205,16 @@ export async function pullFromCloud({ force=false }={}){
       emit(hasLocalChanges()?"pending":"synced");
       return {ok:true,applied:0,skipped:true};
     }
-    const snap=await getDoc(refs.data);
+    let snap;
+    try{
+      if(sdkHung) throw Object.assign(new Error("pull-timeout"),{code:"pull-timeout"});
+      snap=await withTimeout(getDoc(refs.data),READ_LIMIT_MS,"pull-timeout");
+    }catch(e){
+      if(e?.code!=="pull-timeout"&&e?.code!=="unavailable") throw e;
+      // The SDK's connection hung: read the same doc over plain HTTPS.
+      trail("pull-fallback","reading over HTTPS");
+      snap=await restSnap(refs.user,refs.uid);
+    }
     if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     if(snap.metadata?.fromCache){ trail("pull-unreachable","answered from device copy"); if(!isOffline()) saveSyncMeta({lastSyncedAt:getSyncStatus().lastSyncedAt,lastError:UNREACHABLE_ERROR}); emit("offline"); return {ok:false,applied:0,offline:true}; }
     if(!snap.exists()){
@@ -234,7 +260,7 @@ export async function pullFromCloud({ force=false }={}){
     // load can skip the big read.
     if(!cloudVersion){
       cloudVersion=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
-      try{ await setDoc(refs.meta,{v:cloudVersion,updatedAt:serverTimestamp()}); }catch(e){ cloudVersion=null; }
+      try{ await withTimeout(setDoc(refs.meta,{v:cloudVersion,updatedAt:serverTimestamp()}),READ_LIMIT_MS,"pull-timeout"); }catch(e){ cloudVersion=null; }
     }
     if(!currentAccountIs(uid)) return {ok:false,applied:0,stale:true};
     try{
@@ -303,7 +329,8 @@ export async function pushToCloud({ force=false }={}){
     // (unfinished fueling plans, saved plans, the fueling profile) merge
     // instead of overwriting when both sides changed (js/syncMerge.js).
     const agreed=lastSyncedData()||{};
-    const result=await runTransaction(db,async tx=>{
+    trail("push-start",changed.length+" keys");
+    const result=await withTimeout(runTransaction(db,async tx=>{
       const snap=await tx.get(refs.data);
       const existing=snap.exists()?(snap.data()||{}):{};
       const cloudData={...(existing.data||{})};
@@ -329,7 +356,8 @@ export async function pushToCloud({ force=false }={}){
       tx.set(refs.data,{data:cloudData,keyUpdatedAt:cloudTimes,updatedAt:serverTimestamp()});
       tx.set(refs.meta,{v:version,updatedAt:serverTimestamp()});
       return {data:cloudData,times:cloudTimes};
-    });
+    }),WRITE_LIMIT_MS,"push-timeout");
+    trail("push-done",changed.length+" keys");
     if(!currentAccountIs(uid)) return false;
     const finalTimes=result.times;
     const nowTimes=getKeyTimes();
