@@ -800,3 +800,6 @@ Eddie's iPhone Safari was signed in but showed the blank template plan until he 
 
 ## 2026-11-07: sync read that hangs on iPhone (branch claude/project-thread-ujgtzu-hang, not merged)
 Eddie's `?signincheck` box showed "pull-start" on every page and never a result: the SDK's cloud read hung with no error, so the phone kept its empty copy. Fix: `js/syncTimeout.js` (pure, `tests/syncTimeout.test.mjs`) gives each read a 12 s limit and the push 25 s; when the SDK read times out or says "unavailable", `js/cloudSync.js` reads the same doc over Firestore REST with the user's token (`firestoreRestBase` in `js/firebase.js`) and applies it as usual; Firestore also gets `experimentalAutoDetectLongPolling`. Sandbox: with the SDK connection blocked, a fresh device still restored everything through the REST read. Push has no REST fallback (it errors "push-timeout" instead). No rules change.
+
+## 2026-11-07: remember a hanging connection (branch claude/project-thread-ujgtzu-fast, not merged)
+After the sync read gained its HTTPS fallback, each page load still waited out the 12 s limit first. A device that hits the hang now records `__cloudSyncSdkHungAt` (device-only, one day) and later pulls read the version and the doc over HTTPS straight away (trail: "pull-fast"). Sandbox, SDK blocked: second load restored the data in about 0.5 s. No rules change.
