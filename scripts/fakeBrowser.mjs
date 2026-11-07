@@ -33,6 +33,7 @@ export const browserLocalPersistence = {};
 export class GoogleAuthProvider { setCustomParameters() {} }
 export const onAuthStateChanged = (a, cb) => { setTimeout(() => cb(user), 0); return () => {}; };
 export const signInWithPopup = async () => ({ user });
+export const signInWithCredential = async () => ({ user });
 export const signOut = async () => {};`;
 const fakeFirestore = (docs, lists = {}) => `
 const DOCS = ${JSON.stringify(docs)};

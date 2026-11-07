@@ -184,7 +184,7 @@ export const ACCENTS = {
     "": { ac: "#C7D6E4", glow: "#2B4256" },
     running: { ac: "#8FC3EE", glow: "#27445F" },
     strength: { ac: "#A9A7E3", glow: "#35335A" },
-    soccer: { ac: "#8FD0B2", glow: "#244A44" },
+    soccer: { ac: "#9FD3E6", glow: "#23495B" },
     general: { ac: "#E3C3A0", glow: "#4A3F36" }
 };
 export const accentFor = a => ACCENTS[cleanStart(a).sport] || ACCENTS[""];

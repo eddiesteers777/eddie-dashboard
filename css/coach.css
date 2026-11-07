@@ -708,14 +708,21 @@
 .coach-plans [hidden]{ display:none !important; }
 @media print{ body.print-one-plan *{ visibility:hidden; } body.print-one-plan .coach-plan.print-me, body.print-one-plan .coach-plan.print-me *{ visibility:visible; color:#000; } body.print-one-plan .coach-plan.print-me{ position:absolute; left:0; top:0; width:100%; background:#fff; border:0; } .coach-plan-btns{ display:none !important; } }
 
-/* Invite link maker (js/coachInvite.js) */
-.coach-invite{ margin-bottom:22px; }
+/* Invite link maker (js/coachInvite.js): one raised card, gold on the chosen sport and the main button */
+.coach-invite{ margin-bottom:22px; padding:18px; border-radius:var(--radius); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
 .coach-invite [hidden]{ display:none!important; }
-.ci-lab{ display:block; margin:12px 0 6px; font-size:14px; color:var(--text-secondary); }
+.coach-invite .coach-queue-head{ margin-bottom:6px; }
+.ci-lab{ display:block; margin:14px 0 6px; font:500 11px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
+.coach-invite .clients-search{ width:100%; box-sizing:border-box; min-height:48px; margin:0; }
 .ci-sports{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.ci-sport{ min-height:48px; border-radius:var(--radius-pill); border:1px solid var(--border,rgba(255,255,255,.14)); background:transparent; color:var(--text); font:600 15px var(--font-body); cursor:pointer; }
-.ci-sport.on{ border-color:var(--gold,var(--primary)); box-shadow:0 0 0 1px var(--gold,var(--primary)); }
-.ci-out{ margin:12px 0; padding:12px 14px; border-radius:10px; border:1px solid var(--border,rgba(255,255,255,.14)); font:500 13px/1.5 var(--font-mono); word-break:break-all; }
-.ci-out.ci-empty{ color:var(--text-secondary); font-family:var(--font-body); }
-.ci-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.ci-sport{ min-height:48px; border-radius:var(--radius); border:1px solid var(--sb-bubble-raised-border); background:var(--sb-bubble-dark-bg); box-shadow:var(--sb-bubble-dark-shadow); color:var(--text); font:600 15px var(--font-body); cursor:pointer; transition:border-color .18s ease; }
+.ci-sport:hover{ border-color:var(--gold,var(--primary)); }
+.ci-sport.on{ border-color:var(--gold,var(--primary)); box-shadow:0 0 0 1px var(--gold,var(--primary)), var(--sb-bubble-dark-shadow); }
+.ci-sport:focus-visible{ outline:2px solid var(--gold,var(--primary)); outline-offset:2px; }
+.ci-out{ margin:14px 0; padding:12px 14px; border-radius:var(--radius); background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); font:500 12.5px/1.5 var(--font-mono); word-break:break-all; color:var(--text); }
+.ci-out.ci-empty{ color:var(--text-secondary); font-family:var(--font-body); font-size:14px; }
+.ci-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
 .ci-row .sb-btn{ flex:1 1 140px; }
+.coach-invite .sb-btn-primary{ background:var(--gold,var(--primary)); color:var(--on-primary); }
+.coach-invite .coach-pb-glance:last-child{ margin:0; font-size:13px; }
+@media (prefers-reduced-motion:reduce){ .ci-sport{ transition:none; } }
