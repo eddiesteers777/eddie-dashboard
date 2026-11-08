@@ -15,6 +15,14 @@ function fail(message) { note.textContent = message; home.hidden = false; }
     } catch { /* storage unavailable */ }
     const result = parseReturnHash(location.hash, state);
     history.replaceState(null, "", location.pathname);      // the token never stays in the address bar
+    if (result.kind === "none") {
+        // Signing in can reload this page once (js/auth.js clears an old account's copy first). The sign-in
+        // already finished then: carry on instead of saying it failed.
+        try {
+            const { waitForUser } = await import("./auth.js");
+            if (await waitForUser()) { trail("return-done", "already signed in"); location.replace(back); return; }
+        } catch { /* fall through to the message */ }
+    }
     if (result.kind !== "token") {
         trail("return-fail", result.kind === "error" ? result.error : "nothing came back");
         fail("Sign-in didn't finish. Go back and try again.");
