@@ -1339,11 +1339,13 @@
 }
 
 /* Edit button, edit form and "Edited by you" on a plan's day card (Running tab) */
-.running-generated-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.running-generated-actions .running-row-btn,.running-generated-actions .running-btn-outline{min-height:44px;padding:0 18px}
+.running-generated-day-detail-label{font-family:var(--font-mono);letter-spacing:.1em;margin-bottom:8px}
+.running-generated-actions{display:flex;gap:10px;margin-top:16px}
+.running-generated-actions>*{flex:1 1 0;min-height:44px}
 .running-generated-actions-end{justify-content:flex-end}
+.running-generated-actions-end>*{flex:0 1 auto;min-width:110px}
 .running-generated-day-detail .running-input{width:100%}
-.running-generated-edited-tag{display:inline-block;margin-left:8px;padding:3px 8px;border:1px solid rgba(199,214,228,.35);border-radius:6px;color:var(--primary);font-family:var(--font-mono);letter-spacing:.08em}
-.running-generated-undo{background:none;border:0;padding:0;color:var(--primary);font:inherit;text-decoration:underline;cursor:pointer;position:relative}
-.running-generated-undo::after{content:"";position:absolute;inset:-14px -6px}
+.running-generated-day-detail .running-generated-day-detail-meta{margin-top:8px;font-size:13px}
+.running-generated-undo{background:none;border:0;padding:0;color:var(--primary);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;position:relative}
+.running-generated-undo::after{content:"";position:absolute;inset:-14px -8px}
 .running-generated-day-detail [hidden]{display:none!important}

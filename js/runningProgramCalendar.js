@@ -212,14 +212,19 @@ function renderDayDetail() {
         const id = escapeHtml(item.programId);
         const own = item.programSource !== "coach";
         const edited = Boolean(item.entry.edited);
-        const completeBtn = `<button type="button" class="running-row-btn ${complete ? "primary" : ""} running-generated-complete-btn" data-toggle-generated-complete="${id}" data-generated-date="${escapeHtml(selectedDate)}">${complete ? "✓ Completed" : "Mark Complete"}</button>`;
-        const editBtn = own ? `<button type="button" class="running-row-btn primary running-generated-edit-btn" data-edit-generated-day="${id}" data-generated-date="${escapeHtml(selectedDate)}">Edit</button>` : "";
-        return `<div class="running-generated-day-detail" data-generated-plan-id="${id}" data-generated-plan-date="${escapeHtml(selectedDate)}">
-            <div class="running-generated-day-detail-header">
-                <span class="running-generated-day-detail-label">${escapeHtml(item.programName)} · Week ${item.week}${edited ? ' <span class="running-generated-edited-tag">Edited by you</span>' : ""}</span>
+        const date = escapeHtml(selectedDate);
+        const completeBtn = `<button type="button" class="running-row-btn primary running-generated-complete-btn" data-toggle-generated-complete="${id}" data-generated-date="${date}">${complete ? "✓ Completed" : "Mark Complete"}</button>`;
+        const editBtn = own ? `<button type="button" class="running-row-btn running-generated-edit-btn" data-edit-generated-day="${id}" data-generated-date="${date}">Edit</button>` : "";
+        const note = edited
+            ? `Edited by you · <button type="button" class="running-generated-undo" data-undo-generated-edit="${id}" data-generated-date="${date}">Undo</button>`
+            : escapeHtml(item.phase || "Planned workout");
+        return `<div class="running-generated-day-detail" data-generated-plan-id="${id}" data-generated-plan-date="${date}">
+            <div class="running-generated-day-detail-label">${escapeHtml(item.programName)} · Week ${item.week}</div>
+            <div class="running-detail-plan-line">
+                <span class="running-detail-session">${escapeHtml(item.entry.session || "Planned run")}</span>
+                <span class="running-detail-miles">${formatMiles(item.entry.miles)}<small>mi</small></span>
             </div>
-            <div class="running-detail-plan-line"><strong>${formatMiles(item.entry.miles)} mi</strong> · ${escapeHtml(item.entry.session || "Planned Run")}</div>
-            <div class="running-generated-day-detail-meta">${escapeHtml(item.phase || "")} · ${edited ? `<button type="button" class="running-generated-undo" data-undo-generated-edit="${id}" data-generated-date="${escapeHtml(selectedDate)}">Undo edit</button> puts the original back` : "Planned race-plan workout"}</div>
+            <div class="running-generated-day-detail-meta">${note}</div>
             <div class="running-generated-actions">${editBtn}${completeBtn}</div>
         </div>`;
     }).join("");
