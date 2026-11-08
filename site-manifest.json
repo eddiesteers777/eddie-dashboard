@@ -402,6 +402,8 @@
     "js/syncGuard.js",
     "js/syncMerge.js",
     "js/syncTimeout.js",
+    "js/testedRuns.js",
+    "js/testedRunsView.js",
     "js/thisWeekCard.js",
     "js/todayClient.js",
     "js/todayColumns.js",

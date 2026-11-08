@@ -836,3 +836,6 @@ Eddie chose no public availability (guests can't read `coachAvailability`; a pub
 
 ## 2026-11-08: Apply goal placeholder follows the sport (branch claude/project-thread-e71w2z, not merged)
 The goal chips on apply.html already followed the chosen service (`goalIdeas`); only the example text in the "own words" box was always the running one ("Break 25 minutes in the 5K"). It now follows the sport too (`goalHint` in js/apply.js). No rules change.
+
+### 2026-11-08: Adaptive fueling step 1 — tested runs log (branch claude/project-thread-seqa52, not merged)
+Tested runs card on the Fueling page: log a long run or race with what was taken and three answers; list with Worked / Mostly / Didn't tags; empty state; edit and delete. Sync key `fueling-tested-runs` merged by id. No plan reads it yet. No rules change. Tests: `tests/testedRuns.test.mjs` (ratings, validation, prefill, list helpers, sync merge). Checked at 390 and 1280: no sideways scroll, controls 44px+.

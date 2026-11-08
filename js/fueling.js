@@ -20,6 +20,7 @@ import { toast, sbConfirm, sbPrompt } from "./ui.js";
 import { weightIn, weightFromDisplay } from "./fuelProfile.js";
 import { initFuelingPlans, currentProfile, updateProfile } from "./fuelingPlans.js";
 import { initFuelClock, updateFuelClock } from "./fuelClock.js";
+import { initTestedRuns } from "./testedRunsView.js";
 import { marathonDayFor, weekHasWorkouts } from "./fuelClockModel.js";
 
 const $ = (id) => document.getElementById(id);
@@ -2726,6 +2727,8 @@ function renderFuelingPage() {
     renderFuelClock();
 
     renderDurationStatus();
+
+    initTestedRuns({ load: loadJSON, save: saveJSON });
 
     // Drafts and the athlete profile (js/fuelingPlans.js): picks up the
     // draft that was open on this device, else fills the athlete's details

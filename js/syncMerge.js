@@ -27,7 +27,7 @@
 import { mergeProfiles } from "./fuelProfile.js";
 import { mergeDraftValues, DRAFT_PREFIX, stable } from "./fuelDrafts.js";
 
-const BY_ID_KEYS = ["fueling-plans", "fueling-library", "fueling-diy-recipes"];
+const BY_ID_KEYS = ["fueling-plans", "fueling-library", "fueling-diy-recipes", "fueling-tested-runs"];
 
 const parse = s => { try { return JSON.parse(s); } catch { return undefined; } };
 
