@@ -19,6 +19,7 @@ import {
     screenProblem, applicationProblem, cleanApplication, applyGoalIdeas, LIMITS
 } from "./applicationForm.js";
 import { icon } from "./icons.js";
+import { sportFromServices } from "./intakeFlow.js";
 
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const DRAFT_KEY = "sb-apply-draft";
@@ -72,6 +73,9 @@ function screen({ title, sub = "", body = "", next = "Next", nextAct = "next", s
         </div>`;
 }
 
+const GOAL_HINTS = { running: "e.g. Break 25 minutes in the 5K", soccer: "e.g. Win the ball more in the middle", strength: "e.g. Squat my body weight", general: "e.g. Feel better and stay consistent" };
+const goalHint = (services = []) => GOAL_HINTS[sportFromServices(services)] || GOAL_HINTS.general;
+
 const SCREENS = {
     who: () => screen({
         title: "Who's training?",
@@ -106,7 +110,7 @@ const SCREENS = {
             body: `
                 <div class="ig-chips">${ideas.map(g => chip(g, { on: answers.goal === g, attrs: `data-pick="goal" data-value="${esc(g)}"` })).join("")}</div>
                 <label class="ig-q" for="apGoal">Or in your own words</label>
-                <input id="apGoal" class="ig-input" data-field="goal" type="text" maxlength="${LIMITS.goal}" placeholder="e.g. Break 25 minutes in the 5K" value="${esc(own)}">`
+                <input id="apGoal" class="ig-input" data-field="goal" type="text" maxlength="${LIMITS.goal}" placeholder="${esc(goalHint(answers.services))}" value="${esc(own)}">`
         });
     },
 

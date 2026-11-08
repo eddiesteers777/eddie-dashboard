@@ -830,3 +830,9 @@ First real Home Screen sign-in through auth-return.html worked ("login-ok via fu
 Same branch: the sign-in box no longer appears on its own in the Home Screen app (Eddie: it got in the way of the profile button). It shows only with `?signincheck`.
 ## 2026-11-08: Sessions "Your progress" card (branch claude/project-thread-e71w2z, not merged)
 schedule.html shows a glass card above Coming up: sessions done (from `sessionLogs` marked completed, today or earlier), practices logged in the last 30 days (homework logs), and the last session's "Worked on" / "Next time". Pure logic in `js/soccerProgress.js` (`tests/soccerProgress.test.mjs`). Hidden until there is something to show. Checked in a browser with a seeded client at 390px, filled and empty. No rules change.
+
+## 2026-11-08: soccer.html "Times on request" (branch claude/project-thread-e71w2z, not merged)
+Eddie chose no public availability (guests can't read `coachAvailability`; a public copy would need a rules change). The made-up example times on both soccer panels are replaced by a "Times on request" card with an Apply button, and the booking copy says I send open times after approval. No rules change.
+
+## 2026-11-08: Apply goal placeholder follows the sport (branch claude/project-thread-e71w2z, not merged)
+The goal chips on apply.html already followed the chosen service (`goalIdeas`); only the example text in the "own words" box was always the running one ("Break 25 minutes in the 5K"). It now follows the sport too (`goalHint` in js/apply.js). No rules change.
