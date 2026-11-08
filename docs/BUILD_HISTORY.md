@@ -827,3 +827,4 @@ Readout from Eddie's Home Screen app: Google's token arrived, then the page rest
 
 ## 2026-11-08: sign-in return page survives its own reload (branch claude/project-thread-ujgtzu-return, not merged)
 First real Home Screen sign-in through auth-return.html worked ("login-ok via full page", saved sign-in yes), but the account guard reloaded the page once and the reload, with no answer in the address, said "Sign-in didn't finish". `js/authReturn.js` now checks for a signed-in user first and goes on to Today. Sandbox: opening auth-return.html with no answer while signed in lands on Today; a wrong state is still refused. No rules change.
+Same branch: the sign-in box no longer appears on its own in the Home Screen app (Eddie: it got in the way of the profile button). It shows only with `?signincheck`.
