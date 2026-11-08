@@ -825,6 +825,11 @@ playbook.html shows a glass Continue card (title, minutes, drill count, date) wh
 ## 2026-11-07: full-page Google sign-in for the Home Screen app (branch claude/project-thread-ujgtzu-redirect, not merged)
 Readout from Eddie's Home Screen app: Google's token arrived, then the page restarted within a second and sign-in never finished (the pop-up hands its answer back to a page the app reloads). `js/googleRedirect.js` (pure, `tests/googleRedirect.test.mjs`) builds the trip to Google and reads the answer; `auth-return.html` + `js/authReturn.js` finish the sign-in on load (state check, token removed from the address bar, same retry as the pop-up path). `login()` in `js/auth.js` uses it only in the Home Screen app on southboundcoaching.com; Safari keeps Google's window. Needs `https://southboundcoaching.com/auth-return.html` in the Google Cloud web client's Authorized redirect URIs (Eddie, click-by-click given 2026-11-07). Sandbox (Auth emulator): return with a good state signs in and lands on Today; a wrong state is refused. Not tested on a real iPhone. No rules change.
 
+<<<<<<< HEAD
 ## 2026-11-08: sign-in return page survives its own reload (branch claude/project-thread-ujgtzu-return, not merged)
 First real Home Screen sign-in through auth-return.html worked ("login-ok via full page", saved sign-in yes), but the account guard reloaded the page once and the reload, with no answer in the address, said "Sign-in didn't finish". `js/authReturn.js` now checks for a signed-in user first and goes on to Today. Sandbox: opening auth-return.html with no answer while signed in lands on Today; a wrong state is still refused. No rules change.
 Same branch: the sign-in box no longer appears on its own in the Home Screen app (Eddie: it got in the way of the profile button). It shows only with `?signincheck`.
+=======
+## 2026-11-08: Sessions "Your progress" card (branch claude/project-thread-e71w2z, not merged)
+schedule.html shows a glass card above Coming up: sessions done (from `sessionLogs` marked completed, today or earlier), practices logged in the last 30 days (homework logs), and the last session's "Worked on" / "Next time". Pure logic in `js/soccerProgress.js` (`tests/soccerProgress.test.mjs`). Hidden until there is something to show. Checked in a browser with a seeded client at 390px, filled and empty. No rules change.
+>>>>>>> origin/main
