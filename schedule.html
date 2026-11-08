@@ -129,6 +129,17 @@
                 <!-- Soccer client: next session + its homework, then booking, then homework. -->
                 <section id="soccerNext" class="sb-next" hidden></section>
 
+                <section id="progressWrap" class="sb-progress" aria-labelledby="progressTitle" hidden>
+                    <div class="sb-sec-row"><h2 class="clients-section-title" id="progressTitle">Your progress</h2></div>
+                    <div class="sb-progress-card">
+                        <div class="sb-progress-stats">
+                            <div><b id="progSessions">0</b><span>Sessions done</span></div>
+                            <div><b id="progPractices">0</b><span id="progPracticesLab">Practices, last 30 days</span></div>
+                        </div>
+                        <div id="progLast" class="sb-progress-last" hidden></div>
+                    </div>
+                </section>
+
                 <div id="comingUpWrap">
                     <h2 class="clients-section-title" id="comingUpTitle">Coming up</h2>
                     <div id="comingUpList" class="clients-list"></div>

@@ -368,6 +368,7 @@
     "js/slotBookings.js",
     "js/soccerBooking.js",
     "js/soccerPage.js",
+    "js/soccerProgress.js",
     "js/start.js",
     "js/startCarry.js",
     "js/startFlow.js",

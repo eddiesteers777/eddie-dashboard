@@ -30,6 +30,7 @@ import { weekDays, weekStartOf, addDays, weekCounts } from "./scheduleWeek.js";
 import { listMyPlans, savePlan } from "./sessionPlans.js";
 import { planKey, planMatches, clientsOf, parseLine, totalMinutes } from "./sessionPlanModel.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
+import { soccerProgress } from "./soccerProgress.js";
 
 let currentUser = null;
 let myCoaches = [];
@@ -714,9 +715,26 @@ async function loadHomework() {
     try { hwItems = await listMyHomework(); } catch (error) { console.warn("Southbound: couldn't load homework.", error); return; }
     renderNextCard();
     renderHomeworkRows();
+    renderProgress();
 }
 
 const localToday = () => new Date().toLocaleDateString("en-CA");
+
+// "Your progress": sessions done, practices logged, and what you worked on last (only the player's own, already visible, data).
+function renderProgress() {
+    const wrap = dayEl("progressWrap");
+    const p = soccerProgress(myRequestsAll, hwItems, localToday());
+    wrap.hidden = !p.show;
+    if (!p.show) return;
+    dayEl("progSessions").textContent = String(p.sessions);
+    dayEl("progPractices").textContent = String(p.practices);
+    const last = dayEl("progLast");
+    last.hidden = !p.last;
+    if (p.last) {
+        const bits = [p.last.workedOn && `Worked on: ${escapeHtml(p.last.workedOn)}`, p.last.nextTime && `Next time: ${escapeHtml(p.last.nextTime)}`].filter(Boolean);
+        last.innerHTML = `<span class="sb-kick">Last time \u00b7 ${escapeHtml(formatDateShort(p.last.date))}</span><p>${bits.join("<br>")}</p>`;
+    }
+}
 
 // One session date: when, what, and (once your coach logs it) what you
 // worked on. `note` = an older booking's single note from the coach.
@@ -810,6 +828,7 @@ async function refreshMyRequests() {
     attendanceLine.hidden = !attendance.line;
     attendanceLine.textContent = attendance.line;
 
+    renderProgress();
     await hydrateIcons();
 }
 

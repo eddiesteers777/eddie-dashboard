@@ -585,3 +585,13 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 #bookForm .sched-radio-row input:focus-visible + span{ outline:2px solid var(--primary); outline-offset:2px; }
 #bookForm .clients-editor-actions{ display:grid; gap:8px; }
 #bookForm .clients-editor-actions .clients-btn-primary{ width:100%; min-height:48px; }
+
+/* Your progress (client Sessions): two numbers and what you worked on last time */
+.sb-progress{ margin:0 0 22px; }
+.sb-progress-card{ padding:16px; border:1px solid rgba(214,228,240,.2); border-radius:18px; background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72)); box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36); }
+.sb-progress-stats{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.sb-progress-stats b{ display:block; font:800 36px/1 var(--font-display); color:var(--text); }
+.sb-progress-stats span{ display:block; margin-top:4px; color:var(--text-secondary); font-size:13px; }
+.sb-progress-last{ margin-top:14px; padding-top:12px; border-top:1px solid rgba(214,228,240,.14); }
+.sb-progress-last p{ margin:6px 0 0; color:var(--text); font-size:15px; line-height:1.45; }
+.sb-progress[hidden],.sb-progress-last[hidden]{ display:none !important; }
