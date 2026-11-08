@@ -13,7 +13,8 @@ import {
     getActiveProgramEntriesForDate,
     getActiveProgramWeekStats,
     getActiveProgramUpcomingRuns,
-    toggleRunningProgramDayCompleted
+    toggleRunningProgramDayCompleted,
+    editProgramDay
 } from "./activeProgramSources.js";
 
 let selectedDate = null;
@@ -208,15 +209,18 @@ function renderDayDetail() {
 
     const runHtml = runs.map(item => {
         const complete = Boolean(item.entry.completed);
-        return `<div class="running-generated-day-detail" data-generated-plan-id="${escapeHtml(item.programId)}" data-generated-plan-date="${escapeHtml(selectedDate)}">
+        const id = escapeHtml(item.programId);
+        const own = item.programSource !== "coach";
+        const edited = Boolean(item.entry.edited);
+        const completeBtn = `<button type="button" class="running-row-btn ${complete ? "primary" : ""} running-generated-complete-btn" data-toggle-generated-complete="${id}" data-generated-date="${escapeHtml(selectedDate)}">${complete ? "✓ Completed" : "Mark Complete"}</button>`;
+        const editBtn = own ? `<button type="button" class="running-row-btn primary running-generated-edit-btn" data-edit-generated-day="${id}" data-generated-date="${escapeHtml(selectedDate)}">Edit</button>` : "";
+        return `<div class="running-generated-day-detail" data-generated-plan-id="${id}" data-generated-plan-date="${escapeHtml(selectedDate)}">
             <div class="running-generated-day-detail-header">
-                <span class="running-generated-day-detail-label">${escapeHtml(item.programName)} · Week ${item.week}</span>
-                <button type="button" class="running-row-btn ${complete ? "primary" : ""} running-generated-complete-btn" data-toggle-generated-complete="${escapeHtml(item.programId)}" data-generated-date="${escapeHtml(selectedDate)}">
-                    ${complete ? "✓ Completed" : "Mark Complete"}
-                </button>
+                <span class="running-generated-day-detail-label">${escapeHtml(item.programName)} · Week ${item.week}${edited ? ' <span class="running-generated-edited-tag">Edited by you</span>' : ""}</span>
             </div>
             <div class="running-detail-plan-line"><strong>${formatMiles(item.entry.miles)} mi</strong> · ${escapeHtml(item.entry.session || "Planned Run")}</div>
-            <div class="running-generated-day-detail-meta">${escapeHtml(item.phase || "")} · Planned race-plan workout</div>
+            <div class="running-generated-day-detail-meta">${escapeHtml(item.phase || "")} · ${edited ? `<button type="button" class="running-generated-undo" data-undo-generated-edit="${id}" data-generated-date="${escapeHtml(selectedDate)}">Undo edit</button> puts the original back` : "Planned race-plan workout"}</div>
+            <div class="running-generated-actions">${editBtn}${completeBtn}</div>
         </div>`;
     }).join("");
 
@@ -329,12 +333,79 @@ function setupObserver() {
     targets.forEach(target => observer.observe(target, { childList: true, subtree: true }));
 }
 
+function runEdit(programId, dateStr, edit) {
+    temporarilyPaused = true;
+    editProgramDay(programId, dateStr, edit)
+        .catch(() => {})
+        .finally(() => {
+            temporarilyPaused = false;
+            scheduleRefresh();
+        });
+}
+
+// Swaps the day card for Miles and Workout fields. The next refresh puts the card back.
+function openEditForm(programId, dateStr) {
+    const item = activeEntries(dateStr).find(x => x.programId === programId && Number(x.entry.miles) > 0);
+    const box = [...document.querySelectorAll(".running-generated-day-detail")].find(n => n.dataset.generatedPlanId === programId);
+    if (!item || !box) return;
+    temporarilyPaused = true;
+    box.innerHTML = `
+        <div class="running-generated-day-detail-header"><span class="running-generated-day-detail-label">${escapeHtml(item.programName)} · Week ${item.week}</span></div>
+        <label class="running-field-label" for="rgMiles">Miles</label>
+        <input id="rgMiles" class="running-input" type="number" min="0" step="0.1" value="${escapeHtml(item.entry.miles)}" data-edit-miles>
+        <label class="running-field-label" for="rgSession">Workout</label>
+        <input id="rgSession" class="running-input" type="text" maxlength="300" value="${escapeHtml(item.entry.session || "")}" data-edit-session>
+        <div class="running-generated-day-detail-meta">Changes this day only. Other days stay as planned.</div>
+        <div class="running-generated-actions running-generated-actions-end">
+            <button type="button" class="running-btn-outline" data-cancel-generated-edit>Cancel</button>
+            <button type="button" class="running-row-btn primary" data-save-generated-edit="${escapeHtml(programId)}" data-generated-date="${escapeHtml(dateStr)}">Save</button>
+        </div>`;
+    box.querySelector("[data-cancel-generated-edit]").addEventListener("click", () => { temporarilyPaused = false; });
+    box.querySelector("#rgMiles").focus();
+}
+
 document.addEventListener("click", event => {
     const target = event.target;
     const calendarCell = target.closest("[data-cal-date]");
     if (calendarCell) {
         selectedDate = calendarCell.dataset.calDate;
         scheduleRefresh();
+        return;
+    }
+
+    const editBtn = target.closest("[data-edit-generated-day]");
+    if (editBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        openEditForm(editBtn.dataset.editGeneratedDay, editBtn.dataset.generatedDate);
+        return;
+    }
+
+    const undoBtn = target.closest("[data-undo-generated-edit]");
+    if (undoBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        runEdit(undoBtn.dataset.undoGeneratedEdit, undoBtn.dataset.generatedDate, null);
+        return;
+    }
+
+    const cancelBtn = target.closest("[data-cancel-generated-edit]");
+    if (cancelBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        scheduleRefresh();
+        return;
+    }
+
+    const saveBtn = target.closest("[data-save-generated-edit]");
+    if (saveBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        const box = saveBtn.closest(".running-generated-day-detail");
+        runEdit(saveBtn.dataset.saveGeneratedEdit, saveBtn.dataset.generatedDate, {
+            miles: box.querySelector("[data-edit-miles]").value,
+            session: box.querySelector("[data-edit-session]").value
+        });
         return;
     }
 

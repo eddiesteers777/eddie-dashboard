@@ -12,6 +12,7 @@
 
 import { loadRunningPrograms, saveRunningPrograms } from "./runningPrograms.js";
 import { loadTrainingPrograms, saveTrainingPrograms } from "./trainingPrograms.js";
+import { applyDayEdit, revertDayEdit } from "./programDayEdit.js";
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
 
 function getActivePrograms() {
@@ -182,4 +183,23 @@ export async function toggleProgramSupplementalCompleted(programId, dateStr, typ
         }
     }
     return null;
+}
+
+// Edit (or undo an edit of) one day of the person's own plan. A coach's plan is never changed here.
+export async function editProgramDay(programId, dateStr, edit) {
+    for (const [load, save] of [[loadRunningPrograms, saveRunningPrograms], [loadTrainingPrograms, saveTrainingPrograms]]) {
+        const programs = load();
+        const program = programs.find(item => item.id === programId);
+        if (!program?.generatedPlan?.weeks) continue;
+
+        for (const week of program.generatedPlan.weeks) {
+            const index = (week.days || []).findIndex(item => item.date === dateStr);
+            if (index < 0 || week.days[index].type === "rest") continue;
+            week.days[index] = edit ? applyDayEdit(week.days[index], edit) : revertDayEdit(week.days[index]);
+            program.updatedAt = new Date().toISOString();
+            await save(programs);
+            return true;
+        }
+    }
+    return false;
 }

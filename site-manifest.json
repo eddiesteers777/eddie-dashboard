@@ -289,6 +289,7 @@
     "js/profile.js",
     "js/profileCheckCard.js",
     "js/profileChecks.js",
+    "js/programDayEdit.js",
     "js/programs.js",
     "js/programsView.js",
     "js/progressView.js",

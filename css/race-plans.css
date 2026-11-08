@@ -1337,3 +1337,13 @@
         grid-template-columns:1fr 1fr;
     }
 }
+
+/* Edit button, edit form and "Edited by you" on a plan's day card (Running tab) */
+.running-generated-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.running-generated-actions .running-row-btn,.running-generated-actions .running-btn-outline{min-height:44px;padding:0 18px}
+.running-generated-actions-end{justify-content:flex-end}
+.running-generated-day-detail .running-input{width:100%}
+.running-generated-edited-tag{display:inline-block;margin-left:8px;padding:3px 8px;border:1px solid rgba(199,214,228,.35);border-radius:6px;color:var(--primary);font-family:var(--font-mono);letter-spacing:.08em}
+.running-generated-undo{background:none;border:0;padding:0;color:var(--primary);font:inherit;text-decoration:underline;cursor:pointer;position:relative}
+.running-generated-undo::after{content:"";position:absolute;inset:-14px -6px}
+.running-generated-day-detail [hidden]{display:none!important}
