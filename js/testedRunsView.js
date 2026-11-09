@@ -16,9 +16,18 @@ export function initTestedRuns({ load, save }) {
     if (!body) return;
     let runs = readRuns(load(TESTED_KEY, []));
     let form = null;           // null = list view, else { values, editingId }
+    let saved = null;          // the run just saved: shows a result card above the list
 
     const seg = (name, table, value) => `<div class="tr-seg" role="radiogroup" aria-label="${name}">${Object.entries(table).map(([k, w]) =>
         `<button type="button" role="radio" aria-checked="${value === k}" class="${value === k ? "on" : ""}" data-pick="${name}" data-v="${k}">${esc(w)}</button>`).join("")}</div>`;
+
+    function resultHtml() {
+        if (!saved) return "";
+        const next = { worked: "Worked. That rate is logged as one you can build on.", mostly: "Mostly. Worth another try before you build on it.", didnt: "Didn't work. Take note of what to change next time." }[saved.rating];
+        return `<div class="tr-result" role="status"><span class="tr-dot ${TAG[saved.rating]}" aria-hidden="true">${saved.rating === "didnt" ? "!" : "✓"}</span>
+            <div><span class="tr-eyebrow">Saved</span><b>${esc(RATING_WORDS[saved.rating])}</b><small>${esc(saved.name)} · ${Math.round(saved.taken.carbs)} g/hr</small></div>
+            <p>${esc(next)} Your plans don't use it yet.</p></div>`;
+    }
 
     function listHtml() {
         if (!runs.length) return `<div class="tr-empty"><div class="tr-ic" aria-hidden="true">0</div><h3>No tested runs yet</h3>
@@ -64,7 +73,7 @@ export function initTestedRuns({ load, save }) {
     }
 
     function draw() {
-        body.innerHTML = form ? formHtml() : listHtml();
+        body.innerHTML = form ? formHtml() : resultHtml() + listHtml();
         if (form) body.querySelector("#tr_name")?.focus({ preventScroll: true });
     }
 
@@ -78,10 +87,12 @@ export function initTestedRuns({ load, save }) {
         const t = event.target.closest("[data-act],[data-pick],[data-tweak]");
         if (!t) return;
         if (t.dataset.act === "new") {
+            saved = null;
             form = { editingId: null, values: { kind: "long", date: new Date().toLocaleDateString("en-CA"), tweaks: [] } };
             draw(); body.scrollIntoView({ block: "nearest" }); return;
         }
         if (t.dataset.act === "edit") {
+            saved = null;
             const r = runs.find(x => String(x.id) === t.dataset.id); if (!r) return;
             form = { editingId: r.id, values: { ...r, carbs: r.taken.carbs, sodium: r.taken.sodium ?? "", fluid: r.taken.fluid ?? "", caffeine: r.taken.caffeine ?? "", tempF: r.tempF ?? "", tweaks: [...r.tweaks] } };
             draw(); return;
@@ -121,7 +132,7 @@ export function initTestedRuns({ load, save }) {
         const err = body.querySelector("#trErr");
         if (!res.ok) { err.textContent = res.problem; err.hidden = false; err.scrollIntoView({ block: "nearest" }); return; }
         runs = upsertRun(runs, res.run); save(TESTED_KEY, runs);
-        form = null; draw();
+        form = null; saved = res.run; draw();
         toast(`Saved as ${RATING_WORDS[res.run.rating]}.`);
     });
 

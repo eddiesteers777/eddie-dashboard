@@ -3453,3 +3453,12 @@ html.sb-guest .fueling-page .fx-guest-offer{ display:block; }
 .tr-panel [hidden]{display:none!important}
 .tr-f input[type=date]{color-scheme:dark}
 .tr-form{max-width:640px}.tr-empty{max-width:520px;margin:0 auto}
+
+/* Tested runs: the mock-up's look (display headings, lit top edge on the result) */
+.tr-panel .fuel-panel-header h2{font:700 1.5rem/1.05 var(--font-display);text-transform:uppercase;letter-spacing:.03em}
+.tr-result{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;margin:0 0 16px;padding:16px;border-radius:18px;border:1px solid rgba(214,228,240,.2);background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72));box-shadow:inset 0 2px 0 var(--gold),0 8px 20px rgba(0,0,0,.3)}
+.tr-dot{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 1.5rem var(--font-display);border:1.5px solid currentColor;grid-row:span 1}
+.tr-dot.t-ok{color:var(--sage);background:rgba(157,184,154,.2)}.tr-dot.t-mid{color:var(--gold);background:rgba(210,173,98,.15)}.tr-dot.t-no{color:var(--red);background:rgba(208,122,106,.15)}
+.tr-result b{display:block;font:800 1.5rem/1 var(--font-display);text-transform:uppercase}.tr-result small{color:var(--muted)}
+.tr-eyebrow{display:block;font:500 .66rem/1 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.tr-result p{grid-column:1/-1;margin:6px 0 0;color:var(--text)}
