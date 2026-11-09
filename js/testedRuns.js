@@ -119,3 +119,39 @@ export function runLine(run) {
     const plan = run.planned && Math.round(run.planned.carbs) !== Math.round(run.taken.carbs) ? ` (plan: ${Math.round(run.planned.carbs)})` : "";
     return `${when} · ${run.miles} mi · ${Math.round(run.taken.carbs)} g/hr${plan}`;
 }
+
+/* ---- Step 2: Tested vs Calculator (2026-11-09) ---- */
+export const USE_TESTED_KEY = "fueling-use-tested";          // "1" when the athlete turned adaptive on (synced, off by default)
+export const MIN_TESTED_MINUTES = 60;                          // a short run says little about a long one
+export const WARN_GAP = 10;                                    // g/hr above tested before the plan says "untested"
+
+/** The highest carb rate that worked on a run long enough to count. */
+export function testedRate(runs) {
+    let best = null;
+    for (const r of readRuns(runs)) {
+        if (r.rating !== "worked" || !(r.minutes >= MIN_TESTED_MINUTES)) continue;
+        if (!best || r.taken.carbs > best.carbs || (r.taken.carbs === best.carbs && r.date > best.date)) best = { carbs: Math.round(r.taken.carbs), name: r.name, date: r.date, id: r.id };
+    }
+    return best && best.carbs > 0 ? best : null;
+}
+
+/**
+ * What the Tested vs Calculator card shows, or null when it shouldn't
+ * (adaptive off, nothing tested yet, or no calculated plan).
+ * current = the carbs box now; applied says which number the plan is using.
+ */
+export function compareModel({ on, runs, calcCarbs, current, race = false } = {}) {
+    if (!on || !(Number(calcCarbs) > 0)) return null;
+    const tested = testedRate(runs);
+    if (!tested) return null;
+    const calc = Math.round(Number(calcCarbs)), now = Math.round(Number(current));
+    const gap = calc - tested.carbs;
+    return {
+        tested, calc, gap,
+        applied: now === tested.carbs ? "tested" : now === calc ? "calc" : "custom",
+        warn: gap > WARN_GAP
+            ? (race ? `The calculator's number is ${gap} g/hr above anything you've tested. Race day is not the day to try it.`
+                    : `The calculator's number is ${gap} g/hr above anything you've tested. Try it in a long run first.`)
+            : ""
+    };
+}

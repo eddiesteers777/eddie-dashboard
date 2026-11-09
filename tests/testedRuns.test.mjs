@@ -70,3 +70,26 @@ test("sync: a run added on each phone survives; a delete sticks", () => {
     const merged = JSON.parse(mergeSyncedValue("fueling-tested-runs", JSON.stringify([a]), JSON.stringify([b]), "[]").value);
     assert.equal(merged.length, 2);
 });
+
+import { testedRate, compareModel } from "../js/testedRuns.js";
+const mk = (o, id) => buildRun(good(o), { id, now: 1 }).run;
+
+test("tested rate: highest Worked rate on a run of an hour or more", () => {
+    const runs = [mk({ carbs: 55 }, "a"), mk({ carbs: 67, date: "2026-11-01" }, "b"), mk({ carbs: 80, stomach: "off" }, "c"), mk({ carbs: 90, minutes: 40 }, "d")];
+    assert.equal(testedRate(runs).carbs, 67);
+    assert.equal(testedRate([mk({ stomach: "bad" }, "x")]), null);
+    assert.equal(testedRate([]), null);
+});
+
+test("compare card: hidden when off or untested; warns past 10 g/hr; says which number is in use", () => {
+    const runs = [mk({ carbs: 67 }, "a")];
+    assert.equal(compareModel({ on: false, runs, calcCarbs: 95, current: 95 }), null);
+    assert.equal(compareModel({ on: true, runs: [], calcCarbs: 95, current: 95 }), null);
+    assert.equal(compareModel({ on: true, runs, calcCarbs: 0, current: 0 }), null);
+    const m = compareModel({ on: true, runs, calcCarbs: 95, current: 95, race: true });
+    assert.equal(m.gap, 28); assert.equal(m.applied, "calc"); assert.match(m.warn, /Race day is not the day/);
+    assert.equal(compareModel({ on: true, runs, calcCarbs: 95, current: 67 }).applied, "tested");
+    assert.equal(compareModel({ on: true, runs, calcCarbs: 95, current: 80 }).applied, "custom");
+    assert.equal(compareModel({ on: true, runs, calcCarbs: 70, current: 70 }).warn, "");
+    assert.match(compareModel({ on: true, runs, calcCarbs: 95, current: 95 }).warn, /long run first/);
+});

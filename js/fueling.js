@@ -20,7 +20,7 @@ import { toast, sbConfirm, sbPrompt } from "./ui.js";
 import { weightIn, weightFromDisplay } from "./fuelProfile.js";
 import { initFuelingPlans, currentProfile, updateProfile } from "./fuelingPlans.js";
 import { initFuelClock, updateFuelClock } from "./fuelClock.js";
-import { initTestedRuns } from "./testedRunsView.js";
+import { initTestedRuns, refreshTestedCompare } from "./testedRunsView.js";
 import { marathonDayFor, weekHasWorkouts } from "./fuelClockModel.js";
 
 const $ = (id) => document.getElementById(id);
@@ -659,6 +659,7 @@ function runCalculation() {
 
     updatePlanWorkoutLabel();
     updateTotalsAndTimeline(true);
+    renderTestedCompare();
 
 }
 
@@ -746,9 +747,19 @@ $("calculateBtn").addEventListener("click", runCalculation);
         else typedTargets[id] = id === "fluidPerHour" ? fluidInput(id) : Number($(id).value) || 0;
         updateTotalsAndTimeline(false);
         renderTypedNote();
+        if (id === "carbsPerHour") renderTestedCompare();
     });
 
 });
+
+// Tested vs Calculator (adaptive fueling, off unless turned on in Tested runs).
+function renderTestedCompare() {
+    refreshTestedCompare({
+        calcCarbs: calcTargets?.carbsPerHour, current: $("carbsPerHour").value, race: mode === "race",
+        apply: n => { $("carbsPerHour").value = n; $("carbsPerHour").dispatchEvent(new Event("input", { bubbles: true })); }
+    });
+}
+window.addEventListener("sb-tested-changed", () => { if (lastTargets) renderTestedCompare(); });
 
 // "You set carbs to 60 g/hr (worked out: 55)" under the targets.
 function renderTypedNote() {
@@ -2619,6 +2630,7 @@ function applyState(state) {
         }
         if (Object.keys(typed).length) updateTotalsAndTimeline(false);
         renderTypedNote();
+        renderTestedCompare();
     } else {
         renderDurationStatus();
     }

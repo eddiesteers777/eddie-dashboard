@@ -839,3 +839,6 @@ The goal chips on apply.html already followed the chosen service (`goalIdeas`); 
 
 ### 2026-11-08: Adaptive fueling step 1 — tested runs log (branch claude/project-thread-seqa52, not merged)
 Tested runs card on the Fueling page: log a long run or race with what was taken and three answers; list with Worked / Mostly / Didn't tags; empty state; edit and delete. Sync key `fueling-tested-runs` merged by id. No plan reads it yet. No rules change. Tests: `tests/testedRuns.test.mjs` (ratings, validation, prefill, list helpers, sync merge). Checked at 390 and 1280: no sideways scroll, controls 44px+.
+
+### 2026-11-09: Adaptive fueling step 2 — Tested vs Calculator (branch claude/project-thread-seqa52, not merged)
+Off-by-default switch in Tested runs; compare card in Your plan; tested rate = best Worked rate on a 60+ minute run; warns past 10 g/hr above tested. Tested runs panel now hidden on phone steps 1-3. No rules change. Tests: compareModel and testedRate in `tests/testedRuns.test.mjs`. Checked at 390 and 1280 with the switch off, on and applied.

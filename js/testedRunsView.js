@@ -4,14 +4,18 @@
    Nothing here changes a plan. Pure logic: js/testedRuns.js. */
 import {
     TESTED_KEY, STOMACH, ENERGY, TOOK, TWEAKS, RATING_WORDS,
-    buildRun, prefillFromPlan, upsertRun, removeRun, readRuns, runLine
+    buildRun, prefillFromPlan, upsertRun, removeRun, readRuns, runLine, USE_TESTED_KEY, compareModel
 } from "./testedRuns.js";
 import { toast, sbConfirm } from "./ui.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const TAG = { worked: "t-ok", mostly: "t-mid", didnt: "t-no" };
 
+let store = null;
+const changed = () => window.dispatchEvent(new CustomEvent("sb-tested-changed"));
+
 export function initTestedRuns({ load, save }) {
+    store = { load, save };
     const body = document.getElementById("fuelTested") && document.getElementById("fuelTestedBody");
     if (!body) return;
     let runs = readRuns(load(TESTED_KEY, []));
@@ -37,7 +41,9 @@ export function initTestedRuns({ load, save }) {
             <ul class="tr-list">${runs.map(r => `<li><button type="button" class="tr-row" data-act="edit" data-id="${esc(r.id)}">
                 <span class="tr-main"><b>${esc(r.name)}</b><small>${esc(runLine(r))}</small></span>
                 <span class="tr-tag ${TAG[r.rating] || ""}">${esc(RATING_WORDS[r.rating] || "")}</span></button></li>`).join("")}</ul>
-            <button type="button" class="fuel-btn secondary tr-wide" data-act="new">+ Log a run</button>`;
+            <button type="button" class="fuel-btn secondary tr-wide" data-act="new">+ Log a run</button>
+            <div class="tr-switchrow"><div><b id="trUseLbl">Start plans from what you've tested</b><small>Off: the calculator works as it always has. On: your plan shows your best tested rate next to the calculator's.</small></div>
+            <button type="button" class="tr-sw${load(USE_TESTED_KEY, false) === true ? " on" : ""}" role="switch" aria-checked="${load(USE_TESTED_KEY, false) === true}" aria-labelledby="trUseLbl" data-act="use"></button></div>`;
     }
 
     function formHtml() {
@@ -97,10 +103,13 @@ export function initTestedRuns({ load, save }) {
             form = { editingId: r.id, values: { ...r, carbs: r.taken.carbs, sodium: r.taken.sodium ?? "", fluid: r.taken.fluid ?? "", caffeine: r.taken.caffeine ?? "", tempF: r.tempF ?? "", tweaks: [...r.tweaks] } };
             draw(); return;
         }
+        if (t.dataset.act === "use") {
+            save(USE_TESTED_KEY, !(load(USE_TESTED_KEY, false) === true)); draw(); changed(); return;
+        }
         if (t.dataset.act === "cancel") { form = null; draw(); return; }
         if (t.dataset.act === "delete") {
             if (!await sbConfirm("Delete this tested run? It leaves your list on every device.", { title: "Delete run", confirmLabel: "Delete", danger: true })) return;
-            runs = removeRun(runs, form.editingId); save(TESTED_KEY, runs); form = null; draw(); toast("Run deleted.", { type: "info" }); return;
+            runs = removeRun(runs, form.editingId); save(TESTED_KEY, runs); form = null; draw(); changed(); toast("Run deleted.", { type: "info" }); return;
         }
         if (t.dataset.pick) { readForm(); form.values[t.dataset.pick] = t.dataset.v; draw(); body.querySelector(`[data-pick="${t.dataset.pick}"].on`)?.focus({ preventScroll: true }); return; }
         if (t.dataset.tweak) {
@@ -132,9 +141,31 @@ export function initTestedRuns({ load, save }) {
         const err = body.querySelector("#trErr");
         if (!res.ok) { err.textContent = res.problem; err.hidden = false; err.scrollIntoView({ block: "nearest" }); return; }
         runs = upsertRun(runs, res.run); save(TESTED_KEY, runs);
-        form = null; saved = res.run; draw();
+        form = null; saved = res.run; draw(); changed();
         toast(`Saved as ${RATING_WORDS[res.run.rating]}.`);
     });
 
     draw();
+}
+
+/* ---- Tested vs Calculator card inside "Your plan" (step 2) ----
+   Off unless the athlete turned it on. Tapping a number puts it in the
+   carbs box through apply(); the plan's usual "you set carbs to ..." note
+   then says what was worked out. */
+export function refreshTestedCompare({ calcCarbs, current, race, apply }) {
+    const host = document.getElementById("fuelTestedCompare");
+    if (!host || !store) return;
+    const { load } = store;
+    const m = compareModel({ on: load(USE_TESTED_KEY, false) === true, runs: readRuns(load(TESTED_KEY, [])), calcCarbs, current, race });
+    host.hidden = !m;
+    if (!m) { host.innerHTML = ""; return; }
+    const tile = (kind, label, n, src) => `<button type="button" class="tr-tile${m.applied === kind ? " on" : ""}" role="radio" aria-checked="${m.applied === kind}" data-use="${kind}">
+        <span class="tr-eyebrow">${label}</span><span class="tr-big">${n}<small>g/hr</small></span><span class="tr-src">${esc(src)}</span></button>`;
+    host.innerHTML = `<div class="tr-cmp-head"><b>Carbs: tested or calculator</b>${m.applied === "custom" ? '<small>Your own number is in use</small>' : ""}</div>
+        <div class="tr-tiles" role="radiogroup" aria-label="Carbs an hour">${tile("tested", "Tested", m.tested.carbs, `${m.tested.name}. Worked.`)}${tile("calc", "Calculator", m.calc, "General guide for this run.")}</div>
+        ${m.warn ? `<p class="tr-warn" role="note"><b aria-hidden="true">!</b><span>${esc(m.warn)}</span></p>` : ""}`;
+    host.onclick = e => {
+        const t = e.target.closest("[data-use]"); if (!t) return;
+        apply(t.dataset.use === "tested" ? m.tested.carbs : m.calc);
+    };
 }
