@@ -842,3 +842,6 @@ Tested runs card on the Fueling page: log a long run or race with what was taken
 
 ### 2026-11-09: Adaptive fueling step 2 — Tested vs Calculator (branch claude/project-thread-seqa52, not merged)
 Off-by-default switch in Tested runs; compare card in Your plan; tested rate = best Worked rate on a 60+ minute run; warns past 10 g/hr above tested. Tested runs panel now hidden on phone steps 1-3. No rules change. Tests: compareModel and testedRate in `tests/testedRuns.test.mjs`. Checked at 390 and 1280 with the switch off, on and applied.
+
+### 2026-11-09: Adaptive fueling step 3 — +10 g/hr next step (branch claude/project-thread-seqa52, not merged)
+Next tile and ladder in the compare card; hold messages after so-so or bad runs. No rules change. Tests in `tests/testedRuns.test.mjs`. Checked at 390 and 1280.

@@ -93,3 +93,19 @@ test("compare card: hidden when off or untested; warns past 10 g/hr; says which 
     assert.equal(compareModel({ on: true, runs, calcCarbs: 70, current: 70 }).warn, "");
     assert.match(compareModel({ on: true, runs, calcCarbs: 95, current: 95 }).warn, /long run first/);
 });
+
+test("step 3: a Worked newest run earns +10, capped below the calculator; so-so and bad runs hold", () => {
+    const old = mk({ carbs: 55, date: "2026-10-11" }, "a"), rome = mk({ carbs: 67, date: "2026-10-25" }, "b");
+    const m = compareModel({ on: true, runs: [old, rome], calcCarbs: 95, current: 95 });
+    assert.equal(m.next.carbs, 77);
+    assert.deepEqual(m.ladder.map(r => [r.kind, r.carbs]), [["done", 55], ["done", 67], ["next", 77], ["calc", 95]]);
+    assert.equal(compareModel({ on: true, runs: [old, rome], calcCarbs: 95, current: 77 }).applied, "next");
+    assert.equal(compareModel({ on: true, runs: [rome], calcCarbs: 75, current: 75 }).next, null, "within one step of the calculator");
+    const so = mk({ carbs: 72, stomach: "off", date: "2026-11-01" }, "c");
+    const h = compareModel({ on: true, runs: [old, rome, so], calcCarbs: 95, current: 95 });
+    assert.equal(h.next, null); assert.match(h.hold, /Hold at 67/);
+    const bad = mk({ carbs: 80, stomach: "bad", date: "2026-11-02" }, "d");
+    assert.match(compareModel({ on: true, runs: [rome, bad], calcCarbs: 95, current: 95 }).hold, /Stay at 67/);
+    const lower = mk({ carbs: 50, date: "2026-11-03" }, "e");
+    assert.equal(compareModel({ on: true, runs: [rome, lower], calcCarbs: 95, current: 95 }).next, null, "a clean run below the best earns no step");
+});

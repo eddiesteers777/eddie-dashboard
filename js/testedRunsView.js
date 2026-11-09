@@ -4,7 +4,7 @@
    Nothing here changes a plan. Pure logic: js/testedRuns.js. */
 import {
     TESTED_KEY, STOMACH, ENERGY, TOOK, TWEAKS, RATING_WORDS,
-    buildRun, prefillFromPlan, upsertRun, removeRun, readRuns, runLine, USE_TESTED_KEY, compareModel
+    buildRun, prefillFromPlan, upsertRun, removeRun, readRuns, runLine, USE_TESTED_KEY, compareModel, STEP_UP
 } from "./testedRuns.js";
 import { toast, sbConfirm } from "./ui.js";
 
@@ -161,11 +161,18 @@ export function refreshTestedCompare({ calcCarbs, current, race, apply }) {
     if (!m) { host.innerHTML = ""; return; }
     const tile = (kind, label, n, src) => `<button type="button" class="tr-tile${m.applied === kind ? " on" : ""}" role="radio" aria-checked="${m.applied === kind}" data-use="${kind}">
         <span class="tr-eyebrow">${label}</span><span class="tr-big">${n}<small>g/hr</small></span><span class="tr-src">${esc(src)}</span></button>`;
-    host.innerHTML = `<div class="tr-cmp-head"><b>Carbs: tested or calculator</b>${m.applied === "custom" ? '<small>Your own number is in use</small>' : ""}</div>
-        <div class="tr-tiles" role="radiogroup" aria-label="Carbs an hour">${tile("tested", "Tested", m.tested.carbs, `${m.tested.name}. Worked.`)}${tile("calc", "Calculator", m.calc, "General guide for this run.")}</div>
+    const top = Math.max(...m.ladder.map(r => r.carbs));
+    const ladder = m.ladder.length > 2 ? `<div class="tr-ladder" role="img" aria-label="Carb rates: ${m.ladder.map(r => `${r.carbs} ${r.kind === "next" ? "next step" : r.kind === "calc" ? "calculator" : "worked"}`).join(", ")}">${m.ladder.map(r =>
+        `<span class="tr-rung ${r.kind}" style="height:${Math.max(28, Math.round(r.carbs / top * 100))}%"><b>${r.carbs}</b></span>`).join("")}</div>
+        <div class="tr-rl">${m.ladder.map(r => `<span>${r.kind === "next" ? "Next step" : r.kind === "calc" ? "Calculator" : esc((r.name || "").slice(0, 14))}</span>`).join("")}</div>` : "";
+    host.innerHTML = `<div class="tr-cmp-head"><b>Carbs: tested, next step or calculator</b>${m.applied === "custom" ? '<small>Your own number is in use</small>' : ""}</div>
+        ${m.next ? `<p class="tr-step">A run that works earns the next one ${STEP_UP} g/hr more.</p>` : ""}
+        ${ladder}
+        <div class="tr-tiles${m.next ? " three" : ""}" role="radiogroup" aria-label="Carbs an hour">${tile("tested", "Tested", m.tested.carbs, `${m.tested.name}. Worked.`)}${m.next ? tile("next", "Next", m.next.carbs, `${STEP_UP} more than tested.`) : ""}${tile("calc", "Calculator", m.calc, "General guide for this run.")}</div>
+        ${m.hold ? `<p class="tr-warn" role="note"><b aria-hidden="true">i</b><span>${esc(m.hold)}</span></p>` : ""}
         ${m.warn ? `<p class="tr-warn" role="note"><b aria-hidden="true">!</b><span>${esc(m.warn)}</span></p>` : ""}`;
     host.onclick = e => {
         const t = e.target.closest("[data-use]"); if (!t) return;
-        apply(t.dataset.use === "tested" ? m.tested.carbs : m.calc);
+        apply(t.dataset.use === "tested" ? m.tested.carbs : t.dataset.use === "next" ? m.next.carbs : m.calc);
     };
 }

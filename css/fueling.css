@@ -3479,3 +3479,11 @@ html.sb-guest .fueling-page .fx-guest-offer{ display:block; }
 .tr-big{font:800 2.2rem/1 var(--font-display)}.tr-big small{font:600 .85rem var(--font-body);color:var(--muted);margin-left:4px}
 .tr-src{font-size:.82rem;color:var(--muted)}
 .tr-warn{display:flex;gap:10px;margin:12px 0 0;padding:12px;border-radius:12px;background:rgba(211,154,114,.1);border:1px solid rgba(211,154,114,.3);font-size:.92rem}.tr-warn b{color:var(--orange)}
+
+/* Step 3: next step tile and ladder */
+.tr-step{margin:0 0 8px;color:var(--muted);font-size:.92rem}
+.tr-tiles.three{grid-template-columns:repeat(3,1fr);gap:8px}.tr-tiles.three .tr-tile{padding:10px;min-height:92px}.tr-tiles.three .tr-big{font-size:1.8rem}
+.tr-ladder{display:flex;align-items:flex-end;gap:8px;height:96px;margin:6px 0 4px}
+.tr-rung{flex:1;border-radius:8px 8px 3px 3px;display:flex;justify-content:center;padding-top:5px;background:rgba(199,214,228,.16);font:700 .95rem var(--font-display)}
+.tr-rung.done{background:rgba(157,184,154,.38)}.tr-rung.next{background:rgba(199,214,228,.36);outline:1.5px solid var(--primary)}.tr-rung.calc{background:none;border:1.5px dashed rgba(214,228,240,.35)}
+.tr-rl{display:flex;gap:8px;margin-bottom:12px}.tr-rl span{flex:1;text-align:center;font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -135,10 +135,23 @@ export function testedRate(runs) {
     return best && best.carbs > 0 ? best : null;
 }
 
+export const STEP_UP = 10;                                     // g/hr a run that worked earns for the next long run
+
+/** Worked rates, lowest to highest, one per distinct rate (newest run keeps the label), for the ladder. */
+export function workedLadder(runs, limit = 3) {
+    const seen = new Map();
+    for (const r of readRuns(runs).slice().reverse()) {          // oldest first, so a later run at the same rate wins
+        if (r.rating === "worked" && r.minutes >= MIN_TESTED_MINUTES && r.taken.carbs > 0) seen.set(Math.round(r.taken.carbs), r.name);
+    }
+    return [...seen.entries()].sort((a, b) => a[0] - b[0]).slice(-limit).map(([carbs, name]) => ({ carbs, name }));
+}
+
 /**
  * What the Tested vs Calculator card shows, or null when it shouldn't
  * (adaptive off, nothing tested yet, or no calculated plan).
  * current = the carbs box now; applied says which number the plan is using.
+ * Step 3: after the newest long run worked, the next step is tested + 10
+ * (never past the calculator); a run that went only so-so or badly holds.
  */
 export function compareModel({ on, runs, calcCarbs, current, race = false } = {}) {
     if (!on || !(Number(calcCarbs) > 0)) return null;
@@ -146,9 +159,20 @@ export function compareModel({ on, runs, calcCarbs, current, race = false } = {}
     if (!tested) return null;
     const calc = Math.round(Number(calcCarbs)), now = Math.round(Number(current));
     const gap = calc - tested.carbs;
+    const latest = readRuns(runs).find(r => r.minutes >= MIN_TESTED_MINUTES && r.rating);
+    let next = null, hold = "";
+    if (latest?.rating === "worked" && latest.taken.carbs >= tested.carbs) {
+        const n = Math.min(tested.carbs + STEP_UP, 120);
+        if (n < calc) next = { carbs: n };
+    } else if (latest?.rating === "mostly") {
+        hold = `${latest.name} went only so-so. Hold at ${tested.carbs} g/hr until a long run goes cleanly.`;
+    } else if (latest?.rating === "didnt") {
+        hold = `${latest.name} didn't go well. Stay at ${tested.carbs} g/hr or lower, and look at what to change.`;
+    }
+    const applied = now === tested.carbs ? "tested" : next && now === next.carbs ? "next" : now === calc ? "calc" : "custom";
     return {
-        tested, calc, gap,
-        applied: now === tested.carbs ? "tested" : now === calc ? "calc" : "custom",
+        tested, calc, gap, next, hold, applied,
+        ladder: [...workedLadder(runs).map(r => ({ kind: "done", ...r })), ...(next ? [{ kind: "next", carbs: next.carbs }] : []), { kind: "calc", carbs: calc }],
         warn: gap > WARN_GAP
             ? (race ? `The calculator's number is ${gap} g/hr above anything you've tested. Race day is not the day to try it.`
                     : `The calculator's number is ${gap} g/hr above anything you've tested. Try it in a long run first.`)
