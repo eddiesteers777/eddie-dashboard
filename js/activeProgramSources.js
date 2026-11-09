@@ -14,6 +14,7 @@ import { loadRunningPrograms, saveRunningPrograms } from "./runningPrograms.js";
 import { loadTrainingPrograms, saveTrainingPrograms } from "./trainingPrograms.js";
 import { applyDayEdit, revertDayEdit } from "./programDayEdit.js";
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
+import { programWins, overriddenProgramNames } from "./programPrecedence.js";
 
 function getActivePrograms() {
     const race = loadRunningPrograms()
@@ -47,8 +48,11 @@ function dayDateWithinWeek(week, dayCode) {
 
 export function getActiveProgramEntriesForDate(dateStr) {
     const results = [];
+    const all = getActivePrograms();
 
-    for (const program of getActivePrograms()) {
+    for (const program of all) {
+        if (!programWins(all, program, dateStr)) continue;
+        const overrides = overriddenProgramNames(all, dateStr);
         const generated = program.generatedPlan;
         for (const week of generated.weeks || []) {
             const generatedDay = (week.days || []).find(day => day.date === dateStr);
@@ -58,6 +62,7 @@ export function getActiveProgramEntriesForDate(dateStr) {
                     programName: program.name,
                     planType: program.type,
                     programSource: program.source,
+                    overrides,
                     week: week.week,
                     phase: week.phase,
                     entry: generatedDay
@@ -72,6 +77,7 @@ export function getActiveProgramEntriesForDate(dateStr) {
                     programName: program.name,
                     planType: program.type,
                     programSource: program.source,
+                    overrides,
                     week: week.week,
                     phase: week.phase,
                     entry: {
@@ -92,7 +98,8 @@ export function getActiveProgramWeekStats(mondayDate, sundayDate) {
     const end = new Date(`${sundayDate}T00:00:00`);
     const summaries = [];
 
-    for (const program of getActivePrograms()) {
+    const allForStats = getActivePrograms();
+    for (const program of allForStats) {
         let planned = 0;
         let completed = 0;
 
@@ -101,6 +108,7 @@ export function getActiveProgramWeekStats(mondayDate, sundayDate) {
                 if (!day.date) continue;
                 const date = new Date(`${day.date}T00:00:00`);
                 if (date < start || date > end || day.type === "rest") continue;
+                if (!programWins(allForStats, program, day.date)) continue;
                 const miles = Number(day.miles) || 0;
                 planned += miles;
                 if (day.completed) completed += miles;
@@ -127,10 +135,12 @@ export function getActiveProgramUpcomingRuns(todayDate, horizonDays = 14) {
     end.setDate(end.getDate() + horizonDays);
     const upcoming = [];
 
-    for (const program of getActivePrograms()) {
+    const allForUpcoming = getActivePrograms();
+    for (const program of allForUpcoming) {
         for (const week of program.generatedPlan?.weeks || []) {
             for (const day of week.days || []) {
                 if (!day.date || day.type === "rest" || !day.miles) continue;
+                if (!programWins(allForUpcoming, program, day.date)) continue;
                 const date = new Date(`${day.date}T00:00:00`);
                 if (date < start || date > end) continue;
                 upcoming.push({

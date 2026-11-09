@@ -218,13 +218,14 @@ function renderDayDetail() {
         const note = edited
             ? `Edited by you · <button type="button" class="running-generated-undo" data-undo-generated-edit="${id}" data-generated-date="${date}">Undo</button>`
             : escapeHtml(item.phase || "Planned workout");
+        const overrides = (item.overrides || []).length ? ` · Overrides: ${escapeHtml(item.overrides.join(", "))}` : "";
         return `<div class="running-generated-day-detail" data-generated-plan-id="${id}" data-generated-plan-date="${date}">
             <div class="running-generated-day-detail-label">${escapeHtml(item.programName)} · Week ${item.week}</div>
             <div class="running-detail-plan-line">
                 <span class="running-detail-session">${escapeHtml(item.entry.session || "Planned run")}</span>
                 <span class="running-detail-miles">${formatMiles(item.entry.miles)}<small>mi</small></span>
             </div>
-            <div class="running-generated-day-detail-meta">${note}</div>
+            <div class="running-generated-day-detail-meta">${note}${overrides}</div>
             <div class="running-generated-actions">${editBtn}${completeBtn}</div>
         </div>`;
     }).join("");
