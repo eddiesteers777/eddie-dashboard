@@ -121,6 +121,7 @@ export function runLine(run) {
 }
 
 /* ---- Step 2: Tested vs Calculator (2026-11-09) ---- */
+export const MY_SETUP_KEY = "fueling-my-setup";            // the athlete's usual bottles / mix / handoff, one line of their words (synced)
 export const USE_TESTED_KEY = "fueling-use-tested";          // "1" when the athlete turned adaptive on (synced, off by default)
 export const MIN_TESTED_MINUTES = 60;                          // a short run says little about a long one
 export const WARN_GAP = 10;                                    // g/hr above tested before the plan says "untested"
@@ -130,7 +131,7 @@ export function testedRate(runs) {
     let best = null;
     for (const r of readRuns(runs)) {
         if (r.rating !== "worked" || !(r.minutes >= MIN_TESTED_MINUTES)) continue;
-        if (!best || r.taken.carbs > best.carbs || (r.taken.carbs === best.carbs && r.date > best.date)) best = { carbs: Math.round(r.taken.carbs), name: r.name, date: r.date, id: r.id };
+        if (!best || r.taken.carbs > best.carbs || (r.taken.carbs === best.carbs && r.date > best.date)) best = { carbs: Math.round(r.taken.carbs), name: r.name, date: r.date, id: r.id, setup: r.setup || "" };
     }
     return best && best.carbs > 0 ? best : null;
 }

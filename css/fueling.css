@@ -3487,3 +3487,7 @@ html.sb-guest .fueling-page .fx-guest-offer{ display:block; }
 .tr-rung{flex:1;border-radius:8px 8px 3px 3px;display:flex;justify-content:center;padding-top:5px;background:rgba(199,214,228,.16);font:700 .95rem var(--font-display)}
 .tr-rung.done{background:rgba(157,184,154,.38)}.tr-rung.next{background:rgba(199,214,228,.36);outline:1.5px solid var(--primary)}.tr-rung.calc{background:none;border:1.5px dashed rgba(214,228,240,.35)}
 .tr-rl{display:flex;gap:8px;margin-bottom:12px}.tr-rl span{flex:1;text-align:center;font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Step 4: saved setup */
+.tr-keep{display:flex;align-items:center;gap:10px;min-height:44px;font-size:.92rem;color:var(--muted)}.tr-keep input{width:22px;height:22px;flex:0 0 22px}
+.tr-setup{margin:12px 0 0;font-size:.92rem;color:var(--text)}.tr-setup b{color:var(--muted);font-weight:600}

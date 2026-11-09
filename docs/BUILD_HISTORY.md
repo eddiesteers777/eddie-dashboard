@@ -845,3 +845,6 @@ Off-by-default switch in Tested runs; compare card in Your plan; tested rate = b
 
 ### 2026-11-09: Adaptive fueling step 3 — +10 g/hr next step (branch claude/project-thread-seqa52, not merged)
 Next tile and ladder in the compare card; hold messages after so-so or bad runs. No rules change. Tests in `tests/testedRuns.test.mjs`. Checked at 390 and 1280.
+
+### 2026-11-09: Adaptive fueling step 4 — saved setup (branch claude/project-thread-seqa52, not merged)
+"Use this as my usual setup" on a logged run; new runs start with it; the compare card shows the setup that worked. No rules change. Found and fixed while testing: the checkbox was lost when a segmented answer redrew the form.

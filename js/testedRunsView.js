@@ -4,7 +4,7 @@
    Nothing here changes a plan. Pure logic: js/testedRuns.js. */
 import {
     TESTED_KEY, STOMACH, ENERGY, TOOK, TWEAKS, RATING_WORDS,
-    buildRun, prefillFromPlan, upsertRun, removeRun, readRuns, runLine, USE_TESTED_KEY, compareModel, STEP_UP
+    buildRun, prefillFromPlan, upsertRun, removeRun, readRuns, runLine, USE_TESTED_KEY, MY_SETUP_KEY, compareModel, STEP_UP
 } from "./testedRuns.js";
 import { toast, sbConfirm } from "./ui.js";
 
@@ -64,6 +64,7 @@ export function initTestedRuns({ load, save }) {
             <div class="tr-two">${field("fluid", "Fluid (oz/hr)", "number", v.fluid)}${field("caffeine", "Caffeine (mg total)", "number", v.caffeine)}</div>
             ${field("tempF", "Temperature (°F, optional)", "number", v.tempF)}
             ${field("setup", "Your setup (optional)", "text", v.setup, 'placeholder="Bottles, handoff mile, mix" maxlength="300"')}
+            <label class="tr-keep"><input type="checkbox" id="tr_keepsetup"${v.keepSetup ? " checked" : ""}> <span>Use this as my usual setup. It fills in next time.</span></label>
             <p class="tr-sub">How it went</p>
             <div class="tr-q"><b>Stomach</b>${seg("stomach", STOMACH, v.stomach)}</div>
             <div class="tr-q"><b>Energy late in the run</b>${seg("energy", ENERGY, v.energy)}</div>
@@ -86,7 +87,7 @@ export function initTestedRuns({ load, save }) {
     function readForm() {
         const f = body.querySelector("form"), g = id => f.querySelector(`#tr_${id}`)?.value ?? "";
         const v = form.values;
-        Object.assign(v, { name: g("name"), date: g("date"), miles: g("miles"), minutes: g("minutes"), carbs: g("carbs"), sodium: g("sodium"), fluid: g("fluid"), caffeine: g("caffeine"), tempF: g("tempF"), setup: g("setup"), note: g("note") });
+        Object.assign(v, { name: g("name"), date: g("date"), miles: g("miles"), minutes: g("minutes"), carbs: g("carbs"), sodium: g("sodium"), fluid: g("fluid"), caffeine: g("caffeine"), tempF: g("tempF"), setup: g("setup"), note: g("note"), keepSetup: Boolean(f.querySelector("#tr_keepsetup")?.checked) });
     }
 
     body.addEventListener("click", async event => {
@@ -94,7 +95,7 @@ export function initTestedRuns({ load, save }) {
         if (!t) return;
         if (t.dataset.act === "new") {
             saved = null;
-            form = { editingId: null, values: { kind: "long", date: new Date().toLocaleDateString("en-CA"), tweaks: [] } };
+            form = { editingId: null, values: { setup: String(load(MY_SETUP_KEY, "") || ""), kind: "long", date: new Date().toLocaleDateString("en-CA"), tweaks: [] } };
             draw(); body.scrollIntoView({ block: "nearest" }); return;
         }
         if (t.dataset.act === "edit") {
@@ -140,6 +141,7 @@ export function initTestedRuns({ load, save }) {
         const res = buildRun({ ...form.values, planned: form.values.planned ?? old?.planned }, { id: form.editingId });
         const err = body.querySelector("#trErr");
         if (!res.ok) { err.textContent = res.problem; err.hidden = false; err.scrollIntoView({ block: "nearest" }); return; }
+        if (form.values.keepSetup && res.run.setup) save(MY_SETUP_KEY, res.run.setup);
         runs = upsertRun(runs, res.run); save(TESTED_KEY, runs);
         form = null; saved = res.run; draw(); changed();
         toast(`Saved as ${RATING_WORDS[res.run.rating]}.`);
@@ -169,6 +171,7 @@ export function refreshTestedCompare({ calcCarbs, current, race, apply }) {
         ${m.next ? `<p class="tr-step">A run that works earns the next one ${STEP_UP} g/hr more.</p>` : ""}
         ${ladder}
         <div class="tr-tiles${m.next ? " three" : ""}" role="radiogroup" aria-label="Carbs an hour">${tile("tested", "Tested", m.tested.carbs, `${m.tested.name}. Worked.`)}${m.next ? tile("next", "Next", m.next.carbs, `${STEP_UP} more than tested.`) : ""}${tile("calc", "Calculator", m.calc, "General guide for this run.")}</div>
+        ${m.tested.setup ? `<p class="tr-setup"><b>Setup that worked:</b> ${esc(m.tested.setup)}</p>` : ""}
         ${m.hold ? `<p class="tr-warn" role="note"><b aria-hidden="true">i</b><span>${esc(m.hold)}</span></p>` : ""}
         ${m.warn ? `<p class="tr-warn" role="note"><b aria-hidden="true">!</b><span>${esc(m.warn)}</span></p>` : ""}`;
     host.onclick = e => {

@@ -109,3 +109,10 @@ test("step 3: a Worked newest run earns +10, capped below the calculator; so-so 
     const lower = mk({ carbs: 50, date: "2026-11-03" }, "e");
     assert.equal(compareModel({ on: true, runs: [rome, lower], calcCarbs: 95, current: 95 }).next, null, "a clean run below the best earns no step");
 });
+
+test("step 4: the tested rate carries the setup that worked", () => {
+    const r = mk({ carbs: 67, setup: "3 bottles, 10.4%, handoff at mile 10" }, "s");
+    assert.equal(testedRate([r]).setup, "3 bottles, 10.4%, handoff at mile 10");
+    assert.equal(compareModel({ on: true, runs: [r], calcCarbs: 95, current: 95 }).tested.setup, r.setup);
+    assert.equal(testedRate([mk({ carbs: 60 }, "n")]).setup, "");
+});
