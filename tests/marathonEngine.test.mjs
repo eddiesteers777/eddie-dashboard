@@ -193,10 +193,39 @@ test("the careful ramp: up, hold, up, then a deeper down week", () => {
 
 test("warnings tell the coach what to look at", () => {
     assert.ok(make({ raceDate: "2027-02-14" }).warnings.some(w => /10-week plan/.test(w)));
-    assert.ok(make({ currentMiles: 12, longestRun: 4, runDays: ["TUE", "THU", "SUN"] }).warnings.some(w => /longest run reaches/.test(w)));
+    assert.ok(make({ currentMiles: 12, longestRun: 4, runDays: ["TUE", "THU", "SUN"] }).warnings.some(w => /long run reaches/.test(w)));
     assert.ok(make({ currentMiles: 18 }).warnings.some(w => /800s test is a big day/.test(w)));
     assert.ok(make({ runDays: ["SAT", "SUN", "MON"], longRunDay: "SUN" }).warnings.some(w => /next to the long run/.test(w)));
     assert.ok(make({ goalTime: "4:30:00" }).warnings.some(w => /faster than the goal/.test(w)));
+});
+
+test("the coach's peak miles: the plan climbs to it and arrives in the peak week", () => {
+    for (const [peakMiles, extra] of [[45, {}], [52, {}], [38, { injuryHistory: true }], [75, { currentMiles: 50 }], [35, { raceDate: "2027-02-14" }]]) {
+        const plan = make({ peakMiles, ...extra });
+        const peakWeek = plan.weeks.find(w => w.kind === "peak");
+        assert.ok(Math.abs(peakWeek.targetMiles - peakMiles) <= 0.5, `asked ${peakMiles}, peak week ${peakWeek.targetMiles}`);
+        assert.ok(Math.max(...plan.weeks.map(w => w.targetMiles)) <= peakMiles + 0.5);
+    }
+    // A far-off peak is reached gradually: the plan climbs at its own pace, never above the ramp.
+    const slow = make({ peakMiles: 36 }), fast = make({ peakMiles: 52 });
+    const build = plan => plan.weeks.filter(w => w.kind === "build").map(w => w.targetMiles);
+    assert.ok(build(slow).some((m, i, a) => i > 0 && m === a[i - 1]) || build(slow).at(-1) <= 36);
+    assert.ok(fast.weeks.find(w => w.kind === "peak").targetMiles > slow.weeks.find(w => w.kind === "peak").targetMiles);
+    // The peak can't be reached faster than the ramp allows: the coach is told.
+    const tooFar = make({ peakMiles: 90, raceDate: "2027-02-28" });
+    assert.ok(tooFar.warnings.some(w => /safely/.test(w)));
+});
+
+test("long run target: 20 miles for a marathon unless the coach sets another", () => {
+    const strong = make({ currentMiles: 40, longestRun: 14, peakMiles: 55, recentRace: { meters: 21097.5, seconds: 5400 }, goalTime: "3:10:00", runDays: ["MON", "TUE", "WED", "THU", "SAT", "SUN"] });
+    assert.equal(strong.summary.longestRun, 20);
+    assert.equal(make({ longTarget: 16, currentMiles: 40, peakMiles: 55, recentRace: { meters: 21097.5, seconds: 5400 }, goalTime: "3:10:00" }).summary.longestRun, 16);
+    // A peak too low to hold a 20 mile run says so.
+    const low = make({ peakMiles: 32, recentRace: { meters: 21097.5, seconds: 5400 }, goalTime: "3:10:00" });
+    assert.ok(low.summary.longestRun < 20);
+    assert.ok(low.warnings.some(w => /short of the 20 asked for/.test(w)));
+    // Never over 20, whatever is asked.
+    assert.equal(normalize({ ...BASE, longTarget: 26 }).longTarget, 20);
 });
 
 test("every stimulus has three weeks of speed sessions and long runs", () => {

@@ -41,6 +41,12 @@ Race date, goal time, a recent race, current weekly miles, longest recent run, r
 - Injury history forces the careful ramp. 45+ miles a week defaults to experienced. Everyone else is normal.
 - The long run is at most half the week on 3 or 4 run days, 45% on 5, 40% on 6 or 7.
 
+## Peak miles and the long run target (Eddie, 2026-11-10)
+- **Eddie:** the coach sets the peak weekly miles for the plan, and the plan builds to it over time. The long run goes up to 20 miles for a marathon (10 for a half).
+- **Engine:** `peakMiles` is the most miles in one week. The plan climbs just fast enough to arrive at it in the peak week, never faster than the runner's ramp. A peak too far away to reach safely stops short and the coach is told. With no peak set, the engine picks one from current miles.
+- **Engine:** `longTarget` defaults to 20 and can be lowered, never raised past 20. The long run climbs evenly to it, limited by the 3-hour rule and by its share of the week. A peak too low to hold the target gives a warning that names the weekly miles needed.
+- Half marathon plans (long run to 10) are not in the engine yet.
+
 ## The week (Engine)
 - Speed day: Tuesday when it is a run day, otherwise the earliest run day that is not next to the long run.
 - Runners in their first marathon or under 25 miles a week get one key session a week: speed and the long run workout take turns. Everyone else gets both.

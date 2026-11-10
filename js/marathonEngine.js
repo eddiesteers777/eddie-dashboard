@@ -99,7 +99,9 @@ export function normalize(input = {}) {
         : s.firstMarathon || s.currentMiles < RULES.bothFromMiles ? "ALTERNATE" : tier.key;
     s.reps800 = clamp(Math.round(Number(input.reps800) || tier.reps800), 4, 12);
     s.rest800 = clamp(Math.round((Number(input.rest800) || tier.rest800) / 30) * 30, 60, 180);
-    s.peakMiles = Number(input.peakMiles) > 0 ? Number(input.peakMiles) : 0;
+    // The coach's peak: the most miles in one week the plan builds to, and the long run it ends on.
+    s.peakMiles = Number(input.peakMiles) > 0 ? clamp(Math.round(Number(input.peakMiles)), 10, 120) : 0;
+    s.longTarget = Number(input.longTarget) > 0 ? clamp(Math.round(Number(input.longTarget) * 2) / 2, 8, RULES.longCapMiles) : RULES.longCapMiles;
     return s;
 }
 
@@ -396,29 +398,43 @@ function planLevels(s, cal, p) {
     // base may double, up to the tier's floor, or the long run never gets long.
     const reach = Math.max(start * tier.peakFactor, Math.min(start * 2, tier.floor));
     const peak = Math.max(start, s.peakMiles || Math.min(reach, Math.max(tier.ceiling, start)));
+    const longWanted = s.longTarget;
     const share = RULES.longShare[clamp(s.runDays.length, 3, 7)];
     const capByTime = p ? floorHalf(RULES.longCapMinutes / (((p.easyFast + p.easySlow) / 2) / 60)) : RULES.longCapMiles;
     const longCap = Math.min(RULES.longCapMiles, capByTime);
 
-    let high = start, first = true;
-    const totals = cal.map(w => {
-        if (w.kind === "leadin") { first = false; return start; }
-        if (w.kind === "down") return high * (1 - tier.down);
-        if (w.kind === "build") {
-            const action = first ? "hold" : tier.pattern[w.blockWeek - 1];
-            first = false;
-            if (action === "up") high = Math.min(peak, high + clamp(high * tier.ramp, RULES.stepMin, RULES.stepMax));
-            return high;
-        }
-        if (w.kind === "peak") return high;
-        if (w.kind === "taper") return high * RULES.taperMiles[RULES.taperMiles.length - (cal.filter(x => x.kind === "taper").length) + w.taperIndex];
-        return 0;   // race week: set by its own days
-    });
+    // The weekly miles for a ramp speed (1 = the tier's full ramp). The plan
+    // climbs just fast enough to arrive at the peak in the peak week, never
+    // faster than the tier's ramp, so a peak far away is reached gradually.
+    const simulate = speed => {
+        let high = start, first = true;
+        const totals = cal.map(w => {
+            if (w.kind === "leadin") { first = false; return start; }
+            if (w.kind === "down") return high * (1 - tier.down);
+            if (w.kind === "build") {
+                const action = first ? "hold" : tier.pattern[w.blockWeek - 1];
+                first = false;
+                if (action === "up") high = Math.min(peak, high + clamp(high * tier.ramp * speed, RULES.stepMin * Math.min(1, speed), RULES.stepMax * speed));
+                return high;
+            }
+            if (w.kind === "peak") return high;
+            if (w.kind === "taper") return high * RULES.taperMiles[RULES.taperMiles.length - (cal.filter(x => x.kind === "taper").length) + w.taperIndex];
+            return 0;   // race week: set by its own days
+        });
+        return { totals, high };
+    };
+    let { totals, high } = simulate(1);
+    if (high >= peak - 0.01) {
+        // Full speed gets there early: find the slowest ramp that still arrives.
+        let lo = 0.05, hi = 1;
+        for (let i = 0; i < 30; i++) { const mid = (lo + hi) / 2; if (simulate(mid).high >= peak - 0.01) hi = mid; else lo = mid; }
+        ({ totals, high } = simulate(hi));
+    }
 
     // The long run climbs evenly across the weeks that aren't down weeks.
     const climbing = cal.map((w, i) => (["leadin", "build", "peak"].includes(w.kind) ? i : -1)).filter(i => i >= 0);
     const startLong = Math.min(longCap, Math.max(3, s.longestRun || roundHalf(start * 0.3)));
-    const topLong = Math.max(startLong, Math.min(longCap, startLong + tier.longStep * (climbing.length - 1), floorHalf(share * high)));
+    const topLong = Math.max(startLong, Math.min(longCap, longWanted));
     let lastLong = startLong;
     const longs = cal.map((w, i) => {
         const at = climbing.indexOf(i);
@@ -431,7 +447,7 @@ function planLevels(s, cal, p) {
         if (w.kind === "taper") return floorHalf(topLong * RULES.taperLong[RULES.taperLong.length - cal.filter(x => x.kind === "taper").length + w.taperIndex]);
         return 0;
     });
-    return { totals, longs, peak: high, wanted: peak, longCap, capByTime, topLong: Math.max(...longs) };
+    return { totals, longs, peak: high, wanted: peak, longCap, capByTime, topLong: Math.max(...longs), longWanted, share };
 }
 
 // One week's days: the long run and the speed day first, easy runs share the rest.
@@ -541,7 +557,10 @@ export function generateMarathonPlan(input = {}) {
         warnings.push(`The recent race points to about ${clock(fitness.predictedSec)}, faster than the goal. Race-pace work follows the goal; raise it if you agree.`);
     }
     if (levels.capByTime < RULES.longCapMiles) warnings.push(`The 3-hour rule caps the long run at ${levels.capByTime} miles for this runner.`);
-    if (longest < 16 && longest < levels.capByTime) warnings.push(`The longest run reaches ${longest} miles. Marathon runners usually build to 16 or more: more weeks, more weekly miles or another run day would get there.`);
+    if (longest < levels.longWanted && longest < levels.capByTime) {
+        const needed = Math.ceil(levels.longWanted / levels.share);
+        warnings.push(`The long run reaches ${longest} miles, short of the ${levels.longWanted} asked for. A ${levels.longWanted}-mile long run needs about ${needed} miles in the peak week on ${s.runDays.length} run days.`);
+    }
     if (levels.peak < levels.wanted - 1 && s.peakMiles) warnings.push(`Building safely from ${s.currentMiles} miles a week reaches about ${Math.round(levels.peak)}, not the ${s.peakMiles} asked for.`);
     if (count < 12) warnings.push(`This is a ${count}-week plan. Most marathon builds take 16 or more, so it moves quickly and has a 2-week taper.`);
     if (testWeeks.length < 2) warnings.push("The plan is too short for two 800s days far enough apart, so there is one.");
