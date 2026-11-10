@@ -69,3 +69,4 @@
     .ms-day{ padding-left:12px; }
 }
 @media (prefers-reduced-motion:reduce){ .ms-dialog[open]{ animation:none; } }
+.ms-coros{ margin:0 0 12px; padding:10px 12px; border-radius:10px; font-size:14px; color:var(--text); background:color-mix(in srgb,var(--primary) 12%,transparent); border:1px solid color-mix(in srgb,var(--primary) 30%,transparent); }

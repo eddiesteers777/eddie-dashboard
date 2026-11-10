@@ -144,16 +144,17 @@ export function previewFor(st) {
     try { return generateMarathonPlan(st); } catch { return { problems: ["Check the setup."], weeks: [], warnings: [], fixes: [] }; }
 }
 
-export function marathonSetup({ firstName, record, plan = null, done = new Set(), onCreate, onApply }) {
+/** me: Eddie's own plan ("Plan for me"): nothing goes to a client; `note` is the "From your COROS" line; `settings` starts the setup. */
+export function marathonSetup({ firstName, record, plan = null, done = new Set(), onCreate, onApply, me = false, note = "", settings = null }) {
     const today = isoToday();
     const regen = Boolean(plan?.generator?.settings?.engine === "marathon");
-    let st = regen ? { ...plan.generator.settings } : marathonSettingsFromProfile(record, today);
+    let st = regen ? { ...plan.generator.settings } : (settings || marathonSettingsFromProfile(record, today));
     let view = "plan";
-    const first = firstName || "the runner";
+    const first = me ? "me" : (firstName || "the runner");
 
     const d = document.createElement("dialog");
     d.className = "sb-dialog ms-dialog";
-    d.setAttribute("aria-label", regen ? "Update the marathon plan" : "New marathon plan");
+    d.setAttribute("aria-label", me ? "My marathon plan" : regen ? "Update the marathon plan" : "New marathon plan");
     document.body.appendChild(d);
     d.addEventListener("close", () => d.remove());
     d.addEventListener("click", ev => { if (ev.target === d) d.close(); });
@@ -164,14 +165,14 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
         d.innerHTML = `
         <div class="ms-wrap">
             <header class="ms-head">
-                <div><span class="ms-kick">${regen ? "Update the plan" : "New marathon plan"}</span><h2>${view === "setup" ? "Setup" : `Plan for ${esc(first)}`}</h2></div>
+                <div><span class="ms-kick">${me ? "My marathon plan" : regen ? "Update the plan" : "New marathon plan"}</span><h2>${view === "setup" ? "Setup" : me ? "Plan for me" : `Plan for ${esc(first)}`}</h2></div>
                 <button type="button" class="sb-btn sb-btn-icon" data-act="close" aria-label="Close">${icon("close")}</button>
             </header>
-            ${view === "setup" ? setupView(st) : planView(st, ready ? prev : null, regen ? "regen" : "new", first)}
+            ${view === "setup" ? (note ? `<p class="ms-coros">${esc(note)}</p>` : "") + setupView(st) : planView(st, ready ? prev : null, regen ? "regen" : "new", first)}
             <footer class="ms-foot">
                 ${view === "setup"
                     ? `<span class="ms-kick">The plan updates when you go back</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="back">Back</button><button type="button" class="sb-btn sb-btn-primary" data-act="apply">Show the plan</button></span>`
-                    : `<span class="ms-kick">${regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button><button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${regen ? "Update plan" : "Create plan"}</button></span>`}
+                    : `<span class="ms-kick">${me ? "Saved on your account. Nothing goes to a client." : regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button><button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${me ? (regen ? "Update my plan" : "Save my plan") : regen ? "Update plan" : "Create plan"}</button></span>`}
             </footer>
         </div>`;
         d.scrollTop = 0;
@@ -202,13 +203,13 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
                 if (!regen) {
                     const result = generateCoachPlan(st);
                     d.close();
-                    return onCreate({ name: `Marathon plan, ${shortDate(st.raceDate)}`, kind: "race", ...result });
+                    return onCreate({ name: me ? "My marathon plan" : `Marathon plan, ${shortDate(st.raceDate)}`, kind: "race", ...result });
                 }
                 const from = st.startDate > today ? st.startDate : today;
                 const result = regeneratePlan(plan, st, { from, scope: "all", replaceEdits: false, today, done });
                 const days = result.changes.length;
                 const kept = result.keptEdited.length;
-                const ok = await sbConfirm(`${days} day${days === 1 ? "" : "s"} change from ${shortDate(from)} on.${kept ? ` ${kept} day${kept === 1 ? "" : "s"} you changed by hand ${kept === 1 ? "is" : "are"} kept.` : ""}\n\nIt goes into your editor (you can undo). ${first} sees it when you publish.`, { title: "Update the plan?", confirmLabel: "Update plan" });
+                const ok = await sbConfirm(`${days} day${days === 1 ? "" : "s"} change from ${shortDate(from)} on.${kept ? ` ${kept} day${kept === 1 ? "" : "s"} you changed by hand ${kept === 1 ? "is" : "are"} kept.` : ""}\n\n${me ? "It replaces the days from then on." : `It goes into your editor (you can undo). ${first} sees it when you publish.`}`, { title: "Update the plan?", confirmLabel: me ? "Update my plan" : "Update plan" });
                 if (!ok) return;
                 d.close();
                 onApply({ plan: result.plan, kind: "race", message: `Marathon plan updated: ${days} day${days === 1 ? "" : "s"} changed.` });

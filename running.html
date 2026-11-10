@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/running.css">
     <link rel="stylesheet" href="css/race-plans.css">
+    <link rel="stylesheet" href="css/marathonSetup.css">
+    <link rel="stylesheet" href="css/myPlan.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c2834">
@@ -32,6 +34,9 @@
         <div class="running-section-tabs" id="runningSectionTabs" role="tablist" aria-label="Running workspace">
             <button type="button" class="running-section-tab active" data-running-section="calendar" role="tab" aria-selected="true">
                 Calendar
+            </button>
+            <button type="button" class="running-section-tab" data-running-section="my-plan" data-requires="coach" role="tab" aria-selected="false">
+                My plan
             </button>
             <button type="button" class="running-section-tab" data-running-section="race-plans" role="tab" aria-selected="false">
                 Race Plans
@@ -90,6 +95,10 @@
                 </details>
             </section>
 
+        </section>
+
+        <section id="runningMyPlanSection" class="running-section-view" data-running-panel="my-plan" data-requires="coach" hidden>
+            <div id="myPlanRoot" class="mp-root"><p class="sb-wait" style="min-height:1em"></p></div>
         </section>
 
         <section id="runningRacePlansSection" class="running-section-view" data-running-panel="race-plans" hidden>
@@ -446,6 +455,7 @@
     <script type="module" src="js/runningCalendar.js"></script>
     <script type="module" src="js/runningProgramCalendar.js"></script>
     <script type="module" src="js/racePlans.js"></script>
+    <script type="module" src="js/myPlanTab.js"></script>
     <script src="js/registerSW.js"></script>
 
 </body>

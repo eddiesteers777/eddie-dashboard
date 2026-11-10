@@ -1036,7 +1036,7 @@ function renderSavedPlans() {
     if (!container) return;
 
     const plans = loadRunningPrograms()
-        .filter(plan => plan && (plan.generatedPlan || plan.settings || plan.raceType))
+        .filter(plan => plan && !plan.own && (plan.generatedPlan || plan.settings || plan.raceType))
         .sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
 
     const grouped = {
