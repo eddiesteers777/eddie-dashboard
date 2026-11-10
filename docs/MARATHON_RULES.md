@@ -64,4 +64,4 @@ Race date, goal time, a recent race, current weekly miles, longest recent run, r
 - **Eddie:** 3 x 1 mile at race pace on the Tuesday. **Engine:** 2:00 easy jog between; for a race on another day, the run day closest to five days out. Two days out is rest, the day before is a 2-mile shakeout.
 
 ## Not built yet
-Adapting (injury, missed, travel), the coach's screens, Eddie's own plan, and sending a week to the watch. See the phases in `docs/APP_REFERENCE.md` "Marathon engine".
+Adapting (injury, missed, travel), Eddie's own plan ("Me"), half marathon, and sending a week to the watch. The coach's screen is built (see `docs/APP_REFERENCE.md` "Marathon plan screen"). See the phases in `docs/APP_REFERENCE.md` "Marathon engine".

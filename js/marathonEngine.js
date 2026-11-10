@@ -571,13 +571,24 @@ export function generateMarathonPlan(input = {}) {
     const short = weeks.filter(w => ["build", "peak"].includes(w.kind) && w.miles < w.targetMiles - 2).length;
     if (short) warnings.push(`${s.runDays.length} run days can't hold the planned miles in ${short} week${short === 1 ? "" : "s"}. Another run day closes the gap.`);
 
+    // One-tap fixes for the warnings that have one: { id, label, patch }.
+    const fixes = [];
+    if (longest < levels.longWanted && longest < levels.capByTime) {
+        const needed = Math.ceil(levels.longWanted / levels.share);
+        if (needed > (s.peakMiles || levels.peak) && needed <= tier.ceiling + 15) fixes.push({ id: "peak", label: `Set peak to ${needed} miles`, patch: { peakMiles: needed } });
+    }
+    if (fitness.source === "recent race" && fitness.goalSec && fitness.gap > RULES.goalStretch) {
+        const rounded = Math.ceil(fitness.predictedSec / 60) * 60;
+        fixes.push({ id: "goal", label: `Use ${clock(rounded)} as the goal`, patch: { goalTime: clock(rounded) } });
+    }
+
     const blocks = [];
     for (const w of weeks) {
         const last = blocks.at(-1);
         if (last && last.block === w.block) last.to = w.index; else blocks.push({ block: w.block, name: w.stimulus, from: w.index, to: w.index });
     }
     return {
-        engine: ENGINE_VERSION, problems: [], settings: s, fitness, paces, weeks, benchmarks, warnings,
+        engine: ENGINE_VERSION, problems: [], settings: s, fitness, paces, weeks, benchmarks, warnings, fixes,
         summary: {
             weeks: count, tier: tier.label, keySessions: s.keySessions, startMiles: weeks[0].miles, peakMiles: biggest, longestRun: longest,
             longCap: levels.longCap, blocks, raceDate: s.raceDate, racePace: paces?.marathon || "",
@@ -617,6 +628,17 @@ function placeRacePaceDay(weeks, s, ctx) {
             delete d.workout; delete d.key;
         }
     }
+}
+
+/** The engine's weeks in the shape js/coachPlanGenerator.js lays strength and cross-training onto. */
+export function shapeForCoachPlan(settings) {
+    const plan = generateMarathonPlan(settings);
+    if (plan.problems.length) throw new Error(plan.problems[0]);
+    const weeks = plan.weeks.map(w => ({
+        startDate: w.startDate, phase: w.stimulus, ...(w.down ? { cutback: true } : {}),
+        days: w.days.map(d => ({ date: d.date, day: d.day, type: d.type, miles: d.miles, session: d.session, ...(d.workout ? { workout: d.workout } : {}) }))
+    }));
+    return { weeks, warnings: plan.warnings, plan };
 }
 
 export default { ENGINE_VERSION, RULES, STIMULI, CODES, checkSettings, normalize, fitnessFrom, pacesFrom, planCalendar, generateMarathonPlan, clockSeconds };

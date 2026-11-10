@@ -53,6 +53,7 @@ import {
 } from "./planOps.js";
 import { dayEntries, weekEntries, saveEntry, deleteEntry } from "./coachLibrary.js";
 import { generateDialog, regenerateDialog } from "./planGenerateDialogs.js";
+import { marathonSetup } from "./marathonSetup.js";
 import { promptDialog, pasteDialog } from "./planPromptDialogs.js";
 
 // Day types a structured run workout applies to.
@@ -605,6 +606,20 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         try {
             if (act === "new") return newPlanDialog();
             if (act === "regen") {
+                const applyRegen = ({ plan, kind, message }) => {
+                    state.editing.kind = kind;
+                    runOp(message, current => {
+                        for (const key of Object.keys(current)) delete current[key];
+                        Object.assign(current, plan);
+                    });
+                };
+                // A plan the marathon engine made is regenerated on its own screen.
+                if (state.editing.plan.generator?.settings?.engine === "marathon") {
+                    return marathonSetup({
+                        firstName: first, record: data.record, plan: state.editing.plan,
+                        done: new Set(doneMarks(state.editing.planId).keys()), onApply: applyRegen
+                    });
+                }
                 return regenerateDialog({
                     firstName: first, record: data.record, plan: state.editing.plan,
                     done: new Set(doneMarks(state.editing.planId).keys()),
@@ -1069,6 +1084,16 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
         container.querySelectorAll(".is-dragging, .is-drop").forEach(el => el.classList.remove("is-dragging", "is-drop"));
     });
 
+    function openMarathon() {
+        marathonSetup({
+            firstName: first, record: data.record,
+            onCreate: ({ name, kind, plan, warnings, summary }) => {
+                startNew({ name, kind, plan, notes: warnings });
+                toast(`Built ${summary.weeks} weeks: ${summary.miles} mi, peak ${summary.peak} mi a week, ${summary.workouts} workouts, ${summary.strength} strength sessions. Change anything, then publish it to ${first}.`);
+            }
+        });
+    }
+
     function openGenerate() {
         generateDialog({
             firstName: first, record: data.record,
@@ -1092,6 +1117,10 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                     <strong>${icon("bolt")} Generate it from ${esc(first)}'s profile</strong>
                     <span>Runs and strength for every day, built from their goal, race, miles and the days they can train. You edit anything after.</span>
                 </button>
+                <button type="button" class="pw-gen-pick" data-act="marathon">
+                    <strong>${icon("bolt")} Build a marathon plan</strong>
+                    <span>Four-week blocks, a down week closing each one, race-pace long runs, the 800s test early and late. Paces come from a recent race. Peak miles and the 20-mile long run are yours to set.</span>
+                </button>
                 <p class="pw-gen-or">or start blank</p>
                 <label class="pw-label">Name<input class="sb-dialog-input" name="name" maxlength="120" required placeholder="e.g. Spring 10K build"></label>
                 <label class="pw-label">Starts the week of<input class="sb-dialog-input" name="start" type="date" required value="${nextMonday}"></label>
@@ -1104,6 +1133,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             </form>`);
         d.querySelector("[data-cancel]").addEventListener("click", () => d.close());
         d.querySelector('[data-act="generate"]').addEventListener("click", () => { d.close(); openGenerate(); });
+        d.querySelector('[data-act="marathon"]').addEventListener("click", () => { d.close(); openMarathon(); });
         d.querySelector("form").addEventListener("submit", ev => {
             ev.preventDefault();
             const f = new FormData(ev.target);

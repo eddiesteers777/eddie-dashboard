@@ -1,0 +1,71 @@
+/* The marathon plan screen (js/marathonSetup.js): plan first, setup on its own view.
+   Foggy blue app look; mist is the action colour, gold marks down weeks, the race and warnings. */
+.ms-dialog{ width:min(1000px, calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow-y:auto; border-radius:14px; }
+.ms-dialog [hidden]{ display:none !important; }
+.ms-wrap{ display:flex; flex-direction:column; gap:12px; padding:16px; }
+.ms-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.ms-head h2{ font-family:var(--font-display); font-weight:900; font-size:30px; line-height:.95; text-transform:uppercase; margin:6px 0 0; }
+.ms-kick{ font:600 11px var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.ms-panel, .ms-setup{ background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.ms-panel h3{ font-family:var(--font-display); font-weight:800; font-size:20px; text-transform:uppercase; margin:0 0 8px; }
+.ms-setup{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.ms-setup p{ margin:4px 0 0; font-size:15px; line-height:1.4; flex:1 1 200px; }
+.ms-stats{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:12px; }
+.ms-stats div{ border-top:2px solid var(--border); padding-top:8px; min-width:0; }
+.ms-stats b{ display:block; font:800 26px/1 var(--font-display); color:var(--primary-light); }
+.ms-stats i{ font:600 10.5px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-style:normal; }
+.ms-chart{ display:flex; align-items:flex-end; gap:3px; height:120px; }
+.ms-bar{ flex:1; min-width:0; border-radius:3px 3px 0 0; }
+.ms-bar.is-down{ opacity:.5; background-image:repeating-linear-gradient(135deg, transparent 0 4px, rgba(0,0,0,.35) 4px 6px); }
+.ms-bar.is-race{ background:var(--gold) !important; opacity:1; }
+.ms-b0{ background:#7C95AB; } .ms-b1{ background:#8FB0C4; } .ms-b2{ background:#9DBAA8; } .ms-b3{ background:#C9B88E; } .ms-b4{ background:#B49BB8; } .ms-b5{ background:#A8C0D8; } .ms-b6{ background:#8FA6BC; }
+.ms-b-down{ background:#555; opacity:.5; }
+.ms-legend{ display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 10px; font:600 10.5px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.ms-legend i{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+.ms-warn{ border-left:3px solid var(--gold); padding:8px 12px; margin:6px 0; background:rgba(210,173,98,.08); font-size:14px; line-height:1.4; border-radius:0 6px 6px 0; }
+.ms-fixes{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 8px; }
+.ms-weeks{ display:grid; }
+.ms-wk{ border-top:1px solid var(--border); }
+.ms-wk summary{ list-style:none; display:flex; align-items:center; gap:10px; min-height:44px; cursor:pointer; font-size:15px; }
+.ms-wk summary::-webkit-details-marker{ display:none; }
+.ms-n{ font:600 11px var(--font-mono); color:var(--muted); width:46px; flex:none; }
+.ms-mi{ margin-left:auto; font:600 13px var(--font-mono); color:var(--primary-light); }
+.ms-tag{ font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--border); border-radius:4px; padding:2px 6px; color:var(--muted); white-space:nowrap; }
+.ms-tag.is-down{ color:var(--gold-light); border-color:rgba(210,173,98,.4); }
+.ms-day{ display:flex; gap:10px; padding:6px 0 6px 56px; font-size:14px; line-height:1.35; border-top:1px dashed rgba(214,228,240,.06); }
+.ms-d{ width:34px; flex:none; font:600 11px var(--font-mono); color:var(--muted); padding-top:2px; }
+.ms-day small{ display:block; color:var(--muted); font-size:12.5px; }
+.ms-dmi{ margin-left:auto; font:600 12px var(--font-mono); color:var(--muted); white-space:nowrap; }
+.ms-day .is-key{ color:var(--gold-light); }
+.ms-note{ margin:10px 0 0; font-size:13px; color:var(--muted); }
+.ms-empty{ text-align:center; padding:16px 8px 8px; color:var(--muted); font-size:14px; line-height:1.5; }
+.ms-empty strong{ display:block; font:800 18px var(--font-display); text-transform:uppercase; color:var(--text); margin-bottom:6px; }
+.ms-ghost{ height:110px; display:flex; align-items:flex-end; gap:3px; opacity:.35; }
+.ms-ghost i{ flex:1; background:var(--border); border-radius:3px 3px 0 0; }
+.ms-foot{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; position:sticky; bottom:0; padding:10px 0 2px; background:var(--surface); }
+.ms-btns{ display:flex; gap:8px; }
+.ms-form{ display:flex; flex-direction:column; gap:14px; }
+.ms-grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+.ms-f{ display:flex; flex-direction:column; gap:5px; min-width:0; }
+.ms-f > span, .ms-label{ font:600 11px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.ms-f.is-wide{ grid-column:1 / -1; }
+.ms-days{ border:0; padding:0; margin:0; }
+.ms-days div{ display:flex; gap:6px; flex-wrap:wrap; margin-top:5px; }
+.ms-days label{ position:relative; }
+.ms-days input{ position:absolute; opacity:0; inset:0; margin:0; cursor:pointer; }
+.ms-days span{ min-width:44px; min-height:44px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+.ms-days input:checked + span{ background:rgba(199,214,228,.16); border-color:var(--primary); color:var(--primary-light); }
+.ms-days input:focus-visible + span{ outline:2px solid var(--primary); outline-offset:2px; }
+.ms-more summary{ cursor:pointer; min-height:44px; display:flex; align-items:center; font:600 12px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--primary-light); }
+.ms-more .ms-grid{ margin:6px 0 12px; }
+.ms-check{ display:flex; align-items:center; gap:10px; min-height:44px; font-size:15px; }
+.ms-check input{ width:20px; height:20px; }
+.ms-error{ color:var(--red); font-size:14px; margin:0; }
+@media (max-width:820px){
+    .ms-dialog{ width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }
+    .ms-wrap{ padding:12px; }
+    .ms-head h2{ font-size:26px; }
+    .ms-stats{ grid-template-columns:repeat(2, 1fr); gap:12px 8px; }
+    .ms-day{ padding-left:12px; }
+}
+@media (prefers-reduced-motion:reduce){ .ms-dialog[open]{ animation:none; } }
