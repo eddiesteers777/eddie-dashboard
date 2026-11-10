@@ -342,6 +342,7 @@
     "js/runWorkout.js",
     "js/runningCalendar.js",
     "js/runningLog.js",
+    "js/runningPlanned.js",
     "js/runningProgramCalendar.js",
     "js/runningPrograms.js",
     "js/schedule.js",

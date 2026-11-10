@@ -745,7 +745,7 @@
     inset:0;
     background:rgba(4,10,7,.7);
     backdrop-filter:blur(6px);
-    z-index:200;
+    z-index:5000;
     align-items:center;
     justify-content:center;
     padding:20px;
@@ -1168,3 +1168,77 @@
     .running-page .running-day-detail,
     .running-page .running-agenda{ max-width:760px; }
 }
+
+/* ==========================================
+   Add workout: Plan it / I did it, kind chips, planned rows
+========================================== */
+.running-mode{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    margin-bottom:6px;
+}
+.running-mode-btn{
+    min-height:44px;
+    border:0;
+    background:transparent;
+    color:var(--text-secondary);
+    font:600 14px var(--font-body);
+    cursor:pointer;
+}
+.running-mode-btn.active{
+    background:var(--primary);
+    color:var(--on-primary);
+    font-weight:700;
+}
+.running-kinds{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+.running-kind-chip{
+    min-height:44px;
+    padding:0 14px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text-secondary);
+    font:600 14px var(--font-body);
+    cursor:pointer;
+}
+.running-kind-chip.active{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:var(--on-primary);
+    font-weight:700;
+}
+.running-detail-own{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:12px;
+}
+.running-detail-own-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:12px 0 0;
+    border-top:1px solid var(--border);
+}
+.running-detail-own-row:first-child{ border-top:0; padding-top:0; }
+.running-detail-own-main{ display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 160px; }
+.running-detail-own-kicker{
+    font:600 11px var(--font-mono);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+}
+.running-detail-own-notes{ color:var(--text-secondary); font-size:14px; }
+.running-detail-own-actions{ display:flex; gap:8px; align-items:flex-start; }
+.running-detail-own-row.done strong{ color:var(--sage); }
+
+.running-modal{ max-height:calc(100dvh - 40px); overflow-y:auto; overscroll-behavior:contain; }

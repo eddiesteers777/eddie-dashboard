@@ -84,6 +84,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "gear-shoes",
     "strength-history",
     "running-log",
+    "running-planned",
     "personal-records",
     "running-programs",
     "training-programs",

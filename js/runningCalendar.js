@@ -25,6 +25,7 @@ import {
 } from "./marathonData.js";
 
 import { getEntriesForDate, getRecentEntries } from "./runningLog.js";
+import { loadPlanned, plannedForDate, plannedAmount, kindById } from "./runningPlanned.js";
 import { getActiveProgramEntriesForDate } from "./activeProgramSources.js";
 import { showsPersonalPlan } from "./role.js";
 import { icon } from "./icons.js";
@@ -299,6 +300,7 @@ function renderWeekView() {
 
     const cells = [];
     const agendaItems = [];
+    const ownPlanned = loadPlanned();
 
     for (let i = 0; i < 7; i++) {
         const date = new Date(monday);
@@ -307,10 +309,11 @@ function renderWeekView() {
         const dateStr = isoDate(date);
         const day = marathonDayForDate(dateStr);
         const casual = getEntriesForDate(dateStr);
+        const own = plannedForDate(ownPlanned, dateStr);
         const isToday = dateStr === todayStr;
         const isSelected = dateStr === selectedDate;
         const done = day ? isCompleted(day.week, day.dayKey) : false;
-        const dotClass = done ? "done" : (casual.length ? "logged" : (day && day.miles ? "planned" : ""));
+        const dotClass = done ? "done" : (casual.length ? "logged" : ((day && day.miles) || own.length ? "planned" : ""));
 
         cells.push(`
             <button
@@ -330,6 +333,11 @@ function renderWeekView() {
         const planned = getActiveProgramEntriesForDate(dateStr)
             .filter(item => Number(item.entry.miles) > 0)
             .map(item => ({ miles: Number(item.entry.miles), type: item.entry.session || item.entry.type || "Run" }));
+
+        own.filter(w => !w.done).forEach(w => planned.push({
+            miles: Number(w.miles) || 0,
+            type: kindById(w.kind)?.label || "Workout"
+        }));
 
         if (!isSelected && ((day && day.miles) || casual.length || planned.length)) {
             agendaItems.push({ dateStr, date, day, casual, planned, isToday, done });
@@ -420,11 +428,14 @@ function renderMonthView() {
         cells.push(`<div class="running-month-cell empty"></div>`);
     }
 
+    const ownPlannedMonth = loadPlanned();
+
     for (let d = 1; d <= daysInMonth; d++) {
         const date = new Date(year, month, d);
         const dateStr = isoDate(date);
         const day = marathonDayForDate(dateStr);
         const casual = getEntriesForDate(dateStr);
+        const hasOwn = plannedForDate(ownPlannedMonth, dateStr).length > 0;
         const isToday = dateStr === todayStr;
         const isSelected = dateStr === selectedDate;
 
@@ -437,7 +448,7 @@ function renderMonthView() {
                 <span class="running-month-cell-num">${d}</span>
                 ${day ? `<span class="running-month-cell-glyph">${cellGlyph(dateStr, day)}</span>` : ""}
                 ${day ? `<span class="running-month-cell-label">${escapeHtml(cellLabel(day))}</span>` : ""}
-                ${casual.length ? `<span class="running-week-cell-dot"></span>` : ""}
+                ${casual.length || hasOwn ? `<span class="running-week-cell-dot"></span>` : ""}
 
             </button>
         `);
@@ -470,6 +481,7 @@ function renderListView() {
     }
 
     const rows = [];
+    const ownPlannedList = loadPlanned();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -481,7 +493,7 @@ function renderListView() {
         const day = marathonDayForDate(dateStr);
         const casual = getEntriesForDate(dateStr);
 
-        if (!day && !casual.length) {
+        if (!day && !casual.length && !plannedForDate(ownPlannedList, dateStr).length) {
             continue;
         }
 
@@ -499,6 +511,7 @@ function renderListView() {
 
                 <span class="running-list-row-main">
                     ${day ? `<strong>${escapeHtml(cellLabel(day))}</strong> <span>${escapeHtml(day.session || "")}</span> ${cellGlyph(dateStr, day)}` : ""}
+                    ${plannedForDate(ownPlannedList, dateStr).map(w => `<span class="running-list-row-casual">${escapeHtml(kindById(w.kind)?.label || "Workout")} ${escapeHtml(plannedAmount(w))}</span>`).join("")}
                     ${casual.map(c => `<span class="running-list-row-casual">+ ${c.miles.toFixed(1)} mi ${escapeHtml(c.type || "")}</span>`).join("")}
                 </span>
 
@@ -526,6 +539,7 @@ function renderDayDetail(dateStr) {
 
     const day = marathonDayForDate(dateStr);
     const casual = getEntriesForDate(dateStr);
+    const own = plannedForDate(loadPlanned(), dateStr);
     const date = new Date(dateStr + "T00:00:00");
     const label = date.toLocaleDateString(undefined, {
         weekday: "long",
@@ -563,11 +577,34 @@ function renderDayDetail(dateStr) {
             </div>
 
         </div>
-    ` : `
+    ` : own.length ? "" : `
         <div class="running-detail-plan running-detail-rest">
             ${showsPersonalPlan() ? "No marathon workout scheduled — rest day, or outside the training block." : "Nothing planned for this day."}
         </div>
     `;
+
+    const ownBlock = own.length ? `
+        <div class="running-detail-own">
+            ${own.map(w => {
+                const k = kindById(w.kind);
+                const amount = plannedAmount(w);
+                return `
+                <div class="running-detail-own-row ${w.done ? "done" : ""}">
+                    <span class="running-detail-own-main">
+                        <span class="running-detail-own-kicker">Planned${w.time ? " · " + escapeHtml(w.time) : ""}</span>
+                        <strong>${escapeHtml(k?.label || "Workout")}${amount ? " · " + escapeHtml(amount) : ""}</strong>
+                        ${w.notes ? `<span class="running-detail-own-notes">${escapeHtml(w.notes)}</span>` : ""}
+                    </span>
+                    <span class="running-detail-own-actions">
+                        <button type="button" class="running-row-btn" data-edit-planned="${w.id}">Edit</button>
+                        <button type="button" class="running-row-btn ${w.done ? "" : "primary"}" data-done-planned="${w.id}">
+                            ${w.done ? `${icon("check")} Done` : "Mark done"}
+                        </button>
+                    </span>
+                </div>`;
+            }).join("")}
+        </div>
+    ` : "";
 
     const casualBlock = casual.length ? `
         <div class="running-detail-casual">
@@ -585,10 +622,11 @@ function renderDayDetail(dateStr) {
         <div class="running-detail-header">
             <span>${escapeHtml(label)}</span>
             <button type="button" class="running-row-btn primary" data-add-run-for="${dateStr}">
-                + Add Run
+                + Add workout
             </button>
         </div>
         ${planBlock}
+        ${ownBlock}
         ${casualBlock}
     `;
 }

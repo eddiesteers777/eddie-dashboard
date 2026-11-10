@@ -7,6 +7,8 @@
    never required for this to work.
 ========================================== */
 
+import { PLAN_KINDS, DONE_TYPES, kindById, makePlanned, loadPlanned, savePlanned, logEntryFromPlanned } from "./runningPlanned.js";
+
 const LOG_KEY = "running-log";
 const SNAPSHOT_KEY = "__eddieos_coros_data_snapshot_v2";
 
@@ -208,35 +210,147 @@ export function importCorosRun(candidate) {
    Add / Edit modal
 ========================================== */
 
+let modalMode = "plan";      // "plan" = a workout for later, "done" = a run already done
+let modalKind = "easy";      // plan kind id, or a done type like "Easy"
+let editingPlannedId = null; // a planned workout being edited
+let completingPlannedId = null; // a planned run being marked done (removed on save)
+
+function renderKindChips() {
+    const wrap = document.getElementById("runningRunKinds");
+    if (!wrap) return;
+
+    const options = modalMode === "plan"
+        ? PLAN_KINDS.map(k => ({ value: k.id, label: k.label }))
+        : DONE_TYPES.map(t => ({ value: t, label: t }));
+
+    wrap.innerHTML = options.map(o => `
+        <button type="button" class="running-kind-chip ${o.value === modalKind ? "active" : ""}"
+            data-run-kind="${escapeHtml(o.value)}" aria-pressed="${o.value === modalKind}">${escapeHtml(o.label)}</button>
+    `).join("");
+
+    const kind = kindById(modalKind);
+    const amountLabel = document.getElementById("runningRunAmountLabel");
+    if (amountLabel) {
+        amountLabel.textContent = modalMode === "plan" && kind && !kind.run ? "Minutes (optional)" : "Distance (miles)";
+    }
+}
+
+function setModalMode(mode) {
+    modalMode = mode;
+    modalKind = mode === "plan" ? "easy" : "Easy";
+    document.querySelectorAll("[data-run-mode]").forEach(btn => {
+        const on = btn.dataset.runMode === mode;
+        btn.classList.toggle("active", on);
+        btn.setAttribute("aria-pressed", String(on));
+    });
+    renderKindChips();
+}
+
 function openRunModal(entry = null) {
-    editingEntryId = entry?.id || null;
+    editingEntryId = null;
+    editingPlannedId = null;
+    completingPlannedId = null;
+
+    const isPlanned = !!entry?.kind;          // a planned workout
+    const isLog = !!entry?.id && !isPlanned;  // an existing logged run
+    const existing = isPlanned || isLog;
+
+    editingEntryId = isLog ? entry.id : null;
+    editingPlannedId = isPlanned ? entry.id : null;
+
+    setModalMode(isLog ? "done" : "plan");
+    if (isPlanned) modalKind = entry.kind;
+    if (isLog) modalKind = DONE_TYPES.includes(entry.type) ? entry.type : "Other";
+    renderKindChips();
+
+    // Fresh adds can switch between planning and logging. Edits can't.
+    const modeBar = document.getElementById("runningRunMode");
+    if (modeBar) modeBar.style.display = existing ? "none" : "";
 
     document.getElementById("runningRunModalTitle").textContent =
-        entry?.id ? "Edit Run" : "Add a Run";
+        isPlanned ? "Edit workout" : isLog ? "Edit Run" : "Add a workout";
 
     document.getElementById("runningRunDate").value =
         entry?.date || localIsoDate(new Date());
 
     document.getElementById("runningRunTime").value = entry?.time || "";
-    document.getElementById("runningRunMiles").value = entry?.miles || "";
-    document.getElementById("runningRunType").value = entry?.type || "Easy";
+    document.getElementById("runningRunMiles").value =
+        (isPlanned ? (entry.miles || entry.minutes) : entry?.miles) || "";
     document.getElementById("runningRunNotes").value = entry?.notes || "";
 
     const deleteBtn = document.getElementById("runningRunDelete");
 
     if (deleteBtn) {
-        deleteBtn.style.display = entry?.id ? "inline-block" : "none";
+        deleteBtn.style.display = existing ? "inline-block" : "none";
     }
 
     document.getElementById("runningRunModalOverlay")?.classList.add("open");
 }
 
+/** "Mark done" on a planned run: the same form, filled in, as a run you did. */
+function openMarkDone(item) {
+    const prefill = logEntryFromPlanned(item);
+    if (!prefill) return;
+    openRunModal(prefill);
+    completingPlannedId = item.id;
+    document.getElementById("runningRunModalTitle").textContent = "Log this run";
+    const modeBar = document.getElementById("runningRunMode");
+    if (modeBar) modeBar.style.display = "none";
+    setModalMode("done");
+    modalKind = prefill.type;
+    renderKindChips();
+}
+
 function closeRunModal() {
     document.getElementById("runningRunModalOverlay")?.classList.remove("open");
     editingEntryId = null;
+    editingPlannedId = null;
+    completingPlannedId = null;
+}
+
+function savePlannedModal() {
+    const date = document.getElementById("runningRunDate").value;
+    const amount = document.getElementById("runningRunMiles").value;
+    const kind = kindById(modalKind);
+
+    const item = makePlanned({
+        id: editingPlannedId || undefined,
+        date,
+        kind: modalKind,
+        miles: kind?.run ? amount : undefined,
+        minutes: kind?.run ? undefined : amount,
+        time: document.getElementById("runningRunTime").value,
+        notes: document.getElementById("runningRunNotes").value
+    });
+
+    if (!item) {
+        import("./ui.js").then(({ toast }) => toast(
+            kind?.run ? "Add a date and how many miles." : "Add a date first."
+        )).catch(() => {});
+        return;
+    }
+
+    const items = loadPlanned();
+    const at = items.findIndex(e => e.id === item.id);
+    if (at >= 0) {
+        item.done = items[at].done;
+        items[at] = item;
+    } else {
+        items.push(item);
+    }
+    savePlanned(items);
+    closeRunModal();
+
+    import("./ui.js").then(({ toast }) => toast("Workout added.")).catch(() => {});
+    window.dispatchEvent(new CustomEvent("eddieos:running-log-changed"));
 }
 
 function saveRunModal() {
+    if (modalMode === "plan") {
+        savePlannedModal();
+        return;
+    }
+
     const date = document.getElementById("runningRunDate").value;
     const miles = Number(document.getElementById("runningRunMiles").value);
 
@@ -251,7 +365,7 @@ function saveRunModal() {
         date,
         time: document.getElementById("runningRunTime").value || null,
         miles,
-        type: document.getElementById("runningRunType").value,
+        type: modalKind,
         notes: document.getElementById("runningRunNotes").value.trim()
     };
 
@@ -272,6 +386,11 @@ function saveRunModal() {
     }
 
     saveLog(data);
+
+    if (completingPlannedId) {
+        savePlanned(loadPlanned().filter(e => e.id !== completingPlannedId));
+    }
+
     closeRunModal();
 
     // A new run: saved, with an optional share image (Train → Recent Workouts has it too).
@@ -291,6 +410,13 @@ function saveRunModal() {
 }
 
 function deleteRunModal() {
+    if (editingPlannedId) {
+        savePlanned(loadPlanned().filter(e => e.id !== editingPlannedId));
+        closeRunModal();
+        window.dispatchEvent(new CustomEvent("eddieos:running-log-changed"));
+        return;
+    }
+
     if (!editingEntryId) {
         closeRunModal();
         return;
@@ -314,6 +440,41 @@ document.addEventListener("click", event => {
 
     if (target.matches("#runningAddRunBtn")) {
         openRunModal();
+        return;
+    }
+
+    const modeBtn = target.closest("[data-run-mode]");
+    if (modeBtn) {
+        setModalMode(modeBtn.dataset.runMode);
+        return;
+    }
+
+    const kindBtn = target.closest("[data-run-kind]");
+    if (kindBtn) {
+        modalKind = kindBtn.dataset.runKind;
+        renderKindChips();
+        return;
+    }
+
+    const editPlanned = target.closest("[data-edit-planned]");
+    if (editPlanned) {
+        const item = loadPlanned().find(e => e.id === editPlanned.dataset.editPlanned);
+        if (item) openRunModal(item);
+        return;
+    }
+
+    const donePlanned = target.closest("[data-done-planned]");
+    if (donePlanned) {
+        const items = loadPlanned();
+        const item = items.find(e => e.id === donePlanned.dataset.donePlanned);
+        if (!item) return;
+        if (kindById(item.kind)?.run) {
+            openMarkDone(item);
+        } else {
+            item.done = !item.done;
+            savePlanned(items);
+            window.dispatchEvent(new CustomEvent("eddieos:running-log-changed"));
+        }
         return;
     }
 
