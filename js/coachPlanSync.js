@@ -56,6 +56,14 @@ export async function syncCoachPlans() {
     const updated = [];
     let changed = false;
 
+    // A copy whose coach plan no longer exists for this client: mark it,
+    // so the client may remove it by hand (js/coachPlanRemoval.js).
+    const live = new Set(headers.map(h => h.id));
+    for (const entry of local) {
+        const orphaned = Boolean(entry.coachPlanId) && !live.has(entry.coachPlanId);
+        if (Boolean(entry.orphaned) !== orphaned) { entry.orphaned = orphaned; changed = true; }
+    }
+
     for (const header of headers) {
         let entry = local.find(p => p.coachPlanId === header.id);
 
@@ -89,10 +97,11 @@ export async function syncCoachPlans() {
                 generatedPlan: mergeRuntimeByDate(seed, version.plan),
                 updatedAt: new Date().toISOString()
             };
-            if (entry) Object.assign(entry, next); else local.push(next);
+            // A new version from the coach brings a removed plan back.
+            if (entry) Object.assign(entry, next, { removedByClient: false }); else local.push(next);
             updated.push(header);
             changed = true;
-        } else if (entry.status !== "active") {
+        } else if (entry.status !== "active" && !entry.removedByClient) {
             entry.status = "active";
             changed = true;
         }

@@ -203,3 +203,11 @@
     .training-stepper{align-items:flex-start;flex-direction:column;}
     .training-stepper-track{width:100%;}
 }
+
+/* Plans from a coach (js/coachPlansCard.js) */
+.pg-coach-plans{margin-bottom:16px;}
+.pg-coach-plans .pg-p{margin-bottom:6px;}
+.pg-cp-gap{margin-top:20px;}
+.pg-cp-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border);}
+.pg-cp-row .pg-item-main{flex:1 1 180px;}
+@media (max-width:520px){.pg-cp-row .sb-btn{flex:0 0 100%;}}
