@@ -420,3 +420,18 @@ html.al-on #readinessCard .rd-body-foot{border-top:1px solid rgba(var(--t),.22)!
 html.al-on #readinessCard .eos-today-card-header{align-items:center;padding:0}
 html.al-on #featuredTraining .ft-header h2{color:rgb(var(--t))!important}
 html.al-on #featuredTraining .ft-manage-btn{border-color:rgba(var(--t),.55)!important}
+
+/* Today: hero rest day, fewer outlines, quieter side cards (H3, Eddie 2026-11-10) */
+html.al-on #todayCard .hero-rest{display:flex;flex-direction:column;gap:6px;padding:6px 4px 2px}
+html.al-on #todayCard .hr-kicker{font:600 12px/1 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:rgb(var(--t))}
+html.al-on #todayCard .hr-big{font:400 clamp(44px,9vw,60px)/.95 var(--font-display);letter-spacing:.02em;text-transform:uppercase;color:var(--text);margin-top:4px}
+html.al-on #todayCard .hr-what{margin:0;font-size:17px;color:var(--text)}
+html.al-on #todayCard .hr-sub{margin:0;font-size:14px;color:var(--text-secondary)}
+html.al-on #todayCard .hero-rest .sb-btn{align-self:flex-start;margin-top:12px}
+html.al-on #todayCard{padding:22px 22px 20px!important;background:radial-gradient(130% 120% at 0% 0%,rgba(var(--t),.55),rgba(var(--t),.16) 50%,rgba(var(--t),0) 82%),linear-gradient(180deg,rgba(42,62,82,.88),rgba(24,36,48,.82))!important}
+html.al-on :is(#todayCard,#weekSection,#todayHabits,#coachCardSection,#nutritionSnap,#readinessCard,#featuredTraining){border:1px solid rgba(255,255,255,.07)!important;box-shadow:inset 3px 0 0 rgb(var(--t)),inset 0 1px 0 rgba(255,255,255,.07),0 22px 40px -22px rgba(0,0,0,.6)!important}
+html.al-on :is(#weekSection,#todayHabits,#nutritionSnap,#featuredTraining,#readinessCard,#coachCardSection){background:linear-gradient(98deg,rgba(var(--t),.28) 0%,rgba(var(--t),.08) 48%,rgba(var(--t),0) 85%),linear-gradient(180deg,rgba(42,62,82,.82),rgba(24,36,48,.76))!important}
+html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-header h2{font-size:15px!important;font-family:var(--font-mono)!important;letter-spacing:.12em!important;text-transform:uppercase!important;color:rgb(var(--t))!important;font-weight:600!important}
+html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-header h2::before{display:none!important}
+html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-header{margin-bottom:8px}
+html.al-on #weekSection .wk-miles{font-size:20px!important}
