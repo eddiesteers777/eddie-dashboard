@@ -57,12 +57,24 @@ html.pl-on .ex-reply{background:rgba(210,173,98,.08);border-left-color:#D2AD62}
 /* The Home hero photo is cooled to match (it was warm olive) */
 html.sbh-sky-on #sbhPhoto{filter:hue-rotate(175deg) saturate(.6) brightness(.95)}
 
-/* Apply buttons open the Get started flow (start.html) and wear its ice blue, not gold. */
-html body a[href="start.html"].pub-btn-primary,
-html body a[href="start.html"].pub-nav-cta{
+/* One main-button colour on the public site (Eddie, 2026-11-10): ice blue with dark text, as in the app.
+   Gold stays for labels and for where you are (active tabs). */
+html body .pub-btn-primary,
+html body .pub-nav-cta,
+html body .pc-calculate-btn,
+html body #pc-root .pc-calculate-btn,
+html body .sf-btn.p,
+html body .pc-calc-btn,
+html body .sb-btn-primary{
     background:linear-gradient(160deg,#E0E9F1,#B9CBDB); color:#13202B; border-color:transparent;
     box-shadow:0 10px 26px -10px rgba(143,166,188,.55),inset 0 1px 0 rgba(255,255,255,.5);
 }
-html body a[href="start.html"].pub-btn-primary:hover,
-html body a[href="start.html"].pub-nav-cta:hover{ background:linear-gradient(160deg,#EEF3F7,#C7D6E4); color:#13202B; opacity:1; }
+html body .pub-btn-primary:hover,
+html body .pub-nav-cta:hover,
+html body .pc-calculate-btn:hover,
+html body #pc-root .pc-calculate-btn:hover,
+html body .sf-btn.p:hover,
+html body .pc-calc-btn:hover,
+html body .sb-btn-primary:hover{ background:linear-gradient(160deg,#EEF3F7,#C7D6E4); color:#13202B; opacity:1; }
+html body .pub-btn-primary:disabled{ background:linear-gradient(160deg,#E0E9F1,#B9CBDB); }
 html body a[href="start.html"].pub-nav-cta.active{ box-shadow:0 0 0 2px var(--bg),0 0 0 4px #C7D6E4; }

@@ -29,7 +29,7 @@ import { monthGrid, shiftMonth, firstOfMonth, cellLabel, monthSummaryLine } from
 import { getMyClientRecord } from "./clientRecords.js";
 import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
-import { toast, emptyHtml, friendlyError, sbChoose, sbAlert } from "./ui.js";
+import { toast, emptyHtml, notConnectedHtml, friendlyError, sbChoose, sbAlert } from "./ui.js";
 import { icon } from "./icons.js";
 import { listMyChangeRequests } from "./changeRequests.js";
 import { awaitingAck, awaitingView, noticeVersionOf } from "./planWindow.js";
@@ -430,10 +430,9 @@ function showFailed(retry) {
 }
 
 function showEmpty(view) {
-    const text = view === "empty-coach"
-        ? emptyHtml({ iconName: "calendar", title: "No plan yet", text: "Your coach hasn't published a plan for you yet. When they do, your weeks show up here and you'll get an email.", actionHref: "updates.html", actionLabel: "From Your Coach" })
-        : emptyHtml({ iconName: "link", title: "Not connected to a coach yet", text: "Connect with your coach. The plan they build for you shows up here.", actionHref: "clients.html?tab=share", actionLabel: "Connect with Coach" });
-    $("planBody").innerHTML = `<div class="clients-card myplan-empty">${text}</div>`;
+    $("planBody").innerHTML = view === "empty-coach"
+        ? `<div class="clients-card myplan-empty sb-empty-card">${emptyHtml({ iconName: "calendar", title: "No plan yet", text: "Your coach hasn't published a plan for you yet. When they do, your weeks show up here and you'll get an email.", actionHref: "updates.html", actionLabel: "From Your Coach", primary: true })}</div>`
+        : notConnectedHtml("the plan they build for you shows up here.").replace("clients-card", "clients-card myplan-empty");
     reveal();
 }
 

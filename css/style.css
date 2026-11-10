@@ -5069,3 +5069,4 @@ html:not(.sb-charts-drawn) .tr-bars.sb-chart .tr-bar-fill, html:not(.sb-charts-d
     html .eos-bottomnav{ translate:0 var(--sb-vv-fix, 0px); }
     html.sb-typing .eos-bottomnav{ display:none !important; }
 }
+.sb-empty-card{ margin-top:12px; }

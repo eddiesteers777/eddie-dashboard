@@ -10,6 +10,10 @@ const MOTIF = {
   install: `<div class="drop" style="left:62%;top:20%;width:90px;height:100px"></div><div class="drop" style="left:72%;top:46%;width:60px;height:68px"></div><div class="drop" style="left:56%;top:62%;width:44px;height:50px"></div>`,
   routes: `<div class="graph"></div><svg class="mk-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="rgba(206,222,236,.13)" stroke-width=".3"><path d="M-5 22 C 15 12, 30 32, 50 22 S 85 8, 105 24"/><path d="M-5 30 C 15 20, 30 40, 50 30 S 85 16, 105 32"/><path d="M-5 38 C 18 30, 32 48, 52 38 S 85 24, 105 40"/><path d="M-5 70 C 20 60, 35 80, 58 70 S 88 56, 105 72"/><path d="M-5 78 C 20 68, 35 88, 58 78 S 88 64, 105 80"/></g><path d="M78 12 C 88 24, 74 36, 84 48 S 96 58, 88 76" fill="none" stroke="rgba(230,203,142,.34)" stroke-width=".5" stroke-dasharray="1.4 1.6"/><circle cx="78" cy="12" r="1.2" fill="rgba(230,203,142,.55)"/><circle cx="88" cy="76" r="1.2" fill="none" stroke="rgba(230,203,142,.55)" stroke-width=".3"/></svg>`,
   tools: `<div class="graph"></div><svg class="mk-svg" viewBox="0 0 100 100" preserveAspectRatio="xMaxYMin meet"><g transform="translate(80 30)" fill="none" stroke="rgba(242,226,196,.3)" stroke-width=".5"><path d="M-14 8 A 17 17 0 1 1 14 8"/>${Array.from({length:11},(_,i)=>{const a=(-210+i*24)*Math.PI/180;return `<line x1="${(15*Math.cos(a)).toFixed(1)}" y1="${(15*Math.sin(a)).toFixed(1)}" x2="${(18*Math.cos(a)).toFixed(1)}" y2="${(18*Math.sin(a)).toFixed(1)}"/>`}).join('')}<line x1="0" y1="0" x2="9" y2="-9" stroke="#D6B98E" stroke-width=".8"/></g></svg>`,
+  pace: `<div class="graph"></div>`,
+  75: `<div class="graph"></div>`,
+  privacy: `<div class="graph"></div>`,
+  terms: `<div class="graph"></div>`
 };
 const page = (location.pathname.split("/").pop() || "home.html").replace(/\.html$/, "");
 if (MOTIF[page]) {

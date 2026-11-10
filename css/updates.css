@@ -112,3 +112,5 @@ a.updates-item:hover{ border-color:var(--primary); }
 .updates-page .updates-text{ color:var(--text); font-size:15.5px; line-height:1.55; }
 
 .updates-open{ display:inline-flex; align-items:center; min-height:44px; margin-top:6px; padding:0 14px; border-radius:6px; background:var(--primary); color:var(--on-primary); font-weight:600; text-decoration:none; }
+/* Empty feed: the "not connected" card carries its own glass, so the feed's frame steps aside. */
+.updates-page .updates-feed.is-bare{ padding:0; background:none; border:0; box-shadow:none; }

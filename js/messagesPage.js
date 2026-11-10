@@ -12,7 +12,7 @@ import { listMyCoaches } from "./coachAccess.js";
 import { cachedRole } from "./role.js";
 import { mountThread, enterFullScreen } from "./messageView.js";
 import { sendClientMessageEmail } from "./emailNotify.js";
-import { emptyHtml } from "./ui.js";
+import { notConnectedHtml } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -65,13 +65,7 @@ listenForAuth(async user => {
     const coaches = await listMyCoaches().catch(() => []);
     if (!coaches.length) {
         setSubtitle("Talk to your coach here once you're connected.");
-        $("msgThread").innerHTML = emptyHtml({
-            iconName: "messageSquare",
-            title: "You're not connected to a coach yet",
-            text: "Once your coach approves you (or you share your code with them), your conversation shows here.",
-            actionHref: "clients.html?tab=share",
-            actionLabel: "Connect with your coach"
-        });
+        $("msgThread").innerHTML = notConnectedHtml("your conversation shows up here.");
         import("./icons.js").then(m => m.hydrate());
         return;
     }

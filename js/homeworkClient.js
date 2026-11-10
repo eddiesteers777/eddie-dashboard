@@ -14,7 +14,7 @@ import { progress, sortForClient, streak, isoOf, embedUrl, watchUrl, thumbUrl, F
 import { esc, thumbHtml, ticksHtml, metaLine, standingPill, dueText, clipText } from "./homeworkView.js";
 import { cachedRole } from "./role.js";
 import { icon } from "./icons.js";
-import { toast, friendlyError, emptyHtml } from "./ui.js";
+import { toast, friendlyError, emptyHtml, notConnectedHtml } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 let items = [];
@@ -174,7 +174,7 @@ listenForAuth(async user => {
     items = list;
     $("hwLoading").hidden = true;
     if (!coaches.length && !items.length) {
-        $("hwList").innerHTML = `<div class="clients-card">${emptyHtml({ iconName: "link", title: "Not connected to a coach yet", text: "Connect with your coach and the skills they give you to practice show up here.", actionHref: "clients.html?tab=share", actionLabel: "Connect with Coach" })}</div>`;
+        $("hwList").innerHTML = notConnectedHtml("the skills they give you to practice show up here.");
         return;
     }
     const wanted = location.hash.slice(1);

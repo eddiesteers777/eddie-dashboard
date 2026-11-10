@@ -210,14 +210,21 @@ export function loadingHtml(label = "Loading", { lines = 3 } = {}) {
         </div>`;
 }
 
-export function emptyHtml({ iconName = "info", title = "", text = "", actionHref = "", actionLabel = "" } = {}) {
+export function emptyHtml({ iconName = "info", title = "", text = "", actionHref = "", actionLabel = "", primary = false } = {}) {
     return `
         <div class="sb-empty">
             <span class="sb-empty-icon">${icon(iconName)}</span>
             ${title ? `<strong class="sb-empty-title">${esc(title)}</strong>` : ""}
             ${text ? `<p class="sb-empty-text">${text}</p>` : ""}
-            ${actionHref ? `<a class="sb-btn sb-btn-secondary" href="${esc(actionHref)}">${esc(actionLabel)}</a>` : ""}
+            ${actionHref ? `<a class="sb-btn ${primary ? "sb-btn-primary" : "sb-btn-secondary"}" href="${esc(actionHref)}">${esc(actionLabel)}</a>` : ""}
         </div>`;
+}
+
+// The one "not connected to a coach yet" card, the same on My Plan, Messages, From Your Coach and Homework.
+// `what` finishes the sentence "Connect with your coach and ...".
+export function notConnectedHtml(what) {
+    return `<div class="clients-card sb-empty-card">${emptyHtml({ iconName: "link", title: "Not connected to a coach yet",
+        text: `Connect with your coach and ${what}`, actionHref: "clients.html?tab=share", actionLabel: "Connect with your coach", primary: true })}</div>`;
 }
 
 // For inline (non-module) page scripts.
