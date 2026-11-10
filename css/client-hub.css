@@ -541,6 +541,7 @@ button.hub-glance-item:hover{ border-color:rgba(201,173,132,.35); }
     flex-wrap:wrap;
 }
 .pw-plan.is-draft{ border-style:dashed; }
+.pw-plan-btns{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:flex-end; }
 .pw-plan-main{ display:flex; flex-direction:column; gap:4px; min-width:0; flex:1 1 240px; }
 .pw-plan-main strong{ font-size:16px; overflow-wrap:anywhere; }
 .pw-meta{ color:var(--muted); font-size:13px; font-weight:600; }
