@@ -299,3 +299,11 @@ html.al-on .st-row-switch{min-height:60px}
 html.al-on .settings-btn{background:var(--primary)!important;color:var(--on-primary)!important;border:0!important;min-height:44px;border-radius:6px!important}
 html.al-on .sb-emoji-open{min-height:44px!important}
 html.al-on .checkin-page .clients-section-title,html.al-on .clients-section-title{font:400 22px/1 var(--font-display)!important;letter-spacing:.03em;text-transform:uppercase}
+
+/* Round 5 (Eddie, 2026-11-10): every tap target is 44px or has an invisible hit area that reaches 44px. */
+html.al-on .wk-see-all,html.al-on .wk-item-link,html.al-on .st-row-link a,html.al-on .st-note a{position:relative}
+html.al-on .wk-see-all::after,html.al-on .wk-item-link::after{content:"";position:absolute;inset:-12px -6px}
+html.al-on .wk-done{min-width:44px!important;min-height:44px!important}
+html.al-on button.bar{position:relative}
+html.al-on button.bar::after{content:"";position:absolute;inset:-8px -2px}
+html.al-on .running-pill{min-width:44px!important}

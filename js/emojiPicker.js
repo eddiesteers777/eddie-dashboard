@@ -112,7 +112,7 @@ export function attachEmojiPicker(textarea) {
     bar.innerHTML = `
         ${quick ? QUICK_REACTIONS.map(id => `
             <button type="button" class="sb-emoji-quick" data-quick="${id}" aria-label="Add ${esc(emojiById(id).label)}" title="${esc(emojiById(id).label)}">${emojiImg(id, { size: 24 })}</button>`).join("") : ""}
-        <button type="button" class="sb-emoji-open" aria-haspopup="dialog" aria-expanded="false" aria-label="Add a Southbound reaction" title="Southbound reactions">
+        <button type="button" class="sb-emoji-open" aria-haspopup="dialog" aria-expanded="false" aria-label="${quick ? "More Southbound reactions" : "React with a Southbound reaction"}" title="Southbound reactions">
             ${emojiImg("sb_southbound", { size: 22 })}<span>${quick ? "More" : "React"}</span>
         </button>
         <div class="sb-emoji-preview" hidden></div>`;
