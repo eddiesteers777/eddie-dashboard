@@ -352,3 +352,20 @@ html.al-on .running-kind-chip.active{background:rgba(199,214,228,.18)!important;
 html.al-on .running-modal .running-mode-btn{min-height:44px}
 html.al-on .running-modal .running-btn-outline{min-height:44px;background:transparent!important;color:var(--text)!important;border:1px solid rgba(214,228,240,.3)!important;border-radius:6px!important}
 html.al-on .running-modal .running-row-btn.primary{min-height:44px;background:var(--primary)!important;color:var(--on-primary)!important;border:0!important;border-radius:6px!important}
+
+/* Coach round 1 (Eddie, 2026-11-10): 12px text floor on the coach pages, and 44px tap areas. */
+html.al-on .eos-today-eyebrow,html.al-on .sb-eyebrow,html.al-on .coach-focus-tag,html.al-on .ci-lab,html.al-on .cm-group,
+html.al-on .sched-weeksum,html.al-on .sched-key-booked,html.al-on .sched-key-asked,html.al-on .sched-key-open,
+html.al-on .mp-eyebrow,html.al-on .mp-goal-label,html.al-on .mp-countdown,html.al-on .mp-hero-week,html.al-on .mp-hint,html.al-on .mp-week-dates,html.al-on .mp-phase-pill,html.al-on .mp-day-kicker,html.al-on .mp-pace-chip,html.al-on .mp-day-timing,html.al-on .mp-note-label,
+html.al-on .an-kind,html.al-on .tr-legend,html.al-on .rc-sub-h,html.al-on .coros-eyebrow,html.al-on .coros-data-eyebrow,
+html.al-on .wr-nutrition-day-label,html.al-on .stat-sub,html.al-on .heat-legend{font-size:12px!important}
+html.al-on body:has(.an-kind) main small,html.al-on body:has(.an-kind) main em{font-size:12px!important}
+html.al-on .coach-clients-all{display:inline-flex;align-items:center;min-height:44px}
+html.al-on .clients-btn-primary,html.al-on .clients-btn-secondary{min-height:44px}
+html.al-on .clients-btn-secondary{min-width:44px}
+html.al-on .planner-btn,html.al-on .pl-chip{min-height:44px}
+html.al-on .daynav .today-btn,html.al-on .daynav button{min-height:44px;min-width:44px}
+html.al-on .tw-link,html.al-on .wr-story a,html.al-on .pl-details summary{position:relative}
+html.al-on .tw-link::after{content:"";position:absolute;inset:-12px -6px}
+html.al-on body:has(.daynav) :is(.eyebrow,.lbl,small,.manage-toggle){font-size:12px!important}
+html.al-on [class^="sched-"] > span:first-child{font-size:12px}

@@ -143,7 +143,7 @@ const SUBNAV_GROUPS = {
         { href: "fueling.html", label: "Fueling", short: "Fueling", icon: "fuel" }
     ],
     coach: [
-        { href: "coach.html", label: "Dashboard", short: "Home", icon: "grid" },
+        { href: "coach.html", label: "Dashboard", short: "Dashboard", icon: "grid" },
         { href: "clients.html", label: "Clients", short: "Clients", icon: "users" },
         { href: "checkin.html", label: "Check-ins", short: "Check-ins", icon: "clipboard" },
         { href: "coach-messages.html", label: "Inbox", short: "Inbox", icon: "messageSquare" },

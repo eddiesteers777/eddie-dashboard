@@ -165,9 +165,10 @@ function renderStrip() {
         const first = String(c.goesBy || c.name || "").split(/\s+/)[0];
         const week = days.map(d => DOT_LABEL[d.state]).join(", ");
         return `
-        <a class="coach-strip-item" href="client.html?uid=${encodeURIComponent(c.uid)}" aria-label="${escapeHtml(c.name)}${c.attention.length ? `, ${c.attention.length} waiting` : ""}${week ? `. This week: ${week}` : ""}">
-            <span class="coach-strip-ring is-${tone}"><span>${escapeHtml(initials(c.name))}</span></span>
+        <a class="coach-strip-item" href="client.html?uid=${encodeURIComponent(c.uid)}">
+            <span class="coach-strip-ring is-${tone}" aria-hidden="true"><span>${escapeHtml(initials(c.name))}</span></span>
             <span class="coach-strip-name">${escapeHtml(first)}</span>
+            <span class="sr-only">${c.attention.length ? `, ${c.attention.length} waiting` : ""}${week ? `. This week: ${escapeHtml(week)}` : ""}</span>
             <span class="coach-strip-dots" aria-hidden="true">${days.map(d => `<i class="is-${d.state}"></i>`).join("")}</span>
         </a>`;
     }).join("");
