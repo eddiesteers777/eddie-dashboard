@@ -45,37 +45,50 @@ async function renderWearableSharing() {
             '<label><span><strong>Performance</strong><small>Pace, heart rate, load, and fitness metrics</small></span><input type="checkbox" data-share="performance" ' + (p.performance ? "checked" : "") + '></label>' +
             '<label><span><strong>Recovery &amp; sleep</strong><small>Sleep, HRV, resting heart rate, and recovery/stress</small></span><input type="checkbox" data-share="recovery" ' + (p.recovery ? "checked" : "") + '></label>' +
             '<label><span><strong>Athlete model</strong><small>A year of your runs (distance, time, heart rate, climb, how hard they felt) plus 120 days of sleep, HRV, resting heart rate and morning check-in scores, and the laps of your coach\'s workouts (6 weeks), so your coach can see your training load, how you\'re responding, each rep against the plan, readiness and race fitness. Never your routes, run names or notes.</small></span><input type="checkbox" data-share="model" ' + (p.model ? "checked" : "") + '></label>' +
-            '<div class="wearable-share-actions"><button type="button" class="settings-btn" data-share-save>Save sharing</button>' +
-            (active ? '<button type="button" class="settings-btn wearable-share-revoke" data-share-revoke>Stop sharing</button>' : '') +
-            '</div></div>';
+            (active ? '<div class="wearable-share-actions"><button type="button" class="settings-btn wearable-share-revoke" data-share-revoke>Stop sharing</button></div>' : '') +
+            '</div>';
     }).join("");
 }
 
-$("wearableSharingList")?.addEventListener("click", async event => {
-    const save = event.target.closest("[data-share-save]");
-    const revoke = event.target.closest("[data-share-revoke]");
-    const row = event.target.closest("[data-coach-uid]");
-    if (!row || (!save && !revoke)) return;
-
+// Each switch saves the moment it flips (Eddie, 2026-11-10): no separate Save button to forget.
+// "revoke" is Stop sharing. The list is drawn again afterwards, so focus goes back to the switch you used.
+async function saveShareRow(row, { revoke = false, focusKey = "" } = {}) {
     const coachUid = row.dataset.coachUid;
+    const inputs = [...row.querySelectorAll("[data-share]")];
     const permissions = revoke
         ? { activity: false, performance: false, recovery: false, model: false }
-        : Object.fromEntries([...row.querySelectorAll("[data-share]")].map(input => [input.dataset.share, input.checked]));
-
-    const button = save || revoke;
-    button.disabled = true;
+        : Object.fromEntries(inputs.map(input => [input.dataset.share, input.checked]));
+    row.querySelectorAll("input,button").forEach(el => { el.disabled = true; });
     try {
         await saveWearableShare(coachUid, permissions);
         // All four summaries follow the new choices at once (each one
         // writes when allowed and clears itself when not).
         await Promise.allSettled([syncSharedWearableActivity(), syncSharedWearablePerformance(), syncSharedWearableRecovery(), syncSharedAthleteModel({ force: true })]);
-        window.SB?.toast?.(revoke ? "Wearable sharing stopped." : "Wearable sharing settings saved.");
+        window.SB?.toast?.(revoke ? "Wearable sharing stopped." : "Saved.");
         await renderWearableSharing();
+        if (focusKey) {
+            const again = [...document.querySelectorAll("[data-coach-uid]")].find(r => r.dataset.coachUid === coachUid);
+            again?.querySelector('[data-share="' + focusKey + '"]')?.focus();
+        }
     } catch (error) {
         console.error("Wearable sharing save failed:", error);
-        window.SB?.toast?.("Couldn't save wearable sharing. Try again.", { type: "error" });
-        button.disabled = false;
+        window.SB?.toast?.("Couldn't save that. Try again.", { type: "error" });
+        await renderWearableSharing();
     }
+}
+
+$("wearableSharingList")?.addEventListener("change", event => {
+    const input = event.target.closest("[data-share]");
+    const row = event.target.closest("[data-coach-uid]");
+    if (!input || !row) return;
+    saveShareRow(row, { focusKey: input.dataset.share });
+});
+
+$("wearableSharingList")?.addEventListener("click", event => {
+    const revoke = event.target.closest("[data-share-revoke]");
+    const row = event.target.closest("[data-coach-uid]");
+    if (!revoke || !row) return;
+    saveShareRow(row, { revoke: true });
 });
 
 async function render() {
