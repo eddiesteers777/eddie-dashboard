@@ -211,3 +211,4 @@
 .pg-cp-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border);}
 .pg-cp-row .pg-item-main{flex:1 1 180px;}
 @media (max-width:520px){.pg-cp-row .sb-btn{flex:0 0 100%;}}
+.programs-page .pg-layout:has(.pg-side[hidden]){grid-template-columns:minmax(0,1fr);}

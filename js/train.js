@@ -54,7 +54,7 @@ const tile = (value, label) => `<div class="tr-tile"><strong>${esc(value)}</stro
 
 function drawPanel() {
     const week = weekTotals(state.feed, localDay());
-    const since = `Since Monday, ${dayWords(week.from)}`;
+    const since = `from ${dayWords(week.from)}`;
     const cards = tabs().map((t, i) => {
         let body = "";
         if (t.key === "run") {
@@ -84,7 +84,7 @@ function drawPanel() {
         }
         return `<section class="eos-today-card tr-panel" aria-labelledby="trPanel-${t.key}">
             <div class="eos-today-card-header"><h2 id="trPanel-${t.key}">${esc(t.label)}</h2></div>
-            ${i === 0 ? `<p class="tr-since">This week · ${esc(since)}</p>` : ""}${body}</section>`;
+            ${i === 0 ? `<p class="tr-since">This week, ${esc(since)}</p>` : ""}${body}</section>`;
     });
     $("trainPanel").innerHTML = cards.join("");
 }

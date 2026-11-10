@@ -645,9 +645,10 @@ function setClientsView(isCoach) {
     document.getElementById("clientsTabs").hidden = !isCoach;
     document.getElementById("shareTabBtn").hidden = isCoach;
     titleEl.textContent = isCoach ? coachTitle : "Connect with Your Coach";
+    document.title = isCoach ? document.title : "Connect with Your Coach | Southbound Coaching";
     introEl.textContent = isCoach
         ? coachIntro
-        : "Your coach can find your account and assign you directly. Use My Coaches to see or remove connected coaches.";
+        : "Your coach can find your account and assign you directly. No code needed.";
     if (!isCoach) selectTab("share");
     else if (document.querySelector('.clients-tab.active')?.dataset.tab === "share") selectTab("coach");
 }

@@ -274,7 +274,7 @@ function renderLibraryGrid(){
 
         emptyState.innerHTML =
 
-            'No cross-training workouts yet. Click <strong>+ New Workout</strong> to build your first one.';
+            'No cross-training workouts yet. Tap <strong>+ New Workout</strong> to build your first one.';
 
         return;
 

@@ -19,7 +19,9 @@ import { listMyBookingRequests, SESSION_TYPES } from "./scheduling.js";
 import { sessionList, attendance, logWords, statusLabel } from "./sessionModel.js";
 import { summarizePlans, summarizeProgress, isoDate, shortDate } from "./clientSummary.js";
 import { profileAccess } from "./navAccess.js";
-import { progressHighlights, progressSections, habitStreak } from "./progressView.js";
+import { progressHighlights, progressSections } from "./progressView.js";
+import { habitStreak as dayStreak } from "./todayCues.js";
+import { habitList, dayKey } from "./habitDefaults.js";
 import { barsHtml } from "./svgCharts.js";
 import "./chartTips.js";
 
@@ -128,7 +130,7 @@ async function init() {
     const progress = summarizeProgress({ plans, results, sessions, checkins, today });
     const recentSessions = sessions.filter(s => s.date >= addDays(today, -27) && s.date <= today);
     const sections = progressSections(access);
-    const streak = habitStreak(readJson("entries", {}));
+    const streak = dayStreak(readJson("entries", {}), habitList(readJson("habits", null), false), dayKey());
 
     const items = progressHighlights({ progress, access, attendance: attendance(recentSessions), streak });
     renderMetrics(items);

@@ -423,7 +423,7 @@ function renderCounts(programs) {
     if (counts.paused) bits.push(`${counts.paused} paused`);
     if (counts.draft) bits.push(`${counts.draft} draft${counts.draft === 1 ? '' : 's'}`);
     if (counts.archived) bits.push(`${counts.archived} archived`);
-    el.textContent = bits.join(' · ') || 'No programs yet';
+    el.textContent = bits.join(' · ');
 }
 
 function renderSeason(programs, today) {
@@ -466,7 +466,8 @@ function renderList(groups) {
     el.innerHTML = [
         section('Now', groups.now), section('Up next', groups.next),
         section('Drafts and paused', groups.drafts), section('Finished', groups.finished, true)
-    ].join('') || '<p class="pg-note">Nothing here yet.</p>';
+    ].join('');
+    el.hidden = !el.innerHTML;
 }
 
 function itemMeta(program) {
@@ -513,7 +514,7 @@ function renderDetail(program, programs, bucket, today) {
     const el = document.getElementById('pgDetail');
     if (!el) return;
     if (!program) {
-        el.innerHTML = `<div class="pg-empty"><h2 class="pg-h2">No programs yet</h2><p class="pg-p">A program lays out every week from now to a race, or builds a block without one.</p><button type="button" class="sb-btn sb-btn-primary" data-new>+ New program</button></div>`;
+        el.innerHTML = `<div class="pg-empty"><h2 class="pg-h2">No programs yet</h2><p class="pg-p">A program lays out every week from now to a race, or builds a block without one.</p></div>`;
         return;
     }
     const weekIndex = bucket === 'now' ? currentWeekIndex(program, today) : -1;

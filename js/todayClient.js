@@ -104,7 +104,7 @@ export function renderClientToday() {
                 <div class="wk-rest-day">
                     <span class="wk-icon">${icon(plan ? "moon" : "calendar")}</span>
                     <div>
-                        <strong>${action ? esc(action) : quietDayTitle({ plan })}</strong>
+                        <strong>${action ? esc(action) : (!inputs.plans.length ? "No plan yet" : quietDayTitle({ plan }))}</strong>
                         ${action ? `<span>Rest day on your plan.</span>`
                             : next ? ""
                             : inputs.plans.length ? `<span>Nothing else scheduled yet.</span>`

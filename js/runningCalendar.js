@@ -565,7 +565,7 @@ function renderDayDetail(dateStr) {
         </div>
     ` : `
         <div class="running-detail-plan running-detail-rest">
-            ${showsPersonalPlan() ? "No marathon workout scheduled — rest day, or outside the training block." : "Nothing planned from the marathon block for this day."}
+            ${showsPersonalPlan() ? "No marathon workout scheduled — rest day, or outside the training block." : "Nothing planned for this day."}
         </div>
     `;
 
