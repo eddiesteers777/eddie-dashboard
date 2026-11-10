@@ -20,7 +20,6 @@ import { weekRidgeHtml } from "./weekRidge.js";
 import { sessionShape, miniShapeSvg, actualWeek } from "./trainShapes.js";
 
 const PAGE = 15;
-const TAB_KEY = "sb-train-tab";
 const TABS = [
     { key: "run", label: "Running", cap: "running", icon: "activity" },
     { key: "strength", label: "Strength", cap: "strength", icon: "dumbbell" },
@@ -35,7 +34,7 @@ const unit = () => { try { return cleanSettings(JSON.parse(localStorage.getItem(
 const volume = lb => volumeText(lb, unit());
 const dayWords = date => new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
-const state = { tab: null, filter: "all", shown: PAGE, feed: [], results: null, byId: new Map(), kinds: new Map(), laps: new Map() };
+const state = { filter: "all", shown: PAGE, feed: [], results: null, byId: new Map(), kinds: new Map(), laps: new Map() };
 const KIND_TAG = { reps: "Rep by rep", splits: "Splits" };
 
 function tabs() {
@@ -47,14 +46,6 @@ function tabs() {
 
 function drawTabs() {
     const list = tabs();
-    let saved = null;
-    try { saved = localStorage.getItem(TAB_KEY); } catch { saved = null; }
-    if (!state.tab || !list.some(t => t.key === state.tab)) state.tab = list.find(t => t.key === saved)?.key || list[0].key;
-    $("trainTabs").innerHTML = list.map(t => `
-        <button type="button" role="tab" class="tr-tab" id="trTab-${t.key}" data-tab="${t.key}" aria-label="${t.label}" aria-selected="${t.key === state.tab}" aria-controls="trainPanel" tabindex="${t.key === state.tab ? 0 : -1}">
-            ${icon(t.icon)}${t.short ? `<span class="tr-tab-long">${t.label}</span><span class="tr-tab-short" aria-hidden="true">${t.short}</span>` : `<span>${t.label}</span>`}
-        </button>`).join("");
-    $("trainPanel").setAttribute("aria-labelledby", `trTab-${state.tab}`);
     $("trainFilter").innerHTML = FILTERS.filter(([k]) => k === "all" || list.some(t => t.key === k)).map(([k, label]) =>
         `<button type="button" class="tr-filter-chip" data-filter="${k}" aria-pressed="${k === state.filter}">${label}</button>`).join("");
 }
@@ -64,33 +55,38 @@ const tile = (value, label) => `<div class="tr-tile"><strong>${esc(value)}</stro
 function drawPanel() {
     const week = weekTotals(state.feed, localDay());
     const since = `Since Monday, ${dayWords(week.from)}`;
-    let body = "";
-    if (state.tab === "run") {
-        const w = week.run;
-        body = `
+    const cards = tabs().map((t, i) => {
+        let body = "";
+        if (t.key === "run") {
+            const w = week.run;
+            body = `
             <div class="tr-tiles">${tile(w.meters ? (w.meters / MILE).toFixed(1) : "0", "Miles")}${tile(String(w.count), w.count === 1 ? "Run" : "Runs")}${tile(w.longest ? (w.longest / MILE).toFixed(1) : "—", "Longest (mi)")}</div>
             ${weekRidgeHtml(actualWeek(state.feed, week.from, localDay()), { id: "tr-ridge", actual: true })}
             <div class="tr-actions">
                 <a class="sb-btn sb-btn-primary" href="running.html">${icon("activity")} Open Running</a>
                 <a class="sb-btn sb-btn-secondary" href="running.html?addRun=1">${icon("plus")} Log a run</a>
             </div>`;
-    } else if (state.tab === "strength") {
-        const w = week.strength;
-        body = `
+        } else if (t.key === "strength") {
+            const w = week.strength;
+            body = `
             <div class="tr-tiles">${tile(String(w.count), w.count === 1 ? "Workout" : "Workouts")}${tile(String(w.sets), "Sets")}${w.volumeLb > 0 ? tile(volume(w.volumeLb), "Volume") : tile("—", "Volume")}</div>
             <div class="tr-actions">
                 <a class="sb-btn sb-btn-primary" href="strength.html">${icon("dumbbell")} Start a workout</a>
             </div>`;
-    } else {
-        const w = week.cross;
-        body = `
+        } else {
+            const w = week.cross;
+            body = `
             <div class="tr-tiles">${tile(String(w.count), w.count === 1 ? "Session" : "Sessions")}${tile(w.minutes ? String(w.minutes) : "0", "Minutes")}</div>
             <div class="tr-actions">
                 <button type="button" class="sb-btn sb-btn-primary" data-log-cross>${icon("plus")} Log a session</button>
                 <a class="sb-btn sb-btn-secondary" href="cross-training.html">${icon("bike")} Workout library</a>
             </div>`;
-    }
-    $("trainPanel").innerHTML = `<p class="tr-since">This week · ${esc(since)}</p>${body}`;
+        }
+        return `<section class="eos-today-card tr-panel" aria-labelledby="trPanel-${t.key}">
+            <div class="eos-today-card-header"><h2 id="trPanel-${t.key}">${esc(t.label)}</h2></div>
+            ${i === 0 ? `<p class="tr-since">This week · ${esc(since)}</p>` : ""}${body}</section>`;
+    });
+    $("trainPanel").innerHTML = cards.join("");
 }
 
 /* ---------- the feed ---------- */
@@ -172,14 +168,6 @@ async function refresh({ account = false } = {}) {
 /* ---------- actions ---------- */
 
 document.addEventListener("click", async event => {
-    const tab = event.target.closest("[data-tab]");
-    if (tab) {
-        state.tab = tab.dataset.tab;
-        try { localStorage.setItem(TAB_KEY, state.tab); } catch { /* device preference only */ }
-        drawTabs(); drawPanel();
-        $(`trTab-${state.tab}`)?.focus();
-        return;
-    }
     const filter = event.target.closest("[data-filter]");
     if (filter) { state.filter = filter.dataset.filter; state.shown = PAGE; drawTabs(); drawFeed(); return; }
     if (event.target.closest("#trainMore")) { state.shown += PAGE; drawFeed(); return; }
@@ -200,19 +188,6 @@ document.addEventListener("click", async event => {
     if (event.target.closest("[data-log-cross]")) {
         (await import("./sessionDialogs.js")).openCrossLog();
     }
-});
-
-// Arrow keys move between tabs.
-document.addEventListener("keydown", event => {
-    const tab = event.target.closest?.("[data-tab]");
-    if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-    const keys = tabs().map(t => t.key);
-    let i = keys.indexOf(tab.dataset.tab);
-    i = event.key === "Home" ? 0 : event.key === "End" ? keys.length - 1 : (i + (event.key === "ArrowRight" ? 1 : -1) + keys.length) % keys.length;
-    event.preventDefault();
-    state.tab = keys[i];
-    drawTabs(); drawPanel();
-    $(`trTab-${state.tab}`)?.focus();
 });
 
 let pending = null;

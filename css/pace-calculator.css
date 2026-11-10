@@ -1184,3 +1184,20 @@ html{
 @media (max-width:600px){
     #pc-root #hr-method{ flex-wrap:wrap; }
 }
+
+/* One menu line for the four calculators (js/pace-calculator.js adds .pc-tool-menu and .pc-has-menu). */
+#pc-root.pc-has-menu .pc-tool-tabs{ display:none; }
+#pc-root .pc-tool-menu{
+    display:flex; align-items:center; gap:12px; min-height:52px; margin:0 0 14px; padding:0 14px 0 16px; position:relative;
+    border-radius:18px; border:1px solid rgba(214,228,240,.2);
+    background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72));
+    box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36);
+}
+#pc-root .pc-tool-menu-label{ font:500 11px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--gold, var(--primary)); }
+#pc-root .pc-tool-menu select{
+    flex:1; min-height:44px; background:transparent; border:0; color:var(--text); font:600 16px var(--font-body);
+    appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:22px;
+}
+#pc-root .pc-tool-menu::after{ content:"\25BE"; position:absolute; right:16px; color:var(--text-secondary); pointer-events:none; }
+#pc-root .pc-tool-menu select:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:8px; }
+#pc-root .pc-tool-menu option{ background:#1D2A36; color:#E9EEF2; }

@@ -24,8 +24,9 @@ export const RAIL_CARDS = [
       alt: "A loaded barbell on a gym floor", pos: "50% 60%" },
 ];
 
-/* Pages that keep their own footer-free look: the apply flow, the Playbook tools, the 75 tracker, the bare pace page. */
-const SKIP = /^(apply|75|pace)\.html$|^playbook/;
+/* The photo rail sells the services, so it shows only on the pages about them (Eddie, 2026-11-10). Every other page goes from its
+   call to action straight to the footer links. */
+const SHOW = /^(home|coaching|soccer|about)\.html$/;
 
 export function railHtml(cards = RAIL_CARDS) {
     const card = c => {
@@ -44,7 +45,7 @@ export function railHtml(cards = RAIL_CARDS) {
 
 export function mountRail(doc = document, path = location.pathname) {
     const page = path.split("/").pop() || "home.html";
-    if (SKIP.test(page)) return;
+    if (!SHOW.test(page)) return;
     const footer = doc.querySelector(".pub-footer");
     if (!footer || footer.querySelector(".pub-rail")) return;
     const rail = doc.createElement("section");

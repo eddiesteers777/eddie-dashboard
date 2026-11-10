@@ -643,6 +643,33 @@ function initToolTabs(){
 
     });
 
+    /* Four calculators in one menu line instead of a second tab row (Eddie, 2026-11-10). The buttons stay in the page
+       (hidden by css/pace-calculator.css) so the switching above keeps working. */
+    var strip = document.getElementById("pc-tool-tabs");
+    var root = strip && strip.closest("#pc-root");
+    if(!strip || !root){
+        return;
+    }
+    var wrap = document.createElement("label");
+    wrap.className = "pc-tool-menu";
+    wrap.innerHTML = '<span class="pc-tool-menu-label">Tool</span>';
+    var select = document.createElement("select");
+    select.setAttribute("aria-label", "Pick a calculator");
+    strip.querySelectorAll("[data-pc-tool]").forEach(function(btn){
+        var option = document.createElement("option");
+        option.value = btn.dataset.pcTool;
+        option.textContent = btn.textContent.trim();
+        select.appendChild(option);
+        btn.addEventListener("click", function(){ select.value = btn.dataset.pcTool; });
+    });
+    select.addEventListener("change", function(){
+        var btn = strip.querySelector('[data-pc-tool="' + select.value + '"]');
+        if(btn){ btn.click(); }
+    });
+    wrap.appendChild(select);
+    strip.parentNode.insertBefore(wrap, strip);
+    root.classList.add("pc-has-menu");
+
 }
 
 function populateDistancePreset(selectId){

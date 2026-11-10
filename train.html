@@ -34,11 +34,12 @@
             </div>
         </section>
 
-        <!-- Running / Strength / Cross-Training (js/train.js), only the ones this account has. -->
-        <div class="tr-tabs" role="tablist" aria-label="Training type" id="trainTabs"></div>
-        <section class="eos-today-card tr-panel" id="trainPanel" role="tabpanel" aria-live="polite">
-            <div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:60%"></span></div>
-        </section>
+        <!-- One small card each for Running / Strength / Cross-Training (js/train.js), only the ones this account has. -->
+        <div class="tr-stack" id="trainPanel" aria-live="polite">
+            <section class="eos-today-card tr-panel">
+                <div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:60%"></span></div>
+            </section>
+        </div>
 
         <!-- Every completed session from all three, newest first. -->
         <section class="eos-today-card tr-recent" aria-labelledby="trainRecentTitle">

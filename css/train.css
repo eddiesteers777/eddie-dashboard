@@ -230,3 +230,4 @@
     .tr-page .tr-item{ grid-template-columns:72px minmax(0,1fr) auto; }
     .tr-page .tr-item-icon{ width:72px; height:44px; }
 }
+.tr-stack{ display:flex; flex-direction:column; gap:12px; }

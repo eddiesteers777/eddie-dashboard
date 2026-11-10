@@ -19,8 +19,8 @@ test("the rail lists soccer, strength and running, and each card is a link", () 
     assert.ok(html.includes('aria-label="Scroll photos right"'));
 });
 
-test("the rail is skipped on the apply flow and the Playbook tools", async () => {
+test("the rail shows only on the pages about the services", async () => {
     const { mountRail } = await import("../js/footerRail.js");
     const doc = { querySelector: () => { throw new Error("should not look for the footer"); } };
-    for (const path of ["/contact.html", "/playbook.html", "/playbook-board.html", "/75.html"]) mountRail(doc, path);
+    for (const path of ["/contact.html", "/packages.html", "/tools.html", "/install.html", "/privacy.html", "/playbook.html", "/75.html"]) mountRail(doc, path);
 });
