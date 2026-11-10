@@ -40,10 +40,17 @@ test("the setup follows the profile, and leaves out what the profile lacks", () 
     assert.equal(hurt.firstMarathon, true);
     // "None" answers are not injuries.
     assert.equal(marathonSettingsFromProfile({ ...PROFILE, injuries: "None" }, TODAY).injuryHistory, false);
-    // A profile for another race: nothing is carried over, and the engine says what is missing.
+    // A profile for another race opens as that race; asking for a different distance carries nothing over.
     const half = marathonSettingsFromProfile({ ...PROFILE, eventType: "half", targetDate: "2027-02-14" }, TODAY);
-    assert.equal(half.raceDate, "");
-    assert.ok(generateMarathonPlan(half).problems.some(p => /race date/.test(p)));
+    assert.equal(half.raceType, "HALF");
+    assert.equal(half.raceDate, "2027-02-14");
+    const asMarathon = marathonSettingsFromProfile({ ...PROFILE, eventType: "half", targetDate: "2027-02-14" }, TODAY, "MARATHON");
+    assert.equal(asMarathon.raceDate, "");
+    assert.ok(generateMarathonPlan(asMarathon).problems.some(p => /race date/.test(p)));
+    // A 5K or 10K profile opens as that race, with the long run left to the plan.
+    const k = marathonSettingsFromProfile({ ...PROFILE, eventType: "5k", targetDate: "2027-02-14" }, TODAY);
+    assert.equal(k.raceType, "5K");
+    assert.equal(k.longTarget, 0);
     // An empty profile never throws.
     const none = marathonSettingsFromProfile({}, TODAY);
     assert.equal(none.currentMiles, 0);

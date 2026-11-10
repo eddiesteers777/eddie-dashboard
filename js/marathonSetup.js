@@ -18,7 +18,7 @@
    generateMarathonPlan().fixes (one tap, e.g. "Set peak to 45 miles").
 ========================================== */
 
-import { generateMarathonPlan, RULES, DISTANCES, CODES, clockSeconds } from "./marathonEngine.js";
+import { generateMarathonPlan, RULES, DISTANCES, CODES, goalSecondsFor } from "./marathonEngine.js";
 import { generateCoachPlan, regeneratePlan } from "./coachPlanGenerator.js";
 import { raceSeconds, marathonSettingsFromProfile, clockText, isoToday } from "./marathonProfile.js";
 import { workoutSummary } from "./runWorkout.js";
@@ -28,8 +28,12 @@ import { icon } from "./icons.js";
 
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const DAY = { MON: "Mon", TUE: "Tue", WED: "Wed", THU: "Thu", FRI: "Fri", SAT: "Sat", SUN: "Sun" };
-const RACES = [["MARATHON", "Marathon"], ["HALF", "Half marathon"]];
-const raceLabel = st => (st.raceType === "HALF" ? "half marathon" : "marathon");
+const RACES = [["MARATHON", "Marathon"], ["HALF", "Half marathon"], ["10K", "10K"], ["5K", "5K"]];
+const distOf = st => DISTANCES[st.raceType] || DISTANCES.MARATHON;
+const raceLabel = st => distOf(st).label;
+const capital = text => text.charAt(0).toUpperCase() + text.slice(1);
+const LEVELS = [["", "Automatic"], ["BEGINNER", "Beginner"], ["INTERMEDIATE", "Intermediate"], ["ADVANCED", "Advanced"], ["COMPETITIVE", "Competitive"], ["ELITE", "Elite high school"]];
+const OLD_LEVELS = [["", "Automatic"], ["CAREFUL", "Careful"], ["NORMAL", "Normal"], ["EXPERIENCED", "Experienced"]];
 const RECENT = [["", "No recent race"], ["5K", "5K"], ["10K", "10K"], ["HALF", "Half marathon"], ["MARATHON", "Marathon"]];
 const RECENT_M = { "5K": 5000, "10K": 10000, HALF: 21097.5, MARATHON: 42195 };
 const longDate = iso => (/^\d{4}-\d{2}-\d{2}$/.test(iso || "") ? new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "");
@@ -55,7 +59,7 @@ function weeksHtml(plan) {
 function planView(st, plan, mode, first) {
     const s = st;
     const summaryBits = [
-        s.raceDate ? `${s.raceType === "HALF" ? "Half marathon" : "Marathon"} ${shortDate(s.raceDate)}` : "", s.goalTime ? `${s.goalTime} goal` : "",
+        s.raceDate ? `${capital(raceLabel(s))} ${shortDate(s.raceDate)}` : "", s.goalTime ? `${s.goalTime} goal` : "",
         s.currentMiles ? `${s.currentMiles} mi/wk now` : "", s.peakMiles ? `peak ${s.peakMiles}` : "",
         s.runDays?.length ? `${s.runDays.length} run days` : "", s.runDays?.length ? `long run ${DAY[s.longRunDay] || ""}` : ""
     ].filter(Boolean);
@@ -88,9 +92,9 @@ function setupView(st) {
     const tier = st.tierAsked || "";
     return `<form class="ms-form" novalidate>
         <div class="ms-grid">
-            ${field("Race", select("race", RACES, st.raceType === "HALF" ? "HALF" : "MARATHON"))}
+            ${field("Race", select("race", RACES, distOf(st).key))}
             ${field("Race date", input("raceDate", st.raceDate, 'type="date"'))}
-            ${field("Goal time", input("goalTime", st.goalTime, 'placeholder="3:45:00" inputmode="numeric" autocomplete="off"'))}
+            ${field("Goal time", input("goalTime", st.goalTime, `placeholder="${distOf(st).short ? "17:45" : "3:45:00"}" inputmode="numeric" autocomplete="off"`))}
             ${field("Recent race", select("recentDist", RECENT, recentDist))}
             ${field("Its time", input("recentTime", recentTime, 'placeholder="1:45:00" inputmode="numeric" autocomplete="off"'))}
             ${field("Miles / week now", input("currentMiles", st.currentMiles || "", 'type="number" min="0" max="150" step="1" inputmode="numeric" placeholder="30"'))}
@@ -102,14 +106,16 @@ function setupView(st) {
         <div class="ms-grid">${field("Long run day", select("longRunDay", CODES.map(c => [c, DAY[c]]), st.longRunDay))}</div>
         <details class="ms-more"><summary>More options</summary>
             <div class="ms-grid">
-                ${field("Ramp", select("tier", [["", "Automatic"], ["CAREFUL", "Careful"], ["NORMAL", "Normal"], ["EXPERIENCED", "Experienced"]], tier))}
+                ${field(distOf(st).short ? "Level" : "Ramp", select("tier", distOf(st).short ? LEVELS : OLD_LEVELS, tier))}
                 ${field("Key sessions", select("keySessions", [["", "Automatic"], ["BOTH", "Speed and long run every week"], ["ALTERNATE", "Take turns"]], st.keySessions || ""))}
-                ${field("Long run target (mi)", input("longTarget", st.longTarget || DISTANCES[st.raceType === "HALF" ? "HALF" : "MARATHON"].longCapMiles, `type="number" min="5" max="${DISTANCES[st.raceType === "HALF" ? "HALF" : "MARATHON"].longCapMiles}" step="0.5" inputmode="decimal"`))}
+                ${field("Long run target (mi)", input("longTarget", st.longTarget || "", `type="number" min="${distOf(st).minLongTarget}" max="${distOf(st).longCapMiles}" step="0.5" inputmode="decimal" placeholder="Auto"`))}
+                ${distOf(st).short ? field("Time trial (with the 800s test)", select("timeTrial", [["", "None"], ["MILE", "Mile"], ["3200", "3200 m"]], st.timeTrial || "")) : ""}
+                ${distOf(st).short ? field("Tune-up races (dates)", input("tuneUps", (st.tuneUps || []).join(", "), 'placeholder="2027-02-07, 2027-02-21" autocomplete="off"'), true) : ""}
                 ${field("Strength a week", select("strengthDays", [[0, "None"], [1, "1"], [2, "2"], [3, "3"]], st.strengthDays || 0))}
                 ${field("800s test: reps", select("reps800", [["", "Automatic"], ...[8, 9, 10].map(n => [n, String(n)])], st.reps800 || ""))}
                 ${field("800s test: rest", select("rest800", [["", "Automatic"], [60, "1:00 jog"], [90, "1:30 jog"], [120, "2:00 jog"]], st.rest800 || ""))}
             </div>
-            <label class="ms-check"><input type="checkbox" name="injuryHistory"${st.injuryHistory ? " checked" : ""}><span>Injury history (uses the careful ramp)</span></label>
+            <label class="ms-check"><input type="checkbox" name="injuryHistory"${st.injuryHistory ? " checked" : ""}><span>Injury history (a gentler ramp)</span></label>
             <label class="ms-check"><input type="checkbox" name="firstMarathon"${st.firstMarathon ? " checked" : ""}><span>First time at this distance (one key session a week)</span></label>
         </details>
         <p class="ms-error" data-el="error" role="alert" hidden></p>
@@ -121,9 +127,9 @@ function readSetup(form, base) {
     const num = k => Number(f.get(k)) || 0;
     const dist = String(f.get("recentDist") || ""), seconds = raceSeconds(f.get("recentTime"));
     const goal = String(f.get("goalTime") || "").trim();
-    const goalSec = clockSeconds(goal);
+    const raceType = DISTANCES[f.get("race")] ? String(f.get("race")) : "MARATHON";
+    const goalSec = goalSecondsFor(raceType, goal);
     const runDays = CODES.filter(c => f.getAll("runDays").includes(c));
-    const raceType = f.get("race") === "HALF" ? "HALF" : "MARATHON";
     const out = {
         ...base,
         raceDate: String(f.get("raceDate") || ""), startDate: String(f.get("startDate") || ""),
@@ -132,7 +138,9 @@ function readSetup(form, base) {
         currentMiles: num("currentMiles"), longestRun: num("longestRun"), peakMiles: num("peakMiles"),
         runDays, trainDays: CODES.filter(c => runDays.includes(c) || (base.trainDays || []).includes(c)),
         longRunDay: String(f.get("longRunDay") || ""),
-        raceType, distance: raceType, longTarget: Math.min(num("longTarget") || DISTANCES[raceType].longCapMiles, DISTANCES[raceType].longCapMiles),
+        raceType, distance: raceType, longTarget: Math.min(num("longTarget"), DISTANCES[raceType].longCapMiles),
+        timeTrial: String(f.get("timeTrial") || ""),
+        tuneUps: String(f.get("tuneUps") || "").split(/[\s,;]+/).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)),
         strengthDays: num("strengthDays"),
         injuryHistory: f.get("injuryHistory") === "on", firstMarathon: f.get("firstMarathon") === "on",
         tierAsked: String(f.get("tier") || ""), tier: String(f.get("tier") || "") || undefined,
@@ -172,11 +180,11 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
                 <div><span class="ms-kick">${me ? "My plan" : regen ? "Update the plan" : "New race plan"}</span><h2>${view === "setup" ? "Setup" : me ? "Plan for me" : `Plan for ${esc(first)}`}</h2></div>
                 <button type="button" class="sb-btn sb-btn-icon" data-act="close" aria-label="Close">${icon("close")}</button>
             </header>
-            ${view === "setup" ? (note ? `<p class="ms-coros">${esc(note)}</p>` : "") + setupView(st) : planView(st, ready ? prev : null, regen ? "regen" : "new", first)}
+            ${view === "setup" ? (note ? `<p class="ms-coros">${esc(note)}</p>` : "") + setupView(st) : planView(st, prev, regen ? "regen" : "new", first)}
             <footer class="ms-foot">
                 ${view === "setup"
                     ? `<span class="ms-kick">The plan updates when you go back</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="back">Back</button><button type="button" class="sb-btn sb-btn-primary" data-act="apply">Show the plan</button></span>`
-                    : `<span class="ms-kick">${me ? "Saved on your account. Nothing goes to a client." : regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button><button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${me ? (regen ? "Update my plan" : "Save my plan") : regen ? "Update plan" : "Create plan"}</button></span>`}
+                    : `<span class="ms-kick">${!ready && prev?.problems?.[0] ? `Can't create yet: ${esc(prev.problems[0])}` : me ? "Saved on your account. Nothing goes to a client." : regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button><button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${me ? (regen ? "Update my plan" : "Save my plan") : regen ? "Update plan" : "Create plan"}</button></span>`}
             </footer>
         </div>`;
         d.scrollTop = 0;
@@ -187,6 +195,15 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
         const form = d.querySelector(".ms-form");
         if (form) st = readSetup(form, st);
     };
+
+    // A different race changes the levels and fields on offer: keep what was typed and redraw.
+    d.addEventListener("change", ev => {
+        if (ev.target?.name !== "race" || view !== "setup") return;
+        const form = d.querySelector(".ms-form");
+        st = { ...readSetup(form, st), tier: undefined, tierAsked: "", longTarget: 0 };
+        delete st.tier;
+        draw();
+    });
 
     d.addEventListener("click", async ev => {
         const btn = ev.target.closest("[data-act]");

@@ -158,7 +158,10 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                             <span class="pw-meta">Published ${esc(niceDate(toMillis(h.publishedAt)))}${range(h) ? ` · ${esc(range(h))}` : ""}</span>
                             <div class="pw-chips">${statusChips(h)}</div>
                         </div>
-                        <button type="button" class="sb-btn sb-btn-secondary" data-act="open" data-id="${esc(h.id)}">Open</button>
+                        <div class="pw-plan-btns">
+                            <button type="button" class="sb-btn sb-btn-secondary" data-act="open" data-id="${esc(h.id)}">Open</button>
+                            <button type="button" class="sb-btn sb-btn-tertiary" data-act="remove" data-id="${esc(h.id)}">Remove</button>
+                        </div>
                     </div>`).join("")}
 
                 ${draftOnly.map(d => `
@@ -167,7 +170,10 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                             <strong>${esc(d.name)}</strong>
                             <span class="pw-meta">Draft · not published yet · only you can see it</span>
                         </div>
-                        <button type="button" class="sb-btn sb-btn-secondary" data-act="open" data-id="${esc(d.id)}">Open</button>
+                        <div class="pw-plan-btns">
+                            <button type="button" class="sb-btn sb-btn-secondary" data-act="open" data-id="${esc(d.id)}">Open</button>
+                            <button type="button" class="sb-btn sb-btn-tertiary" data-act="delete-draft" data-id="${esc(d.id)}">Delete draft</button>
+                        </div>
                     </div>`).join("")}
 
                 ${!active.length && !draftOnly.length ? `
@@ -651,6 +657,26 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
             if (act === "notes-ok") { state.editing.notes = []; container.querySelector('[data-el="notes"]')?.remove(); return; }
             if (act === "open") return openEditor(btn.dataset.id);
             if (act === "adopt") return adopt(btn.dataset.store, btn.dataset.id);
+            if (act === "remove") {
+                const h = published().find(x => x.id === btn.dataset.id);
+                if (!h) return;
+                if (!(await sbConfirm(`"${h.name}" comes off ${first}'s calendar. Its history is kept, and you can restore it under Archived.`, { title: "Remove this plan?", confirmLabel: "Remove" }))) return;
+                await setPlanArchived(h.id, true);
+                h.status = "archived";
+                toast("Plan removed. It's under Archived if you want it back.");
+                onChange?.();
+                return renderList();
+            }
+            if (act === "delete-draft") {
+                const d = drafts().find(x => x.id === btn.dataset.id);
+                if (!d) return;
+                if (!(await sbConfirm(`"${d.name}" is a draft only you can see. It is deleted for good.`, { title: "Delete this draft?", confirmLabel: "Delete draft", danger: true }))) return;
+                await deleteDraft(d.id);
+                data.planDrafts = drafts().filter(x => x.id !== d.id);
+                toast("Draft deleted");
+                onChange?.();
+                return renderList();
+            }
             if (act === "restore") {
                 await setPlanArchived(btn.dataset.id, false);
                 const h = published().find(x => x.id === btn.dataset.id);
@@ -1118,8 +1144,8 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                     <span>Runs and strength for every day, built from their goal, race, miles and the days they can train. You edit anything after.</span>
                 </button>
                 <button type="button" class="pw-gen-pick" data-act="marathon">
-                    <strong>${icon("bolt")} Build a marathon or half plan</strong>
-                    <span>Four-week blocks, a down week closing each one, race-pace long runs, the 800s test early and late. Paces come from a recent race. Peak miles and the long run (20 miles, or 10 for a half) are yours to set.</span>
+                    <strong>${icon("bolt")} Build a race plan, 5K to marathon</strong>
+                    <span>5K, 10K, half or marathon. Four-week blocks, a down week closing each one, the 800s test early and late. Paces come from a recent race. Peak miles and the long run are yours to set.</span>
                 </button>
                 <p class="pw-gen-or">or start blank</p>
                 <label class="pw-label">Name<input class="sb-dialog-input" name="name" maxlength="120" required placeholder="e.g. Spring 10K build"></label>

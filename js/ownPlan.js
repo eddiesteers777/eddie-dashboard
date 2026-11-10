@@ -114,14 +114,15 @@ export async function saveOwn({ plan, name, now = Date.now() }) {
     const all = loadRunningPrograms();
     const existing = all.find(isOwnPlan);
     const iso = new Date(now).toISOString();
-    const raceType = plan.generator?.settings?.raceType === "HALF" ? "HALF" : "MARATHON";
+    const raceType = ["HALF", "10K", "5K"].includes(plan.generator?.settings?.raceType) ? plan.generator.settings.raceType : "MARATHON";
+    const label = { MARATHON: "marathon", HALF: "half marathon", "10K": "10K", "5K": "5K" }[raceType];
     const record = {
         ...(existing || {}),
         id: existing?.id || OWN_ID,
         own: true,
-        name: name || (plan.generator?.settings?.raceType === "HALF" ? "My half marathon plan" : "My marathon plan"),
+        name: name || `My ${label} plan`,
         type: raceType,
-        settings: { raceType, raceName: name || (raceType === "HALF" ? "My half marathon plan" : "My marathon plan"), raceDate: plan.raceDate },
+        settings: { raceType, raceName: name || `My ${label} plan`, raceDate: plan.raceDate },
         status: "active",
         generatedPlan: plan,
         createdAt: existing?.createdAt || iso,
