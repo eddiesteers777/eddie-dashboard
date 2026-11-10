@@ -407,3 +407,16 @@ html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-head
 html.al-on #todayCard .wk-kicker,html.al-on #weekSection .wk-miles,html.al-on .th-count{color:rgb(var(--t))!important}
 html.al-on :is(#todayCard,#weekSection,#todayHabits,#coachCardSection,#nutritionSnap){border:1px solid rgba(var(--t),.5)!important}
 html.al-on :is(#todayCard,#weekSection,#todayHabits,#coachCardSection,#nutritionSnap){background:linear-gradient(98deg,rgba(var(--t),.42) 0%,rgba(var(--t),.14) 48%,rgba(var(--t),0) 85%),linear-gradient(180deg,rgba(42,62,82,.86),rgba(24,36,48,.8))!important;box-shadow:inset 3px 0 0 rgb(var(--t)),0 14px 32px rgba(0,0,0,.38)!important}
+
+/* Today: Readiness (lavender) and Featured Runs (rose) join the one-colour-per-card set (Eddie 2026-11-10) */
+html.al-on #readinessCard{--t:168,159,198}
+html.al-on #featuredTraining{--t:208,142,162}
+html.al-on :is(#readinessCard,#featuredTraining){border:1px solid rgba(var(--t),.5)!important;background:linear-gradient(98deg,rgba(var(--t),.42) 0%,rgba(var(--t),.14) 48%,rgba(var(--t),0) 85%),linear-gradient(180deg,rgba(42,62,82,.86),rgba(24,36,48,.8))!important;box-shadow:inset 3px 0 0 rgb(var(--t)),0 14px 32px rgba(0,0,0,.38)!important;border-radius:18px!important}
+html.al-on #readinessCard .eos-today-card-header h2::before{background:rgb(var(--t))!important}
+html.al-on #readinessCard .rd-body{background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:0!important;border:0!important;box-shadow:none!important;padding-left:0!important;padding-right:0!important}
+html.al-on #readinessCard{padding:18px!important}
+html.al-on #readinessCard .rd-body::before{display:none!important}
+html.al-on #readinessCard .rd-body-foot{border-top:1px solid rgba(var(--t),.22)!important}
+html.al-on #readinessCard .eos-today-card-header{align-items:center;padding:0}
+html.al-on #featuredTraining .ft-header h2{color:rgb(var(--t))!important}
+html.al-on #featuredTraining .ft-manage-btn{border-color:rgba(var(--t),.55)!important}
