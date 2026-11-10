@@ -100,7 +100,18 @@ export function renderClientToday() {
             const plan = can("plan");
             // What the plan says to do on its rest day, in its own words; nothing written, nothing added.
             const action = restDayAction(inputs.plans, today);
-            container.innerHTML = `
+            const title = !inputs.plans.length ? "No plan yet" : quietDayTitle({ plan });
+            // With something coming up, the card leads with it (the hero), in the plan's own words.
+            if (line && next) {
+                container.innerHTML = `
+                <div class="hero-rest">
+                    <span class="hr-kicker">${esc(action ? "Rest day" : inputs.plans.length ? title : "Nothing today")} · Next up</span>
+                    <div class="hr-big">${esc(line.when)}</div>
+                    <p class="hr-what">${esc(line.what)}</p>
+                    ${action ? `<p class="hr-sub">${esc(action)}</p>` : ""}
+                    <a class="sb-btn sb-btn-primary" href="${esc(workoutLink(next.item).href)}">See it</a>
+                </div>${feelHtml}`;
+            } else container.innerHTML = `
                 <div class="wk-rest-day">
                     <span class="wk-icon">${icon(plan ? "moon" : "calendar")}</span>
                     <div>
