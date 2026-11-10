@@ -73,6 +73,13 @@ function cueBlock(item) {
     return cue ? `<blockquote class="wk-cue">“${esc(cue)}”<cite>${esc(item.fromCoach ? "Your coach" : "Coach cue")}</cite></blockquote>` : "";
 }
 
+// A detail line that only repeats the title ("Easy run" under "Easy run" or "5 mi Easy run") is left out.
+function detailText(item, shown = item.title) {
+    const d = String(item.detail || "").trim();
+    if (!d) return "";
+    return String(shown || "").toLowerCase().includes(d.toLowerCase()) ? "" : d;
+}
+
 export function workoutCardHtml(item) {
     const k = KIND[item.kind] || KIND.run;
     const link = workoutLink(item);
@@ -91,7 +98,7 @@ export function workoutCardHtml(item) {
                 ${bigNumber}
             </div>
             ${ribbon}
-            ${!ribbon && item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            ${!ribbon && detailText(item) ? `<p class="wk-detail">${esc(detailText(item))}</p>` : ""}
             ${cueBlock(item)}
             ${changeNote(item) ? `<p class="wk-detail">${changeNote(item)}</p>` : ""}
             ${fuelLine(item)}
@@ -123,7 +130,7 @@ export function coachRunCardHtml(item, { href = "marathon.html" } = {}) {
                 ${bigNumber}
             </div>
             ${ribbon}
-            ${!ribbon && item.detail ? `<p class="wk-detail">${esc(item.detail)}</p>` : ""}
+            ${!ribbon && detailText(item) ? `<p class="wk-detail">${esc(detailText(item))}</p>` : ""}
             ${cueBlock(item)}
             <div class="wk-actions-row">${mark}</div>
         </div>`;
@@ -138,7 +145,7 @@ function itemLine(item) {
             <span class="wk-dot" style="color:${k.color}">${icon(k.icon)}</span>
             <span class="wk-item-text">
                 ${(item.kind === "run" && item.source?.type === "plan") || item.source?.strength ? `<a class="wk-item-link" href="${esc(workoutLink(item).href)}">${esc(text)}</a>` : `<span>${esc(text)}</span>`}
-                ${item.detail ? `<small>${esc(item.detail)}</small>` : ""}
+                ${detailText(item, text) ? `<small>${esc(detailText(item, text))}</small>` : ""}
                 ${changeNote(item)}
                 ${item.kind === "strength" && item.actual && item.done ? `<small class="wk-logged-inline">Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</small>`
                     : item.actual?.distance ? `<small class="wk-logged-inline">You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</small>`
@@ -181,10 +188,10 @@ export function weekListHtml(week, { compact = false, busyOnly = false, skipToda
     }).join("")}</ol>`;
 }
 
-export function summaryLine(summary) {
+export function summaryLine(summary, { miles = true } = {}) {
     const parts = [];
     if (summary.planned) parts.push(`${summary.done} of ${summary.planned} done`);
-    if (summary.miles) parts.push(`${summary.milesDone} / ${summary.miles} mi`);
+    if (miles && summary.miles) parts.push(`${summary.milesDone} / ${summary.miles} mi`);
     if (summary.strength.planned) parts.push(`Strength ${summary.strength.done} of ${summary.strength.planned}`);
     if (summary.sessions) parts.push(`${summary.sessions} session${summary.sessions === 1 ? "" : "s"}`);
     return parts.join(" · ");

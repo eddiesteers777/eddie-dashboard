@@ -121,7 +121,9 @@ export function renderClientToday() {
         const hasWeek = week.days.some(d => d.items.length);
         section.hidden = !hasWeek;
         if (hasWeek) {
-            $("weekSummary").textContent = summaryLine(week.summary);
+            // The heading already carries the week's miles when it shows them: don't say them twice.
+            const milesInHeading = can("plan") && !!weekMiles(week).planned;
+            $("weekSummary").textContent = summaryLine(week.summary, { miles: !milesInHeading });
             // A plan's week is seven bars, each as tall as its day's miles (js/weekTrail.js), tapped done like the
             // Plan list; sessions only: just the busy days. The heading carries the week's miles.
             $("weekList").innerHTML = can("plan") ? weekTrailHtml(week, { canToggle }) : weekListHtml(week, { compact: true, busyOnly: true });
