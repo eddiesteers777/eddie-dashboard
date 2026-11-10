@@ -379,3 +379,11 @@
     .st-switch::after,
     .settings-page .wearable-share-row input[type="checkbox"]::after{ transition:none; }
 }
+
+/* Tap area: the switch looks 30 tall but its hit area is 44 (audit 2026-11). */
+.st-switch::before,
+.settings-page .wearable-share-row input[type="checkbox"]::before{
+    content:"";
+    position:absolute;
+    inset:-7px -4px;
+}

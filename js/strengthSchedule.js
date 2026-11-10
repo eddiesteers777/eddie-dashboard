@@ -903,6 +903,9 @@ function renderMyWorkouts() {
 
     const count = $("strengthMyWorkoutsCount");
     if (count) count.textContent = days.length ? String(days.length) : "";
+    // The empty card has its own "+ New Workout"; one button at a time (audit 2026-11).
+    const headNew = document.getElementById("strengthMyWorkoutsNew");
+    if (headNew) headNew.style.display = days.length ? "" : "none";
 
     if (!days.length) {
         container.innerHTML = `

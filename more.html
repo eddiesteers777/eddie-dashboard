@@ -366,6 +366,7 @@
 
     <script type="module">
         import { login, logout, listenForAuth } from "./js/auth.js";
+        import { initialsOf } from "./js/accountModel.js";
 
         const nameEl = document.getElementById("moreUserName");
         const statusEl = document.getElementById("moreSyncStatus");
@@ -478,7 +479,7 @@
                 const name = user.displayName || "Runner";
 
                 nameEl.textContent = name;
-                avatarEl.textContent = name.slice(0, 1).toUpperCase();
+                avatarEl.textContent = initialsOf(user.displayName) || name.slice(0, 1).toUpperCase();
 
                 loginBtn.style.display = "none";
                 logoutBtn.style.display = "inline-flex";
