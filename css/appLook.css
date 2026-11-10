@@ -333,3 +333,7 @@ html.al-on .ct-block-remove{min-width:44px;min-height:44px}
  html.al-on .ct-modal{max-width:none!important;border-radius:18px 18px 0 0!important;max-height:92dvh!important;padding-bottom:env(safe-area-inset-bottom)}
  html.al-on .strength-editor-modal{border-radius:0!important}
 }
+
+/* Round 9 (2026-11-10): small links on the workout page reach a 44px tap area. */
+html.al-on .hub-back,html.al-on .clients-card-note a{position:relative}
+html.al-on .hub-back::after,html.al-on .clients-card-note a::after{content:"";position:absolute;inset:-14px -8px}
