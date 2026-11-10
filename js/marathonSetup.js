@@ -180,11 +180,11 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
                 <div><span class="ms-kick">${me ? "My plan" : regen ? "Update the plan" : "New race plan"}</span><h2>${view === "setup" ? "Setup" : me ? "Plan for me" : `Plan for ${esc(first)}`}</h2></div>
                 <button type="button" class="sb-btn sb-btn-icon" data-act="close" aria-label="Close">${icon("close")}</button>
             </header>
-            ${view === "setup" ? (note ? `<p class="ms-coros">${esc(note)}</p>` : "") + setupView(st) : planView(st, ready ? prev : null, regen ? "regen" : "new", first)}
+            ${view === "setup" ? (note ? `<p class="ms-coros">${esc(note)}</p>` : "") + setupView(st) : planView(st, prev, regen ? "regen" : "new", first)}
             <footer class="ms-foot">
                 ${view === "setup"
                     ? `<span class="ms-kick">The plan updates when you go back</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="back">Back</button><button type="button" class="sb-btn sb-btn-primary" data-act="apply">Show the plan</button></span>`
-                    : `<span class="ms-kick">${me ? "Saved on your account. Nothing goes to a client." : regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button><button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${me ? (regen ? "Update my plan" : "Save my plan") : regen ? "Update plan" : "Create plan"}</button></span>`}
+                    : `<span class="ms-kick">${!ready && prev?.problems?.[0] ? `Can't create yet: ${esc(prev.problems[0])}` : me ? "Saved on your account. Nothing goes to a client." : regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button><button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${me ? (regen ? "Update my plan" : "Save my plan") : regen ? "Update plan" : "Create plan"}</button></span>`}
             </footer>
         </div>`;
         d.scrollTop = 0;
