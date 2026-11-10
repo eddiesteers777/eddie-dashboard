@@ -30,7 +30,7 @@ const SKIP = /^(apply|75|pace)\.html$|^playbook/;
 export function railHtml(cards = RAIL_CARDS) {
     const card = c => {
         const [small, large] = c.widths;
-        return `<a class="pub-rail-card" href="${c.href}" role="listitem">` +
+        return `<a class="pub-rail-card" href="${c.href}">` +
             `<img src="images/${c.photo}-${large}.webp" srcset="images/${c.photo}-${small}.webp ${small}w, images/${c.photo}-${large}.webp ${large}w" ` +
             `sizes="(max-width: 760px) 72vw, 340px" width="${large}" height="${Math.round(large * 0.625)}" loading="lazy" decoding="async" ` +
             `alt="${c.alt}" style="object-position:${c.pos}" onerror="this.remove()">` +
@@ -39,7 +39,7 @@ export function railHtml(cards = RAIL_CARDS) {
     return `<div class="pub-rail-head"><h2>What I coach</h2>` +
         `<div class="pub-rail-nav"><button type="button" class="pub-rail-prev" aria-label="Scroll photos left">&larr;</button>` +
         `<button type="button" class="pub-rail-next" aria-label="Scroll photos right">&rarr;</button></div></div>` +
-        `<div class="pub-rail-track" role="list" tabindex="0" aria-label="Soccer, strength and running">${cards.map(card).join("")}</div>`;
+        `<div class="pub-rail-track" role="group" tabindex="0" aria-label="Soccer, strength and running">${cards.map(card).join("")}</div>`;
 }
 
 export function mountRail(doc = document, path = location.pathname) {

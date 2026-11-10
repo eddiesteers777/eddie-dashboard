@@ -848,3 +848,6 @@ Next tile and ladder in the compare card; hold messages after so-so or bad runs.
 
 ### 2026-11-09: Adaptive fueling step 4 — saved setup (branch claude/project-thread-seqa52, not merged)
 "Use this as my usual setup" on a logged run; new runs start with it; the compare card shows the setup that worked. No rules change. Found and fixed while testing: the checkbox was lost when a segmented answer redrew the form.
+
+## 2026-11-10 — Site audit round 1 (branch claude/project-thread-q2u700, not merged)
+Report: /mnt/project-files/site-audit-2026-11/REPORT.md. Built: home step 1 no longer says "no account" (Apply goes to Get started, which signs in with Google); the footer's Apply button is gone on pages that already end with a call-to-action band; the old "Faster. Stronger. Smarter." slogan is gone from page footers (structured-data slogan is now the three brand lines); `--muted` lightened to #9DAA99 (contrast 4.9:1 on the app surface); Weekly Review "no data" days, the marathon phase pill, the footer rail ARIA roles, the Home headline label, and the empty Client Hub heading fixed for axe; `terms.html` added to the static test's public page list. Tested: `npm run test:static` 1380 pass, axe on the touched pages. Not run: `npm run smoke`, rules emulator. No rules change.

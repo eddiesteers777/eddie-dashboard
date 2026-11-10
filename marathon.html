@@ -736,7 +736,7 @@
         <button type="button" class="mp-week-step" data-week-step="1" aria-label="Next week" ${selectedWeek >= 16 ? "disabled" : ""}>&rarr;</button>
       </div>
       <div class="mp-week-meta">
-        <span class="mp-phase-pill" style="background:${phaseInfo.color}22; color:${phaseInfo.color}">${phaseInfo.label}</span>
+        <span class="mp-phase-pill" style="background:${phaseInfo.color}22; color:color-mix(in srgb, ${phaseInfo.color} 72%, white)">${phaseInfo.label}</span>
         <span class="mp-week-total mp-mono"><b>${total}</b> mi · ${done}/7 done</span>
       </div>
       ${raceBanner}${checkBanner}

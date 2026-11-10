@@ -113,7 +113,7 @@ if (!mq("(prefers-reduced-motion: reduce)") && navigator.connection?.saveData !=
         const bigEl = document.querySelector(".sbh-big");
         const words = [];
         if (bigEl) {
-            bigEl.setAttribute("aria-label", bigEl.textContent.replace(/\s+/g, " ").trim());
+            bigEl.setAttribute("role", "group"); bigEl.setAttribute("aria-label", bigEl.textContent.replace(/\s+/g, " ").trim());
             const walk = (node) => [...node.childNodes].forEach((n) => {
                 if (n.nodeType === 3) {
                     const f = document.createDocumentFragment();
