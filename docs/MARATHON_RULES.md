@@ -77,3 +77,16 @@ Same system as the marathon, scaled down. `settings.raceType: "HALF"` (or `dista
 - Peak: normal 1.5x current, careful 1.4x, experienced 1.35x. Ceilings 28 / 40 / 60. A low base may double up to 22 / 26 / 30.
 - Key sessions: both every week, one at a time for a first half or under 25 miles a week (the marathon's rule).
 - Paces: from a recent race (same fitness model); race pace is the half's own, from the goal when it is within 3% of fitness.
+
+## 5K and 10K (Eddie approved 2026-11-10; doubles wait)
+`settings.raceType: "5K"` or `"10K"`. Table `DISTANCES` and `RULES.shortTiers` in `js/marathonEngine.js`. Research notes and sources: `/mnt/project-files/marathon-generator/5k10k-rulebook-draft.md`. The numbers are starting values from standard coaching sources, not validated on real runners.
+- **Five levels** by weekly miles: Beginner (under 15), Intermediate (under 30), Advanced (under 50), Competitive (under 65), Elite high school (65+). Injury history steps one level down. The coach can pick the level. Peak ceilings 5K: 25 / 40 / 55 / 70 / 85; 10K: 30 / 45 / 60 / 75 / 85.
+- **Quality days:** Beginner and Intermediate: one key session a week, taking turns with a long run workout. Advanced and up: a speed day plus a second quality day (threshold, hill sprints or tempo), at least two days from the speed day and the long run when the run days allow it, plus the long run.
+- **Blocks** (new stimulus every 4 weeks, down week closing each): Base, Hills, Strength (threshold, hill sprints), VO2max (800s, 1K, 1200s), then 5K specific or 10K specific. Fewer weeks drop blocks from the front. The 10K leans on threshold (tempo 25 to 30 min, 2-mile repeats) and finishes long runs at 10K pace.
+- **Long run:** 5K up to 12 miles or 100 minutes, 10K up to 14 miles or 110 minutes, at most 30% of the week. Unless the coach sets a target, the plan aims for 6 / 8 / 10 / 12 / 12 miles by level (10K: 8 / 10 / 12 / 14 / 14).
+- **Taper:** two taper weeks plus race week (one taper week under 10 weeks), about 80% then 60% of the biggest week, intensity kept.
+- **Race week:** 5K: 4 x 600 at 5K pace, 2:00 jog. 10K: 3 x 1 mile at 10K pace, 2:00 jog. Placed about five days out, nothing hard within two days of it.
+- **800s test** as the marathon. **Time trial** (optional, Mile or 3200): the same trial in the same two weeks, on the second quality day (needs Advanced and up).
+- **Tune-up races** (coach-entered dates): the race replaces that week's hardest work; other hard days within two days become easy. A date that is off a run day, outside the plan, on race day or within 10 days of the race is left out with a note.
+- **Goal times** for a 5K or 10K read as minutes:seconds ("17:45", "38:30"); a marathon or half goal still reads hours:minutes ("3:30").
+- Paces add 3K and mile pace for the reps and strides. Not built: doubles, cross-country courses, altitude and heat.

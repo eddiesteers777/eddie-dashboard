@@ -4,7 +4,7 @@
 // Run: npm run test:static
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generateMarathonPlan, checkSettings, normalize, fitnessFrom, pacesFrom, planCalendar, clockSeconds, RULES, STIMULI, CODES } from "../js/marathonEngine.js";
+import { generateMarathonPlan, checkSettings, normalize, fitnessFrom, pacesFrom, planCalendar, clockSeconds, goalSecondsFor, RULES, STIMULI, CODES } from "../js/marathonEngine.js";
 import { sanitizeWorkout, paceToSeconds } from "../js/runWorkout.js";
 import { addDays, mondayOf } from "../js/coachingPlanModel.js";
 
@@ -420,5 +420,165 @@ test("half sweep: 300 random runners keep the half rules", () => {
         plan.weeks.forEach((w, i) => { if (w.kind === "down") { assert.ok(!w.days.some(d => d.benchmark), label); assert.ok(plan.weeks[i - 1].kind !== "down", label); } });
         const taper = plan.weeks.filter(w => ["peak", "taper"].includes(w.kind)).map(w => w.targetMiles);
         for (let i = 1; i < taper.length; i++) assert.ok(taper[i] <= taper[i - 1] + 0.01, `${label} taper ${taper}`);
+    }
+});
+
+// ---------- 5K and 10K (docs/MARATHON_RULES.md, "5K and 10K") ----------
+
+const K5 = { startDate: "2026-12-21", raceDate: "2027-03-27", raceType: "5K", goalTime: "17:45", recentRace: { meters: 5000, seconds: 1110 }, currentMiles: 40, longestRun: 9, runDays: ["MON", "TUE", "WED", "THU", "FRI", "SUN"], longRunDay: "SUN" };
+const makeK = extra => generateMarathonPlan({ ...K5, ...extra });
+
+test("5K and 10K: five levels by weekly miles, injury history steps one down", () => {
+    const lvl = (miles, extra = {}) => normalize({ ...K5, currentMiles: miles, ...extra }).tier;
+    assert.equal(lvl(10), "BEGINNER");
+    assert.equal(lvl(20), "INTERMEDIATE");
+    assert.equal(lvl(40), "ADVANCED");
+    assert.equal(lvl(55), "COMPETITIVE");
+    assert.equal(lvl(70), "ELITE");
+    assert.equal(lvl(40, { injuryHistory: true }), "INTERMEDIATE");
+    assert.equal(lvl(10, { injuryHistory: true }), "BEGINNER");
+    assert.equal(lvl(10, { tier: "COMPETITIVE" }), "COMPETITIVE");
+    assert.equal(normalize({ ...K5, currentMiles: 10 }).secondDay, null);
+    assert.ok(normalize({ ...K5, currentMiles: 40 }).secondDay);
+    assert.equal(normalize({ ...K5, raceType: "10K" }).distance, "10K");
+    assert.equal(normalize({ ...K5, currentMiles: 40, keySessions: "ALTERNATE" }).secondDay, null);
+});
+
+test("5K and 10K: a goal time reads as minutes:seconds, a marathon goal still as hours:minutes", () => {
+    assert.equal(goalSecondsFor("5K", "17:45"), 1065);
+    assert.equal(goalSecondsFor("10K", "38:30"), 2310);
+    assert.equal(goalSecondsFor("10K", "1:05:00"), 3900);
+    assert.equal(goalSecondsFor("MARATHON", "3:30"), 12600);
+    const p = makeK({ recentRace: { meters: 5000, seconds: 1080 } });
+    assert.ok(Math.abs(mid(p.summary.racePace) - 1065 / 3.107) < 6);   // the goal pace, about 5:43 a mile
+});
+
+test("5K: an advanced runner gets two quality days, the 5K blocks, a 4 x 600 race week and a 3.1-mile race day", () => {
+    const plan = makeK();
+    assert.deepEqual(plan.problems, []);
+    assert.equal(plan.settings.tier, "ADVANCED");
+    assert.ok(plan.weeks.some(w => w.stimulus === "5K specific"));
+    assert.ok(plan.weeks.some(w => w.stimulus === "Strength"));
+    const days = allDays(plan);
+    const build = plan.weeks.filter(w => w.kind === "build");
+    for (const w of build) assert.equal(w.days.filter(d => d.type === "workout").length, 2, `week ${w.index} quality days`);
+    // the two quality days are not next to each other or to the long run
+    for (const w of build) {
+        const q = w.days.filter(d => d.type === "workout").map(d => d.day);
+        assert.ok(Math.abs(CODES.indexOf(q[0]) - CODES.indexOf(q[1])) >= 2, q.join());
+        assert.ok(!q.includes("SAT"));
+    }
+    const race = days.find(d => d.type === "race");
+    assert.equal(race.miles, 3.1);
+    assert.match(race.session, /5K/);
+    const rp = days.find(d => d.raceWeek);
+    assert.equal(rp.workout.sets[0].repeat, 4);
+    assert.equal(rp.workout.sets[0].amount, 600);
+    assert.equal(rp.workout.sets[0].effort, "5K");
+    assert.ok(Math.max(...days.filter(d => d.type === "long").map(d => d.miles)) <= 12);
+    // paces for every effort the library uses
+    for (const key of ["5K", "10K", "3K", "mile", "threshold", "800s"]) assert.ok(plan.paces[key], key);
+});
+
+test("10K: more threshold, a 14-mile ceiling, 10K-pace race week and race day", () => {
+    const plan = makeK({ raceType: "10K", goalTime: "38:00", recentRace: { meters: 5000, seconds: 1110 } });
+    assert.deepEqual(plan.problems, []);
+    assert.ok(plan.weeks.some(w => w.stimulus === "10K specific"));
+    const days = allDays(plan);
+    assert.equal(days.find(d => d.type === "race").miles, 6.2);
+    const rp = days.find(d => d.raceWeek);
+    assert.equal(rp.workout.sets[0].repeat, 3);
+    assert.equal(rp.workout.sets[0].unit, "mi");
+    assert.equal(rp.workout.sets[0].effort, "10K");
+    assert.ok(Math.max(...days.filter(d => d.type === "long").map(d => d.miles)) <= 14);
+    assert.ok(days.some(d => d.type === "workout" && /Tempo/.test(d.session)));
+});
+
+test("5K: beginner and intermediate runners get one quality day and no second day", () => {
+    const plan = makeK({ currentMiles: 14, longestRun: 5, runDays: ["TUE", "THU", "SAT", "SUN"], goalTime: "27:00", recentRace: null });
+    assert.equal(plan.settings.tier, "BEGINNER");
+    for (const w of plan.weeks.filter(w => w.kind === "build")) assert.ok(w.days.filter(d => d.type === "workout").length <= 1, `week ${w.index}`);
+    assert.ok(!plan.warnings.some(m => /short of the/.test(m)));   // an automatic long run target never warns
+});
+
+test("time trial: the same mile in the 800s test weeks, on the second quality day", () => {
+    const plan = makeK({ timeTrial: "MILE" });
+    const tts = allDays(plan).filter(d => d.timeTrial);
+    assert.equal(tts.length, 2);
+    assert.deepEqual(tts[0].workout, tts[1].workout);
+    assert.match(tts[0].session, /Mile time trial/);
+    const tests = allDays(plan).filter(d => d.benchmark);
+    for (const t of tests) assert.ok(tts.some(x => Math.abs(gapDays(t.date, x.date)) <= 6));
+    assert.ok(makeK({ timeTrial: "3200" }).weeks.flatMap(w => w.days).some(d => /3200 time trial/.test(d.session)));
+    // no second day, no time trial, and a note says so
+    const none = makeK({ timeTrial: "MILE", currentMiles: 14, runDays: ["TUE", "THU", "SUN"] });
+    assert.ok(none.warnings.some(m => /time trial needs a second quality day/.test(m)));
+    assert.ok(!allDays(none).some(d => d.timeTrial));
+});
+
+test("tune-up races replace that week's hard work, and say why when one can't be placed", () => {
+    const plan = makeK({ tuneUps: ["2027-02-07", "2027-03-21", "2027-02-06", "2030-01-01"] });
+    const days = allDays(plan);
+    const tune = days.find(d => d.date === "2027-02-07");
+    assert.equal(tune.tuneUp, true);
+    assert.match(tune.session, /Tune-up race/);
+    assert.equal(tune.workout.sets[0].amount, 5000);
+    // the other hard days within two days become easy
+    for (const d of days) if (d !== tune && Math.abs(gapDays(d.date, tune.date)) <= 2) assert.ok(d.type !== "workout" || d.tuneUp, d.date);
+    assert.equal(days.filter(d => d.tuneUp).length, 1);
+    for (const date of ["2027-03-21", "2027-02-06", "2030-01-01"]) assert.ok(plan.warnings.some(m => m.includes(date)), date);
+});
+
+test("5K and 10K sweep: 300 random runners keep the rules", () => {
+    const r = rng(20261112);
+    const pick = list => list[Math.floor(r() * list.length)];
+    const int = (lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
+    for (let n = 0; n < 300; n++) {
+        const raceType = pick(["5K", "10K"]);
+        const D = { "5K": { cap: 12, miles: 3.1 }, "10K": { cap: 14, miles: 6.2 } }[raceType];
+        const count = int(3, 7);
+        const runDays = CODES.slice().sort(() => r() - 0.5).slice(0, count);
+        const startDate = addDays("2026-09-01", int(0, 60));
+        const weeks = int(8, 24);
+        const raceDate = addDays(mondayOf(startDate), (weeks - 1) * 7 + pick([5, 6, 6, 6, 2]));
+        const settings = {
+            raceType, startDate, raceDate, runDays, longRunDay: pick(runDays), currentMiles: int(8, 85), longestRun: pick([0, int(3, 14)]),
+            goalTime: pick(["", "15:30", "18:00", "22:00", "28:00", "34:00", "38:00", "45:00"]),
+            recentRace: pick([null, { meters: 5000, seconds: int(900, 2100) }, { meters: 10000, seconds: int(1950, 4300) }]),
+            injuryHistory: r() < 0.2, tier: pick([undefined, undefined, "BEGINNER", "ADVANCED", "ELITE"]), peakMiles: pick([0, 0, int(15, 90)]),
+            timeTrial: pick(["", "", "MILE", "3200"]),
+            tuneUps: pick([[], [], [addDays(startDate, int(10, 100))]])
+        };
+        const label = `#${n} ${JSON.stringify(settings)}`;
+        assert.deepEqual(checkSettings(settings), [], label);
+        const plan = generateMarathonPlan(settings);
+        assert.equal(plan.weeks.length, weeks, label);
+        const s = plan.settings;
+        const days = allDays(plan);
+        for (const d of days) {
+            if (d.type === "rest") continue;
+            if (d.type !== "race") assert.ok(runDays.includes(d.day) && d.date >= startDate, `${label} ${d.date} on a day off`);
+            if (d.type === "long") assert.ok(d.miles <= D.cap && d.miles <= plan.summary.longCap, `${label} long ${d.miles}`);
+            if (d.workout) assert.deepEqual(d.workout, sanitizeWorkout(d.workout), label);
+        }
+        assert.equal(days.filter(d => d.type === "race").length, 1, label);
+        assert.equal(days.find(d => d.type === "race").miles, D.miles, label);
+        assert.ok(days.filter(d => d.type === "workout").every(d => gapDays(d.date, raceDate) >= 3), label);
+        // a second quality day is at least two days from the speed day and the long run when the run days allow it
+        plan.weeks.forEach((w, i) => {
+            if (w.kind === "down") { assert.ok(!w.days.some(d => d.benchmark || d.timeTrial), label); assert.ok(plan.weeks[i - 1].kind !== "down", label); }
+            const hard = w.days.filter(d => d.type === "workout" && !d.tuneUp && !d.raceWeek);
+            assert.ok(hard.length <= (s.secondDay ? 2 : 1), `${label} week ${w.index} has ${hard.length} hard days`);
+            if (s.keySessions === "ALTERNATE" && ["build", "peak"].includes(w.kind)) assert.ok(w.days.filter(d => d.key && !d.tuneUp && !d.raceWeek).length <= 1, `${label} week ${w.index} two key sessions`);
+        });
+        for (const b of plan.summary.blocks.slice(0, -1)) assert.ok(b.to - b.from + 1 <= 4, label);
+        const blocks = plan.summary.blocks;
+        for (let i = 1; i < blocks.length; i++) assert.notEqual(blocks[i].name, blocks[i - 1].name, label);
+        const tests = days.filter(d => d.benchmark);
+        if (tests.length === 2) assert.deepEqual(tests[0].workout, tests[1].workout, label);
+        const taper = plan.weeks.filter(w => ["peak", "taper"].includes(w.kind)).map(w => w.targetMiles);
+        for (let i = 1; i < taper.length; i++) assert.ok(taper[i] <= taper[i - 1] + 0.01, `${label} taper ${taper}`);
+        const ceiling = { BEGINNER: 30, INTERMEDIATE: 45, ADVANCED: 60, COMPETITIVE: 75, ELITE: 85 }[s.tier];
+        if (!settings.peakMiles) assert.ok(plan.summary.peakMiles <= Math.max(ceiling, settings.currentMiles) + 4, `${label} peak ${plan.summary.peakMiles}`);
     }
 });

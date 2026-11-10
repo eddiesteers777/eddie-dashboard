@@ -37,13 +37,24 @@ const METERS_PER_MILE = 1609.344;
 // The two race distances (docs/MARATHON_RULES.md, "Half marathon"). The marathon numbers are the originals.
 export const DISTANCES = Object.freeze({
     MARATHON: { key: "MARATHON", label: "marathon", meters: 42195, miles: 26.2, effort: "marathon", longCapMiles: 20, longCapMinutes: 180, capText: "3-hour",
-        minWeeks: 8, maxWeeks: 30, taperWeeks: 3, taperShort: 12, taperMiles: [0.8, 0.6], taperLong: [0.65, 0.45], minLongTarget: 8, tiers: {} },
+        minWeeks: 8, maxWeeks: 30, typical: 16, quick: 12, taperWeeks: 3, taperShort: 12, taperMiles: [0.8, 0.6], taperLong: [0.65, 0.45], minLongTarget: 8, tiers: {} },
     HALF: { key: "HALF", label: "half marathon", meters: 21097.5, miles: 13.1, effort: "half marathon", longCapMiles: 10, longCapMinutes: 150, capText: "2:30",
-        minWeeks: 8, maxWeeks: 20, taperWeeks: 3, taperShort: 10, taperMiles: [0.75, 0.55], taperLong: [0.85, 0.7], minLongTarget: 5,
-        tiers: { CAREFUL: { floor: 22, ceiling: 28 }, NORMAL: { floor: 26, ceiling: 40 }, EXPERIENCED: { floor: 30, ceiling: 60 } } }
+        minWeeks: 8, maxWeeks: 20, typical: 12, quick: 10, taperWeeks: 3, taperShort: 10, taperMiles: [0.75, 0.55], taperLong: [0.85, 0.7], minLongTarget: 5,
+        tiers: { CAREFUL: { floor: 22, ceiling: 28 }, NORMAL: { floor: 26, ceiling: 40 }, EXPERIENCED: { floor: 30, ceiling: 60 } } },
+    // 5K and 10K: five levels (RULES.shortTiers), a second quality day, a lower long-run share.
+    "10K": { key: "10K", label: "10K", meters: 10000, miles: 6.2, effort: "10K", short: true, longCapMiles: 14, longCapMinutes: 110, capText: "110-minute",
+        minWeeks: 8, maxWeeks: 24, typical: 10, quick: 10, taperWeeks: 3, taperShort: 10, taperMiles: [0.8, 0.6], taperLong: [0.7, 0.5], minLongTarget: 4,
+        longShare: { 3: 0.4, 4: 0.35, 5: 0.3, 6: 0.3, 7: 0.3 },
+        tiers: { BEGINNER: { ceiling: 30 }, INTERMEDIATE: { ceiling: 45 }, ADVANCED: { ceiling: 60 }, COMPETITIVE: { ceiling: 75 } } },
+    "5K": { key: "5K", label: "5K", meters: 5000, miles: 3.1, effort: "5K", short: true, longCapMiles: 12, longCapMinutes: 100, capText: "100-minute",
+        minWeeks: 8, maxWeeks: 24, typical: 10, quick: 10, taperWeeks: 3, taperShort: 10, taperMiles: [0.8, 0.6], taperLong: [0.7, 0.5], minLongTarget: 4,
+        longShare: { 3: 0.4, 4: 0.35, 5: 0.3, 6: 0.3, 7: 0.3 }, tiers: {} }
 });
-const distanceOf = input => DISTANCES[input?.distance === "HALF" || input?.raceType === "HALF" ? "HALF" : "MARATHON"];
-const tierFor = (s, D) => ({ ...RULES.tiers[s.tier], ...(D.tiers[s.tier] || {}) });
+const distanceOf = input => DISTANCES[[input?.distance, input?.raceType].find(k => DISTANCES[k]) || "MARATHON"];
+const tierSet = D => (D.short ? RULES.shortTiers : RULES.tiers);
+const tierFor = (s, D) => ({ ...tierSet(D)[s.tier], ...(D.tiers[s.tier] || {}) });
+const SHORT_ORDER = ["BEGINNER", "INTERMEDIATE", "ADVANCED", "COMPETITIVE", "ELITE"];
+const shortLevel = miles => (miles < 15 ? "BEGINNER" : miles < 30 ? "INTERMEDIATE" : miles < 50 ? "ADVANCED" : miles < 65 ? "COMPETITIVE" : "ELITE");
 
 export const RULES = Object.freeze({
     minWeeks: 8,
@@ -67,6 +78,14 @@ export const RULES = Object.freeze({
         CAREFUL: { label: "Careful", ramp: 0.06, pattern: ["up", "hold", "up"], down: 0.25, peakFactor: 1.4, floor: 32, ceiling: 40, longStep: 1, mpShare: 0.35, reps800: 8, rest800: 120, key: "ALTERNATE", easyCap: 8, warm: 1, cool: 1 },
         NORMAL: { label: "Normal", ramp: 0.08, pattern: ["up", "up", "up"], down: 0.2, peakFactor: 1.5, floor: 36, ceiling: 60, longStep: 1.5, mpShare: 0.5, reps800: 8, rest800: 90, key: "BOTH", easyCap: 10, warm: 1.5, cool: 1 },
         EXPERIENCED: { label: "Experienced", ramp: 0.1, pattern: ["up", "up", "up"], down: 0.15, peakFactor: 1.35, floor: 40, ceiling: 90, longStep: 2, mpShare: 0.6, reps800: 10, rest800: 90, key: "BOTH", easyCap: 12, warm: 2, cool: 1.5 }
+    },
+    // The five levels for the 5K and 10K (docs/MARATHON_RULES.md, "5K and 10K"). `second` = a second quality day each week.
+    shortTiers: {
+        BEGINNER: { label: "Beginner", ramp: 0.06, pattern: ["up", "hold", "up"], down: 0.25, peakFactor: 1.4, floor: 20, ceiling: 25, mpShare: 0.3, reps800: 6, rest800: 120, key: "ALTERNATE", second: false, easyCap: 5, warm: 1, cool: 1 },
+        INTERMEDIATE: { label: "Intermediate", ramp: 0.08, pattern: ["up", "up", "up"], down: 0.2, peakFactor: 1.45, floor: 28, ceiling: 40, mpShare: 0.3, reps800: 8, rest800: 120, key: "ALTERNATE", second: false, easyCap: 6, warm: 1, cool: 1 },
+        ADVANCED: { label: "Advanced", ramp: 0.09, pattern: ["up", "up", "up"], down: 0.2, peakFactor: 1.4, floor: 40, ceiling: 55, mpShare: 0.3, reps800: 8, rest800: 90, key: "BOTH", second: true, easyCap: 8, warm: 1.5, cool: 1 },
+        COMPETITIVE: { label: "Competitive", ramp: 0.1, pattern: ["up", "up", "up"], down: 0.15, peakFactor: 1.3, floor: 55, ceiling: 70, mpShare: 0.3, reps800: 10, rest800: 90, key: "BOTH", second: true, easyCap: 9, warm: 1.5, cool: 1.5 },
+        ELITE: { label: "Elite high school", ramp: 0.1, pattern: ["up", "up", "up"], down: 0.15, peakFactor: 1.25, floor: 70, ceiling: 85, mpShare: 0.3, reps800: 10, rest800: 90, key: "BOTH", second: true, easyCap: 10, warm: 2, cool: 1.5 }
     }
 });
 
@@ -95,25 +114,46 @@ export function normalize(input = {}) {
     s.currentMiles = Math.max(0, Number(input.currentMiles) || 0);
     s.longestRun = Math.max(0, Number(input.longestRun) || 0);
     s.injuryHistory = Boolean(input.injuryHistory);
-    const asked = RULES.tiers[input.tier] ? input.tier : null;
-    s.tier = s.injuryHistory ? "CAREFUL"
-        : asked || (s.currentMiles >= 45 ? "EXPERIENCED" : "NORMAL");
-    s.firstMarathon = Boolean(input.firstMarathon);
     const D = distanceOf(input);
     s.distance = D.key;
-    const tier = RULES.tiers[s.tier];
+    const asked = tierSet(D)[input.tier] ? input.tier : null;
+    if (D.short) {
+        // Five levels by weekly miles; injury history steps one level down.
+        const level = asked || shortLevel(s.currentMiles);
+        s.tier = s.injuryHistory ? SHORT_ORDER[Math.max(0, SHORT_ORDER.indexOf(level) - 1)] : level;
+    } else {
+        s.tier = s.injuryHistory ? "CAREFUL" : asked || (s.currentMiles >= 45 ? "EXPERIENCED" : "NORMAL");
+    }
+    s.firstMarathon = Boolean(input.firstMarathon);
+    const tier = tierFor(s, D);
     s.longRunDay = s.runDays.includes(input.longRunDay) ? input.longRunDay
         : s.runDays.includes("SUN") ? "SUN" : s.runDays.includes("SAT") ? "SAT" : s.runDays.at(-1) || "SUN";
     s.speedDay = pickSpeedDay(s.runDays, s.longRunDay, input.speedDay);
     // Newer and low-mileage runners get one key session a week unless the coach says otherwise.
     s.keySessions = ["BOTH", "ALTERNATE"].includes(input.keySessions) ? input.keySessions
+        : D.short ? tier.key
         : s.firstMarathon || s.currentMiles < RULES.bothFromMiles ? "ALTERNATE" : tier.key;
+    s.secondDay = D.short && tier.second && s.keySessions === "BOTH" ? pickSecondDay(s.runDays, s.longRunDay, s.speedDay) : null;
+    s.timeTrial = input.timeTrial === "MILE" || input.timeTrial === "3200" ? input.timeTrial : "";
+    s.tuneUps = (Array.isArray(input.tuneUps) ? input.tuneUps : []).filter(d => ISO.test(String(d))).map(String).sort();
     s.reps800 = clamp(Math.round(Number(input.reps800) || tier.reps800), 4, 12);
     s.rest800 = clamp(Math.round((Number(input.rest800) || tier.rest800) / 30) * 30, 60, 180);
     // The coach's peak: the most miles in one week the plan builds to, and the long run it ends on.
     s.peakMiles = Number(input.peakMiles) > 0 ? clamp(Math.round(Number(input.peakMiles)), 10, 120) : 0;
-    s.longTarget = Number(input.longTarget) > 0 ? clamp(Math.round(Number(input.longTarget) * 2) / 2, D.minLongTarget, D.longCapMiles) : D.longCapMiles;
+    // Not set by the coach: the marathon and half aim for their cap; a 5K or 10K runner for what their level calls for.
+    const autoLong = D.short ? Math.min(D.longCapMiles, { BEGINNER: 6, INTERMEDIATE: 8, ADVANCED: 10, COMPETITIVE: 12, ELITE: 12 }[s.tier] + (D.key === "10K" ? 2 : 0)) : D.longCapMiles;
+    s.longAsked = Number(input.longTarget) > 0;
+    s.longTarget = Number(input.longTarget) > 0 ? clamp(Math.round(Number(input.longTarget) * 2) / 2, D.minLongTarget, D.longCapMiles) : autoLong;
     return s;
+}
+
+// The second quality day: a run day as far as it can be from the speed day and the long run.
+function pickSecondDay(runDays, longDay, speedDay) {
+    const open = runDays.filter(c => c !== longDay && c !== speedDay);
+    if (!open.length || !speedDay) return null;
+    const score = c => Math.min(dayGap(c, speedDay), dayGap(c, longDay));
+    const order = ["THU", "FRI", "WED", "SAT", "MON", "TUE", "SUN"];
+    return open.slice().sort((a, b) => score(b) - score(a) || order.indexOf(a) - order.indexOf(b))[0];
 }
 
 // The speed day: early in the week, never next to the long run when there's a choice.
@@ -143,6 +183,14 @@ export function checkSettings(input = {}) {
     return out;
 }
 
+/** A goal time in seconds. "3:30" is hours:minutes for a marathon or half, minutes:seconds for a 5K or 10K. */
+export function goalSecondsFor(distance, text) {
+    const D = typeof distance === "string" ? (DISTANCES[distance] || DISTANCES.MARATHON) : distance;
+    const parts = String(text || "").trim().split(":");
+    if (D.short && parts.length === 2 && parts.every(x => /^\d{1,2}$/.test(x)) && Number(parts[1]) < 60) return Number(parts[0]) * 60 + Number(parts[1]);
+    return clockSeconds(text);
+}
+
 // ---------- fitness and paces ----------
 
 /**
@@ -152,7 +200,7 @@ export function checkSettings(input = {}) {
  */
 export function fitnessFrom(input = {}) {
     const D = distanceOf(input);
-    const goalSec = clockSeconds(input.goalTime);
+    const goalSec = goalSecondsFor(D, input.goalTime);
     const race = input.recentRace && Number(input.recentRace.meters) >= 1500 && Number(input.recentRace.seconds) > 0 ? input.recentRace : null;
     if (race) {
         const vdot = vdotFromRace(Number(race.meters), Number(race.seconds));
@@ -172,6 +220,8 @@ function paceSeconds(fitness) {
     const { vdot } = fitness;
     if (!vdot) return null;
     const racePace = meters => timeForVdot(vdot, meters) / (meters / METERS_PER_MILE);
+    // The plan's own distance runs at its race pace (goal-aware); the others come from fitness.
+    const at = meters => (fitness.raceMeters === meters && fitness.mpSec ? fitness.mpSec : racePace(meters));
     // Threshold: the pace of a race that lasts an hour.
     let lo = 5000, hi = 30000;
     for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; if (timeForVdot(vdot, mid) < 3600) lo = mid; else hi = mid; }
@@ -179,9 +229,8 @@ function paceSeconds(fitness) {
     return {
         easyFast: easyAt(0.72), easySlow: easyAt(0.62),
         // mpSec is the race pace of the plan's own distance; the other one comes from fitness.
-        marathon: fitness.raceMeters === 21097.5 ? (fitness.mpSec ? racePace(42195) : 0) : fitness.mpSec,
-        half: fitness.raceMeters === 21097.5 ? fitness.mpSec : racePace(21097.5), threshold: 3600 / (lo / METERS_PER_MILE),
-        tenK: racePace(10000), fiveK: racePace(5000)
+        marathon: at(42195), half: at(21097.5), threshold: 3600 / (lo / METERS_PER_MILE),
+        tenK: at(10000), fiveK: at(5000), threeK: racePace(3000), mile: racePace(METERS_PER_MILE)
     };
 }
 
@@ -198,15 +247,17 @@ export function pacesFrom(fitness) {
         threshold: around(p.threshold),
         "10K": around(p.tenK),
         "5K": around(p.fiveK),
+        "3K": around(p.threeK),
+        mile: around(p.mile),
         "800s": `${mmss(p.fiveK)}-${mmss(p.tenK)}`
     };
 }
 
 // Minutes per mile for sizing a timed step (a guess when there are no paces).
-const DEFAULT_MIN_PER_MILE = { easy: 10, steady: 9, marathon: 8.5, "half marathon": 8, threshold: 7.75, "10K": 7.5, "5K": 7.25, "800s": 7.25 };
+const DEFAULT_MIN_PER_MILE = { easy: 10, steady: 9, marathon: 8.5, "half marathon": 8, threshold: 7.75, "10K": 7.5, "5K": 7.25, "3K": 7, mile: 6.5, "800s": 7.25 };
 function minutesPerMile(effort, p) {
     if (p) {
-        const sec = { easy: (p.easyFast + p.easySlow) / 2, steady: p.marathon + 22, marathon: p.marathon, "half marathon": p.half, threshold: p.threshold, "10K": p.tenK, "5K": p.fiveK, "800s": (p.fiveK + p.tenK) / 2 }[effort];
+        const sec = { easy: (p.easyFast + p.easySlow) / 2, steady: p.marathon + 22, marathon: p.marathon, "half marathon": p.half, threshold: p.threshold, "10K": p.tenK, "5K": p.fiveK, "3K": p.threeK, mile: p.mile, "800s": (p.fiveK + p.tenK) / 2 }[effort];
         if (sec) return sec / 60;
     }
     return DEFAULT_MIN_PER_MILE[effort] || 8.5;
@@ -293,7 +344,71 @@ const HALF_SPECIFIC = {
     ],
     long: [["mp", 1, 2], ["mp", 1, 3], ["mp", 1, 3]]
 };
-const stimuliFor = D => (D.key === "HALF" ? { ...STIMULI, SPECIFIC: HALF_SPECIFIC } : STIMULI);
+// ---- 5K and 10K blocks: Base, Hills, Strength (threshold), VO2max, Race-specific ----
+// `second` is the second quality day (threshold work beside the main session); `long` as above.
+const TEMPO = (min, effort = "threshold") => S("Tempo run", "One steady push at threshold.", "Settle in; don't start too fast.", [W(1, min, "min", effort)]);
+const CRUISE = [
+    S("Cruise intervals", "Raises the pace you can hold.", "Even effort on every rep.", [W(4, 1, "mi", "threshold", REC(1, "min"))]),
+    S("Cruise intervals", "More time at threshold with short breaks.", "Even effort on every rep.", [W(3, 10, "min", "threshold", REC(2, "min"))]),
+    S("Cruise intervals", "Longer reps at threshold.", "Patient on the first, strong on the last.", [W(2, 15, "min", "threshold", REC(3, "min"))])
+];
+const HILL_SPRINTS = [6, 8, 10].map(n => S("Hill sprints", "Builds power and running economy with little pounding.", "Fast and tall, walk back down. Full rest.", [W(n, 0.3, "min", "hill sprint", REC(1.5, "min", "walk back down"))]));
+const SHORT_BASE = { name: "Base", speed: STIMULI.BASE.speed, second: [20, 25, 30].map(m => S("Steady run", "Builds aerobic strength.", "Comfortable but purposeful.", [W(1, m, "min", "steady")])), long: ["easy", "easy", "easy"] };
+const SHORT_HILLS = { name: "Hills", speed: STIMULI.HILLS.speed, second: [15, 20, 20].map(m => TEMPO(m)), long: ["easy", "easy", "easy"] };
+const SHORT_VO2 = {
+    name: "VO2max",
+    speed: [
+        S("800s", "Builds your top aerobic speed.", "Smooth and fast, not a sprint.", [W(6, 800, "m", "3K", REC(2, "min"))]),
+        S("1K repeats", "Longer reps at VO2max.", "Even splits. Relax your shoulders.", [W(5, 1000, "m", "5K", REC(2.5, "min"))]),
+        S("1200s", "The longest reps of the block.", "Lock into the pace by the second lap.", [W(4, 1200, "m", "5K", REC(2.5, "min"))])
+    ],
+    second: CRUISE, long: ["easy", "easy", ["steady", 2]]
+};
+const SHORT_STIMULI = {
+    "5K": {
+        BASE: SHORT_BASE, HILLS: SHORT_HILLS, VO2: SHORT_VO2,
+        STRENGTH: { name: "Strength", speed: [CRUISE[0], S("Cruise intervals", "Longer reps at threshold.", "Even effort on every rep.", [W(3, 2000, "m", "threshold", REC(1.5, "min"))]), TEMPO(20)], second: HILL_SPRINTS, long: ["easy", "easy", ["steady", 2]] },
+        SPECIFIC: {
+            name: "5K specific",
+            speed: [
+                S("5K pace reps", "Makes 5K pace feel controlled.", "Even splits, relaxed shoulders.", [W(5, 1000, "m", "5K", REC(2, "min"))]),
+                S("Mile-pace 400s", "Sharpens speed above race pace.", "Quick and smooth.", [W(8, 400, "m", "mile", REC(1.5, "min"))]),
+                S("1600s", "The biggest 5K-pace day of the block.", "Hold the same pace on the last one.", [W(3, 1600, "m", "5K", REC(3, "min"))])
+            ],
+            second: [TEMPO(20), CRUISE[1], TEMPO(15)], long: [["steady", 2], ["steady", 3], ["steady", 3]]
+        }
+    },
+    "10K": {
+        BASE: SHORT_BASE, HILLS: SHORT_HILLS, VO2: { ...SHORT_VO2, long: ["easy", ["steady", 2], ["steady", 3]] },
+        STRENGTH: { name: "Strength", speed: [TEMPO(25), S("2-mile repeats", "Longer reps at threshold.", "Patient on the first, strong on the last.", [W(3, 2, "mi", "threshold", REC(2, "min"))]), TEMPO(30)], second: HILL_SPRINTS, long: [["steady", 2], ["steady", 3], ["steady", 4]] },
+        SPECIFIC: {
+            name: "10K specific",
+            speed: [
+                S("10K pace reps", "Makes 10K pace feel controlled.", "Even splits. Stay patient early.", [W(4, 1, "mi", "10K", REC(1.5, "min"))]),
+                S("2K repeats", "More time at 10K pace.", "Lock in the rhythm.", [W(5, 2000, "m", "10K", REC(2, "min"))]),
+                S("2-mile repeats", "The biggest 10K-pace day of the block.", "Hold the same pace on the last one.", [W(3, 2, "mi", "10K", REC(2.5, "min"))])
+            ],
+            second: [TEMPO(20), TEMPO(25), TEMPO(20)], long: [["finish", 2], ["finish", 3], ["finish", 3]]
+        }
+    }
+};
+const stimuliFor = D => (D.short ? SHORT_STIMULI[D.key] : D.key === "HALF" ? { ...STIMULI, SPECIFIC: HALF_SPECIFIC } : STIMULI);
+// What the peak week, the taper and race week use for each distance.
+const RACE_LIB = {
+    "5K": {
+        peakSpeed: S("5K pace reps", "The last big race-pace day.", "Controlled. Even splits.", [W(4, 1200, "m", "5K", REC(2.5, "min"))]), peakLong: ["steady", 3], peakSecond: TEMPO(20),
+        tapers: [S("800s", "Keeps the legs sharp as the miles come down.", "Quick and relaxed. Finish wanting more.", [W(5, 800, "m", "5K", REC(2, "min"))]), S("400s", "A last touch of race pace.", "It should feel easy.", [W(6, 400, "m", "5K", REC(1.5, "min"))])],
+        raceWeek: S("5K pace", "The last look at race pace.", "Relaxed. This should feel easy.", [W(4, 600, "m", "5K", REC(2, "min"))])
+    },
+    "10K": {
+        peakSpeed: S("10K pace run", "The biggest race-pace day.", "Settle into the rhythm.", [W(1, 6, "mi", "10K")]), peakLong: ["finish", 3], peakSecond: TEMPO(20),
+        tapers: [S("1K repeats", "Keeps the legs sharp as the miles come down.", "Quick and relaxed. Finish wanting more.", [W(4, 1000, "m", "10K", REC(2, "min"))]), S("10K pace", "Keeps race pace familiar.", "It should feel easy.", [W(2, 1, "mi", "10K", REC(0.5, "mi"))])],
+        raceWeek: S("10K pace", "The last look at race pace.", "Relaxed. This should feel easy.", [W(3, 1, "mi", "10K", REC(2, "min"))])
+    }
+};
+const timeTrialTemplate = s => (s.timeTrial === "MILE"
+    ? S("Mile time trial", "A clean benchmark, the same early and late.", "Even effort. The fastest mile you can hold.", [W(1, 1, "mi", "mile")])
+    : S("3200 time trial", "A clean benchmark, the same early and late.", "Even effort. The fastest 3200 you can hold.", [W(1, 3200, "m", "3K")]));
 
 // Blocks before the peak, first to last, by how many full blocks the plan has.
 const ORDER = {
@@ -366,7 +481,7 @@ function speedDay(template, { tier, paces, p, scale = 1, cap = 0 }) {
 /** A long run as a day, with its workout when the week calls for one. */
 function longDay(kind, miles, { tier, paces, D }) {
     const fuel = "Practice your race-day fueling.";
-    if (!Array.isArray(kind) || miles < 8) return { miles, session: "Long run, easy", workout: null };
+    if (!Array.isArray(kind) || miles < (D.short ? 6 : 8)) return { miles, session: "Long run, easy", workout: null };
     const [type, a, b] = kind;
     if (type === "steady" || type === "finish") {
         const last = Math.min(a, Math.max(1, Math.floor(miles * 0.3)));
@@ -403,13 +518,17 @@ function longDay(kind, miles, { tier, paces, D }) {
  * Each week's place in the plan:
  * { kind: "leadin" | "build" | "down" | "peak" | "taper" | "race", block, blockWeek, stimulus }
  */
+const ORDER_SHORT = {
+    0: [], 1: ["SPECIFIC"], 2: ["STRENGTH", "SPECIFIC"], 3: ["STRENGTH", "VO2", "SPECIFIC"], 4: ["BASE", "STRENGTH", "VO2", "SPECIFIC"], 5: ["BASE", "HILLS", "STRENGTH", "VO2", "SPECIFIC"]
+};
+
 export function planCalendar(weeks, distance = "MARATHON") {
     const D = DISTANCES[distance] || DISTANCES.MARATHON;
     const taper = weeks < D.taperShort ? D.taperWeeks - 1 : D.taperWeeks;
     const peakAt = weeks - 1 - taper;
-    const full = Math.min(6, Math.floor(peakAt / RULES.blockWeeks));
+    const full = Math.min(D.short ? 5 : 6, Math.floor(peakAt / RULES.blockWeeks));
     const lead = peakAt - full * RULES.blockWeeks;
-    const order = ORDER[full];
+    const order = (D.short ? ORDER_SHORT : ORDER)[full];
     const out = [];
     for (let i = 0; i < weeks; i++) {
         if (i < lead) out.push({ kind: "leadin", block: 0, blockWeek: i + 1, stimulus: "SETTLE" });
@@ -434,7 +553,7 @@ function planLevels(s, cal, p, D) {
     const reach = Math.max(start * tier.peakFactor, Math.min(start * 2, tier.floor));
     const peak = Math.max(start, s.peakMiles || Math.min(reach, Math.max(tier.ceiling, start)));
     const longWanted = s.longTarget;
-    const share = RULES.longShare[clamp(s.runDays.length, 3, 7)];
+    const share = (D.longShare || RULES.longShare)[clamp(s.runDays.length, 3, 7)];
     const capByTime = p ? floorHalf(D.longCapMinutes / (((p.easyFast + p.easySlow) / 2) / 60)) : D.longCapMiles;
     const longCap = Math.min(D.longCapMiles, capByTime);
 
@@ -486,7 +605,7 @@ function planLevels(s, cal, p, D) {
 }
 
 // One week's days: the long run and the speed day first, easy runs share the rest.
-function layoutWeek({ start, s, tier, total, long, speed, notBefore }) {
+function layoutWeek({ start, s, tier, total, long, speed, second, notBefore }) {
     const days = CODES.map((day, i) => ({ date: addDays(start, i), day, type: "rest", miles: 0, session: "Rest" }));
     const open = days.filter(d => s.runDays.includes(d.day) && d.date >= notBefore);
     const set = (d, fields) => Object.assign(d, fields);
@@ -495,6 +614,8 @@ function layoutWeek({ start, s, tier, total, long, speed, notBefore }) {
     if (longAt && long) { set(longAt, { type: "long", ...long }); left -= long.miles; }
     const speedAt = open.find(d => d.day === s.speedDay);
     if (speedAt && speed) { set(speedAt, speed); left -= speed.miles; }
+    const secondAt = second && open.find(d => d.day === s.secondDay && d.type === "rest");
+    if (secondAt) { set(secondAt, second); left -= second.miles; }
     // Easy days, lightest first to drop when the week can't hold them all.
     const weight = d => (dayGap(d.day, s.longRunDay) === 1 ? (CODES.indexOf(d.day) === (CODES.indexOf(s.longRunDay) + 1) % 7 ? 0.7 : 0.8) : 1);
     let easy = open.filter(d => d.type === "rest");
@@ -536,7 +657,10 @@ export function generateMarathonPlan(input = {}) {
     const ctx = { tier, paces, p, D };
     const half = D.key === "HALF";
     const STIM = stimuliFor(D);
-    const TAPERS = half ? TAPER_SPEED_HALF : TAPER_SPEED;
+    const lib = RACE_LIB[D.key] || (half
+        ? { peakSpeed: PEAK_SPEED_HALF, peakLong: PEAK_LONG_HALF, tapers: TAPER_SPEED_HALF, raceWeek: RACE_WEEK_HALF }
+        : { peakSpeed: PEAK_SPEED, peakLong: PEAK_LONG, tapers: TAPER_SPEED, raceWeek: RACE_WEEK });
+    const TAPERS = lib.tapers;
 
     // The two 800s days: plan week 2 and the peak week, when they're far enough apart.
     const peakAt = cal.findIndex(w => w.kind === "peak");
@@ -548,10 +672,10 @@ export function generateMarathonPlan(input = {}) {
         const total = levels.totals[i];
         const isTest = testWeeks.includes(i);
         const stim = STIM[w.stimulus];
-        let speedTemplate = null, longKind = "easy", scale = 1;
-        if (w.kind === "build") { speedTemplate = stim.speed[w.blockWeek - 1]; longKind = stim.long[w.blockWeek - 1]; }
-        else if (w.kind === "down") { speedTemplate = stim.speed[0]; scale = RULES.downReps; }
-        else if (w.kind === "peak") { speedTemplate = half ? PEAK_SPEED_HALF : PEAK_SPEED; longKind = half ? PEAK_LONG_HALF : PEAK_LONG; }
+        let speedTemplate = null, longKind = "easy", scale = 1, secondTemplate = null;
+        if (w.kind === "build") { speedTemplate = stim.speed[w.blockWeek - 1]; longKind = stim.long[w.blockWeek - 1]; secondTemplate = stim.second?.[w.blockWeek - 1] || null; }
+        else if (w.kind === "down") { speedTemplate = stim.speed[0]; scale = RULES.downReps; secondTemplate = stim.second?.[0] || null; }
+        else if (w.kind === "peak") { speedTemplate = lib.peakSpeed; longKind = lib.peakLong; secondTemplate = lib.peakSecond || null; }
         else if (w.kind === "taper") speedTemplate = TAPERS[TAPERS.length - cal.filter(x => x.kind === "taper").length + w.taperIndex];
 
         // One key session a week: speed and the long run workout take turns.
@@ -569,17 +693,23 @@ export function generateMarathonPlan(input = {}) {
             else if (speedTemplate) speed = { type: "workout", key: w.kind !== "down", ...speedDay(speedTemplate, { ...ctx, scale, cap: Math.max(5, total * 0.25) }) };
             else if (w.kind !== "race") speed = { type: "easy", miles: clamp(roundHalf(total * 0.18), 3, tier.easyCap), session: STRIDES };
         }
+        let second = null;
+        if (s.secondDay && (["build", "down", "peak"].includes(w.kind) || (w.kind === "leadin" && isTest && s.timeTrial))) {
+            if (isTest && s.timeTrial) second = { type: "workout", key: true, timeTrial: true, ...speedDay(timeTrialTemplate(s), ctx) };
+            else if (secondTemplate) second = { type: "workout", key: w.kind !== "down", ...speedDay(secondTemplate, { ...ctx, scale, cap: Math.max(4, total * 0.18) }) };
+        }
         const long = w.kind === "race" ? null : longDay(w.kind === "down" || w.kind === "taper" ? "easy" : longKind, levels.longs[i], ctx);
         const days = w.kind === "race"
             ? raceWeekDays({ start, s, tier, D })
-            : layoutWeek({ start, s, tier, total, long, speed, notBefore: s.startDate });
+            : layoutWeek({ start, s, tier, total, long, speed, second, notBefore: s.startDate });
         return {
             index: i + 1, startDate: start, kind: w.kind, down: w.kind === "down", block: w.block, blockWeek: w.blockWeek,
             stimulus: STIMULUS_NAME(w.stimulus, D), targetMiles: roundHalf(total), miles: 0, days
         };
     });
 
-    placeRacePaceDay(weeks, s, ctx, half ? RACE_WEEK_HALF : RACE_WEEK);
+    placeRacePaceDay(weeks, s, ctx, lib.raceWeek);
+    const dropped = placeTuneUps(weeks, s, ctx, D);
     for (const w of weeks) w.miles = roundHalf(weekMiles(w.days));
 
     // ---------- what the coach should look at ----------
@@ -596,13 +726,15 @@ export function generateMarathonPlan(input = {}) {
         warnings.push(`The recent race points to about ${clock(fitness.predictedSec)}, faster than the goal. Race-pace work follows the goal; raise it if you agree.`);
     }
     if (levels.capByTime < D.longCapMiles) warnings.push(`The ${D.capText} rule caps the long run at ${levels.capByTime} miles for this runner.`);
-    if (longest < levels.longWanted && longest < levels.capByTime) {
+    if (longest < levels.longWanted && longest < levels.capByTime && (!D.short || s.longAsked)) {
         const needed = Math.ceil(levels.longWanted / levels.share);
         warnings.push(`The long run reaches ${longest} miles, short of the ${levels.longWanted} asked for. A ${levels.longWanted}-mile long run needs about ${needed} miles in the peak week on ${s.runDays.length} run days.`);
     }
     if (levels.peak < levels.wanted - 1 && s.peakMiles) warnings.push(`Building safely from ${s.currentMiles} miles a week reaches about ${Math.round(levels.peak)}, not the ${s.peakMiles} asked for.`);
-    if (count < (half ? 10 : 12)) warnings.push(`This is a ${count}-week plan. Most ${D.label} builds take ${half ? "12" : "16"} or more, so it moves quickly and has a short taper.`);
+    if (count < D.quick) warnings.push(`This is a ${count}-week plan. Most ${D.label} builds take ${D.typical} or more, so it moves quickly and has a short taper.`);
     if (testWeeks.length < 2) warnings.push("The plan is too short for two 800s days far enough apart, so there is one.");
+    for (const d of dropped) warnings.push(d);
+    if (s.timeTrial && !s.secondDay) warnings.push("The time trial needs a second quality day (Advanced level and up, with a free run day), so it was left out.");
     if (!s.speedDay) warnings.push("There is no run day free for a speed session.");
     else if (dayGap(s.speedDay, s.longRunDay) < 2) warnings.push("The speed day sits next to the long run. Another run day would space them out.");
     const test = all.find(d => d.benchmark);
@@ -612,7 +744,7 @@ export function generateMarathonPlan(input = {}) {
 
     // One-tap fixes for the warnings that have one: { id, label, patch }.
     const fixes = [];
-    if (longest < levels.longWanted && longest < levels.capByTime) {
+    if (longest < levels.longWanted && longest < levels.capByTime && (!D.short || s.longAsked)) {
         const needed = Math.ceil(levels.longWanted / levels.share);
         if (needed > (s.peakMiles || levels.peak) && needed <= tier.ceiling + 15) fixes.push({ id: "peak", label: `Set peak to ${needed} miles`, patch: { peakMiles: needed } });
     }
@@ -636,7 +768,7 @@ export function generateMarathonPlan(input = {}) {
     };
 }
 
-const clock = sec => { const t = Math.round(sec); return `${Math.floor(t / 3600)}:${String(Math.floor(t % 3600 / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`; };
+const clock = sec => { const t = Math.round(sec); if (t < 3600) return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; return `${Math.floor(t / 3600)}:${String(Math.floor(t % 3600 / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`; };
 
 // Race week: short easy runs, a rest two days out, a shakeout the day before.
 function raceWeekDays({ start, s, tier, D }) {
@@ -667,6 +799,34 @@ function placeRacePaceDay(weeks, s, ctx, template) {
             delete d.workout; delete d.key;
         }
     }
+}
+
+// Tune-up races: the race replaces that week's hardest work. Returns what could not be placed, in plain words.
+function placeTuneUps(weeks, s, ctx, D) {
+    const out = [];
+    const all = weeks.flatMap(w => w.days);
+    for (const date of s.tuneUps) {
+        const at = all.find(d => d.date === date);
+        const why = !at ? "is outside the plan"
+            : daysBetween(date, s.raceDate) < 10 ? "is too close to the race (it needs 10 days)"
+            : at.type === "rest" || !s.runDays.includes(at.day) ? "is not on a run day"
+            : at.type === "race" || at.raceWeek ? "is on the race day" : "";
+        if (why) { out.push(`The tune-up race on ${date} ${why}, so it was left out.`); continue; }
+        const { tier } = ctx;
+        const distance = D.short ? D.miles : Math.min(D.miles, 6.2);
+        Object.assign(at, {
+            type: "workout", key: true, tuneUp: true, miles: roundHalf(distance + 2.5), session: `Tune-up race: ${D.short ? D.label : "a short race"}`,
+            workout: sanitizeWorkout({ warmup: { amount: 1.5, unit: "mi", note: "easy" }, sets: [{ ...W(1, D.short ? D.meters : 10000, "m", D.short ? D.effort : "10K"), pace: ctx.paces?.[D.short ? D.effort : "10K"] || "" }], cooldown: { amount: 1, unit: "mi", note: "easy" }, why: "A race counts as that week's hard work.", cue: "Race it, then recover." })
+        });
+        delete at.benchmark; delete at.timeTrial; delete at.raceWeek;
+        for (const d of all) {
+            if (d === at) continue;
+            const near = Math.abs(daysBetween(d.date, date)) <= 2;
+            if (d.type === "workout" && near) { Object.assign(d, { type: "easy", miles: Math.min(d.miles, 4), session: "Easy run" }); delete d.workout; delete d.key; delete d.benchmark; delete d.timeTrial; }
+            else if (d.type === "long" && d.workout && near) { Object.assign(d, { session: "Long run, easy" }); delete d.workout; delete d.key; }
+        }
+    }
+    return out;
 }
 
 /** The engine's weeks in the shape js/coachPlanGenerator.js lays strength and cross-training onto. */

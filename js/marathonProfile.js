@@ -23,9 +23,10 @@ export function raceSeconds(text) {
     return n.length === 3 ? n[0] * 3600 + n[1] * 60 + n[2] : n[0] * 60 + n[1];
 }
 /** The setup a client's profile suggests. Nothing is made up: what the profile lacks stays empty. */
-export function marathonSettingsFromProfile(record = {}, today = isoToday(), distance = "MARATHON") {
-    const D = DISTANCES[distance] || DISTANCES.MARATHON;
+export function marathonSettingsFromProfile(record = {}, today = isoToday(), distance = "") {
     const base = settingsFromProfile(record, today);
+    // The profile's own race decides unless the caller asks for a distance.
+    const D = DISTANCES[distance] || (base.mode === "race" && DISTANCES[base.raceType]) || DISTANCES.MARATHON;
     const r = record || {};
     const isMarathon = base.raceType === D.key && base.mode === "race";
     return {
@@ -36,7 +37,7 @@ export function marathonSettingsFromProfile(record = {}, today = isoToday(), dis
         recentRace: null,
         currentMiles: Number(r.weeklyMileage) > 0 ? Math.round(Number(r.weeklyMileage)) : 0,
         longestRun: Number(r.longestRun) > 0 ? Number(r.longestRun) : 0,
-        peakMiles: 0, longTarget: D.longCapMiles,
+        peakMiles: 0, longTarget: D.short ? 0 : D.longCapMiles,
         runDays: base.runDays, trainDays: base.trainDays, longRunDay: base.longRunDay,
         injuryHistory: Boolean(realAnswer(r.injuries)),
         firstMarathon: /first (marathon|26)/i.test(`${r.primaryGoal || ""} ${r.targetEvent || ""}`),

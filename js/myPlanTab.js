@@ -67,7 +67,7 @@ function render() {
     if (!plan || at.state === "none") {
         root.innerHTML = `<section class="mp-card mp-empty"><div class="mp-ghost" aria-hidden="true">${Array.from({ length: 16 }, (_, i) => `<i style="height:${26 + (i % 4 === 3 ? -8 : i * 3)}%"></i>`).join("")}</div>
             <h2>No plan for you yet</h2>
-            <p>Build your own marathon or half marathon plan the same way you build a client's. Your COROS runs fill in where you are now.</p>
+            <p>Build your own 5K, 10K, half marathon or marathon plan the same way you build a client's. Your COROS runs fill in where you are now.</p>
             <button type="button" class="sb-btn sb-btn-primary" data-act="build">Build my plan</button>
             <p class="mp-fine">Saved on your account. Nothing goes to a client.</p></section>`;
         return;
