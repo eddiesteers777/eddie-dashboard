@@ -384,3 +384,39 @@ html.al-on .record > span,html.al-on .hb-tile > span,html.al-on .hb-dow,html.al-
 html.al-on .data-connections-intro > span,html.al-on .coros-data-preview > span,
 html.al-on .reset-link button,html.al-on .reset-link label{font-size:12px!important}
 html.al-on .mp-bar text{font-size:11px}
+
+/* Today: one fading colour per card (side sweep, Eddie 2026-11-10) */
+html.al-on #todayCard{--t:112,160,214}      /* clear blue: the action */
+html.al-on #weekSection{--t:104,186,176}    /* teal: the week */
+html.al-on #todayHabits{--t:142,192,138}    /* green: done */
+html.al-on #nutritionSnap{--t:218,138,102}  /* clay: food */
+html.al-on #coachCardSection{--t:218,172,88}/* gold: the coach */
+html.al-on #coachCardSection{border-radius:18px!important;padding:18px 18px 8px!important}
+html.al-on #coachCardSection .eos-today-card-header{margin-bottom:4px}
+html.al-on #coachCardSection .eos-coach-row{border-top:1px solid rgba(var(--t),.18)}
+html.al-on #coachCardSection .eos-coach-row:first-child{border-top:0}
+html.al-on #coachCardSection .eos-coach-row-icon{background:rgba(var(--t),.2)!important;color:rgb(var(--t))!important}
+html.al-on .th-row.is-on .th-name{text-decoration:none!important;opacity:.62}
+html.al-on .th-row{position:relative}
+html.al-on .th-row.is-on::after{content:"\2713";position:absolute;top:-4px;left:calc(50% + 10px);width:18px;height:18px;border-radius:50%;background:rgb(var(--t));color:#10202c;font:700 11px/18px var(--font-body);text-align:center}
+html.al-on .wk-feel{border:0!important;background:none!important;box-shadow:none!important;justify-content:center;border-top:1px solid rgba(var(--t),.2)!important;border-radius:0!important;margin-top:6px}
+html.al-on .eos-nutrition-snap-header span:first-child{font:600 12px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:rgb(var(--t))}
+html.al-on .eos-snap-link{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid rgba(var(--t),.55);border-radius:6px;color:var(--text)!important;font-weight:600;text-decoration:none}
+html.al-on .eos-nutrition-snap-empty{color:var(--text-secondary);padding:6px 0 4px}
+html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-header h2::before{background:rgb(var(--t))!important}
+html.al-on #todayCard .wk-kicker,html.al-on #weekSection .wk-miles,html.al-on .th-count{color:rgb(var(--t))!important}
+html.al-on :is(#todayCard,#weekSection,#todayHabits,#coachCardSection,#nutritionSnap){border:1px solid rgba(var(--t),.5)!important}
+html.al-on :is(#todayCard,#weekSection,#todayHabits,#coachCardSection,#nutritionSnap){background:linear-gradient(98deg,rgba(var(--t),.42) 0%,rgba(var(--t),.14) 48%,rgba(var(--t),0) 85%),linear-gradient(180deg,rgba(42,62,82,.86),rgba(24,36,48,.8))!important;box-shadow:inset 3px 0 0 rgb(var(--t)),0 14px 32px rgba(0,0,0,.38)!important}
+
+/* Today: Readiness (lavender) and Featured Runs (rose) join the one-colour-per-card set (Eddie 2026-11-10) */
+html.al-on #readinessCard{--t:168,159,198}
+html.al-on #featuredTraining{--t:208,142,162}
+html.al-on :is(#readinessCard,#featuredTraining){border:1px solid rgba(var(--t),.5)!important;background:linear-gradient(98deg,rgba(var(--t),.42) 0%,rgba(var(--t),.14) 48%,rgba(var(--t),0) 85%),linear-gradient(180deg,rgba(42,62,82,.86),rgba(24,36,48,.8))!important;box-shadow:inset 3px 0 0 rgb(var(--t)),0 14px 32px rgba(0,0,0,.38)!important;border-radius:18px!important}
+html.al-on #readinessCard .eos-today-card-header h2::before{background:rgb(var(--t))!important}
+html.al-on #readinessCard .rd-body{background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:0!important;border:0!important;box-shadow:none!important;padding-left:0!important;padding-right:0!important}
+html.al-on #readinessCard{padding:18px!important}
+html.al-on #readinessCard .rd-body::before{display:none!important}
+html.al-on #readinessCard .rd-body-foot{border-top:1px solid rgba(var(--t),.22)!important}
+html.al-on #readinessCard .eos-today-card-header{align-items:center;padding:0}
+html.al-on #featuredTraining .ft-header h2{color:rgb(var(--t))!important}
+html.al-on #featuredTraining .ft-manage-btn{border-color:rgba(var(--t),.55)!important}
