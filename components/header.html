@@ -9,7 +9,7 @@
 
     <div class="nav-left eos-nav-left">
 
-        <!-- No logo or wordmark in the bar (2026-10-15): search sits alone on the left; Dashboard is the first link. -->
+        <!-- No logo or wordmark in the bar (2026-10-15): search sits alone on the left; Today is the first link. -->
         <!-- A guest on a page open to everyone (js/loadHeader.js GUEST_PAGES) gets Home instead of search and the menus. -->
         <a class="sb-guest-home" href="home.html"><span data-icon="home"></span><span>Home</span></a>
         <button class="search-btn" type="button" aria-label="Search">
@@ -19,13 +19,7 @@
         <div class="nav-links eos-nav-links">
 
             <a href="index.html" class="eos-nav-item">
-                <span class="sb-side-ic" data-icon="home" aria-hidden="true"></span>Dashboard
-            </a>
-            <a href="schedule.html" class="eos-nav-item" data-requires="client+sessions">
-                <span class="sb-side-ic" data-icon="calendar" aria-hidden="true"></span>Soccer
-            </a>
-            <a href="homework.html" class="eos-nav-item" data-requires="client+homework">
-                <span class="sb-side-ic" data-icon="clipboard" aria-hidden="true"></span>Homework
+                <span class="sb-side-ic" data-icon="home" aria-hidden="true"></span>Today
             </a>
             <details class="nav-dropdown eos-dropdown" data-requires="coach">
                 <summary class="eos-dropdown-trigger">
@@ -39,9 +33,20 @@
                     <a href="schedule.html" class="eos-dropdown-link">Schedule</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown" data-requires="running,strength,crossTraining,habits">
+            <details class="nav-dropdown eos-dropdown" data-requires="client+sessions,client+homework,client+updates">
                 <summary class="eos-dropdown-trigger">
-                    <span class="sb-side-ic" data-icon="footprint" aria-hidden="true"></span><span>Training</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="users" aria-hidden="true"></span><span>Coach</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                </summary>
+                <div class="nav-dropdown-menu eos-dropdown-menu">
+                    <a href="schedule.html" class="eos-dropdown-link" data-requires="client+sessions">Soccer</a>
+                    <a href="homework.html" class="eos-dropdown-link" data-requires="client+homework">Homework</a>
+                    <a href="messages.html" class="eos-dropdown-link" data-requires="client+updates">Messages</a>
+                    <a href="updates.html" class="eos-dropdown-link" data-requires="client+updates">From Your Coach</a>
+                </div>
+            </details>
+            <details class="nav-dropdown eos-dropdown" data-requires="running,strength,crossTraining">
+                <summary class="eos-dropdown-trigger">
+                    <span class="sb-side-ic" data-icon="footprint" aria-hidden="true"></span><span>Train</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="train.html" class="eos-dropdown-link" data-requires="running,strength,crossTraining">Train Overview</a>
@@ -49,26 +54,27 @@
                     <a href="routes.html" class="eos-dropdown-link" data-requires="running">Build a Route</a>
                     <a href="strength.html" class="eos-dropdown-link" data-requires="strength">Strength</a>
                     <a href="cross-training.html" class="eos-dropdown-link" data-requires="crossTraining">Cross-Training</a>
-                    <a href="habits.html" class="eos-dropdown-link" data-requires="habits">Habits</a>
                 </div>
             </details>
-            <details class="nav-dropdown eos-dropdown" data-requires="nutrition,fueling">
+            <details class="nav-dropdown eos-dropdown" data-requires="nutrition,fueling,habits">
                 <summary class="eos-dropdown-trigger">
                     <span class="sb-side-ic" data-icon="fuel" aria-hidden="true"></span><span>Fuel</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="nutrition.html" class="eos-dropdown-link" data-requires="nutrition">Nutrition</a>
                     <a href="fueling.html" class="eos-dropdown-link" data-requires="fueling">Fueling</a>
+                    <a href="habits.html" class="eos-dropdown-link" data-requires="habits">Habits</a>
                 </div>
             </details>
             <details class="nav-dropdown eos-dropdown">
                 <summary class="eos-dropdown-trigger">
-                    <span class="sb-side-ic" data-icon="calendar" aria-hidden="true"></span><span>Planning</span><span class="eos-chevron" data-icon="chevronDown"></span>
+                    <span class="sb-side-ic" data-icon="calendar" aria-hidden="true"></span><span>Plan</span><span class="eos-chevron" data-icon="chevronDown"></span>
                 </summary>
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="planner.html" class="eos-dropdown-link" data-requires="coach">Planner</a>
                     <a href="plan.html" class="eos-dropdown-link" data-requires="client+plan">My Plan</a>
                     <a href="programs.html" class="eos-dropdown-link" data-requires="running,strength">Programs</a>
+                    <a href="checkin.html" class="eos-dropdown-link" data-requires="client+checkins">Weekly Check-in</a>
                 </div>
             </details>
             <details class="nav-dropdown eos-dropdown">
@@ -90,8 +96,6 @@
                 <div class="nav-dropdown-menu eos-dropdown-menu">
                     <a href="tools.html" class="eos-dropdown-link">Free Tools</a>
                     <a href="playbook.html" class="eos-dropdown-link" data-requires="coach">Southbound Playbook</a>
-                    <a href="checkin.html" class="eos-dropdown-link" data-requires="client+checkins">Weekly Check-in</a>
-                    <a href="messages.html" class="eos-dropdown-link" data-requires="client+updates">Messages</a>
                     <a href="install.html" class="eos-dropdown-link">Get the App</a>
                 </div>
             </details>
