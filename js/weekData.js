@@ -15,6 +15,7 @@ import {
     getActiveRunningPrograms, toggleRunningProgramDayCompleted, toggleProgramSupplementalCompleted
 } from "./activeProgramSources.js";
 import { getAllEntries } from "./runningLog.js";
+import { loadPlanned, savePlanned } from "./runningPlanned.js";
 import { SESSION_TYPES, listMyBookingRequests } from "./scheduling.js";
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
 import { fuelForRun, profileFromPlans } from "./workoutFuel.js";
@@ -36,6 +37,7 @@ export function weekInputs(sessions = []) {
     return {
         plans: getActiveRunningPrograms(),
         strength: loadStrengthSchedule().items,
+        planned: (() => { try { return loadPlanned(); } catch { return []; } })(),
         sessions,
         runLog
     };
@@ -75,6 +77,16 @@ export async function toggleDone(item) {
         return Boolean(day.strengthCompleted);
     }
     if (src.type === "extra") return toggleProgramSupplementalCompleted(src.programId, src.date, item.kind === "strength" ? "strength" : "cross");
+    if (src.type === "planned") {
+        // Strength and cross-training planned by hand: the same done mark the Running page flips.
+        if (item.kind === "run") return null;
+        const list = loadPlanned();
+        const entry = list.find(e => e.id === src.plannedId);
+        if (!entry) return null;
+        entry.done = !entry.done;
+        savePlanned(list);
+        return entry.done;
+    }
     if (src.type === "strength") {
         const data = loadStrengthSchedule();
         const entry = data.items.find(i => i.id === src.itemId);
@@ -103,6 +115,7 @@ export function workoutLink(item) {
     if (item.kind === "run" && item.source?.type === "plan") {
         return { href: `workout.html?program=${encodeURIComponent(item.source.programId)}&date=${item.source.date}`, label: item.structured && !item.done ? "Start" : item.coachPlanId && !item.done ? "Log it" : "Open" };
     }
+    if (item.kind === "run" && item.source?.type === "planned") return { href: "running.html", label: "Log it" };
     if (item.kind === "cross") return { href: "cross-training.html", label: "Open" };
     if (item.kind === "session") return { href: "schedule.html", label: "Details" };
     return { href: "running.html", label: "Open" };

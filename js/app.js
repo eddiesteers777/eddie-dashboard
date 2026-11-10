@@ -29,6 +29,10 @@ import { restTextOf } from "./todayCues.js";
 // race. Clients get their own plans and a "From your coach" card
 // instead (js/role.js, js/coachCard.js).
 const PERSONAL_PLAN = showsPersonalPlan();
+// Once race day has passed the marathon block is over: the coach's Today then follows this week's own
+// training (plans, strength, cross-training, workouts planned by hand), the way a client's does.
+const MARATHON_OVER = PERSONAL_PLAN && (() => { const end = new Date(RACE_DATE); end.setHours(23, 59, 59, 999); return Date.now() > end.getTime(); })();
+const COACH_MARATHON_TODAY = PERSONAL_PLAN && !MARATHON_OVER;
 
 function localIso(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -201,7 +205,7 @@ function renderPhaseStatus() {
         return;
     }
 
-    if (!PERSONAL_PLAN) {
+    if (!COACH_MARATHON_TODAY) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         let names = [];
@@ -285,8 +289,8 @@ function onCompleteClick(event) {
 
 function renderToday() {
     // Clients: today's workout + this week, from every source
-    // (js/todayClient.js). The coach's own dashboard continues below.
-    if (!PERSONAL_PLAN) {
+    // (js/todayClient.js). The coach's own marathon dashboard continues below.
+    if (!COACH_MARATHON_TODAY) {
         if (clientTodayModule) clientTodayModule.renderClientToday();
         else import("./todayClient.js").then(m => { clientTodayModule = m; m.initClientToday(); })
             .catch(error => console.error("Southbound: client Today failed to load.", error));

@@ -76,7 +76,7 @@ export function planContext(plans, date) {
  *   sessions  [{ date, startTime, endTime?, title, detail }]
  *   runLog    [{ date, miles }]
  */
-export function buildDay(date, { plans = [], strength = [], sessions = [], runLog = [] } = {}, today = date) {
+export function buildDay(date, { plans = [], strength = [], sessions = [], runLog = [], planned = [] } = {}, today = date) {
     const items = [];
     const scheduled = strength.filter(s => s.date === date);
     const scheduledFrom = new Set(scheduled.flatMap(s => [s.racePlanId, s.trainingPlanId]).filter(Boolean));
@@ -169,6 +169,26 @@ export function buildDay(date, { plans = [], strength = [], sessions = [], runLo
             fromCoach: false,
             workoutId: s.workoutId || "",
             source: { type: "strength", itemId: s.id, date }
+        });
+    }
+
+    // Workouts planned by hand on the Running page ("Plan it"): running, strength or cross-training.
+    // A planned run is not ticked here: logging it on Running turns it into a logged run and removes the plan.
+    const PLANNED_TITLE = { easy: "Easy run", tempo: "Tempo", intervals: "Intervals", long: "Long run", strength: "Strength", cross: "Cross-training" };
+    for (const e of planned.filter(x => x.date === date)) {
+        const kind = e.kind === "strength" ? "strength" : e.kind === "cross" ? "cross" : "run";
+        items.push({
+            id: `planned:${e.id}`,
+            kind,
+            title: PLANNED_TITLE[e.kind] || "Workout",
+            detail: [kind === "run" ? "" : (Number(e.minutes) > 0 ? `${e.minutes} min` : ""), e.time ? niceTime(e.time) : "", e.notes || ""].filter(Boolean).join(" · "),
+            miles: kind === "run" ? round1(e.miles) : 0,
+            done: kind === "run" ? false : Boolean(e.done),
+            skipped: false,
+            planName: "Planned by you",
+            planSource: "running-planned",
+            fromCoach: false,
+            source: { type: "planned", plannedId: e.id, date }
         });
     }
 

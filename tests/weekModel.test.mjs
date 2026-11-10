@@ -121,3 +121,24 @@ test("a coach's strength session: the day itself on a strength day, its own item
     assert.deepEqual(mon[1].actual, { rpe: 6, pain: false });
     assert.equal(buildWeek("2026-09-28", { plans: [plan] }, "2026-09-30").summary.strength.planned, 3, "Mon core + Wed lower + Thu core extra");
 });
+
+test("workouts planned by hand (running, strength, cross-training) show on their day", () => {
+    const planned = [
+        { id: "a", date: "2026-11-10", kind: "strength", minutes: 45, notes: "Lower body", done: true },
+        { id: "b", date: "2026-11-10", kind: "easy", miles: 5 },
+        { id: "c", date: "2026-11-10", kind: "cross", minutes: 40 },
+        { id: "d", date: "2026-11-11", kind: "tempo", miles: 6 }
+    ];
+    const day = buildDay("2026-11-10", { planned }, "2026-11-10");
+    assert.deepEqual(day.items.map(i => i.kind), ["run", "strength", "cross"]);
+    const [run, strength, cross] = day.items;
+    assert.equal(run.miles, 5);
+    assert.equal(run.done, false);          // a planned run is done by logging it on Running
+    assert.equal(strength.done, true);
+    assert.equal(strength.detail, "45 min · Lower body");
+    assert.equal(cross.detail, "40 min");
+    assert.equal(strength.source.type, "planned");
+    assert.equal(buildDay("2026-11-12", { planned }, "2026-11-10").items.length, 0);
+    const week = buildWeek("2026-11-09", { planned }, "2026-11-10");
+    assert.equal(week.days.flatMap(d => d.items).length, 4);
+});

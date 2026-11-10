@@ -30,7 +30,7 @@ const KIND = {
 
 // A logged coach-plan workout is done or skipped by its log (edit it on the workout page), not a tap.
 // (Exported: Today's week row taps a day's one workout done by the same rule.)
-export const canToggle = item => ["plan", "extra", "strength"].includes(item.source?.type) && !item.autoDone && !item.actual;
+export const canToggle = item => (["plan", "extra", "strength"].includes(item.source?.type) || (item.source?.type === "planned" && item.kind !== "run")) && !item.autoDone && !item.actual;
 
 function doneButton(item, compact = false, secondary = false, glass = false) {
     if (!canToggle(item)) return "";
@@ -105,7 +105,7 @@ export function workoutCardHtml(item) {
             ${item.kind === "strength" && item.actual && item.done ? `<p class="wk-logged">${icon("checkCircle")} Logged${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.actual?.distance ? `<p class="wk-logged">${icon("checkCircle")} You ran ${item.actual.distance} mi${item.actual.rpe ? ` · effort ${item.actual.rpe}/10` : ""}${item.actual.pain ? " · pain flagged" : ""}</p>`
                 : item.logged ? `<p class="wk-logged">${icon("activity")} You logged ${item.logged} mi${item.autoDone ? " — counts as done" : ""}</p>` : ""}
-            <div class="wk-actions-row">${doneButton(item, false, false, true)}${changeButton(item, true)}</div>
+            <div class="wk-actions-row">${doneButton(item, false, false, true)}${changeButton(item, true)}${item.source?.type === "planned" && item.kind === "run" && !item.done ? `<a class="sb-btn sb-btn-primary" href="running.html">Log this run</a>` : ""}</div>
         </div>`;
 }
 
