@@ -235,30 +235,55 @@ html.al-on .hw-row{border-top-color:rgba(214,228,240,.14)}
 html.al-on .hw-thumb{background:linear-gradient(135deg,#3b5368,#22364a 60%,#1b2a38)}
 html.al-on .hw-thumb.hw-nov{color:var(--primary)}
 
-/* Round 2, option B (Eddie, 2026-11-10): Train, Running and More share one calm look. One hero card (gold top edge) per page,
-   the rest sit on the fog with hairlines and sentence-case headings. Mist marks the selected tab. Mock-ups: app-round2/. */
-html.al-on .tr-panel,html.al-on .running-calendar-wrap,html.al-on .running-fold,html.al-on .running-tl-card,html.al-on .more-page .more-row,html.al-on .running-view-toggle,html.al-on .running-section-tabs{
- background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-html.al-on .tr-panel{border-top:1px solid rgba(214,228,240,.16)!important;padding:20px 0!important}
-html.al-on .tr-stack>.tr-panel:first-child,html.al-on .running-day-detail,html.al-on .more-page .eos-more-account{
- background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72))!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;
- box-shadow:inset 0 2px 0 var(--gold),0 12px 30px rgba(0,0,0,.36)!important;padding:18px!important}
-html.al-on .tr-panel .eos-today-card-header h2,html.al-on .more-page .more-group-title,html.al-on .running-tl-title{font:650 17px/1.2 var(--font-body)!important;letter-spacing:0!important;text-transform:none!important;color:var(--text)!important;display:flex;align-items:center;gap:10px}
-html.al-on .tr-panel .eos-today-card-header h2::before,html.al-on .more-page .more-group-title::before{content:"";flex:0 0 3px;height:16px;border-radius:2px;background:var(--gold)!important}
-html.al-on .running-view-toggle,html.al-on .running-section-tabs{background:transparent!important}
-html.al-on .running-section-tabs{border-bottom:1px solid rgba(214,228,240,.16)!important}
-html.al-on .running-section-tab.active,html.al-on .running-view-btn.active{background:rgba(199,214,228,.16)!important;color:var(--text)!important;box-shadow:inset 0 -2px 0 var(--primary)!important;border-radius:8px!important}
-html.al-on .running-fold{border-bottom:1px solid rgba(214,228,240,.14)!important;padding:6px 0!important}
-html.al-on .more-page .more-group{--rail:var(--primary)!important;gap:0!important}
-html.al-on .more-page .more-row{border-bottom:1px solid rgba(214,228,240,.12)!important;border-left:0!important;padding:12px 2px!important;min-height:56px}
-html.al-on .more-page .more-row-icon{background:transparent!important}
-html.al-on .more-page .more-list{gap:22px!important}
+/* Round 2, option A (Eddie, 2026-11-10; he first picked B by mistake): Train, Running and More. Every section is one glass card, one heading style,
+   one corner size (18), mist for the selected tab. Mock-ups: app-round2/. */
+html.al-on .tr-panel,html.al-on .running-calendar-wrap,html.al-on .running-day-detail,html.al-on .running-fold,html.al-on .running-tl-card,html.al-on .more-page .more-row,html.al-on .more-page .eos-more-account,html.al-on .running-view-toggle,html.al-on .running-section-tabs{
+ background:var(--gl)!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;
+ box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36)!important}
+html.al-on .tr-panel,html.al-on .running-day-detail,html.al-on .running-fold{padding:18px!important}
+html.al-on .running-view-toggle,html.al-on .running-section-tabs{border-radius:14px!important;padding:4px!important;box-shadow:inset 0 1px 0 rgba(214,228,240,.1)!important}
+html.al-on .running-section-tab,html.al-on .running-view-btn{border-radius:10px!important}
+html.al-on .tr-panel .eos-today-card-header h2,html.al-on .tr-recent .eos-today-card-header h2,html.al-on .more-page .more-group-title,html.al-on .running-tl-title{font:400 22px/1 var(--font-display)!important;letter-spacing:.03em!important;text-transform:uppercase!important;color:var(--text)!important;display:flex;align-items:center;gap:10px}
+html.al-on .tr-panel .eos-today-card-header h2::before,html.al-on .tr-recent .eos-today-card-header h2::before,html.al-on .more-page .more-group-title::before{content:"";flex:0 0 4px;height:18px;border-radius:2px;background:var(--gold)!important}
+html.al-on .more-page .more-group{--rail:var(--primary)!important}
+html.al-on .more-page .more-row{border-left:1px solid rgba(214,228,240,.2)!important;margin-bottom:8px;padding:12px 16px!important}
+html.al-on .more-page .eos-more-account{border-left:1px solid rgba(214,228,240,.2)!important;box-shadow:inset 0 2px 0 var(--gold),0 12px 30px rgba(0,0,0,.36)!important}
+html.al-on .tr-tile strong,html.al-on .running-summary-stat strong{font-family:var(--font-display)!important;font-weight:400!important}
+html.al-on .running-fold{margin-bottom:8px}
 html.al-on .running-add-btn{display:none!important}
-html.al-on .running-tl-card{border-bottom:1px solid rgba(214,228,240,.12)!important;padding:12px 2px!important}
-html.al-on .tr-tile strong{font-family:var(--font-display)!important;font-weight:400!important}
+html.al-on .tr-panel .tr-tiles{margin:12px 0}
 html.al-on .tr-item-icon{display:none!important}
 html.al-on .tr-item{grid-template-columns:minmax(0,1fr)!important}
 html.al-on .tr-item-actions{grid-column:1!important}
 html.al-on .tr-item-actions .sb-btn{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--text-secondary)!important;padding-left:0!important;min-width:0!important}
-html.al-on .tr-recent .eos-today-card-header h2{font:650 17px/1.2 var(--font-body)!important;letter-spacing:0!important;text-transform:none!important;color:var(--text)!important;display:flex;align-items:center;gap:10px}
-html.al-on .tr-recent .eos-today-card-header h2::before{content:"";flex:0 0 3px;height:16px;border-radius:2px;background:var(--gold)!important}
+
+/* Round 3 (Eddie, 2026-11-10): Cross-training and Messages in the same glass look. The forest-green leftovers in Messages become the fog blues. */
+html.al-on #ct-root{width:auto;max-width:1040px;padding:8px 20px 40px;position:relative;z-index:1}
+html.al-on .ct-hero,html.al-on .ct-hero.sb-hero-corner{background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+html.al-on .ct-hero .ct-eyebrow{display:block!important;background:none!important;padding:0 0 8px!important;border-radius:0!important;font:600 11px/1 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+html.al-on .ct-hero .ct-title{font:400 34px/1 var(--font-display)!important;letter-spacing:.02em;text-transform:uppercase}
+html.al-on .ct-hero .ct-sub{font:400 15px/1.5 var(--font-body);color:var(--text-secondary);max-width:46ch}
+html.al-on .ct-stats-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;margin-top:18px!important}
+html.al-on .ct-stat:nth-child(n+3){display:none}
+html.al-on .ct-stat,html.al-on .ct-card,html.al-on .ct-attach-panel{background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72))!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36)!important}
+html.al-on .ct-stat{padding:16px 18px!important}
+html.al-on .ct-stat-val{font:400 34px/1 var(--font-display)!important}
+html.al-on .ct-stat-label{font:500 11px/1.3 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)}
+html.al-on .ct-search{background:rgba(10,18,26,.5)!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:12px!important;min-height:46px;font-size:16px}
+html.al-on .ct-new-btn{background:var(--primary)!important;color:var(--on-primary)!important;border:0!important;border-radius:6px!important;min-height:44px;box-shadow:none!important}
+html.al-on .ct-new-btn.ct-log-btn{background:transparent!important;color:var(--text)!important;border:1px solid rgba(214,228,240,.3)!important}
+html.al-on .ct-filter-chip.active{background:rgba(199,214,228,.16)!important;color:var(--text)!important;border-color:var(--primary)!important}
+html.al-on .ct-library-empty.visible{background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72))!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;box-shadow:inset 0 2px 0 var(--gold),0 12px 30px rgba(0,0,0,.36)!important;padding:28px 20px!important;font-size:16px;color:var(--text)}
+html.al-on .ct-panel-title{font:400 22px/1 var(--font-display)!important;letter-spacing:.03em!important;text-transform:uppercase!important;display:flex;align-items:center;gap:10px}
+html.al-on .ct-panel-title::before{content:"";flex:0 0 4px;height:18px;border-radius:2px;background:var(--gold)}
+@media (max-width:600px){
+ html.al-on #msgThread.is-full{background:radial-gradient(120% 50% at 50% 0%,#2a3e52,var(--bg) 60%)!important}
+ html.al-on #msgThread.is-full .msg-head,html.al-on #msgThread.is-full .msg-compose{background:rgba(23,33,43,.82)!important;border-color:rgba(214,228,240,.12)!important}
+}
+html.al-on .msg-press-menu,html.al-on .msg-press-react{background:rgba(29,42,54,.97)!important}
+html.al-on .msg-press{background:rgba(8,14,20,.55)!important}
+html.al-on .msg-input{background:rgba(10,18,26,.55)!important}
+html.al-on .msg-row.is-mine .msg-bubble{background:linear-gradient(180deg,#D6E3EE,#B6CADB)!important;color:var(--on-primary)!important}
+html.al-on .msg-row.is-mine .msg-bubble::after{background:#B6CADB!important}
+html.al-on .ct-hero.sb-hero-corner{--sb-corner-top:0px;--sb-corner-right:0px;min-height:0}
+html.al-on .ct-hero,html.al-on .ct-hero.sb-hero-corner{overflow:visible!important;border-radius:0!important}
