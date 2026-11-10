@@ -369,3 +369,11 @@ html.al-on .tw-link,html.al-on .wr-story a,html.al-on .pl-details summary{positi
 html.al-on .tw-link::after{content:"";position:absolute;inset:-12px -6px}
 html.al-on body:has(.daynav) :is(.eyebrow,.lbl,small,.manage-toggle){font-size:12px!important}
 html.al-on [class^="sched-"] > span:first-child{font-size:12px}
+
+/* Coach round 2 (Eddie, 2026-11-10, "both"): flat coach panels join the glass style; the selected colour is mist blue app-wide. */
+html.al-on .wr-lead,html.al-on .wr-reading,html.al-on .pl-card,html.al-on .planner-grid,html.al-on .gear-empty-state.visible,html.al-on .clients-empty{background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72))!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 30px rgba(0,0,0,.36)!important}
+html.al-on .wr-reading{border-left:1px solid rgba(214,228,240,.2)!important;box-shadow:inset 0 2px 0 var(--good),0 12px 30px rgba(0,0,0,.36)!important}
+html.al-on .wr-reading.is-fatigue,html.al-on .wr-reading.is-unusual{box-shadow:inset 0 2px 0 var(--amber),0 12px 30px rgba(0,0,0,.36)!important}
+html.al-on .wr-reading.is-unknown{box-shadow:inset 0 2px 0 var(--sage),0 12px 30px rgba(0,0,0,.36)!important}
+html.al-on .planner-grid{overflow:hidden}
+html.al-on{--sb-lens-bg:linear-gradient(180deg,#D6E3EE,#B6CADB)!important}
