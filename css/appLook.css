@@ -234,3 +234,31 @@ html.al-on .hw-pill.sage{background:rgba(199,214,228,.14);color:var(--primary)}
 html.al-on .hw-row{border-top-color:rgba(214,228,240,.14)}
 html.al-on .hw-thumb{background:linear-gradient(135deg,#3b5368,#22364a 60%,#1b2a38)}
 html.al-on .hw-thumb.hw-nov{color:var(--primary)}
+
+/* Round 2, option B (Eddie, 2026-11-10): Train, Running and More share one calm look. One hero card (gold top edge) per page,
+   the rest sit on the fog with hairlines and sentence-case headings. Mist marks the selected tab. Mock-ups: app-round2/. */
+html.al-on .tr-panel,html.al-on .running-calendar-wrap,html.al-on .running-fold,html.al-on .running-tl-card,html.al-on .more-page .more-row,html.al-on .running-view-toggle,html.al-on .running-section-tabs{
+ background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.al-on .tr-panel{border-top:1px solid rgba(214,228,240,.16)!important;padding:20px 0!important}
+html.al-on .tr-stack>.tr-panel:first-child,html.al-on .running-day-detail,html.al-on .more-page .eos-more-account{
+ background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72))!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;
+ box-shadow:inset 0 2px 0 var(--gold),0 12px 30px rgba(0,0,0,.36)!important;padding:18px!important}
+html.al-on .tr-panel .eos-today-card-header h2,html.al-on .more-page .more-group-title,html.al-on .running-tl-title{font:650 17px/1.2 var(--font-body)!important;letter-spacing:0!important;text-transform:none!important;color:var(--text)!important;display:flex;align-items:center;gap:10px}
+html.al-on .tr-panel .eos-today-card-header h2::before,html.al-on .more-page .more-group-title::before{content:"";flex:0 0 3px;height:16px;border-radius:2px;background:var(--gold)!important}
+html.al-on .running-view-toggle,html.al-on .running-section-tabs{background:transparent!important}
+html.al-on .running-section-tabs{border-bottom:1px solid rgba(214,228,240,.16)!important}
+html.al-on .running-section-tab.active,html.al-on .running-view-btn.active{background:rgba(199,214,228,.16)!important;color:var(--text)!important;box-shadow:inset 0 -2px 0 var(--primary)!important;border-radius:8px!important}
+html.al-on .running-fold{border-bottom:1px solid rgba(214,228,240,.14)!important;padding:6px 0!important}
+html.al-on .more-page .more-group{--rail:var(--primary)!important;gap:0!important}
+html.al-on .more-page .more-row{border-bottom:1px solid rgba(214,228,240,.12)!important;border-left:0!important;padding:12px 2px!important;min-height:56px}
+html.al-on .more-page .more-row-icon{background:transparent!important}
+html.al-on .more-page .more-list{gap:22px!important}
+html.al-on .running-add-btn{display:none!important}
+html.al-on .running-tl-card{border-bottom:1px solid rgba(214,228,240,.12)!important;padding:12px 2px!important}
+html.al-on .tr-tile strong{font-family:var(--font-display)!important;font-weight:400!important}
+html.al-on .tr-item-icon{display:none!important}
+html.al-on .tr-item{grid-template-columns:minmax(0,1fr)!important}
+html.al-on .tr-item-actions{grid-column:1!important}
+html.al-on .tr-item-actions .sb-btn{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--text-secondary)!important;padding-left:0!important;min-width:0!important}
+html.al-on .tr-recent .eos-today-card-header h2{font:650 17px/1.2 var(--font-body)!important;letter-spacing:0!important;text-transform:none!important;color:var(--text)!important;display:flex;align-items:center;gap:10px}
+html.al-on .tr-recent .eos-today-card-header h2::before{content:"";flex:0 0 3px;height:16px;border-radius:2px;background:var(--gold)!important}
