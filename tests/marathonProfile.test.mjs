@@ -102,3 +102,17 @@ test("the old generator is untouched by the engine path", () => {
     assert.equal(old.plan.generator.settings.engine, undefined);
     assert.ok(old.plan.weeks.some(w => /Foundation|Build|Peak/.test(w.phase)));
 });
+
+test("a half marathon goes through the coach generator and the profile pre-fill", () => {
+    const st = marathonSettingsFromProfile({ ...PROFILE, eventType: "half marathon", targetDate: "2027-03-28" }, TODAY, "HALF");
+    assert.equal(st.raceType, "HALF");
+    assert.equal(st.distance, "HALF");
+    assert.equal(st.longTarget, 10);
+    assert.equal(marathonSettingsFromProfile(PROFILE, TODAY).raceType, "MARATHON");
+    assert.equal(marathonSettingsFromProfile(PROFILE, TODAY, "HALF").raceDate, "");   // the profile's race is a marathon
+    const { plan } = generateCoachPlan({ ...st, raceDate: "2027-03-28", startDate: "2026-12-21", currentMiles: 25, longestRun: 7, goalTime: "1:45:00", runDays: ["MON", "TUE", "THU", "FRI", "SUN"], longRunDay: "SUN", strengthDays: 0 });
+    const days = plan.weeks.flatMap(w => w.days);
+    assert.equal(Math.max(...days.filter(d => d.type === "long").map(d => d.miles)), 10);
+    assert.match(days.find(d => d.type === "race").session, /half marathon/i);
+    assert.equal(plan.generator.settings.raceType, "HALF");
+});

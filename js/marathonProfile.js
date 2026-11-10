@@ -7,7 +7,7 @@
    Unit-tested in tests/marathonProfile.test.mjs.
 ========================================== */
 
-import { RULES } from "./marathonEngine.js";
+import { RULES, DISTANCES } from "./marathonEngine.js";
 import { settingsFromProfile, nextMonday } from "./coachPlanGenerator.js";
 import { realAnswer } from "./intakeFlow.js";
 
@@ -23,19 +23,20 @@ export function raceSeconds(text) {
     return n.length === 3 ? n[0] * 3600 + n[1] * 60 + n[2] : n[0] * 60 + n[1];
 }
 /** The setup a client's profile suggests. Nothing is made up: what the profile lacks stays empty. */
-export function marathonSettingsFromProfile(record = {}, today = isoToday()) {
+export function marathonSettingsFromProfile(record = {}, today = isoToday(), distance = "MARATHON") {
+    const D = DISTANCES[distance] || DISTANCES.MARATHON;
     const base = settingsFromProfile(record, today);
     const r = record || {};
-    const isMarathon = base.raceType === "MARATHON" && base.mode === "race";
+    const isMarathon = base.raceType === D.key && base.mode === "race";
     return {
-        engine: "marathon", mode: "race", raceType: "MARATHON", racePriority: "A",
+        engine: "marathon", mode: "race", raceType: D.key, distance: D.key, racePriority: "A",
         startDate: base.startDate || nextMonday(today),
         raceDate: isMarathon ? base.raceDate : "",
         goalTime: isMarathon ? base.goalTime : "",
         recentRace: null,
         currentMiles: Number(r.weeklyMileage) > 0 ? Math.round(Number(r.weeklyMileage)) : 0,
         longestRun: Number(r.longestRun) > 0 ? Number(r.longestRun) : 0,
-        peakMiles: 0, longTarget: RULES.longCapMiles,
+        peakMiles: 0, longTarget: D.longCapMiles,
         runDays: base.runDays, trainDays: base.trainDays, longRunDay: base.longRunDay,
         injuryHistory: Boolean(realAnswer(r.injuries)),
         firstMarathon: /first (marathon|26)/i.test(`${r.primaryGoal || ""} ${r.targetEvent || ""}`),

@@ -331,3 +331,94 @@ test("sweep: 400 random runners, every plan keeps the rules", () => {
         for (let i = 1; i < taper.length; i++) assert.ok(taper[i] < taper[i - 1], label);
     }
 });
+
+// ---------- half marathon (docs/MARATHON_RULES.md, "Half marathon") ----------
+
+const HALF = { ...BASE, raceType: "HALF", goalTime: "1:45:00", recentRace: { meters: 10000, seconds: 2820 }, currentMiles: 25, longestRun: 7 };
+const makeHalf = extra => generateMarathonPlan({ ...HALF, ...extra });
+
+test("half: a 14-week plan has 10-mile long runs at most, a half-pace last block and a half race day", () => {
+    const plan = makeHalf({ startDate: "2026-12-21" });
+    assert.deepEqual(plan.problems, []);
+    assert.equal(plan.settings.distance, "HALF");
+    assert.equal(plan.weeks.length, 14);
+    const days = allDays(plan);
+    assert.equal(Math.max(...days.filter(d => d.type === "long").map(d => d.miles)), 10);
+    assert.equal(plan.summary.longCap, 10);
+    assert.ok(plan.weeks.some(w => w.stimulus === "Half-marathon specific"));
+    assert.ok(!plan.weeks.some(w => w.stimulus === "Marathon specific"));
+    const race = days.find(d => d.type === "race");
+    assert.equal(race.miles, 13.1);
+    assert.match(race.session, /half marathon/);
+    // down weeks every fourth week of a block, and two taper weeks before race week
+    assert.ok(plan.weeks.some(w => w.kind === "down"));
+    assert.equal(plan.weeks.filter(w => w.kind === "taper").length, 2);
+    // race week Tuesday: 3 x 1 mile at half pace, 2:00 jog
+    const rp = days.find(d => d.raceWeek);
+    assert.equal(rp.day, "TUE");
+    assert.equal(rp.workout.sets[0].repeat, 3);
+    assert.equal(rp.workout.sets[0].effort, "half marathon");
+    assert.equal(rp.workout.sets[0].recovery.amount, 2);
+    // the race pace is the half's own: about 8:00 a mile for 1:45
+    assert.ok(Math.abs(mid(plan.summary.racePace) - 8 * 60) < 25);
+    // the biggest race-pace long run carries race pace in "half marathon" effort
+    const longs = days.filter(d => d.type === "long" && d.workout && /race pace/.test(d.session));
+    assert.ok(longs.length >= 2);
+    assert.ok(longs.every(d => d.workout.sets[0].effort === "half marathon"));
+});
+
+test("half: the rules differ where the rulebook says, and the marathon does not change", () => {
+    assert.equal(normalize(HALF).longTarget, 10);
+    assert.equal(normalize({ ...HALF, longTarget: 14 }).longTarget, 10);
+    assert.equal(normalize(BASE).longTarget, 20);
+    assert.ok(checkSettings({ ...HALF, startDate: "2026-09-07" }).some(m => /at most 20 weeks/.test(m)));
+    assert.ok(checkSettings({ ...HALF, raceDate: "2027-01-10" }).some(m => /half marathon plan needs at least 8 weeks/.test(m)));
+    // a 9-week plan has a shorter taper than a 14-week one
+    assert.equal(planCalendar(9, "HALF").filter(w => w.kind === "taper").length, 1);
+    assert.equal(planCalendar(10, "HALF").filter(w => w.kind === "taper").length, 2);
+    assert.equal(planCalendar(11, "MARATHON").filter(w => w.kind === "taper").length, 1);
+    assert.equal(planCalendar(12, "MARATHON").filter(w => w.kind === "taper").length, 2);
+    // the half's peak ceiling is lower than the marathon's for the same runner
+    const m = make({ currentMiles: 40, startDate: "2026-11-09" }), h = makeHalf({ currentMiles: 40, startDate: "2026-11-09", raceDate: "2027-03-28" });
+    assert.ok(h.summary.peakMiles <= 60);
+    assert.ok(m.summary.longestRun > h.summary.longestRun);
+});
+
+test("half sweep: 300 random runners keep the half rules", () => {
+    const r = rng(20261111);
+    const pick = list => list[Math.floor(r() * list.length)];
+    const int = (lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
+    for (let n = 0; n < 300; n++) {
+        const count = int(3, 7);
+        const runDays = CODES.slice().sort(() => r() - 0.5).slice(0, count);
+        const startDate = addDays("2026-09-01", int(0, 60));
+        const weeks = int(8, 20);
+        const raceDate = addDays(mondayOf(startDate), (weeks - 1) * 7 + pick([5, 6, 6, 6, 2]));
+        const settings = {
+            raceType: "HALF", startDate, raceDate, runDays, longRunDay: pick(runDays), currentMiles: int(8, 60), longestRun: pick([0, int(3, 14)]),
+            goalTime: pick(["", "1:25:00", "1:45:00", "2:10:00", "2:40:00"]),
+            recentRace: pick([null, { meters: 5000, seconds: int(960, 2100) }, { meters: 10000, seconds: int(2000, 4300) }]),
+            injuryHistory: r() < 0.2, firstMarathon: r() < 0.3, peakMiles: pick([0, 0, int(15, 70)])
+        };
+        const label = `#${n} ${JSON.stringify(settings)}`;
+        assert.deepEqual(checkSettings(settings), [], label);
+        const plan = generateMarathonPlan(settings);
+        assert.equal(plan.weeks.length, weeks, label);
+        const days = allDays(plan);
+        for (const d of days) {
+            if (d.type === "long") assert.ok(d.miles <= 10 && d.miles <= plan.summary.longCap, `${label} long run ${d.miles}`);
+            if (d.type !== "rest" && d.type !== "race") assert.ok(runDays.includes(d.day) && d.date >= startDate, `${label} ${d.date}`);
+            if (d.workout) assert.deepEqual(d.workout, sanitizeWorkout(d.workout), label);
+        }
+        const race = days.filter(d => d.type === "race");
+        assert.equal(race.length, 1, label);
+        assert.equal(race[0].miles, 13.1, label);
+        assert.ok(days.filter(d => d.type === "workout").every(d => gapDays(d.date, raceDate) >= 3), label);
+        const rp = days.filter(d => d.raceWeek);
+        if (rp.length) assert.equal(rp[0].workout.sets[0].effort, "half marathon", label);
+        for (const b of plan.summary.blocks.slice(0, -1)) assert.ok(b.to - b.from + 1 <= 4, label);
+        plan.weeks.forEach((w, i) => { if (w.kind === "down") { assert.ok(!w.days.some(d => d.benchmark), label); assert.ok(plan.weeks[i - 1].kind !== "down", label); } });
+        const taper = plan.weeks.filter(w => ["peak", "taper"].includes(w.kind)).map(w => w.targetMiles);
+        for (let i = 1; i < taper.length; i++) assert.ok(taper[i] <= taper[i - 1] + 0.01, `${label} taper ${taper}`);
+    }
+});

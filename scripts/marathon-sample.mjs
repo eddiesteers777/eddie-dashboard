@@ -1,5 +1,5 @@
 // Prints a marathon engine plan as plain text, for reading a draft.
-// Run: node scripts/marathon-sample.mjs [normal|first|careful|experienced]
+// Run: node scripts/marathon-sample.mjs [normal|first|careful|experienced|half|halffirst]
 import { generateMarathonPlan } from "../js/marathonEngine.js";
 import { workoutSummary } from "../js/runWorkout.js";
 
@@ -7,6 +7,8 @@ export const SAMPLES = {
     normal: { label: "Normal: 30 miles a week, 5 days, recent 1:45 half, goal 3:45", startDate: "2026-12-07", raceDate: "2027-03-28", goalTime: "3:45:00", recentRace: { meters: 21097.5, seconds: 6300 }, currentMiles: 30, longestRun: 10, runDays: ["MON", "TUE", "THU", "FRI", "SUN"], longRunDay: "SUN" },
     first: { label: "First marathon: 18 miles a week, 4 days, recent 29:00 5K, no goal time", startDate: "2026-12-07", raceDate: "2027-03-28", recentRace: { meters: 5000, seconds: 1740 }, currentMiles: 18, longestRun: 6, runDays: ["TUE", "THU", "SAT", "SUN"], longRunDay: "SUN", firstMarathon: true },
     careful: { label: "Careful: injury history, 25 miles a week, 4 days, goal 4:15 only, 18 weeks", startDate: "2026-11-23", raceDate: "2027-03-28", goalTime: "4:15:00", currentMiles: 25, longestRun: 8, runDays: ["TUE", "THU", "SAT", "SUN"], longRunDay: "SUN", injuryHistory: true },
+    half: { label: "Half marathon, normal: 25 miles a week, 5 days, recent 47:00 10K, goal 1:40, 14 weeks", raceType: "HALF", startDate: "2026-12-21", raceDate: "2027-03-28", goalTime: "1:40:00", recentRace: { meters: 10000, seconds: 2820 }, currentMiles: 25, longestRun: 7, runDays: ["MON", "TUE", "THU", "FRI", "SUN"], longRunDay: "SUN" },
+    halffirst: { label: "First half, 15 miles a week, 4 days, no race, 10 weeks", raceType: "HALF", startDate: "2027-01-18", raceDate: "2027-03-28", goalTime: "2:15:00", currentMiles: 15, longestRun: 4, runDays: ["TUE", "THU", "SAT", "SUN"], longRunDay: "SUN", firstMarathon: true },
     experienced: { label: "Experienced: 50 miles a week, 6 days, recent 1:25 half, goal 3:05, 20 weeks", startDate: "2026-11-09", raceDate: "2027-03-28", goalTime: "3:05:00", recentRace: { meters: 21097.5, seconds: 5100 }, currentMiles: 50, longestRun: 14, runDays: ["MON", "TUE", "WED", "THU", "SAT", "SUN"], longRunDay: "SUN" }
 };
 

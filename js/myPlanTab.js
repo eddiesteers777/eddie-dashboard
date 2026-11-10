@@ -67,8 +67,8 @@ function render() {
     if (!plan || at.state === "none") {
         root.innerHTML = `<section class="mp-card mp-empty"><div class="mp-ghost" aria-hidden="true">${Array.from({ length: 16 }, (_, i) => `<i style="height:${26 + (i % 4 === 3 ? -8 : i * 3)}%"></i>`).join("")}</div>
             <h2>No plan for you yet</h2>
-            <p>Build your own marathon plan the same way you build a client's. Your COROS runs fill in where you are now.</p>
-            <button type="button" class="sb-btn sb-btn-primary" data-act="build">Build my marathon plan</button>
+            <p>Build your own marathon or half marathon plan the same way you build a client's. Your COROS runs fill in where you are now.</p>
+            <button type="button" class="sb-btn sb-btn-primary" data-act="build">Build my plan</button>
             <p class="mp-fine">Saved on your account. Nothing goes to a client.</p></section>`;
         return;
     }
@@ -104,7 +104,7 @@ root?.addEventListener("click", async ev => {
     if (act === "build" || act === "edit") return openSetup();
     if (act === "weeks") { const w = root.querySelector("#mpWeeks"); if (w) { w.hidden = !w.hidden; if (!w.hidden) w.scrollIntoView({ block: "nearest", behavior: "smooth" }); } return; }
     if (act === "remove") {
-        if (!await sbConfirm("Remove your marathon plan from the calendar? Days you ticked done stay in your run history.", { title: "Remove my plan?", confirmLabel: "Remove plan", danger: true })) return;
+        if (!await sbConfirm("Remove your plan from the calendar? Days you ticked done stay in your run history.", { title: "Remove my plan?", confirmLabel: "Remove plan", danger: true })) return;
         await removeOwn(); record = null; render();
     }
 });

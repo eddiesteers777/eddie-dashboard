@@ -45,7 +45,7 @@ Race date, goal time, a recent race, current weekly miles, longest recent run, r
 - **Eddie:** the coach sets the peak weekly miles for the plan, and the plan builds to it over time. The long run goes up to 20 miles for a marathon (10 for a half).
 - **Engine:** `peakMiles` is the most miles in one week. The plan climbs just fast enough to arrive at it in the peak week, never faster than the runner's ramp. A peak too far away to reach safely stops short and the coach is told. With no peak set, the engine picks one from current miles.
 - **Engine:** `longTarget` defaults to 20 and can be lowered, never raised past 20. The long run climbs evenly to it, limited by the 3-hour rule and by its share of the week. A peak too low to hold the target gives a warning that names the weekly miles needed.
-- Half marathon plans (long run to 10) are not in the engine yet.
+- Half marathon plans: see "Half marathon" below.
 
 ## The week (Engine)
 - Speed day: Tuesday when it is a run day, otherwise the earliest run day that is not next to the long run.
@@ -64,4 +64,16 @@ Race date, goal time, a recent race, current weekly miles, longest recent run, r
 - **Eddie:** 3 x 1 mile at race pace on the Tuesday. **Engine:** 2:00 easy jog between; for a race on another day, the run day closest to five days out. Two days out is rest, the day before is a 2-mile shakeout.
 
 ## Not built yet
-Adapting (injury, missed, travel), Eddie's own plan ("Me"), half marathon, and sending a week to the watch. The coach's screen is built (see `docs/APP_REFERENCE.md` "Marathon plan screen"). See the phases in `docs/APP_REFERENCE.md` "Marathon engine".
+Adapting (injury, missed, travel), Today pointing at Eddie's own plan, and sending a week to the watch. The coach's screen is built (see `docs/APP_REFERENCE.md` "Marathon plan screen"). See the phases in `docs/APP_REFERENCE.md` "Marathon engine".
+
+## Half marathon (Eddie approved, 2026-11-10, "go")
+Same system as the marathon, scaled down. `settings.raceType: "HALF"` (or `distance`), table `DISTANCES` in `js/marathonEngine.js`.
+- 8 to 20 weeks. Four-week blocks, a new stimulus each block, week 4 a down week (same percentages).
+- Long run climbs to 10 miles (never above), 2:30 limit for slow runners. Down-week long run 30% shorter.
+- Taper: 2 taper weeks plus race week (1 taper week under 10 weeks). About 75% then 55% of the biggest week; long runs 85% then 70% of the top long run.
+- Race week Tuesday: 3 x 1 mile at half pace, 2:00 jog, same placing rules as the marathon.
+- Last block "Half-marathon specific": 2 x 2, 3 x 2, 2 x 3 miles at half pace; peak week 3 x 3. Long runs finish with 2 to 3 race-pace miles. Other blocks are the marathon's.
+- 800s test: same (plan week 2 and the peak week).
+- Peak: normal 1.5x current, careful 1.4x, experienced 1.35x. Ceilings 28 / 40 / 60. A low base may double up to 22 / 26 / 30.
+- Key sessions: both every week, one at a time for a first half or under 25 miles a week (the marathon's rule).
+- Paces: from a recent race (same fitness model); race pace is the half's own, from the goal when it is within 3% of fitness.

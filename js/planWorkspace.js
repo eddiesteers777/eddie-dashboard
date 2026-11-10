@@ -1118,8 +1118,8 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                     <span>Runs and strength for every day, built from their goal, race, miles and the days they can train. You edit anything after.</span>
                 </button>
                 <button type="button" class="pw-gen-pick" data-act="marathon">
-                    <strong>${icon("bolt")} Build a marathon plan</strong>
-                    <span>Four-week blocks, a down week closing each one, race-pace long runs, the 800s test early and late. Paces come from a recent race. Peak miles and the 20-mile long run are yours to set.</span>
+                    <strong>${icon("bolt")} Build a marathon or half plan</strong>
+                    <span>Four-week blocks, a down week closing each one, race-pace long runs, the 800s test early and late. Paces come from a recent race. Peak miles and the long run (20 miles, or 10 for a half) are yours to set.</span>
                 </button>
                 <p class="pw-gen-or">or start blank</p>
                 <label class="pw-label">Name<input class="sb-dialog-input" name="name" maxlength="120" required placeholder="e.g. Spring 10K build"></label>
