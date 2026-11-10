@@ -490,20 +490,26 @@ function renderToday() {
     if (!items.length) {
         // A rest day the plan wrote something for ("Rest: walk, eat, celebrate"): that, not a generic line.
         const restText = restTextOf(dayData);
+        const bigClass = text => text.length > 22 ? "hr-big is-long" : "hr-big";
         container.innerHTML = PERSONAL_PLAN ? (restText ? `
-            <div class="eos-today-rest">
-                <strong>${escapeHtml(restText)}</strong>
-                <span>Rest day on your plan.</span>
+            <div class="hero-rest">
+                <span class="hr-kicker">Rest day</span>
+                <div class="${bigClass(restText)}">${escapeHtml(restText)}</div>
+                <p class="hr-sub">Rest day on your plan.</p>
             </div>
         ` : `
-            <div class="eos-today-rest">
-                Nothing scheduled today. Good day to rest, or check in on your
-                <a href="strength.html">Strength plan</a>.
+            <div class="hero-rest">
+                <span class="hr-kicker">Rest day</span>
+                <div class="hr-big">Nothing scheduled</div>
+                <p class="hr-what">Good day to rest, or check in on your Strength plan.</p>
+                <a class="sb-btn sb-btn-primary" href="strength.html">Strength plan</a>
             </div>
         `) : `
-            <div class="eos-today-rest">
-                Nothing on your plan today. Log a run on <a href="running.html">Running</a>,
-                or start a workout from <a href="strength.html">Strength</a>.
+            <div class="hero-rest">
+                <span class="hr-kicker">Nothing today</span>
+                <div class="hr-big">Open day</div>
+                <p class="hr-what">Nothing on your plan today. Log a run on <a href="running.html">Running</a>,
+                or start a workout from <a href="strength.html">Strength</a>.</p>
             </div>
         `;
         return;

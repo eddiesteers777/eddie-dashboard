@@ -435,3 +435,5 @@ html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-head
 html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-header h2::before{display:none!important}
 html.al-on :is(#weekSection,#todayHabits,#coachCardSection) .eos-today-card-header{margin-bottom:8px}
 html.al-on #weekSection .wk-miles{font-size:20px!important}
+
+html.al-on #todayCard .hr-big.is-long{font-size:clamp(30px,6vw,40px)}
