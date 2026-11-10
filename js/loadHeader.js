@@ -144,9 +144,9 @@ const SUBNAV_GROUPS = {
     ],
     coach: [
         { href: "coach.html", label: "Dashboard", short: "Home", icon: "grid" },
-        { href: "clients.html", label: "My Clients", short: "Clients", icon: "users" },
+        { href: "clients.html", label: "Clients", short: "Clients", icon: "users" },
         { href: "checkin.html", label: "Check-ins", short: "Check-ins", icon: "clipboard" },
-        { href: "coach-messages.html", label: "Messages", short: "Inbox", icon: "messageSquare" },
+        { href: "coach-messages.html", label: "Inbox", short: "Inbox", icon: "messageSquare" },
         { href: "schedule.html", label: "Schedule", short: "Schedule", icon: "calendar" }
     ]
 };
@@ -182,7 +182,7 @@ const SEARCH_DESTINATIONS = [
     { label: "Southbound Playbook", href: "playbook.html", icon: "clipboard", color: "var(--sage)", requires: "coach", also: ["tactical board", "drills", "practice plan", "roster", "lineup", "soccer"] },
     { label: "Messages", href: "messages.html", icon: "messageSquare", color: "var(--primary)", requires: "client+updates", also: ["message coach", "chat", "text coach", "ask coach"] },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
-    { label: "My Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
+    { label: "Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
     { label: "Soccer", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions", also: ["schedule", "sessions", "book a session"] },
     { label: "Homework", href: "homework.html", icon: "clipboard", color: "var(--primary)", requires: "client+homework", also: ["practice", "drills", "skills"] },
     { label: "Weekly Check-in", href: "checkin.html", icon: "star", color: "var(--amber)", requires: "client+checkins" },

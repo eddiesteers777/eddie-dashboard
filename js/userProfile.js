@@ -3,7 +3,7 @@
 
    The account/role data model described in
    docs/PRODUCT_ARCHITECTURE.md. A profile document gets created the
-   first time someone signs in. The approval workflow (My Clients ->
+   first time someone signs in. The approval workflow (Clients ->
    Pending) and the internal nav (js/navAccess.js) both now read it
    -- the nav hides sections a client's role/services don't cover,
    though that's still just a UX simplification, not the real access

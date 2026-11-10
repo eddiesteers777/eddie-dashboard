@@ -66,7 +66,7 @@ function renderList() {
                     </span>
                 </button>
             </div>`).join("")}`).join("")
-        : `<p class="cm-none">${clients.length ? "No clients match." : "No clients yet. Add one from My Clients."}</p>`;
+        : `<p class="cm-none">${clients.length ? "No clients match." : "No clients yet. Add one from Clients."}</p>`;
 }
 
 // ---------- about this client ----------

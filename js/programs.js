@@ -62,7 +62,7 @@ function formatDate(value) {
 // A coach with linked access can leave notes on a client's plan (see
 // clients.html / js/coachAccess.js); cloud sync mirrors those notes
 // down into localStorage on every pull, so the client sees the
-// latest one right on the plan card without visiting My Clients.
+// latest one right on the plan card without visiting Clients.
 function coachNotesBadge(field, programId) {
     const notes = getLocalCoachNotes()?.[field]?.[programId];
     if (!notes || !notes.length) return '';

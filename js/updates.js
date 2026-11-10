@@ -63,7 +63,7 @@ listenForAuth(async user => {
 
     if (cachedRole() === "coach") {
         $("feedLoading").hidden = true;
-        $("feed").innerHTML = `<div class="clients-card"><p class="clients-card-note">This is where your clients read what you send them. Send an update from a client's page in <a href="clients.html">My Clients</a> (Notes tab).</p></div>`;
+        $("feed").innerHTML = `<div class="clients-card"><p class="clients-card-note">This is where your clients read what you send them. Send an update from a client's page in <a href="clients.html">Clients</a> (Notes tab).</p></div>`;
         return;
     }
 

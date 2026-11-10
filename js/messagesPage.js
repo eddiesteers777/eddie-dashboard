@@ -58,7 +58,7 @@ listenForAuth(async user => {
 
     if (cachedRole() === "coach") {
         setSubtitle("Your conversations with clients.");
-        $("msgThread").innerHTML = `<div class="clients-card"><p class="clients-card-note">Each client's messages are on their page: open a client from <a href="clients.html">My Clients</a> and choose the Messages tab. New messages also show on your <a href="coach.html">Coach Dashboard</a>.</p></div>`;
+        $("msgThread").innerHTML = `<div class="clients-card"><p class="clients-card-note">Each client's messages are on their page: open a client from <a href="clients.html">Clients</a> and choose the Messages tab. New messages also show on your <a href="coach.html">Coach Dashboard</a>.</p></div>`;
         return;
     }
 

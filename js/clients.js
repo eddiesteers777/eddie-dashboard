@@ -1,5 +1,5 @@
 /* ==========================================
-   Southbound — My Clients
+   Southbound — Clients
 
    Two roles live on one page since any account can be both a coach
    and a client: "Coach a Client" (this account managing someone
@@ -607,7 +607,7 @@ async function refreshPending() {
             }
             await settleApplication(app, profile.uid, linked);
             if (linked) {
-                toast(`${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and in My Clients now.`);
+                toast(`${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved and in Clients now.`);
             } else {
                 await sbAlert("They are approved but aren't linked to you yet. Use Find a Client above and click Assign when their active account appears.", { title: `${profile.displayName || "They"} ${profile.displayName ? "is" : "are"} approved` });
             }

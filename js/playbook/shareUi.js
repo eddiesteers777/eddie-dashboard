@@ -23,7 +23,7 @@ export async function sendToClient(token, { title }, toast) {
     try { links = (await (await import("../coachAccess.js")).listMyClients()).filter(l => l.clientUid); }
     catch { return toast("Couldn't reach your clients. Check your connection."); }
     const { sbAlert } = await import("../ui.js");
-    if (!links.length) return sbAlert("Link a client first (My Clients), then you can send them plans.", { title: "No clients yet" });
+    if (!links.length) return sbAlert("Link a client first (Clients), then you can send them plans.", { title: "No clients yet" });
     const dlg = document.createElement("dialog");
     dlg.className = "pb-dlg dr-dlg";
     const sel = document.createElement("select");

@@ -571,7 +571,7 @@ export function shortDate(iso) {
 // ---------- One-line row for the client list ----------
 
 // The status bits under a client's name in a list: plan week, next
-// session, check-in (My Clients and the Coach Dashboard).
+// session, check-in (Clients and the Coach Dashboard).
 export function clientStatusLines(c) {
     const p = c.plans?.primary;
     const trains = (c.services || []).some(v => TRAINING_SERVICES.includes(v));

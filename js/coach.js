@@ -1,7 +1,7 @@
 /* ==========================================
    Southbound — Coach Dashboard
 
-   A "needs attention" summary plus quick links into My Clients and
+   A "needs attention" summary plus quick links into Clients and
    Schedule, rather than duplicating either page's UI here. Deep
    links use ?tab=... which clients.js/schedule.js read on load (see
    selectTab() in each) to land directly on the right tab.
@@ -380,7 +380,7 @@ document.querySelectorAll("[data-week-step]").forEach(btn => btn.addEventListene
     renderWeek();
 }));
 
-// ---- Your clients (search; the full filters live on My Clients) ----
+// ---- Your clients (search; the full filters live on Clients) ----
 
 const CLIENTS_SHOWN = 8;
 let showAllClients = false;
@@ -393,7 +393,7 @@ function renderClientList() {
         .filter(c => !q || c.searchText.includes(q))
         .sort((a, b) => (b.attention.length > 0) - (a.attention.length > 0) || String(a.name).localeCompare(String(b.name)));
     if (!today.clients.length) {
-        el.innerHTML = `<p class="clients-card-note">No clients yet. Approve someone in <a href="clients.html?tab=pending">Pending</a>, or enter a client's code in <a href="clients.html?tab=coach">My Clients</a>.</p>`;
+        el.innerHTML = `<p class="clients-card-note">No clients yet. Approve someone in <a href="clients.html?tab=pending">Pending</a>, or enter a client's code in <a href="clients.html?tab=coach">Clients</a>.</p>`;
         return;
     }
     if (!rows.length) {

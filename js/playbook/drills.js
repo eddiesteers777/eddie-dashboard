@@ -149,7 +149,7 @@ async function openAssign(d, board) {
         const [ca, hw] = await Promise.all([import("../coachAccess.js"), import("../homework.js")]);
         mod = hw; links = await ca.listMyClients();
     } catch { return toast("Couldn't reach your clients. Check your connection."); }
-    if (!links.length) { const { sbAlert } = await import("../ui.js"); return sbAlert("Link a client first (My Clients), then you can send them drills.", { title: "No clients yet" }); }
+    if (!links.length) { const { sbAlert } = await import("../ui.js"); return sbAlert("Link a client first (Clients), then you can send them drills.", { title: "No clients yet" }); }
     const dlg = $("assign"); dlg.replaceChildren();
     let pick = links[0].clientUid;
     const e = (tag, cls, text) => h(tag, cls, text);
