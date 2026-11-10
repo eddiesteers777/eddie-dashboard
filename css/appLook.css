@@ -337,3 +337,18 @@ html.al-on .ct-block-remove{min-width:44px;min-height:44px}
 /* Round 9 (2026-11-10): small links on the workout page reach a 44px tap area. */
 html.al-on .hub-back,html.al-on .clients-card-note a{position:relative}
 html.al-on .hub-back::after,html.al-on .clients-card-note a::after{content:"";position:absolute;inset:-14px -8px}
+
+/* Round 10 (2026-11-10): the Running "Add a workout" sheet wears the same blue glass as the Round 8 windows. */
+html.al-on .running-modal-overlay{background:rgba(6,12,18,.66)!important}
+html.al-on .running-modal{background:linear-gradient(180deg,rgba(42,62,82,.97),rgba(24,36,48,.97))!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.5)!important}
+html.al-on .running-modal-header{border-bottom:1px solid rgba(214,228,240,.14)!important;background:none!important}
+html.al-on .running-modal-header #runningRunModalTitle{font:400 24px/1 var(--font-display)!important;letter-spacing:.03em;text-transform:uppercase;color:var(--text)!important}
+html.al-on .running-modal-close{width:44px;height:44px;border-radius:50%!important;background:rgba(10,18,26,.5)!important;border:1px solid rgba(214,228,240,.25)!important;color:var(--text)!important}
+html.al-on .running-modal .running-field-label{font:600 12px/1 var(--font-mono)!important;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)!important}
+html.al-on .running-modal .running-input{background:rgba(10,18,26,.5)!important;border:1px solid rgba(214,228,240,.22)!important;border-radius:12px!important;min-height:44px;font-size:16px!important;color:var(--text)!important}
+html.al-on .running-modal .running-input:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(199,214,228,.18)!important;outline:none}
+html.al-on .running-kind-chip{min-height:44px;background:rgba(10,18,26,.4)!important;border:1px solid rgba(214,228,240,.22)!important;color:var(--text)!important}
+html.al-on .running-kind-chip.active{background:rgba(199,214,228,.18)!important;border-color:var(--primary)!important;color:var(--text)!important}
+html.al-on .running-modal .running-mode-btn{min-height:44px}
+html.al-on .running-modal .running-btn-outline{min-height:44px;background:transparent!important;color:var(--text)!important;border:1px solid rgba(214,228,240,.3)!important;border-radius:6px!important}
+html.al-on .running-modal .running-row-btn.primary{min-height:44px;background:var(--primary)!important;color:var(--on-primary)!important;border:0!important;border-radius:6px!important}
