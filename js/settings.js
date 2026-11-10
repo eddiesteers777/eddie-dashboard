@@ -244,7 +244,7 @@ document.getElementById("saveCancelNoticeBtn")?.addEventListener("click", async 
 });
 
 document.getElementById("copyBookingLinkBtn")?.addEventListener("click", async () => {
-    const url = new URL("apply.html", window.location.href).href;
+    const url = new URL("start.html", window.location.href).href;
     try { await navigator.clipboard.writeText(url); toast("Link copied."); }
     catch { toast(url); }
 });

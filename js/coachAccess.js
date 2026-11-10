@@ -377,7 +377,7 @@ export async function createInviteCode() {
 // through linkWithCode() -- the exact rules-checked batch a typed code
 // uses (code must exist, belong to that client, be under 7 days old,
 // and is burned by the link). The client's app keeps it fresh while the
-// account is pending (js/loadHeader.js, js/apply.js).
+// account is pending (js/loadHeader.js).
 export function applyCodeFor(uid) {
     return `APPLY-${uid}`;
 }

@@ -7,7 +7,7 @@ catch { ({ chromium } = await import("/opt/node22/lib/node_modules/playwright/in
 export { chromium };
 
 // The pages each persona opens.
-export const GUEST = ["home.html", "about.html", "packages.html", "coaching.html", "soccer.html", "apply.html",
+export const GUEST = ["home.html", "about.html", "packages.html", "coaching.html", "soccer.html",
     "contact.html", "install.html", "pace.html", "privacy.html", "fueling.html"];
 export const CLIENT = ["index.html", "train.html", "running.html", "strength.html", "cross-training.html", "nutrition.html",
     "fueling.html", "habits.html", "plan.html", "progress.html", "checkin.html", "schedule.html", "messages.html",

@@ -17,7 +17,7 @@ test("each button opens the application with a real service chosen", () => {
         // The free calculator that had its own picker (fuel.html) became the full Fueling calculator (2026-10-15).
         for (const page of ["pace.html"]) {
             const html = read(page);
-            assert.ok(html.includes(`href="apply.html?service=${service}" data-interest="${key}"`), `${page}: ${key} opens the application with ${service} chosen`);
+            assert.ok(html.includes(`href="start.html?sport=${key}" data-interest="${key}"`), `${page}: ${key} opens Get started with ${key} chosen`);
         }
     }
     assert.deepEqual(Object.keys(EXPECTED), ["running", "strength", "soccer"]);
@@ -58,6 +58,6 @@ test("the copy is plain: no pressure, no urgency", () => {
     const card = html.slice(html.indexOf('id="interestPicker"'), html.indexOf("</section>", html.indexOf('id="interestPicker"')));
     const text = card.replace(/<[^>]+>/g, " ");
     assert.match(text, /What are you training for\?/);
-    assert.match(text, /needs no account/);
+    assert.match(text, /takes about a minute/);
     assert.ok(!/limited|only \d|hurry|last chance|don't miss|spots left|today only/i.test(text), "no fake urgency or scarcity");
 });

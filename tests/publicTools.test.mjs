@@ -38,5 +38,5 @@ test("it is findable: titled, described, and linked from Home", () => {
     const html = read("pace.html");
     assert.match(html, /<title>Free Pace Calculator \| Southbound Coaching<\/title>/);
     assert.match(read("home.html"), /href="tools\.html#pace"/);
-    assert.match(html, /href="apply\.html\?service=running"/, "its next step preselects Running on the application");
+    assert.match(html, /href="start\.html\?sport=running"/, "its next step preselects Running on Get started");
 });
