@@ -29,6 +29,7 @@
 ========================================== */
 
 import { shapePlan, RACE_INFO } from "./planShape.js";
+import { shapeForCoachPlan, checkSettings as checkMarathon } from "./marathonEngine.js";
 import { shapeRunWalk, isRunWalk, sessionDays, RUN_WALK_RACES } from "./runWalk.js";
 import { sanitizeWorkout, workoutSummary } from "./runWorkout.js";
 import { sanitizeStrength } from "./strengthWorkout.js";
@@ -452,10 +453,13 @@ export function compose(date, run, strength) {
 export function generateCoachPlan(settings, { now = Date.now() } = {}) {
     const runDays = CODES.filter(c => (settings.runDays || []).includes(c));
     const s = { ...settings, runDays, trainDays: CODES.filter(c => runDays.includes(c) || (settings.trainDays || []).includes(c)) };
-    const problems = checkSettings(s);
+    // settings.engine "marathon": the weeks, workouts and paces come from js/marathonEngine.js
+    // (Eddie's rulebook, docs/MARATHON_RULES.md); strength and the rest are laid on the same way.
+    const engine = s.engine === "marathon";
+    const problems = engine ? checkMarathon(s) : checkSettings(s);
     if (problems.length) throw new Error(problems[0]);
     // Starting from little or no running: the time-based run/walk ladder (js/runWalk.js).
-    const { weeks: shaped, warnings } = isRunWalk(s) ? shapeRunWalk(s) : shapePlan(s);
+    const { weeks: shaped, warnings } = engine ? shapeForCoachPlan(s) : isRunWalk(s) ? shapeRunWalk(s) : shapePlan(s);
     const pool = strengthPool(s);
     let quality = 0, mainN = 0, lightN = 0;
     const raceGuard = s.mode === "race" ? addDays(s.raceDate, -3) : null;
@@ -472,6 +476,8 @@ export function generateCoachPlan(settings, { now = Date.now() } = {}) {
                 // Already a full session (run/walk).
                 Object.assign(day, { miles: d.miles, session: d.session, workout: clone(d.workout) });
             } else if (type === "race" && d.session) {
+                day.session = d.session;
+            } else if (engine && type !== "workout" && type !== "rest" && d.session) {
                 day.session = d.session;
             } else if (type === "workout" && day.miles < 3) {
                 // Too short for a session: easy with strides.
