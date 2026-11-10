@@ -607,13 +607,13 @@ function renderBlocksList(){
 
         html += '<div class="ct-block-row" draggable="true" data-block-id="' + block.id + '">' +
 
-            '<div class="ct-block-drag-handle">' + icon("moreVertical") + icon("moreVertical") + '</div>' +
+            '<div class="ct-block-drag-handle" aria-hidden="true">' + icon("moreVertical") + icon("moreVertical") + '</div>' +
 
-            '<input type="text" class="ct-block-input" data-field="label" data-id="' + block.id + '" placeholder="Block label" value="' + escapeHtml(block.label) + '">' +
+            '<input type="text" class="ct-block-input" data-field="label" data-id="' + block.id + '" aria-label="Block label" placeholder="Block label" value="' + escapeHtml(block.label) + '">' +
 
-            '<input type="number" min="0" class="ct-block-input" data-field="duration" data-id="' + block.id + '" placeholder="min" value="' + block.duration + '">' +
+            '<input type="number" min="0" class="ct-block-input" data-field="duration" data-id="' + block.id + '" aria-label="Minutes" placeholder="min" value="' + block.duration + '">' +
 
-            '<select class="ct-block-select" data-field="intensity" data-id="' + block.id + '">' +
+            '<select class="ct-block-select" data-field="intensity" data-id="' + block.id + '" aria-label="Intensity">' +
 
                 INTENSITIES.map(function(level){
 
@@ -623,9 +623,9 @@ function renderBlocksList(){
 
             '</select>' +
 
-            '<input type="text" class="ct-block-input" data-field="notes" data-id="' + block.id + '" placeholder="Notes" value="' + escapeHtml(block.notes) + '">' +
+            '<input type="text" class="ct-block-input" data-field="notes" data-id="' + block.id + '" aria-label="Block notes" placeholder="Notes" value="' + escapeHtml(block.notes) + '">' +
 
-            '<button type="button" class="ct-block-remove" data-remove-block="' + block.id + '">' + icon("close") + '</button>' +
+            '<button type="button" class="ct-block-remove" data-remove-block="' + block.id + '" aria-label="Remove block">' + icon("close") + '</button>' +
 
         '</div>';
 

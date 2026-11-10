@@ -82,26 +82,26 @@
 <!-- ========== Workout Builder Modal ========== -->
 
 <div class="ct-modal-overlay" id="ct-modal-overlay">
-  <div class="ct-modal">
+  <div class="ct-modal" role="dialog" aria-modal="true" aria-labelledby="ct-modal-title">
 
     <div class="ct-modal-header">
       <h2 class="ct-modal-title" id="ct-modal-title">New Cross-Training Workout</h2>
-      <button type="button" class="ct-modal-close" id="ct-modal-close"><span data-icon="close"></span></button>
+      <button type="button" class="ct-modal-close" id="ct-modal-close" aria-label="Close"><span data-icon="close"></span></button>
     </div>
 
     <div class="ct-modal-body">
 
-      <label class="ct-field-label">Workout Name</label>
+      <label class="ct-field-label" for="ct-builder-name">Workout Name</label>
       <input type="text" class="ct-input" id="ct-builder-name" placeholder="e.g. Zone 2 Bike Ride">
 
-      <label class="ct-field-label">Category</label>
-      <div class="ct-category-chips" id="ct-builder-category-chips"></div>
+      <div class="ct-field-label" id="ct-category-label">Category</div>
+      <div class="ct-category-chips" role="group" aria-labelledby="ct-category-label" id="ct-builder-category-chips"></div>
 
-      <label class="ct-field-label">Blocks</label>
-      <div class="ct-blocks-list" id="ct-blocks-list"></div>
+      <div class="ct-field-label" id="ct-blocks-label">Blocks</div>
+      <div class="ct-blocks-list" role="group" aria-labelledby="ct-blocks-label" id="ct-blocks-list"></div>
       <button type="button" class="ct-add-block-btn" id="ct-add-block-btn">+ Add Block</button>
 
-      <label class="ct-field-label">Workout Notes</label>
+      <label class="ct-field-label" for="ct-builder-notes">Workout Notes</label>
       <textarea class="ct-textarea" id="ct-builder-notes" rows="2" placeholder="Optional notes for the whole workout…"></textarea>
 
     </div>

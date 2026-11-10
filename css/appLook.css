@@ -307,3 +307,29 @@ html.al-on .wk-done{min-width:44px!important;min-height:44px!important}
 html.al-on button.bar{position:relative}
 html.al-on button.bar::after{content:"";position:absolute;inset:-8px -2px}
 html.al-on .running-pill{min-width:44px!important}
+
+/* Round 8 (Eddie, 2026-11-10, option A): the Strength builder and the Cross-training window are blue glass, with 44px fields and buttons.
+   The Cross-training window sits above the tab bar; on a phone it is a bottom sheet. */
+html.al-on .ct-modal-overlay,html.al-on .strength-editor-overlay{background:rgba(6,12,18,.66)!important}
+html.al-on .ct-modal-overlay{z-index:4600!important}
+html.al-on .ct-modal,html.al-on .strength-editor-modal{background:linear-gradient(180deg,rgba(42,62,82,.97),rgba(24,36,48,.97))!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:18px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.5)!important}
+html.al-on .ct-modal-header,html.al-on .strength-editor-header{border-bottom:1px solid rgba(214,228,240,.14)!important;background:none!important}
+html.al-on .ct-modal-footer,html.al-on .strength-editor-footer{border-top:1px solid rgba(214,228,240,.14)!important;background:none!important}
+html.al-on .ct-modal-title,html.al-on .strength-editor-header h2{font:400 24px/1 var(--font-display)!important;letter-spacing:.03em;text-transform:uppercase;color:var(--text)!important;min-width:0}
+html.al-on .strength-editor-header .strength-library-eyebrow{font:600 11px/1 var(--font-mono);letter-spacing:.14em;color:var(--text-secondary)!important}
+html.al-on .ct-field-label{font:600 12px/1 var(--font-mono)!important;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)!important}
+html.al-on .ct-modal input,html.al-on .ct-modal select,html.al-on .ct-modal textarea,html.al-on .strength-editor-modal .st-big-input,html.al-on .strength-editor-modal [data-day-duration]{background:rgba(10,18,26,.5)!important;border:1px solid rgba(214,228,240,.22)!important;border-radius:12px!important;min-height:44px;font-size:16px!important;color:var(--text)!important}
+html.al-on .ct-modal input:focus,html.al-on .ct-modal select:focus,html.al-on .ct-modal textarea:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(199,214,228,.18)!important;outline:none}
+html.al-on .ct-category-chip{min-height:44px;background:rgba(10,18,26,.4)!important;border:1px solid rgba(214,228,240,.22)!important;color:var(--text)!important}
+html.al-on .ct-category-chip.active{background:rgba(199,214,228,.18)!important;border-color:var(--primary)!important;color:var(--text)!important}
+html.al-on .ct-add-block-btn,html.al-on .ct-btn-secondary,html.al-on .strength-editor-save,html.al-on .strength-editor-modal .strength-builder-btn{min-height:44px;background:transparent!important;color:var(--text)!important;border:1px solid rgba(214,228,240,.3)!important;border-radius:6px!important}
+html.al-on .ct-btn-primary,html.al-on .strength-editor-add{min-height:48px;background:var(--primary)!important;color:var(--on-primary)!important;border:0!important;border-radius:6px!important;box-shadow:none!important}
+html.al-on .ct-modal-close,html.al-on .strength-editor-close{width:44px;height:44px;border-radius:50%!important;background:rgba(10,18,26,.5)!important;border:1px solid rgba(214,228,240,.25)!important;color:var(--text)!important}
+html.al-on .ct-modal-total{font:600 13px/1 var(--font-mono);color:var(--text-secondary)}
+html.al-on .ct-block-row{background:rgba(10,18,26,.32)!important;border:1px solid rgba(214,228,240,.14)!important;border-radius:12px!important}
+html.al-on .ct-block-remove{min-width:44px;min-height:44px}
+@media (max-width:700px){
+ html.al-on .ct-modal-overlay{align-items:flex-end!important;padding:0!important}
+ html.al-on .ct-modal{max-width:none!important;border-radius:18px 18px 0 0!important;max-height:92dvh!important;padding-bottom:env(safe-area-inset-bottom)}
+ html.al-on .strength-editor-modal{border-radius:0!important}
+}
