@@ -17,6 +17,7 @@ const readJson = k => { try { return JSON.parse(get(k) || "{}") || {}; } catch {
 const readLocal = () => Object.fromEntries(SYNC_KEYS.map(k => [k, get(k)]));
 
 let uid = null, fs = null, ref = null, busy = null, pageStarted = false, paused = false;
+let lastRead = null, lastRemote = {}; // for the opt-in check (?pbcheck): how the last account read went
 let state = "checking"; // checking | guest | syncing | synced | offline | toobig | paused
 
 function show() {
@@ -48,10 +49,14 @@ function applyKeys(map) {
 }
 
 async function readRemote() {
+    const t0 = Date.now();
     try {
         const snap = await fs.getDoc(ref);
-        return snap.exists() ? snap.data().keys || {} : {};
+        lastRemote = snap.exists() ? snap.data().keys || {} : {};
+        lastRead = { ok: true, ms: Date.now() - t0, hadDoc: snap.exists() };
+        return lastRemote;
     } catch (e) {
+        lastRead = { ok: false, error: (e && (e.code || e.message)) || "unknown", ms: Date.now() - t0 };
         if (e && e.code === "permission-denied") return {}; // your own not-yet-created doc reads as denied
         throw e;
     }
@@ -146,6 +151,29 @@ export async function afterClear() {
 }
 
 export const isSignedIn = () => Boolean(uid);
+
+// For the opt-in check page only: what this device, the last sync and the account each hold.
+export function syncInfo() {
+    const owner = get(OWNER);
+    const snap = readJson(SNAP), times = readJson(TIMES);
+    return {
+        signedIn: Boolean(uid), linked: !owner ? "no" : owner === uid ? "yes" : "other",
+        state: { checking: "checking", guest: "Sign in", syncing: "Syncing…", synced: "Synced to your account", offline: "Offline: will sync", toobig: "Too big to sync", paused: "Sync paused" }[state],
+        local: get(KEYS.roster), snapshot: snap[KEYS.roster] ?? null, remote: lastRemote[KEYS.roster], read: lastRead,
+        changed: Object.keys(times)
+    };
+}
+// Check page button, only after the person taps it: put the account's roster on this device.
+// Local then equals the account, so the next sync sends nothing and the snapshot catches up.
+export async function loadAccountRoster() {
+    const v = lastRemote[KEYS.roster] && lastRemote[KEYS.roster].v;
+    if (!v) return false;
+    put(KEYS.roster, v);
+    await syncNow();
+    return get(KEYS.roster) === v;
+}
+// Read the account again (the check page's "Check again").
+export const recheck = () => syncNow();
 // Coach-only tools (send to a client, assign homework). Clients and guests never see them; the
 // rules are the real gate, this only keeps buttons that would fail out of their way.
 export const isCoachUser = () => Boolean(uid) && cachedRole() === "coach";

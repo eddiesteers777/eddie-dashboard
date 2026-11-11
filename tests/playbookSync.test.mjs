@@ -111,3 +111,32 @@ test("parent contacts never sync", () => {
     assert.ok(!SYNC_KEYS.includes(KEYS.contacts));
     assert.ok(Object.keys(mergeStates({ [KEYS.contacts]: "x" }, { [KEYS.contacts]: "y" })).every(k => k !== KEYS.contacts));
 });
+
+// ---- the opt-in sync check (?pbcheck) ----
+import { describeCheck } from "../js/playbook/syncCheckModel.js";
+const roster = n => RO.serializeRoster(Array.from({ length: n }, (_, i) => ({ id: `r${i + 1}`, name: `P${i + 1}`, pos: "MID" })));
+const line = (d, label) => d.lines.find(l => l[0] === label)[1];
+
+test("sync check: account has 18, phone has none, offers to load them", () => {
+    const d = describeCheck({ signedIn: true, linked: "yes", state: "Synced to your account", local: null, snapshot: null,
+        remote: { v: roster(18), at: Date.UTC(2026, 10, 10, 20, 5) }, read: { ok: true, ms: 420, hadDoc: true }, changed: [] });
+    assert.equal(line(d, "Roster on this phone"), "none saved");
+    assert.equal(line(d, "Roster in your account"), "18 players, saved 2026-11-10 20:05 UTC");
+    assert.equal(d.canLoad, true);
+    assert.equal(d.inAccount, 18);
+});
+
+test("sync check: a failed read says why and offers nothing", () => {
+    const d = describeCheck({ signedIn: true, linked: "yes", state: "Synced to your account", local: null, snapshot: null,
+        remote: undefined, read: { ok: false, error: "permission-denied" }, changed: [] });
+    assert.equal(line(d, "Last account read"), "failed: permission-denied");
+    assert.equal(line(d, "Roster in your account"), "couldn't read");
+    assert.equal(d.canLoad, false);
+});
+
+test("sync check: same roster on both sides offers nothing", () => {
+    const d = describeCheck({ signedIn: true, linked: "yes", state: "Synced to your account", local: roster(18), snapshot: roster(18),
+        remote: { v: roster(18), at: 1 }, read: { ok: true, ms: 90, hadDoc: true }, changed: [] });
+    assert.equal(line(d, "Roster on this phone"), "18 players");
+    assert.equal(d.canLoad, false);
+});

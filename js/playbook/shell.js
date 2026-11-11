@@ -42,3 +42,5 @@ if (clear) clear.addEventListener("click", async () => {
 
 await startSync();
 if (clear) clear.textContent = clearText();
+// Opt-in sync check: only with ?pbcheck in the address, never on its own.
+if (/[?&]pbcheck\b/.test(location.search)) import("./syncCheck.js").catch(e => console.warn("Southbound: sync check did not load.", e));
