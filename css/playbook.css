@@ -974,3 +974,8 @@ body.pb-live-on .pb-dock-item .ui-icon{width:20px;height:20px}
 /* 44px taps: footer links on the Playbook home and the board name field */
 .ph-link{display:inline-flex;align-items:center;min-height:44px;padding:0 12px 0 0}
 .pb-name{min-height:44px}
+
+/* Tool row: tools share the row by their text, not in equal thirds (Conditioning was drawn past its pill). */
+.pb-subnav{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pb-subnav::-webkit-scrollbar{display:none}
+.pb-subnav .pb-subtab{flex:1 1 auto;min-width:auto;padding:0 10px;white-space:nowrap;letter-spacing:.04em}
