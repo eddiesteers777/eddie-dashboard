@@ -816,3 +816,57 @@ html.sb-typing .dr-tray{display:none}
 :root:not(.pb-light) .pb-continue{background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72));border-color:rgba(210,173,98,.5)}
 .pb-continue:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
 @media print{.pb-continue{display:none!important}}
+
+/* ==========================================================
+   Playbook v2 (Eddie, "Build D", 2026-11-11): one bottom bar, a top row of tools, a "more" sheet.
+   Replaces the Plan / Run / Team switch above (.pb-seg is no longer built).
+   ========================================================== */
+.pb-tabs.pb-nav{display:flex;align-items:center;gap:8px;margin:0 0 16px}
+.pb-subnav{flex:1;min-width:0}
+.pb-more-btn{flex:none;width:44px;height:44px;border-radius:14px;border:1px solid var(--pb-glass-border);background:var(--pb-glass-bg);color:var(--pb-text);display:grid;place-items:center;cursor:pointer;touch-action:manipulation}
+.pb-more-btn svg{width:22px;height:22px}
+.pb-more-btn:focus-visible,.pb-dock-item:focus-visible,.pb-menu-row:focus-visible,.pb-menu-x:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
+body.pb-has-dock{padding-bottom:calc(104px + env(safe-area-inset-bottom))!important}
+body.pb-has-dock .eos-bottomnav{display:none!important}
+body.pb-has-dock .pb-toast{bottom:calc(92px + env(safe-area-inset-bottom))}
+.pb-dock{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));width:min(380px,calc(100vw - 20px));height:64px;display:flex;justify-content:space-around;align-items:center;padding:0 4px;border-radius:32px;background:rgba(27,40,54,.94);border:1px solid var(--pb-glass-border,rgba(214,228,240,.18));box-shadow:0 12px 30px rgba(0,0,0,.45);z-index:900;translate:-50% var(--sb-vv-fix,0px)}
+:root.pb-light .pb-dock{background:rgba(251,248,241,.96);box-shadow:0 12px 30px rgba(15,32,25,.2)}
+html.sb-typing .pb-dock{display:none}
+.pb-dock-item{flex:1;min-width:0;min-height:52px;display:grid;justify-items:center;align-content:center;gap:1px;border-radius:26px;color:var(--pb-muted);text-decoration:none;font:600 11px var(--font-body);touch-action:manipulation}
+.pb-dock-item .ui-icon svg{width:22px;height:22px;display:block}
+.pb-dock-item[aria-current="page"]{background:var(--pb-lens,var(--pb-sel-bg));color:var(--pb-sel-fg);font-weight:700}
+.pb-menu{position:fixed;inset:auto 0 0 0;margin:0 auto;width:min(520px,100%);max-width:100%;border:0;border-radius:26px 26px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#26384A,#1A2733);color:var(--text,#F2EDE1);box-shadow:0 -20px 50px rgba(0,0,0,.5);z-index:5300}
+:root.pb-light .pb-menu{background:#FBF8F1;color:#0F2019}
+.pb-menu::backdrop{background:rgba(5,10,16,.55)}
+.pb-menu-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 12px;font:800 20px var(--font-display);text-transform:uppercase}
+.pb-menu-x{min-height:44px;padding:0 6px;background:none;border:0;color:var(--pb-act);font:600 15px var(--font-body);cursor:pointer}
+.pb-menu-body{display:grid;gap:8px}
+.pb-menu-row{display:flex;align-items:center;min-height:52px;padding:0 16px;border-radius:14px;border:1px solid var(--pb-line);background:var(--pb-field);color:inherit;font:600 16px var(--font-body);text-decoration:none;text-align:left;cursor:pointer;touch-action:manipulation}
+.pb-menu-row[hidden]{display:none}
+.pb-menu-app{display:none}
+html.pb-app .pb-menu-app{display:flex}
+@media print{.pb-dock,.pb-menu,.pb-more-btn{display:none!important}body.pb-has-dock{padding-bottom:0!important}}
+
+/* ---- This week (playbook.html) ---- */
+.wk-card{position:relative;display:block;padding:18px;margin:0 0 12px;border:1px solid var(--pb-glass-border,var(--pb-line));border-radius:20px;background:var(--pb-raise-bg,var(--pb-card));box-shadow:var(--pb-raise-shadow,var(--pb-shadow))}
+.wk-card.game{border-top:2px solid var(--pb-act)}
+.wk-k{font:500 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
+.wk-card h2{margin:6px 0 2px;font:800 28px/1.05 var(--font-display);text-transform:uppercase}
+.wk-card.prac h2{font-size:22px}
+.wk-count{font:800 54px/1 var(--font-display);color:var(--pb-act);letter-spacing:.02em;margin:6px 0 2px}
+.wk-meta{color:var(--pb-muted);font-size:14px}
+.wk-act{display:flex;gap:10px;margin-top:14px}
+.wk-act .pb-btn{min-height:48px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.wk-act .pb-btn:first-child{flex:1}
+.wk-empty{text-align:center;padding:26px 18px}
+.wk-empty p{color:var(--pb-muted);margin:8px 0 16px}
+.wk-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+.wk-chip{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--pb-line);background:var(--pb-field);color:var(--pb-text);text-decoration:none;font:500 14px var(--font-body)}
+.ph-all{margin-top:18px}
+.ph-all>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:500 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
+@media(min-width:900px){.wk-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:start}.wk-card{margin-bottom:12px}}
+.pb-dock-item .ui-icon{width:22px;height:22px;display:block}
+.pb-menu .pb-menu-row{width:100%;margin:0;justify-content:flex-start;text-decoration:none}
+.pb-hero+.pb-hub{padding-top:0;border-top:0}
+.pb-hub>.pb-tabs.pb-nav{margin:6px 0 10px}
+.pb-place{display:flex;align-items:center;min-height:44px;font:500 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
