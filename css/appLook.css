@@ -493,3 +493,8 @@ html.al-on .eos-bottomnav-item:nth-child(4).active{--t:218,138,102}
 html.al-on .eos-bottomnav-item:nth-child(5).active{--t:168,159,198}
 html.al-on .eos-bottomnav-item.active{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 8px 20px rgba(var(--t,150,190,226),.45),inset 0 -3px 0 rgba(var(--t,150,190,226),.55)!important}
 }
+/* No raw words before the lockup is drawn; bigger, with the lines glowing */
+.eos-splash-lock:not(.sb-lock-ready){opacity:0}
+.eos-splash-lock{font-size:46px}
+.eos-splash-lock>svg{filter:drop-shadow(0 0 .3em rgba(200,216,230,.5))}
+@media(max-width:400px){.eos-splash-lock{font-size:38px}}

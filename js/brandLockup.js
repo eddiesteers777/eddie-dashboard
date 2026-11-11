@@ -7,13 +7,13 @@
 const LINES = ["#E6EEF5", "#C7D6E4", "#9FB2C3", "#D2AD62"];
 const DOT = "#D2AD62";
 const SVGNS = "http://www.w3.org/2000/svg";
-const L = 1.35;      // room left of the word for the lines (em)
+const L0 = 1.35;      // room left of the word for the lines (em)
 const GAP = 0.26;    // between word and sub line (em)
 const SUB = 0.58;    // sub line size (em)
 const SCALE = 100;   // viewBox units per em
 
 const CSS = `
-.sb-lock{position:relative;display:inline-block;padding-left:${L}em;font-size:20px;line-height:1;text-decoration:none;color:inherit;white-space:nowrap}
+.sb-lock{position:relative;display:inline-block;padding-left:${L0}em;font-size:20px;line-height:1;text-decoration:none;color:inherit;white-space:nowrap}
 .sb-lock-word{display:block;font-family:var(--font-brand,'Saira',sans-serif);font-weight:800;font-size:1em;line-height:1;letter-spacing:.02em;text-transform:uppercase;color:var(--cream,#F1EBDD)}
 .sb-lock-sub{display:block;margin-top:${GAP}em;font:700 ${SUB}em/1 var(--font-body,'Albert Sans',sans-serif);letter-spacing:.36em;text-transform:uppercase;color:var(--gold,#D2AD62)}
 .sb-lock>svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
@@ -41,6 +41,9 @@ function mk(tag, attrs) {
 export function drawLockup(el, { animate = false } = {}) {
     if (!el || el.querySelector(":scope > svg")) return;
     ensureStyle();
+    const bold = el.hasAttribute("data-bold");
+    const L = bold ? 2.1 : L0;
+    el.style.paddingLeft = L + "em";
     const word = el.querySelector(".sb-lock-word");
     const sub = el.querySelector(".sb-lock-sub");
     if (!word || !sub) return;
@@ -60,23 +63,35 @@ export function drawLockup(el, { animate = false } = {}) {
     const tx = L + sou;                         // x where the T starts
     const yb = 1 + GAP + SUB / 2;               // centre of the sub line
     const h = 1 + GAP + SUB;
-    const dotX = tx - 0.95, r = 0.075, sw = 0.15, step = 0.22;
+    const dotX = tx - 0.95, r = bold ? 0.12 : 0.075, sw = bold ? 0.25 : 0.15, step = bold ? 0.33 : 0.22;
     const u = v => +(v * SCALE).toFixed(1);
 
     const svg = mk("svg", { viewBox: `0 0 ${u(tx)} ${u(h)}`, width: tx * fs, height: h * fs, "aria-hidden": "true" });
     svg.style.width = tx + "em";
     svg.style.height = h + "em";
     LINES.forEach((c, i) => {
-        const y = 0.1 + i * step;
+        const y = (bold ? 0.14 : 0.1) + i * step;
         const d = `M${u(sw / 2)} ${u(y)} C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.3)} ${u(yb)} L${u(dotX - 0.1)} ${u(yb)}`;
         svg.appendChild(mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` }));
     });
     svg.appendChild(mk("circle", { cx: u(dotX), cy: u(yb), r: u(r * 1.15 + 0.03), fill: DOT }));
     el.insertBefore(svg, el.firstChild);
+    el.classList.add("sb-lock-ready");
     if (animate) el.classList.add("sb-lock-draw");
 }
 
 export function drawLockups(root = document, opts) {
-    const go = () => root.querySelectorAll(".sb-lock").forEach(el => drawLockup(el, opts));
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
+    const go = () => root.querySelectorAll(".sb-lock").forEach(el => {
+        try { drawLockup(el, opts); } catch (e) {}
+        el.classList.add("sb-lock-ready");
+    });
+    // Load the two faces first: fonts.ready can resolve before they were asked for,
+    // which drew the lines for fallback letters and showed raw text.
+    if (document.fonts && document.fonts.load) {
+        const wait = ms => new Promise(r => setTimeout(r, ms));
+        Promise.race([
+            Promise.all([document.fonts.load("800 20px Saira"), document.fonts.load("700 12px 'Albert Sans'")]),
+            wait(1500)
+        ]).then(go, go);
+    } else go();
 }

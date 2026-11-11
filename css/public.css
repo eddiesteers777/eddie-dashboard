@@ -1474,3 +1474,4 @@ html body a[href="start.html"].pub-nav-cta.active{ box-shadow:0 0 0 2px var(--bg
 /* Lockup: size comes from font-size on .sb-lock (js/brandLockup.js) */
 .pub-logo .sb-lock{font-size:21px;}
 @media(max-width:400px){.pub-logo .sb-lock{font-size:18px;}}
+.pub-logo .sb-lock:not(.sb-lock-ready){opacity:0}
