@@ -100,13 +100,13 @@ html{
 
 :root{
 
-    --bg:#0B1A14;
+    --bg:#17212B;
 
-    --surface:#12261D;
+    --surface:#1D2A36;
 
-    --surface-light:#183026;
+    --surface-light:#27394A;
 
-    --border:rgba(255,255,255,.08);
+    --border:rgba(214,228,240,.1);
 
     --text:#F2EDE1;
 
@@ -114,15 +114,15 @@ html{
 
     --muted:#9DAA99;
 
-    --primary:#D6B98E;
+    --primary:#C7D6E4;
 
-    --primary-light:#ECD6B0;
+    --primary-light:#E0E9F1;
 
-    --primary-dark:#A9895F;
+    --primary-dark:#8FA6BC;
 
     /* Southbound brand palette (from the brand board). --primary is
        the tan; text sitting on a tan fill uses --on-primary. */
-    --forest:#173226;
+    --forest:#213242;
 
     --sage:#A0BB9C;
 
@@ -130,7 +130,7 @@ html{
 
     --cream:#F2EDE1;
 
-    --on-primary:#0F2019;
+    --on-primary:#13202B;
 
     /* Muted status colors that sit well on forest: on target / good day
        (--good) and off target / rough day (--bad). Analytics, Readiness. */
@@ -1235,7 +1235,7 @@ section{
         bottom:0;
         z-index:1300;
         padding:6px 6px calc(6px + env(safe-area-inset-bottom));
-        background:rgba(15,32,25,.94);
+        background:rgba(22,34,46,.94);
         backdrop-filter:blur(20px);
         -webkit-backdrop-filter:blur(20px);
         border-top:1px solid rgba(255,255,255,.08);
@@ -2989,7 +2989,7 @@ body.has-bottomnav .sb-toast-host{ bottom:96px; }
     color:var(--text);
 }
 .sb-dialog::backdrop{
-    background:rgba(5,12,9,.66);
+    background:rgba(8,14,20,.66);
     backdrop-filter:blur(3px);
     -webkit-backdrop-filter:blur(3px);
 }
@@ -4146,7 +4146,7 @@ body.has-bottomnav.sb-net-on .sb-toast-host{ bottom:calc(142px + env(safe-area-i
        tone underneath, and stronger blur with a colour lift so what scrolls
        beneath shows through. The open tab is a lit glass lens. */
     .eos-bottomnav{
-        background:linear-gradient(180deg,rgba(104,140,120,.34) 0%,rgba(30,58,45,.5) 46%,rgba(12,28,21,.66) 100%);
+        background:linear-gradient(180deg,rgba(150,178,204,.34) 0%,rgba(52,78,104,.5) 46%,rgba(22,34,46,.7) 100%);
         backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
         -webkit-backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
         border:1px solid rgba(255,246,226,.24);
@@ -4377,14 +4377,14 @@ body.page-today .stats .stat-card:hover{ transform:none; box-shadow:none; border
 /* ---- The account sheet ---- */
 .sb-account{
     width:min(380px,calc(100vw - 32px));
-    background:linear-gradient(180deg,rgba(26,52,41,.92),rgba(11,26,20,.95));
-    border:1px solid rgba(236,230,212,.13);
+    background:linear-gradient(180deg,rgba(60,88,114,.94),rgba(20,30,42,.96));
+    border:1px solid rgba(214,228,240,.26);
     border-radius:28px;
-    box-shadow:inset 0 1px 0 rgba(255,244,222,.1),0 2px 8px rgba(0,0,0,.3),0 40px 90px -24px rgba(0,0,0,.8);
+    box-shadow:inset 0 1px 0 rgba(235,244,252,.28),0 2px 8px rgba(0,0,0,.3),0 40px 90px -24px rgba(0,0,0,.8);
     -webkit-backdrop-filter:blur(28px) saturate(1.7);
     backdrop-filter:blur(28px) saturate(1.7);
 }
-.sb-account::backdrop{ background:rgba(5,12,9,.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.sb-account::backdrop{ background:rgba(8,14,20,.6); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
 .sb-account [hidden]{ display:none !important; }
 .sb-account-body{ display:flex; flex-direction:column; gap:14px; padding:22px; }
 .sb-account-who{ display:flex; align-items:center; gap:14px; }
@@ -4392,7 +4392,7 @@ body.page-today .stats .stat-card:hover{ transform:none; box-shadow:none; border
     flex:0 0 60px;
     width:60px;
     height:60px;
-    border:1px solid rgba(236,230,212,.18);
+    border:1px solid rgba(214,228,240,.3);
     background:linear-gradient(180deg,var(--surface-light),var(--surface));
     box-shadow:inset 0 1px 0 rgba(255,244,222,.08),0 6px 14px -8px rgba(0,0,0,.6);
 }
@@ -4432,8 +4432,8 @@ body.page-today .stats .stat-card:hover{ transform:none; box-shadow:none; border
     padding:12px 18px;
     border:0;
     border-radius:14px;
-    background:linear-gradient(180deg,#E8CFA6,var(--primary));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 26px -12px rgba(214,185,142,.7);
+    background:linear-gradient(180deg,#DCE8F2,var(--primary));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 10px 26px -12px rgba(150,190,226,.6);
     color:var(--on-primary);
     font:650 16px/1 var(--font-body);
     cursor:pointer;
@@ -4655,7 +4655,7 @@ body.page-today #todayCard{ padding:20px 20px 10px; }
 .eos-navbar .account-btn:hover,
 .eos-mobile-topbar .eos-mobile-icon-btn:hover,
 .eos-mobile-topbar .account-btn:hover{
-    background:linear-gradient(180deg,rgba(104,140,120,.34) 0%,rgba(30,58,45,.5) 46%,rgba(12,28,21,.66) 100%);
+    background:linear-gradient(180deg,rgba(150,178,204,.34) 0%,rgba(52,78,104,.5) 46%,rgba(22,34,46,.7) 100%);
     -webkit-backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
     backdrop-filter:blur(28px) saturate(1.9) brightness(1.12);
     border:1px solid rgba(255,246,226,.24);
@@ -4976,7 +4976,7 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
     display:flex;gap:2px;
     position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:1150;
     width:min(560px,calc(100% - 24px));margin:0 auto 16px;padding:4px;
-    border-radius:999px;background:rgba(8,18,14,.9);border:1px solid rgba(255,255,255,.09);
+    border-radius:999px;background:rgba(22,34,46,.9);border:1px solid rgba(214,228,240,.16);
     box-shadow:inset 0 1px 2px rgba(0,0,0,.35),0 10px 24px rgba(0,0,0,.25);
     backdrop-filter:blur(18px) saturate(135%);-webkit-backdrop-filter:blur(18px) saturate(135%);
     overflow:visible;
@@ -4991,8 +4991,8 @@ html.sb-guest body.has-bottomnav{ padding-bottom:32px !important; }
   .eos-subnav-icon .ui-icon{width:15px;height:15px}
   .eos-subnav-label{overflow:hidden;text-overflow:ellipsis}
   .eos-subnav-link.active{
-    background:linear-gradient(180deg,#E8CFA6,var(--primary));color:var(--on-primary);
-    box-shadow:0 4px 14px rgba(214,185,142,.25);
+    background:linear-gradient(180deg,#DCE8F2,var(--primary));color:var(--on-primary);
+    box-shadow:0 4px 14px rgba(150,190,226,.3);
   }
   /* The top bar scrolls away on these pages; the tabs take its place at the top. */
   body:has(.eos-subnav) .eos-mobile-topbar{position:static}
