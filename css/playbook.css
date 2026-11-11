@@ -79,7 +79,7 @@
 .pb-shell option{background:var(--pb-card2);color:var(--pb-text)}
 .pb-row{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
 .pb-stage{display:flex;justify-content:center;min-width:0}
-#pitch{width:100%;max-width:560px;max-height:calc(100svh - 150px);aspect-ratio:68/105;border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none;background:#3C7A55;box-shadow:var(--pb-shadow)}
+#pitch{width:100%;max-width:560px;max-height:calc(100svh - 150px);aspect-ratio:68/105;border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none;background:#2A4A52;box-shadow:var(--pb-shadow)}
 #pitch.drawing{cursor:crosshair}
 .pl{cursor:grab}.pl:active{cursor:grabbing}
 .pl text{font:700 2.5px var(--font-body);pointer-events:none}
@@ -870,3 +870,12 @@ html.pb-app .pb-menu-app{display:flex}
 .pb-hero+.pb-hub{padding-top:0;border-top:0}
 .pb-hub>.pb-tabs.pb-nav{margin:6px 0 10px}
 .pb-place{display:flex;align-items:center;min-height:44px;font:500 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
+
+/* ---- Playbook v2 step 2: the pitch comes first on a phone; Library opens on skill tiles ---- */
+@media(max-width:899px){.pb-layout>.pb-stage{order:-1}}
+.dr-tiles{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dr-tile{display:grid;align-content:center;justify-items:start;gap:2px;min-height:92px;padding:14px 16px;border-radius:18px;border:1px solid var(--pb-glass-border,var(--pb-line));background:var(--pb-raise-bg,var(--pb-card));box-shadow:var(--pb-raise-shadow,var(--pb-shadow));color:var(--pb-text);font:600 15px var(--font-body);text-align:left;cursor:pointer;touch-action:manipulation}
+.dr-tile b{font:800 34px/1 var(--font-display);color:var(--pb-text)}
+.dr-back{grid-column:1/-1;justify-self:start;min-height:44px;padding:0 14px 0 10px;border-radius:12px;border:1px solid var(--pb-line);background:var(--pb-field);color:var(--pb-text);font:600 14px var(--font-body);cursor:pointer;touch-action:manipulation}
+.dr-tile:focus-visible,.dr-back:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
+@media(min-width:700px){.dr-tiles{grid-template-columns:repeat(3,1fr)}}

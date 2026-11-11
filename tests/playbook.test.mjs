@@ -377,3 +377,10 @@ test("roster quick add: commas, semicolons, lines and spreadsheet pastes", () =>
     assert.deepEqual(RO.parseBulk("Dee\t4\tMID").map(p => [p.name, p.num, p.pos]), [["Dee", 4, "MID"]]);
     assert.deepEqual(RO.parseBulk(" ,; \n\n"), []);
 });
+
+test("topicCounts lists the skills that have drills, in the skill list's order", async () => {
+    const { topicCounts } = await import("../js/playbook/drillModel.js");
+    const rows = topicCounts([{ topic: "Passing" }, { topic: "Warm-up" }, { topic: "Passing" }, { topic: "Mystery" }]);
+    assert.deepEqual(rows, [{ topic: "Warm-up", count: 1 }, { topic: "Passing", count: 2 }, { topic: "Mystery", count: 1 }]);
+    assert.deepEqual(topicCounts([]), []);
+});

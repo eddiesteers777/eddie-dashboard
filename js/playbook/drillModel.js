@@ -105,3 +105,10 @@ export function importDrills(list, incoming) {
     }
     return out;
 }
+
+// How many drills sit under each skill, in the skill list's order, skills with none left out (the Library tiles).
+export function topicCounts(drills) {
+    const n = new Map();
+    for (const d of drills) n.set(d.topic, (n.get(d.topic) || 0) + 1);
+    return [...TOPICS, ...[...n.keys()].filter(k => !TOPICS.includes(k))].filter(k => n.get(k)).map(k => ({ topic: k, count: n.get(k) }));
+}

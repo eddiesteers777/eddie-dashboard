@@ -49,6 +49,24 @@ function render() {
     [...tbox.children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === topic)));
     const grid = $("grid"); grid.replaceChildren();
     $("none").hidden = list.length > 0;
+    const none = $("none"), clr = $("clearF");
+    none.querySelector("p").textContent = drills.length ? "No drills match. Clear a filter or add your own." : "No drills yet. Add your own, or bring back the starter drills from More.";
+    clr.hidden = !drills.length;
+    // Library opens on skill tiles; a skill, a search or a filter shows the drills themselves.
+    const tiles = !topic && !$("q").value.trim() && !D_int() && !Number($("fMin").value);
+    tbox.hidden = tiles || !!topic;
+    if (tiles && drills.length) {
+        const box = h("div", "dr-tiles");
+        for (const { topic: name, count } of D.topicCounts(drills)) {
+            const b = h("button", "dr-tile"); b.type = "button"; b.append(h("b", "", String(count)), h("span", "", name));
+            b.onclick = () => { topic = name; render(); window.scrollTo({ top: 0 }); };
+            box.append(b);
+        }
+        grid.append(box);
+        renderTray();
+        return;
+    }
+    if (topic) { const back = h("button", "dr-back", "\u2039 Library"); back.type = "button"; back.onclick = () => { topic = ""; render(); }; grid.append(back); }
     const nFilt = (D_int() ? 1 : 0) + (Number($("fMin").value) ? 1 : 0);
     const fn = $("filtN"); fn.hidden = !nFilt; fn.textContent = nFilt;
     const bs = boards(), byTopic = new Map();

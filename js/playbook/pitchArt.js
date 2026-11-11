@@ -22,8 +22,8 @@ export function addDefs(e, svg, id = "pa") {
     };
     grad("vig", { cx: "50%", cy: "50%", r: "75%" }, [[".55", "#000", 0], [1, "#000", .34]]);
     grad("sheen", { x1: 0, y1: 0, x2: 0, y2: 1 }, [[0, "#fff", .09], [".5", "#fff", 0], [1, "#000", .12]]);
-    grad("home", { cx: "35%", cy: "28%", r: "85%" }, [[0, "#2C4A3A"], [1, C.home]]);
-    grad("away", { cx: "35%", cy: "28%", r: "85%" }, [[0, "#FFFFFF"], [1, "#D9D2BF"]]);
+    grad("home", { cx: "35%", cy: "28%", r: "85%" }, [[0, "#EBD39B"], [1, C.home]]);
+    grad("away", { cx: "35%", cy: "28%", r: "85%" }, [[0, "#D9EEFB"], [1, C.away]]);
     grad("ball", { cx: "36%", cy: "30%", r: "80%" }, [[0, "#FFFFFF"], [".7", "#F1EFEA"], [1, "#C9C6BE"]]);
     const net = e("pattern", { id: `${id}-net`, width: .7, height: .7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
     e("path", { d: "M0 0H.7M0 0V.7", stroke: "#fff", "stroke-width": .08, opacity: .55, fill: "none" }, net);
