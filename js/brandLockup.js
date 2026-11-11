@@ -10,18 +10,21 @@ const SVGNS = "http://www.w3.org/2000/svg";
 const L0 = 1.35;      // room left of the word for the lines (em)
 const GAP = 0.26;    // between word and sub line (em)
 const SUB = 0.58;    // sub line size (em)
-const SCALE = 100;   // viewBox units per em
+const SCALE = 100;
+const FLY = [[-7, -11], [-11, 9], [-3, -12], [-6, 11]];   // where each line starts (em from the lockup's top-left)   // viewBox units per em
 
 const CSS = `
 .sb-lock{position:relative;display:inline-block;padding-left:${L0}em;font-size:20px;line-height:1;text-decoration:none;color:inherit;white-space:nowrap}
 .sb-lock-word{display:block;font-family:var(--font-brand,'Saira',sans-serif);font-weight:800;font-size:1em;line-height:1;letter-spacing:.02em;text-transform:uppercase;color:var(--cream,#F1EBDD)}
 .sb-lock-sub{display:block;margin-top:${GAP}em;font:700 ${SUB}em/1 var(--font-body,'Albert Sans',sans-serif);letter-spacing:.36em;text-transform:uppercase;color:var(--gold,#D2AD62)}
 .sb-lock>svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
-.sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.3s calc(.2s + var(--i,0)*.5s) cubic-bezier(.3,.6,.3,1) forwards}
-.sb-lock-draw circle{opacity:0;animation:sb-lock-dot .4s 3.3s ease-out forwards}
+.sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.5s calc(.2s + var(--i,0)*.5s) cubic-bezier(.3,.6,.3,1) forwards}
+.sb-lock-draw circle{opacity:0;animation:sb-lock-dot .4s 3.7s ease-out forwards}
+.sb-lock-draw path.fly{stroke-dasharray:0 2;stroke-dashoffset:0;opacity:0;animation:sb-lock-fly 2.2s calc(.2s + var(--i,0)*.4s) cubic-bezier(.3,.5,.3,1) forwards}
+@keyframes sb-lock-fly{0%{opacity:0;stroke-dasharray:0 2;stroke-dashoffset:0}1%{opacity:1}60%{opacity:1;stroke-dasharray:1 2;stroke-dashoffset:0}100%{opacity:1;stroke-dasharray:calc(1 - var(--fr,0)) 2;stroke-dashoffset:calc(var(--fr,0) * -1)}}
 @keyframes sb-lock-draw{to{stroke-dashoffset:0}}
 @keyframes sb-lock-dot{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.sb-lock-draw path,.sb-lock-draw circle{animation:none;stroke-dashoffset:0;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sb-lock-draw path,.sb-lock-draw circle{animation:none;stroke-dashoffset:0;opacity:1}.sb-lock-draw path.fly{stroke-dasharray:calc(1 - var(--fr,0)) 2;stroke-dashoffset:calc(var(--fr,0) * -1)}}
 `;
 
 function ensureStyle() {
@@ -69,13 +72,29 @@ export function drawLockup(el, { animate = false } = {}) {
     const svg = mk("svg", { viewBox: `0 0 ${u(tx)} ${u(h)}`, width: tx * fs, height: h * fs, "aria-hidden": "true" });
     svg.style.width = tx + "em";
     svg.style.height = h + "em";
+    const pathsToFix = [];
     LINES.forEach((c, i) => {
         const y = (bold ? 0.14 : 0.1) + i * step;
-        const d = `M${u(sw / 2)} ${u(y)} C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.3)} ${u(yb)} L${u(dotX - 0.1)} ${u(yb)}`;
-        svg.appendChild(mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` }));
+        const fly = bold ? FLY[i] : null;   // splash: each line comes in from its own side
+        const lead = fly ? `M${u(fly[0])} ${u(fly[1])} C${u(fly[0])} ${u(y)} ${u(-1.2)} ${u(y)} ${u(sw / 2)} ${u(y)} ` : `M${u(sw / 2)} ${u(y)} `;
+        const rest = `C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.3)} ${u(yb)} L${u(dotX - 0.1)} ${u(yb)}`;
+        const path = mk("path", { d: lead + rest, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` });
+        if (fly) {
+            path.setAttribute("class", "fly");
+            // share of the whole line that is the flight in: it is erased after arrival
+            pathsToFix.push([path, `M${u(sw / 2)} ${u(y)} ` + rest]);
+        }
+        svg.appendChild(path);
     });
     svg.appendChild(mk("circle", { cx: u(dotX), cy: u(yb), r: u(r * 1.15 + 0.03), fill: DOT }));
     el.insertBefore(svg, el.firstChild);
+    pathsToFix.forEach(([path, restD]) => {
+        const probe2 = mk("path", { d: restD });
+        svg.appendChild(probe2);
+        const frac = 1 - probe2.getTotalLength() / path.getTotalLength();
+        probe2.remove();
+        path.style.setProperty("--fr", frac.toFixed(4));
+    });
     el.classList.add("sb-lock-ready");
     if (animate) el.classList.add("sb-lock-draw");
 }
