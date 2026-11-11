@@ -227,7 +227,9 @@ fetch("components/header.html")
                 // rule as above; the copy then matches, so no loop.
                 let plansChanged = false;
                 const { cachedRole } = await import("./role.js");
-                if (cachedRole() !== "coach") {
+                // The coach too: a plan they publish to themselves is addressed to their own account, and
+                // the check lists only plans addressed to this uid (nothing else comes down).
+                {
                     const { syncCoachPlans } = await import("./coachPlanSync.js");
                     plansChanged = (await syncCoachPlans()).changed;
                 }
