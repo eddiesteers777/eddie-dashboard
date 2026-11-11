@@ -41,14 +41,24 @@
 
         <section class="pub-hero pb-hero">
             <div class="pub-hero-kicker" data-app-text="Coach tools">Free tool</div>
-            <h1 data-app-text="Playbook">Southbound Playbook</h1>
+            <h1 data-app-text="This week">Southbound Playbook</h1>
             <p class="pb-pitch">Free soccer tools for coaches. No account needed.</p>
         </section>
 
         <section class="pub-section pb-hub">
-            <a class="pb-continue" id="continue" href="playbook-practice.html" hidden><span class="pb-continue-k">Continue</span><b id="contTitle"></b><small id="contMeta"></small><span class="ph-row-go" aria-hidden="true">&rsaquo;</span></a>
-            <div class="pb-glance" id="glance" aria-label="Your team at a glance" hidden></div>
-            <h2 class="ph-group">Plan</h2>
+            <nav class="pb-tabs" aria-label="Playbook tools"><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+            <div class="wk-grid">
+                <div id="wkCards" aria-live="polite"></div>
+                <div>
+                    <a class="pb-continue" id="continue" href="playbook-practice.html" hidden><span class="pb-continue-k">Continue</span><b id="contTitle"></b><small id="contMeta"></small><span class="ph-row-go" aria-hidden="true">&rsaquo;</span></a>
+                    <div class="pb-glance" id="glance" aria-label="Your team at a glance" hidden></div>
+                    <h2 class="ph-group">Quick tools</h2>
+                    <div class="wk-chips"><a class="wk-chip" href="playbook-board.html">Board</a><a class="wk-chip" href="playbook-drills.html">Drills</a><a class="wk-chip" href="playbook-practice.html">Practice</a><a class="wk-chip" href="playbook-season.html">Season</a><a class="wk-chip" href="playbook-roster.html">Roster</a><a class="wk-chip" href="playbook-game.html">Lineup</a><a class="wk-chip" href="playbook-team.html">Attendance</a><a class="wk-chip" href="playbook-fitness.html">Fitness</a><a class="wk-chip" href="playbook-conditioning.html">Conditioning</a></div>
+                </div>
+            </div>
+            <details class="ph-all" id="phAll">
+                <summary>What's in the Playbook</summary>
+                <h2 class="ph-group">Plan</h2>
             <div class="ph-list">
                 <a class="ph-row" href="playbook-board.html">
                     <span class="ph-row-ic" data-icon="target" aria-hidden="true"></span>
@@ -102,6 +112,8 @@
                     <span class="ph-row-go" aria-hidden="true">&rsaquo;</span>
                 </a>
             </div>
+        
+            </details>
         </section>
 
         <section class="pub-section pb-hub ph-foot">
