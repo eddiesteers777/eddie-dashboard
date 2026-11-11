@@ -32,6 +32,15 @@
         })();
     </script>
 
+    <style>
+        /* Launch splash basics live here, not in a stylesheet that loads later,
+           so nothing raw or green shows before the lockup is drawn. */
+        .eos-splash{background:#141d26!important}
+        .eos-splash::before{display:none!important}
+        .eos-splash .eos-splash-lock{position:relative;font-size:calc(min(100vw, 720px) * .108)}
+        .eos-splash .eos-splash-glow{width:min(72vw, 420px);height:min(72vw, 420px)}
+        .eos-splash .eos-splash-lock:not(.sb-lock-ready){opacity:0}
+    </style>
     <link rel="stylesheet"
           href="css/style.css">
 

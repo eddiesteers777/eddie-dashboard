@@ -21,13 +21,13 @@ const CSS = `
 .sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.5s calc(.2s + var(--i,0)*.5s) cubic-bezier(.3,.6,.3,1) forwards}
 .sb-lock-draw circle{transform-box:fill-box;transform-origin:center;opacity:0;animation:sb-lock-dot .55s 2.7s cubic-bezier(.2,.8,.3,1.4) forwards}
 .sb-lock-draw circle.ring{animation:sb-lock-ring 1s 2.7s ease-out forwards}
-.sb-lock-draw .sb-lock-word{animation:sb-lock-word .9s .25s ease-out both}
+.sb-lock-draw .sb-lock-word{animation:sb-lock-word .9s 1.5s ease-out both}
 .sb-lock-draw .sb-lock-sub{animation:sb-lock-sub .8s 2.75s ease-out both}
 .sb-lock-draw path.lead,.sb-lock-draw path.rest{stroke-dasharray:1 2;stroke-dashoffset:1;opacity:0;animation-duration:1.7s;animation-delay:calc(.15s + var(--i,0)*.3s);animation-fill-mode:forwards;animation-timing-function:cubic-bezier(.45,.05,.85,.5)}
 .sb-lock-draw path.lead{animation-name:sb-lock-lead}
 .sb-lock-draw path.rest{animation-name:sb-lock-rest}
-@keyframes sb-lock-lead{0%{opacity:0;stroke-dashoffset:1}1%{opacity:1}50%{opacity:1;stroke-dashoffset:0}100%{opacity:0;stroke-dashoffset:0}}
-@keyframes sb-lock-rest{0%,44%{opacity:0;stroke-dashoffset:1}45%{opacity:1}100%{opacity:1;stroke-dashoffset:0}}
+@keyframes sb-lock-lead{0%,3%{opacity:0;stroke-dashoffset:1}4%{opacity:1}50%{opacity:1;stroke-dashoffset:0}100%{opacity:0;stroke-dashoffset:0}}
+@keyframes sb-lock-rest{0%,45%{opacity:0;stroke-dashoffset:1}47%{opacity:1}100%{opacity:1;stroke-dashoffset:0}}
 @keyframes sb-lock-draw{to{stroke-dashoffset:0}}
 @keyframes sb-lock-dot{0%{opacity:0;transform:scale(.2)}55%{opacity:1;transform:scale(1.7)}100%{opacity:1;transform:scale(1)}}
 @keyframes sb-lock-ring{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(6)}}
@@ -55,7 +55,7 @@ export function drawLockup(el, { animate = false } = {}) {
     if (!el || el.querySelector(":scope > svg")) return;
     ensureStyle();
     const bold = el.hasAttribute("data-bold");
-    const L = bold ? 2.1 : L0;
+    const L = bold ? 1.8 : L0;
     el.style.paddingLeft = L + "em";
     const word = el.querySelector(".sb-lock-word");
     const sub = el.querySelector(".sb-lock-sub");
