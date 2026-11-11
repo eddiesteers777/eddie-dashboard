@@ -1,0 +1,508 @@
+/* ==========================================
+   Southbound — the plan screen (Running > My plan, and any plan page after it)
+
+   The Marathon page's design, for any plan the race plan generator makes.
+   Scoped to .ps-root so it never touches the rest of the page. The rules
+   were taken from css/marathon.css (the Indy page) and renamed from .mp-
+   to .ps-; the end of this file is what the new screen adds (key-session
+   marks, chips, blocks list, empty state). Panels use .ps-, never the
+   global .card.
+========================================== */
+
+.ps-root{ width:100%; max-width:980px; }
+.ps-root :where(*){ margin:0; padding:0; box-sizing:border-box; }
+.ps-root [hidden]{ display:none!important; }
+
+.ps-root .ps-hero{
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30,48,37,.96),
+            rgba(17,30,23,.95)
+        );
+    border:
+        1px solid var(--border);
+    border-radius:28px;
+    padding:40px;
+    margin-bottom:32px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(18px);
+    position:relative;
+    overflow:hidden;
+}
+.ps-root .ps-eyebrow{
+    display:inline-block;
+    padding:8px 16px;
+    border-radius:999px;
+    background:
+        rgba(201,173,132,.15);
+    color:var(--primary-light);
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    margin-bottom:18px;
+}
+.ps-root .ps-goal-label{
+    color:var(--muted);
+    text-transform:uppercase;
+    font-size:.72rem;
+    letter-spacing:.16em;
+}
+.ps-root .ps-goal-time{
+    margin-top:10px;
+    font-size:3rem;
+    font-weight:800;
+    color:white;
+}
+.ps-root .ps-countdown{
+    margin-top:12px;
+    color:var(--primary-light);
+    font-weight:600;
+}
+.ps-root .ps-display{
+    font-family:var(--font-body);
+}
+.ps-root .ps-mono{
+    font-family:var(--font-mono);
+}
+.ps-root .ps-chart-wrap{
+    background:
+        linear-gradient(
+            145deg,
+            rgba(24,40,31,.96),
+            rgba(17,30,23,.94)
+        );
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:30px;
+    margin-bottom:28px;
+    box-shadow:var(--shadow);
+}
+.ps-root .ps-chart-scroll{
+    overflow-x:auto;
+    padding-bottom:10px;
+}
+.ps-root .ps-bar{
+    cursor:pointer;
+    transition:
+        opacity .25s ease,
+        transform .25s ease;
+}
+.ps-root .ps-bar:hover{
+    opacity:.85;
+}
+.ps-root .ps-bar-selected{
+    stroke:white;
+    stroke-width:3;
+}
+.ps-root .ps-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+    font-size:.75rem;
+    color:var(--muted);
+}
+.ps-root .ps-legend span{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+.ps-root .ps-legend i{
+    width:10px;
+    height:10px;
+    border-radius:3px;
+}
+.ps-root .ps-detail{
+    background:
+        linear-gradient(
+            145deg,
+            rgba(24,40,31,.96),
+            rgba(17,30,23,.95)
+        );
+    border:1px solid var(--border);
+    border-radius:26px;
+    padding:36px;
+    box-shadow:var(--shadow);
+}
+.ps-root .ps-detail-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:30px;
+    flex-wrap:wrap;
+    margin-bottom:28px;
+}
+.ps-root .ps-phase-pill{
+    display:inline-block;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    margin-bottom:18px;
+}
+.ps-root .ps-week-title{
+    font-size:2.2rem;
+    font-weight:800;
+    margin-bottom:8px;
+}
+.ps-root .ps-week-dates{
+    color:var(--muted);
+    font-size:.95rem;
+}
+.ps-root .ps-days{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.ps-root .ps-day-row{
+    display:grid;
+    grid-template-columns:
+        36px
+        55px
+        1fr
+        90px
+        120px
+        110px
+        30px;
+    gap:18px;
+    align-items:center;
+    padding:24px 22px;
+    margin-bottom:12px;
+    border-radius:18px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.06);
+    transition:.25s;
+}
+.ps-root .ps-day-row:last-child{
+    border-bottom:none;
+}
+.ps-root .ps-day-row:hover{
+    background:rgba(255,255,255,.04);
+}
+.ps-root .ps-check{
+    width:24px;
+    height:24px;
+    border-radius:8px;
+    border:2px solid rgba(255,255,255,.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.2s;
+}
+.ps-root .ps-check:hover{
+    border-color:var(--primary);
+}
+.ps-root .ps-check.checked{
+    background:
+        linear-gradient(
+            135deg,
+            var(--primary),
+            var(--primary-dark)
+        );
+    border-color:transparent;
+    color:var(--on-primary);
+}
+.ps-root .ps-day-miles{
+    text-align:right;
+    font-weight:700;
+    font-size:1rem;
+}
+.ps-root .ps-day-timing{
+    color:var(--muted);
+    font-size:.82rem;
+}
+.ps-root .ps-pace-chip{
+    justify-self:center;
+    padding:8px 14px;
+    border-radius:999px;
+    background:
+        rgba(201,173,132,.12);
+    border:
+        1px solid rgba(201,173,132,.25);
+    color:var(--primary-light);
+    font-size:.72rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+.ps-root .ps-day-session-input,
+.ps-root .ps-day-miles-input{
+    background:
+        rgba(255,255,255,.05);
+    border:1px solid transparent;
+    color:white;
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:.92rem;
+    transition:.2s;
+}
+.ps-root .ps-day-session-input{
+    width:100%;
+}
+.ps-root .ps-day-miles-input{
+    width:60px;
+    text-align:right;
+}
+.ps-root .ps-day-session-input:hover,
+.ps-root .ps-day-miles-input:hover{
+    border-color:
+        rgba(201,173,132,.35);
+}
+.ps-root .ps-day-session-input:focus,
+.ps-root .ps-day-miles-input:focus{
+    outline:none;
+    border-color:var(--primary);
+    background:
+        rgba(201,173,132,.08);
+}
+@media (max-width:850px){
+.ps-root .ps-hero{
+        padding:28px;
+    }
+.ps-root .ps-detail{
+        padding:24px;
+    }
+.ps-root .ps-day-row{
+        grid-template-columns:
+            30px
+            45px
+            1fr;
+        gap:12px;
+    }
+.ps-root .ps-day-miles,
+.ps-root .ps-pace-chip,
+.ps-root .ps-day-timing{
+        grid-column:3;
+        justify-self:start;
+        text-align:left;
+    }
+}
+@media (max-width:600px){
+.ps-root .ps-goal-time{
+        font-size:2.3rem;
+    }
+.ps-root .ps-week-title{
+        font-size:1.8rem;
+    }
+}
+.ps-root .ps-coros-preview{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin:-6px 0 2px;
+    padding:9px 14px;
+    border:1px dashed rgba(201,173,132,.28);
+    border-radius:12px;
+    background:rgba(201,173,132,.05);
+    color:var(--muted);
+    font-size:.84rem;
+    line-height:1.45;
+}
+.ps-root .ps-coros-preview.has-warning{
+    border-color:color-mix(in srgb, var(--amber) 55%, transparent);
+}
+.ps-root .ps-coros-preview-icon svg{
+    width:17px;
+    height:17px;
+    margin-top:1px;
+    color:var(--primary);
+    flex-shrink:0;
+}
+.ps-root .ps-coros-preview-body{
+    min-width:0;
+    flex:1;
+}
+.ps-root .ps-coros-steps{
+    color:var(--text);
+}
+.ps-root .ps-coros-arrow{
+    color:var(--primary);
+}
+@media (max-width:850px){
+.ps-root .ps-days .ps-day-row{
+        grid-template-columns:30px minmax(0,1fr) auto auto;
+        grid-template-areas:
+            "check abbr miles toggle"
+            "session session session session"
+            "pace pace timing timing";
+        align-items:center;
+        gap:10px 10px;
+    }
+.ps-root .ps-days .ps-day-row > .ps-check{ grid-area:check; }
+.ps-root .ps-days .ps-day-row > .ps-day-miles{ grid-area:miles; justify-self:end; }
+.ps-root .ps-days .ps-day-row > .ps-day-session-input{ grid-area:session; width:100%; min-width:0; }
+.ps-root .ps-days .ps-day-row > .ps-pace-chip{ grid-area:pace; justify-self:start; }
+.ps-root .ps-days .ps-day-row > .ps-day-timing{ grid-area:timing; justify-self:end; text-align:right; white-space:normal; min-width:0; }
+.ps-root .ps-days .ps-day-row > *{ min-width:0; }
+}
+.ps-root.ps-root.ps-root .ps-hero,
+.ps-root.ps-root.ps-root .ps-detail,
+.ps-root.ps-root.ps-root .ps-chart-wrap{ animation:none; }
+.ps-root.ps-root.ps-root .ps-section-head{ display:flex; justify-content:space-between; align-items:baseline; margin:26px 0 10px; }
+.ps-root.ps-root.ps-root .ps-section-head h2{ margin:0; font:650 18px/1.25 var(--font-body); }
+.ps-root.ps-root.ps-root .ps-hint{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-hero{
+    position:relative;
+    margin:6px 0 0;
+    padding:20px 22px 18px;
+    border-radius:30px;
+    background:radial-gradient(120% 90% at 100% 0%, rgba(214,185,142,.16), transparent 60%), var(--sb-bubble-raised-bg);
+    border:1px solid var(--sb-bubble-raised-border);
+    box-shadow:var(--sb-bubble-raised-shadow);
+    overflow:hidden;
+    backdrop-filter:none;
+}
+.ps-root.ps-root.ps-root .ps-eyebrow{ display:block; padding:0; margin:0; background:none; border-radius:0; font:600 11.5px/1.4 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--primary-light, var(--primary)); }
+.ps-root.ps-root.ps-root .ps-hero-body{ position:relative; display:flex; align-items:center; gap:18px; margin-top:14px; }
+.ps-root.ps-root.ps-root .ps-ring{ flex:0 0 124px; width:124px; height:124px; }
+.ps-root.ps-root.ps-root .ps-ring-track{ fill:none; stroke:rgba(236,230,212,.09); stroke-width:8; }
+.ps-root.ps-root.ps-root .ps-ring-arc{ fill:none; stroke:var(--primary); stroke-width:8; stroke-linecap:round; transition:stroke-dasharray .6s ease; }
+.ps-root.ps-root.ps-root .ps-ring-center{ position:absolute; left:0; top:0; width:124px; height:124px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ps-root.ps-root.ps-root .ps-ring-center b{ font:900 42px/.9 var(--font-display); letter-spacing:.01em; color:var(--text); }
+.ps-root.ps-root.ps-root .ps-ring-center span{ margin-top:5px; font:600 11px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-hero-goal{ min-width:0; text-align:left; }
+.ps-root.ps-root.ps-root .ps-goal-label{ font:600 11.5px/1.3 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-goal-time{ margin-top:2px; font:800 clamp(44px, 12vw, 56px)/.95 var(--font-display); letter-spacing:.01em; color:var(--primary-light, var(--primary)); }
+.ps-root.ps-root.ps-root .ps-countdown{ margin-top:8px; font:600 11.5px/1.35 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text); }
+.ps-root.ps-root.ps-root .ps-hero-week{ margin-top:4px; font:600 11.5px/1.35 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-stat-line{ display:flex; flex-wrap:wrap; gap:4px 18px; margin-top:16px; padding-top:14px; border-top:1px solid var(--sb-hairline); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-stat-line b{ font-weight:600; color:var(--text); }
+.ps-root.ps-root.ps-root .ps-detail{ padding:0; background:none; border:0; border-radius:0; box-shadow:none; }
+.ps-root.ps-root.ps-root .ps-detail-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 8px; }
+.ps-root.ps-root.ps-root .ps-week-id{ flex:1; text-align:center; min-width:0; }
+.ps-root.ps-root.ps-root .ps-week-title{ margin:0; font:900 34px/.95 var(--font-display); letter-spacing:.01em; text-transform:uppercase; }
+.ps-root.ps-root.ps-root .ps-week-dates{ margin-top:2px; font:600 11.5px/1.3 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-week-step{ flex:0 0 44px; width:44px; height:44px; padding:0; border-radius:50%; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); box-shadow:var(--sb-glass-shadow); color:var(--text); font-size:16px; cursor:pointer; }
+.ps-root.ps-root.ps-root .ps-week-step:disabled{ opacity:.35; cursor:default; }
+.ps-root.ps-root.ps-root .ps-week-meta{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 12px; margin:0 0 14px; }
+.ps-root.ps-root.ps-root .ps-phase-pill{ margin:0; padding:3px 10px; font:600 11px/1.5 var(--font-mono); letter-spacing:.1em; }
+.ps-root.ps-root.ps-root .ps-week-total{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-week-total b{ font-weight:600; color:var(--primary-light, var(--primary)); }
+.ps-root.ps-root.ps-root .ps-pills{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; }
+.ps-root.ps-root.ps-root .ps-pill{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    min-height:64px; padding:8px 0 9px;
+    border-radius:16px;
+    background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); box-shadow:var(--sb-glass-shadow);
+    font:600 11px/1 var(--font-mono); letter-spacing:.06em; color:var(--text-secondary);
+    cursor:pointer;
+}
+.ps-root.ps-root.ps-root .ps-pill b{ font:800 21px/1 var(--font-display); letter-spacing:.01em; color:var(--text); }
+.ps-root.ps-root.ps-root .ps-pill i{ width:5px; height:5px; border-radius:50%; background:transparent; }
+.ps-root.ps-root.ps-root .ps-pill.done i{ background:var(--sage); }
+.ps-root.ps-root.ps-root .ps-pill.is-today:not(.on){ border-color:var(--primary); }
+.ps-root.ps-root.ps-root .ps-pill.on{ background:var(--sb-lens-bg); border-color:transparent; box-shadow:var(--sb-lens-shadow); color:var(--on-primary); }
+.ps-root.ps-root.ps-root .ps-pill.on b{ color:var(--on-primary); }
+.ps-root.ps-root.ps-root .ps-pill.on.done i{ background:var(--on-primary); opacity:.55; }
+.ps-root.ps-root.ps-root .ps-days{ display:block; gap:0; margin-top:12px; border:0; }
+.ps-root.ps-root.ps-root .ps-day-group{ display:none; padding:18px 20px 14px; border-radius:26px; background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.ps-root.ps-root.ps-root .ps-day-group.is-sel{ display:block; }
+.ps-root.ps-root.ps-root .ps-day-row{ display:grid; grid-template-columns:minmax(0, 1fr) auto; grid-template-areas:"kick kick" "title miles" "chips chips"; align-items:end; gap:8px 12px; margin:0; padding:0; background:none; border:0; border-radius:0; }
+.ps-root.ps-root.ps-root .ps-day-row:hover{ background:none; }
+.ps-root.ps-root.ps-root .ps-day-row:last-child{ border:0; }
+.ps-root.ps-root.ps-root .ps-day-kicker{ grid-area:kick; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-day-session-input{ grid-area:title; width:100%; min-height:48px; padding:0 14px; border-radius:16px; font-size:16px; }
+.ps-root.ps-root.ps-root .ps-day-miles{ grid-area:miles; display:flex; align-items:center; gap:6px; }
+.ps-root.ps-root.ps-root .ps-day-miles span{ font-size:12px; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-day-chips{ grid-area:chips; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.ps-root.ps-root.ps-root .ps-day-row.race .ps-day-kicker{ color:var(--primary-light, var(--primary)); }
+.ps-root.ps-root.ps-root .ps-pace-chip,
+.ps-root.ps-root.ps-root .ps-day-timing{ display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-day-actions{ display:flex; gap:8px; margin-top:14px; }
+.ps-root.ps-root.ps-root .ps-check{
+    flex:1 1 auto; width:auto; height:auto; min-height:48px; padding:0 22px; margin:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:0; border-radius:999px;
+    background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow);
+    color:var(--on-primary); font:700 15px/1 var(--font-body); cursor:pointer;
+}
+.ps-root.ps-root.ps-root .ps-check::after{ display:none; }
+.ps-root.ps-root.ps-root .ps-check.checked{ background:var(--sage); box-shadow:none; }
+.ps-root.ps-root.ps-root .ps-coros-preview{ margin:14px 0 0; padding:10px 14px; border-radius:14px; border-color:rgba(214,185,142,.28); font-size:13.5px; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-day-session-input,
+.ps-root.ps-root.ps-root .ps-day-miles-input{
+    min-height:44px;
+    border-radius:14px;
+    background:var(--sb-inset-bg);
+    border:1px solid var(--sb-inset-border);
+    box-shadow:var(--sb-inset-shadow);
+    color:var(--text);
+    font-size:16px;
+}
+.ps-root.ps-root.ps-root .ps-day-miles-input{ width:76px; min-height:48px; padding:0 12px; font:800 24px/1 var(--font-display); text-align:right; }
+.ps-root.ps-root.ps-root .ps-day-session-input:focus,
+.ps-root.ps-root.ps-root .ps-day-miles-input:focus{ border-color:rgba(214,185,142,.6); background:var(--sb-inset-bg); }
+.ps-root.ps-root.ps-root .ps-chart-wrap{ margin:0; padding:16px 16px 12px; border-radius:26px; background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); }
+.ps-root.ps-root.ps-root .ps-chart-scroll{ overflow:visible; padding:0; }
+.ps-root.ps-root.ps-root .ps-bar{ cursor:pointer; }
+.ps-root.ps-root.ps-root .ps-bar-selected{ stroke:var(--primary-light, var(--primary)); stroke-width:1.5; }
+.ps-root.ps-root.ps-root .ps-legend{ display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font:600 11px/1.4 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-legend span{ display:flex; align-items:center; gap:6px; }
+.ps-root.ps-root.ps-root .ps-legend i{ width:9px; height:9px; border-radius:2px; }
+.ps-root.ps-root.ps-root .ps-fold-list{ margin-top:14px; padding:2px 18px; border-radius:26px; background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); }
+.ps-root.ps-root.ps-root > .ps-fold-list{ margin-top:26px; }
+.ps-root.ps-root.ps-root .ps-fold{ border-top:1px solid var(--sb-hairline); }
+.ps-root.ps-root.ps-root .ps-fold:first-child{ border-top:0; }
+.ps-root.ps-root.ps-root .ps-fold > summary{ display:flex; align-items:center; justify-content:space-between; min-height:56px; font:650 15.5px var(--font-body); cursor:pointer; list-style:none; }
+.ps-root.ps-root.ps-root .ps-fold > summary::-webkit-details-marker{ display:none; }
+.ps-root.ps-root.ps-root .ps-fold > summary::after{ content:""; width:9px; height:9px; margin:0 4px 3px 0; border-right:2px solid var(--text-secondary); border-bottom:2px solid var(--text-secondary); transform:rotate(45deg); transition:transform .15s; }
+.ps-root.ps-root.ps-root .ps-fold[open] > summary::after{ transform:rotate(-135deg); margin-top:6px; }
+@media (max-width:420px){
+.ps-root.ps-root.ps-root .ps-hero-body{ gap:14px; }
+.ps-root.ps-root.ps-root .ps-ring,
+.ps-root.ps-root.ps-root .ps-ring-center{ flex-basis:108px; width:108px; height:108px; }
+.ps-root.ps-root.ps-root .ps-day-group{ padding:16px 16px 12px; }
+}
+.ps-root.ps-root.ps-root .ps-pill{ user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; transition:transform .12s ease, box-shadow .12s ease; }
+@media (prefers-reduced-motion:reduce){
+.ps-root.ps-root.ps-root .ps-pill{ transition:none; }
+}
+/* ---- added for the plan screen ---- */
+.ps-root.ps-root.ps-root .ps-switch{ display:inline-flex; align-items:center; min-height:44px; }
+.ps-root.ps-root.ps-root .ps-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.ps-root.ps-root.ps-root .ps-chip{ font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:5px 9px; border-radius:999px; border:1px solid color-mix(in srgb,var(--text) 22%,transparent); color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-chip.is-gold{ border-color:color-mix(in srgb,var(--gold,#d4aa62) 60%,transparent); color:var(--gold,#d4aa62); }
+.ps-root.ps-root.ps-root .ps-pill.ps-key{ border-top:3px solid var(--gold,#d4aa62); }
+.ps-root.ps-root.ps-root .ps-pill.is-off{ opacity:.6; }
+.ps-root.ps-root.ps-root .ps-keyline{ font-size:13px; color:var(--text-secondary); margin:8px 2px 0; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+.ps-root.ps-root.ps-root .ps-keyline i{ display:inline-block; width:14px; height:3px; background:var(--gold,#d4aa62); border-radius:2px; margin-right:6px; vertical-align:middle; }
+.ps-root.ps-root.ps-root .ps-why{ margin:10px 0 0; font-size:14px; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-why b{ color:var(--text); font-weight:600; }
+.ps-root.ps-root.ps-root .ps-plain{ margin:0; font-size:14px; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-blocks{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+.ps-root.ps-root.ps-root .ps-blocks li{ display:grid; grid-template-columns:12px 1fr auto; gap:10px; align-items:flex-start; padding:10px 0; border-top:1px solid color-mix(in srgb,var(--text) 10%,transparent); font-size:14px; }
+.ps-root.ps-root.ps-root .ps-blocks li:first-child{ border-top:0; }
+.ps-root.ps-root.ps-root .ps-blocks li i{ width:10px; height:10px; border-radius:3px; margin-top:5px; }
+.ps-root.ps-root.ps-root .ps-blocks li strong{ display:block; }
+.ps-root.ps-root.ps-root .ps-blocks li em{ font-style:normal; color:var(--text-secondary); font-size:13px; }
+.ps-root.ps-root.ps-root .ps-blocks li span{ font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); white-space:nowrap; padding-top:2px; }
+.ps-root.ps-root.ps-root .ps-blocks li.is-now strong{ color:var(--primary-light,var(--primary)); }
+.ps-root.ps-root.ps-root .ps-actions{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0; }
+.ps-root.ps-root.ps-root .ps-legend-extra{ display:flex; gap:14px; flex-wrap:wrap; font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); margin-top:8px; }
+.ps-root.ps-root.ps-root .ps-legend-extra b{ color:#ECD6B0; font-weight:400; margin-right:5px; }
+.ps-root.ps-root.ps-root .ps-fine{ margin:14px 0 0; font-size:13px; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-paces{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px 16px; padding:6px 2px 10px; font-size:14px; }
+.ps-root.ps-root.ps-root .ps-paces div{ display:flex; justify-content:space-between; gap:10px; border-top:1px solid color-mix(in srgb,var(--text) 10%,transparent); padding:6px 0; }
+.ps-root.ps-root.ps-root .ps-paces span{ color:var(--text-secondary); text-transform:capitalize; }
+.ps-root.ps-root.ps-root .ps-fold-body{ padding:4px 2px 12px; font-size:14px; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-fold-body p + p{ margin-top:8px; }
+.ps-root.ps-root.ps-root .ps-empty{ text-align:center; padding:8px 0 4px; }
+.ps-root.ps-root.ps-root .ps-empty h2{ margin:14px 0 6px; font-size:22px; }
+.ps-root.ps-root.ps-root .ps-empty p{ margin:0 auto 16px; max-width:44ch; color:var(--text-secondary); }
+.ps-root.ps-root.ps-root .ps-empty .ps-fine{ margin:14px auto 0; }
+.ps-root.ps-root.ps-root .ps-ghost{ display:flex; align-items:flex-end; gap:4px; height:76px; opacity:.28; }
+.ps-root.ps-root.ps-root .ps-ghost i{ flex:1; border-radius:4px 4px 0 0; background:var(--primary); }
+.ps-root.ps-root.ps-root .ps-bar{ cursor:pointer; }
+.ps-root.ps-root.ps-root .ps-bar:focus-visible rect:nth-of-type(2){ stroke:var(--primary); stroke-width:2; }
+.ps-root.ps-root.ps-root .ps-pill:focus-visible,.ps-root .ps-week-step:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+
+/* Text floor and tap areas (the same 12px rule the Marathon page gets in css/appLook.css). */
+html.al-on .ps-root .ps-eyebrow,html.al-on .ps-root .ps-goal-label,html.al-on .ps-root .ps-countdown,html.al-on .ps-root .ps-hero-week,html.al-on .ps-root .ps-hint,
+html.al-on .ps-root .ps-week-dates,html.al-on .ps-root .ps-phase-pill,html.al-on .ps-root .ps-day-kicker,html.al-on .ps-root .ps-pace-chip,html.al-on .ps-root .ps-day-timing,
+html.al-on .ps-root .ps-ring-center > span,html.al-on .ps-root .ps-pill > span,html.al-on .ps-root .ps-legend > span{ font-size:12px!important; }
+html.al-on .ps-root .ps-bar text{ font-size:11px; }
+.ps-root.ps-root.ps-root .sb-btn{ padding:0 18px; min-height:44px; }
