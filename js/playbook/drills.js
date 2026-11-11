@@ -3,6 +3,8 @@ import * as D from "./drillModel.js";
 import { SEED_DRILLS } from "./drillSeed.js";
 import { loadLibrary } from "./boardLibrary.js";
 import { boardThumb } from "./boardThumb.js";
+import { diagramFor } from "./drillDiagramData.js";
+import { diagramPanel } from "./drillDiagram.js";
 import { isSignedIn, isCoachUser } from "./cloud.js";
 import * as HW from "./drillHomework.js";
 import { addDays } from "../homeworkModel.js";
@@ -133,7 +135,8 @@ function showDetail(id) {
     meta.append(h("span", "dr-int " + d.intensity, d.intensity));
     dlg.append(meta);
     const board = d.boardId && boards().find(b => b.id === d.boardId);
-    const cols = h("div", "dr-cols" + (board ? " has-pic" : ""));
+    const dia = board ? null : diagramFor(d);
+    const cols = h("div", "dr-cols" + (board || dia ? " has-pic" : ""));
     const left = h("div");
     if (d.equipment.length) left.append(section("Equipment", d.equipment.join(", ")));
     if (d.setup) left.append(section("Setup", d.setup));
@@ -143,6 +146,7 @@ function showDetail(id) {
     if (d.easier.length) left.append(section("Make it easier", d.easier));
     cols.append(left);
     if (board) { const pic = h("div", "dr-sec"); pic.append(h("h3", "", "Diagram"), boardThumb(board.board)); cols.append(pic); }
+    if (dia) { const pic = h("div", "dr-sec dr-dia"); pic.append(h("h3", "", "Diagram"), diagramPanel(dia, d.name)); cols.prepend(pic); }
     dlg.append(cols);
     const act = h("div", "dr-detail-actions");
     const btn = (label, cls, fn) => { const b = h("button", "pb-btn " + cls, label); b.type = "button"; b.onclick = () => fn(b); act.append(b); return b; };

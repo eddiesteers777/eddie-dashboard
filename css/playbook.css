@@ -940,3 +940,33 @@ body.pb-live-on .pb-dock-item .ui-icon{width:20px;height:20px}
 .vw-pos{font:500 11px var(--font-mono);letter-spacing:.1em;color:var(--pb-quiet);padding-top:4px}
 .vw-bench{margin:10px 0 0;color:var(--pb-muted);font-size:14px}
 @media print{.vw-seg{display:none}.vw-panel[hidden]{display:block!important}.vw-acts{display:none}.vw-card{box-shadow:none;border-color:#bbb}}
+
+/* Drill diagrams: picture, legend, Step 1/2/3 player. Print shows one picture and every step. */
+.dd-svg{width:100%;height:auto;display:block;border-radius:10px;aspect-ratio:100/70}
+.dd-pitch{fill:#2A4A52}.dd-line{stroke:rgba(255,255,255,.14);stroke-width:.5}
+.dd-zone{fill:rgba(255,255,255,.05);stroke:rgba(255,255,255,.28);stroke-width:.4;stroke-dasharray:1 1}
+.dd-goal{fill:rgba(255,255,255,.22)}
+.dd-label{font:500 3.2px var(--font-mono);fill:rgba(255,255,255,.5)}
+.dd-cone{fill:#D9895C;stroke:rgba(0,0,0,.35);stroke-width:.3}
+.dd-p{stroke:rgba(0,0,0,.5);stroke-width:.4}
+.dd-a{fill:#D2AD62}.dd-d{fill:#8FC3E8}.dd-k{fill:#9DBF9A}.dd-n{fill:#EFE8DA}
+.dd-num{font:700 3px var(--font-body);fill:#1b1b1b}
+.dd-ball{fill:#fff;stroke:#222;stroke-width:.4}
+.dd-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 0;font-size:13px;color:var(--pb-muted)}
+.dd-legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.dd-legend i.dd-a{background:#D2AD62}.dd-legend i.dd-d{background:#8FC3E8}.dd-legend i.dd-k{background:#9DBF9A}.dd-legend i.dd-n{background:#EFE8DA}
+.dd-legend i.dd-cone-i{background:#D9895C;border-radius:2px}
+.dd-steps{display:flex;gap:6px;margin:10px 0 0}
+.dd-step{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--pb-line);background:var(--pb-field);color:var(--pb-text);font:600 14px var(--font-body);cursor:pointer}
+.dd-step.on{background:var(--pb-sel-bg);color:var(--pb-sel-fg);border-color:transparent}
+.dd-cap{margin:10px 0 0;min-height:44px;font-size:15px}
+.dd-print{display:none}
+.dr-dia{min-width:0}
+@media(min-width:620px){.dr-cols.has-pic{grid-template-columns:1fr 300px}.dr-dia{order:2}}
+@media print{
+  .dd-live{display:none}
+  .dd-print{display:block;margin-top:6px}
+  .dd-list{margin:8px 0 0;padding-left:20px}
+  .dd-svg{-webkit-print-color-adjust:exact;print-color-adjust:exact;max-width:100%}
+  .dd-legend{display:none}
+}
