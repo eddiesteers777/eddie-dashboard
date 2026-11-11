@@ -93,6 +93,7 @@
     "js/barcodeScanner.js",
     "js/bodyModel.js",
     "js/bodyView.js",
+    "js/brandLockup.js",
     "js/calendarButton.js",
     "js/calendarExport.js",
     "js/celebrate.js",

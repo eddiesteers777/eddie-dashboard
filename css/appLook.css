@@ -463,3 +463,7 @@ html.al-on .rd-form-foot .sb-btn{border-radius:14px;min-height:54px;box-shadow:0
 html.al-on .rd-field textarea,html.al-on .rd-field input[type=text]{background:rgba(255,255,255,.05)!important;border:1px solid rgba(214,228,240,.2)!important;border-radius:12px!important;color:var(--text)!important;padding:12px 14px!important;font:inherit!important}
 html.al-on .rd-amount .rd-wbar i{background:#9CC0E4}
 html.al-on .rd-wpreset.is-on,html.al-on .rd-amount[data-amount] .rd-wpreset.is-on{border-color:#C7D6E4!important;background:rgba(199,214,228,.2)!important}
+
+/* Launch splash: the lockup (js/brandLockup.js) replaces the tile + wordmark */
+.eos-splash-lock{position:relative;font-size:34px}
+@media(max-width:400px){.eos-splash-lock{font-size:30px}}
