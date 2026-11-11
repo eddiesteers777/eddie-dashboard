@@ -506,3 +506,9 @@ html.al-on .ps-root .ps-week-dates,html.al-on .ps-root .ps-phase-pill,html.al-on
 html.al-on .ps-root .ps-ring-center > span,html.al-on .ps-root .ps-pill > span,html.al-on .ps-root .ps-legend > span{ font-size:12px!important; }
 html.al-on .ps-root .ps-bar text{ font-size:11px; }
 .ps-root.ps-root.ps-root .sb-btn{ padding:0 18px; min-height:44px; }
+.ps-root.ps-root.ps-root .ps-coros-send{ display:inline-flex; align-items:center; gap:6px; margin-top:10px; min-height:44px; padding:6px 16px; border-radius:999px; background:var(--sb-glass-bg); border:1px solid var(--sb-glass-border); box-shadow:var(--sb-glass-shadow); color:var(--text); font:650 13.5px var(--font-body); cursor:pointer; }
+.ps-root.ps-root.ps-root .ps-coros-send:disabled{ opacity:.6; cursor:default; }
+.ps-root.ps-root.ps-root .ps-coros-send svg{ width:14px; height:14px; }
+.ps-root.ps-root.ps-root .ps-send-week{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; margin-top:10px; }
+.ps-root.ps-root.ps-root .ps-send-week .ps-coros-send{ margin-top:0; }
+.ps-root.ps-root.ps-root .ps-send-week span{ font-size:13px; color:var(--text-secondary); }
