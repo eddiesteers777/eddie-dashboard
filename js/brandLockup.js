@@ -11,7 +11,14 @@ const L0 = 1.35;      // room left of the word for the lines (em)
 const GAP = 0.26;    // between word and sub line (em)
 const SUB = 0.58;    // sub line size (em)
 const SCALE = 100;
-const FLY = [[-7, -11], [-11, 9], [-3, -12], [-6, 11]];   // where each line starts (em from the lockup's top-left)   // viewBox units per em
+// How each line swoops in (em from the lockup's top-left): start x,y; two control points; a midpoint;
+// then the last control point relative to the line's start. Order: top, left, right, bottom.
+const FLY = [
+    [0.8, -14, 7, -10, -7, -6, -2.5, -2.2, -1.2, -0.6],
+    [-16, 0.6, -11, -4, -7, 5, -3.5, 1.4, -1.8, -0.6],
+    [16, 3.2, 11, 7.5, 6, 0.5, 1.2, 3.4, -1.8, 1.4],
+    [1.5, 14, -5, 10, 7, 7, 0.4, 4.4, -2, 2]
+];
 
 const CSS = `
 .sb-lock{position:relative;display:inline-block;padding-left:${L0}em;font-size:20px;line-height:1;text-decoration:none;color:inherit;white-space:nowrap}
@@ -21,13 +28,13 @@ const CSS = `
 .sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.5s calc(.2s + var(--i,0)*.5s) cubic-bezier(.3,.6,.3,1) forwards}
 .sb-lock-draw circle{transform-box:fill-box;transform-origin:center;opacity:0;animation:sb-lock-dot .55s 2.7s cubic-bezier(.2,.8,.3,1.4) forwards}
 .sb-lock-draw circle.ring{animation:sb-lock-ring 1s 2.7s ease-out forwards}
-.sb-lock-draw .sb-lock-word{animation:sb-lock-word .9s .25s ease-out both}
+.sb-lock-draw .sb-lock-word{animation:sb-lock-word .9s 1.5s ease-out both}
 .sb-lock-draw .sb-lock-sub{animation:sb-lock-sub .8s 2.75s ease-out both}
 .sb-lock-draw path.lead,.sb-lock-draw path.rest{stroke-dasharray:1 2;stroke-dashoffset:1;opacity:0;animation-duration:1.7s;animation-delay:calc(.15s + var(--i,0)*.3s);animation-fill-mode:forwards;animation-timing-function:cubic-bezier(.45,.05,.85,.5)}
 .sb-lock-draw path.lead{animation-name:sb-lock-lead}
 .sb-lock-draw path.rest{animation-name:sb-lock-rest}
-@keyframes sb-lock-lead{0%{opacity:0;stroke-dashoffset:1}1%{opacity:1}50%{opacity:1;stroke-dashoffset:0}100%{opacity:0;stroke-dashoffset:0}}
-@keyframes sb-lock-rest{0%,44%{opacity:0;stroke-dashoffset:1}45%{opacity:1}100%{opacity:1;stroke-dashoffset:0}}
+@keyframes sb-lock-lead{0%,3%{opacity:0;stroke-dashoffset:1}4%{opacity:1}50%{opacity:1;stroke-dashoffset:0}100%{opacity:0;stroke-dashoffset:0}}
+@keyframes sb-lock-rest{0%,45%{opacity:0;stroke-dashoffset:1}47%{opacity:1}100%{opacity:1;stroke-dashoffset:0}}
 @keyframes sb-lock-draw{to{stroke-dashoffset:0}}
 @keyframes sb-lock-dot{0%{opacity:0;transform:scale(.2)}55%{opacity:1;transform:scale(1.7)}100%{opacity:1;transform:scale(1)}}
 @keyframes sb-lock-ring{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(6)}}
@@ -55,7 +62,7 @@ export function drawLockup(el, { animate = false } = {}) {
     if (!el || el.querySelector(":scope > svg")) return;
     ensureStyle();
     const bold = el.hasAttribute("data-bold");
-    const L = bold ? 2.1 : L0;
+    const L = bold ? 1.8 : L0;
     el.style.paddingLeft = L + "em";
     const word = el.querySelector(".sb-lock-word");
     const sub = el.querySelector(".sb-lock-sub");
@@ -89,7 +96,7 @@ export function drawLockup(el, { animate = false } = {}) {
         const line = d => mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` });
         if (fly) {
             // splash: the flight in (lead) fades away once the line has arrived; the rest stays
-            const lead = line(`M${u(fly[0])} ${u(fly[1])} C${u(fly[0])} ${u(y)} ${u(-1.2)} ${u(y)} ${u(sw / 2)} ${u(y)}`);
+            const lead = line(`M${u(fly[0])} ${u(fly[1])} C${u(fly[2])} ${u(fly[3])} ${u(fly[4])} ${u(fly[5])} ${u(fly[6])} ${u(fly[7])} S${u(sw / 2 + fly[8])} ${u(y + fly[9])} ${u(sw / 2)} ${u(y)}`);
             lead.setAttribute("class", "lead");
             const tail = line(`M${u(sw / 2)} ${u(y)} ` + rest);
             tail.setAttribute("class", "rest");
