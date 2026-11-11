@@ -22,6 +22,8 @@ fetch("components/publicHeader.html")
             if (link.dataset.page === page) link.classList.add("active");
         });
 
+        import("./brandLockup.js").then(m => m.drawLockups(mount)).catch(() => {});
+
         // The partial lands after icons.js's own load-time pass.
         import("./icons.js").then(m => m.hydrate()).catch(() => {});
 

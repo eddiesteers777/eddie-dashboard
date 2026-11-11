@@ -464,6 +464,9 @@ html.al-on .rd-field textarea,html.al-on .rd-field input[type=text]{background:r
 html.al-on .rd-amount .rd-wbar i{background:#9CC0E4}
 html.al-on .rd-wpreset.is-on,html.al-on .rd-amount[data-amount] .rd-wpreset.is-on{border-color:#C7D6E4!important;background:rgba(199,214,228,.2)!important}
 
+/* Launch splash: the lockup (js/brandLockup.js) replaces the tile + wordmark */
+.eos-splash-lock{position:relative;font-size:34px}
+@media(max-width:400px){.eos-splash-lock{font-size:30px}}
 /* Bars and round buttons: blue glass, with a faint section colour under the selected tab (Eddie 2026-11-11, option B) */
 @media (max-width:900px){
 html.al-on .eos-subnav{background:linear-gradient(180deg,rgba(64,92,118,.8),rgba(22,34,46,.86))!important;border:1px solid rgba(214,228,240,.28)!important;box-shadow:inset 0 1px 0 rgba(235,244,252,.28),0 12px 28px rgba(0,0,0,.4)!important}

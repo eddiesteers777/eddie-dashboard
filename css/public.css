@@ -1470,3 +1470,7 @@ html body a[href="start.html"].pub-nav-cta.active{ box-shadow:0 0 0 2px var(--bg
 .pub-contact-where{ text-align:center; color:var(--text-secondary); font-size:15px; line-height:1.5; margin:0 auto 20px; max-width:46ch; }
 .pub-contact-where strong{ color:var(--text); font-weight:600; }
 .sbh-svc-where{ margin:0 0 18px; padding:0 16px; max-width:56ch; color:var(--text-secondary); font-size:15px; line-height:1.5; }
+
+/* Lockup: size comes from font-size on .sb-lock (js/brandLockup.js) */
+.pub-logo .sb-lock{font-size:21px;}
+@media(max-width:400px){.pub-logo .sb-lock{font-size:18px;}}

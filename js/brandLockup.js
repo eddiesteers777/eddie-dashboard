@@ -1,0 +1,82 @@
+/* Southbound lockup: four lines flow under the word SOUTHBOUND and merge into
+   a dot just before COACHING, which starts under the T. Everything is sized
+   in em from the font size of the .sb-lock element, so it scales with it.
+   Usage: <span class="sb-lock" style="font-size:21px"><span class="sb-lock-word">Southbound</span>
+   <span class="sb-lock-sub">Coaching</span></span>, then call drawLockups(). */
+
+const LINES = ["#E6EEF5", "#C7D6E4", "#9FB2C3", "#D2AD62"];
+const DOT = "#D2AD62";
+const SVGNS = "http://www.w3.org/2000/svg";
+const L = 1.35;      // room left of the word for the lines (em)
+const GAP = 0.26;    // between word and sub line (em)
+const SUB = 0.58;    // sub line size (em)
+const SCALE = 100;   // viewBox units per em
+
+const CSS = `
+.sb-lock{position:relative;display:inline-block;padding-left:${L}em;font-size:20px;line-height:1;text-decoration:none;color:inherit;white-space:nowrap}
+.sb-lock-word{display:block;font-family:var(--font-brand,'Saira',sans-serif);font-weight:800;font-size:1em;line-height:1;letter-spacing:.02em;text-transform:uppercase;color:var(--cream,#F1EBDD)}
+.sb-lock-sub{display:block;margin-top:${GAP}em;font:700 ${SUB}em/1 var(--font-body,'Albert Sans',sans-serif);letter-spacing:.36em;text-transform:uppercase;color:var(--gold,#D2AD62)}
+.sb-lock>svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.3s calc(.2s + var(--i,0)*.5s) cubic-bezier(.3,.6,.3,1) forwards}
+.sb-lock-draw circle{opacity:0;animation:sb-lock-dot .4s 3.3s ease-out forwards}
+@keyframes sb-lock-draw{to{stroke-dashoffset:0}}
+@keyframes sb-lock-dot{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.sb-lock-draw path,.sb-lock-draw circle{animation:none;stroke-dashoffset:0;opacity:1}}
+`;
+
+function ensureStyle() {
+    if (document.getElementById("sb-lock-style")) return;
+    const s = document.createElement("style");
+    s.id = "sb-lock-style";
+    s.textContent = CSS;
+    document.head.appendChild(s);
+}
+
+function mk(tag, attrs) {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+}
+
+export function drawLockup(el, { animate = false } = {}) {
+    if (!el || el.querySelector(":scope > svg")) return;
+    ensureStyle();
+    const word = el.querySelector(".sb-lock-word");
+    const sub = el.querySelector(".sb-lock-sub");
+    if (!word || !sub) return;
+
+    // Width of "Sou" (em): the sub line starts under the T.
+    const probe = document.createElement("span");
+    probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font:inherit;letter-spacing:inherit;text-transform:inherit";
+    probe.className = "sb-lock-word";
+    probe.style.display = "inline-block";
+    probe.textContent = "Sou";
+    el.appendChild(probe);
+    const fs = parseFloat(getComputedStyle(word).fontSize) || 20;
+    const sou = probe.getBoundingClientRect().width / fs;
+    probe.remove();
+    sub.style.marginLeft = sou + "em";
+
+    const tx = L + sou;                         // x where the T starts
+    const yb = 1 + GAP + SUB / 2;               // centre of the sub line
+    const h = 1 + GAP + SUB;
+    const dotX = tx - 0.95, r = 0.075, sw = 0.15, step = 0.22;
+    const u = v => +(v * SCALE).toFixed(1);
+
+    const svg = mk("svg", { viewBox: `0 0 ${u(tx)} ${u(h)}`, width: tx * fs, height: h * fs, "aria-hidden": "true" });
+    svg.style.width = tx + "em";
+    svg.style.height = h + "em";
+    LINES.forEach((c, i) => {
+        const y = 0.1 + i * step;
+        const d = `M${u(sw / 2)} ${u(y)} C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.3)} ${u(yb)} L${u(dotX - 0.1)} ${u(yb)}`;
+        svg.appendChild(mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` }));
+    });
+    svg.appendChild(mk("circle", { cx: u(dotX), cy: u(yb), r: u(r * 1.15 + 0.03), fill: DOT }));
+    el.insertBefore(svg, el.firstChild);
+    if (animate) el.classList.add("sb-lock-draw");
+}
+
+export function drawLockups(root = document, opts) {
+    const go = () => root.querySelectorAll(".sb-lock").forEach(el => drawLockup(el, opts));
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
+}

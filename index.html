@@ -56,10 +56,8 @@
 
     <div id="splashScreen" class="eos-splash" aria-hidden="true">
         <div class="eos-splash-glow" aria-hidden="true"></div>
-        <div class="eos-splash-mark">
-            <img src="brand/sb-tile.svg" alt="" class="eos-splash-logo">
-        </div>
-        <div class="eos-splash-wordmark">Southbound</div>
+        <div class="sb-lock eos-splash-lock"><span class="sb-lock-word">Southbound</span><span class="sb-lock-sub">Coaching</span></div>
+        <script type="module">import("./js/brandLockup.js").then(function (m) { m.drawLockups(document.getElementById("splashScreen"), { animate: true }); });</script>
     </div>
 
     <script>
@@ -89,7 +87,7 @@
             setTimeout(function () {
                 splash.classList.add("eos-splash-hide");
                 setTimeout(function () { splash.remove(); }, 550);
-            }, 2500);
+            }, 4400);
         })();
     </script>
 
