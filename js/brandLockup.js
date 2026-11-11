@@ -11,8 +11,14 @@ const L0 = 1.35;      // room left of the word for the lines (em)
 const GAP = 0.26;    // between word and sub line (em)
 const SUB = 0.58;    // sub line size (em)
 const SCALE = 100;
-// Where each line starts and how it swoops in: [x, y, control1 x, control1 y, control2 dx, control2 dy] (em from the lockup's top-left).
-const FLY = [[0.8, -14, 0.8, -5, -0.7, -1.5], [-16, 0.6, -9, 0.4, -1.8, 0], [16, 3.2, 8, 3.4, -1.4, 0.9], [1.5, 14, 1.5, 6, -0.9, 1.4]];   // top, left, right, bottom
+// How each line swoops in (em from the lockup's top-left): start x,y; two control points; a midpoint;
+// then the last control point relative to the line's start. Order: top, left, right, bottom.
+const FLY = [
+    [0.8, -14, 7, -10, -7, -6, -2.5, -2.2, -1.2, -0.6],
+    [-16, 0.6, -11, -4, -7, 5, -3.5, 1.4, -1.8, -0.6],
+    [16, 3.2, 11, 7.5, 6, 0.5, 1.2, 3.4, -1.8, 1.4],
+    [1.5, 14, -5, 10, 7, 7, 0.4, 4.4, -2, 2]
+];
 
 const CSS = `
 .sb-lock{position:relative;display:inline-block;padding-left:${L0}em;font-size:20px;line-height:1;text-decoration:none;color:inherit;white-space:nowrap}
@@ -90,7 +96,7 @@ export function drawLockup(el, { animate = false } = {}) {
         const line = d => mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` });
         if (fly) {
             // splash: the flight in (lead) fades away once the line has arrived; the rest stays
-            const lead = line(`M${u(fly[0])} ${u(fly[1])} C${u(fly[2])} ${u(fly[3])} ${u(sw / 2 + fly[4])} ${u(y + fly[5])} ${u(sw / 2)} ${u(y)}`);
+            const lead = line(`M${u(fly[0])} ${u(fly[1])} C${u(fly[2])} ${u(fly[3])} ${u(fly[4])} ${u(fly[5])} ${u(fly[6])} ${u(fly[7])} S${u(sw / 2 + fly[8])} ${u(y + fly[9])} ${u(sw / 2)} ${u(y)}`);
             lead.setAttribute("class", "lead");
             const tail = line(`M${u(sw / 2)} ${u(y)} ` + rest);
             tail.setAttribute("class", "rest");
