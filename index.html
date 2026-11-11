@@ -38,7 +38,9 @@
         .eos-splash{background:#141d26!important}
         .eos-splash::before{display:none!important}
         .eos-splash .eos-splash-lock{position:relative;font-size:calc(min(100vw, 720px) * .108)}
-        .eos-splash .eos-splash-glow{width:min(72vw, 420px);height:min(72vw, 420px)}
+        .eos-splash .eos-splash-glow{width:min(72vw, 420px);height:min(72vw, 420px);opacity:.2;transform:scale(.7);animation:sb-glow-build 2.7s ease-in forwards}
+        @keyframes sb-glow-build{from{opacity:.2;transform:scale(.7)}to{opacity:.7;transform:scale(1)}}
+        @media (prefers-reduced-motion:reduce){.eos-splash .eos-splash-glow{animation:none;opacity:.7;transform:none}}
         .eos-splash .eos-splash-lock:not(.sb-lock-ready){opacity:0}
     </style>
     <link rel="stylesheet"
