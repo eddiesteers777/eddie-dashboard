@@ -12,7 +12,7 @@ const GAP = 0.26;    // between word and sub line (em)
 const SUB = 0.58;    // sub line size (em)
 const SCALE = 100;
 // Where each line starts and how it swoops in: [x, y, control1 x, control1 y, control2 dx, control2 dy] (em from the lockup's top-left).
-const FLY = [[-10, -10, -8, -1, -1.1, -1.2], [-16, 0.6, -9, 0.4, -1.8, 0], [0.8, -14, 0.8, -5, -0.7, -1.5], [1.5, 14, 1.5, 6, -0.9, 1.4]];
+const FLY = [[0.8, -14, 0.8, -5, -0.7, -1.5], [-16, 0.6, -9, 0.4, -1.8, 0], [16, 3.2, 8, 3.4, -1.4, 0.9], [1.5, 14, 1.5, 6, -0.9, 1.4]];   // top, left, right, bottom
 
 const CSS = `
 .sb-lock{position:relative;display:inline-block;padding-left:${L0}em;font-size:20px;line-height:1;text-decoration:none;color:inherit;white-space:nowrap}
