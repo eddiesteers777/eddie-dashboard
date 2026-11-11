@@ -17,8 +17,8 @@ const CSS = `
 .sb-lock-word{display:block;font-family:var(--font-brand,'Saira',sans-serif);font-weight:800;font-size:1em;line-height:1;letter-spacing:.02em;text-transform:uppercase;color:var(--cream,#F1EBDD)}
 .sb-lock-sub{display:block;margin-top:${GAP}em;font:700 ${SUB}em/1 var(--font-body,'Albert Sans',sans-serif);letter-spacing:.36em;text-transform:uppercase;color:var(--gold,#D2AD62)}
 .sb-lock>svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
-.sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.1s .15s cubic-bezier(.2,.7,.2,1) forwards}
-.sb-lock-draw circle{opacity:0;animation:sb-lock-dot .35s .95s ease-out forwards}
+.sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.3s calc(.2s + var(--i,0)*.5s) cubic-bezier(.3,.6,.3,1) forwards}
+.sb-lock-draw circle{opacity:0;animation:sb-lock-dot .4s 3.3s ease-out forwards}
 @keyframes sb-lock-draw{to{stroke-dashoffset:0}}
 @keyframes sb-lock-dot{to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.sb-lock-draw path,.sb-lock-draw circle{animation:none;stroke-dashoffset:0;opacity:1}}
@@ -69,7 +69,7 @@ export function drawLockup(el, { animate = false } = {}) {
     LINES.forEach((c, i) => {
         const y = 0.1 + i * step;
         const d = `M${u(sw / 2)} ${u(y)} C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.3)} ${u(yb)} L${u(dotX - 0.1)} ${u(yb)}`;
-        svg.appendChild(mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1 }));
+        svg.appendChild(mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` }));
     });
     svg.appendChild(mk("circle", { cx: u(dotX), cy: u(yb), r: u(r * 1.15 + 0.03), fill: DOT }));
     el.insertBefore(svg, el.firstChild);
