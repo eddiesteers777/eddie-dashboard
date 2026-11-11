@@ -920,3 +920,23 @@ body.pb-live-on .pb-dock{height:54px;width:min(280px,76vw);opacity:.92}
 body.pb-live-on .pb-dock-item{min-height:44px;border-radius:22px}
 body.pb-live-on .pb-dock-item span:not(.ui-icon){display:none}
 body.pb-live-on .pb-dock-item .ui-icon{width:20px;height:20px}
+
+/* ---- Parent game link (playbook-view.html, game): Game info / Lineup ---- */
+.vw-seg{display:flex;padding:4px;margin:0 0 12px;border-radius:14px;background:var(--pb-glass-bg);border:1px solid var(--pb-glass-border,var(--pb-line));max-width:520px}
+.vw-seg button{flex:1;min-height:44px;border:0;border-radius:10px;background:none;color:var(--pb-muted);font:600 13px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;touch-action:manipulation}
+.vw-seg button[aria-pressed="true"]{background:var(--pb-sel-bg);color:var(--pb-sel-fg)}
+.vw-panel{max-width:520px}.vw-panel[hidden]{display:none}
+.vw-card{padding:18px;margin:0 0 12px;border:1px solid var(--pb-glass-border,var(--pb-line));border-radius:20px;background:var(--pb-raise-bg,var(--pb-card));box-shadow:var(--pb-raise-shadow,var(--pb-shadow))}
+.vw-info{border-top:2px solid var(--pb-act)}
+.vw-k{font:500 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
+.vw-kick{font:800 54px/1 var(--font-display);color:var(--pb-act);margin:6px 0 10px}
+.vw-h2{margin:6px 0 8px;font:800 22px/1.05 var(--font-display);text-transform:uppercase}
+.vw-rows{display:grid;gap:8px}.vw-row b{display:block;font-size:18px;line-height:1.25}.vw-row small{color:var(--pb-muted);font-size:13px}
+.vw-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.vw-acts .pb-btn{min-height:48px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;flex:1}
+.vw-muted{color:var(--pb-muted);margin:0}
+.vw-first{margin:6px 0 10px;font-size:16px}.vw-first:last-child{margin-bottom:0}
+.vw-pl{display:grid;grid-template-columns:44px 1fr;gap:6px 10px;font-size:16px}
+.vw-pos{font:500 11px var(--font-mono);letter-spacing:.1em;color:var(--pb-quiet);padding-top:4px}
+.vw-bench{margin:10px 0 0;color:var(--pb-muted);font-size:14px}
+@media print{.vw-seg{display:none}.vw-panel[hidden]{display:block!important}.vw-acts{display:none}.vw-card{box-shadow:none;border-color:#bbb}}

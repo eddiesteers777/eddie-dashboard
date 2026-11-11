@@ -87,3 +87,19 @@ test("update text: our own Playbook link becomes a button, other links stay text
     assert.ok(!/href="https:\/\/evil/.test(out));
     assert.equal(S.linkifyPlaybook("plain", ""), "plain");
 });
+
+test("a shared game carries kickoff, arrive, site and field, and drops bad values", () => {
+    const roster = [{ id: "r1", name: "Maya", num: 1, pos: "GK" }];
+    const game = { ...GM.newGame(), squad: ["r1"], lineups: [["r1", ...Array(10).fill("")], ["r1", ...Array(10).fill("")]] };
+    const session = { time: "10:00", arrive: "09:15", site: "home", place: "Field 2", duty: {}, captain: "" };
+    const back = S.parsePayload(S.gamePayload("2026-11-13", game, roster, { jobs: [] }, session));
+    assert.equal(back.game.time, "10:00");
+    assert.equal(back.game.arrive, "09:15");
+    assert.equal(back.game.site, "home");
+    assert.equal(back.game.place, "Field 2");
+    const bad = S.parsePayload({ v: 1, k: "game", time: "25:99", arrive: 5, site: "moon", place: "x".repeat(200) });
+    assert.equal(bad.game.time, "");
+    assert.equal(bad.game.arrive, "");
+    assert.equal(bad.game.site, "");
+    assert.equal(bad.game.place.length, 40);
+});

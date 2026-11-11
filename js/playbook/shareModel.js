@@ -65,7 +65,8 @@ export function gamePayload(date, game, roster, team, session) {
     for (const j of team?.jobs || []) { const names = ((session?.duty || {})[j.id] || []).map(name).filter(Boolean); if (names.length) duty.push({ job: j.name, names }); }
     return {
         v: 1, k: "game", date, opp: game.opp, formation: game.formation, periods: game.periods, minutes: game.minutes,
-        lineups: game.lineups.map(row => row.map(name)), bench: game.lineups.map((_, p) => bench(p)), duty, captain: name(session?.captain || "")
+        lineups: game.lineups.map(row => row.map(name)), bench: game.lineups.map((_, p) => bench(p)), duty, captain: name(session?.captain || ""),
+        time: session?.time || "", arrive: session?.arrive || "", site: session?.site || "", place: session?.place || ""
     };
 }
 
@@ -94,7 +95,10 @@ export function parsePayload(o) {
         const bench = Array.from({ length: g.periods }, (_, p) => (Array.isArray(o.bench?.[p]) ? o.bench[p] : []).slice(0, 40).map(nm).filter(Boolean));
         const duty = (Array.isArray(o.duty) ? o.duty : []).slice(0, 12).map(d => ({ job: nm(d?.job) || "", names: (Array.isArray(d?.names) ? d.names : []).slice(0, 6).map(nm).filter(Boolean) })).filter(d => d.job && d.names.length);
         const date = typeof o.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.date) ? o.date : "";
-        return { kind: "game", game: { ...g, lineups, bench, duty, date, captain: nm(o.captain) } };
+        const hm = v => (typeof v === "string" && /^([01]?\d|2[0-3]):[0-5]\d$/.test(v) ? v : "");
+        const site = ["home", "away", "neutral"].includes(o.site) ? o.site : "";
+        const place = typeof o.place === "string" ? o.place.trim().slice(0, 40) : "";
+        return { kind: "game", game: { ...g, lineups, bench, duty, date, captain: nm(o.captain), time: hm(o.time), arrive: hm(o.arrive), site, place } };
     }
     return null;
 }
