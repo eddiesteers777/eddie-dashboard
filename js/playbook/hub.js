@@ -33,7 +33,7 @@ function drawWeek() {
         c.append(h("div", "wk-k", g.when || "Next game"), h("h2", "", g.title), h("div", "wk-count", g.count),
             h("div", "wk-meta", [g.arrive && `Arrive ${g.arrive}`, g.where].filter(Boolean).join(" · ") || "Add kickoff and arrive time in Season"));
         const act = h("div", "wk-act");
-        act.append(link("playbook-game.html", "pb-btn pb-primary", "Set lineup"), link("playbook-season.html", "pb-btn", "Details"));
+        act.append(g.hasLineup ? link(`playbook-live.html?date=${g.date}`, "pb-btn pb-primary", "Game day") : link(`playbook-game.html?date=${g.date}`, "pb-btn pb-primary", "Set lineup"), g.hasLineup ? link(`playbook-game.html?date=${g.date}`, "pb-btn", "Lineup") : link("playbook-season.html", "pb-btn", "Details"));
         c.append(act); cards.push(c);
     }
     if (v.practice) {

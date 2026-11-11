@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Free Soccer Game Day Clock and Sub Reminders | Southbound Playbook</title>
+
+    <meta name="description" content="Free soccer game day clock: a half or quarter timer, the score, who is on the field and the changes to make at the break. Works on a phone.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Southbound Coaching">
+    <meta property="og:title" content="Free Soccer Game Day Clock and Sub Reminders | Southbound Playbook">
+    <meta property="og:description" content="Free soccer game day clock: a half or quarter timer, the score, who is on the field and the changes to make at the break. Works on a phone.">
+    <meta property="og:url" content="https://southboundcoaching.com/playbook-live.html">
+    <link rel="canonical" href="https://southboundcoaching.com/playbook-live.html">
+    <meta property="og:image" content="https://southboundcoaching.com/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Southbound Coaching">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/playbook.css">
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <script>try{if(localStorage.getItem("sb-account-storage-owner"))document.documentElement.classList.add("pb-app")}catch(e){}</script>
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+
+</head>
+
+<body class="pub-body pb-body">
+
+    <div id="publicHeader"></div>
+
+    <main class="pub-page pb-page" id="main">
+  <div class="pb-shell" id="app">
+  <header class="pb-head">
+    <div class="pb-head-text">
+      <div class="pub-hero-kicker">Free tool &middot; Southbound Playbook</div>
+      <h1>Game day</h1>
+      <span class="pb-sub" id="sub"></span>
+    </div>
+  </header>
+  <nav class="pb-tabs" aria-label="Playbook tools"><a href="playbook-live.html" class="pb-tab" aria-current="page">Game day</a><a href="playbook-fitness.html" class="pb-tab">Fitness</a><a href="playbook-conditioning.html" class="pb-tab">Conditioning</a><button type="button" class="pb-tab pb-theme" data-pb-theme aria-label="Switch between light and dark">Light</button></nav>
+
+  <div id="lvEmpty" class="lv-card lv-empty" hidden>
+    <h2 id="lvEmptyH">No game to run</h2>
+    <p id="lvEmptyP">Set a lineup for a game, then the clock and the changes start from it.</p>
+    <a class="pb-btn pb-primary" href="playbook-game.html" id="lvEmptyGo">Set a lineup</a>
+  </div>
+
+  <div id="lvBody" hidden>
+    <section class="lv-card lv-clock" aria-label="Game clock">
+      <div class="lv-top"><span class="lv-k" id="lvPeriod"></span><span class="lv-k lv-state" id="lvState"></span></div>
+      <div class="lv-time" id="lvTime" role="timer" aria-live="off">0:00</div>
+      <div class="lv-score">
+        <div class="lv-side"><span class="lv-k">Us</span><b id="lvUs">0</b><span class="lv-pm"><button type="button" class="lv-pmb" id="usDn" aria-label="Take a goal off us">&minus;</button><button type="button" class="lv-pmb lv-plus" id="usUp" aria-label="Goal for us">+</button></span></div>
+        <div class="lv-side lv-them"><span class="lv-k" id="lvThemName">Them</span><b id="lvThem">0</b><span class="lv-pm"><button type="button" class="lv-pmb" id="themDn" aria-label="Take a goal off them">&minus;</button><button type="button" class="lv-pmb lv-plus" id="themUp" aria-label="Goal for them">+</button></span></div>
+      </div>
+      <div class="lv-act">
+        <button type="button" class="pb-btn pb-primary lv-big" id="lvMain">Start</button>
+        <button type="button" class="pb-btn lv-big" id="lvMinute">+1 min</button>
+      </div>
+    </section>
+
+    <section class="lv-card lv-change" id="lvChange" aria-label="Changes" hidden>
+      <div class="lv-k" id="lvChangeK"></div>
+      <p class="lv-chg"><b>Off</b><span id="lvOff"></span></p>
+      <p class="lv-chg"><b>On</b><span id="lvOn"></span></p>
+    </section>
+
+    <h2 class="lv-h">On the field</h2>
+    <div class="lv-field" id="lvField"></div>
+    <p class="pb-hint" id="lvBench"></p>
+    <p class="lv-foot"><a class="ph-link" href="playbook-game.html" id="lvEdit">Edit the lineup</a> <button type="button" class="ph-link" id="lvReset">Reset the clock</button></p>
+  </div>
+
+  <div id="toast" class="pb-toast" role="status" aria-live="polite"></div>
+  </div>
+    </main>
+
+<footer class="pub-footer">
+        <div class="pub-footer-top">
+            <div class="pub-footer-lead">
+                <a href="home.html" class="pub-footer-brand" aria-label="Southbound Coaching home"><img src="brand/sb-mark.svg" alt="" class="brand-mark"><span class="pub-footer-word"><span class="brand-word">Southbound</span> <span class="pub-footer-sub">Coaching</span></span></a>
+                <p class="pub-footer-line">Training built around you.</p>
+                <a href="start.html" class="pub-btn-primary">Apply to train with me</a>
+            </div>
+            <nav class="pub-footer-cols" aria-label="Footer">
+                <div><h2>Train</h2><a href="coaching.html">Coaching</a><a href="soccer.html">Soccer</a><a href="packages.html">Packages</a></div>
+                <div><h2>Free tools</h2><a href="tools.html#pace">Pace calculator</a><a href="tools.html#playbook">Soccer Playbook</a><a href="tools.html#fueling">Fueling calculator</a><a href="install.html">Get the app</a></div>
+                <div><h2>Southbound</h2><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a></div>
+            </nav>
+        </div>
+        <p class="pub-footer-legal">&copy; 2026 Southbound Coaching</p>
+    </footer>
+
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/playbook/boot.js"></script>
+    <script type="module" src="js/playbook/live.js"></script>
+
+</body>
+
+</html>

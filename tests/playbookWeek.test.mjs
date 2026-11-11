@@ -42,6 +42,7 @@ test("the next game and next practice come from the schedule, past ones are skip
     assert.equal(v.game.arrive, "9:15 AM");
     assert.equal(v.game.where, "Home · Field 2");
     assert.equal(v.game.count, "2d 2h");
+    assert.equal(v.game.hasLineup, false);
     assert.equal(v.practice.id, "d");
     assert.equal(v.practice.planId, "p1");
     assert.equal(v.practice.when, "Fri Feb 5 · 3:30 PM");
@@ -55,4 +56,11 @@ test("date and time text are safe on bad input", () => {
     assert.equal(dayText("nope"), "");
     assert.equal(timeText(""), "");
     assert.equal(timeText("12:00"), "12 PM");
+});
+
+test("a game with a lineup says so, so the home page can offer Game day", () => {
+    const lineups = [["a", "b"], ["a", "c"]];
+    const v = weekView(team([s("g", "2027-02-06", "game", { opp: "X", time: "10:00", game: { lineups } })]), now);
+    assert.equal(v.game.hasLineup, true);
+    assert.equal(weekView(team([s("g", "2027-02-06", "game", { opp: "X", time: "10:00", game: { lineups: [[""], [""]] } })]), now).game.hasLineup, false);
 });

@@ -879,3 +879,44 @@ html.pb-app .pb-menu-app{display:flex}
 .dr-back{grid-column:1/-1;justify-self:start;min-height:44px;padding:0 14px 0 10px;border-radius:12px;border:1px solid var(--pb-line);background:var(--pb-field);color:var(--pb-text);font:600 14px var(--font-body);cursor:pointer;touch-action:manipulation}
 .dr-tile:focus-visible,.dr-back:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
 @media(min-width:700px){.dr-tiles{grid-template-columns:repeat(3,1fr)}}
+
+/* ---- Playbook v2 step 3: Game day (playbook-live.html) ---- */
+.lv-card{padding:18px;margin:0 0 12px;border:1px solid var(--pb-glass-border,var(--pb-line));border-radius:20px;background:var(--pb-raise-bg,var(--pb-card));box-shadow:var(--pb-raise-shadow,var(--pb-shadow))}
+.lv-clock{border-top:2px solid var(--pb-act)}
+.lv-k{font:500 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
+.lv-top{display:flex;justify-content:space-between;gap:10px}
+.lv-state[data-s="running"]{color:var(--pb-act)}
+.lv-state[data-s="over"]{color:var(--pb-act);font-weight:600}
+.lv-time{font:800 78px/1 var(--font-display);letter-spacing:.02em;text-align:center;margin:8px 0 6px;font-variant-numeric:tabular-nums}
+.lv-score{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 14px}
+.lv-side{display:grid;justify-items:center;gap:2px;padding:10px 6px;border-radius:16px;border:1px solid var(--pb-line);background:var(--pb-field)}
+.lv-side b{font:800 40px/1 var(--font-display)}
+.lv-side:not(.lv-them) b{color:var(--pb-act)}
+.lv-them b{color:#8FC3E8}
+.lv-pm{display:flex;gap:8px;margin-top:4px}
+.lv-pmb{width:48px;height:44px;border-radius:12px;border:1px solid var(--pb-line);background:var(--pb-field);color:var(--pb-text);font:600 22px var(--font-body);cursor:pointer;touch-action:manipulation}
+.lv-pmb.lv-plus{background:var(--pb-sel-bg);color:var(--pb-sel-fg);border-color:transparent}
+.lv-act{display:grid;grid-template-columns:1fr auto;gap:10px}
+.lv-big{min-height:60px;font-size:17px}
+.lv-change{border-top:2px solid var(--pb-line)}
+.lv-change.due{border-top-color:var(--pb-act)}
+.lv-chg{display:grid;grid-template-columns:44px 1fr;gap:8px;margin:8px 0 0;font-size:16px}
+.lv-chg b{font:600 11px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--pb-quiet);padding-top:3px}
+.lv-h{margin:18px 0 8px;font:600 11px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
+.lv-field{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lv-p{display:grid;justify-items:center;gap:1px;padding:10px 4px;min-height:84px;border-radius:16px;border:1px solid var(--pb-line);background:var(--pb-raise-bg,var(--pb-card))}
+.lv-p b{font:800 26px/1 var(--font-display)}
+.lv-pos{font:500 10px var(--font-mono);letter-spacing:.12em;color:var(--pb-quiet)}
+.lv-pn{font-size:14px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv-p.off{border-color:var(--pb-act);box-shadow:inset 0 0 0 1px var(--pb-act)}
+.lv-foot{display:flex;gap:16px;margin:12px 0 0}
+.lv-empty{text-align:center;padding:26px 18px}
+.lv-empty h2{margin:0 0 6px;font:800 24px var(--font-display);text-transform:uppercase}
+.lv-empty p{color:var(--pb-muted);margin:0 0 16px}
+.lv-empty .pb-btn{min-height:48px;display:inline-flex;align-items:center;text-decoration:none}
+@media(min-width:700px){.lv-field{grid-template-columns:repeat(4,1fr)}}
+/* during a live clock the bottom bar shrinks to a thin icon strip, so a stray tap cannot pull you off the game */
+body.pb-live-on .pb-dock{height:54px;width:min(280px,76vw);opacity:.92}
+body.pb-live-on .pb-dock-item{min-height:44px;border-radius:22px}
+body.pb-live-on .pb-dock-item span:not(.ui-icon){display:none}
+body.pb-live-on .pb-dock-item .ui-icon{width:20px;height:20px}

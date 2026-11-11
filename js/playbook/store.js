@@ -15,6 +15,7 @@ export const KEYS = Object.freeze({
     conditioning: "sb-playbook-conditioning", // device only: the coach's conditioning block
     seedsOffered: "sb-playbook-seeds-offered", // device only: how many starter drills this device has been offered
     mileRun: "sb-playbook-mile-run", // device only: a mile test being run right now
+    live: "sb-playbook-live", // device only: the Game day clock for the game being played
     run: "sb-playbook-run", // device only: a practice being run right now
     theme: "sb-playbook-theme"
 });

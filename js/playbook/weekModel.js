@@ -39,7 +39,7 @@ export function weekView(team, now = new Date()) {
     let game = null;
     if (ng) {
         const s = ng.session, opp = opponent(s);
-        game = { id: s.id, date: s.date, title: opp ? `${s.site === "away" ? "at" : "vs"} ${opp}` : "Game", when: [dayText(s.date), timeText(s.time)].filter(Boolean).join(" · "), count: countdown(s.date, s.time, now), arrive: s.arrive ? timeText(s.arrive) : "", where: where(s) };
+        game = { id: s.id, date: s.date, title: opp ? `${s.site === "away" ? "at" : "vs"} ${opp}` : "Game", when: [dayText(s.date), timeText(s.time)].filter(Boolean).join(" · "), count: countdown(s.date, s.time, now), arrive: s.arrive ? timeText(s.arrive) : "", where: where(s), hasLineup: !!s.game && s.game.lineups.flat().some(Boolean) };
     }
     const p = team.sessions.filter(s => s.kind === "practice" && !s.cancelled && s.date >= today).sort((a, b) => a.date.localeCompare(b.date) || (a.time || "99").localeCompare(b.time || "99"))[0];
     const practice = p ? { id: p.id, date: p.date, planId: p.planId || "", when: [dayText(p.date), timeText(p.time)].filter(Boolean).join(" · "), count: countdown(p.date, p.time, now) } : null;

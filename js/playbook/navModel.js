@@ -7,7 +7,8 @@ export const GROUPS = Object.freeze([
         { file: "playbook-practice.html", label: "Practice" },
         { file: "playbook-season.html", label: "Season" }
     ] },
-    { id: "run", label: "Run", icon: "activity", file: "playbook-fitness.html", tools: [
+    { id: "run", label: "Run", icon: "activity", file: "playbook-live.html", tools: [
+        { file: "playbook-live.html", label: "Game day" },
         { file: "playbook-fitness.html", label: "Fitness" },
         { file: "playbook-conditioning.html", label: "Conditioning" }
     ] },
