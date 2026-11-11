@@ -970,3 +970,7 @@ body.pb-live-on .pb-dock-item .ui-icon{width:20px;height:20px}
   .dd-svg{-webkit-print-color-adjust:exact;print-color-adjust:exact;max-width:100%}
   .dd-legend{display:none}
 }
+
+/* 44px taps: footer links on the Playbook home and the board name field */
+.ph-link{display:inline-flex;align-items:center;min-height:44px;padding:0 12px 0 0}
+.pb-name{min-height:44px}
