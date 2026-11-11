@@ -311,6 +311,7 @@ async function render() {
     if (!showHealthStats({ settings: data.settings, connected: isCorosConnected(), hasData })) {
         el.classList.add("rd-none");
         el.innerHTML = "";
+        morningStrip(false);
         return;
     }
     const before = [1, 2].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); return shownHistory[isoDate(d)]?.color; }).filter(Boolean);
@@ -320,6 +321,7 @@ async function render() {
     const connected = isCorosConnected();
     const easy = advice.swap && role === "coach" && workout.week ? await nextEasyDay(workout) : null;
     const checkin = data.checkins[today];
+    morningStrip(!checkin, today);
     const flagged = r.flags.some(f => f.key === "sick" || f.key === "pain");
     const missing = r.score == null ? missingReason({ connected, refreshing: healthRefreshing(), error: lastHealthError(), health: data.health, history, today }) : null;
     const adviceText = missing && !flagged ? missing.text : advice.text;
@@ -390,6 +392,22 @@ async function render() {
             render();
         }
     };
+}
+
+// The morning check-in as a strip in the page header (the same row the after-run strip uses), until today's is done.
+function morningStrip(show, today) {
+    const strip = $("morningStrip");
+    if (!strip) return;
+    if (!show) { strip.hidden = true; strip.innerHTML = ""; return; }
+    strip.innerHTML = `
+        <span class="ci-strip-text"><span class="ci-strip-label">Morning check-in</span> <span class="ci-strip-ask">How are you feeling today?</span></span>
+        <button type="button" class="sb-btn sb-btn-primary ci-strip-btn" data-morning>Check in</button>`;
+    strip.hidden = false;
+    if (!strip.dataset.bound) {
+        strip.dataset.bound = "1";
+        strip.addEventListener("click", event => { if (event.target.closest("[data-morning]")) openCheckin(strip.dataset.date, render); });
+    }
+    strip.dataset.date = today;
 }
 
 async function init() {
