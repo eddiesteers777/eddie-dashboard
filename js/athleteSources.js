@@ -50,9 +50,9 @@ function strengthDates() {
 }
 
 export async function selfInputs(today) {
-    const [athleteData, readinessData, decisionData, md, trends, planner] = await Promise.all([
+    const [athleteData, readinessData, decisionData, md, trends] = await Promise.all([
         import("./athleteData.js"), import("./readinessData.js"), import("./weeklyDecisionData.js"),
-        import("./marathonData.js"), import("./trendsData.js"), import("./plannerEvents.js")
+        import("./marathonData.js"), import("./trendsData.js")
     ]);
     const model = await athleteData.loadModelInputs(today);
     const morning = readinessData.inputs();
@@ -83,7 +83,7 @@ export async function selfInputs(today) {
             purpose: w?.purpose || "", race
         },
         decisions: decisionData.decisionLog(),
-        busyDays: planner.loadPlannerEvents().map(e => ({ date: e.date, category: e.category || "personal" })),
+        busyDays: [],
         strengthDates: strengthDates()
     };
 }

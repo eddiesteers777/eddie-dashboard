@@ -168,11 +168,9 @@ export const PAGE_REQUIRES = Object.freeze({
     "client.html": "coach",
     "marathon.html": "coach",
     "75day.html": "coach",
-    "planner.html": "coach",
     "analytics.html": "coach",
     "weekly-review.html": "coach",
-    "planning.html": "coach",
-    "gear.html": "coach"
+    "planning.html": "coach"
 });
 
 export function pageAllowed(page, access) {

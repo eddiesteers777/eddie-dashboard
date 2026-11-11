@@ -12,7 +12,6 @@ import {
     loadProgress
 } from "./marathonData.js";
 
-import { getUpcomingPlannerEvents, categoryFor, formatTime } from "./plannerEvents.js";
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
 import { celebrateRun } from "./celebrate.js";
@@ -475,21 +474,6 @@ function renderToday() {
         });
     }
 
-    // Today's events from the coach's own Planner (js/plannerEvents.js)
-    if (PERSONAL_PLAN) try {
-        getUpcomingPlannerEvents(0).forEach(ev => {
-            const category = categoryFor(ev.category);
-            items.push({
-                icon: icon("calendar"),
-                color: category.color,
-                title: ev.title,
-                detail: [formatTime(ev.time), category.label].filter(Boolean).join(" · "),
-                link: "planner.html"
-            });
-        });
-    } catch {
-        // No planner data -- fine.
-    }
 
     if (!items.length) {
         // A rest day the plan wrote something for ("Rest: walk, eat, celebrate"): that, not a generic line.

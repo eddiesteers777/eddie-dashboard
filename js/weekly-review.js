@@ -5,7 +5,7 @@
    glance, response, recovery, reading, next week), js/weeklyLoad.js
    (training stimulus) and js/thisWeekCard.js (the decision). This file
    draws the week's dates and the compact list at the end: strength,
-   cross-training, nutrition (with the day bars) and shoes.
+   cross-training, nutrition (with the day bars).
 ========================================== */
 
 import {
@@ -199,38 +199,6 @@ function renderNutrition() {
 }
 
 /* ==========================================
-   Gear
-========================================== */
-
-function renderGear() {
-    const valueEl = document.getElementById("wrGearValue");
-    const metaEl = document.getElementById("wrGearMeta");
-
-    let shoes = [];
-
-    try {
-        shoes = JSON.parse(localStorage.getItem("gear-shoes") || "[]");
-    } catch {
-        shoes = [];
-    }
-
-    const active = shoes.filter(s => !s.retired);
-
-    const nearing = active.filter(s => {
-        const logged = (s.mileageLog || []).reduce((sum, e) => sum + (Number(e.miles) || 0), 0);
-        const miles = (Number(s.startingMiles) || 0) + logged;
-        return miles >= (s.threshold || 400) * 0.8;
-    });
-
-    valueEl.textContent = String(nearing.length);
-    metaEl.textContent = active.length
-        ? `of ${active.length} active pair${active.length === 1 ? "" : "s"}`
-        : "no shoes tracked yet";
-
-    return nearing.length;
-}
-
-/* ==========================================
    Init
 ========================================== */
 
@@ -249,7 +217,6 @@ function init() {
     renderStrength(week);
     renderCrossTraining(weekNumber);
     renderNutrition();
-    renderGear();
 }
 
 init();
