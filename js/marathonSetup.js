@@ -8,7 +8,8 @@
 
      marathonSetup({ firstName, record, plan?, done?, onCreate, onApply })
 
-   New plan:  Create plan -> onCreate({ name, kind, plan, warnings, summary })
+   New plan:  Create plan -> onCreate({ name, kind, plan, warnings, summary, publish })
+              (publish is true for "Create and publish": the caller opens its publish sheet at once)
               (the same payload as generateDialog, so the editor takes over).
    Regenerate (plan was made by this engine): Update plan -> a preview of
    what changes -> onApply({ plan, kind, message }). Days the coach changed
@@ -157,7 +158,7 @@ export function previewFor(st) {
 }
 
 /** me: Eddie's own plan ("Plan for me"): nothing goes to a client; `note` is the "From your COROS" line; `settings` starts the setup. */
-export function marathonSetup({ firstName, record, plan = null, done = new Set(), onCreate, onApply, me = false, note = "", settings = null }) {
+export function marathonSetup({ firstName, record, plan = null, done = new Set(), onCreate, onApply, me = false, note = "", settings = null, publishable = false }) {
     const today = isoToday();
     const regen = Boolean(plan?.generator?.settings?.engine === "marathon");
     let st = regen ? { ...plan.generator.settings } : (settings || marathonSettingsFromProfile(record, today));
@@ -184,7 +185,7 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
             <footer class="ms-foot">
                 ${view === "setup"
                     ? `<span class="ms-kick">The plan updates when you go back</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="back">Back</button><button type="button" class="sb-btn sb-btn-primary" data-act="apply">Show the plan</button></span>`
-                    : `<span class="ms-kick">${!ready && prev?.problems?.[0] ? `Can't create yet: ${esc(prev.problems[0])}` : me ? "Saved on your account. Nothing goes to a client." : regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button><button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${me ? (regen ? "Update my plan" : "Save my plan") : regen ? "Update plan" : "Create plan"}</button></span>`}
+                    : `<span class="ms-kick">${!ready && prev?.problems?.[0] ? `Can't create yet: ${esc(prev.problems[0])}` : me ? "Saved on your account. Nothing goes to a client." : regen ? "You'll see what changes before it does" : "Nothing is saved until you create it"}</span><span class="ms-btns"><button type="button" class="sb-btn sb-btn-secondary" data-act="close">Cancel</button>${!me && !regen && publishable ? `<button type="button" class="sb-btn sb-btn-secondary" data-act="go-publish"${ready ? "" : " disabled"}>Create and publish</button>` : ""}<button type="button" class="sb-btn sb-btn-primary" data-act="go"${ready ? "" : " disabled"}>${me ? (regen ? "Update my plan" : "Save my plan") : regen ? "Update plan" : "Create plan"}</button></span>`}
             </footer>
         </div>`;
         d.scrollTop = 0;
@@ -217,14 +218,14 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
             if (fix) { st = { ...st, ...fix.patch }; draw(); toast("Updated. The plan is redrawn.", { type: "info" }); }
             return;
         }
-        if (act === "go") {
+        if (act === "go" || act === "go-publish") {
             const prev = previewFor(st);
             if (prev.problems.length) return;
             try {
                 if (!regen) {
                     const result = generateCoachPlan(st);
                     d.close();
-                    return onCreate({ name: me ? `My ${raceLabel(st)} plan` : `${raceLabel(st) === "marathon" ? "Marathon" : "Half marathon"} plan, ${shortDate(st.raceDate)}`, kind: "race", ...result });
+                    return onCreate({ name: me ? `My ${raceLabel(st)} plan` : `${capital(raceLabel(st))} plan, ${shortDate(st.raceDate)}`, kind: "race", publish: act === "go-publish", ...result });
                 }
                 const from = st.startDate > today ? st.startDate : today;
                 const result = regeneratePlan(plan, st, { from, scope: "all", replaceEdits: false, today, done });

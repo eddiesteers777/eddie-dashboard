@@ -43,7 +43,9 @@
 .ms-ghost{ height:110px; display:flex; align-items:flex-end; gap:3px; opacity:.35; }
 .ms-ghost i{ flex:1; background:var(--border); border-radius:3px 3px 0 0; }
 .ms-foot{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; position:sticky; bottom:0; padding:10px 0 2px; background:var(--surface); }
-.ms-btns{ display:flex; gap:8px; }
+.ms-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+.ms-btns .sb-btn{ flex:0 0 auto; }
+@media (max-width:560px){ .ms-btns{ width:100%; } .ms-btns [data-act="go"], .ms-btns [data-act="go-publish"]{ flex:1 1 auto; } }
 .ms-form{ display:flex; flex-direction:column; gap:14px; }
 .ms-grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
 .ms-f{ display:flex; flex-direction:column; gap:5px; min-width:0; }
