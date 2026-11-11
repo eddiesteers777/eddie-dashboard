@@ -19,15 +19,22 @@ const CSS = `
 .sb-lock-sub{display:block;margin-top:${GAP}em;font:700 ${SUB}em/1 var(--font-body,'Albert Sans',sans-serif);letter-spacing:.36em;text-transform:uppercase;color:var(--gold,#D2AD62)}
 .sb-lock>svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
 .sb-lock-draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:sb-lock-draw 1.5s calc(.2s + var(--i,0)*.5s) cubic-bezier(.3,.6,.3,1) forwards}
-.sb-lock-draw circle{opacity:0;animation:sb-lock-dot .4s 3.9s ease-out forwards}
-.sb-lock-draw path.lead,.sb-lock-draw path.rest{stroke-dasharray:1 2;stroke-dashoffset:1;opacity:0;animation-duration:2.4s;animation-delay:calc(.2s + var(--i,0)*.4s);animation-fill-mode:forwards;animation-timing-function:cubic-bezier(.35,.4,.4,1)}
+.sb-lock-draw circle{transform-box:fill-box;transform-origin:center;opacity:0;animation:sb-lock-dot .55s 2.7s cubic-bezier(.2,.8,.3,1.4) forwards}
+.sb-lock-draw circle.ring{animation:sb-lock-ring 1s 2.7s ease-out forwards}
+.sb-lock-draw .sb-lock-word{animation:sb-lock-word .9s .25s ease-out both}
+.sb-lock-draw .sb-lock-sub{animation:sb-lock-sub .8s 2.75s ease-out both}
+.sb-lock-draw path.lead,.sb-lock-draw path.rest{stroke-dasharray:1 2;stroke-dashoffset:1;opacity:0;animation-duration:1.7s;animation-delay:calc(.15s + var(--i,0)*.3s);animation-fill-mode:forwards;animation-timing-function:cubic-bezier(.45,.05,.85,.5)}
 .sb-lock-draw path.lead{animation-name:sb-lock-lead}
 .sb-lock-draw path.rest{animation-name:sb-lock-rest}
 @keyframes sb-lock-lead{0%{opacity:0;stroke-dashoffset:1}1%{opacity:1}50%{opacity:1;stroke-dashoffset:0}100%{opacity:0;stroke-dashoffset:0}}
 @keyframes sb-lock-rest{0%,44%{opacity:0;stroke-dashoffset:1}45%{opacity:1}100%{opacity:1;stroke-dashoffset:0}}
 @keyframes sb-lock-draw{to{stroke-dashoffset:0}}
-@keyframes sb-lock-dot{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.sb-lock-draw path,.sb-lock-draw circle{animation:none;stroke-dashoffset:0;opacity:1}.sb-lock-draw path.lead{opacity:0}.sb-lock-draw path.rest{stroke-dashoffset:0;opacity:1}}
+@keyframes sb-lock-dot{0%{opacity:0;transform:scale(.2)}55%{opacity:1;transform:scale(1.7)}100%{opacity:1;transform:scale(1)}}
+@keyframes sb-lock-ring{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(6)}}
+@keyframes sb-lock-word{from{opacity:0;transform:translateY(.25em)}to{opacity:1;transform:none}}
+@keyframes sb-lock-sub{from{opacity:0;transform:translateX(-.5em)}to{opacity:1;transform:none}}
+@keyframes sb-glow-hit{0%{transform:scale(1);opacity:.8}35%{transform:scale(1.45);opacity:1}100%{transform:scale(1.1);opacity:.75}}
+@media (prefers-reduced-motion:reduce){.sb-lock-draw path,.sb-lock-draw circle{animation:none;stroke-dashoffset:0;opacity:1}.sb-lock-draw path.lead{opacity:0}.sb-lock-draw path.rest{stroke-dashoffset:0;opacity:1}.sb-lock-draw circle.ring{display:none}.sb-lock-draw .sb-lock-word,.sb-lock-draw .sb-lock-sub{animation:none}}
 `;
 
 function ensureStyle() {
@@ -92,10 +99,15 @@ export function drawLockup(el, { animate = false } = {}) {
             svg.appendChild(line(`M${u(sw / 2)} ${u(y)} ` + rest));
         }
     });
+    if (animate) svg.appendChild(mk("circle", { class: "ring", cx: u(dotX), cy: u(yb), r: u(r * 1.15 + 0.03), fill: "none", stroke: DOT, "stroke-width": u(0.04) }));
     svg.appendChild(mk("circle", { cx: u(dotX), cy: u(yb), r: u(r * 1.15 + 0.03), fill: DOT }));
     el.insertBefore(svg, el.firstChild);
     el.classList.add("sb-lock-ready");
-    if (animate) el.classList.add("sb-lock-draw");
+    if (animate) {
+        el.classList.add("sb-lock-draw");
+        const splash = el.closest(".eos-splash");
+        if (splash) setTimeout(() => splash.classList.add("sb-hit"), 2700);
+    }
 }
 
 export function drawLockups(root = document, opts) {

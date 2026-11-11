@@ -498,3 +498,5 @@ html.al-on .eos-bottomnav-item.active{box-shadow:inset 0 1px 0 rgba(255,255,255,
 .eos-splash-lock{font-size:46px}
 .eos-splash-lock>svg{filter:drop-shadow(0 0 .3em rgba(200,216,230,.5))}
 @media(max-width:400px){.eos-splash-lock{font-size:38px}}
+.eos-splash.sb-hit .eos-splash-glow{animation:sb-glow-hit 1.1s ease-out forwards!important}
+@media (prefers-reduced-motion:reduce){.eos-splash.sb-hit .eos-splash-glow{animation:none!important}}
