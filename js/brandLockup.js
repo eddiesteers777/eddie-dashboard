@@ -60,7 +60,7 @@ export function drawLockup(el, { animate = false } = {}) {
     const tx = L + sou;                         // x where the T starts
     const yb = 1 + GAP + SUB / 2;               // centre of the sub line
     const h = 1 + GAP + SUB;
-    const dotX = tx - 0.6, r = 0.075, sw = 0.15, step = 0.22;
+    const dotX = tx - 0.95, r = 0.075, sw = 0.15, step = 0.22;
     const u = v => +(v * SCALE).toFixed(1);
 
     const svg = mk("svg", { viewBox: `0 0 ${u(tx)} ${u(h)}`, width: tx * fs, height: h * fs, "aria-hidden": "true" });
@@ -68,7 +68,7 @@ export function drawLockup(el, { animate = false } = {}) {
     svg.style.height = h + "em";
     LINES.forEach((c, i) => {
         const y = 0.1 + i * step;
-        const d = `M${u(sw / 2)} ${u(y)} C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.5)} ${u(yb)} L${u(dotX - 0.2)} ${u(yb)}`;
+        const d = `M${u(sw / 2)} ${u(y)} C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.3)} ${u(yb)} L${u(dotX - 0.1)} ${u(yb)}`;
         svg.appendChild(mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1 }));
     });
     svg.appendChild(mk("circle", { cx: u(dotX), cy: u(yb), r: u(r * 1.15 + 0.03), fill: DOT }));
