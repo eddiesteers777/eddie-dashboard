@@ -115,6 +115,8 @@
 
             <!-- Post-run check-in (js/effortCard.js mountCheckinStrip): only while today's watch run has no effort answer.
                  Its own row across the header, under the greeting (and the compass, js/appLook.js). -->
+            <!-- Morning check-in (js/readinessCard.js): in the header until today's check-in is done, only while the Readiness card shows. -->
+            <div id="morningStrip" class="ci-strip" role="region" aria-label="Morning check-in" hidden></div>
             <div id="checkinStrip" class="ci-strip" role="region" aria-label="Check in on today's run" hidden></div>
 
         </section>
