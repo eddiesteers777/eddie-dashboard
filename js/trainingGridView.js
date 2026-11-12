@@ -52,6 +52,15 @@ export const stripLegendHtml = () => `<p class="tg-legend" aria-hidden="true"><s
 
 /* ---------- weekly miles ---------- */
 
+/** Runs from the watch (COROS, Strava) as [{ date, miles }]; empty when that data isn't on this device. */
+export async function loadWatchMiles(today = todayIso()) {
+    try {
+        const { allRuns } = await import("./trendsData.js");
+        return allRuns(today).map(r => ({ date: r.date, miles: (Number(r.distance) || 0) / 1609.344 })).filter(r => r.miles > 0);
+    } catch { return []; }
+}
+
+
 const mi = n => `${Number(n) % 1 ? Number(n).toFixed(1) : Number(n)}`;
 
 /** The card under "This week" on Today (M2): this week's miles and the 4-week average, the graph, the bar,
@@ -73,33 +82,50 @@ export function milesCardHtml(weeks) {
 
 const shortDate = iso => D(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }).replace(" ", " ");
 
+let gradientSeq = 0;
+/** A smooth line through the points; the curve never dips below or above its two neighbours. */
+function curve(p) {
+    if (p.length < 3) return p.map((q, i) => `${i ? "L" : "M"}${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(" ");
+    let d = `M${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)}`;
+    for (let i = 0; i < p.length - 1; i++) {
+        const a = p[i], b = p[i + 1], pa = p[i - 1] || a, nb = p[i + 2] || b;
+        const lo = Math.min(a[1], b[1]), hi = Math.max(a[1], b[1]);
+        const c1 = [a[0] + (b[0] - pa[0]) / 6, Math.min(hi, Math.max(lo, a[1] + (b[1] - pa[1]) / 6))];
+        const c2 = [b[0] - (nb[0] - a[0]) / 6, Math.min(hi, Math.max(lo, b[1] - (nb[1] - a[1]) / 6))];
+        d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
+    }
+    return d;
+}
+
 /** The line graph itself: finished weeks solid, planned dashed, this week marked, the 4-week average dotted.
  *  `compact` is the shorter one inside Today's card (hidden from screen readers: the card's label says it). */
 function milesSvg(weeks, { compact = false } = {}) {
     const idx = weeks.findIndex(w => w.kind === "now");
     const avg = recentAverage(weeks);
-    const W = 340, H = compact ? 112 : 140, L = 22, R = 22, T = 18, B = 22;
-    const top = Math.max(10, ...weeks.map(w => Math.max(w.miles, w.planned)));
+    const id = `tgfill${++gradientSeq}`;
+    const W = 340, H = compact ? 118 : 148, L = 18, R = 18, T = 20, B = 24;
+    const top = Math.max(10, ...weeks.map(w => Math.max(w.miles, w.planned))) * 1.08;
     const x = i => L + i * (W - L - R) / Math.max(1, weeks.length - 1);
     const y = v => T + (1 - v / top) * (H - T - B);
-    const pts = weeks.map((w, i) => [x(i), y(w.miles)]);
-    const path = a => a.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
-    // This week's dashed line to the plan starts at this week's planned miles, so a quiet week doesn't drag the plan down.
-    const planPts = [[x(idx), y(weeks[idx].planned)], ...pts.slice(idx + 1)];
-    const past = pts.slice(0, idx + 1);
     const base = H - B;
-    const labels = weeks.map((w, i) => (i % 2 === (idx % 2) ? `<text x="${x(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" class="tg-ax${i === idx ? " is-now" : ""}">${esc(i === idx ? "This week" : shortDate(w.monday))}</text>` : "")).join("");
-    const dots = weeks.map((w, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(i > idx ? w.planned : w.miles).toFixed(1)}" r="${i === idx ? 5 : 3.5}" class="tg-pt${i > idx ? " is-plan" : ""}${i === idx ? " is-now" : ""}"/>`).join("");
-    const avgLine = avg ? `<line x1="${L}" x2="${W - R}" y1="${y(avg).toFixed(1)}" y2="${y(avg).toFixed(1)}" class="tg-avg"/><text x="${W - R}" y="${(y(avg) - 4).toFixed(1)}" text-anchor="end" class="tg-ax">avg ${avg}</text>` : "";
-    const nowLabel = weeks[idx].miles ? `<text x="${x(idx).toFixed(1)}" y="${(y(weeks[idx].miles) - 9).toFixed(1)}" text-anchor="middle" class="tg-val">${mi(weeks[idx].miles)}</text>` : "";
+    const done = weeks.slice(0, idx + 1).map((w, i) => [x(i), y(w.miles)]);
+    // The plan line leaves from last week's finished miles, runs through this week's planned miles and on.
+    const plan = [...(idx > 0 ? [done[idx - 1]] : []), ...weeks.slice(idx).map((w, i) => [x(idx + i), y(w.planned)])];
+    const grid = [.34, .67, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${y(top / 1.08 * f).toFixed(1)}" y2="${y(top / 1.08 * f).toFixed(1)}" class="tg-grid"/>`).join("");
+    const labels = weeks.map((w, i) => (i % 2 === (idx % 2) ? `<text x="${x(i).toFixed(1)}" y="${H - 6}" text-anchor="middle" class="tg-ax${i === idx ? " is-now" : ""}">${esc(i === idx ? "This week" : shortDate(w.monday))}</text>` : "")).join("");
+    const pastDots = weeks.slice(0, idx).map((w, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(w.miles).toFixed(1)}" r="3" class="tg-pt"/>`).join("");
+    const planDots = weeks.slice(idx).map((w, i) => (i === 0 && w.planned === w.miles) ? "" : `<circle cx="${x(idx + i).toFixed(1)}" cy="${y(w.planned).toFixed(1)}" r="${i === 0 ? 4 : 3.4}" class="tg-pt is-plan"/>`).join("");
+    const nowDot = `<circle cx="${x(idx).toFixed(1)}" cy="${y(weeks[idx].miles).toFixed(1)}" r="5" class="tg-pt is-now"/>`;
+    const avgLine = avg ? `<line x1="${L}" x2="${W - R}" y1="${y(avg).toFixed(1)}" y2="${y(avg).toFixed(1)}" class="tg-avg"/><text x="${W - R}" y="${(y(avg) - 5).toFixed(1)}" text-anchor="end" class="tg-ax">avg ${avg}</text>` : "";
     const rows = weeks.map(w => `${shortDate(w.monday)}: ${w.kind === "plan" ? `${mi(w.planned)} planned` : w.kind === "now" ? `${mi(w.miles)} of ${mi(w.planned)} planned` : `${mi(w.miles)} run`}`).join("; ");
     const aria = compact ? `aria-hidden="true"` : `role="img" aria-label="${esc(`Weekly run miles. ${rows}`)}"`;
     return `<svg class="tg-graph${compact ? " is-compact" : ""}" viewBox="0 0 ${W} ${H}" ${aria} preserveAspectRatio="xMidYMid meet">
-            ${avgLine}
-            <path d="${path(past)} L${past.at(-1)[0].toFixed(1)} ${base} L${past[0][0].toFixed(1)} ${base}Z" class="tg-area"/>
-            <path d="${path(past)}" class="tg-line"/>
-            ${planPts.length > 1 ? `<path d="${path(planPts)}" class="tg-line is-plan"/>` : ""}
-            ${dots}${nowLabel}${labels}
+            <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="tg-stop-a"/><stop offset="1" class="tg-stop-b"/></linearGradient></defs>
+            ${grid}${avgLine}
+            <path d="${curve(done)} L${done.at(-1)[0].toFixed(1)} ${base} L${done[0][0].toFixed(1)} ${base}Z" fill="url(#${id})"/>
+            <path d="${curve(done)}" class="tg-line"/>
+            ${plan.length > 1 ? `<path d="${curve(plan)}" class="tg-line is-plan"/>` : ""}
+            ${pastDots}${planDots}${nowDot}${labels}
         </svg>`;
 }
 
@@ -113,16 +139,17 @@ export function milesGraphHtml(weeks) {
     const avg = recentAverage(weeks);
     return `<div class="eos-today-card-header"><h2 id="tgMilesTitle">Weekly miles</h2>${avg ? `<span class="tg-avg-text">Last 4 weeks avg ${avg} mi</span>` : ""}</div>
         ${milesSvg(weeks)}
-        <p class="tg-legend" aria-hidden="true"><span>Solid = run</span><span>Dashed = planned</span></p>`;
+        <p class="tg-legend" aria-hidden="true"><span>Solid = run</span><span>Dotted = planned</span></p>`;
 }
 
 export function mountWeeklyMiles(el, { today = todayIso() } = {}) {
     if (!el) return { update() {} };
-    const draw = () => {
+    const draw = async () => {
         let inputs, completed;
         try { inputs = weekInputs([]); } catch { inputs = { plans: [], strength: [], sessions: [], runLog: [], planned: [] }; }
         try { completed = storedSessions(); } catch { completed = []; }
-        el.innerHTML = milesGraphHtml(weeklyMiles(inputs, today, completed));
+        const watch = await loadWatchMiles(today);
+        el.innerHTML = milesGraphHtml(weeklyMiles(inputs, today, completed, { watch }));
         el.hidden = false;
     };
     ["sb:sessions-changed", "eddieos:running-programs-changed", "eddieos:training-programs-changed", "storage"].forEach(name => window.addEventListener(name, draw));

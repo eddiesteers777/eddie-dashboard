@@ -101,13 +101,14 @@ html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; fo
 .tg-miles-graph [hidden]{ display:none !important; }
 .tg-avg-text{ margin-left:auto; font:600 12px/1.3 var(--font-mono); color:var(--text-secondary, var(--muted)); }
 .tg-graph{ display:block; width:100%; height:auto; margin-top:6px; }
-.tg-line{ fill:none; stroke:var(--primary); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
-.tg-line.is-plan{ stroke-width:2; stroke-dasharray:5 4; }
-.tg-area{ fill:var(--primary); opacity:.14; }
-.tg-pt{ fill:var(--primary); stroke:var(--primary); stroke-width:1.5; }
-.tg-pt.is-plan{ fill:var(--surface); }
-.tg-pt.is-now{ stroke:var(--text); }
-.tg-avg{ stroke:var(--border); stroke-dasharray:2 4; }
-.tg-ax{ fill:var(--text-secondary, var(--muted)); font-size:9px; }
+.tg-line{ fill:none; stroke:var(--primary); stroke-width:2.6; stroke-linejoin:round; stroke-linecap:round; }
+.tg-line.is-plan{ stroke-width:2; stroke-dasharray:1 6; opacity:.85; }
+.tg-stop-a{ stop-color:var(--primary); stop-opacity:.34; }
+.tg-stop-b{ stop-color:var(--primary); stop-opacity:0; }
+.tg-grid{ stroke:var(--border); stroke-opacity:.45; stroke-width:1; }
+.tg-pt{ fill:var(--primary); }
+.tg-pt.is-plan{ fill:var(--bg, #0F2019); stroke:var(--primary); stroke-width:1.6; }
+.tg-pt.is-now{ stroke:var(--text); stroke-width:2; }
+.tg-avg{ stroke:var(--text-secondary, var(--muted)); stroke-opacity:.55; stroke-dasharray:2 5; }
+.tg-ax{ fill:var(--text-secondary, var(--muted)); font-size:9.5px; letter-spacing:.02em; }
 .tg-ax.is-now{ fill:var(--text); font-weight:700; }
-.tg-val{ fill:var(--text); font:700 10px var(--font-mono); }

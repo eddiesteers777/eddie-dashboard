@@ -101,3 +101,14 @@ test("weekly miles: past weeks count what was run, this week keeps both, later w
     assert.equal(recentAverage([{ kind: "done", miles: 10 }, { kind: "done", miles: 20 }, { kind: "now", miles: 1 }]), 15);
     assert.equal(recentAverage([{ kind: "now", miles: 1 }]), null);
 });
+
+test("weekly miles: watch runs fill the weeks behind and are not added twice when also logged", () => {
+    const withLog = { ...inputs, runLog: [{ date: "2026-11-03", miles: 10 }] };
+    const watch = [{ date: "2026-11-03", miles: 10.2 }, { date: "2026-11-04", miles: 5 }, { date: "2026-11-12", miles: 4 }, { date: "2026-11-20", miles: 8 }];
+    const w = weeklyMiles(withLog, today, [], { back: 1, ahead: 1, watch });
+    assert.equal(w[0].miles, 15.2);   // the 3rd counts once (the larger), plus the 4th
+    assert.equal(w[1].miles, 4);      // this week: today's watch run
+    assert.equal(w[1].planned, 6.5);
+    assert.equal(w[2].kind, "plan");  // a future day's watch run is ignored
+    assert.equal(w[2].miles, w[2].planned);
+});

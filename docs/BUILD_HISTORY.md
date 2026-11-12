@@ -915,3 +915,6 @@ Eddie picked D, T1 and P1 from mock-ups (/mnt/project-files/week-card/). Coach a
 
 ### 2026-11-12: Today's Miles card gets the graph (M2)
 Eddie asked for the Miles this week card to carry the same line graph as Train, with the bar below. Built as M2: this week's miles left, 4-week average right, a shorter graph (`milesSvg(weeks, {compact})` shared with the Train graph, hidden from screen readers inside the card because the card's label says it), the bar, then last and next week. Whole card still opens Train. Coach only; no rules change. Checked in a browser at phone width.
+
+### 2026-11-12: Weekly miles graph reads the watch's runs, smoother look
+Eddie's real graph showed zero for every past week and a spike where the plan line started: it only read the plan and the manual run log, not COROS/Strava runs. `weeklyMiles` now takes `watch` runs ([{date, miles}] from `loadWatchMiles`, js/trendsData.js `allRuns`); a day counts the larger of watch and plan/log so a run in both isn't added twice. The plan line now leaves from last week's finished miles and is dotted; lines are smooth with a gradient fill and faint grid. Today's card paints from the plan at once and again when the watch runs are read. The watch path itself was only unit-tested, not run against a real COROS history in a browser.

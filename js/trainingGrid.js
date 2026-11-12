@@ -132,19 +132,28 @@ export function todayPick(day, completed = []) {
  * Past weeks count what was run (logged or finished); this week keeps both numbers; later weeks use the plan.
  * -> [{ monday, miles, planned, kind: "done" | "now" | "plan" }]
  */
-export function weeklyMiles(inputs, today, completed = [], { back = 5, ahead = 3 } = {}) {
+export function weeklyMiles(inputs, today, completed = [], { back = 5, ahead = 3, watch = [] } = {}) {
+    // Watch runs (COROS, Strava) by day. A day counts the larger of the watch and the plan/log, so a run
+    // that is in both is not added twice.
+    const watched = {};
+    for (const r of watch) if (r?.date && Number(r.miles) > 0) watched[r.date] = (watched[r.date] || 0) + Number(r.miles);
     const thisMonday = mondayOf(today);
     const out = [];
     for (let w = -back; w <= ahead; w++) {
         const monday = addDays(thisMonday, w * 7);
         let miles = 0, done = 0;
         for (let i = 0; i < 7; i++) {
-            for (const item of trainingItems(buildDay(addDays(monday, i), inputs, today), completed)) {
+            const date = addDays(monday, i);
+            let dayPlanned = 0, dayDone = 0;
+            for (const item of trainingItems(buildDay(date, inputs, today), completed)) {
                 if (item.kind !== "run") continue;
                 const m = Number(item.miles) || 0;
-                miles += m;
-                if (item.done) done += m;
+                dayPlanned += m;
+                if (item.done) dayDone += m;
             }
+            if (date <= today) dayDone = Math.max(dayDone, watched[date] || 0);
+            miles += dayPlanned;
+            done += dayDone;
         }
         const kind = w < 0 ? "done" : w === 0 ? "now" : "plan";
         out.push({ monday, miles: round1(kind === "plan" ? miles : done), planned: round1(miles), kind });

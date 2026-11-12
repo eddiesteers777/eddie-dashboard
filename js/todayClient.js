@@ -23,7 +23,7 @@ import { nextRace } from "./raceCountdown.js";
 import { raceStripModel, raceStripHtml, raceDayText } from "./raceStrip.js";
 import { icon } from "./icons.js";
 import { cachedRole } from "./role.js";
-import { dayStripHtml, todayLineHtml, stripLegendHtml, milesCardHtml, sportRows, totalsText, todayPick, weeklyMiles } from "./trainingGridView.js";
+import { dayStripHtml, todayLineHtml, stripLegendHtml, milesCardHtml, loadWatchMiles, sportRows, totalsText, todayPick, weeklyMiles } from "./trainingGridView.js";
 import { storedSessions } from "./sessionStore.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
@@ -145,9 +145,14 @@ export function renderClientToday() {
         const milesCard = $("weekMilesCard");
         if (milesCard) {
             if (combined && grid.totals.planned) {
-                milesCard.innerHTML = milesCardHtml(weeklyMiles(inputs, today, completedSessions));
-                milesCard.hidden = false;
-                import("./icons.js").then(m => m.hydrate());
+                const paint = watch => {
+                    milesCard.innerHTML = milesCardHtml(weeklyMiles(inputs, today, completedSessions, { watch }));
+                    milesCard.hidden = false;
+                    import("./icons.js").then(m => m.hydrate());
+                };
+                paint([]);
+                // The watch's runs (COROS, Strava) fill in the weeks behind once they're read.
+                loadWatchMiles(today).then(watch => { if (watch.length) paint(watch); });
             } else milesCard.hidden = true;
         }
         const hasWeek = combined ? true : week.days.some(d => d.items.length);
