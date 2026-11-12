@@ -91,7 +91,7 @@ export function drawLockup(el, { animate = false } = {}) {
     svg.style.height = h + "em";
     LINES.forEach((c, i) => {
         const y = (bold ? 0.14 : 0.1) + i * step;
-        const fly = bold ? FLY[i] : null;   // splash: each line comes in from its own side
+        const fly = bold && animate ? FLY[i] : null;   // animated splash: each line comes in from its own side
         const rest = `C${u(L * 0.9)} ${u(y)} ${u(L * 0.6)} ${u(yb)} ${u(L + 0.3)} ${u(yb)} L${u(dotX - 0.1)} ${u(yb)}`;
         const line = d => mk("path", { d, fill: "none", stroke: c, "stroke-width": u(sw), "stroke-linecap": "round", pathLength: 1, style: `--i:${i}` });
         if (fly) {

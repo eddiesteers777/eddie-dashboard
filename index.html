@@ -42,6 +42,7 @@
         @keyframes sb-glow-build{from{opacity:.2;transform:scale(.7)}to{opacity:.7;transform:scale(1)}}
         @media (prefers-reduced-motion:reduce){.eos-splash .eos-splash-glow{animation:none;opacity:.7;transform:none}}
         .eos-splash .eos-splash-lock:not(.sb-lock-ready){opacity:0}
+        .eos-splash[data-quick] .eos-splash-glow{animation:none;opacity:.7;transform:none}
     </style>
     <link rel="stylesheet"
           href="css/style.css">
@@ -70,14 +71,14 @@
     <div id="splashScreen" class="eos-splash" aria-hidden="true">
         <div class="eos-splash-glow" aria-hidden="true"></div>
         <div class="sb-lock eos-splash-lock" data-bold><span class="sb-lock-word">Southbound</span><span class="sb-lock-sub">Coaching</span></div>
-        <script type="module">import("./js/brandLockup.js").then(function (m) { m.drawLockups(document.getElementById("splashScreen"), { animate: true }); });</script>
+        <script type="module">import("./js/brandLockup.js").then(function (m) { var s = document.getElementById("splashScreen"); if (s) m.drawLockups(s, { animate: !s.hasAttribute("data-quick") }); });</script>
     </div>
 
     <script>
         // Runs synchronously, before first paint, so a repeat visit
         // within the same session never even flashes the splash --
         // it's removed before the browser has anything to show. A
-        // fresh session gets the full ~3s brand moment, then fades.
+        // fresh session gets the brand moment, then fades.
         (function () {
             var splash = document.getElementById("splashScreen");
             if (!splash) return;
@@ -97,10 +98,32 @@
                 return;
             }
 
-            setTimeout(function () {
+            function lift() {
                 splash.classList.add("eos-splash-hide");
                 setTimeout(function () { splash.remove(); }, 550);
-            }, 4300);
+            }
+
+            // The full animation plays on the first open of the day. Later opens that day show the
+            // logo still and lift as soon as Today is drawn (2026-11-12: the splash covered a page
+            // that was ready in under a second for 4.3 s on every open of the Home Screen app).
+            var playedToday = false;
+            try {
+                var now = new Date(), day = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+                playedToday = localStorage.getItem("sb-splash-day") === day;
+                localStorage.setItem("sb-splash-day", day);
+            } catch (e) { /* storage blocked: play it in full */ }
+
+            if (!playedToday) { setTimeout(lift, 4300); return; }
+
+            splash.setAttribute("data-quick", "");
+            var start = Date.now();
+            (function check() {
+                var waited = Date.now() - start;
+                var heading = document.getElementById("welcomeHeading");
+                var drawn = !!(heading && heading.textContent.trim());
+                if ((drawn && waited >= 700) || waited >= 2500) lift();
+                else setTimeout(check, 80);
+            })();
         })();
     </script>
 
