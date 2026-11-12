@@ -2341,6 +2341,9 @@ listenForAuth(async user => {
     renderAll();
     const requested = new URLSearchParams(location.search).get("tab");
     if (requested) selectTab(requested);
+    // Programs' "Edit plan" lands on one plan (?tab=plan&plan=ID).
+    const planToOpen = new URLSearchParams(location.search).get("plan");
+    if (planToOpen && requested === "plan") workspace?.then(w => w?.openPlan?.(planToOpen)).catch(() => {});
     // Their application and every plan version, for History (after the page is up).
     const extras = await loadHistoryExtras(record).catch(() => ({ application: null, planVersions: {} }));
     record.application = extras.application;

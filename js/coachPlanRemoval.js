@@ -43,3 +43,12 @@ export function archiveByCoachPlanId(plans, coachPlanId, archived = true) {
         ? { ...p, status: archived ? "archived" : "active" }
         : p);
 }
+
+// A coach plan this account published (it is in `headers`, the coach's own
+// coachingPlans list) can be edited in the Client Hub Plan tab, even when it
+// was addressed to this same account. Returns that link, or "".
+export function editLinkFor(entry, headers) {
+    const header = (headers || []).find(h => h.id === entry?.coachPlanId);
+    if (!header?.clientUid) return "";
+    return `client.html?uid=${encodeURIComponent(header.clientUid)}&tab=plan&plan=${encodeURIComponent(header.id)}`;
+}

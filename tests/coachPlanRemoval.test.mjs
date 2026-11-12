@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { planRange, canRemove, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "../js/coachPlanRemoval.js";
+import { planRange, canRemove, editLinkFor, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "../js/coachPlanRemoval.js";
 
 const entry = {
     id: "coach-ftI", coachPlanId: "ftI", source: "coach", status: "active", name: "Strength Phase",
@@ -30,4 +30,10 @@ test("unassign by the coach archives the matching copy", () => {
     const out = archiveByCoachPlanId([entry, other], "ftI", true);
     assert.equal(out[0].status, "archived");
     assert.equal(out[1].status, "active");
+});
+test("a plan I published, even to myself, links to its editor; a stranger's does not", () => {
+    const headers = [{ id: "ftI", clientUid: "me uid" }];
+    assert.equal(editLinkFor(entry, headers), "client.html?uid=me%20uid&tab=plan&plan=ftI");
+    assert.equal(editLinkFor(other, headers), "");
+    assert.equal(editLinkFor(entry, null), "");
 });

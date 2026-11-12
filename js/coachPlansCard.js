@@ -9,7 +9,7 @@
 ========================================== */
 
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
-import { planRange, canRemove, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "./coachPlanRemoval.js";
+import { planRange, canRemove, editLinkFor, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "./coachPlanRemoval.js";
 import { cachedRole } from "./role.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 
@@ -34,13 +34,15 @@ function myCopyRow(entry, role) {
     const on = entry.status === "active";
     const removable = canRemove(entry, role);
     const meta = [`From ${entry.coachName || "your coach"}`, rangeText(entry)].join(" · ");
+    const editHref = editLinkFor(entry, published);
+    const edit = editHref ? `<a class="sb-btn sb-btn-primary" href="${esc(editHref)}">Edit plan</a>` : "";
     const action = on
         ? (removable ? `<button type="button" class="sb-btn sb-btn-secondary" data-cp-remove="${esc(entry.id)}">Remove</button>` : "")
         : (entry.removedByClient ? `<button type="button" class="sb-btn sb-btn-tertiary" data-cp-restore="${esc(entry.id)}">Put back</button>` : "");
     return `<div class="pg-cp-row">
         <span class="pg-item-main"><strong>${esc(entry.name || "Coach plan")}</strong><span class="pg-data">${esc(meta)}</span></span>
         <span class="pg-chip${on ? " is-sage" : ""}">${on ? "On calendar" : entry.removedByClient ? "Removed" : "Archived"}</span>
-        ${action}
+        ${edit}${action}
     </div>`;
 }
 
@@ -61,7 +63,7 @@ function render() {
     const parts = [];
     if (mine.length) {
         parts.push(`<div class="pg-card-head"><span class="pg-kicker">Plans from a coach</span></div>
-            <p class="pg-p">These show on your Running calendar and Today. Removing one takes it off this calendar only.</p>
+            <p class="pg-p">These show on your Running calendar and Today. Removing one takes it off this calendar only.${published?.some(h => mine.some(e => e.coachPlanId === h.id)) ? " Edit plan opens the plans you wrote in your coach editor." : ""}</p>
             ${mine.map(e => myCopyRow(e, role)).join("")}`);
     }
     if (role === "coach" && published?.length) {
