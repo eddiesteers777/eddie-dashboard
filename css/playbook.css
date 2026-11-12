@@ -253,16 +253,16 @@
 .pb-refresh{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:5200;display:flex;align-items:center;gap:6px;max-width:calc(100vw - 32px);padding:6px 6px 6px 14px;background:var(--pb-card);color:var(--pb-text);border:1px solid var(--pb-act);border-radius:8px;box-shadow:var(--pb-shadow);font:500 14px var(--font-body)}
 .pb-refresh .pb-tab{color:var(--pb-act);border-bottom:0}
 /* Opt-in sync check (?pbcheck) */
-.pb-check{display:block!important;position:fixed;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top));z-index:5300;max-width:480px;margin:0 auto;max-height:calc(100dvh - 120px);overflow:auto;padding:16px;background:var(--pb-card);color:var(--pb-text);border:1px solid var(--pb-act);border-radius:8px;box-shadow:var(--pb-shadow);font:400 15px/1.4 var(--font-body)}
-.pb-check h2{margin:0 0 8px;font:600 18px var(--font-display);text-transform:uppercase;letter-spacing:.04em}
-.pb-check dl{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 12px;margin:0}
-.pb-check dt{opacity:.75}
-.pb-check dd{margin:0;font-family:var(--font-mono);font-size:14px;overflow-wrap:anywhere}
-.pb-check-note{margin:12px 0 0;color:var(--pb-act)}
-.pb-check-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.pb-check-btn{min-height:44px;padding:8px 14px;border-radius:6px;border:1px solid var(--pb-act);background:transparent;color:var(--pb-text);font:600 15px var(--font-body);cursor:pointer}
-.pb-check-btn:first-child{background:var(--pb-act);color:var(--pb-on-act,var(--on-primary))}
-@media print{.pb-syncstat,.pb-refresh,.pb-check{display:none!important}}
+.pb-synccheck{display:block!important;position:fixed;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top));z-index:5300;max-width:480px;margin:0 auto;max-height:calc(100dvh - 120px);overflow:auto;padding:16px;background:var(--pb-card);color:var(--pb-text);border:1px solid var(--pb-act);border-radius:8px;box-shadow:var(--pb-shadow);font:400 15px/1.4 var(--font-body)}
+.pb-synccheck h2{margin:0 0 8px;font:600 18px var(--font-display);text-transform:uppercase;letter-spacing:.04em}
+.pb-synccheck dl{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 12px;margin:0}
+.pb-synccheck dt{opacity:.75}
+.pb-synccheck dd{margin:0;font-family:var(--font-mono);font-size:14px;overflow-wrap:anywhere}
+.pb-synccheck-note{margin:12px 0 0;color:var(--pb-act)}
+.pb-synccheck-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pb-synccheck-btn{min-height:44px;padding:8px 14px;border-radius:6px;border:1px solid var(--pb-act);background:transparent;color:var(--pb-text);font:600 15px var(--font-body);cursor:pointer}
+.pb-synccheck-btn:first-child{background:var(--pb-act);color:var(--pb-on-act,var(--on-primary))}
+@media print{.pb-syncstat,.pb-refresh,.pb-synccheck{display:none!important}}
 
 /* ---- team: attendance, runs, duty ---- */
 .tm-day{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));margin:0 0 16px}
@@ -989,3 +989,25 @@ body.pb-live-on .pb-dock-item .ui-icon{width:20px;height:20px}
 .pb-subnav{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .pb-subnav::-webkit-scrollbar{display:none}
 .pb-subnav .pb-subtab{flex:1 1 auto;min-width:auto;padding:0 10px;white-space:nowrap;letter-spacing:.04em}
+
+/* ==========================================================
+   COMPUTER LAYOUT (Eddie, 2026-11-12, option A). Computers only (901px and up): phones are untouched.
+   1. Signed in, the app's left menu wears the foggy blue (the Playbook skips css/appLook.css, so it stayed forest green).
+   2. The pages use the whole screen beside the menu instead of a 760 to 1000px column.
+   ========================================================== */
+@media (min-width:901px){
+  html.pb-app body .eos-navbar{background:linear-gradient(180deg,rgba(33,50,66,.98),rgba(21,32,43,.98))!important;border-right:1px solid rgba(214,228,240,.16)!important}
+  html.pb-app body .eos-navbar .search-btn{background:rgba(214,228,240,.07)!important;border-color:rgba(214,228,240,.18)!important}
+  html.pb-app body .eos-navbar .eos-nav-item.active,html.pb-app body .eos-navbar .eos-dropdown-trigger.section-active{background:rgba(199,214,228,.14)!important;box-shadow:inset 3px 0 0 #C7D6E4!important}
+  html.pb-app body .eos-navbar .eos-nav-item.active .sb-side-ic,html.pb-app body .eos-navbar .eos-dropdown-trigger.section-active .sb-side-ic{color:#C7D6E4!important}
+  html.pb-app body .eos-navbar .eos-dropdown-link.active{background:rgba(199,214,228,.14)!important;box-shadow:inset 3px 0 0 #D2AD62!important;color:#F1E6D0!important}
+
+  body.pb-in-app .pb-shell,body.pb-in-app .pb-page,body.pb-in-app #main.container{max-width:none!important}
+  body.pb-in-app .pb-shell,body.pb-in-app #main.container{padding-left:40px!important;padding-right:40px!important}
+  body.pb-in-app .pb-page .pb-hub,body.pb-in-app .pb-page .pb-hero,body.pb-in-app .ss-shell,body.pb-in-app .rn-run{max-width:none!important;margin-inline:0!important}
+  body.pb-in-app .pb-page .pb-hero,body.pb-in-app .pb-hero{padding-left:0!important;padding-right:0!important}
+  body.pb-in-app .pb-hub{padding-left:0;padding-right:0}
+  body.pb-in-app .wk-grid{grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:28px}
+  body.pb-in-app .dr-tiles{grid-template-columns:repeat(4,1fr)}
+  body.pb-in-app .ro-list,body.pb-in-app .tm-list{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+}
