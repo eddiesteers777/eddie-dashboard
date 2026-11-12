@@ -10,6 +10,13 @@
 // Southbound dialogs/toasts (js/ui.js) for every app page, including
 // inline page scripts, which reach them as window.SB.
 import("./ui.js").catch(error => console.warn("Southbound: UI helpers unavailable.", error));
+// ?loadcheck shows how this page's load went on this device (js/loadCheck.js). Opt-in, never on its own.
+try {
+    const ask = new URLSearchParams(location.search).get("loadcheck");
+    if (ask === "off") sessionStorage.removeItem("sb-loadcheck");
+    else if (ask !== null) sessionStorage.setItem("sb-loadcheck", "1");
+    if (sessionStorage.getItem("sb-loadcheck") === "1") import("./loadCheck.js").catch(() => {});
+} catch { /* storage unavailable */ }
 // The tab dock and other bottom bars stay off the form on a phone (js/viewportFix.js).
 import("./viewportFix.js").catch(() => {});
 // The old-print night with forest glass (js/appLook.js); the Playbook keeps its own look.
