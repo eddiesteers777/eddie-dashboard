@@ -38,13 +38,24 @@ const auth = getAuth(app);
 // IndexedDB (private windows, strict tracking protection) the SDK falls
 // back to memory, as before. Signing out clears the persistent copy
 // (js/auth.js).
+// Some phones stall Firestore's streaming connection with no error (2026-11-07, iPhone Safari: the
+// sync read never answered). Auto-detect only helps when the stream fails; on a stall it waits forever,
+// and every screen that reads Firestore then sits empty (coach pages, 2026-11-12). So an iPhone/iPad,
+// or any device that has already seen a hang (js/cloudSync.js leaves the mark), skips the stream and
+// uses plain requests from the start. Slightly more traffic, but it answers.
+function streamLooksUnsafe() {
+  try {
+    if (Date.now() - Number(localStorage.getItem("__cloudSyncSdkHungAt") || 0) < 24 * 3600 * 1000) return true;
+  } catch { /* storage blocked */ }
+  const ua = navigator.userAgent || "";
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
 let db;
 try {
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }),
-    // Some phones and networks stall Firestore's streaming connection with no error (2026-11-07,
-    // iPhone Safari: the sync read never answered). This lets it fall back to plain requests.
-    experimentalAutoDetectLongPolling: true
+    ...(streamLooksUnsafe() ? { experimentalForceLongPolling: true } : { experimentalAutoDetectLongPolling: true })
   });
 } catch (error) {
   console.warn("Southbound: offline copy unavailable, using memory only.", error);
