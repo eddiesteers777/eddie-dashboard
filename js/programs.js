@@ -478,7 +478,7 @@ function itemMeta(program) {
 
 function actionsHtml(program) {
     if (program.source === 'marathon') {
-        return `<a class="sb-btn sb-btn-primary" href="marathon.html">Open the marathon plan</a>`;
+        return `<a class="sb-btn sb-btn-primary" href="running.html#my-plan">Open my plan</a>`;
     }
     if (program.source === 'race') {
         return `<a class="sb-btn sb-btn-primary" href="${program.editHref}">Change it on Running</a>`;

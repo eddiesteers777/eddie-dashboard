@@ -112,7 +112,7 @@ export function workoutCardHtml(item) {
 // The coach's own run for today (the marathon plan), in the same card as a client's: the picture and its
 // labels first, the name with the miles, the details, one full-width button, and a quiet Mark done. The marathon
 // plan keeps its own done record, so the button carries the week and the day (js/app.js ticks it).
-export function coachRunCardHtml(item, { href = "marathon.html" } = {}) {
+export function coachRunCardHtml(item, { href = "running.html#my-plan" } = {}) {
     const ribbon = ribbonHtml(ribbonSegments(item.workout));
     const done = Boolean(item.done);
     const bigNumber = item.miles ? `<span class="wk-big">${item.miles}<small> mi</small></span>` : "";

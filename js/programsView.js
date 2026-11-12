@@ -130,7 +130,7 @@ export function marathonProgram(name = "Indianapolis Monumental") {
         key: "marathon", source: "marathon", id: "marathon", name, kind: "Marathon", status: "active",
         start: isoOf(START_DATE), end: isoOf(RACE_DATE), goal: "3:05", weeks, totalWeeks: weeks.length,
         peak: Math.max(0, ...weeks.map(w => w.miles)), longest: Math.max(0, ...weeks.map(w => w.longRun)),
-        runDays: 0, liftDays: 0, crossDays: 0, preview: false, editHref: "marathon.html"
+        runDays: 0, liftDays: 0, crossDays: 0, preview: false, editHref: "running.html#my-plan"
     };
 }
 

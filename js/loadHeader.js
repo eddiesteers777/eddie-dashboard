@@ -10,6 +10,13 @@
 // Southbound dialogs/toasts (js/ui.js) for every app page, including
 // inline page scripts, which reach them as window.SB.
 import("./ui.js").catch(error => console.warn("Southbound: UI helpers unavailable.", error));
+// ?loadcheck shows how this page's load went on this device (js/loadCheck.js). Opt-in, never on its own.
+try {
+    const ask = new URLSearchParams(location.search).get("loadcheck");
+    if (ask === "off") sessionStorage.removeItem("sb-loadcheck");
+    else if (ask !== null) sessionStorage.setItem("sb-loadcheck", "1");
+    if (sessionStorage.getItem("sb-loadcheck") === "1") import("./loadCheck.js").catch(() => {});
+} catch { /* storage unavailable */ }
 // The tab dock and other bottom bars stay off the form on a phone (js/viewportFix.js).
 import("./viewportFix.js").catch(() => {});
 // The old-print night with forest glass (js/appLook.js); the Playbook keeps its own look.
@@ -165,7 +172,6 @@ const SEARCH_DESTINATIONS = [
     { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)", requires: "fueling" },
     // The coach's personal tools (built around his own race block) --
     // hidden from clients, like their More rows and menu links.
-    { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)", requires: "coach" },
     { label: "75-Day Challenge", href: "75day.html", icon: "flame", color: "var(--green)", requires: "coach" },
     { label: "Analytics", href: "analytics.html", icon: "trendingUp", color: "var(--amber)", requires: "coach" },
     { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)", requires: "coach" },

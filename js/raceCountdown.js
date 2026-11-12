@@ -19,7 +19,7 @@ function dayOf(iso) {
 
 // "Race day — 5K" -> "5K", "Race day: Fall Half - goal 1:45:00" -> "Fall Half". "" when the title says nothing more.
 function raceNameOf(day) {
-    const text = String(day?.title || day?.session || "").replace(/^race( day)?\s*[:\u2014\u2013-]*\s*/i, "").split(/\s+[-\u2013\u2014]\s+/)[0].trim();
+    const text = String(day?.title || day?.session || "").replace(/^race( day)?\s*[:\u2014\u2013-]*\s*/i, "").split(/\s+[-\u2013\u2014]\s+|:\s/)[0].trim();
     return /^race( day)?$/i.test(text) ? "" : text;
 }
 
