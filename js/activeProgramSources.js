@@ -157,6 +157,12 @@ export function getActiveProgramUpcomingRuns(todayDate, horizonDays = 14) {
     return upcoming.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+// A Mark done tap answers at once. The save writes this device first (before its first await), then pushes to the
+// cloud, which on a slow phone connection can take many seconds: the tap must not wait for that push.
+function saveInBackground(save, programs) {
+    Promise.resolve(save(programs)).catch(error => console.warn("Southbound: plan save did not finish.", error));
+}
+
 export async function toggleRunningProgramDayCompleted(programId, dateStr) {
     for (const [load, save] of [[loadCoachPlans, saveCoachPlans], [loadRunningPrograms, saveRunningPrograms], [loadTrainingPrograms, saveTrainingPrograms]]) {
         const programs = load();
@@ -168,7 +174,7 @@ export async function toggleRunningProgramDayCompleted(programId, dateStr) {
             if (!day || day.type === "rest") continue;
             day.completed = !Boolean(day.completed);
             program.updatedAt = new Date().toISOString();
-            await save(programs);
+            saveInBackground(save, programs);
             return day.completed;
         }
     }
@@ -187,7 +193,7 @@ export async function toggleProgramSupplementalCompleted(programId, dateStr, typ
                 if (entry.type !== type || dayDateWithinWeek(week, entry.day) !== dateStr) continue;
                 entry.completed = !entry.completed;
                 program.updatedAt = new Date().toISOString();
-                await save(programs);
+                saveInBackground(save, programs);
                 return entry.completed;
             }
         }
