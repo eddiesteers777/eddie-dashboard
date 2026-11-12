@@ -9,7 +9,7 @@
 ========================================== */
 
 import { loadCoachPlans, saveCoachPlans } from "./coachPlanStore.js";
-import { planRange, canRemove, editLinkFor, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "./coachPlanRemoval.js";
+import { planRange, canRemove, canDeleteCopy, deleteCoachCopy, editLinkFor, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "./coachPlanRemoval.js";
 import { cachedRole } from "./role.js";
 import { toast, sbConfirm, friendlyError } from "./ui.js";
 
@@ -39,10 +39,11 @@ function myCopyRow(entry, role) {
     const action = on
         ? (removable ? `<button type="button" class="sb-btn sb-btn-secondary" data-cp-remove="${esc(entry.id)}">Remove</button>` : "")
         : (entry.removedByClient ? `<button type="button" class="sb-btn sb-btn-tertiary" data-cp-restore="${esc(entry.id)}">Put back</button>` : "");
+    const del = canDeleteCopy(entry) ? `<button type="button" class="sb-btn sb-btn-tertiary" data-cp-delete="${esc(entry.id)}">Delete</button>` : "";
     return `<div class="pg-cp-row">
         <span class="pg-item-main"><strong>${esc(entry.name || "Coach plan")}</strong><span class="pg-data">${esc(meta)}</span></span>
         <span class="pg-chip${on ? " is-sage" : ""}">${on ? "On calendar" : entry.removedByClient ? "Removed" : "Archived"}</span>
-        ${edit}${action}
+        ${edit}${action}${del}
     </div>`;
 }
 
@@ -96,6 +97,11 @@ card?.addEventListener("click", async event => {
             if (!(await sbConfirm(`${entry?.name || "This plan"} comes off your Running calendar and Today. The coach's plan isn't changed, and you can put it back.`, { title: "Remove this plan?", confirmLabel: "Remove", danger: true }))) return;
             await saveCoachPlans(removeCoachPlan(loadCoachPlans(), btn.dataset.cpRemove));
             toast("Plan removed from your calendar");
+        } else if (btn.dataset.cpDelete) {
+            const entry = loadCoachPlans().find(p => p.id === btn.dataset.cpDelete);
+            if (!(await sbConfirm(`${entry?.name || "This plan"} is only a leftover copy on this account. Deleting it removes it from this list. Nothing changes for any client.`, { title: "Delete this copy?", confirmLabel: "Delete", danger: true }))) return;
+            await saveCoachPlans(deleteCoachCopy(loadCoachPlans(), btn.dataset.cpDelete));
+            toast("Copy deleted");
         } else if (btn.dataset.cpRestore) {
             await saveCoachPlans(restoreCoachPlan(loadCoachPlans(), btn.dataset.cpRestore));
             toast("Plan is back on your calendar");

@@ -52,3 +52,13 @@ export function editLinkFor(entry, headers) {
     if (!header?.clientUid) return "";
     return `client.html?uid=${encodeURIComponent(header.clientUid)}&tab=plan&plan=${encodeURIComponent(header.id)}`;
 }
+
+// A copy whose plan isn't addressed to this account any more (orphaned, set by
+// js/coachPlanSync.js) can be deleted from the list for good. Anything else stays.
+export function canDeleteCopy(entry) {
+    return Boolean(entry) && entry.source === "coach" && entry.orphaned === true;
+}
+
+export function deleteCoachCopy(plans, id) {
+    return (plans || []).filter(p => !(p.id === id && canDeleteCopy(p)));
+}

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { planRange, canRemove, editLinkFor, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "../js/coachPlanRemoval.js";
+import { planRange, canRemove, canDeleteCopy, deleteCoachCopy, editLinkFor, removeCoachPlan, restoreCoachPlan, archiveByCoachPlanId } from "../js/coachPlanRemoval.js";
 
 const entry = {
     id: "coach-ftI", coachPlanId: "ftI", source: "coach", status: "active", name: "Strength Phase",
@@ -36,4 +36,11 @@ test("a plan I published, even to myself, links to its editor; a stranger's does
     assert.equal(editLinkFor(entry, headers), "client.html?uid=me%20uid&tab=plan&plan=ftI");
     assert.equal(editLinkFor(other, headers), "");
     assert.equal(editLinkFor(entry, null), "");
+});
+test("only an orphaned copy can be deleted from the list", () => {
+    const orphan = { ...entry, orphaned: true };
+    assert.equal(canDeleteCopy(orphan), true);
+    assert.equal(canDeleteCopy(entry), false);
+    assert.deepEqual(deleteCoachCopy([orphan, other], "coach-ftI").map(p => p.id), ["coach-x"]);
+    assert.equal(deleteCoachCopy([entry, other], "coach-ftI").length, 2);
 });
