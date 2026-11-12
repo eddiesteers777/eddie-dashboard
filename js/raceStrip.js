@@ -45,12 +45,13 @@ export function raceStripModel(race, ctx) {
 
 export function raceStripHtml(model) {
     if (!model) return "";
-    const label = model.days === 0 ? "Race day is today" : `${model.days} ${model.days === 1 ? "day" : "days"} to race day`;
+    // The words under the number are gone (Eddie, 2026-11-12); the race and its date stay for screen readers.
+    const label = `${model.days === 0 ? "Race day is today" : `${model.days} ${model.days === 1 ? "day" : "days"} to go`}: ${model.caption}${model.weekText ? `, ${model.weekText}` : ""}`;
     return `
         <div class="race-strip-top" role="img" aria-label="${esc(label)}">
             <span class="race-strip-big">${esc(model.big)}</span>
             <span class="race-strip-unit">${esc(model.unit)}</span>
         </div>
         ${model.weeks.length ? `<div class="race-strip-bar" aria-hidden="true">${model.weeks.map(w => `<i class="is-${w}"></i>`).join("")}</div>` : ""}
-        <div class="race-strip-foot"><span>${esc(model.caption)}</span><span>${esc(model.weekText)}</span></div>`;
+`;
 }

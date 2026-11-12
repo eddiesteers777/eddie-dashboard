@@ -21,6 +21,11 @@ test("across plans the earliest upcoming race day wins, and past race days are s
     assert.equal(nextRace([mk("k", "2026-12-05", "Race day — 5K")], "2026-12-05").days, 0, "race day itself counts");
 });
 
+test("a long race-day description is cut to its name", () => {
+    const long = { id: "d", ...plan({}, [{ days: [{ date: "2026-12-05", type: "race", session: "5K race: 15 min jog + 4 strides, race, 10 min cool-down" }] }]) };
+    assert.equal(nextRace([long], "2026-11-12").name, "5K race");
+});
+
 test("a race day with no name falls back to the plan's race type, then to nothing", () => {
     const named = { id: "a", status: "active", generatedPlan: { generator: { settings: { raceType: "HALF" } }, weeks: raceWeek("2026-12-05") } };
     assert.equal(nextRace([named], "2026-11-12").name, "half marathon");
