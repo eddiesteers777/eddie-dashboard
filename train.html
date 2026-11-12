@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/train.css">
+    <link rel="stylesheet" href="css/trainingGrid.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c2834">
@@ -33,6 +34,9 @@
                 <p class="eos-today-phase">Your running, strength and cross-training, and every workout you've finished.</p>
             </div>
         </section>
+
+        <!-- Everything planned and done, from Running, Strength and Cross-Training, on one calendar (js/trainingGridView.js). -->
+        <section class="eos-today-card tg-cal" id="trainCalendar" aria-labelledby="tgTitle" hidden></section>
 
         <!-- One small card each for Running / Strength / Cross-Training (js/train.js), only the ones this account has. -->
         <div class="tr-stack" id="trainPanel" aria-live="polite">
@@ -58,6 +62,10 @@
     <script src="js/loadHeader.js"></script>
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/train.js"></script>
+    <script type="module">
+        import { mountTrainingCalendar } from "./js/trainingGridView.js";
+        mountTrainingCalendar(document.getElementById("trainCalendar"));
+    </script>
     <script src="js/registerSW.js"></script>
 
 </body>

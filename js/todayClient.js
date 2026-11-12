@@ -22,6 +22,9 @@ import { restDayAction } from "./todayCues.js";
 import { nextRace } from "./raceCountdown.js";
 import { raceStripModel, raceStripHtml, raceDayText } from "./raceStrip.js";
 import { icon } from "./icons.js";
+import { cachedRole } from "./role.js";
+import { sportGridHtml, sportRows, totalsText } from "./trainingGridView.js";
+import { storedSessions } from "./sessionStore.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
 const $ = id => document.getElementById(id);
@@ -130,9 +133,32 @@ export function renderClientToday() {
     // that have something on, not seven rows of "Rest".
     const section = $("weekSection");
     if (section) {
-        const hasWeek = week.days.some(d => d.items.length);
+        // The coach's own week: running, strength and cross-training together, one row per sport
+        // (js/trainingGrid.js). It opens the Train page, where the whole calendar is.
+        const combined = cachedRole() === "coach";
+        let grid = null;
+        if (combined) {
+            let completed = [];
+            try { completed = storedSessions(); } catch { completed = []; }
+            grid = sportRows(week, completed);
+        }
+        const hasWeek = combined ? true : week.days.some(d => d.items.length);
         section.hidden = !hasWeek;
-        if (hasWeek) {
+        if (combined && !grid.totals.planned) {
+            $("weekSummary").textContent = "Nothing planned this week.";
+            $("weekList").innerHTML = `<p class="tg-none">Add a run, a lift or a cross-training session and it shows here.</p>`;
+            const milesEl = $("weekMiles");
+            if (milesEl) milesEl.hidden = true;
+            const seeAll = $("weekSeeAll");
+            if (seeAll) { seeAll.href = "train.html"; seeAll.firstChild.textContent = "Training "; }
+        } else if (combined) {
+            $("weekSummary").textContent = `${grid.totals.done} of ${grid.totals.planned} done`;
+            $("weekList").innerHTML = `<a class="tg-link" href="train.html" aria-label="This week's training. Open the training calendar">${sportGridHtml(grid)}</a>`;
+            const milesEl = $("weekMiles");
+            if (milesEl) { milesEl.hidden = false; milesEl.classList.add("tg-totals"); milesEl.textContent = totalsText(grid.totals); }
+            const seeAll = $("weekSeeAll");
+            if (seeAll) { seeAll.href = "train.html"; seeAll.firstChild.textContent = "Training "; }
+        } else if (hasWeek) {
             // The heading already carries the week's miles when it shows them: don't say them twice.
             const milesInHeading = can("plan") && !!weekMiles(week).planned;
             $("weekSummary").textContent = summaryLine(week.summary, { miles: !milesInHeading });
