@@ -14,7 +14,7 @@ import {
 
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
-import { addGreetingTrail } from "./greetingTrail.js";
+import { greetingLine } from "./greetingTrail.js";
 import { celebrateRun } from "./celebrate.js";
 import { weekProgressNow } from "./celebrateWeek.js";
 import { showsPersonalPlan } from "./role.js";
@@ -75,13 +75,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     // just the greeting, then the first name.
     if (welcomeHeading) {
         welcomeHeading.textContent = greeting;
-        addGreetingTrail(welcomeHeading);
+        // The words ride the logo's top line (js/greetingTrail.js); the <h1> stays for screen readers.
+        const line = greetingLine(welcomeHeading);
+        line.set(greeting, { final: false });
 
         import("./auth.js").then(({ listenForAuth }) => {
             listenForAuth(user => {
                 if (!user) return;
                 const name = user.displayName ? user.displayName.split(" ")[0] : "";
                 welcomeHeading.innerHTML = name ? `${greeting}, <br>${escapeHtml(name)}` : greeting;
+                line.set(name ? `${greeting}, ${name}` : greeting);
             });
         }).catch(() => {});
     }

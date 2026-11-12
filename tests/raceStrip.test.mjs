@@ -29,6 +29,7 @@ test("race day, tomorrow, and a plan we can't place in the block", () => {
 
 test("the html is escaped and says the days out loud", () => {
     const html = raceStripHtml(raceStripModel({ date: "2026-11-22", days: 36 }, { weekNumber: 1, totalWeeks: 2 }));
-    assert.match(html, /aria-label="36 days to race day"/);
+    assert.match(html, /aria-label="36 days to go: Race day · Sun,? Nov 22, Week 1 of 2"/);
     assert.match(html, /is-now/);
+    assert.ok(!html.includes("race-strip-foot"), "no words under the bar");
 });
