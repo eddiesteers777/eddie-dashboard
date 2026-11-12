@@ -202,6 +202,7 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
                         ${archived.map(h => `
                             <div class="pw-plan pw-plan-archived">
                                 <div class="pw-plan-main"><strong>${esc(h.name)}</strong><span class="pw-meta">Published ${esc(niceDate(toMillis(h.publishedAt)))}</span></div>
+                                <button type="button" class="sb-btn sb-btn-secondary" data-act="open" data-id="${esc(h.id)}">Edit</button>
                                 <button type="button" class="sb-btn sb-btn-tertiary" data-act="restore" data-id="${esc(h.id)}">Restore</button>
                             </div>`).join("")}
                     </details>` : ""}

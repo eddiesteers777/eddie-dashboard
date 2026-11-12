@@ -47,7 +47,7 @@ async function publishedPlans(clientUid) {
     try {
         const headers = await listPlansForClient(clientUid);
         return Promise.all(headers.map(async h => {
-            if (h.status !== "active") return h;
+            // Archived plans load too, so a coach can still open and edit one (publishing it again puts it back).
             const master = await getMaster(h.id).catch(() => null);
             if (master?.plan) return { ...h, plan: master.plan };
             if (isRolling(h)) return { ...h, plan: null };
