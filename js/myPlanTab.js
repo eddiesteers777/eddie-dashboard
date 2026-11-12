@@ -11,6 +11,7 @@ import { loadOwn, saveOwn, removeOwn, corosPrefill, prefillNote, applyPrefill, d
 import { mountPlanScreen } from "./planScreen.js";
 import { marathonSetup } from "./marathonSetup.js";
 import { marathonSettingsFromProfile, isoToday, clockText } from "./marathonProfile.js";
+import { recoverySetup } from "./recoverySetup.js";
 import { sbConfirm, toast } from "./ui.js";
 
 const root = document.getElementById("myPlanRoot");
@@ -29,13 +30,24 @@ async function profileRecord() {
     try { return await (await import("./userProfile.js")).getMyProfile(); } catch { return null; }
 }
 
-async function openSetup() {
+function openRecovery() {
+    const own = record?.generatedPlan?.generator?.settings?.engine === "recovery" ? record.generatedPlan : null;
+    recoverySetup({
+        plan: own,
+        onRace: () => openSetup({ skipRecovery: true }),
+        onCreate: async ({ plan, name }) => { record = await saveOwn({ plan, name }); toast("Your recovery plan is saved.", { type: "success" }); render(); },
+        onApply: async ({ plan, name }) => { record = await saveOwn({ plan, name }); toast("Your recovery plan is updated.", { type: "success" }); render(); }
+    });
+}
+
+async function openSetup({ skipRecovery = false } = {}) {
+    if (!skipRecovery && record?.generatedPlan?.generator?.settings?.engine === "recovery") return openRecovery();
     const today = isoToday();
     const pre = await prefill(today);
     const plan = record?.generatedPlan?.generator?.settings?.engine === "marathon" ? record.generatedPlan : null;
     const base = plan ? null : applyPrefill({ ...marathonSettingsFromProfile(await profileRecord(), today), strengthDays: 0 }, pre);
     marathonSetup({
-        me: true, record: null, plan, settings: base, done: plan ? doneDates(plan) : new Set(),
+        me: true, onRecovery: openRecovery, record: null, plan, settings: base, done: plan ? doneDates(plan) : new Set(),
         note: prefillNote(pre, clockText),
         onCreate: async ({ plan: made }) => { record = await saveOwn({ plan: made }); toast("Your plan is saved.", { type: "success" }); render(); },
         onApply: async ({ plan: next, message }) => { record = await saveOwn({ plan: next }); toast(message || "Your plan is updated.", { type: "success" }); render(); }

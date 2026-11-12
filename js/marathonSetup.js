@@ -158,7 +158,7 @@ export function previewFor(st) {
 }
 
 /** me: Eddie's own plan ("Plan for me"): nothing goes to a client; `note` is the "From your COROS" line; `settings` starts the setup. */
-export function marathonSetup({ firstName, record, plan = null, done = new Set(), onCreate, onApply, me = false, note = "", settings = null, publishable = false }) {
+export function marathonSetup({ firstName, record, plan = null, done = new Set(), onCreate, onApply, me = false, note = "", settings = null, publishable = false, onRecovery = null }) {
     const today = isoToday();
     const regen = Boolean(plan?.generator?.settings?.engine === "marathon");
     let st = regen ? { ...plan.generator.settings } : (settings || marathonSettingsFromProfile(record, today));
@@ -181,6 +181,7 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
                 <div><span class="ms-kick">${me ? "My plan" : regen ? "Update the plan" : "New race plan"}</span><h2>${view === "setup" ? "Setup" : me ? "Plan for me" : `Plan for ${esc(first)}`}</h2></div>
                 <button type="button" class="sb-btn sb-btn-icon" data-act="close" aria-label="Close">${icon("close")}</button>
             </header>
+            ${me && !regen && onRecovery ? `<div class="ms-switch" role="group" aria-label="Plan type"><button type="button" aria-pressed="true" class="is-on">Race plan</button><button type="button" data-act="recovery" aria-pressed="false">Recovery</button></div>` : ""}
             ${view === "setup" ? (note ? `<p class="ms-coros">${esc(note)}</p>` : "") + setupView(st) : planView(st, prev, regen ? "regen" : "new", first)}
             <footer class="ms-foot">
                 ${view === "setup"
@@ -211,6 +212,7 @@ export function marathonSetup({ firstName, record, plan = null, done = new Set()
         if (!btn) return;
         const act = btn.dataset.act;
         if (act === "close") return d.close();
+        if (act === "recovery") { d.close(); onRecovery?.(); return; }
         if (act === "edit") { view = "setup"; draw(); return; }
         if (act === "back" || act === "apply") { apply(); view = "plan"; draw(); return; }
         if (act === "fix") {

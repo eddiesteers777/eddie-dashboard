@@ -146,6 +146,7 @@ export function buildPlanView(plan, today, { generate = null } = {}) {
 
     return {
         state: at.state, index: wi, total, weeks, legend, blocks, chips,
+        recovery: settings.engine === "recovery",
         raceType: settings.raceType || rich?.summary?.distance || "",
         raceLabel: RACE_LABEL[settings.raceType] || "Race",
         raceDate, goalTime: settings.goalTime || "",

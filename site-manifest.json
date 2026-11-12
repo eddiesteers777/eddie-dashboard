@@ -321,6 +321,8 @@
     "js/readinessData.js",
     "js/readinessV2.js",
     "js/readinessV2Data.js",
+    "js/recoveryPlan.js",
+    "js/recoverySetup.js",
     "js/registerSW.js",
     "js/role.js",
     "js/routeApi.js",

@@ -34,14 +34,22 @@ export function emptyHtml() {
     return `<div class="ps-root"><div class="ps-hero"><div class="ps-eyebrow">Your race plan</div>
         <div class="ps-empty"><div class="ps-ghost" aria-hidden="true">${Array.from({ length: 16 }, (_, i) => `<i style="height:${30 + (i % 4 === 3 ? -10 : i * 4)}%"></i>`).join("")}</div>
         <h2>No plan yet</h2>
-        <p>Build a 5K, 10K, half marathon or marathon plan. It shows here week by week, with the countdown and the whole season. Your COROS runs fill in where you are now.</p>
+        <p>Build a 5K, 10K, half marathon or marathon plan, or a recovery plan for after a race. It shows here week by week, with the countdown and the whole season. Your COROS runs fill in where you are now.</p>
         <button type="button" class="sb-btn sb-btn-primary" data-ps="build">Build my plan</button>
         <p class="ps-fine">Saved on your account. Nothing goes to a client.</p></div></div></div>`;
 }
 
 /* ---------- pieces ---------- */
 
+function recoveryHero(v, name) {
+    const week = v.state === "before" ? `Starts ${esc(fmt(v.startDate, { month: "short", day: "numeric" }))}` : v.state === "after" ? "Recovery finished" : `Week <span>${v.index + 1} of ${v.total} · ${esc(v.weeks[v.index].phase)}</span>`;
+    return `<div class="ps-hero"><div class="ps-eyebrow">${esc(name || "Recovery plan")}</div>
+      <div class="ps-hero-body"><div class="ps-hero-goal"><div class="ps-goal-label">Recovery</div><div class="ps-hero-week ps-mono">${week}</div></div></div>
+      <div class="ps-stat-line ps-mono"><span><b>${v.cycle}</b> mi in all</span><span><b>${v.donePct}%</b> done</span></div></div>`;
+}
+
 function hero(v, name) {
+    if (v.recovery) return recoveryHero(v, name);
     const C = 326.7, arc = (v.ring * C).toFixed(1);
     const past = v.toRace != null && v.toRace < 0;
     const eyebrow = `${esc(name || `My ${v.raceLabel.toLowerCase()} plan`)}${v.raceDate ? ` · ${esc(fmt(v.raceDate, { weekday: "short", month: "short", day: "numeric", year: "numeric" }))}` : ""}`;
@@ -130,7 +138,8 @@ function chart(v) {
 }
 
 function blocks(v) {
-    if (!v.blocks.length) return "";
+    if (!v.blocks.length) return `<div class="ps-chart-wrap"><div class="ps-actions"><button type="button" class="sb-btn sb-btn-secondary" data-ps="edit">Edit setup</button><button type="button" class="sb-btn sb-btn-tertiary" data-ps="remove">Remove plan</button></div>
+        <p class="ps-fine">Saved on your account. Nothing goes to a client. Days you edit by hand stay as you set them.</p></div>`;
     const rows = v.blocks.map(b => `<li class="${b.now ? "is-now" : ""}"><i style="background:${b.colour}"></i><div><strong>${esc(b.name)}${b.now ? " · now" : ""}</strong><em>${esc(b.text)}</em></div><span>Wk ${b.from}${b.to > b.from ? `–${b.to}` : ""}</span></li>`).join("");
     return `<div class="ps-section-head"><h2>The blocks</h2><span class="ps-hint">new stimulus every 4 weeks</span></div>
     <div class="ps-chart-wrap"><ul class="ps-blocks">${rows}</ul>

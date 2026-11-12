@@ -72,3 +72,10 @@
 }
 @media (prefers-reduced-motion:reduce){ .ms-dialog[open]{ animation:none; } }
 .ms-coros{ margin:0 0 12px; padding:10px 12px; border-radius:10px; font-size:14px; color:var(--text); background:color-mix(in srgb,var(--primary) 12%,transparent); border:1px solid color-mix(in srgb,var(--primary) 30%,transparent); }
+
+/* Race plan | Recovery switch and the recovery rules (js/recoverySetup.js) */
+.ms-switch{ display:flex; border:1px solid var(--border); border-radius:var(--radius-pill); overflow:hidden; margin:2px 0 12px; }
+.ms-switch button{ flex:1; min-height:44px; border:0; background:transparent; color:var(--text-muted, var(--text)); font:inherit; font-weight:600; cursor:pointer; }
+.ms-switch button.is-on{ background:var(--primary); color:var(--on-primary); }
+.ms-rules{ margin:10px 0 0; padding-left:18px; }
+.ms-rules li{ margin:4px 0; }
