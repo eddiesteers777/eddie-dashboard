@@ -152,7 +152,9 @@ async function activateTrainingPlan(id) {
     plan.archivedAt = null;
     plan.pausedAt = null;
 
-    await saveTrainingPrograms(programs);
+    // Device copy now; the cloud copy finishes in the background so the tap answers at once.
+    const saving = saveTrainingPrograms(programs);
+    saving.catch(() => {});
 
     let strengthResult = { warning: '' };
     try {
@@ -191,19 +193,22 @@ async function updateTrainingPlanStatus(id, nextStatus) {
         plan.pausedAt = null;
     }
 
-    await saveTrainingPrograms(programs);
-
-    try {
-        if (nextStatus === 'paused' || nextStatus === 'archived') {
-            await deactivateTrainingPlanStrengthSchedule(id);
-        }
-    } catch (error) {
-        console.error('Training-plan Strength cleanup failed:', error);
-    }
+    // The device copy is written at once; the screen changes now, and the cloud copy
+    // (which can take many seconds on a slow phone) finishes in the background.
+    const saving = saveTrainingPrograms(programs);
 
     renderPage();
     window.dispatchEvent(new CustomEvent('eddieos:training-programs-changed', { detail: { programId: id, action: nextStatus } }));
     window.dispatchEvent(new CustomEvent('eddieos:running-programs-changed', { detail: { programId: id, action: nextStatus } }));
+
+    (async () => {
+        try {
+            if (nextStatus === 'paused' || nextStatus === 'archived') await deactivateTrainingPlanStrengthSchedule(id);
+        } catch (error) {
+            console.error('Training-plan Strength cleanup failed:', error);
+        }
+        await saving.catch(() => {});
+    })();
 }
 
 function applyTrainingSettings(settings) {
