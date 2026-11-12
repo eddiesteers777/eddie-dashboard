@@ -20,7 +20,7 @@ import { changeMode } from "./weekChanges.js";
 import { nextLine, quietDayTitle } from "./todayGlance.js";
 import { restDayAction } from "./todayCues.js";
 import { nextRace } from "./raceCountdown.js";
-import { raceStripModel, raceStripHtml } from "./raceStrip.js";
+import { raceStripModel, raceStripHtml, raceDayText } from "./raceStrip.js";
 import { icon } from "./icons.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
@@ -65,15 +65,16 @@ export function renderClientToday() {
     // Where they are in their plan, in the hero.
     const ctx = planContext(inputs.plans, today);
     const phase = $("phaseStatus");
+    const race = nextRace(inputs.plans, today);
+    const model = raceStripModel(race, ctx);
+    const strip = $("raceStrip");
+    // The strip counts down to the next race day in any active plan. The plan name and "Week X of Y" come from the
+    // plan on today's date (ctx), so they always agree. No race ahead: that plan's end date, as "Plan ends".
+    if (strip) { strip.hidden = !model; strip.innerHTML = raceStripHtml(model); }
     if (phase && ctx) {
-        const race = nextRace(inputs.plans, today);
-        const strip = $("raceStrip");
-        const model = raceStripModel(race, ctx);
-        // With a race ahead the strip carries the countdown and the week; the line keeps the plan and phase.
-        if (strip) { strip.hidden = !model; strip.innerHTML = raceStripHtml(model); }
         phase.textContent = model
             ? [ctx.planName, ctx.phase].filter(Boolean).join(" · ")
-            : `Week ${ctx.weekNumber} of ${ctx.totalWeeks} · ${ctx.planName}${ctx.phase ? ` · ${ctx.phase}` : ""}`;
+            : [`Week ${ctx.weekNumber} of ${ctx.totalWeeks}`, ctx.planName, ctx.phase, ctx.endDate ? `Plan ends ${raceDayText(ctx.endDate)}` : ""].filter(Boolean).join(" · ");
     }
 
     const dateLabel = $("todayDateLabel");

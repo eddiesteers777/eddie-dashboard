@@ -14,7 +14,8 @@ test("days to go, and the block as one segment per week", () => {
     assert.equal(m.unit, "Days to go");
     assert.deepEqual(m.weeks, ["done", "done", "now", "next", "next"]);
     assert.equal(m.weekText, "Week 3 of 5");
-    assert.match(m.caption, /^Race day · Sun,? Nov 22$/);
+    assert.match(m.caption, /^Race day · Sun,? Nov 22$/, "no name on the race day: plain label");
+    assert.match(raceStripModel({ date: "2026-12-05", days: 23, name: "5K" }, null).caption, /^5K · Sat, Dec 5$/);
 });
 
 test("race day, tomorrow, and a plan we can't place in the block", () => {
