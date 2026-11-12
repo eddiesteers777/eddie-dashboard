@@ -127,5 +127,22 @@ $("disconnectCorosBtn")?.addEventListener("click", async () => {
     window.SB?.toast?.("COROS disconnected.");
 });
 
-window.addEventListener("eddieos:coros-auth-changed", () => { render(); renderWearableSharing(); });
+window.addEventListener("eddieos:coros-auth-changed", event => {
+    render(); renderWearableSharing();
+    // Connected from Today's Connect sheet: go back to Today (js/readinessCard.js).
+    if (event.detail?.connected) returnToToday();
+});
+
+// Today's Readiness card sends people here with ?connect=coros. COROS only returns to the pages it knows
+// (settings.html, analytics.html), so the sign-in starts here and Today is opened again when it is done.
+function returnToToday() {
+    let back = null;
+    try { back = sessionStorage.getItem("sb-coros-return"); sessionStorage.removeItem("sb-coros-return"); } catch { /* storage blocked */ }
+    if (back === "index.html") window.location.replace(back);
+}
+if (new URLSearchParams(window.location.search).get("connect") === "coros") {
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    if (getTokenRecord()?.access_token) returnToToday();
+    else setTimeout(() => $("connectCorosBtn")?.click(), 400);
+}
 render();

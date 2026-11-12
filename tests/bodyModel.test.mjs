@@ -13,13 +13,12 @@ const health = Object.fromEntries(DATES.map((d, i) => [d, {
 }]));
 const TODAY = "2026-10-15";
 
-test("it shows only with a watch behind it, and only until the person turns it off", () => {
-    assert.equal(showHealthStats({ settings: {}, connected: true, hasData: false }), true, "a connected watch");
-    assert.equal(showHealthStats({ settings: {}, connected: false, hasData: true }), true, "history already on this device");
-    assert.equal(showHealthStats({ settings: {}, connected: false, hasData: false }), false, "no watch, nothing to show: not drawn");
-    assert.equal(showHealthStats({ settings: { showOnToday: false }, connected: true, hasData: true }), false, "switched off in Settings");
-    assert.equal(showHealthStats({ settings: { showOnToday: true }, connected: true }), true);
-    assert.equal(showHealthStats(), false);
+test("it shows for everyone who trains (a watch or not), until the person turns it off", () => {
+    assert.equal(showHealthStats({ settings: {} }), true, "a connected watch");
+    assert.equal(showHealthStats({ settings: {} }), true, "no watch: it reads what they logged");
+    assert.equal(showHealthStats({ settings: { showOnToday: false } }), false, "switched off in Settings");
+    assert.equal(showHealthStats({ settings: { showOnToday: true } }), true);
+    assert.equal(showHealthStats(), true);
 });
 
 test("sleep, HRV and resting HR are read off the morning's record", () => {

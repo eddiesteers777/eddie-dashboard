@@ -520,3 +520,75 @@
     .rd-ring2{ width:108px; height:108px; }
     .rd-ring2 figcaption b{ font-size:46px; }
 }
+
+/* ==========================================================
+   OPTION C (2026-11-12): a word, one line, a ledger of why, 4 weeks under any row.
+   Mock-ups: /mnt/project-files/readiness-card/. The card itself keeps the glass from css/appLook.css.
+   ========================================================== */
+.rd-card{ container-type:inline-size; }
+.rd-chip{ font:500 10.5px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--text-secondary); border:1px solid var(--border); border-radius:99px; padding:5px 10px; }
+.rd-body-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.rd-body-top .rd-ring2{ width:92px; height:92px; flex:none; }
+.rd-body-top .rd-ring2 figcaption b{ font-size:38px; }
+.rd-word2{ margin:0; font:800 clamp(40px,12vw,48px)/.95 var(--font-display); letter-spacing:.02em; text-transform:uppercase; color:var(--tone-hi); }
+.rd-word2.rd-word-quiet{ color:var(--muted); font-size:clamp(30px,9vw,38px); }
+.rd-estimate{ margin:6px 0 0; font-size:13px; color:var(--muted); }
+.rd-card .rd-line{ margin-top:10px; }
+
+.rd-ledger{ list-style:none; margin:14px 0 0; padding:0; position:relative; }
+.rd-lrow{ border-top:1px solid var(--border); }
+.rd-lrow:first-child{ border-top:0; }
+.rd-lbtn, .rd-lstatic{ appearance:none; background:none; border:0; font:inherit; color:inherit; text-align:left; width:100%; min-height:48px; padding:11px 0; display:flex; align-items:baseline; gap:12px; }
+.rd-lbtn{ cursor:pointer; }
+.rd-lbtn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:8px; }
+.rd-lk{ flex:none; width:92px; font:500 10.5px/1.2 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.rd-lv{ flex:1; min-width:0; font-size:14.5px; }
+.rd-lv em{ font-style:normal; color:var(--muted); }
+.rd-ld{ flex:none; width:8px; height:8px; border-radius:50%; align-self:center; background:var(--sage, var(--good)); }
+.rd-ld.mid{ background:var(--primary); }
+.rd-ld.low{ background:var(--bad); }
+.rd-lchev{ flex:none; width:14px; align-self:center; color:var(--muted); font-size:15px; transform:rotate(90deg); transition:transform .15s; }
+.rd-lrow.open .rd-lchev{ transform:rotate(-90deg); color:var(--primary); }
+.rd-lrow.open .rd-lk{ color:var(--primary); }
+.rd-lrow.ghost .rd-lv{ color:var(--muted); }
+.rd-lact{ appearance:none; background:none; border:0; font:650 14px var(--font-body); color:var(--primary); padding:0 2px; min-height:44px; margin:-12px 0; display:inline-flex; align-items:center; text-decoration:underline; text-underline-offset:3px; cursor:pointer; white-space:nowrap; }
+.rd-progress{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; font-size:13px; color:var(--muted); }
+.rd-dots{ display:flex; gap:6px; }
+.rd-dots i{ width:9px; height:9px; border-radius:50%; border:1px solid var(--primary-dark); }
+.rd-dots i.on{ background:var(--primary); border-color:var(--primary); }
+
+/* the 4-week panel under an open row */
+.rd-tr{ margin:2px 0 14px; padding:14px 14px 12px; border:1px solid var(--border); border-radius:14px; background:rgba(10,18,26,.22); }
+.rd-tr h4{ margin:0 0 8px; display:flex; justify-content:space-between; gap:10px; font:500 10.5px/1.2 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.rd-tr svg{ display:block; width:100%; height:auto; overflow:visible; }
+.rd-tr .sb-chart{ margin:0; }
+.rd-wk4{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:10px; }
+.rd-wk4 div{ text-align:center; border-top:1px solid var(--border); padding-top:6px; font-size:12px; color:var(--muted); }
+.rd-wk4 b{ display:block; font:700 17px/1.2 var(--font-display); color:var(--text); letter-spacing:.01em; white-space:nowrap; }
+.rd-wk4 .now b{ color:var(--primary); }
+.rd-says{ margin:10px 0 0; font-size:14px; color:var(--text-secondary); }
+.rd-says b{ color:var(--text); font-weight:650; }
+
+.rd-body-foot{ margin-top:8px; }
+.rd-morebtn{ margin-left:auto; }
+.rd-more2{ margin-top:6px; border-top:1px solid var(--border); padding-top:6px; }
+
+/* Connect sheet (opens on Today instead of sending people to Settings first) */
+.rd-sheet{ border:1px solid rgba(214,228,240,.22); border-radius:24px 24px 0 0; padding:14px 20px 26px; width:min(100%,480px); max-width:100%; margin:auto auto 0; background:linear-gradient(180deg,#2c4054,#1d2a36); color:var(--text); box-shadow:0 -12px 40px rgba(0,0,0,.5); }
+.rd-sheet::backdrop{ background:rgba(8,14,20,.6); }
+.rd-sheet .rd-grab{ width:38px; height:4px; border-radius:4px; background:var(--border); margin:0 auto 16px; }
+.rd-sheet h3{ margin:0 0 8px; font:800 26px/1 var(--font-display); text-transform:uppercase; }
+.rd-sheet p{ margin:0; font-size:14.5px; color:var(--text-secondary); }
+.rd-sheet ul{ list-style:none; padding:0; margin:12px 0 16px; }
+.rd-sheet li{ padding:7px 0 7px 22px; position:relative; font-size:14.5px; }
+.rd-sheet li::before{ content:""; position:absolute; left:2px; top:14px; width:9px; height:5px; border-left:2px solid var(--good); border-bottom:2px solid var(--good); transform:rotate(-45deg); }
+.rd-sheet .sb-btn{ width:100%; min-height:48px; margin-top:6px; }
+.rd-sheet .rd-sheet-foot{ margin-top:12px; font-size:12.5px; color:var(--muted); text-align:center; }
+
+@container (min-width:520px){
+    .rd-word2{ font-size:54px; }
+    .rd-body-top .rd-ring2{ width:104px; height:104px; }
+    .rd-lk{ width:120px; }
+    .rd-tr svg{ max-height:210px; }
+}
+@media (prefers-reduced-motion:reduce){ .rd-lchev{ transition:none; } }

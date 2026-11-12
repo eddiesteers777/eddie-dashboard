@@ -319,6 +319,8 @@
     "js/readinessBacktest.js",
     "js/readinessCard.js",
     "js/readinessData.js",
+    "js/readinessLedger.js",
+    "js/readinessRead.js",
     "js/readinessV2.js",
     "js/readinessV2Data.js",
     "js/recoveryPlan.js",

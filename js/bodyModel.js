@@ -19,10 +19,10 @@ const addDays = (date, n) => {
 const num = value => (Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null);
 const mean = list => list.reduce((s, v) => s + v, 0) / list.length;
 
-// Does the card show? Only with a watch behind it (connected, or its data already on this device),
-// and only when the person has not turned it off in Settings (on until they do).
-export function showHealthStats({ settings = {}, connected = false, hasData = false } = {}) {
-    return settings.showOnToday !== false && Boolean(connected || hasData);
+// Does the card show? For everyone who trains, until the person turns it off in Settings (on by default).
+// With a watch it reads the watch; without one it reads what they logged (js/readinessRead.js, 2026-11-12).
+export function showHealthStats({ settings = {} } = {}) {
+    return settings.showOnToday !== false;
 }
 
 // The last 7 days of one measure, [{ day: 0..6 (6 = the morning shown), v }]; null with fewer than 3 days.
@@ -66,6 +66,7 @@ export function bodyMeasures(health = {}, date, { needMin = DEFAULT_SLEEP_NEED }
     const rhr = bpm == null ? null : {
         bpm: Math.round(bpm),
         value: `${Math.round(bpm)}`,
+        diff,
         note: usual == null ? "building your average" : diff === 0 ? `your usual is ${Math.round(usual)}` : `${Math.abs(diff)} ${diff > 0 ? "above" : "below"} your usual`,
         trend: trendOf(health, date, d => d.rhr)
     };

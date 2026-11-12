@@ -25,13 +25,15 @@ import { cachedRole } from "./role.js";
 import { icon } from "./icons.js";
 import { toast, sbPrompt } from "./ui.js";
 import { readinessV2 } from "./readinessV2.js";
-import { showHealthStats, bodyMeasures } from "./bodyModel.js";
-import { ringHtml, measuresHtml } from "./bodyView.js";
+import { showHealthStats } from "./bodyModel.js";
+import { ringHtml } from "./bodyView.js";
+import { wordOf, trendPanel, watchRows, saidRow, logRead, TREND_DAYS } from "./readinessRead.js";
+import { ledgerHtml, trendHtml } from "./readinessLedger.js";
+import "./chartTips.js";
 import { athleteInputs, resetAthleteInputs } from "./readinessV2Data.js";
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const COLOR_WORD = { green: "Green", yellow: "Yellow", red: "Red", none: "" };
 // "Go as planned: you're ready for Tempo run." -> the lead in bold.
 const adviceHtml = text => { const i = String(text).indexOf(": "); return i > 0 && i < 40 ? `<b>${esc(text.slice(0, i + 1))}</b> ${esc(text.slice(i + 2))}` : esc(text); };
 
@@ -292,92 +294,155 @@ function insightsHtml(today) {
     return `<details class="rd-insights"><summary>${icon("activity")} What's helping, what's hurting</summary>${body}${recap}</details>`;
 }
 
-async function render() {
-    const el = $("readinessCard");
-    if (!el) return;
+// ---------- the card (option C, 2026-11-12): a word, one line, a ledger of why, 4 weeks under any row ----------
+
+let openRow = null;     // which ledger row's 4 weeks is open
+let moreOpen = false;   // "Your week" fold
+let model = null;       // the last thing computed, so opening a row redraws without recomputing
+
+function connectSheet() {
+    const dialog = document.createElement("dialog");
+    dialog.className = "rd-sheet";
+    dialog.setAttribute("aria-label", "Connect COROS");
+    dialog.innerHTML = `<div class="rd-grab" aria-hidden="true"></div>
+        <h3>Connect COROS</h3>
+        <p>Southbound reads your sleep, HRV, resting heart rate and runs from your COROS watch.</p>
+        <ul><li>Today's readiness uses last night's sleep and HRV</li><li>Your runs fill in your week</li><li>Workouts only go to your watch if you have a plan, and you can turn that off in Settings</li></ul>
+        <button type="button" class="sb-btn sb-btn-primary" data-go>Continue to COROS</button>
+        <button type="button" class="sb-btn sb-btn-tertiary" data-close>Not now</button>
+        <p class="rd-sheet-foot">No COROS watch? Keep logging runs and checking in. This card reads those.</p>`;
+    dialog.addEventListener("click", event => {
+        if (event.target === dialog || event.target.closest("[data-close]")) dialog.close();
+        if (event.target.closest("[data-go]")) {
+            // COROS only brings people back to the pages it knows (settings.html, analytics.html): sign in there, then return here.
+            try { sessionStorage.setItem("sb-coros-return", "index.html"); } catch { /* the sign-in still works */ }
+            window.location.assign("settings.html?connect=coros#coros");
+        }
+    });
+    dialog.addEventListener("close", () => dialog.remove());
+    document.body.appendChild(dialog);
+    dialog.showModal();
+}
+
+async function compute() {
     const today = isoDate(new Date());
     const role = cachedRole();
     const data = inputs();
-    const useV2 = role === "coach" && data.settings.version === "v2";
+    const connected = isCorosConnected();
+    const history = load(READINESS_KEY, {});
+    const hasWatchData = connected || Object.keys(history).length > 0 || Object.keys(data.health || {}).length > 0;
+    const useV2 = role === "coach" && data.settings.version === "v2" && hasWatchData;
     const extra = useV2 ? await athleteInputs(today) : null;
     const v2data = useV2 ? { ...data, ...(extra || {}) } : null;
-    const r = useV2 ? readinessV2(today, v2data) : computeReadiness(today, data);
-    const history = load(READINESS_KEY, {});
-    const shownHistory = useV2 ? Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); const k = isoDate(d); const x = readinessV2(k, v2data); return [k, x.score == null ? null : { score: x.score, color: x.color }]; }).filter(([, v]) => v)) : history;
-    // Shown only with a watch behind it (COROS connected on this device, or scores / health data synced from another
-    // one) and only until the person turns it off in Settings (health stats on Today, on by default). The coach is no
-    // exception. A class, not `hidden`: the page's data-requires pass unhides by capability.
-    const hasData = Object.keys(history).length > 0 || Object.keys(data.health || {}).length > 0;
-    if (!showHealthStats({ settings: data.settings, connected: isCorosConnected(), hasData })) {
-        el.classList.add("rd-none");
-        el.innerHTML = "";
-        morningStrip(false);
-        return;
-    }
-    const before = [1, 2].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); return shownHistory[isoDate(d)]?.color; }).filter(Boolean);
+    const needMin = data.settings.sleepNeedMin || DEFAULT_SLEEP_NEED;
     const workout = role === "coach" ? await coachWorkout(today) : await clientWorkout(today);
-    const advice = adviceFor(r, workout, before);
-    const coach = sleepCoach(data.health, today, data.settings.sleepNeedMin);
-    const connected = isCorosConnected();
-    const easy = advice.swap && role === "coach" && workout.week ? await nextEasyDay(workout) : null;
     const checkin = data.checkins[today];
-    morningStrip(!checkin, today);
-    const flagged = r.flags.some(f => f.key === "sick" || f.key === "pain");
-    const missing = r.score == null ? missingReason({ connected, refreshing: healthRefreshing(), error: lastHealthError(), health: data.health, history, today }) : null;
-    const adviceText = missing && !flagged ? missing.text : advice.text;
-    const lastDay = d => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    const m = { today, role, data, connected, useV2, extra, workout, checkin, needMin, watch: hasWatchData };
 
+    if (hasWatchData) {
+        const r = useV2 ? readinessV2(today, v2data) : computeReadiness(today, data);
+        const shownHistory = useV2 ? Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); const k = isoDate(d); const x = readinessV2(k, v2data); return [k, x.score == null ? null : { score: x.score, color: x.color }]; }).filter(([, v]) => v)) : history;
+        const before = [1, 2].map(i => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - i); return shownHistory[isoDate(d)]?.color; }).filter(Boolean);
+        const advice = adviceFor(r, workout, before);
+        const flagged = r.flags.some(f => f.key === "sick" || f.key === "pain");
+        const missing = r.score == null ? missingReason({ connected, refreshing: healthRefreshing(), error: lastHealthError(), health: data.health, history, today }) : null;
+        Object.assign(m, {
+            r, shownHistory, advice, missing,
+            flags: r.flags.filter(f => f.key !== "pain" && f.key !== "sick"),
+            adviceText: missing && !flagged ? missing.text : advice.text,
+            color: r.color, word: wordOf(r.color),
+            rows: [...watchRows({ health: data.health, date: today, needMin }), saidRow(data.checkins, today)],
+            sessions: [],
+            coach: sleepCoach(data.health, today, data.settings.sleepNeedMin)
+        });
+    } else {
+        let sessions = [];
+        try { sessions = await (await import("./athleteData.js")).loadLedger(today, { plan: false }); } catch { sessions = []; }
+        const read = logRead({ date: today, sessions, checkins: data.checkins });
+        const advice = read.ready ? adviceFor({ score: 1, color: read.color, flags: read.flags }, workout, []) : { text: "", swap: false };
+        Object.assign(m, {
+            read, sessions, advice, missing: null, flags: [], shownHistory: history,
+            color: read.color, word: read.word, rows: read.rows,
+            adviceText: read.ready ? advice.text : `Check in each morning. After ${read.progress.need} mornings, or a few logged runs, Southbound can say how you're carrying your training.`
+        });
+    }
+    return m;
+}
+
+function draw(m) {
+    const el = $("readinessCard");
+    if (!el || !m) return;
+    const { today, role, data, connected, useV2, extra, workout, checkin, needMin } = m;
+    const lastDay = d => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    morningStrip(!checkin, today);
     el.hidden = false;
-    // The look (premium shell): a ring in the day's tone, the advice, the watch's sleep / HRV / resting HR each with its week
-    // as a line (js/bodyView.js, from js/bodyModel.js), COROS's own recovery number and the check-in. Everything else folds under Details.
-    el.className = `rd-card ${r.color}`;
-    const flagLines = r.flags.filter(f => f.key !== "pain" && f.key !== "sick");
-    const detailsOpen = el.querySelector(".rd-more")?.open ? " open" : "";
-    const extras = `
-            ${missing?.latest ? `<p class="rd-last">Last score: <strong class="${missing.latest.color}">${missing.latest.score}</strong> on ${lastDay(missing.latest.date)}</p>` : ""}
-            ${flagLines.map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`).join("")}
-            ${missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : ""}
-            ${easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : ""}
-            ${advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""}`;
-    const measures = bodyMeasures(data.health, today, { needMin: data.settings.sleepNeedMin || DEFAULT_SLEEP_NEED });
+    el.className = `rd-card ${m.color}`;
+
+    const dates = Array.from({ length: TREND_DAYS }, (_, i) => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - (TREND_DAYS - 1 - i)); return isoDate(d); });
+    const panels = {};
+    if (openRow) panels[openRow] = trendHtml(trendPanel(openRow, { health: data.health, checkins: data.checkins, sessions: m.sessions, date: today, needMin }), dates);
+
+    const easy = m.easy;
+    const swapBtn = easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : "";
+    const lines = [
+        m.missing?.latest ? `<p class="rd-last">Last score: <strong class="${m.missing.latest.color}">${m.missing.latest.score}</strong> on ${lastDay(m.missing.latest.date)}</p>` : "",
+        ...(m.read ? m.read.flags : []).map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`),
+        ...m.flags.map(f => `<p class="rd-flag">${icon("alertTriangle")} ${esc(f.text)}</p>`),
+        m.missing?.canRefresh ? `<button type="button" class="sb-btn sb-btn-secondary rd-refresh" data-act="refresh">${icon("refresh")} Refresh from COROS</button>` : "",
+        swapBtn,
+        m.advice.swap && role !== "coach" ? `<a class="rd-link" href="plan.html">Ask your coach to move it →</a>` : ""
+    ].join("");
+
+    const chip = m.watch ? (connected ? "COROS" : "Your watch") : "From your log";
+    const hasScore = m.watch && m.r.score != null;
+    const sub = !m.watch && m.read.ready ? `<p class="rd-estimate">An estimate from what you've logged. No watch data.</p>` : "";
+    const wordHtml = m.word
+        ? `<p class="rd-word2 tone-${m.color}">${esc(m.word)}</p>`
+        : `<p class="rd-word2 rd-word-quiet">${m.watch ? "No score yet" : "Not yet"}</p>`;
+    const dots = !m.watch && !m.read.ready
+        ? `<div class="rd-progress"><span class="rd-dots" aria-hidden="true">${Array.from({ length: m.read.progress.need }, (_, i) => `<i${i < m.read.progress.have ? ' class="on"' : ""}></i>`).join("")}</span><span>${m.read.progress.have} of ${m.read.progress.need} mornings</span></div>`
+        : "";
+    const more = `
+        ${weekDots(today, m.shownHistory)}
+        ${m.watch && m.coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(m.coach.text)}</p><small>${m.coach.debtMin > 30 ? `Short ${hm(m.coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(m.coach.needMin)}</button></small></div></div>` : ""}
+        ${m.watch && useV2 ? v2Html(m.r, extra) : m.watch ? corosHtml(m.r) : ""}
+        ${insightsHtml(today)}
+        ${role === "coach" && m.watch ? `<div class="rd-version" role="group" aria-label="Which readiness score">
+            <span>Score:</span>
+            <button type="button" class="rd-ver${useV2 ? "" : " is-on"}" data-act="v1" aria-pressed="${!useV2}">Classic</button>
+            <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
+            <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
+        </div>` : ""}`;
+
     el.innerHTML = `
-        <div class="eos-today-card-header"><h2>Readiness</h2><span class="rd-source">${connected ? "From COROS" : "From your watch"}</span></div>
-        <div class="rd-body tone-${r.color}">
+        <div class="eos-today-card-header"><h2>Readiness</h2><span class="rd-chip">${esc(chip)}</span></div>
+        <div class="rd-body tone-${m.color}">
             <div class="rd-body-top">
-                ${ringHtml(r.score, r.color)}
-                <div class="rd-say">
-                    <p class="rd-word">${COLOR_WORD[r.color] || "&nbsp;"}</p>
-                    <p class="rd-line">${adviceHtml(adviceText)}</p>
-                </div>
+                <div class="rd-say">${wordHtml}${sub}</div>
+                ${hasScore ? ringHtml(m.r.score, m.r.color) : ""}
             </div>
-            ${extras.trim() ? `<div class="rd-extras">${extras}</div>` : ""}
-            ${measuresHtml(measures)}
+            <p class="rd-line">${adviceHtml(m.adviceText)}</p>
+            ${lines.trim() ? `<div class="rd-extras">${lines}</div>` : ""}
+            ${ledgerHtml(m.rows, { open: openRow, panels })}
+            ${dots}
             <div class="rd-body-foot">
-                ${r.coros ? `<span class="rd-recovery">COROS recovery <b>${r.coros.percent}%</b></span>` : "<span></span>"}
                 <div class="rd-checkin-row">
                     ${checkin
                         ? `<span class="rd-done">${icon("checkCircle")} Checked in</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
                         : `<button type="button" class="sb-btn sb-btn-secondary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
                 </div>
+                <button type="button" class="sb-btn sb-btn-tertiary rd-morebtn" data-act="more" aria-expanded="${moreOpen}">Your week <span aria-hidden="true">›</span></button>
             </div>
-        <details class="rd-more"${detailsOpen}><summary>Details</summary>
-            ${useV2 ? v2Html(r, extra) : `${r.parts.length ? `<ul class="rd-parts">${partsHtml(r.parts)}</ul>` : ""}${corosHtml(r)}`}
-            ${weekDots(today, shownHistory)}
-            ${coach ? `<div class="rd-sleep">${icon("moon")}<div><p>${esc(coach.text)}</p><small>${coach.debtMin > 30 ? `Short ${hm(coach.debtMin)} of sleep over the last 7 nights. ` : ""}<button type="button" class="rd-link-btn" data-act="need">Sleep need: ${hm(coach.needMin)}</button></small></div></div>` : ""}
-            ${insightsHtml(today)}
-            ${role === "coach" ? `<div class="rd-version" role="group" aria-label="Which readiness score">
-                <span>Score:</span>
-                <button type="button" class="rd-ver${useV2 ? "" : " is-on"}" data-act="v1" aria-pressed="${!useV2}">Classic</button>
-                <button type="button" class="rd-ver${useV2 ? " is-on" : ""}" data-act="v2" aria-pressed="${useV2}">New (testing)</button>
-                <a class="rd-link" href="analytics.html#readinessCheckPanel">Which predicts better?</a>
-            </div>` : ""}
-        </details>
-        </div>
-        ${connected || missing ? "" : `<p class="rd-connect">${icon("watch")} Connect COROS in <a href="settings.html#coros">Settings</a> for your daily score.</p>`}`;
-    import("./icons.js").then(m => m.hydrate?.()).catch(() => {});
+            ${moreOpen ? `<div class="rd-more2">${more}</div>` : ""}
+        </div>`;
+    import("./icons.js").then(m2 => m2.hydrate?.()).catch(() => {});
 
     el.onclick = async event => {
+        const trend = event.target.closest("[data-trend]")?.dataset.trend;
+        if (trend) { openRow = openRow === trend ? null : trend; draw(model); return; }
         const act = event.target.closest("[data-act]")?.dataset.act;
+        if (act === "more") { moreOpen = !moreOpen; draw(model); }
+        if (act === "connect") connectSheet();
         if (act === "checkin") openCheckin(today, render);
         if (act === "v1" || act === "v2") { saveSettings({ ...loadSettings(), version: act }); render(); }
         if (act === "refresh") { const done = refreshHealth({ force: true }); render(); await done; render(); }
@@ -392,6 +457,24 @@ async function render() {
             render();
         }
     };
+}
+
+async function render() {
+    const el = $("readinessCard");
+    if (!el) return;
+    const settings = loadSettings();
+    // Only the person's own switch (Settings: health stats on Today) hides it. A class, not `hidden`: the page's
+    // data-requires pass unhides by capability.
+    if (!showHealthStats({ settings })) {
+        el.classList.add("rd-none");
+        el.innerHTML = "";
+        morningStrip(false);
+        return;
+    }
+    const m = await compute();
+    m.easy = m.advice.swap && m.role === "coach" && m.workout.week ? await nextEasyDay(m.workout) : null;
+    model = m;
+    draw(m);
 }
 
 // The morning check-in as a strip in the page header (the same row the after-run strip uses), until today's is done.
