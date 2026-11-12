@@ -58,11 +58,11 @@
   <section class="ss-body" id="ssBody" hidden>
     <div class="ss-next" id="ssNext" hidden></div>
     <div class="ss-heads" id="ssHeads"></div>
-    <div class="ss-viewbar"><div class="ss-seg ss-view" id="ssView" role="group" aria-label="View"><button type="button" data-v="week" aria-pressed="true">Week</button><button type="button" data-v="month" aria-pressed="false">Month</button></div><button class="pb-btn" id="ssToday" type="button">Today</button></div>
-    <div class="ss-month" id="ssMonth" hidden>
+    <div class="ss-viewbar"><div class="ss-seg ss-view" id="ssView" role="group" aria-label="View"><button type="button" data-v="week" aria-pressed="false">Week</button><button type="button" data-v="month" aria-pressed="true">Month</button></div><button class="pb-btn" id="ssToday" type="button">Today</button></div>
+    <div class="ss-month" id="ssMonth">
       <div class="ss-weekbar"><button class="pb-btn" id="ssMPrev" type="button" aria-label="Previous month">&lsaquo;</button><b id="ssMName"></b><button class="pb-btn" id="ssMNext" type="button" aria-label="Next month">&rsaquo;</button></div>
       <div class="ss-grid" id="ssGrid" role="grid" aria-label="Month"></div>
-      <p class="ss-legend"><span class="ss-dot g"></span> Game <span class="ss-dot"></span> Practice &middot; dashed is away</p>
+      <p class="ss-legend"><span class="ss-dot g"></span> Game <span class="ss-dot"></span> Practice <span class="ss-dot c"></span> Conditioning &middot; dashed is away</p>
     </div>
     <div class="ss-weekbar" id="ssWeekBar"><button class="pb-btn" id="ssPrev" type="button" aria-label="Previous week">&lsaquo;</button><b id="ssRange"></b><button class="pb-btn" id="ssNextW" type="button" aria-label="Next week">&rsaquo;</button></div>
     <div class="ss-strip" id="ssStrip" role="tablist" aria-label="Days of the week"></div>
@@ -71,7 +71,8 @@
 
   <dialog id="ssDlg" class="pb-dlg pb-dlg-wide">
     <h2 id="ssDlgTitle">Add</h2>
-    <div class="ss-seg" id="ssKind" role="group" aria-label="Type"><button type="button" data-k="game" aria-pressed="true">Game</button><button type="button" data-k="practice" aria-pressed="false">Practice</button><button type="button" data-k="repeat" aria-pressed="false">Repeat</button><button type="button" data-k="dates" aria-pressed="false">Season dates</button></div>
+    <div class="ss-seg" id="ssKind" role="group" aria-label="Type"><button type="button" data-k="game" aria-pressed="true">Game</button><button type="button" data-k="practice" aria-pressed="false">Practice</button><button type="button" data-k="conditioning" aria-pressed="false">Conditioning</button><button type="button" data-k="repeat" aria-pressed="false">Repeat</button><button type="button" data-k="dates" aria-pressed="false">Season dates</button></div>
+    <label class="ss-f" id="fNote" hidden>What is the work? <input id="inNote" maxlength="60" autocomplete="off" placeholder="1 mile + beep test"></label>
     <label class="ss-f" id="fOpp">Opponent <input id="inOpp" maxlength="40" autocomplete="off"></label>
     <div class="ss-f ss-pick" id="pkDay">Day<div class="ss-chips2" id="chDay"></div></div>
     <div class="ss-f ss-pick" id="pkTime"><span id="lblTime2">Kickoff</span><div class="ss-chips2" id="chTime"></div></div>

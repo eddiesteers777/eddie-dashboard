@@ -44,3 +44,14 @@ await startSync();
 if (clear) clear.textContent = clearText();
 // Opt-in sync check: only with ?pbcheck in the address, never on its own.
 if (/[?&]pbcheck\b/.test(location.search)) import("./syncCheck.js").catch(e => console.warn("Southbound: sync check did not load.", e));
+
+// Drop-down menus (quick tools, More): a tap outside, or on a button inside, closes them.
+document.addEventListener("click", e => {
+    document.querySelectorAll("details.pb-menu2[open]").forEach(d => {
+        if (!d.contains(e.target) || e.target.closest(".pb-menu2-list button, .pb-menu2-list a")) d.open = false;
+    });
+});
+document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll("details.pb-menu2[open]").forEach(d => { d.open = false; d.querySelector("summary")?.focus(); });
+});

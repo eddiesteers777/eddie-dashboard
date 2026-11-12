@@ -96,3 +96,35 @@ test("addMonths lands on the first of the month, across a year end", () => {
     assert.equal(S.addMonths("2027-01-15", -1), "2026-12-01");
     assert.equal(S.addMonths("2027-03-31", -1), "2027-02-01");
 });
+
+test("conditioning is a third schedule type with its own note, kept through save and reload", () => {
+    const r = S.saveItem(T.emptyTeam(), { date: "2027-02-02", kind: "conditioning", time: "15:45", place: "Track", note: "1 mile + beep test", opp: "Nobody" });
+    assert.ok(r.id);
+    const s = r.team.sessions.find(x => x.id === r.id);
+    assert.equal(s.kind, "conditioning"); assert.equal(s.note, "1 mile + beep test"); assert.equal(s.opp, undefined);
+    const back = T.loadTeam(T.serializeTeam(r.team)).sessions[0];
+    assert.equal(back.kind, "conditioning"); assert.equal(back.note, "1 mile + beep test"); assert.equal(back.time, "15:45");
+});
+
+test("conditioning can sit on the same day as a practice and a game, but only once", () => {
+    let t = S.saveItem(T.emptyTeam(), { date: "2027-02-04", kind: "game", opp: "A" }).team;
+    t = S.saveItem(t, { date: "2027-02-04", kind: "practice" }).team;
+    const c = S.saveItem(t, { date: "2027-02-04", kind: "conditioning" });
+    assert.ok(c.id);
+    assert.equal(S.saveItem(c.team, { date: "2027-02-04", kind: "conditioning" }).error, "taken");
+    assert.equal(S.weekDays(c.team, "2027-02-01").find(d => d.date === "2027-02-04").items.length, 3);
+});
+
+test("conditioning days do not count toward the 13 practice days", () => {
+    let t = S.saveItem(T.emptyTeam(), { date: "2027-02-04", kind: "game", opp: "A", time: "16:30" }).team;
+    t = S.saveItem(t, { date: "2027-02-02", kind: "conditioning" }).team;
+    t = S.saveItem(t, { date: "2027-02-03", kind: "practice" }).team;
+    assert.equal(S.practiceDaysBefore(t, t.sessions.find(s => s.kind === "game")).have, 1);
+});
+
+test("changing a conditioning day to a game drops the note, and a game never keeps one", () => {
+    const r = S.saveItem(T.emptyTeam(), { date: "2027-02-02", kind: "conditioning", note: "Hills" });
+    const g = S.saveItem(r.team, { id: r.id, date: "2027-02-02", kind: "game", opp: "B" });
+    const s = g.team.sessions[0];
+    assert.equal(s.kind, "game"); assert.equal(s.note, undefined); assert.equal(s.opp, "B");
+});

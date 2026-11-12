@@ -1011,3 +1011,49 @@ body.pb-live-on .pb-dock-item .ui-icon{width:20px;height:20px}
   body.pb-in-app .dr-tiles{grid-template-columns:repeat(4,1fr)}
   body.pb-in-app .ro-list,body.pb-in-app .tm-list{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
 }
+
+/* ==========================================================
+   SEASON: big calendar, tap a day, pick what it is (Eddie, 2026-11-12, option A).
+   Month is the first view. Conditioning is the third type (mist blue); practice stays sage, game gold.
+   ========================================================== */
+.ss-dot.c{background:#9FB8D0}
+.ss-ev.c{background:color-mix(in srgb,#9FB8D0 20%,transparent);border-left:3px solid #9FB8D0}
+.ss-cell.sel .ss-n{color:var(--pb-text);font-weight:700}
+.ss-daytitle{margin:2px 0 8px}
+.ss-none-t{margin:0 0 12px;color:var(--pb-muted);font:500 13px/1.5 var(--font-mono)}
+.ss-addk{margin:14px 0 6px}
+.ss-types{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin:0 0 12px}
+.ss-type{min-height:64px;display:grid;justify-items:center;align-content:center;gap:4px;padding:8px 6px;border-radius:14px;border:1px solid var(--pb-glass-border,var(--pb-line));background:var(--pb-glass-bg);color:var(--pb-text);font:700 15px var(--font-body);cursor:pointer;touch-action:manipulation}
+.ss-type .ss-dot{width:10px;height:10px}
+.ss-type:hover{border-color:var(--pb-act)}.ss-type:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
+.ss-card.cond{box-shadow:inset 3px 0 0 #9FB8D0,var(--pb-raise-shadow)}
+.ss-tools2{display:flex;gap:6px 18px;flex-wrap:wrap;margin-top:10px}
+.ss-link{min-height:44px;padding:0 2px;background:none;border:0;color:var(--pb-muted);font:600 13px var(--font-body);text-decoration:underline;text-underline-offset:3px;cursor:pointer;touch-action:manipulation}
+@media (min-width:1000px){
+  .ss-body.is-month{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(340px,1fr);column-gap:24px;align-items:start}
+  .ss-body.is-month>*{grid-column:1 / -1}
+  .ss-body.is-month>.ss-month{grid-column:1;grid-row:4}
+  .ss-body.is-month>.ss-day{grid-column:2;grid-row:4;position:sticky;top:16px}
+  .ss-body.is-month .ss-cell{min-height:92px}
+}
+
+/* ==========================================================
+   DROP-DOWN MENUS (Eddie, 2026-11-12): fewer buttons showing at once.
+   details.pb-menu2: "Open a tool" on This Week (opens in the page) and "More" on the board and practice headers (floats).
+   ========================================================== */
+.pb-menu2{position:relative}
+.pb-menu2>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--pb-glass-border,var(--pb-line));background:var(--pb-glass-bg);color:var(--pb-text);font:700 14px var(--font-body);cursor:pointer;touch-action:manipulation;user-select:none}
+.pb-menu2>summary::-webkit-details-marker{display:none}
+.pb-menu2>summary::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-2px) rotate(45deg);opacity:.75;transition:transform .15s}
+.pb-menu2[open]>summary::after{transform:translateY(2px) rotate(225deg)}
+.pb-menu2>summary:focus-visible{outline:2px solid var(--pb-act);outline-offset:2px}
+.pb-menu2-list{display:grid;gap:2px;padding:8px;border-radius:16px;border:1px solid var(--pb-glass-border,var(--pb-line));background:linear-gradient(180deg,#26384A,#1A2733)}
+:root.pb-light .pb-menu2-list{background:#FBF8F1}
+.pb-menu2-list h3{margin:8px 10px 2px;font:600 10px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pb-quiet)}
+.pb-menu2-list a,.pb-menu2-list .pb-btn{display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:0 12px;border-radius:10px;border:0;background:none;box-shadow:none;color:var(--pb-text);font:600 15px var(--font-body);text-decoration:none;text-align:left;cursor:pointer}
+.pb-menu2-list a:hover,.pb-menu2-list .pb-btn:hover{background:rgba(214,228,240,.09)}
+.pb-menu2-list [hidden]{display:none!important}
+.pb-menu2-flow{margin:0 0 8px}.pb-menu2-flow .pb-menu2-list{margin-top:8px}
+.pb-menu2-pop>summary{padding:0 14px}
+.pb-menu2-pop .pb-menu2-list{position:absolute;right:0;top:calc(100% + 6px);z-index:60;min-width:210px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+@media print{.pb-menu2{display:none!important}}

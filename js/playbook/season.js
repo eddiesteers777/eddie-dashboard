@@ -17,7 +17,7 @@ const fmtDate = (d, o) => new Date(d + "T12:00:00").toLocaleDateString(undefined
 const fmtTime = t => { if (!t) return ""; const [hh, mm] = t.split(":").map(Number); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`; };
 const SITE = { home: "Home", away: "Away", neutral: "Neutral" };
 
-let team = readTeam(), today = T.todayKey(), selected = today, editing = null, kind = "game", site = "", planFor = null, view = "week";
+let team = readTeam(), today = T.todayKey(), selected = today, editing = null, kind = "game", site = "", planFor = null, view = "month";
 
 function save(next) {
     team = next;
@@ -65,23 +65,31 @@ function renderHeads() {
     if (headsOpen) list.forEach(g => heads.append(sugRow(g)));
 }
 
+// On a phone the day's options sit below the calendar: if they are off the bottom of the screen, bring them up (never past the calendar's top).
+function revealDay() {
+    if (innerWidth >= 1000) return;
+    const top = $("ssDay").getBoundingClientRect().top, room = innerHeight - 110;
+    if (top <= room - 150) return;
+    const dy = Math.min(top - room * 0.45, $("ssMonth").getBoundingClientRect().top - 70); // never push the calendar's top off the screen
+    if (dy > 0) window.scrollBy({ top: dy, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
 function renderMonth() {
     $("ssMName").textContent = fmtDate(selected.slice(0, 7) + "-01", { month: "long", year: "numeric" });
     const grid = $("ssGrid"); grid.replaceChildren();
     for (const d of ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) grid.append(h("div", "ss-dow", d));
     for (const week of S.monthWeeks(team, selected)) for (const d of week) {
         const c = h("button", "ss-cell" + (d.inMonth ? "" : " out") + (d.date === selected ? " sel" : "") + (d.date === today ? " today" : "")); c.type = "button";
-        const items = d.items.filter(i => !i.cancelled), game = items.some(S.isGame), prac = items.some(i => i.kind === "practice");
-        c.setAttribute("aria-label", `${fmtDate(d.date, { weekday: "long", month: "long", day: "numeric" })}${game ? ", game" : ""}${prac ? ", practice" : ""}`);
+        const items = d.items.filter(i => !i.cancelled), game = items.some(S.isGame), prac = items.some(i => i.kind === "practice"), cond = items.some(i => i.kind === "conditioning");
+        c.setAttribute("aria-label", `${fmtDate(d.date, { weekday: "long", month: "long", day: "numeric" })}${game ? ", game" : ""}${prac ? ", practice" : ""}${cond ? ", conditioning" : ""}`);
         c.append(h("span", "ss-n", String(Number(d.date.slice(8)))));
         const lines = h("span", "ss-lines"), dots = h("span", "ss-dots");
         for (const s of items) {
-            const isG = S.isGame(s), away = s.site === "away";
-            lines.append(h("span", "ss-ev " + (isG ? "g" : "p") + (isG && away ? " away" : ""), isG ? `${s.time ? fmtTime(s.time).replace(":00", "").replace(" ", "").toLowerCase() + " " : ""}${away ? "@ " : ""}${S.opponent(s) || "Game"}` : `${s.time ? fmtTime(s.time).replace(":00", "").replace(" ", "").toLowerCase() + " " : ""}Practice`));
-            dots.append(h("span", "ss-dot" + (isG ? " g" : "")));
+            const isG = S.isGame(s), away = s.site === "away", cl = isG ? "g" : s.kind === "conditioning" ? "c" : "p", tm = s.time ? fmtTime(s.time).replace(":00", "").replace(" ", "").toLowerCase() + " " : "";
+            lines.append(h("span", "ss-ev " + cl + (isG && away ? " away" : ""), isG ? `${tm}${away ? "@ " : ""}${S.opponent(s) || "Game"}` : `${tm}${s.kind === "conditioning" ? "Conditioning" : "Practice"}`));
+            dots.append(h("span", "ss-dot" + (cl === "p" ? "" : " " + cl)));
         }
         c.append(lines, dots);
-        c.onclick = () => { selected = d.date; render(); };
+        c.onclick = () => { selected = d.date; render(); revealDay(); };
         grid.append(c);
     }
 }
@@ -117,24 +125,26 @@ function renderStrip(monday) {
 }
 
 function itemCard(s) {
-    const card = h("article", "ss-card" + (s.kind === "game" ? " game" : "")), isG = s.kind === "game";
-    card.append(h("div", "ss-k", `${isG ? "Game" : "Practice"} · ${fmtDate(s.date, { weekday: "short", month: "short", day: "numeric" })}`));
-    card.append(h("h3", "", isG ? (S.opponent(s) ? "vs " + S.opponent(s) : "Game") : "Practice"));
+    const isG = s.kind === "game", isC = s.kind === "conditioning", card = h("article", "ss-card" + (isG ? " game" : isC ? " cond" : "")), label = isG ? "Game" : isC ? "Conditioning" : "Practice";
+    card.append(h("div", "ss-k", `${label} · ${fmtDate(s.date, { weekday: "short", month: "short", day: "numeric" })}`));
+    card.append(h("h3", "", isG ? (S.opponent(s) ? "vs " + S.opponent(s) : "Game") : label));
     const dl = h("dl"); const row = (k, v) => { if (v) { dl.append(h("dt", "", k), h("dd", "", v)); } };
     if (s.cancelled) row("Status", "Cancelled. It is not made up later.");
     row(isG ? "Kickoff" : "Start", fmtTime(s.time)); row("Where", [SITE[s.site], s.place].filter(Boolean).join(" · ")); row("Arrive", fmtTime(s.arrive));
     const cnt = isG ? S.practiceDaysBefore(team, s) : null; if (cnt) row("Before it", `${cnt.have} of ${cnt.need} scheduled practice days`);
     const plan = s.planId ? plans().find(p => p.id === s.planId) : null;
-    if (!isG) row("Plan", plan ? `${plan.name} · ${plan.practice.total} min` : s.planId ? "That plan was deleted" : "No plan yet");
+    if (isC) row("Work", s.note);
+    if (!isG && !isC) row("Plan", plan ? `${plan.name} · ${plan.practice.total} min` : s.planId ? "That plan was deleted" : "No plan yet");
     if (isG) row("Lineup", s.game && s.game.lineups.some(r => r.some(Boolean)) ? "Set" : "Not set");
     card.append(dl);
     const btns = h("div", "ss-btns"); const b = (label, fn, cls = "") => { const x = h(fn.href ? "a" : "button", "pb-btn " + cls, label); if (fn.href) x.href = fn.href; else { x.type = "button"; x.onclick = fn; } btns.append(x); };
     if (!isG && s.cancelled) { b("Restore practice", () => save(S.setCancelled(team, s.id, false)), "pb-primary"); b("Edit", () => openEdit(s)); card.append(btns); return card; }
     if (isG) b("Set lineup", Object.assign(() => {}, { href: `playbook-game.html?date=${s.date}` }), "pb-primary");
+    else if (isC) { b("Attendance", Object.assign(() => {}, { href: "playbook-team.html" }), "pb-primary"); b("Fitness check", Object.assign(() => {}, { href: "playbook-fitness.html" })); }
     else if (plan) { b("Run it", Object.assign(() => {}, { href: `playbook-run.html?plan=${encodeURIComponent(plan.id)}` }), "pb-primary"); b("Change plan", () => openPlans(s)); }
     else b("Pick a plan", () => openPlans(s), "pb-primary");
     b("Edit", () => openEdit(s));
-    if (!isG) b("Cancel practice", () => save(S.setCancelled(team, s.id, true)));
+    if (!isG && !isC) b("Cancel practice", () => save(S.setCancelled(team, s.id, true)));
     card.append(btns);
     return card;
 }
@@ -142,18 +152,26 @@ function itemCard(s) {
 function renderDay() {
     const box = $("ssDay"); box.replaceChildren();
     const day = S.weekDays(team, S.weekStart(selected)).find(d => d.date === selected);
-    if (!day.items.length) {
-        const e = h("div", "ss-none"); e.append(h("p", "", `Nothing on ${fmtDate(selected, { weekday: "long", month: "short", day: "numeric" })}.`));
-        const r = h("div", "ss-btns");
-        for (const [label, k] of [["Add game", "game"], ["Add practice", "practice"]]) { const x = h("button", "pb-btn", label); x.type = "button"; x.onclick = () => openEdit(null, k); r.append(x); }
-        e.append(r); box.append(e);
-    } else day.items.forEach(s => { box.append(itemCard(s)); Rules.forDay(sugs(), selected).filter(g => g.sid === s.id).forEach(g => box.append(sugRow(g))); });
+    box.append(h("div", "ss-k ss-daytitle", fmtDate(selected, { weekday: "long", month: "long", day: "numeric" })));
+    if (!day.items.length) box.append(h("p", "ss-none-t", scheduled() ? "Nothing on this day yet. What is it?" : "Nothing on the calendar yet. Tap a day, then pick what it is."));
+    else day.items.forEach(s => { box.append(itemCard(s)); Rules.forDay(sugs(), selected).filter(g => g.sid === s.id).forEach(g => box.append(sugRow(g))); });
+    // Big type buttons for whatever is not on this day yet (one of each type per day).
+    const have = new Set(day.items.map(i => i.kind)), left = S.ADDABLE.filter(k => !have.has(k));
+    if (left.length) {
+        if (day.items.length) box.append(h("div", "ss-k ss-addk", "Add to this day"));
+        const types = h("div", "ss-types");
+        for (const k of left) { const x = h("button", "ss-type " + k); x.type = "button"; x.append(h("i", "ss-dot" + (k === "game" ? " g" : k === "conditioning" ? " c" : "")), h("span", "", T.KIND_LABELS[k])); x.onclick = () => openEdit(null, k); types.append(x); }
+        box.append(types);
+    }
+    const tools = h("div", "ss-tools2");
+    for (const [label, fn] of [["Repeat practices", openRepeat], ["Season dates", openWin]]) { const x = h("button", "ss-link", label); x.type = "button"; x.onclick = fn; tools.append(x); }
+    box.append(tools);
     const rest = S.weekDays(team, S.weekStart(selected)).filter(d => d.date !== selected && d.items.length);
     if (rest.length && view === "week") {
         box.append(h("div", "ss-wk", "Rest of this week"));
         for (const d of rest) for (const s of d.items) {
             const r = h("button", "ss-row" + (s.kind === "game" ? " game" : "")); r.type = "button";
-            const t = h("span", "ss-rt"); t.append(h("b", "", s.kind === "game" ? (S.opponent(s) ? "Game · vs " + S.opponent(s) : "Game") : "Practice"), h("span", "", [fmtTime(s.time), s.planId ? "Plan attached" : s.kind === "practice" ? "No plan yet" : ""].filter(Boolean).join(" · ")));
+            const t = h("span", "ss-rt"); t.append(h("b", "", s.kind === "game" ? (S.opponent(s) ? "Game · vs " + S.opponent(s) : "Game") : T.KIND_LABELS[s.kind] || "Practice"), h("span", "", [fmtTime(s.time), s.planId ? "Plan attached" : s.kind === "practice" ? "No plan yet" : ""].filter(Boolean).join(" · ")));
             r.append(h("i", "", fmtDate(d.date, { weekday: "short", day: "numeric" })), t);
             r.onclick = () => { selected = d.date; render(); window.scrollTo({ top: 0, behavior: "smooth" }); };
             box.append(r);
@@ -162,12 +180,11 @@ function renderDay() {
 }
 
 function render() {
-    const has = scheduled();
-    $("ssEmpty").hidden = has; $("ssBody").hidden = !has;
+    $("ssEmpty").hidden = true; $("ssBody").hidden = false; // the calendar is always there: an empty season is just an empty calendar
     const upcoming = team.sessions.filter(s => s.date >= today && s.kind !== "other");
-    const ng = upcoming.filter(s => s.kind === "game").length, np = upcoming.filter(s => s.kind === "practice").length;
-    $("ssSub").textContent = upcoming.length ? `${ng} ${ng === 1 ? "game" : "games"} · ${np} ${np === 1 ? "practice" : "practices"} ahead` : "";
-    if (!has) return;
+    const ng = upcoming.filter(s => s.kind === "game").length, np = upcoming.filter(s => s.kind === "practice").length, nc = upcoming.filter(s => s.kind === "conditioning").length;
+    $("ssSub").textContent = upcoming.length ? `${ng} ${ng === 1 ? "game" : "games"} · ${np} ${np === 1 ? "practice" : "practices"}${nc ? ` · ${nc} conditioning` : ""} ahead` : "";
+    $("ssBody").classList.toggle("is-month", view === "month");
     const mon = S.weekStart(selected);
     $("ssRange").textContent = `${fmtDate(mon, { month: "short", day: "numeric" })} – ${fmtDate(S.addDays(mon, 6), { month: "short", day: "numeric" })}`;
     renderHeads();
@@ -181,7 +198,7 @@ function setKind(k) {
     if (k === "repeat" || k === "dates") { $("ssDlg").close(); (k === "repeat" ? openRepeat : openWin)(); return; }
     kind = k;
     $("ssKind").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k)));
-    $("fOpp").hidden = k !== "game"; $("fArrive").hidden = k !== "game"; $("ssSite").hidden = k !== "game";
+    $("fOpp").hidden = k !== "game"; $("fArrive").hidden = k !== "game"; $("ssSite").hidden = k !== "game"; $("fNote").hidden = k !== "conditioning";
     $("lblTime").textContent = "Other time"; $("lblTime2").textContent = k === "game" ? "Kickoff" : "Start";
     chipsReflect();
 }
@@ -203,10 +220,10 @@ function chipsReflect() {
 function setSite(v) { site = v; $("ssSite").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === v))); }
 function openEdit(s, k = "game") {
     editing = s ? s.id : null;
-    $("ssDlgTitle").textContent = s ? "Edit" : "Add to the schedule";
+    $("ssDlgTitle").textContent = s ? "Edit" : `Add ${T.KIND_LABELS[k] === "Conditioning" ? "conditioning" : T.KIND_LABELS[k].toLowerCase()} · ${fmtDate(selected, { weekday: "short", month: "short", day: "numeric" })}`;
     $("ssKind").hidden = Boolean(s); setKind(s ? s.kind : k);
     $("inOpp").value = s?.opp || s?.game?.opp || ""; $("inDate").value = s ? s.date : selected;
-    $("inTime").value = s?.time || ""; $("inArrive").value = s?.arrive || ""; $("inPlace").value = s?.place || ""; setSite(s?.site || "");
+    $("inTime").value = s?.time || ""; $("inArrive").value = s?.arrive || ""; $("inPlace").value = s?.place || ""; $("inNote").value = s?.note || ""; setSite(s?.site || "");
     buildChips(); chipsReflect();
     $("ssErr").hidden = true; $("ssDelete").hidden = !s; $("ssDelete").textContent = "Delete";
     $("ssDlg").showModal();
@@ -214,8 +231,8 @@ function openEdit(s, k = "game") {
 function saveEdit() {
     const date = $("inDate").value;
     if (!date) { $("ssErr").textContent = "Pick a date."; $("ssErr").hidden = false; return; }
-    const r = S.saveItem(team, { id: editing, date, kind, opp: $("inOpp").value, time: $("inTime").value, arrive: $("inArrive").value, site, place: $("inPlace").value });
-    if (r.error) { $("ssErr").textContent = r.error === "taken" ? `There is already a ${kind} on that date. Edit that one instead.` : "Couldn't save that."; $("ssErr").hidden = false; return; }
+    const r = S.saveItem(team, { id: editing, date, kind, opp: $("inOpp").value, time: $("inTime").value, arrive: $("inArrive").value, site, place: $("inPlace").value, note: $("inNote").value });
+    if (r.error) { $("ssErr").textContent = r.error === "taken" ? `There is already ${kind === "conditioning" ? "conditioning" : "a " + kind} on that date. Edit that one instead.` : "Couldn't save that."; $("ssErr").hidden = false; return; }
     selected = date; $("ssDlg").close(); save(r.team);
 }
 function openPlans(s) {

@@ -5,6 +5,7 @@ import { openSession, cleanSchedule, todayKey } from "./teamModel.js";
 
 export const REQUIRED_PRACTICE_DAYS = 13; // AHSAA bylaws, Section 14 (13 days of practice before the first contest)
 const MAX_SESSIONS = 400;
+export const ADDABLE = Object.freeze(["game", "practice", "conditioning"]); // what the Season page can add
 const isDate = d => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d + "T12:00:00Z"));
 const toDate = d => new Date(d + "T12:00:00");
 const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -39,14 +40,14 @@ export function saveItem(team, { id, date, kind, ...rest }) {
     if (id) { // edit in place; a changed date or kind must not collide with another item
         const cur = team.sessions.find(s => s.id === id);
         if (!cur) return { team, id: null, error: "missing" };
-        const nd = isDate(date) ? date : cur.date, nk = kind === "game" || kind === "practice" ? kind : cur.kind;
+        const nd = isDate(date) ? date : cur.date, nk = ADDABLE.includes(kind) ? kind : cur.kind;
         if (team.sessions.some(s => s.id !== id && s.date === nd && s.kind === nk)) return { team, id: null, error: "taken" };
         const merged = { ...cur, date: nd, kind: nk };
-        delete merged.time; delete merged.arrive; delete merged.site; delete merged.place; delete merged.opp; delete merged.planId;
+        delete merged.time; delete merged.arrive; delete merged.site; delete merged.place; delete merged.opp; delete merged.note; delete merged.planId;
         if (nk !== "game") delete merged.game;
         return { team: { ...team, sessions: team.sessions.map(s => (s.id === id ? { ...merged, ...cleanSchedule({ ...rest, kind: nk, planId: rest.planId ?? cur.planId }) } : s)) }, id };
     }
-    if (!isDate(date) || (kind !== "game" && kind !== "practice")) return { team, id: null, error: "bad" };
+    if (!isDate(date) || !ADDABLE.includes(kind)) return { team, id: null, error: "bad" };
     if (team.sessions.some(s => s.date === date && s.kind === kind)) return { team, id: null, error: "taken" };
     const o = openSession(team, date, kind);
     return { team: { ...o.team, sessions: o.team.sessions.map(s => (s.id === o.id ? { ...s, ...cleanSchedule({ ...rest, kind }) } : s)) }, id: o.id };

@@ -5,8 +5,8 @@ import { parseGame } from "./gameModel.js";
 
 export const MARKS = Object.freeze(["here", "late", "absent", "excused"]);
 export const MARK_LABELS = Object.freeze({ here: "Here", late: "Late", absent: "Absent", excused: "Excused" });
-export const KINDS = Object.freeze(["practice", "game", "other"]);
-export const KIND_LABELS = Object.freeze({ practice: "Practice", game: "Game", other: "Other" });
+export const KINDS = Object.freeze(["practice", "game", "conditioning", "other"]);
+export const KIND_LABELS = Object.freeze({ practice: "Practice", game: "Game", conditioning: "Conditioning", other: "Other" });
 export const DEFAULT_JOBS = Object.freeze([
     { name: "Carry the balls", count: 1 }, { name: "Set up and pick up cones", count: 2 },
     { name: "Water and first aid bag", count: 1 }, { name: "Goals and bibs", count: 2 }
@@ -212,6 +212,7 @@ export function cleanSchedule(s) {
     if (SITES.includes(s?.site)) out.site = s.site;
     const place = str(s?.place, 40); if (place) out.place = place;
     if (s?.kind === "game") { const opp = str(s?.opp, 40); if (opp) out.opp = opp; }
+    if (s?.kind === "conditioning") { const note = str(s?.note, 60); if (note) out.note = note; }
     if (typeof s?.planId === "string" && s.planId) out.planId = s.planId.slice(0, 40);
     if (s?.cancelled === true && s?.kind === "practice") out.cancelled = true;
     return out;
