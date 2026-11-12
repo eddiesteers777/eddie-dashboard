@@ -47,7 +47,7 @@ test("a week combines plan runs, strength days, extras, schedule, sessions and l
     assert.equal(week.summary.loggedMiles, 8.2);
     assert.deepEqual(week.summary.strength, { planned: 3, done: 0 });
     assert.equal(week.summary.sessions, 1);
-    assert.deepEqual(week.context, { planId: "coach-p1", planName: "Fall 10K", weekNumber: 1, totalWeeks: 2, phase: "" });
+    assert.deepEqual(week.context, { planId: "coach-p1", planName: "Fall 10K", weekNumber: 1, totalWeeks: 2, phase: "", endDate: "2026-10-11" });
 });
 
 test("a plan's strength session copied onto the Strength schedule shows once", () => {

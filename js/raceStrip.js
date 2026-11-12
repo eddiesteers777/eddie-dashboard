@@ -13,15 +13,17 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 
 const MAX_SEGMENTS = 30;   // a longer block would be a smear of slivers
 
-// "Sun Nov 22" from a local ISO date.
+// "Sun, Nov 22" from a local ISO date.
 function raceDay(iso) {
     const [y, m, d] = String(iso || "").split("-").map(Number);
     if (!y) return "";
     return new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
+export const raceDayText = raceDay;
+
 /**
- * race: { date, days } from nextRace(); ctx: { weekNumber, totalWeeks } from planContext() or null.
+ * race: { date, days, name } from nextRace(); ctx: { weekNumber, totalWeeks } from planContext() or null.
  * -> { days, big, unit, weeks: ["done"|"now"|"next", ...], caption, weekText } or null.
  */
 export function raceStripModel(race, ctx) {
@@ -36,7 +38,7 @@ export function raceStripModel(race, ctx) {
         big: race.days === 0 ? "Today" : race.days === 1 ? "1" : String(race.days),
         unit: race.days === 0 ? "Race day" : race.days === 1 ? "Day to go" : "Days to go",
         weeks,
-        caption: `Race day · ${raceDay(race.date)}`,
+        caption: `${race.name || "Race day"} · ${raceDay(race.date)}`,
         weekText: total && now ? `Week ${now} of ${total}` : ""
     };
 }
