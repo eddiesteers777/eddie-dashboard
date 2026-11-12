@@ -13,7 +13,7 @@ export const CLIENT = ["index.html", "train.html", "running.html", "strength.htm
     "fueling.html", "habits.html", "plan.html", "progress.html", "checkin.html", "schedule.html", "messages.html",
     "updates.html", "profile.html", "programs.html", "pace-calculator.html", "routes.html", "settings.html", "more.html"];
 export const COACH = ["coach.html", "clients.html", "client.html?uid=c1", "checkin.html?tab=review", "coach-messages.html",
-    "schedule.html?tab=availability", "marathon.html", "75day.html", "analytics.html",
+    "schedule.html?tab=availability", "75day.html", "analytics.html",
     "weekly-review.html", "planning.html", "index.html", "settings.html"];
 
 const ALL_SERVICES = ["online_coaching", "running", "strength", "soccer_1on1", "soccer_group"];

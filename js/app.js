@@ -394,7 +394,7 @@ function renderToday() {
             color: "var(--primary-dark)",
             title: dayData.session || "Run",
             detail: `${dayData.miles} mi${dayData.pace ? ` @ ${dayData.pace}` : ""}${dayData.race ? " — RACE DAY" : ""}`,
-            link: "marathon.html",
+            link: "running.html#my-plan",
             isRun: true,
             data: dayData,
             week,

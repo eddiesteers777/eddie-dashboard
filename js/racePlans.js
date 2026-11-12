@@ -1100,6 +1100,9 @@ function initSectionTabs() {
             }
         });
     });
+
+    // running.html#my-plan opens that tab (the old Marathon page forwards here).
+    if (location.hash === "#my-plan") tabs.find(tab => tab.dataset.runningSection === "my-plan")?.click();
 }
 
 function initRaceTypeCards() {

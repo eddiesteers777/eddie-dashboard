@@ -165,7 +165,6 @@ const SEARCH_DESTINATIONS = [
     { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)", requires: "fueling" },
     // The coach's personal tools (built around his own race block) --
     // hidden from clients, like their More rows and menu links.
-    { label: "Marathon Plan", href: "marathon.html", icon: "activity", color: "var(--primary-dark)", requires: "coach" },
     { label: "75-Day Challenge", href: "75day.html", icon: "flame", color: "var(--green)", requires: "coach" },
     { label: "Analytics", href: "analytics.html", icon: "trendingUp", color: "var(--amber)", requires: "coach" },
     { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)", requires: "coach" },

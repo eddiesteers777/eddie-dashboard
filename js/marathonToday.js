@@ -56,5 +56,5 @@ export function renderCoachWeek({ today }) {
         milesEl.textContent = `${m.done} / ${m.planned} mi`;
     }
     const seeAll = document.getElementById("weekSeeAll");
-    if (seeAll) { seeAll.href = "marathon.html"; if (seeAll.firstChild) seeAll.firstChild.textContent = "Full plan "; }
+    if (seeAll) { seeAll.href = "running.html#my-plan"; if (seeAll.firstChild) seeAll.firstChild.textContent = "Full plan "; }
 }
