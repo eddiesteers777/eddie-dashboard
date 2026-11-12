@@ -1112,9 +1112,12 @@ export function mountPlanWorkspace(container, { clientUid, clientName, clientEma
 
     function openMarathon() {
         marathonSetup({
-            firstName: first, record: data.record,
-            onCreate: ({ name, kind, plan, warnings, summary }) => {
+            firstName: first, record: data.record, publishable: true,
+            onCreate: ({ name, kind, plan, warnings, summary, publish }) => {
                 startNew({ name, kind, plan, notes: warnings });
+                // "Create and publish": straight to the same "what the client will see" sheet. Nothing reaches
+                // the client until that sheet's Publish; Keep editing leaves the new draft open.
+                if (publish) return review();
                 toast(`Built ${summary.weeks} weeks: ${summary.miles} mi, peak ${summary.peak} mi a week, ${summary.workouts} workouts, ${summary.strength} strength sessions. Change anything, then publish it to ${first}.`);
             }
         });
