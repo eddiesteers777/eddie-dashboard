@@ -54,30 +54,31 @@ export const stripLegendHtml = () => `<p class="tg-legend" aria-hidden="true"><s
 
 const mi = n => `${Number(n) % 1 ? Number(n).toFixed(1) : Number(n)}`;
 
-/** The small card under "This week" on Today: this week's miles and the weeks either side. Opens Train. */
+/** The card under "This week" on Today (M2): this week's miles and the 4-week average, the graph, the bar,
+ *  and the weeks either side. All of it opens Train. */
 export function milesCardHtml(weeks) {
     const idx = weeks.findIndex(w => w.kind === "now");
     const now = weeks[idx], last = weeks[idx - 1], next = weeks[idx + 1];
     if (!now) return "";
+    const avg = recentAverage(weeks);
     const pct = now.planned ? Math.min(100, Math.round(now.miles / now.planned * 100)) : 0;
     const side = [last ? `<span>Last week ${mi(last.miles)} mi</span>` : "", next && next.planned ? `<span>Next week ${mi(next.planned)} mi planned</span>` : ""].join("");
-    return `<a class="tg-miles-link" href="train.html" aria-label="Miles this week: ${mi(now.miles)} of ${mi(now.planned)} planned. Open the training overview">
+    return `<a class="tg-miles-link" href="train.html" aria-label="Miles this week: ${mi(now.miles)} of ${mi(now.planned)} planned${avg ? `, last four weeks averaged ${avg}` : ""}. Open the training overview">
         <div class="eos-today-card-header"><h2>Miles this week</h2><span class="wk-see-all">Training <span data-icon="chevronRight"></span></span></div>
-        <p class="tg-big"><b>${mi(now.miles)}</b><span>${now.planned ? `of ${mi(now.planned)} mi planned` : "mi so far"}</span></p>
+        <div class="tg-top"><p class="tg-big"><b>${mi(now.miles)}</b><span>${now.planned ? `of ${mi(now.planned)} mi` : "mi so far"}</span></p>${avg ? `<span class="tg-avg-text">4-wk avg <b>${avg}</b></span>` : ""}</div>
+        ${hasMiles(weeks) ? milesSvg(weeks, { compact: true }) : ""}
         <div class="tg-bar" aria-hidden="true"><i style="width:${pct}%"></i></div>
         ${side ? `<p class="tg-side">${side}</p>` : ""}</a>`;
 }
 
 const shortDate = iso => D(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }).replace(" ", " ");
 
-/** The Train page's graph: eight or nine weeks of run miles, finished solid, planned dashed, this week marked. */
-export function milesGraphHtml(weeks) {
+/** The line graph itself: finished weeks solid, planned dashed, this week marked, the 4-week average dotted.
+ *  `compact` is the shorter one inside Today's card (hidden from screen readers: the card's label says it). */
+function milesSvg(weeks, { compact = false } = {}) {
     const idx = weeks.findIndex(w => w.kind === "now");
-    if (idx < 0 || !weeks.some(w => w.planned || w.miles)) {
-        return `<div class="eos-today-card-header"><h2 id="tgMilesTitle">Weekly miles</h2></div><p class="tg-none">No running logged or planned in these weeks yet.</p>`;
-    }
     const avg = recentAverage(weeks);
-    const W = 340, H = 140, L = 22, R = 22, T = 18, B = 22;
+    const W = 340, H = compact ? 112 : 140, L = 22, R = 22, T = 18, B = 22;
     const top = Math.max(10, ...weeks.map(w => Math.max(w.miles, w.planned)));
     const x = i => L + i * (W - L - R) / Math.max(1, weeks.length - 1);
     const y = v => T + (1 - v / top) * (H - T - B);
@@ -90,16 +91,28 @@ export function milesGraphHtml(weeks) {
     const labels = weeks.map((w, i) => (i % 2 === (idx % 2) ? `<text x="${x(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" class="tg-ax${i === idx ? " is-now" : ""}">${esc(i === idx ? "This week" : shortDate(w.monday))}</text>` : "")).join("");
     const dots = weeks.map((w, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(i > idx ? w.planned : w.miles).toFixed(1)}" r="${i === idx ? 5 : 3.5}" class="tg-pt${i > idx ? " is-plan" : ""}${i === idx ? " is-now" : ""}"/>`).join("");
     const avgLine = avg ? `<line x1="${L}" x2="${W - R}" y1="${y(avg).toFixed(1)}" y2="${y(avg).toFixed(1)}" class="tg-avg"/><text x="${W - R}" y="${(y(avg) - 4).toFixed(1)}" text-anchor="end" class="tg-ax">avg ${avg}</text>` : "";
-    const nowLabel = `<text x="${x(idx).toFixed(1)}" y="${(y(weeks[idx].miles) - 9).toFixed(1)}" text-anchor="middle" class="tg-val">${mi(weeks[idx].miles)}</text>`;
+    const nowLabel = weeks[idx].miles ? `<text x="${x(idx).toFixed(1)}" y="${(y(weeks[idx].miles) - 9).toFixed(1)}" text-anchor="middle" class="tg-val">${mi(weeks[idx].miles)}</text>` : "";
     const rows = weeks.map(w => `${shortDate(w.monday)}: ${w.kind === "plan" ? `${mi(w.planned)} planned` : w.kind === "now" ? `${mi(w.miles)} of ${mi(w.planned)} planned` : `${mi(w.miles)} run`}`).join("; ");
-    return `<div class="eos-today-card-header"><h2 id="tgMilesTitle">Weekly miles</h2>${avg ? `<span class="tg-avg-text">Last 4 weeks avg ${avg} mi</span>` : ""}</div>
-        <svg class="tg-graph" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Weekly run miles. ${rows}`)}" preserveAspectRatio="xMidYMid meet">
+    const aria = compact ? `aria-hidden="true"` : `role="img" aria-label="${esc(`Weekly run miles. ${rows}`)}"`;
+    return `<svg class="tg-graph${compact ? " is-compact" : ""}" viewBox="0 0 ${W} ${H}" ${aria} preserveAspectRatio="xMidYMid meet">
             ${avgLine}
             <path d="${path(past)} L${past.at(-1)[0].toFixed(1)} ${base} L${past[0][0].toFixed(1)} ${base}Z" class="tg-area"/>
             <path d="${path(past)}" class="tg-line"/>
             ${planPts.length > 1 ? `<path d="${path(planPts)}" class="tg-line is-plan"/>` : ""}
-            ${dots}${weeks[idx].miles ? nowLabel : ""}${labels}
-        </svg>
+            ${dots}${nowLabel}${labels}
+        </svg>`;
+}
+
+const hasMiles = weeks => weeks.some(w => w.kind === "now") && weeks.some(w => w.planned || w.miles);
+
+/** The Train page's graph: eight or nine weeks of run miles, finished solid, planned dashed, this week marked. */
+export function milesGraphHtml(weeks) {
+    if (!hasMiles(weeks)) {
+        return `<div class="eos-today-card-header"><h2 id="tgMilesTitle">Weekly miles</h2></div><p class="tg-none">No running logged or planned in these weeks yet.</p>`;
+    }
+    const avg = recentAverage(weeks);
+    return `<div class="eos-today-card-header"><h2 id="tgMilesTitle">Weekly miles</h2>${avg ? `<span class="tg-avg-text">Last 4 weeks avg ${avg} mi</span>` : ""}</div>
+        ${milesSvg(weeks)}
         <p class="tg-legend" aria-hidden="true"><span>Solid = run</span><span>Dashed = planned</span></p>`;
 }
 

@@ -86,10 +86,14 @@ html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; fo
 .tg-today-main strong{ display:block; }
 .tg-today-main small{ display:block; color:var(--text-secondary, var(--muted)); }
 .tg-miles-link{ display:block; color:inherit; text-decoration:none; }
+.tg-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-top:4px; }
+.tg-top .tg-avg-text{ margin-left:0; }
+.tg-avg-text b{ color:var(--text); }
+.tg-graph.is-compact{ margin-top:2px; }
 .tg-big{ display:flex; align-items:baseline; gap:8px; margin:4px 0 0; }
-.tg-big b{ font:800 34px/1 var(--font-display); }
+.tg-big b{ font:800 30px/1 var(--font-display); }
 .tg-big span{ color:var(--text-secondary, var(--muted)); }
-.tg-bar{ height:8px; border-radius:4px; background:color-mix(in srgb, var(--primary) 18%, transparent); overflow:hidden; margin:10px 0 8px; }
+.tg-bar{ height:8px; border-radius:4px; background:color-mix(in srgb, var(--primary) 18%, transparent); overflow:hidden; margin:6px 0 8px; }
 .tg-bar i{ display:block; height:100%; border-radius:4px; background:var(--primary); }
 .tg-side{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0; font-size:12px; color:var(--text-secondary, var(--muted)); }
 
