@@ -14,6 +14,7 @@ import {
 
 import { describeCorosFreshness } from "./corosStatus.js";
 import { icon } from "./icons.js";
+import { addGreetingTrail } from "./greetingTrail.js";
 import { celebrateRun } from "./celebrate.js";
 import { weekProgressNow } from "./celebrateWeek.js";
 import { showsPersonalPlan } from "./role.js";
@@ -74,6 +75,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // just the greeting, then the first name.
     if (welcomeHeading) {
         welcomeHeading.textContent = greeting;
+        addGreetingTrail(welcomeHeading);
 
         import("./auth.js").then(({ listenForAuth }) => {
             listenForAuth(user => {
