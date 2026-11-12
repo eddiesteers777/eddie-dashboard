@@ -36,7 +36,11 @@
         </section>
 
         <!-- Everything planned and done, from Running, Strength and Cross-Training, on one calendar (js/trainingGridView.js). -->
-        <section class="eos-today-card tg-cal" id="trainCalendar" aria-labelledby="tgTitle" hidden></section>
+        <div class="tg-pair">
+            <!-- Weekly miles: the weeks behind and ahead (js/trainingGridView.js). -->
+            <section class="eos-today-card tg-miles-graph" id="trainMiles" aria-labelledby="tgMilesTitle" hidden></section>
+            <section class="eos-today-card tg-cal" id="trainCalendar" aria-labelledby="tgTitle" hidden></section>
+        </div>
 
         <!-- One small card each for Running / Strength / Cross-Training (js/train.js), only the ones this account has. -->
         <div class="tr-stack" id="trainPanel" aria-live="polite">
@@ -63,7 +67,8 @@
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/train.js"></script>
     <script type="module">
-        import { mountTrainingCalendar } from "./js/trainingGridView.js";
+        import { mountTrainingCalendar, mountWeeklyMiles } from "./js/trainingGridView.js";
+        mountWeeklyMiles(document.getElementById("trainMiles"));
         mountTrainingCalendar(document.getElementById("trainCalendar"));
     </script>
     <script src="js/registerSW.js"></script>

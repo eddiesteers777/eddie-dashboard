@@ -106,3 +106,55 @@ export function stepMonth(year, month, by) {
 }
 
 export const filterItems = (items, kind) => (kind && kind !== "all" ? items.filter(i => i.kind === kind) : items);
+
+/* ---------- the day strip (Today's card) ---------- */
+
+/** Seven days, each with one dot per sport that has something: [{ date, isToday, dots: [{ kind, done }] }]. */
+export function dayStrip(grid) {
+    return grid.days.map((d, i) => ({
+        date: d.date,
+        isToday: d.isToday,
+        dots: grid.rows.map(r => (r.cells[i] ? { kind: r.kind, done: r.cells[i].done } : null)).filter(Boolean)
+    }));
+}
+
+/** Today's training in one line: the first thing still to do, else the first thing. null when nothing today. */
+export function todayPick(day, completed = []) {
+    const items = trainingItems(day, completed);
+    if (!items.length) return null;
+    return items.find(i => !i.done) || items[0];
+}
+
+/* ---------- weekly miles ---------- */
+
+/**
+ * Run miles per week, oldest first: `back` weeks before this one, this week, `ahead` weeks after.
+ * Past weeks count what was run (logged or finished); this week keeps both numbers; later weeks use the plan.
+ * -> [{ monday, miles, planned, kind: "done" | "now" | "plan" }]
+ */
+export function weeklyMiles(inputs, today, completed = [], { back = 5, ahead = 3 } = {}) {
+    const thisMonday = mondayOf(today);
+    const out = [];
+    for (let w = -back; w <= ahead; w++) {
+        const monday = addDays(thisMonday, w * 7);
+        let miles = 0, done = 0;
+        for (let i = 0; i < 7; i++) {
+            for (const item of trainingItems(buildDay(addDays(monday, i), inputs, today), completed)) {
+                if (item.kind !== "run") continue;
+                const m = Number(item.miles) || 0;
+                miles += m;
+                if (item.done) done += m;
+            }
+        }
+        const kind = w < 0 ? "done" : w === 0 ? "now" : "plan";
+        out.push({ monday, miles: round1(kind === "plan" ? miles : done), planned: round1(miles), kind });
+    }
+    return out;
+}
+
+/** Average of the finished weeks that had any running, over the last `n`. null when there are none. */
+export function recentAverage(weeks, n = 4) {
+    const past = weeks.filter(w => w.kind === "done").slice(-n);
+    if (!past.length) return null;
+    return Math.round(past.reduce((t, w) => t + w.miles, 0) / past.length);
+}

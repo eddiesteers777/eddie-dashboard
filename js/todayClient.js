@@ -23,7 +23,7 @@ import { nextRace } from "./raceCountdown.js";
 import { raceStripModel, raceStripHtml, raceDayText } from "./raceStrip.js";
 import { icon } from "./icons.js";
 import { cachedRole } from "./role.js";
-import { sportGridHtml, sportRows, totalsText } from "./trainingGridView.js";
+import { dayStripHtml, todayLineHtml, stripLegendHtml, milesCardHtml, sportRows, totalsText, todayPick, weeklyMiles } from "./trainingGridView.js";
 import { storedSessions } from "./sessionStore.js";
 import { cachedNavAccess, profileAccess, fallbackAccess, meets } from "./navAccess.js";
 
@@ -136,11 +136,19 @@ export function renderClientToday() {
         // The coach's own week: running, strength and cross-training together, one row per sport
         // (js/trainingGrid.js). It opens the Train page, where the whole calendar is.
         const combined = cachedRole() === "coach";
-        let grid = null;
+        let grid = null, completedSessions = [];
         if (combined) {
-            let completed = [];
-            try { completed = storedSessions(); } catch { completed = []; }
-            grid = sportRows(week, completed);
+            try { completedSessions = storedSessions(); } catch { completedSessions = []; }
+            grid = sportRows(week, completedSessions);
+        }
+        // The miles card under it (T1): this week's miles and the weeks either side. Coach only.
+        const milesCard = $("weekMilesCard");
+        if (milesCard) {
+            if (combined && grid.totals.planned) {
+                milesCard.innerHTML = milesCardHtml(weeklyMiles(inputs, today, completedSessions));
+                milesCard.hidden = false;
+                import("./icons.js").then(m => m.hydrate());
+            } else milesCard.hidden = true;
         }
         const hasWeek = combined ? true : week.days.some(d => d.items.length);
         section.hidden = !hasWeek;
@@ -153,7 +161,8 @@ export function renderClientToday() {
             if (seeAll) { seeAll.href = "train.html"; seeAll.firstChild.textContent = "Training "; }
         } else if (combined) {
             $("weekSummary").textContent = `${grid.totals.done} of ${grid.totals.planned} done`;
-            $("weekList").innerHTML = `<a class="tg-link" href="train.html" aria-label="This week's training. Open the training calendar">${sportGridHtml(grid)}</a>`;
+            const todayDay = week.days.find(d => d.isToday);
+            $("weekList").innerHTML = `<a class="tg-link" href="train.html" aria-label="This week's training. Open the training calendar">${dayStripHtml(grid)}</a>${todayLineHtml(todayDay ? todayPick(todayDay, completedSessions) : null)}${stripLegendHtml()}`;
             const milesEl = $("weekMiles");
             if (milesEl) { milesEl.hidden = false; milesEl.classList.add("tg-totals"); milesEl.textContent = totalsText(grid.totals); }
             const seeAll = $("weekSeeAll");

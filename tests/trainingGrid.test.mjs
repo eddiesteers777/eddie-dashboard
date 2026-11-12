@@ -70,3 +70,34 @@ test("month steps across a year; Monday of a Sunday is six days back", () => {
     assert.equal(mondayOf("2026-11-15"), "2026-11-09");
     assert.equal(monthGrid(2027, 2, inputs, today).weeks.length, 4);
 });
+
+import { dayStrip, todayPick, weeklyMiles, recentAverage } from "../js/trainingGrid.js";
+
+test("the day strip has one dot per sport that day, done or not", () => {
+    const g = sportRows(buildWeek("2026-11-09", inputs, today));
+    const s = dayStrip(g);
+    assert.equal(s.length, 7);
+    assert.deepEqual(s[1].dots, [{ kind: "strength", done: true }]);
+    assert.deepEqual(s[3].dots, [{ kind: "run", done: false }]);
+    assert.equal(s[3].isToday, true);
+    assert.deepEqual(s[2].dots, [{ kind: "cross", done: true }]);
+});
+test("today's line is the first thing still to do", () => {
+    const week = buildWeek("2026-11-09", inputs, today);
+    assert.equal(todayPick(week.days[3]).kind, "run");
+    assert.equal(todayPick(week.days[1]).kind, "strength"); // all done: the first one
+    assert.equal(todayPick(week.days[6]), null);
+});
+test("weekly miles: past weeks count what was run, this week keeps both, later weeks use the plan", () => {
+    const withLog = { ...inputs, runLog: [{ date: "2026-11-03", miles: 10 }] };
+    const w = weeklyMiles(withLog, today, [], { back: 2, ahead: 1 });
+    assert.equal(w.length, 4);
+    assert.deepEqual(w.map(x => x.kind), ["done", "done", "now", "plan"]);
+    assert.equal(w[1].miles, 10);
+    assert.equal(w[2].monday, "2026-11-09");
+    assert.equal(w[2].planned, 6.5);
+    assert.equal(w[2].miles, 0);
+    assert.equal(w[3].miles, w[3].planned);
+    assert.equal(recentAverage([{ kind: "done", miles: 10 }, { kind: "done", miles: 20 }, { kind: "now", miles: 1 }]), 15);
+    assert.equal(recentAverage([{ kind: "now", miles: 1 }]), null);
+});

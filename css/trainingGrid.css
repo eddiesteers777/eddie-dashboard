@@ -4,23 +4,13 @@
    Train page's calendar. Run = the app's blue, strength = sage, cross = gold.
 ========================================== */
 
-.tg-grid [hidden], .tg-cal [hidden]{ display:none !important; }
+.tg-cal [hidden]{ display:none !important; }
 .tg-run{ --tg:var(--primary); }
 .tg-strength{ --tg:var(--sage); }
 .tg-cross{ --tg:var(--gold, #D2AD62); }
 
 /* ---- Today's card ---- */
 .tg-link{ display:block; color:inherit; text-decoration:none; }
-.tg-grid{ display:grid; grid-template-columns:auto repeat(7,minmax(0,1fr)); gap:5px; align-items:center; }
-.tg-h{ text-align:center; font-size:11px; line-height:1.25; color:var(--text-secondary, var(--muted)); }
-.tg-h b{ display:block; font-weight:500; }
-.tg-h.is-today{ color:var(--text); font-weight:700; }
-.tg-h.is-today b{ font-weight:700; }
-.tg-r{ font-size:12px; color:var(--text-secondary, var(--muted)); padding-right:6px; }
-.tg-c{ height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font:700 11px/1 var(--font-mono); color:var(--on-primary); background:var(--tg); }
-.tg-c.is-todo{ background:color-mix(in srgb, var(--tg) 26%, transparent); box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--tg) 85%, transparent); color:var(--text); }
-.tg-c.is-missed{ outline:1px dashed color-mix(in srgb, var(--tg) 70%, transparent); outline-offset:-1px; }
-.tg-c.is-empty{ background:transparent; border:1px dashed var(--border); }
 html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; font:600 13px/1.3 var(--font-mono) !important; letter-spacing:0; white-space:normal; }
 #weekSection .eos-today-card-header:has(.tg-totals:not([hidden])){ flex-wrap:wrap; row-gap:4px; }
 #weekSection .eos-today-card-header:has(.tg-totals:not([hidden])) .wk-see-all{ margin-left:auto; }
@@ -72,10 +62,48 @@ html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; fo
 .tg-legend{ display:flex; gap:12px; flex-wrap:wrap; margin:14px 0 0; font-size:11px; color:var(--text-secondary, var(--muted)); }
 .tg-legend i{ display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; background:var(--tg); }
 
-/* A computer: the calendar spans the page, under the heading. */
+/* A computer: the graph and calendar sit side by side under the heading. */
 @media (min-width:901px){
     .tr-page{ grid-template-rows:auto auto auto 1fr; }
-    .tr-page > .tg-cal{ grid-column:1 / -1; grid-row:2; margin-top:22px; }
+    .tr-page > .tg-pair{ grid-column:1 / -1; grid-row:2; margin-top:22px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:start; }
+    .tg-pair > .tg-miles-graph:not([hidden]) + .tg-cal{ margin-top:0; }
     .tr-page > .tr-stack{ grid-column:1; grid-row:3; align-self:start; margin-top:22px; }
     .tr-page > .tr-recent{ grid-column:2; grid-row:3 / span 2; }
 }
+
+/* ---- Today: day strip, today line, miles card ---- */
+.tg-strip{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; text-align:center; }
+.tg-tile{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 0 7px; border-radius:12px; border:1.5px solid transparent; background:color-mix(in srgb, var(--surface-light) 70%, transparent); }
+.tg-tile small{ font-size:10px; color:var(--text-secondary, var(--muted)); }
+.tg-tile b{ font-size:13px; font-weight:600; }
+.tg-tile.is-today{ border-color:var(--text); }
+.tg-dots{ display:flex; gap:3px; justify-content:center; height:9px; margin-top:4px; }
+.tg-dots i{ width:8px; height:8px; border-radius:50%; background:var(--tg); }
+.tg-dots i.is-todo{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--tg); }
+.tg-today{ display:flex; align-items:center; gap:10px; margin-top:12px; padding:8px 4px 8px 12px; border-radius:12px; background:color-mix(in srgb, var(--surface-light) 70%, transparent); }
+.tg-today > i{ flex:0 0 4px; align-self:stretch; min-height:32px; border-radius:2px; background:var(--tg); }
+.tg-today-main{ flex:1 1 auto; min-width:0; }
+.tg-today-main strong{ display:block; }
+.tg-today-main small{ display:block; color:var(--text-secondary, var(--muted)); }
+.tg-miles-link{ display:block; color:inherit; text-decoration:none; }
+.tg-big{ display:flex; align-items:baseline; gap:8px; margin:4px 0 0; }
+.tg-big b{ font:800 34px/1 var(--font-display); }
+.tg-big span{ color:var(--text-secondary, var(--muted)); }
+.tg-bar{ height:8px; border-radius:4px; background:color-mix(in srgb, var(--primary) 18%, transparent); overflow:hidden; margin:10px 0 8px; }
+.tg-bar i{ display:block; height:100%; border-radius:4px; background:var(--primary); }
+.tg-side{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0; font-size:12px; color:var(--text-secondary, var(--muted)); }
+
+/* ---- Train: weekly miles graph ---- */
+.tg-miles-graph [hidden]{ display:none !important; }
+.tg-avg-text{ margin-left:auto; font:600 12px/1.3 var(--font-mono); color:var(--text-secondary, var(--muted)); }
+.tg-graph{ display:block; width:100%; height:auto; margin-top:6px; }
+.tg-line{ fill:none; stroke:var(--primary); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; }
+.tg-line.is-plan{ stroke-width:2; stroke-dasharray:5 4; }
+.tg-area{ fill:var(--primary); opacity:.14; }
+.tg-pt{ fill:var(--primary); stroke:var(--primary); stroke-width:1.5; }
+.tg-pt.is-plan{ fill:var(--surface); }
+.tg-pt.is-now{ stroke:var(--text); }
+.tg-avg{ stroke:var(--border); stroke-dasharray:2 4; }
+.tg-ax{ fill:var(--text-secondary, var(--muted)); font-size:9px; }
+.tg-ax.is-now{ fill:var(--text); font-weight:700; }
+.tg-val{ fill:var(--text); font:700 10px var(--font-mono); }
