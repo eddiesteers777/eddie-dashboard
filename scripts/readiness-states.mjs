@@ -8,7 +8,7 @@ const persona = process.argv[3] || "client";
 const iso = n => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 const health = {};
-for (let i = 0; i < 28; i++) health[iso(-i)] = { hrv: { avg: [56, 58, 55, 52, 57, 54, 49][i % 7], baseline: 55, low: 50, high: 61 }, rhr: [47, 47, 48, 49, 47, 48, 48][i % 7], sleep: { asleepMin: [432, 410, 450, 395, 440, 425, 380][i % 7], wake: "06:10" } };
+for (let i = 0; i < 28; i++) health[iso(-i)] = { stress: { avg: [31, 28, 35, 41, 30, 27, 25][i % 7], level: "Low" }, hrv: { avg: [56, 58, 55, 52, 57, 54, 49][i % 7], baseline: 55, low: 50, high: 61 }, rhr: [47, 47, 48, 49, 47, 48, 48][i % 7], sleep: { asleepMin: [432, 410, 450, 395, 440, 425, 380][i % 7], wake: "06:10" } };
 const checkins = {};
 for (let i = 0; i < 20; i++) checkins[iso(-i)] = { energy: i === 0 ? 4 : 3 + (i % 3 ? 1 : 0), soreness: i < 4 ? 3 : 2, mood: 4 };
 const log = { entries: [] };
@@ -36,13 +36,28 @@ for (const [name, ls] of Object.entries(scenarios)) {
         const shot = async file => { await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(1200); await card.screenshot({ path: file }); };
         await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(900);   // Today fades sections in as they scroll into view
         await shot(`${OUT}/${name}-${w}.png`);
-        const first = await card.locator("[data-trend]").first().elementHandle().catch(() => null);
-        if (first) {
-            await card.locator("[data-trend]").first().click();
+        const tabs = card.locator(".rd-tab");
+        if (await tabs.count() > 1) {
+            await tabs.nth(1).click();
             await page.waitForTimeout(900);
-            await shot(`${OUT}/${name}-${w}-open.png`);
+            await shot(`${OUT}/${name}-${w}-tab2.png`);
             const chart = card.locator(".sb-chart").first();
             if (await chart.count()) { const box = await chart.boundingBox(); await page.mouse.move(box.x + box.width * 0.62, box.y + box.height * 0.5); await page.waitForTimeout(300); await shot(`${OUT}/${name}-${w}-hover.png`); }
+            // a swipe across the panel (not the chart) goes to the next tab; a tap on a cell of today's row opens its panel
+            const before = await card.locator(".rd-tab.on").textContent();
+            await page.evaluate(() => {
+                const t = document.querySelector("#readinessCard .rd-says"), r = t.getBoundingClientRect();
+                const all = [...document.querySelectorAll("#readinessCard .rd-tab")], left = all.findIndex(x => x.classList.contains("on")) < all.length - 1;   // the last tab swipes back
+                const [from, to] = left ? [r.right - 20, r.left + 10] : [r.left + 10, r.right - 20];
+                const mk = x => new Touch({ identifier: 1, target: t, clientX: x, clientY: r.top + 4 });
+                t.dispatchEvent(new TouchEvent("touchstart", { bubbles: true, touches: [mk(from)], changedTouches: [mk(from)] }));
+                t.dispatchEvent(new TouchEvent("touchend", { bubbles: true, touches: [], changedTouches: [mk(to)] }));
+            });
+            await page.waitForTimeout(300);
+            const after = await card.locator(".rd-tab.on").textContent();
+            if (before === after) problems.push(`${name}@${w}: swipe did not change the tab (${before})`);
+            const cell = card.locator("button.rd-cell").first();
+            if (await cell.count()) { await cell.click(); await page.waitForTimeout(300); if ((await card.locator(".rd-tab.on").textContent()) === after && after !== (await card.locator(".rd-tab").first().textContent())) problems.push(`${name}@${w}: a cell did not open its panel`); }
         }
         if (w === 390) {
             const wide = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
@@ -51,7 +66,7 @@ for (const [name, ls] of Object.entries(scenarios)) {
             if (small.length) problems.push(`${name}@${w}: short tap targets ${JSON.stringify(small)}`);
         }
         if (name === "log" && w === 390) {
-            const conn = card.locator('[data-act="connect"]').first();
+            const conn = card.locator('[data-act="connect"]').first(); await conn.scrollIntoViewIfNeeded();
             if (await conn.count()) { await conn.click(); await page.waitForTimeout(400); await page.screenshot({ path: `${OUT}/connect-sheet-390.png` }); }
         }
         await ctx.close();

@@ -27,8 +27,8 @@ import { toast, sbPrompt } from "./ui.js";
 import { readinessV2 } from "./readinessV2.js";
 import { showHealthStats } from "./bodyModel.js";
 import { ringHtml } from "./bodyView.js";
-import { wordOf, trendPanel, watchRows, saidRow, logRead, TREND_DAYS } from "./readinessRead.js";
-import { ledgerHtml, trendHtml } from "./readinessLedger.js";
+import { wordOf, trendPanel, panelTabs, todayStrip, logRead, TREND_DAYS } from "./readinessRead.js";
+import { lensHtml, trendHtml, stripHtml } from "./readinessLedger.js";
 import "./chartTips.js";
 import { athleteInputs, resetAthleteInputs } from "./readinessV2Data.js";
 
@@ -296,7 +296,7 @@ function insightsHtml(today) {
 
 // ---------- the card (option C, 2026-11-12): a word, one line, a ledger of why, 4 weeks under any row ----------
 
-let openRow = null;     // which ledger row's 4 weeks is open
+let activeTab = null;   // which tab of the inner card is showing (null = the first)
 let moreOpen = false;   // "Your week" fold
 let model = null;       // the last thing computed, so opening a row redraws without recomputing
 
@@ -351,7 +351,6 @@ async function compute() {
             flags: r.flags.filter(f => f.key !== "pain" && f.key !== "sick"),
             adviceText: missing && !flagged ? missing.text : advice.text,
             color: r.color, word: wordOf(r.color),
-            rows: [...watchRows({ health: data.health, date: today, needMin }), saidRow(data.checkins, today)],
             sessions: [],
             coach: sleepCoach(data.health, today, data.settings.sleepNeedMin)
         });
@@ -362,7 +361,7 @@ async function compute() {
         const advice = read.ready ? adviceFor({ score: 1, color: read.color, flags: read.flags }, workout, []) : { text: "", swap: false };
         Object.assign(m, {
             read, sessions, advice, missing: null, flags: [], shownHistory: history,
-            color: read.color, word: read.word, rows: read.rows,
+            color: read.color, word: read.word,
             adviceText: read.ready ? advice.text : `Check in each morning. After ${read.progress.need} mornings, or a few logged runs, Southbound can say how you're carrying your training.`
         });
     }
@@ -379,8 +378,10 @@ function draw(m) {
     el.className = `rd-card ${m.color}`;
 
     const dates = Array.from({ length: TREND_DAYS }, (_, i) => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - (TREND_DAYS - 1 - i)); return isoDate(d); });
-    const panels = {};
-    if (openRow) panels[openRow] = trendHtml(trendPanel(openRow, { health: data.health, checkins: data.checkins, sessions: m.sessions, date: today, needMin }), dates);
+    const tabs = panelTabs({ watch: m.watch, health: data.health });
+    if (!tabs.some(t => t.key === activeTab)) activeTab = tabs[0].key;
+    const panelHtml = trendHtml(trendPanel(activeTab, { health: data.health, checkins: data.checkins, sessions: m.sessions, date: today, needMin }), dates);
+    const strip = todayStrip({ watch: m.watch, health: data.health, date: today, checkins: data.checkins, read: m.read });
 
     const easy = m.easy;
     const swapBtn = easy ? `<button type="button" class="sb-btn sb-btn-secondary rd-swap" data-act="swap">${icon("refresh")} Move it to ${esc(easy.name)}, run easy today</button>` : "";
@@ -418,28 +419,30 @@ function draw(m) {
         <div class="eos-today-card-header"><h2>Readiness</h2><span class="rd-chip">${esc(chip)}</span></div>
         <div class="rd-body tone-${m.color}">
             <div class="rd-body-top">
-                <div class="rd-say">${wordHtml}${sub}</div>
                 ${hasScore ? ringHtml(m.r.score, m.r.color) : ""}
+                <div class="rd-say">${wordHtml}${sub}<p class="rd-line">${adviceHtml(m.adviceText)}</p></div>
             </div>
-            <p class="rd-line">${adviceHtml(m.adviceText)}</p>
             ${lines.trim() ? `<div class="rd-extras">${lines}</div>` : ""}
-            ${ledgerHtml(m.rows, { open: openRow, panels })}
+            ${lensHtml(tabs, activeTab, panelHtml)}
+            ${stripHtml(strip, activeTab)}
             ${dots}
             <div class="rd-body-foot">
                 <div class="rd-checkin-row">
                     ${checkin
                         ? `<span class="rd-done">${icon("checkCircle")} Checked in</span><button type="button" class="sb-btn sb-btn-tertiary" data-act="checkin">Edit</button>`
-                        : `<button type="button" class="sb-btn sb-btn-secondary" data-act="checkin">${icon("edit")} Morning check-in</button>`}
+                        : `<button type="button" class="sb-btn ${!m.watch && !m.read.ready ? "sb-btn-primary" : "sb-btn-secondary"}" data-act="checkin">${icon("edit")} ${!m.watch && !m.read.ready ? "Check in now" : "Morning check-in"}</button>`}
                 </div>
                 <button type="button" class="sb-btn sb-btn-tertiary rd-morebtn" data-act="more" aria-expanded="${moreOpen}">Your week <span aria-hidden="true">›</span></button>
             </div>
             ${moreOpen ? `<div class="rd-more2">${more}</div>` : ""}
+            ${m.watch ? "" : `<div class="rd-connectbar"><p><b>Add COROS</b> for sleep, HRV and more</p><button type="button" class="sb-btn sb-btn-primary" data-act="connect">Connect</button></div>`}
         </div>`;
     import("./icons.js").then(m2 => m2.hydrate?.()).catch(() => {});
 
+    bindSwipe(el);
     el.onclick = async event => {
-        const trend = event.target.closest("[data-trend]")?.dataset.trend;
-        if (trend) { openRow = openRow === trend ? null : trend; draw(model); return; }
+        const tab = event.target.closest("[data-tab]")?.dataset.tab;
+        if (tab) { selectTab(tab); return; }
         const act = event.target.closest("[data-act]")?.dataset.act;
         if (act === "more") { moreOpen = !moreOpen; draw(model); }
         if (act === "connect") connectSheet();
@@ -457,6 +460,38 @@ function draw(m) {
             render();
         }
     };
+}
+
+function selectTab(key) {
+    if (!key || key === activeTab) return;
+    activeTab = key;
+    draw(model);
+    $("readinessCard")?.querySelector(".rd-tab.on")?.scrollIntoView({ inline: "nearest", block: "nearest" });
+}
+
+// Swipe the inner card sideways to change tab. A finger sliding across the chart reads its days instead (js/chartTips.js).
+function bindSwipe(el) {
+    if (el.dataset.swipe) return;
+    el.dataset.swipe = "1";
+    let start = null;
+    el.addEventListener("touchstart", event => {
+        start = event.target.closest(".rd-panel") && !event.target.closest(".sb-chart") && event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+    }, { passive: true });
+    el.addEventListener("touchend", event => {
+        if (!start || !model) return;
+        const t = event.changedTouches[0], dx = t.clientX - start.x, dy = t.clientY - start.y;
+        start = null;
+        if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        const keys = panelTabs({ watch: model.watch, health: model.data.health }).map(x => x.key);
+        const next = keys[keys.indexOf(activeTab) + (dx < 0 ? 1 : -1)];
+        if (next) selectTab(next);
+    }, { passive: true });
+    el.addEventListener("keydown", event => {
+        if (!event.target.closest?.('[role="tab"]') || !["ArrowLeft", "ArrowRight"].includes(event.key) || !model) return;
+        const keys = panelTabs({ watch: model.watch, health: model.data.health }).map(x => x.key);
+        const next = keys[keys.indexOf(activeTab) + (event.key === "ArrowRight" ? 1 : -1)];
+        if (next) { selectTab(next); $("readinessCard")?.querySelector(".rd-tab.on")?.focus(); }
+    });
 }
 
 async function render() {

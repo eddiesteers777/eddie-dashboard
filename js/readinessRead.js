@@ -17,7 +17,6 @@
 ========================================== */
 
 import { hm, colorOf, DEFAULT_SLEEP_NEED } from "./readiness.js";
-import { bodyMeasures } from "./bodyModel.js";
 
 export const WORDS = Object.freeze({ green: "Ready", yellow: "Steady", red: "Easy day" });
 export const wordOf = color => WORDS[color] || "";
@@ -82,6 +81,7 @@ const isHard = s => (Number(s?.rpe) >= 6) || ((Number(s?.distance) || 0) / MILE 
 // ---------- trend panels ----------
 
 const fmt = {
+    stress: v => `${Math.round(v)}`,
     sleep: v => hm(v),
     hrv: v => `${Math.round(v)} ms`,
     rhr: v => `${Math.round(v)} bpm`,
@@ -106,6 +106,7 @@ export function trendPanel(key, ctx) {
         const days = Object.keys(by).filter(d => d > addDays(date, -TREND_DAYS) && d <= date).length;
         Object.assign(out, { title: "Training · 4 weeks", sub: "miles per week", kind: "weekbars", weekValues: weeks, have: days, minHave: 4 });
         out.weeks = weeks.map((v, i) => ({ label: WEEK_LABELS[i], text: `${Math.round(v)} mi` }));
+        out.big = { text: `${Math.round(weeks[3])}`, unit: "mi this week" };
         out.building = days < out.minHave;
         out.buildingText = `Building: ${days} of ${out.minHave} runs logged`;
         if (!out.building) {
@@ -125,6 +126,7 @@ export function trendPanel(key, ctx) {
         const wk = weekAverages(values);
         Object.assign(out, { title: "What you said · 4 weeks", sub: "soreness, 1 to 5", kind: "line", values, have, minHave: 6, scale: [1, 5] });
         out.weeks = wk.map(w => ({ label: w.label, text: w.v == null ? "–" : String(round1(w.v)) }));
+        out.big = { text: wk[3].v == null ? "–" : String(round1(wk[3].v)), unit: "soreness this week" };
         out.building = have < out.minHave;
         out.buildingText = `Building: ${have} of ${out.minHave} check-ins`;
         if (!out.building) {
@@ -139,21 +141,23 @@ export function trendPanel(key, ctx) {
     const pickers = {
         sleep: d => num(health[d]?.sleep?.asleepMin),
         hrv: d => num(health[d]?.hrv?.avg),
-        rhr: d => num(health[d]?.rhr)
+        rhr: d => num(health[d]?.rhr),
+        stress: d => num(health[d]?.stress?.avg)
     };
     const series = dailySeries(date, TREND_DAYS, pickers[key]);
     const values = series.map(p => p.v);
     const real = known(values);
     const wk = weekAverages(values);
     const f = fmt[key];
-    const titles = { sleep: ["Sleep · 4 weeks", `need ${hm(needMin)}`], hrv: ["HRV · 4 weeks", "your normal"], rhr: ["Resting HR · 4 weeks", "your usual"] }[key];
+    const titles = { sleep: ["Sleep · 4 weeks", `need ${hm(needMin)}`], hrv: ["HRV · 4 weeks", "your normal"], rhr: ["Resting HR · 4 weeks", "your usual"], stress: ["Stress · 4 weeks", "COROS"] }[key];
     Object.assign(out, { title: titles[0], sub: titles[1], kind: key === "sleep" ? "bars" : "line", values, have: real.length, minHave: MIN_TREND_DAYS });
     out.weeks = wk.map(w => ({ label: w.label, text: w.v == null ? "–" : f(w.v) }));
     out.building = real.length < MIN_TREND_DAYS;
-    out.buildingText = `Building: ${real.length} of ${TREND_DAYS} nights`;
+    out.buildingText = `Building: ${real.length} of ${TREND_DAYS} ${key === "stress" ? "days" : "nights"}`;
     if (out.building) return out;
 
     const m = mean(real);
+    out.big = key === "sleep" ? { text: hm(m), unit: "avg" } : key === "hrv" ? { text: `${Math.round(m)}`, unit: "ms avg" } : key === "rhr" ? { text: `${Math.round(m)}`, unit: "bpm avg" } : { text: `${Math.round(m)}`, unit: "avg" };
     if (key === "sleep") {
         out.need = needMin;
         const under = real.filter(v => v < needMin - 10).length;
@@ -166,6 +170,10 @@ export function trendPanel(key, ctx) {
             : now < out.band[0] ? `This week's average (${Math.round(now)} ms) is below your normal range.`
             : now > out.band[1] ? `This week's average (${Math.round(now)} ms) is above your normal range.`
             : "This week's average is inside your normal range.";
+    } else if (key === "stress") {
+        const now = wk[3].v, before = known(wk.slice(0, 3).map(w => w.v));
+        out.says = now == null || !before.length ? "COROS's daily stress. Shown, not scored."
+            : `This week averages ${Math.round(now)}, ${Math.round(Math.abs(now - mean(before))) < 1 ? "the same as" : now > mean(before) ? "above" : "below"} the 3 weeks before${Math.round(Math.abs(now - mean(before))) < 1 ? "" : ` (${Math.round(mean(before))})`}. COROS's number, not in your score.`;
     } else {
         const s = Math.max(sd(real), 1.5);
         out.band = [m - s, m + s];
@@ -180,42 +188,48 @@ export function trendPanel(key, ctx) {
     return out;
 }
 
-// ---------- ledger rows ----------
+// ---------- the lens: which panels, and today's row ----------
 
-const toneOfDiff = diff => (diff >= 3 ? "low" : diff >= 1 ? "mid" : "ok");
-
-/** The watch's three rows (only what it reported) -> [{ key, label, value, note, tone, trend: true }]. */
-export function watchRows({ health = {}, date, needMin = DEFAULT_SLEEP_NEED } = {}) {
-    const m = bodyMeasures(health, date, { needMin });
-    const rows = [];
-    if (m.sleep) {
-        const short = needMin - m.sleep.min;
-        rows.push({ key: "sleep", label: "Sleep", value: m.sleep.value, note: m.sleep.note, tone: short > 60 ? "low" : short > 20 ? "mid" : "ok", trend: true });
-    }
-    if (m.hrv) rows.push({ key: "hrv", label: "HRV", value: `${m.hrv.ms} ms`, note: m.hrv.note, tone: /below/.test(m.hrv.note) ? "low" : "ok", trend: true });
-    if (m.rhr) rows.push({ key: "rhr", label: "Resting HR", value: `${m.rhr.bpm} bpm`, note: m.rhr.note, tone: toneOfDiff(m.rhr.diff || 0), trend: true });
-    return rows;
+/** The inner card's tabs, in order: [{ key, label }]. Stress only once COROS has sent any. */
+export function panelTabs({ watch, health = {} } = {}) {
+    if (!watch) return [{ key: "miles", label: "Training" }, { key: "said", label: "Soreness" }];
+    const tabs = [{ key: "sleep", label: "Sleep" }, { key: "hrv", label: "HRV" }, { key: "rhr", label: "Resting HR" }];
+    if (Object.values(health).some(d => d?.stress?.avg > 0)) tabs.push({ key: "stress", label: "Stress" });
+    return tabs;
 }
 
-/** "You said": today's check-in in words; with none yet, a ghost row that offers the check-in. */
-export function saidRow(checkins = {}, date) {
+const energyOf = c => (c?.energy ? ENERGY_WORDS[c.energy - 1] : null);
+const soreOf = c => (c?.soreness ? SORE_WORDS[c.soreness - 1] : null);
+
+/**
+ * Today's values in one straight row: [{ key, label, value (null = a dash), tab (the panel it opens, or null) }].
+ * With a watch: what the watch reported this morning. Without: what was logged and said.
+ */
+export function todayStrip({ watch, health = {}, date, checkins = {}, read = null } = {}) {
+    if (watch) {
+        const d = health[date] || {};
+        const cells = [
+            { key: "sleep", label: "Sleep", value: num(d.sleep?.asleepMin) ? hm(d.sleep.asleepMin) : null, tab: "sleep" },
+            { key: "hrv", label: "HRV", value: num(d.hrv?.avg) ? `${Math.round(d.hrv.avg)}` : null, tab: "hrv" },
+            { key: "rhr", label: "Rest HR", value: num(d.rhr) ? `${Math.round(d.rhr)}` : null, tab: "rhr" }
+        ];
+        if (Object.values(health).some(x => x?.stress?.avg > 0)) cells.push({ key: "stress", label: "Stress", value: num(d.stress?.avg) ? `${Math.round(d.stress.avg)}` : null, tab: "stress" });
+        return cells;
+    }
     const c = checkins[date];
-    const has = c && (c.energy || c.soreness || c.mood || c.sick || c.pain);
-    if (!has) return { key: "said", label: "You said", value: "Not yet today", ghost: true, action: { act: "checkin", label: "Check in" }, trend: true };
-    const bits = [];
-    if (c.energy) bits.push(`Energy ${ENERGY_WORDS[c.energy - 1].toLowerCase()}`);
-    if (c.soreness) bits.push(`sore: ${SORE_WORDS[c.soreness - 1].toLowerCase()}`);
-    if (!bits.length && c.sick) bits.push("feeling sick");
-    const low = c.sick || c.pain || c.soreness >= 4 || (c.energy && c.energy <= 2);
-    const mid = c.soreness === 3 || c.energy === 3;
-    return { key: "said", label: "You said", value: bits.join(" · ") || "Checked in", tone: low ? "low" : mid ? "mid" : "ok", trend: true };
+    return [
+        { key: "miles", label: "7 days", value: read && read.miles.last7 > 0 ? `${Math.round(read.miles.last7)} mi` : null, tab: "miles" },
+        { key: "hard", label: "Hard", value: read?.hard ? String(read.hard.count) : null, tab: null },
+        { key: "said", label: "Sore", value: soreOf(c), tab: "said" },
+        { key: "energy", label: "Energy", value: energyOf(c), tab: null }
+    ];
 }
 
 // ---------- no watch: the read from what was logged ----------
 
 /**
  * { date, sessions (athlete ledger), checkins, workout ({ kind, title }) } ->
- * { ready, color, word, flags, rows, miles, hard, progress: { have, need }, haveCheckins, haveSessions }
+ * { ready, color, word, flags, miles, hard, progress: { have, need }, haveCheckins, haveSessions }
  * Not ready (too little logged) -> word "" and the progress dots; the card asks for a check-in.
  */
 export function logRead({ date, sessions = [], checkins = {} } = {}) {
@@ -253,18 +267,11 @@ export function logRead({ date, sessions = [], checkins = {} } = {}) {
     if (flags.some(f => f.key === "pain")) score = Math.min(score, 55);
     score = Math.max(0, score);
 
-    const rows = [];
-    if (sessionCount === 0 && last7 === 0) rows.push({ key: "miles", label: "Training", value: "No runs logged", ghost: true, action: { href: "running.html", label: "Log a run" } });
-    else rows.push({ key: "miles", label: "Last 7 days", value: `${Math.round(last7)} mi`, note: usual ? `usual ${Math.round(usual)}` : "", tone: usual && last7 / usual > 1.3 ? "low" : usual && last7 / usual > 1.15 ? "mid" : "ok", trend: true });
-    if (hard) rows.push({ key: "hard", label: "Hard days", value: `${hard.count} of 7`, note: hard.lastAgo == null ? "" : hard.lastAgo === 0 ? "one today" : `last one ${hard.lastAgo} ${hard.lastAgo === 1 ? "day" : "days"} ago`, tone: hard.count >= 3 ? "low" : hard.count === 2 ? "mid" : "ok" });
-    rows.push(saidRow(checkins, date));
-    rows.push({ key: "watch", label: "Sleep, HRV", value: "Not connected", ghost: true, action: { act: "connect", label: "Connect" } });
-
     return {
         ready,
         color: ready ? colorOf(score) : "none",
         word: ready ? wordOf(colorOf(score)) : "",
-        flags, rows, miles: { last7, usual }, hard, progress,
+        flags, miles: { last7, usual }, hard, progress,
         haveCheckins: checkinDays, haveSessions: sessionCount
     };
 }

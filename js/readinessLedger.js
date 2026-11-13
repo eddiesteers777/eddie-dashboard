@@ -1,12 +1,12 @@
 /* ==========================================
-   Southbound — the Readiness card's ledger and 4-week panels, drawn (pure strings)
+   Southbound — the Readiness card's inner card, drawn (pure strings)
 
-   js/readinessRead.js decides what the rows say; this draws them: a ledger of
-   reasons (one hairline row each, a small dot for how it reads), and under the
-   open row a 4-week panel (bars for sleep and weekly miles, a line with the
-   person's own band for HRV, resting HR and soreness). Touch or hover a day to
-   read it (js/chartTips.js through chartWrap). No DOM, no storage:
-   tests/readinessRead.test.mjs.
+   Option B of the 2026-11-13 redesign (card inside a card). js/readinessRead.js
+   decides what the panels say; this draws them: the inner card (tabs across the
+   top, one 4-week panel under them: bars for sleep and weekly miles, a line with
+   the person's own band for HRV, resting HR, stress and soreness) and today's
+   numbers in one straight row. Touch or hover a day to read it (js/chartTips.js
+   through chartWrap). No DOM, no storage: tests/readinessRead.test.mjs.
 ========================================== */
 
 import { chartWrap } from "./svgCharts.js";
@@ -78,26 +78,24 @@ function chartSvg(panel, dates) {
 
 /** One 4-week panel (see trendPanel in js/readinessRead.js). dates: the 28 days it covers. */
 export function trendHtml(panel, dates = []) {
-    const head = `<h4><span>${esc(panel.title)}</span><span>${esc(panel.sub)}</span></h4>`;
+    const sub = `<small>${esc(panel.sub)}</small>`;
     if (panel.building) {
-        return `<div class="rd-tr" id="rd-tr-${esc(panel.key)}">${head}<p class="rd-says"><b>${esc(panel.buildingText)}.</b> The 4-week view draws once there is enough to read.</p></div>`;
+        return `<div class="rd-tr" id="rd-tr-${esc(panel.key)}" role="tabpanel"><div class="rd-tr-head"><span class="rd-big rd-big-quiet">–</span>${sub}</div>
+            <svg class="rd-ghostline" viewBox="0 0 ${W} 70" aria-hidden="true"><polyline points="4,44 40,30 78,40 118,22 160,36 200,26 244,38 296,28" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 6" stroke-linecap="round"/></svg>
+            <p class="rd-says"><b>${esc(panel.buildingText)}.</b> The 4-week view draws once there is enough to read.</p></div>`;
     }
-    const weeks = `<div class="rd-wk4">${panel.weeks.map((w, i) => `<div${i === 3 ? ' class="now"' : ""}><b>${esc(w.text)}</b>${esc(w.label)}</div>`).join("")}</div>`;
-    return `<div class="rd-tr" id="rd-tr-${esc(panel.key)}">${head}${chartSvg(panel, dates)}${weeks}<p class="rd-says">${esc(panel.says)}</p></div>`;
+    return `<div class="rd-tr" id="rd-tr-${esc(panel.key)}" role="tabpanel"><div class="rd-tr-head"><span class="rd-big">${esc(panel.big.text)}<u>${esc(panel.big.unit)}</u></span>${sub}</div>${chartSvg(panel, dates)}<p class="rd-says">${esc(panel.says)}</p></div>`;
 }
 
-/**
- * rows: [{ key, label, value, note, tone, ghost, action: { act, label }, trend }]
- * open: the key of the open row (or null); panels: { key: panelHtml }
- */
-export function ledgerHtml(rows, { open = null, panels = {} } = {}) {
-    return `<ul class="rd-ledger" role="list">${rows.map(r => {
-        if (r.ghost) {
-            return `<li class="rd-lrow ghost"><div class="rd-lstatic"><span class="rd-lk">${esc(r.label)}</span><span class="rd-lv">${esc(r.value)}</span>${r.action ? (r.action.href ? `<a class="rd-lact" href="${esc(r.action.href)}">${esc(r.action.label)}</a>` : `<button type="button" class="rd-lact" data-act="${esc(r.action.act)}">${esc(r.action.label)}</button>`) : ""}</div></li>`;
-        }
-        const body = `<span class="rd-lk">${esc(r.label)}</span><span class="rd-lv">${esc(r.value)}${r.note ? ` <em>${esc(r.note)}</em>` : ""}</span><i class="rd-ld ${esc(r.tone || "ok")}" aria-hidden="true"></i>`;
-        if (!r.trend) return `<li class="rd-lrow"><div class="rd-lstatic">${body}</div></li>`;
-        const isOpen = open === r.key;
-        return `<li class="rd-lrow${isOpen ? " open" : ""}"><button type="button" class="rd-lbtn" data-trend="${esc(r.key)}" aria-expanded="${isOpen}" aria-controls="rd-tr-${esc(r.key)}">${body}<span class="rd-lchev" aria-hidden="true">›</span></button>${isOpen ? panels[r.key] || "" : ""}</li>`;
-    }).join("")}</ul>`;
+/** The inner card: tabs ([{ key, label }]) with the active one marked, and its panel under them. */
+export function lensHtml(tabs, active, panelHtml) {
+    return `<div class="rd-lens"><div class="rd-tabs" role="tablist" aria-label="Trends">${tabs.map(t => `<button type="button" role="tab" class="rd-tab${t.key === active ? " on" : ""}" data-tab="${esc(t.key)}" aria-selected="${t.key === active}" aria-controls="rd-tr-${esc(t.key)}">${esc(t.label)}</button>`).join("")}</div><div class="rd-panel">${panelHtml}</div></div>`;
+}
+
+/** Today's values in one straight row. A cell that opens a panel is a button. */
+export function stripHtml(cells, active) {
+    return `<div class="rd-strip" style="--cols:${cells.length}">${cells.map(c => {
+        const inner = `<small>${esc(c.label)}</small><b${c.value == null ? ' class="dim"' : ""}>${c.value == null ? "–" : esc(c.value)}</b>`;
+        return c.tab ? `<button type="button" class="rd-cell${c.tab === active ? " on" : ""}" data-tab="${esc(c.tab)}">${inner}</button>` : `<div class="rd-cell">${inner}</div>`;
+    }).join("")}</div>`;
 }
