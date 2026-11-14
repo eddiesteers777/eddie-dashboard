@@ -73,33 +73,8 @@ html:not(.rb-app) .rb-page{ width:min(1600px, 100% - 24px) !important; }
     .rb-sidecol{ position:static !important; grid-row:1; grid-column:1; height:100%; border-right:1px solid var(--rb-line); }
 }
 
-/* phone: the panel is a sheet over the map; the page keeps its own bars */
-@media (max-width:899px){
-    .rb-layout{ border-radius:14px; }
-    .rb-page, html:not(.rb-app) .rb-page{ padding-top:8px !important; }
-    html:not(.rb-app) .rb-page{ width:calc(100% - 16px) !important; }
-    .rb-sidecol{ position:absolute !important; z-index:1200; left:0; right:0; bottom:0; height:78%; border-top:1px solid var(--rb-line); border-radius:18px 18px 0 0; box-shadow:0 -20px 40px -16px rgba(0,0,0,.7); }
-    .rb-panel-toggle{ display:inline-flex; }
-    .rb-top .rb-search{ flex:1 1 100%; order:-1; }
-    .rb-top .rb-prefs-open{ flex:1 1 100%; }
-    .rb-top{ gap:6px; padding:8px; }
-    .rb-tools{ grid-template-columns:repeat(4, minmax(0,1fr)); padding:6px 8px 8px; }
-    .rb-tools .sb-btn{ font-size:12.5px; white-space:normal; line-height:1.15; padding:0 4px; }
-    .rb-statwrap{ padding:6px 8px 0; }
-}
-
 /* inside the app the page starts lower than it needs to: pull the builder up under the header */
 @media (min-width:900px){ body.rb-in-app .rb-page{ margin-top:-48px; } }
-@media (max-width:899px){
-    body.rb-in-app .rb-page{ margin-top:-56px; }
-    /* Settings and the map look live in the panel on a phone (js/routesLayout.js moves them) */
-    .rb-side-extra{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .rb-side-extra .rb-prefs-open{ position:static; flex:1 1 100%; width:100%; max-width:none; }
-    .rb-side-extra .rb-looks{ position:static; margin:0; }
-    .rb-top .rb-mode{ flex:1 1 auto; }
-    .rb-top .rb-mode-btn{ flex:1; }
-    .rb-statwrap .rb-stat{ padding:4px 10px; }
-}
 @media (min-width:900px){ .rb-side-extra{ display:none; } }
 
 /* The app's own left menu starts closed on this page so the map gets the width (Eddie, 2026-11-14); the Menu button brings it back. Computer only. */
@@ -113,3 +88,64 @@ html:not(.rb-app) .rb-page{ width:min(1600px, 100% - 24px) !important; }
 }
 @media (prefers-reduced-motion:reduce){ html body .eos-navbar, body.rb-in-app{ transition:none !important; } }
 @media (min-width:901px){ body.rb-in-app .rb-page.container{ max-width:none !important; width:auto !important; margin-left:16px !important; margin-right:16px !important; padding-left:0 !important; padding-right:0 !important; } }
+
+/* ---------- phone: the map is the screen, controls sit on its edges (2026-11-14, second phone pass) ---------- */
+.rb-rail{ display:none; }
+@media (max-width:899px){
+    body.rb-in-app .rb-page{ margin-top:-56px; }
+    .rb-page, html:not(.rb-app) .rb-page{ padding-top:0 !important; padding-bottom:0 !important; }
+    html:not(.rb-app) .rb-page{ width:100% !important; }
+    .rb-layout{ width:100vw; max-width:100vw; margin-left:calc(50% - 50vw) !important; border:0; border-radius:0; }
+    .rb-mapwrap{ display:block; height:100%; }
+    .rb-stage{ position:absolute; inset:0; min-height:0; }
+
+    /* top: panel button + search, then route type; glass, map visible around them */
+    .rb-top{ position:absolute !important; z-index:900; left:10px !important; right:10px !important; top:10px !important; padding:0; gap:8px; background:none; border:0; pointer-events:none !important; }
+    .rb-top > *{ pointer-events:auto; }
+    .rb-top .rb-panel-toggle{ order:-2; display:inline-flex; width:48px; min-height:48px; padding:0; justify-content:center; border-radius:14px; background:rgba(14,22,30,.86); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+    .rb-top .rb-panel-toggle span{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    .rb-top .rb-panel-toggle img{ width:30px; }
+    .rb-top .rb-search{ order:-1; flex:1 1 calc(100% - 56px); display:flex; gap:0; min-height:48px; border-radius:14px; overflow:hidden; background:rgba(14,22,30,.86); border:1px solid rgba(236,230,212,.16); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+    .rb-top .rb-search input{ flex:1; min-width:0; min-height:48px; border:0 !important; background:transparent !important; border-radius:0; padding:0 12px; }
+    .rb-top .rb-search .sb-btn{ min-height:48px; border:0 !important; border-left:1px solid rgba(236,230,212,.14) !important; border-radius:0 !important; padding:0 14px; background:rgba(29,42,54,.6) !important; }
+    .rb-top .rb-mode{ flex:0 0 auto; width:auto !important; padding:3px; border-radius:14px; background:rgba(14,22,30,.86) !important; }
+    .rb-top .rb-mode-btn{ min-height:44px !important; padding:0 14px; font-size:13.5px; }
+    .rb-top .rb-loopbar{ flex:0 0 100%; }
+    .rb-top .rb-results{ top:56px !important; left:0 !important; right:0 !important; }
+
+    /* hint: a small line under the route type, not a block over the map */
+    .rb-stage .rb-hint{ top:124px !important; bottom:auto !important; left:10px !important; right:auto !important; transform:none !important; max-width:calc(100% - 90px); padding:6px 12px; font-size:13px; border-radius:12px; }
+    .rb-stage .rb-busy{ top:124px; }
+
+    /* right rail: the few things you tap while drawing */
+    .rb-rail{ position:absolute; z-index:900; right:10px; top:124px; display:flex; flex-direction:column; gap:8px; }
+    .rb-rail > button{ position:static !important; inset:auto !important; width:60px; min-height:52px; padding:4px 2px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border-radius:14px !important; border:1px solid rgba(236,230,212,.16) !important; background:rgba(14,22,30,.86) !important; color:var(--text) !important; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); font:600 11.5px/1.15 var(--font-body, inherit) !important; text-align:center; white-space:normal; box-shadow:0 8px 18px -10px rgba(0,0,0,.6); }
+    .rb-rail > button:disabled{ opacity:.5; }
+    .rb-rail > button[aria-pressed="true"], .rb-tools-open .rb-rail-more{ background:var(--text) !important; color:#13202b !important; }
+    .rb-rail-more span{ font-size:20px; line-height:1; }
+    .rb-rail-more b{ font-weight:600; }
+
+    /* the rest of the tools: a small card from the Tools button */
+    .rb-tools{ position:absolute !important; z-index:950; right:78px; top:124px; bottom:auto; left:auto; width:min(230px, calc(100% - 100px)); display:none !important; grid-template-columns:1fr 1fr; gap:6px; padding:8px; border-radius:16px; background:rgba(14,22,30,.94); border:1px solid rgba(236,230,212,.16); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:0 18px 40px -16px rgba(0,0,0,.7); }
+    .rb-tools-open .rb-tools{ display:grid !important; }
+    .rb-tools .sb-btn{ font-size:13px; white-space:normal; line-height:1.15; padding:0 6px; }
+
+    /* bottom: the three numbers in one slim glass bar */
+    .rb-statwrap{ position:absolute !important; z-index:900; left:10px; right:10px; bottom:10px; padding:0; background:none; border:0; }
+    .rb-statwrap .rb-stats{ background:rgba(14,22,30,.86); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border:1px solid rgba(236,230,212,.16); border-radius:16px; }
+    .rb-statwrap .rb-stat{ padding:6px 12px; }
+    .rb-statwrap .rb-stat strong{ font-size:20px; }
+    .rb-note{ position:absolute; z-index:900; left:10px; right:10px; bottom:78px; border-radius:12px; border:0; }
+
+    /* map furniture: pinch to zoom, credit just above the numbers */
+    .rb-mapwrap .leaflet-control-zoom{ display:none; }
+    .rb-mapwrap .leaflet-bottom{ bottom:72px !important; }
+
+    /* the panel: a sheet over the map */
+    .rb-sidecol{ position:absolute !important; z-index:1200; left:0; right:0; bottom:0; height:78%; border-top:1px solid var(--rb-line); border-radius:20px 20px 0 0; box-shadow:0 -20px 40px -16px rgba(0,0,0,.7); }
+    .rb-panel-toggle{ display:inline-flex; }
+    .rb-side-close{ transform:rotate(-90deg); }
+    .rb-side-extra{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .rb-side-extra .rb-prefs-open{ position:static; flex:1 1 100%; width:100%; max-width:none; }
+    .rb-side-extra .rb-looks{ position:static; margin:0; }
+}

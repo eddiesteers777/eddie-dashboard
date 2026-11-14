@@ -42,15 +42,36 @@ if (typeof document !== "undefined") {
         document.addEventListener("rb:show-tab", () => set(true, false));
         layout.addEventListener("keydown", e => { if (e.key === "Escape" && !layout.classList.contains("rb-panel-closed") && window.innerWidth < WIDE) { set(false, true); toggle.focus(); } });
 
-        // Phone: Settings and the map look sit in the panel so the map keeps the room; computer: in the bar above the map.
+        // Phone (2026-11-14, Eddie: "make the map full screen"): the map fills the screen and the controls sit on its
+        // edges. Settings and the map look go in the panel; Undo, Find me, Safe Map and a Tools button form a rail on
+        // the right; the other tools open from Tools. On a computer everything goes back where the page put it.
         const extra = document.getElementById("rbSideExtra"), bar = layout.querySelector(".rb-top"), loop = document.getElementById("rbLoopBar");
+        const stage = layout.querySelector(".rb-stage"), tools = layout.querySelector(".rb-tools");
+        const rail = document.createElement("div");
+        rail.className = "rb-rail"; rail.setAttribute("role", "group"); rail.setAttribute("aria-label", "Map tools");
+        const more = document.createElement("button");
+        more.type = "button"; more.className = "rb-rail-more"; more.id = "rbToolsMore";
+        more.setAttribute("aria-expanded", "false"); more.setAttribute("aria-controls", "rbToolsList");
+        more.innerHTML = '<span aria-hidden="true">&#8943;</span><b>Tools</b>';
+        if (tools) tools.id = tools.id || "rbToolsList";
+        const homes = new Map(); // element -> [parent, next sibling] as the page put it
+        const RAIL = ["rbUndo", "rbLocate", "rbSafeMap"];
+        for (const id of [...RAIL, "rbPrefsOpen", "rbLooks"]) { const el = document.getElementById(id); if (el) homes.set(el, [el.parentElement, el.nextSibling]); }
+        const setTools = open => { layout.classList.toggle("rb-tools-open", open); more.setAttribute("aria-expanded", String(open)); };
+        more.addEventListener("click", () => setTools(!layout.classList.contains("rb-tools-open")));
+        tools?.addEventListener("click", e => { if (e.target.closest("button") && window.innerWidth < WIDE) setTools(false); });
         const place = () => {
             const phone = window.innerWidth < WIDE;
-            for (const id of ["rbPrefsOpen", "rbLooks"]) {
-                const el = document.getElementById(id);
-                if (!el || !extra || !bar) continue;
-                if (phone && el.parentElement !== extra) extra.append(el);
-                if (!phone && el.parentElement !== bar) bar.insertBefore(el, loop);
+            layout.classList.toggle("rb-phone", phone);
+            if (phone) {
+                if (stage && rail.parentElement !== stage) stage.append(rail);
+                RAIL.forEach(id => { const el = document.getElementById(id); if (el && el.parentElement !== rail) rail.append(el); });
+                if (more.parentElement !== rail) rail.append(more);
+                for (const id of ["rbPrefsOpen", "rbLooks"]) { const el = document.getElementById(id); if (el && extra && el.parentElement !== extra) extra.append(el); }
+            } else {
+                setTools(false);
+                for (const [el, [parent, next]] of homes) if (el.parentElement !== parent) parent.insertBefore(el, next && next.parentElement === parent ? next : null);
+                rail.remove();
             }
         };
         place();
@@ -70,7 +91,7 @@ if (typeof document !== "undefined") {
             const top = layout.getBoundingClientRect().top + window.scrollY;
             const nav = document.querySelector(".eos-bottomnav");
             const bottom = nav && getComputedStyle(nav).position === "fixed" ? nav.getBoundingClientRect().height : 0;
-            layout.style.setProperty("--rb-h", mapHeight(window.innerHeight, top, bottom + 14) + "px");
+            layout.style.setProperty("--rb-h", mapHeight(window.innerHeight, top, bottom + (window.innerWidth < WIDE ? 0 : 14)) + "px");
             window.__routeBuilder?.map?.invalidateSize();
         };
         size();
