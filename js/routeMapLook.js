@@ -17,7 +17,7 @@ export const LOOKS = [
     { id: "terrain", label: "Terrain", url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", maxZoom: 17, attribution: "Map data © OpenStreetMap contributors, SRTM. Style © OpenTopoMap (CC-BY-SA)" }
 ];
 
-export const DEFAULT_LOOK = "dark";
+export const DEFAULT_LOOK = "light";
 
 /** A look by id; anything unknown (or missing) falls back to the default. */
 export function lookFor(id) {

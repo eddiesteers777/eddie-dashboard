@@ -75,3 +75,5 @@ body{ overflow-x:clip; }
     .rb-layout:not(.rb-panel-closed) .rb-tools, .rb-layout:not(.rb-panel-closed) .rb-prefs-open, .rb-layout:not(.rb-panel-closed) .rb-panel-toggle, .rb-layout:not(.rb-panel-closed) .rb-looks{ visibility:hidden; }
 }
 @media (prefers-reduced-motion:reduce){ .rb-sidecol{ transition:none !important; } }
+#rbMap{ background:#e4e9df !important; }
+#rbMap.rb-look-dark{ background:#1b2733 !important; }
