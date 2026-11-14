@@ -281,7 +281,13 @@
                 <details class="rb-card" id="rbSavedCard" open>
                     <summary>My Routes</summary>
                     <div class="rb-card-body">
+                        <div class="rb-lib-tools" id="rbLibTools" hidden>
+                            <input type="search" id="rbLibSearch" class="rb-lib-search" placeholder="Search your routes" aria-label="Search your routes" autocomplete="off">
+                            <div class="rb-lib-chips" id="rbLibChips" role="group" aria-label="Filter routes"></div>
+                            <label class="rb-lib-sort"><span>Sort</span> <select id="rbLibSort" aria-label="Sort routes"></select></label>
+                        </div>
                         <ul class="rb-saved" id="rbSaved"></ul>
+                        <p class="rb-empty" id="rbLibNone" hidden>No routes match. Clear the search or pick All.</p>
                         <p class="rb-empty" id="rbSavedEmpty">No saved routes yet. Build one and tap Save route.</p>
                     </div>
                 </details>

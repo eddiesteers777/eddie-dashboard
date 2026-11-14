@@ -23,6 +23,7 @@ import { explain } from "./routeExplain.js";
 import { generateLoop, LOOP_MAX_ATTEMPTS } from "./routeLoop.js";
 import { optimise } from "./routeOptimise.js";
 import { buildGpx, gpxFileName } from "./routeGpx.js";
+import { FILTERS, SORTS, filterRoutes, thumbPath } from "./routeLibrary.js";
 import { makeRecord, listRoutes, saveRoute, deleteRoute, VIEW_KEY, SETTINGS_KEY } from "./routeStore.js";
 import { ENTER_AT } from "./routeGlobe.js";
 import { readSettings, settingsRecord, sidewalkFirst, LAYER_KEYS } from "./routeSettings.js";
@@ -1060,19 +1061,35 @@ $("rbGlobeBtn").onclick = () => enterGlobe();
 $("rbGlobeBack").onclick = () => { const c = map.getCenter(); leaveGlobe([c.lat, c.lng], Math.max(map.getZoom(), 13)); };
 
 /* ---------- save, open, export ---------- */
+const LIB = { query: "", filter: "all", sort: "new" };
 function refreshSaved() {
-    const rows = listRoutes(store);
-    $("rbSavedEmpty").hidden = rows.length > 0;
-    $("rbSaved").innerHTML = rows.map(r => `
-        <li class="rb-saved-row" data-id="${esc(r.id)}">
+    const all = listRoutes(store);
+    $("rbSavedEmpty").hidden = all.length > 0;
+    $("rbLibTools").hidden = all.length < 2;
+    if (all.length < 2) { LIB.query = ""; LIB.filter = "all"; LIB.sort = "new"; }
+    $("rbLibChips").innerHTML = FILTERS.map(f => `<button type="button" class="rb-lib-chip${LIB.filter === f.id ? " is-on" : ""}" data-filter="${f.id}" aria-pressed="${LIB.filter === f.id}">${f.label}</button>`).join("");
+    $("rbLibSort").innerHTML = SORTS.map(o => `<option value="${o.id}"${LIB.sort === o.id ? " selected" : ""}>${o.label}</option>`).join("");
+    const rows = filterRoutes(all, LIB);
+    $("rbLibNone").hidden = !all.length || rows.length > 0;
+    $("rbSaved").innerHTML = rows.map(r => {
+        const gain = r.climb ? Math.round(r.climb.highFt) : null;
+        return `
+        <li class="rb-saved-row rb-card-route" data-id="${esc(r.id)}">
+            <button type="button" class="rb-thumb" data-open aria-label="Open ${esc(r.name)} on the map"><svg viewBox="0 0 120 80" aria-hidden="true"><path d="${thumbPath(r.line)}"/></svg></button>
             <div class="rb-saved-main"><strong>${esc(r.name)}</strong>
-            <span>${r.miles.toFixed(2)} mi · ${r.loop ? "loop" : "point to point"}${r.surface && S.layers.surface ? ` · ${r.surface.ab}% path + sidewalk` : ""}${r.safety && S.layers.safe ? ` · safety ${r.safety.avg} ${esc(r.safety.band)}` : ""}</span></div>
+            <span>${r.miles.toFixed(2)} mi${gain ? ` · up to ${gain} ft climb` : ""}</span>
+            <span class="rb-pills"><i class="rb-pill">${r.loop ? "Loop" : "Point to point"}</i>${r.safety && S.layers.safe ? `<i class="rb-pill">Safety ${r.safety.avg} ${esc(r.safety.band)}</i>` : ""}${r.surface && S.layers.surface ? `<i class="rb-pill">${r.surface.ab}% path + sidewalk</i>` : ""}</span></div>
             <div class="rb-saved-actions">
-                <button type="button" class="sb-btn sb-btn-secondary" data-open>Open</button>
+                <button type="button" class="sb-btn sb-btn-primary" data-open>Open</button>
+                <button type="button" class="sb-btn sb-btn-secondary" data-gpx>GPX</button>
                 <button type="button" class="sb-btn sb-btn-tertiary" data-del aria-label="Delete ${esc(r.name)}">Delete</button>
             </div>
-        </li>`).join("");
+        </li>`;
+    }).join("");
 }
+$("rbLibSearch").addEventListener("input", e => { LIB.query = e.target.value; refreshSaved(); });
+$("rbLibChips").addEventListener("click", e => { const b = e.target.closest("[data-filter]"); if (b) { LIB.filter = b.dataset.filter; refreshSaved(); } });
+$("rbLibSort").addEventListener("change", e => { LIB.sort = e.target.value; refreshSaved(); });
 
 $("rbSave").onclick = () => {
     if (S.coords.length < 2) return;
@@ -1098,7 +1115,16 @@ $("rbSaved").addEventListener("click", async e => {
     if (!row) return;
     const rec = listRoutes(store).find(r => r.id === row.dataset.id);
     if (!rec) return;
-    if (e.target.closest("[data-open]")) {
+    if (e.target.closest("[data-gpx]")) {
+        // From the saved line: no new height lookup, so this file has no elevation.
+        const gpx = buildGpx({ name: rec.name, coords: rec.line, miles: rec.miles });
+        const url = URL.createObjectURL(new Blob([gpx.text], { type: "application/gpx+xml" }));
+        const a = document.createElement("a");
+        a.href = url; a.download = gpxFileName(rec.name);
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        toast(`Saved ${a.download}. Open "Build, then open in your watch app" for the steps. Elevation is added when you export from the map.`);
+    } else if (e.target.closest("[data-open]")) {
         clearDerived(); S.token++;
         S.waypoints = rec.waypoints.map(p => p.slice()); S.closed = !!rec.loop;
         S.coords = rec.line.map(p => p.slice()); S.miles = rec.miles; S.snapped = rec.snapped !== false;

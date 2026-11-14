@@ -337,6 +337,7 @@
     "js/routeGeo.js",
     "js/routeGlobe.js",
     "js/routeGpx.js",
+    "js/routeLibrary.js",
     "js/routeLoop.js",
     "js/routeOptimise.js",
     "js/routePrefs.js",

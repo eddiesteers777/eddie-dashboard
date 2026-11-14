@@ -351,3 +351,19 @@ html:not(.rb-app) .rb-tabs{ background:rgba(10,16,22,.7); -webkit-backdrop-filte
 html.rb-app [data-public-only]{ display:none; }
 /* the hint sits left of Safe Map, not over it */
 .rb-hint{ left:12px !important; transform:none !important; max-width:calc(100% - 150px); text-align:left; border-radius:16px; }
+
+/* My Routes library (2026-11-14): thumbnail cards, search, chips, sort */
+.rb-lib-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+.rb-lib-search{ width:100%; min-height:44px; font-size:16px; }
+.rb-lib-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+.rb-lib-chip{ min-height:44px; padding:0 14px; border-radius:99px; border:1px solid var(--border); background:transparent; color:var(--muted); font:inherit; font-size:14px; }
+.rb-lib-chip.is-on{ background:var(--text); color:var(--bg); border-color:var(--text); }
+.rb-lib-sort{ display:flex; gap:8px; align-items:center; font-size:13px; color:var(--muted); }
+.rb-lib-sort select{ min-height:44px; font-size:16px; }
+.rb-saved .rb-card-route{ display:grid; grid-template-columns:96px 1fr; gap:6px 12px; align-items:start; }
+.rb-thumb{ grid-row:1 / span 1; width:96px; height:72px; padding:0; border-radius:10px; border:1px solid var(--border); background:var(--surface); cursor:pointer; }
+.rb-thumb svg{ width:100%; height:100%; display:block; }
+.rb-thumb path{ fill:none; stroke:var(--gold, var(--primary)); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.rb-card-route .rb-saved-actions{ grid-column:1 / -1; }
+.rb-pills{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+.rb-pill{ font-style:normal; font-size:12px; padding:2px 9px; border-radius:99px; border:1px solid var(--border); color:var(--muted); }
