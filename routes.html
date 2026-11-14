@@ -58,14 +58,11 @@
 
         <div class="rb-layout" id="rbLayout">
 
-            <button type="button" class="rb-panel-toggle" id="rbPanelToggle" aria-expanded="true" aria-controls="rbSide" hidden><img src="brand/sb-mark.svg" alt="" width="22" height="22"><span>Panel</span></button>
-
             <section class="rb-mapcol" aria-label="Map">
-
-                <button type="button" class="sb-btn sb-btn-secondary rb-prefs-open" id="rbPrefsOpen" aria-controls="rbPrefs" aria-expanded="false">Settings: <span id="rbPrefsWords">sidewalk-first · any surface · hills as they come</span></button>
 
                 <div class="rb-mapwrap">
                     <div class="rb-top">
+                <button type="button" class="rb-panel-toggle" id="rbPanelToggle" aria-expanded="true" aria-controls="rbSide" hidden><img src="brand/sb-mark.svg" alt="" width="22" height="22"><span>Panel</span></button>
                 <form class="rb-search" id="rbSearch" role="search">
                     <label class="sr-only" for="rbSearchInput">Search for a place</label>
                     <input id="rbSearchInput" type="search" placeholder="Search a place or address" autocomplete="off" enterkeyhint="search">
@@ -79,6 +76,9 @@
                     <button type="button" class="rb-mode-btn" id="rbModeLoop" aria-pressed="false">Loop</button>
                 </div>
 
+                <button type="button" class="sb-btn sb-btn-secondary rb-prefs-open" id="rbPrefsOpen" aria-controls="rbPrefs" aria-expanded="false">Settings: <span id="rbPrefsWords">sidewalk-first · any surface · hills as they come</span></button>
+                <div class="rb-looks" id="rbLooks" role="group" aria-label="Map look"></div>
+
                 <div class="rb-loopbar" id="rbLoopBar" hidden>
                     <label class="rb-field">
                         <span>Loop length (mi)</span>
@@ -87,13 +87,14 @@
                     <button type="button" class="sb-btn sb-btn-primary" id="rbMakeLoop">Make a loop</button>
                 </div>
                     </div>
-                    <div class="rb-looks" id="rbLooks" role="group" aria-label="Map look"></div>
+                                        <div class="rb-stage">
                     <div id="rbMap" role="application" aria-label="Route map. Tap to add a point, drag a point or the route line to reshape it, tap a point to remove it."></div>
                     <div id="rbGlobe" class="rb-globe" hidden aria-label="Globe view"></div>
                     <button type="button" class="rb-globe-back" id="rbGlobeBack" hidden>Back to map</button>
                     <button type="button" class="rb-safemap-btn" id="rbSafeMap" aria-pressed="false" disabled>Safe Map</button>
                     <div class="rb-hint" id="rbHint">Tap the map to drop your start.</div>
                     <div class="rb-busy" id="rbBusy" hidden></div>
+                    </div>
                     <section class="rb-prefs" id="rbPrefs" aria-label="Builder settings">
                         <div class="rb-prefs-head">
                             <h2>Builder settings</h2>
@@ -158,6 +159,7 @@
                     <button type="button" class="rb-side-close" id="rbPanelClose" aria-label="Hide the panel">&lsaquo;</button>
                 </header>
                 <div class="rb-logorule" aria-hidden="true"></div>
+                <div class="rb-side-extra" id="rbSideExtra"></div>
 
                 <div class="rb-tabs" id="rbTabs" role="tablist" aria-label="Route details">
                     <button type="button" role="tab" id="rbTab-route" aria-controls="rbPanel-route" aria-selected="true" data-tab="route">Route</button>

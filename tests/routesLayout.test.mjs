@@ -13,8 +13,8 @@ test("a saved choice wins on any width; junk is ignored", () => {
     assert.equal(panelStartsOpen(1280, "closed"), false);
     assert.equal(panelStartsOpen(1280, "banana"), true);
 });
-test("map height leaves room for the header and a bottom nav, never under 420", () => {
+test("map height leaves room for the header and a bottom nav, never under 460", () => {
     assert.equal(mapHeight(900, 76), 824);
     assert.equal(mapHeight(844, 60, 64), 720);
-    assert.equal(mapHeight(500, 100, 64), 420);
+    assert.equal(mapHeight(500, 100, 64), 460);
 });

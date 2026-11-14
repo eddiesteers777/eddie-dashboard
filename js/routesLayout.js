@@ -16,9 +16,9 @@ export function panelStartsOpen(width, saved) {
     return width >= WIDE;
 }
 
-/** The map's height: what is left of the screen under the header (and above a bottom nav). Never below 420. */
+/** The builder's height: what is left of the screen under the header (and above a bottom nav). Never below 460. */
 export function mapHeight(viewH, topPx, bottomPx = 0) {
-    return Math.max(420, Math.round(viewH - topPx - bottomPx));
+    return Math.max(460, Math.round(viewH - topPx - bottomPx));
 }
 
 if (typeof document !== "undefined") {
@@ -30,6 +30,7 @@ if (typeof document !== "undefined") {
             layout.classList.toggle("rb-panel-closed", !open);
             toggle.setAttribute("aria-expanded", String(open));
             toggle.hidden = false;
+            setTimeout(() => window.__routeBuilder?.map?.invalidateSize(), 60);
             if (remember) { try { localStorage.setItem(PANEL_KEY, open ? "open" : "closed"); } catch { /* private mode */ } }
         };
         let saved = null;
@@ -41,11 +42,25 @@ if (typeof document !== "undefined") {
         document.addEventListener("rb:show-tab", () => set(true, false));
         layout.addEventListener("keydown", e => { if (e.key === "Escape" && !layout.classList.contains("rb-panel-closed") && window.innerWidth < WIDE) { set(false, true); toggle.focus(); } });
 
+        // Phone: Settings and the map look sit in the panel so the map keeps the room; computer: in the bar above the map.
+        const extra = document.getElementById("rbSideExtra"), bar = layout.querySelector(".rb-top"), loop = document.getElementById("rbLoopBar");
+        const place = () => {
+            const phone = window.innerWidth < WIDE;
+            for (const id of ["rbPrefsOpen", "rbLooks"]) {
+                const el = document.getElementById(id);
+                if (!el || !extra || !bar) continue;
+                if (phone && el.parentElement !== extra) extra.append(el);
+                if (!phone && el.parentElement !== bar) bar.insertBefore(el, loop);
+            }
+        };
+        place();
+        window.addEventListener("resize", place);
+
         const size = () => {
             const top = layout.getBoundingClientRect().top + window.scrollY;
             const nav = document.querySelector(".eos-bottomnav");
             const bottom = nav && getComputedStyle(nav).position === "fixed" ? nav.getBoundingClientRect().height : 0;
-            layout.style.setProperty("--rb-h", mapHeight(window.innerHeight, top, bottom) + "px");
+            layout.style.setProperty("--rb-h", mapHeight(window.innerHeight, top, bottom + 14) + "px");
             window.__routeBuilder?.map?.invalidateSize();
         };
         size();
