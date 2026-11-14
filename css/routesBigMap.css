@@ -101,3 +101,15 @@ html:not(.rb-app) .rb-page{ width:min(1600px, 100% - 24px) !important; }
     .rb-statwrap .rb-stat{ padding:4px 10px; }
 }
 @media (min-width:900px){ .rb-side-extra{ display:none; } }
+
+/* The app's own left menu starts closed on this page so the map gets the width (Eddie, 2026-11-14); the Menu button brings it back. Computer only. */
+.rb-menu-toggle{ display:none; }
+@media (min-width:901px){
+    body.rb-in-app .rb-menu-toggle{ display:inline-flex; flex:0 0 auto; align-items:center; gap:8px; min-height:44px; padding:0 14px; border-radius:12px; border:1px solid var(--rb-line); background:rgba(29,42,54,.9); color:var(--text); font:600 14px var(--font-body, inherit); cursor:pointer; }
+    html body .eos-navbar{ transition:transform .22s ease, visibility 0s linear 0s; }
+    body.rb-in-app{ transition:padding-left .22s ease; }
+    body.rb-in-app.rb-menu-closed{ padding-left:0 !important; }
+    html body.rb-in-app.rb-menu-closed .eos-navbar{ transform:translateX(-100%); visibility:hidden; transition:transform .22s ease, visibility 0s linear .22s; }
+}
+@media (prefers-reduced-motion:reduce){ html body .eos-navbar, body.rb-in-app{ transition:none !important; } }
+@media (min-width:901px){ body.rb-in-app .rb-page.container{ max-width:none !important; width:auto !important; margin-left:16px !important; margin-right:16px !important; padding-left:0 !important; padding-right:0 !important; } }

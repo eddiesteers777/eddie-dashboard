@@ -56,6 +56,16 @@ if (typeof document !== "undefined") {
         place();
         window.addEventListener("resize", place);
 
+        // The app's left menu starts closed here (every visit, not remembered) and opens from the Menu button.
+        const menuBtn = document.getElementById("rbMenuToggle");
+        const setMenu = open => {
+            document.body.classList.toggle("rb-menu-closed", !open);
+            if (menuBtn) { menuBtn.setAttribute("aria-expanded", String(open)); document.getElementById("rbMenuWord").textContent = open ? "Hide menu" : "Menu"; }
+            [60, 260].forEach(t => setTimeout(() => window.__routeBuilder?.map?.invalidateSize(), t));
+        };
+        setMenu(false);
+        menuBtn?.addEventListener("click", () => setMenu(document.body.classList.contains("rb-menu-closed")));
+
         const size = () => {
             const top = layout.getBoundingClientRect().top + window.scrollY;
             const nav = document.querySelector(".eos-bottomnav");
