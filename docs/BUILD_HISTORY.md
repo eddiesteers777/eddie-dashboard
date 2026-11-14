@@ -936,3 +936,6 @@ Eddie picked A (Prayer) and B (Bible) from mock-ups in project files `prayer-bib
 - My Routes (Save tab): thumbnail cards, search, distance chips, sort, GPX per card (`js/routeLibrary.js`). Merged 2e39bc1.
 - Map looks Light / Dark / Terrain (`js/routeMapLook.js`, key `sb-route-look`, device only). Dark is the old CSS-inverted OSM; Terrain is OpenTopoMap (CC-BY-SA, credited). No satellite: tile terms unchecked. The globe stays dark.
 - Send to COROS from a route card (`js/routeCoros.js`): COROS's `uploadRouteFile` through `js/corosClient.js`, type 2 (on foot), asks first, stamps `corosSentAt` on the route record; editing and saving the route in the builder clears it. NOT tested on a real COROS account.
+
+## 2026-11-14: Build a Route, big map layout (option A)
+Map fills the page; the Route / Safety / Fuel / Save panel slides over it (left on a computer, a sheet on a phone). `css/routesBigMap.css` re-lays out the same markup; `js/routesLayout.js` handles open/close (device key `sb-route-panel`, open on 900px+ by default, closed on phones) and sizes the map under the header. Logo mark and the four logo colors (ice, blue, sage, gold) in the panel header and a four-color rule. The hero text stays in the page, visually hidden. NOT checked in the real signed-in shell (app header, bottom nav) or on a real iPhone.

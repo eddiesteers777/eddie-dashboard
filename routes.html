@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="css/publicFog.css">
     <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
     <link rel="stylesheet" href="css/routes.css">
+    <link rel="stylesheet" href="css/routesBigMap.css">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c2834">
@@ -42,20 +43,22 @@
 
     <main class="rb-page" id="main">
 
-        <section class="eos-today-hero" data-app-only>
+        <section class="eos-today-hero rb-hero-off" data-app-only>
             <div>
                 <div class="eos-today-eyebrow">Running</div>
                 <h1>Build a Route</h1>
                 <p class="eos-today-phase">Tap the map to drop points, drag to reshape. The route snaps to sidewalks and trails, and the fuel plan follows the distance.</p>
             </div>
         </section>
-        <section class="rb-hero" data-public-only>
+        <section class="rb-hero rb-hero-off" data-public-only>
             <div class="rb-kicker">Free &middot; no account needed</div>
             <h1>Build a route</h1>
             <p>Tap the map to drop points. The route keeps to sidewalks and trails, and the fuel plan follows the distance.</p>
         </section>
 
-        <div class="rb-layout">
+        <div class="rb-layout" id="rbLayout">
+
+            <button type="button" class="rb-panel-toggle" id="rbPanelToggle" aria-expanded="true" aria-controls="rbSide" hidden><img src="brand/sb-mark.svg" alt="" width="22" height="22"><span>Panel</span></button>
 
             <section class="rb-mapcol" aria-label="Map">
 
@@ -147,7 +150,14 @@
 
             </section>
 
-            <section class="rb-sidecol" aria-label="Route details">
+            <section class="rb-sidecol" id="rbSide" aria-label="Route details">
+
+                <header class="rb-side-head">
+                    <img src="brand/sb-mark.svg" alt="" width="34" height="34">
+                    <div class="rb-side-title"><span class="rb-side-kick">Southbound</span><b>Build a Route</b></div>
+                    <button type="button" class="rb-side-close" id="rbPanelClose" aria-label="Hide the panel">&lsaquo;</button>
+                </header>
+                <div class="rb-logorule" aria-hidden="true"></div>
 
                 <div class="rb-tabs" id="rbTabs" role="tablist" aria-label="Route details">
                     <button type="button" role="tab" id="rbTab-route" aria-controls="rbPanel-route" aria-selected="true" data-tab="route">Route</button>
@@ -334,6 +344,7 @@
     <script type="module" src="js/routesShell.js"></script>
     <script type="module" src="js/routes.js"></script>
     <script type="module" src="js/routesTabs.js"></script>
+    <script type="module" src="js/routesLayout.js"></script>
     <script type="module" src="js/icons.js"></script>
 </body>
 </html>
