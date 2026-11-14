@@ -15,6 +15,7 @@ import { icon } from "./icons.js";
 import { celebrateHabit, weekDots } from "./celebrate.js";
 import { streakAtRisk, habitStreak, dayComplete } from "./todayCues.js";
 import { findWaterHabit } from "./waterSheet.js";
+import { faithKind } from "./faithSheets.js";
 
 const EMOJI_PREFIX = /^\s*(?:\p{Extended_Pictographic}️?)\s*/u;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -66,6 +67,16 @@ function init() {
                 habit: waterHabit,
                 onChange: () => { render(el); window.dispatchEvent(new CustomEvent("sb:habits-changed")); }
             }));
+            return;
+        }
+        // Prayer and Bible open their own sheet; the habit ticks itself when everything on it is checked.
+        const faith = faithKind(habitList(read("habits", null), showsPersonalPlan()), btn.dataset.habit);
+        if (faith) {
+            const faithHabit = habitList(read("habits", null), showsPersonalPlan()).find(h => h.id === btn.dataset.habit);
+            import("./faithSheets.js").then(m => (faith === "prayer" ? m.openPrayerSheet : m.openBibleSheet)({
+                habit: faithHabit,
+                onChange: () => { render(el); window.dispatchEvent(new CustomEvent("sb:habits-changed")); }
+            })).then(() => render(el));
             return;
         }
         const next = toggleEntry(read("entries", {}), dayKey(), btn.dataset.habit);

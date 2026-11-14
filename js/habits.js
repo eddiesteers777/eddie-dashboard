@@ -11,6 +11,7 @@ import { icon } from "./icons.js";
 import { storedIcon, habitIconId } from "./habitIconSet.js";
 import { habitIconHtml, attachIconSuggestions, iconForNewHabit, pickHabitIcon, useLineIcons } from "./habitIconPicker.js";
 import { showsPersonalPlan } from "./role.js";
+import { faithKind } from "./faithSheets.js";
 import { celebrateHabit, weekDots } from "./celebrate.js";
 import { dayComplete as dayCompleteOn } from "./todayCues.js";
 import { COACH_HABITS, CLIENT_HABITS } from "./habitDefaults.js";
@@ -530,6 +531,17 @@ document.addEventListener("click", e => {
                 onChange: () => { loadData(); renderToday(); renderHero(); renderWeek(selectedDate); }
             })).then(() => { loadData(); renderToday(); renderHero(); renderWeek(selectedDate); });
             return;
+        }
+        // Prayer and Bible open their own sheet, for today only (their lists and plans are kept by day).
+        if (selectedDate === todayStr()) {
+            const kind = faithKind(habits, habitId);
+            if (kind) {
+                const reload = () => { loadData(); renderToday(); renderHero(); renderWeek(selectedDate); };
+                import("./faithSheets.js").then(m => (kind === "prayer" ? m.openPrayerSheet : m.openBibleSheet)({
+                    habit: habits.find(h => h.id === habitId), onChange: reload
+                })).then(reload);
+                return;
+            }
         }
         toggleCheck(selectedDate, habitId);
 
