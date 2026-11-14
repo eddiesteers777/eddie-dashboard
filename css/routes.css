@@ -288,7 +288,7 @@ html.rb-sheet-open .eos-bottomnav{ display:none !important; } /* the sheet takes
 /* the map: tall, muted, with glass controls */
 .rb-mapwrap{ border-radius:22px; border:1px solid var(--sb-glass-border); box-shadow:0 30px 60px -30px rgba(0,0,0,.85); }
 #rbMap{ height:clamp(440px, 68svh, 720px); background:#1b2733; }
-.leaflet-tile-pane{ filter:invert(1) hue-rotate(185deg) saturate(.35) brightness(1.05) contrast(.88); }
+#rbMap.rb-look-dark .leaflet-tile-pane{ filter:invert(1) hue-rotate(185deg) saturate(.35) brightness(1.05) contrast(.88); }
 .rb-mapwrap .leaflet-bar{ border:1px solid rgba(236,230,212,.16) !important; border-radius:14px; overflow:hidden; box-shadow:0 8px 20px -8px rgba(0,0,0,.6); }
 .rb-mapwrap .leaflet-bar a{ background:rgba(14,22,30,.78) !important; color:var(--text) !important; border-bottom-color:rgba(236,230,212,.12) !important; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
 .rb-mapwrap .leaflet-control-attribution{ background:rgba(14,22,30,.6) !important; color:rgba(236,230,212,.7) !important; border-radius:8px 0 0 0; }
@@ -367,3 +367,10 @@ html.rb-app [data-public-only]{ display:none; }
 .rb-card-route .rb-saved-actions{ grid-column:1 / -1; }
 .rb-pills{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
 .rb-pill{ font-style:normal; font-size:12px; padding:2px 9px; border-radius:99px; border:1px solid var(--border); color:var(--muted); }
+
+/* Map looks (2026-11-14): Light / Dark / Terrain, bottom-left over the map */
+.rb-looks{ position:absolute; right:10px; top:132px; z-index:600; display:flex; gap:2px; padding:3px; border-radius:14px; background:rgba(14,22,30,.78); border:1px solid rgba(236,230,212,.16); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+.rb-looks button{ min-height:44px; min-width:44px; padding:0 12px; border:0; border-radius:11px; background:transparent; color:var(--text); font:inherit; font-size:13px; cursor:pointer; }
+.rb-looks button[aria-pressed="true"]{ background:var(--text); color:#13202b; }
+.rb-pill-ok{ color:var(--green); border-color:var(--green); }
+.rb-card-route .rb-saved-actions{ flex-wrap:wrap; }

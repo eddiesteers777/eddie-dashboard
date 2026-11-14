@@ -518,3 +518,6 @@ Tapping the Prayer or Bible habit (Today, and the Habits page for today) opens a
 - **Bible (option B, week strip):** `js/biblePlan.js`. One set plan, Bible in a year: 66 books in order, 1,189 chapters over 365 days, a checkbox per chapter. `bible-plan` = `{id, start, read, log, lock}`. A missed day carries over: the day shown is the first unfinished one, held steady for the calendar day. "Just log that I read" ticks today only, no plan.
 - Keys are in `EXACT_KEYS` (`js/cloudSync.js`) and the sign-out list (`js/auth.js`). Owner-only sync doc, so no Firestore rules change.
 - 2026-11-14 second Bible plan, "Chronological" (`CHRONO` in `js/biblePlan.js`): our own arrangement by blocks of chapters (Job with the patriarchs, Psalms woven with David, prophets with the kings, Acts with the letters). Same 1,189 chapters, 365 days. `bible-plan.id` is `year` or `chrono`; a test checks every chapter appears once.
+
+### Build a Route: library, map looks, COROS send (2026-11-14)
+Saved routes show as cards (`refreshSaved` in `js/routes.js`, helpers in `js/routeLibrary.js`). The map look is chosen by `#rbLooks` (`js/routeMapLook.js`); only the Dark look gets the CSS invert filter (`#rbMap.rb-look-dark`). Send to COROS = `js/routeCoros.js`; the sent state lives on the route record (`corosSentAt`) and syncs with it.

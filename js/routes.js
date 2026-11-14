@@ -23,6 +23,8 @@ import { explain } from "./routeExplain.js";
 import { generateLoop, LOOP_MAX_ATTEMPTS } from "./routeLoop.js";
 import { optimise } from "./routeOptimise.js";
 import { buildGpx, gpxFileName } from "./routeGpx.js";
+import { sentLabel } from "./routeCoros.js";
+import { LOOKS, LOOK_KEY, lookFor } from "./routeMapLook.js";
 import { FILTERS, SORTS, filterRoutes, thumbPath } from "./routeLibrary.js";
 import { makeRecord, listRoutes, saveRoute, deleteRoute, VIEW_KEY, SETTINGS_KEY } from "./routeStore.js";
 import { ENTER_AT } from "./routeGlobe.js";
@@ -74,7 +76,19 @@ $("rbGel").value = S.gelG;
 const view = read(VIEW_KEY);
 const map = L.map("rbMap", { zoomControl: true, attributionControl: true, zoomSnap: 0.5, minZoom: 2, worldCopyJump: true })
     .setView(view && Array.isArray(view.c) ? view.c : CALERA, view && view.z ? view.z : 13);
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
+let tiles = null;
+function setLook(id, remember) {
+    const look = lookFor(id);
+    if (tiles) map.removeLayer(tiles);
+    tiles = L.tileLayer(look.url, { maxZoom: look.maxZoom, maxNativeZoom: look.maxZoom, attribution: look.attribution }).addTo(map);
+    tiles.bringToBack();
+    $("rbMap").classList.toggle("rb-look-dark", look.id === "dark");
+    $("rbLooks").querySelectorAll("[data-look]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.look === look.id)));
+    if (remember) { try { localStorage.setItem(LOOK_KEY, look.id); } catch { /* private mode: the choice just is not kept */ } }
+}
+$("rbLooks").innerHTML = LOOKS.map(l => `<button type="button" data-look="${l.id}" aria-pressed="false">${l.label}</button>`).join("");
+$("rbLooks").addEventListener("click", e => { const b = e.target.closest("[data-look]"); if (b) setLook(b.dataset.look, true); });
+{ let saved = null; try { saved = localStorage.getItem(LOOK_KEY); } catch { /* none */ } setLook(saved, false); }
 const overlay = L.layerGroup().addTo(map);
 const gapLayer = L.layerGroup().addTo(map);
 const lineLayer = L.layerGroup().addTo(map);
@@ -1078,9 +1092,10 @@ function refreshSaved() {
             <button type="button" class="rb-thumb" data-open aria-label="Open ${esc(r.name)} on the map"><svg viewBox="0 0 120 80" aria-hidden="true"><path d="${thumbPath(r.line)}"/></svg></button>
             <div class="rb-saved-main"><strong>${esc(r.name)}</strong>
             <span>${r.miles.toFixed(2)} mi${gain ? ` · up to ${gain} ft climb` : ""}</span>
-            <span class="rb-pills"><i class="rb-pill">${r.loop ? "Loop" : "Point to point"}</i>${r.safety && S.layers.safe ? `<i class="rb-pill">Safety ${r.safety.avg} ${esc(r.safety.band)}</i>` : ""}${r.surface && S.layers.surface ? `<i class="rb-pill">${r.surface.ab}% path + sidewalk</i>` : ""}</span></div>
+            <span class="rb-pills"><i class="rb-pill">${r.loop ? "Loop" : "Point to point"}</i><i class="rb-pill${r.corosSentAt ? " rb-pill-ok" : ""}">${sentLabel(r)}</i>${r.safety && S.layers.safe ? `<i class="rb-pill">Safety ${r.safety.avg} ${esc(r.safety.band)}</i>` : ""}${r.surface && S.layers.surface ? `<i class="rb-pill">${r.surface.ab}% path + sidewalk</i>` : ""}</span></div>
             <div class="rb-saved-actions">
                 <button type="button" class="sb-btn sb-btn-primary" data-open>Open</button>
+                <button type="button" class="sb-btn sb-btn-secondary" data-coros>${r.corosSentAt ? "Send again" : "Send to COROS"}</button>
                 <button type="button" class="sb-btn sb-btn-secondary" data-gpx>GPX</button>
                 <button type="button" class="sb-btn sb-btn-tertiary" data-del aria-label="Delete ${esc(r.name)}">Delete</button>
             </div>
@@ -1115,7 +1130,21 @@ $("rbSaved").addEventListener("click", async e => {
     if (!row) return;
     const rec = listRoutes(store).find(r => r.id === row.dataset.id);
     if (!rec) return;
-    if (e.target.closest("[data-gpx]")) {
+    if (e.target.closest("[data-coros]")) {
+        const btn = e.target.closest("[data-coros]");
+        try {
+            const [{ isCorosConnected, callTool }, { sendRouteToCoros }] = await Promise.all([import("./corosClient.js"), import("./routeCoros.js")]);
+            if (!isCorosConnected()) { toast("Connect COROS in Settings first, then send again.", { type: "error" }); return; }
+            if (!(await sbConfirm(`Send "${rec.name}" to your COROS account? It shows up in the COROS app under Routes within a few minutes, then syncs to your watch.`, { confirmLabel: "Send to COROS" }))) return;
+            btn.disabled = true; btn.textContent = "Sending…";
+            const at = await sendRouteToCoros(rec, callTool);
+            saveRoute(store, { ...rec, corosSentAt: at, updatedAt: rec.updatedAt });
+            toast("Sent. COROS accepted it. Check Routes in the COROS app in a few minutes.");
+        } catch (err) {
+            toast(friendlyError(err, "send that to COROS"), { type: "error" });
+        }
+        refreshSaved();
+    } else if (e.target.closest("[data-gpx]")) {
         // From the saved line: no new height lookup, so this file has no elevation.
         const gpx = buildGpx({ name: rec.name, coords: rec.line, miles: rec.miles });
         const url = URL.createObjectURL(new Blob([gpx.text], { type: "application/gpx+xml" }));

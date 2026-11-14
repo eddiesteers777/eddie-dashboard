@@ -931,3 +931,8 @@ Eddie found option C (live since 276788a) too long and messy on a phone and aske
 
 ## 2026-11-14 Prayer map and Bible week sheets (branch claude/project-thread-pndybm)
 Eddie picked A (Prayer) and B (Bible) from mock-ups in project files `prayer-bible-habits/`. Tested: new unit tests (prayerModel, biblePlan), static tests (3 known Garmin-package failures only), a Playwright run as the coach persona at 390 and 1280 (empty state, starter steps, edit, completion ticks the habit and plays the scene, Bible pick/partial/complete, no page errors, no sideways scroll). Not run: smoke, a11y, rules emulator, a real iPhone.
+
+## 2026-11-14: Build a Route, My Routes library, map looks, Send to COROS
+- My Routes (Save tab): thumbnail cards, search, distance chips, sort, GPX per card (`js/routeLibrary.js`). Merged 2e39bc1.
+- Map looks Light / Dark / Terrain (`js/routeMapLook.js`, key `sb-route-look`, device only). Dark is the old CSS-inverted OSM; Terrain is OpenTopoMap (CC-BY-SA, credited). No satellite: tile terms unchecked. The globe stays dark.
+- Send to COROS from a route card (`js/routeCoros.js`): COROS's `uploadRouteFile` through `js/corosClient.js`, type 2 (on foot), asks first, stamps `corosSentAt` on the route record; editing and saving the route in the builder clears it. NOT tested on a real COROS account.
