@@ -16,7 +16,7 @@ test("the plan covers all 1,189 chapters in 365 days, in order, once", () => {
 
 test("marking a day read logs it, and unmarking removes the log", () => {
     let p = B.startPlan("2026-11-14");
-    const n = B.chaptersOn(0).length;
+    const n = B.chaptersOn(p, 0).length;
     for (let i = 0; i < n; i++) p = B.toggleChapter(p, "2026-11-14", 0, i);
     assert.ok(B.dayDone(p, 0));
     assert.equal(p.log["2026-11-14"], 0);
@@ -37,7 +37,7 @@ test("a missed day carries over: tomorrow shows the first unfinished day", () =>
 
 test("finishing the day does not swap the sheet until tomorrow", () => {
     let p = B.withLock(B.startPlan("2026-11-14"), "2026-11-14");
-    for (let i = 0; i < B.chaptersOn(0).length; i++) p = B.toggleChapter(p, "2026-11-14", 0, i);
+    for (let i = 0; i < B.chaptersOn(p, 0).length; i++) p = B.toggleChapter(p, "2026-11-14", 0, i);
     assert.equal(B.dayFor(p, "2026-11-14"), 0);
     assert.equal(B.dayFor(p, "2026-11-15"), 1);
     assert.equal(B.daysBehind(p, "2026-11-15", 1), 0);
@@ -58,4 +58,25 @@ test("week strip runs Monday to Sunday and marks done days", () => {
 test("cleanPlan rejects other shapes", () => {
     assert.equal(B.cleanPlan({ id: "x" }), null);
     assert.ok(B.cleanPlan(B.startPlan("2026-11-14")));
+});
+
+test("chronological plan: all 1,189 chapters exactly once, same chapters as the year plan, different order", () => {
+    const c = B.planDays("chrono").flat(), y = B.planDays("year").flat();
+    assert.equal(B.planDays("chrono").length, 365);
+    assert.equal(c.length, 1189);
+    assert.equal(new Set(c).size, 1189);
+    assert.deepEqual([...c].sort(), [...y].sort());
+    assert.notDeepEqual(c, y);
+    assert.equal(c[0], "Genesis 1");
+    assert.ok(c.indexOf("Job 1") < c.indexOf("Genesis 12"), "Job sits with the patriarchs");
+    assert.ok(c.indexOf("Acts 13") < c.indexOf("Galatians 1") && c.indexOf("Galatians 1") < c.indexOf("Acts 15"));
+    assert.equal(c.at(-1), "Revelation 22");
+});
+
+test("a chronological plan runs on its own chapters and cleans up", () => {
+    let p = B.startPlan("2026-11-14", "chrono");
+    assert.equal(B.cleanPlan(p).id, "chrono");
+    for (let i = 0; i < B.chaptersOn(p, 0).length; i++) p = B.toggleChapter(p, "2026-11-14", 0, i);
+    assert.ok(B.dayDone(p, 0));
+    assert.equal(B.planName("chrono"), "Chronological");
 });

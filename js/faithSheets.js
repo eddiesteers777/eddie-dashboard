@@ -217,20 +217,20 @@ export async function openBibleSheet({ habit = null, onChange = null } = {}) {
         if (!plan) {
             sub.textContent = "No plan chosen yet";
             body.innerHTML = `<div class="fs-empty"><p>Pick a plan and your reading shows up here each day. If you miss a day, it carries over.</p></div>
-                <button type="button" class="fs-opt" data-pick><b>Bible in a year</b><span>All 66 books in order, about 3 chapters a day</span></button>
+                ${Object.values(B.PLANS).map(pl => `<button type="button" class="fs-opt" data-pick="${pl.id}"><b>${esc(pl.name)}</b><span>${esc(pl.blurb)}</span></button>`).join("")}
                 <button type="button" class="fs-opt" data-log><b>Just log that I read</b><span>No plan. One tap for today only.</span></button>
                 ${habit && (read("entries", {}) || {})[day]?.[habit.id] ? `<button type="button" class="fs-btn fs-b2" data-unlog>Undo today's tick</button>` : ""}`;
             foot.innerHTML = "";
             return;
         }
-        const d = plan.lock.day, ch = B.chaptersOn(d), got = new Set(plan.read[d] || []);
+        const d = plan.lock.day, ch = B.chaptersOn(plan, d), got = new Set(plan.read[d] || []);
         const behind = B.daysBehind(plan, day, d), over = d >= B.PLAN_DAYS || ch.length === 0;
-        sub.textContent = over ? "Bible in a year · complete" : `Bible in a year · Day ${d + 1} of ${B.PLAN_DAYS}`;
+        sub.textContent = over ? `${B.planName(plan.id)} · complete` : `${B.planName(plan.id)} · Day ${d + 1} of ${B.PLAN_DAYS}`;
         const strip = B.weekStrip(plan, day).map(w => `<div class="fs-wd is-${w.state}"><span>${w.label}</span><b>${w.done ? CK : w.date}</b></div>`).join("");
         const note = over ? "You finished the year." : behind > 0
             ? `You are ${behind} day${behind > 1 ? "s" : ""} behind. Nothing is lost. Pick up here.`
             : "You are on track.";
-        const next = ch.length ? `Next up: ${esc(B.chaptersOn(d + 1)[0] || "the end")}.` : "";
+        const next = ch.length ? `Next up: ${esc(B.chaptersOn(plan, d + 1)[0] || "the end")}.` : "";
         body.innerHTML = `<div class="fs-week" aria-label="This week">${strip}</div>
             <div class="fs-card${behind > 0 ? "" : " is-ok"}"><span class="fs-ic" aria-hidden="true">${BOOK}</span><div><b>${esc(note)}</b><small>${over ? "" : `${B.PLAN_DAYS - d - 1} days left. ${next}`}</small></div></div>
             <p class="fs-h3"><span>Today's reading</span><span>${got.size} of ${ch.length}</span></p>
@@ -259,7 +259,8 @@ export async function openBibleSheet({ habit = null, onChange = null } = {}) {
     draw();
     await run(dlg, async e => {
         const t = e.target;
-        if (t.closest("[data-pick]")) { plan = B.withLock(B.startPlan(day), day); savePlan(); draw(); return; }
+        const pick = t.closest("[data-pick]");
+        if (pick) { plan = B.withLock(B.startPlan(day, pick.dataset.pick), day); savePlan(); draw(); return; }
         if (t.closest("[data-log]")) {
             dlg.close();
             if (habit) { const had = setTick(habit, day, true); sync(); onChange?.(); if (!had) celebrate(habit, day); }

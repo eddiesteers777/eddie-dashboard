@@ -1,9 +1,9 @@
 /* ==========================================
    Southbound — Bible in a year plan (pure)
 
-   Our own simple plan: the 66 books in order, all 1,189 chapters spread over
+   Two plans of our own, both all 1,189 chapters over 365 days: "year" (the 66 books in order) and "chrono". The year plan: the 66 books in order, all 1,189 chapters spread over
    365 days (3 or 4 chapters a day). Only book and chapter references, no Bible
-   text. "bible-plan" = { id: "year", start: "YYYY-MM-DD", read: { "12": [0,2] },
+   text. "bible-plan" = { id: "year" | "chrono", start: "YYYY-MM-DD", read: { "12": [0,2] },
    log: { "YYYY-MM-DD": 12 }, lock: { date, day } }.
    Reading carries over: the day shown is the first one not finished, held
    steady for the calendar day (lock). Tests: tests/biblePlan.test.mjs.
@@ -26,27 +26,50 @@ const BOOKS = [
 
 export const TOTAL_CHAPTERS = BOOKS.reduce((n, b) => n + b[1], 0);
 
-let cache = null;
+// Chronological order: one reasonable arrangement (scholars differ), written here, not copied from a published plan.
+// Blocks of [book, firstChapter, lastChapter]. Every chapter appears exactly once (tests/biblePlan.test.mjs).
+const CHRONO = [
+    ["Genesis", 1, 11], ["Job", 1, 42], ["Genesis", 12, 50], ["Exodus", 1, 40], ["Leviticus", 1, 27], ["Numbers", 1, 36], ["Deuteronomy", 1, 34], ["Psalm", 90, 90],
+    ["Joshua", 1, 24], ["Judges", 1, 21], ["Ruth", 1, 4], ["1 Samuel", 1, 31], ["Psalm", 1, 72], ["2 Samuel", 1, 24], ["1 Chronicles", 1, 29], ["Psalm", 73, 89],
+    ["1 Kings", 1, 11], ["Proverbs", 1, 31], ["Ecclesiastes", 1, 12], ["Song of Solomon", 1, 8], ["1 Kings", 12, 22], ["2 Kings", 1, 25], ["2 Chronicles", 1, 36],
+    ["Obadiah", 1, 1], ["Joel", 1, 3], ["Jonah", 1, 4], ["Amos", 1, 9], ["Hosea", 1, 14], ["Isaiah", 1, 66], ["Micah", 1, 7], ["Nahum", 1, 3], ["Zephaniah", 1, 3],
+    ["Jeremiah", 1, 52], ["Habakkuk", 1, 3], ["Lamentations", 1, 5], ["Ezekiel", 1, 48], ["Daniel", 1, 12], ["Ezra", 1, 10], ["Haggai", 1, 2], ["Zechariah", 1, 14],
+    ["Esther", 1, 10], ["Nehemiah", 1, 13], ["Malachi", 1, 4], ["Psalm", 91, 150],
+    ["Matthew", 1, 28], ["Mark", 1, 16], ["Luke", 1, 24], ["John", 1, 21], ["Acts", 1, 12], ["James", 1, 5], ["Acts", 13, 14], ["Galatians", 1, 6], ["Acts", 15, 18],
+    ["1 Thessalonians", 1, 5], ["2 Thessalonians", 1, 3], ["Acts", 19, 19], ["1 Corinthians", 1, 16], ["2 Corinthians", 1, 13], ["Romans", 1, 16], ["Acts", 20, 28],
+    ["Ephesians", 1, 6], ["Philippians", 1, 4], ["Colossians", 1, 4], ["Philemon", 1, 1], ["1 Timothy", 1, 6], ["Titus", 1, 3], ["1 Peter", 1, 5], ["2 Peter", 1, 3],
+    ["Jude", 1, 1], ["2 Timothy", 1, 4], ["Hebrews", 1, 13], ["1 John", 1, 5], ["2 John", 1, 1], ["3 John", 1, 1], ["Revelation", 1, 22]
+];
+
+export const PLANS = Object.freeze({
+    year: { id: "year", name: "Bible in a year", blurb: "All 66 books in order, Genesis to Revelation" },
+    chrono: { id: "chrono", name: "Chronological", blurb: "In the order events happened, about 3 chapters a day" }
+});
+export const planName = id => (PLANS[id] || PLANS.year).name;
+
+const cache = {};
 /** 365 days; each day is a list of chapter references like "Genesis 1". */
-export function planDays() {
-    if (cache) return cache;
-    const chapters = BOOKS.flatMap(([name, n]) => Array.from({ length: n }, (_, i) => `${name} ${i + 1}`));
-    cache = Array.from({ length: PLAN_DAYS }, (_, d) => chapters.slice(Math.floor(d * chapters.length / PLAN_DAYS), Math.floor((d + 1) * chapters.length / PLAN_DAYS)));
-    return cache;
+export function planDays(id = "year") {
+    if (cache[id]) return cache[id];
+    const chapters = id === "chrono"
+        ? CHRONO.flatMap(([name, a, z]) => Array.from({ length: z - a + 1 }, (_, i) => `${name} ${a + i}`))
+        : BOOKS.flatMap(([name, n]) => Array.from({ length: n }, (_, i) => `${name} ${i + 1}`));
+    cache[id] = Array.from({ length: PLAN_DAYS }, (_, d) => chapters.slice(Math.floor(d * chapters.length / PLAN_DAYS), Math.floor((d + 1) * chapters.length / PLAN_DAYS)));
+    return cache[id];
 }
 
-export function startPlan(startKey) {
-    return { id: "year", start: startKey, read: {}, log: {}, lock: null };
+export function startPlan(startKey, id = "year") {
+    return { id, start: startKey, read: {}, log: {}, lock: null };
 }
 
 export function cleanPlan(saved) {
-    if (!saved || saved.id !== "year" || !/^\d{4}-\d{2}-\d{2}$/.test(saved.start || "")) return null;
-    return { id: "year", start: saved.start, read: saved.read && typeof saved.read === "object" ? saved.read : {}, log: saved.log && typeof saved.log === "object" ? saved.log : {}, lock: saved.lock || null };
+    if (!saved || !PLANS[saved.id] || !/^\d{4}-\d{2}-\d{2}$/.test(saved.start || "")) return null;
+    return { id: saved.id, start: saved.start, read: saved.read && typeof saved.read === "object" ? saved.read : {}, log: saved.log && typeof saved.log === "object" ? saved.log : {}, lock: saved.lock || null };
 }
 
-export const chaptersOn = day => planDays()[day] || [];
+export const chaptersOn = (plan, day) => planDays(plan.id)[day] || [];
 export const readCount = (plan, day) => (plan.read?.[day] || []).length;
-export const dayDone = (plan, day) => chaptersOn(day).length > 0 && readCount(plan, day) >= chaptersOn(day).length;
+export const dayDone = (plan, day) => chaptersOn(plan, day).length > 0 && readCount(plan, day) >= chaptersOn(plan, day).length;
 
 /** First day not finished (PLAN_DAYS when the whole year is read). */
 export function firstOpenDay(plan) {
