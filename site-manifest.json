@@ -386,6 +386,7 @@
     "js/sessionReport.js",
     "js/sessionShare.js",
     "js/sessionStore.js",
+    "js/sessionWrap.js",
     "js/setRunner.js",
     "js/settings.js",
     "js/seventyFive.js",

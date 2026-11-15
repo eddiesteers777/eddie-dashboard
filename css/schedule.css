@@ -742,3 +742,17 @@ a.ac-card:hover{ border-color:var(--primary); }
 .sc-plan-link{ flex:none; min-height:44px; display:inline-grid; place-items:center; padding:0 14px; border-radius:8px; border:1px solid var(--primary); color:var(--primary); text-decoration:none; font-weight:600; }
 .sc-plan-link.has{ background:var(--primary); color:var(--on-primary); }
 @media (min-width:901px){ .ss-parts{ display:grid; grid-template-columns:1fr 1fr; gap:0 12px; } }
+
+/* Session page: Wrap up */
+.ss-tab{ border:0; background:transparent; font:600 16px var(--font-body); cursor:pointer; }
+.ss-tab.on{ background:var(--primary); color:var(--on-primary); }
+.ss-opt{ margin-left:8px; color:var(--muted); font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; }
+.ss-did, .ss-pl{ display:grid; gap:8px; margin:0 0 10px; padding:12px 14px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); }
+.ss-did-top, .ss-pl-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.ss-did-top b, .ss-pl-top b{ flex:1; min-width:0; }
+.ss-seg{ display:flex; gap:4px; }
+.ss-seg button{ min-height:44px; min-width:64px; padding:0 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font:600 14px var(--font-body); cursor:pointer; }
+.ss-seg button.on{ background:var(--green); border-color:var(--green); color:var(--on-primary); }
+.ss-seg button.on.skip{ background:var(--orange); border-color:var(--orange); }
+.ss-came .sc-chip.out{ text-decoration:line-through; opacity:.7; }
+.ss-pl .ss-note{ min-height:48px; }

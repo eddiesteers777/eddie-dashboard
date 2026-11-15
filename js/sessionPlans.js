@@ -38,6 +38,23 @@ export async function deletePlan(key, date) {
     await deleteDoc(doc(db, "sessionPlans", planId(user.uid, key, date)));
 }
 
+// ---- The coach's wrap-up working copy (sessionWraps, coach only) ----
+
+export async function getWrap(key, date) {
+    const user = await waitForUser();
+    if (!user) return null;
+    const snap = await getDoc(doc(db, "sessionWraps", planId(user.uid, key, date)));
+    return snap.exists() ? snap.data() : null;
+}
+
+export async function saveWrap(key, date, wrap, { sent = false } = {}) {
+    const user = await waitForUser();
+    const data = { coachUid: user.uid, key, date, missed: wrap.missed || [], parts: wrap.parts || [], summary: wrap.summary || "", lines: wrap.lines || {}, updatedAt: serverTimestamp() };
+    if (sent) data.sentAt = serverTimestamp();
+    else if (wrap.sentAt) data.sentAt = wrap.sentAt;
+    await setDoc(doc(db, "sessionWraps", planId(user.uid, key, date)), data);
+}
+
 // ---- The coach's private notes per part (sessionPlanNotes, coach only) ----
 
 export async function getPlanNotes(key, date) {

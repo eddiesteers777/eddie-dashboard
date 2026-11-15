@@ -35,9 +35,12 @@
 
         <div id="ssBody" hidden>
             <div class="ss-tabs" role="group" aria-label="Session steps">
-                <span class="ss-tab on" aria-current="step">Plan</span>
+                <button type="button" class="ss-tab on" data-tab="plan" aria-pressed="true">Plan</button>
                 <a class="ss-tab" href="playbook-run.html">Run</a>
+                <button type="button" class="ss-tab" data-tab="wrap" aria-pressed="false">Wrap up</button>
             </div>
+
+            <div id="ssPlanPane">
 
             <section class="sc-block" aria-labelledby="ssFromTitle">
                 <span class="sp-lbl" id="ssFromTitle">Start from</span>
@@ -67,6 +70,36 @@
             <div class="ss-save">
                 <button type="button" class="sb-btn sb-btn-primary" id="ssSave">Save plan</button>
                 <button type="button" class="sb-btn sb-btn-tertiary" id="ssRemove" hidden>Remove plan</button>
+            </div>
+            </div>
+
+            <div id="ssWrapPane" hidden>
+                <p class="ss-hint" id="ssWrapNote"></p>
+                <div id="ssWrapForm">
+                    <section class="sc-block">
+                        <h2 class="clients-section-title">Who came</h2>
+                        <div class="sc-chips ss-came" id="ssCame" role="group" aria-label="Who came"></div>
+                    </section>
+                    <section class="sc-block">
+                        <h2 class="clients-section-title">What we did</h2>
+                        <div id="ssDid"></div>
+                        <button type="button" class="sb-btn sb-btn-secondary" id="ssDidAdd">+ Add something we did</button>
+                    </section>
+                    <section class="ss-card">
+                        <label class="sp-lbl" for="ssSummary">Group summary</label>
+                        <textarea class="sb-dialog-input ss-note" id="ssSummary" rows="4" maxlength="700" placeholder="How did it go? What stood out?"></textarea>
+                        <p class="ss-hint">Every player who came reads this.</p>
+                    </section>
+                    <section class="sc-block">
+                        <h2 class="clients-section-title">A line for each player <span class="ss-opt">optional</span></h2>
+                        <div id="ssLines"></div>
+                    </section>
+                    <div class="ss-save">
+                        <button type="button" class="sb-btn sb-btn-primary" id="ssSend">Send summary</button>
+                        <button type="button" class="sb-btn sb-btn-secondary" id="ssWrapSave">Save for later</button>
+                    </div>
+                    <p class="ss-hint" id="ssSentNote" hidden></p>
+                </div>
             </div>
         </div>
 

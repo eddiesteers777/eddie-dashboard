@@ -11,7 +11,12 @@
 import { listenForAuth } from "./auth.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { sessionList } from "./sessionModel.js";
-import { listMyPlans, savePlan, deletePlan, getPlanNotes, savePlanNotes } from "./sessionPlans.js";
+import { listMyPlans, savePlan, deletePlan, getPlanNotes, savePlanNotes, getWrap, saveWrap } from "./sessionPlans.js";
+import { saveSessionLog } from "./sessionLogs.js";
+import { listMyClients } from "./coachAccess.js";
+import { sendSessionSummaryEmail } from "./emailNotify.js";
+import { wrapParts, cleanWrap, logsFor, canWrap, hasWords, emailText } from "./sessionWrap.js";
+import { getMyProfile } from "./userProfile.js";
 import { linesFromPractice } from "./sessionPlanModel.js";
 import {
     PART_KINDS, MAX_NOTE, linesFromParts, notesFromParts, partsFromLines, totalMins, sessionMinutes,
@@ -19,7 +24,7 @@ import {
 } from "./sessionBuild.js";
 import { esc } from "./homeworkView.js";
 import { icon } from "./icons.js";
-import { toast, friendlyError, sbConfirm } from "./ui.js";
+import { toast, friendlyError, sbConfirm, sbChoose } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -28,7 +33,7 @@ const MAX_PARTS = 12;
 const dateLong = d => new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 const time = t => { if (!t) return ""; const [h, m] = t.split(":").map(Number); return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`; };
 
-const st = { group: null, plans: [], existing: null, parts: [], playbook: null, dirty: false };
+const st = { group: null, plans: [], existing: null, parts: [], playbook: null, dirty: false, wrap: { missed: [], parts: [], summary: "", lines: {} }, sentAt: null, wrapDirty: false, links: new Map() };
 
 const hasContent = () => st.parts.some(p => p.name || p.note);
 
@@ -207,6 +212,134 @@ function wire() {
     window.addEventListener("beforeunload", e => { if (st.dirty) e.preventDefault(); });
 }
 
+// ---- Wrap up ----
+
+const today = new Date().toLocaleDateString("en-CA");
+const first = name => String(name || "Player").split(/\s+/)[0];
+
+function renderCame() {
+    $("ssCame").innerHTML = st.group.players.map(p => {
+        const out = st.wrap.missed.includes(p.clientUid);
+        return `<button type="button" class="sc-chip${out ? " out" : " on"}" data-came="${esc(p.clientUid)}" aria-pressed="${!out}">${esc(first(p.name))}${out ? " · missed" : ""}</button>`;
+    }).join("");
+}
+
+function renderDid() {
+    $("ssDid").innerHTML = st.wrap.parts.length ? st.wrap.parts.map((p, i) => `<div class="ss-did" data-i="${i}">
+        <div class="ss-did-top"><b>${esc(p.name)}</b><div class="ss-seg" role="group" aria-label="${esc(p.name)}">
+            <button type="button" data-st="done" class="${p.status === "done" ? "on" : ""}" aria-pressed="${p.status === "done"}">Done</button>
+            <button type="button" data-st="skipped" class="${p.status === "skipped" ? "on skip" : ""}" aria-pressed="${p.status === "skipped"}">Skipped</button></div></div>
+        <input class="sb-dialog-input" data-how maxlength="200" value="${esc(p.how)}" placeholder="How it went (optional)" aria-label="How ${esc(p.name)} went" autocomplete="off"></div>`).join("")
+        : `<div class="sc-empty">${st.existing ? "Nothing in the plan." : "No plan was saved for this session."} Add what you did below.</div>`;
+}
+
+function renderLines() {
+    const came = st.group.players.filter(p => !st.wrap.missed.includes(p.clientUid));
+    $("ssLines").innerHTML = came.length ? came.map(p => `<div class="ss-pl"><div class="ss-pl-top"><b>${esc(p.name)}</b></div>
+        <textarea class="sb-dialog-input ss-note" data-line="${esc(p.clientUid)}" rows="2" maxlength="200" placeholder="A line for ${esc(first(p.name))} (optional)" aria-label="A line for ${esc(p.name)}">${esc(st.wrap.lines[p.clientUid] || "")}</textarea></div>`).join("") : `<div class="sc-empty">Nobody is marked as coming.</div>`;
+}
+
+function renderWrap() {
+    renderCame(); renderDid(); renderLines();
+    $("ssSummary").value = st.wrap.summary;
+    const n = st.group.players.filter(p => !st.wrap.missed.includes(p.clientUid)).length;
+    $("ssSend").textContent = `Send summary to ${n} ${n === 1 ? "player" : "players"}`;
+    $("ssSend").disabled = !canWrap(DATE, today);
+    $("ssWrapNote").textContent = canWrap(DATE, today) ? "It takes about a minute, and it starts from your plan." : "You can wrap this up on the day of the session.";
+    $("ssSentNote").hidden = !st.sentAt;
+    if (st.sentAt) $("ssSentNote").textContent = "Sent. Sending again updates what players see in the app.";
+}
+
+const readWrap = () => cleanWrap({ ...st.wrap, summary: $("ssSummary").value }, st.group.players);
+
+async function sendWrap() {
+    const wrap = readWrap();
+    const players = st.group.players;
+    const came = players.filter(p => !wrap.missed.includes(p.clientUid));
+    if (!came.length) { toast("Mark at least one player as coming.", { type: "error" }); return; }
+    if (!hasWords(wrap) && !await sbConfirm("There are no words in this summary yet. Send just the attendance and the drills?", { confirmLabel: "Send anyway" })) return;
+    let email = true;
+    if (st.sentAt) {
+        const pick = await sbChoose("Players already got this once. Email them the update too?", { title: "Send again", choices: [{ value: "yes", label: "Update the app and email them", primary: true }, { value: "no", label: "Update the app only" }] });
+        if (!pick) return;
+        email = pick === "yes";
+    }
+    const button = $("ssSend");
+    button.disabled = true;
+    try {
+        const focus = $("ssFocus").value.trim() || st.existing?.focus || "";
+        const results = await Promise.allSettled(logsFor({ group: st.group, wrap, focus }).map(log => saveSessionLog(log)));
+        const failed = results.filter(r => r.status === "rejected");
+        await saveWrap(KEY, DATE, wrap, { sent: failed.length < results.length }).catch(e => console.warn("Southbound: wrap-up copy not saved.", e));
+        const sentOk = results.map((r, i) => (r.status === "fulfilled" ? players[i] : null)).filter(Boolean);
+        if (email) {
+            const me = await getMyProfile().catch(() => null);
+            for (const p of sentOk.filter(p => !wrap.missed.includes(p.clientUid))) {
+                const link = st.links.get(p.clientUid);
+                sendSessionSummaryEmail({ clientEmail: link?.clientEmail || "", clientName: first(p.name), coachName: me?.displayName || "", dateLabel: dateLong(DATE), text: emailText(wrap, p.clientUid, focus) });
+            }
+        }
+        st.wrap = wrap; st.sentAt = failed.length < results.length ? Date.now() : st.sentAt; st.wrapDirty = false;
+        renderWrap();
+        if (failed.length) { console.error(failed[0].reason); toast(`Sent to ${sentOk.length}. ${failed.length} didn't save, try again.`, { type: "error" }); }
+        else toast(`Sent to ${came.length} ${came.length === 1 ? "player" : "players"}`);
+    } catch (error) {
+        console.error(error);
+        toast(friendlyError(error, "send the summary"), { type: "error" });
+    } finally { button.disabled = !canWrap(DATE, today); }
+}
+
+async function saveDraft() {
+    try { st.wrap = readWrap(); await saveWrap(KEY, DATE, st.wrap); st.wrapDirty = false; toast("Saved for later"); }
+    catch (error) { toast(friendlyError(error, "save that"), { type: "error" }); }
+}
+
+function wireWrap() {
+    $("ssCame").addEventListener("click", e => {
+        const b = e.target.closest("[data-came]");
+        if (!b) return;
+        const uid = b.dataset.came, i = st.wrap.missed.indexOf(uid);
+        i >= 0 ? st.wrap.missed.splice(i, 1) : st.wrap.missed.push(uid);
+        st.wrapDirty = true; renderWrap();
+    });
+    $("ssDid").addEventListener("click", e => {
+        const row = e.target.closest(".ss-did"), b = e.target.closest("[data-st]");
+        if (!row || !b) return;
+        st.wrap.parts[Number(row.dataset.i)].status = b.dataset.st;
+        st.wrapDirty = true; renderDid();
+    });
+    $("ssDid").addEventListener("input", e => {
+        const row = e.target.closest(".ss-did");
+        if (row && e.target.matches("[data-how]")) { st.wrap.parts[Number(row.dataset.i)].how = e.target.value; st.wrapDirty = true; }
+    });
+    $("ssLines").addEventListener("input", e => { const u = e.target.dataset.line; if (u) { st.wrap.lines[u] = e.target.value; st.wrapDirty = true; } });
+    $("ssSummary").addEventListener("input", () => { st.wrapDirty = true; });
+    $("ssDidAdd").addEventListener("click", async () => {
+        const name = await sbPromptName();
+        if (!name) return;
+        st.wrap.parts.push({ name: name.slice(0, 60), kind: "Other", mins: 0, status: "done", how: "" });
+        st.wrapDirty = true; renderDid();
+    });
+    $("ssSend").addEventListener("click", sendWrap);
+    $("ssWrapSave").addEventListener("click", saveDraft);
+    window.addEventListener("beforeunload", e => { if (st.wrapDirty) e.preventDefault(); });
+}
+
+async function sbPromptName() { const { sbPrompt } = await import("./ui.js"); return (await sbPrompt("What did you do?", { title: "Add something we did", placeholder: "Rondo 4v1" }) || "").trim(); }
+
+function showTab(name) {
+    const wrap = name === "wrap";
+    $("ssPlanPane").hidden = wrap; $("ssWrapPane").hidden = !wrap;
+    document.querySelectorAll(".ss-tab[data-tab]").forEach(b => { const on = b.dataset.tab === name; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
+    if (wrap) {
+        // Parts follow the plan as it is saved now, keeping earlier answers.
+        const planned = st.existing?.lines?.length ? partsFromLines(st.existing.lines, []) : [];
+        if (planned.length) st.wrap.parts = wrapParts(planned, st.wrap.parts);
+        renderWrap();
+    }
+    history.replaceState(null, "", `${location.pathname}?key=${encodeURIComponent(KEY)}&date=${encodeURIComponent(DATE)}${wrap ? "&tab=wrap" : ""}`);
+}
+
 const fail = html => { $("ssLoading").hidden = true; $("ssError").hidden = false; $("ssError").innerHTML = html; };
 
 listenForAuth(async user => {
@@ -231,6 +364,12 @@ listenForAuth(async user => {
         renderFrom();
         renderParts();
         wire();
+        const [wrapDoc, links] = await Promise.all([getWrap(KEY, DATE).catch(() => null), listMyClients().catch(() => [])]);
+        st.links = new Map(links.map(l => [l.clientUid, l]));
+        if (wrapDoc) { st.wrap = cleanWrap({ ...wrapDoc, parts: wrapDoc.parts || [] }, g.players); st.sentAt = wrapDoc.sentAt ? Date.now() : null; }
+        wireWrap();
+        document.querySelectorAll(".ss-tab[data-tab]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+        if (params.get("tab") === "wrap") showTab("wrap");
         $("ssLoading").hidden = true;
         $("ssBody").hidden = false;
     } catch (error) {

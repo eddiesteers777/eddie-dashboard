@@ -2152,3 +2152,22 @@ test("session plan notes: only the coach who owns the plan reads or writes them"
     await assertFails(setDoc(doc(as("client"), "sessionPlanNotes/client_s1_2026-11-17"), { ...good, coachUid: "client" }));
     await assertSucceeds(deleteDoc(mine));
 });
+
+test("session wraps: coach only, shape checked, and sending a log still needs the real booking", async () => {
+    await seedScopedCoaches();
+    const mine = doc(as("coach"), "sessionWraps/coach_s1_2026-11-17");
+    const good = { coachUid: "coach", key: "s1", date: "2026-11-17", missed: ["kid"], parts: [{ name: "Rondo", status: "done", how: "Sharp" }], summary: "Great energy.", lines: { kid: "Opens up on the right." }, updatedAt: serverTimestamp() };
+    assert.equal((await getDoc(mine)).exists(), false);
+    await assertSucceeds(setDoc(mine, good));
+    await assertSucceeds(setDoc(mine, { ...good, sentAt: serverTimestamp() }));
+    await assertSucceeds(getDoc(mine));
+    await assertFails(setDoc(mine, { ...good, summary: "x".repeat(701) }));
+    await assertFails(setDoc(mine, { ...good, parts: Array(13).fill({ name: "a" }) }));
+    await assertFails(setDoc(mine, { ...good, lines: "text" }));
+    await assertFails(setDoc(mine, { ...good, extra: 1 }));
+    await assertFails(setDoc(doc(as("coach"), "sessionWraps/coach_s2_2026-11-17"), good));
+    await assertFails(getDoc(doc(as("client"), "sessionWraps/coach_s1_2026-11-17")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "sessionWraps/coach_s1_2026-11-17")));
+    await assertFails(setDoc(doc(as("client"), "sessionWraps/client_s1_2026-11-17"), { ...good, coachUid: "client" }));
+    await assertSucceeds(deleteDoc(mine));
+});

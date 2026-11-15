@@ -885,6 +885,26 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
     }
 
+    // The coach's working copy of a session wrap-up (2026-11-15,
+    // js/sessionWrap.js): who missed it, how each part went, the group
+    // summary and a line per player. Coach only; sending writes each
+    // player's sessionLogs doc, which is what players read.
+    match /sessionWraps/{wrapId} {
+      allow read, delete: if isApprovedCoach() && wrapId.matches(request.auth.uid + '_.*');
+      allow create, update: if isApprovedCoach()
+        && request.resource.data.keys().hasOnly(["coachUid", "key", "date", "missed", "parts", "summary", "lines", "sentAt", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.key is string && request.resource.data.key.size() > 0 && request.resource.data.key.size() <= 60
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && wrapId == request.auth.uid + "_" + request.resource.data.key + "_" + request.resource.data.date
+        && request.resource.data.missed is list && request.resource.data.missed.size() <= 40
+        && request.resource.data.parts is list && request.resource.data.parts.size() <= 12
+        && request.resource.data.summary is string && request.resource.data.summary.size() <= 700
+        && request.resource.data.lines is map && request.resource.data.lines.size() <= 40
+        && (!("sentAt" in request.resource.data) || request.resource.data.sentAt == null || request.resource.data.sentAt is timestamp)
+        && request.resource.data.updatedAt == request.time;
+    }
+
     // What happened at one session of a booking (Client Hub Phase 6,
     // js/sessionLogs.js): one doc per booking + date. The coach writes it
     // (completed / no-show / cancelled / cancelled late, plus what they
