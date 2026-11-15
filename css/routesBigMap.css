@@ -203,3 +203,23 @@ html:not(.rb-app) .rb-page{ width:min(1600px, 100% - 24px) !important; }
     body.rb-in-app .rb-side-extra .rb-looks button{ min-height:44px; padding:0 10px; font-size:12.5px; }
     body.rb-in-app .rb-side-extra{ gap:6px; }
 }
+
+/* ---------- 2026-11-14 evening: busy pill fix, safety archived, small map credit ---------- */
+/* The "Checking surfaces…" pill had a top AND an older bottom, so it stretched down the map. */
+.rb-stage .rb-busy{ bottom:auto !important; top:12px; }
+html.rb-safe-off .rb-tabs{ grid-template-columns:repeat(3, 1fr); }
+html.rb-safe-off #rbSafeMap, html.rb-safe-off #rbPanel-safety, html.rb-safe-off #rbSafeBar, html.rb-safe-off #rbSafetyCard{ display:none !important; }
+/* map credit: small, in the corner */
+.rb-mapwrap .leaflet-control-attribution{ font-size:9px !important; line-height:1.3 !important; padding:1px 5px !important; margin:0 !important; border-radius:6px 0 0 0 !important; background:rgba(255,255,255,.6) !important; color:#3a3f44 !important; }
+.rb-mapwrap .leaflet-control-attribution a{ color:#3a3f44 !important; }
+#rbMap.rb-look-dark .leaflet-control-attribution{ background:rgba(14,22,30,.6) !important; color:rgba(236,230,212,.75) !important; }
+#rbMap.rb-look-dark .leaflet-control-attribution a{ color:rgba(236,230,212,.85) !important; }
+@media (max-width:899px){
+    .rb-mapwrap .leaflet-bottom, body.rb-in-app .rb-mapwrap .leaflet-bottom{ bottom:0 !important; }
+    .rb-statwrap{ bottom:20px; }
+    body.rb-in-app .rb-statwrap{ bottom:calc(18px + env(safe-area-inset-bottom)); }
+    .rb-stage .rb-busy{ top:124px; left:10px !important; right:auto; transform:none !important; max-width:calc(100% - 80px); padding:6px 12px; font-size:13px; border-radius:12px; }
+    body.rb-in-app .rb-stage .rb-busy{ top:calc(104px + env(safe-area-inset-top)); }
+    /* one message at a time: the busy pill takes the hint's spot while it shows */
+    .rb-stage .rb-hint:has(~ .rb-busy:not([hidden])){ visibility:hidden; }
+}
