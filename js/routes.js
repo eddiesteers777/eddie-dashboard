@@ -65,6 +65,15 @@ if (saved.pace && parsePace(saved.pace)) S.pace = parsePace(saved.pace);
 if (saved.gelG) S.gelG = saved.gelG;
 S.prefs = saved.prefs;
 S.layers = saved.layers;
+/* Safe Map and the safety rating are archived (Eddie, 2026-11-14): the code stays, nothing of it shows.
+   Set this to false to bring it back (tab, Settings switch and Safe Map button return with it). */
+const SAFETY_ARCHIVED = true;
+if (SAFETY_ARCHIVED) {
+    S.layers = { ...S.layers, safe: false };
+    document.getElementById("rbTab-safety")?.remove();
+    document.querySelector('#rbLayers [data-layer="safe"]')?.remove();
+    document.documentElement.classList.add("rb-safe-off");
+}
 S.opts = { ...saved.opts, shortest: false };
 function saveSettings() {
     write(SETTINGS_KEY, settingsRecord({ pace: formatPace(S.pace), gelG: S.gelG, prefs: S.prefs, layers: S.layers, opts: S.opts }));
@@ -89,6 +98,7 @@ function setLook(id, remember) {
 $("rbLooks").innerHTML = LOOKS.map(l => `<button type="button" data-look="${l.id}" aria-pressed="false">${l.label}</button>`).join("");
 $("rbLooks").addEventListener("click", e => { const b = e.target.closest("[data-look]"); if (b) setLook(b.dataset.look, true); });
 { let saved = null; try { saved = localStorage.getItem(LOOK_KEY); } catch { /* none */ } setLook(saved, false); }
+map.attributionControl.setPrefix(false); // the required map credit stays; the Leaflet link moves to the credits line under the panel
 const overlay = L.layerGroup().addTo(map);
 const gapLayer = L.layerGroup().addTo(map);
 const lineLayer = L.layerGroup().addTo(map);
@@ -837,6 +847,7 @@ $("rbSidewalkFirst").onclick = () => {
 document.querySelectorAll("#rbLayers [data-layer]").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.layer;
     S.layers = { ...S.layers, [k]: !S.layers[k] };
+    if (SAFETY_ARCHIVED) S.layers.safe = false;
     saveSettings(); paintSwitches(); applyLayers();
 }));
 /* A layer switched off in Settings is gone (hidden, not greyed) from the map, the panels and My Routes.
