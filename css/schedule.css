@@ -653,3 +653,26 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 .sp-preview .sb-progress{ margin:0 0 22px; }
 .sp-preview .sb-week{ padding:16px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
 .sp-preview .sb-next{ padding:18px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); border-top:2px solid var(--primary); background:var(--sb-bubble-raised-bg); border-left:1px solid var(--sb-bubble-raised-border); border-right:1px solid var(--sb-bubble-raised-border); border-bottom:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+
+/* Coach Soccer page (soccer-coach.html) */
+.sc-page [hidden]{ display:none !important; }
+.sc-counts{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:0 0 14px; padding:14px 10px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); text-align:center; }
+.sc-counts b{ display:block; font:900 34px/1 var(--font-display); }
+.sc-counts span{ font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.sc-page .sb-next{ padding:18px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); border-top:2px solid var(--gold, var(--primary)); background:var(--sb-bubble-raised-bg); border-left:1px solid var(--sb-bubble-raised-border); border-right:1px solid var(--sb-bubble-raised-border); border-bottom:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.sc-players{ margin:8px 0 0; color:var(--text-secondary); }
+.sc-cols{ display:grid; gap:0 18px; }
+@media (min-width:901px){ .sc-cols{ grid-template-columns:1fr 1fr; } }
+.sc-block{ margin:0 0 22px; }
+.sc-more{ font-size:13px; color:var(--primary); text-decoration:none; min-height:44px; display:inline-flex; align-items:center; }
+.sc-list{ display:flex; flex-direction:column; gap:8px; }
+.sc-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 14px; min-height:56px; border-radius:12px; border:1px solid var(--border); background:var(--sb-bubble-raised-bg); color:var(--text); text-decoration:none; }
+.sc-row b{ display:block; } .sc-row small{ color:var(--muted); }
+a.sc-row:hover{ border-color:var(--primary); }
+.sc-pill{ flex:none; font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; padding:4px 10px; border-radius:20px; border:1px solid var(--border); color:var(--muted); }
+.sc-pill.ice{ color:var(--primary); border-color:currentColor; }
+.sc-empty{ padding:16px; border-radius:12px; border:1px dashed var(--border); color:var(--muted); }
+.sc-tools{ display:grid; gap:8px; }
+@media (min-width:640px){ .sc-tools{ grid-template-columns:repeat(3,1fr); } }
+.sc-tool{ display:block; padding:14px; min-height:64px; border-radius:12px; border:1px solid var(--border); background:var(--sb-bubble-raised-bg); color:var(--text); text-decoration:none; }
+.sc-tool small{ display:block; color:var(--muted); margin-top:2px; }

@@ -765,3 +765,6 @@ body[data-coach-scope="online"] #coachPlansWrap,
 body[data-coach-scope="online"] .coach-week,
 body[data-coach-scope="online"] #inquiries,
 body[data-coach-scope="soccer"] #inquiries{ display:none !important; }
+
+.coach-soccer-link{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 14px; padding:14px 16px; min-height:56px; border-radius:12px; border:1px solid var(--border); background:var(--sb-bubble-raised-bg); color:var(--text); text-decoration:none; }
+.coach-soccer-link span{ color:var(--muted); font-size:13px; }

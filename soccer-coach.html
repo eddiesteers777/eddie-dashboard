@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soccer | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page schedule-page sc-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coach</div>
+                <h1>Soccer</h1>
+                <p class="eos-today-phase" id="scLead">Sessions, requests and homework in one place.</p>
+            </div>
+        </section>
+
+        <div id="scLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="scError" class="clients-empty" hidden></div>
+
+        <div id="scBody" hidden>
+            <div class="sc-counts" id="scCounts"></div>
+            <section id="scNext" class="sb-next"></section>
+            <div class="sc-cols">
+                <section class="sc-block" aria-labelledby="scReqTitle">
+                    <div class="sb-sec-row"><h2 class="clients-section-title" id="scReqTitle">Requests</h2><a class="sc-more" href="schedule.html">Answer on Schedule</a></div>
+                    <div id="scRequests" class="sc-list"></div>
+                </section>
+                <section class="sc-block" aria-labelledby="scHwTitle">
+                    <div class="sb-sec-row"><h2 class="clients-section-title" id="scHwTitle">Homework to review</h2></div>
+                    <div id="scHomework" class="sc-list"></div>
+                </section>
+            </div>
+            <section class="sc-block" aria-labelledby="scUpTitle">
+                <div class="sb-sec-row"><h2 class="clients-section-title" id="scUpTitle">Coming up</h2><a class="sc-more" href="schedule.html">Week and month view</a></div>
+                <div id="scUpcoming" class="sc-list"></div>
+            </section>
+            <section class="sc-block">
+                <div class="sb-sec-row"><h2 class="clients-section-title">Tools</h2></div>
+                <div class="sc-tools">
+                    <a class="sc-tool" href="playbook.html"><b>Playbook</b><small>Board, drills, practice plans, roster, game day</small></a>
+                    <a class="sc-tool" href="schedule.html"><b>Schedule</b><small>Open times, days off, week and month</small></a>
+                    <a class="sc-tool" href="clients.html"><b>Players</b><small>Each player's homework and sessions</small></a>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/soccerCoach.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>
