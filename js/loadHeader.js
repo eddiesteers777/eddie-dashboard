@@ -121,6 +121,7 @@ const PAGE_TAB = {
     "soccer-preview.html": "coach",
     "soccer-coach.html": "coach",
     "soccer-session.html": "coach",
+    "soccer-homework.html": "coach",
     "admin-coaches.html": "coach",
     "profile.html": "more",
     "updates.html": "more",

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/homework.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page schedule-page sc-page ss-page hwp-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Coach · Soccer</div>
+                <h1>Homework</h1>
+                <p class="eos-today-phase" id="hwLead"><span class="sb-wait"></span></p>
+            </div>
+        </section>
+
+        <p><a class="sc-more" href="soccer-coach.html">&larr; Soccer</a></p>
+
+        <div id="hwLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="hwError" class="clients-empty" hidden></div>
+
+        <div id="hwBody" hidden>
+            <div class="ss-tabs" role="group" aria-label="Homework views">
+                <button type="button" class="ss-tab on" data-tab="overview" aria-pressed="true">Overview</button>
+                <button type="button" class="ss-tab" data-tab="players" aria-pressed="false">Players</button>
+                <button type="button" class="ss-tab" data-tab="library" aria-pressed="false">Library</button>
+            </div>
+            <div class="hwp-actions"><button type="button" class="sb-btn sb-btn-primary" id="hwNew">+ Assign homework</button></div>
+
+            <div id="paneOverview"></div>
+            <div id="panePlayers" hidden></div>
+            <div id="paneLibrary" hidden></div>
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/soccerHomework.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

@@ -756,3 +756,17 @@ a.ac-card:hover{ border-color:var(--primary); }
 .ss-seg button.on.skip{ background:var(--orange); border-color:var(--orange); }
 .ss-came .sc-chip.out{ text-decoration:line-through; opacity:.7; }
 .ss-pl .ss-note{ min-height:48px; }
+
+/* Homework page (soccer-homework.html) */
+.hwp-page [hidden]{ display:none !important; }
+.hwp-actions{ margin:0 0 14px; } .hwp-actions .sb-btn{ width:100%; min-height:48px; }
+.hwp-card{ display:grid; gap:10px; margin:0 0 10px; padding:12px 14px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); }
+.hwp-top{ display:flex; align-items:center; gap:10px; }
+.hwp-who{ flex:1; min-width:0; display:flex; align-items:center; gap:10px; color:var(--text); text-decoration:none; }
+.hwp-main{ flex:1; min-width:0; } .hwp-main b{ display:block; } .hwp-main small{ display:block; color:var(--muted); }
+.hwp-acts{ display:flex; flex-wrap:wrap; gap:8px; } .hwp-acts .sb-btn{ min-height:44px; display:inline-grid; place-items:center; text-decoration:none; }
+.hwp-bar{ height:8px; border-radius:9px; background:var(--border); overflow:hidden; } .hwp-bar i{ display:block; height:100%; background:var(--green); }
+.hwp-grp + .hwp-grp{ margin-top:6px; } .hwp-grp-top{ display:flex; justify-content:space-between; margin-bottom:6px; } .hwp-grp-top span{ color:var(--muted); }
+.hwp-card .hwp-top > .sb-btn{ flex:0 0 auto; min-height:44px; }
+.hwp-pick{ cursor:pointer; justify-content:flex-start; gap:12px; } .hwp-pick input{ width:22px; height:22px; flex:0 0 22px; accent-color:var(--primary); }
+.hwp-pick div{ flex:1; min-width:0; }
