@@ -15,6 +15,8 @@ import { esc, thumbHtml, ticksHtml, metaLine, standingPill, dueText, clipText } 
 import { cachedRole } from "./role.js";
 import { icon } from "./icons.js";
 import { toast, friendlyError, emptyHtml, notConnectedHtml } from "./ui.js";
+import { celebrateHomework } from "./homeworkMoment.js";
+import { primeSound } from "./waterSound.js";
 
 const $ = id => document.getElementById(id);
 let items = [];
@@ -142,6 +144,8 @@ document.addEventListener("click", async event => {
         const hw = items.find(h => h.id === openId);
         if (!hw || btn.disabled) return;
         const raw = $("hwCount").value;
+        const wasComplete = progress(hw, today()).complete;
+        primeSound(); // started from this tap, so the chime is allowed to play
         btn.disabled = true;
         try {
             const { log, queued } = await logPractice(hw.id, { date: today(), count: raw === "" ? null : Number(raw), feel: draft.feel });
@@ -150,6 +154,9 @@ document.addEventListener("click", async event => {
             draft = { count: 0, feel: "okay" };
             playing = false;
             renderDetail(hw.id);
+            // The finish (never waits on, and never blocks, the saved log).
+            import("./userProfile.js").then(m => m.getMyProfile()).catch(() => null).then(profile =>
+                celebrateHomework({ hw, wasComplete, today: today(), streak: streak(items, today()), firstName: profile?.displayName || "" })).catch(() => {});
         } catch (error) {
             console.error(error);
             toast(friendlyError(error, "save that"), { type: "error" });
