@@ -2123,3 +2123,13 @@ test("roles: the admin reads every coach's links, bookings and homework; a scope
     await assertFails(getDocs(query(collection(other, "coachLinks"), where("coachUid", "==", "soccerCoach"))));
     await assertFails(getDoc(doc(other, "homework/hw1")));
 });
+
+test("roles: the admin lists and reads coach profiles; nobody else can list profiles", async () => {
+    await seedScopedCoaches();
+    await assertSucceeds(getDocs(query(collection(as("coach"), "userProfiles"), where("isCoachApproved", "==", true))));
+    await assertSucceeds(getDoc(doc(as("coach"), "userProfiles/soccerCoach")));
+    await assertFails(getDocs(query(collection(as("coach"), "userProfiles"))));
+    await assertFails(getDocs(query(collection(as("soccerCoach"), "userProfiles"), where("isCoachApproved", "==", true))));
+    await assertFails(getDocs(query(collection(as("client"), "userProfiles"), where("isCoachApproved", "==", true))));
+    await assertFails(getDoc(doc(as("onlineCoach"), "userProfiles/soccerCoach")));
+});

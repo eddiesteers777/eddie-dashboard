@@ -31,19 +31,19 @@ function renderList(coaches, datas) {
         const d = datas[i];
         const k = soccerCounts({ requests: d.requests, homework: d.homework, today });
         return `<a class="ac-card" href="admin-coaches.html?coach=${encodeURIComponent(c.uid)}">
-            <div class="ac-head"><span class="ac-av">${esc(initials(c.name))}</span><div><b>${esc(c.name)}</b><small>${esc(scopeLabel(c.scope))}</small></div><span class="sc-pill">Open</span></div>
+            <div class="ac-head"><span class="ac-av">${esc(initials(c.name))}</span><div><b>${esc(c.name)}</b><small>${esc(c.noRole ? "Coach, no role set yet" : scopeLabel(c.scope))}</small></div><span class="sc-pill">Open</span></div>
             <div class="sc-counts ac-counts">${counts4(k, d.links.length)}</div></a>`;
     }).join("") : `<div class="clients-empty"><p>Nobody is a coach yet. Open a client in the Client Hub and use the coach role button.</p></div>`;
 }
 
 function renderDetail(coach, d) {
-    $("acEyebrow").textContent = scopeLabel(coach.scope);
+    $("acEyebrow").textContent = coach.noRole ? "Coach, no role set" : scopeLabel(coach.scope);
     $("acTitle").textContent = coach.name;
     const k = soccerCounts({ requests: d.requests, homework: d.homework, today });
     $("acLead").textContent = k.requests || k.toReview ? [k.requests && `${k.requests} waiting`, k.toReview && `${k.toReview} to review`].filter(Boolean).join(" · ") : "Nothing waiting.";
     $("acCounts").innerHTML = counts4(k, d.links.length);
     $("acActions").innerHTML = `<a class="clients-btn-primary" href="client.html?uid=${encodeURIComponent(coach.uid)}&tab=plan">Edit their running plan</a>
-        <a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(coach.uid)}">Open in Client Hub</a>`;
+        <a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(coach.uid)}">${coach.noRole ? "Set their role" : "Open in Client Hub"}</a>`;
 
     const names = new Map(d.links.map(l => [l.clientUid, l.clientName]));
     const sessions = upcomingSessions(d.requests, today);

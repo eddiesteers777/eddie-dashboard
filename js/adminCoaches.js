@@ -10,17 +10,19 @@
 
 import { db } from "./firebase.js";
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { listMyClients } from "./coachAccess.js";
-import { getProfile } from "./userProfile.js";
+import { waitForUser } from "./auth.js";
 
+// Every approved coach except the admin. A coach with no coachScope (made a
+// coach before roles existed) shows as "admin" with noRole, so the admin can
+// give them a role.
 export async function listMyCoachAccounts() {
-    const links = await listMyClients();
-    const profiles = await Promise.all(links.map(l => getProfile(l.clientUid).catch(() => null)));
-    return profiles
-        .map((p, i) => p && p.isCoachApproved === true && (p.coachScope === "soccer" || p.coachScope === "online")
-            ? { uid: links[i].clientUid, name: p.displayName || links[i].clientName || "Coach", scope: p.coachScope, services: p.services || [] }
-            : null)
-        .filter(Boolean);
+    const user = await waitForUser();
+    if (!user) return [];
+    const snap = await getDocs(query(collection(db, "userProfiles"), where("isCoachApproved", "==", true)));
+    return snap.docs
+        .filter(d => d.id !== user.uid)
+        .map(d => { const p = d.data(); return { uid: d.id, name: p.displayName || "Coach", scope: p.coachScope || "admin", noRole: !p.coachScope, services: p.services || [] }; })
+        .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 const rows = async (name, coachUid) => {
