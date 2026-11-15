@@ -76,3 +76,33 @@ export function weekCounts(days = []) {
     for (const day of days) for (const item of day.items) n[item.kind]++;
     return n;
 }
+
+/**
+ * The month grid for the coach's Month view: whole weeks, Monday first, so
+ * the first and last row can hold days of the next/previous month.
+ * month: "YYYY-MM". Same inputs as weekDays. Each cell:
+ *   { date, inMonth, dayOff, booked, asked, open }  (counts of sessions / requests / open times)
+ */
+export function monthDays({ month, slots = [], blackoutDates = [], requests = [] } = {}) {
+    const first = `${month}-01`;
+    const start = weekStartOf(first);
+    const [y, m] = month.split("-").map(Number);
+    const last = isoOf(new Date(y, m, 0));
+    const weeks = Math.ceil((((new Date(...last.split("-").map((n, i) => i === 1 ? n - 1 : n)) - new Date(...start.split("-").map((n, i) => i === 1 ? n - 1 : n))) / 86400000) + 1) / 7);
+    const cells = [];
+    for (let w = 0; w < weeks; w++) {
+        const days = weekDays({ weekStart: addDays(start, w * 7), slots, blackoutDates, requests });
+        for (const day of days) {
+            const n = weekCounts([day]);
+            cells.push({ date: day.date, inMonth: day.date.slice(0, 7) === month, dayOff: day.dayOff, booked: n.booked, asked: n.asked, open: n.open });
+        }
+    }
+    return cells;
+}
+
+// The month before / after "YYYY-MM".
+export const addMonths = (month, n) => {
+    const [y, m] = month.split("-").map(Number);
+    const d = new Date(y, m - 1 + n, 1);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+};

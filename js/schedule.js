@@ -26,7 +26,8 @@ import { sortForClient, progress as hwProgress } from "./homeworkModel.js";
 import { can } from "./navAccess.js";
 import { clientSessions, statusLabel, CANCELLED } from "./sessionModel.js";
 import { hasReport, reportHtml } from "./sessionReport.js";
-import { weekDays, weekStartOf, addDays, weekCounts } from "./scheduleWeek.js";
+import { weekDays, weekStartOf, addDays, weekCounts, monthDays, addMonths } from "./scheduleWeek.js";
+import { clientWeek, clientWeekLine } from "./soccerWeek.js";
 import { listMyPlans, savePlan } from "./sessionPlans.js";
 import { planKey, planMatches, clientsOf, parseLine, totalMinutes } from "./sessionPlanModel.js";
 import { sendBookingRequestEmail, sendBookingResponseEmail } from "./emailNotify.js";
@@ -145,7 +146,7 @@ function slotCardHtml(slot, actionsHtml) {
 // ---- Coach: the week at a glance ----
 // What the coach has so far (open times, days off, requests); the grid
 // redraws whenever any of them loads (js/scheduleWeek.js).
-const coachWeek = { slots: [], blackoutDates: [], requests: [], plans: [], start: "" };
+const coachWeek = { slots: [], blackoutDates: [], requests: [], plans: [], start: "", view: "week", month: "", pickedDay: "" };
 
 // Booked sessions of one day, one per open time (a group is one session).
 function planGroups(day) {
@@ -161,11 +162,70 @@ function planGroups(day) {
     return [...groups.values()];
 }
 
+// Month view: one tile per day with how many sessions, requests and open
+// times it holds. Tap a day to see its list (and its sessions, if any).
+function renderCoachMonth(today) {
+    const cells = monthDays({ month: coachWeek.month, slots: coachWeek.slots, blackoutDates: coachWeek.blackoutDates, requests: coachWeek.requests });
+    const inMonth = cells.filter(c => c.inMonth);
+    const sum = inMonth.reduce((n, c) => ({ booked: n.booked + c.booked, asked: n.asked + c.asked, open: n.open + c.open }), { booked: 0, asked: 0, open: 0 });
+    const name = new Date(`${coachWeek.month}-01T00:00:00`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    document.getElementById("schedWeekSum").textContent = `${name} · ${sum.booked} booked · ${sum.asked} asked · ${sum.open} open`;
+    document.getElementById("schedWeekNow").disabled = coachWeek.month === today.slice(0, 7);
+    const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => `<span class="sched-mh">${d}</span>`).join("");
+    const tiles = cells.map(c => {
+        const bits = [c.booked && `${c.booked} booked`, c.asked && `${c.asked} asked`, c.open && `${c.open} open`].filter(Boolean);
+        const kind = c.dayOff ? " is-off" : c.booked ? " has-booked" : c.asked ? " has-asked" : c.open ? " has-open" : "";
+        return `<button type="button" class="sched-mday${kind}${c.inMonth ? "" : " is-other"}${c.date === today ? " is-today" : ""}${c.date === coachWeek.pickedDay ? " is-picked" : ""}" data-date="${c.date}" aria-label="${escapeHtml(formatDateShort(c.date))}${bits.length ? ": " + bits.join(", ") : c.dayOff ? ": day off" : ""}"><b>${Number(c.date.slice(8))}</b><span>${c.dayOff ? "Off" : escapeHtml(bits.join(" · "))}</span></button>`;
+    }).join("");
+    document.getElementById("schedMonth").innerHTML = heads + tiles;
+    renderMonthDay();
+}
+
+function renderMonthDay() {
+    const box = document.getElementById("schedMonthDay");
+    const date = coachWeek.pickedDay;
+    box.hidden = !date;
+    if (!date) return;
+    const day = weekDays({ weekStart: weekStartOf(date), slots: coachWeek.slots, blackoutDates: coachWeek.blackoutDates, requests: coachWeek.requests }).find(d => d.date === date);
+    const label = { soccer: "Soccer", running: "Running", strength: "Strength", general: "Session" };
+    const rows = (day?.items || []).map(it => {
+        const type = it.label || label[it.sessionType] || typeLabel(it.sessionType) || "";
+        const who = it.kind === "open" ? `Open${it.capacity > 1 ? ` · ${it.spotsLeft} of ${it.capacity} left` : ""}` : it.who;
+        const body = `<span class="sched-ev-time">${escapeHtml(formatTime(it.startTime))}</span><span class="sched-ev-who">${escapeHtml(who)}</span><span class="sched-ev-type">${escapeHtml(type)}</span>`;
+        return it.clientUid && it.kind !== "open" ? `<a class="sched-ev is-${it.kind}" href="client.html?uid=${encodeURIComponent(it.clientUid)}&tab=sessions">${body}</a>` : `<div class="sched-ev is-${it.kind}">${body}</div>`;
+    }).join("");
+    box.innerHTML = `<h3>${escapeHtml(formatDateShort(date))}</h3>${rows || `<p class="sched-day-none">${day?.dayOff ? "Day off." : "Nothing on this day."}</p>`}`;
+}
+
+document.getElementById("schedMonth")?.addEventListener("click", event => {
+    const tile = event.target.closest("[data-date]");
+    if (!tile) return;
+    coachWeek.pickedDay = coachWeek.pickedDay === tile.dataset.date ? "" : tile.dataset.date;
+    renderCoachWeek();
+});
+
+document.querySelectorAll(".sched-view [data-view]").forEach(btn => btn.addEventListener("click", () => {
+    coachWeek.view = btn.dataset.view;
+    coachWeek.pickedDay = "";
+    renderCoachWeek();
+}));
+
 function renderCoachWeek() {
     const el = document.getElementById("schedWeek");
     if (!el) return;
     const today = localToday();
     if (!coachWeek.start) coachWeek.start = weekStartOf(today);
+    if (!coachWeek.month) coachWeek.month = today.slice(0, 7);
+    const monthView = coachWeek.view === "month";
+    el.hidden = monthView;
+    document.getElementById("schedMonth").hidden = !monthView;
+    document.querySelectorAll(".sched-view [data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === coachWeek.view)));
+    document.getElementById("schedPrev").setAttribute("aria-label", monthView ? "Previous month" : "Previous week");
+    document.getElementById("schedNext").setAttribute("aria-label", monthView ? "Next month" : "Next week");
+    document.getElementById("schedWeekNow").textContent = monthView ? "This month" : "This week";
+    document.getElementById("schedWeekTitle").textContent = monthView ? "Your month" : "Your week";
+    if (monthView) { renderCoachMonth(today); return; }
+    document.getElementById("schedMonthDay").hidden = true;
     const days = weekDays({ weekStart: coachWeek.start, slots: coachWeek.slots, blackoutDates: coachWeek.blackoutDates, requests: coachWeek.requests });
     const n = weekCounts(days);
     const end = addDays(coachWeek.start, 6);
@@ -225,12 +285,20 @@ async function refreshPlans() {
 }
 
 document.querySelectorAll("[data-week-step]").forEach(btn => btn.addEventListener("click", () => {
-    if (!coachWeek.start) coachWeek.start = weekStartOf(localToday());
-    coachWeek.start = addDays(coachWeek.start, 7 * Number(btn.dataset.weekStep));
+    const step = Number(btn.dataset.weekStep);
+    if (coachWeek.view === "month") {
+        coachWeek.month = addMonths(coachWeek.month || localToday().slice(0, 7), step);
+        coachWeek.pickedDay = "";
+    } else {
+        if (!coachWeek.start) coachWeek.start = weekStartOf(localToday());
+        coachWeek.start = addDays(coachWeek.start, 7 * step);
+    }
     renderCoachWeek();
 }));
 document.getElementById("schedWeekNow").addEventListener("click", () => {
     coachWeek.start = weekStartOf(localToday());
+    coachWeek.month = localToday().slice(0, 7);
+    coachWeek.pickedDay = "";
     renderCoachWeek();
 });
 document.getElementById("addSlotLink").addEventListener("click", event => {
@@ -631,6 +699,7 @@ let hwItems = [];
 let nextSession = null;
 let myPlans = [];
 let myRequestsAll = [];
+let myRequestsLoaded = false;
 let rescheduling = null; // "Thu, Oct 22 · 5:00 PM" while the client is picking a replacement
 
 function hwOpenItems() {
@@ -649,7 +718,46 @@ function planCardHtml(plan) {
         ${plan.bring ? `<p class="sb-plan-bring"><span class="sb-kick">Bring</span> ${escapeHtml(plan.bring)}</p>` : ""}</div>`;
 }
 
+// "Your week" (soccer client): Monday to Sunday with the sessions and the
+// homework on one strip. Tap a day for what is on it.
+const sbWeek = { start: "", picked: "" };
+
+function renderSoccerWeek() {
+    const box = dayEl("soccerWeek");
+    if (!can("homework") || cachedRole() === "coach" || !myRequestsLoaded) { box.hidden = true; return; }
+    const t = localToday();
+    if (!sbWeek.start) sbWeek.start = weekStartOf(t);
+    const days = clientWeek({ requests: myRequestsAll, homework: hwItems, anyDay: sbWeek.start, today: t });
+    if (!sbWeek.picked || !days.some(d => d.date === sbWeek.picked)) sbWeek.picked = days.find(d => d.date === t)?.date || days[0].date;
+    const line = clientWeekLine(days, t);
+    const end = addDays(sbWeek.start, 6);
+    const range = `${formatDateShort(sbWeek.start).replace(/^\w+, /, "")} \u2013 ${formatDateShort(end).replace(/^\w+, /, "")}`;
+    const picked = days.find(d => d.date === sbWeek.picked);
+    const strip = days.map(d => {
+        const name = new Date(`${d.date}T00:00:00`).toLocaleDateString(undefined, { weekday: "short" });
+        const dots = `${d.sessions.length ? `<i class="d-session"></i>` : ""}${d.homework.some(h => !h.done) ? `<i class="d-hw"></i>` : ""}${d.homework.length && d.homework.every(h => h.done) ? `<i class="d-done"></i>` : ""}`;
+        return `<button type="button" class="sb-wday${d.date === t ? " is-today" : ""}${d.date === sbWeek.picked ? " is-picked" : ""}${d.date < t ? " is-past" : ""}" data-day="${d.date}" aria-pressed="${d.date === sbWeek.picked}" aria-label="${escapeHtml(formatDateShort(d.date))}${d.sessions.length ? ", session" : ""}${d.homework.length ? ", homework" : ""}"><small>${escapeHtml(name)}</small><b>${Number(d.date.slice(8))}</b><span class="sb-wdots">${dots}</span></button>`;
+    }).join("");
+    const sessions = picked.sessions.map(s => `<div class="sb-wrow"><span class="sb-wkind session">Session</span><div><b>${escapeHtml(formatTime(s.startTime))}${s.endTime ? `\u2013${escapeHtml(formatTime(s.endTime))}` : ""}</b><small>${escapeHtml(typeLabel(s.sessionType))}${s.label ? ` \u00b7 ${escapeHtml(s.label)}` : ""}</small></div></div>`).join("");
+    const work = picked.homework.map(h => `<a class="sb-wrow" href="homework.html#${escapeHtml(h.id)}"><span class="sb-wkind ${h.done ? "done" : "hw"}">${h.done ? "Done" : "Homework"}</span><div><b>${escapeHtml(h.title)}</b><small>${h.done ? "Logged" : h.due ? "Due today" : "Practice today"}</small></div></a>`).join("");
+    box.innerHTML = `
+        <div class="sb-sec-row"><h2 class="clients-section-title" id="sbWeekTitle">Your week</h2><span class="sb-kick">${escapeHtml(range)}</span></div>
+        <div class="sb-wnav"><button type="button" class="clients-btn-secondary" data-wstep="-1" aria-label="Previous week">\u2039</button><span>${escapeHtml(line || "Nothing planned yet")}</span><button type="button" class="clients-btn-secondary" data-wstep="1" aria-label="Next week">\u203a</button></div>
+        <div class="sb-wstrip">${strip}</div>
+        <div class="sb-wdetail"><span class="sb-kick tan">${escapeHtml(formatDateShort(picked.date))}</span>${sessions}${work || ""}${!sessions && !work ? `<p class="sb-wnone">Nothing on this day. <a href="#availableSlotsWrap">Book a session</a></p>` : ""}</div>
+        <p class="sb-wkey"><span class="d-session"></span>Session<span class="d-hw"></span>Homework<span class="d-done"></span>Done</p>`;
+    box.hidden = false;
+}
+
+dayEl("soccerWeek").addEventListener("click", event => {
+    const step = event.target.closest("[data-wstep]");
+    if (step) { sbWeek.start = addDays(sbWeek.start, 7 * Number(step.dataset.wstep)); sbWeek.picked = ""; renderSoccerWeek(); return; }
+    const day = event.target.closest("[data-day]");
+    if (day) { sbWeek.picked = day.dataset.day; renderSoccerWeek(); }
+});
+
 function renderNextCard() {
+    renderSoccerWeek();
     const box = dayEl("soccerNext");
     const s = nextSession;
     box.hidden = !s;
@@ -792,6 +900,7 @@ async function refreshMyRequests() {
     // The coach's plan for the next session (best effort: the card works without it).
     try { myPlans = await listMyPlans("client"); } catch (error) { console.warn("Southbound: couldn't load session plans.", error); }
     myRequestsAll = requests;
+    myRequestsLoaded = true;
     const today = localToday();
     const { upcoming, past, waiting, declined, attendance } = clientSessions(requests, today);
 

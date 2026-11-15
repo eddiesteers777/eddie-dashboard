@@ -595,3 +595,51 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 .sb-progress-last{ margin-top:14px; padding-top:12px; border-top:1px solid rgba(214,228,240,.14); }
 .sb-progress-last p{ margin:6px 0 0; color:var(--text); font-size:15px; line-height:1.45; }
 .sb-progress[hidden],.sb-progress-last[hidden]{ display:none !important; }
+
+/* ===== Soccer week (client) and the coach's Month view ===== */
+.schedule-page .sb-week{ padding:16px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.schedule-page .sb-week[hidden]{ display:none !important; }
+.sb-wnav{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 0 12px; color:var(--text-secondary); font-size:14px; text-align:center; }
+.sb-wnav .clients-btn-secondary{ min-width:44px; min-height:44px; border-radius:var(--radius-sm); }
+.sb-wstrip{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+.sb-wday{ min-height:68px; padding:6px 0; border-radius:10px; border:1px solid var(--border); background:rgba(4,11,8,.28); color:var(--text); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; font:inherit; }
+.sb-wday small{ font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.sb-wday b{ font:900 22px/1 var(--font-display); }
+.sb-wday.is-past{ opacity:.65; }
+.sb-wday.is-today{ box-shadow:inset 0 2px 0 var(--gold, var(--primary)); }
+.sb-wday.is-picked{ background:var(--sb-bubble-raised-bg); border-color:var(--primary); }
+.sb-wdots{ display:flex; gap:4px; min-height:7px; }
+.sb-wdots i, .sb-wkey span{ width:7px; height:7px; border-radius:50%; display:inline-block; }
+.d-session{ background:var(--gold, var(--primary)); } .d-hw{ background:var(--primary); } .d-done{ background:var(--green); }
+.sb-wdetail{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+.sb-wrow{ display:flex; gap:12px; align-items:center; padding:11px 12px; min-height:52px; border-radius:10px; border:1px solid var(--border); background:rgba(4,11,8,.28); color:var(--text); text-decoration:none; }
+.sb-wrow b{ display:block; } .sb-wrow small{ color:var(--muted); }
+.sb-wkind{ flex:none; width:82px; text-align:center; font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; padding:4px 0; border-radius:20px; border:1px solid var(--border); color:var(--muted); }
+.sb-wkind.session{ color:var(--gold, var(--primary)); border-color:currentColor; } .sb-wkind.hw{ color:var(--primary); border-color:currentColor; } .sb-wkind.done{ color:var(--green); border-color:currentColor; }
+.sb-wnone{ margin:4px 0; color:var(--muted); }
+.sb-wkey{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0 0; font:500 10.5px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.sb-wkey span{ margin-left:8px; } .sb-wkey span:first-child{ margin-left:0; }
+
+.sched-view{ display:inline-flex; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; }
+.sched-view button{ min-height:40px; padding:0 14px; background:transparent; color:var(--muted); border:0; font:inherit; font-weight:600; cursor:pointer; }
+.sched-view button[aria-pressed="true"]{ background:var(--sb-lens-bg); color:var(--text); box-shadow:var(--sb-lens-shadow); }
+.sched-month{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+.sched-month[hidden], .sched-month-day[hidden]{ display:none !important; }
+.sched-mh{ text-align:center; font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:2px 0 4px; }
+.sched-mday{ min-height:64px; padding:6px; border-radius:10px; border:1px solid var(--border); background:rgba(4,11,8,.28); color:var(--text); text-align:left; display:flex; flex-direction:column; gap:3px; cursor:pointer; font:inherit; min-width:0; }
+.sched-mday b{ font:900 18px/1 var(--font-display); }
+.sched-mday span{ font:500 9.5px/1.25 var(--font-mono); letter-spacing:.04em; color:var(--muted); overflow-wrap:anywhere; }
+.sched-mday.is-other{ opacity:.35; }
+.sched-mday.has-open{ background:color-mix(in srgb, var(--primary) 9%, transparent); }
+.sched-mday.has-booked{ background:color-mix(in srgb, var(--green) 14%, transparent); }
+.sched-mday.has-asked{ border-style:dashed; border-color:var(--primary); }
+.sched-mday.is-off{ background:repeating-linear-gradient(135deg, transparent 0 6px, rgba(236,230,212,.045) 6px 12px); }
+.sched-mday.is-today{ box-shadow:inset 0 2px 0 var(--gold, var(--primary)); }
+.sched-mday.is-picked{ border-color:var(--primary); outline:1px solid var(--primary); }
+.sched-month-day{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+.sched-month-day h3{ margin:0; font-family:var(--font-display); text-transform:uppercase; font-size:20px; }
+@media (max-width:640px){
+  .sched-mday{ min-height:52px; padding:4px; } .sched-mday span{ font-size:0; line-height:0; } .sched-mday.has-open::after, .sched-mday.has-booked::after, .sched-mday.has-asked::after{ content:""; width:7px; height:7px; border-radius:50%; background:var(--primary); } .sched-mday.has-booked::after{ background:var(--green); }
+}
+.sched-view button[aria-pressed="true"]{ color:var(--on-primary); }
+@media (max-width:640px){ .sched-view{ flex:0 0 100%; } .sched-view button{ flex:1; } .sched-weeknav .clients-btn-secondary{ min-width:44px; } }
