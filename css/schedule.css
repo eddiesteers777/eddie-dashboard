@@ -676,3 +676,16 @@ a.sc-row:hover{ border-color:var(--primary); }
 @media (min-width:640px){ .sc-tools{ grid-template-columns:repeat(3,1fr); } }
 .sc-tool{ display:block; padding:14px; min-height:64px; border-radius:12px; border:1px solid var(--border); background:var(--sb-bubble-raised-bg); color:var(--text); text-decoration:none; }
 .sc-tool small{ display:block; color:var(--muted); margin-top:2px; }
+
+/* My Coaches (admin): one glass card per coach */
+.ac-card{ display:block; margin:0 0 12px; padding:14px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); color:var(--text); text-decoration:none; }
+a.ac-card:hover{ border-color:var(--primary); }
+.ac-head{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.ac-head div{ flex:1; min-width:0; } .ac-head small{ display:block; color:var(--muted); }
+.ac-av{ width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:var(--primary); color:var(--on-primary); font:800 15px var(--font-display); }
+.ac-counts{ grid-template-columns:repeat(4,1fr); margin-bottom:0; box-shadow:none; }
+.ac-card .ac-counts{ background:transparent; border:0; padding:6px 0 0; }
+.ac-counts b{ font-size:28px; }
+.ac-actions{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
+.ac-actions a{ flex:1 1 200px; text-align:center; text-decoration:none; }
+@media (max-width:520px){ .ac-counts{ grid-template-columns:repeat(2,1fr); } }

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Coaches | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page schedule-page sc-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow" id="acEyebrow">Admin</div>
+                <h1 id="acTitle">My Coaches</h1>
+                <p class="eos-today-phase" id="acLead">Your soccer and online coaches in one place.</p>
+            </div>
+        </section>
+
+        <div id="acLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="acError" class="clients-empty" hidden></div>
+
+        <div id="acList" hidden></div>
+
+        <div id="acDetail" hidden>
+            <p><a class="sc-more" href="admin-coaches.html">&larr; All coaches</a></p>
+            <div class="sc-counts ac-counts" id="acCounts"></div>
+            <div class="ac-actions" id="acActions"></div>
+            <section id="acNext" class="sb-next"></section>
+            <div class="sc-cols">
+                <section class="sc-block">
+                    <div class="sb-sec-row"><h2 class="clients-section-title">Requests</h2></div>
+                    <div id="acRequests" class="sc-list"></div>
+                </section>
+                <section class="sc-block">
+                    <div class="sb-sec-row"><h2 class="clients-section-title">Homework to review</h2></div>
+                    <div id="acHomework" class="sc-list"></div>
+                </section>
+            </div>
+            <section class="sc-block">
+                <div class="sb-sec-row"><h2 class="clients-section-title">Coming up</h2></div>
+                <div id="acUpcoming" class="sc-list"></div>
+            </section>
+            <section class="sc-block">
+                <div class="sb-sec-row"><h2 class="clients-section-title">Their players</h2></div>
+                <div id="acPlayers" class="sc-list"></div>
+            </section>
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/adminCoachesPage.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

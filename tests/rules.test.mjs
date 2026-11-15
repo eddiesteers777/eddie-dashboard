@@ -166,7 +166,9 @@ test("an approved coach can directly assign an active client without an invite",
     // Reading a link that doesn't exist yet is refused (the rule reads the
     // stored doc), so assignClient must write without checking first: that
     // pre-read made every assignment fail on the live site (2026-10-03).
-    await assertFails(getDoc(link));
+    // (The admin coach may read any link since 2026-11-15, so this pre-read is
+    // allowed for the admin and returns "missing"; a scoped coach still fails.)
+    assert.equal((await getDoc(link)).exists(), false);
     await assertSucceeds(setDoc(link, {
         coachUid: "coach",
         coachName: "Coach One",
@@ -2102,4 +2104,22 @@ test("roles: only the admin reads the website inbox, and nobody can self-grant a
     await assertFails(getDoc(doc(as("onlineCoach"), "inquiries/q9")));
     await assertFails(updateDoc(doc(as("client"), "userProfiles/client"), { coachScope: "admin", isCoachApproved: true }));
     await assertFails(setDoc(doc(as("new9"), "userProfiles/new9"), { uid: "new9", role: "client", isCoachApproved: false, coachScope: "admin", status: "pending", services: [], displayName: "N", email: "n@example.com" }));
+});
+
+test("roles: the admin reads every coach's links, bookings and homework; a scoped coach does not read another coach's", async () => {
+    await seedScopedCoaches();
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "bookingRequests/sb1"), { coachUid: "soccerCoach", clientUid: "kid", status: "requested", dates: ["2026-11-20"], startTime: "09:00" });
+        await setDoc(doc(db, "homework/hw1"), { coachUid: "soccerCoach", clientUid: "kid", title: "Wall passes", status: "active", logs: [] });
+    });
+    const admin = as("coach");
+    await assertSucceeds(getDocs(query(collection(admin, "coachLinks"), where("coachUid", "==", "soccerCoach"))));
+    await assertSucceeds(getDocs(query(collection(admin, "bookingRequests"), where("coachUid", "==", "soccerCoach"))));
+    await assertSucceeds(getDocs(query(collection(admin, "homework"), where("coachUid", "==", "soccerCoach"))));
+    const other = as("onlineCoach");
+    await assertFails(getDocs(query(collection(other, "bookingRequests"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDocs(query(collection(other, "homework"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDocs(query(collection(other, "coachLinks"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDoc(doc(other, "homework/hw1")));
 });

@@ -337,9 +337,11 @@ service cloud.firestore {
     }
 
     match /coachLinks/{linkId} {
+      // The admin coach also reads every coach's links (My Coaches page).
       allow read: if signedIn()
         && (request.auth.uid == resource.data.coachUid
-            || request.auth.uid == resource.data.clientUid);
+            || request.auth.uid == resource.data.clientUid
+            || isAdminCoach());
 
       // There are now two supported creation paths:
       // 1) direct assignment by an approved coach to an already-active client;
@@ -771,7 +773,8 @@ service cloud.firestore {
     match /bookingRequests/{requestId} {
       allow read: if signedIn()
         && (request.auth.uid == resource.data.coachUid
-            || request.auth.uid == resource.data.clientUid);
+            || request.auth.uid == resource.data.clientUid
+            || isAdminCoach());
 
       allow create: if signedIn()
         && request.resource.data.clientUid == request.auth.uid
@@ -1124,7 +1127,8 @@ service cloud.firestore {
     match /homework/{homeworkId} {
       allow read: if signedIn()
         && (resource.data.coachUid == request.auth.uid
-            || resource.data.clientUid == request.auth.uid);
+            || resource.data.clientUid == request.auth.uid
+            || isAdminCoach());
       allow create: if signedIn()
         && request.resource.data.coachUid == request.auth.uid
         && request.resource.data.clientUid is string

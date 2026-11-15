@@ -127,4 +127,6 @@ test("coach roles: admin keeps everything, soccer and online coaches get their o
     assert.equal(accessFromProfile({ status: "active", services: ["running"], isCoachApproved: false }).coachScope, null);
     assert.equal(pageAllowed("analytics.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" })), false);
     assert.equal(pageAllowed("schedule.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" })), true);
+    assert.equal(pageAllowed("admin-coaches.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" })), false);
+    assert.equal(pageAllowed("admin-coaches.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach" })), true);
 });
