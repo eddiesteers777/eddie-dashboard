@@ -29,11 +29,21 @@ export async function fetchRoute(locs, costing = null, avoid = null) {
     const body = { locations: locs.map(p => ({ lat: p[0], lon: p[1] })), costing: "pedestrian", directions_options: { units: "miles" } };
     if (costing) body.costing_options = { pedestrian: costing };
     if (avoid && avoid.length) body.exclude_polygons = avoid; // [[lon, lat], ...] boxes the route must stay out of
-    const res = await timedFetch(VALHALLA + "/route", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-    }, 20000);
-    if (!res.ok) throw new Error("Routing answered " + res.status);
+    // The free server is shared: a busy answer (429, 5xx) or a dropped connection is tried again, twice, before giving up.
+    let res = null, last = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt) await new Promise(r => setTimeout(r, attempt * 1200));
+        try {
+            res = await timedFetch(VALHALLA + "/route", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            }, 20000);
+        } catch (err) { last = err; res = null; continue; }
+        if (res.ok || !(res.status === 429 || res.status >= 500)) break;
+        last = new Error("Routing answered " + res.status);
+    }
+    if (!res) { const e = new Error("Routing didn't answer"); e.reason = "network"; e.cause = last; throw e; }
+    if (!res.ok) { const e = new Error("Routing answered " + res.status); e.status = res.status; throw e; }
     const data = await res.json();
     const legs = data.trip && data.trip.legs;
     if (!legs || !legs.length) throw new Error("No route came back");

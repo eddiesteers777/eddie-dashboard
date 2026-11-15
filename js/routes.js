@@ -207,10 +207,10 @@ function updateNote() {
     const el = $("rbNote");
     const text = S.routeError || S.surfaceError || S.loopNote;
     el.hidden = !text;
-    const retry = !S.routeError && !!S.surfaceError;
+    const retry = !!S.routeError || !!S.surfaceError;
     el.innerHTML = esc(text || "") + (retry ? ' <button type="button" class="rb-retry" id="rbRetry">Try again</button>' : "");
     const b = $("rbRetry");
-    if (b) b.onclick = retryMapData;
+    if (b) b.onclick = S.routeError ? reroute : retryMapData;
 }
 
 function retryMapData() { S.surfaceError = ""; S.facts = null; updateNote(); renderSafety(); render(); settle(false); }
@@ -336,7 +336,11 @@ async function reroute() {
     } catch (err) {
         console.warn("Route builder: routing failed", err);
         result = straightRoute(locs);
-        S.routeError = "The routing service isn't reachable. Showing straight lines between your points. This is NOT a snapped route, and the distance is straight-line only.";
+        const why = err && err.status === 429 ? "The free routing service is busy right now."
+            : err && err.status >= 500 ? "The free routing service had a problem."
+            : err && err.status ? "The routing service couldn't route between these points."
+            : "The routing service didn't answer.";
+        S.routeError = why + " Showing straight lines between your points. This is NOT a snapped route, and the distance is straight-line only.";
     }
     if (my !== S.token) return; // a newer edit won
     S.coords = result.coords; S.miles = result.miles || lineMiles(result.coords); S.snapped = result.snapped;
