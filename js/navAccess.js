@@ -170,6 +170,7 @@ export const PAGE_REQUIRES = Object.freeze({
     "client.html": "coach",
     "soccer-preview.html": "coach",
     "soccer-coach.html": "coach+sessions",
+    "soccer-session.html": "coach+sessions",
     "admin-coaches.html": "admin",
     "marathon.html": "admin",
     "75day.html": "admin",

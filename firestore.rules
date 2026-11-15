@@ -868,6 +868,23 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
     }
 
+    // The coach's private notes for each part of a session plan (2026-11-15,
+    // js/sessionBuild.js): one doc per plan, same id as the plan. Coach only:
+    // players read the plan (sessionPlans), never this. The read rule goes by
+    // the doc id, so a coach reading a plan with no notes yet gets "missing".
+    match /sessionPlanNotes/{noteId} {
+      allow read, delete: if isApprovedCoach() && noteId.matches(request.auth.uid + '_.*');
+      allow create, update: if isApprovedCoach()
+        && request.resource.data.keys().hasOnly(["coachUid", "key", "date", "notes", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && request.resource.data.key is string && request.resource.data.key.size() > 0 && request.resource.data.key.size() <= 60
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && noteId == request.auth.uid + "_" + request.resource.data.key + "_" + request.resource.data.date
+        && request.resource.data.notes is list && request.resource.data.notes.size() <= 12
+        && request.resource.data.notes.join("").size() <= 3600
+        && request.resource.data.updatedAt == request.time;
+    }
+
     // What happened at one session of a booking (Client Hub Phase 6,
     // js/sessionLogs.js): one doc per booking + date. The coach writes it
     // (completed / no-show / cancelled / cancelled late, plus what they

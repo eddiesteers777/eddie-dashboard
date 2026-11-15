@@ -2133,3 +2133,22 @@ test("roles: the admin lists and reads coach profiles; nobody else can list prof
     await assertFails(getDocs(query(collection(as("client"), "userProfiles"), where("isCoachApproved", "==", true))));
     await assertFails(getDoc(doc(as("onlineCoach"), "userProfiles/soccerCoach")));
 });
+
+test("session plan notes: only the coach who owns the plan reads or writes them", async () => {
+    await seedScopedCoaches();
+    const mine = doc(as("coach"), "sessionPlanNotes/coach_s1_2026-11-17");
+    const good = { coachUid: "coach", key: "s1", date: "2026-11-17", notes: ["Two touch max.", "", "x".repeat(300)], updatedAt: serverTimestamp() };
+    assert.equal((await getDoc(mine)).exists(), false);
+    await assertSucceeds(setDoc(mine, good));
+    await assertSucceeds(getDoc(mine));
+    await assertSucceeds(setDoc(mine, { ...good, notes: Array(12).fill("y".repeat(300)) }));
+    await assertFails(setDoc(mine, { ...good, notes: Array(13).fill("a") }));
+    await assertFails(setDoc(mine, { ...good, notes: Array(12).fill("y".repeat(301)) }));
+    await assertFails(setDoc(mine, { ...good, extra: 1 }));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlanNotes/coach_s2_2026-11-17"), good));
+    await assertFails(getDoc(doc(as("client"), "sessionPlanNotes/coach_s1_2026-11-17")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "sessionPlanNotes/coach_s1_2026-11-17")));
+    await assertFails(setDoc(doc(as("soccerCoach"), "sessionPlanNotes/coach_s1_2026-11-17"), { ...good, coachUid: "soccerCoach" }));
+    await assertFails(setDoc(doc(as("client"), "sessionPlanNotes/client_s1_2026-11-17"), { ...good, coachUid: "client" }));
+    await assertSucceeds(deleteDoc(mine));
+});

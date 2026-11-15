@@ -9,7 +9,7 @@
 import { db } from "./firebase.js";
 import { waitForUser } from "./auth.js";
 import {
-    doc, setDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp
+    doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { cleanPlan, validPlan, planId } from "./sessionPlanModel.js";
 
@@ -36,4 +36,22 @@ export async function savePlan(input) {
 export async function deletePlan(key, date) {
     const user = await waitForUser();
     await deleteDoc(doc(db, "sessionPlans", planId(user.uid, key, date)));
+}
+
+// ---- The coach's private notes per part (sessionPlanNotes, coach only) ----
+
+export async function getPlanNotes(key, date) {
+    const user = await waitForUser();
+    if (!user) return [];
+    const snap = await getDoc(doc(db, "sessionPlanNotes", planId(user.uid, key, date)));
+    const notes = snap.exists() ? snap.data().notes : [];
+    return Array.isArray(notes) ? notes.map(n => String(n ?? "")) : [];
+}
+
+export async function savePlanNotes(key, date, notes = []) {
+    const user = await waitForUser();
+    const list = (Array.isArray(notes) ? notes : []).slice(0, 12).map(n => String(n ?? "").slice(0, 300));
+    const ref = doc(db, "sessionPlanNotes", planId(user.uid, key, date));
+    if (!list.some(Boolean)) { await deleteDoc(ref).catch(() => {}); return; }
+    await setDoc(ref, { coachUid: user.uid, key, date, notes: list, updatedAt: serverTimestamp() });
 }

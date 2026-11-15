@@ -120,6 +120,7 @@ const PAGE_TAB = {
     "client.html": "coach",
     "soccer-preview.html": "coach",
     "soccer-coach.html": "coach",
+    "soccer-session.html": "coach",
     "admin-coaches.html": "coach",
     "profile.html": "more",
     "updates.html": "more",

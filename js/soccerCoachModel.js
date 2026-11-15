@@ -16,7 +16,7 @@ export function upcomingSessions(requests = [], today = "", limit = 6) {
     for (const s of sessionList(requests, today)) {
         if (s.date < today || ["cancelled", "late-cancel"].includes(s.log?.status)) continue;
         const key = `${s.date}|${s.startTime}|${s.slotId || s.bookingId}`;
-        const g = groups.get(key) || { key, date: s.date, startTime: s.startTime, endTime: s.endTime, label: s.label, sessionType: s.sessionType, players: [] };
+        const g = groups.get(key) || { key, date: s.date, startTime: s.startTime, endTime: s.endTime, label: s.label, sessionType: s.sessionType, slotId: s.slotId || "", bookingId: s.bookingId || "", players: [] };
         g.players.push({ clientUid: s.clientUid, name: s.clientName || "Player" });
         groups.set(key, g);
     }

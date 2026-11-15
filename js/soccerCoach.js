@@ -18,6 +18,8 @@ import { getProfile } from "./userProfile.js";
 import { standing } from "./homeworkModel.js";
 import { openSheet } from "./homeworkCoach.js";
 import { esc } from "./homeworkView.js";
+import { planKey } from "./sessionPlanModel.js";
+import { listMyPlans } from "./sessionPlans.js";
 import { friendlyError, toast } from "./ui.js";
 
 const $ = id => document.getElementById(id);
@@ -26,6 +28,10 @@ const dateShort = d => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, {
 const time = t => { if (!t) return ""; const [h, m] = t.split(":").map(Number); return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`; };
 const empty = text => `<div class="sc-empty">${esc(text)}</div>`;
 const playerLine = players => players.length > 4 ? `${players.slice(0, 4).map(p => esc(p.name)).join(", ")} +${players.length - 4}` : players.map(p => esc(p.name)).join(", ");
+
+// Link to the session page: "Plan" until one is saved, then "Open plan".
+let planned = new Set();
+const planLink = s => { const key = planKey({ slotId: s.slotId, bookingId: s.bookingId }); return `<a class="sc-plan-link${planned.has(`${key}|${s.date}`) ? " has" : ""}" href="soccer-session.html?key=${encodeURIComponent(key)}&date=${encodeURIComponent(s.date)}">${planned.has(`${key}|${s.date}`) ? "Open plan" : "Plan"}</a>`; };
 
 function render({ requests, homework, names }) {
     const c = soccerCounts({ requests, homework, today });
@@ -39,7 +45,7 @@ function render({ requests, homework, names }) {
     $("scNext").innerHTML = next
         ? `<div class="sb-next-top"><span class="sb-kick tan">Next session · ${esc(next.date === today ? "Today" : dateShort(next.date))}</span><span class="sb-chip">${next.players.length} booked</span></div>
            <div class="sb-next-when"><b>${esc(time(next.startTime))}</b><span>${esc(next.label || "Soccer")}${next.endTime ? ` · until ${esc(time(next.endTime))}` : ""}</span></div>
-           <p class="sc-players">${playerLine(next.players)}</p>`
+           <p class="sc-players">${playerLine(next.players)}</p><p>${planLink(next)}</p>`
         : `<div class="sb-next-top"><span class="sb-kick tan">Next session</span></div><div class="sc-empty">No sessions booked. Open times are set on <a href="schedule.html">Schedule</a>.</div>`;
 
     const waiting = waitingRequests(requests);
@@ -48,7 +54,7 @@ function render({ requests, homework, names }) {
     const review = homeworkToReview(homework);
     $("scHomework").innerHTML = review.length ? review.slice(0, 8).map(({ hw, fresh }) => `<a class="sc-row" href="client.html?uid=${encodeURIComponent(hw.clientUid)}&tab=homework"><div><b>${esc(names.get(hw.clientUid) || "Player")}</b><small>${esc(hw.title)}</small></div><span class="sc-pill ice">${fresh} new</span></a>`).join("") : empty("No new practices to look at.");
 
-    $("scUpcoming").innerHTML = sessions.length ? sessions.map(s => `<div class="sc-row"><div><b>${esc(dateShort(s.date))} · ${esc(time(s.startTime))}</b><small>${esc(s.label || "Soccer")} · ${playerLine(s.players)}</small></div><span class="sc-pill">${s.players.length}</span></div>`).join("") : empty("Nothing coming up.");
+    $("scUpcoming").innerHTML = sessions.length ? sessions.map(s => `<div class="sc-row"><div><b>${esc(dateShort(s.date))} · ${esc(time(s.startTime))}</b><small>${esc(s.label || "Soccer")} · ${playerLine(s.players)}</small></div>${planLink(s)}</div>`).join("") : empty("Nothing coming up.");
 }
 
 // ---- Players: every soccer client, tick several or tap Assign on one ----
@@ -128,7 +134,8 @@ listenForAuth(async user => {
     if (!user) return;
     // Who may open this page is decided by PAGE_REQUIRES in js/navAccess.js (coach + sessions).
     try {
-        const [requests, homework, links] = await Promise.all([listRequestsForMyClients(), listHomeworkIAssigned(), listMyClients().catch(() => [])]);
+        const [requests, homework, links, plans] = await Promise.all([listRequestsForMyClients(), listHomeworkIAssigned(), listMyClients().catch(() => []), listMyPlans("coach").catch(() => [])]);
+        planned = new Set(plans.map(p => `${p.key}|${p.date}`));
         const names = new Map(links.map(l => [l.clientUid, l.clientName]));
         for (const r of requests) if (r.clientUid && r.clientName && !names.has(r.clientUid)) names.set(r.clientUid, r.clientName);
         render({ requests, homework, names });
