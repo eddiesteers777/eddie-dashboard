@@ -408,6 +408,7 @@
     "js/soccerPage.js",
     "js/soccerPreview.js",
     "js/soccerProgress.js",
+    "js/soccerRoster.js",
     "js/soccerSession.js",
     "js/soccerWeek.js",
     "js/start.js",

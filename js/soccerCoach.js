@@ -12,7 +12,8 @@
 import { listenForAuth } from "./auth.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { listHomeworkIAssigned, assignHomework } from "./homework.js";
-import { listMyClients } from "./coachAccess.js";
+import { listMyClients, assignClient } from "./coachAccess.js";
+import { loadSoccerRoster, listAllSoccerHomework } from "./soccerRoster.js";
 import { upcomingSessions, waitingRequests, homeworkToReview, soccerCounts, playerRows, filterPlayers, PLAYER_FILTERS } from "./soccerCoachModel.js";
 import { getProfile } from "./userProfile.js";
 import { standing } from "./homeworkModel.js";
@@ -58,7 +59,7 @@ function render({ requests, homework, names }) {
 }
 
 // ---- Players: every soccer client, tick several or tap Assign on one ----
-const pl = { rows: [], filter: "all", search: "", picked: new Set(), homework: [] };
+const pl = { mine: new Set(), rows: [], filter: "all", search: "", picked: new Set(), homework: [] };
 const ago = ms => { if (!ms) return "no practice yet"; const d = Math.floor((Date.now() - ms) / 864e5); return d <= 0 ? "practiced today" : d === 1 ? "practiced yesterday" : `practiced ${d} days ago`; };
 const initials = name => String(name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
 const STATUS = { new: ["New", "ice"], behind: ["Behind", "clay"], ok: ["On track", "sage"] };
@@ -73,10 +74,10 @@ function renderPlayers() {
         const [label, tone] = STATUS[r.status];
         return `<div class="sc-prow${pl.picked.has(r.uid) ? " picked" : ""}">
             <label class="sc-tick"><input type="checkbox" data-pick="${esc(r.uid)}" ${pl.picked.has(r.uid) ? "checked" : ""} aria-label="Pick ${esc(r.name)}"><span></span></label>
-            <a class="sc-pmain" href="client.html?uid=${encodeURIComponent(r.uid)}&tab=homework"><span class="ac-av">${esc(initials(r.name))}</span><div><b>${esc(r.name)}</b><small>${esc(r.kind)} · ${r.homework ? `${r.homework} homework` : "no homework yet"} · ${esc(ago(r.lastMs))}</small></div></a>
+            ${pl.mine.has(r.uid) ? `<a class="sc-pmain" href="client.html?uid=${encodeURIComponent(r.uid)}&tab=homework">` : `<div class="sc-pmain">`}<span class="ac-av">${esc(initials(r.name))}</span><div><b>${esc(r.name)}</b><small>${esc(r.kind)} · ${r.homework ? `${r.homework} homework` : "no homework yet"} · ${esc(ago(r.lastMs))}${pl.mine.has(r.uid) ? "" : " · not yet yours"}</small></div>${pl.mine.has(r.uid) ? "</a>" : "</div>"}
             <span class="sc-pill ${tone}">${label}</span>
             <button type="button" class="sb-btn ${r.status === "new" ? "sb-btn-primary" : "sb-btn-secondary"}" data-assign="${esc(r.uid)}">Assign</button>
-            <a class="sb-btn sb-btn-tertiary" href="soccer-preview.html?uid=${encodeURIComponent(r.uid)}">View as player</a></div>`;
+            ${pl.mine.has(r.uid) ? `<a class="sb-btn sb-btn-tertiary" href="soccer-preview.html?uid=${encodeURIComponent(r.uid)}">View as player</a>` : ""}</div>`;
     }).join("") : empty(pl.rows.length ? "Nobody matches." : "No soccer clients yet. A client with a soccer service shows up here.");
     const k = pl.picked.size;
     $("scPickBar").hidden = !k;
@@ -88,7 +89,9 @@ async function assignTo(uids) {
     if (!rows.length) return;
     const input = await openSheet({ firstName: rows.length === 1 ? rows[0].name.split(" ")[0] : `${rows.length} players` });
     if (!input) return;
-    const results = await Promise.allSettled(rows.map(r => assignHomework(r.uid, input)));
+    // A player who isn't this coach's yet is added to their players first (homework needs the link).
+    const linkResults = await Promise.allSettled(rows.filter(r => !pl.mine.has(r.uid)).map(r => assignClient(r.uid).then(() => pl.mine.add(r.uid))));
+    const results = await Promise.allSettled(rows.map(r => pl.mine.has(r.uid) ? assignHomework(r.uid, input) : Promise.reject(new Error("not-linked"))));
     const ok = results.map((x, i) => x.status === "fulfilled" ? { r: rows[i], hw: x.value } : null).filter(Boolean);
     const failed = results.length - ok.length;
     for (const { hw } of ok) pl.homework.push(hw);
@@ -122,9 +125,18 @@ function wirePlayers() {
     });
 }
 
-async function loadPlayers(links, homework) {
-    const profiles = new Map();
-    await Promise.all(links.map(async l => { try { const p = await getProfile(l.clientUid); if (p) profiles.set(l.clientUid, p); } catch { /* shows without a type, so it is left out */ } }));
+async function loadPlayers(ownLinks, ownHomework) {
+    let links = ownLinks, profiles = new Map(), homework = ownHomework;
+    pl.mine = new Set(ownLinks.map(l => l.clientUid));
+    try {
+        // Every soccer player and every coach's homework; falls back to this coach's own if the rules don't allow it yet.
+        const roster = await loadSoccerRoster(ownLinks);
+        links = roster.links; profiles = roster.profiles;
+        homework = await listAllSoccerHomework().catch(() => ownHomework);
+    } catch (error) {
+        console.warn("Southbound: all-players roster unavailable, showing your own.", error?.code || error);
+        await Promise.all(ownLinks.map(async l => { try { const p = await getProfile(l.clientUid); if (p) profiles.set(l.clientUid, p); } catch { /* left out */ } }));
+    }
     Object.assign(pl, { links, profiles, homework: [...homework] });
     pl.rows = playerRows({ links, profiles, homework, standingOf: h => standing(h, today) });
     wirePlayers();

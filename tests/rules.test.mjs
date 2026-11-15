@@ -2124,6 +2124,24 @@ test("roles: the admin reads every coach's links, bookings and homework; a scope
     await assertFails(getDoc(doc(other, "homework/hw1")));
 });
 
+test("roles: every soccer coach reads all soccer homework, but cannot change another coach's, and other roles cannot read it", async () => {
+    await seedScopedCoaches();
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "userProfiles/soccerCoach2"), { uid: "soccerCoach2", role: "coach", isCoachApproved: true, coachScope: "soccer", status: "active", services: [], displayName: "Second Soccer", email: "s2@example.com" });
+        await setDoc(doc(db, "homework/hw1"), { coachUid: "soccerCoach", clientUid: "kid", title: "Wall passes", status: "active", logs: [] });
+        await setDoc(doc(db, "bookingRequests/sb1"), { coachUid: "soccerCoach", clientUid: "kid", status: "requested", dates: ["2026-11-20"], startTime: "09:00" });
+    });
+    const second = as("soccerCoach2");
+    await assertSucceeds(getDocs(collection(second, "homework")));
+    await assertSucceeds(getDoc(doc(second, "homework/hw1")));
+    await assertFails(updateDoc(doc(second, "homework/hw1"), { title: "Mine now" }));
+    await assertFails(deleteDoc(doc(second, "homework/hw1")));
+    await assertFails(getDoc(doc(second, "bookingRequests/sb1")));
+    await assertFails(getDocs(collection(as("onlineCoach"), "homework")));
+    await assertFails(getDocs(collection(as("client"), "homework")));
+});
+
 test("roles: the admin lists and reads coach profiles; nobody else can list profiles", async () => {
     await seedScopedCoaches();
     await assertSucceeds(getDocs(query(collection(as("coach"), "userProfiles"), where("isCoachApproved", "==", true))));

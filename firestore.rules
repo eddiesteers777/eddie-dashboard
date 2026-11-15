@@ -112,6 +112,13 @@ service cloud.firestore {
         && get(profilePath(request.auth.uid)).data.get("coachScope", "admin") == "admin";
     }
 
+    // A soccer coach (2026-11-15) also reads every soccer homework, so the
+    // Players list shows all soccer players, not only their own links.
+    function isSoccerCoach() {
+      return isApprovedCoach()
+        && get(profilePath(request.auth.uid)).data.get("coachScope", "admin") == "soccer";
+    }
+
     // What a scoped coach may change on someone's profile: never the role
     // fields, and services only within their own side.
     function scopedCoachMayEdit() {
@@ -1186,7 +1193,8 @@ service cloud.firestore {
       allow read: if signedIn()
         && (resource.data.coachUid == request.auth.uid
             || resource.data.clientUid == request.auth.uid
-            || isAdminCoach());
+            || isAdminCoach()
+            || isSoccerCoach());
       allow create: if signedIn()
         && request.resource.data.coachUid == request.auth.uid
         && request.resource.data.clientUid is string
