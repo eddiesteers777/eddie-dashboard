@@ -75,7 +75,8 @@ function renderPlayers() {
             <label class="sc-tick"><input type="checkbox" data-pick="${esc(r.uid)}" ${pl.picked.has(r.uid) ? "checked" : ""} aria-label="Pick ${esc(r.name)}"><span></span></label>
             <a class="sc-pmain" href="client.html?uid=${encodeURIComponent(r.uid)}&tab=homework"><span class="ac-av">${esc(initials(r.name))}</span><div><b>${esc(r.name)}</b><small>${esc(r.kind)} · ${r.homework ? `${r.homework} homework` : "no homework yet"} · ${esc(ago(r.lastMs))}</small></div></a>
             <span class="sc-pill ${tone}">${label}</span>
-            <button type="button" class="sb-btn ${r.status === "new" ? "sb-btn-primary" : "sb-btn-secondary"}" data-assign="${esc(r.uid)}">Assign</button></div>`;
+            <button type="button" class="sb-btn ${r.status === "new" ? "sb-btn-primary" : "sb-btn-secondary"}" data-assign="${esc(r.uid)}">Assign</button>
+            <a class="sb-btn sb-btn-tertiary" href="soccer-preview.html?uid=${encodeURIComponent(r.uid)}">View as player</a></div>`;
     }).join("") : empty(pl.rows.length ? "Nobody matches." : "No soccer clients yet. A client with a soccer service shows up here.");
     const k = pl.picked.size;
     $("scPickBar").hidden = !k;

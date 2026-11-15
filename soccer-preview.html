@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/clients.css">
     <link rel="stylesheet" href="css/homework.css">
     <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/homeworkMoment.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c2834">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -34,10 +35,23 @@
         <div id="spLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
         <div id="spMissing" class="clients-empty" hidden></div>
         <div id="spBody" hidden>
-            <section id="spWeek" class="sb-week" aria-labelledby="sbWeekTitle"></section>
-            <section id="spNext" class="sb-next" hidden></section>
-            <section id="spHw" class="sp-block"></section>
-            <section id="spProgress" class="sb-progress" hidden></section>
+            <div class="sb-seg sp-tabs" role="tablist" aria-label="What the player sees">
+                <button type="button" role="tab" class="on" data-tab="today" aria-selected="true">Today</button>
+                <button type="button" role="tab" data-tab="week" aria-selected="false">Week</button>
+                <button type="button" role="tab" data-tab="homework" aria-selected="false">Homework</button>
+            </div>
+            <div id="spPaneToday" class="sp-pane">
+                <section id="spGreet" class="sp-block"></section>
+                <section id="spNext" class="sb-next" hidden></section>
+                <section id="spHw" class="sp-block"></section>
+                <section id="spProgress" class="sb-progress" hidden></section>
+            </div>
+            <div id="spPaneWeek" class="sp-pane" hidden>
+                <section id="spWeek" class="sb-week" aria-labelledby="sbWeekTitle"></section>
+            </div>
+            <div id="spPaneHomework" class="sp-pane" hidden>
+                <section id="spHwAll" class="sp-block"></section>
+            </div>
         </div>
 
     </main>

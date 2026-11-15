@@ -21,6 +21,7 @@ import { soccerProgress } from "./soccerProgress.js";
 import { esc } from "./homeworkView.js";
 import { cachedRole } from "./role.js";
 import { friendlyError } from "./ui.js";
+import { celebrateHomework } from "./homeworkMoment.js";
 
 const $ = id => document.getElementById(id);
 const today = new Date().toLocaleDateString("en-CA");
@@ -29,7 +30,7 @@ const dateShort = d => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, {
 const time = t => { if (!t) return ""; const [h, m] = t.split(":").map(Number); return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`; };
 const typeText = t => ({ soccer: "Soccer", running: "Running", strength: "Strength" }[t] || "Session");
 
-const state = { requests: [], homework: [], start: weekStartOf(today), picked: today, name: "this client" };
+const state = { tab: "today", requests: [], homework: [], start: weekStartOf(today), picked: today, name: "this client" };
 
 function renderWeek() {
     const days = clientWeek({ requests: state.requests, homework: state.homework, anyDay: state.start, today });
@@ -71,6 +72,36 @@ function renderRest() {
     }
 }
 
+function renderGreet() {
+    const { upcoming } = clientSessions(state.requests, today);
+    const open = state.homework.filter(h => h.status !== "archived" && !hwProgress(h, today).complete).length;
+    $("spGreet").innerHTML = `<div class="sb-sec-row"><h2 class="clients-section-title">Hi, ${esc(state.name)}</h2></div><div class="clients-card"><p class="sb-wnone">${upcoming.length ? `Next session ${esc(upcoming[0].date === today ? "today" : dateShort(upcoming[0].date))}. ` : "No session booked. "}${open ? `${open} homework to practice.` : "Homework is all caught up."}</p></div>`;
+}
+
+// Every homework the player has, done or not. "Play the finish" shows the celebration they get
+// after a practice. Nothing is saved: the homework is copied with one extra practice in memory.
+function renderHomeworkTab() {
+    const items = sortForClient(state.homework.filter(h => h.status !== "archived"), today);
+    $("spHwAll").innerHTML = `<div class="sb-sec-row"><h2 class="clients-section-title">Homework</h2></div>` + (items.length
+        ? items.map(h => { const p = hwProgress(h, today); return `<div class="sb-wrow"><div style="flex:1"><b>${esc(h.title)}</b><small>${esc(p.label)}${h.dueDate ? ` · due ${esc(dateShort(h.dueDate))}` : ""}</small></div><button type="button" class="clients-btn-secondary" data-finish="${esc(h.id)}">Play the finish</button></div>`; }).join("")
+        : `<div class="clients-card"><p class="sb-wnone">No homework yet. When you give ${esc(state.name)} something to practice, it shows here.</p></div>`);
+}
+
+function showTab(tab) {
+    state.tab = tab;
+    document.querySelectorAll(".sp-tabs [data-tab]").forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
+    ["today", "week", "homework"].forEach(t => { $("spPane" + t[0].toUpperCase() + t.slice(1)).hidden = t !== tab; });
+}
+document.querySelector(".sp-tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
+$("spHwAll").addEventListener("click", e => {
+    const b = e.target.closest("[data-finish]");
+    const hw = b && state.homework.find(h => h.id === b.dataset.finish);
+    if (!hw) return;
+    const was = hwProgress(hw, today).complete;
+    const preview = { ...hw, logs: [...(hw.logs || []), { date: today, count: 1, feel: "okay" }] };
+    celebrateHomework({ hw: preview, wasComplete: was, today, streak: 1, firstName: state.name === "this client" ? "" : state.name });
+});
+
 $("spWeek").addEventListener("click", event => {
     const step = event.target.closest("[data-wstep]");
     if (step) { state.start = addDays(state.start, 7 * Number(step.dataset.wstep)); state.picked = ""; renderWeek(); return; }
@@ -98,9 +129,11 @@ listenForAuth(async user => {
         state.requests = requests.filter(r => r.clientUid === uid);
         state.homework = homework;
         $("spBanner").hidden = false;
-        $("spBanner").innerHTML = `<span><b>Viewing as ${esc(profile?.displayName || "client")}.</b> This is what they see. Read-only: nothing here is saved.</span><a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(uid)}">Exit preview</a>`;
+        $("spBanner").innerHTML = `<span><b>Viewing as ${esc(profile?.displayName || "client")}.</b> This is what they see (play the finish on the Homework tab). Read-only: nothing here is saved.</span><a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(uid)}">Exit preview</a>`;
         renderWeek();
         renderRest();
+        renderGreet();
+        renderHomeworkTab();
         $("spLoading").hidden = true;
         $("spBody").hidden = false;
     } catch (error) {
