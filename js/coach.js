@@ -9,6 +9,8 @@
 
 import { listenForAuth } from "./auth.js";
 import { cachedRole } from "./role.js";
+import { getNavAccess } from "./navAccess.js";
+import { scopeLabel } from "./services.js";
 import { withTimeout } from "./syncTimeout.js";
 import { isApprovedCoach, listPendingProfiles } from "./userProfile.js";
 import { getEmailSetupStatus } from "./emailNotify.js";
@@ -677,6 +679,15 @@ document.addEventListener("click", event => {
     today.clients = null;
     loadQueue();
 });
+
+// Coach roles: the dashboard follows the coach's side (css/coach.css hides
+// what the other side doesn't use). Admin sees everything.
+getNavAccess().then(access => {
+    if (!access?.isCoach) return;
+    document.body.dataset.coachScope = access.coachScope || "admin";
+    const eyebrow = document.querySelector(".eos-today-eyebrow");
+    if (eyebrow && access.coachScope && access.coachScope !== "admin") eyebrow.textContent = `Coach \u00b7 ${access.coachScope === "soccer" ? "Soccer" : access.coachScope === "online" ? "Online" : scopeLabel(access.coachScope)}`;
+}).catch(() => {});
 
 listenForAuth(async user => {
     signedOutEl.hidden = Boolean(user);

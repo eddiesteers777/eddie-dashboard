@@ -103,6 +103,29 @@ service cloud.firestore {
         && get(profilePath(request.auth.uid)).data.isCoachApproved == true;
     }
 
+    // Coach roles (2026-11-14). An approved coach with no coachScope is the
+    // admin (Eddie's own account); "online" and "soccer" coaches are scoped.
+    // Only an admin can change role, isCoachApproved or coachScope, and
+    // read the website inbox.
+    function isAdminCoach() {
+      return isApprovedCoach()
+        && get(profilePath(request.auth.uid)).data.get("coachScope", "admin") == "admin";
+    }
+
+    // What a scoped coach may change on someone's profile: never the role
+    // fields, and services only within their own side.
+    function scopedCoachMayEdit() {
+      let mine = get(profilePath(request.auth.uid)).data.get("coachScope", "admin");
+      let after = request.resource.data;
+      let before = resource.data;
+      return after.get("role", "") == before.get("role", "")
+        && after.get("isCoachApproved", false) == before.get("isCoachApproved", false)
+        && after.get("coachScope", "") == before.get("coachScope", "")
+        && (after.get("services", []) == before.get("services", [])
+            || (mine == "soccer" && after.get("services", []).hasOnly(["soccer_1on1", "soccer_group"]))
+            || (mine == "online" && after.get("services", []).hasOnly(["online_coaching", "running", "strength"])));
+    }
+
     function linked(coachUid, clientUid) {
       return exists(/databases/$(database)/documents/coachLinks/$(coachUid + '_' + clientUid));
     }
@@ -151,6 +174,7 @@ service cloud.firestore {
         && request.resource.data.uid == uid
         && request.resource.data.role == "client"
         && request.resource.data.isCoachApproved == false
+        && !("coachScope" in request.resource.data)
         && request.resource.data.status == "pending"
         && request.resource.data.services.size() == 0;
 
@@ -166,6 +190,8 @@ service cloud.firestore {
         // ids (js/services.js; tests/services.test.mjs keeps this list in
         // step). Profiles whose services aren't touched pass as they are.
         || (isApprovedCoach()
+            && (isAdminCoach() || scopedCoachMayEdit())
+            && request.resource.data.get("coachScope", "admin") in ["admin", "online", "soccer"]
             && (request.resource.data.get("services", []) == resource.data.get("services", [])
                 || request.resource.data.get("services", []).hasOnly(["online_coaching", "running", "strength", "soccer_1on1", "soccer_group"])));
     }
@@ -1667,7 +1693,7 @@ service cloud.firestore {
 
     match /inquiries/{inquiryId} {
       allow create: if validInquiry(request.resource.data);
-      allow read: if isApprovedCoach();
+      allow read: if isAdminCoach();
       allow update: if isApprovedCoach()
         && request.resource.data.status in ["new", "handled"]
         && onlyChanges(["status", "handledAt"]);

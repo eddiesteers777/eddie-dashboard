@@ -2054,3 +2054,52 @@ test("session plans: well-formed only, the id must be the coach's, a coach can't
     const full = sp("coach", { title: "t".repeat(80), focus: "f".repeat(200), bring: "b".repeat(200), lines: Array(12).fill("6:00 PM|" + "n".repeat(60) + "|120 min"), clientUids: Array.from({ length: 40 }, (_, i) => "u".repeat(28) + String(i).padStart(2, "0")) });
     await assertSucceeds(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-23".replace("10-23", "10-22")), full));
 });
+
+// ---- Coach roles (2026-11-14): admin / online / soccer ----
+
+async function seedScopedCoaches() {
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "userProfiles/soccerCoach"), { uid: "soccerCoach", role: "coach", isCoachApproved: true, coachScope: "soccer", status: "active", services: [], displayName: "Soccer Coach", email: "s@example.com" });
+        await setDoc(doc(db, "userProfiles/onlineCoach"), { uid: "onlineCoach", role: "coach", isCoachApproved: true, coachScope: "online", status: "active", services: [], displayName: "Online Coach", email: "o@example.com" });
+        await setDoc(doc(db, "userProfiles/kid"), { uid: "kid", role: "client", isCoachApproved: false, status: "pending", services: [], displayName: "Kid", email: "k@example.com" });
+        await setDoc(doc(db, "coachLinks/soccerCoach_kid"), { coachUid: "soccerCoach", clientUid: "kid" });
+        await setDoc(doc(db, "coachLinks/onlineCoach_kid"), { coachUid: "onlineCoach", clientUid: "kid" });
+    });
+}
+
+test("roles: the admin can turn an existing client into a soccer or online coach", async () => {
+    await seedScopedCoaches();
+    await assertSucceeds(updateDoc(doc(as("coach"), "userProfiles/client"), { role: "coach", isCoachApproved: true, coachScope: "soccer" }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "userProfiles/client"), { coachScope: "online" }));
+    await assertFails(updateDoc(doc(as("coach"), "userProfiles/client"), { coachScope: "owner" }));
+});
+
+test("roles: a scoped coach cannot promote anyone or change a role", async () => {
+    await seedScopedCoaches();
+    for (const who of ["soccerCoach", "onlineCoach"]) {
+        const db = as(who);
+        await assertFails(updateDoc(doc(db, "userProfiles/kid"), { role: "coach", isCoachApproved: true, coachScope: "admin" }));
+        await assertFails(updateDoc(doc(db, "userProfiles/kid"), { isCoachApproved: true }));
+        await assertFails(updateDoc(doc(db, "userProfiles/kid"), { coachScope: "soccer" }));
+        await assertFails(updateDoc(doc(db, who === "soccerCoach" ? "userProfiles/soccerCoach" : "userProfiles/onlineCoach"), { coachScope: "admin" }));
+    }
+});
+
+test("roles: a scoped coach approves clients only inside their own side", async () => {
+    await seedScopedCoaches();
+    await assertSucceeds(updateDoc(doc(as("soccerCoach"), "userProfiles/kid"), { status: "active", services: ["soccer_group"] }));
+    await assertFails(updateDoc(doc(as("soccerCoach"), "userProfiles/kid"), { services: ["running"] }));
+    await assertFails(updateDoc(doc(as("onlineCoach"), "userProfiles/kid"), { services: ["soccer_1on1"] }));
+    await assertSucceeds(updateDoc(doc(as("onlineCoach"), "userProfiles/kid"), { services: ["running"] }));
+});
+
+test("roles: only the admin reads the website inbox, and nobody can self-grant a scope", async () => {
+    await seedScopedCoaches();
+    await env.withSecurityRulesDisabled(async ctx => { await setDoc(doc(ctx.firestore(), "inquiries/q9"), { note: "hi" }); });
+    await assertSucceeds(getDoc(doc(as("coach"), "inquiries/q9")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "inquiries/q9")));
+    await assertFails(getDoc(doc(as("onlineCoach"), "inquiries/q9")));
+    await assertFails(updateDoc(doc(as("client"), "userProfiles/client"), { coachScope: "admin", isCoachApproved: true }));
+    await assertFails(setDoc(doc(as("new9"), "userProfiles/new9"), { uid: "new9", role: "client", isCoachApproved: false, coachScope: "admin", status: "pending", services: [], displayName: "N", email: "n@example.com" }));
+});

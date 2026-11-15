@@ -521,3 +521,10 @@ Tapping the Prayer or Bible habit (Today, and the Habits page for today) opens a
 
 ### Build a Route: library, map looks, COROS send (2026-11-14)
 Saved routes show as cards (`refreshSaved` in `js/routes.js`, helpers in `js/routeLibrary.js`). The map look is chosen by `#rbLooks` (`js/routeMapLook.js`); only the Dark look gets the CSS invert filter (`#rbMap.rb-look-dark`). Send to COROS = `js/routeCoros.js`; the sent state lives on the route record (`corosSentAt`) and syncs with it.
+
+## Coach roles (2026-11-14)
+- `userProfiles.coachScope`: `admin` (or absent on an approved coach = Eddie's own account), `online`, `soccer`. Only an admin can set it, change `role`/`isCoachApproved`, or read `inquiries` (`isAdminCoach()` / `scopedCoachMayEdit()` in `firestore.rules`; tests "roles:" in `tests/rules.test.mjs`). A scoped coach can only set `services` on someone inside their own side.
+- App: `capabilitiesFor({ coachScope })` in `js/services.js` (new capability `admin` for Eddie's own tools: 75-Day, Analytics, Weekly Review, Weekly Planning; Playbook is `coach+sessions`). `accessFromProfile` carries `coachScope` (nav access cache version 3). `showsPersonalPlan()` is admin only.
+- Assign: Client Hub button "Make coach" / "Coach: Soccer coach" (admin only, not on your own account) opens a dialog (Online / Soccer / Admin / Remove) and calls `setCoachScope()` in `js/userProfile.js`. A promoted client keeps their account, services and coach link.
+- Coach dashboard: `body[data-coach-scope]` hides what the other side doesn't use (`css/coach.css` end). Not built: an admin All | Online | Soccer switch, giving a soccer coach every soccer client (a coach still sees clients linked to them), a Settings > Coaches list.
+- Preview as client: `soccer-preview.html` + `js/soccerPreview.js`, a read-only copy of a soccer client's Soccer page, opened from the Client Hub.

@@ -29,11 +29,11 @@ import { capabilitiesFor, failOpenCapabilities, hasTrainingService, hasSoccerSer
 // The last access this device worked out (device-only, like
 // sb-account-role in js/role.js, never synced): js/loadHeader.js draws
 // the tab bar from it straight away, then redraws only if the fresh
-// profile says otherwise. Offline, it's what the nav shows. Version 2
-// carries capabilities; older copies are ignored (the next profile read
+// profile says otherwise. Offline, it's what the nav shows. Version 3
+// carries capabilities and the coach scope; older copies are ignored (the next profile read
 // replaces them).
 const ACCESS_KEY = "sb-nav-access";
-const VERSION = 2;
+const VERSION = 3;
 
 export function cachedNavAccess() {
     try {
@@ -71,10 +71,12 @@ export function accessFromProfile(profile, { hasCoachPlan = false } = {}) {
     }
     const isCoach = profile.isCoachApproved === true;
     const services = Array.isArray(profile.services) ? profile.services : [];
-    const caps = capabilitiesFor({ services, status: profile.status || null, isCoachApproved: isCoach, hasCoachPlan });
+    const coachScope = isCoach ? (profile.coachScope || "admin") : null;
+    const caps = capabilitiesFor({ services, status: profile.status || null, isCoachApproved: isCoach, hasCoachPlan, coachScope });
     return {
         v: VERSION,
         isCoach,
+        coachScope,
         // Kept for older callers; the capabilities are what decide.
         hasTrainingAccess: isCoach || hasTrainingService(services),
         hasSoccerAccess: isCoach || hasSoccerService(services),
@@ -167,11 +169,11 @@ export const PAGE_REQUIRES = Object.freeze({
     "coach-messages.html": "coach",
     "client.html": "coach",
     "soccer-preview.html": "coach",
-    "marathon.html": "coach",
-    "75day.html": "coach",
-    "analytics.html": "coach",
-    "weekly-review.html": "coach",
-    "planning.html": "coach"
+    "marathon.html": "admin",
+    "75day.html": "admin",
+    "analytics.html": "admin",
+    "weekly-review.html": "admin",
+    "planning.html": "admin"
 });
 
 export function pageAllowed(page, access) {

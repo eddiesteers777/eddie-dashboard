@@ -23,7 +23,7 @@ import { waitForUser } from "./auth.js";
 import {
     doc, getDoc, setDoc, updateDoc, deleteDoc,
     collection, query, where, getDocs,
-    serverTimestamp
+    serverTimestamp, deleteField
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import { cleanServices } from "./services.js";
@@ -188,6 +188,19 @@ export async function setClientServices(uid, services) {
 export async function denyProfile(uid) {
     await updateDoc(profileDoc(uid), { status: "archived" });
     await deleteDoc(clientDirectoryDoc(uid));
+}
+
+// Admin only (the rules enforce it): make an account an admin, online or
+// soccer coach, or ("none") take coach access away again. The person keeps
+// their account, their services and their own coach link.
+export async function setCoachScope(uid, scope) {
+    if (scope === "none") {
+        await updateDoc(profileDoc(uid), { role: "client", isCoachApproved: false, coachScope: deleteField() });
+        return;
+    }
+    if (!["admin", "online", "soccer"].includes(scope)) throw new Error("unknown-scope");
+    await updateDoc(profileDoc(uid), { role: "coach", isCoachApproved: true, coachScope: scope, status: "active" });
+    await deleteDoc(clientDirectoryDoc(uid)).catch(() => {});
 }
 
 export async function promoteToCoach(uid) {

@@ -758,3 +758,10 @@
     .coach-plans{ order:3; margin:0 0 18px; }
     .coach-tools{ order:7; }
 }
+
+/* Coach roles: each side sees only what it uses. Admin sees everything. */
+body[data-coach-scope="online"] .coach-pb,
+body[data-coach-scope="online"] #coachPlansWrap,
+body[data-coach-scope="online"] .coach-week,
+body[data-coach-scope="online"] #inquiries,
+body[data-coach-scope="soccer"] #inquiries{ display:none !important; }

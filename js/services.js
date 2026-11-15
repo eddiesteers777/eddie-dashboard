@@ -78,8 +78,20 @@ export const CAPABILITIES = Object.freeze([
     "homework",      // soccer homework (homework.html, the hub's Homework tab)
     "profile",       // My Profile (the guided profile)
     "updates",       // From Your Coach, Messages, Connect with Coach
-    "coach"          // the Coach section and Eddie's own tools
+    "coach",         // the Coach section (any coach)
+    "admin"          // Eddie's own tools, coach roles, the website inbox (admin coach only)
 ]);
+
+// Coach roles (Eddie, 2026-11-14): who a coach account is. No scope on an
+// approved coach means admin (Eddie's own account). "online" coaches
+// running, strength and online clients; "soccer" coaches soccer clients.
+export const COACH_SCOPES = Object.freeze([
+    { value: "admin", label: "Admin" },
+    { value: "online", label: "Online coach" },
+    { value: "soccer", label: "Soccer coach" }
+].map(Object.freeze));
+export const isAdminScope = scope => !scope || scope === "admin";
+export const scopeLabel = scope => COACH_SCOPES.find(c => c.value === (scope || "admin"))?.label || "Coach";
 
 const TRAINING_CAPS = ["plan", "running", "strength", "crossTraining", "fueling", "nutrition", "readiness", "checkins"];
 const ACTIVE_CAPS = ["progress", "habits", "package"];
@@ -91,8 +103,13 @@ const ACCOUNT_CAPS = ["profile", "updates"];
 //   isCoachApproved the coach flag (only the coach gets "coach")
 //   hasCoachPlan    the client has an active plan from their coach
 //                   (gives a soccer-only client Plan + check-in)
-export function capabilitiesFor({ services = [], status = null, isCoachApproved = false, hasCoachPlan = false } = {}) {
-    if (isCoachApproved === true) return new Set(CAPABILITIES);
+export function capabilitiesFor({ services = [], status = null, isCoachApproved = false, hasCoachPlan = false, coachScope = null } = {}) {
+    if (isCoachApproved === true) {
+        if (isAdminScope(coachScope)) return new Set(CAPABILITIES);
+        if (coachScope === "online") return new Set(["coach", ...TRAINING_CAPS, ...ACTIVE_CAPS, ...ACCOUNT_CAPS]);
+        if (coachScope === "soccer") return new Set(["coach", "sessions", "homework", ...ACTIVE_CAPS, ...ACCOUNT_CAPS]);
+        return new Set(["coach", ...ACCOUNT_CAPS]); // an unknown scope gets the least
+    }
     if (status === "pending") return new Set(["profile"]);
     if (status !== "active") return new Set();
 
@@ -112,5 +129,5 @@ export function capabilitiesFor({ services = [], status = null, isCoachApproved 
 // When the profile can't be read and the device remembers nothing: the
 // whole client app (the nav has always failed open), never the coach's.
 export function failOpenCapabilities() {
-    return new Set(CAPABILITIES.filter(c => c !== "coach"));
+    return new Set(CAPABILITIES.filter(c => c !== "coach" && c !== "admin"));
 }
