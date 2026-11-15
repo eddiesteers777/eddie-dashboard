@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { linesFromParts, notesFromParts, partsFromLines, totalMins, sessionMinutes, lastPlanFor, sessionGroups, findGroup, cleanParts, blankParts } from "../js/sessionBuild.js";
+import { cleanTemplate, validTemplate, linesFromParts, notesFromParts, partsFromLines, totalMins, sessionMinutes, lastPlanFor, sessionGroups, findGroup, cleanParts, blankParts } from "../js/sessionBuild.js";
 import { cleanPlan, parseLine } from "../js/sessionPlanModel.js";
 
 const parts = [
@@ -47,4 +47,12 @@ test("minutes, last week's plan, groups", () => {
     assert.equal(groups.length, 2);
     assert.equal(findGroup(groups, "s1", "2026-11-17").players.length, 2);
     assert.equal(findGroup(groups, "b3", "2026-11-19").players[0].name, "Ava");
+});
+
+test("templates keep parts with their notes and need a name and a part", () => {
+    const t = cleanTemplate({ name: "  First touch night ", focus: "x", parts: [{ kind: "Warm-up", name: "Rondo", mins: 10, note: "private" }, { name: "" }] });
+    assert.equal(t.name, "First touch night"); assert.equal(t.parts.length, 1); assert.equal(t.parts[0].note, "private");
+    assert.equal(validTemplate(t), "");
+    assert.match(validTemplate(cleanTemplate({ parts: t.parts })), /name/);
+    assert.match(validTemplate(cleanTemplate({ name: "x" })), /part/);
 });

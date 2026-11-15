@@ -31,8 +31,11 @@ export function cleanWrap(input = {}, players = []) {
         const t = text(line, MAX_LINE);
         if (known.has(uid) && t) lines[uid] = t;
     }
+    // Carried only with a line to carry.
+    const carry = [...new Set((input.carry || []).filter(u => known.has(u) && lines[u] && !missed.includes(u)))];
     return {
         missed,
+        carry,
         parts: (input.parts || []).slice(0, 12).map(p => ({
             name: text(p.name, 60), kind: text(p.kind, 12) || "Other", mins: Math.min(180, Math.max(0, Number(p.mins) || 0)),
             status: p.status === "skipped" ? "skipped" : "done", how: text(p.how, MAX_HOW)
@@ -67,3 +70,29 @@ export const hasWords = wrap => Boolean(wrap.summary || Object.keys(wrap.lines |
 export function emailText(wrap, uid, focus = "") {
     return [focus ? `Focus: ${focus}` : "", wordsFor(wrap, uid)].filter(Boolean).join("\n\n");
 }
+
+// ---- Group into 1-on-1: lines the coach marked "carry to their next 1-on-1" ----
+
+export const CARRY_DAYS = 21;
+const addDaysIso = (iso, n) => { const d = new Date(`${iso}T12:00:00`); d.setDate(d.getDate() + n); return d.toLocaleDateString("en-CA"); };
+
+// wraps: the coach's saved wrap-ups. Newest carried line per player, from before `beforeDate`
+// and within CARRY_DAYS of it.
+export function carryNotes(wraps = [], playerUids = [], beforeDate = "") {
+    const want = new Set(playerUids);
+    const from = addDaysIso(beforeDate, -CARRY_DAYS);
+    const best = new Map();
+    for (const w of wraps || []) {
+        if (!w?.date || !(w.date < beforeDate) || w.date < from) continue;
+        for (const uid of w.carry || []) {
+            const line = w.lines?.[uid];
+            if (!want.has(uid) || !line) continue;
+            const had = best.get(uid);
+            if (!had || w.date > had.date) best.set(uid, { uid, date: w.date, key: w.key, line, summary: w.summary || "" });
+        }
+    }
+    return [...best.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+// The plan part a carried line becomes. The name is what players see; the line stays a private note.
+export const carryPart = note => ({ kind: "Other", name: "Carry-over from group", mins: 0, note: String(note.line || "").slice(0, 300) });

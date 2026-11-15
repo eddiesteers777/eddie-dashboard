@@ -11,11 +11,12 @@
 import { listenForAuth } from "./auth.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { sessionList } from "./sessionModel.js";
-import { listMyPlans, savePlan, deletePlan, getPlanNotes, savePlanNotes, getWrap, saveWrap } from "./sessionPlans.js";
+import { listMyPlans, savePlan, deletePlan, getPlanNotes, savePlanNotes, getWrap, saveWrap, listWraps } from "./sessionPlans.js";
+import { listTemplates, saveTemplate, deleteTemplate } from "./sessionTemplates.js";
 import { saveSessionLog } from "./sessionLogs.js";
 import { listMyClients } from "./coachAccess.js";
 import { sendSessionSummaryEmail } from "./emailNotify.js";
-import { wrapParts, cleanWrap, logsFor, canWrap, hasWords, emailText } from "./sessionWrap.js";
+import { wrapParts, cleanWrap, logsFor, canWrap, hasWords, emailText, carryNotes, carryPart } from "./sessionWrap.js";
 import { getMyProfile } from "./userProfile.js";
 import { linesFromPractice } from "./sessionPlanModel.js";
 import {
@@ -24,7 +25,7 @@ import {
 } from "./sessionBuild.js";
 import { esc } from "./homeworkView.js";
 import { icon } from "./icons.js";
-import { toast, friendlyError, sbConfirm, sbChoose } from "./ui.js";
+import { toast, friendlyError, sbConfirm, sbChoose, sbPrompt } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -33,7 +34,7 @@ const MAX_PARTS = 12;
 const dateLong = d => new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 const time = t => { if (!t) return ""; const [h, m] = t.split(":").map(Number); return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`; };
 
-const st = { group: null, plans: [], existing: null, parts: [], playbook: null, dirty: false, wrap: { missed: [], parts: [], summary: "", lines: {} }, sentAt: null, wrapDirty: false, links: new Map() };
+const st = { group: null, plans: [], existing: null, parts: [], playbook: null, dirty: false, wrap: { missed: [], carry: [], parts: [], summary: "", lines: {} }, sentAt: null, wrapDirty: false, links: new Map() };
 
 const hasContent = () => st.parts.some(p => p.name || p.note);
 
@@ -69,10 +70,21 @@ function renderTotal() {
     $("ssTotal").classList.toggle("over", Boolean(length && planned > length));
 }
 
+function renderCarry() {
+    const box = $("ssCarry");
+    const notes = st.carry || [];
+    box.hidden = !notes.length;
+    if (!notes.length) return;
+    const nameOf = uid => st.group.players.find(p => p.clientUid === uid)?.name || "Player";
+    box.innerHTML = `<div class="ss-carry-head"><span class="sp-lbl">From group</span></div>` + notes.map(n => `<div class="ss-carry-row"><div><b>${esc(first(nameOf(n.uid)))} · ${esc(dateLong(n.date))}</b><p>${esc(n.line)}</p></div>
+        <button type="button" class="sb-btn sb-btn-secondary" data-use="${esc(n.uid)}">Start plan from this</button></div>`).join("");
+}
+
 function renderFrom() {
     const last = lastPlanFor(st.plans, KEY, DATE);
     $("ssFrom").innerHTML = [
         last ? `<button type="button" class="sc-chip" data-from="last">Last plan (${esc(dateLong(last.date))})</button>` : "",
+        `<button type="button" class="sc-chip" data-from="template">Saved template</button>`,
         `<button type="button" class="sc-chip" data-from="playbook">Playbook practice</button>`,
         `<button type="button" class="sc-chip" data-from="blank">Blank</button>`
     ].join("");
@@ -129,6 +141,12 @@ async function startFrom(kind) {
         const notes = await getPlanNotes(last.key, last.date).catch(() => []);
         return replaceParts(partsFromLines(last.lines, notes), last.focus || "", last.bring || "");
     }
+    if (kind === "template") {
+        const list = await listTemplates();
+        const t = await pickFrom("Saved templates", list.map(x => ({ id: x.id, label: x.name, sub: `${(x.parts || []).length} parts${x.focus ? ` · ${x.focus}` : ""}`, tpl: x })), "No templates yet. Save a plan as a template and it shows up here.");
+        if (t) await replaceParts(cleanParts(t.tpl.parts), t.tpl.focus || "", t.tpl.bring || "");
+        return;
+    }
     const pb = await playbook();
     const choice = await pickFrom("Playbook practice", pb.practices.map(p => ({ id: p.id, label: p.name, sub: `${p.practice.items.length} drills`, practice: p.practice })), "No saved practices yet. Build one in the Playbook's practice planner.");
     if (choice) await replaceParts(partsFromLines(linesFromPractice(choice.practice, pb.drills, st.group.startTime)));
@@ -169,6 +187,15 @@ async function save() {
     } finally { button.disabled = false; }
 }
 
+async function saveAsTemplate() {
+    const parts = cleanParts(st.parts);
+    if (!parts.length) { toast("Add a part first.", { type: "error" }); return; }
+    const name = (await sbPrompt("Name this template.", { title: "Save as template", defaultValue: $("ssFocus").value.trim() || st.group.label || "", placeholder: "First touch night", confirmLabel: "Save", maxLength: 60 }) || "").trim();
+    if (!name) return;
+    try { await saveTemplate({ name, focus: $("ssFocus").value, bring: $("ssBring").value, parts }); toast("Saved as a template"); }
+    catch (error) { console.error(error); toast(friendlyError(error, "save the template"), { type: "error" }); }
+}
+
 async function remove() {
     if (!await sbConfirm("Remove this plan? Players will no longer see it.", { confirmLabel: "Remove", danger: true })) return;
     try {
@@ -207,8 +234,20 @@ function wire() {
     $("ssAdd").addEventListener("click", () => { st.parts.push({ kind: "Other", name: "", mins: 0, note: "" }); st.dirty = true; renderParts(); $("ssParts").lastElementChild?.querySelector("[data-f=name]")?.focus(); });
     $("ssDrills").addEventListener("click", () => addDrill().catch(e => toast(friendlyError(e, "open your drills"), { type: "error" })));
     $("ssFrom").addEventListener("click", e => { const b = e.target.closest("[data-from]"); if (b) startFrom(b.dataset.from).catch(err => toast(friendlyError(err, "load that"), { type: "error" })); });
+    $("ssCarry").addEventListener("click", e => {
+        const b = e.target.closest("[data-use]");
+        const n = b && (st.carry || []).find(x => x.uid === b.dataset.use);
+        if (!n) return;
+        if (st.parts.some(p => p.name === carryPart(n).name && p.note === carryPart(n).note)) { toast("That is already in the plan."); return; }
+        const empty = st.parts.findIndex(p => !p.name && !p.note);
+        const part = carryPart(n);
+        st.parts = [part, ...st.parts.filter((_, i) => i !== empty)].slice(0, MAX_PARTS);
+        if (!$("ssFocus").value.trim()) $("ssFocus").value = n.line.slice(0, 200);
+        st.dirty = true; renderParts(); toast("Added to the top of the plan");
+    });
     $("ssSave").addEventListener("click", save);
     $("ssRemove").addEventListener("click", remove);
+    $("ssTemplate").addEventListener("click", saveAsTemplate);
     window.addEventListener("beforeunload", e => { if (st.dirty) e.preventDefault(); });
 }
 
@@ -236,7 +275,8 @@ function renderDid() {
 function renderLines() {
     const came = st.group.players.filter(p => !st.wrap.missed.includes(p.clientUid));
     $("ssLines").innerHTML = came.length ? came.map(p => `<div class="ss-pl"><div class="ss-pl-top"><b>${esc(p.name)}</b></div>
-        <textarea class="sb-dialog-input ss-note" data-line="${esc(p.clientUid)}" rows="2" maxlength="200" placeholder="A line for ${esc(first(p.name))} (optional)" aria-label="A line for ${esc(p.name)}">${esc(st.wrap.lines[p.clientUid] || "")}</textarea></div>`).join("") : `<div class="sc-empty">Nobody is marked as coming.</div>`;
+        <textarea class="sb-dialog-input ss-note" data-line="${esc(p.clientUid)}" rows="2" maxlength="200" placeholder="A line for ${esc(first(p.name))} (optional)" aria-label="A line for ${esc(p.name)}">${esc(st.wrap.lines[p.clientUid] || "")}</textarea>
+        <button type="button" class="sc-chip ss-carry-btn${st.wrap.carry.includes(p.clientUid) ? " on" : ""}" data-carry="${esc(p.clientUid)}" aria-pressed="${st.wrap.carry.includes(p.clientUid)}">${st.wrap.carry.includes(p.clientUid) ? "✓ Goes to their next 1-on-1" : "Carry to their next 1-on-1"}</button></div>`).join("") : `<div class="sc-empty">Nobody is marked as coming.</div>`;
 }
 
 function renderWrap() {
@@ -313,6 +353,14 @@ function wireWrap() {
         if (row && e.target.matches("[data-how]")) { st.wrap.parts[Number(row.dataset.i)].how = e.target.value; st.wrapDirty = true; }
     });
     $("ssLines").addEventListener("input", e => { const u = e.target.dataset.line; if (u) { st.wrap.lines[u] = e.target.value; st.wrapDirty = true; } });
+    $("ssLines").addEventListener("click", e => {
+        const b = e.target.closest("[data-carry]");
+        if (!b) return;
+        const u = b.dataset.carry, i = st.wrap.carry.indexOf(u);
+        if (i < 0 && !String(st.wrap.lines[u] || "").trim()) { toast("Write a line for them first.", { type: "error" }); return; }
+        i >= 0 ? st.wrap.carry.splice(i, 1) : st.wrap.carry.push(u);
+        st.wrapDirty = true; renderLines();
+    });
     $("ssSummary").addEventListener("input", () => { st.wrapDirty = true; });
     $("ssDidAdd").addEventListener("click", async () => {
         const name = await sbPromptName();
@@ -368,6 +416,8 @@ listenForAuth(async user => {
         st.links = new Map(links.map(l => [l.clientUid, l]));
         if (wrapDoc) { st.wrap = cleanWrap({ ...wrapDoc, parts: wrapDoc.parts || [] }, g.players); st.sentAt = wrapDoc.sentAt ? Date.now() : null; }
         wireWrap();
+        // Lines carried from a group session into this one (only before the session itself).
+        if (DATE >= today) listWraps().then(w => { st.carry = carryNotes(w, g.players.map(p => p.clientUid), DATE); renderCarry(); }).catch(() => {});
         document.querySelectorAll(".ss-tab[data-tab]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
         if (params.get("tab") === "wrap") showTab("wrap");
         $("ssLoading").hidden = true;

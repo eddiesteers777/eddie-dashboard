@@ -388,6 +388,7 @@
     "js/sessionReport.js",
     "js/sessionShare.js",
     "js/sessionStore.js",
+    "js/sessionTemplates.js",
     "js/sessionWrap.js",
     "js/setRunner.js",
     "js/settings.js",

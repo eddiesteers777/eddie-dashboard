@@ -49,7 +49,7 @@ export async function getWrap(key, date) {
 
 export async function saveWrap(key, date, wrap, { sent = false } = {}) {
     const user = await waitForUser();
-    const data = { coachUid: user.uid, key, date, missed: wrap.missed || [], parts: wrap.parts || [], summary: wrap.summary || "", lines: wrap.lines || {}, updatedAt: serverTimestamp() };
+    const data = { coachUid: user.uid, key, date, missed: wrap.missed || [], parts: wrap.parts || [], summary: wrap.summary || "", lines: wrap.lines || {}, carry: wrap.carry || [], updatedAt: serverTimestamp() };
     if (sent) data.sentAt = serverTimestamp();
     else if (wrap.sentAt) data.sentAt = wrap.sentAt;
     await setDoc(doc(db, "sessionWraps", planId(user.uid, key, date)), data);
@@ -71,4 +71,12 @@ export async function savePlanNotes(key, date, notes = []) {
     const ref = doc(db, "sessionPlanNotes", planId(user.uid, key, date));
     if (!list.some(Boolean)) { await deleteDoc(ref).catch(() => {}); return; }
     await setDoc(ref, { coachUid: user.uid, key, date, notes: list, updatedAt: serverTimestamp() });
+}
+
+// Every wrap-up this coach saved (for carrying lines into a later 1-on-1).
+export async function listWraps() {
+    const user = await waitForUser();
+    if (!user) return [];
+    const snap = await getDocs(query(collection(db, "sessionWraps"), where("coachUid", "==", user.uid)));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }

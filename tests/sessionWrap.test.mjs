@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { wrapParts, cleanWrap, logsFor, wordsFor, canWrap, hasWords, emailText } from "../js/sessionWrap.js";
+import { wrapParts, cleanWrap, logsFor, wordsFor, canWrap, hasWords, emailText, carryNotes, carryPart } from "../js/sessionWrap.js";
 
 const players = [{ clientUid: "a", name: "Ava", bookingId: "b1" }, { clientUid: "j", name: "Jordan", bookingId: "b2" }, { clientUid: "c", name: "Cole", bookingId: "b3" }];
 const plan = [{ name: "Rondo 4v1", kind: "Warm-up", mins: 10, note: "private" }, { name: "Juggling", kind: "Cool-down", mins: 10, note: "" }];
@@ -40,4 +40,21 @@ test("words, email, when you can wrap up", () => {
     assert.equal(emailText(wrap, "a", "First touch"), "Focus: First touch\n\nGood.\n\nFor you: Nice.");
     assert.ok(canWrap("2026-11-15", "2026-11-15")); assert.ok(!canWrap("2026-11-16", "2026-11-15"));
     assert.ok(!hasWords({ summary: "", lines: {}, parts: [{ how: "" }] })); assert.ok(hasWords({ summary: "x", lines: {}, parts: [] }));
+});
+
+test("carry: only lines marked to carry, newest per player, recent, before the session", () => {
+    const wrap = cleanWrap({ missed: ["c"], lines: { a: "Opens up on the right.", j: "Stays calm." }, carry: ["a", "c", "zzz", "b"] }, players);
+    assert.deepEqual(wrap.carry, ["a"]);
+    const wraps = [
+        { date: "2026-11-10", key: "s1", carry: ["a"], lines: { a: "older" } },
+        { date: "2026-11-17", key: "s1", carry: ["a", "j"], lines: { a: "Opens up on the right.", j: "Stays calm." } },
+        { date: "2026-10-01", key: "s1", carry: ["a"], lines: { a: "too old" } },
+        { date: "2026-11-20", key: "s1", carry: ["a"], lines: { a: "after the session" } }
+    ];
+    const notes = carryNotes(wraps, ["a"], "2026-11-19");
+    assert.equal(notes.length, 1);
+    assert.equal(notes[0].line, "Opens up on the right.");
+    assert.equal(carryNotes(wraps, ["zzz"], "2026-11-19").length, 0);
+    assert.equal(carryNotes(wraps, ["a", "j"], "2026-11-19").length, 2);
+    assert.deepEqual(carryPart(notes[0]), { kind: "Other", name: "Carry-over from group", mins: 0, note: "Opens up on the right." });
 });

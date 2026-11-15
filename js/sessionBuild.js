@@ -86,3 +86,14 @@ export function sessionGroups(sessions = []) {
 }
 export const findGroup = (groups, key, date) => (groups || []).find(g => g.key === key && g.date === date) || null;
 export const sessionHref = g => `soccer-session.html?key=${encodeURIComponent(g.key)}&date=${encodeURIComponent(g.date)}`;
+
+// ---- Templates: a plan saved to start from again ----
+export function cleanTemplate(input = {}) {
+    return {
+        name: clean(input.name, 60),
+        focus: clean(input.focus, 200),
+        bring: clean(input.bring, 200),
+        parts: cleanParts(input.parts)
+    };
+}
+export const validTemplate = t => (!t.name ? "Give the template a name." : !t.parts.length ? "Add at least one part first." : "");

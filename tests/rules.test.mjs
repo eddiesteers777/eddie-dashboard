@@ -2171,3 +2171,30 @@ test("session wraps: coach only, shape checked, and sending a log still needs th
     await assertFails(setDoc(doc(as("client"), "sessionWraps/client_s1_2026-11-17"), { ...good, coachUid: "client" }));
     await assertSucceeds(deleteDoc(mine));
 });
+
+test("session wraps carry list and session templates: coach only, lists by coachUid", async () => {
+    await seedScopedCoaches();
+    const wrap = doc(as("coach"), "sessionWraps/coach_s1_2026-11-17");
+    const base = { coachUid: "coach", key: "s1", date: "2026-11-17", missed: [], parts: [], summary: "x", lines: { kid: "y" }, carry: ["kid"], updatedAt: serverTimestamp() };
+    await assertSucceeds(setDoc(wrap, base));
+    await assertFails(setDoc(wrap, { ...base, carry: Array(41).fill("a") }));
+    await assertFails(setDoc(wrap, { ...base, carry: "kid" }));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "sessionWraps"), where("coachUid", "==", "coach"))));
+    await assertFails(getDocs(query(collection(as("coach"), "sessionWraps"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDocs(query(collection(as("soccerCoach"), "sessionWraps"), where("coachUid", "==", "coach"))));
+    const t = doc(as("coach"), "sessionTemplates/coach_t1");
+    const tpl = { coachUid: "coach", name: "First touch night", focus: "First touch", bring: "Ball", parts: [{ kind: "Warm-up", name: "Rondo", mins: 10, note: "private" }], updatedAt: serverTimestamp() };
+    assert.equal((await getDoc(t)).exists(), false);
+    await assertSucceeds(setDoc(t, tpl));
+    await assertSucceeds(getDoc(t));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "sessionTemplates"), where("coachUid", "==", "coach"))));
+    await assertFails(setDoc(t, { ...tpl, name: "" }));
+    await assertFails(setDoc(t, { ...tpl, parts: Array(13).fill({}) }));
+    await assertFails(setDoc(t, { ...tpl, extra: 1 }));
+    await assertFails(setDoc(doc(as("coach"), "sessionTemplates/other_t1"), tpl));
+    await assertFails(getDoc(doc(as("client"), "sessionTemplates/coach_t1")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "sessionTemplates/coach_t1")));
+    await assertFails(getDocs(query(collection(as("soccerCoach"), "sessionTemplates"), where("coachUid", "==", "coach"))));
+    await assertFails(setDoc(doc(as("client"), "sessionTemplates/client_t1"), { ...tpl, coachUid: "client" }));
+    await assertSucceeds(deleteDoc(t));
+});

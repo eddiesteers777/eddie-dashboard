@@ -890,9 +890,12 @@ service cloud.firestore {
     // summary and a line per player. Coach only; sending writes each
     // player's sessionLogs doc, which is what players read.
     match /sessionWraps/{wrapId} {
-      allow read, delete: if isApprovedCoach() && wrapId.matches(request.auth.uid + '_.*');
+      // get goes by the doc id (a missing doc reads as missing); list by the stored coachUid.
+      allow get, delete: if isApprovedCoach() && wrapId.matches(request.auth.uid + '_.*');
+      allow list: if isApprovedCoach() && resource.data.coachUid == request.auth.uid;
       allow create, update: if isApprovedCoach()
-        && request.resource.data.keys().hasOnly(["coachUid", "key", "date", "missed", "parts", "summary", "lines", "sentAt", "updatedAt"])
+        && request.resource.data.keys().hasOnly(["coachUid", "key", "date", "missed", "parts", "summary", "lines", "carry", "sentAt", "updatedAt"])
+        && request.resource.data.get("carry", []) is list && request.resource.data.get("carry", []).size() <= 40
         && request.resource.data.coachUid == request.auth.uid
         && request.resource.data.key is string && request.resource.data.key.size() > 0 && request.resource.data.key.size() <= 60
         && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
@@ -902,6 +905,22 @@ service cloud.firestore {
         && request.resource.data.summary is string && request.resource.data.summary.size() <= 700
         && request.resource.data.lines is map && request.resource.data.lines.size() <= 40
         && (!("sentAt" in request.resource.data) || request.resource.data.sentAt == null || request.resource.data.sentAt is timestamp)
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // A session plan the coach saved to start from again (2026-11-15,
+    // js/sessionTemplates.js). Coach only; the notes are private.
+    match /sessionTemplates/{templateId} {
+      allow get, delete: if isApprovedCoach() && templateId.matches(request.auth.uid + '_.*');
+      allow list: if isApprovedCoach() && resource.data.coachUid == request.auth.uid;
+      allow create, update: if isApprovedCoach()
+        && request.resource.data.keys().hasOnly(["coachUid", "name", "focus", "bring", "parts", "updatedAt"])
+        && request.resource.data.coachUid == request.auth.uid
+        && templateId.matches(request.auth.uid + '_.*')
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+        && request.resource.data.focus is string && request.resource.data.focus.size() <= 200
+        && request.resource.data.bring is string && request.resource.data.bring.size() <= 200
+        && request.resource.data.parts is list && request.resource.data.parts.size() <= 12
         && request.resource.data.updatedAt == request.time;
     }
 
