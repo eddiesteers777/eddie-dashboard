@@ -14,6 +14,7 @@ import {
 
 import { prewarmGoogleSignIn, googleSignInReady, requestGoogleAccessToken, GOOGLE_CLIENT_ID } from "./googleSignIn.js";
 import { trail } from "./signInTrail.js";
+import { withTimeout } from "./syncTimeout.js";
 import { retryOnNetworkError } from "./signInRetry.js";
 import { buildAuthUrl, newState, useRedirectSignIn } from "./googleRedirect.js";
 
@@ -244,7 +245,11 @@ async function prepareAccountState(user) {
     if (changed) {
         clearAccountSensitiveBrowserState();
         setStorageOwner(null);
-        await clearOfflineCopy();
+        // Wiping the offline copy can hang for good on a phone whose IndexedDB is blocked. Everything on every page
+        // waits for this function (waitForUser), and the owner mark is only set again below, so a hang here left
+        // the whole app empty on every open. Give it a few seconds, then carry on (2026-11-15).
+        try { await withTimeout(clearOfflineCopy(), 5000, "clear-timeout"); }
+        catch (error) { trail("clear-offline", error?.code || "failed"); }
     }
 
     if (nextUid) {
