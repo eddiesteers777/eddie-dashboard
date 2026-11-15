@@ -643,3 +643,13 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 }
 .sched-view button[aria-pressed="true"]{ color:var(--on-primary); }
 @media (max-width:640px){ .sched-view{ flex:0 0 100%; } .sched-view button{ flex:1; } .sched-weeknav .clients-btn-secondary{ min-width:44px; } }
+
+/* Preview as client (coach): the gold "viewing as" bar and a quiet block of rows. */
+.sp-banner{ position:sticky; top:0; z-index:20; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border-radius:12px; font-size:14px; color:var(--text); background:color-mix(in srgb, var(--gold, var(--primary)) 16%, var(--bg)); border:1px solid color-mix(in srgb, var(--gold, var(--primary)) 55%, transparent); }
+.sp-banner[hidden]{ display:none !important; }
+.sp-banner b{ color:var(--gold, var(--primary)); }
+.sp-preview [hidden]{ display:none !important; }
+.sp-preview .sp-block{ display:flex; flex-direction:column; gap:8px; margin:0 0 22px; }
+.sp-preview .sb-progress{ margin:0 0 22px; }
+.sp-preview .sb-week{ padding:16px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); background:var(--sb-bubble-raised-bg); border:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }
+.sp-preview .sb-next{ padding:18px; margin:0 0 22px; border-radius:var(--sb-radius-card, 22px); border-top:2px solid var(--primary); background:var(--sb-bubble-raised-bg); border-left:1px solid var(--sb-bubble-raised-border); border-right:1px solid var(--sb-bubble-raised-border); border-bottom:1px solid var(--sb-bubble-raised-border); box-shadow:var(--sb-bubble-raised-shadow); }

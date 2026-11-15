@@ -118,6 +118,7 @@ const PAGE_TAB = {
     "playbook.html": "more", "playbook-board.html": "more", "playbook-drills.html": "more", "playbook-practice.html": "more", "playbook-run.html": "more", "playbook-fitness.html": "more", "playbook-results.html": "more", "playbook-conditioning.html": "more", "playbook-season.html": "more", "playbook-roster.html": "more", "playbook-team.html": "more", "playbook-game.html": "more",
     "clients.html": "coach",
     "client.html": "coach",
+    "soccer-preview.html": "coach",
     "profile.html": "more",
     "updates.html": "more",
     "messages.html": "more",

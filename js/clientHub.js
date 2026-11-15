@@ -2254,7 +2254,14 @@ function renderAll() {
     renderSessions();
     // Soccer clients get a Homework tab (under More).
     const hwTab = $("hubHomeworkTab");
-    if (hwTab) hwTab.hidden = !(hasSoccerService(record.profile?.services || []) || (record.requests || []).some(r => r.sessionType === "soccer"));
+    const isSoccerClient = hasSoccerService(record.profile?.services || []) || (record.requests || []).some(r => r.sessionType === "soccer");
+    if (hwTab) hwTab.hidden = !isSoccerClient;
+    // Coach: see the player's own Soccer page, read-only.
+    const previewBtn = $("hubPreview");
+    if (previewBtn) {
+        previewBtn.hidden = !isSoccerClient;
+        previewBtn.href = `soccer-preview.html?uid=${encodeURIComponent(record.uid || new URLSearchParams(location.search).get("uid") || "")}`;
+    }
     renderWorkouts();
     renderChanges();
     renderSuggestions();
