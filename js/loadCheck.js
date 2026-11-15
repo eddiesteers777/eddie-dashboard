@@ -3,6 +3,7 @@
 // for this tab, ?loadcheck=off to turn it off. Shows times and counts only; nothing is sent.
 // It keeps the last few loads of the session, so a page that reloads itself shows as two loads.
 import { loadLines } from "./loadTrail.js";
+import { readTrail } from "./signInTrail.js";
 
 const KEY = "sb-loadcheck-log";
 const box = document.createElement("div");
@@ -41,7 +42,43 @@ function paint() {
         past = rest;
     } catch { /* storage blocked */ }
     const before = past.slice(-3).map(p => `earlier load (${p.type}): greeting ${p.greeting === undefined ? "never" : (p.greeting / 1000).toFixed(1) + "s"}`);
-    box.textContent = [...before, ...lines].join("\n");
+    const t0 = Date.now();
+    const trailLines = readTrail().slice(-4).map(([at, page, step, detail]) => `  ${String(Math.round((t0 - at) / 1000)).padStart(4)}s ago ${page} ${step}${detail ? " " + detail : ""}`);
+    box.textContent = [...before, ...lines, ...probeLines(), "sign-in steps:", ...trailLines].join("\n");
 }
+
+// Three quick tests of the cloud connection, run once per page load:
+// did sign-in answer, does an SDK read answer, does a plain HTTPS read answer.
+const probe = { auth: "testing…", sdk: "testing…", rest: "testing…" };
+const probeLines = () => [`sign-in answered: ${probe.auth}`, `cloud read (app): ${probe.sdk}`, `cloud read (https): ${probe.rest}`];
+const timed = async (label, work, limit = 15000) => {
+    const start = performance.now();
+    try {
+        const out = await Promise.race([work(), new Promise((_, no) => setTimeout(() => no(new Error("no answer in " + limit / 1000 + "s")), limit))]);
+        probe[label] = `${((performance.now() - start) / 1000).toFixed(1)}s ${out || "ok"}`;
+    } catch (error) { probe[label] = `${error?.code || error?.message || "failed"} (${((performance.now() - start) / 1000).toFixed(1)}s)`; }
+};
+(async () => {
+    let user = null;
+    await timed("auth", async () => {
+        const { waitForUser } = await import("./auth.js");
+        user = await waitForUser();
+        return user ? "signed in" : "signed OUT";
+    });
+    if (!user) { probe.sdk = probe.rest = "skipped (no sign-in)"; return; }
+    await Promise.all([
+        timed("sdk", async () => {
+            const [{ db }, fs] = await Promise.all([import("./firebase.js"), import("https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js")]);
+            const snap = await fs.getDoc(fs.doc(db, "userProfiles", user.uid));
+            return snap.exists() ? "ok" : "ok (no profile)";
+        }),
+        timed("rest", async () => {
+            const { firestoreRestBase } = await import("./firebase.js");
+            const token = await user.getIdToken();
+            const response = await fetch(`${firestoreRestBase}/userProfiles/${user.uid}`, { headers: { Authorization: `Bearer ${token}` } });
+            return response.ok ? "ok" : "http " + response.status;
+        })
+    ]);
+})();
 paint();
 setInterval(paint, 1000);
