@@ -104,16 +104,21 @@ const ACCOUNT_CAPS = ["profile", "updates"];
 //   hasCoachPlan    the client has an active plan from their coach
 //                   (gives a soccer-only client Plan + check-in)
 export function capabilitiesFor({ services = [], status = null, isCoachApproved = false, hasCoachPlan = false, coachScope = null } = {}) {
-    if (isCoachApproved === true) {
-        if (isAdminScope(coachScope)) return new Set(CAPABILITIES);
-        if (coachScope === "online") return new Set(["coach", ...TRAINING_CAPS, ...ACTIVE_CAPS, ...ACCOUNT_CAPS]);
-        if (coachScope === "soccer") return new Set(["coach", "sessions", "homework", ...ACTIVE_CAPS, ...ACCOUNT_CAPS]);
-        return new Set(["coach", ...ACCOUNT_CAPS]); // an unknown scope gets the least
+    const scoped = isCoachApproved === true && !isAdminScope(coachScope);
+    if (isCoachApproved === true && !scoped) return new Set(CAPABILITIES);
+    let base = null;
+    if (scoped) {
+        // A scoped coach keeps whatever their own services give them as a
+        // client (Eddie, 2026-11-15: his soccer coaches are also running clients).
+        if (coachScope === "online") base = ["coach", ...TRAINING_CAPS, ...ACTIVE_CAPS, ...ACCOUNT_CAPS];
+        else if (coachScope === "soccer") base = ["coach", "sessions", "homework", ...ACTIVE_CAPS, ...ACCOUNT_CAPS];
+        else return new Set(["coach", ...ACCOUNT_CAPS]); // an unknown scope gets the least
+        status = "active";
     }
     if (status === "pending") return new Set(["profile"]);
     if (status !== "active") return new Set();
 
-    const caps = new Set(ACCOUNT_CAPS);
+    const caps = new Set(base || ACCOUNT_CAPS);
     const training = hasTrainingService(services);
     const soccer = hasSoccerService(services);
     if (training) TRAINING_CAPS.forEach(c => caps.add(c));

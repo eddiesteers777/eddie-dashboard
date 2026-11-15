@@ -118,7 +118,11 @@ test("coach roles: admin keeps everything, soccer and online coaches get their o
     assert.ok(!online.has("admin") && !online.has("sessions") && !online.has("homework"));
     const odd = capabilitiesFor({ isCoachApproved: true, coachScope: "wat" });
     assert.ok(odd.has("coach") && !odd.has("admin") && !odd.has("sessions"));
+    const both = capabilitiesFor({ isCoachApproved: true, coachScope: "soccer", services: ["running"], status: "active" });
+    assert.ok(both.has("coach") && both.has("homework") && both.has("running") && both.has("plan") && !both.has("admin"));
     assert.equal(accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" }).coachScope, "soccer");
+    const emma = accessFromProfile({ status: "active", services: ["running"], isCoachApproved: true, role: "coach", coachScope: "soccer" });
+    assert.equal(pageAllowed("running.html", emma), true);
     assert.equal(accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach" }).coachScope, "admin");
     assert.equal(accessFromProfile({ status: "active", services: ["running"], isCoachApproved: false }).coachScope, null);
     assert.equal(pageAllowed("analytics.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" })), false);

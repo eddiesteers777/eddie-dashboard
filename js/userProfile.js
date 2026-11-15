@@ -199,8 +199,8 @@ export async function setCoachScope(uid, scope) {
         return;
     }
     if (!["admin", "online", "soccer"].includes(scope)) throw new Error("unknown-scope");
+    // The clientDirectory doc stays: they remain normal clients of Eddie too.
     await updateDoc(profileDoc(uid), { role: "coach", isCoachApproved: true, coachScope: scope, status: "active" });
-    await deleteDoc(clientDirectoryDoc(uid)).catch(() => {});
 }
 
 export async function promoteToCoach(uid) {
