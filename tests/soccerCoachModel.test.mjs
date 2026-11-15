@@ -30,3 +30,22 @@ test("counts for the strip", () => {
     const c = soccerCounts({ requests: [r("a", "Ava", "2026-11-17"), r("b", "Jo", "2026-11-30"), r("c", "Zed", "2026-11-17", "requested")], homework: [{ id: "1", logs: [{ at: 5 }, { at: 6 }] }], today: "2026-11-15" });
     assert.deepEqual(c, { thisWeek: 1, requests: 1, toReview: 1, practices: 2 });
 });
+
+test("players: only soccer clients, status from homework, filters and search", async () => {
+    const { playerRows, filterPlayers } = await import("../js/soccerCoachModel.js");
+    const links = [{ clientUid: "a", clientName: "Ava L." }, { clientUid: "b", clientName: "Ben K." }, { clientUid: "c", clientName: "Run Client" }, { clientUid: "d", clientName: "Cole" }];
+    const profiles = new Map([["a", { services: ["soccer_group"] }], ["b", { services: ["soccer_1on1", "soccer_group"] }], ["c", { services: ["running"] }], ["d", { services: ["soccer_1on1"], displayName: "Cole M." }]]);
+    const homework = [
+        { clientUid: "a", status: "active", logs: [{ at: 5 }], id: "1" },
+        { clientUid: "b", status: "active", logs: [], id: "2" },
+        { clientUid: "b", status: "archived", logs: [], id: "3" }
+    ];
+    const rows = playerRows({ links, profiles, homework, standingOf: h => (h.id === "2" ? "behind" : "on-track") });
+    assert.deepEqual(rows.map(r => r.name), ["Ava L.", "Ben K.", "Cole M."]);
+    assert.deepEqual(rows.map(r => r.status), ["ok", "behind", "new"]);
+    assert.equal(rows[1].kind, "Group + 1-on-1");
+    assert.deepEqual(filterPlayers(rows, "group").map(r => r.uid), ["a", "b"]);
+    assert.deepEqual(filterPlayers(rows, "one").map(r => r.uid), ["b", "d"]);
+    assert.deepEqual(filterPlayers(rows, "needs").map(r => r.uid), ["b", "d"]);
+    assert.deepEqual(filterPlayers(rows, "all", "av").map(r => r.uid), ["a"]);
+});

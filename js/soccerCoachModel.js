@@ -51,3 +51,45 @@ export function soccerCounts({ requests = [], homework = [], today = "" } = {}) 
         practices: review.reduce((n, r) => n + r.fresh, 0)
     };
 }
+
+// ---- Players (every soccer client) ----
+
+const hasSvc = (profile, id) => (profile?.services || []).includes(id);
+
+// One row per soccer client. `homework` is everything this coach assigned.
+// status: "new" (nothing active), "behind" (something behind or overdue), "ok".
+// `standingOf(hw)` comes from homeworkModel.standing so this stays pure.
+export function playerRows({ links = [], profiles = new Map(), homework = [], standingOf = () => "on-track" } = {}) {
+    const by = new Map();
+    for (const hw of homework || []) {
+        if (!hw || hw.status === "archived") continue;
+        (by.get(hw.clientUid) || by.set(hw.clientUid, []).get(hw.clientUid)).push(hw);
+    }
+    const rows = [];
+    for (const link of links || []) {
+        const profile = profiles.get(link.clientUid);
+        const group = hasSvc(profile, "soccer_group"), one = hasSvc(profile, "soccer_1on1");
+        if (!group && !one) continue;
+        const active = by.get(link.clientUid) || [];
+        const behind = active.filter(h => ["behind", "overdue"].includes(standingOf(h))).length;
+        const lastMs = Math.max(0, ...active.flatMap(h => (h.logs || []).map(l => l?.at || 0)));
+        rows.push({
+            uid: link.clientUid,
+            name: profile?.displayName || link.clientName || "Player",
+            group, one,
+            kind: group && one ? "Group + 1-on-1" : group ? "Group" : "1-on-1",
+            homework: active.length, behind, lastMs,
+            status: !active.length ? "new" : behind ? "behind" : "ok"
+        });
+    }
+    return rows.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export const PLAYER_FILTERS = [["all", "All"], ["group", "Group"], ["one", "1-on-1"], ["needs", "Needs homework"]];
+
+export function filterPlayers(rows = [], filter = "all", search = "") {
+    const q = String(search || "").trim().toLowerCase();
+    return rows.filter(r =>
+        (filter === "all" || (filter === "group" && r.group) || (filter === "one" && r.one) || (filter === "needs" && r.status !== "ok"))
+        && (!q || r.name.toLowerCase().includes(q)));
+}

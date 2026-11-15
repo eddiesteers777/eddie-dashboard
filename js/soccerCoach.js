@@ -11,11 +11,14 @@
 
 import { listenForAuth } from "./auth.js";
 import { listRequestsForMyClients } from "./scheduling.js";
-import { listHomeworkIAssigned } from "./homework.js";
+import { listHomeworkIAssigned, assignHomework } from "./homework.js";
 import { listMyClients } from "./coachAccess.js";
-import { upcomingSessions, waitingRequests, homeworkToReview, soccerCounts } from "./soccerCoachModel.js";
+import { upcomingSessions, waitingRequests, homeworkToReview, soccerCounts, playerRows, filterPlayers, PLAYER_FILTERS } from "./soccerCoachModel.js";
+import { getProfile } from "./userProfile.js";
+import { standing } from "./homeworkModel.js";
+import { openSheet } from "./homeworkCoach.js";
 import { esc } from "./homeworkView.js";
-import { friendlyError } from "./ui.js";
+import { friendlyError, toast } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 const today = new Date().toLocaleDateString("en-CA");
@@ -48,6 +51,79 @@ function render({ requests, homework, names }) {
     $("scUpcoming").innerHTML = sessions.length ? sessions.map(s => `<div class="sc-row"><div><b>${esc(dateShort(s.date))} · ${esc(time(s.startTime))}</b><small>${esc(s.label || "Soccer")} · ${playerLine(s.players)}</small></div><span class="sc-pill">${s.players.length}</span></div>`).join("") : empty("Nothing coming up.");
 }
 
+// ---- Players: every soccer client, tick several or tap Assign on one ----
+const pl = { rows: [], filter: "all", search: "", picked: new Set(), homework: [] };
+const ago = ms => { if (!ms) return "no practice yet"; const d = Math.floor((Date.now() - ms) / 864e5); return d <= 0 ? "practiced today" : d === 1 ? "practiced yesterday" : `practiced ${d} days ago`; };
+const initials = name => String(name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+const STATUS = { new: ["New", "ice"], behind: ["Behind", "clay"], ok: ["On track", "sage"] };
+
+function renderPlayers() {
+    const shown = filterPlayers(pl.rows, pl.filter, pl.search);
+    $("scPlCount").textContent = `${pl.rows.length} ${pl.rows.length === 1 ? "player" : "players"}`;
+    const n = f => filterPlayers(pl.rows, f).length;
+    $("scPlChips").innerHTML = PLAYER_FILTERS.map(([id, label]) => `<button type="button" class="sc-chip${pl.filter === id ? " on" : ""}" data-filter="${id}" aria-pressed="${pl.filter === id}">${esc(label)} ${n(id)}</button>`).join("")
+        + (shown.length ? `<button type="button" class="sc-chip" data-all>${shown.every(r => pl.picked.has(r.uid)) ? "Clear shown" : "Select all shown"}</button>` : "");
+    $("scPlayers").innerHTML = shown.length ? shown.map(r => {
+        const [label, tone] = STATUS[r.status];
+        return `<div class="sc-prow${pl.picked.has(r.uid) ? " picked" : ""}">
+            <label class="sc-tick"><input type="checkbox" data-pick="${esc(r.uid)}" ${pl.picked.has(r.uid) ? "checked" : ""} aria-label="Pick ${esc(r.name)}"><span></span></label>
+            <a class="sc-pmain" href="client.html?uid=${encodeURIComponent(r.uid)}&tab=homework"><span class="ac-av">${esc(initials(r.name))}</span><div><b>${esc(r.name)}</b><small>${esc(r.kind)} · ${r.homework ? `${r.homework} homework` : "no homework yet"} · ${esc(ago(r.lastMs))}</small></div></a>
+            <span class="sc-pill ${tone}">${label}</span>
+            <button type="button" class="sb-btn ${r.status === "new" ? "sb-btn-primary" : "sb-btn-secondary"}" data-assign="${esc(r.uid)}">Assign</button></div>`;
+    }).join("") : empty(pl.rows.length ? "Nobody matches." : "No soccer clients yet. A client with a soccer service shows up here.");
+    const k = pl.picked.size;
+    $("scPickBar").hidden = !k;
+    $("scPickText").textContent = `${k} ${k === 1 ? "player" : "players"} picked`;
+}
+
+async function assignTo(uids) {
+    const rows = uids.map(u => pl.rows.find(r => r.uid === u)).filter(Boolean);
+    if (!rows.length) return;
+    const input = await openSheet({ firstName: rows.length === 1 ? rows[0].name.split(" ")[0] : `${rows.length} players` });
+    if (!input) return;
+    const results = await Promise.allSettled(rows.map(r => assignHomework(r.uid, input)));
+    const ok = results.map((x, i) => x.status === "fulfilled" ? { r: rows[i], hw: x.value } : null).filter(Boolean);
+    const failed = results.length - ok.length;
+    for (const { hw } of ok) pl.homework.push(hw);
+    pl.picked = new Set([...pl.picked].filter(u => !ok.some(o => o.r.uid === u)));
+    pl.rows = playerRows({ links: pl.links, profiles: pl.profiles, homework: pl.homework, standingOf: h => standing(h, today) });
+    renderPlayers();
+    if (failed) toast(`Assigned to ${ok.length}. ${failed} didn't save, try those again.`, { type: "error" });
+    else toast(ok.length === 1 ? `Assigned to ${ok[0].r.name.split(" ")[0]}` : `Assigned to ${ok.length} players`);
+}
+
+function wirePlayers() {
+    $("scPlSearch").addEventListener("input", e => { pl.search = e.target.value; renderPlayers(); });
+    $("scPlayersWrap").addEventListener("click", e => {
+        const f = e.target.closest("[data-filter]");
+        if (f) { pl.filter = f.dataset.filter; renderPlayers(); return; }
+        if (e.target.closest("[data-all]")) {
+            const shown = filterPlayers(pl.rows, pl.filter, pl.search);
+            const all = shown.every(r => pl.picked.has(r.uid));
+            shown.forEach(r => all ? pl.picked.delete(r.uid) : pl.picked.add(r.uid));
+            renderPlayers(); return;
+        }
+        const a = e.target.closest("[data-assign]");
+        if (a) { assignTo([a.dataset.assign]); return; }
+        if (e.target.closest("#scPickGo")) assignTo([...pl.picked]);
+    });
+    $("scPlayersWrap").addEventListener("change", e => {
+        const c = e.target.closest("[data-pick]");
+        if (!c) return;
+        c.checked ? pl.picked.add(c.dataset.pick) : pl.picked.delete(c.dataset.pick);
+        renderPlayers();
+    });
+}
+
+async function loadPlayers(links, homework) {
+    const profiles = new Map();
+    await Promise.all(links.map(async l => { try { const p = await getProfile(l.clientUid); if (p) profiles.set(l.clientUid, p); } catch { /* shows without a type, so it is left out */ } }));
+    Object.assign(pl, { links, profiles, homework: [...homework] });
+    pl.rows = playerRows({ links, profiles, homework, standingOf: h => standing(h, today) });
+    wirePlayers();
+    renderPlayers();
+}
+
 listenForAuth(async user => {
     if (!user) return;
     // Who may open this page is decided by PAGE_REQUIRES in js/navAccess.js (coach + sessions).
@@ -56,6 +132,7 @@ listenForAuth(async user => {
         const names = new Map(links.map(l => [l.clientUid, l.clientName]));
         for (const r of requests) if (r.clientUid && r.clientName && !names.has(r.clientUid)) names.set(r.clientUid, r.clientName);
         render({ requests, homework, names });
+        loadPlayers(links, homework).catch(e => console.warn("Southbound: players unavailable.", e));
         $("scLoading").hidden = true;
         $("scBody").hidden = false;
     } catch (error) {

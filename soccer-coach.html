@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/clients.css">
     <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/homework.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c2834">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -47,6 +48,13 @@
             <section class="sc-block" aria-labelledby="scUpTitle">
                 <div class="sb-sec-row"><h2 class="clients-section-title" id="scUpTitle">Coming up</h2><a class="sc-more" href="schedule.html">Week and month view</a></div>
                 <div id="scUpcoming" class="sc-list"></div>
+            </section>
+            <section class="sc-block" aria-labelledby="scPlTitle" id="scPlayersWrap">
+                <div class="sb-sec-row"><h2 class="clients-section-title" id="scPlTitle">Players</h2><span class="sc-more" id="scPlCount"></span></div>
+                <input type="search" id="scPlSearch" class="sc-search" placeholder="Search players" aria-label="Search players" autocomplete="off">
+                <div class="sc-chips" id="scPlChips" role="group" aria-label="Filter players"></div>
+                <div id="scPlayers" class="sc-list"></div>
+                <div class="sc-pickbar" id="scPickBar" hidden><span id="scPickText"></span><button type="button" class="sb-btn sb-btn-primary" id="scPickGo">Assign homework</button></div>
             </section>
             <section class="sc-block">
                 <div class="sb-sec-row"><h2 class="clients-section-title">Tools</h2></div>

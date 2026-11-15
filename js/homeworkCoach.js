@@ -182,7 +182,7 @@ export async function mountHomework(root, { clientUid, firstName = "them", sessi
 
 // ---- the assign / edit sheet ----
 // Resolves to the form's values, or null when closed.
-function openSheet({ firstName, hw = null, prefill = null }) {
+export function openSheet({ firstName, hw = null, prefill = null }) {
     const seed = hw || prefill;
     return new Promise(resolve => {
         const dialog = document.createElement("dialog");
