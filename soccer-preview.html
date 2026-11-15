@@ -26,9 +26,9 @@
 
         <section class="eos-today-hero">
             <div>
-                <div class="eos-today-eyebrow">Soccer</div>
-                <h1>Soccer</h1>
-                <p class="eos-today-phase">Your next session, the homework before it, and booking another.</p>
+                <div class="eos-today-eyebrow">Player view</div>
+                <h1>Player view</h1>
+                <p class="eos-today-phase">Sessions, homework and plan, the way the player sees them.</p>
             </div>
         </section>
 
@@ -39,6 +39,7 @@
                 <button type="button" role="tab" class="on" data-tab="today" aria-selected="true">Today</button>
                 <button type="button" role="tab" data-tab="week" aria-selected="false">Week</button>
                 <button type="button" role="tab" data-tab="homework" aria-selected="false">Homework</button>
+                <button type="button" role="tab" data-tab="plan" aria-selected="false" id="spTabPlan" hidden>Plan</button>
             </div>
             <div id="spPaneToday" class="sp-pane">
                 <section id="spGreet" class="sp-block"></section>
@@ -48,6 +49,9 @@
             </div>
             <div id="spPaneWeek" class="sp-pane" hidden>
                 <section id="spWeek" class="sb-week" aria-labelledby="sbWeekTitle"></section>
+            </div>
+            <div id="spPanePlan" class="sp-pane" hidden>
+                <section id="spPlan" class="sp-block"></section>
             </div>
             <div id="spPaneHomework" class="sp-pane" hidden>
                 <section id="spHwAll" class="sp-block"></section>

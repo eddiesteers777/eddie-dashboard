@@ -2272,7 +2272,7 @@ function renderAll() {
     // Coach: see the player's own Soccer page, read-only.
     const previewBtn = $("hubPreview");
     if (previewBtn) {
-        previewBtn.hidden = !isSoccerClient;
+        previewBtn.hidden = false;
         previewBtn.href = `soccer-preview.html?uid=${encodeURIComponent(record.uid || new URLSearchParams(location.search).get("uid") || "")}`;
     }
     renderWorkouts();

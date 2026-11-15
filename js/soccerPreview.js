@@ -21,6 +21,8 @@ import { soccerProgress } from "./soccerProgress.js";
 import { esc } from "./homeworkView.js";
 import { cachedRole } from "./role.js";
 import { friendlyError } from "./ui.js";
+import { listPlansForClient, listVersions } from "./coachingPlans.js";
+import { planWeekFor, dayText } from "./coachingPlanModel.js";
 import { celebrateHomework } from "./homeworkMoment.js";
 
 const $ = id => document.getElementById(id);
@@ -87,10 +89,24 @@ function renderHomeworkTab() {
         : `<div class="clients-card"><p class="sb-wnone">No homework yet. When you give ${esc(state.name)} something to practice, it shows here.</p></div>`);
 }
 
+// The coached running plan as the player's copy shows it (the newest published version).
+function renderPlanTab() {
+    const plan = state.plan;
+    $("spTabPlan").hidden = !plan;
+    if (!plan) return;
+    const { week, state: where } = planWeekFor(plan.plan, today);
+    const weeks = plan.plan?.weeks || [];
+    const next = week ? weeks[weeks.indexOf(week) + 1] : null;
+    const block = (title, w) => w ? `<div class="sb-sec-row"><h3 class="clients-section-title">${esc(title)}</h3><span class="sb-kick">${w.plannedMiles ? `${esc(String(w.plannedMiles))} mi` : ""}</span></div>${(w.days || []).map(d => `<div class="sb-wrow"><span class="sb-wkind ${d.date === today ? "hw" : "session"}">${esc(d.day || "")}</span><div><b>${esc(dayText(d))}</b><small>${esc(d.date ? dateShort(d.date) : "")}</small></div></div>`).join("")}` : "";
+    $("spPlan").innerHTML = `<div class="sb-sec-row"><h2 class="clients-section-title">${esc(plan.name || "Plan")}</h2><span class="sb-kick">Version ${esc(String(plan.version || 1))}</span></div>`
+        + (week ? block(where === "current" ? "This week" : where === "upcoming" ? "First week" : "Last week", week) + block("Next week", next) : `<div class="clients-card"><p class="sb-wnone">Nothing in this plan yet.</p></div>`)
+        + `<p class="sb-wnone">For the whole plan or to change it, open the <a href="client.html?uid=${encodeURIComponent(uid)}&tab=plan">Client Hub plan</a>.</p>`;
+}
+
 function showTab(tab) {
     state.tab = tab;
     document.querySelectorAll(".sp-tabs [data-tab]").forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
-    ["today", "week", "homework"].forEach(t => { $("spPane" + t[0].toUpperCase() + t.slice(1)).hidden = t !== tab; });
+    ["today", "week", "homework", "plan"].forEach(t => { $("spPane" + t[0].toUpperCase() + t.slice(1)).hidden = t !== tab; });
 }
 document.querySelector(".sp-tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
 $("spHwAll").addEventListener("click", e => {
@@ -120,6 +136,13 @@ listenForAuth(async user => {
     if (cachedRole() !== "coach") { location.replace("index.html"); return; }
     if (!uid) { missing("Pick a client first."); return; }
     try {
+        const planPromise = listPlansForClient(uid).then(async list => {
+            const active = list.filter(p => p.status === "active").sort((a, b) => (b.version || 0) - (a.version || 0))[0];
+            if (!active) return null;
+            const versions = await listVersions(active.id);
+            const latest = versions.find(v => v.plan) || null;
+            return latest ? { ...active, plan: latest.plan } : null;
+        }).catch(() => null);
         const [profile, requests, homework] = await Promise.all([
             getProfile(uid).catch(() => null),
             listRequestsForMyClients(),
@@ -128,11 +151,13 @@ listenForAuth(async user => {
         state.name = profile?.displayName?.split(" ")[0] || "this client";
         state.requests = requests.filter(r => r.clientUid === uid);
         state.homework = homework;
+        state.plan = await planPromise;
         $("spBanner").hidden = false;
         $("spBanner").innerHTML = `<span><b>Viewing as ${esc(profile?.displayName || "client")}.</b> This is what they see (play the finish on the Homework tab). Read-only: nothing here is saved.</span><a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(uid)}">Exit preview</a>`;
         renderWeek();
         renderRest();
         renderGreet();
+        renderPlanTab();
         renderHomeworkTab();
         $("spLoading").hidden = true;
         $("spBody").hidden = false;
