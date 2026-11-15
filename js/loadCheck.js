@@ -51,6 +51,7 @@ function paint() {
 // did sign-in answer, does an SDK read answer, does a plain HTTPS read answer.
 const probe = { auth: "testing…", sdk: "testing…", rest: "testing…", idb: "testing…", memLong: "testing…", memAuto: "testing…" };
 const probeLines = () => [
+    `app keeps data in: ${globalThis.__sbFirestoreCache || "unknown"}`,
     `sign-in answered: ${probe.auth}`,
     `cloud read (app): ${probe.sdk}`,
     `cloud read (https): ${probe.rest}`,

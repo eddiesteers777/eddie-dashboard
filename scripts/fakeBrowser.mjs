@@ -46,6 +46,7 @@ export const getFirestore = () => ({});
 export const initializeFirestore = () => ({});
 export const persistentLocalCache = () => ({});
 export const persistentSingleTabManager = () => ({});
+export const memoryLocalCache = () => ({});
 export const terminate = async () => {};
 export const clearIndexedDbPersistence = async () => {};
 export const doc = (base, ...segs) => ref(join(base?.path ? base : null, segs));

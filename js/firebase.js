@@ -5,7 +5,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
-  getFirestore, initializeFirestore, persistentLocalCache, persistentSingleTabManager,
+  getFirestore, initializeFirestore, persistentLocalCache, persistentSingleTabManager, memoryLocalCache,
   terminate, clearIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
@@ -38,24 +38,34 @@ const auth = getAuth(app);
 // IndexedDB (private windows, strict tracking protection) the SDK falls
 // back to memory, as before. Signing out clears the persistent copy
 // (js/auth.js).
-// Some phones stall Firestore's streaming connection with no error (2026-11-07, iPhone Safari: the
-// sync read never answered). Auto-detect only helps when the stream fails; on a stall it waits forever,
-// and every screen that reads Firestore then sits empty (coach pages, 2026-11-12). So an iPhone/iPad,
-// or any device that has already seen a hang (js/cloudSync.js leaves the mark), skips the stream and
-// uses plain requests from the start. Slightly more traffic, but it answers.
-function streamLooksUnsafe() {
+// On some iPhones the offline copy itself hangs: every read through it waits for good, and every screen
+// that reads Firestore sits empty (coach screens, 2026-11-12 to 11-14). Proven on Eddie's phone with the
+// Load check: a connection that keeps nothing on the phone answered in 0.3 s, plain HTTPS answered in 0.2 s,
+// phone storage opened fine, and only this connection never answered. js/cloudSync.js leaves a mark
+// (__cloudSyncSdkHungAt) when a read hangs. A device that has the mark keeps its data in memory instead
+// (this page only, no saved copy; a change made with no signal is not kept if the app is closed first).
+// The choice is remembered for 14 days (__fsMemoryCacheAt) so it doesn't flip back to the stuck copy after
+// the mark's day is up; then it is tried again, and a hang puts the mark back.
+const HUNG_KEY = "__cloudSyncSdkHungAt", MEMORY_KEY = "__fsMemoryCacheAt";
+function useMemoryCache() {
   try {
-    if (Date.now() - Number(localStorage.getItem("__cloudSyncSdkHungAt") || 0) < 24 * 3600 * 1000) return true;
-  } catch { /* storage blocked */ }
-  const ua = navigator.userAgent || "";
-  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const now = Date.now();
+    const hung = now - Number(localStorage.getItem(HUNG_KEY) || 0) < 24 * 3600 * 1000;
+    const since = Number(localStorage.getItem(MEMORY_KEY) || 0);
+    if (hung && !(now - since < 14 * 24 * 3600 * 1000)) localStorage.setItem(MEMORY_KEY, String(now));
+    return hung || now - since < 14 * 24 * 3600 * 1000;
+  } catch { return false; }
 }
 
 let db;
+const memoryOnly = useMemoryCache();
+globalThis.__sbFirestoreCache = memoryOnly ? "memory" : "saved";
 try {
   db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }),
-    ...(streamLooksUnsafe() ? { experimentalForceLongPolling: true } : { experimentalAutoDetectLongPolling: true })
+    localCache: memoryOnly ? memoryLocalCache() : persistentLocalCache({ tabManager: persistentSingleTabManager() }),
+    // Some networks stall the streaming connection with no error (2026-11-07, iPhone Safari): this lets it
+    // fall back to plain requests.
+    experimentalAutoDetectLongPolling: true
   });
 } catch (error) {
   console.warn("Southbound: offline copy unavailable, using memory only.", error);
