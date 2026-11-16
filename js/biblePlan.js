@@ -12,7 +12,7 @@
 export const BIBLE_PLAN_KEY = "bible-plan";
 export const PLAN_DAYS = 365;
 
-const BOOKS = [
+export const BOOKS = [
     ["Genesis", 50], ["Exodus", 40], ["Leviticus", 27], ["Numbers", 36], ["Deuteronomy", 34], ["Joshua", 24], ["Judges", 21], ["Ruth", 4],
     ["1 Samuel", 31], ["2 Samuel", 24], ["1 Kings", 22], ["2 Kings", 25], ["1 Chronicles", 29], ["2 Chronicles", 36], ["Ezra", 10], ["Nehemiah", 13],
     ["Esther", 10], ["Job", 42], ["Psalm", 150], ["Proverbs", 31], ["Ecclesiastes", 12], ["Song of Solomon", 8], ["Isaiah", 66], ["Jeremiah", 52],

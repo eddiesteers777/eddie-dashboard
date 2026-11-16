@@ -58,6 +58,7 @@
     <link rel="stylesheet" href="css/trainingGrid.css">
     <link rel="stylesheet" href="css/waterSheet.css">
     <link rel="stylesheet" href="css/faithSheets.css">
+    <link rel="stylesheet" href="css/faithPages.css">
     <link rel="stylesheet" href="css/readiness.css">
     <link rel="stylesheet" href="css/trends.css">
 
@@ -204,6 +205,9 @@
         <!-- TODAY'S HABITS (js/todayHabits.js): one tap each, the Habits page's own check-offs (redesign step 3) -->
         <section id="todayHabits" class="eos-today-card th-card" data-cel-card data-requires="habits" aria-label="Today's habits"></section>
 
+        <!-- VERSE TO CARRY (js/todayCarry.js): the verse picked on the Bible page, shown the day it was picked -->
+        <section id="todayCarry" class="tc" aria-label="Verse to carry" hidden></section>
+
 
         <!-- ==========================================
              Featured Runs (coach only -- js/featuredTraining.js)
@@ -343,6 +347,7 @@
     <script type="module" src="js/readinessCard.js"></script>
     <script type="module" src="js/profileCheckCard.js"></script>
     <script type="module" src="js/todayHabits.js"></script>
+    <script type="module" src="js/todayCarry.js"></script>
 
     <script src="js/registerSW.js"></script>
 

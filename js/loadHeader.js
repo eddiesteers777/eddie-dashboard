@@ -101,6 +101,8 @@ const PAGE_TAB = {
     "strength.html": "train",
     "cross-training.html": "train",
     "habits.html": "habits",
+    "prayer.html": "habits",
+    "bible.html": "habits",
     "homework.html": "homework",
     "nutrition.html": "health",
     "fueling.html": "health",

@@ -44,8 +44,8 @@ test("the Sessions tab: soccer clients without a plan, nobody else", () => {
 
 test("training clients: the training pages, no Schedule, no coach pages", () => {
     for (const who of ["running", "strength", "online"]) {
-        assert.deepEqual(allowed(who), ["checkin.html", "clients.html", "cross-training.html", "habits.html",
-            "messages.html", "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "running.html",
+        assert.deepEqual(allowed(who), ["bible.html", "checkin.html", "clients.html", "cross-training.html", "habits.html",
+            "messages.html", "nutrition.html", "pace-calculator.html", "plan.html", "prayer.html", "profile.html", "programs.html", "progress.html", "running.html",
             "strength.html", "train.html", "updates.html", "workout.html"], who);
     }
 });
@@ -55,8 +55,8 @@ test("Build a Route is a free tool: any signed-in account can open it", () => {
 });
 
 test("soccer clients: Schedule and Habits; Plan + check-in only with a coach plan; no nutrition (the fueling calculator is for everyone)", () => {
-    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "homework.html", "messages.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html"]);
-    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "homework.html", "messages.html", "plan.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html", "workout.html"]);
+    assert.deepEqual(allowed("soccer"), ["bible.html", "clients.html", "habits.html", "homework.html", "messages.html", "prayer.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html"]);
+    assert.deepEqual(allowed("soccerWithPlan"), ["bible.html", "checkin.html", "clients.html", "habits.html", "homework.html", "messages.html", "plan.html", "prayer.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html", "workout.html"]);
     assert.ok(pageAllowed("fueling.html", people.soccerWithPlan) && !pageAllowed("nutrition.html", people.soccerWithPlan));
     assert.ok(pageAllowed("schedule.html", people.hybrid) && pageAllowed("running.html", people.hybrid));
 });
