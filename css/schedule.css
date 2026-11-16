@@ -781,3 +781,12 @@ a.ac-card:hover{ border-color:var(--primary); }
 @media (max-width:560px){ .ss-carry-row{ flex-wrap:wrap; } .ss-carry-row .sb-btn{ width:100%; } }
 .sp-tabs{ margin:0 0 14px; }
 .sp-pane[hidden]{ display:none !important; }
+
+/* Session summaries (player timeline) */
+.ssum-tl{ border-left:2px solid var(--sb-glass-border, rgba(255,255,255,.14)); margin-left:6px; padding-left:16px; }
+.ssum-tl[hidden]{ display:none !important; }
+.ssum-item{ position:relative; margin:0 0 16px; }
+.ssum-item::before{ content:""; position:absolute; left:-24px; top:3px; width:12px; height:12px; border-radius:50%; background:var(--gold, var(--primary)); }
+.ssum-card{ margin-top:6px; padding:14px; border-radius:14px; background:var(--sb-glass-bg, var(--surface)); box-shadow:var(--sb-glass-shadow); border:1px solid var(--sb-glass-border, transparent); }
+.ssum-card p{ margin:6px 0; }
+.ssum-card .ssum-next{ color:var(--sage); }

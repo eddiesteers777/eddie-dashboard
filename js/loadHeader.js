@@ -81,7 +81,7 @@ const BOTTOM_TABS = [
     { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client+plan" },
     // Someone who only books sessions (soccer, no plan) gets them as a tab
     // of their own; with a plan, they're in the Plan tab's week.
-    { key: "sessions", label: "Soccer", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!nutrition+!fueling", pages: ["schedule.html", "homework.html"] },
+    { key: "sessions", label: "Soccer", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!nutrition+!fueling", pages: ["schedule.html", "homework.html", "session-summaries.html"] },
     // Five tabs at most (redesign step 3, Eddie 2026-10-14): training
     // clients get Today · Plan · Train · Fuel · More, the coach Today ·
     // Coach · Train · Fuel · More. Habits stays a tab only for accounts

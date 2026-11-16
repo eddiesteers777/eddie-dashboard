@@ -55,8 +55,8 @@ test("Build a Route is a free tool: any signed-in account can open it", () => {
 });
 
 test("soccer clients: Schedule and Habits; Plan + check-in only with a coach plan; no nutrition (the fueling calculator is for everyone)", () => {
-    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "homework.html", "messages.html", "profile.html", "progress.html", "schedule.html", "updates.html"]);
-    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "homework.html", "messages.html", "plan.html", "profile.html", "progress.html", "schedule.html", "updates.html", "workout.html"]);
+    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "homework.html", "messages.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html"]);
+    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "homework.html", "messages.html", "plan.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html", "workout.html"]);
     assert.ok(pageAllowed("fueling.html", people.soccerWithPlan) && !pageAllowed("nutrition.html", people.soccerWithPlan));
     assert.ok(pageAllowed("schedule.html", people.hybrid) && pageAllowed("running.html", people.hybrid));
 });
