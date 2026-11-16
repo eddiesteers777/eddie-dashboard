@@ -327,10 +327,24 @@ service cloud.firestore {
         && request.resource.data.coachUid == request.auth.uid;
     }
 
+    // The admin may also link another coach as their client (2026-11-15): coaches
+    // like Emily and Emma Grace are Eddie's running clients too, so he can open
+    // their Client Hub and edit their plan. Nobody else can link a coach.
+    function adminLinksCoach(clientUid) {
+      let ref = profilePath(clientUid);
+      return isAdminCoach()
+        && exists(ref)
+        && get(ref).data.uid == clientUid
+        && get(ref).data.role == "coach"
+        && get(ref).data.isCoachApproved == true
+        && get(ref).data.status == "active";
+    }
+
     function directCoachLink() {
       return validCoachLinkData()
         && request.resource.data.inviteCode == ""
-        && activeClientAccount(request.resource.data.clientUid);
+        && (activeClientAccount(request.resource.data.clientUid)
+            || adminLinksCoach(request.resource.data.clientUid));
     }
 
     function invitedCoachLink() {

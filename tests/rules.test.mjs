@@ -2124,6 +2124,15 @@ test("roles: the admin reads every coach's links, bookings and homework; a scope
     await assertFails(getDoc(doc(other, "homework/hw1")));
 });
 
+test("roles: only the admin can link another coach as their client", async () => {
+    await seedScopedCoaches();
+    const data = (coachUid, email) => ({ coachUid, coachName: "X", coachEmail: email, clientUid: "soccerCoach", clientName: "Soccer Coach", clientEmail: "s@example.com", inviteCode: "", linkedAt: serverTimestamp() });
+    await assertFails(setDoc(doc(as("onlineCoach"), "coachLinks/onlineCoach_soccerCoach"), data("onlineCoach", "o@example.com")));
+    await assertSucceeds(setDoc(doc(as("coach"), "coachLinks/coach_soccerCoach"), data("coach", "coach@example.com")));
+    // Then the admin's Client Hub opens for them (a linked coach can read the client's record boundary).
+    await assertSucceeds(getDoc(doc(as("coach"), "userProfiles/soccerCoach")));
+});
+
 test("roles: every soccer coach reads all soccer homework, but cannot change another coach's, and other roles cannot read it", async () => {
     await seedScopedCoaches();
     await env.withSecurityRulesDisabled(async ctx => {

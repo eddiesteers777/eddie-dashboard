@@ -12,7 +12,8 @@ import { listMyCoachAccounts, loadCoachData } from "./adminCoaches.js";
 import { upcomingSessions, waitingRequests, homeworkToReview, soccerCounts } from "./soccerCoachModel.js";
 import { scopeLabel } from "./services.js";
 import { esc } from "./homeworkView.js";
-import { friendlyError } from "./ui.js";
+import { friendlyError, toast, sbChoose, sbConfirm } from "./ui.js";
+import { listMyClients, linkCoachAsClient } from "./coachAccess.js";
 
 const $ = id => document.getElementById(id);
 const today = new Date().toLocaleDateString("en-CA");
@@ -36,14 +37,49 @@ function renderList(coaches, datas) {
     }).join("") : `<div class="clients-empty"><p>Nobody is a coach yet. Open a client in the Client Hub and use the coach role button.</p></div>`;
 }
 
+let myLinks = [];
+
+async function setRole(coach) {
+    const choice = await sbChoose(`${coach.name} keeps their account. Soccer coaches see soccer clients, the Soccer page and the Playbook. Online coaches see running, strength and online clients. Admins see everything.`, {
+        title: "Set their role",
+        choices: [
+            { value: "soccer", label: "Soccer coach", primary: coach.scope === "soccer" },
+            { value: "online", label: "Online coach", primary: coach.scope === "online" },
+            { value: "admin", label: "Admin" },
+            { value: "none", label: "Remove coach access" }
+        ]
+    });
+    if (!choice) return;
+    if (choice === "admin" && !(await sbConfirm("An admin can see everything, change roles and read your website inbox. Make them an admin?", { title: "Make an admin?", confirmLabel: "Make admin", danger: true }))) return;
+    try {
+        const { setCoachScope } = await import("./userProfile.js");
+        await setCoachScope(coach.uid, choice);
+        toast(choice === "none" ? "Coach access removed." : "Saved.");
+        location.reload();
+    } catch (error) { toast(friendlyError(error, "change their role"), { type: "error" }); }
+}
+
+async function addAsClient(coach) {
+    try {
+        await linkCoachAsClient(coach.uid);
+        toast("Added. You can open their plan now.");
+        location.reload();
+    } catch (error) { toast(friendlyError(error, "add them as your client"), { type: "error" }); }
+}
+
 function renderDetail(coach, d) {
+    const isMine = myLinks.some(l => l.clientUid === coach.uid);
     $("acEyebrow").textContent = coach.noRole ? "Coach, no role set" : scopeLabel(coach.scope);
     $("acTitle").textContent = coach.name;
     const k = soccerCounts({ requests: d.requests, homework: d.homework, today });
     $("acLead").textContent = k.requests || k.toReview ? [k.requests && `${k.requests} waiting`, k.toReview && `${k.toReview} to review`].filter(Boolean).join(" · ") : "Nothing waiting.";
     $("acCounts").innerHTML = counts4(k, d.links.length);
-    $("acActions").innerHTML = `<a class="clients-btn-primary" href="client.html?uid=${encodeURIComponent(coach.uid)}&tab=plan">Edit their running plan</a>
-        <a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(coach.uid)}">${coach.noRole ? "Set their role" : "Open in Client Hub"}</a>`;
+    $("acActions").innerHTML = `<button type="button" class="clients-btn-primary" data-role>${coach.noRole ? "Set their role" : "Change role"}</button>
+        ${isMine ? `<a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(coach.uid)}&tab=plan">Edit their running plan</a>
+        <a class="clients-btn-secondary" href="client.html?uid=${encodeURIComponent(coach.uid)}">Open in Client Hub</a>` : `<button type="button" class="clients-btn-secondary" data-addclient>Add as my client (to edit their plan)</button>`}`;
+    $("acActions").querySelector("[data-role]").onclick = () => setRole(coach);
+    const add = $("acActions").querySelector("[data-addclient]");
+    if (add) add.onclick = () => addAsClient(coach);
 
     const names = new Map(d.links.map(l => [l.clientUid, l.clientName]));
     const sessions = upcomingSessions(d.requests, today);
@@ -70,6 +106,7 @@ listenForAuth(async user => {
     // Admin only: PAGE_REQUIRES in js/navAccess.js.
     try {
         const coaches = await listMyCoachAccounts();
+        myLinks = await listMyClients().catch(() => []);
         const pick = new URLSearchParams(location.search).get("coach");
         const chosen = coaches.find(c => c.uid === pick);
         if (chosen) {
