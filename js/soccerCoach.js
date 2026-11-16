@@ -59,16 +59,19 @@ function render({ requests, homework, names }) {
 }
 
 // ---- Players: every soccer client, tick several or tap Assign on one ----
-const pl = { mine: new Set(), rows: [], filter: "all", search: "", picked: new Set(), homework: [] };
+const pl = { onlyMine: false, mine: new Set(), rows: [], filter: "all", search: "", picked: new Set(), homework: [] };
 const ago = ms => { if (!ms) return "no practice yet"; const d = Math.floor((Date.now() - ms) / 864e5); return d <= 0 ? "practiced today" : d === 1 ? "practiced yesterday" : `practiced ${d} days ago`; };
 const initials = name => String(name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
 const STATUS = { new: ["New", "ice"], behind: ["Behind", "clay"], ok: ["On track", "sage"] };
 
 function renderPlayers() {
-    const shown = filterPlayers(pl.rows, pl.filter, pl.search);
-    $("scPlCount").textContent = `${pl.rows.length} ${pl.rows.length === 1 ? "player" : "players"}`;
-    const n = f => filterPlayers(pl.rows, f).length;
-    $("scPlChips").innerHTML = PLAYER_FILTERS.map(([id, label]) => `<button type="button" class="sc-chip${pl.filter === id ? " on" : ""}" data-filter="${id}" aria-pressed="${pl.filter === id}">${esc(label)} ${n(id)}</button>`).join("")
+    const base = pl.onlyMine ? pl.rows.filter(r => pl.mine.has(r.uid)) : pl.rows;
+    const shown = filterPlayers(base, pl.filter, pl.search);
+    $("scPlCount").textContent = `${base.length} ${base.length === 1 ? "player" : "players"}`;
+    const n = f => filterPlayers(base, f).length;
+    const mineCount = pl.rows.filter(r => pl.mine.has(r.uid)).length;
+    const scope = pl.rows.length > mineCount ? `<button type="button" class="sc-chip${pl.onlyMine ? " on" : ""}" data-mine aria-pressed="${pl.onlyMine}">${pl.onlyMine ? `My players ${mineCount}` : `All players ${pl.rows.length}`} · switch</button>` : "";
+    $("scPlChips").innerHTML = scope + PLAYER_FILTERS.map(([id, label]) => `<button type="button" class="sc-chip${pl.filter === id ? " on" : ""}" data-filter="${id}" aria-pressed="${pl.filter === id}">${esc(label)} ${n(id)}</button>`).join("")
         + (shown.length ? `<button type="button" class="sc-chip" data-all>${shown.every(r => pl.picked.has(r.uid)) ? "Clear shown" : "Select all shown"}</button>` : "");
     $("scPlayers").innerHTML = shown.length ? shown.map(r => {
         const [label, tone] = STATUS[r.status];
@@ -105,10 +108,11 @@ async function assignTo(uids) {
 function wirePlayers() {
     $("scPlSearch").addEventListener("input", e => { pl.search = e.target.value; renderPlayers(); });
     $("scPlayersWrap").addEventListener("click", e => {
+        if (e.target.closest("[data-mine]")) { pl.onlyMine = !pl.onlyMine; renderPlayers(); return; }
         const f = e.target.closest("[data-filter]");
         if (f) { pl.filter = f.dataset.filter; renderPlayers(); return; }
         if (e.target.closest("[data-all]")) {
-            const shown = filterPlayers(pl.rows, pl.filter, pl.search);
+            const shown = filterPlayers(pl.onlyMine ? pl.rows.filter(r => pl.mine.has(r.uid)) : pl.rows, pl.filter, pl.search);
             const all = shown.every(r => pl.picked.has(r.uid));
             shown.forEach(r => all ? pl.picked.delete(r.uid) : pl.picked.add(r.uid));
             renderPlayers(); return;

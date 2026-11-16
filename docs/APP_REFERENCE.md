@@ -560,3 +560,4 @@ Update 2026-11-15: the player view also has a Plan tab (the newest published ver
 
 ## My Coaches: set role and link a coach as your client (2026-11-15, rules change)
 The Client Hub only opens for linked clients, and a coach's profile has `role: "coach"`, so the old "Set their role" path showed "This client isn't connected to your account". My Coaches (`?coach=uid`) now has "Set their role / Change role" (`setCoachScope`, no Hub) and, when you aren't linked, "Add as my client" (`linkCoachAsClient` in `js/coachAccess.js`), which writes the link so "Edit their running plan" and "Open in Client Hub" work. Rules: `adminLinksCoach()` lets only the admin create that link, for an active approved coach (test in `tests/rules.test.mjs`).
+Update 2026-11-15: the Players list has a "All players / My players · switch" chip (shown only when some players are not yet the coach's); it filters by `pl.mine`. No rules change.
