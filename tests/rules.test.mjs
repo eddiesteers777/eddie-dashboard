@@ -2124,6 +2124,36 @@ test("roles: the admin reads every coach's links, bookings and homework; a scope
     await assertFails(getDoc(doc(other, "homework/hw1")));
 });
 
+test("parent links: one exact address reads it with no sign-in, nobody lists, only the linked coach writes", async () => {
+    await seedScopedCoaches();
+    const token = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6";
+    const body = (extra = {}) => ({ coachUid: "soccerCoach", clientUid: "kid", firstName: "Ava", coachFirst: "Coach", last: { date: "2026-11-14", focus: "Weak foot", workedOn: "Passing", nextTime: "Head up" }, homework: "Wall passes|2 of 3", updatedAt: serverTimestamp(), ...extra });
+    const coach = as("soccerCoach");
+    await assertSucceeds(setDoc(doc(coach, `parentLinks/${token}`), body()));
+    // Someone with the exact address, signed out, reads that one document.
+    const anon = env.unauthenticatedContext().firestore();
+    await assertSucceeds(getDoc(doc(anon, `parentLinks/${token}`)));
+    // Nobody lists them, and a short or guessable address is refused.
+    await assertFails(getDocs(collection(anon, "parentLinks")));
+    await assertFails(getDocs(collection(as("onlineCoach"), "parentLinks")));
+    await assertFails(getDoc(doc(anon, "parentLinks/short")));
+    await assertSucceeds(getDocs(query(collection(coach, "parentLinks"), where("coachUid", "==", "soccerCoach"))));
+    // Only the linked coach creates; a coach not linked to the player cannot, nor can the player or anyone else.
+    await assertFails(setDoc(doc(as("coach"), "parentLinks/b1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ coachUid: "coach" })));
+    await assertFails(setDoc(doc(as("coach"), "parentLinks/c1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ coachUid: "soccerCoach" })));
+    await assertFails(setDoc(doc(as("kid"), "parentLinks/d1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body()));
+    // The wrong fields or too much text are refused (no email, no notes).
+    await assertFails(setDoc(doc(coach, "parentLinks/e1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ email: "p@example.com" })));
+    await assertFails(setDoc(doc(coach, "parentLinks/f1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ homework: "x".repeat(901) })));
+    // Refresh by the owner works, by another coach does not, and deleting ends the link.
+    await assertSucceeds(updateDoc(doc(coach, `parentLinks/${token}`), { homework: "Wall passes|3 of 3", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("onlineCoach"), `parentLinks/${token}`), { homework: "hacked", updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("onlineCoach"), `parentLinks/${token}`)));
+    await assertFails(deleteDoc(doc(anon, `parentLinks/${token}`)));
+    await assertSucceeds(deleteDoc(doc(coach, `parentLinks/${token}`)));
+    assert.equal((await getDoc(doc(anon, `parentLinks/${token}`))).exists(), false, "the link is gone once deleted");
+});
+
 test("roles: only the admin can link another coach as their client", async () => {
     await seedScopedCoaches();
     const data = (coachUid, email) => ({ coachUid, coachName: "X", coachEmail: email, clientUid: "soccerCoach", clientName: "Soccer Coach", clientEmail: "s@example.com", inviteCode: "", linkedAt: serverTimestamp() });

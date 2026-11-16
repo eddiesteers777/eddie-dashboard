@@ -13,6 +13,7 @@ import { listenForAuth } from "./auth.js";
 import { listRequestsForMyClients } from "./scheduling.js";
 import { listHomeworkIAssigned, assignHomework } from "./homework.js";
 import { listMyClients, assignClient } from "./coachAccess.js";
+import { shareWithParent } from "./parentShare.js";
 import { loadSoccerRoster, listAllSoccerHomework } from "./soccerRoster.js";
 import { upcomingSessions, waitingRequests, homeworkToReview, soccerCounts, playerRows, filterPlayers, PLAYER_FILTERS } from "./soccerCoachModel.js";
 import { getProfile } from "./userProfile.js";
@@ -59,7 +60,7 @@ function render({ requests, homework, names }) {
 }
 
 // ---- Players: every soccer client, tick several or tap Assign on one ----
-const pl = { onlyMine: false, mine: new Set(), rows: [], filter: "all", search: "", picked: new Set(), homework: [] };
+const pl = { user: null, requests: [], onlyMine: false, mine: new Set(), rows: [], filter: "all", search: "", picked: new Set(), homework: [] };
 const ago = ms => { if (!ms) return "no practice yet"; const d = Math.floor((Date.now() - ms) / 864e5); return d <= 0 ? "practiced today" : d === 1 ? "practiced yesterday" : `practiced ${d} days ago`; };
 const initials = name => String(name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
 const STATUS = { new: ["New", "ice"], behind: ["Behind", "clay"], ok: ["On track", "sage"] };
@@ -80,7 +81,7 @@ function renderPlayers() {
             ${pl.mine.has(r.uid) ? `<a class="sc-pmain" href="client.html?uid=${encodeURIComponent(r.uid)}&tab=homework">` : `<div class="sc-pmain">`}<span class="ac-av">${esc(initials(r.name))}</span><div><b>${esc(r.name)}</b><small>${esc(r.kind)} · ${r.homework ? `${r.homework} homework` : "no homework yet"} · ${esc(ago(r.lastMs))}${pl.mine.has(r.uid) ? "" : " · not yet yours"}</small></div>${pl.mine.has(r.uid) ? "</a>" : "</div>"}
             <span class="sc-pill ${tone}">${label}</span>
             <button type="button" class="sb-btn ${r.status === "new" ? "sb-btn-primary" : "sb-btn-secondary"}" data-assign="${esc(r.uid)}">Assign</button>
-            ${pl.mine.has(r.uid) ? `<a class="sb-btn sb-btn-tertiary" href="soccer-preview.html?uid=${encodeURIComponent(r.uid)}">View as player</a>` : ""}</div>`;
+            ${pl.mine.has(r.uid) ? `<a class="sb-btn sb-btn-tertiary" href="soccer-preview.html?uid=${encodeURIComponent(r.uid)}">View as player</a><button type="button" class="sb-btn sb-btn-tertiary" data-parent="${esc(r.uid)}">Share with parent</button>` : ""}</div>`;
     }).join("") : empty(pl.rows.length ? "Nobody matches." : "No soccer clients yet. A client with a soccer service shows up here.");
     const k = pl.picked.size;
     $("scPickBar").hidden = !k;
@@ -117,6 +118,12 @@ function wirePlayers() {
             shown.forEach(r => all ? pl.picked.delete(r.uid) : pl.picked.add(r.uid));
             renderPlayers(); return;
         }
+        const par = e.target.closest("[data-parent]");
+        if (par) {
+            const row = pl.rows.find(r => r.uid === par.dataset.parent);
+            if (row && pl.user) shareWithParent({ coachUid: pl.user.uid, coachName: pl.user.displayName || "", uid: row.uid, name: row.name, requests: pl.requests, homework: pl.homework });
+            return;
+        }
         const a = e.target.closest("[data-assign]");
         if (a) { assignTo([a.dataset.assign]); return; }
         if (e.target.closest("#scPickGo")) assignTo([...pl.picked]);
@@ -152,6 +159,7 @@ listenForAuth(async user => {
     // Who may open this page is decided by PAGE_REQUIRES in js/navAccess.js (coach + sessions).
     try {
         const [requests, homework, links, plans] = await Promise.all([listRequestsForMyClients(), listHomeworkIAssigned(), listMyClients().catch(() => []), listMyPlans("coach").catch(() => [])]);
+        pl.user = user; pl.requests = requests;
         planned = new Set(plans.map(p => `${p.key}|${p.date}`));
         const names = new Map(links.map(l => [l.clientUid, l.clientName]));
         for (const r of requests) if (r.clientUid && r.clientName && !names.has(r.clientUid)) names.set(r.clientUid, r.clientName);

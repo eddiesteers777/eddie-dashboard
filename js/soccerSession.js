@@ -16,6 +16,8 @@ import { listTemplates, saveTemplate, deleteTemplate } from "./sessionTemplates.
 import { saveSessionLog } from "./sessionLogs.js";
 import { listMyClients } from "./coachAccess.js";
 import { sendSessionSummaryEmail } from "./emailNotify.js";
+import { refreshParentLinks } from "./parentShare.js";
+import { listHomeworkIAssigned } from "./homework.js";
 import { wrapParts, cleanWrap, logsFor, canWrap, hasWords, emailText, carryNotes, carryPart } from "./sessionWrap.js";
 import { getMyProfile } from "./userProfile.js";
 import { linesFromPractice } from "./sessionPlanModel.js";
@@ -319,6 +321,10 @@ async function sendWrap() {
                 sendSessionSummaryEmail({ clientEmail: link?.clientEmail || "", clientName: first(p.name), coachName: me?.displayName || "", dateLabel: dateLong(DATE), text: emailText(wrap, p.clientUid, focus) });
             }
         }
+        // Keep any parent link for these players current (quietly).
+        Promise.all([listRequestsForMyClients(), listHomeworkIAssigned()]).then(([requests, homework]) => import("./auth.js").then(a => a.waitForUser()).then(u => u && refreshParentLinks({
+            coachUid: u.uid, coachName: u.displayName || "", uids: sentOk.map(p => p.clientUid), names: new Map(sentOk.map(p => [p.clientUid, p.name])), requests, homework
+        }))).catch(() => {});
         st.wrap = wrap; st.sentAt = failed.length < results.length ? Date.now() : st.sentAt; st.wrapDirty = false;
         renderWrap();
         if (failed.length) { console.error(failed[0].reason); toast(`Sent to ${sentOk.length}. ${failed.length} didn't save, try again.`, { type: "error" }); }

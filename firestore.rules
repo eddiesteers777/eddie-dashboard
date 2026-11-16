@@ -893,6 +893,46 @@ service cloud.firestore {
     // js/sessionBuild.js): one doc per plan, same id as the plan. Coach only:
     // players read the plan (sessionPlans), never this. The read rule goes by
     // the doc id, so a coach reading a plan with no notes yet gets "missing".
+    // Parent link (2026-11-16): a small snapshot a coach shares with a player's
+    // parent, opened by its long random address with no sign-in. Anyone who has
+    // the exact address may read that one document; nobody can list them. It holds
+    // the player's first name, the last session summary and open homework, nothing
+    // else. Only the coach who made it (and is linked to the player) can change or
+    // delete it; deleting it ends the link.
+    function validParentLink(d) {
+      return d.keys().hasOnly(["coachUid", "clientUid", "firstName", "coachFirst", "last", "homework", "updatedAt"])
+        && d.keys().hasAll(["coachUid", "clientUid", "firstName", "coachFirst", "last", "homework", "updatedAt"])
+        && d.coachUid is string && d.clientUid is string
+        && d.firstName is string && d.firstName.size() <= 40
+        && d.coachFirst is string && d.coachFirst.size() <= 40
+        && d.homework is string && d.homework.size() <= 900
+        && (d.last == null
+            || (d.last is map
+                && d.last.keys().hasOnly(["date", "focus", "workedOn", "nextTime"])
+                && d.last.date is string && d.last.date.size() <= 10
+                && d.last.focus is string && d.last.focus.size() <= 120
+                && d.last.workedOn is string && d.last.workedOn.size() <= 800
+                && d.last.nextTime is string && d.last.nextTime.size() <= 400));
+    }
+
+    match /parentLinks/{token} {
+      allow get: if token.matches('[A-Za-z0-9]{24,64}');
+      allow list: if signedIn() && resource.data.coachUid == request.auth.uid;
+      allow create: if signedIn()
+        && token.matches('[A-Za-z0-9]{24,64}')
+        && validParentLink(request.resource.data)
+        && request.resource.data.coachUid == request.auth.uid
+        && linked(request.auth.uid, request.resource.data.clientUid)
+        && request.resource.data.updatedAt == request.time;
+      allow update: if signedIn()
+        && resource.data.coachUid == request.auth.uid
+        && validParentLink(request.resource.data)
+        && request.resource.data.coachUid == resource.data.coachUid
+        && request.resource.data.clientUid == resource.data.clientUid
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if signedIn() && resource.data.coachUid == request.auth.uid;
+    }
+
     match /sessionPlanNotes/{noteId} {
       allow read, delete: if isApprovedCoach() && noteId.matches(request.auth.uid + '_.*');
       allow create, update: if isApprovedCoach()
